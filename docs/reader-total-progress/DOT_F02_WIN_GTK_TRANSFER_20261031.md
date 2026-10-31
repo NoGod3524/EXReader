@@ -132,3 +132,66 @@ exactly one EXR_SDK_VERSION:STRING=3.42.0 line; failure is not suppressed.
 The existing quoted reference build, Bash invocation, old tests, CMake/SDK guards and product are unchanged.
 The first two failed runs remain above. This is one additional 240/150/20-minute verification, not unlimited retries.
 Third-run result remains pending; no new transfer success or formal acceptance is claimed.
+
+## Third run: bounded cross-host candidate proof passed (2026-10-31 05:21Z)
+
+Tested source: 3b416378337a73c62423857e4340d469d357038d.
+[Run 41169386789](https://github.com/NoGod3524/EXReader/actions/runs/41169386789), attempt 1, all three jobs success:
+Windows124443838088 ended05:04:52Z; GTK124449124796 ended05:18:31Z;
+authenticate124451949329 ended05:18:46Z.
+This is the approved Windows-to-GTK slice, NOT completion of the full F02 acceptance item.
+The actual authentication result explicitly retains F02_accepted=false and formal95/108.
+
+### Actual executed evidence
+Both PowerShell configure steps emitted the successful exact CMakeCache binding:
+EXR_SDK_VERSION:STRING=3.42.0. The existing organization and other original regression steps were not waived.
+
+Windows completed all six named sender checks: native file-picker import and product mapping; actual visible
+reader; native account Sync; closed-host installed public SDK original readback; authenticated server PUT body;
+host-produced revision binding the original hash/size. Source SHA/run/attempt were recorded.
+
+GTK completed all seven named receiver checks: fresh independent mapping; actual HTTPS scan of sender wire;
+explicit native Receive without fabricating local SDK mapping; shelf activation causing actual download/import/open;
+recorded exact GET response; closed-host public SDK original readback; new-process offline reopen after the
+test server stopped and the private download cache was removed.
+
+The exact original is 12000 bytes, SHA256
+5f00b41f874d60348d6dc237873759906e5f0ed28b05bb399a6699bbc3c7b38f.
+Its cross-host book key is txt: plus that hash. Sender and receiver SDK IDs both happened to be1;
+they remain separate local row IDs, NOT the cross-device identity contract.
+Both SDK readbacks report book1/12000 bytes. First and offline GTK opens each report reader_visible1/error0.
+Screenshots were produced by the Actions driver; this seal did not visually inspect the archived images.
+
+Independent authentication actually executed one positive chain and eight semantic controls.
+Each was rejected at its expected rule:
+sender-source -> sender identity; sender-PUT -> actual PUT; wire-hash -> wire identity;
+receiver-attempt -> receiver identity; receiver-key -> cross-host key; receiver-GET -> actual GET;
+receiver-SDK-bytes -> SDK original; receiver-open -> actual open.
+These are executed controls from the ordinary authentication log, not inferred from job status alone.
+
+### Immutable artifact identities
+All below bind the same tested source/run/attempt; API metadata was read at05:21Z, not expired.
+Original ZIP parsing and byte/hash checks occurred only in the authorized Actions jobs, not this cloud computer.
+
+| Artifact | Bytes | SHA256 |
+|---|---:|---|
+| sender13030748486 | 6354365 | 4771f705c20c7230e13a193cbf44eb8b0c3a03ea4da208fbef26ad82fa033a8a |
+| receiver13031069198 | 9176577 | 0eea8b939b2359e8c88a329e07ea6ded047a9d3afbbf30ea6bd84de760a4e044 |
+| authentication13031635572 | 15488583 | c21ebc168c25481d2755c148218f8865a0c77cbe3909330a007e7f6470069e79 |
+| original-server-fetch13030764993 | 6332363 | fede5f902ec891498d9cd46ed8285476e29bd5342fbc0c9d57234cf90242f40c |
+| Windows-original-regression13030887995 | 10784789 | 03880d3f6372baa812b6a859173609e609e1190cc985907cb64b18f602dd80ba |
+| GTK-original-regression13030819927 | 86316102 | 6b24bc59ef346a8c954ccda2f8989ca08ed16296b25022983ffbcfb47c3be0b6 |
+
+The independent audit binds sender/receiver artifact IDs and original bytes; the larger original GTK regression
+archive is separately retained, not falsely described as downloaded through the new64MiB transfer-archive budget.
+
+### Scope and remaining work
+The sender performs a real localhost HTTPS PUT. Its exact persistent server objects are transferred as an
+authenticated artifact; the receiver restores that byte-identical store and performs real HTTPS GET and UI open.
+This is not a continuously-online public DAV deployment, bidirectional conflict test, six-target complete loop,
+real-user data migration, or a new integrated-product-source acceptance. Other formats/platforms and the
+remainder of the frozen F02 clauses still need their own evidence and ownership.
+
+First and second failed runs remain preserved above; none were spliced into this successful attempt.
+Third-run allowance is consumed1/1. No fourth run is authorized by this package.
+This result-only seal uses [skip ci], changes no product/test/SDK, and does not promote the formal95/108 count.
