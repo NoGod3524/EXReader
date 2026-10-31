@@ -46,3 +46,6 @@ Later explicit CI authorization is required to enable execution.
 Proposed future ceiling, NOT authorized:1130 runner-minutes/full attempt (Windows240,GTK120,
 Android210,Apple builds2x55,Apple organization3x110,Windows/GTK returns2x45,summary30).
 Current authorized CI:0. Ledger remains96/108. Continue the gaps, review, then authorized execution.
+
+## Build prerequisite review
+The adapter now installs the unchanged OPDSHash hash-only owner for each GTK/Windows/Android target before store configuration, with a canonical environment prefix. Apple retains its existing per-product hash installation and receives no competing override. Future workflow must install GTK apt dependencies, PyYAML, Java 17/Gradle 8.9 and matching Android tools; extracting build steps does not install setup-actions prerequisites. No build was executed.
