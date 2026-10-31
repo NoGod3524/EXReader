@@ -46,6 +46,7 @@ def main():
  user.GetDlgCtrlID.argtypes=[W.HWND];user.GetDlgCtrlID.restype=C.c_int
  user.PostMessageW.argtypes=[W.HWND,W.UINT,W.WPARAM,W.LPARAM];user.PostMessageW.restype=W.BOOL
  user.GetPropW.argtypes=[W.HWND,W.LPCWSTR];user.GetPropW.restype=W.HANDLE
+ user.IsWindowEnabled.argtypes=[W.HWND];user.IsWindowEnabled.restype=W.BOOL
  H.K.QueryPerformanceCounter.argtypes=[C.POINTER(C.c_longlong)];H.K.QueryPerformanceFrequency.argtypes=[C.POINTER(C.c_longlong)]
  H.K.SetThreadExecutionState.argtypes=[W.DWORD];H.K.SetThreadExecutionState.restype=W.DWORD
  def qpc():
@@ -103,7 +104,7 @@ def main():
    def await_paint(previous):
     host.poll(lambda:(True,) if painted()>previous else None,10,interval=.001)
     emit(dict(kind="paint_readiness",pid=host.process.pid,qpc=qpc(),previous_generation=previous,painted_generation=painted()))
-   host.send=traced;emit(dict(kind="process",pid=host.process.pid,qpc=qpc(),frequency=frequency.value,exe_sha256=sha(host.exe)))
+   driver_start=qpc();host.send=traced;emit(dict(kind="process",pid=host.process.pid,qpc=driver_start,frequency=frequency.value,exe_sha256=sha(host.exe)))
    try:
     entry["first_screen"]=H.op_first_screen(host,60);entry["hwnd"]=int(host.window)
     user.ShowWindow(host.window,9);need(user.SetWindowPos(host.window,W.HWND(-1),0,0,1168,752,0x42),"owned product window geometry")
@@ -147,7 +148,16 @@ def main():
      host.set_text(host.control("search"),"EXReader benchmark")
      host.poll(lambda:(True,) if host.lb_count()==1 and "EXReader benchmark" in host.lb_item(0) else None,10)
      await_shelf();entry["metadata_anchor_before"]=shelf_state()
-     before_paint=painted();entry["open"]=H.op_open(host,"EXReader benchmark",30);await_paint(before_paint);key=entry["open"]["key"];entry["page_turns"]=[]
+     before_paint=painted();entry["open"]=H.op_open(host,"EXReader benchmark",30);await_paint(before_paint)
+     release_file=folder/"page-setup-release.json"
+     print("F08_PAGE_SETUP_BARRIER",host.process.pid,str(release_file),flush=True)
+     host.poll(lambda:(True,) if release_file.exists() else None,90,interval=.01)
+     released=json.loads(release_file.read_text(encoding="utf-8"))
+     need(released.get("picker_cua_call_returned") is True and released.get("pid")==host.process.pid and isinstance(released.get("qpc"),int) and driver_start<=released["qpc"]<=qpc(),"explicit post-CUA setup release")
+     host.poll(lambda:(True,) if user.IsWindowEnabled(host.window) and painted()>before_paint and int(user.GetPropW(host.window,"EXReaderF08JobState") or 0)==1 else None,10,interval=.001)
+     entry["page_setup_barrier"]={"release":released,"ready_qpc":qpc(),"painted_generation":painted(),"product_job_state":1,"owner_enabled":True}
+     emit({"kind":"page_setup_barrier","pid":host.process.pid,**entry["page_setup_barrier"]})
+     key=entry["open"]["key"];entry["page_turns"]=[]
      for _ in range(8):
       before_paint=painted();turn=H.op_page_turn(host,key);await_paint(before_paint);entry["page_turns"].append(turn);key=turn["to"]
      host.wait_enabled("metadata",10);host.send(host.window,0x111,128,0)
