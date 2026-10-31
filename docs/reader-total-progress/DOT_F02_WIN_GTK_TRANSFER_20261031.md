@@ -85,3 +85,39 @@ Windows path normalization (Sentinel_ccf1f53a53dc81919073ef94dbc5083e). The work
 compute file(REAL_PATH) for the installed build/f02-hash directory and exports that exact value through GITHUB_ENV
 before the unchanged builders. No product guard, SDK, old builder, test assertion or timeout changes.
 This correction has one additional 240/150/20-minute run; no further automatic correction is authorized.
+
+## Authorized correction run: terminal failure (sealed 2026-10-31 04:25Z)
+
+Source 915132b5060e01524fda1a9e6004e335ce617f96; run
+[41165250954](https://github.com/NoGod3524/EXReader/actions/runs/41165250954), attempt 1.
+Windows job 124431307896 ended failure at 03:57:26Z. GTK job 124435216932 was skipped.
+Authentication job 124435216282 ended failure at 03:57:36Z because the upstream jobs were not both successful.
+
+The canonical-prefix blocker was cleared. The Windows host build and original compact, wave3, TXT,
+account/sync, forward-scan comparison and installed-SDK scan steps succeeded. The retained original
+"Build native organization consumers" step failed. This failure was not suppressed or counted as a pass.
+
+Root's ordinary job-log inspection located the organization consumer configure error at
+tests/windows_organization_projection/cloud/CMakeLists.txt:8: find_package requested EXReader EXACT
+version "3", while the installed candidate was 3.42.0. The logged invocation used the unquoted
+-DEXR_SDK_VERSION=3.42.0; a later reference build used the quoted equivalent and succeeded.
+PowerShell argument handling is therefore a candidate cause, not yet proven by source/cache inspection.
+No old test, product source, SDK guard or assertion was changed to hide this failure.
+
+The new "Native Windows import and actual HTTPS PUT" step was skipped. Consequently the six new sender
+checks, seven receiver checks, and one-positive/eight-negative cross-host authentication controls remain
+NOT EXECUTED. No cross-host transfer success is claimed. GTK was not built/run in this attempt.
+The old regression successes do not satisfy F02 or substitute for an unexecuted receiver.
+
+Independent API recheck at 04:24:59Z confirmed the three job outcomes, source SHA and retained artifact metadata:
+- artifact 13029208976, windows-host-sdk342-41165250954-1
+- 10696355 bytes
+- SHA256 f6738da14ad96796d9e1b243487f7ee81d2e1a76f6be19cdd177ada5cc19c578
+- same run/source/attempt; not expired at inspection.
+The archive was not downloaded or parsed on the cloud computer. It contains the original build/regression
+evidence, not a completed transfer proof. First-run failure 41164667579 and its artifact remain preserved above.
+
+Both separately authorized runs are consumed: original 1/1 and canonical-correction 1/1.
+There is no third-run authorization. The next permitted action is read-only diagnosis of the exact
+organization CMake argument/cache discrepancy; a code/workflow correction or another run needs its own grant.
+This document-only seal uses [skip ci]. Formal acceptance stays 95/108 (87.96%), F02 not promoted.
