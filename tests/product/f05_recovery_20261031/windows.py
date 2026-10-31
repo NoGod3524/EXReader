@@ -60,6 +60,11 @@ def main():
         db = out / name / "library.sqlite.product.sqlite"
         with sqlite3.connect(db.as_uri() + "?mode=ro", uri=True, timeout=20) as connection:
             return connection.execute(query).fetchall()
+    def sdk_originals(name):
+        db=out/name/"library.sqlite"
+        with sqlite3.connect(db.as_uri()+"?mode=ro",uri=True,timeout=20) as connection:
+            return [{"id":row[0],"bytes":len(row[1]),"sha256":hashlib.sha256(row[1]).hexdigest()}
+                    for row in connection.execute("SELECT id,source FROM books ORDER BY id")]
     def snapshot(name):
         records = [json.loads(body) for body, in rows(name, "SELECT body_json FROM reader_revisions")]
         entity_keys = {r["entity_key"] for r in records if r["entity_kind"] == "book"}
@@ -108,7 +113,27 @@ def main():
         sync(first)
         second = launch("second")
         configure(second)
+        before_cancel=sdk_originals("second")
+        store.hold_get=True;store.get_blocked.clear();store.release.clear()
+        cancel_dialog=second.open_account()
+        second.press(cancel_dialog,A.SYNC)
+        if not store.get_blocked.wait(60):
+            raise AssertionError("actual Windows sync original GET not reached")
+        second.press(cancel_dialog,A.CANCEL)
+        store.release.set()
+        second.wait_note(cancel_dialog,"CANCELLED",120)
+        cancelled_originals=sdk_originals("second")
+        if cancelled_originals!=before_cancel:
+            raise AssertionError("cancelled transport mutated SDK originals")
+        second.close_account(cancel_dialog)
         sync(second)
+        retry_originals=sdk_originals("second")
+        if len(retry_originals)!=1 or retry_originals[0]["sha256"]!=hashlib.sha256(original).hexdigest():
+            raise AssertionError("actual cancellation retry original mismatch or duplicate")
+        report["cases"].append({"name":"cancel_sync_retry","outcome":"passed",
+            "cancel_layer":"transport-original-GET-before-native-auto-receive",
+            "actual_native_cancel":True,"before":before_cancel,"cancelled":cancelled_originals,
+            "retry":retry_originals,"sdk_import_mid_commit_cancel_tested":False})
         initial = snapshot("first")
         if snapshot("second")["heads"] != initial["heads"]:
             raise AssertionError("second actual host has not received initial head")
