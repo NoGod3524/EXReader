@@ -36,6 +36,8 @@ def analyze_csv(path,pid):
             duration=float(value);need(math.isfinite(duration) and duration>=0,"display duration")
             displayed+=duration>0
     return dict(rows=len(rows),displayed_rows=displayed,columns=columns,missing_csv=False)
+def trace_ready(code,output):
+    return code==0 and b"Running" in output and b"Microsoft-Windows-DXGI" in output
 def controls():
     path=OUT/"control.csv";head="ProcessID,CPUStartQPC,DisplayedTime\n"
     path.write_text(head+"42,100,16.6667\n",encoding="utf-8")
@@ -47,7 +49,10 @@ def controls():
         except RuntimeError as exc:actual=str(exc)
         need(actual==reason,"CSV negative")
     path.write_text(head,encoding="utf-8");need(analyze_csv(path,42)["rows"]==0,"empty remains unsupported")
-    return dict(positive=2,negative=2)
+    need(trace_ready(0,b"Status: Running\nProvider: Microsoft-Windows-DXGI"),"ETW ready")
+    need(not trace_ready(0,b"Status: Running"),"ETW missing provider")
+    need(not trace_ready(1,b"Status: Running\nProvider: Microsoft-Windows-DXGI"),"ETW query failed")
+    return dict(positive=3,negative=4)
 def decoded(path):
     raw=path.read_bytes()
     return raw.decode("utf-16" if raw.startswith((b"\xff\xfe",b"\xfe\xff")) else "utf-8",errors="replace")
@@ -92,9 +97,9 @@ def main():
                 while time.monotonic()<deadline and trace.poll() is None:
                     p=subprocess.run(["logman","query",session,"-ets"],capture_output=True,timeout=5)
                     (folder/"session.txt").write_bytes(p.stdout+p.stderr)
-                    if p.returncode==0 and "Started recording." in decoded(folder/"collector.log"):started=True;break
+                    if trace_ready(p.returncode,p.stdout):started=True;break
                     time.sleep(.2)
-                need(started,"ETW session did not start")
+                need(started,"ETW session or DXGI provider not ready")
                 need(kernel.SetEvent(event),"start signal")
                 producer_code=producer.wait(timeout=10);trace_code=trace.wait(timeout=20)
             need(producer_code==0 and trace_code==0,"control or collector failed")
