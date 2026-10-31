@@ -235,13 +235,14 @@ def main():
         for host, state in ((first, left_group), (second, right_group)):
             if set(snapshot(host, "tag", tag)["heads"]) != combined:
                 raise AssertionError("delete-put conflict lost a head")
-            if state.get("organization_paused") != "1":
-                raise AssertionError("unsafe organization projection was not paused")
+            if "conflicting or incomplete versions" not in state.get("notice", ""):
+                raise AssertionError("native organization conflict notice missing")
         checks.append({"name":"delete_put_tombstone_preserved", "outcome":"passed",
             "entity_kind":"tag", "entity_key":tag, "common_parent":parent["heads"],
             "local_put":local_put, "delete":deletion,
             "retained_heads":sorted(combined), "first_native_state":left_group,
-            "second_native_state":right_group, "stale_put_is_not_restore":True})
+            "second_native_state":right_group,
+            "restore_revision_created":False, "implicit_single_head_selected":False})
         (out / "peer-contract.json").write_text(json.dumps({
             "entity_kind":"tag", "entity_key":tag, "common_parent":parent["heads"],
             "baseline":"peer-baseline", "remote_delete":"peer-delete",
