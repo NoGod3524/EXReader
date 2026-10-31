@@ -13,10 +13,11 @@ def main():
  secret_bytes=[v.encode() for v in (user,password,authorization)]
  events=[];errors=[];server=None;reports=[];observations={};success=False
  fault_observations=[];process_observations=[];phase_observations=[]
+ original_get_requests=[];original_get_counter_history=[];last_original_response={'last_event_seq':0}
  report=dict(identity=identity(),accepted=False,sender_artifact=receipt,book_key=sender['book_key'],
   original_bytes=sender['original_bytes'],original_sha256=sender['original_sha256'],sdk_version='3.42.0',
   F02_accepted=False,formal='95/108',phases=reports,processes=observations)
- report.update(fault_observations=fault_observations,process_observations=process_observations,phase_observations=phase_observations,independent12_controls_executed=False)
+ report.update(fault_observations=fault_observations,process_observations=process_observations,phase_observations=phase_observations,original_get_requests=original_get_requests,original_get_counter_history=original_get_counter_history,independent12_controls_executed=False)
  def command(args,timeout=90,input=None,check=True):
   p=subprocess.run(list(map(str,args)),input=input,capture_output=True,timeout=timeout)
   if check:need(p.returncode==0,'Android command '+str(args[0]))
@@ -29,12 +30,29 @@ def main():
  def safe_save(name,data):
   need(not any(x in data for x in secret_bytes),'generated credential in evidence')
   p=OUT/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
- def filemeta(name):
+ def filemeta(name,raw_name=None):
   if not exists(name):return dict(exists=False)
-  native=adb('shell',f"run-as {PACKAGE} stat -c '%d %i %h %u %s %a' files/{name}").stdout.decode().strip().split()
+  raw_stat=adb('shell',f"run-as {PACKAGE} stat -c '%d %i %h %u %s %a' files/{name}").stdout
+  if raw_name:safe_save(raw_name,raw_stat)
+  native=raw_stat.decode().strip().split()
   need(len(native)==6,'native file metadata')
   data=private(name)
   return dict(exists=True,dev=int(native[0]),ino=int(native[1]),nlink=int(native[2]),uid=int(native[3]),size=int(native[4]),mode=native[5],sha256=sha(data))
+ def capture_isolated_original():
+  if 'cold_cache_isolation' in report:return
+  name='f02-cold-cache-isolation/'+sender['original_sha256']+'.txt'
+  need(exists(name),'isolated original retained')
+  meta=filemeta(name,'cold-cache-isolated-native-stat.txt');raw=private(name)
+  need(meta.get('size')==sender['original_bytes']==len(raw) and meta.get('sha256')==sha(raw)==sender['original_sha256'],'isolated original raw identity')
+  safe_save('cold-cache-isolated-original.txt',raw)
+  report['cold_cache_isolation']=dict(identity=identity(),native=meta,raw_path='cold-cache-isolated-original.txt',raw_bytes=len(raw),raw_sha256=sha(raw))
+ def publish_original_counter(kind):
+  counter=dict(identity=identity(),original_sha256=sender['original_sha256'],count=len(original_get_requests),
+   last_request_id=len(original_get_requests),kind=kind,publication=len(original_get_counter_history)+1,**last_original_response)
+  write('f02-original-get-counter.next',json.dumps(counter).encode())
+  adb('shell','run-as',PACKAGE,'mv','files/f02-original-get-counter.next','files/f02-original-get-counter.json')
+  original_get_counter_history.append(counter)
+  return counter
  def record_observation(name,value,public=None):
   raw=json.dumps(value,ensure_ascii=True,sort_keys=True).encode()
   need(not re.search(rb'https?://|Basic\s',raw),'redacted observation fields')
@@ -71,11 +89,15 @@ def main():
   phase_observation=dict(identity=identity(),phase=phase,java_passed=value.get('passed'),
    active_check=value.get('active_check'),active_substep=value.get('active_substep'),failure_type=value.get('failure_type'),
    failure_observation=detail,corrupt_trace=trace)
+  phase_observation.update(cold_cache_preparation=value.get('observed',{}).get('cold_cache_preparation',{}),
+   normal_download=value.get('observed',{}).get('normal_download',{}),duplicate_original_gets=value.get('observed',{}).get('duplicate_original_gets',{}))
   phase_observations.append(phase_observation)
   public=dict(identity=identity(),phase=phase,java_passed=value.get('passed'),active_check=value.get('active_check'),
    active_substep=value.get('active_substep'),failure_type=value.get('failure_type'),
    failure_observation={k:v for k,v in detail.items() if k!='trace'},first_snapshot=trace[:1],last_snapshots=trace[-2:],
    sdk_observations=[r for r in trace if 'sdk_owner_available' in r or 'sdk_book_count' in r])
+  public.update(cold_cache_preparation=phase_observation['cold_cache_preparation'],
+   normal_download=phase_observation['normal_download'],duplicate_original_gets=phase_observation['duplicate_original_gets'])
   record_observation(phase+'-phase-observation.json',phase_observation,public)
   need(native is not None and value['passed'],'actual '+phase+' checks')
   pid=int(re.search(rb'^Pid:\s+([0-9]+)',native,re.M)[1]);uid=int(re.search(rb'^Uid:\s+([0-9]+)',native,re.M)[1])
@@ -109,18 +131,31 @@ def main():
      declared_bytes=len(data) if declared is None else declared))
     fault=getattr(handler,'f02_fault_observation',None)
     if fault is not None:
-     fault.update(response_status=code,response_bytes=len(data),response_sha256=sha(data),declared_bytes=len(data) if declared is None else declared)
+     fault.update(event_seq=events[-1]['seq'],response_status=code,response_bytes=len(data),response_sha256=sha(data),declared_bytes=len(data) if declared is None else declared)
+    request=getattr(handler,'f02_original_get_request',None)
+    if request is not None and handler.command=='GET' and handler.path==object_path:
+     events[-1]['original_get_request_id']=request['id'];request['response_event_seq']=events[-1]['seq']
+     last_original_response.clear();last_original_response.update(last_event_seq=events[-1]['seq'],response_request_id=request['id'],
+      authenticated=handler.headers.get('Authorization')==authorization,response_status=code,response_bytes=len(data),response_sha256=sha(data))
+     publish_original_counter('response')
   class EvidenceHandler(base):
    def send(self,code,data=b''):
     event(self,code,data);return super().send(code,data)
    def do_GET(self):
     self.f02_fault_observation=None
     try:
+     self.f02_original_get_request=None
+     if self.path==object_path:
+      with server.lock:
+       request=dict(id=len(original_get_requests)+1,authenticated=self.headers.get('Authorization')==authorization,fault_mode='none')
+       original_get_requests.append(request);self.f02_original_get_request=request
+       counter=publish_original_counter('request');request['start_publication']=counter['publication']
      if self.path==object_path and exists('f02-get-mode'):
       mode=private('f02-get-mode').decode().strip();adb('shell','run-as',PACKAGE,'rm','files/f02-get-mode')
       fault=dict(mode=mode if mode in ('corrupt','truncate','block') else 'other_redacted',mode_consumed=True,
        corrupt_sent=False,authenticated=self.headers.get('Authorization')==authorization,request_role='original')
       self.f02_fault_observation=fault
+      with server.lock:self.f02_original_get_request['fault_mode']=fault['mode']
       with server.lock:fault_observations.append(fault)
       if not self.authorized():return
       if mode=='corrupt':
@@ -153,6 +188,7 @@ def main():
   adb('shell','am','force-stop',PACKAGE)
   adb('reverse','tcp:'+str(server.server.server_port),'tcp:'+str(server.server.server_port))
   instrument('online')
+  capture_isolated_original()
   # All host owners were joined by the instrumentation before these database reads.
   with tempfile.TemporaryDirectory(prefix='f02-closed-product-') as scratch:
    path=Path(scratch)/'product.db';path.write_bytes(private('reader-catalog.db'))
@@ -197,6 +233,10 @@ def main():
     server.release.set()
     if not report.get('offline',{}).get('server_stopped'):server.server.shutdown();server.server.server_close()
   finally:
+   if 'cold_cache_isolation' not in report:
+    try:capture_isolated_original()
+    except Exception as isolation_error:report['isolation_capture_error']=type(isolation_error).__name__
+   save(OUT/'original-get-requests.json',original_get_requests)
    save(OUT/'events.json',events);save(OUT/'report.json',report)
    safe=True
    for path in OUT.rglob('*'):
@@ -208,6 +248,7 @@ def main():
     with open(os.environ['GITHUB_OUTPUT'],'a') as out:out.write('safe_upload=true\n')
    print('F02_ANDROID_OBSERVATION_TERMINAL '+json.dumps(dict(identity=identity(),fault_observations=fault_observations,
     process_observations=process_observations,phase_results=[dict(phase=v.get('phase'),passed=v.get('passed'),active_check=v.get('active_check'),active_substep=v.get('active_substep')) for v in reports],
+    original_get_requests=original_get_requests,original_get_counter_history=original_get_counter_history,cold_cache_isolation=report.get('cold_cache_isolation'),isolation_capture_error=report.get('isolation_capture_error'),
     independent12_controls_executed=False,F02_accepted=False,formal='95/108')),flush=True)
    print('F02_ANDROID_RESULT '+json.dumps(dict(identity=identity(),accepted=success,safe_upload=safe,phases=len(reports),F02_accepted=False)),flush=True)
    need(safe,'no generated credentials in uploaded evidence')

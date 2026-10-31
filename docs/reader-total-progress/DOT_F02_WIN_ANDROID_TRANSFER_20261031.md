@@ -142,3 +142,15 @@ The original failed run41233481729, its six artifacts, diagnostic41235413651 and
 Any cold-cache negative setup or further verification requires a new exact scope and budget. No cache removal, assertion relaxation, production fix or new runtime was performed under this observation authorization. Only this document is sealed after the result.
 
 Observation evidence document prepared at 2026-10-31T20:19:54.361948+00:00 / 2026-10-31 16:19:54 EDT.
+
+## Approved cold-cache full validation round (2026-10-31)
+
+Status: implementation draft, not run. New exclusive branch codex/gpt-f02-cold-cache-validation-20261031, parent3ba9dbefe975b60cd6d3b6d2dac6d186f43c637b. Product source remainsfe947bec25a56f40538677ffa9fb2a5e1e351b08; SDK8357eafa28423a7ab93ba08b823af80f01ad1505 and archived real Windows sender remain fixed.
+
+Exact six paths: F02ReceiveTest.java, run.py, source_lock.json (branch identity), fetch_sender.py (budget metadata), existing workflow and this document. Independent authenticate.py, build.py, init.gradle, product and SDK files are frozen. The additional independent cold-cache checks live in the approved workflow, avoiding a seventh path.
+
+The original sync remains first. Before corrupt mode the test requires native/controller FINISHED,256 shards, no busy flags/pending SDK task, a transfer-owner queue barrier and stable epoch; SDK0/local_id0; and the exact12000-byte verified active cache. It atomically moves that one inode once into a new0700 app-private test directory, verifies identity and absence, and refuses any rebuilt active cache. It never loops deletion, restores isolated bytes or forces an owner to cancel.
+
+Original corruption, truncation, cancellation, empty-SDK/cache assertions and timeouts remain. Normal receive must add a real original GET and obtain correct bytes. Duplicate receive must add no original GET; unrelated metadata traffic is allowed. Original20 Activity checks, offline reopening and12 independent controls remain intact. Isolated raw bytes and numeric native stat evidence are retained. New counter publications count original-request arrivals and atomically replace only a test counter file, so a late response does not create a new request.
+
+Workflow is restored to admission10 + Android60 + independent15 =85 runner-minute ceiling, exactly one initial attempt, no automatic correction/rerun. Original independent assertions run first; workflow-contained verification then recomputes the new isolation, exact XOR1 and GET-boundary evidence from its authenticated original ZIPs. All syntax/build/test/fixture/ZIP handling remains Actions-only. Any result is followed only by document [skip ci] sealing. Formal95/108 remains.

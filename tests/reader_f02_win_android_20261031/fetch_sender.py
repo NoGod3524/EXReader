@@ -62,8 +62,8 @@ def guard():
  runs=api('actions/runs?branch='+LOCK['branch']+'&per_page=100')['workflow_runs']
  owned=[r for r in runs if r.get('path')=='.github/workflows/dot-f02-win-android-transfer-20261031.yml']
  need(len(owned)==1 and owned[0]['head_sha']==head,'single approved run')
- save(OUT/'admission.json',dict(identity=identity(),base=LOCK['base'],sdk=LOCK['sdk'],changed=sorted(changed),approved_minutes=30,rounds=1,F02_accepted=False))
- print('F02_ANDROID_SCOPE exact11 SDK8357 frozen old assertions; one30-minute round',flush=True)
+ save(OUT/'admission.json',dict(identity=identity(),base=LOCK['base'],sdk=LOCK['sdk'],changed=sorted(changed),approved_minutes=85,rounds=1,F02_accepted=False))
+ print('F02_ANDROID_SCOPE exact11 SDK8357 frozen old assertions; one85-minute round',flush=True)
 def external_sender():
  actions();s=LOCK['sender'];meta=api('actions/artifacts/'+str(s['sender_artifact']))
  need(meta['id']==s['sender_artifact'] and meta['name']==s['sender_name'] and not meta['expired'],'external artifact identity')
