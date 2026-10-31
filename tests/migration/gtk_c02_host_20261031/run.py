@@ -148,9 +148,95 @@ for path in [authority, *sorted(authority.rglob("*"))]:
     device=library.stat().st_dev, inode=library.stat().st_ino,
     bytes=library.stat().st_size, sha256=hashlib.sha256(library.read_bytes()).hexdigest())), indent=2) + "\n")
 shutil.copytree(authority, out / "retained-authority")
+
+# Source contract: new qualification must retain actual static-link inputs.
+GTK_C02_STATIC_LINK_INPUTS = 1
+def retain_static_inputs():
+    import shlex
+    root = Path(__file__).resolve().parents[3]
+    directory = out/"binary-binding"
+    directory.mkdir()
+    inputs = directory/"inputs"
+    inputs.mkdir()
+    def retain(path, category):
+        path = Path(path).resolve(strict=True)
+        with path.open("rb") as stream:
+            first = os.fstat(stream.fileno())
+            raw = stream.read()
+            last = os.fstat(stream.fileno())
+        assert (first.st_dev,first.st_ino,first.st_size,first.st_mtime_ns,first.st_ctime_ns) == (
+            last.st_dev,last.st_ino,last.st_size,last.st_mtime_ns,last.st_ctime_ns)
+        digest = hashlib.sha256(raw).hexdigest()
+        target = inputs/(digest+"-"+path.name)
+        if target.exists():
+            assert target.read_bytes() == raw
+        else:
+            target.write_bytes(raw)
+        return dict(path=target.relative_to(out).as_posix(),physical_path=str(path),
+                    bytes=len(raw),sha256=digest,device=first.st_dev,inode=first.st_ino,category=category)
+    clean_environment = dict(PATH="/usr/bin:/bin",LANG="C",LC_ALL="C")
+    def tool(path):
+        path = Path(path).resolve(strict=True)
+        assert path.parent == Path("/usr/bin"), path
+        raw = path.read_bytes()
+        version = subprocess.check_output([str(path),"--version"],env=clean_environment,text=True,timeout=10)
+        return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest(),version=version)
+    targets = (
+        ("runtime-host",Path(host),Path(host),Path(host).parent,
+         Path(host).parent/"CMakeFiles/c02-gtk-host-check.dir/link.txt"),
+        ("product-host",root/"build/gtk/actual-host/gtk-host/exreader-linux",
+         root/"build/gtk/actual-host/gtk-host/exreader-linux",root/"build/gtk/actual-host/gtk-host",
+         root/"build/gtk/actual-host/gtk-host/CMakeFiles/exreader-linux.dir/link.txt"),
+        ("admission",root/"build/sdk-admission/exreader-c02-admission",Path(admission),
+         root/"build/sdk-admission",root/"build/sdk-admission/CMakeFiles/exreader-c02-admission.dir/link.txt"))
+    records = []
+    for name,built,executed,cwd,link in targets:
+        lines = [line for line in link.read_text().splitlines() if line.strip()]
+        assert len(lines) == 1, (name,lines)
+        command = shlex.split(lines[0])
+        assert command and Path(command[0]).is_absolute() and command.count("-o") == 1
+        output_index = command.index("-o")+1
+        assert output_index < len(command) and (cwd/command[output_index]).resolve() == built.resolve()
+        driver = tool(command[0])
+        linker_name = subprocess.check_output([command[0],"-print-prog-name=ld"],
+                                              env=clean_environment,text=True,timeout=10).strip()
+        linker_path = shutil.which(linker_name,path=clean_environment["PATH"])
+        assert linker_path, linker_name
+        arguments = []
+        for index,argument in enumerate(command[1:],1):
+            if index == output_index or argument.startswith("-"):
+                continue
+            path = (cwd/argument).resolve(strict=True)
+            assert path.is_file(), (name,argument)
+            item = retain(path,"link-input")
+            item.update(argument=index,original_argument=argument,
+                        sdk_installed=path.is_relative_to(root/"stage-sdk"),
+                        c02_installed=path.is_relative_to(root/"stage-c02"))
+            arguments.append(item)
+        assert any(item["sdk_installed"] and Path(item["physical_path"]).name == "libexr_library.a"
+                   for item in arguments), (name,"missing actual installed SDK library")
+        assert any(Path(item["physical_path"]).name == "libexreader-posix-c02-sdk-admission.a"
+                   for item in arguments), (name,"missing actual C02 SDK adapter")
+        record = dict(name=name,working_directory=str(cwd.resolve()),argv=command,
+                      output_argument=output_index,link_script=retain(link,"cmake-link-script"),
+                      driver=driver,linker=tool(linker_path),inputs=arguments,
+                      built=retain(built,"build-elf"),executed=retain(executed,"actual-elf"))
+        record["build_equals_executed"] = record["built"]["sha256"] == record["executed"]["sha256"]
+        records.append(record)
+        print("C02-GTK-LINK-INPUTS "+json.dumps(dict(name=name,argv=command,driver=driver,linker=record["linker"],
+            build_equals_executed=record["build_equals_executed"],
+            inputs=[dict(argument=item["argument"],file=Path(item["physical_path"]).name,
+                         sdk=item["sdk_installed"],c02=item["c02_installed"],sha256=item["sha256"])
+                    for item in arguments])),flush=True)
+    receipt = dict(schema="c02-gtk-static-link-inputs-v1",source=os.environ["GITHUB_SHA"],
+        run=os.environ["GITHUB_RUN_ID"],attempt=os.environ["GITHUB_RUN_ATTEMPT"],
+        sdk_base="8357eafa28423a7ab93ba08b823af80f01ad1505",sdk_version="3.42.0",targets=records)
+    (directory/"receipt.json").write_text(json.dumps(receipt,indent=2)+"\n")
+
+retain_static_inputs()
 assert len(rows) == 13
 save()
 report = json.loads((out / "report.json").read_text())
-report.update(passed=True, complete=True)
+report.update(passed=True, complete=True,static_link_inputs="binary-binding/receipt.json")
 (out / "report.json").write_text(json.dumps(report, indent=2) + "\n")
 print("C02-ACTUAL-GTK cases=13 failed=0")

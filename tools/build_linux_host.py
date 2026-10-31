@@ -69,8 +69,26 @@ def main():
         shutil.copyfile(ROOT/name, payload/name)
     shutil.copytree(args.sdk/'share/exreader/licenses', payload/'licenses')
     source = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
+    originals = output/'binary-originals'
+    originals.mkdir()
+    original_host = args.binary.resolve(strict=True) if args.binary is not None else build/'exreader-linux'
+    binary_rows = {}
+    for name,original,packaged in (
+        ('exreader-linux',original_host,payload/'bin/exreader-linux'),
+        ('exreader-c02-admission',admission,payload/'bin/exreader-c02-admission')):
+        retained = originals/(name+'.elf')
+        shutil.copyfile(original,retained)
+        built_raw,installed_raw = retained.read_bytes(),packaged.read_bytes()
+        binary_rows[name] = dict(original=retained.relative_to(output).as_posix(),
+            packaged=packaged.relative_to(output).as_posix(),original_bytes=len(built_raw),
+            original_sha256=hashlib.sha256(built_raw).hexdigest(),packaged_bytes=len(installed_raw),
+            packaged_sha256=hashlib.sha256(installed_raw).hexdigest(),same_bytes=built_raw==installed_raw)
+    (output/'binary-originals.json').write_text(json.dumps(dict(
+        schema='c02-gtk-package-binary-originals-v1',source=source,sdk_version=args.sdk_version,
+        binaries=binary_rows),indent=2)+'\n')
     manifest = {'schema': 1, 'source_sha': source, 'sdk_version': identity.split()[0], 'abi': int(identity.split()[1]),
                 'c02_admission': True, 'c02_authority': 'OS account home/.exreader-c02-admission',
+                'c02_binary_originals': 'binary-originals.json',
                 'gtk_version': subprocess.check_output(['pkg-config', '--modversion', 'gtk+-3.0'], text=True).strip(),
                 'files': {str(p.relative_to(payload)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted(payload.rglob('*')) if p.is_file()}}
