@@ -37,7 +37,7 @@ def replay(document):
   need(paint["flags"]==3 and paint["v0"]>0,"visible successful product bitmap and GDI flush")
   value=(paint["qpc"]-start)*1000/frequency;input_row=inputs.get(worker["input_id"])
   sample={"identity":identity,"full_frame_production_ms":value,
-   "worker_ms":(end-start)*1000/frequency,"queue_ms":(start-worker["queued_qpc"])*1000/frequency,
+   "worker_ms":(end-start)*1000/frequency,"job_created_to_worker_ms":(start-worker["queued_qpc"])*1000/frequency,
    "paint_ms":(paint["qpc"]-paint["start_qpc"])*1000/frequency,"input_to_complete_ms":None,
    "worker_start_qpc":start,"completion_qpc":paint["qpc"],"input_id":worker["input_id"]}
   if input_row:
