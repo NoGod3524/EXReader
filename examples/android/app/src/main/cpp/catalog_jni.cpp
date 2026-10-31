@@ -203,6 +203,12 @@ extern "C" JNIEXPORT jobject JNICALL JNI_METHOD(lookup)(JNIEnv *env,jclass,jlong
   copied(values);
   return found?shelf_book(env,values.values.at(0)):nullptr;
 });}
+extern "C" JNIEXPORT jstring JNICALL JNI_METHOD(localKey)(JNIEnv *env,jclass,jlong id,jlong sdk){return call(env,id,[&](owner &o)->jstring{
+  reader_catalog_error e{};rows values{env,nullptr,{}};int found=0;
+  database(reader_catalog_local_lookup(o.catalog,sdk,nullptr,copy,&values,&found,&e),e.message);
+  copied(values);
+  return found?string(env,values.values.at(0).key):nullptr;
+});}
 extern "C" JNIEXPORT jboolean JNICALL JNI_METHOD(hasLocal)(JNIEnv *env,jclass,jlong id,jlong sdk){return call(env,id,[&](owner &o)->jboolean{
   reader_catalog_error e{};int present=0;database(reader_catalog_has_local(o.catalog,sdk,&present,&e),e.message);return present?JNI_TRUE:JNI_FALSE;
 });}
