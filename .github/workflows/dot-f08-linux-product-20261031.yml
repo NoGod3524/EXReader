@@ -30,7 +30,7 @@ jobs:
       - name: Install the fixed native desktop toolchain
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libgtk-3-dev libglib2.0-dev pkg-config ninja-build xvfb openbox xdotool xclip x11-utils dbus dbus-x11 at-spi2-core
+          sudo apt-get install -y libgtk-3-dev libglib2.0-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build xvfb openbox xdotool xclip x11-utils dbus dbus-x11 at-spi2-core gsettings-desktop-schemas
       - name: Build full compact GTK product from unchanged SDK and installed public modules
         run: python3 tests/reader_f08_linux_product_20261031/run.py build
       - name: Original 44 launches and separate six causal launches on the same full program
