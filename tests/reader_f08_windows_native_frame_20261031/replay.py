@@ -78,7 +78,7 @@ def replay(document):
   "reader_native_ui_frame_candidates":stats(ui_frames,True),"reader_native_ui_start_missing":ui_missing,
   "reader_native_ui_font_candidates":stats(ui_font,True),"reader_native_ui_page_candidates":stats(ui_page,True),
   "native_ui_boundary":"WM_HOST_COMPLETE accepts ready frame, through owner/layout handling, to first same-generation GDI completion",
-  "phase_rows":[r for r in rows if r["kind"] in ("settings_save","ui_accept_begin","ui_accept_body_end","ui_owners_complete","catalog_hash","catalog_attach","catalog_lookup")],
+  "phase_rows":[r for r in rows if r["kind"] in ("settings_save","ui_accept_begin","ui_accept_body_end","ui_owners_complete","ui_controls","catalog_hash","catalog_attach","catalog_lookup")],
   "reader_font_full_frame_production":stats(font),"reader_page_full_frame_production":stats(page),
   "shelf_full_frame_production_candidates":stats([r["full_frame_production_ms"] for r in shelf]),
   "shelf_samples":shelf,"shelf_unbound_completions":shelf_unknown,"shelf_full_census_proven":False,
