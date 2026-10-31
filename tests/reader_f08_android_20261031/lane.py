@@ -4,9 +4,9 @@ from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[2]
 HERE=Path(__file__).resolve().parent
 OUT=ROOT/"build/f08-android"
-BASE="22b207d142bf11de35aa5ffd0c64d7935ea3e6a9"
+BASE="8e5f4c850839c493e1307ea8f17ab3552209d08a"
 ALLOWED={"tests/reader_f08_android_20261031/build.py","tests/reader_f08_android_20261031/lane.py",
-         "tests/reader_f08_android_20261031/profile.json",".github/workflows/dot-f08-android-20261031.yml"}
+         ".github/workflows/dot-f08-android-20261031.yml"}
 def need(value,message):
     if not value:raise ValueError(message)
 def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
@@ -74,6 +74,27 @@ def controls():
         except ValueError:continue
         raise ValueError("negative coverage control accepted")
     return {"positive":1,"over_budget":1,"invalid":len(mutations)}
+def verify_owner(value,ident):
+    need(all(value.get(k)==v for k,v in ident.items()),"owner source/run/attempt")
+    need(value.get("api")==34 and value.get("abi")=="x86_64","owner target")
+    need(value.get("count")==18 and value.get("failed")==0 and len(value.get("checks",[]))==18
+         and all(x.get("pass") is True for x in value["checks"]),"original owner regression")
+    need(len({x["id"] for x in value["checks"]})==18,"unique owner cases")
+    return {"cases":18,"passed":True}
+def owner_controls():
+    command(["adb","shell","am","force-stop","org.exreader.host"])
+    command(["adb","install","-r","-t",OUT/"packages/product-owner-androidTest.apk"])
+    ident=identity()
+    output=command(["adb","shell","am","instrument","-w","-r","-e","source_sha",ident["source_sha"],
+        "-e","run_id",ident["run_id"],"-e","attempt",ident["attempt"],
+        "org.exreader.host.test/org.exreader.host.ProductOwnerTest"],timeout=300)
+    (OUT/"owner-instrumentation.txt").write_bytes(output)
+    need(b"OK (18 tests)" in output and b"INSTRUMENTATION_CODE: -1" in output
+         and b"FAILURES!!!" not in output,"original owner instrumentation")
+    report=command(["adb","shell","run-as","org.exreader.host","cat","files/product-owner-report.json"])
+    (OUT/"owner-report.json").write_bytes(report)
+    return verify_owner(json.loads(report),ident)
+
 def sample():
     guard()
     profile=json.loads((HERE/"profile.json").read_text());save(OUT/"profile.json",profile)
@@ -109,6 +130,7 @@ def sample():
     except Exception as error:
         save(OUT/"evaluation.json",{**identity(),"shelf_budget_accepted":False,"f08_accepted":False,"problem":str(error)})
         raise
+    print("F08_ANDROID_OWNER",json.dumps(owner_controls()),flush=True)
     need(run.returncode==0,"original sampler failed")
     need(result["shelf_budget_accepted"],"predeclared shelf budget exceeded")
 def seal():
@@ -173,7 +195,8 @@ def audit():
             evaluation=evaluate(result,json.loads((HERE/"profile.json").read_text()))
             recorded=json.loads((raw/"evaluation.json").read_text())
             need(all(recorded.get(k)==v for k,v in evaluation.items()),"budget evaluation differs")
-            report.update(evaluation,observation_complete=True)
+            owner=verify_owner(json.loads((raw/"owner-report.json").read_text()),ident)
+            report.update(evaluation,observation_complete=True,owner_regression=owner)
     save(target/"audit.json",report)
     print("F08_ANDROID_AUDIT",json.dumps(report),flush=True)
 if __name__=="__main__":
