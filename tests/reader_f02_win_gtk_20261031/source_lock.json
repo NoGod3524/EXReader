@@ -1,0 +1,37 @@
+{
+  "base": "cfdaf6a4531548be63b4dd0c2bccd6b050a93124",
+  "owned": [
+    "tests/reader_f02_win_gtk_20261031/source_lock.json",
+    "tests/reader_f02_win_gtk_20261031/dav_store.py",
+    "tests/reader_f02_win_gtk_20261031/windows_send.py",
+    "tests/reader_f02_win_gtk_20261031/gtk_receive.py",
+    "tests/reader_f02_win_gtk_20261031/authenticate.py",
+    ".github/workflows/dot-f02-win-gtk-transfer-20261031.yml",
+    "docs/reader-total-progress/DOT_F02_WIN_GTK_TRANSFER_20261031.md"
+  ],
+  "frozen": {
+    "src": "01dbab7c7c28aff175b5a953fea307e21d84eee2",
+    "include": "ef1bbaafc4a250053e5b0f88d329d1a25b22794b",
+    "cmake": "505c604a2b30b72b3a251cd3f0bb7628e6d58fc1",
+    "CMakeLists.txt": "a5ed27fcca1d709c2217c585da47dc55dc23c1d0",
+    "bindings": "54c12f70a1a63cae6574984a388b66bf6248c38e",
+    "apps/reader": "004a0b08be8568407475b8bafe8472bd216516b8",
+    "examples": "b4bd6ad62bc8438ab093ca2c0553158ef4e8c0f0",
+    "tests/windows_sdk342": "0044ebda61fe5750c8defa5d81b63414df14fdbc",
+    "tests/gtk_sdk342_package": "0b63f1c5e5afcac9dfc5f687ea58c79a686b1c40",
+    "tests/reader_gtk_raw_wave3": "f0f12308626e10dbfbc2756a0afeff18e6987a0e",
+    "tests/reader_windows_account": "db06dfd321b0befe60430fe509ab98a06e78dcc6",
+    "tests/linux_host": "cc848eca53445fbc290ee5a7d714315932f76031",
+    "tests/reader_gtk_receive": "ad3e0c31c056ee421f1549ab8b847860f08107bc",
+    "tests/reader_windows_compact": "fa4a06abad46f5542190b38f2891a005890da3b7",
+    "tests/reader_navigation": "defb7e62adc638c04e448cdc5138c4386a9c0de8",
+    "tests/reader_gtk_navigation": "7c74f08ecd942bb6f251a4f8248d262f6162843a",
+    "tests/reader_gtk_batch_import": "56481df2c5bfc3177aea0e4c1b02996170db1abf"
+  },
+  "rounds": 1,
+  "job_budgets_minutes": {
+    "windows": 240,
+    "gtk": 150,
+    "authenticate": 20
+  }
+}
