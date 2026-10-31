@@ -22,6 +22,8 @@ from production import bound_history, acknowledged_prefix, audit_repairs
 from scanner import audit_scanner
 from gtk_host import audit_gtk_host
 from android_host import audit_android_host, android_negative_controls
+from apple_host import audit_apple_host, apple_negative_controls
+from posix_native import audit as audit_posix_native
 from gtk_snapshots import pending_negative_controls
 
 from protocols import (SDK, C01, ABI2_FAILURES, need, sha, hexadecimal, integer, json_value,
@@ -573,6 +575,34 @@ def gtk_evidence(files, spec, source):
     need(len(declared) == len(set(declared)) and len(declared) >= 13, "gtk-source-case-declaration")
     return audit_gtk_host(files,spec,source,set(declared))
 
+def posix_native_evidence(files, spec, source):
+    prefix = spec["independent_prefix"]
+    need(prefix.endswith("/") and canonical_path(prefix[:-1]) == prefix[:-1], "posix-independent-artifact-prefix")
+    retained = {name[len(prefix):]:raw for name,raw in files.items() if name.startswith(prefix)}
+    inventory(retained)
+    observation = json_value(retained["fstat.json"])
+    need(observation["schema"] == "pc02-component-fstat-v1" and
+         observation["original_bytes_prefix"] == "original/" and
+         observation["objects"]["."]["physical_path"] == observation["root"],
+         "posix-independent-native-capture")
+    raw = {name[len("original/"):]:data for name,data in retained.items() if name.startswith("original/")}
+    need(retained["producer-file-hashes.json"] == raw["file-hashes.json"],
+         "posix-original-producer-inventory-preserved")
+    receipt = json_value(raw["receipt.json"])
+    platform = "macOS-" if spec["role"] == "posix-native-macos" else "Linux-"
+    need(receipt["platform"].startswith(platform), "posix-actual-platform")
+    tool = receipt["tool"]
+    binary = retained[tool["name"]]
+    need(len(binary) == tool["bytes"] and sha(binary) == tool["sha256"], "posix-original-executed-binary")
+    result = audit_posix_native(raw,observation["objects"],source=source,run=spec["run"],
+                               attempt=spec["attempt"],euid=observation["euid"])
+    need(json_value(json.dumps(result).encode()) == json_value(retained["result.json"]),
+         "posix-independent-original-zip-redecode-agrees")
+    return dict(capabilities=["posix-original-55-418","posix-api17-independent-native-semantics"],
+                original_counts=result["original_counts"], migration_api=result["migration_api"],
+                actual_sdk=False, actual_migration=False,
+                independent_pre_confirm_snapshot=False, evidence_limits=result["evidence_limits"])
+
 def android_evidence(files, spec, source, missing):
     inventory(files, "artifact-file-hashes.json")
     late = {"source.txt", "logcat-final.txt", "artifact-receipt.json", "artifact-file-hashes.json"}
@@ -600,6 +630,14 @@ def android_evidence(files, spec, source, missing):
     return result
 
 def host_evidence(files, spec, source, missing):
+    inventory(files)
+    declared_sources = json_value(files["source-files.json"])
+    need(declared_sources and {"examples/apple/HostSDK.swift", "examples/apple/HostC02Admission.swift",
+         "examples/apple/HostModel.swift"} <= set(declared_sources), "apple-qualified-source-inventory")
+    for path, row in declared_sources.items():
+        raw = git_bytes(source,path)
+        need(len(raw) == row["bytes"] and sha(raw) == row["sha256"] and
+             files["source/" + path] == raw, "apple-original-qualified-source-bytes")
     receipt = json_value(files[spec["receipt"]])
     provenance(receipt,spec,source)
     need(receipt["platform"] == spec["platform"] and receipt["full_c02_acceptance"] is False, "host-build-receipt")
@@ -624,10 +662,7 @@ def host_evidence(files, spec, source, missing):
         need(observations[name]["sdk_open_count"] == 0 and observations[name]["admitted"] is False, "host-refuses-before-sdk")
     need(observations["last-borrow-blocks-owner"]["owner_admitted"] is False and
          observations["final-borrow-release-allows-owner"]["owner_admitted"] is True, "host-last-borrow")
-    # This adapter validates runtime observations. A platform-specific native
-    # authority decoder must be implemented before this can qualify all C02.
-    missing.add(prefix+"-native-authority-semantic-adapter")
-    return dict(capabilities=[prefix+"-build",prefix+"-runtime-observations"],runtime=True)
+    return audit_apple_host(files, spec, source, report)
 
 @functools.lru_cache(maxsize=None)
 def fixture_txt(source):
@@ -735,6 +770,8 @@ def validate(files,spec,source,missing):
         return gtk_evidence(files,spec,source)
     if role == "host-android":
         return android_evidence(files,spec,source,missing)
+    if role in ("posix-native-linux", "posix-native-macos"):
+        return posix_native_evidence(files,spec,source)
     return host_evidence(files,spec,source,missing)
 
 def reseal_intents(data,wrong_ack=False):
@@ -859,8 +896,14 @@ def main():
             host_controls.extend(pending_negative_controls(files,spec["runtime_prefix"],output/role/"negative-controls"))
         if role == "host-android":
             host_controls.extend(android_negative_controls(files,output/role/"negative-controls"))
-    need(windows is not None, "negative-controls-require-original-windows-native")
-    controls = negative_controls(windows[0],windows[1],source,output) + host_controls
+        if role in ("host-macos", "host-ios"):
+            host_controls.extend(apple_negative_controls(files,output/role/"negative-controls"))
+    if windows is None:
+        need(args.allow_incomplete and len(host_controls) >= 7,
+             "host-components-require-independent-native-negatives")
+        controls = host_controls
+    else:
+        controls = negative_controls(windows[0],windows[1],source,output) + host_controls
     for path,artifact in original_checks:
         need(path.stat().st_size == artifact["bytes"] and sha(path.read_bytes()) == artifact["sha256"],
              "retained-original-unchanged")

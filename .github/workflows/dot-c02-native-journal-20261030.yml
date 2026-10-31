@@ -50,6 +50,8 @@ jobs:
           allowed.update(['tests/migration/c02_completion_audit_20261031/android_host.py','tests/migration/c02_completion_audit_20261031/qualification.android-661.json'])
           allowed.update(['tools/android_c02.py','tools/build_android_host.py'])
           allowed.update(['tests/migration/c02_completion_audit_20261031/posix_migration.py','tests/migration/c02_completion_audit_20261031/posix_native.py'])
+          allowed.update(['tests/migration/c02_completion_audit_20261031/apple_host.py'])
+          allowed.update(['tests/migration/c02_completion_audit_20261031/qualification.apple-267.json'])
           assert set(pathlib.Path('changed-paths.txt').read_text().splitlines())==allowed
           PY
           git diff --exit-code a8d0b162d8c21617e4c2c837e3eb2b2174bbf69b HEAD -- extras/migration/windows_coordinator_hardening_20261030 tests/migration/windows_coordinator_hardening_20261030 extras/migration/windows_coordinator_cas_20261030 tests/migration/windows_coordinator_cas_20261030

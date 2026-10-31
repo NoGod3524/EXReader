@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "source": "267bdbaddeb15f9420bd5c2e20f1cb031fd95613",
+  "repository": "NoGod3524/EXReader",
+  "packages": [
+    {
+      "role": "host-macos",
+      "platform": "macos",
+      "run": 41179330166,
+      "attempt": 1,
+      "job": 124474161157,
+      "job_name": "Actual C02 Apple app UID macos",
+      "workflow": ".github/workflows/dot-c02-apple-host-20261031.yml",
+      "receipt": "receipt.json",
+      "admission_report": "admission.json",
+      "observation_log": "observations.log",
+      "artifact": {
+        "id": 13034720573,
+        "name": "c02-apple-runtime-macos-41179330166-1",
+        "bytes": 55008521,
+        "sha256": "8700b0786c51a1a988e3e422e85fe071d719603774566eb3b546e959ac6b132c"
+      }
+    },
+    {
+      "role": "host-ios",
+      "platform": "iphonesimulator",
+      "run": 41179330166,
+      "attempt": 1,
+      "job": 124474161201,
+      "job_name": "Actual C02 Apple app UID iphonesimulator",
+      "workflow": ".github/workflows/dot-c02-apple-host-20261031.yml",
+      "receipt": "receipt.json",
+      "admission_report": "admission.json",
+      "observation_log": "observations.log",
+      "artifact": {
+        "id": 13034398089,
+        "name": "c02-apple-runtime-iphonesimulator-41179330166-1",
+        "bytes": 55041336,
+        "sha256": "c6210ff3cb2d0838132b0a2b8cd33ba4ee525f2f84a1f00a0c8c79492285705c"
+      }
+    }
+  ]
+}
