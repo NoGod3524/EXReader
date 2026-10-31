@@ -1,0 +1,24 @@
+name: F03 organization preparation (execution disabled)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  blocked-pending-driver-review-and-budget:
+    # Approved stage is source preparation, zero CI. New approval required to remove.
+    if: ${{ false }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject preparation as acceptance
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          scope = json.loads(Path("tests/dot_f03_same_source_20261031/scope.json").read_text())
+          assert scope["ci_authorized"] is False and scope["complete"] is False
+          raise SystemExit("F03 preparation only; no six-target acceptance")
+          PY
