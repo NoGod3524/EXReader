@@ -1,6 +1,12 @@
 name: DOT C02 Apple fixed authority and actual host runtime
 on:
   workflow_dispatch:
+    inputs:
+      diagnostic:
+        description: 'Read-only original artifact JSON (source, run, attempt, job, artifact, bytes, sha256, platform); empty runs native tests'
+        required: false
+        default: ''
+        type: string
   push:
     branches: [codex/dot-c02-native-journal-20261030]
     paths:
@@ -23,7 +29,31 @@ env:
   EXR_APPLE_SDK_VERSION: '3.42.0'
   EXR_APPLE_RAW3: 'OFF'
 jobs:
+  diagnostic:
+    if: github.event_name == 'workflow_dispatch' && inputs.diagnostic != ''
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Bind and retain original ZIP; print actual inner runtime diagnostics
+        env:
+          GH_TOKEN: ${{ github.token }}
+          C02_DIAGNOSTIC: ${{ inputs.diagnostic }}
+        run: python3 tests/migration/apple_c02_host_20261031/diagnose.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-apple-original-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-c02-original-diagnostic/
+          if-no-files-found: error
+          retention-days: 30
   sdk:
+    if: (github.event_name != 'workflow_dispatch' || inputs.diagnostic == '') && !contains(github.event.head_commit.message, '[c02-audit-only]')
     name: Frozen SDK3.42 Apple ${{ matrix.target }}
     runs-on: macos-15
     timeout-minutes: 15

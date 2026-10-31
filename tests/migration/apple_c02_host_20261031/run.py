@@ -256,6 +256,13 @@ def main():
                        producer_native_map="*-native-map.json")
     except BaseException as error:
         receipt["error"] = type(error).__name__+":"+str(error)
+        if home is not None:
+            for path in (home/"Documents/c02-evidence/failure.json",
+                         home/"Library/Application Support/EXReader/host-log.txt"):
+                if path.is_file():
+                    print(json.dumps(dict(diagnostic=str(path),text=path.read_text(errors="backslashreplace")[-24000:])),flush=True)
+        for path in sorted(evidence.glob("*.log")):
+            print(json.dumps(dict(diagnostic=path.name,text=path.read_text(errors="backslashreplace")[-16000:])),flush=True)
         raise
     finally:
         (evidence/"receipt.json").write_text(json.dumps(receipt,indent=2)+"\n")
