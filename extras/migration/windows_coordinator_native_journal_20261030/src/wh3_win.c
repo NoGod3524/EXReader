@@ -124,6 +124,22 @@ static int intents(HANDLE h,const journal *j,uint64_t *seq,char last[65],LONGLON
  if(pending||count!=j->n)return 0;
  *end=z;return 1;
 }
+/* Observational read only. The complete native pair is revalidated under the
+   same storage lock; no newer tip is substituted into a caller's transaction. */
+int wh3w_read(wh3w_store *s,char (*lines)[EXR_WH_LINE_MAX],size_t capacity,
+ size_t *count,wh3_tip *tip) {
+ journal *j=NULL;uint64_t seq;char seal[65];LONGLONG bytes;int ok=0;
+ if(count)*count=0;if(tip)memset(tip,0,sizeof(*tip));
+ if(!s||!lines||!count||!tip||capacity>EXR_WH_MAX_JOURNAL)return 0;
+ EnterCriticalSection(&s->lock);j=malloc(sizeof(*j));
+ if(j&&!s->poisoned&&identities(s)&&loadjournal(s,s->j,j)&&j->n<=capacity&&
+    intents(s->i,j,&seq,seal,&bytes)&&identities(s)){
+  size_t k;memset(lines,0,j->n*sizeof(j->lines[0]));
+  for(k=0;k<j->n;k++)memcpy(lines[k],j->lines[k],strlen(j->lines[k])+1);
+  *count=j->n;tipof(s,j,tip);ok=1;
+ }
+ free(j);LeaveCriticalSection(&s->lock);return ok;
+}
 static void phase(wh3w_store *s,unsigned n) {if(s->c.phase)s->c.phase(s->c.context,n);}
 void wh3w_close(wh3w_store *s) {
  unsigned k;if(!s)return;

@@ -79,11 +79,14 @@ static HANDLE reg_spawn(unsigned mode,unsigned stop) {
  if(!CreateProcessW(exe,command,NULL,NULL,TRUE,CREATE_NO_WINDOW,NULL,NULL,&si,&pi))return NULL;
  CloseHandle(pi.hThread);return pi.hProcess;
 }
+static int coordinator_child(reg_shared *shared);
 static int reg_child(const char *handle) {
  HANDLE mapping=(HANDLE)(uintptr_t)_strtoui64(handle,NULL,10);
  reg_shared *shared=MapViewOfFile(mapping,FILE_MAP_ALL_ACCESS,0,0,sizeof(*shared));
  wh3wr_registration *r=NULL;wh3w_controls controls={0};void *cap=NULL;wh3_tip tip;
- if(!shared)return 90;controls.context=shared;controls.phase=reg_barrier;
+ if(!shared)return 90;
+ if(shared->stop==600)return coordinator_child(shared);
+ controls.context=shared;controls.phase=reg_barrier;
  if(shared->stop>=WH3WR_ENROLL_RESERVED){
   int ok=wh3wr_enroll_controlled(shared->library,shared->root,sdk_prove,(void *)original,&controls);
   UnmapViewOfFile(shared);return ok?0:95;
@@ -393,6 +396,7 @@ typedef struct {
  void *cap;wh3_tip tip;wh3w_identity before,staged;char lease[49],stage_id[49];
  wh_record row;char original_bytes[128];size_t original_size;
  wchar_t stage[MAX_PATH];unsigned published,checks_after_publish,proofs,released;
+ size_t terminal_count;reg_shared *barrier;
 } run_fixture;
 static void run_identity(const wh3w_identity *id,char out[49]) {
  static const char hex[]="0123456789abcdef";unsigned char bytes[24];unsigned i;
@@ -432,7 +436,24 @@ static wh_step run_acquire(void *context,const wh_binding *b,const wh_gates *g,v
 }
 static wh_step run_reacquire(void *context,const wh_binding *b,const wh_gates *g,
  const char *prior,void **cap,char id[49]) {
- (void)context;(void)b;(void)g;(void)prior;(void)id;*cap=NULL;return WH_STEP_FAILED;
+ run_fixture *r=context;wh3_tip actual;size_t count=0;char (*lines)[EXR_WH_LINE_MAX];
+ wchar_t retained[MAX_PATH];wh3w_identity original_id;char stage_id[49];
+ *cap=NULL;if(strcmp(prior,r->lease)||!reg_open(WH3WG_RECOVER,NULL))return WH_STEP_FAILED;
+ lines=calloc(EXR_WH_MAX_JOURNAL,sizeof(*lines));if(!lines)return WH_STEP_UNCERTAIN;
+ if(!wh3wr_journal(registration,b,g,NULL,&f.store)||
+    !wh3w_read(f.store,lines,EXR_WH_MAX_JOURNAL,&count,&actual)||
+    actual.line_count!=r->tip.line_count||memcmp(actual.manifest_sha,r->tip.manifest_sha,65)||
+    memcmp(actual.last_line_sha,r->tip.last_line_sha,65)){free(lines);return WH_STEP_UNCERTAIN;}
+ free(lines);
+ if(!wh3wr_resume(registration,b,g,f.store,&r->tip,&r->cap))return WH_STEP_UNCERTAIN;
+ *cap=r->cap;memcpy(id,r->lease,49);
+ swprintf_s(retained,MAX_PATH,L"%ls\\coordinator-retained.sqlite",f.parent);
+ if(!capture_id(retained,0,&original_id)||memcmp(&original_id,&r->before,sizeof(original_id))||
+    !run_read(retained,&r->row,r->original_bytes,&r->original_size)||
+    !capture_id(reglib,0,&r->staged))return WH_STEP_UNCERTAIN;
+ run_identity(&r->staged,stage_id);
+ if(strcmp(stage_id,r->stage_id))return WH_STEP_UNCERTAIN;
+ r->published=1;return WH_STEP_OK;
 }
 static wh_step run_snapshot(void *context,void *cap,wh_record *rows,size_t max,size_t *n) {
  run_fixture *r=context;*n=0;
@@ -463,7 +484,9 @@ static wh_step run_publish(void *context,void *cap,const char *id,wh_pub *pub) {
  run_fixture *r=context;*pub=WH_PUB_UNKNOWN;
  if(run_check(context,cap)!=WH_STEP_OK||strcmp(id,r->stage_id)||
     wh3wr_publish(registration,L"coordinator-stage.sqlite",&r->staged,L"coordinator-retained.sqlite")!=WH3_TX_OK)return WH_STEP_UNCERTAIN;
- r->published=1;*pub=WH_PUB_YES;return WH_STEP_OK;
+ r->published=1;
+ if(r->barrier)reg_barrier(r->barrier,600);
+ *pub=WH_PUB_YES;return WH_STEP_OK;
 }
 static wh_step run_inspect(void *context,void *cap,const char *id,const char *content,wh_pub *pub) {
  run_fixture *r=context;wh3w_identity actual;*pub=WH_PUB_UNKNOWN;
@@ -482,7 +505,7 @@ static wh3_tx_status run_append(void *context,void *cap,const wh3_tip *expected,
 }
 static int run_terminal_proof(void *context,const wh3_tip *tip) {
  run_fixture *r=context;char content[65];wh_pub publication=WH_PUB_UNKNOWN;r->proofs++;
- return tip->line_count==13&&tip->line_count==r->tip.line_count&&
+ return tip->line_count==(r->terminal_count?r->terminal_count:13)&&tip->line_count==r->tip.line_count&&
    !memcmp(tip->last_line_sha,r->tip.last_line_sha,65)&&wh_content_digest(&r->row,1,content)&&
    run_inspect(r,r->cap,r->stage_id,content,&publication)==WH_STEP_OK&&publication==WH_PUB_YES;
 }
@@ -525,6 +548,57 @@ static void recover_missing_case(void) {
  expect(!wh3wr_check(registration),"recovery refuses silently adopting new target");reg_close_all();
  expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"pending target change never admits ordinary reader");
 }
+static wh3_session *run_session(run_fixture *r) {
+ wh_provider p={0};wh3_backend backend;
+ p.abi=EXR_WH_ABI;p.identity_sha=f.b.provider;p.context=r;p.acquire=run_acquire;p.reacquire=run_reacquire;
+ p.check=run_check;p.snapshot=run_snapshot;p.import_rows=run_import;p.verify=run_verify;
+ p.publish=run_publish;p.inspect=run_inspect;p.discard=run_discard;p.release=run_release;
+ backend.abi=EXR_WH3_ABI;backend.context=r;backend.append=run_append;
+ return wh3_create(&f.b,&f.g,&p,&backend);
+}
+static int coordinator_child(reg_shared *shared) {
+ run_fixture r={0};wh3_session *session;wh_report report;wh_status status;
+ f.b=shared->b;f.g=shared->g;wcscpy_s(reglib,MAX_PATH,shared->library);
+ wcscpy_s(f.root,MAX_PATH,shared->root);wcscpy_s(f.parent,MAX_PATH,shared->library);
+ *wcsrchr(f.parent,L'\\')=0;r.barrier=shared;
+ session=run_session(&r);if(!session)return 91;
+ status=wh3_run(session,&report);return status==WH_COMPLETED?0:92;
+}
+static void coordinator_recovery_case(void) {
+ run_fixture r={0};wh3_session *session;wh_report report;wh_status status;HANDLE child;
+ char (*lines)[EXR_WH_LINE_MAX]=NULL;const char *pointers[EXR_WH_MAX_JOURNAL];size_t count=0,i;
+ unsigned seq=0,event=0;wh3_tip bad;void *cap=NULL;
+ if(!reg_fixture("killed-real-coordinator-recovers-actual-published-target",1))return;
+ expect(capture_id(reglib,0,&r.before),"independent pre-publication native target");
+ child=reg_spawn(WH3WG_OWNER,600);expect(child!=NULL,"spawn real coordinator");if(!child)return;
+ expect(WaitForSingleObject(rrdy,15000)==WAIT_OBJECT_0&&rs->reached==600,"actual publication barrier before success journal");
+ expect(finish(child,1),"kill real coordinator at observed barrier");
+ expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"new reader remains refused after publisher death");
+ expect(reg_open(WH3WG_RECOVER,NULL),"fresh recovery custody");
+ expect(wh3wr_journal(registration,&f.b,&f.g,NULL,&f.store),"open original native journal");
+ lines=calloc(EXR_WH_MAX_JOURNAL,sizeof(*lines));expect(lines!=NULL,"allocate bounded recovery prefix");
+ if(!lines){reg_close_all();return;}
+ expect(wh3w_read(f.store,lines,EXR_WH_MAX_JOURNAL,&count,&r.tip)&&count==10,
+   "read complete independently acknowledged publish-intent prefix");
+ if(count!=10){free(lines);reg_close_all();return;}
+ expect(sscanf(lines[count-1],"EXRWH2 %u %u %48s %48s",&seq,&event,r.lease,r.stage_id)==4&&
+    seq==9&&event==9,"actual historical stage identity is evidence only");
+ bad=r.tip;bad.last_line_sha[0]=bad.last_line_sha[0]=='a'?'b':'a';
+ expect(!wh3wr_resume(registration,&f.b,&f.g,f.store,&bad,&cap)&&!cap,
+    "wrong supplied prefix never upgrades to actual tip");
+ reg_close_all();
+ r.terminal_count=14;session=run_session(&r);expect(session!=NULL,"new recovery coordinator facade");
+ if(!session){free(lines);return;}
+ for(i=0;i<count;i++)pointers[i]=lines[i];
+ status=wh3_recover(session,pointers,count,&report);
+ printf("OBS real_recovery status=%d detail=%s seq=%u proof=%u released=%u\n",
+   (int)status,report.detail,report.seq,r.proofs,r.released);
+ expect(status==WH_COMPLETED&&!report.live_lease&&!report.poisoned,"fresh actual coordinator confirms publication and completes");
+ expect(r.tip.line_count==14&&r.proofs==1&&r.released,"recovery journal and independent content proof precede release");
+ expect(wh3_dispose(session),"completed recovery facade disposes");free(lines);
+ expect(reg_probe(WH3WG_SHARED)==1&&rs->sdk_opened,"fresh process reads only after recovered CLEAN");
+ expect(reg_open(WH3WG_SHARED,NULL)&&wh3wr_check(registration),"recovered trusted target is current");reg_close_all();
+}
 int main(int argc,char **argv) {
  if(argc==3&&!strcmp(argv[1],"--registry-child"))return reg_child(argv[2]);
  if(argc==3&&!strcmp(argv[1],"--probe-owner")){
@@ -549,7 +623,7 @@ int main(int argc,char **argv) {
  {unsigned i;for(i=WH3WR_ENROLL_RESERVED;i<=WH3WR_ENROLL_BOUND;i++)enrollment_kill(i);
   for(i=0;i<3;i++){enrollment_policy(i,0);enrollment_policy(i,1);}
   for(i=0;i<4;i++)enrollment_bad(i);}
- drive_alias_case();coordinator_case();recover_missing_case();
+ drive_alias_case();coordinator_case();recover_missing_case();coordinator_recovery_case();
  fixture_close();if(rs)UnmapViewOfFile(rs);if(rm)CloseHandle(rm);if(rrdy)CloseHandle(rrdy);if(rgo)CloseHandle(rgo);
  printf("{\"source\":\"%s\",\"cases\":%u,\"checks\":%u,\"failed\":%u,\"passed\":%s,\"actual_sdk\":true,\"trusted_registry\":true,\"production_coordinator\":false,\"full_c02_acceptance\":false}\n",
    CANDIDATE_SOURCE_SHA,cases,checks,failures,failures?"false":"true");
