@@ -66,12 +66,37 @@ def main():
         "/r:" + str(framework / "WPF/WindowsBase.dll"),
         "/r:" + str(framework / "System.Web.Extensions.dll"),
         ROOT / "tests/reader_f09_escape_selection/probe.cs")
+    reports = {}
     for label, expectation in (("baseline", "absent"), ("candidate", "present")):
-        run(probe, packages[label], OUT / label, expectation)
-    reports = {label: json.loads((OUT / label / "report.json").read_text()) for label in packages}
-    assert all(r["passed"] for r in reports.values())
-    (OUT / "verdict.json").write_text(json.dumps(dict(passed=True, reports=reports,
+        directory = OUT / label
+        directory.mkdir(parents=True, exist_ok=True)
+        command = list(map(str, (probe, packages[label], directory, expectation)))
+        print("+ independent probe", label, *command, flush=True)
+        with (directory / "stdout.log").open("wb") as stdout, (directory / "stderr.log").open("wb") as stderr:
+            result = subprocess.run(command, cwd=ROOT, stdout=stdout, stderr=stderr)
+        print((directory / "stdout.log").read_text(encoding="utf-8", errors="replace"), flush=True)
+        print((directory / "stderr.log").read_text(encoding="utf-8", errors="replace"), flush=True)
+        report_file = directory / "report.json"
+        try:
+            report = json.loads(report_file.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            report = dict(passed=False, error="probe report missing or invalid")
+        report["probe_returncode"] = result.returncode
+        report["passed"] = result.returncode == 0 and report.get("passed") is True
+        # A native crash bypasses the C# finally. Clean only this probe's newly launched host.
+        if result.returncode != 0 and (directory / "host.pid").exists():
+            pid = (directory / "host.pid").read_text().strip()
+            assert pid.isdecimal() and int(pid) > 0
+            cleanup = subprocess.run(["taskkill", "/PID", pid, "/T", "/F"], capture_output=True)
+            report["failed_probe_host_cleanup_returncode"] = cleanup.returncode
+            (directory / "cleanup.log").write_bytes(cleanup.stdout + cleanup.stderr)
+        reports[label] = report
+        (directory / "observation.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    passed = all(r["passed"] for r in reports.values())
+    (OUT / "verdict.json").write_text(json.dumps(dict(passed=passed, reports=reports,
+        retained_failure_run=41152293447, diagnostic_only=True,
         hashes={k: hashlib.sha256(v.read_bytes()).hexdigest() for k,v in packages.items()},
         formal_f09_accepted=False, screen_reader_verified=False), indent=2))
+    assert passed, "one or both independent native observations failed; retained as failure"
 if __name__ == "__main__":
     main()
