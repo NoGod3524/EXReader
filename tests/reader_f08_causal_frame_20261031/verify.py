@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Strict causal evidence, not a throughput/physical-presentation acceptance gate."""
-import copy, hashlib, importlib.util, io, json, os, stat, subprocess, sys, zipfile
+import copy, hashlib, importlib.util, io, json, math, os, stat, subprocess, sys, zipfile
 from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/"build/f08-causal"
@@ -33,6 +33,17 @@ def complete_intervals(result,raw):
     expected=intervals(raw)
     got=[{k:r[k] for k in e} for r,e in zip(result["intervals"],expected)]
     need(len(result["intervals"])==len(expected) and got==expected,"all_intervals_retained")
+def shelf_content_matches(draw,state,frame,action):
+    content=draw.get("shelf_content",{})
+    if not all(content.get(k) is True for k in ("available","list_drawable","row_drawable","clip_intersects")):return False
+    if not all(integer(content.get(k)) for k in ("at","top_id","index","width","height")):return False
+    if not all(type(content.get(k)) is int and -(2**31)<=content[k]<2**31 for k in ("x","y")):return False
+    scroll=content.get("scroll")
+    if type(scroll) not in (int,float) or not math.isfinite(scroll) or scroll<0:return False
+    return (content["top_id"]>0 and content["top_id"]==state["shelf_top_id"]==
+            action.get("observed",{}).get("shelf_top_id") and
+            content["width"]>0 and content["height"]>0 and content["y"]<=scroll<content["y"]+content["height"] and
+            draw["at"]<=content["at"]<=frame["after"])
 def analyze(raw,driver,ident):
     need(raw.get("pid")==driver.get("pid") and type(raw.get("pid")) is int and raw["pid"]>0,"pid")
     need(raw.get("source")==ident["GITHUB_SHA"] and raw.get("run")==ident["GITHUB_RUN_ID"] and raw.get("attempt")==ident["GITHUB_RUN_ATTEMPT"],"identity")
@@ -56,6 +67,7 @@ def analyze(raw,driver,ident):
         need(f["clock"]<raw["clock_count"] and 0<f["before"]<=f["after"],"phase")
         need(type(f.get("complete")) is bool,"complete")
         need(f.get("presentation") is None or (integer(f["presentation"]) and f["presentation"]>0),"presentation")
+    need(raw.get("shelf_content_version",0) in (0,1),"shelf_content_version")
     all_intervals=intervals(raw)
     joined=[]
     actions=driver["actions"]
@@ -74,6 +86,7 @@ def analyze(raw,driver,ident):
         event=min(next(iter(groups.values())),key=lambda x:x["at"])
         need(event["clock"]<raw["clock_count"],"event_clock")
         field=action["field"]
+        content_binding=field=="shelf_top_id" and raw.get("shelf_content_version")==1
         def effect(s):
             if not all(integer(s.get(k)) for k in (field,"book","sequence","busy","saving")):return False
             if s["book"]!=action["book"]:return False
@@ -94,18 +107,24 @@ def analyze(raw,driver,ident):
                 if f["clock"]==d["clock"] and f["counter"]==d["counter"] and f["before"]<=d["at"]<=f["after"]:
                     linked=[s for s in states if s["at"]>=d["at"] and
                             (field=="shelf_top_id" or s["at"]<=f["after"])]
+                    if content_binding:linked=[s for s in linked if shelf_content_matches(d,s,f,action)]
                     if linked:paint.append((f,d,linked[0]))
         need(paint,"matching_paint")
-        # Shelf publication is delayed: choose the nearest preceding target paint only as a temporal candidate.
-        f,d,state=(max(paint,key=lambda x:x[1]["at"]) if field=="shelf_top_id" else min(paint,key=lambda x:x[0]["after"]))
+        # Legacy shelf rows stay temporal; the new observer binds exact native row content at draw entry.
+        f,d,state=(max(paint,key=lambda x:x[1]["at"]) if field=="shelf_top_id" and not content_binding else min(paint,key=lambda x:x[0]["after"]))
         joined.append(dict(id=action["id"],inject_start=action["inject_start"],active_end=max(action["done"],f["after"]),
             host_event_us=event["at"],state_us=state["at"],paint_end_us=f["after"],clock=f["clock"],counter=f["counter"],
             inject_to_event_us=event["at"]-action["inject_start"],
             event_to_matching_paint_us=None if field=="shelf_top_id" else f["after"]-event["at"],
             event_to_candidate_paint_us=f["after"]-event["at"] if field=="shelf_top_id" else None,
-            causal_attribution="unknown_temporal_candidate" if field=="shelf_top_id" else "same_frame_state_generation",
+            causal_attribution=("input_and_observed_shelf_content_at_draw_entry" if content_binding else
+                "unknown_temporal_candidate" if field=="shelf_top_id" else "same_frame_state_generation"),
+            shelf_content=d["shelf_content"] if content_binding else None,
+            event_to_content_draw_entry_us=d["at"]-event["at"] if content_binding else None,
+            event_to_content_frame_end_us=f["after"]-event["at"] if content_binding else None,
             shelf_publication_may_follow_paint=field=="shelf_top_id",
-            evidence="input/state + nearest preceding list draw (not causal proof)" if field=="shelf_top_id" else "single input + state generation in target draw frame"))
+            evidence=("single input + exact observed top book ID and visible clipped row at native draw entry" if content_binding else
+                "input/state + nearest preceding list draw (not causal proof)" if field=="shelf_top_id" else "single input + state generation in target draw frame")))
     for r in all_intervals:
         active=[a for a in joined if a["inject_start"]<=r["start"] and r["end"]<=a["active_end"]]
         touched=[a for a in joined if a["inject_start"]<r["end"] and a["active_end"]>r["start"]]
@@ -204,8 +223,34 @@ def regressions():
         except Invalid as e:actual=str(e)
         need(actual==expected,"regression:"+name);negative.append(name)
     return dict(positive=len(positive),negative=len(negative),passed=positive+negative)
+def content_regressions():
+    raw,driver,ident=fixture();raw.update(list_draw_handlers=1,shelf_content_version=1)
+    raw["inputs"][0].update(type=2,code=1,hardware=0)
+    raw["draws"][0].update(kind=2,shelf_content=dict(at=132,top_id=1,index=0,x=0,y=0,width=100,height=20,
+        scroll=1.5,available=True,list_drawable=True,row_drawable=True,clip_intersects=True))
+    raw["states"][0].update(at=250,end=260,shelf_restoring=0,reader_visible=0)
+    driver["actions"][0].update(type=2,code=1,field="shelf_top_id",before=0,expected=None,effect_at=270,
+        observed={"shelf_top_id":1})
+    result=analyze(raw,driver,ident)["actions"][0]
+    need(result["causal_attribution"]=="input_and_observed_shelf_content_at_draw_entry" and
+         result["event_to_content_draw_entry_us"]==10 and result["event_to_content_frame_end_us"]==80 and
+         result["event_to_matching_paint_us"] is None,"native_content_positive")
+    legacy=copy.deepcopy(raw);legacy.pop("shelf_content_version")
+    need(analyze(legacy,driver,ident)["actions"][0]["causal_attribution"]=="unknown_temporal_candidate","legacy_not_promoted")
+    cases=[("wrong_book",{"top_id":2}),("missing_content",{"available":False}),
+        ("hidden_list",{"list_drawable":False}),("hidden_row",{"row_drawable":False}),
+        ("clipped_out",{"clip_intersects":False}),("wrong_geometry",{"scroll":25.0}),
+        ("after_frame",{"at":201}),("before_draw",{"at":129}),("unavailable_id",{"top_id":-1}),
+        ("nonfinite_scroll",{"scroll":float("nan")}),("wrong_type",{"top_id":True})]
+    for name,change in cases:
+        broken=copy.deepcopy(raw);broken["draws"][0]["shelf_content"].update(change);actual=None
+        try:analyze(broken,driver,ident)
+        except Invalid as error:actual=str(error)
+        need(actual=="matching_paint","content_control:"+name)
+    return {"positive":2,"negative":len(cases),"cases":[name for name,_ in cases]}
+
 def preflight():
-    print("F08_PREFLIGHT",json.dumps(dict(original=controls(),regressions=regressions())),flush=True)
+    print("F08_PREFLIGHT",json.dumps(dict(original=controls(),regressions=regressions(),content=content_regressions())),flush=True)
 
 def verify_top(top,ident):
     need(top.get("identity")==ident and top.get("accepted") is True,"driver")
@@ -246,7 +291,7 @@ def verify():
         results.append(result)
     receipt=dict(identity=identity(),passed=True,new_launches=6,new_actions=18,
         host_sha256=top["host_sha256"],module_sha256=top["module_sha256"],results=results,
-        controls=controls(),regressions=regressions(),draw_control=load(ROOT/"build/f08-causal-control/draw.json"),old_counts=dict(launches=44,samples=760,positive=2,negative=24),
+        controls=controls(),regressions=regressions(),content_controls=content_regressions(),draw_control=load(ROOT/"build/f08-causal-control/draw.json"),old_counts=dict(launches=44,samples=760,positive=2,negative=24),
         physical_display_presented=False,F08_accepted=False,not_product_performance_acceptance=True)
     need(receipt["draw_control"].get("passed") is True and receipt["draw_control"].get("pixels_equal") is True,"draw_control")
     save(OUT/"summary.json",receipt)
@@ -284,6 +329,7 @@ def audit():
     need(summary["host_sha256"]==top["host_sha256"] and summary["module_sha256"]==top["module_sha256"],"summary_hash")
     need(summary["controls"]==controls(),"controls_recompute")
     need(summary["regressions"]==regressions(),"regressions_recompute")
+    need(summary["content_controls"]==content_regressions(),"content_controls_recompute")
     draw_control=summary["draw_control"]
     need(draw_control.get("passed") is True and draw_control.get("hook_only")==0 and
          draw_control.get("with_handler")==1 and draw_control.get("callbacks")==1 and
