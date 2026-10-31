@@ -461,7 +461,8 @@ def _formal(files,spec,source,contract,wave):
         return dict(missing=["formal-package:original-build-and-package"])
     build=read_json(files,"full-host-build.json");provenance(build,spec,source)
     need(build["platform"]=="Windows Wave3 raw SDK3.42" and build["sdk_version"]=="3.42.0" and
-         build["binary"]=="host/EXReaderWave3.exe" and build["full_c02_acceptance"] is False and
+         build["binary"] in ("host/EXReaderWave3.exe","host\\EXReaderWave3.exe") and
+         build["full_c02_acceptance"] is False and
          build["installed_modules"]==contract["modules"],"wp-qualified-all-full-profile-modules")
     original=files["EXReaderWave3.exe"];image=pe_image(original)
     need(sha(original)==build["binary_sha256"],"wp-original-wave3-build-exe")
