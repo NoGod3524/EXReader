@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: MIT
 """Actions-only native Apple reception of actual same-run Windows peer histories."""
 import argparse
+import base64
+import secrets
+import stat
 import hashlib
 import json
 import os
@@ -65,7 +68,11 @@ final class F05RecoveryUITests: XCTestCase {
               let url=URL(string:root.replacingOccurrences(of:"/dav/",with:"/__f05_gate")) else {return false}
         let done=expectation(description:"read-only fixture boundary")
         var reached=false
-        let task=URLSession.shared.dataTask(with:url){data,_,_ in
+        var request=URLRequest(url:url)
+        let env=ProcessInfo.processInfo.environment
+        let pair=(env["F05_USER"] ?? "")+":"+(env["F05_PASSWORD"] ?? "")
+        request.setValue("Basic "+Data(pair.utf8).base64EncodedString(),forHTTPHeaderField:"Authorization")
+        let task=URLSession.shared.dataTask(with:request){data,_,_ in
             if let data,let object=try? JSONSerialization.jsonObject(with:data) as? [String:Bool] {
                 reached=object["original_get_blocked"] == true
             }
@@ -92,19 +99,23 @@ final class F05RecoveryUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout:30))
         XCTAssertFalse((field.value as? String ?? "").hasPrefix("http"),"fresh test profile required")
         field.tap();field.typeText(root+"\n")
+        let username=try XCTUnwrap(ProcessInfo.processInfo.environment["F05_USER"])
+        let password=try XCTUnwrap(ProcessInfo.processInfo.environment["F05_PASSWORD"])
+        tap("account.username");node("account.username").typeText(username)
+        tap("account.password");node("account.password").typeText(password)
         tap("account.connect")
         XCTAssertTrue(wait{self.node("account.choose").label=="云盘书库，"+root})
         sync()
         XCTAssertTrue(text("account.receive.state").contains("待处理冲突 0 项"))
-        openBook()
     }
-    func test02ReceiveRealConcurrentHeads() {
+    func test02CacheMissReceiveCancelRetry() { cancelRealReceiveThenRetry() }
+    func test03ReceiveRealConcurrentHeads() {
         sync()
         XCTAssertTrue(text("account.receive.state").contains("待处理冲突 1 项"),
             "actual native conflict must be visible; never select one head")
         openBook()
     }
-    func test03OfflineReopenOriginal() {
+    func test04OfflineReopenOriginal() {
         // Server is offline before this new actual process starts.
         openBook()
     }
@@ -120,6 +131,7 @@ def main():
     p.add_argument("--platform",choices=("macos","iphone","ipad"),required=True)
     p.add_argument("--udid")
     p.add_argument("--peer",type=Path)
+    p.add_argument("--container",type=Path)
     p.add_argument("--certificate",type=Path)
     p.add_argument("--key",type=Path)
     p.add_argument("--output",type=Path)
@@ -138,43 +150,92 @@ def main():
     a.output.mkdir(parents=True,exist_ok=False)
     contract=json.loads((a.peer/"peer-contract.json").read_text())
     if contract["entity_kind"]!="book":raise AssertionError("Apple book receiver requires book peers")
-    server=Store(a.certificate,a.key,None) # Explicit anonymous fixture, no account credentials.
+    user,password="f05",secrets.token_hex(24)
+    authorization="Basic "+base64.b64encode((user+":"+password).encode()).decode()
+    server=Store(a.certificate,a.key,authorization)
     origin=server.expose_checkpoint(a.peer/contract["baseline"])
     report={"source":os.environ["GITHUB_SHA"],"run":os.environ["GITHUB_RUN_ID"],
             "attempt":os.environ["GITHUB_RUN_ATTEMPT"],"host":a.platform,
             "F05_accepted":False,"cases":[],"producer":origin["author"],
-            "simultaneous_online_peers":False,"anonymous_fixture":True}
+            "simultaneous_online_peers":False,"generated_fixture_credentials_only":True}
+    trusted=False
     label="macOS" if a.platform=="macos" else "iOS"
     try:
+        if a.platform=="macos":
+            subprocess.run(["sudo","security","add-trusted-cert","-d","-r","trustRoot",
+                "-k","/Library/Keychains/System.keychain",str(a.certificate)],check=True,capture_output=True)
+            trusted=True
         if a.platform!="macos":
             if not a.udid:raise ValueError("actual simulator UDID required")
             subprocess.run(["xcrun","simctl","keychain",a.udid,"add-root-cert",str(a.certificate)],check=True)
-        for number,name in enumerate(("test01BaselineOriginal","test02ReceiveRealConcurrentHeads","test03OfflineReopenOriginal")):
-            if number==1:server.expose_checkpoint(a.peer/contract["remote_conflict"])
-            if number==2:server.offline=True
+        for number,name in enumerate(("test01BaselineOriginal","test02CacheMissReceiveCancelRetry","test03ReceiveRealConcurrentHeads","test04OfflineReopenOriginal")):
+            if number==1:
+                if a.platform=="macos":
+                    if a.container is None:raise ValueError("isolated actual app container required")
+                    container=a.container.resolve()
+                else:
+                    container=Path(subprocess.check_output(["xcrun","simctl","get_app_container",
+                        a.udid,"org.exreader.host","data"],text=True).strip()).resolve()
+                leaf=contract["entity_key"].split(":",1)[1]+"."+contract["entity_key"].split(":",1)[0]
+                matches=list(container.rglob("sync/"+leaf))
+                if len(matches)!=1:raise AssertionError("one exact test-profile cache required")
+                cache=matches[0]
+                if cache.is_symlink() or not stat.S_ISREG(cache.stat().st_mode):
+                    raise AssertionError("unsafe cache identity")
+                content=cache.read_bytes()
+                if hashlib.sha256(content).hexdigest()!=contract["entity_key"].split(":",1)[1]:
+                    raise AssertionError("cache bytes differ from actual peer original")
+                before=cache.stat()
+                quarantine=cache.parent.parent/("f05-cache-quarantine-"+secrets.token_hex(12))
+                quarantine.mkdir(mode=0o700)
+                isolated=quarantine/leaf
+                cache.rename(isolated)
+                after=isolated.stat()
+                if (before.st_ino,before.st_dev,before.st_size)!=(after.st_ino,after.st_dev,after.st_size):
+                    raise AssertionError("cache isolation did not preserve inode/size")
+                (a.output/"quarantined-cache.bin").write_bytes(isolated.read_bytes())
+                report["cache_fault"]={"path":str(cache),"quarantine":str(isolated),
+                    "sha256":hashlib.sha256(content).hexdigest(),"bytes":len(content),
+                    "inode":before.st_ino,"device":before.st_dev,
+                    "owner_state":"prior XCTest teardown terminated actual application",
+                    "sdk_original_untouched":True,"restored_before_retry":False}
+                server.hold_get=True;server.get_blocked.clear();server.release.clear()
+            if number==2:server.expose_checkpoint(a.peer/contract["remote_conflict"])
+            if number==3:server.offline=True
             start=len(server.requests)
             argv=command+["-only-testing:EXReaderHostUITests-"+label+"/F05RecoveryUITests/"+name,
                           "-resultBundlePath",str(a.output/(name+".xcresult"))]
             with (a.output/(name+".log")).open("wb") as log:
                 done=subprocess.run(argv,stdout=log,stderr=subprocess.STDOUT,timeout=600,
-                    env=dict(os.environ,TEST_RUNNER_F05_ROOT=server.root))
-            print((a.output/(name+".log")).read_text(errors="replace"),flush=True)
+                    env=dict(os.environ,TEST_RUNNER_F05_ROOT=server.root,
+                        TEST_RUNNER_F05_USER=user,TEST_RUNNER_F05_PASSWORD=password))
+            safe=(a.output/(name+".log")).read_text(errors="replace").replace(password,"<fixture-secret>").replace(authorization,"<fixture-auth>")
+            (a.output/(name+".log")).write_text(safe)
+            print(safe,flush=True)
             report["cases"].append({"test":name,"exit":done.returncode,"requests_start":start,
                                     "requests_end":len(server.requests),"argv":argv})
             if done.returncode:raise AssertionError("actual Apple UI failed: "+name)
+            if number==1 and not server.get_blocked.is_set():
+                raise AssertionError("real cache-miss receive gate never reached")
             server.release.set()
-            if number==2 and len(server.requests)!=start:
+            if number==3 and len(server.requests)!=start:
                 raise AssertionError("offline reopening unexpectedly requested network")
     except BaseException as error:
-        report["failure"]=repr(error)
-        raise
+        safe=repr(error).replace(password,"<fixture-secret>").replace(authorization,"<fixture-auth>")
+        report["failure"]=safe
+        raise RuntimeError(safe) from None
     finally:
         report["requests"]=server.requests
         report["uncovered"]=["independent xcresult attachments and catalog head audit",
-            "receive cancellation cache-miss staging and exact SDK readback","uncertain acknowledgment process kill",
+            "receive cancellation exact SDK readback","uncertain acknowledgment process kill",
             "organization projection (owner gap, not lower API injected)",
             "actual displayed original byte/readback authentication"]
         (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
         server.close()
+        if trusted:
+            digest=subprocess.check_output(["openssl","x509","-in",str(a.certificate),
+                "-noout","-fingerprint","-sha1"],text=True).strip().split("=")[-1].replace(":","")
+            subprocess.run(["sudo","security","delete-certificate","-Z",digest,
+                "/Library/Keychains/System.keychain"],check=True,capture_output=True)
 
 if __name__=="__main__":main()
