@@ -42,3 +42,19 @@ Next phases: persistent domain isolation; coordinated Windows/GTK/Android/Apple 
 ## Run record
 
 Pending the one authorized push-triggered validation. No build or test success is claimed yet.
+
+### First run: preserved failure
+
+Source 8bfe57395de52f221f4abeb50f3f80cc12d90198, run https://github.com/NoGod3524/EXReader/actions/runs/41151540486, attempt 1.
+
+Windows job 124388962762: native archive and installed consumer compiled successfully. Native result: 46 scenarios, 299 checks, 3 failures (296 passing). All three failures are in unpinned-descendant-rebind-during-open: the move did not occur, replacement creation failed, and the unchanged trusted root opened. Ten deterministic crash scenarios, other identity controls, all fault controls and resealed semantic attacks passed in this source. This is a failing candidate, not native acceptance.
+
+The successful-rebind fixture stopped after pinning the target parent, which already prevented the namespace change. The correction stops immediately after pinning the volume root; it first proves that the target can be renamed/restored, then requires the actual mid-open replacement to succeed and trusted root identity to reject it. No production code or assertion of identity rejection is removed.
+
+Ubuntu job 124388962467 and Windows each retain ABI2 81 checks / 6 failures. Both ABI3 steps succeeded against unchanged 16-case/64-check assertions. Entire run conclusion: failure.
+
+GitHub artifact metadata, not independently rehashed ZIPs:
+- Windows ID 13023092516, 32864 bytes, SHA256 2169ef787169b502a8906bb2fcaa0845be7e8a74f063d1dc340fc42097ffd602.
+- Ubuntu ID 13022813222, 1677 bytes, SHA256 ff2258f216bf01a1493e9db610e0564b4498b126aa0fc083e09710fb98cfa887.
+
+The one originally authorized run is consumed. The corrected fixture is prepared for a separately authorized next run; no automatic retry has been started.
