@@ -68,7 +68,17 @@ case 10 failed (worker exit 1; detail only in the artifact). Cause, consistent w
 freed inode number for the recreated payload, so dev/ino identity accepted the replacement. The user then approved all
 corrections in this conversation. Fix core dba079b550f9ec83054e6b7b0b7475f43bc1739f: a component-only O_RDONLY payload
 handle stays open from begin until the slot is cleaned or tx_close, keeping the original inode allocated; the runner now
-prints the last worker lines of a failed case. Run pending. Claims: transient_cleanup_passed=true is inherited from the base;
-managed_cleanup_component_passed, product_cleanup_passed and crash_recovery_validated stay false until certified.
+prints the last worker lines of a failed case.
+Run 41170057297/A1 (tests 12da717cef38c90ae2097e52d33f7b3682aef043, core dba079b5): success, 30/30 on both platforms
+with the complete fixed name set; file-set, archive-export/hook-absence, header identity and link-line audits passed.
+
+| Platform | Job | Artifact ID | Name | Bytes | Digest |
+|---|---|---|---|---|---|
+| Linux x86_64, euid 1001 | 124445872128 | 13030965993 | webdav-managed-cleanup-Linux-41170057297-1 | 86807 | sha256:25b95345c6607c6fc0fadd54c95bdd62c515bcc460498664bddabdf88c88b442 |
+| macOS arm64, euid 501 | 124445872050 | 13030352879 | webdav-managed-cleanup-macOS-41170057297-1 | 74101 | sha256:72ac0c1e56854a06669e01b7e9714605562c03275e482853d0088901f8d566fe |
+
+Claims: transient_cleanup_passed=true (inherited); managed_cleanup_component_passed=true pending independent
+certification of the artifacts above (not yet done); product_cleanup_passed=false; crash_recovery_validated=false
+(SIGKILL process-death recovery only, no power-loss proof, no product wiring).
 Not done: managed WebDAV entry point, first host root creation and UUID persistence, startup recovery, pending display,
 unpublished staging abandon policy and root rotation. Old unreceipted residue is never adopted. Formal 95/108 unchanged.
