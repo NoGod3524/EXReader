@@ -12,9 +12,9 @@ import re
 import struct
 import zipfile
 
-from protocols import need, sha, json_value, relative
+from protocols import need, sha, json_value
 from posix_protocols import observed_id, u64
-from posix_owner import audit_posix_owner
+from posix_owner import audit_posix_owner, relative
 
 
 def _encoded(value):
