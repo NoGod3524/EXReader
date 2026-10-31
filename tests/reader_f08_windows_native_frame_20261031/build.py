@@ -7,6 +7,7 @@ FILES={"examples/reader.c","apps/reader/desktop/windows_shelf.inc",
  "apps/reader/desktop/windows_feature_integration.cmake","tests/reader_f08_windows_product_20261031/build.py",
  "tests/reader_f08_windows_native_frame_20261031/trace.h","tests/reader_f08_windows_native_frame_20261031/build.py",
  "tests/reader_f08_windows_native_frame_20261031/replay.py","tests/reader_f08_windows_native_frame_20261031/local_probe.py",
+ "tests/reader_f08_windows_native_frame_20261031/pixels.py",
  ".github/workflows/f08-windows-native-frame-20261031.yml"}
 spec=importlib.util.spec_from_file_location("original_f08_build",ROOT/"tests/reader_f08_windows_product_20261031/build.py")
 B=importlib.util.module_from_spec(spec);spec.loader.exec_module(B)
@@ -23,7 +24,7 @@ def main():
   cache=(B.EVIDENCE/"host-CMakeCache.txt").read_text()
   B.need("EXR_WINDOWS_FRAME_REVIEW:BOOL=ON" in cache,"native diagnostic option compiled")
   (B.EVIDENCE/"native-source").mkdir()
-  for name in ("local_probe.py","replay.py","trace.h"):
+  for name in ("local_probe.py","replay.py","trace.h","pixels.py"):
    (B.EVIDENCE/"native-source"/name).write_bytes((Path(__file__).parent/name).read_bytes())
   B.save(B.EVIDENCE/"native-frame-build.json",{**B.identity(),"instrumented":True,
    "boundary":"worker-entry to first same-generation GDI execution completion",
