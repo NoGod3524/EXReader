@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "source": "36918c9c1ee18aa5345cd6ea4cf3072922e3c43b",
+  "repository": "NoGod3524/EXReader",
+  "packages": [
+    {
+      "role": "native-windows",
+      "platform": "Windows",
+      "run": 41177046777,
+      "attempt": 1,
+      "job": 124466640046,
+      "job_name": "native_evidence (windows-2022)",
+      "workflow": ".github/workflows/dot-c02-native-journal-20261030.yml",
+      "artifact": {
+        "id": 13033057153,
+        "name": "c02-native-journal-windows-2022-36918c9c1ee18aa5345cd6ea4cf3072922e3c43b",
+        "bytes": 33176,
+        "sha256": "96bf2099e39b8ff61c750a84d3126d56da87fa4fd91ecc6923bf544e43f9a249"
+      }
+    },
+    {
+      "role": "native-linux",
+      "platform": "Linux",
+      "run": 41177046777,
+      "attempt": 1,
+      "job": 124466639810,
+      "job_name": "native_evidence (ubuntu-22.04)",
+      "workflow": ".github/workflows/dot-c02-native-journal-20261030.yml",
+      "artifact": {
+        "id": 13033262070,
+        "name": "c02-native-journal-ubuntu-22.04-36918c9c1ee18aa5345cd6ea4cf3072922e3c43b",
+        "bytes": 1675,
+        "sha256": "38e046f2edab3555e4e89180d035dd9fc24edbc6e817ad282efaadf90394cebe"
+      }
+    },
+    {
+      "role": "host-gtk",
+      "platform": "Linux",
+      "run": 41177046720,
+      "attempt": 1,
+      "job": 124466639561,
+      "job_name": "gtk",
+      "workflow": ".github/workflows/dot-c02-gtk-host-20261031.yml",
+      "artifact": {
+        "id": 13033177186,
+        "name": "c02-actual-gtk-36918c9c1ee18aa5345cd6ea4cf3072922e3c43b",
+        "bytes": 57284131,
+        "sha256": "5ee9fbc3aaae64507698a3b795d5b8b9015743d9a08485b3f7346cc3afd95846"
+      },
+      "evidence_prefix": "work/EXReader/EXReader/evidence/",
+      "runtime_prefix": "c02-gtk-41177046720-1/",
+      "package_prefix": "work/EXReader/EXReader/build/gtk-package/"
+    }
+  ]
+}
