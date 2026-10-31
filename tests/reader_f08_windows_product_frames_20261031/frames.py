@@ -91,7 +91,11 @@ def analyze(folder,pid,frequency,native):
         context=REPLAY.inspect_composition(rows,formats,pid,folder)
     joins=json.loads((folder/"frame-retirement-joins.json").read_text())
     durations=[1000*(r["qpc_confirmed"]-r["cycle_start_qpc"])/frequency for r in joins if r["frame_id_retirement_join_valid"]]
+    inputs=[r for r in events if r["kind"]=="input"]
+    need(all(type(r.get("target_enabled_before")) is bool and type(r.get("target_enabled_after")) is bool for r in inputs),"native control state coverage")
+    buttons=[r for r in inputs if r["message"]==0xF5]
     summary={"pid":pid,"qpc_frequency":frequency,"etw_events":len(rows),"bound_windows":len(handles),
+        "button_dispatch_states":buttons,"disabled_button_dispatches":sum(not r["target_enabled_before"] for r in buttons),
         "input_dispatches":sum(r["kind"]=="input" for r in events),"composition":context,
         "dwm_cycle_to_retirement_ms":durations,"scope":"DWM composition cycle; not application input-to-frame time",
         "application_paint_generation_bound":False,"frame_budget_measured":False,"physical_presentation_proven":False}
@@ -182,6 +186,8 @@ def capture():
         user.GetWindowThreadProcessId.argtypes=[T.HWND,C.POINTER(T.DWORD)];user.GetWindowThreadProcessId.restype=T.DWORD
         user.GetClassNameW.argtypes=[T.HWND,T.LPWSTR,C.c_int];user.GetClassNameW.restype=C.c_int
         user.GetDlgCtrlID.argtypes=[T.HWND];user.GetDlgCtrlID.restype=C.c_int
+        user.IsWindowEnabled.argtypes=[T.HWND];user.IsWindowEnabled.restype=T.BOOL
+        user.IsWindowVisible.argtypes=[T.HWND];user.IsWindowVisible.restype=T.BOOL
         original_init,original_close,original_find,original_send=P.Host.__init__,P.Host.close,P.Host.find_window,P.Host.send
         def emit(host,event):
             with (host._f08_folder/"native.jsonl").open("a",encoding="utf-8") as stream:
@@ -232,11 +238,25 @@ def capture():
             if message not in (0xF5,0x20A,0x186,0x111,0xC):return original_send(host,hwnd,message,wparam,lparam,timeout)
             bind(host,hwnd);start=qpc()
             event={"kind":"input","pid":host.process.pid,"hwnd":int(hwnd),"message":message,"wparam":wparam,
-                   "control_id":user.GetDlgCtrlID(hwnd),"start_qpc":start,"completed":False}
+                   "control_id":user.GetDlgCtrlID(hwnd),"start_qpc":start,"completed":False,
+                   "target_enabled_before":bool(user.IsWindowEnabled(hwnd)),
+                   "target_visible_before":bool(user.IsWindowVisible(hwnd))}
+            if message==0xF5:
+                try:
+                    event["controls_before"]={name:host.enabled(name) for name in ("next","font_inc","font_dec")}
+                    event["page_label_before"]=host.label(500)
+                except Exception as error:event["observation_error"]=repr(error)
             try:
                 result=original_send(host,hwnd,message,wparam,lparam,timeout);event["completed"]=True;return result
             except BaseException as error:event["error"]=repr(error);raise
-            finally:event["end_qpc"]=qpc();emit(host,event)
+            finally:
+                event["end_qpc"]=qpc();event["target_enabled_after"]=bool(user.IsWindowEnabled(hwnd))
+                if message==0xF5:
+                    try:
+                        event["controls_after"]={name:host.enabled(name) for name in ("next","font_inc","font_dec")}
+                        event["page_label_after"]=host.label(500)
+                    except Exception as error:event["observation_error_after"]=repr(error)
+                emit(host,event)
         def close(host,*args,**kwargs):
             try:return original_close(host,*args,**kwargs)
             finally:
@@ -278,6 +298,10 @@ def capture():
     except BaseException as error:
         fatal=error;report["problems"].append(repr(error));report["traceback"]=traceback.format_exc()
     finally:
+        records=OUT/"observations/per-launch.json"
+        if records.exists() and report["captures"] and "launch_bindings" not in report:
+            try:report["launch_bindings"]=launch_bindings(json.loads(records.read_text()),report["captures"],OUT)
+            except Exception as error:report["problems"].append("process lifetime binding: "+repr(error))
         save(OUT/"result.json",report)
         save(OUT/"manifest.json",{**identity(),"f08_accepted":False,
              "files":{p.relative_to(OUT).as_posix():{"sha256":sha(p),"bytes":p.stat().st_size}
@@ -312,10 +336,14 @@ def audit():
         recomputed=analyze(folder,entry["pid"],entry["frequency"],source/"native.jsonl")
         need(recomputed==entry["analysis"] and recomputed==json.loads((source/"analysis.json").read_text()),"independent frame analysis")
         verified.append({"pid":entry["pid"],"composition":recomputed["composition"],
-                         "native_input_dispatches":recomputed["input_dispatches"]})
+                         "native_input_dispatches":recomputed["input_dispatches"],
+                         "button_dispatch_states":recomputed["button_dispatch_states"],
+                         "disabled_button_dispatches":recomputed["disabled_button_dispatches"]})
     bindings=None
     if result["capture_complete"]:
         need(len(verified)==len(result["captures"]) and len(verified)>=10,"every trace independently verified")
+        need(result.get("launch_bindings") is not None,"complete launch bindings")
+    if result.get("launch_bindings") is not None:
         bindings=launch_bindings(json.loads((raw/"observations/per-launch.json").read_text()),result["captures"],raw)
         need(bindings==result["launch_bindings"],"independent process lifetime bindings")
     report={**ident,"artifact_id":artifact,"sha256":digest,"authenticated":True,"capture_complete":result["capture_complete"],
