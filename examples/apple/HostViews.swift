@@ -810,7 +810,11 @@ struct ReaderScreen: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityIdentifier("reader.page")
                 .accessibilityLabel(Text(model.pageAccessibilityLabel))
+#if EXR_APPLE_F08_REVIEW
+                .accessibilityValue(Text(model.f08ReaderObservation))
+#else
                 .accessibilityValue(Text(model.location))
+#endif
                 .onAppear { model.updateViewport(geometry.size) }
                 .onChange(of: geometry.size) { value in model.updateViewport(value) }
             }

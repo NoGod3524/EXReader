@@ -7,6 +7,46 @@ import CReaderProduct
 import Combine
 import Darwin
 
+#if EXR_APPLE_F08_REVIEW
+import MetricKit
+
+// Native extended launch measurement includes the first stable, usable shelf.
+// The normal host does not compile this review observer.
+enum HostF08Review {
+    private(set) static var launchStatus = "not-started"
+    private(set) static var launchError = ""
+    private static var pending: DispatchWorkItem?
+    private static var signature = ""
+    static func beginLaunch() {
+        guard ProcessInfo.processInfo.arguments.contains("-EXRF08Launch") else { return }
+        if #available(macOS 13, iOS 16, *) {
+            do {
+                try MXMetricManager.extendLaunchMeasurement(forTaskID: "org.exreader.f08.shelf-ready")
+                launchStatus = "started"
+            } catch { launchStatus = "start-failed"; launchError = String(describing: error) }
+        } else { launchStatus = "unsupported" }
+    }
+    static func observeShelf(_ value: String, ready: @escaping () -> Bool, changed: @escaping () -> Void) {
+        guard launchStatus == "started", value != signature || pending == nil else { return }
+        signature = value; pending?.cancel()
+        let work = DispatchWorkItem {
+            pending = nil
+            guard ready() else { return }
+            if #available(macOS 13, iOS 16, *) {
+                do {
+                    try MXMetricManager.finishExtendedLaunchMeasurement(forTaskID: "org.exreader.f08.shelf-ready")
+                    launchStatus = "finished"
+                } catch { launchStatus = "finish-failed"; launchError = String(describing: error) }
+                changed()
+            }
+        }
+        pending = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
+    }
+}
+#endif
+
+
 #if EXR_APPLE_PAGE_THEME
 enum HostPageThemeChoice: String, CaseIterable {
     case original, light, dark, system
@@ -352,6 +392,19 @@ final class HostShelf: ObservableObject {
         }
         top = rows[index].key
         guard !loading, appliedGeneration == generation else { return }
+#if EXR_APPLE_F08_REVIEW
+        let launchGeneration = generation, launchTop = top, launchVisible = visible
+        let launchKeys = rows.map(\.id)
+        let launchSignature = "\(generation)|\(top?.key ?? "")|" + launchKeys.joined(separator: "|") + visible.sorted().joined(separator: "|")
+        HostF08Review.observeShelf(launchSignature, ready: { [weak self] in
+            guard let self else { return false }
+            return !self.loading && self.error.isEmpty && self.awaitingLayoutKey == nil &&
+                self.generation == launchGeneration && self.appliedGeneration == launchGeneration &&
+                self.query.isEmpty && self.appliedQuery.isEmpty && self.top == launchTop &&
+                self.visible == launchVisible && !self.visible.isEmpty && self.top != nil &&
+                self.rows.map(\.id) == launchKeys && self.viewportSize.width > 0 && self.viewportSize.height > 0
+        }, changed: { [weak self] in self?.objectWillChange.send() })
+#endif
         if after && lastIndex >= rows.count - 12, let last = rows.last {
             request(anchor: last.key, previous: false, inclusive: false, replacing: false)
         } else if before && index < 12, let first = rows.first {
@@ -402,6 +455,10 @@ final class HostShelf: ObservableObject {
         value["requested_restore_key"] = restoreKey ?? ""
         value["geometry_revision"] = geometryRevision
         value["issued_restore_revision"] = issuedRestoreRevision
+#endif
+#if EXR_APPLE_F08_REVIEW
+        value["f08_launch_task_status"] = HostF08Review.launchStatus
+        value["f08_launch_task_error"] = HostF08Review.launchError
 #endif
         return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
     }
@@ -1293,6 +1350,19 @@ final class HostReaderModel: ObservableObject {
     }
 #endif
     @Published var pageAccessibilityLabel = ""
+#if EXR_APPLE_F08_REVIEW
+    var f08ReaderObservation: String {
+        var usage = rusage(); getrusage(RUSAGE_SELF, &usage)
+        let bitmap: String
+        if let bytes = image?.dataProvider?.data { bitmap = SHA256.hash(data: bytes as Data).map { String(format: "%02x", $0) }.joined() }
+        else { bitmap = "" }
+        let value: [String: Any] = ["bitmap_sha256": bitmap, "sdk_frame_count": frameCount,
+            "font_size": fontSize, "logical_offset": pageBaseOffset, "location": location,
+            "process_peak_rss_bytes": usage.ru_maxrss, "busy": busy, "title": title,
+            "source_sha": Bundle.main.object(forInfoDictionaryKey: "EXRSourceSHA") as? String ?? ""]
+        return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
+    }
+#endif
     @Published var fontSize = 28
 #if EXR_APPLE_PAGE_THEME
     @Published private(set) var pageThemeChoice = HostPageThemeChoice.original
