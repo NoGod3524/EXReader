@@ -107,6 +107,12 @@ def main():
         wait(host, lambda: account(host).get("session_state") == "4", 240)
         if heads is not None:
             wait(host, lambda: set(snapshot(host)["heads"]) == set(heads))
+        # Transport completion does not project or import. Press the real
+        # separate Receive action before observing product/visible conflicts.
+        host.key("alt+r")
+        wait(host, lambda: account(host).get("phase") == "0"
+             and account(host).get("preparing") == "0"
+             and account(host).get("owner_busy") == "0", 120)
         state = account(host)
         command("import", "-window", window(host, "Account and Sync"),
                 out / ("sync-" + host.folder.name + "-" + str(len(store.requests)) + ".png"))
@@ -132,6 +138,10 @@ def main():
         second = launch("second")
         configure(second)
         sync(second, snapshot(first)["heads"])
+        command("xdotool", "windowactivate", "--sync", second.window)
+        second.key("F2", "Return")
+        second.wait(lambda state: state["book"] > 0 and state["reader_visible"]
+                    and not state["error"], timeout=120)
         baseline = snapshot(first)
         store.offline = True
         edit(first, "Offline GTK edit")
