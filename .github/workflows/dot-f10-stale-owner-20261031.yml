@@ -72,4 +72,4 @@ jobs:
           name: f10-stale-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/stale-audit/
           if-no-files-found: error
-# Prepared only; one approved activation follows independent static review.
+# Activate the sole approved API verification round after native static review.
