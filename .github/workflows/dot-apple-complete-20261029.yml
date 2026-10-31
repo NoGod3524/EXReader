@@ -1,7 +1,7 @@
 name: Apple SDK 3.42 full same-source host gates
 on:
   push:
-    branches: [codex/dot-apple-input-full-20261030]
+    branches: [codex/dot-apple-fresh-full-20261031]
 permissions:
   contents: read
   actions: read
@@ -31,7 +31,7 @@ jobs:
             tests/reader_team24_apple/run_ui.py \
             tests/apple_host/EXReaderHostUITests.swift tests/apple_host/reading/ui \
             tests/apple_host/navigation/ui tests/apple_host/search/ui tests/apple_host/page_theme/ui
-          test "$(git rev-parse HEAD:tests/reader_team24_apple/ui/FeaturesUITests.swift)" = 91bf54e9347d4a8bff73e70722d51a42116866fc
+          test "$(git rev-parse HEAD:tests/reader_team24_apple/ui/FeaturesUITests.swift)" = fa974c4079e3a4d41322160249619bfb5b66d299
           python3 - <<'PY'
           import subprocess
           path = 'tests/reader_team24_apple/ui/FeaturesUITests.swift'

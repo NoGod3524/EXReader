@@ -87,6 +87,16 @@ final class FeaturesUITests: XCTestCase {
             let visible = viewport.map { $0.intersection(targetFrame) } ?? targetFrame
             guard !visible.isNull, visible.width >= 12, visible.height >= 12,
                   snapshot.isEnabled, target.isHittable else { return false }
+            if id == "features.annotations.snapshot" {
+                guard let fresh = try? target.snapshot() else { return false }
+                targetFrame = fresh.frame
+                let freshVisible = viewport.map { $0.intersection(fresh.frame) } ?? fresh.frame
+                print("snapshot-tap-frame old=\(snapshot.frame) fresh=\(fresh.frame) visible=\(freshVisible) enabled=\(fresh.isEnabled) nativeHittable=true")
+                guard !freshVisible.isNull, freshVisible.width >= 12, freshVisible.height >= 12,
+                      fresh.isEnabled else { return false }
+                targetFrame = freshVisible
+                return true
+            }
             targetFrame = visible
             return true
 #endif
