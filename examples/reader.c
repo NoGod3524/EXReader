@@ -4588,6 +4588,10 @@ static void host_update_controls(void) {
   EnableWindow(g.zoom_dec, !busy && has && g.frame.fixed);
   EnableWindow(g.zoom_inc, !busy && has && g.frame.fixed);
   EnableWindow(g.cancel_button, busy || g.job != NULL);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_record("ui_controls_enable",controls_begin,NULL,g.frame.generation,g.frame.book_id,IDC_PAGE,0,0,busy,0);
+  int64_t controls_modules_begin=f08_tick();
+#endif
 #ifdef EXR_READER_WINDOWS_NAVIGATION
   winnav_controls();
 #endif
@@ -4606,14 +4610,28 @@ static void host_update_controls(void) {
 #ifdef EXR_READER_WINDOWS_ACCOUNT
   EnableWindow(g.account_button,!g.closing && !g.metadata_running && !g.metadata_dialog);
 #endif
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_record("ui_controls_modules",controls_modules_begin,NULL,g.frame.generation,g.frame.book_id,IDC_PAGE,0,0,busy,0);
+  int64_t controls_focus_begin=f08_tick();
+#endif
   /* A command that just disabled itself must not take keyboard focus with it. */
   host_a11y_focus_guard(focused);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_record("ui_controls_focus",controls_focus_begin,NULL,g.frame.generation,g.frame.book_id,IDC_PAGE,0,0,busy,0);
+  int64_t controls_owner_begin=f08_tick();
+#endif
   /* A modal dialog owns the keyboard: keep the truthful blocked state. */
   host_a11y_owner_reapply();
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_record("ui_controls_owner",controls_owner_begin,NULL,g.frame.generation,g.frame.book_id,IDC_PAGE,0,0,busy,0);
+  int64_t controls_compact_begin=f08_tick();
+#endif
 #ifdef EXR_READER_WINDOWS_COMPACT
   compact_controls();
 #endif
 #ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_record("ui_controls_compact",controls_compact_begin,NULL,g.frame.generation,g.frame.book_id,IDC_PAGE,0,0,busy,0);
+  SetPropW(g.window,L"EXReaderF08JobState",(HANDLE)(uintptr_t)(1+(g.job!=NULL || g.pending!=NULL)));
   f08_record("ui_controls",controls_begin,NULL,g.frame.generation,g.frame.book_id,IDC_PAGE,g.job ? g.job->kind : 0,0,busy,0);
 #endif
 }
@@ -6325,6 +6343,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       finish_close(window);
       return 0;
     case WM_DESTROY:
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+      RemovePropW(window,L"EXReaderF08JobState");
+#endif
       KillTimer(window, 1);
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       prefs_destroy_menu(window);
