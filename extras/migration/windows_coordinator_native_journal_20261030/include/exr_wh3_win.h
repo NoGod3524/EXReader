@@ -91,7 +91,7 @@ int wh3wr_enroll(const wchar_t *library,const wchar_t *root,
    Recovery accepts only its independently computed initial grant and exact
    object identities, then repeats initial-state proof. Ordinary open never
    calls either enrollment API. Torn or replaced objects remain refused. */
-enum { WH3WR_ENROLL_INTENT=501, WH3WR_ENROLL_GATE=502,
+enum { WH3WR_ENROLL_RESERVED=500, WH3WR_ENROLL_INTENT=501, WH3WR_ENROLL_GATE=502,
        WH3WR_ENROLL_PROVED=503, WH3WR_ENROLL_BOUND=504 };
 int wh3wr_enroll_controlled(const wchar_t *library,const wchar_t *root,
  int (*prove_initial)(void *,const wchar_t *),void *context,const wh3w_controls *);

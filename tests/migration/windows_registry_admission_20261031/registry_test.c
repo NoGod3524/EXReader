@@ -84,7 +84,7 @@ static int reg_child(const char *handle) {
  reg_shared *shared=MapViewOfFile(mapping,FILE_MAP_ALL_ACCESS,0,0,sizeof(*shared));
  wh3wr_registration *r=NULL;wh3w_controls controls={0};void *cap=NULL;wh3_tip tip;
  if(!shared)return 90;controls.context=shared;controls.phase=reg_barrier;
- if(shared->stop>=WH3WR_ENROLL_INTENT){
+ if(shared->stop>=WH3WR_ENROLL_RESERVED){
   int ok=wh3wr_enroll_controlled(shared->library,shared->root,sdk_prove,(void *)original,&controls);
   UnmapViewOfFile(shared);return ok?0:95;
  }
@@ -277,16 +277,24 @@ static int counted_initial(void *context,const wchar_t *path) {
  initial_proofs++;return sdk_prove(context,path);
 }
 static void enrollment_kill(unsigned at) {
- HANDLE child;char name[80];int bound=at==WH3WR_ENROLL_BOUND;
+ HANDLE child;char name[80];wchar_t alternate[MAX_PATH];int bound=at==WH3WR_ENROLL_BOUND;
  snprintf(name,sizeof(name),"enrollment-process-kill-%u",at);
  if(!reg_fixture(name,0))return;
  child=reg_spawn(WH3WG_ENROLL,at);expect(child!=NULL,"spawn real enrollment owner");if(!child)return;
  expect(WaitForSingleObject(rrdy,15000)==WAIT_OBJECT_0&&rs->reached==(int)at,"exact enrollment persistence barrier");
+ if(at==WH3WR_ENROLL_RESERVED){
+  swprintf_s(alternate,MAX_PATH,L"%ls\\other-enrollment",f.parent);initial_proofs=0;
+  expect(!wh3wr_enroll_created(reglib,alternate,0,counted_initial,(void *)original),"same target cannot enroll through another root concurrently");
+  expect(initial_proofs==0,"competing enrollment never reaches SDK proof");
+ }
  expect(finish(child,1),"terminate enrollment process at barrier");
  expect(reg_probe(WH3WG_SHARED)==bound,"fresh process accepts only independently committed Binding");
  if(!bound){
   initial_proofs=0;
-  expect(wh3wr_recover_enrollment(reglib,counted_initial,(void *)original),"recover exact enrollment intent");
+  if(at==WH3WR_ENROLL_RESERVED){
+   expect(!wh3wr_recover_enrollment(reglib,counted_initial,(void *)original)&&initial_proofs==0,"empty reservation never invents an intent");
+   expect(wh3wr_enroll(reglib,f.root,counted_initial,(void *)original),"explicit retry verifies existing empty native set");
+  }else expect(wh3wr_recover_enrollment(reglib,counted_initial,(void *)original),"recover exact enrollment intent");
   expect(initial_proofs==1,"recovery actually opens and verifies SDK content");
  }
  expect(reg_probe(WH3WG_SHARED)==1&&rs->sdk_opened,"completed enrollment opens real SDK in fresh process");
@@ -357,7 +365,7 @@ int main(int argc,char **argv) {
  unknown_case();shared_case_registry();source_borrow_case();owner_first_case();kill_case();
  bad_target(0);bad_target(1);bad_registry(0);bad_registry(1);missing_gate();
  publication_case(0);publication_case(1);bad_initial();short_begin_case();
- {unsigned i;for(i=WH3WR_ENROLL_INTENT;i<=WH3WR_ENROLL_BOUND;i++)enrollment_kill(i);
+ {unsigned i;for(i=WH3WR_ENROLL_RESERVED;i<=WH3WR_ENROLL_BOUND;i++)enrollment_kill(i);
   for(i=0;i<3;i++){enrollment_policy(i,0);enrollment_policy(i,1);}
   for(i=0;i<4;i++)enrollment_bad(i);}
  fixture_close();if(rs)UnmapViewOfFile(rs);if(rm)CloseHandle(rm);if(rrdy)CloseHandle(rrdy);if(rgo)CloseHandle(rgo);

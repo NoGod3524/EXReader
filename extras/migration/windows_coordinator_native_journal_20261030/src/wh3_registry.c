@@ -14,7 +14,7 @@
 struct wh3wr_registration {
  HKEY key;
  wh3wg_gate *gate;
- HANDLE target,pins[RPINS];
+ HANDLE target,pins[RPINS],enrollment_mutex;
  wchar_t library[MAX_PATH],root[MAX_PATH],paths[RPINS][MAX_PATH],route[65];
  wh3w_identity ids[5],pinids[RPINS];
  unsigned np,mode; void *cap;
@@ -75,6 +75,45 @@ static int rsecure(HKEY key,PSID user) {
  }
  ok=has_user&&has_system;
 done:free(sd);return ok;
+}
+/* Enrollment may choose different roots for one logical library. Serialize
+   that bootstrap by user+route before inspecting or writing registry intent.
+   This global mutex spans Windows sessions; it never supplies a CLEAN grant. */
+static HANDLE rmutex(const wchar_t *route) {
+ TOKEN_USER *user=ruser();LPWSTR sid=NULL;PSECURITY_DESCRIPTOR expected=NULL,actual=NULL;
+ SECURITY_ATTRIBUTES sa;wchar_t name[180],sddl[512],sid_hash[65];char hash[65];
+ HANDLE h=NULL;DWORD size=0,revision,wait;PSID owner;PACL acl;BOOL present,defaulted;
+ SECURITY_DESCRIPTOR_CONTROL control;unsigned k;int own=0,system=0;
+ if(!user||!ConvertSidToStringSidW(user->User.Sid,&sid))goto done;
+ wh_sha256_hex(user->User.Sid,GetLengthSid(user->User.Sid),hash);
+ for(k=0;k<65;k++)sid_hash[k]=(wchar_t)hash[k];
+ if(swprintf_s(name,180,L"Global\\EXReaderC02-enroll-%ls-%ls",sid_hash,route)<0||
+    swprintf_s(sddl,512,L"O:%lsD:P(A;;0x%08lx;;;SY)(A;;0x%08lx;;;%ls)",
+       sid,(unsigned long)MUTEX_ALL_ACCESS,(unsigned long)MUTEX_ALL_ACCESS,sid)<0||
+    !ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl,SDDL_REVISION_1,&expected,NULL))goto done;
+ memset(&sa,0,sizeof(sa));sa.nLength=sizeof(sa);sa.lpSecurityDescriptor=expected;
+ h=CreateMutexW(&sa,FALSE,name);if(!h)goto done;
+ (void)GetKernelObjectSecurity(h,OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,NULL,0,&size);
+ if(GetLastError()!=ERROR_INSUFFICIENT_BUFFER||!size)goto fail;
+ actual=malloc(size);if(!actual)goto fail;
+ if(!GetKernelObjectSecurity(h,OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,actual,size,&size)||
+    !GetSecurityDescriptorOwner(actual,&owner,&defaulted)||!EqualSid(owner,user->User.Sid)||
+    !GetSecurityDescriptorControl(actual,&control,&revision)||!(control&SE_DACL_PROTECTED)||
+    !GetSecurityDescriptorDacl(actual,&present,&acl,&defaulted)||!present||!acl||!IsValidAcl(acl))goto fail;
+ for(k=0;k<acl->AceCount;k++){
+  ACCESS_ALLOWED_ACE *ace;PSID value;int is_user,is_system;
+  if(!GetAce(acl,k,(void **)&ace)||ace->Header.AceType!=ACCESS_ALLOWED_ACE_TYPE||
+     ace->Header.AceFlags||(ace->Mask&MUTEX_ALL_ACCESS)!=MUTEX_ALL_ACCESS)goto fail;
+  value=(PSID)&ace->SidStart;if(!IsValidSid(value))goto fail;
+  is_user=EqualSid(value,user->User.Sid);is_system=IsWellKnownSid(value,WinLocalSystemSid);
+  if(!is_user&&!is_system)goto fail;own|=is_user;system|=is_system;
+ }
+ if(!own||!system)goto fail;
+ wait=WaitForSingleObject(h,0);if(wait!=WAIT_OBJECT_0&&wait!=WAIT_ABANDONED)goto fail;
+ goto done;
+fail:CloseHandle(h);h=NULL;
+done:
+ if(sid)LocalFree(sid);if(expected)LocalFree(expected);free(actual);free(user);return h;
 }
 static int ropenkey(const wchar_t *route,int create,HKEY *out) {
  TOKEN_USER *user=NULL;LPWSTR sid=NULL;PSECURITY_DESCRIPTOR sd=NULL;
@@ -199,9 +238,10 @@ static void rinitial_grant(wh3wr_registration *r) {
 static int rabsent(HKEY key,const wchar_t *name) {
  DWORD type=0,n=0;return RegQueryValueExW(key,name,NULL,&type,NULL,&n)==ERROR_FILE_NOT_FOUND;
 }
-static int rintent(wh3wr_registration *r) {
+static int rintent(wh3wr_registration *r,const wh3w_controls *controls) {
  unsigned char check[RBYTES];
  if(!rabsent(r->key,L"Binding")||!rabsent(r->key,L"Enrollment"))return 0;
+ rphase(controls,WH3WR_ENROLL_RESERVED);
  rencode(r,r->record);
  return RegSetValueExW(r->key,L"Enrollment",0,REG_BINARY,r->record,RBYTES)==ERROR_SUCCESS&&
    RegFlushKey(r->key)==ERROR_SUCCESS&&rread_value(r->key,L"Enrollment",check)&&!memcmp(r->record,check,RBYTES);
@@ -234,7 +274,9 @@ int wh3wr_close(wh3wr_registration *r) {
  if(r->gate&&!wh3wg_close(r->gate))return 0;
  if(r->target!=INVALID_HANDLE_VALUE)CloseHandle(r->target);
  for(k=0;k<r->np;k++)CloseHandle(r->pins[k]);
- if(r->key)RegCloseKey(r->key);free(r);return 1;
+ if(r->key)RegCloseKey(r->key);
+ if(r->enrollment_mutex){(void)ReleaseMutex(r->enrollment_mutex);CloseHandle(r->enrollment_mutex);}
+ free(r);return 1;
 }
 int wh3wr_open(const wchar_t *library,unsigned mode,const wh3w_controls *controls,wh3wr_registration **out) {
  wh3wr_registration *r;int ok=0;
@@ -258,7 +300,7 @@ int wh3wr_enroll_controlled(const wchar_t *library,const wchar_t *root,
  const wchar_t *names[3]={L"admission.bin",L"journal.bin",L"intent.bin"};
  wchar_t route[65],path[MAX_PATH];unsigned k;int ok=0;char domain[49];
  if(!prove)return 0;r=calloc(1,sizeof(*r));if(!r)return 0;r->target=INVALID_HANDLE_VALUE;
- if(!rpath(library,r->library,r->route)||!rpath(root,r->root,route)||wcslen(r->root)>MAX_PATH-32||!rpins(r)||!rtarget(r,0,0)||!rid(r->target,&r->ids[4],0))goto done;
+ if(!rpath(library,r->library,r->route)||!rpath(root,r->root,route)||wcslen(r->root)>MAX_PATH-32||!rpins(r)||!(r->enrollment_mutex=rmutex(r->route))||!rtarget(r,0,0)||!rid(r->target,&r->ids[4],0))goto done;
  {
   HANDLE h=CreateFileW(r->root,FILE_LIST_DIRECTORY|FILE_READ_ATTRIBUTES,FILE_SHARE_READ,NULL,OPEN_EXISTING,
     FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
@@ -275,7 +317,7 @@ int wh3wr_enroll_controlled(const wchar_t *library,const wchar_t *root,
   for(k=0;k<24;k++){domain[k*2]=hex[id[k]>>4];domain[k*2+1]=hex[id[k]&15];}domain[48]=0;memcpy(r->domain,domain,49);}
  rinitial_grant(r);
  if(!rlegacy(r->library)||!wh3wg_open(r->root,r->ids,r->domain,NULL,WH3WG_ENROLL,NULL,&r->gate)||
-    !ropenkey(r->route,2,&r->key)||!rintent(r))goto done;
+    !ropenkey(r->route,2,&r->key)||!rintent(r,controls))goto done;
  rphase(controls,WH3WR_ENROLL_INTENT);
  {wh3wg_grant actual;if(!wh3wg_enroll(r->gate,&actual)||actual.generation||
     memcmp(actual.seal,r->grant.seal,65))goto done;}
@@ -337,7 +379,7 @@ int wh3wr_recover_enrollment(const wchar_t *library,
  wchar_t path[MAX_PATH];unsigned k;int ok=0;LONGLONG admission_size=0;
  wh3wg_grant expected;wh3w_identity id;
  if(!prove)return 0;r=calloc(1,sizeof(*r));if(!r)return 0;r->target=INVALID_HANDLE_VALUE;
- if(!rpath(library,r->library,r->route)||!ropenkey(r->route,0,&r->key)||!rabsent(r->key,L"Binding")||
+ if(!rpath(library,r->library,r->route)||!(r->enrollment_mutex=rmutex(r->route))||!ropenkey(r->route,0,&r->key)||!rabsent(r->key,L"Binding")||
     !rread_value(r->key,L"Enrollment",r->record)||!rdecode(r)||!rpins(r)||!rtarget(r,0,1)||!rlegacy(r->library))goto done;
  expected=r->grant;rinitial_grant(r);
  if(expected.generation||memcmp(expected.seal,r->grant.seal,65))goto done;
