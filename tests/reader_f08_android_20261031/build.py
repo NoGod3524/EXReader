@@ -1,5 +1,5 @@
 """Actions-only SDK 3.42 shelf adapter; original recipes and tests stay frozen."""
-import importlib.util, json, shutil, zipfile
+import importlib.util, json, shlex, shutil, zipfile
 from lane import ROOT, OUT, identity, need, save, sha, guard
 def main():
     guard()
@@ -20,10 +20,10 @@ def main():
         "-PexrPreferencesPrefix="+str(stage),"-PexrDav="+str(stage),"-PexrSideload="+str(stage),
         "-PexrTestRunner=org.exreader.host.ShelfCatalogTest"]
     command=["gradle","-p","examples/android","--no-daemon","--stacktrace","-I",
-        "tests/reader_wave3_c11/candidate.init.gradle",*flags,
+        str(ROOT/"tests/reader_wave3_c11/candidate.init.gradle"),*flags,
         ":app:assembleDebug",":app:assembleDebugAndroidTest",":uitest:assembleDebug",":uitest:assembleDebugAndroidTest"]
     save(OUT/"gradle-command.json",command)
-    builder.sh(command)
+    builder.sh(["bash","-e","-o","pipefail","-c",shlex.join(command)+" 2>&1 | tee "+shlex.quote(str(OUT/"gradle.log"))])
     sampler_sources=["tools/run_reader_shelf_ui.py",
         "examples/android/app/src/androidTest/java/org/exreader/host/ShelfCatalogTest.java",
         "examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/ShelfWalkthroughTest.java",
