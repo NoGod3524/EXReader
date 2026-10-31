@@ -1,5 +1,26 @@
 # SPDX-License-Identifier: MIT
 import argparse,hashlib,json,os,pathlib,subprocess
+def parse_jsonl(raw):
+    # JSONL records are delimited by LF bytes, not Unicode line separators.
+    if not raw.endswith(b'\n'):
+        raise ValueError('JSONL requires a final LF')
+    return [json.loads(line.decode('utf-8')) for line in raw.split(b'\n')[:-1]]
+
+def parser_controls():
+    value={'text':'left\u2028middle\u0085right'}
+    raw=json.dumps(value,ensure_ascii=False).encode('utf-8')+b'\n'
+    assert parse_jsonl(raw)==[value]
+    invalid=(raw[:-1],raw+b'\n',b'{"text":"cut\n',b'{"text":"\xff"}\n')
+    for case in invalid:
+        try:
+            parse_jsonl(case)
+        except (ValueError,UnicodeDecodeError):
+            pass
+        else:
+            raise AssertionError('invalid JSONL accepted')
+    print('PRIVATE-PARSER '+json.dumps(dict(positive=1,negative=len(invalid),passed=True)),flush=True)
+
+parser_controls()
 p=argparse.ArgumentParser()
 for key in ('probe','old-probe','fixtures','work'):p.add_argument('--'+key,required=True)
 a=p.parse_args()
@@ -30,7 +51,7 @@ for mask in ('022','000'):
             assert target.stat().st_mode & 0o777 == 0o600
             if mode!='normal':assert target.read_bytes()==sentinels[name]
         if mode=='normal':
-            lines=[json.loads(s) for s in (directory/'output.jsonl').read_text().splitlines()]
+            lines=parse_jsonl((directory/'output.jsonl').read_bytes())
             assert lines[0]['type']=='header' and lines[-1]['type']=='footer'
             assert lines[-1]['complete'] and result['annotations']>0
             assert lines[0]['book_key']==book
