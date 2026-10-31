@@ -1,0 +1,73 @@
+name: F08 Windows actual product desktop pixels
+on:
+  push:
+    branches: [codex/dot-f08-windows-product-pixels-20261031]
+permissions:
+  contents: read
+  actions: read
+env:
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: '1'
+defaults:
+  run:
+    shell: pwsh
+jobs:
+  capture:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    outputs:
+      artifact: ${{ steps.upload.outputs.artifact-id }}
+      digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile only the external test observer
+        run: |
+          python -m py_compile tests/reader_f08_windows_product_pixels_20261031/run.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install uiautomation==2.0.29
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake -S tests/reader_f08_windows_product_pixels_20261031 -B build/f08-product-pixels-build -A x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build/f08-product-pixels-build --config Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Capture unchanged full product during original ten interaction launches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_f08_windows_product_pixels_20261031/run.py capture
+      - uses: actions/upload-artifact@v4
+        id: upload
+        if: always()
+        with:
+          name: f08-windows-product-pixels-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-windows-product-pixels/
+          include-hidden-files: true
+          if-no-files-found: error
+  audit:
+    needs: capture
+    if: always() && needs.capture.outputs.artifact != ''
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reauthenticate product and independently replay every native pixel image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F08_ARTIFACT_ID: ${{ needs.capture.outputs.artifact }}
+          F08_ARTIFACT_DIGEST: ${{ needs.capture.outputs.digest }}
+        run: python tests/reader_f08_windows_product_pixels_20261031/run.py audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-windows-product-pixels-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-windows-product-pixels-audit/audit.json
+          if-no-files-found: error
