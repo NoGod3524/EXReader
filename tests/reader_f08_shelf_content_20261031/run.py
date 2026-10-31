@@ -78,14 +78,18 @@ def product(raw):
 def coverage(summary):
     need(summary["passed"] is True and summary["new_launches"]==6 and summary["new_actions"]==18,"six original causal launches")
     actions=[a for row in summary["results"] if row["kind"]=="shelf" for a in row["actions"]]
-    need(len(actions)==6 and all(a["causal_attribution"]=="input_and_observed_shelf_content_at_draw_entry" and
+    need(len(actions)==6 and all(a["causal_attribution"] in ("input_and_observed_shelf_content_at_draw_entry","input_and_observed_shelf_viewport_composition") and
          type(a["event_to_content_draw_entry_us"]) is int and a["event_to_content_draw_entry_us"]>=0 for a in actions),
          "all six shelf actions bound to native content")
     need(summary["draw_control"].get("shelf_content_control") is True and
          summary["draw_control"].get("clip_rejected") is True and summary["draw_control"].get("missing_id_rejected") is True,
          "native content control")
+    need(summary["draw_control"].get("viewport_composition_control") is True and
+         summary["draw_control"].get("viewport_pixels_equal") is True and
+         summary["draw_control"].get("cached_list_draws")==0,"cached viewport native control")
+    need(summary["settlement_controls"]==V.settlement_regressions(),"separate paint and completion controls")
     need(summary["F08_accepted"] is False and summary["physical_display_presented"] is False,"bounded claims")
-    return {"shelf_actions":len(actions),"content_draw_entry_us":[a["event_to_content_draw_entry_us"] for a in actions],
+    return {"shelf_actions":len(actions),"shelf_attributions":[a["causal_attribution"] for a in actions],"content_draw_entry_us":[a["event_to_content_draw_entry_us"] for a in actions],
             "content_frame_end_us":[a["event_to_content_frame_end_us"] for a in actions],
             "physical_presentation_proven":False,"frame_budget_measured":False,"f08_accepted":False}
 def startup_coverage(root,top,ident=None):
@@ -152,11 +156,12 @@ def audit():
         need(sha(raw/"f08-causal/module.so")==top["module_sha256"],"observer bytes")
         vident=V.identity();V.verify_top(top,vident)
         need(summary["identity"]==vident and summary["controls"]==V.controls() and
-             summary["regressions"]==V.regressions() and summary["content_controls"]==V.content_regressions(),"independent controls")
+             summary["regressions"]==V.regressions() and summary["content_controls"]==V.content_regressions() and
+             summary["settlement_controls"]==V.settlement_regressions(),"independent controls")
         need(len(summary["results"])==6,"all analyzed launches")
         for row in top["cohorts"]:
             observations=load(raw/("f08-causal/launch-%02d/%d.json"%(row["launch"],row["pid"])))
-            need(observations.get("shelf_content_version")==1,"native snapshot schema")
+            need(observations.get("shelf_content_version")==2,"native snapshot schema")
             result=V.analyze(observations,row,vident)
             previous=summary["results"][row["launch"]]
             need(all(previous[k]==row[k] for k in ("launch","pid","kind")),"result launch identity")

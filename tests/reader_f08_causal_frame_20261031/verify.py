@@ -38,6 +38,14 @@ def shelf_content_matches(draw,state,frame,action):
     if not all(content.get(k) is True for k in ("available","list_drawable","row_drawable","clip_intersects")):return False
     if not all(integer(content.get(k)) for k in ("at","top_id","index","width","height")):return False
     if not all(type(content.get(k)) is int and -(2**31)<=content[k]<2**31 for k in ("x","y")):return False
+    if draw["kind"]==3:
+        if content.get("draw_target")!="viewport" or content.get("target_drawable") is not True:return False
+        if not all(type(content.get(k)) is int for k in ("draw_x","draw_y")):return False
+        clip=[content.get(k) for k in ("clip_x","clip_y","clip_width","clip_height")]
+        if not all(type(x) in (int,float) and math.isfinite(x) for x in clip):return False
+        x,y,w,h=clip
+        if not (w>0 and h>0 and x<content["draw_x"]+content["width"] and x+w>content["draw_x"] and
+                y<content["draw_y"]+content["height"] and y+h>content["draw_y"]):return False
     scroll=content.get("scroll")
     if type(scroll) not in (int,float) or not math.isfinite(scroll) or scroll<0:return False
     return (content["top_id"]>0 and content["top_id"]==state["shelf_top_id"]==
@@ -53,6 +61,8 @@ def analyze(raw,driver,ident):
     need(integer(raw.get("clock_count")) and 0<raw["clock_count"]<=64,"clocks")
     if any(a["field"]=="shelf_top_id" for a in driver["actions"]):
         need(integer(raw.get("list_draw_handlers")) and raw["list_draw_handlers"]>0,"list_draw_handler")
+        if raw.get("shelf_content_version")==2:
+            need(integer(raw.get("viewport_draw_handlers")) and raw["viewport_draw_handlers"]>0,"viewport_draw_handler")
     for collection in ("states","inputs","draws","frames"):
         need(type(raw.get(collection)) is list and 0<len(raw[collection])<=65536,"rows:"+collection)
     for e in raw["inputs"]:
@@ -67,7 +77,7 @@ def analyze(raw,driver,ident):
         need(f["clock"]<raw["clock_count"] and 0<f["before"]<=f["after"],"phase")
         need(type(f.get("complete")) is bool,"complete")
         need(f.get("presentation") is None or (integer(f["presentation"]) and f["presentation"]>0),"presentation")
-    need(raw.get("shelf_content_version",0) in (0,1),"shelf_content_version")
+    need(raw.get("shelf_content_version",0) in (0,1,2),"shelf_content_version")
     all_intervals=intervals(raw)
     joined=[]
     actions=driver["actions"]
@@ -86,8 +96,8 @@ def analyze(raw,driver,ident):
         event=min(next(iter(groups.values())),key=lambda x:x["at"])
         need(event["clock"]<raw["clock_count"],"event_clock")
         field=action["field"]
-        content_binding=field=="shelf_top_id" and raw.get("shelf_content_version")==1
-        def effect(s):
+        content_binding=field=="shelf_top_id" and raw.get("shelf_content_version") in (1,2)
+        def effect(s,settled=True):
             if not all(integer(s.get(k)) for k in (field,"book","sequence","busy","saving")):return False
             if s["book"]!=action["book"]:return False
             if not integer(s.get("shelf_loading")) or s["shelf_loading"]:return False
@@ -96,35 +106,52 @@ def analyze(raw,driver,ident):
             elif not integer(s.get("painted_generation")) or s.get("reader_visible")!=1:return False
             changed=s[field]!=action["before"] if action["expected"] is None else s[field]==action["expected"]
             generation=field=="shelf_top_id" or s["painted_generation"]>action["previous_generation"]
-            return s["ok"] and changed and generation and s["sequence"]>action["previous_sequence"] and not s["busy"] and not s["saving"]
+            return s["ok"] and changed and generation and s["sequence"]>action["previous_sequence"] and (not settled or not s["busy"] and not s["saving"])
         states=[s for s in raw["states"] if event["at"]<=s["at"]<=action["done"] and effect(s)]
         need(states,"generation")
         paint=[]
+        target_kinds=(2,3) if content_binding and raw.get("shelf_content_version")==2 else ((2,) if field=="shelf_top_id" else (1,))
         for d in raw["draws"]:
-            if d["clock"]!=event["clock"] or d["kind"]!=(2 if field=="shelf_top_id" else 1):continue
+            if d["clock"]!=event["clock"] or d["kind"] not in target_kinds:continue
             if not event["at"]<=d["at"]<=action["done"]:continue
             for f in raw["frames"]:
                 if f["clock"]==d["clock"] and f["counter"]==d["counter"] and f["before"]<=d["at"]<=f["after"]:
-                    linked=[s for s in states if s["at"]>=d["at"] and
-                            (field=="shelf_top_id" or s["at"]<=f["after"])]
-                    if content_binding:linked=[s for s in linked if shelf_content_matches(d,s,f,action)]
-                    if linked:paint.append((f,d,linked[0]))
+                    if field=="shelf_top_id":
+                        linked=[s for s in states if s["at"]>=d["at"]]
+                        if content_binding:linked=[s for s in linked if shelf_content_matches(d,s,f,action)]
+                        if linked:paint.append((f,d,linked[0],linked[0]))
+                    else:
+                        # Painting and completion are separate native publications.
+                        # Require a new generation in this draw frame, then an idle
+                        # publication of that exact generation before driver done.
+                        for painted in raw["states"]:
+                            if not (d["at"]<=painted["at"]<=painted["end"]<=f["after"] and
+                                    painted["at"]<=action["done"] and effect(painted,settled=False)):continue
+                            linked=[s for s in states if s["at"]>=painted["at"] and
+                                    s["sequence"]>=painted["sequence"] and
+                                    s["painted_generation"]==painted["painted_generation"]]
+                            if linked:paint.append((f,d,painted,linked[0]))
         need(paint,"matching_paint")
         # Legacy shelf rows stay temporal; the new observer binds exact native row content at draw entry.
-        f,d,state=(max(paint,key=lambda x:x[1]["at"]) if field=="shelf_top_id" and not content_binding else min(paint,key=lambda x:x[0]["after"]))
+        f,d,state,settled_state=(max(paint,key=lambda x:x[1]["at"]) if field=="shelf_top_id" and not content_binding else min(paint,key=lambda x:x[0]["after"]))
         joined.append(dict(id=action["id"],inject_start=action["inject_start"],active_end=max(action["done"],f["after"]),
-            host_event_us=event["at"],state_us=state["at"],paint_end_us=f["after"],clock=f["clock"],counter=f["counter"],
+            host_event_us=event["at"],state_us=state["at"],settled_state_us=settled_state["at"],
+            painted_generation=state["painted_generation"] if field!="shelf_top_id" else None,
+            paint_busy=state["busy"],paint_saving=state["saving"],
+            paint_end_us=f["after"],clock=f["clock"],counter=f["counter"],
             inject_to_event_us=event["at"]-action["inject_start"],
             event_to_matching_paint_us=None if field=="shelf_top_id" else f["after"]-event["at"],
             event_to_candidate_paint_us=f["after"]-event["at"] if field=="shelf_top_id" else None,
-            causal_attribution=("input_and_observed_shelf_content_at_draw_entry" if content_binding else
+            causal_attribution=("input_and_observed_shelf_viewport_composition" if content_binding and d["kind"]==3 else
+                 "input_and_observed_shelf_content_at_draw_entry" if content_binding else
                 "unknown_temporal_candidate" if field=="shelf_top_id" else "same_frame_state_generation"),
             shelf_content=d["shelf_content"] if content_binding else None,
             event_to_content_draw_entry_us=d["at"]-event["at"] if content_binding else None,
             event_to_content_frame_end_us=f["after"]-event["at"] if content_binding else None,
             shelf_publication_may_follow_paint=field=="shelf_top_id",
-            evidence=("single input + exact observed top book ID and visible clipped row at native draw entry" if content_binding else
-                "input/state + nearest preceding list draw (not causal proof)" if field=="shelf_top_id" else "single input + state generation in target draw frame")))
+            evidence=("single input + exact native top book ID in the viewport composition clip; may reuse cached pixels" if content_binding and d["kind"]==3 else
+                 "single input + exact observed top book ID and visible clipped row at native draw entry" if content_binding else
+                "input/state + nearest preceding list draw (not causal proof)" if field=="shelf_top_id" else "single input + painted generation in target draw frame + later idle state of the same generation")))
     for r in all_intervals:
         active=[a for a in joined if a["inject_start"]<=r["start"] and r["end"]<=a["active_end"]]
         touched=[a for a in joined if a["inject_start"]<r["end"] and a["active_end"]>r["start"]]
@@ -247,10 +274,56 @@ def content_regressions():
         try:analyze(broken,driver,ident)
         except Invalid as error:actual=str(error)
         need(actual=="matching_paint","content_control:"+name)
-    return {"positive":2,"negative":len(cases),"cases":[name for name,_ in cases]}
+    raw.update(shelf_content_version=2,viewport_draw_handlers=1)
+    raw["draws"][0].update(kind=3)
+    raw["draws"][0]["shelf_content"].update(draw_target="viewport",target_drawable=True,
+        draw_x=0,draw_y=-1,clip_x=0.0,clip_y=0.0,clip_width=100.0,clip_height=100.0)
+    result=analyze(raw,driver,ident)["actions"][0]
+    need(result["causal_attribution"]=="input_and_observed_shelf_viewport_composition","viewport_content_positive")
+    viewport_cases=[("wrong_draw_target",{"draw_target":"list"}),("hidden_viewport",{"target_drawable":False}),
+        ("viewport_clip_miss",{"draw_y":101}),("empty_composition_clip",{"clip_height":0}),
+        ("invalid_composition_clip",{"clip_x":float("nan")})]
+    for name,change in viewport_cases:
+        broken=copy.deepcopy(raw);broken["draws"][0]["shelf_content"].update(change);actual=None
+        try:analyze(broken,driver,ident)
+        except Invalid as error:actual=str(error)
+        need(actual=="matching_paint","viewport_control:"+name)
+    return {"positive":3,"negative":len(cases)+len(viewport_cases),
+            "cases":[name for name,_ in cases+viewport_cases]}
+
+def settlement_regressions():
+    raw,driver,ident=fixture()
+    raw["states"][0].update(busy=1,saving=1)
+    raw["states"].append(dict(raw["states"][0],at=250,end=260,sequence=3,busy=0,saving=0))
+    for field in ("page","font"):
+        d=copy.deepcopy(driver)
+        if field=="font":d["actions"][0].update(field="font",before=22,expected=24)
+        result=analyze(raw,d,ident)["actions"][0]
+        need(result["state_us"]==150 and result["settled_state_us"]==250 and
+             result["painted_generation"]==2 and result["paint_busy"]==1 and result["paint_saving"]==1,
+             "paint_then_settlement:"+field)
+    cases=[
+        ("no_settlement","generation",lambda r:r["states"].pop()),
+        ("busy_at_completion","generation",lambda r:r["states"][1].update(busy=1)),
+        ("saving_at_completion","generation",lambda r:r["states"][1].update(saving=1)),
+        ("different_settled_generation","matching_paint",lambda r:r["states"][1].update(painted_generation=3)),
+        ("old_painted_generation","matching_paint",lambda r:r["states"][0].update(painted_generation=1)),
+        ("wrong_painted_book","matching_paint",lambda r:r["states"][0].update(book=2)),
+        ("wrong_painted_effect","matching_paint",lambda r:r["states"][0].update(page=3)),
+        ("paint_after_frame","matching_paint",lambda r:r["states"][0].update(at=210,end=220)),
+        ("publication_after_frame","matching_paint",lambda r:r["states"][0].update(end=201)),
+        ("settlement_before_paint","matching_paint",lambda r:r["states"][1].update(at=125,end=126)),
+        ("failed_paint_publication","matching_paint",lambda r:r["states"][0].update(ok=False)),
+        ("no_target_draw","matching_paint",lambda r:r["draws"][0].update(kind=2))]
+    for name,expected,change in cases:
+        broken=copy.deepcopy(raw);change(broken);actual=None
+        try:analyze(broken,driver,ident)
+        except Invalid as error:actual=str(error)
+        need(actual==expected,"settlement_control:"+name)
+    return {"positive":2,"negative":len(cases),"cases":[x[0] for x in cases]}
 
 def preflight():
-    print("F08_PREFLIGHT",json.dumps(dict(original=controls(),regressions=regressions(),content=content_regressions())),flush=True)
+    print("F08_PREFLIGHT",json.dumps(dict(original=controls(),regressions=regressions(),content=content_regressions(),settlement=settlement_regressions())),flush=True)
 
 def verify_top(top,ident):
     need(top.get("identity")==ident and top.get("accepted") is True,"driver")
@@ -291,7 +364,7 @@ def verify():
         results.append(result)
     receipt=dict(identity=identity(),passed=True,new_launches=6,new_actions=18,
         host_sha256=top["host_sha256"],module_sha256=top["module_sha256"],results=results,
-        controls=controls(),regressions=regressions(),content_controls=content_regressions(),draw_control=load(ROOT/"build/f08-causal-control/draw.json"),old_counts=dict(launches=44,samples=760,positive=2,negative=24),
+        controls=controls(),regressions=regressions(),content_controls=content_regressions(),settlement_controls=settlement_regressions(),draw_control=load(ROOT/"build/f08-causal-control/draw.json"),old_counts=dict(launches=44,samples=760,positive=2,negative=24),
         physical_display_presented=False,F08_accepted=False,not_product_performance_acceptance=True)
     need(receipt["draw_control"].get("passed") is True and receipt["draw_control"].get("pixels_equal") is True,"draw_control")
     save(OUT/"summary.json",receipt)
@@ -330,6 +403,7 @@ def audit():
     need(summary["controls"]==controls(),"controls_recompute")
     need(summary["regressions"]==regressions(),"regressions_recompute")
     need(summary["content_controls"]==content_regressions(),"content_controls_recompute")
+    need(summary["settlement_controls"]==settlement_regressions(),"settlement_controls_recompute")
     draw_control=summary["draw_control"]
     need(draw_control.get("passed") is True and draw_control.get("hook_only")==0 and
          draw_control.get("with_handler")==1 and draw_control.get("callbacks")==1 and

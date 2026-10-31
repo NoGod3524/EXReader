@@ -27,7 +27,7 @@ static Input inputs[CAP];
 static Draw draws[CAP];
 static Frame frames[CAP];
 static GdkFrameClock *clocks[CLOCKS];
-static unsigned ns,ni,nd,nf,nc,overflow,event_hook,draw_hook,list_draw_handlers;
+static unsigned ns,ni,nd,nf,nc,overflow,event_hook,draw_hook,list_draw_handlers,viewport_draw_handlers;
 static gint64 begins[CLOCKS];
 static gboolean enabled;
 static pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
@@ -87,6 +87,7 @@ static void record_draw(GtkWidget *w,unsigned kind,cairo_t *cr){
  Draw row={0};row.at=g_get_monotonic_time();row.counter=gdk_frame_clock_get_frame_counter(c);
  row.clock=clock_id(c);row.kind=kind;
  if(kind==2u)row.content=f08_shelf_content(w,cr);
+ if(kind==3u)row.content=f08_shelf_content_for_draw(gtk_bin_get_child(GTK_BIN(w)),w,cr);
  pthread_mutex_lock(&mutex);if(nd<CAP)draws[nd++]=row;else overflow++;pthread_mutex_unlock(&mutex);
 }
 static gboolean list_draw(GtkWidget *w,cairo_t *cr,gpointer data){
@@ -98,6 +99,16 @@ static gboolean list_draw(GtkWidget *w,cairo_t *cr,gpointer data){
   * GTK 3.24.33 gtk/gtkwidget.c: gtk_widget_draw_internal(). */
  return FALSE;
 }
+static gboolean viewport_draw(GtkWidget *w,cairo_t *cr,gpointer data){
+ (void)data;
+ GtkWidget *list=gtk_bin_get_child(GTK_BIN(w));
+ if(enabled && ours(w) && GTK_IS_LIST_BOX(list) &&
+    g_strcmp0(atk_object_get_name(gtk_widget_get_accessible(list)),"Bookshelf")==0)
+  record_draw(w,3u,cr);
+ /* Observe the composition containing both cached and newly rendered pixels.
+  * No invalidation, scrolling, event handling or cairo mutation. */
+ return FALSE;
+}
 static gboolean realized(GSignalInvocationHint *h,guint n,const GValue *v,gpointer data){
  (void)h;(void)data;
  if(!n || !GTK_IS_WIDGET(g_value_get_object(v)))return TRUE;
@@ -106,6 +117,11 @@ static gboolean realized(GSignalInvocationHint *h,guint n,const GValue *v,gpoint
   g_signal_connect(w,"draw",G_CALLBACK(list_draw),NULL);
   g_object_set_data(G_OBJECT(w),"exr-f08-list-draw",GUINT_TO_POINTER(1));
   list_draw_handlers++;
+ }
+ if(GTK_IS_VIEWPORT(w) && !g_object_get_data(G_OBJECT(w),"exr-f08-viewport-draw")){
+  g_signal_connect(w,"draw",G_CALLBACK(viewport_draw),NULL);
+  g_object_set_data(G_OBJECT(w),"exr-f08-viewport-draw",GUINT_TO_POINTER(1));
+  viewport_draw_handlers++;
  }
  if(!GTK_IS_WINDOW(w))return TRUE;
  /* Title may be assigned after realize; clocks are harmlessly observed for all windows. */
@@ -175,7 +191,7 @@ __attribute__((destructor)) static void finish(void){
  fputs(",\"executable\":",f);quoted(f,exe);
  fprintf(f,",\"capacity\":%u,\"overflow\":%u,\"event_hook\":%u,\"draw_hook\":%u,\"clock_count\":%u,\"probe_static_bytes\":%zu",
   CAP,overflow,event_hook,draw_hook,nc,sizeof(states)+sizeof(inputs)+sizeof(draws)+sizeof(frames));
- fprintf(f,",\"list_draw_handlers\":%u,\"shelf_content_version\":1",list_draw_handlers);
+ fprintf(f,",\"list_draw_handlers\":%u,\"viewport_draw_handlers\":%u,\"shelf_content_version\":2",list_draw_handlers,viewport_draw_handlers);
  fputs(",\"states\":[",f);
  for(unsigned i=0;i<ns;i++){
   State *s=states+i;fprintf(f,"%s{\"at\":%"G_GINT64_FORMAT",\"end\":%"G_GINT64_FORMAT",\"ok\":%s",i?",":"",s->at,s->end,s->ok?"true":"false");
@@ -188,13 +204,17 @@ __attribute__((destructor)) static void finish(void){
  for(unsigned i=0;i<nd;i++){
   Draw *d=draws+i;fprintf(f,"%s{\"at\":%"G_GINT64_FORMAT",\"clock\":%u,\"counter\":%"G_GINT64_FORMAT",\"kind\":%u",
    i?",":"",d->at,d->clock,d->counter,d->kind);
-  if(d->kind==2u){
+  if(d->kind==2u || d->kind==3u){
    F08ShelfContent *c=&d->content;
    fprintf(f,",\"shelf_content\":{\"at\":%"G_GINT64_FORMAT",\"top_id\":%"G_GINT64_FORMAT",\"index\":%d,"
     "\"x\":%d,\"y\":%d,\"width\":%d,\"height\":%d,\"scroll\":%.17g,"
-    "\"available\":%s,\"list_drawable\":%s,\"row_drawable\":%s,\"clip_intersects\":%s}",
+    "\"available\":%s,\"list_drawable\":%s,\"row_drawable\":%s,\"clip_intersects\":%s,"
+    "\"draw_target\":\"%s\",\"target_drawable\":%s,\"draw_x\":%d,\"draw_y\":%d,"
+    "\"clip_x\":%.17g,\"clip_y\":%.17g,\"clip_width\":%.17g,\"clip_height\":%.17g}",
     c->at,c->top_id,c->index,c->x,c->y,c->width,c->height,c->scroll,
-    c->available?"true":"false",c->list_drawable?"true":"false",c->row_drawable?"true":"false",c->clip_intersects?"true":"false");
+    c->available?"true":"false",c->list_drawable?"true":"false",c->row_drawable?"true":"false",c->clip_intersects?"true":"false",
+    c->draw_target==2?"viewport":"list",c->target_drawable?"true":"false",c->draw_x,c->draw_y,
+    c->clip_x,c->clip_y,c->clip_width,c->clip_height);
   }
   fputc('}',f);
  }
