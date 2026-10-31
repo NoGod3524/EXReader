@@ -14,11 +14,26 @@
     "docs/reader-total-progress/DOT_F10_SAFETY_20261031.md"
   ],
   "ci_budget": {
-    "runs": 1,
+    "current_round": 2,
+    "additional_runs": 1,
     "linux_minutes": 45,
     "audit_minutes": 15,
     "automatic_reruns": 0
   },
   "production_writes": false,
-  "full_f10_complete": false
+  "full_f10_complete": false,
+  "preserved_runs": [
+    {
+      "id": 41252143789,
+      "attempt": 1,
+      "source": "a650340012ef112731b03388a0c4367621e9b82a",
+      "result": "failure before probe"
+    },
+    {
+      "id": 41252520631,
+      "attempt": 1,
+      "source": "65cf2e26afbc2337b6f136664dbfa883c031ac9e",
+      "result": "read-only diagnosis success"
+    }
+  ]
 }
