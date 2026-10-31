@@ -141,14 +141,15 @@ def native(platform):
             "xcode":command(["xcodebuild","-version"],text=True),"os":command(["sw_vers"],text=True),
             "arch":command(["uname","-m"],text=True),"runner_image":os.environ.get("ImageVersion")})
         original_result=evidence/"original.xcresult";metrics_result=evidence/"metrics.xcresult"
-        common=["-project",project/"EXReaderHost.xcodeproj","-scheme",scheme,"-destination",destination,
-                "-derivedDataPath",derived,"-configuration","Release","-enableCodeCoverage","NO",
-                "-enableAddressSanitizer","NO","-enableThreadSanitizer","NO","-enableUndefinedBehaviorSanitizer","NO",
-                "-parallel-testing-enabled","NO","-test-timeouts-enabled","YES",
-                "-default-test-execution-time-allowance","2700","-maximum-test-execution-time-allowance","2700",
+        build_options=["-project",project/"EXReaderHost.xcodeproj","-scheme",scheme,"-destination",destination,
+                "-derivedDataPath",derived,"-configuration","Release",
                 "EXR_SDK_DIR="+str(sdk),"EXR_PRODUCTS_DIR="+str(products),"CODE_SIGNING_ALLOWED="+signing,
                 "SWIFT_OPTIMIZATION_LEVEL=-O","GCC_OPTIMIZATION_LEVEL=s"]
-        settings=json.loads(command(["xcodebuild","-showBuildSettings","-json",*common]))
+        common=[*build_options,"-enableCodeCoverage","NO","-enableAddressSanitizer","NO",
+                "-enableThreadSanitizer","NO","-enableUndefinedBehaviorSanitizer","NO",
+                "-parallel-testing-enabled","NO","-test-timeouts-enabled","YES",
+                "-default-test-execution-time-allowance","2700","-maximum-test-execution-time-allowance","2700"]
+        settings=json.loads(command(["xcodebuild","-showBuildSettings","-json",*build_options]))
         save(evidence/"build-settings.json",settings)
         targets=[row["buildSettings"] for row in settings if row.get("target")==scheme]
         need(len(targets)==1 and targets[0]["CONFIGURATION"]=="Release" and
