@@ -6,11 +6,9 @@ ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/"build/f08-windows-frame-capability"
 URL="https://github.com/GameTechDev/PresentMon/releases/download/v2.6.0/PresentMon-2.6.0-x64.exe"
 DIGEST="b2a706bc6ad475749e3b7e3409263aa1e6906d45bdcf993f6dbc0f660188f1af"
-BASE="8052bcc6b7ac112ce9b35c19117b18241aa47e05"
+BASE="8dbd61b5c3aebf17e178615763bf319d1c7e488b"
 OWNED={
  ".github/workflows/dot-f08-windows-frame-capability-20261031.yml",
- "tests/reader_f08_windows_frame_capability_20261031/CMakeLists.txt",
- "tests/reader_f08_windows_frame_capability_20261031/control.cpp",
  "tests/reader_f08_windows_frame_capability_20261031/run.py",
 }
 def need(value,message):
@@ -50,6 +48,9 @@ def controls():
         need(actual==reason,"CSV negative")
     path.write_text(head,encoding="utf-8");need(analyze_csv(path,42)["rows"]==0,"empty remains unsupported")
     return dict(positive=2,negative=2)
+def decoded(path):
+    raw=path.read_bytes()
+    return raw.decode("utf-16" if raw.startswith((b"\xff\xfe",b"\xfe\xff")) else "utf-8",errors="replace")
 def main():
     guard();OUT.mkdir(parents=True,exist_ok=False)
     result=dict(source=os.environ["GITHUB_SHA"],run=os.environ["GITHUB_RUN_ID"],
@@ -72,24 +73,26 @@ def main():
     kernel.CreateEventW.restype=ctypes.c_void_p
     kernel.SetEvent.argtypes=[ctypes.c_void_p];kernel.SetEvent.restype=ctypes.c_int
     kernel.CloseHandle.argtypes=[ctypes.c_void_p]
-    for mode in ("dxgi","gdi"):
-        folder=OUT/mode;folder.mkdir()
-        event_name="Local\\F08-"+os.environ["GITHUB_RUN_ID"]+"-"+mode
+    result["display"]=decoded(OUT/"display.txt")
+    for mode,profile in (("dxgi","display"),("gdi","display"),("dxgi","cpu_only"),("gdi","cpu_only")):
+        label=profile+"_"+mode;folder=OUT/label;folder.mkdir()
+        event_name="Local\\F08-"+os.environ["GITHUB_RUN_ID"]+"-"+label
         event=kernel.CreateEventW(None,True,False,event_name);need(event,"event")
         producer=trace=None
         try:
             with (folder/"control.jsonl").open("wb") as stream,(folder/"collector.log").open("wb") as log:
                 producer=subprocess.Popen([str(binary),mode,event_name],stdout=stream,stderr=stream)
-                session="F08-"+os.environ["GITHUB_RUN_ID"]+"-"+mode
+                session="F08-"+os.environ["GITHUB_RUN_ID"]+"-"+label
                 command=[str(collector),"--process_id",str(producer.pid),"--session_name",session,
-                    "--output_file",str(folder/"frames.csv"),"--qpc_time","--timed","12","--terminate_after_timed"]
+                    "--output_file",str(folder/"frames.csv"),"--qpc_time","--timed","12","--terminate_after_timed","--no_console_stats"]
+                if profile=="cpu_only":command.extend(["--no_track_display","--no_track_gpu","--no_track_input"])
                 save(folder/"command.json",command)
                 trace=subprocess.Popen(command,stdout=log,stderr=log)
                 deadline=time.monotonic()+10;started=False
                 while time.monotonic()<deadline and trace.poll() is None:
                     p=subprocess.run(["logman","query",session,"-ets"],capture_output=True,timeout=5)
                     (folder/"session.txt").write_bytes(p.stdout+p.stderr)
-                    if p.returncode==0:started=True;break
+                    if p.returncode==0 and "Started recording." in decoded(folder/"collector.log"):started=True;break
                     time.sleep(.2)
                 need(started,"ETW session did not start")
                 need(kernel.SetEvent(event),"start signal")
@@ -100,19 +103,23 @@ def main():
             need(all(line["pid"]==producer.pid for line in lines),"control PID")
             paints=[line for line in lines if line["kind"] in ("gdi_paint","dxgi_present")]
             need(len(paints)>=35 and all(line["result"]==0 for line in paints),"control drawing")
-            result["captures"].append(dict(mode=mode,pid=producer.pid,complete=True,draw_calls=len(paints),**analyze_csv(folder/"frames.csv",producer.pid)))
+            result["captures"].append(dict(mode=mode,profile=profile,pid=producer.pid,complete=True,draw_calls=len(paints),**analyze_csv(folder/"frames.csv",producer.pid)))
         except Exception as exc:
-            result["captures"].append(dict(mode=mode,pid=producer.pid if producer else None,
+            result["captures"].append(dict(mode=mode,profile=profile,pid=producer.pid if producer else None,
                 complete=False,error_type=type(exc).__name__,error=str(exc),rows=0,displayed_rows=0))
         finally:
             for process in (producer,trace):
                 if process and process.poll() is None:process.terminate();process.wait(timeout=10)
             kernel.CloseHandle(event)
+            if (folder/"collector.log").exists():
+                result["captures"][-1]["collector_log"]=decoded(folder/"collector.log")
             save(OUT/"receipt.json",result)
-    captures={row["mode"]:row for row in result["captures"]}
-    result.update(diagnostic_complete=all(row["complete"] for row in result["captures"]),dxgi_presentmon_observed=captures["dxgi"]["rows"]>0,
-        gdi_presentmon_observed=captures["gdi"]["rows"]>0,
-        gdi_display_timing_observed=captures["gdi"]["displayed_rows"]>0)
+    captures={(row["profile"],row["mode"]):row for row in result["captures"]}
+    result.update(diagnostic_complete=all(row["complete"] for row in result["captures"]),dxgi_presentmon_observed=captures["display","dxgi"]["rows"]>0,
+        gdi_presentmon_observed=captures["display","gdi"]["rows"]>0,
+        gdi_display_timing_observed=captures["display","gdi"]["displayed_rows"]>0,
+        dxgi_cpu_present_observed=captures["cpu_only","dxgi"]["rows"]>0,
+        gdi_cpu_present_observed=captures["cpu_only","gdi"]["rows"]>0)
     result["files"]={str(p.relative_to(OUT)):hashlib.sha256(p.read_bytes()).hexdigest()
                      for p in OUT.rglob("*") if p.is_file() and p.name!="receipt.json"}
     save(OUT/"receipt.json",result);print("F08_WINDOWS_FRAME_CAPABILITY",json.dumps(result),flush=True)

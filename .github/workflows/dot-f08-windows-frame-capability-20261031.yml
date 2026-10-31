@@ -1,7 +1,7 @@
 name: F08 Windows GDI frame measurement capability
 on:
   push:
-    branches: [codex/dot-f08-windows-frame-capability-20261031, codex/dot-f08-windows-frame-audit-20261031]
+    branches: [codex/dot-f08-windows-frame-modes-20261031]
 permissions:
   contents: read
   actions: read
@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   capability:
-    if: github.ref_name == 'codex/dot-f08-windows-frame-capability-20261031'
+    if: github.ref_name == 'codex/dot-f08-windows-frame-modes-20261031'
     runs-on: windows-2022
     timeout-minutes: 20
     steps:
