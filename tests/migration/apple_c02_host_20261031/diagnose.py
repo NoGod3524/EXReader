@@ -10,7 +10,11 @@ from pathlib import Path
 import re
 import stat
 import subprocess
+import sys
 import zipfile
+
+sys.path.insert(0,str(Path(__file__).resolve().parent.parent/'c02_completion_audit_20261031'))
+from macho_sdk import sdk_pair_diagnostic
 
 REPO = "NoGod3524/EXReader"
 WORKFLOW = ".github/workflows/dot-c02-apple-host-20261031.yml"
@@ -66,6 +70,7 @@ def main():
               "runtime/baseline/failure.json","runtime/baseline/baseline.json",
               "native/baseline/model/host-log.txt","runtime/fresh/failure.json")
     reports = {}
+    sdk_reports = []
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         seen = set()
         for info in archive.infolist():
@@ -79,6 +84,36 @@ def main():
                 data = archive.read(info)
                 reports[name] = dict(bytes=len(data),sha256=hashlib.sha256(data).hexdigest(),
                                      text=data.decode("utf-8","backslashreplace")[-24000:])
+        sdk_prefix = "installed-sdk/lib/"
+        originals = sorted(name for name in seen if name.startswith(sdk_prefix) and name.endswith(".dylib"))
+        if originals:
+            identity = json.loads(archive.read("installed-sdk/c02-sdk-identity.json"))
+            for name in originals:
+                original = archive.read(name)
+                leaf = name[len(sdk_prefix):]
+                require(hashlib.sha256(original).hexdigest() == identity["files"]["lib/"+leaf],
+                        "actual original SDK byte identity")
+                for kind in ("production","runtime"):
+                    framework = "Frameworks/" if request["platform"] == "iphonesimulator" else "Contents/Frameworks/"
+                    bundled_name = "bundles/"+kind+".app/"+framework+leaf
+                    require(bundled_name in seen,"matching bundled SDK")
+                    bundled = archive.read(bundled_name)
+                    try:
+                        report = sdk_pair_diagnostic(original,bundled)
+                    except Exception as error:
+                        report = dict(error=type(error).__name__+":"+str(error),
+                                      original_header=original[:128].hex(),bundled_header=bundled[:128].hex())
+                    report.update(provider=leaf,bundle=kind)
+                    sdk_reports.append(report)
+        (out/"macho-sdk-diagnostic.json").write_text(json.dumps(sdk_reports,indent=2)+"\n")
+        for report in sdk_reports:
+            compact = dict(report)
+            for key in ("original","bundled"):
+                if key in compact:
+                    value = compact[key]
+                    compact[key] = dict(value,commands=[cmd for cmd in value["commands"] if
+                        cmd["kind"] == 0x1d or cmd.get("segment",{}).get("name") == "__LINKEDIT"])
+            print(json.dumps(dict(diagnostic="original-sdk-macho-layout",**compact)),flush=True)
     (out/"diagnostic.json").write_text(json.dumps(dict(
         scope="diagnostic-only",full_c02_complete=False,producer=request,reports=reports),indent=2)+"\n")
     for name,record in reports.items():

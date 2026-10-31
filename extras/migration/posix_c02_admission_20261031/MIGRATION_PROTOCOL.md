@@ -42,6 +42,12 @@ The actual journal ACK must be completely and durably published before advancing
 
 pc02_floor_confirm requires a live fresh capability and exact full-floor CAS. It only completes the independently registered head through that exact floor count; it creates no floor, never upgrades expected state, and cannot discard a complete record. The seventeenth native API case actually kills a fresh process at the first FLOOR's1402 publication: recovery observes complete floor1 and the same464-byte head, refuses old count0, then confirms that exact floor and independently observes the same head nativeID grow to736 bytes.
 
+## Production ACK profile
+
+The synchronous production owner uses FLOOR payload352: original272-byte prefix, actual ACK device/inode16 at272, whole raw ACK SHA64 at288. The old pc02_floor_advance API is explicitly the component272 profile. Production pc02_floor_advance_ack requires every earlier floor to be352 and binds actual ACK identity/raw SHA; pc02_floor_check_ack independently compares a selected immutable floor to the actual observed ACK. Common chain/head logic includes the full raw352 envelope hash. The production journal refuses any272 floor, even when its count/line hashes otherwise match.
+
+Actual ACK files use the fixed296-byte PC02ACK1 header documented in ../posix_c02_migration_20261031/README.md. INPUT/B seal, manifest, ordinal, actual self nativeID, complete raw seal and canonical ABI2 line all match independently. The full raw ACK SHA includes its footer. Neither component272 receipts nor supplied line hashes alone prove this production journal binding.
+
 ## Native members and lifetime
 
 The only targets are the registered library basename and its .legacy-map.json mirror. Stage and retained names are distinct canonical sibling basenames. The exact native states are original+stage/no-retained, retained+stage/no-target, or retained+published/no-stage. An originally absent mirror never gains a retained original. Unknown objects, identities or errors refuse.

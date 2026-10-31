@@ -8,6 +8,7 @@
 #define PM_LIMIT 65536u
 #define PM_FLOOR 3u
 #define PM_FLOOR_BYTES 272u
+#define PM_ACK_FLOOR_BYTES 352u
 static int pm_noreplace(int directory,const char *from,const char *to){
 #if defined(__APPLE__)
  return renameatx_np(directory,from,directory,to,RENAME_EXCL)==0;
@@ -51,7 +52,8 @@ static int pm_name(unsigned phase,uint64_t generation,const char input[65],uint6
  if(phase==PM_FLOOR){
   if(!slot||slot>256)return 0;
   n=snprintf(out,128,"floor-%016llx-%03u",(unsigned long long)generation,(unsigned)slot);
- }else{
+ }
+ else{
   if((phase!=PC02_META_INPUT&&phase!=PC02_META_PREPARED)||slot)return 0;
   n=snprintf(out,128,"%s-%016llx-%s",phase==PC02_META_INPUT?"input":"prepared",
    (unsigned long long)generation,input);
@@ -176,7 +178,8 @@ static int pm_write(pc02_lease *h,unsigned phase,pc02_cap *cap,uint64_t slot,con
   generation=get64(h->binding+88)+1;
   zero_sha(pending);
   wh_sha256_hex(data,count,input);
- }else{
+ }
+ else{
   if((phase!=PC02_META_PREPARED&&phase!=PM_FLOOR)||!live_cap(h,cap))return 0;
   generation=h->seen.pending.generation;
   memcpy(input,h->seen.pending.input,65);
@@ -225,7 +228,8 @@ static int pm_write(pc02_lease *h,unsigned phase,pc02_cap *cap,uint64_t slot,con
  if(verify<0||!sameid(&id,&actual)||!size_exact(verify,(off_t)n)||!io_read(verify,readback,n,0)||memcmp(bytes,readback,n))goto done;
  if(close(verify)){verify=-1;
  goto done;
- }verify=-1;
+ }
+ verify=-1;
  if(!pc02_check(h)||!pm_noreplace(h->route_dir,temporary,leaf))goto done;
  pm_phase(h,1402);
  if(fsync(h->route_dir))goto done;
@@ -308,7 +312,7 @@ done:
 }
 int pc02_floor_read(pc02_lease *h,const pc02_pending_record *exact,pc02_floor *out){
  unsigned largest=0,head_count=0;
- unsigned char data[PM_FLOOR_BYTES],*head=NULL;
+ unsigned char data[PM_ACK_FLOOR_BYTES],*head=NULL;
  size_t size,head_bytes=0;
  pc02_metadata_info info;
  if(!out||!pm_exact(h,exact)||!pm_floor_slots(h,exact->generation,&largest)||
@@ -319,7 +323,7 @@ int pc02_floor_read(pc02_lease *h,const pc02_pending_record *exact,pc02_floor *o
  pc02_floor current;
  pm_floor_empty(exact,&current);
  for(unsigned k=1;k<=largest;k++){
-  if(pm_read(h,PM_FLOOR,exact,k,data,sizeof(data),&size,&info)!=1||size!=sizeof(data)||
+  if(pm_read(h,PM_FLOOR,exact,k,data,sizeof(data),&size,&info)!=1||(size!=PM_FLOOR_BYTES&&size!=PM_ACK_FLOOR_BYTES)||
      get64(data)!=current.count||memcmp(data+8,current.last_line_sha256,64)||
      memcmp(data+72,current.chain_sha256,64)||get64(data+136)!=k||memcmp(data+208,exact->manifest,64)){free(head);
      return 0;
@@ -329,6 +333,15 @@ int pc02_floor_read(pc02_lease *h,const pc02_pending_record *exact,pc02_floor *o
    return 0;
    }}
 
+  if(size==PM_ACK_FLOOR_BYTES){
+   pc02_identity ack=getid(data+272);
+   char raw[65];
+   memcpy(raw,data+288,64);
+   raw[64]=0;
+   if(!ack.inode||!nonzero(raw)){free(head);
+   return 0;
+   }
+  }
   char line[65];
   memcpy(line,data+144,64);
   line[64]=0;
@@ -344,14 +357,24 @@ int pc02_floor_read(pc02_lease *h,const pc02_pending_record *exact,pc02_floor *o
  *out=current;
  return 1;
 }
-int pc02_floor_advance(pc02_lease *h,pc02_cap *cap,const pc02_floor *expected,
- const char line[65],pc02_floor *out){
+static int pm_floor_advance(pc02_lease *h,pc02_cap *cap,const pc02_floor *expected,
+ const char line[65],const pc02_identity *ack,const char *raw,pc02_floor *out){
  pc02_floor actual,check;
  pc02_metadata_info info;
- unsigned char bytes[PM_FLOOR_BYTES];
+ unsigned char bytes[PM_ACK_FLOOR_BYTES];
  char sha[65];
  if(!out||!expected||!nonzero(line)||!live_cap(h,cap)||h->borrows||
     !pc02_floor_read(h,&h->seen.pending,&actual)||!pm_floor_same(expected,&actual)||actual.count>=256)return 0;
+ size_t payload_size=ack?PM_ACK_FLOOR_BYTES:PM_FLOOR_BYTES;
+ if(ack){
+  if(!ack->inode||!nonzero(raw))return 0;
+  for(uint64_t k=1;k<=actual.count;k++){
+   unsigned char prior[PM_ACK_FLOOR_BYTES];
+   size_t n=0;
+   pc02_metadata_info checked;
+   if(pm_read(h,PM_FLOOR,&h->seen.pending,k,prior,sizeof(prior),&n,&checked)!=1||n!=PM_ACK_FLOOR_BYTES)return 0;
+  }
+ }
  memset(bytes,0,sizeof(bytes));
  put64(bytes,actual.count);
  memcpy(bytes+8,actual.last_line_sha256,64);
@@ -359,7 +382,10 @@ int pc02_floor_advance(pc02_lease *h,pc02_cap *cap,const pc02_floor *expected,
  put64(bytes+136,actual.count+1);
  memcpy(bytes+144,line,64);
  memcpy(bytes+208,actual.manifest,64);
- if(!pm_write(h,PM_FLOOR,cap,actual.count+1,bytes,sizeof(bytes),sha,&info)||
+ if(ack){putid(bytes+272,ack);
+ memcpy(bytes+288,raw,64);
+ }
+ if(!pm_write(h,PM_FLOOR,cap,actual.count+1,bytes,payload_size,sha,&info)||
     !pm_head_catchup(h,cap,(unsigned)(actual.count+1))||
     !pc02_floor_read(h,&h->seen.pending,&check)||check.count!=actual.count+1||
     memcmp(check.last_line_sha256,line,65)||memcmp(check.chain_sha256,info.sha256,65)){
@@ -368,6 +394,24 @@ int pc02_floor_advance(pc02_lease *h,pc02_cap *cap,const pc02_floor *expected,
  }
  *out=check;
  return 1;
+}
+int pc02_floor_advance(pc02_lease *h,pc02_cap *cap,const pc02_floor *expected,const char line[65],pc02_floor *out){
+ return pm_floor_advance(h,cap,expected,line,NULL,NULL,out);
+}
+int pc02_floor_advance_ack(pc02_lease *h,pc02_cap *cap,const pc02_floor *expected,
+ const char line[65],const pc02_identity *ack,const char raw[65],pc02_floor *out){
+ return ack&&raw&&pm_floor_advance(h,cap,expected,line,ack,raw,out);
+}
+int pc02_floor_check_ack(pc02_lease *h,const pc02_pending_record *exact,uint64_t slot,
+ const char line[65],const pc02_identity *ack,const char raw[65]){
+ unsigned char data[PM_ACK_FLOOR_BYTES];
+ size_t n=0;
+ pc02_metadata_info info;
+ pc02_floor floor;
+ if(!ack||!ack->inode||!nonzero(line)||!nonzero(raw)||!pc02_floor_read(h,exact,&floor)||!slot||slot>floor.count||
+    pm_read(h,PM_FLOOR,exact,slot,data,sizeof(data),&n,&info)!=1||n!=PM_ACK_FLOOR_BYTES)return 0;
+ pc02_identity stored=getid(data+272);
+ return sameid(ack,&stored)&&!memcmp(data+144,line,64)&&!memcmp(data+288,raw,64);
 }
 int pc02_floor_confirm(pc02_lease *h,pc02_cap *cap,const pc02_floor *expected){
  pc02_floor actual,after;
