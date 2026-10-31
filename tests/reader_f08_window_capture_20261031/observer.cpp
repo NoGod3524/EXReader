@@ -92,10 +92,13 @@ int wmain(int argc,wchar_t**argv){
   std::vector<unsigned char> previous;com_ptr<ID3D11Texture2D> staging;D3D11_TEXTURE2D_DESC staging_desc{};
   auto closed_token=item.Closed([&,gate](auto const&,auto const&){std::lock_guard<std::mutex> guard(gate->lock);if(!gate->stopping)closed=true;});
   auto token=pool.FrameArrived([&,gate](auto const&sender,auto const&){
+   auto callback_entry=tick();
    std::lock_guard<std::mutex> guard(gate->lock);if(gate->stopping || failed)return;
    try{
-    while(auto frame=sender.TryGetNextFrame()){
-     auto begin=tick();RECT bounds{},after_bounds{};
+    for(;;){
+     auto acquire_begin=tick();auto frame=sender.TryGetNextFrame();auto acquire_end=tick();
+     if(!frame)break;
+     auto begin=acquire_end;RECT bounds{},after_bounds{};
      check_hresult(DwmGetWindowAttribute(root,DWMWA_EXTENDED_FRAME_BOUNDS,&bounds,sizeof(bounds)));
      std::array<Region,2> before={region(root,119),region(root,123)};
      auto content=frame.ContentSize();auto relative=frame.SystemRelativeTime().count();
@@ -126,8 +129,8 @@ int wmain(int argc,wchar_t**argv){
       last=frames;previous=std::move(bytes);saved_pixel_bytes+=previous.size();changed_images++;
       auto path=folder/(std::to_string(last)+".png");bitmap(path,previous,size.Width,size.Height);saved_bytes+=fs::file_size(path);
      }
-     std::printf("{\"kind\":\"frame\",\"index\":%u,\"system_relative_100ns\":%lld,\"callback_qpc\":%lld,\"copy_qpc\":%lld,\"map_start_qpc\":%lld,\"map_end_qpc\":%lld,\"readback_finished_qpc\":%lld,\"width\":%d,\"height\":%d,\"changed\":%s,\"image\":\"%u.png\",\"regions\":[",
-      frames,(long long)relative,begin,copy,map_begin,map_end,tick(),size.Width,size.Height,changed?"true":"false",last);
+     std::printf("{\"kind\":\"frame\",\"index\":%u,\"system_relative_100ns\":%lld,\"callback_entry_qpc\":%lld,\"acquire_begin_qpc\":%lld,\"acquire_end_qpc\":%lld,\"callback_qpc\":%lld,\"copy_qpc\":%lld,\"map_start_qpc\":%lld,\"map_end_qpc\":%lld,\"readback_finished_qpc\":%lld,\"width\":%d,\"height\":%d,\"changed\":%s,\"image\":\"%u.png\",\"regions\":[",
+      frames,(long long)relative,callback_entry,acquire_begin,acquire_end,begin,copy,map_begin,map_end,tick(),size.Width,size.Height,changed?"true":"false",last);
      for(unsigned j=0;j<2;j++){
       const auto&r=before[j];bool stable=same(r,after[j])&&EqualRect(&bounds,&after_bounds);
       RECT crop={r.rect.left-bounds.left,r.rect.top-bounds.top,r.rect.right-bounds.left,r.rect.bottom-bounds.top};
