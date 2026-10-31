@@ -191,13 +191,34 @@ def replay():
         control=load(raw/"f08-causal-control/draw.json")
         need(control.get("passed") is True and control.get("hook_only")==0 and control.get("with_handler")==1 and
              control.get("callbacks")==1 and control.get("pixels_equal") is True and control.get("nonempty") is True,"native draw control")
-        results=[]
+        results=[];diagnostics=[]
         for row in top["cohorts"]:
             observations=load(raw/("f08-causal/launch-%02d/%d.json"%(row["launch"],row["pid"])))
             need(observations.get("shelf_content_version")==1,"native shelf content schema")
             need(observations["executable"]==str((ROOT/"build/perf-package/EXReader-Linux/bin/exreader-linux").resolve()),"native executable path")
-            analyzed=V.analyze(observations,row,ident)
-            results.append({**{key:row[key] for key in ("launch","pid","kind")},**analyzed})
+            try:analyzed=V.analyze(observations,row,ident)
+            except V.Invalid as error:
+                detail={key:row[key] for key in ("launch","pid","kind")}
+                detail.update(error=str(error),draw_counts={str(kind):sum(d["kind"]==kind for d in observations["draws"]) for kind in (1,2)},actions=[])
+                for action in row["actions"]:
+                    item={key:action[key] for key in ("id","field","before","expected","book","previous_generation","previous_sequence","inject_start","inject_end","effect_at","done")}
+                    try:V.analyze(observations,{**row,"actions":[action]},ident);item["passed"]=True
+                    except V.Invalid as failure:item.update(passed=False,error=str(failure))
+                    start,end=action["inject_start"],action["done"]+250000
+                    # Extra 250 ms is diagnostic context only; V.analyze's strict window is unchanged.
+                    item["context_end"]=end
+                    for name in ("inputs","states","draws"):
+                        rows=[value for value in observations[name] if start<=value["at"]<=end]
+                        item[name+"_count"]=len(rows);item[name]=rows[:128]
+                    frames=[value for value in observations["frames"] if value["before"]<=end and value["after"]>=start]
+                    item["frame_count"]=len(frames);item["frames"]=frames[:128]
+                    detail["actions"].append(item)
+                diagnostics.append(detail)
+                print("F08_CAUSAL_DIAGNOSTIC",json.dumps(detail),flush=True)
+            else:results.append({**{key:row[key] for key in ("launch","pid","kind")},**analyzed})
+        report["launch_failures"]=[{key:item[key] for key in ("launch","pid","kind","error","draw_counts")} for item in diagnostics]
+        save(dest/"diagnostics.json",diagnostics)
+        need(not diagnostics,"all six native causal joins")
         summary={"passed":True,"new_launches":6,"new_actions":18,"results":results,"draw_control":control,
                  "physical_display_presented":False,"F08_accepted":False}
         report.update(coverage(summary),replay_complete=True,program_sha256=built["program_sha256"],
