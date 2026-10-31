@@ -21,6 +21,14 @@ public abstract class C02ActorService extends Service {
             if (message.what == SOURCE) {
                 library = new NativeLibrary(this, new File(getFilesDir(), "library.db"));
                 source = library.source(message.getData().getLong("book"));
+                try (NativeLibrary.Borrow other = library.borrow()) {
+                    boolean refused = false;
+                    try { library.closePrimaryForAdmissionTest(); }
+                    catch (NativeAdmission.Required expected) { refused = true; }
+                    if (!refused || other.checked() == 0 || library.books().length != 1 || C02Probe.canOwn(this))
+                        throw new AssertionError("Mixed borrow refusal did not retain Java/SDK/admission ownership");
+                    result.putBoolean("mixed_borrow_refused", true);
+                }
                 library.closePrimaryForAdmissionTest();
                 byte[] actual = new byte[C02Probe.ORIGINAL.length];
                 if (source.read(0, actual, actual.length) != actual.length || !Arrays.equals(actual, C02Probe.ORIGINAL))

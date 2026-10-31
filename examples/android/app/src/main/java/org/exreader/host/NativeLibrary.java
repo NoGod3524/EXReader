@@ -148,8 +148,9 @@ public final class NativeLibrary implements AutoCloseable {
     /** Debug actor: exercise native SDK-close while an actual Source remains. */
     void closePrimaryForAdmissionTest() {
         if (!BuildConfig.C02_ADMISSION_TEST) throw new IllegalStateException("Test actor is disabled");
+        nativeClosePrimaryForSourceTest(checked(), borrows);
+        handle = 0;
         closeRequested = true;
-        closeHandle();
     }
 
     public static String identity() {
@@ -306,6 +307,7 @@ public final class NativeLibrary implements AutoCloseable {
     private static native void nativeCloseSource(long source);
     private static native boolean nativeBounded(long handle,long bookId);
     private static native void nativeClose(long handle);
+    private static native void nativeClosePrimaryForSourceTest(long handle, int expectedRawSources);
     private static native String[][] nativeBooks(long handle);
     private static native long[] nativeImportFile(long handle, String path, int format, String title,
                                                  boolean legacy, boolean historical);
