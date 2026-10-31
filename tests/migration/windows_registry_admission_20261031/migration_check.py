@@ -71,6 +71,23 @@ class Runner:
             rows=connection.execute("SELECT id,title,source FROM books ORDER BY id").fetchall()
             return [dict(id=r[0],title=r[1],sha=hashlib.sha256(r[2]).hexdigest()) for r in rows]
         finally:connection.close()
+    def independent_sqlite(self,target):
+        raw=pathlib.Path(str(target)+".legacy-map.json").read_bytes();data=json.loads(raw)
+        book=next(b for b in data["books"] if b["legacy_id"]=="b-txt")
+        note=next(n for n in data["notes"] if n["legacy_id"]=="n-txt-unique")
+        ambiguous=next(n for n in data["notes"] if n["legacy_id"]=="n-txt-ambiguous")
+        db=sqlite3.connect(target.as_uri()+"?mode=ro",uri=True)
+        try:
+            internal=db.execute("SELECT id,data FROM exr_migration_ledger").fetchall()
+            assert len(internal)==1 and internal[0][0]==1 and bytes(internal[0][1])==raw
+            source=db.execute("SELECT source FROM books WHERE id=?",(book["book_id"],)).fetchone()
+            assert source and bytes(source[0])==L.TXT
+            actual=db.execute("SELECT book_id,start,end,text,anchor_exact FROM notes WHERE id=?",(note["new_id"],)).fetchone()
+            assert note["located"] and actual==(book["book_id"],note["start"],note["end"],"keep this","unique sentence about silver tides"),(actual,note)
+            assert not ambiguous["located"] and ambiguous["new_id"] is None
+            assert db.execute("SELECT count(*) FROM notes WHERE book_id=? AND text='appears twice'",(book["book_id"],)).fetchone()[0]==0
+            return dict(ledger_sha=hashlib.sha256(raw).hexdigest(),book_id=book["book_id"],source_sha=hashlib.sha256(source[0]).hexdigest(),note_id=note["new_id"],start=actual[1],end=actual[2],text=actual[3],anchor=actual[4],ambiguous_absent=True)
+        finally:db.close()
     def input_binding(self,folder,target,producer):
         matches=[]
         base=winreg.OpenKey(winreg.HKEY_CURRENT_USER,r"Software\EXReaderC02Admission")
@@ -114,7 +131,7 @@ class Runner:
         self.input_binding(folder,target,self.a.tool)
         self.call(folder,self.a.tool,"verify",target,pack)
         self.call(folder,self.a.admission,"check",target)
-        after=self.contents(target)
+        after=self.contents(target);independent_first=self.independent_sqlite(target)
         assert all(row in after for row in baseline)
         assert len(after)==len(baseline)+4,(baseline,after)
         assert any(sha(p)==before for p in folder.glob("*-0.retained"))
@@ -131,7 +148,8 @@ class Runner:
         assert after==self.contents(target)
         assert ledger==pathlib.Path(str(target)+".legacy-map.json").read_bytes()
         assert old_native=={p.name:sha(p) for p in root.iterdir()}
-        return dict(before=before,after=sha(target),baseline=baseline,final=after,old_native=old_native)
+        return dict(before=before,after=sha(target),baseline=baseline,final=after,old_native=old_native,
+                    independent_first=independent_first,independent_second=self.independent_sqlite(target))
     def strict_abort(self):
         folder,target,pack,root=self.fixture("strict-policy-abort")
         before=sha(target);pack.write_bytes(L.build_pack([L.entry(L.book_record("unsupported","data.xyz"),b"unsupported")],[]))
@@ -154,7 +172,10 @@ class Runner:
             with log.open("wb") as out:
                 child=subprocess.Popen([str(self.a.test_tool),"migrate",str(target),str(pack)],stdout=out,stderr=subprocess.STDOUT,env=env)
                 try:
-                    wait=K.WaitForSingleObject(ready,90000)
+                    wait=258
+                    for _ in range(90):
+                        wait=K.WaitForSingleObject(ready,1000)
+                        if wait!=258 or child.poll() is not None:break
                     assert wait==0,dict(wait=wait,exit=child.poll(),log=log.read_text(errors="replace"))
                     self.call(folder,self.a.admission,"check",target,success=False)
                     child.kill();child.wait(timeout=15)
@@ -175,14 +196,16 @@ class Runner:
         recovered=self.call(folder,self.a.tool,"recover",target)
         self.call(folder,self.a.admission,"check",target)
         published=phase in (800,801,802,803,905,906,907,908,203,204) or (phase in (1,2,3,4,5,6,7,8,9,10) and sequence is not None and sequence>=10)
+        independent=None
         if published:
             self.call(folder,self.a.tool,"verify",target,pack)
             assert len(self.contents(target))==len(before)+1
+            independent=self.independent_sqlite(target)
             assert any(sha(p)==original for p in folder.glob("*-0.retained"))
         else:
             assert sha(target)==original and self.contents(target)==before
         return dict(phase=phase,member=member,sequence=sequence,published=published,original=original,
-                    recovered=sha(target),owner_exit=child.returncode,recovery=recovered["stdout"])
+                    recovered=sha(target),owner_exit=child.returncode,recovery=recovered["stdout"],independent=independent)
 
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 def main():
@@ -193,7 +216,7 @@ def main():
     a.output.mkdir(parents=True,exist_ok=True)
     r=Runner(a);r.run("actual-import-and-second-epoch",r.normal);r.run("strict-policy-abort",r.strict_abort)
     for phase in (900,901,902,903,904,905,906,907,908,201,202,203,204):
-        r.run(f"actual-owner-kill-{phase}",lambda phase=phase:r.killed(phase,1 if phase in (906,907) else 0))
+        r.run(f"actual-owner-kill-{phase}",lambda phase=phase:r.killed(phase,1 if phase in (906,907,908,203,204) else 0))
     for member in (0,1):
         for phase in (800,802,803):
             r.run(f"native-member-kill-{phase}-{member}",lambda phase=phase,member=member:r.killed(phase,member))
