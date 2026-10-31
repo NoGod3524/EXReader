@@ -154,6 +154,7 @@ int reader_catalog_close(reader_catalog **catalog,reader_catalog_error *e) {
   free(c);*catalog=NULL;return SQLITE_OK;
 }
 
+#if defined(_WIN32) || defined(__linux__)
 #ifdef _WIN32
 static int local_fixed_catalog(sqlite3 *db) {
   const char *path=sqlite3_db_filename(db,"main");
@@ -172,6 +173,20 @@ done:
   if(file!=INVALID_HANDLE_VALUE) CloseHandle(file);
   free(wide);free(resolved);return local;
 }
+#else
+#include <sys/vfs.h>
+#include <linux/magic.h>
+static int local_fixed_catalog(sqlite3 *db) {
+  const char *path=sqlite3_db_filename(db,"main");struct statfs filesystem;
+  if(!path || statfs(path,&filesystem)) return 0;
+  /* Only known local filesystems qualify; network/unknown mounts retain DELETE. */
+  switch((unsigned long)filesystem.f_type) {
+    case EXT4_SUPER_MAGIC: case XFS_SUPER_MAGIC: case BTRFS_SUPER_MAGIC: case F2FS_SUPER_MAGIC:
+      return 1;
+    default:return 0;
+  }
+}
+#endif
 void reader_catalog_prepare_repair(reader_catalog *c) {
   sqlite3_stmt *s=NULL;
   if(enter(c,NULL)!=SQLITE_OK) return;
