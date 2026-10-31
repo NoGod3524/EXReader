@@ -2,6 +2,7 @@
 #include <exr_wh3_win.h>
 #include <sddl.h>
 #include <winternl.h>
+#include <wincrypt.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -308,7 +309,8 @@ int wh3wr_open(const wchar_t *library,unsigned mode,const wh3w_controls *control
  wh3wr_registration *r;int ok=0;
  if(out)*out=NULL;if(!out||(mode!=WH3WG_SHARED&&mode!=WH3WG_OWNER&&mode!=WH3WG_RECOVER))return 0;
  r=calloc(1,sizeof(*r));if(!r)return 0;r->target=INVALID_HANDLE_VALUE;r->mode=mode;
- if(!rpath(library,r->library,r->route)||!ropenkey(r->route,0,&r->key)||!rread(r->key,r->record)||!rdecode(r)||!rpins(r))goto done;
+ if(!rpath(library,r->library,r->route)||!ropenkey(r->route,0,&r->key)||!rread(r->key,r->record)||!rdecode(r)||!rpins(r)||
+    (mode!=WH3WG_RECOVER&&!rabsent(r->key,L"Checkpoint")))goto done;
  if(!wh3wg_open(r->root,r->ids,r->domain,&r->grant,mode,controls,&r->gate)||
     !rcurrent(r)||!rtarget(r,mode==WH3WG_RECOVER,mode!=WH3WG_RECOVER)||!ridentity(r,mode!=WH3WG_RECOVER)||!rlegacy(r->library))goto done;
  /* Readers need query rights only. Owners get write rights only after custody. */
@@ -437,7 +439,8 @@ done:
  if(!wh3wr_close(r))return 0;return ok;
 }
 int wh3wr_check(wh3wr_registration *r) {
- return r&&ridentity(r,1)&&rcurrent(r)&&rlegacy(r->library)&&wh3wg_check(r->gate);
+ return r&&ridentity(r,1)&&rcurrent(r)&&rlegacy(r->library)&&
+    (r->mode==WH3WG_RECOVER||rabsent(r->key,L"Checkpoint"))&&wh3wg_check(r->gate);
 }
 int wh3wr_journal(wh3wr_registration *r,const wh_binding *b,const wh_gates *g,
  const wh3w_controls *controls,wh3w_store **out) {
@@ -536,4 +539,200 @@ int wh3wr_finish(wh3wr_registration *r,wh3w_store *store,const wh3_tip *tip,
  {wh3w_identity after;if(!ridentity(r,0)||!rid(r->target,&after,0)||!reqid(&target,&after))return 0;}
  r->grant=grant;r->ids[4]=target;r->cap=NULL;
  return rwrite(r,0);
+}
+/* Immutable transaction inputs are retained by native-domain identity. A
+   subsequent epoch uses different value names, preserving every earlier proof. */
+#define RTMAX 65536u
+#define RTH (24u+RBYTES)
+static int rtname(wh3wr_registration *r,unsigned phase,wchar_t name[80]) {
+ const wchar_t *prefix;unsigned k;size_t n;
+ if(phase!=WH3WR_INPUT&&phase!=WH3WR_PREPARED)return 0;
+ prefix=phase==WH3WR_INPUT?L"Transaction-":L"Prepared-";
+ wcscpy_s(name,80,prefix);n=wcslen(name);
+ for(k=0;k<49;k++)name[n+k]=(wchar_t)r->domain[k];return 1;
+}
+static int rtbound(wh3wr_registration *r,const unsigned char *old) {
+ /* The same domain may advance exactly once from its recorded initial CLEAN
+    to the independently proven terminal target. An epoch never reuses it. */
+ unsigned char next[RBYTES];uint64_t generation=rget(old+56);char hash[65];
+ wh_sha256_hex(old,RSEAL,hash);if(memcmp(old,"WH3REG01",8)||memcmp(hash,old+RSEAL,64))return 0;
+ if(!memcmp(old,r->record,RBYTES))return 1;
+ if(generation==UINT64_MAX||r->grant.generation!=generation+1)return 0;
+ memcpy(next,old,RBYTES);memcpy(next+56,r->record+56,72);
+ memcpy(next+224,r->record+224,24);memcpy(next+RSEAL,r->record+RSEAL,64);
+ return !memcmp(next,r->record,RBYTES);
+}
+int wh3wr_transaction_read(wh3wr_registration *r,unsigned phase,void *data,
+ size_t capacity,size_t *size) {
+ wchar_t name[80];unsigned char *bytes=NULL;DWORD n=0,type=0,expected;char hash[65];int ok=0;
+ if(size)*size=0;
+ if(!r||!data||!size||r->mode==WH3WG_SHARED||!rtname(r,phase,name)||!rcurrent(r)||
+    !ridentity(r,0)||!wh3wg_check(r->gate))return 0;
+ if(RegQueryValueExW(r->key,name,NULL,&type,NULL,&n)!=ERROR_SUCCESS||type!=REG_BINARY||
+    n<RTH+64||n>RTH+RTMAX+64)return 0;
+ expected=n;bytes=malloc(n);if(!bytes)return 0;
+ if(RegQueryValueExW(r->key,name,NULL,&type,bytes,&n)!=ERROR_SUCCESS||type!=REG_BINARY||n!=expected||
+    memcmp(bytes,"WH3TXN01",8)||rget(bytes+8)!=phase||rget(bytes+16)!=n-RTH-64||
+    n-RTH-64>capacity||!rtbound(r,bytes+24))goto done;
+ wh_sha256_hex(bytes,n-64,hash);if(memcmp(hash,bytes+n-64,64))goto done;
+ memcpy(data,bytes+RTH,n-RTH-64);*size=n-RTH-64;ok=rcurrent(r)&&ridentity(r,0)&&wh3wg_check(r->gate);
+done:free(bytes);if(!ok)*size=0;return ok;
+}
+int wh3wr_transaction_write(wh3wr_registration *r,unsigned phase,const void *data,size_t size) {
+ wchar_t name[80];unsigned char *bytes=NULL,*check=NULL;DWORD n,type=0,got;char hash[65];int ok=0;
+ if(!r||!data||!size||size>RTMAX||r->mode!=WH3WG_OWNER||!rtname(r,phase,name)||
+    !wh3wr_check(r)||!rabsent(r->key,name)||(phase==WH3WR_INPUT?(r->cap!=NULL||wh3wg_generation(r->gate)!=0):r->cap==NULL))return 0;
+ if(phase==WH3WR_PREPARED){
+  void *input=malloc(RTMAX);size_t input_size=0;int valid=input&&wh3wr_transaction_read(r,WH3WR_INPUT,input,RTMAX,&input_size)&&input_size;
+  free(input);if(!valid)return 0;
+ }
+ n=(DWORD)(RTH+size+64);bytes=calloc(1,n);check=malloc(n);if(!bytes||!check)goto done;
+ memcpy(bytes,"WH3TXN01",8);rput(bytes+8,phase);rput(bytes+16,size);
+ memcpy(bytes+24,r->record,RBYTES);memcpy(bytes+RTH,data,size);wh_sha256_hex(bytes,n-64,hash);memcpy(bytes+n-64,hash,64);
+ got=n;
+ if(RegSetValueExW(r->key,name,0,REG_BINARY,bytes,n)!=ERROR_SUCCESS||RegFlushKey(r->key)!=ERROR_SUCCESS||
+    RegQueryValueExW(r->key,name,NULL,&type,check,&got)!=ERROR_SUCCESS||type!=REG_BINARY||got!=n||memcmp(bytes,check,n)||
+    !wh3wr_check(r))goto done;
+ ok=1;
+done:
+ if(!ok&&r&&r->cap){wh3w_domain domain;wh3wg_domain(r->gate,&domain);domain.poison(domain.context,r->cap,"transaction-proof-uncertain");}
+ free(bytes);free(check);return ok;
+}
+/* Checkpointing switches to newly created native objects; it never truncates
+   or adopts an old journal. A protected intent blocks all ordinary admission
+   until the exact new binding is durable. Every old object/value is retained. */
+#define RCKNEW (8u+RBYTES)
+#define RCKPATH (8u+2u*RBYTES)
+#define RCKSEAL (RCKPATH+2u*MAX_PATH)
+#define RCKBYTES (RCKSEAL+64u)
+static int rrecord_valid(const unsigned char *bytes) {
+ char hash[65];if(memcmp(bytes,"WH3REG01",8))return 0;
+ wh_sha256_hex(bytes,RSEAL,hash);return !memcmp(hash,bytes+RSEAL,64);
+}
+static int rcheckpoint_read(HKEY key,unsigned char bytes[RCKBYTES]) {
+ DWORD n=RCKBYTES,type=0;char hash[65];unsigned char zero[RBYTES]={0};wchar_t path[MAX_PATH];
+ if(RegQueryValueExW(key,L"Checkpoint",NULL,&type,bytes,&n)!=ERROR_SUCCESS||type!=REG_BINARY||
+    n!=RCKBYTES||memcmp(bytes,"WH3CKP01",8)||!rrecord_valid(bytes+8))return 0;
+ wh_sha256_hex(bytes,RCKSEAL,hash);if(memcmp(hash,bytes+RCKSEAL,64))return 0;
+ if(memcmp(bytes+RCKNEW,zero,RBYTES)&&!rrecord_valid(bytes+RCKNEW))return 0;
+ memcpy(path,bytes+RCKPATH,sizeof(path));
+ if(!wmemchr(path,0,MAX_PATH))return 0;
+ {wchar_t original[MAX_PATH],*slash;size_t parent,k,n=wcslen(path);
+  memcpy(original,bytes+8+768,sizeof(original));if(!wmemchr(original,0,MAX_PATH))return 0;
+  slash=wcsrchr(original,L'\\');if(!slash)return 0;parent=(size_t)(slash-original)+1;
+  if(n!=parent+36||wmemcmp(path,original,parent)||wmemcmp(path+parent,L"wh3-",4))return 0;
+  for(k=parent+4;k<n;k++)if(!((path[k]>=L'0'&&path[k]<=L'9')||(path[k]>=L'a'&&path[k]<=L'f')))return 0;
+  for(k=n+1;k<MAX_PATH;k++)if(path[k])return 0;
+ }
+ if(memcmp(bytes+RCKNEW,zero,RBYTES)&&
+    (memcmp(bytes+RCKPATH,bytes+RCKNEW+768,2*MAX_PATH)||
+     memcmp(bytes+8+224,bytes+RCKNEW+224,24)||
+     memcmp(bytes+8+248,bytes+RCKNEW+248,2*MAX_PATH)||rget(bytes+RCKNEW+56)))return 0;
+ return 1;
+}
+static int rcheckpoint_write(wh3wr_registration *r,unsigned char bytes[RCKBYTES],
+ const unsigned char *expected) {
+ unsigned char check[RCKBYTES];char hash[65];
+ if(!rcurrent(r)||(expected?(!rcheckpoint_read(r->key,check)||memcmp(check,expected,RCKBYTES)):
+    !rabsent(r->key,L"Checkpoint")))return 0;
+ wh_sha256_hex(bytes,RCKSEAL,hash);memcpy(bytes+RCKSEAL,hash,64);
+ return RegSetValueExW(r->key,L"Checkpoint",0,REG_BINARY,bytes,RCKBYTES)==ERROR_SUCCESS&&
+    RegFlushKey(r->key)==ERROR_SUCCESS&&rcheckpoint_read(r->key,check)&&!memcmp(bytes,check,RCKBYTES);
+}
+static int rcheckpoint_retire(wh3wr_registration *r,const unsigned char bytes[RCKBYTES]) {
+ wchar_t name[80];unsigned k;DWORD n=RCKBYTES,type=0;unsigned char check[RCKBYTES];
+ wcscpy_s(name,80,L"Checkpoint-");for(k=0;k<64;k++)name[11+k]=(wchar_t)bytes[RCKSEAL+k];name[75]=0;
+ if(!rcurrent(r)||!rcheckpoint_read(r->key,check)||memcmp(bytes,check,RCKBYTES))return 0;
+ if(rabsent(r->key,name)){
+  if(RegSetValueExW(r->key,name,0,REG_BINARY,bytes,RCKBYTES)!=ERROR_SUCCESS||RegFlushKey(r->key)!=ERROR_SUCCESS)return 0;
+ }
+ if(RegQueryValueExW(r->key,name,NULL,&type,check,&n)!=ERROR_SUCCESS||type!=REG_BINARY||
+    n!=RCKBYTES||memcmp(bytes,check,RCKBYTES))return 0;
+ return RegDeleteValueW(r->key,L"Checkpoint")==ERROR_SUCCESS&&RegFlushKey(r->key)==ERROR_SUCCESS&&
+    rabsent(r->key,L"Checkpoint");
+}
+static int rclean(wh3wr_registration *r) {
+ wh3wg_grant grant;
+ return r&&ridentity(r,1)&&reqid(&r->live_target,&r->ids[4])&&rcurrent(r)&&rlegacy(r->library)&&
+    wh3wg_clean(r->gate,&grant)&&grant.generation==r->grant.generation&&!memcmp(grant.seal,r->grant.seal,65);
+}
+static int rempty_pair(wh3wr_registration *r) {
+ const wchar_t *names[]={L"journal.bin",L"intent.bin"};unsigned k;
+ for(k=0;k<2;k++){
+  wchar_t path[MAX_PATH];HANDLE h;wh3w_identity id;LARGE_INTEGER size;int ok;
+  swprintf_s(path,MAX_PATH,L"%ls\\%ls",r->root,names[k]);
+  h=CreateFileW(path,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+  if(h==INVALID_HANDLE_VALUE)return 0;
+  ok=rid(h,&id,0)&&reqid(&id,&r->ids[k+2])&&GetFileSizeEx(h,&size)&&size.QuadPart==0;
+  CloseHandle(h);if(!ok)return 0;
+ }
+ return 1;
+}
+static int rnewroot(wh3wr_registration *old,wchar_t root[MAX_PATH]) {
+ HCRYPTPROV provider=0;unsigned char random[16];wchar_t leaf[37];const wchar_t *slash;
+ static const wchar_t hex[]=L"0123456789abcdef";unsigned k;size_t n;int ok;
+ if(!CryptAcquireContextW(&provider,NULL,NULL,PROV_RSA_AES,CRYPT_VERIFYCONTEXT))return 0;
+ ok=CryptGenRandom(provider,sizeof(random),random)!=0;CryptReleaseContext(provider,0);if(!ok)return 0;
+ wcscpy_s(leaf,37,L"wh3-");for(k=0;k<16;k++){leaf[4+2*k]=hex[random[k]>>4];leaf[5+2*k]=hex[random[k]&15];}leaf[36]=0;
+ slash=wcsrchr(old->root,L'\\');if(!slash)return 0;n=(size_t)(slash-old->root)+1;
+ if(n+36>MAX_PATH-32)return 0;
+ memcpy(root,old->root,n*sizeof(wchar_t));wcscpy_s(root+n,MAX_PATH-n,leaf);return 1;
+}
+int wh3wr_next_epoch(const wchar_t *library,int (*prove)(void *,const wchar_t *),
+ void *context,const wh3w_controls *controls) {
+ wh3wr_registration *old=NULL,*next=NULL;int ok=0;unsigned k;
+ unsigned char checkpoint[RCKBYTES]={0},before[RCKBYTES],id[24];wchar_t root[MAX_PATH],path[MAX_PATH];
+ HANDLE directory=INVALID_HANDLE_VALUE,files[3]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE};
+ const wchar_t *names[]={L"admission.bin",L"journal.bin",L"intent.bin"};static const char hex[]="0123456789abcdef";
+ if(!prove||!wh3wr_open(library,WH3WG_RECOVER,NULL,&old)||!rclean(old))goto done;
+ if(!rabsent(old->key,L"Checkpoint")){
+  int switched;
+  if(!rcheckpoint_read(old->key,checkpoint))goto done;
+  switched=!memcmp(old->record,checkpoint+RCKNEW,RBYTES);
+  if(!switched&&memcmp(old->record,checkpoint+8,RBYTES))goto done;
+  /* A checkpoint changes no target object or library path. Before Binding
+     switches, any incomplete new namespace is preserved and never adopted. */
+  if(switched&&(memcmp(checkpoint+8+224,old->record+224,24)||
+      memcmp(checkpoint+8+248,old->record+248,2*MAX_PATH)||old->grant.generation||!rempty_pair(old)))goto done;
+  if(!prove(context,old->library)||!rclean(old)||!rcheckpoint_retire(old,checkpoint))goto done;
+  if(switched){ok=1;goto done;}
+ }
+ if(!prove(context,old->library)||!rclean(old)||!rnewroot(old,root))goto done;
+ memset(checkpoint,0,sizeof(checkpoint));memcpy(checkpoint,"WH3CKP01",8);
+ memcpy(checkpoint+8,old->record,RBYTES);memcpy(checkpoint+RCKPATH,root,(wcslen(root)+1)*sizeof(wchar_t));
+ if(!rcheckpoint_write(old,checkpoint,NULL))goto done;rphase(controls,WH3WR_EPOCH_INTENT);
+ if(!CreateDirectoryW(root,NULL))goto done;
+ directory=CreateFileW(root,FILE_LIST_DIRECTORY|FILE_READ_ATTRIBUTES,FILE_SHARE_READ,NULL,OPEN_EXISTING,
+    FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+ if(directory==INVALID_HANDLE_VALUE)goto done;
+ next=calloc(1,sizeof(*next));if(!next)goto done;next->target=INVALID_HANDLE_VALUE;next->mode=WH3WG_RECOVER;
+ wcscpy_s(next->library,MAX_PATH,old->library);wcscpy_s(next->route,65,old->route);wcscpy_s(next->root,MAX_PATH,root);
+ next->ids[4]=old->ids[4];memcpy(next->record,old->record,RBYTES);
+ if(!rid(directory,&next->ids[0],1)||!rpins(next)||!rtarget(next,0,1)||
+    RegOpenKeyExW(old->key,L"",REG_OPTION_OPEN_LINK,KEY_READ|KEY_WRITE|KEY_WOW64_64KEY,&next->key)!=ERROR_SUCCESS)goto done;
+ for(k=0;k<3;k++){
+  HANDLE read_pin;
+  swprintf_s(path,MAX_PATH,L"%ls\\%ls",root,names[k]);
+  files[k]=CreateFileW(path,GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,CREATE_NEW,
+    FILE_FLAG_OPEN_REPARSE_POINT|FILE_FLAG_WRITE_THROUGH,NULL);
+  if(files[k]==INVALID_HANDLE_VALUE||!rid(files[k],&next->ids[k+1],0)||!FlushFileBuffers(files[k]))goto done;
+  read_pin=ReOpenFile(files[k],GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,FILE_FLAG_OPEN_REPARSE_POINT);
+  if(read_pin==INVALID_HANDLE_VALUE)goto done;CloseHandle(files[k]);files[k]=read_pin;
+ }
+ rphase(controls,WH3WR_EPOCH_OBJECTS);
+ rput(id,next->ids[0].volume);memcpy(id+8,&next->ids[0].file,16);
+ for(k=0;k<24;k++){next->domain[2*k]=hex[id[k]>>4];next->domain[2*k+1]=hex[id[k]&15];}next->domain[48]=0;
+ rinitial_grant(next);
+ if(!wh3wg_open(root,next->ids,next->domain,NULL,WH3WG_ENROLL,NULL,&next->gate))goto done;
+ {wh3wg_grant actual;if(!wh3wg_enroll(next->gate,&actual)||actual.generation||memcmp(actual.seal,next->grant.seal,65))goto done;}
+ memcpy(before,checkpoint,RCKBYTES);rencode(next,checkpoint+RCKNEW);
+ if(!rcheckpoint_write(old,checkpoint,before))goto done;rphase(controls,WH3WR_EPOCH_READY);
+ if(!rclean(old)||!prove(context,old->library)||!rclean(old)||!ridentity(next,1)||!wh3wg_check(next->gate))goto done;
+ if(!rwrite(next,0))goto done;rphase(controls,WH3WR_EPOCH_BOUND);
+ if(!rclean(next)||!rcheckpoint_retire(next,checkpoint))goto done;
+ rphase(controls,WH3WR_EPOCH_RETIRED);ok=1;
+done:
+ for(k=0;k<3;k++)if(files[k]!=INVALID_HANDLE_VALUE)CloseHandle(files[k]);
+ if(directory!=INVALID_HANDLE_VALUE)CloseHandle(directory);
+ if(!wh3wr_close(next))ok=0;if(!wh3wr_close(old))ok=0;return ok;
 }

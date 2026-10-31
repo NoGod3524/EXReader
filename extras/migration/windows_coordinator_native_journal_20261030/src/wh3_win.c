@@ -581,3 +581,12 @@ int wh3wg_reconcile(wh3wg_gate *g,wh3w_store *s,const wh3_tip *exact,
  }
  LeaveCriticalSection(&g->lock);LeaveCriticalSection(&s->lock);return ok;
 }
+
+/* Observes an exact, currently valid CLEAN grant without advancing it. */
+int wh3wg_clean(wh3wg_gate *g,wh3wg_grant *grant) {
+ int ok=0;if(!g||!grant)return 0;EnterCriticalSection(&g->lock);
+ if(!g->active&&(g->state=='I'||g->state=='C')&&wh3wg_check(g)){
+  grant->generation=g->generation;memcpy(grant->seal,g->seal,65);ok=1;
+ }
+ LeaveCriticalSection(&g->lock);return ok;
+}
