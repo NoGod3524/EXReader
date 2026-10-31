@@ -1,0 +1,24 @@
+{
+  "base": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
+  "sdk_frozen": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "branch": "dot/f10-safety-20261031",
+  "owner": "dot native F10 safety subagent",
+  "allowed_paths": [
+    "tests/product/f10_safety_20261031/CMakeLists.txt",
+    "tests/product/f10_safety_20261031/probe.cpp",
+    "tests/product/f10_safety_20261031/fixture.py",
+    "tests/product/f10_safety_20261031/drive.py",
+    "tests/product/f10_safety_20261031/verify.py",
+    "tests/product/f10_safety_20261031/manifest.json",
+    ".github/workflows/dot-f10-safety-20261031.yml",
+    "docs/reader-total-progress/DOT_F10_SAFETY_20261031.md"
+  ],
+  "ci_budget": {
+    "runs": 1,
+    "linux_minutes": 45,
+    "audit_minutes": 15,
+    "automatic_reruns": 0
+  },
+  "production_writes": false,
+  "full_f10_complete": false
+}
