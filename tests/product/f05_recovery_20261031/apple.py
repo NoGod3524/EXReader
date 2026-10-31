@@ -28,6 +28,17 @@ final class F05RecoveryUITests: XCTestCase {
     private func tap(_ id:String) {
         let target=node(id)
         XCTAssertTrue(target.waitForExistence(timeout:60),id)
+        for _ in 0..<8 {
+            if target.isHittable { break }
+            let form=node("account.form")
+            if !form.exists { break }
+            let earlier=target.frame.midY < form.frame.midY
+#if os(macOS)
+            form.scroll(byDeltaX:0,deltaY:earlier ? 260 : -260)
+#else
+            if earlier { form.swipeDown() } else { form.swipeUp() }
+#endif
+        }
         XCTAssertTrue(wait{target.isEnabled && target.isHittable},id)
         target.tap()
     }
