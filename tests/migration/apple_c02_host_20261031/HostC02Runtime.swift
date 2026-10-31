@@ -206,12 +206,18 @@ private func crashPending() throws {
     let result = manifest.withCString { bound in input.withCString { pc02_begin(owner, bound, $0, &capability) } }
     throw ReviewFailure(message:"pending never reached durable barrier: "+String(result))
 }
+private func onMain<T>(_ operation: () throws -> T) rethrows -> T {
+    if Thread.isMainThread { return try operation() }
+    return try DispatchQueue.main.sync(execute:operation)
+}
 private func waitUntil(_ condition: () -> Bool) throws {
     let limit = Date().addingTimeInterval(30)
-    while !condition() && Date() < limit {
-        RunLoop.current.run(mode:.default,before:Date().addingTimeInterval(0.02))
+    while !onMain(condition) && Date() < limit {
+        if Thread.isMainThread {
+            RunLoop.current.run(mode:.default,before:Date().addingTimeInterval(0.02))
+        } else { Thread.sleep(forTimeInterval:0.02) }
     }
-    try require(condition(), "actual HostModel startup deadline")
+    try require(onMain(condition), "actual HostModel startup deadline")
 }
 private func modelFolder() throws -> URL {
     try FileManager.default.url(for:.applicationSupportDirectory,in:.userDomainMask,
@@ -221,18 +227,18 @@ private func baseline() throws {
     try Runtime.observe("model-admission-before-catalog") {
         let folder = try modelFolder()
         let catalog = folder.appendingPathComponent("reader-catalog.db")
-        var model: HostReaderModel? = HostReaderModel()
-        model!.start()
+        var model: HostReaderModel? = onMain { HostReaderModel() }
+        onMain { model!.start() }
         try waitUntil { !model!.busy }
-        try require(model!.admissionRequired && !model!.libraryReady, "unknown model requires explicit action")
+        try require(onMain { model!.admissionRequired && !model!.libraryReady }, "unknown model requires explicit action")
         try require(!FileManager.default.fileExists(atPath:catalog.path) &&
                     !FileManager.default.fileExists(atPath:folder.appendingPathComponent("library.sqlite").path),
                     "model did not create SDK or catalog before admission")
-        model!.prepareLibrary(.create)
+        onMain { model!.prepareLibrary(.create) }
         try waitUntil { !model!.busy }
-        try require(model!.libraryReady && FileManager.default.fileExists(atPath:catalog.path),
+        try require(onMain { model!.libraryReady } && FileManager.default.fileExists(atPath:catalog.path),
                     "explicit UI action opens actual SDK then catalog")
-        model = nil
+        onMain { model = nil }
         return ["admitted":true,"target":folder.appendingPathComponent("library.sqlite").path]
     }
     try Runtime.observe("explicit-enrollment-recovery") {
@@ -322,10 +328,10 @@ private func freshPreserve() throws {
         let library = folder.appendingPathComponent("library.sqlite")
         let catalog = folder.appendingPathComponent("reader-catalog.db")
         let before = [digest(try Data(contentsOf:library)),digest(try Data(contentsOf:catalog))]
-        let model = HostReaderModel()
-        model.start()
+        let model = onMain { HostReaderModel() }
+        onMain { model.start() }
         try waitUntil { !model.busy }
-        try require(!model.libraryReady && !model.errorText.isEmpty, "fresh profile refuses existing actual state")
+        try require(onMain { !model.libraryReady && !model.errorText.isEmpty }, "fresh profile refuses existing actual state")
         try require(before == [digest(try Data(contentsOf:library)),digest(try Data(contentsOf:catalog))],
                     "fresh preserved exact actual database bytes")
         return ["admitted":false,"target":library.path,"before_sha256":before]
@@ -366,7 +372,7 @@ private func execute() {
         window = UIWindow(frame:UIScreen.main.bounds)
         window?.rootViewController = UIViewController()
         window?.makeKeyAndVisible()
-        DispatchQueue.main.async { execute() }
+        DispatchQueue.global(qos:.userInitiated).async { execute() }
         return true
     }
 }
