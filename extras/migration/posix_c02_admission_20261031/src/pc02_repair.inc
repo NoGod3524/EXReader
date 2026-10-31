@@ -118,7 +118,7 @@ static int pr_read_named(pc02_lease *h,const char *prefix,unsigned kind,uint64_t
  return 1;
 }
 static int pr_scan_names(pc02_lease *h,unsigned *last,unsigned *last_done){
- unsigned char plans[PR_PLANS+1]={0},done[PR_PLANS+1]={0};
+ unsigned char plans[PR_PLANS+1]={0},done[PR_PLANS+1]={0},applied[PR_PLANS+1]={0};
  int fd=-1,ok=0;
  DIR *dir=NULL;
  *last=*last_done=0;
@@ -142,7 +142,7 @@ static int pr_scan_names(pc02_lease *h,unsigned *last,unsigned *last_done){
   else if(!strncmp(e->d_name,"repair-done-",12)){prefix="repair-done";
   set=done;
   }
-  else if(!strncmp(e->d_name,"repair-applied-",15))prefix="repair-applied";
+  else if(!strncmp(e->d_name,"repair-applied-",15)){prefix="repair-applied";set=applied;}
   else continue;
   const char *digits=e->d_name+strlen(prefix)+1;
   if(strlen(digits)!=6||strspn(digits,"0123456789")!=6)goto finish;
@@ -157,6 +157,7 @@ static int pr_scan_names(pc02_lease *h,unsigned *last,unsigned *last_done){
   if(set==done&&n>*last_done)*last_done=n;
  }
  for(unsigned k=1;k<=*last;k++)if(!plans[k])goto finish;
+ for(unsigned k=1;k<=PR_PLANS;k++)if(applied[k]&&!plans[k])goto finish;
  if(*last_done>*last)goto finish;
  ok=1;
 finish:

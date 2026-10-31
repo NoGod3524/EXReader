@@ -4,13 +4,14 @@
 import argparse, hashlib, json, os, pathlib, platform, pwd, re, select, shutil, signal, sqlite3, stat, struct, subprocess, sys, traceback
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]))
 import legacy_data as L
+from repair_cases import RepairCases
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 def identity(path):
     s=path.stat();return (s.st_dev,s.st_ino)
 def text(raw,offset,size):return raw[offset:offset+size].split(b"\0",1)[0].decode("utf-8")
-class Runner:
+class Runner(RepairCases):
     def __init__(self,a):
-        self.a=a;self.rows=[];self.serial=0;self.events={};self.sources=[];providers=set()
+        self.a=a;self.rows=[];self.repair_rows=[];self.serial=0;self.events={};self.sources=[];providers=set()
         self.authority=pathlib.Path(pwd.getpwuid(os.geteuid()).pw_dir).resolve()/".exreader-c02-admission"
         for tool in (a.tool,a.test_tool):
             v=self.call(a.output,tool,"--version")["stdout"].strip()
@@ -31,8 +32,8 @@ class Runner:
         (folder/f"command-{self.serial:04}.json").write_text(json.dumps(row,indent=2)+"\n")
         if expected is not None:assert not timed_out and p.returncode in expected,row
         return row
-    def fixture(self,name,seed=True,enroll=True):
-        folder=self.a.output/"cases"/name;folder.mkdir(parents=True,mode=0o700)
+    def fixture(self,name,seed=True,enroll=True,area="cases"):
+        folder=self.a.output/area/name;folder.mkdir(parents=True,mode=0o700)
         target=folder/"library.sqlite";pack=folder/"input.exrpack";seedpack=folder/"seed.exrpack"
         books,notes=L.dataset()
         pack.write_bytes(L.build_pack(books[:1],[n for n in notes if n["bookId"]=="b-txt"]))
@@ -248,16 +249,19 @@ class Runner:
         assert sha(target)==before and sha(pathlib.Path(str(target)+".legacy-map.json"))==mirror
         self.call(folder,self.a.guarded,"dump","--target",target);self.capture(folder,target,"final")
         return dict(actual_sdk=True,legacy_mutation_refused_before_lock=True,all_three_entrypoints=True)
-    def paused(self,folder,target,pack,phase,sequence=None,member=None,require_cap=False):
+    def paused(self,folder,target,pack,phase,sequence=None,member=None,require_cap=False,command=None,label="paused"):
         ready_r,ready_w=os.pipe();go_r,go_w=os.pipe();env=dict(os.environ)
         env.update(EXR_PC02_PHASE=str(phase),EXR_PC02_READY_FD=str(ready_w),EXR_PC02_GO_FD=str(go_r))
         if sequence is not None:env["EXR_PC02_SEQUENCE"]=str(sequence)
         if member is not None:env["EXR_PC02_MEMBER"]=str(member)
         if require_cap:env["EXR_PC02_REQUIRE_CAP"]="1"
-        out=open(folder/"process.stdout","wb");err=open(folder/"process.stderr","wb")
-        p=subprocess.Popen([str(self.a.test_tool),"migrate",str(target),str(pack)],stdout=out,stderr=err,env=env,pass_fds=(ready_w,go_r))
+        prefix="process" if label=="paused" else "process-"+label
+        out=open(folder/(prefix+".stdout"),"wb");err=open(folder/(prefix+".stderr"),"wb")
+        arguments=["migrate",str(target),str(pack)] if command is None else list(map(str,command))
+        actual_command=[str(self.a.test_tool),*arguments]
+        p=subprocess.Popen(actual_command,stdout=out,stderr=err,env=env,pass_fds=(ready_w,go_r))
         os.close(ready_w);os.close(go_r)
-        observation=dict(owner_pid=p.pid,observer_pid=os.getpid(),observer_uid=os.getuid(),observer_euid=os.geteuid(),phase=phase,sequence=sequence,member=member,require_cap=require_cap,ready_hex="",kill_signal=None)
+        observation=dict(command=actual_command,owner_pid=p.pid,observer_pid=os.getpid(),observer_uid=os.getuid(),observer_euid=os.geteuid(),phase=phase,sequence=sequence,member=member,require_cap=require_cap,ready_hex="",kill_signal=None)
         try:
             events=select.select([ready_r],[],[],60)[0]
             raw_ready=os.read(ready_r,1) if events else b""
@@ -272,7 +276,7 @@ class Runner:
             observation["owner_uid"]=owner[0][2]
             assert not [row for row in process_rows if row[1]==p.pid],"synchronous owner spawned a child"
             self.call(folder,self.a.admission,"check",target,expected=(2,))
-            self.capture(folder,target,"paused")
+            self.capture(folder,target,label)
             observation["kill_signal"]=int(signal.SIGKILL)
             os.kill(p.pid,signal.SIGKILL);observation["wait_returncode"]=p.wait(timeout=10)
             assert observation["wait_returncode"]==-signal.SIGKILL
@@ -280,8 +284,8 @@ class Runner:
             if p.poll() is None:p.kill();p.wait(timeout=10)
             os.close(ready_r);os.close(go_w);out.close();err.close()
             observation["final_returncode"]=p.returncode
-            observation["barrier_stdout"]=(folder/"process.stdout").read_text(errors="replace")
-            (folder/"process-observation.json").write_text(json.dumps(observation,indent=2)+"\n")
+            observation["barrier_stdout"]=(folder/(prefix+".stdout")).read_text(errors="replace")
+            (folder/(prefix+"-observation.json")).write_text(json.dumps(observation,indent=2)+"\n")
         return observation
     def cut(self,phase,sequence=None,member=None,require_cap=False):
         name=f"process-kill-{phase}-"+("any" if sequence is None else str(sequence))+("-m"+str(member) if member is not None else "")
@@ -339,6 +343,7 @@ class Runner:
              binaries={role:dict(path=str(getattr(self.a,role)),bytes=getattr(self.a,role).stat().st_size,sha256=sha(getattr(self.a,role)),mode=stat.S_IMODE(getattr(self.a,role).stat().st_mode)) for role in ("tool","test_tool","admission","legacy","guarded")})
         (self.a.output/"migration-result.json").write_text(json.dumps(value,indent=2)+"\n")
         (self.a.output/"native-source-observations.json").write_text(json.dumps(self.sources,indent=2)+"\n")
+        self.repair_save()
 def main():
     ap=argparse.ArgumentParser()
     for name in ("tool","test-tool","admission","legacy","guarded","output"):ap.add_argument("--"+name,type=pathlib.Path,required=True)
@@ -365,6 +370,7 @@ def main():
         for kind in ("same-bytes-new-ID","wrong-input-tuple","hole","old-valid-tip"):
             runner.run("actual-ACK-refuse-"+kind,lambda kind=kind:runner.bad_ack(kind))
     else:runner.run("published-event-observed",lambda:(_ for _ in ()).throw(AssertionError("no canonical published history")))
+    runner.repair_all()
     inventory=[]
     for p in sorted(a.output.rglob("*")):
         s=p.lstat();row=dict(path=p.relative_to(a.output).as_posix(),device=s.st_dev,inode=s.st_ino,uid=s.st_uid,gid=s.st_gid,
@@ -374,6 +380,7 @@ def main():
     (a.output/"file-hashes.json").write_text(json.dumps(inventory,indent=2)+"\n")
     runner.save();assert len(runner.rows)==36,len(runner.rows)
     assert all(r["passed"] for r in runner.rows),[r["name"] for r in runner.rows if not r["passed"]]
-    print("POSIX-C02-ACTUAL cases=36 failed=0")
+    assert len(runner.repair_rows)==17 and all(r["passed"] for r in runner.repair_rows),[r["name"] for r in runner.repair_rows if not r["passed"]]
+    print("POSIX-C02-ACTUAL cases=36 repair_cases=17 failed=0")
     return 0
 if __name__=="__main__":sys.exit(main())
