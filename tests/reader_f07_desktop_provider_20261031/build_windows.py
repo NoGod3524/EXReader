@@ -3,6 +3,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -169,8 +170,13 @@ def main():
     keep(host/'CMakeCache.txt','host-cache.txt')
     keep(host/'compile_commands.json','host-commands.json')
     run(['dumpbin','/IMPORTS',binary],'host-imports')
-    run(['dumpbin','/HEADERS',binary],'host-headers')
-    run(['dumpbin','/?'],'inspector-version')
+    headers=run(['dumpbin','/HEADERS',binary],'host-headers')
+    versions=re.findall(rb'(?m)^Microsoft \(R\) COFF/PE Dumper Version ([0-9]+(?:\.[0-9]+){3})\s*$',headers.stdout)
+    assert headers.returncode==0 and len(versions)==1, 'Missing or ambiguous Dumper version'
+    (EVIDENCE/'inspector-version.json').write_text(json.dumps(dict(
+        version=versions[0].decode('ascii'),returncode=headers.returncode,
+        argv=['dumpbin','/HEADERS',str(binary)],command_record='host-headers.command.json',
+        output_record='host-headers.log',output_sha256=digest(headers.stdout)))+'\n')
     targets,interface=auxiliary(sdk,product,stage,'windows')
     finish(source,'windows',sdk,product,stage,targets,interface,'EXReader.exe',
            dict(architecture='x64',sdk_linkage='static-reading',diagnostic_flags=['/VERBOSE:LIB'],
