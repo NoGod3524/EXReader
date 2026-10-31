@@ -31,8 +31,10 @@ jobs:
           path: |
             build/f09-escape/source.json
             build/f09-escape/verdict.json
-            build/f09-escape/baseline/report.json
-            build/f09-escape/candidate/report.json
+            build/f09-escape/baseline/*.log
+            build/f09-escape/baseline/*.json
+            build/f09-escape/candidate/*.log
+            build/f09-escape/candidate/*.json
             build/f09-escape/baseline-package/build.json
             build/f09-escape/candidate-package/build.json
             build/f09-escape/baseline-package/report.json
