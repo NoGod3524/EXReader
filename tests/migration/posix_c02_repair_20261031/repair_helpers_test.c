@@ -194,7 +194,7 @@ static void state_tests(fixture *f,int vectors){
  memcpy(raw,f->state,sizeof(raw));blob.bytes=S-1;CHECK(!pc02rs_state_prefix(&blob,&s));
  blob.bytes=0;CHECK(!pc02rs_state_prefix(&blob,&s));
  begin_case("complete-state-resealed-contradictions");
- const size_t offsets[]={S+9,S+16,S+24,S+232,S+240,2*S+32,2*S+96,2*S+160};
+ const size_t offsets[]={S+9,S+16,S+24,S+232,S+240,2*S+32,2*S+96,2*S+24};
  for(size_t k=0;k<sizeof(offsets)/sizeof(offsets[0]);k++){
   memcpy(raw,f->state,sizeof(raw));raw[offsets[k]]^=1;
   size_t record=offsets[k]/S;seal(raw+record*S,304);blob.bytes=record==2?3*S:2*S;
@@ -209,6 +209,11 @@ static void state_tests(fixture *f,int vectors){
  CHECK(!pc02rs_state_tail(&blob,&s,f->state+2*S));
  known=s;known.count=2;known.keep_bytes=2*S;known.tail_bytes=S;
  CHECK(!pc02rs_state_tail(&blob,&known,f->state+2*S));
+ /* A different complete nonzero terminal is a fact for this byte scanner;
+    ACK/SDK proof must assess it without discarding the complete C. */
+ change_hex(raw+2*S+160);seal(raw+2*S,304);
+ CHECK(pc02rs_state_prefix(&blob,&s)&&s.count==3&&s.kind=='C'&&!s.tail_bytes);
+ CHECK(!pc02rs_state_tail(&blob,&s,f->state+2*S));
  raw[3*S-1]^=1;CHECK(!pc02rs_state_prefix(&blob,&s));
  begin_case("state-next-canonical-B-C-and-illegal-tuples");
  memcpy(raw,f->state,sizeof(raw));blob.bytes=S;REQUIRE(pc02rs_state_prefix(&blob,&s));
