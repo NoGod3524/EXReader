@@ -127,3 +127,9 @@ Reader grants contain both the exact generation and the complete last-record sea
 The added installed consumer plans 28 scenarios, including four deterministic process-kill barriers, missing/truncated/aliased objects, both lock orders, failed gate and journal writes, retained journal references, exact-tip recovery and the frozen C01 generation-5/PENDING-0 drift. The C01 implementation is extracted from its exact frozen commit inside Actions and compiled unchanged. Existing 46-case native, 16/64 ABI3 and 81/6 ABI2 checks continue in their original jobs.
 
 Gate test publication proof is deliberately a control. Actual trusted-registry, publisher, recovery worker and product-host integration remain in progress; no full C02 score is claimed by this library-stage test.
+
+### First persistent-gate run: configuration failure retained
+
+Source 83d85a7e21ccae5936f9f54fc8feb2774664acef. Native regression run https://github.com/NoGod3524/EXReader/actions/runs/41157097677 / attempt 1 built the extended native archive successfully; the native 46-case step and both ABI3 steps passed. Both original ABI2 steps retained their six failures.
+
+The separate gate run https://github.com/NoGod3524/EXReader/actions/runs/41157097763 / attempt 1 stopped while configuring its installed consumer: the Windows C01 source path contained backslashes, and CMake rejected the resulting source-list escape. The gate executable was not compiled or run. The correction normalizes this input with CMake's TO_CMAKE_PATH before adding the unchanged frozen source. No assertion, case or provider code is removed.
