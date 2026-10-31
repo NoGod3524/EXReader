@@ -1,4 +1,4 @@
-name: F08 native Apple Instruments capability
+name: F08 process-scoped Apple Instruments capability
 on:
   push:
     branches: [codex/dot-f08-apple-trace-20261031]
@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
       - name: Parse the additive capability observer
         run: python3 -m py_compile tests/reader_f08_apple_trace_20261031/probe.py
-      - name: Trace the authenticated Release program without rebuilding it
+      - name: Attach to the authenticated running Release program
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tests/reader_f08_apple_trace_20261031/probe.py ${{ matrix.platform }}

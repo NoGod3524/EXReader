@@ -1,4 +1,4 @@
-"""Probe native Instruments frame availability on authenticated Release programs."""
+"""Probe process-scoped Instruments frames on authenticated Release programs."""
 import argparse, importlib.util, json, os, plistlib, re, subprocess, sys, time, traceback
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -18,15 +18,25 @@ def main(platform):
     need(set(command(["git","diff","--name-only",BASE,"HEAD"],text=True).splitlines())==
          {"tests/reader_f08_apple_trace_20261031/probe.py",".github/workflows/dot-f08-apple-trace-20261031.yml"},"test-only scope")
     out=ROOT/("build/f08-apple-trace-"+platform);out.mkdir(parents=True,exist_ok=False)
-    report={**identity(),"platform":platform,"scope":"Native Instruments capability and startup trace, not workload acceptance",
+    report={**identity(),"platform":platform,"scope":"Native Instruments capability on the already-launched product process, not startup timing or workload acceptance",
             "probe_complete":False,"f08_accepted":False,"frame_budget_measured":False,"first_interactive_measured":False,
             "commands":[],"problems":[]}
     app_process=None;trace_process=None;device=None;trace_log=None;app_log=None
     def run(label,args,timeout=180,required=True):
         args=list(map(str,args))
-        result=subprocess.run(args,cwd=ROOT,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=timeout)
+        started=time.monotonic()
+        try:
+            result=subprocess.run(args,cwd=ROOT,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=timeout)
+        except subprocess.TimeoutExpired as error:
+            output=error.output or b""
+            if isinstance(output,str):output=output.encode("utf-8")
+            (out/(label+".log")).write_bytes(output)
+            report["commands"].append({"label":label,"argv":args,"timeout_seconds":timeout,
+                "elapsed_seconds":time.monotonic()-started,"timed_out":True})
+            raise
         (out/(label+".log")).write_bytes(result.stdout)
-        report["commands"].append({"label":label,"argv":args,"returncode":result.returncode})
+        report["commands"].append({"label":label,"argv":args,"returncode":result.returncode,
+            "elapsed_seconds":time.monotonic()-started})
         if required:need(result.returncode==0,label+" failed: "+result.stdout.decode("utf-8",errors="replace")[-2000:])
         return result
     try:
@@ -62,16 +72,6 @@ def main(platform):
             run("install",["xcrun","simctl","install",device,app])
         else:report["destination"]={"name":"native macOS runner","arch":command(["uname","-m"],text=True).strip()}
         run("trace-devices",["xcrun","xctrace","list","devices"])
-        trace=out/"animation.trace"
-        args=["xcrun","xctrace","record","--template","Animation Hitches","--time-limit","60s",
-              "--all-processes","--output",str(trace),"--no-prompt"]
-        if device:args.extend(["--device",device])
-        save(out/"trace-command.json",args)
-        trace_log=(out/"record.log").open("wb")
-        trace_process=subprocess.Popen(args,cwd=ROOT,stdout=trace_log,stderr=subprocess.STDOUT)
-        report["trace_started_uptime"]=time.monotonic()
-        # This delay is preparation only, not a measurement or a tracing-readiness guarantee.
-        time.sleep(3)
         report["launch_started_uptime"]=time.monotonic()
         if device:
             launched=run("launch",["xcrun","simctl","launch",device,info["CFBundleIdentifier"],"-EXRShelfSeed"])
@@ -82,7 +82,29 @@ def main(platform):
             app_process=subprocess.Popen([str(binary),"-EXRShelfSeed"],stdout=app_log,stderr=subprocess.STDOUT)
             report["app_pid"]=app_process.pid
         report["launch_returned_uptime"]=time.monotonic()
-        code=trace_process.wait(timeout=180);trace_log.close();trace_log=None
+        run("target-process",["ps","-p",str(report["app_pid"]),"-o","pid=,ppid=,comm="])
+        trace=out/"animation.trace"
+        args=["xcrun","xctrace","record","--template","Animation Hitches","--time-limit","60s",
+              "--attach",str(report["app_pid"]),"--output",str(trace),"--no-prompt"]
+        if device:args.extend(["--device",device])
+        save(out/"trace-command.json",args)
+        trace_log=(out/"record.log").open("wb")
+        trace_process=subprocess.Popen(args,cwd=ROOT,stdout=trace_log,stderr=subprocess.STDOUT)
+        report["trace_started_uptime"]=time.monotonic()
+        report["trace_process_pid"]=trace_process.pid
+        report["trace_scope"]="exact already-launched product PID"
+        try:code=trace_process.wait(timeout=180)
+        except subprocess.TimeoutExpired:
+            report["record_timeout_seconds"]=180
+            # Diagnostic work follows the failed deadline and cannot convert the run to a pass.
+            for label,argv in (
+                ("recorder-process",["ps","-p",str(trace_process.pid),"-o","pid=,ppid=,etime=,command="]),
+                ("recorder-stack",["sample",str(trace_process.pid),"3","-file",str(out/"recorder-stack.txt")]),
+                ("target-process-after-timeout",["ps","-p",str(report["app_pid"]),"-o","pid=,ppid=,etime=,comm="])):
+                try:run(label,argv,timeout=15,required=False)
+                except Exception as error:report["problems"].append("diagnostic "+label+": "+repr(error))
+            raise
+        trace_log.close();trace_log=None
         report["record_returncode"]=code
         need(code==0 and trace.is_dir(),"native Instruments recording failed")
         run("export-toc",["xcrun","xctrace","export","--input",trace,"--toc","--output",out/"toc.xml"])
@@ -103,7 +125,7 @@ def main(platform):
         report["program_sha256_after"]=sha(binary)
         need(report["program_sha256_after"]==pin["program"],"program bytes changed")
         report["probe_complete"]=True
-        report["target_process_frame_attribution"]="unverified; exported all-process tables require an independent PID-aware analysis"
+        report["target_process_frame_attribution"]="unverified; process-scoped recording still requires independent PID-aware table validation"
     except BaseException as error:
         report["problems"].append(repr(error));report["traceback"]=traceback.format_exc();raise
     finally:
