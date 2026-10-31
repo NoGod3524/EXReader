@@ -79,7 +79,18 @@ jobs:
       - name: Compile the independent C and C++ consumers from installed packages
         run: |
           set -o pipefail
-          cmake -S tests/reader_webdav_import/consumer -B build/wi-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WI_PREFIX;$WI_SDK" 2>&1 | tee build/wi-logs/consumer-configure.log
+          mkdir -p build/wi-include/a/b
+          python - <<'PY'
+          from pathlib import Path
+          root=Path.cwd().resolve()
+          original=root/'tests/reader_webdav_import/consumer/../../../..//apps/reader/cloud-import/src/cloud_import.c'
+          assert not original.exists() and not original.is_symlink()
+          anchor=root/'build/wi-include/a/b'
+          source=(anchor/'../../../..//apps/reader/cloud-import/src/cloud_import.c').resolve(strict=True)
+          assert source==root/'apps/reader/cloud-import/src/cloud_import.c' and source.is_file()
+          print('REVIEW-INCLUDE-ANCHOR',anchor,'SOURCE',source)
+          PY
+          cmake -S tests/reader_webdav_import/consumer -B build/wi-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-I$PWD/build/wi-include/a/b" -DCMAKE_PREFIX_PATH="$WI_PREFIX;$WI_SDK" 2>&1 | tee build/wi-logs/consumer-configure.log
           cmake --build build/wi-consumer --parallel 4 2>&1 | tee build/wi-logs/consumer-build.log
       - name: Real native TLS WebDAV download, SDK import and independent SDK readback
         run: |

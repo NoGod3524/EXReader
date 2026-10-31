@@ -37,3 +37,13 @@ Successful bounded retry does not imply complete cleanup: persistent permissions
 product_cleanup_passed stays false; crash recovery is not validated. No durable receipt was added.
 A durable recovery design would require a separately authorized ownership/identity/active-transfer protocol
 established before permissions become unavailable; a later receipt alone cannot guarantee deletion.
+
+## Initial run and targeted harness correction
+Run 41160684498/A1 at 62b739439578d2d4f11f1fa0638fc5b89d5e55e6 failed on both platforms.
+Frozen SDK, candidate WebDAV and cloud-import packages built and installed. Existing cloud-review-probe.c:19
+uses a four-parent relative include from a three-level source directory, so the compiler could not locate
+apps/reader/cloud-import/src/cloud_import.c. The old 77 and seven new runtime cases were skipped, not passed.
+The only correction is a workflow-local compiler include anchor build/wi-include/a/b. Its four-parent
+resolution is asserted equal to the current candidate repository cloud_import.c, not the frozen SDK tree.
+The original consumer source, allocator-failure macros and all assertions are unchanged. No product change
+beyond the reviewed one line. This consumes the sole targeted correction run; result pending.
