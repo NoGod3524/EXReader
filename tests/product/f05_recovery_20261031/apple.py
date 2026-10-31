@@ -63,6 +63,8 @@ final class F05RecoveryUITests: XCTestCase {
         book.tap()
         XCTAssertTrue(node("reader.back").waitForExistence(timeout:90))
         XCTAssertTrue(wait{!self.node("reader.busy").exists})
+        XCTAssertTrue(wait{self.node("reader.page").label.contains("F05 original remains readable")},
+            "actual native rendered text must match retained original")
     }
     private func gateReached() -> Bool {
         guard let root=ProcessInfo.processInfo.environment["F05_ROOT"],
@@ -256,8 +258,7 @@ def main():
         report["requests"]=server.requests
         report["uncovered"]=["independent xcresult attachments and artifact authentication",
             "uncertain acknowledgment process kill",
-            "organization projection (owner gap, not lower API injected)",
-            "actual rendered text semantic readback"]
+            "organization projection (owner gap, not lower API injected)"]
         (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
         server.close()
         if trusted:
