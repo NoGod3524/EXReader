@@ -133,3 +133,17 @@ Gate test publication proof is deliberately a control. Actual trusted-registry, 
 Source 83d85a7e21ccae5936f9f54fc8feb2774664acef. Native regression run https://github.com/NoGod3524/EXReader/actions/runs/41157097677 / attempt 1 built the extended native archive successfully; the native 46-case step and both ABI3 steps passed. Both original ABI2 steps retained their six failures.
 
 The separate gate run https://github.com/NoGod3524/EXReader/actions/runs/41157097763 / attempt 1 stopped while configuring its installed consumer: the Windows C01 source path contained backslashes, and CMake rejected the resulting source-list escape. The gate executable was not compiled or run. The correction normalizes this input with CMake's TO_CMAKE_PATH before adding the unchanged frozen source. No assertion, case or provider code is removed.
+
+### Persistent gate validation passed
+
+Source 13e06ca5bc808cce5279d9101b88b64544fa1907, run https://github.com/NoGod3524/EXReader/actions/runs/41157310400 / attempt 1, Windows job 124406831183: 28 scenarios / 309 checks / 0 failures. The four process barriers (201, 202, 203, 204), both cross-process lock orders and the actual frozen C01 drift passed.
+
+Artifact 13025791064: 39970 bytes, GitHub ZIP SHA256 5afec0359aeb2c5963008dcd558fe6005ca045d15964be077cd072dc4eef1551. This is a gate-component result; its publication callback remains a test control.
+
+### Actual host borrow lifetimes
+
+The Android source, search and navigation owners now retain explicit NativeLibrary borrows until native teardown completes. Parent close refuses new work and defers native library close until the last borrower releases. Failed construction releases its borrow after JNI cleanup; a failed close does not prematurely release it.
+
+Each BoundedEpub native pager has its own borrow, including a candidate PageLoad that has not been committed. Closing the parent cannot release that candidate's admission. A late commit after reader close refuses and disposes the candidate. Apple HostFixed now strongly retains HostLibrary through exr_fixed_free, matching HostPublication's existing ownership.
+
+A separate C02 workflow builds the actual Android and macOS products against the unchanged SDK 3.42 source. It reuses existing build recipes but records its own C02 provenance; it does not reuse the old package guard's restricted branch claim. Live admission wiring and native publication/recovery are still required before C02 completion.

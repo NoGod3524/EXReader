@@ -58,6 +58,7 @@ final class NativeSearch implements AutoCloseable {
     private final Thread owner=Thread.currentThread();
     final long bookId;final String key;
     private long handle;
+    private final NativeLibrary.Borrow borrow;
     NativeSearch(BookStore store,long bookId,String query,byte[] font,float size,HostTask task,Control control)throws Exception {
         store.searchOwner();validate(query);
         NativeLibrary.Book book=store.find(bookId);if(book==null)throw new IllegalStateException("书籍已不可用");
@@ -65,8 +66,11 @@ final class NativeSearch implements AutoCloseable {
         BookStore.VerifiedSource source=store.verifySource(bookId,null,0,task);
         this.bookId=bookId;key=source.key+"|exreader-sdk-"+nativeVersion();
         int mode=book.fixed()?FIXED:source.location.equals("epub_chapter")?EPUB:REFLOW;
-        handle=nativeOpen(store.nativeLibrary().checked(),bookId,mode,key,query,font,size,control);
-        if(handle==0)throw new IllegalStateException("搜索暂不可用");
+        borrow=store.nativeLibrary().borrow();
+        try {
+            handle=nativeOpen(borrow.checked(),bookId,mode,key,query,font,size,control);
+            if(handle==0)throw new IllegalStateException("搜索暂不可用");
+        } catch(Exception|Error error) { borrow.close(); throw error; }
     }
     static void validate(String query){
         if(query==null||query.isEmpty()||query.length()>4096||query.indexOf('\0')>=0)throw new Failure(2,0);
@@ -84,7 +88,7 @@ final class NativeSearch implements AutoCloseable {
         if(source.book.format==NativeLibrary.FORMAT_CBZ||mode!=hit.mode)throw new IllegalStateException("搜索来源不匹配");
         return new Match(nativeResolve(store.nativeLibrary().checked(),book,hit.mode,hit.unit,hit.start,hit.end,hit.route(),hit.bytes(),font,size,task));
     }
-    @Override public void close(){if(handle==0)return;owned();nativeClose(handle);handle=0;}
+    @Override public void close(){if(handle!=0){owned();nativeClose(handle);handle=0;}borrow.close();}
     private static native String nativeVersion();
     private static native long nativeOpen(long library,long book,int mode,String key,String query,byte[] font,float size,Control control);
     private static native Batch nativeNext(long handle,int limit,Control control);

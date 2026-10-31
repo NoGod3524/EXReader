@@ -94,6 +94,46 @@ public final class NativeLibrary implements AutoCloseable {
     }
 
     private long handle;
+    private int borrows;
+    private boolean closeRequested;
+
+    /** Keeps the SDK owner (and its admission) alive until native teardown. */
+    static final class Borrow implements AutoCloseable {
+        private NativeLibrary library;
+        private Borrow(NativeLibrary library) { this.library = library; }
+        long checked() {
+            if (library == null || library.handle == 0)
+                throw new IllegalStateException("Library borrow is closed");
+            return library.handle;
+        }
+        @Override public void close() {
+            if (library != null) {
+                library.endBorrow();
+                library = null;
+            }
+        }
+    }
+
+    Borrow borrow() {
+        checked();
+        if (borrows == Integer.MAX_VALUE) throw new IllegalStateException("Too many library borrows");
+        Borrow result = new Borrow(this);
+        ++borrows;
+        return result;
+    }
+
+    private void endBorrow() {
+        if (borrows <= 0) throw new IllegalStateException("Unbalanced library borrow");
+        if (borrows == 1 && closeRequested) closeHandle();
+        --borrows;
+    }
+
+    private void closeHandle() {
+        if (handle != 0) {
+            nativeClose(handle);
+            handle = 0;
+        }
+    }
 
     public NativeLibrary(String path) {
         handle = nativeOpen(path);
@@ -125,17 +165,27 @@ public final class NativeLibrary implements AutoCloseable {
     static final class Source implements AutoCloseable {
         private long handle;
         final long size;
-        Source(long[] value) { handle = value[0]; size = value[1]; }
+        private final Borrow borrow;
+        Source(Borrow borrow, long bookId) {
+            this.borrow = borrow;
+            long[] value = nativeOpenSource(borrow.checked(), bookId);
+            handle = value[0]; size = value[1];
+        }
         int read(long offset, byte[] bytes, int count) {
             if (handle == 0) throw new IllegalStateException("Source is closed");
             return nativeReadSource(handle, offset, bytes, count);
         }
         @Override public void close() {
             if (handle != 0) { nativeCloseSource(handle); handle = 0; }
+            borrow.close();
         }
     }
 
-    Source source(long bookId) { return new Source(nativeOpenSource(checked(), bookId)); }
+    Source source(long bookId) {
+        Borrow borrow = borrow();
+        try { return new Source(borrow, bookId); }
+        catch (RuntimeException | Error error) { borrow.close(); throw error; }
+    }
     long exportOriginal(long bookId,String destination,HostTask task) {return nativeExportOriginal(checked(),bookId,destination,task);}
     ImportResult importLegacyFile(String path,int format,String title) {
         long[] values=nativeImportFile(checked(),path,format,title,true,false);
@@ -211,7 +261,7 @@ public final class NativeLibrary implements AutoCloseable {
     boolean bounded(long bookId) { return nativeBounded(checked(),bookId); }
 
     long checked() {
-        if (handle == 0) throw new IllegalStateException("Library is closed");
+        if (closeRequested || handle == 0) throw new IllegalStateException("Library is closed");
         return handle;
     }
 
@@ -233,10 +283,8 @@ public final class NativeLibrary implements AutoCloseable {
 
     @Override
     public void close() {
-        if (handle != 0) {
-            nativeClose(handle);
-            handle = 0;
-        }
+        closeRequested = true;
+        if (borrows == 0) closeHandle();
     }
 
     private static native String nativeIdentity();

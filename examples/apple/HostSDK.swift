@@ -617,11 +617,13 @@ struct HostFixedGeometry {
 
 final class HostFixed {
     let handle: OpaquePointer
+    private let library: HostLibrary
     private let font: HostFont
     private(set) var pageIDs: [String] = []
     private(set) var geometries: [HostFixedGeometry] = []
 
     init(library: HostLibrary, bookID: Int64, font: HostFont, cancel: HostCancelBox? = nil) throws {
+        self.library = library
         self.font = font
         let active = cancel ?? HostCancelBox()
         try active.check()
