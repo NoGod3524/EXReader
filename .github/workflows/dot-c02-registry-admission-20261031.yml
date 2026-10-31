@@ -65,7 +65,7 @@ jobs:
           rows=[json.loads(line) for line in pathlib.Path('evidence/registry.log').read_text().splitlines() if line.startswith('{"source":')]
           assert len(rows)==1
           r=rows[0]
-          assert r['source']==os.environ['GITHUB_SHA'] and r['cases']==14 and r['checks']>=100 and r['failed']==0 and r['passed'] is True
+          assert r['source']==os.environ['GITHUB_SHA'] and r['cases']==28 and r['checks']>=200 and r['failed']==0 and r['passed'] is True
           assert r['actual_sdk'] is True and r['trusted_registry'] is True
           assert r['production_coordinator'] is False and r['full_c02_acceptance'] is False
           PY
