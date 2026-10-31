@@ -574,7 +574,14 @@ def gtk_evidence(files, spec, source):
     return audit_gtk_host(files,spec,source,set(declared))
 
 def android_evidence(files, spec, source, missing):
-    inventory(files)
+    inventory(files, "artifact-file-hashes.json")
+    late = {"source.txt", "logcat-final.txt", "artifact-receipt.json", "artifact-file-hashes.json"}
+    need(late <= set(files), "android-always-preserved-envelope")
+    inventory({path:raw for path,raw in files.items() if path not in late})
+    artifact_receipt = json_value(files["artifact-receipt.json"])
+    provenance(artifact_receipt, spec, source)
+    need(artifact_receipt["full_c02_acceptance"] is False and files["source.txt"].strip() == source.encode(),
+         "android-final-artifact-envelope")
     test = git_bytes(source, "tests/migration/android_c02_host_20261031/androidTest/java/org/exreader/host/C02HostTest.java").decode()
     names = re.findall(r'passed\("([a-z_]+)"\)', test)
     need(len(names) == len(set(names)) == 14, "android-qualified-source-original-cases")
