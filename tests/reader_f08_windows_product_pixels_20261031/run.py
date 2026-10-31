@@ -1,5 +1,5 @@
 """Real Windows product desktop pixels beside unchanged interaction test bodies."""
-import argparse, contextlib, ctypes as C, hashlib, json, os, runpy, shutil, struct, subprocess, sys, time, traceback
+import argparse, contextlib, ctypes as C, hashlib, json, math, os, runpy, shutil, struct, subprocess, sys, time, traceback
 from ctypes import wintypes as T
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2];HERE=Path(__file__).resolve().parent
@@ -46,6 +46,9 @@ def analyze(folder,entry):
          driver[0]["exe_sha256"]==entry["program_sha256"] and driver[0]["qpc"]<=first["qpc"]<last["qpc"]<=driver[-1]["qpc"] and
          type(driver[-1]["exit"]) is int,"actual native process lifetime")
     images={};previous={};changed={119:[],123:[]};valid={119:0,123:0};invalid={119:0,123:0};indices=set();present=0;extra=0
+    phase_ticks={name:[] for name in ("copy_to_first_map","copy_to_successful_map","successful_map_call",
+        "all_map_calls","mapped_to_finished","pixel_copy_and_alpha","pixel_compare","bitmap_write","copy_to_finished")}
+    map_attempts=0;blocking_maps=0
     frames=sorted([r for r in native if r["kind"] in ("frame","pointer_only")],key=lambda r:r["index"])
     need([r["index"] for r in frames]==list(range(1,len(frames)+1)) and len(frames)==last["desktop_records"],"no omitted acquisition records")
     releases=[r for r in native if r["kind"]=="frame_release"]
@@ -62,6 +65,22 @@ def analyze(folder,entry):
              frame["copy_submitted_qpc"]<=frame["readback_finished_qpc"]<=last["qpc"] and
              0<frame["last_present_qpc"]<=frame["acquired_qpc"] and frame["last_present_qpc"]>present and
              frame["accumulated_frames"]>0,"native frame QPC chronology")
+        names=("first_map_qpc","map_start_qpc","map_end_qpc","map_cpu_ticks","map_attempts")
+        need(all(type(frame.get(k)) is int for k in names) and frame["map_attempts"]>0 and
+             frame["copy_submitted_qpc"]<=frame["first_map_qpc"]<=frame["map_start_qpc"]<=
+             frame["map_end_qpc"]<=frame["readback_finished_qpc"] and
+             frame["map_end_qpc"]-frame["map_start_qpc"]<=frame["map_cpu_ticks"]<=
+             frame["map_end_qpc"]-frame["first_map_qpc"] and type(frame.get("map_blocking")) is bool,
+             "native Map phase chronology")
+        for name,start,end in (
+            ("copy_to_first_map","copy_submitted_qpc","first_map_qpc"),
+            ("copy_to_successful_map","copy_submitted_qpc","map_start_qpc"),
+            ("successful_map_call","map_start_qpc","map_end_qpc"),
+            ("mapped_to_finished","map_end_qpc","readback_finished_qpc"),
+            ("copy_to_finished","copy_submitted_qpc","readback_finished_qpc")):
+            phase_ticks[name].append(frame[end]-frame[start])
+        phase_ticks["all_map_calls"].append(frame["map_cpu_ticks"])
+        map_attempts+=frame["map_attempts"];blocking_maps+=frame["map_blocking"]
         present=frame["last_present_qpc"]
         need([r["control_id"] for r in frame["regions"]]==[119,123],"both native content regions")
         for region in frame["regions"]:
@@ -69,10 +88,22 @@ def analyze(folder,entry):
             valid_native=region["pid"]==pid and all(region[k] is True for k in
                 ("visible","unoccluded","in_bounds","geometry_stable")) and frame["protected_content"] is False
             need(type(region["valid"]) is bool and region["valid"]==valid_native,"native visibility predicate")
+            times=("copy_start_qpc","copy_end_qpc","compare_end_qpc","write_start_qpc","write_end_qpc")
+            need(all(type(region.get(k)) is int for k in times),"native region phase schema")
             if not region["valid"]:
+                need(all(region[k]==0 for k in times),"unavailable region has no pixel work")
                 need(region["image"]=="" and region["changed"] is False,"unavailable content retained without image")
                 invalid[control]+=1;continue
             valid[control]+=1
+            need(frame["map_end_qpc"]<=region["copy_start_qpc"]<=region["copy_end_qpc"]<=
+                 region["compare_end_qpc"]<=frame["readback_finished_qpc"],"native copy/compare phases")
+            phase_ticks["pixel_copy_and_alpha"].append(region["copy_end_qpc"]-region["copy_start_qpc"])
+            phase_ticks["pixel_compare"].append(region["compare_end_qpc"]-region["copy_end_qpc"])
+            if region["changed"]:
+                need(region["compare_end_qpc"]<=region["write_start_qpc"]<=region["write_end_qpc"]<=
+                     frame["readback_finished_qpc"],"native bitmap write phase")
+                phase_ticks["bitmap_write"].append(region["write_end_qpc"]-region["write_start_qpc"])
+            else:need(region["write_start_qpc"]==region["write_end_qpc"]==0,"unchanged pixels are not rewritten")
             name=region["image"];parts=name.removesuffix(".bmp").split("-")
             need(name.endswith(".bmp") and len(parts)==2 and parts[0]==str(control) and parts[1].isdigit() and
                  0<int(parts[1])<=index and region["hwnd"]>0 and len(rect)==4 and
@@ -97,7 +128,13 @@ def analyze(folder,entry):
             need(event["start_qpc"]<=event["dispatch_qpc"]<=event["end_qpc"],"actual dispatch time")
             if event["message"]==0xF5 and event["control_id"] in (113,114):
                 need(event["enabled_at_dispatch"] is True and 0<event["remaining_ms"]<=2000,"original font deadline and readiness")
-    return {"pid":pid,"observer_pid":entry["observer_pid"],"qpc_frequency":freq,
+    def phase_summary(values):
+        ordered=sorted(x*1000/freq for x in values);n=len(ordered)
+        return {"n":n,"p50_ms":ordered[math.ceil(n*.5)-1] if n else None,
+                "p95_ms":ordered[math.ceil(n*.95)-1] if n else None,"max_ms":max(ordered) if n else None}
+    phases={"timing_version":1,"map_attempts":map_attempts,"blocking_maps":blocking_maps,
+            "durations":{name:phase_summary(values) for name,values in phase_ticks.items()}}
+    return {"pid":pid,"observer_pid":entry["observer_pid"],"qpc_frequency":freq,"capture_phases":phases,
         "desktop_records":len(frames),"desktop_updates":len(frames)-last["pointer_only"],
         "pointer_only_records":last["pointer_only"],"accumulated_extra_frames":extra,"ring_backpressure":last["ring_backpressure"],
         "valid_region_records":valid,"unavailable_region_records":invalid,"distinct_content_frames":{k:len(v) for k,v in changed.items()},
