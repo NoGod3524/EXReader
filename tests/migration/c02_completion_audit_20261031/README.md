@@ -24,18 +24,17 @@ qualification.json 按 manifest.template.json 填入最终合格源码的真实 
 - 独立解码 WH3RPR01 修复计划，核对 INPUT 权威、封存三份原始字节、最后完整 ACK 前缀、计划 gate、修复历史和退休状态。额外核对225字符真实root，以及保留FileID将当前完整ACK9回退至ACK5时的拒绝和原文件不再改变。候选下一行由 INPUT 的原生对象、快照 / 内容摘要和完整 FSM 独立推导，不能跳过一个完整 ACK。
 - 使用 Python SQLite 的内存 deserialize 与 query_only 直接核对实际数据库：应用与 schema、原文、内部账本与外部 mirror 原字节、reflow / fixed / audio 批注，并核对唯一引用与歧义引用两个独立 TXT 场景。没有导入生产 verifier。
 
-## 尚需各平台接入的 adapter
+## 跨平台实际产物与独立解码
 
-现有 Android / macOS owner 工件只有 build receipt，因此会记录 build-only 并留下缺口。host-gtk 也必须提供实际工件。没有这些证据，默认审计退出失败，full_c02_complete 保持 false。
+完整请求包含十二个角色：native-windows、native-linux、persistent-gate、registry-product、host-android、host-macos、host-ios、host-gtk、posix-native-linux、posix-native-macos、posix-migration-linux、posix-migration-macos。manifest.template.json 列出真实工作流与作业名，所有 source/run/attempt/job/artifact 字段必须取自同一生产源码的实际运行。runtime_prefix 与 binaries 是原 ZIP 的精确成员路径；提交请求前须在 Actions 核实，不能按 basename 搜索或遇错切换前缀。
 
-未来运行报告可通过每个 host 包的 admission_report 和 observation_log 接入，格式：
+- Android：独立重读原 app-raw.tar、原生 FD/fstat 观察、固定 Context 目录、A/B/S 原字节与 SQLite；核对实际原生 source 最后释放及进程死亡后的 PENDING 拒绝。普通 Debug/Release APK 的 ELF 导入/导出与 SDK PT_LOAD 段须绑定原安装 SDK，检查原件而非仅信 receipt。
+- GTK：检查实际运行的四份原生快照、UID 与目录/文件身份、实际 SDK 借用顺序以及普通产品包。
+- macOS/iOS：核对原始五阶段、九条路由、实际 SDK 资源、进程观察、两个真实 app bundle 和安装的 C02 archives。原始安装 SDK 已单独保留；整字节哈希与签名后 SDK 不同时，目前 fail closed，须完成 Mach-O 代码页与签名差异独立绑定后才可消除该缺口。
+- POSIX native：独立解码实际原生输出、INPUT/PREPARED、floor/head 及每项 native ID，保留原 28/207、目录 scope 10/81 和迁移 API 17/130。按 qualified source 中的开关强制新源码保留 confirm 前后的 head 原件；旧工件缺原件时不得伪造补齐。
+- POSIX 实际迁移：生产 profile 必须使用 352B FLOOR 与 296B ACK header，绑定实际执行二进制、真实 SDK 数据库、原书/批注/账本、两成员发布和 fresh process recovery。272B 组件 FLOOR 不可替代。独立生产 adapter 与残缺 B/C/head 的显式 Repair 仍在实现；十二角色齐全本身不表示完成。
 
-- 报告 schema 为 c02-host-admission-v1，含 source/run/attempt/platform、actual_sdk:true、complete:true、passed:true，以及 cases 数组。
-- 必须有 clean-admits-before-sdk、pending-refuses-before-sdk、missing-binding-refuses-before-sdk、last-borrow-blocks-owner、final-borrow-release-allows-owner、fresh-process-pending-refusal 六个唯一场景。
-- observation_log 每条原始记录为 C02-HOST-OBS 后跟 JSON。cases[i].observation 必须等于同名原始记录。
-- clean 的 sdk_open_count 必须为 1；三个拒绝场景必须为 0 且 admitted:false；最后 borrow 存活时 owner_admitted:false，最后释放后为 true。
-
-此接口目前只核验运行观察。各平台真实 authority 的原始文件协议确定后，仍须在 host_evidence 中接入原生状态解码，才可消除 native-authority-semantic-adapter 缺口。不能仅靠补这六条 JSON 宣称完成全 C02。
+所有 host 报告仍须保留六个核心运行观察（clean、PENDING、missing binding、最后借用阻止 owner、最后释放允许 owner、fresh process PENDING 拒绝），但 JSON 的 passed/complete 字段不能代替原生文件、SDK 与对象身份检查。生产输入、provider 文件和旧回归案例均从 qualified Git source 独立核对。
 
 实际迁移 runner 的成功 detail 应包含 evidence_dir（相对 actual-migration/cases 的目录名）。二次修复进程案例还需 repair_phase、repair_owner_exit、origin_phase、origin_sequence；原始日志分别为 killed-owner.log / repair-owner.log。篡改案例保存 prior_stage / after_stage 的 dev、ino、sha；repair archive 拒绝案例保留 raw_before 三文件摘要。新增未知协议应补 decoder，不得删掉缺口判断。
 
@@ -53,10 +52,10 @@ workflow 为 .github/workflows/dot-c02-completion-audit-20261031.yml，每个作
 
 dispatch输入：
 - producer_source：完整40位生产提交SHA，默认上述faae提交。
-- scope：windows-components 或 complete-c02。
-- qualification_manifest：仅complete-c02使用，填写完整JSON请求；必须包含七种包角色并与producer_source相同。
+- scope：windows-components、selected-components 或 complete-c02。
+- qualification_manifest：selected-components 与 complete-c02 使用完整 JSON。前者可选择显式局部角色，后者必须包含十二种角色并与 producer_source 相同。
 
-组件模式拒绝传入自定义manifest或更换producer_source。完整模式使用--require-complete；各平台native authority解码尚未完成时会明确失败。工作流先在Actions做Python语法检查，始终上传准备日志、API响应、已下载的原ZIP、失败输出、最终scope与摘要清单。
+固定 windows-components 模式拒绝自定义 manifest 或更换 producer_source。selected-components 必须带 Windows native 或实际 host 的独立篡改负例，输出保持 component-evidence。完整模式使用 --require-complete，任何尚未实现的原生能力、实际修复或 SDK 字节绑定都会留下缺口并失败。工作流先在Actions做Python语法检查，始终上传准备日志、API响应、已下载的原ZIP、失败输出、最终scope与摘要清单。
 
 示例调用（workflow发布到可dispatch的ref后）：
 ```sh

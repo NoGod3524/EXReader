@@ -598,3 +598,35 @@ SHA256 bdab1d5ce896c58c6791bdfa7e3bb19b704e457955b2cbc3da4b7a3742b932d0
 (8062896 bytes). The producer copies then ad-hoc signs bundle dylibs after its
 SDK identity was recorded. Actual signature-region differences must be decoded
 from the newly retained original SDK bytes; the audit does not waive this mismatch.
+
+### First POSIX production build and latest Android original audit
+
+Commit 73f445f61f06c41916677960076f241b640317a5 adds the synchronous desktop
+POSIX actual SDK migration owner, immutable private pack custody, INPUT/PREPARED,
+ACK296/FLOOR352 binding, native two-member publication and the 36-case driver.
+Run 41182277983/A1 failed during the first owner build on both Ubuntu and macOS:
+ABI3's installed exr_wh3.h includes exr_wh.h, but the owner target did not yet
+carry the original ABI2 header include directory. SDK and native authority
+installation passed; the original 65 and actual 36 cases were not run. Preserve
+this failed run. The follow-up adds the explicit frozen ABI2 include; its
+validation is a separate run.
+
+Android producer 99999d62933cf38a40f69325c11df320df29d7fb passed run
+41181228186/A1: actual app 14 cases / 362 checks at UID 10141, and unchanged
+import-entry sample 19 / 95. App job 124478856217 retains artifact 13034658274,
+75551660 bytes, SHA256
+2e6d3d1c0253c04a77ec6821d2ed1554c5fc0e826db49725f655f1a53145dc86.
+Independent original ZIP audit 41182350480/A1 at 73f445f61f06c41916677960076f241b640317a5
+passed with installed_sdk_byte_binding=true, standard_package_byte_binding=true
+and all 8 fully resealed native negative controls. Audit artifact 13035622460,
+75483204 bytes, SHA256
+b5f6acb3f00a68620de26557b2dffdbccc9ce5a010d3b198fa9eccc3e8948a07.
+It remains selected Android evidence with the other eleven roles explicitly
+missing. The source-qualified native pre/post-confirm capture at
+20ef447e25504a2855acf44d1b5729dd81a4fe14 also passed both POSIX jobs in
+41181680798/A1; its original ZIP audit remains part of final qualification.
+
+The complete request template now lists all twelve current roles and exact
+workflows. Actual POSIX Repair and its independent production adapter, Apple
+signed SDK byte binding, and a final common-source all-role audit remain open.
+Formal 95/108 and frozen SDK/C01 values remain unchanged.

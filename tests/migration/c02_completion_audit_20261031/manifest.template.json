@@ -66,7 +66,11 @@
         "cases": 50,
         "checks": 530
       },
-      "expected_scanner": {"cases":29,"checks":91794,"observations":6603},
+      "expected_scanner": {
+        "cases": 29,
+        "checks": 91794,
+        "observations": 6603
+      },
       "required_repair_phases": [
         950,
         951,
@@ -78,39 +82,54 @@
     },
     {
       "role": "host-android",
-      "platform": "Linux",
+      "platform": "Android",
       "run": null,
       "attempt": 1,
       "job": null,
       "job_name": "android",
-      "workflow": ".github/workflows/dot-c02-host-owners-20261031.yml",
+      "workflow": ".github/workflows/dot-c02-android-host-20261031.yml",
       "artifact": {
         "id": null,
         "name": null,
         "bytes": null,
         "sha256": null
-      },
-      "receipt": "c02-evidence/receipt.json",
-      "admission_report": null,
-      "observation_log": null
+      }
     },
     {
       "role": "host-macos",
-      "platform": "macOS",
+      "platform": "macos",
       "run": null,
       "attempt": 1,
       "job": null,
-      "job_name": "macos",
-      "workflow": ".github/workflows/dot-c02-host-owners-20261031.yml",
+      "job_name": "Actual C02 Apple app UID macos",
+      "workflow": ".github/workflows/dot-c02-apple-host-20261031.yml",
+      "receipt": "receipt.json",
+      "admission_report": "admission.json",
+      "observation_log": "observations.log",
       "artifact": {
         "id": null,
         "name": null,
         "bytes": null,
         "sha256": null
-      },
-      "receipt": "c02-evidence/receipt.json",
-      "admission_report": null,
-      "observation_log": null
+      }
+    },
+    {
+      "role": "host-ios",
+      "platform": "iphonesimulator",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": "Actual C02 Apple app UID iphonesimulator",
+      "workflow": ".github/workflows/dot-c02-apple-host-20261031.yml",
+      "receipt": "receipt.json",
+      "admission_report": "admission.json",
+      "observation_log": "observations.log",
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      }
     },
     {
       "role": "host-gtk",
@@ -118,17 +137,93 @@
       "run": null,
       "attempt": 1,
       "job": null,
-      "job_name": null,
-      "workflow": null,
+      "job_name": "gtk",
+      "workflow": ".github/workflows/dot-c02-gtk-host-20261031.yml",
       "artifact": {
         "id": null,
         "name": null,
         "bytes": null,
         "sha256": null
       },
-      "receipt": null,
-      "admission_report": null,
-      "observation_log": null
+      "evidence_prefix": "work/EXReader/EXReader/evidence/",
+      "runtime_prefix": null,
+      "package_prefix": "work/EXReader/EXReader/build/gtk-package/"
+    },
+    {
+      "role": "posix-native-macos",
+      "platform": "macOS",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": "admission (macos-15)",
+      "workflow": ".github/workflows/dot-c02-posix-admission-20261031.yml",
+      "independent_prefix": "work/EXReader/EXReader/evidence/native-independent/",
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      }
+    },
+    {
+      "role": "posix-native-linux",
+      "platform": "Linux",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": "admission (ubuntu-22.04)",
+      "workflow": ".github/workflows/dot-c02-posix-admission-20261031.yml",
+      "independent_prefix": "work/EXReader/EXReader/evidence/native-independent/",
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      }
+    },
+    {
+      "role": "posix-migration-linux",
+      "platform": "Linux",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": "migration (ubuntu-22.04)",
+      "workflow": ".github/workflows/dot-c02-posix-migration-20261031.yml",
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      },
+      "evidence_prefix": "work/EXReader/EXReader/evidence/",
+      "runtime_prefix": null,
+      "binaries": {
+        "owner": "work/EXReader/EXReader/stage-owner/bin/exreader-c02-migrate",
+        "controls": "work/EXReader/EXReader/build/owner/exreader-c02-migrate-controls",
+        "admission": "work/EXReader/EXReader/stage-c02/bin/exreader-c02-admission"
+      }
+    },
+    {
+      "role": "posix-migration-macos",
+      "platform": "macOS",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": "migration (macos-15)",
+      "workflow": ".github/workflows/dot-c02-posix-migration-20261031.yml",
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      },
+      "evidence_prefix": "work/EXReader/EXReader/evidence/",
+      "runtime_prefix": null,
+      "binaries": {
+        "owner": "work/EXReader/EXReader/stage-owner/bin/exreader-c02-migrate",
+        "controls": "work/EXReader/EXReader/build/owner/exreader-c02-migrate-controls",
+        "admission": "work/EXReader/EXReader/stage-c02/bin/exreader-c02-admission"
+      }
     }
   ]
 }
