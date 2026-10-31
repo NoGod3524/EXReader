@@ -91,8 +91,19 @@ def main():
         host.key("alt+F4")
         wait("account", lambda s: s["visible"] == "0" and s["session_present"] == "0")
     def sync():
-        account_window(); host.key("alt+s")
-        wait("account", lambda s: s["session_state"] == "4" and s["owner_busy"] == "0" and s["preparing"] == "0", 240)
+        account_window()
+        generation = int(observed("account")["session_generation"])
+        host.key("alt+s")
+        wait("account", lambda s: int(s["session_generation"]) > generation and
+             s["session_state"] == "4" and s["owner_busy"] == "0" and s["preparing"] == "0" and
+             s["receive_enabled"] == "1", 240)
+        # Transport completion is not projection. Use the real Receive action,
+        # then its distinct completion notice (not stale prior receive_seen).
+        host.key("alt+r")
+        wait("account", lambda s: s["owner_busy"] == "0" and s["preparing"] == "0" and
+             s["projection_status"] == "0" and int(s["receive_seen"]) > 0 and
+             s["notice"] == "Sync finished. Open a book to add it to this device's reading library", 240)
+        report.setdefault("account_rounds", []).append(observed("account"))
         account_close()
     def check(name, condition):
         assert condition, name
@@ -108,7 +119,10 @@ def main():
         account_window()
         for mnemonic, value in (("w", dav.base + "/dav/"), ("u", user), ("p", password)):
             host.key("alt+" + mnemonic, "ctrl+a"); host.paste(value)
-        host.key("alt+h"); account_close()
+        host.key("alt+h", "alt+a")
+        wait("account", lambda s: s["bound"] == "1" and s["credential_status"] == "0" and
+             s["root"] == dav.base + "/dav/" and s["owner_busy"] == "0")
+        account_close()
         before = frame(); sync()
         check("remote_sync_does_not_move_active_reader", frame() == before)
         received = rows(); report["incoming"] = received

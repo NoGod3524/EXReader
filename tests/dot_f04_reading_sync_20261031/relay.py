@@ -59,18 +59,22 @@ def start(folder, previous=None, certificate=None, key=None):
             '-nodes', '-days', '1', '-keyout', str(private), '-out', str(cert),
             '-subj', '/CN=127.0.0.1', '-addext',
             'subjectAltName=IP:127.0.0.1'], check=True, capture_output=True)
-    if sys.platform == 'darwin':
-        sys.path.insert(0, str(ROOT / 'tests/webdav'))
-        from cloud_native import trust_fixture_certificates
-        trust_fixture_certificates((cert,), 'apple-android-relay-')
+    loaded = load(previous) if previous is not None else None
+    fixture_trust = trust_desktop(cert, 'f04-apple') if sys.platform == 'darwin' else None
     user, password = 'relay-fixture', secrets.token_hex(32)
     authorization = 'Basic ' + base64.b64encode((user + ':' + password).encode()).decode()
-    dav = Dav(cert, private, authorization)
+    try:
+        dav = Dav(cert, private, authorization)
+    except BaseException:
+        if fixture_trust: untrust_desktop(fixture_trust)
+        private.unlink(missing_ok=True)
+        raise
+    dav.fixture_trust = fixture_trust
     dav.certificate_sha256 = hashlib.sha256(cert.read_bytes()).hexdigest()
     dav.prior_entries, dav.prior_directories, dav.previous_sha256 = {}, set(), None
     dav.previous = None
     if previous is not None:
-        state, dav.previous_sha256 = load(previous)
+        state, dav.previous_sha256 = loaded
         dav.previous = state
         dav.directories = set(state['directories'])
         dav.entries = {path: base64.b64decode(value['body'], validate=True)
@@ -105,6 +109,8 @@ def save(dav, folder, phase, data):
     dav.server.shutdown()
     dav.server.server_close()
     (folder / 'key.pem').unlink(missing_ok=True)
+    if getattr(dav, 'fixture_trust', None):
+        untrust_desktop(dav.fixture_trust); dav.fixture_trust = None
 
 
 def retained_rows(database):
@@ -141,7 +147,15 @@ def trust_desktop(certificate, prefix):
         subprocess.run(["sudo", "cp", str(certificate), target], check=True, capture_output=True)
         subprocess.run(["sudo", "update-ca-certificates"], check=True, capture_output=True)
         return {"kind": "linux", "path": target}
-    raise AssertionError("Only desktop Windows/GTK trust is supported by this helper")
+    if sys.platform == "darwin":
+        fingerprint = subprocess.check_output(["openssl", "x509", "-in", str(certificate),
+                        "-noout", "-fingerprint", "-sha1"], text=True).strip().split("=", 1)[1].replace(":", "")
+        assert len(fingerprint) == 40 and all(c in "0123456789ABCDEFabcdef" for c in fingerprint)
+        subprocess.run(["sudo", "security", "add-trusted-cert", "-d", "-r", "trustRoot",
+                        "-k", "/Library/Keychains/System.keychain", str(certificate)],
+                       check=True, capture_output=True)
+        return {"kind": "macos", "fingerprint": fingerprint}
+    raise AssertionError("Unsupported desktop fixture trust platform")
 
 
 def untrust_desktop(trust):
@@ -153,6 +167,9 @@ def untrust_desktop(trust):
         assert trust["path"] in ("/usr/local/share/ca-certificates/f04-gtk.crt",)
         subprocess.run(["sudo", "rm", "--", trust["path"]], check=True, capture_output=True)
         subprocess.run(["sudo", "update-ca-certificates"], check=True, capture_output=True)
+    elif trust["kind"] == "macos":
+        subprocess.run(["sudo", "security", "delete-certificate", "-Z", trust["fingerprint"],
+                        "/Library/Keychains/System.keychain"], check=True, capture_output=True)
     else:
         raise AssertionError("Unknown fixture trust identity")
 

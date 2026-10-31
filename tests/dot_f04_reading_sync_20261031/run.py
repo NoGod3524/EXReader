@@ -30,6 +30,12 @@ def stage_apple(target='iphone', generic=False):
                           "sys.path.insert(0, " + repr(str(HERE)) + ")")
     source = replace_once(source, "('position', 'uploaded')",
                           "('position', 'uploaded', 'created-records', 'incoming-bookmark', 'incoming-note', 'edited-records')")
+    source = replace_once(source, "from relay import start, save", "from relay import start, save, untrust_desktop")
+    source = replace_once(source, "            dav.server.shutdown(); dav.server.server_close()",
+        "            dav.server.shutdown(); dav.server.server_close()\n"
+        "            if getattr(dav, 'fixture_trust', None):\n"
+        "                untrust_desktop(dav.fixture_trust); dav.fixture_trust = None\n"
+        "            (out / 'key.pem').unlink(missing_ok=True)")
     source = replace_once(source, "ROOT / 'tests/apple_android_relay/apple/RelayUITests.swift'",
                           "ROOT / 'tests/dot_f04_reading_sync_20261031/apple_driver.swift'")
     source = replace_once(source, "identity = json.loads((sdk / 'wave3-packages.json').read_text())",
@@ -57,8 +63,8 @@ def stage_apple(target='iphone', generic=False):
         "'platform': " + repr({"iphone": "iphone-simulator", "ipad": "ipad-simulator", "macos": "macos"}[target]))
     source = source.replace("data['f04_stage'] = 'iphone-android-reading-v1'",
                             "data['f04_stage'] = 'six-host-reading-preparation-v2'")
-    source = replace_once(source, "from relay import start, save",
-                          "from relay import start, save, input_metadata, retained_rows")
+    source = replace_once(source, "from relay import start, save, untrust_desktop",
+                          "from relay import start, save, untrust_desktop, input_metadata, retained_rows")
     source = replace_once(source, "                    checkpoints[name] = payload",
         "                    payload['retained_records'] = retained_rows(root / 'accounts' / matching[0]['id'] / 'reader-catalog.db')\n"
         "                    checkpoints[name] = payload")
@@ -81,6 +87,7 @@ def stage_apple(target='iphone', generic=False):
         finish = source.index("                    profiles =", begin)
         source = source[:begin] + (
             "                    root = Path.home() / 'Library/Application Support/EXReader'\n") + source[finish:]
+        source = replace_once(source, "CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_ALLOWED=YES")
         source = replace_once(source, "'-scheme', 'EXReaderHost-iOS'", "'-scheme', 'EXReaderHost-macOS'")
         source = replace_once(source, "'platform=iOS Simulator,id=' + udid", "'platform=macOS'")
         source = replace_once(source, "'derived/Build/Products/Debug-iphonesimulator/EXReaderHost.app'",
