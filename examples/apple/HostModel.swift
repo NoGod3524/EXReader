@@ -7,6 +7,97 @@ import CReaderProduct
 import Combine
 import Darwin
 
+#if EXR_APPLE_F08_REVIEW
+import os
+#if os(iOS)
+import MetricKit
+#endif
+
+// Native extended launch measurement includes the first stable, usable shelf.
+// The normal host does not compile this review observer.
+enum HostF08Review {
+    private(set) static var launchStatus = "not-started"
+    private(set) static var launchError = ""
+    private static var pending: DispatchWorkItem?
+    private static var signature = ""
+    private static let phaseLock = NSLock()
+    private static var phaseValues: [[String: Any]] = []
+    static func phase(_ name: String, count: Int? = nil) {
+        let args = ProcessInfo.processInfo.arguments
+        guard args.contains("-EXRF08Launch") || args.contains("-EXRF08PhaseOnly") else { return }
+        var value: [String: Any] = ["phase": name, "uptime_s": ProcessInfo.processInfo.systemUptime,
+            "pid": ProcessInfo.processInfo.processIdentifier, "main_thread": Thread.isMainThread]
+        if let count { value["count"] = count }
+        phaseLock.lock(); defer { phaseLock.unlock() }
+        phaseValues.append(value)
+    }
+    static var phases: [[String: Any]] {
+        phaseLock.lock(); defer { phaseLock.unlock() }; return phaseValues
+    }
+    static func beginLaunch() {
+        phase("app-init")
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-EXRF08PhaseOnly") { launchStatus = "observing-native-layout"; return }
+        guard args.contains("-EXRF08Launch") else { return }
+#if os(iOS)
+        if #available(iOS 16, *) {
+            do {
+                phase("native-extend-begin")
+                try MXMetricManager.extendLaunchMeasurement(forTaskID: MXLaunchTaskID(rawValue: "org.exreader.f08.shelf-ready"))
+                phase("native-extend-returned")
+                launchStatus = "started"
+            } catch { launchStatus = "start-failed"; launchError = String(describing: error) }
+        } else { launchStatus = "unsupported" }
+#else
+        // The actual Xcode16.4 MetricKit headers mark launch tasks unavailable on macOS.
+        // Keep native layout readiness, and report a launch-request upper bound separately.
+        launchStatus = "observing-native-layout"
+#endif
+    }
+    static func observeShelf(_ value: String, ready: @escaping () -> Bool, changed: @escaping () -> Void) {
+        guard (launchStatus == "started" || launchStatus == "observing-native-layout"), value != signature || pending == nil else { return }
+        signature = value; pending?.cancel()
+        let work = DispatchWorkItem {
+            pending = nil
+            guard ready() else { return }
+            phase("native-layout-ready")
+#if os(iOS)
+            if launchStatus == "started", #available(iOS 16, *) {
+                do {
+                    phase("native-finish-begin")
+                    try MXMetricManager.finishExtendedLaunchMeasurement(forTaskID: MXLaunchTaskID(rawValue: "org.exreader.f08.shelf-ready"))
+                    phase("native-finish-returned")
+                    launchStatus = "finished"
+                } catch { launchStatus = "finish-failed"; launchError = String(describing: error) }
+            } else { launchStatus = "native-layout-finished" }
+#else
+            launchStatus = "native-layout-finished"
+#endif
+            changed()
+        }
+        pending = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
+    }
+    private static let animationLog = OSLog(subsystem: "org.exreader.f08", category: "NativeUI")
+    private(set) static var scrollActive = false
+    private(set) static var scrollStarts = 0
+    private(set) static var scrollEnds = 0
+    static func observeScrollPhase(active: Bool) {
+        guard active != scrollActive else { return }
+        scrollActive = active
+        if active {
+            scrollStarts += 1
+            os_signpost(.animationBegin, log: animationLog, name: "ShelfScroll", signpostID: .exclusive)
+        } else {
+            scrollEnds += 1
+            os_signpost(.end, log: animationLog, name: "ShelfScroll", signpostID: .exclusive)
+        }
+    }
+
+}
+#endif
+
+
 #if EXR_APPLE_PAGE_THEME
 enum HostPageThemeChoice: String, CaseIterable {
     case original, light, dark, system
@@ -90,6 +181,9 @@ final class HostShelf: ObservableObject {
 #endif
 
     init(defaults: UserDefaults = .standard) {
+#if EXR_APPLE_F08_REVIEW
+        HostF08Review.phase("shelf-init")
+#endif
         self.defaults = defaults
         query = defaults.string(forKey: "EXRShelfQuery") ?? ""
         selected = defaults.string(forKey: "EXRShelfSelected")
@@ -333,6 +427,9 @@ final class HostShelf: ObservableObject {
         }
         if firstLayoutUptime == nil, !loading, generation == appliedGeneration {
             firstLayoutUptime = ProcessInfo.processInfo.systemUptime
+#if EXR_APPLE_F08_REVIEW
+            HostF08Review.phase("shelf-first-visible-layout", count: rows.count)
+#endif
         }
         if acknowledged || visible != newVisible || top != rows[index].key {
             let now = ProcessInfo.processInfo.systemUptime
@@ -352,6 +449,19 @@ final class HostShelf: ObservableObject {
         }
         top = rows[index].key
         guard !loading, appliedGeneration == generation else { return }
+#if EXR_APPLE_F08_REVIEW
+        let launchGeneration = generation, launchTop = top, launchVisible = visible
+        let launchKeys = rows.map(\.id)
+        let launchSignature = "\(generation)|\(top?.key ?? "")|" + launchKeys.joined(separator: "|") + visible.sorted().joined(separator: "|")
+        HostF08Review.observeShelf(launchSignature, ready: { [weak self] in
+            guard let self else { return false }
+            return !self.loading && self.error.isEmpty && self.awaitingLayoutKey == nil &&
+                self.generation == launchGeneration && self.appliedGeneration == launchGeneration &&
+                self.query.isEmpty && self.appliedQuery.isEmpty && self.top == launchTop &&
+                self.visible == launchVisible && !self.visible.isEmpty && self.top != nil &&
+                self.rows.map(\.id) == launchKeys && self.viewportSize.width > 0 && self.viewportSize.height > 0
+        }, changed: { [weak self] in self?.objectWillChange.send() })
+#endif
         if after && lastIndex >= rows.count - 12, let last = rows.last {
             request(anchor: last.key, previous: false, inclusive: false, replacing: false)
         } else if before && index < 12, let first = rows.first {
@@ -402,6 +512,16 @@ final class HostShelf: ObservableObject {
         value["requested_restore_key"] = restoreKey ?? ""
         value["geometry_revision"] = geometryRevision
         value["issued_restore_revision"] = issuedRestoreRevision
+#endif
+#if EXR_APPLE_F08_REVIEW
+        value["f08_launch_task_status"] = HostF08Review.launchStatus
+        value["f08_launch_task_error"] = HostF08Review.launchError
+        // Keep the detailed phase buffer out of the live accessibility view tree
+        // until the native endpoint has fired; the buffer retains every timestamp.
+        value["f08_launch_phases"] = ["finished", "native-layout-finished", "start-failed", "finish-failed"].contains(HostF08Review.launchStatus) ? HostF08Review.phases : []
+        value["f08_native_scroll_signpost_starts"] = HostF08Review.scrollStarts
+        value["f08_native_scroll_signpost_ends"] = HostF08Review.scrollEnds
+        value["f08_native_scroll_active"] = HostF08Review.scrollActive
 #endif
         return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
     }
@@ -1293,6 +1413,19 @@ final class HostReaderModel: ObservableObject {
     }
 #endif
     @Published var pageAccessibilityLabel = ""
+#if EXR_APPLE_F08_REVIEW
+    var f08ReaderObservation: String {
+        var usage = rusage(); getrusage(RUSAGE_SELF, &usage)
+        let bitmap: String
+        if let bytes = image?.dataProvider?.data { bitmap = SHA256.hash(data: bytes as Data).map { String(format: "%02x", $0) }.joined() }
+        else { bitmap = "" }
+        let value: [String: Any] = ["bitmap_sha256": bitmap, "sdk_frame_count": frameCount,
+            "font_size": fontSize, "logical_offset": pageBaseOffset, "location": location,
+            "process_peak_rss_bytes": usage.ru_maxrss, "busy": busy, "title": title,
+            "source_sha": Bundle.main.object(forInfoDictionaryKey: "EXRSourceSHA") as? String ?? ""]
+        return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
+    }
+#endif
     @Published var fontSize = 28
 #if EXR_APPLE_PAGE_THEME
     @Published private(set) var pageThemeChoice = HostPageThemeChoice.original
@@ -1480,10 +1613,16 @@ final class HostReaderModel: ObservableObject {
     private var slowDelay: Double = 0
 
     init(profile: HostAccountProfile? = nil, accounts: HostAccounts? = nil) {
+#if EXR_APPLE_F08_REVIEW
+        HostF08Review.phase("reader-model-init")
+#endif
         self.accountProfile = profile
         self.accounts = accounts
         self.accountSession = profile.flatMap { accounts?.controller(for: $0) }
         self.defaults = profile.flatMap { UserDefaults(suiteName: "org.exreader.account." + $0.id) } ?? .standard
+#if EXR_APPLE_F08_REVIEW
+        HostF08Review.phase("reader-model-init-complete")
+#endif
     }
 
     deinit {
@@ -1938,6 +2077,9 @@ final class HostReaderModel: ObservableObject {
     }
 
     func start() {
+#if EXR_APPLE_F08_REVIEW
+        HostF08Review.phase("startup-request")
+#endif
         traceUITest("startup-request")
         guard !started else { return }
 #if EXR_APPLE_HOST_REVIEW
@@ -1956,6 +2098,9 @@ final class HostReaderModel: ObservableObject {
         }
         let fresh = freshState
         queue.async {
+#if EXR_APPLE_F08_REVIEW
+            HostF08Review.phase("startup-owner-start")
+#endif
             do {
                 let folder = try self.storageFolder()
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -2001,6 +2146,9 @@ final class HostReaderModel: ObservableObject {
                 self.configureImportMappingReview()
 #endif
                 let library = try HostLibrary(path: folder.appendingPathComponent("library.sqlite"))
+#if EXR_APPLE_F08_REVIEW
+                HostF08Review.phase("startup-library-opened")
+#endif
                 try HostImportCopy.discardInterrupted(in: folder.appendingPathComponent("import-staging", isDirectory: true))
                 let fontURL = Bundle.main.url(forResource: "Reader", withExtension: "otf")
                 guard let fontURL else { throw HostError.invalidInput("缺少 Reader.otf") }
@@ -2020,10 +2168,24 @@ final class HostReaderModel: ObservableObject {
                                           fontSize: savedFont > 0 ? savedFont : 28)
                 self.session = session
                 let (storedBooks, repairProblems) = try HostImportPublication.perform {
+#if EXR_APPLE_F08_REVIEW
+                    HostF08Review.phase("startup-enumeration-begin")
+#endif
                     let books = try library.books()
-                    return (books, try catalog.repairMissing(library: library, books: books))
+#if EXR_APPLE_F08_REVIEW
+                    HostF08Review.phase("startup-enumeration-complete", count: books.count)
+                    HostF08Review.phase("startup-repair-begin")
+#endif
+                    let problems = try catalog.repairMissing(library: library, books: books)
+#if EXR_APPLE_F08_REVIEW
+                    HostF08Review.phase("startup-repair-complete", count: problems.count)
+#endif
+                    return (books, problems)
                 }
                 let rows = try session.listBooks(storedBooks)
+#if EXR_APPLE_F08_REVIEW
+                HostF08Review.phase("startup-compatibility-rows-complete", count: rows.count)
+#endif
                 self.catalog = catalog
 #if EXR_APPLE_IMPORT_REVIEW
                 self.refreshImportMappingProbe(catalog, folder: folder)
@@ -2031,6 +2193,9 @@ final class HostReaderModel: ObservableObject {
                 let lastID = (self.defaults.object(forKey: "EXRLastBook") as? NSNumber)?.int64Value
                 let lastPresent = lastID.map { id in storedBooks.contains(where: { $0.id == id }) } ?? false
                 DispatchQueue.main.async {
+#if EXR_APPLE_F08_REVIEW
+                    HostF08Review.phase("startup-main-publish", count: rows.count)
+#endif
                     self.traceUITest("startup-publish rows=\(rows.count)")
                     self.organizationURL = folder.appendingPathComponent("reader-catalog.db")
                     self.books = rows
