@@ -7,6 +7,7 @@ import stat
 import sqlite3
 import signal
 import threading
+import time
 import hashlib
 import json
 import os
@@ -194,6 +195,8 @@ def main():
             "simultaneous_online_peers":False,"generated_fixture_credentials_only":True}
     trusted=False
     app_folder=None
+    monitor=None
+    monitor_stop=threading.Event()
     label="macOS" if a.platform=="macos" else "iOS"
     def readback(folder):
         with sqlite3.connect((folder/"library.sqlite").resolve().as_uri()+"?mode=ro",uri=True) as db:
@@ -260,8 +263,12 @@ def main():
                 server.hold_put=True;server.put_committed.clear();server.release.clear()
                 def kill_at_commit():
                     try:
-                        if not server.put_committed.wait(180):
-                            raise AssertionError("native PUT never reached committed/unknown-ack boundary")
+                        deadline=time.monotonic()+180
+                        while not server.put_committed.wait(.1):
+                            if monitor_stop.is_set():return
+                            if time.monotonic()>=deadline:
+                                raise AssertionError("native PUT never reached committed/unknown-ack boundary")
+                        if monitor_stop.is_set():return
                         pids=subprocess.check_output(["pgrep","-x","EXReaderHost"],text=True).split()
                         if len(pids)!=1:raise AssertionError("unique actual EXReaderHost PID required")
                         pid=int(pids[0])
@@ -319,15 +326,29 @@ def main():
         report["failure"]=safe
         raise RuntimeError(safe) from None
     finally:
-        report["requests"]=server.requests
-        report["uncovered"]=["independent xcresult attachments and artifact authentication",
-            "organization projection (owner gap, not lower API injected)"]
-        (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
-        server.close()
-        if trusted:
+        cleanup_errors=[]
+        monitor_stop.set()
+        def cleanup(label, action):
+            try:action()
+            except BaseException as error:
+                cleanup_errors.append({"step":label,"failure":repr(error).replace(password,"<fixture-secret>")})
+        cleanup("server-close",server.close)
+        if monitor is not None:cleanup("kill-monitor-join",lambda:monitor.join(5))
+        if monitor is not None and monitor.is_alive():
+            cleanup_errors.append({"step":"kill-monitor-join","failure":"monitor still alive"})
+        def remove_trust():
             digest=subprocess.check_output(["openssl","x509","-in",str(a.certificate),
                 "-noout","-fingerprint","-sha1"],text=True).strip().split("=")[-1].replace(":","")
             subprocess.run(["sudo","security","delete-certificate","-Z",digest,
                 "/Library/Keychains/System.keychain"],check=True,capture_output=True)
+        if trusted:cleanup("fixture-trust-remove",remove_trust)
+        report["requests"]=server.requests
+        report["uncovered"]=["independent xcresult attachments and artifact authentication",
+            "organization projection (owner delta not yet composed)"]
+        report["cleanup_errors"]=cleanup_errors
+        cleanup("coverage-write",lambda:(a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n"))
+        if cleanup_errors:
+            print(json.dumps({"cleanup_errors":cleanup_errors,"primary_failure":report.get("failure")}),flush=True)
+            if "failure" not in report:raise RuntimeError("F05 cleanup failed; preserve evidence")
 
 if __name__=="__main__":main()
