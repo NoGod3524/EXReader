@@ -12,6 +12,17 @@ SIZE=3446781
 DIGEST="80c64d7dbb756611fcfaa81ad5200f23be191c7a71ffc37085f714b549429a84"
 OUT=ROOT/"build/f08-windows-etw-inspect"
 PM_SHA="b2a706bc6ad475749e3b7e3409263aa1e6906d45bdcf993f6dbc0f660188f1af"
+def element_payload(node):
+    return {"tag":node.tag.rsplit("}",1)[-1],"attributes":dict(node.attrib),
+            "text":node.text,"children":[element_payload(child) for child in node]}
+def leaf_texts(node):
+    if node.get("text") and node["text"].strip():yield node["text"].strip()
+    for child in node.get("children",[]):yield from leaf_texts(child)
+def unsigned(value):
+    try:
+        value=str(value).strip()
+        return int(value,16 if value.lower().startswith("0x") else 10)
+    except (TypeError,ValueError):return None
 def events(path):
     for _,node in ET.iterparse(path,events=("end",)):
         if node.tag.rsplit("}",1)[-1]!="Event":continue
@@ -23,7 +34,10 @@ def events(path):
         yield {"provider":provider.attrib.get("Name",provider.attrib.get("Guid","")) if provider is not None else "",
             "event":system["EventID"].text if "EventID" in system else None,
             "execution":dict(execution.attrib) if execution is not None else {},
-            "clock":dict(clock.attrib) if clock is not None else {},"data":data,"labels":rendered}
+            "clock":dict(clock.attrib) if clock is not None else {},"data":data,"labels":rendered,
+            "event_data":[element_payload(x) for x in values.get("EventData",[])],
+            "version":system["Version"].text if "Version" in system else None,
+            "opcode":system["Opcode"].text if "Opcode" in system else None}
         node.clear()
 def inspect_window(rows, updates, links, native_path, folder, pid):
     native=[json.loads(line) for line in native_path.read_text().splitlines()]
@@ -71,6 +85,52 @@ def inspect_window(rows, updates, links, native_path, folder, pid):
     return {"native_paint_join":native_summary,"sprite_tokens":sorted(sprite_tokens),"sprite_link_count":len(sprite_links),
             "dwm_window_event_count":len(direct),"dwm_types":{key:value["count"] for key,value in types.items()},
             "physical_presentation_proven":False}
+
+def inspect_composition(rows, handles, pid, folder):
+    dwm=[r for r in rows if r["provider"]=="Microsoft-Windows-Dwm-Core"]
+    live={};cycles=[];unfinished=[]
+    for row in dwm:
+        key=(row["execution"].get("ProcessID"),row["execution"].get("ThreadID"))
+        if row["event"]=="10":
+            if key in live:unfinished.append(live.pop(key))
+            live[key]=[]
+        if key in live:
+            live[key].append(row)
+            if row["event"]=="12":cycles.append(live.pop(key))
+    unfinished.extend(live.values())
+    selected=[]
+    for cycle in cycles:
+        updates=[r for r in cycle if r["event"]=="46" and
+                 (r["data"].get("hWnd") or "").strip().casefold() in handles]
+        if not updates:continue
+        attribution=[]
+        for row in cycle:
+            if row["event"]!="387":continue
+            values=[unsigned(v) for datum in row["event_data"]
+                    if datum["attributes"].get("Name")=="CompositorRendered" for v in leaf_texts(datum)]
+            attribution.append({"event":row,"rendered_pids":[v for v in values if v is not None]})
+        selected.append({"start_qpc":unsigned(cycle[0]["clock"].get("RawTime")),
+            "end_qpc":unsigned(cycle[-1]["clock"].get("RawTime")),"updates":updates,"attribution":attribution,
+            "present_start_count":sum(r["event"]=="15" for r in cycle),
+            "present_succeeded_count":sum(r["event"]=="141" for r in cycle),
+            "process_frame_info":[r for r in cycle if r["event"]=="11"],
+            "all_events":cycle,"paint_generation_link":"unknown","physical_presentation_proven":False})
+    frame_info=[r for r in dwm if r["event"] in ("1","202")]
+    save(folder/"composition-cycles.json",{"target_cycles":selected,"unfinished_cycles":unfinished,"frame_info":frame_info})
+    duplicate_names=sum(len([x["attributes"].get("Name") for x in row["event_data"]])!=
+        len(set(x["attributes"].get("Name") for x in row["event_data"])) for row in rows)
+    nested=sum(any(x["children"] for x in row["event_data"]) for row in rows)
+    result={"complete_dwm_cycles":len(cycles),"unfinished_dwm_cycles":len(unfinished),"target_window_cycles":len(selected),
+        "target_window_updates_in_complete_cycles":sum(len(x["updates"]) for x in selected),
+        "target_cycles_with_present_succeeded":sum(x["present_succeeded_count"]>0 for x in selected),
+        "target_cycles_with_process_attribution":sum(any(pid in a["rendered_pids"] for a in x["attribution"]) for x in selected),
+        "repeated_event_data_names_preserved":duplicate_names,"events_with_nested_data_preserved":nested,
+        "first_target_cycle":{"events":[{"event":r["event"],"qpc":r["clock"].get("RawTime"),
+             "task":r["labels"].get("Task"),"data":r["data"],"event_data":r["event_data"]}
+             for r in selected[0]["all_events"] if r["event"] in ("10","11","12","46","87","100","15","16","141","387","114")]} if selected else None,
+        "frame_info_examples":frame_info[:4],"paint_generation_link":"unknown","physical_presentation_proven":False}
+    print("F08_COMPOSITION_CONTEXT",folder.name,json.dumps(result),flush=True)
+    return {k:v for k,v in result.items() if k not in ("first_target_cycle","frame_info_examples")}
 
 def main():
     need(os.environ.get("GITHUB_ACTIONS")=="true","Actions only")
@@ -130,6 +190,7 @@ def main():
                "replays":[]}
         entry["window_analysis"]=inspect_window(rows,updates,links,raw/mode/"control.jsonl",folder,pid)
         entry["replays_not_repeated"]=True
+        entry["composition_context"]=inspect_composition(rows,handles,pid,folder)
         report["captures"].append(entry)
     report["files"]={p.relative_to(OUT).as_posix():{"sha256":sha(p),"bytes":p.stat().st_size}
                      for p in OUT.rglob("*") if p.is_file() and "raw" not in p.relative_to(OUT).parts}
