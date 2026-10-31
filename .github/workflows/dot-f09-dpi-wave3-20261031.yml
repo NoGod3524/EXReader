@@ -1,0 +1,139 @@
+name: F09 DPI-aware Wave3 host regression and package
+on:
+  push:
+    branches: [codex/dot-f09-dpi-wave3-20261031]
+permissions:
+  contents: read
+concurrency:
+  group: f09-dpi-wave3-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Verify SDK candidate identity
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt
+      - name: Prepare native display
+        run: python tests/reader_native_owner_repairs/display.py
+      - name: Install UI automation
+        run: python -m pip install uiautomation==2.0.29
+      - name: Build and package the 3.42 native host
+        id: build
+        run: python tests/windows_sdk342/build.py
+      - name: Original compact native UI
+        if: always() && steps.build.outcome == 'success'
+        run: python tests/reader_windows_compact/check_ui.py --candidate build/windows-sdk342/package/EXReader/EXReader.exe --font build/host-font-cache/Reader.otf --fixtures build/windows-sdk342/fixtures --output build/windows-sdk342/compact
+      - name: Wave3 native UI
+        if: always() && steps.build.outcome == 'success'
+        run: python tests/reader_wave3_c09/check_ui.py --candidate build/windows-sdk342/package/EXReader/EXReader.exe --font build/host-font-cache/Reader.otf --fixtures build/windows-sdk342/fixtures --output build/windows-sdk342/wave3-ui
+      - name: Native TXT progress
+        if: always() && steps.build.outcome == 'success'
+        run: python tests/windows_host/txt/check_progress.py build/windows-sdk342/package/EXReader/EXReader.exe build/host-font-cache/Reader.otf build/windows-sdk342/txt-progress "build/windows-sdk342/fixtures/Fixed page.pdf" build/windows-sdk342/txt-consumer/txtp-inject.exe raw
+      - name: Build account acceptance consumers
+        id: accountbuild
+        if: always() && steps.build.outcome == 'success'
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/windows-sdk342/raw;$pwd/build/windows-sdk342/product;$pwd/build/windows-sdk342/sdk"
+          cmake -S tests/reader_revisions/consumer -B build/windows-sdk342/account-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'revision configure failed' }
+          cmake --build build/windows-sdk342/account-revisions --parallel 4
+          if ($LASTEXITCODE) { throw 'revision build failed' }
+          cmake -S tests/terra_windows_sync/consumer -B build/windows-sdk342/account-capture -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'capture configure failed' }
+          cmake --build build/windows-sdk342/account-capture --parallel 4
+          if ($LASTEXITCODE) { throw 'capture build failed' }
+          python tests/windows_host/make_fixtures.py --output build/windows-sdk342/account-fixtures
+          if ($LASTEXITCODE) { throw 'account fixture generation failed' }
+          python tests/reader_reading_state/make_fixtures.py build/windows-sdk342/reading-fixtures
+          if ($LASTEXITCODE) { throw 'reading fixture generation failed' }
+      - name: Native account and sync checks
+        if: always() && steps.accountbuild.outcome == 'success'
+        env:
+          EXR_ACCOUNT_COMPACT_PICKER: '1'
+        shell: bash
+        run: |
+          set -o pipefail
+          python -u tests/reader_windows_account/check_account_ui.py --candidate build/windows-sdk342/package/EXReader/EXReader.exe --package build/windows-sdk342/package/EXReader --fixtures build/windows-sdk342/account-fixtures --revision-consumer build/windows-sdk342/account-revisions/revision-consumer.exe --capture-probe build/windows-sdk342/account-capture/reading-capture-probe.exe --reading-fixtures build/windows-sdk342/reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/windows-sdk342/host/windows-host.map --output build/windows-sdk342/account-ui 2>&1 | tee build/windows-sdk342/account.log
+      - name: Build native organization consumers
+        id: organizationbuild
+        if: always() && steps.build.outcome == 'success'
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/windows-sdk342/raw;$pwd/build/windows-sdk342/product;$pwd/build/windows-sdk342/sdk"
+          cmake -S tests/reader_windows_raw3/metadata-consumer -B build/organization-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DRAW_METADATA=ON "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'metadata configure failed' }
+          cmake --build build/organization-consumer --parallel 4
+          if ($LASTEXITCODE) { throw 'metadata build failed' }
+          cmake -S tests/windows_organization_projection/cloud -B build/cloud-readback -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'readback configure failed' }
+          cmake --build build/cloud-readback --parallel 4
+          if ($LASTEXITCODE) { throw 'readback build failed' }
+          New-Item -ItemType Directory -Force build/c09/package | Out-Null
+          Copy-Item -Recurse build/windows-sdk342/package/EXReader build/c09/package/
+          if ((Get-FileHash build/windows-sdk342/package/EXReader/EXReader.exe).Hash -ne (Get-FileHash build/c09/package/EXReader/EXReader.exe).Hash) { throw 'copied executable differs' }
+      - name: Native organization and receive cancellation
+        if: always() && steps.organizationbuild.outcome == 'success'
+        run: python tests/windows_organization_projection/check_ui.py
+      - name: Build same-source from-first TXT reference
+        id: reference
+        if: always() && steps.build.outcome == 'success'
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/windows-sdk342/raw;$pwd/build/windows-sdk342/product;$pwd/build/windows-sdk342/sdk"
+          cmake -S apps/reader/desktop -B build/windows-sdk342/reference -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix" "-DEXR_SDK=$pwd/build/windows-sdk342/sdk" "-DEXR_SDK_VERSION=3.42.0" "-DREADER_METADATA_PREFIX=$pwd/build/windows-sdk342/raw" "-DREADER_ACCOUNT_PREFIX=$pwd/build/windows-sdk342/raw" -DEXR_READER_WINDOWS_WAVE3=ON -DEXR_READER_WINDOWS_CLOUD_CONTENT_BOUND=ON -DEXR_READER_WINDOWS_TXT_PROGRESS=ON "-DCMAKE_C_FLAGS=/DEXR_TXT_SCAN_FROM_FIRST=1"
+          if ($LASTEXITCODE) { throw 'reference configure failed' }
+          cmake --build build/windows-sdk342/reference --target EXReaderWave3 --parallel 4 --verbose
+          if ($LASTEXITCODE) { throw 'reference build failed' }
+      - name: Native forward scan comparison
+        if: always() && steps.reference.outcome == 'success'
+        run: python tests/windows_txt_forward_scan/check_ui.py --candidate build/windows-sdk342/package/EXReader/EXReader.exe --reference build/windows-sdk342/reference/EXReaderWave3.exe --font build/host-font-cache/Reader.otf --output build/windows-sdk342/txt-forward
+      - name: Same-source installed SDK scan checks
+        if: always() && steps.build.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S tests/windows_txt_forward_scan/sdk -B build/windows-sdk342/scan-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/windows-sdk342/sdk"
+          cmake --build build/windows-sdk342/scan-sdk --parallel 4
+          ctest --test-dir build/windows-sdk342/scan-sdk --output-on-failure --no-tests=error
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f09-dpi-wave3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-sdk342/logs/
+            build/windows-sdk342/host/CMakeCache.txt
+            build/windows-sdk342/host/windows-host.map
+            build/windows-sdk342/reference/EXReaderWave3.exe
+            build/windows-sdk342/reference/windows-host.map
+            build/windows-sdk342/package/report.json
+            build/windows-sdk342/package/build.json
+            build/windows-sdk342/package/application.log
+            build/windows-sdk342/package/EXReader/
+            build/windows-sdk342/compact/report.json
+            build/windows-sdk342/account.log
+            build/windows-sdk342/account-ui/report.json
+            build/windows-sdk342/account-ui/*.bmp
+            build/organization-ui/report.json
+            build/organization-ui/*.bmp
+            build/windows-sdk342/wave3-ui/report.json
+            build/windows-sdk342/txt-progress/report.json
+            build/windows-sdk342/txt-progress/**/*.log
+            build/windows-sdk342/txt-progress/*.bmp
+            build/windows-sdk342/txt-forward/report.json
+            build/windows-sdk342/txt-forward/*.bmp
+            build/windows-sdk342/txt-forward/**/*.log
+            build/windows-sdk342/scan-sdk/Testing/
+            build/native-owner-preflight/display.json
+          if-no-files-found: warn
