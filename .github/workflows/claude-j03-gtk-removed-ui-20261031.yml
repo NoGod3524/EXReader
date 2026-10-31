@@ -40,7 +40,8 @@ jobs:
           cmake -S extras/opds -B build/j03-hash -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/j03-hash-stage"
           cmake --build build/j03-hash
           cmake --install build/j03-hash
-          echo "EXREADER_ORIGINAL_HASH_PREFIX=$PWD/build/j03-hash-stage" >> "$GITHUB_ENV"
+          export EXREADER_ORIGINAL_HASH_PREFIX="$PWD/build/j03-hash-stage"
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$EXREADER_ORIGINAL_HASH_PREFIX" >> "$GITHUB_ENV"
           cmake -S apps/reader/store/native -B build/j03-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
           cmake --build build/j03-product --parallel 4
           cmake --install build/j03-product
