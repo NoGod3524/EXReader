@@ -24,6 +24,7 @@ from gtk_host import audit_gtk_host
 from android_host import audit_android_host, android_negative_controls
 from apple_host import audit_apple_host, apple_negative_controls
 from posix_native import audit as audit_posix_native
+from posix_owner import audit_posix_owner
 from gtk_snapshots import pending_negative_controls
 
 from protocols import (SDK, C01, ABI2_FAILURES, need, sha, hexadecimal, integer, json_value,
@@ -45,6 +46,56 @@ HOST_CASES = {"clean-admits-before-sdk", "pending-refuses-before-sdk",
               "missing-binding-refuses-before-sdk", "last-borrow-blocks-owner",
               "final-borrow-release-allows-owner", "fresh-process-pending-refusal"}
 FROZEN_NATIVE_STEP = "Preserve original ABI2 81 checks and raw six contract failures"
+
+def package_identity(spec, source):
+    role = spec["role"]
+    need(role in ROLES, "known-package-role")
+    date = "20261031"
+    if role.startswith("native-"):
+        windows = role == "native-windows"
+        platform, os_name = ("Windows", "windows-2022") if windows else ("Linux", "ubuntu-22.04")
+        workflow, job = "native-journal", "native_evidence (" + os_name + ")"
+        date, name = "20261030", "c02-native-journal-" + os_name + "-" + source
+    elif role in ("persistent-gate", "registry-product"):
+        platform = "Windows"
+        workflow, job = (("domain-gate", "persistent_gate") if role == "persistent-gate" else
+                         ("registry-admission", "registry_and_product"))
+        name = "c02-" + role + "-" + source
+    elif role in ("host-android", "host-gtk"):
+        job = role[5:]
+        platform = "Android" if job == "android" else "Linux"
+        workflow, name = job + "-host", "c02-actual-" + job + "-" + source
+    elif role in ("host-macos", "host-ios"):
+        platform = "macos" if role == "host-macos" else "iphonesimulator"
+        workflow, job = "apple-host", "Actual C02 Apple app UID " + platform
+        name = f"c02-apple-runtime-{platform}-{spec['run']}-{spec['attempt']}"
+    else:
+        macos = role.endswith("-macos")
+        platform, os_name = ("macOS", "macos-15") if macos else ("Linux", "ubuntu-22.04")
+        migration = role.startswith("posix-migration-")
+        lane = "migration" if migration else "admission"
+        workflow, job = "posix-" + lane, lane + " (" + os_name + ")"
+        name = "c02-posix-" + ("migration-" if migration else "") + os_name + "-" + source
+    need(spec["platform"] == platform and spec["job_name"] == job and
+         spec["workflow"] == ".github/workflows/dot-c02-" + workflow + "-" + date + ".yml" and
+         spec["artifact"]["name"] == name, "canonical-package-role:" + role)
+
+def qualification_negative_controls(specs, source):
+    controls = []
+    for spec in specs:
+        package_identity(spec,source)
+        for role in sorted(ROLES - {spec["role"]}):
+            changed = dict(spec,role=role)
+            try:
+                package_identity(changed,source)
+            except ValueError as error:
+                need(str(error) == "canonical-package-role:" + role, "exact-role-substitution-refusal")
+                controls.append(dict(original_role=spec["role"],claimed_role=role,
+                                     rejected=True,reason=str(error)))
+            else:
+                raise ValueError("accepted-package-role-substitution:" + spec["role"] + ":" + role)
+    need(len(controls) == len(specs)*(len(ROLES)-1), "all-qualified-role-substitutions-rejected")
+    return controls
 
 def canonical_path(name):
     name = name.replace("\\", "/")
@@ -705,6 +756,7 @@ def download_json(repo,path,target):
     return value
 
 def acquire(repo,spec,source,directory):
+    package_identity(spec,source)
     directory.mkdir()
     run_id,attempt,job_id = spec["run"],spec["attempt"],spec["job"]
     need(all(type(value) is int and value > 0 for value in (run_id,attempt,job_id)), "producer-positive-ids")
@@ -772,6 +824,7 @@ def semantic_diagnostic(files,spec,error):
                 files=[dict(path=name,bytes=len(data)) for name,data in sorted(files.items())])
 
 def validate(files,spec,source,missing):
+    package_identity(spec,source)
     role = spec["role"]
     if role.startswith("native-"):
         return native_evidence(files,spec,source)
@@ -780,12 +833,32 @@ def validate(files,spec,source,missing):
     if role == "registry-product":
         return registry_evidence(files,spec,source,missing)
     if role == "host-gtk":
-        return gtk_evidence(files,spec,source)
+        details = gtk_evidence(files,spec,source)
+        if details.get("installed_sdk_byte_binding") is not True:
+            missing.add("host-gtk:installed-sdk-byte-binding")
+        return details
     if role == "host-android":
         return android_evidence(files,spec,source,missing)
     if role in ("posix-native-linux", "posix-native-macos"):
-        return posix_native_evidence(files,spec,source)
-    return host_evidence(files,spec,source,missing)
+        details = posix_native_evidence(files,spec,source)
+        if details["independent_pre_confirm_snapshot"] is not True:
+            missing.add(role + ":independent-pre-confirm-snapshot")
+        return details
+    if role in ("posix-migration-linux", "posix-migration-macos"):
+        details = audit_posix_owner(files,spec,source,git_bytes)
+        need(all(details[key] is True for key in ("actual_owner","actual_migration",
+             "production_native_ack","payload_semantics_verified","journal_bound")),
+             "actual-posix-production-capabilities")
+        details["capabilities"] = ["posix-actual-sdk-owner","posix-production-native-ack",
+                                   "posix-original-payload-semantics","posix-fresh-process-recovery"]
+        for capability in details["missing"]:
+            missing.add(role + ":" + capability)
+        if details["partial_state_head_repair"] is not True:
+            missing.add(role + ":posix-partial-state-and-head-explicit-repair")
+        return details
+    if role in ("host-macos", "host-ios"):
+        return host_evidence(files,spec,source,missing)
+    raise ValueError("independent-production-adapter-required:" + role)
 
 def reseal_intents(data,wrong_ack=False):
     data = bytearray(data)
@@ -877,10 +950,14 @@ def main():
     requested = json_value(manifest_data)
     need(requested["schema"] == 1 and hexadecimal(requested["source"],40), "audit-manifest-schema")
     repo,source = requested["repository"],requested["source"]
-    need(re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+",repo) is not None, "repository-name")
+    need(repo == "NoGod3524/EXReader" == os.environ["GITHUB_REPOSITORY"], "qualification-repository")
     specs = requested["packages"]
     need(specs and all(spec["role"] in ROLES for spec in specs) and
-         len({spec["role"] for spec in specs}) == len(specs), "audit-package-roles")
+         len({spec["role"] for spec in specs}) == len(specs) and
+         len({spec["artifact"]["id"] for spec in specs}) == len(specs), "audit-package-roles")
+    for spec in specs:
+        package_identity(spec,source)
+    role_controls = qualification_negative_controls(specs,source)
     output = args.output.resolve()
     output.mkdir(parents=True,exist_ok=False)
     (output/"request.json").write_bytes(manifest_data)
@@ -923,14 +1000,17 @@ def main():
     result = dict(schema=1,audit_source=os.environ["GITHUB_SHA"],audit_run=os.environ["GITHUB_RUN_ID"],
                   audit_attempt=os.environ["GITHUB_RUN_ATTEMPT"],producer_source=source,
                   original_zips_verified=True,semantic_negative_controls=controls,packages=packages,
-                  missing_capabilities=sorted(missing),full_c02_complete=not missing,power_loss_tested=False,
+                  qualification_negative_controls=role_controls,
+                  missing_capabilities=sorted(missing),full_c02_complete=not args.allow_incomplete and not missing,power_loss_tested=False,
                   scope="complete-c02" if not args.allow_incomplete else "component-evidence",
                   passed=not missing or args.allow_incomplete)
     (output/"audit-result.json").write_text(json.dumps(result,indent=2)+"\n")
-    print(json.dumps(result),flush=True)
     print("C02-AUDIT-SUMMARY " + json.dumps(dict(
         passed=result["passed"],full_c02_complete=result["full_c02_complete"],producer_source=source,
-        semantic_negative_controls=len(controls),missing_capabilities=sorted(missing),
+        original_zips_verified=True, original_zip_count=len(original_checks),
+        semantic_negative_controls=len(controls), qualification_negative_controls=len(role_controls),
+        negative_controls=[dict(name=c["name"],reason=c["reason"]) for c in controls],
+        missing_capabilities=sorted(missing),
         packages=[dict(role=p["role"],run=p["run"],attempt=p["attempt"],artifact=p["artifact"]["id"],
                        capabilities=p["details"]["capabilities"]) for p in packages])),flush=True)
     return 0 if result["passed"] else 1
