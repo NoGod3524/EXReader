@@ -123,5 +123,93 @@
     "six-host producer workflow is intentionally disabled",
     "compiled/runtime correctness and all final host behavior unverified",
     "graph checker intentionally cannot set F04_accepted until retained producer evidence is integrated"
+  ],
+  "graph_producers": [
+    {
+      "job": "F04 Windows seed",
+      "artifact": "f04-windows-seed",
+      "host": "windows",
+      "role": "seed"
+    },
+    {
+      "job": "F04 gtk peer",
+      "artifact": "f04-gtk-peer",
+      "host": "linux-gtk",
+      "role": "peer",
+      "previous": "f04-windows-seed",
+      "incoming_prefix": "F04_WINDOWS"
+    },
+    {
+      "job": "F04 Windows return (gtk)",
+      "artifact": "f04-windows-return-gtk",
+      "host": "windows",
+      "role": "return",
+      "previous": "f04-gtk-peer",
+      "incoming_prefix": "F04_GTK"
+    },
+    {
+      "job": "F04 macos peer",
+      "artifact": "f04-macos-peer",
+      "host": "macos",
+      "role": "peer",
+      "previous": "f04-windows-seed",
+      "incoming_prefix": "F04_WINDOWS"
+    },
+    {
+      "job": "F04 Windows return (macos)",
+      "artifact": "f04-windows-return-macos",
+      "host": "windows",
+      "role": "return",
+      "previous": "f04-macos-peer",
+      "incoming_prefix": "F04_MACOS"
+    },
+    {
+      "job": "F04 android peer",
+      "artifact": "f04-android-peer",
+      "host": "android-api34-x86_64",
+      "role": "peer",
+      "previous": "f04-windows-seed",
+      "incoming_prefix": "F04_WINDOWS"
+    },
+    {
+      "job": "F04 Windows return (android)",
+      "artifact": "f04-windows-return-android",
+      "host": "windows",
+      "role": "return",
+      "previous": "f04-android-peer",
+      "incoming_prefix": "F04_ANDROID"
+    },
+    {
+      "job": "F04 iphone peer",
+      "artifact": "f04-iphone-peer",
+      "host": "iphone-simulator",
+      "role": "peer",
+      "previous": "f04-windows-seed",
+      "incoming_prefix": "F04_WINDOWS"
+    },
+    {
+      "job": "F04 Windows return (iphone)",
+      "artifact": "f04-windows-return-iphone",
+      "host": "windows",
+      "role": "return",
+      "previous": "f04-iphone-peer",
+      "incoming_prefix": "F04_IPHONE"
+    },
+    {
+      "job": "F04 ipad peer",
+      "artifact": "f04-ipad-peer",
+      "host": "ipad-simulator",
+      "role": "peer",
+      "previous": "f04-windows-seed",
+      "incoming_prefix": "F04_WINDOWS"
+    },
+    {
+      "job": "F04 Windows return (ipad)",
+      "artifact": "f04-windows-return-ipad",
+      "host": "windows",
+      "role": "return",
+      "previous": "f04-ipad-peer",
+      "incoming_prefix": "F04_IPAD"
+    }
   ]
 }

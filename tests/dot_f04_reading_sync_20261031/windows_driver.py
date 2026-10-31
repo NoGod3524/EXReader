@@ -130,6 +130,7 @@ def main():
             check("native_client_put", any(r["method"] == "PUT" and "/revisions/" in r["path"] for r in dav.requests))
         report["program"] = {"sha256": hashlib.sha256(args.candidate.read_bytes()).hexdigest(),
                              "bytes": args.candidate.stat().st_size}
+        (out / "program.bin").write_bytes(args.candidate.read_bytes())
         report["passed"] = True
         save(dav, out, args.phase, report); dav = None
     finally:

@@ -154,3 +154,9 @@ The singleTask MainActivity must first launch after instrumentation installs Act
 - 公共 Alice EPUB 首屏是无文字封面；Windows seed 使用三次真实 next 后才捕获范围，不给空页制造文本。若最后关闭/清理失败，即使先写过state，也删除本阶段state并保留失败result，防止失败producer被图审计误接纳。
 
 - 结果文件写入本身失败也会失效自身state；未来原始artifact认证同时要求producer success、result通过、state一致，不能只凭state的早期passed。
+
+### 六端图原始工件认证准备
+- contract 固定 1 个 Windows seed、5 个 peer、5 个 Windows return 的 job/artifact 绑定；这表示可连通双向图的生产者，不要求任意两个 host 全配对，也不以作者数量计分。
+- audit.py --authenticate-graph 设计为只在 Actions 读取本 run/attempt 作业与原 artifact ZIP，核 job success、source、ZIP大小/SHA、result+state、实际 program.bin、证书/服务源码、真实请求和原件字节，再建立 predecessor SHA 图。它不解包生产者给出的路径。
+- 每phase单独保留实际运行程序原字节。Apple是实际构建的app executable，Android为验证安装APK等于同run产物后读取的安装APK，桌面为实际启动的文件。
+- 完整 producer workflow 仍没有启用；原协议18锚点与必要旧宿主断言的严格认证尚需接合，F04最终标志仍false。上述新代码未运行。

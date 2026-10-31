@@ -59,6 +59,7 @@ def stage_apple(target='iphone', generic=False):
         "        data['sdk_version'] = identity['sdk_version']\n"
         "        data['f04_stage'] = 'iphone-android-reading-v1'")
     source = replace_once(source, "        data['passed'] = True",
+        "        (out / 'program.bin').write_bytes(binary.read_bytes())\n"
         "        required = ('created-records',) if args.phase == 'apple-first' else ('incoming-bookmark', 'incoming-note')\n"
         "        assert all(name in checkpoints for name in required)\n"
         "        data['f04_checkpoints'] = {name: checkpoints[name] for name in required}\n"
@@ -130,6 +131,8 @@ def stage_android(generic=False):
         "        report['checks'] = [name for name in expected if name not in report['f04_checks']]\n"
         "        report['f04_stage'] = 'iphone-android-reading-v1'\n"
         "        report['sdk_version'] = '3.42.0'")
+    source = replace_once(source, "        assert report['passed'] is True, report",
+        "        save('program.bin', installed_apk)\n        assert report['passed'] is True, report")
     if generic:
         source = replace_once(source, "relay.load(args.previous, 'apple-first')", "relay.load(args.previous)")
         source = replace_once(source, "    args = parser.parse_args()",

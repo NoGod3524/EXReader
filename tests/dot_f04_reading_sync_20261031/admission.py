@@ -20,7 +20,10 @@ def main():
     assert not git("status", "--porcelain", "--", *sdk_paths)
     for path in ("tests/apple_android_relay", "tests/reader_android_record_interop",
                  "tests/apple_sdk342_host", "tests/apple_host/reading",
-                 "tests/reader_android_reading", "apps", "examples", "extras"):
+                 "tests/reader_android_reading", "tests/windows_sdk342", "tests/gtk_sdk342_package",
+                 "tests/android_sdk342_package", "tests/reader_windows_records", "tests/reader_windows_account",
+                 "tests/reader_gtk_reading_records", "tests/linux_host", "tools",
+                 "apps", "examples", "extras"):
         assert not git("diff", "--name-only", contract["base_source"], source, "--", path), path
     result = {"source_sha": source, "base_source": contract["base_source"],
               "sdk_source": contract["sdk_source"], "sdk_version": contract["sdk_version"],

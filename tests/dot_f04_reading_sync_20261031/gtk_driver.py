@@ -161,6 +161,7 @@ def main():
         check("native_authenticated_transport", bool(dav.requests) and all(r["authenticated"] for r in dav.requests))
         report["program"] = {"sha256": hashlib.sha256(host.binary.read_bytes()).hexdigest(),
                              "bytes": host.binary.stat().st_size}
+        (out / "program.bin").write_bytes(host.binary.read_bytes())
         report["passed"] = True; save(dav, out, "gtk-peer", report); dav = None
     finally:
         actions = []

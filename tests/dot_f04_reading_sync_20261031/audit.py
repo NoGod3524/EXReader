@@ -5,8 +5,8 @@ Runs the unchanged prior relay assertions first, then verifies additional
 application-authored bookmark/range bytes and explicit receiver landings.
 A passing stage can NEVER set the complete six-target F04 flag.
 """
-import argparse, base64, hashlib, json, os, subprocess, sys
-from pathlib import Path
+import argparse, base64, hashlib, io, json, os, subprocess, sys, zipfile
+from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
@@ -267,10 +267,93 @@ def graph_audit(manifest_path):
     target.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     print(json.dumps(report, ensure_ascii=False), flush=True)
 
+
+def authenticate_graph():
+    """Original Actions ZIP/API authentication before the graph checker.
+
+    Naming is part of the future disabled producer contract, not guessed from
+    uploaded files. This does not waive the separate retained-protocol audit.
+    """
+    need(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
+    sys.path.insert(0, str(ROOT / "tools"))
+    from check_parallel_integration import fetch, download_artifact_zip
+    from relay import identity
+    current = identity()
+    run_id, attempt = current["run_id"], current["attempt"]
+    contract = json.loads((HERE / "contract.json").read_text())
+    bindings = contract["graph_producers"]
+    jobs = fetch("actions/runs/" + run_id + "/attempts/" + attempt + "/jobs?per_page=100")["jobs"]
+    artifacts = fetch("actions/runs/" + run_id + "/artifacts?per_page=100")["artifacts"]
+    out = ROOT / "build/f04-graph-auth"
+    out.mkdir(parents=True, exist_ok=False)
+    manifest = {"states": [], "edges": [], "artifact_identities": [], "producer_jobs": []}
+    accepted_states = {}
+    for binding in bindings:
+        matches = [j for j in jobs if j["name"] == binding["job"]]
+        need(len(matches) == 1 and matches[0]["conclusion"] == "success" and
+             matches[0]["head_sha"] == current["source_sha"], "failed/missing/duplicate graph producer")
+        manifest["producer_jobs"].append({k: matches[0][k] for k in ("id", "name", "head_sha", "conclusion")})
+        expected_name = binding["artifact"] + "-" + run_id + "-" + attempt
+        matches = [a for a in artifacts if a["name"] == expected_name and not a["expired"]]
+        need(len(matches) == 1, "missing/duplicate/expired graph artifact: " + expected_name)
+        row = matches[0]
+        need(row["workflow_run"]["head_sha"] == current["source_sha"], "artifact source")
+        raw = download_artifact_zip(row["id"])
+        need(len(raw) == row["size_in_bytes"] and "sha256:" + hashlib.sha256(raw).hexdigest() == row["digest"], "original ZIP identity")
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            names = archive.namelist()
+            need(len(names) == len(set(names)) and all(not PurePosixPath(n).is_absolute() and
+                 ".." not in PurePosixPath(n).parts and "\\" not in n for n in names), "unsafe archive members")
+            # No extraction of producer-controlled paths.
+            state_raw = archive.read("state.json"); state = json.loads(state_raw)
+            result_name = "report.json" if binding["host"] == "android-api34-x86_64" else "result.json"
+            result = json.loads(archive.read(result_name))
+            for value in (state, state["data"], result):
+                need(all(str(value[k]) == v for k, v in current.items()), "phase source/run/attempt")
+            need(state["data"]["passed"] is True and result["passed"] is True and
+                 not result.get("cleanup_errors"), "producer result/cleanup failure")
+            need(state["data"]["platform"] == binding["host"], "producer host role")
+            program = archive.read("program.bin")
+            need(len(program) == state["data"]["program"]["bytes"] and
+                 hashlib.sha256(program).hexdigest() == state["data"]["program"]["sha256"], "actual program bytes")
+            need(state["server"]["certificate_sha256"] == hashlib.sha256(archive.read("cert.pem")).hexdigest(), "phase certificate identity")
+            need(state["server"]["implementation_sha256"] == hashlib.sha256((HERE / "relay.py").read_bytes()).hexdigest(), "relay source")
+            need(state["server"]["dav_implementation_sha256"] ==
+                 hashlib.sha256((ROOT / "tests/reader_d23_relay/relay.py").read_bytes()).hexdigest(), "DAV source")
+            requests = json.loads(archive.read("requests.json"))
+            need(requests and all(r["authenticated"] for r in requests), "actual authenticated request evidence")
+            need(any(r["method"] == "PUT" and "/revisions/" in r["path"] for r in requests) or
+                 binding["role"] == "return", "actual app publication")
+            if binding["role"] != "seed":
+                need(any(r["method"] == "GET" and "/objects/" in r["path"] for r in requests), "actual app original receive")
+            original = contract["original"]
+            originals = [base64.b64decode(v["body"], validate=True) for path, v in state["entries"].items() if "/objects/" in path]
+            need(len(originals) == 1 and len(originals[0]) == original["bytes"] and
+                 hashlib.sha256(originals[0]).hexdigest() == original["sha256"], "fixed original bytes")
+        digest = hashlib.sha256(state_raw).hexdigest()
+        filename = binding["artifact"] + ".json"
+        (out / filename).write_bytes(state_raw)
+        manifest["states"].append({"path": filename, "sha256": digest})
+        manifest["artifact_identities"].append({k: row[k] for k in ("id", "name", "digest", "size_in_bytes")})
+        accepted_states[binding["artifact"]] = (state, digest)
+    for binding in bindings:
+        if binding["role"] == "seed": continue
+        source, source_digest = accepted_states[binding["previous"]]
+        destination, destination_digest = accepted_states[binding["artifact"]]
+        need(destination["previous_sha256"] == source_digest, "exact staged predecessor")
+        manifest["edges"].append({"from": source_digest, "to": destination_digest,
+            "markers": {"bookmark": binding["incoming_prefix"] + "_BOOKMARK",
+                        "note": binding["incoming_prefix"] + "_NOTE"}})
+    path = out / "manifest.json"
+    path.write_text(json.dumps(manifest, indent=2))
+    graph_audit(path)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--graph", type=Path)
+    parser.add_argument("--authenticate-graph", action="store_true")
     args = parser.parse_args()
-    if args.graph: graph_audit(args.graph)
+    need(not (args.graph and args.authenticate_graph), "choose one audit entry")
+    if args.authenticate_graph: authenticate_graph()
+    elif args.graph: graph_audit(args.graph)
     else: main()
-
