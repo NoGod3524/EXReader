@@ -42,6 +42,8 @@ def main():
                    check=True, capture_output=True)
     subprocess.run(["certutil", "-addstore", "-f", "Root", str(cert)],
                    check=True, capture_output=True)
+    fingerprint = subprocess.run([openssl, "x509", "-in", str(cert), "-noout", "-fingerprint", "-sha1"],
+                                 check=True, capture_output=True, text=True).stdout.strip().split("=", 1)[1].replace(":", "")
     store = Store(cert, key, authorization)
     devices = []
     report = {"identity": {"source": os.environ["GITHUB_SHA"],
@@ -188,7 +190,7 @@ def main():
         report["uncovered"] = ["delete_put_tombstone_preserved", "cancel_receive_retry",
                                "other five hosts", "independent original-artifact authentication"]
         (out / "coverage.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
-        subprocess.run(["certutil", "-delstore", "Root", str(cert)], capture_output=True)
+        subprocess.run(["certutil", "-delstore", "Root", fingerprint], capture_output=True)
         key.unlink(missing_ok=True)
 
 if __name__ == "__main__":
