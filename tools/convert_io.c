@@ -121,7 +121,10 @@ static void set_win_error(char **error, const char *prefix, DWORD code) {
 int cv_path_equal(const char *a, const char *b) {
   if (!a || !b) return a == b;
 #ifdef _WIN32
-  return _stricmp(a, b) == 0;
+  wchar_t *wa = wide(a), *wb = wide(b);
+  int equal = wa && wb && CompareStringOrdinal(wa, -1, wb, -1, TRUE) == CSTR_EQUAL;
+  free(wa); free(wb);
+  return equal;
 #else
   return strcmp(a, b) == 0;
 #endif
@@ -287,7 +290,6 @@ char *cv_absolute(const char *path, char **error) {
 int cv_same_file(const char *a, const char *b, int *same, char **error) {
   cv_file_id ia, ib;
   char *na, *nb;
-  size_t la, lb;
   *same = 0;
   if (!cv_identity(a, &ia, error) || !cv_identity(b, &ib, error)) return 0;
   if (ia.exists && ib.exists) {
@@ -314,8 +316,7 @@ int cv_same_file(const char *a, const char *b, int *same, char **error) {
     }
     if (!na || !nb) { free(na); free(nb); return 0; }
   }
-  la = strlen(na); lb = strlen(nb);
-  *same = la == lb && cv_path_equal(na, nb);
+  *same = cv_path_equal(na, nb);
   free(na); free(nb);
   return 1;
 }

@@ -2,6 +2,11 @@
 
 最新版本：**3.39.0**。整理日期：2026-10-20。
 
+2026-10-31未发布审计修复：修复批处理错误路径重复释放、Windows Unicode目标重名漏检、
+报告及转换输出覆盖批处理清单，以及CBZ流式阅读在保存进度或元数据后失效。
+补充对应CLI和书库回归，并保留删除书籍后旧阅读器失效的行为；SDK版本、ABI和书库schema不变。
+逐项修复和Windows GCC/MSVC验证见 `docs/AUDIT-FIXES-2026-10-31.md`。
+
 3.39.0：集成WP7的Bengali、Tamil、Telugu、Kannada、Malayalam、Thai、Khmer、Myanmar专用塑形。
 每脚本50条真实字体及50条合成字体序列，固定HarfBuzz14.6.0参考共800例；
 glyph严格相等、cluster按声明的包含口径、advance/offset固定1.5px@200px容差。

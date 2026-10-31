@@ -23,8 +23,13 @@ static exr_status open_fixed(exr_format format,const void *data,size_t size,
 #define PROGRESS_SCHEMA "CREATE TABLE book_progress(book_id INTEGER PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,position INTEGER NOT NULL CHECK(position>=0),state INTEGER NOT NULL CHECK(state BETWEEN 0 AND 3),prefix TEXT,suffix TEXT,chapter TEXT);" \
   "CREATE TRIGGER books_progress_changed AFTER UPDATE OF position ON books WHEN OLD.position<>NEW.position BEGIN DELETE FROM book_progress WHERE book_id=NEW.id;END;"
 #define LOCATION_SCHEMA "ALTER TABLE notes ADD COLUMN location_state INTEGER NOT NULL DEFAULT 1 CHECK(location_state BETWEEN 0 AND 3);"
+typedef struct stream_blob {
+  sqlite3 *db;sqlite3_blob *blob;int64_t id;int size,deleted;
+  exr_library *owner;struct stream_blob *next;
+} stream_blob;
 struct exr_library {
   sqlite3 *db;
+  stream_blob *streams;
 };
 static exr_status database_error(exr_library *l, exr_error *e) {
   return exr_fail(e, EXR_DATABASE, "%s", sqlite3_errmsg(l->db));
@@ -153,8 +158,13 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
 }
 void exr_library_close(exr_library *l) {
   if (l) {
-    if (l->db)
+    if (l->db) {
+      stream_blob *b;
+      sqlite3_mutex_enter(sqlite3_db_mutex(l->db));
+      for(b=l->streams;b;b=b->next) b->owner=NULL;
+      sqlite3_mutex_leave(sqlite3_db_mutex(l->db));
       sqlite3_close_v2(l->db);
+    }
     free(l);
   }
 }
@@ -257,15 +267,26 @@ finish:
    source-based fixed reader; other formats keep the in-memory API. */
 #define EXR_STREAM_CHUNK ((size_t)64 * 1024)
 #define EXR_STREAM_MAX (UINT64_C(2) * 1024 * 1024 * 1024 - 1)
-typedef struct { sqlite3 *db; sqlite3_blob *blob; } stream_blob;
 static size_t stream_blob_read(void *context,uint64_t offset,void *buffer,size_t size) {
-  stream_blob *b=context;int n;
-  if(!b || !b->blob || offset>INT_MAX || size>INT_MAX || offset+size>(uint64_t)sqlite3_blob_bytes(b->blob)) return 0;
-  n=(int)size;
-  return sqlite3_blob_read(b->blob,buffer,n,(int)offset)==SQLITE_OK ? size : 0;
+  stream_blob *b=context;int result=SQLITE_ERROR;
+  if(!b || !b->blob || offset>(uint64_t)b->size || size>(uint64_t)b->size-offset) return 0;
+  sqlite3_mutex_enter(sqlite3_db_mutex(b->db));
+  /* Updating any books column expires the cursor. Reseek before reading:
+     an attempted read of an expired cursor aborts it permanently. */
+  if(!b->deleted && sqlite3_blob_reopen(b->blob,b->id)==SQLITE_OK && sqlite3_blob_bytes(b->blob)==b->size)
+    result=sqlite3_blob_read(b->blob,buffer,(int)size,(int)offset);
+  sqlite3_mutex_leave(sqlite3_db_mutex(b->db));
+  return result==SQLITE_OK ? size : 0;
 }
 static void stream_blob_release(void *context) {
   stream_blob *b=context;if(!b) return;
+  if(b->owner) {
+    stream_blob **link;
+    sqlite3_mutex_enter(sqlite3_db_mutex(b->db));
+    for(link=&b->owner->streams;*link && *link!=b;link=&(*link)->next) {}
+    if(*link) *link=b->next;
+    sqlite3_mutex_leave(sqlite3_db_mutex(b->db));
+  }
   if(b->blob) sqlite3_blob_close(b->blob);
   free(b);
 }
@@ -536,6 +557,10 @@ exr_status exr_library_fixed_source(exr_library *l,int64_t id,const exr_fixed_op
   context=calloc(1,sizeof(*context));if(!context) { sqlite3_finalize(s);return exr_fail(e,EXR_MEMORY,"Streaming source allocation failed"); }
   context->db=l->db;
   if(sqlite3_blob_open(l->db,"main","books","source",id,0,&context->blob)!=SQLITE_OK) { sqlite3_finalize(s);free(context);return exr_fail(e,EXR_DATABASE,"Cannot open stored source blob"); }
+  context->id=id;context->size=sqlite3_blob_bytes(context->blob);
+  sqlite3_mutex_enter(sqlite3_db_mutex(l->db));
+  context->owner=l;context->next=l->streams;l->streams=context;
+  sqlite3_mutex_leave(sqlite3_db_mutex(l->db));
   memset(&source,0,sizeof(source));source.size=(uint64_t)sqlite3_blob_bytes(context->blob);source.read_at=stream_blob_read;source.release=stream_blob_release;source.context=context;
   sqlite3_finalize(s);
   return exr_cbz_open_source(&source,"",&options,1,out,e);
@@ -1049,7 +1074,14 @@ static exr_status remove_id(exr_library *l, int64_t id, int note, exr_error *e) 
   return done(l, s, e);
 }
 exr_status exr_library_delete(exr_library *l, int64_t id, exr_error *e) {
-  return remove_id(l, id, 0, e);
+  exr_status status;stream_blob *b;
+  if(!l) return exr_fail(e,EXR_ARGUMENT,"Invalid deletion");
+  sqlite3_mutex_enter(sqlite3_db_mutex(l->db));
+  status=remove_id(l,id,0,e);
+  /* A later import can reuse this row ID; old readers must not follow it. */
+  if(status==EXR_OK) for(b=l->streams;b;b=b->next) if(b->id==id) b->deleted=1;
+  sqlite3_mutex_leave(sqlite3_db_mutex(l->db));
+  return status;
 }
 exr_status exr_library_remove_note(exr_library *l, int64_t id, exr_error *e) {
   return remove_id(l, id, 1, e);
