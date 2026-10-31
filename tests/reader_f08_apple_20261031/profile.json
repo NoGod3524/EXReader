@@ -15,7 +15,13 @@
     "page_theme": true,
     "iterations": 5,
     "forward_scrolls_per_iteration": 10,
-    "return_scrolls_outside_measurement": 10
+    "return_scrolls_outside_measurement": 10,
+    "build_configuration": "Release",
+    "swift_optimization": "-O",
+    "debugger_enabled": false,
+    "code_coverage_enabled": false,
+    "sanitizers_enabled": false,
+    "main_thread_checker_enabled": false
   },
   "budgets": {
     "animation_hitch_time_ratio_ms_per_s": 10,
@@ -29,5 +35,10 @@
     "Simulator and hosted macOS results are tied to the recorded runner and device profile.",
     "Reader-body scroll, locate/jump and page/font metrics are not covered by this shelf lane."
   ],
-  "f08_accepted": false
+  "f08_accepted": false,
+  "previous_debug_run": {
+    "source_sha": "edc5da8e624b1ad96ba3787d5665edfbcd41f046",
+    "run_id": 41183331986,
+    "classification": "preserved functional and diagnostic evidence; does not prove Release performance"
+  }
 }

@@ -1,6 +1,7 @@
 """Actions-only three-target measurements; all original shelf assertions stay intact."""
 import argparse, importlib.util, json, os, plistlib, re, shutil, subprocess, sys, traceback
 from pathlib import Path
+import xml.etree.ElementTree as ET
 ROOT=Path(__file__).resolve().parents[2]
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(ROOT/"tests/reader_f08_android_20261031"))
@@ -102,6 +103,19 @@ def native(platform):
         shutil.copyfile(candidate,evidence/"ShelfUITests.swift")
         project=out/"project";derived=out/"derived"
         run(["ruby","tests/reader_team24_apple/make_project.rb",project,resources,tests,"wave3"],"project")
+        schemes=sorted((project/"EXReaderHost.xcodeproj/xcshareddata/xcschemes").glob("*.xcscheme"))
+        need(len(schemes)==2,"generated Apple schemes")
+        for path in schemes:
+            document=ET.parse(path)
+            for tag in ("TestAction","LaunchAction"):
+                action=document.getroot().find(tag);need(action is not None,"scheme action")
+                action.attrib.update({"buildConfiguration":"Release","selectedDebuggerIdentifier":"",
+                    "selectedLauncherIdentifier":"Xcode.IDEFoundation.Launcher.PosixSpawn",
+                    "codeCoverageEnabled":"NO","disableMainThreadChecker":"YES",
+                    "enableAddressSanitizer":"NO","enableThreadSanitizer":"NO","enableUBSanitizer":"NO"})
+            document.write(path,encoding="utf-8",xml_declaration=True)
+            (evidence/"schemes").mkdir(exist_ok=True)
+            shutil.copyfile(path,evidence/"schemes"/path.name)
         configuration=json.loads(command(["ruby","-rxcodeproj","-rjson","-e",
             'p=Xcodeproj::Project.open(ARGV[0]);v={};p.targets.each{|t|next unless t.product_type=="com.apple.product-type.application";t.build_configurations.each{|c|v[t.name+"/"+c.name]=c.build_settings["SWIFT_ACTIVE_COMPILATION_CONDITIONS"]}};puts JSON.generate(v)',
             project/"EXReaderHost.xcodeproj"],text=True))
@@ -110,7 +124,7 @@ def native(platform):
         save(evidence/"project-configuration.json",configuration)
         if platform=="macos":
             destination="platform=macOS";device="macos";device_name="macOS host";runtime="macOS"
-            scheme="EXReaderHost-macOS";suffix="Debug";signing="YES";test_target="EXReaderHostUITests-macOS"
+            scheme="EXReaderHost-macOS";suffix="Release";signing="YES";test_target="EXReaderHostUITests-macOS"
         else:
             choices=json.loads(command(["xcrun","simctl","list","devices","available","--json"]))
             prefix="iPhone" if platform=="iphone" else "iPad"
@@ -121,16 +135,25 @@ def native(platform):
             run(["xcrun","simctl","boot",device],"boot")
             run(["xcrun","simctl","bootstatus",device,"-b"],"boot-ready")
             destination="platform=iOS Simulator,id="+device;scheme="EXReaderHost-iOS"
-            suffix="Debug-iphonesimulator";signing="NO";test_target="EXReaderHostUITests-iOS"
+            suffix="Release-iphonesimulator";signing="NO";test_target="EXReaderHostUITests-iOS"
         destination_file=evidence/"destination.txt";destination_file.write_text("\n".join((destination,device,device_name,runtime))+"\n")
         save(evidence/"environment.json",{"destination":destination,"device":device_name,"runtime":runtime,
             "xcode":command(["xcodebuild","-version"],text=True),"os":command(["sw_vers"],text=True),
             "arch":command(["uname","-m"],text=True),"runner_image":os.environ.get("ImageVersion")})
         original_result=evidence/"original.xcresult";metrics_result=evidence/"metrics.xcresult"
         common=["-project",project/"EXReaderHost.xcodeproj","-scheme",scheme,"-destination",destination,
-                "-derivedDataPath",derived,"-parallel-testing-enabled","NO","-test-timeouts-enabled","YES",
+                "-derivedDataPath",derived,"-configuration","Release","-enableCodeCoverage","NO",
+                "-enableAddressSanitizer","NO","-enableThreadSanitizer","NO","-enableUndefinedBehaviorSanitizer","NO",
+                "-parallel-testing-enabled","NO","-test-timeouts-enabled","YES",
                 "-default-test-execution-time-allowance","2700","-maximum-test-execution-time-allowance","2700",
-                "EXR_SDK_DIR="+str(sdk),"EXR_PRODUCTS_DIR="+str(products),"CODE_SIGNING_ALLOWED="+signing]
+                "EXR_SDK_DIR="+str(sdk),"EXR_PRODUCTS_DIR="+str(products),"CODE_SIGNING_ALLOWED="+signing,
+                "SWIFT_OPTIMIZATION_LEVEL=-O","GCC_OPTIMIZATION_LEVEL=s"]
+        settings=json.loads(command(["xcodebuild","-showBuildSettings","-json",*common]))
+        save(evidence/"build-settings.json",settings)
+        targets=[row["buildSettings"] for row in settings if row.get("target")==scheme]
+        need(len(targets)==1 and targets[0]["CONFIGURATION"]=="Release" and
+             targets[0]["SWIFT_OPTIMIZATION_LEVEL"]=="-O","optimized product configuration")
+        report["configuration"]="Release";report["build_settings_sha256"]=sha(evidence/"build-settings.json")
         run(["xcodebuild","test",*common,"-resultBundlePath",original_result,
              "-skip-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics"],"original-seven",required=False)
         app=derived/"Build/Products"/suffix/"EXReaderHost.app"

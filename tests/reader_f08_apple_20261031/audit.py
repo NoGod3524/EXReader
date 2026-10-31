@@ -1,6 +1,7 @@
 """Authenticate all five original ZIPs and independently parse the native xcresults."""
 import hashlib, io, json, os, stat, sys, zipfile
 from pathlib import PurePosixPath
+import xml.etree.ElementTree as ET
 from run import ROOT, HERE, identity, need, save, sha, command, guard, extract_metrics
 def main():
     guard()
@@ -46,6 +47,24 @@ def main():
             need(all(result.get(k)==v for k,v in ident.items()) and result["platform"]==kind and result["f08_accepted"] is False,"native identity")
             need((raw/"profile.json").read_bytes()==(HERE/"profile.json").read_bytes(),"profile bytes")
             entry["collection_complete"]=result["collection_complete"];entry["problems"]=result["problems"]
+            if "build_settings_sha256" in result:
+                need(result["configuration"]=="Release" and sha(raw/"build-settings.json")==result["build_settings_sha256"],"release build settings")
+                settings=json.loads((raw/"build-settings.json").read_text())
+                target="EXReaderHost-macOS" if kind=="macos" else "EXReaderHost-iOS"
+                app_settings=[r["buildSettings"] for r in settings if r.get("target")==target]
+                need(len(app_settings)==1 and app_settings[0]["CONFIGURATION"]=="Release" and
+                     app_settings[0]["SWIFT_OPTIMIZATION_LEVEL"]=="-O","actual optimized host")
+                schemes=list((raw/"schemes").glob("*.xcscheme"));need(len(schemes)==2,"scheme evidence")
+                for scheme in schemes:
+                    tree=ET.parse(scheme)
+                    for tag in ("TestAction","LaunchAction"):
+                        action=tree.getroot().find(tag)
+                        need(action is not None and action.get("buildConfiguration")=="Release" and
+                             action.get("selectedDebuggerIdentifier")=="" and action.get("codeCoverageEnabled")=="NO" and
+                             action.get("disableMainThreadChecker")=="YES" and
+                             all(action.get(key)=="NO" for key in ("enableAddressSanitizer","enableThreadSanitizer","enableUBSanitizer")),"release measurement scheme")
+                entry["configuration"]="Release"
+            if result["collection_complete"]:need(entry.get("configuration")=="Release","complete release evidence")
             if (raw/"original.xcresult").exists():
                 sys.path.insert(0,str(ROOT/"tests/apple_host"));from collect_evidence import load_results
                 entry["original_cases"]=load_results(raw/"original.xcresult")
