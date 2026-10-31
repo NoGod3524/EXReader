@@ -15,3 +15,16 @@ Exact new paths:
 - docs/reader-total-progress/DOT_F07_LINK_EVIDENCE_20261031.md
 
 At preparation: not run. Further certification, six-platform integration or correction requires its own approved scope/budget.
+
+## Result sealed 2026-10-31 23:17 UTC (19:17 America/New_York)
+
+- Preparation: 8da268cfc45845ca17aed60025b0b2c2f96988bf, skip-ci. Actual same-tree trigger/verifier source: f33eb38571fd551f78555b89ab7ae553889f5cc4.
+- [Run 41251856370/A1](https://github.com/NoGod3524/EXReader/actions/runs/41251856370), job124686859052, diagnostic success; the sole approved run is consumed. No repeat.
+- diagnostic_completed=true/errors=[], full_log_parser_replay=true; classification=zero_matching_provider_evidence.
+- Authenticated complete host-build.log: 5469 bytes, 11 lines, UTF-8 strict, SHA256 351fbd1917835bae4dcee349303f609533aff49db7b583ba270133e9675248a6. Searching blocks=0, raw Loaded rows=0, projected SQLite matches=[].
+- Both unchanged original windows_loaded_sqlite and original evaluate reproduced provider_loaded_ambiguous. This is missing matching evidence in the complete retained log, not merely truncation of the earlier filtered JSON. It does NOT establish actual duplicate providers or a proven production/linker defect.
+- MAP SHA256 2901dbf7032a3bf2e704160280bc3ca4e53e206c11da2147030a3cf22f7629fe; sqlite3_open_v2 and sqlite3_prepare_v2 each report exr_vendor_exr_sqlite:sqlite3.c.obj. These basename facts are not substituted for full-path loaded-member evidence. sqlite3_sourceid had no matching MAP row.
+- Original checker SHA256 12657282c8e4ed5461bbda925358058a235a43cedd909c553145ce0c64ea2318. Prior tests and nine negative controls are untouched; negative_controls_executed=false in this diagnosis.
+- Output [artifact13061358143](https://github.com/NoGod3524/EXReader/actions/runs/41251856370/artifacts/13061358143), 32453178 bytes, SHA256 86a22d48bbb319bd0be40b9a08ae84b4ebcb82fbdd9ddd3728c9a31c69d4d3c2; expires2026-11-30T23:17:09Z. Contains authenticated original ZIP, full retained evidence and line-numbered contexts/summary, created only in Actions.
+- gate_changed=false, product_rebuilt=false, artifact_code_executed=false, audit_passed=false, F07_accepted=false; formal count unchanged.
+- Next unresolved work: obtain valid actual-host provider identity on the final common source and frozen SDK, while retaining original failure and public-dependency checks. This old 727 SDK profile cannot certify the 8357 six-platform product. Any new build/diagnostic/certification needs separately approved exact scope and budget; none was automatically started.
