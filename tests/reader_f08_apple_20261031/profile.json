@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "sdk_version": "3.42.0",
+  "runner": "macos-15",
+  "real_sdk_sources": 2202,
+  "targets": [
+    "macos",
+    "iphone",
+    "ipad"
+  ],
+  "selection": "One recorded native macOS runner, or the latest available matching iPhone/iPad simulator on that runner; the concrete destination and runtime are retained.",
+  "configuration": {
+    "generator": "tests/reader_team24_apple/make_project.rb",
+    "mode": "wave3",
+    "page_theme": true,
+    "iterations": 5,
+    "forward_scrolls_per_iteration": 10,
+    "return_scrolls_outside_measurement": 10
+  },
+  "budgets": {
+    "animation_hitch_time_ratio_ms_per_s": 10,
+    "first_interactive_ms": 2000,
+    "process_peak_rss_bytes": 536870912
+  },
+  "budget_basis": "Limits are declared before measurement. Numeric evaluation requires verified native metric units and positive frame coverage.",
+  "limits": [
+    "Original seven shelf UI cases remain unchanged and are executed separately.",
+    "XCTest animation aggregates do not provide a per-frame P95/P99 distribution.",
+    "Simulator and hosted macOS results are tied to the recorded runner and device profile.",
+    "Reader-body scroll, locate/jump and page/font metrics are not covered by this shelf lane."
+  ],
+  "f08_accepted": false
+}
