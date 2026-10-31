@@ -3710,10 +3710,13 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
         case 'I':
           if (GetKeyState(VK_CONTROL) & 0x8000) { host_command(IDC_IMPORT_BUTTON); return 0; }
           break;
-        case VK_ESCAPE:
+        case VK_ESCAPE: {
+          int selection_changed = g.selection.active;
           selection_clear();
+          if (selection_changed) host_a11y_page_changed(1);
           set_status(L"已清除选择。");
           return 0;
+        }
       }
       break;
   }
