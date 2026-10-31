@@ -139,6 +139,25 @@ class Ui:
         self.host.key('ctrl+shift+d')
         self.window('Removed books')
 
+    def activate_first(self):
+        """Give the list box keyboard focus (a mouse click on a button leaves focus there), then Home+Return."""
+        d = self.dialog_node()
+        lists = [n for n in bus.walk(d) if bus.role(n) == 'list box']
+        report.setdefault('activation', []).append({'list_boxes': len(lists), 'focused': False})
+        for n in lists:
+            comp = bus._safe(lambda: n.get_component_iface())
+            if comp is not None and bus._safe(lambda: comp.grab_focus(), False):
+                report['activation'][-1]['focused'] = True
+                break
+        if not report['activation'][-1]['focused']:
+            items = [n for n in bus.walk(d) if bus.role(n) == 'list item']
+            box = bus.extents(items[0]) if items else None
+            assert box and box['x'] >= 0, 'no focusable list row'
+            command('xdotool', 'mousemove', '--sync', str(box['x'] + box['width'] // 2), str(box['y'] + box['height'] // 2))
+            command('xdotool', 'click', '1')
+        time.sleep(.3)
+        self.host.key('Home', 'Return')
+
     def step(self, name, **data):
         row = dict(name=name, **data)
         report['steps'].append(row)
@@ -238,7 +257,7 @@ def scenario_b(args, out):
         p2 = ui.wait_rows(lambda k: k != p1, 'B page 2')
         record('B.page2_is_exactly_the_last_real_id', p2 == [kb], {'keys': p2})
         _, sel_before, _ = ui.rows()
-        ui.host.key('Home', 'Return'); ui.window('Book details')
+        ui.activate_first(); ui.window('Book details')
         ui.shot('b-details-page2-row')
         ui.host.key('alt+r'); ui.window('Confirm book operation')
         ui.host.key('alt+o'); ui.window('Confirm book operation', False); ui.window('Book details', False)
@@ -256,7 +275,7 @@ def scenario_b(args, out):
                {'rows': len(r1), 'next_enabled': ui.enabled('Next page')})
         # First-page selection: restore the first record by id.
         _, sel0, _ = ui.rows()
-        ui.host.key('Home', 'Return'); ui.window('Book details')
+        ui.activate_first(); ui.window('Book details')
         ui.host.key('alt+r'); ui.window('Confirm book operation')
         ui.host.key('alt+o'); ui.window('Confirm book operation', False); ui.window('Book details', False)
         ui.host.wait(lambda s: s['books'] == 2 and not s['error'], timeout=60)
@@ -268,7 +287,7 @@ def scenario_b(args, out):
         record('B.final_removed_list_is_49_synthetic_ids', r2 == sorted(set(expected) - {ka}), {'rows': len(r2)})
         # Synthetic row has no retained original: product must refuse without writing.
         rev_before = ui.sql('SELECT count(*) FROM reader_revisions')[0][0]
-        ui.host.key('Home', 'Return'); ui.window('Book details')
+        ui.activate_first(); ui.window('Book details')
         ui.host.key('alt+r')
         time.sleep(1.5)
         ui.shot('b-synthetic-restore-attempt')
