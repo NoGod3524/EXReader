@@ -26,6 +26,7 @@ static void product_shelf_search_changed(void) {
   settings_save();
 }
 static void product_shelf_dispatch(void) {
+  if(!g.books || !IsWindowVisible(g.books)) return;
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
   if(winio_modal_blocked()) return;
 #endif
@@ -64,6 +65,7 @@ static void product_shelf_dispatch(void) {
   g.shelf_need_refresh=0;g.shelf_queries++;job_start(job);
 }
 static void product_shelf_edges(void) {
+  if(!g.books || !IsWindowVisible(g.books)) return;
   if(!g.product_ready || g.product_pending || !g.shelf_cursors || !g.shelf_count || g.shelf_filter_pending ||
      g.shelf_applying || g.closing || g.job || g.pending || g.shelf_need_refresh) return;
   RECT area;GetClientRect(g.books,&area);LRESULT height=SendMessageW(g.books,LB_GETITEMHEIGHT,0,0);
@@ -137,7 +139,12 @@ static LRESULT CALLBACK product_shelf_procedure(HWND window,UINT message,WPARAM 
 #ifdef EXR_WINDOWS_FRAME_REVIEW
   if(f08_count_query(message)) return CallWindowProcW(g.shelf_procedure,window,message,wparam,lparam);
 #endif
-  if(message==WM_NCDESTROY) RemovePropW(window,L"EXReaderShelfSnapshot");
+  if(message==WM_NCDESTROY) {
+    RemovePropW(window,L"EXReaderShelfSnapshot");
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+    RemovePropW(window,L"EXReaderF08ShelfPaintedSnapshot");RemovePropW(window,L"EXReaderF08ShelfTopBookId");
+#endif
+  }
 #ifdef EXR_WINDOWS_FRAME_REVIEW
   /* Every native listbox message is retained, including direct GDI paths.
      Getters bypass this subclass so observations cannot recursively trace themselves. */
@@ -165,7 +172,10 @@ static LRESULT CALLBACK product_shelf_procedure(HWND window,UINT message,WPARAM 
       flushed ? 1+(pending ? 2:0)+(f08_shelf_redraw ? 4:0):-1,top,count);
     if(flushed && f08_shelf_redraw && !pending && !(product_shelf_snapshot_serial&1) &&
         (message==WM_PAINT || (f08_direct && changed))) {
-      f08_record("shelf_frame_complete",f08_start,&f08_source,(unsigned long)product_shelf_snapshot_serial,0,IDC_BOOKS,message,1,top,count);
+      LONGLONG top_book=top>=0 && (size_t)top<g.shelf_count ? g.shelf[top].id:0;
+      SetPropW(window,L"EXReaderF08ShelfPaintedSnapshot",(HANDLE)product_shelf_snapshot_serial);
+      SetPropW(window,L"EXReaderF08ShelfTopBookId",(HANDLE)(ULONG_PTR)top_book);
+      f08_record("shelf_frame_complete",f08_start,&f08_source,(unsigned long)product_shelf_snapshot_serial,top_book,IDC_BOOKS,message,1,top,count);
       memset(&f08_shelf_pending,0,sizeof(f08_shelf_pending));
     } else if(f08_direct && !changed) f08_shelf_pending=f08_old_pending;
   }

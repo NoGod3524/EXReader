@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 BASE="8a4f7f90b33142ccc4dfb4722c8c99a8f728eac0"
 FILES={"examples/reader.c","apps/reader/desktop/windows_shelf.inc",
+ "tests/reader_f08_window_capture_20261031/observer.cpp",".github/workflows/f08-window-capture-20261031.yml",
  "apps/reader/desktop/catalog_sdk.c","apps/reader/desktop/catalog_sdk.h","apps/reader/desktop/windows_catalog.inc",
  "apps/reader/desktop/windows_feature_integration.cmake","tests/reader_f08_windows_product_20261031/build.py",
  "tests/reader_f08_windows_native_frame_20261031/trace.h","tests/reader_f08_windows_native_frame_20261031/build.py",
