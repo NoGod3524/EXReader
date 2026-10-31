@@ -26,3 +26,14 @@ runs 41240011603 and 41241360545: all 7,837 frames and every metric match the
 original delivery, including the 295.194 ms maximum and 84 initial frames.
 Native and independent duplicate keys, and a foreign source SHA, were rejected.
 No new product performance run is claimed by that replay.
+
+The native Android hardware qualification adapter reuses the unchanged ten-case
+shelf driver and analyzer. It replaces exactly the cloud identity assignment and
+entry guard, declares a native-local run, verifies the actual Arc hardware
+renderer and installed Release APK, seals failures, and replays the original
+budgets. Sampling has an 1100-second cap with cleanup time within the 20-minute
+window. Its APK producer is explicitly the authenticated older 03ec Release;
+hardware qualification does not count as final same-source F08 acceptance.
+The requested 512 MiB guest heap is clamped by the official emulator to 576 MiB
+(growth limit 192 MiB), matching the archived Ubuntu runtime. The 512 MiB
+sampled process PSS budget is unchanged.
