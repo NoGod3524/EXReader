@@ -499,7 +499,11 @@ def provider_sources(files,spec,source):
     for name,value in re.findall(r'^#define (WH3_[A-Z_]+) "([^"]+)"$',files["wh3_build.h"].decode().replace("\r\n","\n"),re.M):
         need(name not in definitions, "provider-duplicate-definition")
         definitions[name]=value
-    digest=sha(material)
+    # Reconstruct the exact LF CMake string used by string(SHA256), while
+    # accepting only its byte-identical LF or Windows text-file CRLF serialization.
+    canonical = ("\n".join(lines)+"\n").encode("ascii")
+    need(material in (canonical,canonical.replace(b"\n",b"\r\n")), "provider-material-line-endings")
+    digest=sha(canonical)
     expected_build = dict(WH3_BUILD_SOURCE=source,WH3_BUILD_RUN=str(spec["run"]),
                           WH3_BUILD_ATTEMPT=str(spec["attempt"]),WH3_PROVIDER_SHA=digest)
     for key,value in expected_build.items():
