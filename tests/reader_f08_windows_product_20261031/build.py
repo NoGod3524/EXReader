@@ -36,14 +36,14 @@ def build():
     installed_hash=OUT/"hash"
     H.configure(ROOT/"extras/opds",OUT/"hash-build",["-DEXREADER_OPDS_HASH_ONLY=ON","-DCMAKE_INSTALL_PREFIX="+str(installed_hash)],"hash")
     H.run(["cmake","--install",OUT/"hash-build"],"hash-install")
-    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"]=str(installed_hash)
+    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"]=installed_hash.resolve().as_posix()
     sdk,product,stage=OUT/"sdk-stage",OUT/"product-stage",OUT/"raw-stage"
     prefix=";".join(map(str,(stage,product,sdk,installed_hash)))
     H.run(["cmake","--preset","reading-library","-B",OUT/"sdk-build","-DCMAKE_INSTALL_PREFIX="+str(sdk)],"sdk-configure")
     H.run(["cmake","--build",OUT/"sdk-build","--parallel","4"],"sdk-build")
     H.run(["cmake","--install",OUT/"sdk-build"],"sdk-install")
     H.configure(ROOT/"apps/reader/store/native",OUT/"product-build",
-        ["-DCMAKE_INSTALL_PREFIX="+str(product),"-DREADER_ORIGINAL_HASH_PREFIX="+str(installed_hash)],"product")
+        ["-DCMAKE_INSTALL_PREFIX="+str(product),"-DREADER_ORIGINAL_HASH_PREFIX="+installed_hash.resolve().as_posix()],"product")
     H.run(["cmake","--install",OUT/"product-build"],"product-install")
     raw=set(H.RAW_MODULES)|W.RAW_NEW
     for module in tuple(H.MODULES)+W.NEW_MODULES:
