@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import plistlib
+import uuid
 import importlib.abc
 import importlib.util
 import os
@@ -112,7 +113,7 @@ def receive_apple(a, stamp):
     """Actual XCTest session under fixture TLS; no lower-level revision application."""
     require(sys.platform == "darwin" and a.host in ("macos","iphone","ipad"), "Apple runner required")
     require(all(value is not None for value in
-                (a.wire,a.expectations,a.projection_expectations,a.database,a.program,a.destination)),
+                (a.wire,a.expectations,a.projection_expectations,a.program,a.destination)),
             "exact Apple receiver inputs required")
     from android import wire_server
     fixture_spec=importlib.util.spec_from_file_location("f03_apple_tls_prepare",
@@ -120,21 +121,36 @@ def receive_apple(a, stamp):
     module=importlib.util.module_from_spec(fixture_spec);fixture_spec.loader.exec_module(module)
     folder=a.output.parent / (a.output.stem + "-receiver")
     folder.mkdir(parents=True,exist_ok=False)
-    fixture=folder/"fixture";module.prepare(fixture)
+    fixture=folder/"fixture"
     expected_receipt=json.loads(a.projection_expectations.read_text(encoding="utf-8"))
     same_identity(expected_receipt,stamp)
     require(expected_receipt.get("sdk_version")==SCOPE["sdk_version"],"author SDK differs")
     expected=expected_receipt["snapshot"]
-    sys.path.insert(0,str(ROOT/"tests/webdav"))
-    from cloud_native import trust_fixture_certificates
-    trust_fixture_certificates((fixture/"public/ca.crt",),"f03-apple-")
-    if a.host != "macos":
-        require(a.udid is not None, "exact simulator UDID required")
-        subprocess.run(["xcrun","simctl","bootstatus",a.udid,"-b"],check=True)
-        subprocess.run(["xcrun","simctl","keychain",a.udid,"add-root-cert",
-                        str(fixture/"public/ca.crt")],check=True)
-    relay,server,config=wire_server(a.wire,fixture)
+    server=None; trusted_fingerprint=None; clone=None
     try:
+        module.prepare(fixture)
+        if a.host=="macos":
+            fingerprint=subprocess.check_output(["openssl","x509","-in",str(fixture/"public/ca.crt"),
+                "-noout","-fingerprint","-sha1"],text=True).strip().split("=",1)[1].replace(":","")
+            require(len(fingerprint)==40 and all(c in "0123456789ABCDEFabcdef" for c in fingerprint),
+                    "invalid fixture fingerprint")
+            trusted_fingerprint=fingerprint
+            subprocess.run(["sudo","security","add-trusted-cert","-d","-r","trustRoot",
+                "-k","/Library/Keychains/System.keychain",str(fixture/"public/ca.crt")],
+                check=True,capture_output=True)
+        else:
+            require(a.udid is not None,"exact source simulator UDID required")
+            # Trust only a receiver-owned clone; never reset the owner's simulator keychain.
+            created=subprocess.check_output(["xcrun","simctl","clone",a.udid,
+                "F03-"+stamp["run_id"]+"-"+stamp["attempt"]+"-"+a.host],text=True).strip()
+            clone=str(uuid.UUID(created))
+            require(clone.lower() != a.udid.lower(),"receiver simulator ownership unavailable")
+            subprocess.run(["xcrun","simctl","boot",clone],check=True)
+            subprocess.run(["xcrun","simctl","bootstatus",clone,"-b"],check=True)
+            subprocess.run(["xcrun","simctl","keychain",clone,"add-root-cert",
+                str(fixture/"public/ca.crt")],check=True)
+            a.destination="platform=iOS Simulator,id="+clone
+        relay,server,config=wire_server(a.wire,fixture)
         work=ROOT/"build/dot-f03-native"/a.host
         scheme="EXReaderHost-macOS" if a.host=="macos" else "EXReaderHost-iOS"
         environment=dict(os.environ)
@@ -145,7 +161,8 @@ def receive_apple(a, stamp):
         test_target="EXReaderHostUITests-" + ("macOS" if a.host=="macos" else "iOS")
         plist=a.program.parent.parent/"Info.plist" if a.host=="macos" else a.program.parent/"Info.plist"
         package_identity=plistlib.loads(plist.read_bytes())
-        require(package_identity.get("EXRSourceSHA")==stamp["source_sha"] and
+        require(package_identity.get("CFBundleIdentifier")=="org.exreader.host" and
+                package_identity.get("EXRSourceSHA")==stamp["source_sha"] and
                 package_identity.get("EXRSDKVersion")==SCOPE["sdk_version"],"actual Apple bundle identity differs")
         argv=["xcodebuild","test-without-building","-project",str(work/"project/EXReaderHost.xcodeproj"),
               "-scheme",scheme,"-destination",a.destination,"-derivedDataPath",str(work/"derived"),
@@ -177,7 +194,23 @@ def receive_apple(a, stamp):
                          "f03-received-groups-persisted"]],"actual native receiver steps incomplete")
         require(any(r["method"]=="GET" and "/revisions/" in r["path"] and r["authenticated"]
                     for r in server.requests),"actual native revision receive missing")
-        actual=read_snapshot(a.database)
+        if a.host=="macos":
+            profile_root=Path.home()/"Library/Application Support/EXReader"
+        else:
+            container=Path(subprocess.check_output(["xcrun","simctl","get_app_container",clone,
+                "org.exreader.host","data"],text=True).strip()).resolve(strict=True)
+            profile_root=container/"Library/Application Support/EXReader"
+        profiles=json.loads((profile_root/"accounts.json").read_text(encoding="utf-8"))
+        matches=[entry for entry in profiles if entry["root"]==config["root"]]
+        require(len(matches)==1,"actual bundle fixture account not unique")
+        identifier=matches[0]["id"]
+        require(isinstance(identifier,str) and identifier and Path(identifier).name==identifier,
+                "unsafe actual profile identity")
+        database=(profile_root/"accounts"/identifier/"reader-catalog.db").resolve(strict=True)
+        require(database.is_relative_to((profile_root/"accounts").resolve()),"profile DB escaped app account")
+        if a.database is not None:
+            require(a.database.resolve(strict=True)==database,"caller DB not current native account")
+        actual=read_snapshot(database)
         for table in TABLES:
             require(actual[table]==expected[table],"Apple projection differs: "+table)
         original={r["id"]:r["body"] for r in expected["revisions"]}
@@ -190,12 +223,30 @@ def receive_apple(a, stamp):
         relay.save(server,folder/"wire","f03-"+a.host+"-receive",{"projection":"../projection.json"})
         server=None
     finally:
+        active_failure=sys.exc_info()[0] is not None
+        failures=[]
+        def cleanup(label, action):
+            try: action()
+            except Exception as error: failures.append({"action":label,"error":str(error)})
         if server is not None:
-            write_json(folder/"failed-requests.json",server.requests)
-            server.server.shutdown();server.server.server_close()
-        # Fixture-generated keys are never evidence artifacts.
+            cleanup("requests",lambda:write_json(folder/"failed-requests.json",server.requests))
+            cleanup("server-stop",server.server.shutdown)
+            cleanup("server-close",server.server.server_close)
+        if trusted_fingerprint is not None:
+            cleanup("remove-owned-trust",lambda:subprocess.run(["sudo","security","delete-certificate",
+                "-Z",trusted_fingerprint,"/Library/Keychains/System.keychain"],check=True,capture_output=True))
+        if clone is not None:
+            cleanup("stop-owned-simulator",lambda:subprocess.run(["xcrun","simctl","shutdown",clone],
+                check=True,capture_output=True))
+            cleanup("delete-owned-simulator",lambda:subprocess.run(["xcrun","simctl","delete",clone],
+                check=True,capture_output=True))
         import shutil
-        shutil.rmtree(fixture/"private",ignore_errors=True)
+        cleanup("fixture-private",lambda:shutil.rmtree(fixture/"private"))
+        write_json(folder/"cleanup.json",{"passed":not failures,"errors":failures})
+        if failures:
+            receipt=folder/"projection.json"
+            if receipt.exists():receipt.rename(folder/"projection-before-failed-cleanup.json")
+            if not active_failure:raise RuntimeError("receiver fixture cleanup failed")
 
 def main():
     p = argparse.ArgumentParser()

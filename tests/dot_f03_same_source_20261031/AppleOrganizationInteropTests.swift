@@ -301,6 +301,10 @@ final class AppleOrganizationInteropTests: XCTestCase {
         tap("account.sync.start")
         XCTAssertTrue(wait(180) { self.text("account.sync.state") == "本轮扫描完成" },
                       "Actual native network receive did not finish")
+        XCTAssertTrue(wait(180) {
+            let receive = self.text("account.receive.state")
+            return receive.contains("组织待依赖或重扫 0 项") && receive.contains("待处理冲突 0 项")
+        }, "Native product organization receive did not settle without unresolved rows")
         steps.append("f03-native-https-received")
         tap("library.organization")
         for entry in expected {
