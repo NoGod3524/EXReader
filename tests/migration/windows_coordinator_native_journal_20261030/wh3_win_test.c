@@ -429,7 +429,10 @@ static void revoke_after_begin(void) {
  expect(f.poisoned==1&&f.entered==f.left,"poison callback, borrow balanced");
  wh3w_close(f.store);f.store=NULL;expect(fresh_probe()==0,"durable unresolved intent");
 }
-int main(int argc,char **argv) {
+#ifndef WH3W_TEST_ENTRY
+#define WH3W_TEST_ENTRY main
+#endif
+int WH3W_TEST_ENTRY(int argc,char **argv) {
  if(argc==3&&!strcmp(argv[1],"--child"))return child_main(argv[2]);
  happy();
  cas_mismatch(0,"cas-count");cas_mismatch(1,"cas-full-tail");cas_mismatch(2,"cas-manifest");

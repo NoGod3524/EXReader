@@ -1,0 +1,82 @@
+name: C02 persistent native admission gate
+on:
+  push:
+    branches: [codex/dot-c02-native-journal-20261030]
+    paths:
+      - extras/migration/windows_coordinator_native_journal_20261030/**
+      - tests/migration/windows_domain_gate_20261031/**
+      - tests/migration/windows_coordinator_native_journal_20261030/**
+      - .github/workflows/dot-c02-domain-gate-20261031.yml
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  persistent_gate:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Preserve ABI2 and ABI3 sources and extract frozen C01
+        run: |
+          set -euo pipefail
+          git diff --exit-code a8d0b162d8c21617e4c2c837e3eb2b2174bbf69b HEAD -- extras/migration/windows_coordinator_hardening_20261030 tests/migration/windows_coordinator_hardening_20261030 extras/migration/windows_coordinator_cas_20261030 tests/migration/windows_coordinator_cas_20261030 src include
+          mkdir -p build/frozen-c01
+          git archive ccd7fec67eb8aa463b09533ce320820f2da472d9 extras/migration/windows_admission_lease_20261030 | tar -x -C build/frozen-c01
+      - name: Build installed native library and separate persistent-gate consumer
+        id: build
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_coordinator_hardening_20261030 -B build/lib2 -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/lib2 --config Release
+          cmake --install build/lib2 --config Release --prefix "$GITHUB_WORKSPACE/stage"
+          cmake -S extras/migration/windows_coordinator_cas_20261030 -B build/lib3 -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage"
+          cmake --build build/lib3 --config Release
+          cmake --install build/lib3 --config Release --prefix "$GITHUB_WORKSPACE/stage"
+          cmake -S extras/migration/windows_coordinator_native_journal_20261030 -B build/native -DWH_PREFIX="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/native --config Release
+          cmake --install build/native --config Release --prefix "$GITHUB_WORKSPACE/stage"
+          cmake -S tests/migration/windows_domain_gate_20261031 -B build/gate -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage" -DC01_SOURCE="$GITHUB_WORKSPACE/build/frozen-c01/extras/migration/windows_admission_lease_20261030" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/gate --config Release
+      - name: Actual cross-process custody, persistent intent and C01 drift
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          EXE=$(find build/gate -type f -name coordinator-domain-check.exe | head -1)
+          set +e
+          "$EXE" 2>&1 | tee evidence/gate.log
+          statuses=("${PIPESTATUS[@]}")
+          set -e
+          printf '%s\n' "${statuses[0]}" > evidence/gate-exit.txt
+          if [ "${statuses[1]}" -ne 0 ]; then exit "${statuses[1]}"; fi
+          if [ "${statuses[0]}" -ne 0 ]; then exit "${statuses[0]}"; fi
+          python - <<'PY'
+          import json,os,pathlib
+          rows=[json.loads(s) for s in pathlib.Path('evidence/gate.log').read_text().splitlines() if s.startswith('{"source":')]
+          assert len(rows)==1
+          r=rows[0]
+          assert r['source']==os.environ['GITHUB_SHA'] and r['cases']==28 and r['checks']>=160 and r['failed']==0 and r['passed'] is True
+          assert r['persistent_gate'] is True and r['frozen_c01_drift'] is True
+          assert r['publication_proof_control'] is True and r['real_owner_wiring'] is False
+          PY
+      - name: Retain raw native objects and provenance
+        if: always()
+        run: |
+          mkdir -p evidence
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          p=pathlib.Path('evidence')
+          r=dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],os=os.environ['RUNNER_OS'],frozen_c01='ccd7fec67eb8aa463b09533ce320820f2da472d9',real_owner_wiring=False,full_c02_acceptance=False)
+          (p/'receipt.json').write_text(json.dumps(r,indent=2)+'\n')
+          inventory=[dict(path=str(f.relative_to(p)),bytes=f.stat().st_size,sha256=hashlib.sha256(f.read_bytes()).hexdigest()) for f in sorted(p.rglob('*')) if f.is_file()]
+          (p/'file-hashes.json').write_text(json.dumps(inventory,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-persistent-gate-${{ github.sha }}
+          path: evidence/
+          if-no-files-found: error
