@@ -210,7 +210,14 @@ def finish_cleanup(actions, report, destination):
         except BaseException as error:
             failures.append({"action": label, "error": type(error).__name__ + ": " + str(error)})
     report["cleanup_errors"] = failures
-    if failures: report["passed"] = False
+    if failures or active_failure:
+        report["passed"] = False
+        # A snapshot sealed before app-close must not remain admissible if the
+        # producer subsequently failed. Remove only this phase's own result.
+        try:
+            Path(destination).with_name("state.json").unlink(missing_ok=True)
+        except BaseException as error:
+            failures.append({"action": "invalidate-failed-state", "error": type(error).__name__ + ": " + str(error)})
     try:
         Path(destination).write_text(json.dumps(report, ensure_ascii=False, indent=2))
     except BaseException as error:
