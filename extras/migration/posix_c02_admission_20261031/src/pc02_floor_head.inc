@@ -97,11 +97,11 @@ static int pm_head_catchup(pc02_lease *h,pc02_cap *cap,unsigned largest){
  fd=regular_open(h->route_dir,leaf,O_RDWR,1,&id);
  if(fd<0||!sameid(&id,&expected)||!size_exact(fd,(off_t)size))goto done;
  for(unsigned slot=count+1;slot<=largest;slot++){
-  unsigned char payload[PM_FLOOR_BYTES],record[PF_RECORD],verify[PF_RECORD];
+  unsigned char payload[PM_ACK_FLOOR_BYTES],record[PF_RECORD],verify[PF_RECORD];
   pc02_metadata_info info;
   size_t got=0;
   if(pm_read(h,PM_FLOOR,&h->seen.pending,slot,payload,sizeof(payload),&got,&info)!=1||
-     got!=sizeof(payload)||get64(payload+136)!=slot||!live_cap(h,cap))goto done;
+     (got!=PM_FLOOR_BYTES&&got!=PM_ACK_FLOOR_BYTES)||get64(payload+136)!=slot||!live_cap(h,cap))goto done;
   memset(record,0,sizeof(record));
   memcpy(record,"PC02H001",8);
   put64(record+8,slot);
@@ -124,7 +124,8 @@ static int pm_head_catchup(pc02_lease *h,pc02_cap *cap,unsigned largest){
      !sameid(&id,&expected)||fsync(h->route_dir)||!live_cap(h,cap))goto done;
   if(close(again)){again=-1;
   goto done;
-  }again=-1;
+  }
+  again=-1;
   memcpy(previous,record+208,64);
   phase(h,1502);
  }

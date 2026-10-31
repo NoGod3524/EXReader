@@ -1,0 +1,93 @@
+name: C02 actual synchronous POSIX migration and recovery
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/dot-c02-native-journal-20261030]
+    paths:
+      - extras/migration/posix_c02_migration_20261031/**
+      - extras/migration/posix_c02_admission_20261031/**
+      - extras/migration/posix_c02_sdk_admission_20261031/**
+      - extras/migration/src/lm_c02_posix_guard.c
+      - extras/migration/src/lm_main.c
+      - extras/migration/CMakeLists.txt
+      - tests/migration/posix_c02_migration_20261031/**
+      - .github/workflows/dot-c02-posix-migration-20261031.yml
+permissions: {contents: read}
+defaults:
+  run: {shell: bash}
+jobs:
+  migration:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Freeze SDK, C01 and original coordinator controls
+        run: |
+          set -euo pipefail
+          git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt bindings
+          git diff --exit-code a8d0b162d8c21617e4c2c837e3eb2b2174bbf69b HEAD -- extras/migration/windows_coordinator_hardening_20261030 tests/migration/windows_coordinator_hardening_20261030 extras/migration/windows_coordinator_cas_20261030 tests/migration/windows_coordinator_cas_20261030 extras/migration/windows_admission_lease_20261030
+          python -c "import hashlib,pathlib; assert hashlib.sha256(pathlib.Path('tests/migration/run_cases.py').read_bytes()).hexdigest()=='28c1401cdfac08475232a5b234748b379aca2ef8a9bf0760cd32310db83b215a'; assert hashlib.sha256(pathlib.Path('tests/migration/legacy_data.py').read_bytes()).hexdigest()=='9c6baddebbcce6ac7597eed9c93c39a39ca547af77dca93fc98c9d88bec8e5d4'"
+          mkdir -p evidence/build-logs
+          echo "C02_POSIX_MIGRATION_EVIDENCE=$HOME/c02-posix-migration-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libxml2-dev libssl-dev
+      - name: Install unchanged SDK and native authority
+        run: |
+          set -euo pipefail
+          cmake --preset reading-library -B build/sdk -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-sdk"
+          cmake --build build/sdk --parallel 4 2>&1 | tee evidence/build-logs/sdk.log
+          cmake --install build/sdk
+          cmake -S extras/migration/windows_coordinator_hardening_20261030 -B build/abi2 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-abi2"
+          cmake --build build/abi2 --parallel 4
+          cmake --install build/abi2
+          cmake -S extras/migration/windows_coordinator_cas_20261030 -B build/abi3 -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage-abi2" -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-abi3"
+          cmake --build build/abi3 --parallel 4
+          cmake --install build/abi3
+          cmake -S extras/migration/posix_c02_admission_20261031 -B build/native -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage-abi2" -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-native"
+          cmake --build build/native --parallel 4 2>&1 | tee evidence/build-logs/native.log
+          cmake --install build/native
+          cmake -S extras/migration/posix_c02_sdk_admission_20261031 -B build/sdk-admission -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage-abi2" -DPC02_PREFIX="$GITHUB_WORKSPACE/stage-native" -DEXR_SDK="$GITHUB_WORKSPACE/stage-sdk" -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-c02"
+          cmake --build build/sdk-admission --parallel 4 2>&1 | tee evidence/build-logs/sdk-admission.log
+          cmake --install build/sdk-admission
+      - name: Build true synchronous owner, guarded old CLI and explicit historical controls
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/posix_c02_migration_20261031 -B build/owner -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$GITHUB_WORKSPACE/stage-sdk" -DPC02_SDK_PREFIX="$GITHUB_WORKSPACE/stage-c02" -DWH3_PREFIX="$GITHUB_WORKSPACE/stage-abi3" -DPC02_BUILD_SOURCE="$GITHUB_SHA" -DPC02_BUILD_RUN="$GITHUB_RUN_ID" -DPC02_BUILD_ATTEMPT="$GITHUB_RUN_ATTEMPT" -DPC02_MIGRATION_ACTIONS_CONTROLS=ON -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-owner"
+          cmake --build build/owner --parallel 4 2>&1 | tee evidence/build-logs/owner.log
+          cmake --install build/owner
+          cmake -S extras/migration -B build/guarded -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$GITHUB_WORKSPACE/stage-sdk" -DLM_C02_PREFIX="$GITHUB_WORKSPACE/stage-c02"
+          cmake --build build/guarded --parallel 4 2>&1 | tee evidence/build-logs/guarded.log
+          cmake -S extras/migration -B build/legacy-baseline -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$GITHUB_WORKSPACE/stage-sdk" -DLM_HISTORICAL_TEST_BASELINE=ON
+          cmake --build build/legacy-baseline --parallel 4 2>&1 | tee evidence/build-logs/legacy-baseline.log
+          cp build/owner/pc02-provider-inputs.txt evidence/
+      - name: Original historical runner unchanged
+        run: |
+          set -euo pipefail
+          python tests/migration/run_cases.py --tool build/legacy-baseline/exreader-legacy-migrate --workdir "$C02_POSIX_MIGRATION_EVIDENCE/legacy-native" --out "$C02_POSIX_MIGRATION_EVIDENCE/legacy-result.json" --label "${{ matrix.os }}-historical-original"
+      - name: Actual SDK import, native publication, ACK identity and fresh process recovery
+        run: |
+          set -euo pipefail
+          python -m py_compile tests/migration/posix_c02_migration_20261031/run.py
+          python tests/migration/posix_c02_migration_20261031/run.py --tool stage-owner/bin/exreader-c02-migrate --test-tool build/owner/exreader-c02-migrate-controls --admission stage-c02/bin/exreader-c02-admission --legacy build/legacy-baseline/exreader-legacy-migrate-tx --guarded build/guarded/exreader-legacy-migrate-tx --output "$C02_POSIX_MIGRATION_EVIDENCE" 2>&1 | tee evidence/actual-native.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-posix-migration-${{ matrix.os }}-${{ github.sha }}
+          path: |
+            evidence/
+            ${{ env.C02_POSIX_MIGRATION_EVIDENCE }}/
+            stage-owner/bin/
+            build/owner/exreader-c02-migrate-controls
+            stage-c02/bin/
+          include-hidden-files: true
+          if-no-files-found: error

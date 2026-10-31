@@ -113,6 +113,13 @@ int pc02_floor_read(pc02_lease *,const pc02_pending_record *,pc02_floor *);
 /* Explicit fresh-owner confirmation of this exact full floor. It catches up
    an interrupted independent head, adds no floor/count, never adopts newer. */
 int pc02_floor_confirm(pc02_lease *,pc02_cap *,const pc02_floor *exact);
+/* Production profile: immutable FLOOR352 additionally binds ACK actual native
+   ID and whole raw ACK SHA. Every earlier floor must also use this profile.
+   The original advance() remains component-only FLOOR272; no mixed fallback. */
+int pc02_floor_advance_ack(pc02_lease *,pc02_cap *,const pc02_floor *exact,
+ const char line_sha256[65],const pc02_identity *actual_ack,const char raw_ack_sha256[65],pc02_floor *);
+int pc02_floor_check_ack(pc02_lease *,const pc02_pending_record *,uint64_t count,
+ const char line_sha256[65],const pc02_identity *actual_ack,const char raw_ack_sha256[65]);
 int pc02_floor_advance(pc02_lease *,pc02_cap *,const pc02_floor *exact,
  const char line_sha256[65],pc02_floor *);
 typedef struct {
