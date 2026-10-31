@@ -20,14 +20,18 @@ enum HostF08Review {
     private(set) static var launchError = ""
     private static var pending: DispatchWorkItem?
     private static var signature = ""
+    private static var signatureRevision = 0
+    private static var observerArmID = 0
+    private static var observedReady: Bool?
     private static let phaseLock = NSLock()
     private static var phaseValues: [[String: Any]] = []
-    static func phase(_ name: String, count: Int? = nil) {
+    static func phase(_ name: String, count: Int? = nil, details: [String: Any] = [:]) {
         let args = ProcessInfo.processInfo.arguments
         guard args.contains("-EXRF08Launch") || args.contains("-EXRF08PhaseOnly") else { return }
         var value: [String: Any] = ["phase": name, "uptime_s": ProcessInfo.processInfo.systemUptime,
             "pid": ProcessInfo.processInfo.processIdentifier, "main_thread": Thread.isMainThread]
         if let count { value["count"] = count }
+        value.merge(details) { current, _ in current }
         phaseLock.lock(); defer { phaseLock.unlock() }
         phaseValues.append(value)
     }
@@ -55,12 +59,35 @@ enum HostF08Review {
 #endif
     }
     static func observeShelf(_ value: String, ready: @escaping () -> Bool, changed: @escaping () -> Void) {
-        guard (launchStatus == "started" || launchStatus == "observing-native-layout"), value != signature || pending == nil else { return }
+        guard launchStatus == "started" || launchStatus == "observing-native-layout" else { return }
+        let signatureChanged = value != signature
+        if signatureChanged { signatureRevision += 1 }
+        let candidateReady = ready()
+        let shouldArm = signatureChanged || pending == nil
+        if signatureChanged || observedReady != candidateReady || pending == nil {
+            phase("native-ready-predicate-observed", details: [
+                "full_native_ready_predicate": candidateReady, "signature_revision": signatureRevision,
+                "signature_changed": signatureChanged, "observer_arm_id": observerArmID,
+                "pending_observer": pending != nil, "will_arm": shouldArm])
+        }
+        observedReady = candidateReady
+        guard shouldArm else { return }
+        let cancelledPending = pending != nil, previousArmID = observerArmID
         signature = value; pending?.cancel()
+        observerArmID += 1
+        let armID = observerArmID, revision = signatureRevision
         let work = DispatchWorkItem {
             pending = nil
-            guard ready() else { return }
-            phase("native-layout-ready")
+            let confirmedReady = ready()
+            observedReady = confirmedReady
+            phase("native-ready-observer-fired", details: [
+                "observer_arm_id": armID, "signature_revision": revision,
+                "current_observer_arm_id": observerArmID,
+                "full_native_ready_predicate": confirmedReady,
+                "fired_dispatch_uptime_ns": DispatchTime.now().uptimeNanoseconds])
+            guard confirmedReady else { return }
+            phase("native-layout-ready", details: [
+                "observer_arm_id": armID, "signature_revision": revision])
 #if os(iOS)
             if launchStatus == "started", #available(iOS 16, *) {
                 do {
@@ -76,7 +103,13 @@ enum HostF08Review {
             changed()
         }
         pending = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
+        let due = DispatchTime.now() + 0.35
+        DispatchQueue.main.asyncAfter(deadline: due, execute: work)
+        phase("native-ready-observer-armed", details: [
+            "observer_arm_id": armID, "signature_revision": revision,
+            "cancelled_pending_observer": cancelledPending, "previous_observer_arm_id": previousArmID,
+            "full_native_ready_predicate_at_arm": candidateReady,
+            "due_dispatch_uptime_ns": due.uptimeNanoseconds, "stability_delay_s": 0.35])
     }
     private static let animationLog = OSLog(subsystem: "org.exreader.f08", category: "NativeUI")
     private(set) static var scrollActive = false
