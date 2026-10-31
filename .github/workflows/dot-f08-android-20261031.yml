@@ -1,7 +1,7 @@
-name: F08 Android key-only startup validation
+name: F08 Android optimized Release shelf validation
 on:
   push:
-    branches: [codex/f08-android-startup-key-20261031]
+    branches: [codex/f08-android-release-review-20261031]
   workflow_dispatch:
 permissions:
   contents: read
@@ -50,9 +50,9 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Build SDK 3.42 and the original shelf suites
+      - name: Build SDK 3.42 and the optimized complete-feature app
         run: python3 tests/reader_f08_android_20261031/build.py
-      - name: Validate key lookup and original shelf cohorts
+      - name: Run the unchanged original shelf UI on the Release app
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -64,7 +64,7 @@ jobs:
           cores: 4
           emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -camera-back none
           disable-animations: false
-          script: python3 tests/reader_f08_android_startup_20261031/diagnose.py full
+          script: python3 tests/reader_f08_android_20261031/lane.py sample
       - name: Seal all raw observations including failures
         if: always()
         run: python3 tests/reader_f08_android_20261031/lane.py seal
