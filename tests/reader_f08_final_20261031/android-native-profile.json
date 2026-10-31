@@ -21,7 +21,6 @@
     "target": "default",
     "abi": "x86_64",
     "device": "pixel_6",
-    "system_image_revision": 4,
     "cores": 4,
     "ram_mib": 4096,
     "heap_mib": 512,
@@ -33,7 +32,10 @@
     "refresh_hz": 60,
     "animation_scale": 1,
     "cpu_acceleration": "WHPX",
-    "gpu": "host"
+    "gpu": "host",
+    "system_image_archive_revision": 4,
+    "system_image_embedded_revision": 2,
+    "system_image_archive_sha256": "b57f6386af25b0fe5488e77196b43c03778c6760e6f4311611d090391b9cb2b3"
   },
   "real_sdk_sources": 2202,
   "budgets": {
