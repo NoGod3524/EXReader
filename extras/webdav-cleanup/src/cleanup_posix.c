@@ -9,6 +9,7 @@
 #include "exr_webdav_cleanup.h"
 
 #include <errno.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -756,6 +757,125 @@ exr_wc_status exr_wc_recover(exr_wc_root *r, uint32_t start, uint32_t maximum,
       return EXR_WC_UNCERTAIN;
     }
   }
+  return EXR_WC_OK;
+}
+
+
+/* New explicit APIs do not change automatic recovery of old receipts. */
+static int wc_same_expected(const wc_slot *v, const exr_wc_info *e) {
+  char id[33];
+  wc_hex(v->id, id);
+  return memcmp(id, e->transaction_id, sizeof id) == 0 &&
+         v->dir_ino == e->directory_inode && v->payload_ino == e->payload_inode &&
+         v->bytes == e->bytes;
+}
+
+exr_wc_status exr_wc_abandon_stale(exr_wc_root *r, const exr_wc_info *expected,
+                                  exr_wc_cleanup_result *res) {
+  wc_slot v;
+  struct stat ds, ps, held, root;
+  char name[36];
+  int dir = -1, hold = -1, scan = -1, e = 0, found;
+  DIR *entries = NULL;
+  struct dirent *entry;
+  exr_wc_status status = EXR_WC_REFUSED;
+  if (res) memset(res, 0, sizeof *res);
+  if (!r || !expected || !res || expected->slot >= r->m.count)
+    return EXR_WC_ARGUMENT;
+  if (r->poisoned) { res->receipt_uncertain = 1; return EXR_WC_UNCERTAIN; }
+  if (r->active) return EXR_WC_BUSY;
+  v = r->m.slots[expected->slot];
+  if (!wc_same_expected(&v, expected) ||
+      (expected->state != EXR_WC_OWNED && expected->state != EXR_WC_SEALED &&
+       expected->state != EXR_WC_CLEANED))
+    return EXR_WC_REFUSED;
+  if (v.state == EXR_WC_CLEANED) return EXR_WC_OK;
+  if ((v.state != EXR_WC_OWNED && v.state != EXR_WC_SEALED) ||
+      expected->state != v.state)
+    return EXR_WC_REFUSED;
+  if (fstat(r->dirfd, &root) != 0) goto io;
+  if (!wc_private(&root, S_IFDIR) || root.st_dev != r->dev ||
+      (uint64_t)root.st_ino != r->m.root_ino)
+    goto done;
+  wc_txname(v.id, name);
+  dir = wc_open_dir(r->dirfd, name);
+  if (dir < 0) {
+    if (errno == ELOOP || errno == ENOTDIR) goto done;
+    if (errno != ENOENT) goto io;
+    /* No name to delete: finish a prior interrupted owned cleanup. */
+  } else {
+    if (fstat(dir, &ds) != 0) goto io;
+    if (!wc_private(&ds, S_IFDIR) || ds.st_dev != r->dev ||
+        (uint64_t)ds.st_ino != v.dir_ino) goto done;
+    found = fstatat(dir, wc_payload, &ps, AT_SYMLINK_NOFOLLOW);
+    if (found == 0) {
+      if (!wc_private(&ps, S_IFREG) || ps.st_dev != r->dev ||
+          (uint64_t)ps.st_ino != v.payload_ino || ps.st_nlink != 1 ||
+          (v.state == EXR_WC_SEALED && (uint64_t)ps.st_size != v.bytes))
+        goto done;
+      hold = openat(dir, wc_payload, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+      if (hold < 0) { if (errno == ELOOP) goto done; goto io; }
+      if (fstat(hold, &held) != 0) goto io;
+      if (held.st_dev != ps.st_dev || held.st_ino != ps.st_ino) goto done;
+    } else if (errno != ENOENT) goto io;
+    scan = openat(dir, ".", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    if (scan < 0) goto io;
+    entries = fdopendir(scan);
+    if (!entries) goto io;
+    scan = -1;
+    errno = 0;
+    while ((entry = readdir(entries)) != NULL) {
+      if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..") &&
+          strcmp(entry->d_name, wc_payload)) goto done;
+      errno = 0;
+    }
+    if (errno) goto io;
+    closedir(entries); entries = NULL;
+  }
+  switch (wc_clean_slot(r, expected->slot, &e)) {
+  case WC_DONE: res->removed = 1; status = EXR_WC_OK; break;
+  case WC_PENDING: res->pending = 1; res->native_error = e; status = EXR_WC_IO; break;
+  case WC_DENIED: res->native_error = e; break;
+  default: res->removed = res->receipt_uncertain = 1;
+           res->native_error = e; status = EXR_WC_UNCERTAIN; break;
+  }
+  goto done;
+io:
+  res->pending = 1; res->native_error = errno; status = EXR_WC_IO;
+done:
+  if (entries) closedir(entries);
+  if (scan >= 0) close(scan);
+  if (hold >= 0) close(hold);
+  if (dir >= 0) close(dir);
+  return status;
+}
+
+exr_wc_status exr_wc_borrow_sealed_fd(exr_wc_tx *tx, int *borrowed_fd) {
+  wc_slot v;
+  struct stat ds, ps, held;
+  char name[36];
+  int flags;
+  if (borrowed_fd) *borrowed_fd = -1;
+  if (!tx || !borrowed_fd) return EXR_WC_ARGUMENT;
+  if (tx->root->poisoned) return EXR_WC_UNCERTAIN;
+  if (tx->root->active != tx) return EXR_WC_REFUSED;
+  v = tx->root->m.slots[tx->slot];
+  if (v.state != EXR_WC_SEALED || tx->hold < 0 || tx->dirfd < 0)
+    return EXR_WC_REFUSED;
+  flags = fcntl(tx->hold, F_GETFL);
+  if (flags < 0) return EXR_WC_IO;
+  if ((flags & O_ACCMODE) != O_RDONLY) return EXR_WC_REFUSED;
+  wc_txname(v.id, name);
+  if (fstatat(tx->root->dirfd, name, &ds, AT_SYMLINK_NOFOLLOW) != 0 ||
+      fstatat(tx->dirfd, wc_payload, &ps, AT_SYMLINK_NOFOLLOW) != 0 ||
+      fstat(tx->hold, &held) != 0) return EXR_WC_IO;
+  if (!wc_private(&ds, S_IFDIR) || ds.st_dev != tx->root->dev ||
+      (uint64_t)ds.st_ino != v.dir_ino || !wc_private(&ps, S_IFREG) ||
+      ps.st_dev != tx->root->dev || (uint64_t)ps.st_ino != v.payload_ino ||
+      ps.st_nlink != 1 || (uint64_t)ps.st_size != v.bytes ||
+      held.st_dev != ps.st_dev || held.st_ino != ps.st_ino)
+    return EXR_WC_REFUSED;
+  *borrowed_fd = tx->hold;
   return EXR_WC_OK;
 }
 
