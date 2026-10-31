@@ -29,10 +29,10 @@ qualification.json 按 manifest.template.json 填入最终合格源码的真实 
 完整请求包含十二个角色：native-windows、native-linux、persistent-gate、registry-product、host-android、host-macos、host-ios、host-gtk、posix-native-linux、posix-native-macos、posix-migration-linux、posix-migration-macos。manifest.template.json 列出真实工作流与作业名，所有 source/run/attempt/job/artifact 字段必须取自同一生产源码的实际运行。runtime_prefix 与 binaries 是原 ZIP 的精确成员路径；提交请求前须在 Actions 核实，不能按 basename 搜索或遇错切换前缀。
 
 - Android：独立重读原 app-raw.tar、原生 FD/fstat 观察、固定 Context 目录、A/B/S 原字节与 SQLite；核对实际原生 source 最后释放及进程死亡后的 PENDING 拒绝。普通 Debug/Release APK 的 ELF 导入/导出与 SDK PT_LOAD 段须绑定原安装 SDK，检查原件而非仅信 receipt。
-- GTK：检查实际运行的四份原生快照、UID 与目录/文件身份、实际 SDK 借用顺序以及普通产品包。
-- macOS/iOS：核对原始五阶段、九条路由、实际 SDK 资源、进程观察、两个真实 app bundle 和安装的 C02 archives。原始安装 SDK 已单独保留；整字节哈希与签名后 SDK 不同时，目前 fail closed，须完成 Mach-O 代码页与签名差异独立绑定后才可消除该缺口。
+- GTK：检查实际运行的四份原生快照、UID 与目录/文件身份、实际 SDK 借用顺序以及普通产品包。保留三个实际程序的完整链接输入、原始构建 ELF 和执行 ELF；在固定编译器/链接器 SHA、严格参数白名单下独立重链接，要求三个 ELF 整字节相同，并从链接 map 验证 SDK 与 C02 实际符号来源。
+- macOS/iOS：核对原始五阶段、九条路由、实际 SDK 资源、进程观察、两个真实 app bundle 和安装的 C02 archives。分别校验原始安装 SDK 与签名后 SDK 的全部 CodeDirectory 代码页、签名结构和特殊槽；只归一化已验证的 20 字节 LINKEDIT 长度/签名长度，签名前其余全部字节须精确相同。
 - POSIX native：独立解码实际原生输出、INPUT/PREPARED、floor/head 及每项 native ID，保留原 28/207、目录 scope 10/81 和迁移 API 17/130。按 qualified source 中的开关强制新源码保留 confirm 前后的 head 原件；旧工件缺原件时不得伪造补齐。
-- POSIX 实际迁移：生产 profile 必须使用 352B FLOOR 与 296B ACK header，绑定实际执行二进制、真实 SDK 数据库、原书/批注/账本、两成员发布和 fresh process recovery。272B 组件 FLOOR 不可替代。独立生产 adapter 与残缺 B/C/head 的显式 Repair 仍在实现；十二角色齐全本身不表示完成。
+- POSIX 实际迁移：生产 profile 必须使用 352B FLOOR 与 296B ACK header，绑定实际执行二进制、真实 SDK 数据库、原书/批注/账本、两成员发布和 fresh process recovery。272B 组件 FLOOR 不可替代。独立生产 adapter 已验证实际 owner 的原始 36 场景、65/135 历史回归、INPUT/PREPARED、原生 ACK/FLOOR/head 和 SDK 数据；残缺 B/C/head 的显式 Repair 仍在实现。十二角色齐全本身不表示完成。
 
 所有 host 报告仍须保留六个核心运行观察（clean、PENDING、missing binding、最后借用阻止 owner、最后释放允许 owner、fresh process PENDING 拒绝），但 JSON 的 passed/complete 字段不能代替原生文件、SDK 与对象身份检查。生产输入、provider 文件和旧回归案例均从 qualified Git source 独立核对。
 
@@ -41,6 +41,8 @@ qualification.json 按 manifest.template.json 填入最终合格源码的真实 
 ## 重新封装负例
 
 从已通过的 Windows 原 ZIP 文件集生成 9 份新的 ZIP。每次都重新生成文件清单、文件摘要、ZIP CRC 和新 ZIP 摘要；内部 BEGIN/ACK 篡改还重新计算记录 seal 与后继链。包括 source/run/attempt 重绑、假 full-P0、保留字节、重复旧 count、错误 ACK 绑定、内部行损坏、降低原 301 项计数。每份新 ZIP 与拒绝原因均保留，原 ZIP 不变。
+
+Android 另有 8 个原生语义负例；Apple 每个平台包含 8 个原生负例和 8 个 SDK 字节对负例；GTK 包含 8 个原生负例和 8 个链接/二进制负例；POSIX 实际 owner 每个平台有 8 个重封装负例。每个有效包另需拒绝其余 11 个角色替换。新负例保存篡改包、原 ZIP 来源、重新生成的清单及精确拒绝原因，再调用相同独立解码路径。原始 ZIP 始终保留。
 
 只有明确检查当前局部证据时才使用 --allow-incomplete；其输出 scope 为 component-evidence，缺口原样列出。完整验收使用默认行为或 --require-complete。此脚本不会更新正式 95/108，也不授予 F12 / 全 P0 验收。
 

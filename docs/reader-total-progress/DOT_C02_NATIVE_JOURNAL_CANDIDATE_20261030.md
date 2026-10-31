@@ -705,3 +705,60 @@ SHA256 fbd35cbd42f25951d0b34903c810eb3654b37647ebb762f7caf021c15a673cd8.
 The follow-up changes only compact-log field selection; all original checks,
 patch ZIP readback, reconstructed semantic decoders and exact expected rejection
 classes remain unchanged. Its full successful result must be recorded separately.
+
+### Native owner negative controls and exact GTK binary closure
+
+Audit 41185703560/A1, after the compact-log correction, successfully audited
+the six original producer 734f4fa5d packages with 25 semantic negatives and
+66 role-substitution negatives. Artifact 13036877890 is 113111385 bytes,
+SHA256 3eef035cb3a7ebd96d63929ef3cc478c746261b121c57811c2d067204c13dfa1.
+The two missing production capabilities remain explicit partial B/C/head Repair;
+the six other roles are absent from this selected request, so it is not complete.
+
+GTK producer 57c6407e992992459cd6aa742043c263c19926c7 passed runtime run
+41184993985/A1, job 124490014750, with all 13 existing cases. Original artifact
+13035922715 is 91436418 bytes, SHA256
+a036bd51032359aee8374e19cdbb9d321e48e75ae397badb34214e51deeec763.
+It retains every actual linker input and original build/executed/packaged ELF
+for runtime-host, product-host and admission. The independent verifier checks
+the compiler/linker digests, permits only the known plain argument grammar,
+relinks with the retained actual objects/archives, and requires exact ELF bytes.
+GNU map/symbol checks bind real SDK entry points and native admission entry
+points to the specified common installed archives. No arbitrary strip/RPATH
+normalization or shell/plugin argument is accepted.
+
+Independent GTK audit 41186558815/A1 passed with one original ZIP, 16 semantic
+negatives (8 native plus 8 binary/link controls), and 11 role substitutions.
+Three self-consistent code changes fail exact independent static relinking;
+plugin and shell argument attacks are rejected before execution. Each binary
+negative retains its patch capsule, source/run/job/original-ZIP context, fresh
+inventory/CRC, reconstructed inputs and exact rejection class. Audit artifact
+13035929642 is 270109631 bytes, SHA256
+73b0bb376e1904bbb427ca0c538a2b24e9d91208bf982d5566361fabddc6b85a.
+GTK's installed_sdk_byte_binding gap is closed for this producer. Complete
+qualification still needs all twelve roles at the final common producer.
+
+The POSIX Repair scanner/store and isolated consumer are now separately
+submitted to native Ubuntu/macOS Actions. Their 30 named component scenarios
+cover every partial B/C byte boundary 1..367 and head boundary 1..271, strict
+ACK296/FLOOR352 relationships, actual immutable publication, identity/permission/
+ACL/link refusal and source retention. FIFO reads are nonblocking; the created
+temporary FD stays pinned through final publication readback. The real FIFO
+remains on the runner with native metadata retained, and is explicitly excluded
+from ZIP upload to avoid blocking the artifact reader. This component workflow
+does not qualify production Repair; the real owner integration and independent
+raw repair-plan/archive decoder are still pending. Formal 95/108 remains unchanged.
+
+The first helper run 41187608811/A1 compiled successfully on Ubuntu. Its native
+consumer reached 30 cases / 3870 checks with one failure at line 201 in
+complete-state-resealed-contradictions. The failing test changed a complete C
+record's nonzero terminal to another nonzero value and re-sealed it. State-prefix
+parsing has no ACK input; it must retain a complete C fact, with terminal proof
+performed by the transaction/SDK layer. Treating that record as a prefix-internal
+contradiction was an invalid test expectation. The correction preserves all nine
+actual contradiction checks by testing C generation against the preceding B,
+and adds two checks that another structurally valid complete C remains count 3
+and cannot be truncated back to B. No production scanner/store code is changed.
+Preserve failed Ubuntu job 124497608383 and artifact 13037466997, 238913 bytes,
+SHA256 895495475b2c05b92d8d9db9f24b1056c621febad15440436149169065cc5176.
+The corrected helper run is separate evidence and still pending.
