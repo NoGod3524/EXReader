@@ -49,3 +49,6 @@ Current authorized CI:0. Ledger remains96/108. Continue the gaps, review, then a
 
 ## Build prerequisite review
 The adapter now installs the unchanged OPDSHash hash-only owner for each GTK/Windows/Android target before store configuration, with a canonical environment prefix. Apple retains its existing per-product hash installation and receives no competing override. Future workflow must install GTK apt dependencies, PyYAML, Java 17/Gradle 8.9 and matching Android tools; extracting build steps does not install setup-actions prerequisites. No build was executed.
+
+## Confirmed product blocker on 94fb
+Apple's native sync completion explicitly projects only newly received books: `HostModel.receiveAccountPage` calls `HostCatalog.receivePage`, which enumerates/projects only `book`; organization screens read the projected group/member tables. The new Apple receiver is therefore fail-closed preparation, not a demonstrated working receive path. The original Apple production owner must deliver the missing remote organization projection; this package must not call lower-level projection APIs to simulate it. The separate iPad original `organization.kind.tag` failure remains. No CI should be spent as if either gap were solved.

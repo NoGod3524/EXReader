@@ -1,6 +1,8 @@
 """Actions-only retained builds. No production/source rewrite and no automatic CI submission."""
 import argparse
 import hashlib
+import json
+import plistlib
 import importlib.abc
 import importlib.util
 import os
@@ -8,7 +10,7 @@ from pathlib import Path
 import runpy
 import subprocess
 import sys
-from identity import ROOT, SCOPE, identity, require, write_json
+from identity import ROOT, SCOPE, identity, require, write_json, same_identity, read_snapshot, TABLES, canonical, digest
 
 class SDK342Loader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     """Version-only in-memory adapter; recorded source remains byte-for-byte unmodified."""
@@ -106,11 +108,104 @@ def build_linux_recipe(host, audit):
             environment["PATH"] = str(Path(sdk_root) / "platform-tools") + os.pathsep + environment["PATH"]
 
 
+def receive_apple(a, stamp):
+    """Actual XCTest session under fixture TLS; no lower-level revision application."""
+    require(sys.platform == "darwin" and a.host in ("macos","iphone","ipad"), "Apple runner required")
+    require(all(value is not None for value in
+                (a.wire,a.expectations,a.projection_expectations,a.database,a.program,a.destination)),
+            "exact Apple receiver inputs required")
+    from android import wire_server
+    fixture_spec=importlib.util.spec_from_file_location("f03_apple_tls_prepare",
+        ROOT/"tests/webdav_android/fixture.py")
+    module=importlib.util.module_from_spec(fixture_spec);fixture_spec.loader.exec_module(module)
+    folder=a.output.parent / (a.output.stem + "-receiver")
+    folder.mkdir(parents=True,exist_ok=False)
+    fixture=folder/"fixture";module.prepare(fixture)
+    expected_receipt=json.loads(a.projection_expectations.read_text(encoding="utf-8"))
+    same_identity(expected_receipt,stamp)
+    require(expected_receipt.get("sdk_version")==SCOPE["sdk_version"],"author SDK differs")
+    expected=expected_receipt["snapshot"]
+    sys.path.insert(0,str(ROOT/"tests/webdav"))
+    from cloud_native import trust_fixture_certificates
+    trust_fixture_certificates((fixture/"public/ca.crt",),"f03-apple-")
+    if a.host != "macos":
+        require(a.udid is not None, "exact simulator UDID required")
+        subprocess.run(["xcrun","simctl","bootstatus",a.udid,"-b"],check=True)
+        subprocess.run(["xcrun","simctl","keychain",a.udid,"add-root-cert",
+                        str(fixture/"public/ca.crt")],check=True)
+    relay,server,config=wire_server(a.wire,fixture)
+    try:
+        work=ROOT/"build/dot-f03-native"/a.host
+        scheme="EXReaderHost-macOS" if a.host=="macos" else "EXReaderHost-iOS"
+        environment=dict(os.environ)
+        environment.update({"TEST_RUNNER_F03_EXPECTED_GROUPS":a.expectations.read_text(encoding="utf-8"),
+            "TEST_RUNNER_F03_DAV_ROOT":config["root"],
+            "TEST_RUNNER_F03_DAV_USERNAME":config["user"],
+            "TEST_RUNNER_F03_DAV_PASSWORD":config["password"]})
+        test_target="EXReaderHostUITests-" + ("macOS" if a.host=="macos" else "iOS")
+        plist=a.program.parent.parent/"Info.plist" if a.host=="macos" else a.program.parent/"Info.plist"
+        package_identity=plistlib.loads(plist.read_bytes())
+        require(package_identity.get("EXRSourceSHA")==stamp["source_sha"] and
+                package_identity.get("EXRSDKVersion")==SCOPE["sdk_version"],"actual Apple bundle identity differs")
+        argv=["xcodebuild","test-without-building","-project",str(work/"project/EXReaderHost.xcodeproj"),
+              "-scheme",scheme,"-destination",a.destination,"-derivedDataPath",str(work/"derived"),
+              "-resultBundlePath",str(folder/"receiver.xcresult"),
+              "-only-testing:"+test_target+"/AppleOrganizationInteropTests/testF03ReceivedOrganizationVisibleAfterRestart"]
+        result=subprocess.run(argv,cwd=ROOT,env=environment,capture_output=True,timeout=1500)
+        raw=result.stdout+result.stderr
+        require(config["password"].encode() not in raw,"fixture secret appeared in XCTest output")
+        (folder/"xcodebuild.log").write_bytes(raw)
+        require(result.returncode==0,"actual XCTest receiver failed")
+        sys.path.insert(0,str(ROOT/"tests/apple_host"))
+        from collect_evidence import load_results
+        cases=load_results(folder/"receiver.xcresult")
+        require(len(cases)==1 and cases[0]["result"]=="Passed" and
+                "testF03ReceivedOrganizationVisibleAfterRestart" in cases[0]["name"],
+                "actual receiver XCTest missing, failed or skipped")
+        attachments=folder/"attachments"
+        subprocess.run(["xcrun","xcresulttool","export","attachments","--path",
+                        str(folder/"receiver.xcresult"),"--output-path",str(attachments)],check=True)
+        attachment_manifest=json.loads((attachments/"manifest.json").read_text())
+        steps=[]
+        for group in attachment_manifest:
+            for item in group["attachments"]:
+                if item["suggestedHumanReadableName"].startswith("organization-steps-"):
+                    filename=item["exportedFileName"]
+                    require(Path(filename).name==filename,"unsafe attachment path")
+                    steps.append(json.loads((attachments/filename).read_text())["steps"])
+        require(steps==[["f03-native-https-received","f03-received-groups-visible",
+                         "f03-received-groups-persisted"]],"actual native receiver steps incomplete")
+        require(any(r["method"]=="GET" and "/revisions/" in r["path"] and r["authenticated"]
+                    for r in server.requests),"actual native revision receive missing")
+        actual=read_snapshot(a.database)
+        for table in TABLES:
+            require(actual[table]==expected[table],"Apple projection differs: "+table)
+        original={r["id"]:r["body"] for r in expected["revisions"]}
+        received={r["id"]:r["body"] for r in actual["revisions"]}
+        require(all(received.get(k)==v for k,v in original.items()),"Apple exact revisions differ")
+        write_json(folder/"projection.json",{**stamp,"host":a.host,"sdk_version":SCOPE["sdk_version"],
+            "program_sha256":digest(a.program),"native_sync_completed":True,"restart_verified":True,
+            "snapshot":actual,"snapshot_sha256":hashlib.sha256(canonical(actual)).hexdigest(),
+            "complete_product_accepted":False})
+        relay.save(server,folder/"wire","f03-"+a.host+"-receive",{"projection":"../projection.json"})
+        server=None
+    finally:
+        if server is not None:
+            write_json(folder/"failed-requests.json",server.requests)
+            server.server.shutdown();server.server.server_close()
+        # Fixture-generated keys are never evidence artifacts.
+        import shutil
+        shutil.rmtree(fixture/"private",ignore_errors=True)
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--host", choices=["windows", "gtk", "macos", "iphone", "ipad", "android"], required=True)
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--native-tests", action="store_true")
+    p.add_argument("--apple-receive", action="store_true")
+    for name in ("wire","expectations","projection-expectations","database","program"):
+        p.add_argument("--"+name,type=Path)
+    p.add_argument("--udid")
     p.add_argument("--sdk", type=Path)
     p.add_argument("--products", type=Path)
     p.add_argument("--resources", type=Path)
@@ -120,7 +215,9 @@ def main():
     changes = []
     accepted = False
     try:
-        if a.native_tests:
+        if a.apple_receive:
+            receive_apple(a,stamp)
+        elif a.native_tests:
             require(a.sdk is not None and a.products is not None, "installed SDK/products required")
             work = ROOT / "build/dot-f03-native" / a.host
             work.mkdir(parents=True, exist_ok=False)
@@ -183,7 +280,8 @@ def main():
             runpy.run_path(str(path), run_name="__main__")
         accepted = True
     finally:
-        write_json(a.output, {**stamp, "host": a.host, "build_completed": accepted,
+        write_json(a.output, {**stamp, "host": a.host, "operation_completed": accepted,
+                              "operation": "apple-receive" if a.apple_receive else "build",
                               "sdk_version": SCOPE["sdk_version"], "in_memory_adapters": changes,
                               "product_source_changed": False, "complete_product_accepted": False})
 if __name__ == "__main__":

@@ -53,3 +53,6 @@ GTK author now waits for removed-mode transitions and verifies the actual parent
 
 ### Android receiver preparation
 The native receiver can host the unchanged authentic wire under its own build-time fixture CA and reverse the local TLS port into the emulator. It refuses an APK whose bundled test CA differs, performs actual native sync/UI/restart assertions, then reads the stopped app catalog plus WAL for exact group/membership/revision comparison. Windows now prechecks source/run/attempt/SDK of the author receipt and waits for the actual receive projection. None of these steps have run; Apple fixture bootstrap and final chain/manifest remain open, and CI remains zero.
+
+### Newly confirmed owner blocker
+F05 identified and F03 independently read the fixed 94fb Apple path: HostModel explicitly documents book-only receive completion; HostCatalog.receivePage enumerates `book` and calls hostReceiveProject for `book` only; HostOrganization loads organization projection tables. Missing native remote shelf/tag/series/membership projection is a production integration gap, in addition to the retained iPad tag-entry failure. The prepared XCTest/TLS receiver intentionally does not fill that gap via lower-level API/SQL. Resolving it needs the existing Apple owner’s sealed delta or new explicit product-path authority. CI remains 0; no completion/count increase.

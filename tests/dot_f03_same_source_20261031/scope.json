@@ -49,5 +49,19 @@
       "host": "all",
       "error": "Six-host wire lifecycle extension requires actual producer/receiver receipts; retained single-host suites and Windows/GTK tag relay are not full F03."
     }
+  ],
+  "production_blockers": [
+    {
+      "host": "Apple macOS/iPhone/iPad",
+      "source": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
+      "paths": [
+        "examples/apple/HostModel.swift",
+        "examples/apple/HostCatalog.swift",
+        "examples/apple/HostOrganization.swift"
+      ],
+      "finding": "Native receiveAccountPage only projects book entities; remote shelf/tag/series/membership projection is not wired into this completion path.",
+      "owner": "existing Apple production owner",
+      "status": "requires sealed owner delivery or explicit production scope; no lower-API bypass"
+    }
   ]
 }
