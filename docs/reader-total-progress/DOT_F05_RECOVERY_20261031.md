@@ -1,3 +1,27 @@
+# Contract correction — 2026-10-31 23:19 UTC
+
+The coordinator settled the original F05 interpretation: preserve every concurrent
+head and present conflict; preserve delete/put and display delete conflict; stale
+put must not restore. An existing explicit resolution/restore action must include
+all observed competing parents. **No requirement to resolve every concurrent
+scenario to one head.** Earlier text below that calls absent single-head resolution
+a blanket production blocker is superseded; the safety refusal itself is not a bug.
+
+Sources on preparation base: [protocol lines129–130](https://github.com/NoGod3524/EXReader/blob/94fb236a4a2da87dfbaf4f1dd2a47885d615a230/docs/WEBDAV-PROTOCOL.md#L129-L130)
+and [native client line160](https://github.com/NoGod3524/EXReader/blob/94fb236a4a2da87dfbaf4f1dd2a47885d615a230/docs/WEBDAV-PROTOCOL.md#L160).
+Actual host conflict presentation remains required, not just lower-layer refusal.
+
+Preparation has progressed to a real HTTPS fault fixture and Win32 dual-host
+driver: offline native edit/reconnect, committed PUT response withheld plus kill
+and retry, two native edits producing genuine concurrent heads over HTTPS, and
+offline host reopen/read. These are unexecuted, unvalidated source, not green tests.
+The Win32 driver still lacks tombstone/delete-put and receive-cancel scenarios;
+other platform drivers and the final workflow are not installed. It returns
+coverage only, with F05_accepted=false. The contract checker remains distinct
+from independent artifact authentication. CI usage remains0.
+
+---
+
 # F05 native dot handoff — 2026-10-31 23:16 UTC / 19:16 America/New_York
 
 Status: **not accepted; production capability blocker; 0 CI runs consumed**.
