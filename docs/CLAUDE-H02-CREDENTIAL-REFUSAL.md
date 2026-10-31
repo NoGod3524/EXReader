@@ -67,3 +67,13 @@ no requests; no synthetic marker in package temp files; 3 worker threads sampled
 **Kept RED (product defect):** `s3_failed_B_save_does_not_let_stale_A_secret_sync_as_B` - after saving B fails, Sync
 stays enabled and 257 requests go out with the stale A secret. Matches the read-only finding in `acct_set_job` (old
 in-memory secret not cleared when `exr_credentials_put` fails). Not fixed here: product change is outside this package.
+
+### Run 41157434078 (source 36e997f8, S4 tightened + S6 added, pre-fix product): 22/26
+Probe job 124407214233 green; host job 124407323865 red. Artifacts: probe 13025542441 (831 B, zip sha256
+1b1fa895b3ec31d6d0fd6d6a8e06b748d771c4ec217dae00ed85bbc2fa064a93); host 13025203757 (2108 B, zip sha256
+1b0e826ff7fe19bb2a21251c0b03cff253c68c276d13c035570ed6ddf5cc4dc2).
+S4 green: the cancel provably landed (PROPFIND held, note `同步已取消`, Retry enabled), Retry completed, books, the
+single non-empty head and every revision row unchanged. S6a/S6b: A's session really cancelled / failed, B refused as
+UNAVAILABLE, but **Retry stayed enabled and sent 256 / 257 requests (GET, PROPFIND) with A** - kept RED, as is S3.
+Also red in this run only: `worker_threads_observed_without_impersonation_token` (n=6); the job log prints no per-sample
+detail, so the cause is not established (it was green with n=3/6 in runs 41145383847, 41146619827, 41157486595).
