@@ -173,6 +173,8 @@ def controls():
     lld = "Address Size Align Out In Symbol\n00001000 00000100 4 .text\n00001000 00000100 4 C:\\x\\libexr.lib(layout.c.obj):(.text)\n"
     gnu = "Archive member included to satisfy reference by file (symbol)\n\nlibexr_core.a(layout.c.o)\n   host.o (foo)\n"
     res = []
+    NL = chr(10)
+    HDR = "Publics by Value" + NL
 
     def case(name, text, want_members, want_verdict_any=None):
         marks = classify_format(text)
@@ -181,12 +183,8 @@ def controls():
                     "pass": len(m) == want_members})
     case("synthetic_msvc_lib", msvc_lib, 1)
     case("synthetic_msvc_dot_a", msvc_a, 1)
-    case("synthetic_msvc_basename_no_extension", "Publics by Value
- 0001:00000010  foo  0000000140001010 f   exr_vendor_webp:dec_clip_tables.c.obj
-", 1)
-    case("negative_import_stub_is_not_a_member", "Publics by Value
- 0001:00000010  foo  0000000140001010 f   kernel32:KERNEL32.dll
-", 0)
+    case("synthetic_msvc_basename_no_extension", HDR + " 0001:00000010  foo  0000000140001010 f   exr_vendor_webp:dec_clip_tables.c.obj" + NL, 1)
+    case("negative_import_stub_is_not_a_member", HDR + " 0001:00000010  foo  0000000140001010 f   kernel32:KERNEL32.dll" + NL, 0)
     case("synthetic_lld_paren", lld, 1)
     case("synthetic_gnu_archive_list", gnu, 1)
     case("negative_truncated_header_only", "Publics by Value\n", 0)
