@@ -14,19 +14,23 @@ typedef struct {
  void (*leave)(void *,void *);
 } wh3w_domain;
 enum { WH3W_PRE_BEGIN=1, WH3W_BEGIN_FLUSHED, WH3W_JOURNAL_WRITTEN,
-       WH3W_JOURNAL_FLUSHED, WH3W_ACK_FLUSHED };
+       WH3W_JOURNAL_FLUSHED, WH3W_ACK_FLUSHED,
+       WH3W_BEGIN_PARTIAL, WH3W_JOURNAL_HEADER_PARTIAL,
+       WH3W_JOURNAL_BODY_PARTIAL, WH3W_ACK_PARTIAL, WH3W_ACK_WRITTEN,
+       WH3W_PINNED_BASE=100 };
 enum { WH3W_NO_FAULT=0, WH3W_SHORT_WRITE, WH3W_FLUSH_FAIL, WH3W_READBACK_FAIL };
 /* Explicit candidate-only deterministic controls. Normal use supplies zero.
    Short write really writes a prefix; flush-fail is injected API failure,
    not evidence about physical media/power-loss durability. */
 typedef struct {
  unsigned fault;
+ unsigned fault_phase; /* zero means the first eligible operation */
  void *context;
  void (*phase)(void *,unsigned);
 } wh3w_controls;
 typedef struct wh3w_store wh3w_store;
 /* Existing local NTFS root, fixed journal.bin/intent.bin, all identities trusted
-   by the caller's domain capability. No creation, truncation or repair. */
+   by the caller's domain capability. No creation, truncation, bootstrap or repair. Both files are validated on open. */
 int wh3w_open(const wchar_t *,const wh3w_identity[3],const wh_binding *,
  const wh_gates *,const wh3w_domain *,const wh3w_controls *,wh3w_store **);
 wh3_tx_status wh3w_append(void *,void *,const wh3_tip *,const char *,wh3_tip *);
