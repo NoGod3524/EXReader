@@ -762,3 +762,21 @@ and cannot be truncated back to B. No production scanner/store code is changed.
 Preserve failed Ubuntu job 124497608383 and artifact 13037466997, 238913 bytes,
 SHA256 895495475b2c05b92d8d9db9f24b1056c621febad15440436149169065cc5176.
 The corrected helper run is separate evidence and still pending.
+
+The corrected helper run 41187908522/A1 passed Ubuntu job 124498481459:
+30 cases / 3872 checks. Artifact 13037427589 is 238597 bytes, SHA256
+3e1c479b083ea7eb2b06ec7d42d05648f7fa0e0b0e38b03b0477bccdfedbcd87.
+macOS job 124498481297 exposed a real production ACL bug: three checks for
+an actual extra ALLOW entry on a source file/directory were accepted. Preserve
+artifact 13038106489, 239857 bytes, SHA256
+7d5e8e674411b9db003109e4cab831a1661488b4a060e517df7b54c46f7f5527.
+Darwin acl_get_entry returns 0 for an entry and -1/EINVAL at the end; the
+old loop incorrectly expected 1 and skipped real entries. The repair store,
+native admission and owner I/O now validate the ACL, enumerate successful
+0 results, accept only the validated ACL's -1/EINVAL termination, and reject
+other errors or acl_free failure. This follows Apple's acl_get_entry(3)
+contract: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/acl_get_entry.3.html
+Existing real ACL negative checks remain unchanged. Production Repair guard
+and SDK proof callbacks are submitted with this correction for native compile
+and original regressions; actual new Repair cut/retry scenarios are not yet
+qualified. All prior failures remain available.

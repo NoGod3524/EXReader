@@ -80,13 +80,16 @@ static int rpacl(int fd,int directory){
  (void)directory;
  if(!acl)return errno==ENOENT;
  acl_entry_t entry;
- int which=ACL_FIRST_ENTRY,result=0,ok=1;
- while((result=acl_get_entry(acl,which,&entry))==1){
+ int which=ACL_FIRST_ENTRY,ok=acl_valid(acl)==0;
+ while(ok){
+  errno=0;
+  int result=acl_get_entry(acl,which,&entry);
+  if(result==-1){if(errno!=EINVAL)ok=0;break;}
+  if(result!=0){ok=0;break;}
   acl_tag_t tag;
   which=ACL_NEXT_ENTRY;
   if(acl_get_tag_type(entry,&tag)||tag!=ACL_EXTENDED_DENY){ok=0;break;}
  }
- if(result<0)ok=0;
  if(acl_free(acl))ok=0;
  return ok;
 #elif defined(__linux__)

@@ -27,6 +27,9 @@ set(_provider_inputs
  ../src/lm_main.c ../src/lm_pack.c ../src/lm_util.c ../src/lm_mirror.c ../src/lm.h ../src/lm_mirror.h
  ../posix_c02_admission_20261031/include/exr_pc02.h ../posix_c02_admission_20261031/src/pc02.c
  ../posix_c02_admission_20261031/src/pc02_migration.inc ../posix_c02_admission_20261031/src/pc02_floor_head.inc
+ src/pc02_repair_owner.inc ../posix_c02_admission_20261031/src/pc02_repair.inc
+ ../posix_c02_admission_20261031/src/pc02_repair_scan.c ../posix_c02_admission_20261031/include/exr_pc02_repair_scan.h
+ ../posix_c02_admission_20261031/src/pc02_repair_store.c ../posix_c02_admission_20261031/include/exr_pc02_repair_store.h
  ../posix_c02_sdk_admission_20261031/src/pc02_sdk.c
  ../windows_coordinator_cas_20261030/src/wh3_core.c ../windows_coordinator_hardening_20261030/src/wh_core.c
  ../windows_coordinator_hardening_20261030/src/wh_digest.c)

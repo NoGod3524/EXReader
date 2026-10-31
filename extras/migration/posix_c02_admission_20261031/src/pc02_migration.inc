@@ -433,7 +433,7 @@ static int pm_member_names(pc02_lease *h,const pc02_member *m){
  if(snprintf(mirror,sizeof(mirror),"%s.legacy-map.json",h->leaf)>=(int)sizeof(mirror))return 0;
  if(strcmp(m->target,h->leaf)&&strcmp(m->target,mirror))return 0;
  if(!strcmp(m->target,h->leaf)){
-  pc02_identity target=getid(h->binding+40);
+  pc02_identity target=h->seen.kind=='B'?h->seen.target:getid(h->binding+40);
   if(!m->original_present)return 0;
   if(h->seen.kind=='C'){
    unsigned char b[S_BYTES];

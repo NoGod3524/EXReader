@@ -135,6 +135,46 @@ typedef int (*pc02_member_prove)(void *,int original,int prepared);
 int pc02_member_observe(pc02_lease *,const pc02_member *,unsigned *);
 int pc02_member_publish(pc02_lease *,pc02_cap *,const pc02_member *,
  pc02_member_prove,void *);
+/* Explicit protected repair, not ordinary admission. All fields below are
+   byte arrays: persisted description2951 has no padding or native endianness. */
+typedef struct {unsigned char identity[16],bytes[8];char sha256[65];} pc02_repair_file;
+typedef struct {
+ char target[256],stage[256],retained[256];unsigned char original_present;
+ unsigned char original[16],prepared[16];
+} pc02_repair_member;
+typedef struct {
+ unsigned char binding[296],gates[325],original_grant[88];
+ pc02_repair_file original[2],prepared[2],pack;
+ pc02_repair_member members[2];
+ char journal[64],pack_leaf[64],token[49];unsigned char journal_identity[16],mirror_present,has_prepared;
+} pc02_repair_description;
+typedef struct {
+ const char *library,*archive_directory;
+ int parent_directory,archive_directory_fd;
+ const pc02_repair_description *description;
+ pc02_pending_record pending;
+ unsigned before_begin,publish_intent,committed,aborted,terminal,member_states[2];
+ char terminal_sha256[65];
+} pc02_repair_view;
+/* schema is pure: no SDK/IO/mutation. It validates the exact original provider
+   payload and returns its complete canonical description. prepared may be NULL. */
+typedef int (*pc02_repair_schema)(void *,const void *input,size_t,
+ const void *prepared,size_t,pc02_repair_description *);
+/* Called only after all original native bytes and protected plan are durable.
+   Prove actual identified originals/prepared images through private archive
+   clones, close every SDK owner/source before returning, never mutate source.
+   Both directory fds are borrowed; do not close them or retain the view. */
+typedef int (*pc02_repair_prove)(void *,const pc02_repair_view *);
+enum {PC02_REPAIR_ARCHIVE_DURABLE=1701,PC02_REPAIR_PLAN_DURABLE=1702,
+ PC02_REPAIR_STATE_APPLIED=1703,PC02_REPAIR_HEAD_APPLIED=1704,
+ PC02_REPAIR_APPLIED_DURABLE=1705,PC02_REPAIR_RETIRED_DURABLE=1706};
+/* Reader/OWNER open never repairs. Explicit prepare may only trim verified
+   interrupted tails (or restore a canonical C already selected by Binding).
+   An active protected plan blocks readers until actual final finish/reconcile.
+   restored_clean=1 restores the same registered pre-BEGIN grant, no new cap. */
+int pc02_repair_prepare(const char *authority_root,const char *library,
+ pc02_repair_schema,pc02_repair_prove,void *,const pc02_controls *,int *restored_clean);
+
 
 #ifdef __cplusplus
 }
