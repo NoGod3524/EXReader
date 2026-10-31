@@ -350,12 +350,20 @@ static int c13(int base) {
   exr_wc_cleanup_result c;
   struct stat st;
   char uuid[33], name[36];
-  int cd, rd, td, dest;
+  int cd, rd, td, dest, rc, err;
+  exr_wc_status s;
   CHECK(geteuid() != 0);
   CHECK((cd = make_dir(base, "canary")) >= 0 && write_file(cd, "c", "c\n") == 0);
   CHECK(fchmod(cd, 0500) == 0);
   errno = 0;
-  CHECK(unlinkat(cd, "c", 0) != 0 && errno == EACCES);
+  rc = unlinkat(cd, "c", 0);
+  err = errno;
+  /* Raw values for the offline verifier; the CHECKs below stay the oracle. */
+  CHECK(fstat(cd, &st) == 0);
+  printf("EVID canary uid=%u euid=%u mode=%o rc=%d errno=%d\n", (unsigned)getuid(), (unsigned)geteuid(),
+         (unsigned)(st.st_mode & 07777), rc, err);
+  errno = err;
+  CHECK(rc != 0 && err == EACCES);
   CHECK(fchmod(cd, 0700) == 0 && unlinkat(cd, "c", 0) == 0 && close(cd) == 0);
   CHECK(unlinkat(base, "canary", AT_REMOVEDIR) == 0);
   CHECK(exr_wc_create_at(base, "root", &r, uuid) == EXR_WC_OK);
@@ -363,7 +371,11 @@ static int c13(int base) {
   if (published_tx(r, dest, "book.epub", &tx)) return 1;
   CHECK(txname(r, 0, name) == 0 && (rd = open_dir(base, "root")) >= 0 && (td = open_dir(rd, name)) >= 0);
   CHECK(fchmod(td, 0500) == 0);
-  CHECK(exr_wc_cleanup(tx, 0, &c) == EXR_WC_IO && c.pending == 1 && c.removed == 0 && c.native_error == EACCES);
+  s = exr_wc_cleanup(tx, 0, &c);
+  CHECK(fstat(td, &st) == 0);
+  printf("EVID cleanup txdir_mode=%o status=%d removed=%d pending=%d receipt_uncertain=%d native_error=%d\n",
+         (unsigned)(st.st_mode & 07777), (int)s, c.removed, c.pending, c.receipt_uncertain, c.native_error);
+  CHECK(s == EXR_WC_IO && c.pending == 1 && c.removed == 0 && c.native_error == EACCES);
   CHECK(state_of(r, 0) == EXR_WC_PUBLISHED && !absent(td, "payload"));
   CHECK(fstatat(dest, "book.epub", &st, AT_SYMLINK_NOFOLLOW) == 0 && st.st_nlink == 2);
   CHECK(exr_wc_tx_close(&tx) == EXR_WC_OK && exr_wc_close(&r) == EXR_WC_OK);
@@ -564,11 +576,14 @@ static const struct {
     {"21-illegal-leaf", c21},
 };
 
-static int cmd_recover(int base, const char *uuid) {
+/* step=1 waits for a stdin line after each pass so the runner can snapshot
+ * the fixture between the two passes of the same process. */
+static int cmd_recover(int base, const char *uuid, int step) {
   exr_wc_root *r = NULL;
   exr_wc_recovery_report rep;
   int s = exr_wc_open_at(base, "root", uuid, &r);
   printf("OPEN %d\n", s);
+  if (step) fflush(stdout);
   if (s != EXR_WC_OK) return 0;
   for (int k = 0; k < 2; k++) {
     s = exr_wc_recover(r, 0, 64, &rep);
@@ -578,6 +593,12 @@ static int cmd_recover(int base, const char *uuid) {
            (unsigned)rep.next_slot, (unsigned)rep.total_slots, rep.receipt_uncertain, rep.native_error);
     for (uint32_t i = 0; i < rep.total_slots; i++) printf("%s%u", i ? "," : "", (unsigned)state_of(r, i));
     printf("]}\n");
+    if (step) {
+      char ch;
+      fflush(stdout);
+      while (read(STDIN_FILENO, &ch, 1) == 1 && ch != '\n') {
+      }
+    }
   }
   return exr_wc_close(&r) == EXR_WC_OK ? 0 : 1;
 }
@@ -642,7 +663,8 @@ int main(int argc, char **argv) {
     printf("STATUS %d\n", s);
     return exr_wc_close(&r) == EXR_WC_OK ? 0 : 1;
   }
-  if (strcmp(argv[1], "recover") == 0 && argc == 4) return cmd_recover(base, argv[3]);
+  if (strcmp(argv[1], "recover") == 0 && argc == 4) return cmd_recover(base, argv[3], 0);
+  if (strcmp(argv[1], "recover-step") == 0 && argc == 4) return cmd_recover(base, argv[3], 1);
 #ifdef EXR_WC_TEST_HOOKS
   if (strcmp(argv[1], "kill-flow") == 0 && argc == 5) return cmd_kill_flow(base, argv[3], argv[4]);
 #endif

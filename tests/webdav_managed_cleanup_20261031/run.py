@@ -5,14 +5,21 @@
 Every fixture lives in a fresh tempfile directory, every worker has a 30 s
 limit, cross-process timing is a HELD/hook marker handshake, and only PIDs
 this runner spawned are killed.
+
+Besides results.json the runner writes raw per-case evidence (processes,
+signals, filesystem snapshots, receipt bytes) under OUTPUT/evidence as each
+case ends, so tests/webdav_managed_cleanup_evidence_20261031/verify.py can
+recompute the invariants without trusting the passed flags.
 """
 import argparse
+import base64
 import hashlib
 import json
 import os
 import platform
 import queue
 import shutil
+import signal
 import stat
 import subprocess
 import sys
@@ -69,45 +76,87 @@ def expect(condition, message):
         raise Failure(message)
 
 
+def process_record(ev, kind, argv):
+    rec = dict(kind=kind, argv=[os.path.basename(argv[0])] + argv[1:], pid=None, returncode=None,
+               timed_out=False, signal_sent=None, handshake=[], stdout=[])
+    ev['processes'].append(rec)
+    return rec
+
+
 class Worker:
     """A spawned worker whose stdout lines arrive through a queue."""
 
-    def __init__(self, argv, log):
+    def __init__(self, argv, log, ev):
         self.argv = argv
         self.log = log
+        self.rec = process_record(ev, 'worker', argv)
         self.lines = queue.Queue()
         self.proc = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT, text=True)
+        self.rec['pid'] = self.proc.pid
         self.deadline = time.monotonic() + LIMIT
-        threading.Thread(target=self._read, daemon=True).start()
+        self.reader = threading.Thread(target=self._read, daemon=True)
+        self.reader.start()
 
     def _read(self):
         for line in self.proc.stdout:
             self.log.append(line.rstrip('\n'))
+            self.rec['stdout'].append(line.rstrip('\n'))
             self.lines.put(line.rstrip('\n'))
         self.lines.put(None)
 
     def wait_for(self, prefix):
         while True:
             remaining = self.deadline - time.monotonic()
+            if remaining <= 0:
+                self.rec['timed_out'] = True
             expect(remaining > 0, f'timeout waiting for {prefix!r}')
             try:
                 line = self.lines.get(timeout=remaining)
             except queue.Empty:
+                self.rec['timed_out'] = True
                 raise Failure(f'timeout waiting for {prefix!r}')
             expect(line is not None, f'worker exited before {prefix!r}')
             if line.startswith(prefix):
+                self.rec['handshake'].append(line)
                 return line
+
+    def send(self, text):
+        self.proc.stdin.write(text)
+        self.proc.stdin.flush()
+
+    def finish(self):
+        """Waits for a normal exit within the worker deadline."""
+        try:
+            self.rec['returncode'] = self.proc.wait(timeout=max(0.1, self.deadline - time.monotonic()))
+        except subprocess.TimeoutExpired:
+            self.rec['timed_out'] = True
+            self.kill()
+            raise Failure('worker did not exit within its limit')
+        self.reader.join(timeout=5)
+        return self.rec['returncode']
 
     def kill(self):
         if self.proc.poll() is None:
             self.proc.kill()
-        return self.proc.wait(timeout=LIMIT)
+            self.rec['signal_sent'] = int(signal.SIGKILL)
+        self.rec['returncode'] = self.proc.wait(timeout=LIMIT)
+        self.reader.join(timeout=5)
+        return self.rec['returncode']
 
 
-def run(argv, log):
-    proc = subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=LIMIT)
+def run(argv, log, ev):
+    rec = process_record(ev, 'run', argv)
+    try:
+        proc = subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=LIMIT)
+    except subprocess.TimeoutExpired as error:
+        rec['timed_out'] = True
+        out = error.stdout or ''
+        rec['stdout'] = (out.decode(errors='replace') if isinstance(out, bytes) else out).splitlines()
+        raise Failure(f'{rec["argv"][:2]} exceeded {LIMIT} s')
     log.extend(proc.stdout.splitlines())
+    rec['returncode'] = proc.returncode
+    rec['stdout'] = proc.stdout.splitlines()
     return proc.returncode, proc.stdout.splitlines()
 
 
@@ -117,12 +166,60 @@ def line_value(lines, prefix):
     return found[0]
 
 
-def recover(consumer, base, uuid, log):
-    code, lines = run([consumer, 'recover', str(base), uuid], log)
+def recover(consumer, base, uuid, log, ev):
+    """Two recover passes in one new process, snapshotting after each pass."""
+    ev['phases'].append('recover')
+    worker = Worker([consumer, 'recover-step', str(base), uuid], log, ev)
+    reports = []
+    try:
+        status = int(worker.wait_for('OPEN ').split()[1])
+        if status == 0:
+            for index in range(2):
+                reports.append(json.loads(worker.wait_for('RECOVER ')[len('RECOVER '):]))
+                snapshot(base, f'after_recovery_{index + 1}', ev)
+                worker.send('\n')
+        code = worker.finish()
+    finally:
+        if worker.rec['returncode'] is None:
+            worker.kill()
     expect(code == 0, f'recover exited {code}')
-    status = int(line_value(lines, 'OPEN '))
-    reports = [json.loads(line[len('RECOVER '):]) for line in lines if line.startswith('RECOVER ')]
     return status, reports
+
+
+def entry_record(path):
+    st = os.lstat(path)
+    rec = dict(type='file' if stat.S_ISREG(st.st_mode) else 'dir' if stat.S_ISDIR(st.st_mode)
+               else 'symlink' if stat.S_ISLNK(st.st_mode) else 'other',
+               mode=stat.S_IMODE(st.st_mode), dev=st.st_dev, ino=st.st_ino, nlink=st.st_nlink, size=st.st_size)
+    if rec['type'] == 'symlink':
+        rec['link'] = os.readlink(path)
+    if rec['type'] == 'file':
+        try:
+            raw = Path(path).read_bytes()
+        except OSError as error:
+            rec['read_errno'] = error.errno
+        else:
+            rec['sha256'] = hashlib.sha256(raw).hexdigest()
+            if Path(path).name.startswith('.receipt'):
+                rec['bytes_b64'] = base64.b64encode(raw).decode()
+    return rec
+
+
+def snapshot(base, label, ev):
+    """Every entry of the synthetic fixture, without following symlinks."""
+    entries, errors = {}, []
+
+    def walk_error(error):
+        errors.append(dict(path=str(error.filename), errno=error.errno))
+
+    for directory, dirs, files in os.walk(base, onerror=walk_error):
+        for name in sorted(dirs + files):
+            path = Path(directory, name)
+            try:
+                entries[path.relative_to(base).as_posix()] = entry_record(path)
+            except OSError as error:
+                errors.append(dict(path=str(path), errno=error.errno))
+    ev['snapshots'].append(dict(label=label, entries=entries, walk_errors=errors))
 
 
 def file_record(path):
@@ -138,37 +235,47 @@ def tx_dirs(root):
     return sorted(p for p in root.iterdir() if p.name.startswith('tx-')) if root.is_dir() else []
 
 
-def case_in_process(name, consumer, base, log):
-    code, lines = run([consumer, 'case', str(base), name], log)
+def case_in_process(name, consumer, base, log, ev):
+    ev['phases'].append('case')
+    code, lines = run([consumer, 'case', str(base), name], log, ev)
+    snapshot(base, 'final', ev)
     expect(code == 0 and f'PASS {name}' in lines, f'worker exited {code}')
 
 
-def case_cross_process(consumer, base, log):
-    code, lines = run([consumer, 'prep', str(base)], log)
+def case_cross_process(consumer, base, log, ev):
+    ev['phases'].append('prep')
+    code, lines = run([consumer, 'prep', str(base)], log, ev)
     expect(code == 0, 'prep failed')
     uuid = line_value(lines, 'UUID ')
-    holder = Worker([consumer, 'hold', str(base), uuid], log)
+    ev['phases'].append('hold')
+    holder = Worker([consumer, 'hold', str(base), uuid], log, ev)
     try:
         expect(holder.wait_for('HELD ') == 'HELD 0', 'holder did not open the root')
-        code, lines = run([consumer, 'try-open', str(base), uuid], log)
+        ev['phases'].append('try-open-while-held')
+        code, lines = run([consumer, 'try-open', str(base), uuid], log, ev)
         expect(code == 0 and line_value(lines, 'STATUS ') == '3', 'second process was not BUSY')
     finally:
+        ev['phases'].append('kill-holder')
         returncode = holder.kill()
     expect(returncode == -9, f'holder ended with {returncode}, not SIGKILL')
-    code, lines = run([consumer, 'try-open', str(base), uuid], log)
+    ev['phases'].append('try-open-after-kill')
+    code, lines = run([consumer, 'try-open', str(base), uuid], log, ev)
+    snapshot(base, 'final', ev)
     expect(code == 0 and line_value(lines, 'STATUS ') == '0', 'lock not released by process death')
 
 
-def case_eacces(consumer, base, log):
+def case_eacces(consumer, base, log, ev):
     expect(os.geteuid() != 0, 'real EACCES requires a non-root runner')
     name = '13-real-eacces-recovered'
-    code, lines = run([consumer, 'case', str(base), name], log)
+    ev['phases'].append('case')
+    code, lines = run([consumer, 'case', str(base), name], log, ev)
+    snapshot(base, 'before_recovery', ev)
     expect(code == 0 and f'PASS {name}' in lines, f'phase one exited {code}')
     uuid = line_value(lines, 'UUID ')
     book = base / 'dest' / 'book.epub'
     before = file_record(book)
     expect(before and before['nlink'] == 2, 'alias missing after EACCES')
-    status, reports = recover(consumer, base, uuid, log)
+    status, reports = recover(consumer, base, uuid, log, ev)
     expect(status == 0 and len(reports) == 2, 'reopen failed')
     first, second = reports
     expect(first['status'] == 0 and first['cleaned'] == 1 and first['pending'] == 0 and first['states'] == [6],
@@ -180,15 +287,18 @@ def case_eacces(consumer, base, log):
     expect(not tx_dirs(base / 'root'), 'transaction directory left behind')
 
 
-def case_kill(name, hookworker, consumer, base, log):
+def case_kill(name, hookworker, consumer, base, log, ev):
     phase, state, states, cleaned, pending = KILL[name]
-    worker = Worker([hookworker, 'kill-flow', str(base), phase, str(state)], log)
+    ev['phases'].append('kill-flow')
+    worker = Worker([hookworker, 'kill-flow', str(base), phase, str(state)], log, ev)
     try:
         uuid = worker.wait_for('UUID ').split()[1]
         held = worker.wait_for('HELD ')
         expect(held.split()[1:] == [phase, '0', str(state)], f'held at {held!r}')
     finally:
+        ev['phases'].append('kill-worker')
         returncode = worker.kill()
+    snapshot(base, 'before_recovery', ev)
     expect(returncode == -9, f'worker ended with {returncode}, not SIGKILL')
     root, book = base / 'root', base / 'dest' / 'book.epub'
     has_tx, has_payload, has_book, nlink, has_next = DISK[phase]
@@ -200,7 +310,7 @@ def case_kill(name, hookworker, consumer, base, log):
     if before:
         expect(before['nlink'] == nlink and before['sha256'] == hashlib.sha256(DATA).hexdigest(), f'destination {before}')
     expect((root / '.receipt.next').exists() == has_next, '.receipt.next presence mismatch')
-    status, reports = recover(consumer, base, uuid, log)
+    status, reports = recover(consumer, base, uuid, log, ev)
     expect(status == 0 and len(reports) == 2, f'reopen status {status}')
     for index, report in enumerate(reports):
         expect(report['status'] == 0 and report['refused'] == 0 and report['receipt_uncertain'] == 0 and
@@ -234,26 +344,49 @@ def main():
     parser.add_argument('--output', required=True)
     parser.add_argument('--core-sha', required=True)
     parser.add_argument('--tests-sha', required=True)
+    parser.add_argument('--identity-file', action='append', default=[], metavar='LABEL=PATH',
+                        help='file whose SHA-256 is recorded in the evidence identity')
+    parser.add_argument('--compiler', default='')
     args = parser.parse_args()
     out = Path(args.output)
     out.mkdir(parents=True, exist_ok=True)
     consumer, hookworker = str(Path(args.consumer).resolve()), str(Path(args.hookworker).resolve())
+    evidence = out / 'evidence'
+    (evidence / 'cases').mkdir(parents=True, exist_ok=True)
+    files = dict(consumer=args.consumer, hookworker=args.hookworker)
+    files.update(item.split('=', 1) for item in args.identity_file)
+    identity = dict(schema='exr-wc-evidence/1', core_sha=args.core_sha, tests_sha=args.tests_sha,
+                    system=platform.system(), release=platform.release(), machine=platform.machine(),
+                    python=platform.python_version(), uid=os.getuid(), euid=os.geteuid(),
+                    compiler=args.compiler, worker_limit_seconds=LIMIT,
+                    payload_sha256=hashlib.sha256(DATA).hexdigest(),
+                    files={label: dict(path=path, sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest())
+                           for label, path in files.items()})
+    (evidence / 'identity.json').write_text(json.dumps(identity, indent=2) + '\n')
     results = []
     for name in ALL:
         base = Path(tempfile.mkdtemp(prefix=f'wc-{name[:2]}-'))
         log, started = [], time.monotonic()
+        ev = dict(name=name, phases=[], processes=[], snapshots=[], exception=None)
         try:
             if name == '06-cross-process-lock':
-                case_cross_process(consumer, base, log)
+                case_cross_process(consumer, base, log, ev)
             elif name == '13-real-eacces-recovered':
-                case_eacces(consumer, base, log)
+                case_eacces(consumer, base, log, ev)
             elif name in KILL:
-                case_kill(name, hookworker, consumer, base, log)
+                case_kill(name, hookworker, consumer, base, log, ev)
             else:
-                case_in_process(name, consumer, base, log)
+                case_in_process(name, consumer, base, log, ev)
             passed, detail = True, ''
         except Exception as error:  # every case must leave a record
             passed, detail = False, f'{type(error).__name__}: {error}'
+            ev['exception'] = detail
+            try:
+                snapshot(base, 'at_exception', ev)
+            except Exception as snap_error:
+                ev['snapshot_error'] = repr(snap_error)
+        ev['seconds'] = round(time.monotonic() - started, 3)
+        (evidence / 'cases' / f'{name}.json').write_text(json.dumps(ev, indent=1) + '\n')
         results.append(dict(name=name, passed=passed, detail=detail, seconds=round(time.monotonic() - started, 3), log=log))
         print(('PASS ' if passed else 'FAIL ') + name + (f' -- {detail}' if detail else ''), flush=True)
         if not passed:
@@ -268,6 +401,10 @@ def main():
                    failed=[r['name'] for r in results if not r['passed']],
                    complete=sorted(names) == ALL and len(ALL) == 30)
     (out / 'results.json').write_text(json.dumps(dict(summary=summary, cases=results), indent=2) + '\n')
+    (evidence / 'manifest.json').write_text(json.dumps(dict(
+        schema='exr-wc-evidence/1', names=names, complete=summary['complete'],
+        case_files={n: hashlib.sha256((evidence / 'cases' / f'{n}.json').read_bytes()).hexdigest() for n in names}),
+        indent=2) + '\n')
     print('MANAGED-CLEANUP-RESULT ' + json.dumps(summary), flush=True)
     return 0 if summary['complete'] and summary['passed'] == 30 else 1
 
