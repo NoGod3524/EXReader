@@ -26,7 +26,7 @@ def build():
     manifest=work/"AndroidManifest.xml"
     manifest.write_text('<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="'+PACKAGE+'"><uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/><application android:debuggable="true" android:hardwareAccelerated="true" android:label="F08 platform control" android:theme="@android:style/Theme.Material.Light.NoActionBar"><activity android:name="org.exreader.host.F08Control" android:exported="true"/></application></manifest>')
     classes=work/"classes";classes.mkdir();dex=work/"dex";dex.mkdir()
-    command(["javac","-source","8","-target","8","-bootclasspath",jar,"-d",classes,*sorted(sources.glob("*.java"))])
+    command(["javac","--release","8","-classpath",jar,"-d",classes,*sorted(sources.glob("*.java"))])
     command([bt/"d8","--lib",jar,"--min-api","26","--output",dex,*sorted(classes.rglob("*.class"))])
     unsigned=work/"unsigned.apk";aligned=work/"aligned.apk"
     command([bt/"aapt2","link","-I",jar,"--manifest",manifest,"-o",unsigned])
