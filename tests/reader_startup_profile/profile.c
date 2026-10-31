@@ -2,7 +2,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "catalog_sdk.h"
 #include <sqlite3.h>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <time.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,9 +45,15 @@ static int instrument(sqlite3 *db, char **message, const sqlite3_api_routines *a
   return sqlite3_trace_v2(db, SQLITE_TRACE_PROFILE, trace, NULL);
 }
 static double millis(void) {
+#ifdef _WIN32
   LARGE_INTEGER counter, frequency;
   QueryPerformanceCounter(&counter); QueryPerformanceFrequency(&frequency);
   return 1000.0 * (double)counter.QuadPart / (double)frequency.QuadPart;
+#else
+  struct timespec stamp;
+  if (clock_gettime(CLOCK_MONOTONIC, &stamp)) exit(1);
+  return 1000.0 * stamp.tv_sec + (double)stamp.tv_nsec / 1000000.0;
+#endif
 }
 #define REQUIRE(x) do { if (!(x)) { fprintf(stderr, "failure line %d: %s\n", __LINE__, #x); exit(1); } } while (0)
 int main(int argc, char **argv) {

@@ -163,7 +163,7 @@ exr_status reader_catalog_sdk_attach(reader_catalog *catalog,exr_library *librar
 exr_status reader_catalog_sdk_repair(reader_catalog *catalog,exr_library *library,const exr_book *books,
                                     size_t count,const exr_control *control,size_t *failed,exr_error *error) {
   exr_status first=EXR_OK;if(error) memset(error,0,sizeof(*error));if(failed) *failed=0;
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__linux__)
   int repair_prepared=0;
 #endif
   if(!catalog || !library || (!books && count)) return fail(error,EXR_ARGUMENT,"Missing catalog repair input");
@@ -174,7 +174,7 @@ exr_status reader_catalog_sdk_repair(reader_catalog *catalog,exr_library *librar
       status=fail(&current,EXR_DATABASE,product_error.message);
     else if(present) continue;
     else {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__linux__)
       if(!repair_prepared) { reader_catalog_prepare_repair(catalog);repair_prepared=1; }
 #endif
       status=reader_catalog_sdk_attach(catalog,library,&books[i],control,NULL,&current);
