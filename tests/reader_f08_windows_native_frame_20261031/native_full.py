@@ -21,6 +21,17 @@ def validate_picker_marker(request,marker,pid,now):
   marker.get('computer_use_returned') is True and marker.get('post_action_refresh_returned') is True and
   type(marker.get('qpc')) is int and request['qpc']<=marker['qpc']<=now,'real CUA completion and post-action refresh barrier')
 
+def seal_raw(out,report,control):
+ out,control=Path(out).resolve(),Path(control).resolve()
+ need(not control.is_relative_to(out),'controller writes stay outside raw')
+ need(not (out/'manifest.json').exists(),'raw is sealed once and never rewritten')
+ need(report['owned_live_after_cleanup']==[],'seal waits for every owned process')
+ save(out/'result.json',report)
+ files={p.relative_to(out).as_posix():{'sha256':sha(p),'bytes':p.stat().st_size} for p in out.rglob('*') if p.is_file() and p!=out/'manifest.json'}
+ save(out/'manifest.json',{'execution':'local-native','source_sha':report['source_sha'],'files':files,'f08_accepted':False})
+ receipt={'raw':str(out),'manifest_sha256':sha(out/'manifest.json'),'owned_live_after_cleanup':[],'harness_pid':os.getpid(),'collection_complete':report['collection_complete'],'f08_accepted':False}
+ save(control/'SEALED.tmp',receipt);(control/'SEALED.tmp').replace(control/'SEALED.json');return receipt
+
 def unpack(a,out):
  data=Path(a.zip).read_bytes();meta=json.loads(Path(a.metadata).read_text(encoding='utf-8-sig'))
  need(len(data)==meta['size_in_bytes'] and 'sha256:'+hashlib.sha256(data).hexdigest()==meta['digest'],'build ZIP identity')
@@ -52,7 +63,9 @@ def main():
  a=ap.parse_args();collection_started=time.monotonic();need(os.name=='nt' and os.environ.get('COMPUTERNAME','').upper()=='LAP25002','named native Windows host')
  need(os.environ.get('GITHUB_ACTIONS')!='true','native execution must not impersonate Actions')
  out=Path(a.output).resolve();base=(Path(os.environ['USERPROFILE'])/'.codex/f08-device-runs').resolve()
- need(out.is_relative_to(base) and not out.exists(),'fresh bounded native output');out.mkdir(parents=True)
+ need(out.is_relative_to(base) and not out.exists(),'fresh bounded native output')
+ control=out.with_name(out.name+'.control');need(not control.exists(),'fresh external control directory');control.mkdir(parents=True);out.mkdir(parents=True)
+ print('F08_NATIVE_FULL_CONTROL '+json.dumps({'harness_pid':os.getpid(),'raw':str(out),'control':str(control),'stop_file':str(control/'STOP')}),flush=True)
  raw,meta,ident=unpack(a,out);helper=Path(a.helper_root)
  sys.path.insert(0,str(helper/'tests/reader_perf_windows'));import perf_windows as P
  need(sha(P.__file__)==ident['unchanged_helpers']['tests/reader_perf_windows/perf_windows.py'],'loaded original sampler')
@@ -74,20 +87,20 @@ def main():
   d=DisplayMode(size=C.sizeof(DisplayMode));need(user.EnumDisplaySettingsW(None,0xffffffff,C.byref(d)),'read current display');return [d.width,d.height,d.frequency]
  before=display();deadline=collection_started+5400;stage_deadline=deadline;done=threading.Event();expired=threading.Event()
  report={'execution':'local-native','source_sha':a.expected_source,'run_id':out.name,'attempt':'local-native','producer':meta,
-  'harness_sha256':sha(__file__),'actions_environment_value':os.environ.get('GITHUB_ACTIONS'),'observer_source_sha':a.observer_source,'observer_sha256':a.observer_sha256,'display_before':before,
+  'control_directory':str(control),'harness_pid':os.getpid(),'harness_sha256':sha(__file__),'actions_environment_value':os.environ.get('GITHUB_ACTIONS'),'observer_source_sha':a.observer_source,'observer_sha256':a.observer_sha256,'display_before':before,
   'planned':{'maximum_product_starts':78,'txt':3,'diagnostic_bisect_launches':1,'main_per_cohort':12,'main_cohorts':['cold_shelf','warm_shelf','reading','import','import_epub'],'interaction_per_cohort':5,'interaction_cohorts':['warm_shelf','reading'],'preparation_launches':4},
   'steps':[],'captures':[],'problems':[],'f08_accepted':False,'all_ui_frame_census_complete':False,'observer_attach_policy':'after original shelf/restore TTI; before first explicit open; all native trace rows kept from launch','picker_policy':'real dialog close releases original body; real CUA post-action refresh must return before product close/next launch'}
  save(out/'native-origin.json',report)
- active={};current_stage='initial';suppressed=0
+ active={};owned=[];current_stage='initial';suppressed=0
  def check():
-  if (out/'STOP').exists():raise InterruptedError('controller stopped native full collection')
+  if (control/'STOP').exists():raise InterruptedError('controller stopped native full collection')
   if expired.is_set() or time.monotonic()>=min(stage_deadline,deadline):raise TimeoutError('original stage / 90-minute full collection cap')
  def watchdog():
   if not done.wait(max(0,deadline-time.monotonic())):
    expired.set()
    for host in list(active.values()):
     if getattr(host,'window',None):user.PostMessageW(host.window,0x10,0,0)
- threading.Thread(target=watchdog,daemon=True).start()
+ watchdog_thread=threading.Thread(target=watchdog,daemon=True);watchdog_thread.start()
  # Original cleanup paths are moved into this run instead of deleting failure evidence.
  old_rmtree=shutil.rmtree
  def retain_tree(path,*args,**kwargs):
@@ -127,12 +140,13 @@ def main():
   check();index=len(report['captures']);folder=out/('capture-%03d'%index);folder.mkdir();entry={'index':index,'folder':folder.name,'stage':current_stage,'complete':False}
   host._native_folder=folder;host._native_entry=entry;host._native_observer=None;host._native_stream=None;host._native_bridges=[];host.window=None
   host._native_profile=Path(v[2] if len(v)>2 else kw['data'])
-  report['captures'].append(entry)
+  report['captures'].append(entry);owned.append(host)
   previous=os.environ.get('EXREADER_F08_TRACE');os.environ['EXREADER_F08_TRACE']=str(folder/'product-native-trace.json')
   try:original_init(host,*v,**kw)
   except BaseException as error:
    entry['constructor_error']=repr(error)
    if hasattr(host,'process'):active[host.process.pid]=host
+   elif hasattr(host,'log') and not host.log.closed:host.log.close()
    raise
   finally:
    if previous is None:os.environ.pop('EXREADER_F08_TRACE',None)
@@ -182,8 +196,8 @@ def main():
   if name=='open':host._native_entry['expected_reader']=True
   if name!='import':return original_click(host,name,timeout)
   path=Path(host.text(host.control('path'))).resolve();need(path.is_file(),'fixed real picker input');host.wait_enabled('import',60);need(not dialog(host),'no pre-existing picker')
-  number=len(host._native_bridges);complete=host._native_folder/('picker-%02d-complete.json'%number)
-  request={'kind':'picker_request','pid':host.process.pid,'request':number,'path':str(path),'sha256':sha(path),'bytes':path.stat().st_size,'complete_file':str(complete),'qpc':qpc()}
+  number=len(host._native_bridges);complete=control/('capture-%03d-picker-%02d-complete.json'%(host._native_entry['index'],number));retained=host._native_folder/('picker-%02d-complete.json'%number)
+  request={'kind':'picker_request','pid':host.process.pid,'request':number,'path':str(path),'sha256':sha(path),'bytes':path.stat().st_size,'complete_file':str(complete),'raw_marker_file':str(retained),'qpc':qpc()}
   host._native_bridges.append(request);emit(host,request);print('F08_NATIVE_FULL_PICKER '+json.dumps(request),flush=True)
   need(user.PostMessageW(host.control('import'),0xF5,0,0),'post real import button');shown=host.poll(lambda:(dialog(host),) if dialog(host) else None,30)[0]
   emit(host,{'kind':'picker_dialog','request':number,'hwnd':int(shown)})
@@ -197,7 +211,7 @@ def main():
   try:
    for req in host._native_bridges:
     file=Path(req['complete_file']);host.poll(lambda:(True,) if file.exists() else None,60)
-    marker=json.loads(file.read_text(encoding='utf-8'));validate_picker_marker(req,marker,host.process.pid,qpc())
+    marker=json.loads(file.read_text(encoding='utf-8'));validate_picker_marker(req,marker,host.process.pid,qpc());save(req['raw_marker_file'],marker)
     emit(host,{'kind':'picker_cua_complete','request':req['request'],'marker':marker})
    if host._native_observer is not None:
     (folder/'stop').write_text('original case finished; stop observer before closing product\n');entry['observer_exit']=host._native_observer.wait(timeout=30)
@@ -281,13 +295,23 @@ def main():
   for host in list(active.values()):
    try:close(host)
    except BaseException as error:report['problems'].append('final cleanup: '+repr(error))
-  done.set();shutil.rmtree=old_rmtree;subprocess.run=original_run
+  done.set();watchdog_thread.join(timeout=2);shutil.rmtree=old_rmtree;subprocess.run=original_run
   try:after=display()
   except BaseException as error:after=None;report['problems'].append('display observation: '+repr(error))
-  report.update(observed_product_starts=len(report['captures']),display_after=after,collection_cap_expired=expired.is_set(),controller_stop_requested=(out/'STOP').exists(),collection_complete=all(s.get('exit')==0 for s in report['steps']) and len(report['steps'])==3 and all(e['complete'] for e in report['captures']))
-  report['display_unchanged']=report['display_after']==before;save(out/'result.json',report)
-  # Nested original manifests are retained, too; exclude only this root manifest.
-  files={p.relative_to(out).as_posix():{'sha256':sha(p),'bytes':p.stat().st_size} for p in out.rglob('*') if p.is_file() and p!=out/'manifest.json'}
-  save(out/'manifest.json',{'execution':'local-native','source_sha':a.expected_source,'files':files,'f08_accepted':False})
+  live=[]
+  for host in owned:
+   for name in ('process','_native_observer'):
+    process=getattr(host,name,None)
+    if process is not None and process.poll() is None:live.append({'kind':name,'pid':process.pid})
+  stopped=(control/'STOP').exists()
+  if stopped:
+   value=(control/'STOP').read_bytes();(out/'controller-stop-request.bin').write_bytes(value)
+   report['controller_stop_sha256']=hashlib.sha256(value).hexdigest()
+  report.update(observed_product_starts=len(report['captures']),display_after=after,collection_cap_expired=expired.is_set(),controller_stop_requested=stopped,owned_live_after_cleanup=live,collection_complete=not live and all(s.get('exit')==0 for s in report['steps']) and len(report['steps'])==3 and all(e['complete'] for e in report['captures']))
+  report['display_unchanged']=report['display_after']==before
+  if live:
+   report['problems'].append('owned cleanup incomplete; manifest withheld');save(out/'result.json',report);save(control/'UNSEALED.json',{'owned_live_after_cleanup':live,'f08_accepted':False})
+  else:
+   receipt=seal_raw(out,report,control);print('F08_NATIVE_FULL_SEALED '+json.dumps(receipt),flush=True)
  print('F08_NATIVE_FULL_OUTPUT',str(out),flush=True);return 0 if report['collection_complete'] and report['display_unchanged'] else 1
 if __name__=='__main__':raise SystemExit(main())

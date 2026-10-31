@@ -138,7 +138,7 @@ def audit(a):
   origin=load(root/'result.json');manifest=load(root/'manifest.json');producer,build=artifact(root,a.zip,a.metadata,a.expected_source)
   need(origin['execution']=='local-native' and origin['attempt']=='local-native' and origin['actions_environment_value']!='true','explicit native execution identity')
   need(origin['source_sha']==manifest['source_sha']==a.expected_source and origin['producer']==producer,'independently authenticated source/artifact metadata')
-  need(origin['collection_complete'] is True and not origin['problems'] and not origin['collection_cap_expired'] and not origin['controller_stop_requested'],'complete uncancelled original suite')
+  need(origin['collection_complete'] is True and origin['owned_live_after_cleanup']==[] and not origin['problems'] and not origin['collection_cap_expired'] and not origin['controller_stop_requested'],'complete uncancelled original suite')
   need(origin['display_unchanged'] is True and origin['display_before']==origin['display_after'] and len(origin['display_before'])==3 and all(v>0 for v in origin['display_before']),'actual display mode unchanged')
   actual={p.relative_to(root).as_posix() for p in root.rglob('*') if p.is_file()};need(actual==set(manifest['files'])|{'manifest.json'},'complete native raw inventory')
   for n,v in manifest['files'].items():
@@ -185,7 +185,7 @@ def audit(a):
     bound={kind:[v for v in driver if v['kind']==kind and v.get('request')==req['request']] for kind in ('picker_dialog','picker_closed','picker_cua_complete')}
     need(all(len(v)==1 for v in bound.values()) and req['qpc']<=bound['picker_dialog'][0]['qpc']<=bound['picker_closed'][0]['qpc']<=bound['picker_cua_complete'][0]['qpc'],'real owned picker and completion chronology')
     complete=bound['picker_cua_complete'][0];marker_check(req,complete['marker'],e['pid'],complete['qpc'])
-    need(load(req['complete_file'])==complete['marker'] and Path(req['path']).resolve().is_relative_to(root) and sha(req['path'])==req['sha256'] and Path(req['path']).stat().st_size==req['bytes'],'original input and retained real CUA marker bytes')
+    need(not Path(req['complete_file']).resolve().is_relative_to(root) and Path(req['raw_marker_file']).resolve().is_relative_to(folder.resolve()) and load(req['raw_marker_file'])==complete['marker'] and Path(req['path']).resolve().is_relative_to(root) and sha(req['path'])==req['sha256'] and Path(req['path']).stat().st_size==req['bytes'],'original input and retained real CUA marker bytes')
    document=load(folder/'product-native-trace.json');need(document['pid']==e['pid'] and document['frequency']==e['frequency'],'native trace process/QPC binding')
    native=json.loads(json.dumps(replay.replay(document)));need(native==e['native_analysis']==load(folder/'native-analysis.json'),'all retained native candidate/tail rows replayed')
    value=pixels.analyze(folder,{**e,'program_sha256':build['program_sha256']},type('Checks',(),{'rows':staticmethod(rows),'need':staticmethod(need),'sha':staticmethod(sha),'save':staticmethod(lambda path,v:None)}))
@@ -224,7 +224,7 @@ def self_test():
   except (ValueError,KeyError):continue
   raise AssertionError(label+' accepted')
  need(reader_body(False,None,0)=='not_applicable' and reader_body(True,{'valid':True},1)=='present' and reader_body(True,None,10)=='missing' and reader_body(True,{'valid':True},0)=='missing','reader applicability and missing/unknown pixels')
- from native_full import validate_picker_marker
+ from native_full import validate_picker_marker,seal_raw
  request={'request':0,'qpc':10};marker={'request':0,'pid':7,'qpc':20,'computer_use_returned':True,'post_action_refresh_returned':True}
  validate_picker_marker(request,marker,7,30)
  for change in ({'pid':8},{'request':1},{'qpc':9},{'qpc':31},{'computer_use_returned':False},{'post_action_refresh_returned':False}):
@@ -251,7 +251,25 @@ def self_test():
   (product/'program/EXReader.exe').write_bytes(b'changed');rejected('changed retained binary');(product/'program/EXReader.exe').write_bytes(payloads['program/EXReader.exe'])
   extra=product/'extra';extra.write_bytes(b'extra');rejected('unlisted producer payload');extra.unlink()
   original=archive.read_bytes();archive.write_bytes(original+b'changed');rejected('changed ZIP bytes');archive.write_bytes(original)
- print(json.dumps({'artifact_negative_controls':5,'picker_barrier_negative_controls':6,'coverage_controls_passed':True,'positive_default_product_starts':78,'positive_original_conditional_product_starts':66,'negative_controls':len(controls),'reader_body_controls':4,'f08_accepted':False}))
+ with tempfile.TemporaryDirectory(prefix='f08-native-seal-controls-') as temporary:
+  root=Path(temporary)/'raw';control=Path(temporary)/'raw.control';root.mkdir();control.mkdir();(root/'stop').write_bytes(b'owned cleanup already complete')
+  report={'source_sha':'test-only','owned_live_after_cleanup':[],'collection_complete':False}
+  receipt=seal_raw(root,report,control);need(load(control/'SEALED.json')==receipt,'external final seal receipt');frozen={p.relative_to(root).as_posix():sha(p) for p in root.rglob('*') if p.is_file()}
+  (control/'STOP').write_bytes(b'late controller stop');(control/'picker-complete.json').write_bytes(b'late controller marker')
+  need(frozen=={p.relative_to(root).as_posix():sha(p) for p in root.rglob('*') if p.is_file()} and receipt['manifest_sha256']==sha(root/'manifest.json'),'late control writes cannot mutate sealed raw')
+  other=Path(temporary)/'live-raw';other.mkdir()
+  try:seal_raw(other,{**report,'owned_live_after_cleanup':[{'pid':7}]},control)
+  except ValueError:pass
+  else:raise AssertionError('sealed while owned process live')
+  need(not (other/'manifest.json').exists(),'live-owned case remains unsealed')
+  try:seal_raw(root,report,control)
+  except ValueError:pass
+  else:raise AssertionError('sealed raw was rewritten')
+  nested=other/'inside-control';nested.mkdir()
+  try:seal_raw(other,report,nested)
+  except ValueError:pass
+  else:raise AssertionError('controller could write inside raw')
+ print(json.dumps({'seal_controls':5,'artifact_negative_controls':5,'picker_barrier_negative_controls':6,'coverage_controls_passed':True,'positive_default_product_starts':78,'positive_original_conditional_product_starts':66,'negative_controls':len(controls),'reader_body_controls':4,'f08_accepted':False}))
 if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('--self-test',action='store_true')
  for n in ('run','helper-root','output','zip','metadata','expected-source','manifest-sha256','observer','observer-source','observer-sha256'):p.add_argument('--'+n)
