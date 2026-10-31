@@ -46,8 +46,13 @@ def main():
     P.need(observer_meta["digest"] == "sha256:" + digest and observer_meta["size_in_bytes"] == 94508316 and
            observer_meta["workflow_run"]["head_sha"] == observer_pin["source_sha"] and
            str(observer_meta["workflow_run"]["id"]) == observer_pin["run_id"] and not observer_meta["expired"], "observer metadata")
-    data = P.command(["gh", "api", "repos/NoGod3524/EXReader/actions/artifacts/13051612967/zip"])
+    observer_cache = ROOT / "build/f08-local-inputs/observer.zip"
+    data = observer_cache.read_bytes() if observer_cache.exists() else P.command(
+        ["gh", "api", "repos/NoGod3524/EXReader/actions/artifacts/13051612967/zip"])
     P.need(len(data) == 94508316 and P.hashlib.sha256(data).hexdigest() == digest, "observer ZIP")
+    if not observer_cache.exists():
+        observer_cache.parent.mkdir(parents=True, exist_ok=True)
+        observer_cache.write_bytes(data)
     observer = out / "observer.exe"
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         list(P.F.PRODUCT.entries(archive))
@@ -74,6 +79,11 @@ def main():
     user.SetForegroundWindow.argtypes = [W.HWND]
     user.GetDlgCtrlID.argtypes = [W.HWND]
     user.IsWindowEnabled.argtypes = [W.HWND]
+    user.ShowWindow.argtypes = [W.HWND, C.c_int]
+    user.SetWindowPos.argtypes = [W.HWND, W.HWND, C.c_int, C.c_int, C.c_int, C.c_int, W.UINT]
+    user.SetWindowPos.restype = W.BOOL
+    H.K.SetThreadExecutionState.argtypes = [W.DWORD]
+    H.K.SetThreadExecutionState.restype = W.DWORD
     before = D.Settings(size=C.sizeof(D.Settings))
     P.need(user.EnumDisplaySettingsW(None, 0xffffffff, C.byref(before)), "current display")
     foreground = user.GetForegroundWindow()
@@ -84,6 +94,9 @@ def main():
         value = C.c_longlong()
         P.need(H.K.QueryPerformanceCounter(C.byref(value)), "native QPC")
         return value.value
+    execution_state = H.K.SetThreadExecutionState(0x80000003)
+    P.need(execution_state, "temporary display and system awake request")
+    report["execution_state_before"] = execution_state
     try:
         requested = D.Settings.from_buffer_copy(before)
         requested.width, requested.height, requested.frequency = 1280, 800, 60
@@ -121,6 +134,10 @@ def main():
             try:
                 entry["first_screen"] = H.op_first_screen(host, 60)
                 entry["hwnd"] = int(host.window)
+                user.ShowWindow(host.window, 9)
+                P.need(user.SetWindowPos(host.window, W.HWND(-1), 0, 0, 0, 0, 0x43), "visible owned product window")
+                user.SetForegroundWindow(host.window)
+                entry["foreground_at_capture"] = user.GetForegroundWindow() == host.window
                 stream = (folder / "native.jsonl").open("wb")
                 process = subprocess.Popen([str(observer), str(entry["hwnd"]), str(host.process.pid),
                                             str(folder / "stop"), str(folder / "images")],
@@ -168,6 +185,7 @@ def main():
         report["problems"].append(repr(error))
         raise
     finally:
+        report["execution_state_restored"] = bool(H.K.SetThreadExecutionState(execution_state))
         restored = user.ChangeDisplaySettingsExW(None, C.byref(before), None, 0, None)
         after = D.Settings(size=C.sizeof(D.Settings))
         report["display_restored"] = restored == 0 and bool(user.EnumDisplaySettingsW(None, 0xffffffff, C.byref(after))) and (
