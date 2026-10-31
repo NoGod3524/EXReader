@@ -13,7 +13,7 @@ def module(name,path):
 
 def main():
  p=argparse.ArgumentParser();p.add_argument("--zip",required=True);p.add_argument("--metadata",required=True)
- p.add_argument("--expected-source",required=True);p.add_argument("--helper-root",required=True);p.add_argument("--observer",required=True);a=p.parse_args()
+ p.add_argument("--expected-source",required=True);p.add_argument("--harness-source");p.add_argument("--helper-root",required=True);p.add_argument("--observer",required=True);a=p.parse_args()
  need(os.name=="nt" and os.environ.get("COMPUTERNAME","").upper()=="LAP25002","named native Windows device")
  need(os.environ.get("GITHUB_ACTIONS")!="true","local-native provenance")
  data=Path(a.zip).read_bytes();meta=json.loads(Path(a.metadata).read_text(encoding="utf-8-sig"))
@@ -37,20 +37,20 @@ def main():
  need(sha(a.observer)=="d9091ee8b19cce806942d1c7127802b0cfe222eda10e378d95e0cd2bde9869c7" and Path(a.observer).stat().st_size==80896,"retained lossless WGC observer identity")
  sys.path.insert(0,str(helper/"tests/reader_perf_windows"));import perf_windows as H
  D=module("f08_native_display",helper/"tests/reader_wave3_c09/desktop.py")
- WUI=module("f08_original_native_ui",helper/"tests/reader_wave3_c09/check_ui.py")
  replay=module("f08_native_replay",raw/"native-source/replay.py")
  user=C.WinDLL("user32",use_last_error=True)
  user.EnumDisplaySettingsW.argtypes=[W.LPCWSTR,W.DWORD,C.POINTER(D.Settings)];user.EnumDisplaySettingsW.restype=W.BOOL
  user.GetForegroundWindow.restype=W.HWND;user.SetForegroundWindow.argtypes=[W.HWND]
  user.ShowWindow.argtypes=[W.HWND,C.c_int];user.SetWindowPos.argtypes=[W.HWND,W.HWND,C.c_int,C.c_int,C.c_int,C.c_int,W.UINT];user.SetWindowPos.restype=W.BOOL
  user.GetDlgCtrlID.argtypes=[W.HWND];user.GetDlgCtrlID.restype=C.c_int
+ user.PostMessageW.argtypes=[W.HWND,W.UINT,W.WPARAM,W.LPARAM];user.PostMessageW.restype=W.BOOL
  H.K.QueryPerformanceCounter.argtypes=[C.POINTER(C.c_longlong)];H.K.QueryPerformanceFrequency.argtypes=[C.POINTER(C.c_longlong)]
  H.K.SetThreadExecutionState.argtypes=[W.DWORD];H.K.SetThreadExecutionState.restype=W.DWORD
  def qpc():
   v=C.c_longlong();need(H.K.QueryPerformanceCounter(C.byref(v)),"native QPC");return v.value
  before=D.Settings(size=C.sizeof(D.Settings));need(user.EnumDisplaySettingsW(None,0xffffffff,C.byref(before)),"display observation")
  foreground=user.GetForegroundWindow();frequency=C.c_longlong();H.K.QueryPerformanceFrequency(C.byref(frequency))
- report=dict(source_sha=a.expected_source,execution="local-native",machine="LAP25002",captures=[],problems=[],
+ report=dict(source_sha=a.expected_source,harness_source_sha=a.harness_source or a.expected_source,harness_sha256=sha(__file__),execution="local-native",machine="LAP25002",captures=[],problems=[],
   artifact_id=meta["id"],artifact_digest=meta["digest"],program_sha256=identity["program_sha256"],
   display_before=[before.width,before.height,before.frequency],display_mode_changed_by_harness=False,
   operation_boundary="worker-entry/native-scroll-entry to same-generation GDI execution completion",
@@ -106,11 +106,12 @@ def main():
      # Original reading preparation adds one fixed packaged EPUB in a separate
      # profile; the shelf corpus remains the untouched 2202 seeded originals.
      fixture=raw/"program/Sample-positive.epub";entry["reading_fixture_sha256"]=sha(fixture)
-     adapter=types.SimpleNamespace(window=host.window,process=host.process,
-       wait=lambda predicate,timeout=30:host.poll(predicate,timeout,interval=.02))
-     host.wait_enabled("import",30);WUI.post_click(host.window,H.IDS["import"])
-     WUI.fill_system_dialog(adapter,fixture)
-     host.poll(lambda:(True,) if any("EXReader benchmark" in row for row in host.rows()) else None,60,interval=.02)
+     host.wait_enabled("import",30)
+     emit(dict(kind="picker_post",pid=host.process.pid,qpc=qpc(),fixture_sha256=sha(fixture)))
+     need(user.PostMessageW(host.control("import"),0xF5,0,0),"native import button post")
+     print("F08_PICKER_EXPECTED",host.process.pid,str(fixture),flush=True)
+     # The agent selects this fixed packaged fixture through computer-use.
+     host.poll(lambda:(True,) if any("EXReader benchmark" in row for row in host.rows()) else None,90,interval=.02)
      entry["open"]=H.op_open(host,"EXReader benchmark",30);key=entry["open"]["key"];entry["page_turns"]=[]
      for _ in range(8):
       turn=H.op_page_turn(host,key);entry["page_turns"].append(turn);key=turn["to"]
