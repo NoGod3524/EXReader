@@ -135,3 +135,33 @@ At the user's request, Windows, Linux and Apple are being handled by three indep
 The integration branch is codex/f08-final-integration-20261031. Its initial production assembly is source 01dcd120b186ed3e8f72a373aff52db798d89613. Relative to the shared base 6c3c75bc793acb2bd369db7ea9d701fb87946a81, only six production paths differ: the three Android mapping-projection paths and three Linux durable-WAL paths. Core SDK source/include/CMake trees remain unchanged. Existing Windows/Apple/Linux measurement adapters and failed evidence are retained in the history. New agent instrumentation is not accepted into the final source until its checks and measurement coverage are reviewed.
 
 Formal catalog F08 remains pending. The next common-source execution must prove all required target/workload budgets; independent component runs cannot transfer acceptance to that assembly.
+
+## Linux component validation completed after parallel investigation
+
+Validated measurement source: d981f2d7c8e0bae6408f27a137bc423638e11026. The actual UI-frame boundary was frozen in 34423007204481654bf3f2c2887c39174504d6be before its final full sampling. It uses the original, unsmoothed GdkFrameTimings.frame_time at the start of the native frame cycle, through update/layout/draw/after-paint and measured XSync completion of preceding X-server requests. The separately retained worker-to-content spans are operation latency; they are not substituted for the ordinary UI-frame metric.
+
+Two independently authenticated executions cover all 54 launches:
+- [Full original cohort and six causal launches, run 41240011603](https://github.com/NoGod3524/EXReader/actions/runs/41240011603), sampling 124652417890 and audit 124655106085.
+- [Reader body and explicit FOUND jumps, run 41241360545](https://github.com/NoGod3524/EXReader/actions/runs/41241360545), sampling 124655764805 and audit 124656057908.
+- Original 44-launch / 760-sample cohort and six-launch / 18-action causal cohort remain intact. Four added launches provide twelve actual reader-body wheel actions and six unique-paragraph FOUND jumps.
+
+All 7,837 native UI-frame records remain, including 84 initial clock frames and the 295.194 ms maximum. Required generations missing: zero. Native errors: zero. Complete inventory: 938 jobs, 380 page generations, 172 shelf generations and 1,639 input records. Each native frame joins the retained original clock/counter evidence.
+
+| Native UI-frame scope | Count | P95 ms | P99 ms |
+| --- | ---: | ---: | ---: |
+| All 54 launches | 7,837 | 7.051 | 11.698 |
+| Reader/body | 816 | 11.759 | 15.130 |
+| Shelf | 1,616 | 7.622 | 14.009 |
+| Page turn | 286 | 8.369 | 9.012 |
+| Font/settings | 44 | 8.026 | 9.701 |
+| Locate/jump | 224 | 3.286 | 12.071 |
+
+The original 16.67 ms P95 and 33.34 ms P99 limits are unchanged. Cold first interaction maximum is 1,409.056 ms; warm maximum 214.774 ms; original 44-process RSS peak 221,622,272 bytes, with each added reader process below 74 MiB.
+
+Full raw artifact 13057004287: 50,254,714 bytes, SHA-256 694bc9d1d9eb9a551fd484fc7a5703ae26447b47e302d7fbbc39fdebe39f72af. Its independent audit is artifact 13057870435, SHA-256 ef0413fe3cf76582611db523f3b02fbdc24e7874c5197ac1da0b86a8d3044c5c.
+
+Extra-workload raw artifact 13057342447: 137,687 bytes, SHA-256 1a4111ea7284092354bb38a5fc076a6b657df4a9374354556ab5fee29466f249. Its independent audit is artifact 13056999781, SHA-256 029a28f7935c55644663daae77802702a84c788a3c0c0aeb850e059b83823652.
+
+Both use executable SHA-256 c5be0d15fd4de21ad04daa75474d45440e121be0bb20e3b91b4a668c3e637215 and observer SHA-256 c844d11a40a525138221f7721319fd528d3a318b6712a6f2e72f24bb6c7af810. Every original ZIP entry was rehashed. Earlier cancelled, incomplete and driver-error executions remain preserved.
+
+These results validate this Linux component and its recorded X11/Xvfb profile. They do not prove physical/GPU/compositor scanout, and they do not transfer acceptance to other targets or to a later common-source build. The formal F08 catalog remains pending.
