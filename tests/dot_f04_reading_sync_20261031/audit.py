@@ -35,11 +35,33 @@ def selected(rows, marker):
     need(len(entities) == 1, "ambiguous marker entity " + marker)
     entity = next(iter(entities))
     history = [wire for wire, _ in rows.values() if wire["entity_key"] == entity]
+    by_id = {wire["id"]: wire for wire in history}
+    for wire in history:
+        need(len(wire["parents"]) == len(set(wire["parents"])), "duplicate parents")
+        need(all(parent in by_id for parent in wire["parents"]), "missing or foreign parent")
+    visiting, done = set(), set()
+    def visit(revision):
+        need(revision not in visiting, "cyclic revision history")
+        if revision in done:
+            return
+        visiting.add(revision)
+        for parent in by_id[revision]["parents"]:
+            visit(parent)
+        visiting.remove(revision)
+        done.add(revision)
+    for revision in by_id:
+        visit(revision)
     parents = {parent for wire in history for parent in wire["parents"]}
     heads = [wire for wire in history if wire["id"] not in parents]
     need(len(heads) == 1 and heads[0].get("operation") != "delete", "not SAFE unique head")
     head = heads[0]
     need(head.get("payload") and marker in head["payload"].get("text", ""), "current marker absent")
+    original = json.loads((HERE / "contract.json").read_text())["original"]
+    expected_book = original["format"] + ":" + original["sha256"]
+    need(head["entity_kind"] == "annotation" and head["payload"]["book_key"] == expected_book,
+         "wrong original book")
+    need(head["entity_key"] == expected_book + ":" + head["payload"]["annotation_id"],
+         "global annotation identity")
     return head, rows[head["id"]][1]
 
 def compare_location(location, observed):
