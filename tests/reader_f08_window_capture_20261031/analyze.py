@@ -1,5 +1,6 @@
 """Replay actual owned-window capture bytes. No frame-budget acceptance is inferred."""
 import hashlib
+from PIL import Image
 from pathlib import Path
 
 def analyze(folder, entry, P):
@@ -19,19 +20,26 @@ def analyze(folder, entry, P):
            ready[0]["cursor_capture"] is False and ready[0]["frame_pool_buffers"]==8,"capture configuration")
     frames=[r for r in native if r["kind"]=="frame"]
     P.need([r["index"] for r in frames]==list(range(1,len(frames)+1)) and len(frames)==last["frames"],"callback accounting")
-    images={};pixel_cache={};changed={119:[],123:[]};invalid={119:0,123:0};previous={};whole=None
+    images={};loaded_name=None;pixels=None;changed={119:[],123:[]};invalid={119:0,123:0};previous={};whole=None
     previous_time=-1;whole_changes=0;phase=[];callback_lags=[]
     for r in frames:
         P.need(first["qpc"]<=r["callback_qpc"]<=r["copy_qpc"]<=r["map_start_qpc"]<=r["map_end_qpc"]<=
                r["readback_finished_qpc"]<=last["qpc"],"readback chronology")
         native_time=r["system_relative_100ns"]
-        P.need(previous_time<native_time and native_time*freq<=r["callback_qpc"]*10000000,"compositor QPC chronology")
+        P.need(isinstance(native_time,int) and 0<native_time and previous_time<native_time,"native timestamp sequence")
         previous_time=native_time
-        name=r["image"];P.need(name.endswith(".bmp") and name[:-4].isdigit() and 0<int(name[:-4])<=r["index"],"image path")
-        if name not in images:
-            images[name]=P.bitmap(folder/"images"/name)
-            pixel_cache[name]=(folder/"images"/name).read_bytes()[54:]
-        info=images[name];pixels=pixel_cache[name]
+        name=r["image"];P.need(name.endswith(".png") and name[:-4].isdigit() and 0<int(name[:-4])<=r["index"],"image path")
+        if name!=loaded_name:
+            path=folder/"images"/name
+            with Image.open(path) as picture:
+                P.need(picture.format=="PNG" and picture.mode=="RGBA","native PNG format")
+                width,height=picture.size
+                pixels=picture.tobytes("raw","BGRA")
+            P.need(len(pixels)==width*height*4 and all(a==255 for a in pixels[3::4]),"opaque lossless pixels")
+            images[name]={"sha256":P.sha(path),"width":width,"height":height,
+                          "bgr_sha256":hashlib.sha256(pixels).hexdigest(),"bytes":path.stat().st_size}
+            loaded_name=name
+        info=images[name]
         P.need(info["width"]==r["width"]==ready[0]["width"] and info["height"]==r["height"]==ready[0]["height"],"frame dimensions")
         key=info["bgr_sha256"];actual=whole!=key
         P.need(r["changed"]==actual and (not actual or int(name[:-4])==r["index"]),"whole-image changes")
@@ -56,12 +64,15 @@ def analyze(folder, entry, P):
         callback_lags.append(r["callback_qpc"]*1000/freq-native_time/10000)
     P.need(set(images)=={p.name for p in (folder/"images").glob("*")} and whole_changes==last["changed_images"],"raw image accounting")
     P.need(sum(info["width"]*info["height"]*4 for info in images.values())==last["saved_pixel_bytes"],"native pixel byte accounting")
+    P.need(sum(info["bytes"] for info in images.values())==last["saved_file_bytes"],"encoded image byte accounting")
     inputs=[r for r in driver if r["kind"]=="input"]
     for event in inputs:
         P.need(event["pid"]==pid and driver[0]["qpc"]<=event["start_qpc"]<=event["dispatch_qpc"]<=event["end_qpc"]<=driver[-1]["qpc"],"input chronology")
     result={"native_frames":len(frames),"native_input_dispatches":len(inputs),
             "distinct_content_frames":{key:len(value) for key,value in changed.items()},"content_frames":changed,
             "invalid_regions":invalid,"images":images,"readback_ms":phase,"callback_lag_ms":callback_lags,
+            "timestamps_after_callback":sum(value<0 for value in callback_lags),
+            "native_timestamp_order_confirmed":all(value>=0 for value in callback_lags),
             "frame_census_complete":False,"application_paint_generation_bound":False,
             "frame_budget_measured":False,"physical_scanout_proven":False,"f08_accepted":False}
     P.save(folder/"analysis.json",result);return result
