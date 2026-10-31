@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: MIT
 """Runner-local authenticated HTTPS store; no revision/database injection."""
 import hashlib
+import json
+import os
+from pathlib import Path
 import ssl
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -8,7 +11,7 @@ from xml.sax.saxutils import escape
 
 class Store:
     def __init__(self, certificate, key, authorization):
-        self.entries, self.requests = {}, []
+        self.entries, self.requests, self.commits = {}, [], []
         self.directories = {"/dav/"}
         self.lock = threading.Lock()
         self.offline = False
@@ -60,7 +63,12 @@ class Store:
                     return
                 with outer.lock:
                     exists = self.path in outer.entries
-                    if not exists: outer.entries[self.path] = self.body
+                    if not exists:
+                        outer.entries[self.path] = self.body
+                        outer.commits.append({"sequence": len(outer.commits),
+                            "path": self.path, "bytes": len(self.body),
+                            "sha256": hashlib.sha256(self.body).hexdigest(),
+                            "authenticated_native_put": True})
                     held = outer.hold_put and "/revisions/" in self.path
                     if held: outer.hold_put = False
                 if held:
@@ -98,6 +106,59 @@ class Store:
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.root = "https://127.0.0.1:%d/dav/" % self.server.server_port
+    def checkpoint(self, directory, author):
+        """Persist only actual committed PUT bytes, for same-run offline peers."""
+        if os.environ.get("GITHUB_ACTIONS") != "true": raise RuntimeError("Actions only")
+        directory = Path(directory)
+        directory.mkdir(parents=True, exist_ok=False)
+        with self.lock:
+            entries, commits, requests = dict(self.entries), list(self.commits), list(self.requests)
+            directories = sorted(self.directories)
+        files = {}
+        for index, (path, body) in enumerate(sorted(entries.items())):
+            name = str(index) + ".body"
+            digest = hashlib.sha256(body).hexdigest()
+            if not any(c["path"] == path and c["sha256"] == digest for c in commits):
+                raise AssertionError("checkpoint entry lacks actual authenticated PUT")
+            (directory / name).write_bytes(body)
+            files[path] = {"file": name, "bytes": len(body), "sha256": digest}
+        manifest = {"source": os.environ["GITHUB_SHA"], "run": os.environ["GITHUB_RUN_ID"],
+            "attempt": os.environ["GITHUB_RUN_ATTEMPT"], "author": author,
+            "sdk": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+            "files": files, "directories": directories, "commits": commits,
+            "requests": requests, "simultaneous_online_peers": False}
+        (directory / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\\n")
+        return manifest
+
+    def expose_checkpoint(self, directory):
+        """Expose unchanged producer bytes; never modify receiver DB/revisions."""
+        directory = Path(directory)
+        data = json.loads((directory / "manifest.json").read_text())
+        for key, env in (("source", "GITHUB_SHA"), ("run", "GITHUB_RUN_ID"),
+                         ("attempt", "GITHUB_RUN_ATTEMPT")):
+            if str(data[key]) != os.environ[env]: raise AssertionError("foreign producer identity")
+        if data["sdk"] != "8357eafa28423a7ab93ba08b823af80f01ad1505":
+            raise AssertionError("foreign SDK producer")
+        verified = {}
+        for path, item in data["files"].items():
+            file = directory / item["file"]
+            if file.parent != directory or not path.startswith("/dav/exreader-sync-v1/"):
+                raise AssertionError("producer path escape")
+            body = file.read_bytes()
+            if len(body) != item["bytes"] or hashlib.sha256(body).hexdigest() != item["sha256"]:
+                raise AssertionError("producer immutable bytes differ")
+            if not any(c["path"] == path and c["sha256"] == item["sha256"]
+                       and c["authenticated_native_put"] for c in data["commits"]):
+                raise AssertionError("producer PUT identity absent")
+            verified[path] = body
+        with self.lock:
+            for path, body in verified.items():
+                if path in self.entries and self.entries[path] != body:
+                    raise AssertionError("immutable peer path collision")
+            self.entries.update(verified)
+            self.directories.update(data["directories"])
+        return data
+
     def close(self):
         self.release.set()
         self.server.shutdown()
