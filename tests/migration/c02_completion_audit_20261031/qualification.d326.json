@@ -1,0 +1,229 @@
+{
+  "schema": 1,
+  "repository": "NoGod3524/EXReader",
+  "source": "d32603dc65bccfd65901239d21cb65cd10bca168",
+  "packages": [
+    {
+      "role": "native-windows",
+      "platform": "Windows",
+      "run": 41190673643,
+      "attempt": 1,
+      "job": 124506653536,
+      "job_name": "native_evidence (windows-2022)",
+      "workflow": ".github/workflows/dot-c02-native-journal-20261030.yml",
+      "artifact": {
+        "id": 13038727530,
+        "name": "c02-native-journal-windows-2022-d32603dc65bccfd65901239d21cb65cd10bca168",
+        "bytes": 33164,
+        "sha256": "903f714ca369b91a1191c5e80313bc188c0407c1d731291c1c0db30c93c16ef4"
+      }
+    },
+    {
+      "role": "native-linux",
+      "platform": "Linux",
+      "run": 41190673643,
+      "attempt": 1,
+      "job": 124506653319,
+      "job_name": "native_evidence (ubuntu-22.04)",
+      "workflow": ".github/workflows/dot-c02-native-journal-20261030.yml",
+      "artifact": {
+        "id": 13037694786,
+        "name": "c02-native-journal-ubuntu-22.04-d32603dc65bccfd65901239d21cb65cd10bca168",
+        "bytes": 1677,
+        "sha256": "4041eec4f0a41db323d402b36ead1d43e49e14035a8cfdff67d0a169f0d474d8"
+      }
+    },
+    {
+      "role": "persistent-gate",
+      "platform": "Windows",
+      "run": 41190680652,
+      "attempt": 1,
+      "job": 124506673314,
+      "job_name": "persistent_gate",
+      "workflow": ".github/workflows/dot-c02-domain-gate-20261031.yml",
+      "artifact": {
+        "id": 13038338470,
+        "name": "c02-persistent-gate-d32603dc65bccfd65901239d21cb65cd10bca168",
+        "bytes": 39971,
+        "sha256": "73bebe9dccae041d18e57db562d2ec7a357034804907e1e0375e042b34db52e7"
+      }
+    },
+    {
+      "role": "registry-product",
+      "platform": "Windows",
+      "run": 41190549780,
+      "attempt": 1,
+      "job": 124506290699,
+      "job_name": "registry_and_product",
+      "workflow": ".github/workflows/dot-c02-registry-admission-20261031.yml",
+      "artifact": {
+        "id": 13039120045,
+        "name": "c02-registry-product-d32603dc65bccfd65901239d21cb65cd10bca168",
+        "bytes": 98208517,
+        "sha256": "45346cf6fcb941d2aaa1d3590d996dc2115d2a541f99bc89ab6bd62c655b5b0b"
+      },
+      "expected_registry": {
+        "cases": 50,
+        "checks": 530
+      },
+      "expected_scanner": {
+        "cases": 29,
+        "checks": 91794,
+        "observations": 6603
+      },
+      "required_repair_phases": [
+        950,
+        951,
+        952,
+        953,
+        954,
+        955
+      ]
+    },
+    {
+      "role": "host-android",
+      "platform": "Android",
+      "run": 41190546101,
+      "attempt": 1,
+      "job": 124506277300,
+      "job_name": "android",
+      "workflow": ".github/workflows/dot-c02-android-host-20261031.yml",
+      "artifact": {
+        "id": 13038279408,
+        "name": "c02-actual-android-d32603dc65bccfd65901239d21cb65cd10bca168",
+        "bytes": 75904558,
+        "sha256": "4e614966cc45c252734692dbd8d61ab9cf300fa5307d78d55c3b9a0fc1a8a8d8"
+      }
+    },
+    {
+      "role": "host-macos",
+      "platform": "macos",
+      "run": 41190546119,
+      "attempt": 1,
+      "job": 124507036261,
+      "job_name": "Actual C02 Apple app UID macos",
+      "workflow": ".github/workflows/dot-c02-apple-host-20261031.yml",
+      "receipt": "receipt.json",
+      "admission_report": "admission.json",
+      "observation_log": "observations.log",
+      "artifact": {
+        "id": 13038358723,
+        "name": "c02-apple-runtime-macos-41190546119-1",
+        "bytes": 67027632,
+        "sha256": "ffd77ca0177669b0fa86241a6c7d1f49e0661ec0c1ef65300dcb77aab8147177"
+      }
+    },
+    {
+      "role": "host-ios",
+      "platform": "iphonesimulator",
+      "run": 41190546119,
+      "attempt": 1,
+      "job": 124507036280,
+      "job_name": "Actual C02 Apple app UID iphonesimulator",
+      "workflow": ".github/workflows/dot-c02-apple-host-20261031.yml",
+      "receipt": "receipt.json",
+      "admission_report": "admission.json",
+      "observation_log": "observations.log",
+      "artifact": {
+        "id": 13038269955,
+        "name": "c02-apple-runtime-iphonesimulator-41190546119-1",
+        "bytes": 67058019,
+        "sha256": "df8924ab82c67a1cb53cdaa79c5bf0af667a0692bb88d8d88670239572417a40"
+      }
+    },
+    {
+      "role": "host-gtk",
+      "platform": "Linux",
+      "run": 41190546167,
+      "attempt": 1,
+      "job": 124506277274,
+      "job_name": "gtk",
+      "workflow": ".github/workflows/dot-c02-gtk-host-20261031.yml",
+      "artifact": {
+        "id": 13038443383,
+        "name": "c02-actual-gtk-d32603dc65bccfd65901239d21cb65cd10bca168",
+        "bytes": 92067042,
+        "sha256": "3a23cd492906a240b9623e569034fbdbc675adf5406594abdd1e5aa305a3bdc7"
+      },
+      "evidence_prefix": "work/EXReader/EXReader/evidence/",
+      "runtime_prefix": "c02-gtk-41190546167-1/",
+      "package_prefix": "work/EXReader/EXReader/build/gtk-package/"
+    },
+    {
+      "role": "posix-native-linux",
+      "platform": "Linux",
+      "run": 41190546118,
+      "attempt": 1,
+      "job": 124506276957,
+      "job_name": "admission (ubuntu-22.04)",
+      "workflow": ".github/workflows/dot-c02-posix-admission-20261031.yml",
+      "independent_prefix": "work/EXReader/EXReader/evidence/native-independent/",
+      "artifact": {
+        "id": 13038946064,
+        "name": "c02-posix-ubuntu-22.04-d32603dc65bccfd65901239d21cb65cd10bca168",
+        "bytes": 789776,
+        "sha256": "bd9a67350d5ee87f02bab15ebe992f94b305b42d80db725393fe80c3bea66a77"
+      }
+    },
+    {
+      "role": "posix-native-macos",
+      "platform": "macOS",
+      "run": 41190546118,
+      "attempt": 1,
+      "job": 124506277079,
+      "job_name": "admission (macos-15)",
+      "workflow": ".github/workflows/dot-c02-posix-admission-20261031.yml",
+      "independent_prefix": "work/EXReader/EXReader/evidence/native-independent/",
+      "artifact": {
+        "id": 13038388194,
+        "name": "c02-posix-macos-15-d32603dc65bccfd65901239d21cb65cd10bca168",
+        "bytes": 772994,
+        "sha256": "cf73d32d430dfd7e3fe6592a9b15676c5f8cfa4a9b081297f150f85b63d59a4c"
+      }
+    },
+    {
+      "role": "posix-migration-linux",
+      "platform": "Linux",
+      "run": 41190546125,
+      "attempt": 1,
+      "job": 124506277350,
+      "job_name": "migration (ubuntu-22.04)",
+      "workflow": ".github/workflows/dot-c02-posix-migration-20261031.yml",
+      "artifact": {
+        "id": 13038363533,
+        "name": "c02-posix-migration-ubuntu-22.04-d32603dc65bccfd65901239d21cb65cd10bca168",
+        "bytes": 58297512,
+        "sha256": "a68dcad815d39d7d52ec914383e3760b8234d4e1f7df1d7dadff5605609cc596"
+      },
+      "evidence_prefix": "work/EXReader/EXReader/evidence/",
+      "runtime_prefix": "c02-posix-migration-41190546125-1/",
+      "binaries": {
+        "owner": "work/EXReader/EXReader/stage-owner/bin/exreader-c02-migrate",
+        "controls": "work/EXReader/EXReader/build/owner/exreader-c02-migrate-controls",
+        "admission": "work/EXReader/EXReader/stage-c02/bin/exreader-c02-admission"
+      }
+    },
+    {
+      "role": "posix-migration-macos",
+      "platform": "macOS",
+      "run": 41190546125,
+      "attempt": 1,
+      "job": 124506277155,
+      "job_name": "migration (macos-15)",
+      "workflow": ".github/workflows/dot-c02-posix-migration-20261031.yml",
+      "artifact": {
+        "id": 13038493608,
+        "name": "c02-posix-migration-macos-15-d32603dc65bccfd65901239d21cb65cd10bca168",
+        "bytes": 52964857,
+        "sha256": "02a5c5b8265a4ff244cd9236043e065bd30f20e3dbc49797b4cb4ca631d3eb3c"
+      },
+      "evidence_prefix": "work/EXReader/EXReader/evidence/",
+      "runtime_prefix": "c02-posix-migration-41190546125-1/",
+      "binaries": {
+        "owner": "work/EXReader/EXReader/stage-owner/bin/exreader-c02-migrate",
+        "controls": "work/EXReader/EXReader/build/owner/exreader-c02-migrate-controls",
+        "admission": "work/EXReader/EXReader/stage-c02/bin/exreader-c02-admission"
+      }
+    }
+  ]
+}

@@ -58,4 +58,4 @@ pc02_abandon only invalidates the exact current in-memory cap when borrows=0 and
 
 The original28 admission and10 scope cases remain. The additional17 native API cases exercise actual metadata/head/floor bytes and IDs, contradictory records, last-floor rollback, exact publication, and real process kills at1301/1302. They are component tests: actual_sdk=false and host_wiring=false. They preserve every raw source/failure object via the original Actions inventory.
 
-Required next qualification: actual synchronous SDK owner and canonical per-line journal; explicit archived/protected repair for partial B/C/head tails. Ordinary open still refuses those tails. No power-loss claim is made.
+The actual synchronous SDK owner and canonical ACK296/FLOOR352 journal are documented in [the owner README](../posix_c02_migration_20261031/README.md). Explicit archived/protected Repair is specified in [REPAIR_PROTOCOL.md](REPAIR_PROTOCOL.md). Ordinary open continues to refuse partial tails; the separate actual Repair cases retain pre-apply native observations and archive copies for independent decoding.
