@@ -34,6 +34,13 @@ formats return `EXR_UNSUPPORTED` from the streaming entry points; the existing
 memory APIs are unchanged. `fixed_source` opens a stored CBZ through SQLite blob
 I/O and pages a stored PDF into an anonymous pagefile mapping before parsing.
 
+Active CBZ readers remain usable after progress, favorite, title or cover
+updates. Each range read opens a fresh blob cursor and verifies the original
+length while holding the library mutex. The source retains the library until
+the reader releases it. Deleting a book through the library invalidates its
+active CBZ readers; a later import that reuses the numeric ID cannot redirect
+those readers to the replacement book.
+
 Example:
 
 ```c

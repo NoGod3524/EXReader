@@ -6,6 +6,7 @@ from email.utils import formatdate
 import io
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 import urllib.error
@@ -43,6 +44,42 @@ def network(results):
 
 
 class CollectorProtocol(unittest.TestCase):
+    def test_retained_original_keeps_identity_and_discovery_stays_live(self):
+        entry = {'path': 'epub/book.epub', 'source_url': URL, 'sha256': collect.sha(b'original'),
+                 'size': 8, 'limits': {'download_bytes': 8}}
+        with tempfile.TemporaryDirectory() as directory, patch.object(collect, 'FROZEN_DIRECTORY', Path(directory)):
+            retained = Path(directory) / entry['path']
+            retained.parent.mkdir()
+            retained.write_bytes(b'original')
+            with network([]) as (opened, slept):
+                self.assertEqual(collect.source_bytes(entry, 'collect'), (b'original', retained.as_uri()))
+                opened.assert_not_called()
+            with network([response(b'new')]) as (opened, slept):
+                self.assertEqual(collect.source_bytes(entry, 'discover'), (b'new', URL))
+                self.assertEqual(opened.call_count, 1)
+            for data, message in ((b'changed!', 'identity'), (b'short', 'identity'),
+                                  (b'original!', 'download bound')):
+                with self.subTest(data=data), network([]) as (opened, slept):
+                    retained.write_bytes(data)
+                    with self.assertRaisesRegex(ValueError, message):
+                        collect.source_bytes(entry, 'collect')
+                    opened.assert_not_called()
+
+    def test_unretained_source_still_requires_publisher_identity(self):
+        entry = {'path': 'book.epub', 'source_url': URL, 'sha256': collect.sha(b'original'),
+                 'size': 8, 'limits': {'download_bytes': 8}}
+        with tempfile.TemporaryDirectory() as directory, patch.object(collect, 'FROZEN_DIRECTORY', Path(directory)):
+            with network([response()]) as (opened, slept):
+                self.assertEqual(collect.source_bytes(entry, 'collect'), (b'original', URL))
+            with network([response(b'changed!')]) as (opened, slept):
+                with self.assertRaisesRegex(ValueError, 'identity'):
+                    collect.source_bytes(entry, 'collect')
+            for path in ('../book.epub', str(Path(directory) / 'book.epub')):
+                with self.subTest(path=path), network([]) as (opened, slept):
+                    with self.assertRaisesRegex(ValueError, 'Unsafe manifest path'):
+                        collect.source_bytes(dict(entry, path=path), 'collect')
+                    opened.assert_not_called()
+
     def test_429_then_success_honors_retry_after_seconds(self):
         with network([error(retry_after='3'), response()]) as (opened, slept):
             self.assertEqual(collect.fetch(URL, 8), (b'original', URL))
