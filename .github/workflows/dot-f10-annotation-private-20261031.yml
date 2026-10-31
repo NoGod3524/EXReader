@@ -64,10 +64,10 @@ jobs:
           cmake -S apps/reader/reading-state -B build/private-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$SDK" -DEXR_SDK_VERSION=3.42.0 -DCMAKE_PREFIX_PATH="$S" -DCMAKE_INSTALL_PREFIX="$S"
           cmake --build build/private-state --parallel 4
           cmake --install build/private-state
-          cmake -S apps/reader/annotation-export -B build/private-export -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S;$SDK" -DCMAKE_INSTALL_PREFIX="$S"
-          cmake --build build/private-export --parallel 4 --verbose
+          cmake -E env ZERO_AR_DATE=1 cmake -S apps/reader/annotation-export -B build/private-export -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S;$SDK" -DCMAKE_INSTALL_PREFIX="$S"
+          cmake -E env ZERO_AR_DATE=1 cmake --build build/private-export --parallel 4 --verbose
           cat build/private-export/cmake_install.cmake
-          cmake --install build/private-export
+          cmake -E env ZERO_AR_DATE=1 cmake --install build/private-export
           cmake -S tests/reader_annotation_export/consumer -B build/private-old -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S;$SDK"
           cmake --build build/private-old --parallel 4
           cmake -S tests/reader_annotation_export_posix_private_20261031 -B build/private-new -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S;$SDK" -DSOURCE_SHA="$GITHUB_SHA"
@@ -129,7 +129,7 @@ jobs:
                         built_sha256=sha(built),installed_sha256=sha(installed),
                         differing_common_bytes=len(diff),first_difference_offsets=diff[:256],
                         built_members=members(built),installed_members=members(installed),tools=tools,ar_lists=ar_lists,
-                        ZERO_AR_DATE=os.environ.get('ZERO_AR_DATE'),cmake_version=probe(['cmake','--version']))
+                        ZERO_AR_DATE=os.environ.get('ZERO_AR_DATE'),archive_subprocess_environment={'ZERO_AR_DATE':'1','scope':'annotation-export configure/build/install only'},cmake_version=probe(['cmake','--version']))
           pathlib.Path('build/private-evidence/archive-diagnostic.json').write_text(json.dumps(evidence,indent=2)+'\n')
           print('PRIVATE-ARCHIVE-DIAGNOSTIC '+json.dumps(evidence),flush=True)
           assert built==installed

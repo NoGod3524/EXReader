@@ -82,3 +82,28 @@ index members. BSD inline names are decoded; GNU /NNN long-name references remai
 raw name tokens, not resolved identities. No object equality is inferred from
 names alone. Diagnostic tool failures/timeouts are recorded without bypassing
 the final full-byte comparison.
+
+## Observed archive difference and final bounded correction candidate
+
+Diagnostic run 41156691844 attempt 1 at 22b73528929338b2828baf3a973828db8fcb9f16
+remains FAILURE (Linux success, macOS failure). Both six-case receipts pass.
+macOS built/installed archives are both 84904 bytes and differ at only offset 33:
+the __.SYMDEF SORTED member header time changes 1793411154 to 1793411155.
+The symbol-index payload SHA and annotation_export.cpp.o payload SHA are equal;
+this fact does not turn the original full-byte comparison into a pass.
+Verbose build and generated install script both show /usr/bin/ranlib calls.
+The executed tool reports Apple cctools-1024.3.
+
+The exact official cctools-1024.3 source supports ZERO_AR_DATE: libtool.c
+1234-1241 reads the environment variable, 1421 avoids realtime toc_time,
+4390 writes that value into the TOC archive date. This matches the observed
+difference, and motivates a candidate, not a retroactive successful result.
+https://github.com/apple-oss-distributions/cctools/blob/cctools-1024.3/misc/libtool.c
+
+Only the annotation-export configure/build/install subprocesses now receive
+ZERO_AR_DATE=1 via cmake -E env. Other dependencies, SDK, global environment,
+production code, and all assertions remain unchanged. Diagnostic JSON retains
+the ambient ZERO_AR_DATE value separately from the declared scoped subprocess
+environment; an ambient null does not describe those three subprocesses.
+The remaining second run in the new two-run authorization must still prove
+the original entire built==installed equality; no normalization is performed.
