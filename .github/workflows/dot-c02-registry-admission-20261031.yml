@@ -5,6 +5,7 @@ on:
     paths:
       - extras/migration/windows_coordinator_native_journal_20261030/**
       - tests/migration/windows_registry_admission_20261031/**
+      - tests/migration/windows_repair_scan_20261031/**
       - extras/migration/src/lm_main.c
       - examples/reader.c
       - apps/reader/desktop/CMakeLists.txt
@@ -47,6 +48,22 @@ jobs:
           cmake -S extras/migration/windows_coordinator_native_journal_20261030 -B build/native -DWH_PREFIX="$GITHUB_WORKSPACE/stage" -DWH3_BUILD_SDK_TOOL=ON -DEXR_SDK="$GITHUB_WORKSPACE/build/sdk"
           cmake --build build/native --config Release 2>&1 | tee evidence/build-logs/admission-command-build.log
           cmake --install build/native --config Release --prefix "$GITHUB_WORKSPACE/stage"
+      - name: Last-ACK and gate repair planning from actual native bytes
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/windows_repair_scan_20261031 -B build/repair-scan -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/repair-scan --config Release 2>&1 | tee evidence/build-logs/repair-scan-build.log
+          EXE=$(find build/repair-scan -type f -name coordinator-repair-scan-check.exe | head -1)
+          "$EXE" evidence/repair-scan 2>&1 | tee evidence/repair-scan.log
+          python - <<'PY'
+          import json,os,pathlib
+          rows=[json.loads(line) for line in pathlib.Path('evidence/repair-scan.log').read_text().splitlines() if line.startswith('{"source":')]
+          assert len(rows)==1
+          r=rows[0]
+          assert r['source']==os.environ['GITHUB_SHA'] and r['cases']==29 and r['failed']==0 and r['passed'] is True
+          assert r['native_io'] is True and r['read_only_scanner'] is True
+          assert r['process_kill'] is False and r['production_repair'] is False
+          PY
       - name: Build separate installed registry consumer and actual product
         run: |
           set -euo pipefail

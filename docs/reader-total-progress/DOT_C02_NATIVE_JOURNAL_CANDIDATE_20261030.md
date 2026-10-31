@@ -272,3 +272,32 @@ run the original legacy scenario runner for the shared-loop extraction, then exe
 migration, a second epoch, strict rollback, process kills and foreign prepared bytes/identities.
 Torn-journal/gate explicit repair, other platform admission and final same-source original-ZIP
 semantic audit remain outstanding. Formal acceptance remains 95/108.
+
+## Actual owner bring-up and explicit raw repair (2026-10-31)
+
+Source 1f618780d936627d9bd1ab48cece4781dbca7e11, Actions run 41169507968/A1,
+retains the first fast actual-migration failure: all 25 scenarios exited in input
+setup before any requested barrier. Native registry/product and original legacy
+scenario steps passed; actual migration did not. Artifact 13030373853 is 1043819
+bytes with API SHA256 73caa568fd826be71b15fbb25d21817c2a069a49697d95903b30d94212e674f9.
+Source ef2478b5e0e9bb782e06e53c0d28fa3d727180a3 run 41168469106 remains the earlier
+slow-wait attempt; its original record is retained separately. The path-pin loop
+was restoring a directory character as a separator after temporarily terminating
+the drive root; the new candidate preserves the original character.
+
+The next candidate adds an independent read-only last-ACK/gate scanner, preserved
+raw archives, a protected registry Repair plan and resumable application of only
+its validated target bytes. Ordinary readers and new epochs refuse an active
+Repair. Actual terminal proof and CLEAN Binding must precede Repair retirement.
+Archive paths derive from the identified root's native volume-GUID path, including
+roots already accepted near the original length limit.
+
+The separate scanner consumer has 29 planned scenarios with every-byte prefixes
+and resealed semantic contradictions. The actual-owner runner has 83 planned
+scenarios: original migration cases, native append cut points, interrupted repair,
+partial BEGIN/CLEAN gates, archive tampering and a long registered root.
+An Applied Repair also fixes the minimum ACK prefix: same-FileID rollback to an
+older complete history is refused by byte comparison against the protected archive.
+It checks SQLite ledger/source/annotation content independently of the C verifier.
+These additions have not yet passed Actions. POSIX host/owner integration and the
+final same-source original-ZIP audit remain outstanding; formal acceptance is 95/108.

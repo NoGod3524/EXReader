@@ -22,12 +22,13 @@ typedef struct {
 typedef struct {char magic[8],input_sha[65];c02_file files[2];} c02_prepared;
 #pragma pack(pop)
 typedef struct {
+ wchar_t requested_library[MAX_PATH];
  c02_input input;c02_prepared prepared;wh3wr_registration *registration;
  wh3w_store *journal;void *cap;wh3_tip tip;wh3w_controls controls;
  HANDLE pack,pack_parents[128],original,mirror,stages[2];size_t parent_count;
  wchar_t paths[2][MAX_PATH],retained[2][MAX_PATH],mirror_path[MAX_PATH];
  char library_utf8[4*MAX_PATH],pack_utf8[4*MAX_PATH],stage_utf8[4*MAX_PATH],mirror_utf8[4*MAX_PATH],old_mirror_utf8[4*MAX_PATH];
- int recovered,has_prepared,publish_intent,published,aborted;unsigned member;
+ int recovered,has_prepared,publish_intent,published,aborted;unsigned member;const char *operation;
  char lines[EXR_WH_MAX_JOURNAL][EXR_WH_LINE_MAX];const char *line_ptrs[EXR_WH_MAX_JOURNAL];size_t line_count;
 } c02_owner;
 static int c02_physical(HANDLE,char [4*MAX_PATH]);
@@ -109,9 +110,9 @@ static int c02_pack_pin(c02_owner *o) {
  wchar_t path[MAX_PATH];size_t k,n=wcslen(o->input.pack);FILE_ATTRIBUTE_TAG_INFO tag;c02_file actual;
  wcscpy_s(path,MAX_PATH,o->input.pack);
  for(k=3;k<n;k++)if(k==3||path[k]==L'\\'){
-  HANDLE h;if(o->parent_count>=128)return 0;path[k]=0;
+  HANDLE h;wchar_t saved=path[k];if(o->parent_count>=128)return 0;path[k]=0;
   h=CreateFileW(path,FILE_LIST_DIRECTORY|FILE_READ_ATTRIBUTES,FILE_SHARE_READ,NULL,OPEN_EXISTING,
-    FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);path[k]=L'\\';
+    FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);path[k]=saved;
   if(h==INVALID_HANDLE_VALUE)return 0;o->pack_parents[o->parent_count++]=h;
   if(!GetFileInformationByHandleEx(h,FileAttributeTagInfo,&tag,sizeof(tag))||
      !(tag.FileAttributes&FILE_ATTRIBUTE_DIRECTORY)||(tag.FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT))return 0;
@@ -174,6 +175,11 @@ static int c02_input_valid(c02_owner *o,const wchar_t *library) {
  }
  return c02_paths(o);
 }
+static int c02_repair_input(void *context,const void *data,size_t size,wh_binding *binding,wh_gates *gates) {
+ c02_owner *o=context;if(size!=sizeof(o->input))return 0;
+ memcpy(&o->input,data,size);if(!c02_input_valid(o,o->requested_library))return 0;
+ *binding=o->input.binding;*gates=o->input.gates;return 1;
+}
 static int c02_prepared_read(c02_owner *o) {
  size_t size=0,k;char hash[65];
  if(!wh3wr_transaction_read(o->registration,WH3WR_PREPARED,&o->prepared,sizeof(o->prepared),&size)||
@@ -187,19 +193,22 @@ static int c02_create_input(c02_owner *o,const wchar_t *library,const wchar_t *p
  HCRYPTPROV random=0;unsigned char token[24];unsigned k;static const char hex[]="0123456789abcdef";
  memcpy(o->input.magic,"C02IN001",8);wcscpy_s(o->input.library,MAX_PATH,library);
  wcscpy_s(o->input.pack,MAX_PATH,pack);o->input.allow_partial=(uint32_t)partial;
- if(!c02_binding(o)||!c02_pack_pin(o)||!CryptAcquireContextW(&random,NULL,NULL,PROV_RSA_AES,CRYPT_VERIFYCONTEXT))return 0;
+ o->operation="input-binary-binding";if(!c02_binding(o))return 0;
+ o->operation="input-pack-custody";if(!c02_pack_pin(o))return 0;
+ o->operation="input-random-token";if(!CryptAcquireContextW(&random,NULL,NULL,PROV_RSA_AES,CRYPT_VERIFYCONTEXT))return 0;
  k=(unsigned)CryptGenRandom(random,sizeof(token),token);CryptReleaseContext(random,0);if(!k)return 0;
  for(k=0;k<24;k++){o->input.token[2*k]=hex[token[k]>>4];o->input.token[2*k+1]=hex[token[k]&15];}
  for(k=0;k<2;k++){
   swprintf_s(o->input.stages[k],64,L"c02-%hs-%u.stage",o->input.token,k);
   swprintf_s(o->input.retained[k],64,L"c02-%hs-%u.retained",o->input.token,k);
  }
- if(!c02_paths(o))return 0;
- o->original=c02_open(library,GENERIC_READ,FILE_SHARE_READ,OPEN_EXISTING);
+ o->operation="input-paths";if(!c02_paths(o))return 0;
+ o->operation="input-original";o->original=c02_open(library,GENERIC_READ,FILE_SHARE_READ,OPEN_EXISTING);
  if(o->original==INVALID_HANDLE_VALUE||!c02_hash(o->original,&o->input.original))return 0;
- o->mirror=c02_open(o->mirror_path,GENERIC_READ,FILE_SHARE_READ,OPEN_EXISTING);
+ o->operation="input-mirror";o->mirror=c02_open(o->mirror_path,GENERIC_READ,FILE_SHARE_READ,OPEN_EXISTING);
  if(o->mirror==INVALID_HANDLE_VALUE){if(!c02_absent(o->mirror_path))return 0;}
  else{if(!c02_hash(o->mirror,&o->input.mirror))return 0;o->input.mirror_present=1;}
+ o->operation="input-private-objects";
  for(k=0;k<2;k++){
   HANDLE created;
   if(!c02_absent(o->retained[k]))return 0;
@@ -209,7 +218,8 @@ static int c02_create_input(c02_owner *o,const wchar_t *library,const wchar_t *p
   o->stages[k]=ReOpenFile(created,FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE,FILE_FLAG_OPEN_REPARSE_POINT);
   CloseHandle(created);if(o->stages[k]==INVALID_HANDLE_VALUE)return 0;
  }
- if(!c02_input_valid(o,library)||!wh3wr_transaction_write(o->registration,WH3WR_INPUT,&o->input,sizeof(o->input)))return 0;
+ o->operation="input-canonical-schema";if(!c02_input_valid(o,library))return 0;
+ o->operation="input-durable-record";if(!wh3wr_transaction_write(o->registration,WH3WR_INPUT,&o->input,sizeof(o->input)))return 0;
  c02_phase(o,900);return 1;
 }
 static int c02_original_state(c02_owner *o) {
@@ -418,7 +428,14 @@ int wmain(int argc,wchar_t **argv) {
   if(argc==5&&!wcscmp(argv[4],L"--allow-partial"))partial=1;else if(argc!=4)goto usage;}
  o=calloc(1,sizeof(*o));if(!o)return 3;o->recovered=recover;
  o->original=o->mirror=o->pack=o->stages[0]=o->stages[1]=INVALID_HANDLE_VALUE;
- o->controls.context=o;o->controls.phase=c02_phase;
+ o->controls.context=o;o->controls.phase=c02_phase;wcscpy_s(o->requested_library,MAX_PATH,library);
+#ifdef WH3_MIGRATION_TEST_CONTROLS
+ {const char *short_gate=getenv("EXR_C02_GATE_SHORT");if(short_gate){
+   unsigned at=(unsigned)strtoul(short_gate,NULL,10);
+   if(at!=WH3WG_BEGIN_WRITTEN&&at!=WH3WG_CLEAN_WRITTEN)goto done;
+   o->controls.fault=WH3W_SHORT_WRITE;o->controls.fault_phase=at;
+ }}
+#endif
  if(!wcscmp(argv[1],L"verify")){
   wcscpy_s(o->input.library,MAX_PATH,library);wcscpy_s(o->input.pack,MAX_PATH,pack);
   if(!wh3wr_open(library,WH3WG_SHARED,NULL,&o->registration)||!c02_paths(o)||!c02_pack_pin(o))goto done;
@@ -430,11 +447,14 @@ int wmain(int argc,wchar_t **argv) {
   }
   ok=wh3t_verify(o->pack,o->library_utf8,o->pack_utf8,o->old_mirror_utf8)&&wh3wr_check(o->registration);goto done;
  }
+ if(recover&&!wh3wr_repair_prepare(library,c02_repair_input,o,&o->controls))goto done;
+ o->operation="exclusive-admission";
  if(!wh3wr_open(library,recover?WH3WG_RECOVER:WH3WG_OWNER,&o->controls,&o->registration))goto done;
  if(recover){
   if(!wh3wr_transaction_read(o->registration,WH3WR_INPUT,&o->input,sizeof(o->input),&size)||size!=sizeof(o->input)||
      !c02_input_valid(o,library)||!c02_pack_pin(o))goto done;
  }else if(!c02_create_input(o,library,pack,partial))goto done;
+ o->operation="exact-journal-open";
  if(!wh3wr_journal(o->registration,&o->input.binding,&o->input.gates,&o->controls,&o->journal)||!c02_history(o))goto done;
  if(recover&&!o->line_count&&wh3wr_clean(o->registration)&&c02_original_state(o)){
   puts("{\"status\":\"abandoned_before_admission\",\"live_capability\":false}");ok=1;goto done;
@@ -465,7 +485,7 @@ int wmain(int argc,wchar_t **argv) {
  ok=report.status==WH_COMPLETED||report.status==WH_ROLLED_BACK;
  if(ok&&!wh3_dispose(session))ok=0;
 done:
- if(!ok)fprintf(stderr,"C02 refused or pending; immutable inputs and native evidence retained (Windows error %lu).\n",GetLastError());
+ if(!ok)fprintf(stderr,"C02 refused or pending; immutable inputs and native evidence retained (operation %s, Windows error %lu).\n",o&&o->operation?o->operation:"initial",GetLastError());
  c02_cleanup(o);return ok?(report.status==WH_ROLLED_BACK&&!recover?3:0):2;
 usage:
  fputs("Usage: exreader-c02-migrate migrate LIBRARY PACK [--allow-partial]\n"
