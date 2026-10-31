@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "package": "F04-reading-sync-stage1",
+  "base_source": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
+  "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "sdk_version": "3.42.0",
+  "branch": "dot/f04-reading-sync-20261031",
+  "authorized_paths": [
+    "tests/dot_f04_reading_sync_20261031/contract.json",
+    "tests/dot_f04_reading_sync_20261031/admission.py",
+    "tests/dot_f04_reading_sync_20261031/fixtures.py",
+    "tests/dot_f04_reading_sync_20261031/relay.py",
+    "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+    "tests/dot_f04_reading_sync_20261031/android_driver.java",
+    "tests/dot_f04_reading_sync_20261031/run.py",
+    "tests/dot_f04_reading_sync_20261031/audit.py",
+    ".github/workflows/dot-f04-reading-sync-20261031.yml",
+    "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+  ],
+  "phase": "implementation-only-no-CI",
+  "ci_runs_authorized": 0,
+  "complete_f04": false,
+  "platforms": [
+    "iphone-simulator",
+    "android-api34-x86_64"
+  ],
+  "phases": [
+    "apple-first",
+    "android",
+    "apple-return"
+  ],
+  "required_types": [
+    "progress",
+    "bookmark",
+    "annotation"
+  ],
+  "markers": {
+    "apple_bookmark": "F04_APPLE_BOOKMARK",
+    "apple_note": "F04_APPLE_NOTE",
+    "android_bookmark": "F04_ANDROID_BOOKMARK",
+    "android_note": "F04_ANDROID_NOTE"
+  },
+  "unimplemented_final_targets": [
+    "windows",
+    "linux-gtk",
+    "macos",
+    "ipad"
+  ],
+  "transport": "staged authenticated HTTPS snapshots, not simultaneous hosts",
+  "original": {
+    "sha256": "4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036",
+    "bytes": 189249,
+    "format": "epub"
+  },
+  "preserved": {
+    "apple_cases": {
+      "wave3": 5,
+      "base": 13,
+      "control": 13,
+      "search": 4,
+      "theme": 4
+    },
+    "android_sync_phases": 4,
+    "android_receive_checks": 24,
+    "old_drivers": "unchanged; generated Actions-only adapter copies exact base scripts"
+  }
+}
