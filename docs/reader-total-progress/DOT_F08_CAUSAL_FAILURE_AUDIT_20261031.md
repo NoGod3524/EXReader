@@ -1,6 +1,6 @@
 # F08 retained causal failure audit
 
-Status: implementation prepared; the single audit has not run yet. Formal progress stays 95/108; F08 is not accepted.
+Status: the single audit attempt failed during Python parsing, before any diagnostic logic ran. Formal progress stays 95/108; F08 is not accepted.
 
 ## Scope and immutable producer
 
@@ -13,7 +13,7 @@ source `878a3f67a2bcfad51d49c67292548e5892185f3d`.
 [Artifact 13030394230](https://github.com/NoGod3524/EXReader/actions/runs/41169786301/artifacts/13030394230)
 has name `f08-causal-41169786301-1`, size 4,422,645 bytes and SHA-256
 `d20d1b690625b914f16dadc958c7cbb1409c17681db96896190678d350d0c189`.
-Actions metadata was read back and matches these pins; its ZIP contents remain unexamined until this audit runs.
+Actions metadata was read back and matches these pins. The diagnostic did not download or parse the ZIP; its inner records remain unexamined.
 
 The original cohort remains 44 launches / 760 samples / 2 positive + 24 negative controls.
 The new producer planned 6 launches / 18 actions / 2 positive + 8 negative controls.
@@ -71,10 +71,10 @@ Xvfb frame activity is not physical display presentation or a 60fps result.
 
 ## Deterministic controls
 
-Exactly one synthetic positive establishes a linked restoring-only state while retaining a one-second interval
+The planned, unexecuted positive control establishes a linked restoring-only state while retaining a one-second interval
 and a frame-counter gap. It still does not confirm a hidden-shelf root cause.
 
-Exactly twelve negatives cover:
+The twelve planned, unexecuted negatives cover:
 
 1. Wrong producer source identity.
 2. Wrong ZIP digest with the correct byte length.
@@ -91,3 +91,17 @@ Exactly twelve negatives cover:
 
 These are diagnostic audit controls, separate from the producer's unexecuted 2+8 controls.
 A completed diagnostic cannot promote F08 or revise the failed producer's result.
+
+## Actual single attempt: failed before execution
+
+- Audit source: [6725cbd3e496dd8daba81136240e79f70f28f5f3](https://github.com/NoGod3524/EXReader/commit/6725cbd3e496dd8daba81136240e79f70f28f5f3).
+- [Run 41174980081, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41174980081), push event, created 2026-10-31 06:02:51 UTC.
+- [Job 124460551080](https://github.com/NoGod3524/EXReader/actions/runs/41174980081/job/124460551080) used Ubuntu 22.04 with the 20-minute cap. Checkout succeeded at the exact audit source.
+- At 06:02:59 UTC, Python reported `SyntaxError: '[' was never closed` at audit.py line 373. The baseline list comprehension at lines 373-374 lacks its closing square bracket. This is an error in the audit implementation, not evidence about the producer's timeout or product performance.
+- No audit source guard, synthetic control, producer API call, ZIP download, ZIP hash check, inventory parsing, retained-binary check or per-launch analysis executed.
+- Artifact upload then failed because `build/f08-causal-failure-audit/` did not exist. The Actions artifact query returned an empty list. The decoded job log is the failure evidence; there is no generated audit bundle or diagnostic receipt.
+- The one-run budget is consumed. No repair, rerun, product execution or resampling followed. The failed source and run remain intact.
+- The source branch was read back at the exact audit SHA. The commit-scoped Actions query found one run, attempt 1, with failure.
+- The hidden-shelf condition remains an unverified static candidate. No new causal result, physical-presentation result or F08 acceptance evidence was obtained.
+
+This result is published as a separate documentation-only commit with [skip ci]. The audit source file remains the exact failed version for traceability.
