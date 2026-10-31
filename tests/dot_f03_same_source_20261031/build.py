@@ -32,6 +32,29 @@ class SDK342Loader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                            "occurrences": text.count("3.41.0")})
         exec(compile(adapted, str(self.target), "exec"), module.__dict__)
 
+def prepare_hash(host, environment, audit):
+    """Build the frozen product dependency for the same target, without replacing its owner."""
+    prefix = (ROOT / "build/dot-f03-hash" / host / "stage").resolve()
+    build = prefix.parent / "build"
+    argv = ["cmake", "-S", str(ROOT / "extras/opds"), "-B", str(build), "-G", "Ninja",
+            "-DCMAKE_BUILD_TYPE=Release", "-DEXREADER_OPDS_HASH_ONLY=ON",
+            "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", "-DCMAKE_INSTALL_PREFIX=" + str(prefix)]
+    if host == "android":
+        toolchain = environment.get("C11_TOOLCHAIN")
+        require(toolchain and Path(toolchain).is_file(), "installed matching Android toolchain required")
+        argv += ["-DCMAKE_TOOLCHAIN_FILE=" + toolchain, "-DANDROID_ABI=x86_64",
+                 "-DANDROID_PLATFORM=android-26", "-DANDROID_STL=c++_static"]
+    subprocess.run(argv, cwd=ROOT, env=environment, check=True)
+    subprocess.run(["cmake", "--build", str(build), "--parallel", "4", "--target", "install"],
+                   cwd=ROOT, env=environment, check=True)
+    require(prefix.is_dir() and prefix == prefix.resolve(), "canonical installed hash prefix required")
+    environment["EXREADER_ORIGINAL_HASH_PREFIX"] = str(prefix)
+    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = str(prefix)
+    with Path(os.environ["GITHUB_ENV"]).open("a", encoding="utf-8") as stream:
+        stream.write("EXREADER_ORIGINAL_HASH_PREFIX=" + str(prefix) + "\n")
+    audit.append({"dependency": "EXReaderOPDSHash 0.1.0", "target": host,
+                  "source": "extras/opds", "configure": argv, "prefix": str(prefix)})
+
 def build_linux_recipe(host, audit):
     """Actions executes named original build steps; only explicit SDK version pins change."""
     import yaml
@@ -55,7 +78,11 @@ def build_linux_recipe(host, audit):
     environment = dict(os.environ)
     environment.update({k: str(v) for k, v in recipe.get("env", {}).items()})
     environment.update({k: str(v) for k, v in recipe["jobs"][job].get("env", {}).items()})
+    if host == "gtk":
+        prepare_hash(host, environment, audit)
     for name in names:
+        if host == "android" and name == "Install the raw0.2 product and reviewed wave3 packages into one prefix":
+            prepare_hash(host, environment, audit)
         choices = [step for step in steps if step.get("name") == name]
         require(len(choices) == 1 and "run" in choices[0], "original recipe missing: " + name)
         original = choices[0]["run"]
@@ -132,6 +159,7 @@ def main():
             build_linux_recipe(a.host, changes)
         elif a.host == "windows":
             require(os.name == "nt", "Windows build requires Windows runner")
+            prepare_hash("windows", os.environ, changes)
             loader = SDK342Loader(changes)
             sys.meta_path.insert(0, loader)
             path = ROOT / "tests/reader_wave3_c09/build.py"

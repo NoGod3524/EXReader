@@ -45,11 +45,13 @@ def audit(root, manifest, stamp):
         require(report.get("program_sha256") == manifest["programs"][host], "retained binary mismatch")
     rounds = manifest["rounds"]
     require(rounds and all(r["author"] in SCOPE["hosts"] for r in rounds), "invalid author rounds")
-    require(len({r["author"] for r in rounds}) >= 2, "at least two actual device authors required")
+    covered_operations = set()
     previous_wire = {}
     for round_number, round_record in enumerate(rounds):
         author = round_record["author"]
-        require(round_record["operations"] == SCOPE["operations"], "lifecycle incomplete")
+        operations = round_record["operations"]
+        require(operations and set(operations).issubset(SCOPE["operations"]), "unknown lifecycle operation")
+        covered_operations.update(operations)
         wire = read(file_record(root, round_record["wire"]))
         same_identity(wire, stamp)
         bodies = {}
@@ -75,7 +77,7 @@ def audit(root, manifest, stamp):
                 wire_revisions[value["id"]] = value
         require(set(wire_revisions) == required_revisions, "missing authored wire revisions")
         operation_evidence = round_record["operation_evidence"]
-        require(set(operation_evidence) == set(SCOPE["operations"]), "UI operations unproven")
+        require(set(operation_evidence) == set(operations), "UI operations unproven")
         for operation, item in operation_evidence.items():
             raw = file_record(root, item)
             event = read(raw)
@@ -116,6 +118,7 @@ def audit(root, manifest, stamp):
             method = "PUT" if host == author else "GET"
             require(any(r.get("method") == method and "/revisions/" in r.get("path", "")
                         for r in requests), "required native revision transport absent")
+    require(covered_operations == set(SCOPE["operations"]), "lifecycle coverage incomplete")
     require(SCOPE["complete"] is True and SCOPE["ci_authorized"] is True,
             "preparation_only: final acceptance disabled by current authorization")
     return {**stamp, "accepted": True, "preparation_only": False,

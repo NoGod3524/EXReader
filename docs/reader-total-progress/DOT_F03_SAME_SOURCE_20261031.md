@@ -44,3 +44,6 @@ bar six-target consistency if actual GTK/Apple-originated operations are receive
 
 GTK/Android named original build recipe invocation is authored with version-only SDK pins;
 not executed, no receipt or passing build claimed. Original CI setup dependencies remain required.
+
+### Continued source preparation (not executed)
+Added a GTK native-UI author for nested shelf/tag/series, group delete/restore, membership remove/restore and restart, then actual account-session HTTPS publication. Product SQL remains read-only. Lifecycle operation coverage is checked across phases, not falsely required in every phase or from every host. Added target-matched canonical OPDSHash preinstallation to the new build wrapper; unchanged Apple builder already owns its per-target hash setup. Full receiver transport/orchestration, evidence manifest and original retained suites remain unfinished/unexecuted. No CI authorized or started; preparation is not F03 acceptance.
