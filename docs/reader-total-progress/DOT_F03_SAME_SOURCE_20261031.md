@@ -32,3 +32,12 @@ No F03 ledger increment before complete clause proof.
 
 F04 reading,F05 recovery,F07 provider,F10 privacy,F08 performance and external Apple/UI owners
 retain their paths. These preparation files do not complete or stop the overall task.
+
+## Static review correction and continued implementation
+F06 reviewed initial514526:13 added files, baseline/SDK and no-CI boundaries checked.
+Removed newly invented mandatory six-author/per-operation-PNG conditions; six-target receiving
+consistency is distinct from every host authoring every operation. Preparation-only scope now
+explicitly prevents verifier final acceptance. Native Apple/Android HTTPS receiver UI/restart cases
+and independent native-test compilation wiring are now authored, not run. Final orchestration still
+in progress. Windows existing organizer lacks group delete/restore author controls; this does not
+bar six-target consistency if actual GTK/Apple-originated operations are received by Windows.

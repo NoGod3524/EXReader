@@ -270,4 +270,78 @@ final class AppleOrganizationInteropTests: XCTestCase {
         steps.append("preserved")
     }
 
+    // Called only after an actual host sync phase. Expectations identify visible entities,
+    // never inject catalog rows or revisions. No missing-input skip is permitted.
+    func testF03ReceivedOrganizationVisibleAfterRestart() throws {
+        let environment = ProcessInfo.processInfo.environment
+        let raw = try XCTUnwrap(environment["F03_EXPECTED_GROUPS"])
+        let data = try XCTUnwrap(raw.data(using: .utf8))
+        let expected = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        XCTAssertFalse(expected.isEmpty, "Actual producer identities required")
+        launch(fresh: false)
+        let root = try XCTUnwrap(environment["F03_DAV_ROOT"])
+        XCTAssertTrue(root.hasPrefix("https://"), "Only fixture HTTPS")
+        tap("account.choose")
+        let rootField = element("account.root")
+        XCTAssertTrue(rootField.waitForExistence(timeout: 30))
+        rootField.tap(); rootField.typeText(root + "\n")
+        if let username = environment["F03_DAV_USERNAME"], !username.isEmpty {
+            let field = element("account.username")
+            XCTAssertTrue(field.waitForExistence(timeout: 30)); field.tap(); field.typeText(username)
+        }
+        if let password = environment["F03_DAV_PASSWORD"], !password.isEmpty {
+            let field = element("account.password")
+            XCTAssertTrue(field.waitForExistence(timeout: 30)); field.tap(); field.typeText(password)
+        }
+        let remember = element("account.remember")
+        if remember.exists && (remember.value as? String == "1") { tap("account.remember") }
+        tap("account.connect")
+        XCTAssertTrue(wait { !self.element("account.connect").exists &&
+            self.element("account.sync.start").exists })
+        tap("account.sync.start")
+        XCTAssertTrue(wait(180) { self.text("account.sync.state") == "本轮扫描完成" },
+                      "Actual native network receive did not finish")
+        steps.append("f03-native-https-received")
+        tap("library.organization")
+        for entry in expected {
+            let groupKind = try XCTUnwrap(entry["kind"] as? String)
+            let name = try XCTUnwrap(entry["name"] as? String)
+            XCTAssertTrue(["shelf", "tag", "series"].contains(groupKind))
+            kind(groupKind)
+            if let parents = entry["parents"] as? [String] {
+                for parent in parents { select(parent); tap("organization.children") }
+            }
+            if entry["deleted"] as? Bool == true {
+                XCTAssertFalse(row(name).exists, "Deleted group remains active")
+                tap("organization.removed")
+                XCTAssertTrue(row(name).waitForExistence(timeout: 60), "Remote tombstone missing")
+                tap("organization.removed")
+            } else {
+                select(name)
+                if let key = entry["member_key"] as? String {
+                    let member = element("organization.member." + key)
+                    let present = try XCTUnwrap(entry["member_present"] as? Bool)
+                    XCTAssertTrue(wait { member.exists == present }, "Remote membership diverges")
+                }
+            }
+        }
+        steps.append("f03-received-groups-visible")
+        app.terminate()
+        XCTAssertTrue(wait(15) { self.app.state == .notRunning })
+        launch(fresh: false)
+        tap("library.organization")
+        for entry in expected where entry["deleted"] as? Bool != true {
+            kind(try XCTUnwrap(entry["kind"] as? String))
+            if let parents = entry["parents"] as? [String] {
+                for parent in parents { select(parent); tap("organization.children") }
+            }
+            select(try XCTUnwrap(entry["name"] as? String))
+            if let key = entry["member_key"] as? String {
+                let present = try XCTUnwrap(entry["member_present"] as? Bool)
+                XCTAssertTrue(wait { self.element("organization.member." + key).exists == present })
+            }
+        }
+        steps.append("f03-received-groups-persisted")
+    }
+
 }
