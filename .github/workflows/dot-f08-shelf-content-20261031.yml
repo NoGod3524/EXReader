@@ -69,6 +69,9 @@ jobs:
             build/f08-causal-probe/f08_draw_control > build/f08-causal-control/draw.json
             /usr/bin/python3 tests/reader_f08_shelf_content_20261031/run.py capture
           '
+      - name: Seal available raw evidence after success or interruption
+        if: always()
+        run: /usr/bin/python3 tests/reader_f08_shelf_content_20261031/run.py seal
       - uses: actions/upload-artifact@v4
         id: upload
         if: always()
