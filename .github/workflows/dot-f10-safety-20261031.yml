@@ -89,4 +89,4 @@ jobs:
           name: f10-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f10-audit/
           if-no-files-found: error
-# Prepared approved no-replace round; activation follows independent review.
+# Activate the sole approved no-replace round after independent review.
