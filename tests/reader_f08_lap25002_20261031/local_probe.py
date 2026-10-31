@@ -26,6 +26,7 @@ def module(name, path):
 
 P = module("local_pixels", "tests/reader_f08_windows_product_pixels_20261031/run.py")
 D = module("local_display", "tests/reader_wave3_c09/desktop.py")
+WGC = module("window_capture_analysis", "tests/reader_f08_window_capture_20261031/analyze.py")
 
 def main():
     parser = argparse.ArgumentParser()
@@ -40,28 +41,27 @@ def main():
     out.mkdir(parents=True, exist_ok=False)
     cached = ROOT / "build/f08-local-inputs/product/original.zip"
     raw, product = P.F.product(out / "product", cached.read_bytes() if cached.exists() else None)
-    observer_pin = {"source_sha": "ede0972d89e73e294a4d6c8fdf72aed067ba2b13", "run_id": "41225360464", "attempt": "1"}
-    observer_meta = P.F.api("actions/artifacts/13051612967")
-    digest = "4ae8cc3a8f73da8db3781e27f13ea26b0a71250c4570c09f9852de73d8b5398d"
-    P.need(observer_meta["digest"] == "sha256:" + digest and observer_meta["size_in_bytes"] == 94508316 and
+    observer_pin = {"source_sha": "504d21cfdd5790c6c19515c38190eca763b04ded", "run_id": "41234554947", "attempt": "1"}
+    observer_meta = P.F.api("actions/artifacts/13054893475")
+    digest = "09576fc3cd03509423b1ffa5663b9af17630cbd3f827cb113588c902538e014b"
+    P.need(observer_meta["digest"] == "sha256:" + digest and observer_meta["size_in_bytes"] == 33250 and
            observer_meta["workflow_run"]["head_sha"] == observer_pin["source_sha"] and
            str(observer_meta["workflow_run"]["id"]) == observer_pin["run_id"] and not observer_meta["expired"], "observer metadata")
-    observer_cache = ROOT / "build/f08-local-inputs/observer.zip"
+    observer_cache = ROOT / "build/f08-local-inputs/window-observer.zip"
     data = observer_cache.read_bytes() if observer_cache.exists() else P.command(
-        ["gh", "api", "repos/NoGod3524/EXReader/actions/artifacts/13051612967/zip"])
-    P.need(len(data) == 94508316 and P.hashlib.sha256(data).hexdigest() == digest, "observer ZIP")
+        ["gh", "api", "repos/NoGod3524/EXReader/actions/artifacts/13054893475/zip"])
+    P.need(len(data) == 33250 and P.hashlib.sha256(data).hexdigest() == digest, "observer ZIP")
     if not observer_cache.exists():
         observer_cache.parent.mkdir(parents=True, exist_ok=True)
         observer_cache.write_bytes(data)
     observer = out / "observer.exe"
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         list(P.F.PRODUCT.entries(archive))
-        manifest = json.loads(archive.read("manifest.json"))
-        old = json.loads(archive.read("result.json"))
-        P.need(all(manifest[k] == v for k, v in observer_pin.items()), "observer manifest")
+        metadata = json.loads(archive.read("metadata.json").decode("utf-8-sig"))
+        P.need(all(metadata[k] == v for k, v in observer_pin.items()) and metadata["invalid_window_rejected"], "observer identity")
         binary = archive.read("observer.exe")
-        P.need(P.hashlib.sha256(binary).hexdigest() == old["observer_sha256"] ==
-               manifest["files"]["observer.exe"]["sha256"], "observer bytes")
+        P.need(len(binary) == metadata["observer_bytes"] == 77824 and P.hashlib.sha256(binary).hexdigest() == metadata["observer_sha256"] ==
+               "1bf47e44dfd2f76d95a46e45213f3cbf0e425742124b6ac602d4afda9f463230", "observer bytes")
         observer.write_bytes(binary)
     P.save(out / "observer-metadata.json", observer_meta)
     report = {"execution": "local-native", "native_run_id": stamp, "source_sha": head, "machine": "LAP25002",
@@ -198,11 +198,14 @@ def main():
         if foreground:
             user.SetForegroundWindow(foreground)
         P.save(out / "result.json", report)
+        P.save(out / "manifest.json", {"execution": "local-native", "source_sha": head,
+            "files": {p.relative_to(out).as_posix(): {"sha256": P.sha(p), "bytes": p.stat().st_size}
+                      for p in sorted(out.rglob("*")) if p.is_file() and p != out / "manifest.json"}})
         print("F08_LOCAL_NATIVE_OUTPUT", str(out), flush=True)
         P.need(report["display_restored"], "original display restoration")
     try:
         for entry in report["captures"]:
-            entry["analysis"] = P.analyze(out / entry["folder"], entry)
+            entry["analysis"] = WGC.analyze(out / entry["folder"], entry, P)
             control = 119 if entry["kind"] == "shelf" else 123
             P.need(entry["analysis"]["distinct_content_frames"][control] >= 3 and
                    entry["analysis"]["native_input_dispatches"] >= 6, "observed product content changes")
