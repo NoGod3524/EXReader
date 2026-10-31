@@ -95,9 +95,12 @@ def main():
         with sqlite3.connect(db.as_uri() + "?mode=ro", uri=True, timeout=20) as connection:
             records = [json.loads(r[0]) for r in connection.execute("SELECT body_json FROM reader_revisions")]
             pending = connection.execute("SELECT count(*) FROM reader_outbox").fetchone()[0]
+        entity_keys = {r["entity_key"] for r in records if r["entity_kind"] == "book"}
+        if len(entity_keys) != 1:
+            raise AssertionError("single-book producer cannot combine unrelated entity heads")
         ids = {r["id"] for r in records if r["entity_kind"] == "book"}
         parents = {p for r in records if r["entity_kind"] == "book" for p in r["parents"]}
-        return {"heads": sorted(ids - parents), "records": records, "outbox": pending}
+        return {"entity_key": next(iter(entity_keys)), "heads": sorted(ids - parents), "records": records, "outbox": pending}
     def sync(host, heads=None):
         open_account(host)
         host.key("alt+s")
