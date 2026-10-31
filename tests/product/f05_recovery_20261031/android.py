@@ -129,6 +129,28 @@ def main():
         heads={r["id"] for r in selected}-{q for r in selected for q in r["parents"]}
         return {"records":selected,"heads":sorted(heads),"outbox":pending,
                 "files":{k:hashlib.sha256(v).hexdigest() for k,v in data.items()}}
+    def sdk_snapshot(label):
+        nonlocal serial
+        def read():
+            values={}
+            for name in ("library.db","library.db-wal"):
+                proc=subprocess.run(["adb","exec-out","run-as",PACKAGE,"cat","files/"+name],
+                    capture_output=True,timeout=20)
+                if proc.returncode==0:values[name]=proc.stdout
+                elif name=="library.db":raise AssertionError("SDK library absent")
+            return values
+        values=None
+        for _ in range(10):
+            before=read();time.sleep(.1);after=read()
+            if before==after:values=before;break
+        if values is None:raise AssertionError("SDK readonly observation unstable")
+        folder=a.output/(str(serial)+"-sdk-"+label);serial+=1;folder.mkdir()
+        for name,body in values.items():(folder/name).write_bytes(body)
+        with sqlite3.connect((folder/"library.db").resolve().as_uri()+"?mode=ro",uri=True) as db:
+            books=[{"id":row[0],"source_bytes":len(row[1]),
+                    "source_sha256":hashlib.sha256(row[1]).hexdigest()}
+                   for row in db.execute("SELECT id,source FROM books ORDER BY id")]
+        return {"books":books,"count":len(books),"observation":"stable copied SDK DB read-only"}
     try:
         # CI supplies a fresh emulator/APK whose trust includes this test CA.
         # Do not silently clear an existing caller's profile.
@@ -164,6 +186,7 @@ def main():
             "before_stat":before_stat,"after_stat":after_stat,"bytes":len(body),
             "sha256":hashlib.sha256(body).hexdigest(),"owner_idle_native_state":idle["text"],
             "sdk_original_untouched":True,"restored_before_retry":False}
+        sdk_before=sdk_snapshot("before-cancel")
         dav.hold_get=True;dav.get_blocked.clear();dav.release.clear()
         click(title,contains=True);click("接收")
         if not dav.get_blocked.wait(30):
@@ -171,12 +194,26 @@ def main():
         click("取消同步")
         dav.release.set()
         wait(lambda:find(text="已取消",contains=True))
+        sdk_cancelled=sdk_snapshot("cancelled")
+        if sdk_cancelled["books"]!=sdk_before["books"]:
+            raise AssertionError("cancel before original GET changed SDK originals")
         click(title,contains=True);click("接收")
         wait(lambda:find(text="书籍已接收",contains=True),120)
+        sdk_retry=sdk_snapshot("retry")
+        matches=[b for b in sdk_retry["books"] if b["source_sha256"]==original["source_sha256"]
+                 and b["source_bytes"]==original["source_bytes"]]
+        if len(matches)!=1 or sdk_retry["count"]!=sdk_before["count"]+1:
+            raise AssertionError("actual retry did not import exactly one exact SDK original")
+        click(title,contains=True);click("接收")
+        wait(lambda:find(text="书籍已接收",contains=True),120)
+        sdk_duplicate=sdk_snapshot("duplicate-receive")
+        if sdk_duplicate["books"]!=sdk_retry["books"]:
+            raise AssertionError("duplicate receive changed exact SDK original set")
         report["cases"].append({"name":"cancel_receive_retry","outcome":"passed",
             "actual_original_get_blocked":True,"native_cancel_clicked":True,
             "retry_native_state":"书籍已接收","original_key":selected[0]["entity_key"],
-            "sdk_exact_readback_pending":True})
+            "sdk_before":sdk_before,"sdk_cancelled":sdk_cancelled,
+            "sdk_retry":sdk_retry,"sdk_duplicate":sdk_duplicate})
         close_panel()
         before=snapshot("baseline")
         if set(before["heads"])!=set(contract["common_parent"]):
@@ -219,7 +256,7 @@ def main():
         raise RuntimeError(safe) from None
     finally:
         report["requests"]=dav.requests
-        report["uncovered"]=["receive cancellation SDK exact count/readback","uncertain PUT acknowledgment kill",
+        report["uncovered"]=["uncertain PUT acknowledgment kill",
                              "actual original offline reopening","independent artifact authentication"]
         (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
         dav.close()
