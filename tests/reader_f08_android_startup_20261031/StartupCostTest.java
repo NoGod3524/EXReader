@@ -67,6 +67,19 @@ public final class StartupCostTest extends Instrumentation {
                     comparisons.put(new JSONObject().put("query",kind).put("wall_ns",now()-started)
                         .put("cpu_ns",Debug.threadCpuTimeNanos()-cpu).put("verified_books",verified).put("heads",heads));
                 }
+                JSONArray keyComparisons=new JSONArray();
+                require(NativeCatalog.localKey(catalog.nativeOwner(),Long.MAX_VALUE)==null,"Missing local mapping stays absent");
+                for(String kind:new String[]{"lookup","local_key","local_key","lookup"}){
+                    started=now();cpu=Debug.threadCpuTimeNanos();int verified=0;
+                    for(int i=0;i<books.length;i++){
+                        String value="local_key".equals(kind)?NativeCatalog.localKey(catalog.nativeOwner(),books[i].id):
+                            catalog.localShelfBook(books[i].id).key.bookKey;
+                        require(keys[i].equals(value),"Exactly the same visible local key");verified++;
+                    }
+                    keyComparisons.put(new JSONObject().put("query",kind).put("wall_ns",now()-started)
+                        .put("cpu_ns",Debug.threadCpuTimeNanos()-cpu).put("verified_books",verified));
+                }
+                report.put("key_comparisons",keyComparisons);
                 report.put("comparisons",comparisons).put("books",books.length);
             }
             Files.write(new File(directory,"f08-startup-cost.json").toPath(),report.toString(2).getBytes(StandardCharsets.UTF_8));

@@ -1,7 +1,7 @@
-name: F08 Android startup phase diagnosis
+name: F08 Android key-only startup validation
 on:
   push:
-    branches: [codex/f08-android-startup-phases-20261031]
+    branches: [codex/f08-android-startup-key-20261031]
   workflow_dispatch:
 permissions:
   contents: read
@@ -52,7 +52,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - name: Build SDK 3.42 and the original shelf suites
         run: python3 tests/reader_f08_android_20261031/build.py
-      - name: Attribute startup on the original 2202-source seed
+      - name: Validate key lookup and original shelf cohorts
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -64,7 +64,7 @@ jobs:
           cores: 4
           emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -camera-back none
           disable-animations: false
-          script: python3 tests/reader_f08_android_startup_20261031/diagnose.py
+          script: python3 tests/reader_f08_android_startup_20261031/diagnose.py full
       - name: Seal all raw observations including failures
         if: always()
         run: python3 tests/reader_f08_android_20261031/lane.py seal
