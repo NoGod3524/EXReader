@@ -256,3 +256,45 @@ One initial push-triggered attempt only: admission10, Windows30, Android60, audi
 Source/Git/docs use only the approved native lap25002 -> saved official instabox@0.8.52 -> original VM route. All project syntax/build/test/fixture/benchmark/ZIP operations run in Actions. No Studio/C02/Apple/F08/UI or other-owner integration; no shared dirty tree, main/shared branch, PR/tag/release. Same-source proof still means artifact-carried Windows PUT store replayed by the Android test HTTPS server, not one continuously live cross-machine server. Android is an emulator. Full six-target F02 and physical-device acceptance remain open; formal95/108 and F02_accepted=false remain unchanged.
 
 Contract prepared 2026-10-31T21:34:25.333117+00:00.
+
+
+## Actual same-source initial result: failed, no rerun
+
+The sole [run41244498593 / attempt1](https://github.com/NoGod3524/EXReader/actions/runs/41244498593) completed **failure** at fixed tested source [ce6b908c5fa4447ad9f24e24c81bb68346f86420](https://github.com/NoGod3524/EXReader/commit/ce6b908c5fa4447ad9f24e24c81bb68346f86420), parent86d38aec32a53bafff80d8f01fd677e10a4e5e64. Exactly the six approved paths differ from that parent. A later document-only [skip ci] seal does not replace this CI source identity.
+
+| Job | UTC interval | Actual conclusion |
+|---|---|---|
+| admission124664998847 | 21:38:03–21:38:13 | success |
+| windows124665042028 | 21:38:16–21:43:21 | failure |
+| android124666185584 | skipped at21:43:22 | not executed |
+| authenticate124666184650 | 21:43:24–21:43:35 | failure on upstream windows |
+
+Admission completed Python syntax checks, SDK8357/core/shared-source freeze, exact six-path admission, unchanged Java assertions/timeouts/XOR1 input, unchanged original20 audit semantics, original12 controls and the receiver body after input binding. No syntax/build/runtime/fixture/ZIP processing ran locally or in the VM.
+
+Windows hash-owner setup, canonical installed prefix, SDK source gate, native display, pinned UI automation installation, frozen SDK342 build/package and installed public SDK inspector build all succeeded. The installed proof capture succeeded at21:42:46.5486398Z: rolewindows,82 retained files, static-reading, contract fingerprint1288327c2c16dc07923872830606ec7aaaf9829b5b5ab092c91103eb29725644. This is producer capture, not independent acceptance of those archives.
+
+The failed step is **Native Windows import and actual HTTPS PUT**,21:42:46–21:43:09. Its ordinary log ends with the fixed disclosure:
+F02_FAILED stage=native_transfer error_type=PermissionError.
+The process exited1. No F02_WINDOWS_CHECK completion record is present in the ordinary log. The frozen driver catches the exception without a stack or Windows error code; ordinary evidence does not identify the failing call or prove its root cause. Do not infer a UI, shell, permissions-policy or product defect from the exception class alone. The retained sender artifact is522 bytes and is not accepted as successful PUT evidence.
+
+Android did not start. New Android20 checks, offline phases, original12 controls, new4 provenance controls and separate cold-cache recomputation were **not executed in this round**. Independent summary is passedfalse/errors["AssertionError: upstream windows"]/same_source_windowsfalse/F02_acceptedfalse/formal95/108. The audit gate stopped before downloading producer/receiver archives; its small result artifact contains no accepted Windows/Android original-archive comparison. No old green outcome is substituted for this failed new combination.
+
+### Preserved actual artifacts
+
+All five API IDs, byte counts and SHA256 digests match the ordinary upload logs for this source/run/attempt. They were unexpired at seal and expire2027-01-29T21:38:01Z. Original ZIPs were not downloaded or parsed in this conversation, on the local machine or VM.
+
+| Artifact | ID | ZIP bytes | SHA-256 |
+|---|---:|---:|---|
+| f02-android-independent-41244498593-1 | [13059595020](https://github.com/NoGod3524/EXReader/actions/runs/41244498593/artifacts/13059595020) | 332 | `29810f267ec51f4dae1fc4861ba1246637cc77fcdb979ed8cde89c0e86b1d855` |
+| f02-windows-sdk-41244498593-1 | [13059575162](https://github.com/NoGod3524/EXReader/actions/runs/41244498593/artifacts/13059575162) | 16341199 | `0e93c8b2c1ce0794b17f41496375fe0fd5b2d4a54efe3006d10a13f301cb7f64` |
+| f02-windows-41244498593-1 | [13059495494](https://github.com/NoGod3524/EXReader/actions/runs/41244498593/artifacts/13059495494) | 522 | `d16a8c84e6452807d7db2ba8532da7e3842c0ae6c3b0d8bec2a68c1b73afe3a4` |
+| f02-windows-build-41244498593-1 | [13059246488](https://github.com/NoGod3524/EXReader/actions/runs/41244498593/artifacts/13059246488) | 63073 | `eeba8c29c197377250b47eb7324f7f4f2a8b30cc8e4625f82bcaeae34b1042a6` |
+| f02-android-admission-41244498593-1 | [13058486623](https://github.com/NoGod3524/EXReader/actions/runs/41244498593/artifacts/13058486623) | 531 | `281e76911e92d4f61c464afdcc3abc03fdf78f921114229bcb7b0917c7ef4a8f` |
+
+The sender report, installed proof and bounded build logs remain available for a separately authorized Actions-only diagnosis. First inspect the retained report and SDK/package evidence against the exact above artifact identities; if they lack the failing call/error code, propose minimal redacted stage/errno observation before changing product or test behavior. Reading the ZIP or starting another run is not authorized by unused minutes in this round. No speculative correction was made.
+
+The one initial round is consumed: **1/1**,115 runner-minute ceiling. Actual non-skipped job intervals total326seconds, **5.43 elapsed runner-minutes**; run wall interval335seconds. Unused ceiling does not authorize a correction or another attempt. No rerun/dispatch occurred. All earlier green and failed inputs/runs/seals remain unchanged.
+
+Source/Git/docs remain on the original VM through approved native lap25002/official saved-login InstaBox; DC remains unused. No production, Java, SDK, old Windows recipe or external owner path changed. Same-source transfer acceptance remains unproven; the previous archived-sender Android cold-cache slice remains accepted only at98d2542f3/run41240919804. Physical-device/six-target/full F02 acceptance and formal95/108 do not change.
+
+Failed-round seal prepared 2026-10-31T21:47:53.406772+00:00 / 2026-10-31T17:47:53.406772-04:00.
