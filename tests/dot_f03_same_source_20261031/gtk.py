@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 import subprocess
 import sys
-from identity import ROOT, identity, require, snapshot_receipt, write_json, read_snapshot, digest
+from identity import ROOT, identity, require, snapshot_receipt, write_json, read_snapshot, digest, SCOPE, canonical
 
 def author(a, stamp):
     """Actual GTK UI authors the lifecycle; SQL is read-only and cannot manufacture a revision."""
@@ -204,7 +204,32 @@ def author(a, stamp):
                 or a.phase=="restart","no actual authored revision upload")
         host.key("alt+F4");window("Account and Sync",False)
         host.close()
-        snapshot_receipt("gtk",catalog,program,a.output/"projection.json","actual-author-projection")
+        projected=read_snapshot(catalog)
+        host.launch();host.wait(lambda current:not current.get("shelf_loading") and
+                               not current.get("shelf_restoring"),timeout=60)
+        require(read_snapshot(catalog)==projected,"author projection changed after real restart")
+        host.close()
+        write_json(a.output/"projection.json",{**stamp,"host":"gtk","sdk_version":SCOPE["sdk_version"],
+            "program_sha256":digest(program),"native_sync_completed":True,"restart_verified":True,
+            "snapshot":projected,"snapshot_sha256":hashlib.sha256(canonical(projected)).hexdigest(),
+            "complete_product_accepted":False})
+        groups=[]
+        for group_kind,table,key,item,title in (
+            ("shelf","reader_shelves","shelf_id","root","F03 Root"),
+            ("shelf","reader_shelves","shelf_id","child","F03 Child"),
+            ("tag","reader_tags","tag_id","tag","F03 Tag"),
+            ("series","reader_series","series_id","series","F03 Series")):
+            row=next(row for row in projected[table] if row[key]==known[item])
+            value={"kind":group_kind,"name":title,"deleted":bool(row["deleted"]),
+                   "parents":["F03 Root"] if item=="child" else []}
+            if item!="root":
+                table_member={"shelf":"reader_book_shelves","tag":"reader_book_tags",
+                              "series":"reader_book_series"}[group_kind]
+                value.update(member_key=known["book_key"],member_title=a.book.stem,
+                    member_present=any(x[key]==known[item] and x["book_key"]==known["book_key"]
+                                       for x in projected[table_member]))
+            groups.append(value)
+        write_json(a.output/"expected-groups.json",groups)
         relay.save(dav,a.output/"wire","f03-gtk-"+a.phase,{"identities":known,"events":events})
         dav=None
     finally:

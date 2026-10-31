@@ -4,21 +4,92 @@ on:
 permissions:
   contents: read
 jobs:
-  blocked-pending-driver-review-and-budget:
-    # Approved stage is source preparation, zero CI. New approval required to remove.
+  gtk-author-preparation:
+    # Zero CI authorized. Real partial-chain source, not F03 acceptance.
+    if: ${{ false }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Retained GTK prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil ninja-build
+          python3 -m pip install PyYAML
+      - name: Build actual GTK and retained native build tests
+        run: python3 tests/dot_f03_same_source_20261031/build.py --host gtk --output build/f03-gtk-build.json
+      - name: Preserve original full GTK organization assertions
+        run: |
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/f03-retained-openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/dot_f03_same_source_20261031/gtk.py --mode retained --package build/package/EXReader-Linux --command-consumer build/command-consumer/command-consumer --output build/f03-retained-gtk
+          '
+      - name: Actual native lifecycle phases
+        run: |
+          python3 tests/dot_f03_same_source_20261031/fixtures.py --output build/f03-originals
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/f03-openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/dot_f03_same_source_20261031/gtk.py --mode author --phase create --profile build/f03-author-profile --book build/f03-originals/gtk-organization.txt --package build/package/EXReader-Linux --output build/f03-author/create
+            previous=create
+            for phase in delete restore member-remove member-restore restart; do
+              python3 tests/dot_f03_same_source_20261031/gtk.py --mode author --phase "$phase" --profile build/f03-author-profile --book build/f03-originals/gtk-organization.txt --package build/package/EXReader-Linux --output "build/f03-author/$phase" --previous "build/f03-author/$previous/wire/state.json"
+              previous="$phase"
+            done
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f03-native-gtk
+          path: |
+            build/f03-author/
+            build/f03-retained-gtk/
+            build/f03-originals/manifest.json
+            build/f03-gtk-build.json
+            !build/**/key.pem
+            !build/**/private/**
+          if-no-files-found: error
+  windows-receive-preparation:
+    if: ${{ false }}
+    needs: gtk-author-preparation
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: actions/download-artifact@v4
+        with: {name: f03-native-gtk, path: build/f03-input}
+      - run: python -m pip install uiautomation==2.0.29
+      - name: Build same-source Windows and retained build checks
+        shell: pwsh
+        run: |
+          python tests/dot_f03_same_source_20261031/build.py --host windows --output build/f03-windows-build.json
+          if ($LASTEXITCODE) { throw 'Windows build failed' }
+      - name: Native receive and restart each GTK state
+        shell: pwsh
+        run: |
+          foreach ($phase in @('create','delete','restore','member-remove','member-restore','restart')) {
+            python tests/dot_f03_same_source_20261031/windows.py --mode receive --package build/c09/package/EXReader --previous "build/f03-input/f03-author/$phase/wire/state.json" --expectations "build/f03-input/f03-author/$phase/projection.json" --output "build/f03-windows/$phase"
+            if ($LASTEXITCODE) { throw "Actual Windows receive failed: $phase" }
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f03-native-windows
+          path: |
+            build/f03-windows/
+            build/f03-windows-build.json
+            build/c09/report.json
+            !build/**/key.pem
+          if-no-files-found: error
+  acceptance-disabled:
     if: ${{ false }}
     runs-on: ubuntu-22.04
     timeout-minutes: 1
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Reject preparation as acceptance
-        run: |
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          scope = json.loads(Path("tests/dot_f03_same_source_20261031/scope.json").read_text())
-          assert scope["ci_authorized"] is False and scope["complete"] is False
-          raise SystemExit("F03 preparation only; no six-target acceptance")
-          PY
+      - run: |
+          echo 'Preparation only: Android/Apple orchestration, six-host original suites and manifest incomplete.'
+          exit 1
