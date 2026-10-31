@@ -26,7 +26,9 @@ from protocols import (SDK, C01, ABI2_FAILURES, need, sha, hexadecimal, integer,
                        input_record, prepared_record, legacy_pack, sqlite_content)
 
 ROLES = {"native-windows", "native-linux", "persistent-gate", "registry-product",
-         "host-android", "host-macos", "host-gtk"}
+         "host-android", "host-macos", "host-ios", "host-gtk",
+         "posix-native-linux", "posix-native-macos",
+         "posix-migration-linux", "posix-migration-macos"}
 OWNER_CASES = {"registered", "unregistered", "pending", "missing-gate", "replaced-target",
                "actual-host-final-release"}
 CLI_CASES = {"unknown-check-never-creates", "explicit-create-and-check", "create-never-overwrites",

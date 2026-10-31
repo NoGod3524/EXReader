@@ -68,6 +68,11 @@ jobs:
           python -m py_compile tests/migration/gtk_c02_host_20261031/run.py
           python -c "import sys;sys.path.insert(0,'tools');from host_font import fetch;fetch('build/host-font')"
           python tests/migration/gtk_c02_host_20261031/run.py --host build/gtk/c02-gtk-host-check --admission stage-c02/bin/exreader-c02-admission --font build/host-font/Reader.otf --output "$C02_GTK_EVIDENCE" 2>&1 | tee evidence/host.log
+      - name: Independently decode raw authority and reject resealed corruptions
+        run: |
+          set -euo pipefail
+          python -m py_compile tests/migration/c02_completion_audit_20261031/posix_protocols.py tests/migration/c02_completion_audit_20261031/gtk_snapshots.py
+          python tests/migration/c02_completion_audit_20261031/gtk_snapshots.py --root "$C02_GTK_EVIDENCE" --output evidence/native-audit 2>&1 | tee evidence/native-audit.log
       - name: Package the actual host with explicit enrollment
         run: |
           set -euo pipefail

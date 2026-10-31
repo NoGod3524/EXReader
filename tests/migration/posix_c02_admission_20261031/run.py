@@ -79,12 +79,12 @@ def main():
     print(api_stdout,end="");print(api_stderr,end="",file=sys.stderr)
     assert len(api_summaries)==1
     api=api_summaries[0]
-    assert api["source"]==os.environ["GITHUB_SHA"] and api["cases"]==16 and len(api_cases)==16
+    assert api["source"]==os.environ["GITHUB_SHA"] and api["cases"]==17 and len(api_cases)==17
     assert api["checks"]==sum(c["checks"] for c in api_cases) and api["failed"]==sum(c["failed"] for c in api_cases)==0
     assert api["passed"] is True and api["migration_api"] is True and api["process_kill"] is True
     assert api["actual_sdk"] is False and api["host_wiring"] is False and api["power_loss"] is False
     assert api_result.returncode==0
-    print(f"POSIX-C02-MIGRATION-API cases=16 checks={api['checks']} failed=0")
+    print(f"POSIX-C02-MIGRATION-API cases=17 checks={api['checks']} failed=0")
     print(f"POSIX-C02-SCOPED cases=10 checks={scoped['checks']} failed=0")
     print(f"POSIX-C02-ADMISSION cases={r['cases']} checks={r['checks']} failed=0")
     return 0

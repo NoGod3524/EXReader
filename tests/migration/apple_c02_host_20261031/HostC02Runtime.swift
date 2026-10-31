@@ -15,7 +15,7 @@ private func require(_ condition: Bool, _ message: String) throws {
 }
 private func digest(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
 private func writeJSON(_ value: Any, _ path: URL) throws {
-    try JSONSerialization.data(withJSONObject: value, options: [.sortedKeys, .prettyPrinted]).write(to: path)
+    try JSONSerialization.data(withJSONObject: value, options: [.sortedKeys, .prettyPrinted]).write(to: path, options: .atomic)
 }
 private func identity(_ path: URL) throws -> [String: Any] {
     let descriptor = path.path.withCString { open($0,O_RDONLY | O_NOFOLLOW | O_CLOEXEC) }
