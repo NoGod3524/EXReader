@@ -52,7 +52,7 @@ jobs:
     name: Native ${{ matrix.platform }}
     needs: sdk
     runs-on: macos-15
-    timeout-minutes: ${{ (github.event_name == 'push' || inputs.diagnostic) && 20 || 90 }}
+    timeout-minutes: ${{ (github.event_name == 'push' || inputs.diagnostic) && 25 || 90 }}
     strategy:
       fail-fast: false
       matrix:

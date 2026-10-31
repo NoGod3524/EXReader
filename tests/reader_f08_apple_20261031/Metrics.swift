@@ -15,6 +15,25 @@
         record("f08-scroll-metrics", ready(""))
     }
 
+    func test14F08NativeShelfAnimationSignposts() {
+        search("")
+        _ = ready("")
+        let options = XCTMeasureOptions()
+        options.iterationCount = 5
+        options.invocationOptions = [.manuallyStop]
+        measure(metrics: [XCTOSSignpostMetric(subsystem: "org.exreader.f08", category: "NativeUI", name: "ShelfScroll"),
+                          XCTMemoryMetric(application: app)], options: options) {
+            for _ in 0..<10 { scroll(previous: false) }
+            stopMeasuring()
+            for _ in 0..<10 { scroll(previous: true) }
+            _ = ready("")
+        }
+        let value = ready("")
+        record("f08-native-animation-scroll-metrics", value)
+        XCTAssertGreaterThan(value["f08_native_scroll_signpost_starts"] as? Int ?? 0, 0)
+        XCTAssertEqual(value["f08_native_scroll_signpost_starts"] as? Int, value["f08_native_scroll_signpost_ends"] as? Int)
+    }
+
 // F08_STANDALONE_CLASSES
 
 final class F08LaunchUITests: XCTestCase {
@@ -51,7 +70,7 @@ final class F08LaunchUITests: XCTestCase {
         while Date() < end {
             if let value = shelf(), value["query"] as? String == "", value["loading"] as? Bool == false,
                value["restoring_layout"] as? Bool == false, value["generation"] as? Int == value["applied_generation"] as? Int,
-               (!requireExtendedTask || value["f08_launch_task_status"] as? String == "finished"),
+               (!requireExtendedTask || ["finished", "native-layout-finished"].contains(value["f08_launch_task_status"] as? String ?? "")),
                let visible = value["visible_keys"] as? [String], !visible.isEmpty,
                !(value["top_key"] as? String ?? "").isEmpty {
                 let field = app.descendants(matching: .any).matching(identifier: "library.search").firstMatch
@@ -69,12 +88,29 @@ final class F08LaunchUITests: XCTestCase {
             app.launchArguments = ["-EXRShelfSeed", "-EXRFreshState", "1", "-EXRF08PhaseOnly"]
         }
         let options = XCTMeasureOptions(); options.iterationCount = 5; options.invocationOptions = [.manuallyStop]
-        measure(metrics: [XCTApplicationLaunchMetric(waitUntilResponsive: responsive), XCTClockMetric()], options: options) {
+        var metrics: [XCTMetric] = [XCTClockMetric()]
+        var nativeLaunchMetricAvailable = false
+#if os(iOS)
+        metrics.append(XCTApplicationLaunchMetric(waitUntilResponsive: responsive))
+        nativeLaunchMetricAvailable = true
+#endif
+        measure(metrics: metrics, options: options) {
+            let requestUptime = ProcessInfo.processInfo.systemUptime
             app.launch()
             let value = ready(requireExtendedTask: extendedTask)
             stopMeasuring()
-            samples.append(["native_wait_until_responsive": responsive, "native_extended_task_enabled": extendedTask, "shelf": value,
-                "scope": "fresh process and fresh copy of the frozen 2202-original library; XCTest clock includes launch/quiescence/AX polling"])
+            let phases = value["f08_launch_phases"] as? [[String: Any]] ?? []
+            let nativeReady = phases.first(where: { $0["phase"] as? String == "native-layout-ready" })?["uptime_s"] as? Double
+            var sample: [String: Any] = ["native_wait_until_responsive": responsive, "native_extended_task_requested": extendedTask,
+                "native_extended_task_enabled": extendedTask && nativeLaunchMetricAvailable,
+                "native_launch_metric_available": nativeLaunchMetricAvailable, "shelf": value,
+                "launch_request_uptime_s": requestUptime, "test_driver_pid": ProcessInfo.processInfo.processIdentifier,
+                "scope": "fresh process and fresh copy of the frozen 2202-original library; XCTest clock includes launch/quiescence/AX polling"]
+            if let nativeReady {
+                sample["native_layout_ready_uptime_s"] = nativeReady
+                sample["native_layout_ready_from_launch_request_upper_bound_ms"] = (nativeReady - requestUptime) * 1000
+            }
+            samples.append(sample)
             let screen = XCTAttachment(screenshot: app.screenshot()); screen.name = "f08-launch-ready"; screen.lifetime = .keepAlways; add(screen)
             app.terminate()
             XCTAssertTrue(app.wait(for: .notRunning, timeout: 15))

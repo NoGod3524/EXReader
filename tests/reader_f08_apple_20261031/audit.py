@@ -77,7 +77,7 @@ def main():
                 _,metrics=extract_metrics(raw/"metrics.xcresult")
                 need(metrics==json.loads((raw/"performance-metrics.json").read_text()),"xcresult metrics differ")
                 entry["performance_metrics"]=metrics
-            for label in ("launch","reader"):
+            for label in ("shelf-animation","launch","reader"):
                 result_path=raw/(label+".xcresult");saved_path=raw/(label+"-performance-cases.json")
                 if result_path.exists() and saved_path.exists():
                     _,cases=extract_metrics(result_path,with_cases=True)
