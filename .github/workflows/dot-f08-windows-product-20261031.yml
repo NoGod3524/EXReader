@@ -6,6 +6,9 @@ on:
 permissions:
   contents: read
   actions: read
+env:
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: '1'
 jobs:
   sample:
     runs-on: windows-2022

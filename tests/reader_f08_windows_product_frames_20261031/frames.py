@@ -9,9 +9,9 @@ from build import identity, need, save, sha, command
 sys.path.insert(0,str(ROOT/"tests/reader_f08_windows_etw_20261031"))
 import replay_audit as REPLAY
 from capture import PROVIDERS
-BASE="92f1ad32d9d4877713779464f4069de93b7b869c"
-PIN={"source_sha":"e67d913e7e21a2c819bce7f706d5776787943308","run_id":"41187934685","attempt":"1",
-     "artifact_id":13037922101,"bytes":44494735,"digest":"463e29a59c8174a7d236451cddd91d6b675970dd80b30fa8a52b4a012523c14a"}
+BASE="6bb0a7083c218b8899f9451336654c650b53495c"
+PIN={"source_sha":"6bb0a7083c218b8899f9451336654c650b53495c","run_id":"41188896369","attempt":"1",
+     "artifact_id":13038192218,"bytes":46042724,"digest":"94433d419c3bdee542e968d682a2ede7102527036a4a64e82b8cdf77a0145877"}
 OUT=ROOT/"build/f08-windows-product-frames"
 FILES={"tests/reader_f08_windows_product_frames_20261031/frames.py",".github/workflows/dot-f08-windows-product-frames-20261031.yml"}
 def guard():
@@ -56,12 +56,21 @@ def product(target,provided=None):
     need(package["passed"] is True and package["source_sha"]==PIN["source_sha"] and
          package["sdk_version"]=="3.42.0" and package["selftest_checks"]>=26,"native package")
     need((raw/"profile.json").read_bytes()==(ROOT/"tests/reader_f08_windows_product_20261031/profile.json").read_bytes(),"fixed platform")
+    sample=json.loads((raw/"sample-result.json").read_text())
+    verification=json.loads((raw/"observations/verification.json").read_text())
+    need(sample["collection_complete"] is True and verification["accepted"] is True and
+         verification["checks_passed"]==verification["checks_total"]==20,"complete original observations")
+    budgets=PRODUCT.raw_budgets(raw,json.loads((raw/"observations/summary.json").read_text()),
+                               json.loads((raw/"profile.json").read_text()))
+    need(budgets==sample["budget_evaluation"] and budgets["non_frame_budget_passed"],"same-program memory and interaction budgets")
     return raw,{"pin":PIN,"program_sha256":built["program_sha256"],"build_authenticated":True,
-                "producer_observations_accepted":False,"unchanged_helpers":built["unchanged_helpers"]}
+                "producer_observations_accepted":True,"non_frame_budgets":budgets,"unchanged_helpers":built["unchanged_helpers"]}
 def execute(args,log,checked=True,timeout=180):
     done=subprocess.run(list(map(str,args)),cwd=ROOT,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=timeout)
     Path(log).write_bytes(done.stdout)
-    if checked:need(done.returncode==0,"command failed: "+str(args[0]))
+    if checked and done.returncode:
+        print(done.stdout.decode("utf-8",errors="replace"),flush=True)
+        need(False,"command failed: "+str(args[0]))
     return done
 def analyze(folder,pid,frequency,native):
     rows=list(REPLAY.events(folder/"events.xml"))
@@ -176,8 +185,7 @@ def capture():
                         emit(host,{"kind":"close","pid":host.process.pid,"qpc":qpc(),"exit":host.process.poll()})
                         time.sleep(0.25)
                         execute(["logman","stop",host._f08_session,"-ets"],folder/"stop.log");host._f08_started=False
-                        execute(["tracerpt",folder/"raw.etl","-rts","-of","XML","-o",folder/"events.xml",
-                                 "-summary",folder/"trace-summary.txt","-y"],folder/"tracerpt.log")
+                        execute(["tracerpt",folder/"raw.etl","-rts","-of","XML","-o",folder/"events.xml","-y"],folder/"tracerpt.log")
                         entry["analysis"]=analyze(folder,host.process.pid,frequency.value,folder/"native.jsonl")
                         need(entry["analysis"]["composition"]["target_window_cycles"]>0 and
                              entry["analysis"]["composition"]["retirement_join"]["valid_frame_id_retirement_joins"]>0,

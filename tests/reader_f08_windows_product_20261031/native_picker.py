@@ -34,6 +34,8 @@ def click(host,name,timeout=2000):
     adapter=PickerHost(host)
     try:
         if W.system_dialog(adapter):raise P.MeasurementFault("unexpected pre-existing native dialog")
+        host.wait_enabled("import",60)
+        entry["import_ready_ms"]=P.now_ms()
         # BM_CLICK enters a modal native picker in the compact product. Post the
         # real button click so the driver can operate that dialog while it is open.
         W.post_click(host.window,P.IDS["import"])
