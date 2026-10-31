@@ -25,6 +25,10 @@ jobs:
           if ($record.kind -ne 'fatal') { throw "Invalid window result" }
           & build/f08-window-observer/observer.exe --check-png build/f08-window-observer/image-selftest.png
           if ($LASTEXITCODE -ne 0) { throw "Lossless PNG roundtrip failed" }
+          & build/f08-window-observer/observer.exe --check-limits > build/f08-window-observer/limit-selftest.json
+          if ($LASTEXITCODE -ne 0) { throw "Bounded capture argument controls failed" }
+          $limits = Get-Content -LiteralPath build/f08-window-observer/limit-selftest.json | ConvertFrom-Json
+          if (-not $limits.passed -or $limits.capture_limit_checks -ne 8) { throw "Capture argument control inventory" }
           $LASTEXITCODE = 0
           $metadata = @{
             source_sha = $env:GITHUB_SHA
@@ -34,6 +38,7 @@ jobs:
             observer_bytes = (Get-Item -LiteralPath build/f08-window-observer/observer.exe).Length
             invalid_window_rejected = $true
             png_roundtrip_passed = $true
+            capture_limit_controls_passed = $true
             product_sampled = $false
             f08_accepted = $false
           }

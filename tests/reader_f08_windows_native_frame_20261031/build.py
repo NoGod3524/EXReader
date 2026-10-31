@@ -3,7 +3,7 @@ import importlib.util,json,os,subprocess,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 BASE="8a4f7f90b33142ccc4dfb4722c8c99a8f728eac0"
-FILES={"src/library.c","tests/reader_f08_windows_native_frame_20261031/library_journal.c","examples/reader.c","apps/reader/desktop/windows_shelf.inc",
+FILES={"tests/reader_f08_windows_native_frame_20261031/README.md","tests/reader_f08_windows_native_frame_20261031/native_full.py","tests/reader_f08_windows_native_frame_20261031/native_audit.py","src/library.c","tests/reader_f08_windows_native_frame_20261031/library_journal.c","examples/reader.c","apps/reader/desktop/windows_shelf.inc",
  "tests/reader_f08_window_capture_20261031/observer.cpp",".github/workflows/f08-window-capture-20261031.yml",
  "apps/reader/desktop/catalog_sdk.c","apps/reader/desktop/catalog_sdk.h","apps/reader/desktop/windows_catalog.inc",
  "apps/reader/desktop/windows_feature_integration.cmake","tests/reader_f08_windows_product_20261031/build.py",
@@ -33,8 +33,11 @@ def main():
   cache=(B.EVIDENCE/"host-CMakeCache.txt").read_text()
   B.need("EXR_WINDOWS_FRAME_REVIEW:BOOL=ON" in cache,"native diagnostic option compiled")
   (B.EVIDENCE/"native-source").mkdir()
-  for name in ("local_probe.py","replay.py","trace.h","pixels.py"):
+  for name in ("local_probe.py","replay.py","trace.h","pixels.py","native_full.py","native_audit.py","README.md"):
    (B.EVIDENCE/"native-source"/name).write_bytes((Path(__file__).parent/name).read_bytes())
+  (B.EVIDENCE/"native-source/seed_shelf.c").write_bytes((ROOT/"tests/windows_host/seed_shelf.c").read_bytes())
+  controls=subprocess.run([sys.executable,str(Path(__file__).parent/"native_audit.py"),"--self-test"],capture_output=True,timeout=30)
+  (B.EVIDENCE/"native-full-controls.log").write_bytes(controls.stdout+controls.stderr);B.need(controls.returncode==0,"full native count/body guard controls")
   B.save(B.EVIDENCE/"native-frame-build.json",{**B.identity(),"instrumented":True,
    "operation_boundary":"worker-entry to same-generation GDI execution completion",
    "ui_frame_candidate_boundary":"ready-frame native UI accept to same-generation GDI execution completion",
