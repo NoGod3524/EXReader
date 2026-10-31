@@ -38,6 +38,7 @@ static struct {
   unsigned long generation, received_attempt;
   int want_stage, want_receive, exit_wanted, closing_session, dialog_close_wanted;
   int have_secret, recv_failed, recv_done, stage_failed;
+  int session_stale; /* credentials changed after the session copied its authorization */
   wchar_t notice[512], detail_text[768];
 } acct;
 
