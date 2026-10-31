@@ -8,7 +8,8 @@
 static GtkWidget *target;
 static unsigned emissions,callbacks;
 static gboolean painted;
-static F08ShelfContent observed_content;
+static F08ShelfContent observed_content,viewport_content;
+static unsigned viewport_callbacks;
 static gboolean hook(GSignalInvocationHint *hint,guint n,const GValue *v,gpointer data){
  (void)hint;(void)data;
  if(n && g_value_get_object(v)==G_OBJECT(target))emissions++;
@@ -17,17 +18,21 @@ static gboolean hook(GSignalInvocationHint *hint,guint n,const GValue *v,gpointe
 static gboolean passive(GtkWidget *widget,cairo_t *cr,gpointer data){
  (void)data;callbacks++;observed_content=f08_shelf_content(widget,cr);return FALSE;
 }
+static gboolean passive_viewport(GtkWidget *widget,cairo_t *cr,gpointer data){
+ (void)data;viewport_callbacks++;viewport_content=f08_shelf_content_for_draw(target,widget,cr);return FALSE;
+}
 static void after_paint(GdkFrameClock *clock,gpointer data){
  (void)clock;(void)data;painted=TRUE;
 }
-static cairo_surface_t *render(void){
- int width=gtk_widget_get_allocated_width(target),height=gtk_widget_get_allocated_height(target);
+static cairo_surface_t *render_widget(GtkWidget *widget){
+ int width=gtk_widget_get_allocated_width(widget),height=gtk_widget_get_allocated_height(widget);
  g_assert_cmpint(width,>,0);g_assert_cmpint(height,>,0);
  cairo_surface_t *s=cairo_image_surface_create(CAIRO_FORMAT_ARGB32,width,height);
- cairo_t *cr=cairo_create(s);gtk_widget_draw(target,cr);cairo_destroy(cr);
+ cairo_t *cr=cairo_create(s);gtk_widget_draw(widget,cr);cairo_destroy(cr);
  cairo_surface_flush(s);g_assert_cmpint(cairo_surface_status(s),==,CAIRO_STATUS_SUCCESS);
  return s;
 }
+static cairo_surface_t *render(void){return render_widget(target);}
 int main(int argc,char **argv){
  gtk_init(&argc,&argv);
  g_object_set(gtk_settings_get_default(),"gtk-enable-animations",FALSE,NULL);
@@ -78,8 +83,30 @@ int main(int argc,char **argv){
  g_assert_cmpfloat(observed_content.scroll,>=,observed_content.y);
  g_assert_cmpfloat(observed_content.scroll,<,observed_content.y+observed_content.height);
  cairo_surface_destroy(shifted);
+ GtkWidget *viewport=gtk_widget_get_ancestor(target,GTK_TYPE_VIEWPORT);g_assert_nonnull(viewport);
+ cairo_surface_t *viewport_before=render_widget(viewport);
+ gulong viewport_handler=g_signal_connect(viewport,"draw",G_CALLBACK(passive_viewport),NULL);
+ unsigned list_before=callbacks;
+ cairo_surface_t *viewport_after=render_widget(viewport);
+ unsigned cached_list_draws=callbacks-list_before;
+ g_assert_cmpuint(viewport_callbacks,==,1);
+ g_assert_true(viewport_content.available);g_assert_true(viewport_content.clip_intersects);
+ g_assert_true(viewport_content.target_drawable);g_assert_cmpint(viewport_content.draw_target,==,2);
+ g_assert_cmpint(viewport_content.top_id,==,106);
+ g_assert_cmpint(viewport_content.draw_y,<,0);
+ gsize viewport_bytes=(gsize)cairo_image_surface_get_stride(viewport_before)*cairo_image_surface_get_height(viewport_before);
+ const guchar *va=cairo_image_surface_get_data(viewport_before),*vb=cairo_image_surface_get_data(viewport_after);
+ g_assert_cmpint(memcmp(va,vb,viewport_bytes),==,0);
+ gboolean viewport_nonzero=FALSE;for(gsize i=0;i<viewport_bytes;i++)if(va[i]){viewport_nonzero=TRUE;break;}
+ g_assert_true(viewport_nonzero);
+ /* A cached composition must remain observable without a fresh list draw. */
+ g_assert_cmpuint(cached_list_draws,==,0);
+ g_signal_handler_disconnect(viewport,viewport_handler);
+ cairo_surface_destroy(viewport_before);cairo_surface_destroy(viewport_after);
  cairo_surface_t *tiny=cairo_image_surface_create(CAIRO_FORMAT_ARGB32,1,1);
  cairo_t *outside=cairo_create(tiny);
+ F08ShelfContent wrong_context=f08_shelf_content_for_draw(target,window,outside);
+ g_assert_false(wrong_context.available);
  F08ShelfContent clipped=f08_shelf_content(target,outside);
  g_assert_true(clipped.available);g_assert_false(clipped.clip_intersects);
  g_object_set_data(G_OBJECT(later),"book-id",NULL);
@@ -87,8 +114,10 @@ int main(int argc,char **argv){
  cairo_destroy(outside);cairo_surface_destroy(tiny);
  g_print("{\"passed\":true,\"hook_only\":%u,\"with_handler\":%u,\"callbacks\":%u,"
          "\"pixels_equal\":true,\"nonempty\":true,\"pixel_sha256\":\"%s\","
-         "\"gtk\":\"%u.%u.%u\",\"shelf_content_control\":true,\"initial_top_id\":101,\"scrolled_top_id\":106,\"clip_rejected\":true,\"missing_id_rejected\":true}\n",hook_only,observed_emissions,observed_callbacks,digest,
-         gtk_get_major_version(),gtk_get_minor_version(),gtk_get_micro_version());
+         "\"gtk\":\"%u.%u.%u\",\"shelf_content_control\":true,\"initial_top_id\":101,\"scrolled_top_id\":106,\"clip_rejected\":true,\"missing_id_rejected\":true,"
+         "\"viewport_composition_control\":true,\"viewport_pixels_equal\":true,\"viewport_nonempty\":true,"
+         "\"cached_list_draws\":%u,\"viewport_callbacks\":%u,\"wrong_context_rejected\":true}\n",hook_only,observed_emissions,observed_callbacks,digest,
+         gtk_get_major_version(),gtk_get_minor_version(),gtk_get_micro_version(),cached_list_draws,viewport_callbacks);
  g_free(digest);g_signal_handler_disconnect(target,handler);
  g_signal_remove_emission_hook(signal,emission);
  cairo_surface_destroy(unhandled);cairo_surface_destroy(observed);gtk_widget_destroy(window);
