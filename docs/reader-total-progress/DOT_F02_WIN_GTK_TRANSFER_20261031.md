@@ -121,3 +121,14 @@ Both separately authorized runs are consumed: original 1/1 and canonical-correct
 There is no third-run authorization. The next permitted action is read-only diagnosis of the exact
 organization CMake argument/cache discrepancy; a code/workflow correction or another run needs its own grant.
 This document-only seal uses [skip ci]. Formal acceptance stays 95/108 (87.96%), F02 not promoted.
+
+## Separately approved third verification: explicit SDK string
+
+User approval is Sentinel_73a990a2e55881919c4abca76df008a0, relayed by root at 04:35Z.
+This newly authorized one run changes only this package's workflow argument wiring:
+the two PowerShell SDK-version tokens (organization cloud reader and original inspector) are quoted,
+typed -DEXR_SDK_VERSION:STRING=3.42.0. After successful configure each actual CMakeCache must contain
+exactly one EXR_SDK_VERSION:STRING=3.42.0 line; failure is not suppressed.
+The existing quoted reference build, Bash invocation, old tests, CMake/SDK guards and product are unchanged.
+The first two failed runs remain above. This is one additional 240/150/20-minute verification, not unlimited retries.
+Third-run result remains pending; no new transfer success or formal acceptance is claimed.
