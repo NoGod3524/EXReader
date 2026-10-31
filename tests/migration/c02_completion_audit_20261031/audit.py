@@ -25,6 +25,7 @@ from android_host import audit_android_host, android_negative_controls
 from apple_host import audit_apple_host, apple_negative_controls
 from posix_native import audit as audit_posix_native
 from posix_owner import audit_posix_owner, posix_owner_negative_controls
+from posix_repair_negatives import repair_negative_controls
 from windows_products import audit_windows_products, windows_products_negative_controls, diagnose_windows_products
 from gtk_snapshots import pending_negative_controls
 
@@ -1010,6 +1011,8 @@ def main():
         if role in ("posix-migration-linux", "posix-migration-macos"):
             host_controls.extend(posix_owner_negative_controls(
                 files,spec,source,git_bytes,output/role/"negative-controls"))
+            host_controls.extend(repair_negative_controls(
+                files,spec,source,git_bytes,output/role/"repair-negative-controls"))
     if windows is None:
         need(args.allow_incomplete and len(host_controls) >= 7,
              "host-components-require-independent-native-negatives")

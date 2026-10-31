@@ -61,6 +61,9 @@ jobs:
           allowed.add('tests/migration/posix_c02_migration_20261031/repair_cases.py')
           allowed.add('tests/migration/c02_completion_audit_20261031/windows_products.py')
           allowed.add('tests/migration/c02_completion_audit_20261031/posix_repair.py')
+          allowed.add('tests/migration/c02_completion_audit_20261031/posix_repair_negatives.py')
+          allowed.add('tests/migration/c02_completion_audit_20261031/qualification.d326.json')
+          allowed.add('extras/migration/posix_c02_admission_20261031/REPAIR_PROTOCOL.md')
           assert set(pathlib.Path('changed-paths.txt').read_text().splitlines())==allowed
           PY
           git diff --exit-code a8d0b162d8c21617e4c2c837e3eb2b2174bbf69b HEAD -- extras/migration/windows_coordinator_hardening_20261030 tests/migration/windows_coordinator_hardening_20261030 extras/migration/windows_coordinator_cas_20261030 tests/migration/windows_coordinator_cas_20261030

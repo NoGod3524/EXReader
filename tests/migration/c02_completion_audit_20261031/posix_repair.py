@@ -1423,11 +1423,16 @@ def audit_repair_cases(owner,source,git_bytes):
     if owner.spec["role"] == "posix-migration-macos":
         rows = [r for _,r in owner.commands["repair-cases/"+folder] if
                 owner.binary_map[r["command"][0]][0] == "acl-system"]
-        need([r["command"] for r in rows] == [
+        acl_valid = ([r["command"] for r in rows] == [
              ["/bin/ls","-lde",authority],["/bin/chmod","+a#","0","everyone allow write",authority],
              ["/bin/ls","-lde",authority],["/bin/chmod","-a#","0",authority]] and all(r["exit"] == 0 for r in rows) and
-             re.search(r"^\s*0:\s+group:everyone\s+allow\s+.*write",rows[2]["stdout"],re.M),
-             "pr-darwin-allow-ace-real-system-observation")
+             re.search(r"^\s*0:\s+group:everyone\s+allow\s+.*write",rows[2]["stdout"],re.M))
+        if not acl_valid:
+            import json
+            print("C02-REPAIR-ACL-DIAGNOSTIC "+json.dumps([
+                dict(command=r["command"],exit=r["exit"],stdout=r["stdout"][:4096]) for r in rows[:4]],
+                ensure_ascii=False),flush=True)
+        need(acl_valid, "pr-darwin-allow-ace-real-system-observation")
     else:
         o = owner.json("repair-cases/"+folder+"/acl-system-call.json")
         raw = struct.pack("<I",2)+b"".join(struct.pack("<HHI",t,p,u) for t,p,u in (

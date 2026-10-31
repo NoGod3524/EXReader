@@ -908,3 +908,26 @@ Subsequent changes to independent decoders and documentation do not rebuild or
 replace those retained original packages. Explicit Repair has passed both actual
 20-case native consumers; full semantic decoding and new adversarial replays
 are being submitted against those exact originals.
+
+
+The first full Repair bridge audit 41193042202/A1 at d97b1ae021 failed in
+unknown-repair-objects-refused's unknown-archive classification. The original
+archive was correctly rejected as pr-only-qualified-sdk-proof-factory-files;
+the case verifier expected the generic pr-unknown-or-extra-repair-object label.
+Only that expected exact refusal class changes in 94a62df7a181f570531ead68eac8060aa303c68a.
+The production decoder/refusal rules and all actual producer files are unchanged.
+Preserve failure artifact 13039791949, 53914063 bytes, SHA256
+a4567fc86ea48709140f2ceacd9bb9a50a28ce9e4d5260cf53aa5727dd18489d.
+Retry 41193219206/A1 uses the same six original d326 ZIPs. The new Repair
+adversarial replays will be added after this positive bridge check; successful
+component evidence still cannot claim complete-c02.
+
+
+Repair bridge retry 41193219206/A1, job 124514073960, passed the Linux
+original 36/65/135 evidence, all twenty new Repair cases and the original eight
+owner negative controls before failing the macOS ACL-system observation assertion.
+Preserve artifact 13039941989, 172415862 bytes, SHA256
+ca36a8002a164e4fa444ae831b1c774a29ffe74b3482c7f6024c37a801ca9523.
+The exact original macOS command/stdout evidence is being exposed in bounded
+Actions diagnostics before selecting any correction. No production object or
+native refusal requirement is changed by this diagnostic.
