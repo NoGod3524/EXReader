@@ -4,6 +4,7 @@ import argparse
 import base64
 import secrets
 import stat
+import sqlite3
 import hashlib
 import json
 import os
@@ -159,7 +160,19 @@ def main():
             "F05_accepted":False,"cases":[],"producer":origin["author"],
             "simultaneous_online_peers":False,"generated_fixture_credentials_only":True}
     trusted=False
+    app_folder=None
     label="macOS" if a.platform=="macos" else "iOS"
+    def readback(folder):
+        with sqlite3.connect((folder/"library.sqlite").resolve().as_uri()+"?mode=ro",uri=True) as db:
+            originals=[{"id":row[0],"bytes":len(row[1]),"sha256":hashlib.sha256(row[1]).hexdigest()}
+                       for row in db.execute("SELECT id,source FROM books ORDER BY id")]
+        with sqlite3.connect((folder/"reader-catalog.db").resolve().as_uri()+"?mode=ro",uri=True) as db:
+            revisions=[json.loads(row[0]) for row in db.execute("SELECT body_json FROM reader_revisions")]
+        selected=[row for row in revisions if row["entity_kind"]=="book"
+                  and row["entity_key"]==contract["entity_key"]]
+        heads={row["id"] for row in selected}-{parent for row in selected for parent in row["parents"]}
+        return {"originals":originals,"records":selected,"heads":sorted(heads),
+                "observation":"actual app terminated; readonly SDK and product catalog"}
     try:
         if a.platform=="macos":
             subprocess.run(["sudo","security","add-trusted-cert","-d","-r","trustRoot",
@@ -185,6 +198,11 @@ def main():
                 content=cache.read_bytes()
                 if hashlib.sha256(content).hexdigest()!=contract["entity_key"].split(":",1)[1]:
                     raise AssertionError("cache bytes differ from actual peer original")
+                app_folder=cache.parent.parent
+                baseline=readback(app_folder)
+                if baseline["originals"] or set(baseline["heads"])!=set(contract["common_parent"]):
+                    raise AssertionError("baseline received catalog must not import SDK original before native open")
+                report["baseline_readback"]=baseline
                 before=cache.stat()
                 quarantine=cache.parent.parent/("f05-cache-quarantine-"+secrets.token_hex(12))
                 quarantine.mkdir(mode=0o700)
@@ -217,6 +235,14 @@ def main():
             if done.returncode:raise AssertionError("actual Apple UI failed: "+name)
             if number==1 and not server.get_blocked.is_set():
                 raise AssertionError("real cache-miss receive gate never reached")
+            if number>=1:
+                observed=readback(app_folder)
+                expected=contract["common_parent"] if number==1 else contract["competing_heads"]
+                if set(observed["heads"])!=set(expected):
+                    raise AssertionError("actual retained Apple book heads differ")
+                if len(observed["originals"])!=1 or observed["originals"][0]["sha256"]!=contract["entity_key"].split(":",1)[1]:
+                    raise AssertionError("actual Apple SDK original is absent, duplicate, or changed")
+                report["cases"][-1]["readback"]=observed
             server.release.set()
             if number==3 and len(server.requests)!=start:
                 raise AssertionError("offline reopening unexpectedly requested network")
@@ -226,10 +252,10 @@ def main():
         raise RuntimeError(safe) from None
     finally:
         report["requests"]=server.requests
-        report["uncovered"]=["independent xcresult attachments and catalog head audit",
-            "receive cancellation exact SDK readback","uncertain acknowledgment process kill",
+        report["uncovered"]=["independent xcresult attachments and artifact authentication",
+            "cancelled-before-retry SDK observation","uncertain acknowledgment process kill",
             "organization projection (owner gap, not lower API injected)",
-            "actual displayed original byte/readback authentication"]
+            "actual rendered text semantic readback"]
         (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
         server.close()
         if trusted:
