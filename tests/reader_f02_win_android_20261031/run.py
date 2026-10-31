@@ -1,12 +1,14 @@
-"""Real Android Activity/HTTPS chain over the authenticated archived Windows PUT store."""
+"""Real Android Activity/HTTPS chain over the authenticated same-source Windows PUT store."""
 import base64,hashlib,json,os,re,secrets,sqlite3,subprocess,sys,tempfile,threading,time
 from fetch_sender import *
 PACKAGE='org.exreader.host'
 def main():
  actions();OUT.mkdir(parents=True,exist_ok=True)
- raw=(INPUT/'sender.zip').read_bytes();need(sha(raw)==LOCK['sender']['sha256'],'downloaded Windows original ZIP')
+ raw=(INPUT/'sender.zip').read_bytes();receipt=json.loads((INPUT/'sender-receipt.json').read_text())
+ need(receipt['consumer']==receipt['identity']==identity() and receipt['producer_job']>0,'same-source input consumer')
+ need(sha(raw)==receipt['sha256'] and len(raw)==receipt['bytes'],'downloaded Windows original ZIP')
+ need(receipt['sdk_fingerprint']==contract_fingerprint(LOCK['sdk_contract']),'input SDK fingerprint')
  frozen=old_verifier();files=frozen.unpack(raw);sender=frozen.verify_sender(files)
- receipt=json.loads((INPUT/'sender-receipt.json').read_text());need(receipt['consumer']==identity(),'input consumer')
  sys.path.insert(0,str(ROOT/'tests/reader_session_android'));from run_roundtrip import Dav
  user='f02-'+secrets.token_hex(16);password=secrets.token_hex(32)
  authorization='Basic '+base64.b64encode((user+':'+password).encode()).decode()

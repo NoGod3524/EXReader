@@ -53,7 +53,7 @@ def current_artifact(role,directory):
  name='f02-android-'+role+'-'+str(identity()['run'])+'-'+str(identity()['attempt'])
  allmeta=api('actions/runs/'+str(identity()['run'])+'/artifacts?per_page=100')['artifacts'];found=[a for a in allmeta if a['name']==name]
  need(len(found)==1,'current artifact '+role);meta=found[0]
- need(not meta['expired'] and meta['workflow_run']['head_sha']==identity()['source'],'current artifact source')
+ need(not meta['expired'] and meta['workflow_run']['id']==identity()['run'] and meta['workflow_run']['head_sha']==identity()['source'],'current artifact source')
  raw=api('actions/artifacts/'+str(meta['id'])+'/zip',True)
  need(len(raw)==meta['size_in_bytes'] and 'sha256:'+sha(raw)==meta['digest'],'current original ZIP')
  (directory/(role+'.zip')).write_bytes(raw)
@@ -87,22 +87,57 @@ def negatives(sender,w,r,receipt,directory):
  run('process-restart','receiver',r,changed,lambda f:compare(sender,f,receipt),'process restart')
  need(len(results)==12,'twelve semantic controls')
  return results
+def provenance_negatives(proof,receipt,sdk_files,directory):
+ meta=proof['metadata'][0];aid=receipt['artifact_id'];digest=receipt['sha256'];job=proof['job'];prefix=LOCK['sender']['artifact_prefix']
+ results=[]
+ def test(name,original,mutated,call,reason):
+  try:call(mutated)
+  except AssertionError as error:need(str(error)==reason,'wrong provenance rejection '+name)
+  else:raise AssertionError('provenance negative accepted '+name)
+  save(directory/(name+'.json'),dict(name=name,rejected=True,reason=reason,original=original,mutated=mutated))
+  results.append(dict(name=name,rejected=True,reason=reason))
+ old=copy.deepcopy(meta);old['id']=LOCK['archived_sender']['sender_artifact'];old['name']=LOCK['archived_sender']['sender_name']
+ old['workflow_run'].update(id=LOCK['archived_sender']['run'],head_sha=LOCK['archived_sender']['source'])
+ call=lambda value:verify_producer_meta(value,aid,prefix,digest,job)
+ test('old-artifact',meta,old,call,'same-source artifact identity')
+ changed=copy.deepcopy(meta);changed['workflow_run']['head_sha']='0'*40
+ test('cross-source',meta,changed,call,'same-source artifact source')
+ changed=copy.deepcopy(meta);changed['name']=prefix+'-'+str(identity()['run'])+'-999'
+ test('wrong-attempt',meta,changed,call,'same-source artifact attempt')
+ manifest=json.loads(sdk_files['manifest.json']);changed=copy.deepcopy(manifest)
+ changed['contract']['sdk_source']='0'*40;changed['fingerprint']=contract_fingerprint(changed['contract'])
+ test('wrong-sdk-fingerprint',manifest,changed,lambda value:verify_sdk_contract(value,'windows'),'SDK fingerprint')
+ need(len(results)==4,'four provenance controls');return results
 def main():
  actions();target=OUT/'independent';target.mkdir(parents=True,exist_ok=True)
- result=dict(identity=identity(),passed=False,errors=[],F02_accepted=False,formal='95/108')
+ result=dict(identity=identity(),passed=False,errors=[],F02_accepted=False,formal='95/108',same_source_windows=False)
  try:
   meta=api('actions/runs/'+str(identity()['run']))
   need(meta['head_sha']==identity()['source'] and meta['run_attempt']==1,'audit run identity')
-  jobs=api('actions/runs/'+str(identity()['run'])+'/jobs?per_page=100')['jobs']
-  for name in ('admission','android'):
+  jobs=api('actions/runs/'+str(identity()['run'])+'/attempts/1/jobs?per_page=100')['jobs']
+  for name in ('admission','windows','android'):
    found=[j for j in jobs if j['name']==name];need(len(found)==1 and found[0]['conclusion']=='success','upstream '+name)
   inputs,ir=current_artifact('input',target);receiver,rr=current_artifact('receiver',target)
-  original=inputs['sender.zip'];need(sha(original)==LOCK['sender']['sha256'] and len(original)==LOCK['sender']['bytes'],'pinned archived Windows ZIP')
-  frozen=old_verifier();windows=frozen.unpack(original);sender=frozen.verify_sender(windows)
-  receipt=json.loads(inputs['sender-receipt.json']);need(receipt['consumer']==identity(),'input receipt consumer')
+  original,windows,sender,receipt,proof,sdk_raw=current_sender(target)
+  need(inputs['sender.zip']==original,'consumed ZIP equals independently fetched Windows ZIP')
+  need(inputs['windows-sdk.zip']==sdk_raw,'consumed SDK ZIP equals independently fetched Windows SDK ZIP')
+  need(json.loads(inputs['sender-receipt.json'])==receipt,'input receipt same-source producer')
   result['receiver']=compare(sender,receiver,receipt)
   result['controls']=negatives(sender,windows,receiver,receipt,target/'negative-controls')
-  result.update(passed=True,input_artifact=ir,receiver_artifact=rr,windows_source=LOCK['sender']['source'],windows_run=LOCK['sender']['run'],windows_artifact=LOCK['sender']['sender_artifact'],original_bytes=sender['original_bytes'],original_sha256=sender['original_sha256'])
+  sdk_files=unpack_current(sdk_raw)
+  result['windows_sdk']=verify_sdk_proof(sdk_files,'windows',sender=windows)
+  android_files={p[len('android-sdk-proof/'):]:data for p,data in receiver.items() if p.startswith('android-sdk-proof/')}
+  result['android_sdk']=verify_sdk_proof(android_files,'android',receiver=receiver)
+  need(json.loads(receiver['build.json'])['sdk_trees']==LOCK['sdk_contract']['sdk_trees'],'Android actual SDK trees')
+  need(result['windows_sdk']['fingerprint']==result['android_sdk']['fingerprint']==receipt['sdk_fingerprint'],'cross-host SDK contract')
+  result['provenance_controls']=provenance_negatives(proof,receipt,sdk_files,target/'provenance-controls')
+  result['receiver']['same_source_windows']=True
+  save(target/'producer-proof.json',proof);save(target/'windows-sdk-manifest.json',json.loads(sdk_files['manifest.json']))
+  save(target/'android-sdk-manifest.json',json.loads(android_files['manifest.json']))
+  result.update(passed=True,same_source_windows=True,input_artifact=ir,receiver_artifact=rr,windows_source=identity()['source'],
+   windows_run=identity()['run'],windows_attempt=identity()['attempt'],windows_artifact=receipt,producer_job=proof['job'],
+   windows_checks=sender['count'],original_bytes=sender['original_bytes'],original_sha256=sender['original_sha256'],
+   original_archives_byte_equal=True,physical_device=False)
  except Exception as exc:result['errors'].append(type(exc).__name__+': '+str(exc))
  finally:
   save(target/'summary.json',result);print('F02_ANDROID_AUTH '+json.dumps(result),flush=True)

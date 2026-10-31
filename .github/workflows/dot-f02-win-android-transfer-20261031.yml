@@ -1,12 +1,12 @@
-name: F02 cold-cache complete validation
+name: F02 same-source Windows to Android
 on:
   push:
-    branches: [codex/gpt-f02-cold-cache-validation-20261031]
+    branches: [codex/gpt-f02-same-source-win-android-20261031]
 permissions:
   contents: read
   actions: read
 concurrency:
-  group: gpt-f02-cold-cache-validation
+  group: gpt-f02-same-source-win-android
   cancel-in-progress: false
 env:
   PYTHONUTF8: '1'
@@ -20,14 +20,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
+        with: {fetch-depth: 0, ref: '${{ github.sha }}'}
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
-      - name: Exact11 source and immutable real Windows sender input
+      - name: Exact6 source, SDK8357 and frozen shared-module admission
         env: {GH_TOKEN: '${{ github.token }}'}
         run: |
           python -m py_compile tests/reader_f02_win_android_20261031/*.py
-          python tests/reader_f02_win_android_20261031/fetch_sender.py
+          python tests/reader_f02_win_android_20261031/fetch_sender.py guard
           python - <<'PY'
           import re, subprocess
           from pathlib import Path
@@ -52,42 +52,151 @@ jobs:
            '.github/workflows/dot-f02-win-android-transfer-20261031.yml',
            'docs/reader-total-progress/DOT_F02_WIN_ANDROID_TRANSFER_20261031.md',
            'tests/reader_f02_win_android_20261031/fetch_sender.py',
-           java,'tests/reader_f02_win_android_20261031/run.py','tests/reader_f02_win_android_20261031/source_lock.json'}
-          changed=set(subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+           'tests/reader_f02_win_android_20261031/authenticate.py','tests/reader_f02_win_android_20261031/run.py','tests/reader_f02_win_android_20261031/source_lock.json'}
+          source_base='86d38aec32a53bafff80d8f01fd677e10a4e5e64'
+          changed=set(subprocess.check_output(['git','diff','--name-only',source_base,'HEAD'],text=True).splitlines())
           assert changed==expected, 'exact six changed paths'
+          audit_path='tests/reader_f02_win_android_20261031/authenticate.py'
+          original_audit=subprocess.check_output(['git','show',source_base+':'+audit_path],text=True)
+          audit=Path(audit_path).read_text()
+          assert audit.split('def compare(',1)[1].split('def current_artifact(',1)[0]==original_audit.split('def compare(',1)[1].split('def current_artifact(',1)[0], 'original20 audit semantics'
+          assert audit.split('def negatives(',1)[1].split('def provenance_negatives(',1)[0]==original_audit.split('def negatives(',1)[1].split('def main(',1)[0], 'original12 controls unchanged'
+          old_run=subprocess.check_output(['git','show',source_base+':tests/reader_f02_win_android_20261031/run.py'],text=True)
+          marker=" sys.path.insert(0,str(ROOT/'tests/reader_session_android'));from run_roundtrip import Dav"
+          assert run[run.index(marker):]==old_run[old_run.index(marker):], 'original receive, faults, timeouts and offline sequence unchanged'
           print('F02_COLD_SOURCE_GUARD original20 assertions/timeouts/input retained; explicit cold precondition only')
           PY
-      - uses: actions/upload-artifact@v4
-        with:
-          name: f02-android-input-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/f02-android-input/
-          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: f02-android-admission-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f02-android/admission.json
           if-no-files-found: warn
-  android:
+  windows:
     needs: admission
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      EXREADER_ORIGINAL_HASH_PREFIX: ${{ github.workspace }}/build/f02-hash
+    outputs:
+      artifact_id: ${{ steps.sender.outputs.artifact-id }}
+      artifact_digest: ${{ steps.sender.outputs.artifact-digest }}
+      sdk_artifact_id: ${{ steps.sdk.outputs.artifact-id }}
+      sdk_artifact_digest: ${{ steps.sdk.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, ref: '${{ github.sha }}'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install the existing public hash owner
+        shell: pwsh
+        run: |
+          cmake -S extras/opds -B build/f02-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON "-DCMAKE_INSTALL_PREFIX=$env:GITHUB_WORKSPACE/build/f02-hash"
+          if ($LASTEXITCODE) { throw 'hash configure' }
+          cmake --build build/f02-hash-build --parallel 4
+          if ($LASTEXITCODE) { throw 'hash build' }
+          cmake --install build/f02-hash-build
+          if ($LASTEXITCODE) { throw 'hash install' }
+      - name: Export canonical installed original-hash prefix
+        shell: pwsh
+        run: |
+          @'
+          file(REAL_PATH "$ENV{GITHUB_WORKSPACE}/build/f02-hash" prefix)
+          if(NOT IS_ABSOLUTE "${prefix}" OR NOT IS_DIRECTORY "${prefix}")
+            message(FATAL_ERROR "Installed original hash prefix missing")
+          endif()
+          file(APPEND "$ENV{GITHUB_ENV}" "EXREADER_ORIGINAL_HASH_PREFIX=${prefix}\n")
+          '@ | Set-Content -Encoding utf8 build/f02-canonical-prefix.cmake
+          cmake -P build/f02-canonical-prefix.cmake
+          if ($LASTEXITCODE) { throw 'canonical prefix export' }
+      - name: Verify SDK candidate identity
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt
+      - name: Prepare native display
+        run: python tests/reader_native_owner_repairs/display.py
+      - name: Install UI automation
+        run: python -m pip install uiautomation==2.0.29
+      - name: Build and package the 3.42 native host
+        id: build
+        run: python tests/windows_sdk342/build.py
+      - name: Build existing installed public SDK original inspector
+        shell: pwsh
+        run: |
+          cmake -S tests/reader_gtk_receive -B build/f02-inspector -G Ninja -DCMAKE_BUILD_TYPE=Release "-DEXR_SDK_VERSION:STRING=3.42.0" "-DCMAKE_PREFIX_PATH=$pwd/build/windows-sdk342/sdk"
+          if ($LASTEXITCODE) { throw 'inspector configure' }
+          $versionLines = @(Select-String -LiteralPath build/f02-inspector/CMakeCache.txt -Pattern '^EXR_SDK_VERSION:STRING=3\.42\.0$')
+          if ($versionLines.Count -ne 1) { throw 'F02 actual CMake SDK version differs' }
+          Write-Output 'F02_CMAKE_VERSION build/f02-inspector=3.42.0 STRING'
+          cmake --build build/f02-inspector --parallel 4
+          if ($LASTEXITCODE) { throw 'inspector build' }
+      - name: Retain installed static SDK, configs, link map and actual program identity
+        id: sdk_proof
+        run: python tests/reader_f02_win_android_20261031/fetch_sender.py windows-proof
+      - name: Native Windows import and actual HTTPS PUT
+        id: sender_driver
+        run: python tests/reader_f02_win_gtk_20261031/windows_send.py
+      - name: Preserve actual server upload and sender evidence
+        id: sender
+        if: always() && steps.sender_driver.outputs.safe_upload == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: f02-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f02-windows/
+          if-no-files-found: warn
+      - name: Preserve installed Windows SDK proof on success or failure
+        id: sdk
+        if: always() && steps.sdk_proof.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: f02-windows-sdk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f02-windows-sdk/
+          if-no-files-found: error
+      - name: Preserve bounded Windows build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f02-windows-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-sdk342/logs/
+            build/windows-sdk342/package/report.json
+            build/windows-sdk342/package/build.json
+            build/native-owner-preflight/display.json
+          if-no-files-found: warn
+  android:
+    needs: [admission, windows]
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
+        with: {fetch-depth: 0, ref: '${{ github.sha }}'}
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: '17'}
       - uses: gradle/actions/setup-gradle@v4
         with: {gradle-version: '8.9'}
-      - uses: actions/download-artifact@v4
+      - name: Authenticate this run's Windows original and installed SDK ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F02_WINDOWS_ARTIFACT_ID: ${{ needs.windows.outputs.artifact_id }}
+          F02_WINDOWS_ARTIFACT_DIGEST: ${{ needs.windows.outputs.artifact_digest }}
+          F02_WINDOWS_SDK_ARTIFACT_ID: ${{ needs.windows.outputs.sdk_artifact_id }}
+          F02_WINDOWS_SDK_ARTIFACT_DIGEST: ${{ needs.windows.outputs.sdk_artifact_digest }}
+        run: python tests/reader_f02_win_android_20261031/fetch_sender.py prepare
+      - uses: actions/upload-artifact@v4
         with:
           name: f02-android-input-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/f02-android-input
+          path: build/f02-android-input/
+          include-hidden-files: true
+          if-no-files-found: error
       - name: Build fixed SDK342 and matched real Activity/instrumentation APKs
         id: build
         run: python tests/reader_f02_win_android_20261031/build.py
+      - name: Retain installed shared SDK and actual APK JNI proof
+        run: python tests/reader_f02_win_android_20261031/fetch_sender.py android-proof
       - name: Enable the original emulator accelerator
         run: sudo chmod 666 /dev/kvm
       - name: Actual receive, public original readback and offline process reopen
@@ -129,17 +238,22 @@ jobs:
           path: build/f02-android-status/
           if-no-files-found: warn
   authenticate:
-    needs: [admission, android]
+    needs: [admission, windows, android]
     if: always()
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
+        with: {fetch-depth: 0, ref: '${{ github.sha }}'}
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
-      - name: Authenticate original ZIPs and independently recompute12 controls
-        env: {GH_TOKEN: '${{ github.token }}'}
+      - name: Authenticate same-source originals, retain12 and add4 provenance controls
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F02_WINDOWS_ARTIFACT_ID: ${{ needs.windows.outputs.artifact_id }}
+          F02_WINDOWS_ARTIFACT_DIGEST: ${{ needs.windows.outputs.artifact_digest }}
+          F02_WINDOWS_SDK_ARTIFACT_ID: ${{ needs.windows.outputs.sdk_artifact_id }}
+          F02_WINDOWS_SDK_ARTIFACT_DIGEST: ${{ needs.windows.outputs.sdk_artifact_digest }}
         run: python tests/reader_f02_win_android_20261031/authenticate.py
       - name: Recompute cold isolation and target original GET boundaries
         run: |

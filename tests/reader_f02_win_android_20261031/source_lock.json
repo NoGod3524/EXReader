@@ -1,17 +1,12 @@
 {
-  "base": "f59425f00af9069a22dc9cef2399ae84e3a62648",
+  "base": "86d38aec32a53bafff80d8f01fd677e10a4e5e64",
   "sdk": "8357eafa28423a7ab93ba08b823af80f01ad1505",
-  "branch": "codex/gpt-f02-cold-cache-validation-20261031",
+  "branch": "codex/gpt-f02-same-source-win-android-20261031",
   "owned": [
-    "examples/android/app/src/main/java/org/exreader/host/MainActivity.java",
-    "examples/android/app/src/main/java/org/exreader/host/BookStore.java",
-    "tests/reader_f02_win_android_20261031/source_lock.json",
     "tests/reader_f02_win_android_20261031/fetch_sender.py",
-    "tests/reader_f02_win_android_20261031/build.py",
-    "tests/reader_f02_win_android_20261031/run.py",
     "tests/reader_f02_win_android_20261031/authenticate.py",
-    "tests/reader_f02_win_android_20261031/init.gradle",
-    "tests/reader_f02_win_android_20261031/java/org/exreader/host/F02ReceiveTest.java",
+    "tests/reader_f02_win_android_20261031/run.py",
+    "tests/reader_f02_win_android_20261031/source_lock.json",
     ".github/workflows/dot-f02-win-android-transfer-20261031.yml",
     "docs/reader-total-progress/DOT_F02_WIN_ANDROID_TRANSFER_20261031.md"
   ],
@@ -40,31 +35,33 @@
     "tools": "dfb0100ac0b0cbba7b0774e54713291e7e1a5126",
     "tests/reader_android_receive_d22": "60892d12db3dc0c90134a5f63593bb0097593cdc",
     "tests/reader_f02_win_gtk_20261031": "84228b8493c92a6ff82c27c0943b1e5111f28ea8",
-    ".github/workflows/reader-d22-android-receive.yml": "449767394c9f63671e9936660f6c5433d0abcc34"
+    ".github/workflows/reader-d22-android-receive.yml": "449767394c9f63671e9936660f6c5433d0abcc34",
+    "CMakePresets.json": "f27df4b414c35d95f271021bb17105330757ab10",
+    "tests/reader_windows_raw3": "aea3bc9321028dae1021e1746f853bbb6673ca7f",
+    "tests/reader_wave3_c09": "e4d15fad4d8bd8ce5da20e95d2af76d898164455",
+    "tests/reader_windows_preferences": "37583149f86379f3b7f7e6a31db2bea9675992e7",
+    "tests/reader_txt_progress/consumer": "4123f20843d99629be42556b3c3562c4f3dbfb99",
+    "tests/reader_native_owner_repairs/display.py": "ea321aff0d63a413be6ce5cf8042669804fb8025",
+    "tests/reader_f02_win_android_20261031/java/org/exreader/host/F02ReceiveTest.java": "cb5b00397eced744364cb38706476512e0b3942c",
+    "tests/reader_f02_win_android_20261031/build.py": "646c4b2926b8749d157e47dfea3cb40b0c241b74",
+    "tests/reader_f02_win_android_20261031/init.gradle": "bb80155000e317e6024552d3cfde6143372514cf"
   },
   "sender": {
-    "source": "3b416378337a73c62423857e4340d469d357038d",
-    "run": 41169386789,
-    "attempt": 1,
-    "job": 124443838088,
-    "sender_artifact": 13030748486,
-    "bytes": 6354365,
-    "sha256": "4771f705c20c7230e13a193cbf44eb8b0c3a03ea4da208fbef26ad82fa033a8a",
-    "audit_artifact": 13031635572,
-    "audit_bytes": 15488583,
-    "audit_sha256": "c21ebc168c25481d2755c148218f8865a0c77cbe3909330a007e7f6470069e79",
     "original_bytes": 12000,
     "original_sha256": "5f00b41f874d60348d6dc237873759906e5f0ed28b05bb399a6699bbc3c7b38f",
-    "sender_name": "f02-windows-41169386789-1"
+    "artifact_prefix": "f02-windows",
+    "sdk_artifact_prefix": "f02-windows-sdk",
+    "job": "windows"
   },
   "budgets": {
     "admission": 10,
+    "windows": 30,
     "android": 60,
     "audit": 15,
-    "total": 85,
+    "total": 115,
     "rounds": 1
   },
-  "scope": "archived real Windows PUT -> SDK342 Android Activity receive and SDK-backed offline reopen; not complete F02",
+  "scope": "same full source SHA / same run-attempt real Windows PUT archive -> Android emulator GET, explicit receive, SDK original and offline reopen; not complete F02",
   "formal_catalog_blob": "e0c52bf139da2374cf58dbce40ae6c093a59f39d",
   "formal_score": "95/108",
   "production_result_blobs": {
@@ -82,5 +79,38 @@
     "legacy_D22_assertions_unchanged": true
   },
   "expected_activity_checks": 20,
-  "semantic_controls": 12
+  "semantic_controls": 12,
+  "original_base": "f59425f00af9069a22dc9cef2399ae84e3a62648",
+  "archived_sender": {
+    "source": "3b416378337a73c62423857e4340d469d357038d",
+    "run": 41169386789,
+    "attempt": 1,
+    "job": 124443838088,
+    "sender_artifact": 13030748486,
+    "bytes": 6354365,
+    "sha256": "4771f705c20c7230e13a193cbf44eb8b0c3a03ea4da208fbef26ad82fa033a8a",
+    "audit_artifact": 13031635572,
+    "audit_bytes": 15488583,
+    "audit_sha256": "c21ebc168c25481d2755c148218f8865a0c77cbe3909330a007e7f6470069e79",
+    "original_bytes": 12000,
+    "original_sha256": "5f00b41f874d60348d6dc237873759906e5f0ed28b05bb399a6699bbc3c7b38f",
+    "sender_name": "f02-windows-41169386789-1"
+  },
+  "sdk_contract": {
+    "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+    "sdk_trees": {
+      "src": "01dbab7c7c28aff175b5a953fea307e21d84eee2",
+      "include": "ef1bbaafc4a250053e5b0f88d329d1a25b22794b",
+      "cmake": "505c604a2b30b72b3a251cd3f0bb7628e6d58fc1",
+      "CMakeLists.txt": "a5ed27fcca1d709c2217c585da47dc55dc23c1d0",
+      "bindings": "54c12f70a1a63cae6574984a388b66bf6248c38e"
+    },
+    "shared_trees": {
+      "apps/reader": "004a0b08be8568407475b8bafe8472bd216516b8",
+      "extras": "61fccfdaa6786ecd87dc9a7939c7d63314af4f11"
+    },
+    "sdk_version": "3.42.0",
+    "sdk_abi": 1
+  },
+  "provenance_controls": 4
 }
