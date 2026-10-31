@@ -41,3 +41,47 @@ The two hosts use HTTPS against the same logical DAV store relocated between job
 This is NOT a simultaneous continuously-online public server or a production deployment test. No public service rented.
 No credentials/system-account/owner policy changes. No H02/H03/H04/J03/C02 scope takeover.
 Status pending: this package does not presume a product bug, does not promote F02, and leaves95/108 unchanged.
+
+## Sole approved run: failed before native transfer (2026-10-31 03:35:55Z observation)
+
+Tested source: e50c97f7acfa09afb8a9eae8a4f138586248fb1c.
+Run [41164667579](https://github.com/NoGod3524/EXReader/actions/runs/41164667579), attempt 1, started 03:30:35Z.
+Windows job 124429548817 failed at 03:33:29Z; GTK job 124430200817 skipped;
+authentication job 124430199903 failed its upstream-result guard at 03:33:38Z.
+
+Observed successful steps: exact-seven-file/frozen-source admission, public OPDSHash build/install,
+original Windows SDK identity8357 guard, display preparation, automation installation.
+Inside the original build step the log explicitly reports "sdk-install success".
+The following product configure fails at apps/reader/store/native/CMakeLists.txt:95:
+"Original hash prefix must be canonical", followed by "RuntimeError: product-configure exit=1".
+
+This is a test-workflow dependency-prefix orchestration defect, not evidence that cross-host transfer failed.
+The package supplied EXREADER_ORIGINAL_HASH_PREFIX using the raw Windows github.workspace plus a slash suffix;
+the unchanged product guard requires exact equality with CMake file(REAL_PATH). A separately authorized correction
+would obtain the canonical prefix through CMake and publish that exact value before invoking the unchanged builders.
+Do not weaken the product guard or change the frozen SDK/builders to accommodate this workflow.
+
+All original native UI regression steps after host build, the six sender checks, seven receiver checks,
+and one-positive/eight-negative independent transfer controls were NOT EXECUTED. No sender/receiver proof artifact
+was uploaded; safety-upload conditions stayed false because the new drivers never ran. The auth always-upload
+step had no proof files, so it created no artifact. No success or rejection-control count is credited.
+
+Retained original build-evidence artifact (metadata checked through GitHub API, not downloaded or parsed here):
+- ID 13028452194, name windows-host-sdk342-41164667579-1
+- size 14929 bytes
+- SHA256 5c371554d7810a4cc15637f714992903f74c72e5de057deea259d3756e833b36
+- source e50c97f7acfa09afb8a9eae8a4f138586248fb1c, same run/attempt; not expired at observation.
+This is build evidence only, not a transfer receipt or original-book proof.
+
+Round budget: 1/1 consumed. No automatic rerun or correction is authorized by the original single-run grant.
+Result-document sealing is doc-only with [skip ci], not a second verification.
+F02 remains unverified; fixed formal total remains 95/108 (87.96%).
+This snapshot preserves the failed run and next prerequisite; it does not mean the overall EXReader task stopped or completed.
+
+## Separately authorized canonical-prefix correction
+
+After preserving the first failure, the user explicitly approved one additional run solely for the workflow's
+Windows path normalization (Sentinel_ccf1f53a53dc81919073ef94dbc5083e). The workflow now asks CMake itself to
+compute file(REAL_PATH) for the installed build/f02-hash directory and exports that exact value through GITHUB_ENV
+before the unchanged builders. No product guard, SDK, old builder, test assertion or timeout changes.
+This correction has one additional 240/150/20-minute run; no further automatic correction is authorized.
