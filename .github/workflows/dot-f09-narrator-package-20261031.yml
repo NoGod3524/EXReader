@@ -1,0 +1,35 @@
+name: F09 clean Windows candidate package for Narrator check
+on:
+  push:
+    branches: [codex/dot-f09-narrator-package-20261031]
+permissions:
+  contents: read
+concurrency:
+  group: f09-narrator-package-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build and package candidate without diagnostics
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: utf-8
+        run: python tests/reader_f09_narrator_package_20261031/run.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f09-narrator-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f09-narrator-package/package-manifest.json
+            build/f09-narrator-package/candidate-package/build.json
+            build/f09-narrator-package/candidate-package/report.json
+            build/f09-narrator-package/candidate-package/EXReader/
+          if-no-files-found: error
