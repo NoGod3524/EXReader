@@ -335,3 +335,158 @@ def verify_static_binding(files,spec,source,verification_output=None):
         (output/"result.json").write_text(json.dumps(dict(installed_sdk_byte_binding=False,
             error=type(error).__name__,detail=str(error),targets=results),indent=2)+"\n")
         raise
+
+def _loaded_function_byte(raw,name):
+    address,size = _elf_functions(raw)[name]
+    offset = struct.unpack_from("<Q",raw,32)[0]
+    width,count = struct.unpack_from("<HH",raw,54)
+    found = []
+    for index in range(count):
+        kind,flags,start,virtual,physical,length,memory,alignment = struct.unpack_from("<IIQQQQQQ",raw,offset+width*index)
+        if kind == 1 and flags & 1 and virtual <= address < address+size <= virtual+length:
+            found.append(start+address-virtual)
+    need(len(found) == 1,"gtk-negative-loaded-code-location")
+    return found[0]
+
+def _archive_function_byte(raw,wanted):
+    need(raw.startswith(b"!<arch>\n"),"gtk-negative-actual-static-archive")
+    position,found = 8,[]
+    while position < len(raw):
+        need(position+60 <= len(raw) and raw[position+58:position+60] == b"`\n","gtk-negative-archive-header")
+        size = int(raw[position+48:position+58].decode().strip())
+        start,end = position+60,position+60+size
+        need(size >= 0 and end <= len(raw),"gtk-negative-archive-member-bounds")
+        member = raw[start:end]
+        if member[:7] == b"\x7fELF\x02\x01\x01":
+            need(len(member) >= 64 and struct.unpack_from("<HH",member,16) == (1,62),"gtk-negative-sdk-relocatable-object")
+            offset = struct.unpack_from("<Q",member,40)[0]
+            width,count = struct.unpack_from("<HH",member,58)
+            need(width == 64 and 0 < count < 4096 and offset+width*count <= len(member),"gtk-negative-object-sections")
+            sections = [struct.unpack_from("<IIQQQQIIQQ",member,offset+i*width) for i in range(count)]
+            for section in sections:
+                if section[1] != 2:
+                    continue
+                at,length,link,step = section[4],section[5],section[6],section[9]
+                need(step == 24 and length % step == 0 and at+length <= len(member) and link < count,
+                     "gtk-negative-object-symbols")
+                strings = sections[link]
+                need(strings[1] == 3 and strings[4]+strings[5] <= len(member),"gtk-negative-object-strings")
+                table = member[strings[4]:strings[4]+strings[5]]
+                for entry in range(at,at+length,step):
+                    name,info,other,index,address,width = struct.unpack_from("<IBBHQQ",member,entry)
+                    if not name or not (info >> 4 in (1,2) and info & 15 == 2 and 0 < index < count):
+                        continue
+                    if table[name:name+len(wanted)+1] != wanted.encode()+b"\0":
+                        continue
+                    content = sections[index]
+                    need(content[1] == 1 and content[2] & 4 and content[3] == 0 and width > 0 and
+                         address+width <= content[5] and content[4]+content[5] <= len(member),
+                         "gtk-negative-selected-sdk-code-section")
+                    found.append(start+content[4]+address)
+        position = end+(size & 1)
+    need(len(found) == 1,"gtk-negative-unique-selected-archive-function:"+wanted)
+    return found[0]
+
+def gtk_binary_negative_controls(files,spec,source,output):
+    """Actions-only re-packed static SDK proof capsules, independently read back before rejection."""
+    import io
+    import zipfile
+    runtime = spec["runtime_prefix"]
+    receipt_path = runtime+"binary-binding/receipt.json"
+    if receipt_path not in files:
+        need(not _qualified_static_source(source),"gtk-new-source-needs-binary-negative-originals")
+        return []
+    need(os.environ.get("GITHUB_ACTIONS") == "true","gtk-binary-negative-actions-only")
+    original = json_value(files[receipt_path])["targets"][0]
+    need(original["name"] == "runtime-host","gtk-negative-original-runtime-target")
+    root = Path(output)
+    root.mkdir(parents=True,exist_ok=False)
+    context = dict(source=source,run=spec["run"],attempt=spec["attempt"],
+                   original_artifact=spec["artifact"]["id"],original_zip_sha256=spec["artifact"]["sha256"])
+    cases = [
+        ("gtk-expected-elf-selected-code","gtk-independent-static-relink-exact-build-elf:"),
+        ("gtk-sdk-selected-code","gtk-independent-static-relink-exact-build-elf:"),
+        ("gtk-native-selected-code","gtk-independent-static-relink-exact-build-elf:"),
+        ("gtk-forged-tool-sha","gtk-exact-original-link-tool"),
+        ("gtk-forbidden-plugin-argv","gtk-unobserved-or-unsafe-link-argument:"),
+        ("gtk-shell-token-argv","gtk-unobserved-or-unsafe-link-argument:"),
+        ("gtk-omitted-sdk-input","gtk-unobserved-or-unsafe-link-argument:"),
+        ("gtk-mismatched-link-script","gtk-original-cmake-link-argv")]
+    controls = []
+    for name,expected in cases:
+        record = json_value(json.dumps(original).encode())
+        references = [*record["inputs"],record["built"],record["executed"],record["link_script"]]
+        data = {item["path"]:_static_input(files,runtime,item) for item in references}
+        def replace(item,raw):
+            prior = item["path"]
+            digest = sha(raw)
+            path = "binary-binding/inputs/"+digest+"-"+Path(item["physical_path"]).name
+            for value in references:
+                if value["path"] == prior:
+                    value.update(path=path,bytes=len(raw),sha256=digest)
+            data[path] = raw
+        def flip(raw,offset):
+            need(0 <= offset < len(raw),"gtk-negative-mutation-bounds")
+            changed = bytearray(raw)
+            changed[offset] ^= 1
+            return bytes(changed)
+        if name == "gtk-expected-elf-selected-code":
+            item = record["built"]
+            raw = data[item["path"]]
+            replace(item,flip(raw,_loaded_function_byte(raw,"exr_library_open")))
+        elif name in ("gtk-sdk-selected-code","gtk-native-selected-code"):
+            native = name == "gtk-native-selected-code"
+            archive = "libexreader-posix-c02-admission.a" if native else "libexr_library.a"
+            item = next(item for item in record["inputs"] if Path(item["physical_path"]).name == archive)
+            raw = data[item["path"]]
+            replace(item,flip(raw,_archive_function_byte(raw,"pc02_check" if native else "exr_library_open")))
+        elif name == "gtk-forged-tool-sha":
+            value = record["driver"]["sha256"]
+            record["driver"]["sha256"] = ("0" if value[0] != "0" else "1")+value[1:]
+        elif name in ("gtk-forbidden-plugin-argv","gtk-shell-token-argv"):
+            record["argv"].append("-fplugin=/tmp/exreader-never-load.so" if name == "gtk-forbidden-plugin-argv" else ";")
+            replace(record["link_script"],(shlex.join(record["argv"])+"\n").encode())
+        elif name == "gtk-omitted-sdk-input":
+            record["inputs"] = [item for item in record["inputs"] if Path(item["physical_path"]).name != "libexr_library.a"]
+        else:
+            replace(record["link_script"],(shlex.join(record["argv"])+" -lm\n").encode())
+        references = [*record["inputs"],record["built"],record["executed"],record["link_script"]]
+        candidate = {item["path"]:data[item["path"]] for item in references}
+        candidate["candidate.json"] = (json.dumps(dict(schema="c02-gtk-binary-negative-v1",
+            name=name,producer=context,target=record),sort_keys=True,indent=2)+"\n").encode()
+        candidate["file-hashes.json"] = (json.dumps([dict(path=path,bytes=len(raw),sha256=sha(raw))
+            for path,raw in sorted(candidate.items())],indent=2)+"\n").encode()
+        path = root/(name+".zip")
+        with zipfile.ZipFile(path,"x",compression=zipfile.ZIP_DEFLATED,compresslevel=6) as archive:
+            for member,raw in sorted(candidate.items()):
+                archive.writestr(member,raw)
+        packed = path.read_bytes()
+        with zipfile.ZipFile(io.BytesIO(packed)) as archive:
+            entries = archive.infolist()
+            need(len(entries) == len({item.filename for item in entries}) <= 128 and
+                 sum(item.file_size for item in entries) <= 512*1024*1024,"gtk-negative-capsule-bounds")
+            restored = {}
+            for item in entries:
+                member = item.filename
+                need(not member.startswith("/") and all(part not in ("",".","..") for part in member.split("/")) and
+                     not item.flag_bits & 1,"gtk-negative-capsule-canonical-paths")
+                restored[member] = archive.read(item)
+        inventory = json_value(restored["file-hashes.json"])
+        need({item["path"] for item in inventory} == set(restored)-{"file-hashes.json"} and
+             len(inventory) == len(restored)-1 and all(len(restored[item["path"]]) == item["bytes"] and
+             sha(restored[item["path"]]) == item["sha256"] for item in inventory),
+             "gtk-negative-capsule-refreshed-inventory")
+        decoded = json_value(restored["candidate.json"])
+        need(decoded["schema"] == "c02-gtk-binary-negative-v1" and decoded["name"] == name and
+             decoded["producer"] == context,"gtk-negative-capsule-original-source-binding")
+        try:
+            _relink_target(restored,"",decoded["target"],root/name)
+        except ValueError as error:
+            need(str(error).startswith(expected),"gtk-negative-unexpected-rejection:"+name+":"+str(error))
+            controls.append(dict(name=name,rejected=True,reason=str(error),original=context,
+                zip_bytes=len(packed),zip_sha256=sha(packed),refreshed_inventory=True))
+        else:
+            raise ValueError("gtk-binary-negative-unexpectedly-accepted:"+name)
+    need(len(controls) == 8,"gtk-eight-binary-negative-capsules")
+    (root/"result.json").write_text(json.dumps(controls,indent=2)+"\n")
+    return controls

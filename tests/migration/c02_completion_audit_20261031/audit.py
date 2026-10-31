@@ -20,7 +20,7 @@ import zipfile
 
 from production import bound_history, acknowledged_prefix, audit_repairs
 from scanner import audit_scanner
-from gtk_host import audit_gtk_host
+from gtk_host import audit_gtk_host, gtk_binary_negative_controls
 from android_host import audit_android_host, android_negative_controls
 from apple_host import audit_apple_host, apple_negative_controls
 from posix_native import audit as audit_posix_native
@@ -984,6 +984,8 @@ def main():
             windows = (files,spec)
         if role == "host-gtk":
             host_controls.extend(pending_negative_controls(files,spec["runtime_prefix"],output/role/"negative-controls"))
+            host_controls.extend(gtk_binary_negative_controls(
+                files,spec,source,output/role/"binary-negative-controls"))
         if role == "host-android":
             host_controls.extend(android_negative_controls(files,output/role/"negative-controls"))
         if role in ("host-macos", "host-ios"):
