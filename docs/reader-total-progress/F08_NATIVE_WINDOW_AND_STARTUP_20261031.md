@@ -186,3 +186,90 @@ Raw artifact 13056959967: 42,119,480 bytes; SHA-256 791a2a412820cbc308292f0edec8
 The original forty-case Debug regression remains independently retained; its private fault suites are not claimed to run against this Release binary. Failed intermediate builds, including the original SDK guard rejection and two test-adapter errors, remain in Actions. Software-renderer and native HWUI OpenGL/Vulkan system-Settings controls also remain separate environment diagnostics and do not grant product acceptance.
 
 Android frame acceptance and its additional reader/font/jump coverage are still outstanding. A bounded same-process native FrameMetrics/FrameTimeline diagnostic is being prepared to distinguish UI scheduling, submission, buffer/fence waits and actual raster work. It does not alter the declared budgets or any desktop resolution.
+
+
+## 2026-10-31 23:25 UTC integration checkpoint
+
+F08 remains pending. Linux has completed its component checks. The following
+qualification and functional results do not replace the final same-source,
+six-platform acceptance.
+
+### Native Android hardware qualification
+
+The LAP25002 portable emulator passed the official WHPX check and rendered
+with Intel Arc 140V. The fixed API34 default x86_64 Pixel6 target uses 4 CPUs,
+4096 MiB RAM, 1080×2400 at 60 Hz, density 420 and animation scales 1. The
+requested 512 MiB heap is officially clamped to 576 MiB with growth limit
+192 MiB, matching the archived Ubuntu runtime. PSS remains limited to
+524288 KiB.
+
+Execution adapter 970904cf6c75f2c4729dce56153ececcc7a5b457 used the older
+Release producer 03ecfa21f6cd8d8e354145d56ffdf24244ecbe61 from
+[41240610450](https://github.com/NoGod3524/EXReader/actions/runs/41240610450),
+artifact 13056959967 (42119480 bytes, SHA256
+791a2a412820cbc308292f0edec869bc3079504eccd3e5383582d007313982e7).
+The frozen ten-case driver/analyzer remain intact except for two Python
+identity/admission lines. No Actions environment was fabricated. This is
+hardware qualification, not final same-source evidence.
+
+The single native run native-lap25002-20261031T222413Z passed 9/10 cases;
+system-picker return failed. All 6348 callbacks remain archived. The 6343
+ordinary callbacks have P95 35.132422 ms, P99 67.226670 ms, maximum 601.940994 ms.
+Including all five first-draw callbacks gives P95 35.195304 ms, P99 68.467564 ms,
+maximum 608.131626 ms. The original pre-draw readiness measurement was
+2873.696 ms. Peak sampled PSS was 99120 KiB over 196 valid samples. Numeric
+limits were not met.
+
+Independent replay fdea327b7443273140e8881b5b054376df21aa42 authenticated all
+252 payloads and native manifest SHA256
+e2c535950dba8529c505a76a120db7f911dbfaf19a537ad4b16ee37ce13f2a11.
+The first seven screenshots are nonuniform; rotation/process restoration,
+offline return and picker screenshots are black. Accessibility state and
+pre-draw revision do not prove visible content. The audit rejects these
+captures. Future failures also retain installed APK identity and terminal
+power/display/window/input/SurfaceFlinger state.
+
+A separate Settings portrait/landscape/portrait/relaunch control passed,
+with 229 authenticated payloads and no GL/color-buffer errors. Settings
+retained its Window while EXReader recreated its Activity/Window, so the
+control does not resolve the original failure. The prior zero-stage observer
+format failure and 200 payloads are retained. Completed sessions restored
+rotation and left no qemu/product processes; desktop stayed 1920×1200@60.
+
+### Windows and Apple
+
+Windows candidate ff78144229589efd5715fab7528f42d013f143b9 paints a genuinely
+new, valid, visible page before returning to the message loop, after all
+existing owner/pending/save/control work. Build, 6 CTests, 17 settings and
+10 protocol controls passed in
+[41250582151](https://github.com/NoGod3524/EXReader/actions/runs/41250582151).
+Native attempt 20261031T231709Z-native-frame was stopped by the computer-use
+tool's physical-Escape signal before the eight-page cohort. Its 149 payloads
+and separate interruption note are retained; no performance pass is claimed.
+The original full Windows scope still requires 78 starts, including its
+preparations and extra TXT bisect, plus all original assertions.
+
+Apple [41245322975](https://github.com/NoGod3524/EXReader/actions/runs/41245322975)
+at 77b2789de3416f4143f3eb2a37ee09a704d34750 completed both SDK jobs, three
+native functional jobs and independent audit. Mac artifact 13059771797 is
+70279179 bytes, SHA256
+7c6a9504f67cdbb8bfeec61bc0f92fd4c9a021fa2c908a6de10f6a83ffd088d6;
+all 379 payloads were independently authenticated.
+
+Mac original-scroll hitch ratios are five 0 ms/s measurements, with native
+frame-count aggregates [8,14,8,15,8]. Custom shelf intervals have five 0 ms/s
+values and frame aggregates [6,10,10,6,6]; actual start/end counters are
+120/120 and inactive. These aggregates are not an independent exact total
+frame census. All 18 launch-request-to-native-ready upper bounds are below
+2 s (maximum 1185.680 ms). Reader font/locate and separate long-EPUB page/locate
+cases function, but their SDK snapshot sequence is not an OS frame count;
+native reader hitch coverage remains missing.
+
+Phone extended launch is 2.133–2.569 s and iPad 3.500–4.053 s, above 2 s.
+Mobile hitch/frame fields remain absent, not zero. Independent macos-26
+capability run [41252447709](https://github.com/NoGod3524/EXReader/actions/runs/41252447709)
+is testing newer-host metric availability with authenticated 77b program
+bytes; old profiles/data retain their original meaning.
+
+The physical-Escape stop is respected: local interaction/VM tests have not
+restarted. Source work, archived-data replay and remote verification continue.
