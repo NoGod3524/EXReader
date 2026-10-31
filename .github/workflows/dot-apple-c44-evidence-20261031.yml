@@ -1,0 +1,30 @@
+name: Inspect pinned Apple c44 and independent F09 evidence
+on:
+  push:
+    branches: [codex/dot-apple-c44-evidence-20261031]
+    paths: ['tools/reader_composition/apple_c44_evidence_20261031.py', '.github/workflows/dot-apple-c44-evidence-20261031.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact independent diagnostic-only scope
+        run: |
+          git diff --exit-code c44a9cf211fffa4ed6f2720ffa49a186c3b4d196 HEAD -- . ':!tools/reader_composition/apple_c44_evidence_20261031.py' ':!.github/workflows/dot-apple-c44-evidence-20261031.yml' ':!docs/reader-total-progress/DOT_APPLE_C44_EVIDENCE_20261031.md'
+          python3 -m py_compile tools/reader_composition/apple_c44_evidence_20261031.py
+      - name: Authenticate three original ZIPs and parse evidence only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/apple_c44_evidence_20261031.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-c44-f09-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/dot-apple-c44-evidence/
+            !build/dot-apple-c44-evidence/**/extracted/**/*.xcresult/**
+          if-no-files-found: error
+          retention-days: 30
