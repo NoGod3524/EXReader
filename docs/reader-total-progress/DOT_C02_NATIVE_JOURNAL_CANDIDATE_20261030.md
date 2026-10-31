@@ -823,3 +823,38 @@ selected complete C restoration and an actual authority ALLOW ACL. Original
 and cloned SDK proof FDs are now held across verification, with exact identities,
 whole-byte hashes and named-object checks before and after. Run 41189018097/A1
 is the first execution of these new cases; it is pending, not qualification.
+
+Run 41189018097/A1 at 313a22493e23f597e2a04f5bb6e93e43577bddce passed both
+actual owners: original 36 plus new 17 Repair cases, 0 failures, and unchanged
+historical 65/135. The two original packages are:
+- Ubuntu job 124501752974, artifact 13038555426, 54708032 bytes,
+  SHA256 c4ba8b8d88c9e4f71f06340e3b7fd90b4f62b083feb07e5499dd910dab4eeac1.
+- macOS job 124501753270, artifact 13038079253, 49368470 bytes,
+  SHA256 6b88078ffc3979eada22353125d5f509b30344f834e2944d28407c6b638d58f3.
+Actions-only original ZIP diagnostic 41189764553/A1 retained the exact Ubuntu
+archive and emitted actual repair wire sizes, plan/guard/applied/done/archive
+members, source fstat rows and SDK clone proof logs. This is diagnostic-only;
+artifact 13038501341 is 50665003 bytes, SHA256
+34603bf525b99d640e9af5d1e4406eb76e3133dbc7ae31a17e5424f7b8334152.
+A separate full semantic adapter and deletion/resealed controls are still needed.
+
+Windows producer 3d65bf562105060879b66d3d181e81341703a89a then passed the entire
+registry/product workflow 41189450810/A1, job 124503017080. Its original artifact
+13037853426 is 98208933 bytes, SHA256
+52064f99df5124e3cca13fdecbae8ba4af38eab80c9b72de39a35fc5ddf6472c.
+It retains the three actual product profiles, guarded legacy originals, both
+owner probes, and execution of the same packaged host/admission/migration
+program bytes in the formal package. The Windows reading profile uses static
+SDK libraries; reporting no runtime SDK DLL imports is distinct from an exact
+independent static relink. The new decoder must report its actual binary and
+package bindings precisely. The successful producer does not replace its
+pending original-ZIP independent audit.
+
+Review of Repair retirement found that ACK/FLOOR records appended after the
+initial plan also need validation when reading a completed epoch. A head prefix
+alone cannot substitute for the current actual terminal ACK chain. Native DONE
+verification and further real refusal controls are being added, including
+continued migration after pre-BEGIN repair; the pre-BEGIN epoch retains its
+own empty journal/head and must not mistake a later INPUT's same-generation
+FLOOR files for its own. Old seventeen-case evidence retains this explicit gap
+until the new native controls and independent audit pass.

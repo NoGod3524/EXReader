@@ -96,6 +96,15 @@ class RepairCases:
         assert len(list(self.route(target).glob("repair-plan-*")))==2
         result=self.repair_finish(folder,target,pack,seed,before,"H")
         assert result["plans"]==2 and result["done"]==1
+        self.capture(folder,target,"repair-done")
+        marker=self.route(target)/"repair-applied-000001"
+        marker.rename(folder/"retained-middle-applied.raw")
+        self.capture(folder,target,"middle-applied-missing")
+        unchanged=self.repair_source_hashes(folder,target)
+        self.call(folder,self.a.admission,"check",target,expected=(2,))
+        self.call(folder,self.a.tool,"recover",target,expected=(2,))
+        self.repair_sources_equal(unchanged);self.capture(folder,target,"refused")
+        result["middle_applied_loss_refused"]=True
         return result
     def repair_refusal(self,name,make):
         folder,target,pack,seed=self.fixture(name,area="repair-cases")
@@ -194,6 +203,60 @@ class RepairCases:
                 os.chmod(self.authority,mode)
         self.call(folder,self.a.admission,"check",target);self.capture(folder,target,"restored-acl")
         return dict(authority_allow_acl_refused=True,no_source_modification=True)
+
+    def repair_post_done_ack_loss(self):
+        folder,target,pack,seed,before,head,_=self.repair_fixture("done-new-terminal-ack-loss-refused","H")
+        self.repair_pause(folder,target,1702,"repair-plan-1")
+        self.repair_finish(folder,target,pack,seed,before,"H")
+        self.capture(folder,target,"repair-done")
+        desc=self.input(target);records=self.ack(desc);assert len(records)>1 and records[-1]["event"]==12
+        plan=(self.route(target)/"repair-plan-000001").read_bytes()[112:-64]
+        count=struct.unpack_from("<Q",plan,5031)[0]
+        assert sum(plan[5039+k*452+346]==6 for k in range(count))==1
+        selected=records[-1]["path"];actual_id=self._repair_id(selected)
+        selected.rename(folder/"retained-new-terminal-ack.raw")
+        assert self._repair_id(folder/"retained-new-terminal-ack.raw")==actual_id
+        self.capture(folder,target,"terminal-ack-missing");unchanged=self.repair_source_hashes(folder,target)
+        self.call(folder,self.a.admission,"check",target,expected=(2,))
+        self.call(folder,self.a.tool,"recover",target,expected=(2,))
+        self.repair_sources_equal(unchanged);self.capture(folder,target,"refused")
+        return dict(new_complete_terminal_not_in_plan=True,head_preserved=True,actual_ack_retained=True,no_source_modification=True)
+
+    def repair_next_generation(self):
+        folder,target,pack,seed,before,head,_=self.repair_fixture("pre-begin-repair-then-new-generation","B")
+        self.repair_pause(folder,target,1702,"repair-plan-1")
+        self.repair_finish(folder,target,pack,seed,before,"B")
+        self.capture(folder,target,"repair-done")
+        grant=(self.route(target)/"binding").read_bytes();old_generation=struct.unpack_from("<Q",grant,88)[0]
+        self.call(folder,self.a.tool,"migrate",target,pack)
+        desc=self.input(target);assert desc["generation"]==old_generation+1
+        self.call(folder,self.a.admission,"check",target);self.call(folder,self.a.tool,"verify",target,pack)
+        self.independent(target);self.journal_bound(desc);self.capture(folder,target,"new-generation")
+        return dict(same_clean_grant_restored_then_new_generation=True,generation=desc["generation"])
+
+    def repair_unknown_objects(self):
+        folder,target,pack,seed=self.fixture("unknown-repair-objects-refused",area="repair-cases")
+        route=self.route(target);before=self.repair_source_hashes(folder,target)
+        unknown=route/"repair-unknown-object";unknown.write_bytes(b"not an authority object\n");os.chmod(unknown,0o600)
+        self.capture(folder,target,"unknown-name")
+        self.call(folder,self.a.admission,"check",target,expected=(2,))
+        self.call(folder,self.a.tool,"recover",target,expected=(2,))
+        unknown.rename(folder/"retained-unknown-object.raw")
+        archive=route/f"repair-archive-000001-{os.getpid()}-0";archive.mkdir(mode=0o700)
+        bad=archive/"unknown-archive-object";bad.write_bytes(b"not a factory raw object\n");os.chmod(bad,0o600)
+        self.capture(folder,target,"unknown-archive")
+        self.call(folder,self.a.admission,"check",target,expected=(2,))
+        self.call(folder,self.a.tool,"recover",target,expected=(2,))
+        bad.rename(folder/"retained-unknown-archive.raw")
+        self.call(folder,self.a.admission,"check",target)
+        marker=route/"repair-guard-000256.retired";marker.write_bytes(b"orphan retired marker\n");os.chmod(marker,0o600)
+        self.capture(folder,target,"orphan-retired")
+        self.call(folder,self.a.admission,"check",target,expected=(2,))
+        self.call(folder,self.a.tool,"recover",target,expected=(2,))
+        self.repair_sources_equal(before);self.capture(folder,target,"refused")
+        return dict(unknown_name_refused=True,unknown_archive_object_refused=True,empty_uncommitted_archive_not_promoted=True,
+                    orphan_retired_refused=True,no_source_modification=True)
+
     def repair_all(self):
         for kind in ("B","C","H"):self.repair_run("partial-"+dict(B="begin",C="clean",H="head")[kind]+"-actual",lambda kind=kind:self.repair_basic(kind))
         for point in range(1701,1707):self.repair_run("repair-retry-"+str(point),lambda point=point:self.repair_cut(point))
@@ -204,6 +267,9 @@ class RepairCases:
             ("orphan-applied-refused",self.repair_orphan_applied),
             ("selected-complete-clean-restored",self.repair_selected_clean),
             ("protected-applied-floor-rollback-refused",self.repair_floor_rollback),
-            ("authority-allow-acl-refused",self.repair_authority_acl)):
+            ("authority-allow-acl-refused",self.repair_authority_acl),
+            ("done-new-terminal-ack-loss-refused",self.repair_post_done_ack_loss),
+            ("pre-begin-repair-then-new-generation",self.repair_next_generation),
+            ("unknown-repair-objects-refused",self.repair_unknown_objects)):
             self.repair_run(name,callback)
-        assert len(self.repair_rows)==17
+        assert len(self.repair_rows)==20
