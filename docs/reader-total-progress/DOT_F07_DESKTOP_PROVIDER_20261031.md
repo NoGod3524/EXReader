@@ -75,3 +75,9 @@ All original seven negative controls remain. Wrong-owner now changes the actuall
 - Retained audit artifact: ID `13038275682`, `31563241` bytes, SHA-256 `db39164de434bb87f105a09bc75b50a31eeb371baacbc78ae37a263864d664e5`; includes the original Windows ZIP and failure summary. No local ZIP download or analysis was performed.
 - Host live-runtime provider observation and full six-platform F07 acceptance remain unproved.
 
+
+## Authorized fixed diagnostic JSON read
+
+User Sentinel_aa4e9de0d5448191b923f54d8cccaea0 approved the preceding failure doc-only seal and one Ubuntu 20-minute read of fixed diagnostic artifact 13038145693 (31566370 bytes, SHA-256 ec264351524561b43d94190dcaedbed68905aa8ffe647a5cfa93114192ab097d), run 41187576237/A1, source 8bb03c91c946a1a174d1c6452cf402a67d356ea9. Only the existing pure diagnostic script, workflow and this document change. The certification checker remains byte-identical to 26d94263a.
+
+The reader opens only the exact diagnostic.json ZIP member after identity and bounded ZIP checks; it does not recursively read the nested original Windows ZIP or execute artifact code. Every selected_link_rows value is printed with its array index and physical diagnostic.json line. The earlier JSON did not retain original host-build.log line numbers, so those are explicitly unavailable. Matching counts use the retained filtered projection, not a reconstructed full log: omitted intervening Searching rows may change context. This is format evidence only, not a corrected gate, product rebuild, or successful certification. Prior failures remain.
