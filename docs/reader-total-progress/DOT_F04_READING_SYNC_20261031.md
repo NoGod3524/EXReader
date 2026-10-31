@@ -103,3 +103,7 @@ until Actions validates them.
 No runtime success or completion count is claimed. Failures and later fixes
 must retain exact run/attempt/job/artifact identity. No new CI may begin under
 this zero-CI preparation grant.
+
+Static source follow-up: point records remain BOOKMARK after note-text edits (annotation_view.cpp classifies point before note_size). The new strict selector also refuses missing/foreign parents, duplicate parents and cyclic history before accepting one head. These are static findings, not executed tests.
+
+Static review caught BookStore construction invoking repairMissingMappings(): the prepared Android driver now borrows the actual MainActivity worker/store for list, retained-wire and public original reads; it does not open a second application BookStore/SDK connection. Its independent chapter-boundary fixture remains a separate isolated test library. No runtime proof is claimed for this correction.

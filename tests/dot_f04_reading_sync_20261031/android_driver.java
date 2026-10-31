@@ -99,13 +99,30 @@ public final class F04AndroidTest extends Instrumentation {
         evidence.put("independent_boundary_tests",bounds.put("passed",true).put("app_database_seeded",false));
         active="explicit_application_receive_original";
     }
+
+    interface OwnerRead<T> { T run(BookStore store) throws Exception; }
+    private <T> T onOwner(OwnerRead<T> read)throws Exception {
+        Activity activity=readerMonitor.getLastActivity();need(activity!=null,"actual host activity");
+        java.lang.reflect.Field workerField=MainActivity.class.getDeclaredField("worker");
+        java.lang.reflect.Field storeField=MainActivity.class.getDeclaredField("store");
+        workerField.setAccessible(true);storeField.setAccessible(true);
+        java.util.concurrent.ExecutorService worker=(java.util.concurrent.ExecutorService)workerField.get(activity);
+        java.util.concurrent.FutureTask<T> result=new java.util.concurrent.FutureTask<>(()->{
+            BookStore store=(BookStore)storeField.get(activity);
+            need(store!=null,"existing application store");store.searchOwner();
+            return read.run(store);
+        });
+        worker.execute(result);
+        return result.get(120,java.util.concurrent.TimeUnit.SECONDS);
+    }
+
     private JSONObject location()throws Exception{
         // Read-only evidence from the existing product owner; never seed or apply a record here.
-        try(BookStore store=new BookStore(context,new File(context.getFilesDir(),"library.db"))){
+        return onOwner(store->{
             HostTask task=new HostTask(()->false);ReadingRecord record=NativeReadingProduct.list(store,input.getString("book_identity"),"",false,new ReadingControl(task,null,"relay-evidence",false)).progress;
             need(record.readable()&&record.capture.mode==ReadingCapture.EPUB,"safe application EPUB progress");ReadingCapture c=record.capture;
             return new JSONObject().put("part",c.unit).put("path",c.partPath).put("start",c.start).put("end",c.end).put("exact",c.text(0)).put("prefix",c.text(1)).put("suffix",c.text(2)).put("parser",c.parser).put("head",record.head).put("book_identity",c.bookKey);
-        }
+        });
     }
     private void onTarget(JSONObject f,JSONObject loc)throws Exception{
         need(f.getString("source_key").equals(input.getString("book_identity")),"actual frame original identity");
@@ -131,15 +148,15 @@ public final class F04AndroidTest extends Instrumentation {
             .put("wire_b64",android.util.Base64.encodeToString(wire,android.util.Base64.NO_WRAP));
     }
     private JSONArray observedRecords()throws Exception {
-        JSONArray result=new JSONArray();
-        try(BookStore store=new BookStore(context,new File(context.getFilesDir(),"library.db"))) {
+        return onOwner(store->{
+            JSONArray result=new JSONArray();
             ReadingControl control=new ReadingControl(new HostTask(()->false),null,"f04-evidence",false);
             NativeReadingProduct.Page page=NativeReadingProduct.list(store,input.getString("book_identity"),"",false,control);
             need(page.complete&&!page.budgetStopped,"complete bounded reading record page");
             if(page.progress!=null)result.put(captureRecord(page.progress,store));
             for(ReadingRecord record:page.rows)result.put(captureRecord(record,store));
-        }
-        return result;
+            return result;
+        });
     }
     private JSONObject recordWith(JSONArray records,String marker)throws Exception {
         JSONObject found=null;
@@ -200,7 +217,8 @@ public final class F04AndroidTest extends Instrumentation {
             });
             check("explicit_application_receive_original",()->{until(n->n.isEnabled()&&text(n).contains(input.optString("remote_title")),this::tap,"remote book",30000);click("接收");status("书籍已接收");
                 File original=new File(new File(context.getFilesDir(),"sync-cache"),input.getString("original_sha256")+".epub");need(original.length()==input.getLong("original_bytes"),"received exact byte length");need(BookStore.syncFileHash(original,new HostTask(()->false)).equals(input.getString("original_sha256")),"received SHA256 from Apple original");
-                try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getPath())){
+                onOwner(store->{
+                    NativeLibrary library=store.nativeLibrary();
                     NativeLibrary.Book[] books=library.books();need(books.length==1,"exactly one app-received original");
                     java.security.MessageDigest digest=java.security.MessageDigest.getInstance("SHA-256");
                     try(NativeLibrary.Source source=library.source(books[0].id)){
@@ -209,7 +227,8 @@ public final class F04AndroidTest extends Instrumentation {
                     }
                     StringBuilder hash=new StringBuilder();for(byte value:digest.digest())hash.append(String.format(java.util.Locale.ROOT,"%02x",value&255));
                     need(hash.toString().equals(input.getString("original_sha256")),"public SDK original SHA256 matches Apple");evidence.put("public_source_sha256",hash.toString());
-                }
+                    return null;
+                });
                 chapterBoundaries(original);
                 click("关闭");until(n->n.isEnabled()&&id(n,"text1")&&text(n).startsWith(input.optString("remote_title")+"\n"),n->{try{evidence.put("selected_shelf_control",tree(n));}catch(Exception error){throw new IllegalStateException(error);}tap(n);},"local received shelf row",30000);JSONObject first=settled();need(first.getLong("part")==evidence.getJSONObject("independent_boundary_tests").getLong("image_part")&&first.getLong("start")==0&&first.getLong("end")==0&&first.getLong("bounded_visual_boxes")>0,"real received cover retained, not silently skipped");evidence.put("initial_frame",first);
             });
