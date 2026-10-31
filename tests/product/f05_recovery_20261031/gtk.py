@@ -23,6 +23,7 @@ def main():
         raise RuntimeError("Actions only")
     parser = argparse.ArgumentParser()
     parser.add_argument("--payload", type=Path, required=True)
+    parser.add_argument("--inspect", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     out = args.output.resolve()
@@ -90,6 +91,11 @@ def main():
         host.key("alt+h", "alt+a")
         wait(host, lambda: account(host).get("bound") == "1")
         close_account(host)
+    def sdk_originals(host):
+        db=host.folder/"profile/library.sqlite"
+        with sqlite3.connect(db.resolve().as_uri()+"?mode=ro",uri=True,timeout=20) as connection:
+            return [{"id":row[0],"bytes":len(row[1]),"sha256":hashlib.sha256(row[1]).hexdigest()}
+                    for row in connection.execute("SELECT id,source FROM books ORDER BY id")]
     def snapshot(host, kind="book", entity=None):
         db = host.folder / "profile/library.sqlite.product.sqlite"
         with sqlite3.connect(db.as_uri() + "?mode=ro", uri=True, timeout=20) as connection:
@@ -175,11 +181,29 @@ def main():
         sync(first)
         second = launch("second")
         configure(second)
+        before_cancel=sdk_originals(second)
+        store.hold_get=True;store.get_blocked.clear();store.release.clear()
+        open_account(second);second.key("alt+s")
+        if not store.get_blocked.wait(60):
+            raise AssertionError("actual GTK original GET boundary missing")
+        second.key("alt+c")
+        wait(second,lambda:account(second).get("cancel_requested")=="1",10)
+        store.release.set()
+        wait(second,lambda:account(second).get("session_state")=="3",120)
+        if sdk_originals(second)!=before_cancel:
+            raise AssertionError("cancelled GTK transport changed SDK originals")
+        close_account(second)
         sync(second, snapshot(first)["heads"])
         command("xdotool", "windowactivate", "--sync", second.window)
         second.key("F2", "Return")
         second.wait(lambda state: state["book"] > 0 and state["reader_visible"]
                     and not state["error"], timeout=120)
+        after_retry=sdk_originals(second)
+        if len(after_retry)!=1 or after_retry[0]["sha256"]!=hashlib.sha256(original.read_bytes()).hexdigest():
+            raise AssertionError("cancel retry did not import exact one original")
+        checks.append({"name":"cancel_sync_retry","outcome":"passed",
+            "cancel_layer":"transport-original-GET-before-explicit-native-receive",
+            "before":before_cancel,"retry":after_retry,"sdk_mid_import_cancel_tested":False})
         baseline = snapshot(first)
         store.offline = True
         edit(first, "Offline GTK edit")
@@ -264,6 +288,30 @@ def main():
         checks.append({"name": "concurrent_heads_preserved", "outcome": "passed",
                        "heads": sorted(heads), "first_native_state": left,
                        "second_native_state": right})
+        original_id=sdk_originals(first)[0]["id"]
+        preserved=snapshot(first)
+        first.close()
+        store.offline=True
+        previous_requests=len(store.requests)
+        first=launch("first")
+        first.key("F2","Home","Return")
+        first.wait(lambda state:state["book"]==original_id and state["reader_visible"]
+                   and not state["error"],timeout=120)
+        if len(store.requests)!=previous_requests or snapshot(first)["heads"]!=preserved["heads"]:
+            raise AssertionError("offline reopened reader changed heads or used network")
+        command("import","-window",first.window,out/"offline-reader.png")
+        first.close()
+        exported=out/"offline-sdk-original.bin"
+        inspected=subprocess.run([str(args.inspect.resolve()),
+            str(first.folder/"profile/library.sqlite"),str(original_id),str(exported)],
+            capture_output=True,text=True,timeout=60)
+        (out/"offline-sdk-readback.log").write_text(inspected.stdout+inspected.stderr)
+        if inspected.returncode or exported.read_bytes()!=original.read_bytes():
+            raise AssertionError("installed SDK exact offline original readback failed")
+        checks.append({"name":"restart_offline_read","outcome":"passed",
+            "book":original_id,"heads":preserved["heads"],"network_requests":0,
+            "public_sdk_readback":json.loads(inspected.stdout),
+            "original_sha256":hashlib.sha256(exported.read_bytes()).hexdigest()})
     except Exception as error:
         report["errors"].append(str(error))
         raise
@@ -277,7 +325,7 @@ def main():
         store.close()
         report["requests"] = store.requests
         report["uncovered"] = ["stale-put replay after tombstone", "conditional explicit restore parents",
-                               "receive cancellation", "offline reopened actual read",
+                               "SDK mid-import cancellation (additional, not universal prerequisite)",
                                "independent original-artifact authentication"]
         (out / "coverage.json").write_text(json.dumps(report, indent=2) + "\n")
         subprocess.run(["sudo", "rm", "--", str(trust)], check=True, capture_output=True)
