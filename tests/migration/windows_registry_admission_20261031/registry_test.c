@@ -168,7 +168,7 @@ static void kill_case(void) {
  if(!reg_fixture("killed-pending-owner-fresh-reader-refused",1))return;
  child=reg_spawn(WH3WG_OWNER,WH3WG_BEGIN_DURABLE);expect(child!=NULL,"spawn pending owner");if(!child)return;
  expect(WaitForSingleObject(rrdy,15000)==WAIT_OBJECT_0&&rs->reached==WH3WG_BEGIN_DURABLE,"observed durable pending barrier");
- expect(TerminateProcess(child,97)!=0&&finish(child,97),"kill actual owner at barrier");
+ expect(finish(child,1),"kill actual owner at barrier");
  expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"new process cannot adopt pending generation");
 }
 static void bad_target(int hardlink) {
@@ -209,7 +209,18 @@ static void publication_case(int fail_clean) {
  swprintf_s(stage,MAX_PATH,L"%ls\\stage.sqlite",f.parent);swprintf_s(backup,MAX_PATH,L"%ls\\retained.sqlite",f.parent);
  expect(sdk_seed(stage,published),"actual staged SDK database");
  expect(wh3wr_prepare_publish(registration),"release target pin only under live pending");
- expect(MoveFileW(reglib,backup)!=0&&MoveFileW(stage,reglib)!=0,"actual target namespace publication");
+ {
+  HANDLE deletion;DWORD deletion_error,parent_error,save_error,publish_error;int saved,moved;
+  deletion=CreateFileW(reglib,DELETE,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+  deletion_error=deletion==INVALID_HANDLE_VALUE?GetLastError():0;if(deletion!=INVALID_HANDLE_VALUE)CloseHandle(deletion);
+  deletion=CreateFileW(f.parent,FILE_ADD_FILE|FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+  parent_error=deletion==INVALID_HANDLE_VALUE?GetLastError():0;if(deletion!=INVALID_HANDLE_VALUE)CloseHandle(deletion);
+  saved=MoveFileW(reglib,backup)!=0;save_error=saved?0:GetLastError();
+  moved=saved&&MoveFileW(stage,reglib)!=0;publish_error=moved?0:(saved?GetLastError():ERROR_OPERATION_ABORTED);
+  printf("OBS publication delete_open_error=%lu parent_write_error=%lu saved=%d save_error=%lu moved=%d publish_error=%lu\n",
+    (unsigned long)deletion_error,(unsigned long)parent_error,saved,(unsigned long)save_error,moved,(unsigned long)publish_error);
+  expect(saved&&moved,"actual target namespace publication");
+ }
  expect(reg_terminal(cap,&tip),"complete acknowledged native journal");
  if(fail_clean){
   expect(!wh3wr_finish(registration,f.store,&tip,reg_prove,(void *)published),"unknown clean yields no registry advance");
