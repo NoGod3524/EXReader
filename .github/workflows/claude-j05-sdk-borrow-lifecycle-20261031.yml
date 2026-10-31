@@ -1,0 +1,48 @@
+name: J05 SDK borrow lifecycle evidence
+on:
+  push:
+    branches: [codex/claude-j05-sdk-borrow-lifecycle-20261031]
+    paths:
+      - tools/validation/claude-j05-sdk-borrow-lifecycle-20261031/**
+      - .github/workflows/claude-j05-sdk-borrow-lifecycle-20261031.yml
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  lifecycle:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 8357eafa28423a7ab93ba08b823af80f01ad1505
+          path: sdk-src
+      - name: Build and install the frozen SDK
+        working-directory: sdk-src
+        run: |
+          test "$(git rev-parse HEAD)" = 8357eafa28423a7ab93ba08b823af80f01ad1505
+          sudo apt-get update && sudo apt-get install -y ninja-build
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+      - name: Build the consumer against the installed stage and run it
+        run: |
+          mkdir -p evidence
+          stage="$PWD/sdk-src/build/reading-library/stage"
+          cmake -S tools/validation/claude-j05-sdk-borrow-lifecycle-20261031 -B build/j05 -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$stage"
+          cmake --build build/j05
+          ldd build/j05/j05-lifecycle | tee evidence/ldd.txt
+          set +e
+          build/j05/j05-lifecycle "$PWD/build/j05/lifecycle.db" "$PWD/sdk-src/tests/fixtures/fonts/primary.ttf" | tee evidence/events.jsonl
+          echo "exit=${PIPESTATUS[0]}" | tee evidence/exit.txt
+          set -e
+          python3 -I tools/validation/claude-j05-sdk-borrow-lifecycle-20261031/summarize.py "$stage" evidence/events.jsonl evidence sdk-src
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: j05-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence
+          if-no-files-found: warn
