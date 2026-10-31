@@ -89,6 +89,41 @@ def author(a, stamp):
         prior = {r["id"] for r in before.get("revisions",[])}
         ids = [r["id"] for r in after["revisions"] if r["id"] not in prior]
         require(ids or operation=="restart","native operation made no revision")
+        def group(table, key, identifier):
+            rows = [row for row in after[table] if row[key] == identifier]
+            require(len(rows) == 1, "expected one projected group")
+            return rows[0]
+        if operation == "nested-shelf":
+            root = group("reader_shelves", "shelf_id", known["root"])
+            child = group("reader_shelves", "shelf_id", known["child"])
+            require(root["name"] == "F03 Root" and root["ordinal"] == 1 and not root["deleted"],
+                    "root projection differs")
+            require(child["name"] == "F03 Child" and child["parent_id"] == known["root"] and
+                    child["ordinal"] == 2 and not child["deleted"], "nested projection differs")
+        elif operation in ("tag", "series"):
+            row = group("reader_tags" if operation == "tag" else "reader_series",
+                        operation + "_id", known[operation])
+            require(row["name"] == "F03 " + operation.title() and not row["deleted"],
+                    "group projection differs")
+        elif operation in ("group-delete", "group-restore"):
+            wanted = 1 if operation == "group-delete" else 0
+            for table, key, item in (("reader_shelves","shelf_id","child"),
+                                     ("reader_tags","tag_id","tag"),
+                                     ("reader_series","series_id","series")):
+                require(group(table,key,known[item])["deleted"] == wanted, "tombstone projection differs")
+        if operation in ("nested-shelf","tag","series","membership-remove","membership-restore"):
+            mapping = [("reader_book_shelves","shelf_id","child",3),
+                       ("reader_book_tags","tag_id","tag",None),
+                       ("reader_book_series","series_id","series",7)]
+            for table, key, item, ordinal in mapping:
+                if item not in known:
+                    continue
+                rows = [row for row in after[table] if row[key] == known[item] and
+                        row["book_key"] == known["book_key"]]
+                require(len(rows) == (0 if operation == "membership-remove" else 1),
+                        "membership projection differs")
+                if rows and ordinal is not None:
+                    require(rows[0]["ordinal"] == ordinal, "membership ordering differs")
         image = a.output / (operation+".png")
         command("import","-window",window("Library collections"),image)
         record = {**stamp,"host":"gtk","operation":operation,"passed":True,"native_ui":True,
@@ -125,13 +160,15 @@ def author(a, stamp):
             for index,key in ((0,"child"),(1,"tag"),(2,"series")):
                 kind(index)
                 if a.phase=="restore":
-                    if state("collections").get("removed")!="1":host.key("alt+m");org_ready()
+                    if state("collections").get("removed")!="1":
+                        host.key("alt+m");wait(lambda:state("collections").get("removed")=="1");org_ready()
                 elif index==0:
                     choose(known["root"]);host.key("alt+e")
                     wait(lambda:state("collections").get("parent_id")==known["root"])
                 choose(known[key]);host.key("alt+s" if a.phase=="restore" else "alt+d")
                 window("Collection details");save()
-                if a.phase=="restore":host.key("alt+m");org_ready()
+                if a.phase=="restore":
+                    host.key("alt+m");wait(lambda:state("collections").get("removed")=="0");org_ready()
             event("group-restore" if a.phase=="restore" else "group-delete",before)
         elif a.phase in ("member-remove","member-restore"):
             before=read_snapshot(catalog)
