@@ -160,3 +160,7 @@ The singleTask MainActivity must first launch after instrumentation installs Act
 - audit.py --authenticate-graph 设计为只在 Actions 读取本 run/attempt 作业与原 artifact ZIP，核 job success、source、ZIP大小/SHA、result+state、实际 program.bin、证书/服务源码、真实请求和原件字节，再建立 predecessor SHA 图。它不解包生产者给出的路径。
 - 每phase单独保留实际运行程序原字节。Apple是实际构建的app executable，Android为验证安装APK等于同run产物后读取的安装APK，桌面为实际启动的文件。
 - 完整 producer workflow 仍没有启用；原协议18锚点与必要旧宿主断言的严格认证尚需接合，F04最终标志仍false。上述新代码未运行。
+
+- Graph producer上传清单只取state/result（Android report）/requests/cert.pem/program.bin与明确证据；不得整目录带入profile、private或key.pem。原ZIP认证发现这些本包私有路径会拒绝，不下载用户凭据。
+
+Producer contract explicitly marks current jobs `fresh_profile=true`: original GET is required for those non-seed jobs only, not a universal requirement for a future approved cached-profile return. Current drivers still create fresh profiles. No CI was run.
