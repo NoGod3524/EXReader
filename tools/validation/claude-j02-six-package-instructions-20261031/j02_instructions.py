@@ -243,6 +243,9 @@ def main():
     ext = {"task": "J02", "sdk_version": "3.42.0", "source": f12.SOURCE, "producer_run": f12.RUN, "producer_attempt": f12.ATTEMPT,
            "packages": manifest, "note": "outer hashes live only here, never inside the ZIPs (no circular hash)"}
     dump(CAND / "six-package-final-manifest.json", ext)
+    dump(OUT / "six-package-final-manifest.json", ext)
+    dump(OUT / "coverage-matrix.json", {t: {"status": r["status"], "topics": r.get("topics"),
+         "instruction_sha256": r.get("instruction_sha256"), "inner_sha256": r.get("inner_sha256")} for t, r in results.items()})
     sums = "".join(m["sha256"] + "  " + m["file"] + "\n" for m in manifest.values())
     (CAND / "SHA256SUMS").write_text(sums)
     summary = dict(results=results, passed=[t for t, r in results.items() if r["status"] == "passed"],
