@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <d3d11.h>
 #include <dwmapi.h>
+#include <wincodec.h>
 #include <array>
 #include <dxgi1_2.h>
 #include <windows.graphics.capture.interop.h>
@@ -33,16 +34,32 @@ static Region region(HWND root,int id){
 static bool same(const Region&a,const Region&b){
  return a.hwnd==b.hwnd&&a.pid==b.pid&&a.visible==b.visible&&EqualRect(&a.rect,&b.rect);
 }
-static void bitmap(const fs::path&p,const std::vector<unsigned char>&bytes,LONG w,LONG h){
- BITMAPFILEHEADER f{};BITMAPINFOHEADER b{};f.bfType=0x4d42;f.bfOffBits=sizeof(f)+sizeof(b);f.bfSize=f.bfOffBits+(DWORD)bytes.size();
- b.biSize=sizeof(b);b.biWidth=w;b.biHeight=-h;b.biPlanes=1;b.biBitCount=32;b.biSizeImage=(DWORD)bytes.size();
- FILE*s=nullptr;if(_wfopen_s(&s,p.c_str(),L"wb")||!s)throw hresult_error(E_FAIL,L"open bitmap");
- bool ok=fwrite(&f,sizeof(f),1,s)==1&&fwrite(&b,sizeof(b),1,s)==1&&fwrite(bytes.data(),bytes.size(),1,s)==1;
- if(fclose(s)||!ok)throw hresult_error(E_FAIL,L"write bitmap");
+static void bitmap(const fs::path&p,const std::vector<unsigned char>&bytes,LONG w,LONG h,bool verify=false){
+ com_ptr<IWICImagingFactory> factory;
+ check_hresult(CoCreateInstance(CLSID_WICImagingFactory,nullptr,CLSCTX_INPROC_SERVER,__uuidof(IWICImagingFactory),factory.put_void()));
+ com_ptr<IWICStream> stream;check_hresult(factory->CreateStream(stream.put()));check_hresult(stream->InitializeFromFilename(p.c_str(),GENERIC_WRITE));
+ com_ptr<IWICBitmapEncoder> encoder;check_hresult(factory->CreateEncoder(GUID_ContainerFormatPng,nullptr,encoder.put()));
+ check_hresult(encoder->Initialize(stream.get(),WICBitmapEncoderNoCache));com_ptr<IWICBitmapFrameEncode> frame;
+ check_hresult(encoder->CreateNewFrame(frame.put(),nullptr));check_hresult(frame->Initialize(nullptr));check_hresult(frame->SetSize(w,h));
+ auto format=GUID_WICPixelFormat32bppBGRA;check_hresult(frame->SetPixelFormat(&format));
+ if(!IsEqualGUID(format,GUID_WICPixelFormat32bppBGRA))throw hresult_error(E_FAIL,L"PNG pixel format");
+ check_hresult(frame->WritePixels(h,w*4,(UINT)bytes.size(),const_cast<BYTE*>(bytes.data())));
+ check_hresult(frame->Commit());check_hresult(encoder->Commit());frame=nullptr;encoder=nullptr;stream=nullptr;
+ if(verify){
+  com_ptr<IWICBitmapDecoder> decoder;check_hresult(factory->CreateDecoderFromFilename(p.c_str(),nullptr,GENERIC_READ,WICDecodeMetadataCacheOnLoad,decoder.put()));
+  com_ptr<IWICBitmapFrameDecode> decoded;check_hresult(decoder->GetFrame(0,decoded.put()));com_ptr<IWICFormatConverter> converter;
+  check_hresult(factory->CreateFormatConverter(converter.put()));check_hresult(converter->Initialize(decoded.get(),GUID_WICPixelFormat32bppBGRA,WICBitmapDitherTypeNone,nullptr,0,WICBitmapPaletteTypeCustom));
+  std::vector<unsigned char> roundtrip(bytes.size());check_hresult(converter->CopyPixels(nullptr,w*4,(UINT)roundtrip.size(),roundtrip.data()));
+  if(roundtrip!=bytes)throw hresult_error(E_FAIL,L"PNG roundtrip mismatch");
+ }
 }
 int wmain(int argc,wchar_t**argv){
  setvbuf(stdout,nullptr,_IOLBF,65536);SetProcessDPIAware();
  try{
+  if(argc==3&&std::wstring(argv[1])==L"--check-png"){
+   init_apartment(apartment_type::multi_threaded);
+   bitmap(argv[2],{0,17,255,255,255,1,83,255,19,27,29,255,255,255,255,255},2,2,true);return 0;
+  }
   if(argc!=5)throw hresult_error(E_INVALIDARG,L"root_hwnd pid stop_file image_folder");
   HWND root=(HWND)(uintptr_t)std::stoull(argv[1]);DWORD pid=(DWORD)std::stoul(argv[2]),owner=0,affinity=0;
   GetWindowThreadProcessId(root,&owner);
@@ -69,7 +86,7 @@ int wmain(int argc,wchar_t**argv){
   auto pool=Direct3D11CaptureFramePool::CreateFreeThreaded(native,DirectXPixelFormat::B8G8R8A8UIntNormalized,8,size);
   auto session=pool.CreateCaptureSession(item);session.IsCursorCaptureEnabled(false);
   fs::path folder=argv[4],stop=argv[3];fs::create_directories(folder);
-  std::mutex lock;std::atomic<bool> failed{false},closed{false};unsigned frames=0,changed_images=0,last=0;unsigned long long saved_bytes=0;
+  std::mutex lock;std::atomic<bool> failed{false},closed{false};unsigned frames=0,changed_images=0,last=0;unsigned long long saved_bytes=0,saved_pixel_bytes=0;
   std::vector<unsigned char> previous;com_ptr<ID3D11Texture2D> staging;D3D11_TEXTURE2D_DESC staging_desc{};
   auto closed_token=item.Closed([&](auto const&,auto const&){closed=true;});
   auto token=pool.FrameArrived([&](auto const&sender,auto const&){
@@ -103,11 +120,11 @@ int wmain(int argc,wchar_t**argv){
      std::array<Region,2> after={region(root,119),region(root,123)};
      frames++;bool changed=previous!=bytes;
      if(changed){
-      if(saved_bytes+bytes.size()>(1ull<<30))throw hresult_error(E_FAIL,L"image byte cap");
-      last=frames;previous=std::move(bytes);saved_bytes+=previous.size();changed_images++;
-      bitmap(folder/(std::to_string(last)+".bmp"),previous,size.Width,size.Height);
+      if(saved_bytes>(1ull<<30)||frames>7200)throw hresult_error(E_FAIL,L"image byte or frame cap");
+      last=frames;previous=std::move(bytes);saved_pixel_bytes+=previous.size();changed_images++;
+      auto path=folder/(std::to_string(last)+".png");bitmap(path,previous,size.Width,size.Height);saved_bytes+=fs::file_size(path);
      }
-     std::printf("{\"kind\":\"frame\",\"index\":%u,\"system_relative_100ns\":%lld,\"callback_qpc\":%lld,\"copy_qpc\":%lld,\"map_start_qpc\":%lld,\"map_end_qpc\":%lld,\"readback_finished_qpc\":%lld,\"width\":%d,\"height\":%d,\"changed\":%s,\"image\":\"%u.bmp\",\"regions\":[",
+     std::printf("{\"kind\":\"frame\",\"index\":%u,\"system_relative_100ns\":%lld,\"callback_qpc\":%lld,\"copy_qpc\":%lld,\"map_start_qpc\":%lld,\"map_end_qpc\":%lld,\"readback_finished_qpc\":%lld,\"width\":%d,\"height\":%d,\"changed\":%s,\"image\":\"%u.png\",\"regions\":[",
       frames,(long long)relative,begin,copy,map_begin,map_end,tick(),size.Width,size.Height,changed?"true":"false",last);
      for(unsigned j=0;j<2;j++){
       const auto&r=before[j];bool stable=same(r,after[j])&&EqualRect(&bounds,&after_bounds);
@@ -128,8 +145,8 @@ int wmain(int argc,wchar_t**argv){
   while(!fs::exists(stop)&&!failed&&!closed&&IsWindow(root)&&GetTickCount64()<deadline)Sleep(5);
   session.Close();pool.FrameArrived(token);pool.Close();item.Closed(closed_token);
   std::lock_guard<std::mutex> guard(lock);bool expired=GetTickCount64()>=deadline;
-  std::printf("{\"kind\":\"summary\",\"qpc\":%lld,\"frames\":%u,\"changed_images\":%u,\"saved_pixel_bytes\":%llu,\"deadline_expired\":%s,\"failed\":%s,\"target_closed\":%s,\"frame_census_complete\":false,\"physical_scanout_proven\":false,\"f08_accepted\":false}\n",
-   tick(),frames,changed_images,saved_bytes,expired?"true":"false",failed?"true":"false",closed?"true":"false");
+  std::printf("{\"kind\":\"summary\",\"qpc\":%lld,\"frames\":%u,\"changed_images\":%u,\"saved_pixel_bytes\":%llu,\"saved_file_bytes\":%llu,\"deadline_expired\":%s,\"failed\":%s,\"target_closed\":%s,\"frame_census_complete\":false,\"physical_scanout_proven\":false,\"f08_accepted\":false}\n",
+   tick(),frames,changed_images,saved_pixel_bytes,saved_bytes,expired?"true":"false",failed?"true":"false",closed?"true":"false");
   return !failed&&!expired&&frames>0?0:1;
  }catch(hresult_error const&e){std::printf("{\"kind\":\"fatal\",\"hresult\":\"0x%08lX\",\"qpc\":%lld}\n",(unsigned long)e.code(),tick());return 1;}
  catch(...){std::printf("{\"kind\":\"fatal\",\"qpc\":%lld}\n",tick());return 1;}
