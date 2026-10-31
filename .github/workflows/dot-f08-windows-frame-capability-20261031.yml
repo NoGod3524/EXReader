@@ -1,0 +1,36 @@
+name: F08 Windows GDI frame measurement capability
+on:
+  push:
+    branches: [codex/dot-f08-windows-frame-capability-20261031]
+permissions:
+  contents: read
+concurrency:
+  group: f08-windows-frame-capability-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  capability:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compile isolated native rendering controls
+        run: |
+          python -m py_compile tests/reader_f08_windows_frame_capability_20261031/run.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake -S tests/reader_f08_windows_frame_capability_20261031 -B build/f08-win-control -A x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build/f08-win-control --config Release --parallel 2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Compare DXGI and the product's GDI rendering path
+        run: python tests/reader_f08_windows_frame_capability_20261031/run.py
+      - name: Preserve complete capability evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f08-windows-frame-capability-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-windows-frame-capability/
+            build/f08-win-control/Release/f08_frame_control.exe
+          if-no-files-found: error
