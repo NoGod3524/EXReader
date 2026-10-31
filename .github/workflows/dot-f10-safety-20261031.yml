@@ -83,4 +83,4 @@ jobs:
           name: f10-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f10-audit/
           if-no-files-found: error
-# Prepared only: final activation commit is separately reviewed.
+# Activate the sole approved characterization run after native dot review.
