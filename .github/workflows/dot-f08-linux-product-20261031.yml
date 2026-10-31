@@ -1,7 +1,7 @@
-name: F08 full GTK product with native viewport evidence
+name: F08 GTK compositor presentation feedback
 on:
   push:
-    branches: [codex/dot-f08-linux-viewport-20261031]
+    branches: [codex/f08-linux-mutter-20261031]
 permissions:
   contents: read
   actions: read
@@ -32,7 +32,33 @@ jobs:
       - name: Install the fixed native desktop toolchain
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libgtk-3-dev libglib2.0-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build xvfb openbox xdotool xclip x11-utils dbus dbus-x11 at-spi2-core gsettings-desktop-schemas python3-gi gir1.2-atspi-2.0
+          sudo apt-get install -y libgtk-3-dev libglib2.0-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build xvfb mutter mesa-utils xdotool xclip x11-utils dbus dbus-x11 at-spi2-core gsettings-desktop-schemas python3-gi gir1.2-atspi-2.0
+      - name: Require actual compositor feedback before product sampling
+        run: |
+          mkdir -p build/f08-mutter-capability
+          cc -O2 -Wall -Wextra tests/reader_f08_linux_mutter_20261031/capability.c -o build/f08-mutter-capability/probe $(pkg-config --cflags --libs gtk+-3.0)
+          Xvfb :98 -screen 0 1440x900x24 -nolisten tcp > build/f08-mutter-capability/xvfb.log 2>&1 &
+          f08_xvfb=$!
+          trap 'kill $f08_xvfb 2>/dev/null || true' EXIT
+          sleep 2
+          export DISPLAY=:98
+          dbus-run-session -- bash -euo pipefail -c '
+            mutter --x11 --replace --sm-disable > build/f08-mutter-capability/mutter.log 2>&1 &
+            f08_wm=$!
+            trap "kill $f08_wm 2>/dev/null || true" EXIT
+            sleep 2
+            kill -0 $f08_wm
+            mutter --version > build/f08-mutter-capability/version.txt
+            xprop -root _NET_SUPPORTED > build/f08-mutter-capability/properties.txt
+            glxinfo -B > build/f08-mutter-capability/renderer.txt
+            build/f08-mutter-capability/probe > build/f08-mutter-capability/result.json
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-mutter-capability-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-mutter-capability/
+          if-no-files-found: error
       - name: Build full compact GTK product from unchanged SDK and installed public modules
         run: python3 tests/reader_f08_linux_product_20261031/run.py build
       - name: Original 44 launches and separate six causal launches on the same full program
@@ -44,10 +70,13 @@ jobs:
           sleep 2
           export DISPLAY=:99
           dbus-run-session -- bash -euo pipefail -c '
-            openbox > build/f08-linux-product/evidence/openbox.log 2>&1 &
+            mutter --x11 --replace --sm-disable > build/f08-linux-product/evidence/mutter.log 2>&1 &
             f08_wm=$!
             trap "kill $f08_wm 2>/dev/null || true" EXIT
-            sleep 1
+            sleep 2
+            kill -0 $f08_wm
+            xprop -root _NET_SUPPORTED > build/f08-linux-product/evidence/compositor-properties.txt
+            glxinfo -B > build/f08-linux-product/evidence/renderer.txt
             xdpyinfo > build/f08-linux-product/evidence/xdpyinfo.txt
             /usr/bin/python3 tests/reader_f08_linux_product_20261031/run.py sample
           '
