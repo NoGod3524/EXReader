@@ -273,3 +273,61 @@ bytes; old profiles/data retain their original meaning.
 
 The physical-Escape stop is respected: local interaction/VM tests have not
 restarted. Source work, archived-data replay and remote verification continue.
+
+
+## 2026-10-31 23:53 UTC reviewed source integration
+
+The integration branch now includes Windows 7c6dcd74, Apple 77b2789d and its
+1d66ea29 candidate-phase observer, and Android dc981b7b plus f0ca9443. The
+Linux repair-preparation condition remains enabled on both Windows and Linux;
+the Windows merge did not replace the reviewed Linux implementation.
+
+Windows hosted build [41253820469](https://github.com/NoGod3524/EXReader/actions/runs/41253820469)
+passed six CTests, 17 settings checks, ten protocol controls and the full-entry
+coverage/provenance/seal controls. Observer build
+[41253820527](https://github.com/NoGod3524/EXReader/actions/runs/41253820527)
+passed eight bounded-duration controls and lossless PNG controls. The new native
+entry preserves the original 78-start plan, or explicitly reports the original
+conditional TXT omission as 12 missing starts. It always leaves F08 acceptance
+false while the complete native all-UI/LISTBOX frame census is missing. No new
+local product or observer execution occurred.
+
+The interrupted 23:17 Windows raw directory has 148 payloads matching its
+original manifest and one stop-file mismatch caused by later cleanup. The
+original stop bytes were recovered and hash-checked only in an external
+analysis copy. The overwritten raw file and interruption supplement remain
+preserved. The forensic archive is 40348228 bytes, SHA256
+b5ec44cfc00239e9be17fb7e66f6cb3ad0eb16eda93b2978f8a93fc6f8eb1a7f.
+The replacement harness uses a sibling control directory, waits for owned
+process cleanup, seals raw last and publishes the final manifest digest outside
+raw. Late controller writes cannot modify sealed raw.
+
+Android adds a capture-only first-catalog frame latch, one passive tree-draw
+begin witness and an exact same-Window/native-VSYNC join. Native callback
+completion supplies a separately named upper bound; pre-draw is not renamed as
+completed rendering. Missing, duplicate, cross-frame and RT-only witnesses fail
+closed, and the original two-second budget stays intact. A ready-output close
+failure is written to the still-open native trace before native shutdown.
+[41254307973](https://github.com/NoGod3524/EXReader/actions/runs/41254307973)
+passed 18 audit controls, 30 actual Java state controls and public API34 observer
+compilation. The merged tree also passed the Python association and Windows
+full-entry controls. These controls do not resolve the archived 9/10 UI result,
+black screenshots or frame-budget failures.
+
+Apple capability run
+[41252447709](https://github.com/NoGod3524/EXReader/actions/runs/41252447709)
+is complete. On macOS 26.6.2/Xcode 26.2, the authenticated original phone app
+completed the minimal scrolling control with configured native hitch metrics,
+but xcresult still omitted native hitch/frame fields. Mac cases did not obtain
+an app window; no new Mac metric or pagination capability is inferred. Repeating
+that simulator-metric route has stopped. The candidate-phase observer retains
+the original 0.35-second confirmation endpoint and records actual predicate,
+revision and timer events; no estimated offset is subtracted from launch time.
+A separate original-toolchain diagnostic
+[41254331568](https://github.com/NoGod3524/EXReader/actions/runs/41254331568)
+has been submitted; its results are pending.
+
+F08 remains pending at formal progress 95/108. Only Linux has completed its
+component acceptance. Local desktop/VM interaction remains stopped after the
+physical Escape signal, and the desktop resolution has not changed. Remote
+source controls and archived-evidence analysis continue.
