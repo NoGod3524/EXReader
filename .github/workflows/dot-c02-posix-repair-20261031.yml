@@ -1,0 +1,59 @@
+name: C02 native POSIX repair scanner and immutable store checks
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/dot-c02-native-journal-20261030]
+    paths:
+      - extras/migration/posix_c02_admission_20261031/include/exr_pc02_repair_*.h
+      - extras/migration/posix_c02_admission_20261031/src/pc02_repair_scan.c
+      - extras/migration/posix_c02_admission_20261031/src/pc02_repair_store.c
+      - tests/migration/posix_c02_repair_20261031/**
+      - .github/workflows/dot-c02-posix-repair-20261031.yml
+permissions: {contents: read}
+defaults:
+  run: {shell: bash}
+jobs:
+  repair_helpers:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Preserve frozen SDK, C01 and original coordinator contracts
+        run: |
+          set -euo pipefail
+          git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt bindings
+          git diff --exit-code a8d0b162d8c21617e4c2c837e3eb2b2174bbf69b HEAD -- extras/migration/windows_coordinator_hardening_20261030 tests/migration/windows_coordinator_hardening_20261030 extras/migration/windows_coordinator_cas_20261030 tests/migration/windows_coordinator_cas_20261030 extras/migration/windows_admission_lease_20261030
+          git cat-file -e ccd7fec67eb8aa463b09533ce320820f2da472d9:extras/migration/windows_admission_lease_20261030/src/lm_win_lease.c
+          test "$(id -u)" -ne 0
+          mkdir -p evidence/build-logs
+      - name: Install unchanged ABI2 coordinator
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_coordinator_hardening_20261030 -B build/abi2 -DCMAKE_BUILD_TYPE=Release 2>&1 | tee evidence/build-logs/abi2-configure.log
+          cmake --build build/abi2 --parallel 4 2>&1 | tee evidence/build-logs/abi2-build.log
+          cmake --install build/abi2 --prefix "$GITHUB_WORKSPACE/stage-abi2" 2>&1 | tee evidence/build-logs/abi2-install.log
+      - name: Compile isolated scanner and immutable store consumer
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/posix_c02_repair_20261031 -B build/repair-helpers -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage-abi2" -DSOURCE_SHA="$GITHUB_SHA" 2>&1 | tee evidence/build-logs/helpers-configure.log
+          cmake --build build/repair-helpers --parallel 4 2>&1 | tee evidence/build-logs/helpers-build.log
+      - name: Exercise every partial boundary and actual protected publication
+        run: |
+          set -euo pipefail
+          python tests/migration/posix_c02_repair_20261031/run.py --tool build/repair-helpers/posix-c02-repair-helpers-check --output evidence/repair-helpers 2>&1 | tee evidence/helpers.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-posix-repair-helpers-${{ matrix.os }}-${{ github.sha }}
+          path: |
+            evidence/
+            !evidence/repair-helpers/native/store/fifo-plan
+          include-hidden-files: true
+          if-no-files-found: error
