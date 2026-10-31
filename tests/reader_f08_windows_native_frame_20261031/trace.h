@@ -8,7 +8,7 @@
 /* Metadata follows the owned frame through frame_move, never a borrowed job. */
 typedef struct {
   LONG id,input_id;
-  LONGLONG queued_qpc,worker_start_qpc,worker_end_qpc;
+  LONGLONG queued_qpc,worker_start_qpc,worker_end_qpc,ui_start_qpc;
 } f08_origin;
 typedef struct {
   const char *kind;
@@ -74,9 +74,9 @@ static int f08_finish(void) {
       GetCurrentProcessId(),frequency.QuadPart,f08_count,f08_overflow?"true":"false",(unsigned long long)sizeof(f08_rows));
   for(i=0;i<n;i++) {
     const f08_row *r=&f08_rows[i];
-    fprintf(file,"%s{\"index\":%ld,\"kind\":\"%s\",\"qpc\":%lld,\"start_qpc\":%lld,\"job_id\":%ld,\"input_id\":%ld,\"queued_qpc\":%lld,\"worker_start_qpc\":%lld,\"worker_end_qpc\":%lld,\"generation\":%lu,\"book\":%lld,\"control\":%d,\"message\":%u,\"flags\":%d,\"v0\":%lld,\"v1\":%lld,\"thread\":%lu}\n",
+    fprintf(file,"%s{\"index\":%ld,\"kind\":\"%s\",\"qpc\":%lld,\"start_qpc\":%lld,\"job_id\":%ld,\"input_id\":%ld,\"queued_qpc\":%lld,\"worker_start_qpc\":%lld,\"worker_end_qpc\":%lld,\"ui_start_qpc\":%lld,\"generation\":%lu,\"book\":%lld,\"control\":%d,\"message\":%u,\"flags\":%d,\"v0\":%lld,\"v1\":%lld,\"thread\":%lu}\n",
       i?",":"",i,r->kind,r->qpc,r->start_qpc,r->origin.id,r->origin.input_id,r->origin.queued_qpc,
-      r->origin.worker_start_qpc,r->origin.worker_end_qpc,r->generation,r->book,r->control,r->message,r->flags,r->v0,r->v1,r->thread);
+      r->origin.worker_start_qpc,r->origin.worker_end_qpc,r->origin.ui_start_qpc,r->generation,r->book,r->control,r->message,r->flags,r->v0,r->v1,r->thread);
   }
   fprintf(file,"],\"read_only_message_counts\":[");
   for(i=0;i<(LONG)(sizeof(f08_query_messages)/sizeof(f08_query_messages[0]));i++)

@@ -71,6 +71,7 @@ target_link_libraries(reader_windows_records_w3 PRIVATE EXReaderSession::reader_
 add_executable(EXReaderWave3 WIN32 "${EXR_W3_DESKTOP}/../../../examples/reader.c" "${EXR_W3_DESKTOP}/windows_wave3_bridge.cpp")
 option(EXR_WINDOWS_FRAME_REVIEW "Enable isolated full product native frame production trace" OFF)
 if(EXR_WINDOWS_FRAME_REVIEW)
+  target_compile_definitions(reader_catalog_sdk PRIVATE EXR_WINDOWS_FRAME_REVIEW=1)
   target_compile_definitions(EXReaderWave3 PRIVATE EXR_WINDOWS_FRAME_REVIEW=1
     "EXR_WINDOWS_FRAME_REVIEW_HEADER=\"${EXR_W3_DESKTOP}/../../../tests/reader_f08_windows_native_frame_20261031/trace.h\"")
 endif()

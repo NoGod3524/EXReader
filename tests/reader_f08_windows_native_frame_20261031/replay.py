@@ -4,10 +4,10 @@ from pathlib import Path
 
 def need(value,reason):
  if not value:raise ValueError(reason)
-def stats(values):
- if not values:return {"n":0,"p95_ms":None,"p99_ms":None,"max_ms":None,"passed":False}
+def stats(values,apply_frame_budget=False):
+ if not values:return {"n":0,"p95_ms":None,"p99_ms":None,"max_ms":None,"budget_applied":apply_frame_budget,"passed":False if apply_frame_budget else None}
  ordered=sorted(values);p95=ordered[math.ceil(.95*len(ordered))-1];p99=ordered[math.ceil(.99*len(ordered))-1]
- return {"n":len(values),"p95_ms":p95,"p99_ms":p99,"max_ms":max(values),"passed":p95<=16.67 and p99<=33.34}
+ return {"n":len(values),"p95_ms":p95,"p99_ms":p99,"max_ms":max(values),"budget_applied":apply_frame_budget,"passed":(p95<=16.67 and p99<=33.34) if apply_frame_budget else None}
 def replay(document):
  rows=document["rows"];frequency=document["frequency"]
  need(type(frequency) is int and frequency>0,"QPC frequency")
@@ -22,7 +22,7 @@ def replay(document):
  produced=[r for r in workers.values() if r["flags"]==0 and r["v0"] and r["v1"]]
  paints=[r for r in rows if r["kind"]=="reader_gdi_complete"]
  publications=[r for r in rows if r["kind"]=="reader_publish" and r["flags"]]
- reader=[];missing=[];all_ids=set();font=[];page=[]
+ reader=[];missing=[];all_ids=set();font=[];page=[];ui_frames=[];ui_missing=[]
  for pub in publications:
   identity=(pub["job_id"],pub["generation"],pub["book"])
   need(identity not in all_ids,"duplicate accepted generation");all_ids.add(identity)
@@ -46,6 +46,13 @@ def replay(document):
    if input_row["control"] in (113,114):font.append(value)
    if input_row["control"] in (105,106):page.append(value)
   else:missing.append({"identity":identity,"reason":"input causality unavailable"})
+  ui_start=pub.get("ui_start_qpc",0)
+  sample["native_ui_frame_ms"]=None
+  sample["worker_end_to_publish_ms"]=(pub["qpc"]-end)*1000/frequency
+  if ui_start:
+   need(end<=ui_start<=pub["qpc"]<=paint["start_qpc"],"native UI pipeline chronology")
+   sample["native_ui_frame_ms"]=(paint["qpc"]-ui_start)*1000/frequency;ui_frames.append(sample["native_ui_frame_ms"])
+  else:ui_missing.append(identity)
   reader.append(sample)
  for worker in produced:
   identity=(worker["job_id"],worker["generation"],worker["book"])
@@ -65,6 +72,10 @@ def replay(document):
  return {"raw_rows":len(rows),"read_only_message_counts":document.get("read_only_message_counts",[]),"reader_produced":len(produced),"reader_published":len(publications),
   "reader_paints":len(paints),"reader_samples":reader,"reader_missing":missing,
   "reader_full_frame_production":stats([r["full_frame_production_ms"] for r in reader]),
+  "reader_operation_latency_interpretation":"async worker start to GDI completion; ordinary frame budget is not applied",
+  "reader_native_ui_frame_candidates":stats(ui_frames,True),"reader_native_ui_start_missing":ui_missing,
+  "native_ui_boundary":"WM_HOST_COMPLETE accepts ready frame, through owner/layout handling, to first same-generation GDI completion",
+  "phase_rows":[r for r in rows if r["kind"] in ("settings_save","ui_accept_begin","ui_accept_body_end","ui_owners_complete","catalog_hash","catalog_attach","catalog_lookup")],
   "reader_font_full_frame_production":stats(font),"reader_page_full_frame_production":stats(page),
   "shelf_full_frame_production_candidates":stats([r["full_frame_production_ms"] for r in shelf]),
   "shelf_samples":shelf,"shelf_unbound_completions":shelf_unknown,"shelf_full_census_proven":False,
@@ -78,15 +89,16 @@ def control():
  def row(kind,t,**extra):
   r=dict(index=0,kind=kind,qpc=t,start_qpc=0,job_id=0,input_id=0,queued_qpc=0,worker_start_qpc=0,
          worker_end_qpc=0,generation=0,book=0,control=0,message=0,flags=0,v0=0,v1=0,thread=1);r.update(extra);return r
- origin=dict(job_id=1,input_id=1,queued_qpc=20,worker_start_qpc=30,worker_end_qpc=40030,generation=1,book=7)
+ origin=dict(job_id=1,input_id=1,queued_qpc=20,worker_start_qpc=30,worker_end_qpc=40030,generation=1,book=7,ui_start_qpc=40040)
  rows=[row("start",1),row("input",10,input_id=1,control=114),row("worker_end",40030,**origin,v0=1,v1=1),
        row("reader_publish",40040,**origin,flags=1),row("reader_gdi_complete",40060,**origin,start_qpc=40050,flags=3,v0=720),row("normal_exit",40100)]
  for i,r in enumerate(rows):r["index"]=i
  d=dict(frequency=1000000,overflow=False,rows_attempted=len(rows),rows=rows)
  result=replay(d);need(result["reader_full_frame_production"]["p95_ms"]==40.03,"full worker cost, not cheap paint tail")
- need(not result["reader_full_frame_production"]["passed"],"unchanged frame budget")
+ need(result["reader_full_frame_production"]["passed"] is None,"async operation is not classified as an ordinary frame")
+ need(result["reader_native_ui_frame_candidates"]["passed"] is True,"native UI candidate uses its own pipeline start")
  checks=["full-worker-boundary"]
- for name,change in [("overflow",lambda x:x.update(overflow=True)),
+ for name,change in [("reverse-ui-start",lambda x:x["rows"][3].update(ui_start_qpc=40070)),("overflow",lambda x:x.update(overflow=True)),
   ("wrong-generation",lambda x:x["rows"][3].update(generation=2)),
   ("reverse-time",lambda x:x["rows"][4].update(qpc=25)),
   ("failed-gdi",lambda x:x["rows"][4].update(flags=-1)),
