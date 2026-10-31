@@ -51,7 +51,19 @@ r=subprocess.run(["cmd","/c","mklink","/J",str(alias),str(actual)],capture_outpu
 assert r.returncode==0,(r.stdout,r.stderr)
 run("reparse",["create",alias/"library.sqlite",alias/"domain"],False)
 assert not (actual/"library.sqlite").exists() and not (actual/"domain").exists();done("reparse-parent-before-creation")
-assert len(results)==9
+before=state(existing)
+existing_gate=existing.parent/"b";original_gate={x.name:state(x) for x in existing_gate.iterdir() if x.is_file()}
+for iteration in range(2):
+    r=run("next-epoch-"+str(iteration),["next-epoch",existing],True);assert r["books"]==1
+    run("next-check-"+str(iteration),["check",existing],True)
+assert state(existing)==before and {x.name:state(x) for x in existing_gate.iterdir() if x.is_file()}==original_gate
+assert len(list(existing.parent.glob("wh3-*")))==2;done("repeated-native-epoch-retains-original-files")
+pending,pending_gate=seed("pending-epoch","--prepare-pending")
+before=state(pending);raw={x.name:state(x) for x in pending_gate.iterdir() if x.is_file()}
+r=run("pending-epoch",["next-epoch",pending],False);assert r["books"]==0 and r["original_bytes"]==0
+assert state(pending)==before and {x.name:state(x) for x in pending_gate.iterdir() if x.is_file()}==raw
+done("epoch-cannot-bypass-pending")
+assert len(results)==11
 report=json.loads((out/"report.json").read_text());report.update(complete=True,passed=True)
 (out/"report.json").write_text(json.dumps(report,indent=2)+"\n")
-print("C02-ADMISSION-CLI cases=9 failed=0")
+print("C02-ADMISSION-CLI cases=11 failed=0")

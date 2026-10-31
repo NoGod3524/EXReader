@@ -66,6 +66,7 @@ int wh3wg_begin(wh3wg_gate *,const wh_binding *,const wh_gates *,
 void wh3wg_domain(wh3wg_gate *,wh3w_domain *);
 int wh3wg_check(wh3wg_gate *);
 uint64_t wh3wg_generation(const wh3wg_gate *);
+int wh3wg_clean(wh3wg_gate *,wh3wg_grant *);
 /* Recovery grants a fresh capability only for the exact complete on-disk tip. */
 int wh3wg_resume(wh3wg_gate *,const wh_binding *,const wh_gates *,
  wh3w_store *,const wh3_tip *,void **capability);
@@ -110,6 +111,21 @@ int wh3wr_recover_enrollment(const wchar_t *library,
 int wh3wr_open(const wchar_t *library,unsigned mode,const wh3w_controls *,
  wh3wr_registration **);
 int wh3wr_check(wh3wr_registration *);
+/* Per-native-domain immutable input and verified-stage records, held in the
+   protected registry. Unknown writes cannot issue success or authorize publish.
+   Only explicit owner/recovery callers may read them; bytes are still subject
+   to the production provider's canonical schema and semantic validation. */
+enum { WH3WR_INPUT=1, WH3WR_PREPARED=2 };
+/* Explicit clean-state checkpoint; preserves prior roots and registry values.
+   Ordinary opens refuse during its durable intent. A retry never adopts an
+   incompletely created root and independently proves the current target again. */
+enum { WH3WR_EPOCH_INTENT=700, WH3WR_EPOCH_OBJECTS, WH3WR_EPOCH_READY,
+       WH3WR_EPOCH_BOUND, WH3WR_EPOCH_RETIRED };
+int wh3wr_next_epoch(const wchar_t *library,int (*prove)(void *,const wchar_t *),
+ void *context,const wh3w_controls *);
+int wh3wr_transaction_write(wh3wr_registration *,unsigned phase,const void *,size_t);
+int wh3wr_transaction_read(wh3wr_registration *,unsigned phase,void *,size_t,size_t *);
+
 int wh3wr_journal(wh3wr_registration *,const wh_binding *,const wh_gates *,
  const wh3w_controls *,wh3w_store **);
 int wh3wr_begin(wh3wr_registration *,const wh_binding *,const wh_gates *,

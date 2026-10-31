@@ -86,6 +86,10 @@ static int reg_child(const char *handle) {
  wh3wr_registration *r=NULL;wh3w_controls controls={0};void *cap=NULL;wh3_tip tip;
  if(!shared)return 90;
  if(shared->stop==600)return coordinator_child(shared);
+ if(shared->stop>=WH3WR_EPOCH_INTENT){
+  controls.context=shared;controls.phase=reg_barrier;
+  return wh3wr_next_epoch(shared->library,sdk_prove,(void *)original,&controls)?0:96;
+ }
  controls.context=shared;controls.phase=reg_barrier;
  if(shared->stop>=WH3WR_ENROLL_RESERVED){
   int ok=wh3wr_enroll_controlled(shared->library,shared->root,sdk_prove,(void *)original,&controls);
@@ -396,13 +400,20 @@ typedef struct {
  void *cap;wh3_tip tip;wh3w_identity before,staged;char lease[49],stage_id[49];
  wh_record row;char original_bytes[128];size_t original_size;
  wchar_t stage[MAX_PATH];unsigned published,checks_after_publish,proofs,released;
- size_t terminal_count;reg_shared *barrier;
+ size_t terminal_count;reg_shared *barrier;unsigned round;
 } run_fixture;
 static void run_identity(const wh3w_identity *id,char out[49]) {
  static const char hex[]="0123456789abcdef";unsigned char bytes[24];unsigned i;
  for(i=0;i<8;i++)bytes[i]=(unsigned char)(id->volume>>(8*i));
  memcpy(bytes+8,&id->file,16);
  for(i=0;i<24;i++){out[2*i]=hex[bytes[i]>>4];out[2*i+1]=hex[bytes[i]&15];}out[48]=0;
+}
+static int run_metadata(void) {
+ char data[64];size_t n=0;
+ return wh3wr_transaction_read(registration,WH3WR_INPUT,data,sizeof(data),&n)&&
+    n==26&&!memcmp(data,"fixture-coordinator-input",26)&&
+    wh3wr_transaction_read(registration,WH3WR_PREPARED,data,sizeof(data),&n)&&
+    n==29&&!memcmp(data,"fixture-coordinator-prepared",29);
 }
 static int run_read(const wchar_t *path,wh_record *row,char bytes[128],size_t *length) {
  char narrow[4*MAX_PATH];exr_library *lib=NULL;exr_error error={0};exr_book *books=NULL;
@@ -428,6 +439,7 @@ static wh_step run_acquire(void *context,const wh_binding *b,const wh_gates *g,v
  *cap=NULL;
  if(!reg_open(WH3WG_OWNER,NULL))return WH_STEP_FAILED;
  empty_tip(&r->tip);
+ if(!wh3wr_transaction_write(registration,WH3WR_INPUT,"fixture-coordinator-input",26))return WH_STEP_UNCERTAIN;
  if(!wh3wr_begin(registration,b,g,&r->tip,&r->cap))return WH_STEP_UNCERTAIN;
  *cap=r->cap;
  if(!wh3wr_journal(registration,b,g,NULL,&f.store)||!capture_id(f.root,1,&root)||
@@ -439,6 +451,7 @@ static wh_step run_reacquire(void *context,const wh_binding *b,const wh_gates *g
  run_fixture *r=context;wh3_tip actual;size_t count=0;char (*lines)[EXR_WH_LINE_MAX];
  wchar_t retained[MAX_PATH];wh3w_identity original_id;char stage_id[49];
  *cap=NULL;if(strcmp(prior,r->lease)||!reg_open(WH3WG_RECOVER,NULL))return WH_STEP_FAILED;
+ if(!run_metadata())return WH_STEP_UNCERTAIN;
  lines=calloc(EXR_WH_MAX_JOURNAL,sizeof(*lines));if(!lines)return WH_STEP_UNCERTAIN;
  if(!wh3wr_journal(registration,b,g,NULL,&f.store)||
     !wh3w_read(f.store,lines,EXR_WH_MAX_JOURNAL,&count,&actual)||
@@ -464,7 +477,7 @@ static wh_step run_snapshot(void *context,void *cap,wh_record *rows,size_t max,s
 static wh_step run_import(void *context,void *cap,const wh_record *rows,size_t n,char id[49]) {
  run_fixture *r=context;
  if(run_check(context,cap)!=WH_STEP_OK||n!=1||memcmp(rows,&r->row,sizeof(*rows)))return WH_STEP_UNCERTAIN;
- swprintf_s(r->stage,MAX_PATH,L"%ls\\coordinator-stage.sqlite",f.parent);
+ swprintf_s(r->stage,MAX_PATH,L"%ls\\%ls",f.parent,r->round?L"coordinator2-stage.sqlite":L"coordinator-stage.sqlite");
  if(!sdk_seed(r->stage,r->original_bytes)||!capture_id(r->stage,0,&r->staged))return WH_STEP_UNCERTAIN;
  run_identity(&r->staged,r->stage_id);memcpy(id,r->stage_id,49);return WH_STEP_OK;
 }
@@ -477,13 +490,15 @@ static wh_step run_verify(void *context,void *cap,const char *id,const wh_record
  run_fixture *r=context;char content[65];wh3w_identity actual;
  if(run_check(context,cap)!=WH_STEP_OK||strcmp(id,r->stage_id)||n!=1||
     !wh_content_digest(rows,n,content)||!capture_id(r->stage,0,&actual)||
-    memcmp(&actual,&r->staged,sizeof(actual))||!run_content(r,r->stage,content))return WH_STEP_UNCERTAIN;
+    memcmp(&actual,&r->staged,sizeof(actual))||!run_content(r,r->stage,content)||
+    !wh3wr_transaction_write(registration,WH3WR_PREPARED,"fixture-coordinator-prepared",29))return WH_STEP_UNCERTAIN;
  return WH_STEP_OK;
 }
 static wh_step run_publish(void *context,void *cap,const char *id,wh_pub *pub) {
  run_fixture *r=context;*pub=WH_PUB_UNKNOWN;
  if(run_check(context,cap)!=WH_STEP_OK||strcmp(id,r->stage_id)||
-    wh3wr_publish(registration,L"coordinator-stage.sqlite",&r->staged,L"coordinator-retained.sqlite")!=WH3_TX_OK)return WH_STEP_UNCERTAIN;
+    wh3wr_publish(registration,r->round?L"coordinator2-stage.sqlite":L"coordinator-stage.sqlite",&r->staged,
+      r->round?L"coordinator2-retained.sqlite":L"coordinator-retained.sqlite")!=WH3_TX_OK)return WH_STEP_UNCERTAIN;
  r->published=1;
  if(r->barrier)reg_barrier(r->barrier,600);
  *pub=WH_PUB_YES;return WH_STEP_OK;
@@ -599,6 +614,120 @@ static void coordinator_recovery_case(void) {
  expect(reg_probe(WH3WG_SHARED)==1&&rs->sdk_opened,"fresh process reads only after recovered CLEAN");
  expect(reg_open(WH3WG_SHARED,NULL)&&wh3wr_check(registration),"recovered trusted target is current");reg_close_all();
 }
+static int registry_root(wchar_t root[MAX_PATH]) {
+ HKEY key=fixture_key();unsigned char record[1352];DWORD size=sizeof(record),type=0;int ok;
+ if(!key)return 0;
+ ok=RegQueryValueExW(key,L"Binding",NULL,&type,record,&size)==ERROR_SUCCESS&&type==REG_BINARY&&size==sizeof(record);
+ RegCloseKey(key);if(!ok)return 0;memcpy(root,record+768,2*MAX_PATH);
+ return wmemchr(root,0,MAX_PATH)!=NULL;
+}
+static void transaction_case(unsigned kind) {
+ char name[80],data[64];size_t size=0;wh3_tip empty;void *cap=NULL;
+ snprintf(name,sizeof(name),"immutable-transaction-record-%u",kind);
+ if(!reg_fixture(name,1))return;
+ expect(reg_open(WH3WG_OWNER,NULL),"transaction owner from trusted current domain");
+ expect(wh3wr_transaction_write(registration,WH3WR_INPUT,"fixture-input",14),"persist immutable input before pending");
+ expect(!wh3wr_transaction_write(registration,WH3WR_INPUT,"changed",8),"input cannot be replaced");
+ expect(wh3wr_transaction_read(registration,WH3WR_INPUT,data,sizeof(data),&size)&&size==14&&
+    !memcmp(data,"fixture-input",14),"read original acknowledged input");
+ expect(!wh3wr_transaction_read(registration,WH3WR_INPUT,data,4,&size)&&size==0,"bounded read refuses short output");
+ if(kind){
+  HKEY key=fixture_key();unsigned char record[1352],bytes[1601];DWORD n=sizeof(record),type=0;wchar_t value[80];unsigned i;
+  expect(key!=NULL,"open explicit tamper control");
+  if(key){
+   expect(RegQueryValueExW(key,L"Binding",NULL,&type,record,&n)==ERROR_SUCCESS&&n==sizeof(record),"read independent binding");
+   wcscpy_s(value,80,L"Transaction-");for(i=0;i<48;i++)value[12+i]=(wchar_t)record[8+i];value[60]=0;
+   n=1600;
+   expect(RegQueryValueExW(key,value,NULL,&type,bytes,&n)==ERROR_SUCCESS&&n==24+1352+14+64,"read canonical transaction envelope");
+   if(n==24+1352+14+64){
+    if(kind==1)bytes[24+1288]^=1;
+    else {char hash[65];bytes[24+136]^=1;wh_sha256_hex(bytes+24,1288,hash);memcpy(bytes+24+1288,hash,64);}
+    wh_sha256_hex(bytes,n-64,(char *)bytes+n-64);
+    expect(RegSetValueExW(key,value,0,REG_BINARY,bytes,n)==ERROR_SUCCESS,"rehash outer envelope after semantic mutation");
+   }
+   RegCloseKey(key);
+  }
+  expect(!wh3wr_transaction_read(registration,WH3WR_INPUT,data,sizeof(data),&size)&&size==0,"resealed inner corruption or wrong authority is refused");
+ }else{
+  expect(!wh3wr_transaction_write(registration,WH3WR_PREPARED,"early",6),"no prepared evidence before mutation capability");
+  empty_tip(&empty);expect(wh3wr_begin(registration,&f.b,&f.g,&empty,&cap),"durable pending after trusted input");
+  expect(wh3wr_transaction_write(registration,WH3WR_PREPARED,"fixture-stage",14),"persist verified-stage record under live cap");
+  expect(!wh3wr_transaction_write(registration,WH3WR_PREPARED,"changed",8),"stage proof cannot be replaced");
+ }
+ reg_close_all();
+ if(!kind){
+  initial_proofs=0;
+  expect(!wh3wr_next_epoch(reglib,counted_initial,(void *)original,NULL)&&initial_proofs==0,
+    "checkpoint cannot bypass pending or call SDK for it");
+  expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"metadata close leaves pending refused");
+ }
+}
+static int raw_gate_read(const wchar_t *root,unsigned char **bytes,DWORD sizes[3]) {
+ const wchar_t *names[]={L"admission.bin",L"journal.bin",L"intent.bin"};wchar_t path[MAX_PATH];unsigned i;
+ for(i=0;i<3;i++){swprintf_s(path,MAX_PATH,L"%ls\\%ls",root,names[i]);if(!read_bytes(path,&bytes[i],&sizes[i]))return 0;}return 1;
+}
+static int raw_gate_same(const wchar_t *root,unsigned char **before,const DWORD sizes[3]) {
+ unsigned char *after[3]={0};DWORD n[3]={0};unsigned i;int ok=raw_gate_read(root,after,n);
+ for(i=0;i<3;i++){if(n[i]!=sizes[i]||(n[i]&&(!before[i]||!after[i]||memcmp(before[i],after[i],n[i]))))ok=0;free(after[i]);}return ok;
+}
+static void epoch_repeat_case(void) {
+ run_fixture first={0},second={0};wh3_session *session;wh_report report;unsigned i;
+ unsigned char *bytes[3]={0};DWORD sizes[3]={0};wchar_t prior[MAX_PATH];wh3w_identity old_id,new_id;
+ if(!reg_fixture("two-actual-coordinators-retain-prior-native-epoch",1))return;
+ wcscpy_s(prior,MAX_PATH,f.root);expect(capture_id(prior,1,&old_id),"original native epoch identity");
+ session=run_session(&first);expect(session!=NULL,"first actual coordinator");if(!session)return;
+ expect(wh3_run(session,&report)==WH_COMPLETED&&wh3_dispose(session),"first actual publication completes");
+ expect(reg_open(WH3WG_OWNER,NULL)&&run_metadata(),"original immutable inputs remain readable after trusted target advances");reg_close_all();
+ expect(raw_gate_read(prior,bytes,sizes),"preserve full previous native pair and gate");
+ expect(wh3wr_next_epoch(reglib,sdk_prove,(void *)original,NULL),"explicit independently proven clean checkpoint");
+ expect(raw_gate_same(prior,bytes,sizes),"every original native byte retained unchanged");
+ for(i=0;i<3;i++)free(bytes[i]);
+ expect(registry_root(f.root)&&capture_id(f.root,1,&new_id)&&memcmp(&old_id,&new_id,sizeof(old_id)),"new registered native root identity");
+ expect(reg_open(WH3WG_OWNER,NULL),"owner uses new independent epoch");
+ {char data[64];size_t n;expect(!wh3wr_transaction_read(registration,WH3WR_INPUT,data,sizeof(data),&n),"previous input cannot bind new epoch");}
+ reg_close_all();second.round=1;session=run_session(&second);expect(session!=NULL,"second actual coordinator");if(!session)return;
+ expect(wh3_run(session,&report)==WH_COMPLETED&&wh3_dispose(session),"second actual publication uses a fresh journal");
+ expect(reg_open(WH3WG_OWNER,NULL)&&run_metadata(),"second exact transaction provenance");reg_close_all();
+ expect(reg_probe(WH3WG_SHARED)==1&&rs->sdk_opened,"fresh reader admits the second verified target");
+}
+static void epoch_kill_case(unsigned phase) {
+ char name[100];wchar_t prior[MAX_PATH],next[MAX_PATH];HANDLE child;unsigned i;
+ unsigned char *bytes[3]={0};DWORD sizes[3]={0};
+ snprintf(name,sizeof(name),"checkpoint-process-death-%u",phase);
+ if(!reg_fixture(name,1))return;
+ wcscpy_s(prior,MAX_PATH,f.root);expect(raw_gate_read(prior,bytes,sizes),"capture original checkpoint source bytes");
+ child=reg_spawn(WH3WG_OWNER,phase);expect(child!=NULL,"spawn real checkpoint owner");if(!child)return;
+ expect(WaitForSingleObject(rrdy,15000)==WAIT_OBJECT_0&&rs->reached==(int)phase,"observe exact durable checkpoint barrier");
+ expect(finish(child,1),"kill checkpoint owner at observed phase");
+ expect(reg_probe(WH3WG_SHARED)==(phase==WH3WR_EPOCH_RETIRED?1:0),"ordinary admission follows durable checkpoint completion");
+ expect(wh3wr_next_epoch(reglib,sdk_prove,(void *)original,NULL),"explicit recovery re-proves target and resolves checkpoint");
+ expect(raw_gate_same(prior,bytes,sizes),"original checkpoint source files remain byte-identical");
+ for(i=0;i<3;i++)free(bytes[i]);
+ expect(registry_root(next)&&_wcsicmp(next,prior),"new trusted root retains old root");
+ expect(reg_probe(WH3WG_SHARED)==1&&rs->sdk_opened,"fresh SDK reader after confirmed checkpoint");
+}
+static void checkpoint_bad_case(int replaced) {
+ wchar_t root[MAX_PATH],path[MAX_PATH],saved[MAX_PATH];HANDLE child,h;HKEY key;
+ if(!reg_fixture(replaced?"checkpoint-refuses-replaced-new-journal":"checkpoint-refuses-malformed-intent",1))return;
+ if(replaced){
+  child=reg_spawn(WH3WG_OWNER,WH3WR_EPOCH_BOUND);expect(child!=NULL,"spawn checkpoint publication");if(!child)return;
+  expect(WaitForSingleObject(rrdy,15000)==WAIT_OBJECT_0&&rs->reached==WH3WR_EPOCH_BOUND,"new binding durable but checkpoint still pending");
+  expect(finish(child,1),"kill at published checkpoint");
+  expect(registry_root(root),"read independently stored new root");
+  swprintf_s(path,MAX_PATH,L"%ls\\journal.bin",root);swprintf_s(saved,MAX_PATH,L"%ls\\original-journal.bin",root);
+  expect(MoveFileW(path,saved)!=0,"preserve original journal object");
+  h=CreateFileW(path,GENERIC_WRITE,0,NULL,CREATE_NEW,0,NULL);expect(h!=INVALID_HANDLE_VALUE,"actual replacement journal identity");
+  if(h!=INVALID_HANDLE_VALUE)CloseHandle(h);
+ }else{
+  key=fixture_key();expect(key!=NULL,"open malformed-intent control");
+  if(key){expect(RegSetValueExW(key,L"Checkpoint",0,REG_BINARY,(const BYTE *)"WH3CKP01",8)==ERROR_SUCCESS,
+    "write truncated checkpoint intent");RegCloseKey(key);}
+ }
+ initial_proofs=0;
+ expect(!wh3wr_next_epoch(reglib,counted_initial,(void *)original,NULL)&&initial_proofs==0,
+    "bad checkpoint refuses before any SDK proof");
+ expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"bad checkpoint remains quarantined");
+}
 int main(int argc,char **argv) {
  if(argc==3&&!strcmp(argv[1],"--registry-child"))return reg_child(argv[2]);
  if(argc==3&&!strcmp(argv[1],"--probe-owner")){
@@ -624,6 +753,9 @@ int main(int argc,char **argv) {
   for(i=0;i<3;i++){enrollment_policy(i,0);enrollment_policy(i,1);}
   for(i=0;i<4;i++)enrollment_bad(i);}
  drive_alias_case();coordinator_case();recover_missing_case();coordinator_recovery_case();
+ {unsigned i;for(i=0;i<3;i++)transaction_case(i);epoch_repeat_case();
+  for(i=WH3WR_EPOCH_INTENT;i<=WH3WR_EPOCH_RETIRED;i++)epoch_kill_case(i);}
+ checkpoint_bad_case(0);checkpoint_bad_case(1);
  fixture_close();if(rs)UnmapViewOfFile(rs);if(rm)CloseHandle(rm);if(rrdy)CloseHandle(rrdy);if(rgo)CloseHandle(rgo);
  printf("{\"source\":\"%s\",\"cases\":%u,\"checks\":%u,\"failed\":%u,\"passed\":%s,\"actual_sdk\":true,\"trusted_registry\":true,\"production_coordinator\":false,\"full_c02_acceptance\":false}\n",
    CANDIDATE_SOURCE_SHA,cases,checks,failures,failures?"false":"true");

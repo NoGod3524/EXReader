@@ -40,6 +40,9 @@ int wmain(int argc,wchar_t **argv) {
   ok=wh3wr_open(library,WH3WG_SHARED,NULL,&admission)&&
      prove_library(&result,library)&&wh3wr_check(admission);
   if(!wh3wr_close(admission))ok=0;
+ }else if(!wcscmp(argv[1],L"next-epoch")){
+  if(argc!=3)goto usage;
+  ok=wh3wr_next_epoch(library,prove_library,&result,NULL);
  }else if(!wcscmp(argv[1],L"recover-enrollment")){
   if(argc!=3)goto usage;
   ok=wh3wr_recover_enrollment(library,prove_library,&result);
@@ -53,6 +56,6 @@ int wmain(int argc,wchar_t **argv) {
  return ok?0:2;
 usage:
  fputs("Usage: exreader-c02-admission create|enroll LIBRARY NEW_DOMAIN_ROOT\n"
-       "       exreader-c02-admission recover-enrollment|check LIBRARY\n",stderr);
+       "       exreader-c02-admission recover-enrollment|next-epoch|check LIBRARY\n",stderr);
  return 64;
 }
