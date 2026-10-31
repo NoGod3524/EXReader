@@ -122,13 +122,19 @@ def capture():
     except BaseException as error:
         report["problems"].append(repr(error));report["traceback"]=traceback.format_exc();raise
     finally:
-        for folder in ("f08-causal","f08-causal-control"):
-            if (ROOT/"build"/folder).exists():shutil.copytree(ROOT/"build"/folder,OUT/folder)
-        save(OUT/"result.json",report)
-        save(OUT/"manifest.json",{**identity(),"f08_accepted":False,"files":{
-            p.relative_to(OUT).as_posix():{"sha256":sha(p),"bytes":p.stat().st_size}
-            for p in sorted(OUT.rglob("*")) if p.is_file() and p!=OUT/"manifest.json"}})
+        save(OUT/"result.json",report);seal()
         print("F08_SHELF_CONTENT",json.dumps(report),flush=True)
+def seal():
+    guard();OUT.mkdir(parents=True,exist_ok=True)
+    for folder in ("f08-causal","f08-causal-control"):
+        if (ROOT/"build"/folder).exists():
+            shutil.copytree(ROOT/"build"/folder,OUT/folder,dirs_exist_ok=True)
+    if not (OUT/"result.json").exists():
+        save(OUT/"result.json",{**identity(),"collection_complete":False,
+            "problems":["capture interrupted before final result"],"f08_accepted":False})
+    save(OUT/"manifest.json",{**identity(),"f08_accepted":False,"files":{
+        p.relative_to(OUT).as_posix():{"sha256":sha(p),"bytes":p.stat().st_size}
+        for p in sorted(OUT.rglob("*")) if p.is_file() and p!=OUT/"manifest.json"}})
 def audit():
     guard();ident=identity()
     raw,pin=archive(ident,"f08-shelf-content-"+ident["run_id"]+"-"+ident["attempt"],
@@ -160,5 +166,5 @@ def audit():
     dest=ROOT/"build/f08-shelf-content-audit";dest.mkdir()
     save(dest/"audit.json",report);print("F08_SHELF_CONTENT_AUDIT",json.dumps(report),flush=True)
 if __name__=="__main__":
-    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("guard","capture","audit"))
+    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("guard","capture","audit","seal"))
     globals()[parser.parse_args().mode]()
