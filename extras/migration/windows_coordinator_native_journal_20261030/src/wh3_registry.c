@@ -21,8 +21,10 @@ struct wh3wr_registration {
  int target_absent;
  unsigned np,mode; void *cap;
  unsigned char record[RBYTES];
- wh3wg_grant grant;char domain[49];
+ wh3wg_grant grant;char domain[49];wh3w_controls controls;
 };
+static int rrepair_access(wh3wr_registration *,int);
+static int rrepair_retire(wh3wr_registration *);
 static int rid(HANDLE h,wh3w_identity *id,int directory) {
  FILE_ID_INFO f;BY_HANDLE_FILE_INFORMATION b;
  if(!GetFileInformationByHandleEx(h,FileIdInfo,&f,sizeof(f))||
@@ -308,9 +310,9 @@ int wh3wr_close(wh3wr_registration *r) {
 int wh3wr_open(const wchar_t *library,unsigned mode,const wh3w_controls *controls,wh3wr_registration **out) {
  wh3wr_registration *r;int ok=0;
  if(out)*out=NULL;if(!out||(mode!=WH3WG_SHARED&&mode!=WH3WG_OWNER&&mode!=WH3WG_RECOVER))return 0;
- r=calloc(1,sizeof(*r));if(!r)return 0;r->target=INVALID_HANDLE_VALUE;r->mode=mode;
+ r=calloc(1,sizeof(*r));if(!r)return 0;r->target=INVALID_HANDLE_VALUE;r->mode=mode;if(controls)r->controls=*controls;
  if(!rpath(library,r->library,r->route)||!ropenkey(r->route,0,&r->key)||!rread(r->key,r->record)||!rdecode(r)||!rpins(r)||
-    (mode!=WH3WG_RECOVER&&!rabsent(r->key,L"Checkpoint")))goto done;
+    (mode!=WH3WG_RECOVER&&!rabsent(r->key,L"Checkpoint"))||!rrepair_access(r,mode==WH3WG_RECOVER))goto done;
  if(!wh3wg_open(r->root,r->ids,r->domain,&r->grant,mode,controls,&r->gate)||
     !rcurrent(r)||!rtarget(r,mode==WH3WG_RECOVER,mode!=WH3WG_RECOVER)||!ridentity(r,mode!=WH3WG_RECOVER)||!rlegacy(r->library))goto done;
  /* Readers need query rights only. Owners get write rights only after custody. */
@@ -440,7 +442,7 @@ done:
 }
 int wh3wr_check(wh3wr_registration *r) {
  return r&&ridentity(r,1)&&rcurrent(r)&&rlegacy(r->library)&&
-    (r->mode==WH3WG_RECOVER||rabsent(r->key,L"Checkpoint"))&&wh3wg_check(r->gate);
+    (r->mode==WH3WG_RECOVER||rabsent(r->key,L"Checkpoint"))&&rrepair_access(r,r->mode==WH3WG_RECOVER)&&wh3wg_check(r->gate);
 }
 int wh3wr_journal(wh3wr_registration *r,const wh_binding *b,const wh_gates *g,
  const wh3w_controls *controls,wh3w_store **out) {
@@ -538,7 +540,9 @@ int wh3wr_finish(wh3wr_registration *r,wh3w_store *store,const wh3_tip *tip,
  }
  {wh3w_identity after;if(!ridentity(r,0)||!rid(r->target,&after,0)||!reqid(&target,&after))return 0;}
  r->grant=grant;r->ids[4]=target;r->cap=NULL;
- return rwrite(r,0);
+ if(!rwrite(r,0))return 0;
+ if(!rabsent(r->key,L"Repair"))rphase(&r->controls,WH3WR_REPAIR_FINISHED);
+ return rrepair_retire(r);
 }
 /* Immutable transaction inputs are retained by native-domain identity. A
    subsequent epoch uses different value names, preserving every earlier proof. */
@@ -684,7 +688,7 @@ int wh3wr_next_epoch(const wchar_t *library,int (*prove)(void *,const wchar_t *)
  unsigned char checkpoint[RCKBYTES]={0},before[RCKBYTES],id[24];wchar_t root[MAX_PATH],path[MAX_PATH];
  HANDLE directory=INVALID_HANDLE_VALUE,files[3]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE};
  const wchar_t *names[]={L"admission.bin",L"journal.bin",L"intent.bin"};static const char hex[]="0123456789abcdef";
- if(!prove||!wh3wr_open(library,WH3WG_RECOVER,NULL,&old)||!rclean(old))goto done;
+ if(!prove||!wh3wr_open(library,WH3WG_RECOVER,NULL,&old)||!rabsent(old->key,L"Repair")||!rclean(old))goto done;
  if(!rabsent(old->key,L"Checkpoint")){
   int switched;
   if(!rcheckpoint_read(old->key,checkpoint))goto done;
@@ -816,7 +820,7 @@ done:
  SetLastError(error);return status;
 }
 
-int wh3wr_clean(wh3wr_registration *r) {return r&&!r->cap&&rclean(r);}
+int wh3wr_clean(wh3wr_registration *r) {return r&&!r->cap&&rabsent(r->key,L"Repair")&&rclean(r);}
 
 int wh3wr_library_path(wh3wr_registration *r,wchar_t *out,size_t capacity) {
  DWORD n;wh3w_identity id;
@@ -827,3 +831,5 @@ int wh3wr_library_path(wh3wr_registration *r,wchar_t *out,size_t capacity) {
  if(!n||n>=capacity||!wh3wr_check(r)){out[0]=0;return 0;}
  return 1;
 }
+
+#include "wh3_registry_repair.inc"

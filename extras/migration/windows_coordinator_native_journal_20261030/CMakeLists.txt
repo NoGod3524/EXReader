@@ -4,7 +4,7 @@ if(NOT WIN32)
   message(FATAL_ERROR "This adapter requires Windows and local NTFS")
 endif()
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-add_library(exreader-coordinator-native STATIC src/wh3_win.c src/wh3_registry.c)
+add_library(exreader-coordinator-native STATIC src/wh3_win.c src/wh3_registry.c src/wh3_repair_scan.c)
 target_link_libraries(exreader-coordinator-native PUBLIC advapi32)
 target_compile_options(exreader-coordinator-native PRIVATE /utf-8 /W4 /WX)
 target_compile_definitions(exreader-coordinator-native PRIVATE _CRT_SECURE_NO_WARNINGS _WIN32_WINNT=0x0602)
@@ -15,7 +15,7 @@ target_include_directories(exreader-coordinator-native PUBLIC
   "${WH_PREFIX}/include/exreader-migration-coordinator-hardening")
 set_target_properties(exreader-coordinator-native PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
 install(TARGETS exreader-coordinator-native ARCHIVE DESTINATION lib)
-install(FILES include/exr_wh3_win.h DESTINATION include/exreader-coordinator-native)
+install(FILES include/exr_wh3_win.h include/exr_wh3_repair.h DESTINATION include/exreader-coordinator-native)
 
 option(WH3_BUILD_SDK_TOOL "Build the actual SDK admission command" OFF)
 if(WH3_BUILD_SDK_TOOL)
@@ -48,7 +48,8 @@ if(WH3_BUILD_SDK_TOOL)
     set(WH3_BUILD_ATTEMPT "0")
   endif()
   set(provider_sources tools/wh3_migrate_main.c tools/wh3_transform.c tools/wh3_transform.h
-    tools/wh3_build.h.in CMakeLists.txt src/wh3_win.c src/wh3_registry.c include/exr_wh3_win.h
+    tools/wh3_build.h.in CMakeLists.txt src/wh3_win.c src/wh3_registry.c src/wh3_registry_repair.inc
+    src/wh3_repair_scan.c include/exr_wh3_win.h include/exr_wh3_repair.h
     ../src/lm_main.c ../src/lm_ledger.h ../src/lm.h ../src/lm_pack.c ../src/lm_util.c
     ../src/lm_mirror.c ../src/lm_mirror.h
     ../windows_coordinator_cas_20261030/src/wh3_core.c

@@ -167,4 +167,15 @@ int wh3wr_finish(wh3wr_registration *,wh3w_store *,const wh3_tip *,
    before releasing a shared registration. Pending never becomes clean here. */
 int wh3wr_close(wh3wr_registration *);
 
+/* Explicit recovery only. Before the first write, validate immutable INPUT,
+   preserve all three raw files in identified archives, and durably bind the
+   exact bounded repair plan in the protected registry. No capability or CLEAN
+   grant is issued here. An interrupted plan blocks ordinary readers until
+   actual terminal proof and finish retire it. */
+enum { WH3WR_REPAIR_PLANNED=950, WH3WR_REPAIR_JOURNAL, WH3WR_REPAIR_INTENT,
+       WH3WR_REPAIR_GATE, WH3WR_REPAIR_APPLIED, WH3WR_REPAIR_FINISHED };
+int wh3wr_repair_prepare(const wchar_t *library,
+ int (*validate_input)(void *,const void *,size_t,wh_binding *,wh_gates *),
+ void *context,const wh3w_controls *);
+
 #endif
