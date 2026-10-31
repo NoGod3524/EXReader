@@ -55,6 +55,12 @@ static void accounts_update_controls(void) {
   gtk_widget_set_sensitive(accounts.retry,!accounts.owner_busy && !accounts.preparing && !accounts.close_wanted &&
     ((accounts.session && (accounts.view.state==READER_SESSION_FAILED || accounts.view.state==READER_SESSION_CANCELLED)) ||
      accounts.projection_status || accounts.import_retry));
+#ifdef EXR_READER_GTK_MANAGED
+  if(managed_owner.worker||managed_owner.view.recovery_running)gtk_widget_set_sensitive(accounts.scan,FALSE);
+  if(managed_owner.retry)gtk_widget_set_sensitive(managed_owner.retry,!accounts.close_wanted&&!accounts.owner_busy&&
+    !accounts.preparing&&!managed_owner.worker&&!managed_owner.view.recovery_running&&
+    (!accounts.session||(accounts.view.state!=READER_SESSION_RUNNING&&accounts.view.state!=READER_SESSION_CANCELLING&&accounts.view.state!=READER_SESSION_CLOSING)));
+#endif
   gtk_button_set_label(GTK_BUTTON(accounts.scan),accounts.want_open ? "_Sync and open":"_Sync library");
   gtk_button_set_use_underline(GTK_BUTTON(accounts.scan),TRUE);
   gtk_widget_set_sensitive(accounts.disconnect,accounts.session && !accounts.close_wanted && accounts.view.state!=READER_SESSION_CLOSING);
@@ -74,6 +80,9 @@ static void accounts_destroyed(GtkWidget *widget,gpointer unused) {
   accounts.remember=accounts.session_only=accounts.identity=accounts.notice=accounts.progress=NULL;
   accounts.load=accounts.apply=accounts.forget=accounts.scan=accounts.receive=accounts.cancel=accounts.retry=accounts.disconnect=NULL;
   accounts.spinner=NULL;
+#ifdef EXR_READER_GTK_MANAGED
+  managed_owner.dialog_badge=managed_owner.retry=NULL;
+#endif
   if(accounts.main_content) gtk_widget_set_sensitive(accounts.main_content,TRUE);
   accounts.main_content=NULL;
   if(!closing && !accounts.exit_wanted) {
@@ -139,6 +148,16 @@ static void accounts_start_network(void) {
   if(!accounts.dialog || accounts.close_wanted || accounts.exit_wanted || g_atomic_int_get(&accounts.control.cancelled)) {
     accounts_finish_close();return;
   }
+#ifdef EXR_READER_GTK_MANAGED
+  if(managed_owner.worker||managed_owner.view.recovery_running){
+    accounts_notice("Temporary download cleanup is still running. Try syncing when it finishes");
+    accounts.phase=ACCOUNT_IDLE;accounts_update_controls();return;
+  }
+  if(managed_owner.view.status||managed_owner.view.capacity_exhausted){
+    char *caption=managed_caption();accounts_notice(caption);g_free(caption);
+    accounts.phase=ACCOUNT_IDLE;accounts_update_controls();return;
+  }
+#endif
   const char *user=gtk_entry_get_text(GTK_ENTRY(accounts.user)),*password=gtk_entry_get_text(GTK_ENTRY(accounts.password));
   char *pair=g_strconcat(user,":",password,NULL),*encoded=g_base64_encode((const guchar *)pair,strlen(pair));
   char *authorization=g_strconcat("Basic ",encoded,NULL);reader_secret_free(pair);reader_secret_free(encoded);
@@ -146,7 +165,9 @@ static void accounts_start_network(void) {
   char *originals=g_build_filename(home,"sync-originals",NULL);reader_session_config config={0};
   config.product_path=product;config.private_directory=work;config.original_directory=originals;config.account_id=accounts.id;
   config.dav.root_url=accounts.bound_root;config.dav.authorization=authorization;
-#ifdef EXR_READER_GTK_RAW3
+#ifdef EXR_READER_GTK_MANAGED
+  reader_session_status code=reader_session_create_managed_raw_v3(&config,managed_owner.profile,&accounts.session);
+#elif defined(EXR_READER_GTK_RAW3)
   reader_session_status code=reader_session_create_raw_v3(&config,&accounts.session);
 #else
   reader_session_status code=reader_session_create(&config,&accounts.session);
@@ -379,6 +400,9 @@ static gboolean accounts_tick(gpointer unused) {
   (void)unused;accounts.ticks++;
   if(accounts.session) {
     reader_session_snapshot previous=accounts.view;reader_session_observe(accounts.session,&accounts.view);
+#ifdef EXR_READER_GTK_MANAGED
+    reader_session_managed_observe(accounts.session,&managed_owner.view);managed_present();
+#endif
     if(accounts.view.state!=previous.state) {
       if(accounts.view.state==READER_SESSION_FINISHED && accounts.want_open && !accounts.close_wanted && !accounts.exit_wanted && !accounts.preparing) {
         accounts.preparing=TRUE;accounts.phase=ACCOUNT_PROJECT;accounts.projection_status=0;
@@ -431,6 +455,17 @@ static GtkWidget *accounts_entry(GtkWidget *grid,int row,const char *caption,con
   gtk_label_set_mnemonic_widget(GTK_LABEL(label),entry);gtk_grid_attach(GTK_GRID(grid),label,0,row,1,1);gtk_grid_attach(GTK_GRID(grid),entry,1,row,1,1);
   atk_object_set_name(gtk_widget_get_accessible(entry),access);gtk_widget_set_hexpand(entry,TRUE);return entry;
 }
+#ifdef EXR_READER_GTK_MANAGED
+static void accounts_cleanup_retry(GtkWidget *button,gpointer unused) {
+  (void)button;(void)unused;
+  if(accounts.close_wanted||accounts.preparing||accounts.owner_busy||managed_owner.worker)return;
+  if(accounts.session){
+    if(reader_session_managed_retry_cleanup(accounts.session)==READER_SESSION_OK){
+      managed_owner.view.recovery_running=1;managed_present();accounts_timer();
+    }
+  }else managed_launch();
+}
+#endif
 static void accounts_open(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;
   if(closing || busy || saving || save_failed || metadata_running || metadata_dialog || collections_opened() || accounts.dialog ||
@@ -474,6 +509,12 @@ static void accounts_open(GtkWidget *button,gpointer unused) {
   accounts.retry=accounts_button(operations,"Re_try",G_CALLBACK(accounts_retry),NULL);
   accounts.disconnect=accounts_button(operations,"_Disconnect",G_CALLBACK(accounts_disconnect),NULL);
   gtk_box_pack_start(GTK_BOX(area),operations,FALSE,FALSE,7);
+#ifdef EXR_READER_GTK_MANAGED
+  managed_owner.retry=accounts_button(operations,"Retry cleanup",G_CALLBACK(accounts_cleanup_retry),NULL);
+  managed_owner.dialog_badge=gtk_label_new("");
+  gtk_label_set_line_wrap(GTK_LABEL(managed_owner.dialog_badge),TRUE);
+  gtk_box_pack_start(GTK_BOX(area),managed_owner.dialog_badge,FALSE,FALSE,4);managed_present();
+#endif
   accounts.spinner=gtk_spinner_new();gtk_box_pack_start(GTK_BOX(area),accounts.spinner,FALSE,FALSE,4);
   accounts.notice=gtk_label_new("");accounts.progress=gtk_label_new("");
   atk_object_set_description(gtk_widget_get_accessible(accounts.notice),"Account operation status");

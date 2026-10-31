@@ -1,0 +1,130 @@
+name: GTK managed WebDAV product integration
+on:
+  push:
+    branches: [codex/gpt-webdav-product-integration-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: gpt-webdav-product-integration
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  linux:
+    name: Linux GTK managed WebDAV
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact source and upstream audit admission
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/gtk_managed_webdav_20261031/guard.py
+      - name: Native GTK and HTTPS tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil dbus-x11
+      - name: Syntax and full installed product build with original TLS regression
+        run: |
+          python3 -m py_compile tests/gtk_managed_webdav_20261031/*.py
+          python3 tests/gtk_managed_webdav_20261031/build.py build
+      - name: Installed consumer and isolated process-death fault matrix
+        timeout-minutes: 20
+        run: python3 tests/gtk_managed_webdav_20261031/matrix.py
+      - name: Real installed GTK HTTPS, recovery, capacity and offline-reading scenarios
+        timeout-minutes: 20
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+            openbox >build/gtk-managed/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/gtk_managed_webdav_20261031/ui.py
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-managed-Linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-managed/*.json
+            build/gtk-managed/*.log
+            build/gtk-managed/*.zip
+            build/gtk-managed/prefix/
+            build/gtk-managed/host/gtk-host/exreader-linux
+            build/gtk-managed/host/gtk-account-host.map
+            build/gtk-managed/host/CMakeCache.txt
+            build/gtk-managed/probes/managed-consumer
+            build/gtk-managed/probes/managed-fault-worker
+            build/gtk-managed/probes/*.map
+            build/gtk-managed/probes/CMakeCache.txt
+            build/gtk-managed/package/
+            build/gtk-managed/matrix/
+            build/gtk-managed/ui/
+            build/gtk-managed/old-webdav-evidence/
+            !build/gtk-managed/**/*.key
+          if-no-files-found: error
+  compatibility:
+    name: Legacy ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: windows-2022, platform: Windows}
+          - {os: macos-15, platform: macOS}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Exact source and upstream audit admission
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/gtk_managed_webdav_20261031/guard.py
+      - name: Native build tooling
+        run: |
+          python -m pip install ninja==1.11.1.1
+          if [ "$RUNNER_OS" = macOS ]; then
+            brew install openssl@3
+            echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"
+          fi
+      - name: Unchanged default WebDAV and session consumers
+        run: python tests/gtk_managed_webdav_20261031/build.py compat
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-managed-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-managed/*.json
+            build/gtk-managed/*.log
+            build/gtk-managed/legacy/
+            build/gtk-managed/legacy-tls-evidence/
+            build/gtk-managed/legacy-session-evidence/
+            !build/gtk-managed/**/*.key
+          if-no-files-found: error
+  evidence:
+    name: Independent product evidence verification
+    needs: [linux, compatibility]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Authenticate original same-run archives and recompute raw observations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/gtk_managed_webdav_20261031/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-managed-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/gtk-managed-verification/
+          if-no-files-found: error
