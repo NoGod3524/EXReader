@@ -12,6 +12,7 @@ defaults:
     shell: bash
 jobs:
   native_evidence:
+    if: ${{ !contains(github.event.head_commit.message, '[c02-audit-only]') }}
     strategy:
       fail-fast: false
       matrix:
@@ -136,4 +137,212 @@ jobs:
         with:
           name: c02-native-journal-${{ matrix.os }}-${{ github.sha }}
           path: evidence/
+          if-no-files-found: error
+  original_zip_audit:
+    if: ${{ contains(github.event.head_commit.message, '[c02-audit-only]') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions: {contents: read, actions: read}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Bind producer source and retain exact original ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git diff --exit-code 867ca3cd9aaa58acb5b4a5ace35370b50383e2f8 HEAD -- extras/migration/windows_coordinator_native_journal_20261030 tests/migration/windows_coordinator_native_journal_20261030 extras/migration/windows_coordinator_hardening_20261030 tests/migration/windows_coordinator_hardening_20261030 extras/migration/windows_coordinator_cas_20261030 tests/migration/windows_coordinator_cas_20261030
+          mkdir -p audit-evidence
+          gh api repos/NoGod3524/EXReader/actions/runs/41151974177 > audit-evidence/run.json
+          gh api 'repos/NoGod3524/EXReader/actions/runs/41151974177/attempts/1/jobs?per_page=100' > audit-evidence/jobs.json
+          gh api repos/NoGod3524/EXReader/actions/artifacts/13023637120 > audit-evidence/windows-artifact.json
+          gh api repos/NoGod3524/EXReader/actions/artifacts/13023372361 > audit-evidence/ubuntu-artifact.json
+          gh api repos/NoGod3524/EXReader/actions/artifacts/13023637120/zip > audit-evidence/windows.zip
+          gh api repos/NoGod3524/EXReader/actions/artifacts/13023372361/zip > audit-evidence/ubuntu.zip
+      - name: Independently decode raw journals and reject rehashed semantic mutations
+        run: |
+          set -euo pipefail
+          python - <<'PY' | tee audit-evidence/audit.log
+          import copy,hashlib,io,json,os,pathlib,re,struct,zipfile
+          P=pathlib.Path('audit-evidence')
+          SOURCE='867ca3cd9aaa58acb5b4a5ace35370b50383e2f8'
+          RUN=41151974177
+          EXPECTED={
+           'windows':(13023637120,33171,'0c4e066105bc80256c4025569de566edef47503346f74009561654f9c1b25b3d',124390323488,'Windows'),
+           'ubuntu':(13023372361,1673,'6a6af3956d5dfd3d897e7709df36b0ac617d7134990aaaa5de9da77ef23bd93d',124390323249,'Linux')}
+          checks=[]
+          def need(ok,name):
+              if not ok: raise ValueError(name)
+          def sha(data): return hashlib.sha256(data).hexdigest()
+          def summary(data):
+              rows=[json.loads(s) for s in data.decode().splitlines() if s.startswith('{"source":')]
+              need(len(rows)==1,'one-result-record')
+              return rows[0]
+          def frames(data):
+              out=[];pos=0
+              while pos<len(data):
+                  need(pos+4<=len(data),'torn-length')
+                  n=struct.unpack_from('<I',data,pos)[0];pos+=4
+                  need(0<n<2048 and pos+n<=len(data),'torn-body')
+                  line=data[pos:pos+n];pos+=n
+                  need(b'\0' not in line and len(out)<256,'invalid-line')
+                  out.append(line)
+              return out
+          def intent_chain(journal,data):
+              lines=frames(journal)
+              need(len(data)%424==0 and len(data)<=424*2*256,'torn-intent')
+              previous=b'0'*64;seq=0;count=0;pending=None;begin_hash=None
+              for pos in range(0,len(data),424):
+                  r=data[pos:pos+424]
+                  need(r[:8]==b'WH3INT01' and r[9:16]==b'\0'*7,'canonical-header')
+                  need(r[296:360]==previous,'previous-record-hash')
+                  digest=sha(r[:360]).encode()
+                  need(r[360:424]==digest,'record-seal')
+                  number,old,n=struct.unpack_from('<QQQ',r,16)
+                  if r[8:9]==b'B':
+                      need(pending is None and number==seq+1,'begin-sequence')
+                      need(old==count and old<len(lines),'contiguous-old-count')
+                      need(n==len(lines[old]),'line-length')
+                      need(r[232:296]==b'\0'*64,'canonical-begin-reserved')
+                      need(r[40:104]==sha(lines[0]).encode(),'manifest-binding')
+                      need(r[104:168]==(sha(lines[old-1]).encode() if old else b'0'*64),'old-tip')
+                      need(r[168:232]==sha(lines[old]).encode(),'new-tip')
+                      pending=r;begin_hash=digest
+                  elif r[8:9]==b'A':
+                      need(pending is not None,'ack-without-begin')
+                      need(number==struct.unpack_from('<Q',pending,16)[0],'ack-sequence')
+                      need(r[24:232]==pending[24:232] and r[232:296]==begin_hash,'ack-binding')
+                      count=old+1;seq=number;pending=None
+                  else: raise ValueError('unknown-record-kind')
+                  previous=digest
+              need(pending is None and count==len(lines),'unacknowledged-journal')
+              return len(lines)
+          def validate_files(files,platform):
+              inventory=json.loads(files['file-hashes.json'])
+              listed={}
+              for row in inventory:
+                  name=row['path'].replace('\\','/')
+                  need(name not in listed and name in files,'inventory-unique')
+                  need(type(row['bytes']) is int and row['bytes']==len(files[name]),'inventory-size')
+                  need(row['sha256']==sha(files[name]),'inventory-hash')
+                  listed[name]=row
+              need(set(listed)==set(files)-{'file-hashes.json'},'inventory-complete')
+              receipt=json.loads(files['receipt.json'])
+              need(receipt['source']==SOURCE and int(receipt['run'])==RUN and int(receipt['attempt'])==1,'receipt-provenance')
+              need(receipt['os']==platform,'receipt-platform')
+              need(receipt['real_owner_wiring'] is False and receipt['full_p0_acceptance'] is False,'scope-honesty')
+              for kind,total,failed in [('abi2',81,6),('abi3',64,0)]:
+                  result=summary(files[kind+'.log'])
+                  need(result['source']==SOURCE and result['checks']==total and result['failed']==failed,'baseline-counts')
+                  need(result['passed'] is (failed==0) and receipt[kind]==result,'baseline-result')
+                  need(files[kind+'-exit.txt'].strip()==(b'1' if failed else b'0'),'baseline-exit')
+                  if kind=='abi3': need(result['cases']==16 and result['native_durability'] is False,'abi3-scope')
+              if platform=='Linux':
+                  need(receipt['native'] is None and 'native.log' not in files,'no-linux-native-claim')
+                  return
+              result=summary(files['native.log'])
+              need(result['source']==SOURCE and result['cases']==46 and result['checks']==301 and result['failed']==0,'native-counts')
+              need(result['passed'] is True and receipt['native']==result and files['native-exit.txt'].strip()==b'0','native-result')
+              need(result['native_io'] is True and result['subprocess_crash'] is True,'native-evidence')
+              need(result['power_loss'] is False and result['real_owner_wiring'] is False,'native-limit')
+              log=files['native.log'].decode().replace('\r\n','\n')
+              case_rows=re.findall(r'^CASE (\d+) (.+)$',log,re.M)
+              need([int(n) for n,_ in case_rows]==list(range(1,47)) and len(set(s for _,s in case_rows))==46,'all-named-cases')
+              need(not re.search(r'^FAIL ',log,re.M),'no-native-failure')
+              pairs=re.findall(r'^OBS reached=(\d+) expected=(\d+)$',log,re.M)
+              need([int(a) for a,b in pairs]==[1,6,2,7,8,3,4,9,10,5] and all(a==b for a,b in pairs),'ten-exact-crash-barriers')
+              need('OBS midopen root_move=1 error=0 reached=101' in log,'actual-path-rebinding')
+              invalid=set(range(10,17))|set(range(19,27))|set(range(36,43))|{46}
+              for number in range(1,47):
+                  prefix='native-files/case-%03d/a/b/'%number
+                  journal=files[prefix+'journal.bin'];intent=files[prefix+'intent.bin']
+                  try: intent_chain(journal,intent);valid=True
+                  except ValueError: valid=False
+                  need(valid is (number not in invalid),'raw-case-%03d'%number)
+          def refresh_inventory(files):
+              rows=[dict(path=k,bytes=len(v),sha256=sha(v)) for k,v in sorted(files.items()) if k!='file-hashes.json']
+              files['file-hashes.json']=(json.dumps(rows,indent=2)+'\n').encode()
+          def reject_mutation(original,name,change):
+              files=copy.deepcopy(original);change(files);refresh_inventory(files)
+              try: validate_files(files,'Windows')
+              except (ValueError,KeyError,TypeError,IndexError,json.JSONDecodeError):
+                  checks.append(dict(name=name,rejected=True));return
+              raise ValueError('accepted internally rehashed tamper: '+name)
+          def modify_receipt(files,key,value):
+              r=json.loads(files['receipt.json']);r[key]=value
+              files['receipt.json']=json.dumps(r).encode()
+          def reseal(data):
+              data=bytearray(data);previous=b'0'*64;begin=b''
+              for pos in range(0,len(data),424):
+                  data[pos+296:pos+360]=previous
+                  if data[pos+8]==ord('A'): data[pos+232:pos+296]=begin
+                  digest=sha(data[pos:pos+360]).encode();data[pos+360:pos+424]=digest
+                  if data[pos+8]==ord('B'): begin=digest
+                  previous=digest
+              return data
+          def reserved_attack(files):
+              key='native-files/case-001/a/b/intent.bin'
+              data=bytearray(files[key]);data[9]=1;files[key]=bytes(reseal(data))
+          def count_attack(files):
+              key='native-files/case-001/a/b/intent.bin'
+              data=bytearray(files[key]);data[848:1696]=data[:848]
+              struct.pack_into('<Q',data,848+16,2);struct.pack_into('<Q',data,1272+16,2)
+              files[key]=bytes(reseal(data))
+          def interior_attack(files):
+              key='native-files/case-001/a/b/journal.bin'
+              data=bytearray(files[key]);first=struct.unpack_from('<I',data)[0]
+              data[4+first+4+10]^=1;files[key]=bytes(data)
+          run=json.loads((P/'run.json').read_text())
+          jobs=json.loads((P/'jobs.json').read_text())['jobs']
+          need(run['id']==RUN and run['head_sha']==SOURCE and run['run_attempt']==1,'producer-run-binding')
+          need(run['status']=='completed' and run['conclusion']=='failure','preserved-overall-failure')
+          packages={}
+          for key,(aid,size,digest,jid,platform) in EXPECTED.items():
+              metadata=json.loads((P/(key+'-artifact.json')).read_text())
+              need(metadata['id']==aid and metadata['size_in_bytes']==size and metadata['digest']=='sha256:'+digest,'artifact-identity')
+              need(metadata['expired'] is False and metadata['workflow_run']['id']==RUN and metadata['workflow_run']['head_sha']==SOURCE,'artifact-run')
+              raw=(P/(key+'.zip')).read_bytes()
+              need(len(raw)==size and sha(raw)==digest,'original-zip-digest')
+              with zipfile.ZipFile(io.BytesIO(raw)) as z:
+                  entries=[e for e in z.infolist() if not e.is_dir()]
+                  need(sum(e.file_size for e in entries)<25*1024*1024,'archive-bound')
+                  names=[e.filename.replace('\\','/') for e in entries]
+                  need(len(names)==len(set(names)) and all(not n.startswith('/') and '..' not in pathlib.PurePosixPath(n).parts for n in names),'archive-paths')
+                  files={name:z.read(e) for name,e in zip(names,entries)}
+              validate_files(files,platform);packages[key]=files
+              job=next(j for j in jobs if j['id']==jid)
+              need(job['run_id']==RUN and job['conclusion']=='failure','job-binding')
+              failed=[s['name'] for s in job['steps'] if s['conclusion']=='failure']
+              need(failed==['Preserve original ABI2 81 checks and raw six contract failures'],'only-preserved-abi2-fails')
+              if key=='windows':
+                  step=next(s for s in job['steps'] if s['name']=='Real NTFS I/O, subprocess barriers, and resealed semantic attacks')
+                  need(step['conclusion']=='success','native-job-step')
+              checks.append(dict(name=key+'-original-zip-and-semantics',passed=True,artifact=aid,bytes=size,sha256=digest,job=jid))
+          reject_mutation(packages['windows'],'receipt-source',lambda f:modify_receipt(f,'source','0'*40))
+          reject_mutation(packages['windows'],'receipt-run',lambda f:modify_receipt(f,'run','1'))
+          reject_mutation(packages['windows'],'receipt-attempt',lambda f:modify_receipt(f,'attempt','2'))
+          reject_mutation(packages['windows'],'false-full-p0',lambda f:modify_receipt(f,'full_p0_acceptance',True))
+          reject_mutation(packages['windows'],'resealed-reserved-byte',reserved_attack)
+          reject_mutation(packages['windows'],'resealed-duplicate-gap',count_attack)
+          reject_mutation(packages['windows'],'rehashed-interior-corruption',interior_attack)
+          # Read the original ZIP files again after all parsing/mutation controls.
+          for key,(_,size,digest,_,_) in EXPECTED.items():
+              raw=(P/(key+'.zip')).read_bytes()
+              need(len(raw)==size and sha(raw)==digest,'retained-original-'+key)
+          result=dict(audit_source=os.environ['GITHUB_SHA'],audit_run=os.environ['GITHUB_RUN_ID'],
+                      audit_attempt=os.environ['GITHUB_RUN_ATTEMPT'],producer_source=SOURCE,
+                      producer_run=RUN,producer_attempt=1,checks=checks,passed=True,
+                      native_checks=301,legacy_abi2_failures_per_platform=6,
+                      real_owner_wiring=False,full_p0_acceptance=False)
+          (P/'audit-result.json').write_text(json.dumps(result,indent=2)+'\n')
+          print(json.dumps(result))
+          PY
+      - name: Preserve original ZIPs, API receipts and independent audit result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c02-original-zip-audit-${{ github.sha }}
+          path: audit-evidence/
           if-no-files-found: error

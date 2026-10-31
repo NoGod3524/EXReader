@@ -58,3 +58,25 @@ GitHub artifact metadata, not independently rehashed ZIPs:
 - Ubuntu ID 13022813222, 1677 bytes, SHA256 ff2258f216bf01a1493e9db610e0564b4498b126aa0fc083e09710fb98cfa887.
 
 The one originally authorized run is consumed. The corrected fixture is prepared for a separately authorized next run; no automatic retry has been started.
+
+### Approved correction run: native storage passes
+
+The user approved exactly one additional two-job round after the first failure. Source 867ca3cd9aaa58acb5b4a5ace35370b50383e2f8, run https://github.com/NoGod3524/EXReader/actions/runs/41151974177, attempt 1.
+
+Windows job 124390323488: native installed consumer passed all 46 scenarios / 301 checks / 0 failures. The path-rebinding fixture recorded `OBS midopen root_move=1 error=0 reached=101`; trusted identity then refused the actual replacement. Only the fixture and this record changed from the first run; native library source is identical.
+
+Windows and Ubuntu job 124390323249 both retained ABI3 16 cases / 64 checks / 0 failures and ABI2 81 checks / 6 failures. Each job's only failed step is the original ABI2 consumer. Overall conclusion remains failure.
+
+Exact producer artifact metadata:
+- Windows ID 13023637120, 33171 bytes, SHA256 0c4e066105bc80256c4025569de566edef47503346f74009561654f9c1b25b3d.
+- Ubuntu ID 13023372361, 1673 bytes, SHA256 6a6af3956d5dfd3d897e7709df36b0ac617d7134990aaaa5de9da77ef23bd93d.
+
+Both authorized native validation rounds have now been used.
+
+### Prepared original-ZIP audit
+
+The existing workflow now has a separate audit-only path, selected by the commit marker `[c02-audit-only]`. That path skips both native matrix jobs and runs one Ubuntu job, at most 15 minutes. No further validation starts until separately approved.
+
+The audit binds the exact producer source, run, attempt, two job IDs and artifact IDs above. Inside Actions only, it downloads both original ZIPs, verifies their exact sizes and SHA256 values, checks every internal inventory entry, parses all raw native journal/intent pairs, and verifies the ten observed process barriers and successful path replacement. It rejects seven semantic mutations after recomputing the package's internal inventory: wrong source, wrong run, wrong attempt, false full-P0 claim, resealed reserved bytes, resealed duplicate/gap counts, and changed interior journal bytes. After parsing it rehashes and retains both untouched original ZIPs in the audit artifact.
+
+This is a separately implemented artifact audit, not an independent human review. Its result is pending. It grants no production admission. Persistent gate and actual owner/reader lifetime wiring remain required for full C02.
