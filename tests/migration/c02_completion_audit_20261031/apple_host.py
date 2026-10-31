@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 """Independent Apple app-UID authority, actual SQLite and retained bundle audit."""
+import io
 import json
+import zipfile
 import plistlib
 import posixpath
 import re
@@ -10,6 +12,7 @@ from protocols import SDK, need, sha, json_value
 from posix_protocols import anchor, binding, states, metadata, observed_id, route, decode_route
 from gtk_host import sqlite_books
 from gtk_snapshots import pending_negative_controls
+from macho_sdk import bind_sdk, sdk_negative_variants
 
 PHASES = ("enrollment-crash", "pending-crash", "baseline", "fresh", "fresh-preserve")
 CASES = {"model-admission-before-catalog", "explicit-enrollment-recovery", "unknown-check-never-creates",
@@ -150,7 +153,10 @@ def bundles(files, receipt, platform, source, spec):
     paths = {"production":"bundles/production.app/" + ("EXReader" if mobile else "Contents/MacOS/EXReader"),
              "runtime":"bundles/runtime.app/" + ("C02Runtime" if mobile else "Contents/MacOS/C02Runtime")}
     sdk_identity = json_value(files["installed/c02-sdk-identity.json"])
-    sdk_copies = []
+    need(receipt["original_sdk_archive_prefix"] == "installed-sdk/" and
+         files["installed-sdk/c02-sdk-identity.json"] == files["installed/c02-sdk-identity.json"],
+         "apple-original-installed-sdk-identity")
+    sdk_copies, sdk_bindings = [], {}
     for kind,path in paths.items():
         need(sha(files[path]) == receipt["binaries"][kind], "apple-qualified-bundle-binary-sha")
         provider = macho_sdk(files[path])
@@ -158,11 +164,9 @@ def bundles(files, receipt, platform, source, spec):
         frameworks = app + ("Frameworks/" if mobile else "Contents/Frameworks/")
         sdk_raw = files[frameworks + provider]
         expected = sdk_identity["files"]["lib/" + provider]
-        actual = sha(sdk_raw)
-        if actual != expected:
-            print(json.dumps(dict(diagnostic="apple-sdk-original-bundle-bytes",bundle=kind,provider=provider,
-                                  original_sha256=expected,bundled_sha256=actual,bytes=len(sdk_raw))),flush=True)
-        need(actual == expected, "apple-bundled-exact-installed-sdk")
+        original = files["installed-sdk/lib/" + provider]
+        need(sha(original) == expected, "apple-original-installed-sdk-byte-binding")
+        sdk_bindings[kind] = dict(provider=provider, **bind_sdk(original, sdk_raw))
         sdk_copies.append(sdk_raw)
         plist = plistlib.loads(files[app + ("Info.plist" if mobile else "Contents/Info.plist")])
         need(plist["EXRSourceSHA"] == source, "apple-bundle-qualified-source")
@@ -184,7 +188,8 @@ def bundles(files, receipt, platform, source, spec):
     need(b"_pc02_check" in symbols and b"_pc02_close" in symbols and
          (b"_pc02_scope_create" if mobile else b"_pc02_sdk_open_user") in symbols,
          "apple-executed-runtime-native-owner-symbols")
-    return {kind:sha(files[path]) for kind,path in paths.items()}
+    return dict(production=sha(files[paths["production"]]), runtime=sha(files[paths["runtime"]]),
+                installed_sdk_bindings=sdk_bindings)
 
 def audit_apple_host(files, spec, source, report):
     receipt = json_value(files["receipt.json"])
@@ -296,7 +301,8 @@ def audit_apple_host(files, spec, source, report):
                        for name in ("library.sqlite","reader-catalog.db")], "apple-original-fresh-preserve-hashes")
     return dict(capabilities=["apple-actual-app-uid","apple-native-authority-byte-decoder",
                               "apple-original-sdk-and-catalog","apple-real-enrollment-and-pending-crashes",
-                              "apple-document-publication-fixed-final-owner","apple-production-bundle"],
+                              "apple-document-publication-fixed-final-owner","apple-production-bundle",
+                              "apple-installed-shared-sdk-byte-binding"],
                 runtime_cases=14, native_snapshots=decoded, app_uid=uid,
                 binaries=bundles(files,receipt,spec["platform"],source,spec), actual_migration=False)
 
@@ -318,4 +324,64 @@ def apple_negative_controls(files, output):
     virtual = {prefix + "authority/" + name:data for name,data in authority["raw"].items() if name in selected}
     virtual[prefix + "library-0.sqlite"] = database
     virtual[prefix + "native-identities.json"] = (json.dumps(manifest) + "\n").encode()
-    return pending_negative_controls(virtual,"",output)
+    return (pending_negative_controls(virtual,"",output) +
+            sdk_repacked_controls(files,receipt,output / "sdk"))
+
+def sdk_repacked_controls(files, receipt, output):
+    executables = [path for path in ("bundles/production.app/Contents/MacOS/EXReader",
+                                    "bundles/production.app/EXReader") if path in files]
+    need(len(executables) == 1, "apple-sdk-control-one-production-bundle")
+    executable = executables[0]
+    provider = macho_sdk(files[executable])
+    frameworks = "Contents/Frameworks/" if "/Contents/" in executable else "Frameworks/"
+    original_path = "installed-sdk/lib/" + provider
+    bundled_path = "bundles/production.app/" + frameworks + provider
+    original, bundled = files[original_path], files[bundled_path]
+    expected_reasons = {
+        "sdk-code-byte":"macho-sdk-cd-page-hashes",
+        "sdk-code-byte-rehashed":"macho-sdk-resigning-changed-payload",
+        "sdk-linkedit-payload-rehashed":"macho-sdk-resigning-changed-payload",
+        "sdk-original-payload-rehashed":"macho-sdk-resigning-changed-payload",
+        "sdk-forged-page-hash":"macho-sdk-cd-page-hashes",
+        "sdk-signature-out-of-bounds":"macho-sdk-signature-file-range",
+        "sdk-linkedit-out-of-bounds":"macho-sdk-signature-tail-linkedit-size",
+        "sdk-linkedit-vmsize-rehashed":"macho-sdk-signature-tail-linkedit-size",
+    }
+    output.mkdir(parents=True, exist_ok=True)
+    controls = []
+    for variant in sdk_negative_variants(original, bundled):
+        name = variant["name"]
+        need(name in expected_reasons, "apple-known-sdk-negative")
+        context = dict(schema="apple-sdk-original-byte-negative-v1", name=name,
+                       source=receipt["source"],run=receipt["run"],attempt=receipt["attempt"],
+                       original_path=original_path,bundled_path=bundled_path,
+                       original_baseline_sha256=sha(original),bundled_baseline_sha256=sha(bundled))
+        packet = {"original-sdk.dylib":variant["original"],"bundled-sdk.dylib":variant["bundled"],
+                  "control.json":(json.dumps(context,indent=2)+"\n").encode()}
+        packet["file-hashes.json"] = (json.dumps([
+            dict(path=key,bytes=len(value),sha256=sha(value))
+            for key,value in sorted(packet.items())],indent=2)+"\n").encode()
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer,"w",zipfile.ZIP_DEFLATED) as archive:
+            for key,value in sorted(packet.items()):
+                archive.writestr(key,value)
+        raw = buffer.getvalue()
+        (output / (name + ".zip")).write_bytes(raw)
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            need(archive.namelist() == sorted(packet), "apple-sdk-negative-zip-inventory")
+            decoded = {key:archive.read(key) for key in archive.namelist()}
+        for row in json_value(decoded["file-hashes.json"]):
+            need(len(decoded[row["path"]]) == row["bytes"] and sha(decoded[row["path"]]) == row["sha256"],
+                 "apple-sdk-negative-rehashed-original-files")
+        need(json_value(decoded["control.json"]) == context, "apple-sdk-negative-exact-context")
+        try:
+            bind_sdk(decoded["original-sdk.dylib"],decoded["bundled-sdk.dylib"])
+        except ValueError as error:
+            reason = str(error)
+            need(reason == expected_reasons[name], "apple-sdk-negative-expected-refusal:" + name + ":" + reason)
+        else:
+            raise ValueError("accepted-repacked-apple-sdk-negative:" + name)
+        controls.append(dict(name=name,rejected=True,reason=reason,bytes=len(raw),sha256=sha(raw),
+                             scope="repacked-original-sdk-byte-pair"))
+    need(len(controls) == len(expected_reasons), "apple-all-sdk-negative-controls")
+    return controls
