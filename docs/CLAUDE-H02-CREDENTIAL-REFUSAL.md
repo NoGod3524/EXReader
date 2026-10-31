@@ -78,3 +78,13 @@ Artifacts: probe 13021071869 (831 B, zip sha256 e5c018f3f6eac371d6ee3a6ca86c6341
 host 13020688622 (1568 B, zip sha256 4348c3b235c8f42e8374d5de1c3b7619af5e11b8ea88262484e2ea6a7101dc15).
 S3 now: Sync disabled after the failed B save, 0 requests with A. 6 worker threads sampled, none with a thread token.
 The H02 branch itself is unchanged and still shows S3 red (run 41145383847) as the pre-fix evidence.
+
+### Second product fix and run 41157486595 (source d0f133be): success, 26/26
+A reader session copies the Basic authorization at creation, and Retry resumed a cancelled/failed session regardless of
+later credential changes (S6 red pre-fix). `windows_accounts_ui.inc` now marks the session stale on every account
+Set/Forget and both the Retry button state and `acct_retry` refuse a stale session; Sync still starts a fresh session
+with the current secret, and Retry stays available when credentials did not change (S4).
+Probe job 124407375404, host job 124407478660, both green. Artifacts: probe 13025990903 (832 B, zip sha256
+44bdaa4f632fdbf431771f52ae5efc3f404f2107e1505d0028c7a23144ec7a31); host 13025796711 (2053 B, zip sha256
+9b799cc9541746c5316b3ce581c1911a3627bd43e0022d0b547aee05e04aea6d).
+S6a/S6b: Retry disabled after the failed B save, 0 new requests, books/heads/revisions/outbox unchanged. S4 green as above.
