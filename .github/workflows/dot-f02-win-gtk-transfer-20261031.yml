@@ -1,0 +1,323 @@
+name: F02 Windows to GTK actual original transfer
+on:
+  push:
+    branches: [codex/dot-f02-win-gtk-transfer-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f02-win-gtk-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  EXREADER_ORIGINAL_HASH_PREFIX: ${{ github.workspace }}/build/f02-hash
+jobs:
+  windows:
+    outputs:
+      artifact_id: ${{ steps.sender.outputs.artifact-id }}
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Admit exact seven-file package
+        run: python tests/reader_f02_win_gtk_20261031/authenticate.py guard
+      - name: Install the existing public hash owner
+        shell: pwsh
+        run: |
+          cmake -S extras/opds -B build/f02-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON "-DCMAKE_INSTALL_PREFIX=$env:GITHUB_WORKSPACE/build/f02-hash"
+          if ($LASTEXITCODE) { throw 'hash configure' }
+          cmake --build build/f02-hash-build --parallel 4
+          if ($LASTEXITCODE) { throw 'hash build' }
+          cmake --install build/f02-hash-build
+          if ($LASTEXITCODE) { throw 'hash install' }
+      - name: Verify SDK candidate identity
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt
+      - name: Prepare native display
+        run: python tests/reader_native_owner_repairs/display.py
+      - name: Install UI automation
+        run: python -m pip install uiautomation==2.0.29
+      - name: Build and package the 3.42 native host
+        id: build
+        run: python tests/windows_sdk342/build.py
+      - name: Original compact native UI
+        if: always() && steps.build.outcome == 'success'
+        run: python tests/reader_windows_compact/check_ui.py --candidate build/windows-sdk342/package/EXReader/EXReader.exe --font build/host-font-cache/Reader.otf --fixtures build/windows-sdk342/fixtures --output build/windows-sdk342/compact
+      - name: Wave3 native UI
+        if: always() && steps.build.outcome == 'success'
+        run: python tests/reader_wave3_c09/check_ui.py --candidate build/windows-sdk342/package/EXReader/EXReader.exe --font build/host-font-cache/Reader.otf --fixtures build/windows-sdk342/fixtures --output build/windows-sdk342/wave3-ui
+      - name: Native TXT progress
+        if: always() && steps.build.outcome == 'success'
+        run: python tests/windows_host/txt/check_progress.py build/windows-sdk342/package/EXReader/EXReader.exe build/host-font-cache/Reader.otf build/windows-sdk342/txt-progress "build/windows-sdk342/fixtures/Fixed page.pdf" build/windows-sdk342/txt-consumer/txtp-inject.exe raw
+      - name: Build account acceptance consumers
+        id: accountbuild
+        if: always() && steps.build.outcome == 'success'
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/windows-sdk342/raw;$pwd/build/windows-sdk342/product;$pwd/build/windows-sdk342/sdk"
+          cmake -S tests/reader_revisions/consumer -B build/windows-sdk342/account-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'revision configure failed' }
+          cmake --build build/windows-sdk342/account-revisions --parallel 4
+          if ($LASTEXITCODE) { throw 'revision build failed' }
+          cmake -S tests/terra_windows_sync/consumer -B build/windows-sdk342/account-capture -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'capture configure failed' }
+          cmake --build build/windows-sdk342/account-capture --parallel 4
+          if ($LASTEXITCODE) { throw 'capture build failed' }
+          python tests/windows_host/make_fixtures.py --output build/windows-sdk342/account-fixtures
+          if ($LASTEXITCODE) { throw 'account fixture generation failed' }
+          python tests/reader_reading_state/make_fixtures.py build/windows-sdk342/reading-fixtures
+          if ($LASTEXITCODE) { throw 'reading fixture generation failed' }
+      - name: Native account and sync checks
+        if: always() && steps.accountbuild.outcome == 'success'
+        env:
+          EXR_ACCOUNT_COMPACT_PICKER: '1'
+        shell: bash
+        run: |
+          set -o pipefail
+          python -u tests/reader_windows_account/check_account_ui.py --candidate build/windows-sdk342/package/EXReader/EXReader.exe --package build/windows-sdk342/package/EXReader --fixtures build/windows-sdk342/account-fixtures --revision-consumer build/windows-sdk342/account-revisions/revision-consumer.exe --capture-probe build/windows-sdk342/account-capture/reading-capture-probe.exe --reading-fixtures build/windows-sdk342/reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/windows-sdk342/host/windows-host.map --output build/windows-sdk342/account-ui 2>&1 | tee build/windows-sdk342/account.log
+      - name: Build native organization consumers
+        id: organizationbuild
+        if: always() && steps.build.outcome == 'success'
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/windows-sdk342/raw;$pwd/build/windows-sdk342/product;$pwd/build/windows-sdk342/sdk"
+          cmake -S tests/reader_windows_raw3/metadata-consumer -B build/organization-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DRAW_METADATA=ON "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'metadata configure failed' }
+          cmake --build build/organization-consumer --parallel 4
+          if ($LASTEXITCODE) { throw 'metadata build failed' }
+          cmake -S tests/windows_organization_projection/cloud -B build/cloud-readback -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'readback configure failed' }
+          cmake --build build/cloud-readback --parallel 4
+          if ($LASTEXITCODE) { throw 'readback build failed' }
+          New-Item -ItemType Directory -Force build/c09/package | Out-Null
+          Copy-Item -Recurse build/windows-sdk342/package/EXReader build/c09/package/
+          if ((Get-FileHash build/windows-sdk342/package/EXReader/EXReader.exe).Hash -ne (Get-FileHash build/c09/package/EXReader/EXReader.exe).Hash) { throw 'copied executable differs' }
+      - name: Native organization and receive cancellation
+        if: always() && steps.organizationbuild.outcome == 'success'
+        run: python tests/windows_organization_projection/check_ui.py
+      - name: Build same-source from-first TXT reference
+        id: reference
+        if: always() && steps.build.outcome == 'success'
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/windows-sdk342/raw;$pwd/build/windows-sdk342/product;$pwd/build/windows-sdk342/sdk"
+          cmake -S apps/reader/desktop -B build/windows-sdk342/reference -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix" "-DEXR_SDK=$pwd/build/windows-sdk342/sdk" "-DEXR_SDK_VERSION=3.42.0" "-DREADER_METADATA_PREFIX=$pwd/build/windows-sdk342/raw" "-DREADER_ACCOUNT_PREFIX=$pwd/build/windows-sdk342/raw" -DEXR_READER_WINDOWS_WAVE3=ON -DEXR_READER_WINDOWS_CLOUD_CONTENT_BOUND=ON -DEXR_READER_WINDOWS_TXT_PROGRESS=ON "-DCMAKE_C_FLAGS=/DEXR_TXT_SCAN_FROM_FIRST=1"
+          if ($LASTEXITCODE) { throw 'reference configure failed' }
+          cmake --build build/windows-sdk342/reference --target EXReaderWave3 --parallel 4 --verbose
+          if ($LASTEXITCODE) { throw 'reference build failed' }
+      - name: Native forward scan comparison
+        if: always() && steps.reference.outcome == 'success'
+        run: python tests/windows_txt_forward_scan/check_ui.py --candidate build/windows-sdk342/package/EXReader/EXReader.exe --reference build/windows-sdk342/reference/EXReaderWave3.exe --font build/host-font-cache/Reader.otf --output build/windows-sdk342/txt-forward
+      - name: Same-source installed SDK scan checks
+        if: always() && steps.build.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S tests/windows_txt_forward_scan/sdk -B build/windows-sdk342/scan-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/windows-sdk342/sdk"
+          cmake --build build/windows-sdk342/scan-sdk --parallel 4
+          ctest --test-dir build/windows-sdk342/scan-sdk --output-on-failure --no-tests=error
+      - name: Build existing installed public SDK original inspector
+        shell: pwsh
+        run: |
+          cmake -S tests/reader_gtk_receive -B build/f02-inspector -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 "-DCMAKE_PREFIX_PATH=$pwd/build/windows-sdk342/sdk"
+          if ($LASTEXITCODE) { throw 'inspector configure' }
+          cmake --build build/f02-inspector --parallel 4
+          if ($LASTEXITCODE) { throw 'inspector build' }
+      - name: Native Windows import and actual HTTPS PUT
+        id: sender_driver
+        run: python tests/reader_f02_win_gtk_20261031/windows_send.py
+      - name: Preserve actual server upload and sender evidence
+        id: sender
+        if: always() && steps.sender_driver.outputs.safe_upload == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: f02-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f02-windows/
+          if-no-files-found: warn
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-host-sdk342-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-sdk342/logs/
+            build/windows-sdk342/host/CMakeCache.txt
+            build/windows-sdk342/host/windows-host.map
+            build/windows-sdk342/reference/EXReaderWave3.exe
+            build/windows-sdk342/reference/windows-host.map
+            build/windows-sdk342/package/report.json
+            build/windows-sdk342/package/build.json
+            build/windows-sdk342/package/application.log
+            build/windows-sdk342/package/EXReader/EXReader.exe
+            build/windows-sdk342/compact/report.json
+            build/windows-sdk342/account.log
+            build/windows-sdk342/account-ui/report.json
+            build/windows-sdk342/account-ui/*.bmp
+            build/organization-ui/report.json
+            build/organization-ui/*.bmp
+            build/windows-sdk342/wave3-ui/report.json
+            build/windows-sdk342/txt-progress/report.json
+            build/windows-sdk342/txt-progress/**/*.log
+            build/windows-sdk342/txt-progress/*.bmp
+            build/windows-sdk342/txt-forward/report.json
+            build/windows-sdk342/txt-forward/*.bmp
+            build/windows-sdk342/txt-forward/**/*.log
+            build/windows-sdk342/scan-sdk/Testing/
+            build/native-owner-preflight/display.json
+          if-no-files-found: warn
+  gtk:
+    needs: windows
+    outputs:
+      artifact_id: ${{ steps.receiver.outputs.artifact-id }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Admit exact seven-file scope instead of claiming old branch guard
+        run: python3 tests/reader_f02_win_gtk_20261031/authenticate.py guard
+      - name: Authenticate and retain Windows actual server store
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f02_win_gtk_20261031/authenticate.py fetch --id ${{ needs.windows.outputs.artifact_id }} --name f02-windows --out build/f02-input
+      - name: Install the existing public hash owner
+        run: |
+          cmake -S extras/opds -B build/f02-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/f02-hash"
+          cmake --build build/f02-hash-build --parallel 4
+          cmake --install build/f02-hash-build
+      - name: Install GTK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Install both families and build same-source 3.42 host and package
+        run: |
+          python3 -m py_compile tests/gtk_sdk342_package/*.py
+          python3 tests/gtk_sdk342_package/run.py build
+      - name: Prepare original fixtures
+        run: |
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures
+          python3 tests/reader_gtk_navigation/make_inputs.py build/gtk-navigation-fixtures
+          python3 tests/linux_host/generate_fixed.py build/gtk-fixed-inputs
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-backend-fixtures
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-ui-fixtures
+          mkdir -p build/gtk-navigation-backend build/gtk-batch-backend/profile build/gtk-batch-owner-faults build/gtk-atspi-client
+          chmod 700 build/gtk-navigation-backend build/gtk-batch-backend/profile
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+      - name: Original navigation backend
+        run: |
+          set -o pipefail
+          build/gtk-raw-wave3/retained-host/reader-gtk-navigation-backend "$PWD/build/gtk-navigation-backend/library.sqlite" "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-navigation-fixtures" "$PWD/build/gtk-fixed-inputs" 2>&1 | tee build/gtk-navigation-backend/checks.log
+      - name: Original folder backend and owner faults
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend "$PWD/build/gtk-batch-backend/profile/library.sqlite" "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-backend-fixtures" "$PWD/build/gtk-batch-backend/originals.tsv" exercise 2>&1 | tee build/gtk-batch-backend/checks.log
+          build/gtk-raw-wave3/retained-host/reader-gtk-batch-owner-faults "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-owner-faults" 2>&1 | tee build/gtk-batch-owner-faults/checks.log
+      - name: Original navigation and folder GUI suites
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/gtk-raw-wave3/retained-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            failed=0
+            /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-navigation-fixtures --fixed-inputs build/gtk-fixed-inputs --output build/gtk-navigation-ui || failed=1
+            /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-batch-ui-fixtures --output build/gtk-batch-ui --backend build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend || failed=1
+            exit "$failed"
+          '
+      - name: Build existing installed public SDK original inspector
+        run: |
+          cmake -S tests/reader_gtk_receive -B build/f02-inspector -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/f02-inspector --parallel 4
+      - name: GTK real receive, open and offline reopen
+        id: receiver_driver
+        run: |
+          xvfb-run -a -s '-screen 0 1440x900x24' dbus-run-session -- bash -euc '
+            openbox >build/f02-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            sleep 1
+            python3 tests/reader_f02_win_gtk_20261031/gtk_receive.py
+          '
+      - name: Preserve receiver and original fetch identity
+        id: receiver
+        if: always() && steps.receiver_driver.outputs.safe_upload == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: f02-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f02-gtk/
+          if-no-files-found: warn
+      - name: Preserve original Windows ZIP and fetch identity
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f02-transfer-fetch-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f02-fetch/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-sdk342-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-sdk342/
+            build/f06/linux/
+            build/gtk-raw-wave3/raw-host/
+            build/gtk-raw-wave3/legacy-host/
+            build/gtk-raw-wave3/*.log
+            build/gtk-raw-wave3/*.json
+            build/gtk-raw-wave3/retained-host/CMakeCache.txt
+            build/gtk-raw-wave3/retained-host/gtk-host/exreader-linux
+            build/gtk-raw-wave3/retained-host/reader-gtk-navigation-backend
+            build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend
+            build/gtk-raw-wave3/retained-package/
+            build/gtk-navigation-backend/
+            build/gtk-navigation-ui/
+            build/gtk-batch-backend/
+            build/gtk-batch-owner-faults/
+            build/gtk-batch-ui/
+            build/gtk-navigation-fixtures/manifest.json
+            build/gtk-batch-backend-fixtures/manifest.json
+            build/gtk-batch-ui-fixtures/manifest.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: ${{ success() && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/codex/sdk342-six-source-20261028') }}
+        with:
+          name: f06-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f06/linux/
+          if-no-files-found: error
+  authenticate:
+    needs: [windows, gtk]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require both original host jobs and authenticate actual transfer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WINDOWS_RESULT: ${{ needs.windows.result }}
+          GTK_RESULT: ${{ needs.gtk.result }}
+        run: |
+          test "$WINDOWS_RESULT" = success
+          test "$GTK_RESULT" = success
+          python3 tests/reader_f02_win_gtk_20261031/authenticate.py verify --windows-id ${{ needs.windows.outputs.artifact_id }} --gtk-id ${{ needs.gtk.outputs.artifact_id }}
+      - name: Preserve independent result and original archives on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f02-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f02-auth/
+            build/f02-fetch-windows/
+            build/f02-fetch-gtk/
+          if-no-files-found: warn
