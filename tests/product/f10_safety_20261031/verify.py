@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: MIT
+"""Independent deterministic interpretation of raw observations, Actions only."""
+import argparse,copy,hashlib,json,os,sys
+from pathlib import Path
+NAMES=['normal','close-join','eacces-cleanup','kill-and-restart','target-created-during-download']
+def evaluate(index,rows,program):
+    errors=[]
+    if list(index['cases'])!=NAMES: errors.append('exact five cases')
+    if index['source']!=os.environ['GITHUB_SHA'] or str(index['run'])!=os.environ['GITHUB_RUN_ID'] or str(index['attempt'])!=os.environ['GITHUB_RUN_ATTEMPT']:errors.append('source/run/attempt')
+    if hashlib.sha256(program).hexdigest()!=index['program_sha256']: errors.append('actual consumer digest')
+    for name,row in zip(NAMES,rows):
+        if row.get('name')!=name or not row.get('observation_complete'):errors.append(name+': incomplete')
+        if any(str(row.get(k))!=str(index[k]) for k in ['source','run','attempt','program_sha256']):errors.append(name+': identity')
+        if row.get('euid')==0:errors.append(name+': root')
+        if row.get('original_before')!=row.get('original_after'):errors.append(name+': original changed')
+        if row.get('synthetic_secret_leaks'):errors.append(name+': synthetic secret leaked')
+        if not row.get('requests') or not all(x['authenticated'] for x in row['requests']):errors.append(name+': authenticated native requests')
+    normal,closed,eacces,killed,race=rows
+    if normal.get('exit_code')!=0 or not normal.get('result') or normal['result'][-1]['status']!=0 or normal['result'][-1]['pushed']!=1:errors.append('normal baseline')
+    if not closed.get('close_join_passed') or not any(x.get('state')==7 for x in closed.get('views',[])):errors.append('close before destroy')
+    if eacces.get('canary_errno')!=13:errors.append('real EACCES')
+    if killed.get('exit_code')!=-9 or not killed.get('killed_residual') or killed.get('restart',{}).get('exit_code')!=0:errors.append('real death/restart')
+    if not race.get('concurrent_target') or not race.get('target_after'):errors.append('concurrent target evidence')
+    return errors
+def main():
+    a=argparse.ArgumentParser();a.add_argument('--input',type=Path,required=True);a.add_argument('--output',type=Path,required=True);args=a.parse_args()
+    assert os.environ.get('GITHUB_ACTIONS')=='true'
+    root=args.input;out=args.output;out.mkdir(parents=True,exist_ok=True)
+    index=json.loads((root/'evidence/index.json').read_text())
+    rows=[json.loads((root/'evidence'/n/'observation.json').read_text()) for n in NAMES]
+    program=(root/'probe/f10-probe').read_bytes()
+    errors=evaluate(index,rows,program)
+    controls=[]
+    variants=[('source',lambda i,r:i.update(source='0'*40)),('consumer',lambda i,r:i.update(program_sha256='0'*64)),
+              ('permission',lambda i,r:r[2].update(canary_errno=0)),('kill',lambda i,r:r[3].update(exit_code=0)),
+              ('join',lambda i,r:r[1].update(close_join_passed=False)),('original',lambda i,r:r[0].update(original_after='0'*64))]
+    for name,mutate in variants:
+        i=copy.deepcopy(index);r=copy.deepcopy(rows);mutate(i,r)
+        reasons=evaluate(i,r,program);controls.append({'name':name,'rejected':bool(reasons),'reasons':reasons})
+    if not all(x['rejected'] for x in controls):errors.append('negative control accepted')
+    temps=lambda r:[x for x in r.get('after',[]) if x['name'].endswith('.tmp')]
+    findings=[
+        {'requirement':'normal successful operation removes its temporaries','passed':not temps(rows[0]),'observed':temps(rows[0])},
+        {'requirement':'close waits for worker release before destroy','passed':rows[1].get('close_join_passed',False)},
+        {'requirement':'failed deletion leaves explicit recoverable cleanup ownership','passed':not temps(rows[2]),'observed':temps(rows[2]),'note':'public result has no cleanup-owner/status field; retain failed result, do not infer recoverability'},
+        {'requirement':'process-death leftovers handled by next operation','passed':not temps(rows[3]),'observed':temps(rows[3])},
+        {'requirement':'concurrently appeared target not overwritten','passed':rows[4].get('concurrent_target')==rows[4].get('target_after'),'observed':{'before':rows[4].get('concurrent_target'),'after':rows[4].get('target_after')}}
+    ]
+    result={'source':index['source'],'run':index['run'],'attempt':index['attempt'],'evidence_consistent':not errors,'errors':errors,
+            'findings':findings,'negative_controls':controls,'safety_passed':not errors and all(x['passed'] for x in findings),
+            'full_f10_complete':False,'scope':index['scope'],
+            'limits':['No reading SDK imported or real host UI operated','No OS secure storage failure or lock-screen tests','No managed transport integration in this baseline','SIGKILL is not hardware power loss','No production changes or original assertions changed']}
+    (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+    print(json.dumps(result))
+    # A reproducible defect deliberately remains a failed safety gate.
+    return 0 if result['safety_passed'] else 1
+if __name__=='__main__':sys.exit(main())
