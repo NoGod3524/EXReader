@@ -41,3 +41,6 @@ explicitly prevents verifier final acceptance. Native Apple/Android HTTPS receiv
 and independent native-test compilation wiring are now authored, not run. Final orchestration still
 in progress. Windows existing organizer lacks group delete/restore author controls; this does not
 bar six-target consistency if actual GTK/Apple-originated operations are received by Windows.
+
+GTK/Android named original build recipe invocation is authored with version-only SDK pins;
+not executed, no receipt or passing build claimed. Original CI setup dependencies remain required.

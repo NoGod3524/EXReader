@@ -24,7 +24,8 @@ Only new F03 paths are owned. Production, SDK, old tests and external owners are
 1. Six-host lifecycle execution is not yet connected to emit the final manifest. Existing Windows/GTK
    relay covers tag membership only; Android original network test synthesizes records and is not
    used as a six-host author proof.
-2. GTK/Android build orchestration still needs connection to final workflow.
+2. GTK/Android named original build recipe invocation is authored (requires PyYAML and original
+   job dependencies), but has not run and still needs final workflow orchestration.
 3. Native-test compilation wiring is authored but unexecuted. Apple/Android real HTTPS receiver UI
    and process-restart checks are authored; complete six-host artifact orchestration remains absent.
 4. Retained drivers do not emit the complete new interop receipt schema. Projection-only receipts
