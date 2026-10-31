@@ -95,6 +95,12 @@ jobs:
                        requested_scope=os.environ['AUDIT_SCOPE'],completed=result is not None,audit_exit=audit_exit,
                        full_c02_complete=bool(passed and result.get('full_c02_complete')),passed=passed)
           (root/'workflow-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          print("C02-WORKFLOW-AUDIT-RESULT " + json.dumps(dict(
+              **receipt, result_sha256=hashlib.sha256(result_path.read_bytes()).hexdigest() if result else None,
+              original_zip_count=len(result["packages"]) if result else 0,
+              semantic_negative_controls=len(result["semantic_negative_controls"]) if result else 0,
+              qualification_negative_controls=len(result.get("qualification_negative_controls",[])) if result else 0,
+              missing_capabilities=result["missing_capabilities"] if result else None)),flush=True)
           rows=[dict(path=p.relative_to(root).as_posix(),bytes=p.stat().st_size,sha256=hashlib.sha256(p.read_bytes()).hexdigest())
                 for p in sorted(root.rglob('*')) if p.is_file()]
           (root/'audit-file-hashes.json').write_text(json.dumps(rows,indent=2)+'\n')
@@ -111,7 +117,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with: {persist-credentials: false}
+        with: {persist-credentials: false, fetch-depth: 0}
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - name: Retain exact original POSIX ZIP and inspect native evidence paths

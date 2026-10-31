@@ -8,7 +8,8 @@ from pathlib import Path
 import re
 import subprocess
 
-from audit import zip_files
+from audit import zip_files, git_bytes, package_identity, semantic_diagnostic
+from posix_owner import audit_posix_owner
 from protocols import need, sha, json_value
 
 REPO = "NoGod3524/EXReader"
@@ -90,6 +91,24 @@ def main():
                    members=len(files))
     (out / "receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
     print("C02-POSIX-DIAGNOSTIC " + json.dumps(receipt), flush=True)
+    if "owner_spec" in request:
+        spec = request["owner_spec"]
+        need(spec["run"] == request["run"] and spec["attempt"] == request["attempt"] and
+             spec["job"] == request["job"] and spec["artifact"] == dict(id=request["artifact"],
+                  name=artifact["name"],bytes=request["bytes"],sha256=request["sha256"]),
+             "diagnostic-owner-spec-exact-original")
+        package_identity(spec,request["source"])
+        try:
+            details = audit_posix_owner(files,spec,request["source"],git_bytes)
+        except Exception as error:
+            diagnostic = semantic_diagnostic(files,spec,error)
+            (out / "owner-failure.json").write_text(json.dumps(diagnostic,indent=2)+"\n")
+            print("C02-POSIX-OWNER-FAILURE " + json.dumps({
+                key:value for key,value in diagnostic.items() if key != "files"}),flush=True)
+            raise
+        (out / "owner-independent.json").write_text(json.dumps(details,indent=2)+"\n")
+        print("C02-POSIX-OWNER-INDEPENDENT " + json.dumps({
+            key:value for key,value in details.items() if key != "cases"}),flush=True)
 
 if __name__ == "__main__":
     main()
