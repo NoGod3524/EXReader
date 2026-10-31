@@ -1,6 +1,22 @@
-# C02 native journal candidate
+# C02 implementation and independent verification
 
-This is C02's native storage stage. Full C02 still requires a persistent domain gate, actual owner/reader wiring and end-to-end verification. Formal acceptance remains 95/108.
+## Current qualification status
+
+The immutable production source is d32603dc65bccfd65901239d21cb65cd10bca168.
+All twelve required roles have original Actions packages at this source. Windows
+product qualification has passed. POSIX Repair's final independent checks and
+the strict twelve-role complete-c02 audit are still pending. The exact original
+package request is tests/migration/c02_completion_audit_20261031/qualification.d326.json.
+Formal acceptance remains 95/108; this work does not grant F12 or full P0 acceptance.
+
+## Historical implementation record
+
+The remaining sections preserve the implementation sequence, original scope at
+each stage, every failed validation and later corrections. Earlier statements of
+remaining work describe their recorded stage; the current status is stated above.
+
+This began as C02's native storage stage, before the persistent domain gate,
+actual owner/reader wiring and end-to-end verification were implemented.
 
 ## Custody and scope
 
@@ -931,3 +947,29 @@ ca36a8002a164e4fa444ae831b1c774a29ffe74b3482c7f6024c37a801ca9523.
 The exact original macOS command/stdout evidence is being exposed in bounded
 Actions diagnostics before selecting any correction. No production object or
 native refusal requirement is changed by this diagnostic.
+
+
+The first newly integrated Repair-negative runs at ece9f86c8 failed before
+reading any original ZIP: Linux 41193907277/A1 and macOS 41193908865/A1.
+The new module imported relative from protocols; the existing path validator
+is exported by posix_owner. Commit 844b0709a15395e1275ad473c46dea5003ce7cab
+corrects only those imports, preserving all eight attacks and full replays.
+Their retained preparation-failure artifacts are respectively:
+- 13039363317, 1234 bytes, SHA256
+  b46034bb769a921f42faf864372551d41ee1089f5bccbba35c6a543b9381663d.
+- 13039118858, 1231 bytes, SHA256
+  e3b0264ad5e8c16a38e72d59a74066ad764bed9d6b2e41a268aba1bb4b7c82ce.
+Platform-specific retries 41194013033/A1 and 41194014921/A1 keep the same
+original producer d326 packages and run the same full semantic owner decoder.
+
+
+Mac diagnostic run 41194014921/A1, job 124516423066, retained the four actual
+ACL system command records. chmod's everyone allow write succeeds, and the
+following ls -lde reports the complete directory ACE as
+` 0: group:everyone allow add_file`. The original audit expected a literal write
+in ls output. The correction requires that exact add_file ACE line while
+preserving the exact four argv vectors, all zero command exits, real admission
+and recovery refusal, and restoration of the original registered domain.
+Preserve diagnostic failure artifact 13039888620, 47852547 bytes, SHA256
+d489b1fbe6a87df29d41e464024ce07405ed8875af40fd0c593d5c976898f3a8.
+No producer or ACL handling implementation is changed by this audit correction.
