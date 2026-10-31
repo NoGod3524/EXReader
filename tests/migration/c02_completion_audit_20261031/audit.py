@@ -25,6 +25,7 @@ from android_host import audit_android_host, android_negative_controls
 from apple_host import audit_apple_host, apple_negative_controls
 from posix_native import audit as audit_posix_native
 from posix_owner import audit_posix_owner, posix_owner_negative_controls
+from windows_products import audit_windows_products, windows_products_negative_controls, diagnose_windows_products
 from gtk_snapshots import pending_negative_controls
 
 from protocols import (SDK, C01, ABI2_FAILURES, need, sha, hexadecimal, integer, json_value,
@@ -606,8 +607,13 @@ def registry_evidence(files, spec, source, missing):
     migration = migration_evidence(files,spec,source,missing)
     need(migration["provider"]==provider, "provider-actual-binary-source-fingerprint")
     migration["source_line_endings"]=endings
-    return dict(capabilities=["trusted-registry","windows-product-admission","legacy-regression",*migration["capabilities"]],
-                registry=result,cli_cases=len(admission),host_cases=len(product),legacy=legacy,scanner=scanner,migration=migration)
+    products = audit_windows_products(files,spec,source,git_bytes)
+    for capability in products["missing"]:
+        missing.add("registry-product:" + capability)
+    return dict(capabilities=["trusted-registry","windows-product-admission","legacy-regression",
+                              *migration["capabilities"],*products["capabilities"]],
+                registry=result,cli_cases=len(admission),host_cases=len(product),legacy=legacy,
+                scanner=scanner,migration=migration,products=products)
 
 def gtk_evidence(files, spec, source, verification_output=None):
     for key in ("evidence_prefix", "runtime_prefix", "package_prefix"):
@@ -818,10 +824,16 @@ def semantic_diagnostic(files,spec,error):
         if "/" not in name and name.endswith(".log"):
             lines = data.decode(errors="backslashreplace").splitlines()
             logs[name] = dict(lines=len(lines),tail=lines[-8:])
-    return dict(diagnostic="component-semantic-failure",role=spec["role"],run=spec["run"],
-                attempt=spec["attempt"],artifact=spec["artifact"]["id"],
-                error=type(error).__name__,detail=str(error),contexts=contexts,logs=logs,
-                files=[dict(path=name,bytes=len(data)) for name,data in sorted(files.items())])
+    result = dict(diagnostic="component-semantic-failure",role=spec["role"],run=spec["run"],
+                  attempt=spec["attempt"],artifact=spec["artifact"]["id"],
+                  error=type(error).__name__,detail=str(error),contexts=contexts,logs=logs,
+                  files=[dict(path=name,bytes=len(data)) for name,data in sorted(files.items())])
+    if spec["role"] == "registry-product":
+        try:
+            result["windows_products"] = diagnose_windows_products(files)
+        except Exception as diagnostic_error:
+            result["windows_products_diagnostic_error"] = str(diagnostic_error)
+    return result
 
 def validate(files,spec,source,missing,verification_output=None):
     package_identity(spec,source)
@@ -855,6 +867,8 @@ def validate(files,spec,source,missing,verification_output=None):
             missing.add(role + ":" + capability)
         if details["partial_state_head_repair"] is not True:
             missing.add(role + ":posix-partial-state-and-head-explicit-repair")
+        else:
+            details["capabilities"].append("posix-explicit-state-head-repair")
         return details
     if role in ("host-macos", "host-ios"):
         return host_evidence(files,spec,source,missing)
@@ -982,6 +996,9 @@ def main():
         original_checks.append((output/role/"original.zip",spec["artifact"]))
         if role == "native-windows":
             windows = (files,spec)
+        if role == "registry-product":
+            host_controls.extend(windows_products_negative_controls(
+                files,spec,source,git_bytes,output/role/"product-negative-controls"))
         if role == "host-gtk":
             host_controls.extend(pending_negative_controls(files,spec["runtime_prefix"],output/role/"negative-controls"))
             host_controls.extend(gtk_binary_negative_controls(
