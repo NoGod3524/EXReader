@@ -1,0 +1,96 @@
+name: F08 Apple native shelf measurements
+on:
+  push:
+    branches: [codex/dot-f08-apple-20261031]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.42.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  sdk:
+    name: SDK ${{ matrix.target }}
+    runs-on: macos-15
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard frozen source and compile test adapters
+        run: |
+          python3 -m py_compile tests/reader_f08_apple_20261031/*.py
+          python3 tests/reader_f08_apple_20261031/run.py guard
+      - name: Build exact SDK 3.42 and installed products
+        run: python3 tests/apple_sdk342_host/build.py --target '${{ matrix.target }}'
+      - name: Seal installed files
+        if: always()
+        run: python3 tests/reader_f08_apple_20261031/run.py seal --platform '${{ matrix.target }}-sdk'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-apple-${{ matrix.target }}-sdk-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            build/raw3-ios-sdk/${{ matrix.target }}/sdk/
+            build/raw3-ios-sdk/${{ matrix.target }}/raw-products/
+            build/raw3-ios-sdk/${{ matrix.target }}/*.json
+          if-no-files-found: error
+  native:
+    name: Native ${{ matrix.platform }}
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: f08-apple-*-sdk-*
+          path: sdk-input
+      - name: Prepare original project generator
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Original seven cases and native scrolling metrics
+        run: python3 tests/reader_f08_apple_20261031/run.py native --platform '${{ matrix.platform }}'
+      - name: Seal observations including failures
+        if: always()
+        run: python3 tests/reader_f08_apple_20261031/run.py seal --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-apple-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: build/f08-apple/${{ matrix.platform }}/evidence/
+          if-no-files-found: error
+  audit:
+    needs: [sdk, native]
+    if: always()
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate original ZIPs and reparse native results
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_apple_20261031/audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-apple-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-apple-audit/audit.json
+            build/f08-apple-audit/*/metadata.json
+          if-no-files-found: error
