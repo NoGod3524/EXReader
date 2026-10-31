@@ -12,7 +12,21 @@ typedef struct {
   size_t size, refs;
   exr_source source;
 } exr_archive_store;
+/* Private reading view. Full public documents keep their contiguous arrays;
+   a chapter reader supplies indexed nodes and resident projection spans. */
+typedef struct {
+  void *context;
+  exr_node (*node)(void *context,size_t index);
+  const char *(*text)(void *context,size_t offset,size_t *available);
+  const void *(*style)(void *context,size_t index);
+  exr_status (*writing)(void *context,size_t node,int mode,exr_error *error);
+  const void *font_rules;
+  size_t font_count;
+  exr_status (*prepare)(void *context,size_t node,const exr_control *control,exr_error *error);
+  exr_status (*status)(void *context,exr_error *error);
+} exr_document_view;
 struct exr_document {
+  const exr_document_view *view;
   exr_status (*load_package)(const exr_document *,const exr_control *,exr_document **,exr_error *);
   char *text, *title,*language; /* Optional publication-level fallback; element lang wins. */
   size_t size, text_capacity;
@@ -35,11 +49,44 @@ struct exr_document {
   size_t ncx_resource;
   int has_ncx;
 };
+static inline exr_node exr_doc_node(const exr_document *doc,size_t node) {
+  return doc->view ? doc->view->node(doc->view->context,node) : doc->nodes[node];
+}
+static inline const char *exr_doc_span(const exr_document *doc,size_t offset,size_t *available) {
+  if(doc->view) return doc->view->text(doc->view->context,offset,available);
+  if(offset>doc->size) { *available=0;return NULL; }
+  *available=doc->size-offset;return doc->text+offset;
+}
+static inline unsigned char exr_doc_byte(const exr_document *doc,size_t offset) {
+  size_t available;const char *text=exr_doc_span(doc,offset,&available);
+  return text && available ? (unsigned char)*text : 0;
+}
+static inline int exr_doc_next(const exr_document *doc,size_t end,size_t *offset,uint32_t *cp) {
+  size_t available,at=0;const char *text;
+  if(*offset>=end) return 0;
+  text=exr_doc_span(doc,*offset,&available);
+  if(!text) return 0;
+  if(available>end-*offset) available=end-*offset;
+  if(!exr_next(text,available,&at,cp)) return 0;
+  *offset+=at;return 1;
+}
+static inline int exr_doc_copy(const exr_document *doc,size_t offset,size_t size,void *out) {
+  size_t done=0;
+  while(done<size) {
+    size_t available,chunk;const char *text=exr_doc_span(doc,offset+done,&available);
+    if(!text || !available) return 0;
+    chunk=size-done<available ? size-done : available;
+    memcpy((char *)out+done,text,chunk);done+=chunk;
+  }
+  return 1;
+}
 
 typedef exr_status (*exr_xml_position_fn)(void *context, size_t offset, size_t node);
 /* Incremental XML input, preserving the same complete DOM/text snapshot.
    The document and error object outlive the parser; free it after success/error. */
 typedef struct exr_xml_tree_parser exr_xml_tree_parser;
+exr_node_kind exr_xml_element_kind(const char *name);
+int exr_projection_boundary(exr_node_kind kind, const char *tag);
 exr_status exr_xml_tree_begin(exr_document *doc,size_t resource,int in_spine,int linear,
   const char *root_name,exr_xml_position_fn position,void *context,
   exr_xml_tree_parser **out,exr_error *error);

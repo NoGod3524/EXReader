@@ -20,6 +20,32 @@ static void bad(const char *body,exr_status expected) {
   CHECK(exr_pdf_cmap_parse(text,strlen(text),NULL,&map,&error)==expected && !map && error.code==expected && error.message[0]);
 }
 static int cancelled(void *context) { (void)context; return 1; }
+static void simple_font_codespaces(void) {
+  const char *body="1 begincodespacerange <0000> <ffff> endcodespacerange "
+    "2 beginbfchar <41> <0041> <0042> <0042> endbfchar "
+    "1 beginbfrange <43> <44> <0043> endbfrange";
+  const char *invalid[]={
+    "1 begincodespacerange <0000> <ffff> endcodespacerange 1 beginbfchar <0100> <0041> endbfchar",
+    "1 begincodespacerange <0000> <ffff> endcodespacerange 1 beginbfrange <00fe> <0100> <0041> endbfrange",
+    "1 begincodespacerange <0000> <ffff> endcodespacerange 2 beginbfchar <41> <0041> <0041> <0042> endbfchar",
+    "1 begincodespacerange <0000> <ffff> endcodespacerange 1 beginbfchar <000041> <0041> endbfchar",
+    "1 begincodespacerange <0000> <fffe> endcodespacerange 1 beginbfchar <41> <0041> endbfchar",
+    "2 begincodespacerange <0000> <00ff> <0100> <ffff> endcodespacerange 1 beginbfchar <41> <0041> endbfchar",
+    "2 begincodespacerange <00> <ff> <0000> <ffff> endcodespacerange 1 beginbfchar <41> <0041> endbfchar"
+  };
+  char text[1024]; exr_pdf_cmap *map=NULL; size_t i;
+  snprintf(text,sizeof(text),"%s%s%s",START,body,END);
+  CHECK(exr_pdf_cmap_parse(text,strlen(text),NULL,&map,&error)==EXR_FORMAT && !map);
+  CHECK(exr_pdf_cmap_parse_width(text,strlen(text),2,NULL,&map,&error)==EXR_FORMAT && !map);
+  OK(exr_pdf_cmap_parse_width(text,strlen(text),1,NULL,&map,&error));
+  mapped(map,"A",1,65,"A",1); mapped(map,"B",1,66,"B",1);
+  mapped(map,"D",1,68,"D",1); mapped(map,"Z",1,90,"\xef\xbf\xbd",3);
+  exr_pdf_cmap_free(map);
+  for(i=0;i<sizeof(invalid)/sizeof(*invalid);i++) {
+    snprintf(text,sizeof(text),"%s%s%s",START,invalid[i],END); map=NULL;
+    CHECK(exr_pdf_cmap_parse_width(text,strlen(text),1,NULL,&map,&error)==EXR_FORMAT && !map);
+  }
+}
 int main(void) {
   const char *invalid[]={
     "1 begincodespacerange <00> <7f> endcodespacerange 1 beginbfchar <80> <0041> endbfchar",
@@ -77,5 +103,6 @@ int main(void) {
   }
   CHECK(exr_pdf_cmap_parse(NULL,1,NULL,&map,&error)==EXR_ARGUMENT && !map);
   CHECK(exr_pdf_cmap_parse(START END,strlen(START END),NULL,NULL,&error)==EXR_ARGUMENT);
+  simple_font_codespaces();
   exr_pdf_cmap_free(NULL); printf("%u native PDF ToUnicode checks passed\n",checks); return 0;
 }

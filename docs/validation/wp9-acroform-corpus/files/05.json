@@ -1,0 +1,12 @@
+{
+ "base": "05-text-three-pages.pdf",
+ "id": "05",
+ "category": "widget/multipage",
+ "expect": "accept",
+ "size": 1251,
+ "sha256": "388e7ad2807ac2d6829edb42c41827791ce18d1839afc1b185d9d5bf5e8caff7",
+ "edited_sha256": "dff1ed9ce270c59c6efa393a35d2fe110479d745a80a618941830646c4fc45fc",
+ "assertions": 45,
+ "result": "pass",
+ "failures": []
+}

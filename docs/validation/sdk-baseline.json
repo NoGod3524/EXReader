@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "package": "Integrated core SDK baseline",
+  "status": "candidate K, re-frozen after the accepted Android and AcroForm corpus deliveries",
+  "sdk_baseline": "d46ff370cb3c5ce9a0ceb4dc1f8b099209149280",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "previous_baseline": "a2552d7feb786cd2345d2b0b3eb894777b3254db",
+  "protected_trees": {
+    "src": "5f34c5b7538f478c638fb98cd187b14ffff1eebc",
+    "include": "b3e88897939967688e607054fa524ec11669b9b4",
+    "cmake": "31298d7a58a15b99694b7c8710d838fde7baf7b9",
+    "CMakeLists.txt": "962dcfa741f0c3af5a8d0c25c33efa521cc1e032",
+    "tests/fixtures": "2a1fd5e58347f6ed8692996ba855c703f3c2da46",
+    ".github/workflows/native.yml": "be39352acf9313ab596030efa6ecea9d5a4a4540",
+    ".github/workflows/reliability.yml": "a27c1d1ca5a7aae1d590ceed356fdd5cd81abdb9",
+    "bindings": "54c12f70a1a63cae6574984a388b66bf6248c38e"
+  },
+  "evidence": {
+    "native": 39837151097,
+    "acroform": 39837165548,
+    "spacing": 39837179303
+  },
+  "declared_change": "AcroForm base form editing with the independent 75-document corpus gate, CSS table border-spacing, and the Android host delivery; only the top-level CMakeLists.txt of the protected set changed in this re-freeze",
+  "consumer_contract": "Existing public headers, installed consumers, trimmed component builds, JNI and Swift bindings keep building; ABI stays 1 and the SDK version keeps 3.40.0",
+  "package_rule": "A host or optional package passes only when it keeps every protected tree identical to K and proves it with its own cloud run",
+  "refreeze_trigger": "Any later change to a protected tree, including package B final corpus or engine work and the accepted Android delivery, requires a new candidate and new evidence",
+  "history_note": "The previous baseline and its 98-job reliability campaign stay bound to their own source and are not carried over",
+  "contracts": {
+    ".github/workflows/wp15-opds.yml": "BASELINE",
+    "tools/android_host_evidence.py": "SDK_BASE",
+    ".github/workflows/wp13-android.yml": "ANDROID_OWNERSHIP_HEAD pins the audit boundary to the accepted Android source, not the SDK baseline",
+    "note": "Both SDK guards name this candidate; package ownership boundaries stay separate from the SDK baseline."
+  },
+  "superseded_candidate": "4729f7fc7d908d249704d96ee61cc74ee778a27f"
+}

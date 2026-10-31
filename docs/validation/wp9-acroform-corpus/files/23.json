@@ -1,0 +1,12 @@
+{
+ "base": "23-choice-labels.pdf",
+ "id": "23",
+ "category": "choice/labels",
+ "expect": "accept",
+ "size": 658,
+ "sha256": "3d5ef939a421f11ffe5889555ddb132ef1b53d8fdc9aa9d8cf516f30943d540c",
+ "edited_sha256": "0dab5c5578d3dc1b97cc7bca4c4fe1e33af3026280517051faa74ccc4090db33",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

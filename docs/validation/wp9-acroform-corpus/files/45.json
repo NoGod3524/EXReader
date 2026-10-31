@@ -1,0 +1,12 @@
+{
+ "base": "45-reject-multiselect-combo.pdf",
+ "id": "45",
+ "category": "reject/multiselect-combo",
+ "expect": "reject",
+ "size": 606,
+ "sha256": "e2cdfb0401a1d2fc0ff6cb0821155273fb8f63be0cd50efab37739efc99da71a",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

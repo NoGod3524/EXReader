@@ -1,0 +1,394 @@
+{
+  "schema": 1,
+  "package": "R5 Apple host cloud validation",
+  "repository": "NoGod3524/EXReader",
+  "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+  "run": {
+    "id": 39903016234,
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234",
+    "workflow": ".github/workflows/wp13-apple.yml",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-23T04:56:33Z",
+    "updated_at": "2026-10-23T05:29:01Z"
+  },
+  "role": "independent intermediate candidate; final common-source acceptance is recorded separately",
+  "evidence_origin": {
+    "metadata": "GitHub Actions REST resources through the connected GitHub tools",
+    "job_logs": "decoded completed GitHub Actions job logs",
+    "artifact_validation": "GitHub Actions summary job only",
+    "local_tests_builds_syntax_checks_or_artifact_downloads": false
+  },
+  "input_fix": {
+    "commit": "1abf9d3cf07f98a888c96709e832331f136b1211",
+    "file": "tests/apple_host/EXReaderHostUITests.swift",
+    "before": "one press(forDuration: 0.1)",
+    "after": "one standard XCUIElement.tap()",
+    "retries_added": false,
+    "readiness_checks_and_original_deadline_preserved": true,
+    "result_assertions_preserved": true,
+    "changed_files": [
+      "tests/apple_host/EXReaderHostUITests.swift",
+      "docs/WP13-APPLE-REVIEW.md"
+    ]
+  },
+  "frozen_sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "review_suites": {
+    "sdk": {
+      "accepted": true,
+      "checks": 21
+    },
+    "model": {
+      "accepted": true,
+      "checks": 18
+    },
+    "bounded": {
+      "accepted": true,
+      "checks": 15,
+      "runtime_budget_seconds": 900,
+      "diagnostic_only": false
+    }
+  },
+  "legacy_self_checks": {
+    "macos": 21,
+    "iphone": 21,
+    "ipad": 21,
+    "total": 63
+  },
+  "expected_ui_per_platform": {
+    "cases": 13,
+    "passed": 13,
+    "failed": 0,
+    "steps": 67,
+    "base_steps": 46,
+    "regression_steps": 15,
+    "bounded_steps": 6,
+    "attachments": 50,
+    "ordinary_attachments": 37,
+    "step_json_attachments": 13
+  },
+  "physical_device_execution": false,
+  "limitations": [
+    "Device installation awaits owner signing.",
+    "The system document picker is not driven by XCUITest.",
+    "Library opens retain the 32 MiB host input limit."
+  ],
+  "preserved_prior_failure": {
+    "run_id": 39899825998,
+    "source_sha": "da1c1833d89932612d8e4549fee5aec378555ad4",
+    "conclusion": "failure",
+    "iphone_job_id": 120239280978,
+    "summary_job_id": 120245172071,
+    "summary_accepted": false,
+    "summary_problem": "Rejected: upstream SDK, UI or package job did not succeed",
+    "first_import_observation": "The first press did not trigger fixture-request; retained as failed evidence.",
+    "diagnostic": {
+      "run_id": 39903160806,
+      "job_id": 120249042967,
+      "diagnostic_only": true,
+      "accepted": false,
+      "synthesized_event": "long press",
+      "coordinate": {
+        "x": 97.25,
+        "y": 457.25
+      },
+      "duration_seconds": 0.1
+    }
+  },
+  "accepted": true,
+  "date": "2026-10-23",
+  "jobs": [
+    {
+      "id": 120248598860,
+      "name": "sdk (iphoneos)",
+      "status": "completed",
+      "conclusion": "success",
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "run_id": 39903016234,
+      "attempt": 1,
+      "started_at": "2026-10-23T04:56:37Z",
+      "completed_at": "2026-10-23T04:58:37Z",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/job/120248598860"
+    },
+    {
+      "id": 120248599053,
+      "name": "sdk (iphonesimulator)",
+      "status": "completed",
+      "conclusion": "success",
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "run_id": 39903016234,
+      "attempt": 1,
+      "started_at": "2026-10-23T04:56:40Z",
+      "completed_at": "2026-10-23T04:58:57Z",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/job/120248599053"
+    },
+    {
+      "id": 120248599067,
+      "name": "sdk (macos)",
+      "status": "completed",
+      "conclusion": "success",
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "run_id": 39903016234,
+      "attempt": 1,
+      "started_at": "2026-10-23T04:56:37Z",
+      "completed_at": "2026-10-23T04:59:14Z",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/job/120248599067"
+    },
+    {
+      "id": 120249330054,
+      "name": "uitest (macos)",
+      "status": "completed",
+      "conclusion": "success",
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "run_id": 39903016234,
+      "attempt": 1,
+      "started_at": "2026-10-23T04:59:17Z",
+      "completed_at": "2026-10-23T05:08:32Z",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/job/120249330054"
+    },
+    {
+      "id": 120249330077,
+      "name": "package",
+      "status": "completed",
+      "conclusion": "success",
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "run_id": 39903016234,
+      "attempt": 1,
+      "started_at": "2026-10-23T04:59:18Z",
+      "completed_at": "2026-10-23T05:11:13Z",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/job/120249330077"
+    },
+    {
+      "id": 120249330080,
+      "name": "uitest (iphone)",
+      "status": "completed",
+      "conclusion": "success",
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "run_id": 39903016234,
+      "attempt": 1,
+      "started_at": "2026-10-23T04:59:18Z",
+      "completed_at": "2026-10-23T05:16:27Z",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/job/120249330080"
+    },
+    {
+      "id": 120249330198,
+      "name": "uitest (ipad)",
+      "status": "completed",
+      "conclusion": "success",
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "run_id": 39903016234,
+      "attempt": 1,
+      "started_at": "2026-10-23T04:59:18Z",
+      "completed_at": "2026-10-23T05:27:49Z",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/job/120249330198"
+    },
+    {
+      "id": 120257639650,
+      "name": "summary",
+      "status": "completed",
+      "conclusion": "success",
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "run_id": 39903016234,
+      "attempt": 1,
+      "started_at": "2026-10-23T05:27:51Z",
+      "completed_at": "2026-10-23T05:29:00Z",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/job/120257639650"
+    }
+  ],
+  "ui": {
+    "macos": {
+      "job_id": 120249330054,
+      "accepted": true,
+      "totals": {
+        "cases": 13,
+        "passed": 13,
+        "failed": 0,
+        "steps": 67
+      },
+      "errors": [],
+      "actual_passed_test_records": 13,
+      "actual_step_markers": 67,
+      "actual_attachment_records": 50,
+      "step_json_attachments": 13,
+      "evidence_sha256": "27da5a9caa166bc98604e07d769737ed3a4c774da013f535c70265f2119aee85",
+      "collector_log_line": "2026-10-23T05:08:24.6431210Z {\"platform\": \"macos\", \"accepted\": true, \"totals\": {\"cases\": 13, \"passed\": 13, \"failed\": 0, \"steps\": 67}, \"errors\": []}"
+    },
+    "iphone": {
+      "job_id": 120249330080,
+      "accepted": true,
+      "totals": {
+        "cases": 13,
+        "passed": 13,
+        "failed": 0,
+        "steps": 67
+      },
+      "errors": [],
+      "actual_passed_test_records": 13,
+      "actual_step_markers": 67,
+      "actual_attachment_records": 50,
+      "step_json_attachments": 13,
+      "evidence_sha256": "bfd04a0eb73494707953621b13bde1a88ffddc4d2fb08d3c0e5e1736af8274e1",
+      "collector_log_line": "2026-10-23T05:15:54.3457960Z {\"platform\": \"iphone\", \"accepted\": true, \"totals\": {\"cases\": 13, \"passed\": 13, \"failed\": 0, \"steps\": 67}, \"errors\": []}"
+    },
+    "ipad": {
+      "job_id": 120249330198,
+      "accepted": true,
+      "totals": {
+        "cases": 13,
+        "passed": 13,
+        "failed": 0,
+        "steps": 67
+      },
+      "errors": [],
+      "actual_passed_test_records": 13,
+      "actual_step_markers": 67,
+      "actual_attachment_records": 50,
+      "step_json_attachments": 13,
+      "evidence_sha256": "93a03ded836ff39b4aae02650d4f32e60f6b2f7c7d53df02eb59507412bc1ff7",
+      "collector_log_line": "2026-10-23T05:27:20.4867550Z {\"platform\": \"ipad\", \"accepted\": true, \"totals\": {\"cases\": 13, \"passed\": 13, \"failed\": 0, \"steps\": 67}, \"errors\": []}"
+    }
+  },
+  "aggregate_ui": {
+    "cases": 39,
+    "passed": 39,
+    "failed": 0,
+    "steps": 201,
+    "attachments": 150
+  },
+  "strict_summary": {
+    "job_id": 120257639650,
+    "accepted": true,
+    "problem_count": 0,
+    "initial_and_final_acceptances": [
+      {
+        "timestamp": "2026-10-23T05:28:09.9275610Z",
+        "accepted": true
+      },
+      {
+        "timestamp": "2026-10-23T05:28:56.1701110Z",
+        "accepted": true
+      }
+    ],
+    "gate_review_checks": 97,
+    "complete_same_run_positive_check": 1,
+    "refusal_regressions": 96,
+    "gate_regression_result_bound_by_final_assembly": true,
+    "final_log_line": "2026-10-23T05:28:56.1701110Z {\"accepted\": true, \"platforms\": {\"macos\": {\"totals\": {\"cases\": 13, \"failed\": 0, \"passed\": 13, \"steps\": 67}, \"attachment_count\": 50, \"evidence_sha256\": \"27da5a9caa166bc98604e07d769737ed3a4c774da013f535c70265f2119aee85\"}, \"iphone\": {\"totals\": {\"cases\": 13, \"failed\": 0, \"passed\": 13, \"steps\": 67}, \"attachment_count\": 50, \"evidence_sha256\": \"bfd04a0eb73494707953621b13bde1a88ffddc4d2fb08d3c0e5e1736af8274e1\"}, \"ipad\": {\"totals\": {\"cases\": 13, \"failed\": 0, \"passed\": 13, \"steps\": 67}, \"attachment_count\": 50, \"evidence_sha256\": \"93a03ded836ff39b4aae02650d4f32e60f6b2f7c7d53df02eb59507412bc1ff7\"}}, \"problems\": []}"
+  },
+  "artifact_integrity": {
+    "count": 8,
+    "all_nonempty": true,
+    "all_unexpired": true,
+    "all_same_run_and_source": true,
+    "all_sha256_digests_valid": true,
+    "all_digests_match_completed_upload_logs": true,
+    "artifact_bytes_revalidated_in_cloud_summary": true
+  },
+  "artifacts": [
+    {
+      "id": 12480307882,
+      "name": "wp13-apple-ipad",
+      "size_in_bytes": 46613019,
+      "digest": "sha256:65fc292c70a1ccfb7a8c587e9bdd6efea9ae560aed1f8db7d383601ac04cbb4e",
+      "expired": false,
+      "created_at": "2026-10-23T05:27:27Z",
+      "expires_at": "2026-11-22T05:27:22Z",
+      "run_id": 39903016234,
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/artifacts/12480307882",
+      "upload_digest_matches": true
+    },
+    {
+      "id": 12480289667,
+      "name": "wp13-apple-validation",
+      "size_in_bytes": 66952,
+      "digest": "sha256:32209f0299ad83367e5094f081f53ad91d69dd9c4e0f02bbd1aad29202c146ac",
+      "expired": false,
+      "created_at": "2026-10-23T05:28:57Z",
+      "expires_at": "2026-11-22T05:28:56Z",
+      "run_id": 39903016234,
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/artifacts/12480289667",
+      "upload_digest_matches": true
+    },
+    {
+      "id": 12480067281,
+      "name": "wp13-apple-macos",
+      "size_in_bytes": 36646188,
+      "digest": "sha256:17390b1010ed1d968936a678dd412ece7259ccfe985767bfa427eab99b8c981c",
+      "expired": false,
+      "created_at": "2026-10-23T05:08:28Z",
+      "expires_at": "2026-11-22T05:08:25Z",
+      "run_id": 39903016234,
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/artifacts/12480067281",
+      "upload_digest_matches": true
+    },
+    {
+      "id": 12479903496,
+      "name": "wp13-apple-package",
+      "size_in_bytes": 129348050,
+      "digest": "sha256:a049122ebc61b01551278256009f1bae979ba98664c7fcecffd8dbb3e9b44a37",
+      "expired": false,
+      "created_at": "2026-10-23T05:11:04Z",
+      "expires_at": "2026-11-22T05:10:55Z",
+      "run_id": 39903016234,
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/artifacts/12479903496",
+      "upload_digest_matches": true
+    },
+    {
+      "id": 12479881505,
+      "name": "wp13-apple-sdk-macos",
+      "size_in_bytes": 18828181,
+      "digest": "sha256:c5205914999d7ce41464d4e0b40bcdf745e211c1fcf8ca7405f12c4f4be41272",
+      "expired": false,
+      "created_at": "2026-10-23T04:59:09Z",
+      "expires_at": "2026-11-22T04:59:05Z",
+      "run_id": 39903016234,
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/artifacts/12479881505",
+      "upload_digest_matches": true
+    },
+    {
+      "id": 12479289115,
+      "name": "wp13-apple-sdk-iphonesimulator",
+      "size_in_bytes": 18828274,
+      "digest": "sha256:f8f23d53722d904d2daae2da25c0ce3fe2557645d38ece380e6e4149a9070acd",
+      "expired": false,
+      "created_at": "2026-10-23T04:58:54Z",
+      "expires_at": "2026-11-22T04:58:50Z",
+      "run_id": 39903016234,
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/artifacts/12479289115",
+      "upload_digest_matches": true
+    },
+    {
+      "id": 12479229751,
+      "name": "wp13-apple-iphone",
+      "size_in_bytes": 37320481,
+      "digest": "sha256:7a1d209ce06e32754d7517eb42cdcc2b739b6524e99dc633b4566d5f084c5936",
+      "expired": false,
+      "created_at": "2026-10-23T05:15:59Z",
+      "expires_at": "2026-11-22T05:15:55Z",
+      "run_id": 39903016234,
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/artifacts/12479229751",
+      "upload_digest_matches": true
+    },
+    {
+      "id": 12478714717,
+      "name": "wp13-apple-sdk-iphoneos",
+      "size_in_bytes": 18531025,
+      "digest": "sha256:b699f2fe11128458a9a501ea7caa924c1a870abcbb052a67c18a6f3d435a3a86",
+      "expired": false,
+      "created_at": "2026-10-23T04:58:32Z",
+      "expires_at": "2026-11-22T04:58:28Z",
+      "run_id": 39903016234,
+      "source_sha": "1abf9d3cf07f98a888c96709e832331f136b1211",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903016234/artifacts/12478714717",
+      "upload_digest_matches": true
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+ "base": "27-needappearances-absent.pdf",
+ "id": "27",
+ "category": "need-appearances/absent",
+ "expect": "accept",
+ "size": 585,
+ "sha256": "3a292bcdda7d6f41966597a8380c58f25dbfdc77861282fddfeec0f4aae88042",
+ "edited_sha256": "4d548ebe88fbe4342b94d359ee5ed7b02e06b023516a8fc16e06e46ca53da4fa",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

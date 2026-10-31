@@ -1,0 +1,12 @@
+{
+ "base": "34-no-acroform.pdf",
+ "id": "34",
+ "category": "structure/no-form",
+ "expect": "empty",
+ "size": 368,
+ "sha256": "94ddeb2e526c1764ea5d82d2b58792a86cc1386feb40198571b780067b19d8ec",
+ "edited_sha256": null,
+ "assertions": 7,
+ "result": "pass",
+ "failures": []
+}

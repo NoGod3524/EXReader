@@ -39,6 +39,9 @@
     ]
   },
   "files": {
+    "chapter_index.c": "doc",
+    "chapter_reader.c": "layout",
+    "chapter_window.c": "doc",
     "aac.c": "audio",
     "affine_image.c": "graphics",
     "anchor.c": "doc",
@@ -114,6 +117,7 @@
     "pdf_font.c": "pdf",
     "pdf_function.c": "pdf",
     "pdf_image.c": "pdf",
+    "pdf_jpx.c": "pdf",
     "pdf_objects.c": "pdf",
     "pdf_pages.c": "pdf",
     "pdf_paint.c": "pdf",
@@ -177,6 +181,7 @@
     "src/pdf_font_data.h": "pdf",
     "src/pdf_function_internal.h": "pdf",
     "src/pdf_internal.h": "pdf",
+    "src/pdf_jpx_internal.h": "pdf",
     "src/pdf_raster_internal.h": "pdf",
     "src/pdf_saslprep_data.h": "pdf",
     "src/pixels_internal.h": "graphics",
@@ -202,6 +207,7 @@
     "include/exr/pdf_edit.h": "pdf_edit",
     "include/exr/audio.h": "audio",
     "include/exr/library.h": "library",
-    "include/exr/textindex.h": "textindex"
+    "include/exr/textindex.h": "textindex",
+    "src/chapter_internal.h": "doc"
   }
 }

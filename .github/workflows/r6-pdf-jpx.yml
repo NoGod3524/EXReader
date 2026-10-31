@@ -1,0 +1,102 @@
+name: Native PDF JPX integration
+on:
+  push:
+    branches: [codex/r6-reading-release]
+    paths:
+      - 'src/pdf_jpx*'
+      - 'src/pdf_image.c'
+      - 'src/pdf_objects.c'
+      - 'src/pdf_internal.h'
+      - 'tools/layers.json'
+      - 'cmake/**'
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
+      - 'tests/pdf_jpx_integration/**'
+      - 'tests/pdf_jpx/**'
+      - '.github/workflows/r6-pdf-jpx.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  integration:
+    name: JPX ${{ matrix.jpx }} sanitizer ${{ matrix.sanitize }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - jpx: 'ON'
+            sanitize: 'OFF'
+          - jpx: 'ON'
+            sanitize: 'ON'
+          - jpx: 'OFF'
+            sanitize: 'OFF'
+    env:
+      JPX: ${{ matrix.jpx }}
+      SANITIZE: ${{ matrix.sanitize }}
+      ASAN_OPTIONS: detect_leaks=1
+      UBSAN_OPTIONS: halt_on_error=1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install independent fixture encoder and PDF reference
+        run: sudo apt-get update -qq && sudo apt-get install -y python3-pil poppler-utils
+      - name: Build current SDK with enabled or trimmed JPX
+        id: sdk
+        run: |
+          cmake --preset reading-core -DEXR_BUILD_TESTS=ON -DEXR_ENABLE_PDF_JPX="$JPX" -DEXR_SANITIZE="$SANITIZE"
+          cmake --build --preset reading-core --parallel 4
+          ctest --test-dir build/reading-core --output-on-failure --no-tests=error --output-junit "$PWD/build/native-jpx.xml"
+          python3 tools/check_layers.py build/reading-core
+          cmake --install build/reading-core
+      - name: Build existing public installed reading consumers
+        id: consumers
+        run: |
+          if [ "$SANITIZE" = ON ]; then
+            export CFLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer'
+            export CXXFLAGS="$CFLAGS"
+            export LDFLAGS='-fsanitize=address,undefined'
+          fi
+          cmake -S tests/reading_real -B build/jpx-public -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-core/stage"
+          cmake --build build/jpx-public --parallel 4
+          cmake -S tests/reading_corpus -B build/jpx-real -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-core/stage"
+          cmake --build build/jpx-real --parallel 4
+      - name: Exercise public image rendering and refusal boundaries
+        run: |
+          options=()
+          if [ "$JPX" = OFF ]; then options=(--expect-off); fi
+          python3 tests/pdf_jpx_integration/check.py --binary build/jpx-public/reading-real-benchmark --font tests/fixtures/fonts/primary.ttf --output build/jpx-integration "${options[@]}"
+      - name: Restore exact retained originals without contacting publishers again
+        id: originals
+        if: always() && matrix.jpx == 'ON' && matrix.sanitize == 'OFF' && steps.sdk.outcome == 'success' && steps.consumers.outcome == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12474886324
+          run-id: 39891075765
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: build/jpx-retained
+      - name: Repeat complete acceptance of all eight unchanged registered documents
+        if: always() && matrix.jpx == 'ON' && matrix.sanitize == 'OFF' && steps.originals.outcome == 'success'
+        run: |
+          python3 tests/reading_corpus/check_protocol.py build/jpx-real/r2-location tests/fixtures/fonts/primary.ttf
+          python3 tools/reading_corpus/run.py --manifest tools/reading_corpus/real-v1.json --registered-at ea5c13e081cfba86d9f6dd759439894463e51126 \
+            --assets build/jpx-retained/real-inputs/assets --binary build/jpx-real/r2-document \
+            --location build/jpx-real/r2-location --font tests/fixtures/fonts/primary.ttf --output build/jpx-real-evidence
+      - name: Preserve source-bound raw results and every refusal
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r6-jpx-${{ matrix.jpx }}-${{ matrix.sanitize }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/native-jpx.xml
+            build/reading-core/CMakeCache.txt
+            build/reading-core/Testing/Temporary/
+            build/jpx-integration/
+            build/jpx-real-evidence/
+            build/jpx-retained/real-inputs/
+          if-no-files-found: error
+          retention-days: 30

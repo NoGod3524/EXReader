@@ -1,9 +1,19 @@
 # SPDX-License-Identifier: MIT
+if(EXR_BUILD_TESTS AND EXR_ENABLE_PDF AND EXR_ENABLE_PDF_JPX)
+  add_executable(exreader-pdf-jpx-test tests/pdf_jpx/regress.c)
+  target_include_directories(exreader-pdf-jpx-test PRIVATE src include)
+  target_link_libraries(exreader-pdf-jpx-test PRIVATE exr_pdf exr_jpx)
+  add_test(NAME native-pdf-jpx COMMAND exreader-pdf-jpx-test)
+endif()
+
 if(EXR_BUILD_TESTS)
   enable_testing()
   add_executable(exreader-core-component-test tests/test_core_component.c)
   target_link_libraries(exreader-core-component-test PRIVATE exr_core)
   add_test(NAME native-core-component COMMAND exreader-core-component-test ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf)
+  add_executable(exreader-anchor-boundary-test tests/test_anchor_boundary.c)
+  target_link_libraries(exreader-anchor-boundary-test PRIVATE exr_formats)
+  add_test(NAME native-anchor-boundary COMMAND exreader-anchor-boundary-test)
 endif()
 
 # Direct-source regression executables define a few public helpers themselves.
@@ -22,6 +32,21 @@ if(EXR_FULL_TESTS)
       endforeach()
     endif()
   endforeach()
+endif()
+
+if(EXR_BUILD_TESTS AND EXR_ENABLE_LIBRARY)
+  add_executable(exreader-library-source-test tests/test_library_source.c)
+  target_compile_definitions(exreader-library-source-test PRIVATE EXR_SOURCE_SQLITE_FIXTURES=1)
+  if(EXR_ENABLE_PDF)
+    target_compile_definitions(exreader-library-source-test PRIVATE EXR_SOURCE_FIXED_READER=1)
+  endif()
+  target_link_libraries(exreader-library-source-test PRIVATE exr_library exr_core exr_sqlite)
+  add_test(NAME native-library-source COMMAND exreader-library-source-test
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures" "${CMAKE_CURRENT_BINARY_DIR}")
+  add_executable(exreader-library-epub-storage-test tests/test_library_epub_storage.c)
+  target_link_libraries(exreader-library-epub-storage-test PRIVATE exr_library exr_core exr_sqlite miniz)
+  add_test(NAME native-library-epub-storage COMMAND exreader-library-epub-storage-test
+    "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
 if(EXR_BUILD_TESTS)

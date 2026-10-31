@@ -3,6 +3,7 @@ on:
   push:
     branches: ['codex/framework']
   pull_request:
+  workflow_call:
   workflow_dispatch:
 permissions:
   contents: read
@@ -32,6 +33,22 @@ jobs:
           elif [ "${{ runner.os }}" = macOS ]; then font=/System/Library/Fonts/Supplemental/Arial.ttf; test=./build/native/exreader-table-fragments-test;
           else font=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf; test=./build/native/exreader-table-fragments-test; fi
           "$test" tests/fixtures --font "$font"
+      - name: Measure bounded single chapters and evicted-window recovery
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = Windows ]; then probe=build/native/Release/exreader-wp6-chapter-probe.exe;
+          else probe=build/native/exreader-wp6-chapter-probe; fi
+          python3 tools/generate_bounded_chapter_corpus.py build/wp6-corpus
+          python3 tools/run_wp6_bounded_probe.py "$probe" tests/fixtures/fonts/primary.ttf build/wp6-corpus build/wp6-evidence --window-bytes 16384 --sample-pages 64 --random-count 8 --repeats 1
+      - name: Preserve bounded chapter measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-WP6-${{ runner.os }}
+          path: |
+            build/wp6-evidence/
+            build/wp6-corpus/manifest.json
+          if-no-files-found: warn
       - name: Install portable SDK with license notices
         run: cmake --install build/native --config Release --prefix stage
       - name: Build and run installed static components

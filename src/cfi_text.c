@@ -4,47 +4,133 @@ typedef struct {
   const exr_document *doc; const exr_control *control; exr_error *error; exr_status status;
   exr_buffer text; size_t bytes,visited,position,desired; unsigned whitespace,mapping,found;
   exr_cfi_point target,result;
+  size_t keep,scalars;
+  char *before;
+  int bounded,capturing;
+  const char *query;
+  uint32_t *prefix;
+  size_t query_size,matched,matches,first_match;
 } text_walk;
+static int target_boundary(text_walk *w,size_t node,size_t offset) {
+  if(w->target.node!=node || w->target.offset!=offset) return 1;
+  w->position=w->bytes;
+  if(w->bounded && !w->capturing) {
+    w->before=exr_copy(w->text.data ? w->text.data : "",w->text.size);
+    if(!w->before) { w->status=exr_fail(w->error,EXR_MEMORY,"CFI context allocation failed");return 0; }
+    w->text.size=0;if(w->text.data) w->text.data[0]=0;
+    w->scalars=0;w->capturing=1;
+  }
+  return 1;
+}
 static int boundary(text_walk *w,size_t node,size_t offset) {
-  if(w->target.node==node && w->target.offset==offset) w->position=w->bytes;
+  if(!target_boundary(w,node,offset)) return 0;
   if(w->mapping && w->desired==w->bytes) { w->result=(exr_cfi_point){node,offset,w->target.side}; w->found=1; }
   return 1;
 }
+static int append_text(text_walk *w,const char *text,size_t bytes) {
+  size_t i,limit=w->doc->view ? EXR_MAX_INPUT : EXR_MAX_TEXT-1;
+  if(bytes>limit-w->bytes) { w->status=exr_fail(w->error,EXR_LIMIT,"CFI assertion text exceeds byte budget");return 0; }
+  if(w->query) {
+    for(i=0;i<bytes;i++) {
+      while(w->matched && text[i]!=w->query[w->matched]) w->matched=w->prefix[w->matched-1];
+      if(text[i]==w->query[w->matched]) w->matched++;
+      if(w->matched==w->query_size) {
+        if(!w->matches) w->first_match=w->bytes+i+1-w->query_size;
+        if(++w->matches>1) w->found=1;
+        w->matched=w->prefix[w->matched-1];
+      }
+    }
+  } else if(!w->mapping) {
+    if(!exr_append(&w->text,text,bytes)) { w->status=exr_fail(w->error,EXR_MEMORY,"CFI assertion allocation failed");return 0; }
+    if(w->bounded) {
+      w->scalars++;
+      if(w->capturing) { if(w->scalars>=w->keep) w->found=1; }
+      else if(w->scalars>w->keep) {
+        size_t remove=0;uint32_t cp;
+        if(!exr_next(w->text.data,w->text.size,&remove,&cp)) { w->status=EXR_ENCODING;return 0; }
+        memmove(w->text.data,w->text.data+remove,w->text.size-remove);
+        w->text.size-=remove;w->text.data[w->text.size]=0;w->scalars--;
+      }
+    }
+  }
+  w->bytes+=bytes;return 1;
+}
 static int walk(text_walk *w,size_t node,unsigned depth) {
-  const exr_node *v=&w->doc->nodes[node]; size_t child,number=0;
+  exr_node value=exr_doc_node(w->doc,node);
+  const exr_node *v=&value; size_t child,number=0;
   if(depth>256) { w->status=exr_fail(w->error,EXR_LIMIT,"CFI assertion XML depth exceeds 256"); return 0; }
   if(!(w->visited++%256)) { w->status=exr_control_poll(w->control,EXR_STAGE_READ,w->visited,0,w->error); if(w->status!=EXR_OK) return 0; }
   if(v->kind==EXR_NODE_TEXT) {
+    if(w->doc->view) {
+      w->status=w->doc->view->prepare(w->doc->view->context,node,w->control,w->error);
+      if(w->status!=EXR_OK) return 0;
+      value=exr_doc_node(w->doc,node);
+    }
     const char *s=v->text ? v->text : ""; size_t n=strlen(s),at=0,offset=0,next_check=4096;
     while(at<n) {
       size_t start=at,bytes; uint32_t cp; unsigned whitespace;
-      boundary(w,node,offset); if(w->found) return 1;
+      if(!boundary(w,node,offset)) return 0;
+      if(w->found) return 1;
       if(at>=next_check) { w->status=exr_control_cancel(w->control,w->error); if(w->status!=EXR_OK) return 0; next_check=at+4096; }
       if(!exr_next(s,n,&at,&cp)) { w->status=exr_fail(w->error,EXR_ENCODING,"Invalid raw CFI text"); return 0; }
       whitespace=cp==32 || cp==9 || cp==10 || cp==13;
       bytes=whitespace ? !w->whitespace : at-start;
       if(bytes) {
-        if(bytes>EXR_MAX_TEXT-1-w->bytes || (!w->mapping && !exr_append(&w->text,whitespace ? " " : s+start,bytes))) { w->status=exr_fail(w->error,EXR_LIMIT,"CFI assertion text exceeds byte budget"); return 0; }
-        w->bytes+=bytes;
+        if(!append_text(w,whitespace ? " " : s+start,bytes)) return 0;
       }
       w->whitespace=whitespace; offset+=cp>0xffff ? 2 : 1;
+      if(w->found) return 1;
     }
     return boundary(w,node,offset);
   }
-  for(child=v->first_child;child!=SIZE_MAX;child=w->doc->nodes[child].next_sibling,number++) {
-    if(w->target.node==node && w->target.offset==number) w->position=w->bytes;
+  for(child=v->first_child;child!=SIZE_MAX;child=exr_doc_node(w->doc,child).next_sibling,number++) {
+    if(!target_boundary(w,node,number)) return 0;
     if(!walk(w,child,depth+1)) return 0;
     if(w->found) return 1;
   }
-  if(w->target.node==node && w->target.offset==number) w->position=w->bytes;
+  if(!target_boundary(w,node,number)) return 0;
   return 1;
+}
+static exr_status assertion_stream(const exr_document *d,size_t chapter,const char *before,const char *after,
+  const exr_control *control,exr_cfi_point *point,exr_error *e) {
+  text_walk w={0};exr_buffer query={0};char *left=NULL,*right=NULL;
+  size_t root,nb=before ? strlen(before) : 0,na=after ? strlen(after) : 0;
+  exr_status status;
+  if(point->node<d->node_count) {
+    status=exr_cfi_context(d,chapter,point,nb>na ? nb : na,control,&left,&right,e);
+    if(status==EXR_CANCELLED) return status;
+    if(status==EXR_OK && nb<=strlen(left) && na<=strlen(right) &&
+       (!nb || !memcmp(left+strlen(left)-nb,before,nb)) && (!na || !memcmp(right,after,na))) {
+      free(left);free(right);return EXR_OK;
+    }
+    free(left);free(right);
+  }
+  if(!exr_append(&query,before,nb) || !exr_append(&query,after,na)) { free(query.data);return exr_fail(e,EXR_MEMORY,"CFI assertion query allocation failed"); }
+  if(!query.size) { free(query.data);return exr_fail(e,EXR_FORMAT,"Empty CFI correction"); }
+  w.doc=d;w.control=control;w.error=e;w.target=*point;w.position=SIZE_MAX;
+  w.query=query.data;w.query_size=query.size;
+  status=exr_kmp_prefix(query.data,query.size,control,&w.prefix,e);
+  if(status!=EXR_OK) { free(query.data);return status; }
+  root=exr_doc_node(d,d->chapters[chapter].root).first_child;
+  while(root!=SIZE_MAX && exr_doc_node(d,root).kind==EXR_NODE_TEXT) root=exr_doc_node(d,root).next_sibling;
+  if(root==SIZE_MAX) status=exr_fail(e,EXR_FORMAT,"CFI assertion has no XML root");
+  else if(!walk(&w,root,0)) status=w.status;
+  else if(w.matches!=1) status=exr_fail(e,EXR_FORMAT,"CFI assertion is missing or ambiguous");
+  else {
+    w.query=NULL;w.mapping=1;w.desired=w.first_match+nb;w.bytes=w.whitespace=w.visited=w.found=0;
+    if(!walk(&w,root,0)) status=w.status;
+    else if(!w.found) status=exr_fail(e,EXR_FORMAT,"CFI assertion position cannot be mapped");
+    else { *point=w.result;status=EXR_OK; }
+  }
+  free(w.prefix);free(query.data);return status;
 }
 exr_status exr_cfi_assertion_resolve(const exr_document *d,size_t chapter,const char *before,const char *after,
                                        const exr_control *control,exr_cfi_point *point,exr_error *e) {
   text_walk w={0}; exr_buffer query={0}; size_t root,n_before=before ? strlen(before) : 0,n_after=after ? strlen(after) : 0,start,end,second,last; exr_status status;
+  if(d->view) return assertion_stream(d,chapter,before,after,control,point,e);
   w.doc=d; w.control=control; w.error=e; w.target=*point; w.position=SIZE_MAX;
-  root=d->nodes[d->chapters[chapter].root].first_child;
-  while(root!=SIZE_MAX && d->nodes[root].kind==EXR_NODE_TEXT) root=d->nodes[root].next_sibling;
+  root=exr_doc_node(d,d->chapters[chapter].root).first_child;
+  while(root!=SIZE_MAX && exr_doc_node(d,root).kind==EXR_NODE_TEXT) root=exr_doc_node(d,root).next_sibling;
   if(root==SIZE_MAX) return exr_fail(e,EXR_FORMAT,"CFI assertion has no XML root");
   if(!walk(&w,root,0)) { status=w.status; goto done; }
   if(w.position!=SIZE_MAX && n_before<=w.position && n_after<=w.text.size-w.position &&
@@ -67,11 +153,19 @@ exr_status exr_cfi_context(const exr_document *d,size_t chapter,const exr_cfi_po
                               const exr_control *control,char **before,char **after,exr_error *e) {
   text_walk w={0}; size_t root,start,end,count=0; uint32_t cp; exr_status status;
   *before=*after=NULL; w.doc=d; w.control=control; w.error=e; w.target=*point; w.position=SIZE_MAX;
-  root=d->nodes[d->chapters[chapter].root].first_child;
-  while(root!=SIZE_MAX && d->nodes[root].kind==EXR_NODE_TEXT) root=d->nodes[root].next_sibling;
+  if(d->view) { w.bounded=1;w.keep=context; }
+  root=exr_doc_node(d,d->chapters[chapter].root).first_child;
+  while(root!=SIZE_MAX && exr_doc_node(d,root).kind==EXR_NODE_TEXT) root=exr_doc_node(d,root).next_sibling;
   if(root==SIZE_MAX) return exr_fail(e,EXR_FORMAT,"CFI context has no XML root");
   if(!walk(&w,root,0)) { status=w.status; goto done; }
   if(w.position==SIZE_MAX) { status=exr_fail(e,EXR_ARGUMENT,"CFI context needs a Unicode scalar boundary"); goto done; }
+  if(d->view) {
+    *before=w.before;w.before=NULL;
+    *after=exr_copy(w.text.data ? w.text.data : "",w.text.size);
+    if(!*after) { free(*before);*before=NULL;status=exr_fail(e,EXR_MEMORY,"CFI context allocation failed"); }
+    else status=EXR_OK;
+    goto done;
+  }
   start=end=w.position;
   while(start && count++<context) { start--; while(start && ((unsigned char)w.text.data[start]&0xc0)==0x80) start--; }
   count=0; while(end<w.text.size && count++<context) if(!exr_next(w.text.data,w.text.size,&end,&cp)) { status=exr_fail(e,EXR_ENCODING,"Invalid CFI context text"); goto done; }
@@ -80,5 +174,5 @@ exr_status exr_cfi_context(const exr_document *d,size_t chapter,const exr_cfi_po
   if(!*before || !*after) { free(*before); free(*after); *before=*after=NULL; status=exr_fail(e,EXR_MEMORY,"CFI context allocation failed"); goto done; }
   status=EXR_OK;
 done:
-  free(w.text.data); return status;
+  free(w.before);free(w.text.data); return status;
 }

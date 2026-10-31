@@ -151,7 +151,7 @@ static int line_parameter(content_reader *r,const char *name,double value) {
   }
   return 1;
 }
-exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *present,exr_error *e) {
+static exr_status group_space(exr_pdf_file *file,uint32_t group,int page,int parent_cmyk,int *present,exr_error *e) {
   uint32_t id;const exr_pdf_value *v;int isolated=0,knockout=0;exr_status status;const char *keys[]={"I","K"};size_t i;
   *present=0;status=resolved(file,group,&group,e);if(status!=EXR_OK) return status;
   v=exr_pdf_value_at(file,group);if(!v || v->kind==EXR_PDF_NULL) return EXR_OK;
@@ -171,12 +171,19 @@ exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *pre
     return exr_fail(e,EXR_UNSUPPORTED,"PDF group blending space must be a device space");
   /* Context 2 is a soft-mask root, which has no parent to inherit CS from
      (ISO 32000-1 table 147). Only actual pages force isolation. */
-  if(!page && !isolated && v && v->kind!=EXR_PDF_NULL) return exr_fail(e,EXR_FORMAT,"Only isolated PDF groups may specify a blending space");
+  /* Nonisolated groups inherit (ISO 32000-1 11.7.2). Adobe also emits a
+     redundant CMYK declaration: tolerate it only with a proven CMYK parent. */
+  if(!page && !isolated && v && v->kind!=EXR_PDF_NULL &&
+     !(parent_cmyk && (name_is(file,id,"DeviceCMYK") || name_is(file,id,"CMYK"))))
+    return exr_fail(e,EXR_FORMAT,"Only isolated PDF groups may specify a different blending space");
   *present=(page==EXR_PDF_GROUP_PAGE_CONTEXT || isolated ? EXR_PDF_GROUP_ISOLATED : EXR_PDF_GROUP_NONISOLATED) | (knockout ? EXR_PDF_GROUP_KNOCKOUT : 0);
   if(v && v->kind!=EXR_PDF_NULL && (name_is(file,id,"DeviceGray") || name_is(file,id,"G"))) *present|=EXR_PDF_GROUP_GRAY;
   if(v && v->kind!=EXR_PDF_NULL && (name_is(file,id,"DeviceCMYK") || name_is(file,id,"CMYK"))) *present|=EXR_PDF_GROUP_CMYK;
   if(v && v->kind!=EXR_PDF_NULL && name_is(file,id,"DeviceRGB")) *present|=EXR_PDF_GROUP_RGB;
   return EXR_OK;
+}
+exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *present,exr_error *e) {
+  return group_space(file,group,page,0,present,e);
 }
 static int blend_name(exr_pdf_file *file,uint32_t id,exr_blend_mode *mode) {
   static const char *names[]={"Normal","Multiply","Screen","Overlay","Darken","Lighten","ColorDodge","ColorBurn",
@@ -495,7 +502,8 @@ static exr_status form(content_reader *r,uint32_t id,exr_error *error) {
   }
   if(r->graphics) {
     if(resolved(r->file,exr_pdf_get(r->file,id,"Group"),&value,error)!=EXR_OK) return error->code;
-    if(exr_pdf_group_rgb(r->file,value,0,&layer,error)!=EXR_OK) return error->code;
+    if(group_space(r->file,value,0,r->callbacks.image_space &&
+       r->callbacks.image_space(r->context)==EXR_GROUP_CMYK,&layer,error)!=EXR_OK) return error->code;
   }
   if(resolved(r->file,exr_pdf_get(r->file,id,"Resources"),&value,error)!=EXR_OK) return error->code;
   if(value!=EXR_PDF_NONE && exr_pdf_value_at(r->file,value)->kind!=EXR_PDF_NULL) {

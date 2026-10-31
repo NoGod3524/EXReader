@@ -45,8 +45,8 @@ static int compare_pages(const void *left,const void *right) {
     }
   }
   if(*a || *b) return *a ? 1 : -1;
-  if(la->frame != lb->frame) return la->frame < lb->frame ? -1 : 1;
-  return strcmp(original_a,original_b);
+  { int order=strcmp(original_a,original_b);if(order) return order; }
+  return la->frame < lb->frame ? -1 : la->frame > lb->frame;
 }
 static void release(void *context) {
   comic *d=context;size_t i;if(!d) return;
@@ -56,11 +56,19 @@ static void release(void *context) {
   exr_metadata_free(d->metadata,d->metadata_count);free(d->pages);free(d->data);free(d);
 }
 static size_t read_source(void *context,mz_uint64 offset,void *buffer,size_t size) {
-  comic *d=context;size_t n;
-  if(d->io_error.code!=EXR_OK || exr_control_cancel(d->control,&d->io_error)!=EXR_OK) return 0;
-  n=d->source.read_at(d->source.context,offset,buffer,size);
-  if(n!=size) exr_fail(&d->io_error,EXR_IO,"Cannot read CBZ archive source");
-  return n;
+  comic *d=context;size_t done=0;
+  if(d->io_error.code!=EXR_OK) return 0;
+  if(offset>d->source.size || (uint64_t)size>d->source.size-offset) {
+    exr_fail(&d->io_error,EXR_IO,"CBZ source read exceeds its extent");return 0;
+  }
+  while(done<size) {
+    size_t n;
+    if(exr_control_cancel(d->control,&d->io_error)!=EXR_OK) return 0;
+    n=d->source.read_at(d->source.context,offset+done,(unsigned char *)buffer+done,size-done);
+    if(!n || n>size-done) { exr_fail(&d->io_error,EXR_IO,"Cannot read CBZ archive source");return 0; }
+    done+=n;
+  }
+  return done;
 }
 static exr_status archive_error(comic *d,exr_error *e,const char *message) {
   if(d->io_error.code!=EXR_OK) { if(e) *e=d->io_error;return d->io_error.code; }
@@ -193,7 +201,7 @@ static exr_status member_pages(comic *d,mz_uint index,const mz_zip_archive_file_
   }
   free(data);
   if(status!=EXR_OK) {
-    for(i=0;i<page_count;i++) { free((*out)[i].name); free((*out)[i].id); }
+    if(*out) for(i=0;i<page_count;i++) { free((*out)[i].name); free((*out)[i].id); }
     free(*out); *out=NULL; return status;
   }
   *count=page_count; return EXR_OK;

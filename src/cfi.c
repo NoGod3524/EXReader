@@ -11,9 +11,9 @@ static const char *identifier(const exr_node *n) {
 static exr_status root_element(const exr_document *d,size_t chapter,size_t *root,exr_error *e) {
   size_t child; *root=SIZE_MAX;
   if(!d || chapter>=d->chapter_count) return exr_fail(e,EXR_ARGUMENT,"Invalid CFI chapter");
-  for(child=d->nodes[d->chapters[chapter].root].first_child;child!=SIZE_MAX;child=d->nodes[child].next_sibling) {
-    if(d->nodes[child].kind==EXR_NODE_TEXT) {
-      const char *s=d->nodes[child].text; if(s && s[strspn(s," \t\r\n")]) return invalid(e);
+  for(child=exr_doc_node(d,d->chapters[chapter].root).first_child;child!=SIZE_MAX;child=exr_doc_node(d,child).next_sibling) {
+    if(exr_doc_node(d,child).kind==EXR_NODE_TEXT) {
+      const char *s=exr_doc_node(d,child).text; if(s && s[strspn(s," \t\r\n")]) return invalid(e);
     } else { if(*root!=SIZE_MAX) return invalid(e); *root=child; }
   }
   return *root==SIZE_MAX ? invalid(e) : EXR_OK;
@@ -22,6 +22,15 @@ static size_t units(const char *s) {
   size_t n=s ? strlen(s) : 0,at=0,count=0; uint32_t cp;
   while(at<n) { if(!exr_next(s,n,&at,&cp)) return SIZE_MAX; count+=cp>0xffff ? 2 : 1; }
   return count;
+}
+static size_t raw_units(const exr_document *d,size_t node,const exr_control *control,exr_error *e) {
+  if(d->view && d->view->prepare(d->view->context,node,control,e)!=EXR_OK) return SIZE_MAX;
+  return units(exr_doc_node(d,node).text);
+}
+static const char *node_identifier(const exr_document *d,size_t node,const exr_control *control,exr_error *e) {
+  exr_node value;
+  if(d->view && d->view->prepare(d->view->context,node,control,e)!=EXR_OK) return NULL;
+  value=exr_doc_node(d,node);return identifier(&value);
 }
 static int escaped(exr_buffer *b,const char *s) {
   if(!s) return 1;
@@ -44,40 +53,40 @@ exr_status exr_document_cfi_path_create(const exr_document *d,size_t chapter,con
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing CFI path output");
   *out=NULL;
   status=root_element(d,chapter,&root,e); if(status!=EXR_OK) return status;
-  if(!point || point->node>=d->node_count || d->nodes[point->node].chapter!=chapter || point->side>2)
+  if(!point || point->node>=d->node_count || exr_doc_node(d,point->node).chapter!=chapter || point->side>2)
     return exr_fail(e,EXR_ARGUMENT,"Invalid CFI DOM point");
   status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
   node=point->node;
-  if(d->nodes[node].kind==EXR_NODE_TEXT) {
-    size_t length=units(d->nodes[node].text);
+  if(exr_doc_node(d,node).kind==EXR_NODE_TEXT) {
+    size_t length=raw_units(d,node,control,e);
     if(point->offset>length || length==SIZE_MAX) return exr_fail(e,EXR_ARGUMENT,"CFI text offset exceeds UTF-16 length");
-    parent=d->nodes[node].parent; index=1; offset=point->offset; text=1;
-    for(child=d->nodes[parent].first_child;child!=node;child=d->nodes[child].next_sibling) {
+    parent=exr_doc_node(d,node).parent; index=1; offset=point->offset; text=1;
+    for(child=exr_doc_node(d,parent).first_child;child!=node;child=exr_doc_node(d,child).next_sibling) {
       if(child==SIZE_MAX) return invalid(e);
-      if(d->nodes[child].kind==EXR_NODE_TEXT) offset+=units(d->nodes[child].text);
+      if(exr_doc_node(d,child).kind==EXR_NODE_TEXT) offset+=raw_units(d,child,control,e);
       else { index+=2; offset=point->offset; }
     }
     node=parent;
   } else if(point->offset!=SIZE_MAX) {
     size_t boundary=0; index=1; text=1;
-    for(child=d->nodes[node].first_child;child!=SIZE_MAX && boundary<point->offset;child=d->nodes[child].next_sibling,boundary++) {
-      if(d->nodes[child].kind==EXR_NODE_TEXT) offset+=units(d->nodes[child].text);
+    for(child=exr_doc_node(d,node).first_child;child!=SIZE_MAX && boundary<point->offset;child=exr_doc_node(d,child).next_sibling,boundary++) {
+      if(exr_doc_node(d,child).kind==EXR_NODE_TEXT) offset+=raw_units(d,child,control,e);
       else { index+=2; offset=0; }
     }
     if(boundary!=point->offset) return exr_fail(e,EXR_ARGUMENT,"CFI child boundary exceeds element length");
   }
   while(node!=root) {
-    if(node==SIZE_MAX || depth==256 || d->nodes[node].kind==EXR_NODE_CHAPTER || d->nodes[node].kind==EXR_NODE_TEXT) return invalid(e);
-    chain[depth++]=node; node=d->nodes[node].parent;
+    if(node==SIZE_MAX || depth==256 || exr_doc_node(d,node).kind==EXR_NODE_CHAPTER || exr_doc_node(d,node).kind==EXR_NODE_TEXT) return invalid(e);
+    chain[depth++]=node; node=exr_doc_node(d,node).parent;
   }
   for(k=depth;k>0;k--) {
     size_t target=chain[k-1],ordinal=0;
     status=exr_control_poll(control,EXR_STAGE_READ,depth-k,depth,e); if(status!=EXR_OK) goto done;
-    for(child=d->nodes[d->nodes[target].parent].first_child;child!=SIZE_MAX;child=d->nodes[child].next_sibling) {
-      if(d->nodes[child].kind!=EXR_NODE_TEXT) ordinal+=2;
+    for(child=exr_doc_node(d,exr_doc_node(d,target).parent).first_child;child!=SIZE_MAX;child=exr_doc_node(d,child).next_sibling) {
+      if(exr_doc_node(d,child).kind!=EXR_NODE_TEXT) ordinal+=2;
       if(child==target) break;
     }
-    if(child==SIZE_MAX || !step(&b,ordinal,identifier(&d->nodes[target]),k==1 && !text ? point->side : 0)) goto limit;
+    if(child==SIZE_MAX || !step(&b,ordinal,node_identifier(d,target,control,e),k==1 && !text ? point->side : 0)) goto limit;
   }
   if(text) {
     char value[64]; snprintf(value,sizeof(value),":%zu",offset);
@@ -117,12 +126,13 @@ static int assertion(const char **at,exr_buffer *id,unsigned *side,exr_buffer *a
 }
 /* Map a virtual text chunk (which may span adjacent model text nodes) back to
    a DOM point. Empty chunks resolve to a parent child boundary. */
-static int chunk(const exr_document *d,size_t parent,size_t index,size_t offset,exr_cfi_point *out) {
+static int chunk(const exr_document *d,size_t parent,size_t index,size_t offset,
+                 const exr_control *control,exr_error *e,exr_cfi_point *out) {
   size_t child,ordinal=1,boundary=0,last=SIZE_MAX;
-  for(child=d->nodes[parent].first_child;child!=SIZE_MAX;child=d->nodes[child].next_sibling,boundary++) {
-    if(d->nodes[child].kind==EXR_NODE_TEXT) {
+  for(child=exr_doc_node(d,parent).first_child;child!=SIZE_MAX;child=exr_doc_node(d,child).next_sibling,boundary++) {
+    if(exr_doc_node(d,child).kind==EXR_NODE_TEXT) {
       if(ordinal==index) {
-        size_t length=units(d->nodes[child].text); last=child;
+        size_t length=raw_units(d,child,control,e); last=child;
         if(offset<=length) { out->node=child; out->offset=offset; return 1; } offset-=length;
       }
     } else {
@@ -155,24 +165,24 @@ exr_status exr_document_cfi_path_resolve(const exr_document *d,size_t chapter,co
       id.size=0; if(id.data) id.data[0]=0;
       { int located;
         if(!assertion(&p,&id,&side,&after) || *p) goto malformed;
-        located=chunk(d,node,index,offset,&result);
+        located=chunk(d,node,index,offset,control,e,&result);
         if(!located) { result=(exr_cfi_point){SIZE_MAX,SIZE_MAX,0}; if(!id.size && !after.size) goto malformed; }
         result.side=side;
         if(id.size || after.size) { status=exr_cfi_assertion_resolve(d,chapter,id.data,after.data,control,&result,e); if(status!=EXR_OK) goto done; }
       }
       break;
     }
-    for(child=d->nodes[node].first_child;child!=SIZE_MAX;child=d->nodes[child].next_sibling,children++) {
-      if(d->nodes[child].kind!=EXR_NODE_TEXT) { ordinal+=2; if(ordinal==index) selected=child; }
+    for(child=exr_doc_node(d,node).first_child;child!=SIZE_MAX;child=exr_doc_node(d,child).next_sibling,children++) {
+      if(exr_doc_node(d,child).kind!=EXR_NODE_TEXT) { ordinal+=2; if(ordinal==index) selected=child; }
     }
     id.size=0; if(id.data) id.data[0]=0;
     if(!assertion(&p,&id,&side,NULL)) goto malformed;
     if(id.size) {
-      const char *actual=selected!=SIZE_MAX ? identifier(&d->nodes[selected]) : NULL;
+      const char *actual=selected!=SIZE_MAX ? node_identifier(d,selected,control,e) : NULL;
       if(!actual || strcmp(actual,id.data)) {
         size_t i; selected=SIZE_MAX;
-        for(i=0;i<d->node_count;i++) if(d->nodes[i].chapter==chapter && d->nodes[i].kind!=EXR_NODE_TEXT) {
-          const char *candidate=identifier(&d->nodes[i]);
+        for(i=0;i<d->node_count;i++) if(exr_doc_node(d,i).chapter==chapter && exr_doc_node(d,i).kind!=EXR_NODE_TEXT) {
+          const char *candidate=node_identifier(d,i,control,e);
           if(!(i%256)) { status=exr_control_cancel(control,e); if(status!=EXR_OK) goto done; }
           if(candidate && !strcmp(candidate,id.data)) { if(selected!=SIZE_MAX) goto malformed; selected=i; }
         }

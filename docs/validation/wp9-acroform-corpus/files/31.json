@@ -1,0 +1,12 @@
+{
+ "base": "31-duplicate-partials.pdf",
+ "id": "31",
+ "category": "structure/qualified-names",
+ "expect": "accept",
+ "size": 872,
+ "sha256": "55590c41729810d3d188b26ee44975a230fcdea3b051eac50e42a24d1ad604cb",
+ "edited_sha256": "7bd701c035091f81cbf9d7195e15d158753c98460e7925761086c97d8134ad05",
+ "assertions": 43,
+ "result": "pass",
+ "failures": []
+}

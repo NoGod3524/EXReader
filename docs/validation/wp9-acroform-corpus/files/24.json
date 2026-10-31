@@ -1,0 +1,12 @@
+{
+ "base": "24-mixed-batch.pdf",
+ "id": "24",
+ "category": "mixed/batch",
+ "expect": "accept",
+ "size": 3687,
+ "sha256": "f3fc47bf31ab29335ab1d6516cfd53b8819ab0ef0a68134b5f6b2b41614509e7",
+ "edited_sha256": "5b1ffd3b887b48c9dc7d2d99070570629ca795465f4c4be861ee4d0a62cbfb19",
+ "assertions": 118,
+ "result": "pass",
+ "failures": []
+}

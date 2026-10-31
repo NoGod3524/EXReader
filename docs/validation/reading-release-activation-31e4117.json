@@ -1,0 +1,190 @@
+{
+  "schema": 1,
+  "scope": "R6 default-branch adoption, enforced ruleset and actual release-plan preparation using the canonical-root repair candidate",
+  "complete_product": false,
+  "wp16_cpu_credit_seconds": 0,
+  "local_execution": false,
+  "local_artifact_download": false,
+  "merge": {
+    "pr": 2,
+    "method": "merge",
+    "source_sha": "31e4117bb3341f57fad65e2d067afaec20655b0e",
+    "parents": [
+      "07c6910c12dab572771440c7ce34157f079f80d9",
+      "5b2e05b5aa69d76e88716e1552aba1ad31201cfe"
+    ]
+  },
+  "ruleset": {
+    "id": 25700819,
+    "url": "https://github.com/NoGod3524/EXReader/rules/25700819",
+    "enforcement": "active",
+    "default_branch": "codex/framework",
+    "strict_required_check": "reading-required",
+    "publisher_integration_id": 15368,
+    "bypass_actors": [],
+    "current_user_can_bypass": "never",
+    "merge_methods": [
+      "merge"
+    ],
+    "deletion_prohibited": true,
+    "non_fast_forward_prohibited": true
+  },
+  "retained_failed_prepare": {
+    "run_id": 39908471213,
+    "job_id": 120265737201,
+    "attempt": 1,
+    "workflow_source_sha": "31e4117bb3341f57fad65e2d067afaec20655b0e",
+    "prepared": false,
+    "published": false,
+    "protocol_checks": 57,
+    "problem": "HTTP Error 404: Not Found",
+    "confirmed_cause": "The shared fetch helper appended a trailing slash for the empty repository-root path. GitHub returns 404 for that URL; the canonical root URL succeeds."
+  },
+  "verified_prepare": {
+    "run_id": 39908781291,
+    "job_id": 120266711919,
+    "attempt": 1,
+    "workflow_source_sha": "f448d3fe00858ca7c57734c116b29acbf03960a4",
+    "workflow_branch": "codex/reading-release-root-url",
+    "protocol_checks": 58,
+    "conclusion": "success",
+    "output_files": 8,
+    "artifact": {
+      "id": 12482136628,
+      "name": "reading-release-plan-39908781291-1",
+      "size_in_bytes": 43359806,
+      "digest": "sha256:cf7b19a666494ca4e129cd62fa6cf2e1ac20725cd875d04e97e46debd17960df",
+      "expired_at_audit": false
+    },
+    "plan": {
+      "schema": 1,
+      "prepared": true,
+      "published": false,
+      "source_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "accepted_run_id": 39902467216,
+      "accepted_run_attempt": 1,
+      "tag": "reading-sdk-v3.40.0",
+      "default_branch": "codex/framework",
+      "default_branch_head": "31e4117bb3341f57fad65e2d067afaec20655b0e",
+      "identity": {
+        "sdk_version": "3.40.0",
+        "abi": 1,
+        "library_schema": 7,
+        "library_header_version": "3.34.0"
+      },
+      "publisher": {
+        "integration_id": 15368,
+        "publisher": "github-actions",
+        "check_id": 120250787806
+      },
+      "accepted_summary_artifact": {
+        "id": 12479434671,
+        "name": "reading-required-39902467216-1",
+        "digest": "sha256:d36a1d330de08399c7f4bdc110be6ecb3d0401feddd8731911a0e85e4a954ef0",
+        "size_in_bytes": 3224
+      },
+      "archives": [
+        {
+          "host": "Linux",
+          "arch": "X64",
+          "profile": "reading-core",
+          "bytes": 6346646,
+          "sha256": "60cc0ef87a0b55ffa49a68f760d185e84427521fb43398bcb1f82060aa15d106",
+          "manifest_sha256": "220fa768e74a7e1702da602c78106cb9d859ec366487656bc17792cd848b8b92",
+          "name": "EXReader-reading-core-3.40.0-Linux-X64.tar.gz",
+          "artifact": {
+            "id": 12479880321,
+            "name": "reading-reading-core-39902467216-1",
+            "digest": "sha256:3f7e979de03a8b08aaab284102a9a4e3bc1dd5f1a5ea54ec6358a956a18c3e62",
+            "size_in_bytes": 12972664
+          }
+        },
+        {
+          "host": "Linux",
+          "arch": "X64",
+          "profile": "reading-library",
+          "bytes": 7144226,
+          "sha256": "d6042fd49b0e26c909a98d6dadbc5179402767d90c0f5a303e40b85fe2711e72",
+          "manifest_sha256": "1d7725fc78d308a52e6ad551deb536fd99a805fb765ee51c4557a906a9d78f3f",
+          "name": "EXReader-reading-library-3.40.0-Linux-X64.tar.gz",
+          "artifact": {
+            "id": 12479512249,
+            "name": "reading-reading-library-39902467216-1",
+            "digest": "sha256:f28318e3ca7602f366b23f84aef2d73042e0c51daedd560507914697ebb70ab3",
+            "size_in_bytes": 14579750
+          }
+        },
+        {
+          "host": "Windows",
+          "arch": "X64",
+          "profile": "reading-core",
+          "bytes": 8493092,
+          "sha256": "963eaa507282cc14af3ce501d1d25a2ac27c8b83af5df6f65a4eabff1fd03aa1",
+          "manifest_sha256": "22616128c2918c6f7d6714b74958321c5ad1622c53b69c7f77d50a89ac47461d",
+          "name": "EXReader-reading-core-3.40.0-Windows-X64.tar.gz",
+          "artifact": {
+            "id": 12479153984,
+            "name": "reading-platform-Windows-reading-core-39902467216-1",
+            "digest": "sha256:0881d3f661ff651e301415db5664a775e445c2948a0fc13af2dec8c84e2c73c3",
+            "size_in_bytes": 17271469
+          }
+        },
+        {
+          "host": "Windows",
+          "arch": "X64",
+          "profile": "reading-library",
+          "bytes": 9695591,
+          "sha256": "5e1a90aea608c696da1a9e62b6b25a96c0eda9273d3c625e9cebeef471bb2e4e",
+          "manifest_sha256": "de1f468db776ec0181cd4cc352849928bb242f4deb68f49b199ab59807d61edf",
+          "name": "EXReader-reading-library-3.40.0-Windows-X64.tar.gz",
+          "artifact": {
+            "id": 12479356905,
+            "name": "reading-platform-Windows-reading-library-39902467216-1",
+            "digest": "sha256:77d2a17f257171a294331a109207ac49fa16cfd886e87b5074778a7a8e4ae729",
+            "size_in_bytes": 19692358
+          }
+        },
+        {
+          "host": "macOS",
+          "arch": "ARM64",
+          "profile": "reading-core",
+          "bytes": 5580476,
+          "sha256": "ce54cd341cea780fe3d3a049b40b660b9eaa2a00a1c00aa8d3995b0ed3e7c013",
+          "manifest_sha256": "6fc66b831ad1e7448d5f06ed562ea8ead007a58b63ca682db462b791415be673",
+          "name": "EXReader-reading-core-3.40.0-macOS-ARM64.tar.gz",
+          "artifact": {
+            "id": 12478833711,
+            "name": "reading-platform-macOS-reading-core-39902467216-1",
+            "digest": "sha256:de113563d26b907d17b8e51609b155d10b46f58e1dd1dec51058cc30e6be3d12",
+            "size_in_bytes": 11537970
+          }
+        },
+        {
+          "host": "macOS",
+          "arch": "ARM64",
+          "profile": "reading-library",
+          "bytes": 6370598,
+          "sha256": "05525637cf7584b43e23d71cacee9a3610944904e1ec0100041ae5dc4ce4b5eb",
+          "manifest_sha256": "06fff0354f210f579a0b74a0354d484b8abc5e3d1658f03cf1074beda7aec508",
+          "name": "EXReader-reading-library-3.40.0-macOS-ARM64.tar.gz",
+          "artifact": {
+            "id": 12479328118,
+            "name": "reading-platform-macOS-reading-library-39902467216-1",
+            "digest": "sha256:332d393ff12087153722a239f11e75861d46d61d890a1b6a48813a5750174630",
+            "size_in_bytes": 13139394
+          }
+        }
+      ],
+      "problems": []
+    }
+  },
+  "subsequent_default_push": {
+    "run_id": 39908383274,
+    "source_sha": "31e4117bb3341f57fad65e2d067afaec20655b0e",
+    "performance_job": 120265465013,
+    "performance_accepted": false,
+    "measurement_valid": false,
+    "problem": "Baseline environment refused",
+    "old_acceptance_transferred": false
+  }
+}

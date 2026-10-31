@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "package": "WP13 Linux review repairs",
+  "status": "passed_declared_reference_scope_and_negative_regressions",
+  "base_sha": "8ae82da506f4c7a1616f25a4544fe3ba77e90f08",
+  "acceptance_source_sha": "af0fef29c5c61caf3607012965173db1e540330a",
+  "implementation_sha": "823d356f7e9d12d08ba5defa99cb32d9fee0934a",
+  "branch": "codex/wp13-linux-review",
+  "cloud_run": 39713302962,
+  "cloud_job": 119609451216,
+  "cloud_conclusion": "success",
+  "ui_cases": {"expected": 20, "passed": 20, "report_path": "linux-host-evidence/report.json", "report_sha256": "d21d0513864439a6e5d9b1438f2009244e578bc8600528d5a40e60081cc1def8"},
+  "screenshot_sha256": "626ef9f8d9f914fea15655de80c2db1600875bc9d6486ced372bef104f03f085",
+  "negative_regressions": {
+    "report_path": "linux-review-evidence/regressions.json",
+    "already_exited_nonzero_child_rejected": true,
+    "already_exited_zero_child_accepted": true,
+    "gtk_public_sdk_note_failure_checks": 13,
+    "nondefault_font_mutant_rejected": true,
+    "mutant_prior_ui_checks_passed": 12,
+    "expected_font_before_restart": 26,
+    "incorrect_mutant_restored_font": 24
+  },
+  "fixes": [
+    "Query notes before replacing the visible list; preserve current rows and count on read failure",
+    "Prepare candidate book notes before replacing document, pager, image or current book",
+    "Preserve note refresh errors after successful add/delete instead of replacing them with OK",
+    "Check child return code even if it exited before Session.close",
+    "Keep a nondefault 26px font for restart acceptance and record the pre-restart expected state"
+  ],
+  "artifact": {"id": 12397029230, "name": "WP13-Linux-af0fef29c5c61caf3607012965173db1e540330a", "bytes": 32860934, "sha256": "6824e61e21a987894608e517374d0c82cfcd7a93115a9f8f1a8c5dd5a10ea05d"},
+  "prior_review_runs_retained": [
+    {"run": 39712828623, "source": "823d356f7e9d12d08ba5defa99cb32d9fee0934a", "result": "failed negative verifier orchestration: clipboard child retained captured pipe; original 20 UI checks passed"},
+    {"run": 39712888558, "source": "bc8226d6b4775725a394e9b9d17ff1cccc30d979", "result": "same captured-pipe timeout; no complete acceptance credit"},
+    {"run": 39713016982, "source": "b41a010bf0320fa6b89e463b85eebf89cdde65f1", "result": "same captured-pipe timeout; no complete acceptance credit"},
+    {"run": 39713202343, "source": "b5d19a6879a606c52ed00f2cd89dfa4099e3c792", "result": "same captured-pipe timeout; no complete acceptance credit"}
+  ],
+  "original_delivery_evidence_preserved": "docs/validation/wp13-linux.json",
+  "local_build_test_download_or_reaggregation": false,
+  "core_api_abi_schema_changes": false,
+  "wp16_cpu_credit_seconds": 0,
+  "workflow_dispatch_integration_ref_supported": true,
+  "remaining": ["Complete cross-platform WP13", "Physical Linux desktop and Wayland acceptance", "Annotation comment editing UI", "Other original declared reference-host exclusions"]
+}

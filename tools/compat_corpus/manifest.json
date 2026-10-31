@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "dataset_id": "licensed-real-documents-v1",
+  "complete": false,
+  "targets": {
+    "pdf": 1000,
+    "epub": 500,
+    "txt": 30,
+    "html": 30,
+    "fb2": 30,
+    "docx": 30,
+    "rtf": 30,
+    "mobi": 30,
+    "cbz": 30
+  },
+  "selection": {
+    "method": "Pending per-file redistribution review and pre-observation capability declarations; no historical assets imported",
+    "engine_results_used": false,
+    "candidate_ids": [],
+    "excluded": []
+  },
+  "files": []
+}

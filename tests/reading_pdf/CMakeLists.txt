@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.24)
+project(EXReaderFixedMeasurement LANGUAGES C CXX)
+list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
+find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
+add_executable(reading-pdf-benchmark ../../tools/reading_pdf_benchmark.c)
+target_link_libraries(reading-pdf-benchmark PRIVATE EXReader::exreader m)
+set_target_properties(reading-pdf-benchmark PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+target_compile_options(reading-pdf-benchmark PRIVATE -Wall -Wextra -Werror)

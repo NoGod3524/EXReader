@@ -133,7 +133,7 @@ void exr_model_free(exr_document *d) {
     free(d->archive);
   }
 }
-static exr_node_kind element_kind(const char *name) {
+exr_node_kind exr_xml_element_kind(const char *name) {
   const char *s = local_name(name);
   if (!strcmp(s, "section") || !strcmp(s, "article"))
     return EXR_NODE_SECTION;
@@ -200,7 +200,7 @@ static void XMLCALL tree_start(void *user, const char *name, const char **attrs)
     stop(p, EXR_FORMAT);
     return;
   }
-  index = exr_model_node(p->doc, p->stack[p->depth], p->chapter, element_kind(name), name, NULL, 0);
+  index = exr_model_node(p->doc, p->stack[p->depth], p->chapter, exr_xml_element_kind(name), name, NULL, 0);
   if (index == SIZE_MAX) {
     stop(p, EXR_LIMIT);
     return;
@@ -411,6 +411,15 @@ static int project_text(projection *p, exr_node *node, unsigned heading) {
   node->end = p->text.size;
   return 1;
 }
+int exr_projection_boundary(exr_node_kind kind, const char *tag) {
+  return kind == EXR_NODE_CHAPTER || kind == EXR_NODE_SECTION ||
+         kind == EXR_NODE_PARAGRAPH || kind == EXR_NODE_HEADING ||
+         kind == EXR_NODE_LIST || kind == EXR_NODE_LIST_ITEM ||
+         kind == EXR_NODE_TABLE || kind == EXR_NODE_ROW ||
+         kind == EXR_NODE_CELL || kind == EXR_NODE_BREAK ||
+         kind == EXR_NODE_NOTE || !strcmp(tag, "div") || !strcmp(tag, "blockquote") ||
+         !strcmp(tag, "pre");
+}
 static int project_node(projection *p, size_t index, unsigned heading) {
   exr_node *node = &p->doc->nodes[index];
   const char *tag = exr_html_tag(p->doc, node);
@@ -421,13 +430,7 @@ static int project_node(projection *p, size_t index, unsigned heading) {
   if (!strcmp(tag, "head") || !strcmp(tag, "script") || !strcmp(tag, "style") ||
       !strcmp(tag, "object") || !strcmp(tag, "template") || exr_node_attribute(node, "hidden"))
     return 1;
-  boundary = node->kind == EXR_NODE_CHAPTER || node->kind == EXR_NODE_SECTION ||
-             node->kind == EXR_NODE_PARAGRAPH || node->kind == EXR_NODE_HEADING ||
-             node->kind == EXR_NODE_LIST || node->kind == EXR_NODE_LIST_ITEM ||
-             node->kind == EXR_NODE_TABLE || node->kind == EXR_NODE_ROW ||
-             node->kind == EXR_NODE_CELL || node->kind == EXR_NODE_BREAK ||
-             node->kind == EXR_NODE_NOTE || !strcmp(tag, "div") || !strcmp(tag, "blockquote") ||
-             !strcmp(tag, "pre");
+  boundary = exr_projection_boundary(node->kind, tag);
   if (boundary)
     end_block(p);
   if (node->kind == EXR_NODE_HEADING)
@@ -448,6 +451,29 @@ static int project_node(projection *p, size_t index, unsigned heading) {
   if (boundary)
     end_block(p);
   return 1;
+}
+/* A parsed document is immutable after finish, so the geometric growth slack of
+   the text, node, block and directory arrays is dead weight in the retained parse
+   workspace.  Return it to the allocator; append paths grow again from the exact
+   size if a later format step adds content. */
+static void shrink_array(void **data, size_t *capacity, size_t count, size_t element) {
+  void *smaller;
+  if (!*data || !count || *capacity <= count || !element || count > SIZE_MAX / element)
+    return;
+  smaller = realloc(*data, count * element);
+  if (smaller) {
+    *data = smaller;
+    *capacity = count;
+  }
+}
+static void model_shrink(exr_document *d) {
+  shrink_array((void **)&d->text, &d->text_capacity, d->size + 1, 1);
+  shrink_array((void **)&d->nodes, &d->node_capacity, d->node_count, sizeof(*d->nodes));
+  shrink_array((void **)&d->blocks, &d->capacity, d->count, sizeof(*d->blocks));
+  shrink_array((void **)&d->chapters, &d->chapter_capacity, d->chapter_count,
+               sizeof(*d->chapters));
+  shrink_array((void **)&d->resources, &d->resource_capacity, d->resource_count,
+               sizeof(*d->resources));
 }
 exr_status exr_model_finish(exr_document *d, exr_error *e) {
   size_t i;
@@ -511,6 +537,7 @@ exr_status exr_model_finish(exr_document *d, exr_error *e) {
   free(d->last_children);
   d->last_children = NULL;
   d->last_capacity = 0;
+  model_shrink(d);
   return EXR_OK;
 }
 

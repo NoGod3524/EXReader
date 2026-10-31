@@ -141,6 +141,12 @@ static exr_status epub_load(void *context, size_t part, exr_document **out, exr_
   return exr_epub_load(context, part, out, e);
 }
 static void epub_release(void *context) { exr_document_free(context); }
+exr_status exr_publication_retain_epub(exr_publication *p,const exr_document **index,exr_error *e) {
+  if(!p || !index || p->load!=epub_load)
+    return exr_fail(e,EXR_UNSUPPORTED,"Chapter windows require an EPUB publication");
+  if(p->refs==SIZE_MAX) return exr_fail(e,EXR_LIMIT,"Too many publication references");
+  p->refs++;*index=p->context;return EXR_OK;
+}
 
 static exr_status publication_index(exr_document *index, exr_publication **out, exr_error *e) {
   exr_part *parts;
@@ -208,6 +214,10 @@ exr_status exr_publication_open(const char *path, exr_publication **out, exr_err
   return status;
 }
 const char *exr_publication_title(const exr_publication *p) { return p ? p->title : ""; }
+size_t exr_publication_index_memory(const exr_publication *p) {
+  return p ? sizeof(*p)+p->metadata_bytes+p->count*sizeof(*p->parts)+
+    p->navigation_count*sizeof(*p->navigation)+exr_document_memory_size(p->context)+sizeof(exr_archive_store) : 0;
+}
 const exr_part *exr_publication_parts(const exr_publication *p, size_t *count) {
   if (count)
     *count = p ? p->count : 0;

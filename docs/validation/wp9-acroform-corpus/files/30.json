@@ -1,0 +1,12 @@
+{
+ "base": "30-deep-nesting.pdf",
+ "id": "30",
+ "category": "structure/deep-nesting",
+ "expect": "accept",
+ "size": 1534,
+ "sha256": "9fcec02f2593d9d4aedbc1c939f5d3770f7542ccd1422e01836b5846735da7e3",
+ "edited_sha256": "a388f0d2fcd881d75f1d21669670faba6a3003f69553ae41786047e810f47211",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

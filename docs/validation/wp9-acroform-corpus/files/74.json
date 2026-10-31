@@ -1,0 +1,12 @@
+{
+ "base": "74-read-multi-page-annot.pdf",
+ "id": "74",
+ "category": "read/multi-page-annot",
+ "expect": "read-fail",
+ "size": 799,
+ "sha256": "337b6426c660234e7d5dda6bed8f6c9954409f207761d2c19e2046eae8c96969",
+ "edited_sha256": null,
+ "assertions": 6,
+ "result": "pass",
+ "failures": []
+}
