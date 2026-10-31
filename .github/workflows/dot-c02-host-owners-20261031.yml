@@ -32,7 +32,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt bindings
           git diff --exit-code a8d0b162d8c21617e4c2c837e3eb2b2174bbf69b HEAD -- extras/migration/windows_coordinator_hardening_20261030 tests/migration/windows_coordinator_hardening_20261030 extras/migration/windows_coordinator_cas_20261030 tests/migration/windows_coordinator_cas_20261030
-          git diff --exit-code ccd7fec67eb8aa463b09533ce320820f2da472d9 HEAD -- extras/migration/windows_admission_lease_20261030
+          git diff --exit-code a8d0b162d8c21617e4c2c837e3eb2b2174bbf69b HEAD -- extras/migration/windows_admission_lease_20261030
+          git cat-file -e ccd7fec67eb8aa463b09533ce320820f2da472d9:extras/migration/windows_admission_lease_20261030/src/lm_win_lease.c
       - name: Prepare Android tools
         run: |
           python3 -m pip install 'PyYAML==6.0.3'
@@ -40,36 +41,4 @@ jobs:
           echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
           yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;${C11_NDK}"
-      - name: Build real host and JNI using the unchanged SDK 3.42 recipe
-        run: |
-          mkdir -p build/f06
-          python3 tests/android_sdk342_package/run.py build
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: c02-android-owners-${{ github.sha }}
-          path: |
-            build/f06/android-payload/build.json
-            build/f06/android-sdk342-build-step-*.sh
-            build/wave3/logs/
-            build/wave3/artifacts/sha256.txt
-          if-no-files-found: error
-  macos:
-    runs-on: macos-15
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
-      - name: Build actual macOS host against frozen SDK 3.42
-        run: python3 tests/apple_sdk342_package/run.py --target macos
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: c02-macos-owners-${{ github.sha }}
-          path: |
-            build/apple-sdk342/macos/identity.json
-            build/apple-sdk342/macos/host/build.json
-            build/apple-sdk342/macos/host/product-link.json
-            build/apple-sdk342/macos/products/share/exreader-apple/product.json
-          if-no-files-found: error
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" 

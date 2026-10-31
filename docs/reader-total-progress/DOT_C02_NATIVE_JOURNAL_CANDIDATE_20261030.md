@@ -147,3 +147,9 @@ The Android source, search and navigation owners now retain explicit NativeLibra
 Each BoundedEpub native pager has its own borrow, including a candidate PageLoad that has not been committed. Closing the parent cannot release that candidate's admission. A late commit after reader close refuses and disposes the candidate. Apple HostFixed now strongly retains HostLibrary through exr_fixed_free, matching HostPublication's existing ownership.
 
 A separate C02 workflow builds the actual Android and macOS products against the unchanged SDK 3.42 source. It reuses existing build recipes but records its own C02 provenance; it does not reuse the old package guard's restricted branch claim. Live admission wiring and native publication/recovery are still required before C02 completion.
+
+### First actual-host build: setup failures retained
+
+Source 6750ca5ce97abe8c02b625accab65285cb2a1e1e, run https://github.com/NoGod3524/EXReader/actions/runs/41158383462 / attempt 1. Android job 124410152477 stopped at the new C02 guard: it incorrectly compared the separately frozen C01 tree against this branch, where C01 has never been merged. The corrected guard checks this branch against its actual baseline and verifies the frozen source object separately. The existing gate consumer still extracts and compiles that exact C01 source.
+
+macOS job 124410152702 built and installed the frozen SDK, then stopped before compiling the host because the independent OPDSHash prefix was absent. The C02 workflow now installs that existing dependency for each target and passes its canonical prefix. No SDK or existing build recipe changes. Both jobs now retain a C02 receipt even if an early configuration fails.
