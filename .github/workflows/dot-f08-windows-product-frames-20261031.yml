@@ -29,6 +29,16 @@ jobs:
         run: python -m pip install uiautomation==2.0.29
       - name: Parse additive test adapter
         run: python -m py_compile tests/reader_f08_windows_product_frames_20261031/frames.py
+      - name: Verify real retained PID reuse and negative launch identity controls
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_f08_windows_product_frames_20261031/frames.py binding_regression
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-windows-lifetime-regression-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-windows-lifetime-regression/regression.json
+          if-no-files-found: warn
       - name: Authenticate fixed full product and trace unchanged interaction cohort
         env:
           GH_TOKEN: ${{ github.token }}

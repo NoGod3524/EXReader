@@ -97,6 +97,67 @@ def analyze(folder,pid,frequency,native):
         "application_paint_generation_bound":False,"frame_budget_measured":False,"physical_presentation_proven":False}
     save(folder/"analysis.json",summary)
     return summary
+def launch_bindings(records,captures,root):
+    lifetimes=[];indexes=set()
+    for entry in captures:
+        index=entry["index"];need(index not in indexes and entry["folder"]=="trace-%03d"%index,"trace identity")
+        indexes.add(index)
+        events=[json.loads(line) for line in (root/entry["folder"]/"native.jsonl").read_text().splitlines()]
+        first,last=events[0],events[-1]
+        need(first["kind"]=="process" and last["kind"]=="close" and
+             first["pid"]==last["pid"]==entry["pid"] and first["frequency"]==entry["frequency"] and
+             type(first["qpc"]) is int and type(last["qpc"]) is int and 0<first["qpc"]<last["qpc"]
+             and type(last["exit"]) is int,"closed native process lifetime")
+        log=Path(first["log"])
+        need(log.parent.name=="logs" and log.parent.parent.name=="observations","native sampler log origin")
+        lifetimes.append({"trace_index":index,"pid":entry["pid"],"start_qpc":first["qpc"],
+            "end_qpc":last["qpc"],"frequency":first["frequency"],"log_name":log.name,"complete":entry["complete"]})
+    for index,current in enumerate(lifetimes):
+        for previous in lifetimes[:index]:
+            if previous["pid"]==current["pid"]:
+                need(previous["frequency"]==current["frequency"] and previous["end_qpc"]<current["start_qpc"],
+                     "overlapping lifetimes for a reused PID")
+    result=[];used=set()
+    for row in records:
+        launch=row["launch_id"]
+        need(launch=="%s-%02d"%(row["cohort"],row["index"]),"original launch identifier")
+        matches=[x for x in lifetimes if x["pid"]==row["pid"] and x["log_name"]==launch+".log"]
+        need(len(matches)==1 and matches[0]["trace_index"] not in used and matches[0]["complete"],"unique launch lifetime")
+        match=matches[0];used.add(match["trace_index"])
+        log=root/"observations/logs"/match["log_name"]
+        need(log.is_file() and log.stat().st_size==row["log_bytes"],"exact original process log")
+        result.append({"launch_id":launch,**match})
+    need(len(result)==len(records),"complete launch bindings")
+    return result
+
+def binding_regression():
+    guard()
+    target=ROOT/"build/f08-windows-lifetime-regression";target.mkdir(parents=True,exist_ok=False)
+    pin={"source_sha":"f751c2ac8e0c9359119b3558d59aa76f2fb74188","run_id":"41189536724","attempt":"1"}
+    artifact=13038376565;digest="be6b47c8ccbb7d81e2a99e471dead5ad34540c7579469a255855339206e408c6";size=119484609
+    meta=api("actions/artifacts/"+str(artifact));producer=api("actions/runs/"+pin["run_id"]+"/attempts/1")
+    need(meta["id"]==artifact and not meta["expired"] and meta["size_in_bytes"]==size and meta["digest"]=="sha256:"+digest
+         and meta["workflow_run"]["head_sha"]==pin["source_sha"] and str(meta["workflow_run"]["id"])==pin["run_id"]
+         and producer["head_sha"]==pin["source_sha"] and producer["run_attempt"]==1,"retained regression producer")
+    data=command(["gh","api","repos/NoGod3524/EXReader/actions/artifacts/"+str(artifact)+"/zip"])
+    need(len(data)==size and hashlib.sha256(data).hexdigest()==digest,"retained regression ZIP")
+    raw=target/"raw";extract(data,raw,"manifest.json",pin)
+    original=json.loads((raw/"result.json").read_text())
+    need(original["capture_complete"] is False and original["problems"]==["ValueError('process PID reused within cohort')"]
+         and len(original["captures"])==12 and all(x["complete"] for x in original["captures"]),"actual retained PID failure")
+    records=json.loads((raw/"observations/per-launch.json").read_text());need(len(records)==10,"regression launches")
+    bindings=launch_bindings(records,original["captures"],raw)
+    need(len({x["pid"] for x in original["captures"]})<len(original["captures"]),"actual reused PID")
+    negatives=[]
+    for field,value in (("pid",-1),("launch_id","foreign-00")):
+        changed=[dict(x) for x in records];changed[0][field]=value
+        try:launch_bindings(changed,original["captures"],raw)
+        except ValueError:negatives.append(field)
+        else:raise ValueError("foreign launch identity accepted")
+    report={**identity(),"producer":pin,"artifact_id":artifact,"sha256":digest,"authenticated":True,
+        "bindings":bindings,"negative_controls":negatives,"original_failure_preserved":True,"resampled":False,"f08_accepted":False}
+    save(target/"regression.json",report);print("F08_PROCESS_LIFETIME_REGRESSION",json.dumps(report),flush=True)
+
 def capture():
     guard();OUT.mkdir(parents=True,exist_ok=False)
     report={**identity(),"capture_complete":False,"captures":[],"problems":[],"f08_accepted":False,
@@ -211,9 +272,7 @@ def capture():
             need(len(interactions[name])==count,"original interaction count")
         launches=json.loads((OUT/"observations/per-launch.json").read_text())
         need(len(launches)==10 and {r["cohort"] for r in launches}=={"warm_shelf","reading"},"original launches")
-        by_pid={x.get("pid"):x for x in report["captures"]}
-        need(len(by_pid)==len(report["captures"]),"process PID reused within cohort")
-        need(all(r["pid"] in by_pid and by_pid[r["pid"]]["complete"] for r in launches),"every measured process traced")
+        report["launch_bindings"]=launch_bindings(launches,report["captures"],OUT)
         need(report["captures"] and all(x["complete"] for x in report["captures"]) and not report["problems"],"complete traces")
         report["capture_complete"]=True
     except BaseException as error:
@@ -254,10 +313,14 @@ def audit():
         need(recomputed==entry["analysis"] and recomputed==json.loads((source/"analysis.json").read_text()),"independent frame analysis")
         verified.append({"pid":entry["pid"],"composition":recomputed["composition"],
                          "native_input_dispatches":recomputed["input_dispatches"]})
-    if result["capture_complete"]:need(len(verified)==len(result["captures"]) and len(verified)>=10,"every trace independently verified")
+    bindings=None
+    if result["capture_complete"]:
+        need(len(verified)==len(result["captures"]) and len(verified)>=10,"every trace independently verified")
+        bindings=launch_bindings(json.loads((raw/"observations/per-launch.json").read_text()),result["captures"],raw)
+        need(bindings==result["launch_bindings"],"independent process lifetime bindings")
     report={**ident,"artifact_id":artifact,"sha256":digest,"authenticated":True,"capture_complete":result["capture_complete"],
-        "captures":verified,"problems":result["problems"],"frame_budget_measured":False,
+        "captures":verified,"launch_bindings":bindings,"problems":result["problems"],"frame_budget_measured":False,
         "application_paint_generation_bound":False,"f08_accepted":False}
     save(target/"audit.json",report);print("F08_PRODUCT_ETW_AUDIT",json.dumps(report),flush=True)
 if __name__=="__main__":
-    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("capture","audit"));globals()[parser.parse_args().mode]()
+    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("capture","audit","binding_regression"));globals()[parser.parse_args().mode]()
