@@ -146,3 +146,5 @@ The singleTask MainActivity must first launch after instrumentation installs Act
 - GTK：补实际 Apply credentials (alt+a) 并等待绑定成功；每次扫描要求 session_generation 递增，运输完成后明确执行 Receive books (alt+r)，等待投影完成的独立 notice/状态，不拿旧 state=4 当新完成。
 - Windows：只读核实 accounts_ui 原逻辑会在新 FINISHED attempt 自动开始接收；“同步完成：投影检查…”是接收结束分支，因此原真实账户 helper 的完成条件保留。
 - macOS：原 relay.start 本来已有宿主证书信任（并非缺失）；统一为一次指纹记录的临时信任，正常/失败路径均移除该证书。macOS CODE_SIGNING_ALLOWED=YES 与 94fb supplemental 原真实套件一致；iOS 模拟器仍 NO。
+
+- 静态清理复核：桌面 finally 不再串联可能短路的 close；逐项尝试实际应用、fixture server、信任、私钥及 AT-SPI 释放。清理错误记入结果并使本阶段失败，不覆盖正在传播的原测试异常。

@@ -8,7 +8,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "tools")); sys.path.insert(0, str(HERE))
 from check_linux_host import Session, command
 import atspi_client as bus
-from relay import start, save, identity, trust_desktop, untrust_desktop, retained_rows
+from relay import start, save, identity, trust_desktop, untrust_desktop, retained_rows, finish_cleanup
 
 def main():
     assert os.environ.get("GITHUB_ACTIONS") == "true" and sys.platform.startswith("linux")
@@ -153,12 +153,15 @@ def main():
                              "bytes": host.binary.stat().st_size}
         report["passed"] = True; save(dav, out, "gtk-peer", report); dav = None
     finally:
-        if host.process: host.close()
+        actions = []
+        if host.process: actions.append(("close-actual-app", host.close))
         if dav:
-            (out / "requests.json").write_text(json.dumps(dav.requests, indent=2))
-            dav.server.shutdown(); dav.server.server_close()
-        if trust: untrust_desktop(trust)
-        (out / "key.pem").unlink(missing_ok=True)
-        (out / "result.json").write_text(json.dumps(report, ensure_ascii=False, indent=2))
-        bus.exit_bus()
+            actions.extend([
+                ("save-requests", lambda: (out / "requests.json").write_text(json.dumps(dav.requests, indent=2))),
+                ("stop-fixture", dav.server.shutdown),
+                ("close-fixture", dav.server.server_close)])
+        if trust: actions.append(("remove-fixture-trust", lambda: untrust_desktop(trust)))
+        actions.append(("remove-fixture-key", lambda: (out / "key.pem").unlink(missing_ok=True)))
+        actions.append(("close-accessibility-bus", bus.exit_bus))
+        finish_cleanup(actions, report, out / "result.json")
 if __name__ == "__main__": main()
