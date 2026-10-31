@@ -41,6 +41,7 @@ android {
         buildConfigField 'boolean', 'READER_PAGE_THEME', exrPageTheme.toString()
         buildConfigField 'boolean', 'READER_SELECTOR_BYTES_CANDIDATE', exrSelectorBytes.toString()
         buildConfigField 'boolean', 'READER_WAVE3', exrWave3.toString()
+        buildConfigField 'boolean', 'F08_REVIEW', (project.findProperty('exrF08Review') == 'true').toString()
         testInstrumentationRunner (project.findProperty('exrTestRunner') ?: 'org.exreader.host.CatalogStoreTest')
         ndk {
             abiFilters 'x86_64'

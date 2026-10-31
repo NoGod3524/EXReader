@@ -29,7 +29,7 @@ final class ShelfWindowMetrics implements AutoCloseable {
     private boolean failed;
 
     static ShelfWindowMetrics start(Activity activity,long createdNs) {
-        if (!BuildConfig.DEBUG || !activity.getIntent().getBooleanExtra("shelf_metrics",false))return null;
+        if ((!BuildConfig.DEBUG && !BuildConfig.F08_REVIEW) || !activity.getIntent().getBooleanExtra("shelf_metrics",false))return null;
         return new ShelfWindowMetrics(activity,createdNs);
     }
 
