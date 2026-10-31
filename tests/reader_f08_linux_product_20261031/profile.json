@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "runner": "ubuntu-22.04",
+  "sdk_version": "3.42.0",
+  "build_type": "Release",
+  "screen": [
+    1440,
+    900,
+    24
+  ],
+  "library_books": 2202,
+  "original_launches": 32,
+  "interaction_launches": 12,
+  "causal_launches": 6,
+  "features": [
+    "compact",
+    "raw_selector",
+    "wave3",
+    "page_background",
+    "account",
+    "reading_records",
+    "search",
+    "navigation",
+    "preferences",
+    "batch_import",
+    "drop_import"
+  ],
+  "budgets": {
+    "first_verified_selection_response_max_ms": 2000,
+    "peak_rss_bytes": 536870912,
+    "frame_p95_ms": 16.67,
+    "frame_p99_ms": 33.34
+  },
+  "semantics": {
+    "first_verified_selection_response": "Process launch to the original sampler's first changed shelf selection after native Down input; includes the desktop harness and is a conservative observed readiness bound.",
+    "memory": "Linux VmHWM across the unchanged 32-launch and 12-launch cohorts, including the passive measurement module.",
+    "frame": "GDK phase durations and counter intervals remain separate observations; they do not satisfy application-frame or physical-presentation budgets."
+  },
+  "f08_accepted": false
+}

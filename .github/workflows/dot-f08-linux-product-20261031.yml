@@ -1,0 +1,86 @@
+name: F08 full GTK product measurement
+on:
+  push:
+    branches: [codex/dot-f08-linux-product-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f08-linux-product-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+defaults:
+  run:
+    shell: bash
+jobs:
+  sample:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    outputs:
+      artifact_id: ${{ steps.evidence.outputs.artifact-id }}
+      artifact_digest: ${{ steps.evidence.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse only the additive test adapters
+        run: python3 -m py_compile tests/reader_f08_linux_product_20261031/run.py tests/reader_f08_linux_product_20261031/audit.py
+      - name: Install the fixed native desktop toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev libglib2.0-dev pkg-config ninja-build xvfb openbox xdotool xclip x11-utils dbus dbus-x11 at-spi2-core
+      - name: Build full compact GTK product from unchanged SDK and installed public modules
+        run: python3 tests/reader_f08_linux_product_20261031/run.py build
+      - name: Original 44 launches and separate six causal launches on the same full program
+        run: |
+          mkdir -p build/f08-linux-product/evidence
+          Xvfb :99 -screen 0 1440x900x24 -nolisten tcp > build/f08-linux-product/evidence/xvfb.log 2>&1 &
+          f08_xvfb=$!
+          trap 'kill $f08_xvfb 2>/dev/null || true' EXIT
+          sleep 2
+          export DISPLAY=:99
+          dbus-run-session -- bash -euo pipefail -c '
+            openbox > build/f08-linux-product/evidence/openbox.log 2>&1 &
+            f08_wm=$!
+            trap "kill $f08_wm 2>/dev/null || true" EXIT
+            sleep 1
+            xdpyinfo > build/f08-linux-product/evidence/xdpyinfo.txt
+            python3 tests/reader_f08_linux_product_20261031/run.py sample
+          '
+      - name: Preserve every available sample and failure
+        if: always()
+        run: python3 tests/reader_f08_linux_product_20261031/run.py seal
+      - uses: actions/upload-artifact@v4
+        if: always()
+        id: evidence
+        with:
+          name: f08-linux-product-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-linux-product/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+  audit:
+    needs: sample
+    if: always() && needs.sample.outputs.artifact_id != ''
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate full ZIP and independently replay raw observations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F08_ARTIFACT_ID: ${{ needs.sample.outputs.artifact_id }}
+          F08_ARTIFACT_DIGEST: ${{ needs.sample.outputs.artifact_digest }}
+        run: python3 tests/reader_f08_linux_product_20261031/audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-linux-product-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-linux-product-audit/audit.json
+            build/f08-linux-product-audit/metadata.json
+            build/f08-linux-product-audit/*.log
+          if-no-files-found: error
