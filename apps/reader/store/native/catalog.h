@@ -31,8 +31,8 @@ typedef int (*reader_catalog_visit)(void *, const reader_catalog_row *);
 
 int reader_catalog_open(const char *path, reader_catalog **out, reader_catalog_error *error);
 int reader_catalog_close(reader_catalog **catalog, reader_catalog_error *error);
-#ifdef _WIN32
-/* Best-effort, connection-local optimization for a missing-mapping repair. */
+#if defined(_WIN32) || defined(__linux__)
+/* Best-effort local-filesystem optimization for a missing-mapping repair. */
 void reader_catalog_prepare_repair(reader_catalog *);
 #endif
 /* The host verifies the original SDK bytes before attach and supplies NFC
