@@ -137,7 +137,12 @@ def main():
                 user.ShowWindow(host.window, 9)
                 P.need(user.SetWindowPos(host.window, W.HWND(-1), 0, 0, 0, 0, 0x43), "visible owned product window")
                 user.SetForegroundWindow(host.window)
-                entry["foreground_at_capture"] = user.GetForegroundWindow() == host.window
+                print("F08_ACTIVATE_OWNED_WINDOW", json.dumps({"pid": host.process.pid, "hwnd": int(host.window), "kind": kind}), flush=True)
+                activation_deadline = time.monotonic() + 90
+                while user.GetForegroundWindow() != host.window:
+                    P.need(time.monotonic() < activation_deadline, "owned product must be in foreground")
+                    time.sleep(.05)
+                entry["foreground_at_capture"] = True
                 stream = (folder / "native.jsonl").open("wb")
                 process = subprocess.Popen([str(observer), str(entry["hwnd"]), str(host.process.pid),
                                             str(folder / "stop"), str(folder / "images")],
