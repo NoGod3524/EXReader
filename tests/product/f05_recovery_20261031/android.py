@@ -133,7 +133,27 @@ def main():
         # CI supplies a fresh emulator/APK whose trust includes this test CA.
         # Do not silently clear an existing caller's profile.
         adb("reverse","tcp:"+str(dav.server.server_port),"tcp:"+str(dav.server.server_port))
-        launch();configure();sync();close_panel()
+        launch();configure();sync()
+        book_rows=[json.loads(body) for path,body in dav.entries.items()
+                   if "/revisions/" in path and json.loads(body)["entity_kind"]=="book"]
+        book_parents={parent for row in book_rows for parent in row["parents"]}
+        selected=[row for row in book_rows if row["id"] not in book_parents]
+        if len(selected)!=1:raise AssertionError("receive cancellation needs one safe actual book")
+        title=selected[0]["payload"]["title"]
+        dav.hold_get=True;dav.get_blocked.clear();dav.release.clear()
+        click(title,contains=True);click("接收")
+        if not dav.get_blocked.wait(30):
+            raise AssertionError("real original receive did not reach GET boundary")
+        click("取消同步")
+        dav.release.set()
+        wait(lambda:find(text="已取消",contains=True))
+        click(title,contains=True);click("接收")
+        wait(lambda:find(text="书籍已接收",contains=True),120)
+        report["cases"].append({"name":"cancel_receive_retry","outcome":"passed",
+            "actual_original_get_blocked":True,"native_cancel_clicked":True,
+            "retry_native_state":"书籍已接收","original_key":selected[0]["entity_key"],
+            "sdk_exact_readback_pending":True})
+        close_panel()
         before=snapshot("baseline")
         if set(before["heads"])!=set(contract["common_parent"]):
             raise AssertionError("actual receiver lacks common native ancestor")
@@ -175,7 +195,7 @@ def main():
         raise RuntimeError(safe) from None
     finally:
         report["requests"]=dav.requests
-        report["uncovered"]=["receive cancellation","uncertain PUT acknowledgment kill",
+        report["uncovered"]=["receive cancellation SDK exact count/readback","uncertain PUT acknowledgment kill",
                              "actual original offline reopening","independent artifact authentication"]
         (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
         dav.close()
