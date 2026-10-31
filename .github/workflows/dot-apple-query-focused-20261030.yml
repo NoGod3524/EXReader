@@ -1,7 +1,7 @@
 name: Apple query helper focused validation
 on:
   push:
-    branches: [codex/dot-apple-observe-focused-20261031]
+    branches: [codex/dot-apple-tap-decision-measure-20261031]
 permissions:
   contents: read
   actions: read
@@ -31,7 +31,7 @@ jobs:
             tests/reader_team24_apple/run_ui.py \
             tests/apple_host/EXReaderHostUITests.swift tests/apple_host/reading/ui \
             tests/apple_host/navigation/ui tests/apple_host/search/ui tests/apple_host/page_theme/ui
-          test "$(git rev-parse HEAD:tests/reader_team24_apple/ui/FeaturesUITests.swift)" = fa974c4079e3a4d41322160249619bfb5b66d299
+          test "$(git rev-parse HEAD:tests/reader_team24_apple/ui/FeaturesUITests.swift)" = 7b1b9d6b3d8093cf34744f3776a5f3b7ce3a1738
           python3 - <<'PY'
           import subprocess
           path = 'tests/reader_team24_apple/ui/FeaturesUITests.swift'
@@ -216,11 +216,12 @@ jobs:
                   with log.open(errors='replace') as stream:
                       for number,line in enumerate(stream,1):
                           action=None
-                          for label in ('Test Case','Start Test','Set Up','Tear Down','Terminate','Launch','Find','Check existence','Tap','Type','snapshot-tap-frame','Exceeded execution time','background assertion','Restarting after'):
+                          for label in ('EXR-DECISION','Test Case','Start Test','Set Up','Tear Down','Terminate','Launch','Find','Check existence','Tap','Type','snapshot-tap-frame','Exceeded execution time','background assertion','Restarting after'):
                               if label.lower() in line.lower():action=label;break
                           if action is None:continue
                           elapsed=re.search(r't\s*=\s*([0-9.]+)s',line)
                           row={'line':number,'action':action,'elapsed_s':float(elapsed.group(1)) if elapsed else None,'cases':re.findall(r'test[A-Z][A-Za-z0-9_]+',line),'feature_ids':re.findall(r'features\.[A-Za-z0-9_.-]+',line)}
+                          if 'EXR-DECISION' in line:row['decision']=line.split('EXR-DECISION',1)[1].strip()[:600]
                           if 'snapshot-tap-frame' in line:row['frame_numbers']=re.findall(r'-?\d+(?:\.\d+)?',line.split('snapshot-tap-frame',1)[1])[:20]
                           timeline.append(row)
                           if len(timeline)==20000:report['errors'].append({'operation':'ui-timeline-cap'});break
