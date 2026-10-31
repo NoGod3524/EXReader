@@ -222,5 +222,10 @@ def finish_cleanup(actions, report, destination):
         Path(destination).write_text(json.dumps(report, ensure_ascii=False, indent=2))
     except BaseException as error:
         failures.append({"action": "write-result", "error": type(error).__name__ + ": " + str(error)})
+        report["passed"] = False
+        try:
+            Path(destination).with_name("state.json").unlink(missing_ok=True)
+        except BaseException as invalidation:
+            failures.append({"action": "invalidate-unreported-state", "error": type(invalidation).__name__ + ": " + str(invalidation)})
     if failures and not active_failure:
         raise RuntimeError("F04 cleanup failed: " + json.dumps(failures))

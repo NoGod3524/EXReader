@@ -152,3 +152,5 @@ The singleTask MainActivity must first launch after instrumentation installs Act
 - 接收端初始化自查：Windows 仅 seed 本地导入；peer 空库走实际账户同步自动 receive/import。GTK peer 空库执行 Receive 投影后真实书架 search/F2/Home/Return 云书打开。避免先本地导入再 stage bootstrap 产生与远端并发的 book root；没有测试合并或写入产品库。
 
 - 公共 Alice EPUB 首屏是无文字封面；Windows seed 使用三次真实 next 后才捕获范围，不给空页制造文本。若最后关闭/清理失败，即使先写过state，也删除本阶段state并保留失败result，防止失败producer被图审计误接纳。
+
+- 结果文件写入本身失败也会失效自身state；未来原始artifact认证同时要求producer success、result通过、state一致，不能只凭state的早期passed。
