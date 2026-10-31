@@ -1,41 +1,25 @@
 name: F08 pinned evidence inspection
-run-name: F08 evidence ${{ inputs.artifact }}
 on:
+  push:
+    branches: [codex/dot-f08-evidence-inspect-20261031]
   workflow_dispatch:
     inputs:
-      source:
-        required: true
-        type: string
-      run:
-        required: true
-        type: string
-      attempt:
-        required: true
-        default: '1'
-        type: string
-      artifact:
-        required: true
-        type: string
-      digest:
-        required: true
-        type: string
-      bytes:
-        required: true
-        type: string
-      manifest:
-        required: true
-        default: manifest.json
-        type: string
-      paths:
-        required: true
+      pins:
+        description: JSON array of explicitly pinned artifact inspections
+        required: false
         type: string
 permissions:
   contents: read
   actions: read
 jobs:
   inspect:
+    name: Inspect ${{ matrix.artifact }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(inputs.pins || '[{"source":"bf3ca78c42add246faebc0a208bbe8a6150e856c","run":"41185695882","attempt":"1","artifact":"13036956838","digest":"9c0781549a10417bc18dc436ada3fca42afc6787000a1f64bc18c3a24a4e011b","bytes":"40306704","manifest":"manifest.json","paths":"[\"txt-diagnosis.log\",\"original-main.log\",\"original-verifier.log\",\"original-interactions.log\"]"},{"source":"edc5da8e624b1ad96ba3787d5665edfbcd41f046","run":"41183331986","attempt":"1","artifact":"13036503080","digest":"fef65b17b3677577d1f81d3603fc111d529ddd1ecce62a4bd2dfddab956c1a79","bytes":"66893477","manifest":"f08-manifest.json","paths":"[\"performance-metrics.json\",\"original/shelf-ui.json\",\"environment.json\"]"}]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,20 +30,20 @@ jobs:
       - name: Authenticate every file and inspect selected original records
         env:
           GH_TOKEN: ${{ github.token }}
-          F08_SOURCE: ${{ inputs.source }}
-          F08_RUN: ${{ inputs.run }}
-          F08_ATTEMPT: ${{ inputs.attempt }}
-          F08_ARTIFACT: ${{ inputs.artifact }}
-          F08_DIGEST: ${{ inputs.digest }}
-          F08_BYTES: ${{ inputs.bytes }}
-          F08_MANIFEST: ${{ inputs.manifest }}
-          F08_PATHS: ${{ inputs.paths }}
+          F08_SOURCE: ${{ matrix.source }}
+          F08_RUN: ${{ matrix.run }}
+          F08_ATTEMPT: ${{ matrix.attempt }}
+          F08_ARTIFACT: ${{ matrix.artifact }}
+          F08_DIGEST: ${{ matrix.digest }}
+          F08_BYTES: ${{ matrix.bytes }}
+          F08_MANIFEST: ${{ matrix.manifest }}
+          F08_PATHS: ${{ matrix.paths }}
         run: |
           python3 -m py_compile tests/reader_f08_evidence_inspect_20261031/inspect.py
           python3 tests/reader_f08_evidence_inspect_20261031/inspect.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: f08-evidence-inspection-${{ inputs.artifact }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: f08-evidence-inspection-${{ matrix.artifact }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f08-evidence-inspect/*.json
           if-no-files-found: error
