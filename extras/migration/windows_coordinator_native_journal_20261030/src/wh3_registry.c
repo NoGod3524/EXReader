@@ -70,9 +70,8 @@ static int rsecure(HKEY key,PSID user) {
   if(!GetAce(acl,k,(void **)&ace)||ace->Header.AceType!=ACCESS_ALLOWED_ACE_TYPE||ace->Header.AceFlags)goto done;
   sid=(PSID)&ace->SidStart;
   if(!IsValidSid(sid)||(ace->Mask&KEY_ALL_ACCESS)!=KEY_ALL_ACCESS)goto done;
-  if(EqualSid(sid,user))has_user=1;
-  else if(IsWellKnownSid(sid,WinLocalSystemSid))has_system=1;
-  else goto done;
+  {int own=EqualSid(sid,user),system=IsWellKnownSid(sid,WinLocalSystemSid);
+   if(!own&&!system)goto done;has_user|=own;has_system|=system;}
  }
  ok=has_user&&has_system;
 done:free(sd);return ok;
@@ -101,8 +100,11 @@ static int ropenkey(const wchar_t *route,int create,HKEY *out) {
  }
  if(!rsecure(base,user->User.Sid))goto done;
  if(create){
-  if(RegCreateKeyExW(base,route,0,NULL,REG_OPTION_NON_VOLATILE,access,&sa,&key,&disposition)!=ERROR_SUCCESS||
-     disposition!=REG_CREATED_NEW_KEY||RegFlushKey(base)!=ERROR_SUCCESS)goto done;
+  LSTATUS status=create==2?RegOpenKeyExW(base,route,REG_OPTION_OPEN_LINK,access,&key):ERROR_FILE_NOT_FOUND;
+  if(status==ERROR_FILE_NOT_FOUND){
+   if(RegCreateKeyExW(base,route,0,NULL,REG_OPTION_NON_VOLATILE,access,&sa,&key,&disposition)!=ERROR_SUCCESS||
+      disposition!=REG_CREATED_NEW_KEY||RegFlushKey(base)!=ERROR_SUCCESS)goto done;
+  }else if(status!=ERROR_SUCCESS)goto done;
  }else if(RegOpenKeyExW(base,route,REG_OPTION_OPEN_LINK,access,&key)!=ERROR_SUCCESS)goto done;
  if(!rsecure(key,user->User.Sid))goto done;
  *out=key;key=NULL;ok=1;
@@ -153,12 +155,13 @@ static int ridentity(wh3wr_registration *r,int target) {
  }
  return !target||(r->target!=INVALID_HANDLE_VALUE&&rid(r->target,&id,0)&&reqid(&id,&r->ids[4]));
 }
-static int rread(HKEY key,unsigned char bytes[RBYTES]) {
+static int rread_value(HKEY key,const wchar_t *value,unsigned char bytes[RBYTES]) {
  DWORD type=0,n=RBYTES;char hash[65];
- if(RegQueryValueExW(key,L"Binding",NULL,&type,bytes,&n)!=ERROR_SUCCESS||type!=REG_BINARY||n!=RBYTES||
+ if(RegQueryValueExW(key,value,NULL,&type,bytes,&n)!=ERROR_SUCCESS||type!=REG_BINARY||n!=RBYTES||
     memcmp(bytes,"WH3REG01",8))return 0;
  wh_sha256_hex(bytes,RSEAL,hash);return !memcmp(hash,bytes+RSEAL,64);
 }
+static int rread(HKEY key,unsigned char bytes[RBYTES]) {return rread_value(key,L"Binding",bytes);}
 static int rcurrent(wh3wr_registration *r) {
  HKEY key=NULL;unsigned char bytes[RBYTES];int ok;
  if(!ropenkey(r->route,0,&key))return 0;
@@ -172,6 +175,37 @@ static void rencode(wh3wr_registration *r,unsigned char bytes[RBYTES]) {
  memcpy(bytes+768,r->root,(wcslen(r->root)+1)*sizeof(wchar_t));
  wh_sha256_hex(bytes,RSEAL,hash);memcpy(bytes+RSEAL,hash,64);
 }
+static void rphase(const wh3w_controls *c,unsigned phase) {
+ if(c&&c->phase)c->phase(c->context,phase);
+}
+static int rlegacy(const wchar_t *library) {
+ const wchar_t *suffixes[]={L".migration-recovery",L".migration-pending.json",L".migrate-lock"};
+ wchar_t path[MAX_PATH];unsigned k;size_t n=wcslen(library);
+ for(k=0;k<3;k++){
+  DWORD attributes,error;
+  if(n+wcslen(suffixes[k])>=MAX_PATH)return 0;
+  wcscpy_s(path,MAX_PATH,library);wcscat_s(path,MAX_PATH,suffixes[k]);
+  attributes=GetFileAttributesW(path);error=attributes==INVALID_FILE_ATTRIBUTES?GetLastError():0;
+  if(attributes!=INVALID_FILE_ATTRIBUTES||(error!=ERROR_FILE_NOT_FOUND&&error!=ERROR_PATH_NOT_FOUND))return 0;
+ }
+ return 1;
+}
+static void rinitial_grant(wh3wr_registration *r) {
+ unsigned char bytes[344];memset(bytes,0,sizeof(bytes));memcpy(bytes,"WH3GATE1",8);bytes[8]='I';
+ rput(bytes+16,1);memcpy(bytes+32,r->domain,48);memset(bytes+80,'0',64);
+ memset(bytes+152,'0',64);memset(bytes+216,'0',64);
+ r->grant.generation=0;wh_sha256_hex(bytes,280,r->grant.seal);
+}
+static int rabsent(HKEY key,const wchar_t *name) {
+ DWORD type=0,n=0;return RegQueryValueExW(key,name,NULL,&type,NULL,&n)==ERROR_FILE_NOT_FOUND;
+}
+static int rintent(wh3wr_registration *r) {
+ unsigned char check[RBYTES];
+ if(!rabsent(r->key,L"Binding")||!rabsent(r->key,L"Enrollment"))return 0;
+ rencode(r,r->record);
+ return RegSetValueExW(r->key,L"Enrollment",0,REG_BINARY,r->record,RBYTES)==ERROR_SUCCESS&&
+   RegFlushKey(r->key)==ERROR_SUCCESS&&rread_value(r->key,L"Enrollment",check)&&!memcmp(r->record,check,RBYTES);
+}
 static int rdecode(wh3wr_registration *r) {
  unsigned k;unsigned char canonical[RBYTES];wchar_t library[MAX_PATH],route[65],root[MAX_PATH];
  memcpy(r->domain,r->record+8,48);r->domain[48]=0;
@@ -180,15 +214,15 @@ static int rdecode(wh3wr_registration *r) {
  for(k=0;k<5;k++){r->ids[k].volume=rget(r->record+128+k*24);memcpy(&r->ids[k].file,r->record+136+k*24,16);}
  memcpy(library,r->record+248,sizeof(library));memcpy(root,r->record+768,sizeof(root));
  if(!wmemchr(library,0,MAX_PATH)||!wmemchr(root,0,MAX_PATH)||
-    _wcsicmp(library,r->library)||!rpath(root,r->root,route)||_wcsicmp(root,r->root))return 0;
+    _wcsicmp(library,r->library)||!rpath(root,r->root,route)||wcslen(r->root)>MAX_PATH-32||_wcsicmp(root,r->root))return 0;
  /* Preserve the stored spelling in the canonical encoding; lookup is case-insensitive. */
  wcscpy_s(r->library,MAX_PATH,library);
  rencode(r,canonical);return !memcmp(canonical,r->record,RBYTES);
 }
 static int rwrite(wh3wr_registration *r,int initial) {
- unsigned char next[RBYTES],check[RBYTES];DWORD type=0,n=0;
+ unsigned char next[RBYTES],check[RBYTES];
  if(initial){
-  if(RegQueryValueExW(r->key,L"Binding",NULL,&type,NULL,&n)!=ERROR_FILE_NOT_FOUND)return 0;
+  if(!rabsent(r->key,L"Binding")||!rread_value(r->key,L"Enrollment",check)||memcmp(check,r->record,RBYTES))return 0;
  }else if(!rcurrent(r))return 0;
  rencode(r,next);
  if(RegSetValueExW(r->key,L"Binding",0,REG_BINARY,next,RBYTES)!=ERROR_SUCCESS||
@@ -208,7 +242,7 @@ int wh3wr_open(const wchar_t *library,unsigned mode,const wh3w_controls *control
  r=calloc(1,sizeof(*r));if(!r)return 0;r->target=INVALID_HANDLE_VALUE;r->mode=mode;
  if(!rpath(library,r->library,r->route)||!ropenkey(r->route,0,&r->key)||!rread(r->key,r->record)||!rdecode(r)||!rpins(r))goto done;
  if(!wh3wg_open(r->root,r->ids,r->domain,&r->grant,mode,controls,&r->gate)||
-    !rcurrent(r)||!rtarget(r,mode==WH3WG_RECOVER,mode!=WH3WG_RECOVER)||!ridentity(r,mode!=WH3WG_RECOVER))goto done;
+    !rcurrent(r)||!rtarget(r,mode==WH3WG_RECOVER,mode!=WH3WG_RECOVER)||!ridentity(r,mode!=WH3WG_RECOVER)||!rlegacy(r->library))goto done;
  /* Readers need query rights only. Owners get write rights only after custody. */
  if(mode!=WH3WG_SHARED){
   HKEY write=NULL;
@@ -218,13 +252,13 @@ int wh3wr_open(const wchar_t *library,unsigned mode,const wh3w_controls *control
  *out=r;ok=1;
 done:if(!ok)(void)wh3wr_close(r);return ok;
 }
-int wh3wr_enroll(const wchar_t *library,const wchar_t *root,
- int (*prove)(void *,const wchar_t *),void *context) {
+int wh3wr_enroll_controlled(const wchar_t *library,const wchar_t *root,
+ int (*prove)(void *,const wchar_t *),void *context,const wh3w_controls *controls) {
  wh3wr_registration *r;HANDLE files[3]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE};
  const wchar_t *names[3]={L"admission.bin",L"journal.bin",L"intent.bin"};
  wchar_t route[65],path[MAX_PATH];unsigned k;int ok=0;char domain[49];
  if(!prove)return 0;r=calloc(1,sizeof(*r));if(!r)return 0;r->target=INVALID_HANDLE_VALUE;
- if(!rpath(library,r->library,r->route)||!rpath(root,r->root,route)||!rpins(r)||!rtarget(r,0,0)||!rid(r->target,&r->ids[4],0))goto done;
+ if(!rpath(library,r->library,r->route)||!rpath(root,r->root,route)||wcslen(r->root)>MAX_PATH-32||!rpins(r)||!rtarget(r,0,0)||!rid(r->target,&r->ids[4],0))goto done;
  {
   HANDLE h=CreateFileW(r->root,FILE_LIST_DIRECTORY|FILE_READ_ATTRIBUTES,FILE_SHARE_READ,NULL,OPEN_EXISTING,
     FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
@@ -239,17 +273,66 @@ int wh3wr_enroll(const wchar_t *library,const wchar_t *root,
  }
  {unsigned char id[24];static const char hex[]="0123456789abcdef";rput(id,r->ids[0].volume);memcpy(id+8,&r->ids[0].file,16);
   for(k=0;k<24;k++){domain[k*2]=hex[id[k]>>4];domain[k*2+1]=hex[id[k]&15];}domain[48]=0;memcpy(r->domain,domain,49);}
- if(!wh3wg_open(r->root,r->ids,r->domain,NULL,WH3WG_ENROLL,NULL,&r->gate)||
-    !ropenkey(r->route,1,&r->key)||!wh3wg_enroll(r->gate,&r->grant)||!ridentity(r,1)||
-    !prove(context,r->library)||!ridentity(r,1)||!wh3wg_check(r->gate))goto done;
+ rinitial_grant(r);
+ if(!rlegacy(r->library)||!wh3wg_open(r->root,r->ids,r->domain,NULL,WH3WG_ENROLL,NULL,&r->gate)||
+    !ropenkey(r->route,2,&r->key)||!rintent(r))goto done;
+ rphase(controls,WH3WR_ENROLL_INTENT);
+ {wh3wg_grant actual;if(!wh3wg_enroll(r->gate,&actual)||actual.generation||
+    memcmp(actual.seal,r->grant.seal,65))goto done;}
+ rphase(controls,WH3WR_ENROLL_GATE);
+ if(!ridentity(r,1)||!rlegacy(r->library)||!prove(context,r->library)||!ridentity(r,1)||
+    !rlegacy(r->library)||!wh3wg_check(r->gate))goto done;
  for(k=0;k<3;k++){LARGE_INTEGER size;if(!GetFileSizeEx(files[k],&size)||(k&&size.QuadPart))goto done;}
+ rphase(controls,WH3WR_ENROLL_PROVED);
+ ok=rwrite(r,1);if(ok)rphase(controls,WH3WR_ENROLL_BOUND);
+done:
+ for(k=0;k<3;k++)if(files[k]!=INVALID_HANDLE_VALUE)CloseHandle(files[k]);
+ if(!wh3wr_close(r))return 0;return ok;
+}
+int wh3wr_enroll(const wchar_t *library,const wchar_t *root,
+ int (*prove)(void *,const wchar_t *),void *context) {
+ return wh3wr_enroll_controlled(library,root,prove,context,NULL);
+}
+int wh3wr_recover_enrollment(const wchar_t *library,
+ int (*prove)(void *,const wchar_t *),void *context) {
+ wh3wr_registration *r;HANDLE files[3]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE};
+ const wchar_t *names[3]={L"admission.bin",L"journal.bin",L"intent.bin"};
+ wchar_t path[MAX_PATH];unsigned k;int ok=0;LONGLONG admission_size=0;
+ wh3wg_grant expected;wh3w_identity id;
+ if(!prove)return 0;r=calloc(1,sizeof(*r));if(!r)return 0;r->target=INVALID_HANDLE_VALUE;
+ if(!rpath(library,r->library,r->route)||!ropenkey(r->route,0,&r->key)||!rabsent(r->key,L"Binding")||
+    !rread_value(r->key,L"Enrollment",r->record)||!rdecode(r)||!rpins(r)||!rtarget(r,0,1)||!rlegacy(r->library))goto done;
+ expected=r->grant;rinitial_grant(r);
+ if(expected.generation||memcmp(expected.seal,r->grant.seal,65))goto done;
+ for(k=0;k<3;k++){
+  LARGE_INTEGER size;
+  swprintf_s(path,MAX_PATH,L"%ls\\%ls",r->root,names[k]);
+  files[k]=CreateFileW(path,GENERIC_READ,FILE_SHARE_READ|(k?0:FILE_SHARE_WRITE),NULL,
+    OPEN_EXISTING,FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+  if(files[k]==INVALID_HANDLE_VALUE||!rid(files[k],&id,0)||!reqid(&id,&r->ids[k+1])||
+     !GetFileSizeEx(files[k],&size)||(k&&size.QuadPart))goto done;
+  if(!k)admission_size=size.QuadPart;
+ }
+ if(admission_size==0){
+  wh3wg_grant actual;
+  if(!wh3wg_open(r->root,r->ids,r->domain,NULL,WH3WG_ENROLL,NULL,&r->gate)||
+     !wh3wg_enroll(r->gate,&actual)||actual.generation||memcmp(actual.seal,expected.seal,65))goto done;
+ }else if(!wh3wg_open(r->root,r->ids,r->domain,&expected,WH3WG_OWNER,NULL,&r->gate))goto done;
+ {
+  HKEY write=NULL;
+  if(RegOpenKeyExW(r->key,L"",REG_OPTION_OPEN_LINK,KEY_READ|KEY_SET_VALUE|KEY_WOW64_64KEY,&write)!=ERROR_SUCCESS)goto done;
+  RegCloseKey(r->key);r->key=write;
+ }
+ if(!ridentity(r,1)||!rlegacy(r->library)||!prove(context,r->library)||!ridentity(r,1)||
+    !rlegacy(r->library)||!wh3wg_check(r->gate))goto done;
+ for(k=1;k<3;k++){LARGE_INTEGER size;if(!GetFileSizeEx(files[k],&size)||size.QuadPart)goto done;}
  ok=rwrite(r,1);
 done:
  for(k=0;k<3;k++)if(files[k]!=INVALID_HANDLE_VALUE)CloseHandle(files[k]);
  if(!wh3wr_close(r))return 0;return ok;
 }
 int wh3wr_check(wh3wr_registration *r) {
- return r&&ridentity(r,1)&&rcurrent(r)&&wh3wg_check(r->gate);
+ return r&&ridentity(r,1)&&rcurrent(r)&&rlegacy(r->library)&&wh3wg_check(r->gate);
 }
 int wh3wr_journal(wh3wr_registration *r,const wh_binding *b,const wh_gates *g,
  const wh3w_controls *controls,wh3w_store **out) {
@@ -304,7 +387,7 @@ wh3_tx_status wh3wr_publish(wh3wr_registration *r,const wchar_t *stage_leaf,
     !ridentity(r,0)||!rcurrent(r)||!wh3wg_check(r->gate))goto done;
  target_leaf=wcsrchr(r->library,L'\\')+1;parent_length=(size_t)(target_leaf-r->library);
  if(!_wcsicmp(stage_leaf,target_leaf)||!_wcsicmp(retained_leaf,target_leaf)||
-    !_wcsicmp(stage_leaf,retained_leaf)||parent_length+wcslen(stage_leaf)>=MAX_PATH)goto done;
+    !_wcsicmp(stage_leaf,retained_leaf)||parent_length+wcslen(stage_leaf)>=MAX_PATH||parent_length+wcslen(retained_leaf)>=MAX_PATH)goto done;
  memcpy(stage,r->library,parent_length*sizeof(wchar_t));wcscpy_s(stage+parent_length,MAX_PATH-parent_length,stage_leaf);
  staged=CreateFileW(stage,GENERIC_READ|GENERIC_WRITE|DELETE,FILE_SHARE_READ,NULL,OPEN_EXISTING,
    FILE_FLAG_OPEN_REPARSE_POINT|FILE_FLAG_WRITE_THROUGH,NULL);

@@ -9,7 +9,7 @@ static wh3wr_registration *registration;
 static wchar_t reglib[MAX_PATH];
 static const char original[]="C02 registered original\n",published[]="C02 published original\n";
 typedef struct {
- wchar_t library[MAX_PATH];wh_binding b;wh_gates g;
+ wchar_t library[MAX_PATH],root[MAX_PATH];wh_binding b;wh_gates g;
  HANDLE ready,go;unsigned mode,stop;int opened,sdk_opened,reached;
 } reg_shared;
 static HANDLE rm,rrdy,rgo;
@@ -71,7 +71,7 @@ static HANDLE reg_spawn(unsigned mode,unsigned stop) {
   if(!rm||!rrdy||!rgo)return NULL;rs=MapViewOfFile(rm,FILE_MAP_ALL_ACCESS,0,0,sizeof(*rs));if(!rs)return NULL;
  }
  memset(rs,0,sizeof(*rs));ResetEvent(rrdy);ResetEvent(rgo);
- wcscpy_s(rs->library,MAX_PATH,reglib);rs->b=f.b;rs->g=f.g;
+ wcscpy_s(rs->library,MAX_PATH,reglib);wcscpy_s(rs->root,MAX_PATH,f.root);rs->b=f.b;rs->g=f.g;
  rs->ready=rrdy;rs->go=rgo;rs->mode=mode;rs->stop=stop;
  if(!GetModuleFileNameW(NULL,exe,MAX_PATH))return NULL;
  swprintf_s(command,2*MAX_PATH,L"\"%ls\" --registry-child %llu",exe,(unsigned long long)(uintptr_t)rm);
@@ -84,6 +84,10 @@ static int reg_child(const char *handle) {
  reg_shared *shared=MapViewOfFile(mapping,FILE_MAP_ALL_ACCESS,0,0,sizeof(*shared));
  wh3wr_registration *r=NULL;wh3w_controls controls={0};void *cap=NULL;wh3_tip tip;
  if(!shared)return 90;controls.context=shared;controls.phase=reg_barrier;
+ if(shared->stop>=WH3WR_ENROLL_INTENT){
+  int ok=wh3wr_enroll_controlled(shared->library,shared->root,sdk_prove,(void *)original,&controls);
+  UnmapViewOfFile(shared);return ok?0:95;
+ }
  shared->opened=wh3wr_open(shared->library,shared->mode,&controls,&r);
  if(shared->opened&&shared->mode==WH3WG_SHARED)shared->sdk_opened=sdk_prove((void *)original,shared->library);
  if(shared->opened&&shared->stop==WH3WG_BEGIN_DURABLE){
@@ -255,6 +259,10 @@ static void bad_initial(void) {
  expect(!wh3wr_enroll(reglib,f.root,initial_refuse,NULL),"initial proof refusal");
  expect(!reg_open(WH3WG_SHARED,NULL),"no trusted grant after failed proof");
  expect(!wh3wr_enroll(reglib,f.root,sdk_prove,(void *)original),"no automatic bootstrap replay");
+ expect(!wh3wr_recover_enrollment(reglib,initial_refuse,NULL),"recovery repeats initial proof");
+ expect(!reg_open(WH3WG_SHARED,NULL),"failed repeated proof never admits");
+ expect(wh3wr_recover_enrollment(reglib,sdk_prove,(void *)original),"explicit enrollment recovery with actual SDK proof");
+ expect(reg_open(WH3WG_SHARED,NULL),"recovered initial grant admits");reg_close_all();
 }
 static void short_begin_case(void) {
  wh3w_controls controls={0};wh3_tip empty;void *cap=NULL;
@@ -263,6 +271,70 @@ static void short_begin_case(void) {
  expect(reg_open(WH3WG_OWNER,&controls),"exclusive owner");empty_tip(&empty);
  expect(!wh3wr_begin(registration,&f.b,&f.g,&empty,&cap)&&!cap,"partial native pending never authorizes mutation");
  reg_close_all();expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"torn gate refuses fresh SDK open");
+}
+static unsigned initial_proofs;
+static int counted_initial(void *context,const wchar_t *path) {
+ initial_proofs++;return sdk_prove(context,path);
+}
+static void enrollment_kill(unsigned at) {
+ HANDLE child;char name[80];int bound=at==WH3WR_ENROLL_BOUND;
+ snprintf(name,sizeof(name),"enrollment-process-kill-%u",at);
+ if(!reg_fixture(name,0))return;
+ child=reg_spawn(WH3WG_ENROLL,at);expect(child!=NULL,"spawn real enrollment owner");if(!child)return;
+ expect(WaitForSingleObject(rrdy,15000)==WAIT_OBJECT_0&&rs->reached==(int)at,"exact enrollment persistence barrier");
+ expect(finish(child,1),"terminate enrollment process at barrier");
+ expect(reg_probe(WH3WG_SHARED)==bound,"fresh process accepts only independently committed Binding");
+ if(!bound){
+  initial_proofs=0;
+  expect(wh3wr_recover_enrollment(reglib,counted_initial,(void *)original),"recover exact enrollment intent");
+  expect(initial_proofs==1,"recovery actually opens and verifies SDK content");
+ }
+ expect(reg_probe(WH3WG_SHARED)==1&&rs->sdk_opened,"completed enrollment opens real SDK in fresh process");
+}
+static void enrollment_policy(unsigned marker,int directory) {
+ const wchar_t *suffixes[]={L".migration-recovery",L".migration-pending.json",L".migrate-lock"};
+ wchar_t path[MAX_PATH];char name[80];LARGE_INTEGER size;HANDLE h;
+ snprintf(name,sizeof(name),"enrollment-retains-legacy-policy-%u-%d",marker,directory);
+ if(!reg_fixture(name,0))return;
+ swprintf_s(path,MAX_PATH,L"%ls%ls",reglib,suffixes[marker]);
+ if(directory)expect(CreateDirectoryW(path,NULL)!=0,"real legacy policy directory");
+ else {h=CreateFileW(path,GENERIC_WRITE,0,NULL,CREATE_NEW,0,NULL);
+  expect(h!=INVALID_HANDLE_VALUE,"real legacy policy file");if(h!=INVALID_HANDLE_VALUE)CloseHandle(h);}
+ initial_proofs=0;
+ expect(!wh3wr_enroll(reglib,f.root,counted_initial,(void *)original)&&initial_proofs==0,"policy refuses before SDK proof");
+ expect(GetFileAttributesW(path)!=INVALID_FILE_ATTRIBUTES,"policy object retained");
+ swprintf_s(path,MAX_PATH,L"%ls\\admission.bin",f.root);
+ h=CreateFileW(path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,0,NULL);
+ expect(h!=INVALID_HANDLE_VALUE&&GetFileSizeEx(h,&size)&&size.QuadPart==0,"policy never initializes gate");
+ if(h!=INVALID_HANDLE_VALUE)CloseHandle(h);
+}
+static void enrollment_bad(unsigned kind) {
+ wchar_t path[MAX_PATH],other[MAX_PATH];char name[80];unsigned char *bytes=NULL;DWORD n=0;
+ snprintf(name,sizeof(name),"enrollment-recovery-refuses-mutation-%u",kind);
+ if(!reg_fixture(name,0))return;
+ expect(!wh3wr_enroll(reglib,f.root,initial_refuse,NULL),"retain incomplete enrollment");
+ if(kind==0){
+  swprintf_s(path,MAX_PATH,L"%ls\\admission.bin",f.root);
+  expect(read_bytes(path,&bytes,&n)&&n==344,"read exact initial record");
+  if(bytes&&n){expect(replace_bytes(path,bytes,n-1),"plant torn initial record");free(bytes);}
+ }else if(kind==1){
+  swprintf_s(other,MAX_PATH,L"%ls\\original.sqlite",f.parent);
+  expect(MoveFileW(reglib,other)&&CopyFileW(other,reglib,TRUE),"replace actual target FileID");
+ }else if(kind==2){
+  HKEY key=fixture_key();unsigned char record[1353];DWORD size=1352,type=0;
+  expect(key!=NULL,"open initial-intent registry control");
+  if(key){
+   expect(RegQueryValueExW(key,L"Enrollment",NULL,&type,record,&size)==ERROR_SUCCESS&&size==1352,"read independent enrollment intent");
+   record[64]=record[64]=='a'?'b':'a';wh_sha256_hex(record,1288,(char *)record+1288);
+   expect(RegSetValueExW(key,L"Enrollment",0,REG_BINARY,record,1352)==ERROR_SUCCESS,"reseal wrong expected initial grant");RegCloseKey(key);
+  }
+ }else{
+  swprintf_s(path,MAX_PATH,L"%ls\\journal.bin",f.root);expect(DeleteFileW(path)!=0,"remove enrolled journal object");
+ }
+ initial_proofs=0;
+ expect(!wh3wr_recover_enrollment(reglib,counted_initial,(void *)original)&&initial_proofs==0,"mutated enrollment refuses before SDK");
+ expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"no admission from rejected recovery");
+ if(kind==3)expect(GetFileAttributesW(path)==INVALID_FILE_ATTRIBUTES&&GetLastError()==ERROR_FILE_NOT_FOUND,"missing object never recreated");
 }
 int main(int argc,char **argv) {
  if(argc==3&&!strcmp(argv[1],"--registry-child"))return reg_child(argv[2]);
@@ -284,6 +356,9 @@ int main(int argc,char **argv) {
  unknown_case();shared_case_registry();source_borrow_case();owner_first_case();kill_case();
  bad_target(0);bad_target(1);bad_registry(0);bad_registry(1);missing_gate();
  publication_case(0);publication_case(1);bad_initial();short_begin_case();
+ {unsigned i;for(i=WH3WR_ENROLL_INTENT;i<=WH3WR_ENROLL_BOUND;i++)enrollment_kill(i);
+  for(i=0;i<3;i++){enrollment_policy(i,0);enrollment_policy(i,1);}
+  for(i=0;i<4;i++)enrollment_bad(i);}
  fixture_close();if(rs)UnmapViewOfFile(rs);if(rm)CloseHandle(rm);if(rrdy)CloseHandle(rrdy);if(rgo)CloseHandle(rgo);
  printf("{\"source\":\"%s\",\"cases\":%u,\"checks\":%u,\"failed\":%u,\"passed\":%s,\"actual_sdk\":true,\"trusted_registry\":true,\"production_coordinator\":false,\"full_c02_acceptance\":false}\n",
    CANDIDATE_SOURCE_SHA,cases,checks,failures,failures?"false":"true");

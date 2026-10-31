@@ -87,6 +87,16 @@ int wh3wg_reconcile(wh3wg_gate *,wh3w_store *,const wh3_tip *,
 typedef struct wh3wr_registration wh3wr_registration;
 int wh3wr_enroll(const wchar_t *library,const wchar_t *root,
  int (*prove_initial)(void *,const wchar_t *),void *context);
+/* Enrollment intent is durably recorded before the first native gate record.
+   Recovery accepts only its independently computed initial grant and exact
+   object identities, then repeats initial-state proof. Ordinary open never
+   calls either enrollment API. Torn or replaced objects remain refused. */
+enum { WH3WR_ENROLL_INTENT=501, WH3WR_ENROLL_GATE=502,
+       WH3WR_ENROLL_PROVED=503, WH3WR_ENROLL_BOUND=504 };
+int wh3wr_enroll_controlled(const wchar_t *library,const wchar_t *root,
+ int (*prove_initial)(void *,const wchar_t *),void *context,const wh3w_controls *);
+int wh3wr_recover_enrollment(const wchar_t *library,
+ int (*prove_initial)(void *,const wchar_t *),void *context);
 int wh3wr_open(const wchar_t *library,unsigned mode,const wh3w_controls *,
  wh3wr_registration **);
 int wh3wr_check(wh3wr_registration *);
