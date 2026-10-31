@@ -32,16 +32,23 @@ static int acl_clear(int fd){
  acl_t acl=acl_get_fd_np(fd,ACL_TYPE_EXTENDED);
  if(!acl)return errno==ENOENT;
  acl_entry_t entry;
- int which=ACL_FIRST_ENTRY,result=0,ok=1;
- while((result=acl_get_entry(acl,which,&entry))==1){
-  acl_tag_t tag;
+ int which=ACL_FIRST_ENTRY,ok=acl_valid(acl)==0;
+ while(ok){
+  errno=0;
+  int result=acl_get_entry(acl,which,&entry);
+  if(result==-1){if(errno!=EINVAL)ok=0;
+  break;
+  }
+  if(result!=0){ok=0;
+  break;
+  }
   which=ACL_NEXT_ENTRY;
+  acl_tag_t tag;
   if(acl_get_tag_type(entry,&tag)||tag!=ACL_EXTENDED_DENY){ok=0;
   break;
   }
  }
- if(result<0)ok=0;
- acl_free(acl);
+ if(acl_free(acl))ok=0;
  return ok;
 #else
  (void)fd;

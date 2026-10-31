@@ -105,13 +105,24 @@ static int access_acl(int fd){
 #if defined(__APPLE__)
  acl_t acl=acl_get_fd_np(fd,ACL_TYPE_EXTENDED);
  if(!acl)return errno==ENOENT;
- acl_entry_t entry;int which=ACL_FIRST_ENTRY,result=0,ok=1;
- while((result=acl_get_entry(acl,which,&entry))==1){
-  acl_tag_t tag;which=ACL_NEXT_ENTRY;
-  if(acl_get_tag_type(entry,&tag)||tag!=ACL_EXTENDED_DENY){ok=0;break;}
+ acl_entry_t entry;
+ int which=ACL_FIRST_ENTRY,ok=acl_valid(acl)==0;
+ while(ok){
+  errno=0;
+  int result=acl_get_entry(acl,which,&entry);
+  if(result==-1){if(errno!=EINVAL)ok=0;
+  break;
+  }
+  if(result!=0){ok=0;
+  break;
+  }
+  which=ACL_NEXT_ENTRY;
+  acl_tag_t tag;
+  if(acl_get_tag_type(entry,&tag)||tag!=ACL_EXTENDED_DENY){ok=0;
+  break;
+  }
  }
- if(result<0)ok=0;
- acl_free(acl);
+ if(acl_free(acl))ok=0;
  return ok;
 #else
  (void)fd;return 1;
@@ -417,7 +428,7 @@ static int authority_current(pc02_lease *h){
  entry_id(h->root,"registry.lock",h->registry,1,&actual)&&sameid(&actual,&h->registry_id)&&size_exact(h->registry,16);
 }
 static int regular_open(int directory,const char *leaf,int flags,int private_mode,pc02_identity *id){
- int fd=openat(directory,leaf,flags|O_NOFOLLOW|O_CLOEXEC,0600);
+ int fd=openat(directory,leaf,flags|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC,0600);
  if(fd<0)return -1;
  if(!entry_id(directory,leaf,fd,private_mode,id)){close(fd);
  errno=EINVAL;
@@ -702,9 +713,11 @@ static int authoritative_state(pc02_lease *h,const state *s){
  return h->mode==PC02_RECOVER&&generation!=UINT64_MAX&&s->generation==generation+1&&
    !memcmp(s->previous_clean,h->binding+96,64);
 }
+static int pr_access(pc02_lease *);
+static int pr_retire(pc02_lease *);
 int pc02_check(pc02_lease *h){
  state actual;
- if(!h||h->poisoned||!route_current(h)||!binding_current(h)||!load_state(h,&actual)||!state_same(&actual,&h->seen))return 0;
+ if(!h||h->poisoned||!route_current(h)||!binding_current(h)||!load_state(h,&actual)||!state_same(&actual,&h->seen)||!pr_access(h))return 0;
  if(h->active){
   uint64_t generation=get64(h->binding+88);
   if(actual.kind!='B'||generation==UINT64_MAX||actual.generation!=generation+1||memcmp(actual.previous_clean,h->binding+96,64))return 0;
@@ -1007,6 +1020,7 @@ int pc02_finish(pc02_lease *h,pc02_cap *cap,const char terminal[65],pc02_prove p
  if(!publish_binding(h,bytes,0)){h->poisoned=1;
  return 0;
  }
+ if(!pr_retire(h)){h->poisoned=1;return 0;}
  h->active=0;
  h->transition=0;
  h->current=NULL;
@@ -1026,6 +1040,7 @@ int pc02_reconcile(pc02_lease *h,const pc02_pending_record *exact,const char ter
  if(memcmp(bytes,h->binding,224)&&!publish_binding(h,bytes,0)){h->poisoned=1;
  return 0;
  }
+ if(!pr_retire(h)){h->poisoned=1;return 0;}
  pc02_grant local;
  return pc02_grant_get(h,grant?grant:&local);
 }
@@ -1078,3 +1093,4 @@ const char *pc02_library_path(pc02_lease *h){
  return pc02_check(h)?h->library:NULL;
 }
 #include "pc02_migration.inc"
+#include "pc02_repair.inc"

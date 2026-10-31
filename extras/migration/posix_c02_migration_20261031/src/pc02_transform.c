@@ -253,3 +253,41 @@ done:
  pc02t_free(c);
  return ok&&pc02t_quiet(target);
 }
+
+int pc02t_original_verify(const char *target,const char *mirror) {
+ ctx *c=calloc(1,sizeof(*c));
+ pc02t_original *baseline=NULL;
+ size_t count=0;
+ void *ledger=NULL;
+ size_t bytes=0;
+ int found=0,ok=0;
+ char *old=NULL;
+ size_t old_bytes=0;
+ lm_mirror_file snapshot;
+ lm_err error={{0},{0}};
+ if(!c)return 0;
+ c->target=target;
+ c->cmd="repair-original-proof";
+ if(!pc02t_quiet(target)||exr_library_open(target,&c->lib,&c->err)!=EXR_OK||
+    !pc02t_baseline(c->lib,&baseline,&count)||
+    exr_library_migration_ledger_get(c->lib,&ledger,&bytes,&found,&c->err)!=EXR_OK)goto done;
+ if(found&&!sidecar_parse(c,ledger,bytes))goto done;
+ if(mirror){
+  if(!lm_mirror_snapshot(mirror,1,LM_MIRROR_LEDGER_MAX,&snapshot,&old,&old_bytes,&error)||!snapshot.present||
+     (found&&(bytes!=old_bytes||memcmp(ledger,old,bytes)))||(!found&&!sidecar_parse(c,old,old_bytes)))goto done;
+ }
+ exr_library_close(c->lib);
+ c->lib=NULL;
+ /* Frozen SDK dump independently enumerates original blobs/covers, every
+    reflow/fixed annotation, progress, and all ledger audio bookmarks/resume. */
+ dump_library(c);
+ if(!c->lib||c->out!=O_NONE||!pc02t_preserved(c->lib,baseline,count))goto done;
+ printf("{\"repair_original_actual_sdk\":true,\"original_books\":%llu}\n",(unsigned long long)count);
+ ok=1;
+done:
+ free(baseline);
+ exr_free(ledger);
+ free(old);
+ pc02t_free(c);
+ return ok&&pc02t_quiet(target);
+}

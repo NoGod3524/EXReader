@@ -50,7 +50,8 @@ typedef struct {
  pc02_controls controls;
  int parent,pack,original,mirror,stages[2];
  char parent_path[P2_PATH],stage_path[2][P2_PATH],pack_path[P2_PATH],mirror_path[P2_PATH],mirror_leaf[256];
- int recovered,has_prepared,publish_intent,published,aborted,clean;
+ int recovered,has_prepared,publish_intent,published,aborted,clean,repair_schema;
+ const char *repair_library,*repair_authority;
  size_t initial_count;
  unsigned member;
  const char *operation;
@@ -99,7 +100,7 @@ static int child_path(p2_owner *o,const char *leaf,char out[P2_PATH]){
  return n>0&&n<P2_PATH;
 }
 static int paths(p2_owner *o){
- const char *actual=pc02_library_path(o->lease),*slash;
+ const char *actual=o->repair_schema?o->input.library:pc02_library_path(o->lease),*slash;
  if(!actual||strcmp(actual,o->input.library)||!(slash=strrchr(actual,'/')))return 0;
  size_t n=slash==actual?1:(size_t)(slash-actual);
  memcpy(o->parent_path,actual,n);
@@ -174,12 +175,14 @@ static int input_valid(p2_owner *o){
  wh_gates expected;
  char manifest[EXR_WH_LINE_MAX],authority[P2_PATH];
  const wh_binding *b=&i->binding;
+ if(o->repair_schema){if(!o->repair_authority)return 0;strcpy(authority,o->repair_authority);}
+ else if(!pc02_user_authority(authority,sizeof(authority)))return 0;
  if(memcmp(i->magic,"PC02IN01",8)||!text(b->source,sizeof(b->source),0)||!text(b->run,sizeof(b->run),0)||
     !text(b->attempt,sizeof(b->attempt),0)||!text(b->artifact,sizeof(b->artifact),0)||!text(b->platform,sizeof(b->platform),0)||
     !text(b->sdk,sizeof(b->sdk),0)||!text(b->provider,sizeof(b->provider),0)||!wh_binding_valid(b)||
     strcmp(b->provider,PC02_PROVIDER_SHA)||strcmp(b->sdk,"3.42.0-8357eafa")||
     !text(i->library,sizeof(i->library),0)||!absolute(i->library)||!text(i->pack,sizeof(i->pack),0)||!absolute(i->pack)||
-    !text(i->authority,sizeof(i->authority),0)||!pc02_user_authority(authority,sizeof(authority))||strcmp(authority,i->authority)||
+    !text(i->authority,sizeof(i->authority),0)||strcmp(authority,i->authority)||
     !hex(i->token,48)||i->mirror_present>1||i->allow_partial>1||!file_valid(&i->original)||
     !file_valid(&i->source_pack)||!file_valid(&i->private_pack)||memcmp(i->source_pack.size,i->private_pack.size,8)||
     strcmp(i->source_pack.sha,i->private_pack.sha))return 0;
@@ -210,7 +213,11 @@ static int input_valid(p2_owner *o){
  if(memcmp(&zero,&i->mirror,sizeof(zero)))return 0;
  }
  if(memcmp(i->original_grant+72,i->original.identity,16))return 0;
- if(o->recovered){
+ if(o->repair_schema){
+  char grant_seal[65];memcpy(grant_seal,i->original_grant+8,64);grant_seal[64]=0;
+  if(!hex(grant_seal,64))return 0;
+ }
+ else if(o->recovered){
   unsigned char begin[304]={0};
   char sha[65],manifest_sha[65];
   if(pc02io_get64(i->original_grant)==UINT64_MAX||pc02io_get64(i->original_grant)+1!=o->pending.generation)return 0;
@@ -527,6 +534,7 @@ static wh_step discard(void *context,void *cap,const char *stage){
  o->aborted=1;
  return WH_STEP_OK;
 }
+#include "pc02_repair_owner.inc"
 static int terminal_proof(void *context,const char *path,int target,const pc02_pending_record *pending,const char *terminal){
  p2_owner *o=context;
  (void)path;
@@ -646,8 +654,12 @@ int main(int argc,char **argv){
  goto done;
  }
  o->operation="exclusive-native-admission";
- /* Partial state/head recovery is deliberately fail-closed in this first
-    provider qualification. The separately archived explicit repair follows. */
+ if(recover){
+  int restored=0;o->operation="explicit-protected-tail-repair";
+  o->repair_library=argv[2];o->repair_authority=authority;
+  if(!pc02_repair_prepare(authority,argv[2],repair_schema,repair_prove,o,&o->controls,&restored))goto done;
+  if(restored){puts("{\"status\":\"restored_original_registered_clean\",\"live_capability\":false}");ok=1;goto done;}
+ }
  if(!pc02_open(authority,argv[2],recover?PC02_RECOVER:PC02_OWNER,NULL,&o->controls,&o->lease))goto done;
  pc02_identity parent;
  if(!pc02_parent_fd(o->lease,&o->parent,&parent)||!supported_filesystem(o->parent))goto done;
