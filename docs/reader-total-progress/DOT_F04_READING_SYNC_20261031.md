@@ -148,3 +148,5 @@ The singleTask MainActivity must first launch after instrumentation installs Act
 - macOS：原 relay.start 本来已有宿主证书信任（并非缺失）；统一为一次指纹记录的临时信任，正常/失败路径均移除该证书。macOS CODE_SIGNING_ALLOWED=YES 与 94fb supplemental 原真实套件一致；iOS 模拟器仍 NO。
 
 - 静态清理复核：桌面 finally 不再串联可能短路的 close；逐项尝试实际应用、fixture server、信任、私钥及 AT-SPI 释放。清理错误记入结果并使本阶段失败，不覆盖正在传播的原测试异常。
+
+- 接收端初始化自查：Windows 仅 seed 本地导入；peer 空库走实际账户同步自动 receive/import。GTK peer 空库执行 Receive 投影后真实书架 search/F2/Home/Return 云书打开。避免先本地导入再 stage bootstrap 产生与远端并发的 book root；没有测试合并或写入产品库。
