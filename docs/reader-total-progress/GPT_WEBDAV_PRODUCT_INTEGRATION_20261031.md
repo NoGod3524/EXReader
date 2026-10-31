@@ -52,6 +52,12 @@
   worktree `/data/workspace/exreader-dot-webdav-managed-cleanup-audit-20261031`。
   本地存在不代表已发布或已通过。
 
+进一步只读核对该 audit commit 的 `tests/webdav_managed_cleanup_audit_20261031/verify.py`：
+第 150–166 行针对固定历史 artifacts 明确返回 `critical_evidence_complete=False`，
+第 241 行以该字段参与 `audit_passed`。这是已知历史证据缺失的编码，
+不能通过重跑当前审计或仅更换 pin 得到新证据的接受结论；需要原审计 owner
+为补齐后的原始观测提供实际重算检查。
+
 | 平台 | artifact | 名称 | bytes | API digest SHA-256 |
 |---|---|---|---:|---|
 | Linux | 13030965993 | webdav-managed-cleanup-Linux-41170057297-1 | 86807 | 25b95345c6607c6fc0fadd54c95bdd62c515bcc460498664bddabdf88c88b442 |
