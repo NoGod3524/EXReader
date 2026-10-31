@@ -4,10 +4,11 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2];HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(ROOT/"tests/reader_f08_android_20261031"))
 from lane import identity, need, save, sha, command
-BASE="714482fa388ab24195f13f48c09cf68a30628f57"
+BASE="da12b2b2ea1a727e2d5038d0219a608742227b3b"
 OUT=ROOT/"build/f08-linux-product";EVIDENCE=OUT/"evidence"
-FILES={"tests/reader_f08_linux_product_20261031/run.py","tests/reader_f08_linux_product_20261031/audit.py",
-       ".github/workflows/dot-f08-linux-product-20261031.yml"}
+FILES={"tests/reader_f08_linux_product_20261031/run.py",
+       ".github/workflows/dot-f08-linux-product-20261031.yml",
+       "tests/reader_f08_linux_mutter_20261031/capability.c"}
 ADAPTERS=("tests/reader_f08_compact_resume_20261031/adapter.py","tests/reader_f08_compact_resume_20261031/controls.py")
 COHORTS=("perf-evidence","perf-interactions")
 TREES=(*COHORTS,"perf-package","perf-guards","f08-result","f08-causal","f08-causal-control")
