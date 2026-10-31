@@ -5,6 +5,8 @@ import base64
 import secrets
 import stat
 import sqlite3
+import signal
+import threading
 import hashlib
 import json
 import os
@@ -129,6 +131,24 @@ final class F05RecoveryUITests: XCTestCase {
             "actual native conflict must be visible; never select one head")
         openBook()
     }
+    func test06UnknownPutAckProcessKill() {
+        tap("library.organization")
+        tap("organization.kind.tag")
+        tap("organization.create")
+        tap("organization.name")
+        node("organization.name").typeText("F05 Apple uncertain")
+        tap("organization.save")
+        let row=app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH 'organization.group.' AND label == 'F05 Apple uncertain'")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout:60))
+        tap("organization.close")
+        tap("account.sync.start")
+        // The external fixture monitor sends SIGKILL only after authenticated
+        // native PUT bytes are committed while its acknowledgement is held.
+        XCTAssertTrue(wait{self.app.state == .notRunning})
+        app.launch()
+        XCTAssertTrue(node("account.sync.start").waitForExistence(timeout:90))
+        sync()
+    }
     func test05OfflineReopenOriginal() {
         // Server is offline before this new actual process starts.
         openBook()
@@ -181,10 +201,11 @@ def main():
                        for row in db.execute("SELECT id,source FROM books ORDER BY id")]
         with sqlite3.connect((folder/"reader-catalog.db").resolve().as_uri()+"?mode=ro",uri=True) as db:
             revisions=[json.loads(row[0]) for row in db.execute("SELECT body_json FROM reader_revisions")]
+            pending=db.execute("SELECT count(*) FROM reader_outbox").fetchone()[0]
         selected=[row for row in revisions if row["entity_kind"]=="book"
                   and row["entity_key"]==contract["entity_key"]]
         heads={row["id"] for row in selected}-{parent for row in selected for parent in row["parents"]}
-        return {"originals":originals,"records":selected,"heads":sorted(heads),
+        return {"originals":originals,"records":selected,"heads":sorted(heads),"outbox":pending,
                 "observation":"actual app terminated; readonly SDK and product catalog"}
     try:
         if a.platform=="macos":
@@ -194,7 +215,7 @@ def main():
         if a.platform!="macos":
             if not a.udid:raise ValueError("actual simulator UDID required")
             subprocess.run(["xcrun","simctl","keychain",a.udid,"add-root-cert",str(a.certificate)],check=True)
-        for number,name in enumerate(("test01BaselineOriginal","test02CacheMissReceiveCancel","test03RetryOriginal","test04ReceiveRealConcurrentHeads","test05OfflineReopenOriginal")):
+        for number,name in enumerate(("test01BaselineOriginal","test02CacheMissReceiveCancel","test03RetryOriginal","test04ReceiveRealConcurrentHeads","test05OfflineReopenOriginal","test06UnknownPutAckProcessKill")):
             if number==1:
                 if a.platform=="macos":
                     if a.container is None:raise ValueError("isolated actual app container required")
@@ -233,6 +254,27 @@ def main():
                 server.hold_get=True;server.get_blocked.clear();server.release.clear()
             if number==3:server.expose_checkpoint(a.peer/contract["remote_conflict"])
             if number==4:server.offline=True
+            monitor=None;monitor_errors=[];kill_receipt={}
+            if number==5:
+                server.offline=False
+                server.hold_put=True;server.put_committed.clear();server.release.clear()
+                def kill_at_commit():
+                    try:
+                        if not server.put_committed.wait(180):
+                            raise AssertionError("native PUT never reached committed/unknown-ack boundary")
+                        pids=subprocess.check_output(["pgrep","-x","EXReaderHost"],text=True).split()
+                        if len(pids)!=1:raise AssertionError("unique actual EXReaderHost PID required")
+                        pid=int(pids[0])
+                        command_line=subprocess.check_output(["ps","-p",str(pid),"-o","command="],text=True).strip()
+                        if "/EXReaderHost.app/EXReaderHost" not in command_line:
+                            raise AssertionError("unexpected host PID executable")
+                        kill_receipt.update({"pid":pid,"command":command_line,
+                            "signal":"SIGKILL","wire_commits_before_kill":list(server.commits),
+                            "immutable_before":{k:hashlib.sha256(v).hexdigest() for k,v in server.entries.items()}})
+                        os.kill(pid,signal.SIGKILL)
+                    except BaseException as error:monitor_errors.append(repr(error))
+                    finally:server.release.set()
+                monitor=threading.Thread(target=kill_at_commit,daemon=True);monitor.start()
             start=len(server.requests)
             argv=command+["-only-testing:EXReaderHostUITests-"+label+"/F05RecoveryUITests/"+name,
                           "-resultBundlePath",str(a.output/(name+".xcresult"))]
@@ -245,6 +287,15 @@ def main():
             print(safe,flush=True)
             report["cases"].append({"test":name,"exit":done.returncode,"requests_start":start,
                                     "requests_end":len(server.requests),"argv":argv})
+            if monitor is not None:
+                monitor.join(190)
+                if monitor.is_alive() or monitor_errors:
+                    raise AssertionError("kill fixture failed: "+repr(monitor_errors))
+                if not kill_receipt:raise AssertionError("missing actual process kill receipt")
+                if any(k not in server.entries or hashlib.sha256(server.entries[k]).hexdigest()!=v
+                       for k,v in kill_receipt["immutable_before"].items()):
+                    raise AssertionError("uncertain retry changed immutable committed wire")
+                report["cases"][-1]["kill"]=kill_receipt
             if done.returncode:raise AssertionError("actual Apple UI failed: "+name)
             if number==1 and not server.get_blocked.is_set():
                 raise AssertionError("real cache-miss receive gate never reached")
@@ -257,6 +308,8 @@ def main():
                     raise AssertionError("cancel before original response published SDK original")
                 if number>1 and (len(observed["originals"])!=1 or observed["originals"][0]["sha256"]!=contract["entity_key"].split(":",1)[1]):
                     raise AssertionError("actual Apple SDK original is absent, duplicate, or changed")
+                if number==5 and observed["outbox"]!=0:
+                    raise AssertionError("killed native PUT was not acknowledged on actual retry")
                 report["cases"][-1]["readback"]=observed
             server.release.set()
             if number==4 and len(server.requests)!=start:
@@ -268,7 +321,6 @@ def main():
     finally:
         report["requests"]=server.requests
         report["uncovered"]=["independent xcresult attachments and artifact authentication",
-            "uncertain acknowledgment process kill",
             "organization projection (owner gap, not lower API injected)"]
         (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
         server.close()
