@@ -17,8 +17,10 @@
 #include <atomic>
 #include <filesystem>
 #include <mutex>
+#include <memory>
 #include <vector>
 #include <cstdio>
+#include <string>
 using namespace winrt;
 using namespace winrt::Windows::Graphics::Capture;
 using namespace winrt::Windows::Graphics::DirectX;
@@ -53,14 +55,28 @@ static void bitmap(const fs::path&p,const std::vector<unsigned char>&bytes,LONG 
   if(roundtrip!=bytes)throw hresult_error(E_FAIL,L"PNG roundtrip mismatch");
  }
 }
+static unsigned long long capture_limit(const wchar_t*arg){
+ std::wstring value(arg);size_t consumed=0;auto ms=std::stoull(value,&consumed);
+ if(consumed!=value.size()||ms<1||ms>5400000)throw hresult_error(E_INVALIDARG,L"capture limit 1..5400000 ms");
+ return ms;
+}
 int wmain(int argc,wchar_t**argv){
  setvbuf(stdout,nullptr,_IOLBF,65536);SetProcessDPIAware();
  try{
+  if(argc==2&&std::wstring(argv[1])==L"--check-limits"){
+   if(capture_limit(L"1")!=1||capture_limit(L"120000")!=120000||capture_limit(L"5400000")!=5400000)throw hresult_error(E_FAIL,L"capture limit positive control");
+   for(const auto*value:{L"0",L"5400001",L"-1",L"120000x",L""}){
+    bool rejected=false;try{capture_limit(value);}catch(...){rejected=true;}
+    if(!rejected)throw hresult_error(E_FAIL,L"capture limit negative control");
+   }
+   std::printf("{\"capture_limit_checks\":8,\"passed\":true}\n");return 0;
+  }
   if(argc==3&&std::wstring(argv[1])==L"--check-png"){
    init_apartment(apartment_type::multi_threaded);
    bitmap(argv[2],{0,17,255,255,255,1,83,255,19,27,29,255,255,255,255,255},2,2,true);return 0;
   }
-  if(argc!=5)throw hresult_error(E_INVALIDARG,L"root_hwnd pid stop_file image_folder");
+  if(argc!=5&&argc!=6)throw hresult_error(E_INVALIDARG,L"root_hwnd pid stop_file image_folder [capture_limit_ms]");
+  auto limit_ms=argc==6?capture_limit(argv[5]):120000ull;auto frame_limit=argc==6?(limit_ms*60+999)/1000+8:7200ull;if(frame_limit<7200)frame_limit=7200;
   HWND root=(HWND)(uintptr_t)std::stoull(argv[1]);DWORD pid=(DWORD)std::stoul(argv[2]),owner=0,affinity=0;
   GetWindowThreadProcessId(root,&owner);
   if(!IsWindow(root)||owner!=pid)throw hresult_error(E_ACCESSDENIED,L"window ownership");
@@ -86,14 +102,18 @@ int wmain(int argc,wchar_t**argv){
   auto pool=Direct3D11CaptureFramePool::CreateFreeThreaded(native,DirectXPixelFormat::B8G8R8A8UIntNormalized,8,size);
   auto session=pool.CreateCaptureSession(item);session.IsCursorCaptureEnabled(false);
   fs::path folder=argv[4],stop=argv[3];fs::create_directories(folder);
-  std::mutex lock;std::atomic<bool> failed{false},closed{false};unsigned frames=0,changed_images=0,last=0;unsigned long long saved_bytes=0,saved_pixel_bytes=0;
+  struct Gate { std::mutex lock;bool stopping{}; };auto gate=std::make_shared<Gate>();
+  std::atomic<bool> failed{false},closed{false};unsigned frames=0,changed_images=0,last=0;unsigned long long saved_bytes=0,saved_pixel_bytes=0;
   std::vector<unsigned char> previous;com_ptr<ID3D11Texture2D> staging;D3D11_TEXTURE2D_DESC staging_desc{};
-  auto closed_token=item.Closed([&](auto const&,auto const&){closed=true;});
-  auto token=pool.FrameArrived([&](auto const&sender,auto const&){
-   std::lock_guard<std::mutex> guard(lock);if(failed)return;
+  auto closed_token=item.Closed([&,gate](auto const&,auto const&){std::lock_guard<std::mutex> guard(gate->lock);if(!gate->stopping)closed=true;});
+  auto token=pool.FrameArrived([&,gate](auto const&sender,auto const&){
+   auto callback_entry=tick();
+   std::lock_guard<std::mutex> guard(gate->lock);if(gate->stopping || failed)return;
    try{
-    while(auto frame=sender.TryGetNextFrame()){
-     auto begin=tick();RECT bounds{},after_bounds{};
+    for(;;){
+     auto acquire_begin=tick();auto frame=sender.TryGetNextFrame();auto acquire_end=tick();
+     if(!frame)break;
+     auto begin=acquire_end;RECT bounds{},after_bounds{};
      check_hresult(DwmGetWindowAttribute(root,DWMWA_EXTENDED_FRAME_BOUNDS,&bounds,sizeof(bounds)));
      std::array<Region,2> before={region(root,119),region(root,123)};
      auto content=frame.ContentSize();auto relative=frame.SystemRelativeTime().count();
@@ -120,12 +140,12 @@ int wmain(int argc,wchar_t**argv){
      std::array<Region,2> after={region(root,119),region(root,123)};
      frames++;bool changed=previous!=bytes;
      if(changed){
-      if(saved_bytes>(1ull<<30)||frames>7200)throw hresult_error(E_FAIL,L"image byte or frame cap");
+      if(saved_bytes>(1ull<<30)||frames>frame_limit)throw hresult_error(E_FAIL,L"image byte or frame cap");
       last=frames;previous=std::move(bytes);saved_pixel_bytes+=previous.size();changed_images++;
       auto path=folder/(std::to_string(last)+".png");bitmap(path,previous,size.Width,size.Height);saved_bytes+=fs::file_size(path);
      }
-     std::printf("{\"kind\":\"frame\",\"index\":%u,\"system_relative_100ns\":%lld,\"callback_qpc\":%lld,\"copy_qpc\":%lld,\"map_start_qpc\":%lld,\"map_end_qpc\":%lld,\"readback_finished_qpc\":%lld,\"width\":%d,\"height\":%d,\"changed\":%s,\"image\":\"%u.png\",\"regions\":[",
-      frames,(long long)relative,begin,copy,map_begin,map_end,tick(),size.Width,size.Height,changed?"true":"false",last);
+     std::printf("{\"kind\":\"frame\",\"index\":%u,\"system_relative_100ns\":%lld,\"callback_entry_qpc\":%lld,\"acquire_begin_qpc\":%lld,\"acquire_end_qpc\":%lld,\"callback_qpc\":%lld,\"copy_qpc\":%lld,\"map_start_qpc\":%lld,\"map_end_qpc\":%lld,\"readback_finished_qpc\":%lld,\"width\":%d,\"height\":%d,\"changed\":%s,\"image\":\"%u.png\",\"regions\":[",
+      frames,(long long)relative,callback_entry,acquire_begin,acquire_end,begin,copy,map_begin,map_end,tick(),size.Width,size.Height,changed?"true":"false",last);
      for(unsigned j=0;j<2;j++){
       const auto&r=before[j];bool stable=same(r,after[j])&&EqualRect(&bounds,&after_bounds);
       RECT crop={r.rect.left-bounds.left,r.rect.top-bounds.top,r.rect.right-bounds.left,r.rect.bottom-bounds.top};
@@ -140,11 +160,13 @@ int wmain(int argc,wchar_t**argv){
    catch(...){std::printf("{\"kind\":\"callback_error\",\"qpc\":%lld}\n",tick());std::fflush(stdout);failed=true;}
   });
   session.StartCapture();
-  std::printf("{\"kind\":\"ready\",\"qpc\":%lld,\"width\":%d,\"height\":%d,\"frame_pool_buffers\":8,\"capture_scope\":\"owned_window\",\"cursor_capture\":false}\n",tick(),size.Width,size.Height);std::fflush(stdout);
-  auto deadline=GetTickCount64()+120000;
+  std::printf("{\"kind\":\"ready\",\"qpc\":%lld,\"width\":%d,\"height\":%d,\"frame_pool_buffers\":8,\"capture_scope\":\"owned_window\",\"cursor_capture\":false,\"capture_limit_ms\":%llu,\"frame_limit\":%llu}\n",tick(),size.Width,size.Height,limit_ms,frame_limit);std::fflush(stdout);
+  auto deadline=GetTickCount64()+limit_ms;
   while(!fs::exists(stop)&&!failed&&!closed&&IsWindow(root)&&GetTickCount64()<deadline)Sleep(5);
-  session.Close();pool.FrameArrived(token);pool.Close();item.Closed(closed_token);
-  std::lock_guard<std::mutex> guard(lock);bool expired=GetTickCount64()>=deadline;
+  pool.FrameArrived(token);item.Closed(closed_token);
+  { std::lock_guard<std::mutex> stop_guard(gate->lock);gate->stopping=true; }
+  session.Close();pool.Close();
+  std::lock_guard<std::mutex> guard(gate->lock);bool expired=GetTickCount64()>=deadline;
   std::printf("{\"kind\":\"summary\",\"qpc\":%lld,\"frames\":%u,\"changed_images\":%u,\"saved_pixel_bytes\":%llu,\"saved_file_bytes\":%llu,\"deadline_expired\":%s,\"failed\":%s,\"target_closed\":%s,\"frame_census_complete\":false,\"physical_scanout_proven\":false,\"f08_accepted\":false}\n",
    tick(),frames,changed_images,saved_pixel_bytes,saved_bytes,expired?"true":"false",failed?"true":"false",closed?"true":"false");
   return !failed&&!expired&&frames>0?0:1;

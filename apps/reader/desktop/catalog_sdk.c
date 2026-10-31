@@ -13,6 +13,12 @@ static int title_within_limit(const char *text) {
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <bcrypt.h>
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+static __declspec(thread) reader_catalog_sdk_trace sdk_trace;
+static int64_t sdk_tick(void) { LARGE_INTEGER v;QueryPerformanceCounter(&v);return v.QuadPart; }
+const reader_catalog_sdk_trace *reader_catalog_sdk_trace_get(void) { return &sdk_trace; }
+#endif
+
 typedef struct { BCRYPT_ALG_HANDLE algorithm; BCRYPT_HASH_HANDLE value; } source_hash;
 static int hash_begin(source_hash *h) {
   return BCryptOpenAlgorithmProvider(&h->algorithm,BCRYPT_SHA256_ALGORITHM,NULL,0)>=0 &&
@@ -140,7 +146,13 @@ exr_status reader_catalog_sdk_attach(reader_catalog *catalog,exr_library *librar
   const char *format=format_name(book->format);
   if(!format) return fail(error,EXR_UNSUPPORTED,"Unsupported product book format");
   if(cancelled(control)) return fail(error,EXR_CANCELLED,"Source identity check cancelled");
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  int64_t identity_begin=sdk_tick();
+#endif
   exr_status status=reader_catalog_sdk_original_identity(library,book->id,control,hex,&bytes,error);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  sdk_trace.hash_qpc+=sdk_tick()-identity_begin;sdk_trace.hashed++;
+#endif
   if(status!=EXR_OK) return status;
   if(book->format==EXR_PDF || book->format==EXR_CBZ) location="fixed_page";
   else if(book->format==EXR_EPUB) {
@@ -154,7 +166,13 @@ exr_status reader_catalog_sdk_attach(reader_catalog *catalog,exr_library *librar
   if(cancelled(control)) { free(normalized);return fail(error,EXR_CANCELLED,"Product mapping cancelled before transaction"); }
   reader_catalog_book record={format,hex,book->title?book->title:"",book->author?book->author:"",
     normalized,location,bytes,book->id,book->favorite};
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  int64_t attach_begin=sdk_tick();
+#endif
   reader_catalog_error product_error={0};int result=reader_catalog_attach(catalog,&record,&product_error);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  sdk_trace.attach_qpc+=sdk_tick()-attach_begin;sdk_trace.attached++;
+#endif
   free(normalized);
   if(result!=0) return fail(error,EXR_DATABASE,product_error.message);
   if(key) snprintf(key,READER_BOOK_KEY_CAPACITY,"%s:%s",format,hex);
@@ -167,10 +185,20 @@ exr_status reader_catalog_sdk_repair(reader_catalog *catalog,exr_library *librar
   int repair_prepared=0;
 #endif
   if(!catalog || !library || (!books && count)) return fail(error,EXR_ARGUMENT,"Missing catalog repair input");
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  memset(&sdk_trace,0,sizeof(sdk_trace));
+#endif
   for(size_t i=0;i<count;i++) {
     int present=0;reader_catalog_error product_error={0};exr_error current={0};exr_status status;
     if(cancelled(control)) return fail(error,EXR_CANCELLED,"Catalog startup repair cancelled");
-    if(reader_catalog_has_local(catalog,books[i].id,&present,&product_error)!=0)
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+    int64_t lookup_begin=sdk_tick();
+#endif
+    int lookup_result=reader_catalog_has_local(catalog,books[i].id,&present,&product_error);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+    sdk_trace.lookup_qpc+=sdk_tick()-lookup_begin;sdk_trace.lookups++;
+#endif
+    if(lookup_result!=0)
       status=fail(&current,EXR_DATABASE,product_error.message);
     else if(present) continue;
     else {

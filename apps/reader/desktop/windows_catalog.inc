@@ -165,8 +165,15 @@ static exr_status product_job_run(host_job *job) {
         status=EXR_ARGUMENT;job->error.code=status;
         snprintf(job->error.message,sizeof(job->error.message),"Accepted SDK book no longer exists");
       } else status=reader_catalog_sdk_attach(catalog,g.library,&books[at],&control,job->product_key,&job->error);
-    } else if(status==EXR_OK)
+    } else if(status==EXR_OK) {
       status=reader_catalog_sdk_repair(catalog,g.library,books,count,&control,&failed,&job->error);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+      const reader_catalog_sdk_trace *trace=reader_catalog_sdk_trace_get();
+      f08_record("catalog_hash",0,&job->review,0,0,0,job->kind,status,trace->hash_qpc,trace->hashed);
+      f08_record("catalog_attach",0,&job->review,0,0,0,job->kind,status,trace->attach_qpc,trace->attached);
+      f08_record("catalog_lookup",0,&job->review,0,0,0,job->kind,status,trace->lookup_qpc,trace->lookups);
+#endif
+    }
     exr_books_free(books,count);
     LeaveCriticalSection(&g.library_lock);
   }
