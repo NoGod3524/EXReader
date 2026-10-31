@@ -153,6 +153,8 @@ def main():
                                 "terminated_pid": terminated_pid, "reopened_pid": first.process.pid,
                                 "before": pending, "after": snapshot("first")})
         # Both actual clients edit a shared parent without seeing the other edit.
+        common = snapshot("first")
+        store.checkpoint(out / "peer-baseline", "windows-native-book-common-parent")
         edit(first, "Concurrent first")
         edit(second, "Concurrent second")
         one, two = snapshot("first"), snapshot("second")
@@ -166,6 +168,12 @@ def main():
             raise AssertionError("concurrent head discarded")
         if "并发版本" not in first_detail or "并发版本" not in second_detail:
             raise AssertionError("real host did not display conflict")
+        store.checkpoint(out / "peer-conflict", "windows-two-native-book-peer-heads")
+        (out / "peer-contract.json").write_text(json.dumps({
+            "entity_kind":"book", "entity_key":common["entity_key"],
+            "common_parent":common["heads"], "competing_heads":sorted(expected),
+            "baseline":"peer-baseline", "remote_conflict":"peer-conflict",
+            "simultaneous_online_peers":False}, indent=2) + "\n")
         report["cases"].append({"name": "concurrent_heads_preserved", "outcome": "passed",
                                 "heads": sorted(expected), "first_ui": first_detail,
                                 "second_ui": second_detail})
