@@ -55,6 +55,14 @@ jobs:
       - name: Build B with the same SDK 3.42 GTK recipe that produced A
         run: |
           set -euo pipefail
+          # 8232e91c's product catalog requires an installed OPDSHash prefix that the A-era recipe predates;
+          # stage it from this same tree exactly like dot-integration-candidate-20261031.yml does.
+          mkdir -p "$RUNNER_TEMP/k03-hash-stage"
+          export EXREADER_ORIGINAL_HASH_PREFIX="$(cd "$RUNNER_TEMP/k03-hash-stage" && pwd -P)"
+          cmake -S extras/opds -B "$RUNNER_TEMP/k03-hash-build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$EXREADER_ORIGINAL_HASH_PREFIX" 2>&1 | tee build/k03/hash-configure.log
+          cmake --build "$RUNNER_TEMP/k03-hash-build" --parallel 4 2>&1 | tee build/k03/hash-build.log
+          cmake --install "$RUNNER_TEMP/k03-hash-build" 2>&1 | tee build/k03/hash-install.log
+          find "$EXREADER_ORIGINAL_HASH_PREFIX" -type f -exec sha256sum {} + | sort -k2 > build/k03/evidence/hash-prefix.sha256
           python3 tests/gtk_sdk342_package/run.py build 2>&1 | tee build/k03/b-build.log
           test -f build/f06/linux/manifest.json
       - name: Move the B build tree away (no build-tree dependency)

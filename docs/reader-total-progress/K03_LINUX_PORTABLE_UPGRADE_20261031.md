@@ -65,5 +65,13 @@ The independent job re-derives the conclusions from the uploaded evidence only (
 identity, and its own reads of the profile copies), without the driver's pass/fail.
 
 ## Status
-Pending the first run; results, artifact IDs and digests are appended below. Scope of any result: F12 Linux portable
+Initial run 41174389797 / attempt 1 (a0542af3561470d6dbaa1639b71049129da3dd46): failed in "Build B" at
+`raw-product-configure` — `apps/reader/store/native/CMakeLists.txt:91` requires READER_ORIGINAL_HASH_PREFIX or
+EXREADER_ORIGINAL_HASH_PREFIX (installed OPDSHash), a dependency added between 8f8acf32 and 8232e91c that the A-era
+recipe does not stage. No B package was produced and no UI item ran; that run's artifacts are kept unmodified.
+Single targeted correction: the workflow stages OPDSHash from this same tree (`extras/opds`, `EXREADER_OPDS_HASH_ONLY=ON`,
+canonical prefix, as `dot-integration-candidate-20261031.yml` does) and exports the prefix before running the unchanged
+recipe. No recipe, product or guard change.
+
+Correction run results, artifact IDs and digests are appended below. Scope of any result: F12 Linux portable
 update slice only — not F11, not six-platform F12, not formal release or signing, not licensing/documentation.
