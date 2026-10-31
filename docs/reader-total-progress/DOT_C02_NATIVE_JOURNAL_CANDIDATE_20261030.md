@@ -80,3 +80,30 @@ The existing workflow now has a separate audit-only path, selected by the commit
 The audit binds the exact producer source, run, attempt, two job IDs and artifact IDs above. Inside Actions only, it downloads both original ZIPs, verifies their exact sizes and SHA256 values, checks every internal inventory entry, parses all raw native journal/intent pairs, and verifies the ten observed process barriers and successful path replacement. It rejects seven semantic mutations after recomputing the package's internal inventory: wrong source, wrong run, wrong attempt, false full-P0 claim, resealed reserved bytes, resealed duplicate/gap counts, and changed interior journal bytes. After parsing it rehashes and retains both untouched original ZIPs in the audit artifact.
 
 This is a separately implemented artifact audit, not an independent human review. Its result is pending. It grants no production admission. Persistent gate and actual owner/reader lifetime wiring remain required for full C02.
+
+### Production integration inventory prepared after native validation
+
+Read-only inspection of the candidate tree found the following actual entry and ownership boundaries. These are implementation obligations, not completed wiring.
+
+| Owner | Actual entry | Lifetime that must retain admission |
+| --- | --- | --- |
+| Windows product | `examples/reader.c`, WinMain SDK open at line 6437; presence gate in `apps/reader/desktop/windows_migration_gate.h` | Keep shared custody through worker shutdown and session/source/fixed-reader destruction, then SDK close at line 6316. Presence checks alone do not exclude a later migrator. |
+| GTK product | `examples/linux/reading.c`, `linux_reader_open` / `linux_reader_close` | Acquire before SDK open at line 273; release after batch, navigation, search, account jobs, session and wave-3 owners close. The existing `.product.lock` is a separate catalog lock. |
+| Apple product | `examples/apple/HostSDK.swift`, `HostLibrary.init/deinit`; independent opens in `HostModel.swift` | Every HostLibrary instance needs the same domain check. HostPublication already retains HostLibrary; HostSession/back-to-library also retains it. Source fingerprint/export operations release scoped sources. A return to the shelf is not final release. |
+| Android product | `examples/android/app/src/main/cpp/exreader_host_jni.c`, NativeLibrary nativeOpen/nativeClose; Java `NativeLibrary.java` | Source currently has no parent borrow. BoundedEpub, NativeSearch and NativeNavigation keep native objects after their open calls; each needs a retained borrow through actual native close. Defer the library's gate release until all such objects finish, including exceptional construction paths. |
+| Helper readers | `apps/reader/local-downloads/src/local_downloads.c:889` | The open is verification of a newly made private backup, not an additional open of the original library. Classify and protect its namespace while verifying; do not silently treat it as public-target admission. |
+| Migration owner and observers | `extras/migration/src/lm_main.c`, `lm_recovery.c`, `lm_new_target.c`, worker executable | Owner admission must precede snapshot, stage, target SDK open and publication. Child observers need tracked live borrows; recovery must prove worker termination before any terminal release. Windows recovery currently returns platform-unqualified, so installing the journal alone cannot activate it. |
+
+The frozen SDK's source retains its database owner after `exr_library_close` (`include/exr/library.h` and `src/library.c`). Fixed-source CBZ readers can also retain that source internally. Intercepting only source calls made directly by a host would therefore miss real borrows. Keep custody with each host owner and its derived reader objects, with tests that close the parent before releasing the final child.
+
+Persistent gate contract for the next stage:
+- Read an independently trusted domain-to-full49 mapping and exact object identities before taking custody. H01 validates the shape of supplied JSON; it supplies neither registry provenance nor SDK authority.
+- Under exclusive custody, durably establish PENDING before the first migration write. A failed, short or unknown gate write grants no mutation capability. Native journal poison must never rely on a second write succeeding.
+- Every ordinary reader acquires shared custody, verifies the full persisted state and expected generation while held, and retains custody until its final borrow. Missing, truncated, replaced or unresolved gate state refuses SDK open; it is never silently initialized.
+- Recovery acquires fresh exclusive custody and matches the exact actual journal/intent tip, actual publication state and terminal worker evidence. A string identity, a green test receipt, closing a handle or returning to the shelf cannot clear PENDING.
+- Establish CLEAN only after the terminal journal, publication/abort proof and all worker/borrow obligations agree. The known C01 generation-5/PENDING-0 drift must remain isolated after killing the holder.
+- Bootstrap/enrollment is a separate explicit operation over a proved initial state. Its trusted registry and native object binding must be implemented before production use; no automatic empty-file repair is allowed.
+
+Required integration evidence includes real source/publication/pager/search/navigation/export borrows surviving parent close; both reader/writer acquisition orders; killed-owner fresh-reader refusal; missing/replaced gate refusal; generation drift with PENDING cleared in C01; failed persistence with subsequent writes denied; and recovery using only the exact acknowledged tip. Existing 46 native scenarios, ABI3 16/64 and ABI2 81/6 remain preserved.
+
+No production-owner file was changed during this inventory. Apple Features helpers/admission/workflows, F12's audit files, H01 and H02 account handlers remain outside this writer's changes.
