@@ -222,3 +222,37 @@ All earlier failed runs and artifacts remain, including41233481729 and4123750079
 The original sender remains archived real Windows source3b416378337a73c62423857e4340d469d357038d /41169386789/A1 /13030748486, not a new-source Windows run or continuously live Windows service. Android is an emulator. The fixed slice proves original transfer, rejection under the real injected faults, cache reuse and SDK-backed offline reopening. Physical Android, six-target coverage and complete formal F02 acceptance are not conferred. **F02_accepted=false; formal95/108 remains unchanged.** External owners, main/shared branches, PRs, tags and releases remain untouched.
 
 Cold-cache evidence document prepared at 2026-10-31T21:02:54.799417+00:00 / 2026-10-31 17:02:54 EDT.
+
+
+## Approved same-source Windows -> Android round
+
+Implementation pending its sole Actions round. Base86d38aec32a53bafff80d8f01fd677e10a4e5e64; exclusive branchcodex/gpt-f02-same-source-win-android-20261031. The previous accepted cold-cache source98d2542f3d9849bbcb81f134c6327b59240043b3/run41240919804/A1 and all earlier failures remain above. This package changes the input provenance contract and adds evidence; it does not modify production, Java, the SDK or the old Windows recipe.
+
+Exact six changed paths relative to this base:
+
+| Existing path | Minimal change |
+|---|---|
+| tests/reader_f02_win_android_20261031/fetch_sender.py | source admission, current Windows artifact/SDK proof authentication, installed evidence capture |
+| tests/reader_f02_win_android_20261031/authenticate.py | independent current-run ZIP refetch, original12 controls, four provenance controls, cross-host SDK proof |
+| tests/reader_f02_win_android_20261031/run.py | current authenticated input binding only; remaining receive/fault/offline body unchanged |
+| tests/reader_f02_win_android_20261031/source_lock.json | exact scope, historical identities, fixed SDK/shared trees and budgets |
+| .github/workflows/dot-f02-win-android-transfer-20261031.yml | one admission -> Windows -> Android -> independent-audit graph |
+| docs/reader-total-progress/DOT_F02_WIN_ANDROID_TRANSFER_20261031.md | this contract and later actual results |
+
+Frozen inputs: SDK8357eafa28423a7ab93ba08b823af80f01ad1505 (3.42.0/ABI1), product MainActivity blobc98cb87a86ab95ae9498cf9ab5dce68e9c4dd369 and BookStore blobbe6dc75e0f77d0a975c21dc7dddeea31b46d5d81. The source lock records SDK core tree/blob IDs for src/include/cmake/CMakeLists.txt/bindings, compared against the fixed SDK commit. Shared apps/reader tree004a0b08be8568407475b8bafe8472bd216516b8 and extras tree61fccfdaa6786ecd87dc9a7939c7d63314af4f11 come from the accepted product candidate and match the old tested Windows producer3b416378337a73c62423857e4340d469d357038d. They are compiled from the single new checkout H, not replaced with the SDK repository's different product module tree.
+
+Java F02ReceiveTest.java blobcb5b00397eced744364cb38706476512e0b3942c, build.py blob646c4b2926b8749d157e47dfea3cb40b0c241b74 and init.gradle blobbb80155000e317e6024552d3cfde6143372514cf remain frozen. Old Windows windows_send/build/helper/verify_sender files remain unchanged. Admission compares the original20 audit body and12 negative-control implementation against the accepted base; the receive body after input binding, original corruption bytes/timeouts and cold precondition are preserved.
+
+Every job checks out the same full github.sha H. Windows reuses its installed static SDK build, >=26 package self-checks, real picker import, account sync/actual HTTPS PUT, six sender checks and public installed-SDK original readback. Unrelated old Windows compact/account/organization/forward-scan suites are not rerun or newly claimed by this narrow slice.
+
+The Windows upload step exports artifact ID and SHA256 directly to dependent jobs, separately for f02-windows and f02-windows-sdk. Android fetches only those outputs and verifies current H/run/attempt, successful producer job/time window, exact artifact names, API bytes/digests and the raw ZIP hashes. The source lock retains the old13030748486 identity solely as history and negative input; there is no archived-input fallback. Original TXT stays12000 bytes, SHA2565f00b41f874d60348d6dc237873759906e5f0ed28b05bb399a6699bbc3c7b38f, corrupt response remains first-byte XOR1.
+
+SDK evidence is platform-specific: Windows proof retains installed .lib archive bytes, headers/configs, raw link map/cache, packaged host/inspector and package selftest. It is a static-reading build, not a Windows SDK DLL requirement. Android retains installed SDK/provider/header/config bytes, actual APK JNI bytes and host CMake-cache evidence. Shared ELF loaded-image comparison preserves code/data identity if Gradle strips non-loaded symbols; both full-file hashes and the loaded-image hash are recorded. The fingerprint binds exact SDK core and shared-module Git objects, rather than only a3.42.0 string.
+
+The separate audit re-fetches this run's original Windows ZIP and SDK ZIP from the producer outputs and requires exact byte equality with the archives Android consumed. It re-runs the unchanged sender semantics, Android20 semantic checks and original12 named/reasoned controls, independently recomputes both installed SDK proofs, and runs four additional controls: old artifact, cross-source SHA, wrong attempt and a self-consistent wrong SDK fingerprint. Only after those pass may summary.same_source_windows become true. The existing separate workflow code then recomputes raw cold-cache isolation/stat, owner completion, exact XOR1 response and normal/duplicate target-GET boundaries.
+
+One initial push-triggered attempt only: admission10, Windows30, Android60, audit15, total115 runner-minute ceiling. There is no automatic correction/rerun. This budget is based on the old selected Windows steps totaling235s (build189s, sender6s) and the accepted Android339s/audit14s, with cold-build margins. The old Windows whole-suite1588s included other UI suites outside this slice. Unused ceiling does not grant another run. Failure artifacts and original assertions must remain.
+
+Source/Git/docs use only the approved native lap25002 -> saved official instabox@0.8.52 -> original VM route. All project syntax/build/test/fixture/benchmark/ZIP operations run in Actions. No Studio/C02/Apple/F08/UI or other-owner integration; no shared dirty tree, main/shared branch, PR/tag/release. Same-source proof still means artifact-carried Windows PUT store replayed by the Android test HTTPS server, not one continuously live cross-machine server. Android is an emulator. Full six-target F02 and physical-device acceptance remain open; formal95/108 and F02_accepted=false remain unchanged.
+
+Contract prepared 2026-10-31T21:34:25.333117+00:00.
