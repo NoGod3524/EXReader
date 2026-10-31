@@ -239,8 +239,8 @@ def collect_provider(argv):
     for name in ("CMakeCache.txt", "build.ninja", "CMakeFiles/rules.ninja"):
         copy(name, args.build_directory / name)
     responses = sorted(args.build_directory.rglob("*.rsp"))
-    if not responses:
-        raise RuntimeError("No original Ninja response file retained; do not reconstruct")
+    rules = (args.build_directory / "CMakeFiles/rules.ninja").read_text(errors="replace")
+    response_status = "retained" if responses else "missing" if "rspfile" in rules else "not_used"
     for response in responses:
         copy("response/" + response.relative_to(args.build_directory).as_posix(), response)
     capture("cmake-version.log", ["cmake", "--version"])
@@ -264,7 +264,9 @@ def collect_provider(argv):
                 "product_prefix": str(args.product_prefix.resolve(strict=True)),
                 "stage_prefix": str(args.stage_prefix.resolve(strict=True)),
                 "files": records, "commands": commands,
-                "observations": "static-only", "host_runtime_provider_observed": False,
+                "observations": "static-only", "static_only": True,
+                "response_status": response_status,
+                "host_runtime_provider_observed": False,
                 "F07_accepted": False}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
 
