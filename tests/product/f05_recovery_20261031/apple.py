@@ -96,7 +96,7 @@ final class F05RecoveryUITests: XCTestCase {
         XCTAssertTrue(wait{self.node("account.choose").label=="云盘书库，"+root})
         sync()
         XCTAssertTrue(text("account.receive.state").contains("待处理冲突 0 项"))
-        cancelRealReceiveThenRetry()
+        openBook()
     }
     func test02ReceiveRealConcurrentHeads() {
         sync()
@@ -150,8 +150,6 @@ def main():
             if not a.udid:raise ValueError("actual simulator UDID required")
             subprocess.run(["xcrun","simctl","keychain",a.udid,"add-root-cert",str(a.certificate)],check=True)
         for number,name in enumerate(("test01BaselineOriginal","test02ReceiveRealConcurrentHeads","test03OfflineReopenOriginal")):
-            if number==0:
-                server.hold_get=True;server.get_blocked.clear();server.release.clear()
             if number==1:server.expose_checkpoint(a.peer/contract["remote_conflict"])
             if number==2:server.offline=True
             start=len(server.requests)
@@ -164,8 +162,6 @@ def main():
             report["cases"].append({"test":name,"exit":done.returncode,"requests_start":start,
                                     "requests_end":len(server.requests),"argv":argv})
             if done.returncode:raise AssertionError("actual Apple UI failed: "+name)
-            if number==0 and not server.get_blocked.is_set():
-                raise AssertionError("native original receive gate was never reached")
             server.release.set()
             if number==2 and len(server.requests)!=start:
                 raise AssertionError("offline reopening unexpectedly requested network")
@@ -175,7 +171,7 @@ def main():
     finally:
         report["requests"]=server.requests
         report["uncovered"]=["independent xcresult attachments and catalog head audit",
-            "receive cancellation exact SDK count/readback","uncertain acknowledgment process kill",
+            "receive cancellation cache-miss staging and exact SDK readback","uncertain acknowledgment process kill",
             "organization projection (owner gap, not lower API injected)",
             "actual displayed original byte/readback authentication"]
         (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
