@@ -19,6 +19,8 @@ jobs:
           python3 tests/reader_f08_shelf_content_20261031/run.py guard
           python3 -m py_compile tests/reader_f08_causal_frame_20261031/verify.py tests/reader_f08_shelf_content_20261031/run.py
           python3 tests/reader_f08_causal_frame_20261031/verify.py preflight
+          python3 -m py_compile tests/reader_f08_compact_resume_20261031/adapter.py tests/reader_f08_compact_resume_20261031/controls.py
+          python3 tests/reader_f08_compact_resume_20261031/controls.py
       - name: Build only the passive observer and isolated native control
         run: |
           sudo apt-get update
@@ -51,21 +53,21 @@ jobs:
       - name: Install the fixed GTK runtime and test compiler
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build pkg-config libgtk-3-dev xvfb openbox xdotool x11-utils libsecret-1-0
+          sudo apt-get install -y cmake ninja-build pkg-config libgtk-3-dev xvfb openbox xdotool x11-utils libsecret-1-0 dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0
           cmake -S tests/reader_f08_causal_frame_20261031 -B build/f08-causal-probe -G Ninja -DCMAKE_BUILD_TYPE=Release
           cmake --build build/f08-causal-probe
       - name: Run unchanged six-launch driver with the original full product
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          xvfb-run -a -s "-screen 0 1440x900x24" sh -c '
+          xvfb-run -a -s "-screen 0 1440x900x24" dbus-run-session -- sh -c '
             set -eu
             openbox > build/f08-openbox.log 2>&1 &
             wm=$!
             trap "kill $wm" EXIT
             mkdir -p build/f08-causal-control
             build/f08-causal-probe/f08_draw_control > build/f08-causal-control/draw.json
-            python3 tests/reader_f08_shelf_content_20261031/run.py capture
+            /usr/bin/python3 tests/reader_f08_shelf_content_20261031/run.py capture
           '
       - uses: actions/upload-artifact@v4
         id: upload

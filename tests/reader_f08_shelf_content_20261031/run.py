@@ -6,10 +6,13 @@ BASE="2bd45f2f764b4cba33037d3366baea3adee1086b"
 PRODUCER={"source_sha":"1c39ec9f0b5015d3aa1f12c0a39bcfa4719568b2","run_id":"41196829037","attempt":"1"}
 FILES={"tests/reader_f08_causal_frame_20261031/probe.c","tests/reader_f08_causal_frame_20261031/verify.py",
        "tests/reader_f08_causal_frame_20261031/draw_control.c","tests/reader_f08_causal_frame_20261031/shelf_content.h",
-       "tests/reader_f08_shelf_content_20261031/run.py",".github/workflows/dot-f08-shelf-content-20261031.yml"}
+       "tests/reader_f08_shelf_content_20261031/run.py",".github/workflows/dot-f08-shelf-content-20261031.yml",
+       "tests/reader_f08_compact_resume_20261031/adapter.py","tests/reader_f08_compact_resume_20261031/controls.py"}
 sys.path.insert(0,str(ROOT/"tests/reader_f08_causal_frame_20261031"))
 import driver as D
 import verify as V
+sys.path.insert(0,str(ROOT/"tests/reader_f08_compact_resume_20261031"))
+import adapter as A
 spec=importlib.util.spec_from_file_location("linux_full_product",ROOT/"tests/reader_f08_linux_product_20261031/run.py")
 R=importlib.util.module_from_spec(spec);spec.loader.exec_module(R)
 need,save,sha,command,identity,load=R.need,R.save,R.sha,R.command,R.identity,R.load
@@ -83,6 +86,24 @@ def coverage(summary):
     return {"shelf_actions":len(actions),"content_draw_entry_us":[a["event_to_content_draw_entry_us"] for a in actions],
             "content_frame_end_us":[a["event_to_content_frame_end_us"] for a in actions],
             "physical_presentation_proven":False,"frame_budget_measured":False,"f08_accepted":False}
+def startup_coverage(root,top):
+    import configparser
+    continued=0
+    for row in top["cohorts"]:
+        folder=root/("launch-%02d"%row["launch"])
+        receipt=load(folder/"compact-resume.json")
+        need(receipt["identity"]==V.identity(),"startup receipt identity")
+        settings=(folder/"startup-settings.ini").read_text()
+        need(hashlib.sha256(settings.encode()).hexdigest()==receipt["settings_sha256"],"original startup settings")
+        config=configparser.ConfigParser(interpolation=None);config.read_string(settings)
+        need(config.getint("reader","book")==receipt["requested_book"],"requested native book")
+        A.verify(receipt,row)
+        want="shelf_unchanged" if row["kind"]=="shelf" else "continued"
+        need(receipt["stage"]==want,"native startup route")
+        continued+=receipt["stage"]=="continued"
+    need(len(top["cohorts"])==6 and continued==4,"four Continue inputs and two unchanged Library entries")
+    return {"continued":continued,"shelf_unchanged":2,"shared_startup_limit_seconds":600,
+            "automatic_restore_measured":False}
 def capture():
     guard();OUT.mkdir(parents=True,exist_ok=False)
     report={**identity(),"collection_complete":False,"problems":[],"f08_accepted":False}
@@ -93,10 +114,11 @@ def capture():
         seed=ROOT/"build/perf-probe/seed_library";seed.parent.mkdir(parents=True,exist_ok=True)
         shutil.copyfile(raw/"perf-probe/seed_library",seed);seed.chmod(0o755)
         (ROOT/"build/perf-package/EXReader-Linux/bin/exreader-linux").chmod(0o755)
-        D.main();V.verify()
+        A.install();D.main();V.verify()
         summary=load(ROOT/"build/f08-causal/summary.json")
         need(summary["host_sha256"]==built["program_sha256"],"same product after sampling")
-        report.update(coverage(summary),collection_complete=True)
+        report.update(coverage(summary),collection_complete=True,
+            startup=startup_coverage(ROOT/"build/f08-causal",load(ROOT/"build/f08-causal/driver.json")))
     except BaseException as error:
         report["problems"].append(repr(error));report["traceback"]=traceback.format_exc();raise
     finally:
@@ -131,7 +153,9 @@ def audit():
             previous=summary["results"][row["launch"]]
             need(all(previous[k]==row[k] for k in ("launch","pid","kind")),"result launch identity")
             need(all(previous[k]==v for k,v in result.items()),"raw content recomputation")
-        checked=coverage(summary);need(all(saved[k]==v for k,v in checked.items()),"coverage recomputation")
+        checked=coverage(summary)
+        checked["startup"]=startup_coverage(raw/"f08-causal",top)
+        need(all(saved[k]==v for k,v in checked.items()),"coverage recomputation")
         report.update(checked,collection_complete=True,program_sha256=built["program_sha256"])
     dest=ROOT/"build/f08-shelf-content-audit";dest.mkdir()
     save(dest/"audit.json",report);print("F08_SHELF_CONTENT_AUDIT",json.dumps(report),flush=True)
