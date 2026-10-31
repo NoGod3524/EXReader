@@ -1,7 +1,7 @@
 # Linux C02 plus managed WebDAV joint candidate
-Status: implementation candidate prepared for review; initial CI has not yet run.
+Status: initial run preserved with a failed test adapter; sole targeted correction prepared, not yet run.
 Owner: this conversation, exclusive branch codex/gpt-c02-webdav-joint-20261031.
-The machine and shared worktrees are untouched; Git objects are constructed through saved gh authentication on the prescribed DC/Instabox route.
+Shared worktrees are untouched. Source/Git/docs use the authorized lap25002 native terminal, saved official instabox@0.8.52, and the existing VM. Desktop Commander is quota-blocked and unused.
 
 Fixed product base: 8232e91cd7b9296dfcdd3096b96317eb3fa1008a
 C02 product: d32603dc65bccfd65901239d21cb65cd10bca168
@@ -54,3 +54,22 @@ they do not substitute new file identities created while unpacking.
 All six joint groups retain partial evidence on failure. Independent controls cover SIGKILL, target identity, valid-prefix rollback,
 cleanup-only request counts, premature lease release and failure to release after final joins.
 This candidate does not transfer the old complete-c02 or full-product labels to H.
+
+## Initial round and sole targeted correction
+Initial source: ac6309d1e7dd00233a735ab3fa1b5084bf32cd49.
+Run 41222658017 / attempt 1 is completed/failure. Admission, c02_linux, Legacy Windows and Legacy macOS succeeded.
+GTK job 124600309439 stopped before product compilation at the adapter's unique generator-expression assertion.
+The same generic text appears in the real build helper and the preserved mixed-prefix negative-control configure command.
+The correction restricts the expression to the build helper's build-type argument. The control command and every original assertion remain.
+Independent job 124601474160 refused with producer job gtk; no GTK or cross-group result is claimed for this round.
+Ordinary C02 logs report native 28/207 + 10/81 + 17/130, and actual migration 36 plus repair20, all failed=0.
+The correction changes only this new build adapter and this document. No frozen product/source/assertion change is introduced.
+The full new H must rerun all corresponding jobs and authenticate its own original ZIPs; old green jobs are not spliced into acceptance.
+
+Initial artifacts retained:
+- joint-gtk-41222658017-1: id=13050572710, bytes=3597, sha256:0eefff31a7c0b9473738de7948ff7617219b480ba3944ea588903b7ba2b69e9a
+- joint-Windows-41222658017-1: id=13050493426, bytes=2356353, sha256:2d23550e52dd46d2d9a9c97aca91da7dbd086696bae6851c4a1f26724c6c2c43
+- joint-independent-41222658017-1: id=13050458726, bytes=309, sha256:48ec7f9dcc1c71d8559e6751cf2591869b04e9bdb9f2b7a5492a20c627090f08
+- joint-c02-linux-41222658017-1: id=13050279165, bytes=29218427, sha256:862ba06d9f5f5522ab884adf803c1319539892a71e976550cec68155c45183a4
+- joint-macOS-41222658017-1: id=13050153344, bytes=1339464, sha256:0ba93ebe8baf8c9f7e0dc7e33e8aaab134ab264a53d77310f998b23989f0eabb
+- joint-admission-41222658017-1: id=13049993890, bytes=4422, sha256:131436ec598f0a908de64920b40caa155194148b2742b51559796bf78502f46b
