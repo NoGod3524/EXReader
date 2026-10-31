@@ -103,9 +103,15 @@ def fetch_upstream(comp, cache):
 def source_bytes(row, comps, cache):
     """Return (bytes, origin) only if content hash equals the registered expectation."""
     exp = row.get("expected_sha256")
-    if not exp:
-        return None, "no_expected_hash"
     p = row["source"]
+    if not exp:
+        # Registry pins only the upstream archive (not the file) for this row.
+        comp = comps.get(row["component"])
+        if row.get("origin_kind") != "upstream" and comp and comp.get("archive_sha256"):
+            mem = fetch_upstream(comp, cache)
+            if p in mem:
+                return mem[p], "pinned_archive_member_without_registry_file_hash:" + comp["source"] + "!" + p
+        return None, "no_expected_hash"
     for base, label in ((SRC, "8f8acf32"), (F12, "f12")):
         f = base / p
         if f.is_file() and sha(f.read_bytes()) == exp:
