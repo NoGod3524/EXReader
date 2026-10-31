@@ -1,0 +1,33 @@
+name: F08 Windows pinned ETL replay audit
+on:
+  push:
+    branches: [codex/dot-f08-windows-etw-inspect-20261031]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate existing ZIP and inspect original ETLs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m py_compile tests/reader_f08_windows_etw_20261031/replay_audit.py
+          python tests/reader_f08_windows_etw_20261031/replay_audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-windows-etw-inspect-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-windows-etw-inspect/
+            !build/f08-windows-etw-inspect/raw/
+          if-no-files-found: error
