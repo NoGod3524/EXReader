@@ -1477,8 +1477,9 @@ def audit_repair_cases(owner,source,git_bytes):
         details.append(item)
 
         folder = "unknown-repair-objects-refused"
-        for label in ("unknown-name","unknown-archive"):
-            refused(folder,label,["pr-unknown-or-extra-repair-object"])
+        for label,reason in (("unknown-name","pr-unknown-or-extra-repair-object"),
+                             ("unknown-archive","pr-only-qualified-sdk-proof-factory-files")):
+            refused(folder,label,[reason])
         for label in ("orphan-retired","refused"):
             refused(folder,label,["pr-actual-wrapper112-bytes"])
         target = frame(folder,"refused")["library"]
