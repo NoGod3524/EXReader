@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include <exr_wh3_win.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
@@ -13,7 +15,7 @@ struct wh3w_store {
  wchar_t paths[MAX_PINS][MAX_PATH];
  wh3w_identity ids[3],pinids[MAX_PINS];
  wh_binding b; wh_gates g; wh3w_domain d; wh3w_controls c;
- CRITICAL_SECTION lock; int locked_init,poisoned;
+ CRITICAL_SECTION lock; int locked_init,poisoned,domain_retained;
 };
 static int idof(HANDLE h,wh3w_identity *id,int directory) {
  FILE_ID_INFO f; BY_HANDLE_FILE_INFORMATION b;
@@ -129,6 +131,7 @@ void wh3w_close(wh3w_store *s) {
  if(s->i!=INVALID_HANDLE_VALUE)CloseHandle(s->i);
  for(k=0;k<s->np;k++)CloseHandle(s->pins[k]);
  if(s->locked_init)DeleteCriticalSection(&s->lock);
+ if(s->domain_retained)s->d.release(s->d.context);
  free(s);
 }
 int wh3w_open(const wchar_t *root,const wh3w_identity ids[3],const wh_binding *b,
@@ -147,6 +150,8 @@ int wh3w_open(const wchar_t *root,const wh3w_identity ids[3],const wh_binding *b
  s=calloc(1,sizeof(*s));if(!s)return 0;
  s->j=s->i=INVALID_HANDLE_VALUE;s->b=*b;s->g=*g;s->d=*d;if(c)s->c=*c;memcpy(s->ids,ids,sizeof(s->ids));
  InitializeCriticalSection(&s->lock);s->locked_init=1;
+ if(!!d->retain!=!!d->release)goto fail;
+ if(d->retain){if(!d->retain(d->context))goto fail;s->domain_retained=1;}
  for(k=3;k<=len;k++)if(k==3||k==len||full[k]==L'\\') {
   HANDLE h;
   if(s->np>=MAX_PINS)goto fail;
@@ -289,4 +294,274 @@ done:
  if(entered)s->d.leave(s->d.context,guard);
  LeaveCriticalSection(&s->lock);
  return result;
+}
+
+
+/* Persistent, append-only admission gate. It deliberately uses a separate
+   object from the frozen C01 lease: C01 header drift cannot erase this intent. */
+#define GREC 344u
+#define GSEAL 280u
+#define GMAX 256u
+struct wh3wg_gate {
+ HANDLE file,pins[MAX_PINS];unsigned np,mode,borrows,clients;int initialized,active,poisoned;
+ wchar_t paths[MAX_PINS][MAX_PATH],leaf[MAX_PATH];
+ wh3w_identity ids[2],pinids[MAX_PINS];
+ char domain[49],manifest[65],seal[65],previous_clean[65];uint64_t sequence,generation;
+ wh3wg_grant trusted;
+ unsigned char state;LONGLONG bytes;wh_binding binding;
+ wh3w_controls controls;CRITICAL_SECTION lock;
+};
+static int ghx(const char *p,size_t n) {
+ size_t k;if(!p)return 0;
+ for(k=0;k<n;k++)if(!((p[k]>='0'&&p[k]<='9')||(p[k]>='a'&&p[k]<='f')))return 0;
+ return p[n]==0;
+}
+static int gidentity(wh3wg_gate *g) {
+ unsigned k;wh3w_identity id;
+ for(k=0;k<g->np;k++){
+  HANDLE h;int same;
+  if(!idof(g->pins[k],&id,1)||!eqid(&id,&g->pinids[k]))return 0;
+  h=CreateFileW(g->paths[k],FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE,
+     NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+  if(h==INVALID_HANDLE_VALUE)return 0;
+  same=idof(h,&id,1)&&eqid(&id,&g->pinids[k]);CloseHandle(h);
+  if(!same)return 0;
+ }
+ return idof(g->file,&id,0)&&eqid(&id,&g->ids[1]);
+}
+static int gload(wh3wg_gate *g,int adopt) {
+ unsigned char r[GREC],last_state=0,zero[64]={0};char previous[65],hash[65],manifest[65],before_begin[65]={0};
+ uint64_t seq=0,gen=0,count=0;LONGLONG size,pos;
+ memset(previous,'0',64);previous[64]=0;memset(manifest,'0',64);manifest[64]=0;
+ if(!gidentity(g)||!sizeis(g->file,&size)||!size||size%(LONGLONG)GREC
+    ||size>(LONGLONG)(GREC*GMAX)||!seekto(g->file,0))return 0;
+ for(pos=0;pos<size;pos+=GREC){
+  uint64_t next;
+  if(!rd(g->file,r,GREC)||memcmp(r,"WH3GATE1",8)||memcmp(r+9,zero,7)
+     ||get64(r+16)!=seq+1||memcmp(r+32,g->domain,48)||memcmp(r+216,previous,64))return 0;
+  wh_sha256_hex(r,GSEAL,hash);if(memcmp(hash,r+GSEAL,64))return 0;
+  next=get64(r+24);
+  if(!seq){
+   if(r[8]!='I'||next||get64(r+144)||memcmp(r+80,manifest,64)||memcmp(r+152,previous,64))return 0;
+  }else if(r[8]=='B'){
+   if(last_state=='B'||gen==UINT64_MAX||next!=gen+1||get64(r+144)>EXR_WH_MAX_JOURNAL)return 0;
+   memcpy(before_begin,previous,65);
+   memcpy(manifest,r+80,64);manifest[64]=0;
+   if(!ghx(manifest,64))return 0;
+   count=get64(r+144);
+  }else if(r[8]=='C'){
+   if(last_state!='B'||next!=gen||memcmp(r+80,manifest,64)||get64(r+144)<count||get64(r+144)>EXR_WH_MAX_JOURNAL)return 0;
+  }else return 0;
+  {char tip[65];memcpy(tip,r+152,64);tip[64]=0;if(!ghx(tip,64))return 0;}
+  seq++;gen=next;last_state=r[8];memcpy(previous,hash,65);
+ }
+ if(!gidentity(g))return 0;
+ if(adopt){
+  g->sequence=seq;g->generation=gen;g->state=last_state;g->bytes=size;
+  memcpy(g->seal,previous,65);memcpy(g->manifest,manifest,65);
+  memcpy(g->previous_clean,before_begin,65);return 1;
+ }
+ return seq==g->sequence&&gen==g->generation&&last_state==g->state&&size==g->bytes
+   &&!memcmp(previous,g->seal,65)&&!memcmp(manifest,g->manifest,65);
+}
+static void gphase(wh3wg_gate *g,unsigned at) {
+ if(g->controls.phase)g->controls.phase(g->controls.context,at);
+}
+static int grecord(wh3wg_gate *g,unsigned char state,uint64_t generation,
+                   const wh3_tip *tip,unsigned at) {
+ unsigned char r[GREC];char seal[65];LONGLONG size;DWORD put=0;
+ if(g->poisoned||g->sequence>=GMAX||!gidentity(g)||!sizeis(g->file,&size)
+    ||size!=g->bytes||!seekto(g->file,size))return 0;
+ memset(r,0,sizeof(r));memcpy(r,"WH3GATE1",8);r[8]=state;
+ set64(r+16,g->sequence+1);set64(r+24,generation);memcpy(r+32,g->domain,48);
+ memcpy(r+80,tip->manifest_sha,64);set64(r+144,tip->line_count);
+ memcpy(r+152,tip->last_line_sha,64);memcpy(r+216,g->seal,64);
+ wh_sha256_hex(r,GSEAL,seal);memcpy(r+GSEAL,seal,64);
+ /* Every attempted record failure poisons this holder. Old trusted generation
+    remains unchanged: visible unacknowledged CLEAN cannot be auto-adopted. */
+ if(g->controls.fault==WH3W_SHORT_WRITE&&g->controls.fault_phase==at){
+  (void)WriteFile(g->file,r,GREC-1,&put,NULL);g->poisoned=1;return 0;
+ }
+ if(!wr(g->file,r,GREC)){g->poisoned=1;return 0;}
+ gphase(g,at);
+ if((g->controls.fault==WH3W_FLUSH_FAIL&&g->controls.fault_phase==at)
+    ||!FlushFileBuffers(g->file)){g->poisoned=1;return 0;}
+ if(g->controls.fault==WH3W_READBACK_FAIL&&g->controls.fault_phase==at){
+  g->poisoned=1;return 0;
+ }
+ if(!gload(g,1)||g->state!=state||g->generation!=generation||memcmp(g->seal,seal,65)){
+  g->poisoned=1;return 0;
+ }
+ gphase(g,at+1);return 1;
+}
+int wh3wg_close(wh3wg_gate *g) {
+ unsigned k;if(!g)return 1;
+ EnterCriticalSection(&g->lock);
+ if(g->borrows||g->clients){LeaveCriticalSection(&g->lock);return 0;}
+ if(g->file!=INVALID_HANDLE_VALUE)CloseHandle(g->file);
+ for(k=0;k<g->np;k++)CloseHandle(g->pins[k]);
+ LeaveCriticalSection(&g->lock);DeleteCriticalSection(&g->lock);free(g);return 1;
+}
+int wh3wg_open(const wchar_t *root,const wh3w_identity ids[2],const char domain[49],
+ const wh3wg_grant *trusted,unsigned mode,const wh3w_controls *controls,wh3wg_gate **out) {
+ wh3wg_gate *g;wchar_t full[MAX_PATH],part[MAX_PATH],drive[4],fs[32];
+ size_t len,k;DWORD n,access;OVERLAPPED ov;LONGLONG size;
+ if(out)*out=NULL;
+ if(!out||!root||!ids||!ghx(domain,48)||mode<WH3WG_SHARED||mode>WH3WG_RECOVER)return 0;
+ if(mode!=WH3WG_ENROLL&&(!trusted||!ghx(trusted->seal,64)))return 0;
+ len=wcslen(root);
+ if(len<4||len>MAX_PATH-32||root[1]!=L':'||root[2]!=L'\\'||wcschr(root+2,L':'))return 0;
+ n=GetFullPathNameW(root,MAX_PATH,full,NULL);
+ if(!n||n>=MAX_PATH||_wcsicmp(root,full)||full[len-1]==L'\\')return 0;
+ drive[0]=full[0];drive[1]=L':';drive[2]=L'\\';drive[3]=0;
+ if(GetDriveTypeW(drive)!=DRIVE_FIXED||!GetVolumeInformationW(drive,NULL,0,NULL,NULL,NULL,fs,32)||_wcsicmp(fs,L"NTFS"))return 0;
+ g=calloc(1,sizeof(*g));if(!g)return 0;
+ InitializeCriticalSection(&g->lock);g->file=INVALID_HANDLE_VALUE;g->mode=mode;if(trusted)g->trusted=*trusted;
+ memcpy(g->ids,ids,sizeof(g->ids));memcpy(g->domain,domain,49);if(controls)g->controls=*controls;
+ memset(g->seal,'0',64);g->seal[64]=0;
+ for(k=3;k<=len;k++)if(k==3||k==len||full[k]==L'\\'){
+  HANDLE h;if(g->np>=MAX_PINS)goto fail;
+  memcpy(part,full,k*sizeof(wchar_t));part[k]=0;
+  h=CreateFileW(part,FILE_LIST_DIRECTORY|FILE_READ_ATTRIBUTES,FILE_SHARE_READ,NULL,OPEN_EXISTING,
+    FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+  if(h==INVALID_HANDLE_VALUE)goto fail;
+  g->pins[g->np]=h;wcscpy_s(g->paths[g->np],MAX_PATH,part);
+  if(!idof(h,&g->pinids[g->np],1)){g->np++;goto fail;}g->np++;
+ }
+ if(!g->np||!eqid(&g->pinids[g->np-1],&ids[0])||ids[0].volume!=ids[1].volume)goto fail;
+ swprintf_s(g->leaf,MAX_PATH,L"%ls\\admission.bin",full);
+ access=GENERIC_READ|(mode==WH3WG_SHARED?0:GENERIC_WRITE);
+ g->file=CreateFileW(g->leaf,access,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,
+   FILE_FLAG_OPEN_REPARSE_POINT|FILE_FLAG_WRITE_THROUGH,NULL);
+ if(g->file==INVALID_HANDLE_VALUE||!gidentity(g))goto fail;
+ memset(&ov,0,sizeof(ov));
+ if(!LockFileEx(g->file,LOCKFILE_FAIL_IMMEDIATELY|(mode==WH3WG_SHARED?0:LOCKFILE_EXCLUSIVE_LOCK),
+    0,MAXDWORD,0,&ov))goto fail;
+ if(mode==WH3WG_ENROLL){
+  if(trusted||!sizeis(g->file,&size)||size)goto fail;
+ }else{
+  if(!gload(g,1))goto fail;
+  if(mode==WH3WG_RECOVER){
+   int current=g->state!='B'&&g->generation==trusted->generation&&!memcmp(g->seal,trusted->seal,65);
+   int pending=trusted->generation!=UINT64_MAX&&g->generation==trusted->generation+1
+       &&!memcmp(g->previous_clean,trusted->seal,65);
+   if(!current&&!pending)goto fail;
+  }else if(g->state=='B'||g->generation!=trusted->generation||memcmp(g->seal,trusted->seal,65))goto fail;
+  g->initialized=1;
+ }
+ *out=g;return 1;
+fail:(void)wh3wg_close(g);return 0;
+}
+int wh3wg_enroll(wh3wg_gate *g,wh3wg_grant *grant) {
+ wh3_tip zero;int ok;
+ if(!g||!grant)return 0;EnterCriticalSection(&g->lock);
+ memset(&zero,0,sizeof(zero));memset(zero.manifest_sha,'0',64);memset(zero.last_line_sha,'0',64);
+ ok=g->mode==WH3WG_ENROLL&&!g->initialized&&!g->sequence&&grecord(g,'I',0,&zero,0);
+ if(ok){g->initialized=1;g->mode=WH3WG_OWNER;
+  grant->generation=0;memcpy(grant->seal,g->seal,65);g->trusted=*grant;}
+ LeaveCriticalSection(&g->lock);return ok;
+}
+int wh3wg_check(wh3wg_gate *g) {
+ int ok;if(!g)return 0;EnterCriticalSection(&g->lock);
+ ok=g->initialized&&!g->poisoned&&gload(g,0);
+ LeaveCriticalSection(&g->lock);return ok;
+}
+uint64_t wh3wg_generation(const wh3wg_gate *g) {return g?g->generation:0;}
+static int gbinding(wh3wg_gate *g,const wh_binding *b,const wh_gates *gates,const wh3_tip *tip) {
+ char manifest[EXR_WH_LINE_MAX],hash[65];
+ if(!b||!gates||!tip||!ghx(tip->manifest_sha,64)||!ghx(tip->last_line_sha,64)
+    ||tip->line_count>EXR_WH_MAX_JOURNAL||!wh_manifest(b,gates,manifest))return 0;
+ wh_sha256_hex(manifest,strlen(manifest),hash);
+ return !memcmp(hash,tip->manifest_sha,65)&&(!g->active||!memcmp(&g->binding,b,sizeof(*b)));
+}
+int wh3wg_begin(wh3wg_gate *g,const wh_binding *b,const wh_gates *gates,
+ const wh3_tip *base,void **cap) {
+ int ok=0;if(cap)*cap=NULL;if(!g||!cap)return 0;EnterCriticalSection(&g->lock);
+ if(g->mode==WH3WG_OWNER&&!g->active&&!g->borrows&&g->generation!=UINT64_MAX
+    &&g->state!='B'&&wh3wg_check(g)&&gbinding(g,b,gates,base)
+    &&grecord(g,'B',g->generation+1,base,WH3WG_BEGIN_WRITTEN)){
+  g->binding=*b;g->active=1;*cap=g;ok=1;
+ }
+ LeaveCriticalSection(&g->lock);return ok;
+}
+static int genter(void *context,void *cap,const wh_binding *b,void **guard) {
+ wh3wg_gate *g=context;int ok=0;if(guard)*guard=NULL;
+ if(!g||!guard||!b)return 0;EnterCriticalSection(&g->lock);
+ if(cap==g&&g->active&&g->state=='B'&&!memcmp(b,&g->binding,sizeof(*b))
+    &&g->borrows<UINT_MAX&&wh3wg_check(g)){g->borrows++;*guard=g;ok=1;}
+ LeaveCriticalSection(&g->lock);return ok;
+}
+static int gvalid(void *context,void *guard) {
+ wh3wg_gate *g=context;int ok;if(!g)return 0;EnterCriticalSection(&g->lock);
+ ok=guard==g&&g->borrows&&g->active&&g->state=='B'&&wh3wg_check(g);
+ LeaveCriticalSection(&g->lock);return ok;
+}
+static void gpoison(void *context,void *guard,const char *reason) {
+ wh3wg_gate *g=context;(void)reason;if(!g)return;EnterCriticalSection(&g->lock);
+ if(guard==g)g->poisoned=1;LeaveCriticalSection(&g->lock);
+}
+static void gleave(void *context,void *guard) {
+ wh3wg_gate *g=context;if(!g)return;EnterCriticalSection(&g->lock);
+ if(guard==g&&g->borrows)g->borrows--;LeaveCriticalSection(&g->lock);
+}
+static int gretain(void *context) {
+ wh3wg_gate *g=context;int ok=0;if(!g)return 0;EnterCriticalSection(&g->lock);
+ if(g->initialized&&!g->poisoned&&g->clients<UINT_MAX){g->clients++;ok=1;}
+ LeaveCriticalSection(&g->lock);return ok;
+}
+static void grelease(void *context) {
+ wh3wg_gate *g=context;if(!g)return;EnterCriticalSection(&g->lock);
+ if(g->clients)g->clients--;LeaveCriticalSection(&g->lock);
+}
+void wh3wg_domain(wh3wg_gate *g,wh3w_domain *out) {
+ if(!out)return;out->context=g;out->enter=genter;out->validate=gvalid;out->poison=gpoison;out->leave=gleave;
+ out->retain=gretain;out->release=grelease;
+}
+static int gtip(wh3w_store *s,const wh3_tip *expected,int terminal) {
+ journal *j;wh3_tip actual;uint64_t seq;char seal[65];LONGLONG bytes;int ok=0;
+ if(!s||!expected||s->poisoned)return 0;
+ EnterCriticalSection(&s->lock);j=malloc(sizeof(*j));
+ if(j&&identities(s)&&loadjournal(s,s->j,j)&&intents(s->i,j,&seq,seal,&bytes)){
+  unsigned line_seq,event;char tail;
+  tipof(s,j,&actual);ok=eqtip(&actual,expected);
+  if(ok&&terminal)ok=j->n>1&&sscanf(j->lines[j->n-1],"EXRWH2 %u %u %c",&line_seq,&event,&tail)==3
+       &&event==12; /* validated FSM's durable RELEASE_BEGIN */
+ }
+ free(j);LeaveCriticalSection(&s->lock);return ok;
+}
+int wh3wg_resume(wh3wg_gate *g,const wh_binding *b,const wh_gates *gates,
+ wh3w_store *s,const wh3_tip *exact,void **cap) {
+ int ok=0;if(cap)*cap=NULL;if(!g||!s||!cap)return 0;
+ EnterCriticalSection(&s->lock);EnterCriticalSection(&g->lock);
+ if(g->mode==WH3WG_RECOVER&&!g->active&&!g->borrows&&g->state=='B'&&wh3wg_check(g)
+    &&gbinding(g,b,gates,exact)&&!memcmp(g->manifest,exact->manifest_sha,65)
+    &&s&&s->d.context==g&&gtip(s,exact,0)){
+  g->binding=*b;g->active=1;*cap=g;ok=1;
+ }
+ LeaveCriticalSection(&g->lock);LeaveCriticalSection(&s->lock);return ok;
+}
+int wh3wg_finish(wh3wg_gate *g,void *cap,wh3w_store *s,const wh3_tip *exact,
+ int (*prove)(void *,const wh3_tip *),void *context,wh3wg_grant *grant) {
+ int ok=0;if(!g||!s||!prove||!grant)return 0;
+ EnterCriticalSection(&s->lock);EnterCriticalSection(&g->lock);
+ if(cap==g&&g->active&&!g->borrows&&g->state=='B'&&wh3wg_check(g)
+    &&s&&s->d.context==g&&gtip(s,exact,1)&&!memcmp(g->manifest,exact->manifest_sha,65)
+    &&prove(context,exact)&&wh3wg_check(g)&&gtip(s,exact,1)
+    &&grecord(g,'C',g->generation,exact,WH3WG_CLEAN_WRITTEN)){
+  g->active=0;grant->generation=g->generation;memcpy(grant->seal,g->seal,65);ok=1;
+ }
+ if(!ok&&cap==g&&g->active)g->poisoned=1;
+ LeaveCriticalSection(&g->lock);LeaveCriticalSection(&s->lock);return ok;
+}
+
+int wh3wg_reconcile(wh3wg_gate *g,wh3w_store *s,const wh3_tip *exact,
+ int (*prove)(void *,const wh3_tip *),void *context,wh3wg_grant *grant) {
+ int ok=0;if(!g||!s||!prove||!grant)return 0;
+ EnterCriticalSection(&s->lock);EnterCriticalSection(&g->lock);
+ if(g->mode==WH3WG_RECOVER&&!g->active&&!g->borrows&&g->state=='C'&&wh3wg_check(g)
+    &&s->d.context==g&&gtip(s,exact,1)&&!memcmp(g->manifest,exact->manifest_sha,65)
+    &&prove(context,exact)&&wh3wg_check(g)&&gtip(s,exact,1)){
+  grant->generation=g->generation;memcpy(grant->seal,g->seal,65);ok=1;
+ }
+ LeaveCriticalSection(&g->lock);LeaveCriticalSection(&s->lock);return ok;
 }

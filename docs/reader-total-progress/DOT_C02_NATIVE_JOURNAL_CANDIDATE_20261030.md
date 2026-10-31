@@ -107,3 +107,23 @@ Persistent gate contract for the next stage:
 Required integration evidence includes real source/publication/pager/search/navigation/export borrows surviving parent close; both reader/writer acquisition orders; killed-owner fresh-reader refusal; missing/replaced gate refusal; generation drift with PENDING cleared in C01; failed persistence with subsequent writes denied; and recovery using only the exact acknowledged tip. Existing 46 native scenarios, ABI3 16/64 and ABI2 81/6 remain preserved.
 
 No production-owner file was changed during this inventory. Apple Features helpers/admission/workflows, F12's audit files, H01 and H02 account handlers remain outside this writer's changes.
+
+### Original-ZIP audit completed
+
+Audit source ff4bed4356db38835cbdae997e86d37f60e46af2, run https://github.com/NoGod3524/EXReader/actions/runs/41155803873, attempt 1, job 124402210551: success. The native matrix was skipped. Both exact producer ZIPs passed size/digest/inventory/semantic verification; all seven internally rehashed mutations were rejected. Both original ZIPs were rehashed again after parsing and retained intact.
+
+Audit artifact ID 13024233704, 19998 bytes, GitHub ZIP SHA256 7e8dc0e71ae1025660f22b3dbac62b0850f28ad03a2222b8268e8fd5b9dc5bd5. Its producer remains 867ca3cd9aaa58acb5b4a5ace35370b50383e2f8 / 41151974177 / attempt 1, not the audit source. The original producer run remains failed solely on its preserved ABI2 checks.
+
+### Persistent gate implementation and continuing authorization
+
+After approving the audit, the user explicitly authorized continued C02 implementation, independent-branch pushes and necessary verification without per-round confirmation. Previous per-round CI limits therefore no longer block C02 work. Frozen C01/SDK and original test contracts remain preserved.
+
+The native library now adds an independently stored append-only admission object. Explicit enrollment operates only on an already existing, trusted, empty object; ordinary opens never create or repair it. Every prefix is pinned, the exact root/file identities are revalidated, and shared/exclusive whole-file locks enforce actual cross-process custody.
+
+BEGIN is flushed and reread before the gate issues a capability. A journal error poisons the live holder while the prior PENDING record remains sufficient to isolate a fresh process, without depending on another disk write succeeding. An open journal retains gate storage; a live journal or per-call borrow prevents premature close.
+
+Reader grants contain both the exact generation and the complete last-record seal from an independently trusted registry. Readers never derive a newer grant from the gate file. CLEAN requires the complete actual terminal journal plus the owner's independent proof of actual publication/abort and terminated workers. A failed CLEAN write/flush/readback returns no new grant. A fresh exclusive recovery can reconcile a completely written terminal state only after checking the caller's exact tip and independently proving publication again.
+
+The added installed consumer plans 28 scenarios, including four deterministic process-kill barriers, missing/truncated/aliased objects, both lock orders, failed gate and journal writes, retained journal references, exact-tip recovery and the frozen C01 generation-5/PENDING-0 drift. The C01 implementation is extracted from its exact frozen commit inside Actions and compiled unchanged. Existing 46-case native, 16/64 ABI3 and 81/6 ABI2 checks continue in their original jobs.
+
+Gate test publication proof is deliberately a control. Actual trusted-registry, publisher, recovery worker and product-host integration remain in progress; no full C02 score is claimed by this library-stage test.

@@ -24,13 +24,13 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
-      - name: Exact seven-file scope and immutable ABI2/ABI3
+      - name: Authorized C02 native/gate scope and immutable ABI2/ABI3
         run: |
           set -euo pipefail
           git diff --name-only a8d0b162d8c21617e4c2c837e3eb2b2174bbf69b HEAD > changed-paths.txt
           python - <<'PY'
           import pathlib
-          allowed={'extras/migration/windows_coordinator_native_journal_20261030/src/wh3_win.c','extras/migration/windows_coordinator_native_journal_20261030/include/exr_wh3_win.h','extras/migration/windows_coordinator_native_journal_20261030/CMakeLists.txt','tests/migration/windows_coordinator_native_journal_20261030/CMakeLists.txt','tests/migration/windows_coordinator_native_journal_20261030/wh3_win_test.c','.github/workflows/dot-c02-native-journal-20261030.yml','docs/reader-total-progress/DOT_C02_NATIVE_JOURNAL_CANDIDATE_20261030.md'}
+          allowed={'extras/migration/windows_coordinator_native_journal_20261030/src/wh3_win.c','extras/migration/windows_coordinator_native_journal_20261030/include/exr_wh3_win.h','extras/migration/windows_coordinator_native_journal_20261030/CMakeLists.txt','tests/migration/windows_coordinator_native_journal_20261030/CMakeLists.txt','tests/migration/windows_coordinator_native_journal_20261030/wh3_win_test.c','.github/workflows/dot-c02-native-journal-20261030.yml','docs/reader-total-progress/DOT_C02_NATIVE_JOURNAL_CANDIDATE_20261030.md','tests/migration/windows_domain_gate_20261031/CMakeLists.txt','tests/migration/windows_domain_gate_20261031/gate_test.c','.github/workflows/dot-c02-domain-gate-20261031.yml'}
           assert set(pathlib.Path('changed-paths.txt').read_text().splitlines())==allowed
           PY
           git diff --exit-code a8d0b162d8c21617e4c2c837e3eb2b2174bbf69b HEAD -- extras/migration/windows_coordinator_hardening_20261030 tests/migration/windows_coordinator_hardening_20261030 extras/migration/windows_coordinator_cas_20261030 tests/migration/windows_coordinator_cas_20261030
