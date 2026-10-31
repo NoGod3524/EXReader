@@ -1,0 +1,43 @@
+name: F12 retained package materials audit
+on:
+  push:
+    branches: [codex/dot-f12-package-material-audit-20261030]
+    paths:
+      - scripts/audit/dot_f12_package_material_audit_20261030.py
+      - .github/workflows/dot-f12-package-material-audit-20261030.yml
+      - docs/reader-total-progress/DOT_F12_PACKAGE_MATERIAL_AUDIT_20261030.md
+permissions:
+  contents: read
+  actions: read
+jobs:
+  materials:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact base and exclusive path guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor 8f8acf3234cba747165f001c0c96efe1b911e6ad HEAD
+          python3 - <<'PY'
+          import subprocess
+          allowed = {'scripts/audit/dot_f12_package_material_audit_20261030.py', '.github/workflows/dot-f12-package-material-audit-20261030.yml', 'docs/reader-total-progress/DOT_F12_PACKAGE_MATERIAL_AUDIT_20261030.md'}
+          changed = set(subprocess.check_output(['git','diff','--name-only','8f8acf3234cba747165f001c0c96efe1b911e6ad','HEAD'],text=True).splitlines())
+          assert changed == allowed, changed
+          PY
+      - name: Controls and retained original package audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/audit/dot_f12_package_material_audit_20261030.py
+      - name: Preserve audit and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f12-package-materials-${{ github.run_id }}-${{ github.run_attempt }}
+          path: f12-evidence/
+          if-no-files-found: warn
+          retention-days: 90
