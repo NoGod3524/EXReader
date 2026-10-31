@@ -343,9 +343,10 @@ int main(int argc,char **argv) {
   if(!MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,argv[2],-1,path,MAX_PATH))return 3;
   ok=wh3wr_open(path,WH3WG_OWNER,NULL,&r);(void)wh3wr_close(r);return ok?0:10;
  }
- if(argc==2&&(!strcmp(argv[1],"--prepare-host")||!strcmp(argv[1],"--prepare-unregistered")||!strcmp(argv[1],"--prepare-pending"))){
+ if(argc==2&&(!strcmp(argv[1],"--prepare-host")||!strcmp(argv[1],"--prepare-unregistered")||!strcmp(argv[1],"--prepare-pending")||!strcmp(argv[1],"--prepare-enrollment-failure"))){
   char path[4*MAX_PATH];wh3_tip empty;void *cap=NULL;
-  if(!reg_fixture("actual-product-startup",strcmp(argv[1],"--prepare-unregistered")!=0))return 1;
+  if(!reg_fixture("actual-product-startup",strcmp(argv[1],"--prepare-unregistered")!=0&&strcmp(argv[1],"--prepare-enrollment-failure")!=0))return 1;
+  if(!strcmp(argv[1],"--prepare-enrollment-failure")&&wh3wr_enroll(reglib,f.root,initial_refuse,NULL))return 1;
   if(!strcmp(argv[1],"--prepare-pending")){
    empty_tip(&empty);if(!reg_open(WH3WG_OWNER,NULL)||!wh3wr_begin(registration,&f.b,&f.g,&empty,&cap))return 1;
    reg_close_all();

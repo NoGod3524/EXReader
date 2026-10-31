@@ -95,6 +95,11 @@ enum { WH3WR_ENROLL_INTENT=501, WH3WR_ENROLL_GATE=502,
        WH3WR_ENROLL_PROVED=503, WH3WR_ENROLL_BOUND=504 };
 int wh3wr_enroll_controlled(const wchar_t *library,const wchar_t *root,
  int (*prove_initial)(void *,const wchar_t *),void *context,const wh3w_controls *);
+/* Explicit user command only: create a new domain root and all three objects,
+   or validate the already existing empty set. Existing incomplete roots are
+   never filled in. create_library uses CREATE_NEW and never overwrites. */
+int wh3wr_enroll_created(const wchar_t *library,const wchar_t *root,int create_library,
+ int (*prove_initial)(void *,const wchar_t *),void *context);
 int wh3wr_recover_enrollment(const wchar_t *library,
  int (*prove_initial)(void *,const wchar_t *),void *context);
 int wh3wr_open(const wchar_t *library,unsigned mode,const wh3w_controls *,
