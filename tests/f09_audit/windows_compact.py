@@ -190,6 +190,25 @@ def main(exe, book):
               items, bool(items) and all(n.strip() for n in items))
         keys('{Esc}{Esc}', 'close menu')
 
+        # W-12 every product function has a keyboard entry in the menus
+        # (docs/READER-PRODUCT-PLAN.md default UI: shelf, search, import,
+        # continue, organize, bookmarks, annotations, contents, in-book search,
+        # typesetting, themes, account/sync).
+        menus = {}
+        for key, label in (('b', '书库'), ('r', '阅读'), ('v', '视图'), ('s', '设置')):
+            keys('{Alt}' + key, label + ' menu')
+            popup = wait(lambda: auto.MenuControl(searchDepth=2).Exists(0) and auto.MenuControl(searchDepth=2), 8)
+            menus[label] = [(i.Name, i.IsEnabled) for i in popup.GetChildren()] if popup else None
+            keys('{Esc}{Esc}', 'close ' + label)
+        every = ' '.join(name for items in menus.values() if items for name, _ in items)
+        required = {'导入': '导入书籍', '继续阅读': '继续阅读', '详情': '书籍详情', '同步': '同步账号',
+                    '书内搜索': '书内搜索', '目录': '目录', '阅读记录': '书签与阅读记录', '标注': '标注编辑',
+                    '字号': '字号', '书架': '书架', '阅读设置': '排版与主题设置'}
+        missing = [want for fragment, want in required.items() if fragment not in every]
+        check('W-12', 'menus', 'each product function in the default-UI plan has a menu entry reachable by access key',
+              {'menus': menus, 'missing': missing}, not missing)
+        (OUT / 'menus.json').write_text(json.dumps(menus, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
         # W-09 annotation from the keyboard: select page, add a note
         keys('{Ctrl}a', 'select page')
         keys('{Alt}r', 'reading menu')
