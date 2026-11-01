@@ -702,3 +702,28 @@ Prepared, not run. Four existing paths: F03 build.py, main workflow, scope and t
 Static install-closure review found catalog installs reader_catalog, reader_catalog_sqlite and independent reader_original_import, while reader_catalog only builds the first two. Revisions explicitly depends on its installed reader_revision_hash; commands installs only reader_commands. F03 subsequent modules use their original install target. Original tools/build_android_host.py, SDK/product/test files and all original Android and audit commands are unchanged.
 
 New exact case f03/two-host-complete-install / marker [F03-TWO-HOST-INSTALL-160-ONE-RUN]: one fresh same-source GTK20 + Android120 + original audit20, maximum160 runner-min, no retry. Earlier failures and artifacts preserved. No old evidence is relabeled; full F03 remains pending and receives zero formal count credit from a partial two-host result. Canonical ec11 and ownership unchanged.
+
+
+## Complete install-target result - 2026-11-01T15:10:51Z
+
+Run https://github.com/NoGod3524/EXReader/actions/runs/41318900037 attempt 1 failed, source 5a07f8079777f5297971b2f9d0d5ccf3eaadd2e6. GTK job 124884737065 succeeded, including original retained checks and all six author phases. Android job 124886308710 passed the previous missing-library installation point and built actual APKs, then failed the unchanged tools/check_android_host.py static gate at 15:10:24Z: MainActivity lacks takePersistableUriPermission. The original all-exits and six native receives did not run. Original audit rejects the unsuccessful Android producer. No gate was skipped or rewritten and no retry was started.
+
+Read-only investigation distinguishes this from a moved call: MainActivity1112 delegates to ImportController.submit, which delegates to ImportEntry.submit. ImportEntry documents temporary Intent grant lifetime and copies into app-private staging; no takePersistableUriPermission call was found in those three files. The old checker specifically searches MainActivity text. Whether that old static requirement should be revised for the current import architecture belongs to the original import/checker owner and needs an explicit scope decision. No comment token, fabricated pass, synthetic source or product change has been added.
+
+Original artifacts preserved:
+- reader-suite-f03-audit-41318900037-1: id 13089430151, 22956040 bytes, sha256:add080db3baa8c957d45909c209b4e6234991e6256508e506684a59506a1c1fd.
+- reader-suite-f03-android-41318900037-1: id 13088503668, 93697959 bytes, sha256:977a9dd21cac10813e1ef321e597898401d8b62ebb6976ebcc660e8333e9f54c.
+- reader-suite-f03-gtk-41318900037-1: id 13088487990, 23013558 bytes, sha256:223ab5c453e08a6bc354909c3e9ebe2a470369a66c2aa49d87cf6f6280d7706a.
+
+One approved run consumed, no automatic retry. Full F03 remains pending/unaccepted with zero formal count credit. Canonical ec11cf862ca3b44483d7e8c4726ae748ab438337, original SDK/tools/tests, product code and external owners remain unchanged. No original ZIP was parsed outside Actions.
+
+### Original-owner handoff (not sent externally)
+
+Please reconcile the unchanged legacy static requirement with the current temporary-grant/private-copy import contract. Do not weaken permissions, insert a token, filter this failure, or alter product behavior merely to satisfy a text scan. Map existing revoked-grant, copy-completion, process-restart and private-ready-file tests before proposing any explicitly authorized checker migration. F03 install target gap is closed; native Android receive remains unexecuted. No further CI is authorized by this handoff.
+
+Exact source evidence:
+- [Legacy MainActivity token gate](https://github.com/NoGod3524/EXReader/blob/5a07f8079777f5297971b2f9d0d5ccf3eaadd2e6/tools/check_android_host.py#L42-L45).
+- [Activity delegates selected import](https://github.com/NoGod3524/EXReader/blob/5a07f8079777f5297971b2f9d0d5ccf3eaadd2e6/examples/android/app/src/main/java/org/exreader/host/MainActivity.java#L1101-L1112).
+- [Controller submits to ImportEntry](https://github.com/NoGod3524/EXReader/blob/5a07f8079777f5297971b2f9d0d5ccf3eaadd2e6/examples/android/app/src/main/java/org/exreader/host/ImportController.java#L40-L64).
+- [Temporary-grant contract](https://github.com/NoGod3524/EXReader/blob/5a07f8079777f5297971b2f9d0d5ccf3eaadd2e6/extras/android-import-entry/android/importentry/src/main/java/org/exreader/importentry/ImportEntry.java#L59-L64).
+- [Private-copy and descriptor handling](https://github.com/NoGod3524/EXReader/blob/5a07f8079777f5297971b2f9d0d5ccf3eaadd2e6/extras/android-import-entry/android/importentry/src/main/java/org/exreader/importentry/ImportEntry.java#L400-L440).
