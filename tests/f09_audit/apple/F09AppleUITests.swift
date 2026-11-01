@@ -159,7 +159,7 @@ final class F09AppleUITests: XCTestCase {
             }
             reached[id] = target.isHittable
             samples.append(["tool": id, "hittable": target.isHittable, "scroll_steps": attempts,
-                            "frame": NSCoder.string(for: target.frame)])
+                            "frame": "\(target.frame)"])
         }
         let unreachable = reached.filter { !$0.value }.map { $0.key }.sorted()
         XCTAssertTrue(unreachable.isEmpty, "Unreachable after scrolling: \(unreachable) \(app.debugDescription)")
