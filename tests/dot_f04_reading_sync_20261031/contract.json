@@ -363,5 +363,19 @@
     "runner_minutes_cap": 5,
     "build": false,
     "product_execution": false
+  },
+  "windows_import_probe": {
+    "run_id": "41264117725",
+    "attempt": "1",
+    "source_sha": "cb8b5e2d04a524a44a686eb8385872ee832d373e",
+    "job_id": 124723215028,
+    "artifact_id": 13067105719,
+    "size_in_bytes": 53052917,
+    "digest": "sha256:c6f0ae369230eb3173a3bd5794abf54be064686ed542a8b606b8e1d7a9a3be1b",
+    "case": "f04/windows-import-only",
+    "run_limit": 1,
+    "runner_minutes_cap": 10,
+    "rebuild": false,
+    "DAV": false
   }
 }

@@ -379,3 +379,34 @@ jobs:
           path: build/f04-fixed-diagnostic/
           if-no-files-found: error
           retention-days: 30
+
+  windows_import_only:
+    name: F04 fixed Windows native picker only
+    if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && inputs.case == 'f04/windows-import-only' && inputs.controller_sha == github.sha }}
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Native display dependencies only
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow uiautomation==2.0.29
+          python3 tests/reader_native_owner_repairs/display.py
+      - name: Authenticate historical build and exercise native picker once
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/dot_f04_reading_sync_20261031/run.py windows-import-fixed
+      - name: Collect safe diagnostics
+        if: always()
+        run: python3 tests/dot_f04_reading_sync_20261031/run.py diagnostics --kind windows
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f04-import-only-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/phase/result.json
+            build/phase/opened-page.png
+            build/f04-diagnostics/windows/
+          if-no-files-found: error
+          retention-days: 30
