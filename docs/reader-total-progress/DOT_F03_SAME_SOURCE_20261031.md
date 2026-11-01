@@ -328,3 +328,44 @@ F04 owner retains package diagnosis and any repair proposal; the canonical
 controller does not alter its twelve received blobs. This seal changes only
 this document, starts no CI and awards neither F03 nor F04. Original failures
 and the fixed producer source remain available.
+
+## F04 repair round result — 2026-11-01 02:20 UTC
+
+Specific branch-push approval was received at 2026-11-01T02:09:23Z
+(`Sentinel_67a181bc2b1081919b37edad4ca49f45`).
+Six fixed blobs from reviewed F04 source
+`2bfc3df1d2ec8bc1e26822a792a4287b66acc990` were copied without a merge.
+The caller, F03 runtime and the other F04 blobs were unchanged; the union
+remained exactly twenty-three added paths relative to 94fb.
+
+Run https://github.com/NoGod3524/EXReader/actions/runs/41264117725, attempt1,
+source `cb8b5e2d04a524a44a686eb8385872ee832d373e`,
+tree `b282f2388dbbd67bef86f58392b7e0447b519d8f`: **failure**.
+Newly authorized round **1/1 used**, no retry; 120 minutes was the cap, not
+actual consumption.
+
+- Original retained Linux job124723214816: success, 239 seconds
+  (02:11:03–02:15:02 UTC).
+- Windows seed job124723215028: failure, 406 seconds
+  (02:11:03–02:17:49 UTC). Same-source build passed; the actual input action
+  advanced beyond the SendInput assertion, but the shelf did not become
+  exactly one row within the existing 120-second wait. Root cause is not
+  established by that timeout.
+- Android peer124724643777, Windows return124724643951 and F04 audit124724644588:
+  skipped due to the failed seed. No successful roundtrip or aggregate.
+- F03 product and diagnostic cases: unselected/skipped, not rerun.
+
+Exact original artifacts from the run API:
+
+| Name | ID | Bytes | ZIP SHA256 | Expiration UTC |
+| --- | --- | --- | --- | --- |
+| f04-build-windows-41264117725-1 | 13067105719 | 53052917 | c6f0ae369230eb3173a3bd5794abf54be064686ed542a8b606b8e1d7a9a3be1b | 2027-01-30T02:11:00Z |
+| f04-retained-linux-41264117725-1 | 13067010479 | 14734883 | e51e1fdf13a900dc896c5d76ad35dd429e6531ef4698a712c405c3583b383a26 | 2026-12-01T02:14:56Z |
+| f04-diagnostic-retained_linux-41264117725-1 | 13066406876 | 7538 | 13adb6a38b1b41fcaa10c9c630a956d1d1d7419be4b81edb72a5961634e2106f | 2026-12-01T02:14:59Z |
+| f04-diagnostic-windows_seed-41264117725-1 | 13066097833 | 1638 | 2f0916f73a040e9a0589c95fbcdb1f114d1468785235330e98477e9d97736a46 | 2026-12-01T02:17:44Z |
+
+The diagnostic ZIP member contents have not been parsed outside Actions.
+F04 retains the next fixed-artifact diagnosis design and any repair ownership.
+This append changes only the canonical handoff document; it does not alter
+the six received blobs, trigger a run, or count any F03/F04 acceptance.
+No CI remains running and no Git write outcome is uncertain at this seal.
