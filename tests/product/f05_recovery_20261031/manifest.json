@@ -39,7 +39,8 @@
     "native deletion conflict operation details on GTK/Android remain external UI owner work",
     "Apple organization receive delta requires approved common-source composition",
     "artifact role names/job IDs/receipt members/runtime normalization not wired",
-    "no actual Actions execution or independent full acceptance"
+    "no actual Actions execution or independent full acceptance",
+    "Android original HostSyncTest.java SDK whitelist rejects3.42 before its16 assertions; generated Java test adaptation not yet approved"
   ],
   "contract": "Preserve concurrent heads and display conflict; do not auto-select a winner. Preserve concurrent tombstone and put; old put is not restore. If a user explicitly resolves/restores, parents must include all competing heads. No requirement to resolve every scenario to one head.",
   "claims": {
@@ -294,7 +295,11 @@
       "report_kind": "phase-ordered-checks",
       "distinct_pids": 4,
       "real_blocked_boundaries": 2,
-      "provenance": "Original public SDK seeding remains regression, not new native peer author."
+      "provenance": "Original public SDK seeding remains regression, not new native peer author.",
+      "instrumentation_source_path": "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
+      "instrumentation_source_blob": "ec9bb60ae3233d914086e06c8bb93aa4580d6ceb",
+      "runtime_state": "blocked_original_java_sdk_allowlist",
+      "adapter_scope": "Python CLI choice adaptation approved; original Java still admits only SDK3.40/3.41. A separate minimal generated Java adaptation requires explicit approval."
     },
     "apple-account-sync-3": {
       "hosts": [
