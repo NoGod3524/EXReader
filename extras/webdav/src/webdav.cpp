@@ -263,6 +263,7 @@ struct sink {
   uint64_t maximum,received=0;const exr_webdav_control *control;
   std::vector<unsigned char> *buffer=nullptr;temporary *file=nullptr;
   exr_webdav_write_observer observer=nullptr;void *observer_context=nullptr;
+  exr_webdav_read_consumer consumer=nullptr;void *consumer_context=nullptr;
 #ifdef EXR_WEBDAV_MANAGED
   managed_temporary *managed=nullptr;
 #endif
@@ -273,6 +274,11 @@ struct sink {
     else
 #endif
     if(file) { file->write(data,bytes);if(observer) observer(observer_context,data,bytes); }
+    else if(consumer) {
+      exr_webdav_status code=EXR_DAV_IO;
+      try { code=consumer(consumer_context,data,bytes); } catch(...) { reject(EXR_DAV_IO,"GET consumer failed"); }
+      if(code!=EXR_DAV_OK)reject(code==EXR_DAV_CANCELLED?EXR_DAV_CANCELLED:EXR_DAV_IO,"GET consumer refused bytes");
+    }
     else { const unsigned char *p=(const unsigned char *)data;buffer->insert(buffer->end(),p,p+bytes); }
     received+=(uint64_t)bytes;if(control && control->progress) control->progress(control->context,received);
   }
@@ -775,6 +781,31 @@ extern "C" exr_webdav_status exr_webdav_download_file(exr_webdav_client *client,
 extern "C" exr_webdav_status exr_webdav_download_observed(exr_webdav_client *client,const char *resource,const char *directory,const char *filename,const exr_webdav_control *control,exr_webdav_write_observer observer,void *observer_context,exr_webdav_download *out,exr_webdav_error *error) {
   return download_file(client,resource,directory,filename,control,observer,observer_context,out,error);
 }
+
+extern "C" exr_webdav_status exr_webdav_read_stream(exr_webdav_client *client,const char *resource,uint64_t expected,exr_webdav_read_consumer consumer,void *context,const exr_webdav_control *control,uint64_t *received,exr_webdav_error *error) {
+  clean(error);if(received)*received=0;
+  try {
+    if(!client||!resource||!consumer||!received||!expected||expected>client->max_download)
+      reject(EXR_DAV_ARGUMENT,"Missing bounded stream request");
+#ifdef __ANDROID__
+    android_operation operation(client);
+#elif defined(EXR_WEBDAV_APPLE_URLSESSION)
+    apple_operation operation(client);
+#endif
+#ifdef EXR_WEBDAV_MANAGED
+    if(client->managed)client->managed->check_owner();
+#endif
+    std::string relative=path(resource,false);
+    if(relative.empty()||relative.back()=='/')reject(EXR_DAV_ARGUMENT,"Stream requires a file resource");
+    sink output{expected,0,control,nullptr,nullptr};
+    output.consumer=consumer;output.consumer_context=context;
+    url target=client->root;target.path+=relative;
+    fetch(*client,target,"GET",200,output);
+    if(output.received!=expected)reject(EXR_DAV_IO,"GET length differs from immutable identity");
+    cancelled(control);*received=output.received;return EXR_DAV_OK;
+  }catch(const failure &f){return report(error,f);}catch(...){return report(error,{EXR_DAV_IO,"Cannot read bounded stream",0});}
+}
+
 extern "C" exr_webdav_status exr_webdav_make_collection(exr_webdav_client *client,const char *collection,const exr_webdav_control *control,exr_webdav_error *error){
   clean(error);try{
     if(!client||!collection)reject(EXR_DAV_ARGUMENT,"Missing immutable collection request");
