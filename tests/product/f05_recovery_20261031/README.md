@@ -1,4 +1,4 @@
-# F05 current test design — 2026-11-01 00:35 UTC
+# F05 current test design — 2026-11-01 01:00 UTC
 
 Preparation only; **not 100% accepted**. One active implementation branch,
 `dot/f05-client-recovery-20261031`, one independent validator. Nine approved files
@@ -29,7 +29,7 @@ or identical cancel phase is invented.
 cannot disappear as N/A; author roles may come from another native host in this
 same source/run/attempt. Applicable cancellation layer is recorded as transport,
 receive or import; process recovery records its actual boundary rather than
-inventing one mandatory kill point. Offline reopen alone requires no peer wire.
+inventing one mandatory kill point. Offline reopen and wholly local cancellation/recovery require no peer wire; an explicitly remote boundary still requires observed native wire.
 Resolution/restore checks apply only when the actual user operation occurred.
 
 `verify.py` uses the runner's normal `gh api` read-only authentication without
@@ -48,6 +48,26 @@ rejection. Deliberately malformed tiny ZIPs are labeled negative controls only,
 not source archives or native-client results. Any negative failure closes the gate.
 Even a passed gate reports `F05_accepted=false`: final independent product
 acceptance and complete applicable native coverage remain separate.
+
+The original Android 16-check runner has a confirmed compatibility block:
+its Java `HostSyncTest.java` still accepts only SDK3.40/3.41. The approved
+Python CLI-choice adapter is not sufficient. The original Java remains untouched;
+a separately approved, byte-guarded generated instrumentation copy is pending.
+The retained entry deliberately fails preflight rather than wasting a CI attempt.
+Do not describe this route as runnable yet.
+
+Windows/GTK/Android now emit role receipts tied to raw case pointers and actual
+native evidence. Android compares installed APK bytes to the retained program.
+Apple binds actual native product identity, per-phase xcresult attachments and
+exact killed/reopened executable paths/hashes. These are unexecuted preparations.
+
+GTK's native old-parent put follows the actual native deletion in the authenticated
+commit sequence, with typed operations and common parents verified. Its unmodified
+checkpoint can then be delivered to Android through the native sync route, preserving
+Android's own earlier local head as well. This tests the original old-put-not-restore
+contract; repeated-ID replay is additional rather than a newly invented hard gate.
+Deletion-specific native UI remains partial. F07's bounded source review found no
+new blocker in this checkpoint isolation; it is not runtime verification.
 
 No authentication, negative control, syntax check or host test has been executed
 for this preparation. The pending shared-suite integration does not authorize
