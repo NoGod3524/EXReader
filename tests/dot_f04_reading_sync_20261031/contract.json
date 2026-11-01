@@ -119,10 +119,9 @@
     "ipad-simulator"
   ],
   "execution_blockers": [
-    "zero CI authorization",
-    "six-host producer workflow is intentionally disabled",
-    "compiled/runtime correctness and all final host behavior unverified",
-    "graph checker intentionally cannot set F04_accepted until retained producer evidence is integrated"
+    "full six-host runtime still unverified",
+    "current authorization covers only Windows Android return",
+    "original four-ZIP aggregate remains not-run"
   ],
   "graph_producers": [
     {
@@ -335,5 +334,20 @@
       },
       "full_F04": false
     }
+  },
+  "round_history": [
+    {
+      "run_id": "41262238367",
+      "source_sha": "a01e28bd02ef5fcbc1448f26dfd86da0b3499869",
+      "conclusion": "failure",
+      "legacy": "schema1 revisions mixed with schema3 catalog",
+      "windows": "first synchronous import click timeout; root cause not proven"
+    }
+  ],
+  "current_round": 2,
+  "legacy_provider": {
+    "source": "210403d121d6484a8fff4ea7ffd911efa3163535",
+    "prefix": "build/v1-product-stage",
+    "probe_checks_unchanged": true
   }
 }
