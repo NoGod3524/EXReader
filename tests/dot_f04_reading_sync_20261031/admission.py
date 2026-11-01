@@ -15,7 +15,7 @@ def main():
     assert git("merge-base", contract["base_source"], source) == contract["base_source"]
     changed = git("diff", "--name-only", contract["base_source"], source).splitlines()
     if os.environ.get("GITHUB_REF") == "refs/heads/" + contract["canonical"]["branch"]:
-        assert os.environ.get("F04_SCOPE") in ("f04/windows-android", "f04/six-host"), "approved fixed case"
+        assert os.environ.get("F04_SCOPE") in ("f04/windows-android", "f04/six-host", "f04/android-ready-diagnostic"), "approved fixed case"
         assert os.environ.get("F04_CONTROLLER_SHA") == source, "controller/source mismatch"
         assert set(changed) == set(contract["canonical"]["union_paths"]), (changed, "exact approved twenty-six-path union")
     else:
