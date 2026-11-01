@@ -230,7 +230,9 @@ final class F09AppleUITests: XCTestCase {
         let search = element("library.search")
         results["⌘F focuses search"] = wait(10) { ((search.value as? String) ?? "").contains("Sample") }
         samples.append(["command": "⌘F", "search_value": (search.value as? String) ?? ""])
-        app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6))
+        // Clear the query and submit: the search field releases focus (and the
+        // on-screen keyboard that otherwise hides the shelf on iPhone).
+        app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6) + "\n")
 
         XCTAssertTrue(wait(30) { self.element("library.organization").isEnabled }, app.debugDescription)
         app.typeKey("o", modifierFlags: [.command, .shift])
