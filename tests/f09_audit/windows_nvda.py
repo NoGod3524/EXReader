@@ -50,7 +50,7 @@ def main(nvda, exe, book):
     text = log.read_text(encoding='utf-8', errors='replace') if log.exists() else ''
     spoken = [m.group(1) for m in re.finditer(r'Speaking \[(.*?)\]\s*$', text, re.M)]
     joined = '\n'.join(spoken)
-    book_title = Path(book).stem
+    book_title = Path(book).stem.replace('-', ' ')  # Extra-Book.epub carries the title "Extra Book"
     expectations = [
         ('S-01', 'the main window title is spoken', 'EXReader'),
         ('S-02', 'the library menu is spoken by its name', '书库'),
