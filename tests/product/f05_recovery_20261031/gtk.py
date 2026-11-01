@@ -333,5 +333,42 @@ def main():
         subprocess.run(["sudo", "update-ca-certificates"], check=True, capture_output=True)
         key.unlink(missing_ok=True)
 
+
+def build():
+    if os.environ.get("GITHUB_ACTIONS")!="true" or not sys.platform.startswith("linux"):
+        raise RuntimeError("Linux Actions only")
+    import runpy
+    recipe=ROOT/"tests/gtk_sdk342_package/run.py"
+    blob=subprocess.check_output(["git","hash-object",str(recipe)],cwd=ROOT,text=True).strip()
+    if blob!="9c26c4670c402fdd5de8d6bf4d03110df7a43be6":
+        raise AssertionError("original GTK SDK342 build recipe changed")
+    prefix=ROOT/"build/f05-original-hash"
+    def run(*args):
+        subprocess.run(list(map(str,args)),cwd=ROOT,check=True)
+    run("cmake","-S",ROOT/"extras/opds","-B",ROOT/"build/f05-original-hash-build",
+        "-G","Ninja","-DCMAKE_BUILD_TYPE=Release","-DEXREADER_OPDS_HASH_ONLY=ON",
+        "-DCMAKE_INSTALL_PREFIX="+str(prefix.resolve()))
+    run("cmake","--build",ROOT/"build/f05-original-hash-build","--parallel","4")
+    run("cmake","--install",ROOT/"build/f05-original-hash-build")
+    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"]=str(prefix.resolve(strict=True))
+    # Its guard is specific to its historical package branch. F05 admission
+    # separately locks the approved base and SDK. Execute its unchanged build
+    # and retained raw/legacy assertions, never weaken their result predicates.
+    sys.argv=[str(recipe),"build"]
+    runpy.run_path(str(recipe),run_name="__main__")
+    sdk=ROOT/"build/reading-library/stage"
+    raw=ROOT/"build/gtk-raw-wave3/raw-stage"
+    for label,source in (("inspect","tests/reader_gtk_receive"),
+                         ("metadata-consumer","tests/reader_metadata/consumer"),
+                         ("revision-consumer","tests/reader_revisions/consumer"),
+                         ("reading-probe","tests/reader_reading_v2/consumer")):
+        target=ROOT/"build/f05-consumers"/label
+        run("cmake","-S",ROOT/source,"-B",target,"-G","Ninja",
+            "-DCMAKE_BUILD_TYPE=Release","-DEXR_SDK_VERSION=3.42.0",
+            "-DEXR_SDK="+str(sdk),"-DCMAKE_PREFIX_PATH="+str(raw)+";"+str(sdk))
+        run("cmake","--build",target,"--parallel","4")
+    run(sys.executable,"tests/reader_reading_state/make_fixtures.py","build/f05-receive-fixtures")
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv)>1 and sys.argv[1]=="build":build()
+    else:main()
