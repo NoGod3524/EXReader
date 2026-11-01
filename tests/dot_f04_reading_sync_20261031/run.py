@@ -25,6 +25,7 @@ def retained(path):
 
 def stage_apple(target='iphone', generic=False):
     # Explicit full-round Mac permission preparation; diagnostics remain a separate mode.
+    iphone_record_prep = '1' if target == 'iphone' and generic and os.environ.get('F04_SCOPE') == 'f04/iphone-record-diagnostic' else '0'
     permission_prep = '1' if target == 'macos' and generic and os.environ.get('F04_SCOPE') == 'f04/six-host' else '0'
     source = retained("tests/apple_android_relay/apple/run.py")
     source = replace_once(source, "ROOT = Path(__file__).resolve().parents[3]", "ROOT = Path(" + repr(str(ROOT)) + ")")
@@ -68,6 +69,7 @@ def stage_apple(target='iphone', generic=False):
         "        data['passed'] = True")
     source = replace_once(source, "'__PHASE__': args.phase, '__TOKEN__': token,",
         "'__PHASE__': args.phase, '__TOKEN__': token,\n"
+        "                         '__IPHONE_RECORD_PREP__': " + repr(iphone_record_prep) + ",\n"
         "                         '__MAC_PERMISSION_PREP__': " + repr(permission_prep) + ",\n"
         "                         '__INCOMING_PREFIX__': getattr(args, 'incoming_prefix', 'F04_ANDROID'),\n"
         "                         '__OUTGOING_PREFIX__': 'F04_" + target.upper() + "',")
@@ -601,7 +603,8 @@ def load_mac_diagnostic_state(path, phase=None):
     """Diagnostic-only historical input; never rewrites the original identity."""
     import base64, hashlib
     contract = json.loads((HERE / "contract.json").read_text())
-    key = "apple_visibility_diagnostic" if os.environ["F04_SCOPE"] == "f04/apple-visible-diagnostic" else "macos_state_diagnostic"
+    key = {"f04/apple-visible-diagnostic": "apple_visibility_diagnostic",
+           "f04/iphone-record-diagnostic": "iphone_record_diagnostic"}.get(os.environ["F04_SCOPE"], "macos_state_diagnostic")
     pin = contract[key]
     assert os.environ["F04_SCOPE"] == pin["case"]
     raw = Path(path).read_bytes()
@@ -623,10 +626,11 @@ def macos_state_diagnostic(target='macos'):
     sys.path.insert(0, str(ROOT / "tools"))
     from check_parallel_integration import fetch, download_artifact_zip
     contract = json.loads((HERE / "contract.json").read_text())
-    key = "apple_visibility_diagnostic" if os.environ["F04_SCOPE"] == "f04/apple-visible-diagnostic" else "macos_state_diagnostic"
+    key = {"f04/apple-visible-diagnostic": "apple_visibility_diagnostic",
+           "f04/iphone-record-diagnostic": "iphone_record_diagnostic"}.get(os.environ["F04_SCOPE"], "macos_state_diagnostic")
     pin = contract[key]
     assert target in ("macos", "iphone", "ipad")
-    assert key == "apple_visibility_diagnostic" or target == "macos"
+    assert key == "apple_visibility_diagnostic" or (key == "iphone_record_diagnostic" and target == "iphone") or (key == "macos_state_diagnostic" and target == "macos")
     assert sys.platform == "darwin" and os.environ["F04_SCOPE"] == pin["case"]
     assert os.environ["GITHUB_REF"] == "refs/heads/" + contract["canonical"]["branch"]
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -641,6 +645,7 @@ def macos_state_diagnostic(target='macos'):
                 "production_equivalent_to": pin["producer_source"], "changed_paths": changed,
                 "historical_producer": pin, "target": target, "diagnostic_only": True, "F04_accepted": False, "passed": False}
     destination = ROOT / ("build/f04-apple-visibility-diagnostic/" + target) if key == "apple_visibility_diagnostic" else ROOT / "build/f04-macos-state-diagnostic"
+    if key == "iphone_record_diagnostic": destination = ROOT / "build/f04-iphone-record-diagnostic"
     destination.mkdir(parents=True, exist_ok=False)
     sdk_target = "macos" if target == "macos" else "iphonesimulator"
     sdk = ROOT / ("sdk-input/team24-apple-sdk-" + sdk_target + "-f04")
@@ -705,7 +710,7 @@ def macos_state_diagnostic(target='macos'):
         source = replace_once(source, "        token = secrets.token_hex(20)",
                               "        token = secrets.token_hex(20)\n        redactions.extend([user, password, token])")
         source = replace_once(source, "        for key, value in substitutions.items(): template = template.replace(key, value)",
-            "        substitutions['__MAC_DIAGNOSTIC__'] = '1'\n"
+            "        substitutions['__MAC_DIAGNOSTIC__'] = " + repr("0" if key == "iphone_record_diagnostic" else "1") + "\n"
             "        for key, value in substitutions.items(): template = template.replace(key, value)")
         old_print = "            print((out / (role + '.log')).read_text(errors='replace')[-20000:], flush=True)"
         source = replace_once(source, old_print,
@@ -783,8 +788,12 @@ def main():
     assert Path.cwd().resolve() == ROOT
     assert os.environ.get("EXR_APPLE_SDK_VERSION") == "3.42.0"
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics", "windows-import-fixed", "macos-state-diagnostic", "apple-visibility-diagnostic", "authenticate-selected"))
+    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics", "windows-import-fixed", "macos-state-diagnostic", "apple-visibility-diagnostic", "iphone-record-diagnostic", "authenticate-selected"))
     args, rest = parser.parse_known_args()
+    if args.action == "iphone-record-diagnostic":
+        assert not rest
+        macos_state_diagnostic("iphone")
+        return
     if args.action == "apple-visibility-diagnostic":
         p = argparse.ArgumentParser()
         p.add_argument("--target", choices=("macos", "iphone", "ipad"), required=True)

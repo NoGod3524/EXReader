@@ -505,7 +505,61 @@ final class F04ReadingSyncUITests: XCTestCase {
         let screen = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); screen.name = name; screen.lifetime = .keepAlways; add(screen)
     }
 
+    #if os(iOS)
+    private func iphoneRecordRow(_ kind: String, containing marker: String) -> Int {
+        let lists = app.descendants(matching: .any).matching(identifier: "reading.list")
+        var towardStart = true
+        var previousVisible: [String: CGRect]? = nil
+        for observation in 0...20 {
+            // One actual list snapshot per observation; all row reads below are in memory.
+            guard let snapshot = try? lists.firstMatch.snapshot() else { continue }
+            var nodes: [any XCUIElementSnapshot] = []
+            func collect(_ node: any XCUIElementSnapshot) {
+                nodes.append(node)
+                for child in node.children { collect(child) }
+            }
+            collect(snapshot)
+            func node(_ id: String) -> (any XCUIElementSnapshot)? {
+                nodes.first { $0.identifier == id }
+            }
+            func content(_ id: String) -> String {
+                guard let value = node(id) else { return "" }
+                return value.label.isEmpty ? (value.value as? String) ?? "" : value.label
+            }
+            // Preserve the original index order, exact kind and body substring rule.
+            for i in 0..<32 {
+                if content("reading.kind.\(i)") == kind &&
+                    (marker.isEmpty || content("reading.body.\(i)").contains(marker)) { return i }
+            }
+            if observation == 20 { break }
+            let bounds = snapshot.frame
+            guard bounds.width > 0 && bounds.height > 0 else { continue }
+            var visible: [String: CGRect] = [:]
+            for value in nodes where value.identifier.hasPrefix("reading.kind.") {
+                let frame = value.frame
+                if frame.width > 0 && frame.height > 0 && bounds.intersects(frame) {
+                    visible[value.identifier] = frame
+                }
+            }
+            // Offscreen AX nodes do not establish the start. No movement is only
+            // evidence to reverse once, never proof that the record is absent.
+            if towardStart && (visible["reading.kind.0"] != nil ||
+                (!visible.isEmpty && previousVisible == visible)) {
+                towardStart = false
+            }
+            previousVisible = visible
+            print("F04 IPHONE ROW PREPARATION observation=\(observation) direction=\(towardStart ? "toward-start" : "toward-end") visible=\(visible.keys.sorted())")
+            if towardStart { lists.firstMatch.swipeDown() }
+            else { lists.firstMatch.swipeUp() }
+        }
+        XCTFail("iPhone record preparation-incomplete after at most 21 snapshots / 20 native scrolls")
+        return -1
+    }
+    #endif
     private func row(_ kind: String, containing marker: String = "") -> Int {
+        #if os(iOS)
+        if "__IPHONE_RECORD_PREP__" == "1" { return iphoneRecordRow(kind, containing: marker) }
+        #endif
         for i in 0..<32 {
             if text("reading.kind.\(i)") == kind &&
                 (marker.isEmpty || text("reading.body.\(i)").contains(marker)) { return i }
