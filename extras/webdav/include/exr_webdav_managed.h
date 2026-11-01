@@ -39,7 +39,7 @@ exr_webdav_status exr_webdav_managed_observe(const exr_webdav_client *,exr_webda
  * Does not access the SDK or network. Return value is the snapshot status.
  */
 int exr_webdav_managed_recover_profile(const char *profile,exr_webdav_managed_snapshot *);
-/* Linux owned upload snapshots. The client and snapshot stay on the enabling
+/* Linux owned transient snapshots (upload or verified download staging). The client and snapshot stay on the enabling
  * worker; only one snapshot may be active. begin is the explicit opt-in that
  * atomically upgrades a v1 registry to v2 purpose records when it first needs
  * an S root. Download D roots retain their UUID and recovery semantics.
@@ -56,6 +56,17 @@ exr_webdav_status exr_webdav_snapshot_begin(exr_webdav_client *,
   exr_webdav_owned_snapshot **,int *borrowed_write_fd,exr_webdav_error *);
 exr_webdav_status exr_webdav_snapshot_seal(exr_webdav_owned_snapshot *,
   uint64_t expected_bytes,int *borrowed_read_fd,exr_webdav_error *);
+/* Publish a sealed, caller-verified snapshot into a private same-filesystem
+ * directory without replacing any destination. The caller verifies length/hash
+ * before this call. EXISTS never permits replacement; verify the existing file.
+ * published may be 1 on failure: retain that final file and inspect pending/
+ * uncertain cleanup, never roll back publication. Explicit close is still
+ * required; success does not by itself acknowledge product history.
+ * S uses its existing recovery rules; no new purpose, format or capacity.
+ */
+exr_webdav_status exr_webdav_snapshot_publish_file(exr_webdav_owned_snapshot *,
+  const char *private_directory,const char *filename,
+  exr_webdav_download *,exr_webdav_error *);
 exr_webdav_status exr_webdav_snapshot_close(exr_webdav_owned_snapshot **,exr_webdav_error *);
 #ifdef __cplusplus
 }
