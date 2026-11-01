@@ -322,6 +322,52 @@ def main():
                     request_start=reconnect_start,competing_heads=after["heads"],
                     final_heads=after["heads"],conflict_displayed=True,explicit_user_resolution=False)
         normalized[-1]["source_evidence"].append("conflict.png")
+        # Preserve the original Android offline-author scene above. Now receive
+        # the independently created real GTK delete-then-old-parent-put history.
+        # These bytes are served over native HTTPS, never inserted into a DB.
+        proof=contract["old_put_after_tombstone"]
+        inherited=dav.expose_checkpoint(a.peer/contract["remote_delete_put"])
+        if inherited["author"]!="gtk-native-delete-then-old-parent-put":
+            raise AssertionError("wrong real native stale-history author role")
+        if proof["put"]["operation"]!="put" or proof["delete"]["operation"]!="delete":
+            raise AssertionError("stale history lacks typed put/delete")
+        if set(proof["put"]["parents"])!=set(contract["common_parent"]) or set(proof["delete"]["parents"])!=set(contract["common_parent"]):
+            raise AssertionError("stale peer branches changed actual common parent")
+        if proof["delete_commit"]["index"]>=proof["put_commit"]["index"]:
+            raise AssertionError("producer did not observe delete before old-parent put")
+        for role in ("put","delete"):
+            item=proof[role+"_commit"]
+            actual=inherited["commits"][item["index"]]
+            if actual["path"]!=item["path"] or actual["sha256"]!=item["sha256"] or not actual["authenticated_native_put"]:
+                raise AssertionError("producer original commit sequence differs")
+            body=dav.entries[item["path"]]
+            if hashlib.sha256(body).hexdigest()!=item["sha256"] or json.loads(body)!=proof[role]:
+                raise AssertionError("received native stale-history bytes differ")
+        prior_heads=set(after["heads"])
+        stale_start=len(dav.requests)
+        panel();stale_status=sync()
+        if "冲突" not in stale_status:raise AssertionError("stale-history native conflict missing")
+        (a.output/"stale-conflict.png").write_bytes(adb("exec-out","screencap","-p"))
+        evidence.append("stale-conflict.png")
+        close_panel()
+        after_stale=snapshot("received-real-stale-put")
+        expected_heads=prior_heads|{proof["put"]["id"],proof["delete"]["id"]}
+        if set(after_stale["heads"])!=expected_heads:
+            raise AssertionError("native stale-history receiver discarded a competing head")
+        if any(row["operation"]=="restore" for row in after_stale["records"]):
+            raise AssertionError("ordinary old-parent put implicitly restored deletion")
+        report["cases"].append({"name":"receive_real_old_put_after_tombstone","outcome":"partial",
+            "preservation_passed":True,"deletion_conflict_ui_detail":False,
+            "prior_heads":sorted(prior_heads),"after":after_stale,
+            "native_conflict_text":stale_status,"original_producer_proof":proof,
+            "scope":"original native GTK wire delivered to native Android; not simultaneous-online peers"})
+        finish_case({"delete_put_tombstone_preserved":"receiver"},request_start=stale_start,
+            competing_heads=sorted(expected_heads),final_heads=after_stale["heads"],
+            tombstone_preserved=True,stale_peer_did_not_resurrect=True,
+            delete_conflict_displayed=False,explicit_user_restore=False,
+            uncovered="native deletion operation details")
+        normalized[-1]["source_evidence"].append("stale-conflict.png")
+        after=after_stale
         dav.offline=True
         offline_requests=len(dav.requests)
         pid=shell("pidof",PACKAGE).decode().strip()
