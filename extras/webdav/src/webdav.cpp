@@ -873,7 +873,7 @@ extern "C" exr_webdav_status exr_webdav_snapshot_seal(exr_webdav_owned_snapshot 
     auto &p=*h->pool;p.check_owner();auto &r=p.view.root[h->index];
     int code=exr_wc_seal(h->tx);
     if(code==EXR_WC_OK)code=exr_wc_borrow_sealed_fd(h->tx,fd);
-    if(code!=EXR_WC_OK){r.status=code;r.receipt_uncertain=code==EXR_WC_UNCERTAIN;p.inspect(h->index);p.fail(code,"Cannot seal upload snapshot",errno);}
+    if(code!=EXR_WC_OK){r.status=code;r.receipt_uncertain=code==EXR_WC_UNCERTAIN;p.inspect(h->index);if(code==EXR_WC_UNCERTAIN)p.fail(code,"Upload snapshot receipt uncertain",errno);reject(EXR_DAV_IO,"Cannot seal upload snapshot");}
     struct stat st{};if(fstat(*fd,&st)||st.st_size<0||(uint64_t)st.st_size!=expected){*fd=-1;reject(EXR_DAV_IO,"Upload snapshot length differs");}
     p.inspect(h->index);return EXR_DAV_OK;
   }catch(const failure &f){return report(error,f);}catch(...){return report(error,{EXR_DAV_IO,"Cannot seal upload snapshot",0});}
