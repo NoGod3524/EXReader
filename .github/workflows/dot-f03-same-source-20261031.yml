@@ -6,7 +6,7 @@ on:
     inputs:
       case:
         type: choice
-        options: [f03/gtk-ready-artifact-diagnostic, f03/gtk-ready-diagnostic, f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory, f04/android-ready-diagnostic]
+        options: [f03/gtk-numeric-diagnostic, f03/gtk-ready-artifact-diagnostic, f03/gtk-ready-diagnostic, f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory, f04/android-ready-diagnostic]
         default: f03/gtk-android
         required: true
 permissions:
@@ -402,3 +402,131 @@ jobs:
           name: reader-suite-f03-gtk-ready-artifact-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f03-gtk-ready-artifact/
           if-no-files-found: error
+
+  f03_gtk_numeric_diagnostic:
+    if: ${{ github.ref == 'refs/heads/dot/f03-gtk-ready-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f03/gtk-numeric-diagnostic' || github.event_name == 'push' && contains(github.event.head_commit.message, '[F03-GTK-NUMERIC-20-ONE-RUN]')) }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      F03_NUMERIC_OBSERVATION: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Exact approved candidate and source admission
+        run: |
+          python -m pip install PyYAML Pillow
+          python -c "import sys; sys.path.insert(0,'tests/dot_f03_same_source_20261031'); from identity import identity; print(identity())"
+      - name: Retained GTK prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil ninja-build
+      - name: Build actual GTK and retained native build tests
+        run: python tests/dot_f03_same_source_20261031/build.py --host gtk --output build/f03-gtk-build.json
+      - name: Retain original GTK organization assertions
+        run: |
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/f03-retained-openbox.log 2>&1 &
+            wm_pid=$!
+            sampler_pid=
+            collect_wm() {
+              rc=$?
+              trap - EXIT
+              if [ -n "$sampler_pid" ]; then
+                kill "$sampler_pid" 2>/dev/null || true
+                wait "$sampler_pid" 2>/dev/null || true
+              fi
+              xwininfo -root -tree >build/f03-retained-window-tree-exit.txt 2>&1 || true
+              xprop -root _NET_SUPPORTING_WM_CHECK _NET_CLIENT_LIST _NET_ACTIVE_WINDOW >build/f03-retained-root-properties-exit.txt 2>&1 || true
+              kill "$wm_pid" 2>/dev/null || true
+              exit "$rc"
+            }
+            trap collect_wm EXIT
+            for observation in $(seq 1 20); do
+              xprop -root _NET_SUPPORTING_WM_CHECK >>build/f03-retained-wm-observations.txt 2>&1 || true
+              if xprop -root _NET_SUPPORTING_WM_CHECK 2>/dev/null | grep -Eq "window id # 0x[1-9a-fA-F][0-9a-fA-F]*"; then
+                break
+              fi
+              sleep 0.5
+            done
+            xwininfo -root -tree >build/f03-retained-window-tree-before.txt 2>&1 || true
+            (
+              for sample in $(seq 1 30); do
+                {
+                  date -u +%FT%TZ
+                  timeout 2s xwininfo -root -tree 2>&1 | head -c 16384 || true
+                  timeout 2s xprop -root _NET_SUPPORTING_WM_CHECK _NET_CLIENT_LIST _NET_ACTIVE_WINDOW 2>&1 | head -c 4096 || true
+                } >>build/f03-retained-window-samples.txt
+                sleep 1
+              done
+            ) &
+            sampler_pid=$!
+            python tests/dot_f03_same_source_20261031/gtk.py --mode retained --package build/package/EXReader-Linux --command-consumer build/command-consumer/command-consumer --output build/f03-retained-gtk
+          '
+      - name: Actual six-phase native author lifecycle
+        run: |
+          python tests/dot_f03_same_source_20261031/fixtures.py --output build/f03-originals
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/f03-author-openbox.log 2>&1 &
+            wm_pid=$!
+            sampler_pid=
+            collect_wm() {
+              rc=$?
+              trap - EXIT
+              if [ -n "$sampler_pid" ]; then
+                kill "$sampler_pid" 2>/dev/null || true
+                wait "$sampler_pid" 2>/dev/null || true
+              fi
+              xwininfo -root -tree >build/f03-author-window-tree-exit.txt 2>&1 || true
+              xprop -root _NET_SUPPORTING_WM_CHECK _NET_CLIENT_LIST _NET_ACTIVE_WINDOW >build/f03-author-root-properties-exit.txt 2>&1 || true
+              kill "$wm_pid" 2>/dev/null || true
+              exit "$rc"
+            }
+            trap collect_wm EXIT
+            for observation in $(seq 1 20); do
+              xprop -root _NET_SUPPORTING_WM_CHECK >>build/f03-author-wm-observations.txt 2>&1 || true
+              if xprop -root _NET_SUPPORTING_WM_CHECK 2>/dev/null | grep -Eq "window id # 0x[1-9a-fA-F][0-9a-fA-F]*"; then
+                break
+              fi
+              sleep 0.5
+            done
+            xwininfo -root -tree >build/f03-author-window-tree-before.txt 2>&1 || true
+            (
+              for sample in $(seq 1 30); do
+                {
+                  date -u +%FT%TZ
+                  timeout 2s xwininfo -root -tree 2>&1 | head -c 16384 || true
+                  timeout 2s xprop -root _NET_SUPPORTING_WM_CHECK _NET_CLIENT_LIST _NET_ACTIVE_WINDOW 2>&1 | head -c 4096 || true
+                } >>build/f03-author-window-samples.txt
+                sleep 1
+              done
+            ) &
+            sampler_pid=$!
+            python tests/dot_f03_same_source_20261031/gtk.py --mode author --phase create --profile build/f03-author-profile --book build/f03-originals/gtk-organization.txt --package build/package/EXReader-Linux --output build/f03-author/create
+            previous=create
+            for phase in delete restore member-remove member-restore restart; do
+              python tests/dot_f03_same_source_20261031/gtk.py --mode author --phase "$phase" --profile build/f03-author-profile --book build/f03-originals/gtk-organization.txt --package build/package/EXReader-Linux --output "build/f03-author/$phase" --previous "build/f03-author/$previous/wire/state.json"
+              previous="$phase"
+            done
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-suite-f03-gtk-numeric-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f03-author/
+            build/f03-retained-gtk/
+            build/f03-originals/
+            build/f03-gtk-build.json
+            build/package/EXReader-Linux/
+            build/f03-*.log
+            build/f03-*-window-tree-*.txt
+            build/f03-*-root-properties-*.txt
+            build/f03-*-wm-observations.txt
+            build/f03-*-window-samples.txt
+            !build/**/key.pem
+            !build/**/private/**
+            !build/**/connection.json
+          if-no-files-found: error
+

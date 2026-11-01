@@ -634,3 +634,10 @@ expires 2027-01-30T13:53:53Z.
 Any further execution needs a new bounded scope. A possible next diagnostic
 would preserve the original actions and waits while recording allowlisted,
 non-secret numeric account status and focus before/after existing key actions.
+
+
+## GTK numeric-only instrumentation - 2026-11-01T13:59:58Z authorization
+
+Prepared, not run. Four existing paths only; independent dot/f03-gtk-ready-20261101 branch, canonical ec11 unchanged. Unique [F03-GTK-NUMERIC-20-ONE-RUN], one Ubuntu job capped at 20 runner-min, no retry. Original build, four CTest tests, 27 retained assertions, six author phases, UI action arguments and 180-second predicate/deadline remain unchanged.
+
+Read-only daemon samples numeric active-window ID and strict integer account-state whitelist every one second plus observation overhead until finally. Fixed-label action events preserve their event time and the cached sample's own timestamp; no freshness wait or readiness gate. Finally uses bounded join and finite window command before original cleanup; observation failures never replace original failure. Only classified request counts are emitted; original relay has no response-status field, so status is explicitly missing. No query, URL, header, auth, body, account text, screenshot or whole profile is added to diagnostic output. Existing original receipts/artifacts remain unchanged. F03 remains pending and unaccepted.

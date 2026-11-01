@@ -1,5 +1,9 @@
 """Real GTK retained organization and DAV relay phases; never replaces native UI with SQL writes."""
 import argparse
+import os
+import threading
+from datetime import datetime, timezone
+from urllib.parse import urlsplit
 import configparser
 import hashlib
 import importlib.util
@@ -130,6 +134,94 @@ def author(a, stamp):
                   "program_sha256":digest(program),"revision_ids":ids,"before":before,"after":after}
         write_json(a.output/(operation+".json"),record)
         events.append(operation)
+    # Diagnostic observations never gate or modify original actions/waits.
+    diagnostic_enabled = os.environ.get("F03_NUMERIC_OBSERVATION") == "1"
+    diagnostic_stop = threading.Event()
+    diagnostic_cache = {"availability": "not_sampled"}
+    diagnostic_thread = None
+    numeric_fields = ("visible", "owner_busy", "preparing", "bound", "closing", "stage_status",
+        "session_present", "cancel_requested", "session_state", "session_status", "session_generation",
+        "closed_generation", "ticks", "attempt", "phase", "projection_status", "focused", "form_enabled")
+    def diagnostic_emit(stage, sample=None):
+        if not diagnostic_enabled:
+            return
+        try:
+            record = {"stage": stage, "event_utc": datetime.now(timezone.utc).isoformat(),
+                "event_monotonic": time.monotonic(), "sample": sample if sample is not None else diagnostic_cache}
+            line = json.dumps(record, sort_keys=True)
+            with (a.output / "numeric-observations.jsonl").open("a", encoding="utf-8") as stream:
+                stream.write(line + "\n")
+            print("F03_NUMERIC " + line, flush=True)
+        except Exception:
+            # No exception text, account value, or diagnostic failure may replace the original result.
+            pass
+    def diagnostic_snapshot():
+        result = {"sample_utc": datetime.now(timezone.utc).isoformat(), "sample_monotonic": time.monotonic()}
+        try:
+            proc = subprocess.run(["xdotool", "getactivewindow"], capture_output=True, text=True, timeout=1)
+            value = proc.stdout.strip()
+            result["active_window_id"] = int(value) if proc.returncode == 0 and re.fullmatch(r"[0-9]{1,20}", value) else "unavailable"
+        except Exception:
+            result["active_window_id"] = "unavailable"
+            result["window_error_type"] = "observation_error"
+        try:
+            ini = configparser.ConfigParser(interpolation=None)
+            with Path(host.observe).open("r", encoding="utf-8") as stream:
+                raw = stream.read(65537)
+            if len(raw) > 65536:
+                result["account_state"] = "unavailable"
+            else:
+                ini.read_string(raw)
+                values = dict(ini["account"]) if ini.has_section("account") else {}
+                result["account_state"] = {key: (int(values[key]) if re.fullmatch(r"-?[0-9]{1,20}", values[key]) else "invalid")
+                    if key in values else "missing" for key in numeric_fields}
+        except Exception:
+            result["account_state"] = "unavailable"
+            result["state_error_type"] = "observation_error"
+        try:
+            counts = {}
+            for request in list(dav.requests) if dav is not None else []:
+                method = request.get("method")
+                if method not in ("GET", "PUT", "PROPFIND", "MKCOL", "DELETE", "HEAD", "OPTIONS"):
+                    method = "OTHER"
+                path = urlsplit(request.get("path", "")).path
+                category = "revisions" if "/revisions/" in path else "originals" if "/originals/" in path or "/objects/" in path else "root" if path == "/dav/" else "other"
+                status = request.get("status")
+                status = status if type(status) is int and 100 <= status <= 599 else "missing"
+                key = method + ":" + category + ":" + str(status)
+                counts[key] = counts.get(key, 0) + 1
+            result["request_counts"] = counts
+        except Exception:
+            result["request_counts"] = "unavailable"
+            result["request_error_type"] = "observation_error"
+        return result
+    def diagnostic_loop():
+        nonlocal diagnostic_cache
+        while not diagnostic_stop.is_set():
+            try:
+                diagnostic_cache = diagnostic_snapshot()
+                diagnostic_emit("periodic", diagnostic_cache)
+            except Exception:
+                diagnostic_emit("sample_unavailable", {"error_type": "observation_error"})
+            diagnostic_stop.wait(1)
+    def diagnostic_action(original, label):
+        def observed(*args, **kwargs):
+            stage = "account_apply" if label == "key" and args == ("alt+h", "alt+a") else "sync_key" if label == "key" and args == ("alt+s",) else label
+            diagnostic_emit(stage + "_before")
+            try:
+                return original(*args, **kwargs)
+            finally:
+                diagnostic_emit(stage + "_after")
+        return observed
+    if diagnostic_enabled:
+        try:
+            # Fixed labels only; never serialize action arguments (including pasted credentials).
+            for action_name in ("key", "paste", "launch", "close", "dialog"):
+                setattr(host, action_name, diagnostic_action(getattr(host, action_name), action_name))
+            diagnostic_thread = threading.Thread(target=diagnostic_loop, daemon=True)
+            diagnostic_thread.start()
+        except Exception:
+            diagnostic_emit("startup_unavailable", {"error_type": "observation_error"})
     try:
         host.launch()
         if a.phase=="create":
@@ -238,6 +330,14 @@ def author(a, stamp):
         relay.save(dav,a.output/"wire","f03-gtk-"+a.phase,{"identities":known,"events":events})
         dav=None
     finally:
+        if diagnostic_enabled:
+            diagnostic_stop.set()
+            try:
+                if diagnostic_thread is not None:
+                    diagnostic_thread.join(timeout=1)
+                diagnostic_emit("finally_before_cleanup", diagnostic_snapshot())
+            except Exception:
+                diagnostic_emit("finally_unavailable", {"error_type": "observation_error"})
         if host.process and host.process.poll() is None:host.process.kill();host.process.wait(timeout=20)
         if dav:
             dav.server.shutdown();dav.server.server_close()

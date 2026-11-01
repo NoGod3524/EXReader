@@ -315,5 +315,35 @@
       "bytes": 22821295,
       "sha256": "1d5d1c6bc5921b7df45fa71184923b473e7028d7c4cf319f262474441b19e2a4"
     }
+  },
+  "gtk_numeric_diagnostic_round": {
+    "authorization_message": "Sentinel_422d49cb6fb08191a185ddac3fab198c",
+    "authorization_utc": "2026-11-01T13:59:58Z",
+    "base_sha": "7b5b55c15dabbefb1deb3fad47fe4fc5fe88e1ce",
+    "branch": "dot/f03-gtk-ready-20261101",
+    "case": "f03/gtk-numeric-diagnostic",
+    "marker": "[F03-GTK-NUMERIC-20-ONE-RUN]",
+    "allowed_existing_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      "tests/dot_f03_same_source_20261031/gtk.py",
+      "tests/dot_f03_same_source_20261031/scope.json",
+      "docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md"
+    ],
+    "runner_minutes_cap": 20,
+    "run_limit": 1,
+    "automatic_retries": 0,
+    "status": "prepared_not_run",
+    "original_actions_wait_predicates_and_180s_deadline_unchanged": true,
+    "retained_ctest_count": 4,
+    "retained_organization_checks": 27,
+    "diagnostic_only": true,
+    "full_F03_accepted": false,
+    "numeric_state_only": true,
+    "cached_sample_time_separate_from_event_time": true,
+    "request_status_not_recorded_by_original_relay": "missing",
+    "sampler_daemon": true,
+    "stop_join_timeout_seconds": 1,
+    "active_window_command_timeout_seconds": 1,
+    "other_jobs_skipped": true
   }
 }
