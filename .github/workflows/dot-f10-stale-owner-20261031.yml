@@ -137,3 +137,5 @@ jobs:
 # Activate approved fixture correction once after 41ae3a3 review.
 
 # Phase C prepared skip-ci; activation only after independent review, one 45+15 minute run.
+
+# Activate phase C once after independent review of 16b8130d.
