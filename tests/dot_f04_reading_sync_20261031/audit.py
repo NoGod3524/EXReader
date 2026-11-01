@@ -447,6 +447,26 @@ def retained_evidence(bundle, current):
     need(receipt["sdk_version"] == "3.42.0" and
          receipt["sdk_source"] == "8357eafa28423a7ab93ba08b823af80f01ad1505", "retained SDK")
     need(receipt["original_four_zip_aggregate"] == "not-run", "retained aggregate scope")
+    need(receipt.get("legacy_catalog_source") == "210403d121d6484a8fff4ea7ffd911efa3163535" and
+         receipt.get("legacy_revisions_source") == receipt["legacy_catalog_source"] and
+         receipt.get("legacy_product_prefix") == "build/v1-product-stage" and
+         receipt.get("current_product_prefix") == "build/v2-product-stage", "legacy provider identity")
+    def cache_value(text, key):
+        rows = [line.split("=", 1)[1] for line in text.splitlines()
+                if line.startswith(key + ":") and "=" in line]
+        need(len(rows) == 1, "legacy cache field")
+        return rows[0].replace("\\", "/")
+    caches = bundle["legacy_caches"]
+    need(cache_value(caches["v1-product"], "CMAKE_HOME_DIRECTORY").endswith("/build/v1-source/apps/reader/store/native"),
+         "legacy catalog source path")
+    need(cache_value(caches["v1-revisions"], "READER_PRODUCT_PREFIX").endswith("/build/v1-product-stage"),
+         "legacy revisions product prefix")
+    for name in ("v1-adapter", "v1-consumer"):
+        prefix = cache_value(caches[name], "CMAKE_PREFIX_PATH")
+        need("build/v1-product-stage" in prefix and "build/v2-product-stage" not in prefix, "legacy consumer product prefix")
+    link = bundle["legacy_link"].replace("\\", "/")
+    need("v1-product-stage/lib/" in link and "v2-product-stage/" not in link, "legacy linked catalog")
+
     need(sdk["accepted"] is True and wire["accepted"] is True, "retained report refused")
     need(all(str(legacy["identity"][variable]) == current[key] for key, variable in
          (("source_sha", "GITHUB_SHA"), ("run_id", "GITHUB_RUN_ID"), ("attempt", "GITHUB_RUN_ATTEMPT"))),
@@ -530,7 +550,10 @@ def authenticate_retained():
                 sdk_program_sha256=program("v2-consumer/reading-v2-probe"),
                 wire_program_sha256=program("v2-webdav-consumer/reading-v2-probe"),
                 legacy_program_sha256=program("v1-consumer/reading-state-probe"),
-                legacy_c_sha256=program("v1-consumer/reading-state-c-consumer"))
+                legacy_c_sha256=program("v1-consumer/reading-state-c-consumer"),
+                legacy_caches={name: archive.read(name + "/CMakeCache.txt").decode("utf-8") for name in
+                               ("v1-product", "v1-revisions", "v1-adapter", "v1-consumer")},
+                legacy_link=archive.read("v1-consumer/reading-state-link.map").decode("utf-8"))
         need(bundle["receipt"]["platform"] == binding["platform"], "retained platform")
         normalized.append(retained_evidence(bundle, current))  # Qualified positive first.
         negatives = [
