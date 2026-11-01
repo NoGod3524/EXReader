@@ -100,11 +100,25 @@ final class F09AppleUITests: XCTestCase {
         group.tap()
         XCTAssertTrue(bookRow().waitForExistence(timeout: 60))
         bookRow().tap()
+        // The retained G16 path (OrganizationUITests.testTagAndSeriesPersist):
+        // verify the original, add, restart (second entry), remove, restart
+        // (third entry, the one that opened no panel in run 41170540560).
+        tap("organization.verify-original")
+        XCTAssertTrue(wait { self.element("organization.message").label.contains("原件验证完成") }, app.debugDescription)
+        bookRow().tap()
         tap("organization.add")
-        XCTAssertTrue(wait { (self.element("organization.membership").label) == "member" })
+        XCTAssertTrue(wait { (self.element("organization.membership").label) == "member" }, app.debugDescription)
+        app.terminate()
+        XCTAssertTrue(wait(15) { self.app.state == .notRunning })
+        launch(fresh: false)
+        tap("library.organization")
+        tap("organization.kind.tag")
+        XCTAssertTrue(groupRow("F09 Tag").waitForExistence(timeout: 60), app.debugDescription)
+        groupRow("F09 Tag").tap()
+        XCTAssertTrue(bookRow().waitForExistence(timeout: 60))
+        bookRow().tap()
         tap("organization.remove")
-        // The original failure: terminate about one second after the removal.
-        RunLoop.current.run(until: Date().addingTimeInterval(1.0))
+        XCTAssertTrue(wait { (self.element("organization.membership").label) == "not member" }, app.debugDescription)
         app.terminate()
         XCTAssertTrue(wait(15) { self.app.state == .notRunning })
         launch(fresh: false)
