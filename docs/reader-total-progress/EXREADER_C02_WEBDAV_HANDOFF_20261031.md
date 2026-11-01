@@ -1,3 +1,43 @@
+# EXReader continuation snapshot — scheduled 2026-11-01 04:22 UTC
+Actual API capture: **2026-11-01T04:19:24Z / 2026-11-01 00:19:24 America/New_York (EDT)**. The scheduled request arrived early. This is a continuation backup, not completion, suspension, or release.
+
+Formal ledger remains **96/108 (88.89%), 96 verified / 1 partial / 11 pending**, fixed `5db41cb19673fb75bb0b498c677d770931ac33e8`. Read existing independent-document content/blob `60867004d657a808a942dff8518db9a028f67990` (prior snapshot `b0bd106b5a12dd1bdfd1e5859a59c0e88c4c179d`) before updating only this file. Historical evidence below remains intact.
+
+## New evidence and currently running round
+- Prior six-host [41270747157](https://github.com/NoGod3524/EXReader/actions/runs/41270747157), source `3e8ed8ccde4536a01cc6b57c3a00bfb7561c9b39`, failed overall. Windows/Android/GTK real paths, their Windows returns, and original retained checks passed. Both Apple SDK jobs stopped before compilation at system-pip externally-managed-environment; three Apple UI jobs/returns were skipped. The final audit correctly rejected missing producers. This is not an Apple UI/product failure or six-host acceptance. Sixteen original artifact ID/size/SHA pins remain in [F04 seal/environment preparation](https://github.com/NoGod3524/EXReader/blob/7aeea3a00c1a4be4f50ebc260b1be222a95585f3/docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md); no original ZIP was rewritten.
+- User **04:10:27Z** approved exactly three existing files (F04 helper workflow, contract, F04 document), specified branch commit/push, and one fresh fifteen-job **230 runner-minute cap**, no retry. Independent review of `7aeea3a00c1a4be4f50ebc260b1be222a95585f3` verified only five macOS-job environment blocks added: setup-python3.12, RUNNER_TEMP-local venv, GITHUB_PATH, actual interpreter/toolchain identity. Removing those five blocks reproduces the prior helper byte-for-byte. No system-pip override; Ruby fallback, production, SDK, drivers, old tests, assertions and graph unchanged.
+- Current [41272334508](https://github.com/NoGod3524/EXReader/actions/runs/41272334508), attempt1, source/controller `2cdad2057d4877b4712af8155da72fb92b50e411`, canonical branch `dot/reader-suite-20261101`, started **04:14:57Z**, is **in_progress** at capture.
+  - macOS SDK job `124747494579`: **success**, including actual SDK/product build and upload.
+  - iPhoneSimulator SDK job `124747494601`: **success**, including actual SDK/product build and upload.
+  - Linux original18/121 job `124747494676`: **success**.
+  - Windows seed job `124747494562`: **in_progress**, same-source build step in progress; no new seed-runtime result yet.
+  - Downstream Android/GTK/three Apple UI/five returns/final graph audit have no completed result at capture. Other historical F03/diagnostic/import-only cases are skipped.
+- The environment fix has now passed the previous pip blocker and both Apple SDK builds. **SDK build success is not Apple UI success, full F04, or a new formal acceptance item.** One authorized launch is used; no automatic second launch.
+
+## Main-task states and actual activity
+| Task | Fixed identity / branch | Actual state and next step |
+|---|---|---|
+| F03 | canonical sole writer/trigger, current `2cdad2057d4877b4712af8155da72fb92b50e411` | Coordinates the selected F04 case; own GTK/Android requirement still incomplete with original failures retained. No F03 rerun in this case. |
+| F04 | preparation `7aeea3a00c1a4be4f50ebc260b1be222a95585f3`; current run above | **Test monitoring/waiting**, not active source implementation. Await actual remaining native phases and independent final audit; report specific failure if any without spending another round. |
+| F05 | seal `9ce943e1ff0c26b54db69f5c31eec057d2be216b`, `dot/f05-client-recovery-20261031` | Java shadow adaptation source prepared; **0 new CI**. Full native conflict/cancellation/recovery integration remains blocked; no green from preparation. |
+| F07 | seal `697448abd8188580304806163ba9b543e76ba9ba`, historical diagnostic branch sealed | Provider runtime evidence pending. Historical diagnostic complete is not F07 accepted; no new producer. |
+| F10 | seal `4db961144b00c9004e2775b9e1e57e6ea7a31cb7`, `dot/f10-stale-owner-20261031` | Component layers **82 cases / 880 assertions / 38 exact negatives** passed; **full_F10=false**. Actual host/common-consumer and credentials/privacy evidence still needed. |
+| F12 | seal `64729214788a99ae96de7dda1a6376337324f9e4`, `dot/f12-delivery-20261101` | Three approved delivery-guidance paths source-reviewed, **0 CI**; waits final candidate and actual package/upgrade/license evidence. This agent is doing this finite documentation update and bounded reviews. |
+
+Actual classification at capture: **0 confirmed active source-implementation lanes**; F03 canonical coordination, F04 test monitoring, one F12 review/documentation lane, F05/F07/F10 evidence/integration waiting. This is not six simultaneous implementers. Completed sub-results are neither active slots nor complete remaining formal F items.
+
+## Constraints, provenance and continuation
+- Formal P0 safety not granted: sealed C02 migration/journal/repair evidence remains limited to its original scope; no all-P0, hard-power-loss or independent MSVC-static-relink claim. F05 conflict preservation, explicit conflict display, cancellation/retry and genuine wire recovery remain actual host evidence gaps.
+- Frozen SDK `8357eafa28423a7ab93ba08b823af80f01ad1505`, preparation baseline `94fb236a4a2da87dfbaf4f1dd2a47885d615a230`. Five SDK paths match b5e7/94fb/8357; historical727 applies to its historical artifacts. F10 raw-component successes did not build/consume the six reader hosts.
+- Current canonical26-path admission retains exactly three separately authorized parser one-line production deltas and the SDK/old-test locks. Latest environment round adds no production ownership. Existing external UI/F08/F09 and other host owners remain unchanged; specific earlier Apple/cleanup/parser transfers do not transfer whole modules.
+- F03 remains the only canonical writer/trigger; F04 owns its preparation subset. This independent documentation branch is not the tested source. No shared/default branch, PR, tag, release, catalog change or new CI is performed by this snapshot.
+- GitHub direct-source/Git route remains approved. Desktop Commander quota/connection, lap25002/instabox and native handshake were **not revalidated**; no recovered-access claim, no credentials read or recorded.
+- Continue design-before-code, one writer plus one independent reviewer per module, parameterized suite and exact new budget authorization. The current sole launch cap is **230 runner-minutes**, not elapsed wall time or a completion promise; queue/parallelism and untested Apple UI mean no reliable finish range. Overall remaining formal work also has no defensible ETA.
+- Handshake/status: owners and parent received source review and the current run identity; this snapshot independently reads API status at the stated time. Final candidate remains unfrozen, complete six-host outcome still pending. Preserve all earlier failures and artifact identities below.
+
+---
+## Earlier snapshots (historical; latest facts above take precedence)
+
 # EXReader continuation snapshot — scheduled 2026-11-01 03:22 UTC
 Actual API check: **2026-11-01T03:25:43Z / 2026-10-31 23:25:43 America/New_York (EDT)**. Continuation backup only; not completion, suspension, or a release.
 
