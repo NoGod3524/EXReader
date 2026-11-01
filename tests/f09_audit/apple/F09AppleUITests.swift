@@ -51,8 +51,27 @@ final class F09AppleUITests: XCTestCase {
     private func tap(_ id: String) {
         let target = element(id)
         XCTAssertTrue(target.waitForExistence(timeout: 60), "Missing \(id): \(app.debugDescription)")
+        // At accessibility sizes a control can sit below the visible part of
+        // its scroll view; scroll that view the way a user would.
+        if !target.isHittable,
+           let scroll = app.scrollViews.allElementsBoundByIndex.last(where: {
+               $0.descendants(matching: .any).matching(identifier: id).count > 0 }) {
+            for _ in 0..<8 where !target.isHittable {
+#if os(macOS)
+                scroll.scroll(byDeltaX: 0, deltaY: -200)
+#else
+                scroll.swipeUp()
+#endif
+            }
+        }
         XCTAssertTrue(wait { target.isEnabled && target.isHittable }, "Unavailable \(id): \(app.debugDescription)")
         target.tap()
+    }
+
+    // The retained helper: macOS keeps StaticText content in value, iOS in label.
+    private func text(_ id: String) -> String {
+        guard let node = try? element(id).snapshot() else { return "" }
+        return node.label.isEmpty ? (node.value as? String ?? "") : node.label
     }
 
     private func state() -> String {
@@ -104,10 +123,10 @@ final class F09AppleUITests: XCTestCase {
         // verify the original, add, restart (second entry), remove, restart
         // (third entry, the one that opened no panel in run 41170540560).
         tap("organization.verify-original")
-        XCTAssertTrue(wait { self.element("organization.message").label.contains("原件验证完成") }, app.debugDescription)
+        XCTAssertTrue(wait { self.text("organization.message").contains("原件验证完成") }, app.debugDescription)
         bookRow().tap()
         tap("organization.add")
-        XCTAssertTrue(wait { (self.element("organization.membership").label) == "member" }, app.debugDescription)
+        XCTAssertTrue(wait { self.text("organization.membership") == "member" }, app.debugDescription)
         app.terminate()
         XCTAssertTrue(wait(15) { self.app.state == .notRunning })
         launch(fresh: false)
@@ -118,7 +137,7 @@ final class F09AppleUITests: XCTestCase {
         XCTAssertTrue(bookRow().waitForExistence(timeout: 60))
         bookRow().tap()
         tap("organization.remove")
-        XCTAssertTrue(wait { (self.element("organization.membership").label) == "not member" }, app.debugDescription)
+        XCTAssertTrue(wait { self.text("organization.membership") == "not member" }, app.debugDescription)
         app.terminate()
         XCTAssertTrue(wait(15) { self.app.state == .notRunning })
         launch(fresh: false)
@@ -146,8 +165,16 @@ final class F09AppleUITests: XCTestCase {
         tap("library.book.0")
         XCTAssertTrue(element("reader.page").waitForExistence(timeout: 90), app.debugDescription)
         let toggle = element("reader.tools.toggle")
-        if toggle.exists && toggle.isHittable { toggle.tap() }
         let scroll = element("reader.tools.scroll")
+        if toggle.waitForExistence(timeout: 10) {
+            for attempt in 0..<3 where !scroll.exists {
+                XCTAssertTrue(wait(20) { toggle.isHittable }, app.debugDescription)
+                toggle.tap()
+                let shown = scroll.waitForExistence(timeout: 5)
+                samples.append(["toggle_attempt": attempt, "tools_shown": shown, "toggle_label": toggle.label])
+            }
+            XCTAssertTrue(scroll.exists, "显示阅读工具 did not show the tools row: \(app.debugDescription)")
+        }
         var reached: [String: Bool] = [:]
         for id in ["reader.search", "reader.select", "reader.notes", "reader.navigation", "reader.first",
                    "reader.previous", "reader.next", "reader.font.decrease", "reader.font.increase"] {
