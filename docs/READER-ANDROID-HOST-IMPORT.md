@@ -58,3 +58,14 @@ Provider 的同步 Binder query/getType/open 阶段仍没有内部超时；复�
 原始报告：`build/android-host-import/ui/<phase>-raw-report.json`；四份 ready：同目录 `<kill-phase>-boundary-marker.json`。具名清单在 `tests/reader_android_host_import/run_ui.py` 的 `expected`，认证入口为 `tests/reader_android_host_import/check_evidence.py`，完整 producer 为 `.github/workflows/reader-android-host-import.yml` 的 `android` job。
 
 共同合流轮复用 producer 时，需要用共同线所有权核对替换该分支的 `96623448..HEAD` 路径归属检查；构建、设备 120 项与认证不减。授予仍限 API34 default x86_64 模拟器，真实第三方云盘、真机、TalkBack 语音、性能与完整产品保持未授予。
+
+
+## Static import-contract migration - 2026-11-01
+
+Explicit exception approved at 2026-11-01T15:26:49Z (Sentinel_0ed09cbccc788191b8a1cfa0bdec51d7): replace only the old MainActivity persistable-permission text predicate with scoped real-call recognition of the already accepted private-copy chain. Legacy direct permission calls remain recognized; comments, strings and unrelated isolated calls do not satisfy the migrated private-copy path. Other static checks, runtime evidence gates and exit behavior remain unchanged.
+
+Historical evidence is not a new run: component seal e4f20df783872dd536f40a7431b200352aa2da17 / run40161341409 accepted95; host seal8a564e817fec01538d9c6efc35d173c6f24d8fec / run40173100103 accepted120 (20new+100retained), sourcea7b2cb391c24a8ca0db3ff1472e3bfed84248be6. Temporary grants cover initial copy; unfinished URI work needs a real redelivery after process death, while published Ready bytes recover privately. This does not assert current runtime permission correctness from static source alone.
+
+This independent branch will run only the new fixed static positive/negative regression suite on Ubuntu22.04, timeout5minutes, once/no retry. No APK/emulator/two-host160 chain is run and no formal progress count is added. Prior F03 run41318900037 static failure is retained. Candidate prepared, not yet run.
+
+Fixed regression budget: 34 cases = 3 positive contract cases + 28 negative contract cases + 2 preservation/original-checker cases + 1 unchanged non-import static-check negative case. Mutations remain in-memory, never overwrite tested source. Static acceptance is not APK/device acceptance.
