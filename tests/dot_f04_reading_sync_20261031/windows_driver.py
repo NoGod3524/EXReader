@@ -22,9 +22,10 @@ def main():
     p.add_argument("--previous", type=Path)
     p.add_argument("--title", required=True)
     p.add_argument("--incoming-prefix", default="F04_APPLE")
-    p.add_argument("--phase", choices=("windows-seed", "windows-peer", "windows-return"), required=True)
+    p.add_argument("--phase", choices=("windows-seed", "windows-peer", "windows-return", "windows-import-only"), required=True)
+    p.add_argument("--producer-receipt", type=Path)
     args = p.parse_args()
-    assert (args.phase == "windows-seed") == (args.previous is None)
+    assert (args.phase in ("windows-seed", "windows-import-only")) == (args.previous is None)
     out = args.output.resolve(); out.mkdir(parents=True, exist_ok=False)
     rec = module("f04_windows_records", "tests/reader_windows_records/check_ui.py")
     account = module("f04_windows_account", "tests/reader_windows_account/check_account_ui.py")
@@ -64,7 +65,52 @@ def main():
             sent = rec.U.SendInput(2, events, C.sizeof(Input))
             report["import_input"] = {"method": "SendInput", "events_sent": sent, "dispatches": 1}
             assert sent == 2, "Import physical input refused; not retried"
-            # No second click and no synchronous BM_CLICK timeout suppression.
+            # Compact host always opens the real system picker, ignoring hidden path.
+            rec.U.GetParent.argtypes = [W.HWND]; rec.U.GetParent.restype = W.HWND
+            rec.U.GetDlgCtrlID.argtypes = [W.HWND]; rec.U.GetDlgCtrlID.restype = C.c_int
+            rec.U.GetWindow.argtypes = [W.HWND, W.UINT]; rec.U.GetWindow.restype = W.HWND
+            rec.U.EnumChildWindows.argtypes = [W.HWND, rec.M.ENUM, W.LPARAM]
+            def classname(window):
+                name = C.create_unicode_buffer(100); rec.U.GetClassNameW(window, name, 100)
+                return name.value
+            def owned_picker():
+                candidates = []
+                @rec.M.ENUM
+                def visit(window, unused):
+                    pid = W.DWORD(); rec.U.GetWindowThreadProcessId(window, C.byref(pid))
+                    if pid.value == self.process.pid and window != self.window and rec.U.IsWindowVisible(window) and classname(window) == "#32770" and rec.U.GetWindow(window, 4) == self.window:
+                        candidates.append(window)
+                    return True
+                rec.U.EnumWindows(visit, 0)
+                assert len(candidates) <= 1, "ambiguous owned picker"
+                return candidates[0] if candidates else None
+            dialog = self.wait(owned_picker, timeout=30)
+            def filename_control():
+                found = []
+                @rec.M.ENUM
+                def child(window, unused):
+                    if classname(window) == "Edit" and rec.U.IsWindowVisible(window) and rec.U.IsWindowEnabled(window):
+                        parent = rec.U.GetParent(window)
+                        matched = rec.U.GetDlgCtrlID(window) == 1001 and classname(parent) == "ComboBox" and classname(rec.U.GetParent(parent)) == "FloatNotifySink"
+                        ancestor = window
+                        while ancestor and ancestor != dialog:
+                            matched |= rec.U.GetDlgCtrlID(ancestor) in (1148, 1152)
+                            ancestor = rec.U.GetParent(ancestor)
+                        if matched: found.append(window)
+                    return True
+                rec.U.EnumChildWindows(dialog, child, 0)
+                assert len(found) <= 1, "ambiguous filename control"
+                return found[0] if found else None
+            filename = self.wait(filename_control, timeout=30)
+            rec.M.set_text(filename, str(path))
+            assert rec.text(filename) == str(path), "system picker path mismatch"
+            accept = rec.U.GetDlgItem(dialog, 1)
+            assert accept and rec.U.IsWindowVisible(accept) and rec.U.IsWindowEnabled(accept), "picker accept unavailable"
+            # One native acceptance event; no retry loop from the older recipe.
+            assert rec.U.PostMessageW(accept, 0xF5, 0, 0), "picker accept not posted"
+            self.wait(lambda: not rec.U.IsWindow(dialog), timeout=30)
+            report["import_input"]["system_picker_accepted_once"] = True
+            # No second import click and no timeout suppression.
             self.wait(lambda: rec.send(self.control("books"), 0x18B) == 1, timeout=120)
             self.wait_idle()
             assert self.row(args.title) == 0 and rec.send(self.control("books"), 0x18B) == 1, "Import target row mismatch"
@@ -113,6 +159,35 @@ def main():
     def rows():
         return retained_rows(Path(str(app.db) + ".product.sqlite"))
     try:
+        if args.phase == "windows-import-only":
+            assert args.producer_receipt is not None
+            producer = json.loads(args.producer_receipt.read_text())
+            report["product_producer"] = producer
+            report["scope"] = "fixed historical Windows import path only"
+            report["same_current_source_runtime"] = False
+            app = Device(args.candidate.resolve(), args.font.resolve(), out / "profile")
+            phase = "import"
+            app.import_file(args.original.resolve())
+            check("fresh_library_single_import", rec.send(app.control("books"), 0x18B) == 1)
+            app.open(args.title); app.wait_idle()
+            app.wait(lambda: frame() != "未打开书籍" and bool(frame()), timeout=60)
+            page = rec.U.GetDlgItem(app.window, 123)
+            assert rec.U.IsWindowVisible(page) and rec.U.GetForegroundWindow() == app.window
+            bounds = W.RECT(); assert rec.U.GetWindowRect(page, C.byref(bounds))
+            assert bounds.right - bounds.left > 8 and bounds.bottom - bounds.top > 8
+            from PIL import ImageGrab
+            picture = ImageGrab.grab(bbox=(bounds.left + 3, bounds.top + 3, bounds.right - 3, bounds.bottom - 3))
+            extrema = picture.convert("RGB").getextrema()
+            check("opened_page_nonuniform_pixels", any(low != high for low, high in extrema))
+            picture.save(out / "opened-page.png")
+            report["opened_page"] = {"label": frame(), "extrema": extrema}
+            assert rec.U.PostMessageW(app.window, 0x10, 0, 0), "normal close request failed"
+            code = app.process.wait(timeout=30)
+            check("normal_close_zero", code == 0)
+            report["passed"] = True
+            report["program"] = {"sha256": hashlib.sha256(args.candidate.read_bytes()).hexdigest(),
+                                 "bytes": args.candidate.stat().st_size}
+            return
         dav, user, password = start(out, previous=args.previous)
         trust = trust_desktop(out / "cert.pem", "f04-windows")
         app = Device(args.candidate.resolve(), args.font.resolve(), out / "profile")
@@ -186,7 +261,9 @@ def main():
             secrets = [user, password]
             if user is not None and password is not None:
                 secrets.append(base64.b64encode((user + ":" + password).encode()).decode())
-            (diagnostic / "exception.txt").write_text(diagnostic_text(traceback.format_exc(), secrets), encoding="utf-8")
+            cleaned_exception = diagnostic_text(traceback.format_exc(), secrets)
+            print(cleaned_exception, flush=True)
+            (diagnostic / "exception.txt").write_text(cleaned_exception, encoding="utf-8")
             if app:
                 observed = {"process_id": app.process.pid, "exit_code": app.process.poll(),
                             "window_exists": bool(rec.U.IsWindow(app.window)), "phase": phase}
@@ -194,6 +271,19 @@ def main():
                     observed["status"] = diagnostic_text(app.status(), secrets)
                 except Exception as observation_error:
                     observed["status_error"] = type(observation_error).__name__
+                windows = []
+                @rec.M.ENUM
+                def visit(window, unused):
+                    pid = W.DWORD(); rec.U.GetWindowThreadProcessId(window, C.byref(pid))
+                    if pid.value == app.process.pid and rec.U.IsWindowVisible(window):
+                        name = C.create_unicode_buffer(100); rec.U.GetClassNameW(window, name, 100)
+                        windows.append({"class": name.value, "main": window == app.window,
+                                        "foreground": window == rec.U.GetForegroundWindow(),
+                                        "enabled": bool(rec.U.IsWindowEnabled(window))})
+                    return True
+                rec.U.EnumWindows(visit, 0)
+                observed["owned_visible_windows"] = windows
+                print("F04 DIAGNOSTIC WINDOW " + json.dumps(observed), flush=True)
                 (diagnostic / "window.json").write_text(json.dumps(observed, indent=2), encoding="utf-8")
                 log = out / "profile/application.log"
                 if log.is_file():
