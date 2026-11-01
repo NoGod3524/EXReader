@@ -200,6 +200,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         bindViews();
         if(savedInstanceState!=null&&BuildConfig.READER_WAVE3){originalPanel.restoreState(savedInstanceState);annotationPanel.restoreState(savedInstanceState);}
         shelfMetrics=ShelfWindowMetrics.start(this,activityStartedNs);
+        if(BuildConfig.F08_REVIEW&&shelfMetrics!=null)readerView.observeF08(shelfMetrics.readerObserver);
         if(shelfMetrics!=null)catalogShelf.observeFirstInteractive(activityStartedNs,shelfMetrics);
         wireActions();
         readerView.setListener(this);
@@ -606,6 +607,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         pageBusy = false;
         readerView.setSelectMode(false);
         readerView.setPage(current);
+        if(BuildConfig.F08_REVIEW)readerView.acceptF08(gen,current);
         selectButton.setText("Select");
         selectionBar.setVisibility(View.GONE);
         selectionStatus.setText("");
@@ -1114,6 +1116,17 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if(BuildConfig.F08_REVIEW&&intent.getBooleanExtra("f08_capture_stop",false)){
+            long at=android.os.SystemClock.elapsedRealtimeNanos();
+            if(shelfMetrics!=null&&getIntent().getBooleanExtra("shelf_metrics",false)
+                    &&shelfMetrics.readerStopRequest(intent.getIntExtra("f08_expected_pid",-1),intent.getLongExtra("f08_expected_window",-1),at)){
+                readerView.observeF08(null);
+                catalogShelf.stopObservingMetrics(shelfMetrics);
+                shelfMetrics.close("owned_reader_stop",at);
+            }else Log.w(TAG,"F08 capture stop rejected expected_pid="+intent.getIntExtra("f08_expected_pid",-1)
+                    +" expected_window="+intent.getLongExtra("f08_expected_window",-1)+" pid="+android.os.Process.myPid()+" elapsed_ns="+at);
+            return;
+        }
         setIntent(intent);
         if (routeImport(intent)) return;
         if (!BuildConfig.DEBUG || !intent.getBooleanExtra("exr_review", false)) return;

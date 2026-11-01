@@ -1,0 +1,547 @@
+"""Separate 2202+1 Release reader cohort; exact bitmap-paint / Window FrameMetrics replay."""
+import collections
+import hashlib
+import json
+import math
+import re
+import threading
+import time
+import traceback
+from pathlib import Path, PurePosixPath
+
+SAMPLE={"size":2419,"sha256":"9d6464c0f15bfe5b970dd7168aa3162d46e3a64f8f0f049801e7b8651fab3f76"}
+
+CASES=("open","page_forward","page_backward","font_increase","font_decrease",
+       "search_found_select","body_applicability","return_shelf")
+RENDER_CASES=CASES[:6]
+IDENTITY=("source_sha","run_id","attempt")
+SNAPSHOT=("snapshot_identity","book_id","page_index","page_count","part","start","end",
+          "font","zoom","fixed","source_key","bitmap_width","bitmap_height")
+
+
+def need(value,message):
+    if not value:raise ValueError(message)
+
+
+def load(path):return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def save(path,value):
+    path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
+    path.write_text(json.dumps(value,indent=2,allow_nan=False)+"\n",encoding="utf-8")
+
+
+def summary(values):
+    values=sorted(values)
+    return {"count":len(values),"p95":values[math.ceil(len(values)*.95)-1] if values else None,
+            "p99":values[math.ceil(len(values)*.99)-1] if values else None,"max":max(values,default=None)}
+
+
+def associate(events,frames):
+    """No nearest-time/offset/reuse join: actual VSYNC + PID + Window must be unique."""
+    problems=[];accepts={};latest={};last_generation={};draws=[];sets={};active={};ranges=[]
+    for event in events:
+        owner=(event["pid"],event["window_id"]);kind=event["kind"]
+        if kind=="page_set":
+            sets[owner]=event
+            if not event["page_present"] and owner in active:
+                ranges.append((*owner,active.pop(owner),event["mono_ns"]))
+            latest.pop(owner,None)
+        elif kind=="accept":
+            key=(*owner,event["accept_id"])
+            previous=sets.pop(owner,None)
+            if key in accepts or not previous or not previous["page_present"] or any(
+                    previous.get(k)!=event.get(k) for k in SNAPSHOT):problems.append("unpaired/duplicate accept: "+str(key))
+            if not event.get("same_current_page") or not event.get("page_present") or event.get("request_generation",-1)<0:
+                problems.append("missing accepted generation: "+str(key))
+            old=last_generation.get(owner,-1)
+            if event["request_generation"]<=old:problems.append("old request generation: "+str(key))
+            last_generation[owner]=event["request_generation"]
+            accepts[key]=event;latest[owner]=event
+            active.setdefault(owner,event["mono_ns"])
+        elif kind=="bitmap_draw":
+            draw=dict(event);current=latest.get(owner)
+            draw["generation_valid"]=bool(current and event.get("accepted_snapshot") and
+                event.get("accept_id")==current["accept_id"] and
+                event.get("request_generation")==current["request_generation"] and
+                all(event.get(k)==current.get(k) for k in SNAPSHOT))
+            draws.append(draw)
+        elif kind=="no_bitmap" and owner in latest:problems.append("null bitmap for accepted generation: "+str(owner))
+        elif kind=="error":problems.append("reader observer error: "+str(event.get("detail")))
+    for owner,event in sets.items():
+        if event["page_present"]:problems.append("page set without accepted generation: "+str(owner))
+    for owner,start in active.items():
+        ranges.append((*owner,start,None));problems.append("reader not cleared before trace end: "+str(owner))
+    frame_map=collections.defaultdict(list);draw_map=collections.defaultdict(list)
+    for frame in frames:frame_map[(frame["pid"],frame["window_id"],frame["vsync_ns"])].append(frame)
+    for draw in draws:draw_map[(draw["pid"],draw["window_id"],draw["frame_time_ns"])].append(draw)
+    bindings=[];painted_accepts=set();matched_keys=set()
+    for draw in draws:
+        key=(draw["pid"],draw["window_id"],draw["frame_time_ns"]);matches=frame_map[key];reasons=[]
+        if not draw["generation_valid"]:reasons.append("old/missing accepted generation")
+        if not all(draw.get(k) for k in ("painted","page_present","bitmap_present","same_current_page","same_window","attached","shown")):
+            reasons.append("paint/Window unavailable")
+        if draw.get("bitmap_recycled") or draw.get("frame_time_status")!="ok" or draw["frame_time_ns"]<=0:
+            reasons.append("recycled bitmap or unavailable frame clock")
+        if not draw["frame_time_ns"]<=draw["draw_begin_mono_ns"]<=draw["draw_end_mono_ns"]:
+            reasons.append("invalid draw clock order")
+        if len(matches)!=1 or len(draw_map[key])!=1:reasons.append("missing/duplicate exact VSYNC association")
+        if matches and any(f["drop_count"]!=0 or f["total_ns"]<0 or f["first_draw"] not in (0,1) for f in matches):
+            reasons.append("dropped/invalid FrameMetrics")
+        native_start=native_end=None
+        if len(matches)==1:
+            frame=matches[0];stages=("unknown_ns","input_ns","animation_ns","layout_measure_ns","draw_ns")
+            if frame["intended_vsync_ns"]<=0 or any(type(frame.get(k)) is not int or frame[k]<0 for k in stages):
+                reasons.append("unavailable/negative native draw stages")
+            else:
+                native_start=frame["intended_vsync_ns"]+sum(frame[k] for k in stages[:-1])
+                native_end=native_start+frame["draw_ns"]
+                if not frame["intended_vsync_ns"]<=frame["vsync_ns"]<=native_start<=draw["draw_begin_mono_ns"]<=draw["draw_end_mono_ns"]<=native_end:
+                    reasons.append("bitmap paint outside exact native draw interval")
+        row={"pid":key[0],"window_id":key[1],"frame_time_ns":key[2],"draw_id":draw["draw_id"],
+             "accept_id":draw["accept_id"],"request_generation":draw["request_generation"],
+             "status":"missing" if reasons else "complete","reasons":reasons,
+             "callback_sequences":[f["sequence"] for f in matches],
+             "native_draw_start_ns":native_start,"native_draw_end_ns":native_end,"snapshot":{k:draw.get(k) for k in SNAPSHOT}}
+        if not reasons:
+            frame=matches[0];row.update(total_ns=frame["total_ns"],first_draw=frame["first_draw"],
+                intended_vsync_ns=frame["intended_vsync_ns"],vsync_ns=frame["vsync_ns"])
+            painted_accepts.add((key[0],key[1],draw["accept_id"]));matched_keys.add(key)
+        else:problems.append("draw "+str(draw["draw_id"])+": "+", ".join(reasons))
+        bindings.append(row)
+    for key in accepts:
+        if key not in painted_accepts:problems.append("accepted generation has no unique completed reader frame: "+str(key))
+    census=[]
+    for frame in frames:
+        key=(frame["pid"],frame["window_id"],frame["vsync_ns"])
+        reader_active=any(key[:2]==(pid,window) and start<=key[2] and (end is None or key[2]<=end)
+                          for pid,window,start,end in ranges)
+        state="reader_paint" if key in matched_keys else "no_new_reader_draw" if reader_active else "outside_reader"
+
+        census.append({"pid":key[0],"window_id":key[1],"sequence":frame["sequence"],"vsync_ns":key[2],
+                       "total_ns":frame["total_ns"],"first_draw":frame["first_draw"],"reader_active":reader_active,"status":state})
+    return {"problems":problems,"bindings":bindings,"callback_census":census,
+            "accepted_generations":len(accepts),"bitmap_draws":len(draws),"binding_complete":bool(accepts) and not problems}
+
+
+def jsonl(path):
+    raw=path.read_bytes();need(raw.endswith(b"\n"),"truncated trace: "+str(path))
+    rows=[json.loads(line) for line in raw.splitlines()]
+    need(len(rows)>=2 and rows[0]["kind"]=="start" and rows[-1]["kind"]=="stop","trace header/footer: "+str(path))
+    return rows
+
+
+def validate_case_clocks(cases):
+    need([c["id"] for c in cases]==list(CASES),"fixed ordered reader actions")
+    previous=-1
+    for case in cases:
+        start,end=case["started_elapsed_ns"],case["finished_elapsed_ns"]
+        need(type(start) is int and type(end) is int and 0<=start<end and previous<=start,"reader case clock overlap/order")
+        previous=end
+        for item in case["detail"]["inputs"]:
+            a,b=item["started_elapsed_ns"],item["finished_elapsed_ns"]
+            need(type(a) is int and type(b) is int and start<=a<=b<=end,"public input outside actual action")
+
+
+def verified_image(root,value,reader_required):
+    """Recompute the helper's PNG crop and ARGB summary outside the measured app."""
+    from PIL import Image
+    image=value["reader_image"]
+    def payload(name,digest):
+        path=PurePosixPath(name)
+        need(not path.is_absolute() and ".." not in path.parts and "\\" not in name and ":" not in name,"image path")
+        target=root/"ui"/path
+        need(hashlib.sha256(target.read_bytes()).hexdigest()==digest,"image bytes: "+name)
+        return target
+    full=payload(image["screenshot_path"],image["screenshot_sha256"])
+    clocks=(image["capture_started_elapsed_ns"],image["capture_finished_elapsed_ns"])
+    need(image["screenshot_captured"] is True and all(type(v) is int and v>=0 for v in clocks)
+         and clocks[0]<=clocks[1],"screenshot capture")
+    with Image.open(full) as raw:screen=raw.convert("RGBA")
+    if image["status"]!="captured":
+        need(not reader_required and image["status"]=="missing","required reader image unavailable")
+        return None
+    bounds=image["bounds"];box=tuple(bounds[k] for k in ("left","top","right","bottom"))
+    need(all(type(v) is int for v in box) and 0<=box[0]<box[2]<=screen.width and 0<=box[1]<box[3]<=screen.height,"reader image bounds")
+    need(type(bounds["width"]) is int and type(bounds["height"]) is int and
+         (bounds["width"],bounds["height"])==(box[2]-box[0],box[3]-box[1]),"reader bounds dimensions")
+    need(bounds==image["bounds_after_capture"]==value["reader_view"]["bounds"]==value["public_after_capture"]["reader_view"]["bounds"]
+         and value["reader_view"]["visible"] is True and value["public_after_capture"]["reader_view"]["visible"] is True,
+         "public visible reader bounds changed or mismatched")
+    post=value["public_after_capture"]
+    need(all(value[k]==post[k] for k in ("page_label","font_label","book_title")),"public target changed during screenshot")
+    crop_file=payload(image["crop_path"],image["crop_sha256"])
+    with Image.open(crop_file) as raw:crop=raw.convert("RGBA")
+    need(crop.size==(box[2]-box[0],box[3]-box[1])==(image["width"],image["height"]),"reader crop dimensions")
+    need(crop.tobytes()==screen.crop(box).tobytes(),"reader crop differs from actual screen")
+    rgba=crop.tobytes();argb=bytearray(len(rgba))
+    argb[0::4]=rgba[3::4];argb[1::4]=rgba[0::4];argb[2::4]=rgba[1::4];argb[3::4]=rgba[2::4]
+    colors=[int.from_bytes(argb[i:i+4],"big") for i in range(0,len(argb),4)]
+    expected={"algorithm":"argb8888-be-v1","sha256":hashlib.sha256(argb).hexdigest(),
+              "distinct_at_least_two":min(colors)!=max(colors),"min_argb":min(colors),"max_argb":max(colors),"pixels":len(colors)}
+    need(image["pixel_summary"]==expected and expected["distinct_at_least_two"],"reader pixel summary/uniform content")
+    return {"bounds":list(box),"pixel_sha256":expected["sha256"],"capture_finished_elapsed_ns":image["capture_finished_elapsed_ns"]}
+
+
+def image_effects(images):
+    checks=[]
+    def compare(name,left,right,equal):
+        a=images[left[0]][left[1]];b=images[right[0]][right[1]]
+        same_bounds=bool(a and b and a["bounds"]==b["bounds"])
+        same_pixels=bool(same_bounds and a["pixel_sha256"]==b["pixel_sha256"])
+        checks.append({"check":name,"same_bounds":same_bounds,"expected_equal":equal,
+                       "passed":same_bounds and same_pixels==equal})
+    for name in ("page_forward","page_backward","font_increase","font_decrease","search_found_select"):
+        compare(name+"_changes_visible_reader",(name,"before"),(name,"after"),False)
+    compare("page_backward_restores_forward_origin",("page_forward","before"),("page_backward","after"),True)
+    compare("font_decrease_restores_original",("font_increase","before"),("font_decrease","after"),True)
+    return checks
+
+
+def analyze(root,identity,fixture,pss_total):
+    """All callback totals remain in the denominator; paint times never replace TOTAL_DURATION."""
+    root=Path(root);problems=[];frames=[];events=[];windows=[]
+    if list((root/"windows").glob("*-capture-error.json")):problems.append("post-seal collector failure")
+    stop_rows=[]
+    for path in sorted((root/"windows").glob("*.jsonl")):
+        try:
+            rows=jsonl(path);header=rows[0];body=rows[1:-1]
+            frames.extend(r for r in body if r.get("kind")=="frame")
+            need(header["schema"]==1 and all(r["kind"]=="frame" and r["pid"]==header["pid"] and
+                r["window_id"]==header["window_id"] and r["sequence"]==i+1 and r["drop_count"]==0 and
+                r["total_ns"]>=0 and r["vsync_ns"]>0 and r["first_draw"] in (0,1) for i,r in enumerate(body)),"Window callback census")
+            need(rows[-1]["frames"]==len(body) and rows[-1]["dropped"]==0,"Window footer census")
+            windows.append((header["pid"],header["window_id"]));stop_rows.append(rows[-1])
+        except Exception as error:problems.append(str(error))
+    for path in sorted((root/"windows/reader-draw").glob("*.jsonl")):
+        try:
+            rows=jsonl(path);header=rows[0];body=rows[1:-1];footer=rows[-1]
+            need(header["schema"]==1 and header["signal"]=="ReaderView.canvas.drawBitmap" and
+                 header["join_metric"]=="VSYNC_TIMESTAMP" and header["clock"]=="System.nanoTime","reader signal/clock")
+            need((header["pid"],header["window_id"]) in windows,"mixed reader Window")
+            need(all(r["kind"] in ("page_set","accept","bitmap_draw","no_bitmap","stop_request") and
+                r["pid"]==header["pid"] and r["window_id"]==header["window_id"] and
+                r["window_identity"]==header["window_identity"] and r["sequence"]==i+1 for i,r in enumerate(body)),"reader event census")
+            need(footer["events"]==footer["attempted"]==len(body) and footer["rejected"]==footer["pending"]==0
+                and footer["failed"] is False,"reader footer census")
+            events.extend(body);stop_rows.append(footer)
+        except Exception as error:problems.append(str(error))
+    need(frames and events,"missing reader/Window traces")
+    stop=load(root/"stop-request.json")
+    requests=[event for event in events if event["kind"]=="stop_request"]
+    need(stop["sent"] and len(requests)==1 and requests[0]["status"]=="accepted" and
+         requests[0]["expected_pid"]==requests[0]["pid"]==stop["pid"] and
+         requests[0]["expected_window_id"]==requests[0]["window_id"]==stop["window_id"],"owned explicit capture stop")
+    need(len(stop_rows)==2 and all(r["stop_reason"]=="owned_reader_stop" and
+         r["scope_end_requested_elapsed_ns"]==requests[0]["requested_elapsed_ns"] for r in stop_rows),"same explicit stop boundary")
+    ready=load(root/"pre-stop-ready.json")
+    need(ready["binding_complete"] and (ready["pid"],ready["window_id"])==(stop["pid"],stop["window_id"]),"required actions completed before stop")
+    for name in ready["prefix_files"]:
+        need((root/"windows"/name).read_bytes().startswith((root/ready["snapshot"] /name).read_bytes()),"captured pre-stop prefix lost: "+name)
+    need(load(root/"trace-close-barrier.json")["complete"],"explicit close barrier missing")
+    binding=associate(events,frames);problems.extend(binding["problems"])
+    ui=load(root/"ui/validation.json");cases=ui["cases"]
+    need(ui==load(root/"pre-stop-ui.json"),"helper evidence changed after completed UI test")
+    cleanup=load(root/"owned-cleanup-before-final-pull.json")
+    need(cleanup["after_confirmed_stream_close"] and cleanup["measured_pid"]==stop["pid"] and
+         all(not r.get("pid_after") and not r.get("error") and not r.get("identity_error") for r in cleanup["packages"]),
+         "final evidence was not collected after owned process cleanup")
+    closed_files=list((root/"windows").glob("*-closed.json"))
+    need(len(closed_files)==1,"collector closed receipt missing")
+    closed=load(closed_files[0])
+    need(closed["kind"]=="capture_closed" and closed["failed"] is False and closed["reader_closed_clean"] is True
+         and closed["stop_reason"]=="owned_reader_stop" and (closed["pid"],closed["window_id"])==(stop["pid"],stop["window_id"]),"collector did not finish cleanly")
+    need(ui["identity"]==identity,"reader UI identity")
+    validate_case_clocks(cases)
+    need(ui["complete"] and ui["plan"]==[{"id":c,"kind":c,"iteration":0} for c in CASES],"reader declared plan")
+    need([c["id"] for c in cases]==list(CASES) and [c["kind"] for c in cases]==list(CASES)
+         and all(c["iteration"]==0 for c in cases),"fixed reader case census")
+    need(ui["fixture"]["sha256"]==fixture["sha256"] and ui["fixture"]["bytes"]==fixture["size"] and ui["fixture"]["public_title"]=="Sample.epub"
+         and ui["fixture"]["query"]=="Chapter three" and ui["fixture"]["distinct_from_seed"],"reader fixture bytes/identity")
+    need(all(float(v)==1 for v in ui["animation"].values()) and len(ui["animation"])==3,"animation profile")
+    from PIL import Image
+    screenshots=[];action_accepts={};action_generations={};images={}
+    for case in cases:
+        need(all(case.get(k)==v for k,v in identity.items()),"reader case identity")
+        need(load(root/"ui/cases"/(case["id"]+".json"))==case,"reader per-case raw")
+        path=root/"ui/shots"/(case["id"]+".png")
+        with Image.open(path) as image:
+            nonuniform=any(a!=b for a,b in image.convert("RGB").getextrema())
+        screenshots.append({"case":case["id"],"nonuniform":nonuniform})
+        if not nonuniform:problems.append("uniform reader screenshot: "+case["id"])
+        expected="n/a" if case["id"]=="body_applicability" else "pass"
+        if case["status"]!=expected:problems.append("reader UI "+case["id"]+": "+str(case.get("error",case["status"])))
+        need(case["started_elapsed_ns"]<case["finished_elapsed_ns"],"reader case clock")
+        detail=case["detail"]
+        images[case["id"]]={phase:verified_image(root,detail[phase],
+            not (case["id"]=="open" and phase=="before" or case["id"]=="return_shelf" and phase=="after")) for phase in ("before","after")}
+        inputs=detail["inputs"]
+        need(all(i["started_elapsed_ns"]<=i["finished_elapsed_ns"] for i in inputs),"actual public input clocks")
+        if case["id"] in RENDER_CASES:
+            need(inputs,"reader action has no recorded public input")
+            first_input=min(i["started_elapsed_ns"] for i in inputs)
+            need(case["started_elapsed_ns"]<=first_input<case["finished_elapsed_ns"],"public input outside case")
+            selected=sorted([e for e in events if e["kind"]=="accept" and
+                 first_input<=e["elapsed_ns"]<=case["finished_elapsed_ns"]],key=lambda e:(e["elapsed_ns"],e["sequence"]))
+            action_generations[case["id"]]=[{k:e[k] for k in ("pid","window_id","accept_id","request_generation","elapsed_ns")} for e in selected]
+            if not selected:problems.append("no accepted generation after actual public input: "+case["id"])
+            else:
+                value=selected[-1];action_accepts[case["id"]]=value;after=detail["after"]
+                if any(e["pid"]!=case["pid"] or e["source_key"]!="epub:"+fixture["sha256"] for e in selected):
+                    problems.append("wrong reader PID/book source: "+case["id"])
+                page=re.match(r"^p\.([0-9]+)(?: |$)",after["page_label"])
+                font=re.fullmatch(r"Size ([0-9]+)",after["font_label"])
+                if not page or not font or int(page[1])!=value["page_index"]+1 or int(font[1])!=int(value["font"]) or after["book_title"]!="Sample.epub":
+                    problems.append("last accepted generation differs from actual public target state: "+case["id"])
+                target_draws=[e for e in events if e["kind"]=="bitmap_draw" and
+                    (e["pid"],e["window_id"],e["accept_id"])==(value["pid"],value["window_id"],value["accept_id"])]
+                capture_end=images[case["id"]]["after"]["capture_finished_elapsed_ns"]
+                if not any(e["elapsed_ns"]<=capture_end for e in target_draws):
+                    problems.append("target generation has no real paint by reader screenshot completion: "+case["id"])
+    effects=image_effects(images)
+    if any(not item["passed"] for item in effects):problems.append("reader visible page/font/locate effect or recovery missing")
+    opened_ui=next(c for c in cases if c["id"]=="open")["detail"]
+    need(opened_ui["import_status"]=="Imported Sample.epub","actual new independent EPUB import")
+    found=next(c for c in cases if c["id"]=="search_found_select")["detail"]
+    need(found["query"]=="Chapter three" and found["explicit_result_click"] and
+         "Chapter three" in found["selected_result"] and re.match(r"[1-9][0-9]* 个结果",found["search_status_before_click"]),
+         "real FOUND search result selection")
+    if all(case in action_accepts for case in RENDER_CASES):
+        a=action_accepts;opened=a["open"];forward=a["page_forward"];back=a["page_backward"]
+        if (forward["part"],forward["page_index"],forward["start"])==(opened["part"],opened["page_index"],opened["start"]):problems.append("forward did not change source page")
+        if any(back[k]!=opened[k] for k in ("part","page_index","start","font")):problems.append("back did not restore source page")
+        if not a["font_increase"]["font"]>back["font"] or a["font_decrease"]["font"]!=opened["font"]:problems.append("font generations did not increase/restore")
+        if (a["search_found_select"]["part"],a["search_found_select"]["start"])==(a["font_decrease"]["part"],a["font_decrease"]["start"]):problems.append("FOUND selection did not relocate source point")
+    paints=[e for e in events if e["kind"]=="bitmap_draw"]
+    body_na=bool(paints) and all(not e["fixed"] and e["pan_limit_x"]==e["pan_limit_y"]==0 for e in paints)
+    if not body_na:problems.append("paged bitmap no-scroll N/A lacks actual pan-limit evidence")
+    seed=load(root/"seed/seed.json")
+    need(all(seed.get(k)==v for k,v in identity.items()) and seed["books"]==2202 and seed["production_mapping_complete"]
+         and len(set(seed["source_keys"]))==2202,"independent original 2202 seed")
+    pss=load(root/"pss-sampling.json");valid=[];problems.extend(pss["errors"])
+    for sample in pss["samples"]:
+        if sample.get("total_pss_kib") is None:continue
+        need(not sample.get("process_changed_during_sample") and sample["pid"]==stop["pid"],"reader PSS changed process")
+        raw=(root/"pss"/(str(sample["slot"])+".txt")).read_text()
+        need(pss_total(raw,sample["pid"])==sample["total_pss_kib"],"reader PSS raw differs")
+        valid.append(sample["total_pss_kib"])
+    if not valid:problems.append("missing reader memory samples")
+    all_frames=summary([f["total_ns"]/1e6 for f in frames]);ordinary=summary([f["total_ns"]/1e6 for f in frames if f["first_draw"]==0])
+    matched=summary([b["total_ns"]/1e6 for b in binding["bindings"] if b["status"]=="complete" and b["first_draw"]==0])
+    scenarios={}
+    for name,kinds in {"reader_open":("open",),"reader_page":("page_forward","page_backward"),
+                       "reader_font":("font_increase","font_decrease"),"reader_locate":("search_found_select",)}.items():
+        keys={(a["pid"],a["window_id"],a["accept_id"]) for kind,a in action_accepts.items() if kind in kinds}
+        rows=[b for b in binding["bindings"] if b["status"]=="complete" and (b["pid"],b["window_id"],b["accept_id"]) in keys]
+        scenarios[name]={"all_frames_ms":summary([b["total_ns"]/1e6 for b in rows]),
+                         "ordinary_frames_ms":summary([b["total_ns"]/1e6 for b in rows if b["first_draw"]==0]),
+                         "first_draw_frames_ms":summary([b["total_ns"]/1e6 for b in rows if b["first_draw"]==1])}
+    def within(value):return bool(value["count"] and value["p95"]<=16.67 and value["p99"]<=33.34)
+    budget=bool(within(ordinary) and within(matched) and valid and max(valid)<=524288 and
+                all(within(scenarios[name]["ordinary_frames_ms"]) for name in ("reader_page","reader_font","reader_locate")))
+    return {"identity":identity,"problems":problems,"binding":binding,"all_window_frames_ms":all_frames,
+            "ordinary_window_frames_ms":ordinary,"matched_reader_frames_ms":matched,"scenarios":scenarios,"screenshots":screenshots,
+            "visible_reader_effects":effects,"action_generations":action_generations,
+            "body":{"status":"n/a" if body_na else "missing","reason":"reflow paged bitmap has zero real pan limits"},
+            "corpus":{"original_seed_books":2202,"supplemental_imports":1,"expected_total":2203,
+                      "independently_observed_total":None,"fixture":fixture},
+            "sampled_peak_pss_kib":max(valid,default=None),"valid_pss_samples":len(valid),
+            "budget_passed":not problems and budget,"budget_values_within_limits":budget,"accepted":not problems,
+            "tti_scope":"unchanged original Shelf case0; supplemental launch is not TTI", "f08_accepted":False}
+
+
+def ready_prefix(snapshot,ui):
+    """Validate a complete prefix without a footer; performance outliers never delay stop."""
+    events=[];frames=[];owners=[];names=[]
+    for folder,is_reader in ((snapshot,False),(snapshot/"reader-draw",True)):
+        paths=sorted(folder.glob("*.jsonl"));need(len(paths)==1,"one current collector Window")
+        for path in paths:
+            raw=path.read_bytes();need(raw.endswith(b"\n"),"partial pre-stop snapshot")
+            rows=[json.loads(line) for line in raw.splitlines()];header=rows[0]
+            need(header["kind"]=="start" and not any(r["kind"]=="stop" for r in rows[1:]),"collector closed before explicit stop")
+            owner=(header["pid"],header["window_id"]);owners.append(owner);names.append(path.relative_to(snapshot).as_posix())
+            body=rows[1:]
+            need(all(r["pid"]==owner[0] and r["window_id"]==owner[1] and r["sequence"]==i+1 for i,r in enumerate(body)),"pre-stop trace identity/sequence")
+            if is_reader:
+                need(all(r["kind"] in ("page_set","accept","bitmap_draw","no_bitmap") for r in body),"reader failure before stop")
+                events.extend(body)
+            else:
+                need(all(r["kind"]=="frame" and r["drop_count"]==0 for r in body),"Window callback failure before stop")
+                frames.extend(body)
+    need(len(set(owners))==1,"mixed pre-stop Window")
+    report=associate(events,frames);need(report["binding_complete"],"required generation/frame association incomplete: "+repr(report["problems"]))
+    validate_case_clocks(ui["cases"])
+    for case in ui["cases"]:
+        need(case["status"]==("n/a" if case["id"]=="body_applicability" else "pass"),"reader action failed before stop")
+        if case["id"] not in RENDER_CASES:continue
+        need(case["detail"]["inputs"],"reader action has no actual public input before stop")
+        start=min(i["started_elapsed_ns"] for i in case["detail"]["inputs"])
+        need(any(e["kind"]=="accept" and start<=e["elapsed_ns"]<=case["finished_elapsed_ns"] for e in events),"reader action has no accepted generation")
+    return {"pid":owners[0][0],"window_id":owners[0][1],"binding_complete":True,
+            "accepted_generations":report["accepted_generations"],"callbacks":len(frames),"prefix_files":[path.relative_to(snapshot).as_posix() for path in sorted(snapshot.rglob("*")) if path.is_file()]}
+
+
+def stop_capture(plan,root,command):
+    import native_android as N
+    ui=load(root/"pre-stop-ui.json");need(ui["identity"]==plan["identity"],"pre-stop UI identity")
+    deadline=time.monotonic()+10;attempts=[];ready=None
+    for index in range(20):
+        if time.monotonic()>=deadline:break
+        target=root/"pre-stop"/("attempt-%02d"%index);target.mkdir(parents=True)
+        item={"snapshot":target.relative_to(root).as_posix(),"host_mono_ns":time.monotonic_ns()}
+        try:
+            command("pre-stop-pull-%02d"%index,"pull","/sdcard/Android/data/"+N.APP+"/files/shelf-window-metrics",
+                    target/"windows",timeout=max(.1,min(3,deadline-time.monotonic())))
+            ready=ready_prefix(target/"windows",ui);ready["snapshot"]=(target/"windows").relative_to(root).as_posix()
+            item["ready"]=True
+        except Exception as error:item["error"]=repr(error)
+        attempts.append(item);save(root/"pre-stop-attempts.json",attempts)
+        if ready:break
+        time.sleep(min(.25,max(0,deadline-time.monotonic())))
+    need(ready is not None,"reader required action callbacks did not complete before explicit stop")
+    save(root/"pre-stop-ready.json",ready)
+    actual=N.adb(plan,"shell","pidof",N.APP,timeout=3).strip()
+    need(actual==str(ready["pid"]),"owned capture PID changed before stop")
+    request={"pid":ready["pid"],"window_id":ready["window_id"],"sent":False,"host_mono_ns":time.monotonic_ns()}
+    save(root/"stop-request.json",request)
+    command("request-owned-stop","shell","am","start","-n",N.APP+"/.MainActivity","--activity-single-top",
+            "--ez","f08_capture_stop","true","--ei","f08_expected_pid",str(ready["pid"]),
+            "--el","f08_expected_window",str(ready["window_id"]),timeout=5)
+    request["sent"]=True;request["host_finished_mono_ns"]=time.monotonic_ns();save(root/"stop-request.json",request)
+    close_barrier(plan,root)
+    target=root/"close-confirm/windows"
+    command("pull-close-confirm","pull","/sdcard/Android/data/"+N.APP+"/files/shelf-window-metrics",target,timeout=10)
+    for name in ready["prefix_files"]:
+        need((target/name).read_bytes().startswith((root/ready["snapshot"]/name).read_bytes()),"pre-stop prefix missing at close: "+name)
+    need(not list(target.glob("*-capture-error.json")),"collector failure before owned cleanup")
+    for path in target.glob("*.jsonl"):
+        need(jsonl(path)[-1]["stop_reason"]=="owned_reader_stop","native explicit footer before cleanup")
+    for path in (target/"reader-draw").glob("*.jsonl"):
+        need(jsonl(path)[-1]["stop_reason"]=="owned_reader_stop","reader explicit footer before cleanup")
+    save(root/"close-confirm.json",{"confirmed":True,"pid":ready["pid"],"window_id":ready["window_id"],
+         "host_mono_ns":time.monotonic_ns()})
+
+
+def close_barrier(plan,root):
+    """Read actual owned-signal stop records; never redraw or force-stop to manufacture one."""
+    import native_android as N
+    deadline=time.monotonic()+10;attempts=[]
+    remote="/sdcard/Android/data/"+N.APP+"/files/shelf-window-metrics"
+    while time.monotonic()<deadline:
+        item={"host_mono_ns":time.monotonic_ns(),"tails":[]};complete=False
+        try:
+            names=N.adb(plan,"shell","ls",remote+"/reader-draw",timeout=min(2,deadline-time.monotonic())).splitlines()
+            need(len(names)==1 and re.fullmatch(r"window-[0-9]+-[0-9]+\.jsonl",names[0]),"one actual reader Window")
+            for folder in ("","/reader-draw"):
+                remaining=deadline-time.monotonic();need(remaining>0,"reader close deadline")
+                raw=N.adb(plan,"shell","tail","-n","1",remote+folder+"/"+names[0],timeout=min(2,remaining))
+                item["tails"].append({"folder":folder,"raw":raw})
+            remaining=deadline-time.monotonic();need(remaining>0,"reader close receipt deadline")
+            receipt=N.adb(plan,"shell","cat",remote+"/"+names[0].replace(".jsonl","-closed.json"),timeout=min(2,remaining))
+            item["closed_receipt_raw"]=receipt;closed=json.loads(receipt);owner=load(root/"stop-request.json")
+            complete=all(json.loads(t["raw"])["kind"]=="stop" and json.loads(t["raw"])["stop_reason"]=="owned_reader_stop" for t in item["tails"]) and (
+                closed["kind"]=="capture_closed" and closed["failed"] is False and closed["reader_closed_clean"] is True
+                and closed["stop_reason"]=="owned_reader_stop" and (closed["pid"],closed["window_id"])==(owner["pid"],owner["window_id"]))
+        except Exception as error:item["error"]=repr(error)
+        attempts.append(item)
+        if complete:save(root/"trace-close-barrier.json",{"complete":True,"attempts":attempts});return
+        time.sleep(min(.25,max(0,deadline-time.monotonic())))
+    save(root/"trace-close-barrier.json",{"complete":False,"attempts":attempts})
+    raise ValueError("native reader streams did not close after the owned signal")
+
+
+def run(plan,root,proof,namespace):
+    """Invoked inside the existing native worker's unchanged 1100-second parent cap."""
+    import native_android as N
+    root=Path(root);root.mkdir(exist_ok=False);(root/"pss").mkdir()
+    identity=plan["identity"];fixture=proof["final_build"]["reader_fixture"]
+    result={"problems":[],"accepted":False};samples={"samples":[],"errors":[]};stop=threading.Event();thread=None
+    def command(name,*args,timeout=45,check=True):
+        call=N.adb(plan,*args,raw=True,check=False,timeout=timeout)
+        (root/(name+".stdout.txt")).write_bytes(call.stdout);(root/(name+".stderr.txt")).write_bytes(call.stderr)
+        need(not check or call.returncode==0,"reader adb command: "+name)
+        return call.stdout.decode(errors="replace")
+    def sample():
+        try:
+            while not stop.is_set():
+                slot=len(samples["samples"]);start=time.monotonic_ns()
+                text=N.adb(plan,"shell","pidof",N.APP,check=False,timeout=10).strip()
+                item={"slot":slot,"pid":int(text) if re.fullmatch(r"[0-9]+",text) else None}
+                if item["pid"] is not None:
+                    raw=N.adb(plan,"shell","dumpsys","meminfo",str(item["pid"]),timeout=15)
+                    (root/"pss"/(str(slot)+".txt")).write_text(raw,encoding="utf-8")
+                    after=N.adb(plan,"shell","pidof",N.APP,check=False,timeout=10).strip()
+                    if after!=str(item["pid"]):item["process_changed_during_sample"]=True
+                    else:item["total_pss_kib"]=namespace["pss_total"](raw,item["pid"])
+                item["collection_elapsed_ms"]=(time.monotonic_ns()-start)/1e6;samples["samples"].append(item)
+                stop.wait(max(0,1-(time.monotonic_ns()-start)/1e9))
+        except Exception as error:samples["errors"].append(repr(error))
+    try:
+        # The original ten-case raw tree was pulled and inventoried by the native worker before this clear.
+        command("install-reader-helper","install","-r","-t",N.ROOT/"build/android-host/artifacts/reader-uitest-debug-androidTest.apk")
+        paths=[line.removeprefix("package:") for line in N.adb(plan,"shell","pm","path",N.HELPER+".test").splitlines() if line.startswith("package:")]
+        need(len(paths)==1,"installed reader helper path")
+        command("pull-installed-reader-helper","pull",paths[0],root/"installed-test.apk")
+        digest=N.sha(root/"installed-test.apk");expected=proof["final_build"]["reader_test_apk"]["sha256"]
+        save(root/"installed-test-identity.json",{"sha256":digest,"producer_sha256":expected,"matches_producer":digest==expected})
+        need(digest==expected,"installed reader helper differs from producer")
+        command("clear-independent-cohort","shell","pm","clear",N.APP)
+        seed=command("seed","shell","am","instrument","-w","-r","-e","phase","seed-ui","-e","source_sha",identity["source_sha"],
+                     "-e","run_id",identity["run_id"],"-e","attempt",identity["attempt"],
+                     N.APP+".test/org.exreader.host.ShelfCatalogTest",timeout=900)
+        need("EXR_SHELF_SEEDED 2202" in seed and "INSTRUMENTATION_CODE: -1" in seed,"reader real SDK seed")
+        command("pull-seed","pull","/sdcard/Android/data/"+N.APP+"/files/shelf-tests",root/"seed",timeout=120)
+        command("stop-unmeasured-seeder","shell","am","force-stop",N.APP)
+        command("push-reader-fixture","push",N.ROOT/"build/android-host/fixtures/Sample.epub","/sdcard/Download/Sample.epub")
+        thread=threading.Thread(target=sample);thread.start()
+        command("launch-reader-shelf","shell","am","start","-n",N.APP+"/.MainActivity","--ez","shelf_metrics","true")
+        ui=command("reader-ui","shell","am","instrument","-w","-r","-e","disableAnalytics","true",
+                   "-e","class","org.exreader.host.uitest.ReaderF08UiTest#reader",
+                   "-e","source_sha",identity["source_sha"],"-e","run_id",identity["run_id"],"-e","attempt",identity["attempt"],
+                   "-e","exr_fixture_name","Sample.epub","-e","exr_fixture_path","/sdcard/Download/Sample.epub",
+                   "-e","exr_fixture_sha256",fixture["sha256"],"-e","exr_fixture_bytes",str(fixture["size"]),
+                   "-e","exr_query","'Chapter three'",proof["final_build"]["reader_test_apk"]["runner"],timeout=210)
+        ui_report=command("reader-ui-validation","shell","cat","/sdcard/Android/data/"+N.HELPER+"/files/reader-evidence/validation.json",timeout=10)
+        save(root/"pre-stop-ui.json",json.loads(ui_report))
+        stop_capture(plan,root,command)
+        need("INSTRUMENTATION_CODE: -1" in ui and "FAILURES!!!" not in ui,"reader UI instrumentation failed")
+    except Exception as error:result["problems"].append(repr(error))
+    finally:
+        stop.set()
+        if thread:thread.join(max(0,min(20,plan["operation_deadline_mono"]-time.monotonic())))
+        if thread and thread.is_alive():samples["errors"].append("reader PSS sampler did not stop")
+        save(root/"pss-sampling.json",samples)
+        # A successful footer/receipt is authenticated before cleanup. On failure this
+        # remains incomplete; force-stop never supplies the missing collector footer.
+        cleanup_deadline=min(time.monotonic()+40,plan["operation_deadline_mono"])
+        measured_pid=load(root/"stop-request.json")["pid"] if (root/"stop-request.json").exists() else None
+        cleanup={"measured_pid":measured_pid,"after_confirmed_stream_close":(root/"close-confirm.json").exists(),"packages":[],"host_started_mono_ns":time.monotonic_ns()}
+        for package in (N.HELPER,N.APP):
+            record={"package":package}
+            try:
+                remaining=cleanup_deadline-time.monotonic();need(remaining>0,"reader owned cleanup deadline")
+                record["pid_before"]=N.adb(plan,"shell","pidof",package,check=False,timeout=min(10,remaining)).strip()
+                if package==N.APP and record["pid_before"] and measured_pid is not None and record["pid_before"]!=str(measured_pid):
+                    record["identity_error"]="owned app PID changed after capture close"
+                    result["problems"].append(record["identity_error"])
+                remaining=cleanup_deadline-time.monotonic();need(remaining>0,"reader owned cleanup deadline")
+                command("cleanup-"+package,"shell","am","force-stop",package,timeout=min(10,remaining))
+                remaining=cleanup_deadline-time.monotonic();need(remaining>0,"reader owned cleanup deadline")
+                record["pid_after"]=N.adb(plan,"shell","pidof",package,check=False,timeout=min(10,remaining)).strip()
+                need(not record["pid_after"],"owned package remains after reader cleanup")
+            except Exception as error:record["error"]=repr(error);result["problems"].append("cleanup: "+repr(error))
+            cleanup["packages"].append(record)
+        cleanup["host_finished_mono_ns"]=time.monotonic_ns();save(root/"owned-cleanup-before-final-pull.json",cleanup)
+        for remote,target in (("/sdcard/Android/data/"+N.HELPER+"/files/reader-evidence","ui"),
+                              ("/sdcard/Android/data/"+N.APP+"/files/shelf-window-metrics","windows")):
+            try:
+                if not (root/target).exists():command("pull-"+target,"pull",remote,root/target,timeout=120)
+            except Exception as error:result["problems"].append("collection: "+repr(error))
+        try:command("logcat","logcat","-d","-v","threadtime")
+        except Exception as error:result["problems"].append("logcat: "+repr(error))
+        try:
+            replay=analyze(root,identity,fixture,namespace["pss_total"])
+            result={**replay,"collection_problems":result["problems"],"accepted":replay["accepted"] and not result["problems"]}
+        except Exception:result["problems"].append(traceback.format_exc())
+        save(root/"result.json",result)
+    return result
