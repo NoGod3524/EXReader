@@ -32,3 +32,8 @@
 ## 独立设计审后的历史盘点分层
 父线程已审设计方向，尚未授新实现或 CI。历史盘点固定 `historical_inventory_only=true`，以历史原 source/run/attempt/package 身份核材料；无需捏造最终 candidate，也不因最终 candidate 未冻结让历史盘点整体失败。历史结果不授 `full_f12_complete`，最终 source 未冻结单列依赖。
 优先读取已有包 manifest/安装清单和普通工件日志确定材料位置，不默认扫描六个历史 ZIP。只有可明确定位 Android notices 缺口并指导最小修补时，再提交单包只读 Actions case 的设计/路径/单轮预算；不重造 H5 或全重建。
+
+
+## 本批说明生成器实施与独立审点
+2026-11-01 00:52:57 UTC 已批准 delivery.py + 本两doc，0 CI；这是说明内容实现，不是新增测试实现许可。独立审点：原各端入口/签名模拟器限制、manifest/schema/哈希逻辑不变；新增文字不把K03同schema、C02组件或F06六开发包结果转授最终升级；不引导运行时复制SQLite/删除远端文件模拟操作；Windows自动接收与GTK显式Receive区别保留；移动端/Apple未验能力明示。反证仍按上表 installation/import/sync_instruction_mismatch，不新增截图或全部平台笛卡尔积。
+将来获批实际打包验证应读取真实生成的安装说明与同包manifest，核该包目标的步骤及限制、旧条款仍在、原哈希清单覆盖该说明；不能只比较源文本即授包内交付已完成。当前仅人工源级检查，未执行语法或测试、未更新历史ZIP。
