@@ -751,9 +751,9 @@
       "case": "f04/macos-state-diagnostic",
       "max_runner_minutes": 15,
       "max_runs": 1,
-      "runs_started": 0,
+      "runs_started": 1,
       "automatic_retry": false,
-      "status": "prepared-awaiting-independent-source-review",
+      "status": "completed-failure",
       "delta_paths": [
         "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
         "tests/dot_f04_reading_sync_20261031/contract.json",
@@ -783,6 +783,68 @@
         "privacy": "no own input/editor values; skip system input subtrees; redact fixed credentials/root/token, URLs and emails; bounded dialog/text counts; no history or raw full tree",
         "original_success_assertions_preserved": true,
         "ios_unchanged": true
+      },
+      "execution": "Existing single macOS diagnostic job; historical SDK/Android pins and production-equivalence allowlist unchanged; F03 sole canonical writer and trigger.",
+      "result": {
+        "run_id": "41287434330",
+        "attempt": 1,
+        "source_sha": "5394ec6dc8aa6da7227bb7876609a235aa164f3d",
+        "job_id": 124791485333,
+        "conclusion": "failure",
+        "test_seconds": 223.783,
+        "artifact_id": 13075384078,
+        "size_in_bytes": 42355931,
+        "digest": "sha256:e41dadfb05de1d9518ac06fa2a909f12f0f8baf6316459615d4c95f581f163ad",
+        "api_updated_at": "2026-11-01T09:17:45Z",
+        "runner_upload_log_at": "2026-11-01T08:17:43Z",
+        "time_discrepancy": "API timestamps one hour ahead of runner/observation; retain separately",
+        "passed_checkpoints": [
+          "position",
+          "incoming-bookmark",
+          "incoming-note"
+        ],
+        "reason": "Exact Python local-network permission dialog persisted before/after one app activation and at timeout, covering enabled but non-hittable save-progress. No permission choice was made; edits/upload not reached.",
+        "diagnostic_only": true,
+        "F04_accepted": false
+      }
+    },
+    "permission_denial_round": {
+      "authorization_message_id": "Sentinel_1e8e3ff427048191a3adc3fbac94dab0",
+      "authorized_at": "2026-11-01T08:21:55Z",
+      "case": "f04/macos-state-diagnostic",
+      "max_runner_minutes": 15,
+      "max_runs": 1,
+      "runs_started": 0,
+      "automatic_retry": false,
+      "status": "prepared-awaiting-independent-source-review",
+      "delta_paths": [
+        "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+        "tests/dot_f04_reading_sync_20261031/contract.json",
+        "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+      ],
+      "design": {
+        "macos_diagnostic_only": true,
+        "environment": "next ephemeral GitHub-hosted macOS runner only, not the user's computer",
+        "system_bundle": "com.apple.UserNotificationCenter",
+        "prompt": "Allow \"Python\" to find devices on local networks?",
+        "explanation": "This will allow the app to discover, connect to, and collect data from devices on your networks.",
+        "choice": "Don't Allow",
+        "max_permission_clicks_per_test": 1,
+        "matching": "unique current positive-size dialog; complete normalized question and explanation; button title/label/string value/descendant static text semantics; one real button with exactly the denial meaning",
+        "fresh_check": "requery exact prompt and unique semantic enabled/hittable button immediately before native click; attempted flag set first",
+        "forbidden": [
+          "Allow fallback",
+          "identifier-number or coordinate guessing",
+          "TCC/settings changes",
+          "system-app activation",
+          "process killing",
+          "permission retry"
+        ],
+        "postcondition": "existing caller wait deadline observes prompt disappearance before original fresh target readiness; no deadline reset",
+        "uncertainty": "loopback DAV/controller need no LAN discovery; denial may affect unidentified indirect networking, so original end-to-end assertions remain required",
+        "list_helper_unchanged": true,
+        "ios_unchanged": true,
+        "original_success_assertions_preserved": true
       },
       "execution": "Existing single macOS diagnostic job; historical SDK/Android pins and production-equivalence allowlist unchanged; F03 sole canonical writer and trigger."
     }

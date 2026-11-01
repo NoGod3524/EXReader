@@ -1,3 +1,23 @@
+# Latest continuation — 2026-11-01 08:21 UTC
+
+## Sealed foreground round: identified environment blocker
+- **41287434330 A1**, source **5394ec6dc8aa6da7227bb7876609a235aa164f3d**, job **124791485333**, **failure**, original UI test **223.783 seconds**; other 27 jobs skipped. One Mac15 budget consumed, no retry.
+- Artifact **13075384078**, **42355931 bytes**, SHA256 **e41dadfb05de1d9518ac06fa2a909f12f0f8baf6316459615d4c95f581f163ad**, same run/source. Actual UI 9653680 bytes, SHA256 **077d22d425c96fca4f3254c0e5901f10a832843c4a27f8c0a6b83e46cbc9b317**. diagnostic_only=true, passed=false, F04_accepted=false.
+- API updated_at **09:17:45Z** and artifact time **09:17:43Z** are one hour ahead of runner upload log **08:17:43Z**. They are retained separately, not silently rewritten. Runner logs identify a GitHub-hosted macos-15-arm64 VM in westus, not a user computer.
+- Original position/bookmark/note checkpoints passed at t24.41/t41.29/t63.25, with one native click each on jump.0/.2/.3. At t71.53 the app was activated once. save-progress stayed enabled=true, hittable=false; no save/edit/upload action followed.
+- Before activation (08:14:52Z), after (08:14:54Z), and timeout (08:17:22Z), simultaneous bounded evidence showed exactly one UserNotificationCenter dialog at (382,104,260,248), covering save-progress. Its text was **Allow “Python” to find devices on local networks?** and explained network-device access. The app was already foreground; busy/pending/cancel were absent. No permission button was clicked.
+- Previous evidence captured blank button labels, not title/value; action-button identifiers alone do not establish semantic choices. Public XCUIElementAttributes title/label/value and snapshot hierarchy provide a supported next semantic check.
+
+## Explicitly authorized minimal denial round
+- User approval **2026-11-01 08:21:55 UTC**, **Sentinel_1e8e3ff427048191a3adc3fbac94dab0**: same three existing files and one Mac diagnostic at most **15 runner-minutes**, no retry, plus one precise **Don't Allow** choice for this Python local-network request on the next temporary GitHub Mac runner.
+- Only the Mac diagnostic branch may act. Require one current positive-size dialog with the exact normalized question and explanation, then one real button whose public title/label/string value/descendant static text identifies only Don't Allow. Normalize typographic quotes/whitespace, deduplicate repeated attributes per button, never infer meaning from substring, identifier number or position.
+- Requery exact prompt and semantic candidate, require enabled/hittable, set the whole-test attempted flag before one native click. Ambiguous/empty/conflicting semantics, unknown dialogs or a repeated request stop without an Allow fallback. Existing target wait deadline observes actual prompt dismissal then the original fresh target readiness; no new wait window.
+- No TCC/defaults/permission database changes, system app activation, process killing or coordinate action. Original five fixed-control whitelist, list helper, iOS behavior and successful save/edit/upload/location assertions stay unchanged.
+- Both fixture services bind **127.0.0.1 with OS-assigned ephemeral ports**: HTTPS DAV transfers genuine app-authored state and HTTPS controller receives authorized read-only checkpoints. They do not require LAN device discovery. Denial is the least-privilege choice, but unidentified indirect networking could still be affected; this round must prove the unchanged real chain rather than assuming success.
+- F12 actual-diff review precedes F03 sole canonical composition/trigger. No local source execution/tests/ZIP. Historical failure evidence, atomic inputs and production-equivalence allowlist retained; formal acceptance **96/108**, F04 incomplete.
+
+---
+
 # Latest continuation — 2026-11-01 07:59 UTC
 
 ## Sealed snapshot round
