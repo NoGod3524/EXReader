@@ -133,3 +133,5 @@ jobs:
 # B prepared; activation only after independent static review. One approved 45+15 minute run.
 
 # Activate B once after native independent review of 5789e442.
+
+# Activate approved fixture correction once after 41ae3a3 review.
