@@ -37,6 +37,7 @@ jobs:
       - name: Check integrated Android association and Windows coverage/sealing
         run: |
           python3 -m unittest discover -s tests/reader_f08_android_binding_20261031 -v
+          python3 -m unittest discover -s tests/reader_f08_final_20261031 -p test_android_inputs.py -v
           python3 tests/reader_f08_windows_native_frame_20261031/native_audit.py --self-test
           mkdir -p build/f08-native-control/integration-latch
           javac -d build/f08-native-control/integration-latch examples/android/app/src/main/java/org/exreader/host/CatalogFrameLatch.java tests/reader_f08_android_binding_20261031/CatalogFrameLatchControl.java

@@ -1,4 +1,4 @@
-# Same-source Linux acceptance adapter
+# Same-source F08 entries
 
 This runs the original 44 launches, six causal launches and four body/jump
 launches on one newly built executable and seed. It retains all 54 native
@@ -27,13 +27,23 @@ original delivery, including the 295.194 ms maximum and 84 initial frames.
 Native and independent duplicate keys, and a foreign source SHA, were rejected.
 No new product performance run is claimed by that replay.
 
-The native Android hardware qualification adapter reuses the unchanged ten-case
-shelf driver and analyzer. It replaces exactly the cloud identity assignment and
-entry guard, declares a native-local run, verifies the actual Arc hardware
-renderer and installed Release APK, seals failures, and replays the original
-budgets. Sampling has an 1100-second cap with cleanup time within the 20-minute
-window. Its APK producer is explicitly the authenticated older 03ec Release;
-hardware qualification does not count as final same-source F08 acceptance.
+The build-check branch runs the controls and separate complete Windows/Android
+builds, each capped at 20 minutes. Windows bundles its exact native helpers and
+builds the external observer. Android packages the actual NewReview.txt, four
+Release APKs, final-source/final-build records and an exact eight-source bundle.
+This branch performs no Linux product sampling or Android emulator execution.
+
+New native Android sampling requires --expected-source and --producer-receipt.
+The receipt contains repository_full_name=NoGod3524/EXReader plus the original
+GitHub artifact and run objects, independently obtained for that exact producer.
+Repository/source/run/attempt, ZIP size/digest, all payloads, source bundle and
+APK identities are checked before staging. The original ten UI cases, analyzer
+and budgets remain intact. A separate same-Window/VSYNC completion upper bound
+uses the original case0 activity start and fixed first-interactive timestamp;
+other lifecycle Window results and missing associations remain fully reported.
+Reader/native-census coverage and final F08 acceptance are still separate.
+Older 03ec qualification evidence is available through read-only audit-legacy.
+Sampling retains the 1100-second cap and cleanup within 20 minutes.
 The requested 512 MiB guest heap is clamped by the official emulator to 576 MiB
 (growth limit 192 MiB), matching the archived Ubuntu runtime. The 512 MiB
 sampled process PSS budget is unchanged.
@@ -42,5 +52,7 @@ Native failures also retain terminal display/power/window/input/SurfaceFlinger
 state and the actual installed APK identity. Descriptive statistics preserve all
 callback rows and first draws without promoting an incomplete UI run. Visible
 case screenshots must be nonuniform; black captures are an explicit missing
-content failure. Reusing the owned AVD clears only the test helper's retained
-output before the original driver runs, matching its fresh-AVD assumption.
+content failure. Future reuse of the owned AVD records removal of the four test-owned
+packages before the frozen driver installs one CI run's complete APK set and
+rebuilds the 2202-original fixture. Local desktop/VM interaction remains stopped
+after the physical Escape signal.
