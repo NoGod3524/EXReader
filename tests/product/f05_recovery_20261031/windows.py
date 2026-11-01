@@ -54,7 +54,7 @@ def main():
     normalized, claim_refs, evidence = [], {}, ["coverage.json"]
     previous_wire = {}
     last_request = 0
-    def finish_case(claims, **semantic):
+    def finish_case(claims, screenshot_device=None, **semantic):
         nonlocal previous_wire, last_request
         raw = report["cases"][-1]
         name = raw["name"]
@@ -67,7 +67,7 @@ def main():
         if any(wire.get(path) != digest for path, digest in previous_wire.items()):
             raise AssertionError("native case rewrote previously observed immutable wire")
         screenshot = name + ".bmp"
-        A.M.screenshot(first.window, out / screenshot)
+        A.M.screenshot((screenshot_device or first).window, out / screenshot)
         evidence.append(screenshot)
         raw["sdk_original_readback"] = observed
         raw["immutable_wire_inventory"] = wire
@@ -169,7 +169,7 @@ def main():
             "cancel_layer":"transport-original-GET-before-native-auto-receive",
             "actual_native_cancel":True,"before":before_cancel,"cancelled":cancelled_originals,
             "retry":retry_originals,"sdk_import_mid_commit_cancel_tested":False})
-        finish_case({"cancel_retry":"local"}, cancel_layer="transport", remote_boundary=True,
+        finish_case({"cancel_retry":"local"}, screenshot_device=second, cancel_layer="transport", remote_boundary=True,
                     native_cancel_observed=True, explicit_retry_passed=True)
         initial = snapshot("first")
         if snapshot("second")["heads"] != initial["heads"]:
