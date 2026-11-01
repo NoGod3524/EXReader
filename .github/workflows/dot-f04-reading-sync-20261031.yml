@@ -222,6 +222,7 @@ jobs:
       - name: Original AT-SPI adapter
         shell: bash
         run: |
+          chmod +x build/input/gtk/package/EXReader-Linux/bin/exreader-linux
           mkdir -p build/gtk-atspi-client
           git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
       - name: Real GTK peer
