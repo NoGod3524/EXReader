@@ -62,3 +62,15 @@ F06 已核开发包形态：Windows/Linux 开发ZIP、macOS ad-hoc开发app、An
 因此无需先扫描六 ZIP 即可明确“说明内容还不完整”的源码级缺口。下一步在本矩阵建立操作→真实 owner 行为→同源证据映射；任何正式用户说明生成器或打包逻辑修改另列授权，不改原包模板冒充已交付。
 
 历史材料盘点使用 `historical_inventory_only=true`，与最终 candidate 未冻结分开；平台合法已声明 symlink 按原producer目标约束验证，不一概拒绝。当前两doc更新是准备，不授 F12。
+
+## 用户操作说明的源码映射（不是运行通过声明）
+| 说明主题 | 已核实现或 owner 固定证据 | 用户说明必须避免的错误 |
+|---|---|---|
+| Windows 同步完成 | 94fb apps/reader/desktop/windows_accounts_ui.inc:350–400；FINISHED 新 attempt 自动进入 receive，最终提示区分已投影/已导入与并发/墓碑；取消保留已应用部分并可重试 | 不把单纯传输结束等同最终接收完成；不承诺取消撤销已提交数据 |
+| GTK 同步/接收 | 94fb examples/linux/accounts_ui.inc；Sync library 与独立 Receive action，接收驱动与冲突列表单列 | 不照抄 Windows 自动接收步骤；先扫描完成不代表已可打开云书 |
+| Android 账号/组织冲突 | F05 owner 指向 SyncPanel.java/SyncController.java；OrganizationPanel 的 unresolved group 提示缺每头删除详情（该缺口不宣称已补） | 不写“自动合并/删除冲突已完全可解释”；真实新回归未运行的操作不得写已验 |
+| Apple 接收/刷新 | F03/F05 owner 已核94fb receiveAccountPage 原先只books；F03两生产文件组织projection尚未成为最终共同候选 | 不把在途 delta 或独立历史 UI 绿色写成最终六端整理同步完成 |
+| 本地导入/删除区别 | 原任务书规定“移除本机下载”与“从书库删除”是不同操作；原书稳定全局身份不使用本机行号 | 用户说明不得诱导通过删 SQLite/同步运行中 SQLite 来清理或同步 |
+| 备份/降级 | K03 证明原 A 打开升级前备份；未测 B 已修改 profile 再给 A；C02 不授全P0 | 文档说明支持边界，不把备份恢复与任意降级混为一谈 |
+
+此表仅将最终文档需要覆盖的操作与固定源码/owner证据关联；正式用户步骤仍须对最终批准候选校准。未访问用户云盘、未读取账号凭据、未改原生成器或 UI。
