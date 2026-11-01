@@ -35,3 +35,34 @@ Prepared source is now verified by the single approved run below. Full F10 remai
 The two additive interfaces are accepted within the stated Linux cooperative-owner contract. Existing recover semantics and 64-slot lifetime behavior are retained and exercised. This is **not** sync snapshot integration: the earlier high-level EACCES and SIGKILL residue observations remain unresolved until the product uses owned snapshots and exposes recovery status. The newly supported readonly descriptor does not silently extend pathname-only WebDAV upload.
 
 Next phase must first specify a reviewed test design linking original F10 requirements to positive/negative scenarios, expected refusal causes and evidence boundaries. Keep at most one implementation line and one verification line for this module. Old no-replace and diagnosis branches remain sealed; no continuing CI or automatic extra team is authorized. Full F10 and the official total remain unchanged.
+
+## Phase B — approved preparation, not yet measured
+
+User approval 2026-11-01 00:20:51 UTC explicitly includes 13 paths, registry v2 persistence and rollback compatibility, and one Linux45 + audit15 run. Phase baseline is 659ef67bb6d408bb5653cedd03efe06e9d7dd6f9. Five production paths are WebDAV header/source, managed header/implementation and sync.cpp; six existing package files and two new test files complete the scope. The two accepted cleanup API files and original probe.c are frozen. No SDK or external host files change.
+
+The exact cache no-replace helper/call delta from 123e1852335ab16e3bc1863e050eb0a298b01cca is explicitly authorized here. No whole-branch integration or common SDK8357 acceptance is implied.
+
+### Frozen proof design (before execution)
+
+Original F10 obligations: owned private snapshot identity, bounded transfer without pathname substitution, retained cleanup failure and restart ownership, no false immutable outbox acknowledgement, unchanged originals and bounded lifetime resources.
+
+- Callback: actual TLS PUT of known bytes; exact monotonic bounded offset reads. Error, short read, oversize read, exception and cancellation refuse. Zero/over-ceiling length refuses before callback. Redirect not followed; 412 remains EXISTS requiring GET verification.
+- Managed lifecycle: actual installed producer write/seal/read-only borrow/PUT/close, active-owner rejection and descriptor invalidation. Rename the original payload name and install replacement: held descriptor still sends original bytes; cleanup refuses replacement and preserves it.
+- Permission/restart: real nonroot directory EACCES leaves registered pending work, restored permission permits retry. Real OWNED/SEALED SIGKILL and exclusive lock conflict; reopening reclaims only registered S identities. Existing old 33 cases retain all inode/permissions/unknown-entry/core refusal controls.
+- Registry: v1 ordinary download/read-only reopen unchanged; first explicit S allocation atomically writes v2 and keeps D leaf/UUID exact. Actual old b5e7 WebDAV consumer refuses v2. Constructed bounded fixtures use public cleanup roots: 16 D roots refuse S despite free D slots; mixed 15D+1S stays total16 and S slot65 refuses. Legacy D OWNED remains pending. Bad CRC, unknown purpose and residual next preserve records. Separately labelled existing registry hook binary dies by SIGKILL before/after rename; old registry or registered unbound v2 remains, never silently adopted.
+- Product sync: actual installed raw revisions + sync + managed WebDAV and TLS server. Original + revision bytes and outbox are checked across normal run, cleanup EACCES after committed PUT, process death, cancellation, response loss and restart. Pending cleanup keeps the original immutable outbox; retries use identical bytes and independent GET verification before ack.
+
+Original 33 / 258 exact assertions / 8 semantic negative controls remain unchanged.
+Phase B adds 29 scenarios / 187 fixed checks plus 10 exact-reason semantic mutations. Additional raw callback statuses and server-observed hash/conditional-write/GET facts are independently checked by audit. Callback, managed and sync results are separate. Missing evidence is a failed result, not skipped success.
+
+### Persistent format and rollback boundary
+
+One existing registry and exclusive lock retain the total 16 roots x 64 lifetime slots across D and S. No second pool, hidden capacity increase, slot reuse or D-to-S reassignment. v1 loads all existing roots as D and is not rewritten by ordinary reads/downloads. First S allocation opts into v2 with purpose per root using exclusive registry.next, fsync, rename and directory fsync. D recovery remains PUBLISHED-only; only registered S OWNED/SEALED can be abandoned. Unknown purpose/CRC/partial registration fails closed.
+
+Old binaries refuse v2; this batch has no automatic downgrade. Restoring old registry would orphan new ownership and is not an approved rollback. Registry crash tests are process death, not hardware power loss.
+
+### Evidence limits
+
+Linux managed upload snapshots only, trusted cooperative owner. Not all host credentials/OSes, not defense against malicious same-UID writes to the held inode. Verification GET and other existing private_file paths remain outside this narrow snapshot cleanup change; any observed residual is retained as a gap, never treated as whole-F10 success. Full F10 remains false. Budget B is one new 60-minute run with zero automatic reruns; prior red and green runs remain sealed.
+
+Preparation status: source/test design committed with skip-ci; stable SHA requires independent review before the sole activation.
