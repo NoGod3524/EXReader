@@ -346,6 +346,89 @@ jobs:
           echo "the accessibility audit did not execute cleanly for ${{ matrix.platform }}"
           exit 1
 
+  f09:
+    name: F09 Apple product checks ${{ matrix.platform }}
+    needs: [frozen, sdk]
+    runs-on: macos-15
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: f09-apple-sdk-*
+          path: sdk-artifact
+      - name: Stage the installed SDK and product prefixes
+        run: |
+          set -euo pipefail
+          mkdir -p stage
+          for dir in sdk-artifact/*/; do cp -R "${dir}." stage/; done
+          ls stage
+      - name: Project generator dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Generate the product host project with the F09 tests
+        run: |
+          set -euo pipefail
+          python3 tests/apple_host/prepare_fixtures.py --resources build/f09-resources
+          ruby tests/reader_team24_apple/make_project.rb build/f09-project build/f09-resources tests/f09_audit/apple base
+          if [ "${{ matrix.platform }}" = macos ]; then target=macos; else target=iphonesimulator; fi
+          mkdir -p build/f09-project/raw-products
+          cp -R "stage/$target-products/." build/f09-project/raw-products/
+          echo "SDK_TARGET=$target" >> "$GITHUB_ENV"
+      - name: Run the F09 checks (default size, then the largest accessibility size on iPhone/iPad)
+        run: |
+          set -uo pipefail
+          platform="${{ matrix.platform }}"
+          mkdir -p build/f09-results
+          if [ "$platform" = macos ]; then
+            scheme=EXReaderHost-macOS; destination="platform=macOS"; signing=YES
+          else
+            scheme=EXReaderHost-iOS; signing=NO
+            prefix=$([ "$platform" = iphone ] && echo iPhone || echo iPad)
+            udid=$(python3 -c "import json,subprocess,sys; d=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','--json'])); print(max((r,x['name'],x['udid']) for r,v in d['devices'].items() for x in v if x.get('isAvailable') and x['name'].startswith(sys.argv[1]))[2])" "$prefix")
+            xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true
+            xcrun simctl erase "$udid"; xcrun simctl boot "$udid"; xcrun simctl bootstatus "$udid" -b
+            destination="platform=iOS Simulator,id=$udid"
+          fi
+          run() {
+            xcodebuild test -project build/f09-project/EXReaderHost.xcodeproj -scheme "$scheme" -destination "$destination" \
+              -derivedDataPath build/f09-derived -resultBundlePath "build/f09-results/$1.xcresult" \
+              -parallel-testing-enabled NO -test-timeouts-enabled YES \
+              -default-test-execution-time-allowance 600 -maximum-test-execution-time-allowance 900 \
+              EXR_SDK_DIR="$PWD/stage/$SDK_TARGET" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "build/f09-results/$1.log"
+            echo "${PIPESTATUS[0]}" > "build/f09-results/$1.status"
+          }
+          run "$platform"
+          if [ "$platform" != macos ]; then
+            xcrun simctl ui "$udid" content_size accessibility-extra-extra-extra-large
+            xcrun simctl ui "$udid" content_size | tee build/f09-results/content-size.txt
+            run "$platform-large"
+            xcrun simctl ui "$udid" content_size medium || true
+          fi
+          grep -h -E "Test Case .*(passed|failed)|error:" build/f09-results/*.log | sort | uniq | tee build/f09-results/summary.txt
+          ! grep -L '^0$' build/f09-results/*.status | grep -q .
+      - name: Export attachments
+        if: always()
+        run: |
+          for bundle in build/f09-results/*.xcresult; do
+            xcrun xcresulttool export attachments --path "$bundle" --output-path "${bundle%.xcresult}-attachments" || true
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f09-apple-checks-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f09-results/*.log
+            build/f09-results/*.status
+            build/f09-results/*.txt
+            build/f09-results/*-attachments/
+          if-no-files-found: warn
+
   summary:
     needs: [frozen, judge, sdk, audit]
     if: always()
