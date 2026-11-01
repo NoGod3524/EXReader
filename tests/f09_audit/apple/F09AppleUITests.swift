@@ -55,7 +55,9 @@ final class F09AppleUITests: XCTestCase {
         guard target.exists, !target.frame.isEmpty else { return false }
         let centre = CGPoint(x: target.frame.midX, y: target.frame.midY)
         guard app.windows.firstMatch.frame.contains(centre) else { return false }
-        return scroll.map { $0.frame.contains(centre) } ?? true
+        // macOS lays the reading tools out inline: no tools scroll view exists.
+        guard let scroll, scroll.exists else { return true }
+        return scroll.frame.contains(centre)
     }
 
     // Scrolls the view that contains the control, first forward then back,
@@ -212,5 +214,44 @@ final class F09AppleUITests: XCTestCase {
         }
         let unreachable = reached.filter { !$0.value }.map { $0.key }.sorted()
         XCTAssertTrue(unreachable.isEmpty, "Unreachable after scrolling: \(unreachable) \(app.debugDescription)")
+    }
+
+    // 3. Hardware keyboard (Mac keyboard; iPad/iPhone simulator hardware
+    //    keyboard events). Only typeKey/typeText drive the commands; each one is
+    //    judged by its visible effect.
+    func testHardwareKeyboardCommands() {
+        launch(fresh: true)
+        tap("library.import.epub")
+        XCTAssertTrue(wait(90) { !self.element("library.busy").exists && self.element("library.book.0").exists })
+        var results: [String: Bool] = [:]
+
+        app.typeKey("f", modifierFlags: .command)
+        app.typeText("Sample")
+        let search = element("library.search")
+        results["⌘F focuses search"] = wait(10) { ((search.value as? String) ?? "").contains("Sample") }
+        samples.append(["command": "⌘F", "search_value": (search.value as? String) ?? ""])
+        app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6))
+
+        XCTAssertTrue(wait(30) { self.element("library.organization").isEnabled }, app.debugDescription)
+        app.typeKey("o", modifierFlags: [.command, .shift])
+        results["⇧⌘O opens 整理"] = element("organization.kind.tag").waitForExistence(timeout: 10)
+        if results["⇧⌘O opens 整理"] == true { tap("organization.close") }
+        XCTAssertTrue(wait(10) { !self.element("organization.kind.tag").exists })
+
+        tap("library.book.0")
+        let page = element("reader.page")
+        XCTAssertTrue(page.waitForExistence(timeout: 90), app.debugDescription)
+        XCTAssertTrue(wait(60) { !self.element("reader.busy").exists })
+        let before = (page.value as? String) ?? ""
+        app.typeKey(.rightArrow, modifierFlags: [])
+        results["→ turns the page"] = wait(20) { ((page.value as? String) ?? "") != before && !self.element("reader.busy").exists }
+        samples.append(["command": "→", "before": before, "after": (page.value as? String) ?? ""])
+
+        app.typeKey("[", modifierFlags: .command)
+        results["⌘[ returns to the shelf"] = element("library.title").waitForExistence(timeout: 20)
+
+        samples.append(["keyboard": results.mapValues { $0 ? "pass" : "fail" }])
+        let failed = results.filter { !$0.value }.map { $0.key }.sorted()
+        XCTAssertTrue(failed.isEmpty, "Keyboard commands without effect: \(failed) \(app.debugDescription)")
     }
 }
