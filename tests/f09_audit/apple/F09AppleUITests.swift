@@ -230,7 +230,9 @@ final class F09AppleUITests: XCTestCase {
         let search = element("library.search")
         results["⌘F focuses search"] = wait(10) { ((search.value as? String) ?? "").contains("Sample") }
         samples.append(["command": "⌘F", "search_value": (search.value as? String) ?? ""])
-        app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6))
+        // Clear the query and submit: the search field releases focus (and the
+        // on-screen keyboard that otherwise hides the shelf on iPhone).
+        app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6) + "\n")
 
         XCTAssertTrue(wait(30) { self.element("library.organization").isEnabled }, app.debugDescription)
         app.typeKey("o", modifierFlags: [.command, .shift])
@@ -242,10 +244,12 @@ final class F09AppleUITests: XCTestCase {
         let page = element("reader.page")
         XCTAssertTrue(page.waitForExistence(timeout: 90), app.debugDescription)
         XCTAssertTrue(wait(60) { !self.element("reader.busy").exists })
-        let before = (page.value as? String) ?? ""
+        // The page label starts with "第 N 页" on every platform (macOS leaves the value empty).
+        func position() -> String { page.label + "|" + ((page.value as? String) ?? "") }
+        let before = position()
         app.typeKey(.rightArrow, modifierFlags: [])
-        results["→ turns the page"] = wait(20) { ((page.value as? String) ?? "") != before && !self.element("reader.busy").exists }
-        samples.append(["command": "→", "before": before, "after": (page.value as? String) ?? ""])
+        results["→ turns the page"] = wait(20) { self.text("reader.page") != "" && position() != before && !self.element("reader.busy").exists }
+        samples.append(["command": "→", "before": String(before.prefix(60)), "after": String(position().prefix(60))])
 
         app.typeKey("[", modifierFlags: .command)
         results["⌘[ returns to the shelf"] = element("library.title").waitForExistence(timeout: 20)

@@ -1906,7 +1906,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         // Escape is the hardware keyboard's Back: first it clears a text selection,
         // then it closes the top panel or leaves the reader. The framework fallback
         // to BACK never reached the reader (F09 keyboard lane K-00/K-04).
-        if(code==android.view.KeyEvent.KEYCODE_ESCAPE&&!event.hasModifiers()){
+        if(code==android.view.KeyEvent.KEYCODE_ESCAPE&&event.hasNoModifiers()){
             if(event.getAction()==android.view.KeyEvent.ACTION_UP&&!event.isCanceled()){
                 if(selectionBar.getVisibility()==View.VISIBLE){readerView.setSelectMode(false);readerView.clearSelection();}
                 else onBackPressed();
