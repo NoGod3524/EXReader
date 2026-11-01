@@ -4,6 +4,10 @@ import Foundation
 
 final class F04ReadingSyncUITests: XCTestCase {
     private let app = XCUIApplication()
+    #if os(macOS)
+    private var pythonNetworkDenyAttempted = false
+    private var pythonNetworkDismissalPending = false
+    #endif
     override func setUpWithError() throws { continueAfterFailure = false }
     override func tearDownWithError() throws { diagnosticReadingState("test-teardown", target: "reading.title") }
     private func e(_ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
@@ -29,11 +33,14 @@ final class F04ReadingSyncUITests: XCTestCase {
             "reader.back", "account.sync.start"].contains(id) {
             var activationAttempted = false
             let ready = wait {
+                if macPythonPermissionStillPending() { return false }
                 let target = e(id)
                 if target.exists && target.isEnabled && target.isHittable { return true }
                 if !activationAttempted {
                     activationAttempted = true
                     restoreMacForeground(for: id)
+                } else {
+                    denyKnownPythonNetworkRequestIfPresent()
                 }
                 return false
             }
@@ -225,6 +232,95 @@ final class F04ReadingSyncUITests: XCTestCase {
     }
     #endif
     #if os(macOS)
+    private func permissionText(_ text: String) -> String {
+        text.replacingOccurrences(of: "“", with: "\"").replacingOccurrences(of: "”", with: "\"")
+            .replacingOccurrences(of: "‘", with: "'").replacingOccurrences(of: "’", with: "'")
+            .split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+    }
+    private func permissionSemantics(_ snapshot: any XCUIElementSnapshot) -> Set<String> {
+        var result = Set<String>()
+        var nodes: [any XCUIElementSnapshot] = [snapshot]
+        while let node = nodes.popLast() {
+            if node.elementType == .textField || node.elementType == .secureTextField ||
+               node.elementType == .textView { continue }
+            nodes.append(contentsOf: node.children)
+            if node.elementType == .dialog || node.elementType == .staticText || node.elementType == .button {
+                for text in [node.title, node.label, node.value as? String ?? ""] {
+                    let normalized = permissionText(text)
+                    if !normalized.isEmpty { result.insert(normalized) }
+                }
+            }
+        }
+        return result
+    }
+    private func isExactPythonNetworkRequest(_ snapshot: any XCUIElementSnapshot) -> Bool {
+        let text = permissionSemantics(snapshot)
+        return text.contains("Allow \"Python\" to find devices on local networks?") &&
+            text.contains("This will allow the app to discover, connect to, and collect data from devices on your networks.")
+    }
+    private func currentPythonPermissionDialog() -> XCUIElement? {
+        let system = XCUIApplication(bundleIdentifier: "com.apple.UserNotificationCenter")
+        let state = system.state
+        if state == .notRunning { return nil }
+        guard state == .runningForeground || state == .runningBackground else {
+            XCTFail("Environment blocked: cannot identify current notification process"); return nil
+        }
+        let dialogs = system.dialogs.allElementsBoundByIndex.filter {
+            $0.exists && $0.frame.width > 0 && $0.frame.height > 0
+        }
+        if dialogs.isEmpty { return nil }
+        guard dialogs.count == 1, let snapshot = try? dialogs[0].snapshot(),
+              isExactPythonNetworkRequest(snapshot) else {
+            diagnosticMacObstruction("unrecognized-permission-dialog", target: "reading.save-progress")
+            XCTFail("Environment blocked: current dialog is not the unique authorized Python local-network request")
+            return nil
+        }
+        return dialogs[0]
+    }
+    private func macPythonPermissionStillPending() -> Bool {
+        guard "__MAC_DIAGNOSTIC__" == "1", pythonNetworkDismissalPending else { return false }
+        if currentPythonPermissionDialog() != nil { return true }
+        pythonNetworkDismissalPending = false
+        return false
+    }
+    private func denyKnownPythonNetworkRequestIfPresent() {
+        guard "__MAC_DIAGNOSTIC__" == "1" else { return }
+        guard let dialog = currentPythonPermissionDialog() else { return }
+        guard !pythonNetworkDenyAttempted else {
+            diagnosticMacObstruction("permission-reappeared", target: "reading.save-progress")
+            XCTFail("Environment blocked: authorized permission choice already attempted; no retry")
+            return
+        }
+        func denialButton(in current: XCUIElement) -> XCUIElement? {
+            var candidates: [XCUIElement] = []
+            for button in current.descendants(matching: .button).allElementsBoundByIndex {
+                guard let snapshot = try? button.snapshot() else { continue }
+                let semantics = permissionSemantics(snapshot)
+                if semantics.contains("Don't Allow") {
+                    guard semantics == Set(["Don't Allow"]) else {
+                        XCTFail("Environment blocked: conflicting permission-button semantics"); return nil
+                    }
+                    candidates.append(button)
+                }
+            }
+            guard candidates.count == 1 else {
+                XCTFail("Environment blocked: no unique explicitly named Don't Allow button"); return nil
+            }
+            return candidates[0]
+        }
+        guard denialButton(in: dialog) != nil else { return }
+        // Requery the same exact prompt and semantic candidate immediately before the native action.
+        guard let freshDialog = currentPythonPermissionDialog(),
+              let button = denialButton(in: freshDialog),
+              button.isEnabled && button.isHittable else {
+            XCTFail("Environment blocked: fresh authorized denial action is not clickable"); return
+        }
+        pythonNetworkDenyAttempted = true
+        pythonNetworkDismissalPending = true
+        print("F04_MAC_PERMISSION choice=Don't Allow request=Python-local-network once=true")
+        button.click()
+        // The existing caller wait retains its original deadline and observes actual dismissal.
+    }
     private func restoreMacForeground(for id: String) {
         diagnosticMacObstruction("before-activate", target: id)
         // activate() would launch a stopped process with EXRFreshState: never allow that path.
@@ -285,8 +381,10 @@ final class F04ReadingSyncUITests: XCTestCase {
                     nodes.append(contentsOf: node.children)
                     guard [XCUIElement.ElementType.window, .dialog, .staticText, .button].contains(node.elementType) else { continue }
                     var row = ["type": String(describing: node.elementType), "id": sanitized(node.identifier),
-                               "label": sanitized(node.label), "frame": String(describing: node.frame)]
-                    if node.elementType == .staticText { row["text"] = sanitized(node.value as? String ?? "") }
+                               "label": sanitized(node.label), "title": sanitized(node.title), "frame": String(describing: node.frame)]
+                    if node.elementType == .staticText || node.elementType == .button {
+                        row["text"] = sanitized(node.value as? String ?? "")
+                    }
                     rows.append(row)
                 }
                 dialogs.append(rows)
@@ -337,10 +435,13 @@ final class F04ReadingSyncUITests: XCTestCase {
         #if os(macOS)
         var activationAttempted = false
         let editorReady = wait {
+            if macPythonPermissionStillPending() { return false }
             if editor.exists && editor.isHittable { return true }
             if !activationAttempted {
                 activationAttempted = true
                 restoreMacForeground(for: "reading.editor")
+            } else {
+                denyKnownPythonNetworkRequestIfPresent()
             }
             return false
         }
