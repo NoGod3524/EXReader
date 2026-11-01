@@ -28,6 +28,9 @@ def main():
            'scope':'POSIX cleanup additive APIs; installed library plus separately labelled existing-hook boundary binary'}
     (out/'index.json').write_text(json.dumps(index,indent=2)+'\n')
     print(json.dumps({'cases':len(rows),'failed':[r['name'] for r in rows if r['exit']!=0]}))
+    from https_fixture import run_suite
+    extra=run_suite((args.bin/'f10-sync-probe').resolve(),(args.bin/'f10-old-client').resolve(),(args.bin/'f10-managed-boundary-probe').resolve(),out/'snapshot')
+    print(json.dumps({'snapshot_cases':len(extra),'exceptions':[r['name'] for r in extra if 'exception' in r['checks']]}))
     # Preserve fixture namespaces separately from the uploaded raw logs.
     return 0 if all(r['exit']==0 for r in rows) else 1
 if __name__=='__main__':raise SystemExit(main())
