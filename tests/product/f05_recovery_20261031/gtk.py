@@ -297,6 +297,37 @@ def main():
         right_group = sync(second)
         left_group = sync(first)
         combined = set(local_put["heads"]) | set(deletion["heads"])
+        if len(local_put["heads"])!=1 or len(deletion["heads"])!=1 or len(combined)!=2:
+            raise AssertionError("real old-put/delete scenario requires two distinct native heads")
+        put_id,delete_id=local_put["heads"][0],deletion["heads"][0]
+        put_row=next(row for row in local_put["records"] if row["id"]==put_id)
+        delete_row=next(row for row in deletion["records"] if row["id"]==delete_id)
+        if put_row["operation"]!="put" or delete_row["operation"]!="delete":
+            raise AssertionError("native actions did not author typed put/delete")
+        if set(put_row["parents"])!=set(parent["heads"]) or set(delete_row["parents"])!=set(parent["heads"]):
+            raise AssertionError("native competing operations do not share the actual old parent")
+        def actual_commit(revision_id):
+            found=[]
+            for index,commit in enumerate(store.commits):
+                if "/revisions/" not in commit["path"]:continue
+                body=store.entries[commit["path"]]
+                row=json.loads(body)
+                if row["id"]==revision_id:
+                    if hashlib.sha256(body).hexdigest()!=commit["sha256"] or not commit["authenticated_native_put"]:
+                        raise AssertionError("native PUT source identity changed")
+                    found.append({"index":index,"path":commit["path"],"sha256":commit["sha256"]})
+            if not found:raise AssertionError("actual native PUT commit evidence absent")
+            return found[0]
+        put_commit,delete_commit=actual_commit(put_id),actual_commit(delete_id)
+        if delete_commit["index"]>=put_commit["index"]:
+            raise AssertionError("old-parent put was not committed after actual tombstone")
+        if any(row["operation"]=="restore" for row in snapshot(first,"tag",tag)["records"]):
+            raise AssertionError("ordinary old-parent put became an implicit restore")
+        stale_proof={"common_parent":parent["heads"],"put":put_row,"delete":delete_row,
+            "put_commit":put_commit,"delete_commit":delete_commit,
+            "scope":"actual old-parent native put after tombstone; not a repeated-ID replay",
+            "restore_revision_created":False}
+
         for host, state in ((first, left_group), (second, right_group)):
             if set(snapshot(host, "tag", tag)["heads"]) != combined:
                 raise AssertionError("delete-put conflict lost a head")
@@ -308,11 +339,13 @@ def main():
             "local_put":local_put, "delete":deletion,
             "retained_heads":sorted(combined), "first_native_state":left_group,
             "second_native_state":right_group,
-            "restore_revision_created":False, "implicit_single_head_selected":False})
+            "restore_revision_created":False, "implicit_single_head_selected":False,
+            "old_put_after_tombstone":stale_proof})
         finish_case({"delete_put_tombstone_preserved":"receiver"},competing_heads=sorted(combined),
                     final_heads=snapshot(first,"tag",tag)["heads"],tombstone_preserved=True,
-                    delete_conflict_displayed=False,stale_peer_did_not_resurrect=False,
-                    uncovered="native deletion operation detail and explicit stale replay",explicit_user_restore=False)
+                    delete_conflict_displayed=False,stale_peer_did_not_resurrect=True,
+                    old_put_after_tombstone=stale_proof,
+                    uncovered="native deletion operation detail",explicit_user_restore=False)
         (out / "peer-contract.json").write_text(json.dumps({
             "entity_kind":"tag", "entity_key":tag, "common_parent":parent["heads"],
             "baseline":"peer-baseline", "remote_delete":"peer-delete",
@@ -390,7 +423,7 @@ def main():
         cleanup("remove-fixture-key",lambda:key.unlink(missing_ok=True))
         report["requests"]=store.requests if store is not None else []
         report["cleanup_errors"]=cleanup_errors
-        report["uncovered"]=["native deletion operation detail","stale-put replay after tombstone",
+        report["uncovered"]=["native deletion operation detail","repeated-ID replay after tombstone (additional, not original hard gate)",
             "conditional explicit restore parents","SDK mid-import cancellation (not universal prerequisite)",
             "independent original-artifact authentication"]
         try:
