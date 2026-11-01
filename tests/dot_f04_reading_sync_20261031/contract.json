@@ -553,6 +553,75 @@
       "artifact_id": 13070316514,
       "size_in_bytes": 20040466,
       "digest": "sha256:d734fa0187678d64c4e731108f44d7b1f6b98d2fcb12b3bb49685f86e72c8396"
+    },
+    "pixel_scroll_round": {
+      "authorization_message_id": "Sentinel_4e552a792a7c81919a80e78887ce2244",
+      "authorized_at": "2026-11-01T07:21:31Z",
+      "case": "f04/macos-state-diagnostic",
+      "max_runner_minutes": 15,
+      "max_runs": 1,
+      "runs_started": 0,
+      "automatic_retry": false,
+      "status": "prepared-awaiting-independent-source-review",
+      "delta_paths": [
+        "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+        "tests/dot_f04_reading_sync_20261031/contract.json",
+        "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+      ],
+      "previous_visibility_result": {
+        "run_id": "41276273173",
+        "attempt": 1,
+        "source_sha": "cc5a88f4de822ad8c235f9b903961cf2a793628e",
+        "conclusion": "failure",
+        "diagnostic_only": true,
+        "F04_accepted": false,
+        "targets": {
+          "iphone": {
+            "job_id": 124758969434,
+            "conclusion": "success",
+            "test_seconds": 212.94,
+            "artifact_id": 13072160640,
+            "size_in_bytes": 42343661,
+            "digest": "sha256:3325f134e551274ebdd5deb0b1f2aa91f8c5512f35f23213eb8c2348480ee60d"
+          },
+          "ipad": {
+            "job_id": 124758969626,
+            "conclusion": "success",
+            "test_seconds": 276.083,
+            "artifact_id": 13072186647,
+            "size_in_bytes": 42343769,
+            "digest": "sha256:65658e2ffff041942c79ee6e9a7189ec5d5f93cc70948e2964c2947cb6795001"
+          },
+          "macos": {
+            "job_id": 124758969636,
+            "conclusion": "failure",
+            "test_seconds": 111.222,
+            "artifact_id": 13072026988,
+            "size_in_bytes": 42344334,
+            "digest": "sha256:5392e1bfbabff6ef44172d82a6eb92d69ecc75c9efebe4df27a528d513334ae3",
+            "reason": "Whole-list swipes alternated reading.jump.2 y=512 and y=227 around viewport y=261..474; ten attempts exhausted without a click."
+          }
+        }
+      },
+      "scroll_design": {
+        "macos_only": true,
+        "initial_max_pixels": 16,
+        "subsequent_max_pixels": 24,
+        "viewport_fraction_cap": 0.2,
+        "max_scrolls": 10,
+        "max_observations": 11,
+        "settled_samples": 3,
+        "sample_interval_seconds": 0.1,
+        "settling_timeout_seconds": 3,
+        "frame_tolerance_pixels": 0.5,
+        "direction": "measured movement per requested delta",
+        "overshoot": "halve cap, minimum 1 pixel",
+        "padding_pixels": 4,
+        "padding_is_acceptance_gate": false,
+        "original_assertions_preserved": true,
+        "ios_unchanged": true
+      },
+      "execution": "Existing single macOS diagnostic job; historical SDK/Android pins and production-equivalence allowlist unchanged; F03 sole canonical writer and trigger."
     }
   },
   "apple_visibility_diagnostic": {
@@ -601,6 +670,41 @@
       "size_in_bytes": 42342626,
       "digest": "sha256:e147bf9f185c3141e3b01b4434c7124ca93c30ea5da48fa7da2f1b63a7ad29c7",
       "passed": false
+    },
+    "result": {
+      "run_id": "41276273173",
+      "attempt": 1,
+      "source_sha": "cc5a88f4de822ad8c235f9b903961cf2a793628e",
+      "conclusion": "failure",
+      "diagnostic_only": true,
+      "F04_accepted": false,
+      "targets": {
+        "iphone": {
+          "job_id": 124758969434,
+          "conclusion": "success",
+          "test_seconds": 212.94,
+          "artifact_id": 13072160640,
+          "size_in_bytes": 42343661,
+          "digest": "sha256:3325f134e551274ebdd5deb0b1f2aa91f8c5512f35f23213eb8c2348480ee60d"
+        },
+        "ipad": {
+          "job_id": 124758969626,
+          "conclusion": "success",
+          "test_seconds": 276.083,
+          "artifact_id": 13072186647,
+          "size_in_bytes": 42343769,
+          "digest": "sha256:65658e2ffff041942c79ee6e9a7189ec5d5f93cc70948e2964c2947cb6795001"
+        },
+        "macos": {
+          "job_id": 124758969636,
+          "conclusion": "failure",
+          "test_seconds": 111.222,
+          "artifact_id": 13072026988,
+          "size_in_bytes": 42344334,
+          "digest": "sha256:5392e1bfbabff6ef44172d82a6eb92d69ecc75c9efebe4df27a528d513334ae3",
+          "reason": "Whole-list swipes alternated reading.jump.2 y=512 and y=227 around viewport y=261..474; ten attempts exhausted without a click."
+        }
+      }
     }
   }
 }

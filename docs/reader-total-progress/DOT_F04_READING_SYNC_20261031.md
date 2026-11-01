@@ -1,3 +1,31 @@
+# Latest continuation — 2026-11-01 07:21 UTC
+
+## Three-Apple diagnostic sealed; single Mac pixel-scroll round approved
+
+[Run 41276273173 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41276273173), source `cc5a88f4de822ad8c235f9b903961cf2a793628e`, ended failure. iPhone job 124758969434 passed the original test in 212.940 seconds; iPad job 124758969626 passed in 276.083 seconds; both report one test and zero failures. Original precise location, record editing and upload assertions remained. Windows returns and graph audit did not run. The diagnostic receipts retain F04_accepted=false; formal catalog remains 96/108.
+
+macOS job 124758969636 failed after 111.222 seconds: reading.jump.0 succeeded, but reading.jump.2 alternated y=512 and y=227 around the actual list viewport y=261..474 as whole-list swipes moved it 285 pixels. Ten attempts exhausted the visibility guard; no jump.2 click was issued. This is observed test scrolling overshoot, not evidence of a resolver failure after a visible button click.
+
+| Target | Original artifact ID | Bytes | SHA256 |
+|---|---:|---:|---|
+| iPhone | 13072160640 | 42343661 | 3325f134e551274ebdd5deb0b1f2aa91f8c5512f35f23213eb8c2348480ee60d |
+| iPad | 13072186647 | 42343769 | 65658e2ffff041942c79ee6e9a7189ec5d5f93cc70948e2964c2947cb6795001 |
+| macOS | 13072026988 | 42344334 | 5392e1bfbabff6ef44172d82a6eb92d69ecc75c9efebe4df27a528d513334ae3 |
+
+API identities and ordinary logs were read; no local ZIP processing or test execution was performed.
+
+User approval at 2026-11-01 07:21:31 UTC (`Sentinel_4e552a792a7c81919a80e78887ce2244`) covers exactly three existing files: this document, contract.json and apple_driver.swift; preparation commit/push and one single Mac diagnostic capped at 15 runner-min, no automatic retry. Independent design review passed before implementation. Actual-source review is still pending at this preparation checkpoint. No new run has started.
+
+The Mac-only implementation uses the original native list's pixel-precise scroll(byDeltaX:deltaY:), initially at most 16 pixels, then at most 24 pixels and 20% of the viewport height. Observed target movement calibrates direction; overshooting to the other side halves the cap, minimum 1 pixel. Each scroll requires movement above 0.5 pixel and three stable frame observations at 0.1-second intervals within three seconds. It re-queries the unique list and row action. There are at most ten scrolls and eleven admission checks, so the last scroll can succeed. Four-pixel padding guides motion only; original full-bounds containment, enabled/hittable checks and one native button.click decide success. Missing, unmoving, unstable or uncontained targets fail without a click. The iOS body, other controls and original precise-state/data assertions are unchanged.
+
+Official native API: https://developer.apple.com/documentation/xcuiautomation/xcuielement/scroll(bydeltax:deltay:)
+
+Reuse the existing f04/macos-state-diagnostic entry, Mac 15-minute job and authenticated historical SDK/Android inputs from 2cdad2057d4877b4712af8155da72fb92b50e411. No workflow or run.py change, no SDK rebuild, no iOS rerun, no product code change. The existing six-path equivalence allowlist describes the cumulative diagnostic delta versus that old producer and is not broadened. The new delta versus cc5a88f4 is only the three authorized paths.
+
+F03 is the sole canonical composer/trigger after F12 actual-diff review. This preparation branch uses [skip ci]. New syntax/build/UI checks remain Actions-only. No formal F04 acceptance or new green run is claimed. All prior failed evidence below remains unchanged.
+
+---
+
 # F04 reading-state bidirectional preparation — 2026-10-31
 
 ## Status and authority
