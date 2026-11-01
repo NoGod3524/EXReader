@@ -1,4 +1,4 @@
-name: Dot F10 owned upload snapshot integration
+name: Dot F10 owned snapshot and streaming GET verification
 on:
   push:
     branches: [dot/f10-stale-owner-20261031]
@@ -59,8 +59,8 @@ jobs:
           assert sorted(changed)==sorted(m['allowed_paths']),changed
           phase=subprocess.check_output(['git','diff','--name-only',m['phase_base'],'HEAD'],text=True).splitlines()
           assert sorted(phase)==sorted(m['phase_paths']),phase
-          repair=subprocess.check_output(['git','diff','--name-only',m['repair_base'],'HEAD'],text=True).splitlines()
-          assert sorted(repair)==sorted(m['repair_paths']),repair
+          stream=subprocess.check_output(['git','diff','--name-only',m['stream_base'],'HEAD'],text=True).splitlines()
+          assert sorted(stream)==sorted(m['stream_paths']),stream
           subprocess.run(['git','diff','--exit-code',m['phase_base'],'HEAD','--',*m['frozen_paths']],check=True)
           subprocess.run(['git','diff','--exit-code',m['base'],'HEAD','--','src','include','cmake','CMakeLists.txt','bindings'],check=True)
           PY
@@ -135,3 +135,5 @@ jobs:
 # Activate B once after native independent review of 5789e442.
 
 # Activate approved fixture correction once after 41ae3a3 review.
+
+# Phase C prepared skip-ci; activation only after independent review, one 45+15 minute run.
