@@ -31,9 +31,12 @@ No new product performance run is claimed by that replay.
 
 The build-check branch runs the controls and separate complete Windows/Android
 builds, each capped at 20 minutes. Windows bundles its exact native helpers and
-builds the external observer. Android packages the actual NewReview.txt, four
-Release APKs, final-source/final-build records and an exact eight-source bundle.
-This branch performs no Linux product sampling or Android emulator execution.
+builds the external observer. Android retains the original four APKs and
+NewReview.txt, and adds an independent reader UI helper APK and the fixed
+Sample.epub. The final-source/final-build records declare the exact 18-source
+bundle and six observer/product Java sources. See android-reader.md for the
+separate reader cohort. This branch performs no Linux product sampling or
+Android emulator execution.
 
 New native Android sampling requires --expected-source and --producer-receipt.
 The receipt contains repository_full_name=NoGod3524/EXReader plus the original
@@ -45,7 +48,9 @@ uses the original case0 activity start and fixed first-interactive timestamp;
 other lifecycle Window results and missing associations remain fully reported.
 Reader/native-census coverage and final F08 acceptance are still separate.
 Older 03ec qualification evidence is available through read-only audit-legacy.
-Sampling retains the 1100-second cap and cleanup within 20 minutes.
+The complete native run uses one 1200-second monotonic deadline. Its worker
+stays at most 1100 seconds and leaves at least 150 seconds of the remaining run;
+terminal checks, owned cleanup, final mirrors and publication share that deadline.
 The requested 512 MiB guest heap is clamped by the official emulator to 576 MiB
 (growth limit 192 MiB), matching the archived Ubuntu runtime. The 512 MiB
 sampled process PSS budget is unchanged.
