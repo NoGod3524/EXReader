@@ -1,3 +1,54 @@
+# EXReader formal single-item acceptance - F04, 2026-11-01 12:55 UTC
+
+**Formal accepted ledger: 97/108 = 89.81% (97 verified,1 partial,10 pending).** This supersedes the96-item current count below, without changing any historical snapshot. Only requirement **F04** is newly accepted. No new total-progress Actions audit was launched; this is root independent clause review plus explicit user-authorized ledger recording, not an assertion that a new generated total-progress report exists.
+
+Authorization: assistant12:55:27Z/Sentinel_c73598566f648191a0893307a6682675 proposed only catalog.json and this handoff document, on a new independent documentation branch, preserving the other107 items and original reports, with no CI. User12:55:38Z/**Sentinel_a3c1e6c8305c8191a155e704ab34ef3c** explicitly approved. Branch **codex/gpt-f04-acceptance-97-20261101** starts from latest documentation head **ac0f128d7714b4fe944e9d392b87bba805c5d673**, which retains formal96 baseline **5db41cb19673fb75bb0b498c677d770931ac33e8** and all subsequent handoff history. Source/Git/docs used only lap25002 Desktop Commander -> normal instabox@0.8.52 saved login -> existing VM m_agqxv2s72g5vwdtsifu5cnmml4.
+
+## Exact ledger delta and accepted scope
+
+Original F04 ID/title/group and fixed108-item denominator are unchanged. Only its state changes pending -> verified, with one reference **f04_six_host_independent_review_20261101** and its scoped review note. All other107 requirement records, all previous evidence entries, catalog version, scope-document identity and historical cutoff remain unchanged. No F01/F02/F03/F05-F12 or host item receives transferred credit.
+
+The original fixed F04 clause requires six-target bidirectional interoperability of reading progress, bookmarks, annotations and original anchors without incorrect positioning. Acceptance follows the already established test scope: Windows,GTK,macOS native hosts, Android API34 x86_64 emulator, iPhone/iPad simulators, one fixed original EPUB and the existing connected graph. It does not grant physical-device coverage, every document format, arbitrary all-pairs exchanges, simultaneous online-host synchronization, universal product readiness or F12 delivery.
+
+## Immutable original execution and authentication
+
+[Run41306566948 / attempt1](https://github.com/NoGod3524/EXReader/actions/runs/41306566948), source **ec11cf862ca3b44483d7e8c4726ae748ab438337**, completed **success** at12:48:51Z. All15 planned jobs passed: five same-source build producers distributed across seed/peer/build jobs, eleven real UI phases (six hosts and five Windows returns), retained Linux suite, and original graph/retained authentication. No older diagnostic or successful producer was spliced into this run.
+
+Original audit job **124852963022** succeeded. It executed the existing authenticate-selected entry, which invokes both original --authenticate-graph and --authenticate-retained with check=True. Original audit assertions were not relaxed. Independent review reread the actual run/jobs API, original audit log and unchanged audit source; artifact ZIP processing occurred in the original Actions job only.
+
+Authenticated evidence artifact **13084306206**, name f04-auth-41306566948-1: **2110005 bytes**, SHA256 **d481b8ad8319e5e0bb6fc8b5acf1e545e3722c3df2b2a56c930568c626949031**. Original audit diagnostic artifact **13084585434**, name f04-diagnostic-audit-41306566948-1: **939 bytes**, SHA256 **e48ab565464617b6851efeb39396f0c471744cdc0cbb6866fd06cbfd99496182**. Both API identities point to this exact source/run and were unexpired when reviewed.
+
+The original authentication checks current upload-output IDs, exact original ZIP bytes/digests, successful producer jobs, source/run/attempt, installed program/build receipt identity, Apple installed SDK identity, authenticated HTTP requests, actual publication and fresh-profile original reception. It verifies the same original EPUB bytes and all staged predecessor hashes before evaluating the graph. These are real executable/transport evidence, not source-only or module-test credit.
+
+## Original-clause evidence map
+
+| Fixed obligation | Original executed evidence |
+|---|---|
+| Six target roles | graph hosts are windows,linux-gtk,macos,android-api34-x86_64,iphone-simulator,ipad-simulator; all six native/UI roles and five Windows return jobs succeeded |
+| Progress interoperability and landing | graph_audit lines220-234 verify each edge's exact original progress wire and platform-specific restored position/FOUND/frame containment; ten directed edges checked |
+| Bookmark and annotation original anchors | lines235-267 verify20 checks (ten edges x bookmark/note), preserve bookmark point versus annotation range, exact original revision/raw wire and each receiver's actual landing/retained record |
+| Bidirectional coverage | lines272-280 check exact required host set and reachability from each host to every other host; no invented all-pairs or six-author prerequisite |
+| Same-source actual producer/consumer evidence | authenticate_graph and authenticated_builds validate all five builds and eleven phase artifacts/programs at ec11cf862ca3b44483d7e8c4726ae748ab438337 /41306566948/A1 before graph evaluation |
+| Retained original behavior | authenticate_retained completed separately after graph authentication; retained_18_121_checked=true, original SDK/wire reports and program/legacy identities plus negative authentication checks passed |
+
+The graph edges are Windows -> Android; Android -> Windows,GTK,macOS,iPhone,iPad; GTK/macOS/iPhone/iPad -> Windows. Every edge includes progress,bookmark and annotation checks. All original wire bytes remain immutable across the graph.
+
+## Why original false fields are preserved, not rewritten
+
+The original graph summary emits **graph_checked=true** and20 graph checks but always writes **F04_accepted=false**, **six_target_accepted=false** and two remaining strings at audit.py281-284. Those are fixed preparation-stage output literals, not evaluated failing assertions. In particular, the remaining text about retained authentication precedes the separate retained command, which actually ran and passed in this same audit job. It would be inaccurate either to rewrite the old report to true or to claim that retained authentication never ran.
+
+The retained summary likewise retains **F04_accepted=false**, **cross_platform_comparison=false** (the selected retained scope has one Linux producer), and **original_four_zip_aggregate=not-run**. The original code explicitly expects that aggregate not to run. This acceptance does not pretend otherwise and does not convert it into a new all-platform retained aggregate requirement.
+
+Root independently mapped the actual authenticated runtime evidence to the original F04 clause and accepted only that established scope; the user then approved this single ledger entry. The generic existing total_progress.py evidence schema already supports root-reviewed named scope in a referenced document plus pinned successful run/source. No new adapter, fabricated passing cases, changed audit flags, denominator or validator is required. Generated build/reader-total-progress/report.json/report.md are Actions outputs and were not manually modified or regenerated.
+
+## Preserved limitations and continuation
+
+All earlier failures, including41295456077 audit missing-hidden-file failure and41303203935 Android readiness failure, remain failures with unchanged original artifacts. The successful isolated Android diagnostic41305482971 remains diagnostic_only/F04=false; this entry is based on the later complete original run41306566948, not promotion of its mixed historical input.
+
+No source,SDK,old-test,workflow,product owner,mainline,PR,tag or release change accompanies this ledger commit. No CI,local/VM build,test,syntax validation or ZIP parsing was run for ledger recording; only JSON/text/Git/API inspection and exact readback. Remaining P0/conflict/provider/SDK delivery/upgrade/license gaps and the separately noted focus-loss risk are not erased. Final delivery and the complete product are not declared finished.
+
+---
+
 # EXReader continuation snapshot - scheduled 2026-11-01 12:22 UTC
 
 Request arrived early at approximately 12:17 UTC. Actual observation window: 12:17:41 UTC through **2026-11-01T12:21:52Z**. This is an hourly continuation backup, not completion, release or a stop request. Source/Git/docs route remains exclusively lap25002 Desktop Commander -> normal saved-login instabox@0.8.52 -> existing VM m_agqxv2s72g5vwdtsifu5cnmml4. No new VM, Codex, alternate connector, local test or local archive processing.
