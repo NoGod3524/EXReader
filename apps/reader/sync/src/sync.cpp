@@ -315,21 +315,54 @@ struct step {
     if(status==READER_REV_NOT_FOUND){++report.pending_metadata;return;}revision_check(status);
     std::string key=i.book_key,expected=key.substr(key.find(':')+1);fs::path cached=s.directory/fs::u8path(object_name(key));
     if(fs::exists(cached)){if(hash_file(cached,bytes,control)!=expected)reject(READER_SYNC_HASH,"Private original cache identity differs");}
-    else {private_file raw(s.directory);download(object_path(key),raw);cache_publish_no_replace(raw,cached,bytes,expected,control);}
+    else {
+#ifdef EXR_WEBDAV_MANAGED
+      if(exr_webdav_managed_enabled(s.dav)){
+        owned_upload snapshot(s.dav);digest hash;
+        struct receive_context {owned_upload *snapshot;digest *hash;} context{&snapshot,&hash};
+        auto receive=[](void *opaque,const void *data,size_t size)->exr_webdav_status{
+          auto &c=*(receive_context*)opaque;
+          try{c.snapshot->write(data,size);c.hash->append(data,size);return EXR_DAV_OK;}catch(...){return EXR_DAV_IO;}
+        };
+        exr_webdav_error error{};uint64_t got=0;
+        dav_check(exr_webdav_read_stream(s.dav,object_path(key).c_str(),bytes,receive,&context,control,&got,&error),error);
+        if(got!=bytes||hash.finish()!=expected)reject(READER_SYNC_HASH,"Downloaded original identity differs");
+        snapshot.seal(bytes);cancelled(control);
+        exr_webdav_download result{};
+        auto code=exr_webdav_snapshot_publish_file(snapshot.handle,s.directory.u8string().c_str(),cached.filename().u8string().c_str(),&result,&error);
+        if(code==EXR_DAV_EXISTS){
+          const auto before=regular_identity(cached);
+          if(hash_file(cached,bytes,control)!=expected||!same_identity(before,regular_identity(cached)))
+            reject(READER_SYNC_HASH,"Existing private cache identity differs");
+        }else dav_check(code,error);
+        snapshot.finish();
+      }else
+#endif
+      {private_file raw(s.directory);download(object_path(key),raw);cache_publish_no_replace(raw,cached,bytes,expected,control);}
+    }
     ++report.originals_verified;
   }
   void pull(unsigned shard,const std::string &after,size_t limit){
     std::string folder=collection("revisions",shard_name(shard));listing listed;exr_webdav_error error{};exr_webdav_status status=exr_webdav_list(s.dav,folder.c_str(),control,&listed.value,&error);
     if(status==EXR_DAV_HTTP&&error.http_status==404){report.shard_complete=1;report.next_shard=(shard+1)%256;return;}dav_check(status,error);
-    std::vector<std::string> leaves;for(size_t n=0;n<listed.value.count;n++){
+    std::map<std::string,uint64_t> lengths;std::vector<std::string> leaves;for(size_t n=0;n<listed.value.count;n++){
       const auto &entry=listed.value.entries[n];std::string resource=entry.resource,leaf=resource.substr(folder.size());
       if(entry.collection||!revision_leaf(leaf)||leaf.substr(0,2)!=shard_name(shard)||!entry.has_size||entry.bytes>READER_REVISION_MAX_BYTES)reject(READER_SYNC_HASH,"Immutable revision shard entry identity is invalid");
-      if(leaf>after)leaves.push_back(leaf);
+      if(leaf>after){leaves.push_back(leaf);lengths.emplace(leaf,entry.bytes);}
     }
     std::sort(leaves.begin(),leaves.end());size_t count=std::min(limit,leaves.size());
     for(size_t n=0;n<count;n++){
-      cancelled(control);private_file file(s.directory);download(folder+leaves[n],file);uint64_t size=fs::file_size(file.name);if(size>READER_REVISION_MAX_BYTES)reject(READER_SYNC_LIMIT,"Revision exceeds wire byte ceiling");
-      std::ifstream input(file.name,std::ios::binary);std::string wire((std::istreambuf_iterator<char>(input)),{});reader_revision_info info{};
+      cancelled(control);const uint64_t size=lengths.at(leaves[n]);
+      if(size>READER_REVISION_MAX_BYTES)reject(READER_SYNC_LIMIT,"Revision exceeds wire byte ceiling");
+      std::string wire;wire.reserve((size_t)size);
+      auto receive=[](void *opaque,const void *data,size_t count)->exr_webdav_status{
+        auto &value=*(std::string*)opaque;
+        if(count>READER_REVISION_MAX_BYTES-value.size())return EXR_DAV_LIMIT;
+        try{value.append((const char*)data,count);return EXR_DAV_OK;}catch(...){return EXR_DAV_MEMORY;}
+      };
+      uint64_t received=0;exr_webdav_error transfer{};
+      dav_check(exr_webdav_read_stream(s.dav,(folder+leaves[n]).c_str(),size,receive,&wire,control,&received,&transfer),transfer);
+      reader_revision_info info{};
       revision_check(READER_SYNC_REV(reader_revision_validate)(s.revisions,wire.data(),wire.size(),leaves[n].substr(33,64).c_str(),&info,nullptr));
       if(std::string(info.revision_id)!=leaves[n].substr(0,32))reject(READER_SYNC_HASH,"Remote revision ID differs from immutable path");
       // Verify a book's claimed immutable length before adopting it as the
