@@ -1602,6 +1602,107 @@
     },
     "diagnostic_only": true,
     "F04_accepted": false,
-    "runs_started": 0
+    "runs_started": 1,
+    "result": {
+      "run_id": "41305482971",
+      "attempt": 1,
+      "source": "48b748af6a3a8de383a2071b13e2f421239c1f59",
+      "job_id": 124844890311,
+      "conclusion": "success",
+      "started_at": "2026-11-01T12:14:01Z",
+      "completed_at": "2026-11-01T12:21:37Z",
+      "checks_passed": 7,
+      "native_forward_actions": 3,
+      "all_actions_accepted": true,
+      "ready_wait_ms": [
+        3,
+        5,
+        6
+      ],
+      "frame_starts": [
+        507,
+        800,
+        878,
+        930
+      ],
+      "token_revision": [
+        [
+          4,
+          10
+        ],
+        [
+          5,
+          12
+        ],
+        [
+          6,
+          14
+        ],
+        [
+          7,
+          16
+        ]
+      ],
+      "saved_location": 930,
+      "new_revision": true,
+      "bookmark_annotation_sync_passed": true,
+      "diagnostic_only": true,
+      "F04_accepted": false,
+      "artifacts": [
+        {
+          "id": 13083188865,
+          "kind": "diagnostics",
+          "bytes": 4199657,
+          "digest": "sha256:9ae8fc5a2b9b13688197ee26ff8f391c9df631570abdaafb21509ad51a258c39"
+        },
+        {
+          "id": 13083098978,
+          "kind": "output",
+          "bytes": 20042542,
+          "digest": "sha256:9274d9e86864373fe3be66bbdd9dde71626f6670e102cb7d5d5a93cff5ab221c"
+        },
+        {
+          "id": 13083024147,
+          "kind": "build",
+          "bytes": 39939041,
+          "digest": "sha256:c2548513adccf2b9a83cdb0037c5b5599f4b3948f1e72b58834ab515b38d2c23"
+        }
+      ],
+      "interpretation": "original full UI chain passed with ready-node baseline; 3/5/6ms waits did not reproduce a prolonged race"
+    }
+  },
+  "android_ready_full_recovery_round": {
+    "case": "f04/six-host",
+    "marker": "[F04-SIX-ANDROID-READY-230-ONE-RUN]",
+    "authorization": {
+      "at": "2026-11-01T12:23:51Z",
+      "message": "Sentinel_3bca66b8e178819186061d1b357da7ae",
+      "files": [
+        ".github/workflows/dot-f03-same-source-20261031.yml",
+        "tests/dot_f04_reading_sync_20261031/contract.json",
+        "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+      ],
+      "jobs": 15,
+      "runner_minutes": 230,
+      "runs": 1,
+      "automatic_retry": false,
+      "mac_permission": "This round ephemeral Mac runner only: exact Python Local Network prompt, unique explicit Don't Allow semantic, one native click during existing initial 10-second observation within original 150-second library deadline; late prompt blocks, no Allow fallback or system-setting changes."
+    },
+    "runs_started": 0,
+    "status": "prepared_not_started",
+    "producer_policy": "all five builds and eleven phases newly produced at one controller source/run/attempt; original retained suite and graph audit; no diagnostic or historical artifacts promoted into graph",
+    "unchanged": [
+      "android_driver.java",
+      "run.py",
+      "admission.py",
+      "helper workflow",
+      "production",
+      "SDK source",
+      "original tests",
+      "audit assertions"
+    ],
+    "scope_budget": "execution_scopes.f04/six-host",
+    "F04_accepted": false,
+    "formal_count": "96/108"
   }
 }
