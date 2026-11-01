@@ -190,6 +190,59 @@ def prepare_hash_owner(platform):
     os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = canonical
     return canonical
 
+def parser_policy_checks():
+    """Compile the actual Android policy; preserve the original twenty cases."""
+    import hashlib
+    path = "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java"
+    old_path = "tests/apple_host/record_compatibility/ParserPolicyCheck.java"
+    old = retained(old_path)
+    directory = ROOT / "build/f04-parser-policy"
+    directory.mkdir(parents=True, exist_ok=False)
+    classes = directory / "classes"
+    classes.mkdir()
+    supplemental = directory / "F04ParserPolicyCheck.java"
+    supplemental.write_text(r'''package org.exreader.host;
+public final class F04ParserPolicyCheck {
+    static void check(String name,String recorded,String actual,boolean expected) {
+        if(ReadingParserPolicy.accepts(recorded,actual)!=expected)throw new AssertionError(name);
+        System.out.println("F04_CASE "+name);
+    }
+    public static void main(String[] args) {
+        check("current-bare","3.42.0","3.42.0",true);
+        check("current-prefixed","exreader-sdk-3.42.0","3.42.0",true);
+        check("retained-prefixed341","exreader-sdk-3.41.0","3.42.0",true);
+        check("bare341-still-refused","3.41.0","3.42.0",false);
+        check("future-bare","3.43.0","3.42.0",false);
+        check("future-prefixed","exreader-sdk-3.43.0","3.42.0",false);
+        check("unknown-patch","3.42.1","3.42.0",false);
+        check("unknown-prefixed-patch","exreader-sdk-3.42.1","3.42.0",false);
+        check("short","3.42","3.42.0",false);
+        check("empty","","3.42.0",false);
+        check("null",null,"3.42.0",false);
+        check("duplicate-prefix","exreader-sdk-exreader-sdk-3.42.0","3.42.0",false);
+        check("trailing-space","3.42.0 ","3.42.0",false);
+        check("embedded-nul","3.42.0"+(char)0,"3.42.0",false);
+        check("unrelated-prefix","exreader-3.42.0","3.42.0",false);
+    }
+}
+''')
+    subprocess.run(["javac", "-encoding", "UTF-8", "-d", str(classes),
+                    str(ROOT / path), str(ROOT / old_path), str(supplemental)], check=True, cwd=ROOT)
+    outputs = {}
+    for name, prefix, count in (("ParserPolicyCheck", "CASE ", 20), ("F04ParserPolicyCheck", "F04_CASE ", 15)):
+        output = subprocess.check_output(["java", "-cp", str(classes), "org.exreader.host." + name], cwd=ROOT, text=True)
+        print(output, end="", flush=True)
+        cases = [line for line in output.splitlines() if line.startswith(prefix)]
+        assert len(cases) == count and len(set(cases)) == count, (name, cases)
+        (directory / (name + ".log")).write_text(output)
+        outputs[name] = {"passed": count, "output_sha256": hashlib.sha256(output.encode()).hexdigest()}
+    result = {"source_sha": os.environ["GITHUB_SHA"], "actual_policy_sha256": hashlib.sha256((ROOT / path).read_bytes()).hexdigest(),
+              "original_checker_sha256": hashlib.sha256(old.encode()).hexdigest(), "checks": outputs,
+              "Windows_new_negative_cases_executed": False}
+    (directory / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    print("F04 PARSER POLICY " + json.dumps(result), flush=True)
+    return result
+
 def build_producer(platform):
     """Actions-only recipe, still unreachable from the disabled workflow."""
     import hashlib
@@ -205,6 +258,7 @@ def build_producer(platform):
         "iphonesimulator": ("tests/apple_sdk342_host/build.py", ["--target", "iphonesimulator"]),
     }
     path, arguments = recipes[platform]
+    parser_checks = parser_policy_checks() if platform == "android" else None
     hash_prefix = prepare_hash_owner(platform) if platform in ("windows", "gtk", "android") else None
     original_recipe = retained(path)
     if platform == "android":
@@ -215,7 +269,8 @@ def build_producer(platform):
         "platform": platform, "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505",
         "sdk_version": "3.42.0", "recipe": path,
         "recipe_sha256": hashlib.sha256(original_recipe.encode()).hexdigest(),
-        "host_runtime_accepted": False, "F04_accepted": False, "original_hash_prefix": hash_prefix}
+        "host_runtime_accepted": False, "F04_accepted": False, "original_hash_prefix": hash_prefix,
+        "parser_policy_checks": parser_checks}
     if platform == "android":
         import yaml
         workflow = retained(".github/workflows/reader-apple-android-relay.yml")
