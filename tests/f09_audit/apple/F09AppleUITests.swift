@@ -246,10 +246,18 @@ final class F09AppleUITests: XCTestCase {
         XCTAssertTrue(wait(60) { !self.element("reader.busy").exists })
         // The page label starts with "第 N 页" on every platform (macOS leaves the value empty).
         func position() -> String { page.label + "|" + ((page.value as? String) ?? "") }
-        let before = position()
-        app.typeKey(.rightArrow, modifierFlags: [])
-        results["→ turns the page"] = wait(20) { self.text("reader.page") != "" && position() != before && !self.element("reader.busy").exists }
-        samples.append(["command": "→", "before": String(before.prefix(60)), "after": String(position().prefix(60))])
+        // ⌘→ turns pages on every platform; the Mac also turns them with a bare →
+        // (iPadOS reserves bare arrows for its keyboard focus system).
+        var turns: [(String, XCUIElement.KeyModifierFlags)] = [("⌘→ turns the page", .command)]
+#if os(macOS)
+        turns.append(("→ turns the page", []))
+#endif
+        for (label, flags) in turns {
+            let before = position()
+            app.typeKey(.rightArrow, modifierFlags: flags)
+            results[label] = wait(20) { position() != before && !self.element("reader.busy").exists }
+            samples.append(["command": label, "before": String(before.prefix(60)), "after": String(position().prefix(60))])
+        }
 
         app.typeKey("[", modifierFlags: .command)
         results["⌘[ returns to the shelf"] = element("library.title").waitForExistence(timeout: 20)
