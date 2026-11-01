@@ -582,14 +582,75 @@ def authenticate_retained():
     (out / "result.json").write_text(json.dumps(dict(current, retained_18_121_checked=True, scope=scope_name, cross_platform_comparison=len(normalized) > 1,
         producers=receipts, original_four_zip_aggregate="not-run", F04_accepted=False), indent=2))
 
+
+def diagnose_fixed():
+    """One authenticated historical failure ZIP, no build and no program execution."""
+    from run import diagnostic_text
+    from relay import identity
+    sys.path.insert(0, str(ROOT / "tools"))
+    from check_parallel_integration import fetch, download_artifact_zip
+    need(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
+    contract = json.loads((HERE / "contract.json").read_text())
+    controller = identity()
+    need(os.environ.get("F04_SCOPE") == "f04/diagnose-round2" and
+         os.environ.get("GITHUB_REF") == "refs/heads/" + contract["canonical"]["branch"] and
+         os.environ.get("F04_CONTROLLER_SHA") == controller["source_sha"], "diagnostic controller")
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    need(head == controller["source_sha"], "diagnostic checkout")
+    paths = subprocess.check_output(["git", "diff", "--name-only", BASE, head], cwd=ROOT, text=True).splitlines()
+    need(set(paths) == set(contract["canonical"]["union_paths"]), "diagnostic exact union")
+    pin = contract["fixed_diagnostic"]
+    run = fetch("actions/runs/" + pin["run_id"])
+    need(run["head_sha"] == pin["source_sha"] and str(run["run_attempt"]) == pin["attempt"] and
+         run["conclusion"] == "failure", "diagnostic producer run")
+    job = fetch("actions/jobs/" + str(pin["job_id"]))
+    need(str(job["run_id"]) == pin["run_id"] and str(job["run_attempt"]) == pin["attempt"] and
+         job["head_sha"] == pin["source_sha"] and job["conclusion"] == "failure", "diagnostic producer job")
+    row = fetch("actions/artifacts/" + str(pin["artifact_id"]))
+    need(row["id"] == pin["artifact_id"] and row["size_in_bytes"] == pin["size_in_bytes"] and
+         row["digest"] == pin["digest"] and not row["expired"] and
+         str(row["workflow_run"]["id"]) == pin["run_id"] and
+         row["workflow_run"]["head_sha"] == pin["source_sha"], "diagnostic artifact identity")
+    blob = download_artifact_zip(pin["artifact_id"])
+    need(len(blob) == pin["size_in_bytes"] and "sha256:" + hashlib.sha256(blob).hexdigest() == pin["digest"],
+         "diagnostic original ZIP digest")
+    out = ROOT / "build/f04-fixed-diagnostic"
+    out.mkdir(parents=True, exist_ok=False)
+    (out / "original.zip").write_bytes(blob)
+    text_names = {"exception.txt", "window.json", "application.txt", "result.json", "manifest.json", "diagnostic-refused.json"}
+    allowed = text_names | {"import-window.png"}
+    reports = []
+    with zipfile.ZipFile(io.BytesIO(blob)) as archive:
+        names = archive.namelist()
+        need(len(names) == len(set(names)) and set(names) <= allowed, "diagnostic member whitelist")
+        for entry in archive.infolist():
+            need(entry.file_size <= (2000000 if entry.filename.endswith(".png") else 262144),
+                 "diagnostic member size")
+            if entry.filename not in text_names:
+                continue
+            raw = archive.read(entry.filename).decode("utf-8", errors="strict")
+            cleaned = diagnostic_text(raw)
+            (out / entry.filename).write_text(cleaned, encoding="utf-8")
+            print("DIAGNOSTIC TEXT " + entry.filename, flush=True)
+            print(cleaned, flush=True)
+            reports.append(entry.filename)
+    result = {"diagnostic_controller": controller, "producer": pin,
+              "original_archive": {"bytes": len(blob), "digest": pin["digest"]},
+              "printed_texts": reports, "missing_texts": sorted(text_names - set(reports)),
+              "diagnostic_only": True, "product_executed": False, "F04_accepted": False}
+    (out / "diagnosis.json").write_text(json.dumps(result, indent=2))
+    print(json.dumps(result), flush=True)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--graph", type=Path)
     parser.add_argument("--authenticate-graph", action="store_true")
     parser.add_argument("--authenticate-retained", action="store_true")
+    parser.add_argument("--diagnose-fixed", action="store_true")
     args = parser.parse_args()
-    need(sum((bool(args.graph), args.authenticate_graph, args.authenticate_retained)) <= 1, "choose one audit entry")
-    if args.authenticate_retained: authenticate_retained()
+    need(sum((bool(args.graph), args.authenticate_graph, args.authenticate_retained, args.diagnose_fixed)) <= 1, "choose one audit entry")
+    if args.diagnose_fixed: diagnose_fixed()
+    elif args.authenticate_retained: authenticate_retained()
     elif args.authenticate_graph: authenticate_graph()
     elif args.graph: graph_audit(args.graph)
     else: main()

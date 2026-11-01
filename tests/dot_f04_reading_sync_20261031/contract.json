@@ -349,5 +349,19 @@
     "source": "210403d121d6484a8fff4ea7ffd911efa3163535",
     "prefix": "build/v1-product-stage",
     "probe_checks_unchanged": true
+  },
+  "fixed_diagnostic": {
+    "run_id": "41264117725",
+    "attempt": "1",
+    "source_sha": "cb8b5e2d04a524a44a686eb8385872ee832d373e",
+    "job_id": 124723215028,
+    "artifact_id": 13066097833,
+    "size_in_bytes": 1638,
+    "digest": "sha256:2f0916f73a040e9a0589c95fbcdb1f114d1468785235330e98477e9d97736a46",
+    "case": "f04/diagnose-round2",
+    "run_limit": 1,
+    "runner_minutes_cap": 5,
+    "build": false,
+    "product_execution": false
   }
 }
