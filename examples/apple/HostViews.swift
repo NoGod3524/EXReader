@@ -299,13 +299,22 @@ struct LibraryScreen: View {
                     .accessibilityIdentifier("library.search")
                     .onChange(of: shelf.query) { _ in shelf.search() }
                     .disabled(model.productIndexPending)
-                Button("刷新") { shelf.refresh() }
+                // 44-point targets: the text-sized buttons measured 34×20.5 pt.
+                Button { shelf.refresh() } label: { Text("刷新").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) }
                     .disabled(model.busy || model.productIndexPending)
                     .accessibilityIdentifier("library.refresh")
-                Button("整理") { organizing = true }
+                Button { organizing = true } label: { Text("整理").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) }
                     .disabled(model.busy || model.productIndexPending || model.organizationURL == nil)
+                    .keyboardShortcut("o", modifiers: [.command, .shift])
                     .accessibilityIdentifier("library.organization")
             }.padding(.horizontal).padding(.vertical, 6)
+            // Hardware keyboard: ⌘O imports, ⌘F moves to search (iPad and Mac).
+            .background {
+                HStack {
+                    Button("") { importing = true }.keyboardShortcut("o", modifiers: .command).disabled(model.busy)
+                    Button("") { searchFocused = true }.keyboardShortcut("f", modifiers: .command)
+                }.opacity(0).allowsHitTesting(false).accessibilityHidden(true)
+            }
 
             if (model.productIndexPending || (shelf.rows.isEmpty && !model.errorText.isEmpty)) && !model.books.isEmpty {
                 // Retained SDK imports remain reachable while product repair is pending.
@@ -738,6 +747,7 @@ struct ReaderScreen: View {
             HStack {
                 Button { model.backToLibrary() } label: { hostHeaderActionLabel("书架", symbol: "books.vertical", compact: compactTools) }
                     .accessibilityLabel(Text("书架"))
+                    .keyboardShortcut("[", modifiers: .command)
                     .accessibilityIdentifier("reader.back")
                 Text(model.title).font(compactTools ? .caption : .headline).lineLimit(1)
                     .accessibilityIdentifier("reader.title")
@@ -790,6 +800,15 @@ struct ReaderScreen: View {
             // chrome expanding to the maximum body-text control height.
             .buttonStyle(.plain)
             .padding(.horizontal).padding(.top, 8)
+            // Hardware keyboard works while the compact tools row is collapsed:
+            // ←/→ turn pages, ⌘F searches the book (iPad and Mac).
+            .background {
+                HStack {
+                    Button("") { model.turn(-1) }.keyboardShortcut(.leftArrow, modifiers: [])
+                    Button("") { model.turn(1) }.keyboardShortcut(.rightArrow, modifiers: [])
+                    Button("") { model.prepareSearch(); showSearch = true }.keyboardShortcut("f", modifiers: .command)
+                }.disabled(model.busy).opacity(0).allowsHitTesting(false).accessibilityHidden(true)
+            }
 
             GeometryReader { geometry in
                 ZStack {
