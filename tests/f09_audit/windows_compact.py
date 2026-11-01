@@ -23,7 +23,7 @@ import uiautomation as auto
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / 'build/f09/windows-compact'
+OUT = ROOT / os.environ.get('F09_WINDOWS_COMPACT_OUT', 'build/f09/windows-compact')
 checks = []
 trace = []
 

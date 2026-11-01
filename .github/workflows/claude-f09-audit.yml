@@ -43,6 +43,19 @@ jobs:
         run: python -m pip install "uiautomation==2.0.29"
       - name: Build the shared-source Windows host and run the existing audit
         run: python tests/f09_audit/baseline.py windows
+      - name: Real screen reader - NVDA portable over the same compact flow
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'nvda_2024.4.2.exe'
+          Invoke-WebRequest -Uri 'https://download.nvaccess.org/releases/2024.4.2/nvda_2024.4.2.exe' -OutFile $installer
+          (Get-FileHash $installer -Algorithm SHA256).Hash | Out-File build/f09/nvda-installer-sha256.txt
+          $portable = Join-Path $env:RUNNER_TEMP 'nvda-portable'
+          Start-Process -FilePath $installer -ArgumentList '--create-portable-silent', "--portable-path=$portable" -Wait
+          if (-not (Test-Path (Join-Path $portable 'nvda.exe'))) { throw 'NVDA portable was not created' }
+          $book = Get-ChildItem build/f09/windows-fixtures -Filter *.epub | Select-Object -First 1
+          python tests/f09_audit/windows_nvda.py (Join-Path $portable 'nvda.exe') build/f06/windows-payload/EXReader/EXReader.exe $book.FullName
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -70,7 +83,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev \
             libssl-dev pkg-config ninja-build at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 gsettings-desktop-schemas \
-            dbus dbus-x11 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+            dbus dbus-x11 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil orca speech-dispatcher
       - name: Build and install the independent public OPDSHash owner (as the F08 workflows on this base)
         run: |
           set -euo pipefail

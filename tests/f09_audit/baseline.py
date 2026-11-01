@@ -112,6 +112,8 @@ def linux():
     record('gtk', payload, code, report)
     # The compact shell this source ships, audited by tests/f09_audit/gtk_compact.py.
     run([sys.executable, '-X', 'faulthandler', 'tests/f09_audit/gtk_compact.py', payload], 'gtk-compact')
+    # The same flow under a real Orca, reading what it speaks.
+    run([sys.executable, 'tests/f09_audit/gtk_orca.py', payload], 'gtk-orca')
 
 
 def android_prepare():
