@@ -14,7 +14,9 @@ Before the final six-platform validation, update contract.json reviewed_source
 to the integrated production commit. No other production, fixture, original
 test or build-recipe changes are admitted after that point. The dedicated
 adapter-check branch runs only the 20-minute controls. The final-validation
-branch runs controls, the original 90-minute full lane, and a 20-minute audit.
+branch runs controls, the original Linux 90-minute full lane and 20-minute audit,
+complete Windows/Android builds, plus two Apple SDK builds (55 minutes), three
+complete native Apple cohorts (90 minutes) and their independent audit (20 minutes).
 
 The audit authenticates every ZIP entry, checks the shared executable, seed
 and observer bytes, replays original assertions and all added actions, rejects
@@ -100,3 +102,10 @@ original seven, separate scroll08, launch09/10/13, reader11/12 and shelf14 run
 with their original assertions, gestures, iterations, warmup, budgets and raw
 missing/failing results. The final native entry rejects the diagnostic shortcut.
 The separate New Window and font15 controls are not added to this lane.
+
+Run 41260612355 completed the 54 Linux launches at source 960a14d3, but the
+final sample summary failed because its build identity was read from the build
+root instead of the producer evidence directory. Its original sealed ZIP and
+audit failure remain retained. The final result helper now takes an explicit
+build-identity path: producer evidence when sampling, archive root when auditing.
+The frozen product, original test bodies, all frame rows and budgets are unchanged.

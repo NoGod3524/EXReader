@@ -102,8 +102,8 @@ def census(raw, extra, ident):
             "frame_budget_passed": all(r["passed"] for r in checks),
             "added_memory_budget_passed": max(peaks) <= c["linux_budgets"]["peak_rss_bytes"]}
 
-def result(raw, extra):
-    built = R.load(Path(raw) / "build-identity.json")
+def result(raw, extra, build_identity):
+    built = R.load(build_identity)
     product = R.load(Path(extra) / "producer-identity.json")
     need(product == {**R.identity(), "mode": "same-job-build", "program_sha256": built["program_sha256"],
          "seed_sha256": built["probes"]["perf-probe/seed_library"], "components": built["components"]},
@@ -134,7 +134,7 @@ def sample():
         except Exception:
             problems.append({"phase": label, "traceback": traceback.format_exc()})
     R.save(FINAL / "phases.json", {**R.identity(), "problems": problems})
-    measured = result(ROOT / "build", E.OUT)
+    measured = result(ROOT / "build", E.OUT, R.EVIDENCE / "build-identity.json")
     R.save(FINAL / "result.json", measured)
     need(not problems and measured["platform_accepted"], "Linux source/cohort/budget gate")
 
@@ -148,7 +148,7 @@ def audit():
     need(replay == R.load(raw / "f08-native-cost-result/summary.json"), "independent original native replay")
     extra = raw / "f08-linux-body-jump"
     need(E.replay(extra, R.load(extra / "driver.json")) == R.load(extra / "summary.json"), "independent added replay")
-    measured = result(raw, extra)
+    measured = result(raw, extra, raw / "build-identity.json")
     need(measured == R.load(raw / "f08-final-linux/result.json"), "independent all-54 replay")
     need(not R.load(raw / "f08-final-linux/phases.json")["problems"], "all collection phases")
     R.save(original.OUT / "final-linux-audit.json", {"authenticated": True, **measured})
