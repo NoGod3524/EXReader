@@ -58,7 +58,7 @@
   "assertions": 258,
   "negative_controls": 8,
   "budget": {
-    "phase": "B, approved 2026-11-01T00:20:51Z",
+    "phase": "B fixture correction approved 2026-11-01T00:41:01Z",
     "runs": 1,
     "linux_minutes": 45,
     "audit_minutes": 15,
@@ -126,5 +126,20 @@
     "old_binary": "refuses v2; no automatic downgrade",
     "capacity": "one registry total 16 roots x 64 lifetime slots",
     "download": "D roots preserve UUID and old PUBLISHED-only recovery"
+  },
+  "repair_base": "1e475efd33c6094641b10a1941777adc1b89c6ad",
+  "repair_paths": [
+    "tests/product/f10_stale_owner_20261031/https_fixture.py",
+    "tests/product/f10_stale_owner_20261031/run.py",
+    ".github/workflows/dot-f10-stale-owner-20261031.yml",
+    "tests/product/f10_stale_owner_20261031/manifest.json",
+    "docs/reader-total-progress/DOT_F10_STALE_OWNER_20261031.md"
+  ],
+  "historical_artifact": {
+    "id": 13063907551,
+    "run": 41257244190,
+    "source": "6230fc8d1dc531d9d7c4d574d79cc6d9c458bda0",
+    "size": 2452124,
+    "sha256": "a4f4c436d92f77825832b653c21f33ce525c3f5bde2bc2b07dff940691bf7842"
   }
 }
