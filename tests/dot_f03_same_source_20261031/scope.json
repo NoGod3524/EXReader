@@ -66,7 +66,8 @@
   ],
   "authorized_production_paths": [
     "apps/reader/desktop/windows_records_owner.cpp",
-    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java"
+    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
+    "examples/apple/HostReadingRecords.swift"
   ],
   "suite": {
     "schema": 1,
@@ -144,7 +145,8 @@
     "tests/dot_f04_reading_sync_20261031/windows_driver.py",
     "tests/dot_f04_reading_sync_20261031/gtk_driver.py",
     "apps/reader/desktop/windows_records_owner.cpp",
-    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java"
+    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
+    "examples/apple/HostReadingRecords.swift"
   ],
   "candidate_admission": true,
   "candidate_admission_contract": {
@@ -175,31 +177,42 @@
   ],
   "historical_owner_evidence_ref": "https://github.com/NoGod3524/EXReader/blob/94fb236a4a2da87dfbaf4f1dd2a47885d615a230/docs/validation/reader-owner-android-joined.json",
   "historical_owner_guard_reexecuted": false,
-  "allowed_path_count": 25,
+  "allowed_path_count": 26,
   "canonical_composition": {
-    "f04_snapshot": "1fc4d1e7834d7b29dc70da166967a421d03143df",
-    "method": "exact six reviewed blobs plus two admission files; no branch merge",
-    "selected_case": "f04/windows-android",
+    "f04_snapshot": "b443c417bd3e3171daf569c1d7c45b2c3257be44",
+    "method": "exact seven reviewed blobs plus entry/scope/identity; no branch merge",
+    "selected_case": "f04/six-host",
     "controller_source_run_head_equal": true,
-    "authorization_message": "Sentinel_8f4de03c729481919cd5d23e524fe814",
-    "authorization_utc": "2026-11-01T03:14:35Z",
-    "runner_minutes_cap": 120,
+    "authorization_message": "Sentinel_75cf2e7d16f08191a426d16572a5bda6",
+    "authorization_utc": "2026-11-01T03:37:27Z",
+    "runner_minutes_cap": 230,
     "run_limit": 1,
     "automatic_retries": 0,
     "job_minutes": {
-      "windows_seed": 30,
-      "android_peer": 45,
-      "windows_return_android": 15,
-      "retained_linux": 20,
+      "windows_seed": 20,
+      "android_peer": 25,
+      "gtk_peer": 25,
+      "build_macos": 15,
+      "build_iphonesimulator": 15,
+      "macos_peer": 15,
+      "iphone_peer": 20,
+      "ipad_peer": 20,
+      "windows_return_android": 10,
+      "windows_return_gtk": 10,
+      "windows_return_macos": 10,
+      "windows_return_iphone": 10,
+      "windows_return_ipad": 10,
+      "retained_linux": 15,
       "audit": 10
     },
     "f03_reexecution_authorized": false,
     "full_F03_accepted": false,
     "full_F04_accepted": false,
-    "production_delta": "Only current 3.42.0 bare/prefixed spelling admission in two reviewed functions; no SDK or wire edits"
+    "production_delta": "Only three exact reviewed current-3.42 parser spelling function additions; no SDK/wire/other owner changes"
   },
   "authorized_production_blob_sha": {
     "apps/reader/desktop/windows_records_owner.cpp": "fb1b36b8ee6a0c48b81d8aff3b2097c7372c4b33",
-    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java": "9566f21b7f38c3652d9a416cabd73d1b76a959d6"
+    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java": "9566f21b7f38c3652d9a416cabd73d1b76a959d6",
+    "examples/apple/HostReadingRecords.swift": "2c6185723fb523996b7c86ec5caf25f849a3f8cf"
   }
 }
