@@ -974,3 +974,169 @@ Current API observations at actual save:
   ]
 }
 ```
+
+
+## 2026-11-01 23:22 UTC hourly handoff ? actual save 2026-11-01T23:24:45.480270+00:00
+
+Formal ledger remains **98/108 (90.74%), 1 partial, 9 pending**, no new acceptance this hour. This append inherits the complete prior handoff, including the delayed 20/21/22 snapshots in `5ff7428fd0566eb35f56ae7c74b9e018492d5630`. User 23:07:36 expressly approved this exact independent documentation branch; no source/catalog changes or CI are initiated here.
+
+- **F03:** this team now owns the explicitly authorized BookStore/OrganizationStore pending-bootstrap recovery repair. Fixed reviewed source `ce45497953e4f54cc253842a153f72f9f00a28bb`, tree `020019085da7185c2f69d83b45d8c73f0391da96`, nine exact files. The three approved old fixture preconditions use real import/verify/attach; eight original methods/assertions remain, twelve new recovery cases added. SDK/journal untouched. One Android original retained-suite run `41360729084` plus new recovery runner, cap120 runner-min, budget1/1, no automatic retry; precise current API status below. Historical ABC C refusal is preserved, not relabeled as a completed fix before this result.
+- **F08:** user reassignment and 21:39 product/SDK/native authority remain in effect. User 23:00:48 specifically authorized local handling of fixed original artifact `13095882137` from run `41336873192`/b797. Transfer authenticated original22995108 bytes,84 payload entries and18 same-source bundle files. Native sample actually began **23:14:37.126839Z**, PID15984 with exclusively started emulator2328. Original1200-second sample deadline implies approximately **23:34:37Z** upper bound, not a completion promise; next observation planned after23:34:50. No early polling or competing local native workload for this report. Eligibility/result remains to be read; no performance pass claimed. Old general local-package prohibition is superseded only for this approved fixed artifact, not broadened.
+- **F07:** Windows fixed-artifact static link evidence sealed at `11c395d6fc7c5e5764377d801ea71f10ec05f4ba`:112 entries/12 controls pass;80 SQLite MAP rows bind SDK member through unique RSP/archive hash. This closes that producer static attribution gap; original Loaded0 retained. Final common-candidate six-target attribution and no-private-module-entry evidence still prevent total F07 acceptance; no automatic count increase. Audit budget1/1 complete.
+- **F05/F10:** original conflict/native details and common-source managed cleanup/credential integration remain dependencies; their specification work is not new implementation or executed acceptance. **F12:** independent source review and delivery/handoff matrix only; final six packages, SDK/schema identities, old-profile migration evidence and actual included-license closure await the final integrated candidate. Canonical ec11 bounded F02/F04 success is not full-feature delivery. P0 pending recovery, conflicts and full SDK common-source coverage remain tracked.
+
+Current six lanes: F03 verification of reviewed implementation; F08 one native baseline running; F05/F10 dependency planning; F07 evidence audit completed; F12 review/handoff. No fresh full handshake or takeover of unrelated external work. Existing owner and no-retry boundaries remain. VM low-space warning (~0.7GiB) remains; no cleanup or resize. Overall remaining ETA cannot be estimated reliably; runner caps are not ETAs.
+
+Actual API evidence (F08 last verified launch explicitly separate from this API timestamp):
+```json
+{
+  "observed_utc": "2026-11-01T23:24:45.480270+00:00",
+  "formal_counts": {
+    "verified": 98,
+    "partial": 1,
+    "pending": 9
+  },
+  "catalog_path": "docs/reader-total-progress/catalog.json",
+  "catalog_blob": "bfafcaf5a49cbc07d444abbe775c3fb37373cd63",
+  "heads": {
+    "dot/reader-suite-20261101": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+    "dot/f03-bootstrap-recovery-20261101": "ce45497953e4f54cc253842a153f72f9f00a28bb",
+    "codex/f08-final-integration-20261031": "b7970bfbe7d1a54e2b41dcbde25bbe4d27472fa0",
+    "codex/f08-final-validation-20261031": "b7970bfbe7d1a54e2b41dcbde25bbe4d27472fa0"
+  },
+  "f03": {
+    "id": 41360729084,
+    "run_attempt": 1,
+    "head_sha": "ce45497953e4f54cc253842a153f72f9f00a28bb",
+    "status": "in_progress",
+    "conclusion": null,
+    "created_at": "2026-11-01T23:09:47Z",
+    "updated_at": "2026-11-01T23:09:52Z",
+    "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/41360729084"
+  },
+  "f03_active_jobs": [
+    {
+      "id": 125010333139,
+      "name": "f03_bootstrap_recovery",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-11-01T23:09:51Z",
+      "completed_at": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-01T23:09:52Z",
+          "completed_at": "2026-11-01T23:09:54Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-01T23:09:54Z",
+          "completed_at": "2026-11-01T23:09:58Z"
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-01T23:09:58Z",
+          "completed_at": "2026-11-01T23:09:58Z"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-01T23:09:58Z",
+          "completed_at": "2026-11-01T23:09:58Z"
+        },
+        {
+          "name": "Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-01T23:09:58Z",
+          "completed_at": "2026-11-01T23:10:06Z"
+        },
+        {
+          "name": "Exact candidate admission",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-01T23:10:06Z",
+          "completed_at": "2026-11-01T23:10:10Z"
+        },
+        {
+          "name": "Install pinned Android compiler and emulator",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-01T23:10:10Z",
+          "completed_at": "2026-11-01T23:10:59Z"
+        },
+        {
+          "name": "Build one actual APK and unchanged original owner producer",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-01T23:10:59Z",
+          "completed_at": "2026-11-01T23:14:48Z"
+        },
+        {
+          "name": "Enable emulator acceleration",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-01T23:14:48Z",
+          "completed_at": "2026-11-01T23:14:48Z"
+        },
+        {
+          "name": "Compile new recovery runner; original retained suite remains unchanged",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-01T23:14:48Z",
+          "completed_at": "2026-11-01T23:15:07Z"
+        },
+        {
+          "name": "Original retained suite plus authenticated recovery cases in one emulator",
+          "status": "in_progress",
+          "conclusion": null,
+          "started_at": "2026-11-01T23:15:07Z",
+          "completed_at": null
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "pending",
+          "conclusion": null,
+          "started_at": null,
+          "completed_at": null
+        },
+        {
+          "name": "Post Run gradle/actions/setup-gradle@v4",
+          "status": "pending",
+          "conclusion": null,
+          "started_at": null,
+          "completed_at": null
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "pending",
+          "conclusion": null,
+          "started_at": null,
+          "completed_at": null
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "pending",
+          "conclusion": null,
+          "started_at": null,
+          "completed_at": null
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "pending",
+          "conclusion": null,
+          "started_at": null,
+          "completed_at": null
+        }
+      ]
+    }
+  ]
+}
+```
