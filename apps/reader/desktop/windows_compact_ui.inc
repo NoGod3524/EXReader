@@ -215,6 +215,11 @@ static int compact_translate(const MSG *message) {
   if(message->message==WM_SYSKEYDOWN && message->wParam==VK_LEFT && (GetKeyState(VK_MENU)&0x8000)) {
     compact_switch(0);return 1;
   }
+  /* Enter on a shelf row opens it, as a double-click does. */
+  if(message->message==WM_KEYDOWN && message->wParam==VK_RETURN && GetDlgCtrlID(message->hwnd)==IDC_BOOKS &&
+     !(GetKeyState(VK_CONTROL)&0x8000) && !(GetKeyState(VK_MENU)&0x8000)) {
+    open_selected_book();return 1;
+  }
   if(message->message!=WM_KEYDOWN || !(GetKeyState(VK_CONTROL)&0x8000) || (GetKeyState(VK_SHIFT)&0x8000)) return 0;
   if(message->wParam=='O') { compact_import();return 1; }
   return 0;
