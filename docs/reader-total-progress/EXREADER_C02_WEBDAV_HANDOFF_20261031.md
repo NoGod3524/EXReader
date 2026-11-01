@@ -1,3 +1,56 @@
+# EXReader continuation snapshot ? scheduled 2026-11-01 11:22 UTC
+The hourly request arrived early, at approximately **11:18 UTC**. Actual observation window is **2026-11-01 11:18:34?11:21:40 UTC**; this is a continuation backup, not completion or release. The latest task explicitly restricts all source/Git/docs operations to **lap25002 Desktop Commander ? normally saved instabox@0.8.52 login ? existing m_agqxv2s72g5vwdtsifu5cnmml4**. This update uses that route, not the previously authorized direct connector route. Earlier route descriptions below are historical.
+
+## Independently rechecked formal ledger and latest terminal run
+Formal ledger is still **96/108 = 88.89%; 96 verified / 1 partial / 11 pending**, sealed at **5db41cb19673fb75bb0b498c677d770931ac33e8**. The VM read that commit and its exact catalog/document diff: only H.iphone.annotation_exchange was promoted under the prior scoped independent review. Older automated wording95 is superseded; green CI does not add acceptance points.
+
+[Run41295456077 A1](https://github.com/NoGod3524/EXReader/actions/runs/41295456077), source **bdb2b93204e1268f7ae8336d4fd53f7e396f3c18**, is now **completed / failure**, API updated_at **10:24:58Z**. There are **14 successful planned jobs and one failed audit**. All six native hosts' interaction paths and all five Windows return paths are green; SDK build and retained-test producers also passed. The iPad peer124817941290 and iPad Windows return124820657354, pending at the previous snapshot, have now passed.
+
+Audit job **124820921786** failed at audit.py authenticated_builds line334: archive.read could not find **sdk/examples/android/.gitignore**. The installed SDK manifest includes all files from rglob, including hidden files; the package copier preserves them, but upload-artifact@v4 defaults include-hidden-files=false and the producer upload blocks omitted that option. This is a concrete original archive/manifest evidence mismatch, not a demonstrated failure of the six completed UI paths. Only the first missing member is proven so far; do not assume it is the only missing entry.
+
+Original Apple build artifacts remain immutable:
+- macOS **13078834935**, **22475712 bytes**, SHA256 **7a2a062fc580facc3574c97f5a252dfb11f7cf88ccdc7e2b7b6471b0b74939e6**.
+- Simulator **13079078632**, **22468401 bytes**, SHA256 **23861ad9850cdaba77b19c02c5faa5cd2bf9c039f096a67ceed25dabad254cd5**.
+- Original failed audit evidence **13079997107**, **331 bytes**, SHA256 **dac6847f5e983f94f5d75cd595042a49d5bf3c6b5f048f6041c004414289eeef**.
+
+Do not alter the failed result, omit manifest entries, weaken hashes, refill old archives from source, or relabel reconstructed bytes as original producer artifacts. Final graph/retained authentication is **not complete**; F04/full-six-target acceptance remains false. Formal96/108 is unchanged.
+
+## Completed evidence versus next unapproved candidate
+Previously sealed single-Mac **41291277832** and single-iPhone **41294552194** passed their original five checkpoints through uploaded. iPhone's bounded native search exposed the actual Android bookmark at row4, rather than misidentifying visible row2 Windows bookmark. The subsequent three-path scope integration reused that exact iPhone preparation in the full graph while preserving Swift, workflows and original success assertions.
+
+The **09:57:06** full fifteen-job/230 runner-minute authorization is consumed **1/1**, no retries. The **10:28 proposed inventory diagnostic is NOT APPROVED** and has not been implemented or triggered:
+- Five existing paths only: both F03/F04 workflows, F04 audit.py, contract.json and F04 evidence document.
+- Proposed case f04/artifact-inventory, marker F04-INVENTORY-10-ONE-RUN, one Ubuntu22.04 job capped at10 runner-min.
+- Actions-only read of the exact **17 original artifacts** from bdb2/run41295456077/A1: five builds, eleven phases, one retained producer. Authenticate exact job/output IDs, source/run/attempt, API byte counts and ZIP digests; collect all missing/unexpected/hash-mismatch and critical identity categories.
+- No extraction/execution of archive code, no product tests or builds, no local ZIP processing, no Mac permission action, no reconstruction, no original audit-function/assertion change. Missing evidence remains a failure/unknown, not a newly accepted outcome.
+- Independent design review passed; implementation, actual-diff review and execution still require the precise new approval. Do not automatically rerun230.
+
+## Actual six-lane activity
+| Lane | Current status | Remaining work/dependency |
+|---|---|---|
+| F03 | Canonical composition/sole trigger completed; no active source implementation | Any future approved controller change remains F03-exclusive; own prior GTK/Android issues are not automatically closed |
+| F04 | Latest full run terminal; original evidence reviewed, waiting for inventory authorization | Enumerate complete artifact mismatch before selecting any producer repair/new round |
+| F05 | Integration/evidence waiting, seal9ce943e1ff0c26b54db69f5c31eec057d2be216b | Actual native conflict/deletion presentation, heads/tombstones, cancellation/recovery; shadow evidence is insufficient |
+| F07 | Provider/runtime evidence waiting, seal697448abd8188580304806163ba9b543e76ba9ba | Provider linkage/loading and real consumer evidence |
+| F10 | Component seal4db961144b00c9004e2775b9e1e57e6ea7a31cb7 retained | Common-consumer/actual host/credentials/privacy integration, not full_F10 |
+| F12 | Independent review and this authorized handoff organization | Final candidate/package/license inventory, real old-profile upgrade/restore matrix and generated instructions; seal64729214788a99ae96de7dda1a6376337324f9e4 is preparation only |
+
+No new teams, source implementation or CI are started. Native team status checked: F04 is completed/waiting; this F12 documentation task is active; no claim of six active implementers. Desktop Commander initially showed no active sessions. Recent canonical run list shows terminal results; no duplicate diagnostic is launched. Automatic replenishment remains paused. F06 verified evidence is retained.
+
+## Scope, permission and handshake status
+P0/C02 migration/journal/Repair stays accepted only in its sealed scope, not all-P0, hardware power loss, independent MSVC static relink or F12 delivery. Native conflict handling and SDK3.42 same-source package/consumer evidence are not fully closed. Frozen SDK **8357eafa28423a7ab93ba08b823af80f01ad1505**, preparation baseline **94fb236a4a2da87dfbaf4f1dd2a47885d615a230**, existing product/SDK/external UI/F08/F09 owners and historical727 scope remain unchanged. Do not combine historical diagnostic inputs with new graph identities.
+
+Potential product focus-loss risk remains unfixed: resign-active/scene callbacks can clear readingRecords binding while retaining status. Startup permission isolation does not repair arbitrary focus-loss handling. The completed full round's temporary Mac exact Python Don't Allow once was explicitly authorized; that permission action is not a standing authorization for another run. No TCC/settings bypass or action on unknown prompts.
+
+**This hour's actual handshake:** lap25002 device d55d0477-84bb-4425-8708-5a3ecacce78b is online; official instabox@0.8.52 saved login successfully read the existing VM. It was automatically suspended; normal wake resumed that same VM, then pwd/read-only gh commands succeeded. No new VM, API key, login replacement, agent/Codex launch, config changes or alternate route. VM reports /data **96.1% used, approximately0.7GiB free**; no cleanup/resize was performed. This revalidates this normal command path only, not an unlimited Desktop Commander quota or broader native/UI capability.
+
+No reliable completion time can be estimated: inventory scope awaits approval; the number/type of remaining archive discrepancies and any necessary new producer run are unknown. Earlier API/log clock anomalies remain recorded below; this snapshot uses actual observation times, not the future scheduled label.
+
+This is a single-file independent documentation update with skip-ci, preserving all prior text, source/branch/run/artifact identities, failed results, next steps and owners. No mainline/catalog/PR/tag/release/source/old-test/SDK/CI mutation.
+
+---
+## Earlier snapshots (historical; latest facts above take precedence)
+
 # EXReader continuation snapshot — scheduled 2026-11-01 10:22 UTC
 Observed/API-read window: **2026-11-01 10:23:02–10:23:09 UTC**. Continuation backup only, not stopping, completion, or release. Independent docs branch `codex/gpt-iphone-acceptance-96-20261031` was read at HEAD `4f2c4df1da48ca818dd69da01d43c70031a047e2`, blob `a52d911081aec90c47c9c97cf460e28eb48d51c3`. All prior text is retained verbatim below; newer observations take precedence.
 
