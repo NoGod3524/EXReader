@@ -5,7 +5,6 @@ import android.os.Handler;
 import android.os.Process;
 import android.os.SystemClock;
 import android.util.Log;
-import android.view.Choreographer;
 import android.view.View;
 import android.view.Window;
 import org.json.JSONObject;
@@ -25,7 +24,6 @@ final class ReaderFrameObserver implements AutoCloseable {
     private final long windowId;
     private final Handler handler;
     private final Consumer<Exception> parentFailure;
-    private final Choreographer choreographer=Choreographer.getInstance();
     private final AtomicInteger pending=new AtomicInteger();
     private final AtomicBoolean failureQueued=new AtomicBoolean();
     private final AtomicLong attempted=new AtomicLong(), rejected=new AtomicLong();
@@ -42,8 +40,8 @@ final class ReaderFrameObserver implements AutoCloseable {
             try {
                 if(!directory.isDirectory()&&!directory.mkdirs())throw new IllegalStateException("Reader trace folder");
                 output=new FileOutputStream(file);
-                write(base("start").put("schema",1).put("signal","ReaderView.canvas.drawBitmap")
-                        .put("join_metric","VSYNC_TIMESTAMP").put("clock","System.nanoTime")
+                write(base("start").put("schema",2).put("signal","ReaderView.canvas.drawBitmap")
+                        .put("binding_strategy","unique-native-draw-interval-v1").put("clock","System.nanoTime")
                         .put("max_events",MAX_EVENTS).put("max_pending",MAX_PENDING).put("max_bytes",MAX_BYTES));
             }catch(Exception error){fail(error);}
         });
@@ -69,14 +67,10 @@ final class ReaderFrameObserver implements AutoCloseable {
 
     void draw(ReaderView view,PageSnapshot page,long beginNs,long endNs,boolean painted,
               float panX,float panY,float limitX,float limitY) {
-        long frameTime=-1;String clockStatus="ok";
-        try {frameTime=choreographer.getFrameTimeNanos();}
-        catch(IllegalStateException unavailable){clockStatus=unavailable.toString();}
         try {
             submit(snapshot(base("bitmap_draw"),view,page).put("draw_id",++drawId).put("accept_id",acceptId)
                     .put("request_generation",generation).put("accepted_snapshot",page==accepted)
                     .put("same_current_page",page==view.page())
-                    .put("frame_time_ns",frameTime).put("frame_time_status",clockStatus)
                     .put("draw_begin_mono_ns",beginNs).put("draw_end_mono_ns",endNs).put("painted",painted)
                     .put("pan_x",panX).put("pan_y",panY).put("pan_limit_x",limitX).put("pan_limit_y",limitY));
         }catch(Exception error){failedEvent(error);}

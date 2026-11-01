@@ -15,6 +15,7 @@ CASES=("open","page_forward","page_backward","font_increase","font_decrease",
        "search_found_select","body_applicability","return_shelf")
 RENDER_CASES=CASES[:6]
 IDENTITY=("source_sha","run_id","attempt")
+BINDING_STRATEGY="unique-native-draw-interval-v1"
 SNAPSHOT=("snapshot_identity","book_id","page_index","page_count","part","start","end",
           "font","zoom","fixed","source_key","bitmap_width","bitmap_height")
 
@@ -37,8 +38,15 @@ def summary(values):
             "p99":values[math.ceil(len(values)*.99)-1] if values else None,"max":max(values,default=None)}
 
 
+def frame_summary(frames):
+    values=[frame.get("total_ns") for frame in frames]
+    invalid=sum(type(value) is not int or value<0 for value in values)
+    return {"count":len(values),"invalid_total_count":invalid,"p95":None,"p99":None,"max":None} if invalid else {
+        **summary([value/1e6 for value in values]),"invalid_total_count":0}
+
+
 def associate(events,frames):
-    """No nearest-time/offset/reuse join: actual VSYNC + PID + Window must be unique."""
+    """Exact CLOCK_MONOTONIC DRAW containment; no nearest-time/offset/invalid-candidate filtering."""
     problems=[];accepts={};latest={};last_generation={};draws=[];sets={};active={};ranges=[]
     for event in events:
         owner=(event["pid"],event["window_id"]);kind=event["kind"]
@@ -72,56 +80,87 @@ def associate(events,frames):
         if event["page_present"]:problems.append("page set without accepted generation: "+str(owner))
     for owner,start in active.items():
         ranges.append((*owner,start,None));problems.append("reader not cleared before trace end: "+str(owner))
-    frame_map=collections.defaultdict(list);draw_map=collections.defaultdict(list)
-    for frame in frames:frame_map[(frame["pid"],frame["window_id"],frame["vsync_ns"])].append(frame)
-    for draw in draws:draw_map[(draw["pid"],draw["window_id"],draw["frame_time_ns"])].append(draw)
-    bindings=[];painted_accepts=set();matched_keys=set()
+    natives=[];keys=collections.Counter();sequences=collections.Counter();bad_owner=set()
+    for index,frame in enumerate(frames):
+        owner=(frame.get("pid"),frame.get("window_id"));reasons=[];start=end=None
+        stages=("unknown_ns","input_ns","animation_ns","layout_measure_ns","draw_ns")
+        clocks=("intended_vsync_ns","vsync_ns")
+        if any(type(frame.get(k)) is not int or frame[k]<=0 for k in ("pid","window_id","sequence",*clocks)) or any(
+                type(frame.get(k)) is not int or frame[k]<0 for k in stages):
+            reasons.append("missing/negative/non-integer native clock/stage")
+            bad_owner.add(owner)
+        else:
+            start=frame["intended_vsync_ns"]+sum(frame[k] for k in stages[:-1]);end=start+frame["draw_ns"]
+            if not frame["intended_vsync_ns"]<=frame["vsync_ns"]<=start<=end:
+                reasons.append("native clock order invalid");bad_owner.add(owner)
+        # Bad total/drop/first-draw and duplicates stay in the candidate census.
+        if type(frame.get("total_ns")) is not int or frame["total_ns"]<0:reasons.append("invalid native TOTAL")
+        elif end is not None and end>frame["intended_vsync_ns"]+frame["total_ns"]:reasons.append("native DRAW exceeds frame completion")
+        if type(frame.get("drop_count")) is not int or frame["drop_count"]!=0:reasons.append("dropped native callback")
+        if type(frame.get("first_draw")) is not int or frame["first_draw"] not in (0,1):reasons.append("invalid native first-draw flag")
+        key=(*owner,frame.get("vsync_ns"));sequence=(*owner,frame.get("sequence"));keys[key]+=1;sequences[sequence]+=1
+        natives.append({"index":index,"frame":frame,"owner":owner,"key":key,"sequence":sequence,
+                        "start":start,"end":end,"reasons":reasons})
+    for native in natives:
+        if keys[native["key"]]!=1 or sequences[native["sequence"]]!=1:native["reasons"].append("duplicate native key/sequence")
+        if native["reasons"]:problems.append("native callback "+str(native["sequence"])+": "+", ".join(native["reasons"]))
+    candidates=[];usage=collections.Counter()
     for draw in draws:
-        key=(draw["pid"],draw["window_id"],draw["frame_time_ns"]);matches=frame_map[key];reasons=[]
+        owner=(draw["pid"],draw["window_id"]);begin=draw.get("draw_begin_mono_ns");end=draw.get("draw_end_mono_ns");reasons=[]
+        if "frame_time_ns" in draw or "frame_time_status" in draw:reasons.append("legacy getter mode is not new interval evidence")
+        valid_clock=type(begin) is int and type(end) is int and 0<begin<end
+        if not valid_clock:reasons.append("missing/non-integer/non-positive bitmap draw span")
+        matches=[native for native in natives if valid_clock and native["owner"]==owner and native["start"] is not None
+                 and native["start"]<=begin<end<=native["end"]]
         if not draw["generation_valid"]:reasons.append("old/missing accepted generation")
-        if not all(draw.get(k) for k in ("painted","page_present","bitmap_present","same_current_page","same_window","attached","shown")):
+        if not all(draw.get(k) is True for k in ("painted","page_present","bitmap_present","same_current_page","same_window","attached","shown")):
             reasons.append("paint/Window unavailable")
-        if draw.get("bitmap_recycled") or draw.get("frame_time_status")!="ok" or draw["frame_time_ns"]<=0:
-            reasons.append("recycled bitmap or unavailable frame clock")
-        if not draw["frame_time_ns"]<=draw["draw_begin_mono_ns"]<=draw["draw_end_mono_ns"]:
-            reasons.append("invalid draw clock order")
-        if len(matches)!=1 or len(draw_map[key])!=1:reasons.append("missing/duplicate exact VSYNC association")
-        if matches and any(f["drop_count"]!=0 or f["total_ns"]<0 or f["first_draw"] not in (0,1) for f in matches):
-            reasons.append("dropped/invalid FrameMetrics")
-        native_start=native_end=None
+        if draw.get("bitmap_recycled"):reasons.append("recycled bitmap")
+        if owner in bad_owner:reasons.append("unusable native clock/stage in same Window census")
+        if len(matches)!=1:reasons.append("missing/ambiguous exact native DRAW containment")
         if len(matches)==1:
-            frame=matches[0];stages=("unknown_ns","input_ns","animation_ns","layout_measure_ns","draw_ns")
-            if frame["intended_vsync_ns"]<=0 or any(type(frame.get(k)) is not int or frame[k]<0 for k in stages):
-                reasons.append("unavailable/negative native draw stages")
-            else:
-                native_start=frame["intended_vsync_ns"]+sum(frame[k] for k in stages[:-1])
-                native_end=native_start+frame["draw_ns"]
-                if not frame["intended_vsync_ns"]<=frame["vsync_ns"]<=native_start<=draw["draw_begin_mono_ns"]<=draw["draw_end_mono_ns"]<=native_end:
-                    reasons.append("bitmap paint outside exact native draw interval")
-        row={"pid":key[0],"window_id":key[1],"frame_time_ns":key[2],"draw_id":draw["draw_id"],
-             "accept_id":draw["accept_id"],"request_generation":draw["request_generation"],
+            reasons.extend(matches[0]["reasons"]);usage[matches[0]["index"]]+=1
+        candidates.append((draw,matches,reasons))
+    bindings=[];painted_accepts=set();matched_indices=set()
+    reader_indices={native["index"] for _,matches,_ in candidates for native in matches}
+    for draw,matches,reasons in candidates:
+        if len(matches)==1 and usage[matches[0]["index"]]!=1:reasons.append("more than one reader draw in native frame")
+        row={"pid":draw["pid"],"window_id":draw["window_id"],"draw_id":draw["draw_id"],"accept_id":draw["accept_id"],
+             "request_generation":draw["request_generation"],"binding_strategy":BINDING_STRATEGY,
+             "vsync_source":"FrameMetrics.VSYNC_TIMESTAMP from unique native DRAW interval",
              "status":"missing" if reasons else "complete","reasons":reasons,
-             "callback_sequences":[f["sequence"] for f in matches],
-             "native_draw_start_ns":native_start,"native_draw_end_ns":native_end,"snapshot":{k:draw.get(k) for k in SNAPSHOT}}
+             "candidate_native_sequences":[native["frame"].get("sequence") for native in matches],
+             "snapshot":{k:draw.get(k) for k in SNAPSHOT}}
+        if len(matches)==1:
+            native=matches[0];frame=native["frame"]
+            row.update(native_draw_start_ns=native["start"],native_draw_end_ns=native["end"],
+                       native_sequence=frame["sequence"],native_vsync_ns=frame["vsync_ns"],native_intended_vsync_ns=frame["intended_vsync_ns"])
         if not reasons:
-            frame=matches[0];row.update(total_ns=frame["total_ns"],first_draw=frame["first_draw"],
-                intended_vsync_ns=frame["intended_vsync_ns"],vsync_ns=frame["vsync_ns"])
-            painted_accepts.add((key[0],key[1],draw["accept_id"]));matched_keys.add(key)
+            frame=matches[0]["frame"];row.update(total_ns=frame["total_ns"],first_draw=frame["first_draw"])
+            painted_accepts.add((draw["pid"],draw["window_id"],draw["accept_id"]));matched_indices.add(matches[0]["index"])
         else:problems.append("draw "+str(draw["draw_id"])+": "+", ".join(reasons))
         bindings.append(row)
     for key in accepts:
         if key not in painted_accepts:problems.append("accepted generation has no unique completed reader frame: "+str(key))
     census=[]
-    for frame in frames:
-        key=(frame["pid"],frame["window_id"],frame["vsync_ns"])
-        reader_active=any(key[:2]==(pid,window) and start<=key[2] and (end is None or key[2]<=end)
+    for index,frame in enumerate(frames):
+        key=(frame.get("pid"),frame.get("window_id"),frame.get("vsync_ns"))
+        reader_active=index in reader_indices or any(key[:2]==(pid,window) and type(key[2]) is int and start<=key[2] and (end is None or key[2]<=end)
                           for pid,window,start,end in ranges)
-        state="reader_paint" if key in matched_keys else "no_new_reader_draw" if reader_active else "outside_reader"
+        state="reader_paint" if index in matched_indices else "no_new_reader_draw" if reader_active else "outside_reader"
+        census.append({"pid":key[0],"window_id":key[1],"sequence":frame.get("sequence"),"vsync_ns":key[2],
+                       "total_ns":frame.get("total_ns"),"first_draw":frame.get("first_draw"),"reader_active":reader_active,"status":state})
+    return {"problems":problems,"bindings":bindings,"callback_census":census,"binding_strategy":BINDING_STRATEGY,
+            "accepted_generations":len(accepts),"bitmap_draws":len(draws),"binding_complete":bool(accepts) and not problems,
+            "all_native_frames_ms":frame_summary(frames),
+            "reader_phase_frames_ms":frame_summary([frame for frame,row in zip(frames,census) if row["reader_active"]]),
+            "reader_first_draw_frames_ms":frame_summary([frame for frame,row in zip(frames,census) if row["reader_active"] and frame.get("first_draw")==1])}
 
-        census.append({"pid":key[0],"window_id":key[1],"sequence":frame["sequence"],"vsync_ns":key[2],
-                       "total_ns":frame["total_ns"],"first_draw":frame["first_draw"],"reader_active":reader_active,"status":state})
-    return {"problems":problems,"bindings":bindings,"callback_census":census,
-            "accepted_generations":len(accepts),"bitmap_draws":len(draws),"binding_complete":bool(accepts) and not problems}
+
+def reader_header(header):
+    need(header.get("schema")==2 and header.get("signal")=="ReaderView.canvas.drawBitmap" and
+         header.get("binding_strategy")==BINDING_STRATEGY and header.get("clock")=="System.nanoTime",
+         "reader raw schema/binding strategy")
 
 
 def jsonl(path):
@@ -216,8 +255,7 @@ def analyze(root,identity,fixture,pss_total):
     for path in sorted((root/"windows/reader-draw").glob("*.jsonl")):
         try:
             rows=jsonl(path);header=rows[0];body=rows[1:-1];footer=rows[-1]
-            need(header["schema"]==1 and header["signal"]=="ReaderView.canvas.drawBitmap" and
-                 header["join_metric"]=="VSYNC_TIMESTAMP" and header["clock"]=="System.nanoTime","reader signal/clock")
+            reader_header(header)
             need((header["pid"],header["window_id"]) in windows,"mixed reader Window")
             need(all(r["kind"] in ("page_set","accept","bitmap_draw","no_bitmap","stop_request") and
                 r["pid"]==header["pid"] and r["window_id"]==header["window_id"] and
@@ -363,6 +401,7 @@ def ready_prefix(snapshot,ui):
             body=rows[1:]
             need(all(r["pid"]==owner[0] and r["window_id"]==owner[1] and r["sequence"]==i+1 for i,r in enumerate(body)),"pre-stop trace identity/sequence")
             if is_reader:
+                reader_header(header)
                 need(all(r["kind"] in ("page_set","accept","bitmap_draw","no_bitmap") for r in body),"reader failure before stop")
                 events.extend(body)
             else:

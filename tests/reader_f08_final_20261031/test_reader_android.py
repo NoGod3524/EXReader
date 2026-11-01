@@ -24,7 +24,7 @@ def fixture():
     page=dict(common,kind="page_set",sequence=1)
     accept=dict(common,kind="accept",sequence=2,accept_id=1,request_generation=4)
     draw=dict(common,kind="bitmap_draw",sequence=3,accept_id=1,request_generation=4,accepted_snapshot=True,
-              draw_id=1,mono_ns=120,frame_time_ns=100,frame_time_status="ok",draw_begin_mono_ns=110,
+              draw_id=1,mono_ns=120,draw_begin_mono_ns=110,
               draw_end_mono_ns=120,painted=True,pan_limit_x=0,pan_limit_y=0)
     clear=dict(common,kind="page_set",sequence=4,page_present=False,snapshot_identity=0,mono_ns=200)
     frame=dict(kind="frame",pid=7,window_id=1,sequence=1,vsync_ns=100,intended_vsync_ns=80,total_ns=57000000,
@@ -39,8 +39,11 @@ class Association(unittest.TestCase):
     def test_exact_actual_vsync_preserves_outlier_total(self):
         result=self.report();self.assertTrue(result["binding_complete"])
         self.assertEqual(result["bindings"][0]["total_ns"],57000000)
-        self.assertEqual(result["bindings"][0]["intended_vsync_ns"],80)
-    def test_intended_only_is_not_an_actual_vsync_match(self):self.frames[0]["vsync_ns"]=80;self.rejects()
+        self.assertEqual(result["bindings"][0]["native_intended_vsync_ns"],80)
+    def test_vsync_label_is_derived_from_exact_native_interval(self):
+        self.frames[0]["vsync_ns"]=80
+        result=self.report();self.assertTrue(result["binding_complete"])
+        self.assertEqual(result["bindings"][0]["native_vsync_ns"],80)
     def test_missing_callback(self):self.frames=[];self.rejects()
     def test_dropped_callback(self):self.frames[0]["drop_count"]=1;self.rejects()
     def test_duplicate_callback(self):self.frames.append(dict(self.frames[0],sequence=2));self.rejects()
@@ -51,12 +54,12 @@ class Association(unittest.TestCase):
     def test_drawn_snapshot_no_longer_current(self):self.events[2]["same_current_page"]=False;self.rejects()
     def test_recycled_bitmap(self):self.events[2]["bitmap_recycled"]=True;self.rejects()
     def test_failed_actual_paint(self):self.events[2]["painted"]=False;self.rejects()
-    def test_unavailable_frame_clock(self):self.events[2]["frame_time_status"]="outside frame";self.rejects()
+    def test_unavailable_paint_clock(self):self.events[2]["draw_begin_mono_ns"]=None;self.rejects()
     def test_mixed_window(self):self.frames[0]["window_id"]=2;self.rejects()
     def test_root_window_mismatch(self):self.events[2]["same_window"]=False;self.rejects()
     def test_null_bitmap_is_not_a_paint(self):self.events[2]["kind"]="no_bitmap";self.rejects()
     def test_rt_only_after_actual_paint_is_legal_and_retained(self):
-        self.frames.append(dict(self.frames[0],sequence=2,vsync_ns=150))
+        self.frames.append(dict(self.frames[0],sequence=2,vsync_ns=150,intended_vsync_ns=150,unknown_ns=0,layout_measure_ns=0,draw_ns=0))
         self.assertTrue(self.report()["binding_complete"])
         self.assertEqual(len(self.report()["callback_census"]),2)
         self.assertEqual(self.report()["callback_census"][1]["status"],"no_new_reader_draw")
@@ -77,6 +80,57 @@ class Association(unittest.TestCase):
         self.events[3:3]=second;self.rejects()
 
 
+class ExactNativeIntervals(unittest.TestCase):
+    setUp=Association.setUp
+    report=Association.report
+    rejects=Association.rejects
+    def test_exact_inclusive_native_boundaries(self):
+        self.events[2].update(draw_begin_mono_ns=105,draw_end_mono_ns=135)
+        self.assertTrue(self.report()["binding_complete"])
+    def test_overlap_keeps_bad_total_drop_and_duplicate_candidates(self):
+        for bad in ({},{"total_ns":-1},{"drop_count":1},{"sequence":1},{"vsync_ns":100}):
+            self.events,self.frames=fixture()
+            self.frames.append(dict(self.frames[0],sequence=2,vsync_ns=101,intended_vsync_ns=81,**{k:v for k,v in bad.items() if k not in ("sequence","vsync_ns")}))
+            self.frames[-1].update(bad)
+            self.rejects();self.assertEqual(self.report()["bindings"][0]["candidate_native_sequences"],[1,self.frames[-1]["sequence"]])
+    def test_native_key_or_sequence_duplicate_outside_paint_still_fails(self):
+        for changed in ({"sequence":1,"vsync_ns":150},{"sequence":2,"vsync_ns":100}):
+            self.events,self.frames=fixture()
+            self.frames.append(dict(self.frames[0],intended_vsync_ns=150,unknown_ns=0,layout_measure_ns=0,draw_ns=0,**changed));self.rejects()
+    def test_cached_redraw_without_new_accept_uses_its_own_native_interval(self):
+        self.frames.append(dict(self.frames[0],sequence=2,vsync_ns=150,intended_vsync_ns=130))
+        draw=dict(self.events[2],sequence=4,draw_id=2,mono_ns=170,draw_begin_mono_ns=160,draw_end_mono_ns=170)
+        self.events.insert(3,draw);self.events[-1]["sequence"]=5
+        result=self.report();self.assertTrue(result["binding_complete"],result["problems"])
+        self.assertEqual([row["native_sequence"] for row in result["bindings"]],[1,2])
+        self.assertEqual(result["reader_phase_frames_ms"]["count"],2)
+    def test_first_slow_frame_vsync_precedes_accept_but_is_retained(self):
+        self.events[1]["mono_ns"]=110;self.events[2].update(draw_begin_mono_ns=120,draw_end_mono_ns=130)
+        self.frames[0].update(unknown_ns=25,first_draw=1)
+        result=self.report();self.assertTrue(result["binding_complete"],result["problems"])
+        self.assertTrue(result["callback_census"][0]["reader_active"])
+        for name in ("all_native_frames_ms","reader_phase_frames_ms","reader_first_draw_frames_ms"):
+            self.assertEqual(result[name]["count"],1);self.assertEqual(result[name]["max"],57)
+    def test_paint_clock_missing_negative_float_bool_and_zero_span(self):
+        for key in ("draw_begin_mono_ns","draw_end_mono_ns"):
+            for value in (None,-1,110.0,True):
+                self.events,self.frames=fixture();self.events[2][key]=value;self.rejects()
+            self.events,self.frames=fixture();del self.events[2][key];self.rejects()
+        self.events,self.frames=fixture();self.events[2]["draw_end_mono_ns"]=110;self.rejects()
+    def test_native_clock_or_stage_missing_negative_float_bool(self):
+        for key in ("intended_vsync_ns","vsync_ns","unknown_ns","input_ns","animation_ns","layout_measure_ns","draw_ns"):
+            for value in (None,-1,1.0,True):
+                self.events,self.frames=fixture();self.frames[0][key]=value;self.rejects()
+            self.events,self.frames=fixture();del self.frames[0][key];self.rejects()
+    def test_near_vsync_cannot_replace_draw_containment(self):
+        self.frames[0]["layout_measure_ns"]=100;self.rejects()
+    def test_cross_pid_is_not_a_candidate(self):self.frames[0]["pid"]=8;self.rejects()
+    def test_old_getter_fields_and_schema_are_not_new_evidence(self):
+        self.events[2].update(frame_time_ns=100,frame_time_status="ok");self.rejects()
+        with self.assertRaisesRegex(ValueError,"reader raw schema/binding strategy"):
+            R.reader_header({"schema":1,"signal":"ReaderView.canvas.drawBitmap","join_metric":"VSYNC_TIMESTAMP","clock":"System.nanoTime"})
+
+
 class StopProtocol(unittest.TestCase):
     def prefix(self,root):
         snapshot=Path(root)/"windows";(snapshot/"reader-draw").mkdir(parents=True)
@@ -92,12 +146,14 @@ class StopProtocol(unittest.TestCase):
                 event["sequence"]=len(events)+1;event["elapsed_ns"]=start+10
                 event["mono_ns"]=vsync-10 if event["kind"]!="bitmap_draw" else vsync+20
                 if event["kind"]!="page_set":event["accept_id"]=index+1;event["request_generation"]=index+4
-                if event["kind"]=="bitmap_draw":event.update(draw_id=index+1,frame_time_ns=vsync,draw_begin_mono_ns=vsync+10,draw_end_mono_ns=vsync+20)
+                if event["kind"]=="bitmap_draw":event.update(draw_id=index+1,draw_begin_mono_ns=vsync+10,draw_end_mono_ns=vsync+20)
                 events.append(event)
             frame[0].update(sequence=index+1,vsync_ns=vsync,intended_vsync_ns=vsync-20);frames.extend(frame)
         clear=fixture()[0][-1];clear.update(sequence=len(events)+1,mono_ns=10000,elapsed_ns=10000);events.append(clear)
         header={"kind":"start","pid":7,"window_id":1}
-        def write(path,rows):path.write_text("".join(json.dumps(r)+"\n" for r in [header,*rows]))
+        def write(path,rows):
+            value={**header,"schema":2,"signal":"ReaderView.canvas.drawBitmap","binding_strategy":R.BINDING_STRATEGY,"clock":"System.nanoTime"} if "reader-draw" in path.parts else {**header,"schema":1}
+            path.write_text("".join(json.dumps(r)+"\n" for r in [value,*rows]))
         write(snapshot/"window-7-1.jsonl",frames);write(snapshot/"reader-draw/window-7-1.jsonl",events)
         return snapshot,{"cases":cases},events,frames
     def test_complete_actions_allow_stop_even_with_real_outlier(self):
