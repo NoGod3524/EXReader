@@ -58,10 +58,10 @@
   "assertions": 258,
   "negative_controls": 8,
   "budget": {
-    "phase": "D download scratch closure approved 2026-11-01T02:04:30Z",
+    "phase": "D audit-only correction approved 2026-11-01T02:16:23Z",
     "runs": 1,
-    "linux_minutes": 45,
-    "audit_minutes": 15,
+    "audit_minutes": 5,
+    "product_runs": 0,
     "automatic_reruns": 0
   },
   "sdk": "Git five SDK objects equal frozen8357; historical SDK727 artifacts separate; this suite does not build/consume SDK reader or bind six hosts",
@@ -193,5 +193,21 @@
     "pull-target-different"
   ],
   "pull_assertions": 317,
-  "pull_negative_controls": 12
+  "pull_negative_controls": 12,
+  "reaudit_base": "a496ccae2545bc8a7500e0836c9ac5ce9b5421f7",
+  "reaudit_paths": [
+    "tests/product/f10_stale_owner_20261031/verify.py",
+    "tests/product/f10_stale_owner_20261031/manifest.json",
+    ".github/workflows/dot-f10-stale-owner-20261031.yml",
+    "docs/reader-total-progress/DOT_F10_STALE_OWNER_20261031.md"
+  ],
+  "fixed_producer": {
+    "id": 13066057477,
+    "name": "f10-stale-linux-41264160828-1",
+    "run": 41264160828,
+    "attempt": 1,
+    "source": "3f729038024028af4a00e50750a651f049f263d9",
+    "size": 2479730,
+    "sha256": "28ad79d58d99ab911f279338f8fb0bfec0937fc5c8a67990354c7faf300a1bef"
+  }
 }
