@@ -342,7 +342,8 @@ def main():
     finally:
         write_json(a.output, {**stamp, "host": a.host, "operation_completed": accepted,
                               "operation": "apple-receive" if a.apple_receive else "build",
-                              "sdk_version": SCOPE["sdk_version"], "in_memory_adapters": changes,
+                              "sdk_version": SCOPE["sdk_version"], "sdk_source": SCOPE["sdk_source"],
+                              "in_memory_adapters": changes,
                               "product_source_changed": False, "complete_product_accepted": False})
 if __name__ == "__main__":
     main()
