@@ -1,3 +1,47 @@
+# Latest fixed status — 2026-11-01 01:37 UTC / 2026-10-31 21:37 America/New_York
+
+Java shadow implementation: `e82932682068eb18b3639d9712d364120d5ee9cc`;
+manifest status: `44c19f840dfce3ab683e03b3611d7ffdf415687f`.
+**F05 incomplete; 0 CI; nine approved files; no workflow; 96/108 unchanged.**
+
+The user explicitly approved the pending minimal Java adaptation at 01:35:33 UTC.
+Only F05's own android.py generates an Actions temporary shadow of the original
+instrumentation tree. HostSyncTest.java is pinned to blob
+`ec9bb60ae3233d914086e06c8bb93aa4580d6ceb`; exactly one version allowlist expression
+adds 3.42.0 and reversing that replacement must recover the original bytes.
+All other instrumentation files remain byte-identical. No repository original
+Java, SDK, product file or old assertion was changed.
+
+Canonical execution order, still **not run**:
+1. `python tests/product/f05_recovery_20261031/android.py retained-prepare`
+   generates `build/f05-driver/retained/java`, its source/hash inventory and init.gradle.
+2. The actual approved APK build must supply
+   `-I build/f05-driver/retained/init.gradle`. The init script replaces exactly
+   one canonical original host-session Java source directory and preserves every
+   other source directory; absent or already-substituted originals fail closed.
+   The original page-theme alternative directory is not silently adapted.
+3. Run the original retained adapter with the previously required fixture,
+   reading-fixtures, output and actual sdk-prefix arguments. It verifies the
+   shadow and sourceSet proof before and after the unchanged original suite.
+   All 16 ordered checks, four distinct PIDs, two real blocked boundaries and
+   NativeLibrary.syncIdentity observations remain required.
+
+F07 completed the finite static review of this exact Java/sourceSet change with
+no remaining issue in that scope. This verifies source preparation, not APK
+execution: the sourceSet proof alone does not prove the resulting APK ran.
+
+The preceding retained-artifact identity revision `a6c734aff15f0539878c1c229d7ef5f9e7782dec`
+also completed its finite review: original Apple SDK inventory inheritance is
+limited to exact sync/failure app records and matching host/source/version.
+macOS terminal still needs its own real compiled-program identity.
+
+Remaining: canonical actual build/job/artifact bindings, external deletion-detail
+UI, composition of Apple owner delta and complete real execution/audit.
+Artifact roles remain empty and manifest remains not ready. Original 265-minute
+authority has not been silently reassigned or consumed.
+
+---
+
 # Latest fixed status — 2026-11-01 01:10 UTC / 2026-10-31 21:10 America/New_York
 
 Implementation snapshot: `6e60a794061822362688d2b414987d6115b9fc37`.
