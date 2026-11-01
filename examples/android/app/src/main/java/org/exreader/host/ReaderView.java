@@ -351,6 +351,19 @@ public final class ReaderView extends View {
         return toViewY(bounds.centerY())>getHeight()/2f;
     }
 
+    /** Selects the whole visible page without a touch, so screen-reader, keyboard and
+     *  switch users can reach annotation too. Returns false when the page has no text. */
+    public boolean selectPage() {
+        if (page == null) return false;
+        int count = page.fixed ? page.regionCount() : page.glyphCount();
+        if (count <= 0) return false;
+        if (!selectMode) setSelectMode(true);
+        anchor = 0;
+        focus = count - 1;
+        updateSelection(true);
+        return selection != null;
+    }
+
     public void clearSelection() {
         renderChanged();
         selection = null;
@@ -389,6 +402,7 @@ public final class ReaderView extends View {
             if(panX>-panLimitX)info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT);
             if(panY<panLimitY)info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP);
             if(panY>-panLimitY)info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN);
+            info.addAction(new AccessibilityNodeInfo.AccessibilityAction(R.id.action_select_page,"Select page"));
         }
         if(BuildConfig.DEBUG) info.getExtras().putString("exreader.frame",frameObservation());
     }
@@ -401,6 +415,7 @@ public final class ReaderView extends View {
             if(action==AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.getId())return panBy(0,getHeight()*.8f);
             if(action==AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN.getId())return panBy(0,-getHeight()*.8f);
         }
+        if(isShown()&&isEnabled()&&page!=null&&action==R.id.action_select_page)return selectPage();
         if(isShown()&&isEnabled()&&page!=null&&listener!=null&&(action==AccessibilityNodeInfo.ACTION_SCROLL_FORWARD||action==AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)){
             listener.onTapZone(action==AccessibilityNodeInfo.ACTION_SCROLL_FORWARD?1:-1);return true;
         }
