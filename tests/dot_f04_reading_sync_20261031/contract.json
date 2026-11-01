@@ -877,9 +877,9 @@
       "case": "f04/macos-state-diagnostic",
       "max_runner_minutes": 15,
       "max_runs": 1,
-      "runs_started": 0,
+      "runs_started": 1,
       "automatic_retry": false,
-      "status": "prepared-awaiting-independent-source-review",
+      "status": "completed-failure",
       "delta_paths": [
         "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
         "tests/dot_f04_reading_sync_20261031/contract.json",
@@ -902,6 +902,65 @@
         "ios_unchanged": true,
         "diagnostics": "Bounded public UI proxies: record kind/jump/edit identifiers, next/pending/status/location and app state; never internal bookID, editor/account values or raw tree",
         "historical_metadata": "All historical six-host/230-minute fields preserved unchanged; no new execution authorization for those scopes"
+      },
+      "execution": "Existing single Mac15 entry; fixed SDK/input/product-equivalence locks unchanged; F03 sole canonical writer and trigger.",
+      "result": {
+        "run_id": "41290204917",
+        "attempt": 1,
+        "source_sha": "e67441671415766306473eccea9113ebe943e836",
+        "job_id": 124799687522,
+        "conclusion": "failure",
+        "test_seconds": 194.062,
+        "artifact_id": 13077591165,
+        "size_in_bytes": 42357495,
+        "digest": "sha256:340484399a902e80bff80337e9445b01804515c59c5901f33df4d0f898430813",
+        "api_updated_at": "2026-11-01T09:56:27Z",
+        "runner_upload_log_at": "2026-11-01T08:56:20Z",
+        "time_discrepancy": "API timestamps one hour ahead of runner/observation; retain separately",
+        "passed_checkpoints": [
+          "position",
+          "incoming-bookmark",
+          "incoming-note",
+          "edited-records"
+        ],
+        "reason": "Startup exact denial succeeded; original save-progress, both note edits/saves, close and unchanged-location assertions passed. edited-records attachment recorded at t183.99. reader.back Tap returned to library; added after-action diagnostics then raced exists against isEnabled on the disappearing reader.back (line409, t187.44..190.32), failing XCTest before sync/upload. This is a diagnostic regression, not a demonstrated product failure.",
+        "diagnostic_only": true,
+        "F04_accepted": false
+      }
+    },
+    "snapshot_evidence_round": {
+      "authorization_message_id": "Sentinel_0116319a849c8191a5f639eaec55b66b",
+      "authorized_at": "2026-11-01T08:58:28Z",
+      "case": "f04/macos-state-diagnostic",
+      "max_runner_minutes": 15,
+      "max_runs": 1,
+      "runs_started": 0,
+      "automatic_retry": false,
+      "status": "prepared-awaiting-independent-source-review",
+      "delta_paths": [
+        "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+        "tests/dot_f04_reading_sync_20261031/contract.json",
+        "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+      ],
+      "design": {
+        "macos_diagnostic_only": true,
+        "remove_success_path_diagnostics": [
+          "before-fixed-tap",
+          "after-fixed-tap",
+          "before-editor-input"
+        ],
+        "app_evidence": "Each existing diagnostic takes at most one optional app root snapshot; all target/list/window/sheet attributes are in-memory optional nodes, never live element reads",
+        "system_evidence": "Only obstruction diagnostic reads current running UserNotificationCenter via at most one optional root snapshot, current positive-size dialogs only",
+        "bounded": true,
+        "missing_or_duplicate_or_unavailable": "Evidence only; no assertions, retries, delays or new success gates",
+        "hittable": "Omitted from diagnostics because snapshot attributes do not provide it; original live action readiness remains unchanged",
+        "privacy": "Input subtrees omitted; status/location whitelist; obstruction text and identifiers redacted and limited; no raw tree or input contents",
+        "startup_permission": "Previous reviewed initial 10s observation inside original 150s deadline; exact Python Don't Allow once; later prompts stop without denial/replay",
+        "original_success_assertions_preserved": true,
+        "list_helper_unchanged": true,
+        "tap_click_change": false,
+        "ios_unchanged": true,
+        "historical_metadata": "All older six-host/230-minute fields unchanged and not newly executable"
       },
       "execution": "Existing single Mac15 entry; fixed SDK/input/product-equivalence locks unchanged; F03 sole canonical writer and trigger."
     }
