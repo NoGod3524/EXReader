@@ -521,3 +521,34 @@ This doc-only skip-ci seal does not change F04 files, entry, or tests. No CI
 remains running and no Git mutation outcome is uncertain. Further six-target
 integration needs a separately bounded scope and budget; component green
 must not increment the formal 96/108 count.
+
+## Isolated GTK readiness diagnostic preparation ? 2026-11-01 13:28 UTC
+
+User approved three existing paths and one Ubuntu job capped at 20 runner-minutes,
+no automatic retry (Sentinel_fa1a930de67881919a66a6651809e144).
+Independent branch dot/f03-gtk-ready-20261101 starts at
+ec11cf862ca3b44483d7e8c4726ae748ab438337; the validated canonical branch is untouched.
+The selected case f03/gtk-ready-diagnostic reuses the exact original GTK build,
+four CTests, 27 organization checks and all six author phase commands.
+gtk.py, original tests, SDK and product files are unchanged.
+
+Before each original Xvfb test session, observe the Openbox root WM property for
+at most 20 times at half-second intervals (tool overhead is additional),
+record the window tree, then execute the original tests. A read-only background
+sampler records at most 30 timestamped root-window samples per session at
+one-second intervals. Each tree/property command is capped at two seconds and
+16/4 KiB respectively; its PID is stopped by the EXIT trap.
+An unavailable observation is evidence, not a substituted product failure or pass.
+An EXIT trap preserves the test exit code and records the root window tree and
+window-manager properties before stopping only its own Openbox process.
+Original application and Openbox logs, reports and failures remain retained.
+No original mapping or test timeout is extended and no test is bypassed.
+
+Prior failures and original fixed-artifact diagnosis remain unchanged. This round
+can validate the already-written F2 author restart navigation and expose actual
+window-mapping evidence; it cannot accept Android, the full F03 six-host clause
+or increment the formal ledger. Other product jobs remain unselected.
+Budget rationale: the first GTK run took 7m15s, including 3m build and 1m05s for
+the 27 original checks; the second stopped after 4m54s. The full six-author-phase
+duration is not yet measured, so 20 minutes is a cap, not a completion promise.
+No run has started at this preparation commit.
