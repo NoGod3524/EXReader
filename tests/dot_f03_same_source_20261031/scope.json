@@ -1250,7 +1250,7 @@
     "case": "f03/owner-core-original",
     "branch": "dot/f03-owner-core-20261101",
     "base": "21ffb3ef36a2daedf20b7a2ca4d0b78cadfad932",
-    "status": "prepared_not_run",
+    "status": "completed_core_controls_passed_full_suite_rejected",
     "budget_runner_minutes": 5,
     "runs": 1,
     "retry": false,
@@ -1258,6 +1258,313 @@
     "old_all_exits_expected": false,
     "artifact_id": 13093186163,
     "accepted": false,
-    "formal_count_credit": 0
+    "formal_count_credit": 0,
+    "result": {
+      "run_id": 41332679953,
+      "attempt": 1,
+      "source_sha": "de31e35ef4d47b474bc313805ccdd1fd874cc6c3",
+      "job_id": 124925898904,
+      "completed_at": "2026-11-01T17:40:51Z",
+      "conclusion": "success",
+      "artifact": {
+        "id": 13093587748,
+        "name": "reader-suite-f03-owner-core-41332679953-1",
+        "bytes": 2558,
+        "sha256": "e43467997a838a565f40d5e50146042fe7f2fb77e41f3e7470a15bbca0d77b0b"
+      },
+      "report": {
+        "accepted": false,
+        "checker_sha256": "0cf0ae5df98e3874c9a6ea4f3d2b594c24e0600e1f93d5b363cdd9aae97d3f8d",
+        "checks": [
+          {
+            "actual_accepted": true,
+            "error_type": null,
+            "expected_accepted": true,
+            "id": "positive",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "old_device_source",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "missing_device_case",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "duplicate_device_case",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "failed_device_case",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "wrong_native_runtime_provider",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "wrong_actual_sqlite_source",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "missing_provider_option",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "skipped_manual_owner_case",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "different_reinstalled_application",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "skipped_owner_xml",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "fixture_in_release",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "missing_link_provider_proof",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "wrong_three_write_crash_boundary",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "missing_successful_retry_after_kill",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "process_not_killed",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "missing_18th_manual",
+            "passed": true
+          },
+          {
+            "actual_accepted": false,
+            "error_type": "ValueError",
+            "expected_accepted": false,
+            "id": "missing_18th_xml",
+            "passed": true
+          },
+          {
+            "actual_accepted": true,
+            "error_type": null,
+            "expected_accepted": true,
+            "id": "restored_positive",
+            "passed": true
+          }
+        ],
+        "controller": {
+          "attempt": "1",
+          "run_id": "41332679953",
+          "source_sha": "de31e35ef4d47b474bc313805ccdd1fd874cc6c3"
+        },
+        "controller_base": "21ffb3ef36a2daedf20b7a2ca4d0b78cadfad932",
+        "core_controls_passed": true,
+        "diagnostic_completed": true,
+        "diagnostic_only": true,
+        "formal_count_credit": 0,
+        "full_F03_accepted": false,
+        "historical_core_provider_authenticated": true,
+        "identity_binding": "fixed producer injected into inspect only; controller environment unchanged",
+        "invalid": [],
+        "missing": [],
+        "observations": {},
+        "old_all_exits": {
+          "actual_accepted": false,
+          "error_type": "ValueError",
+          "expected_accepted": false,
+          "reason": "original shelf acceptance missing"
+        },
+        "original": {
+          "artifact_id": 13093186163,
+          "attempt": "1",
+          "job_id": 124912497495,
+          "run_id": "41328199296",
+          "source_sha": "e21331513a84cc225daa99f672b4c79384e1f34b"
+        },
+        "problems": [],
+        "product_reexecuted": false,
+        "provider_fully_authenticated": false,
+        "selected": {
+          "build/android-host/bounded-gate-review.json": {
+            "bytes": 375,
+            "sha256": "be50f2f0927b37255d615445a53f6c5994396649e14b29190c0c6e1e5df1d0f9"
+          },
+          "build/android-host/build.json": {
+            "bytes": 81800,
+            "sha256": "0bfe97322deec582aaef8b6e50d7dd1dc19e5282f764553c3bbfabf951e5d2af"
+          },
+          "build/android-host/gate-review.json": {
+            "bytes": 375,
+            "sha256": "e603246e96ab37b10f4d5e1ba717ff8d3d3ce09b7888bf3f1148e6b09582d0a8"
+          },
+          "build/owner-android/apks/app-debug-androidTest.apk": {
+            "bytes": 97444,
+            "sha256": "f348b0957409841dab15810f34828f1276e2d88d5bfcb4e9e34788dab5a6ec4a"
+          },
+          "build/owner-android/apks/app-debug.apk": {
+            "bytes": 26539828,
+            "sha256": "e8bd23d6c4ce7bfe3ef4052290810d596eb9f98b3b2ca102b3b6b0c58fdd87e2"
+          },
+          "build/owner-android/device-abi.txt": {
+            "bytes": 7,
+            "sha256": "aaf631698ae5160ceb04a97681a14887fdcab47cd6e0f163c87485b3b1340b62"
+          },
+          "build/owner-android/device-api.txt": {
+            "bytes": 3,
+            "sha256": "ea243e5457028e97f9bc93b37a72f8e80ea61ae081911bb037765590ee6aa435"
+          },
+          "build/owner-android/device-report.json": {
+            "bytes": 2879,
+            "sha256": "c8db5242ff7c6e8d423dc278d1a50d431b182bdebf417a9bbf0d8e8da74d296a"
+          },
+          "build/owner-android/native/debug.dynamic.txt": {
+            "bytes": 1396,
+            "sha256": "4c71fdc37002a445e866554dd73372e47cdbcf9e31d5b2e954309de64b035793"
+          },
+          "build/owner-android/native/debug.map": {
+            "bytes": 3340580,
+            "sha256": "9099811f1fc9bf89e0ff1625da01b9377ac9979e6bb9b03449b49d423b29cfee"
+          },
+          "build/owner-android/native/debug.so": {
+            "bytes": 13282888,
+            "sha256": "93350d4468f320fad90f225a4bf2ebfaa2c5245d8d42af6e50ab1a8ba33312a5"
+          },
+          "build/owner-android/native/debug.symbols.txt": {
+            "bytes": 586286,
+            "sha256": "039e3b70524dd45ee6cb7bd3feea212e7e6206dce056828c4e9cec24df1f10b7"
+          },
+          "build/owner-android/native/inventory.json": {
+            "bytes": 1379,
+            "sha256": "e228d8568b817159b6eff85908c6b3948e1c74bfcabcca52a11413674702e735"
+          },
+          "build/owner-android/native/release.dynamic.txt": {
+            "bytes": 1395,
+            "sha256": "36c7df717a56d9f63d84763d2139bb05a020a5772b2ffd2ad96ac154441eb730"
+          },
+          "build/owner-android/native/release.map": {
+            "bytes": 1711419,
+            "sha256": "c9a9efcc9617a0eb013c0069160db2acf3eb93b38742c84d07464f6620fa625a"
+          },
+          "build/owner-android/native/release.so": {
+            "bytes": 12724792,
+            "sha256": "14fff322f587d8ce5336932b2f8ea841ce6ad290636e50663291d8cd7876189a"
+          },
+          "build/owner-android/native/release.symbols.txt": {
+            "bytes": 267680,
+            "sha256": "4712a1226cc04b974217065af0a43e28c3e44cc4e9d23fcf8cf5fd353b4cff4e"
+          },
+          "build/owner-android/native/sqlite3.h": {
+            "bytes": 695737,
+            "sha256": "cd20a2877bc82b94e36c1093b727dd87cfa3c1d581aac6e240925535cbd90166"
+          },
+          "build/owner-android/owner-instrumentation.txt": {
+            "bytes": 10786,
+            "sha256": "e1361b3dbba9bb9991288ecef98f8e9edcc01553b514771fdc6356c665031988"
+          },
+          "build/owner-android/owner-reports/debug/TEST-emulator-5554 - 14-_app-.xml": {
+            "bytes": 2480,
+            "sha256": "b94741bf8df30392429a666f3dd141f8d7310b44e6a582645db6622d14d98ed2"
+          },
+          "build/owner-android/recover-after.txt": {
+            "bytes": 91,
+            "sha256": "a203e53ed63e0606a735272a5cf35d9b61ff5c3d2048b318bbae67b75ab8861a"
+          },
+          "build/owner-android/recover-before.txt": {
+            "bytes": 92,
+            "sha256": "c0d833c425ee91787a07efb89810fdad725bf3f6bcbc9eb37127d4d68fd05b3b"
+          },
+          "build/owner-android/result.json": {
+            "bytes": 186,
+            "sha256": "1e55011cbc9f914b0c6f2eef49b8d57c87a946268e1f108d8dea3cd5813d1cc4"
+          },
+          "build/owner-android/seed-after.txt": {
+            "bytes": 74,
+            "sha256": "cc376fcd260b55a01f82c04af5e0a9ead88516f600131a38bdea1a3e05b10a8d"
+          },
+          "build/owner-android/seed-before.txt": {
+            "bytes": 74,
+            "sha256": "cc376fcd260b55a01f82c04af5e0a9ead88516f600131a38bdea1a3e05b10a8d"
+          },
+          "build/owner-android/source.txt": {
+            "bytes": 41,
+            "sha256": "0ba49f4d16e125cc2f5e43b82f346fea2575420151324000e7d14aa3d3d7c426"
+          },
+          "build/owner-android/witness-after.txt": {
+            "bytes": 5,
+            "sha256": "f3176ea4064dc47ccab85eb06a79460c0a07325bfdc3da7863dbd974031ee89b"
+          },
+          "build/owner-android/witness-before.txt": {
+            "bytes": 5,
+            "sha256": "fdcc75483f5e22c93d36a3051dbe0fee0671d3bf55936a099d5724cb3ec307b0"
+          },
+          "build/shelf-android/shelf-gate-review.json": {
+            "bytes": 408,
+            "sha256": "7ecb719ae8d627a4e1384656db9ef99cb1fae44dba1a0a672c7f612cc381a826"
+          },
+          "build/shelf-android/shelf-result.json": {
+            "bytes": 1277,
+            "sha256": "4532c2b486cd8374bd843727f8a6772401d1b2a009e797f2c49a794e11326d2f"
+          }
+        }
+      }
+    }
   }
 }

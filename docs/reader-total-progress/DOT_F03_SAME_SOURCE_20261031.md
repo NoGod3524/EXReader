@@ -800,3 +800,12 @@ Diagnostic result artifact reader-suite-f03-owner-fixed-artifact-41331632631-1: 
 ## Owner core original-archive migration, 2026-11-01 17:32 approval
 
 Only the owner name set and manual OK marker migrate from 17 to the actual 18 cases. Original checker remainder and original negative-control script remain unchanged. Independent branch dot/f03-owner-core-20261101; one Ubuntu 5 runner-min, no retry. Fixed original artifact 13093186163 from run 41328199296/A1/source e21331513a84cc225daa99f672b4c79384e1f34b is authenticated and selected evidence is copied into an isolated Actions temporary directory. APK/ELF are data only, never executed. Controller and original producer identities are separate; the in-memory inspect identity supplier is bound to the original producer, without changing controller environment. Fixed 19 controls: original/restored positives, 15 original core mutations, missing 18th manual and XML cases. Original all-exits must still fail and is not a positive control. No product rebuild, runtime re-execution, full F03 acceptance, or formal credit. Status: prepared, not run.
+
+### Owner core original-archive result
+
+- Run [41332679953/A1](https://github.com/NoGod3524/EXReader/actions/runs/41332679953), controller source de31e35ef4d47b474bc313805ccdd1fd874cc6c3, job 124925898904, completed 2026-11-01T17:40:51Z: success. One approved Ubuntu 5 runner-min consumed; no retry or product execution.
+- All fixed 19 controls passed: original and restored positives; 15 inherited core refusals; missing eighteenth manual and XML cases refused. Missing/invalid/problems are empty. Thirty selected original evidence files were authenticated and isolated.
+- The current checker revalidated the historical producer's native inventory, packaged APK/hash/build identity, actual provider source/options, eighteen JSON/manual/XML cases and two real killed-process recovery witnesses. This is historical core evidence, not a new product run.
+- Original all-exits remains rejected with the exact ValueError: original shelf acceptance missing. Original failed suite/run and negative script are preserved; no fabricated positive shelf result.
+- Diagnostic artifact 13093587748, reader-suite-f03-owner-core-41332679953-1, 2558 bytes, SHA256 e43467997a838a565f40d5e50146042fe7f2fb77e41f3e7470a15bbca0d77b0b.
+- accepted=false, full_F03_accepted=false, product_reexecuted=false, formal credit 0. Next runtime validation requires a separately authorized exact identity exception for the now-pinned owner checker; no automatic Android or cross-host rerun.
