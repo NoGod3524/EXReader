@@ -19,6 +19,9 @@ import time
 
 import uiautomation as auto
 
+# The runner console is cp1252; every record here carries Chinese names.
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/f09/windows-compact'
 checks = []
@@ -101,8 +104,10 @@ def main(exe, book):
         shot(window, '00-empty-shelf')
 
         # W-01 menu bar names and access keys
-        bar = window.MenuBarControl(searchDepth=2)
-        names = [m.Name for m in bar.GetChildren()] if bar.Exists(3) else []
+        # A Win32 window exposes two menu bars: the title-bar "System" menu and the
+        # application menu bar. Read the application one.
+        bars = [c for c in window.GetChildren() if c.ControlTypeName == 'MenuBarControl' and c.Name != 'System']
+        names = [m.Name for m in bars[0].GetChildren()] if bars else []
         check('W-01', 'menu bar', '书库/阅读/视图 present, each with an access key',
               names, all(any(n.startswith(label) and '(' in n for n in names) for label in ('书库', '阅读', '视图')))
 
