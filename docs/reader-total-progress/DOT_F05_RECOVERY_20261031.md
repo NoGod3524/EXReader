@@ -1,3 +1,36 @@
+# Latest fixed status — 2026-11-01 01:10 UTC / 2026-10-31 21:10 America/New_York
+
+Implementation snapshot: `6e60a794061822362688d2b414987d6115b9fc37`.
+**F05 incomplete, 0 CI, nine approved files, no workflow, formal 96/108 unchanged.**
+
+Canonical artifact preparation now stages each actual native program as
+`program.bin` and authenticates explicitly bound evidence prefixes. Retained
+original suites may use separately built programs: each is bound to its own
+actual archive bytes and same source/run/attempt/SDK identity rather than falsely
+requiring its executable hash to equal a different F05 build.
+
+The unchanged Apple SDK3.42 supplemental runner verifies both installed SDK
+inventories against frozen SDK8357 and records separate sync/failure program
+identities. Its macOS terminal wrapper retains 20 ordered PASS lines and asserts
+authenticated/unauthenticated request presence, but does not serialize numeric
+request totals or terminal executable SHA. The verifier preserves the original
+command log and exit result without inventing those totals. A canonical wrapper
+must still preserve the terminal program's own actual identity; the sync app's
+hash cannot substitute for it.
+
+No actual producer/job/artifact/member binding has been guessed:
+`artifact_roles` remains empty, manifest remains implementation-in-progress.
+The verifier cannot pass this unfinished matrix. New layout changes are static
+preparation, not independently executed acceptance.
+
+Pending: the already-requested Java single-expression compatibility-copy approval;
+canonical role/program/log bindings; external deletion-detail UI; composition of
+approved Apple owner delta; real Actions execution and complete independent audit.
+No new CI or permanent workflow has been created, and original scripts/SDK/product
+files remain untouched.
+
+---
+
 # Latest fixed status — 2026-11-01 01:00 UTC / 2026-10-31 21:00 America/New_York
 
 Source before documentation: `9ce46b6ec8a1c77fcc72cdcfabad81a9670c2d99`.
