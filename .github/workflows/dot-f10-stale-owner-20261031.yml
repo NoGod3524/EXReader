@@ -67,3 +67,5 @@ jobs:
           path: build/stale-audit/
           if-no-files-found: error
 # Prepared skip-ci; one approved five-minute audit, never a product rerun.
+
+# Activate the sole approved five-minute fixed-producer audit after 62b344 review.
