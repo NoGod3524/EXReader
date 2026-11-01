@@ -23,7 +23,12 @@ final class ShelfWindowMetrics implements AutoCloseable {
     private static final int MAX_FRAMES=20000;
     private static final long MAX_BYTES=32L*1024*1024;
     private final Window window;
-    private final HandlerThread thread=new HandlerThread("exr-shelf-frame-metrics");
+    final ReaderFrameObserver readerObserver;
+    private final HandlerThread thread=new HandlerThread("exr-shelf-frame-metrics") {
+        @Override public void run() {
+            try {super.run();}finally{if(BuildConfig.F08_REVIEW)writeClosedReceipt();}
+        }
+    };
     private final Handler handler;
     private final Window.OnFrameMetricsAvailableListener listener;
     private FileOutputStream output,readyOutput;
@@ -36,6 +41,10 @@ final class ShelfWindowMetrics implements AutoCloseable {
     private long readyBytes,readyEvents;
     private long frames,dropped,bytes;
     private boolean failed;
+    private volatile boolean closed,sealed;
+    private final File captureFailureFile,closedReceiptFile;
+    private String closeReason="not_closed";
+    private long listenerRemovedElapsedNs,listenerRemovedMonoNs;
 
     static ShelfWindowMetrics start(Activity activity,long createdNs) {
         if ((!BuildConfig.DEBUG && !BuildConfig.F08_REVIEW) || !activity.getIntent().getBooleanExtra("shelf_metrics",false))return null;
@@ -47,10 +56,12 @@ final class ShelfWindowMetrics implements AutoCloseable {
         long id=WINDOWS.incrementAndGet();windowId=id;
         catalogLatch=new CatalogFrameLatch(window);
         clearCatalogLatch=()->{
+            if(closed)return;
             catalogLatch.clear();
             readyEvent("clear",catalogLatch.generation,catalogLatch.revision,"cleared",SystemClock.elapsedRealtimeNanos());
         };
         catalogFrame=frameTimeNanos->{
+            if(closed)return;
             String status=catalogLatch.frame(window,frameTimeNanos);
             if(!mainHandler.postAtFrontOfQueue(clearCatalogLatch)){catalogLatch.clear();status="clear_enqueue_failed";}
             readyEvent("latch",catalogLatch.generation,catalogLatch.revision,status,SystemClock.elapsedRealtimeNanos());
@@ -60,7 +71,10 @@ final class ShelfWindowMetrics implements AutoCloseable {
         File file=new File(root,"window-"+Process.myPid()+"-"+id+".jsonl");
         File readyRoot=new File(root,"catalog-ready");
         File readyFile=new File(readyRoot,file.getName());
+        captureFailureFile=new File(root,"window-"+Process.myPid()+"-"+id+"-capture-error.json");
+        closedReceiptFile=new File(root,"window-"+Process.myPid()+"-"+id+"-closed.json");
         thread.start(); handler=new Handler(thread.getLooper());
+        readerObserver=BuildConfig.F08_REVIEW?new ReaderFrameObserver(window,id,handler,root,this::fail):null;
         handler.post(()->{
             try {
                 output=new FileOutputStream(file);
@@ -74,6 +88,7 @@ final class ShelfWindowMetrics implements AutoCloseable {
             } catch(Exception error){fail(error);}
         });
         listener=(observed,reusable,drop)->{
+            if(sealed){externalFailure(new IllegalStateException("Frame callback after collector seal"));return;}
             FrameMetrics copy=new FrameMetrics(reusable);
             if(failed)return;
             try {
@@ -97,18 +112,22 @@ final class ShelfWindowMetrics implements AutoCloseable {
     }
 
     boolean catalogApplied(long generation,long revision,boolean pending) {
+        if(closed)return false;
         String status=catalogLatch.arm(window,generation,revision,pending);
         readyEvent("apply",generation,revision,status,SystemClock.elapsedRealtimeNanos());
         if(!"armed".equals(status))return false;
         choreographer.postFrameCallback(catalogFrame);return true;
     }
     void catalogReady(long generation,long revision,long elapsedNs) {
+        if(closed)return;
         readyEvent("ready_pre_draw",generation,revision,catalogLatch.ready(window,generation,revision),elapsedNs);
     }
     void catalogTreeDraw(long generation,long revision) {
+        if(closed)return;
         readyEvent("tree_draw_begin",generation,revision,catalogLatch.draw(window,generation,revision),SystemClock.elapsedRealtimeNanos());
     }
     private void readyEvent(String kind,long generation,long revision,String status,long elapsedNs) {
+        if(closed)return;
         final long monoNs=System.nanoTime(),frameTimeNs=catalogLatch.frameTimeNs;
         final boolean active=catalogLatch.active;
         final String readyStatus=catalogLatch.readyStatus,drawStatus=catalogLatch.drawStatus;
@@ -131,24 +150,74 @@ final class ShelfWindowMetrics implements AutoCloseable {
     private void write(JSONObject value)throws Exception {
         byte[] raw=(value.toString()+"\n").getBytes(StandardCharsets.UTF_8); output.write(raw); bytes+=raw.length;
     }
+    private void writeClosedReceipt() {
+        File pendingFile=new File(closedReceiptFile.getPath()+".pending");
+        try {
+            JSONObject value=new JSONObject().put("kind","capture_closed").put("pid",Process.myPid()).put("window_id",windowId)
+                    .put("stop_reason",closeReason).put("failed",failed||!closed||!sealed||captureFailureFile.exists())
+                    .put("reader_closed_clean",readerObserver!=null&&readerObserver.closedCleanly())
+                    .put("listener_removed_elapsed_ns",listenerRemovedElapsedNs).put("listener_removed_mono_ns",listenerRemovedMonoNs)
+                    .put("closed_elapsed_ns",SystemClock.elapsedRealtimeNanos()).put("closed_mono_ns",System.nanoTime());
+            if(pendingFile.exists()||closedReceiptFile.exists())throw new IllegalStateException("Capture close receipt already exists");
+            try(FileOutputStream receipt=new FileOutputStream(pendingFile)){
+                receipt.write((value.toString()+"\n").getBytes(StandardCharsets.UTF_8));
+            }
+            if(!pendingFile.renameTo(closedReceiptFile))throw new IllegalStateException("Capture close receipt rename failed");
+        }catch(Exception error){externalFailure(error);}
+    }
+
+    private void externalFailure(Exception error) {
+        failed=true;
+        Log.e("EXRShelfMetrics","Capture failed after seal: "+error);
+        if(captureFailureFile.exists())return;
+        try(FileOutputStream failure=new FileOutputStream(captureFailureFile)){
+            failure.write((new JSONObject().put("kind","error").put("pid",Process.myPid()).put("window_id",windowId)
+                    .put("elapsed_ns",SystemClock.elapsedRealtimeNanos()).put("detail",error.toString()).toString()+"\n")
+                    .getBytes(StandardCharsets.UTF_8));
+        }catch(Exception again){Log.e("EXRShelfMetrics","Could not retain post-seal failure: "+again);}
+    }
     private void fail(Exception error) {
+        if(sealed){externalFailure(error);return;}
         if(failed)return; failed=true; Log.e("EXRShelfMetrics","Capture failed: "+error);
         if(output!=null)try{write(new JSONObject().put("kind","error").put("detail",error.toString()));}
         catch(Exception ignored){Log.e("EXRShelfMetrics","Could not retain capture failure");}
     }
-    @Override public void close() {
+    boolean readerStopRequest(int expectedPid,long expectedWindow,long elapsedNs) {
+        if(!BuildConfig.F08_REVIEW)return false;
+        String status=closed?"rejected_closed":expectedPid!=Process.myPid()||expectedWindow!=windowId
+                ?"rejected_owner":"accepted";
+        Log.i("EXRShelfMetrics","F08 capture stop status="+status+" expected_pid="+expectedPid+" expected_window="+expectedWindow
+                +" pid="+Process.myPid()+" window="+windowId+" elapsed_ns="+elapsedNs);
+        if(readerObserver!=null)readerObserver.stopRequest(expectedPid,expectedWindow,status,elapsedNs);
+        return "accepted".equals(status);
+    }
+    @Override public void close() {close("activity_destroy",SystemClock.elapsedRealtimeNanos());}
+    void close(String reason,long requestedNs) {
+        if(closed)return;
+        closeReason=reason;
         choreographer.removeFrameCallback(catalogFrame);mainHandler.removeCallbacks(clearCatalogLatch);catalogLatch.close();
         readyEvent("stop",catalogLatch.generation,catalogLatch.revision,catalogLatch.readyStatus,SystemClock.elapsedRealtimeNanos());
+        closed=true;
+        if(BuildConfig.F08_REVIEW&&readerObserver!=null)readerObserver.close(reason,requestedNs);
         window.removeOnFrameMetricsAvailableListener(listener);
-        handler.post(()->{
+        listenerRemovedElapsedNs=SystemClock.elapsedRealtimeNanos();listenerRemovedMonoNs=System.nanoTime();
+        // Drain messages already captured by the registered listener before closing its files.
+        if(!handler.post(()->{
+            if(!handler.post(()->{
             try {if(readyOutput!=null)readyOutput.close();}
             catch(Exception error){fail(error);}
             try {
-                if(output!=null&&!failed)write(new JSONObject().put("kind","stop").put("frames",frames).put("dropped",dropped));
+                if(output!=null&&!failed)write(new JSONObject().put("kind","stop").put("frames",frames).put("dropped",dropped)
+                        .put("stop_reason",reason).put("scope_end_requested_elapsed_ns",requestedNs)
+                        .put("listener_removed_elapsed_ns",listenerRemovedElapsedNs).put("listener_removed_mono_ns",listenerRemovedMonoNs)
+                        .put("footer_elapsed_ns",SystemClock.elapsedRealtimeNanos()).put("footer_mono_ns",System.nanoTime()));
             } catch(Exception error){fail(error);} finally{
-                try {if(output!=null)output.close();}catch(Exception error){fail(error);}
+                sealed=true;
+                try {if(output!=null)output.close();}catch(Exception error){externalFailure(error);}
+                output=null;
                 thread.quitSafely();
             }
-        });
+            }))fail(new IllegalStateException("Collector final close enqueue failed"));
+        }))fail(new IllegalStateException("Collector close handler stopped"));
     }
 }

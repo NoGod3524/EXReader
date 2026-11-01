@@ -43,6 +43,12 @@ public final class ReaderView extends View {
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     private PageSnapshot page;
+    private ReaderFrameObserver f08Observer;
+
+    void observeF08(ReaderFrameObserver observer) { if(BuildConfig.F08_REVIEW)f08Observer=observer; }
+    void acceptF08(long generation,PageSnapshot snapshot) {
+        if(BuildConfig.F08_REVIEW&&f08Observer!=null)f08Observer.accept(this,generation,snapshot);
+    }
     private Listener listener;
     private boolean selectMode;
     private Selection selection;
@@ -281,6 +287,7 @@ public final class ReaderView extends View {
         down = false;
         endPan();panX=panY=0;
         page = snapshot;
+        if(BuildConfig.F08_REVIEW&&f08Observer!=null)f08Observer.pageSet(this,snapshot);
         if(snapshot!=null&&turnInput==4)requestFocus();
         if(BuildConfig.DEBUG) {
             debugBitmapIdentity=snapshot==null ? null : bitmapIdentity(snapshot.bitmap);
@@ -477,6 +484,7 @@ public final class ReaderView extends View {
         super.onDraw(canvas);
         canvas.drawColor(Color.rgb(247, 247, 242));
         if (page == null || page.bitmap == null) {
+            if(BuildConfig.F08_REVIEW&&f08Observer!=null)f08Observer.empty(this,page);
             canvas.drawText("No page loaded", 40f, 80f, emptyPaint);
             return;
         }
@@ -484,7 +492,13 @@ public final class ReaderView extends View {
         RectF destination = new RectF(offsetX, offsetY,
                 offsetX + page.bitmap.getWidth() * fit,
                 offsetY + page.bitmap.getHeight() * fit);
-        canvas.drawBitmap(page.bitmap, null, destination, bitmapPaint);
+        if(!BuildConfig.F08_REVIEW||f08Observer==null)canvas.drawBitmap(page.bitmap, null, destination, bitmapPaint);
+        else {
+            PageSnapshot drawn=page;
+            long beginNs=System.nanoTime();boolean painted=false;
+            try {canvas.drawBitmap(drawn.bitmap, null, destination, bitmapPaint);painted=true;}
+            finally {f08Observer.draw(this,drawn,beginNs,System.nanoTime(),painted,panX,panY,panLimitX,panLimitY);}
+        }
         if (selection != null) {
             for (RectF rect : selection.rects) {
                 canvas.drawRect(toViewX(rect.left), toViewY(rect.top), toViewX(rect.right), toViewY(rect.bottom), selectionPaint);

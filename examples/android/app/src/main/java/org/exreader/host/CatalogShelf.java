@@ -106,6 +106,15 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
         observeFirstInteractive(startedNs);
     }
 
+    void stopObservingMetrics(ShelfWindowMetrics metrics) {
+        if(!BuildConfig.F08_REVIEW||completionMetrics!=metrics)return;
+        completionMetrics=null;
+        if(completionDraw!=null&&list.getViewTreeObserver().isAlive())list.getViewTreeObserver().removeOnDrawListener(completionDraw);
+        completionDraw=null;
+        if(firstDraw!=null&&list.getViewTreeObserver().isAlive())list.getViewTreeObserver().removeOnPreDrawListener(firstDraw);
+        firstDraw=null;
+    }
+
     void observeFirstInteractive(long startedNs) {
         activityStartedNs=startedNs;
         firstDraw=()->{

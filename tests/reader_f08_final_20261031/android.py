@@ -3,10 +3,12 @@ import argparse
 import importlib.util
 import json
 import shutil
+import subprocess
 import sys
 import zipfile
 
 from source import ROOT, HERE, admission, need
+from reader_android import SAMPLE
 
 LEGACY=ROOT/"tests/reader_f08_android_20261031"
 sys.path.insert(0,str(LEGACY))
@@ -16,7 +18,7 @@ spec=importlib.util.spec_from_file_location("final_android_release_builder",LEGA
 B=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(B)
 OBSERVER=tuple("examples/android/app/src/main/java/org/exreader/host/"+name for name in
-               ("CatalogFrameLatch.java","CatalogShelf.java","MainActivity.java","ShelfWindowMetrics.java"))
+               ("CatalogFrameLatch.java","CatalogShelf.java","MainActivity.java","ReaderView.java","ShelfWindowMetrics.java","ReaderFrameObserver.java"))
 
 NATIVE_BUNDLE_FILES=(
     'tests/reader_f08_final_20261031/native_android.py',
@@ -27,6 +29,16 @@ NATIVE_BUNDLE_FILES=(
     'tests/reader_f08_final_20261031/source.py',
     'tests/reader_f08_final_20261031/contract.json',
     'tests/reader_f08_android_binding_20261031/audit.py',
+    'tests/reader_f08_final_20261031/reader_android.py',
+    'tests/reader_f08_final_20261031/ReaderF08UiTest.java',
+    'tests/reader_f08_final_20261031/reader-ui.init.gradle',
+    'tools/build_android_host.py',
+    'examples/android/app/src/main/java/org/exreader/host/CatalogFrameLatch.java',
+    'examples/android/app/src/main/java/org/exreader/host/CatalogShelf.java',
+    'examples/android/app/src/main/java/org/exreader/host/MainActivity.java',
+    'examples/android/app/src/main/java/org/exreader/host/ReaderView.java',
+    'examples/android/app/src/main/java/org/exreader/host/ShelfWindowMetrics.java',
+    'examples/android/app/src/main/java/org/exreader/host/ReaderFrameObserver.java',
 )
 
 
@@ -57,7 +69,8 @@ def build():
         dex={name:apk.read(name) for name in apk.namelist()
              if name.startswith("classes") and name.endswith(".dex")}
     markers=("Lorg/exreader/host/CatalogFrameLatch;","Lorg/exreader/host/ShelfWindowMetrics;",
-             "catalogApplied","catalogReady","catalogTreeDraw","ready_pre_draw","tree_draw_begin","catalog-ready")
+             "catalogApplied","catalogReady","catalogTreeDraw","ready_pre_draw","tree_draw_begin","catalog-ready",
+             "Lorg/exreader/host/ReaderFrameObserver;","ReaderView.canvas.drawBitmap","bitmap_draw","request_generation","reader-draw","f08_capture_stop","f08_expected_pid","f08_expected_window","owned_reader_stop")
     present={key:any(key.encode("ascii") in data for data in dex.values()) for key in markers}
     need(dex and all(present.values()),"Release APK lacks reviewed first-catalog observer")
     fixture=ROOT/"build/android-host/fixtures/NewReview.txt"
@@ -65,6 +78,38 @@ def build():
     need(fixture.stat().st_size==expected["size"] and L.sha(fixture)==expected["sha256"],"original picker fixture")
     archived=L.OUT/"fixtures/NewReview.txt";archived.parent.mkdir(parents=True,exist_ok=True)
     shutil.copyfile(fixture,archived)
+    # The original four APKs above are already archived. Build a separate helper test APK;
+    # it replaces only the helper instrumentation after the original ten cases finish.
+    original_command=json.loads((L.OUT/"gradle-command.json").read_text())
+    flags=original["gradle_flags"]
+    reader_command=original_command[:original_command.index(":app:assembleRelease")]+[
+        "-I",str(HERE/"reader-ui.init.gradle"),":uitest:assembleDebugAndroidTest"]
+    need(all(flag in reader_command for flag in flags),"reader helper uses original feature flags")
+    L.save(L.OUT/"reader-gradle-command.json",reader_command)
+    with (L.OUT/"reader-gradle.log").open("wb") as log:
+        subprocess.run(reader_command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,check=True)
+    reader_apk=L.OUT/"packages/reader-uitest-debug-androidTest.apk"
+    shutil.copyfile(ROOT/"examples/android/uitest/build/outputs/apk/androidTest/debug/uitest-debug-androidTest.apk",reader_apk)
+    reader_marker="Lorg/exreader/host/uitest/ReaderF08UiTest;"
+    with zipfile.ZipFile(reader_apk) as apk:
+        need(any(reader_marker.encode() in apk.read(n) for n in apk.namelist()
+                 if n.startswith("classes") and n.endswith(".dex")),"compiled independent reader UI test")
+    need(all(L.sha(L.OUT/"packages"/name)==item["sha256"] for name,item in original["packages"].items()),
+         "original four APK bytes changed")
+    sample=ROOT/"build/wave3/download/Sample.epub"
+    sample_expected=json.loads((L.OUT/"fixtures.json").read_text())["Sample.epub"]
+    need(sample_expected==SAMPLE,"frozen supplemental Sample.epub identity")
+    need(sample.stat().st_size==sample_expected["size"] and L.sha(sample)==sample_expected["sha256"],
+         "original deterministic Android Sample.epub")
+    shutil.copyfile(sample,L.OUT/"fixtures/Sample.epub")
+    reader_fixture={"path":"fixtures/Sample.epub","source_path":"build/wave3/download/Sample.epub",
+                    "generator":"tools/build_android_host.py","generator_sha256":L.sha(ROOT/"tools/build_android_host.py"),
+                    **sample_expected}
+    reader_test={"path":"packages/reader-uitest-debug-androidTest.apk","bytes":reader_apk.stat().st_size,
+                 "sha256":L.sha(reader_apk),"class":"org.exreader.host.uitest.ReaderF08UiTest#reader",
+                 "runner":"org.exreader.host.uitest.test/androidx.test.runner.AndroidJUnitRunner",
+                 "gradle_command_sha256":L.sha(L.OUT/"reader-gradle-command.json"),
+                 "sources":{path:L.sha(HERE/path) for path in ("ReaderF08UiTest.java","reader-ui.init.gradle")}}
     native_files={path:L.sha(ROOT/path) for path in NATIVE_BUNDLE_FILES}
     for path in NATIVE_BUNDLE_FILES:
         copied=L.OUT/"native-source"/path;copied.parent.mkdir(parents=True,exist_ok=True)
@@ -74,6 +119,7 @@ def build():
     L.save(L.OUT/"final-build.json",{**L.identity(),"source":source,
            "original_build_sha256":L.sha(L.OUT/"build.json"),"final_adapter_sha256":L.sha(HERE/"android.py"),
            "observer_source_sha256":{path:L.sha(ROOT/path) for path in OBSERVER},
+           "reader_test_apk":reader_test,"reader_fixture":reader_fixture,
            "observer_dex_markers":present,"packages":original["packages"],
            "native_bundle_files":native_files,"picker_fixture":{"path":"fixtures/NewReview.txt",**expected},
            "sdk_version":"3.42.0","configuration":"Release","debug":False,
