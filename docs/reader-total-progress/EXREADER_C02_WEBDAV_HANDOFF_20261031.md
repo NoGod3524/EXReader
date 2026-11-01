@@ -1,3 +1,53 @@
+# EXReader continuation snapshot — scheduled 2026-11-01 02:22 UTC
+Actual check: **2026-11-01T02:25:31Z / 2026-10-31 22:25:31 America/New_York (EDT)**. Continuation backup only, not completion or suspension.
+
+Formal ledger remains **96/108 (88.89%), 96 verified / 1 partial / 11 pending**, pinned at `5db41cb19673fb75bb0b498c677d770931ac33e8`. Read documentation branch HEAD `b6cc11576957654319f64134ec85071aee163de9` before this single-document update. No catalog/source/workflow change or CI is performed by this snapshot.
+
+## Latest fixed facts — supersede older pending proposals below
+
+| Main task | Fixed identity | Actual state / next action |
+|---|---|---|
+| F03 | canonical `dot/reader-suite-20261101`, latest observed seal `cd6076be6ba0c072ee538753444dd4137bed2ba2` | Own F03 acceptance remains incomplete. Sole canonical writer/trigger now assists the explicitly approved F04 diagnostic entry; this is coordination, not another passing F03 producer. Earlier F03 failed runs remain retained. |
+| F04 | measured `cb8b5e2d04a524a44a686eb8385872ee832d373e`, [run41264117725](https://github.com/NoGod3524/EXReader/actions/runs/41264117725) | Second round failed. Linux original121+18 producer succeeded; Windows actual single input was sent, but no book appeared within120s. Android/return/audit skipped. No inferred product deadlock or F04 acceptance. User02:20:04 approved one5-minute fixed-artifact diagnostic; implementation object `806557445f291524e52d8dc1b6424d5fdee56d5b` has passed bounded static review, not yet observed running at this snapshot. |
+| F05 | `dot/f05-client-recovery-20261031`, seal `9ce943e1ff0c26b54db69f5c31eec057d2be216b` | Approved Java temporary-copy3.42 adapter source reviewed/sealed,0CI. Still needs actual host recovery evidence, original assertions and source-bound consumer identity; no blanket full acceptance. |
+| F07 | old seal `697448abd8188580304806163ba9b543e76ba9ba` | Waiting for actual provider evidence; finite independent review of F10 D completed. No new provider producer or runtime acceptance. |
+| F10 | `dot/f10-stale-owner-20261031`, seal `4db961144b00c9004e2775b9e1e57e6ea7a31cb7` | Linux managed-module closure re-audit accepted,82 scenarios/880 fixed assertions/38 exact negatives. **full_f10_complete=false**; actual joint hosts/credentials and consumption of selected production delta remain to reconcile. No automatic extra component loop. |
+| F12 | `dot/f12-delivery-20261101`, seal `64729214788a99ae96de7dda1a6376337324f9e4` | Guidance generator+two documents,3-path approved source batch complete and reviewed,0CI. Final common product/upgrade support matrix and actual package verification remain open; F12 not accepted. |
+
+F07 exact historical seal: `697448abd8188580304806163ba9b543e76ba9ba`. No new source SHA is inferred from a tool status. F06 was already verified and is not rerun; the user-approved sixth main assignment is F12.
+
+## Fixed evidence and failure history
+
+**F10 D producer versus audit are distinct.** Original product source `3f729038024028af4a00e50750a651f049f263d9`, run[41264160828 A1](https://github.com/NoGod3524/EXReader/actions/runs/41264160828), remains failed at its original auditor: it wrongly required a positive recorded GET/PUT count in a listing-overlimit rejection before GET. Original producer artifact13066057477,2479730bytes,SHA256 `28ad79d58d99ab911f279338f8fb0bfec0937fc5c8a67990354c7faf300a1bef` is unchanged.
+
+Separately approved audit-only [41264697945 A1](https://github.com/NoGod3524/EXReader/actions/runs/41264697945), audit source `413a1e2758898a5a78cd7f436554ab9cfbc4d823`, job124724959344, succeeded. It authenticated the fixed original bytes, did not rebuild or execute the product, and preserved original assertions: API33/258/8 + upload29/187/10 + verification GET8/118/8 + download12/317/12 =82/880/38. New audit artifact13067041457,1629bytes,SHA256 `c90ce88d91b367b37605cf8a3348ec911e420791e9c3fd561bfa28a0d3c23c9c`. Source seal read directly for this snapshot; F07 independently checked actual logs/identity. Original red run stays red. Exact zero requests is allowed only for the original pre-GET rejection case, not a blanket relaxed request gate.
+
+**F04 fixed diagnostic target:** run41264117725 A1, Windows job124723215028, source `cb8b5e2d04a524a44a686eb8385872ee832d373e`; artifact13066097833,1638bytes,SHA256 `2f0916f73a040e9a0589c95fbcdb1f114d1468785235330e98477e9d97736a46`. Diagnostic scope: read exactly this ZIP in Actions, selected small text re-redacted, no product/build. Four F04 files plus F03 canonical entry comprise approved5 paths; cap5minutes once. Object8065574 checks historical run/job/source and artifact digest, separates diagnostic controller identity, and selects a case mutually exclusive with the five product jobs. The hourly reviewer did not download/parse the ZIP; direct connector job/artifact endpoints returned unsupported, so no independent API metadata success is claimed here. Static review does not itself trigger CI.
+
+## Actual six-agent activity at this observation
+
+- Implementation/entry preparation: **2 bounded assignments**, F03 canonical entry and F04 diagnostic handoff; no six-way active coding claim.
+- Diagnostic execution/testing waiting: **0 observed runs** for the new5-minute diagnostic at this check; approval/preparation is not a queued run.
+- Independent review/documentation: **1**, F12 agent finished the finite F04 review then saved this snapshot.
+- Waiting/blocked: **3 other assignments**, F05 runtime/consumer integration, F07 provider evidence, F10 whole-product reconciliation. F12 also retains final-package dependency after documentation work.
+- Completed whole main tasks among F03/F04/F05/F07/F10/F12: **0**. Completed sub-batches and historical F06 acceptance are not active implementation or whole-task completion.
+
+## Boundaries, owners and continuation
+
+C02 sealed migration results do not grant all P0/F12, hard power-loss safety or an arbitrary old-version compatibility matrix. Conflict recovery keeps competing heads/tombstones, explicit native presentation and original cancellation/retry expectations; no invented universal single-head resolution requirement. SDK3.42 source equality (b5e7/94fb/8357 five objects) does not establish reader binary identity or six-host consumption: current F10 module suite did not build/consume the reader. Historical727 artifacts remain separately identified.
+
+UI/animation, F08, F09 and other external owners remain unchanged. Only expressly transferred Apple HostCatalog/HostModel and F10 specified cleanup/WebDAV/sync files belong to these respective writers. K03/C02/Apple original diagnostic remain sealed, not reassigned or rerun. F03 is sole canonical writer/trigger; F04 owns its scoped helper/package, F12 owns only approved delivery files and this independent handoff snapshot. No default/shared branch, PR, tag, release or formal count change.
+
+GitHub direct route is approved; no Desktop Commander quota retry, no alternate credential route or machine handshake. No new ready/pwd/last-success claim, credentials or private fixture data in this snapshot. All build/syntax/tests/fixture/archive work stays Actions-only. No Codex/Claude/new team; paused six-slot auto-refill remains paused.
+
+New scopes retain design-before-code and independent proof/counterexample review, at most one implementation plus one review per module family, parameterized existing suite instead of more duplicate workflows. Await actual fixed diagnostic result before proposing an import repair; reconcile accepted F10 production delta with existing host owners before claiming full F10. F12 next actual-package validation still requires its precise design/scope/budget.
+
+**No defensible completion-time range** for full remaining work is currently available. The5-minute diagnostic limit is a resource cap, not a promise to fix Windows import; prior120/60/200 caps are not reusable authority or ETA. Preserve concrete failures and source/run/artifact provenance, then seek only specific missing approvals.
+
+---
+
+## Previous observations (historical; latest status above takes precedence)
+
 # EXReader continuation snapshot — scheduled 2026-11-01 01:22 UTC
 Actual check: **2026-11-01T01:18:23Z / 2026-10-31 21:18:23 America/New_York (EDT)**, earlier than the nominal scheduled run. This is a continuation backup, not completion or suspension.
 
