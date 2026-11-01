@@ -364,7 +364,7 @@ def authenticate_graph():
     accepted_states = {}
     build_receipts = authenticated_builds(contract, current, jobs, artifacts)
     for binding in bindings:
-        matches = [j for j in jobs if j["name"] == binding["job"]]
+        matches = [j for j in jobs if j["name"] == producer_job_name(contract, binding["job"])]
         need(len(matches) == 1 and matches[0]["conclusion"] == "success" and
              matches[0]["head_sha"] == current["source_sha"], "failed/missing/duplicate graph producer")
         manifest["producer_jobs"].append({k: matches[0][k] for k in ("id", "name", "head_sha", "conclusion")})
@@ -502,7 +502,7 @@ def authenticate_retained():
     artifacts = pages("actions/runs/" + current["run_id"] + "/artifacts", "artifacts")
     normalized, receipts = [], []
     for binding in bindings:
-        job = [j for j in jobs if j["name"] == binding["job"]]
+        job = [j for j in jobs if j["name"] == producer_job_name(contract, binding["job"])]
         need(len(job) == 1 and job[0]["conclusion"] == "success" and
              job[0]["head_sha"] == current["source_sha"], "retained producer job")
         rows = [a for a in artifacts if a["id"] == ids[binding["key"]]]
