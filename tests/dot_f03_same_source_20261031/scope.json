@@ -272,5 +272,32 @@
       "bytes": 22830839,
       "sha256": "acbbe4e93421e927bf9661d2325c7fd4ef870d470281b53d5616ee8bbbc42e9b"
     }
+  },
+  "gtk_ready_artifact_diagnostic_round": {
+    "authorization_message": "Sentinel_ecb50ceb68d881919a7bce45109f5218",
+    "authorization_utc": "2026-11-01T13:48:26Z",
+    "branch": "dot/f03-gtk-ready-20261101",
+    "case": "f03/gtk-ready-artifact-diagnostic",
+    "marker": "[F03-GTK-ARTIFACT-5-ONE-RUN]",
+    "runner_minutes_cap": 5,
+    "run_limit": 1,
+    "automatic_retries": 0,
+    "allowed_existing_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      "tests/dot_f03_same_source_20261031/verify.py",
+      "tests/dot_f03_same_source_20261031/scope.json",
+      "docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md"
+    ],
+    "status": "prepared_not_run",
+    "fixed_source": "e84c4c5db2b242b61990cca9ee7917fa39fa43e9",
+    "fixed_run": 41311869249,
+    "fixed_attempt": 1,
+    "fixed_job": 124863751211,
+    "fixed_artifact": 13086111887,
+    "fixed_bytes": 22830839,
+    "fixed_zip_sha256": "acbbe4e93421e927bf9661d2325c7fd4ef870d470281b53d5616ee8bbbc42e9b",
+    "diagnostic_only": true,
+    "product_reexecuted": false,
+    "full_F03_accepted": false
   }
 }

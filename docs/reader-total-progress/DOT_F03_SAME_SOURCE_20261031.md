@@ -585,3 +585,19 @@ upload roots, so their availability in the archive is not claimed.
 Next useful bounded action is Actions-only inspection of this fixed original
 artifact and explicit missing-file reporting; that needs a separate CI budget.
 No product/SDK/old assertion is changed, no F03 acceptance or ledger increase.
+
+## Approved fixed GTK diagnostic artifact read ? 2026-11-01 13:48 UTC
+
+Approval Sentinel_ecb50ceb68d881919a7bce45109f5218 covers only the existing
+caller, verify.py, scope.json and this evidence document, one Ubuntu five-minute
+run, no automatic retry or product execution. The new isolated verify mode
+authenticates run41311869249/A1/source e84c4c5db2b242b61990cca9ee7917fa39fa43e9,
+failed job124863751211 and artifact13086111887 by API identity, name, timestamp,
+size and original ZIP digest before safe bounded member reading in Actions.
+It preserves original ZIP bytes and prints only selected window samples, trees,
+properties, Openbox logs and the original hash-bound 27-check report.
+The full inventory records explicit missing selected files and author-profile
+log/state presence; missing content is never fabricated or substituted.
+Original diagnose-original and product audit functions/assertions are unchanged.
+Controller and failed producer identities remain separate. This extracts
+evidence only, never grants F03 acceptance or a new product result.
