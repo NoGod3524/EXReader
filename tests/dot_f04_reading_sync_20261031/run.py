@@ -25,7 +25,7 @@ def retained(path):
 
 def stage_apple(target='iphone', generic=False):
     # Explicit full-round Mac permission preparation; diagnostics remain a separate mode.
-    iphone_record_prep = '1' if target == 'iphone' and generic and os.environ.get('F04_SCOPE') == 'f04/iphone-record-diagnostic' else '0'
+    iphone_record_prep = '1' if target == 'iphone' and generic and os.environ.get('F04_SCOPE') in ('f04/iphone-record-diagnostic', 'f04/six-host') else '0'
     permission_prep = '1' if target == 'macos' and generic and os.environ.get('F04_SCOPE') == 'f04/six-host' else '0'
     source = retained("tests/apple_android_relay/apple/run.py")
     source = replace_once(source, "ROOT = Path(__file__).resolve().parents[3]", "ROOT = Path(" + repr(str(ROOT)) + ")")
