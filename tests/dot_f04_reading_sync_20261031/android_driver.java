@@ -52,6 +52,39 @@ public final class F04AndroidTest extends Instrumentation {
     private void records(){until(n->desc(n,"阅读更多操作")&&n.isEnabled(),this::tap,"reader More",30000);click("阅读记录");}
     private JSONObject frame()throws Exception{String[] raw={null};until(n->id(n,"reader_view")&&n.getExtras().containsKey("exreader.frame"),n->raw[0]=n.getExtras().getString("exreader.frame"),"rendered frame",30000);return new JSONObject(raw[0]);}
     private JSONObject settled()throws Exception{long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){JSONObject f=frame();if(f.optLong("settled_token")>0&&f.optLong("settled_token")==f.optLong("accepted_token")&&f.optLong("settled_revision")==f.optLong("revision")&&f.optLong("bitmap_width")>0&&f.optLong("bitmap_height")>0&&(f.optLong("end")>f.optLong("start")||f.optLong("bounded_visual_boxes")>0))return f;SystemClock.sleep(100);}throw new AssertionError("native frame did not settle");}
+    private void observeForwardAfter(int iteration,JSONObject frame)throws Exception {
+        JSONObject observation=evidence.getJSONArray("forward_actions").getJSONObject(iteration);
+        observation.put("after",frame);
+        AccessibilityNodeInfo root=null,node=null;
+        try{
+            root=getUiAutomation().getRootInActiveWindow();node=find(root,n->id(n,"reader_view"));
+            observation.put("enabled_after_observation",node==null?JSONObject.NULL:node.isEnabled());
+        }catch(RuntimeException unavailable){observation.put("enabled_after_observation","unavailable");}
+        finally{if(node!=null&&node!=root)node.recycle();if(root!=null)root.recycle();}
+    }
+    private JSONObject forwardFromReady(int iteration)throws Exception {
+        long started=SystemClock.elapsedRealtime(),end=started+30000;
+        while(SystemClock.elapsedRealtime()<end){
+            AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow(),node=null;
+            try{
+                node=find(root,n->id(n,"reader_view"));
+                if(node!=null&&node.isEnabled()&&node.getExtras().containsKey("exreader.frame")){
+                    JSONObject f=new JSONObject(node.getExtras().getString("exreader.frame"));
+                    if(f.optLong("settled_token")>0&&f.optLong("settled_token")==f.optLong("accepted_token")&&f.optLong("settled_revision")==f.optLong("revision")&&f.optLong("bitmap_width")>0&&f.optLong("bitmap_height")>0&&(f.optLong("end")>f.optLong("start")||f.optLong("bounded_visual_boxes")>0)){
+                        JSONObject observation=new JSONObject().put("iteration",iteration).put("wait_ms",SystemClock.elapsedRealtime()-started).put("enabled_before",node.isEnabled()).put("before",f);
+                        if(!evidence.has("forward_actions"))evidence.put("forward_actions",new JSONArray());
+                        evidence.getJSONArray("forward_actions").put(observation);
+                        boolean accepted=node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);
+                        observation.put("action_accepted",accepted);
+                        need(accepted,"native forward action");
+                        return f;
+                    }
+                }
+            }finally{if(node!=null&&node!=root)node.recycle();if(root!=null)root.recycle();}
+            SystemClock.sleep(100);
+        }
+        throw new AssertionError("UI timeout: page forward");
+    }
     private void chapterBoundaries(File original)throws Exception {
         // Independent public-owner boundary fixture, never the application's
         // library.db. The actual relay still receives/reads/saves solely by UI.
@@ -244,8 +277,8 @@ public final class F04AndroidTest extends Instrumentation {
                 jumpRecord(recordWith(rows,input.optString("incoming_prefix","F04_APPLE")+"_NOTE"),input.optString("incoming_prefix","F04_APPLE")+"_NOTE","incoming_note_frame");
             });
             check("real_forward_pages_and_application_save",()->{
-                JSONObject before=settled();for(int i=0;i<3;i++){JSONObject old=settled();until(n->id(n,"reader_view"),n->need(n.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD),"native forward action"),"page forward",30000);
-                    long end=SystemClock.elapsedRealtime()+30000;boolean moved=false;while(SystemClock.elapsedRealtime()<end){JSONObject now=settled();if(now.getLong("part")!=old.getLong("part")||now.getLong("start")!=old.getLong("start")){moved=true;break;}SystemClock.sleep(100);}need(moved,"real EPUB page advanced");}
+                JSONObject before=null;for(int i=0;i<3;i++){JSONObject old=forwardFromReady(i);if(i==0)before=old;
+                    long end=SystemClock.elapsedRealtime()+30000;boolean moved=false;while(SystemClock.elapsedRealtime()<end){JSONObject now=settled();if(now.getLong("part")!=old.getLong("part")||now.getLong("start")!=old.getLong("start")){observeForwardAfter(i,now);moved=true;break;}SystemClock.sleep(100);}need(moved,"real EPUB page advanced");}
                 JSONObject after=settled();need(after.getLong("part")>before.getLong("part")||after.getLong("start")>before.getLong("start"),"later reading position");evidence.put("outgoing_frame",after);records();click("保存进度");until(n->desc(n,"阅读记录状态")&&text(n).contains("已保存"),null,"application progress saved",30000);
                 JSONObject saved=location();onTarget(after,saved);need(!saved.getString("head").equals(evidence.getJSONObject("incoming_location").getString("head")),"new app revision");evidence.put("location",saved);click("关闭");
             });

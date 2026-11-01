@@ -6,7 +6,7 @@ on:
     inputs:
       case:
         type: choice
-        options: [f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory]
+        options: [f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory, f04/android-ready-diagnostic]
         default: f03/gtk-android
         required: true
 permissions:
@@ -248,4 +248,12 @@ jobs:
     uses: ./.github/workflows/dot-f04-reading-sync-20261031.yml
     with:
       case: f04/artifact-inventory
+      controller_sha: ${{ github.sha }}
+
+  f04_android_ready_diagnostic:
+    name: F04 Android ready diagnostic
+    if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f04/android-ready-diagnostic' || github.event_name == 'push' && contains(github.event.head_commit.message, '[F04-ANDROID-READY-25-ONE-RUN]')) }}
+    uses: ./.github/workflows/dot-f04-reading-sync-20261031.yml
+    with:
+      case: f04/android-ready-diagnostic
       controller_sha: ${{ github.sha }}
