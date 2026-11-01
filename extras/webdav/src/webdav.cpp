@@ -280,6 +280,7 @@ struct sink {
 struct response { int status=0;std::string location;uint64_t length=0;bool has_length=false; };
 struct upload {
   std::FILE *file=nullptr;uint64_t length=0,sent=0;const exr_webdav_control *control;
+  exr_webdav_read_source source=nullptr;void *source_context=nullptr;
   upload(const char *name,uint64_t expected,const exr_webdav_control *c):length(expected),control(c){
     if(!name || !expected || expected>UINT64_C(128)*1024*1024)reject(EXR_DAV_ARGUMENT,"Invalid bounded upload file");
     std::filesystem::path p=std::filesystem::u8path(name);
@@ -292,10 +293,21 @@ struct upload {
 #endif
     if(!file)reject(EXR_DAV_IO,"Upload source is unavailable");
   }
+  upload(uint64_t expected,exr_webdav_read_source fn,void *context,const exr_webdav_control *c)
+    :length(expected),control(c),source(fn),source_context(context){
+    if(!fn||!expected||expected>UINT64_C(128)*1024*1024)reject(EXR_DAV_ARGUMENT,"Invalid bounded upload source");
+  }
   ~upload(){if(file)std::fclose(file);}
   size_t read(void *data,size_t capacity){
-    cancelled(control);size_t want=(size_t)std::min<uint64_t>(capacity,length-sent);
-    size_t got=std::fread(data,1,want,file);if(got!=want)reject(EXR_DAV_IO,"Upload source changed or became unreadable");
+    cancelled(control);if(sent>length)reject(EXR_DAV_LIMIT,"Upload offset exceeds bound");
+    size_t want=(size_t)std::min<uint64_t>(capacity,length-sent),got=0;
+    if(!want)return 0;
+    if(source){
+      exr_webdav_status code=EXR_DAV_IO;
+      try{code=source(source_context,sent,data,want,&got);}catch(...){reject(EXR_DAV_IO,"Upload source callback threw");}
+      if(code!=EXR_DAV_OK)reject(code==EXR_DAV_CANCELLED?EXR_DAV_CANCELLED:EXR_DAV_IO,"Upload source callback refused");
+    }else got=std::fread(data,1,want,file);
+    if(got!=want)reject(EXR_DAV_IO,"Upload source changed or became unreadable");
     sent+=got;if(control&&control->progress)control->progress(control->context,sent);return got;
   }
 };
@@ -673,7 +685,7 @@ extern "C" exr_webdav_status exr_webdav_create(const exr_webdav_config *config,e
 }
 extern "C" void exr_webdav_free(exr_webdav_client *client) {
 #ifdef EXR_WEBDAV_MANAGED
-  if(client&&client->managed&&client->managed->owner!=std::this_thread::get_id())return;
+  if(client&&client->managed&&(client->managed->owner!=std::this_thread::get_id()||client->managed->snapshot_active))return;
 #endif
 #ifdef __ANDROID__
   if(!android_release(client))return;
@@ -795,6 +807,23 @@ extern "C" exr_webdav_status exr_webdav_publish_file(exr_webdav_client *client,c
   }catch(const failure &f){return report(error,f);}catch(...){return report(error,{EXR_DAV_IO,"Cannot publish immutable private file",0});}
 }
 
+extern "C" exr_webdav_status exr_webdav_publish_source(exr_webdav_client *client,const char *resource,uint64_t bytes,exr_webdav_read_source source,void *context,const exr_webdav_control *control,exr_webdav_error *error){
+  clean(error);try{
+    if(!client||!resource)reject(EXR_DAV_ARGUMENT,"Missing immutable upload request");
+#ifdef __ANDROID__
+    android_operation operation(client);
+#elif defined(EXR_WEBDAV_APPLE_URLSESSION)
+    apple_operation operation(client);
+#endif
+    std::string relative=path(resource,false);if(relative.empty()||relative.back()=='/'||bytes>client->max_download)reject(EXR_DAV_ARGUMENT,"Invalid bounded immutable upload");
+    upload input(bytes,source,context,control);url target=client->root;target.path+=relative;std::vector<unsigned char> body;sink output{65536,0,control,&body,nullptr};
+    response r=perform(*client,target,"PUT",-202,output,clock_type::now()+std::chrono::milliseconds(client->timeout),&input);
+    if(redirect(r.status))reject(EXR_DAV_REDIRECT,"Immutable writes do not follow redirects");
+    if(r.status==412)reject(EXR_DAV_EXISTS,"Remote immutable identity requires verification",412);
+    cancelled(control);return EXR_DAV_OK;
+  }catch(const failure &f){return report(error,f);}catch(...){return report(error,{EXR_DAV_IO,"Cannot publish immutable bounded source",0});}
+}
+
 #ifdef EXR_WEBDAV_MANAGED
 extern "C" exr_webdav_status exr_webdav_managed_enable(exr_webdav_client *c,const char *profile,exr_webdav_error *error) {
   clean(error);
@@ -814,5 +843,52 @@ extern "C" int exr_webdav_managed_recover_profile(const char *profile,exr_webdav
   managed_pool p;
   try{p.open(profile);}catch(const failure &){}catch(...){p.view.status=EXR_WC_IO;}
   p.summarize();*out=p.view;return p.view.status;
+}
+#endif
+
+#ifdef EXR_WEBDAV_MANAGED
+struct exr_webdav_owned_snapshot {
+  managed_pool *pool=nullptr;unsigned index=0;exr_wc_tx *tx=nullptr;
+};
+extern "C" exr_webdav_status exr_webdav_snapshot_begin(exr_webdav_client *c,exr_webdav_owned_snapshot **out,int *fd,exr_webdav_error *error){
+  clean(error);if(out)*out=nullptr;if(fd)*fd=-1;
+  try{
+    if(!c||!c->managed||!out||!fd)reject(EXR_DAV_ARGUMENT,"Missing managed snapshot capability");
+    auto &p=*c->managed;p.check_owner();
+    if(p.snapshot_active)reject(EXR_DAV_IO,"An upload snapshot is active");
+    p.recover_snapshots();
+    for(unsigned i=0;i<p.view.roots;i++)if(p.purpose[i]=='S'&&(p.view.root[i].pending||p.view.root[i].unbound||p.view.root[i].refused||p.view.root[i].receipt_uncertain))
+      reject(EXR_DAV_IO,"Registered upload cleanup remains pending");
+    std::unique_ptr<exr_webdav_owned_snapshot> h(new exr_webdav_owned_snapshot);
+    h->pool=&p;h->index=p.select('S');auto &r=p.view.root[h->index];
+    int code=exr_wc_begin(p.handles[h->index],&h->tx,fd);
+    if(code!=EXR_WC_OK){r.status=code;r.receipt_uncertain=code==EXR_WC_UNCERTAIN;p.inspect(h->index);p.fail(code,"Cannot reserve upload snapshot",errno);}
+    p.snapshot_active=true;p.inspect(h->index);*out=h.release();return EXR_DAV_OK;
+  }catch(const failure &f){return report(error,f);}catch(...){return report(error,{EXR_DAV_IO,"Cannot begin upload snapshot",0});}
+}
+extern "C" exr_webdav_status exr_webdav_snapshot_seal(exr_webdav_owned_snapshot *h,uint64_t expected,int *fd,exr_webdav_error *error){
+  clean(error);if(fd)*fd=-1;
+  try{
+    if(!h||!h->tx||!fd||!expected||expected>UINT64_C(128)*1024*1024)reject(EXR_DAV_ARGUMENT,"Invalid upload snapshot seal");
+    auto &p=*h->pool;p.check_owner();auto &r=p.view.root[h->index];
+    int code=exr_wc_seal(h->tx);
+    if(code==EXR_WC_OK)code=exr_wc_borrow_sealed_fd(h->tx,fd);
+    if(code!=EXR_WC_OK){r.status=code;r.receipt_uncertain=code==EXR_WC_UNCERTAIN;p.inspect(h->index);p.fail(code,"Cannot seal upload snapshot",errno);}
+    struct stat st{};if(fstat(*fd,&st)||st.st_size<0||(uint64_t)st.st_size!=expected){*fd=-1;reject(EXR_DAV_IO,"Upload snapshot length differs");}
+    p.inspect(h->index);return EXR_DAV_OK;
+  }catch(const failure &f){return report(error,f);}catch(...){return report(error,{EXR_DAV_IO,"Cannot seal upload snapshot",0});}
+}
+extern "C" exr_webdav_status exr_webdav_snapshot_close(exr_webdav_owned_snapshot **out,exr_webdav_error *error){
+  clean(error);if(!out||!*out)return EXR_DAV_OK;
+  auto *h=*out;
+  if(h->pool->owner!=std::this_thread::get_id())return report(error,{EXR_DAV_ARGUMENT,"Snapshot close requires its owner",0});
+  auto &p=*h->pool;auto &r=p.view.root[h->index];exr_wc_cleanup_result result{};
+  int code=exr_wc_cleanup(h->tx,1,&result);
+  r.status=code;r.receipt_uncertain=result.receipt_uncertain;
+  if(result.native_error)p.view.native_error=result.native_error;
+  exr_wc_tx_close(&h->tx);p.snapshot_active=false;p.inspect(h->index);
+  delete h;*out=nullptr;
+  if(code!=EXR_WC_OK)return report(error,{EXR_DAV_IO,"Upload cleanup remains registered and pending",0});
+  return EXR_DAV_OK;
 }
 #endif
