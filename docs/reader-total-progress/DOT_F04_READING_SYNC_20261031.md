@@ -1,3 +1,21 @@
+# Latest continuation — 2026-11-01 07:32 UTC
+
+## Sealed pixel-scroll round (not acceptance)
+- Run **41284680303 A1**, source **13ae646b11353473bb09459603a16396c1aa89d5**, Mac job **124783470950**: **failure**, 78.244-second original UI test; other 27 jobs skipped. Single 15 runner-minute authorization consumed (1/1), no retry.
+- Native pixel scrolling fixed jump.2: y512 → 496 → 472 → 450 inside actual list y261..474. Original native click, exact-position status and incoming-bookmark checkpoint passed.
+- Next jump.3 was enabled but virtualized: frame (0,768,0,0), not hittable. The preparation positive-size gate failed before scrolling/clicking this row. This is not proof of a product resolver failure.
+- Artifact **13075115412**, **42344277 bytes**, SHA256 **89e6a2c7c7db3878cbbc53d990f2ad17581a43b3a09f70fcfa57727601501ab1**, same source/run, diagnostic_only=true, passed=false, F04_accepted=false. Previous three-platform failed round and successful iPhone/iPad diagnostics remain separately sealed below.
+
+## Approved virtual-row preparation round
+- Explicit approval **2026-11-01 07:32:25 UTC**, message **Sentinel_c32e0fdac5d4819194b19d1a8e4f12f0**. Exactly the same three existing paths: apple_driver.swift, contract.json and this evidence document. One fresh Mac diagnostic, at most **15 runner-minutes**, no automatic retry; F03 is the sole canonical writer/trigger after F12 actual-diff review.
+- Mac jump/edit share native materialization plus pixel convergence. Temporarily absent/zero-size target gets bounded three-second fresh queries; duplicates fail. Real positive visible same-list row anchors and their actual enumerated indices guide native scroll preparation. Placeholder rectangles never supply position or direction.
+- Shared limit: **20 scrolls / 21 admission checks**. First step ≤16px; subsequent ≤24px and ≤20% viewport height. Direction calibration uses actual same-anchor/target signed displacement; stable visible-set turnover proves progress only. Three stable observations, 0.1-second sampling, 0.5px tolerance, three-second settle timeout. A newly materialized target may proceed on its own stable positive frame without requiring the old anchor to survive.
+- Final admission remains unique target, positive dimensions, complete containment in actual bounds, enabled/hittable, exactly one native click, followed by every original exact-position and data assertion. Four-pixel margin guides scrolling only. Overshoot halves cap. No coordinate clicks, fake frames, product hooks or iOS changes.
+- All original source/SDK/Android atomic pins, cumulative six-path production-equivalence allowlist, workflow and runtime entry are unchanged. No local execution, syntax/test run, or ZIP handling; all runtime verification is Actions-only.
+- Preparation status: pending F12 actual-diff review and F03 trigger. This document does not claim a new run or test result. Formal acceptance remains **96/108**; F04 incomplete.
+
+---
+
 # Latest continuation — 2026-11-01 07:21 UTC
 
 ## Three-Apple diagnostic sealed; single Mac pixel-scroll round approved
