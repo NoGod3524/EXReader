@@ -73,11 +73,14 @@ def parse(text):
     return result
 def run_suite(binary,old,boundary,out):
     out.mkdir(parents=True,exist_ok=True);private=out.parent.parent/'snapshot-private';private.mkdir(mode=0o700)
-    cert=private/'cert.pem';key=private/'key.pem'
+    cert=private/'cert.crt';key=private/'key.pem'
     subprocess.run(['openssl','req','-x509','-newkey','rsa:2048','-nodes','-days','1','-keyout',str(key),'-out',str(cert),'-subj','/CN=127.0.0.1','-addext','subjectAltName=IP:127.0.0.1,DNS:localhost'],check=True,capture_output=True)
     sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'webdav'))
     from cloud_native import trust_fixture_certificates
     trust_fixture_certificates((cert,),'f10-owned-')
+    trust=subprocess.run(['openssl','verify','-CAfile','/etc/ssl/certs/ca-certificates.crt',str(cert)],capture_output=True,text=True)
+    print(json.dumps({'system_trust_verify':trust.returncode,'stdout':trust.stdout,'stderr':trust.stderr}),flush=True)
+    if trust.returncode:raise RuntimeError('System trust verification failed; behavior cases not started')
     rows=[]
     def case(name,fn):
         work=private/name;work.mkdir(mode=0o700);server=Server(cert,key);checks={};raw=[]
@@ -86,6 +89,7 @@ def run_suite(binary,old,boundary,out):
         finally:server.close()
         result={'name':name,'checks':checks,'requests':server.requests,'stored':{k:sha(v) for k,v in server.data.items()},'raw':raw}
         (out/(name+'.json')).write_text(json.dumps(result,indent=2)+'\n');rows.append(result)
+        print(json.dumps({'snapshot_observation':result}),flush=True)
     def callback(kind):
         def f(w,s,c,raw):
             s.mode='redirect' if kind=='redirect' else 'normal'
@@ -96,7 +100,15 @@ def run_suite(binary,old,boundary,out):
             c['no_redirect_request']=int(not any(x['path']=='/dav/other' for x in s.requests))
             c['conditional']=int(all(x.get('if_none_match')=='*' for x in s.requests if x['method']=='PUT'))
         return f
-    for kind in ['normal','error','short','overflow','throw','cancel','zero','limit','redirect','exists']:case('callback-'+kind,callback(kind))
+    # Existing callback-normal is also the same native HTTPS fail-fast preflight.
+    # Its original independent audit assertions remain unchanged.
+    case('callback-normal',callback('normal'))
+    preflight=rows[-1]
+    expected={'put':0,'exit':0,'offset':len(BODY),'exact_body':1,'conditional':1,'no_redirect_request':1}
+    if any(preflight['checks'].get(k)!=v for k,v in expected.items()) or preflight['stored'].get('/dav/body')!=sha(BODY):
+        raise RuntimeError('Native verified HTTPS preflight failed; remaining behavior cases not started')
+    print(json.dumps({'native_https_preflight':'passed','case':'callback-normal'}),flush=True)
+    for kind in ['error','short','overflow','throw','cancel','zero','limit','redirect','exists']:case('callback-'+kind,callback(kind))
     def basic(w,s,c,raw):
         h=Interactive(binary,w,s.url);c['enable']=h.enabled;c['begin']=h.cmd('begin');c['write']=h.cmd('write');c['seal']=h.cmd('seal')
         c['busy']=h.cmd('busy');c['put']=h.cmd('put');c['offset']=h.take('offset');c['close']=h.cmd('close');c['fd_closed']=h.take('fd_closed')
