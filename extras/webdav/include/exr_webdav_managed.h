@@ -39,6 +39,24 @@ exr_webdav_status exr_webdav_managed_observe(const exr_webdav_client *,exr_webda
  * Does not access the SDK or network. Return value is the snapshot status.
  */
 int exr_webdav_managed_recover_profile(const char *profile,exr_webdav_managed_snapshot *);
+/* Linux owned upload snapshots. The client and snapshot stay on the enabling
+ * worker; only one snapshot may be active. begin is the explicit opt-in that
+ * atomically upgrades a v1 registry to v2 purpose records when it first needs
+ * an S root. Download D roots retain their UUID and recovery semantics.
+ * Total capacity remains 16 roots x 64 lifetime slots across both purposes.
+ * Old binaries refuse v2. No downgrade or restoration of old registry is safe.
+ * Borrowed write fd expires at seal; borrowed O_RDONLY fd expires at close.
+ * Use pread; do not close/dup/fork borrowed descriptors or reenter the client.
+ * Close attempts cleanup and always releases the handle; non-OK means retained
+ * registered cleanup work, not rollback of a remotely committed PUT.
+ * Freeing the client while a snapshot is active is refused.
+ */
+typedef struct exr_webdav_owned_snapshot exr_webdav_owned_snapshot;
+exr_webdav_status exr_webdav_snapshot_begin(exr_webdav_client *,
+  exr_webdav_owned_snapshot **,int *borrowed_write_fd,exr_webdav_error *);
+exr_webdav_status exr_webdav_snapshot_seal(exr_webdav_owned_snapshot *,
+  uint64_t expected_bytes,int *borrowed_read_fd,exr_webdav_error *);
+exr_webdav_status exr_webdav_snapshot_close(exr_webdav_owned_snapshot **,exr_webdav_error *);
 #ifdef __cplusplus
 }
 #endif
