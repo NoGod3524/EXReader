@@ -338,7 +338,7 @@ jobs:
           path: sdk-input/team24-apple-sdk-macos-f04
           merge-multiple: true
       - name: Original Apple project dependency
-        run: ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document
+        run: ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
       - name: Real macos application receives Android records and republishes
         run: |
           python3 tests/dot_f04_reading_sync_20261031/run.py macos-peer --phase macos-peer --previous build/incoming/state.json --original build/apple-android/original/epub-alice.epub --incoming-prefix F04_ANDROID
@@ -395,7 +395,7 @@ jobs:
           path: sdk-input/team24-apple-sdk-iphonesimulator-f04
           merge-multiple: true
       - name: Original Apple project dependency
-        run: ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document
+        run: ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
       - name: Real iphone application receives Android records and republishes
         run: |
           python3 tests/dot_f04_reading_sync_20261031/run.py iphone-peer --phase iphone-peer --previous build/incoming/state.json --original build/apple-android/original/epub-alice.epub --incoming-prefix F04_ANDROID
@@ -452,7 +452,7 @@ jobs:
           path: sdk-input/team24-apple-sdk-iphonesimulator-f04
           merge-multiple: true
       - name: Original Apple project dependency
-        run: ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document
+        run: ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
       - name: Real ipad application receives Android records and republishes
         run: |
           python3 tests/dot_f04_reading_sync_20261031/run.py ipad-peer --phase ipad-peer --previous build/incoming/state.json --original build/apple-android/original/epub-alice.epub --incoming-prefix F04_ANDROID
