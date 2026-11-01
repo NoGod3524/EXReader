@@ -81,6 +81,12 @@ def download():
     run = api("/actions/runs/" + str(LOCK["producer_run"]))
     need(run["head_sha"] == LOCK["producer_source"] and run["run_attempt"] == 1, "producer_run_identity")
     need(run["status"] == "completed" and run["conclusion"] == "success", "producer_not_success")
+    job = api("/actions/jobs/" + str(LOCK["producer_job"]))
+    need(job["id"] == LOCK["producer_job"] and job["run_id"] == LOCK["producer_run"]
+         and job["status"] == "completed" and job["conclusion"] == "success", "producer_job_identity")
+    need(not job.get("head_sha") or job["head_sha"] == LOCK["producer_source"], "producer_job_source")
+    REPORT["producer_job"] = {key: job.get(key) for key in
+                             ("id", "run_id", "head_sha", "status", "conclusion", "started_at", "completed_at", "html_url")}
     meta = api("/actions/artifacts/" + str(a["id"]))
     need(meta["id"] == a["id"] and meta["name"] == a["name"] and meta["size_in_bytes"] == a["bytes"], "artifact_identity")
     need(meta.get("expired") is False and meta.get("digest") == "sha256:" + a["sha256"], "artifact_digest_or_expired")
@@ -184,8 +190,12 @@ def correlate(rows, libraries, known):
                           canonical(ntpath.splitext(ntpath.basename(archive))[0])]
             paths = sorted({x["resolved"] for x in candidates})
             roles = [role for role, path in known.items() if paths == [canonical(path)]]
+            map_path = archive if archive.lower().endswith(".lib") else archive + ".lib"
+            map_path_consistent = (ntpath.basename(archive) == archive or
+                                   (ntpath.isabs(archive) and paths == [canonical(map_path)]))
             checks = {"sqlite_member": member.lower() in ("sqlite3.c.obj", "sqlite3.c.o"),
-                      "one_rsp_path": len(paths) == 1, "known_archive": len(roles) == 1}
+                      "one_rsp_path": len(paths) == 1, "known_archive": len(roles) == 1,
+                      "map_path_consistent": map_path_consistent}
             item.update(member=member, map_archive=archive, rsp_paths=paths, checks=checks)
             if all(checks.values()):
                 item.update(role=roles[0], archive_bound=True)
@@ -209,6 +219,7 @@ def controls():
     check("duplicate_basename_negative", lambda: not correlate(row, libs + [{"spelling": r"D:\other\exr_vendor_exr_sqlite.lib", "resolved": canonical(r"D:\other\exr_vendor_exr_sqlite.lib")}], known)[0]["archive_bound"])
     check("non_sqlite_member_negative", lambda: not correlate(map_rows(sample.replace("sqlite3.c.obj", "unrelated.obj")), libs, known)[0]["archive_bound"])
     check("bare_object_unbound", lambda: not correlate(map_rows(sample.replace("exr_vendor_exr_sqlite:sqlite3.c.obj", "sqlite3.c.obj")), libs, known)[0]["archive_bound"])
+    check("foreign_absolute_map_negative", lambda: not correlate(map_rows(sample.replace("exr_vendor_exr_sqlite:sqlite3.c.obj", r"C:\foreign\exr_vendor_exr_sqlite.lib:sqlite3.c.obj")), libs, known)[0]["archive_bound"])
     def badzip(name, duplicate=False):
         b = io.BytesIO()
         with zipfile.ZipFile(b, "w") as z:
