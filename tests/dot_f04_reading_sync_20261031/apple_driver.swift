@@ -92,7 +92,7 @@ final class F04ReadingSyncUITests: XCTestCase {
             if item.exists {
                 value["enabled"] = item.isEnabled
                 value["hittable"] = item.isHittable
-                value["frame"] = NSStringFromCGRect(item.frame)
+                value["frame"] = String(describing: item.frame)
                 if let snapshot = try? item.snapshot() {
                     value["label"] = String(snapshot.label.prefix(2048))
                     value["value"] = String(((snapshot.value as? String) ?? "").prefix(2048))
