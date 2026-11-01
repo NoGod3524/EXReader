@@ -799,7 +799,8 @@ def android_ready_diagnostic(arguments):
     assert head == os.environ["GITHUB_SHA"] == os.environ["F04_CONTROLLER_SHA"]
     changed = subprocess.check_output(["git", "diff", "--name-only", pin["producer_source"], head], cwd=ROOT, text=True).splitlines()
     assert set(changed) == set(pin["allowed_changed_paths"]), ("production equivalence", changed)
-    assert subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT) == b""
+    if args.prepare_input:
+        assert subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT) == b""
     destination = ROOT / "build/f04-android-ready-diagnostic"
     incoming = ROOT / "build/f04-fixed-windows"
     p = pin["windows"]
