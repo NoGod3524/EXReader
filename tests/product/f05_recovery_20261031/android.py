@@ -11,6 +11,7 @@ import secrets
 import shlex
 import sqlite3
 import subprocess
+import sys
 import time
 import xml.etree.ElementTree as ET
 from fixture import Store, write_role_receipt
@@ -294,6 +295,7 @@ def main():
         panel();status=sync()
         if "冲突" not in status: raise AssertionError("native conflict status missing")
         (a.output/"conflict.png").write_bytes(adb("exec-out","screencap","-p"))
+        evidence.append("conflict.png")
         close_panel();after=snapshot("concurrent")
         if not set(local["heads"]).issubset(after["heads"]) or len(after["heads"])<2:
             raise AssertionError("offline local branch lost after reconnect")
@@ -309,12 +311,14 @@ def main():
                     competing_heads=after["heads"],final_heads=after["heads"],tombstone_preserved=True,
                     delete_conflict_displayed=False,stale_peer_did_not_resurrect=False,
                     explicit_user_restore=False,uncovered="native delete detail and explicit stale replay")
+        normalized[-1]["source_evidence"].append("conflict.png")
         report["cases"].append({"name":"offline_reconnect_heads_preserved","outcome":"passed",
             "before":before,"offline":local,"after":after,"native_conflict_text":status,
             "scope":"retained concurrent heads and generic conflict, not deletion-specific UI"})
         finish_case({"offline_reconnect":"author","concurrent_heads_preserved":"receiver"},
                     request_start=reconnect_start,competing_heads=after["heads"],
                     final_heads=after["heads"],conflict_displayed=True,explicit_user_resolution=False)
+        normalized[-1]["source_evidence"].append("conflict.png")
         dav.offline=True
         offline_requests=len(dav.requests)
         pid=shell("pidof",PACKAGE).decode().strip()
@@ -370,4 +374,70 @@ def main():
         if cleanup_errors and "failure" not in report:
             raise RuntimeError("F05 Android cleanup failed; see coverage cleanup_errors")
 
-if __name__=="__main__":main()
+
+def retained(argv):
+    """Only the reviewed CLI-choice adapter; keep the original assertions intact."""
+    if os.environ.get("GITHUB_ACTIONS")!="true":
+        raise RuntimeError("Actions only")
+    p=argparse.ArgumentParser()
+    for key in ("fixture","reading-fixtures","output","sdk-prefix"):
+        p.add_argument("--"+key,type=Path,required=True)
+    a=p.parse_args(argv)
+    root=Path(__file__).resolve().parents[3]
+    source=root/"tests/reader_host_session_android/run_ui.py"
+    blob=subprocess.check_output(["git","hash-object",str(source)],cwd=root,text=True).strip()
+    if blob!="7ffae7d6e2ede90848efa954031561b145725e4e":
+        raise AssertionError("original Android 16-check runner blob changed")
+    raw=source.read_bytes()
+    old=b"choices=('3.40.0','3.41.0')"
+    new=b"choices=('3.40.0','3.41.0','3.42.0')"
+    if raw.count(old)!=1 or new in raw:
+        raise AssertionError("reviewed SDK CLI adaptation does not apply exactly once")
+    adapted=raw.replace(old,new,1)
+    if adapted.replace(new,old,1)!=raw:
+        raise AssertionError("adapter changed more than the exact CLI choices")
+    header=a.sdk_prefix/"include/exr/base.h"
+    if '#define EXR_VERSION "3.42.0"' not in header.read_text():
+        raise AssertionError("actual installed SDK header is not 3.42.0")
+    a.output.mkdir(parents=True,exist_ok=False)
+    temporary=a.output/"original-runner-sdk342.py"
+    temporary.write_bytes(adapted)
+    metadata={"adapter_applied":True,"original_path":source.relative_to(root).as_posix(),
+        "original_blob":blob,"original_sha256":hashlib.sha256(raw).hexdigest(),
+        "adapted_sha256":hashlib.sha256(adapted).hexdigest(),
+        "exact_replacements":1,"before":old.decode(),"after":new.decode(),
+        "original_file_unchanged":True,"expected_original_checks":16,
+        "installed_header":{"path":str(header.resolve()),"sha256":hashlib.sha256(header.read_bytes()).hexdigest()},
+        "runtime_sdk_identity_verified":False,"passed":False}
+    try:
+        evidence=a.output/"original-ui"
+        sys.argv=[str(temporary),"--fixture",str(a.fixture.resolve()),
+            "--reading-fixtures",str(a.reading_fixtures.resolve()),"--output",str(evidence),
+            "--sdk-version","3.42.0"]
+        # Preserve only the original relative-import anchor. The executed bytes
+        # are the saved, hash-recorded adapter; traceback identifies that copy.
+        namespace={"__name__":"__main__","__file__":str(source)}
+        exec(compile(temporary.read_bytes(),str(temporary),"exec"),namespace)
+        result=json.loads((evidence/"result.json").read_text())
+        spec=json.loads((Path(__file__).parent/"manifest.json").read_text())["retained_suites"]["android-host-sync-16"]
+        if not result["accepted"] or result["checks"]!=16:
+            raise AssertionError("original Android suite did not retain all 16 checks")
+        if [phase["phase"] for phase in result["phases"]]!=list(spec["phases"]):
+            raise AssertionError("original Android phase order changed")
+        for phase in result["phases"]:
+            expected=spec["phases"][phase["phase"]]
+            if phase["expected_sdk_version"]!="3.42.0" or phase["count"]!=len(expected) or [check["name"] for check in phase["checks"]]!=expected or not all(check["pass"] is True for check in phase["checks"]):
+                raise AssertionError("original Android actual SDK or assertions differ")
+        if len({phase["pid"] for phase in result["phases"]})!=4 or len(result["boundaries"])!=2:
+            raise AssertionError("original Android restart/cancellation boundaries missing")
+        if source.read_bytes()!=raw:
+            raise AssertionError("original repository runner was modified")
+        metadata["runtime_sdk_identity_verified"]=True
+        metadata["passed"]=True
+    finally:
+        (a.output/"adapter.json").write_text(json.dumps(metadata,indent=2)+"\n",encoding="utf-8")
+
+if __name__=="__main__":
+    if len(sys.argv)>1 and sys.argv[1]=="retained":retained(sys.argv[2:])
+    else:main()
+
