@@ -164,7 +164,7 @@ def main():
         title=selected[0]["payload"]["title"]
         original=selected[0]["payload"]
         leaf=original["source_sha256"]+"."+original["format"]
-        if not re.fullmatch(r"[0-9a-f]{64}\\.[a-z0-9]+",leaf):
+        if not re.fullmatch(r"[0-9a-f]{64}\.[a-z0-9]+",leaf):
             raise AssertionError("invalid fixed original cache identity")
         cache="files/sync-cache/"+leaf
         body=adb("exec-out","run-as",PACKAGE,"cat",cache)
@@ -289,9 +289,17 @@ def main():
         raise RuntimeError(safe) from None
     finally:
         report["requests"]=dav.requests
-        report["uncovered"]=["actual original offline reopening","independent artifact authentication"]
-        (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
-        dav.close()
-        adb("reverse","--remove","tcp:"+str(dav.server.server_port))
+        report["uncovered"]=["native deletion conflict operation detail","independent artifact authentication"]
+        cleanup_errors=[]
+        for label, action in (
+            ("fixture-close", dav.close),
+            ("remove-own-adb-reverse", lambda: adb("reverse","--remove","tcp:"+str(dav.server.server_port)))):
+            try: action()
+            except BaseException as error:
+                cleanup_errors.append({"action":label,"error":repr(error).replace(password,"<generated-fixture-secret>").replace(auth,"<generated-fixture-auth>")})
+        report["cleanup_errors"]=cleanup_errors
+        (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+        if cleanup_errors and "failure" not in report:
+            raise RuntimeError("F05 Android cleanup failed; see coverage cleanup_errors")
 
 if __name__=="__main__":main()
