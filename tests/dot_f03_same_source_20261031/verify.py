@@ -264,8 +264,11 @@ def collect_original_archives(root, stamp):
                         ":" not in name and ".." not in name.split("/"),"unsafe/duplicate ZIP member")
                 raw=archive.read(entry)
                 local=root/host/name
-                require(local.is_file() and local.stat().st_size==len(raw) and
-                        digest(local)==hashlib.sha256(raw).hexdigest(),"downloaded evidence differs from original ZIP")
+                require(not local.exists(),"refuse preexisting artifact member")
+                local.parent.mkdir(parents=True,exist_ok=True)
+                local.write_bytes(raw)
+                require(local.stat().st_size==len(raw) and digest(local)==hashlib.sha256(raw).hexdigest(),
+                        "extracted evidence differs from original ZIP")
                 members[name]={"bytes":len(raw),"sha256":hashlib.sha256(raw).hexdigest()}
         receipts[host]={"artifact_id":artifact["id"],"job_id":job["id"],
             "archive_sha256":hashlib.sha256(body).hexdigest(),"members":members}
