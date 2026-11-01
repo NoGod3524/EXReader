@@ -809,3 +809,9 @@ Only the owner name set and manual OK marker migrate from 17 to the actual 18 ca
 - Original all-exits remains rejected with the exact ValueError: original shelf acceptance missing. Original failed suite/run and negative script are preserved; no fabricated positive shelf result.
 - Diagnostic artifact 13093587748, reader-suite-f03-owner-core-41332679953-1, 2558 bytes, SHA256 e43467997a838a565f40d5e50146042fe7f2fb77e41f3e7470a15bbca0d77b0b.
 - accepted=false, full_F03_accepted=false, product_reexecuted=false, formal credit 0. Next runtime validation requires a separately authorized exact identity exception for the now-pinned owner checker; no automatic Android or cross-host rerun.
+
+## Android original complete retained suite with reviewed owner checker, 2026-11-01 17:45 approval
+
+Four existing paths only: F03 identity, caller, scope, evidence document. New exact branch dot/f03-android-owner-20261101 and case f03/android-owner-retained enable exactly seven fixed reviewed exception blobs: original six plus owner checker b5a03e0657db93b413fdcc98671c92575c4437cb. Checker/test/product/SDK code is frozen; original 26-path contract, all old routes and production/SDK pins remain unchanged.
+
+One Ubuntu Android job with original complete retained build/API34 recipe, 120 runner-min maximum, no retry. No GTK, cross-host receive or audit. This revalidates actual downstream suites after the historical owner core migration; prior shelf refusal followed an upstream emulator-stage failure and is not proof of an independent shelf defect or future success. Prepared, not run. F03 pending/unaccepted; formal credit 0.
