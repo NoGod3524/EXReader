@@ -1,3 +1,22 @@
+# Latest continuation — 2026-11-01 07:59 UTC
+
+## Sealed snapshot round
+- **41286210606 A1**, source **e902aceb8ff7093902b90e8eb9c62e33f7d868ef**, Mac job **124787924916**, terminal **failure** at 07:55:17 UTC. Original UI test **263.888 seconds**; all other 27 jobs skipped. One Mac15 authorization consumed, no retry.
+- Artifact **13075777205**, **42356371 bytes**, SHA256 **9943c91bc87f38bd82d5b497991949fee48d8e0f48025ea097a63a5fc1f11b56**. Actual UI **9653680 bytes**, SHA256 **987bc219d8ba837df6a9a0819e3c947c8e5f3cb49b694111a1b8f82245baef65**. Controller/UI source and input/production-equivalence receipt match; diagnostic_only=true, passed=false, F04_accepted=false.
+- jump.0/.2/.3 each received exactly one native click. jump.2 took three small scrolls; jump.3 went from live zero-size representation through seven native scrolls to y450 inside list y261..474. Original exact-location checks passed; incoming-bookmark checkpoint at test t67.14 and incoming-note at t101.58. Three original reading.close taps succeeded.
+- First failure was original tap readiness for **reading.save-progress**, before any save click. Its frame (427,230,94,20) is fully inside the fixed records sheet (277,186,470,360), outside the list. Logs support enabled but non-hittable; no busy/cancel/pending evidence. A repeatedly unhandled UserNotificationCenter dialog at (382,104,260,248) geometrically covers it, but the last recorded system dialog was t88.98 and save wait began t108.55. No simultaneous system title/body/button semantics were captured: overlay remains a strong candidate, not a proven cause.
+- Both edit actions, note saves and final upload were not reached. Their original success assertions remain, not a claim of coverage.
+
+## Approved foreground preparation and bounded evidence
+- Explicit approval **2026-11-01 07:59:21 UTC**, **Sentinel_18b31759a61081919792cfc03cd490db**: same three existing files, one Mac diagnostic at most **15 runner-minutes**, no automatic retry; F12 actual review then F03 sole canonical writer/trigger.
+- Only whitelisted fixed controls and editor-input readiness may request one activation per logical interaction. Original ready predicate comes first. Immediately before activating, require already-running foreground/background state; otherwise fail without deliberate relaunch. Apple documents that activate can launch a stopped app, so no launch fallback is permitted. State is asynchronous: this guard does not claim atomic protection against process-exit races.
+- After native activation, requery the original readiness predicate within the original polling budget. Activation is not success; save/edit/upload/location assertions, editor input semantics, existing row helper and iOS are unchanged. Fixed controls do not borrow list/account-form scrolling.
+- Before/after activation and at final readiness timeout, collect bounded timestamped own target/container/status plus current UserNotificationCenter dialog semantics. System app is read-only, never activated or clicked; no action-button guessing, notification settings, process killing, permission changes or coordinate bypass. Input/editor values are excluded; credentials/root/token, URLs and account emails are redacted, text/dialog counts bounded, no notification history or raw whole-app dump.
+- This preparation may restore foreground but does not promise to remove a system modal. Unknown blocking UI is evidence, not permission to dismiss it.
+- Preparation pending independent actual-diff review. No local execution/tests/ZIP handling. Fixed atomic inputs, workflow/runtime and production-equivalence allowlist unchanged; formal acceptance still **96/108**, F04 incomplete.
+
+---
+
 # Latest continuation — 2026-11-01 07:43 UTC
 
 ## Sealed virtual-row preparation failure and review correction
