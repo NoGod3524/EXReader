@@ -23,7 +23,7 @@ import atspi_client as a11y  # noqa: E402
 import driver  # noqa: E402
 
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-OUT = ROOT / 'build/f09/gtk-compact'
+OUT = ROOT / os.environ.get('F09_GTK_COMPACT_OUT', 'build/f09/gtk-compact')
 checks = []
 
 
