@@ -162,6 +162,34 @@ def prepare():
         "android_init": "build/f04-driver/init.gradle",
         "instrumentation": "org.exreader.host.F04AndroidTest"}), flush=True)
 
+def prepare_hash_owner(platform):
+    """Install the mandatory public hash dependency for this exact target."""
+    assert platform in ("windows", "gtk", "android")
+    retained("extras/opds/CMakeLists.txt")
+    prefix = ROOT / ("build/f04-hash-" + platform + "/prefix")
+    prefix.mkdir(parents=True, exist_ok=True)
+    canonical = prefix.resolve().as_posix()
+    previous = os.environ.get("EXREADER_ORIGINAL_HASH_PREFIX")
+    assert previous in (None, "", canonical), "foreign original hash owner prefix"
+    binary = prefix.parent / "build"
+    args = ["cmake", "-S", str(ROOT / "extras/opds"), "-B", str(binary), "-G", "Ninja",
+            "-DCMAKE_BUILD_TYPE=Release", "-DEXREADER_OPDS_HASH_ONLY=ON",
+            "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", "-DCMAKE_INSTALL_PREFIX=" + canonical]
+    if platform == "android":
+        sdk = Path(os.environ["ANDROID_HOME"])
+        ndk = os.environ.get("C11_NDK", "27.0.12077973")
+        toolchain = sdk / "ndk" / ndk / "build/cmake/android.toolchain.cmake"
+        assert toolchain.is_file(), "install approved Android NDK before target hash build"
+        args += ["-DCMAKE_TOOLCHAIN_FILE=" + toolchain.as_posix(), "-DANDROID_ABI=x86_64",
+                 "-DANDROID_PLATFORM=android-26", "-DANDROID_STL=c++_static"]
+    subprocess.run(args, cwd=ROOT, check=True)
+    subprocess.run(["cmake", "--build", str(binary), "--parallel", "4"], cwd=ROOT, check=True)
+    subprocess.run(["cmake", "--install", str(binary)], cwd=ROOT, check=True)
+    assert (prefix / "lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashConfig.cmake").is_file()
+    # Installed ProductCatalog consumers also need this selector, not just store/native.
+    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = canonical
+    return canonical
+
 def build_producer(platform):
     """Actions-only recipe, still unreachable from the disabled workflow."""
     import hashlib
@@ -177,6 +205,7 @@ def build_producer(platform):
         "iphonesimulator": ("tests/apple_sdk342_host/build.py", ["--target", "iphonesimulator"]),
     }
     path, arguments = recipes[platform]
+    hash_prefix = prepare_hash_owner(platform) if platform in ("windows", "gtk", "android") else None
     original_recipe = retained(path)
     if platform == "android":
         (ROOT / "build/f06").mkdir(parents=True, exist_ok=True)
@@ -186,7 +215,7 @@ def build_producer(platform):
         "platform": platform, "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505",
         "sdk_version": "3.42.0", "recipe": path,
         "recipe_sha256": hashlib.sha256(original_recipe.encode()).hexdigest(),
-        "host_runtime_accepted": False, "F04_accepted": False}
+        "host_runtime_accepted": False, "F04_accepted": False, "original_hash_prefix": hash_prefix}
     if platform == "android":
         import yaml
         workflow = retained(".github/workflows/reader-apple-android-relay.yml")
