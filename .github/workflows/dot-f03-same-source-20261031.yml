@@ -6,7 +6,7 @@ on:
     inputs:
       case:
         type: choice
-        options: [f03/gtk-ready-diagnostic, f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory, f04/android-ready-diagnostic]
+        options: [f03/gtk-ready-artifact-diagnostic, f03/gtk-ready-diagnostic, f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory, f04/android-ready-diagnostic]
         default: f03/gtk-android
         required: true
 permissions:
@@ -381,4 +381,24 @@ jobs:
             !build/**/key.pem
             !build/**/private/**
             !build/**/connection.json
+          if-no-files-found: error
+
+  f03_gtk_ready_artifact_diagnostic:
+    if: ${{ github.ref == 'refs/heads/dot/f03-gtk-ready-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f03/gtk-ready-artifact-diagnostic' || github.event_name == 'push' && contains(github.event.head_commit.message, '[F03-GTK-ARTIFACT-5-ONE-RUN]')) }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Read only the fixed failed GTK diagnostic artifact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tests/dot_f03_same_source_20261031/verify.py --diagnose-gtk-ready-original --output build/f03-gtk-ready-artifact/result.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-suite-f03-gtk-ready-artifact-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f03-gtk-ready-artifact/
           if-no-files-found: error

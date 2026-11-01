@@ -525,15 +525,143 @@ def diagnose_original(output, stamp):
         write_json(output, result)
 
 
+def diagnose_gtk_ready_original(output, stamp):
+    """Read the single approved failed artifact; never rerun or accept product checks."""
+    import os, urllib.request, urllib.parse, zipfile, io, stat
+    run_id, attempt, job_id = 41311869249, 1, 124863751211
+    artifact_id, expected_size = 13086111887, 22830839
+    source = "e84c4c5db2b242b61990cca9ee7917fa39fa43e9"
+    expected_digest = "acbbe4e93421e927bf9661d2325c7fd4ef870d470281b53d5616ee8bbbc42e9b"
+    require(os.environ.get("GITHUB_ACTIONS") == "true", "diagnostic Actions only")
+    require(os.environ["GITHUB_REPOSITORY"] == "NoGod3524/EXReader", "wrong repository")
+    folder = output.parent / "original-gtk-ready"
+    folder.mkdir(parents=True, exist_ok=False)
+    result = {**stamp, "diagnostic_only": True, "product_reexecuted": False,
+              "accepted": False, "full_F03_accepted": False,
+              "original_run": run_id, "original_attempt": attempt, "original_source": source,
+              "original_job": job_id, "original_artifact": artifact_id, "problems": []}
+    class Redirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            value = super().redirect_request(req, fp, code, msg, headers, newurl)
+            if value is not None and urllib.parse.urlsplit(newurl).netloc != "api.github.com":
+                value.remove_header("Authorization")
+            return value
+    opener = urllib.request.build_opener(Redirect())
+    def fetch(path, limit=2*1024*1024):
+        request = urllib.request.Request("https://api.github.com/repos/NoGod3524/EXReader"+path,
+            headers={"Authorization": "Bearer "+os.environ["GITHUB_TOKEN"],
+                     "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"})
+        with opener.open(request, timeout=120) as response:
+            value = response.read(limit+1)
+        require(len(value) <= limit, "diagnostic response exceeds fixed bound")
+        return value
+    try:
+        run = json.loads(fetch(f"/actions/runs/{run_id}/attempts/{attempt}"))
+        jobs = json.loads(fetch(f"/actions/runs/{run_id}/attempts/{attempt}/jobs?per_page=100"))
+        artifact = json.loads(fetch(f"/actions/artifacts/{artifact_id}"))
+        for name, value in (("run.json", run), ("jobs.json", jobs), ("artifact.json", artifact)):
+            write_json(folder/name, value)
+        require(run["id"] == run_id and run["head_sha"] == source and run["run_attempt"] == attempt and
+                run["status"] == "completed" and run["conclusion"] == "failure",
+                "fixed failed readiness run identity differs")
+        matches = [j for j in jobs["jobs"] if j["id"] == job_id]
+        require(len(matches) == 1, "fixed readiness job missing")
+        job = matches[0]
+        require(job["name"] == "f03_gtk_ready_diagnostic" and job["head_sha"] == source and
+                job["run_id"] == run_id and job["run_attempt"] == attempt and
+                job["status"] == "completed" and job["conclusion"] == "failure",
+                "fixed failed readiness GTK job differs")
+        require(artifact["id"] == artifact_id and
+                artifact["name"] == f"reader-suite-f03-gtk-ready-diagnostic-{run_id}-{attempt}" and
+                artifact["size_in_bytes"] == expected_size and
+                artifact["digest"] == "sha256:"+expected_digest and not artifact["expired"] and
+                artifact["workflow_run"]["id"] == run_id and
+                artifact["workflow_run"]["head_sha"] == source and
+                job["started_at"] <= artifact["created_at"] <= job["completed_at"],
+                "fixed readiness artifact metadata differs")
+        body = fetch(f"/actions/artifacts/{artifact_id}/zip", expected_size)
+        require(len(body) == expected_size and hashlib.sha256(body).hexdigest() == expected_digest,
+                "fixed readiness ZIP digest/size differs")
+        (folder/"original.zip").write_bytes(body)
+        wanted = {"collections-ui.json"}
+        for prefix in ("f03-retained", "f03-author"):
+            wanted.update(prefix+suffix for suffix in (
+                "-openbox.log", "-window-tree-before.txt", "-window-tree-exit.txt",
+                "-root-properties-exit.txt", "-wm-observations.txt", "-window-samples.txt"))
+        found, inventory, refused_selected = {}, {}, {}
+        printed = 0
+        with zipfile.ZipFile(io.BytesIO(body)) as archive:
+            entries = archive.infolist()
+            require(len(entries) <= 1000 and sum(x.file_size for x in entries) <= 1024**3,
+                    "readiness ZIP expansion exceeds fixed bound")
+            for entry in entries:
+                name = entry.filename
+                require(name not in inventory and name and not name.startswith("/") and
+                        "\\" not in name and ":" not in name and
+                        not any(x in ("", ".", "..") for x in name.rstrip("/").split("/")) and
+                        not entry.flag_bits & 1,
+                        "unsafe/duplicate/encrypted readiness ZIP member")
+                mode = stat.S_IFMT(entry.external_attr >> 16)
+                inventory[name] = {"bytes": entry.file_size, "compressed_bytes": entry.compress_size,
+                                   "unix_file_type": mode, "symlink": stat.S_ISLNK(entry.external_attr >> 16)}
+                if entry.is_dir() or Path(name).name not in wanted:
+                    continue
+                if mode not in (0, stat.S_IFREG):
+                    refused_selected[name] = "selected member is not a regular file; never followed"
+                    continue
+                require(entry.file_size <= 1024*1024, "selected readiness evidence too large")
+                raw = archive.read(entry)
+                printed += len(raw)
+                require(printed <= 3*1024*1024, "total readiness text exceeds print bound")
+                destination = folder/"selected"/name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(raw)
+                record = {"path": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+                found.setdefault(Path(name).name, []).append(record)
+                print("F03_GTK_READY_ORIGINAL_TEXT_BEGIN "+name, flush=True)
+                print(raw.decode("utf-8", errors="replace"), flush=True)
+                print("F03_GTK_READY_ORIGINAL_TEXT_END "+name, flush=True)
+        require(all(len(items) == 1 for items in found.values()), "selected readiness name ambiguous")
+        require(len(found.get("collections-ui.json", [])) == 1, "original retained report absent")
+        item = found["collections-ui.json"][0]
+        require(item["sha256"] == "e251716ee24b70c87842713b1b510e8bcf0ac186539944b191b9ed7030a351e1",
+                "original 27-check report bytes differ")
+        report = read(folder/"selected"/item["path"])
+        require(report["source_sha"] == source and str(report["run_id"]) == str(run_id) and
+                str(report["attempt"]) == str(attempt) and report["accepted"] is True and
+                report["count"] == 27 and report["program_sha256"] ==
+                "d0a5032dbc8af40ce1a0cba276f2c27a1a2807667c5f2bb7327fdb6be90a6846",
+                "original retained report identity/count differs")
+        profile_expected = ("f03-author-profile/application.log", "f03-author-profile/state.ini")
+        profile_presence = {p: [n for n in inventory if n == p or n.endswith("/"+p)]
+                            for p in profile_expected}
+        result.update(original_zip_verified=True, selected=found,
+                      missing_selected=sorted(wanted-set(found)), refused_selected=refused_selected,
+                      author_profile_presence=profile_presence,
+                      missing_author_profile=sorted(p for p, names in profile_presence.items() if not names),
+                      original_inventory=inventory, diagnostic_extraction_completed=True)
+        print(json.dumps({k:v for k,v in result.items() if k!="original_inventory"}), flush=True)
+    except BaseException as error:
+        result["problems"].append(type(error).__name__+": "+str(error))
+        raise
+    finally:
+        write_json(output, result)
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--manifest", type=Path)
     p.add_argument("--partial", action="store_true")
     p.add_argument("--diagnose-original", action="store_true")
+    p.add_argument("--diagnose-gtk-ready-original", action="store_true")
     p.add_argument("--evidence", type=Path)
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
     stamp = identity()
+    if a.diagnose_gtk_ready_original:
+        require(not a.diagnose_original and not a.partial and a.manifest is None and a.evidence is None, "readiness diagnosis cannot mix audits")
+        diagnose_gtk_ready_original(a.output, stamp)
+        return
     if a.diagnose_original:
         require(not a.partial and a.manifest is None and a.evidence is None, "diagnosis cannot mix product audits")
         diagnose_original(a.output, stamp)
