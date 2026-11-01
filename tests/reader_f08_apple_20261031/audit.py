@@ -3,7 +3,7 @@ import hashlib, io, json, os, stat, sys, zipfile
 from pathlib import PurePosixPath
 import xml.etree.ElementTree as ET
 from run import ROOT, HERE, identity, need, save, sha, command, guard, extract_metrics
-def main():
+def main(mac_validator=None):
     guard()
     out=ROOT/"build/f08-apple-audit";out.mkdir(parents=True)
     ident=identity();api=lambda p:json.loads(command(["gh","api","repos/NoGod3524/EXReader/"+p]))
@@ -85,15 +85,18 @@ def main():
                     sys.path.insert(0,str(ROOT/"tests/apple_host"));from collect_evidence import load_results
                     entry[label+"_cases"]=load_results(result_path)
                     entry[label+"_performance_cases"]=cases
-            if (raw/"driver.json").exists():
-                driver=json.loads((raw/"driver.json").read_text())
-                original=ROOT/"tests/apple_host/shelf/ui/ShelfUITests.swift";text=original.read_text();at=text.rfind("}")
-                inside,marker,standalone=(HERE/"Metrics.swift").read_text().partition("// F08_STANDALONE_CLASSES")
-                need(marker and (raw/"ShelfUITests.swift").read_text()==text[:at]+inside+text[at:]+standalone,
-                     "original seven case bodies or additive driver differ")
-                need(driver["original_sha256"]==sha(original) and driver["insertion_sha256"]==sha(HERE/"Metrics.swift")
-                     and driver["candidate_sha256"]==sha(raw/"ShelfUITests.swift"),"driver identity")
-                entry["original_cases_unchanged"]=True
+            if kind=="macos" and mac_validator is not None:
+                entry.update(mac_validator(raw,out))
+            else:
+                if (raw/"driver.json").exists():
+                    driver=json.loads((raw/"driver.json").read_text())
+                    original=ROOT/"tests/apple_host/shelf/ui/ShelfUITests.swift";text=original.read_text();at=text.rfind("}")
+                    inside,marker,standalone=(HERE/"Metrics.swift").read_text().partition("// F08_STANDALONE_CLASSES")
+                    need(marker and (raw/"ShelfUITests.swift").read_text()==text[:at]+inside+text[at:]+standalone,
+                         "original seven case bodies or additive driver differ")
+                    need(driver["original_sha256"]==sha(original) and driver["insertion_sha256"]==sha(HERE/"Metrics.swift")
+                         and driver["candidate_sha256"]==sha(raw/"ShelfUITests.swift"),"driver identity")
+                    entry["original_cases_unchanged"]=True
             entry["diagnostic"]=result.get("diagnostic",False)
             entry["diagnostic_complete"]=result.get("diagnostic_complete",False)
             if (raw/"original/shelf-ui.json").exists():
