@@ -109,3 +109,11 @@ root instead of the producer evidence directory. Its original sealed ZIP and
 audit failure remain retained. The final result helper now takes an explicit
 build-identity path: producer evidence when sampling, archive root when auditing.
 The frozen product, original test bodies, all frame rows and budgets are unchanged.
+
+At source 9a656853, run 41261877498 completed all Mac test groups but its
+original evidence collector rejected the SDK identity: the unchanged nested
+SDK contract requires job=sdk, while this workflow had named it apple_sdk.
+The original failed collector and sealed SDK identities remain retained.
+The workflow restores the original sdk job ID and its two dependency edges;
+no GITHUB_JOB value or sealed producer record is rewritten. Native and audit
+job IDs have no additional job-name requirement in this reachable call chain.
