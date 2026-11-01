@@ -98,6 +98,12 @@ def linux():
     G.run = run_342
     G.build_sdk()
     G.install_family('raw', G.PREFIX, True)
+    # The recipe leaves the GTK reading-settings UI out (no -DEXR_READER_GTK_PREFERENCES),
+    # so its compact host had no typesetting/theme entry (F09 G-13). The reader-gtk-compact
+    # workflow builds the same compact host with it; do the same here: install the
+    # preferences package into the recipe prefix and enable the option.
+    G.cmake('raw-preferences', ROOT / 'apps/reader/preferences', G.OUT / 'raw-preferences', G.PREFIX, install=True)
+    G.HOST_OPTIONS = G.HOST_OPTIONS + ['-DEXR_READER_GTK_PREFERENCES=ON', '-DREADER_PREFERENCES_PREFIX=' + str(G.PREFIX)]
     payload = G.build_compact_host() / 'EXReader-Linux'
     evidence = OUT / 'gtk-audit'
     if evidence.exists():
