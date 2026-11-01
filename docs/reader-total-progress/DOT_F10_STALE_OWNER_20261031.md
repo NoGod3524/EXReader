@@ -206,3 +206,13 @@ Proposed correction, not executed: permit exactly zero first GET/PUT records onl
 The catalog's original F10 requirement remains the complete privacy/credentials/file-stability/temporary-cleanup outcome, not a transfer from module green. Current F03 owner reports no explicit new managed_raw_v3 hookup in its GTK recipe and no successful complete new receiving/privacy receipt. F04's current cb8b5e2d source run41264117725 is still awaiting its actual-host result at this checkpoint. Thus this F10 branch has not been proven consumed by the common actual-host binaries. Existing credential module evidence is historical, not automatically a current-host receipt. These are explicit evidence/integration boundaries, not invented new component requirements.
 
 Full F10 remains false, official count unchanged. No additional component implementation or CI is automatically authorized by this seal.
+
+## D audit-only correction — separately approved preparation
+
+Approval 2026-11-01 02:16:23 UTC authorizes one five-minute audit of the same original producer, not a product rebuild or scenario rerun. Four existing paths: verify.py, manifest.json, this workflow and this document; base a496ccae2545bc8a7500e0836c9ac5ce9b5421f7. Production and fixture sources are unchanged.
+
+Only pull-revision-over requires exactly zero first recorded GET/PUT requests; every other case still requires a positive first-request boundary. Its original status5, received0, both GET flags0, empty first cache and successful exact retry assertions remain. No fixed check or negative control is removed. F07 independently confirmed the original refusal stage and raw logs before this correction.
+
+Actions verifies original artifact 13066057477 by exact name, run41264160828 attempt1/source3f729038024028af4a00e50750a651f049f263d9, 2479730 bytes and SHA25628ad79d58d99ab911f279338f8fb0bfec0937fc5c8a67990354c7faf300a1bef. Archive member bounds, duplicate/traversal and symlink safety are checked before materialization. The original ZIP is not changed or re-uploaded. No contained binary is executed.
+
+The verdict keeps original producer source/run/attempt and records the new audit source/run/attempt separately. The original failed run remains failed. No re-audit result is claimed before the sole approved execution.
