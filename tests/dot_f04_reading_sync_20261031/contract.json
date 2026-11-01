@@ -342,9 +342,16 @@
       "conclusion": "failure",
       "legacy": "schema1 revisions mixed with schema3 catalog",
       "windows": "first synchronous import click timeout; root cause not proven"
+    },
+    {
+      "run_id": "41264117725",
+      "source_sha": "cb8b5e2d04a524a44a686eb8385872ee832d373e",
+      "conclusion": "failure",
+      "retained": "success",
+      "windows": "compact system picker not consumed; downstream skipped"
     }
   ],
-  "current_round": 2,
+  "current_round": 3,
   "legacy_provider": {
     "source": "210403d121d6484a8fff4ea7ffd911efa3163535",
     "prefix": "build/v1-product-stage",
@@ -376,6 +383,13 @@
     "run_limit": 1,
     "runner_minutes_cap": 10,
     "rebuild": false,
-    "DAV": false
-  }
+    "DAV": false,
+    "result": {
+      "run_id": "41265967021",
+      "controller_source": "f2218d544330beb0f985cb12c1ea6d59b446a221",
+      "conclusion": "success",
+      "full_F04": false
+    }
+  },
+  "current_round_scope": "one new full five-job Windows Android return; 120 runner-minute cap; no retry"
 }
