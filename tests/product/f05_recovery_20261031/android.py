@@ -441,6 +441,12 @@ def retained(argv):
     blob=subprocess.check_output(["git","hash-object",str(source)],cwd=root,text=True).strip()
     if blob!="7ffae7d6e2ede90848efa954031561b145725e4e":
         raise AssertionError("original Android 16-check runner blob changed")
+    java=root/"tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java"
+    java_blob=subprocess.check_output(["git","hash-object",str(java)],cwd=root,text=True).strip()
+    if java_blob!="ec9bb60ae3233d914086e06c8bb93aa4580d6ceb":
+        raise AssertionError("original Android instrumentation source changed")
+    if 'expectedSdk.equals("3.40.0")||expectedSdk.equals("3.41.0")' in java.read_text():
+        raise RuntimeError("blocked_original_java_sdk_allowlist: Python CLI-only adaptation is insufficient; generated Java compatibility adaptation is not yet approved")
     raw=source.read_bytes()
     old=b"choices=('3.40.0','3.41.0')"
     new=b"choices=('3.40.0','3.41.0','3.42.0')"
