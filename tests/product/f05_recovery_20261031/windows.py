@@ -344,12 +344,22 @@ def build_with_provider_evidence():
         folder=H.OUT/"logs" if (H.OUT/"logs").is_dir() else bootstrap
         env=dict(os.environ,VERBOSE="1")
         print(json.dumps({"step":name,"argv":argv,"cwd":str(ROOT)}),flush=True)
-        process=subprocess.run(argv,cwd=ROOT,env=env,stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,text=True,encoding="utf-8",errors="replace",timeout=timeout)
-        (folder/(name+".log")).write_text(process.stdout)
-        command={"argv":argv,"cwd":str(ROOT),"returncode":process.returncode,
+        try:
+            process=subprocess.run(argv,cwd=ROOT,env=env,stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,text=True,encoding="utf-8",errors="replace",timeout=timeout)
+        except subprocess.TimeoutExpired as error:
+            partial=error.stdout or ""
+            if isinstance(partial,bytes):partial=partial.decode("utf-8",errors="replace")
+            (folder/(name+".log")).write_text(partial,encoding="utf-8")
+            command={"argv":argv,"cwd":str(ROOT),"returncode":None,"timed_out":True,
+                     "timeout_seconds":timeout,"environment":{"VERBOSE":"1"}}
+            (folder/(name+"-command.json")).write_text(json.dumps(command,indent=2)+"\n",encoding="utf-8")
+            print(partial,flush=True)
+            raise RuntimeError(name+" timed out; partial log retained") from None
+        (folder/(name+".log")).write_text(process.stdout,encoding="utf-8")
+        command={"argv":argv,"cwd":str(ROOT),"returncode":process.returncode,"timed_out":False,
                  "environment":{"VERBOSE":"1"}}
-        (folder/(name+"-command.json")).write_text(json.dumps(command,indent=2)+"\n")
+        (folder/(name+"-command.json")).write_text(json.dumps(command,indent=2)+"\n",encoding="utf-8")
         print(process.stdout,flush=True)
         if process.returncode:raise RuntimeError(name+" failed: "+str(process.returncode))
     H.run=run
