@@ -369,3 +369,30 @@ F04 retains the next fixed-artifact diagnosis design and any repair ownership.
 This append changes only the canonical handoff document; it does not alter
 the six received blobs, trigger a run, or count any F03/F04 acceptance.
 No CI remains running and no Git write outcome is uncertain at this seal.
+
+## F04 fixed original diagnostic result — 2026-11-01 02:29 UTC
+
+The separately approved five-minute diagnostic ran once:
+https://github.com/NoGod3524/EXReader/actions/runs/41265285040, attempt1,
+controller source `796b52bc155e7ecc9667fef12cb6234467cb3fa9`,
+tree `cdd56beedcad43f6f384c59c3645e9233cabdcdb`.
+Job124726717958 succeeded at fixed-artifact authentication/reading only.
+All product jobs were skipped; no original test or product was rerun.
+The approved diagnostic used **1/1**.
+
+Fixed producer artifact13066097833 was authenticated in Actions and its five
+small text records were printed. The Windows process/window still existed.
+The status remained “书架为空：输入文件路径后点击‘导入’。” The input record showed
+events_sent=2 and dispatches=1, but no one-row shelf appeared in 120 seconds.
+The application text log was empty; import-window.png was absent because
+the screenshot safety condition required the main window to be foreground
+and that condition was not met. Checks/navigations were empty and cleanup
+errors were empty. This shows the run had not reached record-sync/anchor
+scenarios; it does not establish deadlock or a product interoperability defect.
+
+Diagnostic output artifact `f04-fixed-diagnostic-41265285040-1`:
+ID13066014205, 3671 bytes, ZIP SHA256
+`52e698303d55c173df370f7738a2a75df402e28106c71066b7552e7813c26015`.
+F04 remains pending. A successful artifact diagnostic is not product
+acceptance. This result-only seal changes no received F04 blobs or workflow,
+runs no CI, and retains both failed product rounds unchanged.
