@@ -485,6 +485,9 @@ struct LibraryScreen: View {
         .onChange(of: phase) { value in
             if value == .active { shelf.restoreViewport() } else { shelf.save() }
         }
+        // Opening 整理 releases the search field: otherwise closing the sheet refocused
+        // it and the on-screen keyboard squeezed the shelf to nothing (iPhone SE).
+        .onChange(of: organizing) { value in if value { searchFocused = false } }
         .sheet(isPresented: $organizing) {
             if let url = model.organizationURL {
                 HostOrganizationPanel(model: model, productURL: url, books: shelf.rows)
