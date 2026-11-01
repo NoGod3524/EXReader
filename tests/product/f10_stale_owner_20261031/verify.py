@@ -71,6 +71,57 @@ def snapshot_audit(root):
             'managed_accepted':not any(not e.startswith('sync-') and not e.startswith('callback-') for e in errors),
             'sync_accepted':not any(e.startswith('sync-') for e in errors) and not any(e.startswith('snapshot ') for e in errors)}
 
+
+GET_EXPECTED={"get-readonly":{"seed":0,"first_exit":0,"cache_empty_after_first":1,"first_get_present":1,"retry_status":0,"retry_outbox":0,"pending":0,"cache_empty_final":1,"source_identity":1,"remote_original_exact":1,"remote_revision_exact":1,"first_status":0,"first_dav":0,"first_outbox":0,"first_pushed":1,"first_wire_absent":0,"cache_mode":320},"get-missing":{"seed":0,"first_exit":0,"cache_empty_after_first":1,"first_get_present":1,"retry_status":0,"retry_outbox":0,"pending":0,"cache_empty_final":1,"source_identity":1,"remote_original_exact":1,"remote_revision_exact":1,"first_status":0,"first_dav":0,"first_outbox":0,"first_pushed":1,"first_wire_absent":0,"no_original_put":1},"get-wrong":{"seed":0,"first_exit":0,"cache_empty_after_first":1,"first_get_present":1,"retry_status":0,"retry_outbox":0,"pending":0,"cache_empty_final":1,"source_identity":1,"remote_original_exact":1,"remote_revision_exact":1,"first_status":5,"first_dav":0,"first_outbox":1,"first_pushed":0,"first_wire_absent":1},"get-short":{"seed":0,"first_exit":0,"cache_empty_after_first":1,"first_get_present":1,"retry_status":0,"retry_outbox":0,"pending":0,"cache_empty_final":1,"source_identity":1,"remote_original_exact":1,"remote_revision_exact":1,"first_status":3,"first_dav":3,"first_outbox":1,"first_pushed":0,"first_wire_absent":1},"get-over":{"seed":0,"first_exit":0,"cache_empty_after_first":1,"first_get_present":1,"retry_status":0,"retry_outbox":0,"pending":0,"cache_empty_final":1,"source_identity":1,"remote_original_exact":1,"remote_revision_exact":1,"first_status":7,"first_dav":8,"first_outbox":1,"first_pushed":0,"first_wire_absent":1},"get-cancel":{"seed":0,"first_exit":0,"cache_empty_after_first":1,"first_get_present":1,"retry_status":0,"retry_outbox":0,"pending":0,"cache_empty_final":1,"source_identity":1,"remote_original_exact":1,"remote_revision_exact":1,"first_status":6,"first_dav":7,"first_outbox":1,"first_pushed":0,"first_wire_absent":1,"get_boundary":1},"get-kill":{"seed":0,"first_exit":-9,"cache_empty_after_first":1,"first_get_present":1,"retry_status":0,"retry_outbox":0,"pending":0,"cache_empty_final":1,"source_identity":1,"remote_original_exact":1,"remote_revision_exact":1,"signal":9,"get_boundary":1,"first_wire_absent":1},"get-consumer-error":{"get":3,"calls":1,"received":0,"exit":0,"no_local_file":1}}
+def evaluate_get(index,rows,binaries):
+    errors=[]
+    if [str(index.get(k)) for k in ['source','run','attempt']]!=[os.environ['GITHUB_SHA'],os.environ['GITHUB_RUN_ID'],os.environ['GITHUB_RUN_ATTEMPT']]:errors.append('get source/run/attempt')
+    if index.get('get_cases')!=list(GET_EXPECTED) or [r.get('name') for r in rows]!=list(GET_EXPECTED):errors.append('get case set')
+    for name,data in binaries.items():
+        if hashlib.sha256(data).hexdigest()!=index.get('binaries',{}).get(name):errors.append('get binary digest')
+    content=b'F10 stream verification original|'*4096
+    identity=hashlib.sha256(content).hexdigest()
+    for row in rows:
+        name=row.get('name');actual=row.get('checks',{})
+        if 'exception' in actual:errors.append(name+': exception')
+        for key,value in GET_EXPECTED.get(name,{}).items():
+            if type(actual.get(key)) is not int or actual[key]!=value:errors.append(name+': '+key)
+        raw=[]
+        for text in row.get('raw',[]):
+            merged={}
+            for line in text.splitlines():
+                if line.startswith('{'):merged.update(json.loads(line))
+            raw.append(merged)
+        if name=='get-consumer-error':
+            if len(raw)!=1 or any(raw[0].get(k)!=actual.get(k) for k in ['get','calls','received']):errors.append(name+': raw status')
+            continue
+        if len(raw)!=3:errors.append(name+': raw sequence');continue
+        if name!='get-kill' and any(raw[1].get(k)!=actual.get('first_'+k) for k in ['status','outbox','pushed']):errors.append(name+': raw status')
+        if raw[2].get('status')!=actual.get('retry_status') or raw[2].get('outbox')!=actual.get('retry_outbox'):errors.append(name+': raw retry')
+        if actual.get('expected_bytes')!=len(content) or actual.get('expected_sha256')!=identity:errors.append(name+': trusted identity')
+        resource='/dav/exreader-sync-v1/objects/'+identity[:2]+'/'+identity+'.txt'
+        gets=[r for r in row.get('requests',[]) if r.get('method')=='GET' and r.get('path')==resource]
+        sent= b'X'*len(content) if name=='get-wrong' else content[:-1] if name=='get-short' else content+b'X' if name=='get-over' else content
+        if not gets or gets[0].get('response_bytes')!=len(sent) or gets[0].get('response_sha256')!=hashlib.sha256(sent).hexdigest():errors.append(name+': actual response')
+        if row.get('stored',{}).get(resource)!=identity:errors.append(name+': server original')
+        if any(r.get('if_none_match')!='*' for r in row.get('requests',[]) if r.get('method')=='PUT'):errors.append(name+': conditional write')
+    return errors
+def get_audit(root):
+    index=json.loads((root/'evidence/snapshot/index.json').read_text())
+    rows=[json.loads((root/'evidence/snapshot'/(name+'.json')).read_text()) for name in GET_EXPECTED]
+    binaries={'f10-sync-probe':(root/'probe/f10-sync-probe').read_bytes()}
+    errors=evaluate_get(index,rows,binaries);controls=[]
+    guards=[('get-readonly','cache_empty_final',0),('get-missing','no_original_put',0),
+            ('get-wrong','first_status',0),('get-short','first_status',0),('get-over','first_status',0),
+            ('get-cancel','first_outbox',0),('get-kill','signal',0),('get-consumer-error','get',0)]
+    for name,key,value in guards:
+        changed=copy.deepcopy(rows);next(r for r in changed if r['name']==name)['checks'][key]=value
+        reason=name+': '+key;observed=evaluate_get(index,changed,binaries)
+        controls.append({'name':reason,'rejected':reason in observed and reason not in errors})
+    if not all(c['rejected'] for c in controls):errors.append('get negative control accepted')
+    return {'get_accepted':not errors,'get_errors':errors,'get_cases':len(rows),
+            'get_assertions':sum(len(x) for x in GET_EXPECTED.values()),'get_negative_controls':controls}
+
 def main():
     a=argparse.ArgumentParser();a.add_argument('--input',type=Path,required=True);a.add_argument('--output',type=Path,required=True);args=a.parse_args()
     assert os.environ.get('GITHUB_ACTIONS')=='true'
@@ -108,7 +159,9 @@ def main():
     except (OSError,ValueError,KeyError,TypeError,StopIteration) as e:result.update(errors=['incomplete evidence: '+type(e).__name__])
     try:result.update(snapshot_audit(root))
     except (OSError,ValueError,KeyError,TypeError,StopIteration) as e:result.update(snapshot_accepted=False,snapshot_errors=['incomplete snapshot evidence: '+type(e).__name__])
+    try:result.update(get_audit(root))
+    except (OSError,ValueError,KeyError,TypeError,StopIteration) as e:result.update(get_accepted=False,get_errors=['incomplete GET evidence: '+type(e).__name__])
     result['full_f10_complete']=False
     (out/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
-    return 0 if result['api_accepted'] and result.get('snapshot_accepted') else 1
+    return 0 if result['api_accepted'] and result.get('snapshot_accepted') and result.get('get_accepted') else 1
 if __name__=='__main__':raise SystemExit(main())
