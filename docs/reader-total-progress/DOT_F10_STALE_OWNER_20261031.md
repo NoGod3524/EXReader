@@ -1,7 +1,7 @@
 # F10 stale owner additive API — prepared, not yet executed
 
 ## Authority and ownership
-User explicitly transferred only `extras/webdav-cleanup/include/exr_webdav_cleanup.h` and `extras/webdav-cleanup/src/cleanup_posix.c` to native dot F10. The independent branch `dot/f10-stale-owner-20261031` starts at sealed `b5e7fea87174f5e0baabfad97cf5cf7082f2d85e`. This is the old core/SDK727 background, not a claim that the common SDK8357 integration is done. The separate no-replace delta remains at `123e1852335ab16e3bc1863e050eb0a298b01cca`; no whole-branch merge occurred.
+User explicitly transferred only `extras/webdav-cleanup/include/exr_webdav_cleanup.h` and `extras/webdav-cleanup/src/cleanup_posix.c` to native dot F10. The independent branch `dot/f10-stale-owner-20261031` starts at sealed `b5e7fea87174f5e0baabfad97cf5cf7082f2d85e`. Historical upstream SDK727 artifacts are separate from Git source: the five SDK objects in b5e7, 94fb and frozen8357 are identical. This raw-module suite does not build or consume the SDK reader and does not establish six-host integration. The separate no-replace delta remains at `123e1852335ab16e3bc1863e050eb0a298b01cca`; no whole-branch merge occurred.
 
 Original header blob: `47d2d4fa2ac066b21ad644479a84cf541b7f310e`.
 Original source blob: `3cbc6f9a6135b64a19d4a8ee09b3fad3ddc4de16`.
@@ -115,6 +115,36 @@ The held-FD replacement test transmitted the original sealed bytes despite pathn
 
 ### Remaining full F10 boundary
 
-**full_f10_complete=false; official total unchanged.** This accepts the authorized Linux managed upload-snapshot portion on the b5e7/SDK727 background. It is not common SDK8357 six-host integration, complete OS credential/host-lifecycle coverage, or proof about all existing GET verification/private_file scratch paths. Those existing paths still have unreported-delete behavior in source and were not silently granted by this green. No same-UID hostile original-inode write protection or hardware power-loss guarantee is claimed.
+**full_f10_complete=false; official total unchanged.** This accepts the authorized Linux managed upload-snapshot portion on the b5e7 source branch (whose five SDK Git objects equal frozen8357; historical SDK727 artifacts are distinct). It is not common SDK8357 six-host integration, complete OS credential/host-lifecycle coverage, or proof about all existing GET verification/private_file scratch paths. Those existing paths still have unreported-delete behavior in source and were not silently granted by this green. No same-UID hostile original-inode write protection or hardware power-loss guarantee is claimed.
 
 Current implementation line is sealed pending the parent's next exact integration/remaining-gap scope and budget; ownership stays native dot F10. No other production owner, default branch, PR, tag, release, old assertion or SDK was changed. All prior failures and immutable artifacts remain part of the handoff.
+
+## Phase C — bounded verification GET, authorized preparation
+
+User approval 2026-11-01 01:35:33 UTC covers exactly nine paths on this same branch, from seal 75c0f1f5ded388036258c506fac6595b3e5dabef. Three production files: WebDAV header/source and sync.cpp. Six existing evidence files: sync_probe.cpp, https_fixture.py, verify.py, manifest.json, workflow and this document. One Linux45 + audit15 run, no automatic retry. No SDK, core, managed registry, run.py, old probe or external host changes.
+
+The original requirement is length/hash verification before immutable acknowledgement and safe temporary-file handling. Both verification-only GET sites now consume bounded chunks directly into the existing native SHA-256 state, without a file or whole-body allocation. The additive public stream consumer has synchronous borrowed-buffer lifetime and explicit failure, not error-as-EOF. Existing native TLS, status, redirect, byte limit and cancellation paths are reused. Only normal HTTP/TLS completion, exact expected length and trusted immutable SHA-256 authorize ack. A chunk received before terminal success is not proof of commit. Missing local originals use the already-known book identity, never a server-supplied digest.
+
+Frozen eight-case design, independently reviewed before implementation:
+1. Read-only cache: successful push/verification with cache staying empty.
+2. Missing local original: known remote length/hash authorizes metadata; no original PUT.
+3. Same-length altered GET: HASH failure, original outbox retained, retry exact.
+4. Short GET: IO failure, no ack.
+5. Overlength GET: LIMIT failure, no ack.
+6. Cancellation during real partial GET: CANCELLED, no ack, restart retry.
+7. Actual SIGKILL during real partial GET: outbox survives and restart retries; no verification scratch.
+8. Explicit consumer error: IO, returned received=0, no local file.
+
+The new group has 8 scenarios / 118 exact checks / 8 exact-reason semantic negatives. Raw native statuses and server-observed response size/digest independently bind the checks. Original 33/258/8 and 29/187/10 stay intact and separately counted. No result is claimed before the sole approved execution.
+
+Other cache-download and revision-download private_file paths are not silently changed or granted. Full F10 remains false until its original complete contract is evidenced. Linux runtime does not certify all native transports or host lifecycle/credential paths.
+
+### SDK identity clarification
+Read-only Git tree comparisons at b5e7fea87174f5e0baabfad97cf5cf7082f2d85e, 94fb236a4a2da87dfbaf4f1dd2a47885d615a230 and 8357eafa28423a7ab93ba08b823af80f01ad1505 show identical objects:
+- src: 01dbab7c7c28aff175b5a953fea307e21d84eee2
+- include: ef1bbaafc4a250053e5b0f88d329d1a25b22794b
+- cmake: 505c604a2b30b72b3a251cd3f0bb7628e6d58fc1
+- bindings: 54c12f70a1a63cae6574984a388b66bf6248c38e
+- CMakeLists.txt: a5ed27fcca1d709c2217c585da47dc55dc23c1d0
+
+This corrects the earlier source/background shorthand, not the identity of historical upstream SDK727 artifacts. This workflow builds raw store/revisions/sync/WebDAV, not the SDK reader. Actual common-source six-host integration still needs the existing joint integrator and host owners; no ownership expansion follows.
