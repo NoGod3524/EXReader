@@ -1238,6 +1238,37 @@ static void host_a11y_page_changed(int selection_only) {
   }
 }
 
+/* Status line as a polite live region (Win32 dynamic annotation): screen
+   readers announce each message without moving focus. A name change alone on a
+   plain static was not spoken (F09 NVDA: "已添加标注" was silent). */
+#ifndef EVENT_OBJECT_LIVEREGIONCHANGED
+#define EVENT_OBJECT_LIVEREGIONCHANGED 0x8019
+#endif
+static const GUID host_a11y_props_clsid =
+  {0xb5f8350b, 0x0548, 0x48b1, {0xa6, 0xee, 0x88, 0xbd, 0x00, 0xb4, 0xa5, 0xe7}};
+static const GUID host_a11y_props_iid =
+  {0x6e26e776, 0x04f0, 0x495d, {0x80, 0xe4, 0x33, 0x30, 0x35, 0x2e, 0x31, 0x69}};
+static const GUID host_a11y_live_setting =
+  {0xc12bcd8e, 0x2a8e, 0x4950, {0x8a, 0xe7, 0x36, 0x25, 0x11, 0x1d, 0x58, 0xeb}};
+
+static void host_a11y_status_live(void) {
+  static int done;
+  IAccPropServices *props = NULL;
+  VARIANT polite;
+  HRESULT hr;
+  if (done || !g.status) return;
+  done = 1;
+  hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+  if (FAILED(hr) && hr != RPC_E_CHANGED_MODE) return;
+  if (FAILED(CoCreateInstance(&host_a11y_props_clsid, NULL, CLSCTX_INPROC_SERVER, &host_a11y_props_iid,
+                              (void **)&props)) || !props) return;
+  VariantInit(&polite);
+  polite.vt = VT_I4;
+  polite.lVal = 1; /* LiveSetting Polite */
+  props->lpVtbl->SetHwndProp(props, g.status, (DWORD)OBJID_CLIENT, CHILDID_SELF, host_a11y_live_setting, polite);
+  props->lpVtbl->Release(props);
+}
+
 /* Status line: one change event per real text change. */
 static void host_a11y_status_changed(void) {
   static wchar_t previous[768];
@@ -1245,7 +1276,9 @@ static void host_a11y_status_changed(void) {
   if (!wcscmp(previous, g.status_text)) return;
   wcsncpy(previous, g.status_text, 767);
   previous[767] = 0;
+  host_a11y_status_live();
   NotifyWinEvent(EVENT_OBJECT_NAMECHANGE, g.status, OBJID_CLIENT, CHILDID_SELF);
+  NotifyWinEvent(EVENT_OBJECT_LIVEREGIONCHANGED, g.status, OBJID_CLIENT, CHILDID_SELF);
 }
 /* ---- keyboard continuity ------------------------------------------------ */
 /* A command that disables itself while it holds focus must hand focus on. */

@@ -57,7 +57,7 @@ def main(nvda, exe, book):
         ('S-03', 'the import chooser is announced (system dialog title, runner locale)', ('打开', 'Open')),
         ('S-04', 'a shelf row is spoken with the book title', book_title[:12]),
         ('S-05', 'the reading menu is spoken', '阅读'),
-        ('S-06', 'the saved note text is spoken', 'f09 keyboard note'),
+        ('S-06', 'saving the note is confirmed in speech (status live region)', '已添加标注'),
     ]
     def heard(phrase):
         return any(p and p in joined for p in (phrase if isinstance(phrase, tuple) else (phrase,)))

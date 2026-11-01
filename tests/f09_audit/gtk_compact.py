@@ -182,10 +182,21 @@ def main(payload):
 
         # G-10 reader More menu by its mnemonic, items named
         host.key('alt+m')
-        menu = wait(lambda: a11y.find_all(a11y.wait_application('exreader', 5), roles={'menu item'}), 10)
+        menu = wait(lambda: a11y.find_all(a11y.wait_application('exreader', 5), roles={'menu item', 'menu'}), 10)
         items = [a11y.name(i) for i in (menu or []) if a11y.states(i).get('showing')]
-        check('G-10', 'More reader actions', 'Alt+M opens the reader menu with named items',
-              items, bool(items) and all(i.strip() for i in items))
+        # Default UI stays simple; everything else is one level down in named submenus.
+        groups = ['Reading', 'Text and notes', 'Library', 'Import']
+        check('G-10', 'More reader actions', 'Alt+M opens the menu: named items and the Reading, Text and notes, '
+              'Library and Import submenus', {'items': items, 'missing': [g for g in groups if g not in items]},
+              bool(items) and all(i.strip() for i in items) and all(g in items for g in groups))
+        # G-13 every default-UI product function has a named entry under that menu
+        every = [a11y.name(i) for i in (menu or [])]
+        functions = ['Search within book…', 'Directory / page entries…', 'Reading records…', 'Reading settings…',
+                     'Larger text', 'Smaller text', 'Select page text', 'Add note from selection', 'Saved notes',
+                     'Book details…', 'Collections…', 'Account / Sync…', 'Import file…']
+        check('G-13', 'menu functions', 'each product function has a named entry in the More menu tree',
+              {'missing': [f for f in functions if f not in every], 'count': len(every)},
+              all(f in every for f in functions))
         host.key('Escape')
 
         # G-11 back to the library from the keyboard
