@@ -229,10 +229,12 @@ def main(exe, book):
         if menu.Exists(3):
             entry = next((i for i in menu.GetChildren() if i.Name.startswith('标注编辑')), None)
         if entry:
-            # Reach the item from the keyboard: arrow down to it and press Enter.
+            # Reach the item from the keyboard: a menu opened by its access key
+            # already highlights the first item, so arrow down `index` times.
+            # (Round 12 pressed one Down too many and ran 缩小字号.)
             names = [i.Name for i in menu.GetChildren()]
             index = names.index(entry.Name)
-            keys('{Down}' * (index + 1) + '{Enter}', 'annotation editor')
+            keys('{Down}' * index + '{Enter}', 'annotation editor')
         note = wait(lambda: auto.GetFocusedControl() and auto.GetFocusedControl().ControlTypeName == 'EditControl'
                     and auto.GetFocusedControl(), 15)
         check('W-09a', 'annotation editor', '标注编辑 puts focus in a named comment field',

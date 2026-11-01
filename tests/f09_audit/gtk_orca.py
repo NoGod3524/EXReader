@@ -51,7 +51,9 @@ def main(payload):
     except subprocess.TimeoutExpired:
         orca.kill()
     text = log.read_text(encoding='utf-8', errors='replace') if log.exists() else ''
-    spoken = re.findall(r"SPEECH OUTPUT: '(.*?)'", text)
+    # A phrase can span lines (shelf rows carry a trailing newline), so match
+    # up to Orca's "'{'established'" suffix across lines.
+    spoken = [p.strip() for p in re.findall(r"SPEECH OUTPUT: '(.*?)'\s*\{'established'", text, re.S)]
     joined = '\n'.join(spoken)
     expectations = [
         ('O-01', 'the main window is announced', 'EXReader Linux'),
@@ -61,7 +63,12 @@ def main(payload):
         ('O-05', 'the reading page is announced', 'reading page'),
         ('O-06', 'Back to library is spoken by name', 'Back to library'),
     ]
-    checks = [{'id': cid, 'expected': want, 'phrase': phrase, 'status': 'pass' if phrase in joined else 'fail'}
+    # A shelf row counts only when spoken right after the Bookshelf list itself
+    # (the file chooser also lists the corpus file names).
+    on_shelf = any(spoken[i].startswith('Bookshelf List') and 'F09-book' in spoken[i + 1]
+                   for i in range(len(spoken) - 1))
+    checks = [{'id': cid, 'expected': want, 'phrase': phrase,
+               'status': 'pass' if (on_shelf if cid == 'O-03' else phrase in joined) else 'fail'}
               for cid, want, phrase in expectations]
     report = {'source_sha': os.environ.get('GITHUB_SHA'), 'run_id': os.environ.get('GITHUB_RUN_ID'),
               'attempt': os.environ.get('GITHUB_RUN_ATTEMPT'), 'screen_reader': 'Orca', 'orca_ready': ready,
