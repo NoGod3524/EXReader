@@ -84,9 +84,16 @@ def retained_binding(root, manifest, host, stamp):
             members.get("artifact_id") == artifact.get("id") and
             members.get("producer_job_id") == job.get("id"),
             "artifact member admission provenance differs")
-    for record in (manifest["retained"][host], binding["build"], binding["program"]):
-        require(any(m.get("sha256") == record["sha256"] and m.get("bytes") == record["bytes"]
-                    for m in members.get("members", [])), "original artifact member missing")
+    for role, record in (("retained-report", manifest["retained"][host]),
+                         ("build-identity", binding["build"]), ("program", binding["program"])):
+        archive_member = record.get("archive_member")
+        require(isinstance(archive_member, str) and archive_member and
+                not archive_member.startswith("/") and "\\" not in archive_member and
+                ":" not in archive_member and ".." not in archive_member.split("/"), "artifact member path invalid")
+        matches = [m for m in members.get("members", []) if m.get("path") == archive_member]
+        require(len(matches) == 1 and matches[0].get("role") == role and
+                matches[0].get("sha256") == record["sha256"] and
+                matches[0].get("bytes") == record["bytes"], "original artifact member missing/wrong role")
 
 def audit(root, manifest, stamp):
     same_identity(manifest, stamp)
