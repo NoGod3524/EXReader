@@ -670,3 +670,12 @@ Five authenticated successor origins matched (same_origin=true); 709 numeric eve
 Artifact 13087807441, reader-suite-f03-gtk-fixed-origin-diagnostic-41316237632-1, 23011105 bytes, SHA256 aff42d51ebe78000677f337987ad0bf794757ed9564a0c8f48a7ef33b14a92da, created 14:33:51Z. Job/API evidence reviewed; independent artifact-content receipt audit remains pending. No ZIP was downloaded or parsed outside Actions.
 
 GTK candidate delivery is now green; full F03 remains pending/unaccepted, with other host implementations and same-source integration owned separately. No Android/Apple/Windows reexecution, canonical promotion or new CI is included. Canonical ec11cf862ca3b44483d7e8c4726ae748ab438337 remains unchanged. Existing failures, original relay.py, SDK, product safety rules and old tests remain intact.
+
+
+## Same-run two-host fixed-origin round - 2026-11-01T14:39:19Z authorization
+
+Prepared, not run. Three existing files only: main workflow, scope and this evidence document. One new run uses exact case f03/two-host-fixed-origin and marker [F03-TWO-HOST-160-ONE-RUN] on the independent branch. Original gtk/android/audit job names, dependencies and artifact names retained. GTK 20 + Android 120 + audit 20 = 160 runner-min maximum, one run, no automatic retries. Existing canonical GTK case retains its original 60-minute budget and does not enable the new fixed-origin mode.
+
+GTK reuses the reviewed successful observation/cleanup steps and fixed-origin driver, retaining the original build/four CTest tests/27 checks/six author commands. Android and original audit source and commands are unchanged. Each original Android receive clears its own two receiver profiles before creating a new relay, so no cross-phase bound-root adapter is required there. The new run produces fresh GTK bytes, Android receipts and original authenticated audit together under one source/run/attempt; prior artifacts are not substituted or relabeled. Audit still checks original all-exits counts, six receipts, exact database projections and revision bytes, native transport and negative controls.
+
+A successful two-host partial result is not full six-host F03 acceptance and earns no formal count by itself. Original failures and owners remain intact, canonical ec11 remains unchanged, and no other diagnostic/F04/extra host jobs are selected.
