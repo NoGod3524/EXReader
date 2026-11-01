@@ -198,3 +198,9 @@ The canonical actual source must satisfy controller SHA = checkout HEAD = run he
 Syntax/generated-adapter checks are placed at the front of the actual producer jobs, not a separate validation run. On this branch no run has been started and the one-run approval has not been consumed.
 
 Limited reusable-helper review found graph and retained job lookups still using unprefixed names. Both now use the same exact canonical caller-name helper as build authentication; matching is not broadened. No run was consumed.
+
+## Approved round 2 repair (2026-11-01 02:04 UTC)
+
+Round 1 run 41262238367, source a01e28bd02ef5fcbc1448f26dfd86da0b3499869 failed. Windows SDK build passed but synchronous first import BM_CLICK timed out; no claim of proven app deadlock. Linux legacy probe rejected mixed schema-1 revisions/schema-3 catalog. Android, return, audit never ran. Only public Windows build artifact 13065044582 exists (53052942 bytes, sha256 2db74a627d963e230ed2f105d60b3da757f2940052135df4a8595daecb5ff1ee).
+
+User approved six-file correction and one new 120 runner-minute cap (30/45/15/20/10), no retry. Legacy 210403d121d6484a8fff4ea7ffd911efa3163535 catalog/revisions now use isolated v1 prefix; original 121/18 checkers and frozen SDK remain unchanged. Actual CMake caches and link map authenticate isolation. Windows import uses one physically targeted SendInput gesture, fresh empty shelf and bounded unique new row/idle result, never re-clicks after uncertainty. Always-upload diagnostics are separate from successful receipts and exclude profiles, databases, keys and credentials. Screenshots only cover pre-account import; authentication-bearing text is removed. No product/SDK/old-test changes. Implementation still requires independent review and the authorized new runtime; F04 remains pending.

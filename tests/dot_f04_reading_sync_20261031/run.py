@@ -271,6 +271,51 @@ def cleanup_retained_fixture():
             subprocess.run(["sudo", "update-ca-certificates"], check=True)
     certificate.with_suffix(".key").unlink(missing_ok=True)
 
+
+def diagnostic_text(value, secrets=()):
+    """Fail closed on nontext; known fixture values and auth-bearing lines are removed."""
+    import re
+    if not isinstance(value, str) or "\x00" in value:
+        raise ValueError("diagnostic not plain text")
+    for secret in secrets:
+        if secret:
+            value = value.replace(str(secret), "[REDACTED]")
+    value = re.sub(r"-----BEGIN [^-]*KEY-----[\\s\\S]*?-----END [^-]*KEY-----", "[KEY REMOVED]", value)
+    value = re.sub(r"(?im)^.*(?:authorization|password|passwd|access.token|private.key|BEGIN .*KEY|credential).*$",
+                   "[AUTH LINE REMOVED]", value)
+    value = re.sub(r"(https?://)[^/\s@]+@", r"\1[REDACTED]@", value)
+    return value
+
+def collect_diagnostics(arguments):
+    """Only fixed public text evidence; never recursive profiles, databases, or keys."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--kind", choices=("windows", "retained", "android", "audit"), required=True)
+    args = parser.parse_args(arguments)
+    destination = ROOT / "build/f04-diagnostics" / args.kind
+    destination.mkdir(parents=True, exist_ok=True)
+    whitelist = {
+        "windows": [("build/phase/result.json", "result.json")],
+        "android": [("build/phase/result.json", "result.json")],
+        "audit": [("build/f04-graph-auth/result.json", "graph.json"), ("build/f04-retained-auth/result.json", "retained.json")],
+        "retained": [("build/f04-driver/retained-failure.json", "failure.json"),
+                     ("build/v2-sdk-evidence/result.json", "sdk-result.json"),
+                     ("build/v2-sdk-evidence/legacy/summary.json", "legacy-summary.json")]
+    }
+    manifest = {"source_sha": os.environ["GITHUB_SHA"], "run_id": os.environ["GITHUB_RUN_ID"],
+                "attempt": os.environ["GITHUB_RUN_ATTEMPT"], "kind": args.kind,
+                "diagnostic_only": True, "files": [], "missing": [], "refused": []}
+    for source, name in whitelist[args.kind]:
+        path = ROOT / source
+        if not path.is_file():
+            manifest["missing"].append(source); continue
+        try:
+            content = diagnostic_text(path.read_text(encoding="utf-8"))
+            (destination / name).write_text(content, encoding="utf-8")
+            manifest["files"].append(name)
+        except Exception:
+            manifest["refused"].append(source)
+    (destination / "manifest.json").write_text(json.dumps(manifest, indent=2))
+
 def retained_protocol():
     """Run original 18/121 and native HTTPS checks, not the old four-ZIP aggregate."""
     import hashlib, yaml
@@ -294,18 +339,45 @@ def retained_protocol():
         matches = [step for step in steps if step.get("name") == name]
         assert len(matches) == 1, name
         body = matches[0]["run"]
-        # Only installed-SDK selection changes. Probe sources and assertions
-        # remain byte-identical, including the original 121 and all 18 cases.
+        # SDK selector and historical provider isolation only; probe sources
+        # and assertions remain byte-identical (original 121 and all 18 cases).
         adapted = "\n".join(line + (" -DEXR_SDK_VERSION=3.42.0" if
             line.lstrip().startswith("cmake -S ") and "-DEXR_SDK=" in line else "")
             for line in body.splitlines()) + "\n"
+        if index == 0:
+            old = "210403d121d6484a8fff4ea7ffd911efa3163535"
+            archive = "git archive " + old + " apps/reader/revisions extras/opds"
+            assert adapted.count(archive) == 1
+            adapted = adapted.replace(archive, archive + " apps/reader/store/native apps/reader/store/001_catalog.sql tests/reader_catalog/native_catalog_check.c licenses/sqlite-public-domain.txt")
+            # YAML removes indentation; select the actual command exactly once.
+            marker = "cmake -S build/v1-source/apps/reader/revisions"
+            assert adapted.count(marker) == 1
+            commands = (
+                'cmake -S build/v1-source/apps/reader/store/native -B build/v1-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/v1-product-stage"\n'
+                'cmake --build build/v1-product --parallel 4\n'
+                'cmake --install build/v1-product\n')
+            adapted = adapted.replace(marker, commands + marker)
+            lines = adapted.splitlines()
+            adapted = "\n".join(line.replace('READER_PRODUCT_PREFIX="$ws/build/v2-product-stage"', 'READER_PRODUCT_PREFIX="$ws/build/v1-product-stage"')
+                if line.startswith(marker) else line for line in lines) + "\n"
+        if index == 2:
+            lines = adapted.splitlines()
+            adapted = "\n".join(line.replace("build/v2-product-stage", "build/v1-product-stage")
+                if " -B build/v1-adapter " in line or " -B build/v1-consumer " in line else line for line in lines) + "\n"
         script = OUT / ("retained-" + str(index) + ".sh")
         script.write_text(adapted)
         is_tls = name == "Real native HTTPS transfers SDK-exported originals and all eighteen reading captures"
         if is_tls and sys.platform != "win32":
             assert not Path("/usr/local/share/ca-certificates/reader-v2-roundtrip.crt").exists(), "preexisting fixture trust path"
         try:
-            subprocess.run(["bash", "-e", "-o", "pipefail", str(script)], cwd=ROOT, check=True)
+            completed = subprocess.run(["bash", "-e", "-o", "pipefail", str(script)], cwd=ROOT,
+                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            print(diagnostic_text(completed.stdout), flush=True)
+            if completed.returncode:
+                (OUT / "retained-failure.json").write_text(json.dumps({
+                    "step": name, "exit_code": completed.returncode, "passed": False,
+                    "output": diagnostic_text(completed.stdout), "source_sha": os.environ["GITHUB_SHA"]}, indent=2))
+                raise subprocess.CalledProcessError(completed.returncode, ["bash", str(script)])
         finally:
             if is_tls:
                 original_failure = sys.exc_info()[0] is not None
@@ -325,6 +397,10 @@ def retained_protocol():
         "attempt": os.environ["GITHUB_RUN_ATTEMPT"], "sdk_version": "3.42.0",
         "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505", "platform": sys.platform,
         "original_workflow_sha256": hashlib.sha256(recipe.encode()).hexdigest(),
+        "legacy_catalog_source": "210403d121d6484a8fff4ea7ffd911efa3163535",
+        "legacy_revisions_source": "210403d121d6484a8fff4ea7ffd911efa3163535",
+        "legacy_product_prefix": "build/v1-product-stage",
+        "current_product_prefix": "build/v2-product-stage",
         "steps": records, "original_four_zip_aggregate": "not-run", "F04_accepted": False}
     (OUT / "retained-receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
 
@@ -393,8 +469,11 @@ def main():
     assert Path.cwd().resolve() == ROOT
     assert os.environ.get("EXR_APPLE_SDK_VERSION") == "3.42.0"
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build"))
+    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics"))
     args, rest = parser.parse_known_args()
+    if args.action == "diagnostics":
+        collect_diagnostics(rest)
+        return
     prepare()
     if args.action == "package-build":
         package_build(rest)
