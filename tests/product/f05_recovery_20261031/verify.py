@@ -7,6 +7,7 @@ import argparse
 import copy
 import datetime
 import hashlib
+import io
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -75,7 +76,8 @@ def member_index(archive, policy):
         name = entry.filename
         path = PurePosixPath(name)
         require(name and not name.startswith("/") and "\\" not in name and ":" not in name
-                and ".." not in path.parts and "." not in path.parts,
+                and ".." not in path.parts and "." not in path.parts
+                and str(path) == name.rstrip("/"),
                 "unsafe_member", name)
         require(name not in result, "duplicate_member", name)
         require(not stat.S_ISLNK(entry.external_attr >> 16), "unsafe_member", name + ": symlink")
@@ -94,6 +96,12 @@ def zip_hash(archive, entry):
             result.update(block)
     require(size == entry.file_size, "zip_size", entry.filename)
     return result.hexdigest()
+
+def archive_identity(path, metadata):
+    require(path.stat().st_size == metadata["size_in_bytes"], "wrong_zip_size", str(path))
+    actual = digest_file(path)
+    require("sha256:" + actual == metadata["digest"], "wrong_digest", str(path))
+    return actual
 
 def read_json_member(archive, members, name, policy):
     require(name in members and not members[name].is_dir(), "missing_member", name)
@@ -150,9 +158,7 @@ def authenticate(manifest, output, identity):
                 "repos/" + repo + "/actions/artifacts/" + str(artifact["id"]) + "/zip"],
                 stdout=stream, stderr=subprocess.PIPE, timeout=300)
         require(download.returncode == 0, "download_failed", expected_name)
-        require(raw.stat().st_size == artifact["size_in_bytes"], "wrong_zip_size", expected_name)
-        actual = digest_file(raw)
-        require("sha256:" + actual == claimed, "wrong_digest", expected_name)
+        actual = archive_identity(raw, artifact)
         (folder / "artifact.json").write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
         (folder / "producer-job.json").write_text(json.dumps(job, indent=2) + "\n", encoding="utf-8")
         with zipfile.ZipFile(raw) as archive:
@@ -176,7 +182,7 @@ def authenticate(manifest, output, identity):
                 retained[suite_id] = read_json_member(archive, members, member, policy)
         authenticated["roles"][role] = {
             "artifact_id": artifact["id"], "artifact_name": artifact["name"],
-            "job_id": job["id"], "original_zip_sha256": actual,
+            "job_id": job["id"], "artifact_metadata": artifact, "original_zip_sha256": actual,
             "original_zip_bytes": raw.stat().st_size, "program_sha256": program_hash,
             "receipt": receipt, "evidence": evidence, "retained": retained}
     return authenticated
@@ -297,6 +303,64 @@ def check(manifest, bundle, identity):
     return {"receipt_contract_passed": True, "F05_accepted": False,
             "reason": "Authenticated receipts and contract checks are not full independent product acceptance"}
 
+def negative_controls(manifest, authenticated, identity, original_artifacts):
+    # A complete positive gate must succeed first. Otherwise unrelated missing
+    # capabilities cannot cause a planted counterexample to appear successful.
+    check(manifest, authenticated, identity)
+    results = []
+    def reject(name, expected, operation):
+        try:
+            operation()
+        except Rejected as error:
+            require(error.code == expected, "wrong_negative_reason",
+                    name + ": expected " + expected + ", got " + error.code)
+            results.append({"name": name, "expected": expected, "observed": error.code, "passed": True})
+            return
+        raise Rejected("negative_accepted", name)
+    damaged = copy.deepcopy(authenticated)
+    damaged["identity"]["source"] = "0" * 40
+    reject("aggregate-source-substitution", "wrong_source", lambda: check(manifest, damaged, identity))
+    damaged = copy.deepcopy(authenticated)
+    first_role = next(iter(damaged["roles"]))
+    first = damaged["roles"][first_role]["receipt"]
+    removed = next(iter(first["claims"]))
+    del first["claims"][removed]
+    reject("required-native-claim-removed", "missing_claim", lambda: check(manifest, damaged, identity))
+    damaged = copy.deepcopy(authenticated)
+    first = damaged["roles"][first_role]["receipt"]
+    reference = next(iter(first["claims"].values()))[0]
+    next(c for c in first["cases"] if c["id"] == reference["case_id"])["outcome"] = "partial"
+    reject("partial-native-case-as-pass", "partial_case", lambda: check(manifest, damaged, identity))
+    damaged = copy.deepcopy(authenticated)
+    windows = next(row for row in damaged["roles"].values() if row["receipt"]["host"] == "windows")
+    windows["retained"]["windows-account-native-32"]["checks"][0] = "substituted-old-assertion"
+    reject("original-ordered-assertion-substitution", "wrong_suite_names",
+           lambda: check(manifest, damaged, identity))
+    for role, row in authenticated["roles"].items():
+        metadata = copy.deepcopy(row["artifact_metadata"])
+        metadata["digest"] = "sha256:" + ("0" * 64 if row["original_zip_sha256"] != "0" * 64 else "1" * 64)
+        reject(role + "-wrong-original-ZIP-digest", "wrong_digest",
+               lambda role=role, metadata=metadata: archive_identity(original_artifacts / role / "original.zip", metadata))
+    # These are explicitly malformed negative archives, never substituted for
+    # the retained GitHub originals or reported as native host coverage.
+    malformed = io.BytesIO()
+    with zipfile.ZipFile(malformed, "w") as archive:
+        archive.writestr("duplicate.json", "{}")
+        archive.writestr("duplicate.json", "{}")
+    malformed.seek(0)
+    with zipfile.ZipFile(malformed) as archive:
+        reject("duplicate-ZIP-member", "duplicate_member",
+               lambda: member_index(archive, manifest["artifact_policy"]))
+    malformed = io.BytesIO()
+    with zipfile.ZipFile(malformed, "w") as archive:
+        archive.writestr("../escape.json", "{}")
+    malformed.seek(0)
+    with zipfile.ZipFile(malformed) as archive:
+        reject("traversal-ZIP-member", "unsafe_member",
+               lambda: member_index(archive, manifest["artifact_policy"]))
+    return results
+
+
 def main():
     require(os.environ.get("GITHUB_ACTIONS") == "true", "not_actions", "Actions execution only")
     parser = argparse.ArgumentParser()
@@ -311,12 +375,27 @@ def main():
         manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
         require(subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == identity["source"],
                 "wrong_source", "audit checkout")
+        frozen = subprocess.run(["git", "diff", "--exit-code", SDK, "HEAD", "--",
+            "src", "include", "cmake", "CMakeLists.txt", "bindings"], capture_output=True)
+        require(frozen.returncode == 0, "wrong_sdk", "actual five SDK source objects differ")
+        unchanged = subprocess.run(["git", "diff", "--exit-code", manifest["preparation_base"], "HEAD", "--",
+            "tests/reader_windows_account", "tests/linux_host", "tests/reader_host_session_android",
+            "tests/apple_host/account", "tests/reader_team24_apple/run_account_terminal.py"],
+            capture_output=True)
+        require(unchanged.returncode == 0, "old_suite_modified", "retained source assertions changed")
+        for suite in manifest["retained_suites"].values():
+            for path_key, blob_key in (("source_path", "source_blob"), ("supplement_path", "supplement_blob")):
+                if path_key in suite:
+                    blob = subprocess.check_output(["git", "rev-parse", "HEAD:" + suite[path_key]],
+                                                   text=True).strip()
+                    require(blob == suite[blob_key], "old_suite_modified", suite[path_key])
         # Avoid consuming ZIP resources for the intentionally unfinished matrix.
         require(manifest["state"] == "ready-for-client-validation", "not_ready", "F05 preparation only")
         authenticated = authenticate(manifest, args.original_artifacts, identity)
         (args.original_artifacts / "authenticated.json").write_text(
             json.dumps(authenticated, indent=2) + "\n", encoding="utf-8")
         result.update(check(manifest, authenticated, identity))
+        result["negative_controls"] = negative_controls(manifest, authenticated, identity, args.original_artifacts)
     except (Rejected, KeyError, TypeError, ValueError, OSError, zipfile.BadZipFile,
             subprocess.SubprocessError) as error:
         result["errors"].append({"code": getattr(error, "code", "malformed_evidence"), "detail": str(error)})
