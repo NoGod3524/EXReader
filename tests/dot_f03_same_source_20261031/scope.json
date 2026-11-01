@@ -480,5 +480,32 @@
         "created_at": "2026-11-01T14:49:28Z"
       }
     ]
+  },
+  "two_host_complete_install_round": {
+    "authorization_message": "Sentinel_9bbf6087da188191ba4ce9dbec0cb7b6",
+    "authorization_utc": "2026-11-01T14:56:14Z",
+    "base_sha": "fb01ff122b07cd49554df46e2f3e5a1a12e4a5ef",
+    "branch": "dot/f03-gtk-ready-20261101",
+    "case": "f03/two-host-complete-install",
+    "marker": "[F03-TWO-HOST-INSTALL-160-ONE-RUN]",
+    "allowed_existing_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      "tests/dot_f03_same_source_20261031/build.py",
+      "tests/dot_f03_same_source_20261031/scope.json",
+      "docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md"
+    ],
+    "job_minutes": {
+      "gtk": 20,
+      "android": 120,
+      "audit": 20
+    },
+    "runner_minutes_cap": 160,
+    "run_limit": 1,
+    "automatic_retries": 0,
+    "status": "prepared_not_run",
+    "only_added_original_build_target": "reader_original_import",
+    "original_tools_sdk_product_tests_unchanged": true,
+    "formal_count_credit": 0,
+    "full_F03_accepted": false
   }
 }

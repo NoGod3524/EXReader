@@ -306,7 +306,25 @@ def build_android_owner(audit):
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     original_product=module.build_product
     def product_with_sync(product_stage,build):
-        original_product(product_stage,build)
+        original_run = module.run
+        target_extensions = []
+        def complete_catalog_install_targets(argv, *args, **kwargs):
+            values = list(map(str, argv))
+            if (len(values) == 8 and values[0] == shutil.which("cmake") and
+                    values[1] == "--build" and
+                    Path(values[2]).resolve() == (build / "catalog").resolve() and
+                    values[3:] == ["--parallel", "4", "--target", "reader_catalog", "--verbose"]):
+                extended = list(argv[:-1]) + ["reader_original_import", argv[-1]]
+                target_extensions.append({"original": values, "extended": list(map(str, extended))})
+                return original_run(extended, *args, **kwargs)
+            return original_run(argv, *args, **kwargs)
+        module.run = complete_catalog_install_targets
+        try:
+            original_product(product_stage,build)
+        finally:
+            module.run = original_run
+        require(len(target_extensions) == 1, "exact original catalog build target was not observed once")
+        audit.append({"catalog_install_target_extension": target_extensions[0]})
         for name,path in [("webdav","extras/webdav"),("sideload","extras/sideload"),
                           ("sync","apps/reader/sync"),("session","apps/reader/session")]:
             location=build/("f03-"+name)
