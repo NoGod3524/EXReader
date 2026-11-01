@@ -30,7 +30,9 @@ struct managed_pool {
   exr_webdav_managed_snapshot view{};
   exr_wc_root *handles[EXR_WEBDAV_MANAGED_ROOT_LIMIT]{};
   std::thread::id owner=std::this_thread::get_id();
-  bool poisoned=false;
+  bool poisoned=false,snapshot_active=false;
+  unsigned registry_version=1;
+  char purpose[EXR_WEBDAV_MANAGED_ROOT_LIMIT]{};
   managed_pool(){view.enabled=1;view.status=EXR_WC_REFUSED;}
   ~managed_pool(){for(auto &r:handles)exr_wc_close(&r);}
   [[noreturn]] void fail(int code,const char *message,int error=0) {
@@ -50,9 +52,9 @@ struct managed_pool {
     return fd>=0 && !fstat(fd,&s) && S_ISREG(s.st_mode) && s.st_uid==geteuid() && !(s.st_mode&077) && s.st_nlink==1;
   }
   std::string registry() const {
-    std::string value="EXReader managed registry 1\n"+profile+"\n"+std::to_string(view.roots)+"\n";
+    std::string value="EXReader managed registry "+std::to_string(registry_version)+"\n"+profile+"\n"+std::to_string(view.roots)+"\n";
     for(unsigned i=0;i<view.roots;i++){
-      const auto &r=view.root[i];value+=std::string(r.leaf)+" "+(r.unbound?"-":r.uuid)+"\n";
+      const auto &r=view.root[i];value+=std::string(r.leaf)+" "+(r.unbound?"-":r.uuid)+(registry_version==2?std::string(" ")+(purpose[i]?purpose[i]:'D'):"")+"\n";
     }
     char crc[10];std::snprintf(crc,sizeof(crc),"%08x",managed_crc(value));
     return value+crc+"\n";
@@ -73,6 +75,7 @@ struct managed_pool {
     MANAGED_HOOK("registry_next");
     if(renameat(directory.value,"registry.next",directory.value,"registry") || fsync(directory.value))
       fail(EXR_WC_UNCERTAIN,"Download cleanup record update is uncertain",errno);
+    MANAGED_HOOK("registry_committed");
   }
   void load() {
     managed_fd file(openat(directory.value,"registry",O_RDONLY|O_CLOEXEC|O_NOFOLLOW));
@@ -87,15 +90,23 @@ struct managed_pool {
       offset+=(size_t)n;
     }
     std::istringstream input(bytes);std::string magic,binding,count,line;
-    if(!std::getline(input,magic)||magic!="EXReader managed registry 1"||
+    if(!std::getline(input,magic)||(magic!="EXReader managed registry 1"&&magic!="EXReader managed registry 2")||
        !std::getline(input,binding)||binding!=profile||!std::getline(input,count)||
        count.empty()||count.size()>2||count.find_first_not_of("0123456789")!=std::string::npos)
       fail(EXR_WC_REFUSED,"Download cleanup profile identity differs");
+    registry_version=magic=="EXReader managed registry 2"?2:1;
     unsigned total=(unsigned)std::stoul(count);
     if(total>EXR_WEBDAV_MANAGED_ROOT_LIMIT)fail(EXR_WC_REFUSED,"Download cleanup registry exceeds its limit");
     std::set<std::string> leaves,uuids;
     for(unsigned i=0;i<total;i++){
       if(!std::getline(input,line))fail(EXR_WC_REFUSED,"Download cleanup records are incomplete");
+      char kind='D';
+      if(registry_version==2){
+        if(line.size()<3||line[line.size()-2]!=' '||(line.back()!='D'&&line.back()!='S'))
+          fail(EXR_WC_REFUSED,"Unknown managed root purpose");
+        kind=line.back();line.resize(line.size()-2);
+      }
+      purpose[i]=kind;
       size_t space=line.find(' ');std::string leaf=line.substr(0,space),id=space==std::string::npos?"":line.substr(space+1);
       if(leaf.substr(0,5)!="root-"||!managed_hex(leaf.substr(5),32)||!leaves.insert(leaf).second||
          (id!="-"&&(!managed_hex(id,32)||!uuids.insert(id).second)))
@@ -171,14 +182,34 @@ struct managed_pool {
       if(rep.native_error)view.native_error=rep.native_error;
       inspect(i);
     }
-    summarize();
+    recover_snapshots();summarize();
   }
-  unsigned select() {
+  void recover_snapshots() {
+    check_owner();
+    if(snapshot_active)fail(EXR_WC_BUSY,"An upload snapshot is active");
+    for(unsigned i=0;i<view.roots;i++){
+      auto &r=view.root[i];
+      if(purpose[i]!='S'||!handles[i]||r.receipt_uncertain||r.refused)continue;
+      for(unsigned j=0;j<64;j++){
+        exr_wc_info info{};if(exr_wc_inspect(handles[i],j,&info)!=EXR_WC_OK)break;
+        if(info.state==EXR_WC_CLEANED||info.state==EXR_WC_PUBLISHED)continue;
+        if(info.state!=EXR_WC_OWNED&&info.state!=EXR_WC_SEALED){r.refused++;r.status=EXR_WC_REFUSED;continue;}
+        exr_wc_cleanup_result result{};
+        int code=exr_wc_abandon_stale(handles[i],&info,&result);
+        r.receipt_uncertain|=result.receipt_uncertain;
+        if(result.native_error)view.native_error=result.native_error;
+        if(code!=EXR_WC_OK){r.status=code;if(code==EXR_WC_REFUSED)r.refused++;break;}
+        r.status=EXR_WC_OK;view.cleaned++;
+      }
+      inspect(i);
+    }
+  }
+  unsigned select(char kind='D') {
     check_owner();view.published=0;
     if(view.status!=EXR_WC_OK||poisoned)fail(view.status,"Download cleanup is unavailable",view.native_error);
     for(unsigned i=0;i<view.roots;i++){
       const auto &r=view.root[i];
-      if(handles[i]&&r.status==EXR_WC_OK&&!r.pending&&!r.refused&&!r.receipt_uncertain&&r.slots<64)return i;
+      if((purpose[i]?purpose[i]:'D')==kind&&handles[i]&&r.status==EXR_WC_OK&&!r.pending&&!r.refused&&!r.receipt_uncertain&&r.slots<64)return i;
     }
     if(view.roots==EXR_WEBDAV_MANAGED_ROOT_LIMIT){view.capacity_exhausted=1;fail(EXR_WC_LIMIT,"Temporary download capacity is exhausted");}
     unsigned char random[16];managed_fd entropy(::open("/dev/urandom",O_RDONLY|O_CLOEXEC));
@@ -186,7 +217,8 @@ struct managed_pool {
       fail(EXR_WC_IO,"Cannot allocate a download cleanup identity",errno);
     std::string leaf="root-";const char *hex="0123456789abcdef";
     for(unsigned char b:random){leaf+=hex[b>>4];leaf+=hex[b&15];}
-    unsigned i=view.roots++;auto &r=view.root[i];r.unbound=1;
+    unsigned i=view.roots++;auto &r=view.root[i];r.unbound=1;purpose[i]=kind;
+    if(kind=='S')registry_version=2;
     std::snprintf(r.leaf,sizeof(r.leaf),"%s",leaf.c_str());save();
     MANAGED_HOOK("registry_allocating");
     r.status=exr_wc_create_at(directory.value,r.leaf,&handles[i],r.uuid);
