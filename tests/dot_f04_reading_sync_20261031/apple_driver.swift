@@ -32,6 +32,9 @@ final class F04ReadingSyncUITests: XCTestCase {
         e(id).tap()
     }
     private func clickVisibleReadingRow(_ id: String) {
+        #if os(macOS)
+        clickVisibleMacReadingRow(id)
+        #else
         let lists = app.descendants(matching: .any).matching(identifier: "reading.list")
         XCTAssertEqual(lists.count, 1, "Unique actual reading list required")
         for attempt in 0..<10 {
@@ -65,7 +68,85 @@ final class F04ReadingSyncUITests: XCTestCase {
             XCTAssertTrue(moved, "Actual list scroll did not move the target; no click issued")
         }
         XCTFail("Target did not enter the real list viewport; no click issued")
+            #endif
     }
+    #if os(macOS)
+    private func clickVisibleMacReadingRow(_ id: String) {
+        var responseSign: CGFloat? = nil
+        var stepLimit: CGFloat = 24
+        var scrolls = 0
+        func close(_ a: CGRect, _ b: CGRect) -> Bool {
+            return abs(a.minX - b.minX) <= 0.5 && abs(a.minY - b.minY) <= 0.5 &&
+                abs(a.width - b.width) <= 0.5 && abs(a.height - b.height) <= 0.5
+        }
+        func desiredMovement(_ frame: CGRect, _ bounds: CGRect) -> CGFloat {
+            // Padding guides scrolling only; the original full bounds decide admission.
+            let padding: CGFloat = frame.height + 8 <= bounds.height ? 4 : 0
+            if frame.minY < bounds.minY { return bounds.minY + padding - frame.minY }
+            return bounds.maxY - padding - frame.maxY
+        }
+        // Eleven observations allow the tenth scroll to succeed without an eleventh scroll.
+        for attempt in 0...10 {
+            let lists = app.descendants(matching: .any).matching(identifier: "reading.list")
+            XCTAssertEqual(lists.count, 1, "Unique actual reading list required")
+            let list = lists.element(boundBy: 0)
+            let matches = list.descendants(matching: .button).matching(identifier: id)
+            XCTAssertEqual(matches.count, 1, "Unique row action required: \(id)")
+            let button = matches.element(boundBy: 0)
+            let bounds = list.frame, frame = button.frame
+            diagnosticReadingState("row-visibility-\(attempt)", target: id)
+            XCTAssertTrue(bounds.width > 0 && bounds.height > 0 && frame.width > 0 && frame.height > 0)
+            if bounds.contains(frame) {
+                XCTAssertTrue(button.isEnabled && button.isHittable, "Visible row action must be enabled and hittable")
+                button.click()
+                return
+            }
+            XCTAssertTrue(frame.height <= bounds.height, "Row action cannot fit in the visible list")
+            guard frame.minX >= bounds.minX && frame.maxX <= bounds.maxX else {
+                XCTFail("Row action outside horizontal list bounds"); return
+            }
+            guard scrolls < 10 else { break }
+            let wanted = desiredMovement(frame, bounds)
+            let cap = scrolls == 0 ? min(CGFloat(16), stepLimit) : stepLimit
+            let magnitude = min(cap, min(abs(wanted) + 4, bounds.height * 0.2))
+            XCTAssertTrue(magnitude > 0, "A nonzero bounded scroll is required")
+            let delta = (wanted > 0 ? magnitude : -magnitude) * (responseSign ?? 1)
+            print("F04_MAC_SCROLL before target=\(id) scroll=\(scrolls + 1) delta=\(delta) wanted=\(wanted) frame=\(frame) bounds=\(bounds)")
+            list.scroll(byDeltaX: 0, deltaY: delta)
+            scrolls += 1
+            let deadline = Date().addingTimeInterval(3)
+            var previousFrame = frame, previousBounds = bounds
+            var settledFrame = frame, settledBounds = bounds
+            var stableSamples = 0
+            while Date() < deadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+                let freshLists = app.descendants(matching: .any).matching(identifier: "reading.list")
+                XCTAssertEqual(freshLists.count, 1, "Unique actual reading list required after scroll")
+                let freshList = freshLists.element(boundBy: 0)
+                let refreshed = freshList.descendants(matching: .button).matching(identifier: id)
+                XCTAssertEqual(refreshed.count, 1, "Unique row action required after scroll: \(id)")
+                let nextFrame = refreshed.element(boundBy: 0).frame, nextBounds = freshList.frame
+                let moved = abs(nextFrame.midY - frame.midY) > 0.5
+                if moved && close(nextFrame, previousFrame) && close(nextBounds, previousBounds) {
+                    stableSamples += 1
+                } else { stableSamples = 0 }
+                previousFrame = nextFrame; previousBounds = nextBounds
+                settledFrame = nextFrame; settledBounds = nextBounds
+                if stableSamples >= 3 { break }
+            }
+            let movement = settledFrame.midY - frame.midY
+            XCTAssertTrue(stableSamples >= 3, "Actual list scroll did not settle; no click issued")
+            XCTAssertTrue(abs(movement) > 0.5, "Actual list scroll did not move the target; no click issued")
+            responseSign = movement * delta > 0 ? 1 : -1
+            let nextWanted = desiredMovement(settledFrame, settledBounds)
+            if !settledBounds.contains(settledFrame) && wanted * nextWanted < 0 {
+                stepLimit = max(CGFloat(1), stepLimit / 2)
+            }
+            print("F04_MAC_SCROLL after target=\(id) scroll=\(scrolls) movement=\(movement) responseSign=\(responseSign!) nextWanted=\(nextWanted) limit=\(stepLimit) frame=\(settledFrame) bounds=\(settledBounds)")
+        }
+        XCTFail("Target did not enter the real list viewport; no click issued")
+    }
+    #endif
     private func records() {
         #if os(iOS)
         let trigger = e("reader.more").buttons.firstMatch
