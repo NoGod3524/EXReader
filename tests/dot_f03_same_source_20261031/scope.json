@@ -378,12 +378,35 @@
     "runner_minutes_cap": 20,
     "run_limit": 1,
     "automatic_retries": 0,
-    "status": "prepared_not_run",
+    "status": "completed_success",
     "previous_schema_source_run_attempt_phase_checked": true,
     "original_relay_file_unchanged": true,
     "original_product_exact_root_binding_unchanged": true,
     "port_collision_fails_without_retry": true,
     "original_actions_predicates_180s_deadline_and_assertions_unchanged": true,
-    "full_F03_accepted": false
+    "full_F03_accepted": false,
+    "run_id": 41316237632,
+    "attempt": 1,
+    "source_sha": "29089e8750799d0735ba37656cd554209d438809",
+    "job_id": 124876776878,
+    "used_runs": 1,
+    "completed_at": "2026-11-01T14:33:55Z",
+    "retained_build_and_27_check_steps_passed": true,
+    "author_phases_completed": [
+      "create",
+      "delete",
+      "restore",
+      "member-remove",
+      "member-restore",
+      "restart"
+    ],
+    "same_origin_checks_passed": 5,
+    "numeric_records": 709,
+    "artifact": {
+      "id": 13087807441,
+      "bytes": 23011105,
+      "sha256": "aff42d51ebe78000677f337987ad0bf794757ed9564a0c8f48a7ef33b14a92da"
+    },
+    "artifact_contents_independent_audit_pending": true
   }
 }
