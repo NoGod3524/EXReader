@@ -12,12 +12,17 @@ on:
         description: Also run the Android lane (skip when nothing Android changed)
         type: boolean
         default: true
+      desktop:
+        description: Run the Windows and Linux lanes (skip when nothing desktop changed)
+        type: boolean
+        default: true
 permissions:
   contents: read
 env:
   C11_NDK: '27.0.12077973'
 jobs:
   windows:
+    if: github.event_name != 'workflow_dispatch' || inputs.desktop
     runs-on: windows-2022
     timeout-minutes: 120
     steps:
@@ -70,6 +75,7 @@ jobs:
             build/f06/windows-build/logs/
           if-no-files-found: warn
   linux:
+    if: github.event_name != 'workflow_dispatch' || inputs.desktop
     runs-on: ubuntu-22.04
     timeout-minutes: 120
     steps:
