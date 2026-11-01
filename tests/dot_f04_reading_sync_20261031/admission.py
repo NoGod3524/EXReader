@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Actions-only immutable source admission; only two approved parser spelling branches; no evidence promotion."""
+"""Actions-only immutable source admission; only three approved parser spelling branches; no evidence promotion."""
 import json, os, subprocess
 from pathlib import Path
 
@@ -15,11 +15,11 @@ def main():
     assert git("merge-base", contract["base_source"], source) == contract["base_source"]
     changed = git("diff", "--name-only", contract["base_source"], source).splitlines()
     if os.environ.get("GITHUB_REF") == "refs/heads/" + contract["canonical"]["branch"]:
-        assert os.environ.get("F04_SCOPE") == "f04/windows-android", "approved fixed case"
+        assert os.environ.get("F04_SCOPE") in ("f04/windows-android", "f04/six-host"), "approved fixed case"
         assert os.environ.get("F04_CONTROLLER_SHA") == source, "controller/source mismatch"
-        assert set(changed) == set(contract["canonical"]["union_paths"]), (changed, "exact approved twenty-five-path union")
+        assert set(changed) == set(contract["canonical"]["union_paths"]), (changed, "exact approved twenty-six-path union")
     else:
-        assert set(changed) == set(contract["authorized_paths"]), (changed, "exact fourteen-file preparation ownership")
+        assert set(changed) == set(contract["authorized_paths"]), (changed, "exact fifteen-file preparation ownership")
         assert os.environ.get("F04_SCOPE") is None, "execution requires canonical branch"
     sdk_paths = ("src", "include", "cmake", "CMakeLists.txt", "bindings")
     assert not git("diff", "--name-only", contract["sdk_source"], source, "--", *sdk_paths)
@@ -38,6 +38,9 @@ def main():
         "apps/reader/desktop/windows_records_owner.cpp": (
             ' if(!std::strcmp(recorded,exr_version()))return true;',
             ' if(!std::strcmp(exr_version(),"3.42.0")&&!std::strcmp(recorded,"exreader-sdk-3.42.0"))return true;')}
+    production["examples/apple/HostReadingRecords.swift"] = (
+        '        if recorded == actual { return true }',
+        '        if actual == "3.42.0" && recorded == "exreader-sdk-3.42.0" { return true }')
     assert set(git("diff", "--name-only", contract["base_source"], source, "--", "apps", "examples").splitlines()) == set(production)
     for path, (anchor, added) in production.items():
         original = subprocess.check_output(["git", "show", contract["base_source"] + ":" + path], cwd=ROOT)

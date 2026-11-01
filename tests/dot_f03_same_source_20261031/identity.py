@@ -33,12 +33,13 @@ def check_candidate_fields(product_baseline, sdk_freeze, changed, historical_own
             "candidate product baseline mismatch")
     require(sdk_freeze == SCOPE["sdk_source"], "candidate SDK freeze mismatch")
     require(historical_owner_guard_reexecuted is False, "historical owner guard falsely claimed")
-    require(SCOPE.get("allowed_path_count") == 25 and len(SCOPE["allowed_paths"]) == 25 and
-            len(set(SCOPE["allowed_paths"])) == 25, "authorized twenty-five-path contract malformed")
-    require(set(changed).issubset(set(SCOPE["allowed_paths"])), "outside authorized twenty-five paths")
+    require(SCOPE.get("allowed_path_count") == 26 and len(SCOPE["allowed_paths"]) == 26 and
+            len(set(SCOPE["allowed_paths"])) == 26, "authorized twenty-six-path contract malformed")
+    require(set(changed).issubset(set(SCOPE["allowed_paths"])), "outside authorized twenty-six paths")
     production = SCOPE["authorized_production_blob_sha"]
     expected_production = {
         "apps/reader/desktop/windows_records_owner.cpp",
+        "examples/apple/HostReadingRecords.swift",
         "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
     }
     require(set(production) == expected_production and
