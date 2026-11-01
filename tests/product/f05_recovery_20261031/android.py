@@ -327,6 +327,8 @@ def main():
         pid=shell("pidof",PACKAGE).decode().strip()
         shell("am","force-stop",PACKAGE)
         launch()
+        offline_reopened=shell("pidof",PACKAGE).decode().strip()
+        if offline_reopened==pid:raise AssertionError("offline reopening did not replace the real process")
         restarted=snapshot("restart")
         if restarted["heads"]!=after["heads"]:
             raise AssertionError("retained conflict changed after process restart")
@@ -347,7 +349,7 @@ def main():
         finish_case({"offline_read":"local"},reopened_host_readable=True,network_requests=0,
                     network_measurement="controlled F05 library sync endpoint")
         report["cases"].append({"name":"restart_preserves_conflict","outcome":"passed",
-            "terminated_pid":pid,"reopened_pid":shell("pidof",PACKAGE).decode().strip(),
+            "terminated_pid":pid,"reopened_pid":offline_reopened,
             "after":restarted})
     except BaseException as error:
         safe = repr(error).replace(password, "<generated-fixture-secret>").replace(auth, "<generated-fixture-auth>")
