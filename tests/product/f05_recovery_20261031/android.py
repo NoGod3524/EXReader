@@ -28,11 +28,10 @@ def main():
     contract = json.loads((a.peer / "peer-contract.json").read_text())
     user, password = "f05", secrets.token_hex(24)
     auth = "Basic " + base64.b64encode((user + ":" + password).encode()).decode()
-    dav = Store(a.certificate, a.key, auth)
-    producer = dav.expose_checkpoint(a.peer / contract["baseline"])
+    dav, producer, reverse_owned = None, None, False
     report = {"source":os.environ["GITHUB_SHA"], "run":os.environ["GITHUB_RUN_ID"],
               "attempt":os.environ["GITHUB_RUN_ATTEMPT"], "host":"android",
-              "F05_accepted":False, "producer":producer["author"], "cases":[],
+              "F05_accepted":False, "producer":None, "cases":[],
               "simultaneous_online_peers":False}
     normalized, claim_refs, evidence = [], {}, ["coverage.json"]
     previous_wire, last_request = {}, 0
@@ -183,6 +182,9 @@ def main():
                    for row in db.execute("SELECT id,source FROM books ORDER BY id")]
         return {"books":books,"count":len(books),"observation":"stable copied SDK DB read-only"}
     try:
+        dav=Store(a.certificate,a.key,auth)
+        producer=dav.expose_checkpoint(a.peer/contract["baseline"])
+        report["producer"]=producer["author"]
         installed=shell("pm","path",PACKAGE).decode().strip().splitlines()
         if len(installed)!=1 or not installed[0].startswith("package:/data/app/") or not installed[0].endswith(".apk"):
             raise AssertionError("expected one actual installed debug APK, not split/foreign package")
@@ -195,6 +197,7 @@ def main():
             "sha256":report["program_sha256"],"source_binding":"requires independent same-run build identity"}
         # CI supplies a fresh emulator/APK whose trust includes this test CA.
         # Do not silently clear an existing caller's profile.
+        reverse_owned=True
         adb("reverse","tcp:"+str(dav.server.server_port),"tcp:"+str(dav.server.server_port))
         launch();configure();sync()
         book_rows=[json.loads(body) for path,body in dav.entries.items()
@@ -351,12 +354,14 @@ def main():
         report["failure"]=safe
         raise RuntimeError(safe) from None
     finally:
-        report["requests"]=dav.requests
+        report["requests"]=dav.requests if dav is not None else []
         report["uncovered"]=["native deletion conflict operation detail","independent artifact authentication"]
         cleanup_errors=[]
-        for label, action in (
-            ("fixture-close", dav.close),
-            ("remove-own-adb-reverse", lambda: adb("reverse","--remove","tcp:"+str(dav.server.server_port)))):
+        actions=[]
+        if dav is not None:actions.append(("fixture-close",dav.close))
+        if reverse_owned:actions.append(("remove-own-adb-reverse",
+            lambda:adb("reverse","--remove","tcp:"+str(dav.server.server_port))))
+        for label,action in actions:
             try: action()
             except BaseException as error:
                 cleanup_errors.append({"action":label,"error":repr(error).replace(password,"<generated-fixture-secret>").replace(auth,"<generated-fixture-auth>")})
