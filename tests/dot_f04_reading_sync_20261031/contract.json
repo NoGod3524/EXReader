@@ -698,9 +698,9 @@
       "case": "f04/macos-state-diagnostic",
       "max_runner_minutes": 15,
       "max_runs": 1,
-      "runs_started": 0,
+      "runs_started": 1,
       "automatic_retry": false,
-      "status": "prepared-awaiting-independent-source-review",
+      "status": "completed-failure",
       "delta_paths": [
         "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
         "tests/dot_f04_reading_sync_20261031/contract.json",
@@ -723,6 +723,66 @@
         "original_assertions_preserved": true,
         "ios_unchanged": true,
         "job_budget_unchanged": true
+      },
+      "execution": "Existing single macOS diagnostic job; historical SDK/Android pins and production-equivalence allowlist unchanged; F03 sole canonical writer and trigger.",
+      "result": {
+        "run_id": "41286210606",
+        "attempt": 1,
+        "source_sha": "e902aceb8ff7093902b90e8eb9c62e33f7d868ef",
+        "job_id": 124787924916,
+        "conclusion": "failure",
+        "test_seconds": 263.888,
+        "artifact_id": 13075777205,
+        "size_in_bytes": 42356371,
+        "digest": "sha256:9943c91bc87f38bd82d5b497991949fee48d8e0f48025ea097a63a5fc1f11b56",
+        "passed_checkpoints": [
+          "position",
+          "incoming-bookmark",
+          "incoming-note"
+        ],
+        "reason": "jump.0/.2/.3 each clicked exactly once; jump.3 materialized and converged in seven native scrolls. Fixed sheet save-progress then failed original readiness wait before any click; UserNotificationCenter dialog overlapping its bounds is a candidate, not a proven simultaneous cause. Both edits and final upload not reached.",
+        "diagnostic_only": true,
+        "F04_accepted": false
+      }
+    },
+    "foreground_round": {
+      "authorization_message_id": "Sentinel_18b31759a61081919792cfc03cd490db",
+      "authorized_at": "2026-11-01T07:59:21Z",
+      "case": "f04/macos-state-diagnostic",
+      "max_runner_minutes": 15,
+      "max_runs": 1,
+      "runs_started": 0,
+      "automatic_retry": false,
+      "status": "prepared-awaiting-independent-source-review",
+      "delta_paths": [
+        "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+        "tests/dot_f04_reading_sync_20261031/contract.json",
+        "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+      ],
+      "design": {
+        "macos_only": true,
+        "ready_first": true,
+        "max_activations_per_logical_interaction": 1,
+        "activation_state_allowlist": [
+          "runningForeground",
+          "runningBackground"
+        ],
+        "refuse_launch_or_restart": true,
+        "activation_not_a_success_gate": true,
+        "fixed_control_allowlist": [
+          "reading.save-progress",
+          "reading.save-note",
+          "reading.close",
+          "reader.back",
+          "account.sync.start"
+        ],
+        "editor": "original exists/hittable predicate; one foreground preparation if blocked, original tap/typeText content untouched",
+        "poll_timeout_unchanged": true,
+        "list_helper_unchanged": true,
+        "diagnostics": "timestamped own target/container/status plus only current UserNotificationCenter dialogs, before/after activation and final timeout; system app never activated or acted on",
+        "privacy": "no own input/editor values; skip system input subtrees; redact fixed credentials/root/token, URLs and emails; bounded dialog/text counts; no history or raw full tree",
+        "original_success_assertions_preserved": true,
+        "ios_unchanged": true
       },
       "execution": "Existing single macOS diagnostic job; historical SDK/Android pins and production-equivalence allowlist unchanged; F03 sole canonical writer and trigger."
     }

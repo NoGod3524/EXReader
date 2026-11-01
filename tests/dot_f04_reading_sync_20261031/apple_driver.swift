@@ -24,6 +24,25 @@ final class F04ReadingSyncUITests: XCTestCase {
         }
         #endif
         XCTAssertTrue(e(id).waitForExistence(timeout: 30), id)
+        #if os(macOS)
+        if ["reading.save-progress", "reading.save-note", "reading.close",
+            "reader.back", "account.sync.start"].contains(id) {
+            var activationAttempted = false
+            let ready = wait {
+                let target = e(id)
+                if target.exists && target.isEnabled && target.isHittable { return true }
+                if !activationAttempted {
+                    activationAttempted = true
+                    restoreMacForeground(for: id)
+                }
+                return false
+            }
+            if !ready { diagnosticMacObstruction("fixed-control-timeout", target: id) }
+            XCTAssertTrue(ready, "Original fixed control readiness not reached: \(id)")
+            e(id).tap()
+            return
+        }
+        #endif
         if id.hasPrefix("reading.jump.") || id.hasPrefix("reading.edit.") {
             clickVisibleReadingRow(id)
             return
@@ -205,6 +224,80 @@ final class F04ReadingSyncUITests: XCTestCase {
         XCTFail("Reading row preparation-incomplete within bounded native observations; no click issued")
     }
     #endif
+    #if os(macOS)
+    private func restoreMacForeground(for id: String) {
+        diagnosticMacObstruction("before-activate", target: id)
+        // activate() would launch a stopped process with EXRFreshState: never allow that path.
+        let state = app.state
+        guard state == .runningForeground || state == .runningBackground else {
+            XCTFail("Application no longer running; refusing activation/relaunch")
+            return
+        }
+        app.activate()
+        diagnosticMacObstruction("after-activate", target: id)
+    }
+    private func diagnosticMacObstruction(_ phase: String, target: String) {
+        guard "__MAC_DIAGNOSTIC__" == "1" else { return }
+        func sanitized(_ value: String) -> String {
+            var result = value
+            for secret in ["__ROOT__", "__USER__", "__PASSWORD__", "__TOKEN__"].sorted(by: { $0.count > $1.count }) {
+                if !secret.isEmpty { result = result.replacingOccurrences(of: secret, with: "[redacted]") }
+            }
+            result = result.replacingOccurrences(of: "https?://[^\\s]+", with: "[url]", options: .regularExpression)
+            result = result.replacingOccurrences(of: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", with: "[account]", options: .regularExpression)
+            return String(result.prefix(512))
+        }
+        var fields: [String: Any] = ["phase": phase, "target": target,
+            "timestamp": ISO8601DateFormatter().string(from: Date()), "app_state": String(describing: app.state)]
+        var own: [[String: Any]] = []
+        for id in [target, "reading.list", "reading.title", "reading.editor", "reading.status",
+                   "reader.status", "reader.busy", "reading.pending", "reading.cancel", "account.sync.cancel"] {
+            let item = e(id)
+            var row: [String: Any] = ["id": id, "exists": item.exists]
+            if item.exists {
+                row["enabled"] = item.isEnabled
+                row["hittable"] = item.isHittable
+                row["frame"] = String(describing: item.frame)
+                // Only status text is retained; never text-field/editor values.
+                if ["reading.status", "reader.status"].contains(id), let snap = try? item.snapshot() {
+                    row["status"] = sanitized(snap.label.isEmpty ? (snap.value as? String ?? "") : snap.label)
+                }
+            }
+            own.append(row)
+        }
+        fields["own"] = own
+        fields["windows"] = app.windows.allElementsBoundByIndex.map { ["frame": String(describing: $0.frame)] }
+        fields["sheets"] = app.sheets.allElementsBoundByIndex.map { ["frame": String(describing: $0.frame)] }
+        let notificationCenter = XCUIApplication(bundleIdentifier: "com.apple.UserNotificationCenter")
+        let systemState = notificationCenter.state
+        fields["notification_state"] = String(describing: systemState)
+        var dialogs: [[[String: String]]] = []
+        if systemState == .runningForeground || systemState == .runningBackground {
+            // Read only currently exposed dialogs, not notifications/history, never activate this app.
+            for dialog in notificationCenter.dialogs.allElementsBoundByIndex.prefix(3) {
+                guard dialog.exists, dialog.frame.width > 0, dialog.frame.height > 0,
+                      let snapshot = try? dialog.snapshot() else { continue }
+                var nodes: [any XCUIElementSnapshot] = [snapshot]
+                var rows: [[String: String]] = []
+                while let node = nodes.popLast(), rows.count < 40 {
+                    if node.elementType == .textField || node.elementType == .secureTextField ||
+                       node.elementType == .textView { continue }
+                    nodes.append(contentsOf: node.children)
+                    guard [XCUIElement.ElementType.window, .dialog, .staticText, .button].contains(node.elementType) else { continue }
+                    var row = ["type": String(describing: node.elementType), "id": sanitized(node.identifier),
+                               "label": sanitized(node.label), "frame": String(describing: node.frame)]
+                    if node.elementType == .staticText { row["text"] = sanitized(node.value as? String ?? "") }
+                    rows.append(row)
+                }
+                dialogs.append(rows)
+            }
+        }
+        fields["current_notification_dialogs"] = dialogs
+        fields["finished_at"] = ISO8601DateFormatter().string(from: Date())
+        if let bytes = try? JSONSerialization.data(withJSONObject: fields, options: [.sortedKeys]),
+           let json = String(data: bytes, encoding: .utf8) { print("F04_MAC_OBSTRUCTION " + json) }
+    }
+    #endif
     private func records() {
         #if os(iOS)
         let trigger = e("reader.more").buttons.firstMatch
@@ -241,7 +334,21 @@ final class F04ReadingSyncUITests: XCTestCase {
         XCTAssertGreaterThanOrEqual(index, 0)
         tap("reading.edit.\(index)")
         let editor = app.textViews.matching(identifier: "reading.editor").firstMatch
+        #if os(macOS)
+        var activationAttempted = false
+        let editorReady = wait {
+            if editor.exists && editor.isHittable { return true }
+            if !activationAttempted {
+                activationAttempted = true
+                restoreMacForeground(for: "reading.editor")
+            }
+            return false
+        }
+        if !editorReady { diagnosticMacObstruction("editor-timeout", target: "reading.editor") }
+        XCTAssertTrue(editorReady, "Original editor readiness not reached")
+        #else
         XCTAssertTrue(wait { editor.exists && editor.isHittable })
+        #endif
         editor.tap(); editor.typeText(value)
         tap("reading.save-note")
         XCTAssertTrue(wait { text("reading.status").contains("批注已保存") })
