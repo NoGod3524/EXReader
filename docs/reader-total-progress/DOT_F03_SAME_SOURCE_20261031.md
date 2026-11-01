@@ -478,3 +478,46 @@ Exact output artifact identities (API metadata; original ZIPs not parsed locally
 This result-only document seal uses skip-ci, changes no F04 file or workflow,
 and leaves no running CI or uncertain Git mutation. Next production repair,
 if needed, requires explicit owner/path transfer and a new bounded budget.
+
+
+## F04 parser-compatible fresh bidirectional round — 2026-11-01 03:33 UTC
+
+User approval 03:14:35 UTC (Sentinel_8f4de03c729481919cd5d23e524fe814)
+covered eight existing paths and one 120-minute full Windows/Android chain.
+The two production edits are only the reviewed current-3.42 parser spelling
+branches, pinned as blobs fb1b36b8ee6a0c48b81d8aff3b2097c7372c4b33 and
+9566f21b7f38c3652d9a416cabd73d1b76a959d6. Scope/identity allow exactly the
+23 original added paths plus these two reviewed production blobs. SDK8357,
+wire bytes and original tests remain unchanged. No other production permission
+is implied. Finite independent composition review passed before sole trigger.
+
+Run https://github.com/NoGod3524/EXReader/actions/runs/41268741338 attempt1,
+source `f003576d2acfbc2bcb9eaf8c8dcc06e02f9fd593`, tree
+`ee021d4225eca960de5f5784f86263c69f969dce`, completed all five selected jobs
+successfully: Windows seed124736927039, retained Linux124736927125,
+Android peer124737901505, Windows return124738818473, and graph/retained
+authentication124739019981. All selected products were built at this source.
+The ordinary audit log authenticated four real bookmark/note revision-wire
+edges in both directions. It explicitly retains F04_accepted=false and
+six_target_accepted=false; this two-host success is not a six-host formal
+acceptance. F03 remained unselected, and its previous failures remain intact.
+
+The approved run budget is **1/1 used**, with no automatic retry and no
+further run authorized here. Exact API artifact identities:
+- f04-diagnostic-windows_return_android-41268741338-1: ID13068841294; 3828 bytes; sha256:1a36af12ddfcadc5603e1de54ebe821dc059993b7595c1bf487c359572758aa8; expires 2026-12-01T03:30:25Z.
+- f04-diagnostic-windows_seed-41268741338-1: ID13068820683; 2554 bytes; sha256:a5cce67a5abe26db7cc4a2b97563df12cc2b9efb32c84e1e34b412fcf76bc129; expires 2026-12-01T03:24:46Z.
+- f04-build-windows-41268741338-1: ID13068800682; 53053366 bytes; sha256:fb08a6ec4d41995ece1683f52f2faa0abca7f5b51161e0467e80ada15219aa04; expires 2027-01-30T03:19:53Z.
+- f04-diagnostic-audit-41268741338-1: ID13068786587; 943 bytes; sha256:f7d2beffd31b9a38bf3a62076b389836783a9214b26a34569c75f84908149085; expires 2026-12-01T03:30:45Z.
+- f04-android-peer-41268741338-1: ID13068656764; 20040506 bytes; sha256:e161b91cb7042d9bccdca80dd2e0eef7815d2fabb3b0b385af6d8c252e7eb1b7; expires 2026-12-01T03:29:24Z.
+- f04-retained-linux-41268741338-1: ID13068626058; 14734914 bytes; sha256:bef5e9ba03df902ff122ebbb14617659f6782405249ee4394737de8a9b4777c0; expires 2026-12-01T03:23:45Z.
+- f04-diagnostic-android_peer-41268741338-1: ID13068492301; 311 bytes; sha256:543267bf1c4e10a4a8b308e1743e00f8822c4af8488b6ddaef88892fd97cec6d; expires 2026-12-01T03:29:26Z.
+- f04-windows-seed-41268741338-1: ID13068437272; 4201213 bytes; sha256:36869e82e2a55302ea4776ba0749b456f34975fb69749f2dbd441c279fdfac83; expires 2026-12-01T03:24:45Z.
+- f04-auth-41268741338-1: ID13068433036; 572949 bytes; sha256:1a3cf5c556fa308fe14fdf8e1e31f1de21302f69530e2db2b399ba422b095485; expires 2027-01-30T03:19:53Z.
+- f04-windows-return-android-41268741338-1: ID13068374618; 4203666 bytes; sha256:cfdc4ecc7892b9d7623245b3d5d5d38b80167086f7fde0b3d4d57eabb1504a77; expires 2026-12-01T03:30:23Z.
+- f04-diagnostic-retained_linux-41268741338-1: ID13068329211; 7533 bytes; sha256:bbfd6b9bdf07d873c55185575ac02d67b1069d1ab0bd3256c3e7292cef0106df; expires 2026-12-01T03:23:47Z.
+- f04-build-android-41268741338-1: ID13067759255; 39938566 bytes; sha256:78a072e951f13d2c20d0c5fa75bb51e392911cc24eaa92e70a1f2b7993599722; expires 2026-12-01T03:28:22Z.
+
+This doc-only skip-ci seal does not change F04 files, entry, or tests. No CI
+remains running and no Git mutation outcome is uncertain. Further six-target
+integration needs a separately bounded scope and budget; component green
+must not increment the formal 96/108 count.
