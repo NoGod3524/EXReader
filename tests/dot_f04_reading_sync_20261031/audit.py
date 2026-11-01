@@ -295,9 +295,12 @@ def authenticated_builds(contract, current, jobs, artifacts):
             need(all(str(receipt[k]) == v for k, v in current.items()), "build receipt identity")
             need(receipt["platform"] == binding["platform"] and receipt["sdk_version"] == "3.42.0" and
                  receipt["sdk_source"] == contract["sdk_source"], "build target/SDK")
-            recipe = ROOT / receipt["recipe"]
-            need(recipe.is_relative_to(ROOT / "tests") and
-                 hashlib.sha256(recipe.read_bytes()).hexdigest() == receipt["recipe_sha256"], "build recipe identity")
+            expected_recipe = {"windows": "tests/windows_sdk342/build.py",
+                "gtk": "tests/gtk_sdk342_package/run.py", "android": "tests/android_sdk342_package/run.py",
+                "macos": "tests/apple_sdk342_host/build.py", "iphonesimulator": "tests/apple_sdk342_host/build.py"}[binding["platform"]]
+            need(receipt["recipe"] == expected_recipe, "build recipe path")
+            recipe = ROOT / expected_recipe
+            need(hashlib.sha256(recipe.read_bytes()).hexdigest() == receipt["recipe_sha256"], "build recipe identity")
             if receipt["program"] is not None:
                 binary = archive.read("program.bin")
                 need(len(binary) == receipt["program"]["bytes"] and
