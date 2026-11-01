@@ -55,3 +55,10 @@ docs/READING-RELEASE-PLAN.md 的“六包”是 reading-core/library × Linux/Wi
 F06 已核开发包形态：Windows/Linux 开发ZIP、macOS ad-hoc开发app、Android API34 x86_64 emulator/debug APK、iPhone/iPad arm64 simulator app。安装说明必须保留这些限制，不称正式签名真机交付。
 
 下一设计审请求：可先审 F06 固定六原 ZIP 的历史材料缺口，复用既有身份和原材料门禁，仅 Actions 读取、不重建；该结果只能授历史包盘点，不授尚未冻结的最终 F12。当前尚未批准测试文件/CI，未执行。
+
+## 已有包内用户说明与 Android 外包（固定8f8acf源码）
+`tests/android_sdk342_package/run.py` 显式给 Android payload 拷贝 LICENSE 与 THIRD_PARTY_NOTICES.md，故“Android 无许可说明”不成立；该 payload 配方未见 SDK licenses/ 拷贝，APK 内完整材料仍待原件核证。
+`tools/reader_wave3_package/assemble.py` 调用 `delivery.instructions()` 给六包生成 `安装说明-中文.md`，实际模板含 source/SDK、解压/各端启动、Sample试读、散列校验与开发包限制，尚无升级备份/旧库兼容、账号专用目录/同步冲突/恢复操作说明。
+因此无需先扫描六 ZIP 即可明确“说明内容还不完整”的源码级缺口。下一步在本矩阵建立操作→真实 owner 行为→同源证据映射；任何正式用户说明生成器或打包逻辑修改另列授权，不改原包模板冒充已交付。
+
+历史材料盘点使用 `historical_inventory_only=true`，与最终 candidate 未冻结分开；平台合法已声明 symlink 按原producer目标约束验证，不一概拒绝。当前两doc更新是准备，不授 F12。
