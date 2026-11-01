@@ -504,6 +504,7 @@ private struct HostOrganizationPanel: View {
     @StateObject private var organization: HostOrganization
     let books: [HostShelfBook]
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var kind = 0
     @State private var parent: String?
     @State private var parentStack: [String] = []
@@ -530,7 +531,24 @@ private struct HostOrganizationPanel: View {
         refresh()
     }
 
+    // At accessibility text sizes the fixed controls left the group and member
+    // list an 82-point viewport on iPad (F09); the whole panel scrolls instead and
+    // the action rows stack so no button wraps one character per line.
+    private var largeType: Bool { dynamicTypeSize.isAccessibilitySize }
+
+    @ViewBuilder private func groupArea<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        if largeType { content() } else { ScrollView { content() } }
+    }
+
+    @ViewBuilder private func actionRow<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        if largeType { VStack(alignment: .leading, spacing: 8) { content() } } else { HStack { content() } }
+    }
+
     var body: some View {
+        if largeType { ScrollView { panel } } else { panel }
+    }
+
+    private var panel: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("书架整理").font(.headline).accessibilityAddTraits(.isHeader)
@@ -569,7 +587,7 @@ private struct HostOrganizationPanel: View {
             }.buttonStyle(.bordered)
             Text(selectedGroup?.name ?? "未选择分组")
                 .accessibilityIdentifier("organization.selected")
-            ScrollView {
+            groupArea {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(organization.groups) { group in
                         Button(group.name) {
@@ -584,7 +602,7 @@ private struct HostOrganizationPanel: View {
                             .accessibilityIdentifier("organization.more-groups")
                     }
                     if let group = selectedGroup {
-                        HStack {
+                        actionRow {
 #if EXR_APPLE_HOST_REVIEW
                             if ProcessInfo.processInfo.arguments.contains("-EXROrganizationConflictReview") {
                                 Button("提交竞争版本") { organization.reviewCompetingRename(kind: kind, groupID: group.id) }
@@ -634,7 +652,7 @@ private struct HostOrganizationPanel: View {
                             if let book = selectedBook {
                                 Text(organization.membershipPresent ? "member" : "not member")
                                     .accessibilityIdentifier("organization.membership")
-                                HStack {
+                                actionRow {
                                     Button("验证原件") { model.verifyOrganizationOriginal(book, organization: organization) }
                                         .accessibilityIdentifier("organization.verify-original")
                                     Button("添加") {
