@@ -13,14 +13,14 @@ import sqlite3
 import subprocess
 import time
 import xml.etree.ElementTree as ET
-from fixture import Store
+from fixture import Store, write_role_receipt
 
 PACKAGE = "org.exreader.host"
 
 def main():
     if os.environ.get("GITHUB_ACTIONS") != "true": raise RuntimeError("Actions only")
     p = argparse.ArgumentParser()
-    for name in ("peer", "certificate", "key", "output"):
+    for name in ("peer", "certificate", "key", "output", "program"):
         p.add_argument("--" + name, type=Path, required=True)
     a = p.parse_args()
     a.output.mkdir(parents=True, exist_ok=False)
@@ -33,6 +33,36 @@ def main():
               "attempt":os.environ["GITHUB_RUN_ATTEMPT"], "host":"android",
               "F05_accepted":False, "producer":producer["author"], "cases":[],
               "simultaneous_online_peers":False}
+    normalized, claim_refs, evidence = [], {}, ["coverage.json"]
+    previous_wire, last_request = {}, 0
+    def finish_case(claims, request_start=None, **semantic):
+        nonlocal previous_wire, last_request
+        raw=report["cases"][-1]
+        name=raw["name"]
+        observed=sdk_snapshot("role-"+name)
+        if len(observed["books"])!=1 or observed["books"][0]["source_sha256"]!=original["source_sha256"] or observed["books"][0]["source_bytes"]!=original["source_bytes"]:
+            raise AssertionError("Android role changed exact SDK original")
+        wire={path:hashlib.sha256(body).hexdigest() for path,body in dav.entries.items()}
+        if any(wire.get(path)!=digest for path,digest in previous_wire.items()):
+            raise AssertionError("Android role rewrote immutable actual peer wire")
+        screen=name+".png"
+        (a.output/screen).write_bytes(adb("exec-out","screencap","-p"))
+        evidence.append(screen)
+        start=last_request if request_start is None else request_start
+        raw["sdk_original_readback"]=observed
+        raw["immutable_wire_inventory"]=wire
+        raw["screenshot"]=screen
+        raw["controlled_request_range"]=[start,len(dav.requests)]
+        normalized.append({"id":name,"outcome":raw["outcome"],
+            "actual_host_actions":True,"receiver_database_injection":False,
+            "original_identity_preserved":True,"revision_bytes_preserved":True,
+            "peer_wire_observed":any(r["authenticated"] and r["method"] in ("PUT","GET","PROPFIND")
+                                     for r in dav.requests[start:]),
+            "source_evidence":["coverage.json",screen],
+            "source_pointer":"/cases/"+str(len(report["cases"])-1),**semantic})
+        for claim,role in claims.items():
+            claim_refs.setdefault(claim,[]).append({"case_id":name,"role":role})
+        previous_wire,last_request=wire,len(dav.requests)
     serial = 0
     def adb(*args, timeout=60):
         return subprocess.check_output(["adb", *map(str,args)], stderr=subprocess.STDOUT, timeout=timeout)
@@ -152,6 +182,16 @@ def main():
                    for row in db.execute("SELECT id,source FROM books ORDER BY id")]
         return {"books":books,"count":len(books),"observation":"stable copied SDK DB read-only"}
     try:
+        installed=shell("pm","path",PACKAGE).decode().strip().splitlines()
+        if len(installed)!=1 or not installed[0].startswith("package:/data/app/") or not installed[0].endswith(".apk"):
+            raise AssertionError("expected one actual installed debug APK, not split/foreign package")
+        installed_bytes=adb("exec-out","cat",installed[0][len("package:"):],timeout=120)
+        expected_program=a.program.read_bytes()
+        if len(installed_bytes)!=len(expected_program) or hashlib.sha256(installed_bytes).digest()!=hashlib.sha256(expected_program).digest():
+            raise AssertionError("installed Android APK differs from retained producer APK")
+        report["program_sha256"]=hashlib.sha256(installed_bytes).hexdigest()
+        report["installed_program"]={"path":installed[0],"bytes":len(installed_bytes),
+            "sha256":report["program_sha256"],"source_binding":"requires independent same-run build identity"}
         # CI supplies a fresh emulator/APK whose trust includes this test CA.
         # Do not silently clear an existing caller's profile.
         adb("reverse","tcp:"+str(dav.server.server_port),"tcp:"+str(dav.server.server_port))
@@ -214,6 +254,8 @@ def main():
             "retry_native_state":"书籍已接收","original_key":selected[0]["entity_key"],
             "sdk_before":sdk_before,"sdk_cancelled":sdk_cancelled,
             "sdk_retry":sdk_retry,"sdk_duplicate":sdk_duplicate})
+        finish_case({"cancel_retry":"local"},cancel_layer="receive",remote_boundary=True,
+                    native_cancel_observed=True,explicit_retry_passed=True)
         close_panel()
         before=snapshot("baseline")
         if set(before["heads"])!=set(contract["common_parent"]):
@@ -241,10 +283,14 @@ def main():
         report["cases"].append({"name":"kill_commit_ack_replay","outcome":"passed",
             "terminated_pid":killed,"reopened_pid":reopened,"before":local,"after":recovered,
             "committed_wire_unchanged":True})
+        finish_case({"process_recovery":"local"},remote_boundary=True,terminated_pid=killed,
+                    reopened_pid=reopened,actual_process_termination=True,
+                    recovery_boundary="committed-PUT-before-ACK",durable_recovery_passed=True)
         # Publish only the real GTK deletion. A's new local branch is causally
         # concurrent because it was authored before this immutable branch exposure.
         remote=dav.expose_checkpoint(a.peer/contract["remote_delete"])
         dav.offline=False
+        reconnect_start=len(dav.requests)
         panel();status=sync()
         if "冲突" not in status: raise AssertionError("native conflict status missing")
         (a.output/"conflict.png").write_bytes(adb("exec-out","screencap","-p"))
@@ -259,6 +305,16 @@ def main():
         report["cases"].append({"name":"offline_reconnect_delete_put",
             "outcome":"partial","preservation_passed":True,"deletion_conflict_ui_detail":False,"before":before,"offline":local,"after":after,
             "native_conflict_text":status,"peer_author":remote["author"]})
+        finish_case({"delete_put_tombstone_preserved":"receiver"},request_start=reconnect_start,
+                    competing_heads=after["heads"],final_heads=after["heads"],tombstone_preserved=True,
+                    delete_conflict_displayed=False,stale_peer_did_not_resurrect=False,
+                    explicit_user_restore=False,uncovered="native delete detail and explicit stale replay")
+        report["cases"].append({"name":"offline_reconnect_heads_preserved","outcome":"passed",
+            "before":before,"offline":local,"after":after,"native_conflict_text":status,
+            "scope":"retained concurrent heads and generic conflict, not deletion-specific UI"})
+        finish_case({"offline_reconnect":"author","concurrent_heads_preserved":"receiver"},
+                    request_start=reconnect_start,competing_heads=after["heads"],
+                    final_heads=after["heads"],conflict_displayed=True,explicit_user_resolution=False)
         dav.offline=True
         offline_requests=len(dav.requests)
         pid=shell("pidof",PACKAGE).decode().strip()
@@ -279,7 +335,10 @@ def main():
         (a.output/"offline-reader.png").write_bytes(adb("exec-out","screencap","-p"))
         report["cases"].append({"name":"restart_offline_read","outcome":"passed",
             "reader":page,"rendered_nodes":rendered,
-            "sdk_originals":sdk_snapshot("offline-original"),"network_requests":0})
+            "sdk_originals":sdk_snapshot("offline-original"),"network_requests":0,
+            "measurement":"controlled F05 sync endpoint only, not whole OS networking"})
+        finish_case({"offline_read":"local"},reopened_host_readable=True,network_requests=0,
+                    network_measurement="controlled F05 library sync endpoint")
         report["cases"].append({"name":"restart_preserves_conflict","outcome":"passed",
             "terminated_pid":pid,"reopened_pid":shell("pidof",PACKAGE).decode().strip(),
             "after":restarted})
@@ -300,6 +359,9 @@ def main():
         report["cleanup_errors"]=cleanup_errors
         try:
             (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+            write_role_receipt(a.output,"android",a.program,
+                {"source":report["source"],"run":report["run"],"attempt":report["attempt"]},
+                normalized,claim_refs,evidence)
         except BaseException as error:
             safe=repr(error).replace(password,"<generated-fixture-secret>").replace(auth,"<generated-fixture-auth>")
             print("F05 coverage write failed: "+safe,flush=True)
