@@ -358,3 +358,24 @@ jobs:
           path: build/f04-diagnostics/audit/
           if-no-files-found: warn
           retention-days: 30
+
+  diagnose_fixed:
+    name: F04 fixed failure diagnostic only
+    if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && inputs.case == 'f04/diagnose-round2' && inputs.controller_sha == github.sha }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Read pinned failure evidence without executing product
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/dot_f04_reading_sync_20261031/audit.py --diagnose-fixed
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f04-fixed-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f04-fixed-diagnostic/
+          if-no-files-found: error
+          retention-days: 30
