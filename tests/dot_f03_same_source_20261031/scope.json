@@ -1697,5 +1697,20 @@
       "product_conclusion": "undetermined",
       "formal_count_credit": 0
     }
+  },
+  "bootstrap_manual_round": {
+    "case": "f03/bootstrap-three-arm",
+    "branch": "dot/f03-bootstrap-diagnostic-20261101",
+    "base": "4726b17ec44c8adec35e6435ab598cddce038cbe",
+    "status": "prepared_not_run",
+    "budget_runner_minutes": 25,
+    "runs": 1,
+    "retry": false,
+    "class_blob": "9e441f50ebc316e4f4f030075fd09119db71d75f",
+    "manual_executions": 1,
+    "connected_tests_executed": false,
+    "old_apk_upgrade_accepted": false,
+    "product_accepted": false,
+    "formal_count_credit": 0
   }
 }

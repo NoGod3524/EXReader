@@ -986,7 +986,7 @@ jobs:
           if-no-files-found: error
 
   f03_bootstrap_three_arm:
-    if: ${{ (github.ref == 'refs/heads/dot/f03-bootstrap-diagnostic-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f03/bootstrap-three-arm' || github.event_name == 'push' && contains(github.event.head_commit.message, '[F03-BOOTSTRAP-DIAGNOSTIC-25-ONE-RUN]'))) }}
+    if: ${{ (github.ref == 'refs/heads/dot/f03-bootstrap-diagnostic-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f03/bootstrap-three-arm' || github.event_name == 'push' && contains(github.event.head_commit.message, '[F03-BOOTSTRAP-MANUAL-25-ONE-RUN]'))) }}
     runs-on: ubuntu-22.04
     timeout-minutes: 25
     env:
@@ -1019,7 +1019,46 @@ jobs:
         run: python tests/dot_f03_same_source_20261031/build.py --host android --output build/f03-android-build.json
       - name: Enable emulator acceleration
         run: sudo chmod 666 /dev/kvm
-      - name: Run only independent three-arm bootstrap diagnostic
+      - name: Compile diagnostic runner without executing connected tests
+        run: |
+          set -euo pipefail
+          mkdir -p build/f03-bootstrap-manual/apks
+          gradle -p examples/android --no-daemon --stacktrace :app:assembleDebug :app:assembleDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.OrganizationBootstrapDiagnosticTest
+          cp examples/android/app/build/outputs/apk/debug/app-debug.apk build/f03-bootstrap-manual/apks/
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/f03-bootstrap-manual/apks/
+          cat > build/f03-bootstrap-manual/authenticate.py <<'PY'
+          import json,os,pathlib,hashlib,re
+          root=pathlib.Path('build/f03-bootstrap-manual')
+          value=json.loads((root/'device-report.json').read_text())
+          assert all(value[k]==os.environ[e] for k,e in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')])
+          assert (root/'device-api.txt').read_text().strip()=='34' and (root/'device-abi.txt').read_text().strip()=='x86_64'
+          assert value['api']==34 and value['abi']=='x86_64' and value['count']==3 and value['failed']==0
+          assert value['diagnostic_only'] is True and value['product_accepted'] is False and value['old_apk_upgrade_accepted'] is False
+          expected=['currentAutomatic','legacyDirect','legacyReopen']
+          assert [x['id'] for x in value['arms']]==expected
+          assert all(x['diagnostic_completed'] and x['source_preserved'] for x in value['arms'])
+          text=(root/'manual-instrumentation.txt').read_text()
+          assert re.findall(r'^INSTRUMENTATION_CODE: (-?\d+)\s*$',text,re.M)==['-1']
+          assert 'OK (3 tests)' in text and 'FAILURES' not in text and 'shortMsg=' not in text
+          names=[];starts=[];status={}
+          for line in text.splitlines():
+              if line.startswith('INSTRUMENTATION_STATUS: '):
+                  key,_,v=line[len('INSTRUMENTATION_STATUS: '):].partition('=');status[key]=v
+              elif line.startswith('INSTRUMENTATION_STATUS_CODE: '):
+                  code=int(line.split(':',1)[1]);assert code in (0,1)
+                  assert status.get('class')=='org.exreader.host.OrganizationBootstrapDiagnosticTest' and status.get('numtests')=='3'
+                  if code==0:names.append(status.get('test'))
+                  else:starts.append(status.get('test'))
+                  status={}
+          assert names==starts==expected
+          value['manual_verified']=True
+          value['manual_sha256']=hashlib.sha256((root/'manual-instrumentation.txt').read_bytes()).hexdigest()
+          for name in ('app-debug.apk','app-debug-androidTest.apk'):
+              raw=(root/'apks'/name).read_bytes();value.setdefault('apk_identity',{})[name]={'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}
+          (root/'result.json').write_text(json.dumps(value,indent=2)+'\n')
+          print(json.dumps(value))
+          PY
+      - name: Explicit install, unique manual execution and immediate report authentication
         uses: reactivecircus/android-emulator-runner@v2
         with:
           disable-linux-hw-accel: false
@@ -1032,41 +1071,20 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
-            mkdir -p build/f03-bootstrap-diagnostic
-            adb shell getprop ro.build.version.sdk > build/f03-bootstrap-diagnostic/device-api.txt
-            adb shell getprop ro.product.cpu.abi > build/f03-bootstrap-diagnostic/device-abi.txt
-            status=0; gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.OrganizationBootstrapDiagnosticTest -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.OrganizationBootstrapDiagnosticTest -Pandroid.testInstrumentationRunnerArguments.source_sha=$GITHUB_SHA -Pandroid.testInstrumentationRunnerArguments.run_id=$GITHUB_RUN_ID -Pandroid.testInstrumentationRunnerArguments.attempt=$GITHUB_RUN_ATTEMPT > build/f03-bootstrap-diagnostic/gradle-instrumentation.txt 2>&1 || status=$?; cp -r examples/android/app/build/outputs/androidTest-results/connected build/f03-bootstrap-diagnostic/xml; adb exec-out run-as org.exreader.host cat files/f03-bootstrap-diagnostic.json > build/f03-bootstrap-diagnostic/device-report.json; cat build/f03-bootstrap-diagnostic/device-report.json; exit $status
-      - name: Authenticate diagnostic report, not product acceptance
-        run: |
-          python - <<'PY'
-          import json,os,pathlib,hashlib,xml.etree.ElementTree as ET
-          root=pathlib.Path('build/f03-bootstrap-diagnostic')
-          value=json.loads((root/'device-report.json').read_text())
-          assert all(value[k]==os.environ[e] for k,e in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')])
-          assert value['api']==34 and value['abi']=='x86_64' and value['count']==3 and value['failed']==0
-          assert value['diagnostic_only'] is True and value['product_accepted'] is False and value['old_apk_upgrade_accepted'] is False
-          assert [x['id'] for x in value['arms']]==['currentAutomatic','legacyDirect','legacyReopen']
-          assert all(x['diagnostic_completed'] and x['source_preserved'] for x in value['arms'])
-          names=[]
-          for path in (root/'xml').rglob('*.xml'):
-              tree=ET.fromstring(path.read_bytes())
-              for suite in tree.iter('testsuite'):assert all(int(suite.get(k,'0'))==0 for k in ('failures','errors','skipped'))
-              for case in tree.iter('testcase'):
-                  assert case.get('classname')=='org.exreader.host.OrganizationBootstrapDiagnosticTest'
-                  assert not any(case.find(k) is not None for k in ('failure','error','skipped'))
-                  names.append(case.get('name'))
-          assert sorted(names)==sorted(['currentAutomatic','legacyDirect','legacyReopen'])
-          for name in ('app-debug.apk','app-debug-androidTest.apk'):
-              path=pathlib.Path('examples/android/app/build/outputs/apk')/('debug' if name=='app-debug.apk' else 'androidTest/debug')/name
-              raw=path.read_bytes();value.setdefault('apk_identity',{})[name]={'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}
-          (root/'result.json').write_text(json.dumps(value,indent=2)+'\n')
-          print(json.dumps(value))
-          PY
+            adb shell getprop ro.build.version.sdk > build/f03-bootstrap-manual/device-api.txt
+            adb shell getprop ro.product.cpu.abi > build/f03-bootstrap-manual/device-abi.txt
+            adb install -r -t build/f03-bootstrap-manual/apks/app-debug.apk
+            adb install -r -t build/f03-bootstrap-manual/apks/app-debug-androidTest.apk
+            adb shell am instrument -w -r -e source_sha $GITHUB_SHA -e run_id $GITHUB_RUN_ID -e attempt $GITHUB_RUN_ATTEMPT org.exreader.host.test/org.exreader.host.OrganizationBootstrapDiagnosticTest > build/f03-bootstrap-manual/manual-instrumentation.txt
+            cat build/f03-bootstrap-manual/manual-instrumentation.txt
+            adb exec-out run-as org.exreader.host cat files/f03-bootstrap-diagnostic.json > build/f03-bootstrap-manual/device-report.json
+            cat build/f03-bootstrap-manual/device-report.json
+            python build/f03-bootstrap-manual/authenticate.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: reader-suite-f03-bootstrap-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          name: reader-suite-f03-bootstrap-manual-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            build/f03-bootstrap-diagnostic/
+            build/f03-bootstrap-manual/
             build/f03-android-build.json
           if-no-files-found: error
