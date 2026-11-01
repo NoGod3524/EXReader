@@ -813,5 +813,23 @@
       },
       "next_step": "Read-only inspect original owner gate/driver contract and existing evidence. No inferred owner acceptance from 18 green tests; no unapproved modifications or rerun."
     }
+  },
+  "owner_fixed_artifact_round": {
+    "status": "prepared_not_executed",
+    "case": "f03/owner-fixed-artifact",
+    "branch": "dot/f03-owner-artifact-20261101",
+    "marker": "[F03-OWNER-ARTIFACT-5-ONE-RUN]",
+    "base": "99d1b754690fec199f41de2f0edb7070558b285a",
+    "budget_runner_minutes": 5,
+    "maximum_runs": 1,
+    "automatic_retry": false,
+    "product_execution": false,
+    "formal_count_credit": 0,
+    "original_run": 41328199296,
+    "original_attempt": 1,
+    "original_source": "e21331513a84cc225daa99f672b4c79384e1f34b",
+    "original_job": 124912497495,
+    "original_artifact": 13093186163,
+    "authorization": "2026-11-01T17:21:22Z"
   }
 }

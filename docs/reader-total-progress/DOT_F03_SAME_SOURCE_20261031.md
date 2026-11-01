@@ -778,3 +778,10 @@ Later owner instrumentation printed 18/18 tests, zero skipped and zero failed, b
 Authorized one run used 1/1 with no retry. GTK/six receives/cross-host audit were not scheduled; pending F03 and zero formal credit remain. No owner script or further old test was changed. Next step is read-only original owner driver/gate and existing evidence review before any new scope.
 
 Artifact reader-suite-f03-android-importmapping-41328199296-1: id 13093186163, 193531993 bytes, sha256:e8b2d81a33a62a6d47c718bfdea2e49d5075b9eb8de27048eaf3023b33f8f17f, created 2026-11-01T17:14:23Z. API identity verified; archive not downloaded locally.
+
+
+## 2026-11-01 fixed owner artifact inspection (prepared)
+
+Explicit 17:21:22Z approval: four existing paths verify.py/caller/scope/this document, independent branch dot/f03-owner-artifact-20261101 from 99d1b754690fec199f41de2f0edb7070558b285a. One Ubuntu5 run, no retry. New controller independently verifies exact branch/case/source/run/A1 and four-path difference from this base before inspecting fixed original run41328199296/A1/sourcee21331513a84cc225daa99f672b4c79384e1f34b/job124912497495/artifact13093186163 (193531993 bytes, SHA256 e8b2d81a33a62a6d47c718bfdea2e49d5075b9eb8de27048eaf3023b33f8f17f). Original identity.py and owner checker remain unchanged.
+
+Actions only: full API and ZIP identity verification, memory-only safe member reads; no extraction or execution. Read only selected owner identity/report/manual/XML/kill witness files and original step receipt. Print sanitized named outcomes/fingerprints, not unrestricted raw logs. Missing/invalid evidence stays explicit. Old owner rejection remains, no full provider certification or F03 acceptance/formal credit; this is diagnostic only, not a new Android/product run.
