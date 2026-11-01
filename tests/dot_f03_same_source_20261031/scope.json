@@ -562,5 +562,31 @@
     "android_apk_built": true,
     "failed_gate": "tools/check_android_host.py: MainActivity lacks takePersistableUriPermission",
     "android_all_exits_and_six_receives_executed": false
+  },
+  "import_contract_blob_exceptions": {
+    "tools/check_android_host.py": "b03096584d45c8f415440c0f75699f5a8faf0ff1",
+    "docs/READER-ANDROID-HOST-IMPORT.md": "f6d681aec8c7bd968c30f29a73fc78eca8f2c78b",
+    "tests/reader_android_import_contract_20261101/check.py": "5419fb4dac40f79c4238f1639d81ec37a0f92d0a",
+    ".github/workflows/reader-android-import-contract-20261101.yml": "147de484f60332d50ca8a786b76541226fdaec46"
+  },
+  "two_host_import_contract_round": {
+    "case": "f03/two-host-import-contract",
+    "branch": "dot/f03-import-contract-20261101",
+    "marker": "[F03-TWO-HOST-CONTRACT-160-ONE-RUN]",
+    "status": "prepared_not_executed",
+    "base": "24653ccf25c91e7eebd054a6a19b8863384b1ae3",
+    "budget_runner_minutes": 160,
+    "jobs": {
+      "gtk": 20,
+      "android": 120,
+      "audit": 20
+    },
+    "maximum_runs": 1,
+    "automatic_retry": false,
+    "formal_count_credit": 0,
+    "full_f03_accepted": false,
+    "checker_static_run": 41322302859,
+    "checker_static_cases": 34,
+    "authorization": "2026-11-01T15:42:06Z plus identity.py addition 2026-11-01T15:45:52Z"
   }
 }
