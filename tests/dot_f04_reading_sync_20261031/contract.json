@@ -560,9 +560,9 @@
       "case": "f04/macos-state-diagnostic",
       "max_runner_minutes": 15,
       "max_runs": 1,
-      "runs_started": 0,
+      "runs_started": 1,
       "automatic_retry": false,
-      "status": "prepared-awaiting-independent-source-review",
+      "status": "completed-failure",
       "delta_paths": [
         "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
         "tests/dot_f04_reading_sync_20261031/contract.json",
@@ -620,6 +620,61 @@
         "padding_is_acceptance_gate": false,
         "original_assertions_preserved": true,
         "ios_unchanged": true
+      },
+      "execution": "Existing single macOS diagnostic job; historical SDK/Android pins and production-equivalence allowlist unchanged; F03 sole canonical writer and trigger.",
+      "result": {
+        "run_id": "41284680303",
+        "attempt": 1,
+        "source_sha": "13ae646b11353473bb09459603a16396c1aa89d5",
+        "job_id": 124783470950,
+        "conclusion": "failure",
+        "test_seconds": 78.244,
+        "artifact_id": 13075115412,
+        "size_in_bytes": 42344277,
+        "digest": "sha256:89e6a2c7c7db3878cbbc53d990f2ad17581a43b3a09f70fcfa57727601501ab1",
+        "diagnostic_only": true,
+        "F04_accepted": false,
+        "reason": "jump.2 converged y512 ->496 ->472 ->450, exact bookmark checkpoint passed; jump.3 existed with zero-size virtual frame (0,768,0,0), failed positive-frame preparation gate before any click."
+      }
+    },
+    "virtual_row_round": {
+      "authorization_message_id": "Sentinel_c32e0fdac5d4819194b19d1a8e4f12f0",
+      "authorized_at": "2026-11-01T07:32:25Z",
+      "case": "f04/macos-state-diagnostic",
+      "max_runner_minutes": 15,
+      "max_runs": 1,
+      "runs_started": 0,
+      "automatic_retry": false,
+      "status": "prepared-awaiting-independent-source-review",
+      "delta_paths": [
+        "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+        "tests/dot_f04_reading_sync_20261031/contract.json",
+        "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+      ],
+      "scroll_design": {
+        "macos_only": true,
+        "initial_max_pixels": 16,
+        "subsequent_max_pixels": 24,
+        "viewport_fraction_cap": 0.2,
+        "max_scrolls": 20,
+        "max_observations": 21,
+        "settled_samples": 3,
+        "sample_interval_seconds": 0.1,
+        "settling_timeout_seconds": 3,
+        "frame_tolerance_pixels": 0.5,
+        "direction": "target index relative to actual visible indices; signed delta response calibrated only from same real nonzero anchor or target movement",
+        "overshoot": "halve cap, minimum 1 pixel",
+        "padding_pixels": 4,
+        "padding_is_acceptance_gate": false,
+        "original_assertions_preserved": true,
+        "ios_unchanged": true,
+        "shared_budget": "materialization plus convergence",
+        "temporary_absence_or_zero_size": "fresh queries up to three seconds; duplicate target fails immediately",
+        "anchors": "unique actual positive-size viewport-intersecting reading.kind/body/jump/edit rows in the same real List",
+        "visible_set_change": "progress only, never signed calibration",
+        "target_materialized": "stable own positive frame sufficient; old anchor need not survive",
+        "final_gate": "unique positive-size fully contained enabled hittable action; one native click; all exact-position and data assertions unchanged",
+        "jump_and_edit_shared": true
       },
       "execution": "Existing single macOS diagnostic job; historical SDK/Android pins and production-equivalence allowlist unchanged; F03 sole canonical writer and trigger."
     }
