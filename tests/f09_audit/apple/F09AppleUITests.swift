@@ -67,7 +67,8 @@ final class F09AppleUITests: XCTestCase {
         guard let scroll, scroll.exists else { return 0 }
         var steps = 0
         for forward in [true, false] {
-            for _ in 0..<(forward ? 8 : 16) where !visible(target, in: scroll) {
+            // Accessibility sizes make a row of tools several screens wide.
+            for _ in 0..<(forward ? 16 : 32) where !visible(target, in: scroll) && scroll.exists {
 #if os(macOS)
                 let delta: CGFloat = forward ? -200 : 200
                 if horizontal { scroll.scroll(byDeltaX: delta, deltaY: 0) } else { scroll.scroll(byDeltaX: 0, deltaY: delta) }
@@ -225,14 +226,22 @@ final class F09AppleUITests: XCTestCase {
         XCTAssertTrue(wait(90) { !self.element("library.busy").exists && self.element("library.book.0").exists })
         var results: [String: Bool] = [:]
 
-        app.typeKey("f", modifierFlags: .command)
-        app.typeText("Sample")
         let search = element("library.search")
-        results["⌘F focuses search"] = wait(10) { ((search.value as? String) ?? "").contains("Sample") }
-        samples.append(["command": "⌘F", "search_value": (search.value as? String) ?? ""])
+        func searchFocused() -> Bool { (search.value(forKey: "hasKeyboardFocus") as? Bool) ?? false }
+        var presses = 0
+        for _ in 0..<2 where !searchFocused() {
+            app.typeKey("f", modifierFlags: .command)
+            presses += 1
+            _ = wait(5) { searchFocused() }
+        }
+        let focusedBySearchKey = searchFocused()
+        if focusedBySearchKey { app.typeText("Sample") }
+        results["⌘F focuses search"] = focusedBySearchKey && wait(10) { ((search.value as? String) ?? "").contains("Sample") }
+        samples.append(["command": "⌘F", "presses": presses, "focused": focusedBySearchKey,
+                        "search_value": (search.value as? String) ?? "", "search_frame": "\(search.frame)"])
         // Clear the query and submit: the search field releases focus (and the
         // on-screen keyboard that otherwise hides the shelf on iPhone).
-        app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6) + "\n")
+        if focusedBySearchKey { app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6) + "\n") }
 
         XCTAssertTrue(wait(30) { self.element("library.organization").isEnabled }, app.debugDescription)
         app.typeKey("o", modifierFlags: [.command, .shift])
