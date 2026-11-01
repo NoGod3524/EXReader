@@ -33,8 +33,22 @@ class Server:
                         return
                 self.answer(412 if exists else 201)
             def do_GET(self):
-                outer.requests.append({'method':'GET','path':self.path})
-                self.answer(200,outer.data[self.path]) if self.path in outer.data else self.answer(404)
+                record={'method':'GET','path':self.path};outer.requests.append(record)
+                if self.path not in outer.data:self.answer(404);return
+                data=outer.data[self.path]
+                if '/objects/' in self.path:
+                    if outer.mode=='get-wrong':data=b'X'*len(data)
+                    elif outer.mode=='get-short':data=data[:-1]
+                    elif outer.mode=='get-over':data+=b'X'
+                record.update(response_bytes=len(data),response_sha256=sha(data))
+                if outer.mode=='get-gate' and '/objects/' in self.path:
+                    self.send_response(200);self.send_header('Content-Length',str(len(data)));self.end_headers()
+                    self.wfile.write(data[:1024]);self.wfile.flush();outer.arrived.set()
+                    if not outer.release.wait(20):return
+                    try:self.wfile.write(data[1024:])
+                    except OSError:pass
+                    return
+                self.answer(200,data)
             def do_MKCOL(self):self.answer(201)
             def do_PROPFIND(self):
                 # Consume request body so the keep-alive stream stays framed.
@@ -226,7 +240,65 @@ def run_suite(binary,old,boundary,out):
             c['verified_get']=int(any(x['method']=='GET' and x['path']==object_path for x in s.requests))
         return f
     for kind in ['normal','permission','kill','cancel','lost']:case('sync-'+kind,sync_case(kind))
+
+    # Phase C: separately counted stream verification evidence. Existing 29
+    # snapshot rows and all their assertions stay unchanged.
+    def get_case(kind):
+        def f(w,s,c,raw):
+            for leaf in ['cache','originals','managed']:(w/leaf).mkdir(mode=0o700)
+            content=b'F10 stream verification original|'*4096;digest=sha(content)
+            original=w/'originals'/(digest+'.txt');original.write_bytes(content)
+            object_path='/dav/exreader-sync-v1/objects/'+digest[:2]+'/'+digest+'.txt'
+            rev={'version':1,'id':'20'+'0'*29+'1','entity_kind':'book','entity_key':'txt:'+digest,'operation':'put','location_kind':'none','parents':[],
+                 'payload':{'format':'txt','source_sha256':digest,'source_bytes':len(content),'title':'F10 stream','author':'Fixture','favorite':False}}
+            wire=json.dumps(rev,separators=(',',':')).encode();wirefile=w/'wire.json';wirefile.write_bytes(wire)
+            cmd=lambda mode:[str(binary),mode,str(w),s.url,str(wirefile)]
+            q=subprocess.run(cmd('seed'),capture_output=True,text=True,timeout=10);raw.append(q.stdout);c['seed']=parse(q.stdout)['seed']
+            if kind=='missing':
+                s.data[object_path]=content;original.unlink()
+            if kind=='readonly':(w/'cache').chmod(0o500)
+            if kind in ('wrong','short','over'):s.mode='get-'+kind
+            if kind in ('cancel','kill'):s.mode='get-gate';s.release.clear()
+            p=subprocess.Popen(cmd('step'),stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            if kind in ('cancel','kill'):
+                assert s.arrived.wait(20),'actual streaming GET boundary missing'
+                c['get_boundary']=1
+                if kind=='cancel':(w/'cancel').write_text('cancel')
+                else:p.kill()
+                s.release.set()
+            stdout,stderr=p.communicate(timeout=25);raw.append(stdout+stderr);first=parse(stdout);c['first_exit']=p.returncode
+            c['cache_empty_after_first']=int(not any((w/'cache').iterdir()))
+            if kind=='kill':c['signal']=-p.returncode
+            else:
+                c['first_status']=first['status'];c['first_dav']=first['dav_code'];c['first_outbox']=first['outbox'];c['first_pushed']=first['pushed']
+            c['first_wire_absent']=int(not any('/revisions/' in path for path in s.data))
+            first_gets=[r for r in s.requests if r['method']=='GET' and r['path']==object_path]
+            c['first_get_present']=int(bool(first_gets))
+            c['expected_bytes']=len(content);c['expected_sha256']=digest
+            c['first_response_bytes']=first_gets[0].get('response_bytes',-1) if first_gets else -1
+            c['first_response_sha256']=first_gets[0].get('response_sha256','') if first_gets else ''
+            if (w/'cancel').exists():(w/'cancel').unlink()
+            s.mode='normal';s.release.set()
+            q=subprocess.run(cmd('step'),capture_output=True,text=True,timeout=25);raw.append(q.stdout+q.stderr);last=parse(q.stdout)
+            c['retry_status']=last['status'];c['retry_outbox']=last['outbox'];c['pending']=last['cleanup_pending']
+            c['cache_empty_final']=int(not any((w/'cache').iterdir()))
+            c['source_identity']=int((not original.exists()) if kind=='missing' else original.read_bytes()==content)
+            c['remote_original_exact']=int(s.data.get(object_path)==content)
+            revision_path='/dav/exreader-sync-v1/revisions/20/'+rev['id']+'-'+sha(wire)+'.json'
+            c['remote_revision_exact']=int(s.data.get(revision_path)==wire)
+            c['no_original_put']=int(not any(r['method']=='PUT' and r['path']==object_path for r in s.requests))
+            c['cache_mode']=os.stat(w/'cache').st_mode&0o777
+            (w/'cache').chmod(0o700)
+        return f
+    for kind in ['readonly','missing','wrong','short','over','cancel','kill']:case('get-'+kind,get_case(kind))
+    def consumer_error(w,s,c,raw):
+        s.data['/dav/body']=BODY
+        p=subprocess.run([str(binary),'get-error',str(w),s.url],capture_output=True,text=True,timeout=20)
+        raw.append(p.stdout+p.stderr);c.update(parse(p.stdout));c['exit']=p.returncode
+        c['no_local_file']=int(not any(w.iterdir()))
+    case('get-consumer-error',consumer_error)
+
     index={'source':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],
-           'binaries':{p.name:sha(p.read_bytes()) for p in [binary,old,boundary]},'cases':[r['name'] for r in rows],'full_f10_complete':False}
+           'binaries':{p.name:sha(p.read_bytes()) for p in [binary,old,boundary]},'cases':[r['name'] for r in rows[:29]],'get_cases':[r['name'] for r in rows[29:]],'full_f10_complete':False}
     (out/'index.json').write_text(json.dumps(index,indent=2)+'\n')
     return rows
