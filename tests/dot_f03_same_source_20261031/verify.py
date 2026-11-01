@@ -648,15 +648,279 @@ def diagnose_gtk_ready_original(output, stamp):
         write_json(output, result)
 
 
+
+def diagnose_owner_original(output):
+    """Authenticate and inspect one fixed archive; never execute or accept its products."""
+    import os, re, subprocess, urllib.request, urllib.parse, zipfile, io, stat
+    from identity import ROOT
+    import xml.etree.ElementTree as ET
+    base = "99d1b754690fec199f41de2f0edb7070558b285a"
+    branch = "refs/heads/dot/f03-owner-artifact-20261101"
+    require(os.environ.get("GITHUB_ACTIONS") == "true" and
+            os.environ.get("GITHUB_REPOSITORY") == "NoGod3524/EXReader" and
+            os.environ.get("GITHUB_REF") == branch and
+            os.environ.get("F03_OWNER_ARTIFACT_CASE") == "f03/owner-fixed-artifact",
+            "fixed owner diagnostic controller route differs")
+    stamp = {key: os.environ[env] for key, env in (
+        ("source_sha", "GITHUB_SHA"), ("run_id", "GITHUB_RUN_ID"), ("attempt", "GITHUB_RUN_ATTEMPT"))}
+    require(re.fullmatch(r"[0-9a-f]{40}", stamp["source_sha"]) and
+            stamp["run_id"].isdigit() and stamp["attempt"] == "1", "controller identity malformed")
+    require(subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() ==
+            stamp["source_sha"], "controller checkout differs")
+    subprocess.run(["git", "merge-base", "--is-ancestor", base, stamp["source_sha"]], cwd=ROOT, check=True)
+    paths = set(subprocess.check_output(["git", "diff", "--name-only", base, stamp["source_sha"]],
+                                      cwd=ROOT, text=True).splitlines())
+    require(paths == {
+        "tests/dot_f03_same_source_20261031/verify.py",
+        ".github/workflows/dot-f03-same-source-20261031.yml",
+        "tests/dot_f03_same_source_20261031/scope.json",
+        "docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md"},
+        "controller changed outside four approved paths")
+    run_id, attempt, job_id = 41328199296, 1, 124912497495
+    source = "e21331513a84cc225daa99f672b4c79384e1f34b"
+    artifact_id, expected_size = 13093186163, 193531993
+    expected_digest = "e8b2d81a33a62a6d47c718bfdea2e49d5075b9eb8de27048eaf3023b33f8f17f"
+    expected_identity = {"source_sha": source, "run_id": str(run_id), "attempt": str(attempt)}
+    names = {
+        "actualInstalledProviderAndJson", "persistedNativeCreateIds", "strictUtf16AndEmoji",
+        "staleObservedHeadsAreAtomic", "explicitDeleteAndRestore", "metadataFailureRollsBackAndRetries",
+        "outboxFailureRollsBackAndRetries", "membershipNeedsExplicitBookBootstrap",
+        "publicSdkBootstrapKeepsCurrentProductTitle", "shelfAndSeriesMembershipOrder",
+        "missingAndDeletedDependenciesRefused", "mapFailureKeepsSdkAndCommittedBookCommand",
+        "nativeRejectsWrongOwner", "nativeRejectsClosedHandle", "twoNativeOwnersCompeteOnOneObservedHead",
+        "sdkDatabaseRefusedWithoutModification", "opensClosedLegacySystemCatalog",
+        "finalizeImportAutomaticallyBootstrapsOnce"}
+    wanted = {"source.txt", "device-api.txt", "device-abi.txt", "device-report.json",
+              "owner-instrumentation.txt", "result.json"}
+    wanted.update(prefix+"-"+phase+".txt" for prefix in ("seed", "recover", "witness")
+                  for phase in ("before", "after"))
+    result = {"controller": stamp, "controller_base": base, "diagnostic_only": True,
+              "product_reexecuted": False, "accepted": False, "full_F03_accepted": False,
+              "provider_fully_authenticated": False, "formal_count_credit": 0,
+              "original": {**expected_identity, "job_id": job_id, "artifact_id": artifact_id},
+              "problems": [], "missing": [], "invalid": [], "selected": {}, "observations": {}}
+    class Redirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            value = super().redirect_request(req, fp, code, msg, headers, newurl)
+            if value is not None and urllib.parse.urlsplit(newurl).netloc != "api.github.com":
+                value.remove_header("Authorization")
+            return value
+    opener = urllib.request.build_opener(Redirect())
+    def fetch(path, limit=2*1024*1024):
+        request = urllib.request.Request("https://api.github.com/repos/NoGod3524/EXReader"+path,
+            headers={"Authorization": "Bearer "+os.environ["GITHUB_TOKEN"],
+                     "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"})
+        with opener.open(request, timeout=120) as response:
+            raw = response.read(limit+1)
+        require(len(raw) <= limit, "fixed diagnostic response too large")
+        return raw
+    def observe(key, value):
+        result["observations"][key] = bool(value)
+        if not value: result["invalid"].append(key)
+    try:
+        run = json.loads(fetch(f"/actions/runs/{run_id}/attempts/{attempt}"))
+        jobs = json.loads(fetch(f"/actions/runs/{run_id}/attempts/{attempt}/jobs?per_page=100"))
+        artifact = json.loads(fetch(f"/actions/artifacts/{artifact_id}"))
+        require(run["id"] == run_id and run["head_sha"] == source and run["run_attempt"] == attempt and
+                run["status"] == "completed" and run["conclusion"] == "failure", "fixed failed run differs")
+        matches = [j for j in jobs["jobs"] if j["id"] == job_id]
+        require(len(matches) == 1, "fixed job missing")
+        job = matches[0]
+        require(job["name"] == "f03_android_importmapping_retained" and job["head_sha"] == source and
+                job["run_id"] == run_id and job["run_attempt"] == attempt and
+                job["status"] == "completed" and job["conclusion"] == "failure", "fixed failed job differs")
+        require(artifact["id"] == artifact_id and artifact["name"] ==
+                f"reader-suite-f03-android-importmapping-{run_id}-{attempt}" and
+                artifact["size_in_bytes"] == expected_size and not artifact["expired"] and
+                artifact["digest"] == "sha256:"+expected_digest and
+                artifact["workflow_run"]["id"] == run_id and
+                artifact["workflow_run"]["head_sha"] == source and
+                job["started_at"] <= artifact["created_at"] <= job["completed_at"],
+                "fixed artifact metadata differs")
+        body = fetch(f"/actions/artifacts/{artifact_id}/zip", expected_size)
+        require(len(body) == expected_size and hashlib.sha256(body).hexdigest() == expected_digest,
+                "fixed archive digest/size differs")
+        selected, inventory, total_selected = {}, set(), 0
+        organization_present = False
+        with zipfile.ZipFile(io.BytesIO(body)) as archive:
+            entries = archive.infolist()
+            require(len(entries) <= 20000 and sum(e.file_size for e in entries) <= 2*1024**3,
+                    "archive expansion exceeds diagnostic bound")
+            for entry in entries:
+                name = entry.filename
+                parts = name.rstrip("/").split("/")
+                require(name and name not in inventory and not name.startswith("/") and
+                        "\\" not in name and ":" not in name and
+                        not any(x in ("", ".", "..") for x in parts) and not entry.flag_bits & 1,
+                        "unsafe duplicate encrypted archive member")
+                inventory.add(name)
+                if parts[-2:] == ["organization-android", "device-report.json"]: organization_present = True
+                logical = None
+                if "owner-android" in parts:
+                    index = parts.index("owner-android")
+                    tail = "/".join(parts[index+1:])
+                    if tail in wanted or tail.startswith("owner-reports/") and tail.endswith(".xml"):
+                        logical = "owner/"+tail
+                elif parts[-1] == "f03-android-original-steps.json":
+                    logical = "original-steps"
+                if logical is None or entry.is_dir(): continue
+                mode = stat.S_IFMT(entry.external_attr >> 16)
+                if mode not in (0, stat.S_IFREG):
+                    result["invalid"].append("nonregular:"+logical); continue
+                require(logical not in selected and entry.file_size <= 2*1024*1024,
+                        "ambiguous or oversized selected evidence")
+                raw = archive.read(entry); total_selected += len(raw)
+                require(total_selected <= 16*1024*1024, "selected text exceeds diagnostic bound")
+                selected[logical] = raw
+                result["selected"][logical] = {"path": name, "bytes": len(raw),
+                                               "sha256": hashlib.sha256(raw).hexdigest()}
+        result["archive_verified"] = True
+        result["inventory_member_count"] = len(inventory)
+        result["organization_device_report_present"] = organization_present
+        result["missing"] = sorted("owner/"+x for x in wanted if "owner/"+x not in selected)
+        def text(key): return selected[key].decode("utf-8")
+        def parsed(key):
+            try: return json.loads(text(key))
+            except (ValueError, UnicodeError):
+                result["invalid"].append("json:"+key); return None
+        for label, expected in (("source.txt", source), ("device-api.txt", "34"), ("device-abi.txt", "x86_64")):
+            key = "owner/"+label
+            if key in selected: observe(label, text(key).strip() == expected)
+        key = "owner/device-report.json"
+        if key in selected:
+            device = parsed(key)
+            if isinstance(device, dict):
+                observe("device_identity", all(device.get(k) == v for k,v in expected_identity.items()))
+                observe("device_api_abi", device.get("api") == 34 and device.get("abi") == "x86_64")
+                checks = device.get("checks", [])
+                ids = [x.get("id") for x in checks if isinstance(x, dict)] if isinstance(checks, list) else []
+                observe("device_18_checks", device.get("count") == 18 and device.get("failed") == 0 and
+                        isinstance(checks, list) and len(checks) == len(ids) == 18 and set(ids) == names and
+                        all(x.get("pass") is True for x in checks))
+                result["device"] = {"api": device.get("api") if type(device.get("api")) is int else "invalid",
+                                    "abi": device.get("abi") if device.get("abi") == "x86_64" else "unexpected",
+                                    "count": device.get("count") if type(device.get("count")) is int else "invalid",
+                                    "failed": device.get("failed") if type(device.get("failed")) is int else "invalid",
+                                    "known_checks": [{"id": x["id"], "pass": x.get("pass") is True}
+                                     for x in checks if isinstance(x, dict) and x.get("id") in names]
+                                     if isinstance(checks, list) else [],
+                                    "unexpected_check_count": len([x for x in ids if x not in names])}
+        key = "owner/owner-instrumentation.txt"
+        if key in selected:
+            raw = text(key); status = {}; completed = []; bad = []; safe = []
+            for line in raw.splitlines():
+                if line.startswith("INSTRUMENTATION_STATUS: "):
+                    k,_,v = line[len("INSTRUMENTATION_STATUS: "):].partition("=")
+                    if k in ("class", "test", "numtests", "current"): status[k] = v
+                elif line.startswith("INSTRUMENTATION_STATUS_CODE: "):
+                    try: code = int(line.split(":",1)[1])
+                    except ValueError: code = None
+                    if code not in (0,1): bad.append("failure_or_skip")
+                    if code == 0:
+                        valid = (status.get("class") == "org.exreader.host.ProductOwnerTest" and
+                                 status.get("numtests") == "18" and status.get("test") in names)
+                        if not valid: bad.append("status_identity")
+                        completed.append(status.get("test"))
+                        safe.append({"test":status.get("test") if status.get("test") in names else "unexpected",
+                                     "status_code":code,"identity_valid":valid})
+                    status = {}
+            observe("manual_18", len(completed) == 18 and set(completed) == names and not bad and
+                    re.search(r"^INSTRUMENTATION_CODE: -1\s*$", raw, re.M) and "OK (18 tests)" in raw and
+                    "FAILURES" not in raw)
+            result["manual_protocol"] = safe
+            ending = re.findall(r"^INSTRUMENTATION_CODE: (-?[0-9]+)\s*$", raw, re.M)
+            result["manual_summary"] = {"completion_count": len(completed),
+                "ending_codes": [int(x) for x in ending], "ok_18_present": "OK (18 tests)" in raw,
+                "failures_marker_present": "FAILURES" in raw,
+                "failure_or_skip_status_count": bad.count("failure_or_skip"),
+                "invalid_status_identity_count": bad.count("status_identity")}
+        xml_names = []; xml_bad = []; xml_files = []
+        for key in sorted(selected):
+            if key.startswith("owner/owner-reports/") and key.endswith(".xml"):
+                xml_files.append(key)
+                try:
+                    raw = selected[key]
+                    require(b"<!DOCTYPE" not in raw and b"<!ENTITY" not in raw, "XML declarations forbidden")
+                    tree = ET.fromstring(raw)
+                    for suite in tree.iter("testsuite"):
+                        if any(int(suite.get(k,"0")) for k in ("failures","errors","skipped")): xml_bad.append("suite")
+                    for case in tree.iter("testcase"):
+                        if case.get("classname") != "org.exreader.host.ProductOwnerTest" or any(
+                                case.find(k) is not None for k in ("failure","error","skipped")): xml_bad.append("case")
+                        xml_names.append(case.get("name"))
+                except (ValueError, ET.ParseError, AssertionError): xml_bad.append("invalid_xml")
+        if not xml_files: result["missing"].append("owner/owner-reports/*.xml")
+        observe("xml_18", bool(xml_files) and len(xml_names) == 18 and set(xml_names) == names and not xml_bad)
+        result["xml_known_names"] = sorted(x for x in xml_names if x in names)
+        for phase in ("before","after"):
+            keys = ["owner/"+x+"-"+phase+".txt" for x in ("seed","recover","witness")]
+            if all(k in selected for k in keys):
+                seed, recovery, witness = [text(k) for k in keys]
+                observe("kill_"+phase,
+                        "INSTRUMENTATION_RESULT: shortMsg=Process crashed." in seed and
+                        "EXR_OWNER_RECOVERED recover-"+phase in recovery and
+                        re.search(r"^INSTRUMENTATION_CODE: -1\s*$", recovery, re.M) and
+                        "EXR_OWNER_PHASE_FAILED" not in recovery and
+                        witness == ("1,1,0" if phase == "before" else "1,1,1"))
+        if "owner/result.json" in selected:
+            old = parsed("owner/result.json")
+            if isinstance(old, dict):
+                observe("old_owner_gate_identity", all(old.get(k) == v for k,v in expected_identity.items()))
+                observe("old_owner_rejection_retained", old.get("accepted") is False and
+                        "owner device execution failed" in old.get("problems", []))
+                result["old_owner_gate"] = {"accepted": old.get("accepted") is True,
+                    "identity_matches": all(old.get(k) == v for k,v in expected_identity.items()),
+                    "reported_owner_device_failure": "owner device execution failed" in old.get("problems",[]),
+                    "problem_count": len(old.get("problems",[]))}
+        if "original-steps" in selected:
+            steps = parsed("original-steps")
+            result["original_steps_shape"] = type(steps).__name__
+            if isinstance(steps, dict):
+                observe("original_steps_identity", all(steps.get(k) == v for k,v in expected_identity.items()))
+                fixed_workflow = ".github/workflows/reader-organization-android.yml"
+                workflow_hash = steps.get("original_workflow_sha256", "")
+                observe("original_steps_workflow", steps.get("original_workflow") == fixed_workflow and
+                        isinstance(workflow_hash, str) and re.fullmatch(r"[0-9a-f]{64}", workflow_hash))
+                observe("original_steps_failure_retained", steps.get("accepted") is False and
+                        steps.get("historical_owner_guard_reexecuted") is False)
+                receipt_steps = steps.get("steps", [])
+                valid_steps = isinstance(receipt_steps, list) and bool(receipt_steps) and all(
+                    isinstance(x, dict) and type(x.get("exit_code")) is int and
+                    isinstance(x.get("original_command_sha256"), str) and
+                    re.fullmatch(r"[0-9a-f]{64}", x["original_command_sha256"]) for x in receipt_steps)
+                observe("original_steps_records", valid_steps)
+                result["original_steps"] = {"workflow": fixed_workflow if steps.get("original_workflow") == fixed_workflow else "unexpected",
+                    "workflow_sha256": workflow_hash if isinstance(workflow_hash, str) and re.fullmatch(r"[0-9a-f]{64}", workflow_hash) else "invalid",
+                    "accepted": steps.get("accepted") is True,
+                    "historical_owner_guard_reexecuted": steps.get("historical_owner_guard_reexecuted") is True,
+                    "steps": [{"index":index, "exit_code":item["exit_code"],
+                               "command_sha256":item["original_command_sha256"]}
+                              for index,item in enumerate(receipt_steps)] if valid_steps else []}
+        else: result["missing"].append("f03-android-original-steps.json")
+        result["diagnostic_completed"] = True
+        print(json.dumps(result, sort_keys=True), flush=True)
+    except BaseException as error:
+        result["problems"].append(type(error).__name__)
+        raise
+    finally:
+        write_json(output, result)
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--manifest", type=Path)
     p.add_argument("--partial", action="store_true")
     p.add_argument("--diagnose-original", action="store_true")
+    p.add_argument("--diagnose-owner-original", action="store_true")
     p.add_argument("--diagnose-gtk-ready-original", action="store_true")
     p.add_argument("--evidence", type=Path)
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
+    if a.diagnose_owner_original:
+        require(not a.diagnose_original and not a.diagnose_gtk_ready_original and not a.partial
+                and a.manifest is None and a.evidence is None, "owner diagnostic cannot mix audits")
+        diagnose_owner_original(a.output)
+        return
     stamp = identity()
     if a.diagnose_gtk_ready_original:
         require(not a.diagnose_original and not a.partial and a.manifest is None and a.evidence is None, "readiness diagnosis cannot mix audits")
