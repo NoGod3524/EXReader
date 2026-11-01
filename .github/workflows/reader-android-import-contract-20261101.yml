@@ -1,0 +1,31 @@
+name: Android import contract static migration
+on:
+  push:
+    branches: [dot/f03-import-contract-20261101]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-import-contract-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  static_contract:
+    if: ${{ github.ref == 'refs/heads/dot/f03-import-contract-20261101' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push' && contains(github.event.head_commit.message, '[ANDROID-IMPORT-CONTRACT-5-ONE-RUN]')) }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    env:
+      PYTHONUTF8: '1'
+      ANDROID_CANDIDATE_SDK_BASE: 94fb236a4a2da87dfbaf4f1dd2a47885d615a230
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Fixed 34 static cases and unchanged original checker
+        run: python tests/reader_android_import_contract_20261101/check.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-import-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-import-contract/
+          if-no-files-found: error
