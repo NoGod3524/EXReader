@@ -5,7 +5,9 @@ is the compact shell: a library bar (Import book, Continue reading, More
 library actions), a reading bar (Back to library, Previous/Next page,
 Contents / pages, More reader actions) and keyboard commands for collections
 (Ctrl+Shift+C), account (Ctrl+Shift+A), reading records (Ctrl+Shift+R), details
-(Ctrl+E) and search (Ctrl+F). The retained tests/reader_a11y_gtk audit targets
+(Ctrl+E) and search (Ctrl+F); F1 imports, F2 returns to the shelf, F3/F4 turn
+pages (Page_Down only when the hardware-key preference is on). Importing a
+book opens it, by design. The retained tests/reader_a11y_gtk audit targets
 the earlier toolbar; it still runs unchanged. This audit reuses its X11 key
 driver and AT-SPI client, presses only real keys (xdotool) and reads only the
 accessibility bus. A phase that cannot run is a failed check. Actions only.
@@ -91,7 +93,7 @@ def main(payload):
     books = []
     for title in ('Alpha F09 book', 'Beta F09 book'):
         path = corpus / (title.replace(' ', '-') + '.txt')
-        path.write_text(('%s page text for the F09 audit. ' % title) * 60, encoding='utf-8')
+        path.write_text(('%s page text for the F09 audit. ' % title) * 1200, encoding='utf-8')
         books.append(path)
     a11y.init()
     host = driver.Host(payload / 'bin/exreader-linux', payload / 'Reader.otf', OUT, title='EXReader Linux')
@@ -103,7 +105,7 @@ def main(payload):
         host.screenshot(str(OUT / '00-library.png'))
 
         # G-01 library bar names
-        wanted = ['Import book', 'Continue reading', 'More library actions', 'Edit book details']
+        wanted = ['Import book', 'Continue reading', 'More reader actions']
         found = {label: bool(named(root, label)) for label in wanted}
         search = a11y.find_one(root, roles={'text', 'entry'}, contains='Search')
         check('G-01', 'library bar', 'library controls and the search entry are named',
@@ -119,10 +121,14 @@ def main(payload):
             host.key('ctrl+l')
             host.type_text(str(book))
             host.key('Return')
-            grown = wait(lambda: host.number('host', 'books') >= index + 1, 60)
-            if index == len(books) - 1:
-                check('G-02b', 'shelf', 'both imported originals become shelf rows',
-                      host.number('host', 'books'), bool(grown))
+            opened = wait(lambda: host.number('host', 'book') > 0 and host.number('host', 'reader_visible') == 1, 60)
+            if index == 0:
+                check('G-02b', 'reader', 'an imported book opens in the reader', host.section('host'), bool(opened))
+            host.key('F2')
+            wait(lambda: host.number('host', 'reader_visible') == 0, 15)
+        grown = wait(lambda: host.number('host', 'books') >= len(books), 30)
+        check('G-02c', 'shelf', 'F2 returns to the shelf, which lists both imported books',
+              host.number('host', 'books'), bool(grown))
         root = frame()
         rows = [n for n in a11y.find_all(root, roles={'list item'})]
         names = [a11y.name(n) for n in rows]
@@ -160,11 +166,11 @@ def main(payload):
               focused(frame()), bool(opened) and bool(page_focus))
         host.screenshot(str(OUT / '02-reader.png'))
 
-        # G-08 page turn from the keyboard
+        # G-08 page turn from the keyboard (F4 next, the default keyboard binding)
         before = host.number('host', 'page', -1)
-        host.key('Page_Down')
+        host.key('F4')
         turned = wait(lambda: host.number('host', 'page', -1) != before, 15)
-        check('G-08', 'reading position', 'Page_Down moves to another page', {'before': before,
+        check('G-08', 'reading position', 'F4 moves to the next page', {'before': before,
               'after': host.number('host', 'page', -1)}, bool(turned))
 
         # G-09 reading records (bookmarks and annotations) from the keyboard

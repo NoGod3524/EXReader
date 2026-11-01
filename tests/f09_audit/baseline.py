@@ -70,7 +70,7 @@ def windows():
              '--output', evidence / 'verification.json'], 'windows-verify')
     record('windows', payload, code, report)
     # The compact shell this source ships, audited by tests/f09_audit/windows_compact.py.
-    book = next(fixtures.glob('*.epub'), None)
+    book = fixtures / 'Extra-Book.epub'
     run([sys.executable, 'tests/f09_audit/windows_compact.py', payload / 'EXReader.exe', book], 'windows-compact')
 
 
