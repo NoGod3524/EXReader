@@ -269,7 +269,11 @@ def check(manifest, bundle, identity):
                         for p in case["source_evidence"]), "missing_evidence", label)
                 require(case["original_identity_preserved"] is True
                         and case["revision_bytes_preserved"] is True, "identity_changed", label)
-                if contract["wire_required"]:
+                if contract.get("remote_boundary_wire_required", False):
+                    require(isinstance(case.get("remote_boundary"), bool),
+                            "missing_boundary_kind", label)
+                if contract["wire_required"] or (contract.get("remote_boundary_wire_required", False)
+                                                and case["remote_boundary"]):
                     require(case["peer_wire_observed"] is True, "missing_wire", label)
                 if claim == "concurrent_heads_preserved":
                     heads = case["competing_heads"]
@@ -282,11 +286,17 @@ def check(manifest, bundle, identity):
                     else:
                         exact(case["final_heads"], heads, "wrong_final_heads", label)
                 elif claim == "delete_put_tombstone_preserved":
+                    heads = case["competing_heads"]
+                    unique(heads, "invalid_heads", label)
+                    require(len(heads) >= 2, "invalid_heads", label + ": delete/put requires competing heads")
                     require(case["stale_peer_did_not_resurrect"] is True and case["tombstone_preserved"] is True,
                             "tombstone_lost", label)
                     require(case["delete_conflict_displayed"] is True, "silent_delete_conflict", label)
                     if case.get("explicit_user_restore", False):
-                        exact(case["restore_parents"], case["competing_heads"], "wrong_restore_parents", label)
+                        exact(case["restore_parents"], heads, "wrong_restore_parents", label)
+                        exact(case["final_heads"], [case["restore_revision"]], "wrong_final_heads", label)
+                    else:
+                        exact(case["final_heads"], heads, "wrong_final_heads", label)
                 elif claim == "cancel_retry":
                     require(case["cancel_layer"] in {"transport", "receive", "import"}
                             and case["native_cancel_observed"] is True and case["explicit_retry_passed"] is True,
