@@ -78,6 +78,17 @@ exr_webdav_status exr_webdav_make_collection(exr_webdav_client *,const char *col
   const exr_webdav_control *,exr_webdav_error *);
 exr_webdav_status exr_webdav_publish_file(exr_webdav_client *,const char *resource,
   const char *private_file,uint64_t expected_bytes,const exr_webdav_control *,exr_webdav_error *);
+/* Bounded immutable producer. Called synchronously with monotonic offset and
+   exactly the requested capacity (no call at EOF). Return OK and set *read to
+   capacity, or an explicit failure. Short/oversized reads fail closed. Buffer
+   and context are borrowed for this call; no reentry. C++ exceptions are caught
+   before crossing the transport ABI. The caller retains the sealed source until
+   this function returns. EXISTS still requires GET/hash verification. */
+typedef exr_webdav_status (*exr_webdav_read_source)(void *context,uint64_t offset,
+  void *buffer,size_t capacity,size_t *read);
+exr_webdav_status exr_webdav_publish_source(exr_webdav_client *,const char *resource,
+  uint64_t expected_bytes,exr_webdav_read_source,void *source_context,
+  const exr_webdav_control *,exr_webdav_error *);
 #ifdef __cplusplus
 }
 #endif
