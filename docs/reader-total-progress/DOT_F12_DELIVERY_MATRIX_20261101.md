@@ -40,3 +40,8 @@ C02 原件13039319680，1055858172 B，a0dbd292b2196fa0086fe87ba08174c9df58a20c7
 - [K03 seal](https://github.com/NoGod3524/EXReader/blob/6669351b7bf44c4bdda94a70dcd2c5d7e0f50498/docs/reader-total-progress/K03_LINUX_PORTABLE_UPGRADE_20261031.md)
 - [C02 seal](https://github.com/NoGod3524/EXReader/blob/721188e553be4c8cffe9fbfb204f8a544a64bfe9/docs/reader-total-progress/DOT_C02_NATIVE_JOURNAL_CANDIDATE_20261030.md)
 - [F06 ledger](https://github.com/NoGod3524/EXReader/blob/5db41cb19673fb75bb0b498c677d770931ac33e8/docs/reader-total-progress/f06-sdk342-six-packages.md)
+
+## 已有许可严格门禁复用（00:36 UTC 只读补证）
+ledger 中 docs/READING-LICENSES.md（blob 54b08a36854a785ee035ccddab20464cf3aee68c）及 docs/READING-LICENSE-REVIEW.md（blob c5b1a65f91a2ee4a921556d9b814f9c5be320a52）已有 H5 严格出口。修补 source 72c1e89659679b7d7b76504007a84d6d8c453db3 / run39862694733 A1，以及记录的共同 SDK 复验 run39871878859，保留 31 拒绝、1 必需材料缺口阻断、3 正控；材料库存绿色与 release_ready 严格条件分离。其范围仅 Linux 两 reading presets 静态 SDK，不含 Windows/macOS/Android 宿主、宿主字体和音频构建。
+后续应复用 tools/check_reading_licenses.py 的既有材料/来源/固定版本/构建开关/安装归档方法和原断言，不从头另造扫描系统；当前最终六个应用包仍需实际分发内容对账，不能借 H5 转授。
+docs/READING-RELEASE-PLAN.md 的“六包”是 reading-core/library × Linux/Windows/macOS 的 SDK 六包，不是 Windows/macOS/Linux/Android/iPhone/iPad 六应用；其默认分支祖先和发布准备要求不能自动改写成本任务允许发布。
