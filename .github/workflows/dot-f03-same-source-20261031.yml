@@ -6,7 +6,7 @@ on:
     inputs:
       case:
         type: choice
-        options: [f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2]
+        options: [f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only]
         default: f03/gtk-android
         required: true
 permissions:
@@ -201,4 +201,12 @@ jobs:
     uses: ./.github/workflows/dot-f04-reading-sync-20261031.yml
     with:
       case: f04/diagnose-round2
+      controller_sha: ${{ github.sha }}
+
+  f04_windows_import_only:
+    name: F04 Windows import only
+    if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f04/windows-import-only' || github.event_name == 'push' && contains(github.event.head_commit.message, '[F04-IMPORT-10-ONE-RUN]')) }}
+    uses: ./.github/workflows/dot-f04-reading-sync-20261031.yml
+    with:
+      case: f04/windows-import-only
       controller_sha: ${{ github.sha }}

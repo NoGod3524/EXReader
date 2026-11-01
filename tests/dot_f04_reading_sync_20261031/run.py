@@ -466,13 +466,84 @@ def package_build(arguments):
             shutil.copy2(ROOT / "build/host-font-cache/Reader.otf", destination / "Reader.otf")
     shutil.copy2(receipt, destination / "build-receipt.json")
 
+
+def windows_import_fixed():
+    """Execute only the authenticated historical package, never rebuild it."""
+    import hashlib, io, zipfile
+    from pathlib import PurePosixPath
+    sys.path.insert(0, str(ROOT / "tools"))
+    from check_parallel_integration import fetch, download_artifact_zip
+    contract = json.loads((HERE / "contract.json").read_text())
+    pin = contract["windows_import_probe"]
+    assert os.environ.get("F04_SCOPE") == "f04/windows-import-only"
+    assert os.environ["GITHUB_REF"] == "refs/heads/" + contract["canonical"]["branch"]
+    assert os.environ["F04_CONTROLLER_SHA"] == os.environ["GITHUB_SHA"]
+    assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() == os.environ["GITHUB_SHA"]
+    changed = subprocess.check_output(["git", "diff", "--name-only", contract["base_source"], "HEAD"], cwd=ROOT, text=True).splitlines()
+    assert set(changed) == set(contract["canonical"]["union_paths"])
+    producer = fetch("actions/runs/" + pin["run_id"])
+    assert producer["head_sha"] == pin["source_sha"] and str(producer["run_attempt"]) == pin["attempt"]
+    job = fetch("actions/jobs/" + str(pin["job_id"]))
+    assert job["head_sha"] == pin["source_sha"] and str(job["run_id"]) == pin["run_id"] and str(job["run_attempt"]) == pin["attempt"]
+    steps = [x for x in job["steps"] if x["name"] == "Same-source Windows build"]
+    assert len(steps) == 1 and steps[0]["conclusion"] == "success"
+    artifact = fetch("actions/artifacts/" + str(pin["artifact_id"]))
+    assert artifact["id"] == pin["artifact_id"] and not artifact["expired"]
+    assert artifact["size_in_bytes"] == pin["size_in_bytes"] and artifact["digest"] == pin["digest"]
+    assert artifact["workflow_run"]["head_sha"] == pin["source_sha"] and str(artifact["workflow_run"]["id"]) == pin["run_id"]
+    blob = download_artifact_zip(pin["artifact_id"])
+    assert len(blob) == pin["size_in_bytes"] and "sha256:" + hashlib.sha256(blob).hexdigest() == pin["digest"]
+    destination = ROOT / "build/f04-fixed-windows"
+    destination.mkdir(parents=True, exist_ok=False)
+    with zipfile.ZipFile(io.BytesIO(blob)) as archive:
+        names = archive.namelist()
+        assert len(names) == len(set(names))
+        assert sum(x.file_size for x in archive.infolist()) <= 500000000
+        for entry in archive.infolist():
+            path = PurePosixPath(entry.filename)
+            assert not path.is_absolute() and ".." not in path.parts and "\\" not in entry.filename and ":" not in entry.filename
+            assert ((entry.external_attr >> 16) & 0o170000) != 0o120000
+            target = destination.joinpath(*path.parts)
+            if entry.is_dir(): target.mkdir(parents=True, exist_ok=True); continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(archive.read(entry.filename))
+    receipt = json.loads((destination / "build-receipt.json").read_text())
+    assert all(str(receipt[k]) == pin[k] for k in ("source_sha", "run_id", "attempt"))
+    assert receipt["sdk_version"] == "3.42.0" and receipt["platform"] == "windows"
+    assert receipt["sdk_source"] == "8357eafa28423a7ab93ba08b823af80f01ad1505"
+    exe = destination / "package/EXReader/EXReader.exe"
+    data = exe.read_bytes()
+    assert hashlib.sha256(data).hexdigest() == receipt["program"]["sha256"] and len(data) == receipt["program"]["bytes"]
+    assert data == (destination / "program.bin").read_bytes()
+    subprocess.run([sys.executable, str(HERE / "fixtures.py")], cwd=ROOT, check=True)
+    out = ROOT / "build/phase"
+    command = [sys.executable, str(HERE / "windows_driver.py"), "--phase", "windows-import-only",
+        "--candidate", str(exe), "--font", str(destination / "Reader.otf"),
+        "--original", str(ROOT / "build/apple-android/original/epub-alice.epub"),
+        "--title", "Alice's Adventures in Wonderland", "--producer-receipt", str(destination / "build-receipt.json"),
+        "--output", str(out)]
+    try:
+        subprocess.run(command, cwd=ROOT, check=True)
+    finally:
+        result = out / "result.json"
+        if result.is_file(): print("F04 IMPORT RESULT " + diagnostic_text(result.read_text()), flush=True)
+    result = json.loads((out / "result.json").read_text())
+    assert result["passed"] is True and result["F04_accepted"] is False
+    assert result["program"]["sha256"] == receipt["program"]["sha256"]
+    print(json.dumps({"controller_source": os.environ["GITHUB_SHA"], "controller_run": os.environ["GITHUB_RUN_ID"],
+                      "product_producer": pin, "windows_import_path_only": True, "F04_accepted": False}), flush=True)
+
 def main():
     assert os.environ.get("GITHUB_ACTIONS") == "true", "Actions only"
     assert Path.cwd().resolve() == ROOT
     assert os.environ.get("EXR_APPLE_SDK_VERSION") == "3.42.0"
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics"))
+    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics", "windows-import-fixed"))
     args, rest = parser.parse_known_args()
+    if args.action == "windows-import-fixed":
+        assert not rest
+        windows_import_fixed()
+        return
     if args.action == "diagnostics":
         collect_diagnostics(rest)
         return
