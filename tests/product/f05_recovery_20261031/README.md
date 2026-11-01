@@ -1,4 +1,4 @@
-# F05 current test design — 2026-11-01 00:00 UTC
+# F05 current test design — 2026-11-01 00:35 UTC
 
 Preparation only; **not 100% accepted**. One active implementation branch,
 `dot/f05-client-recovery-20261031`, one independent validator. Nine approved files
@@ -24,6 +24,35 @@ or identical cancel phase is invented.
 | Conditional restore | Only if actual user restore exists, every competing parent must be included | Missing parent or ordinary put treated as restore → fail | Actual native action and original wire revision |
 | Independent provenance | All new producers and consumers use one final source/SDK/run/attempt | Foreign source/run/SDK, substituted artifact, changed archive bytes, missing old assertions → reject | Actions API metadata/digest, exact artifact bytes, unchanged old suite reports |
 
+## Reviewed role gate and archive controls
+`manifest.json` schema 2 separates native cases from coverage claims. Receivers
+cannot disappear as N/A; author roles may come from another native host in this
+same source/run/attempt. Applicable cancellation layer is recorded as transport,
+receive or import; process recovery records its actual boundary rather than
+inventing one mandatory kill point. Offline reopen alone requires no peer wire.
+Resolution/restore checks apply only when the actual user operation occurred.
+
+`verify.py` uses the runner's normal `gh api` read-only authentication without
+opening credential files. It retains each GitHub original ZIP and API metadata:
+exact source/run/attempt; exact successful producer job from the attempt-jobs API;
+artifact creation inside that job's start/end interval; unexpired exact artifact
+name and ID; API SHA256 digest and byte size; actual packaged program hash.
+It never re-zips evidence or extracts archive members to arbitrary filesystem paths.
+Duplicate/path-traversal/symlink/encrypted members and archive limits fail closed.
+
+The real positive role gate must pass before negative controls run. Each controlled
+mutation has its own required refusal code: `wrong_source`, `missing_claim`,
+`partial_case`, `wrong_suite_names`, `wrong_digest`, `duplicate_member`,
+`unsafe_member`. A different pre-existing failure does not qualify as successful
+rejection. Deliberately malformed tiny ZIPs are labeled negative controls only,
+not source archives or native-client results. Any negative failure closes the gate.
+Even a passed gate reports `F05_accepted=false`: final independent product
+acceptance and complete applicable native coverage remain separate.
+
+No authentication, negative control, syntax check or host test has been executed
+for this preparation. The pending shared-suite integration does not authorize
+a new parallel permanent workflow or transfer the old run budget.
+
 ## Peer replay is not simultaneous online concurrency
 Windows/GTK authors produce actual native PUT bytes. Same-run checkpoints retain
 source/run/attempt/author, exact bytes/hash and commit sequence. Mobile receivers
@@ -43,10 +72,18 @@ logs redact them. Transport cancellation is not mislabeled mid-SDK-import cancel
 - GTK/Android deletion preservation is implemented but native per-head deletion detail
   remains with the existing UI owner; affected result is **partial**, not accepted.
 - F03's new Apple organization projection delta is not yet composed into this branch.
-- Independent artifact authentication and aggregate role-aware contract mapping are
-  still under construction. Current verify.py is a receipt checker, not proof by itself.
-- The exact retained old-suite list/counts and build recipe must be reviewed before the
-  single approved dispatch; no old checks/negative cases will be silently removed.
+- Role-aware gate and original-archive authenticator are implemented as **unexecuted
+  preparation**. Producer artifact names/job names/member paths and normalized runtime
+  receipts are not wired; manifest stays `implementation-in-progress` and fails closed.
+- Pinned retained suites: Windows native account 32; GTK account 23 plus explicit
+  receive 25 (48 in the original interleaved order); Android original session UI
+  6/5/1/4 (16), four PIDs and two blocked-request boundaries; each Apple host
+  account 3 XCTest cases/14 named steps/6 attachments/256 shards plus original
+  401→pending 1→retry 256→outbox 0. macOS additionally retains account-terminal.
+  These original seeded cases are regression, not new native peer coverage.
+- Original suite blobs and five SDK paths are checked before artifact processing.
+  Runtime adapter connections and their exact report shapes remain required.
+  No original assertion or negative case may be removed to fit the budget.
 - Physical power loss, arbitrary third-party DAV implementations and hardware-specific
   devices are not inferred from runner process-kill/simulator coverage.
 - F07 shared static linker inventory does not establish runtime provider use or F07 acceptance.
