@@ -46,7 +46,7 @@ def main():
               "program_sha256": hashlib.sha256(binary.read_bytes()).hexdigest()}
     normalized, claim_refs, evidence = [], {}, ["coverage.json"]
     previous_wire, last_request = {}, 0
-    def finish_case(claims, screenshot=None, **semantic):
+    def finish_case(claims, screenshot=None, screenshot_host=None, **semantic):
         nonlocal previous_wire, last_request
         raw = checks[-1]
         name = raw["name"]
@@ -60,7 +60,7 @@ def main():
             raise AssertionError("GTK native case rewrote immutable peer wire")
         if screenshot is None:
             screenshot=name+".png"
-            command("import","-window",first.window,out/screenshot)
+            command("import","-window",(screenshot_host or first).window,out/screenshot)
         evidence.append(screenshot)
         raw["sdk_original_readback"]=observed
         raw["immutable_wire_inventory"]=wire
@@ -235,7 +235,7 @@ def main():
         checks.append({"name":"cancel_sync_retry","outcome":"passed",
             "cancel_layer":"transport-original-GET-before-explicit-native-receive",
             "before":before_cancel,"retry":after_retry,"sdk_mid_import_cancel_tested":False})
-        finish_case({"cancel_retry":"local"},remote_boundary=True,cancel_layer="transport",
+        finish_case({"cancel_retry":"local"},screenshot_host=second,remote_boundary=True,cancel_layer="transport",
                     native_cancel_observed=True,explicit_retry_passed=True)
         baseline = snapshot(first)
         store.offline = True
