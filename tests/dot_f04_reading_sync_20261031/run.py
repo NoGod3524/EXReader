@@ -280,7 +280,9 @@ def diagnostic_text(value, secrets=()):
     for secret in secrets:
         if secret:
             value = value.replace(str(secret), "[REDACTED]")
-    value = re.sub(r"-----BEGIN [^-]*KEY-----[\\s\\S]*?-----END [^-]*KEY-----", "[KEY REMOVED]", value)
+    value = re.sub(r"-----BEGIN [^-]*KEY-----.*?-----END [^-]*KEY-----", "[KEY REMOVED]", value, flags=re.DOTALL)
+    if re.search(r"-----(?:BEGIN|END) [^-]*KEY-----", value):
+        raise ValueError("incomplete key block; diagnostic refused")
     value = re.sub(r"(?im)^.*(?:authorization|password|passwd|access.token|private.key|BEGIN .*KEY|credential).*$",
                    "[AUTH LINE REMOVED]", value)
     value = re.sub(r"(https?://)[^/\s@]+@", r"\1[REDACTED]@", value)
