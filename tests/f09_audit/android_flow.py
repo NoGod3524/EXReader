@@ -74,7 +74,9 @@ def main():
         shelf = wait('book_list', seconds=40)
         if shelf is None:
             raise RuntimeError('shelf did not appear')
-        rows = [n for n in shelf.iter('node') if n is not shelf and n.get('clickable') == 'true']
+        # ListView rows are plain text views: the list handles their clicks, so
+        # they are not marked clickable themselves.
+        rows = [n for n in shelf.iter('node') if n is not shelf and n.get('bounds')]
         if not rows:
             raise RuntimeError('no book on the shelf')
         tap(rows[0], 'first book')
