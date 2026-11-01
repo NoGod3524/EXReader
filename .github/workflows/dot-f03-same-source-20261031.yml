@@ -1,12 +1,12 @@
 name: Reader parameterized suite
 on:
   push:
-    branches: [dot/reader-suite-20261101, dot/f03-gtk-ready-20261101, dot/f03-import-contract-20261101, dot/f03-android-catalog-20261101, dot/f03-android-importmapping-20261101, dot/f03-owner-artifact-20261101, dot/f03-owner-core-20261101, dot/f03-android-owner-20261101, dot/f03-bootstrap-diagnostic-20261101]
+    branches: [dot/reader-suite-20261101, dot/f03-gtk-ready-20261101, dot/f03-import-contract-20261101, dot/f03-android-catalog-20261101, dot/f03-android-importmapping-20261101, dot/f03-owner-artifact-20261101, dot/f03-owner-core-20261101, dot/f03-android-owner-20261101, dot/f03-bootstrap-diagnostic-20261101, dot/f03-bootstrap-recovery-20261101]
   workflow_dispatch:
     inputs:
       case:
         type: choice
-        options: [f03/bootstrap-three-arm, f03/android-owner-retained, f03/owner-core-original, f03/owner-fixed-artifact, f03/android-importmapping-retained, f03/android-catalog-retained, f03/two-host-import-contract, f03/two-host-complete-install, f03/two-host-fixed-origin, f03/gtk-fixed-origin-diagnostic, f03/gtk-numeric-diagnostic, f03/gtk-ready-artifact-diagnostic, f03/gtk-ready-diagnostic, f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory, f04/android-ready-diagnostic]
+        options: [f03/bootstrap-recovery, f03/bootstrap-three-arm, f03/android-owner-retained, f03/owner-core-original, f03/owner-fixed-artifact, f03/android-importmapping-retained, f03/android-catalog-retained, f03/two-host-import-contract, f03/two-host-complete-install, f03/two-host-fixed-origin, f03/gtk-fixed-origin-diagnostic, f03/gtk-numeric-diagnostic, f03/gtk-ready-artifact-diagnostic, f03/gtk-ready-diagnostic, f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory, f04/android-ready-diagnostic]
         default: f03/gtk-android
         required: true
 permissions:
@@ -1087,4 +1087,129 @@ jobs:
           path: |
             build/f03-bootstrap-manual/
             build/f03-android-build.json
+          if-no-files-found: error
+
+  f03_bootstrap_recovery:
+    if: ${{ (github.ref == 'refs/heads/dot/f03-bootstrap-recovery-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f03/bootstrap-recovery' || github.event_name == 'push' && contains(github.event.head_commit.message, '[F03-BOOTSTRAP-RECOVERY-120-ONE-RUN]'))) }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      F03_BOOTSTRAP_RECOVERY_CASE: f03/bootstrap-recovery
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.9'}
+      - name: Exact candidate admission
+        run: |
+          python -m pip install PyYAML ninja==1.11.1.1
+          python -c "import sys; sys.path.insert(0,'tests/dot_f03_same_source_20261031'); from identity import identity; print(identity())"
+      - name: Install pinned Android compiler and emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk/emulator" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+      - name: Build one actual APK and unchanged original owner producer
+        run: python tests/dot_f03_same_source_20261031/build.py --host android --output build/f03-android-build.json
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Compile new recovery runner; original retained suite remains unchanged
+        run: |
+          set -euo pipefail
+          mkdir -p build/f03-bootstrap-recovery/apks
+          gradle -p examples/android --no-daemon --stacktrace :app:assembleDebug :app:assembleDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.OrganizationBootstrapRecoveryTest
+          cp examples/android/app/build/outputs/apk/debug/app-debug.apk build/f03-bootstrap-recovery/apks/
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/f03-bootstrap-recovery/apks/
+          cat > build/f03-bootstrap-recovery/authenticate.py <<'PY'
+          import json,os,pathlib,hashlib,re
+          root=pathlib.Path('build/f03-bootstrap-recovery')
+          value=json.loads((root/'device-report.json').read_text())
+          assert all(value[k]==os.environ[e] for k,e in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')])
+          assert (root/'device-api.txt').read_text().strip()=='34' and (root/'device-abi.txt').read_text().strip()=='x86_64'
+          assert value['api']==34 and value['abi']=='x86_64' and value['count']==12 and value['failed']==0
+          assert value['historical_state_recovery'] is True and value['full_f03_accepted'] is False and value['old_apk_upgrade_accepted'] is False
+          expected=['currentAutomatic', 'legacyDirect', 'legacyReopen', 'legacyReopenSyncDeferred', 'unrelatedBookStillBootstraps', 'damagedPendingRetained', 'mismatchedSourceRetained', 'changedMetadataRetained', 'foreignHeadRefused', 'committedBootstrapReplay', 'partialMembershipRefusal', 'explicitDiscardAllowsAutomatic']
+          assert [x['id'] for x in value['checks']]==expected
+          assert all(x['passed'] and x['source_preserved'] for x in value['checks'])
+          text=(root/'manual-instrumentation.txt').read_text()
+          assert re.findall(r'^INSTRUMENTATION_CODE: (-?\d+)\s*$',text,re.M)==['-1']
+          assert 'OK (12 tests)' in text and 'FAILURES' not in text and 'shortMsg=' not in text
+          names=[];starts=[];status={}
+          for line in text.splitlines():
+              if line.startswith('INSTRUMENTATION_STATUS: '):
+                  key,_,v=line[len('INSTRUMENTATION_STATUS: '):].partition('=');status[key]=v
+              elif line.startswith('INSTRUMENTATION_STATUS_CODE: '):
+                  code=int(line.split(':',1)[1]);assert code in (0,1)
+                  assert status.get('class')=='org.exreader.host.OrganizationBootstrapRecoveryTest' and status.get('numtests')=='12'
+                  if code==0:names.append(status.get('test'))
+                  else:starts.append(status.get('test'))
+                  status={}
+          assert names==starts==expected
+          value['manual_verified']=True
+          value['manual_sha256']=hashlib.sha256((root/'manual-instrumentation.txt').read_bytes()).hexdigest()
+          for name in ('app-debug.apk','app-debug-androidTest.apk'):
+              raw=(root/'apks'/name).read_bytes();value.setdefault('apk_identity',{})[name]={'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}
+          (root/'result.json').write_text(json.dumps(value,indent=2)+'\n')
+          print(json.dumps(value))
+          PY
+          cat > build/f03-bootstrap-recovery/run.sh <<'SH'
+          #!/usr/bin/env bash
+          set -uo pipefail
+          python tests/dot_f03_same_source_20261031/build.py --host android --android-retained --output build/f03-android-retained-driver.json
+          retained_rc=$?
+          printf '%s\n' "$retained_rc" > build/f03-bootstrap-recovery/retained-exit.txt
+          set -e
+          adb shell getprop ro.build.version.sdk > build/f03-bootstrap-recovery/device-api.txt
+          adb shell getprop ro.product.cpu.abi > build/f03-bootstrap-recovery/device-abi.txt
+          adb install -r -t build/f03-bootstrap-recovery/apks/app-debug.apk
+          adb install -r -t build/f03-bootstrap-recovery/apks/app-debug-androidTest.apk
+          adb shell am instrument -w -r -e source_sha $GITHUB_SHA -e run_id $GITHUB_RUN_ID -e attempt $GITHUB_RUN_ATTEMPT org.exreader.host.test/org.exreader.host.OrganizationBootstrapRecoveryTest > build/f03-bootstrap-recovery/manual-instrumentation.txt
+          cat build/f03-bootstrap-recovery/manual-instrumentation.txt
+          adb exec-out run-as org.exreader.host cat files/f03-bootstrap-recovery.json > build/f03-bootstrap-recovery/device-report.json
+          cat build/f03-bootstrap-recovery/device-report.json
+          python build/f03-bootstrap-recovery/authenticate.py
+          test "$retained_rc" -eq 0
+          SH
+      - name: Original retained suite plus authenticated recovery cases in one emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash build/f03-bootstrap-recovery/run.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-suite-f03-bootstrap-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f03-bootstrap-recovery/
+            build/f03-android-build.json
+            build/f03-android/
+            build/f03-android-retained-driver.json
+            build/f03-android-original-steps.json
+            build/organization-android/
+            build/owner-android/
+            build/shelf-android/
+            build/import-android/
+            build/android-host/
+            build/wave3/network-fixture/public/
+            !build/**/key.pem
+            !build/**/private/**
+            !build/**/connection.json
           if-no-files-found: error

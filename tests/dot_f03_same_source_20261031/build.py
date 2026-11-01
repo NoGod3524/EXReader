@@ -491,6 +491,7 @@ def main():
                               "operation": "android-retained" if a.android_retained else ("apple-receive" if a.apple_receive else "build"),
                               "sdk_version": SCOPE["sdk_version"], "sdk_source": SCOPE["sdk_source"],
                               "in_memory_adapters": changes,
-                              "product_source_changed": False, "complete_product_accepted": False})
+                              "product_source_changed": False,
+        "candidate_product_delta": ['examples/android/app/src/main/java/org/exreader/host/BookStore.java', 'examples/android/app/src/main/java/org/exreader/host/OrganizationStore.java'] if os.environ.get("F03_BOOTSTRAP_RECOVERY_CASE") else [], "complete_product_accepted": False})
 if __name__ == "__main__":
     main()
