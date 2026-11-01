@@ -91,13 +91,16 @@ final class F04ReadingSyncUITests: XCTestCase {
                 abs(a.width - b.width) <= 0.5 && abs(a.height - b.height) <= 0.5
         }
         func same(_ a: State, _ b: State) -> Bool {
-            guard close(a.bounds, b.bounds), Set(a.anchors.keys) == Set(b.anchors.keys) else { return false }
-            for (key, frame) in a.anchors {
-                guard let other = b.anchors[key], close(frame, other) else { return false }
-            }
+            guard close(a.bounds, b.bounds) else { return false }
             switch (a.frame, b.frame) {
+            // A real target settles on its own geometry; unrelated anchors may virtualize.
             case let (x?, y?): return close(x, y)
-            case (nil, nil): return true
+            case (nil, nil):
+                guard Set(a.anchors.keys) == Set(b.anchors.keys) else { return false }
+                for (key, frame) in a.anchors {
+                    guard let other = b.anchors[key], close(frame, other) else { return false }
+                }
+                return true
             default: return false
             }
         }
