@@ -69,6 +69,9 @@ def windows():
         run([sys.executable, 'tests/reader_a11y_windows/verify_report.py', '--report', report,
              '--output', evidence / 'verification.json'], 'windows-verify')
     record('windows', payload, code, report)
+    # The compact shell this source ships, audited by tests/f09_audit/windows_compact.py.
+    book = next(fixtures.glob('*.epub'), None)
+    run([sys.executable, 'tests/f09_audit/windows_compact.py', payload / 'EXReader.exe', book], 'windows-compact')
 
 
 def linux():
