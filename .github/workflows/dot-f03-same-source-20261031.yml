@@ -1,12 +1,12 @@
 name: Reader parameterized suite
 on:
   push:
-    branches: [dot/reader-suite-20261101, dot/f03-gtk-ready-20261101, dot/f03-import-contract-20261101, dot/f03-android-catalog-20261101, dot/f03-android-importmapping-20261101, dot/f03-owner-artifact-20261101, dot/f03-owner-core-20261101, dot/f03-android-owner-20261101]
+    branches: [dot/reader-suite-20261101, dot/f03-gtk-ready-20261101, dot/f03-import-contract-20261101, dot/f03-android-catalog-20261101, dot/f03-android-importmapping-20261101, dot/f03-owner-artifact-20261101, dot/f03-owner-core-20261101, dot/f03-android-owner-20261101, dot/f03-bootstrap-diagnostic-20261101]
   workflow_dispatch:
     inputs:
       case:
         type: choice
-        options: [f03/android-owner-retained, f03/owner-core-original, f03/owner-fixed-artifact, f03/android-importmapping-retained, f03/android-catalog-retained, f03/two-host-import-contract, f03/two-host-complete-install, f03/two-host-fixed-origin, f03/gtk-fixed-origin-diagnostic, f03/gtk-numeric-diagnostic, f03/gtk-ready-artifact-diagnostic, f03/gtk-ready-diagnostic, f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory, f04/android-ready-diagnostic]
+        options: [f03/bootstrap-three-arm, f03/android-owner-retained, f03/owner-core-original, f03/owner-fixed-artifact, f03/android-importmapping-retained, f03/android-catalog-retained, f03/two-host-import-contract, f03/two-host-complete-install, f03/two-host-fixed-origin, f03/gtk-fixed-origin-diagnostic, f03/gtk-numeric-diagnostic, f03/gtk-ready-artifact-diagnostic, f03/gtk-ready-diagnostic, f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory, f04/android-ready-diagnostic]
         default: f03/gtk-android
         required: true
 permissions:
@@ -983,4 +983,90 @@ jobs:
             !build/**/key.pem
             !build/**/private/**
             !build/**/connection.json
+          if-no-files-found: error
+
+  f03_bootstrap_three_arm:
+    if: ${{ (github.ref == 'refs/heads/dot/f03-bootstrap-diagnostic-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f03/bootstrap-three-arm' || github.event_name == 'push' && contains(github.event.head_commit.message, '[F03-BOOTSTRAP-DIAGNOSTIC-25-ONE-RUN]'))) }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    env:
+      F03_BOOTSTRAP_DIAGNOSTIC_CASE: f03/bootstrap-three-arm
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.9'}
+      - name: Exact candidate admission
+        run: |
+          python -m pip install PyYAML ninja==1.11.1.1
+          python -c "import sys; sys.path.insert(0,'tests/dot_f03_same_source_20261031'); from identity import identity; print(identity())"
+      - name: Install pinned Android compiler and emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk/emulator" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+      - name: Build one actual APK and unchanged original owner producer
+        run: python tests/dot_f03_same_source_20261031/build.py --host android --output build/f03-android-build.json
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Run only independent three-arm bootstrap diagnostic
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            mkdir -p build/f03-bootstrap-diagnostic
+            adb shell getprop ro.build.version.sdk > build/f03-bootstrap-diagnostic/device-api.txt
+            adb shell getprop ro.product.cpu.abi > build/f03-bootstrap-diagnostic/device-abi.txt
+            status=0; gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.OrganizationBootstrapDiagnosticTest -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.OrganizationBootstrapDiagnosticTest -Pandroid.testInstrumentationRunnerArguments.source_sha=$GITHUB_SHA -Pandroid.testInstrumentationRunnerArguments.run_id=$GITHUB_RUN_ID -Pandroid.testInstrumentationRunnerArguments.attempt=$GITHUB_RUN_ATTEMPT > build/f03-bootstrap-diagnostic/gradle-instrumentation.txt 2>&1 || status=$?; cp -r examples/android/app/build/outputs/androidTest-results/connected build/f03-bootstrap-diagnostic/xml; adb exec-out run-as org.exreader.host cat files/f03-bootstrap-diagnostic.json > build/f03-bootstrap-diagnostic/device-report.json; cat build/f03-bootstrap-diagnostic/device-report.json; exit $status
+      - name: Authenticate diagnostic report, not product acceptance
+        run: |
+          python - <<'PY'
+          import json,os,pathlib,hashlib,xml.etree.ElementTree as ET
+          root=pathlib.Path('build/f03-bootstrap-diagnostic')
+          value=json.loads((root/'device-report.json').read_text())
+          assert all(value[k]==os.environ[e] for k,e in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')])
+          assert value['api']==34 and value['abi']=='x86_64' and value['count']==3 and value['failed']==0
+          assert value['diagnostic_only'] is True and value['product_accepted'] is False and value['old_apk_upgrade_accepted'] is False
+          assert [x['id'] for x in value['arms']]==['currentAutomatic','legacyDirect','legacyReopen']
+          assert all(x['diagnostic_completed'] and x['source_preserved'] for x in value['arms'])
+          names=[]
+          for path in (root/'xml').rglob('*.xml'):
+              tree=ET.fromstring(path.read_bytes())
+              for suite in tree.iter('testsuite'):assert all(int(suite.get(k,'0'))==0 for k in ('failures','errors','skipped'))
+              for case in tree.iter('testcase'):
+                  assert case.get('classname')=='org.exreader.host.OrganizationBootstrapDiagnosticTest'
+                  assert not any(case.find(k) is not None for k in ('failure','error','skipped'))
+                  names.append(case.get('name'))
+          assert sorted(names)==sorted(['currentAutomatic','legacyDirect','legacyReopen'])
+          for name in ('app-debug.apk','app-debug-androidTest.apk'):
+              path=pathlib.Path('examples/android/app/build/outputs/apk')/('debug' if name=='app-debug.apk' else 'androidTest/debug')/name
+              raw=path.read_bytes();value.setdefault('apk_identity',{})[name]={'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}
+          (root/'result.json').write_text(json.dumps(value,indent=2)+'\n')
+          print(json.dumps(value))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-suite-f03-bootstrap-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f03-bootstrap-diagnostic/
+            build/f03-android-build.json
           if-no-files-found: error
