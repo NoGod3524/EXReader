@@ -148,3 +148,17 @@ Read-only Git tree comparisons at b5e7fea87174f5e0baabfad97cf5cf7082f2d85e, 94fb
 - CMakeLists.txt: a5ed27fcca1d709c2217c585da47dc55dc23c1d0
 
 This corrects the earlier source/background shorthand, not the identity of historical upstream SDK727 artifacts. This workflow builds raw store/revisions/sync/WebDAV, not the SDK reader. Actual common-source six-host integration still needs the existing joint integrator and host owners; no ownership expansion follows.
+
+## Phase C measured result — accepted within the stated scope
+
+- Run [41262073116 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41262073116), exact measured source **8d4632a2e09ed9682c247fbf707314092d5abdd0**.
+- Linux **124717193748** and independent audit **124717513474** both succeeded; source scope, unchanged SDK guard, Actions syntax and all builds passed.
+- Original API **33 / 258 / 8** and upload snapshot **29 / 187 / 10** remain accepted without relaxed assertions.
+- New streaming GET **8 scenarios / 118 exact checks / 8 semantic negatives**: get_accepted=true, get_errors=[]. All three groups have empty errors, all 26 semantic negatives reject their exact required causes.
+- Producer **13065418280**, f10-stale-linux-41262073116-1, **2463066 bytes**, SHA256 **fc25240cf9144ae3c87eb43d01e09f91e4174e1ae67d6bfe0b685a6052858350**.
+- Audit **13065806826**, f10-stale-audit-41262073116-1, **1079 bytes**, SHA256 **87d509c103b7d0008c784a540e25afb977c04768cfd77b32b0f271e9eddacb2b**.
+- Artifacts expire **2027-01-30T01:40:39Z**. Approved phase C budget **1/1 used**, zero reruns. This document-only skip-ci seal leaves measured production/tests unchanged.
+
+Observed verification used a known **135168-byte** original, SHA256 **991f81b3ecda0c88b5edf685861d59bf1e3ef112b46bebc6bc75a1eba3081153**. A 0500 cache directory remained empty while push succeeded. With local original absent, exact remote bytes were verified without an original PUT. Same-length substituted bytes returned HASH (sync5); 135167 bytes returned IO (sync3/dav3); 135169 bytes returned LIMIT (sync7/dav8); cancellation after a real partial GET returned sync6/dav7. All four refused ack, retained outbox1 and pushed0, then a new normal run finished outbox0. Real GET-boundary SIGKILL exited -9 and restart succeeded. Explicit consumer failure returned IO, exactly one callback and received=0. Every tested cache remained empty; independent server response hashes and raw statuses match the audit.
+
+**full_f10_complete=false; official total unchanged.** The two verification-only GET temporary-file paths are removed and evidenced. Remaining raw cache/revision-download scratch handling, platform credentials/host lifecycle and common-source actual six-host consumption still require their original-contract evidence and separately scoped work. Existing Linux managed cleanup and the new streaming transport are not a blanket claim for every operating system. All old failure runs and artifacts remain sealed. No further CI is running or automatically authorized.
