@@ -1269,6 +1269,23 @@ static void host_a11y_status_live(void) {
   props->lpVtbl->Release(props);
 }
 
+/* A command's accessible name is its command text: "导入(&I)" was exposed as
+   "导入(I)" (retained audit IM-02). The access key stays on the window text. */
+static const GUID host_a11y_name_prop =
+  {0x608d3df8, 0x8128, 0x4aa7, {0xa4, 0x28, 0xf5, 0x5e, 0x49, 0x26, 0x72, 0x91}};
+
+static void host_a11y_command_name(HWND control, const wchar_t *name) {
+  IAccPropServices *props = NULL;
+  HRESULT hr;
+  if (!control) return;
+  hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+  if (FAILED(hr) && hr != RPC_E_CHANGED_MODE) return;
+  if (FAILED(CoCreateInstance(&host_a11y_props_clsid, NULL, CLSCTX_INPROC_SERVER, &host_a11y_props_iid,
+                              (void **)&props)) || !props) return;
+  props->lpVtbl->SetHwndPropStr(props, control, (DWORD)OBJID_CLIENT, CHILDID_SELF, host_a11y_name_prop, name);
+  props->lpVtbl->Release(props);
+}
+
 /* Status line: one change event per real text change. */
 static void host_a11y_status_changed(void) {
   static wchar_t previous[768];
