@@ -64,6 +64,11 @@ def step(rid=None, text=None, label=None):
     return n
 
 
+def note_count(node):
+    found = re.search(r'\((\d+)\)', node.get('text', '')) if node is not None else None
+    return int(found.group(1)) if found else 0
+
+
 def main():
     result = {'source_sha': os.environ.get('GITHUB_SHA'), 'run_id': os.environ.get('GITHUB_RUN_ID'),
               'attempt': os.environ.get('GITHUB_RUN_ATTEMPT'), 'passed': False}
@@ -83,6 +88,8 @@ def main():
         if wait('reader_more', seconds=40) is None:
             raise RuntimeError('reader did not open')
         time.sleep(2)
+        before = note_count(wait('notes_button', seconds=15))
+        result['notes_before'] = before
         step('reader_more', label='reader More')
         step(text='选择本页', label='选择本页')
         bar = wait('selection_bar', seconds=10)
@@ -110,8 +117,9 @@ def main():
         tap(save, 'save annotation')
         notes = wait('notes_button', seconds=15)
         result['notes_label'] = notes.get('text') if notes is not None else None
-        if notes is None or '(1)' not in notes.get('text', ''):
-            raise RuntimeError('notes count did not become (1): %r' % result['notes_label'])
+        # The retained audit earlier in this job now leaves its own note on this book.
+        if note_count(notes) != before + 1:
+            raise RuntimeError('notes count did not grow by one from %r: %r' % (before, result['notes_label']))
         tap(notes, 'notes')
         listed = wait(text='f09 note', seconds=10)
         if listed is None:
