@@ -311,8 +311,8 @@ struct LibraryScreen: View {
             // Hardware keyboard: ⌘O imports, ⌘F moves to search (iPad and Mac).
             .background {
                 HStack {
-                    Button("") { importing = true }.keyboardShortcut("o", modifiers: .command).disabled(model.busy)
-                    Button("") { searchFocused = true }.keyboardShortcut("f", modifiers: .command)
+                    Button("打开文件") { importing = true }.keyboardShortcut("o", modifiers: .command).disabled(model.busy)
+                    Button("搜索书架") { searchFocused = true }.keyboardShortcut("f", modifiers: .command)
                 }.opacity(0).allowsHitTesting(false).accessibilityHidden(true)
             }
 
@@ -354,7 +354,8 @@ struct LibraryScreen: View {
                             .buttonStyle(.plain)
                             .disabled(model.busy)
                             .accessibilityIdentifier(book.sdkID > 0 ? "library.book.\(book.sdkID - 1)" : "library.cloud.\(book.id)")
-                            .accessibilityLabel(Text("\(book.title)，\(book.author)，\(book.format.uppercased())"))
+                            // Empty parts are left out: VoiceOver read "Sample.epub，，EPUB" for a book without an author.
+                            .accessibilityLabel(Text([book.title, book.author, book.format.uppercased()].filter { !$0.isEmpty }.joined(separator: "，")))
                             .id(book.id)
                             .padding(.horizontal, 8)
                             .background(ShelfGeometryProbe(shelf: shelf, rowKey: book.id).id(shelf.geometryRevision))
@@ -801,12 +802,16 @@ struct ReaderScreen: View {
             .buttonStyle(.plain)
             .padding(.horizontal).padding(.top, 8)
             // Hardware keyboard works while the compact tools row is collapsed:
-            // ←/→ turn pages, ⌘F searches the book (iPad and Mac).
+            // ←/→ turn pages on the Mac; iPadOS keeps bare arrows for its focus
+            // system, so ⌘←/⌘→ turn pages everywhere. ⌘F searches the book. The
+            // titles name the commands in the iPad ⌘ shortcut overlay.
             .background {
                 HStack {
-                    Button("") { model.turn(-1) }.keyboardShortcut(.leftArrow, modifiers: [])
-                    Button("") { model.turn(1) }.keyboardShortcut(.rightArrow, modifiers: [])
-                    Button("") { model.prepareSearch(); showSearch = true }.keyboardShortcut("f", modifiers: .command)
+                    Button("上一页") { model.turn(-1) }.keyboardShortcut(.leftArrow, modifiers: [])
+                    Button("下一页") { model.turn(1) }.keyboardShortcut(.rightArrow, modifiers: [])
+                    Button("上一页") { model.turn(-1) }.keyboardShortcut(.leftArrow, modifiers: .command)
+                    Button("下一页") { model.turn(1) }.keyboardShortcut(.rightArrow, modifiers: .command)
+                    Button("书内查找") { model.prepareSearch(); showSearch = true }.keyboardShortcut("f", modifiers: .command)
                 }.disabled(model.busy).opacity(0).allowsHitTesting(false).accessibilityHidden(true)
             }
 
