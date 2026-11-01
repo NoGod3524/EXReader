@@ -69,3 +69,14 @@ Historical evidence is not a new run: component seal e4f20df783872dd536f40a7431b
 This independent branch will run only the new fixed static positive/negative regression suite on Ubuntu22.04, timeout5minutes, once/no retry. No APK/emulator/two-host160 chain is run and no formal progress count is added. Prior F03 run41318900037 static failure is retained. Candidate prepared, not yet run.
 
 Fixed regression budget: 34 cases = 3 positive contract cases + 28 negative contract cases + 2 preservation/original-checker cases + 1 unchanged non-import static-check negative case. Mutations remain in-memory, never overwrite tested source. Static acceptance is not APK/device acceptance.
+
+
+### Static migration result - 2026-11-01T15:39:25Z
+
+[Run 41322302859 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41322302859) succeeded at source48052834b8b2b24d37e76874dcc4301c65319682, job124894908756 (15:39:11Z to15:39:24Z). All34 fixed cases passed:3 positive contract cases,28 negative contract cases,2 preservation/original-checker cases and1 unchanged non-import negative. Comment-only, string-only, isolated calls, broken real-call links and writable-descriptor variants were rejected; whitespace/comment formatting remained accepted. Legacy real-call compatibility passed with private-chain inputs empty.
+
+Restoring the single old predicate and removing the new helper/call produced exact baseline checker bytes (SHA256630868c1fc3dd729594fe52ee004b1c4f17e2b206db551c93aee93670b08027e). The actual original static checker reported no problems,45 declared/unique walkthrough names,candidate_validated=true and accepted=false. Existing evidence gates and runtime test logic were not changed.
+
+Artifact13089394709, android-import-contract-41322302859-1,3502bytes,SHA25611ad1be504adf128e77e8d14958ac083f98378d65a0f97bca09f6b78a6e3230a. Report records exact source/run/attempt, source-file SHA256 values and every case's input hashes, expectation and actual result. Ordinary Actions log/API were reviewed; no ZIP was downloaded or parsed outside Actions.
+
+Static-only result: runtime_executed=false,current_sdk_runtime_accepted=false,product_accepted=false,formal_count_credit=0. Historical95/120 remain historical, not rerun here. F03 failure41318900037 remains preserved; no APK, emulator or two-host160 run was performed or automatically restarted. Changes stay on independent dot/f03-import-contract-20261101; canonicalec11 and the F03 source branch are unchanged. Integrating the reviewed checker into a future source/allowlist requires its own explicit scope and budget.
