@@ -1,3 +1,39 @@
+# EXReader continuation snapshot — scheduled 2026-11-01 03:22 UTC
+Actual API check: **2026-11-01T03:25:43Z / 2026-10-31 23:25:43 America/New_York (EDT)**. Continuation backup only; not completion, suspension, or a release.
+
+Formal ledger remains **96/108 (88.89%), 96 verified / 1 partial / 11 pending**, pinned at `5db41cb19673fb75bb0b498c677d770931ac33e8`. Prior documentation snapshot `19cd57018e5112f948b8a965bf4b5d236d43354d` / blob `2bb79cb548bf38884322eda2dee7d0f0bc33fa7e` was read before this single-file update. No catalog, source, workflow, or new CI action is part of this snapshot.
+
+## New fixed progress and live observation
+- F04 prior [run 41266444103](https://github.com/NoGod3524/EXReader/actions/runs/41266444103), source `19566821ce7082ffb5cde6a538fdf163ab554902`: Windows seed and Linux retained checks succeeded. Android received the original and bookmark/note, but bare parser spelling 3.42.0 was rejected. Source review also found Windows current-version admission rejected the reverse prefixed spelling. These are demonstrated admission gaps, not a claim that every remaining runtime issue has the same cause.
+- User **2026-11-01 03:14:35Z**, message `Sentinel_8f4de03c729481919cd5d23e524fe814`, approved only two production-function transfers, eight changed paths, and one new 120 runner-minute round. Functions: Android `ReadingParserPolicy.accepts`; Windows `windows_records_owner.admitted_parser`. Compatibility addition only for exact current 3.42.0 bare/prefixed spelling; old compatibility rules and wire/SDK remain unchanged.
+- F04 six-file preparation `1fc4d1e7834d7b29dc70da166967a421d03143df` independently reviewed. Canonical composition `e97fb16da054c608a5fc431cb7359d5e3b5652af` independently checked: six blobs identical, two scope/identity files added to this round, total baseline delta 25 paths (23 additions plus two one-line production edits). Exact production blob locks: Windows `fb1b36b8ee6a0c48b81d8aff3b2097c7372c4b33`; Android `9566f21b7f38c3652d9a416cabd73d1b76a959d6`. SDK and original tests protected.
+- Current [run 41268741338](https://github.com/NoGod3524/EXReader/actions/runs/41268741338), attempt 1, source/controller `f003576d2acfbc2bcb9eaf8c8dcc06e02f9fd593`, branch `dot/reader-suite-20261101`, started 03:19:52Z. API at actual check reports **in_progress**, not accepted. Windows seed job `124736927039` **success** (build and real seed); Linux original18/121 job `124736927125` **success**. Android peer job `124737901505` **in_progress**, installing exact prerequisites; Android build and emulator phase not yet completed. Return and final audit have no completed result at this check. F03/diagnostic/import-only jobs are skipped as intended. This single approved round is already consumed as a launch; no automatic retry.
+- Earlier Windows import-only [41265967021](https://github.com/NoGod3524/EXReader/actions/runs/41265967021) passed actual picker/import/open/normal-close. Controller `f2218d544330beb0f985cb12c1ea6d59b446a221` and historical product `cb8b5e2d04a524a44a686eb8385872ee832d373e` remain separate; it is not current six-host or complete F04 acceptance.
+
+## Six primary assignments: actual work, not six active implementations
+| Task | Fixed source / seal | Actual classification and next dependency |
+|---|---|---|
+| F03 | canonical current run source `f003576d2acfbc2bcb9eaf8c8dcc06e02f9fd593` | Canonical sole-writer/trigger coordination and run observation for F04, not new F03 implementation. Own GTK-to-Android acceptance remains blocked by preserved failed runs; no F03 retry in this round. |
+| F04 | reviewed `1fc4d1e7834d7b29dc70da166967a421d03143df`, current run above | **Test waiting / monitoring**. Parser fix implemented and statically reviewed; runtime chain still in progress. Do not count waiting as active implementation or award full F04. |
+| F05 | `9ce943e1ff0c26b54db69f5c31eec057d2be216b` | Prepared Java shadow adaptation, **0 new CI**, blocked on actual integrated host recovery evidence. Source preparation is not runtime acceptance. |
+| F07 | diagnostic seal `697448abd8188580304806163ba9b543e76ba9ba` | Provider evidence still pending; previous diagnostic completed, not provider acceptance. No new producer launch. |
+| F10 | `4db961144b00c9004e2775b9e1e57e6ea7a31cb7` | Component evidence sealed: **82 cases / 880 assertions / 38 exact negative cases** accepted across retained layers. `full_F10=false`: actual host consumption, credential/privacy and common-consumer evidence remain missing. Not active implementation merely because core tests are green. |
+| F12 | `64729214788a99ae96de7dda1a6376337324f9e4` | Three-path delivery guidance source seal, **0 CI**. This agent performs bounded review and this documentation update; complete delivery acceptance waits for final candidate and actual package evidence. |
+
+At this observation there is **0 confirmed active source-implementation lane**; canonical coordination and F04 test waiting are not implementation; F12 is one finite review/documentation lane; remaining assignments are evidence/integration-blocked. Completed sub-results (F06, F10 component layers, historical picker test) are not counted as active lanes or complete remaining F items.
+
+## Safety, same-source limits, authorization and handoff
+- P0/C02 migration and persistent-journal evidence remains sealed in the historical sections below; it does not grant all-P0, F12, hard-power-loss, or independent MSVC-static-relink conclusions. F05 conflict preservation/cancellation/reconnection still needs genuine host/wire evidence; components cannot substitute for it.
+- SDK freeze `8357eafa28423a7ab93ba08b823af80f01ad1505`; preparation product baseline `94fb236a4a2da87dfbaf4f1dd2a47885d615a230`. Five SDK object paths (src/include/cmake/CMakeLists.txt/bindings) match b5e7/94fb/8357; historical SDK727 attribution belongs to historical artifacts, not a reason to mislabel current raw-module source. F10 did not build or consume the reader host, so this equality is not a six-host executable binding.
+- Latest transferred production ownership is only the two parser functions above. Prior specific F03 Apple HostCatalog/HostModel and F10 cleanup transfers remain scoped. UI, F08, F09 and other external owners are not reassigned. No shared/default branch, PR, tag or release action.
+- GitHub direct-source/Git route remains explicitly approved. Existing Desktop Commander/native machine connection or instabox handshake was **not revalidated**; no claim that quota or local access has recovered.
+- Design-before-code, one writer plus one independent reviewer per module, and parameterized-suite convergence remain in force. F03 alone writes/triggers canonical; F04 owns its preparation subset. This documentation branch has its independent sole writer and no source changes.
+- The current cap is **120 runner-minutes** (30+45+15+20+10), not 120 wall-clock minutes or an ETA. Remaining runtime and all remaining formal acceptance work cannot be reliably estimated; no evidence-backed completion range is available. No implied budget extension.
+- Handoff acknowledged by source owners and parent; current run identity independently read through GitHub API. Source review is not runtime success. All previous failures, original assertions, artifact identities and approval boundaries below are retained.
+
+---
+## Earlier snapshots (historical; newer facts above take precedence)
+
 # EXReader continuation snapshot — scheduled 2026-11-01 02:22 UTC
 Actual check: **2026-11-01T02:25:31Z / 2026-10-31 22:25:31 America/New_York (EDT)**. Continuation backup only, not completion or suspension.
 
