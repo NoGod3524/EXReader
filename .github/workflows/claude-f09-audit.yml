@@ -149,13 +149,19 @@ jobs:
           echo "$sdk/platform-tools" >> "$GITHUB_PATH"
           echo "$sdk/emulator" >> "$GITHUB_PATH"
           yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "cmake;3.22.1" "ndk;${C11_NDK}" "emulator" "system-images;android-34;default;x86_64"
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "cmake;3.22.1" "ndk;${C11_NDK}" "emulator" "system-images;android-34;default;x86_64" "system-images;android-34;google_apis_playstore;x86_64"
           sudo apt-get update -qq && sudo apt-get install -y patchelf
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Build the shared-source Android host as F06 does
         run: python3 tests/f09_audit/baseline.py android-prepare
+      - name: Build the F09 speech capture engine (TalkBack evidence)
+        run: |
+          set -o pipefail
+          mkdir -p build/f09
+          gradle -p tests/f09_audit/android_tts --no-daemon --stacktrace :app:assembleDebug 2>&1 | tee build/f09/tts-build.log
+          test -s tests/f09_audit/android_tts/app/build/outputs/apk/debug/app-debug.apk
       - name: Build the retained audit test APK
         run: |
           set -o pipefail
@@ -178,7 +184,8 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: default
+          # Google Play image: it ships TalkBack (Android Accessibility Suite).
+          target: google_apis_playstore
           arch: x86_64
           profile: pixel_6
           ram-size: 4096M
