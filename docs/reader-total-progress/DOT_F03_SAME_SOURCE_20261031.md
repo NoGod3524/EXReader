@@ -239,3 +239,38 @@ Proof target: distinguish native process/window mapping evidence from guesses
 about UI readiness. Negative admission is a fail-closed metadata/hash/path
 check; this diagnostic does not claim a newly executed counterexample suite.
 Uncovered: product behavior, corrected F2 path, Android, complete F03.
+
+## Fixed-artifact diagnosis result — 2026-11-01 01:39 UTC
+
+Diagnostic run https://github.com/NoGod3524/EXReader/actions/runs/41261922506,
+attempt 1, controller source `2f50d4af959cac4d95f1f19c56cd3fe879032d5f`,
+job `124716756046`: **success (artifact inspection only)**.
+GTK/Android/product-audit jobs were all skipped by the case selector, not
+counted as passed. The single approved 10-minute diagnostic round used 1/1.
+
+The fixed original ZIP passed exact API/run/attempt/job/source/size/digest
+authentication in Actions. Original selected evidence:
+- application.log: 381 bytes,
+  cd00520d492e90ac9d987eb54c2e24a0e3791dbe6e27aac9bcc1925346895451;
+  accessibility bus warning, followed by STATUS code=0, message=Ready.
+- Openbox log: 85 bytes,
+  6f748c3cd02a858c087697c3afac639205c62b7b206558bd40d1bcbd98165a5c;
+  only a missing Debian menu-file notice.
+- The hash-locked failure screenshot was forwarded from Actions-decoded PNG
+  bytes and visually inspected: the captured root is entirely black, with no
+  visible application window. This matches the failed visible-window lookup.
+- `window-tree.txt` is absent from the original artifact. The helper error
+  mentioning it is not evidence that it was actually captured.
+
+Neither warning alone establishes causation. The original host reached its
+internal Ready state, but the evidence does not distinguish window-manager
+readiness, missing PID/window association, or another mapping/display failure.
+No production correction is justified solely by these logs; the original
+mapping gate remains intact. The F2 restart fix was still not executed.
+
+Diagnostic output artifact: `reader-suite-f03-diagnostic-41261922506-1`,
+ID **13065477732**, **22369624** bytes, original ZIP SHA256
+`a0af960c4885e7fdc536bc815b967e5f02cf46c45f14c99d37be4315acd163d1`.
+It preserves the prior original ZIP and selected evidence. This is not F03
+acceptance or new product validation. No retry or additional run was started.
+Further execution or instrumentation needs a separately approved scope/budget.
