@@ -5,7 +5,8 @@ on:
   push:
     branches: [claude/f09-audit-20261101]
     paths:
-      - tests/f09_audit/**
+      - tests/f09_audit/apple*
+      - tests/f09_audit/apple/**
       - .github/workflows/claude-f09-apple.yml
   workflow_dispatch:
 permissions:
