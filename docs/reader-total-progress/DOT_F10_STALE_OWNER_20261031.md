@@ -91,3 +91,30 @@ Before building or running corrected behavior, Actions checks historical produce
 The fixture certificate now uses .crt. It is installed with the unchanged trust helper, then OpenSSL verifies against the system CA bundle. The original callback-normal case is the same-native-transport HTTPS fail-fast preflight: native status OK, exact observed server hash, conditional PUT and transferred length must all hold before remaining behavior cases begin. No -k, custom insecure verifier, or TLS bypass. All original cases and exact audit expectations remain. Each core and new snapshot observation, including raw status/exception evidence, is printed as well as retained in artifacts. Generated private keys and profiles stay outside the upload root.
 
 No correction-run result is claimed yet. Budget is one separately approved run, no automatic retry; the prior B failure remains immutable.
+
+## Accepted B correction result and current handoff
+
+- Run [41258166901 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41258166901), exact measured source **6ab976b9ae73c5f6641cc4788b7e18126b53ec17**.
+- Linux job **124705668374** and independent audit job **124706308333** both succeeded.
+- Original API: **33 cases / 258 assertions / 8 semantic negatives**, api_accepted=true, errors=[].
+- B: **29 cases / 187 fixed checks / 10 semantic negatives**, snapshot_accepted=true, snapshot_errors=[]; **callback_accepted=true, managed_accepted=true, sync_accepted=true**.
+- All 18 semantic negatives rejected their precise expected reasons on a passing baseline. Original checks were not removed or relaxed.
+- Producer artifact **13064430312**, **2455746 bytes**, SHA256 **4d3e1f90f5b1077edef1bb7eee859044f20bc6375e6dd4c8f57f7d2e9f65e244**.
+- Audit artifact **13062834922**, **969 bytes**, SHA256 **6363bc337be26909a088fa4412b00c8e3b9d76182eff4c01244e62cc6dc97dae**.
+- Expiry **2027-01-30T00:45:48Z**. Separately approved correction budget **1/1 used**, zero reruns. This document-only seal does not alter the measured source.
+
+### Original failure now verified, not inferred
+
+The correction run first verified the original artifact's fixed ID/size/digest/source and printed its selected JSON members. Original callback-normal had **put=4 (TLS), calls=0, offset=0**, no server requests. Original sync-normal had **dav_code=4**, outbox=1 and no server request. Corrected system-bundle OpenSSL verification returned 0 and the unchanged native callback-normal HTTPS preflight passed before remaining cases. This closes the setup diagnosis without disabling TLS or changing production.
+
+### Observed product behavior
+
+Real remote PUT followed by local cleanup EACCES returned sync status3/dav3, pushed0, outbox1 and cleanup_pending1; after restoring permission, restart/retry returned status0, outbox0 and pending0. Real SIGKILL reported -9; restart recovered registered snapshot work and retried identical bytes. Cancellation returned status6/dav7 with outbox1, followed by successful retry. A lost PUT response required a fresh GET of exact bytes before ack. Server request logs confirm conditional writes, original/revision content hashes and verification GETs.
+
+The held-FD replacement test transmitted the original sealed bytes despite pathname replacement, then refused to clean the replacement. Registry v1 ordinary reads/downloads remained unchanged; first S allocation upgraded atomically, D identity/recovery remained, old binary refused v2, and mixed-purpose capacity stayed 16 total roots. Invalid purpose/CRC/residual-next and registry crash boundaries retained unsafe/ambiguous state rather than adopting it.
+
+### Remaining full F10 boundary
+
+**full_f10_complete=false; official total unchanged.** This accepts the authorized Linux managed upload-snapshot portion on the b5e7/SDK727 background. It is not common SDK8357 six-host integration, complete OS credential/host-lifecycle coverage, or proof about all existing GET verification/private_file scratch paths. Those existing paths still have unreported-delete behavior in source and were not silently granted by this green. No same-UID hostile original-inode write protection or hardware power-loss guarantee is claimed.
+
+Current implementation line is sealed pending the parent's next exact integration/remaining-gap scope and budget; ownership stays native dot F10. No other production owner, default branch, PR, tag, release, old assertion or SDK was changed. All prior failures and immutable artifacts remain part of the handoff.
