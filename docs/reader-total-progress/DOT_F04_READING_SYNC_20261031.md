@@ -268,3 +268,40 @@ API metadata checked after terminal failure; originals are not locally downloade
 |13069089575|f04-build-gtk-41270747157-1|42095812|c39873a0fb5e8b410b5dbdb6ffe3251f8377c65ebe0edf2eecd2a04cabc09f6f|
 |13068943721|f04-retained-linux-41270747157-1|14734881|746d3a19011893dc28e12a90c1ab2b19e19512426e83a1e99f6bd0055aaec17c|
 |13068784496|f04-diagnostic-retained_linux-41270747157-1|7526|319cffcde8ac4e07771b8edf292aea3bb33783a57e352f074ce852b7d4a9e68f|
+
+## 2026-11-01 04:48Z — narrow macOS state diagnostic, approved 15 runner-min
+
+Six-host round 6 run [41272334508](https://github.com/NoGod3524/EXReader/actions/runs/41272334508), source `2cdad2057d4877b4712af8155da72fb92b50e411`, ended failure. Eight jobs passed: two Apple SDK builds, Windows seed, Android peer, GTK peer, Windows returns from Android/GTK, and original retained suite. Three Apple UI jobs failed; their three Windows returns skipped; graph audit rejected missing qualified macOS producer. Actual non-skipped job elapsed sum 3643 seconds, not the 230-minute ceiling.
+
+- macOS job 124749643030: driver line 91 precise-success status wait timed out after real UI build/launch. The pre-close reading.status was not captured; resolver defect versus state observation is not established.
+- iPhone 124749643051 and iPad 124749643098: reading.jump.3 existed below the visible reading.list bounds and failed the hittable requirement. No jump was performed at that point. This diagnostic batch does **not** change the iOS scrolling implementation.
+
+This new case `f04/macos-state-diagnostic` has one macOS job, 15 minutes, no retries. It consumes exact old SDK/Android artifacts with API/run/job/source/size/SHA checks and preserves the original ZIP containers. Real UI and test code are compiled at the new controller HEAD; EXRSourceSHA remains that actual HEAD. A complete tree diff against the old producer allows only six approved non-production paths, demonstrating identical product/SDK/old-generator bytes, not identical historical UI binaries. The SDK and Android producer identities remain separately recorded. No formal graph/phase acceptance consumes this diagnostic; F04 remains false.
+
+The test adds only whitelisted status/location/busy/target observation before/after jump and close plus deferred failure observation. Original precise-success assertions are unchanged. Native UI logs are sanitized with exact fixture secret removal before ordinary-log output or artifact retention; profiles, SQLite databases, credentials and private keys are excluded. Five F04-owned files plus the canonical entry owned by F03 form the exact six-file scope. No product/SDK/old assertion changes.
+
+### Round 6 original artifact API inventory
+
+| ID | Name | Bytes | SHA256 |
+|---|---|---:|---|
+| 13071095139 | f04-diagnostic-iphone-41272334508-1 | 954 | 7470c5962921743699b21e3c709cb1b31e9937a8266e0065583fa1cd05f660e7 |
+| 13070795531 | f04-diagnostic-audit-41272334508-1 | 331 | e7056a283fcda8dd6a93631aea630034f25556ae59c552d94d7a6e84a91eed53 |
+| 13070316646 | f04-diagnostic-windows_return_android-41272334508-1 | 3820 | 0ee447a385d3a3707239e13d5b701ee0f2e4abd1e2547f8a05c8965c86b54720 |
+| 13070316514 | f04-android-peer-41272334508-1 | 20040466 | d734fa0187678d64c4e731108f44d7b1f6b98d2fcb12b3bb49685f86e72c8396 |
+| 13070227157 | f04-diagnostic-android_peer-41272334508-1 | 313 | d4b60ce076414248e9e9a89a97c5172206308c4ada04c6228b144bcd4ffed165 |
+| 13070191404 | f04-build-macos-41272334508-1 | 22475654 | 1643061900c24deac54d8c2ad59982323a8f8470baa6ecbf691d5dd7f99d32b2 |
+| 13070097200 | f04-build-windows-41272334508-1 | 53053382 | 460a5da3d55c98999234bc0f57197e3614d05b2b6ec2ff0c902d93e354d8bafa |
+| 13070082978 | f04-windows-return-android-41272334508-1 | 4203634 | 91e22e2fabc81bbf8e4c0a12c462ffa6f95f4b38f77d4616069089ae0e78427b |
+| 13070052206 | f04-windows-seed-41272334508-1 | 4201214 | 9f1b62160fc735a00c9fefe45443995f694bd5838b68fe8f259e1273971f3389 |
+| 13069932754 | f04-diagnostic-windows_seed-41272334508-1 | 2555 | 69c7255f3d06d8ffee68967191aab605236d680308773e0be416a7df95e6a7fd |
+| 13069884438 | f04-diagnostic-windows_return_gtk-41272334508-1 | 4560 | c8500a5d6283cfe069c3b2b73e3a0f0fc2671f7a25680c39e857f17bd4808a53 |
+| 13069878934 | f04-diagnostic-ipad-41272334508-1 | 950 | ebdd512821dd5c123f4a3c6b9b31c6b8f64c0e74f836be94f6ea3bf388657fc5 |
+| 13069704952 | f04-windows-return-gtk-41272334508-1 | 4205390 | 948c8fc0acae03589256813bb4a1a50071f22b57f30efd222ddf08476827a6b8 |
+| 13069704728 | f04-build-gtk-41272334508-1 | 42095816 | ed8aaea4f3261b13c5e476900bc42fb6acee07f2de3e65ed3e646ef7dbcbd8f8 |
+| 13069558932 | f04-gtk-peer-41272334508-1 | 5165563 | 67c28d05269868dbd61653a48a5b7f689f636b4532befa403d551426f2885589 |
+| 13069453009 | f04-build-iphonesimulator-41272334508-1 | 22468302 | 0a5eb08040efe6566fe79166a7f9b8ed4cdb12fc153652a32d7d25f6c00e9383 |
+| 13069449125 | f04-diagnostic-macos-41272334508-1 | 845 | 0fb822800f51c4a9ef8fd3f79ac04eedd28b2bd10406d4f3d3e3537195c9bcef |
+| 13069248597 | f04-retained-linux-41272334508-1 | 14734895 | bab25da5869c830b96adf6cbb2c6ed04e7342e9e566826590a48123eb6d90cc8 |
+| 13069214894 | f04-diagnostic-gtk-41272334508-1 | 5323 | a6a1ba43cab9e866526fd104368a965a8eae23f89744f4e62d7b6dd01697673c |
+| 13069099133 | f04-diagnostic-retained_linux-41272334508-1 | 7537 | c893c7b716c1f607853567fb42b23317551a58e19a0bc3eafa331780437df5f5 |
+| 13069034697 | f04-build-android-41272334508-1 | 39938566 | bf79f1dfe54c352b172749febc97e4d7060e255aa88d79b1084e8260f050d7c6 |

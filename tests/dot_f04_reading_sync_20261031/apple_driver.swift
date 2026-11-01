@@ -5,6 +5,7 @@ import Foundation
 final class F04ReadingSyncUITests: XCTestCase {
     private let app = XCUIApplication()
     override func setUpWithError() throws { continueAfterFailure = false }
+    override func tearDownWithError() throws { diagnosticReadingState("test-teardown", target: "reading.title") }
     private func e(_ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
     private func text(_ id: String) -> String {
         guard let s = try? e(id).snapshot() else { return "" }
@@ -82,12 +83,37 @@ final class F04ReadingSyncUITests: XCTestCase {
         XCTAssertEqual(text("reader.location"), unchanged, "Creating annotations must not navigate")
         checkpoint("created-records")
     }
+    private func diagnosticReadingState(_ event: String, target: String) {
+        guard "__MAC_DIAGNOSTIC__" == "1" else { return }
+        var fields: [String: Any] = ["event": event, "target": target]
+        for id in ["reader.status", "reading.status", "reader.location", "reader.busy", "reading.cancel", target] {
+            let item = e(id)
+            var value: [String: Any] = ["exists": item.exists]
+            if item.exists {
+                value["enabled"] = item.isEnabled
+                value["hittable"] = item.isHittable
+                value["frame"] = String(describing: item.frame)
+                if let snapshot = try? item.snapshot() {
+                    value["label"] = String(snapshot.label.prefix(2048))
+                    value["value"] = String(((snapshot.value as? String) ?? "").prefix(2048))
+                }
+            }
+            fields[id] = value
+        }
+        if let bytes = try? JSONSerialization.data(withJSONObject: fields, options: [.sortedKeys]),
+           let json = String(data: bytes, encoding: .utf8) { print("F04_READING_STATE " + json) }
+    }
     private func jumpIncoming(_ kind: String, _ marker: String, _ checkpointName: String) {
         records()
         let i = row(kind, containing: marker); XCTAssertGreaterThanOrEqual(i, 0)
+        diagnosticReadingState("before-jump", target: "reading.jump.\(i)")
+        defer { diagnosticReadingState("jump-finally", target: "reading.jump.\(i)") }
         tap("reading.jump.\(i)")
+        diagnosticReadingState("after-jump", target: "reading.jump.\(i)")
         XCTAssertTrue(wait { !e("reader.busy").exists && !e("reading.cancel").exists })
+        diagnosticReadingState("before-close", target: "reading.jump.\(i)")
         tap("reading.close")
+        diagnosticReadingState("after-close", target: "reading.jump.\(i)")
         XCTAssertTrue(wait { text("reader.status") == "已精确定位阅读记录" })
         checkpoint(checkpointName)
     }
