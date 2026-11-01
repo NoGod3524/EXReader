@@ -164,3 +164,53 @@ its unused time is not treated as extra rounds. This preparation commit
 contains no trigger; the sole trigger will identify the exact prepared tree.
 No corrected behavior is claimed before actual execution. Full F03 remains
 unaccepted regardless of a partial two-host result.
+
+## Round 2 result sealed — 2026-11-01 01:01 UTC
+
+- Run https://github.com/NoGod3524/EXReader/actions/runs/41258793317, attempt 1.
+- Source `211615ebea4985405c8dfa2f5c70fad0e2d2ad11`;
+  tree `0924da77de13251dfdbe64a2e51b8111754523a6`.
+- GTK job `124707556530`: actual build and four desktop checks passed.
+  The unchanged original organization suite failed at its initial host launch:
+  `tools/check_linux_host.py:52: Host window was not mapped`.
+  Its report is accepted=false, count=0, report SHA256
+  `c9b0745d1b803b87fde5f018eb79324ee75457303fdc80eab887dc81c81f94a2`.
+  Program SHA256 remains
+  `d0a5032dbc8af40ce1a0cba276f2c27a1a2807667c5f2bb7327fdb6be90a6846`,
+  identical to round 1; this does not prove an environmental cause.
+- The corrected new six-phase author step was **not reached**. The F2 fix
+  is therefore **not behaviorally verified**.
+- Android job `124708596666` skipped. Audit job `124708595924` failed
+  closed: `producer job not successful: gtk`.
+- Newly authorized round 2 used **1/1**, no automatic retry. Original round 1
+  remains failed; no test is dropped, waived or converted into a pass.
+
+### Exact round 2 original artifacts
+
+| Role | ID | Bytes | Original ZIP SHA256 |
+| --- | --- | --- | --- |
+| GTK | 13064700805 | 22383312 | 6fd133347aa6b4fc9c4138c0b94a5c76bb909eecd87b38530d2281fef362da62 |
+| Audit | 13064337094 | 3564 | 0b9dfe8d3b713931e9ed8328d58d71c7560af334e9349a0cbc7a72630f824f0f |
+
+Names end in `41258793317-1`; expiration
+2027-01-30T00:54:27Z. GTK failure screenshot SHA256 from its original report:
+`6db331a569b7048cc4f900d72047771c1f975f34feb28d6b2579e68079b2f1cb`.
+Only ordinary job logs/API metadata were read here, not ZIP contents.
+
+### Bounded source diagnosis and remaining blocker
+
+The original launch helper first observed visible=1 and continued to see the
+process alive, but for its unchanged 30-second mapping deadline could not
+find a visible window with the actual process PID and title EXReader Linux.
+The product sets that title. The four earlier CTests are independent
+catalog/shelf/organization CLI executables, run before Xvfb; they are not
+evidence of a leftover GUI. Each UI workflow section creates its own
+xvfb-run/dbus session. Openbox starts asynchronously without a readiness
+barrier; that is a possible timing issue, not a proven root cause.
+
+The next useful evidence is the retained application/Openbox logs and failure
+screenshot/window information in the original artifact. Any ZIP inspection
+must run only in Actions under separately approved authority; none was run
+after this failure. The original mapping gate and its timeout are preserved.
+Further source repair or execution is not implied by this result seal.
+F03 remains pending, no formal count increase.
