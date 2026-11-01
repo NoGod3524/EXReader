@@ -180,3 +180,50 @@ class Store:
         self.server.shutdown()
         self.server.server_close()
         self.thread.join(timeout=10)
+
+
+def write_role_receipt(output, host, program, identity, cases, claims, evidence):
+    """Format already-observed cases; never turn absence into successful coverage."""
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        raise RuntimeError("Actions only")
+    output, program = Path(output), Path(program)
+    required = {
+        "offline_reconnect": "receiver", "concurrent_heads_preserved": "receiver",
+        "delete_put_tombstone_preserved": "receiver", "cancel_retry": "local",
+        "process_recovery": "local", "offline_read": "local",
+    }
+    names = [case["id"] for case in cases]
+    if len(names) != len(set(names)):
+        raise AssertionError("duplicate native case ID")
+    copied = [dict(case) for case in cases]
+    mapped = {name: list(refs) for name, refs in claims.items()}
+    if not set(mapped).issubset(required):
+        raise AssertionError("unrecognized F05 native claim")
+    for claim, role in required.items():
+        if claim not in mapped:
+            missing = "not-run-" + claim
+            copied.append({"id": missing, "outcome": "not-run",
+                           "reason": "No completed native case supplies this claim"})
+            mapped[claim] = [{"case_id": missing, "role": role}]
+    paths = sorted(set(evidence))
+    for name in paths:
+        path = Path(name)
+        if path.is_absolute() or ".." in path.parts or "\\" in name:
+            raise AssertionError("evidence must be runner artifact-relative")
+        actual = output / path
+        if not actual.is_file() or actual.is_symlink():
+            raise AssertionError("missing or symlink evidence: " + name)
+        if path.suffix == ".key":
+            raise AssertionError("fixture private keys are not receipt evidence")
+    for case in copied:
+        if case["outcome"] in ("passed", "partial"):
+            if not case.get("source_evidence") or not set(case["source_evidence"]).issubset(paths):
+                raise AssertionError("native case evidence missing")
+    receipt = {"schema": 2, "host": host, "identity": identity,
+               "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+               "program_sha256": hashlib.sha256(program.read_bytes()).hexdigest(),
+               "cases": copied, "claims": mapped, "evidence_members": paths,
+               "F05_accepted": False,
+               "artifact_authenticated_by_producer": False}
+    (output / "receipt.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    return receipt
