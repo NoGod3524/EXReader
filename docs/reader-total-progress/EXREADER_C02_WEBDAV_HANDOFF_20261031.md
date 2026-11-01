@@ -1,3 +1,50 @@
+# EXReader continuation snapshot — scheduled 2026-11-01 05:22 UTC
+Actual API capture: **2026-11-01T05:24:26Z / 2026-11-01 01:24:26 America/New_York (EDT)**. Continuation backup only, not completion or suspension.
+
+Formal ledger remains **96/108 (88.89%), 96 verified / 1 partial / 11 pending**, fixed `5db41cb19673fb75bb0b498c677d770931ac33e8`. Read independent documentation HEAD `4be0a711c08c6171905b997d834082f16bf55a03` and current blob `cdaf7088f4fa04d36b2114a6c18be4532d09e944` before this single-file update; all historical material follows unchanged.
+
+## Latest evidence, failure and current queue
+- Six-host [41272334508](https://github.com/NoGod3524/EXReader/actions/runs/41272334508), source `2cdad2057d4877b4712af8155da72fb92b50e411`, ended **failure**. Windows/Android/GTK, two Windows returns, two Apple SDK builds and retained original checks passed. macOS reading jump did not reach the exact expected state; iPhone/iPad reading.jump.3 was not hittable below the visible list. Missing Apple producers/returns prevented full graph acceptance. Twenty-one original artifact pins are sealed in [F04 record at2221d8f](https://github.com/NoGod3524/EXReader/blob/2221d8f9aa43aeadd35c07cd0849507aa80e11f8/docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md). No original failed run is relabeled green.
+- Narrow macOS diagnostic [41274878352](https://github.com/NoGod3524/EXReader/actions/runs/41274878352), controller `aec50c89a500ed5a1ae7aa1767435877c5dcf741`, failed: jump0 succeeded with exact location; jump2 synthesized input but reading state/location did not change. This does not prove an SDK or product guard defect. Artifact **13070923378**, **42342626 bytes**, SHA256 **e147bf9f185c3141e3b01b4434c7124ca93c30ea5da48fa7da2f1b63a7ad29c7**.
+- User **05:10:40Z**, message `Sentinel_e1cf2d80a9d881919234256bde4add76`, approved exactly six nonproduction paths and one three-Apple diagnostic, **Mac15+iPhone20+iPad20=55 runner-minutes**. F04 five-file source `09753480f5c6839745c26374e86f48bd76194acb`; canonical reviewed composition `61b14bb213d8bd9cdc8f298da5e23e9e35ed9ab9`. Full-tree comparison against both previous controller and fixed2cd source confirms exactly six allowed paths; five F04 blobs match independently reviewed source. Earlier commit scope denial was resolved using full-tree evidence and one same-operation retry; commit and branch push succeeded. No permission blocker is carried forward.
+- New [41276273173](https://github.com/NoGod3524/EXReader/actions/runs/41276273173), attempt1, source/controller **cc5a88f4de822ad8c235f9b903961cf2a793628e**, canonical `dot/reader-suite-20261101`, created **05:16:03Z**: API reports **queued**, not executing or passed, at the stated capture.
+  - iPhone job **124758969434**: queued.
+  - iPad job **124758969626**: queued.
+  - macOS job **124758969636**: queued.
+  - All old product, SDK-build, graph-audit and other diagnostic cases are skipped as intended.
+- This round uses bounded real list scrolling, fresh unique row lookup, enabled/hittable/contained target, and one native Mac click or iOS tap; original exact state assertions remain. SDK is not rebuilt; actual UI and diagnostic tests are rebuilt at new controller SHA, with full-tree evidence for unchanged production bytes. Historical SDK/Android inputs remain identified separately, not presented as new same-HEAD graph evidence. **Diagnostic-only; F04 acceptance remains false.**
+
+## Pinned reused inputs and provenance boundary
+Historical input producer source `2cdad2057d4877b4712af8155da72fb92b50e411`, run41272334508 A1:
+- macOS SDK job124747494579, artifact13070191404,22475654 bytes,SHA256 `1643061900c24deac54d8c2ad59982323a8f8470baa6ecbf691d5dd7f99d32b2`.
+- Simulator SDK job124747494601, artifact13069453009,22468302 bytes,SHA256 `0a5eb08040efe6566fe79166a7f9b8ed4cdb12fc153652a32d7d25f6c00e9383`.
+- Android state job124748482840, artifact13070316514,20040466 bytes,SHA256 `d734fa0187678d64c4e731108f44d7b1f6b98d2fcb12b3bb49685f86e72c8396`.
+Runtime must authenticate original API identities/digests and preserve source/controller separation. This hourly snapshot performs no ZIP download or parsing.
+
+## Six assignments and actual activity
+| Main task | Fixed source / seal | Actual classification and next dependency |
+|---|---|---|
+| F03 | canonical controller cc5a88f4de822ad8c235f9b903961cf2a793628e | Sole-writer/trigger coordination; own F03 GTK/Android acceptance still blocked by retained failures. No new F03 producer. |
+| F04 | preparation09753480; run41276273173 above | **Queued test monitoring**, not active source implementation. Await three genuine UI outcomes; no automatic retry or full230 round. |
+| F05 | 9ce943e1ff0c26b54db69f5c31eec057d2be216b | Integration/evidence waiting, Java shadow adaptation prepared,0newCI; full native conflict/cancel/recovery not established. |
+| F07 | 697448abd8188580304806163ba9b543e76ba9ba | Provider runtime evidence waiting; historical diagnostic completion is not F07 acceptance. |
+| F10 | 4db961144b00c9004e2775b9e1e57e6ea7a31cb7 | Sealed component82cases/880assertions/38negatives passed; full_F10=false. Actual host/credentials/privacy/common-consumer integration remains open. |
+| F12 | 64729214788a99ae96de7dda1a6376337324f9e4 | Delivery generator+two documents source-reviewed,0CI. One bounded review/documentation lane here; final candidate and package/upgrade/license evidence still missing. |
+
+**0 confirmed active source-implementation lanes** at capture. F03 coordination, F04 queued monitoring, F12 one finite review/documentation lane; F05/F07/F10 wait on evidence/integration. These are not six simultaneous implementers. F06 is already verified and not rerun.
+
+## Boundaries and continuation
+- P0/C02 migration/journal/repair success remains its original sealed scope, not all-P0, hard-power-loss, F12 or independent MSVC-static-relink acceptance. F05 native conflict display, preservation, cancellation and genuine recovery evidence remain required.
+- Frozen SDK `8357eafa28423a7ab93ba08b823af80f01ad1505`, preparation baseline `94fb236a4a2da87dfbaf4f1dd2a47885d615a230`; five SDK paths match b5e7/94fb/8357, while historical727 belongs to its original artifacts. Components do not substitute for actual six-host consumption.
+- F03 sole canonical writer/trigger; F04 preparation writer. Only explicitly transferred production functions/files remain scoped exceptions. External UI/F08/F09 and other host owners are unchanged. No catalog/default branch/PR/tag/release changes.
+- GitHub direct route remains approved. Desktop Commander quota, lap25002/instabox connection and native handshake were **not revalidated**. No credentials recorded; no inference of recovered access.
+- Design-before-code, one writer plus one independent reviewer per module, parameterized suite and exact single-run budget remain mandatory. This snapshot changes only this independent documentation file and launches no CI.
+- Source review/owner handoff and sole-trigger identity are confirmed; current API explicitly says queued. The55 cap is runner time, not wall time; queue delay and unproven UI outcomes preclude a defensible ETA. Overall remaining formal work also has no evidence-backed completion range.
+- Next: owner monitors authorized queued run to terminal state, preserves each failure and artifact identity, then proposes only evidence-supported next scope. Final product source remains unfrozen; no score increase from diagnostics.
+
+---
+## Earlier snapshots (historical; latest facts above take precedence)
+
 # EXReader continuation snapshot — scheduled 2026-11-01 04:22 UTC
 Actual API capture: **2026-11-01T04:19:24Z / 2026-11-01 00:19:24 America/New_York (EDT)**. The scheduled request arrived early. This is a continuation backup, not completion, suspension, or release.
 
