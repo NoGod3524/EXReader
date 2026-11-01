@@ -130,7 +130,8 @@
       "artifact": "f04-windows-seed",
       "host": "windows",
       "role": "seed",
-      "fresh_profile": true
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
     },
     {
       "job": "F04 gtk peer",
@@ -139,7 +140,8 @@
       "role": "peer",
       "previous": "f04-windows-seed",
       "incoming_prefix": "F04_WINDOWS",
-      "fresh_profile": true
+      "fresh_profile": true,
+      "build_key": "f04-build-gtk"
     },
     {
       "job": "F04 Windows return (gtk)",
@@ -148,7 +150,8 @@
       "role": "return",
       "previous": "f04-gtk-peer",
       "incoming_prefix": "F04_GTK",
-      "fresh_profile": true
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
     },
     {
       "job": "F04 macos peer",
@@ -157,7 +160,8 @@
       "role": "peer",
       "previous": "f04-windows-seed",
       "incoming_prefix": "F04_WINDOWS",
-      "fresh_profile": true
+      "fresh_profile": true,
+      "build_key": "f04-build-macos"
     },
     {
       "job": "F04 Windows return (macos)",
@@ -166,7 +170,8 @@
       "role": "return",
       "previous": "f04-macos-peer",
       "incoming_prefix": "F04_MACOS",
-      "fresh_profile": true
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
     },
     {
       "job": "F04 android peer",
@@ -175,7 +180,8 @@
       "role": "peer",
       "previous": "f04-windows-seed",
       "incoming_prefix": "F04_WINDOWS",
-      "fresh_profile": true
+      "fresh_profile": true,
+      "build_key": "f04-build-android"
     },
     {
       "job": "F04 Windows return (android)",
@@ -184,7 +190,8 @@
       "role": "return",
       "previous": "f04-android-peer",
       "incoming_prefix": "F04_ANDROID",
-      "fresh_profile": true
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
     },
     {
       "job": "F04 iphone peer",
@@ -193,7 +200,8 @@
       "role": "peer",
       "previous": "f04-windows-seed",
       "incoming_prefix": "F04_WINDOWS",
-      "fresh_profile": true
+      "fresh_profile": true,
+      "build_key": "f04-build-iphonesimulator"
     },
     {
       "job": "F04 Windows return (iphone)",
@@ -202,7 +210,8 @@
       "role": "return",
       "previous": "f04-iphone-peer",
       "incoming_prefix": "F04_IPHONE",
-      "fresh_profile": true
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
     },
     {
       "job": "F04 ipad peer",
@@ -211,7 +220,8 @@
       "role": "peer",
       "previous": "f04-windows-seed",
       "incoming_prefix": "F04_WINDOWS",
-      "fresh_profile": true
+      "fresh_profile": true,
+      "build_key": "f04-build-iphonesimulator"
     },
     {
       "job": "F04 Windows return (ipad)",
@@ -220,7 +230,8 @@
       "role": "return",
       "previous": "f04-ipad-peer",
       "incoming_prefix": "F04_IPAD",
-      "fresh_profile": true
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
     }
   ],
   "retained_producers": [
@@ -235,5 +246,32 @@
       "platform": "win32"
     }
   ],
-  "original_four_zip_aggregate": "not-run"
+  "original_four_zip_aggregate": "not-run",
+  "build_producers": [
+    {
+      "key": "f04-build-windows",
+      "job": "F04 build windows",
+      "platform": "windows"
+    },
+    {
+      "key": "f04-build-gtk",
+      "job": "F04 build gtk",
+      "platform": "gtk"
+    },
+    {
+      "key": "f04-build-android",
+      "job": "F04 android peer",
+      "platform": "android"
+    },
+    {
+      "key": "f04-build-macos",
+      "job": "F04 build macos",
+      "platform": "macos"
+    },
+    {
+      "key": "f04-build-iphonesimulator",
+      "job": "F04 build iphonesimulator",
+      "platform": "iphonesimulator"
+    }
+  ]
 }

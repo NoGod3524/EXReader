@@ -268,6 +268,53 @@ def graph_audit(manifest_path):
     print(json.dumps(report, ensure_ascii=False), flush=True)
 
 
+def authenticated_builds(contract, current, jobs, artifacts):
+    from check_parallel_integration import download_artifact_zip
+    ids = json.loads(os.environ["F04_BUILD_IDS"])
+    need(set(ids) == {b["key"] for b in contract["build_producers"]}, "build artifact ID map")
+    receipts = {}
+    for binding in contract["build_producers"]:
+        found_jobs = [j for j in jobs if j["name"] == binding["job"]]
+        need(len(found_jobs) == 1 and found_jobs[0]["conclusion"] == "success" and
+             found_jobs[0]["head_sha"] == current["source_sha"], "build producer job")
+        rows = [a for a in artifacts if a["id"] == ids[binding["key"]]]
+        need(len(rows) == 1 and not rows[0]["expired"], "build artifact ID")
+        artifact = rows[0]
+        need(artifact["workflow_run"]["head_sha"] == current["source_sha"] and
+             str(artifact["workflow_run"]["id"]) == current["run_id"], "build artifact source/run")
+        blob = download_artifact_zip(artifact["id"])
+        need(len(blob) == artifact["size_in_bytes"] and
+             "sha256:" + hashlib.sha256(blob).hexdigest() == artifact["digest"], "build original ZIP identity")
+        with zipfile.ZipFile(io.BytesIO(blob)) as archive:
+            names = archive.namelist()
+            need(len(set(names)) == len(names) and all(not PurePosixPath(n).is_absolute() and
+                 ".." not in PurePosixPath(n).parts and "\\" not in n and not n.endswith(".key")
+                 for n in names), "build unsafe/private archive")
+            receipt_raw = archive.read("build-receipt.json")
+            receipt = json.loads(receipt_raw)
+            need(all(str(receipt[k]) == v for k, v in current.items()), "build receipt identity")
+            need(receipt["platform"] == binding["platform"] and receipt["sdk_version"] == "3.42.0" and
+                 receipt["sdk_source"] == contract["sdk_source"], "build target/SDK")
+            recipe = ROOT / receipt["recipe"]
+            need(recipe.is_relative_to(ROOT / "tests") and
+                 hashlib.sha256(recipe.read_bytes()).hexdigest() == receipt["recipe_sha256"], "build recipe identity")
+            if receipt["program"] is not None:
+                binary = archive.read("program.bin")
+                need(len(binary) == receipt["program"]["bytes"] and
+                     hashlib.sha256(binary).hexdigest() == receipt["program"]["sha256"], "built program bytes")
+            else:
+                manifest_raw = archive.read("sdk342-installed-identity.json")
+                need(hashlib.sha256(manifest_raw).hexdigest() == receipt["installed_identity_sha256"], "installed SDK manifest")
+                manifest = json.loads(manifest_raw)
+                need(all(str(manifest[k]) == v for k, v in current.items()), "installed SDK identity")
+                for root, entries in (("sdk", manifest["sdk_files"]), ("raw-products", manifest["raw_files"])):
+                    for path, identity in entries.items():
+                        content = archive.read(root + "/" + path)
+                        need(len(content) == identity["bytes"] and hashlib.sha256(content).hexdigest() == identity["sha256"],
+                             "installed SDK/product bytes")
+        receipts[binding["key"]] = receipt_raw
+    return receipts
+
 def authenticate_graph():
     """Original Actions ZIP/API authentication before the graph checker.
 
@@ -292,6 +339,7 @@ def authenticate_graph():
     out.mkdir(parents=True, exist_ok=False)
     manifest = {"states": [], "edges": [], "artifact_identities": [], "producer_jobs": []}
     accepted_states = {}
+    build_receipts = authenticated_builds(contract, current, jobs, artifacts)
     for binding in bindings:
         matches = [j for j in jobs if j["name"] == binding["job"]]
         need(len(matches) == 1 and matches[0]["conclusion"] == "success" and
@@ -321,9 +369,20 @@ def authenticate_graph():
             need(state["data"]["passed"] is True and result["passed"] is True and
                  not result.get("cleanup_errors"), "producer result/cleanup failure")
             need(state["data"]["platform"] == binding["host"], "producer host role")
+            receipt_raw = archive.read("build-receipt.json")
+            need(receipt_raw == build_receipts[binding["build_key"]], "phase/build receipt bytes")
+            built = json.loads(receipt_raw)
             program = archive.read("program.bin")
             need(len(program) == state["data"]["program"]["bytes"] and
                  hashlib.sha256(program).hexdigest() == state["data"]["program"]["sha256"], "actual program bytes")
+            if built["program"] is not None:
+                need(built["program"]["sha256"] == state["data"]["program"]["sha256"] and
+                     built["program"]["bytes"] == len(program), "installed/build program differs")
+            else:
+                need(hashlib.sha256(archive.read("installed-identity.json")).hexdigest() ==
+                     built["installed_identity_sha256"], "phase installed SDK differs")
+                need(state["data"]["program"]["bundle_source_sha"] == current["source_sha"] and
+                     state["data"]["program"]["bundle_id"] == "org.exreader.host", "actual Apple bundle identity")
             need(state["server"]["certificate_sha256"] == hashlib.sha256(archive.read("cert.pem")).hexdigest(), "phase certificate identity")
             need(state["server"]["implementation_sha256"] == hashlib.sha256((HERE / "relay.py").read_bytes()).hexdigest(), "relay source")
             need(state["server"]["dav_implementation_sha256"] ==
@@ -366,6 +425,13 @@ def retained_evidence(bundle, current):
          receipt["sdk_source"] == "8357eafa28423a7ab93ba08b823af80f01ad1505", "retained SDK")
     need(receipt["original_four_zip_aggregate"] == "not-run", "retained aggregate scope")
     need(sdk["accepted"] is True and wire["accepted"] is True, "retained report refused")
+    need(all(str(legacy["identity"][variable]) == current[key] for key, variable in
+         (("source_sha", "GITHUB_SHA"), ("run_id", "GITHUB_RUN_ID"), ("attempt", "GITHUB_RUN_ATTEMPT"))),
+         "legacy identity")
+    need(legacy["sdk_version"] == "3.42.0", "legacy actual SDK")
+    need(bundle["legacy_report_sha256"] == legacy["report_sha256"] and
+         len(bundle["legacy_raw"]["checks"]) == legacy["checks_total"] and
+         all(c["pass"] is True for c in bundle["legacy_raw"]["checks"]), "legacy summary/raw")
     need(not legacy["problems"] and legacy["v1_highlight_roundtrip_accepted"] is True and
          legacy["checks_total"] >= 121 and legacy["checks_failed"] == 0, "original 121 checks")
     need(raw["failures"] == 0 and raw["checks"] and all(c["pass"] is True for c in raw["checks"]),
@@ -378,8 +444,13 @@ def retained_evidence(bundle, current):
         need(report["receiver_found"] == 17 and report["receiver_mislocated"] == 0, "original anchor outcomes")
         need(all(c["state"] == ("AMBIGUOUS" if c["id"] == "txt-ambiguous" else "FOUND")
                  for c in report["cases"]), "original ambiguous/FOUND outcomes")
-    need(wire_raw["cases"] == wire["cases"] and wire_raw["failures"] == 0 and
+    need(wire_raw["cases"] == wire["cases"] and wire_raw["failures"] == 0 and wire_raw["checks"] and
          all(c["pass"] is True for c in wire_raw["checks"]), "native transport raw checks")
+    need(wire_raw["native_webdav"] is True and wire_raw["originals_exported"] == 4 and
+         wire_raw["network_pushed"] == 22 and wire_raw["metadata_projected"] == 4 and
+         wire_raw["network_pulled"] >= 22, "native transport raw outcomes")
+    need(all(wire[k] == wire_raw[k] for k in ("originals_exported", "network_pushed",
+         "metadata_projected", "network_pulled")), "native transport summary/raw counters")
     need(wire["originals_exported"] == 4 and wire["network_pushed"] == 22 and
          wire["network_pulled"] >= 22 and wire["metadata_projected"] == 4 and
          wire["request_count"] > 0, "native original/record transport")
@@ -428,6 +499,8 @@ def authenticate_retained():
             bundle = dict(receipt=read_json("f04-driver/retained-receipt.json"),
                 sdk=read_json("v2-sdk-evidence/result.json"), raw=read_json("v2-sdk-evidence/probe.json"),
                 legacy=read_json("v2-sdk-evidence/legacy/summary.json"),
+                legacy_raw=read_json("v2-sdk-evidence/legacy/report.json"),
+                legacy_report_sha256=hashlib.sha256(archive.read("v2-sdk-evidence/legacy/report.json")).hexdigest(),
                 wire=read_json("v2-webdav-evidence/result.json"), wire_raw=read_json("v2-webdav-evidence/probe.json"),
                 sdk_program_sha256=program("v2-consumer/reading-v2-probe"),
                 wire_program_sha256=program("v2-webdav-consumer/reading-v2-probe"),

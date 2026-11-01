@@ -1,20 +1,870 @@
-name: F04 reading sync preparation (disabled pending CI approval)
+name: F04 six-host preparation (disabled pending execution approval)
 on:
   workflow_dispatch:
 permissions:
   contents: read
   actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  EXR_APPLE_SDK_VERSION: '3.42.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+  C11_NDK: '27.0.12077973'
+  PYTHONUTF8: '1'
+# Every job remains disabled. Timeouts are preparation ceilings, not approved CI spend.
 jobs:
-  disabled-preparation:
-    # Only a separately approved commit may activate a producer matrix.
+  build_windows:
+    name: F04 build windows
     if: ${{ false }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    runs-on: windows-2022
+    timeout-minutes: 90
+    outputs:
+      build: ${{ steps.build.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Admit fixed source and exclusive paths
-        run: python3 tests/dot_f04_reading_sync_20261031/admission.py
-# Expanded Windows/GTK/macOS/iPad adapters are preparation only.
-# No six-host producer jobs, dispatch budget, or automatic retry is authorized.
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - name: Admit and build same-source target
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py build-windows
+          python3 tests/dot_f04_reading_sync_20261031/run.py package-build --platform windows
+      - uses: actions/upload-artifact@v4
+        id: build
+        with:
+          name: f04-build-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f04-build-windows
+          if-no-files-found: error
+          retention-days: 30
+  build_gtk:
+    name: F04 build gtk
+    if: ${{ false }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    outputs:
+      build: ${{ steps.build.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - name: GTK build dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Admit and build same-source target
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py build-gtk
+          python3 tests/dot_f04_reading_sync_20261031/run.py package-build --platform gtk
+      - uses: actions/upload-artifact@v4
+        id: build
+        with:
+          name: f04-build-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f04-build-gtk
+          if-no-files-found: error
+          retention-days: 30
+  build_macos:
+    name: F04 build macos
+    if: ${{ false }}
+    runs-on: macos-15
+    timeout-minutes: 90
+    outputs:
+      build: ${{ steps.build.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - name: Admit and build same-source target
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py build-macos
+          python3 tests/dot_f04_reading_sync_20261031/run.py package-build --platform macos
+      - uses: actions/upload-artifact@v4
+        id: build
+        with:
+          name: f04-build-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f04-build-macos
+          if-no-files-found: error
+          retention-days: 30
+  build_iphonesimulator:
+    name: F04 build iphonesimulator
+    if: ${{ false }}
+    runs-on: macos-15
+    timeout-minutes: 90
+    outputs:
+      build: ${{ steps.build.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - name: Admit and build same-source target
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py build-iphonesimulator
+          python3 tests/dot_f04_reading_sync_20261031/run.py package-build --platform iphonesimulator
+      - uses: actions/upload-artifact@v4
+        id: build
+        with:
+          name: f04-build-iphonesimulator-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f04-build-iphonesimulator
+          if-no-files-found: error
+          retention-days: 30
+  windows_seed:
+    name: F04 Windows seed
+    if: ${{ false }}
+    runs-on: windows-2022
+    timeout-minutes: 45
+    needs: [build_windows]
+    outputs:
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - name: Native display and UI prerequisites
+        shell: bash
+        run: |
+          python3 -m pip install uiautomation==2.0.29
+          python3 tests/reader_native_owner_repairs/display.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build_windows.outputs.build }}
+          path: build/input/windows
+          merge-multiple: true
+      - name: Fixed original
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/fixtures.py
+      - name: Real Windows seed
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py windows --phase windows-seed --candidate build/input/windows/package/EXReader/EXReader.exe --font build/input/windows/Reader.otf --original build/apple-android/original/epub-alice.epub --title "Alice's Adventures in Wonderland" --output build/phase
+          python3 tests/dot_f04_reading_sync_20261031/run.py seal-phase --phase-dir build/phase --build-receipt build/input/windows/build-receipt.json
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-windows-seed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/phase/state.json
+            build/phase/result.json
+            build/phase/report.json
+            build/phase/requests.json
+            build/phase/cert.pem
+            build/phase/program.bin
+            build/phase/build-receipt.json
+            build/phase/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+  gtk_peer:
+    name: F04 gtk peer
+    if: ${{ false }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    needs: [windows_seed, build_gtk]
+    outputs:
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.windows_seed.outputs.phase }}
+          path: build/incoming
+          merge-multiple: true
+      - name: Fixed original
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/fixtures.py
+      - name: GTK runtime dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build_gtk.outputs.build }}
+          path: build/input/gtk
+          merge-multiple: true
+      - name: Original AT-SPI adapter
+        shell: bash
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+      - name: Real GTK peer
+        shell: bash
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+          export PYTHONPATH="$PWD/build/gtk-atspi-client"
+          openbox >build/f04-openbox.log 2>&1 &
+          wm=$!
+          trap "kill $wm || true" EXIT
+          gsettings set org.gnome.desktop.interface toolkit-accessibility true
+          gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+          /usr/bin/python3 tests/dot_f04_reading_sync_20261031/run.py gtk --payload build/input/gtk/package/EXReader-Linux --original build/apple-android/original/epub-alice.epub --previous build/incoming/state.json --output build/phase --incoming-prefix F04_WINDOWS
+          '
+          python3 tests/dot_f04_reading_sync_20261031/run.py seal-phase --phase-dir build/phase --build-receipt build/input/gtk/build-receipt.json
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-gtk-peer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/phase/state.json
+            build/phase/result.json
+            build/phase/report.json
+            build/phase/requests.json
+            build/phase/cert.pem
+            build/phase/program.bin
+            build/phase/build-receipt.json
+            build/phase/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+  windows_return_gtk:
+    name: F04 Windows return (gtk)
+    if: ${{ false }}
+    runs-on: windows-2022
+    timeout-minutes: 45
+    needs: [build_windows, gtk_peer]
+    outputs:
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - name: Native display and UI prerequisites
+        shell: bash
+        run: |
+          python3 -m pip install uiautomation==2.0.29
+          python3 tests/reader_native_owner_repairs/display.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build_windows.outputs.build }}
+          path: build/input/windows
+          merge-multiple: true
+      - name: Fixed original
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/fixtures.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.gtk_peer.outputs.phase }}
+          path: build/incoming
+          merge-multiple: true
+      - name: Fresh Windows receiver
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py windows --phase windows-return --candidate build/input/windows/package/EXReader/EXReader.exe --font build/input/windows/Reader.otf --original build/apple-android/original/epub-alice.epub --title "Alice's Adventures in Wonderland" --output build/phase --previous build/incoming/state.json --incoming-prefix F04_GTK
+          python3 tests/dot_f04_reading_sync_20261031/run.py seal-phase --phase-dir build/phase --build-receipt build/input/windows/build-receipt.json
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-windows-return-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/phase/state.json
+            build/phase/result.json
+            build/phase/report.json
+            build/phase/requests.json
+            build/phase/cert.pem
+            build/phase/program.bin
+            build/phase/build-receipt.json
+            build/phase/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+  macos_peer:
+    name: F04 macos peer
+    if: ${{ false }}
+    runs-on: macos-15
+    timeout-minutes: 90
+    needs: [windows_seed, build_macos]
+    outputs:
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.windows_seed.outputs.phase }}
+          path: build/incoming
+          merge-multiple: true
+      - name: Fixed original
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/fixtures.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build_macos.outputs.build }}
+          path: sdk-input/team24-apple-sdk-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          merge-multiple: true
+      - name: Real Apple peer
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py macos-peer --phase macos-peer --previous build/incoming/state.json --original build/apple-android/original/epub-alice.epub
+          python3 tests/dot_f04_reading_sync_20261031/run.py seal-phase --phase-dir build/apple-android/macos-peer --build-receipt sdk-input/team24-apple-sdk-macos-${{ github.run_id }}-${{ github.run_attempt }}/build-receipt.json --installed-identity sdk-input/team24-apple-sdk-macos-${{ github.run_id }}-${{ github.run_attempt }}/sdk342-installed-identity.json
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-macos-peer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/apple-android/macos-peer/state.json
+            build/apple-android/macos-peer/result.json
+            build/apple-android/macos-peer/report.json
+            build/apple-android/macos-peer/requests.json
+            build/apple-android/macos-peer/cert.pem
+            build/apple-android/macos-peer/program.bin
+            build/apple-android/macos-peer/build-receipt.json
+            build/apple-android/macos-peer/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+  windows_return_macos:
+    name: F04 Windows return (macos)
+    if: ${{ false }}
+    runs-on: windows-2022
+    timeout-minutes: 45
+    needs: [build_windows, macos_peer]
+    outputs:
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - name: Native display and UI prerequisites
+        shell: bash
+        run: |
+          python3 -m pip install uiautomation==2.0.29
+          python3 tests/reader_native_owner_repairs/display.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build_windows.outputs.build }}
+          path: build/input/windows
+          merge-multiple: true
+      - name: Fixed original
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/fixtures.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.macos_peer.outputs.phase }}
+          path: build/incoming
+          merge-multiple: true
+      - name: Fresh Windows receiver
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py windows --phase windows-return --candidate build/input/windows/package/EXReader/EXReader.exe --font build/input/windows/Reader.otf --original build/apple-android/original/epub-alice.epub --title "Alice's Adventures in Wonderland" --output build/phase --previous build/incoming/state.json --incoming-prefix F04_MACOS
+          python3 tests/dot_f04_reading_sync_20261031/run.py seal-phase --phase-dir build/phase --build-receipt build/input/windows/build-receipt.json
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-windows-return-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/phase/state.json
+            build/phase/result.json
+            build/phase/report.json
+            build/phase/requests.json
+            build/phase/cert.pem
+            build/phase/program.bin
+            build/phase/build-receipt.json
+            build/phase/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+  android_peer:
+    name: F04 android peer
+    if: ${{ false }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    needs: [windows_seed]
+    outputs:
+      build: ${{ steps.build.outputs.artifact-id }}
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.windows_seed.outputs.phase }}
+          path: build/incoming
+          merge-multiple: true
+      - name: Fixed original
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/fixtures.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install exact Android prerequisites
+        shell: bash
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;27.0.12077973" "emulator" "system-images;android-34;default;x86_64"
+          sudo chmod 666 /dev/kvm
+      - name: Same-job Android build and public handoff
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py build-android
+          python3 tests/dot_f04_reading_sync_20261031/run.py package-build --platform android
+      - uses: actions/upload-artifact@v4
+        id: build
+        with:
+          name: f04-build-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f04-build-android
+          if-no-files-found: error
+          retention-days: 30
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t build/wave3/artifacts/app-debug.apk
+            adb install -r -t build/wave3/artifacts/relay-debug-androidTest.apk
+            python3 tests/dot_f04_reading_sync_20261031/run.py android-peer --previous build/incoming/state.json --fixture build/wave3/network-fixture --output build/phase --incoming-prefix F04_WINDOWS
+            python3 tests/dot_f04_reading_sync_20261031/run.py seal-phase --phase-dir build/phase --build-receipt build/f04-driver/build-android.json
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-android-peer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/phase/state.json
+            build/phase/result.json
+            build/phase/report.json
+            build/phase/requests.json
+            build/phase/cert.pem
+            build/phase/program.bin
+            build/phase/build-receipt.json
+            build/phase/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+  windows_return_android:
+    name: F04 Windows return (android)
+    if: ${{ false }}
+    runs-on: windows-2022
+    timeout-minutes: 45
+    needs: [build_windows, android_peer]
+    outputs:
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - name: Native display and UI prerequisites
+        shell: bash
+        run: |
+          python3 -m pip install uiautomation==2.0.29
+          python3 tests/reader_native_owner_repairs/display.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build_windows.outputs.build }}
+          path: build/input/windows
+          merge-multiple: true
+      - name: Fixed original
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/fixtures.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.android_peer.outputs.phase }}
+          path: build/incoming
+          merge-multiple: true
+      - name: Fresh Windows receiver
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py windows --phase windows-return --candidate build/input/windows/package/EXReader/EXReader.exe --font build/input/windows/Reader.otf --original build/apple-android/original/epub-alice.epub --title "Alice's Adventures in Wonderland" --output build/phase --previous build/incoming/state.json --incoming-prefix F04_ANDROID
+          python3 tests/dot_f04_reading_sync_20261031/run.py seal-phase --phase-dir build/phase --build-receipt build/input/windows/build-receipt.json
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-windows-return-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/phase/state.json
+            build/phase/result.json
+            build/phase/report.json
+            build/phase/requests.json
+            build/phase/cert.pem
+            build/phase/program.bin
+            build/phase/build-receipt.json
+            build/phase/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+  iphone_peer:
+    name: F04 iphone peer
+    if: ${{ false }}
+    runs-on: macos-15
+    timeout-minutes: 90
+    needs: [windows_seed, build_iphonesimulator]
+    outputs:
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.windows_seed.outputs.phase }}
+          path: build/incoming
+          merge-multiple: true
+      - name: Fixed original
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/fixtures.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build_iphonesimulator.outputs.build }}
+          path: sdk-input/team24-apple-sdk-iphonesimulator-${{ github.run_id }}-${{ github.run_attempt }}
+          merge-multiple: true
+      - name: Real Apple peer
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py iphone-peer --phase iphone-peer --previous build/incoming/state.json --original build/apple-android/original/epub-alice.epub
+          python3 tests/dot_f04_reading_sync_20261031/run.py seal-phase --phase-dir build/apple-android/iphone-peer --build-receipt sdk-input/team24-apple-sdk-iphonesimulator-${{ github.run_id }}-${{ github.run_attempt }}/build-receipt.json --installed-identity sdk-input/team24-apple-sdk-iphonesimulator-${{ github.run_id }}-${{ github.run_attempt }}/sdk342-installed-identity.json
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-iphone-peer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/apple-android/iphone-peer/state.json
+            build/apple-android/iphone-peer/result.json
+            build/apple-android/iphone-peer/report.json
+            build/apple-android/iphone-peer/requests.json
+            build/apple-android/iphone-peer/cert.pem
+            build/apple-android/iphone-peer/program.bin
+            build/apple-android/iphone-peer/build-receipt.json
+            build/apple-android/iphone-peer/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+  windows_return_iphone:
+    name: F04 Windows return (iphone)
+    if: ${{ false }}
+    runs-on: windows-2022
+    timeout-minutes: 45
+    needs: [build_windows, iphone_peer]
+    outputs:
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - name: Native display and UI prerequisites
+        shell: bash
+        run: |
+          python3 -m pip install uiautomation==2.0.29
+          python3 tests/reader_native_owner_repairs/display.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build_windows.outputs.build }}
+          path: build/input/windows
+          merge-multiple: true
+      - name: Fixed original
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/fixtures.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.iphone_peer.outputs.phase }}
+          path: build/incoming
+          merge-multiple: true
+      - name: Fresh Windows receiver
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py windows --phase windows-return --candidate build/input/windows/package/EXReader/EXReader.exe --font build/input/windows/Reader.otf --original build/apple-android/original/epub-alice.epub --title "Alice's Adventures in Wonderland" --output build/phase --previous build/incoming/state.json --incoming-prefix F04_IPHONE
+          python3 tests/dot_f04_reading_sync_20261031/run.py seal-phase --phase-dir build/phase --build-receipt build/input/windows/build-receipt.json
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-windows-return-iphone-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/phase/state.json
+            build/phase/result.json
+            build/phase/report.json
+            build/phase/requests.json
+            build/phase/cert.pem
+            build/phase/program.bin
+            build/phase/build-receipt.json
+            build/phase/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+  ipad_peer:
+    name: F04 ipad peer
+    if: ${{ false }}
+    runs-on: macos-15
+    timeout-minutes: 90
+    needs: [windows_seed, build_iphonesimulator]
+    outputs:
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.windows_seed.outputs.phase }}
+          path: build/incoming
+          merge-multiple: true
+      - name: Fixed original
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/fixtures.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build_iphonesimulator.outputs.build }}
+          path: sdk-input/team24-apple-sdk-iphonesimulator-${{ github.run_id }}-${{ github.run_attempt }}
+          merge-multiple: true
+      - name: Real Apple peer
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py ipad-peer --phase ipad-peer --previous build/incoming/state.json --original build/apple-android/original/epub-alice.epub
+          python3 tests/dot_f04_reading_sync_20261031/run.py seal-phase --phase-dir build/apple-android/ipad-peer --build-receipt sdk-input/team24-apple-sdk-iphonesimulator-${{ github.run_id }}-${{ github.run_attempt }}/build-receipt.json --installed-identity sdk-input/team24-apple-sdk-iphonesimulator-${{ github.run_id }}-${{ github.run_attempt }}/sdk342-installed-identity.json
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-ipad-peer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/apple-android/ipad-peer/state.json
+            build/apple-android/ipad-peer/result.json
+            build/apple-android/ipad-peer/report.json
+            build/apple-android/ipad-peer/requests.json
+            build/apple-android/ipad-peer/cert.pem
+            build/apple-android/ipad-peer/program.bin
+            build/apple-android/ipad-peer/build-receipt.json
+            build/apple-android/ipad-peer/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+  windows_return_ipad:
+    name: F04 Windows return (ipad)
+    if: ${{ false }}
+    runs-on: windows-2022
+    timeout-minutes: 45
+    needs: [build_windows, ipad_peer]
+    outputs:
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - name: Native display and UI prerequisites
+        shell: bash
+        run: |
+          python3 -m pip install uiautomation==2.0.29
+          python3 tests/reader_native_owner_repairs/display.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build_windows.outputs.build }}
+          path: build/input/windows
+          merge-multiple: true
+      - name: Fixed original
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/fixtures.py
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.ipad_peer.outputs.phase }}
+          path: build/incoming
+          merge-multiple: true
+      - name: Fresh Windows receiver
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py windows --phase windows-return --candidate build/input/windows/package/EXReader/EXReader.exe --font build/input/windows/Reader.otf --original build/apple-android/original/epub-alice.epub --title "Alice's Adventures in Wonderland" --output build/phase --previous build/incoming/state.json --incoming-prefix F04_IPAD
+          python3 tests/dot_f04_reading_sync_20261031/run.py seal-phase --phase-dir build/phase --build-receipt build/input/windows/build-receipt.json
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-windows-return-ipad-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/phase/state.json
+            build/phase/result.json
+            build/phase/report.json
+            build/phase/requests.json
+            build/phase/cert.pem
+            build/phase/program.bin
+            build/phase/build-receipt.json
+            build/phase/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+  retained_linux:
+    name: F04 original 18 and 121 (linux)
+    if: ${{ false }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    outputs:
+      retained: ${{ steps.retained.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Native dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build
+      - name: Original retained checks on fixed SDK
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2
+          python3 tests/dot_f04_reading_sync_20261031/run.py retained-protocol
+      - uses: actions/upload-artifact@v4
+        id: retained
+        with:
+          name: f04-retained-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f04-driver/retained-receipt.json
+            build/v2-sdk-evidence/result.json
+            build/v2-sdk-evidence/probe.json
+            build/v2-sdk-evidence/legacy/summary.json
+            build/v2-sdk-evidence/legacy/report.json
+            build/v2-webdav-evidence/result.json
+            build/v2-webdav-evidence/probe.json
+            build/v2-webdav-evidence/native-requests.json
+            build/v2-consumer/reading-v2-probe*
+            build/v2-webdav-consumer/reading-v2-probe*
+            build/v1-consumer/reading-state-probe*
+            build/v1-consumer/reading-state-c-consumer*
+          if-no-files-found: error
+          retention-days: 30
+  retained_windows:
+    name: F04 original 18 and 121 (windows)
+    if: ${{ false }}
+    runs-on: windows-2022
+    timeout-minutes: 90
+    outputs:
+      retained: ${{ steps.retained.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Original retained checks on fixed SDK
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2
+          python3 tests/dot_f04_reading_sync_20261031/run.py retained-protocol
+      - uses: actions/upload-artifact@v4
+        id: retained
+        with:
+          name: f04-retained-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f04-driver/retained-receipt.json
+            build/v2-sdk-evidence/result.json
+            build/v2-sdk-evidence/probe.json
+            build/v2-sdk-evidence/legacy/summary.json
+            build/v2-sdk-evidence/legacy/report.json
+            build/v2-webdav-evidence/result.json
+            build/v2-webdav-evidence/probe.json
+            build/v2-webdav-evidence/native-requests.json
+            build/v2-consumer/reading-v2-probe*
+            build/v2-webdav-consumer/reading-v2-probe*
+            build/v1-consumer/reading-state-probe*
+            build/v1-consumer/reading-state-c-consumer*
+          if-no-files-found: error
+          retention-days: 30
+  audit:
+    name: F04 graph and original retained authentication
+    if: ${{ false }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    needs: [build_windows, build_gtk, build_macos, build_iphonesimulator, windows_seed, gtk_peer, windows_return_gtk, macos_peer, windows_return_macos, android_peer, windows_return_android, iphone_peer, windows_return_iphone, ipad_peer, windows_return_ipad, retained_linux, retained_windows]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate exact upload IDs and unchanged original evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F04_ARTIFACT_IDS: '{"f04-windows-seed":${{ needs.windows_seed.outputs.phase }},"f04-gtk-peer":${{ needs.gtk_peer.outputs.phase }},"f04-windows-return-gtk":${{ needs.windows_return_gtk.outputs.phase }},"f04-macos-peer":${{ needs.macos_peer.outputs.phase }},"f04-windows-return-macos":${{ needs.windows_return_macos.outputs.phase }},"f04-android-peer":${{ needs.android_peer.outputs.phase }},"f04-windows-return-android":${{ needs.windows_return_android.outputs.phase }},"f04-iphone-peer":${{ needs.iphone_peer.outputs.phase }},"f04-windows-return-iphone":${{ needs.windows_return_iphone.outputs.phase }},"f04-ipad-peer":${{ needs.ipad_peer.outputs.phase }},"f04-windows-return-ipad":${{ needs.windows_return_ipad.outputs.phase }}}'
+          F04_BUILD_IDS: '{"f04-build-windows":${{ needs.build_windows.outputs.build }},"f04-build-gtk":${{ needs.build_gtk.outputs.build }},"f04-build-android":${{ needs.android_peer.outputs.build }},"f04-build-macos":${{ needs.build_macos.outputs.build }},"f04-build-iphonesimulator":${{ needs.build_iphonesimulator.outputs.build }}}'
+          F04_RETAINED_IDS: '{"f04-retained-linux":${{ needs.retained_linux.outputs.retained }},"f04-retained-windows":${{ needs.retained_windows.outputs.retained }}}'
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/audit.py --authenticate-graph
+          python3 tests/dot_f04_reading_sync_20261031/audit.py --authenticate-retained
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f04-auth-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f04-graph-auth/
+            build/f04-retained-auth/
+          if-no-files-found: error
