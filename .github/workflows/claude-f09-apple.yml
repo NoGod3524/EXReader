@@ -12,6 +12,9 @@ permissions:
   contents: read
   actions: read
 env:
+  EXR_APPLE_SDK_VERSION: '3.42.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
   H9_SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
   A11Y_START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
   A11Y_CONTRACT: tests/reader_a11y_apple/a11y_contract.json
@@ -74,23 +77,18 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Verify this checkout is the run source
         run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-      - name: Build and install the ${{ matrix.target }} SDK
+      - name: Build the frozen 3.42 SDK and the same-source installed product modules (on-base builder)
         run: |
           set -euo pipefail
           target="${{ matrix.target }}"
-          if [ "$target" = macos ]; then
-            cmake -S . -B "build/sdk-$target" -DCMAKE_BUILD_TYPE=Release \
-              -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF
-          else
-            cmake -S . -B "build/sdk-$target" -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT="$target" \
-              -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
-              -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF \
-              -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO -DEXR_ENABLE_AAC=OFF
-          fi
-          cmake --build "build/sdk-$target" --parallel 4
-          cmake --install "build/sdk-$target" --prefix "stage/$target"
+          python3 tests/apple_sdk342_host/build.py --target "$target"
+          mkdir -p "stage/$target" "stage/$target-products"
+          cp -R "build/raw3-ios-sdk/$target/sdk/." "stage/$target/"
+          cp -R "build/raw3-ios-sdk/$target/raw-products/." "stage/$target-products/"
           test -f "stage/$target/lib/libexreader.dylib"
           shasum -a 256 "stage/$target/lib/libexreader.dylib" | tee "stage/$target-identity.txt"
       - uses: actions/upload-artifact@v4
@@ -98,6 +96,7 @@ jobs:
           name: f09-apple-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             stage/${{ matrix.target }}/
+            stage/${{ matrix.target }}-products/
             stage/${{ matrix.target }}-identity.txt
           include-hidden-files: true
           retention-days: 30
@@ -146,6 +145,8 @@ jobs:
           set -euo pipefail
           ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
           ruby tests/reader_a11y_apple/make_a11y_xcodeproj.rb build/a11y-project build/apple-resources
+          if [ "${{ matrix.platform }}" = macos ]; then products="$PWD/stage/macos-products"; else products="$PWD/stage/iphonesimulator-products"; fi
+          ruby tests/f09_audit/apple_product_overlay.rb build/a11y-project/EXReaderA11y.xcodeproj "$products"
           xcodebuild -project build/a11y-project/EXReaderA11y.xcodeproj -list
       - name: Select destination and reset simulator state
         id: destination

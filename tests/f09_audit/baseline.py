@@ -72,10 +72,20 @@ def windows():
 
 
 def linux():
-    F = module('tests/reader_f06_packages/build.py', 'f09_f06')
-    F.OUT = ROOT / 'build/f06'
-    F.OUT.mkdir(parents=True, exist_ok=True)
-    payload = F.linux() / 'EXReader-Linux'
+    # The GTK product host as the current product work on this base builds it
+    # (the F08 performance lane): F06's compact raw0.2 recipe still pins SDK 3.41.
+    hash_prefix = os.environ['EXREADER_ORIGINAL_HASH_PREFIX']
+    run(['cmake', '--preset', 'reading-library'], 'gtk-sdk-configure', check=True)
+    run(['cmake', '--build', '--preset', 'reading-library'], 'gtk-sdk-build', check=True)
+    run(['cmake', '--install', 'build/reading-library'], 'gtk-sdk-install', check=True)
+    run(['cmake', '-S', 'apps/reader/desktop', '-B', 'build/f09-gtk', '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release',
+         '-DEXR_SDK_VERSION=3.42.0', '-DEXR_SDK=' + str(ROOT / 'build/reading-library/stage'), '-DEXR_READER_BUILD_GTK=ON',
+         '-DREADER_ORIGINAL_HASH_PREFIX:PATH=' + hash_prefix, '-DEXR_READER_FIXTURES=' + str(ROOT / 'tests/fixtures')],
+        'gtk-host-configure', check=True)
+    run(['cmake', '--build', 'build/f09-gtk', '--parallel', '4'], 'gtk-host-build', check=True)
+    run([sys.executable, 'tools/build_linux_host.py', '--sdk', 'build/reading-library/stage', '--sdk-version', '3.42.0',
+         '--binary', 'build/f09-gtk/gtk-host/exreader-linux', '--output', 'build/f09-gtk-package'], 'gtk-package', check=True)
+    payload = ROOT / 'build/f09-gtk-package/EXReader-Linux'
     evidence = OUT / 'gtk-audit'
     if evidence.exists():
         shutil.rmtree(evidence)
@@ -90,10 +100,50 @@ def android_prepare():
     """The shared-source APK where the retained audit expects the owner build,
     with the identity record its checker compares the installed APK against."""
     import hashlib
-    F = module('tests/reader_f06_packages/build.py', 'f09_f06')
-    F.OUT = ROOT / 'build/f06'
-    F.OUT.mkdir(parents=True, exist_ok=True)
-    apk = F.android() / 'artifacts/app-debug.apk'
+    # The current on-base recipe (product closure lanes after 343bb94e): an
+    # Android-ABI OPDSHash prefix, then the five reviewed composition steps with
+    # the SDK version raised to 3.42.0.
+    import yaml
+    env_file = Path(os.environ['GITHUB_ENV'])
+
+    def load_env():
+        for line in env_file.read_text().splitlines():
+            key, sep, value = line.partition('=')
+            if sep:
+                os.environ[key] = value
+
+    ndk = Path(os.environ['ANDROID_HOME']) / 'ndk' / os.environ['C11_NDK']
+    stage, build = OUT / 'android-hash-stage', OUT / 'android-hash-build'
+    run(['cmake', '-S', 'extras/opds', '-B', build, '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release',
+         '-DCMAKE_POSITION_INDEPENDENT_CODE=ON', '-DCMAKE_TOOLCHAIN_FILE=' + str(ndk / 'build/cmake/android.toolchain.cmake'),
+         '-DANDROID_ABI=x86_64', '-DANDROID_PLATFORM=android-26', '-DANDROID_STL=c++_static',
+         '-DEXREADER_OPDS_HASH_ONLY=ON', '-DCMAKE_INSTALL_PREFIX=' + stage.as_posix()], 'android-hash-configure', check=True)
+    run(['cmake', '--build', build, '--parallel', '4'], 'android-hash-build', check=True)
+    run(['cmake', '--install', build], 'android-hash-install', check=True)
+    with env_file.open('a') as f:
+        f.write('EXREADER_ORIGINAL_HASH_PREFIX=' + stage.resolve().as_posix() + '\n')
+    load_env()
+    recipe = ROOT / '.github/workflows/android-composition-candidate.yml'
+    steps = yaml.safe_load(recipe.read_text())['jobs']['android']['steps']
+    names = ['Prepare existing C11 candidate test sources', 'Build and install the frozen 3.41 SDK for x86_64',
+             'Install the raw0.2 product and reviewed wave3 packages into one prefix',
+             'Author the deterministic fixtures and the bundled font',
+             'Build the real wave3 host with search directory reading settings and sync']
+    for index, name in enumerate(names):
+        found = [x for x in steps if x.get('name') == name]
+        assert len(found) == 1, name
+        body = found[0]['run']
+        if index == 2:
+            assert body.count('-DEXR_SDK_VERSION=3.41.0') == 1
+            body = body.replace('-DEXR_SDK_VERSION=3.41.0', '-DEXR_SDK_VERSION=3.42.0')
+        if index == 4:
+            assert body.count('-PexrSdk=') == 3 and '-PexrSdkVersion=' not in body
+            body = body.replace('-PexrSdk=', '-PexrSdkVersion=3.42.0 -PexrSdk=')
+        script = OUT / ('android-recipe-step-%d.sh' % index)
+        script.write_text(body)
+        run(['bash', '-e', '-o', 'pipefail', script], 'android-recipe-step-%d' % index, check=True)
+        load_env()
+    apk = ROOT / 'build/wave3/artifacts/app-debug.apk'
     host = ROOT / 'build/android-host'
     (host / 'artifacts').mkdir(parents=True, exist_ok=True)
     shutil.copyfile(apk, host / 'artifacts/app-debug.apk')
