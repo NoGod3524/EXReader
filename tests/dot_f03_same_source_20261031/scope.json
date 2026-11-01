@@ -763,6 +763,55 @@
     "modified_test_methods": [
       "registersAtomicallyAndIdempotently",
       "preservesDuplicateMetadataAndHistory"
-    ]
+    ],
+    "result": {
+      "status": "completed_failure",
+      "source_sha": "e21331513a84cc225daa99f672b4c79384e1f34b",
+      "run_id": 41328199296,
+      "attempt": 1,
+      "completed_at": "2026-11-01T17:14:26Z",
+      "runs_used": 1,
+      "automatic_retry": false,
+      "catalog_store_tests": {
+        "total": 8,
+        "failed": 0,
+        "skipped": 0
+      },
+      "import_mapping_tests": {
+        "total": 14,
+        "failed": 0,
+        "skipped": 0,
+        "accepted_mapping_report": true,
+        "killed_process_recovery_phases": [
+          "before",
+          "during"
+        ]
+      },
+      "owner_instrumentation_log": {
+        "total": 18,
+        "failed": 0,
+        "skipped": 0,
+        "overall_owner_gate_accepted": false
+      },
+      "failure": "owner device execution failed; organization device-report missing; original all-exits failure retained",
+      "full_f03_accepted": false,
+      "formal_count_credit": 0,
+      "job": {
+        "id": 124912497495,
+        "name": "f03_android_importmapping_retained",
+        "conclusion": "failure",
+        "started_at": "2026-11-01T16:48:27Z",
+        "completed_at": "2026-11-01T17:14:25Z"
+      },
+      "artifact": {
+        "id": 13093186163,
+        "name": "reader-suite-f03-android-importmapping-41328199296-1",
+        "size_in_bytes": 193531993,
+        "digest": "sha256:e8b2d81a33a62a6d47c718bfdea2e49d5075b9eb8de27048eaf3023b33f8f17f",
+        "created_at": "2026-11-01T17:14:23Z",
+        "expires_at": "2027-01-30T16:48:25Z"
+      },
+      "next_step": "Read-only inspect original owner gate/driver contract and existing evidence. No inferred owner acceptance from 18 green tests; no unapproved modifications or rerun."
+    }
   }
 }
