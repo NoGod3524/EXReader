@@ -1153,9 +1153,9 @@
     "attempt": "1",
     "max_runner_minutes": 20,
     "max_runs": 1,
-    "runs_started": 0,
+    "runs_started": 1,
     "automatic_retry": false,
-    "status": "prepared-awaiting-independent-source-review",
+    "status": "completed-success",
     "diagnostic_only": true,
     "F04_accepted": false,
     "allowed_changed_paths": [
@@ -1188,6 +1188,82 @@
       "search": "Current view first, toward start until positive row0 intersects viewport or unchanged positive visible-kind frames suggest reversal; reverse once toward end. No movement never establishes absence or early failure. Exhaustion is preparation-incomplete.",
       "isolation": "New explicit iPhone-only switch; non-iPhone row unchanged, Mac permission and Mac diagnostic disabled, no SDK builds/Windows returns/graph.",
       "identity": "Historical SDK and Android source/run/attempt authenticated separately from new controller/UI source. Original bytes, hashes, assertions and history retained."
+    },
+    "result": {
+      "run_id": "41294552194",
+      "attempt": 1,
+      "controller_source": "0fb14eadc46d7392b5efaabe65ab9cf105008b36",
+      "producer_source": "91b2ee1ff98173ccaa9de52b4071821905bd1c07",
+      "job_id": 124812545025,
+      "conclusion": "success",
+      "test_seconds": 135.37,
+      "tests": 1,
+      "failures": 0,
+      "checkpoints": [
+        "position",
+        "incoming-bookmark",
+        "incoming-note",
+        "edited-records",
+        "uploaded"
+      ],
+      "cleanup_errors": [],
+      "actual_ui": {
+        "source_sha": "0fb14eadc46d7392b5efaabe65ab9cf105008b36",
+        "bundle_id": "org.exreader.host",
+        "bytes": 9653296,
+        "sha256": "68c06e80a9173b681f79789e7ee3cdd0ab1f76325a5fe30d5ae036197d986ca0"
+      },
+      "artifact": {
+        "id": 13078148508,
+        "size_in_bytes": 42339480,
+        "digest": "sha256:4d7104bc57af5ba59675879fc26eecb26b954cf6926112d95a91b4fa9165726c"
+      },
+      "evidence": "Two native search scrolls made row4 available for original jump/edit; exact original action and data assertions passed.",
+      "diagnostic_only": true,
+      "F04_accepted": false
     }
+  },
+  "six_host_iphone_recovery_round": {
+    "authorization_message_id": "Sentinel_ae42ab34269c8191b9b1111af0ac5d30",
+    "authorized_at": "2026-11-01T09:57:06Z",
+    "case": "f04/six-host",
+    "max_runner_minutes": 230,
+    "max_runs": 1,
+    "runs_started": 0,
+    "automatic_retry": false,
+    "status": "prepared-awaiting-independent-source-review",
+    "delta_paths": [
+      "tests/dot_f04_reading_sync_20261031/run.py",
+      "tests/dot_f04_reading_sync_20261031/contract.json",
+      "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+    ],
+    "job_minutes": {
+      "windows_seed": 20,
+      "android_peer": 25,
+      "gtk_peer": 25,
+      "build_macos": 15,
+      "build_iphonesimulator": 15,
+      "macos_peer": 15,
+      "iphone_peer": 20,
+      "ipad_peer": 20,
+      "windows_return_android": 10,
+      "windows_return_gtk": 10,
+      "windows_return_macos": 10,
+      "windows_return_iphone": 10,
+      "windows_return_ipad": 10,
+      "retained_linux": 15,
+      "audit": 10
+    },
+    "design": {
+      "only_code_delta": "stage_apple enables existing __IPHONE_RECORD_PREP__ only for target iphone + generic + scope f04/iphone-record-diagnostic OR f04/six-host; all other targets/scopes remain 0.",
+      "swift_and_workflows_unchanged": true,
+      "product_sdk_and_original_assertions_unchanged": true,
+      "new_identity": "All five builds and eleven phase outputs must be new and share this round source/run/attempt. Do not splice prior full-round greens or diagnostic historical inputs.",
+      "diagnostic_separation": "Historical loader and diagnostic switch remain only in diagnostic wrapper, never full graph. Original Windows returns, retained tests and graph authentication unchanged.",
+      "mac_permission": "This round ephemeral Mac only: same exact Python Local Network Don't Allow once, startup10s within original150s before account/book; no Allow/settings/TCC/retry. Late prompts block without replay.",
+      "history_preserved": true,
+      "formal_count": "96/108; no acceptance promotion from isolated diagnostics."
+    },
+    "execution": "Existing F04-SIX-230-ONE-RUN marker, fifteen jobs once; F03 sole canonical writer/trigger following F12 actual review."
   }
 }
