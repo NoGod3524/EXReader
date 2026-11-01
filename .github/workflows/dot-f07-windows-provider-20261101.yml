@@ -1,0 +1,38 @@
+name: F07 Windows actual provider evidence
+on:
+  push:
+    branches: [dot/f07-windows-provider-20261101]
+permissions:
+  contents: read
+concurrency:
+  group: dot-f07-windows-provider-20261101
+  cancel-in-progress: false
+jobs:
+  collect:
+    if: ${{ contains(github.event.head_commit.message, '[F07-WINDOWS-PROVIDER-15-ONE-RUN]') }}
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Original producer Python dependencies
+        shell: bash
+        run: python3 -m pip install PyYAML==6.0.2 pillow
+      - name: Validate and collect actual Windows build evidence
+        shell: bash
+        env:
+          PYTHONUTF8: '1'
+        run: |
+          python3 -m py_compile tests/reader_f07_windows_provider_20261101/collect.py
+          python3 tests/reader_f07_windows_provider_20261101/collect.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f07-windows-provider-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f07-windows-provider/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
