@@ -1,3 +1,9 @@
+# Current canonical partial round
+
+2026-11-01: A11/200 explicitly approved. Canonical dot/reader-suite-20261101 starts94fb with only11 new files; historical F03 production delta below remains exclusively on sealed dot/f03-same-source-20261031@0fa23868. It is not in this candidate. GTK→Android partial proof only, no F03/full count credit. One authorized run after independent review, F07 sole trigger; currently source preparation, 0 CI. See README for exact runtime/owner/admission design.
+
+# Preserved historical F03 preparation notes (not current candidate acceptance)
+
 # F03 native dot preparation — not acceptance
 
 Prepared2026-10-31UTC. Native dot F03 coordinator; no Codex task launched.

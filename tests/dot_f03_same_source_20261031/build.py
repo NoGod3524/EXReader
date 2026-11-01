@@ -257,11 +257,134 @@ def receive_apple(a, stamp):
         if failures and not active_failure:
             raise RuntimeError("receiver fixture cleanup failed")
 
+
+def android_environment():
+    base=SCOPE["baseline"]
+    os.environ["ANDROID_CANDIDATE_SDK_BASE"]=base
+    os.environ["ANDROID_OWNERSHIP_HEAD"]=base
+    os.environ["ORG_GRADLE_PROJECT_exrSdkVersion"]=SCOPE["sdk_version"]
+    stage=(ROOT/"stage/android-product").resolve()
+    sdk=(ROOT/"stage/android-x86_64").resolve()
+    values={"exrSync":"true","exrSdk":str(sdk),"exrProduct":str(stage),
+            "exrDav":str(stage),"exrSideload":str(stage)}
+    for key,value in values.items():os.environ["ORG_GRADLE_PROJECT_"+key]=value
+    home=(ROOT/"build/f03-gradle-home").resolve()
+    init=home/"init.d/f03.gradle";init.parent.mkdir(parents=True,exist_ok=True)
+    source=(ROOT/"tests/dot_f03_same_source_20261031/android").as_posix()
+    init.write_text("gradle.beforeProject { p -> if (p.path == ':uitest') { "
+        "p.pluginManager.withPlugin('com.android.application') { "
+        "p.android.sourceSets.androidTest.java.srcDir new File('"+source+"') } } }\n",encoding="utf-8")
+    os.environ["GRADLE_USER_HOME"]=str(home)
+    with Path(os.environ["GITHUB_ENV"]).open("a",encoding="utf-8") as stream:
+        for key in ["ANDROID_CANDIDATE_SDK_BASE","ANDROID_OWNERSHIP_HEAD","GRADLE_USER_HOME",
+                    "ORG_GRADLE_PROJECT_exrSdkVersion",*["ORG_GRADLE_PROJECT_"+k for k in values]]:
+            stream.write(key+"="+os.environ[key]+"\n")
+    return stage,sdk
+
+def build_android_owner(audit):
+    """Original builder emits its own evidence; only declared candidate build options extend it."""
+    stage,sdk=android_environment()
+    (ROOT/"build/shelf-android").mkdir(parents=True,exist_ok=True)
+    (ROOT/"build/owner-android").mkdir(parents=True,exist_ok=True)
+    subprocess.run([sys.executable,"tests/reader_catalog/check_schema.py","--output",
+                    "build/shelf-android/schema.json"],cwd=ROOT,check=True)
+    subprocess.run([sys.executable,"tests/reader_catalog/check_assets.py"],cwd=ROOT,check=True)
+    android_home=os.environ.get("ANDROID_HOME",os.environ.get("ANDROID_SDK_ROOT",""))
+    toolchain=Path(android_home)/"ndk/27.0.12077973/build/cmake/android.toolchain.cmake"
+    require(toolchain.is_file(),"pinned Android NDK missing")
+    os.environ["C11_TOOLCHAIN"]=str(toolchain)
+    prepare_hash("android",os.environ,audit)
+    fixture=ROOT/"build/wave3/network-fixture"
+    subprocess.run([sys.executable,"tests/webdav_android/fixture.py","prepare",
+                    "--output",str(fixture)],cwd=ROOT,check=True)
+    import shutil
+    ca=ROOT/"tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt"
+    ca.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(fixture/"public/ca.crt",ca)
+    spec=importlib.util.spec_from_file_location("f03_original_android_builder",
+                                               ROOT/"tools/build_android_host.py")
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    original_product=module.build_product
+    def product_with_sync(product_stage,build):
+        original_product(product_stage,build)
+        for name,path in [("webdav","extras/webdav"),("sideload","extras/sideload"),
+                          ("sync","apps/reader/sync"),("session","apps/reader/session")]:
+            location=build/("f03-"+name)
+            argv=["cmake","-S",str(ROOT/path),"-B",str(location),"-G","Ninja",
+                "-DCMAKE_TOOLCHAIN_FILE="+str(toolchain),"-DANDROID_ABI=x86_64",
+                "-DANDROID_PLATFORM=android-26","-DANDROID_STL=c++_static",
+                "-DCMAKE_BUILD_TYPE=Release","-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+                "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
+                "-DEXR_SDK="+str(sdk),"-DEXR_SDK_VERSION="+SCOPE["sdk_version"],
+                "-DREADER_PRODUCT_PREFIX="+str(product_stage),
+                "-DCMAKE_PREFIX_PATH="+str(product_stage)+";"+str(sdk),
+                "-DCMAKE_INSTALL_PREFIX="+str(product_stage)]
+            subprocess.run(argv,cwd=ROOT,check=True)
+            subprocess.run(["cmake","--build",str(location),"--parallel","4","--target","install"],
+                           cwd=ROOT,check=True)
+            audit.append({"additional_original_module":path,"configure":argv})
+    module.build_product=product_with_sync
+    sys.argv=[str(ROOT/"tools/build_android_host.py"),"--stage",str(sdk),
+              "--build-dir","build/android-host","--gradle","gradle"]
+    module.main()
+    subprocess.run(["gradle","-p","examples/android","--no-daemon","--stacktrace",
+                    ":app:assembleRelease","-PexrSdk="+str(sdk)],cwd=ROOT,check=True)
+    subprocess.run([sys.executable,"tools/check_reader_owner_android.py","--evidence",
+                    "build/owner-android","--collect-native"],cwd=ROOT,check=True)
+    subprocess.run([sys.executable,"tools/check_android_host.py","--repo","."],cwd=ROOT,check=True)
+    mapping=ROOT/"examples/android/app/src/androidTest/assets/mapping"
+    mapping.mkdir(parents=True,exist_ok=True)
+    shutil.copyfile(ROOT/"build/android-host/fixtures/Sample.epub",mapping/"Sample.epub")
+    for folder in ("build/shelf-android","build/owner-android"):
+        path=ROOT/folder;path.mkdir(parents=True,exist_ok=True)
+        (path/"source.txt").write_text(os.environ["GITHUB_SHA"]+"\n")
+    audit.append({"original_builder":"tools/build_android_host.py",
+        "original_builder_sha256":digest(ROOT/"tools/build_android_host.py"),
+        "candidate_admission":True,"product_baseline":SCOPE["baseline"],
+        "sdk_freeze":SCOPE["sdk_source"],"historical_owner_guard_reexecuted":False,
+        "historical_owner_evidence_ref":SCOPE["historical_owner_evidence_ref"],
+        "unchanged_original_checker_environment":{
+            "ANDROID_CANDIDATE_SDK_BASE":SCOPE["baseline"],"ANDROID_OWNERSHIP_HEAD":SCOPE["baseline"]}})
+
+def run_android_retained():
+    """Execute preserved device script and every original final gate, preserving every outcome."""
+    import yaml
+    android_environment()
+    original=ROOT/".github/workflows/reader-organization-android.yml"
+    steps=yaml.safe_load(original.read_text())["jobs"]["android-shelf"]["steps"]
+    device=next(s for s in steps if s.get("id")=="emulator")
+    results=[]
+    def run_step(name,command,environment=None):
+        process=subprocess.run(["bash","-euo","pipefail","-c",command],cwd=ROOT,
+                               env=environment or os.environ,check=False)
+        results.append({"name":name,"exit_code":process.returncode,
+                        "original_command_sha256":hashlib.sha256(command.encode()).hexdigest()})
+        return process.returncode
+    device_exit=run_step(device["name"],device["with"]["script"])
+    env=dict(os.environ)
+    env["ANDROID_HOST_UPSTREAM"]=json.dumps({"build":"success","static":"success",
+                                             "emulator":"success" if device_exit==0 else "failure"})
+    gate_outcomes={}
+    for step in steps[steps.index(device)+1:]:
+        if "run" not in step:continue
+        command=step["run"]
+        env["ANDROID_GATE_OUTCOME"]=gate_outcomes.get("gate_review","failure")
+        env["ANDROID_BOUNDED_GATE_OUTCOME"]=gate_outcomes.get("bounded_gate","failure")
+        require("$"+"{{" not in command,"original gate command has unresolved expression")
+        status=run_step(step["name"],command,env)
+        if "id" in step:gate_outcomes[step["id"]]="success" if status==0 else "failure"
+    write_json(ROOT/"build/f03-android-original-steps.json",
+               {**identity(),"original_workflow":str(original.relative_to(ROOT)),
+                "original_workflow_sha256":digest(original),"steps":results,
+                "accepted":all(r["exit_code"]==0 for r in results),
+                "historical_owner_guard_reexecuted":False})
+    require(all(r["exit_code"]==0 for r in results),"original Android suite/gate failure retained")
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--host", choices=["windows", "gtk", "macos", "iphone", "ipad", "android"], required=True)
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--native-tests", action="store_true")
+    p.add_argument("--android-retained", action="store_true")
     p.add_argument("--apple-receive", action="store_true")
     for name in ("wire","expectations","projection-expectations","database","program"):
         p.add_argument("--"+name,type=Path)
@@ -272,10 +395,14 @@ def main():
     p.add_argument("--destination")
     a = p.parse_args()
     stamp = identity()
+    require(a.host in SCOPE["active_hosts"], "host outside approved partial suite")
     changes = []
     accepted = False
     try:
-        if a.apple_receive:
+        if a.android_retained:
+            require(a.host == "android", "Android only")
+            run_android_retained()
+        elif a.apple_receive:
             receive_apple(a,stamp)
         elif a.native_tests:
             require(a.sdk is not None and a.products is not None, "installed SDK/products required")
@@ -313,7 +440,8 @@ def main():
                                cwd=ROOT, check=True)
         elif a.host in ("android", "gtk"):
             require(sys.platform.startswith("linux"), "Linux runner required")
-            build_linux_recipe(a.host, changes)
+            if a.host == "android":build_android_owner(changes)
+            else:build_linux_recipe(a.host, changes)
         elif a.host == "windows":
             require(os.name == "nt", "Windows build requires Windows runner")
             prepare_hash("windows", os.environ, changes)
@@ -341,7 +469,7 @@ def main():
         accepted = True
     finally:
         write_json(a.output, {**stamp, "host": a.host, "operation_completed": accepted,
-                              "operation": "apple-receive" if a.apple_receive else "build",
+                              "operation": "android-retained" if a.android_retained else ("apple-receive" if a.apple_receive else "build"),
                               "sdk_version": SCOPE["sdk_version"], "sdk_source": SCOPE["sdk_source"],
                               "in_memory_adapters": changes,
                               "product_source_changed": False, "complete_product_accepted": False})

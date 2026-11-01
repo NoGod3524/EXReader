@@ -201,14 +201,230 @@ def audit(root, manifest, stamp):
             "scope": "same-source six-host organization lifecycle consistency",
             "physical_device_accepted": False}
 
+
+def collect_original_archives(root, stamp):
+    """Fetch current-attempt API metadata and original ZIP bytes on Actions, never accept supplied metadata."""
+    import os, urllib.request, urllib.parse, zipfile, io
+    from datetime import datetime
+    repository=os.environ["GITHUB_REPOSITORY"]
+    require(repository=="NoGod3524/EXReader","wrong repository")
+    token=os.environ["GITHUB_TOKEN"]
+    class Redirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            result=super().redirect_request(req,fp,code,msg,headers,newurl)
+            if urllib.parse.urlsplit(newurl).netloc != "api.github.com":
+                result.remove_header("Authorization")
+            return result
+    opener=urllib.request.build_opener(Redirect())
+    def fetch(path):
+        request=urllib.request.Request("https://api.github.com/repos/"+repository+path,
+            headers={"Authorization":"Bearer "+token,"Accept":"application/vnd.github+json",
+                     "X-GitHub-Api-Version":"2022-11-28"})
+        with opener.open(request,timeout=180) as response:return response.read()
+    run=json.loads(fetch("/actions/runs/"+stamp["run_id"]+"/attempts/"+stamp["attempt"]))
+    require(run["head_sha"]==stamp["source_sha"] and str(run["run_attempt"])==stamp["attempt"],
+            "current attempt API source mismatch")
+    jobs=json.loads(fetch("/actions/runs/"+stamp["run_id"]+"/attempts/"+stamp["attempt"]+"/jobs?per_page=100"))
+    artifacts=[]
+    page=1
+    while True:
+        values=json.loads(fetch("/actions/runs/"+stamp["run_id"]+"/artifacts?per_page=100&page="+str(page)))
+        artifacts+=values["artifacts"]
+        if len(values["artifacts"])<100:break
+        page+=1
+    proof=root/"api-originals";proof.mkdir(parents=True,exist_ok=False)
+    write_json(proof/"run.json",run);write_json(proof/"jobs.json",jobs)
+    receipts={}
+    for host in ("gtk","android"):
+        name="reader-suite-f03-"+host+"-"+stamp["run_id"]+"-"+stamp["attempt"]
+        matches=[a for a in artifacts if a["name"]==name]
+        require(len(matches)==1,"missing/duplicate current-attempt artifact: "+host)
+        artifact=matches[0]
+        selected=[j for j in jobs["jobs"] if j["name"]==host]
+        require(len(selected)==1 and selected[0]["conclusion"]=="success" and
+                selected[0]["status"]=="completed" and selected[0]["head_sha"]==stamp["source_sha"],
+                "producer job not successful: "+host)
+        job=selected[0]
+        require(job["started_at"]<=artifact["created_at"]<=job["completed_at"],
+                "artifact outside producer job lifetime")
+        require(not artifact.get("expired") and artifact["workflow_run"]["head_sha"]==stamp["source_sha"],
+                "expired/different-source artifact")
+        body=fetch("/actions/artifacts/"+str(artifact["id"])+"/zip")
+        require(len(body)==artifact["size_in_bytes"] and
+                "sha256:"+hashlib.sha256(body).hexdigest()==artifact["digest"],
+                "original ZIP differs from API")
+        (proof/(host+".zip")).write_bytes(body)
+        write_json(proof/(host+"-artifact.json"),artifact)
+        members={}
+        with zipfile.ZipFile(io.BytesIO(body)) as archive:
+            for entry in archive.infolist():
+                if entry.is_dir():continue
+                name=entry.filename
+                require(name not in members and not name.startswith("/") and "\\" not in name and
+                        ":" not in name and ".." not in name.split("/"),"unsafe/duplicate ZIP member")
+                raw=archive.read(entry)
+                local=root/host/name
+                require(local.is_file() and local.stat().st_size==len(raw) and
+                        digest(local)==hashlib.sha256(raw).hexdigest(),"downloaded evidence differs from original ZIP")
+                members[name]={"bytes":len(raw),"sha256":hashlib.sha256(raw).hexdigest()}
+        receipts[host]={"artifact_id":artifact["id"],"job_id":job["id"],
+            "archive_sha256":hashlib.sha256(body).hexdigest(),"members":members}
+    write_json(proof/"admission.json",{**stamp,"api_fetched":True,"archives":receipts})
+    return receipts
+
+def partial_observations(root, stamp):
+    """Audit the exact two-host candidate; never grants six-host F03 completion."""
+    def checked(path):
+        value=read(root/path);same_identity(value,stamp);return value
+    builds={h:checked(Path(h)/("f03-"+h+"-build.json")) for h in ("gtk","android")}
+    for host,report in builds.items():
+        require(report["operation_completed"] is True and report["sdk_source"]==SCOPE["sdk_source"] and
+                report["sdk_version"]==SCOPE["sdk_version"],"build identity/SDK mismatch")
+    gtk=checked(Path("gtk/f03-retained-gtk/collections-ui.json"))
+    require(gtk["accepted"] is True and gtk["count"]==27,"original GTK organization cases incomplete")
+    apk=root/"android/android-host/artifacts/app-debug.apk"
+    program=root/"gtk/package/EXReader-Linux/bin/exreader-linux"
+    require(gtk["program_sha256"]==digest(program),"GTK original/actual program mismatch")
+    android=checked(Path("android/organization-android/result.json"))
+    require(android["accepted"] is True and not android["problems"] and
+        android["native_checks"]==8 and android["real_ui_checks"]==8 and
+        android["real_process_retry_checks"]==1 and android["original_owner_checks"]==17 and
+        android["original_typed_kill_checks"]==2 and android["original_functional_checks"]==112 and
+        android["original_gate_checks"]==87 and android["original_owner_altered_evidence_checks"]==19,
+        "original Android all-exits incomplete")
+    original=checked(Path("android/f03-android-original-steps.json"))
+    require(original["accepted"] is True and original["steps"] and
+            all(s["exit_code"]==0 for s in original["steps"]),"original Android gate execution failed")
+    require(digest(root/"android/owner-android/apks/app-debug.apk")==digest(apk) and
+            digest(root/"android/organization-android/apks/app-debug.apk")==digest(apk),
+            "retained owner/organization APK mismatch")
+    phases=["create","delete","restore","member-remove","member-restore","restart"]
+    observations=[];previous={};previous_digest=None;coverage=set()
+    for phase in phases:
+        author_path=Path("gtk/f03-author")/phase
+        receiver_path=Path("android/f03-android")/phase
+        author=checked(author_path/"projection.json");receiver=checked(receiver_path/"projection.json")
+        require(author["host"]=="gtk" and receiver["host"]=="android","host slot mismatch")
+        require(author["program_sha256"]==digest(program) and receiver["program_sha256"]==digest(apk),
+                "actual phase executable mismatch")
+        for receipt in (author,receiver):
+            require(receipt["sdk_version"]==SCOPE["sdk_version"] and receipt["restart_verified"] is True and
+                    receipt["native_sync_completed"] is True,"native synchronization/restart missing")
+            require(hashlib.sha256(canonical(receipt["snapshot"])).hexdigest()==receipt["snapshot_sha256"],
+                    "snapshot digest mismatch")
+        for table in TABLES:require(author["snapshot"][table]==receiver["snapshot"][table],
+                                    "two-host organization differs: "+table)
+        wire=checked(author_path/"wire/state.json")
+        require(wire.get("previous_sha256")==previous_digest,"author wire lineage mismatch")
+        bodies={}
+        for key,value in wire["entries"].items():
+            raw=base64.b64decode(value["body"],validate=True)
+            require(hashlib.sha256(raw).hexdigest()==value["sha256"],"wire body digest mismatch")
+            bodies[key]=raw
+        require(all(bodies.get(k)==v for k,v in previous.items()),"immutable authored wire overwritten")
+        expected={r["id"]:r["body"] for r in author["snapshot"]["revisions"]}
+        actual={r["id"]:r["body"] for r in receiver["snapshot"]["revisions"]}
+        require(expected and all(actual.get(k)==v for k,v in expected.items()),"received revisions differ")
+        wire_revisions={json.loads(v)["id"]:json.loads(v) for k,v in bodies.items() if "/revisions/" in k}
+        require(all(wire_revisions.get(k)==v for k,v in expected.items()),"snapshot revision absent on real wire")
+        for operation in wire["data"]["events"]:
+            event=checked(author_path/(operation+".json"))
+            require(event["operation"]==operation and event["passed"] is True and event["native_ui"] is True and
+                    event["program_sha256"]==digest(program),"actual native operation missing")
+            require(all(r in expected for r in event["revision_ids"]),"event revision absent from author")
+            coverage.add(operation)
+        for host,path,method in (("gtk",author_path,"PUT"),("android",receiver_path,"GET")):
+            requests=read(root/path/"wire/requests.json")
+            require(all(r["authenticated"] is True for r in requests),"unauthenticated wire evidence")
+            if phase!="restart" or host=="android":
+                require(any(r["method"]==method and "/revisions/" in r["path"] for r in requests),
+                        "actual native revision transport missing")
+        native=checked(receiver_path/"received/result.json")
+        require(native["accepted"] is True and native["restart_verified"] is True and
+                native["native_sync_completed"] is True,"Android UI receipt incomplete")
+        driver=checked(receiver_path/"driver-result.json")
+        require(driver["mode"]=="receive" and driver["native_lifecycle_passed"] is True and
+                driver["apk_sha256"]["host_apk"]==digest(apk),"installed Android phase mismatch")
+        # This exact read-only snapshot was taken from the stopped real app by adb run-as.
+        from identity import read_snapshot
+        require(read_snapshot(root/receiver_path/"native-catalog/reader-catalog.db")==receiver["snapshot"],
+                "retained native database differs from projection receipt")
+        previous=bodies;previous_digest=digest(root/author_path/"wire/state.json")
+        observations.append({"phase":phase,"author_wire_sha256":previous_digest,
+                             "projection_sha256":receiver["snapshot_sha256"]})
+    require(coverage==set(SCOPE["operations"]),"lifecycle operation coverage incomplete")
+    return {**stamp,"accepted":True,"acceptance_mode":"two-host-partial",
+        "active_hosts":["gtk","android"],"phases":observations,"full_f03_accepted":False,
+        "formal_count_credit":0,"not_run":["windows","macos","iphone","ipad","F04","F05"],
+        "sdk_source":SCOPE["sdk_source"],"historical_owner_guard_reexecuted":False}
+
+def partial(root, output, stamp):
+    archives=collect_original_archives(root,stamp)
+    result=partial_observations(root,stamp)
+    result["original_archives"]={k:{x:y for x,y in v.items() if x!="members"} for k,v in archives.items()}
+    # Exact field counterexamples use separate copies, never rewrite original ZIP or producer files.
+    import shutil, tempfile
+    negatives=[]
+    cases=[
+        ("source", "android/f03-android/create/projection.json", ["source_sha"],"0"*40,"identity mismatch"),
+        ("run", "android/f03-android/create/projection.json", ["run_id"],"0","identity mismatch"),
+        ("attempt", "android/f03-android/create/projection.json", ["attempt"],"0","identity mismatch"),
+        ("sdk", "android/f03-android/create/projection.json", ["sdk_version"],"0.0","native synchronization"),
+        ("apk", "android/f03-android/create/projection.json", ["program_sha256"],"0"*64,"actual phase executable"),
+        ("restart", "android/f03-android/create/projection.json", ["restart_verified"],False,"native synchronization"),
+        ("old-gate", "android/organization-android/result.json", ["original_gate_checks"],86,"original Android all-exits"),
+        ("original-failure", "gtk/f03-retained-gtk/collections-ui.json", ["accepted"],False,"original GTK"),
+        ("host", "android/f03-android/create/projection.json", ["host"],"gtk","host slot"),
+    ]
+    for name,path,keys,value,reason in cases:
+        with tempfile.TemporaryDirectory(prefix="f03-audit-negative-",dir=root.parent) as tmp:
+            copy=Path(tmp)/"evidence"
+            # Link originals read-only for efficiency; replace only the changed JSON inode.
+            shutil.copytree(root,copy,copy_function=__import__("os").link,
+                            ignore=shutil.ignore_patterns("api-originals"))
+            target=copy/path;raw=target.read_bytes();data=json.loads(raw);cursor=data
+            for key in keys[:-1]:cursor=cursor[key]
+            cursor[keys[-1]]=value
+            target.unlink();target.write_bytes(canonical(data))
+            try:
+                partial_observations(copy,stamp)
+            except (AssertionError,KeyError,ValueError) as error:
+                require(reason in str(error),"negative rejected for wrong reason: "+name)
+                negatives.append({"name":name,"expected_reason":reason,"actual_reason":str(error),
+                    "original_sha256":hashlib.sha256(raw).hexdigest(),"altered_sha256":digest(target),"rejected":True})
+            else:raise AssertionError("counterexample wrongly accepted: "+name)
+    from identity import check_candidate_fields
+    admission_cases=[
+        ("sdk-as-product",SCOPE["sdk_source"],SCOPE["sdk_source"],[],False,"product baseline mismatch"),
+        ("wrong-sdk",SCOPE["baseline"],"0"*40,[],False,"SDK freeze mismatch"),
+        ("false-old-owner",SCOPE["baseline"],SCOPE["sdk_source"],[],True,"historical owner guard"),
+        ("product-edit",SCOPE["baseline"],SCOPE["sdk_source"],["examples/android/app/build.gradle"],False,"outside authorized"),
+        ("old-test-edit",SCOPE["baseline"],SCOPE["sdk_source"],["tools/check_reader_owner_android.py"],False,"outside authorized"),
+    ]
+    for name,base,sdk,paths,historical,reason in admission_cases:
+        try:check_candidate_fields(base,sdk,paths,historical)
+        except AssertionError as error:
+            require(reason in str(error),"admission negative wrong reason")
+            negatives.append({"name":name,"expected_reason":reason,"actual_reason":str(error),"rejected":True})
+        else:raise AssertionError("admission negative accepted: "+name)
+    result["audit_negatives"]=negatives
+    write_json(output,result)
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--manifest", type=Path, required=True)
+    p.add_argument("--manifest", type=Path)
+    p.add_argument("--partial", action="store_true")
+    p.add_argument("--evidence", type=Path)
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
     stamp = identity()
     result = {**stamp, "accepted": False, "preparation_only": not SCOPE["complete"], "requirement": "F03", "problems": []}
     try:
+        if a.partial:
+            require(a.evidence is not None and a.manifest is None,"partial evidence root required")
+            partial(a.evidence,a.output,stamp)
+            return
+        require(a.manifest is not None,"six-host manifest required")
         result = audit(a.manifest.parent, read(a.manifest), stamp)
     except Exception as error:
         result["problems"].append(type(error).__name__ + ": " + str(error))

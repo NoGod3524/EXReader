@@ -81,6 +81,11 @@ def main():
         adb("pull", installed[len("package:"):], a.output / "installed.apk")
         require(digest(a.output / "installed.apk") == apks["host_apk"], "installed host differs")
         if a.mode == "receive":
+            # Original all-exits artifacts are already sealed outside device profiles.
+            # Every lifecycle checkpoint starts a fresh real receiver, never reuses stale UI evidence.
+            adb("shell","am","force-stop","org.exreader.host")
+            require(b"Success" in adb("shell","pm","clear","org.exreader.host"),"fresh native profile failed")
+            require(b"Success" in adb("shell","pm","clear","org.exreader.host.uitest"),"fresh UI evidence profile failed")
             require(a.projection_expectations is not None, "identity-bound author projection required")
             expected_receipt=json.loads(a.projection_expectations.read_text(encoding="utf-8"))
             same_identity(expected_receipt,stamp)
