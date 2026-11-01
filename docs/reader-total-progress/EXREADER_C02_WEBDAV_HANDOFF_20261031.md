@@ -1,3 +1,43 @@
+# EXReader continuation snapshot — scheduled 2026-11-01 07:22 UTC
+Actual API capture: **2026-11-01T07:26:04Z / 2026-11-01 02:26:04 America/New_York (EST)**. Continuation backup only, not a stop, completion, or release. The daylight-saving rollback has occurred; older 01:24 EDT capture remains correctly dated.
+
+Formal ledger remains **96/108 (88.89%), 96 verified / 1 partial / 11 pending**, fixed `5db41cb19673fb75bb0b498c677d770931ac33e8`. This update read independent documentation branch `codex/gpt-iphone-acceptance-96-20261031` at HEAD `2989ba25a7de84ed506b80ab184adc6df47ad4be`, file blob `1260ab77c6ba7c91554c0e0e4a9ecb0be48d116a`, before prepending this snapshot. All previous text is preserved.
+
+## Completed diagnostic evidence and the single active round
+- [Three-Apple diagnostic 41276273173 A1](https://github.com/NoGod3524/EXReader/actions/runs/41276273173), source `cc5a88f4de822ad8c235f9b903961cf2a793628e`, ended **failure**. iPhone job 124758969434 and iPad job 124758969626 each passed their original one-test application relay, in 212.940 and 276.083 seconds. Original precise-location, record-editing and upload assertions were preserved. These are simulator diagnostic successes, not Windows-return or full-graph acceptance.
+- macOS job 124758969636 failed after 111.222 seconds. The first progress jump succeeded; reading.jump.2 alternated between y=512 and y=227 around actual viewport y=261..474 as whole-list swipes moved 285 pixels. Ten visibility attempts exhausted without issuing the jump.2 click. This establishes test scrolling overshoot, not a resolver failure after a visible target click.
+- Original diagnostic artifacts remain immutable: iPhone 13072160640 / 42343661 bytes /SHA256 `3325f134e551274ebdd5deb0b1f2aa91f8c5512f35f23213eb8c2348480ee60d`; iPad 13072186647 / 42343769 bytes /`65658e2ffff041942c79ee6e9a7189ec5d5f93cc70948e2964c2947cb6795001`; Mac 13072026988 / 42344334 bytes /`5392e1bfbabff6ef44172d82a6eb92d69ecc75c9efebe4df27a528d513334ae3`.
+- User 07:21:31 UTC, message `Sentinel_4e552a792a7c81919a80e78887ce2244`, approved exactly three existing files and one new **Mac 15 runner-minute** diagnostic, no automatic retry. F04 preparation `4b3c14715b957d4d4a6299e72480ce6793613191` passed independent actual-diff review: Swift blob `2adab09c258d6ceec0f3cc166fadc73dc5084e06`, contract blob `31b5fe6475a0e62797fce1e0b9272f5b0ea268be`, record blob `66d873dcdd44916a9505532c29a417416b17821c`. Only `apple_driver.swift`, `contract.json`, and `DOT_F04_READING_SYNC_20261031.md` changed relative to the approved preceding state.
+- F03 canonical composition `bdf096f3337f47cd193356a6ec3de4c305719999`; trigger commit `13ae646b11353473bb09459603a16396c1aa89d5` has the same tree and no file delta. [Run 41284680303 A1](https://github.com/NoGod3524/EXReader/actions/runs/41284680303) started 07:24:49 UTC on `dot/reader-suite-20261101`. Independent API capture reports **in_progress**: Mac job **124783470950** is executing “Authenticate fixed inputs and diagnose real macOS application”; setup dependencies passed. The other 27 jobs are skipped as intended. No UI result or artifact is yet asserted.
+- The Mac-only helper uses native discrete pixel scrolling, first step at most 16 pixels, later at most 24 pixels and 20% of viewport height; measured movement calibrates direction, crossing to the other side halves the cap. Three stable frame observations and real motion are required. At most 10 scrolls and 11 admission checks preserve the final-step check. Full containment, unique target, enabled/hittable, exactly one real click, and original exact-state/data assertions remain. iOS body, product, SDK, old tests, workflows and run.py are unchanged.
+- Existing `f04/macos-state-diagnostic` entry is reused. The new round's sole launch is **1/1 used**, cap 15 runner-min; no repeat, iOS rerun, full 230 round or SDK rebuild is authorized by this snapshot. Diagnostic completion will not by itself grant F04.
+
+## Input identity and source separation
+The reused SDK and Android-state producer is still `2cdad2057d4877b4712af8155da72fb92b50e411`, run 41272334508 A1: macOS SDK artifact 13070191404 / 22475654 bytes /SHA256 `1643061900c24deac54d8c2ad59982323a8f8470baa6ecbf691d5dd7f99d32b2`; Android state 13070316514 / 20040466 bytes /`d734fa0187678d64c4e731108f44d7b1f6b98d2fcb12b3bb49685f86e72c8396`. Current UI/diagnostic source is 13ae646b. Runtime authenticates original API/byte identities, and unchanged production is checked against the historical producer. This is not a new same-HEAD complete graph. Original failures and earlier successful Windows/Android/GTK paths and returns stay separately recorded. This hourly pass reads metadata/source/logs only; it downloads or parses no ZIP.
+
+## Six main assignments and real activity
+| Main task | Fixed source / current identity | Actual activity and next dependency |
+|---|---|---|
+| F03 | canonical 13ae646b11353473bb09459603a16396c1aa89d5 | Composition and sole trigger completed; own GTK/Android acceptance still blocked by preserved failures. No new F03 producer. |
+| F04 | preparation 4b3c1471; run 41284680303 | Test monitoring of the single Mac diagnostic. Await terminal UI result and preserved evidence; no automatic retry. |
+| F05 | 9ce943e1ff0c26b54db69f5c31eec057d2be216b | Integration/evidence waiting. Java shadow preparation is not native deletion-conflict presentation, cancellation or actual recovery validation. |
+| F07 | 697448abd8188580304806163ba9b543e76ba9ba | Provider link/load and runtime evidence waiting. Historical diagnostic success did not resolve provider acceptance. |
+| F10 | 4db961144b00c9004e2775b9e1e57e6ea7a31cb7 | Component 82 cases/880 assertions/38 negatives retained; full_F10=false. Actual client/common-consumer integration and credential/privacy evidence remain open. |
+| F12 | 64729214788a99ae96de7dda1a6376337324f9e4 | Actual-diff review completed; this finite documentation update. Final candidate, actual package/license inventory, supported old-profile upgrade and generated instructions remain unverified. |
+
+**0 confirmed active source-implementation lanes** at capture. F03 coordination, F04 test monitoring, F12 review/documentation and the other three integration waits are not six simultaneous implementers. F06 is already verified and is not rerun. Automatic replacement/replenishment remains paused; no new package or owner transfer is implied.
+
+## P0, ownership, permissions and continuation
+- Sealed C02 migration/journal/Repair remains valid in its original scope; it does not grant full P0, hardware power-loss, F12 or independent MSVC static relink. F05 still needs actual native conflict presentation, head/tombstone preservation, cancellation and recovery evidence.
+- Frozen SDK `8357eafa28423a7ab93ba08b823af80f01ad1505`, preparation baseline `94fb236a4a2da87dfbaf4f1dd2a47885d615a230`; historical 727 stays attached to its original artifacts. Component results do not substitute for actual six-host consumption.
+- F03 remains sole canonical composer/trigger; F04 owns its preparation subset. External UI/F08/F09 and other existing production owners remain unchanged. Only explicit prior function/file transfers apply. No catalog/default branch, PR, tag, release, product, SDK or test change is made by this snapshot.
+- GitHub direct source/Git route is approved. Desktop Commander quota, lap25002/instabox connection and native handshake were **not revalidated**; no recovered-access claim or credential action. This update uses only the independent documentation branch and skip-ci.
+- Design-before-implementation and one writer plus one independent reviewer per module remain. Current 15 cap is a runner-resource ceiling, not an elapsed completion promise. There is no reliable remaining-round or whole-project ETA.
+- Continue the existing Mac run to its terminal outcome, preserve all failures and original artifact identities, and propose the smallest evidence-supported next step within authority. Final product candidate is unfrozen; formal count does not change.
+
+---
+## Earlier snapshots (historical; latest facts above take precedence)
+
 # EXReader continuation snapshot — scheduled 2026-11-01 05:22 UTC
 Actual API capture: **2026-11-01T05:24:26Z / 2026-11-01 01:24:26 America/New_York (EDT)**. Continuation backup only, not completion or suspension.
 
