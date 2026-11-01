@@ -1040,3 +1040,37 @@ jobs:
             build/f04-diagnostics/windows/
           if-no-files-found: error
           retention-days: 30
+
+  macos_state_diagnostic:
+    name: F04 fixed macOS reading state diagnostic
+    if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && inputs.case == 'f04/macos-state-diagnostic' && inputs.controller_sha == github.sha }}
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Isolated Python environment
+        run: |
+          python3 -m venv "$RUNNER_TEMP/f04-python"
+          echo "$RUNNER_TEMP/f04-python/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/f04-python/bin/python" -c "import sys; assert sys.version_info[:2] == (3,12) and sys.prefix != sys.base_prefix; print(sys.executable, sys.version)"
+          "$RUNNER_TEMP/f04-python/bin/python" -m pip install PyYAML==6.0.2 pillow
+      - name: Original Apple project dependency
+        run: ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Authenticate fixed inputs and diagnose real macOS application
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m py_compile tests/dot_f04_reading_sync_20261031/run.py
+          python3 tests/dot_f04_reading_sync_20261031/run.py macos-state-diagnostic
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f04-macos-state-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f04-macos-state-diagnostic/
+          if-no-files-found: error
+          retention-days: 30
