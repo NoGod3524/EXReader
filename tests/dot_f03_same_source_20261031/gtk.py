@@ -139,7 +139,7 @@ def author(a, stamp):
     diagnostic_stop = threading.Event()
     diagnostic_cache = {"availability": "not_sampled"}
     diagnostic_thread = None
-    numeric_fields = ("visible", "owner_busy", "preparing", "bound", "closing", "stage_status",
+    numeric_fields = ("visible", "owner_busy", "preparing", "bound", "closing", "stage_status", "credential_status",
         "session_present", "cancel_requested", "session_state", "session_status", "session_generation",
         "closed_generation", "ticks", "attempt", "phase", "projection_status", "focused", "form_enabled")
     def diagnostic_emit(stage, sample=None):
@@ -282,7 +282,36 @@ def author(a, stamp):
             require(read_snapshot(catalog)==before,"organization changed after restart")
             event("restart",before)
         host.key("alt+F4");window("Library collections",False)
-        dav,user,password=relay.start(a.output/"wire",a.previous)
+        if os.environ.get("F03_FIXED_ORIGIN") == "1" and a.previous is not None:
+            # This private module instance only: preserve the original relay and its hash checks.
+            previous = json.loads(a.previous.read_bytes())
+            predecessor = {"delete": "create", "restore": "delete", "member-remove": "restore",
+                           "member-restore": "member-remove", "restart": "member-restore"}
+            require(previous.get("schema") == 1 and previous.get("source_sha") == stamp["source_sha"] and
+                    previous.get("run_id") == stamp["run_id"] and previous.get("attempt") == stamp["attempt"],
+                    "previous relay identity differs")
+            require(a.phase in predecessor and previous.get("phase") == "f03-gtk-" + predecessor[a.phase],
+                    "previous relay phase differs")
+            origin = urlsplit(previous["server"]["base"])
+            require(origin.scheme == "https" and origin.hostname == "127.0.0.1" and
+                    origin.username is None and origin.password is None and
+                    not origin.path and not origin.query and not origin.fragment and
+                    origin.port is not None and 1 <= origin.port <= 65535,
+                    "previous relay origin is not the original loopback HTTPS origin")
+            original_server_factory = relay.ThreadingHTTPServer
+            def fixed_origin_server(address, handler):
+                require(address == ("127.0.0.1", 0), "unexpected original relay bind request")
+                # Bind only; never connect to, adopt, or retry an existing listener.
+                return original_server_factory(("127.0.0.1", origin.port), handler)
+            relay.ThreadingHTTPServer = fixed_origin_server
+            try:
+                dav,user,password=relay.start(a.output/"wire",a.previous)
+            finally:
+                relay.ThreadingHTTPServer = original_server_factory
+            require(dav.base == previous["server"]["base"], "relay origin changed")
+            diagnostic_emit("relay_origin_checked", {"same_origin": True})
+        else:
+            dav,user,password=relay.start(a.output/"wire",a.previous)
         host.key("F2","ctrl+shift+a");window("Account and Sync")
         field("w",dav.base+"/dav/");field("u",user);field("p",password)
         host.key("alt+h","alt+a")

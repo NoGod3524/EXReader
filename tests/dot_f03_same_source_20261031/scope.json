@@ -361,5 +361,29 @@
       "bytes": 22844419,
       "sha256": "48d933569c1e7dbbb4fa3ba5d5869cbc4f3f7644cac6aec91801be8cd3069cb5"
     }
+  },
+  "gtk_fixed_origin_round": {
+    "authorization_message": "Sentinel_6d5ae1f6dea48191b3d146bdefc24749",
+    "authorization_utc": "2026-11-01T14:23:45Z",
+    "base_sha": "4b48c6c28e174fa8b2a86ff572f9cf1544bd9cd0",
+    "branch": "dot/f03-gtk-ready-20261101",
+    "case": "f03/gtk-fixed-origin-diagnostic",
+    "marker": "[F03-GTK-FIXED-ORIGIN-20-ONE-RUN]",
+    "allowed_existing_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      "tests/dot_f03_same_source_20261031/gtk.py",
+      "tests/dot_f03_same_source_20261031/scope.json",
+      "docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md"
+    ],
+    "runner_minutes_cap": 20,
+    "run_limit": 1,
+    "automatic_retries": 0,
+    "status": "prepared_not_run",
+    "previous_schema_source_run_attempt_phase_checked": true,
+    "original_relay_file_unchanged": true,
+    "original_product_exact_root_binding_unchanged": true,
+    "port_collision_fails_without_retry": true,
+    "original_actions_predicates_180s_deadline_and_assertions_unchanged": true,
+    "full_F03_accepted": false
   }
 }
