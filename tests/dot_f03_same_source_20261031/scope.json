@@ -502,10 +502,65 @@
     "runner_minutes_cap": 160,
     "run_limit": 1,
     "automatic_retries": 0,
-    "status": "prepared_not_run",
+    "status": "completed_failure",
     "only_added_original_build_target": "reader_original_import",
     "original_tools_sdk_product_tests_unchanged": true,
     "formal_count_credit": 0,
-    "full_F03_accepted": false
+    "full_F03_accepted": false,
+    "run_id": 41318900037,
+    "attempt": 1,
+    "source_sha": "5a07f8079777f5297971b2f9d0d5ccf3eaadd2e6",
+    "used_runs": 1,
+    "completed_at": "2026-11-01T15:10:51Z",
+    "jobs": [
+      {
+        "id": 124884737065,
+        "name": "gtk",
+        "conclusion": "success",
+        "started_at": "2026-11-01T14:59:32Z",
+        "completed_at": "2026-11-01T15:05:37Z"
+      },
+      {
+        "id": 124886308710,
+        "name": "android",
+        "conclusion": "failure",
+        "started_at": "2026-11-01T15:05:39Z",
+        "completed_at": "2026-11-01T15:10:35Z"
+      },
+      {
+        "id": 124887581644,
+        "name": "audit",
+        "conclusion": "failure",
+        "started_at": "2026-11-01T15:10:37Z",
+        "completed_at": "2026-11-01T15:10:51Z"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 13089430151,
+        "name": "reader-suite-f03-audit-41318900037-1",
+        "size_in_bytes": 22956040,
+        "digest": "sha256:add080db3baa8c957d45909c209b4e6234991e6256508e506684a59506a1c1fd",
+        "created_at": "2026-11-01T15:10:49Z"
+      },
+      {
+        "id": 13088503668,
+        "name": "reader-suite-f03-android-41318900037-1",
+        "size_in_bytes": 93697959,
+        "digest": "sha256:977a9dd21cac10813e1ef321e597898401d8b62ebb6976ebcc660e8333e9f54c",
+        "created_at": "2026-11-01T15:10:31Z"
+      },
+      {
+        "id": 13088487990,
+        "name": "reader-suite-f03-gtk-41318900037-1",
+        "size_in_bytes": 23013558,
+        "digest": "sha256:223ab5c453e08a6bc354909c3e9ebe2a470369a66c2aa49d87cf6f6280d7706a",
+        "created_at": "2026-11-01T15:05:31Z"
+      }
+    ],
+    "original_install_target_gap_closed": true,
+    "android_apk_built": true,
+    "failed_gate": "tools/check_android_host.py: MainActivity lacks takePersistableUriPermission",
+    "android_all_exits_and_six_receives_executed": false
   }
 }
