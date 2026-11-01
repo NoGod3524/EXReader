@@ -1702,7 +1702,7 @@
     "case": "f03/bootstrap-three-arm",
     "branch": "dot/f03-bootstrap-diagnostic-20261101",
     "base": "4726b17ec44c8adec35e6435ab598cddce038cbe",
-    "status": "prepared_not_run",
+    "status": "completed_diagnostic_reopen_conflict_observed",
     "budget_runner_minutes": 25,
     "runs": 1,
     "retry": false,
@@ -1711,6 +1711,691 @@
     "connected_tests_executed": false,
     "old_apk_upgrade_accepted": false,
     "product_accepted": false,
-    "formal_count_credit": 0
+    "formal_count_credit": 0,
+    "result": {
+      "run_id": 41338502839,
+      "attempt": 1,
+      "source_sha": "434e45afeb6aca3fa69969f1c7cecc8a799f2e3e",
+      "job_id": 124943314564,
+      "completed_at": "2026-11-01T18:54:59Z",
+      "conclusion": "success",
+      "artifact": {
+        "id": 13096501395,
+        "node_id": "MDg6QXJ0aWZhY3QxMzA5NjUwMTM5NQ==",
+        "name": "reader-suite-f03-bootstrap-manual-41338502839-1",
+        "size_in_bytes": 19580896,
+        "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13096501395",
+        "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13096501395/zip",
+        "expired": false,
+        "digest": "sha256:577ffebf0e6571e984a059b68e57d0b3d985ee4e4c41cc997be022c0b2a722b3",
+        "created_at": "2026-11-01T18:54:54Z",
+        "updated_at": "2026-11-01T18:54:54Z",
+        "expires_at": "2027-01-30T18:48:37Z",
+        "workflow_run": {
+          "id": 41338502839,
+          "repository_id": 1421442522,
+          "head_repository_id": 1421442522,
+          "head_branch": "dot/f03-bootstrap-diagnostic-20261101",
+          "head_sha": "434e45afeb6aca3fa69969f1c7cecc8a799f2e3e"
+        }
+      },
+      "report": {
+        "source_sha": "434e45afeb6aca3fa69969f1c7cecc8a799f2e3e",
+        "run_id": "41338502839",
+        "attempt": "1",
+        "api": 34,
+        "abi": "x86_64",
+        "count": 3,
+        "failed": 0,
+        "arms": [
+          {
+            "id": "currentAutomatic",
+            "stage": "completed",
+            "source_sha256": "38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+            "source_bytes": 38,
+            "historical_state_reconstruction": false,
+            "before": {
+              "metadata": [
+                "txt",
+                "38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                "38",
+                "Verified original",
+                "",
+                "Verified original",
+                "0",
+                "0"
+              ],
+              "book_heads": [
+                "054f963a56864c6b9bc2cb7e2adbecac"
+              ],
+              "selection": [
+                "4",
+                "0",
+                "0",
+                "054f963a56864c6b9bc2cb7e2adbecac"
+              ],
+              "revisions": {
+                "count": 2,
+                "sha256": "c10f06ba71bb5869ef680d5dc06d31665b7395981f9860774bcd4b7bf6de62de",
+                "rows": [
+                  [
+                    "054f963a56864c6b9bc2cb7e2adbecac",
+                    "book",
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "put",
+                    "{\"version\":1,\"id\":\"054f963a56864c6b9bc2cb7e2adbecac\",\"entity_kind\":\"book\",\"entity_key\":\"txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"format\":\"txt\",\"source_sha256\":\"38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"source_bytes\":38,\"title\":\"Verified original\",\"author\":\"\",\"favorite\":false}}",
+                    "42757756fbd2276c8a410a5ce98e18307df4c679da48e4d9991f17a0707b6bad"
+                  ],
+                  [
+                    "f9340de8b9df4ad0a1488a808df5865a",
+                    "tag",
+                    "00000000000000000000000000000001",
+                    "put",
+                    "{\"version\":1,\"id\":\"f9340de8b9df4ad0a1488a808df5865a\",\"entity_kind\":\"tag\",\"entity_key\":\"00000000000000000000000000000001\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"name\":\"Tag\"}}",
+                    "3ad44b31fc93e21b47084ef0224767a16b2deab73c6082e1f2d5b3c1eac7cb77"
+                  ]
+                ]
+              },
+              "outbox": {
+                "count": 2,
+                "sha256": "81e6b8754eabe68f2840494a17436bc45c7b9db3bfd4c0062f8458d6bb708861",
+                "rows": [
+                  [
+                    "1",
+                    "054f963a56864c6b9bc2cb7e2adbecac",
+                    "0",
+                    ""
+                  ],
+                  [
+                    "2",
+                    "f9340de8b9df4ad0a1488a808df5865a",
+                    "0",
+                    ""
+                  ]
+                ]
+              },
+              "local_mapping": {
+                "count": 1,
+                "sha256": "0604b41d7e98c595e26dea234c5c81836daceaf604bd689d74c4ce628d0396e4",
+                "rows": [
+                  [
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "1",
+                    "reflow_global"
+                  ]
+                ]
+              },
+              "membership": [],
+              "pending": {
+                "present": true,
+                "raw_sha256": "5e5dd615eb3e0092b9ef57e26a4d6d0db73ac81d70329dda4af0fa7f5c3c4b72",
+                "command_sha256": "75233e5c4c6c77056d5619bd270175d001f375e1dbcc8b21ad5847940bf3d0ba",
+                "command_revision": "0fea626cadd749ca968fa3da663daaf8",
+                "command_heads": [],
+                "bootstrap_present": false,
+                "bootstrap_done": false,
+                "outcome": "Saved before submission"
+              }
+            },
+            "retry_return": "Change committed",
+            "after_retry": {
+              "metadata": [
+                "txt",
+                "38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                "38",
+                "Verified original",
+                "",
+                "Verified original",
+                "0",
+                "0"
+              ],
+              "book_heads": [
+                "054f963a56864c6b9bc2cb7e2adbecac"
+              ],
+              "selection": [
+                "4",
+                "0",
+                "0",
+                "054f963a56864c6b9bc2cb7e2adbecac"
+              ],
+              "revisions": {
+                "count": 3,
+                "sha256": "6fd621922a55aaddedbbf54ecdd179bd19c16e244aaf6e2ce8ebc954b4f18033",
+                "rows": [
+                  [
+                    "054f963a56864c6b9bc2cb7e2adbecac",
+                    "book",
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "put",
+                    "{\"version\":1,\"id\":\"054f963a56864c6b9bc2cb7e2adbecac\",\"entity_kind\":\"book\",\"entity_key\":\"txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"format\":\"txt\",\"source_sha256\":\"38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"source_bytes\":38,\"title\":\"Verified original\",\"author\":\"\",\"favorite\":false}}",
+                    "42757756fbd2276c8a410a5ce98e18307df4c679da48e4d9991f17a0707b6bad"
+                  ],
+                  [
+                    "0fea626cadd749ca968fa3da663daaf8",
+                    "membership",
+                    "tag:00000000000000000000000000000001:txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "put",
+                    "{\"version\":1,\"id\":\"0fea626cadd749ca968fa3da663daaf8\",\"entity_kind\":\"membership\",\"entity_key\":\"tag:00000000000000000000000000000001:txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"book_key\":\"txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"collection_kind\":\"tag\",\"collection_id\":\"00000000000000000000000000000001\",\"ordinal\":0}}",
+                    "78931b7b5b8aaf7a6a36d2cb6f98a7e0c1f79b3c88fc394caa7cf5fc8581451f"
+                  ],
+                  [
+                    "f9340de8b9df4ad0a1488a808df5865a",
+                    "tag",
+                    "00000000000000000000000000000001",
+                    "put",
+                    "{\"version\":1,\"id\":\"f9340de8b9df4ad0a1488a808df5865a\",\"entity_kind\":\"tag\",\"entity_key\":\"00000000000000000000000000000001\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"name\":\"Tag\"}}",
+                    "3ad44b31fc93e21b47084ef0224767a16b2deab73c6082e1f2d5b3c1eac7cb77"
+                  ]
+                ]
+              },
+              "outbox": {
+                "count": 3,
+                "sha256": "8dbad89ffa1c3a40ab2a92676f77a8ad3cc181dd241a41b9783645e2de1fad83",
+                "rows": [
+                  [
+                    "1",
+                    "054f963a56864c6b9bc2cb7e2adbecac",
+                    "0",
+                    ""
+                  ],
+                  [
+                    "3",
+                    "0fea626cadd749ca968fa3da663daaf8",
+                    "0",
+                    ""
+                  ],
+                  [
+                    "2",
+                    "f9340de8b9df4ad0a1488a808df5865a",
+                    "0",
+                    ""
+                  ]
+                ]
+              },
+              "local_mapping": {
+                "count": 1,
+                "sha256": "0604b41d7e98c595e26dea234c5c81836daceaf604bd689d74c4ce628d0396e4",
+                "rows": [
+                  [
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "1",
+                    "reflow_global"
+                  ]
+                ]
+              },
+              "membership": [
+                [
+                  "00000000000000000000000000000001",
+                  "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ],
+              "pending": {
+                "present": false,
+                "raw_sha256": null
+              }
+            },
+            "source_preserved": true,
+            "committed": true,
+            "diagnostic_completed": true
+          },
+          {
+            "id": "legacyDirect",
+            "stage": "completed",
+            "source_sha256": "38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+            "source_bytes": 38,
+            "historical_state_reconstruction": true,
+            "before": {
+              "metadata": [
+                "txt",
+                "38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                "38",
+                "Verified original",
+                "",
+                "Verified original",
+                "0",
+                "0"
+              ],
+              "book_heads": [],
+              "selection": [
+                "0",
+                "0",
+                "0"
+              ],
+              "revisions": {
+                "count": 1,
+                "sha256": "d5556ac3240f4dbe8720ca5716ec0d167723cbf6c9d4424a124546d4ba87c372",
+                "rows": [
+                  [
+                    "76c8111976b34a1691353b0e64726595",
+                    "tag",
+                    "00000000000000000000000000000001",
+                    "put",
+                    "{\"version\":1,\"id\":\"76c8111976b34a1691353b0e64726595\",\"entity_kind\":\"tag\",\"entity_key\":\"00000000000000000000000000000001\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"name\":\"Tag\"}}",
+                    "6b6e1b48bc39be38886dd861d5d8e39b22e604cf49bc5a182e52c2eddffe595f"
+                  ]
+                ]
+              },
+              "outbox": {
+                "count": 1,
+                "sha256": "b4b404b8c8079a066eba42150b8c113f532b12fc36b34fa62b0128012c9c9c28",
+                "rows": [
+                  [
+                    "1",
+                    "76c8111976b34a1691353b0e64726595",
+                    "0",
+                    ""
+                  ]
+                ]
+              },
+              "local_mapping": {
+                "count": 1,
+                "sha256": "0604b41d7e98c595e26dea234c5c81836daceaf604bd689d74c4ce628d0396e4",
+                "rows": [
+                  [
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "1",
+                    "reflow_global"
+                  ]
+                ]
+              },
+              "membership": [],
+              "pending": {
+                "present": true,
+                "raw_sha256": "67fd9a863bc67ef5f7d65756e0d66fe3fdc38c5331d4b66795607aee6e851ff0",
+                "command_sha256": "9476cc39bd8fbdc78f180f4c19b0a1483ade48a5dd7c75bcec647a86575403c7",
+                "command_revision": "287ca131356e4fc7b681be75468e3230",
+                "command_heads": [],
+                "bootstrap_present": true,
+                "bootstrap_done": false,
+                "outcome": "Saved before submission",
+                "bootstrap_sha256": "48785347919efa17362a31be7216dfc5141256768fa5618e189c70e6fc6bb085",
+                "bootstrap_revision": "0b03304fd6b746f0a40fea0c90e9270d",
+                "bootstrap_heads": [],
+                "bootstrap_retained": false
+              }
+            },
+            "retry_return": "Change committed",
+            "after_retry": {
+              "metadata": [
+                "txt",
+                "38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                "38",
+                "Verified original",
+                "",
+                "Verified original",
+                "0",
+                "0"
+              ],
+              "book_heads": [
+                "0b03304fd6b746f0a40fea0c90e9270d"
+              ],
+              "selection": [
+                "4",
+                "0",
+                "0",
+                "0b03304fd6b746f0a40fea0c90e9270d"
+              ],
+              "revisions": {
+                "count": 3,
+                "sha256": "d35d9ca6d5c36ad64c0b4b9c6c74a5d6d4bd285c15a1edd37c14764a61dac14f",
+                "rows": [
+                  [
+                    "0b03304fd6b746f0a40fea0c90e9270d",
+                    "book",
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "put",
+                    "{\"version\":1,\"id\":\"0b03304fd6b746f0a40fea0c90e9270d\",\"entity_kind\":\"book\",\"entity_key\":\"txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"format\":\"txt\",\"source_sha256\":\"38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"source_bytes\":38,\"title\":\"Verified original\",\"author\":\"\",\"favorite\":false}}",
+                    "0ea8f1ed58e4a3b39eb5854d86cd27c9e89f5e5b593baa3f5579a136f20d78aa"
+                  ],
+                  [
+                    "287ca131356e4fc7b681be75468e3230",
+                    "membership",
+                    "tag:00000000000000000000000000000001:txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "put",
+                    "{\"version\":1,\"id\":\"287ca131356e4fc7b681be75468e3230\",\"entity_kind\":\"membership\",\"entity_key\":\"tag:00000000000000000000000000000001:txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"book_key\":\"txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"collection_kind\":\"tag\",\"collection_id\":\"00000000000000000000000000000001\",\"ordinal\":0}}",
+                    "c2aded62f9b16d61ab5f548bb0dbe4889325a2c15c3f0da5c8cc87c4a655f31a"
+                  ],
+                  [
+                    "76c8111976b34a1691353b0e64726595",
+                    "tag",
+                    "00000000000000000000000000000001",
+                    "put",
+                    "{\"version\":1,\"id\":\"76c8111976b34a1691353b0e64726595\",\"entity_kind\":\"tag\",\"entity_key\":\"00000000000000000000000000000001\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"name\":\"Tag\"}}",
+                    "6b6e1b48bc39be38886dd861d5d8e39b22e604cf49bc5a182e52c2eddffe595f"
+                  ]
+                ]
+              },
+              "outbox": {
+                "count": 3,
+                "sha256": "6371542d95a1596162757015544f440db7252e83cd148b8c8cb9c19fc213e0e4",
+                "rows": [
+                  [
+                    "2",
+                    "0b03304fd6b746f0a40fea0c90e9270d",
+                    "0",
+                    ""
+                  ],
+                  [
+                    "3",
+                    "287ca131356e4fc7b681be75468e3230",
+                    "0",
+                    ""
+                  ],
+                  [
+                    "1",
+                    "76c8111976b34a1691353b0e64726595",
+                    "0",
+                    ""
+                  ]
+                ]
+              },
+              "local_mapping": {
+                "count": 1,
+                "sha256": "0604b41d7e98c595e26dea234c5c81836daceaf604bd689d74c4ce628d0396e4",
+                "rows": [
+                  [
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "1",
+                    "reflow_global"
+                  ]
+                ]
+              },
+              "membership": [
+                [
+                  "00000000000000000000000000000001",
+                  "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ],
+              "pending": {
+                "present": false,
+                "raw_sha256": null
+              }
+            },
+            "source_preserved": true,
+            "committed": true,
+            "diagnostic_completed": true
+          },
+          {
+            "id": "legacyReopen",
+            "stage": "completed",
+            "source_sha256": "38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+            "source_bytes": 38,
+            "historical_state_reconstruction": true,
+            "before": {
+              "metadata": [
+                "txt",
+                "38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                "38",
+                "Verified original",
+                "",
+                "Verified original",
+                "0",
+                "0"
+              ],
+              "book_heads": [],
+              "selection": [
+                "0",
+                "0",
+                "0"
+              ],
+              "revisions": {
+                "count": 1,
+                "sha256": "e02876bda4794488f460ff2c29d6beb358cbd779f95be9edb4a0b4a7408fe46d",
+                "rows": [
+                  [
+                    "2ac103fca47949c8b258a684b44d9519",
+                    "tag",
+                    "00000000000000000000000000000001",
+                    "put",
+                    "{\"version\":1,\"id\":\"2ac103fca47949c8b258a684b44d9519\",\"entity_kind\":\"tag\",\"entity_key\":\"00000000000000000000000000000001\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"name\":\"Tag\"}}",
+                    "6da76751595000a70fa12b877e5f2166b44d3e48d8a335274971b7812db602ef"
+                  ]
+                ]
+              },
+              "outbox": {
+                "count": 1,
+                "sha256": "dab34144336b4d7c390294ef8813f7956e20a99d3af4d41fa1b3a450267f38af",
+                "rows": [
+                  [
+                    "1",
+                    "2ac103fca47949c8b258a684b44d9519",
+                    "0",
+                    ""
+                  ]
+                ]
+              },
+              "local_mapping": {
+                "count": 1,
+                "sha256": "0604b41d7e98c595e26dea234c5c81836daceaf604bd689d74c4ce628d0396e4",
+                "rows": [
+                  [
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "1",
+                    "reflow_global"
+                  ]
+                ]
+              },
+              "membership": [],
+              "pending": {
+                "present": true,
+                "raw_sha256": "32b54fc18bcda26d9863b23c86485a32c11eece6369ed7b1326a44c7002fb9cc",
+                "command_sha256": "21bf0572732d0d23f7d3d8389984a86f8bbcd7291bdcc3a90fdbe174fc01ced3",
+                "command_revision": "75099fdb79ca478c8d10871432694902",
+                "command_heads": [],
+                "bootstrap_present": true,
+                "bootstrap_done": false,
+                "outcome": "Saved before submission",
+                "bootstrap_sha256": "ed7e593052d03cf7a0be06c258dbcf92a23d68cc4b0ff0eb887356ae50a2eec8",
+                "bootstrap_revision": "2a478a53ffcf44459df67e97fd162f78",
+                "bootstrap_heads": [],
+                "bootstrap_retained": false
+              }
+            },
+            "after_reopen": {
+              "metadata": [
+                "txt",
+                "38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                "38",
+                "Verified original",
+                "",
+                "Verified original",
+                "0",
+                "0"
+              ],
+              "book_heads": [
+                "77c50cb537ab4426b5e7b30ff272f437"
+              ],
+              "selection": [
+                "4",
+                "0",
+                "0",
+                "77c50cb537ab4426b5e7b30ff272f437"
+              ],
+              "revisions": {
+                "count": 2,
+                "sha256": "2c46ea20f3a879fdfe8fab44d56541624bca8472b6e4f28200cb166199e0de5f",
+                "rows": [
+                  [
+                    "2ac103fca47949c8b258a684b44d9519",
+                    "tag",
+                    "00000000000000000000000000000001",
+                    "put",
+                    "{\"version\":1,\"id\":\"2ac103fca47949c8b258a684b44d9519\",\"entity_kind\":\"tag\",\"entity_key\":\"00000000000000000000000000000001\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"name\":\"Tag\"}}",
+                    "6da76751595000a70fa12b877e5f2166b44d3e48d8a335274971b7812db602ef"
+                  ],
+                  [
+                    "77c50cb537ab4426b5e7b30ff272f437",
+                    "book",
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "put",
+                    "{\"version\":1,\"id\":\"77c50cb537ab4426b5e7b30ff272f437\",\"entity_kind\":\"book\",\"entity_key\":\"txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"format\":\"txt\",\"source_sha256\":\"38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"source_bytes\":38,\"title\":\"Verified original\",\"author\":\"\",\"favorite\":false}}",
+                    "3c53f378eb533ba17c049963b78712433bca427169bf3e221d60ac25b5de8943"
+                  ]
+                ]
+              },
+              "outbox": {
+                "count": 2,
+                "sha256": "5bc55028e62ad5271e2218d5b3c2692af9158cf7cbe5be707c6ca3cd35dcb24c",
+                "rows": [
+                  [
+                    "1",
+                    "2ac103fca47949c8b258a684b44d9519",
+                    "0",
+                    ""
+                  ],
+                  [
+                    "2",
+                    "77c50cb537ab4426b5e7b30ff272f437",
+                    "0",
+                    ""
+                  ]
+                ]
+              },
+              "local_mapping": {
+                "count": 1,
+                "sha256": "0604b41d7e98c595e26dea234c5c81836daceaf604bd689d74c4ce628d0396e4",
+                "rows": [
+                  [
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "1",
+                    "reflow_global"
+                  ]
+                ]
+              },
+              "membership": [],
+              "pending": {
+                "present": true,
+                "raw_sha256": "32b54fc18bcda26d9863b23c86485a32c11eece6369ed7b1326a44c7002fb9cc",
+                "command_sha256": "21bf0572732d0d23f7d3d8389984a86f8bbcd7291bdcc3a90fdbe174fc01ced3",
+                "command_revision": "75099fdb79ca478c8d10871432694902",
+                "command_heads": [],
+                "bootstrap_present": true,
+                "bootstrap_done": false,
+                "outcome": "Saved before submission",
+                "bootstrap_sha256": "ed7e593052d03cf7a0be06c258dbcf92a23d68cc4b0ff0eb887356ae50a2eec8",
+                "bootstrap_revision": "2a478a53ffcf44459df67e97fd162f78",
+                "bootstrap_heads": [],
+                "bootstrap_retained": false
+              }
+            },
+            "retry_return": "Book bootstrap refused. Review the current item and its dependencies. The exact saved request is retained for retry.",
+            "after_retry": {
+              "metadata": [
+                "txt",
+                "38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                "38",
+                "Verified original",
+                "",
+                "Verified original",
+                "0",
+                "0"
+              ],
+              "book_heads": [
+                "77c50cb537ab4426b5e7b30ff272f437"
+              ],
+              "selection": [
+                "4",
+                "0",
+                "0",
+                "77c50cb537ab4426b5e7b30ff272f437"
+              ],
+              "revisions": {
+                "count": 2,
+                "sha256": "2c46ea20f3a879fdfe8fab44d56541624bca8472b6e4f28200cb166199e0de5f",
+                "rows": [
+                  [
+                    "2ac103fca47949c8b258a684b44d9519",
+                    "tag",
+                    "00000000000000000000000000000001",
+                    "put",
+                    "{\"version\":1,\"id\":\"2ac103fca47949c8b258a684b44d9519\",\"entity_kind\":\"tag\",\"entity_key\":\"00000000000000000000000000000001\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"name\":\"Tag\"}}",
+                    "6da76751595000a70fa12b877e5f2166b44d3e48d8a335274971b7812db602ef"
+                  ],
+                  [
+                    "77c50cb537ab4426b5e7b30ff272f437",
+                    "book",
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "put",
+                    "{\"version\":1,\"id\":\"77c50cb537ab4426b5e7b30ff272f437\",\"entity_kind\":\"book\",\"entity_key\":\"txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"format\":\"txt\",\"source_sha256\":\"38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb\",\"source_bytes\":38,\"title\":\"Verified original\",\"author\":\"\",\"favorite\":false}}",
+                    "3c53f378eb533ba17c049963b78712433bca427169bf3e221d60ac25b5de8943"
+                  ]
+                ]
+              },
+              "outbox": {
+                "count": 2,
+                "sha256": "5bc55028e62ad5271e2218d5b3c2692af9158cf7cbe5be707c6ca3cd35dcb24c",
+                "rows": [
+                  [
+                    "1",
+                    "2ac103fca47949c8b258a684b44d9519",
+                    "0",
+                    ""
+                  ],
+                  [
+                    "2",
+                    "77c50cb537ab4426b5e7b30ff272f437",
+                    "0",
+                    ""
+                  ]
+                ]
+              },
+              "local_mapping": {
+                "count": 1,
+                "sha256": "0604b41d7e98c595e26dea234c5c81836daceaf604bd689d74c4ce628d0396e4",
+                "rows": [
+                  [
+                    "txt:38e27a9c64429865d5385f65ea39ad09c9d37f7a7f51070f27718d501c5f5ccb",
+                    "1",
+                    "reflow_global"
+                  ]
+                ]
+              },
+              "membership": [],
+              "pending": {
+                "present": true,
+                "raw_sha256": "b3245b61aea35f6dc1afc5b7b39a36eb06edd16580b542dc48635d5b2c4686b5",
+                "command_sha256": "21bf0572732d0d23f7d3d8389984a86f8bbcd7291bdcc3a90fdbe174fc01ced3",
+                "command_revision": "75099fdb79ca478c8d10871432694902",
+                "command_heads": [],
+                "bootstrap_present": true,
+                "bootstrap_done": false,
+                "outcome": "Book bootstrap refused. Review the current item and its dependencies. The exact saved request is retained for retry.",
+                "bootstrap_sha256": "ed7e593052d03cf7a0be06c258dbcf92a23d68cc4b0ff0eb887356ae50a2eec8",
+                "bootstrap_revision": "2a478a53ffcf44459df67e97fd162f78",
+                "bootstrap_heads": [],
+                "bootstrap_retained": false
+              }
+            },
+            "source_preserved": true,
+            "committed": false,
+            "diagnostic_completed": true
+          }
+        ],
+        "diagnostic_only": true,
+        "product_accepted": false,
+        "old_apk_upgrade_accepted": false,
+        "manual_verified": true,
+        "manual_sha256": "bd924d1ca69126edcb539cbdd8c8ec149e32de472e73817ded3586975bc8c85c",
+        "apk_identity": {
+          "app-debug.apk": {
+            "bytes": 26539828,
+            "sha256": "6f656c425893ac554fed500cff99d4073c652041d7f370d8538050b8e23b8c72"
+          },
+          "app-debug-androidTest.apk": {
+            "bytes": 101576,
+            "sha256": "947401a0d12cada6503b8c649168f3c5d69c5bde46ed4e2d284c1d30c09b9294"
+          }
+        }
+      },
+      "product_accepted": false,
+      "old_apk_upgrade_accepted": false,
+      "formal_count_credit": 0
+    }
   }
 }
