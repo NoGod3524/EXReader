@@ -162,3 +162,26 @@ This corrects the earlier source/background shorthand, not the identity of histo
 Observed verification used a known **135168-byte** original, SHA256 **991f81b3ecda0c88b5edf685861d59bf1e3ef112b46bebc6bc75a1eba3081153**. A 0500 cache directory remained empty while push succeeded. With local original absent, exact remote bytes were verified without an original PUT. Same-length substituted bytes returned HASH (sync5); 135167 bytes returned IO (sync3/dav3); 135169 bytes returned LIMIT (sync7/dav8); cancellation after a real partial GET returned sync6/dav7. All four refused ack, retained outbox1 and pushed0, then a new normal run finished outbox0. Real GET-boundary SIGKILL exited -9 and restart succeeded. Explicit consumer failure returned IO, exactly one callback and received=0. Every tested cache remained empty; independent server response hashes and raw statuses match the audit.
 
 **full_f10_complete=false; official total unchanged.** The two verification-only GET temporary-file paths are removed and evidenced. Remaining raw cache/revision-download scratch handling, platform credentials/host lifecycle and common-source actual six-host consumption still require their original-contract evidence and separately scoped work. Existing Linux managed cleanup and the new streaming transport are not a blanket claim for every operating system. All old failure runs and artifacts remain sealed. No further CI is running or automatically authorized.
+
+## Phase D — download scratch closure, approved preparation
+
+Approval 2026-11-01 02:04:30 UTC permits nine existing files from seal 2d69e941a50e17eb037bfbfa23225680b73f0619, one Linux45 + audit15 run and no automatic retry. Production: managed WebDAV header, webdav.cpp, sync.cpp. Evidence: existing sync_probe.cpp, https_fixture.py, verify.py, manifest.json, workflow and this document. No new YAML, core/SDK changes or separate implementation branch.
+
+Two source-confirmed gaps motivate this batch: managed original pulls previously published a random cache scratch name before hash/no-replace final publication, and revision pulls also used a scratch file before allocating their already-bounded wire string. private_file ignored removal failure. A current pull residue reproduction was not claimed before this experiment.
+
+Revision pulls now consume the accepted streaming GET into the existing <=1 MiB wire budget, then retain the original validate/hash/identity rules. Managed original pulls consume into a registered S snapshot, hash and seal before invoking the existing core no-replace publish API through a narrow new facade, then explicitly close/clean. S now covers verified download staging as well as upload staging. No purpose byte, registry version, receipt format, capacity or D recovery behavior changes; total16 x lifetime64 remains. Unmanaged legacy paths are not silently granted by this Linux managed evidence.
+
+A linked destination is never rolled back or deleted. The facade checks publish cleanup_pending and receipt_uncertain even when core returns OK/published=1. Cleanup failure is reported and preserved. Existing explicit host cleanup lifecycle is reused: release client, recover exact registered profile, reconnect. No new same-client automatic-recovery promise or broad temporary-file scan is added.
+
+Book revisions carrying source_bytes still verify the original before receive. Non-book history retains its original receive-then-pending-original ordering: errors do not pretend to undo already retained history, and do not advance after/pulled. No transaction rollback or remote GC is introduced.
+
+Frozen 12-case design:
+- Normal remote book pull: exact retained wire and final original, no random cache scratch.
+- Revision wrong hash (valid same-length JSON), over1MiB listing, partial GET cancellation, real partial GET SIGKILL.
+- Original wrong hash, short GET, partial GET cancellation, real partial GET SIGKILL.
+- Successful final publication followed by real nonroot cleanup EACCES: report pending, keep final cache, no book receive/advance, explicit recovery and retry.
+- Concurrent test insertion of same-hash or different-hash target: never replace target inode; accept only verified same bytes, reject/preserve conflicting bytes.
+
+The 12 new cases have 317 fixed checks and 12 exact-reason semantic negatives, plus independent raw API rows, retained-wire checks, cache names/hashes/inodes and server response identities. Prior 70 scenarios / 563 exact assertions / 26 negatives remain unchanged and separately counted. Actual process death is not hardware power-loss evidence. No result is claimed before execution.
+
+After this scoped result, proceed to the original F10 four-category evidence review (privacy, credentials, original stability, temporary-file safety) using existing host/owner delivery evidence. Do not automatically create more component batches or turn untested theoretical cases into new requirements. Full F10 remains false until the original whole-product evidence is reconciled.
