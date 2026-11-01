@@ -241,3 +241,30 @@ The new case f04/six-host uses a strongly connected directed graph: Windows→An
 Caps: Windows seed20, Android25, GTK25, macOS SDK15, simulator SDK15, macOS UI15, iPhone UI20, iPad UI20, five Windows returns10 each, retained15, audit10 =230. Old run40678657371 at a different tree/same SDK provides GTK11:03, Apple SDK6:19/4:08, macOS UI4:45 and iPhone UI10:57 timing context. iPad has no prior measured duration, so its estimate is lower confidence. This is a cap, not a duration promise.
 
 Original121/18, native HTTPS/raw counters and independent retained negative checks remain unchanged. Old four-ZIP aggregate is still not-run and not relabeled passed. Graph authentication and final F04 clause review remain necessary; no flags or total acceptance count are promoted by preparation.
+
+## Round 5 environment failure and round 6 isolated Python
+Run41270747157/source3e8ed8ccde4536a01cc6b57c3a00bfb7561c9b39: Windows seed, Android peer, GTK peer, both actual Windows returns and retained checks passed. The two Apple SDK jobs failed before compilation because system Python refused pip installation (externally-managed-environment). The three Apple UI jobs and their returns did not execute. Final audit correctly refused the missing macos_peer producer; this is a consequence, not a separate product failure. Nine non-skipped jobs totaled1435 seconds (23m55), not230 actual minutes.
+
+User04:10:27 UTC approved only this document, contract.json and helper workflow, corresponding branch commit/push, plus one fresh15-job230-cap attempt without retry. All five macOS jobs now select Python3.12, create a RUNNER_TEMP-local virtual environment, expose only its bin via GITHUB_PATH, and install Python packages there. No break-system-packages/system override. Python/pip paths and version, Ruby, CMake and selected Xcode are recorded; the original Ruby gem fallback and native build recipes remain unchanged. Products, SDK, UI drivers and all assertions are unchanged. Every required target is rebuilt at the new common HEAD; no historical successful package substitutes for a current producer. F04 remains pending.
+
+### Fixed original artifact inventory for failed round 5
+API metadata checked after terminal failure; originals are not locally downloaded or parsed. Producer run41270747157 attempt1 source3e8ed8ccde4536a01cc6b57c3a00bfb7561c9b39 tree3ad079fdd63a3d23d2ae76272d697657eeccdde5.
+
+|ID|Name|Bytes|SHA256|
+|---|---|---:|---|
+|13070080785|f04-diagnostic-audit-41270747157-1|332|4c09b1c7269f6d839eceaf47564d07e7f3b4f79f418ca95bd38ee108d69150bb|
+|13069986075|f04-gtk-peer-41270747157-1|5165538|e045b33f451dd29d0183f25da25b45de9cc458f788b9edd7fd64d27ee5deeb7d|
+|13069936228|f04-diagnostic-gtk-41270747157-1|5320|97a7c7ed05f937778bd00ea2d75476c0e61e46ccac5860f1e93589d13ce1583f|
+|13069861545|f04-windows-return-gtk-41270747157-1|4205343|a65aa23061a16b8a4cee4af58299217137d94078f1b547332aaeec31af8faad9|
+|13069800780|f04-android-peer-41270747157-1|20040511|d23e58ff5efcbbc243c8a62d44e2d0dd447e1d61a9e0b1393a795d6d06ee4de4|
+|13069705252|f04-build-windows-41270747157-1|53053429|78c9c139bf8e48ae886c3f652f0b0835239c43d8c85660ecedf5e8bca60b5a48|
+|13069642428|f04-diagnostic-windows_return_gtk-41270747157-1|4540|688c48324a8664b3bb7051c4575cf28515cde48b305d6286c8861bdd7fd0f166|
+|13069436017|f04-diagnostic-windows_seed-41270747157-1|2554|1751ba85c864a742bfe28e97cd254772391ea61868e8d26e109e50a8eeffe670|
+|13069371606|f04-build-android-41270747157-1|39938581|6e5c76445969b35886eabfbf25c5b6c2e178d600896207ad944f309fad8516f5|
+|13069237533|f04-windows-seed-41270747157-1|4201209|f0ccfd59668e66afdfaa248f5bad2b2df5be7a61e37459d64f9d0257b1fbca00|
+|13069203591|f04-windows-return-android-41270747157-1|4203667|584bdd1395075c611410ad17c81e16f4e7f2bc04d4590553de63159830260f05|
+|13069183576|f04-diagnostic-android_peer-41270747157-1|311|a1933c82388819023eccac2c4353b479580d8bccf75fd180243d53fbf444cbe8|
+|13069133801|f04-diagnostic-windows_return_android-41270747157-1|3833|68f50ff7e162b81e8727344e948f0dc751b6b85736c775a454e105682ba90aaf|
+|13069089575|f04-build-gtk-41270747157-1|42095812|c39873a0fb5e8b410b5dbdb6ffe3251f8377c65ebe0edf2eecd2a04cabc09f6f|
+|13068943721|f04-retained-linux-41270747157-1|14734881|746d3a19011893dc28e12a90c1ab2b19e19512426e83a1e99f6bd0055aaec17c|
+|13068784496|f04-diagnostic-retained_linux-41270747157-1|7526|319cffcde8ac4e07771b8edf292aea3bb33783a57e352f074ce852b7d4a9e68f|

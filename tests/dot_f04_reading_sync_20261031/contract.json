@@ -460,9 +460,18 @@
       "conclusion": "success",
       "scope": "Windows Android bidirectional plus original retained authentication",
       "F04_accepted": false
+    },
+    {
+      "run_id": "41270747157",
+      "source_sha": "3e8ed8ccde4536a01cc6b57c3a00bfb7561c9b39",
+      "conclusion": "failure",
+      "passed": "Windows Android GTK actual paths and both returns; retained original checks",
+      "failure": "two macOS SDK jobs refused system pip before SDK build",
+      "consequences": "Apple UI/returns skipped; graph audit missing producer",
+      "actual_job_seconds": 1435
     }
   ],
-  "current_round": 5,
+  "current_round": 6,
   "legacy_provider": {
     "source": "210403d121d6484a8fff4ea7ffd911efa3163535",
     "prefix": "build/v1-product-stage",
@@ -510,5 +519,11 @@
       "examples/apple/HostReadingRecords.swift"
     ],
     "scope": "only exact current 3.42 parser spelling equivalence; no SDK or stored wire changes"
+  },
+  "python_environment": {
+    "platform": "five macOS jobs",
+    "version": "3.12",
+    "isolation": "RUNNER_TEMP/f04-python venv",
+    "system_override": false
   }
 }
