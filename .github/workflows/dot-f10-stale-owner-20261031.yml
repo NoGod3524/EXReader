@@ -98,3 +98,5 @@ jobs:
           path: build/stale-audit/
           if-no-files-found: error
 # B prepared; activation only after independent static review. One approved 45+15 minute run.
+
+# Activate B once after native independent review of 5789e442.
