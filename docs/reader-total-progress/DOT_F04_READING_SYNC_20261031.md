@@ -189,3 +189,10 @@ All new wiring is unexecuted. The original four-ZIP aggregate remains `not-run`;
 Final static hardening of this preparation restores the GTK executable bit after artifact download and restricts build-receipt recipe lookup to the five fixed target recipes (no artifact-supplied filesystem path is opened). F07 independently re-read and accepted the specific restored WebDAV raw-check fix; this is not a whole-workflow or runtime approval.
 
 The limited full-package static review identified that fresh Apple UI jobs cannot inherit the SDK-build runner's Ruby gems. The original `xcodeproj` require/install prerequisite is restored separately in macOS, iPhone and iPad UI jobs. This remains disabled preparation, not executed installation.
+
+
+## Approved first real case — 2026-11-01 01:35:33Z
+User approval `Sentinel_dbf1e1cd310481918cf59dec9cedca3e` permits the exact 23-path canonical union (existing F03 eleven plus F04 twelve) and ONE Windows→Android→fresh Windows case, 120 runner-minutes total: 30/45/15/20/10 for Windows seed+build, Android peer+build, Windows return, Linux original retained checks and audit. No automatic retry is authorized.
+This F04 branch only prepares its existing files. F03 remains sole writer/trigger for the canonical entry, after its current diagnostic reaches terminal state. This helper now has only `workflow_call`, never an independent push/dispatch trigger. Caller display name must be `F04 windows-android`; approved input case is `f04/windows-android`.
+The canonical actual source must satisfy controller SHA = checkout HEAD = run head SHA. 94fb is only the product baseline; 8357 is only the frozen SDK source. Other-SHA artifacts are never reused. The executed graph has two actual host roles and two directed edges; the complete six-host goal remains pending. Linux original 18/121 evidence is included; cross-platform retained comparison is explicitly false in this case.
+Syntax/generated-adapter checks are placed at the front of the actual producer jobs, not a separate validation run. On this branch no run has been started and the one-run approval has not been consumed.
