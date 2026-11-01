@@ -934,9 +934,9 @@
       "case": "f04/macos-state-diagnostic",
       "max_runner_minutes": 15,
       "max_runs": 1,
-      "runs_started": 0,
+      "runs_started": 1,
       "automatic_retry": false,
-      "status": "prepared-awaiting-independent-source-review",
+      "status": "completed-success-diagnostic-only",
       "delta_paths": [
         "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
         "tests/dot_f04_reading_sync_20261031/contract.json",
@@ -962,7 +962,35 @@
         "ios_unchanged": true,
         "historical_metadata": "All older six-host/230-minute fields unchanged and not newly executable"
       },
-      "execution": "Existing single Mac15 entry; fixed SDK/input/product-equivalence locks unchanged; F03 sole canonical writer and trigger."
+      "execution": "Existing single Mac15 entry; fixed SDK/input/product-equivalence locks unchanged; F03 sole canonical writer and trigger.",
+      "result": {
+        "run_id": "41291277832",
+        "attempt": 1,
+        "source_sha": "2fec8c7d3ef4a12ddba335c96da265843c7dcfe7",
+        "job_id": 124802873944,
+        "conclusion": "success",
+        "test_seconds": 80.263,
+        "artifact_id": 13077298124,
+        "size_in_bytes": 42354209,
+        "digest": "sha256:d900a58f9a5ea68e0cbcaa77274cb927d3bd263324522dc66228d2e120aba7fd",
+        "api_updated_at": "2026-11-01T09:05:12Z",
+        "runner_upload_log_at": "2026-11-01T09:05:07Z",
+        "passed_checkpoints": [
+          "position",
+          "incoming-bookmark",
+          "incoming-note",
+          "edited-records",
+          "uploaded"
+        ],
+        "actual_ui": {
+          "bytes": 9653680,
+          "sha256": "efd970c32ef17e4b06590de72641ede8f53fdd8dbfaed62c5dc499bfddbbe6eb"
+        },
+        "cleanup_errors": [],
+        "diagnostic_only": true,
+        "F04_accepted": false,
+        "reason": "One exact startup denial; original full Mac peer native UI succeeded including saved progress, bookmark/note edits, unchanged location, back, actual sync and uploaded checkpoint. Snapshot unavailability remained evidence, not an assertion."
+      }
     }
   },
   "apple_visibility_diagnostic": {
@@ -1047,5 +1075,52 @@
         }
       }
     }
+  },
+  "six_host_recovery_round": {
+    "authorization_message_id": "Sentinel_96e826274dec81918d2f37bb32827617",
+    "authorized_at": "2026-11-01T09:09:04Z",
+    "case": "f04/six-host",
+    "max_runner_minutes": 230,
+    "max_runs": 1,
+    "runs_started": 0,
+    "automatic_retry": false,
+    "status": "prepared-awaiting-independent-source-review",
+    "delta_paths": [
+      "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+      "tests/dot_f04_reading_sync_20261031/run.py",
+      "tests/dot_f04_reading_sync_20261031/contract.json",
+      "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+    ],
+    "job_minutes": {
+      "windows_seed": 20,
+      "android_peer": 25,
+      "gtk_peer": 25,
+      "build_macos": 15,
+      "build_iphonesimulator": 15,
+      "macos_peer": 15,
+      "iphone_peer": 20,
+      "ipad_peer": 20,
+      "windows_return_android": 10,
+      "windows_return_gtk": 10,
+      "windows_return_macos": 10,
+      "windows_return_iphone": 10,
+      "windows_return_ipad": 10,
+      "retained_linux": 15,
+      "audit": 10
+    },
+    "design": {
+      "build_and_phase_identity": "All five builds and eleven phase outputs from the new controller source/run/attempt; no historical diagnostic graph inputs",
+      "mac_permission_switch": "__MAC_PERMISSION_PREP__ is 1 only for stage_apple(target=macos,generic=True) with F04_SCOPE=f04/six-host; explicitly 0 for every other generated Apple target/scope",
+      "diagnostic_separation": "Only four Mac behavior guards accept diagnostic OR permission preparation; diagnostic output guards stay diagnostic-only and historical loader remains diagnostic-only",
+      "permission": "This round's ephemeral Mac peer only; exact Python Local Network Don't Allow once before account/credentials/book/records, startup10s inside original150s; no Allow/settings/TCC/retry; late prompts environment-blocked with no write replay",
+      "ios_unchanged": true,
+      "product_and_sdk_unchanged": true,
+      "original_assertions_unchanged": true,
+      "windows_return_and_graph_checks_unchanged": true,
+      "workflows_unchanged": true,
+      "original_history_preserved": true,
+      "scope_limit": "Original graph/retained preparation only; do not promote F04 acceptance or formal96/108 from diagnostic or pending results"
+    },
+    "execution": "Existing F04-SIX-230-ONE-RUN canonical marker, 15 jobs once; F03 sole canonical writer/trigger after F12 actual review."
   }
 }
