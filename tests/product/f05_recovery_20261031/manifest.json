@@ -300,8 +300,8 @@
       "provenance": "Original public SDK seeding remains regression, not new native peer author.",
       "instrumentation_source_path": "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
       "instrumentation_source_blob": "ec9bb60ae3233d914086e06c8bb93aa4580d6ceb",
-      "runtime_state": "blocked_original_java_sdk_allowlist",
-      "adapter_scope": "Python CLI choice adaptation approved; original Java still admits only SDK3.40/3.41. A separate minimal generated Java adaptation requires explicit approval."
+      "runtime_state": "approved_shadow_adapter_prepared_not_run",
+      "adapter_scope": "Approved generated Python CLI choice and single-expression Java 3.42 allowlist adapters; original source remains unchanged. Canonical build must run android.py retained-prepare before Gradle -I build/f05-driver/retained/init.gradle, then retained. Exact original 16 checks, four PIDs, two boundaries and actual SDK identity remain required; no CI has run."
     },
     "apple-account-sync-3": {
       "hosts": [
