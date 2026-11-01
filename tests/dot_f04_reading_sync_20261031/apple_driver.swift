@@ -57,9 +57,7 @@ final class F04ReadingSyncUITests: XCTestCase {
             }
             if !ready { diagnosticMacObstruction("fixed-control-timeout", target: id) }
             XCTAssertTrue(ready, "Original fixed control readiness not reached: \(id)")
-            diagnosticMacObstruction("before-fixed-tap", target: id)
             e(id).tap()
-            diagnosticMacObstruction("after-fixed-tap", target: id)
             return
         }
         #endif
@@ -399,68 +397,83 @@ final class F04ReadingSyncUITests: XCTestCase {
         }
         var fields: [String: Any] = ["phase": phase, "target": target,
             "timestamp": ISO8601DateFormatter().string(from: Date()), "app_state": String(describing: app.state)]
+        // One optional root snapshot; all disappearing-node evidence is read in memory.
+        var nodes: [any XCUIElementSnapshot] = []
+        if let root = try? app.snapshot() {
+            var pending: [any XCUIElementSnapshot] = [root]
+            while let node = pending.popLast(), nodes.count < 512 {
+                nodes.append(node)
+                if node.elementType != .textField && node.elementType != .secureTextField &&
+                   node.elementType != .textView { pending.append(contentsOf: node.children) }
+            }
+            fields["app_snapshot"] = "available"
+            fields["app_snapshot_truncated"] = !pending.isEmpty
+        } else { fields["app_snapshot"] = "unavailable" }
         var own: [[String: Any]] = []
         for id in [target, "reading.list", "reading.title", "reading.editor", "reading.status",
                    "reader.status", "reader.location", "reader.busy", "reading.pending", "reading.next",
                    "reading.cancel", "account.sync.cancel", "library.title"] {
-            let item = e(id)
-            var row: [String: Any] = ["id": id, "exists": item.exists]
-            if item.exists {
-                row["enabled"] = item.isEnabled
-                row["hittable"] = item.isHittable
-                row["frame"] = String(describing: item.frame)
-                // Only status text is retained; never text-field/editor values.
-                if ["reading.status", "reader.status", "reader.location"].contains(id), let snap = try? item.snapshot() {
-                    row["status"] = sanitized(snap.label.isEmpty ? (snap.value as? String ?? "") : snap.label)
+            let matches = nodes.filter { $0.identifier == id }
+            var row: [String: Any] = ["id": id, "exists": !matches.isEmpty, "snapshot_matches": matches.count]
+            if matches.count == 1, let node = matches.first {
+                row["enabled"] = node.isEnabled
+                row["frame"] = String(describing: node.frame)
+                // Hittability is intentionally omitted: it is not a snapshot attribute.
+                if ["reading.status", "reader.status", "reader.location"].contains(id) {
+                    row["status"] = sanitized(node.label.isEmpty ? (node.value as? String ?? "") : node.label)
                 }
             }
             own.append(row)
         }
-        // Public UI proxies only: no internal bookID, record bodies or editor values.
-        if e("reading.list").exists, let list = try? e("reading.list").snapshot() {
-            var nodes: [any XCUIElementSnapshot] = [list]
-            var identifiers = Set<String>()
-            var visited = 0
-            while let node = nodes.popLast(), visited < 512 {
-                visited += 1
-                nodes.append(contentsOf: node.children)
-                if node.identifier.hasPrefix("reading.kind.") ||
-                   node.identifier.hasPrefix("reading.jump.") || node.identifier.hasPrefix("reading.edit.") {
-                    identifiers.insert(node.identifier)
-                }
-            }
-            fields["record_ui_identifiers"] = Array(identifiers.sorted().prefix(96))
-            fields["record_ui_snapshot_nodes"] = visited
-            fields["record_ui_snapshot_truncated"] = !nodes.isEmpty
-        }
         fields["own"] = own
-        fields["windows"] = app.windows.allElementsBoundByIndex.map { ["frame": String(describing: $0.frame)] }
-        fields["sheets"] = app.sheets.allElementsBoundByIndex.map { ["frame": String(describing: $0.frame)] }
+        fields["record_ui_identifiers"] = Array(Set(nodes.map { $0.identifier }.filter {
+            $0.hasPrefix("reading.kind.") || $0.hasPrefix("reading.jump.") || $0.hasPrefix("reading.edit.")
+        }).sorted().prefix(96))
+        fields["windows"] = nodes.filter { $0.elementType == .window }.prefix(8).map {
+            ["frame": String(describing: $0.frame)]
+        }
+        fields["sheets"] = nodes.filter { $0.elementType == .sheet }.prefix(8).map {
+            ["frame": String(describing: $0.frame)]
+        }
         let notificationCenter = XCUIApplication(bundleIdentifier: "com.apple.UserNotificationCenter")
         let systemState = notificationCenter.state
         fields["notification_state"] = String(describing: systemState)
         var dialogs: [[[String: String]]] = []
         if systemState == .runningForeground || systemState == .runningBackground {
-            // Read only currently exposed dialogs, not notifications/history, never activate this app.
-            for dialog in notificationCenter.dialogs.allElementsBoundByIndex.prefix(3) {
-                guard dialog.exists, dialog.frame.width > 0, dialog.frame.height > 0,
-                      let snapshot = try? dialog.snapshot() else { continue }
-                var nodes: [any XCUIElementSnapshot] = [snapshot]
-                var rows: [[String: String]] = []
-                while let node = nodes.popLast(), rows.count < 40 {
+            if let root = try? notificationCenter.snapshot() {
+                var pending: [any XCUIElementSnapshot] = [root]
+                var visited = 0
+                while let node = pending.popLast(), visited < 512, dialogs.count < 3 {
+                    visited += 1
                     if node.elementType == .textField || node.elementType == .secureTextField ||
                        node.elementType == .textView { continue }
-                    nodes.append(contentsOf: node.children)
-                    guard [XCUIElement.ElementType.window, .dialog, .staticText, .button].contains(node.elementType) else { continue }
-                    var row = ["type": String(describing: node.elementType), "id": sanitized(node.identifier),
-                               "label": sanitized(node.label), "title": sanitized(node.title), "frame": String(describing: node.frame)]
-                    if node.elementType == .staticText || node.elementType == .button {
-                        row["text"] = sanitized(node.value as? String ?? "")
+                    if node.elementType != .dialog {
+                        pending.append(contentsOf: node.children)
+                        continue
                     }
-                    rows.append(row)
+                    guard node.frame.width > 0 && node.frame.height > 0 else { continue }
+                    var descendants: [any XCUIElementSnapshot] = [node]
+                    var rows: [[String: String]] = []
+                    var dialogVisited = 0
+                    while let item = descendants.popLast(), dialogVisited < 128, rows.count < 40 {
+                        dialogVisited += 1
+                        if item.elementType == .textField || item.elementType == .secureTextField ||
+                           item.elementType == .textView { continue }
+                        descendants.append(contentsOf: item.children)
+                        guard [XCUIElement.ElementType.dialog, .staticText, .button].contains(item.elementType) else { continue }
+                        var row = ["type": String(describing: item.elementType), "id": sanitized(item.identifier),
+                                   "label": sanitized(item.label), "title": sanitized(item.title),
+                                   "frame": String(describing: item.frame)]
+                        if item.elementType == .staticText || item.elementType == .button {
+                            row["text"] = sanitized(item.value as? String ?? "")
+                        }
+                        rows.append(row)
+                    }
+                    dialogs.append(rows)
                 }
-                dialogs.append(rows)
-            }
+                fields["notification_snapshot"] = "available"
+                fields["notification_snapshot_truncated"] = !pending.isEmpty
+            } else { fields["notification_snapshot"] = "unavailable" }
         }
         fields["current_notification_dialogs"] = dialogs
         fields["finished_at"] = ISO8601DateFormatter().string(from: Date())
@@ -521,7 +534,6 @@ final class F04ReadingSyncUITests: XCTestCase {
         #endif
         #if os(macOS)
         guard macNoLatePermission(force: true) else { return }
-        diagnosticMacObstruction("before-editor-input", target: "reading.editor")
         #endif
         editor.tap(); editor.typeText(value)
         tap("reading.save-note")
@@ -545,16 +557,27 @@ final class F04ReadingSyncUITests: XCTestCase {
     private func diagnosticReadingState(_ event: String, target: String) {
         guard "__MAC_DIAGNOSTIC__" == "1" else { return }
         var fields: [String: Any] = ["event": event, "target": target]
+        var nodes: [any XCUIElementSnapshot] = []
+        if let root = try? app.snapshot() {
+            var pending: [any XCUIElementSnapshot] = [root]
+            while let node = pending.popLast(), nodes.count < 512 {
+                nodes.append(node)
+                if node.elementType != .textField && node.elementType != .secureTextField &&
+                   node.elementType != .textView { pending.append(contentsOf: node.children) }
+            }
+            fields["snapshot"] = "available"
+            fields["snapshot_truncated"] = !pending.isEmpty
+        } else { fields["snapshot"] = "unavailable" }
         for id in ["reader.status", "reading.status", "reader.location", "reader.busy", "reading.cancel", "reading.list", target] {
-            let item = e(id)
-            var value: [String: Any] = ["exists": item.exists]
-            if item.exists {
-                value["enabled"] = item.isEnabled
-                value["hittable"] = item.isHittable
-                value["frame"] = String(describing: item.frame)
-                if let snapshot = try? item.snapshot() {
-                    value["label"] = String(snapshot.label.prefix(2048))
-                    value["value"] = String(((snapshot.value as? String) ?? "").prefix(2048))
+            let matches = nodes.filter { $0.identifier == id }
+            var value: [String: Any] = ["exists": !matches.isEmpty, "snapshot_matches": matches.count]
+            if matches.count == 1, let node = matches.first {
+                value["enabled"] = node.isEnabled
+                value["frame"] = String(describing: node.frame)
+                // Public status/location only; no account, editor or record-body contents.
+                if ["reader.status", "reading.status", "reader.location"].contains(id) {
+                    value["label"] = String(node.label.prefix(512))
+                    value["value"] = String(((node.value as? String) ?? "").prefix(512))
                 }
             }
             fields[id] = value
