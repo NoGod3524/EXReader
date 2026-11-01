@@ -187,3 +187,5 @@ F07's limited static review found missing original WebDAV raw checks; these are 
 All new wiring is unexecuted. The original four-ZIP aggregate remains `not-run`; full F04 still requires runtime evidence and clause-by-clause final review, not merely a new audit flag.
 
 Final static hardening of this preparation restores the GTK executable bit after artifact download and restricts build-receipt recipe lookup to the five fixed target recipes (no artifact-supplied filesystem path is opened). F07 independently re-read and accepted the specific restored WebDAV raw-check fix; this is not a whole-workflow or runtime approval.
+
+The limited full-package static review identified that fresh Apple UI jobs cannot inherit the SDK-build runner's Ruby gems. The original `xcodeproj` require/install prerequisite is restored separately in macOS, iPhone and iPad UI jobs. This remains disabled preparation, not executed installation.
