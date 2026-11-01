@@ -78,156 +78,131 @@ final class F04ReadingSyncUITests: XCTestCase {
     }
     #if os(macOS)
     private func clickVisibleMacReadingRow(_ id: String) {
-        typealias State = (list: XCUIElement, bounds: CGRect, button: XCUIElement?, frame: CGRect?, anchors: [String: CGRect])
+        typealias Observation = (bounds: CGRect, frame: CGRect?, anchors: [String: CGRect])
         var responseSign: CGFloat? = nil
         var stepLimit: CGFloat = 24
         var scrolls = 0
+        var pending: (observation: Observation, delta: CGFloat)? = nil
         guard let targetIndex = Int(id.split(separator: ".").last ?? "") else {
             XCTFail("Missing real row index"); return
         }
+        let peerID = (id.hasPrefix("reading.jump.") ? "reading.edit." : "reading.jump.") + String(targetIndex)
         func positive(_ frame: CGRect) -> Bool { frame.width > 0 && frame.height > 0 }
-        func close(_ a: CGRect, _ b: CGRect) -> Bool {
-            abs(a.minX - b.minX) <= 0.5 && abs(a.minY - b.minY) <= 0.5 &&
-                abs(a.width - b.width) <= 0.5 && abs(a.height - b.height) <= 0.5
-        }
-        func same(_ a: State, _ b: State) -> Bool {
-            guard close(a.bounds, b.bounds) else { return false }
-            switch (a.frame, b.frame) {
-            // A real target settles on its own geometry; unrelated anchors may virtualize.
-            case let (x?, y?): return close(x, y)
-            case (nil, nil):
-                guard Set(a.anchors.keys) == Set(b.anchors.keys) else { return false }
-                for (key, frame) in a.anchors {
-                    guard let other = b.anchors[key], close(frame, other) else { return false }
-                }
-                return true
-            default: return false
-            }
-        }
-        func sample() -> State? {
-            let deadline = Date().addingTimeInterval(3)
-            var previous: State? = nil
-            var stable = 0
-            while Date() < deadline {
-                let lists = app.descendants(matching: .any).matching(identifier: "reading.list")
-                guard lists.count == 1 else { XCTFail("Unique actual reading list required"); return nil }
-                let list = lists.element(boundBy: 0), bounds = list.frame
-                guard positive(bounds) else { XCTFail("Positive actual list bounds required"); return nil }
-                let matches = list.descendants(matching: .button).matching(identifier: id)
-                guard matches.count <= 1 else { XCTFail("Unique row action required: \(id)"); return nil }
-                let button: XCUIElement? = matches.count == 1 ? matches.element(boundBy: 0) : nil
-                let rawFrame = button?.frame
-                let frame = rawFrame.flatMap { positive($0) ? $0 : nil }
-                var anchors: [String: CGRect] = [:]
-                let candidates = list.descendants(matching: .any).matching(NSPredicate(
-                    format: "identifier BEGINSWITH %@ OR identifier BEGINSWITH %@ OR identifier BEGINSWITH %@ OR identifier BEGINSWITH %@",
-                    "reading.kind.", "reading.body.", "reading.jump.", "reading.edit."))
-                var duplicates = Set<String>()
-                for item in candidates.allElementsBoundByIndex {
-                    let key = item.identifier, rect = item.frame
-                    guard positive(rect), bounds.intersects(rect) else { continue }
-                    if anchors[key] != nil { duplicates.insert(key) }
-                    anchors[key] = rect
-                }
-                for key in duplicates { anchors.removeValue(forKey: key) }
-                let current: State = (list, bounds, button, frame, anchors)
-                if let old = previous, same(current, old) { stable += 1 } else { stable = 0 }
-                previous = current
-                // Unmaterialized targets get the full bounded fresh-query window.
-                if frame != nil && stable >= 3 { return current }
-                RunLoop.current.run(until: Date().addingTimeInterval(0.1))
-            }
-            guard let result = previous, stable >= 3 else {
-                XCTFail("Actual list did not settle within three seconds; no click issued"); return nil
-            }
-            return result
-        }
         func desiredMovement(_ frame: CGRect, _ bounds: CGRect) -> CGFloat {
-            // Four pixels guide scrolling only, never admission.
             let padding: CGFloat = frame.height + 8 <= bounds.height ? 4 : 0
             if frame.minY < bounds.minY { return bounds.minY + padding - frame.minY }
             return bounds.maxY - padding - frame.maxY
         }
-        guard var state = sample() else { return }
-        // Both materialization and convergence share twenty scrolls / twenty-one checks.
+        // At most 21 fresh admission checks, 20 snapshots and 20 native scrolls.
+        // No settling timer or sample count is an additional success condition.
         for attempt in 0...20 {
-            diagnosticReadingState("row-visibility-\(attempt)", target: id)
-            let bounds = state.bounds
-            var wanted: CGFloat
-            if let frame = state.frame {
-                if bounds.contains(frame) {
-                    guard let button = state.button else { XCTFail("Unique row action required"); return }
-                    XCTAssertTrue(positive(frame) && positive(bounds))
-                    XCTAssertTrue(button.isEnabled && button.isHittable, "Visible row action must be enabled and hittable")
-                    button.click()
-                    return
-                }
-                guard frame.height <= bounds.height else { XCTFail("Row action cannot fit in visible list"); return }
-                guard frame.minX >= bounds.minX && frame.maxX <= bounds.maxX else {
-                    XCTFail("Row action outside horizontal list bounds"); return
-                }
-                wanted = desiredMovement(frame, bounds)
-            } else {
-                // Row indices come from the real enumerated List; zero rects never imply a position.
-                let indexed = state.anchors.compactMap { key, frame -> (Int, CGRect)? in
-                    guard let index = Int(key.split(separator: ".").last ?? "") else { return nil }
-                    return (index, frame)
-                }
-                guard let first = indexed.map({ $0.0 }).min(), let last = indexed.map({ $0.0 }).max() else {
-                    XCTFail("No real visible row anchors for materialization"); return
-                }
-                if targetIndex > last { wanted = -24 }
-                else if targetIndex < first { wanted = 24 }
-                else if let peer = indexed.first(where: { $0.0 == targetIndex }) {
-                    wanted = peer.1.midY >= bounds.midY ? -24 : 24
-                } else {
-                    XCTFail("Cannot infer target direction from real visible rows"); return
-                }
+            let lists = app.descendants(matching: .any).matching(identifier: "reading.list")
+            let listCount = lists.count
+            guard listCount == 1 else { XCTFail("Unique actual reading list required"); return }
+            let list = lists.element(boundBy: 0)
+            let matches = list.descendants(matching: .button).matching(identifier: id)
+            let count = matches.count
+            guard count <= 1 else { XCTFail("Unique row action required: \(id)"); return }
+            let bounds = list.frame
+            let button: XCUIElement? = count == 1 ? matches.element(boundBy: 0) : nil
+            let frame = button?.frame
+            // Fresh original admission always precedes movement/anchor evidence.
+            if let button = button, let frame = frame,
+               positive(bounds), positive(frame), bounds.contains(frame),
+               button.isEnabled && button.isHittable {
+                button.click()
+                return
             }
-            guard scrolls < 20 else { break }
-            let cap = scrolls == 0 ? min(CGFloat(16), stepLimit) : stepLimit
-            let magnitude = min(cap, min(abs(wanted) + 4, bounds.height * 0.2))
-            XCTAssertTrue(magnitude > 0, "A nonzero bounded scroll is required")
-            let delta = (wanted > 0 ? magnitude : -magnitude) * (responseSign ?? 1)
-            print("F04_MAC_SCROLL before target=\(id) scroll=\(scrolls + 1) delta=\(delta) wanted=\(wanted) frame=\(String(describing: state.frame)) bounds=\(bounds)")
-            state.list.scroll(byDeltaX: 0, deltaY: delta)
-            scrolls += 1
-            guard let next = sample() else { return }
-            var movements = state.anchors.compactMap { key, frame -> CGFloat? in
-                guard let nextFrame = next.anchors[key] else { return nil }
-                let movement = nextFrame.midY - frame.midY
-                return abs(movement) > 0.5 ? movement : nil
+            // Log captured values only: no AX traversal between admission and click.
+            print("F04_MAC_PREP target=\(id) check=\(attempt + 1) scrolls=\(scrolls) count=\(count) frame=\(String(describing: frame)) bounds=\(bounds)")
+            guard attempt < 20 else { break }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+            let tree: any XCUIElementSnapshot
+            do { tree = try list.snapshot() }
+            catch {
+                print("F04_MAC_PREP snapshot unavailable; pending next fresh admission")
+                continue
             }
-            if let oldFrame = state.frame, let nextFrame = next.frame {
-                let movement = nextFrame.midY - oldFrame.midY
-                if abs(movement) > 0.5 { movements.append(movement) }
+            // All descendant reads below are from this one returned snapshot, not live elements.
+            var nodes: [any XCUIElementSnapshot] = tree.children
+            var targets: [any XCUIElementSnapshot] = []
+            var anchors: [String: CGRect] = [:]
+            var duplicates = Set<String>()
+            while let node = nodes.popLast() {
+                nodes.append(contentsOf: node.children)
+                let key = node.identifier
+                if key == id && node.elementType == .button { targets.append(node) }
+                guard key.hasPrefix("reading.kind.") || key.hasPrefix("reading.body.") ||
+                    key.hasPrefix("reading.jump.") || key.hasPrefix("reading.edit.") else { continue }
+                let rect = node.frame
+                guard positive(rect), tree.frame.intersects(rect) else { continue }
+                if anchors[key] != nil { duplicates.insert(key) }
+                anchors[key] = rect
             }
-            if let movement = movements.first {
-                guard movements.allSatisfy({ $0 * movement > 0 }) else {
-                    XCTFail("Inconsistent real row movement; no click issued"); return
+            for key in duplicates { anchors.removeValue(forKey: key) }
+            guard targets.count <= 1 else { XCTFail("Unique snapshot row action required: \(id)"); return }
+            let targetFrame = targets.first.map { $0.frame }.flatMap { positive($0) ? $0 : nil }
+            let observation: Observation = (tree.frame, targetFrame, anchors)
+            guard positive(observation.bounds) else { continue }
+            // A possibly ready target goes straight to the next fresh original admission.
+            if let targetFrame = targetFrame, observation.bounds.contains(targetFrame) { continue }
+            if let previous = pending {
+                var measured: [(String, CGFloat)] = []
+                for key in previous.observation.anchors.keys.sorted() {
+                    guard let before = previous.observation.anchors[key], let after = anchors[key] else { continue }
+                    let movement = after.midY - before.midY
+                    if abs(movement) > 0.5 { measured.append((key, movement)) }
                 }
-                responseSign = movement * delta > 0 ? 1 : -1
-            }
-            let newlyMaterialized = state.frame == nil && next.frame != nil
-            let changedVisibleSet = Set(state.anchors.keys) != Set(next.anchors.keys)
-            // Set turnover proves progress, not signed movement; never calibrate from placeholders.
-            guard !movements.isEmpty || newlyMaterialized || changedVisibleSet else {
-                XCTFail("Actual list scroll made no measurable progress; no click issued"); return
-            }
-            if next.frame == nil && responseSign == nil {
-                XCTFail("No common real anchor to calibrate materialization direction"); return
-            }
-            if let oldFrame = state.frame, let nextFrame = next.frame {
-                let oldWanted = desiredMovement(oldFrame, bounds)
-                let nextWanted = desiredMovement(nextFrame, next.bounds)
-                if !next.bounds.contains(nextFrame) && oldWanted * nextWanted < 0 {
+                if let before = previous.observation.frame, let after = targetFrame {
+                    let movement = after.midY - before.midY
+                    if abs(movement) > 0.5 { measured.insert((id, movement), at: 0) }
+                }
+                // Insufficient/conflicting evidence consumes a bounded observation, not a blind scroll.
+                guard let chosen = measured.first,
+                      measured.allSatisfy({ $0.1 * chosen.1 > 0 }) else {
+                    print("F04_MAC_PREP movement evidence pending; no further scroll")
+                    continue
+                }
+                responseSign = chosen.1 * previous.delta > 0 ? 1 : -1
+                if let before = previous.observation.frame, let after = targetFrame,
+                   !observation.bounds.contains(after),
+                   desiredMovement(before, previous.observation.bounds) * desiredMovement(after, observation.bounds) < 0 {
                     stepLimit = max(CGFloat(1), stepLimit / 2)
                 }
+                pending = nil
             }
-            print("F04_MAC_SCROLL after target=\(id) scroll=\(scrolls) responseSign=\(String(describing: responseSign)) limit=\(stepLimit) frame=\(String(describing: next.frame)) bounds=\(next.bounds)")
-            state = next
+            var wanted: CGFloat? = nil
+            if let targetFrame = targetFrame {
+                // Geometry unsuitable for native vertical preparation remains pending, not a fabricated click.
+                if targetFrame.height <= observation.bounds.height &&
+                   targetFrame.minX >= observation.bounds.minX && targetFrame.maxX <= observation.bounds.maxX {
+                    wanted = desiredMovement(targetFrame, observation.bounds)
+                }
+            } else {
+                let indices = anchors.keys.compactMap { Int($0.split(separator: ".").last ?? "") }
+                if let first = indices.min(), let last = indices.max() {
+                    if targetIndex < first { wanted = 24 }
+                    else if targetIndex > last { wanted = -24 }
+                    else if let peer = anchors[peerID] {
+                        // Only the real sibling action in the same HStack can guide this case.
+                        if peer.minY < observation.bounds.minY { wanted = 24 }
+                        else if peer.maxY > observation.bounds.maxY { wanted = -24 }
+                    }
+                }
+            }
+            guard let wanted = wanted, wanted != 0, scrolls < 20 else { continue }
+            // Exactly one uncalibrated probe is allowed, based on real geometry/visible row order.
+            guard scrolls == 0 || responseSign != nil else { continue }
+            let cap = scrolls == 0 ? min(CGFloat(16), stepLimit) : stepLimit
+            let magnitude = min(cap, min(abs(wanted) + 4, observation.bounds.height * 0.2))
+            guard magnitude > 0 else { continue }
+            let delta = (wanted > 0 ? magnitude : -magnitude) * (responseSign ?? 1)
+            print("F04_MAC_SCROLL target=\(id) scroll=\(scrolls + 1) delta=\(delta) wanted=\(wanted) frame=\(String(describing: targetFrame)) bounds=\(observation.bounds)")
+            list.scroll(byDeltaX: 0, deltaY: delta)
+            scrolls += 1
+            pending = (observation, delta)
         }
-        XCTFail("Target did not enter the real list viewport; no click issued")
+        XCTFail("Reading row preparation-incomplete within bounded native observations; no click issued")
     }
     #endif
     private func records() {

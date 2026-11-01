@@ -643,9 +643,9 @@
       "case": "f04/macos-state-diagnostic",
       "max_runner_minutes": 15,
       "max_runs": 1,
-      "runs_started": 0,
+      "runs_started": 1,
       "automatic_retry": false,
-      "status": "prepared-awaiting-independent-source-review",
+      "status": "completed-failure",
       "delta_paths": [
         "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
         "tests/dot_f04_reading_sync_20261031/contract.json",
@@ -675,6 +675,54 @@
         "target_materialized": "stable own positive frame sufficient; old anchor need not survive",
         "final_gate": "unique positive-size fully contained enabled hittable action; one native click; all exact-position and data assertions unchanged",
         "jump_and_edit_shared": true
+      },
+      "execution": "Existing single macOS diagnostic job; historical SDK/Android pins and production-equivalence allowlist unchanged; F03 sole canonical writer and trigger.",
+      "result": {
+        "run_id": "41285517057",
+        "attempt": 1,
+        "source_sha": "436ff37b03782d6e4bbab72a1513ed9ce3f6c628",
+        "job_id": 124785888456,
+        "conclusion": "failure",
+        "test_seconds": 37.813,
+        "artifact_id": 13075451161,
+        "size_in_bytes": 42340516,
+        "digest": "sha256:e4f6983d884a8c90ce31308f7fb3d50863e93facf0e60a4f0de01c9c16ce28a7",
+        "reason": "Initial jump.0 preparation sampled 18 anchors with 36 individual AX Find calls; first observation t28.72..33.87 exhausted the three-second timer before any scroll/click. Test-driver sampling regression, not demonstrated product instability.",
+        "diagnostic_only": true,
+        "F04_accepted": false
+      }
+    },
+    "snapshot_round": {
+      "authorization_message_id": "Sentinel_e0c21a23187481919bf2e3dd4a3d0fd6",
+      "authorized_at": "2026-11-01T07:43:57Z",
+      "case": "f04/macos-state-diagnostic",
+      "max_runner_minutes": 15,
+      "max_runs": 1,
+      "runs_started": 0,
+      "automatic_retry": false,
+      "status": "prepared-awaiting-independent-source-review",
+      "delta_paths": [
+        "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+        "tests/dot_f04_reading_sync_20261031/contract.json",
+        "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+      ],
+      "design": {
+        "macos_only": true,
+        "max_fresh_admission_checks": 21,
+        "max_snapshots": 20,
+        "max_scrolls": 20,
+        "initial_max_pixels": 16,
+        "subsequent_max_pixels": 24,
+        "viewport_fraction_cap": 0.2,
+        "success_gate": "fresh unique list and target, positive bounds/frame, original full containment and enabled/hittable, then one immediate native click; no settling qualification",
+        "snapshot": "only after unsuccessful admission; one public list.snapshot per cycle, descendant attributes read from returned hierarchy in memory",
+        "direction": "real positive target frame or actual visible row index range; same-index only real sibling action overflow, otherwise pending",
+        "calibration": "one initial evidenced probe; subsequent signed response measured from same real nonzero anchor/target; insufficient or conflicting evidence remains pending without blind scroll",
+        "preparation_budget": "single 21-cycle loop; final cycle admits but does not snapshot or scroll; no three-second timeout or stable-sample gate",
+        "failure": "preparation-incomplete, not an assertion of product instability",
+        "original_assertions_preserved": true,
+        "ios_unchanged": true,
+        "job_budget_unchanged": true
       },
       "execution": "Existing single macOS diagnostic job; historical SDK/Android pins and production-equivalence allowlist unchanged; F03 sole canonical writer and trigger."
     }
