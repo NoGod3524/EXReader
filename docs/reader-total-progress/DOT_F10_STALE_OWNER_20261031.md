@@ -66,3 +66,18 @@ Old binaries refuse v2; this batch has no automatic downgrade. Restoring old reg
 Linux managed upload snapshots only, trusted cooperative owner. Not all host credentials/OSes, not defense against malicious same-UID writes to the held inode. Verification GET and other existing private_file paths remain outside this narrow snapshot cleanup change; any observed residual is retained as a gap, never treated as whole-F10 success. Full F10 remains false. Budget B is one new 60-minute run with zero automatic reruns; prior red and green runs remain sealed.
 
 Preparation status: source/test design committed with skip-ci; stable SHA requires independent review before the sole activation.
+
+## Phase B measured result — retained failure
+
+- Run [41257244190 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41257244190), source **6230fc8d1dc531d9d7c4d574d79cc6d9c458bda0**.
+- Linux job **124702921508** passed ownership/SDK guards, Actions syntax and all builds. Producer collected observations; its success does not equal acceptance.
+- Audit job **124703554193** failed. Original API **33 / 258 / 8** remains accepted with errors=[].
+- New snapshot verdict is **false**; callback/managed/sync aggregate verdicts are false. Four gated sync cases reported exceptions because the PUT boundary was not reached. Network-dependent PUT/GET assertions failed. No errors were reported for local registry purpose/CRC/capacity, process-death recovery, permission retry or old-client v2 refusal checks, but that does not make the whole package accepted.
+- Producer artifact **13063907551**, **2452124 bytes**, SHA256 **a4f4c436d92f77825832b653c21f33ce525c3f5bde2bc2b07dff940691bf7842**.
+- Audit artifact **13063184364**, **1422 bytes**, SHA256 **f40968cd788095272f09fc4659660009f6156383abfda399c4bacd673aa2cb32**.
+- Expiry **2027-01-30T00:33:16Z**. Budget B **1/1 used**, no retry.
+- New negative controls that rely on already-failed network/outbox guards are explicitly not accepted; no washing of failed baselines.
+
+Static diagnosis found the fixture generates cert.pem and the existing trust helper copies the original filename to /usr/local/share/ca-certificates. Linux update-ca-certificates expects .crt, so this fixture does not correctly install its trust anchor. This is a confirmed setup mismatch from source, not yet a claim that original artifact raw status has been read: ordinary logs contain the audit differences but not those numerical producer values. Next proposed test-only repair must first print the original fixed artifact observations, use cert.crt without disabling TLS checks, expose per-case evidence to ordinary logs, retain all old/new assertions and rerun only with a separately approved budget. No production correction or automatic rerun has been performed.
+
+F10 remains pending. This doc-only skip-ci seal preserves the measured failure and is not a stop/completion of the user's full goal.
