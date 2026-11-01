@@ -1,3 +1,22 @@
+# Latest continuation — 2026-11-01 07:43 UTC
+
+## Sealed virtual-row preparation failure and review correction
+- Run **41285517057 A1**, source **436ff37b03782d6e4bbab72a1513ed9ce3f6c628**, Mac job **124785888456**, terminal **failure** at 07:40:30 UTC; original UI test **37.813 seconds**. Other 27 jobs skipped. Budget 1/1 consumed, no retry.
+- Artifact **13075451161**, **42340516 bytes**, SHA256 **e4f6983d884a8c90ce31308f7fb3d50863e93facf0e60a4f0de01c9c16ce28a7**; exact run/source confirmed. Diagnostic-only, passed=false, F04_accepted=false.
+- Actual UI built successfully (9653680 bytes, SHA256 **6c2df1738aafbad24bfc82c5e35ef6bcc3152460756aeefca7a240c1df3ec920**). Fixed input authentication and production-equivalence receipt succeeded.
+- First jump.0 preparation began at test t28.72. Target/list reads reached t29.52; candidate enumeration began t29.63; 18 anchors each required identifier/frame reads (36 remote AX Find calls), ending t33.87. One observation exceeded the three-second window. No native scroll or jump click occurred. This is a newly introduced test-driver sampling regression, not demonstrated product instability.
+- Review missed AX call cost, forced preparation for already admissible actions, and stable=0/>=3 requiring four observations. Static review is not runtime proof. Later jump.2/jump.3, both edit actions, original row discovery and editor waits were not reached; no claim that this chain passed. Previous results remain sealed below.
+
+## Approved minimal snapshot round
+- Explicit authorization **2026-11-01 07:43:57 UTC**, message **Sentinel_e0c21a23187481919bf2e3dd4a3d0fd6**: same three existing files, one Mac diagnostic at most **15 runner-minutes**, no retry. F12 actual-diff review precedes F03 sole canonical composition/trigger.
+- Single loop: **21 fresh original admission checks**, at most **20 snapshots and 20 native scrolls**. Every cycle first checks actual unique list/target, positive dimensions, complete containment, enabled/hittable; success immediately performs the original single native click. No settling clock, stable-count qualification or prior-anchor requirement blocks an admissible target.
+- Only an unsuccessful nonfinal admission obtains one public list snapshot. Target and anchor attributes are traversed in the returned hierarchy, without live per-descendant AX property requests. The final cycle still admits after the twentieth scroll, without another snapshot/scroll.
+- Real target geometry or visible row indices guide the first ≤16px probe; subsequent steps remain ≤24px and ≤20% viewport height. Same-index guidance uses only the real sibling action in the same HStack when it overflows; no kind/body midpoint guess or invented target rectangle. Same real nonzero anchor/target displacement calibrates direction. Missing/conflicting movement or insufficient direction consumes a pending observation rather than blind scrolling. Snapshot/geometry limits terminate as preparation-incomplete, not product failure.
+- The three-second/three-stable-observation requirement is removed, not enlarged. All original exact-location/data assertions and iOS bytes remain unchanged. Product/SDK/workflow/runtime files, fixed input pins and cumulative six-path equivalence allowlist are unchanged.
+- Prepared only, pending independent actual-diff review and canonical trigger. No local code execution, testing or ZIP handling. Original formal acceptance remains **96/108**, F04 incomplete.
+
+---
+
 # Latest continuation — 2026-11-01 07:32 UTC
 
 ## Sealed pixel-scroll round (not acceptance)
