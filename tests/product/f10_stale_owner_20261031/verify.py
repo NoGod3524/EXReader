@@ -122,6 +122,74 @@ def get_audit(root):
     return {'get_accepted':not errors,'get_errors':errors,'get_cases':len(rows),
             'get_assertions':sum(len(x) for x in GET_EXPECTED.values()),'get_negative_controls':controls}
 
+
+PULL_EXPECTED={"pull-normal":{"first_exit":0,"before_retry_received":1,"cache_exists_first":1,"no_random_cache_first":1,"first_revision_get":1,"first_original_get":1,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"first_status":0,"first_dav_code":0,"first_revision_code":0,"first_pulled":1,"first_received":1,"first_exact_wire":1,"first_after_empty":1,"first_cleanup_pending":0},"pull-revision-wrong":{"first_exit":0,"before_retry_received":0,"cache_exists_first":0,"no_random_cache_first":1,"first_revision_get":1,"first_original_get":0,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"first_status":4,"first_dav_code":0,"first_revision_code":6,"first_pulled":0,"first_received":0,"first_exact_wire":0,"first_after_empty":1,"first_cleanup_pending":0},"pull-revision-over":{"first_exit":0,"before_retry_received":0,"cache_exists_first":0,"no_random_cache_first":1,"first_revision_get":0,"first_original_get":0,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"first_status":5,"first_dav_code":0,"first_revision_code":0,"first_pulled":0,"first_received":0,"first_exact_wire":0,"first_after_empty":1,"first_cleanup_pending":0},"pull-revision-cancel":{"first_exit":0,"before_retry_received":0,"cache_exists_first":0,"no_random_cache_first":1,"first_revision_get":1,"first_original_get":0,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"first_status":6,"first_dav_code":7,"first_revision_code":0,"first_pulled":0,"first_received":0,"first_exact_wire":0,"first_after_empty":1,"first_cleanup_pending":0,"get_boundary":1},"pull-revision-kill":{"first_exit":-9,"before_retry_received":0,"cache_exists_first":0,"no_random_cache_first":1,"first_revision_get":1,"first_original_get":0,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"signal":9,"get_boundary":1},"pull-original-wrong":{"first_exit":0,"before_retry_received":0,"cache_exists_first":0,"no_random_cache_first":1,"first_revision_get":1,"first_original_get":1,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"first_status":5,"first_dav_code":0,"first_revision_code":0,"first_pulled":0,"first_received":0,"first_exact_wire":0,"first_after_empty":1,"first_cleanup_pending":0},"pull-original-short":{"first_exit":0,"before_retry_received":0,"cache_exists_first":0,"no_random_cache_first":1,"first_revision_get":1,"first_original_get":1,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"first_status":3,"first_dav_code":3,"first_revision_code":0,"first_pulled":0,"first_received":0,"first_exact_wire":0,"first_after_empty":1,"first_cleanup_pending":0},"pull-original-cancel":{"first_exit":0,"before_retry_received":0,"cache_exists_first":0,"no_random_cache_first":1,"first_revision_get":1,"first_original_get":1,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"first_status":6,"first_dav_code":7,"first_revision_code":0,"first_pulled":0,"first_received":0,"first_exact_wire":0,"first_after_empty":1,"first_cleanup_pending":0,"get_boundary":1},"pull-original-kill":{"first_exit":-9,"before_retry_received":0,"cache_exists_first":0,"no_random_cache_first":1,"first_revision_get":1,"first_original_get":1,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"signal":9,"get_boundary":1},"pull-cleanup-permission":{"first_exit":0,"before_retry_received":0,"cache_exists_first":1,"no_random_cache_first":1,"first_revision_get":1,"first_original_get":1,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"first_status":3,"first_dav_code":3,"first_revision_code":0,"first_pulled":0,"first_received":0,"first_exact_wire":0,"first_after_empty":1,"first_cleanup_pending":1,"get_boundary":1},"pull-target-same":{"first_exit":0,"before_retry_received":1,"cache_exists_first":1,"no_random_cache_first":1,"first_revision_get":1,"first_original_get":1,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"first_status":0,"first_dav_code":0,"first_revision_code":0,"first_pulled":1,"first_received":1,"first_exact_wire":1,"first_after_empty":1,"first_cleanup_pending":0,"get_boundary":1},"pull-target-different":{"first_exit":0,"before_retry_received":0,"cache_exists_first":1,"no_random_cache_first":1,"first_revision_get":1,"first_original_get":1,"target_preserved":1,"recover":0,"recovery_pending":0,"retry_status":0,"retry_received":1,"retry_exact_wire":1,"retry_cleanup_pending":0,"final_cache_exact":1,"no_random_cache_final":1,"no_put":1,"remote_unchanged":1,"final_payloads":0,"published_inode_preserved":1,"first_status":5,"first_dav_code":0,"first_revision_code":0,"first_pulled":0,"first_received":0,"first_exact_wire":0,"first_after_empty":1,"first_cleanup_pending":0,"get_boundary":1}}
+def evaluate_pull(index,rows,binaries):
+    errors=[]
+    if [str(index.get(k)) for k in ['source','run','attempt']]!=[os.environ['GITHUB_SHA'],os.environ['GITHUB_RUN_ID'],os.environ['GITHUB_RUN_ATTEMPT']]:errors.append('pull source/run/attempt')
+    if index.get('pull_cases')!=list(PULL_EXPECTED) or [r.get('name') for r in rows]!=list(PULL_EXPECTED):errors.append('pull case set')
+    for name,data in binaries.items():
+        if hashlib.sha256(data).hexdigest()!=index.get('binaries',{}).get(name):errors.append('pull binary digest')
+    content=b'F10 pulled original|'*4096;digest=hashlib.sha256(content).hexdigest();leaf=digest+'.txt'
+    rev={'version':1,'id':'00'+'0'*29+'1','entity_kind':'book','entity_key':'txt:'+digest,'operation':'put','location_kind':'none','parents':[],
+         'payload':{'format':'txt','source_sha256':digest,'source_bytes':len(content),'title':'F10 pull','author':'Fixture','favorite':False}}
+    wire=json.dumps(rev,separators=(',',':')).encode();wirehash=hashlib.sha256(wire).hexdigest()
+    object_path='/dav/exreader-sync-v1/objects/'+digest[:2]+'/'+leaf
+    revision_path='/dav/exreader-sync-v1/revisions/00/'+rev['id']+'-'+wirehash+'.json'
+    for row in rows:
+        name=row.get('name');actual=row.get('checks',{})
+        if 'exception' in actual:errors.append(name+': exception')
+        for key,value in PULL_EXPECTED.get(name,{}).items():
+            if type(actual.get(key)) is not int or actual[key]!=value:errors.append(name+': '+key)
+        raw=[]
+        for text in row.get('raw',[]):
+            merged={}
+            for line in text.splitlines():
+                if line.startswith('{'):merged.update(json.loads(line))
+            raw.append(merged)
+        if len(raw)!=4:errors.append(name+': raw sequence');continue
+        if not name.endswith('-kill'):
+            for key in ['status','dav_code','revision_code','pulled','received','exact_wire','after_empty','cleanup_pending']:
+                if raw[0].get(key)!=actual.get('first_'+key):errors.append(name+': raw '+key)
+        if raw[1].get('received')!=actual.get('before_retry_received'):errors.append(name+': raw retained history')
+        if raw[2].get('recover')!=actual.get('recover') or raw[2].get('pending')!=actual.get('recovery_pending'):errors.append(name+': raw recovery')
+        for key in ['status','received','exact_wire','cleanup_pending']:
+            if raw[3].get(key)!=actual.get('retry_'+key):errors.append(name+': raw retry '+key)
+        first_names=[leaf] if PULL_EXPECTED[name]['cache_exists_first'] else []
+        if actual.get('cache_names_first')!=first_names or actual.get('cache_names_final')!=[leaf]:errors.append(name+': cache names')
+        first_hash=hashlib.sha256(b'X'*len(content)).hexdigest() if name=='pull-target-different' else digest if first_names else ''
+        if actual.get('cache_sha_first')!=first_hash or actual.get('cache_sha_final')!=digest:errors.append(name+': cache bytes')
+        if name in ['pull-target-same','pull-target-different'] and actual.get('target_inode_before')!=actual.get('cache_inode_first'):errors.append(name+': existing inode')
+        if name=='pull-cleanup-permission' and actual.get('cache_inode_first')!=actual.get('cache_inode_final'):errors.append(name+': published inode')
+        if row.get('stored',{}).get(object_path)!=digest or row.get('stored',{}).get(revision_path)!=wirehash:errors.append(name+': remote bytes')
+        requests=row.get('requests',[]);n=actual.get('first_request_count')
+        if type(n) is not int or n<1 or n>len(requests):errors.append(name+': request boundary');continue
+        first=requests[:n];revision_get=[x for x in first if x.get('method')=='GET' and x.get('path')==revision_path]
+        original_get=[x for x in first if x.get('method')=='GET' and x.get('path')==object_path]
+        if bool(revision_get)!=bool(PULL_EXPECTED[name]['first_revision_get']) or bool(original_get)!=bool(PULL_EXPECTED[name]['first_original_get']):errors.append(name+': request sequence')
+        if revision_get:
+            sent=wire.replace(b'F10 pull',b'G10 pull') if name=='pull-revision-wrong' else wire
+            if revision_get[0].get('response_bytes')!=len(sent) or revision_get[0].get('response_sha256')!=hashlib.sha256(sent).hexdigest():errors.append(name+': revision response')
+        if original_get:
+            sent=b'X'*len(content) if name=='pull-original-wrong' else content[:-1] if name=='pull-original-short' else content
+            if original_get[0].get('response_bytes')!=len(sent) or original_get[0].get('response_sha256')!=hashlib.sha256(sent).hexdigest():errors.append(name+': original response')
+        if any(x.get('method')=='PUT' for x in requests):errors.append(name+': unexpected remote mutation')
+    return errors
+def pull_audit(root):
+    index=json.loads((root/'evidence/snapshot/index.json').read_text())
+    rows=[json.loads((root/'evidence/snapshot'/(name+'.json')).read_text()) for name in PULL_EXPECTED]
+    binaries={'f10-sync-probe':(root/'probe/f10-sync-probe').read_bytes()}
+    errors=evaluate_pull(index,rows,binaries);controls=[]
+    for name in PULL_EXPECTED:
+        key='signal' if name.endswith('-kill') else 'target_preserved' if name.startswith('pull-target-') else 'first_cleanup_pending' if name=='pull-cleanup-permission' else 'no_random_cache_final' if name=='pull-normal' else 'first_status'
+        value=0 if PULL_EXPECTED[name][key]!=0 else 99
+        mutated=copy.deepcopy(rows);next(r for r in mutated if r['name']==name)['checks'][key]=value
+        reason=name+': '+key;got=evaluate_pull(index,mutated,binaries)
+        controls.append({'name':reason,'rejected':reason in got and reason not in errors})
+    if not all(c['rejected'] for c in controls):errors.append('pull negative control accepted')
+    return {'pull_accepted':not errors,'pull_errors':errors,'pull_cases':len(rows),
+            'pull_assertions':sum(len(x) for x in PULL_EXPECTED.values()),'pull_negative_controls':controls}
+
 def main():
     a=argparse.ArgumentParser();a.add_argument('--input',type=Path,required=True);a.add_argument('--output',type=Path,required=True);args=a.parse_args()
     assert os.environ.get('GITHUB_ACTIONS')=='true'
@@ -161,7 +229,9 @@ def main():
     except (OSError,ValueError,KeyError,TypeError,StopIteration) as e:result.update(snapshot_accepted=False,snapshot_errors=['incomplete snapshot evidence: '+type(e).__name__])
     try:result.update(get_audit(root))
     except (OSError,ValueError,KeyError,TypeError,StopIteration) as e:result.update(get_accepted=False,get_errors=['incomplete GET evidence: '+type(e).__name__])
+    try:result.update(pull_audit(root))
+    except (OSError,ValueError,KeyError,TypeError,StopIteration) as e:result.update(pull_accepted=False,pull_errors=['incomplete pull evidence: '+type(e).__name__])
     result['full_f10_complete']=False
     (out/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
-    return 0 if result['api_accepted'] and result.get('snapshot_accepted') and result.get('get_accepted') else 1
+    return 0 if result['api_accepted'] and result.get('snapshot_accepted') and result.get('get_accepted') and result.get('pull_accepted') else 1
 if __name__=='__main__':raise SystemExit(main())
