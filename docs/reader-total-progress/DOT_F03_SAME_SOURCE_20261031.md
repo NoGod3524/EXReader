@@ -693,3 +693,12 @@ Original artifacts preserved:
 - reader-suite-f03-android-41317482564-1: id 13088082339, 11685223 bytes, sha256:b826672b602016433b52998e0b307778fbcdf075da1df9d10723604741d5bb7f.
 
 No original ZIP was parsed outside Actions. One authorized run consumed, no automatic retry. Full F03 remains pending/unaccepted with zero formal count credit. Canonical ec11cf862ca3b44483d7e8c4726ae748ab438337 and external ownership unchanged.
+
+
+## Complete catalog install-target round - 2026-11-01T14:56:14Z authorization
+
+Prepared, not run. Four existing paths: F03 build.py, main workflow, scope and this document. Private module.run adapter exists only during the original build_product call and restores the original in finally. It matches the exact original cmake executable, catalog build directory, parallelism, reader_catalog target and verbose arguments; it appends only reader_original_import and forwards all other calls unchanged. Original failures propagate. Exactly one matched target extension is recorded after successful original build/install.
+
+Static install-closure review found catalog installs reader_catalog, reader_catalog_sqlite and independent reader_original_import, while reader_catalog only builds the first two. Revisions explicitly depends on its installed reader_revision_hash; commands installs only reader_commands. F03 subsequent modules use their original install target. Original tools/build_android_host.py, SDK/product/test files and all original Android and audit commands are unchanged.
+
+New exact case f03/two-host-complete-install / marker [F03-TWO-HOST-INSTALL-160-ONE-RUN]: one fresh same-source GTK20 + Android120 + original audit20, maximum160 runner-min, no retry. Earlier failures and artifacts preserved. No old evidence is relabeled; full F03 remains pending and receives zero formal count credit from a partial two-host result. Canonical ec11 and ownership unchanged.
