@@ -110,6 +110,8 @@ def linux():
     if report.is_file():
         run([sys.executable, 'tests/reader_a11y_gtk/check_a11y_report.py', '--report', report], 'gtk-gate')
     record('gtk', payload, code, report)
+    # The compact shell this source ships, audited by tests/f09_audit/gtk_compact.py.
+    run([sys.executable, '-X', 'faulthandler', 'tests/f09_audit/gtk_compact.py', payload], 'gtk-compact')
 
 
 def android_prepare():
