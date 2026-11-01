@@ -1,0 +1,19 @@
+name: Reader parameterized suite (preparing approved GTK Android case)
+on:
+  workflow_dispatch:
+    inputs:
+      case:
+        type: choice
+        options: [f03/gtk-android]
+        default: f03/gtk-android
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  preparation-disabled:
+    if: ${{ false }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 1
+    steps:
+      - run: echo 'Approved A11/200 preparation; no execution before complete producer and independent review.'
