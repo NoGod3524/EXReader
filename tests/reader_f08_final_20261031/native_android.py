@@ -1,7 +1,7 @@
 """Run the frozen ten-case Android shelf on the owned native hardware emulator.
 
-This is hardware qualification, with an older authenticated Release producer.
-It does not satisfy the final same-source or reader-interaction gates.
+New sampling requires an explicit same-source CI receipt and the exact eight-source bundle.
+Read-only legacy replay preserves the older producer meaning. Full reader/census gates remain separate.
 """
 import argparse, ctypes, difflib, hashlib, importlib.util, json, os, re
 import stat, struct, subprocess, sys, time, traceback, zipfile
@@ -9,10 +9,22 @@ from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
-PRODUCER = {"source_sha": "03ecfa21f6cd8d8e354145d56ffdf24244ecbe61",
+LEGACY_PRODUCER = {"source_sha": "03ecfa21f6cd8d8e354145d56ffdf24244ecbe61",
             "run_id": "41240610450", "attempt": "1"}
-ARTIFACT = {"id": 13056959967, "bytes": 42119480,
+LEGACY_ARTIFACT = {"id": 13056959967, "bytes": 42119480,
             "sha256": "791a2a412820cbc308292f0edec869bc3079504eccd3e5383582d007313982e7"}
+BUNDLE_FILES=(
+    'tests/reader_f08_final_20261031/native_android.py',
+    'tests/reader_f08_final_20261031/android-native-profile.json',
+    'tools/run_reader_shelf_ui.py',
+    'tests/reader_f08_android_20261031/lane.py',
+    'tests/reader_f08_final_20261031/android.py',
+    'tests/reader_f08_final_20261031/source.py',
+    'tests/reader_f08_final_20261031/contract.json',
+    'tests/reader_f08_android_binding_20261031/audit.py',
+)
+PACKAGES=("app-debug.apk","app-debug-androidTest.apk","uitest-debug.apk","uitest-debug-androidTest.apk")
+REPOSITORY="NoGod3524/EXReader"
 APP = "org.exreader.host"
 HELPER = APP + ".uitest"
 
@@ -34,9 +46,7 @@ def bundle():
     need(os.environ.get("COMPUTERNAME", "").upper() == "LAP25002", "named native host")
     value = load(ROOT / "bundle.json")
     need(value["kind"] == "native-local-source-bundle" and re.fullmatch(r"[0-9a-f]{40}", value["execution_source_sha"]), "source bundle")
-    need(set(value["files"]) == {"tests/reader_f08_final_20261031/native_android.py",
-         "tests/reader_f08_final_20261031/android-native-profile.json", "tools/run_reader_shelf_ui.py",
-         "tests/reader_f08_android_20261031/lane.py"}, "complete source bundle")
+    need(set(value["files"]) == set(BUNDLE_FILES), "complete eight-source bundle")
     for name, digest in value["files"].items():
         p = PurePosixPath(name)
         need(not p.is_absolute() and ".." not in p.parts and sha(ROOT / name) == digest, "bundle file: " + name)
@@ -53,11 +63,11 @@ def display():
     need(api(None, 0xffffffff, mode), "native display query")
     return [struct.unpack_from("<I", mode, offset)[0] for offset in (172, 176, 184)]
 
-def adb(plan, *args, check=True, timeout=45):
+def adb(plan, *args, check=True, timeout=45, raw=False):
     command = [str(Path(plan["sdk"]) / "platform-tools/adb.exe"), "-s", plan["serial"], *map(str, args)]
     result = subprocess.run(command, capture_output=True, timeout=timeout)
     need(not check or result.returncode == 0, "adb command failed: " + " ".join(map(str, args[:4])))
-    return result.stdout.decode(errors="replace")
+    return result if raw else result.stdout.decode(errors="replace")
 
 def profile_check(plan, out):
     profile = load(HERE / "android-native-profile.json")
@@ -105,8 +115,29 @@ def profile_check(plan, out):
          "avd_name": avd_name, "avd_config_sha256": sha(plan["avd_config"]), "config": config,
          "renderer": renderer[0], "animation": animation, "guest_cpus": int(cpu), "effective_heap": heap, "growth_limit": growth, "desktop": display()})
 
-def prepare(archive, out):
-    need(archive.stat().st_size == ARTIFACT["bytes"] and sha(archive) == ARTIFACT["sha256"], "authenticated Release ZIP")
+def producer_receipt(receipt, expected_source):
+    need(re.fullmatch(r"[0-9a-f]{40}", expected_source or ""), "explicit expected source")
+    need(receipt["repository_full_name"] == REPOSITORY, "receipt repository")
+    artifact, run = receipt["artifact"], receipt["run"]
+    repo = run["repository"]
+    need(repo["full_name"] == REPOSITORY and type(repo["id"]) is int and repo["id"] > 0, "run repository")
+    origin = artifact["workflow_run"]
+    need(origin["repository_id"] == origin["head_repository_id"] == repo["id"], "artifact repository")
+    need(run["head_sha"] == origin["head_sha"] == expected_source, "expected source differs from CI")
+    need(type(run["id"]) is int and run["id"] > 0 and origin["id"] == run["id"], "CI run identity")
+    need(type(run["run_attempt"]) is int and run["run_attempt"] > 0, "CI attempt")
+    need(type(artifact["id"]) is int and artifact["id"] > 0 and artifact["expired"] is False
+         and type(artifact["size_in_bytes"]) is int and artifact["size_in_bytes"] > 0, "CI artifact identity")
+    need(re.fullmatch(r"sha256:[0-9a-f]{64}", artifact["digest"]), "CI artifact digest")
+    return ({"source_sha": expected_source, "run_id": str(run["id"]), "attempt": str(run["run_attempt"])},
+            {"id": artifact["id"], "name": artifact["name"], "bytes": artifact["size_in_bytes"],
+             "sha256": artifact["digest"].removeprefix("sha256:")})
+
+
+def prepare(archive, out, expected_source, receipt, code):
+    producer, artifact = producer_receipt(receipt, expected_source)
+    need(code["execution_source_sha"] == expected_source and set(code["files"]) == set(BUNDLE_FILES), "same-source execution bundle")
+    need(archive.stat().st_size == artifact["bytes"] and sha(archive) == artifact["sha256"], "authenticated Release ZIP")
     with zipfile.ZipFile(archive) as z:
         infos = z.infolist(); seen = set()
         need(0 < len(infos) < 20000 and sum(i.file_size for i in infos) < 2 * 1024**3, "ZIP bounds")
@@ -117,33 +148,65 @@ def prepare(archive, out):
             need(not info.flag_bits & 1 and stat.S_IFMT(info.external_attr >> 16) in (0, stat.S_IFDIR, stat.S_IFREG), "ZIP kind")
             seen.add(key)
         manifest = json.loads(z.read("manifest.json"))
-        need(all(manifest.get(k) == v for k, v in PRODUCER.items()), "producer identity")
+        need(all(manifest.get(k) == v for k, v in producer.items()) and manifest["f08_accepted"] is False, "producer identity")
         need({i.filename for i in infos if not i.is_dir()} == set(manifest["files"]) | {"manifest.json"}, "complete ZIP inventory")
         for name, item in manifest["files"].items():
             payload = z.read(name)
             need(len(payload) == item["bytes"] and hashlib.sha256(payload).hexdigest() == item["sha256"], "ZIP entry: " + name)
-        built = json.loads(z.read("build.json"))
-        need(all(built.get(k) == v for k, v in PRODUCER.items()) and built["debug"] is False
-             and built["configuration"] == "Release" and built["sdk_version"] == "3.42.0" and built["page_theme"] is True,
-             "complete-feature optimized Release")
+        built = json.loads(z.read("build.json")); final = json.loads(z.read("final-build.json")); source = json.loads(z.read("final-source.json"))
+        need(all(built.get(k) == final.get(k) == source.get(k) == v for k, v in producer.items()), "same-source build identity")
+        need(built["debug"] is False and built["configuration"] == "Release" and built["sdk_version"] == "3.42.0"
+             and built["page_theme"] is True and built["release_fixture_jni_absent"] is True, "complete-feature optimized Release")
+        required = {"-PexrSync=true", "-PexrSearch=true", "-PexrNavigation=true", "-PexrReading=true",
+                    "-PexrPreferences=true", "-PexrPageTheme=true", "-PexrF08Review=true", "-PexrSelectorBytes=true", "-PexrWave3=true"}
+        need(required <= set(built["gradle_flags"]), "frozen full-feature flags")
+        need(final["source"] == source and final["packages"] == built["packages"]
+             and final["original_build_sha256"] == hashlib.sha256(z.read("build.json")).hexdigest()
+             and final["debug"] is False and final["measurement_performed"] is False and final["f08_accepted"] is False, "final build admission")
+        contract = load(HERE / "contract.json")
+        need(source["reviewed_source"] == contract["reviewed_source"] and source["contract_sha256"] == sha(HERE / "contract.json"), "reviewed contract")
+        need(all(p.startswith(contract["allowed_test_prefix"]) or p == contract["allowed_workflow"] for p in source["changed"]), "unreviewed build source")
+        need(json.loads(z.read("native-source/bundle.json")) == code and final["native_bundle_files"] == code["files"], "exact compiled native bundle")
+        for name, digest in code["files"].items():
+            need(sha(ROOT / name) == digest and hashlib.sha256(z.read("native-source/" + name)).hexdigest() == digest, "compiled bundle file: " + name)
+            if name.startswith(contract["allowed_test_prefix"]):need(source["adapter_files"].get(name) == digest, "admitted native source: " + name)
+        observer = {"examples/android/app/src/main/java/org/exreader/host/" + name for name in
+                    ("CatalogFrameLatch.java", "CatalogShelf.java", "MainActivity.java", "ShelfWindowMetrics.java")}
+        need(set(final["observer_source_sha256"]) == observer and all(re.fullmatch(r"[0-9a-f]{64}", v)
+             for v in final["observer_source_sha256"].values()), "complete observer source identity")
+        need(final["final_adapter_sha256"] == sha(HERE / "android.py"), "compiled final build adapter")
         need(sha(ROOT / "tools/run_reader_shelf_ui.py") == built["frozen_sampler_files"]["tools/run_reader_shelf_ui.py"], "frozen sampler")
+        need(set(built["packages"]) == set(PACKAGES), "exact four compiled APKs")
+        packages = {}
         for name, item in built["packages"].items():
             payload = z.read("packages/" + name)
             need(len(payload) == item["bytes"] and hashlib.sha256(payload).hexdigest() == item["sha256"], "compiled APK")
-            path = (ROOT / "examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"
-                    if name == "app-debug-androidTest.apk" else ROOT / "build/android-host/artifacts" / name)
-            path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(payload)
+            packages[name] = payload
         badging = z.read("release-apk-badging.txt")
         need(hashlib.sha256(badging).hexdigest() == built["release_badging_sha256"]
              and b"application-debuggable" not in badging, "Release manifest flags")
-        with zipfile.ZipFile(ROOT / "build/android-host/artifacts/app-debug.apk") as app:
+        import io
+        with zipfile.ZipFile(io.BytesIO(packages["app-debug.apk"])) as app:
             need(b"Java_org_exreader_host_ProductFixture_" not in app.read("lib/x86_64/libexreader_product.so"), "private fixture JNI")
-        fixture = ("Independent Android ownership and cancellation review.\n" * 200).encode()
-        expected = json.loads(z.read("fixtures.json"))["NewReview.txt"]
-        need(len(fixture) == expected["size"] and hashlib.sha256(fixture).hexdigest() == expected["sha256"], "original picker fixture")
+            dex = [app.read(n) for n in app.namelist() if n.startswith("classes") and n.endswith(".dex")]
+        markers = ("Lorg/exreader/host/CatalogFrameLatch;", "Lorg/exreader/host/ShelfWindowMetrics;",
+                   "catalogApplied", "catalogReady", "catalogTreeDraw", "ready_pre_draw", "tree_draw_begin", "catalog-ready")
+        need(set(final["observer_dex_markers"]) == set(markers) and all(final["observer_dex_markers"].values())
+             and all(any(marker.encode("ascii") in data for data in dex) for marker in markers), "compiled first-catalog observer")
+        fixture = z.read("fixtures/NewReview.txt"); expected = json.loads(z.read("fixtures.json"))["NewReview.txt"]
+        need(final["picker_fixture"] == {"path": "fixtures/NewReview.txt", **expected}
+             and len(fixture) == expected["size"] and hashlib.sha256(fixture).hexdigest() == expected["sha256"], "original picker fixture")
+        # All validation precedes staging. Never borrow an APK or fixture from an older run.
+        for name, payload in packages.items():
+            path = (ROOT / "examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"
+                    if name == "app-debug-androidTest.apk" else ROOT / "build/android-host/artifacts" / name)
+            path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(payload)
         path = ROOT / "build/android-host/fixtures/NewReview.txt"; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(fixture)
-        save(out / "producer.json", {"artifact": ARTIFACT, "producer": PRODUCER, "build": built,
-             "authenticated_zip_payloads": len(manifest["files"]), "qualification_only": True})
+        save(out / "producer-receipt.json", receipt)
+        save(out / "producer.json", {"artifact": artifact, "producer": producer, "build": built,
+             "final_build": final, "final_source": source, "authenticated_zip_payloads": len(manifest["files"]),
+             "same_source_build": True, "qualification_only": True})
+
 
 def sampler(plan, out=None):
     source = (ROOT / "tools/run_reader_shelf_ui.py").read_text(encoding="utf-8")
@@ -161,7 +224,17 @@ def sampler(plan, out=None):
     return namespace
 
 def worker(plan_path):
-    plan = load(plan_path); bundle()
+    plan = load(plan_path); current = bundle()
+    need(plan["expected_source"] == plan["execution_source_sha"] == current["execution_source_sha"] == plan["identity"]["source_sha"], "worker same-source admission")
+    proof = load(Path(plan["output"]) / "producer.json")
+    producer, artifact = producer_receipt(load(Path(plan["output"]) / "producer-receipt.json"), plan["expected_source"])
+    need(proof["producer"] == plan["producer"] == producer and proof["artifact"] == plan["artifact"] == artifact, "worker producer identity")
+    for name, item in proof["build"]["packages"].items():
+        path = (ROOT / "examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"
+                if name == "app-debug-androidTest.apk" else ROOT / "build/android-host/artifacts" / name)
+        need(sha(path) == item["sha256"] and path.stat().st_size == item["bytes"], "staged APK differs: " + name)
+    fixture = ROOT / "build/android-host/fixtures/NewReview.txt"
+    need(sha(fixture) == proof["final_build"]["picker_fixture"]["sha256"], "staged picker fixture differs")
     os.chdir(ROOT)
     os.environ["ANDROID_SERIAL"] = plan["serial"]
     os.environ["PATH"] = str(Path(plan["sdk"]) / "platform-tools") + os.pathsep + os.environ["PATH"]
@@ -258,42 +331,144 @@ def descriptive(out):
             "all_case_screenshots_nonuniform": len(screenshots) == 10 and all(r["nonuniform"] for r in screenshots),
             "native_frame_census_proven": False, "partial_diagnostics_only": True, "f08_accepted": False}
 
+def original_cold_start(out, windows):
+    # The frozen analyze() budgets only case 0's fixed first-interactive timestamp.
+    result = {"case_id": "first_interactive_real_catalog", "binding_complete": False, "errors": [],
+              "tti_upper_ms": None, "tti_upper_budget_passed": None, "original_tti_budget_ms": 2000,
+              "name": "original cold-start Window-frame completion upper bound", "f08_accepted": False}
+    try:
+        case = load(out / "execution/ui/first_interactive_real_catalog.json")
+        identity = load(out / "plan.json")["identity"]
+        need(case["id"] == result["case_id"] and all(case.get(k) == v for k, v in identity.items()), "original case 0 identity")
+        observation = case["detail"]["observation"]
+        start = observation["activity_started_elapsed_ns"]; first = observation["first_interactive_elapsed_ns"]
+        need(type(start) is int and start > 0 and type(first) is int and first >= start, "original first-interactive elapsed timestamps")
+        need(type(observation["first_interactive_ms"]) in (int, float)
+             and observation["first_interactive_ms"] == (first-start)/1e6, "original first-interactive ms definition")
+        candidates = []
+        for window in windows:
+            path = out / "execution/windows/catalog-ready" / window["file"]
+            try:
+                header = json.loads(path.read_text(encoding="utf-8").splitlines()[0])
+            except (OSError, ValueError, IndexError):
+                continue  # Incomplete other lifecycle files remain in the full audit.
+            if header.get("kind") == "start" and header.get("activity_started_elapsed_ns") == start:
+                candidates.append((window, path))
+        need(len(candidates) == 1, "missing/duplicate original cold-start Window")
+        window, path = candidates[0]; result["file"] = window["file"]
+        need(window["binding_complete"], "original cold-start association missing: " + "; ".join(window["errors"]))
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        ready = [row for row in rows if row.get("kind") == "ready_pre_draw"]
+        need(len(ready) == 1 and ready[0]["elapsed_ns"] == first, "original fixed first-interactive/pre-draw differs")
+        result.update(window, errors=[], name=result["name"], case_id=case["id"], activity_started_elapsed_ns=start,
+                      original_first_interactive_elapsed_ns=first, original_first_interactive_ms=observation["first_interactive_ms"])
+    except (OSError, ValueError, TypeError, KeyError, IndexError) as error:
+        result["errors"].append(str(error))
+    return result
+
+
+def catalog_completion(out):
+    spec = importlib.util.spec_from_file_location("f08_catalog_completion", ROOT / "tests/reader_f08_android_binding_20261031/audit.py")
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    value = module.audit_directory(out / "execution/windows")
+    value["original_cold_start"] = original_cold_start(out, value["windows"])
+    return value
+
+
+def authenticate_native(out):
+    manifest = load(out / "manifest.json")
+    actual = {p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file() and p != out / "manifest.json"}
+    need(actual == set(manifest["files"]), "complete native inventory")
+    for name, item in manifest["files"].items():
+        need(sha(out / name) == item["sha256"] and (out / name).stat().st_size == item["bytes"], "native payload: " + name)
+    need(manifest["identity"] == load(out / "plan.json")["identity"], "native manifest identity")
+    return manifest
+
+
 def replay(out):
     plan = load(out / "plan.json"); current = bundle()
-    need(current["execution_source_sha"] == plan["execution_source_sha"], "execution source differs")
+    need(current["execution_source_sha"] == plan["execution_source_sha"] == plan["expected_source"] == plan["identity"]["source_sha"], "execution/build source differs")
+    producer, artifact = producer_receipt(load(out / "producer-receipt.json"), plan["expected_source"])
+    proof = load(out / "producer.json")
+    need(producer == plan["producer"] == proof["producer"] and artifact == plan["artifact"] == proof["artifact"], "same-source producer receipt")
+    need(current["files"] == proof["final_build"]["native_bundle_files"], "replay bundle differs from compiled bundle")
     need(load(out / "native-profile.json")["profile_sha256"] == sha(HERE / "android-native-profile.json"), "measured profile differs")
     namespace = sampler(plan)
     installed = load(out / "installed-identity.json")
-    need(installed["matches_producer"] and sha(out / "installed.apk") == installed["producer_sha256"], "installed product identity")
+    need(installed["matches_producer"] and sha(out / "installed.apk") == installed["producer_sha256"]
+         == proof["build"]["packages"]["app-debug.apk"]["sha256"], "installed product identity")
     need(descriptive(out)["all_case_screenshots_nonuniform"], "visible case content missing")
     analyzed = namespace["analyze"](out / "execution", plan["identity"])
     recorded = load(out / "execution/result.json")
     need(recorded["accepted"] and not recorded["problems"] and all(recorded.get(k) == v for k, v in analyzed.items()), "independent original replay")
     spec = importlib.util.spec_from_file_location("f08_frozen_budget", ROOT / "tests/reader_f08_android_20261031/lane.py")
     lane = importlib.util.module_from_spec(spec); spec.loader.exec_module(lane)
-    evaluation = lane.evaluate(recorded, load(HERE / "android-native-profile.json"))
+    original_evaluation = lane.evaluate(recorded, load(HERE / "android-native-profile.json"))
+    completion = catalog_completion(out)
+    need(completion == load(out / "catalog-completion.json"), "independent catalog completion replay")
+    cold_start = completion["original_cold_start"]
+    need(cold_start["binding_complete"], "original cold-start Window-frame completion association missing")
+    upper_passed = cold_start["tti_upper_budget_passed"] is True
+    evaluation = {**original_evaluation, "original_shelf_budget_accepted": original_evaluation["shelf_budget_accepted"],
+                  "initial_cold_window_completion_upper_budget_passed": upper_passed,
+                  "shelf_budget_accepted": original_evaluation["shelf_budget_accepted"] and upper_passed}
     return {"execution": "native-local", "identity": plan["identity"], "execution_source_sha": plan["execution_source_sha"],
-            "producer": PRODUCER, "artifact": ARTIFACT, "original_analysis": analyzed, "evaluation": evaluation,
-            "scope": "native hardware qualification of the unchanged ten shelf UI cases", "same_source_final_acceptance": False,
-            "f08_accepted": False}
+            "producer": producer, "artifact": artifact, "original_analysis": analyzed, "evaluation": evaluation,
+            "catalog_completion": completion, "same_source_build": True,
+            "scope": "same-source original ten shelf UI cases with separate Window-frame completion upper bounds",
+            "same_source_final_acceptance": False, "f08_accepted": False}
+
+
+def replay_legacy(out):
+    """Read only: retain the old producer/source and replay its original failure, without new acceptance."""
+    authenticate_native(out)
+    plan = load(out / "plan.json"); proof = load(out / "producer.json")
+    need(proof["producer"] == LEGACY_PRODUCER and proof["artifact"] == LEGACY_ARTIFACT
+         and plan["identity"]["source_sha"] == LEGACY_PRODUCER["source_sha"], "legacy producer identity")
+    need(sha(ROOT / "tools/run_reader_shelf_ui.py") == proof["build"]["frozen_sampler_files"]["tools/run_reader_shelf_ui.py"], "legacy sampler differs")
+    original, rejection = None, None
+    try:
+        original = sampler(plan)["analyze"](out / "execution", plan["identity"])
+    except Exception as error:
+        rejection = type(error).__name__ + ": " + str(error)
+    return {"read_only_legacy_replay": True, "producer": LEGACY_PRODUCER, "artifact": LEGACY_ARTIFACT,
+            "legacy_execution_source_sha": plan["execution_source_sha"], "identity": plan["identity"],
+            "original_analysis": original, "original_analysis_rejection": rejection,
+            "original_native_result": load(out / "native-result.json"), "diagnostics": descriptive(out),
+            "same_source_build": False, "same_source_final_acceptance": False, "f08_accepted": False}
+
+
+def fresh_owned_packages(plan, out):
+    # Future authorized sampling only. All four APKs use this CI run's certificate.
+    # Remove only these test-owned packages; the unchanged sampler then installs and seeds anew.
+    records = []
+    for package in (APP + ".test", HELPER + ".test", HELPER, APP):
+        record = {"package": package, "previous_path": adb(plan, "shell", "pm", "path", package, check=False).strip()}
+        if record["previous_path"]:
+            result = adb(plan, "uninstall", package, check=False, raw=True)
+            record.update(returncode=result.returncode, stdout=result.stdout.decode(errors="replace"), stderr=result.stderr.decode(errors="replace"))
+            records.append(record); save(out / "fresh-owned-packages.json", records)
+            need(result.returncode == 0 and record["stdout"].strip() == "Success", "fresh same-certificate package install")
+        else:
+            records.append(record); save(out / "fresh-owned-packages.json", records)
+
 
 def run(args):
-    code = bundle(); out = args.output.resolve(); out.mkdir(parents=True, exist_ok=False)
+    code = bundle()
+    receipt = load(args.producer_receipt); producer, artifact = producer_receipt(receipt, args.expected_source)
+    need(code["execution_source_sha"] == args.expected_source, "native bundle differs from expected CI source")
+    out = args.output.resolve(); out.mkdir(parents=True, exist_ok=False)
     plan = {"output": str(out), "sdk": str(args.sdk.resolve()), "serial": args.serial,
+            "expected_source": args.expected_source, "producer": producer, "artifact": artifact,
             "avd_config": str(args.avd_config.resolve()), "input_archive": str(args.archive.resolve()), "execution_source_sha": code["execution_source_sha"],
-            "identity": {"source_sha": PRODUCER["source_sha"], "run_id": "native-lap25002-" + time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()), "attempt": "1"}}
+            "identity": {"source_sha": args.expected_source, "run_id": "native-lap25002-" + time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()), "attempt": "1"}}
     save(out / "plan.json", plan)
+    save(out / "producer-receipt.json", receipt)
     before = display(); errors = []; process = None; measured = None
     try:
         from PIL import Image
-        prepare(args.archive.resolve(), out); profile_check(plan, out)
-        # Each cloud run used a fresh AVD. Clear only the owned test helper's
-        # retained output before reusing the native AVD; original APP clearing
-        # and the seed path remain inside the unchanged frozen sampler.
-        if adb(plan, "shell", "pm", "path", HELPER, check=False).strip():
-            clear = adb(plan, "shell", "pm", "clear", HELPER)
-            (out / "clear-helper-before-sample.txt").write_text(clear, encoding="utf-8")
-            need(clear.strip() == "Success", "fresh helper output")
+        prepare(args.archive.resolve(), out, args.expected_source, receipt, code); profile_check(plan, out)
+        fresh_owned_packages(plan, out)
         with (out / "worker.log").open("wb") as log:
             process = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "worker", "--plan", str(out / "plan.json")], stdout=log, stderr=subprocess.STDOUT)
             try: code = process.wait(timeout=1100)
@@ -304,6 +479,7 @@ def run(args):
                 except subprocess.TimeoutExpired:
                     process.kill(); code = process.wait(timeout=10)
         collection_errors = collect_terminal_state(plan, out)
+        save(out / "catalog-completion.json", catalog_completion(out))
         diagnostics = descriptive(out)
         save(out / "descriptive-diagnostics.json", diagnostics)
         need(code == 0 and not errors, "original native sampler failed")
@@ -337,20 +513,21 @@ def run(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("sample", "worker", "audit"))
-    for name in ("archive", "sdk", "avd-config", "output", "plan"):
+    parser.add_argument("mode", choices=("sample", "worker", "audit", "audit-legacy"))
+    for name in ("archive", "sdk", "avd-config", "output", "plan", "producer-receipt"):
         parser.add_argument("--" + name, type=Path)
     parser.add_argument("--serial")
+    parser.add_argument("--expected-source", help="Explicit unified CI Git SHA; never inferred from the ZIP")
     args = parser.parse_args()
     if args.mode == "worker": worker(args.plan)
     elif args.mode == "audit":
-        manifest = load(args.output / "manifest.json")
-        actual = {p.relative_to(args.output).as_posix() for p in args.output.rglob("*") if p.is_file() and p != args.output / "manifest.json"}
-        need(actual == set(manifest["files"]), "complete native inventory")
-        for name, item in manifest["files"].items():
-            need(sha(args.output / name) == item["sha256"] and (args.output / name).stat().st_size == item["bytes"], "native payload: " + name)
+        authenticate_native(args.output)
         need(replay(args.output) == load(args.output / "qualification.json"), "native qualification replay")
         print(json.dumps({"authenticated": True, "result": load(args.output / "qualification.json")}))
-    else: run(args)
+    elif args.mode == "audit-legacy":
+        print(json.dumps(replay_legacy(args.output)))
+    else:
+        need(all(getattr(args, key) is not None for key in ("archive", "sdk", "avd_config", "output", "serial", "expected_source", "producer_receipt")), "sample requires explicit expected-source and producer-receipt plus device arguments")
+        run(args)
 
 if __name__ == "__main__": main()
