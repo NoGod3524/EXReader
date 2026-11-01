@@ -73,7 +73,11 @@ final class F09AppleUITests: XCTestCase {
                 let delta: CGFloat = forward ? -200 : 200
                 if horizontal { scroll.scroll(byDeltaX: delta, deltaY: 0) } else { scroll.scroll(byDeltaX: 0, deltaY: delta) }
 #else
-                if horizontal { forward ? scroll.swipeLeft() : scroll.swipeRight() } else { forward ? scroll.swipeUp() : scroll.swipeDown() }
+                // Short, slow drags: a swipe flings a whole screen and can jump over
+                // a control that is only partly on screen (iPhone, largest size).
+                let from = horizontal ? CGVector(dx: forward ? 0.7 : 0.3, dy: 0.5) : CGVector(dx: 0.5, dy: forward ? 0.7 : 0.3)
+                let to = horizontal ? CGVector(dx: forward ? 0.4 : 0.6, dy: 0.5) : CGVector(dx: 0.5, dy: forward ? 0.4 : 0.6)
+                scroll.coordinate(withNormalizedOffset: from).press(forDuration: 0.1, thenDragTo: scroll.coordinate(withNormalizedOffset: to))
 #endif
                 steps += 1
             }
@@ -227,6 +231,10 @@ final class F09AppleUITests: XCTestCase {
         var results: [String: Bool] = [:]
 
         let search = element("library.search")
+        // The shelf is ready for commands once its index work is done: search and
+        // 整理 are disabled while the product index is pending.
+        XCTAssertTrue(wait(60) { search.isEnabled && self.element("library.organization").isEnabled }, app.debugDescription)
+        RunLoop.current.run(until: Date().addingTimeInterval(1.0))
         func searchFocused() -> Bool { (search.value(forKey: "hasKeyboardFocus") as? Bool) ?? false }
         var presses = 0
         for _ in 0..<2 where !searchFocused() {
@@ -235,7 +243,7 @@ final class F09AppleUITests: XCTestCase {
             _ = wait(5) { searchFocused() }
         }
         let focusedBySearchKey = searchFocused()
-        if focusedBySearchKey { app.typeText("Sample") }
+        if focusedBySearchKey { search.typeText("Sample") }
         results["⌘F focuses search"] = focusedBySearchKey && wait(10) { ((search.value as? String) ?? "").contains("Sample") }
         samples.append(["command": "⌘F", "presses": presses, "focused": focusedBySearchKey,
                         "search_value": (search.value as? String) ?? "", "search_frame": "\(search.frame)"])
