@@ -216,3 +216,31 @@ Only pull-revision-over requires exactly zero first recorded GET/PUT requests; e
 Actions verifies original artifact 13066057477 by exact name, run41264160828 attempt1/source3f729038024028af4a00e50750a651f049f263d9, 2479730 bytes and SHA25628ad79d58d99ab911f279338f8fb0bfec0937fc5c8a67990354c7faf300a1bef. Archive member bounds, duplicate/traversal and symlink safety are checked before materialization. The original ZIP is not changed or re-uploaded. No contained binary is executed.
 
 The verdict keeps original producer source/run/attempt and records the new audit source/run/attempt separately. The original failed run remains failed. No re-audit result is claimed before the sole approved execution.
+
+## D fixed-producer re-audit accepted — separate provenance
+
+- Original measured producer remains source **3f729038024028af4a00e50750a651f049f263d9**, run **41264160828 attempt1**, artifact **13066057477**, **2479730 bytes**, SHA256 **28ad79d58d99ab911f279338f8fb0bfec0937fc5c8a67990354c7faf300a1bef**.
+- New audit [41264697945 attempt1](https://github.com/NoGod3524/EXReader/actions/runs/41264697945), audit source **413a1e2758898a5a78cd7f436554ab9cfbc4d823**, job **124724959344**, succeeded.
+- Audit checked the original metadata/name/source/size/digest and materialized its exact evidence only in Actions. **No product binary was executed, rebuilt or rerun; original ZIP was not altered or re-uploaded.**
+- All four groups accepted with empty errors: API **33/258/8**, upload snapshots **29/187/10**, verification GET **8/118/8**, download closure **12/317/12**. Total **82 scenarios / 880 fixed assertions / 38 exact-reason negatives**; original assertions retained.
+- New audit artifact **13067041457**, f10-fixed-audit-41264697945-1, **1629 bytes**, SHA256 **c90ce88d91b367b37605cf8a3348ec911e420791e9c3fd561bfa28a0d3c23c9c**, expires **2027-01-30T02:19:18Z**.
+- Audit budget **1/1 used**, product reruns **0**. Original failed audit/run stays red and retained. This seal is document-only skip-ci.
+
+The listing-overlimit case now requires exactly zero first GET/PUT records, not a blanket relaxed lower bound. Its original refusal/no-receive/no-cache conditions remain, while every other case still requires a positive request boundary. Native product observation showed the intended pre-GET refusal; the fixed independent auditor now accepts those original bytes.
+
+## Original F10 whole-product reconciliation — finite next gate
+
+This closes the authorized Linux managed module work. Next is a source-and-consumer evidence reconciliation, not automatic additional component implementation.
+
+| Original category | Evidence currently available | Whole-product evidence still needed |
+| --- | --- | --- |
+| Privacy | Bounded HTTPS/native callback paths and synthetic fixture hygiene; private keys/profiles excluded from evidence artifacts | Exact actual-host/log/catalog/queued-payload evidence under the joint source; do not transfer historical component-only checks blindly |
+| Credentials | Existing platform credential module history is reusable only with exact source/build identity and documented coverage limits | Actual host secure-store/session-only wiring and no-secret persistence/log results, linked by each existing owner |
+| Original-file stability | Exact hash/length, no-replace target preservation, immutable retry, held-FD upload and verified final cache in fixed producer | The approved six-host consumers must demonstrably use the integrated source and retain their original stability assertions |
+| Temporary files and lifetime | Registered S upload/download staging, explicit cleanup/pending, real process death/recovery; verification and revision GET avoid scratch | Actual managed-enabled host consumption/close-recovery evidence; unmanaged production paths are not certified by Linux managed tests |
+
+F03 explicitly reported its current GTK recipe has not demonstrated new managed_raw_v3 consumption and its earlier new receiving/restart receipt did not pass. F04 reported current raw3 Windows/Android validation under source cb8b5e2d04a524a44a686eb8385872ee832d373e/run41264117725; that ongoing run is not an F10 accepted receipt at this checkpoint. No inference that these source trees include this branch's new production delta is permitted.
+
+Entry to the total F10 audit is now appropriate: the joint integrator pins the selected production delta and actual consumer source, owners supply their existing runs/identities for the four original categories, and only concrete failed or missing original requirements block the result. No new hardware-power-loss, adversarial same-UID or indefinite theoretical-case requirements are introduced. SDK Git objects already match frozen8357, but this raw-module suite still does not build the SDK reader or grant six-host acceptance.
+
+**full_f10_complete=false; official total unchanged.** Production owner remains native dot F10 within the explicitly transferred files. Further integration, host changes or CI need their concrete existing authorization or a new bounded approval; no automatic component loop is started.
