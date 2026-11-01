@@ -169,3 +169,11 @@ Producer contract explicitly marks current jobs `fresh_profile=true`: original G
 `run.py build-{windows,gtk,android,macos,iphonesimulator}` first requires this package's exact admission, then invokes byte-locked 94fb SDK3.42 build recipes. Historical unrelated branch guards are not substituted for current admission; build assertions are unchanged. Android compiles the new instrumentation using the original named relay Gradle recipe, exact SDK3.42 selection, and verifies the app APK did not change during instrumentation build. Apple SDK steps explicitly do not claim to have built the UI executable. Workflow remains disabled; dependency setup, same-run routing, retained proof authentication and actual execution remain incomplete.
 
 F06 static review found missing canonical OPDSHash owner in the retained Windows/Android/GTK build entrypoints. The wrapper now builds the public hash-only package before those recipes, in target-specific prefixes; Android uses NDK27/API26/x86_64, not a host archive. Its canonical environment selector remains set through installed ProductCatalog consumers. Apple retains its existing per-target hash setup. This corrects a statically identified dependency; only F10's Linux prior recipe has runtime evidence, not these new F04 platform builds.
+
+
+### Continued F04-only preparation: retained evidence and artifact identity
+The active F04 line does not wait for the independent F03 shared-suite run.
+Graph artifact lookup now consumes explicit upload-result IDs and checks source/run/attempt/digest; unrelated same-name artifacts do not cause rejection.
+The retained-protocol recipe selects the original 18/121 checks, original export, and native HTTPS 18-capture steps from the byte-locked workflow. Only SDK selection is adapted to 3.42. All assertions remain original. The historical complete four-ZIP aggregate is explicitly `not-run`.
+The retained auditor authenticates same-run IDs, original ZIPs, original reports/raw checks and actual probe binaries. Each rejection probe begins from a separately validated positive bundle and asserts its exact rejection reason. These checks have not been executed.
+Producer workflow routing and complete compiled/installed host evidence remain in progress. No workflow is enabled, no run is started, and no complete-F04 acceptance is asserted.

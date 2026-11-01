@@ -222,5 +222,18 @@
       "incoming_prefix": "F04_IPAD",
       "fresh_profile": true
     }
-  ]
+  ],
+  "retained_producers": [
+    {
+      "key": "f04-retained-linux",
+      "job": "F04 original 18 and 121 (linux)",
+      "platform": "linux"
+    },
+    {
+      "key": "f04-retained-windows",
+      "job": "F04 original 18 and 121 (windows)",
+      "platform": "win32"
+    }
+  ],
+  "original_four_zip_aggregate": "not-run"
 }
