@@ -1,3 +1,32 @@
+# Latest fixed status — 2026-11-01 01:00 UTC / 2026-10-31 21:00 America/New_York
+
+Source before documentation: `9ce46b6ec8a1c77fcc72cdcfabad81a9670c2d99`.
+F05 incomplete; 0 CI; nine approved files; no workflow; 96/108 unchanged.
+
+F07 completed limited static review of the Android/Apple preparation and the new
+GTK-original-checkpoint → Android-receiver scene. The precise Apple process-path/hash
+binding correction and native checkpoint isolation were accepted as source changes,
+not executed results.
+
+**Confirmed blocker:** original Android Java `HostSyncTest.java`
+(blob `ec9bb60ae3233d914086e06c8bb93aa4580d6ceb`) rejects SDK3.42 before
+the16 original checks. Python CLI adaptation alone does not close this. A generated,
+single-expression Java compatibility copy and strict sourceSet binding await explicit
+approval; original repository Java is untouched. The retained adapter now refuses this
+known unsupported route before a CI attempt.
+
+The coordinator approved original stale-put interpretation: a genuine old-common-parent
+put committed after a native tombstone, complete original bytes/typed parents/commit
+order and no implicit restore suffice; do not demand an extra repeated-ID replay.
+GTK preparation checks that evidence. Android preserves its original offline scene and
+then receives the genuine checkpoint, verifying all three competing heads and no restore.
+User-visible deletion details remain partial with external UI owner.
+
+Shared canonical-suite producer/job/artifact-role/member integration is still unfinished.
+No additional run, scope or budget has been inferred from these preparations.
+
+---
+
 # F05 continuation — 2026-11-01 00:51 UTC / 2026-10-31 20:51 America/New_York
 
 **Unexecuted preparation, not completion. Formal 96/108 unchanged.**
