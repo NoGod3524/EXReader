@@ -72,24 +72,37 @@ def windows():
 
 
 def linux():
-    # The GTK product host as the current product work on this base builds it
-    # (the F08 performance lane): F06's compact raw0.2 recipe still pins SDK 3.41.
-    hash_prefix = os.environ['EXREADER_ORIGINAL_HASH_PREFIX']
-    run(['cmake', '--preset', 'reading-library'], 'gtk-sdk-configure', check=True)
-    run(['cmake', '--build', '--preset', 'reading-library'], 'gtk-sdk-build', check=True)
-    run(['cmake', '--install', 'build/reading-library'], 'gtk-sdk-install', check=True)
-    run(['cmake', '-S', 'apps/reader/desktop', '-B', 'build/f09-gtk', '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release',
-         '-DEXR_SDK_VERSION=3.42.0', '-DEXR_SDK=' + str(ROOT / 'build/reading-library/stage'), '-DEXR_READER_BUILD_GTK=ON',
-         '-DREADER_ORIGINAL_HASH_PREFIX:PATH=' + hash_prefix, '-DEXR_READER_FIXTURES=' + str(ROOT / 'tests/fixtures')],
-        'gtk-host-configure', check=True)
-    run(['cmake', '--build', 'build/f09-gtk', '--parallel', '4'], 'gtk-host-build', check=True)
-    run([sys.executable, 'tools/build_linux_host.py', '--sdk', 'build/reading-library/stage', '--sdk-version', '3.42.0',
-         '--binary', 'build/f09-gtk/gtk-host/exreader-linux', '--output', 'build/f09-gtk-package'], 'gtk-package', check=True)
-    payload = ROOT / 'build/f09-gtk-package/EXReader-Linux'
+    # The full GTK product host F06 packages (account, reading records, search,
+    # navigation, wave3, raw3, compact), built by the retained recipe
+    # tests/reader_gtk_raw_wave3/run.py. That recipe pins SDK 3.41.0, which the
+    # shared base no longer installs; only that version argument is raised to
+    # 3.42.0 here, the recipe file itself is unchanged.
+    G = module('tests/reader_gtk_raw_wave3/run.py', 'f09_gtk')
+    original = G.run
+
+    def run_342(label, args, *rest, **options):
+        raised, previous = [], None
+        for arg in args:
+            text = str(arg)
+            if text == '-DEXR_SDK_VERSION=3.41.0':
+                arg = '-DEXR_SDK_VERSION=3.42.0'
+            elif text == '3.41.0' and previous == '--sdk-version':
+                arg = '3.42.0'
+            raised.append(arg)
+            previous = text
+        return original(label, raised, *rest, **options)
+
+    G.run = run_342
+    G.build_sdk()
+    G.install_family('raw', G.PREFIX, True)
+    payload = G.build_compact_host() / 'EXReader-Linux'
     evidence = OUT / 'gtk-audit'
     if evidence.exists():
         shutil.rmtree(evidence)
-    code = run([sys.executable, 'tests/reader_a11y_gtk/audit_gtk_a11y.py', '--payload', payload, '--output', evidence], 'gtk-audit')
+    # faulthandler: the retained driver has crashed intermittently after the
+    # collections phase (codex/gtk-accessibility-crash-diagnostic); keep the stack.
+    code = run([sys.executable, '-X', 'faulthandler', 'tests/reader_a11y_gtk/audit_gtk_a11y.py', '--payload', payload,
+                '--output', evidence], 'gtk-audit')
     report = evidence / 'result.json'
     if report.is_file():
         run([sys.executable, 'tests/reader_a11y_gtk/check_a11y_report.py', '--report', report], 'gtk-gate')

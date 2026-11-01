@@ -6,7 +6,6 @@ on:
     paths:
       - tests/f09_audit/**
       - .github/workflows/claude-f09-audit.yml
-      - .github/workflows/claude-f09-apple.yml
   workflow_dispatch:
 permissions:
   contents: read
