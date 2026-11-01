@@ -33,11 +33,23 @@ def check_candidate_fields(product_baseline, sdk_freeze, changed, historical_own
             "candidate product baseline mismatch")
     require(sdk_freeze == SCOPE["sdk_source"], "candidate SDK freeze mismatch")
     require(historical_owner_guard_reexecuted is False, "historical owner guard falsely claimed")
-    require(SCOPE.get("allowed_path_count") == 23 and len(SCOPE["allowed_paths"]) == 23 and
-            len(set(SCOPE["allowed_paths"])) == 23, "authorized twenty-three-path contract malformed")
-    require(set(changed).issubset(set(SCOPE["allowed_paths"])), "outside authorized twenty-three paths")
-    require(not any(p.startswith(("examples/","apps/","tools/")) for p in changed),
-            "production or original owner source changed")
+    require(SCOPE.get("allowed_path_count") == 25 and len(SCOPE["allowed_paths"]) == 25 and
+            len(set(SCOPE["allowed_paths"])) == 25, "authorized twenty-five-path contract malformed")
+    require(set(changed).issubset(set(SCOPE["allowed_paths"])), "outside authorized twenty-five paths")
+    production = SCOPE["authorized_production_blob_sha"]
+    expected_production = {
+        "apps/reader/desktop/windows_records_owner.cpp",
+        "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
+    }
+    require(set(production) == expected_production and
+            set(SCOPE["authorized_production_paths"]) == expected_production,
+            "authorized parser production paths mismatch")
+    require(not any(p.startswith(("examples/","apps/","tools/")) and p not in production
+                    for p in changed), "production or original owner source changed")
+    for path, expected_blob in production.items():
+        actual_blob = subprocess.check_output(["git", "rev-parse", "HEAD:" + path],
+                                             cwd=ROOT, text=True).strip()
+        require(actual_blob == expected_blob, "reviewed parser production blob mismatch: " + path)
 
 def identity():
     require(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
