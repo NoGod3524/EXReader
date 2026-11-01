@@ -679,3 +679,17 @@ Prepared, not run. Three existing files only: main workflow, scope and this evid
 GTK reuses the reviewed successful observation/cleanup steps and fixed-origin driver, retaining the original build/four CTest tests/27 checks/six author commands. Android and original audit source and commands are unchanged. Each original Android receive clears its own two receiver profiles before creating a new relay, so no cross-phase bound-root adapter is required there. The new run produces fresh GTK bytes, Android receipts and original authenticated audit together under one source/run/attempt; prior artifacts are not substituted or relabeled. Audit still checks original all-exits counts, six receipts, exact database projections and revision bytes, native transport and negative controls.
 
 A successful two-host partial result is not full six-host F03 acceptance and earns no formal count by itself. Original failures and owners remain intact, canonical ec11 remains unchanged, and no other diagnostic/F04/extra host jobs are selected.
+
+
+## Same-run two-host result - 2026-11-01
+
+Run https://github.com/NoGod3524/EXReader/actions/runs/41317482564 attempt 1 failed; source e5dc7b479235f1921d52dd5b2f666b6f2f2b7840. GTK job 124880504302 succeeded (14:42:06Z to 14:46:57Z), including original retained checks and six author phases. Android job 124881688344 failed during the original build step at 14:49:25Z: cmake install could not find build/android-host/product/catalog/libreader_original_import.a. The emulator, original all-exits and all six receives were skipped. Audit job 124882332235 correctly failed with producer job not successful: android; no gate was weakened.
+
+Read-only source diagnosis: tools/build_android_host.py142-149 builds only reader_catalog for catalog before installing all configured targets. apps/reader/store/native/CMakeLists.txt114 and123 separately define and install reader_original_import; it depends on reader_catalog, not vice versa. F03 build.py309 calls that original builder unchanged. The missing target is therefore a concrete build/install coverage gap, not an observed Android native-receive failure. No builder fix or retry has been performed. A future F03-private exact-target adapter needs a new explicit scope/budget; original tools, production, SDK and tests must remain unchanged.
+
+Original artifacts preserved:
+- reader-suite-f03-audit-41317482564-1: id 13088401114, 22952959 bytes, sha256:bd99e60dae9ba61b7b2515d61271823994ee433fa9c0e99cd6396c2ef9765241.
+- reader-suite-f03-gtk-41317482564-1: id 13088121901, 23010357 bytes, sha256:409d561317d613958dd52d1b885d7a9cc1637036a91e10761a2d26e0c709318b.
+- reader-suite-f03-android-41317482564-1: id 13088082339, 11685223 bytes, sha256:b826672b602016433b52998e0b307778fbcdf075da1df9d10723604741d5bb7f.
+
+No original ZIP was parsed outside Actions. One authorized run consumed, no automatic retry. Full F03 remains pending/unaccepted with zero formal count credit. Canonical ec11cf862ca3b44483d7e8c4726ae748ab438337 and external ownership unchanged.
