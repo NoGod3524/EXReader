@@ -240,6 +240,15 @@ struct step {
       file.name=file.name.parent_path()/fs::u8path(file.name.filename().u8string().substr(1));
 #endif
     exr_webdav_error error{};exr_webdav_download result{};dav_check(exr_webdav_download_file(s.dav,resource.c_str(),s.directory.u8string().c_str(),file.name.filename().u8string().c_str(),control,&result,&error),error);}
+  void verify_remote(const std::string &resource,uint64_t bytes,const std::string &expected){
+    digest hash;exr_webdav_error error{};uint64_t received=0;
+    auto consume=[](void *context,const void *data,size_t count)->exr_webdav_status{
+      try { ((digest*)context)->append(data,count);return EXR_DAV_OK; }
+      catch(...) { return EXR_DAV_IO; }
+    };
+    dav_check(exr_webdav_read_stream(s.dav,resource.c_str(),bytes,consume,&hash,control,&received,&error),error);
+    if(received!=bytes||hash.finish()!=expected)reject(READER_SYNC_HASH,"Remote immutable object differs from the original bytes");
+  }
   void publish(const std::string &resource,const fs::path &file,uint64_t bytes,const std::string &expected
 #ifdef EXR_WEBDAV_MANAGED
     ,owned_upload *owned=nullptr
@@ -257,7 +266,7 @@ struct step {
     if(status!=EXR_DAV_OK&&status!=EXR_DAV_EXISTS&&status!=EXR_DAV_IO)dav_check(status,error);
     // An interrupted response can follow a committed PUT. A fresh GET is the
     // only success/412/ambiguous-IO acknowledgement authority.
-    private_file verify(s.directory);download(resource,verify);if(hash_file(verify.name,bytes,control)!=expected)reject(READER_SYNC_HASH,"Remote immutable object differs from the original bytes");
+    verify_remote(resource,bytes,expected);
     entries.insert(resource);
   }
   bool local_original(const reader_revision_info &i){
@@ -269,9 +278,8 @@ struct step {
     if(!available){
       // Removing a local download must not strand its deletion/metadata queue.
       // A known-length, hash-verified immutable remote original is sufficient.
-      private_file verify(s.directory);
-      try{download(object_path(i.book_key),verify);}catch(const failure &f){if(f.dav==EXR_DAV_HTTP&&f.http==404){++report.pending_local_original;return false;}throw;}
-      std::string key=i.book_key;if(hash_file(verify.name,bytes,control)!=key.substr(key.find(':')+1))reject(READER_SYNC_HASH,"Existing remote original identity differs");
+      std::string key=i.book_key;
+      try{verify_remote(object_path(key),bytes,key.substr(key.find(':')+1));}catch(const failure &f){if(f.dav==EXR_DAV_HTTP&&f.http==404){++report.pending_local_original;return false;}throw;}
       ++report.originals_verified;return true;
     }
 #ifdef EXR_WEBDAV_MANAGED
