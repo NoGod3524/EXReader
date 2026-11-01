@@ -185,3 +185,24 @@ Frozen 12-case design:
 The 12 new cases have 317 fixed checks and 12 exact-reason semantic negatives, plus independent raw API rows, retained-wire checks, cache names/hashes/inodes and server response identities. Prior 70 scenarios / 563 exact assertions / 26 negatives remain unchanged and separately counted. Actual process death is not hardware power-loss evidence. No result is claimed before execution.
 
 After this scoped result, proceed to the original F10 four-category evidence review (privacy, credentials, original stability, temporary-file safety) using existing host/owner delivery evidence. Do not automatically create more component batches or turn untested theoretical cases into new requirements. Full F10 remains false until the original whole-product evidence is reconciled.
+
+## Phase D measured result — audit failure retained
+
+- Run [41264160828 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41264160828), source **3f729038024028af4a00e50750a651f049f263d9**.
+- Linux **124723344588** passed source/SDK guards, syntax, all builds and observation collection. Audit **124723783252** failed.
+- Original **70 scenarios / 563 fixed assertions / 26 negatives** remain accepted with empty errors.
+- New group: **12 scenarios / 317 fixed checks / 12 negatives**. All fixed checks matched and all exact-reason negatives rejected; **pull_accepted=false** because of the sole additional error **pull-revision-over: request boundary**.
+- Producer **13066057477**, **2479730 bytes**, SHA256 **28ad79d58d99ab911f279338f8fb0bfec0937fc5c8a67990354c7faf300a1bef**.
+- Audit **13066711993**, **1230 bytes**, SHA256 **9a4ba892982db60007b375b21af9c6024bc6cc3299a6e8a3cb607306e4f337cd**.
+- Artifacts expire **2027-01-30T02:11:39Z**. Phase D budget **1/1 consumed**, no retry.
+
+Ordinary producer logs show the overlength revision was rejected during listing: sync status5, pulled0, received0, no cache, first_revision_get=0, first_original_get=0 and first_request_count=0. The server evidence array intentionally records GET/PUT, not PROPFIND. The audit incorrectly requires at least one recorded request for every case, conflicting with this explicit pre-GET rejection scenario. This is a narrow audit boundary error; the recorded run remains failed and is not relabelled accepted.
+
+Other observed rows include real cancellation and SIGKILL without book receive, exact recovery, and successful final publication followed by cleanup EACCES: status3/dav3, pending1, received0, retained final inode; explicit close/recover/reopen then preserved that inode and received exact history. Same/different target tests preserved the inserted inode; differing bytes were refused. These observations do not override the failed aggregate audit.
+
+Proposed correction, not executed: permit exactly zero first GET/PUT records only for pull-revision-over while retaining its status5/no-GET/no-receive checks and all other cases' positive request lower bounds. Re-audit this fixed producer artifact in one separately approved five-minute Actions job, preserving its source/run identity and separately recording new audit source/run. No production change, rebuild, rerun of scenarios, or weakened fixed assertions is needed.
+
+### Whole-F10 evidence reconciliation status
+The catalog's original F10 requirement remains the complete privacy/credentials/file-stability/temporary-cleanup outcome, not a transfer from module green. Current F03 owner reports no explicit new managed_raw_v3 hookup in its GTK recipe and no successful complete new receiving/privacy receipt. F04's current cb8b5e2d source run41264117725 is still awaiting its actual-host result at this checkpoint. Thus this F10 branch has not been proven consumed by the common actual-host binaries. Existing credential module evidence is historical, not automatically a current-host receipt. These are explicit evidence/integration boundaries, not invented new component requirements.
+
+Full F10 remains false, official count unchanged. No additional component implementation or CI is automatically authorized by this seal.
