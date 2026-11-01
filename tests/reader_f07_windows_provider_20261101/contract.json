@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "base": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+  "branch": "dot/f07-windows-provider-20261101",
+  "paths": [
+    "tests/reader_f07_windows_provider_20261101/collect.py",
+    "tests/reader_f07_windows_provider_20261101/contract.json",
+    ".github/workflows/dot-f07-windows-provider-20261101.yml",
+    "docs/reader-total-progress/DOT_F07_WINDOWS_PROVIDER_20261101.md"
+  ],
+  "trigger": "[F07-WINDOWS-PROVIDER-15-ONE-RUN]",
+  "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "sdk_version": "3.42.0",
+  "recipe": "tests/windows_sdk342/build.py",
+  "recipe_blob": "d30a5eba1701bfcc3113fe16cea98918a60c7c54",
+  "runner": "windows-2022",
+  "timeout_minutes": 15,
+  "launch_limit": 1,
+  "automatic_retry": false,
+  "authorization": {
+    "message": "Sentinel_fa1a930de67881919a66a6651809e144",
+    "time": "2026-11-01T13:28:43Z"
+  },
+  "diagnostic_only": true,
+  "F07_accepted": false
+}
