@@ -65,31 +65,42 @@ def extract_metrics(metrics_result, with_cases=False):
                         "performance_metrics":found})
     return raw_objects,cases if with_cases else metrics
 
-def native(platform):
+def native(platform, *, mac_prepare=None, mac_patch=None, mac_execute=None, mac_remaining=None, mac_terminal=None, mac_environment=None):
     diagnostic=os.environ.get("F08_APPLE_DIAGNOSTIC","").lower()=="true"
     guard()
     out=ROOT/"build/f08-apple"/platform;evidence=out/"evidence";evidence.mkdir(parents=True)
     report={**identity(),"platform":platform,"collection_complete":False,"f08_accepted":False,"diagnostic":diagnostic,"commands":[],"problems":[]}
     def run(args,role,required=True,timeout=3600):
         args=list(map(str,args));print("F08_APPLE_PHASE",platform,role,flush=True)
-        timed_out=False
-        with (evidence/(role+".log")).open("wb") as f:
-            process=subprocess.Popen(args,cwd=ROOT,stdout=f,stderr=subprocess.STDOUT,start_new_session=True)
-            try:
-                process.wait(timeout=timeout)
-            except subprocess.TimeoutExpired:
-                timed_out=True
-                # Ask xcodebuild to cancel and finalize its xcresult before sealing.
-                # Preserve the failed cohort instead of leaving a live writer behind.
-                for native_signal,grace in ((signal.SIGINT,30),(signal.SIGTERM,10),(signal.SIGKILL,5)):
-                    try: os.killpg(process.pid,native_signal)
-                    except ProcessLookupError: break
-                    try: process.wait(timeout=grace);break
-                    except subprocess.TimeoutExpired: continue
-                if process.returncode is None: process.wait(timeout=5)
-                f.write(("\nF08 collection timeout after "+str(timeout)+" seconds; cancellation requested.\n").encode())
-        report["commands"].append({"role":role,"argv":args,"returncode":process.returncode,
-            "timed_out":timed_out,"collection_timeout_s":timeout})
+        if mac_remaining is not None:timeout=min(timeout,mac_remaining(False))
+        timed_out=False;process=None;terminal={}
+        try:
+            with (evidence/(role+".log")).open("wb") as f:
+                process=subprocess.Popen(args,cwd=ROOT,stdout=f,stderr=subprocess.STDOUT,start_new_session=True,env=mac_environment)
+                try:
+                    process.wait(timeout=timeout)
+                except subprocess.TimeoutExpired:
+                    timed_out=True
+                    for native_signal,grace in ((signal.SIGINT,30),(signal.SIGTERM,10),(signal.SIGKILL,5)):
+                        try:os.killpg(process.pid,native_signal)
+                        except ProcessLookupError:break
+                        if mac_remaining is not None:grace=min(grace,mac_remaining(True))
+                        try:process.wait(timeout=grace);break
+                        except subprocess.TimeoutExpired:continue
+                    if process.returncode is None:process.wait(timeout=5 if mac_remaining is None else min(5,mac_remaining(True)))
+                    f.write(("\nF08 collection timeout after "+str(timeout)+" seconds; cancellation requested.\n").encode())
+                finally:
+                    if mac_terminal is not None:
+                        try:terminal=mac_terminal(process,role)
+                        except BaseException as error:terminal={"owned_group_terminal_verified":False,"terminal_error":repr(error)}
+        finally:
+            record={"role":role,"argv":args,"returncode":process.returncode if process is not None else None,
+                    "timed_out":timed_out,"collection_timeout_s":timeout,**terminal}
+            if process is not None:record.update(pid=process.pid,owned_process_group=process.pid)
+            report["commands"].append(record)
+        if mac_terminal is not None and terminal.get("owned_group_terminal_verified") is not True:
+            report["problems"].append(role+" owned process group unverified")
+            raise RuntimeError(role+" writer terminal state unverified")
         if process.returncode or timed_out:
             report["problems"].append(role+(" collection timeout "+str(timeout)+"s" if timed_out else " exit "+str(process.returncode)))
             print("\n".join((evidence/(role+".log")).read_text(errors="replace").splitlines()[-60:]),flush=True)
@@ -125,7 +136,9 @@ def native(platform):
             "insertion_sha256":sha(HERE/"Metrics.swift"),"original_cases_unchanged":True})
         shutil.copyfile(candidate,evidence/"ShelfUITests.swift")
         project=out/"project";derived=out/"derived"
+        if mac_prepare is not None:mac_prepare(out,evidence,resources,tests,derived,installed)
         run(["ruby","tests/reader_team24_apple/make_project.rb",project,resources,tests,"wave3"],"project")
+        if mac_patch is not None:mac_patch(project,run)
         schemes=sorted((project/"EXReaderHost.xcodeproj/xcshareddata/xcschemes").glob("*.xcscheme"))
         need(len(schemes)==2,"generated Apple schemes")
         for path in schemes:
@@ -181,56 +194,60 @@ def native(platform):
         need(len(targets)==1 and targets[0]["CONFIGURATION"]=="Release" and
              targets[0]["SWIFT_OPTIMIZATION_LEVEL"]=="-O" and targets[0]["ONLY_ACTIVE_ARCH"]=="YES","optimized product configuration")
         report["configuration"]="Release";report["build_settings_sha256"]=sha(evidence/"build-settings.json")
-        if diagnostic:
-            run(["xcodebuild","build-for-testing",*common],"diagnostic-build",timeout=600)
+        if mac_execute is not None:
+            need(platform=="macos" and not diagnostic,"Mac full extension requires original full channel")
+            mac_execute(out,evidence,resources,seed_report,installed,derived,common,test_target,destination_file,report,run)
         else:
-            run(["xcodebuild","test",*common,"-resultBundlePath",original_result,
-                "-only-testing:"+test_target+"/ShelfUITests",
-                "-skip-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics",
-                "-skip-testing:"+test_target+"/ShelfUITests/test14F08NativeShelfAnimationSignposts"],"original-seven",required=False)
-        app=derived/"Build/Products"/suffix/"EXReaderHost.app"
-        info=plistlib.loads((app/("Contents/Info.plist" if platform=="macos" else "Info.plist")).read_bytes())
-        need(info["EXRSourceSHA"]==identity()["source_sha"] and info["EXRSDKVersion"]=="3.42.0","program identity")
-        binary=app/("Contents/MacOS/EXReaderHost" if platform=="macos" else "EXReaderHost")
-        architecture=command(["lipo","-archs",binary],text=True).split()
-        need(architecture==[command(["uname","-m"],text=True).strip()],"native runner architecture")
-        report["program_architecture"]=architecture
-        before=sha(binary);shutil.copytree(app,evidence/"program/EXReaderHost.app")
-        report["program_sha256"]=before
-        (evidence/"program-dependencies.txt").write_text(command(["otool","-L",binary],text=True))
-        if not diagnostic:
-            if platform=="macos":container=Path.home()/"Library/Application Support/EXReader"
+            if diagnostic:
+                run(["xcodebuild","build-for-testing",*common],"diagnostic-build",timeout=600)
             else:
-                container=command([sys.executable,"tests/apple_host/resolve_container.py","--udid",device,
-                                   "--output",evidence/"container.json"],text=True).strip()
-            run([sys.executable,"tests/apple_host/shelf/collect_shelf_evidence.py","--platform",platform,
-                 "--xcresult",original_result,"--output",evidence/"original","--container",container,
-                 "--app",app,"--seed",seed/"shelf-seed.json","--sdk-root",sdk,
-                 "--sdk-identity",installed[target]/"sdk-identity.json","--destination",destination_file],
-                 "original-evidence",required=False,timeout=600)
-            run(["xcodebuild","test-without-building",*common,"-resultBundlePath",metrics_result,
-                "-only-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics"],"scroll-metrics",required=False,timeout=1200)
-            raw_objects,metrics=extract_metrics(metrics_result)
-            save(evidence/"xcresult-objects.json",raw_objects);save(evidence/"performance-metrics.json",metrics)
-            source_report=evidence/"original/shelf-ui.json"
-            report["original_ui_accepted"]=source_report.is_file() and json.loads(source_report.read_text()).get("accepted") is True
-        # Collect launch/reader before the extra scroll experiment. Its full
-        # frozen gesture cohort remains intact even when a diagnostic cap expires.
-        for label,group in (("launch","F08LaunchUITests"),("reader","F08ReaderUITests"),
-                            ("shelf-animation","ShelfUITests/test14F08NativeShelfAnimationSignposts")):
-            result=evidence/(label+".xcresult")
-            run(["xcodebuild","test-without-building",*common,"-resultBundlePath",result,
-                "-only-testing:"+test_target+"/"+group],label+"-metrics",required=False,
-                timeout=1200 if label=="shelf-animation" and not diagnostic else 480)
-            if result.exists():
-                raw_objects,cases=extract_metrics(result,with_cases=True)
-                save(evidence/(label+"-xcresult-objects.json"),raw_objects)
-                save(evidence/(label+"-performance-cases.json"),cases)
-                run(["xcrun","xcresulttool","export","attachments","--path",result,"--output-path",evidence/(label+"-attachments")],label+"-attachments",required=False,timeout=90)
-        need(sha(binary)==before,"program changed between functional and performance tests")
-        report["diagnostic_complete"]=not report["problems"]
-        report["collection_complete"]=not diagnostic and not report["problems"] and report.get("original_ui_accepted") is True
-        report["budget_evaluation"]="Native metric units and frame coverage await independent audit; F08 remains pending."
+                run(["xcodebuild","test",*common,"-resultBundlePath",original_result,
+                    "-only-testing:"+test_target+"/ShelfUITests",
+                    "-skip-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics",
+                    "-skip-testing:"+test_target+"/ShelfUITests/test14F08NativeShelfAnimationSignposts"],"original-seven",required=False)
+            app=derived/"Build/Products"/suffix/"EXReaderHost.app"
+            info=plistlib.loads((app/("Contents/Info.plist" if platform=="macos" else "Info.plist")).read_bytes())
+            need(info["EXRSourceSHA"]==identity()["source_sha"] and info["EXRSDKVersion"]=="3.42.0","program identity")
+            binary=app/("Contents/MacOS/EXReaderHost" if platform=="macos" else "EXReaderHost")
+            architecture=command(["lipo","-archs",binary],text=True).split()
+            need(architecture==[command(["uname","-m"],text=True).strip()],"native runner architecture")
+            report["program_architecture"]=architecture
+            before=sha(binary);shutil.copytree(app,evidence/"program/EXReaderHost.app")
+            report["program_sha256"]=before
+            (evidence/"program-dependencies.txt").write_text(command(["otool","-L",binary],text=True))
+            if not diagnostic:
+                if platform=="macos":container=Path.home()/"Library/Application Support/EXReader"
+                else:
+                    container=command([sys.executable,"tests/apple_host/resolve_container.py","--udid",device,
+                                       "--output",evidence/"container.json"],text=True).strip()
+                run([sys.executable,"tests/apple_host/shelf/collect_shelf_evidence.py","--platform",platform,
+                     "--xcresult",original_result,"--output",evidence/"original","--container",container,
+                     "--app",app,"--seed",seed/"shelf-seed.json","--sdk-root",sdk,
+                     "--sdk-identity",installed[target]/"sdk-identity.json","--destination",destination_file],
+                     "original-evidence",required=False,timeout=600)
+                run(["xcodebuild","test-without-building",*common,"-resultBundlePath",metrics_result,
+                    "-only-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics"],"scroll-metrics",required=False,timeout=1200)
+                raw_objects,metrics=extract_metrics(metrics_result)
+                save(evidence/"xcresult-objects.json",raw_objects);save(evidence/"performance-metrics.json",metrics)
+                source_report=evidence/"original/shelf-ui.json"
+                report["original_ui_accepted"]=source_report.is_file() and json.loads(source_report.read_text()).get("accepted") is True
+            # Collect launch/reader before the extra scroll experiment. Its full
+            # frozen gesture cohort remains intact even when a diagnostic cap expires.
+            for label,group in (("launch","F08LaunchUITests"),("reader","F08ReaderUITests"),
+                                ("shelf-animation","ShelfUITests/test14F08NativeShelfAnimationSignposts")):
+                result=evidence/(label+".xcresult")
+                run(["xcodebuild","test-without-building",*common,"-resultBundlePath",result,
+                    "-only-testing:"+test_target+"/"+group],label+"-metrics",required=False,
+                    timeout=1200 if label=="shelf-animation" and not diagnostic else 480)
+                if result.exists():
+                    raw_objects,cases=extract_metrics(result,with_cases=True)
+                    save(evidence/(label+"-xcresult-objects.json"),raw_objects)
+                    save(evidence/(label+"-performance-cases.json"),cases)
+                    run(["xcrun","xcresulttool","export","attachments","--path",result,"--output-path",evidence/(label+"-attachments")],label+"-attachments",required=False,timeout=90)
+            need(sha(binary)==before,"program changed between functional and performance tests")
+            report["diagnostic_complete"]=not report["problems"]
+            report["collection_complete"]=not diagnostic and not report["problems"] and report.get("original_ui_accepted") is True
+            report["budget_evaluation"]="Native metric units and frame coverage await independent audit; F08 remains pending."
     except BaseException as error:
         failure=error;report["problems"].append(repr(error));report["traceback"]=traceback.format_exc()
     finally:

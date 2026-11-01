@@ -206,7 +206,7 @@ def verify_window_images(attachments,test_record):
   check(False,"images.malformed",repr(error))
  return {"complete":not problems,"problems":problems,"details":details,"iterations":rows,"f08_accepted":False}
 
-def assess(folder,performance,program,run_identity,mode="capture"):
+def assess(folder,performance,program,run_identity,mode="capture",expected_producer_source=None):
  """Recompute the capture from exact per-case native metrics and original attachment bytes."""
  import hashlib
  folder=Path(folder);base=folder/"attachments";problems=[];details=[];rows=[];configs=[];protocols=[];baseline=[]
@@ -232,7 +232,8 @@ def assess(folder,performance,program,run_identity,mode="capture"):
   if len(found)!=1:raise ValueError("unique "+name+" attachment required")
   return found[0],contents(found[0])
  try:
-  check(program.get("program_source_sha")==run_identity["source_sha"] and program.get("sdk_input_source_sha")==PROFILE["producer_source_sha"] and program.get("resource_input_source_sha")==PROFILE["producer_source_sha"],"program.source_identity")
+  producer=PROFILE["producer_source_sha"] if expected_producer_source is None else expected_producer_source
+  check(isinstance(producer,str) and bool(re.fullmatch("[0-9a-f]{40}",producer)) and program.get("program_source_sha")==run_identity["source_sha"] and program.get("sdk_input_source_sha")==producer and program.get("resource_input_source_sha")==producer,"program.source_identity")
   check(bool(re.fullmatch("[0-9a-f]{64}",program.get("program_sha256",""))) and str(program.get("built_executable_url","")).startswith("/"),"program.executable_identity")
   if not isinstance(performance,list):raise ValueError("native case list malformed")
   manifest=load((base/"manifest.json").read_bytes())
@@ -306,7 +307,7 @@ def assess(folder,performance,program,run_identity,mode="capture"):
          "zero_hitch_observed":len(coverage)==2 and all(x["no_observed_hitches"] for x in coverage),
          "native_ratio_is_frozen_budget":False,"diagnostic_only":True,"f08_accepted":False}
 
-def assess_numeric(folder,program,run_identity):
+def assess_numeric(folder,program,run_identity,expected_producer_source=None):
  """Join seven explicitly named groups from one built program; functional seven remain pending."""
  folder=Path(folder);problems=[];details=[];groups=[];rss=[];launch=[];shelf=[];capture={};action={}
  def check(value,code,at=""):
@@ -376,7 +377,7 @@ def assess_numeric(folder,program,run_identity):
     check(len(pids)==6 and len(set(pids))==6,"numeric.launch_fresh_processes",name)
     row.update(clock_metric=clock,samples=samples,raw_upper_bounds_ms=uppers,warmup_index=0,measured_upper_bounds_ms=uppers[1:]);launch.append(row)
    else:
-    assessment=assess(directory,performance,program,run_identity,mode=configured["kind"])
+    assessment=assess(directory,performance,program,run_identity,mode=configured["kind"],expected_producer_source=expected_producer_source)
     check(assessment["complete"],"numeric.reader_incomplete",name)
     for record in assessment.get("protocol_records",[]):
      test=record["test_record"];case=str(test["identity"]["case_id"])

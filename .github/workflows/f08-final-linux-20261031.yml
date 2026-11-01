@@ -43,6 +43,7 @@ jobs:
           python3 -m unittest discover -s tests/reader_f08_android_binding_20261031 -v
           python3 -m unittest discover -s tests/reader_f08_final_20261031 -p test_android_inputs.py -v
           python3 -m unittest discover -s tests/reader_f08_final_20261031 -p "test_reader_*.py" -v
+          python3 -m unittest discover -s tests/reader_f08_final_20261031 -p test_mac_full.py -v
           python3 tests/reader_f08_windows_native_frame_20261031/native_audit.py --self-test
           mkdir -p build/f08-native-control/integration-latch
           javac -d build/f08-native-control/integration-latch examples/android/app/src/main/java/org/exreader/host/CatalogFrameLatch.java tests/reader_f08_android_binding_20261031/CatalogFrameLatchControl.java
@@ -284,6 +285,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        if: matrix.platform == 'macos'
+        with:
+          python-version: '3.13'
       - uses: actions/download-artifact@v4
         with:
           pattern: f08-apple-*-sdk-*
@@ -293,15 +298,24 @@ jobs:
       - name: Original seven cases, native launch, scroll and reader metrics
         run: python3 tests/reader_f08_final_20261031/apple.py native --platform '${{ matrix.platform }}'
       - name: Seal observations including failures
+        id: apple_seal
         if: always()
         run: python3 tests/reader_f08_final_20261031/apple.py seal --platform '${{ matrix.platform }}'
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && (matrix.platform != 'macos' || steps.apple_seal.outcome == 'success')
         with:
           name: f08-apple-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
           include-hidden-files: true
           path: build/f08-apple/${{ matrix.platform }}/evidence/
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.platform == 'macos' && steps.apple_seal.outcome != 'success'
+        with:
+          name: f08-apple-macos-unsealed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-apple/macos/control/
+          include-hidden-files: true
+          if-no-files-found: warn
+
   apple_audit:
     needs: [sdk, apple_native]
     if: always() && github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031' && github.ref != 'refs/heads/codex/f08-final-build-check-20261031'
@@ -311,6 +325,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
       - name: Authenticate original ZIPs and reparse native results
         env:
           GH_TOKEN: ${{ github.token }}
@@ -321,5 +338,8 @@ jobs:
           name: f08-apple-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/f08-apple-audit/audit.json
+            build/f08-apple-audit/mac-full-replay.json
+            build/f08-apple-audit/full-audit-controller.json
+            build/f08-apple-audit/mac-full-validation-tools-receipt/
             build/f08-apple-audit/*/metadata.json
           if-no-files-found: error
