@@ -245,7 +245,7 @@ final class F04ReadingSyncUITests: XCTestCase {
     #if os(macOS)
     // Environment preparation precedes credentials, connections, books and record sheets.
     private func macStartupReady() -> Bool {
-        guard "__MAC_DIAGNOSTIC__" == "1" else {
+        guard ("__MAC_DIAGNOSTIC__" == "1" || "__MAC_PERMISSION_PREP__" == "1") else {
             return wait { e("library.title").exists && !e("library.busy").exists }
         }
         let deadline = Date().addingTimeInterval(150)
@@ -275,7 +275,7 @@ final class F04ReadingSyncUITests: XCTestCase {
         return false
     }
     private func macNoLatePermission(force: Bool) -> Bool {
-        guard "__MAC_DIAGNOSTIC__" == "1", macStartupFinished else { return true }
+        guard ("__MAC_DIAGNOSTIC__" == "1" || "__MAC_PERMISSION_PREP__" == "1"), macStartupFinished else { return true }
         if !force && Date() < macNextPermissionCheck { return true }
         macNextPermissionCheck = Date().addingTimeInterval(1)
         guard currentPythonPermissionDialog() != nil else { return true }
@@ -329,13 +329,13 @@ final class F04ReadingSyncUITests: XCTestCase {
         return dialogs[0]
     }
     private func macPythonPermissionStillPending() -> Bool {
-        guard "__MAC_DIAGNOSTIC__" == "1", pythonNetworkDismissalPending else { return false }
+        guard ("__MAC_DIAGNOSTIC__" == "1" || "__MAC_PERMISSION_PREP__" == "1"), pythonNetworkDismissalPending else { return false }
         if currentPythonPermissionDialog() != nil { return true }
         pythonNetworkDismissalPending = false
         return false
     }
     private func denyKnownPythonNetworkRequestIfPresent() {
-        guard "__MAC_DIAGNOSTIC__" == "1" else { return }
+        guard ("__MAC_DIAGNOSTIC__" == "1" || "__MAC_PERMISSION_PREP__" == "1") else { return }
         guard !macStartupFinished else { XCTFail("Permission action forbidden after startup"); return }
         guard let dialog = currentPythonPermissionDialog() else { return }
         guard !pythonNetworkDenyAttempted else {
