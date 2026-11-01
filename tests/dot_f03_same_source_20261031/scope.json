@@ -696,6 +696,47 @@
     "original_catalog_test_count": 8,
     "expected_completed_schema_version": 3,
     "expected_completed_table_count": 12,
-    "asset_schema_version_unchanged": 1
+    "asset_schema_version_unchanged": 1,
+    "result": {
+      "status": "completed_failure",
+      "source_sha": "1a2859ec098f87793f92cc487012ee9e5996f3ef",
+      "run_id": 41325652110,
+      "attempt": 1,
+      "completed_at": "2026-11-01T16:31:34Z",
+      "runs_used": 1,
+      "automatic_retry": false,
+      "catalog_store_tests": {
+        "total": 8,
+        "failed": 0,
+        "skipped": 0
+      },
+      "import_mapping_tests": {
+        "total": 14,
+        "failed": 2,
+        "skipped": 0,
+        "failures": {
+          "registersAtomicallyAndIdempotently": "AssertionError: 0 != 1",
+          "preservesDuplicateMetadataAndHistory": "SQLiteException: Missing revision field"
+        }
+      },
+      "full_f03_accepted": false,
+      "formal_count_credit": 0,
+      "job": {
+        "id": 124904918002,
+        "name": "f03_android_catalog_retained",
+        "conclusion": "failure",
+        "started_at": "2026-11-01T16:18:32Z",
+        "completed_at": "2026-11-01T16:31:33Z"
+      },
+      "artifact": {
+        "id": 13091163672,
+        "name": "reader-suite-f03-android-catalog-41325652110-1",
+        "size_in_bytes": 116944832,
+        "digest": "sha256:cde47085d2f205bb4b1b0b7208d32cd8b2da29f09953d5d10c9417e2f1c41e41",
+        "created_at": "2026-11-01T16:31:31Z",
+        "expires_at": "2027-01-30T16:18:30Z"
+      },
+      "next_step": "Read-only verify ImportMappingTest expectations against actual native import/revision contract and original owner evidence; no unapproved test/product edits or rerun."
+    }
   }
 }
