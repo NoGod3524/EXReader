@@ -910,6 +910,35 @@ extern "C" exr_webdav_status exr_webdav_snapshot_seal(exr_webdav_owned_snapshot 
     p.inspect(h->index);return EXR_DAV_OK;
   }catch(const failure &f){return report(error,f);}catch(...){return report(error,{EXR_DAV_IO,"Cannot seal upload snapshot",0});}
 }
+
+extern "C" exr_webdav_status exr_webdav_snapshot_publish_file(exr_webdav_owned_snapshot *h,const char *directory,const char *filename,exr_webdav_download *out,exr_webdav_error *error){
+  clean(error);if(out)*out={};
+  try{
+    if(!h||!h->tx||!directory||!filename||!out)reject(EXR_DAV_ARGUMENT,"Missing snapshot publication request");
+    auto &p=*h->pool;p.check_owner();auto &r=p.view.root[h->index];
+    std::string leaf=filename;
+    if(leaf.empty()||leaf.size()>120||leaf.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-.")!=std::string::npos||leaf[0]=='.')
+      reject(EXR_DAV_ARGUMENT,"Snapshot destination requires a bounded plain filename");
+    managed_fd target(::open(directory,O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOFOLLOW));
+    if(!managed_pool::private_dir(target.value))reject(EXR_DAV_IO,"Snapshot destination is not private");
+    int source=-1;int code=exr_wc_borrow_sealed_fd(h->tx,&source);
+    struct stat st{};
+    if(code!=EXR_WC_OK||fstat(source,&st)||st.st_size<0)reject(EXR_DAV_IO,"Snapshot is not sealed and readable");
+    exr_wc_publish_result result{};
+    code=exr_wc_publish_at(h->tx,target.value,leaf.c_str(),&result);
+    out->published=result.published;out->bytes=result.published?(uint64_t)st.st_size:0;
+    p.view.published=result.published;r.receipt_uncertain=result.receipt_uncertain;
+    if(result.native_error)p.view.native_error=result.native_error;
+    if(code!=EXR_WC_OK)r.status=code;
+    p.inspect(h->index);
+    if(result.receipt_uncertain||result.cleanup_pending)
+      reject(EXR_DAV_IO,"Snapshot publication retained pending cleanup");
+    if(code!=EXR_WC_OK)reject(code==EXR_WC_EXISTS?EXR_DAV_EXISTS:EXR_DAV_IO,"Snapshot no-replace publication refused");
+    if(!result.published)reject(EXR_DAV_IO,"Snapshot publication did not commit");
+    return EXR_DAV_OK;
+  }catch(const failure &f){return report(error,f);}catch(...){return report(error,{EXR_DAV_IO,"Cannot publish owned snapshot",0});}
+}
+
 extern "C" exr_webdav_status exr_webdav_snapshot_close(exr_webdav_owned_snapshot **out,exr_webdav_error *error){
   clean(error);if(!out||!*out)return EXR_DAV_OK;
   auto *h=*out;
