@@ -253,14 +253,62 @@ def build_producer(platform):
         evidence["program"] = None  # Real host is built by the later UI producer, not this SDK step.
     (OUT / ("build-" + platform + ".json")).write_text(json.dumps(evidence, indent=2) + "\n")
 
+def retained_protocol():
+    """Run original 18/121 and native HTTPS checks, not the old four-ZIP aggregate."""
+    import hashlib, yaml
+    assert sys.platform in ("win32", "linux")
+    subprocess.run([sys.executable, str(HERE / "admission.py")], cwd=ROOT, check=True)
+    prepare_hash_owner("windows" if sys.platform == "win32" else "gtk")
+    recipe = retained(".github/workflows/reader-reading-v2.yml")
+    steps = yaml.safe_load(recipe)["jobs"]["sdk"]["steps"]
+    names = [
+        "Install one product provider and separate current and actual legacy revisions",
+        "Build and install the frozen reading SDK once",
+        "Install adapter against each revision implementation and compile isolated consumers",
+        "Preserve original 121 cases and verify v2 product round trips from real captures",
+        "Install optional source export and compile an independent C C++ consumer",
+        "Real owner original export cancellation invalidation and atomic no-replace publication",
+        "Install native sync and compile the complete original export and reading consumer",
+        "Real native HTTPS transfers SDK-exported originals and all eighteen reading captures",
+    ]
+    records = []
+    for index, name in enumerate(names):
+        matches = [step for step in steps if step.get("name") == name]
+        assert len(matches) == 1, name
+        body = matches[0]["run"]
+        # Only installed-SDK selection changes. Probe sources and assertions
+        # remain byte-identical, including the original 121 and all 18 cases.
+        adapted = "\n".join(line + (" -DEXR_SDK_VERSION=3.42.0" if
+            line.lstrip().startswith("cmake -S ") and "-DEXR_SDK=" in line else "")
+            for line in body.splitlines()) + "\n"
+        script = OUT / ("retained-" + str(index) + ".sh")
+        script.write_text(adapted)
+        subprocess.run(["bash", "-e", "-o", "pipefail", str(script)], cwd=ROOT, check=True)
+        for line in Path(os.environ["GITHUB_ENV"]).read_text().splitlines():
+            key, separator, value = line.partition("=")
+            if separator:
+                os.environ[key] = value
+        records.append({"name": name, "original_sha256": hashlib.sha256(body.encode()).hexdigest(),
+                        "adapted_sha256": hashlib.sha256(adapted.encode()).hexdigest()})
+    receipt = {"source_sha": os.environ["GITHUB_SHA"], "run_id": os.environ["GITHUB_RUN_ID"],
+        "attempt": os.environ["GITHUB_RUN_ATTEMPT"], "sdk_version": "3.42.0",
+        "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505", "platform": sys.platform,
+        "original_workflow_sha256": hashlib.sha256(recipe.encode()).hexdigest(),
+        "steps": records, "original_four_zip_aggregate": "not-run", "F04_accepted": False}
+    (OUT / "retained-receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
+
 def main():
     assert os.environ.get("GITHUB_ACTIONS") == "true", "Actions only"
     assert Path.cwd().resolve() == ROOT
     assert os.environ.get("EXR_APPLE_SDK_VERSION") == "3.42.0"
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator"))
+    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol"))
     args, rest = parser.parse_known_args()
     prepare()
+    if args.action == "retained-protocol":
+        assert not rest, rest
+        retained_protocol()
+        return
     if args.action.startswith("build-"):
         assert not rest, rest
         build_producer(args.action.removeprefix("build-"))

@@ -271,19 +271,23 @@ def graph_audit(manifest_path):
 def authenticate_graph():
     """Original Actions ZIP/API authentication before the graph checker.
 
-    Naming is part of the future disabled producer contract, not guessed from
-    uploaded files. This does not waive the separate retained-protocol audit.
+    Artifact IDs come from the current producer upload outputs, never a name-only
+    selection among uploaded files. This does not waive the separate retained-protocol audit.
     """
     need(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
     sys.path.insert(0, str(ROOT / "tools"))
-    from check_parallel_integration import fetch, download_artifact_zip
+    from check_parallel_integration import fetch, pages, download_artifact_zip
     from relay import identity
     current = identity()
     run_id, attempt = current["run_id"], current["attempt"]
     contract = json.loads((HERE / "contract.json").read_text())
     bindings = contract["graph_producers"]
-    jobs = fetch("actions/runs/" + run_id + "/attempts/" + attempt + "/jobs?per_page=100")["jobs"]
-    artifacts = fetch("actions/runs/" + run_id + "/artifacts?per_page=100")["artifacts"]
+    jobs = pages("actions/runs/" + run_id + "/attempts/" + attempt + "/jobs", "jobs")
+    artifacts = pages("actions/runs/" + run_id + "/artifacts", "artifacts")
+    producer_ids = json.loads(os.environ["F04_ARTIFACT_IDS"])
+    need(set(producer_ids) == {b["artifact"] for b in bindings}, "producer artifact ID map")
+    need(all(type(v) is int and v > 0 for v in producer_ids.values()), "positive producer artifact IDs")
+    need(len(set(producer_ids.values())) == len(producer_ids), "one artifact ID reused across producers")
     out = ROOT / "build/f04-graph-auth"
     out.mkdir(parents=True, exist_ok=False)
     manifest = {"states": [], "edges": [], "artifact_identities": [], "producer_jobs": []}
@@ -293,11 +297,12 @@ def authenticate_graph():
         need(len(matches) == 1 and matches[0]["conclusion"] == "success" and
              matches[0]["head_sha"] == current["source_sha"], "failed/missing/duplicate graph producer")
         manifest["producer_jobs"].append({k: matches[0][k] for k in ("id", "name", "head_sha", "conclusion")})
-        expected_name = binding["artifact"] + "-" + run_id + "-" + attempt
-        matches = [a for a in artifacts if a["name"] == expected_name and not a["expired"]]
-        need(len(matches) == 1, "missing/duplicate/expired graph artifact: " + expected_name)
+        artifact_id = producer_ids[binding["artifact"]]
+        matches = [a for a in artifacts if a["id"] == artifact_id]
+        need(len(matches) == 1 and not matches[0]["expired"], "missing or expired producer artifact ID")
         row = matches[0]
-        need(row["workflow_run"]["head_sha"] == current["source_sha"], "artifact source")
+        need(row["workflow_run"]["head_sha"] == current["source_sha"] and
+             str(row["workflow_run"]["id"]) == run_id, "artifact source/run")
         raw = download_artifact_zip(row["id"])
         need(len(raw) == row["size_in_bytes"] and "sha256:" + hashlib.sha256(raw).hexdigest() == row["digest"], "original ZIP identity")
         with zipfile.ZipFile(io.BytesIO(raw)) as archive:
@@ -351,12 +356,118 @@ def authenticate_graph():
     path.write_text(json.dumps(manifest, indent=2))
     graph_audit(path)
 
+def retained_evidence(bundle, current):
+    """Pure acceptance of original reports and their actual probe programs."""
+    receipt, sdk, raw, legacy, wire, wire_raw = (bundle[k] for k in
+        ("receipt", "sdk", "raw", "legacy", "wire", "wire_raw"))
+    for report in (receipt, sdk, wire):
+        need(all(str(report[k]) == v for k, v in current.items()), "retained identity")
+    need(receipt["sdk_version"] == "3.42.0" and
+         receipt["sdk_source"] == "8357eafa28423a7ab93ba08b823af80f01ad1505", "retained SDK")
+    need(receipt["original_four_zip_aggregate"] == "not-run", "retained aggregate scope")
+    need(sdk["accepted"] is True and wire["accepted"] is True, "retained report refused")
+    need(not legacy["problems"] and legacy["v1_highlight_roundtrip_accepted"] is True and
+         legacy["checks_total"] >= 121 and legacy["checks_failed"] == 0, "original 121 checks")
+    need(raw["failures"] == 0 and raw["checks"] and all(c["pass"] is True for c in raw["checks"]),
+         "original capture raw checks")
+    need(sdk["checks"] == len(raw["checks"]) and sdk["cases"] == raw["cases"], "capture summary/raw")
+    sys.path.insert(0, str(ROOT / "tests/reader_reading_v2"))
+    from check_sdk import EXPECTED
+    for report in (sdk, wire):
+        need([c["id"] for c in report["cases"]] == EXPECTED, "original 18 cases")
+        need(report["receiver_found"] == 17 and report["receiver_mislocated"] == 0, "original anchor outcomes")
+        need(all(c["state"] == ("AMBIGUOUS" if c["id"] == "txt-ambiguous" else "FOUND")
+                 for c in report["cases"]), "original ambiguous/FOUND outcomes")
+    need(wire_raw["cases"] == wire["cases"] and wire_raw["failures"] == 0 and
+         all(c["pass"] is True for c in wire_raw["checks"]), "native transport raw checks")
+    need(wire["originals_exported"] == 4 and wire["network_pushed"] == 22 and
+         wire["network_pulled"] >= 22 and wire["metadata_projected"] == 4 and
+         wire["request_count"] > 0, "native original/record transport")
+    need(bundle["sdk_program_sha256"] == sdk["consumer_sha256"] and
+         bundle["wire_program_sha256"] == wire["consumer_sha256"], "retained program identity")
+    need(bundle["legacy_program_sha256"] == legacy["probe_sha256"] and
+         bundle["legacy_c_sha256"] == legacy["c_consumer_sha256"], "legacy program identity")
+    fields = ("id", "mode", "kind", "part", "start", "end", "state")
+    normalized = [{k: c[k] for k in fields} for c in sdk["cases"]]
+    need(normalized == [{k: c[k] for k in fields} for c in wire["cases"]], "transport anchor changed")
+    return normalized
+
+def authenticate_retained():
+    """Authenticate IDs from upload outputs, never promote the historical aggregate."""
+    import copy
+    from relay import identity
+    sys.path.insert(0, str(ROOT / "tools"))
+    from check_parallel_integration import pages, download_artifact_zip
+    current = identity()
+    bindings = json.loads((HERE / "contract.json").read_text())["retained_producers"]
+    ids = json.loads(os.environ["F04_RETAINED_IDS"])
+    need(set(ids) == {b["key"] for b in bindings}, "retained artifact ID map")
+    jobs = pages("actions/runs/" + current["run_id"] + "/attempts/" + current["attempt"] + "/jobs", "jobs")
+    artifacts = pages("actions/runs/" + current["run_id"] + "/artifacts", "artifacts")
+    normalized, receipts = [], []
+    for binding in bindings:
+        job = [j for j in jobs if j["name"] == binding["job"]]
+        need(len(job) == 1 and job[0]["conclusion"] == "success" and
+             job[0]["head_sha"] == current["source_sha"], "retained producer job")
+        rows = [a for a in artifacts if a["id"] == ids[binding["key"]]]
+        need(len(rows) == 1 and not rows[0]["expired"], "retained artifact ID")
+        row = rows[0]
+        need(row["workflow_run"]["head_sha"] == current["source_sha"] and
+             str(row["workflow_run"]["id"]) == current["run_id"], "retained artifact source/run")
+        blob = download_artifact_zip(row["id"])
+        need(len(blob) == row["size_in_bytes"] and
+             "sha256:" + hashlib.sha256(blob).hexdigest() == row["digest"], "retained original ZIP identity")
+        with zipfile.ZipFile(io.BytesIO(blob)) as archive:
+            names = archive.namelist()
+            need(len(set(names)) == len(names) and
+                 all(not PurePosixPath(n).is_absolute() and ".." not in PurePosixPath(n).parts and
+                     "\\" not in n and not n.endswith(".key") for n in names), "retained unsafe/private archive")
+            def read_json(path): return json.loads(archive.read(path))
+            suffix = ".exe" if binding["platform"] == "win32" else ""
+            def program(path): return hashlib.sha256(archive.read(path + suffix)).hexdigest()
+            bundle = dict(receipt=read_json("f04-driver/retained-receipt.json"),
+                sdk=read_json("v2-sdk-evidence/result.json"), raw=read_json("v2-sdk-evidence/probe.json"),
+                legacy=read_json("v2-sdk-evidence/legacy/summary.json"),
+                wire=read_json("v2-webdav-evidence/result.json"), wire_raw=read_json("v2-webdav-evidence/probe.json"),
+                sdk_program_sha256=program("v2-consumer/reading-v2-probe"),
+                wire_program_sha256=program("v2-webdav-consumer/reading-v2-probe"),
+                legacy_program_sha256=program("v1-consumer/reading-state-probe"),
+                legacy_c_sha256=program("v1-consumer/reading-state-c-consumer"))
+        need(bundle["receipt"]["platform"] == binding["platform"], "retained platform")
+        normalized.append(retained_evidence(bundle, current))  # Qualified positive first.
+        negatives = [
+            ("wrong-source", "retained identity", lambda b: b["sdk"].update(source_sha="0" * 40)),
+            ("missing-anchor", "capture summary/raw", lambda b: b["sdk"]["cases"].pop()),
+            ("old-check-failure", "original 121 checks", lambda b: b["legacy"].update(checks_failed=1)),
+            ("changed-program", "retained program identity", lambda b: b.update(sdk_program_sha256="0" * 64)),
+        ]
+        rejected = []
+        for label, reason, mutate in negatives:
+            candidate = copy.deepcopy(bundle)  # Never mutate an already-invalid case.
+            mutate(candidate)
+            try:
+                retained_evidence(candidate, current)
+            except AssertionError as error:
+                need(str(error) == reason, "negative rejected for unrelated reason: " + label)
+                rejected.append({"case": label, "reason": reason, "positive_artifact_id": row["id"]})
+            else:
+                raise AssertionError("negative unexpectedly accepted: " + label)
+        receipts.append({"artifact": {k: row[k] for k in ("id", "name", "size_in_bytes", "digest")},
+                         "job_id": job[0]["id"], "negative_checks": rejected})
+    need(len(normalized) == 2 and normalized[0] == normalized[1], "retained cross-platform outcomes")
+    out = ROOT / "build/f04-retained-auth"
+    out.mkdir(parents=True, exist_ok=False)
+    (out / "result.json").write_text(json.dumps(dict(current, retained_18_121_checked=True,
+        producers=receipts, original_four_zip_aggregate="not-run", F04_accepted=False), indent=2))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--graph", type=Path)
     parser.add_argument("--authenticate-graph", action="store_true")
+    parser.add_argument("--authenticate-retained", action="store_true")
     args = parser.parse_args()
-    need(not (args.graph and args.authenticate_graph), "choose one audit entry")
-    if args.authenticate_graph: authenticate_graph()
+    need(sum((bool(args.graph), args.authenticate_graph, args.authenticate_retained)) <= 1, "choose one audit entry")
+    if args.authenticate_retained: authenticate_retained()
+    elif args.authenticate_graph: authenticate_graph()
     elif args.graph: graph_audit(args.graph)
     else: main()
