@@ -1,3 +1,61 @@
+# F05 continuation — 2026-11-01 00:51 UTC / 2026-10-31 20:51 America/New_York
+
+**Unexecuted preparation, not completion. Formal 96/108 unchanged.**
+Branch: `dot/f05-client-recovery-20261031`.
+Current implementation before this note: `5220c68da0813c28dbcdf3b3579472453d0cb671`.
+Preparation base: `94fb236a4a2da87dfbaf4f1dd2a47885d615a230`;
+frozen SDK: `8357eafa28423a7ab93ba08b823af80f01ad1505`.
+Nine approved files exist; workflow absent; **0 Actions runs / 0 spent runner-minutes**.
+Original one-run 265-minute authority is not silently transferred into a different
+shared-suite scope. No syntax/test/ZIP operation ran outside Actions. Native
+Desktop Commander/VM handshake is not freshly rechecked by this work package.
+
+## New preparation and review
+- Manifest schema 2 separates authors, receivers and local recovery claims; no
+  universal single-head resolution or single cancellation layer. Original suite
+  identities are pinned: Windows32, GTK48, Android16, Apple3/14 steps plus401
+  recovery and the macOS terminal suite.
+- Independent verifier downloads original Actions ZIPs using normal authenticated
+  read-only API calls, checks exact attempt job/time/source/digest/size and program
+  bytes, rejects unsafe archive members, and runs exact-code counterexamples only
+  after the actual positive gate. `F05_accepted` remains false.
+- F03 limited static review corrected overly broad wire prerequisites and missing
+  delete/put complete-head checks. It then reviewed Windows receipt mapping and
+  startup trust protection. Static review is not execution.
+- Windows/GTK drivers now retain original SDK readback, immutable-wire inventory,
+  native screenshots and case pointers before producing role receipts. Missing
+  claims become not-run; deletion-specific presentation remains partial.
+- Android binds the actually installed base APK to the retained build bytes;
+  recovery/reading observations map to independent claims. The approved temporary
+  original-runner adapter adds only CLI choice3.42.0 to fixed original bytes and
+  checks original16 named assertions, four PIDs, two boundaries and actual runtime
+  SDK identity. Original repository runner is unchanged.
+- Apple checks same-source SDK3.42 app plist, actual xcodebuild product location,
+  simulator-installed executable hash, original per-phase xcresult Passed status
+  and native screenshot/hierarchy attachments. Actual kill/replacement PIDs,
+  retained original bytes and fixture endpoint counts feed receipts. Additional
+  offline mutation and deletion presentation remain not-run.
+- Fixture trust/server/key cleanup is independently attempted and primary errors
+  retained. Zero-network claims are scoped to the controlled library sync fixture,
+  never the entire operating system.
+
+## Remaining execution/ownership boundaries
+1. GTK/Android user-visible deletion-head details remain with the UI/F09 owner;
+   precise forwardable handoff is retained below. No production paths taken over.
+2. F03 Apple organization receive delta is not composed into this branch.
+3. Producer artifact role/job/member bindings, retained-suite runtime routes and
+   shared canonical-suite integration remain unfinished. Manifest stays
+   implementation-in-progress and intentionally cannot certify acceptance.
+4. Latest Android/Apple runtime mapping awaits finite independent static review.
+5. Parent is reviewing whether existing delayed old-parent put after a real
+   tombstone already satisfies original stale-put semantics; do not invent an
+   additional repeated-ID replay gate or mark unverified facts passed.
+
+All earlier evidence and failures below are retained. This snapshot is resumable
+backup, not stopping/completion or a new authorization.
+
+---
+
 # UI owner handoff: distinguish deletion conflicts — 2026-10-31 23:57 UTC
 
 **For the existing F09/UI owner; no production files reassigned to F05.**
