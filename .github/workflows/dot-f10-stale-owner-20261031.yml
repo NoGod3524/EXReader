@@ -1,4 +1,4 @@
-name: Dot F10 stale owner additive API
+name: Dot F10 owned upload snapshot integration
 on:
   push:
     branches: [dot/f10-stale-owner-20261031]
@@ -26,19 +26,41 @@ jobs:
           m=json.load(open('tests/product/f10_stale_owner_20261031/manifest.json'))
           changed=subprocess.check_output(['git','diff','--name-only',m['base'],'HEAD'],text=True).splitlines()
           assert sorted(changed)==sorted(m['allowed_paths']),changed
+          phase=subprocess.check_output(['git','diff','--name-only',m['phase_base'],'HEAD'],text=True).splitlines()
+          assert sorted(phase)==sorted(m['phase_paths']),phase
+          subprocess.run(['git','diff','--exit-code',m['phase_base'],'HEAD','--',*m['frozen_paths']],check=True)
           subprocess.run(['git','diff','--exit-code',m['base'],'HEAD','--','src','include','cmake','CMakeLists.txt','bindings'],check=True)
           PY
-          python -m py_compile tests/product/f10_stale_owner_20261031/{run,verify}.py
+          python -m py_compile tests/product/f10_stale_owner_20261031/{run,verify,https_fixture}.py
       - name: Build installed production library and labelled boundary variant
         run: |
           set -euo pipefail
           mkdir -p build/stale/logs build/stale/prefix
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
           p="$(realpath build/stale/prefix)"
           trap 'rc=$?; for f in build/stale/logs/*.log; do echo "--- $f"; tail -n 80 "$f"; done; exit "$rc"' ERR
           cmake -S extras/webdav-cleanup -B build/stale/core -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" 2>&1 | tee build/stale/logs/core-config.log
           cmake --build build/stale/core 2>&1 | tee build/stale/logs/core-build.log
           cmake --install build/stale/core 2>&1 | tee -a build/stale/logs/core-build.log
-          cmake -S tests/product/f10_stale_owner_20261031 -B build/stale/probe -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$p" 2>&1 | tee build/stale/logs/probe-config.log
+          export EXREADER_ORIGINAL_HASH_PREFIX="$p"
+          cmake -S extras/opds -B build/stale/hash -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" 2>&1 | tee build/stale/logs/hash-config.log
+          cmake --build build/stale/hash -j2 2>&1 | tee build/stale/logs/hash-build.log
+          cmake --install build/stale/hash 2>&1 | tee -a build/stale/logs/hash-build.log
+          cmake -S apps/reader/store/native -B build/stale/store -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" -DREADER_ORIGINAL_HASH_PREFIX="$p" 2>&1 | tee build/stale/logs/store-config.log
+          cmake --build build/stale/store -j2 2>&1 | tee build/stale/logs/store-build.log
+          cmake --install build/stale/store 2>&1 | tee -a build/stale/logs/store-build.log
+          cmake -S apps/reader/revisions -B build/stale/revisions -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_PRODUCT_PREFIX="$p" -DCMAKE_PREFIX_PATH="$p" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" 2>&1 | tee build/stale/logs/revisions-config.log
+          cmake --build build/stale/revisions -j2 2>&1 | tee build/stale/logs/revisions-build.log
+          cmake --install build/stale/revisions 2>&1 | tee -a build/stale/logs/revisions-build.log
+          cmake -S extras/webdav -B build/stale/webdav -DEXR_WEBDAV_MANAGED=ON -DCMAKE_PREFIX_PATH="$p" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" 2>&1 | tee build/stale/logs/webdav-config.log
+          cmake --build build/stale/webdav -j2 2>&1 | tee build/stale/logs/webdav-build.log
+          cmake --install build/stale/webdav 2>&1 | tee -a build/stale/logs/webdav-build.log
+          cmake -S apps/reader/sync -B build/stale/sync -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DCMAKE_PREFIX_PATH="$p" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" 2>&1 | tee build/stale/logs/sync-config.log
+          cmake --build build/stale/sync -j2 2>&1 | tee build/stale/logs/sync-build.log
+          cmake --install build/stale/sync 2>&1 | tee -a build/stale/logs/sync-build.log
+          git worktree add --detach build/stale/old b5e7fea87174f5e0baabfad97cf5cf7082f2d85e
+          cmake -S tests/product/f10_stale_owner_20261031 -B build/stale/probe -DF10_OLD_SOURCE="$(realpath build/stale/old)" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$p" 2>&1 | tee build/stale/logs/probe-config.log
           cmake --build build/stale/probe 2>&1 | tee build/stale/logs/probe-build.log
       - name: Real process death permissions identities and unchanged limits
         run: python tests/product/f10_stale_owner_20261031/run.py --bin build/stale/probe --output build/stale/evidence
@@ -52,6 +74,9 @@ jobs:
             build/stale/prefix/
             build/stale/probe/f10-stale-probe
             build/stale/probe/f10-stale-boundary-probe
+            build/stale/probe/f10-sync-probe
+            build/stale/probe/f10-old-client
+            build/stale/probe/f10-managed-boundary-probe
           if-no-files-found: error
   audit:
     needs: linux
@@ -72,4 +97,4 @@ jobs:
           name: f10-stale-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/stale-audit/
           if-no-files-found: error
-# Activate the sole approved API verification round after native static review.
+# B prepared; activation only after independent static review. One approved 45+15 minute run.
