@@ -179,6 +179,7 @@ jobs:
         with:
           name: f08-final-windows-build-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f08-windows-native-frame/evidence/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
       - uses: actions/upload-artifact@v4
