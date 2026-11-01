@@ -17,7 +17,7 @@ NAMES={'actualInstalledProviderAndJson','persistedNativeCreateIds','strictUtf16A
        'outboxFailureRollsBackAndRetries','membershipNeedsExplicitBookBootstrap','publicSdkBootstrapKeepsCurrentProductTitle',
        'shelfAndSeriesMembershipOrder','missingAndDeletedDependenciesRefused','mapFailureKeepsSdkAndCommittedBookCommand',
        'nativeRejectsWrongOwner','nativeRejectsClosedHandle','twoNativeOwnersCompeteOnOneObservedHead',
-       'sdkDatabaseRefusedWithoutModification','opensClosedLegacySystemCatalog'}
+       'sdkDatabaseRefusedWithoutModification','opensClosedLegacySystemCatalog','finalizeImportAutomaticallyBootstrapsOnce'}
 
 
 def require(value,message):
@@ -80,7 +80,7 @@ def inspect(root,all_exits):
     require(device['api']==34 and device['abi']=='x86_64' and device['count']==len(NAMES) and device['failed']==0,'owner device execution failed')
     checks=device['checks'];require(len(checks)==len(NAMES) and {v['id'] for v in checks}==NAMES and all(v['pass'] is True for v in checks),'owner checks missing/duplicated/failed')
     raw_run=(root/'owner-instrumentation.txt').read_text()
-    require(re.search(r'^INSTRUMENTATION_CODE: -1\s*$',raw_run,re.M) and 'OK (17 tests)' in raw_run and 'FAILURES' not in raw_run,'manual owner run failed')
+    require(re.search(r'^INSTRUMENTATION_CODE: -1\s*$',raw_run,re.M) and 'OK (18 tests)' in raw_run and 'FAILURES' not in raw_run,'manual owner run failed')
     manual=[];status={}
     for line in raw_run.splitlines():
         if line.startswith('INSTRUMENTATION_STATUS: '):

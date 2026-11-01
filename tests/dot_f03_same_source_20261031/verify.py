@@ -906,16 +906,259 @@ def diagnose_owner_original(output):
         write_json(output, result)
 
 
+def diagnose_owner_core(output):
+    """Authenticate and inspect one fixed archive; never execute or accept its products."""
+    import os, re, subprocess, urllib.request, urllib.parse, zipfile, io, stat
+    from identity import ROOT
+    import xml.etree.ElementTree as ET
+    base = "21ffb3ef36a2daedf20b7a2ca4d0b78cadfad932"
+    branch = "refs/heads/dot/f03-owner-core-20261101"
+    require(os.environ.get("GITHUB_ACTIONS") == "true" and
+            os.environ.get("GITHUB_REPOSITORY") == "NoGod3524/EXReader" and
+            os.environ.get("GITHUB_REF") == branch and
+            os.environ.get("F03_OWNER_CORE_CASE") == "f03/owner-core-original",
+            "fixed owner diagnostic controller route differs")
+    stamp = {key: os.environ[env] for key, env in (
+        ("source_sha", "GITHUB_SHA"), ("run_id", "GITHUB_RUN_ID"), ("attempt", "GITHUB_RUN_ATTEMPT"))}
+    require(re.fullmatch(r"[0-9a-f]{40}", stamp["source_sha"]) and
+            stamp["run_id"].isdigit() and stamp["attempt"] == "1", "controller identity malformed")
+    require(subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() ==
+            stamp["source_sha"], "controller checkout differs")
+    subprocess.run(["git", "merge-base", "--is-ancestor", base, stamp["source_sha"]], cwd=ROOT, check=True)
+    paths = set(subprocess.check_output(["git", "diff", "--name-only", base, stamp["source_sha"]],
+                                      cwd=ROOT, text=True).splitlines())
+    require(paths == {
+        "tools/check_reader_owner_android.py",
+        "tests/dot_f03_same_source_20261031/verify.py",
+        ".github/workflows/dot-f03-same-source-20261031.yml",
+        "tests/dot_f03_same_source_20261031/scope.json",
+        "docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md"},
+        "controller changed outside five approved paths")
+    run_id, attempt, job_id = 41328199296, 1, 124912497495
+    source = "e21331513a84cc225daa99f672b4c79384e1f34b"
+    artifact_id, expected_size = 13093186163, 193531993
+    expected_digest = "e8b2d81a33a62a6d47c718bfdea2e49d5075b9eb8de27048eaf3023b33f8f17f"
+    expected_identity = {"source_sha": source, "run_id": str(run_id), "attempt": str(attempt)}
+    names = {
+        "actualInstalledProviderAndJson", "persistedNativeCreateIds", "strictUtf16AndEmoji",
+        "staleObservedHeadsAreAtomic", "explicitDeleteAndRestore", "metadataFailureRollsBackAndRetries",
+        "outboxFailureRollsBackAndRetries", "membershipNeedsExplicitBookBootstrap",
+        "publicSdkBootstrapKeepsCurrentProductTitle", "shelfAndSeriesMembershipOrder",
+        "missingAndDeletedDependenciesRefused", "mapFailureKeepsSdkAndCommittedBookCommand",
+        "nativeRejectsWrongOwner", "nativeRejectsClosedHandle", "twoNativeOwnersCompeteOnOneObservedHead",
+        "sdkDatabaseRefusedWithoutModification", "opensClosedLegacySystemCatalog",
+        "finalizeImportAutomaticallyBootstrapsOnce"}
+    wanted = {"source.txt", "device-api.txt", "device-abi.txt", "device-report.json",
+              "owner-instrumentation.txt", "result.json"}
+    wanted.update(prefix+"-"+phase+".txt" for prefix in ("seed", "recover", "witness")
+                  for phase in ("before", "after"))
+    result = {"controller": stamp, "controller_base": base, "diagnostic_only": True,
+              "product_reexecuted": False, "accepted": False, "full_F03_accepted": False,
+              "provider_fully_authenticated": False, "formal_count_credit": 0,
+              "original": {**expected_identity, "job_id": job_id, "artifact_id": artifact_id},
+              "problems": [], "missing": [], "invalid": [], "selected": {}, "observations": {}}
+    class Redirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            value = super().redirect_request(req, fp, code, msg, headers, newurl)
+            if value is not None and urllib.parse.urlsplit(newurl).netloc != "api.github.com":
+                value.remove_header("Authorization")
+            return value
+    opener = urllib.request.build_opener(Redirect())
+    def fetch(path, limit=2*1024*1024):
+        request = urllib.request.Request("https://api.github.com/repos/NoGod3524/EXReader"+path,
+            headers={"Authorization": "Bearer "+os.environ["GITHUB_TOKEN"],
+                     "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"})
+        with opener.open(request, timeout=120) as response:
+            raw = response.read(limit+1)
+        require(len(raw) <= limit, "fixed diagnostic response too large")
+        return raw
+    def observe(key, value):
+        result["observations"][key] = bool(value)
+        if not value: result["invalid"].append(key)
+    try:
+        run = json.loads(fetch(f"/actions/runs/{run_id}/attempts/{attempt}"))
+        jobs = json.loads(fetch(f"/actions/runs/{run_id}/attempts/{attempt}/jobs?per_page=100"))
+        artifact = json.loads(fetch(f"/actions/artifacts/{artifact_id}"))
+        require(run["id"] == run_id and run["head_sha"] == source and run["run_attempt"] == attempt and
+                run["status"] == "completed" and run["conclusion"] == "failure", "fixed failed run differs")
+        matches = [j for j in jobs["jobs"] if j["id"] == job_id]
+        require(len(matches) == 1, "fixed job missing")
+        job = matches[0]
+        require(job["name"] == "f03_android_importmapping_retained" and job["head_sha"] == source and
+                job["run_id"] == run_id and job["run_attempt"] == attempt and
+                job["status"] == "completed" and job["conclusion"] == "failure", "fixed failed job differs")
+        require(artifact["id"] == artifact_id and artifact["name"] ==
+                f"reader-suite-f03-android-importmapping-{run_id}-{attempt}" and
+                artifact["size_in_bytes"] == expected_size and not artifact["expired"] and
+                artifact["digest"] == "sha256:"+expected_digest and
+                artifact["workflow_run"]["id"] == run_id and
+                artifact["workflow_run"]["head_sha"] == source and
+                job["started_at"] <= artifact["created_at"] <= job["completed_at"],
+                "fixed artifact metadata differs")
+        body = fetch(f"/actions/artifacts/{artifact_id}/zip", expected_size)
+        require(len(body) == expected_size and hashlib.sha256(body).hexdigest() == expected_digest,
+                "fixed archive digest/size differs")
+
+        import tempfile, importlib.util, sys
+        allowed_owner = wanted | {"native/inventory.json","native/debug.map","native/debug.so",
+            "native/debug.symbols.txt","native/debug.dynamic.txt","native/release.map","native/release.so",
+            "native/release.symbols.txt","native/release.dynamic.txt","native/sqlite3.h",
+            "apks/app-debug.apk","apks/app-debug-androidTest.apk"}
+        extra = {"android-host/build.json","android-host/gate-review.json",
+                 "android-host/bounded-gate-review.json","shelf-android/shelf-result.json",
+                 "shelf-android/shelf-gate-review.json"}
+        selected, inventory = {}, set()
+        with zipfile.ZipFile(io.BytesIO(body)) as archive:
+            entries=archive.infolist()
+            require(len(entries)<=20000 and sum(x.file_size for x in entries)<=2*1024**3,"archive expansion bound")
+            for entry in entries:
+                name=entry.filename;parts=name.rstrip("/").split("/")
+                require(name and name not in inventory and not name.startswith("/") and "\\" not in name and
+                        ":" not in name and not any(x in ("",".","..") for x in parts) and not entry.flag_bits&1,
+                        "unsafe archive member")
+                inventory.add(name);logical=None
+                if "owner-android" in parts:
+                    tail="/".join(parts[parts.index("owner-android")+1:])
+                    if tail in allowed_owner or tail.startswith("owner-reports/") and tail.endswith(".xml"):
+                        logical="build/owner-android/"+tail
+                else:
+                    for group in ("android-host","shelf-android"):
+                        if group in parts:
+                            tail="/".join(parts[parts.index(group):])
+                            if tail in extra:logical="build/"+tail
+                if logical is None or entry.is_dir():continue
+                require(stat.S_IFMT(entry.external_attr>>16) in (0,stat.S_IFREG),"selected member not regular")
+                require(logical not in selected and entry.file_size<=256*1024**2,"selected bound or ambiguity")
+                selected[logical]=archive.read(entry)
+        require(sum(map(len,selected.values()))<=512*1024**2,"selected total bound")
+        result["selected"]={k:{"bytes":len(raw),"sha256":hashlib.sha256(raw).hexdigest()}
+                            for k,raw in sorted(selected.items())}
+        required={"build/owner-android/"+x for x in allowed_owner} | {"build/"+x for x in extra}
+        result["missing"]=sorted(required-set(selected))
+        require(not result["missing"],"required fixed evidence missing")
+        require(any(x.startswith("build/owner-android/owner-reports/") and x.endswith(".xml") for x in selected),
+                "required XML missing")
+        checker_path=ROOT/"tools/check_reader_owner_android.py"
+        checker_text=checker_path.read_text()
+        previous=subprocess.check_output(["git","show",base+":tools/check_reader_owner_android.py"],cwd=ROOT,text=True)
+        restored=checker_text.replace("'opensClosedLegacySystemCatalog','finalizeImportAutomaticallyBootstrapsOnce'}",
+                                      "'opensClosedLegacySystemCatalog'}").replace("OK (18 tests)","OK (17 tests)")
+        require(restored==previous,"checker changed beyond two authorized edits")
+        spec=importlib.util.spec_from_file_location("f03_fixed_owner_checker",checker_path)
+        checker=importlib.util.module_from_spec(spec)
+        saved_sys_path=list(sys.path)
+        original_identity=None
+        saved_cwd=Path.cwd()
+        try:
+            sys.path.insert(0,str(ROOT/"tools"));spec.loader.exec_module(checker)
+            require(checker.NAMES==names,"core checker name set differs")
+            original_identity=checker.identity
+            checker.identity=lambda:dict(expected_identity)
+            result["identity_binding"]="fixed producer injected into inspect only; controller environment unchanged"
+            result["checker_sha256"]=hashlib.sha256(checker_path.read_bytes()).hexdigest()
+            checks=[];result["checks"]=checks
+            saved_cwd=Path.cwd()
+            with tempfile.TemporaryDirectory(prefix="f03-owner-core-") as temporary:
+                sandbox=Path(temporary)
+                for logical,raw in selected.items():
+                    dest=sandbox/logical;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(raw)
+                root=sandbox/"build/owner-android"
+                def invoke(name,expected):
+                    actual=False;error_type=None
+                    try:
+                        value=checker.inspect(root,False)
+                        actual=value.get("accepted") is True
+                    except (ValueError,OSError,KeyError,TypeError,IndexError,ET.ParseError) as error:
+                        error_type=type(error).__name__
+                    passed=actual is expected
+                    checks.append({"id":name,"expected_accepted":expected,"actual_accepted":actual,
+                                   "passed":passed,"error_type":error_type})
+                    require(passed,"core control differs: "+name)
+                def alter(path,change,name):
+                    raw=path.read_bytes();changed=change(raw)
+                    require(changed!=raw,"mutation did not alter input: "+name)
+                    try:path.write_bytes(changed);invoke(name,False)
+                    finally:path.write_bytes(raw)
+                def edit(path,name,change):
+                    def replace(raw):
+                        value=json.loads(raw);change(value);return json.dumps(value).encode()
+                    alter(path,replace,name)
+                try:
+                    os.chdir(sandbox)
+                    invoke("positive",True);device=root/"device-report.json"
+                    edit(device,"old_device_source",lambda v:v.update(source_sha="0"*40))
+                    edit(device,"missing_device_case",lambda v:v["checks"].pop())
+                    edit(device,"duplicate_device_case",lambda v:v["checks"].append(v["checks"][0]))
+                    edit(device,"failed_device_case",lambda v:v["checks"][0].update({"pass":False}))
+                    edit(device,"wrong_native_runtime_provider",lambda v:v["provider"].__setitem__(3,"/system/lib64/libsqlite.so"))
+                    edit(device,"wrong_actual_sqlite_source",lambda v:v["provider"].__setitem__(1,"wrong"))
+                    edit(device,"missing_provider_option",lambda v:v["provider"].__setitem__(4,""))
+                    alter(root/"owner-instrumentation.txt",lambda raw:raw.replace(b"INSTRUMENTATION_STATUS_CODE: 0",b"INSTRUMENTATION_STATUS_CODE: -3",1),"skipped_manual_owner_case")
+                    alter(root/"apks/app-debug.apk",lambda raw:raw+b"altered APK","different_reinstalled_application")
+                    xml=next((root/"owner-reports").rglob("*.xml"))
+                    def skipped(raw):
+                        tree=ET.fromstring(raw);ET.SubElement(next(tree.iter("testcase")),"skipped");return ET.tostring(tree)
+                    alter(xml,skipped,"skipped_owner_xml")
+                    alter(root/"native/release.symbols.txt",lambda raw:raw+b"0000 T Java_org_exreader_host_ProductFixture_injected\n","fixture_in_release")
+                    alter(root/"native/debug.map",lambda raw:b"","missing_link_provider_proof")
+                    alter(root/"witness-before.txt",lambda raw:b"0,0,0","wrong_three_write_crash_boundary")
+                    alter(root/"recover-after.txt",lambda raw:b"","missing_successful_retry_after_kill")
+                    alter(root/"seed-before.txt",lambda raw:b"OK","process_not_killed")
+                    new_name="finalizeImportAutomaticallyBootstrapsOnce"
+                    alter(root/"owner-instrumentation.txt",
+                          lambda raw:raw.replace(("test="+new_name).encode(),b"test=missing_18th"),
+                          "missing_18th_manual")
+                    def remove_new(raw):
+                        tree=ET.fromstring(raw)
+                        for parent in tree.iter():
+                            for child in list(parent):
+                                if child.tag=="testcase" and child.get("name")==new_name:parent.remove(child)
+                        return ET.tostring(tree)
+                    matches=[p for p in (root/"owner-reports").rglob("*.xml") if new_name.encode() in p.read_bytes()]
+                    require(len(matches)==1,"18th XML ambiguous")
+                    alter(matches[0],remove_new,"missing_18th_xml")
+                    invoke("restored_positive",True)
+                    require(len(checks)==19 and all(x["passed"] for x in checks),"fixed 19 controls incomplete")
+                    all_exits_accepted=False;all_exits_error=None;all_exits_reason=None
+                    try:all_exits_accepted=checker.inspect(root,True).get("accepted") is True
+                    except (ValueError,OSError,KeyError,TypeError,IndexError,ET.ParseError) as error:
+                        all_exits_error=type(error).__name__
+                        all_exits_reason="original shelf acceptance missing" if str(error)=="original shelf acceptance missing" else "unexpected_refusal"
+                    result["old_all_exits"]={"expected_accepted":False,"actual_accepted":all_exits_accepted,
+                                              "error_type":all_exits_error,"reason":all_exits_reason}
+                    require(not all_exits_accepted and all_exits_error=="ValueError" and all_exits_reason=="original shelf acceptance missing","old all exits refusal differs")
+                    result["core_controls_passed"]=True
+                    result["historical_core_provider_authenticated"]=True
+                    result["diagnostic_completed"]=True
+                finally:
+                    os.chdir(saved_cwd)
+        finally:
+            os.chdir(saved_cwd)
+            if original_identity is not None:checker.identity=original_identity
+            sys.path[:]=saved_sys_path
+        print(json.dumps(result,sort_keys=True),flush=True)
+    except BaseException as error:
+        result["problems"].append(type(error).__name__)
+        raise
+    finally:
+        write_json(output,result)
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--manifest", type=Path)
     p.add_argument("--partial", action="store_true")
     p.add_argument("--diagnose-original", action="store_true")
     p.add_argument("--diagnose-owner-original", action="store_true")
+    p.add_argument("--diagnose-owner-core", action="store_true")
     p.add_argument("--diagnose-gtk-ready-original", action="store_true")
     p.add_argument("--evidence", type=Path)
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
+    if a.diagnose_owner_core:
+        require(not a.diagnose_owner_original and not a.diagnose_original and not a.diagnose_gtk_ready_original and not a.partial and a.manifest is None and a.evidence is None, "core diagnostic cannot mix audits")
+        diagnose_owner_core(a.output)
+        return
     if a.diagnose_owner_original:
         require(not a.diagnose_original and not a.diagnose_gtk_ready_original and not a.partial
                 and a.manifest is None and a.evidence is None, "owner diagnostic cannot mix audits")
