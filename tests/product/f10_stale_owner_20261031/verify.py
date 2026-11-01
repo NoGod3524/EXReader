@@ -104,7 +104,7 @@ def main():
         if not all(c['rejected'] for c in controls):errors.append('negative control accepted')
         result.update(api_accepted=not errors,errors=errors,cases=len(NAMES),assertions=sum(len(x) for x in EXPECTED.values()),negative_controls=controls,
                       installed_consumer_cases=len(NAMES)-len(BOUNDARIES),instrumented_boundary_cases=len(BOUNDARIES),
-                      limits=['POSIX Linux only','No sync snapshot integration','No SDK or host UI acceptance','Cooperative private namespace, not malicious same-UID attacker resistance','SIGKILL not hardware power loss','Fixed 64 lifetime slots unchanged'])
+                      limits=['POSIX Linux only','Core API verdict alone does not grant sync; phase B has separate callback/managed/sync verdicts','No SDK or host UI acceptance','Cooperative private namespace, not malicious same-UID attacker resistance','SIGKILL not hardware power loss','Fixed 64 lifetime slots unchanged'])
     except (OSError,ValueError,KeyError,TypeError,StopIteration) as e:result.update(errors=['incomplete evidence: '+type(e).__name__])
     try:result.update(snapshot_audit(root))
     except (OSError,ValueError,KeyError,TypeError,StopIteration) as e:result.update(snapshot_accepted=False,snapshot_errors=['incomplete snapshot evidence: '+type(e).__name__])
