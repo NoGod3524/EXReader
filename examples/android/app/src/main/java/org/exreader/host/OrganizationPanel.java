@@ -52,7 +52,11 @@ final class OrganizationPanel {
         this.activity=activity;this.worker=worker;this.store=store;this.changed=changed;
         shelf=activity.findViewById(R.id.shelf_panel);
         panel=new LinearLayout(activity);panel.setOrientation(LinearLayout.VERTICAL);panel.setPadding(12,12,12,12);panel.setBackgroundColor(0xffffffff);
-        panel.setContentDescription("Organize panel");panel.setClickable(true);panel.setVisibility(View.GONE);
+        // Named for screen readers but not clickable: an empty area of the overlay is not an
+        // activatable control. Touches are still consumed so the shelf beneath stays inert.
+        panel.setContentDescription("Organize panel");panel.setOnTouchListener((v,e)->true);
+        if(android.os.Build.VERSION.SDK_INT>=28)panel.setAccessibilityPaneTitle("Organize");
+        panel.setVisibility(View.GONE);
         heading=new TextView(activity);heading.setTextSize(20);panel.addView(heading);
         search=new EditText(activity);search.setSingleLine(true);search.setHint("Search books");search.setContentDescription("Organize book search");
         LinearLayout navigation=row();
