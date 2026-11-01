@@ -81,3 +81,13 @@ Preparation status: source/test design committed with skip-ci; stable SHA requir
 Static diagnosis found the fixture generates cert.pem and the existing trust helper copies the original filename to /usr/local/share/ca-certificates. Linux update-ca-certificates expects .crt, so this fixture does not correctly install its trust anchor. This is a confirmed setup mismatch from source, not yet a claim that original artifact raw status has been read: ordinary logs contain the audit differences but not those numerical producer values. Next proposed test-only repair must first print the original fixed artifact observations, use cert.crt without disabling TLS checks, expose per-case evidence to ordinary logs, retain all old/new assertions and rerun only with a separately approved budget. No production correction or automatic rerun has been performed.
 
 F10 remains pending. This doc-only skip-ci seal preserves the measured failure and is not a stop/completion of the user's full goal.
+
+## B fixture correction — separately approved, preparation only
+
+User approved at 2026-11-01 00:41:01 UTC exactly five test-side files and one Linux45 + audit15 run. No production or verify.py/old/new assertion changes. Base 1e475efd33c6094641b10a1941777adc1b89c6ad; the manifest pins this repair diff.
+
+Before building or running corrected behavior, Actions checks historical producer artifact 13063907551, 2452124 bytes, SHA256 a4f4c436d92f77825832b653c21f33ce525c3f5bde2bc2b07dff940691bf7842 and its source/run metadata. Only callback-normal and sync-normal JSON members are read and printed to ordinary stdout; the archive is not executed or extracted outside Actions.
+
+The fixture certificate now uses .crt. It is installed with the unchanged trust helper, then OpenSSL verifies against the system CA bundle. The original callback-normal case is the same-native-transport HTTPS fail-fast preflight: native status OK, exact observed server hash, conditional PUT and transferred length must all hold before remaining behavior cases begin. No -k, custom insecure verifier, or TLS bypass. All original cases and exact audit expectations remain. Each core and new snapshot observation, including raw status/exception evidence, is printed as well as retained in artifacts. Generated private keys and profiles stay outside the upload root.
+
+No correction-run result is claimed yet. Budget is one separately approved run, no automatic retry; the prior B failure remains immutable.
