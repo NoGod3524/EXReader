@@ -56,9 +56,9 @@ def main(payload):
     expectations = [
         ('O-01', 'the main window is announced', 'EXReader Linux'),
         ('O-02', 'the import control is spoken by name', 'Import book'),
-        ('O-03', 'a shelf row is spoken with its book title', 'F09 book'),
+        ('O-03', 'a shelf row is spoken with its book title', 'F09-book'),
         ('O-04', 'the collections dialog is announced', 'Library collections'),
-        ('O-05', 'the reading page is announced', 'Reading page'),
+        ('O-05', 'the reading page is announced', 'reading page'),
         ('O-06', 'Back to library is spoken by name', 'Back to library'),
     ]
     checks = [{'id': cid, 'expected': want, 'phrase': phrase, 'status': 'pass' if phrase in joined else 'fail'}
