@@ -429,12 +429,56 @@
     "runner_minutes_cap": 160,
     "run_limit": 1,
     "automatic_retries": 0,
-    "status": "prepared_not_run",
+    "status": "completed_failure",
     "producer_consumer_audit_same_source_run_attempt": true,
     "old_canonical_gtk_budget_minutes": 60,
     "android_receiver_and_audit_code_unchanged": true,
     "other_jobs_not_selected": true,
     "formal_count_credit": 0,
-    "full_F03_accepted": false
+    "full_F03_accepted": false,
+    "run_id": 41317482564,
+    "attempt": 1,
+    "source_sha": "e5dc7b479235f1921d52dd5b2f666b6f2f2b7840",
+    "used_runs": 1,
+    "completed_at": "2026-11-01T14:49:48Z",
+    "jobs": {
+      "gtk": {
+        "id": 124880504302,
+        "conclusion": "success"
+      },
+      "android": {
+        "id": 124881688344,
+        "conclusion": "failure"
+      },
+      "audit": {
+        "id": 124882332235,
+        "conclusion": "failure"
+      }
+    },
+    "failure": "Android original product install cannot find libreader_original_import.a; original audit rejects unsuccessful Android producer",
+    "android_retained_and_receives_executed": false,
+    "artifacts": [
+      {
+        "id": 13088401114,
+        "name": "reader-suite-f03-audit-41317482564-1",
+        "size_in_bytes": 22952959,
+        "digest": "sha256:bd99e60dae9ba61b7b2515d61271823994ee433fa9c0e99cd6396c2ef9765241",
+        "created_at": "2026-11-01T14:49:46Z"
+      },
+      {
+        "id": 13088121901,
+        "name": "reader-suite-f03-gtk-41317482564-1",
+        "size_in_bytes": 23010357,
+        "digest": "sha256:409d561317d613958dd52d1b885d7a9cc1637036a91e10761a2d26e0c709318b",
+        "created_at": "2026-11-01T14:46:55Z"
+      },
+      {
+        "id": 13088082339,
+        "name": "reader-suite-f03-android-41317482564-1",
+        "size_in_bytes": 11685223,
+        "digest": "sha256:b826672b602016433b52998e0b307778fbcdf075da1df9d10723604741d5bb7f",
+        "created_at": "2026-11-01T14:49:28Z"
+      }
+    ]
   }
 }
