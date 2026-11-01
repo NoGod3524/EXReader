@@ -427,6 +427,7 @@ jobs:
           npm install @guidepup/guidepup @guidepup/setup 2>&1 | tail -5
           npm ls --depth=0 | tee versions.txt
           npx @guidepup/setup setup --ci 2>&1 | tail -20
+          npx @guidepup/setup install 2>&1 | tail -20
           app="$GITHUB_WORKSPACE/build/f09-derived/Build/Products/Debug/EXReaderHost.app"
           test -d "$app" || { echo "no built macOS host"; exit 1; }
           node voiceover.mjs "$app" "$GITHUB_WORKSPACE/build/f09-results/voiceover"
