@@ -851,7 +851,8 @@ struct exr_webdav_owned_snapshot {
   managed_pool *pool=nullptr;unsigned index=0;exr_wc_tx *tx=nullptr;
 };
 extern "C" exr_webdav_status exr_webdav_snapshot_begin(exr_webdav_client *c,exr_webdav_owned_snapshot **out,int *fd,exr_webdav_error *error){
-  clean(error);if(out)*out=nullptr;if(fd)*fd=-1;
+  clean(error);if(fd)*fd=-1;
+  if(out&&*out)return report(error,{EXR_DAV_ARGUMENT,"Snapshot output must be empty",0});
   try{
     if(!c||!c->managed||!out||!fd)reject(EXR_DAV_ARGUMENT,"Missing managed snapshot capability");
     auto &p=*c->managed;p.check_owner();
