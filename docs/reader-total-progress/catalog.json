@@ -575,6 +575,12 @@
       "doc": "docs/reader-total-progress/EXREADER_C02_WEBDAV_HANDOFF_20261031.md",
       "source_prefix": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
       "expected_conclusion": "success"
+    },
+    "f02_original_transfer_independent_review_20261101": {
+      "run": 41306566948,
+      "doc": "docs/reader-total-progress/EXREADER_C02_WEBDAV_HANDOFF_20261031.md",
+      "source_prefix": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+      "expected_conclusion": "success"
     }
   },
   "requirements": [
@@ -1631,9 +1637,11 @@
       "id": "F02",
       "group": "final",
       "title": "六目标原书传输：至少两端真实应用完成上传/下载/打开的共同闭环",
-      "state": "pending",
-      "evidence": [],
-      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+      "state": "verified",
+      "evidence": [
+        "f02_original_transfer_independent_review_20261101"
+      ],
+      "note": "Root independent review accepted the original F02 clause: real Windows application original upload followed by actual receiving/opening applications across the existing six-target graph, authenticated at one source/run/attempt. Upload is inferred from the audited code path and authenticated state: empty server, no seed original injection, only authenticated PUT can create entries, and final original bytes/hash verified. Per-request object PUT text remains in the archive and was not separately expanded in this review. Scope remains the fixed EPUB, native desktop hosts and existing Android/iPhone/iPad emulator/simulator targets; no all-pairs, all-format or physical-device claim. Prior F02 failure and original reports remain unchanged; authorized single-item bookkeeping, no new total-progress Actions audit."
     },
     {
       "id": "F03",
