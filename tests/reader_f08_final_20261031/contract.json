@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "reviewed_source": "58733024b0910e4e31974bd8676766ccb8a17e7d",
+  "reviewed_source": "9bb3a75dc7ad1c5a2973ba310270894f1d781513",
   "allowed_test_prefix": "tests/reader_f08_final_20261031/",
   "allowed_workflow": ".github/workflows/f08-final-linux-20261031.yml",
   "platforms_required_for_f08": [
