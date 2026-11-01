@@ -732,3 +732,15 @@ Exact source evidence:
 ## 2026-11-01 same-run import-contract integration (prepared)
 
 Explicit approval at 15:42:06Z plus identity.py at 15:45:52Z: four existing paths only (caller, identity.py, scope.json, this document). Base 24653ccf25c91e7eebd054a6a19b8863384b1ae3 on dot/f03-import-contract-20261101. Unique case f03/two-host-import-contract and marker [F03-TWO-HOST-CONTRACT-160-ONE-RUN]. One GTK 20 + Android 120 + original audit 20, total maximum 160 runner-min; no automatic retry. Original 26-path admission remains intact for every old route; only this exact branch/case admits four previously reviewed files by exact Git blob. No checker, SDK, product, receiver, audit commands, assertions or original ownership rules are otherwise changed. Static run 41322302859 passed 34/34 but is not runtime acceptance. This new round is not executed yet; F03 remains pending/unaccepted, formal count credit zero. New run must produce its own source/run/A1-matched artifacts; no historical artifacts are substituted.
+
+
+## 2026-11-01 same-run import-contract integration result (failure retained)
+
+Run https://github.com/NoGod3524/EXReader/actions/runs/41323172087 attempt 1, source 23c18362e30729373485f61049fc4190e05d7006, completed 16:06:07Z. GTK job 124897516674 succeeded: original organization assertions and all six author phases completed. Android job 124899129846 successfully built the APK and original owner producer; the previous missing catalog target and obsolete import predicate blockers did not recur. The retained CatalogStoreTest ran 8 tests, 0 skipped, 3 failed: createsAndReopensCatalog and enforcesWorkerOwnership expected 1 but got 3; rollsBackInterruptedMigrationAndAllowsRetry expected 10 but got 12. The retained all-exits gate preserved its failure and downstream missing evidence; six F03 Android receives did not execute. Audit job 124901568161 correctly rejected the unsuccessful Android producer. This is not two-host acceptance and does not change the pending/unaccepted six-host F03 or formal count.
+
+Original failures and artifacts remain intact. No test assertion was changed, no failure filtered and no retry performed; authorized round used 1/1. Next action is read-only identification of the original catalog test/schema contract and owner before requesting any new scope. No root cause or product repair is claimed from the numerical mismatch alone.
+
+Artifact identities (API verified, ZIP not downloaded locally):
+- reader-suite-f03-gtk-41323172087-1: id 13090940445, 23011198 bytes, sha256:07e07760d7ed62cb911323dcfd5b419288e66f28bcdcd9812301a05492a41c42; created 2026-11-01T15:56:10Z.
+- reader-suite-f03-audit-41323172087-1: id 13090528495, 22953782 bytes, sha256:04868c819cfd8f57ad1ca42eef2ab004fbe33c211d1acb8a48551311737061f0; created 2026-11-01T16:06:04Z.
+- reader-suite-f03-android-41323172087-1: id 13090009581, 116867647 bytes, sha256:f9ca277711f46b41176f980cab801ff3b376092190ec98dd61669dc864dff8b0; created 2026-11-01T16:05:42Z.
