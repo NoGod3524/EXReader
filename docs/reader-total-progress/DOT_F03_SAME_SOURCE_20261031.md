@@ -838,3 +838,9 @@ A uses current finalizeImport and automatic history; B recreates historical atta
 - No A/B/C result is claimed verified. The captured Gradle log and XML are in the artifact but have not been downloaded/parsed outside Actions. This is a diagnostic collection failure, not evidence proving a product bootstrap defect or success.
 - Artifact 13096071870, reader-suite-f03-bootstrap-diagnostic-41337241559-1, 11756 bytes, SHA256 d1fed49895bad3376013c6b9f1a4b839265113935828759403a8649f3e9b24d5. Existing original tests/product/SDK and their failures remain unchanged.
 - Next is read-only review of the instrumentation installation/cleanup and report-retention path before any separately authorized correction or additional run. No old-APK upgrade acceptance, no full F03 acceptance, no formal credit.
+
+## Three-arm explicit-install/manual capture, 2026-11-01 18:45 approval
+
+Only caller/scope/evidence document change. The diagnostic class, exact eight-pin identity admission, old tests, product and SDK remain frozen. Same exact diagnostic branch/case with a new unique marker; one Ubuntu 25 runner-min, no retry.
+
+Compile assembleDebug/assembleDebugAndroidTest only (no connected test execution), explicitly install both fresh APKs on API34, run the three-arm diagnostic instrumentation exactly once, immediately read the original report and authenticate it before emulator cleanup. Every command failure propagates. Manual original protocol requires exactly three named successful completions, correct class/count, terminal -1 and OK (3 tests), alongside exact source/run/A1 JSON and API/ABI. APK hashes and original manual output are retained. No XML is fabricated or substituted, and no prior-run report is reused. C remains observational, not a predicted success/failure requirement. Prior collection failure remains sealed and undetermined; prepared, not run, zero formal credit.
