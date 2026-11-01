@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import shutil
 from pathlib import Path
 import ssl
 import threading
@@ -219,9 +220,16 @@ def write_role_receipt(output, host, program, identity, cases, claims, evidence)
         if case["outcome"] in ("passed", "partial"):
             if not case.get("source_evidence") or not set(case["source_evidence"]).issubset(paths):
                 raise AssertionError("native case evidence missing")
+    staged_program=output/"program.bin"
+    if program.resolve()!=staged_program.resolve():
+        shutil.copyfile(program,staged_program)
+    program_hash=hashlib.sha256(program.read_bytes()).hexdigest()
+    if hashlib.sha256(staged_program.read_bytes()).hexdigest()!=program_hash:
+        raise AssertionError("staged native program bytes changed")
     receipt = {"schema": 2, "host": host, "identity": identity,
                "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
-               "program_sha256": hashlib.sha256(program.read_bytes()).hexdigest(),
+               "program_sha256": program_hash,
+               "artifact_layout":{"receipt":"receipt.json","program":"program.bin","coverage":"coverage.json"},
                "cases": copied, "claims": mapped, "evidence_members": paths,
                "F05_accepted": False,
                "artifact_authenticated_by_producer": False}
