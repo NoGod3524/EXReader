@@ -1,3 +1,50 @@
+# EXReader continuation snapshot — scheduled 2026-11-01 10:22 UTC
+Observed/API-read window: **2026-11-01 10:23:02–10:23:09 UTC**. Continuation backup only, not stopping, completion, or release. Independent docs branch `codex/gpt-iphone-acceptance-96-20261031` was read at HEAD `4f2c4df1da48ca818dd69da01d43c70031a047e2`, blob `a52d911081aec90c47c9c97cf460e28eb48d51c3`. All prior text is retained verbatim below; newer observations take precedence.
+
+Formal ledger remains **96/108 (88.89%), 96 verified / 1 partial / 11 pending**, fixed `5db41cb19673fb75bb0b498c677d770931ac33e8`. Do not revert to older template95 or promote counts from pending graph/diagnostic results.
+
+## Current authorized full same-source run
+- [41295456077 A1](https://github.com/NoGod3524/EXReader/actions/runs/41295456077), source/controller **bdb2b93204e1268f7ae8336d4fd53f7e396f3c18**, remains **in_progress**, conclusion null. API created_at **09:59:23Z**, updated_at **10:21:22Z**; capture time above is the current check, not updated_at.
+- **12 planned jobs are success**: macOS SDK **124815265648**, retained Linux18/121 **124815265836**, simulator SDK **124815265850**, Windows seed **124815265992**, Android peer **124816396682**, GTK peer **124817941236**, iPhone peer **124817941248**, Mac peer **124817941256**, Windows-return Android **124817941318**, Windows-return Mac **124818746776**, Windows-return GTK **124819305535**, Windows-return iPhone **124820190644**.
+- iPad peer **124817941290** is **in_progress**. Its Windows return and final graph/retained authentication are not yet confirmed complete. Thus neither whole-run success nor final graph authentication is claimed. Unrelated skipped jobs are not accepted evidence.
+- User **09:57:06 UTC**, `Sentinel_ae42ab34269c8191b9b1111af0ac5d30`, explicitly approved three existing paths (F04 run.py, contract.json, F04 record document), preservation of history, and **one new 15-job / 230 runner-minute** full graph, including this round's temporary Mac exact Python **Don't Allow once** startup preparation. Launch is **1/1 used**, no automatic retry, no reliable ETA.
+- Reviewed prep **7cb6e849be6224dc2e04e7aa6599d11b8ee46208**: only code delta adds f04/six-host to the existing iPhone record-search preparation scope, still requiring target=iphone AND generic=True. run blob **28f5f691c8fae766a19635e782792117e94a941c**, contract **15205497393ade7cb26153b8ad8ddee163c40e17**, doc **e30fba56bbe7c16850a6896a0691b0ac9a48adae**. Reverse substitution proved all other run.py bytes identical; Swift and both workflows were unchanged.
+- F03 completed composition and the sole trigger; F04 monitors. Five builds and eleven phase artifacts must come from this new source/run/attempt. Prior twelve green jobs, old diagnostic producer inputs and isolated iPhone/Mac successes cannot be spliced into this graph.
+- Budget ceilings remain Windows seed20; Android25; GTK25; macOS SDK15; simulator SDK15; Mac peer15; iPhone20; iPad20; five Windows returns10 each; retained Linux15; audit10 = **230 runner-min**, not wall-clock ETA. Original Windows progress/bookmark/note FOUND, exact predecessors, immutable retained revisions, authenticated transport, graph connectivity and source/run/attempt/build/program/archive identity checks remain unchanged.
+
+## New evidence this hour, preserved separately
+- Previous full graph **41292070407 A1**, source **91b2ee1ff98173ccaa9de52b4071821905bd1c07**, ended failure: 12 planned jobs passed; iPhone peer failed original row lookup, iPhone Windows return skipped, audit correctly refused missing required producer before final graph/retained authentication. No false aggregate pass.
+- That iPhone failure found only current AX rows0..3 without scrolling. Row2 was **F04_WINDOWS_BOOKMARK**, not Android's bookmark; row3 was Android note below the viewport. Android output did contain F04_ANDROID_BOOKMARK. The unmaterialized row was not proof of retained-data loss.
+- [Single iPhone diagnostic 41294552194 A1](https://github.com/NoGod3524/EXReader/actions/runs/41294552194), controller/UI **0fb14eadc46d7392b5efaabe65ab9cf105008b36**, job **124812545025**, succeeded in **135.370 seconds**, one test/zero failures. Five original checkpoints passed: position60.07, incoming-bookmark72.90, incoming-note85.42, edited-records115.07, uploaded133.76. Native search made **row4** available for original jump and edit; original kind/marker, actual target admission and precise state/location/upload assertions were unchanged. Cleanup errors were empty.
+- Original iPhone artifact **13078148508**, **42,339,480 bytes**, SHA256 **4d7104bc57af5ba59675879fc26eecb26b954cf6926112d95a91b4fa9165726c**. Actual UI **9,653,296 bytes**, SHA256 **68c06e80a9173b681f79789e7ee3cdd0ab1f76325a5fe30d5ae036197d986ca0**. This diagnostic authenticated historical producer91b2/run41292070407/A1 SDK+Android inputs separately from its controller; it remains diagnostic-only/F04_accepted=false.
+- Previously sealed Mac diagnostic **41291277832** also passed all five checkpoints through uploaded, 80.263s, artifact13077298124 /42354209 bytes /SHA256 d900a58f9a5ea68e0cbcaa77274cb927d3bd263324522dc66228d2e120aba7fd. Neither isolated success substitutes for current final audit.
+
+## Preparation, permissions and unresolved product risk
+iPhone search preparation retains original index0..<32 order, kind equality and body.contains(marker). It uses at most21 real List snapshots/20 native scrolls, matching first, moving toward start then at most one reversal. Positive viewport-intersecting row0 or real unchanged visible frames guide reversal only; no movement never establishes absence or introduces a success gate. Existing unique/positive/fullcontain/enabled/hittable action admission and exact position/edit/upload assertions remain unchanged. iPad and other non-iPhone search behavior are unchanged.
+
+Mac preparation remains a separate full-scope switch, never diagnostic-mode or historical-input activation. Only the precise temporary-runner Python local-network prompt and unique fresh semantic Don't Allow may be acted on once before account/credentials/books/records, within scheduled10-second observation inside original150-second library-ready deadline. Missing prompt is not failure. After actual dismissal, only an already-running own app may be restored. Late/unknown/reappearing prompt stops environment-blocked; no Allow, settings/TCC changes, guessed number/coordinates, retry, reopening or replay.
+
+Potential product focus-loss risk remains **unfixed**: resign-active/nonactive scene calls closeAccountSession→readingRecords.bind(nil), clearing binding/rows but retaining status, so performReading may silently return on guard. This verified source path was not directly observed as the earlier failure's internal state. Startup isolation is not a repair or acceptance of arbitrary product focus loss. Snapshot-only optional diagnostics do not assert when evidence is missing.
+
+## Six assignments and boundaries
+| Lane | Actual activity | Remaining dependency |
+|---|---|---|
+| F03 | Canonical composition/sole trigger complete | Same-source identity coordination; own prior GTK/Android limitations not automatically accepted by F04 |
+| F04 | Monitoring one live full graph | iPad completion, its return, final original graph/retained authentication; F04 not promoted |
+| F05 | Integration/evidence waiting, seal9ce943e1ff0c26b54db69f5c31eec057d2be216b | Native conflict/deletion presentation, heads/tombstones, cancellation and recovery |
+| F07 | Provider/runtime evidence waiting, seal697448abd8188580304806163ba9b543e76ba9ba | Provider link/load and actual consumer validation |
+| F10 | Component seal4db961144b00c9004e2775b9e1e57e6ea7a31cb7 retained | Common-consumer/host/credential/privacy integration; component cases do not establish full_F10 |
+| F12 | Evidence organization and this independent snapshot | Final candidate/package/license inventory, real old-profile upgrade/restore matrix, generated instructions; seal64729214788a99ae96de7dda1a6376337324f9e4 is preparation only |
+
+**Zero active source-implementation lanes at capture.** Automatic replenishment stays paused, F06 verified evidence is not rerun. Existing product/SDK/external UI/F08/F09 owners remain unchanged.
+
+P0/C02 migration/journal/Repair remains valid only in its sealed scope, not all-P0/hardware-power-loss/F12/independent MSVC static relink. Full SDK/common-consumer and final same-source graph acceptance remain unresolved; twelve successful jobs do not close the final gates. SDK **8357eafa28423a7ab93ba08b823af80f01ad1505** and preparation baseline **94fb236a4a2da87dfbaf4f1dd2a47885d615a230** stay locked; current graph uses its own new outputs, while old pinned producer artifacts stay immutable historical evidence. Historical727 remains attached to its original scope.
+
+Earlier API/log +1-hour anomalies remain preserved below; current API timestamps are reported raw, not normalized. Desktop Commander quota, lap25002/instabox access and native handshake were **not revalidated**. This backup changes only the same independent document with skip-ci, no product/source/SDK/old-test/catalog/default-branch/PR/tag/release or new CI operation.
+
+---
+## Earlier snapshots (historical; latest facts above take precedence)
+
 # EXReader continuation snapshot — scheduled 2026-11-01 09:22 UTC
 Observed/API-read window: **2026-11-01 09:22:52–09:23:06 UTC**. Continuation backup only, not stopping, completion, or release. Independent documentation branch `codex/gpt-iphone-acceptance-96-20261031` was read at HEAD `565fee56bcadde5838ba6180bcf1a1bb354bf878`, file blob `7a2b8eddc48384346a197ed97465b1c147d4688c`; all earlier text is retained verbatim below.
 
