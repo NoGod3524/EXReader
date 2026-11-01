@@ -22,7 +22,8 @@ def active_contract():
     return contract, scope_name, scope
 
 def producer_job_name(contract, name):
-    return contract["canonical"]["caller_job"] + " / " + name
+    scope = contract["execution_scopes"].get(os.environ.get("F04_SCOPE"), {})
+    return scope.get("caller_job", contract["canonical"]["caller_job"]) + " / " + name
 
 def same_run_head(fetch, current):
     run = fetch("actions/runs/" + current["run_id"])

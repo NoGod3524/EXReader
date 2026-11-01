@@ -19,7 +19,8 @@
     "tests/dot_f04_reading_sync_20261031/windows_driver.py",
     "tests/dot_f04_reading_sync_20261031/gtk_driver.py",
     "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
-    "apps/reader/desktop/windows_records_owner.cpp"
+    "apps/reader/desktop/windows_records_owner.cpp",
+    "examples/apple/HostReadingRecords.swift"
   ],
   "phase": "approved-single-real-windows-android-case",
   "ci_runs_authorized": 1,
@@ -86,23 +87,43 @@
     "planned_edges": [
       [
         "windows",
-        "linux-gtk"
-      ],
-      [
-        "windows",
-        "macos"
-      ],
-      [
-        "windows",
         "android-api34-x86_64"
       ],
       [
-        "windows",
+        "android-api34-x86_64",
+        "windows"
+      ],
+      [
+        "android-api34-x86_64",
+        "linux-gtk"
+      ],
+      [
+        "linux-gtk",
+        "windows"
+      ],
+      [
+        "android-api34-x86_64",
+        "macos"
+      ],
+      [
+        "macos",
+        "windows"
+      ],
+      [
+        "android-api34-x86_64",
         "iphone-simulator"
       ],
       [
-        "windows",
+        "iphone-simulator",
+        "windows"
+      ],
+      [
+        "android-api34-x86_64",
         "ipad-simulator"
+      ],
+      [
+        "ipad-simulator",
+        "windows"
       ]
     ],
     "authors": "at least two real applications; no fixed six-author threshold",
@@ -113,17 +134,15 @@
     "evidence": "program/source identity, exact wires, real UI actions and requests; no screenshot-count threshold"
   },
   "unverified_final_targets": [
-    "windows",
     "linux-gtk",
     "macos",
-    "android-api34-x86_64",
     "iphone-simulator",
     "ipad-simulator"
   ],
   "execution_blockers": [
-    "full six-host runtime still unverified",
-    "current authorization covers only Windows Android return",
-    "original four-ZIP aggregate remains not-run"
+    "six-host graph requires this newly approved actual runtime",
+    "original four-ZIP aggregate remains not-run",
+    "final F04 clause review required after graph and retained authentication"
   ],
   "graph_producers": [
     {
@@ -132,17 +151,19 @@
       "host": "windows",
       "role": "seed",
       "fresh_profile": true,
-      "build_key": "f04-build-windows"
+      "build_key": "f04-build-windows",
+      "job_id": "windows_seed"
     },
     {
       "job": "F04 gtk peer",
       "artifact": "f04-gtk-peer",
       "host": "linux-gtk",
       "role": "peer",
-      "previous": "f04-windows-seed",
-      "incoming_prefix": "F04_WINDOWS",
+      "previous": "f04-android-peer",
+      "incoming_prefix": "F04_ANDROID",
       "fresh_profile": true,
-      "build_key": "f04-build-gtk"
+      "build_key": "f04-build-gtk",
+      "job_id": "gtk_peer"
     },
     {
       "job": "F04 Windows return (gtk)",
@@ -152,17 +173,19 @@
       "previous": "f04-gtk-peer",
       "incoming_prefix": "F04_GTK",
       "fresh_profile": true,
-      "build_key": "f04-build-windows"
+      "build_key": "f04-build-windows",
+      "job_id": "windows_return_gtk"
     },
     {
       "job": "F04 macos peer",
       "artifact": "f04-macos-peer",
       "host": "macos",
       "role": "peer",
-      "previous": "f04-windows-seed",
-      "incoming_prefix": "F04_WINDOWS",
+      "previous": "f04-android-peer",
+      "incoming_prefix": "F04_ANDROID",
       "fresh_profile": true,
-      "build_key": "f04-build-macos"
+      "build_key": "f04-build-macos",
+      "job_id": "macos_peer"
     },
     {
       "job": "F04 Windows return (macos)",
@@ -172,7 +195,8 @@
       "previous": "f04-macos-peer",
       "incoming_prefix": "F04_MACOS",
       "fresh_profile": true,
-      "build_key": "f04-build-windows"
+      "build_key": "f04-build-windows",
+      "job_id": "windows_return_macos"
     },
     {
       "job": "F04 android peer",
@@ -182,7 +206,8 @@
       "previous": "f04-windows-seed",
       "incoming_prefix": "F04_WINDOWS",
       "fresh_profile": true,
-      "build_key": "f04-build-android"
+      "build_key": "f04-build-android",
+      "job_id": "android_peer"
     },
     {
       "job": "F04 Windows return (android)",
@@ -192,17 +217,19 @@
       "previous": "f04-android-peer",
       "incoming_prefix": "F04_ANDROID",
       "fresh_profile": true,
-      "build_key": "f04-build-windows"
+      "build_key": "f04-build-windows",
+      "job_id": "windows_return_android"
     },
     {
       "job": "F04 iphone peer",
       "artifact": "f04-iphone-peer",
       "host": "iphone-simulator",
       "role": "peer",
-      "previous": "f04-windows-seed",
-      "incoming_prefix": "F04_WINDOWS",
+      "previous": "f04-android-peer",
+      "incoming_prefix": "F04_ANDROID",
       "fresh_profile": true,
-      "build_key": "f04-build-iphonesimulator"
+      "build_key": "f04-build-iphonesimulator",
+      "job_id": "iphone_peer"
     },
     {
       "job": "F04 Windows return (iphone)",
@@ -212,17 +239,19 @@
       "previous": "f04-iphone-peer",
       "incoming_prefix": "F04_IPHONE",
       "fresh_profile": true,
-      "build_key": "f04-build-windows"
+      "build_key": "f04-build-windows",
+      "job_id": "windows_return_iphone"
     },
     {
       "job": "F04 ipad peer",
       "artifact": "f04-ipad-peer",
       "host": "ipad-simulator",
       "role": "peer",
-      "previous": "f04-windows-seed",
-      "incoming_prefix": "F04_WINDOWS",
+      "previous": "f04-android-peer",
+      "incoming_prefix": "F04_ANDROID",
       "fresh_profile": true,
-      "build_key": "f04-build-iphonesimulator"
+      "build_key": "f04-build-iphonesimulator",
+      "job_id": "ipad_peer"
     },
     {
       "job": "F04 Windows return (ipad)",
@@ -232,7 +261,8 @@
       "previous": "f04-ipad-peer",
       "incoming_prefix": "F04_IPAD",
       "fresh_profile": true,
-      "build_key": "f04-build-windows"
+      "build_key": "f04-build-windows",
+      "job_id": "windows_return_ipad"
     }
   ],
   "retained_producers": [
@@ -252,27 +282,32 @@
     {
       "key": "f04-build-windows",
       "job": "F04 Windows seed",
-      "platform": "windows"
+      "platform": "windows",
+      "job_id": "windows_seed"
     },
     {
       "key": "f04-build-gtk",
-      "job": "F04 build gtk",
-      "platform": "gtk"
+      "job": "F04 gtk peer",
+      "platform": "gtk",
+      "job_id": "gtk_peer"
     },
     {
       "key": "f04-build-android",
       "job": "F04 android peer",
-      "platform": "android"
+      "platform": "android",
+      "job_id": "android_peer"
     },
     {
       "key": "f04-build-macos",
       "job": "F04 build macos",
-      "platform": "macos"
+      "platform": "macos",
+      "job_id": "build_macos"
     },
     {
       "key": "f04-build-iphonesimulator",
       "job": "F04 build iphonesimulator",
-      "platform": "iphonesimulator"
+      "platform": "iphonesimulator",
+      "job_id": "build_iphonesimulator"
     }
   ],
   "canonical": {
@@ -304,7 +339,8 @@
       "tests/dot_f04_reading_sync_20261031/windows_driver.py",
       "tests/dot_f04_reading_sync_20261031/gtk_driver.py",
       "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
-      "apps/reader/desktop/windows_records_owner.cpp"
+      "apps/reader/desktop/windows_records_owner.cpp",
+      "examples/apple/HostReadingRecords.swift"
     ],
     "controller_source_run_head_equal": true
   },
@@ -337,6 +373,61 @@
         "audit": 10
       },
       "full_F04": false
+    },
+    "f04/six-host": {
+      "hosts": [
+        "windows",
+        "linux-gtk",
+        "macos",
+        "android-api34-x86_64",
+        "iphone-simulator",
+        "ipad-simulator"
+      ],
+      "graph_artifacts": [
+        "f04-windows-seed",
+        "f04-gtk-peer",
+        "f04-windows-return-gtk",
+        "f04-macos-peer",
+        "f04-windows-return-macos",
+        "f04-android-peer",
+        "f04-windows-return-android",
+        "f04-iphone-peer",
+        "f04-windows-return-iphone",
+        "f04-ipad-peer",
+        "f04-windows-return-ipad"
+      ],
+      "build_keys": [
+        "f04-build-windows",
+        "f04-build-gtk",
+        "f04-build-android",
+        "f04-build-macos",
+        "f04-build-iphonesimulator"
+      ],
+      "retained_keys": [
+        "f04-retained-linux"
+      ],
+      "runner_minutes_cap": 230,
+      "run_limit": 1,
+      "automatic_retries": 0,
+      "caller_job": "F04 six-host",
+      "job_minutes": {
+        "windows_seed": 20,
+        "android_peer": 25,
+        "gtk_peer": 25,
+        "build_macos": 15,
+        "build_iphonesimulator": 15,
+        "macos_peer": 15,
+        "iphone_peer": 20,
+        "ipad_peer": 20,
+        "windows_return_android": 10,
+        "windows_return_gtk": 10,
+        "windows_return_macos": 10,
+        "windows_return_iphone": 10,
+        "windows_return_ipad": 10,
+        "retained_linux": 15,
+        "audit": 10
+      },
+      "full_F04": false
     }
   },
   "round_history": [
@@ -362,9 +453,16 @@
       "retained": "success",
       "android": "original received; public resolver rejected parser spelling",
       "return_and_audit": "skipped"
+    },
+    {
+      "run_id": "41268741338",
+      "source_sha": "f003576d2acfbc2bcb9eaf8c8dcc06e02f9fd593",
+      "conclusion": "success",
+      "scope": "Windows Android bidirectional plus original retained authentication",
+      "F04_accepted": false
     }
   ],
-  "current_round": 4,
+  "current_round": 5,
   "legacy_provider": {
     "source": "210403d121d6484a8fff4ea7ffd911efa3163535",
     "prefix": "build/v1-product-stage",
@@ -404,11 +502,12 @@
       "full_F04": false
     }
   },
-  "current_round_scope": "one new full five-job Windows Android return; 120 runner-minute cap; no retry",
+  "current_round_scope": "one fresh six-host strong connected graph; fifteen jobs total230; no retry",
   "production_delta": {
     "paths": [
       "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
-      "apps/reader/desktop/windows_records_owner.cpp"
+      "apps/reader/desktop/windows_records_owner.cpp",
+      "examples/apple/HostReadingRecords.swift"
     ],
     "scope": "only exact current 3.42 parser spelling equivalence; no SDK or stored wire changes"
   }

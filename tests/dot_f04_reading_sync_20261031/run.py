@@ -346,7 +346,7 @@ def diagnostic_text(value, secrets=()):
 def collect_diagnostics(arguments):
     """Only fixed public text evidence; never recursive profiles, databases, or keys."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--kind", choices=("windows", "retained", "android", "audit"), required=True)
+    parser.add_argument("--kind", choices=("windows", "retained", "android", "audit", "gtk", "macos", "iphone", "ipad"), required=True)
     args = parser.parse_args(arguments)
     destination = ROOT / "build/f04-diagnostics" / args.kind
     destination.mkdir(parents=True, exist_ok=True)
@@ -358,6 +358,10 @@ def collect_diagnostics(arguments):
                      ("build/v2-sdk-evidence/result.json", "sdk-result.json"),
                      ("build/v2-sdk-evidence/legacy/summary.json", "legacy-summary.json")]
     }
+    whitelist["gtk"] = [("build/phase/result.json", "result.json")]
+    for target in ("macos", "iphone", "ipad"):
+        whitelist[target] = [("build/apple-android/" + target + "-peer/result.json", "result.json"),
+                             ("build/apple-android/" + target + "-peer/checkpoint-error.txt", "checkpoint-error.txt")]
     manifest = {"source_sha": os.environ["GITHUB_SHA"], "run_id": os.environ["GITHUB_RUN_ID"],
                 "attempt": os.environ["GITHUB_RUN_ATTEMPT"], "kind": args.kind,
                 "diagnostic_only": True, "files": [], "missing": [], "refused": []}
@@ -369,6 +373,7 @@ def collect_diagnostics(arguments):
             content = diagnostic_text(path.read_text(encoding="utf-8"))
             (destination / name).write_text(content, encoding="utf-8")
             manifest["files"].append(name)
+            print("F04 DIAGNOSTIC " + args.kind + "/" + name + "\n" + content, flush=True)
         except Exception:
             manifest["refused"].append(source)
     (destination / "manifest.json").write_text(json.dumps(manifest, indent=2))
@@ -588,13 +593,35 @@ def windows_import_fixed():
     print(json.dumps({"controller_source": os.environ["GITHUB_SHA"], "controller_run": os.environ["GITHUB_RUN_ID"],
                       "product_producer": pin, "windows_import_path_only": True, "F04_accepted": False}), flush=True)
 
+def authenticate_selected_graph():
+    """Resolve exact current-job outputs for this selected case, then run both original audits."""
+    contract = json.loads((HERE / "contract.json").read_text())
+    scope = contract["execution_scopes"][os.environ["F04_SCOPE"]]
+    needs = json.loads(os.environ["F04_NEEDS"])
+    graph = [b for b in contract["graph_producers"] if b["artifact"] in scope["graph_artifacts"]]
+    builds = [b for b in contract["build_producers"] if b["key"] in scope["build_keys"]]
+    def output(job, key):
+        assert needs[job]["result"] == "success", "required producer failed: " + job
+        value = needs[job]["outputs"][key]
+        assert str(value).isdigit() and int(value) > 0
+        return int(value)
+    os.environ["F04_ARTIFACT_IDS"] = json.dumps({b["artifact"]: output(b["job_id"], "phase") for b in graph})
+    os.environ["F04_BUILD_IDS"] = json.dumps({b["key"]: output(b["job_id"], "build") for b in builds})
+    os.environ["F04_RETAINED_IDS"] = json.dumps({"f04-retained-linux": output("retained_linux", "retained")})
+    for flag in ("--authenticate-graph", "--authenticate-retained"):
+        subprocess.run([sys.executable, str(HERE / "audit.py"), flag], cwd=ROOT, check=True)
+
 def main():
     assert os.environ.get("GITHUB_ACTIONS") == "true", "Actions only"
     assert Path.cwd().resolve() == ROOT
     assert os.environ.get("EXR_APPLE_SDK_VERSION") == "3.42.0"
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics", "windows-import-fixed"))
+    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics", "windows-import-fixed", "authenticate-selected"))
     args, rest = parser.parse_known_args()
+    if args.action == "authenticate-selected":
+        assert not rest
+        authenticate_selected_graph()
+        return
     if args.action == "windows-import-fixed":
         assert not rest
         windows_import_fixed()
