@@ -17,7 +17,7 @@
 | 最终汇总 | 每条适用合同均有已核证据或明确受合同允许的边界 | missing evidence、partial 被当 pass、组件结果冒总体验收：incomplete_f12_evidence | 缺数不自动 N/A；正式108分母和96当前分子不动 |
 
 ## 原件认证设计
-在将来另批的 Actions 验证中，按当前 attempt jobs 与 artifact 上传身份关联，核实际原 ZIP 字节、大小/digest、成员安全路径及程序字节。用户提供的 receipt 自称 authenticated 不够。拒重名成员/遍历/链接/超预算展开；原 ZIP 保留不重封。负例从已合格正例产生，每次只改一项，必须观察对应精确拒因，不能借其他预存错误算成功。下载/解包/语法/测试仅在 Actions，本轮未实施。
+在将来另批的 Actions 验证中，按当前 attempt jobs 与 artifact 上传身份关联，核实际原 ZIP 字节、大小/digest、成员安全路径及程序字节。用户提供的 receipt 自称 authenticated 不够。拒重名成员/遍历/逃逸或未知链接/超预算展开；合法的原 producer 已声明平台链接（例如 macOS framework symlink）按其原契约核目标和包内约束，不一概拒绝且不跟随逃逸；原 ZIP 保留不重封。负例从已合格正例产生，每次只改一项，必须观察对应精确拒因，不能借其他预存错误算成功。下载/解包/语法/测试仅在 Actions，本轮未实施。
 
 ## 不扩大原条款
 - 不强求所有平台都实现自动更新、签名发布或任意旧版本降级；先记录实际承诺/支持矩阵。
@@ -28,3 +28,7 @@
 
 ## 下一批提案（未授权实施）
 优先只读完成六平台现有用户说明/打包许可位置清单，并由父线程确认最终候选及旧版本支持范围。随后提交最小参数化 suite case 的精确文件/producer 依赖/时间 cap；复用现有产物而非默认全重建。依赖尚未固定，当前不报虚假 CI 分钟或完工 ETA。设计独立审过、具体预算获批后才写测试或触发。
+
+## 独立设计审后的历史盘点分层
+父线程已审设计方向，尚未授新实现或 CI。历史盘点固定 `historical_inventory_only=true`，以历史原 source/run/attempt/package 身份核材料；无需捏造最终 candidate，也不因最终 candidate 未冻结让历史盘点整体失败。历史结果不授 `full_f12_complete`，最终 source 未冻结单列依赖。
+优先读取已有包 manifest/安装清单和普通工件日志确定材料位置，不默认扫描六个历史 ZIP。只有可明确定位 Android notices 缺口并指导最小修补时，再提交单包只读 Actions case 的设计/路径/单轮预算；不重造 H5 或全重建。
