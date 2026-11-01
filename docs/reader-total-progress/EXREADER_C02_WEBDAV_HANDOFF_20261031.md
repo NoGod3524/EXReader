@@ -913,3 +913,64 @@ Scheduled hour: 19:22 UTC. Initial authorized-route attempt at 19:21 returned ma
 - Repository-wide API separately showed run 41336873192 on codex/f08-final-validation-20261031 in progress. It is external to this team's controller/budget and is neither taken over nor counted as this team's CI.
 - Both separately approved 25 runner-min rounds were used once (each 1/1); there is no automatic retry or residual authorization for a new run. Budget caps are not ETAs. No reliable ETA for the remaining requirements is available.
 - All prior history, owners, fixed inputs, authorization boundaries and failure artifacts remain intact. No new cross-owner handshake or external notification was performed. Formal progress remains 98/108 even though evidence collection advanced.
+
+
+## 2026-11-01 20:22 / 21:22 / 22:22 UTC delayed handoff ? saved 2026-11-01T23:10:54.594696+00:00
+
+These three scheduled snapshots were not saved on schedule: the prescribed DC connection was unavailable, then the exact documentation-branch write required confirmation. User 23:07:36 explicitly approved this existing independent documentation branch. This is the actual later save, not a backdated observation; all earlier history remains intact. No source or catalog change and no CI is initiated by this snapshot.
+
+### Formal ledger and bounded evidence
+- Formal status remains **98/108 (90.74%), 1 partial, 9 pending**, ledger acceptance commit `255ec5578063765334d37f967507926c79557a3e`; catalog blob `bfafcaf5a49cbc07d444abbe775c3fb37373cd63`. F02/F04 accepted within their original scope. Old 95/96/97 prompts are historical, not current. No new credit this period.
+- Canonical `ec11cf862ca3b44483d7e8c4726ae748ab438337` and full F04 run `41306566948` remain historical accepted evidence, not all-feature delivery.
+
+### Progress, ownership and remaining gaps
+- F03 ABC manual run `41338502839` / source `434e45afeb6aca3fa69969f1c7cecc8a799f2e3e`, seal `75cbe80dc92aa5465bce0581b9275388c6600372`: A/B commit; C reconstructed legitimate saved bootstrap survives reopen but automatic competing revision causes explicit retry refusal. Original source, metadata and saved intent were preserved. This is not old-APK upgrade acceptance. Earlier report-collection failure remains.
+- User 22:54 assigned the production repair to this F03 lane; it is no longer waiting for an external owner. User 22:58:44 approved exactly three legacy fixture preconditions while retaining eight original methods/assertions; 23:07:36 approved nine files on `dot/f03-bootstrap-recovery-20261101`. Independently reviewed source `ce45497953e4f54cc253842a153f72f9f00a28bb`, tree `020019085da7185c2f69d83b45d8c73f0391da96`: two production files protect import/reopen/sync automatic history against validated durable pending, twelve new recovery cases; journal format, SDK and all other original assertions unchanged. F03 sole controller dispatched once, cap 120 runner-min, no automatic retry. Actual run status is below; not yet a repair-pass claim.
+- F07 fixed original artifact audit `41357347494` / source `273267657d3b2b2161346b075839bdf147b9941b`, job `125000158309`, succeeded 22:29:03?22:29:14 UTC. 112 entries authenticated, 12 controls pass, 80 MAP SQLite symbols bind through member/RSP to the unique SDK archive, zero unbound. Literal Loaded remains zero but the static-link attribution gap for this producer is closed. New artifact `13103433754`, 891453 bytes, SHA256 `bcd259c0d17ba2b898dac9b7587b772c8458d4e2218b2a8f35ee3c015a1e99ec`; seal `11c395d6fc7c5e5764377d801ea71f10ec05f4ba`. Final common-source six-target attribution and module no-private-entry evidence remain to map; no automatic F07 acceptance. One 5-minute audit budget consumed, no rebuild/retry.
+- F08 was explicitly reassigned from the completed F04 lane at 20:07, not left with an external lane. Both integration/validation branches were verified at `b7970bfbe7d1a54e2b41dcbde25bbe4d27472fa0`; run `41336873192` succeeded 11 jobs but did not close native performance requirements. User 21:39 approved necessary product/SDK and LAP native work under original limits. Exact LAP SDK/AVD qualification paths subsequently supplied: API34/default/x86_64, Pixel6 profile, original display/hardware retained. User 23:00:48 specifically approved local handling of fixed artifact `13095882137` and original native baseline. At this save, transfer/preparation is queued; no native sample result claimed, no old four-APK bundle substituted.
+- F05 conflict recovery and F10 managed cleanup/credential integration remain dependent on their original owners/common-source integration. F12 is reviewing and recording, not making release packages prematurely. Final six-package candidate, actual SDK/schema identities, supported old-profile upgrade matrix and included licenses remain F12 delivery inputs. P0 recovery/conflicts and all-feature SDK common-source closure are not completed by the F04 or diagnostic greens.
+- Six lanes: F03 reviewed implementation completed and verification dispatched; F08 native preparation active; F05/F10 dependency specifications, F07 completed evidence audit, F12 independent review/handoff. External repository runs are listed separately below, not counted as this team execution.
+
+### Authorization, time and resumption
+Only prescribed lap25002 Desktop Commander ? saved-login instabox@0.8.52 ? existing VM was used for Git/docs. No mainline push, release, PR, display change, process termination or new machine. Historical owner branches remain provenance, not current repair ownership. No fresh full handshake was performed. Native special handling applies only to the approved fixed F08 artifact. This snapshot does not grant additional CI or retries. Caps are not ETAs; remaining complete-delivery ETA is unknown. VM reports /data 96.1% full (~0.7 GiB free); no cleanup or resize performed.
+
+Current API observations at actual save:
+```json
+{
+  "saved_utc": "2026-11-01T23:10:54.594696+00:00",
+  "previous_doc_head": "0630af26bb66d72fe5ae783f369c5ef51c26bc3f",
+  "formal_counts": {
+    "verified": 98,
+    "partial": 1,
+    "pending": 9
+  },
+  "heads": {
+    "dot/reader-suite-20261101": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+    "dot/f03-bootstrap-recovery-20261101": "ce45497953e4f54cc253842a153f72f9f00a28bb",
+    "codex/f08-final-integration-20261031": "b7970bfbe7d1a54e2b41dcbde25bbe4d27472fa0",
+    "codex/f08-final-validation-20261031": "b7970bfbe7d1a54e2b41dcbde25bbe4d27472fa0"
+  },
+  "f03_runs": [
+    {
+      "id": 41360729084,
+      "attempt": 1,
+      "source": "ce45497953e4f54cc253842a153f72f9f00a28bb",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41360729084"
+    }
+  ],
+  "repository_in_progress": [
+    {
+      "id": 41360729084,
+      "branch": "dot/f03-bootstrap-recovery-20261101",
+      "source": "ce45497953e4f54cc253842a153f72f9f00a28bb"
+    },
+    {
+      "id": 41358460770,
+      "branch": "claude/f09-joint-20261101",
+      "source": "514a792b1d5ba099f415c5d7bfdd01aee087e7bd"
+    }
+  ]
+}
+```
