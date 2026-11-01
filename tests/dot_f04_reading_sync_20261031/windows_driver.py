@@ -31,6 +31,43 @@ def main():
     account = module("f04_windows_account", "tests/reader_windows_account/check_account_ui.py")
     rec.U.GetWindowRect.argtypes = [W.HWND, C.POINTER(W.RECT)]
     class Device(rec.RecordsApp, account.Device):
+        def menu_command(self, identifier):
+            assert identifier in (137, 210, 107), "unapproved menu entry"
+            self.wait_idle(); self.focus()
+            assert rec.U.GetForegroundWindow() == self.window and rec.U.IsWindowEnabled(self.window), "menu owner unavailable"
+            pid = W.DWORD(); rec.U.GetWindowThreadProcessId(self.window, C.byref(pid))
+            assert pid.value == self.process.pid, "menu wrong process"
+            rec.U.GetMenu.argtypes = [W.HWND]; rec.U.GetMenu.restype = W.HANDLE
+            rec.U.GetSubMenu.argtypes = [W.HANDLE, C.c_int]; rec.U.GetSubMenu.restype = W.HANDLE
+            rec.U.GetMenuItemCount.argtypes = [W.HANDLE]; rec.U.GetMenuItemCount.restype = C.c_int
+            rec.U.GetMenuItemID.argtypes = [W.HANDLE, C.c_int]; rec.U.GetMenuItemID.restype = W.UINT
+            rec.U.GetMenuState.argtypes = [W.HANDLE, W.UINT, W.UINT]; rec.U.GetMenuState.restype = W.UINT
+            found = []
+            def visit(menu):
+                for index in range(rec.U.GetMenuItemCount(menu)):
+                    child = rec.U.GetSubMenu(menu, index)
+                    if child: visit(child)
+                    elif rec.U.GetMenuItemID(menu, index) == identifier:
+                        found.append(rec.U.GetMenuState(menu, index, 0x400))
+            visit(rec.U.GetMenu(self.window))
+            assert len(found) == 1 and found[0] != 0xFFFFFFFF and not (found[0] & 3), "menu missing or disabled"
+            rec.send(self.window, 0x111, identifier, 0)
+        def open_account(self):
+            self.menu_command(137)
+            dialog = self.account_dialog(); self.settle(dialog)
+            return dialog
+        def close(self):
+            try:
+                if self.process.poll() is None:
+                    assert rec.U.PostMessageW(self.window, 0x10, 0, 0), "normal close request refused"
+                    self.process.wait(timeout=30)
+                assert self.process.returncode == 0, "normal close exit not zero"
+            except BaseException:
+                if self.process.poll() is None:
+                    self.process.kill(); self.process.wait(timeout=10)
+                raise
+            finally:
+                self.log.close()
         def import_file(self, path):
             self.wait_initial_shelf(); self.wait_idle()
             assert rec.send(self.control("books"), 0x18B) == 0, "seed profile not empty"
@@ -131,7 +168,7 @@ def main():
         app.wait(lambda: not rec.U.IsWindowEnabled(rec.U.GetDlgItem(d, rec.CANCEL)), timeout=90)
         app.wait_idle()
     def show():
-        app.wait_idle(); rec.send(rec.U.GetDlgItem(app.window, rec.BUTTON), 0xF5)
+        app.wait_idle(); app.menu_command(rec.BUTTON)
         d = app.dialog(); settle(d); return d
     def press(d, control):
         rec.send(rec.U.GetDlgItem(d, control), 0xF5); settle(d)
@@ -234,7 +271,7 @@ def main():
             before = frame()
             d = show(); press(d, rec.PROGRESS)
             body(d, "F04_WINDOWS_BOOKMARK"); press(d, rec.BOOKMARK); close(d)
-            app.click("select"); app.wait_idle()
+            app.menu_command(107); app.wait_idle()
             d = show(); body(d, "F04_WINDOWS_NOTE"); press(d, rec.HIGHLIGHT); close(d)
             check("record_creation_does_not_navigate", frame() == before)
             sync()
