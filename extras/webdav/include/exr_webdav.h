@@ -68,6 +68,17 @@ typedef void (*exr_webdav_write_observer)(void *context, const void *bytes, size
 exr_webdav_status exr_webdav_download_observed(exr_webdav_client *, const char *resource,
   const char *private_directory, const char *filename, const exr_webdav_control *,
   exr_webdav_write_observer, void *observer_context, exr_webdav_download *, exr_webdav_error *);
+/* Bounded GET without a local file or whole-body allocation. The synchronous
+   consumer borrows each chunk only for its call and returns an explicit status;
+   errors/exceptions abort, never mean EOF. Do not reenter the client.
+   *received is zero on failure. OK requires normal HTTP/TLS termination and
+   exactly expected_bytes; partial consumer state must otherwise be discarded.
+   Hash/identity verification is the caller's responsibility before any ack. */
+typedef exr_webdav_status (*exr_webdav_read_consumer)(void *context,
+  const void *bytes,size_t size);
+exr_webdav_status exr_webdav_read_stream(exr_webdav_client *,const char *resource,
+  uint64_t expected_bytes,exr_webdav_read_consumer,void *consumer_context,
+  const exr_webdav_control *,uint64_t *received,exr_webdav_error *);
 /* Optional immutable-sync primitives. No write follows a redirect, even within
    the configured root. MKCOL accepts 201 or pre-existing 405; callers must
    subsequently prove the collection when using it. PUT streams a regular
