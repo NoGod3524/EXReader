@@ -177,3 +177,11 @@ Graph artifact lookup now consumes explicit upload-result IDs and checks source/
 The retained-protocol recipe selects the original 18/121 checks, original export, and native HTTPS 18-capture steps from the byte-locked workflow. Only SDK selection is adapted to 3.42. All assertions remain original. The historical complete four-ZIP aggregate is explicitly `not-run`.
 The retained auditor authenticates same-run IDs, original ZIPs, original reports/raw checks and actual probe binaries. Each rejection probe begins from a separately validated positive bundle and asserts its exact rejection reason. These checks have not been executed.
 Producer workflow routing and complete compiled/installed host evidence remain in progress. No workflow is enabled, no run is started, and no complete-F04 acceptance is asserted.
+
+
+### Disabled producer routing and installed-program evidence
+The existing workflow now describes 18 disabled jobs: four reusable Windows/GTK/macOS/simulator builds, eleven real UI phases in the bidirectional star, two original retained-protocol jobs, and one authenticated audit. Every job has literal `if: false`; timeout ceilings are NOT authorized runner-minute spend. No dispatch has occurred.
+Android builds and runs its peer in the same job because the app embeds the fixture CA; fixture private keys never become handoff artifacts. Public build artifacts and UI artifacts expose distinct upload IDs.
+`package-build` exports only explicit public program/SDK payloads. `seal-phase` binds the actual program to its same-run build receipt; Apple verifies its actual bundle source plus installed SDK manifest rather than comparing binaries across platforms. The graph auditor independently authenticates build IDs and raw ZIPs, verifies each installed SDK file, and binds phase receipts and program bytes to the appropriate target.
+F07's limited static review found missing original WebDAV raw checks; these are restored (nonempty checks, native transport flag, original counters and summary/raw agreement). The original WebDAV fixture is wrapped with precise per-fixture cleanup, never cleanup of unrelated system trust.
+All new wiring is unexecuted. The original four-ZIP aggregate remains `not-run`; full F04 still requires runtime evidence and clause-by-clause final review, not merely a new audit flag.
