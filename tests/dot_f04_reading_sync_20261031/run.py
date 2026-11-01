@@ -593,6 +593,163 @@ def windows_import_fixed():
     print(json.dumps({"controller_source": os.environ["GITHUB_SHA"], "controller_run": os.environ["GITHUB_RUN_ID"],
                       "product_producer": pin, "windows_import_path_only": True, "F04_accepted": False}), flush=True)
 
+
+def load_mac_diagnostic_state(path, phase=None):
+    """Diagnostic-only historical input; never rewrites the original identity."""
+    import base64, hashlib
+    pin = json.loads((HERE / "contract.json").read_text())["macos_state_diagnostic"]
+    assert os.environ["F04_SCOPE"] == pin["case"]
+    raw = Path(path).read_bytes()
+    state = json.loads(raw)
+    assert state["schema"] == 1 and state["source_sha"] == pin["producer_source"]
+    assert str(state["run_id"]) == pin["run_id"] and str(state["attempt"]) == pin["attempt"]
+    assert state["phase"] == "android" and state["data"]["passed"] is True
+    if phase is not None: assert state["phase"] == phase
+    for key, value in state["entries"].items():
+        assert key.startswith("/dav/exreader-sync-v1/")
+        body = base64.b64decode(value["body"], validate=True)
+        assert hashlib.sha256(body).hexdigest() == value["sha256"]
+    return state, hashlib.sha256(raw).hexdigest()
+
+def macos_state_diagnostic():
+    """One fixed-producer diagnostic. Not a same-HEAD graph acceptance."""
+    import hashlib, io, zipfile, plistlib
+    from pathlib import PurePosixPath
+    sys.path.insert(0, str(ROOT / "tools"))
+    from check_parallel_integration import fetch, download_artifact_zip
+    contract = json.loads((HERE / "contract.json").read_text())
+    pin = contract["macos_state_diagnostic"]
+    assert sys.platform == "darwin" and os.environ["F04_SCOPE"] == pin["case"]
+    assert os.environ["GITHUB_REF"] == "refs/heads/" + contract["canonical"]["branch"]
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    assert head == os.environ["GITHUB_SHA"] == os.environ["F04_CONTROLLER_SHA"]
+    changed = subprocess.check_output(["git", "diff", "--name-only", pin["producer_source"], head],
+                                      cwd=ROOT, text=True).splitlines()
+    assert set(changed) == set(pin["allowed_changed_paths"]), ("production equivalence", changed)
+    assert subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT) == b""
+    producer = fetch("actions/runs/" + pin["run_id"])
+    assert producer["head_sha"] == pin["producer_source"] and str(producer["run_attempt"]) == pin["attempt"]
+    evidence = {"controller_source": head, "ui_build_source": head, "controller_run": os.environ["GITHUB_RUN_ID"],
+                "production_equivalent_to": pin["producer_source"], "changed_paths": changed,
+                "historical_producer": pin, "diagnostic_only": True, "F04_accepted": False, "passed": False}
+    destination = ROOT / "build/f04-macos-state-diagnostic"
+    destination.mkdir(parents=True, exist_ok=False)
+    sdk = ROOT / "sdk-input/team24-apple-sdk-macos-f04"
+    incoming = ROOT / "build/f04-fixed-android"
+    def obtain(kind, folder):
+        p = pin[kind]
+        job = fetch("actions/jobs/" + str(p["job_id"]))
+        assert job["head_sha"] == pin["producer_source"] and str(job["run_id"]) == pin["run_id"]
+        assert str(job["run_attempt"]) == pin["attempt"] and job["conclusion"] == "success"
+        artifact = fetch("actions/artifacts/" + str(p["artifact_id"]))
+        assert artifact["id"] == p["artifact_id"] and not artifact["expired"]
+        assert artifact["size_in_bytes"] == p["size_in_bytes"] and artifact["digest"] == p["digest"]
+        assert artifact["workflow_run"]["head_sha"] == pin["producer_source"]
+        assert str(artifact["workflow_run"]["id"]) == pin["run_id"]
+        body = download_artifact_zip(p["artifact_id"])
+        assert len(body) == p["size_in_bytes"] and "sha256:" + hashlib.sha256(body).hexdigest() == p["digest"]
+        # Original byte container retained separately from consumer receipts.
+        (destination / (kind + "-original.zip")).write_bytes(body)
+        folder.mkdir(parents=True, exist_ok=False)
+        with zipfile.ZipFile(io.BytesIO(body)) as archive:
+            entries = archive.infolist()
+            assert len(entries) == len({x.filename for x in entries})
+            assert sum(x.file_size for x in entries) <= 500000000
+            for entry in entries:
+                path = PurePosixPath(entry.filename)
+                assert not path.is_absolute() and ".." not in path.parts and "\\" not in entry.filename and ":" not in entry.filename
+                assert ((entry.external_attr >> 16) & 0o170000) != 0o120000
+                target = folder.joinpath(*path.parts)
+                if entry.is_dir(): target.mkdir(parents=True, exist_ok=True); continue
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(archive.read(entry.filename))
+    try:
+        obtain("sdk", sdk); obtain("android", incoming)
+        receipt = json.loads((sdk / "build-receipt.json").read_text())
+        assert receipt["platform"] == "macos" and receipt["sdk_version"] == "3.42.0"
+        assert receipt["sdk_source"] == "8357eafa28423a7ab93ba08b823af80f01ad1505"
+        assert receipt["source_sha"] == pin["producer_source"]
+        assert str(receipt["run_id"]) == pin["run_id"] and str(receipt["attempt"]) == pin["attempt"]
+        manifest = (sdk / "sdk342-installed-identity.json").read_bytes()
+        assert hashlib.sha256(manifest).hexdigest() == receipt["installed_identity_sha256"]
+        installed = json.loads(manifest)
+        assert installed["source_sha"] == pin["producer_source"] and installed["sdk_version"] == "3.42.0"
+        wave = json.loads((sdk / "wave3-packages.json").read_text())
+        assert wave["source_sha"] == pin["producer_source"] and wave["sdk_version"] == "3.42.0"
+        assert str(wave["run_id"]) == pin["run_id"] and str(wave["attempt"]) == pin["attempt"]
+        state, state_hash = load_mac_diagnostic_state(incoming / "state.json")
+        evidence["android_state_sha256"] = state_hash
+        subprocess.run([sys.executable, str(HERE / "fixtures.py")], cwd=ROOT, check=True)
+        prepare()
+        source = stage_apple("macos", generic=True)
+        source = replace_once(source,
+            "assert all(identity[k] == data[k] for k in ('source_sha', 'run_id', 'attempt'))",
+            "assert identity['source_sha'] == " + repr(pin["producer_source"]) + "\n"
+            "        assert str(identity['run_id']) == " + repr(pin["run_id"]) + " and str(identity['attempt']) == " + repr(pin["attempt"]))
+        source = replace_once(source, "def main():",
+            "from run import diagnostic_text, load_mac_diagnostic_state\n"
+            "import relay as diagnostic_relay\n"
+            "diagnostic_relay.load = load_mac_diagnostic_state\n\n"
+            "def main():")
+        source = replace_once(source, "    controller = dav = None",
+                              "    controller = dav = None\n    redactions = []")
+        source = replace_once(source, "        token = secrets.token_hex(20)",
+                              "        token = secrets.token_hex(20)\n        redactions.extend([user, password, token])")
+        source = replace_once(source, "        for key, value in substitutions.items(): template = template.replace(key, value)",
+            "        substitutions['__MAC_DIAGNOSTIC__'] = '1'\n"
+            "        for key, value in substitutions.items(): template = template.replace(key, value)")
+        old_print = "            print((out / (role + '.log')).read_text(errors='replace')[-20000:], flush=True)"
+        source = replace_once(source, old_print,
+            "            pass  # Raw logs are never printed; diagnostic wrapper sanitizes in finally.")
+        # Always collect before teardown, including assertions and failed XCTest.
+        before = "    finally:\n        actions = []"
+        after = """    finally:
+        try:
+            raw_log = out / 'native-ui.log'
+            if raw_log.is_file():
+                sanitized = diagnostic_text(raw_log.read_text(encoding='utf-8'), redactions)
+                safe_log = ROOT / 'build/f04-macos-state-diagnostic/native-ui-sanitized.log'
+                safe_log.write_text(sanitized, encoding='utf-8')
+                print('F04 MAC NATIVE UI DIAGNOSTIC\\n' + sanitized, flush=True)
+        except Exception as diagnostic_error:
+            print('F04 diagnostic text refused: ' + type(diagnostic_error).__name__, flush=True)
+        actions = []"""
+        source = replace_once(source, before, after)
+        driver = OUT / "macos-diagnostic.py"
+        driver.write_text(source)
+        command = [sys.executable, str(driver), "--phase", "macos-peer",
+                   "--previous", str(incoming / "state.json"), "--incoming-prefix", "F04_ANDROID",
+                   "--original", str(ROOT / "build/apple-android/original/epub-alice.epub")]
+        subprocess.run(command, cwd=ROOT, check=True)
+        result = json.loads((ROOT / "build/apple-android/macos-peer/result.json").read_text())
+        assert result["passed"] is True and result["source_sha"] == head
+        evidence["passed"] = True
+    finally:
+        # Result and binary identities are useful even when the UI assertion fails.
+        active_failure = sys.exc_info()[0] is not None
+        out = ROOT / "build/apple-android/macos-peer"
+        try:
+            result = out / "result.json"
+            if result.is_file():
+                safe = diagnostic_text(result.read_text(encoding="utf-8"))
+                (destination / "ui-result.json").write_text(safe, encoding="utf-8")
+                print("F04 MAC RESULT " + safe, flush=True)
+            app = out / "derived/Build/Products/Debug/EXReaderHost.app"
+            info = app / "Contents/Info.plist"
+            binary = app / "Contents/MacOS/EXReaderHost"
+            if info.is_file() and binary.is_file():
+                fields = plistlib.loads(info.read_bytes())
+                evidence["actual_ui"] = {"source_sha": fields.get("EXRSourceSHA"),
+                    "bundle_id": fields.get("CFBundleIdentifier"), "bytes": binary.stat().st_size,
+                    "sha256": hashlib.sha256(binary.read_bytes()).hexdigest()}
+                assert fields["EXRSourceSHA"] == head and fields["CFBundleIdentifier"] == "org.exreader.host"
+            (destination / "diagnostic-receipt.json").write_text(json.dumps(evidence, indent=2))
+            print("F04 MAC DIAGNOSTIC RECEIPT " + json.dumps(evidence), flush=True)
+        except Exception as evidence_error:
+            print("F04 diagnostic result collection failed: " + type(evidence_error).__name__, flush=True)
+            if not active_failure: raise
+
+
 def authenticate_selected_graph():
     """Resolve exact current-job outputs for this selected case, then run both original audits."""
     contract = json.loads((HERE / "contract.json").read_text())
@@ -616,8 +773,12 @@ def main():
     assert Path.cwd().resolve() == ROOT
     assert os.environ.get("EXR_APPLE_SDK_VERSION") == "3.42.0"
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics", "windows-import-fixed", "authenticate-selected"))
+    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics", "windows-import-fixed", "macos-state-diagnostic", "authenticate-selected"))
     args, rest = parser.parse_known_args()
+    if args.action == "macos-state-diagnostic":
+        assert not rest
+        macos_state_diagnostic()
+        return
     if args.action == "authenticate-selected":
         assert not rest
         authenticate_selected_graph()
