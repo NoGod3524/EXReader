@@ -20,6 +20,7 @@ import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.Gravity;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -251,6 +252,19 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     private void bindViews() {
         shelfPanel = findViewById(R.id.shelf_panel);
+        // The panel is focusable in touch mode only so the search field does not
+        // take focus (and the soft keyboard) at launch. To TalkBack it must stay a
+        // plain container: as a focusable node it read title, summary and status as
+        // one item and its navigation never reached the book rows.
+        shelfPanel.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+            @Override
+            public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                info.setFocusable(false);
+                if (Build.VERSION.SDK_INT >= 28) info.setScreenReaderFocusable(false);
+            }
+        });
+        if (Build.VERSION.SDK_INT >= 28) findViewById(R.id.shelf_title).setAccessibilityHeading(true);
         readerPanel = findViewById(R.id.reader_panel);
         notesPanel = findViewById(R.id.notes_panel);
         selectionBar = findViewById(R.id.selection_bar);
@@ -1533,6 +1547,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     private void setStatus(String text) {
         statusText.setText(text);
+        // The live region announces its description; a fixed "Status" hid every message.
+        statusText.setContentDescription(text == null || text.isEmpty() ? "Status" : text);
         if (readerStatus != null) readerStatus.setText(text);
         Log.i(TAG, "status " + text);
     }
