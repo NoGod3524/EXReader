@@ -765,6 +765,116 @@ def macos_state_diagnostic(target='macos'):
             if not active_failure: raise
 
 
+def load_android_ready_input(path, phase=None):
+    """Only this diagnostic accepts the immutable historical Windows producer."""
+    import base64, hashlib
+    pin = json.loads((HERE / "contract.json").read_text())["android_ready_diagnostic"]
+    assert os.environ["F04_SCOPE"] == pin["case"]
+    assert Path(path).resolve() == (ROOT / "build/f04-fixed-windows/state.json").resolve()
+    raw = Path(path).read_bytes()
+    state = json.loads(raw)
+    assert state["schema"] == 1 and state["source_sha"] == pin["producer_source"]
+    assert str(state["run_id"]) == pin["run_id"] and str(state["attempt"]) == pin["attempt"]
+    assert state["phase"] == "windows-seed" and state["data"]["passed"] is True
+    if phase is not None: assert phase == state["phase"]
+    for key, value in state["entries"].items():
+        assert key.startswith("/dav/exreader-sync-v1/")
+        body = base64.b64decode(value["body"], validate=True)
+        assert hashlib.sha256(body).hexdigest() == value["sha256"]
+    return state, hashlib.sha256(raw).hexdigest()
+
+
+def android_ready_diagnostic(arguments):
+    """New Android build + fixed Windows input; never a same-run graph result."""
+    import hashlib, io, zipfile
+    from pathlib import PurePosixPath
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--prepare-input", action="store_true")
+    args = parser.parse_args(arguments)
+    contract = json.loads((HERE / "contract.json").read_text())
+    pin = contract["android_ready_diagnostic"]
+    assert sys.platform.startswith("linux") and os.environ["F04_SCOPE"] == pin["case"]
+    assert os.environ["GITHUB_REF"] == "refs/heads/" + contract["canonical"]["branch"]
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    assert head == os.environ["GITHUB_SHA"] == os.environ["F04_CONTROLLER_SHA"]
+    changed = subprocess.check_output(["git", "diff", "--name-only", pin["producer_source"], head], cwd=ROOT, text=True).splitlines()
+    assert set(changed) == set(pin["allowed_changed_paths"]), ("production equivalence", changed)
+    assert subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT) == b""
+    destination = ROOT / "build/f04-android-ready-diagnostic"
+    incoming = ROOT / "build/f04-fixed-windows"
+    p = pin["windows"]
+    if args.prepare_input:
+        sys.path.insert(0, str(ROOT / "tools"))
+        from check_parallel_integration import fetch, download_artifact_zip
+        producer = fetch("actions/runs/" + pin["run_id"])
+        assert producer["head_sha"] == pin["producer_source"] and str(producer["run_attempt"]) == pin["attempt"]
+        job = fetch("actions/jobs/" + str(p["job_id"]))
+        assert job["name"].endswith("F04 Windows seed") and job["conclusion"] == "success"
+        assert job["head_sha"] == pin["producer_source"] and str(job["run_id"]) == pin["run_id"] and str(job["run_attempt"]) == pin["attempt"]
+        artifact = fetch("actions/artifacts/" + str(p["artifact_id"]))
+        assert artifact["id"] == p["artifact_id"] and artifact["name"] == p["name"] and not artifact["expired"]
+        assert artifact["size_in_bytes"] == p["size_in_bytes"] and artifact["digest"] == p["digest"]
+        assert artifact["workflow_run"]["head_sha"] == pin["producer_source"] and str(artifact["workflow_run"]["id"]) == pin["run_id"]
+        body = download_artifact_zip(p["artifact_id"])
+        assert len(body) == p["size_in_bytes"] and "sha256:" + hashlib.sha256(body).hexdigest() == p["digest"]
+        destination.mkdir(parents=True, exist_ok=False)
+        incoming.mkdir(parents=True, exist_ok=False)
+        (destination / "windows-original.zip").write_bytes(body)
+        with zipfile.ZipFile(io.BytesIO(body)) as archive:
+            entries = archive.infolist()
+            assert len(entries) == len({x.filename for x in entries}) and len(entries) <= 50000
+            assert sum(x.file_size for x in entries) <= 500000000
+            for entry in entries:
+                path = PurePosixPath(entry.filename)
+                assert entry.filename and not path.is_absolute() and ".." not in path.parts
+                assert "\\" not in entry.filename and ":" not in entry.filename and "\x00" not in entry.filename
+                assert ((entry.external_attr >> 16) & 0o170000) not in (0o120000, 0o060000, 0o020000)
+                assert not entry.flag_bits & 1
+                target = incoming.joinpath(*path.parts)
+                if entry.is_dir(): target.mkdir(parents=True, exist_ok=True); continue
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(archive.read(entry.filename))
+        load_android_ready_input(incoming / "state.json")
+        subprocess.run([sys.executable, str(HERE / "fixtures.py")], cwd=ROOT, check=True)
+        return
+    original = (destination / "windows-original.zip").read_bytes()
+    assert len(original) == p["size_in_bytes"] and "sha256:" + hashlib.sha256(original).hexdigest() == p["digest"]
+    with zipfile.ZipFile(io.BytesIO(original)) as archive:
+        assert (incoming / "state.json").read_bytes() == archive.read("state.json")
+    state, state_hash = load_android_ready_input(incoming / "state.json")
+    receipt = json.loads((OUT / "build-android.json").read_text())
+    assert receipt["platform"] == "android" and receipt["source_sha"] == head
+    assert str(receipt["run_id"]) == os.environ["GITHUB_RUN_ID"] and str(receipt["attempt"]) == os.environ["GITHUB_RUN_ATTEMPT"]
+    assert receipt["sdk_source"] == contract["sdk_source"] and receipt["sdk_version"] == "3.42.0"
+    evidence = {"controller_source": head, "controller_run": os.environ["GITHUB_RUN_ID"],
+                "controller_attempt": os.environ["GITHUB_RUN_ATTEMPT"], "new_android_build": receipt,
+                "historical_producer": pin, "windows_state_sha256": state_hash,
+                "diagnostic_only": True, "F04_accepted": False, "passed": False}
+    prepare()
+    source = stage_android(generic=True)
+    source = replace_once(source, "def main():",
+        "from run import load_android_ready_input\n"
+        "relay.load = load_android_ready_input\n\n"
+        "def main():")
+    driver = OUT / "android-ready-diagnostic.py"
+    driver.write_text(source)
+    try:
+        subprocess.run([sys.executable, str(driver), "--previous", str(incoming / "state.json"),
+                        "--fixture", str(ROOT / "build/wave3/network-fixture"),
+                        "--output", str(ROOT / "build/phase"), "--incoming-prefix", "F04_WINDOWS"], cwd=ROOT, check=True)
+        report = json.loads((ROOT / "build/phase/report.json").read_text())
+        assert report["passed"] is True and report["source_sha"] == head
+        evidence["passed"] = True
+    finally:
+        (destination / "diagnostic-receipt.json").write_text(json.dumps(evidence, indent=2))
+        print("F04 ANDROID READY RECEIPT " + json.dumps(evidence), flush=True)
+        for name in ("report.json", "result.json"):
+            path = ROOT / "build/phase" / name
+            if path.is_file():
+                safe = diagnostic_text(path.read_text(encoding="utf-8"))
+                (destination / name).write_text(safe, encoding="utf-8")
+
+
 def authenticate_selected_graph():
     """Resolve exact current-job outputs for this selected case, then run both original audits."""
     contract = json.loads((HERE / "contract.json").read_text())
@@ -788,8 +898,11 @@ def main():
     assert Path.cwd().resolve() == ROOT
     assert os.environ.get("EXR_APPLE_SDK_VERSION") == "3.42.0"
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics", "windows-import-fixed", "macos-state-diagnostic", "apple-visibility-diagnostic", "iphone-record-diagnostic", "authenticate-selected"))
+    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics", "windows-import-fixed", "macos-state-diagnostic", "apple-visibility-diagnostic", "iphone-record-diagnostic", "android-ready-diagnostic", "authenticate-selected"))
     args, rest = parser.parse_known_args()
+    if args.action == "android-ready-diagnostic":
+        android_ready_diagnostic(rest)
+        return
     if args.action == "iphone-record-diagnostic":
         assert not rest
         macos_state_diagnostic("iphone")
