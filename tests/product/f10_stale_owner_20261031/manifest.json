@@ -58,13 +58,13 @@
   "assertions": 258,
   "negative_controls": 8,
   "budget": {
-    "phase": "B fixture correction approved 2026-11-01T00:41:01Z",
+    "phase": "C streaming GET approved 2026-11-01T01:35:33Z",
     "runs": 1,
     "linux_minutes": 45,
     "audit_minutes": 15,
     "automatic_reruns": 0
   },
-  "sdk": "unchanged b5e7 background, not joint8357 acceptance",
+  "sdk": "Git five SDK objects equal frozen8357; historical SDK727 artifacts separate; this suite does not build/consume SDK reader or bind six hosts",
   "full_f10_complete": false,
   "phase_base": "659ef67bb6d408bb5653cedd03efe06e9d7dd6f9",
   "phase_paths": [
@@ -141,5 +141,29 @@
     "source": "6230fc8d1dc531d9d7c4d574d79cc6d9c458bda0",
     "size": 2452124,
     "sha256": "a4f4c436d92f77825832b653c21f33ce525c3f5bde2bc2b07dff940691bf7842"
-  }
+  },
+  "stream_base": "75c0f1f5ded388036258c506fac6595b3e5dabef",
+  "stream_paths": [
+    "extras/webdav/include/exr_webdav.h",
+    "extras/webdav/src/webdav.cpp",
+    "apps/reader/sync/src/sync.cpp",
+    "tests/product/f10_stale_owner_20261031/sync_probe.cpp",
+    "tests/product/f10_stale_owner_20261031/https_fixture.py",
+    "tests/product/f10_stale_owner_20261031/verify.py",
+    "tests/product/f10_stale_owner_20261031/manifest.json",
+    ".github/workflows/dot-f10-stale-owner-20261031.yml",
+    "docs/reader-total-progress/DOT_F10_STALE_OWNER_20261031.md"
+  ],
+  "get_cases": [
+    "get-readonly",
+    "get-missing",
+    "get-wrong",
+    "get-short",
+    "get-over",
+    "get-cancel",
+    "get-kill",
+    "get-consumer-error"
+  ],
+  "get_assertions": 118,
+  "get_negative_controls": 8
 }
