@@ -1,66 +1,42 @@
-# F03 six-target organization preparation
+# Authorized reader suite — F03 GTK → Android, first partial round
 
-**Implementation in progress. No syntax/build/test/CI has run. F03 is not accepted.**
-This snapshot is not a completed six-host interop driver.
+Canonical branch: dot/reader-suite-20261101, product baseline 94fb236a4a2da87dfbaf4f1dd2a47885d615a230.
+SDK freeze: 8357eafa28423a7ab93ba08b823af80f01ad1505 / 3.42.0. Exactly 11 new files; no production or original tests change.
+User approved 2026-11-01 00:20:51 UTC: one run, GTK60 + Android120 + audit20 = 200 runner-minutes, no automatic rerun.
+F07 alone owns workflow/scope and dispatches only after independent whole-tree review. F03 owns the nine other files.
+All source remains unexecuted until that authorized dispatch. Preparation commits use [skip ci].
 
-Baseline: 94fb236a4a2da87dfbaf4f1dd2a47885d615a230.
-SDK: 8357eafa28423a7ab93ba08b823af80f01ad1505 / 3.42.0.
-Owned scope: 13 new F03 files plus the explicitly transferred `examples/apple/HostCatalog.swift` and `HostModel.swift`. SDK, old tests and all other product/owner files remain unchanged.
+## Proof target and limits
+Original F03 goal is organization consistency across six hosts. This round proves only the real GTK author → real Android receiver path, preserving nested shelves, tag, series, group deletion/restoration, member removal/restoration and process restart.
+It cannot grant full F03, a formal count increase, or Windows/macOS/iPhone/iPad/F04/F05 credit.
+The old F03 branch is sealed at 0fa23868a585c6a7698e05ea25a835f279063c8a. Its Apple two-file production delta is retained there, NOT incorporated here.
 
-## Implemented preparation
-- Exact Actions checkout/SDK guard; consistent read-only product snapshots; file hashes.
-- Original TXT fixtures, never synthesized accepted product revisions.
-- Windows retained native organization tests and actual Windows/GTK tag relay phases.
-- GTK original collections UI and actual host relay phases.
-- Android installed APK identity, original native eight checks, eight real UI lifecycle cases and
-  original strict all-exits checker; requires real connected XML and owner evidence. A separate receive mode drives actual Android
-  HTTPS account UI, verifies organization controls and restarts the process.
-- Separate Apple/Android lifecycle source copies retain original methods and assertions and add
-  native HTTPS receiver/visibility/restart cases. Those new cases do not replace original six/eight gates.
-- Windows version-only in-memory build adaptation and original Apple SDK3.42 installer invocation.
-- Fail-closed final contract requiring actual cross-device author and all-six receiver wire lifecycle receipts.
+## Actual producer path
+- GTK build uses the existing native installed recipe, with an explicit SDK3.42 version adapter and same-target canonical OPDSHash dependency.
+- The original GTK 27-case organization suite remains. Six phases author actual revisions via native UI and authenticated HTTPS; no manufactured receiver history or SQL projection writes.
+- Android calls the original tools/build_android_host.py to emit its own build/APK/native evidence. An in-memory build-product extension installs unchanged webdav/sideload/sync/session modules into the same native prefix; Gradle receives the explicit SDK3.42 and native sync options. New UI instrumentation is included through an isolated Gradle init directory, not editing old tests.
+- The complete original reader-organization-android device script and every post-device gate execute, retaining native owner17, kill2, functional112, gate87, owner altered-evidence19, organization8 native+8 UI and the existing organization evidence gate.
+- Each receiver phase installs the same host APK, clears only its test app profiles after the original suite has preserved its artifacts, performs native account sync, checks organization UI and a real restart, and reads the stopped app DB/WAL without writing it.
 
-## Explicit remaining implementation gaps
-1. Six-host lifecycle execution is not yet connected to emit the final manifest. Existing Windows/GTK
-   relay covers tag membership only; Android original network test synthesizes records and is not
-   used as a six-host author proof.
-2. GTK/Android named original build recipe invocation is authored (requires PyYAML and original
-   job dependencies), but has not run and still needs final workflow orchestration.
-3. Native-test compilation wiring is authored but unexecuted. Apple/Android real HTTPS receiver UI
-   and process-restart checks are authored; complete six-host artifact orchestration remains absent.
-4. Retained drivers do not emit the complete new interop receipt schema. Projection-only receipts
-   deliberately lack native sync/restart proof and are rejected by final verification.
-5. Original iPad organization fails at organization.kind.tag. The sealed diagnostic shows the organization panel was not visible, but does not establish why entry failed. Do not infer that this receive delta fixes it; no skip or weakened assertion is permitted.
-6. Independent source review has covered the Apple receive delta and key drivers. Complete orchestration review and all Actions compilation/execution remain pending.
+## Candidate admission versus historical ownership
+The original checker has a supported candidate mode. Its existing environment is ANDROID_CANDIDATE_SDK_BASE=94fb and ANDROID_OWNERSHIP_HEAD=94fb; its candidate_only report and empty review range are preserved, not relabeled as the old owner review.
+Outer admission independently checks SDK five objects against8357 and every change against the exact11-file allowlist relative to94fb. Production and old tests remain unchanged.
+Every new identity states candidate_admission=true and historical_owner_guard_reexecuted=false. The historical owner reference is fixed in scope; it is background, never spliced into current results.
+Wrong SDK-as-product-baseline mapping, a changed production/old-test path, or wrong source/run/attempt/program must fail admission.
 
-## Original evidence
-Run41170540560/A1 at94fb: iPad job124448286050 six cases/one failure testTagAndSeriesPersist;
-iPhone124448286073/macOS124448286082 accepted local lifecycle only.
-Original reports explicitly set complete_product_accepted=false. Failure history is unchanged.
+## Audit and negative cases
+The partial audit fetches the current run/attempt API itself, requires successful exact gtk/android jobs, downloads the exact attempt-named original artifacts and checks API digest/size plus every extracted member byte. Supplied metadata is not trusted.
+It checks original suite counts/outcomes, real installed program/APK identity, immutable authenticated wire lineage, exact received revision bodies, organization projections and retained actual Android DB snapshots for all six phases.
+Separate negative copies alter source, SDK, APK, restart proof, original count/failure or host role and must reject for the precise expected reason, preserving original hashes. They never become accepted producer data.
+Restart is an observation rather than a new author write: prior immutable wire is retained; no fabricated PUT is required.
+Raw ZIPs, failures and historical evidence are retained. A failed gate is not converted to success by partial scope.
 
-## Execution boundary
-All scripts are Actions-only. No local syntax/build/test/fixture/ZIP execution.
-Preparation commits use [skip ci]. Workflow has a false job guard, including manual dispatch.
-Later explicit CI authorization is required to enable execution.
-The previous 1130 runner-minute estimate was an unapproved conservative draft, not a granted budget or required test duration. A future complete matrix proposal must separate actual necessary original assertions/timeouts from historical workflow caps and give measured-duration evidence per job.
-Current authorized CI:0. Ledger remains96/108. Continue the gaps, review, then authorized execution.
+## CLI contract
+build.py --host gtk --output build/f03-gtk-build.json
+build.py --host android --output build/f03-android-build.json
+build.py --host android --android-retained --output build/f03-android-retained-driver.json (API34 x86_64 emulator already running)
+gtk.py --mode author --phase create|delete|restore|member-remove|member-restore|restart ... emits per-phase projection.json, expected-groups.json and wire/state.json.
+android.py --mode receive ... --wire ... --expectations ... --projection-expectations ... --tls-fixture build/wave3/network-fixture
+verify.py --partial --evidence build/f03-evidence --output build/f03-partial-result.json
 
-## Build prerequisite review
-The adapter now installs the unchanged OPDSHash hash-only owner for each GTK/Windows/Android target before store configuration, with a canonical environment prefix. Apple retains its existing per-product hash installation and receives no competing override. Future workflow must install GTK apt dependencies, PyYAML, Java 17/Gradle 8.9 and matching Android tools; extracting build steps does not install setup-actions prerequisites. No build was executed.
-
-## Apple native receive delta: prepared, not executed
-On 94fb the native receive path projects only books. The user explicitly transferred the two production files above to F03. Commit b3ef06e169b6c0f56ea3d76246351018b0ef37e1 adds native queued public organization projection after book receive: bounded pages of 50, shelf dependency rescans, then tags/series/membership, existing cancellation/account identity fencing, final publication only after all stages. No test directly projects or writes receiver databases. Source review found no static blocker; compilation and behavior are unverified.
-
-Native receiver evidence binds the real bundle/container and current DAV account profile, uses read-only snapshots, waits for final zero-pending receive status, then opens organization or relaunches the app. Automatic refresh of an already-open organization panel is not claimed. Temporary macOS trust is removed by exact fixture fingerprint; iOS trust stays in an owned cloned simulator which is deleted. Any cleanup failure, including inability to save cleanup evidence, invalidates the success receipt while retaining raw results. The independent original iPad panel-entry failure remains unresolved.
-
-## Final audit design under source review (not a passing result)
-Original goal: actual six-platform shared organization state, including nested shelves, tags, series, delete/restore and memberships. It does not require every platform to author every operation.
-- Positive evidence: one real native author produces each lifecycle transition; immutable authenticated HTTPS revision bytes are consumed by every actual native host from the same source/SDK. Actual product projections and process-restart snapshots agree by organization ID, parent, ordinal, deletion and membership.
-- Retained evidence: preserve original suites and their original result schema. Bind their actual native executable/APK digest to independent same-run build/install identity rather than inventing new SDK fields in old reports.
-- Negative audit cases to implement/review before any final acceptance: alter source/run/attempt, SDK or binary identity; omit a host, lifecycle transition or required original case; report failed/skipped originals; alter wire bytes or revision IDs; claim receiver success without real native transport/restart; change a projected parent/ordinal/tombstone/member; supply a different profile database; leave fixture trust/cleanup failure.
-- Each negative must be rejected for its specific named admission check, with original and changed input digests retained. Synthetic audit counterexamples are never accepted producer revision evidence.
-- Restart is a non-writing observation. It needs retained prior authenticated PUT bytes plus actual current native synchronization and restart evidence, not a fabricated new PUT.
-- Not covered: physical devices, automatic live refresh of an already-open organization panel, unrelated UI polish, all-P0 safety, or repaired iPad panel entry. Six-platform execution and final manifest assembly remain incomplete.
-
-### Unimplemented provenance collector boundary
-The audit's job/API/ZIP metadata inputs are not self-authenticating. The future Actions collector must fetch the current run and exact attempt job endpoint itself, download the specific original artifact, verify its API digest/size and enumerate actual ZIP member paths/roles/bytes. It must establish artifact-to-attempt ownership from real upload/run evidence (artifact metadata alone has no attempt field). Missing job run_attempt cannot be filled with an assertion; an explicit attempt-endpoint/run chain is required. The current draft fails closed without that chain. An archive member must match its exact path and role, not merely any equal-hash file. No collector has run and no final manifest exists.
+Artifact roots: gtk/ and android/ preserve their original build/ relative paths. Fixture private keys, connection passwords and tokens must never be uploaded.

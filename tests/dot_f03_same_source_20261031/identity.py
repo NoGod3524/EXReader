@@ -28,6 +28,17 @@ def digest(path):
     return h.hexdigest()
 def canonical(value):
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+def check_candidate_fields(product_baseline, sdk_freeze, changed, historical_owner_guard_reexecuted=False):
+    require(product_baseline == SCOPE["baseline"] and product_baseline != SCOPE["sdk_source"],
+            "candidate product baseline mismatch")
+    require(sdk_freeze == SCOPE["sdk_source"], "candidate SDK freeze mismatch")
+    require(historical_owner_guard_reexecuted is False, "historical owner guard falsely claimed")
+    require(len(SCOPE["allowed_paths"]) == 11 and len(set(SCOPE["allowed_paths"])) == 11,
+            "authorized eleven-path contract malformed")
+    require(set(changed).issubset(set(SCOPE["allowed_paths"])), "outside authorized eleven paths")
+    require(not any(p.startswith(("examples/","apps/","tools/")) for p in changed),
+            "production or original owner source changed")
+
 def identity():
     require(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
     result = {key: os.environ[env] for key, env in
@@ -38,6 +49,12 @@ def identity():
                    cwd=ROOT, check=True)
     subprocess.run(["git", "diff", "--exit-code", SCOPE["sdk_source"], result["source_sha"],
                     "--", *SCOPE["sdk_paths"]], cwd=ROOT, check=True)
+    changed = subprocess.check_output(["git","diff","--name-only",SCOPE["baseline"],
+        result["source_sha"]],cwd=ROOT,text=True).splitlines()
+    check_candidate_fields(SCOPE["baseline"],SCOPE["sdk_source"],changed)
+    result.update(candidate_admission=True, product_baseline=SCOPE["baseline"],
+        sdk_freeze=SCOPE["sdk_source"], historical_owner_guard_reexecuted=False,
+        historical_owner_evidence_ref=SCOPE["historical_owner_evidence_ref"])
     return result
 def same_identity(value, expected):
     for field in SCOPE["identity_fields"]:
