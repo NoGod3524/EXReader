@@ -290,6 +290,15 @@ struct LibraryScreen: View {
                 }
             }
             .padding(.horizontal).padding(.top, 12)
+            // Hardware keyboard: ⌘O imports, ⌘F moves to search (iPad and Mac). Kept on
+            // the header row like the reader's commands: behind the search row ⌘F did
+            // not reach the field at the largest text size on iPhone (F09).
+            .background {
+                HStack {
+                    Button("打开文件") { importing = true }.keyboardShortcut("o", modifiers: .command).disabled(model.busy)
+                    Button("搜索书架") { searchFocused = true }.keyboardShortcut("f", modifiers: .command)
+                }.opacity(0).allowsHitTesting(false).accessibilityHidden(true)
+            }
 
             HStack {
                 TextField("搜索书名或作者", text: $shelf.query)
@@ -308,13 +317,6 @@ struct LibraryScreen: View {
                     .keyboardShortcut("o", modifiers: [.command, .shift])
                     .accessibilityIdentifier("library.organization")
             }.padding(.horizontal).padding(.vertical, 6)
-            // Hardware keyboard: ⌘O imports, ⌘F moves to search (iPad and Mac).
-            .background {
-                HStack {
-                    Button("打开文件") { importing = true }.keyboardShortcut("o", modifiers: .command).disabled(model.busy)
-                    Button("搜索书架") { searchFocused = true }.keyboardShortcut("f", modifiers: .command)
-                }.opacity(0).allowsHitTesting(false).accessibilityHidden(true)
-            }
 
             if (model.productIndexPending || (shelf.rows.isEmpty && !model.errorText.isEmpty)) && !model.books.isEmpty {
                 // Retained SDK imports remain reachable while product repair is pending.
