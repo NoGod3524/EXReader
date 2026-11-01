@@ -213,7 +213,7 @@ jobs:
 
   f04_six_host:
     name: F04 six-host
-    if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f04/six-host' || github.event_name == 'push' && (contains(github.event.head_commit.message, '[F04-SIX-230-ONE-RUN]') || contains(github.event.head_commit.message, '[F04-SIX-HIDDEN-230-ONE-RUN]'))) }}
+    if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f04/six-host' || github.event_name == 'push' && (contains(github.event.head_commit.message, '[F04-SIX-230-ONE-RUN]') || contains(github.event.head_commit.message, '[F04-SIX-HIDDEN-230-ONE-RUN]') || contains(github.event.head_commit.message, '[F04-SIX-ANDROID-READY-230-ONE-RUN]'))) }}
     uses: ./.github/workflows/dot-f04-reading-sync-20261031.yml
     with:
       case: f04/six-host
