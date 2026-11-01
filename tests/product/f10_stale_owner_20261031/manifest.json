@@ -58,7 +58,7 @@
   "assertions": 258,
   "negative_controls": 8,
   "budget": {
-    "phase": "C streaming GET approved 2026-11-01T01:35:33Z",
+    "phase": "D download scratch closure approved 2026-11-01T02:04:30Z",
     "runs": 1,
     "linux_minutes": 45,
     "audit_minutes": 15,
@@ -165,5 +165,33 @@
     "get-consumer-error"
   ],
   "get_assertions": 118,
-  "get_negative_controls": 8
+  "get_negative_controls": 8,
+  "pull_base": "2d69e941a50e17eb037bfbfa23225680b73f0619",
+  "pull_paths": [
+    "extras/webdav/include/exr_webdav_managed.h",
+    "extras/webdav/src/webdav.cpp",
+    "apps/reader/sync/src/sync.cpp",
+    "tests/product/f10_stale_owner_20261031/sync_probe.cpp",
+    "tests/product/f10_stale_owner_20261031/https_fixture.py",
+    "tests/product/f10_stale_owner_20261031/verify.py",
+    "tests/product/f10_stale_owner_20261031/manifest.json",
+    ".github/workflows/dot-f10-stale-owner-20261031.yml",
+    "docs/reader-total-progress/DOT_F10_STALE_OWNER_20261031.md"
+  ],
+  "pull_cases": [
+    "pull-normal",
+    "pull-revision-wrong",
+    "pull-revision-over",
+    "pull-revision-cancel",
+    "pull-revision-kill",
+    "pull-original-wrong",
+    "pull-original-short",
+    "pull-original-cancel",
+    "pull-original-kill",
+    "pull-cleanup-permission",
+    "pull-target-same",
+    "pull-target-different"
+  ],
+  "pull_assertions": 317,
+  "pull_negative_controls": 12
 }
