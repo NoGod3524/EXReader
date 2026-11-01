@@ -172,7 +172,7 @@ jobs:
           cores: 4
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          script: bash tests/reader_a11y_android/ci/emulator-audit.sh
+          script: bash tests/f09_audit/android_emulator.sh
       - name: Retained checker
         if: ${{ !cancelled() && steps.emulator.outcome == 'success' }}
         run: |
@@ -184,6 +184,7 @@ jobs:
           name: f09-android-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/a11y-android/
+            build/f09/
             build/android-host/build.json
             build/f06/android-build-step-*.sh
           if-no-files-found: warn
