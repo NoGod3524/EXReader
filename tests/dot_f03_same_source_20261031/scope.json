@@ -214,5 +214,48 @@
     "apps/reader/desktop/windows_records_owner.cpp": "fb1b36b8ee6a0c48b81d8aff3b2097c7372c4b33",
     "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java": "9566f21b7f38c3652d9a416cabd73d1b76a959d6",
     "examples/apple/HostReadingRecords.swift": "2c6185723fb523996b7c86ec5caf25f849a3f8cf"
+  },
+  "gtk_ready_diagnostic_round": {
+    "authorization_message": "Sentinel_fa1a930de67881919a66a6651809e144",
+    "authorization_utc": "2026-11-01T13:28:43Z",
+    "base_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+    "branch": "dot/f03-gtk-ready-20261101",
+    "case": "f03/gtk-ready-diagnostic",
+    "marker": "[F03-GTK-READY-20-ONE-RUN]",
+    "allowed_existing_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      "tests/dot_f03_same_source_20261031/scope.json",
+      "docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md"
+    ],
+    "runner": "ubuntu-22.04",
+    "runner_minutes_cap": 20,
+    "run_limit": 1,
+    "automatic_retries": 0,
+    "status": "prepared_not_run",
+    "retained_ctest_count": 4,
+    "retained_organization_checks": 27,
+    "author_phases": [
+      "create",
+      "delete",
+      "restore",
+      "member-remove",
+      "member-restore",
+      "restart"
+    ],
+    "original_driver_and_assertions_unchanged": true,
+    "observation_timeout_is_not_a_product_failure": true,
+    "original_wait_deadlines_unchanged": true,
+    "diagnostic_only": true,
+    "full_F03_accepted": false,
+    "other_host_jobs_selected": false,
+    "canonical_source_unchanged": true,
+    "window_manager_observation_attempts_max_per_session": 20,
+    "window_manager_observation_interval_seconds": 0.5,
+    "window_tool_overhead_additional": true,
+    "running_window_samples_max_per_session": 30,
+    "running_sample_interval_seconds": 1,
+    "running_sample_command_timeout_seconds": 2,
+    "running_sample_tree_bytes_max": 16384,
+    "running_sample_properties_bytes_max": 4096
   }
 }
