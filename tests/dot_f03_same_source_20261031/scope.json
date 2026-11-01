@@ -96,7 +96,25 @@
       "audit": 20
     },
     "acceptance_mode": "two-host-partial",
-    "synthetic_only_run": false
+    "synthetic_only_run": false,
+    "authorization_round": 2,
+    "authorization_message": "Sentinel_7b9e1682dfa4819194bf2d5b47d01bbb",
+    "authorization_utc": "2026-11-01T00:52:57.370136Z",
+    "run_limit_scope": "this separately approved round only",
+    "prior_rounds": [
+      {
+        "round": 1,
+        "run_id": "41257220235",
+        "attempt": 1,
+        "source_sha": "dda3bd89446f9980e917859e161398cc0d60fb8d",
+        "conclusion": "failure",
+        "used_runs": 1,
+        "authorized_runs": 1,
+        "gtk_retained_checks_passed": 27,
+        "android": "not-run",
+        "full_F03_accepted": false
+      }
+    ]
   },
   "allowed_paths": [
     ".github/workflows/dot-f03-same-source-20261031.yml",

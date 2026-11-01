@@ -146,3 +146,21 @@ F03 remains pending. The narrow test-driver repair and a further single capped
 round require explicit approval after the independent design review. No
 production, SDK, old tests, external owner paths, or original assertion budgets
 are changed by this seal. F04/F05 remain not-run in this suite.
+
+## Round 2 authorization and narrow correction — 2026-11-01 00:53 UTC
+
+Explicit approval: 2026-11-01T00:52:57.370136Z,
+`Sentinel_7b9e1682dfa4819194bf2d5b47d01bbb`. Only the existing
+`gtk.py`, `scope.json`, and this document may change in this round.
+The reviewed correction enters the actual shelf using F2 after restart, then
+requires `reader_visible == 0` and the original loading/restoring flags clear
+within the unchanged 60-second deadline. Exact database snapshot equality and
+the original suites/assertions remain unchanged. No product, SDK, original
+test or workflow change.
+
+One newly authorized run, maximum 200 runner-minutes (GTK 60 / Android 120 /
+audit 20), zero automatic retries. Round 1 remains failed and sealed above;
+its unused time is not treated as extra rounds. This preparation commit
+contains no trigger; the sole trigger will identify the exact prepared tree.
+No corrected behavior is claimed before actual execution. Full F03 remains
+unaccepted regardless of a partial two-host result.

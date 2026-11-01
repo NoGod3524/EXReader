@@ -205,8 +205,13 @@ def author(a, stamp):
         host.key("alt+F4");window("Account and Sync",False)
         host.close()
         projected=read_snapshot(catalog)
-        host.launch();host.wait(lambda current:not current.get("shelf_loading") and
-                               not current.get("shelf_restoring"),timeout=60)
+        host.launch()
+        # A restored reader may leave hidden-shelf viewport restoration pending.
+        # Enter the actual shelf before waiting for its existing readiness flags.
+        host.key("F2")
+        host.wait(lambda current:current.get("reader_visible")==0 and
+                  not current.get("shelf_loading") and
+                  not current.get("shelf_restoring"),timeout=60)
         require(read_snapshot(catalog)==projected,"author projection changed after real restart")
         host.close()
         write_json(a.output/"projection.json",{**stamp,"host":"gtk","sdk_version":SCOPE["sdk_version"],
