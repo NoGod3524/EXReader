@@ -1229,9 +1229,9 @@
     "case": "f04/six-host",
     "max_runner_minutes": 230,
     "max_runs": 1,
-    "runs_started": 0,
+    "runs_started": 1,
     "automatic_retry": false,
-    "status": "prepared-awaiting-independent-source-review",
+    "status": "completed-failure",
     "delta_paths": [
       "tests/dot_f04_reading_sync_20261031/run.py",
       "tests/dot_f04_reading_sync_20261031/contract.json",
@@ -1264,6 +1264,213 @@
       "history_preserved": true,
       "formal_count": "96/108; no acceptance promotion from isolated diagnostics."
     },
-    "execution": "Existing F04-SIX-230-ONE-RUN marker, fifteen jobs once; F03 sole canonical writer/trigger following F12 actual review."
+    "execution": "Existing F04-SIX-230-ONE-RUN marker, fifteen jobs once; F03 sole canonical writer/trigger following F12 actual review.",
+    "result": {
+      "run_id": "41295456077",
+      "attempt": 1,
+      "source_sha": "bdb2b93204e1268f7ae8336d4fd53f7e396f3c18",
+      "conclusion": "failure",
+      "success_jobs": 14,
+      "failure_jobs": 1,
+      "all_six_hosts_and_five_windows_returns_passed": true,
+      "audit_job_id": 124820921786,
+      "audit_failure": "authenticated_builds: archive missing sdk/examples/android/.gitignore at audit.py:334; original graph/retained authentication not completed",
+      "F04_accepted": false
+    }
+  },
+  "artifact_inventory_diagnostic": {
+    "case": "f04/artifact-inventory",
+    "producer_source": "bdb2b93204e1268f7ae8336d4fd53f7e396f3c18",
+    "run_id": "41295456077",
+    "attempt": "1",
+    "authorization_message_id": "Sentinel_ce75cdbea15c8191b940c022deb13357",
+    "authorized_at": "2026-11-01T11:23:26Z",
+    "max_runs": 1,
+    "max_runner_minutes": 10,
+    "runs_started": 0,
+    "automatic_retry": false,
+    "diagnostic_only": true,
+    "F04_accepted": false,
+    "status": "prepared-awaiting-independent-source-review",
+    "allowed_changed_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      ".github/workflows/dot-f04-reading-sync-20261031.yml",
+      "tests/dot_f04_reading_sync_20261031/audit.py",
+      "tests/dot_f04_reading_sync_20261031/contract.json",
+      "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+    ],
+    "artifacts": [
+      {
+        "artifact_id": 13079291084,
+        "job_id": 124815265992,
+        "job_name": "F04 six-host / F04 Windows seed",
+        "category": "program-build",
+        "platform": "windows",
+        "name": "f04-build-windows-41295456077-1",
+        "size_in_bytes": 53053379,
+        "digest": "sha256:0a40b5d41403a2a26291632a75af2c221e5ceddc30997265eb281563224b58e5"
+      },
+      {
+        "artifact_id": 13079975931,
+        "job_id": 124817941236,
+        "job_name": "F04 six-host / F04 gtk peer",
+        "category": "program-build",
+        "platform": "gtk",
+        "name": "f04-build-gtk-41295456077-1",
+        "size_in_bytes": 42096086,
+        "digest": "sha256:79fa306ec1dbbd51fa057ccc764d8723a0c953a3391b7db3ab684195f3b73396"
+      },
+      {
+        "artifact_id": 13079226860,
+        "job_id": 124816396682,
+        "job_name": "F04 six-host / F04 android peer",
+        "category": "program-build",
+        "platform": "android",
+        "name": "f04-build-android-41295456077-1",
+        "size_in_bytes": 39938561,
+        "digest": "sha256:696ca2f854c12ed33f05c343e84b0253c595a2a1e90d1b939edf68705667017b"
+      },
+      {
+        "artifact_id": 13078834935,
+        "job_id": 124815265648,
+        "job_name": "F04 six-host / F04 build macos",
+        "category": "sdk-build",
+        "platform": "macos",
+        "name": "f04-build-macos-41295456077-1",
+        "size_in_bytes": 22475712,
+        "digest": "sha256:7a2a062fc580facc3574c97f5a252dfb11f7cf88ccdc7e2b7b6471b0b74939e6"
+      },
+      {
+        "artifact_id": 13079078632,
+        "job_id": 124815265850,
+        "job_name": "F04 six-host / F04 build iphonesimulator",
+        "category": "sdk-build",
+        "platform": "iphonesimulator",
+        "name": "f04-build-iphonesimulator-41295456077-1",
+        "size_in_bytes": 22468401,
+        "digest": "sha256:23861ad9850cdaba77b19c02c5faa5cd2bf9c039f096a67ceed25dabad254cd5"
+      },
+      {
+        "artifact_id": 13079291133,
+        "job_id": 124815265992,
+        "job_name": "F04 six-host / F04 Windows seed",
+        "category": "phase",
+        "platform": "windows",
+        "name": "f04-windows-seed-41295456077-1",
+        "size_in_bytes": 4201199,
+        "digest": "sha256:af68e6b608c4294718e519ddeef2b09166762087e7013659bc68b945c0ffdfd5"
+      },
+      {
+        "artifact_id": 13079247257,
+        "job_id": 124816396682,
+        "job_name": "F04 six-host / F04 android peer",
+        "category": "phase",
+        "platform": "android",
+        "name": "f04-android-peer-41295456077-1",
+        "size_in_bytes": 20040490,
+        "digest": "sha256:98f5fee155cd6d5ee182b19ab4878a98fe65c00f281767d871e0745668c37879"
+      },
+      {
+        "artifact_id": 13080110718,
+        "job_id": 124817941236,
+        "job_name": "F04 six-host / F04 gtk peer",
+        "category": "phase",
+        "platform": "gtk",
+        "name": "f04-gtk-peer-41295456077-1",
+        "size_in_bytes": 5165530,
+        "digest": "sha256:33ae3be04f34b30b1ce0c4140e8e92e2873ec19542ce662ddb7a9393b2a2a480"
+      },
+      {
+        "artifact_id": 13079267797,
+        "job_id": 124817941256,
+        "job_name": "F04 six-host / F04 macos peer",
+        "category": "phase",
+        "platform": "macos",
+        "name": "f04-macos-peer-41295456077-1",
+        "size_in_bytes": 3419411,
+        "digest": "sha256:b4f4d78d59593cdc86c3a64d289e1a4013ceca075448ce900aab917c285966f0"
+      },
+      {
+        "artifact_id": 13079831825,
+        "job_id": 124817941248,
+        "job_name": "F04 six-host / F04 iphone peer",
+        "category": "phase",
+        "platform": "iphone",
+        "name": "f04-iphone-peer-41295456077-1",
+        "size_in_bytes": 3412272,
+        "digest": "sha256:3acea19b4a01ec9a5bcbbf9bacd5687dfcb7449978b06f305078c10f9d708342"
+      },
+      {
+        "artifact_id": 13080095876,
+        "job_id": 124817941290,
+        "job_name": "F04 six-host / F04 ipad peer",
+        "category": "phase",
+        "platform": "ipad",
+        "name": "f04-ipad-peer-41295456077-1",
+        "size_in_bytes": 3412427,
+        "digest": "sha256:2aa04e039275c0f2e75b34115037078f9d2f0f279d90bcb231af15a43e1940a8"
+      },
+      {
+        "artifact_id": 13078264746,
+        "job_id": 124817941318,
+        "job_name": "F04 six-host / F04 Windows return (android)",
+        "category": "phase",
+        "platform": "windows",
+        "name": "f04-windows-return-android-41295456077-1",
+        "size_in_bytes": 4203670,
+        "digest": "sha256:bf894bda612cdd0e47181016c39d3ebf741f8be48528709be5f5cde22360b11d"
+      },
+      {
+        "artifact_id": 13079636154,
+        "job_id": 124819305535,
+        "job_name": "F04 six-host / F04 Windows return (gtk)",
+        "category": "phase",
+        "platform": "windows",
+        "name": "f04-windows-return-gtk-41295456077-1",
+        "size_in_bytes": 4205361,
+        "digest": "sha256:937f2bbd6ba4d1d1410c648124810121630e1a7bea3d06ff39c884cf10162094"
+      },
+      {
+        "artifact_id": 13079791154,
+        "job_id": 124818746776,
+        "job_name": "F04 six-host / F04 Windows return (macos)",
+        "category": "phase",
+        "platform": "windows",
+        "name": "f04-windows-return-macos-41295456077-1",
+        "size_in_bytes": 4205437,
+        "digest": "sha256:e405981cc2bf9c336e198cec2b9918c986617b30499ca7a4e172dd0004de7414"
+      },
+      {
+        "artifact_id": 13080200675,
+        "job_id": 124820190644,
+        "job_name": "F04 six-host / F04 Windows return (iphone)",
+        "category": "phase",
+        "platform": "windows",
+        "name": "f04-windows-return-iphone-41295456077-1",
+        "size_in_bytes": 4205445,
+        "digest": "sha256:563e14f40f51976b0944e7caf48d5e672f60364be3fa0aca16aef24bfb82d65e"
+      },
+      {
+        "artifact_id": 13080306120,
+        "job_id": 124820657354,
+        "job_name": "F04 six-host / F04 Windows return (ipad)",
+        "category": "phase",
+        "platform": "windows",
+        "name": "f04-windows-return-ipad-41295456077-1",
+        "size_in_bytes": 4205427,
+        "digest": "sha256:9f030695685d9b9f66637cc0bb6fcecb2dbecaea2a4094de780e8d87b1d5151f"
+      },
+      {
+        "artifact_id": 13079565129,
+        "job_id": 124815265836,
+        "job_name": "F04 six-host / F04 original 18 and 121 (linux)",
+        "category": "retained",
+        "platform": "linux",
+        "name": "f04-retained-linux-41295456077-1",
+        "size_in_bytes": 14734871,
+        "digest": "sha256:90088b19bb9bfe9facc9bef64a114e4407abd5c5c09eb628251298806cde944c"
+      }
+    ],
+    "constraints": "Actions-only read-only ZIP inventory; no archive extraction/execution/repair, no product run or original audit changes; report all available missing/unexpected/hash/identity findings, do not accept."
   }
 }
