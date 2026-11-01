@@ -175,12 +175,18 @@ def main(exe, book):
         check('W-06', 'EXReaderPage', 'page text readable through a Text or Value pattern',
               readable or {'name': page.Name if page else None}, bool(readable))
 
-        # W-07 page turn from the keyboard changes the announced position
-        label_before = page.Name if page else None
+        # W-07 page turn from the keyboard: the page text an assistive client
+        # reads changes (the page's name stays 阅读区域 by design)
+        def page_text():
+            try:
+                return page.GetLegacyIAccessiblePattern().Value or ''
+            except Exception:
+                return ''
+        text_before = page_text() if page else None
         keys('{PageDown}', 'next page')
-        changed = wait(lambda: page and page.Name != label_before, 15)
-        check('W-07', 'reading position', 'PageDown moves to the next page and the name reflects it',
-              {'before': label_before, 'after': page.Name if page else None}, bool(changed))
+        changed = wait(lambda: page and page_text() and page_text() != text_before, 15)
+        check('W-07', 'reading position', 'PageDown moves to the next page; the readable page text changes',
+              {'before': (text_before or '')[:80], 'after': (page_text() if page else '')[:80]}, bool(changed))
 
         # W-08 reading menu from the keyboard: font size changes
         keys('{Alt}r', 'reading menu')
