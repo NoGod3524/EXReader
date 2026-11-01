@@ -14,6 +14,7 @@ from pathlib import Path, PurePosixPath
 import re
 import stat
 import subprocess
+import sys
 import zipfile
 
 HOSTS = {"windows", "linux", "android", "macos", "iphone", "ipad"}
@@ -124,6 +125,79 @@ def read_json_member(archive, members, name, policy):
     require(members[name].file_size <= policy["max_receipt_bytes"], "zip_limit", name)
     return json.loads(archive.read(members[name]))
 
+def json_pointer(value, pointer):
+    if not pointer:
+        return value
+    require(pointer.startswith("/"), "invalid_pointer", pointer)
+    for part in pointer[1:].split("/"):
+        key = part.replace("~1", "/").replace("~0", "~")
+        value = value[int(key)] if isinstance(value, list) else value[key]
+    return value
+
+def member_path(prefix, relative):
+    path = PurePosixPath(prefix) / relative
+    name = path.as_posix()
+    require(not path.is_absolute() and ".." not in path.parts and "\\" not in name
+            and ":" not in name, "unsafe_member", name)
+    return name
+
+def retained_from_archive(archive, members, suite_id, binding, suite, policy,
+                          identity, host_program_member, host_program_hash):
+    descriptor = {"report_member": binding} if isinstance(binding, str) else binding
+    report_member = descriptor["report_member"]
+    raw = read_json_member(archive, members, report_member, policy)
+    actual_program_member = descriptor.get("program_member", host_program_member)
+    require(actual_program_member in members and not members[actual_program_member].is_dir(),
+            "missing_member", actual_program_member)
+    actual_hash = zip_hash(archive, members[actual_program_member])
+    field = suite.get("program_hash_field")
+    if field:
+        require(raw[field] == actual_hash, "wrong_retained_program", suite_id)
+    identity_member = descriptor.get("program_identity_member")
+    identity_method = "same-actual-program-as-native-F05"
+    if actual_hash != host_program_hash or not field:
+        require(identity_member, "missing_retained_program_identity", suite_id)
+        document = read_json_member(archive, members, identity_member, policy)
+        same_identity({"source": document["source_sha"], "run": document["run_id"],
+                       "attempt": document["attempt"]}, identity, suite_id)
+        require(document.get("accepted", document.get("passed")) is True
+                and document["sdk_version"] == "3.42.0", "wrong_retained_sdk", suite_id)
+        frozen = document.get("sdk_content_candidate", document.get("sdk_source"))
+        if frozen is None:
+            require(descriptor.get("identity_format") == "frozen-apple-sdk342-supplemental"
+                    and suite_id.startswith(("apple-", "macos-")),
+                    "missing_retained_sdk_source", suite_id)
+            # This frozen original runner independently verifies installed SDK
+            # identity/fingerprints against SDK before compiling its actual app.
+            identity_method = "frozen-original-Apple-SDK342-producer"
+        else:
+            require(frozen == SDK, "wrong_retained_sdk", suite_id)
+            identity_method = "same-run-source-SDK-program-identity"
+        program = json_pointer(document, descriptor.get("program_identity_pointer", ""))
+        require(program.get("sha256", program.get("program_sha256")) == actual_hash,
+                "wrong_retained_program", suite_id)
+    if suite["report_kind"] == "original-command-log":
+        require(raw["accepted"] is True, "retained_failed", suite_id)
+        commands = [row for row in raw["commands"] if row["role"] == suite["wrapper_command_role"]]
+        require(len(commands) == 1 and commands[0]["exit"] == 0, "retained_failed", suite_id)
+        log_member = descriptor["log_member"]
+        require(log_member in members and members[log_member].file_size <= policy["max_receipt_bytes"],
+                "missing_member", log_member)
+        text = archive.read(members[log_member]).decode("utf-8")
+        lines = [line[5:] for line in text.splitlines() if line.startswith("PASS ")]
+        report = {"accepted": True, "source_sha": raw["source_sha"], "run_id": raw["run_id"],
+                  "attempt": raw["attempt"], "exit_code": commands[0]["exit"],
+                  "ordered_pass_lines": lines,
+                  "wrapper_assertions_completed": True,
+                  "adaptation": "Exact frozen wrapper completed; request presence asserted, no numeric counts invented",
+                  "original_report_member": report_member, "original_log_member": log_member}
+    else:
+        report = raw
+    return report, {"program_member": actual_program_member, "sha256": actual_hash,
+                    "identity_member": identity_member, "identity_method": identity_method,
+                    "report_member": report_member}
+
+
 def authenticate(manifest, output, identity):
     policy = manifest["artifact_policy"]
     require(policy["repository"] == "NoGod3524/EXReader", "wrong_repository", "fixed repository required")
@@ -189,18 +263,23 @@ def authenticate(manifest, output, identity):
             unique(referenced, "duplicate_evidence", role)
             evidence = {}
             for name in referenced:
-                require(name in members and not members[name].is_dir(), "missing_member", name)
-                evidence[name] = {"bytes": members[name].file_size,
-                                  "sha256": zip_hash(archive, members[name])}
-            retained = {}
-            for suite_id, member in spec["retained_members"].items():
+                actual_member = member_path(spec.get("evidence_prefix", ""), name)
+                require(actual_member in members and not members[actual_member].is_dir(),
+                        "missing_member", actual_member)
+                evidence[name] = {"member": actual_member, "bytes": members[actual_member].file_size,
+                                  "sha256": zip_hash(archive, members[actual_member])}
+            retained, retained_programs = {}, {}
+            for suite_id, binding in spec["retained_members"].items():
                 require(suite_id in manifest["retained_suites"], "unknown_suite", suite_id)
-                retained[suite_id] = read_json_member(archive, members, member, policy)
+                retained[suite_id], retained_programs[suite_id] = retained_from_archive(
+                    archive, members, suite_id, binding, manifest["retained_suites"][suite_id],
+                    policy, identity, program, program_hash)
         authenticated["roles"][role] = {
             "artifact_id": artifact["id"], "artifact_name": artifact["name"],
             "job_id": job["id"], "artifact_metadata": artifact, "original_zip_sha256": actual,
             "original_zip_bytes": raw.stat().st_size, "program_sha256": program_hash,
-            "receipt": receipt, "evidence": evidence, "retained": retained}
+            "receipt": receipt, "evidence": evidence, "retained": retained,
+            "retained_programs": retained_programs}
     return authenticated
 
 def retained_check(spec, report, identity, suite_id):
@@ -235,9 +314,11 @@ def retained_check(spec, report, identity, suite_id):
         require(report["failure_requests"] > 0 and all(report[key] == spec[key]
                 for key in ("failed_state_pending_revisions", "recovery_shards", "outbox_after_retry")),
                 "retained_boundary", suite_id)
-    elif kind == "command-exit":
-        require(report["exit_code"] == 0 and report["authenticated_requests"] > 0
-                and report["unauthenticated_requests"] > 0, "retained_boundary", suite_id)
+    elif kind == "original-command-log":
+        require(report["exit_code"] == 0 and report["wrapper_assertions_completed"] is True
+                and report["ordered_pass_lines"] == spec["ordered_pass_lines"]
+                and len(report["ordered_pass_lines"]) == spec["count"],
+                "wrong_suite_names", suite_id)
     else:
         raise Rejected("unknown_suite_kind", suite_id)
 
@@ -261,7 +342,8 @@ def check(manifest, bundle, identity):
         require(row["program_sha256"] == authenticated["program_sha256"],
                 "wrong_program", host)
         suites = {name for name, spec in manifest["retained_suites"].items() if host in spec["hosts"]}
-        require(set(authenticated["retained"]) == suites, "missing_suite", host)
+        require(set(authenticated["retained"]) == suites
+                and set(authenticated["retained_programs"]) == suites, "missing_suite", host)
         for suite_id in suites:
             retained_check(manifest["retained_suites"][suite_id], authenticated["retained"][suite_id],
                            identity, suite_id)
@@ -399,6 +481,8 @@ def negative_controls(manifest, authenticated, identity, original_artifacts):
 
 def main():
     require(os.environ.get("GITHUB_ACTIONS") == "true", "not_actions", "Actions execution only")
+    require(sys.flags.optimize == 0 and not os.environ.get("PYTHONOPTIMIZE"),
+            "assertions_disabled", "original Python assertions must remain enabled")
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -420,7 +504,9 @@ def main():
             capture_output=True)
         require(unchanged.returncode == 0, "old_suite_modified", "retained source assertions changed")
         for suite in manifest["retained_suites"].values():
-            for path_key, blob_key in (("source_path", "source_blob"), ("supplement_path", "supplement_blob")):
+            for path_key, blob_key in (("source_path", "source_blob"), ("supplement_path", "supplement_blob"),
+                                       ("program_source_path", "program_source_blob"),
+                                       ("instrumentation_source_path", "instrumentation_source_blob")):
                 if path_key in suite:
                     blob = subprocess.check_output(["git", "rev-parse", "HEAD:" + suite[path_key]],
                                                    text=True).strip()
