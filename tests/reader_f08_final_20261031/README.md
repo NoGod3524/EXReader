@@ -64,3 +64,39 @@ final-source/.github/, so the strict inventory rejected it. That original
 archive and failure remain retained. Windows upload now explicitly includes
 hidden files; subsequent builds must be authenticated under their own source,
 run, attempt and ZIP identities.
+
+The Apple entry is `python3 tests/reader_f08_final_20261031/apple.py`.
+Its `guard` uses the same final `source.admission`. For `sdk --target TARGET`,
+admission completes before the original SDK builder's historical SDK source
+guard is bound to this checkout's HEAD. The original builder compiles the SDK,
+legacy products and RAW3/Wave3 products from the current ROOT; version, ABI,
+symbol, product and source/hash checks remain in place. No older SDK or app
+artifact is accepted as a new-source producer.
+
+Reuse the original Apple workflow's macos-15 runners, full-history checkouts,
+permissions, environment and upload/download paths. Keep both matrices
+with fail-fast disabled. Keep
+`EXR_APPLE_SDK_VERSION=3.42.0`, `EXR_APPLE_PAGE_THEME=ON`,
+`EXR_APPLE_RAW3=OFF` and `F08_APPLE_DIAGNOSTIC=false` as in the full original
+lane. The generated full product still requires all six original review,
+PageTheme, RAW3 and Wave3 compile flags and uses the normal SwiftUI Image path.
+
+| Job | Matrix | Needs | Limit | Entry |
+| --- | --- | --- | --- | --- |
+| SDK | macos, iphonesimulator | checkout | 55 min | `sdk --target TARGET`, then always `seal --platform TARGET-sdk` |
+| Native | macos, iphone, ipad | both SDK artifacts | 90 min | `native --platform PLATFORM`, then always `seal --platform PLATFORM` |
+| Audit | one macos-15 job | SDK and Native, always | 20 min | `audit` with actions-read GH_TOKEN |
+
+Keep artifact names `f08-apple-TARGET-sdk-RUN-ATTEMPT` and
+`f08-apple-PLATFORM-RUN-ATTEMPT`. Download both same-run SDK artifacts into
+`sdk-input/`, with their artifact-name subdirectories. SDK uploads retain
+`build/raw3-ios-sdk/TARGET/{sdk,raw-products}/` and all root JSON files; native
+uploads retain `build/f08-apple/PLATFORM/evidence/`. Include hidden files and
+upload failures. The original audit downloads all five exact same-source,
+same-run, same-attempt ZIPs, checks every payload, and reparses native results.
+
+No original producer, test, metric or audit function is rewritten. The complete
+original seven, separate scroll08, launch09/10/13, reader11/12 and shelf14 run
+with their original assertions, gestures, iterations, warmup, budgets and raw
+missing/failing results. The final native entry rejects the diagnostic shortcut.
+The separate New Window and font15 controls are not added to this lane.
