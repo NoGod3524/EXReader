@@ -1245,5 +1245,19 @@
         "expires_at": "2027-01-30T17:28:22Z"
       }
     }
+  },
+  "owner_core_original_round": {
+    "case": "f03/owner-core-original",
+    "branch": "dot/f03-owner-core-20261101",
+    "base": "21ffb3ef36a2daedf20b7a2ca4d0b78cadfad932",
+    "status": "prepared_not_run",
+    "budget_runner_minutes": 5,
+    "runs": 1,
+    "retry": false,
+    "core_controls": 19,
+    "old_all_exits_expected": false,
+    "artifact_id": 13093186163,
+    "accepted": false,
+    "formal_count_credit": 0
   }
 }
