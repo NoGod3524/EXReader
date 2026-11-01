@@ -1,7 +1,7 @@
-name: F08 final same-source Linux cohorts
+name: F08 same-source builds and Linux cohorts
 on:
   push:
-    branches: [codex/f08-final-validation-20261031, codex/f08-final-adapter-check-20261031]
+    branches: [codex/f08-final-validation-20261031, codex/f08-final-adapter-check-20261031, codex/f08-final-build-check-20261031]
   workflow_dispatch:
 permissions:
   contents: read
@@ -48,7 +48,7 @@ jobs:
           path: build/f08-native-control/
           if-no-files-found: warn
   sample:
-    if: github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031'
+    if: github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031' && github.ref != 'refs/heads/codex/f08-final-build-check-20261031'
     needs: control
     runs-on: ubuntu-22.04
     timeout-minutes: 90
@@ -117,3 +117,116 @@ jobs:
             build/f08-linux-product-audit/final-linux-audit.json
             build/f08-linux-product-audit/*.log
           if-no-files-found: error
+
+  windows_build:
+    if: github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031'
+    needs: control
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Admit the reviewed complete source
+        run: python tests/reader_f08_final_20261031/windows.py guard
+      - name: Keep all original native frame protocol controls
+        run: python tests/reader_f08_windows_native_frame_20261031/replay.py --self-test
+      - name: Build the complete Windows package and bundled native helpers
+        run: python tests/reader_f08_final_20261031/windows.py build
+      - name: Build the external observer
+        shell: pwsh
+        run: |
+          cmake -S tests/reader_f08_window_capture_20261031 -B build/f08-wgc -A x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build/f08-wgc --config Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force -Path build/f08-window-observer | Out-Null
+          Copy-Item -LiteralPath build/f08-wgc/Release/f08_window_capture.exe -Destination build/f08-window-observer/observer.exe
+          & build/f08-window-observer/observer.exe 0 0 absent.stop build/f08-window-observer/invalid-window > build/f08-window-observer/invalid-window.jsonl
+          if ($LASTEXITCODE -ne 1) { throw "Invalid HWND must be rejected" }
+          $record = Get-Content -LiteralPath build/f08-window-observer/invalid-window.jsonl | ConvertFrom-Json
+          if ($record.kind -ne 'fatal') { throw "Invalid window result" }
+          & build/f08-window-observer/observer.exe --check-png build/f08-window-observer/image-selftest.png
+          if ($LASTEXITCODE -ne 0) { throw "Lossless PNG roundtrip failed" }
+          & build/f08-window-observer/observer.exe --check-limits > build/f08-window-observer/limit-selftest.json
+          if ($LASTEXITCODE -ne 0) { throw "Bounded capture argument controls failed" }
+          $limits = Get-Content -LiteralPath build/f08-window-observer/limit-selftest.json | ConvertFrom-Json
+          if (-not $limits.passed -or $limits.capture_limit_checks -ne 8) { throw "Capture argument control inventory" }
+          $LASTEXITCODE = 0
+          $metadata = @{
+            source_sha = $env:GITHUB_SHA
+            run_id = $env:GITHUB_RUN_ID
+            attempt = $env:GITHUB_RUN_ATTEMPT
+            observer_sha256 = (Get-FileHash -LiteralPath build/f08-window-observer/observer.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+            observer_bytes = (Get-Item -LiteralPath build/f08-window-observer/observer.exe).Length
+            invalid_window_rejected = $true
+            png_roundtrip_passed = $true
+            capture_limit_controls_passed = $true
+            product_sampled = $false
+            f08_accepted = $false
+          }
+          if ($metadata.source_sha.Length -ne 40 -or $metadata.run_id -notmatch '^\d+$' -or $metadata.attempt -notmatch '^\d+$') { throw "Build identity missing" }
+          $metadata | ConvertTo-Json | Set-Content -LiteralPath build/f08-window-observer/metadata.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-final-windows-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-windows-native-frame/evidence/
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-final-window-observer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-window-observer/
+          if-no-files-found: warn
+          retention-days: 30
+  android_build:
+    if: github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031'
+    needs: control
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      C11_NDK: '27.0.12077973'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Prepare only Android build tools
+        run: |
+          python3 -m pip install 'PyYAML==6.0.3'
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;${C11_NDK}"
+      - name: Admit the reviewed complete source
+        run: python3 tests/reader_f08_final_20261031/android.py guard
+      - name: Build the full Release package with the native frame association
+        run: timeout --signal=TERM --kill-after=10s 1000s python3 tests/reader_f08_final_20261031/android.py build
+      - name: Seal all build observations including failures
+        if: always()
+        run: python3 tests/reader_f08_final_20261031/android.py seal
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-final-android-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-android/
+          if-no-files-found: error
+          retention-days: 30
