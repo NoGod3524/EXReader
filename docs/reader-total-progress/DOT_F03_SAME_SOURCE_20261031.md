@@ -435,3 +435,46 @@ Output artifact `f04-import-only-41265967021-1`: ID13066734468,
 expires 2026-12-01 02:37:59 UTC. It retains result, opened-page screenshot
 and safe diagnostics. This result-only handoff changes no F04 file or
 workflow, triggers no CI, and has no uncertain Git operation or running CI.
+
+
+## F04 fresh full-chain third round — 2026-11-01 02:59 UTC
+
+User approval 02:40:55 UTC covered the three reviewed existing F04 paths
+and one new full-chain 120-minute cap (30+45+15+20+10), without retries.
+Three blobs from `325e4bd9e7eee0521b1c54b30a0edc7e1ce2a79f` were copied
+exactly; the entry was unchanged. All products in this run were rebuilt at
+source `19566821ce7082ffb5cde6a538fdf163ab554902`, tree
+`2d8a7b3ec09b991900d861200850d8a11febee08`; no historical build substituted.
+
+https://github.com/NoGod3524/EXReader/actions/runs/41266444103 attempt1
+completed **failure**. Windows seed job124730133009 succeeded
+02:45:02–02:49:59 UTC; retained Linux job124730133116 succeeded
+02:45:01–02:49:10 UTC. Android peer job124731073979 failed
+02:50:01–02:56:40 UTC at `apple_progress_public_parse_real_jump` with
+`UI timeout: public resolver jump`. The log records actual account/sync and
+explicit original receive checks passing, incoming Windows note/bookmark
+visible, and incoming location parser `3.42.0`. The installed APK matched
+the same-run APK, SHA256 `20a225437d359a964119a1eb4b99cb71c4a2c693c88fd1fe335e725d364ec145`,
+27439236 bytes. These observations do not establish successful resolver
+navigation. The F04 owner reports a production parser-policy compatibility
+mismatch under read-only source diagnosis; no wire mutation or production
+change is authorized by this run's test-only scope.
+
+Windows return job124732330827 and aggregate audit124732330955 were skipped
+as dependencies of the Android failure. F03 jobs remained unselected.
+No complete successful Android phase or bidirectional acceptance exists.
+The approved round is **1/1 used**, not 120 actual runner-minutes spent.
+No automatic retry; F03/F04 remain pending and all previous failures retained.
+
+Exact output artifact identities (API metadata; original ZIPs not parsed locally):
+- f04-build-android-41266444103-1: ID13068225346; 39938251 bytes; sha256:7f6cc0902d5457d5dd77505fe9e125c5c35695c33d4c7626f1ccf3486b46eb57; expires 2026-12-01T02:55:00Z.
+- f04-windows-seed-41266444103-1: ID13067685772; 4201088 bytes; sha256:1250cf89c159d5b16f6fca8e8c0c76695b58525d82ef2aa319815e3b43cab6cd; expires 2026-12-01T02:49:50Z.
+- f04-build-windows-41266444103-1: ID13067600956; 53052923 bytes; sha256:9f80f7223d93c642d3aaecf85a41dc8b08f787ca967a5d796688df34bd0dc7d8; expires 2027-01-30T02:44:59Z.
+- f04-diagnostic-android_peer-41266444103-1: ID13067526598; 313 bytes; sha256:927e0da93705ffcdfea5b349b6615005d881ca33b18ee833b73539fc85b482a6; expires 2026-12-01T02:56:37Z.
+- f04-diagnostic-retained_linux-41266444103-1: ID13067476849; 7530 bytes; sha256:4443f6d9f4aa10f3a562b60c22038a0748bb7d0db3324ab70fe4c13b50a0c685; expires 2026-12-01T02:49:06Z.
+- f04-retained-linux-41266444103-1: ID13067159769; 14734927 bytes; sha256:235d2c797ac293fb6c746e20ddf0516808c8a6c13b33a7f6e377eae1780cb5c0; expires 2026-12-01T02:49:03Z.
+- f04-diagnostic-windows_seed-41266444103-1: ID13066499932; 2556 bytes; sha256:ac589a83db13644f5900adca5cdee8c7ded22cc4d6bac9431784286b81e07209; expires 2026-12-01T02:49:53Z.
+
+This result-only document seal uses skip-ci, changes no F04 file or workflow,
+and leaves no running CI or uncertain Git mutation. Next production repair,
+if needed, requires explicit owner/path transfer and a new bounded budget.
