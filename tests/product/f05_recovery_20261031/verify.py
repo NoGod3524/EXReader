@@ -394,10 +394,13 @@ def main():
         authenticated = authenticate(manifest, args.original_artifacts, identity)
         (args.original_artifacts / "authenticated.json").write_text(
             json.dumps(authenticated, indent=2) + "\n", encoding="utf-8")
-        result.update(check(manifest, authenticated, identity))
-        result["negative_controls"] = negative_controls(manifest, authenticated, identity, args.original_artifacts)
+        passed = check(manifest, authenticated, identity)
+        controls = negative_controls(manifest, authenticated, identity, args.original_artifacts)
+        result.update(passed)
+        result["negative_controls"] = controls
     except (Rejected, KeyError, TypeError, ValueError, OSError, zipfile.BadZipFile,
             subprocess.SubprocessError) as error:
+        result["receipt_contract_passed"] = False
         result["errors"].append({"code": getattr(error, "code", "malformed_evidence"), "detail": str(error)})
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
