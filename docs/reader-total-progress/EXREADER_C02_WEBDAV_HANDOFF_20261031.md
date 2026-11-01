@@ -1,3 +1,46 @@
+# EXReader continuation snapshot — scheduled 2026-11-01 08:22 UTC
+Observed/API-read window: **2026-11-01 08:24:14–08:24:25 UTC**. Continuation backup only, not stopping, completion, or release. Read independent documentation branch `codex/gpt-iphone-acceptance-96-20261031` at HEAD `cb9f4dde75e899decb1d59cbe7061a731f6835b0`, blob `7f153c9deb110430b278685af9e6e2d48dc47565`; all earlier text is retained below.
+
+Formal ledger stays **96/108 (88.89%), 96 verified / 1 partial / 11 pending**, fixed `5db41cb19673fb75bb0b498c677d770931ac33e8`. No diagnostic below grants full F04.
+
+## Latest terminal result and new authorized preparation
+- [Run 41287434330 A1](https://github.com/NoGod3524/EXReader/actions/runs/41287434330), source/controller/UI `5394ec6dc8aa6da7227bb7876609a235aa164f3d`, Mac job `124791485333`, is **completed / failure**. One Mac15 round consumed; no retry. Original position, incoming-bookmark and incoming-note checkpoints passed after one native click each on jump.0/.2/.3. Save-progress remained enabled but non-hittable; both edits and final upload were not reached.
+- Synchronized obstruction captures at observed **08:14:52Z**, **08:14:54Z**, and **08:17:22Z** show the same UserNotificationCenter dialog at (382,104,260,248), covering save-progress (427,230,94,20). Text asks whether Python may find devices on local networks. Own app remained foreground; one native activation did not dismiss the dialog. This now supplies simultaneous obstruction evidence, unlike the earlier merely geometric candidate.
+- The system buttons were captured with empty labels and identifiers action-button-1/action-button-3. No permission button was clicked; no semantics are inferred from numbering or position. Public snapshot title/value/label attributes can supply the missing semantic identity in a subsequent authorized run.
+- Original artifact **13075384078**, **42355931 bytes**, SHA256 `e41dadfb05de1d9518ac06fa2a909f12f0f8baf6316459615d4c95f581f163ad`, same run/source, remains diagnostic-only. No ZIP downloaded or parsed.
+- **Clock discrepancy preserved:** GitHub API reports created_at **2026-11-01T09:06:26Z**, updated_at **09:17:45Z**, artifact created_at **09:17:43Z**, approximately one hour ahead of observed tool/log UTC. These are raw API values, not a rewritten chronology. Observed failure was available before this 08:24 capture. Do not silently normalize or infer a future execution from this mismatch.
+- User **08:21:55 UTC**, message `Sentinel_1e8e3ff427048191a3adc3fbac94dab0`, explicitly approved the original three F04 paths plus **one new Mac diagnostic capped at 15 runner-minutes**, no retry, and one semantically verified **Don't Allow** action for this exact Python local-network prompt on the temporary runner. No Allow fallback, TCC edits, notification-setting changes, unknown-button action, coordinate bypass or unrelated app permission is authorized.
+- F04 is preparing that change; F12 is the independent actual-diff reviewer and F03 remains sole canonical composer/trigger. At this capture, remote F04 HEAD still `c31450f5eef9fec161c322d5f73368046d9a69fb`; canonical HEAD still `5394ec6dc8aa6da7227bb7876609a235aa164f3d`; latest canonical run remains 41287434330. **The newly approved round has not been observed triggered: 0/1 used, preparation/review pending.**
+- Exact design boundary: only Mac diagnostic, unique current positive-size dialog with complete normalized known Python prompt and explanation; unique button with complete Don't Allow semantics from public title/label/string value/child static text; fresh prompt/button/enabled/hittable verification; global one-attempt flag set before one native click. Ambiguous, missing, conflicting, unfamiliar or recurring prompts stop as environment-blocked. Original polling deadline, list helper, iOS and all success assertions stay unchanged.
+- Source read confirms fixture DAV and control endpoints bind **127.0.0.1**. No LAN-device discovery requirement was found; denial is least-privilege preparation, not a guarantee of runtime success. The permission decision concerns Python for the temporary runner user, not just a fixture port.
+
+## Evidence history retained, not relabeled
+- 41276273173: iPhone/iPad original diagnostic paths green; Mac whole-list overshoot failed.
+- 41284680303: bounded pixel scroll made jump.2 pass; jump.3 zero-size virtualization preparation failed.
+- 41285517057: introduced all-anchor AX sampling exceeded the three-second gate before any scroll; test-driver regression, not product instability.
+- 41286210606: revised snapshot/native helper passed jump.2/.3 exact checkpoints; fixed save-progress readiness failed. Artifact 13075777205 /42356371 bytes /SHA256 `9943c91bc87f38bd82d5b497991949fee48d8e0f48025ea097a63a5fc1f11b56`.
+- Prior foreground preparation `c31450f5` passed actual three-path review; its contract `69c78f8493853caefcd8a23eabfb26c73eadc278` was independently compared in full against `0de48c79b040d360798b65df6908847d573587da`. Historical six-host/230-minute fields were unchanged; they are not current launch authority. The current scope is solely the separately approved Mac15 round.
+
+## Six assignments and actual dependencies
+| Lane | Actual work now | Remaining dependency |
+|---|---|---|
+| F03 | Waiting for reviewed F04 blobs, then canonical composition/sole trigger | Own GTK/Android failures and full same-source graph evidence still unresolved |
+| F04 | One authorized test-driver preparation lane; not new product implementation | Semantic permission preparation, actual remaining save/edit/upload chain, then original graph/returns |
+| F05 | Integration/evidence waiting at `9ce943e1ff0c26b54db69f5c31eec057d2be216b` | Native conflict/deletion presentation, head/tombstone preservation, cancellation and recovery; Java shadow is not acceptance |
+| F07 | Provider/runtime evidence waiting at `697448abd8188580304806163ba9b543e76ba9ba` | Provider link/load and actual consumer validation; historical diagnostic success is not acceptance |
+| F10 | Component seal `4db961144b00c9004e2775b9e1e57e6ea7a31cb7` retained | 82 cases/880 assertions/38 negatives do not establish common-consumer, actual host or credentials/privacy integration; full_F10=false |
+| F12 | Independent actual-diff review plus this finite documentation snapshot | Final candidate freeze, real package/licenses, old-profile upgrade/restore matrix and generated instructions; seal `64729214788a99ae96de7dda1a6376337324f9e4` is source preparation only |
+
+No six simultaneous implementers are claimed: **one F04 test-driver preparation, zero confirmed product-source implementation lanes**, F03 coordination, F12 review/docs and three integration waits. Automatic replenishment remains paused; F06 remains verified and is not rerun. No reliable remaining-round or completion ETA.
+
+## Fixed boundaries
+P0/C02 migration/journal/Repair stays valid only in its sealed scope, not all-P0, hardware power loss, F12 or independent MSVC static relink. SDK `8357eafa28423a7ab93ba08b823af80f01ad1505`, preparation baseline `94fb236a4a2da87dfbaf4f1dd2a47885d615a230`, original producer `2cdad2057d4877b4712af8155da72fb92b50e411` and pinned SDK/Android inputs remain unchanged. Historical 727 stays attached to its own evidence.
+
+Existing production and external UI/F08/F09 owners remain unchanged. This snapshot changes only this document on the independent branch, with skip-ci. Direct GitHub route remains approved; no default-branch/catalog/PR/tag/release/SDK/product/old-test action. Desktop Commander quota, lap25002/instabox access and native handshake were **not revalidated**. Continue only the precisely approved sequence; preserve every failed run and original artifact identity.
+
+---
+## Earlier snapshots (historical; latest facts above take precedence)
+
 # EXReader continuation snapshot — scheduled 2026-11-01 07:22 UTC
 Actual API capture: **2026-11-01T07:26:04Z / 2026-11-01 02:26:04 America/New_York (EST)**. Continuation backup only, not a stop, completion, or release. The daylight-saving rollback has occurred; older 01:24 EDT capture remains correctly dated.
 
