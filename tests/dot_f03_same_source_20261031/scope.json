@@ -332,7 +332,7 @@
     "runner_minutes_cap": 20,
     "run_limit": 1,
     "automatic_retries": 0,
-    "status": "prepared_not_run",
+    "status": "completed_failure",
     "original_actions_wait_predicates_and_180s_deadline_unchanged": true,
     "retained_ctest_count": 4,
     "retained_organization_checks": 27,
@@ -344,6 +344,22 @@
     "sampler_daemon": true,
     "stop_join_timeout_seconds": 1,
     "active_window_command_timeout_seconds": 1,
-    "other_jobs_skipped": true
+    "other_jobs_skipped": true,
+    "run_id": 41314638071,
+    "attempt": 1,
+    "source_sha": "e9258dcbefdd140e1a7baa3eff75e9273bee0081",
+    "job_id": 124871985459,
+    "used_runs": 1,
+    "completed_at": "2026-11-01T14:16:13Z",
+    "retained_build_and_27_check_steps_passed": true,
+    "author_create_command_completed": true,
+    "author_delete_failed_original_180s_wait": true,
+    "remaining_four_author_phases_not_executed": true,
+    "numeric_records": 438,
+    "artifact": {
+      "id": 13086817402,
+      "bytes": 22844419,
+      "sha256": "48d933569c1e7dbbb4fa3ba5d5869cbc4f3f7644cac6aec91801be8cd3069cb5"
+    }
   }
 }
