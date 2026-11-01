@@ -45,3 +45,13 @@ C02 原件13039319680，1055858172 B，a0dbd292b2196fa0086fe87ba08174c9df58a20c7
 ledger 中 docs/READING-LICENSES.md（blob 54b08a36854a785ee035ccddab20464cf3aee68c）及 docs/READING-LICENSE-REVIEW.md（blob c5b1a65f91a2ee4a921556d9b814f9c5be320a52）已有 H5 严格出口。修补 source 72c1e89659679b7d7b76504007a84d6d8c453db3 / run39862694733 A1，以及记录的共同 SDK 复验 run39871878859，保留 31 拒绝、1 必需材料缺口阻断、3 正控；材料库存绿色与 release_ready 严格条件分离。其范围仅 Linux 两 reading presets 静态 SDK，不含 Windows/macOS/Android 宿主、宿主字体和音频构建。
 后续应复用 tools/check_reading_licenses.py 的既有材料/来源/固定版本/构建开关/安装归档方法和原断言，不从头另造扫描系统；当前最终六个应用包仍需实际分发内容对账，不能借 H5 转授。
 docs/READING-RELEASE-PLAN.md 的“六包”是 reading-core/library × Linux/Windows/macOS 的 SDK 六包，不是 Windows/macOS/Linux/Android/iPhone/iPad 六应用；其默认分支祖先和发布准备要求不能自动改写成本任务允许发布。
+
+## 宿主打包路径只读盘点（共同准备源94fb，非最终验收）
+- `tools/build_linux_host.py`：复制根 LICENSE、THIRD_PARTY_NOTICES.md、SDK share/exreader/licenses、Reader.otf 与 OFL.txt。
+- `tools/build_windows_host.py`：对应 LICENSE.txt、THIRD_PARTY_NOTICES.md、licenses/、Reader.otf 与 OFL.txt。
+- `tools/build_apple_host.py`：app resources 中复制 EXReader-LICENSE.txt、THIRD_PARTY_NOTICES.md、SDK licenses/ 与 Noto-OFL.txt。
+- `tools/build_android_host.py`：已见 Reader.otf/OFL.txt 和 catalog assets；当前所读 Gradle 配方未见根 notices/SDK licenses 拷贝。只标“APK 内材料待原件核证”，不据局部源码断言整个外包缺材料。
+以上是源码规则，不是本轮 ZIP 实物检查；SDK notices 存在不证明所有宿主 WebDAV/系统依赖或最终构建开关已经闭合对账。
+F06 已核开发包形态：Windows/Linux 开发ZIP、macOS ad-hoc开发app、Android API34 x86_64 emulator/debug APK、iPhone/iPad arm64 simulator app。安装说明必须保留这些限制，不称正式签名真机交付。
+
+下一设计审请求：可先审 F06 固定六原 ZIP 的历史材料缺口，复用既有身份和原材料门禁，仅 Actions 读取、不重建；该结果只能授历史包盘点，不授尚未冻结的最终 F12。当前尚未批准测试文件/CI，未执行。
