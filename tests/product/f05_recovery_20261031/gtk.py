@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_linux_host import Session, command
-from fixture import Store
+from fixture import Store, write_role_receipt
 
 def main():
     if os.environ.get("GITHUB_ACTIONS") != "true":
@@ -44,6 +44,37 @@ def main():
               "identity": {"source": os.environ["GITHUB_SHA"], "run": os.environ["GITHUB_RUN_ID"],
                            "attempt": os.environ["GITHUB_RUN_ATTEMPT"]},
               "program_sha256": hashlib.sha256(binary.read_bytes()).hexdigest()}
+    normalized, claim_refs, evidence = [], {}, ["coverage.json"]
+    previous_wire, last_request = {}, 0
+    def finish_case(claims, screenshot=None, **semantic):
+        nonlocal previous_wire, last_request
+        raw = checks[-1]
+        name = raw["name"]
+        expected = original.read_bytes()
+        observed = {"first":sdk_originals(first), "second":sdk_originals(second)}
+        if any(len(items)!=1 or items[0]["bytes"]!=len(expected)
+               or items[0]["sha256"]!=hashlib.sha256(expected).hexdigest() for items in observed.values()):
+            raise AssertionError("GTK native case changed exact SDK original set")
+        wire = {path:hashlib.sha256(body).hexdigest() for path,body in store.entries.items()}
+        if any(wire.get(path)!=digest for path,digest in previous_wire.items()):
+            raise AssertionError("GTK native case rewrote immutable peer wire")
+        if screenshot is None:
+            screenshot=name+".png"
+            command("import","-window",first.window,out/screenshot)
+        evidence.append(screenshot)
+        raw["sdk_original_readback"]=observed
+        raw["immutable_wire_inventory"]=wire
+        raw["screenshot"]=screenshot
+        normalized.append({"id":name,"outcome":raw["outcome"],
+            "actual_host_actions":True,"receiver_database_injection":False,
+            "original_identity_preserved":True,"revision_bytes_preserved":True,
+            "peer_wire_observed":any(r["authenticated"] and r["method"] in ("PUT","GET","PROPFIND")
+                                     for r in store.requests[last_request:]),
+            "source_evidence":["coverage.json",screenshot],
+            "source_pointer":"/cases/"+str(len(checks)-1),**semantic})
+        for claim,role in claims.items():
+            claim_refs.setdefault(claim,[]).append({"case_id":name,"role":role})
+        previous_wire,last_request=wire,len(store.requests)
     def launch(name):
         folder = out / name
         folder.mkdir(exist_ok=True)
@@ -204,6 +235,8 @@ def main():
         checks.append({"name":"cancel_sync_retry","outcome":"passed",
             "cancel_layer":"transport-original-GET-before-explicit-native-receive",
             "before":before_cancel,"retry":after_retry,"sdk_mid_import_cancel_tested":False})
+        finish_case({"cancel_retry":"local"},remote_boundary=True,cancel_layer="transport",
+                    native_cancel_observed=True,explicit_retry_passed=True)
         baseline = snapshot(first)
         store.offline = True
         edit(first, "Offline GTK edit")
@@ -215,6 +248,7 @@ def main():
         if snapshot(first)["outbox"]: raise AssertionError("outbox not acknowledged")
         checks.append({"name": "offline_reconnect", "outcome": "passed",
                        "baseline": baseline, "offline": offline, "peer": snapshot(second)})
+        finish_case({"offline_reconnect":"author"})
         edit(first, "Uncertain GTK commit")
         pending = snapshot(first)
         store.hold_put = True
@@ -238,6 +272,10 @@ def main():
         checks.append({"name": "kill_commit_ack_replay", "outcome": "passed",
                        "terminated_pid": pid, "reopened_pid": first.process.pid,
                        "pending": pending, "after": snapshot(first)})
+        if pid==first.process.pid:raise AssertionError("GTK actual process not replaced")
+        finish_case({"process_recovery":"local"},remote_boundary=True,
+                    terminated_pid=pid,reopened_pid=first.process.pid,actual_process_termination=True,
+                    recovery_boundary="committed-PUT-before-ACK",durable_recovery_passed=True)
         # Both native peers share one actual group parent. The server checkpoints
         # are raw authenticated PUTs, not synthetic revisions or DB injection.
         tag = group_action(first, "create", name="F05 shared tag")
@@ -269,6 +307,10 @@ def main():
             "retained_heads":sorted(combined), "first_native_state":left_group,
             "second_native_state":right_group,
             "restore_revision_created":False, "implicit_single_head_selected":False})
+        finish_case({"delete_put_tombstone_preserved":"receiver"},competing_heads=sorted(combined),
+                    final_heads=snapshot(first,"tag",tag)["heads"],tombstone_preserved=True,
+                    delete_conflict_displayed=False,stale_peer_did_not_resurrect=False,
+                    uncovered="native deletion operation detail and explicit stale replay",explicit_user_restore=False)
         (out / "peer-contract.json").write_text(json.dumps({
             "entity_kind":"tag", "entity_key":tag, "common_parent":parent["heads"],
             "baseline":"peer-baseline", "remote_delete":"peer-delete",
@@ -289,6 +331,8 @@ def main():
         checks.append({"name": "concurrent_heads_preserved", "outcome": "passed",
                        "heads": sorted(heads), "first_native_state": left,
                        "second_native_state": right})
+        finish_case({"concurrent_heads_preserved":"receiver"},competing_heads=sorted(heads),
+                    final_heads=snapshot(first)["heads"],conflict_displayed=True,explicit_user_resolution=False)
         original_id=sdk_originals(first)[0]["id"]
         preserved=snapshot(first)
         first.close()
@@ -312,26 +356,48 @@ def main():
         checks.append({"name":"restart_offline_read","outcome":"passed",
             "book":original_id,"heads":preserved["heads"],"network_requests":0,
             "public_sdk_readback":json.loads(inspected.stdout),
-            "original_sha256":hashlib.sha256(exported.read_bytes()).hexdigest()})
+            "original_sha256":hashlib.sha256(exported.read_bytes()).hexdigest(),
+            "measurement":"controlled F05 library sync endpoint only; not whole OS networking"})
+        evidence.extend(["offline-sdk-original.bin","offline-sdk-readback.log"])
+        finish_case({"offline_read":"local"},screenshot="offline-reader.png",
+                    reopened_host_readable=True,network_requests=0,
+                    network_measurement="controlled F05 library sync endpoint")
     except Exception as error:
         report["errors"].append(str(error))
         raise
     finally:
-        for host in devices:
+        cleanup_errors=[]
+        def cleanup(label,action):
+            try:action()
+            except BaseException as error:
+                cleanup_errors.append({"action":label,"error":repr(error).replace(password,"<fixture-secret>")})
+        def close_host(host):
             if host.process.poll() is None:
-                try: host.close()
-                except Exception:
-                    host.process.kill()
-                    host.process.wait(timeout=20)
-        store.close()
-        report["requests"] = store.requests
-        report["uncovered"] = ["stale-put replay after tombstone", "conditional explicit restore parents",
-                               "SDK mid-import cancellation (additional, not universal prerequisite)",
-                               "independent original-artifact authentication"]
-        (out / "coverage.json").write_text(json.dumps(report, indent=2) + "\n")
-        subprocess.run(["sudo", "rm", "--", str(trust)], check=True, capture_output=True)
-        subprocess.run(["sudo", "update-ca-certificates"], check=True, capture_output=True)
-        key.unlink(missing_ok=True)
+                try:host.close()
+                except BaseException:
+                    host.process.kill();host.process.wait(timeout=20)
+                    raise
+        for index,host in enumerate(devices):
+            cleanup("native-close-"+str(index),lambda host=host:close_host(host))
+        cleanup("fixture-close",store.close)
+        cleanup("remove-fixture-trust",lambda:subprocess.run(
+            ["sudo","rm","--",str(trust)],check=True,capture_output=True))
+        cleanup("refresh-runner-trust",lambda:subprocess.run(
+            ["sudo","update-ca-certificates"],check=True,capture_output=True))
+        cleanup("remove-fixture-key",lambda:key.unlink(missing_ok=True))
+        report["requests"]=store.requests
+        report["cleanup_errors"]=cleanup_errors
+        report["uncovered"]=["native deletion operation detail","stale-put replay after tombstone",
+            "conditional explicit restore parents","SDK mid-import cancellation (not universal prerequisite)",
+            "independent original-artifact authentication"]
+        try:
+            (out/"coverage.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+            write_role_receipt(out,"linux",binary,report["identity"],normalized,claim_refs,evidence)
+        except BaseException as error:
+            print("F05 GTK evidence write failed: "+repr(error).replace(password,"<fixture-secret>"),flush=True)
+            if not report["errors"]:raise
+        if cleanup_errors and not report["errors"]:
+            raise RuntimeError("F05 GTK cleanup failed; see coverage cleanup_errors")
 
 
 def build():
