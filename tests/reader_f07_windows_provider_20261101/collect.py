@@ -28,8 +28,9 @@ def write_json(path, value):
 def git(*args):
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
 def copy(label, source):
+    need(not source.is_symlink(), "source_symlink:" + label)
     source = source.resolve(strict=True)
-    need(source.is_file() and not source.is_symlink(), "nonregular_source:" + label)
+    need(source.is_relative_to(ROOT.resolve()) and source.is_file(), "nonregular_or_external_source:" + label)
     data = source.read_bytes()
     target = OUT / label
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -116,9 +117,9 @@ def actual_build():
     runpy.run_path(str(ROOT / LOCK["recipe"]), run_name="__f07_original_recipe__")
     return prefix
 def linkage_observation(log, sdk, product):
-    # Retain complete original Searching blocks and every Loaded row.
+    # Observe all original rows. Do not turn collection into provider certification.
     searches = list(re.finditer(r"(?mi)^\s*Searching\s+(.+?\.lib):\s*$", log))
-    blocks, sqlite = [], []
+    blocks, sqlite, findings = [], [], []
     targets = {"sdk": str(sdk.resolve(strict=True)), "product": str(product.resolve(strict=True))}
     canon = lambda p: ntpath.normcase(ntpath.normpath(p))
     for index, match in enumerate(searches):
@@ -132,28 +133,40 @@ def linkage_observation(log, sdk, product):
                    "line": log.count("\n", 0, match.start() + loaded.start()) + 1}
             rows.append(row)
             if member.lower() in ("sqlite3.c.obj", "sqlite3.c.o"):
-                need(ntpath.isabs(full), "sqlite_searching_not_absolute")
-                need(canon(ntpath.basename(archive)) == canon(ntpath.basename(full)),
-                     "sqlite_loaded_searching_mismatch")
-                if ntpath.isabs(archive):
-                    need(canon(archive) == canon(full), "sqlite_loaded_absolute_mismatch")
+                observation = dict(row, identity_verified=False)
                 roles = [key for key, value in targets.items() if canon(full) == canon(value)]
-                need(len(roles) == 1, "sqlite_loaded_unknown_path")
-                path = Path(full).resolve(strict=True)
-                need(path.is_file(), "loaded_archive_missing")
-                body = path.read_bytes()
-                sqlite.append(dict(row, role=roles[0], actual_path=str(path),
-                                   bytes=len(body), sha256=digest(body)))
+                checks = {"searching_absolute": ntpath.isabs(full),
+                          "basename_match": canon(ntpath.basename(archive)) == canon(ntpath.basename(full)),
+                          "loaded_absolute_match": not ntpath.isabs(archive) or canon(archive) == canon(full),
+                          "known_installed_path": len(roles) == 1}
+                observation["checks"] = checks
+                if all(checks.values()):
+                    # Only follow the two known build outputs, never an arbitrary log path.
+                    path = Path(targets[roles[0]])
+                    need(not path.is_symlink(), "loaded_archive_symlink")
+                    path = path.resolve(strict=True)
+                    need(path.is_relative_to(ROOT.resolve()) and path.is_file(), "loaded_archive_external")
+                    body = path.read_bytes()
+                    observation.update(role=roles[0], actual_path=str(path), bytes=len(body),
+                                       sha256=digest(body), identity_verified=True)
+                else:
+                    findings.append({"line": row["line"], "kind": "unverified_loaded_identity", "checks": checks})
+                sqlite.append(observation)
         blocks.append({"start_line": log.count("\n", 0, match.start()) + 1,
                        "searching": full, "text": text, "loaded": rows})
-    write_json(OUT / "linker-contexts.json", {"searching_blocks": blocks,
-               "all_loaded_lines": [{"line": i, "text": line}
-                                   for i, line in enumerate(log.splitlines(), 1)
-                                   if re.match(r"\s*Loaded\s+", line)],
-               "sqlite_loaded": sqlite})
-    need(len({(row["role"], row["member"].lower()) for row in sqlite}) == 1,
-         "sqlite_loaded_missing_or_ambiguous")
-    return sqlite
+    identities = sorted({(row["role"], row["member"].lower()) for row in sqlite if row["identity_verified"]})
+    classification = ("missing_sqlite_loaded_rows" if not sqlite else
+                      "unverified_loaded_identity" if any(not row["identity_verified"] for row in sqlite) else
+                      "multiple_observed_provider_members" if len(identities) > 1 else
+                      "single_observed_provider_member")
+    observation = {"classification": classification, "findings": findings,
+                   "searching_blocks": blocks,
+                   "all_loaded_lines": [{"line": i, "text": line}
+                                       for i, line in enumerate(log.splitlines(), 1)
+                                       if re.match(r"\s*Loaded\s+", line)],
+                   "sqlite_loaded": sqlite, "provider_certified": False}
+    write_json(OUT / "linker-contexts.json", observation)
+    return observation
 def collect():
     build = ROOT / "build/windows-sdk342"
     sdk = build / "sdk/lib/exreader/exr_vendor_exr_sqlite.lib"
@@ -164,19 +177,18 @@ def collect():
     a = copy("archives/sdk-build.lib", sdk_build)
     b = copy("archives/sdk-installed.lib", sdk)
     c = copy("archives/product-installed.lib", product)
-    need((a["bytes"], a["sha256"]) == (b["bytes"], b["sha256"]),
-         "sdk_build_install_bytes_mismatch")
-    need(sdk_build.read_bytes() == sdk.read_bytes(), "sdk_build_install_content_mismatch")
+    sdk_identical = sdk_build.read_bytes() == sdk.read_bytes()
     copy("host/EXReaderWave3.exe", build / "host/EXReaderWave3.exe")
     copy("host/EXReader.exe", build / "package/EXReader/EXReader.exe")
-    need((build / "host/EXReaderWave3.exe").read_bytes() ==
-         (build / "package/EXReader/EXReader.exe").read_bytes(), "package_host_mismatch")
+    package_identical = ((build / "host/EXReaderWave3.exe").read_bytes() ==
+                         (build / "package/EXReader/EXReader.exe").read_bytes())
     copy("host/windows-host.map", build / "host/windows-host.map")
     for relative in ("CMakeCache.txt", "build.ninja", "CMakeFiles/rules.ninja"):
         copy("host-build/" + relative, build / "host" / relative)
     responses = sorted((build / "host").rglob("*.rsp"))
     rules = (build / "host/CMakeFiles/rules.ninja").read_text(encoding="utf-8", errors="replace")
-    need(responses or "rspfile" not in rules, "used_response_files_missing")
+    response_status = {"declared_in_rules": "rspfile" in rules, "present": len(responses),
+                       "files": [str(p.relative_to(build / "host")) for p in responses]}
     for path in responses:
         copy("host-build/" + path.relative_to(build / "host").as_posix(), path)
     for path in sorted((build / "package").rglob("*.json")):
@@ -189,18 +201,27 @@ def collect():
         execute(["dumpbin", "/SYMBOLS", archive], role + "-symbols", 120)
         execute(["dumpbin", "/LINKERMEMBER:1", archive], role + "-members", 120)
     imports = (OUT / "logs/host-imports.log").read_text(encoding="utf-8", errors="replace")
-    need(not re.search(r"(?i)(?:lib)?sqlite3[^\s/]*\.dll", imports), "system_sqlite_import")
-    log = (OUT / "logs/host-build.log").read_text(encoding="utf-8", errors="strict")
-    need("/verbose:lib" in log.lower(), "verbose_link_command_missing")
-    loaded = linkage_observation(log, sdk, product)
+    raw_log = (OUT / "logs/host-build.log").read_bytes()
+    try:
+        log = raw_log.decode("utf-8", errors="strict")
+        decoding = "utf8_strict"
+    except UnicodeDecodeError:
+        log = raw_log.decode("utf-8", errors="replace")
+        decoding = "utf8_replacement_for_observation_raw_bytes_retained"
+    configured = [entry for entry in COMMANDS if entry["name"] == "host-configure"]
+    need(len(configured) == 1 and "-DCMAKE_EXE_LINKER_FLAGS=/VERBOSE:LIB" in configured[0]["argv"],
+         "verbose_configure_command_missing")
+    observed = linkage_observation(log, sdk, product)
     return {"sdk_build": a, "sdk_installed": b, "product_installed": c,
-            "sdk_build_install_identical": True, "sqlite_loaded": loaded,
-            "response_files": [str(p.relative_to(build / "host")) for p in responses]}
+            "sdk_build_install_identical": sdk_identical, "package_host_identical": package_identical,
+            "system_sqlite_import_observed": bool(re.search(r"(?i)(?:lib)?sqlite3[^\s/]*\.dll", imports)),
+            "linker_observation": observed, "log_decoding": decoding,
+            "raw_log_sha256": digest(raw_log), "response_status": response_status}
 def seal(summary):
     write_json(OUT / "summary.json", summary)
     inventory = {}
     for path in sorted(OUT.rglob("*")):
-        if path.is_file() and path.name != "manifest.json":
+        if path.is_file() and path != OUT / "manifest.json":
             need(not path.is_symlink(), "evidence_symlink")
             relative = path.relative_to(OUT).as_posix()
             data = path.read_bytes()
