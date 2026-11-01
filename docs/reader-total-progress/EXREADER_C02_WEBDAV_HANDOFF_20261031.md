@@ -768,3 +768,29 @@ Observation: GitHub API checked at 14:21 UTC; this scheduled-hour snapshot does 
 - P0 migration/conflict and owner/input boundaries remain unchanged. No new owner transfer, automatic replacement, automatic retry, permission action or CI budget is implied. Authorization handshake has not been rechecked. Remaining work has no reliable ETA; observed wall time and job-cap budgets are not billing estimates.
 
 This append-only backup is on the existing independent 98-ledger documentation branch, not canonical source. Only this handoff file is changed; catalog and all 108 entries remain byte-identical.
+
+
+## 2026-11-01 15:22 UTC hourly continuation snapshot
+
+Scheduled-hour backup, observed at 15:19-15:20 UTC (the hourly request arrived early). This is continuation evidence, not a stop or completion declaration. Latest catalog was reread: 98 verified / 1 partial / 9 pending, 108 total, 90.74%; zero new formal acceptances this hour. Formal F04/F02 acceptance evidence remains catalog commit 255ec5578063765334d37f967507926c79557a3e. Catalog and historical entries are not changed by this snapshot; no new total-progress CI audit was run.
+
+### Closed gaps and current candidates
+- F03 fixed-origin GTK run 41316237632/A1, source 29089e8750799d0735ba37656cd554209d438809, succeeded: original four CTests, 27 checks and six native author phases completed; five authenticated successor origins matched, with 709 numeric events. Keeping the original HTTPS origin resolved this fixture's profile-binding obstacle without changing the product safety rule or old relay. This does not prove every older failure had the same cause.
+- First fresh same-run GTK/Android/audit round 41317482564/A1, source e5dc7b479235f1921d52dd5b2f666b6f2f2b7840, failed: GTK passed, Android install lacked reader_original_import, and original audit rejected the failed producer. The F03-private exact-target adapter was subsequently approved, reviewed and added; original tools, SDK, product and tests stayed unchanged.
+- Latest round 41318900037/A1, source 5a07f8079777f5297971b2f9d0d5ccf3eaadd2e6, failed at 15:10:51 UTC. GTK job 124884737065 passed all six author phases. Android job 124886308710 passed the former install failure and produced APKs, then the unchanged tools/check_android_host.py failed with ?MainActivity lacks takePersistableUriPermission? at 15:10:24 UTC. Original all-exits and all six Android receive phases were not executed. Audit job 124887581644 correctly rejected the unsuccessful Android producer.
+- Latest original artifacts: GTK 13088487990 / 23013558 bytes / SHA256 223ab5c453e08a6bc354909c3e9ebe2a470369a66c2aa49d87cf6f6280d7706a; Android 13088503668 / 93697959 bytes / SHA256 977a9dd21cac10813e1ef321e597898401d8b62ebb6976ebcc660e8333e9f54c; audit 13089430151 / 22956040 bytes / SHA256 add080db3baa8c957d45909c209b4e6234991e6256508e506684a59506a1c1fd. API identities were independently checked; original archives remain untouched and were not parsed outside Actions.
+
+### Blocking contract and next authorized boundary
+The missing token was not simply moved to another class. MainActivity delegates to ImportController and ImportEntry; current source uses a temporary Intent read grant and copies into app-private storage, with denied-grant handling and private-ready recovery. The old checker explicitly requires a MainActivity token. F03 must not insert a comment token, fabricate source, filter the failure, skip the gate or alter production permissions to obtain a pass. Original import/checker owner must first reconcile the intended permission contract and map existing revoked-grant, copy-completion and restart tests. This is the next zero-CI handoff, not authorization for another run or for changing the old checker.
+
+Latest F03 result seal, including exact source links and a short owner handoff that has not been sent externally:
+https://github.com/NoGod3524/EXReader/blob/f12da3b05c95bb14c4b7193850ba50e8a1f99e74/docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md
+The seal preserves full_F03_accepted=false and zero count credit. Six GTK commands passing does not establish cross-host F03 acceptance.
+
+### Live state, owners and budgets
+- Canonical dot/reader-suite-20261101 remains ec11cf862ca3b44483d7e8c4726ae748ab438337; its completed 15/15 F04 run 41306566948 and scoped F04/F02 acceptance remain valid, not a claim that all features are complete.
+- GitHub queued/in_progress lists were empty at 15:19 UTC. Zero active source implementation and zero running CI. F03 is closing diagnosis/result documentation; F12 is reviewing and saving this handoff. F04 completed its current evidence work; F07 collection completed but actual Loaded-provider proof remains missing. F05 and F10 remain blocked on their original owner/integration dependencies.
+- Each recent 160 runner-min authorization was one run only and is consumed; no automatic retry or next CI is authorized. Latest run spans approximately 14:59:31 to 15:10:51 UTC; wall time is not runner billing. Remaining ETA cannot be reliably estimated.
+- P0 migration/conflict, F05 recovery, F07 provider proof, F10 privacy/credential and temporary-file integration, iPad annotation partial, and F01 SDK 3.42 final same-source all-function closure remain open. F12 final upgrade/old-library/license/package validation still depends on the final integrated candidate. Original owners, frozen SDK/input boundaries and all failures remain preserved; no owner transfer or automatic replacement. Authorization handshake has not been rechecked.
+
+Only this existing handoff document is appended on the independent 98-ledger docs branch. All prior text and all 108 catalog entries remain unchanged; no source edit or CI operation accompanies this save.
