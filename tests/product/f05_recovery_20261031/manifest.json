@@ -69,15 +69,17 @@
       "roles": [
         "local"
       ],
-      "wire_required": true,
-      "description": "Actual host cancellation at its applicable transport/receive/import layer and successful explicit retry; record the layer, do not impose one shared phase."
+      "wire_required": false,
+      "description": "Actual host cancellation at its applicable transport/receive/import layer and successful explicit retry; record the layer, do not impose one shared phase.",
+      "remote_boundary_wire_required": true
     },
     "process_recovery": {
       "roles": [
         "local"
       ],
-      "wire_required": true,
-      "description": "Actual process termination/restart and durable recovery at the host's applicable boundary, not a universal forced kill point."
+      "wire_required": false,
+      "description": "Actual process termination/restart and durable recovery at the host's applicable boundary, not a universal forced kill point.",
+      "remote_boundary_wire_required": true
     },
     "offline_read": {
       "roles": [
