@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/f09'
 PKG = 'org.exreader.host'
 SERVICE = 'com.google.android.marvin.talkback.TalkBackService'
+moves = []
 
 
 def adb(*args, check=False):
@@ -45,7 +46,14 @@ def seek(fragment, since, limit=40, exclude=None):
         phrase = heard()
         if phrase:
             return phrase
+        before = len(spoken())
         chord('KEYCODE_ALT_LEFT', 'KEYCODE_DPAD_RIGHT')
+        moves.append('key')
+        if len(spoken()) == before:
+            # TalkBack's own touch gesture: a quick swipe right is "next item".
+            adb('shell', 'input', 'swipe', '250', '1300', '850', '1300', '120')
+            time.sleep(0.9)
+            moves.append('swipe')
     return heard()
 
 
@@ -92,6 +100,8 @@ def main(tts_apk, talkback_apk):
             time.sleep(5)
         mark = len(spoken())
         result['shelf_mark'] = mark
+        adb('shell', 'uiautomator', 'dump', '/sdcard/f09tb.xml')
+        (OUT / 'android-talkback-shelf.xml').write_text(adb('exec-out', 'cat', '/sdcard/f09tb.xml'), encoding='utf-8')
         found['shelf_title'] = seek('EXReader shelf', mark)
         found['book_row'] = seek('Sample.epub', mark, exclude='Opened')
         if found['book_row']:
@@ -113,6 +123,7 @@ def main(tts_apk, talkback_apk):
         result['accepted'] = False
     finally:
         result['spoken'] = spoken()
+        result['moves'] = moves
         adb('shell', 'settings', 'put', 'secure', 'enabled_accessibility_services', '""')
         adb('shell', 'settings', 'put', 'secure', 'accessibility_enabled', '0')
         OUT.mkdir(parents=True, exist_ok=True)

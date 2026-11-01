@@ -247,6 +247,12 @@ def main(exe, book):
         rows = [i.Name for i in notes.GetChildren()] if notes else []
         check('W-09b', 'annotation list', 'the saved note is listed with its text',
               rows, any('f09 keyboard note' in r for r in rows))
+        # The save completes on a worker; its confirmation is the status line,
+        # which screen readers announce as a live region.
+        confirmed = wait(lambda: next((t.Name for t in window.GetChildren()
+                                       if t.ControlTypeName == 'TextControl' and '已添加标注' in t.Name), None), 15)
+        check('W-09c', 'status line', 'the status line confirms the saved note (已添加标注)', confirmed, bool(confirmed))
+        time.sleep(1.5)
         shot(window, '04-annotation')
 
         # W-10 back to the shelf from the keyboard, focus lands on the shelf
