@@ -48,25 +48,49 @@ final class F09AppleUITests: XCTestCase {
         return condition()
     }
 
-    private func tap(_ id: String) {
-        let target = element(id)
-        XCTAssertTrue(target.waitForExistence(timeout: 60), "Missing \(id): \(app.debugDescription)")
-        // At accessibility sizes a control can sit below the visible part of
-        // its scroll view; scroll that view the way a user would.
-        if !target.isHittable,
-           let scroll = app.scrollViews.allElementsBoundByIndex.last(where: {
-               $0.descendants(matching: .any).matching(identifier: id).count > 0 }) {
-            for _ in 0..<8 where !target.isHittable {
+    // Visible means its centre lies inside the window and inside the scroll
+    // view that clips it. XCUI's isHittable throws for controls a horizontal
+    // scroll view has moved off screen, so the frame is read instead.
+    private func visible(_ target: XCUIElement, in scroll: XCUIElement?) -> Bool {
+        guard target.exists, !target.frame.isEmpty else { return false }
+        let centre = CGPoint(x: target.frame.midX, y: target.frame.midY)
+        guard app.windows.firstMatch.frame.contains(centre) else { return false }
+        return scroll.map { $0.frame.contains(centre) } ?? true
+    }
+
+    // Scrolls the view that contains the control, first forward then back,
+    // the way a user (or VoiceOver's scroll-into-view) brings it on screen.
+    @discardableResult
+    private func reveal(_ target: XCUIElement, in scroll: XCUIElement?, horizontal: Bool = false) -> Int {
+        guard let scroll, scroll.exists else { return 0 }
+        var steps = 0
+        for forward in [true, false] {
+            for _ in 0..<(forward ? 8 : 16) where !visible(target, in: scroll) {
 #if os(macOS)
-                scroll.scroll(byDeltaX: 0, deltaY: -200)
+                let delta: CGFloat = forward ? -200 : 200
+                if horizontal { scroll.scroll(byDeltaX: delta, deltaY: 0) } else { scroll.scroll(byDeltaX: 0, deltaY: delta) }
 #else
-                scroll.swipeUp()
+                if horizontal { forward ? scroll.swipeLeft() : scroll.swipeRight() } else { forward ? scroll.swipeUp() : scroll.swipeDown() }
 #endif
+                steps += 1
             }
         }
-        XCTAssertTrue(wait { target.isEnabled && target.isHittable }, "Unavailable \(id): \(app.debugDescription)")
+        return steps
+    }
+
+    private func container(of id: String) -> XCUIElement? {
+        app.scrollViews.allElementsBoundByIndex.last(where: { $0.descendants(matching: .any).matching(identifier: id).count > 0 })
+    }
+
+    private func tapElement(_ target: XCUIElement, name: String) {
+        XCTAssertTrue(target.waitForExistence(timeout: 60), "Missing \(name): \(app.debugDescription)")
+        let scroll = container(of: target.identifier)
+        if !visible(target, in: scroll) { reveal(target, in: scroll) }
+        XCTAssertTrue(wait { target.isEnabled && self.visible(target, in: scroll) }, "Unavailable \(name): \(app.debugDescription)")
         target.tap()
     }
+
+    private func tap(_ id: String) { tapElement(element(id), name: id) }
 
     // The retained helper: macOS keeps StaticText content in value, iOS in label.
     private func text(_ id: String) -> String {
@@ -116,15 +140,15 @@ final class F09AppleUITests: XCTestCase {
         tap("organization.save")
         let group = groupRow("F09 Tag")
         XCTAssertTrue(group.waitForExistence(timeout: 60), app.debugDescription)
-        group.tap()
+        tapElement(group, name: "F09 Tag group")
         XCTAssertTrue(bookRow().waitForExistence(timeout: 60))
-        bookRow().tap()
+        tapElement(bookRow(), name: "organization book")
         // The retained G16 path (OrganizationUITests.testTagAndSeriesPersist):
         // verify the original, add, restart (second entry), remove, restart
         // (third entry, the one that opened no panel in run 41170540560).
         tap("organization.verify-original")
         XCTAssertTrue(wait { self.text("organization.message").contains("原件验证完成") }, app.debugDescription)
-        bookRow().tap()
+        tapElement(bookRow(), name: "organization book")
         tap("organization.add")
         XCTAssertTrue(wait { self.text("organization.membership") == "member" }, app.debugDescription)
         app.terminate()
@@ -133,9 +157,9 @@ final class F09AppleUITests: XCTestCase {
         tap("library.organization")
         tap("organization.kind.tag")
         XCTAssertTrue(groupRow("F09 Tag").waitForExistence(timeout: 60), app.debugDescription)
-        groupRow("F09 Tag").tap()
+        tapElement(groupRow("F09 Tag"), name: "F09 Tag group")
         XCTAssertTrue(bookRow().waitForExistence(timeout: 60))
-        bookRow().tap()
+        tapElement(bookRow(), name: "organization book")
         tap("organization.remove")
         XCTAssertTrue(wait { self.text("organization.membership") == "not member" }, app.debugDescription)
         app.terminate()
@@ -180,26 +204,10 @@ final class F09AppleUITests: XCTestCase {
                    "reader.previous", "reader.next", "reader.font.decrease", "reader.font.increase"] {
             let target = element(id)
             XCTAssertTrue(target.waitForExistence(timeout: 30), "Missing \(id): \(app.debugDescription)")
-            var attempts = 0
-            while !target.isHittable && scroll.exists && attempts < 12 {
-#if os(macOS)
-                scroll.scroll(byDeltaX: -120, deltaY: 0)
-#else
-                scroll.swipeLeft()
-#endif
-                attempts += 1
-            }
-            if !target.isHittable && scroll.exists {
-                for _ in 0..<12 where !target.isHittable {
-#if os(macOS)
-                    scroll.scroll(byDeltaX: 120, deltaY: 0)
-#else
-                    scroll.swipeRight()
-#endif
-                }
-            }
-            reached[id] = target.isHittable
-            samples.append(["tool": id, "hittable": target.isHittable, "scroll_steps": attempts,
+            let steps = visible(target, in: scroll) ? 0 : reveal(target, in: scroll, horizontal: true)
+            let shown = visible(target, in: scroll)
+            reached[id] = shown
+            samples.append(["tool": id, "visible": shown, "enabled": target.isEnabled, "scroll_steps": steps,
                             "frame": "\(target.frame)"])
         }
         let unreachable = reached.filter { !$0.value }.map { $0.key }.sorted()
