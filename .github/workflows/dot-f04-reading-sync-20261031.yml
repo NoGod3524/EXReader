@@ -276,6 +276,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Isolated Python environment and toolchain identity
+        run: |
+          python3 -m venv "$RUNNER_TEMP/f04-python"
+          echo "$RUNNER_TEMP/f04-python/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/f04-python/bin/python" -c "import sys; assert sys.version_info[:2] == (3,12) and sys.prefix != sys.base_prefix; print(sys.executable, sys.version)"
+          "$RUNNER_TEMP/f04-python/bin/python" -m pip --version
+          command -v ruby
+          ruby --version
+          command -v cmake
+          cmake --version
+          xcode-select -p
+          xcodebuild -version
       - name: Build exact same-source SDK and product installation
         run: |
           python3 -m pip install PyYAML==6.0.2
@@ -299,6 +314,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Isolated Python environment and toolchain identity
+        run: |
+          python3 -m venv "$RUNNER_TEMP/f04-python"
+          echo "$RUNNER_TEMP/f04-python/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/f04-python/bin/python" -c "import sys; assert sys.version_info[:2] == (3,12) and sys.prefix != sys.base_prefix; print(sys.executable, sys.version)"
+          "$RUNNER_TEMP/f04-python/bin/python" -m pip --version
+          command -v ruby
+          ruby --version
+          command -v cmake
+          cmake --version
+          xcode-select -p
+          xcodebuild -version
       - name: Build exact same-source SDK and product installation
         run: |
           python3 -m pip install PyYAML==6.0.2
@@ -323,6 +353,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Isolated Python environment and toolchain identity
+        run: |
+          python3 -m venv "$RUNNER_TEMP/f04-python"
+          echo "$RUNNER_TEMP/f04-python/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/f04-python/bin/python" -c "import sys; assert sys.version_info[:2] == (3,12) and sys.prefix != sys.base_prefix; print(sys.executable, sys.version)"
+          "$RUNNER_TEMP/f04-python/bin/python" -m pip --version
+          command -v ruby
+          ruby --version
+          command -v cmake
+          cmake --version
+          xcode-select -p
+          xcodebuild -version
       - name: Python and original fixture
         run: |
           python3 -m pip install PyYAML==6.0.2 pillow
@@ -380,6 +425,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Isolated Python environment and toolchain identity
+        run: |
+          python3 -m venv "$RUNNER_TEMP/f04-python"
+          echo "$RUNNER_TEMP/f04-python/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/f04-python/bin/python" -c "import sys; assert sys.version_info[:2] == (3,12) and sys.prefix != sys.base_prefix; print(sys.executable, sys.version)"
+          "$RUNNER_TEMP/f04-python/bin/python" -m pip --version
+          command -v ruby
+          ruby --version
+          command -v cmake
+          cmake --version
+          xcode-select -p
+          xcodebuild -version
       - name: Python and original fixture
         run: |
           python3 -m pip install PyYAML==6.0.2 pillow
@@ -437,6 +497,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Isolated Python environment and toolchain identity
+        run: |
+          python3 -m venv "$RUNNER_TEMP/f04-python"
+          echo "$RUNNER_TEMP/f04-python/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/f04-python/bin/python" -c "import sys; assert sys.version_info[:2] == (3,12) and sys.prefix != sys.base_prefix; print(sys.executable, sys.version)"
+          "$RUNNER_TEMP/f04-python/bin/python" -m pip --version
+          command -v ruby
+          ruby --version
+          command -v cmake
+          cmake --version
+          xcode-select -p
+          xcodebuild -version
       - name: Python and original fixture
         run: |
           python3 -m pip install PyYAML==6.0.2 pillow
