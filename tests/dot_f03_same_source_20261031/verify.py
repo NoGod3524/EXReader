@@ -413,14 +413,131 @@ def partial(root, output, stamp):
     result["audit_negatives"]=negatives
     write_json(output,result)
 
+
+def diagnose_original(output, stamp):
+    """Read the single approved failed artifact; never rerun or accept product checks."""
+    import os, urllib.request, urllib.parse, zipfile, io, stat
+    run_id, attempt, job_id = 41258793317, 1, 124707556530
+    artifact_id, expected_size = 13064700805, 22383312
+    source = "211615ebea4985405c8dfa2f5c70fad0e2d2ad11"
+    expected_digest = "6fd133347aa6b4fc9c4138c0b94a5c76bb909eecd87b38530d2281fef362da62"
+    expected_png = "6db331a569b7048cc4f900d72047771c1f975f34feb28d6b2579e68079b2f1cb"
+    require(os.environ.get("GITHUB_ACTIONS") == "true", "diagnostic Actions only")
+    require(os.environ["GITHUB_REPOSITORY"] == "NoGod3524/EXReader", "wrong repository")
+    folder = output.parent / "original-round2"
+    folder.mkdir(parents=True, exist_ok=False)
+    result = {**stamp, "diagnostic_only": True, "product_reexecuted": False,
+              "accepted": False, "full_F03_accepted": False,
+              "original_run": run_id, "original_attempt": attempt, "original_source": source,
+              "original_job": job_id, "original_artifact": artifact_id, "problems": []}
+    class Redirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            value = super().redirect_request(req, fp, code, msg, headers, newurl)
+            if value is not None and urllib.parse.urlsplit(newurl).netloc != "api.github.com":
+                value.remove_header("Authorization")
+            return value
+    opener = urllib.request.build_opener(Redirect())
+    def fetch(path, limit=2*1024*1024):
+        request = urllib.request.Request("https://api.github.com/repos/NoGod3524/EXReader"+path,
+            headers={"Authorization": "Bearer "+os.environ["GITHUB_TOKEN"],
+                     "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"})
+        with opener.open(request, timeout=120) as response:
+            value = response.read(limit+1)
+        require(len(value) <= limit, "diagnostic response exceeds fixed bound")
+        return value
+    try:
+        run = json.loads(fetch(f"/actions/runs/{run_id}/attempts/{attempt}"))
+        jobs = json.loads(fetch(f"/actions/runs/{run_id}/attempts/{attempt}/jobs?per_page=100"))
+        artifact = json.loads(fetch(f"/actions/artifacts/{artifact_id}"))
+        for name, value in (("run.json", run), ("jobs.json", jobs), ("artifact.json", artifact)):
+            write_json(folder/name, value)
+        require(run["head_sha"] == source and run["run_attempt"] == attempt and
+                run["status"] == "completed" and run["conclusion"] == "failure",
+                "fixed failed run identity differs")
+        matches = [j for j in jobs["jobs"] if j["id"] == job_id]
+        require(len(matches) == 1, "fixed job missing")
+        job = matches[0]
+        require(job["name"] == "gtk" and job["head_sha"] == source and
+                job["status"] == "completed" and job["conclusion"] == "failure",
+                "fixed failed GTK job differs")
+        require(artifact["id"] == artifact_id and
+                artifact["name"] == f"reader-suite-f03-gtk-{run_id}-{attempt}" and
+                artifact["size_in_bytes"] == expected_size and
+                artifact["digest"] == "sha256:"+expected_digest and not artifact["expired"] and
+                artifact["workflow_run"]["id"] == run_id and
+                artifact["workflow_run"]["head_sha"] == source and
+                job["started_at"] <= artifact["created_at"] <= job["completed_at"],
+                "fixed original artifact metadata differs")
+        body = fetch(f"/actions/artifacts/{artifact_id}/zip", expected_size)
+        require(len(body) == expected_size and hashlib.sha256(body).hexdigest() == expected_digest,
+                "fixed original ZIP digest/size differs")
+        (folder/"original.zip").write_bytes(body)
+        wanted = {"application.log", "window-tree.txt", "state.ini", "collections-ui.json",
+                  "f03-retained-openbox.log", "failure-native-desktop.png"}
+        found, inventory = {}, {}
+        with zipfile.ZipFile(io.BytesIO(body)) as archive:
+            entries = archive.infolist()
+            require(len(entries) <= 1000 and sum(x.file_size for x in entries) <= 1024**3,
+                    "original ZIP expansion exceeds diagnostic bound")
+            for entry in entries:
+                name = entry.filename
+                require(name not in inventory and not name.startswith("/") and
+                        "\\" not in name and ":" not in name and ".." not in name.split("/") and
+                        not stat.S_ISLNK(entry.external_attr >> 16),
+                        "unsafe/duplicate original ZIP member")
+                inventory[name] = {"bytes": entry.file_size, "compressed_bytes": entry.compress_size}
+                if entry.is_dir() or Path(name).name not in wanted:
+                    continue
+                require(entry.file_size <= 8*1024*1024, "selected evidence too large")
+                raw = archive.read(entry)
+                destination = folder/"selected"/name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(raw)
+                record = {"path": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+                found.setdefault(Path(name).name, []).append(record)
+                if name.endswith(".png"):
+                    require(raw.startswith(b"\x89PNG\r\n\x1a\n") and
+                            record["sha256"] == expected_png, "fixed failure screenshot differs")
+                    print("F03_DIAGNOSTIC_PNG_BASE64_BEGIN", flush=True)
+                    print(base64.b64encode(raw).decode("ascii"), flush=True)
+                    print("F03_DIAGNOSTIC_PNG_BASE64_END", flush=True)
+                else:
+                    require(len(raw) <= 512*1024, "selected text exceeds diagnostic print bound")
+                    print("F03_ORIGINAL_TEXT_BEGIN "+name, flush=True)
+                    print(raw.decode("utf-8", errors="replace"), flush=True)
+                    print("F03_ORIGINAL_TEXT_END "+name, flush=True)
+        require(all(len(found.get(name, [])) == 1 for name in
+                    ("application.log", "collections-ui.json", "failure-native-desktop.png")),
+                "required fixed diagnostic evidence absent or ambiguous")
+        report_path = folder/"selected"/found["collections-ui.json"][0]["path"]
+        report = read(report_path)
+        require(report["source_sha"] == source and str(report["run_id"]) == str(run_id) and
+                str(report["attempt"]) == str(attempt) and report["accepted"] is False and
+                report["count"] == 0, "original failure report differs")
+        result.update(original_zip_verified=True, selected=found,
+                      missing=sorted(wanted-set(found)), original_inventory=inventory,
+                      diagnostic_extraction_completed=True)
+        print(json.dumps({k:v for k,v in result.items() if k!="original_inventory"}), flush=True)
+    except BaseException as error:
+        result["problems"].append(type(error).__name__+": "+str(error))
+        raise
+    finally:
+        write_json(output, result)
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--manifest", type=Path)
     p.add_argument("--partial", action="store_true")
+    p.add_argument("--diagnose-original", action="store_true")
     p.add_argument("--evidence", type=Path)
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
     stamp = identity()
+    if a.diagnose_original:
+        require(not a.partial and a.manifest is None and a.evidence is None, "diagnosis cannot mix product audits")
+        diagnose_original(a.output, stamp)
+        return
     result = {**stamp, "accepted": False, "preparation_only": not SCOPE["complete"], "requirement": "F03", "problems": []}
     try:
         if a.partial:
