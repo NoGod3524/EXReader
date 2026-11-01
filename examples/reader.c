@@ -6534,6 +6534,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     SendMessageW(g.books, LB_SETCURSEL, 0, 0);
     set_status(L"选择一本书并点击“打开”，或导入新书。");
   } else {
+#ifdef EXR_READER_WINDOWS_COMPACT
+    /* The compact shelf has no path field: Import opens the system file chooser. */
+    if (!compact_expanded) set_status(L"书架为空：按 Ctrl+O 或点击“导入”选择书籍文件。");
+    else
+#endif
     set_status(L"书架为空：输入文件路径后点击“导入”。");
   }
   host_update_controls();
