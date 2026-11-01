@@ -1,7 +1,7 @@
 {
   "base": "b5e7fea87174f5e0baabfad97cf5cf7082f2d85e",
   "branch": "dot/f10-stale-owner-20261031",
-  "production_owner": "native dot F10, explicit two-file transfer",
+  "production_owner": "native dot F10 explicit B five-file transfer; prior cleanup two files frozen",
   "allowed_paths": [
     "extras/webdav-cleanup/include/exr_webdav_cleanup.h",
     "extras/webdav-cleanup/src/cleanup_posix.c",
@@ -11,7 +11,14 @@
     "tests/product/f10_stale_owner_20261031/verify.py",
     "tests/product/f10_stale_owner_20261031/manifest.json",
     ".github/workflows/dot-f10-stale-owner-20261031.yml",
-    "docs/reader-total-progress/DOT_F10_STALE_OWNER_20261031.md"
+    "docs/reader-total-progress/DOT_F10_STALE_OWNER_20261031.md",
+    "extras/webdav/include/exr_webdav.h",
+    "extras/webdav/src/webdav.cpp",
+    "extras/webdav/include/exr_webdav_managed.h",
+    "extras/webdav/src/webdav_managed_posix.inc",
+    "apps/reader/sync/src/sync.cpp",
+    "tests/product/f10_stale_owner_20261031/sync_probe.cpp",
+    "tests/product/f10_stale_owner_20261031/https_fixture.py"
   ],
   "cases": [
     "owned-kill",
@@ -51,11 +58,73 @@
   "assertions": 258,
   "negative_controls": 8,
   "budget": {
+    "phase": "B, approved 2026-11-01T00:20:51Z",
     "runs": 1,
     "linux_minutes": 45,
     "audit_minutes": 15,
     "automatic_reruns": 0
   },
   "sdk": "unchanged b5e7 background, not joint8357 acceptance",
-  "full_f10_complete": false
+  "full_f10_complete": false,
+  "phase_base": "659ef67bb6d408bb5653cedd03efe06e9d7dd6f9",
+  "phase_paths": [
+    "extras/webdav/include/exr_webdav.h",
+    "extras/webdav/src/webdav.cpp",
+    "extras/webdav/include/exr_webdav_managed.h",
+    "extras/webdav/src/webdav_managed_posix.inc",
+    "apps/reader/sync/src/sync.cpp",
+    "tests/product/f10_stale_owner_20261031/CMakeLists.txt",
+    "tests/product/f10_stale_owner_20261031/run.py",
+    "tests/product/f10_stale_owner_20261031/verify.py",
+    "tests/product/f10_stale_owner_20261031/manifest.json",
+    ".github/workflows/dot-f10-stale-owner-20261031.yml",
+    "docs/reader-total-progress/DOT_F10_STALE_OWNER_20261031.md",
+    "tests/product/f10_stale_owner_20261031/sync_probe.cpp",
+    "tests/product/f10_stale_owner_20261031/https_fixture.py"
+  ],
+  "frozen_paths": [
+    "extras/webdav-cleanup/include/exr_webdav_cleanup.h",
+    "extras/webdav-cleanup/src/cleanup_posix.c",
+    "tests/product/f10_stale_owner_20261031/probe.c"
+  ],
+  "snapshot_cases": [
+    "callback-normal",
+    "callback-error",
+    "callback-short",
+    "callback-overflow",
+    "callback-throw",
+    "callback-cancel",
+    "callback-zero",
+    "callback-limit",
+    "callback-redirect",
+    "callback-exists",
+    "managed-normal",
+    "held-fd-path-replacement",
+    "managed-permission-retry",
+    "managed-owned-kill",
+    "managed-sealed-kill",
+    "registry-v1-upgrade",
+    "registry-16-download-roots",
+    "registry-mixed-capacity",
+    "legacy-download-owned-preserved",
+    "registry-refuse-crc",
+    "registry-refuse-purpose",
+    "registry-refuse-next",
+    "migration-kill-before-rename",
+    "migration-kill-after-rename",
+    "sync-normal",
+    "sync-permission",
+    "sync-kill",
+    "sync-cancel",
+    "sync-lost"
+  ],
+  "snapshot_assertions": 187,
+  "snapshot_negative_controls": 10,
+  "no_replace_source": "123e1852335ab16e3bc1863e050eb0a298b01cca",
+  "compatibility": {
+    "registry": "v1 read-only until first S allocation; atomic v2 purpose registration",
+    "old_binary": "refuses v2; no automatic downgrade",
+    "capacity": "one registry total 16 roots x 64 lifetime slots",
+    "download": "D roots preserve UUID and old PUBLISHED-only recovery"
+  }
 }
