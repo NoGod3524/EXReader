@@ -9,6 +9,15 @@ on:
       - tests/f09_audit/apple/**
       - .github/workflows/claude-f09-apple.yml
   workflow_dispatch:
+    inputs:
+      f09_platforms:
+        description: JSON list of platforms for the F09 product checks
+        type: string
+        default: '["macos","iphone","ipad"]'
+      g16:
+        description: Also run the retained G16 audit and its summary
+        type: boolean
+        default: true
 permissions:
   contents: read
   actions: read
@@ -106,6 +115,7 @@ jobs:
 
   audit:
     needs: [frozen, judge, sdk]
+    if: github.event_name != 'workflow_dispatch' || inputs.g16
     runs-on: macos-15
     timeout-minutes: 90
     strategy:
@@ -354,7 +364,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos, iphone, ipad]
+        platform: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.f09_platforms || '["macos","iphone","ipad"]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -452,7 +462,7 @@ jobs:
 
   summary:
     needs: [frozen, judge, sdk, audit]
-    if: always()
+    if: always() && (github.event_name != 'workflow_dispatch' || inputs.g16)
     runs-on: macos-15
     timeout-minutes: 25
     steps:
