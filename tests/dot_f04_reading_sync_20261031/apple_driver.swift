@@ -7,9 +7,16 @@ final class F04ReadingSyncUITests: XCTestCase {
     #if os(macOS)
     private var pythonNetworkDenyAttempted = false
     private var pythonNetworkDismissalPending = false
+    private var macStartupFinished = false
+    private var macNextPermissionCheck = Date.distantPast
     #endif
     override func setUpWithError() throws { continueAfterFailure = false }
-    override func tearDownWithError() throws { diagnosticReadingState("test-teardown", target: "reading.title") }
+    override func tearDownWithError() throws {
+        diagnosticReadingState("test-teardown", target: "reading.title")
+        #if os(macOS)
+        diagnosticMacObstruction("test-teardown", target: "reading.save-progress")
+        #endif
+    }
     private func e(_ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
     private func text(_ id: String) -> String {
         guard let s = try? e(id).snapshot() else { return "" }
@@ -17,11 +24,18 @@ final class F04ReadingSyncUITests: XCTestCase {
     }
     private func wait(_ condition: () -> Bool) -> Bool {
         let deadline = Date().addingTimeInterval(150)
-        while Date() < deadline { if condition() { return true }; RunLoop.current.run(until: Date().addingTimeInterval(0.2)) }
+        while Date() < deadline {
+            #if os(macOS)
+            if !macNoLatePermission(force: false) { return false }
+            #endif
+            if condition() { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
         return condition()
     }
     private func tap(_ id: String) {
         #if os(macOS)
+        guard macNoLatePermission(force: true) else { return }
         if id.hasPrefix("reading.jump.") || id.hasPrefix("reading.edit.") {
             clickVisibleReadingRow(id)
             return
@@ -33,20 +47,19 @@ final class F04ReadingSyncUITests: XCTestCase {
             "reader.back", "account.sync.start"].contains(id) {
             var activationAttempted = false
             let ready = wait {
-                if macPythonPermissionStillPending() { return false }
                 let target = e(id)
                 if target.exists && target.isEnabled && target.isHittable { return true }
                 if !activationAttempted {
                     activationAttempted = true
                     restoreMacForeground(for: id)
-                } else {
-                    denyKnownPythonNetworkRequestIfPresent()
                 }
                 return false
             }
             if !ready { diagnosticMacObstruction("fixed-control-timeout", target: id) }
             XCTAssertTrue(ready, "Original fixed control readiness not reached: \(id)")
+            diagnosticMacObstruction("before-fixed-tap", target: id)
             e(id).tap()
+            diagnosticMacObstruction("after-fixed-tap", target: id)
             return
         }
         #endif
@@ -232,6 +245,46 @@ final class F04ReadingSyncUITests: XCTestCase {
     }
     #endif
     #if os(macOS)
+    // Environment preparation precedes credentials, connections, books and record sheets.
+    private func macStartupReady() -> Bool {
+        guard "__MAC_DIAGNOSTIC__" == "1" else {
+            return wait { e("library.title").exists && !e("library.busy").exists }
+        }
+        let deadline = Date().addingTimeInterval(150)
+        let observationEnd = Date().addingTimeInterval(10)
+        var restored = false
+        while Date() < deadline {
+            if !pythonNetworkDenyAttempted && Date() < observationEnd {
+                denyKnownPythonNetworkRequestIfPresent()
+            }
+            if macPythonPermissionStillPending() {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+                continue
+            }
+            if pythonNetworkDenyAttempted && !restored {
+                restored = true
+                restoreMacForeground(for: "library.title")
+            }
+            if pythonNetworkDenyAttempted || Date() >= observationEnd {
+                if e("library.title").exists && !e("library.busy").exists {
+                    macStartupFinished = true
+                    return macNoLatePermission(force: true)
+                }
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        diagnosticMacObstruction("startup-timeout", target: "library.title")
+        return false
+    }
+    private func macNoLatePermission(force: Bool) -> Bool {
+        guard "__MAC_DIAGNOSTIC__" == "1", macStartupFinished else { return true }
+        if !force && Date() < macNextPermissionCheck { return true }
+        macNextPermissionCheck = Date().addingTimeInterval(1)
+        guard currentPythonPermissionDialog() != nil else { return true }
+        diagnosticMacObstruction("late-permission-environment-blocked", target: "reading.title")
+        XCTFail("Environment blocked: permission arrived after startup; no denial, reopening or write replay")
+        return false
+    }
     private func permissionText(_ text: String) -> String {
         text.replacingOccurrences(of: "“", with: "\"").replacingOccurrences(of: "”", with: "\"")
             .replacingOccurrences(of: "‘", with: "'").replacingOccurrences(of: "’", with: "'")
@@ -285,6 +338,7 @@ final class F04ReadingSyncUITests: XCTestCase {
     }
     private func denyKnownPythonNetworkRequestIfPresent() {
         guard "__MAC_DIAGNOSTIC__" == "1" else { return }
+        guard !macStartupFinished else { XCTFail("Permission action forbidden after startup"); return }
         guard let dialog = currentPythonPermissionDialog() else { return }
         guard !pythonNetworkDenyAttempted else {
             diagnosticMacObstruction("permission-reappeared", target: "reading.save-progress")
@@ -347,7 +401,8 @@ final class F04ReadingSyncUITests: XCTestCase {
             "timestamp": ISO8601DateFormatter().string(from: Date()), "app_state": String(describing: app.state)]
         var own: [[String: Any]] = []
         for id in [target, "reading.list", "reading.title", "reading.editor", "reading.status",
-                   "reader.status", "reader.busy", "reading.pending", "reading.cancel", "account.sync.cancel"] {
+                   "reader.status", "reader.location", "reader.busy", "reading.pending", "reading.next",
+                   "reading.cancel", "account.sync.cancel", "library.title"] {
             let item = e(id)
             var row: [String: Any] = ["id": id, "exists": item.exists]
             if item.exists {
@@ -355,11 +410,28 @@ final class F04ReadingSyncUITests: XCTestCase {
                 row["hittable"] = item.isHittable
                 row["frame"] = String(describing: item.frame)
                 // Only status text is retained; never text-field/editor values.
-                if ["reading.status", "reader.status"].contains(id), let snap = try? item.snapshot() {
+                if ["reading.status", "reader.status", "reader.location"].contains(id), let snap = try? item.snapshot() {
                     row["status"] = sanitized(snap.label.isEmpty ? (snap.value as? String ?? "") : snap.label)
                 }
             }
             own.append(row)
+        }
+        // Public UI proxies only: no internal bookID, record bodies or editor values.
+        if e("reading.list").exists, let list = try? e("reading.list").snapshot() {
+            var nodes: [any XCUIElementSnapshot] = [list]
+            var identifiers = Set<String>()
+            var visited = 0
+            while let node = nodes.popLast(), visited < 512 {
+                visited += 1
+                nodes.append(contentsOf: node.children)
+                if node.identifier.hasPrefix("reading.kind.") ||
+                   node.identifier.hasPrefix("reading.jump.") || node.identifier.hasPrefix("reading.edit.") {
+                    identifiers.insert(node.identifier)
+                }
+            }
+            fields["record_ui_identifiers"] = Array(identifiers.sorted().prefix(96))
+            fields["record_ui_snapshot_nodes"] = visited
+            fields["record_ui_snapshot_truncated"] = !nodes.isEmpty
         }
         fields["own"] = own
         fields["windows"] = app.windows.allElementsBoundByIndex.map { ["frame": String(describing: $0.frame)] }
@@ -435,13 +507,10 @@ final class F04ReadingSyncUITests: XCTestCase {
         #if os(macOS)
         var activationAttempted = false
         let editorReady = wait {
-            if macPythonPermissionStillPending() { return false }
             if editor.exists && editor.isHittable { return true }
             if !activationAttempted {
                 activationAttempted = true
                 restoreMacForeground(for: "reading.editor")
-            } else {
-                denyKnownPythonNetworkRequestIfPresent()
             }
             return false
         }
@@ -449,6 +518,10 @@ final class F04ReadingSyncUITests: XCTestCase {
         XCTAssertTrue(editorReady, "Original editor readiness not reached")
         #else
         XCTAssertTrue(wait { editor.exists && editor.isHittable })
+        #endif
+        #if os(macOS)
+        guard macNoLatePermission(force: true) else { return }
+        diagnosticMacObstruction("before-editor-input", target: "reading.editor")
         #endif
         editor.tap(); editor.typeText(value)
         tap("reading.save-note")
@@ -506,7 +579,11 @@ final class F04ReadingSyncUITests: XCTestCase {
     func testActualApplicationRelay() {
         app.launchArguments = ["-EXRUITestFixtures", "1", "-EXRFreshState", "1"]
         app.launch()
+        #if os(macOS)
+        XCTAssertTrue(macStartupReady(), "Original library readiness after bounded startup environment preparation")
+        #else
         XCTAssertTrue(wait { e("library.title").exists && !e("library.busy").exists })
+        #endif
         tap("account.choose")
         tap("account.root"); e("account.root").typeText("__ROOT__\n")
         tap("account.username"); e("account.username").typeText("__USER__\n")
