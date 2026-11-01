@@ -78,3 +78,71 @@ Reviewer F06 found no static blocker in the two-file bounded native integration;
 
 ### Budget evidence, not authorization
 Actual metadata: run40425590141 windows-first 5m24s, gtk-first 10m13s, windows-return 36s, gtk-return 2m12s. Run41170540560 installed SDK macOS 4m45s/iOS 3m23s; original organization macOS 6m55s/iPhone 13m04s/iPad 15m21s (failure retained). Android run40407771850 32m47s was failed and is not a passing benchmark. Historical 120/240-minute job caps are not original assertion budgets. Original Apple organization suite uses XCTest default300/max600 seconds in supplemental.py and must retain them. A tighter new same-source matrix budget must be proposed after enumerating necessary original organization and receive steps; 1130 runner-min was only an unapproved conservative draft, not authority or expected duration.
+
+## A200 first run sealed — 2026-11-01 00:45 UTC
+
+This section supersedes earlier preparation-only/zero-CI statements for the active
+`dot/reader-suite-20261101` branch only. The older F03 branch remains sealed;
+its Apple production delta is not included in this run.
+
+- Run: https://github.com/NoGod3524/EXReader/actions/runs/41257220235
+- Attempt: 1. Tested source: `dda3bd89446f9980e917859e161398cc0d60fb8d`.
+- Tested tree: `1dd98eaeac7d3ae8fb44c19dd66e8a88eb649725`.
+- Product base: `94fb236a4a2da87dfbaf4f1dd2a47885d615a230`;
+  SDK freeze: `8357eafa28423a7ab93ba08b823af80f01ad1505`.
+- Started 2026-11-01 00:32:53 UTC / 2026-10-31 20:32:53 America/New_York (EDT).
+- Authorized round used: **1/1**; caps GTK 60 / Android 120 / audit 20 minutes.
+  No retry has been authorized or started.
+
+### Actual results and failure
+
+GTK job `124702846971` passed candidate admission, the actual SDK/product/host
+build, all four desktop tests, and the unchanged original GTK organization UI
+suite **27/27**. Its original report identifies the tested source/run/attempt,
+program SHA256 `d0a5032dbc8af40ce1a0cba276f2c27a1a2807667c5f2bb7327fdb6be90a6846`,
+and report SHA256 `55d4439d07e8a9cc95bc54e58528327549def51fccf067a4c863916ce70d6f30`.
+
+The new six-phase author step failed in **create**, at `gtk.py:208`, after
+passing its native action and sync checks but before completing its restart
+receipt. It launched the host and waited for both shelf-loading and
+shelf-restoring to clear while the restored reading view was still visible.
+At timeout, the actual state was `reader_visible=1, book=1, shelf_loading=0,
+shelf_restoring=1`. This phase is **failed**, not accepted; subsequent phases
+were not reached.
+
+Read-only diagnosis against the fixed product base:
+`examples/linux/reader.c:514` exits shelf restoration while the stack is not
+showing the shelf without clearing its pending flag;
+the actual shelf action at line 968 schedules restoration again. The original
+27-check suite explicitly opens the organization/shelf view after restart.
+The proposed narrow correction is to navigate with native F2 before retaining
+the existing shelf-ready and exact persisted-projection assertions. **This
+document commit does not implement that correction and does not run CI.**
+It is a new-driver navigation/wait mismatch; the evidence does not establish
+a product organization failure or a successful new round.
+
+Android job `124704426385` was **skipped** due to its GTK dependency: no
+Android build, original all-exits suite, receive or APK result is claimed.
+Audit job `124704425201` correctly failed closed with
+`producer job not successful: gtk` at `verify.py:244`.
+No two-host acceptance, six-host acceptance, or formal catalog increment.
+
+### Original artifacts retained
+
+| Role | Artifact ID | Bytes | Original ZIP SHA256 |
+| --- | --- | --- | --- |
+| GTK failed producer and retained original suite | 13063743863 | 22772626 | 7cd7a24c43c6d8d47822d2b93474ddf90bccab6773a91d107955e5f407ad098a |
+| Audit refusal/API metadata | 13063484467 | 3576 | a8a9398627c2f4a209dc006c6c1553d0d8d896fac956cb9b9d2cfcbf9ac3b0ed |
+
+Names: `reader-suite-f03-gtk-41257220235-1` and
+`reader-suite-f03-audit-41257220235-1`.
+GitHub API expiration: 2027-01-30T00:32:54Z.
+These identifiers/digests were read from ordinary Actions logs and API metadata;
+no ZIP was downloaded or parsed outside Actions. All failures remain intact.
+
+### Next boundary
+
+F03 remains pending. The narrow test-driver repair and a further single capped
+round require explicit approval after the independent design review. No
+production, SDK, old tests, external owner paths, or original assertion budgets
+are changed by this seal. F04/F05 remain not-run in this suite.
