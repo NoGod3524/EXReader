@@ -36,15 +36,7 @@ def main():
     authorization = "Basic " + base64.b64encode((user + ":" + password).encode()).decode()
     cert, key = out / "fixture.crt", out / "fixture.key"
     openssl = shutil.which("openssl") or r"C:\Program Files\Git\usr\bin\openssl.exe"
-    subprocess.run([openssl, "req", "-x509", "-newkey", "rsa:2048", "-nodes",
-                    "-days", "1", "-keyout", str(key), "-out", str(cert),
-                    "-subj", "/CN=127.0.0.1", "-addext", "subjectAltName=IP:127.0.0.1"],
-                   check=True, capture_output=True)
-    subprocess.run(["certutil", "-addstore", "-f", "Root", str(cert)],
-                   check=True, capture_output=True)
-    fingerprint = subprocess.run([openssl, "x509", "-in", str(cert), "-noout", "-fingerprint", "-sha1"],
-                                 check=True, capture_output=True, text=True).stdout.strip().split("=", 1)[1].replace(":", "")
-    store = Store(cert, key, authorization)
+    fingerprint, store, trust_owned = None, None, False
     devices = []
     report = {"identity": {"source": os.environ["GITHUB_SHA"],
                            "run": os.environ["GITHUB_RUN_ID"],
@@ -137,6 +129,17 @@ def main():
         if "F05 original remains readable" not in A.clipboard_text(device):
             raise AssertionError("actual host original not readable")
     try:
+        subprocess.run([openssl, "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+                        "-days", "1", "-keyout", str(key), "-out", str(cert),
+                        "-subj", "/CN=127.0.0.1", "-addext", "subjectAltName=IP:127.0.0.1"],
+                       check=True, capture_output=True)
+        fingerprint = subprocess.run([openssl, "x509", "-in", str(cert), "-noout", "-fingerprint", "-sha1"],
+                                     check=True, capture_output=True, text=True).stdout.strip().split("=", 1)[1].replace(":", "")
+        if len(fingerprint)!=40 or any(c not in "0123456789abcdefABCDEF" for c in fingerprint):
+            raise AssertionError("invalid generated fixture certificate identity")
+        trust_owned=True
+        subprocess.run(["certutil", "-addstore", "-f", "Root", str(cert)], check=True, capture_output=True)
+        store=Store(cert,key,authorization)
         original = ("F05 original remains readable. " * 400).encode()
         source = out / "F05 original.txt"
         source.write_bytes(original)
@@ -284,11 +287,12 @@ def main():
                     raise
         for index, device in enumerate(devices):
             cleanup("native-close-" + str(index), lambda device=device: close_device(device))
-        cleanup("fixture-close", store.close)
-        cleanup("remove-fixture-trust", lambda: subprocess.run(
-            ["certutil", "-delstore", "Root", fingerprint], check=True, capture_output=True))
+        if store is not None: cleanup("fixture-close", store.close)
+        if trust_owned and fingerprint:
+            cleanup("remove-fixture-trust", lambda: subprocess.run(
+                ["certutil", "-delstore", "Root", fingerprint], check=True, capture_output=True))
         cleanup("remove-fixture-private-key", lambda: key.unlink(missing_ok=True))
-        report["requests"] = store.requests
+        report["requests"] = store.requests if store is not None else []
         report["cleanup_errors"] = cleanup_errors
         report["uncovered"] = ["delete_put_tombstone_preserved",
             "mid-SDK-import cancellation (not the exercised transport layer)",
