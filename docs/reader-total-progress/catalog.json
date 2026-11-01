@@ -569,6 +569,12 @@
       "required_cases": [
         "testNativeAnnotationPreviewConfirmCancelAndDuplicate()"
       ]
+    },
+    "f04_six_host_independent_review_20261101": {
+      "run": 41306566948,
+      "doc": "docs/reader-total-progress/EXREADER_C02_WEBDAV_HANDOFF_20261031.md",
+      "source_prefix": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+      "expected_conclusion": "success"
     }
   },
   "requirements": [
@@ -1641,9 +1647,11 @@
       "id": "F04",
       "group": "final",
       "title": "六目标进度/书签/标注与原始锚点双向互通，不误定位",
-      "state": "pending",
-      "evidence": [],
-      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+      "state": "verified",
+      "evidence": [
+        "f04_six_host_independent_review_20261101"
+      ],
+      "note": "Root independent review accepted the original fixed F04 clause using one authenticated same-source/run/attempt six-host bidirectionally connected graph: progress, bookmark points, annotation ranges and original anchors. Scope: Windows/GTK/macOS native hosts, Android API34 emulator and iPhone/iPad simulators, fixed EPUB and existing graph; no physical-device, all-format or all-pairs claim. Original audit static false flags and prior failures are preserved; this is an explicitly authorized single-item ledger entry, not a new total-progress Actions audit."
     },
     {
       "id": "F05",
