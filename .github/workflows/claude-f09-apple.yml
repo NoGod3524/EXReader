@@ -412,6 +412,24 @@ jobs:
           fi
           grep -h -E "Test Case .*(passed|failed)|error:" build/f09-results/*.log | sort | uniq | tee build/f09-results/summary.txt
           ! grep -L '^0$' build/f09-results/*.status | grep -q .
+      - uses: actions/setup-node@v4
+        if: always() && matrix.platform == 'macos'
+        with:
+          node-version: '20'
+      - name: Real screen reader - VoiceOver over the product host (macOS)
+        if: always() && matrix.platform == 'macos'
+        run: |
+          set -uo pipefail
+          mkdir -p build/f09-vo
+          cp tests/f09_audit/apple/voiceover.mjs build/f09-vo/
+          cd build/f09-vo
+          npm init -y >/dev/null
+          npm install @guidepup/guidepup @guidepup/setup 2>&1 | tail -5
+          npm ls --depth=0 | tee versions.txt
+          npx @guidepup/setup --ci 2>&1 | tail -20
+          app="$GITHUB_WORKSPACE/build/f09-derived/Build/Products/Debug/EXReaderHost.app"
+          test -d "$app" || { echo "no built macOS host"; exit 1; }
+          node voiceover.mjs "$app" "$GITHUB_WORKSPACE/build/f09-results/voiceover"
       - name: Export attachments
         if: always()
         run: |
@@ -427,6 +445,8 @@ jobs:
             build/f09-results/*.status
             build/f09-results/*.txt
             build/f09-results/*-attachments/
+            build/f09-results/voiceover/
+            build/f09-vo/versions.txt
           if-no-files-found: warn
 
   summary:
