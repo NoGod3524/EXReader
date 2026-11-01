@@ -552,3 +552,36 @@ Budget rationale: the first GTK run took 7m15s, including 3m build and 1m05s for
 the 27 original checks; the second stopped after 4m54s. The full six-author-phase
 duration is not yet measured, so 20 minutes is a cap, not a completion promise.
 No run has started at this preparation commit.
+
+## Isolated GTK diagnostic terminal result ? 2026-11-01 13:42 UTC
+
+Run https://github.com/NoGod3524/EXReader/actions/runs/41311869249 attempt 1
+tested source e84c4c5db2b242b61990cca9ee7917fa39fa43e9 on the independent branch.
+Job 124863751211 started 13:33:59Z and ended 13:42:14Z, failure; the 20-minute
+single-run allowance is 1/1 used. No automatic retry. Canonical ec11 is untouched.
+
+The actual build and four original desktop CTests passed. The unchanged
+organization suite passed 27/27 at 13:38:30Z, report SHA256
+e251716ee24b70c87842713b1b510e8bcf0ac186539944b191b9ed7030a351e1;
+program SHA256 d0a5032dbc8af40ce1a0cba276f2c27a1a2807667c5f2bb7327fdb6be90a6846.
+The previous mapping gate passed this time. This does not establish the cause
+of the earlier intermittent mapping failure.
+
+The author step failed in create at gtk.py:200: the original 180-second native
+sync wait did not observe both a newer session_generation and state 4 or 5.
+There is no successful create receipt, and the later five phases were not run.
+The F2 restart check at line 211 was not reached; it remains unverified.
+The ordinary log records org.freedesktop.secrets activation, but that is not
+proof of a keyring prompt, credential failure, network failure or product cause.
+
+Original artifact reader-suite-f03-gtk-ready-diagnostic-41311869249-1:
+ID13086111887, 22830839 bytes, ZIP SHA256
+acbbe4e93421e927bf9661d2325c7fd4ef870d470281b53d5616ee8bbbc42e9b,
+expires 2027-01-30T13:33:55Z.
+Window observations/samples and Openbox logs were selected for upload; their
+ZIP member contents have not been read outside Actions. Author application.log
+and state.ini reside in build/f03-author-profile, outside the unchanged original
+upload roots, so their availability in the archive is not claimed.
+Next useful bounded action is Actions-only inspection of this fixed original
+artifact and explicit missing-file reporting; that needs a separate CI budget.
+No product/SDK/old assertion is changed, no F03 acceptance or ledger increase.

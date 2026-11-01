@@ -231,7 +231,7 @@
     "runner_minutes_cap": 20,
     "run_limit": 1,
     "automatic_retries": 0,
-    "status": "prepared_not_run",
+    "status": "completed_failure",
     "retained_ctest_count": 4,
     "retained_organization_checks": 27,
     "author_phases": [
@@ -256,6 +256,21 @@
     "running_sample_interval_seconds": 1,
     "running_sample_command_timeout_seconds": 2,
     "running_sample_tree_bytes_max": 16384,
-    "running_sample_properties_bytes_max": 4096
+    "running_sample_properties_bytes_max": 4096,
+    "run_id": 41311869249,
+    "attempt": 1,
+    "source_sha": "e84c4c5db2b242b61990cca9ee7917fa39fa43e9",
+    "job_id": 124863751211,
+    "used_runs": 1,
+    "original_desktop_ctests_passed": 4,
+    "original_organization_checks_passed": 27,
+    "author_phase_failed": "create",
+    "failure": "gtk.py:200 native sync generation/state did not settle within original 180 seconds",
+    "restart_F2_executed": false,
+    "artifact": {
+      "id": 13086111887,
+      "bytes": 22830839,
+      "sha256": "acbbe4e93421e927bf9661d2325c7fd4ef870d470281b53d5616ee8bbbc42e9b"
+    }
   }
 }
