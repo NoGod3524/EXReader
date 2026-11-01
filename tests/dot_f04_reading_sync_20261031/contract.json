@@ -1287,11 +1287,11 @@
     "authorized_at": "2026-11-01T11:23:26Z",
     "max_runs": 1,
     "max_runner_minutes": 10,
-    "runs_started": 0,
+    "runs_started": 1,
     "automatic_retry": false,
     "diagnostic_only": true,
     "F04_accepted": false,
-    "status": "prepared-awaiting-independent-source-review",
+    "status": "completed-success-with-findings",
     "allowed_changed_paths": [
       ".github/workflows/dot-f03-same-source-20261031.yml",
       ".github/workflows/dot-f04-reading-sync-20261031.yml",
@@ -1471,6 +1471,82 @@
         "digest": "sha256:90088b19bb9bfe9facc9bef64a114e4407abd5c5c09eb628251298806cde944c"
       }
     ],
-    "constraints": "Actions-only read-only ZIP inventory; no archive extraction/execution/repair, no product run or original audit changes; report all available missing/unexpected/hash/identity findings, do not accept."
+    "constraints": "Actions-only read-only ZIP inventory; no archive extraction/execution/repair, no product run or original audit changes; report all available missing/unexpected/hash/identity findings, do not accept.",
+    "result": {
+      "run_id": "41302619548",
+      "attempt": 1,
+      "source_sha": "0d36ff4d9bcaa4243679f040e959fde588bb9393",
+      "job_id": 124836527529,
+      "conclusion": "success",
+      "inventory_complete": true,
+      "has_findings": true,
+      "original_archives_authenticated": 17,
+      "only_committed_missing": {
+        "13078834935": [
+          "sdk/examples/android/.gitignore"
+        ],
+        "13079078632": [
+          "sdk/examples/android/.gitignore"
+        ]
+      },
+      "hash_mismatch": [],
+      "identity_errors": [],
+      "missing_critical": [],
+      "inspection_errors": [],
+      "uncommitted_package_members": {
+        "windows": 36,
+        "gtk": 31
+      },
+      "artifact": {
+        "id": 13082067635,
+        "size_in_bytes": 164030,
+        "digest": "sha256:24d5a2108237d63fa471ff2b005655ee03a425db493a0fb9ba271720804e9117"
+      },
+      "diagnostic_only": true,
+      "F04_accepted": false,
+      "original_run_conclusion": "failure"
+    }
+  },
+  "six_host_hidden_upload_round": {
+    "authorization_message_id": "Sentinel_7683d94faac88191b45211c7f6e008d1",
+    "authorized_at": "2026-11-01T11:40:55Z",
+    "case": "f04/six-host",
+    "max_runner_minutes": 230,
+    "max_runs": 1,
+    "runs_started": 0,
+    "automatic_retry": false,
+    "status": "prepared-awaiting-independent-source-review",
+    "delta_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      ".github/workflows/dot-f04-reading-sync-20261031.yml",
+      "tests/dot_f04_reading_sync_20261031/contract.json",
+      "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+    ],
+    "job_minutes": {
+      "windows_seed": 20,
+      "android_peer": 25,
+      "gtk_peer": 25,
+      "build_macos": 15,
+      "build_iphonesimulator": 15,
+      "macos_peer": 15,
+      "iphone_peer": 20,
+      "ipad_peer": 20,
+      "windows_return_android": 10,
+      "windows_return_gtk": 10,
+      "windows_return_macos": 10,
+      "windows_return_iphone": 10,
+      "windows_return_ipad": 10,
+      "retained_linux": 15,
+      "audit": 10
+    },
+    "design": {
+      "only_upload_delta": "Only Mac and simulator SDK upload blocks include-hidden-files:true; immediately before upload, hidden relative paths must equal sdk/examples/android/.gitignore and be ordinary non-symlink file; upload root and all members must not be symlinks. No other upload root or hidden allowance.",
+      "no_new_product_gate": "Safety check is upload confidentiality boundary, not business acceptance; run.py and original audit remain unchanged.",
+      "original_history_preserved": true,
+      "new_graph_identity": "New five builds and eleven phases must all share new source/run/attempt; no repaired original ZIP or mixed prior outputs.",
+      "mac_permission": "Ephemeral Mac startup exact Python Local Network Don't Allow once before account/book, original10s within150s, no Allow/settings/TCC/replay; inherited explicit full-round scope only.",
+      "budget": "15 jobs once, cumulative cap230 runner-min, no automatic retry.",
+      "qualification": "Inventory structure checks do not promise remaining original graph/retained semantic audit success; formal96/108 unchanged."
+    }
   }
 }
