@@ -537,6 +537,7 @@ public final class ReaderView extends View {
                 downPanX=panX;downPanY=panY;panning=false;
                 if (selectMode) {
                     int hit = hit(x, y);
+                    if (hit < 0) hit = nearestGlyph(x, y);
                     if(BuildConfig.DEBUG)lastPointerHit=hit;
                     if (hit >= 0) {
                         anchor = hit;
@@ -607,6 +608,20 @@ public final class ReaderView extends View {
     @Override public boolean performClick() {
         super.performClick();
         return true;
+    }
+
+    // Select mode: a tap in the blank part of a reflowed page starts at the closest
+    // glyph, so selecting does not depend on touching text exactly (retained
+    // Android audit annotate_flow taps the page centre).
+    private int nearestGlyph(float viewX, float viewY) {
+        if (page == null || page.fixed) return -1;
+        float x = toContentX(viewX), y = toContentY(viewY), best = Float.MAX_VALUE;
+        int nearest = -1;
+        for (int i = 0, count = page.glyphCount(); i < count; i++) {
+            float candidate = (float) Math.hypot(page.glyphX[i] - x, page.glyphBaseline[i] - y);
+            if (candidate < best) { best = candidate; nearest = i; }
+        }
+        return nearest;
     }
 
     private int hit(float viewX, float viewY) {
