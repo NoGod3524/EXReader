@@ -1,3 +1,49 @@
+# EXReader continuation snapshot — scheduled 2026-11-01 09:22 UTC
+Observed/API-read window: **2026-11-01 09:22:52–09:23:06 UTC**. Continuation backup only, not stopping, completion, or release. Independent documentation branch `codex/gpt-iphone-acceptance-96-20261031` was read at HEAD `565fee56bcadde5838ba6180bcf1a1bb354bf878`, file blob `7a2b8eddc48384346a197ed97465b1c147d4688c`; all earlier text is retained verbatim below.
+
+Formal ledger remains **96/108 (88.89%), 96 verified / 1 partial / 11 pending**, fixed `5db41cb19673fb75bb0b498c677d770931ac33e8`. Older automation wording of 95 is superseded by this sealed evidence; no result below independently promotes F04 or full SDK/host acceptance.
+
+## Live same-source six-host round
+- [41292070407 A1](https://github.com/NoGod3524/EXReader/actions/runs/41292070407), source/controller `91b2ee1ff98173ccaa9de52b4071821905bd1c07`, is **in_progress**, conclusion null. Raw API created_at **09:12:03Z**, updated_at **09:17:23Z**; the current observation above, not updated_at, dates this status check.
+- Four starting jobs are **success**: original retained 18/121 Linux **124805173301**; macOS SDK build **124805173402**; simulator SDK build **124805173497**; Windows seed **124805173513**. Android peer **124806356213** is **in_progress**. Downstream GTK/Mac/iPhone/iPad peers, five Windows returns and final graph/retained authentication are not yet confirmed complete. Unrelated diagnostic/F03 jobs are skipped, not accepted.
+- User **09:09:04 UTC**, `Sentinel_96e826274dec81918d2f37bb32827617`, approved exactly four existing F04 files (apple_driver.swift, run.py, contract.json, DOT_F04_READING_SYNC_20261031.md), preservation of historical fields, and **one 15-job / 230 runner-minute** same-source six-host run. This launch is **1/1 used**; **no automatic retry**, no reliable completion ETA.
+- Independent actual-diff review passed prep `61931b339af4d9022a10a52cf388463f13515b79`. F03 completed canonical composition and the sole trigger; F04 monitors. Only four permission behavior guards and the precise generator substitution changed; workflows, product, SDK, old tests, native actions and original success assertions were unchanged.
+- Budget ceilings: Windows seed20, Android25, GTK25, macOS SDK15, simulator SDK15, Mac peer15, iPhone20, iPad20, five Windows returns10 each, retained Linux15, audit10 = **230**. This is runner-minutes, not wall-clock ETA.
+- Formal graph requires **five builds and eleven phase outputs from this new source/run/attempt**, passed through exact job output artifact IDs: Windows→Android; Android→GTK/Mac/iPhone/iPad; Android and each of those four peers→Windows. Prior diagnostic SDK/Android inputs and earlier iOS successes are not substituted as graph nodes. Exact predecessor, original program/build/SDK/archive identities, native FOUND results, immutable revisions, authenticated transport, graph connectivity and retained original checks remain required.
+
+## Mac full-chain diagnostic now passed; historical failures retained
+- [41291277832 A1](https://github.com/NoGod3524/EXReader/actions/runs/41291277832), source/controller/UI `2fec8c7d3ef4a12ddba335c96da265843c7dcfe7`, Mac job **124802873944**, succeeded: **80.263 seconds**, one test/zero failures, other 27 jobs skipped. Original checkpoints **position**, **incoming-bookmark**, **incoming-note**, **edited-records**, **uploaded** all completed. Final upload attachment was recorded at test t79.16.
+- Original artifact **13077298124**, **42,354,209 bytes**, SHA256 `d900a58f9a5ea68e0cbcaa77274cb927d3bd263324522dc66228d2e120aba7fd`, API rechecked nonexpired. Actual UI **9,653,680 bytes**, SHA256 `efd970c32ef17e4b06590de72641ede8f53fdd8dbfaed62c5dc499bfddbbe6eb`. Receipt remains **diagnostic_only=true / F04_accepted=false**; it reused the fixed historical SDK/Android producer, unlike the currently running full graph.
+- Earlier **41289052139** denied the exact prompt mid-record-session, then timed out after save-progress Tap; **41290204917** passed saves/edits and edited-records but failed in added post-action evidence reading an already-disappeared reader.back. The latter was a diagnostic exists→live-property race, not an original product success assertion.
+- The reviewed correction removed nonessential success-path diagnostics and reads optional root snapshots in memory. Missing/unavailable evidence no longer becomes a failure gate; 41291277832 teardown recorded snapshot unavailable without overriding actual success. Original row helper, Tap/typeText and all exact data/location assertions stayed unchanged.
+- Potential product lifecycle risk remains **unfixed and unproven as this run's cause**: macOS resign-active/scene callbacks call closeAccountSession→readingRecords.bind(nil), clearing bookID/rows while retaining status; performReading can silently return on its binding guard. Moving environment preparation before records avoids this test interruption; it does not repair or accept general product focus-loss behavior.
+
+## Permission and identity boundaries
+Only the new full graph's temporary Mac peer enables independent `__MAC_PERMISSION_PREP__`: target macos AND generic=True AND F04_SCOPE=f04/six-host. Every other generated target/scope gets 0. Diagnostic guards and historical loaders are not falsely enabled; iOS receives no permission action.
+
+Startup observation is at most 10 seconds of scheduled polling within the original 150-second library-ready deadline, before account/credentials/books/records. Exact known Python Local Network question and explanation plus unique fresh semantic **Don't Allow** are required; at most one native denial per test. After actual disappearance, only a still-running own app may be restored foreground. Late/unknown/reappearing prompts are environment-blocked, with no Allow, numbering/coordinate guesses, settings/TCC changes, permission retries, reopening or replay of writes. XCTest's internal system-app activation during the authorized native click is recorded as an implementation side effect, not an explicit scripted activation. Synchronous AX calls cannot be hard-interrupted at a wall-clock boundary.
+
+SDK source remains `8357eafa28423a7ab93ba08b823af80f01ad1505`; preparation baseline `94fb236a4a2da87dfbaf4f1dd2a47885d615a230`. The old producer `2cdad2057d4877b4712af8155da72fb92b50e411` and pinned artifacts remain immutable historical diagnostic evidence only. Current same-source graph uses newly built outputs from 91b2ee1, not those old inputs.
+
+## Six assignments: actual activity and unresolved dependencies
+| Lane | Current activity | Remaining dependency |
+|---|---|---|
+| F03 | Composition/sole trigger complete; source/identity coordination | Own earlier GTK/Android evidence and full same-source graph acceptance are not silently repaired by F04 |
+| F04 | Monitoring the single authorized full six-host run | Remaining peers, five Windows returns, exact graph and retained authentication; full_F04 still false |
+| F05 | Integration/evidence waiting at 9ce943e1ff0c26b54db69f5c31eec057d2be216b | Native conflict/deletion UI, heads/tombstones, cancellation/recovery; Java shadow is not acceptance |
+| F07 | Provider/runtime evidence waiting at 697448abd8188580304806163ba9b543e76ba9ba | Provider link/load and actual consumer evidence |
+| F10 | Component seal 4db961144b00c9004e2775b9e1e57e6ea7a31cb7 retained | Common consumer/actual hosts/credentials and privacy integration; 82 cases/880 assertions/38 negatives are not full_F10 |
+| F12 | Delivery evidence organization and independent review; this snapshot | Final candidate freeze, real package/license inventory, old-profile upgrade/restore matrix, generated instructions; seal64729214788a99ae96de7dda1a6376337324f9e4 is preparation only |
+
+**Zero active source-implementation lanes at capture**; no claim of six simultaneous implementations. Automatic replenishment remains paused; F06 verified evidence is retained and not rerun.
+
+P0/C02 migration/journal/Repair remains limited to its sealed scope: not all-P0, hardware power-loss, F12 delivery, or independent MSVC static relink. Historical 727 stays with its own evidence. Full SDK/common-consumer and same-source source graph acceptance remain outstanding even with four green startup jobs. Existing production, SDK and external UI/F08/F09 owners are unchanged.
+
+Earlier API/log +1-hour discrepancies remain preserved in historical entries, never silently normalized. Latest Mac success API09:05:12Z and runner upload09:05:07Z align; current run API times also lie within the observed chronology. Desktop Commander quota, lap25002/instabox access and native handshake were **not revalidated**. This snapshot touches only this independent document with skip-ci, not source, catalog, default branch, PR/tag/release or CI execution.
+
+---
+## Earlier snapshots (historical; latest facts above take precedence)
+
 # EXReader continuation snapshot — scheduled 2026-11-01 08:22 UTC
 Observed/API-read window: **2026-11-01 08:24:14–08:24:25 UTC**. Continuation backup only, not stopping, completion, or release. Read independent documentation branch `codex/gpt-iphone-acceptance-96-20261031` at HEAD `cb9f4dde75e899decb1d59cbe7061a731f6835b0`, blob `7f153c9deb110430b278685af9e6e2d48dc47565`; all earlier text is retained below.
 
