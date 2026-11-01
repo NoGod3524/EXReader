@@ -1903,6 +1903,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
     @Override public boolean dispatchKeyEvent(android.view.KeyEvent event){
         int code=event.getKeyCode();
+        // Escape is the hardware keyboard's Back: first it clears a text selection,
+        // then it closes the top panel or leaves the reader. The framework fallback
+        // to BACK never reached the reader (F09 keyboard lane K-00/K-04).
+        if(code==android.view.KeyEvent.KEYCODE_ESCAPE&&!event.hasModifiers()){
+            if(event.getAction()==android.view.KeyEvent.ACTION_UP&&!event.isCanceled()){
+                if(selectionBar.getVisibility()==View.VISIBLE){readerView.setSelectMode(false);readerView.clearSelection();}
+                else onBackPressed();
+            }
+            return true;
+        }
         if(BuildConfig.DEBUG&&BuildConfig.READER_PREFERENCES&&(code==19||code==20||code==21||code==22||code==92||code==93))Log.i(TAG,"preferences key code="+code+" action="+event.getAction()+" repeat="+event.getRepeatCount()+" input="+(readingPreferences==null?0:readingPreferences.input)+" operation="+operation+" selected="+(readerView!=null&&readerView.isSelectMode())+" focus="+hasWindowFocus());
         if(BuildConfig.READER_PREFERENCES&&readingPreferences!=null&&readingPreferences.input==4&&current!=null&&!readerView.isSelectMode()&&operation==0&&readerPanel.getVisibility()==View.VISIBLE){
             int delta=0;if(code==android.view.KeyEvent.KEYCODE_PAGE_DOWN||code==android.view.KeyEvent.KEYCODE_DPAD_DOWN)delta=1;
