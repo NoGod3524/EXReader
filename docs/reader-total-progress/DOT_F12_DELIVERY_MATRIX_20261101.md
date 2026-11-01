@@ -3,7 +3,7 @@
 
 ## 原条款与授权
 catalog.json F12 原文：“最终版本升级/旧库兼容、许可/依赖与用户安装/导入/同步说明完备”。
-用户 2026-11-01 00:32:42 UTC 明确批准第六路转 F12、独立分支两份新文档、0 生产改动、0 CI。独占分支拟为 `dot/f12-delivery-20261101`，从上述 ledger 创建；仅本矩阵及同目录 DOT_F12_VALIDATION_DESIGN_20261101.md。K03/C02 原包保留封存；其他生产 owner 不变。GitHub 直连读写授权不等于发布/签名/PR/tag 或无限 CI 授权。
+用户 2026-11-01 00:32:42 UTC 明确批准第六路转 F12、独立分支两份新文档、0 生产改动、0 CI。独占分支为 `dot/f12-delivery-20261101`，从上述 ledger 创建；仅本矩阵及同目录 DOT_F12_VALIDATION_DESIGN_20261101.md。K03/C02 原包保留封存；其他生产 owner 不变。GitHub 直连读写授权不等于发布/签名/PR/tag 或无限 CI 授权。
 
 ## 已有固定证据及不得外推的边界
 | 输入 | 固定身份 | 已证明 | F12 尚缺 |
@@ -54,7 +54,7 @@ docs/READING-RELEASE-PLAN.md 的“六包”是 reading-core/library × Linux/Wi
 以上是源码规则，不是本轮 ZIP 实物检查；SDK notices 存在不证明所有宿主 WebDAV/系统依赖或最终构建开关已经闭合对账。
 F06 已核开发包形态：Windows/Linux 开发ZIP、macOS ad-hoc开发app、Android API34 x86_64 emulator/debug APK、iPhone/iPad arm64 simulator app。安装说明必须保留这些限制，不称正式签名真机交付。
 
-下一设计审请求：可先审 F06 固定六原 ZIP 的历史材料缺口，复用既有身份和原材料门禁，仅 Actions 读取、不重建；该结果只能授历史包盘点，不授尚未冻结的最终 F12。当前尚未批准测试文件/CI，未执行。
+设计审已收窄：优先复用既有清单、打包源码和普通日志，不另扫描六个历史 ZIP。仅当一个明确包内材料缺口无法从既有证据判定、且能指导具体修补时，再申请最小单包只读 Actions；其结果只授 historical_inventory_only，不授最终 F12。当前未申请或执行新增 CI。
 
 ## 已有包内用户说明与 Android 外包（固定8f8acf源码）
 `tests/android_sdk342_package/run.py` 显式给 Android payload 拷贝 LICENSE 与 THIRD_PARTY_NOTICES.md，故“Android 无许可说明”不成立；该 payload 配方未见 SDK licenses/ 拷贝，APK 内完整材料仍待原件核证。
