@@ -1,14 +1,17 @@
 """Offline synthetic ZIP/receipt controls. No Android process, emulator or CI is started."""
+import ast
 import copy
 import hashlib
 import importlib.util
 import io
 import json
+import re
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
 from unittest.mock import patch
+from urllib.parse import quote
 
 HERE=Path(__file__).resolve().parent
 spec=importlib.util.spec_from_file_location("native_android_input_controls",HERE/"native_android.py")
@@ -18,16 +21,48 @@ PRODUCER={"source_sha":EXPECTED,"run_id":"42","attempt":"2"}
 FLAGS=["-PexrSync=true","-PexrSearch=true","-PexrNavigation=true","-PexrReading=true","-PexrPreferences=true",
        "-PexrPageTheme=true","-PexrF08Review=true","-PexrSelectorBytes=true","-PexrWave3=true"]
 MARKERS=("Lorg/exreader/host/CatalogFrameLatch;","Lorg/exreader/host/ShelfWindowMetrics;","catalogApplied",
-         "catalogReady","catalogTreeDraw","ready_pre_draw","tree_draw_begin","catalog-ready")
+         "catalogReady","catalogTreeDraw","ready_pre_draw","tree_draw_begin","catalog-ready",
+         "Lorg/exreader/host/ReaderFrameObserver;","ReaderView.canvas.drawBitmap","bitmap_draw","request_generation",
+         "reader-draw","f08_capture_stop","f08_expected_pid","f08_expected_window","owned_reader_stop")
+OBSERVERS=tuple("examples/android/app/src/main/java/org/exreader/host/"+name for name in
+                ("CatalogFrameLatch.java","CatalogShelf.java","MainActivity.java","ReaderView.java","ShelfWindowMetrics.java","ReaderFrameObserver.java"))
+READER_APK="packages/reader-uitest-debug-androidTest.apk"
+SAMPLE={"size":2419,"sha256":"9d6464c0f15bfe5b970dd7168aa3162d46e3a64f8f0f049801e7b8651fab3f76"}
+
 
 def encoded(value):return (json.dumps(value,sort_keys=True)+"\n").encode()
 def digest(data):return hashlib.sha256(data).hexdigest()
-def package(private=False,observer=True):
+def package(private=False,markers=MARKERS):
     result=io.BytesIO()
     with zipfile.ZipFile(result,"w") as z:
-        z.writestr("classes.dex","\x00".join(MARKERS) if observer else "old observer")
+        z.writestr("classes.dex","\x00".join(markers))
         z.writestr("lib/x86_64/libexreader_product.so",b"Java_org_exreader_host_ProductFixture_fault" if private else b"Release native product")
     return result.getvalue()
+
+
+def original_sample(path):
+    # Execute only the original deterministic EPUB writer and its existing literal.
+    # The full authoring entry also makes large fixtures and is deliberately not called.
+    source=HERE.parents[1]/"tools/build_android_host.py";tree=ast.parse(source.read_text())
+    definitions={node.name:node for node in tree.body if isinstance(node,ast.FunctionDef)}
+    fixture=definitions["write_fixtures"]
+    literal=next(node.value for node in fixture.body if isinstance(node,ast.Assign)
+                 and any(isinstance(t,ast.Name) and t.id=="sample" for t in node.targets))
+    call=next(node.value for node in fixture.body if isinstance(node,ast.Expr) and isinstance(node.value,ast.Call)
+              and isinstance(node.value.func,ast.Name) and node.value.func.id=="epub")
+    scope={"zipfile":zipfile,"hashlib":hashlib,"quote":quote}
+    exec(compile(ast.Module(body=[definitions["epub"],definitions["escape"]],type_ignores=[]),str(source),"exec"),scope)
+    scope["epub"](path,ast.literal_eval(call.args[1]),ast.literal_eval(literal))
+    return path.read_bytes()
+
+
+def edit_final(files,change):
+    value=json.loads(files["final-build.json"]);change(value);files["final-build.json"]=encoded(value)
+
+
+def edit_build(files,change):
+    value=json.loads(files["build.json"]);change(value);files["build.json"]=encoded(value)
+    edit_final(files,lambda final:final.update(packages=value["packages"],original_build_sha256=digest(files["build.json"])))
 
 
 class BuildZipControls(unittest.TestCase):
@@ -42,6 +77,8 @@ class BuildZipControls(unittest.TestCase):
             path.write_bytes(encoded(self.contract) if name.endswith("contract.json") else ("# source "+name+"\n").encode())
         self.code={"kind":"native-local-source-bundle","execution_source_sha":EXPECTED,
                    "files":{n:N.sha(self.root/n) for n in N.BUNDLE_FILES}}
+        self.sample=original_sample(self.root/"input/Sample.epub")
+        self.assertEqual({"size":len(self.sample),"sha256":digest(self.sample)},SAMPLE)
         self.patches=[patch.object(N,"ROOT",self.root),patch.object(N,"HERE",self.here)]
         for item in self.patches:item.start()
         self.addCleanup(self.temp.cleanup)
@@ -51,6 +88,8 @@ class BuildZipControls(unittest.TestCase):
         badging=b"package: name='org.exreader.host' versionCode='1'\n"
         fixture=b"A real archived picker input, not a reconstructed old constant.\n"
         entry={"size":len(fixture),"sha256":digest(fixture)}
+        reader=package(markers=("Lorg/exreader/host/uitest/ReaderF08UiTest;",))
+        command=encoded(["gradle",*FLAGS,"-I","reader-ui.init.gradle",":uitest:assembleDebugAndroidTest"])
         built={**PRODUCER,"debug":False,"configuration":"Release","sdk_version":"3.42.0","page_theme":True,
                "release_fixture_jni_absent":True,"gradle_flags":FLAGS.copy(),
                "frozen_sampler_files":{"tools/run_reader_shelf_ui.py":self.code["files"]["tools/run_reader_shelf_ui.py"]},
@@ -61,12 +100,18 @@ class BuildZipControls(unittest.TestCase):
         final={**PRODUCER,"source":source,"packages":built["packages"],"debug":False,"measurement_performed":False,"f08_accepted":False,
                "original_build_sha256":digest(encoded(built)),"native_bundle_files":self.code["files"],
                "final_adapter_sha256":N.sha(self.here/"android.py"),"observer_dex_markers":{n:True for n in MARKERS},
-               "observer_source_sha256":{"examples/android/app/src/main/java/org/exreader/host/"+n:"0"*64 for n in
-                                         ["CatalogFrameLatch.java","CatalogShelf.java","MainActivity.java","ShelfWindowMetrics.java"]},
-               "picker_fixture":{"path":"fixtures/NewReview.txt",**entry}}
+               "observer_source_sha256":{name:self.code["files"][name] for name in OBSERVERS},
+               "picker_fixture":{"path":"fixtures/NewReview.txt",**entry},
+               "reader_test_apk":{"path":READER_APK,"bytes":len(reader),"sha256":digest(reader),
+                    "class":"org.exreader.host.uitest.ReaderF08UiTest#reader",
+                    "runner":"org.exreader.host.uitest.test/androidx.test.runner.AndroidJUnitRunner",
+                    "gradle_command_sha256":digest(command),"sources":{name:N.sha(self.here/name) for name in ("ReaderF08UiTest.java","reader-ui.init.gradle")}},
+               "reader_fixture":{"path":"fixtures/Sample.epub","source_path":"build/wave3/download/Sample.epub",
+                    "generator":"tools/build_android_host.py","generator_sha256":self.code["files"]["tools/build_android_host.py"],**SAMPLE}}
         files={"build.json":encoded(built),"final-build.json":encoded(final),"final-source.json":encoded(source),
                "native-source/bundle.json":encoded(self.code),"release-apk-badging.txt":badging,
-               "fixtures.json":encoded({"NewReview.txt":entry}),"fixtures/NewReview.txt":fixture,
+               "fixtures.json":encoded({"NewReview.txt":entry,"Sample.epub":SAMPLE}),"fixtures/NewReview.txt":fixture,
+               "fixtures/Sample.epub":self.sample,"reader-gradle-command.json":command,READER_APK:reader,
                **{"packages/"+n:v for n,v in apks.items()},**{"native-source/"+n:(self.root/n).read_bytes() for n in N.BUNDLE_FILES}}
         if mutate:mutate(files)
         manifest={**PRODUCER,"files":{n:{"bytes":len(v),"sha256":digest(v)} for n,v in files.items()},"f08_accepted":False}
@@ -79,58 +124,87 @@ class BuildZipControls(unittest.TestCase):
                              "digest":"sha256:"+N.sha(path),"workflow_run":{"id":42,"head_sha":EXPECTED,"repository_id":7,"head_repository_id":7}},
                  "run":{"id":42,"run_attempt":2,"head_sha":EXPECTED,"repository":{"id":7,"full_name":"NoGod3524/EXReader"}}}
         return path,receipt,files
-    def missing(self,mutate=None,receipt_mutate=None,code=None,expected=EXPECTED):
+    def missing(self,mutate=None,receipt_mutate=None,code=None,expected=EXPECTED,*,reason):
         path,receipt,_=self.archive(mutate)
         if receipt_mutate:receipt_mutate(receipt)
-        with self.assertRaises((ValueError,KeyError)):
+        with self.assertRaisesRegex((ValueError,KeyError),re.escape(reason)):
             N.prepare(path,self.out,expected,receipt,self.code if code is None else code)
+        self.assertFalse((self.root/"build/android-host").exists(),"rejected input must not stage APKs or fixtures")
     def test_pure_build_zip_is_self_contained_without_execution(self):
         path,receipt,files=self.archive();self.assertFalse(any(n.startswith("execution/") for n in files))
         N.prepare(path,self.out,EXPECTED,receipt,self.code)
         self.assertEqual((self.root/"build/android-host/fixtures/NewReview.txt").read_bytes(),files["fixtures/NewReview.txt"])
+        self.assertEqual((self.root/"build/android-host/fixtures/Sample.epub").read_bytes(),self.sample)
+        self.assertEqual((self.root/"build/android-host/artifacts/reader-uitest-debug-androidTest.apk").read_bytes(),files[READER_APK])
         self.assertEqual((self.root/"examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk").read_bytes(),files["packages/app-debug-androidTest.apk"])
         self.assertTrue(N.load(self.out/"producer.json")["same_source_build"])
     def test_receipt_and_expected_source_are_external(self):
-        self.missing(expected="2"*40)
-        self.missing(receipt_mutate=lambda r:r["run"].update(head_sha="2"*40))
-        self.missing(receipt_mutate=lambda r:r["artifact"]["workflow_run"].update(head_sha="2"*40))
+        self.missing(expected="2"*40,reason="expected source differs from CI")
+        self.missing(receipt_mutate=lambda r:r["run"].update(head_sha="2"*40),reason="expected source differs from CI")
+        self.missing(receipt_mutate=lambda r:r["artifact"]["workflow_run"].update(head_sha="2"*40),reason="expected source differs from CI")
     def test_repository_run_attempt_and_digest_reject_mixing(self):
-        changes=[lambda r:r.update(repository_full_name="other/repo"),lambda r:r["run"]["repository"].update(full_name="other/repo"),
-                 lambda r:r["artifact"]["workflow_run"].update(head_repository_id=8),lambda r:r["artifact"]["workflow_run"].update(id=43),
-                 lambda r:r["run"].update(run_attempt=1),lambda r:r["artifact"].update(digest="sha256:"+"0"*64),
-                 lambda r:r["artifact"].update(expired=True)]
-        for mutate in changes:
-            with self.subTest(mutate=mutate):self.missing(receipt_mutate=mutate)
+        changes=[("receipt repository",lambda r:r.update(repository_full_name="other/repo")),
+                 ("run repository",lambda r:r["run"]["repository"].update(full_name="other/repo")),
+                 ("artifact repository",lambda r:r["artifact"]["workflow_run"].update(head_repository_id=8)),
+                 ("CI run identity",lambda r:r["artifact"]["workflow_run"].update(id=43)),
+                 ("producer identity",lambda r:r["run"].update(run_attempt=1)),
+                 ("authenticated Release ZIP",lambda r:r["artifact"].update(digest="sha256:"+"0"*64)),
+                 ("CI artifact identity",lambda r:r["artifact"].update(expired=True))]
+        for reason,mutate in changes:
+            with self.subTest(reason=reason):self.missing(receipt_mutate=mutate,reason=reason)
     def test_missing_new_build_documents_and_picker_bytes(self):
-        for name in ["final-source.json","final-build.json","fixtures/NewReview.txt","native-source/bundle.json"]:
-            with self.subTest(name=name):self.missing(lambda f:f.pop(name))
-    def test_all_four_apks_required(self):
-        for name in N.PACKAGES:
-            with self.subTest(name=name):self.missing(lambda f:f.pop("packages/"+name))
+        for name in ["final-source.json","final-build.json","fixtures/NewReview.txt","native-source/bundle.json",
+                     "reader-gradle-command.json","fixtures/Sample.epub"]:
+            with self.subTest(name=name):self.missing(lambda f:f.pop(name),reason=name)
+        self.missing(lambda f:f.__setitem__("fixtures/Sample.epub",self.sample+b"changed"),reason="unchanged supplemental Sample.epub")
+        def changed_sample(f):
+            replacement=self.sample+b"changed";f["fixtures/Sample.epub"]=replacement
+            entry={"size":len(replacement),"sha256":digest(replacement)}
+            values=json.loads(f["fixtures.json"]);values["Sample.epub"]=entry;f["fixtures.json"]=encoded(values)
+            edit_final(f,lambda final:final["reader_fixture"].update(entry))
+        self.missing(changed_sample,reason="frozen supplemental fixture")
+    def test_all_five_apks_required(self):
+        for name in [*("packages/"+name for name in N.PACKAGES),READER_APK]:
+            with self.subTest(name=name):self.missing(lambda f:f.pop(name),reason=name)
+        self.missing(lambda f:f.__setitem__(READER_APK,b"changed APK"),reason="reader helper APK")
+        def no_reader(f):
+            data=package(markers=("old helper",));f[READER_APK]=data
+            edit_final(f,lambda final:final["reader_test_apk"].update(bytes=len(data),sha256=digest(data)))
+        self.missing(no_reader,reason="compiled Release reader driver")
+        for key,value in [("class","other.Reader#reader"),("runner","other/Runner"),("sources",{}),("gradle_command_sha256","0"*64)]:
+            reason="independent reader helper identity" if key in ("class","runner") else "compiled reader helper sources/command"
+            with self.subTest(key=key):self.missing(lambda f:edit_final(f,lambda final:final["reader_test_apk"].update({key:value})),reason=reason)
     def test_bundle_is_exact_and_cannot_use_old_four_files(self):
-        code=copy.deepcopy(self.code);code["files"]={n:code["files"][n] for n in N.BUNDLE_FILES[:4]};self.missing(code=code)
+        code=copy.deepcopy(self.code);code["files"]={n:code["files"][n] for n in N.BUNDLE_FILES[:4]}
+        self.missing(code=code,reason="same-source execution bundle")
         for name in N.BUNDLE_FILES:
-            with self.subTest(name=name):self.missing(lambda f:f.__setitem__("native-source/"+name,b"different source"))
+            with self.subTest(name=name):self.missing(lambda f:f.__setitem__("native-source/"+name,b"different source"),reason="compiled bundle file: "+name)
+        for name in OBSERVERS:
+            for change in (lambda values:values.pop(name),lambda values:values.update({name:"0"*64})):
+                with self.subTest(observer=name):self.missing(lambda f:edit_final(f,lambda final:change(final["observer_source_sha256"])),reason="complete same-source observer identity")
     def test_changed_local_sampler_is_rejected(self):
         path,receipt,_=self.archive();(self.root/"tools/run_reader_shelf_ui.py").write_text("changed")
-        with self.assertRaises(ValueError):N.prepare(path,self.out,EXPECTED,receipt,self.code)
+        with self.assertRaisesRegex(ValueError,re.escape("compiled bundle file: tools/run_reader_shelf_ui.py")):
+            N.prepare(path,self.out,EXPECTED,receipt,self.code)
     def test_original_release_jni_and_observer_assertions_remain(self):
-        def jni(f):
-            apk=package(private=True);f["packages/app-debug.apk"]=apk
-            b=json.loads(f["build.json"]);b["packages"]["app-debug.apk"]={"bytes":len(apk),"sha256":digest(apk)};f["build.json"]=encoded(b)
-            final=json.loads(f["final-build.json"]);final["packages"]=b["packages"];final["original_build_sha256"]=digest(f["build.json"]);f["final-build.json"]=encoded(final)
-        self.missing(jni)
-        self.missing(lambda f:f.__setitem__("release-apk-badging.txt",b"application-debuggable\n"))
-        def flags(f):
-            b=json.loads(f["build.json"]);b["gradle_flags"].remove("-PexrF08Review=true");f["build.json"]=encoded(b)
-        self.missing(flags)
+        def product(f,data):
+            f["packages/app-debug.apk"]=data
+            edit_build(f,lambda built:built["packages"].update({"app-debug.apk":{"bytes":len(data),"sha256":digest(data)}}))
+        self.missing(lambda f:product(f,package(private=True)),reason="private fixture JNI")
+        def badging(f):
+            f["release-apk-badging.txt"]=b"application-debuggable\n"
+            edit_build(f,lambda built:built.update(release_badging_sha256=digest(f["release-apk-badging.txt"])))
+        self.missing(badging,reason="Release manifest flags")
+        self.missing(lambda f:edit_build(f,lambda built:built["gradle_flags"].remove("-PexrF08Review=true")),reason="frozen full-feature flags")
+        self.missing(lambda f:edit_build(f,lambda built:built["frozen_sampler_files"].update({"tools/run_reader_shelf_ui.py":"0"*64})),reason="frozen sampler")
+        for marker in MARKERS:
+            with self.subTest(marker=marker):self.missing(lambda f:product(f,package(markers=tuple(n for n in MARKERS if n!=marker))),reason="compiled first-catalog observer")
     def test_no_old_execution_default_in_new_source(self):
-        self.missing(expected=N.LEGACY_PRODUCER["source_sha"])
-    def test_builder_and_runtime_use_the_same_eight_source_list(self):
-        import ast
+        self.missing(expected=N.LEGACY_PRODUCER["source_sha"],reason="expected source differs from CI")
+    def test_builder_and_runtime_use_the_same_declared_source_list(self):
         tree=ast.parse((HERE/"android.py").read_text())
         node=next(x for x in tree.body if isinstance(x,ast.Assign) and any(isinstance(t,ast.Name) and t.id=="NATIVE_BUNDLE_FILES" for t in x.targets))
-        self.assertEqual(tuple(ast.literal_eval(node.value)),N.BUNDLE_FILES)
+        self.assertEqual(tuple(ast.literal_eval(node.value)),N.BUNDLE_FILES);self.assertEqual(len(N.BUNDLE_FILES),18)
     def test_legacy_failure_replay_is_read_only_and_keeps_old_source(self):
         plan={"identity":{**N.LEGACY_PRODUCER,"run_id":"native-old-failure"},"execution_source_sha":"970904cf6c75f2c4729dce56153ececcc7a5b457"}
         proof={"producer":N.LEGACY_PRODUCER,"artifact":N.LEGACY_ARTIFACT,
