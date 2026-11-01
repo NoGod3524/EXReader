@@ -40,12 +40,13 @@ class Server:
                     if outer.mode=='get-wrong':data=b'X'*len(data)
                     elif outer.mode=='get-short':data=data[:-1]
                     elif outer.mode=='get-over':data+=b'X'
+                if outer.mode=='pull-revision-wrong' and '/revisions/' in self.path:data=data.replace(b'F10 pull',b'G10 pull')
                 record.update(response_bytes=len(data),response_sha256=sha(data))
-                if outer.mode=='get-gate' and '/objects/' in self.path:
+                if (outer.mode=='get-gate' and '/objects/' in self.path) or (outer.mode=='pull-revision-gate' and '/revisions/' in self.path):
                     self.send_response(200);self.send_header('Content-Length',str(len(data)));self.end_headers()
-                    self.wfile.write(data[:1024]);self.wfile.flush();outer.arrived.set()
+                    cut=min(1024,max(1,len(data)//2));self.wfile.write(data[:cut]);self.wfile.flush();outer.arrived.set()
                     if not outer.release.wait(20):return
-                    try:self.wfile.write(data[1024:])
+                    try:self.wfile.write(data[cut:])
                     except OSError:pass
                     return
                 self.answer(200,data)
@@ -298,7 +299,77 @@ def run_suite(binary,old,boundary,out):
         c['no_local_file']=int(not any(w.iterdir()))
     case('get-consumer-error',consumer_error)
 
+
+    # Phase D closes the two download scratch paths. S keeps its existing
+    # receipt/purpose/capacity; only explicit close/recover/reopen is exercised.
+    def pull_case(kind):
+        def f(w,s,c,raw):
+            for leaf in ['cache','originals','managed']:(w/leaf).mkdir(mode=0o700)
+            content=b'F10 pulled original|'*4096;digest=sha(content)
+            rev={'version':1,'id':'00'+'0'*29+'1','entity_kind':'book','entity_key':'txt:'+digest,'operation':'put','location_kind':'none','parents':[],
+                 'payload':{'format':'txt','source_sha256':digest,'source_bytes':len(content),'title':'F10 pull','author':'Fixture','favorite':False}}
+            wire=json.dumps(rev,separators=(',',':')).encode();wirefile=w/'wire.json';wirefile.write_bytes(wire)
+            object_path='/dav/exreader-sync-v1/objects/'+digest[:2]+'/'+digest+'.txt'
+            revision_path='/dav/exreader-sync-v1/revisions/00/'+rev['id']+'-'+sha(wire)+'.json'
+            s.data[object_path]=content;s.data[revision_path]=wire
+            cached=w/'cache'/(digest+'.txt')
+            cmd=lambda mode:[str(binary),mode,str(w),s.url,str(wirefile)]
+            if kind=='revision-wrong':s.mode='pull-revision-wrong'
+            if kind=='revision-over':s.data[revision_path]=b'X'*(1048576+1)
+            if kind=='original-wrong':s.mode='get-wrong'
+            if kind=='original-short':s.mode='get-short'
+            gated=kind in ['revision-cancel','revision-kill','original-cancel','original-kill','cleanup-permission','target-same','target-different']
+            if gated:s.mode='pull-revision-gate' if kind.startswith('revision-') else 'get-gate';s.release.clear()
+            proc=subprocess.Popen(cmd('pull'),stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            changed=None;target_inode=None
+            if gated:
+                assert s.arrived.wait(20),'actual pull GET boundary missing'
+                c['get_boundary']=1
+                if kind.endswith('-cancel'):(w/'cancel').write_text('cancel')
+                if kind.endswith('-kill'):proc.kill()
+                if kind=='cleanup-permission':
+                    changed=next((w/'managed').rglob('payload')).parent;changed.chmod(0o500)
+                if kind in ['target-same','target-different']:
+                    cached.write_bytes(content if kind=='target-same' else b'X'*len(content));cached.chmod(0o600);target_inode=cached.stat().st_ino
+                s.release.set()
+            stdout,stderr=proc.communicate(timeout=25);raw.append(stdout+stderr);first=parse(stdout)
+            c['first_exit']=proc.returncode
+            if kind.endswith('-kill'):c['signal']=-proc.returncode
+            else:
+                for key in ['status','dav_code','revision_code','pulled','received','exact_wire','after_empty','cleanup_pending']:c['first_'+key]=first[key]
+            inspected=subprocess.run(cmd('inspect'),capture_output=True,text=True,timeout=10);raw.append(inspected.stdout+inspected.stderr)
+            c['before_retry_received']=parse(inspected.stdout)['received']
+            c['cache_exists_first']=int(cached.exists());published_inode=cached.stat().st_ino if cached.exists() else None
+            c['no_random_cache_first']=int(all(x.name==cached.name for x in (w/'cache').iterdir()))
+            c['cache_names_first']=sorted(x.name for x in (w/'cache').iterdir());c['cache_sha_first']=sha(cached.read_bytes()) if cached.exists() else ''
+            c['target_inode_before']=target_inode;c['cache_inode_first']=published_inode
+            c['first_request_count']=len(s.requests)
+            c['first_revision_get']=int(any(x['method']=='GET' and x['path']==revision_path for x in s.requests))
+            c['first_original_get']=int(any(x['method']=='GET' and x['path']==object_path for x in s.requests))
+            c['target_preserved']=int(target_inode is None or (cached.stat().st_ino==target_inode and cached.read_bytes()==(content if kind=='target-same' else b'X'*len(content))))
+            if changed:changed.chmod(0o700)
+            if (w/'cancel').exists():(w/'cancel').unlink()
+            if kind=='target-different':cached.unlink() # Remove only this test's deliberate conflicting fixture.
+            s.mode='normal';s.data[revision_path]=wire;s.release.set()
+            # Same lifecycle as existing session cleanup retry: destroy client,
+            # offline exact-registry recovery, then a new client/worker.
+            recovered=subprocess.run([str(binary),'recover-current',str(w/'managed')],capture_output=True,text=True,timeout=10);raw.append(recovered.stdout+recovered.stderr)
+            c['recover']=parse(recovered.stdout)['recover'];c['recovery_pending']=parse(recovered.stdout)['pending']
+            again=subprocess.run(cmd('pull'),capture_output=True,text=True,timeout=25);raw.append(again.stdout+again.stderr);last=parse(again.stdout)
+            for key in ['status','received','exact_wire','cleanup_pending']:c['retry_'+key]=last[key]
+            c['final_cache_exact']=int(cached.read_bytes()==content)
+            c['cache_sha_final']=sha(cached.read_bytes());c['cache_names_final']=sorted(x.name for x in (w/'cache').iterdir());c['cache_inode_final']=cached.stat().st_ino
+            c['no_random_cache_final']=int([x.name for x in (w/'cache').iterdir()]==[cached.name])
+            c['no_put']=int(not any(x['method']=='PUT' for x in s.requests))
+            c['remote_unchanged']=int(s.data[object_path]==content and s.data[revision_path]==wire)
+            c['final_payloads']=len(list((w/'managed').rglob('payload')))
+            c['published_inode_preserved']=int(kind!='cleanup-permission' or cached.stat().st_ino==published_inode)
+        return f
+    for kind in ['normal','revision-wrong','revision-over','revision-cancel','revision-kill',
+                 'original-wrong','original-short','original-cancel','original-kill','cleanup-permission','target-same','target-different']:
+        case('pull-'+kind,pull_case(kind))
+
     index={'source':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],
-           'binaries':{p.name:sha(p.read_bytes()) for p in [binary,old,boundary]},'cases':[r['name'] for r in rows[:29]],'get_cases':[r['name'] for r in rows[29:]],'full_f10_complete':False}
+           'binaries':{p.name:sha(p.read_bytes()) for p in [binary,old,boundary]},'cases':[r['name'] for r in rows[:29]],'get_cases':[r['name'] for r in rows[29:37]],'pull_cases':[r['name'] for r in rows[37:]],'full_f10_complete':False}
     (out/'index.json').write_text(json.dumps(index,indent=2)+'\n')
     return rows
