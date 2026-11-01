@@ -396,3 +396,42 @@ ID13066014205, 3671 bytes, ZIP SHA256
 F04 remains pending. A successful artifact diagnostic is not product
 acceptance. This result-only seal changes no received F04 blobs or workflow,
 runs no CI, and retains both failed product rounds unchanged.
+
+
+## Fixed Windows native picker verification — 2026-11-01 02:39 UTC
+
+User approved six existing paths and one Windows job capped at 10 minutes on
+2026-11-01 02:30:44 UTC. The finite entry review confirmed the exact five
+F04 blobs from `b1e1370aa511e61751949df3dcd19f587b12f6b9` plus the sole
+canonical entry; the candidate still has exactly 23 added paths versus 94fb.
+
+Run https://github.com/NoGod3524/EXReader/actions/runs/41265967021 attempt 1
+succeeded. Controller source `f2218d544330beb0f985cb12c1ea6d59b446a221`,
+tree `7bd3bc05227f9101154630f400eea4ee9af53618`, Windows job
+124728717790 ran 02:37:27–02:38:03 UTC. This consumed the approved **1/1**
+run; ten minutes was a cap, not actual elapsed usage. All other product and
+diagnostic jobs were skipped. No product rebuild or DAV service ran.
+
+The historical product is explicitly separate: producer source
+`cb8b5e2d04a524a44a686eb8385872ee832d373e`, run41264117725 attempt1,
+job124723215028, artifact13067105719 (53052917 bytes, SHA256
+`c6f0ae369230eb3173a3bd5794abf54be064686ed542a8b606b8e1d7a9a3be1b`).
+The authenticated executable was 8240640 bytes, SHA256
+`737d5c8de83537cc5801010282857b96df91190f38b286a2690898e4eccc7917`.
+It was reused without claiming it was built at the current controller SHA.
+
+The ordinary job log records passed=true for fresh_library_single_import,
+opened_page_nonuniform_pixels and normal_close_zero. A real system picker
+was accepted once after one SendInput dispatch (two events); the new library
+held one EPUB, the opened page reported chapter 1/page 1 and nonuniform RGB
+pixels, and normal close exited zero. Cleanup errors were empty.
+This resolves the narrowly tested import route, not reading-state sync:
+F04_accepted=false, same_current_source_runtime=false, navigations=[].
+F03 and F04 full acceptance remain pending; prior product failures remain.
+
+Output artifact `f04-import-only-41265967021-1`: ID13066734468,
+401007 bytes, ZIP SHA256
+`c0fa0f9dcb737b22dd748d0de8e8399a8c911e259fc0dc9228a4d28605a537f2`,
+expires 2026-12-01 02:37:59 UTC. It retains result, opened-page screenshot
+and safe diagnostics. This result-only handoff changes no F04 file or
+workflow, triggers no CI, and has no uncertain Git operation or running CI.
