@@ -1712,5 +1712,33 @@
     "old_apk_upgrade_accepted": false,
     "product_accepted": false,
     "formal_count_credit": 0
+  },
+  "bootstrap_recovery_blob_exceptions": {
+    "tools/check_android_host.py": "b03096584d45c8f415440c0f75699f5a8faf0ff1",
+    "docs/READER-ANDROID-HOST-IMPORT.md": "f6d681aec8c7bd968c30f29a73fc78eca8f2c78b",
+    "tests/reader_android_import_contract_20261101/check.py": "5419fb4dac40f79c4238f1639d81ec37a0f92d0a",
+    ".github/workflows/reader-android-import-contract-20261101.yml": "147de484f60332d50ca8a786b76541226fdaec46",
+    "examples/android/app/src/androidTest/java/org/exreader/host/CatalogStoreTest.java": "dc20e2ec8851b00c761e7332d32f885df946f209",
+    "examples/android/app/src/androidTest/java/org/exreader/host/ImportMappingTest.java": "12f758e93e1c74589d0d624415973ba05e6d02fe",
+    "tools/check_reader_owner_android.py": "b5a03e0657db93b413fdcc98671c92575c4437cb",
+    "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationBootstrapDiagnosticTest.java": "9e441f50ebc316e4f4f030075fd09119db71d75f",
+    "examples/android/app/src/main/java/org/exreader/host/BookStore.java": "0be5dc75bcc09018f9f7f8e788cc598849e4eb1d",
+    "examples/android/app/src/main/java/org/exreader/host/OrganizationStore.java": "797aaebb6b04b6722460dd6d1effa1063dbac493",
+    "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationTest.java": "683dbf6e5921d58d0a9527e88ec96aaae0f16f84",
+    "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationBootstrapRecoveryTest.java": "6cf2e3f9d6832785f23714f53d4054da1b58ef94"
+  },
+  "bootstrap_recovery_authorization": {
+    "branch": "dot/f03-bootstrap-recovery-20261101",
+    "baseline": "434e45afeb6aca3fa69969f1c7cecc8a799f2e3e",
+    "single_android_minutes": 120,
+    "automatic_retry": false,
+    "old_tests": 8,
+    "fixture_exceptions": [
+      "bootstrapKeepsCurrentUserFields",
+      "partialBootstrapSurvivesMembershipRefusal",
+      "legacyMetadataChangeRefusesBootstrap"
+    ],
+    "new_tests": 12,
+    "full_f03_accepted": false
   }
 }

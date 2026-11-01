@@ -67,6 +67,14 @@ public final class OrganizationTest extends Instrumentation {
         long sdk=books.importFile(source.getPath(),NativeLibrary.FORMAT_TXT,title).id;
         books.finalizeImport(books.verifySource(sdk,null,0,task()));return books.localShelfBook(sdk);
     }
+    private CatalogStore.ShelfBook legacyBook(String title)throws Exception{
+        File source=new File(directory,title+".txt");Files.write(source.toPath(),("Public original "+title).getBytes(StandardCharsets.UTF_8));
+        long sdk=books.importFile(source.getPath(),NativeLibrary.FORMAT_TXT,title).id;
+        BookStore.VerifiedSource verified=books.verifySource(sdk,null,0,task());
+        NativeCatalog.attach(books.productOwner(),verified.format,verified.sha256,verified.bytes,verified.book.id,verified.location,
+            verified.book.title,verified.book.author,java.text.Normalizer.normalize(verified.book.title,java.text.Normalizer.Form.NFC),verified.book.favorite!=0);
+        return books.localShelfBook(sdk);
+    }
     private void completeUnicodeIntentBeforeWrite()throws Exception{
         IntentJournal.Command c=IntentJournal.Command.group(0,0,NativeCatalog.newId(),"书架😀E\u0301",id(90),19,new String[]{id(8),id(7)});
         store().journal.create(c,null);IntentJournal.Pending p=store().journal.read();
@@ -111,7 +119,7 @@ public final class OrganizationTest extends Instrumentation {
         IntentJournal.Pending retained=store().journal.read();require(retained.command.json().toString().equals(competing[0].json().toString())||retained.command.json().toString().equals(competing[1].json().toString()),"complete winning request remains");
     }
     private void bootstrapKeepsCurrentUserFields()throws Exception{
-        group(1,1,"Tag","",0);CatalogStore.ShelfBook b=book("SDK title");
+        group(1,1,"Tag","",0);CatalogStore.ShelfBook b=legacyBook("SDK title");
         String large=String.valueOf((char)1).repeat(4096);
         db().execSQL("UPDATE reader_books SET title=?,author=?,sort_title=?,favorite=1",new Object[]{"用户😀",large,large});
         OrganizationStore.MemberEdit edit=store().member(1,id(1),b,task());require(edit.bootstrap!=null,"explicit bootstrap plan");
@@ -123,7 +131,7 @@ public final class OrganizationTest extends Instrumentation {
         require(count("reader_revisions")==3&&count("reader_book_tags")==1&&store().journal.read()==null,"one book and membership revision");
     }
     private void partialBootstrapSurvivesMembershipRefusal()throws Exception{
-        CatalogStore.ShelfBook b=book("Partial");OrganizationStore.MemberEdit edit=store().member(1,id(999),b,task());
+        CatalogStore.ShelfBook b=legacyBook("Partial");OrganizationStore.MemberEdit edit=store().member(1,id(999),b,task());
         IntentJournal.Command c=IntentJournal.Command.member(1,0,id(999),b.key.bookKey,0,edit.selection.heads);
         require(store().submit(c,edit.bootstrap,task()).contains("Book history committed"),"partial success explicit");
         IntentJournal.Pending saved=store().journal.read();require(saved.bootstrapDone&&count("reader_revisions")==1,"bootstrap checkpoint durable");
@@ -131,7 +139,7 @@ public final class OrganizationTest extends Instrumentation {
         require(count("reader_revisions")==3&&count("reader_book_tags")==1,"no duplicate bootstrap");
     }
     private void legacyMetadataChangeRefusesBootstrap()throws Exception{
-        group(1,1,"Tag","",0);CatalogStore.ShelfBook b=book("Legacy");OrganizationStore.MemberEdit edit=store().member(1,id(1),b,task());
+        group(1,1,"Tag","",0);CatalogStore.ShelfBook b=legacyBook("Legacy");OrganizationStore.MemberEdit edit=store().member(1,id(1),b,task());
         db().execSQL("UPDATE reader_books SET title='New user edit'");
         require(store().submit(IntentJournal.Command.member(1,0,id(1),b.key.bookKey,0,edit.selection.heads),edit.bootstrap,task()).contains("changed since bootstrap review"),"legacy product changed refused");
         require(count("reader_revisions")==1&&count("reader_book_tags")==0&&!store().journal.read().bootstrapDone,"no changed-field overwrite");
