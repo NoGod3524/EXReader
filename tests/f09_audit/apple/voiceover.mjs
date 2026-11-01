@@ -16,12 +16,14 @@ const steps = [];
 const result = { source_sha: process.env.GITHUB_SHA, run_id: process.env.GITHUB_RUN_ID,
   attempt: process.env.GITHUB_RUN_ATTEMPT, screen_reader: 'VoiceOver (macOS)', human_listening_verified: false };
 
+// `fragment` is a string or a predicate over the spoken phrase.
 async function seek(fragment, limit = 60) {
+  const matches = typeof fragment === 'function' ? fragment : (phrase) => phrase.includes(fragment);
   let silent = 0;
   for (let i = 0; i < limit; i++) {
     const phrase = await voiceOver.lastSpokenPhrase();
     steps.push(phrase);
-    if (phrase.includes(fragment)) return true;
+    if (matches(phrase)) return true;
     silent = phrase ? 0 : silent + 1;
     // A cursor trapped inside an element speaks nothing; step back out of it.
     if (silent >= 4) { await voiceOver.stopInteracting(); steps.push('[stop interacting]'); silent = 0; }
@@ -43,7 +45,9 @@ try {
   found.organize = await seek('整理');
   found.importSample = await seek('导入 EPUB');
   if (found.importSample) { await voiceOver.act(); await sleep(6000); }
-  found.book = await seek('Sample', 80);
+  // The shelf row button itself: the status "已导入 Sample.epub" also names the
+  // book and was taken for the row once (run 41284439868).
+  found.book = await seek((phrase) => phrase.startsWith('Sample.epub') && phrase.includes('button'), 80);
   if (found.book) { await voiceOver.act(); await sleep(8000); }
   found.page = await seek('第 1 页', 80);
   result.found = found;
