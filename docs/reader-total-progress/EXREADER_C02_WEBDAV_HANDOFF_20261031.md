@@ -1,3 +1,63 @@
+# EXReader continuation snapshot — scheduled 2026-11-01 01:22 UTC
+Actual check: **2026-11-01T01:18:23Z / 2026-10-31 21:18:23 America/New_York (EDT)**, earlier than the nominal scheduled run. This is a continuation backup, not completion or suspension.
+
+Formal catalog remains **96/108 (88.89%), 96 verified / 1 partial / 11 pending** at `5db41cb19673fb75bb0b498c677d770931ac33e8`. Only this existing handoff document is updated on `codex/gpt-iphone-acceptance-96-20261031`; previous HEAD read first: `586289d404cc8e01b598f764525ee3d842eb11d2`. No catalog/source/workflow change or CI by this snapshot.
+
+## Latest fixed state (supersedes historical status below)
+
+| Main task | Fixed branch / source or seal | Actual result / next blocker |
+|---|---|---|
+| F03 | `dot/reader-suite-20261101`; tested `211615ebea4985405c8dfa2f5c70fad0e2d2ad11`; seal `b7fb3947e7362e10641f32a60779c4f9992f7334` | [Round2 run41258793317 A1](https://github.com/NoGod3524/EXReader/actions/runs/41258793317) completed failure, API rechecked. Original27-suite startup failed “Host window not mapped”; new author did not run, Android skipped. Do not transfer prior original27 pass to this run. Exact-artifact diagnosis awaits new approval. F03 now owns all canonical11 files and sole trigger; F07 no longer writes/triggers this suite. |
+| F04 | `dot/f04-reading-sync-20261031` / `230750bdbc52caa3e46fb5c92a43614068edebd6` | 12-file source preparation,0CI. Original xcodeproj dependency restored in all three fresh Apple UI jobs; source review is not runtime acceptance. Proposed canonical23-path / one120 cap not yet approved. |
+| F05 | `dot/f05-client-recovery-20261031` / `a6c734aff15f0539878c1c229d7ef5f9e7782dec` | 9-file preparation,0CI; identity patch reviewed by F07. Android Java3.42 temporary-adapter scope still blocked pending approval. Original265 allowance is not silently repurposed. |
+| F07 | old diagnostic seal `697448abd8188580304806163ba9b543e76ba9ba` | No new producer. Old run41251856370 diagnostic succeeded but provider evidence ambiguous/F07false. Shared evidence design/review does not equal active implementation or provider runtime proof. |
+| F10 | `dot/f10-stale-owner-20261031`; tested `6ab976b9ae73c5f6641cc4788b7e18126b53ec17`; seal `75c0f1f5ded388036258c506fac6595b3e5dabef` | [Run41258166901 A1](https://github.com/NoGod3524/EXReader/actions/runs/41258166901) success, API and ordinary audit log checked. API33/258/8 and snapshot29/187/10 passed; callback/managed/sync accepted, **full_f10_complete=false**. Next streaming GET9-path / one60 proposal unapproved. |
+| F12 | `dot/f12-delivery-20261101` / `64729214788a99ae96de7dda1a6376337324f9e4` | Approved3-path guidance generator +2docs implemented, independently source-reviewed and sealed;0CI. Historical ZIPs unchanged. Final candidate/old-version support and actual package verification remain open. |
+
+F06 was already verified and is not rerun. User explicitly approved replacing that completed main assignment with F12 at00:32:42; six current main tasks are F03/F04/F05/F07/F10/F12, not six copies of F06 review.
+
+### Actual activity classification at this check
+- Active implementation: **0** confirmed; no new authority inferred from queued plans.
+- Active diagnostic execution: **0**; F03 artifact diagnosis is pending authorization.
+- Dedicated active review: **0** confirmed at this instant; completed F07/source reviews are not active slots.
+- Documentation/evidence organization: **1**, this native F12 agent saving the approved hourly snapshot.
+- Test waiting/running: **0**; the two cited current runs are terminal.
+- Blocked/awaiting scope or evidence: **5 other main assignments**; F12 also has a final-acceptance dependency after this snapshot.
+- Completed main tasks among these six: **0**. F10 sub-batch and F12 source-preparation deliverables are completed, not full F10/F12. Tool “running” flags are not implementation work.
+
+## New evidence and failure preservation
+
+F03 round2 original artifact **13064700805 / 22383312 bytes / SHA256 6fd133347aa6b4fc9c4138c0b94a5c76bb909eecd87b38530d2281fef362da62**. Identity supplied by sealed package/coordinator; no ZIP download or parsing in this snapshot. Preserve the failure and original assertions; do not classify a window-startup problem as a passed six-target behavior test. Original first round and second round remain separate, with no automatic rerun.
+
+F10 Linux job124705668374 and audit124706308333 succeeded. Producer artifact **13064430312 / 2455746 bytes / SHA256 4d3e1f90f5b1077edef1bb7eee859044f20bc6375e6dd4c8f57f7d2e9f65e244**; audit **13062834922 / 969 bytes / SHA256 6363bc337be26909a088fa4412b00c8e3b9d76182eff4c01244e62cc6dc97dae**. Original API33 cases/258 assertions/8 negatives retained; new snapshot29 cases/187 checks/10 exact negatives passed. Original failed B run41257244190 is retained: fixed-original-artifact reading confirmed TLS status4/callback calls0; corrected .crt trust and native HTTPS preflight passed without bypassing TLS or changing production assertions.
+
+**SDK lineage correction:** previous text associating the current b5e7 source with SDK727 must not be used as current proof. Parent/source review established b5e7,94fb and8357 have identical five SDK trees (src/include/cmake/CMakeLists.txt/bindings). SDK727 refers to historical artifact lineage. Nevertheless current F10 B did not build or consume the reader, so tree equality does **not** establish a reader-binary or six-host binding. Full F10 and common six-host acceptance remain ungranted.
+
+F12 guidance now distinguishes Linux sha256sum from macOS shasum, real backup/compatibility limits, import versus local removal, per-host sync/receive/cancel/conflict behavior and license materials. This is source-level completion only, not generated-package execution or F12 acceptance. [Fixed F12 matrix](https://github.com/NoGod3524/EXReader/blob/64729214788a99ae96de7dda1a6376337324f9e4/docs/reader-total-progress/DOT_F12_DELIVERY_MATRIX_20261101.md).
+
+## Pending exact approvals — none executed by this snapshot
+
+1. F04 canonical23 paths, one120 runner-minute actual bidirectional validation.
+2. F05 android.py temporary Java3.42 adapter,0CI.
+3. F10 streaming GET9 paths, one60 runner-minute cap; remove unnecessary verification scratch while preserving hash-before-ack, bounded bytes, cancellation and error semantics.
+4. F03 fixed original-artifact diagnosis3 paths, one10-minute cap; no product/test rebuild.
+
+These are proposals, not grants. Prior blanket approval or unused allowance does not authorize new rounds. Future new batches retain design-before-code, independent proof/counterexample review, one writer plus one reviewer per module family, and convergence toward the parameterized suite. No additional permanent duplicate workflow is inferred.
+
+## P0 / conflicts / owners / continuation
+
+C02 remains sealed complete only in its original scope; it does not grant fullP0/F12 or hardware power-loss safety. F10 now proves the bounded Linux managed-upload cleanup loop, but remaining GET/private_file scratch and host/OS credential-lifecycle coverage are not silently accepted. Conflict recovery still requires preserving competing heads/tombstones and actual native conflict presentation; no invented universal automatic single-head rule. F05 runtime is still absent.
+
+Final common product SHA remains unfrozen. SDK tree identity alone cannot bridge different host/code/artifact provenance or unexecuted tests. Apple organization delta `b3ef06e169b6c0f56ea3d76246351018b0ef37e1` remains outside A and is not deemed compiled/passed. F03 owns only explicitly transferred HostCatalog.swift/HostModel.swift plus its scoped tests; F10 owns only explicitly transferred cleanup/WebDAV/sync scope. UI/animation, F08, F09 and other external owners remain untouched. C02/K03/WebDAV prior sealed deliverables and Apple diagnostic41179353708 are not rerun.
+
+GitHub direct source/Git route remains explicitly approved. No Desktop Commander quota retry, no alternate credential route, no new VM/native-machine handshake, no asserted new last-success/ready/pwd state. No credentials read/exported. All builds/syntax/tests/fixtures/benchmark/archive work remain Actions-only. No Codex/Claude or extra team launched; paused six-slot auto-refill is not resumed.
+
+Current partial deliverables are backed by fixed evidence; **no reliable completion-time range for this next batch or all remaining11 pending items** is available before approval and actual diagnosis. Proposed120/60/10 minute amounts are resource caps, not ETAs. Continue exact approved work when authority arrives, preserve all failures, and request specific scope for remaining integration rather than repeatedly claiming all-six active.
+
+---
+
+## Previous observations (historical; latest corrections above take precedence)
+
 # EXReader continuation snapshot — 2026-11-01 00:22 UTC
 Actual preparation observation: **2026-11-01T00:21:48Z / 2026-10-31 20:21:48 America/New_York (EDT)**.
 
