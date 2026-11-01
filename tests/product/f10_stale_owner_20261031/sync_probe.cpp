@@ -123,6 +123,12 @@ int main(int argc,char **argv){try{
   exr_webdav_config cfg{};cfg.root_url=url;cfg.timeout_ms=10000;
   exr_webdav_client *dav=nullptr;exr_webdav_error error{};
   int code=exr_webdav_create(&cfg,&dav,&error);row("create",code);if(code)return 3;
+  if(mode=="get-error"){
+    unsigned calls=0;uint64_t received=123;
+    auto consume=[](void *context,const void *,size_t)->exr_webdav_status{++*(unsigned*)context;return EXR_DAV_IO;};
+    code=exr_webdav_read_stream(dav,"body",body.size(),consume,&calls,nullptr,&received,&error);
+    row("get",code);row("calls",calls);row("received",received);exr_webdav_free(dav);return 0;
+  }
   if(mode=="callback"){
     reader r;r.mode=argc>4?argv[4]:"normal";
     uint64_t size=r.mode=="zero"?0:r.mode=="limit"?UINT64_C(128)*1024*1024+1:body.size();
