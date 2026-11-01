@@ -119,6 +119,27 @@ final class F09AppleUITests: XCTestCase {
                         "busy": element("library.busy").exists, "state": state()])
     }
 
+    private func organizationSample(_ phase: String) {
+        let row = bookRow(), add = element("organization.add")
+        samples.append(["t": Date().timeIntervalSince1970, "phase": phase,
+                        "message": text("organization.message"), "membership": text("organization.membership"),
+                        "add_enabled": add.exists && add.isEnabled,
+                        "row_exists": row.exists, "row_enabled": row.exists && row.isEnabled,
+                        "row_hittable": row.exists && row.isHittable,
+                        "row_frame": row.exists ? String(describing: row.frame) : ""])
+    }
+
+    // Membership versions re-read: the prepareMembership publish ("已读取成员版本。")
+    // or 添加 enabled, sampled every 200 ms for about 20 s.
+    private func awaitReread(_ phase: String) -> Bool {
+        for _ in 0..<100 {
+            organizationSample(phase)
+            if text("organization.message") == "已读取成员版本。" || element("organization.add").isEnabled { return true }
+            usleep(200_000)
+        }
+        return false
+    }
+
     private func launch(fresh: Bool) {
         app.launchArguments = ["-EXRUITestFixtures", "1"] + (fresh ? ["-EXRFreshState", "1"] : [])
         app.launch()
@@ -155,7 +176,16 @@ final class F09AppleUITests: XCTestCase {
         // (third entry, the one that opened no panel in run 41170540560).
         tap("organization.verify-original")
         XCTAssertTrue(wait { self.text("organization.message").contains("原件验证完成") }, app.debugDescription)
+        // Diagnostic (run 41337069328 attempt 2): this re-read tap once had no
+        // effect and 添加 stayed disabled. Sample the panel around it; if it has no
+        // effect, tap once more only to learn whether a second tap works, then fail.
+        organizationSample("before re-read tap")
         tapElement(bookRow(), name: "organization book")
+        if !awaitReread("after re-read tap") {
+            tapElement(bookRow(), name: "organization book (diagnostic second tap)")
+            let second = awaitReread("after diagnostic second tap")
+            XCTFail("the book-row tap after verification did not re-read the membership versions; second tap re-read=\(second)")
+        }
         tap("organization.add")
         XCTAssertTrue(wait { self.text("organization.membership") == "member" }, app.debugDescription)
         app.terminate()
