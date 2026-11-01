@@ -601,3 +601,36 @@ log/state presence; missing content is never fabricated or substituted.
 Original diagnose-original and product audit functions/assertions are unchanged.
 Controller and failed producer identities remain separate. This extracts
 evidence only, never grants F03 acceptance or a new product result.
+
+## Fixed GTK artifact diagnosis terminal result - 2026-11-01 13:54 UTC
+
+Run https://github.com/NoGod3524/EXReader/actions/runs/41313464418 attempt 1,
+controller 0f5fa9a7af469e630ae61f0deaca1b35b8e15212, job124868512926,
+completed successfully 13:53:56 to 13:54:11Z. Its five-minute allowance is 1/1 used,
+no product was rebuilt or executed and no automatic retry was performed.
+The fixed original ZIP/API/source/run/job identities authenticated successfully.
+All 13 selected text files were read; no selected file was missing or refused.
+The original 27-check report's exact bytes and identity were preserved.
+
+The original author-window samples cover 13:38:31 to 13:39:00Z. They show the actual
+EXReader main window and native import/organization windows. Account and Sync
+is present and active (0x20d94f) from 13:38:48 through 13:38:58; at 13:38:59 the
+client list is temporarily empty, and the 13:39:00 sample lists only the main
+window. No sampled window establishes a keyring prompt. Samples end well before
+the 13:42:10 sync timeout, so they do not establish its internal session state.
+Both author-profile application.log and state.ini are confirmed absent from
+the original archive; their contents cannot be recovered from this artifact.
+Openbox logs contain only the previously observed missing Debian menu notice.
+
+Static product mnemonics match the driver's existing keys: session-only H,
+apply A, sync S. The observed account-window disappearance and original timeout
+remain unexplained; this evidence does not authorize a speculative product fix.
+Original failure/F2-not-reached status and full_F03_accepted=false remain.
+
+Diagnostic output artifact13086188731 contains the unchanged original ZIP and
+selected records, 22821295 bytes, SHA256
+1d5d1c6bc5921b7df45fa71184923b473e7028d7c4cf319f262474441b19e2a4,
+expires 2027-01-30T13:53:53Z.
+Any further execution needs a new bounded scope. A possible next diagnostic
+would preserve the original actions and waits while recording allowlisted,
+non-secret numeric account status and focus before/after existing key actions.

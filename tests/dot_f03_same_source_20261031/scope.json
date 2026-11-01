@@ -288,7 +288,7 @@
       "tests/dot_f03_same_source_20261031/scope.json",
       "docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md"
     ],
-    "status": "prepared_not_run",
+    "status": "completed_success_evidence_only",
     "fixed_source": "e84c4c5db2b242b61990cca9ee7917fa39fa43e9",
     "fixed_run": 41311869249,
     "fixed_attempt": 1,
@@ -298,6 +298,22 @@
     "fixed_zip_sha256": "acbbe4e93421e927bf9661d2325c7fd4ef870d470281b53d5616ee8bbbc42e9b",
     "diagnostic_only": true,
     "product_reexecuted": false,
-    "full_F03_accepted": false
+    "full_F03_accepted": false,
+    "source_sha": "0f5fa9a7af469e630ae61f0deaca1b35b8e15212",
+    "run_id": 41313464418,
+    "attempt": 1,
+    "job_id": 124868512926,
+    "used_runs": 1,
+    "selected_count": 13,
+    "missing_selected": [],
+    "missing_author_profile": [
+      "f03-author-profile/application.log",
+      "f03-author-profile/state.ini"
+    ],
+    "artifact": {
+      "id": 13086188731,
+      "bytes": 22821295,
+      "sha256": "1d5d1c6bc5921b7df45fa71184923b473e7028d7c4cf319f262474441b19e2a4"
+    }
   }
 }
