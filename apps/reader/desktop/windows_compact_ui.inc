@@ -220,7 +220,19 @@ static int compact_translate(const MSG *message) {
      !(GetKeyState(VK_CONTROL)&0x8000) && !(GetKeyState(VK_MENU)&0x8000)) {
     open_selected_book();return 1;
   }
+  /* Menu-bar access keys win over the same letters on controls (书内查找(&B),
+     删除标注(&R), 搜索(&S)), which IsDialogMessage would otherwise take first:
+     in the reader Alt+B moved focus to the find field instead of opening 书库. */
+  if(!compact_expanded && message->message==WM_SYSCHAR &&
+     !(GetKeyState(VK_CONTROL)&0x8000) && !(GetKeyState(VK_SHIFT)&0x8000)) {
+    WPARAM key=message->wParam|0x20;
+    if(key=='b' || key=='r' || key=='v' || key=='s') { SendMessageW(g.window,WM_SYSCOMMAND,SC_KEYMENU,key);return 1; }
+  }
   if(message->message!=WM_KEYDOWN || !(GetKeyState(VK_CONTROL)&0x8000) || (GetKeyState(VK_SHIFT)&0x8000)) return 0;
   if(message->wParam=='O') { compact_import();return 1; }
+#ifdef EXR_READER_PRODUCT_CATALOG
+  /* Ctrl+F reaches the shelf search on the library (the reader keeps in-book search). */
+  if(message->wParam=='F' && !compact_reading && g.shelf_search) { SetFocus(g.shelf_search);return 1; }
+#endif
   return 0;
 }
