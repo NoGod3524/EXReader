@@ -195,7 +195,8 @@
       ],
       "count": 32,
       "report_kind": "ordered-checks",
-      "provenance": "Original planted branch cases remain regression, not new native peer evidence."
+      "provenance": "Original planted branch cases remain regression, not new native peer evidence.",
+      "program_hash_field": "program_sha256"
     },
     "gtk-account-receive-48": {
       "hosts": [
@@ -257,7 +258,8 @@
       ],
       "count": 48,
       "report_kind": "ordered-checks",
-      "provenance": "Original seeded receiver cases remain regression, not new native peer evidence."
+      "provenance": "Original seeded receiver cases remain regression, not new native peer evidence.",
+      "program_hash_field": "program_sha256"
     },
     "android-host-sync-16": {
       "hosts": [
@@ -319,7 +321,8 @@
         "test01RootValidationAnonymousRestartAndUpdate",
         "test02SeparateAccountLibrariesAndRestart",
         "test03NativeHTTPSBackgroundCloseAndRetry"
-      ]
+      ],
+      "program_hash_field": "actual_executable_sha256"
     },
     "apple-account-401-retry": {
       "hosts": [
@@ -340,8 +343,48 @@
       ],
       "source_path": "tests/reader_team24_apple/run_account_terminal.py",
       "source_blob": "b4f5af3578acbd9319498a10f10d14668211b989",
-      "report_kind": "command-exit",
-      "authenticated_and_unauthenticated_requests": true
+      "report_kind": "original-command-log",
+      "wrapper_command_role": "original-account-terminal",
+      "program_source_path": "tests/reader_team24_apple/AccountTerminalReview.swift",
+      "program_source_blob": "5dd7ae9891670f7644af4c070e51da4159c0d467",
+      "ordered_pass_lines": [
+        "finished terminal state",
+        "finished terminal message",
+        "finished completion callback",
+        "finished actual terminal callback",
+        "finished closes",
+        "cancelled terminal state",
+        "cancelled terminal message",
+        "cancelled completion callback",
+        "cancelled actual terminal callback",
+        "cancelled session retries",
+        "retry delivers exactly one successful completion",
+        "cancelled closes",
+        "failed terminal state",
+        "failed terminal message",
+        "failed completion callback",
+        "failed actual terminal callback",
+        "failed closes",
+        "preparation cancellation requested",
+        "preparation cancellation settles",
+        "preparation failure is visible"
+      ],
+      "count": 20,
+      "request_observation": "Original frozen Python wrapper asserts both authenticated and unauthenticated request presence after native exit; do not invent numeric request counts."
     }
+  },
+  "canonical_interface": {
+    "state": "pending_coordinator_actual_job_and_artifact_binding",
+    "module": "F05",
+    "one_per_host_output": {
+      "receipt": "receipt.json",
+      "program": "program.bin",
+      "coverage": "coverage.json",
+      "evidence": "relative paths from receipt; preserve original bytes"
+    },
+    "artifact_evidence_prefix": "explicit trusted spec, never guessed from download layout",
+    "retained_programs": "one actual program per original suite; distinct builds may differ in hash but each needs same source/SDK build provenance",
+    "no_new_permanent_workflow": true,
+    "dispatch_allowed": false
   }
 }
