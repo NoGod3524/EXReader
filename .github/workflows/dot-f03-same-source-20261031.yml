@@ -133,6 +133,7 @@ jobs:
             build/f03-android/
             build/f03-android-build.json
             build/f03-android-retained-driver.json
+            build/f03-android-original-steps.json
             build/organization-android/
             build/owner-android/
             build/shelf-android/
@@ -163,5 +164,5 @@ jobs:
           name: reader-suite-f03-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/f03-partial-result.json
-            build/f03-evidence/audit*
+            build/f03-evidence/api-originals/
           if-no-files-found: error
