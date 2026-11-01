@@ -86,6 +86,17 @@ jobs:
             build/phase/installed-identity.json
           if-no-files-found: error
           retention-days: 30
+      - name: Collect safe diagnostic evidence
+        if: always()
+        run: python3 tests/dot_f04_reading_sync_20261031/run.py diagnostics --kind windows
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f04-diagnostic-windows_seed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f04-diagnostics/windows/
+          if-no-files-found: warn
+          retention-days: 30
+
   android_peer:
     name: F04 android peer
     if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && inputs.case == 'f04/windows-android' && inputs.controller_sha == github.sha }}
@@ -176,6 +187,17 @@ jobs:
             build/phase/installed-identity.json
           if-no-files-found: error
           retention-days: 30
+      - name: Collect safe diagnostic evidence
+        if: always()
+        run: python3 tests/dot_f04_reading_sync_20261031/run.py diagnostics --kind android
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f04-diagnostic-android_peer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f04-diagnostics/android/
+          if-no-files-found: warn
+          retention-days: 30
+
   windows_return_android:
     name: F04 Windows return (android)
     if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && inputs.case == 'f04/windows-android' && inputs.controller_sha == github.sha }}
@@ -232,6 +254,17 @@ jobs:
             build/phase/installed-identity.json
           if-no-files-found: error
           retention-days: 30
+      - name: Collect safe diagnostic evidence
+        if: always()
+        run: python3 tests/dot_f04_reading_sync_20261031/run.py diagnostics --kind windows
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f04-diagnostic-windows_return_android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f04-diagnostics/windows/
+          if-no-files-found: warn
+          retention-days: 30
+
   retained_linux:
     name: F04 original 18 and 121 (linux)
     if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && inputs.case == 'f04/windows-android' && inputs.controller_sha == github.sha }}
@@ -270,8 +303,24 @@ jobs:
             build/v2-webdav-consumer/reading-v2-probe*
             build/v1-consumer/reading-state-probe*
             build/v1-consumer/reading-state-c-consumer*
+            build/v1-consumer/reading-state-link.map
+            build/v1-product/CMakeCache.txt
+            build/v1-revisions/CMakeCache.txt
+            build/v1-adapter/CMakeCache.txt
+            build/v1-consumer/CMakeCache.txt
           if-no-files-found: error
           retention-days: 30
+      - name: Collect safe diagnostic evidence
+        if: always()
+        run: python3 tests/dot_f04_reading_sync_20261031/run.py diagnostics --kind retained
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f04-diagnostic-retained_linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f04-diagnostics/retained/
+          if-no-files-found: warn
+          retention-days: 30
+
   audit:
     name: F04 graph and original retained authentication
     if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && inputs.case == 'f04/windows-android' && inputs.controller_sha == github.sha }}
@@ -298,3 +347,14 @@ jobs:
             build/f04-graph-auth/
             build/f04-retained-auth/
           if-no-files-found: error
+
+      - name: Collect safe diagnostic evidence
+        if: always()
+        run: python3 tests/dot_f04_reading_sync_20261031/run.py diagnostics --kind audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f04-diagnostic-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f04-diagnostics/audit/
+          if-no-files-found: warn
+          retention-days: 30

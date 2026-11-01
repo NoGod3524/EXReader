@@ -2,7 +2,8 @@
 """Actual legacy Windows product controls; no revision-consumer or database writes."""
 import argparse, base64, ctypes as C, hashlib, importlib.util, json, os
 from pathlib import Path
-import sqlite3, sys
+import sqlite3, sys, traceback
+from ctypes import wintypes as W
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -27,9 +28,48 @@ def main():
     out = args.output.resolve(); out.mkdir(parents=True, exist_ok=False)
     rec = module("f04_windows_records", "tests/reader_windows_records/check_ui.py")
     account = module("f04_windows_account", "tests/reader_windows_account/check_account_ui.py")
+    rec.U.GetWindowRect.argtypes = [W.HWND, C.POINTER(W.RECT)]
     class Device(rec.RecordsApp, account.Device):
-        pass
-    app = dav = trust = None
+        def import_file(self, path):
+            self.wait_initial_shelf(); self.wait_idle()
+            assert rec.send(self.control("books"), 0x18B) == 0, "seed profile not empty"
+            self.wait(lambda: rec.U.SetForegroundWindow(self.window) or rec.U.GetForegroundWindow() == self.window)
+            assert rec.U.GetForegroundWindow() == self.window, "Import app not foreground"
+            rec.M.set_text(self.control("path"), str(path))
+            assert rec.text(self.control("path")) == str(path), "Import path mismatch"
+            button = self.control("import")
+            assert rec.U.IsWindowVisible(button) and rec.U.IsWindowEnabled(button), "Import not available"
+            pid = W.DWORD(); rec.U.GetWindowThreadProcessId(button, C.byref(pid))
+            assert pid.value == self.process.pid, "Import wrong process"
+            rectangle = W.RECT()
+            rec.U.GetWindowRect.argtypes = [W.HWND, C.POINTER(W.RECT)]
+            assert rec.U.GetWindowRect(button, C.byref(rectangle)), "Import rectangle"
+            x, y = (rectangle.left + rectangle.right) // 2, (rectangle.top + rectangle.bottom) // 2
+            rec.U.WindowFromPoint.argtypes = [W.POINT]; rec.U.WindowFromPoint.restype = W.HWND
+            assert rec.U.WindowFromPoint(W.POINT(x, y)) == button, "Import hit occluded"
+            class Mouse(C.Structure):
+                _fields_ = [("dx", W.LONG), ("dy", W.LONG), ("mouseData", W.DWORD),
+                            ("dwFlags", W.DWORD), ("time", W.DWORD), ("extra", C.c_size_t)]
+            class Payload(C.Union):
+                _fields_ = [("mi", Mouse)]
+            class Input(C.Structure):
+                _fields_ = [("type", W.DWORD), ("data", Payload)]
+            rec.U.SendInput.argtypes = [W.UINT, C.POINTER(Input), C.c_int]
+            rec.U.SendInput.restype = W.UINT
+            assert rec.U.SetCursorPos(x, y), "Import cursor move failed"
+            assert rec.U.WindowFromPoint(W.POINT(x, y)) == button and rec.U.GetForegroundWindow() == self.window, "Import target changed"
+            events = (Input * 2)()
+            events[0].data.mi.dwFlags = 0x0002
+            events[1].data.mi.dwFlags = 0x0004
+            sent = rec.U.SendInput(2, events, C.sizeof(Input))
+            report["import_input"] = {"method": "SendInput", "events_sent": sent, "dispatches": 1}
+            assert sent == 2, "Import physical input refused; not retried"
+            # No second click and no synchronous BM_CLICK timeout suppression.
+            self.wait(lambda: rec.send(self.control("books"), 0x18B) == 1, timeout=120)
+            self.wait_idle()
+            assert self.row(args.title) == 0 and rec.send(self.control("books"), 0x18B) == 1, "Import target row mismatch"
+    app = dav = trust = user = password = None
+    phase = 'launch'
     report = dict(identity(), platform="windows", sdk_version="3.42.0",
                   f04_stage="six-host-reading-preparation-v2", passed=False,
                   checks=[], navigations=[], F04_accepted=False)
@@ -80,7 +120,9 @@ def main():
         # Only the seed imports locally. A receiver starts empty, otherwise
         # staging a local bootstrap could create a competing book root.
         if args.phase == "windows-seed":
+            phase = "import"
             app.import_file(args.original.resolve()); app.wait_idle()
+        phase = "account-and-records"
         d = app.open_account()
         app.fill(d, dav.base + "/dav/", user, password, False)
         app.apply(d, "仅本次会话"); app.close_account(d)
@@ -133,6 +175,39 @@ def main():
         (out / "program.bin").write_bytes(args.candidate.read_bytes())
         report["passed"] = True
         save(dav, out, args.phase, report); dav = None
+    except BaseException as error:
+        report["passed"] = False
+        report["failure_phase"] = phase
+        report["error_type"] = type(error).__name__
+        diagnostic = ROOT / "build/f04-diagnostics/windows"
+        diagnostic.mkdir(parents=True, exist_ok=True)
+        try:
+            from run import diagnostic_text
+            secrets = [user, password]
+            if user is not None and password is not None:
+                secrets.append(base64.b64encode((user + ":" + password).encode()).decode())
+            (diagnostic / "exception.txt").write_text(diagnostic_text(traceback.format_exc(), secrets), encoding="utf-8")
+            if app:
+                observed = {"process_id": app.process.pid, "exit_code": app.process.poll(),
+                            "window_exists": bool(rec.U.IsWindow(app.window)), "phase": phase}
+                try:
+                    observed["status"] = diagnostic_text(app.status(), secrets)
+                except Exception as observation_error:
+                    observed["status_error"] = type(observation_error).__name__
+                (diagnostic / "window.json").write_text(json.dumps(observed, indent=2), encoding="utf-8")
+                log = out / "profile/application.log"
+                if log.is_file():
+                    (diagnostic / "application.txt").write_text(diagnostic_text(log.read_text(encoding="utf-8"), secrets), encoding="utf-8")
+                # Capture only before credentials ever enter the UI. Never desktop/account screenshots.
+                if phase == "import" and rec.U.IsWindow(app.window) and rec.U.GetForegroundWindow() == app.window:
+                    from PIL import ImageGrab
+                    rect = W.RECT()
+                    if rec.U.GetWindowRect(app.window, C.byref(rect)):
+                        ImageGrab.grab(bbox=(rect.left, rect.top, rect.right, rect.bottom)).save(diagnostic / "import-window.png")
+        except Exception as diagnostic_error:
+            # Do not fall back to copying unsanitized bytes.
+            (diagnostic / "diagnostic-refused.json").write_text(json.dumps({"error_type": type(diagnostic_error).__name__}))
+        raise
     finally:
         actions = []
         if app: actions.append(("close-actual-app", app.close))
