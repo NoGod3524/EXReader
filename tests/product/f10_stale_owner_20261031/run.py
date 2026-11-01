@@ -23,6 +23,7 @@ def main():
             (d/'stdout.log').write_bytes(e.stdout or b'');(d/'stderr.log').write_bytes(e.stderr or b'')
             row={'name':name,'timeout':True,'exit':None,'records':[],'binary':binary.name,'binary_sha256':digest(binary)}
         (d/'observation.json').write_text(json.dumps(row,indent=2)+'\n');rows.append(row)
+        print(json.dumps({'core_observation':row,'stderr':(d/'stderr.log').read_text(errors='replace')}),flush=True)
     index={'source':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'cases':CASES,
            'binaries':{k:digest(v) for k,v in binaries.items()},'euid':os.geteuid(),'full_f10_complete':False,
            'scope':'POSIX cleanup additive APIs; installed library plus separately labelled existing-hook boundary binary'}
