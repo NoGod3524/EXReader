@@ -10,11 +10,12 @@ import threading
 import time
 import hashlib
 import json
+import plistlib
 import os
 from pathlib import Path
 import subprocess
 import sys
-from fixture import Store
+from fixture import Store, write_role_receipt
 
 SWIFT = r'''
 import XCTest
@@ -167,6 +168,7 @@ def main():
     p.add_argument("--udid")
     p.add_argument("--peer",type=Path)
     p.add_argument("--container",type=Path)
+    p.add_argument("--app",type=Path)
     p.add_argument("--certificate",type=Path)
     p.add_argument("--key",type=Path)
     p.add_argument("--output",type=Path)
@@ -176,8 +178,8 @@ def main():
         a.tests.mkdir(parents=True,exist_ok=False)
         (a.tests/"F05RecoveryUITests.swift").write_text(SWIFT)
         return
-    if any(v is None for v in (a.peer,a.certificate,a.key,a.output)):
-        raise ValueError("peer/TLS/output required")
+    if any(v is None for v in (a.peer,a.certificate,a.key,a.output,a.app)):
+        raise ValueError("peer/TLS/output/actual app bundle required")
     command=a.command[1:] if a.command[:1]==["--"] else a.command
     if not command or command[0]!="xcodebuild":raise ValueError("actual xcodebuild required")
     if any("-only-testing" in v or "-resultBundlePath" in v for v in command):
@@ -187,17 +189,91 @@ def main():
     if contract["entity_kind"]!="book":raise AssertionError("Apple book receiver requires book peers")
     user,password="f05",secrets.token_hex(24)
     authorization="Basic "+base64.b64encode((user+":"+password).encode()).decode()
-    server=Store(a.certificate,a.key,authorization)
-    origin=server.expose_checkpoint(a.peer/contract["baseline"])
+    server,origin=None,None
     report={"source":os.environ["GITHUB_SHA"],"run":os.environ["GITHUB_RUN_ID"],
             "attempt":os.environ["GITHUB_RUN_ATTEMPT"],"host":a.platform,
-            "F05_accepted":False,"cases":[],"producer":origin["author"],
+            "F05_accepted":False,"cases":[],"producer":None,
             "simultaneous_online_peers":False,"generated_fixture_credentials_only":True}
     trusted=False
     app_folder=None
     monitor=None
     monitor_stop=threading.Event()
     label="macOS" if a.platform=="macos" else "iOS"
+    normalized,claim_refs,evidence=[],{},["coverage.json"]
+    program_hash=None
+    previous_wire={}
+    def collect_phase(name,bundle):
+        nonlocal program_hash,previous_wire
+        info_path=a.app/("Contents/Info.plist" if a.platform=="macos" else "Info.plist")
+        info=plistlib.loads(info_path.read_bytes())
+        if info.get("EXRSourceSHA")!=os.environ["GITHUB_SHA"] or info.get("EXRSDKVersion")!="3.42.0" or info.get("CFBundleIdentifier")!="org.exreader.host":
+            raise AssertionError("actual built Apple app source/SDK/bundle identity mismatch")
+        binary=a.app/("Contents/MacOS/EXReaderHost" if a.platform=="macos" else "EXReaderHost")
+        content=binary.read_bytes()
+        current=hashlib.sha256(content).hexdigest()
+        if program_hash is not None and current!=program_hash:
+            raise AssertionError("Apple phase changed native executable")
+        if a.platform!="macos":
+            installed=Path(subprocess.check_output(["xcrun","simctl","get_app_container",
+                a.udid,"org.exreader.host","app"],text=True).strip())
+            if hashlib.sha256((installed/"EXReaderHost").read_bytes()).hexdigest()!=current:
+                raise AssertionError("actual installed simulator app differs from retained build")
+        program_hash=current
+        (a.output/"program.bin").write_bytes(content)
+        (a.output/"program-info.plist").write_bytes(info_path.read_bytes())
+        payload=json.loads(subprocess.check_output(["xcrun","xcresulttool","get","test-results","tests",
+            "--path",str(bundle),"--format","json"],text=True))
+        cases=[]
+        def walk(node):
+            if node.get("nodeType")=="Test Case":cases.append(node)
+            for child in node.get("children",[]):walk(child)
+        for node in payload["testNodes"]:walk(node)
+        if len(cases)!=1 or cases[0].get("result")!="Passed" or name not in cases[0].get("name",""):
+            raise AssertionError("actual xcresult missing, skipped, failed or wrong phase")
+        attachments=a.output/(name+"-attachments")
+        subprocess.run(["xcrun","xcresulttool","export","attachments","--path",str(bundle),
+                        "--output-path",str(attachments)],check=True)
+        listing=json.loads((attachments/"manifest.json").read_text())
+        roles=set()
+        for group in listing:
+            for row in group["attachments"]:
+                leaf=row["exportedFileName"]
+                if Path(leaf).name!=leaf:raise AssertionError("unsafe xcresult attachment path")
+                path=attachments/leaf
+                label=row["suggestedHumanReadableName"]
+                if label.startswith("f05-"):
+                    if not path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n"):
+                        raise AssertionError("native XCTest screenshot is not PNG")
+                    roles.add("screen")
+                elif label.startswith("native-ui-"):
+                    if not path.read_text().strip():raise AssertionError("native UI hierarchy absent")
+                    roles.add("hierarchy")
+        if roles!={"screen","hierarchy"}:raise AssertionError("both native UI attachments required")
+        members=[]
+        for folder in (bundle,attachments):
+            for path in folder.rglob("*"):
+                if path.is_symlink():raise AssertionError("symlink xcresult evidence refused")
+                if path.is_file():members.append(path.relative_to(a.output).as_posix())
+        members.extend([name+".log","program-info.plist"])
+        evidence.extend(members)
+        wire={path:hashlib.sha256(body).hexdigest() for path,body in server.entries.items()}
+        if any(wire.get(path)!=digest for path,digest in previous_wire.items()):
+            raise AssertionError("Apple phase changed immutable peer bytes")
+        previous_wire=wire
+        report["cases"][-1]["xcresult"]={"test":cases[0]["name"],"result":"Passed",
+            "members":members,"program_sha256":current,"immutable_wire_inventory":wire}
+        return members
+    def finish_case(case_id,claims,members,**semantic):
+        raw=report["cases"][-1]
+        normalized.append({"id":case_id,"outcome":"passed",
+            "actual_host_actions":True,"receiver_database_injection":False,
+            "original_identity_preserved":True,"revision_bytes_preserved":True,
+            "peer_wire_observed":any(row["authenticated"] and row["method"] in ("PUT","GET","PROPFIND")
+                and row["path"]!="/__f05_gate" for row in server.requests[raw["requests_start"]:raw["requests_end"]]),
+            "source_evidence":["coverage.json",*members],
+            "source_pointer":"/cases/"+str(len(report["cases"])-1),**semantic})
+        for claim,role in claims.items():
+            claim_refs.setdefault(claim,[]).append({"case_id":case_id,"role":role})
     def readback(folder):
         with sqlite3.connect((folder/"library.sqlite").resolve().as_uri()+"?mode=ro",uri=True) as db:
             originals=[{"id":row[0],"bytes":len(row[1]),"sha256":hashlib.sha256(row[1]).hexdigest()}
@@ -211,7 +287,14 @@ def main():
         return {"originals":originals,"records":selected,"heads":sorted(heads),"outbox":pending,
                 "observation":"actual app terminated; readonly SDK and product catalog"}
     try:
+        server=Store(a.certificate,a.key,authorization)
+        origin=server.expose_checkpoint(a.peer/contract["baseline"])
+        report["producer"]=origin["author"]
         if a.platform=="macos":
+            expected_container=(Path.home()/"Library/Application Support/EXReader").resolve()
+            if a.container is None or a.container.resolve()!=expected_container:
+                raise AssertionError("macOS container must be actual fixed EXReader app support root")
+            trusted=True
             subprocess.run(["sudo","security","add-trusted-cert","-d","-r","trustRoot",
                 "-k","/Library/Keychains/System.keychain",str(a.certificate)],check=True,capture_output=True)
             trusted=True
@@ -273,25 +356,41 @@ def main():
                         if len(pids)!=1:raise AssertionError("unique actual EXReaderHost PID required")
                         pid=int(pids[0])
                         command_line=subprocess.check_output(["ps","-p",str(pid),"-o","command="],text=True).strip()
-                        if "/EXReaderHost.app/EXReaderHost" not in command_line:
+                        executable_suffix="/EXReaderHost.app/Contents/MacOS/EXReaderHost" if a.platform=="macos" else "/EXReaderHost.app/EXReaderHost"
+                        if executable_suffix not in command_line:
                             raise AssertionError("unexpected host PID executable")
                         kill_receipt.update({"pid":pid,"command":command_line,
                             "signal":"SIGKILL","wire_commits_before_kill":list(server.commits),
                             "immutable_before":{k:hashlib.sha256(v).hexdigest() for k,v in server.entries.items()}})
                         os.kill(pid,signal.SIGKILL)
+                        server.release.set()
+                        end=time.monotonic()+120
+                        while time.monotonic()<end and not monitor_stop.is_set():
+                            found=subprocess.run(["pgrep","-x","EXReaderHost"],capture_output=True,text=True)
+                            new=[int(value) for value in found.stdout.split() if int(value)!=pid]
+                            if len(new)==1:
+                                reopened=subprocess.check_output(["ps","-p",str(new[0]),"-o","command="],text=True).strip()
+                                if executable_suffix not in reopened:raise AssertionError("foreign reopened process")
+                                kill_receipt.update({"reopened_pid":new[0],"reopened_command":reopened})
+                                break
+                            time.sleep(.05)
+                        if "reopened_pid" not in kill_receipt:
+                            raise AssertionError("actual replacement Apple process not observed")
                     except BaseException as error:monitor_errors.append(repr(error))
                     finally:server.release.set()
                 monitor=threading.Thread(target=kill_at_commit,daemon=True);monitor.start()
             start=len(server.requests)
             argv=command+["-only-testing:EXReaderHostUITests-"+label+"/F05RecoveryUITests/"+name,
                           "-resultBundlePath",str(a.output/(name+".xcresult"))]
-            with (a.output/(name+".log")).open("wb") as log:
-                done=subprocess.run(argv,stdout=log,stderr=subprocess.STDOUT,timeout=600,
-                    env=dict(os.environ,TEST_RUNNER_F05_ROOT=server.root,
-                        TEST_RUNNER_F05_USER=user,TEST_RUNNER_F05_PASSWORD=password))
-            safe=(a.output/(name+".log")).read_text(errors="replace").replace(password,"<fixture-secret>").replace(authorization,"<fixture-auth>")
-            (a.output/(name+".log")).write_text(safe)
-            print(safe,flush=True)
+            try:
+                with (a.output/(name+".log")).open("wb") as log:
+                    done=subprocess.run(argv,stdout=log,stderr=subprocess.STDOUT,timeout=600,
+                        env=dict(os.environ,TEST_RUNNER_F05_ROOT=server.root,
+                            TEST_RUNNER_F05_USER=user,TEST_RUNNER_F05_PASSWORD=password))
+            finally:
+                safe=(a.output/(name+".log")).read_text(errors="replace").replace(password,"<fixture-secret>").replace(authorization,"<fixture-auth>")
+                (a.output/(name+".log")).write_text(safe,encoding="utf-8")
+                print(safe,flush=True)
             report["cases"].append({"test":name,"exit":done.returncode,"requests_start":start,
                                     "requests_end":len(server.requests),"argv":argv})
             if monitor is not None:
@@ -304,6 +403,7 @@ def main():
                     raise AssertionError("uncertain retry changed immutable committed wire")
                 report["cases"][-1]["kill"]=kill_receipt
             if done.returncode:raise AssertionError("actual Apple UI failed: "+name)
+            members=collect_phase(name,a.output/(name+".xcresult"))
             if number==1 and not server.get_blocked.is_set():
                 raise AssertionError("real cache-miss receive gate never reached")
             if number>=1:
@@ -320,7 +420,24 @@ def main():
                 report["cases"][-1]["readback"]=observed
             server.release.set()
             if number==4 and len(server.requests)!=start:
-                raise AssertionError("offline reopening unexpectedly requested network")
+                raise AssertionError("offline reopening requested controlled sync endpoint")
+            if number==2:
+                finish_case("cancel_receive_retry",{"cancel_retry":"local"},members,
+                    remote_boundary=True,cancel_layer="receive",native_cancel_observed=True,
+                    explicit_retry_passed=True,source_pointers=["/cases/1","/cases/2"])
+            elif number==3:
+                finish_case("concurrent_heads_preserved",{"concurrent_heads_preserved":"receiver"},members,
+                    competing_heads=contract["competing_heads"],final_heads=observed["heads"],
+                    conflict_displayed=True,explicit_user_resolution=False)
+            elif number==4:
+                finish_case("restart_offline_read",{"offline_read":"local"},members,
+                    reopened_host_readable=True,network_requests=0,
+                    network_measurement="controlled F05 sync endpoint only, not whole OS")
+            elif number==5:
+                finish_case("kill_commit_ack_replay",{"process_recovery":"local"},members,
+                    remote_boundary=True,terminated_pid=kill_receipt["pid"],
+                    reopened_pid=kill_receipt["reopened_pid"],actual_process_termination=True,
+                    recovery_boundary="committed-PUT-before-ACK",durable_recovery_passed=True)
     except BaseException as error:
         safe=repr(error).replace(password,"<fixture-secret>").replace(authorization,"<fixture-auth>")
         report["failure"]=safe
@@ -332,7 +449,7 @@ def main():
             try:action()
             except BaseException as error:
                 cleanup_errors.append({"step":label,"failure":repr(error).replace(password,"<fixture-secret>")})
-        cleanup("server-close",server.close)
+        if server is not None:cleanup("server-close",server.close)
         if monitor is not None:cleanup("kill-monitor-join",lambda:monitor.join(5))
         if monitor is not None and monitor.is_alive():
             cleanup_errors.append({"step":"kill-monitor-join","failure":"monitor still alive"})
@@ -342,11 +459,15 @@ def main():
             subprocess.run(["sudo","security","delete-certificate","-Z",digest,
                 "/Library/Keychains/System.keychain"],check=True,capture_output=True)
         if trusted:cleanup("fixture-trust-remove",remove_trust)
-        report["requests"]=server.requests
-        report["uncovered"]=["independent xcresult attachments and artifact authentication",
+        report["requests"]=server.requests if server is not None else []
+        report["uncovered"]=["independent original-artifact authentication","native offline mutation/reconnect","deletion conflict presentation",
             "organization projection (owner delta not yet composed)"]
         report["cleanup_errors"]=cleanup_errors
-        cleanup("coverage-write",lambda:(a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n"))
+        cleanup("coverage-write",lambda:(a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8"))
+        if program_hash is not None:
+            cleanup("role-receipt-write",lambda:write_role_receipt(a.output,a.platform,a.output/"program.bin",
+                {"source":report["source"],"run":report["run"],"attempt":report["attempt"]},
+                normalized,claim_refs,evidence))
         if cleanup_errors:
             print(json.dumps({"cleanup_errors":cleanup_errors,"primary_failure":report.get("failure")}),flush=True)
             if "failure" not in report:raise RuntimeError("F05 cleanup failed; preserve evidence")
