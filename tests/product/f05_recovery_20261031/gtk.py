@@ -29,15 +29,10 @@ def main():
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
     cert, key = out / "fixture.crt", out / "fixture.key"
-    subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1",
-                    "-keyout", str(key), "-out", str(cert), "-subj", "/CN=127.0.0.1",
-                    "-addext", "subjectAltName=IP:127.0.0.1"], check=True, capture_output=True)
     trust = Path("/usr/local/share/ca-certificates") / ("f05-" + secrets.token_hex(12) + ".crt")
-    subprocess.run(["sudo", "cp", str(cert), str(trust)], check=True, capture_output=True)
-    subprocess.run(["sudo", "update-ca-certificates"], check=True, capture_output=True)
+    trust_owned, store = False, None
     user, password = "f05", secrets.token_hex(24)
     auth = "Basic " + base64.b64encode((user + ":" + password).encode()).decode()
-    store = Store(cert, key, auth)
     devices, checks = [], []
     binary = (args.payload / "bin/exreader-linux").resolve()
     report = {"host": "linux", "F05_accepted": False, "cases": checks, "errors": [],
@@ -203,6 +198,13 @@ def main():
         window(host, "Book details", False)
         host.wait(lambda s: not s["error"] and not s.get("busy"), timeout=60)
     try:
+        subprocess.run(["openssl","req","-x509","-newkey","rsa:2048","-nodes","-days","1",
+                        "-keyout",str(key),"-out",str(cert),"-subj","/CN=127.0.0.1",
+                        "-addext","subjectAltName=IP:127.0.0.1"],check=True,capture_output=True)
+        trust_owned=True
+        subprocess.run(["sudo","cp",str(cert),str(trust)],check=True,capture_output=True)
+        subprocess.run(["sudo","update-ca-certificates"],check=True,capture_output=True)
+        store=Store(cert,key,auth)
         first = launch("first")
         original = out / "F05.txt"
         original.write_text("F05 GTK original. " * 400)
@@ -379,13 +381,14 @@ def main():
                     raise
         for index,host in enumerate(devices):
             cleanup("native-close-"+str(index),lambda host=host:close_host(host))
-        cleanup("fixture-close",store.close)
-        cleanup("remove-fixture-trust",lambda:subprocess.run(
-            ["sudo","rm","--",str(trust)],check=True,capture_output=True))
-        cleanup("refresh-runner-trust",lambda:subprocess.run(
-            ["sudo","update-ca-certificates"],check=True,capture_output=True))
+        if store is not None:cleanup("fixture-close",store.close)
+        if trust_owned:
+            cleanup("remove-fixture-trust",lambda:subprocess.run(
+                ["sudo","rm","-f","--",str(trust)],check=True,capture_output=True))
+            cleanup("refresh-runner-trust",lambda:subprocess.run(
+                ["sudo","update-ca-certificates"],check=True,capture_output=True))
         cleanup("remove-fixture-key",lambda:key.unlink(missing_ok=True))
-        report["requests"]=store.requests
+        report["requests"]=store.requests if store is not None else []
         report["cleanup_errors"]=cleanup_errors
         report["uncovered"]=["native deletion operation detail","stale-put replay after tombstone",
             "conditional explicit restore parents","SDK mid-import cancellation (not universal prerequisite)",
