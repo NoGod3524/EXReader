@@ -26,7 +26,7 @@ pkg_check_modules(CURL REQUIRED IMPORTED_TARGET libcurl)
 find_package(LibXml2 REQUIRED)
 find_package(Threads REQUIRED)
 add_executable(f10-sync-probe sync_probe.cpp)
-target_link_libraries(f10-sync-probe PRIVATE EXReaderSync::reader_sync)
+target_link_libraries(f10-sync-probe PRIVATE EXReaderSync::reader_sync EXReaderWebDAVCleanup::exr_webdav_cleanup)
 # Separately labelled existing registry hooks select real SIGKILL boundaries.
 add_library(f10-managed-boundary-webdav STATIC ../../../extras/webdav/src/webdav.cpp)
 target_include_directories(f10-managed-boundary-webdav PUBLIC ../../../extras/webdav/include)
