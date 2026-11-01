@@ -1150,3 +1150,24 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+
+  artifact_inventory:
+    name: F04 fixed artifact inventory diagnostic
+    if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && inputs.case == 'f04/artifact-inventory' && inputs.controller_sha == github.sha }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Inventory seventeen authenticated original archives without product execution
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/dot_f04_reading_sync_20261031/audit.py --diagnose-artifact-inventory
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f04-artifact-inventory-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f04-artifact-inventory/
+          if-no-files-found: error
+          retention-days: 30
