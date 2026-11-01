@@ -597,7 +597,9 @@ def windows_import_fixed():
 def load_mac_diagnostic_state(path, phase=None):
     """Diagnostic-only historical input; never rewrites the original identity."""
     import base64, hashlib
-    pin = json.loads((HERE / "contract.json").read_text())["macos_state_diagnostic"]
+    contract = json.loads((HERE / "contract.json").read_text())
+    key = "apple_visibility_diagnostic" if os.environ["F04_SCOPE"] == "f04/apple-visible-diagnostic" else "macos_state_diagnostic"
+    pin = contract[key]
     assert os.environ["F04_SCOPE"] == pin["case"]
     raw = Path(path).read_bytes()
     state = json.loads(raw)
@@ -611,14 +613,17 @@ def load_mac_diagnostic_state(path, phase=None):
         assert hashlib.sha256(body).hexdigest() == value["sha256"]
     return state, hashlib.sha256(raw).hexdigest()
 
-def macos_state_diagnostic():
+def macos_state_diagnostic(target='macos'):
     """One fixed-producer diagnostic. Not a same-HEAD graph acceptance."""
     import hashlib, io, zipfile, plistlib
     from pathlib import PurePosixPath
     sys.path.insert(0, str(ROOT / "tools"))
     from check_parallel_integration import fetch, download_artifact_zip
     contract = json.loads((HERE / "contract.json").read_text())
-    pin = contract["macos_state_diagnostic"]
+    key = "apple_visibility_diagnostic" if os.environ["F04_SCOPE"] == "f04/apple-visible-diagnostic" else "macos_state_diagnostic"
+    pin = contract[key]
+    assert target in ("macos", "iphone", "ipad")
+    assert key == "apple_visibility_diagnostic" or target == "macos"
     assert sys.platform == "darwin" and os.environ["F04_SCOPE"] == pin["case"]
     assert os.environ["GITHUB_REF"] == "refs/heads/" + contract["canonical"]["branch"]
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -631,10 +636,11 @@ def macos_state_diagnostic():
     assert producer["head_sha"] == pin["producer_source"] and str(producer["run_attempt"]) == pin["attempt"]
     evidence = {"controller_source": head, "ui_build_source": head, "controller_run": os.environ["GITHUB_RUN_ID"],
                 "production_equivalent_to": pin["producer_source"], "changed_paths": changed,
-                "historical_producer": pin, "diagnostic_only": True, "F04_accepted": False, "passed": False}
-    destination = ROOT / "build/f04-macos-state-diagnostic"
+                "historical_producer": pin, "target": target, "diagnostic_only": True, "F04_accepted": False, "passed": False}
+    destination = ROOT / ("build/f04-apple-visibility-diagnostic/" + target) if key == "apple_visibility_diagnostic" else ROOT / "build/f04-macos-state-diagnostic"
     destination.mkdir(parents=True, exist_ok=False)
-    sdk = ROOT / "sdk-input/team24-apple-sdk-macos-f04"
+    sdk_target = "macos" if target == "macos" else "iphonesimulator"
+    sdk = ROOT / ("sdk-input/team24-apple-sdk-" + sdk_target + "-f04")
     incoming = ROOT / "build/f04-fixed-android"
     def obtain(kind, folder):
         p = pin[kind]
@@ -664,9 +670,9 @@ def macos_state_diagnostic():
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(archive.read(entry.filename))
     try:
-        obtain("sdk", sdk); obtain("android", incoming)
+        obtain("sdk" if target == "macos" else "sdk_simulator", sdk); obtain("android", incoming)
         receipt = json.loads((sdk / "build-receipt.json").read_text())
-        assert receipt["platform"] == "macos" and receipt["sdk_version"] == "3.42.0"
+        assert receipt["platform"] == sdk_target and receipt["sdk_version"] == "3.42.0"
         assert receipt["sdk_source"] == "8357eafa28423a7ab93ba08b823af80f01ad1505"
         assert receipt["source_sha"] == pin["producer_source"]
         assert str(receipt["run_id"]) == pin["run_id"] and str(receipt["attempt"]) == pin["attempt"]
@@ -681,7 +687,7 @@ def macos_state_diagnostic():
         evidence["android_state_sha256"] = state_hash
         subprocess.run([sys.executable, str(HERE / "fixtures.py")], cwd=ROOT, check=True)
         prepare()
-        source = stage_apple("macos", generic=True)
+        source = stage_apple(target, generic=True)
         source = replace_once(source,
             "assert all(identity[k] == data[k] for k in ('source_sha', 'run_id', 'attempt'))",
             "assert identity['source_sha'] == " + repr(pin["producer_source"]) + "\n"
@@ -708,35 +714,36 @@ def macos_state_diagnostic():
             raw_log = out / 'native-ui.log'
             if raw_log.is_file():
                 sanitized = diagnostic_text(raw_log.read_text(encoding='utf-8'), redactions)
-                safe_log = ROOT / 'build/f04-macos-state-diagnostic/native-ui-sanitized.log'
+                safe_log = Path(__DIAGNOSTIC_LOG_PATH__)
                 safe_log.write_text(sanitized, encoding='utf-8')
                 print('F04 MAC NATIVE UI DIAGNOSTIC\\n' + sanitized, flush=True)
         except Exception as diagnostic_error:
             print('F04 diagnostic text refused: ' + type(diagnostic_error).__name__, flush=True)
         actions = []"""
+        after = after.replace("__DIAGNOSTIC_LOG_PATH__", repr(str(destination / "native-ui-sanitized.log")))
         source = replace_once(source, before, after)
-        driver = OUT / "macos-diagnostic.py"
+        driver = OUT / (target + "-diagnostic.py")
         driver.write_text(source)
-        command = [sys.executable, str(driver), "--phase", "macos-peer",
+        command = [sys.executable, str(driver), "--phase", target + "-peer",
                    "--previous", str(incoming / "state.json"), "--incoming-prefix", "F04_ANDROID",
                    "--original", str(ROOT / "build/apple-android/original/epub-alice.epub")]
         subprocess.run(command, cwd=ROOT, check=True)
-        result = json.loads((ROOT / "build/apple-android/macos-peer/result.json").read_text())
+        result = json.loads((ROOT / ("build/apple-android/" + target + "-peer/result.json")).read_text())
         assert result["passed"] is True and result["source_sha"] == head
         evidence["passed"] = True
     finally:
         # Result and binary identities are useful even when the UI assertion fails.
         active_failure = sys.exc_info()[0] is not None
-        out = ROOT / "build/apple-android/macos-peer"
+        out = ROOT / ("build/apple-android/" + target + "-peer")
         try:
             result = out / "result.json"
             if result.is_file():
                 safe = diagnostic_text(result.read_text(encoding="utf-8"))
                 (destination / "ui-result.json").write_text(safe, encoding="utf-8")
                 print("F04 MAC RESULT " + safe, flush=True)
-            app = out / "derived/Build/Products/Debug/EXReaderHost.app"
-            info = app / "Contents/Info.plist"
-            binary = app / "Contents/MacOS/EXReaderHost"
+            app = out / ("derived/Build/Products/Debug/EXReaderHost.app" if target == "macos" else "derived/Build/Products/Debug-iphonesimulator/EXReaderHost.app")
+            info = app / ("Contents/Info.plist" if target == "macos" else "Info.plist")
+            binary = app / ("Contents/MacOS/EXReaderHost" if target == "macos" else "EXReaderHost")
             if info.is_file() and binary.is_file():
                 fields = plistlib.loads(info.read_bytes())
                 evidence["actual_ui"] = {"source_sha": fields.get("EXRSourceSHA"),
@@ -773,8 +780,14 @@ def main():
     assert Path.cwd().resolve() == ROOT
     assert os.environ.get("EXR_APPLE_SDK_VERSION") == "3.42.0"
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics", "windows-import-fixed", "macos-state-diagnostic", "authenticate-selected"))
+    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator", "retained-protocol", "seal-phase", "package-build", "diagnostics", "windows-import-fixed", "macos-state-diagnostic", "apple-visibility-diagnostic", "authenticate-selected"))
     args, rest = parser.parse_known_args()
+    if args.action == "apple-visibility-diagnostic":
+        p = argparse.ArgumentParser()
+        p.add_argument("--target", choices=("macos", "iphone", "ipad"), required=True)
+        selected = p.parse_args(rest)
+        macos_state_diagnostic(selected.target)
+        return
     if args.action == "macos-state-diagnostic":
         assert not rest
         macos_state_diagnostic()
