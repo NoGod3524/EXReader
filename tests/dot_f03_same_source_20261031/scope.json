@@ -64,7 +64,10 @@
       "status": "Prior Apple candidate changes remain sealed on the original F03 branch; excluded from this GTK/Android candidate. No Apple acceptance in this run."
     }
   ],
-  "authorized_production_paths": [],
+  "authorized_production_paths": [
+    "apps/reader/desktop/windows_records_owner.cpp",
+    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java"
+  ],
   "suite": {
     "schema": 1,
     "canonical_branch": "dot/reader-suite-20261101",
@@ -139,7 +142,9 @@
     ".github/workflows/dot-f04-reading-sync-20261031.yml",
     "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md",
     "tests/dot_f04_reading_sync_20261031/windows_driver.py",
-    "tests/dot_f04_reading_sync_20261031/gtk_driver.py"
+    "tests/dot_f04_reading_sync_20261031/gtk_driver.py",
+    "apps/reader/desktop/windows_records_owner.cpp",
+    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java"
   ],
   "candidate_admission": true,
   "candidate_admission_contract": {
@@ -160,8 +165,9 @@
     "historical_owner_guard_reexecuted": false,
     "historical_owner_evidence_ref": "https://github.com/NoGod3524/EXReader/blob/94fb236a4a2da87dfbaf4f1dd2a47885d615a230/docs/validation/reader-owner-android-joined.json",
     "historical_evidence_is_not_current_run_evidence": true,
-    "require_production_unchanged_from_base": true,
-    "require_original_tests_unchanged_from_base": true
+    "require_production_unchanged_from_base": false,
+    "require_original_tests_unchanged_from_base": true,
+    "require_production_unchanged_except_exact_reviewed_parser_blobs": true
   },
   "active_hosts": [
     "gtk",
@@ -169,14 +175,14 @@
   ],
   "historical_owner_evidence_ref": "https://github.com/NoGod3524/EXReader/blob/94fb236a4a2da87dfbaf4f1dd2a47885d615a230/docs/validation/reader-owner-android-joined.json",
   "historical_owner_guard_reexecuted": false,
-  "allowed_path_count": 23,
+  "allowed_path_count": 25,
   "canonical_composition": {
-    "f04_snapshot": "2b846d38f8344e562b2d3c13b13a85a97b08c725",
-    "method": "exact twelve blobs; no branch merge",
+    "f04_snapshot": "1fc4d1e7834d7b29dc70da166967a421d03143df",
+    "method": "exact six reviewed blobs plus two admission files; no branch merge",
     "selected_case": "f04/windows-android",
     "controller_source_run_head_equal": true,
-    "authorization_message": "Sentinel_dbf1e1cd310481918cf59dec9cedca3e",
-    "authorization_utc": "2026-11-01T01:35:33Z",
+    "authorization_message": "Sentinel_8f4de03c729481919cd5d23e524fe814",
+    "authorization_utc": "2026-11-01T03:14:35Z",
     "runner_minutes_cap": 120,
     "run_limit": 1,
     "automatic_retries": 0,
@@ -189,6 +195,11 @@
     },
     "f03_reexecution_authorized": false,
     "full_F03_accepted": false,
-    "full_F04_accepted": false
+    "full_F04_accepted": false,
+    "production_delta": "Only current 3.42.0 bare/prefixed spelling admission in two reviewed functions; no SDK or wire edits"
+  },
+  "authorized_production_blob_sha": {
+    "apps/reader/desktop/windows_records_owner.cpp": "fb1b36b8ee6a0c48b81d8aff3b2097c7372c4b33",
+    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java": "9566f21b7f38c3652d9a416cabd73d1b76a959d6"
   }
 }

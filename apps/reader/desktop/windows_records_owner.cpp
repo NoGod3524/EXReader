@@ -63,6 +63,7 @@ struct record {reader_rs_record value{};~record(){reader_rs_record_free(&value);
 bool admitted_parser(const char *recorded) {
  if(!recorded)return false;
  if(!std::strcmp(recorded,exr_version()))return true;
+ if(!std::strcmp(exr_version(),"3.42.0")&&!std::strcmp(recorded,"exreader-sdk-3.42.0"))return true;
  return !std::strcmp(exr_version(),"3.41.0")&&(!std::strcmp(recorded,"3.40.0")||
   !std::strcmp(recorded,"exreader-sdk-3.40.0")||!std::strcmp(recorded,"exreader-sdk-3.41.0"));
 }

@@ -17,7 +17,9 @@
     ".github/workflows/dot-f04-reading-sync-20261031.yml",
     "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md",
     "tests/dot_f04_reading_sync_20261031/windows_driver.py",
-    "tests/dot_f04_reading_sync_20261031/gtk_driver.py"
+    "tests/dot_f04_reading_sync_20261031/gtk_driver.py",
+    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
+    "apps/reader/desktop/windows_records_owner.cpp"
   ],
   "phase": "approved-single-real-windows-android-case",
   "ci_runs_authorized": 1,
@@ -300,7 +302,9 @@
       ".github/workflows/dot-f04-reading-sync-20261031.yml",
       "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md",
       "tests/dot_f04_reading_sync_20261031/windows_driver.py",
-      "tests/dot_f04_reading_sync_20261031/gtk_driver.py"
+      "tests/dot_f04_reading_sync_20261031/gtk_driver.py",
+      "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
+      "apps/reader/desktop/windows_records_owner.cpp"
     ],
     "controller_source_run_head_equal": true
   },
@@ -349,9 +353,18 @@
       "conclusion": "failure",
       "retained": "success",
       "windows": "compact system picker not consumed; downstream skipped"
+    },
+    {
+      "run_id": "41266444103",
+      "source_sha": "19566821ce7082ffb5cde6a538fdf163ab554902",
+      "conclusion": "failure",
+      "windows_seed": "success",
+      "retained": "success",
+      "android": "original received; public resolver rejected parser spelling",
+      "return_and_audit": "skipped"
     }
   ],
-  "current_round": 3,
+  "current_round": 4,
   "legacy_provider": {
     "source": "210403d121d6484a8fff4ea7ffd911efa3163535",
     "prefix": "build/v1-product-stage",
@@ -391,5 +404,12 @@
       "full_F04": false
     }
   },
-  "current_round_scope": "one new full five-job Windows Android return; 120 runner-minute cap; no retry"
+  "current_round_scope": "one new full five-job Windows Android return; 120 runner-minute cap; no retry",
+  "production_delta": {
+    "paths": [
+      "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
+      "apps/reader/desktop/windows_records_owner.cpp"
+    ],
+    "scope": "only exact current 3.42 parser spelling equivalence; no SDK or stored wire changes"
+  }
 }
