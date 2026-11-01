@@ -280,6 +280,21 @@ def main():
             "source_pointer":"/cases/"+str(len(report["cases"])-1),**semantic})
         for claim,role in claims.items():
             claim_refs.setdefault(claim,[]).append({"case_id":case_id,"role":role})
+    def bound_process(pid):
+        expected=a.app/("Contents/MacOS/EXReaderHost" if a.platform=="macos" else "EXReaderHost")
+        if a.platform!="macos":
+            installed=Path(subprocess.check_output(["xcrun","simctl","get_app_container",
+                a.udid,"org.exreader.host","app"],text=True,timeout=60).strip())
+            expected=installed/"EXReaderHost"
+        expected=expected.resolve(strict=True)
+        actual=Path(subprocess.check_output(["ps","-ww","-p",str(pid),"-o","comm="],
+                    text=True,timeout=20).strip()).resolve(strict=True)
+        if actual!=expected:
+            raise AssertionError("PID executable is not this phase's exact native product")
+        sha=hashlib.sha256(actual.read_bytes()).hexdigest()
+        if program_hash is None or sha!=program_hash:
+            raise AssertionError("actual PID executable differs from authenticated phase build bytes")
+        return {"pid":pid,"executable":str(actual),"sha256":sha}
     def readback(folder):
         with sqlite3.connect((folder/"library.sqlite").resolve().as_uri()+"?mode=ro",uri=True) as db:
             originals=[{"id":row[0],"bytes":len(row[1]),"sha256":hashlib.sha256(row[1]).hexdigest()}
@@ -372,11 +387,8 @@ def main():
                         pids=subprocess.check_output(["pgrep","-x","EXReaderHost"],text=True).split()
                         if len(pids)!=1:raise AssertionError("unique actual EXReaderHost PID required")
                         pid=int(pids[0])
-                        command_line=subprocess.check_output(["ps","-p",str(pid),"-o","command="],text=True).strip()
-                        executable_suffix="/EXReaderHost.app/Contents/MacOS/EXReaderHost" if a.platform=="macos" else "/EXReaderHost.app/EXReaderHost"
-                        if executable_suffix not in command_line:
-                            raise AssertionError("unexpected host PID executable")
-                        kill_receipt.update({"pid":pid,"command":command_line,
+                        process=bound_process(pid)
+                        kill_receipt.update({"pid":pid,"process":process,
                             "signal":"SIGKILL","wire_commits_before_kill":list(server.commits),
                             "immutable_before":{k:hashlib.sha256(v).hexdigest() for k,v in server.entries.items()}})
                         os.kill(pid,signal.SIGKILL)
@@ -386,9 +398,8 @@ def main():
                             found=subprocess.run(["pgrep","-x","EXReaderHost"],capture_output=True,text=True)
                             new=[int(value) for value in found.stdout.split() if int(value)!=pid]
                             if len(new)==1:
-                                reopened=subprocess.check_output(["ps","-p",str(new[0]),"-o","command="],text=True).strip()
-                                if executable_suffix not in reopened:raise AssertionError("foreign reopened process")
-                                kill_receipt.update({"reopened_pid":new[0],"reopened_command":reopened})
+                                reopened=bound_process(new[0])
+                                kill_receipt.update({"reopened_pid":new[0],"reopened_process":reopened})
                                 break
                             time.sleep(.05)
                         if "reopened_pid" not in kill_receipt:
