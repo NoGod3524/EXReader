@@ -214,3 +214,28 @@ must run only in Actions under separately approved authority; none was run
 after this failure. The original mapping gate and its timeout are preserved.
 Further source repair or execution is not implied by this result seal.
 F03 remains pending, no formal count increase.
+
+## Approved fixed-artifact diagnosis — 2026-11-01 01:35:33 UTC
+
+Approval `Sentinel_dbf1e1cd310481918cf59dec9cedca3e`: only verify.py, the
+existing parameterized workflow and this document; one Ubuntu job, 10 minutes,
+no product rebuild/re-execution, no automatic retry. The workflow selects
+`f03/diagnose-round2`; original GTK/Android/audit jobs remain untouched and
+unselected. Diagnostic controller source is distinct from fixed failed producer
+source, never substituted for it.
+
+Before reading selected evidence, Actions fetches exact original attempt/job
+and artifact metadata, requires the fixed failed job/source/run, artifact
+13064700805, 22383312 bytes and ZIP SHA256
+6fd133347aa6b4fc9c4138c0b94a5c76bb909eecd87b38530d2281fef362da62.
+It preserves the original ZIP, rejects duplicate/traversal/symlink paths and
+bounded expansion, and extracts only application/Openbox/state/report/window
+text and the fixed failure PNG. Missing optional files are explicitly listed.
+Original text is printed unchanged with bounded sizes; the PNG is forwarded
+as base64 from Actions for visual inspection, without external ZIP parsing.
+The diagnostic cannot set accepted/full_F03_accepted or rerun a failed test.
+
+Proof target: distinguish native process/window mapping evidence from guesses
+about UI readiness. Negative admission is a fail-closed metadata/hash/path
+check; this diagnostic does not claim a newly executed counterexample suite.
+Uncovered: product behavior, corrected F2 path, Android, complete F03.

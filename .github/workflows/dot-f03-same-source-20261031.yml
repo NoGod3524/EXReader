@@ -6,7 +6,7 @@ on:
     inputs:
       case:
         type: choice
-        options: [f03/gtk-android]
+        options: [f03/gtk-android, f03/diagnose-round2]
         default: f03/gtk-android
         required: true
 permissions:
@@ -165,4 +165,24 @@ jobs:
           path: |
             build/f03-partial-result.json
             build/f03-evidence/api-originals/
+          if-no-files-found: error
+
+  diagnose:
+    if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f03/diagnose-round2' || github.event_name == 'push' && contains(github.event.head_commit.message, '[F03-DIAG-10-ONE-RUN]')) }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Read only the fixed original round 2 artifact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tests/dot_f03_same_source_20261031/verify.py --diagnose-original --output build/f03-diagnostic/result.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-suite-f03-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f03-diagnostic/
           if-no-files-found: error
