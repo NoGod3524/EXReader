@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "base": "cf02a46e2756c917b4ee13f8d99d85ff8b40bfc2",
+  "branch": "dot/f07-artifact-audit-20261101",
+  "trigger": "[F07-ARTIFACT-AUDIT-5-ONE-RUN]",
+  "paths": [
+    "tests/reader_f07_artifact_audit_20261101/audit.py",
+    "tests/reader_f07_artifact_audit_20261101/contract.json",
+    ".github/workflows/dot-f07-artifact-audit-20261101.yml",
+    "docs/reader-total-progress/DOT_F07_ARTIFACT_AUDIT_20261101.md"
+  ],
+  "repository": "NoGod3524/EXReader",
+  "producer_source": "24b85a76555593598a25f228b757f8b018e83c5c",
+  "producer_run": 41312188612,
+  "producer_attempt": 1,
+  "artifact": {
+    "id": 13085877416,
+    "name": "f07-windows-provider-41312188612-1",
+    "bytes": 13597328,
+    "sha256": "ebac63bf89f2df44abffcfb998920b00afdb1d81fe2c09cb0cbfbaaad88c8613"
+  },
+  "sdk_sha256": "f2e4dc21a4c9f40bb6f1fe4d35cbc513e852377ffc652929fcc52719e240792e",
+  "product_sha256": "b33969efbbf25ea5de34d85d55eeedd4cce005cc84d03d642c0e629436d9d87a",
+  "host_log_sha256": "484bc42c009f6eb3ac34e2144b1f15b0b9fea25a8ed1bb0b42faeb78c2e3144b",
+  "runner": "ubuntu-24.04",
+  "timeout_minutes": 5,
+  "script_deadline_seconds": 240,
+  "launch_limit": 1,
+  "automatic_retry": false,
+  "authorization": {
+    "message": "Sentinel_485e3a27d608819194919d718aa56f25",
+    "time": "2026-11-01T21:39:21Z"
+  },
+  "diagnostic_only": true,
+  "F07_accepted": false,
+  "formal_count_changed": false
+}

@@ -1,0 +1,34 @@
+name: F07 fixed artifact independent audit
+on:
+  push:
+    branches: [dot/f07-artifact-audit-20261101]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: dot-f07-artifact-audit-20261101
+  cancel-in-progress: false
+jobs:
+  audit:
+    if: ${{ contains(github.event.head_commit.message, '[F07-ARTIFACT-AUDIT-5-ONE-RUN]') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Authenticate original artifact and inspect static link evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m py_compile tests/reader_f07_artifact_audit_20261101/audit.py
+          python3 tests/reader_f07_artifact_audit_20261101/audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f07-artifact-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f07-artifact-audit/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
