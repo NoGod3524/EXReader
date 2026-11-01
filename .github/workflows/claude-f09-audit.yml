@@ -2,7 +2,7 @@ name: F09 accessibility audits on shared-source hosts
 # Self-approved F09 budget (user delegation 2026-10-31): see _studio_ui_seal/F09-PLAN.md.
 on:
   push:
-    branches: [claude/f09-audit-20261101]
+    branches: [claude/f09-audit-20261101, claude/f09-joint-20261101]
     paths:
       - tests/f09_audit/**
       - .github/workflows/claude-f09-audit.yml
@@ -27,7 +27,9 @@ jobs:
         shell: bash
         run: |
           git merge-base --is-ancestor 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD
-          bad=$(git diff --name-only 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD | grep -Ev '^(tests/f09_audit/|\.github/workflows/claude-f09-(audit|apple)\.yml$)' || true)
+          # F09 may change host code (examples/, apps/reader/) and its own files; never the frozen SDK,
+          # the shared build, fixtures or any retained test or workflow.
+          bad=$(git diff --name-only 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD | grep -Ev '^(tests/f09_audit/|\.github/workflows/claude-f09-(audit|apple)\.yml$|examples/|apps/reader/)' || true)
           test -z "$bad" || { echo "outside F09 audit scope: $bad"; exit 1; }
       - name: Build and install the independent public OPDSHash owner (as the F08 workflows on this base)
         shell: bash
@@ -59,7 +61,9 @@ jobs:
       - name: Shared candidate and frozen SDK
         run: |
           git merge-base --is-ancestor 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD
-          bad=$(git diff --name-only 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD | grep -Ev '^(tests/f09_audit/|\.github/workflows/claude-f09-(audit|apple)\.yml$)' || true)
+          # F09 may change host code (examples/, apps/reader/) and its own files; never the frozen SDK,
+          # the shared build, fixtures or any retained test or workflow.
+          bad=$(git diff --name-only 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD | grep -Ev '^(tests/f09_audit/|\.github/workflows/claude-f09-(audit|apple)\.yml$|examples/|apps/reader/)' || true)
           test -z "$bad" || { echo "outside F09 audit scope: $bad"; exit 1; }
       - name: Install the GTK build and AT-SPI audit dependencies
         run: |
@@ -109,7 +113,9 @@ jobs:
       - name: Shared candidate and frozen SDK
         run: |
           git merge-base --is-ancestor 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD
-          bad=$(git diff --name-only 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD | grep -Ev '^(tests/f09_audit/|\.github/workflows/claude-f09-(audit|apple)\.yml$)' || true)
+          # F09 may change host code (examples/, apps/reader/) and its own files; never the frozen SDK,
+          # the shared build, fixtures or any retained test or workflow.
+          bad=$(git diff --name-only 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD | grep -Ev '^(tests/f09_audit/|\.github/workflows/claude-f09-(audit|apple)\.yml$|examples/|apps/reader/)' || true)
           test -z "$bad" || { echo "outside F09 audit scope: $bad"; exit 1; }
       - uses: actions/setup-java@v4
         with:

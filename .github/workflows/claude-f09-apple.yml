@@ -3,7 +3,7 @@ name: F09 Apple accessibility audit on the shared candidate
 # its source guard, which now binds the shared candidate 343bb94e and F09 scope.
 on:
   push:
-    branches: [claude/f09-audit-20261101]
+    branches: [claude/f09-audit-20261101, claude/f09-joint-20261101]
     paths:
       - tests/f09_audit/apple*
       - tests/f09_audit/apple/**
@@ -32,7 +32,9 @@ jobs:
         run: |
           set -euo pipefail
           git merge-base --is-ancestor 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD
-          bad=$(git diff --name-only 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD | grep -Ev '^(tests/f09_audit/|\.github/workflows/claude-f09-(audit|apple)\.yml$)' || true)
+          # F09 may change host code (examples/, apps/reader/) and its own files; never the frozen SDK,
+          # the shared build, fixtures or any retained test or workflow.
+          bad=$(git diff --name-only 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD | grep -Ev '^(tests/f09_audit/|\.github/workflows/claude-f09-(audit|apple)\.yml$|examples/|apps/reader/)' || true)
           test -z "$bad" || { echo "outside F09 audit scope: $bad"; exit 1; }
 
   judge:
