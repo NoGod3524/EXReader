@@ -408,5 +408,33 @@
       "sha256": "aff42d51ebe78000677f337987ad0bf794757ed9564a0c8f48a7ef33b14a92da"
     },
     "artifact_contents_independent_audit_pending": true
+  },
+  "two_host_fixed_origin_round": {
+    "authorization_message": "Sentinel_a83786c4fa4c8191b06c9b22e0f85e19",
+    "authorization_utc": "2026-11-01T14:39:19Z",
+    "base_sha": "12b0ef766477a4885f56342b23366955251d4615",
+    "branch": "dot/f03-gtk-ready-20261101",
+    "case": "f03/two-host-fixed-origin",
+    "marker": "[F03-TWO-HOST-160-ONE-RUN]",
+    "allowed_existing_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      "tests/dot_f03_same_source_20261031/scope.json",
+      "docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md"
+    ],
+    "job_minutes": {
+      "gtk": 20,
+      "android": 120,
+      "audit": 20
+    },
+    "runner_minutes_cap": 160,
+    "run_limit": 1,
+    "automatic_retries": 0,
+    "status": "prepared_not_run",
+    "producer_consumer_audit_same_source_run_attempt": true,
+    "old_canonical_gtk_budget_minutes": 60,
+    "android_receiver_and_audit_code_unchanged": true,
+    "other_jobs_not_selected": true,
+    "formal_count_credit": 0,
+    "full_F03_accepted": false
   }
 }
