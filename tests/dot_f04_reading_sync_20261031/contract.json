@@ -1,0 +1,339 @@
+{
+  "schema": 1,
+  "package": "F04-reading-sync-six-host-preparation",
+  "base_source": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
+  "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "sdk_version": "3.42.0",
+  "branch": "dot/f04-reading-sync-20261031",
+  "authorized_paths": [
+    "tests/dot_f04_reading_sync_20261031/contract.json",
+    "tests/dot_f04_reading_sync_20261031/admission.py",
+    "tests/dot_f04_reading_sync_20261031/fixtures.py",
+    "tests/dot_f04_reading_sync_20261031/relay.py",
+    "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+    "tests/dot_f04_reading_sync_20261031/android_driver.java",
+    "tests/dot_f04_reading_sync_20261031/run.py",
+    "tests/dot_f04_reading_sync_20261031/audit.py",
+    ".github/workflows/dot-f04-reading-sync-20261031.yml",
+    "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md",
+    "tests/dot_f04_reading_sync_20261031/windows_driver.py",
+    "tests/dot_f04_reading_sync_20261031/gtk_driver.py"
+  ],
+  "phase": "approved-single-real-windows-android-case",
+  "ci_runs_authorized": 1,
+  "complete_f04": false,
+  "platforms": [
+    "windows",
+    "linux-gtk",
+    "macos",
+    "android-api34-x86_64",
+    "iphone-simulator",
+    "ipad-simulator"
+  ],
+  "phases": [
+    "apple-first",
+    "android",
+    "apple-return",
+    "windows-seed",
+    "windows-peer",
+    "windows-return",
+    "gtk-peer",
+    "macos-peer",
+    "iphone-peer",
+    "ipad-peer"
+  ],
+  "required_types": [
+    "progress",
+    "bookmark",
+    "annotation"
+  ],
+  "markers": {
+    "apple_bookmark": "F04_APPLE_BOOKMARK",
+    "apple_note": "F04_APPLE_NOTE",
+    "android_bookmark": "F04_ANDROID_BOOKMARK",
+    "android_note": "F04_ANDROID_NOTE"
+  },
+  "unimplemented_final_targets": [
+    "six-host producer artifact routing and retained-proof authentication"
+  ],
+  "transport": "staged authenticated HTTPS snapshots, not simultaneous hosts",
+  "original": {
+    "sha256": "4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036",
+    "bytes": 189249,
+    "format": "epub"
+  },
+  "preserved": {
+    "apple_cases": {
+      "wave3": 5,
+      "base": 13,
+      "control": 13,
+      "search": 4,
+      "theme": 4
+    },
+    "android_sync_phases": 4,
+    "android_receive_checks": 24,
+    "old_drivers": "unchanged; generated Actions-only adapter copies exact base scripts"
+  },
+  "acceptance_basis": {
+    "catalog": "docs/reader-total-progress/catalog.json:F04",
+    "product": "docs/READER-PRODUCT-PLAN.md:P5",
+    "wire": "docs/READER-READING-V2.md:必须跑通的出口"
+  },
+  "coverage": {
+    "topology": "connected bidirectional graph; no all-pairs requirement",
+    "planned_edges": [
+      [
+        "windows",
+        "linux-gtk"
+      ],
+      [
+        "windows",
+        "macos"
+      ],
+      [
+        "windows",
+        "android-api34-x86_64"
+      ],
+      [
+        "windows",
+        "iphone-simulator"
+      ],
+      [
+        "windows",
+        "ipad-simulator"
+      ]
+    ],
+    "authors": "at least two real applications; no fixed six-author threshold",
+    "host_fixture": "one common original EPUB for three record types",
+    "protocol_modes": "retain original 18 v2 probes across two independent SDK libraries; not repeated for every host",
+    "unsupported": "no fabricated range on textless fixed pages",
+    "safe_navigation": "SAFE + public FOUND only; missing/ambiguous retained without auto-navigation",
+    "evidence": "program/source identity, exact wires, real UI actions and requests; no screenshot-count threshold"
+  },
+  "unverified_final_targets": [
+    "windows",
+    "linux-gtk",
+    "macos",
+    "android-api34-x86_64",
+    "iphone-simulator",
+    "ipad-simulator"
+  ],
+  "execution_blockers": [
+    "zero CI authorization",
+    "six-host producer workflow is intentionally disabled",
+    "compiled/runtime correctness and all final host behavior unverified",
+    "graph checker intentionally cannot set F04_accepted until retained producer evidence is integrated"
+  ],
+  "graph_producers": [
+    {
+      "job": "F04 Windows seed",
+      "artifact": "f04-windows-seed",
+      "host": "windows",
+      "role": "seed",
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
+    },
+    {
+      "job": "F04 gtk peer",
+      "artifact": "f04-gtk-peer",
+      "host": "linux-gtk",
+      "role": "peer",
+      "previous": "f04-windows-seed",
+      "incoming_prefix": "F04_WINDOWS",
+      "fresh_profile": true,
+      "build_key": "f04-build-gtk"
+    },
+    {
+      "job": "F04 Windows return (gtk)",
+      "artifact": "f04-windows-return-gtk",
+      "host": "windows",
+      "role": "return",
+      "previous": "f04-gtk-peer",
+      "incoming_prefix": "F04_GTK",
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
+    },
+    {
+      "job": "F04 macos peer",
+      "artifact": "f04-macos-peer",
+      "host": "macos",
+      "role": "peer",
+      "previous": "f04-windows-seed",
+      "incoming_prefix": "F04_WINDOWS",
+      "fresh_profile": true,
+      "build_key": "f04-build-macos"
+    },
+    {
+      "job": "F04 Windows return (macos)",
+      "artifact": "f04-windows-return-macos",
+      "host": "windows",
+      "role": "return",
+      "previous": "f04-macos-peer",
+      "incoming_prefix": "F04_MACOS",
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
+    },
+    {
+      "job": "F04 android peer",
+      "artifact": "f04-android-peer",
+      "host": "android-api34-x86_64",
+      "role": "peer",
+      "previous": "f04-windows-seed",
+      "incoming_prefix": "F04_WINDOWS",
+      "fresh_profile": true,
+      "build_key": "f04-build-android"
+    },
+    {
+      "job": "F04 Windows return (android)",
+      "artifact": "f04-windows-return-android",
+      "host": "windows",
+      "role": "return",
+      "previous": "f04-android-peer",
+      "incoming_prefix": "F04_ANDROID",
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
+    },
+    {
+      "job": "F04 iphone peer",
+      "artifact": "f04-iphone-peer",
+      "host": "iphone-simulator",
+      "role": "peer",
+      "previous": "f04-windows-seed",
+      "incoming_prefix": "F04_WINDOWS",
+      "fresh_profile": true,
+      "build_key": "f04-build-iphonesimulator"
+    },
+    {
+      "job": "F04 Windows return (iphone)",
+      "artifact": "f04-windows-return-iphone",
+      "host": "windows",
+      "role": "return",
+      "previous": "f04-iphone-peer",
+      "incoming_prefix": "F04_IPHONE",
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
+    },
+    {
+      "job": "F04 ipad peer",
+      "artifact": "f04-ipad-peer",
+      "host": "ipad-simulator",
+      "role": "peer",
+      "previous": "f04-windows-seed",
+      "incoming_prefix": "F04_WINDOWS",
+      "fresh_profile": true,
+      "build_key": "f04-build-iphonesimulator"
+    },
+    {
+      "job": "F04 Windows return (ipad)",
+      "artifact": "f04-windows-return-ipad",
+      "host": "windows",
+      "role": "return",
+      "previous": "f04-ipad-peer",
+      "incoming_prefix": "F04_IPAD",
+      "fresh_profile": true,
+      "build_key": "f04-build-windows"
+    }
+  ],
+  "retained_producers": [
+    {
+      "key": "f04-retained-linux",
+      "job": "F04 original 18 and 121 (linux)",
+      "platform": "linux"
+    },
+    {
+      "key": "f04-retained-windows",
+      "job": "F04 original 18 and 121 (windows)",
+      "platform": "win32"
+    }
+  ],
+  "original_four_zip_aggregate": "not-run",
+  "build_producers": [
+    {
+      "key": "f04-build-windows",
+      "job": "F04 Windows seed",
+      "platform": "windows"
+    },
+    {
+      "key": "f04-build-gtk",
+      "job": "F04 build gtk",
+      "platform": "gtk"
+    },
+    {
+      "key": "f04-build-android",
+      "job": "F04 android peer",
+      "platform": "android"
+    },
+    {
+      "key": "f04-build-macos",
+      "job": "F04 build macos",
+      "platform": "macos"
+    },
+    {
+      "key": "f04-build-iphonesimulator",
+      "job": "F04 build iphonesimulator",
+      "platform": "iphonesimulator"
+    }
+  ],
+  "canonical": {
+    "branch": "dot/reader-suite-20261101",
+    "entry": ".github/workflows/dot-f03-same-source-20261031.yml",
+    "caller_job": "F04 windows-android",
+    "union_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      "docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md",
+      "tests/dot_f03_same_source_20261031/scope.json",
+      "tests/dot_f03_same_source_20261031/identity.py",
+      "tests/dot_f03_same_source_20261031/build.py",
+      "tests/dot_f03_same_source_20261031/fixtures.py",
+      "tests/dot_f03_same_source_20261031/gtk.py",
+      "tests/dot_f03_same_source_20261031/android.py",
+      "tests/dot_f03_same_source_20261031/verify.py",
+      "tests/dot_f03_same_source_20261031/android/OrganizationInteropTest.java",
+      "tests/dot_f03_same_source_20261031/README.md",
+      "tests/dot_f04_reading_sync_20261031/contract.json",
+      "tests/dot_f04_reading_sync_20261031/admission.py",
+      "tests/dot_f04_reading_sync_20261031/fixtures.py",
+      "tests/dot_f04_reading_sync_20261031/relay.py",
+      "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+      "tests/dot_f04_reading_sync_20261031/android_driver.java",
+      "tests/dot_f04_reading_sync_20261031/run.py",
+      "tests/dot_f04_reading_sync_20261031/audit.py",
+      ".github/workflows/dot-f04-reading-sync-20261031.yml",
+      "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md",
+      "tests/dot_f04_reading_sync_20261031/windows_driver.py",
+      "tests/dot_f04_reading_sync_20261031/gtk_driver.py"
+    ],
+    "controller_source_run_head_equal": true
+  },
+  "execution_scopes": {
+    "f04/windows-android": {
+      "hosts": [
+        "windows",
+        "android-api34-x86_64"
+      ],
+      "graph_artifacts": [
+        "f04-windows-seed",
+        "f04-android-peer",
+        "f04-windows-return-android"
+      ],
+      "build_keys": [
+        "f04-build-windows",
+        "f04-build-android"
+      ],
+      "retained_keys": [
+        "f04-retained-linux"
+      ],
+      "runner_minutes_cap": 120,
+      "run_limit": 1,
+      "automatic_retries": 0,
+      "job_minutes": {
+        "windows_seed": 30,
+        "android_peer": 45,
+        "windows_return_android": 15,
+        "retained_linux": 20,
+        "audit": 10
+      },
+      "full_F04": false
+    }
+  }
+}

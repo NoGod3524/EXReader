@@ -127,7 +127,19 @@
     "tests/dot_f03_same_source_20261031/android.py",
     "tests/dot_f03_same_source_20261031/verify.py",
     "tests/dot_f03_same_source_20261031/android/OrganizationInteropTest.java",
-    "tests/dot_f03_same_source_20261031/README.md"
+    "tests/dot_f03_same_source_20261031/README.md",
+    "tests/dot_f04_reading_sync_20261031/contract.json",
+    "tests/dot_f04_reading_sync_20261031/admission.py",
+    "tests/dot_f04_reading_sync_20261031/fixtures.py",
+    "tests/dot_f04_reading_sync_20261031/relay.py",
+    "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+    "tests/dot_f04_reading_sync_20261031/android_driver.java",
+    "tests/dot_f04_reading_sync_20261031/run.py",
+    "tests/dot_f04_reading_sync_20261031/audit.py",
+    ".github/workflows/dot-f04-reading-sync-20261031.yml",
+    "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md",
+    "tests/dot_f04_reading_sync_20261031/windows_driver.py",
+    "tests/dot_f04_reading_sync_20261031/gtk_driver.py"
   ],
   "candidate_admission": true,
   "candidate_admission_contract": {
@@ -156,5 +168,27 @@
     "android"
   ],
   "historical_owner_evidence_ref": "https://github.com/NoGod3524/EXReader/blob/94fb236a4a2da87dfbaf4f1dd2a47885d615a230/docs/validation/reader-owner-android-joined.json",
-  "historical_owner_guard_reexecuted": false
+  "historical_owner_guard_reexecuted": false,
+  "allowed_path_count": 23,
+  "canonical_composition": {
+    "f04_snapshot": "2b846d38f8344e562b2d3c13b13a85a97b08c725",
+    "method": "exact twelve blobs; no branch merge",
+    "selected_case": "f04/windows-android",
+    "controller_source_run_head_equal": true,
+    "authorization_message": "Sentinel_dbf1e1cd310481918cf59dec9cedca3e",
+    "authorization_utc": "2026-11-01T01:35:33Z",
+    "runner_minutes_cap": 120,
+    "run_limit": 1,
+    "automatic_retries": 0,
+    "job_minutes": {
+      "windows_seed": 30,
+      "android_peer": 45,
+      "windows_return_android": 15,
+      "retained_linux": 20,
+      "audit": 10
+    },
+    "f03_reexecution_authorized": false,
+    "full_F03_accepted": false,
+    "full_F04_accepted": false
+  }
 }

@@ -274,3 +274,23 @@ ID **13065477732**, **22369624** bytes, original ZIP SHA256
 It preserves the prior original ZIP and selected evidence. This is not F03
 acceptance or new product validation. No retry or additional run was started.
 Further execution or instrumentation needs a separately approved scope/budget.
+
+## Exact F04 canonical composition preparation — 2026-11-01 01:41 UTC
+
+After the fixed-artifact diagnosis reached its terminal state, the explicitly
+approved F04 snapshot `2b846d38f8344e562b2d3c13b13a85a97b08c725` is received
+as exactly twelve pinned blobs, not a branch merge. It joins the existing
+eleven paths, forming the approved twenty-three-path allowlist. Product and
+old tests remain unchanged from 94fb; five SDK objects remain fixed to 8357.
+
+The sole canonical entry calls the local F04 workflow_call helper under case
+`f04/windows-android`, display name `F04 windows-android`, and passes
+`controller_sha=github.sha`. Controller, checkout/product candidate, run head
+and all producer evidence must have that one new composed SHA. No artifact
+from the older F03 or F04 branch substitutes for this same-source execution.
+
+F04's single approved cap is 120 minutes: Windows seed30, Android peer45,
+Windows return15, retained Linux20, audit10; no automatic retries. This
+preparation does not trigger. The F03 product case and diagnostic case remain
+unselected: F04 budget cannot rerun or repair the failed F03 scenarios.
+F03 remains pending; the two-host F04 round cannot award complete six-host F04.
