@@ -1082,9 +1082,9 @@
     "case": "f04/six-host",
     "max_runner_minutes": 230,
     "max_runs": 1,
-    "runs_started": 0,
+    "runs_started": 1,
     "automatic_retry": false,
-    "status": "prepared-awaiting-independent-source-review",
+    "status": "completed-failure",
     "delta_paths": [
       "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
       "tests/dot_f04_reading_sync_20261031/run.py",
@@ -1121,6 +1121,73 @@
       "original_history_preserved": true,
       "scope_limit": "Original graph/retained preparation only; do not promote F04 acceptance or formal96/108 from diagnostic or pending results"
     },
-    "execution": "Existing F04-SIX-230-ONE-RUN canonical marker, 15 jobs once; F03 sole canonical writer/trigger after F12 actual review."
+    "execution": "Existing F04-SIX-230-ONE-RUN canonical marker, 15 jobs once; F03 sole canonical writer/trigger after F12 actual review.",
+    "result": {
+      "run_id": "41292070407",
+      "attempt": 1,
+      "source_sha": "91b2ee1ff98173ccaa9de52b4071821905bd1c07",
+      "conclusion": "failure",
+      "planned_jobs": {
+        "success": 12,
+        "failure": 2,
+        "skipped": 1
+      },
+      "iphone_job_id": 124807860245,
+      "iphone_failure": "Original row lookup did not scroll: visible row2 is Windows bookmark, row3 Android note is below viewport; no row4 AX node. Required F04_ANDROID_BOOKMARK was not found.",
+      "audit_job_id": 124810129108,
+      "audit_failure": "required producer failed: iphone_peer; graph and retained authentication not executed",
+      "iphone_diagnostic_artifact": {
+        "id": 13078002995,
+        "size_in_bytes": 950,
+        "digest": "sha256:0d0b130cf042fae6c39dc9e12358f47cd3af65c0dd99a2d71f90ec01de905659"
+      },
+      "F04_accepted": false
+    }
+  },
+  "iphone_record_diagnostic": {
+    "case": "f04/iphone-record-diagnostic",
+    "authorization_message_id": "Sentinel_121e292081c08191a1ffc1d0f0ab0cfc",
+    "authorized_at": "2026-11-01T09:40:23Z",
+    "producer_source": "91b2ee1ff98173ccaa9de52b4071821905bd1c07",
+    "run_id": "41292070407",
+    "attempt": "1",
+    "max_runner_minutes": 20,
+    "max_runs": 1,
+    "runs_started": 0,
+    "automatic_retry": false,
+    "status": "prepared-awaiting-independent-source-review",
+    "diagnostic_only": true,
+    "F04_accepted": false,
+    "allowed_changed_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      ".github/workflows/dot-f04-reading-sync-20261031.yml",
+      "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+      "tests/dot_f04_reading_sync_20261031/run.py",
+      "tests/dot_f04_reading_sync_20261031/contract.json",
+      "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+    ],
+    "sdk_simulator": {
+      "job_id": 124805173497,
+      "artifact_id": 13076809707,
+      "size_in_bytes": 22468259,
+      "digest": "sha256:fec0a4ed78566c20b48fdd24f46704ea29b868271d541f48139e127bbcdbca0e"
+    },
+    "android": {
+      "job_id": 124806356213,
+      "artifact_id": 13078190982,
+      "size_in_bytes": 20040487,
+      "digest": "sha256:3c83369dd780d065fb04b47ff8ab6a74d94355e1bde9ee7b63bf8eefa36337e1"
+    },
+    "targets": {
+      "iphone": 20
+    },
+    "design": {
+      "max_snapshots": 21,
+      "max_native_scrolls": 20,
+      "matching": "Original index0..<32 order, exact kind and body.contains(marker); snapshot memory only. Return original index to unchanged real row action helper.",
+      "search": "Current view first, toward start until positive row0 intersects viewport or unchanged positive visible-kind frames suggest reversal; reverse once toward end. No movement never establishes absence or early failure. Exhaustion is preparation-incomplete.",
+      "isolation": "New explicit iPhone-only switch; non-iPhone row unchanged, Mac permission and Mac diagnostic disabled, no SDK builds/Windows returns/graph.",
+      "identity": "Historical SDK and Android source/run/attempt authenticated separately from new controller/UI source. Original bytes, hashes, assertions and history retained."
+    }
   }
 }
