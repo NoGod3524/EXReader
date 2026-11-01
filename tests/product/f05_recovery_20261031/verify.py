@@ -37,6 +37,22 @@ def exact(values, expected, code, detail):
     unique(values, code, detail)
     require(set(values) == set(expected), code, detail + ": missing or extra")
 
+def same_identity(actual, expected, label):
+    require(actual["source"] == expected["source"], "wrong_source", label)
+    require(str(actual["run"]) == str(expected["run"]), "wrong_run", label)
+    require(str(actual["attempt"]) == str(expected["attempt"]), "wrong_attempt", label)
+
+def delete_head_contract(case, label):
+    heads = case["competing_heads"]
+    unique(heads, "invalid_heads", label)
+    require(len(heads) >= 2, "invalid_heads", label + ": delete/put requires competing heads")
+    if case.get("explicit_user_restore", False):
+        exact(case["restore_parents"], heads, "wrong_restore_parents", label)
+        exact(case["final_heads"], [case["restore_revision"]], "wrong_final_heads", label)
+    else:
+        exact(case["final_heads"], heads, "wrong_final_heads", label)
+
+
 def digest_file(path):
     result = hashlib.sha256()
     with path.open("rb") as stream:
@@ -164,7 +180,7 @@ def authenticate(manifest, output, identity):
         with zipfile.ZipFile(raw) as archive:
             members = member_index(archive, policy)
             receipt = read_json_member(archive, members, spec["receipt_member"], policy)
-            require(receipt["identity"] == identity, "wrong_source", role + ": receipt identity")
+            same_identity(receipt["identity"], identity, role + ": receipt identity")
             program = spec["program_member"]
             require(program in members and not members[program].is_dir(), "missing_member", program)
             program_hash = zip_hash(archive, members[program])
@@ -231,7 +247,7 @@ def check(manifest, bundle, identity):
     require(manifest["schema"] == 2 and manifest["requirement"] == "F05",
             "wrong_manifest", "F05 role schema required")
     require(manifest["sdk_freeze"] == SDK, "wrong_sdk", "frozen SDK differs")
-    require(bundle["identity"] == identity, "wrong_source", "authenticated aggregate identity")
+    same_identity(bundle["identity"], identity, "authenticated aggregate identity")
     roles = bundle["roles"]
     require(set(roles) == set(manifest["artifact_roles"]), "missing_role", "producer roles differ")
     host_rows = {}
@@ -240,8 +256,8 @@ def check(manifest, bundle, identity):
         host = row["host"]
         require(host in HOSTS and host not in host_rows, "duplicate_host", host)
         host_rows[host] = row
-        require(row["identity"] == identity and row["sdk_freeze"] == SDK,
-                "wrong_source", host)
+        same_identity(row["identity"], identity, host)
+        require(row["sdk_freeze"] == SDK, "wrong_sdk", host)
         require(row["program_sha256"] == authenticated["program_sha256"],
                 "wrong_program", host)
         suites = {name for name, spec in manifest["retained_suites"].items() if host in spec["hosts"]}
@@ -286,17 +302,11 @@ def check(manifest, bundle, identity):
                     else:
                         exact(case["final_heads"], heads, "wrong_final_heads", label)
                 elif claim == "delete_put_tombstone_preserved":
-                    heads = case["competing_heads"]
-                    unique(heads, "invalid_heads", label)
-                    require(len(heads) >= 2, "invalid_heads", label + ": delete/put requires competing heads")
+                    delete_head_contract(case, label)
                     require(case["stale_peer_did_not_resurrect"] is True and case["tombstone_preserved"] is True,
                             "tombstone_lost", label)
                     require(case["delete_conflict_displayed"] is True, "silent_delete_conflict", label)
-                    if case.get("explicit_user_restore", False):
-                        exact(case["restore_parents"], heads, "wrong_restore_parents", label)
-                        exact(case["final_heads"], [case["restore_revision"]], "wrong_final_heads", label)
-                    else:
-                        exact(case["final_heads"], heads, "wrong_final_heads", label)
+
                 elif claim == "cancel_retry":
                     require(case["cancel_layer"] in {"transport", "receive", "import"}
                             and case["native_cancel_observed"] is True and case["explicit_retry_passed"] is True,
@@ -330,6 +340,10 @@ def negative_controls(manifest, authenticated, identity, original_artifacts):
     damaged = copy.deepcopy(authenticated)
     damaged["identity"]["source"] = "0" * 40
     reject("aggregate-source-substitution", "wrong_source", lambda: check(manifest, damaged, identity))
+    for field, code in (("run", "wrong_run"), ("attempt", "wrong_attempt")):
+        damaged = copy.deepcopy(authenticated)
+        damaged["identity"][field] = str(int(identity[field]) + 1)
+        reject("aggregate-" + field + "-substitution", code, lambda: check(manifest, damaged, identity))
     damaged = copy.deepcopy(authenticated)
     first_role = next(iter(damaged["roles"]))
     first = damaged["roles"][first_role]["receipt"]
@@ -347,6 +361,18 @@ def negative_controls(manifest, authenticated, identity, original_artifacts):
     reject("original-ordered-assertion-substitution", "wrong_suite_names",
            lambda: check(manifest, damaged, identity))
     for role, row in authenticated["roles"].items():
+        receipt = row["receipt"]
+        reference = receipt["claims"]["delete_put_tombstone_preserved"][0]
+        original = next(c for c in receipt["cases"] if c["id"] == reference["case_id"])
+        delete_head_contract(original, role)
+        damaged_heads = copy.deepcopy(original)
+        damaged_heads["competing_heads"] = damaged_heads["competing_heads"][:1]
+        reject(role + "-delete-conflict-single-head", "invalid_heads",
+               lambda: delete_head_contract(damaged_heads, role))
+        damaged_heads = copy.deepcopy(original)
+        damaged_heads["final_heads"] = []
+        reject(role + "-delete-conflict-dropped-heads", "wrong_final_heads",
+               lambda: delete_head_contract(damaged_heads, role))
         metadata = copy.deepcopy(row["artifact_metadata"])
         metadata["digest"] = "sha256:" + ("0" * 64 if row["original_zip_sha256"] != "0" * 64 else "1" * 64)
         reject(role + "-wrong-original-ZIP-digest", "wrong_digest",
