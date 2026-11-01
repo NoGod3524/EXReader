@@ -14,7 +14,13 @@ def main():
     assert source == os.environ["GITHUB_SHA"]
     assert git("merge-base", contract["base_source"], source) == contract["base_source"]
     changed = git("diff", "--name-only", contract["base_source"], source).splitlines()
-    assert set(changed) == set(contract["authorized_paths"]), (changed, "exact authorized twelve-file ownership")
+    if os.environ.get("GITHUB_REF") == "refs/heads/" + contract["canonical"]["branch"]:
+        assert os.environ.get("F04_SCOPE") == "f04/windows-android", "approved fixed case"
+        assert os.environ.get("F04_CONTROLLER_SHA") == source, "controller/source mismatch"
+        assert set(changed) == set(contract["canonical"]["union_paths"]), (changed, "exact approved twenty-three-path union")
+    else:
+        assert set(changed) == set(contract["authorized_paths"]), (changed, "exact twelve-file preparation ownership")
+        assert os.environ.get("F04_SCOPE") is None, "execution requires canonical branch"
     sdk_paths = ("src", "include", "cmake", "CMakeLists.txt", "bindings")
     assert not git("diff", "--name-only", contract["sdk_source"], source, "--", *sdk_paths)
     assert not git("status", "--porcelain", "--", *sdk_paths)

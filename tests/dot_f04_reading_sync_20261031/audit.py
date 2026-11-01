@@ -12,6 +12,23 @@ ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 BASE = "94fb236a4a2da87dfbaf4f1dd2a47885d615a230"
 
+def active_contract():
+    contract = json.loads((HERE / "contract.json").read_text())
+    scope_name = os.environ.get("F04_SCOPE")
+    need(scope_name in contract["execution_scopes"], "approved execution scope")
+    need(os.environ.get("GITHUB_REF") == "refs/heads/" + contract["canonical"]["branch"], "canonical execution branch")
+    need(os.environ.get("F04_CONTROLLER_SHA") == os.environ["GITHUB_SHA"], "controller/source mismatch")
+    scope = contract["execution_scopes"][scope_name]
+    return contract, scope_name, scope
+
+def producer_job_name(contract, name):
+    return contract["canonical"]["caller_job"] + " / " + name
+
+def same_run_head(fetch, current):
+    run = fetch("actions/runs/" + current["run_id"])
+    need(run["head_sha"] == current["source_sha"] == os.environ["F04_CONTROLLER_SHA"] and
+         str(run["run_attempt"]) == current["attempt"], "controller/product/run head identity")
+
 def need(value, message):
     if not value:
         raise AssertionError(message)
@@ -178,7 +195,8 @@ def graph_audit(manifest_path):
     need(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
     from relay import load, input_metadata
     manifest = json.loads(manifest_path.read_text())
-    required = set(json.loads((HERE / "contract.json").read_text())["platforms"])
+    contract, scope_name, scope = active_contract()
+    required = set(scope["hosts"])
     nodes, edges, checked = {}, set(), []
     identity = {k: os.environ[v] for k, v in
                 (("source_sha", "GITHUB_SHA"), ("run_id", "GITHUB_RUN_ID"), ("attempt", "GITHUB_RUN_ATTEMPT"))}
@@ -251,7 +269,7 @@ def graph_audit(manifest_path):
              "desktop receive non-navigation observation")
         edges.add((sender, receiver))
     observed_hosts = {host for host, _, _ in nodes.values()}
-    need(observed_hosts == required, "six actual host roles required")
+    need(observed_hosts == required, "actual host roles for fixed execution scope")
     for start in required:
         seen, pending = {start}, [start]
         while pending:
@@ -259,7 +277,7 @@ def graph_audit(manifest_path):
             for a, b in edges:
                 if a == current and b not in seen: seen.add(b); pending.append(b)
         need(seen == required, "graph is not bidirectionally connected from " + start)
-    report = dict(identity, graph_checked=True, graph_checks=checked, hosts=sorted(required),
+    report = dict(identity, scope=scope_name, graph_checked=True, graph_checks=checked, hosts=sorted(required),
                   F04_accepted=False, six_target_accepted=False,
                   remaining=["authenticate retained original protocol/host producers",
                              "same-source executable runtime verification; this preparation is not final acceptance"])
@@ -271,10 +289,10 @@ def graph_audit(manifest_path):
 def authenticated_builds(contract, current, jobs, artifacts):
     from check_parallel_integration import download_artifact_zip
     ids = json.loads(os.environ["F04_BUILD_IDS"])
-    need(set(ids) == {b["key"] for b in contract["build_producers"]}, "build artifact ID map")
+    need(set(ids) == set(active_contract()[2]["build_keys"]), "build artifact ID map")
     receipts = {}
-    for binding in contract["build_producers"]:
-        found_jobs = [j for j in jobs if j["name"] == binding["job"]]
+    for binding in [b for b in contract["build_producers"] if b["key"] in active_contract()[2]["build_keys"]]:
+        found_jobs = [j for j in jobs if j["name"] == producer_job_name(contract, binding["job"])]
         need(len(found_jobs) == 1 and found_jobs[0]["conclusion"] == "success" and
              found_jobs[0]["head_sha"] == current["source_sha"], "build producer job")
         rows = [a for a in artifacts if a["id"] == ids[binding["key"]]]
@@ -331,7 +349,9 @@ def authenticate_graph():
     current = identity()
     run_id, attempt = current["run_id"], current["attempt"]
     contract = json.loads((HERE / "contract.json").read_text())
-    bindings = contract["graph_producers"]
+    contract, scope_name, scope = active_contract()
+    bindings = [b for b in contract["graph_producers"] if b["artifact"] in scope["graph_artifacts"]]
+    same_run_head(fetch, current)
     jobs = pages("actions/runs/" + run_id + "/attempts/" + attempt + "/jobs", "jobs")
     artifacts = pages("actions/runs/" + run_id + "/artifacts", "artifacts")
     producer_ids = json.loads(os.environ["F04_ARTIFACT_IDS"])
@@ -471,9 +491,11 @@ def authenticate_retained():
     import copy
     from relay import identity
     sys.path.insert(0, str(ROOT / "tools"))
-    from check_parallel_integration import pages, download_artifact_zip
+    from check_parallel_integration import fetch, pages, download_artifact_zip
     current = identity()
-    bindings = json.loads((HERE / "contract.json").read_text())["retained_producers"]
+    contract, scope_name, scope = active_contract()
+    same_run_head(fetch, current)
+    bindings = [b for b in contract["retained_producers"] if b["key"] in scope["retained_keys"]]
     ids = json.loads(os.environ["F04_RETAINED_IDS"])
     need(set(ids) == {b["key"] for b in bindings}, "retained artifact ID map")
     jobs = pages("actions/runs/" + current["run_id"] + "/attempts/" + current["attempt"] + "/jobs", "jobs")
@@ -530,10 +552,11 @@ def authenticate_retained():
                 raise AssertionError("negative unexpectedly accepted: " + label)
         receipts.append({"artifact": {k: row[k] for k in ("id", "name", "size_in_bytes", "digest")},
                          "job_id": job[0]["id"], "negative_checks": rejected})
-    need(len(normalized) == 2 and normalized[0] == normalized[1], "retained cross-platform outcomes")
+    need(len(normalized) == len(scope["retained_keys"]) and all(n == normalized[0] for n in normalized),
+         "retained selected-scope outcomes")
     out = ROOT / "build/f04-retained-auth"
     out.mkdir(parents=True, exist_ok=False)
-    (out / "result.json").write_text(json.dumps(dict(current, retained_18_121_checked=True,
+    (out / "result.json").write_text(json.dumps(dict(current, retained_18_121_checked=True, scope=scope_name, cross_platform_comparison=len(normalized) > 1,
         producers=receipts, original_four_zip_aggregate="not-run", F04_accepted=False), indent=2))
 
 if __name__ == "__main__":

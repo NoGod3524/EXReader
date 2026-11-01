@@ -19,8 +19,8 @@
     "tests/dot_f04_reading_sync_20261031/windows_driver.py",
     "tests/dot_f04_reading_sync_20261031/gtk_driver.py"
   ],
-  "phase": "implementation-only-no-CI",
-  "ci_runs_authorized": 0,
+  "phase": "approved-single-real-windows-android-case",
+  "ci_runs_authorized": 1,
   "complete_f04": false,
   "platforms": [
     "windows",
@@ -250,7 +250,7 @@
   "build_producers": [
     {
       "key": "f04-build-windows",
-      "job": "F04 build windows",
+      "job": "F04 Windows seed",
       "platform": "windows"
     },
     {
@@ -273,5 +273,67 @@
       "job": "F04 build iphonesimulator",
       "platform": "iphonesimulator"
     }
-  ]
+  ],
+  "canonical": {
+    "branch": "dot/reader-suite-20261101",
+    "entry": ".github/workflows/dot-f03-same-source-20261031.yml",
+    "caller_job": "F04 windows-android",
+    "union_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      "docs/reader-total-progress/DOT_F03_SAME_SOURCE_20261031.md",
+      "tests/dot_f03_same_source_20261031/scope.json",
+      "tests/dot_f03_same_source_20261031/identity.py",
+      "tests/dot_f03_same_source_20261031/build.py",
+      "tests/dot_f03_same_source_20261031/fixtures.py",
+      "tests/dot_f03_same_source_20261031/gtk.py",
+      "tests/dot_f03_same_source_20261031/android.py",
+      "tests/dot_f03_same_source_20261031/verify.py",
+      "tests/dot_f03_same_source_20261031/android/OrganizationInteropTest.java",
+      "tests/dot_f03_same_source_20261031/README.md",
+      "tests/dot_f04_reading_sync_20261031/contract.json",
+      "tests/dot_f04_reading_sync_20261031/admission.py",
+      "tests/dot_f04_reading_sync_20261031/fixtures.py",
+      "tests/dot_f04_reading_sync_20261031/relay.py",
+      "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+      "tests/dot_f04_reading_sync_20261031/android_driver.java",
+      "tests/dot_f04_reading_sync_20261031/run.py",
+      "tests/dot_f04_reading_sync_20261031/audit.py",
+      ".github/workflows/dot-f04-reading-sync-20261031.yml",
+      "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md",
+      "tests/dot_f04_reading_sync_20261031/windows_driver.py",
+      "tests/dot_f04_reading_sync_20261031/gtk_driver.py"
+    ],
+    "controller_source_run_head_equal": true
+  },
+  "execution_scopes": {
+    "f04/windows-android": {
+      "hosts": [
+        "windows",
+        "android-api34-x86_64"
+      ],
+      "graph_artifacts": [
+        "f04-windows-seed",
+        "f04-android-peer",
+        "f04-windows-return-android"
+      ],
+      "build_keys": [
+        "f04-build-windows",
+        "f04-build-android"
+      ],
+      "retained_keys": [
+        "f04-retained-linux"
+      ],
+      "runner_minutes_cap": 120,
+      "run_limit": 1,
+      "automatic_retries": 0,
+      "job_minutes": {
+        "windows_seed": 30,
+        "android_peer": 45,
+        "windows_return_android": 15,
+        "retained_linux": 20,
+        "audit": 10
+      },
+      "full_F04": false
+    }
+  }
 }
