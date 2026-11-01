@@ -56,3 +56,11 @@ content failure. Future reuse of the owned AVD records removal of the four test-
 packages before the frozen driver installs one CI run's complete APK set and
 rebuilds the 2202-original fixture. Local desktop/VM interaction remains stopped
 after the physical Escape signal.
+
+The first common build run 41257670604 passed compilation and controls at
+source 5119631d. Android ZIP identity and standalone input preparation were
+verified. Its Windows ZIP omitted the declared hidden workflow snapshot under
+final-source/.github/, so the strict inventory rejected it. That original
+archive and failure remain retained. Windows upload now explicitly includes
+hidden files; subsequent builds must be authenticated under their own source,
+run, attempt and ZIP identities.
