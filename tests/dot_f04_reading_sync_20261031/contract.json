@@ -814,9 +814,9 @@
       "case": "f04/macos-state-diagnostic",
       "max_runner_minutes": 15,
       "max_runs": 1,
-      "runs_started": 0,
+      "runs_started": 1,
       "automatic_retry": false,
-      "status": "prepared-awaiting-independent-source-review",
+      "status": "completed-failure",
       "delta_paths": [
         "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
         "tests/dot_f04_reading_sync_20261031/contract.json",
@@ -846,7 +846,64 @@
         "ios_unchanged": true,
         "original_success_assertions_preserved": true
       },
-      "execution": "Existing single macOS diagnostic job; historical SDK/Android pins and production-equivalence allowlist unchanged; F03 sole canonical writer and trigger."
+      "execution": "Existing single macOS diagnostic job; historical SDK/Android pins and production-equivalence allowlist unchanged; F03 sole canonical writer and trigger.",
+      "result": {
+        "run_id": "41289052139",
+        "attempt": 1,
+        "source_sha": "d3edf83e395190d6fc2f55c4f14fb99cbe702d86",
+        "job_id": 124796294754,
+        "conclusion": "failure",
+        "test_seconds": 246.788,
+        "artifact_id": 13076039546,
+        "size_in_bytes": 42353043,
+        "digest": "sha256:5eba597868d3b1bf360bb99e9ae7a6b2384813249a7bf4c3cc5744cd9d0c10a6",
+        "api_updated_at": "2026-11-01T09:35:39Z",
+        "runner_upload_log_at": "2026-11-01T08:35:35Z",
+        "time_discrepancy": "API timestamps one hour ahead of runner/observation; retain separately",
+        "passed_checkpoints": [
+          "position",
+          "incoming-bookmark",
+          "incoming-note"
+        ],
+        "reason": "Exact Python Don't Allow native click succeeded at t92.97; XCTest internally activated UserNotificationCenter as part of that authorized action. Prompt disappeared, save-progress passed readiness and Tap synthesized at t93.82, but original saved-status assertion timed out. Final status remained the record-list title; edits/upload not reached.",
+        "mechanism_hypothesis": "HostRootView resign/scene callbacks call closeAccountSession -> readingRecords.bind(nil), clearing bookID/rows/complete but retaining status; performReading then may silently return on bookID guard. Code path verified, internal state not observed in this run; not a proven tap or product root cause.",
+        "diagnostic_only": true,
+        "F04_accepted": false
+      }
+    },
+    "startup_permission_round": {
+      "authorization_message_id": "Sentinel_1a30811476448191a7a4241f18a3a338",
+      "authorized_at": "2026-11-01T08:42:06Z",
+      "case": "f04/macos-state-diagnostic",
+      "max_runner_minutes": 15,
+      "max_runs": 1,
+      "runs_started": 0,
+      "automatic_retry": false,
+      "status": "prepared-awaiting-independent-source-review",
+      "delta_paths": [
+        "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+        "tests/dot_f04_reading_sync_20261031/contract.json",
+        "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+      ],
+      "design": {
+        "macos_diagnostic_only": true,
+        "environment": "next ephemeral GitHub-hosted macOS runner only",
+        "startup": "after app.launch, before account.choose and all credential/connection/book/record actions",
+        "observation_max_seconds": 10,
+        "total_original_library_ready_deadline_seconds": 150,
+        "shared_deadline": true,
+        "absence_is_failure": false,
+        "permission": "Existing exact unique Python Local Network Don't Allow semantics; at most one native click per test; no guessing, Allow, settings/TCC or retry",
+        "after_denial": "Observe actual disappearance then one own-app activation only if still runningForeground/runningBackground; fresh original library readiness before original account actions",
+        "late_permission": "Environment-blocked only; no denial/reopening or write replay during active test",
+        "tap_click_change": false,
+        "original_success_assertions_preserved": true,
+        "list_helper_unchanged": true,
+        "ios_unchanged": true,
+        "diagnostics": "Bounded public UI proxies: record kind/jump/edit identifiers, next/pending/status/location and app state; never internal bookID, editor/account values or raw tree",
+        "historical_metadata": "All historical six-host/230-minute fields preserved unchanged; no new execution authorization for those scopes"
+      },
+      "execution": "Existing single Mac15 entry; fixed SDK/input/product-equivalence locks unchanged; F03 sole canonical writer and trigger."
     }
   },
   "apple_visibility_diagnostic": {
