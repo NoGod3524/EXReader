@@ -642,15 +642,330 @@ def diagnose_fixed():
     (out / "diagnosis.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(result), flush=True)
 
+
+def diagnose_artifact_inventory():
+    """Read-only historical inventory; never an alternate acceptance path."""
+    import base64
+    from relay import identity
+    sys.path.insert(0, str(ROOT / "tools"))
+    from check_parallel_integration import fetch, download_artifact_zip
+    need(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
+    contract = json.loads((HERE / "contract.json").read_text())
+    pin = contract["artifact_inventory_diagnostic"]
+    controller = identity()
+    need(os.environ.get("F04_SCOPE") == pin["case"] and
+         os.environ.get("GITHUB_REF") == "refs/heads/" + contract["canonical"]["branch"] and
+         os.environ.get("F04_CONTROLLER_SHA") == controller["source_sha"], "inventory controller")
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    need(head == controller["source_sha"], "inventory checkout")
+    changed = subprocess.check_output(["git", "diff", "--name-only", pin["producer_source"], head],
+                                      cwd=ROOT, text=True).splitlines()
+    need(set(changed) == set(pin["allowed_changed_paths"]), "inventory exact source delta")
+    producer = fetch("actions/runs/" + pin["run_id"])
+    need(producer["head_sha"] == pin["producer_source"] and
+         str(producer["run_attempt"]) == pin["attempt"] and producer["conclusion"] == "failure",
+         "inventory historical run")
+    need(len(pin["artifacts"]) == 17 and len({p["artifact_id"] for p in pin["artifacts"]}) == 17,
+         "inventory seventeen fixed artifacts")
+    expected_identity = dict(source_sha=pin["producer_source"], run_id=pin["run_id"], attempt=pin["attempt"])
+    out = ROOT / "build/f04-artifact-inventory"
+    out.mkdir(parents=True, exist_ok=False)
+    report = dict(controller=controller, producer=expected_identity, original_run_conclusion="failure",
+                  diagnostic_only=True, F04_accepted=False, product_executed=False,
+                  archives_modified=False, artifacts=[])
+    cross = {}
+    phase_files = {"state.json", "result.json", "report.json", "requests.json", "cert.pem",
+                   "program.bin", "build-receipt.json", "installed-identity.json"}
+    sdk_metadata = {"build-receipt.json", "sdk342-installed-identity.json", "wave3-packages.json",
+                    "sdk-identity.json", "raw-identity.json"}
+    retained_files = {"f04-driver/retained-receipt.json", "v2-sdk-evidence/result.json",
+        "v2-sdk-evidence/probe.json", "v2-sdk-evidence/legacy/summary.json",
+        "v2-sdk-evidence/legacy/report.json", "v2-webdav-evidence/result.json",
+        "v2-webdav-evidence/probe.json", "v2-webdav-evidence/native-requests.json",
+        "v2-consumer/reading-v2-probe", "v2-webdav-consumer/reading-v2-probe",
+        "v1-consumer/reading-state-probe", "v1-consumer/reading-state-c-consumer",
+        "v1-consumer/reading-state-link.map", "v1-product/CMakeCache.txt",
+        "v1-revisions/CMakeCache.txt", "v1-adapter/CMakeCache.txt", "v1-consumer/CMakeCache.txt"}
+    for binding in pin["artifacts"]:
+        row = dict(binding=binding, missing=[], unexpected=[], hash_mismatch=[], identity_errors=[],
+                   inspection_errors=[], missing_critical=[], members=[], expected=[])
+        report["artifacts"].append(row)
+        try:
+            job = fetch("actions/jobs/" + str(binding["job_id"]))
+            need(job["head_sha"] == pin["producer_source"] and str(job["run_id"]) == pin["run_id"] and
+                 str(job["run_attempt"]) == pin["attempt"] and job["conclusion"] == "success" and
+                 job["name"] == binding["job_name"], "inventory producer job")
+            artifact = fetch("actions/artifacts/" + str(binding["artifact_id"]))
+            need(artifact["id"] == binding["artifact_id"] and not artifact["expired"] and
+                 artifact["name"] == binding["name"] and artifact["size_in_bytes"] == binding["size_in_bytes"] and
+                 artifact["digest"] == binding["digest"] and
+                 artifact["workflow_run"]["head_sha"] == pin["producer_source"] and
+                 str(artifact["workflow_run"]["id"]) == pin["run_id"], "inventory artifact metadata")
+            blob = download_artifact_zip(binding["artifact_id"])
+            need(len(blob) == binding["size_in_bytes"] and
+                 "sha256:" + hashlib.sha256(blob).hexdigest() == binding["digest"], "inventory original bytes")
+            row["original_archive_authenticated"] = True
+            with zipfile.ZipFile(io.BytesIO(blob)) as archive:
+                entries = archive.infolist()
+                names = [e.filename for e in entries]
+                need(len(names) == len(set(names)) and len(names) <= 50000, "inventory duplicate/member limit")
+                need(sum(e.file_size for e in entries) <= 500000000 and
+                     all(e.file_size <= 250000000 for e in entries), "inventory expanded size")
+                need(all(not PurePosixPath(n).is_absolute() and ".." not in PurePosixPath(n).parts and
+                         "\\" not in n and ":" not in n and "\x00" not in n and not n.endswith(".key") and
+                         PurePosixPath(n).name != "key.pem" and
+                         not ({"private", "profile"} & set(PurePosixPath(n).parts)) for n in names),
+                     "inventory unsafe paths")
+                need(all(((e.external_attr >> 16) & 0o170000) in (0, 0o100000, 0o040000)
+                         and not (e.flag_bits & 1) for e in entries), "inventory special/encrypted entries")
+                files = {e.filename for e in entries if not e.is_dir()}
+                hashes = {}
+                objects = {}
+                for name in sorted(files):
+                    raw = archive.read(name)
+                    hashes[name] = {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+                    row["members"].append(dict(path=name, hidden=any(p.startswith(".") for p in PurePosixPath(name).parts),
+                                               **hashes[name]))
+                    if name.endswith(".json"):
+                        try:
+                            objects[name] = json.loads(raw)
+                        except (ValueError, UnicodeError):
+                            row["inspection_errors"].append("invalid JSON: " + name)
+                def check_identity(value, path):
+                    if isinstance(value, dict):
+                        if "source_sha" in value and "run_id" in value and "attempt" in value:
+                            for key, expected in expected_identity.items():
+                                if str(value[key]) != expected: row["identity_errors"].append(path + ":" + key)
+                        if "sdk_version" in value and value["sdk_version"] != "3.42.0":
+                            row["identity_errors"].append(path + ":sdk_version")
+                        for key, child in value.items():
+                            if key not in ("body", "raw_b64", "entries"):
+                                check_identity(child, path + "/" + key)
+                    elif isinstance(value, list):
+                        for i, child in enumerate(value): check_identity(child, path + "/" + str(i))
+                for name, value in objects.items(): check_identity(value, name)
+                def require_fields(value, keys, label):
+                    if not isinstance(value, dict):
+                        row["missing_critical"].append(label + ":object")
+                        return False
+                    missing = [k for k in keys if k not in value or value[k] is None]
+                    row["missing_critical"].extend(label + ":" + k for k in missing)
+                    return not missing
+                def identity_required(value, label):
+                    if require_fields(value, expected_identity, label):
+                        for key, expected in expected_identity.items():
+                            if str(value[key]) != expected: row["identity_errors"].append(label + ":" + key)
+                def equal_field(value, key, expected, label):
+                    if require_fields(value, [key], label) and value[key] != expected:
+                        row["identity_errors"].append(label + ":" + key)
+                def expected_hash(path, value, keys=("bytes", "sha256"), label=None):
+                    label = label or path
+                    valid = require_fields(value, keys, label + ":reference")
+                    if path not in files:
+                        row["missing"].append(path)
+                    elif valid and any(hashes[path][key] != value[key] for key in keys):
+                        row["hash_mismatch"].append(label)
+                receipt = objects.get("build-receipt.json")
+                if binding["category"] in ("sdk-build", "program-build", "phase"):
+                    identity_required(receipt, "build-receipt")
+                    equal_field(receipt, "sdk_version", "3.42.0", "build-receipt")
+                    equal_field(receipt, "sdk_source", contract["sdk_source"], "build-receipt")
+                    platform = binding["platform"]
+                    if binding["category"] == "phase":
+                        graph = next((b for b in contract["graph_producers"]
+                                      if binding["name"] == b["artifact"] + "-" + pin["run_id"] + "-" + pin["attempt"]), None)
+                        if graph is None: row["missing_critical"].append("phase:contract-binding")
+                        else:
+                            platform = next(b["platform"] for b in contract["build_producers"]
+                                            if b["key"] == graph["build_key"])
+                    recipe = {"windows": "tests/windows_sdk342/build.py", "gtk": "tests/gtk_sdk342_package/run.py",
+                              "android": "tests/android_sdk342_package/run.py",
+                              "macos": "tests/apple_sdk342_host/build.py",
+                              "iphonesimulator": "tests/apple_sdk342_host/build.py"}.get(platform)
+                    equal_field(receipt, "platform", platform, "build-receipt")
+                    equal_field(receipt, "recipe", recipe, "build-receipt")
+                    if recipe:
+                        equal_field(receipt, "recipe_sha256", hashlib.sha256((ROOT / recipe).read_bytes()).hexdigest(),
+                                    "build-receipt")
+                cross[binding["name"]] = dict(hashes=hashes, receipt=receipt)
+                if binding["category"] == "sdk-build":
+                    expected = set(sdk_metadata)
+                    manifest = objects.get("sdk342-installed-identity.json", {})
+                    receipt = objects.get("build-receipt.json", {})
+                    if not isinstance(manifest, dict): manifest = {}
+                    for root, key in (("sdk", "sdk_files"), ("raw-products", "raw_files")):
+                        values = manifest.get(key)
+                        if not isinstance(values, dict):
+                            row["inspection_errors"].append("missing/invalid manifest map: " + key)
+                            continue
+                        for path, value in values.items():
+                            name = root + "/" + path
+                            expected.add(name); expected_hash(name, value)
+                    expected_hash("sdk342-installed-identity.json",
+                                  {"sha256": receipt.get("installed_identity_sha256") if isinstance(receipt, dict) else None},
+                                  ("sha256",))
+                    identity_required(manifest, "installed-sdk-manifest")
+                    equal_field(manifest, "target", binding["platform"], "installed-sdk-manifest")
+                    equal_field(manifest, "sdk_version", "3.42.0", "installed-sdk-manifest")
+                    equal_field(manifest, "sdk_content_candidate", contract["sdk_source"], "installed-sdk-manifest")
+                    for name in ("wave3-packages.json", "raw-identity.json"):
+                        identity_required(objects.get(name), name)
+                        equal_field(objects.get(name), "target", binding["platform"], name)
+                    sdk_identity = objects.get("sdk-identity.json", {})
+                    identity_required(sdk_identity, "sdk-identity")
+                    equal_field(sdk_identity, "platform", binding["platform"], "sdk-identity")
+                    equal_field(sdk_identity, "job", "build_" + binding["platform"], "sdk-identity")
+                    equal_field(sdk_identity, "sdk_version", "3.42.0", "sdk-identity")
+                    equal_field(sdk_identity, "abi", 1, "sdk-identity")
+                    equal_field(sdk_identity, "reading_sdk_baseline",
+                                "9854061be331fe603a1822d9b2b36ee357154927", "sdk-identity")
+                    if require_fields(sdk_identity, ["files_sha256", "runtime_ids"], "sdk-identity"):
+                        sdk_files = sdk_identity["files_sha256"]
+                        if isinstance(sdk_files, dict):
+                            for path, digest in sdk_files.items():
+                                expected.add("sdk/" + path)
+                                expected_hash("sdk/" + path, {"sha256": digest}, ("sha256",), "sdk-identity:" + path)
+                            committed = manifest.get("sdk_files", {})
+                            if isinstance(committed, dict) and sdk_files != {
+                                    path: value.get("sha256") for path, value in committed.items() if isinstance(value, dict)}:
+                                row["identity_errors"].append("sdk-identity/installed-manifest sdk file map")
+                        else: row["missing_critical"].append("sdk-identity:files_sha256 map")
+                    raw_identity = objects.get("raw-identity.json", {})
+                    if require_fields(raw_identity, ["raw_files"], "raw-identity"):
+                        if raw_identity["raw_files"] != manifest.get("raw_files"):
+                            row["identity_errors"].append("raw-identity/installed-manifest raw file map")
+                    equal_field(objects.get("wave3-packages.json"), "sdk_frozen_source",
+                                contract["sdk_source"], "wave3-packages")
+                elif binding["category"] == "phase":
+                    expected = {"state.json", "requests.json", "cert.pem", "program.bin", "build-receipt.json"}
+                    state = objects.get("state.json", {})
+                    data = state.get("data", {}) if isinstance(state, dict) else {}
+                    result_name = "report.json" if binding["platform"] == "android" else "result.json"
+                    expected.add(result_name)
+                    result = objects.get(result_name, {})
+                    for label, value in (("state", state), ("state.data", data), (result_name, result)):
+                        identity_required(value, label)
+                    program = data.get("program") if isinstance(data, dict) else None
+                    expected_hash("program.bin", program, label="state.data.program")
+                    if isinstance(receipt, dict) and receipt.get("program") is not None:
+                        expected_hash("program.bin", receipt["program"], label="receipt.program")
+                    else:
+                        expected.add("installed-identity.json")
+                        expected_hash("installed-identity.json",
+                                      {"sha256": receipt.get("installed_identity_sha256") if isinstance(receipt, dict) else None},
+                                      ("sha256",))
+                        equal_field(program, "bundle_source_sha", pin["producer_source"], "Apple program")
+                        equal_field(program, "bundle_id", "org.exreader.host", "Apple program")
+                    server = state.get("server", {}) if isinstance(state, dict) else {}
+                    expected_hash("cert.pem", {"sha256": server.get("certificate_sha256")}, ("sha256",))
+                    equal_field(server, "implementation_sha256", hashlib.sha256((HERE / "relay.py").read_bytes()).hexdigest(), "server")
+                    equal_field(server, "dav_implementation_sha256",
+                                hashlib.sha256((ROOT / "tests/reader_d23_relay/relay.py").read_bytes()).hexdigest(), "server")
+                    if graph is not None:
+                        cross[binding["name"]]["graph"] = graph
+                        cross[binding["name"]]["previous_sha256"] = state.get("previous_sha256")
+                        if graph["role"] != "seed":
+                            require_fields(state, ["previous_sha256"], "state")
+                        equal_field(data, "platform", graph["host"], "state.data")
+                    for label, value in (("state.data", data), (result_name, result)):
+                        equal_field(value, "passed", True, label)
+                        if isinstance(value, dict) and value.get("cleanup_errors"):
+                            row["identity_errors"].append(label + ":cleanup_errors")
+                    if isinstance(state, dict):
+                        row["phase"] = state.get("phase")
+                        for key, value in state.get("entries", {}).items():
+                            try:
+                                raw = base64.b64decode(value["body"], validate=True)
+                                if hashlib.sha256(raw).hexdigest() != value["sha256"]:
+                                    row["hash_mismatch"].append("state-entry:" + key)
+                            except (ValueError, KeyError, TypeError):
+                                row["inspection_errors"].append("invalid state-entry:" + key)
+                elif binding["category"] == "retained":
+                    expected = set(retained_files)
+                    for name in ("f04-driver/retained-receipt.json", "v2-sdk-evidence/result.json",
+                                 "v2-webdav-evidence/result.json"):
+                        identity_required(objects.get(name), name)
+                    retained_receipt = objects.get("f04-driver/retained-receipt.json")
+                    equal_field(retained_receipt, "sdk_version", "3.42.0", "retained receipt")
+                    equal_field(retained_receipt, "sdk_source", contract["sdk_source"], "retained receipt")
+                    legacy = objects.get("v2-sdk-evidence/legacy/summary.json", {})
+                    legacy_identity = legacy.get("identity", {}) if isinstance(legacy, dict) else {}
+                    for key, variable in (("source_sha", "GITHUB_SHA"), ("run_id", "GITHUB_RUN_ID"), ("attempt", "GITHUB_RUN_ATTEMPT")):
+                        if require_fields(legacy_identity, [variable], "legacy identity") and str(legacy_identity[variable]) != expected_identity[key]:
+                            row["identity_errors"].append("legacy identity:" + variable)
+                    for path, document, key in (
+                        ("v2-consumer/reading-v2-probe", "v2-sdk-evidence/result.json", "consumer_sha256"),
+                        ("v2-webdav-consumer/reading-v2-probe", "v2-webdav-evidence/result.json", "consumer_sha256"),
+                        ("v1-consumer/reading-state-probe", "v2-sdk-evidence/legacy/summary.json", "probe_sha256"),
+                        ("v1-consumer/reading-state-c-consumer", "v2-sdk-evidence/legacy/summary.json", "c_consumer_sha256"),
+                        ("v2-sdk-evidence/legacy/report.json", "v2-sdk-evidence/legacy/summary.json", "report_sha256")):
+                        document_value = objects.get(document, {})
+                        expected_hash(path, {"sha256": document_value.get(key) if isinstance(document_value, dict) else None},
+                                      ("sha256",), document + ":" + key)
+                else:
+                    expected = {"build-receipt.json", "program.bin"}
+                    if binding["platform"] == "android":
+                        expected |= {"app-debug.apk", "relay-debug-androidTest.apk"}
+                    elif binding["platform"] == "windows":
+                        expected.add("Reader.otf")
+                    receipt = objects.get("build-receipt.json", {})
+                    expected_hash("program.bin", receipt.get("program") if isinstance(receipt, dict) else None)
+                    # Package contents are inventoried, not silently promoted to an exhaustive manifest.
+                    row["uncommitted_package_members"] = sorted(n for n in files if n.startswith("package/"))
+                row["expected"] = sorted(expected)
+                row["missing"] = sorted(set(row["missing"]) | (expected - files))
+                optional = phase_files - expected if binding["category"] == "phase" else set()
+                row["declared_optional_present"] = sorted(optional & files)
+                row["declared_optional_missing"] = sorted(optional - files)
+                row["unexpected"] = sorted(files - expected - optional)
+                row["identity_documents"] = sorted(objects)
+                row["inventory_complete"] = True
+        except Exception as error:
+            row["inspection_errors"].append(type(error).__name__ + ": " + str(error))
+            row["inventory_complete"] = False
+        # Evidence only; no source/archive content, credentials or raw state values printed.
+    # Cross-archive references use original state/receipt bytes, never rewritten identities.
+    for row in report["artifacts"]:
+        name = row["binding"]["name"]
+        data = cross.get(name, {})
+        graph = data.get("graph")
+        if graph is not None:
+            build_name = graph["build_key"] + "-" + pin["run_id"] + "-" + pin["attempt"]
+            build = cross.get(build_name)
+            own_receipt = data["hashes"].get("build-receipt.json")
+            if not build or not own_receipt or "build-receipt.json" not in build["hashes"]:
+                row["missing_critical"].append("phase/build receipt reference unavailable")
+            elif own_receipt != build["hashes"]["build-receipt.json"]:
+                row["hash_mismatch"].append("phase/build receipt bytes")
+            if graph["role"] != "seed":
+                previous_name = graph["previous"] + "-" + pin["run_id"] + "-" + pin["attempt"]
+                previous = cross.get(previous_name, {}).get("hashes", {}).get("state.json")
+                if previous is None:
+                    row["missing_critical"].append("predecessor original state unavailable")
+                elif data.get("previous_sha256") != previous["sha256"]:
+                    row["hash_mismatch"].append("exact staged predecessor")
+        (out / (str(row["binding"]["artifact_id"]) + ".json")).write_text(json.dumps(row, indent=2) + "\n")
+        print("F04 ARTIFACT INVENTORY " + json.dumps(row), flush=True)
+    report["inventory_complete"] = all(r.get("inventory_complete", False) for r in report["artifacts"])
+    report["has_findings"] = any(r["missing"] or r["unexpected"] or r["hash_mismatch"] or
+                               r["identity_errors"] or r["inspection_errors"] or r["missing_critical"] for r in report["artifacts"])
+    report["acceptance"] = "not-evaluated; original audit failure retained"
+    (out / "inventory.json").write_text(json.dumps(report, indent=2) + "\n")
+    print("F04 INVENTORY SUMMARY " + json.dumps({k:v for k,v in report.items() if k != "artifacts"}), flush=True)
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--graph", type=Path)
     parser.add_argument("--authenticate-graph", action="store_true")
     parser.add_argument("--authenticate-retained", action="store_true")
     parser.add_argument("--diagnose-fixed", action="store_true")
+    parser.add_argument("--diagnose-artifact-inventory", action="store_true")
     args = parser.parse_args()
-    need(sum((bool(args.graph), args.authenticate_graph, args.authenticate_retained, args.diagnose_fixed)) <= 1, "choose one audit entry")
-    if args.diagnose_fixed: diagnose_fixed()
+    need(sum((bool(args.graph), args.authenticate_graph, args.authenticate_retained, args.diagnose_fixed, args.diagnose_artifact_inventory)) <= 1, "choose one audit entry")
+    if args.diagnose_artifact_inventory: diagnose_artifact_inventory()
+    elif args.diagnose_fixed: diagnose_fixed()
     elif args.authenticate_retained: authenticate_retained()
     elif args.authenticate_graph: authenticate_graph()
     elif args.graph: graph_audit(args.graph)
