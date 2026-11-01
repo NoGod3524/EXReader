@@ -118,8 +118,12 @@ def main(payload):
             chooser = wait(lambda: host.window_named('Import book', True, 2), 20)
             if index == 0:
                 check('G-02a', 'import chooser', 'F1 opens a chooser named "Import book"', bool(chooser), bool(chooser))
+            time.sleep(1.5)
             host.key('ctrl+l')
+            time.sleep(0.8)
             host.type_text(str(book))
+            time.sleep(0.8)
+            host.screenshot(str(OUT / ('import-%d-before-return.png' % index)))
             host.key('Return')
             opened = wait(lambda: host.number('host', 'book') > 0 and host.number('host', 'reader_visible') == 1, 60)
             if index == 0:

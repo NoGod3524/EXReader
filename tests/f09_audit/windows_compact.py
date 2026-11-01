@@ -198,6 +198,11 @@ def main(exe, book):
         for key, label in (('b', '书库'), ('r', '阅读'), ('v', '视图'), ('s', '设置')):
             keys('{Alt}' + key, label + ' menu')
             popup = wait(lambda: auto.MenuControl(searchDepth=2).Exists(0) and auto.MenuControl(searchDepth=2), 8)
+            if not popup:
+                # The menu bar may still hold the previous menu's mode; leave it and retry once.
+                keys('{Esc}{Esc}', 'leave menu mode')
+                keys('{Alt}' + key, label + ' menu retry')
+                popup = wait(lambda: auto.MenuControl(searchDepth=2).Exists(0) and auto.MenuControl(searchDepth=2), 8)
             menus[label] = [(i.Name, i.IsEnabled) for i in popup.GetChildren()] if popup else None
             keys('{Esc}{Esc}', 'close ' + label)
         every = ' '.join(name for items in menus.values() if items for name, _ in items)

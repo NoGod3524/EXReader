@@ -54,12 +54,14 @@ def main(nvda, exe, book):
     expectations = [
         ('S-01', 'the main window title is spoken', 'EXReader'),
         ('S-02', 'the library menu is spoken by its name', '书库'),
-        ('S-03', 'the import chooser is announced', '打开'),
+        ('S-03', 'the import chooser is announced (system dialog title, runner locale)', ('打开', 'Open')),
         ('S-04', 'a shelf row is spoken with the book title', book_title[:12]),
         ('S-05', 'the reading menu is spoken', '阅读'),
         ('S-06', 'the saved note text is spoken', 'f09 keyboard note'),
     ]
-    checks = [{'id': cid, 'expected': want, 'phrase': phrase, 'status': 'pass' if phrase and phrase in joined else 'fail'}
+    def heard(phrase):
+        return any(p and p in joined for p in (phrase if isinstance(phrase, tuple) else (phrase,)))
+    checks = [{'id': cid, 'expected': want, 'phrase': phrase, 'status': 'pass' if heard(phrase) else 'fail'}
               for cid, want, phrase in expectations]
     report = {'source_sha': os.environ.get('GITHUB_SHA'), 'run_id': os.environ.get('GITHUB_RUN_ID'),
               'attempt': os.environ.get('GITHUB_RUN_ATTEMPT'), 'screen_reader': 'NVDA portable', 'nvda_ready': ready,

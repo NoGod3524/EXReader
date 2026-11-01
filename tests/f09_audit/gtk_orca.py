@@ -22,6 +22,16 @@ OUT = ROOT / 'build/f09/gtk-orca'
 def main(payload):
     OUT.mkdir(parents=True, exist_ok=True)
     log = OUT / 'orca-debug.log'
+    # The runner has no sound card; speech-dispatcher blocks on audio output
+    # (run 41270340855 spoke three phrases, then stalled). A PulseAudio null
+    # sink gives synthesized speech somewhere to go; nothing is listened to.
+    audio = []
+    for command in (['pulseaudio', '--start', '--exit-idle-time=-1'],
+                    ['pactl', 'load-module', 'module-null-sink', 'sink_name=f09null'],
+                    ['pactl', 'set-default-sink', 'f09null']):
+        done = subprocess.run(command, capture_output=True, text=True)
+        audio.append({'command': ' '.join(command), 'code': done.returncode, 'output': (done.stdout + done.stderr)[-300:]})
+    (OUT / 'audio.json').write_text(json.dumps(audio, indent=2) + '\n', encoding='utf-8')
     orca = subprocess.Popen(['orca', '--replace', '--debug', '--debug-file=' + str(log)], stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
     ready = False
