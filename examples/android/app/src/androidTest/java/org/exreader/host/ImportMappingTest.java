@@ -158,13 +158,22 @@ public final class ImportMappingTest extends Instrumentation {
     private void registersAtomicallyAndIdempotently() throws Exception {
         try (BookStore store = open()) {
             BookStore.VerifiedSource source = imported(store, text("one.txt", 2));
-            store.finalizeImport(source); store.finalizeImport(source);
+            store.finalizeImport(source);
             try (CatalogStore catalog = catalog()) {
-                equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_books"));
-                equal(source.book.id, number(ProductFixture.of(catalog), "SELECT sdk_book_id FROM reader_local_books"));
-                equal("reflow_global", value(ProductFixture.of(catalog), "SELECT location_kind FROM reader_local_books"));
-                equal(source.key, value(ProductFixture.of(catalog), "SELECT book_key FROM reader_books"));
-                equal(0L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_revisions"));
+                ProductFixture db = ProductFixture.of(catalog);
+                equal(1L, number(db, "SELECT count(*) FROM reader_books"));
+                equal(source.book.id, number(db, "SELECT sdk_book_id FROM reader_local_books"));
+                equal("reflow_global", value(db, "SELECT location_kind FROM reader_local_books"));
+                equal(source.key, value(db, "SELECT book_key FROM reader_books"));
+                String root = assertOriginalFact(store, db, source);
+                String before = importSnapshot(db);
+                String[] heads = NativeCatalog.heads(store.productOwner(), "book", source.key);
+                String[] metadata = NativeCatalog.metadata(store.productOwner(), source.key);
+                store.finalizeImport(source);
+                equal(root, assertOriginalFact(store, db, source));
+                equal(before, importSnapshot(db));
+                require(Arrays.equals(heads, NativeCatalog.heads(store.productOwner(), "book", source.key)), "repeat heads unchanged");
+                require(Arrays.equals(metadata, NativeCatalog.metadata(store.productOwner(), source.key)), "repeat metadata unchanged");
             }
         }
     }
@@ -173,24 +182,121 @@ public final class ImportMappingTest extends Instrumentation {
         try (BookStore store = open()) {
             BookStore.VerifiedSource first = imported(store, source); store.finalizeImport(first);
             store.saveNote(first.book.id, 0, 0, 6, "Keep SDK note");
+            String before;
+            String[] heads;
+            String[] metadata;
+            String root, edit, deletion;
+            NativeLibrary.Note note = store.notes(first.book.id).get(0);
+            String[] noteLocation = note.location == null ? null : note.location.clone();
             try (CatalogStore catalog = catalog()) {
-                ProductFixture.of(catalog).execSQL("UPDATE reader_books SET title='User title',favorite=1,deleted=1");
-                ProductFixture.of(catalog).execSQL("INSERT INTO reader_revisions VALUES(?,?,?,?,?,?)", new Object[]{
-                        "00000000000000000000000000000001", "book", first.key, "delete", "{}", "0".repeat(64)});
-                ProductFixture.of(catalog).execSQL("INSERT INTO reader_outbox(revision_id) VALUES(?)",
-                        new Object[]{"00000000000000000000000000000001"});
+                ProductFixture db = ProductFixture.of(catalog);
+                root = assertOriginalFact(store, db, first);
+                edit = NativeCatalog.newId();
+                NativeCatalog.Result edited = NativeCatalog.applyBook(store.productOwner(), edit,
+                        NativeCatalog.heads(store.productOwner(), "book", first.key), 0,
+                        first.key, first.format, first.sha256, first.bytes,
+                        "User title", first.book.author, "user title", true);
+                assertBookCommand(edited, first.key, edit);
+                deletion = NativeCatalog.newId();
+                NativeCatalog.Result deleted = NativeCatalog.applyBook(store.productOwner(), deletion,
+                        NativeCatalog.heads(store.productOwner(), "book", first.key), 1,
+                        first.key, first.format, first.sha256, first.bytes,
+                        "User title", first.book.author, "user title", true);
+                assertBookCommand(deleted, first.key, deletion);
+                require(NativeCatalog.retained(store.productOwner(), root)
+                        && NativeCatalog.retained(store.productOwner(), edit)
+                        && NativeCatalog.retained(store.productOwner(), deletion), "typed history retained");
+                equal(3L, number(db, "SELECT count(*) FROM reader_revisions"));
+                equal(3L, number(db, "SELECT count(*) FROM reader_outbox"));
+                equal(1L, number(db, "SELECT count(*) FROM reader_tombstones"));
+                equal("User title", value(db, "SELECT title FROM reader_books"));
+                equal(1L, number(db, "SELECT favorite FROM reader_books"));
+                equal(1L, number(db, "SELECT deleted FROM reader_books"));
+                heads = NativeCatalog.heads(store.productOwner(), "book", first.key);
+                require(Arrays.equals(new String[]{deletion}, heads), "delete is current observed head");
+                metadata = NativeCatalog.metadata(store.productOwner(), first.key);
+                before = importSnapshot(db);
             }
             NativeLibrary.ImportResult duplicate = store.importFile(source.getPath(), 1, "Wrong replacement title");
             require(!duplicate.created, "must reuse SDK original"); equal(first.book.id, duplicate.id);
             store.finalizeImport(store.verifySource(duplicate.id, hash(source), source.length(), task()));
             equal(1, store.notes(first.book.id).size());
+            NativeLibrary.Note afterNote = store.notes(first.book.id).get(0);
+            equal(note.id, afterNote.id); equal(note.start, afterNote.start); equal(note.end, afterNote.end);
+            equal("Keep SDK note", afterNote.comment); require(java.util.Objects.equals(note.selected, afterNote.selected), "SDK note selection unchanged");
+            require(Arrays.equals(noteLocation, afterNote.location), "SDK note location unchanged");
             try (CatalogStore catalog = catalog()) {
-                equal("User title", value(ProductFixture.of(catalog), "SELECT title FROM reader_books"));
-                equal(1L, number(ProductFixture.of(catalog), "SELECT deleted FROM reader_books"));
-                equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_tombstones"));
-                equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_outbox"));
+                ProductFixture db = ProductFixture.of(catalog);
+                equal("User title", value(db, "SELECT title FROM reader_books"));
+                equal(1L, number(db, "SELECT favorite FROM reader_books"));
+                equal(1L, number(db, "SELECT deleted FROM reader_books"));
+                equal(1L, number(db, "SELECT count(*) FROM reader_tombstones"));
+                equal(3L, number(db, "SELECT count(*) FROM reader_outbox"));
+                equal(before, importSnapshot(db));
+                require(Arrays.equals(heads, NativeCatalog.heads(store.productOwner(), "book", first.key)), "duplicate heads unchanged");
+                require(Arrays.equals(metadata, NativeCatalog.metadata(store.productOwner(), first.key)), "duplicate metadata unchanged");
+                require(NativeCatalog.retained(store.productOwner(), root)
+                        && NativeCatalog.retained(store.productOwner(), edit)
+                        && NativeCatalog.retained(store.productOwner(), deletion), "duplicate preserves all typed history");
             }
         }
+    }
+    private static String assertOriginalFact(BookStore store, ProductFixture db, BookStore.VerifiedSource source) throws Exception {
+        equal(source.format, value(db, "SELECT format FROM reader_books"));
+        equal(source.sha256, value(db, "SELECT source_sha256 FROM reader_books"));
+        equal(source.bytes, number(db, "SELECT source_bytes FROM reader_books"));
+        equal(1L, number(db, "SELECT count(*) FROM reader_revisions"));
+        equal(1L, number(db, "SELECT count(*) FROM reader_outbox"));
+        String revision = value(db, "SELECT revision_id FROM reader_revisions");
+        require(revision.matches("[0-9a-f]{32}"), "stable original revision identity");
+        equal("book", value(db, "SELECT entity_kind FROM reader_revisions"));
+        equal(source.key, value(db, "SELECT entity_key FROM reader_revisions"));
+        equal("put", value(db, "SELECT operation FROM reader_revisions"));
+        equal(revision, value(db, "SELECT revision_id FROM reader_outbox"));
+        String body = value(db, "SELECT body_json FROM reader_revisions");
+        StringBuilder digest = new StringBuilder();
+        for (byte b : MessageDigest.getInstance("SHA-256").digest(body.getBytes(StandardCharsets.UTF_8)))
+            digest.append(String.format(java.util.Locale.ROOT, "%02x", b));
+        equal(digest.toString(), value(db, "SELECT body_sha256 FROM reader_revisions"));
+        require(NativeCatalog.retained(store.productOwner(), revision), "original fact retained by native parser");
+        require(Arrays.equals(new String[]{revision}, NativeCatalog.heads(store.productOwner(), "book", source.key)),
+                "original fact is observed head");
+        String[] selection = NativeCatalog.selection(store.productOwner(), "book", source.key);
+        require(selection.length == 4 && "4".equals(selection[0]) && "0".equals(selection[1])
+                && revision.equals(selection[3]), "live original selection");
+        return revision;
+    }
+    private static void assertBookCommand(NativeCatalog.Result result, String key, String revision) {
+        equal(NativeCatalog.Result.OK, result.status);
+        require(result.created && result.applied, "typed command created and applied");
+        equal(key, result.entityKey); equal(revision, result.revisionId);
+    }
+    private static String importSnapshot(ProductFixture db) throws Exception {
+        String[] queries = {
+                "SELECT * FROM reader_books ORDER BY book_key",
+                "SELECT * FROM reader_local_books ORDER BY sdk_book_id",
+                "SELECT * FROM reader_originals ORDER BY book_key",
+                "SELECT * FROM reader_original_pending ORDER BY book_key",
+                "SELECT * FROM reader_revisions ORDER BY revision_id",
+                "SELECT * FROM reader_outbox ORDER BY revision_id",
+                "SELECT * FROM reader_tombstones ORDER BY revision_id"
+        };
+        org.json.JSONArray snapshot = new org.json.JSONArray();
+        for (String query : queries) {
+            org.json.JSONArray rows = new org.json.JSONArray();
+            try (Cursor cursor = db.rawQuery(query, null)) {
+                while (cursor.moveToNext()) {
+                    org.json.JSONArray row = new org.json.JSONArray();
+                    for (int column = 0; column < cursor.getColumnCount(); column++) {
+                        row.put(cursor.getType(column));
+                        row.put(cursor.isNull(column) ? org.json.JSONObject.NULL : cursor.getString(column));
+                    }
+                    rows.put(row);
+                }
+            }
+            snapshot.put(rows);
+        }
+        return snapshot.toString();
     }
     private void keepsLegacyAndBoundedEpubModes() throws Exception {
         File file = epub();

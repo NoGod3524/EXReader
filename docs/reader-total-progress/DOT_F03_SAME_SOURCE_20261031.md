@@ -760,3 +760,10 @@ Run https://github.com/NoGod3524/EXReader/actions/runs/41325652110 attempt 1, so
 One authorized run used 1/1, no automatic retry. GTK, six cross-host receives and cross-host audit were not scheduled in this round. Old failure records remain; F03 pending/unaccepted and formal count credit zero. The numerical/message failures alone are not a confirmed product root cause. Next step is read-only comparison of ImportMappingTest, actual native import/revision contract and owner history, before any new test/product modification is proposed.
 
 Artifact reader-suite-f03-android-catalog-41325652110-1: id 13091163672, 116944832 bytes, sha256:cde47085d2f205bb4b1b0b7208d32cd8b2da29f09953d5d10c9417e2f1c41e41, created 2026-11-01T16:31:31Z. API identity verified; archive not downloaded locally.
+
+
+## 2026-11-01 Android import-mapping contract round (prepared)
+
+Explicit 16:43:39Z approval covers five existing paths: ImportMappingTest.java, F03 identity.py/caller/scope and this document. Base ab7c6fe5be7061f737d6f80515ff1a851fcb5869, independent dot/f03-android-importmapping-20261101. Only two original tests migrate: validate first native original revision and outbox then exact complete snapshots across repeat finalization; create valid typed PUT and DELETE with observed heads through NativeCatalog.applyBook, verify status/identity/retention, then ensure duplicate import preserves all revision/outbox rows, metadata, delete head and SDK note. No fabricated JSON/zero hash SQL history. Original 14 method names/order and other 12 methods remain byte-identical.
+
+Only new exact case f03/android-importmapping-retained / marker [F03-ANDROID-IMPORTMAPPING-120-ONE-RUN] admits the sixth fixed test blob 12f758e93e1c74589d0d624415973ba05e6d02fe. Prior five pins, original 26 paths, SDK/production guards and old routes remain. One complete original Android build/API34/--android-retained round, maximum 120 runner-min, no automatic retry, no GTK/cross-host chain, no product change and no formal count credit. Prepared, not executed; F03 remains pending/unaccepted.

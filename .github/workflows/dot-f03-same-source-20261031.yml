@@ -1,12 +1,12 @@
 name: Reader parameterized suite
 on:
   push:
-    branches: [dot/reader-suite-20261101, dot/f03-gtk-ready-20261101, dot/f03-import-contract-20261101, dot/f03-android-catalog-20261101]
+    branches: [dot/reader-suite-20261101, dot/f03-gtk-ready-20261101, dot/f03-import-contract-20261101, dot/f03-android-catalog-20261101, dot/f03-android-importmapping-20261101]
   workflow_dispatch:
     inputs:
       case:
         type: choice
-        options: [f03/android-catalog-retained, f03/two-host-import-contract, f03/two-host-complete-install, f03/two-host-fixed-origin, f03/gtk-fixed-origin-diagnostic, f03/gtk-numeric-diagnostic, f03/gtk-ready-artifact-diagnostic, f03/gtk-ready-diagnostic, f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory, f04/android-ready-diagnostic]
+        options: [f03/android-importmapping-retained, f03/android-catalog-retained, f03/two-host-import-contract, f03/two-host-complete-install, f03/two-host-fixed-origin, f03/gtk-fixed-origin-diagnostic, f03/gtk-numeric-diagnostic, f03/gtk-ready-artifact-diagnostic, f03/gtk-ready-diagnostic, f03/gtk-android, f03/diagnose-round2, f04/windows-android, f04/diagnose-round2, f04/windows-import-only, f04/six-host, f04/macos-state-diagnostic, f04/apple-visible-diagnostic, f04/iphone-record-diagnostic, f04/artifact-inventory, f04/android-ready-diagnostic]
         default: f03/gtk-android
         required: true
 permissions:
@@ -789,6 +789,74 @@ jobs:
         if: always()
         with:
           name: reader-suite-f03-android-catalog-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f03-android/
+            build/f03-android-build.json
+            build/f03-android-retained-driver.json
+            build/f03-android-original-steps.json
+            build/organization-android/
+            build/owner-android/
+            build/shelf-android/
+            build/import-android/
+            build/android-host/
+            build/wave3/network-fixture/public/
+            !build/**/key.pem
+            !build/**/private/**
+            !build/**/connection.json
+          if-no-files-found: error
+
+  f03_android_importmapping_retained:
+    if: ${{ (github.ref == 'refs/heads/dot/f03-android-importmapping-20261101' && (github.event_name == 'workflow_dispatch' && inputs.case == 'f03/android-importmapping-retained' || github.event_name == 'push' && contains(github.event.head_commit.message, '[F03-ANDROID-IMPORTMAPPING-120-ONE-RUN]'))) }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      F03_IMPORTMAPPING_CONTRACT_CASE: f03/android-importmapping-retained
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.9'}
+      - name: Exact candidate admission
+        run: |
+          python -m pip install PyYAML ninja==1.11.1.1
+          python -c "import sys; sys.path.insert(0,'tests/dot_f03_same_source_20261031'); from identity import identity; print(identity())"
+      - name: Install pinned Android compiler and emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk/emulator" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+      - name: Build one actual APK and unchanged original owner producer
+        run: python tests/dot_f03_same_source_20261031/build.py --host android --output build/f03-android-build.json
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Original complete Android all-exits retained suite
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            python tests/dot_f03_same_source_20261031/build.py --host android --android-retained --output build/f03-android-retained-driver.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-suite-f03-android-importmapping-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/f03-android/
             build/f03-android-build.json

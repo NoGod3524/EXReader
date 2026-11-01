@@ -738,5 +738,31 @@
       },
       "next_step": "Read-only verify ImportMappingTest expectations against actual native import/revision contract and original owner evidence; no unapproved test/product edits or rerun."
     }
+  },
+  "import_mapping_contract_blob_exceptions": {
+    "tools/check_android_host.py": "b03096584d45c8f415440c0f75699f5a8faf0ff1",
+    "docs/READER-ANDROID-HOST-IMPORT.md": "f6d681aec8c7bd968c30f29a73fc78eca8f2c78b",
+    "tests/reader_android_import_contract_20261101/check.py": "5419fb4dac40f79c4238f1639d81ec37a0f92d0a",
+    ".github/workflows/reader-android-import-contract-20261101.yml": "147de484f60332d50ca8a786b76541226fdaec46",
+    "examples/android/app/src/androidTest/java/org/exreader/host/CatalogStoreTest.java": "dc20e2ec8851b00c761e7332d32f885df946f209",
+    "examples/android/app/src/androidTest/java/org/exreader/host/ImportMappingTest.java": "12f758e93e1c74589d0d624415973ba05e6d02fe"
+  },
+  "android_import_mapping_retained_round": {
+    "case": "f03/android-importmapping-retained",
+    "branch": "dot/f03-android-importmapping-20261101",
+    "marker": "[F03-ANDROID-IMPORTMAPPING-120-ONE-RUN]",
+    "status": "prepared_not_executed",
+    "base": "ab7c6fe5be7061f737d6f80515ff1a851fcb5869",
+    "budget_runner_minutes": 120,
+    "maximum_runs": 1,
+    "automatic_retry": false,
+    "formal_count_credit": 0,
+    "full_f03_accepted": false,
+    "authorization": "2026-11-01T16:43:39Z",
+    "original_import_mapping_test_count": 14,
+    "modified_test_methods": [
+      "registersAtomicallyAndIdempotently",
+      "preservesDuplicateMetadataAndHistory"
+    ]
   }
 }
