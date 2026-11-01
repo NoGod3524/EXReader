@@ -17,10 +17,14 @@ const result = { source_sha: process.env.GITHUB_SHA, run_id: process.env.GITHUB_
   attempt: process.env.GITHUB_RUN_ATTEMPT, screen_reader: 'VoiceOver (macOS)', human_listening_verified: false };
 
 async function seek(fragment, limit = 60) {
+  let silent = 0;
   for (let i = 0; i < limit; i++) {
     const phrase = await voiceOver.lastSpokenPhrase();
     steps.push(phrase);
     if (phrase.includes(fragment)) return true;
+    silent = phrase ? 0 : silent + 1;
+    // A cursor trapped inside an element speaks nothing; step back out of it.
+    if (silent >= 4) { await voiceOver.stopInteracting(); steps.push('[stop interacting]'); silent = 0; }
     await voiceOver.next();
     await sleep(250);
   }
@@ -31,7 +35,8 @@ try {
   await voiceOver.start();
   execFileSync('open', ['-n', app, '--args', '-EXRUITestFixtures', '1', '-EXRFreshState', '1']);
   await sleep(8000);
-  await voiceOver.interact();
+  // No interact(): it moved the VoiceOver cursor inside the first button, where
+  // every next() spoke nothing (round 15). Window-level next() walks the controls.
   const found = {};
   found.library = await seek('书架');
   found.search = await seek('搜索');
@@ -40,7 +45,7 @@ try {
   if (found.importSample) { await voiceOver.act(); await sleep(6000); }
   found.book = await seek('Sample', 80);
   if (found.book) { await voiceOver.act(); await sleep(8000); }
-  found.page = await seek('页', 80);
+  found.page = await seek('第 1 页', 80);
   result.found = found;
   result.spoken = await voiceOver.spokenPhraseLog();
   result.checks = Object.entries({
