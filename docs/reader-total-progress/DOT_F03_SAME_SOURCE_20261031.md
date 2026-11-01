@@ -294,3 +294,37 @@ Windows return15, retained Linux20, audit10; no automatic retries. This
 preparation does not trigger. The F03 product case and diagnostic case remain
 unselected: F04 budget cannot rerun or repair the failed F03 scenarios.
 F03 remains pending; the two-host F04 round cannot award complete six-host F04.
+
+## F04 delegated case terminal record — 2026-11-01 01:52 UTC
+
+The sole canonical trigger ran the reviewed F04 helper once:
+https://github.com/NoGod3524/EXReader/actions/runs/41262238367, attempt 1,
+source `a01e28bd02ef5fcbc1448f26dfd86da0b3499869`,
+tree `079ad34e123e22ee3fe23f49724b9fad478cc483`.
+Status: **failure**, authorized F04 round **1/1 used**, no rerun.
+
+- Windows seed job 124717679842: same-source build passed and build artifact
+  uploaded. First real import failed in the inherited UI adapter:
+  `BM_CLICK` (message 245) timed out after 2000 ms, Windows error1460.
+  The button had been observed active/enabled; no conclusion yet distinguishes
+  a modal callback from a product hang. No successful seed receipt is claimed.
+- Retained Linux job 124717680014: original legacy121 probe returned exit2,
+  `Foreign product catalog identity/version`; original checker rejected it.
+  Later missing-report messages follow that first failure, not independent
+  validated scenarios. The original18/WebDAV stage was not reached.
+- F04 Android peer 124718668212, Windows return 124718668651 and aggregate
+  audit 124718668807 were skipped due to dependencies.
+- All F03 product/diagnosis jobs were unselected and skipped. This F04 round
+  did not consume a further F03 product attempt.
+
+Only one artifact was present in the run API:
+`f04-build-windows-41262238367-1`, ID13065044582, 53052942 bytes,
+ZIP SHA256 `2db74a627d963e230ed2f105d60b3da757f2940052135df4a8595daecb5ff1ee`,
+created 2026-11-01T01:47:53Z, expires 2027-01-30T01:43:07Z.
+There are no successful phase or retained-suite artifacts. This record uses
+ordinary logs/API metadata; no ZIP was parsed outside Actions.
+
+F04 owner retains package diagnosis and any repair proposal; the canonical
+controller does not alter its twelve received blobs. This seal changes only
+this document, starts no CI and awards neither F03 nor F04. Original failures
+and the fixed producer source remain available.
