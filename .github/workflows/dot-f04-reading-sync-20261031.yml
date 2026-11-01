@@ -1201,3 +1201,100 @@ jobs:
           path: build/f04-artifact-inventory/
           if-no-files-found: error
           retention-days: 30
+
+  android_ready_diagnostic:
+    name: F04 fixed Windows input Android ready diagnostic
+    if: ${{ github.ref == 'refs/heads/dot/reader-suite-20261101' && inputs.case == 'f04/android-ready-diagnostic' && inputs.controller_sha == github.sha }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    outputs:
+      build: ${{ steps.build.outputs.artifact-id }}
+      phase: ${{ steps.phase.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare Python dependencies
+        shell: bash
+        run: |
+          python3 -m pip install PyYAML==6.0.2 pillow
+      - name: Admission and syntax before actual Android build
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/admission.py
+          python3 -m py_compile tests/dot_f04_reading_sync_20261031/*.py
+          python3 tests/dot_f04_reading_sync_20261031/run.py prepare
+          python3 -m py_compile build/f04-driver/*.py
+      - name: Authenticate fixed historical Windows input
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/dot_f04_reading_sync_20261031/run.py android-ready-diagnostic --prepare-input
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install exact Android prerequisites
+        shell: bash
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;27.0.12077973" "emulator" "system-images;android-34;default;x86_64"
+          sudo chmod 666 /dev/kvm
+      - name: Same-job Android build and public handoff
+        shell: bash
+        run: |
+          python3 tests/dot_f04_reading_sync_20261031/run.py build-android
+          python3 tests/dot_f04_reading_sync_20261031/run.py package-build --platform android
+      - uses: actions/upload-artifact@v4
+        id: build
+        with:
+          name: f04-diagnostic-build-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f04-build-android
+          if-no-files-found: error
+          retention-days: 30
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t build/wave3/artifacts/app-debug.apk
+            adb install -r -t build/wave3/artifacts/relay-debug-androidTest.apk
+            python3 tests/dot_f04_reading_sync_20261031/run.py android-ready-diagnostic
+      - uses: actions/upload-artifact@v4
+        id: phase
+        with:
+          name: f04-android-ready-output-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/phase/state.json
+            build/phase/result.json
+            build/phase/report.json
+            build/phase/requests.json
+            build/phase/cert.pem
+            build/phase/program.bin
+            build/phase/build-receipt.json
+            build/phase/installed-identity.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Collect safe diagnostic evidence
+        if: always()
+        run: python3 tests/dot_f04_reading_sync_20261031/run.py diagnostics --kind android
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f04-diagnostic-android-ready-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f04-diagnostics/android/
+            build/f04-android-ready-diagnostic/
+          if-no-files-found: warn
+          retention-days: 30
+
