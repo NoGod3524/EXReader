@@ -142,7 +142,7 @@ def member_path(prefix, relative):
     return name
 
 def retained_from_archive(archive, members, suite_id, binding, suite, policy,
-                          identity, host_program_member, host_program_hash):
+                          identity, host, host_program_member, host_program_hash):
     descriptor = {"report_member": binding} if isinstance(binding, str) else binding
     report_member = descriptor["report_member"]
     raw = read_json_member(archive, members, report_member, policy)
@@ -164,11 +164,17 @@ def retained_from_archive(archive, members, suite_id, binding, suite, policy,
                 and document["sdk_version"] == "3.42.0", "wrong_retained_sdk", suite_id)
         frozen = document.get("sdk_content_candidate", document.get("sdk_source"))
         if frozen is None:
+            pointers = {"apple-account-sync-3": "/programs/sync",
+                        "apple-account-401-retry": "/programs/failure"}
             require(descriptor.get("identity_format") == "frozen-apple-sdk342-supplemental"
-                    and suite_id.startswith(("apple-", "macos-")),
+                    and suite_id in pointers
+                    and descriptor.get("program_identity_pointer") == pointers[suite_id],
                     "missing_retained_sdk_source", suite_id)
-            # This frozen original runner independently verifies installed SDK
-            # identity/fingerprints against SDK before compiling its actual app.
+            require(document["platform"] == host and document["suite"] == "sync",
+                    "wrong_retained_host", suite_id)
+            # Only the two app records actually emitted by the frozen original
+            # producer inherit its verified SDK inventory. Terminal has no such
+            # record and needs its own actual compile/program identity instead.
             identity_method = "frozen-original-Apple-SDK342-producer"
         else:
             require(frozen == SDK, "wrong_retained_sdk", suite_id)
@@ -176,6 +182,12 @@ def retained_from_archive(archive, members, suite_id, binding, suite, policy,
         program = json_pointer(document, descriptor.get("program_identity_pointer", ""))
         require(program.get("sha256", program.get("program_sha256")) == actual_hash,
                 "wrong_retained_program", suite_id)
+        if identity_method == "frozen-original-Apple-SDK342-producer":
+            require(program["bundle_source_sha"] == identity["source"]
+                    and program["sdk_version"] == "3.42.0",
+                    "wrong_retained_program", suite_id)
+        else:
+            require(document["host"] == host, "wrong_retained_host", suite_id)
     if suite["report_kind"] == "original-command-log":
         require(raw["accepted"] is True, "retained_failed", suite_id)
         commands = [row for row in raw["commands"] if row["role"] == suite["wrapper_command_role"]]
@@ -273,7 +285,7 @@ def authenticate(manifest, output, identity):
                 require(suite_id in manifest["retained_suites"], "unknown_suite", suite_id)
                 retained[suite_id], retained_programs[suite_id] = retained_from_archive(
                     archive, members, suite_id, binding, manifest["retained_suites"][suite_id],
-                    policy, identity, program, program_hash)
+                    policy, identity, receipt["host"], program, program_hash)
         authenticated["roles"][role] = {
             "artifact_id": artifact["id"], "artifact_name": artifact["name"],
             "job_id": job["id"], "artifact_metadata": artifact, "original_zip_sha256": actual,
