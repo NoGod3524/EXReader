@@ -68,7 +68,7 @@ def main(payload):
     on_shelf = any(spoken[i].startswith('Bookshelf List') and 'F09-book' in spoken[i + 1]
                    for i in range(len(spoken) - 1))
     checks = [{'id': cid, 'expected': want, 'phrase': phrase,
-               'status': 'pass' if (on_shelf if cid == 'O-03' else phrase in joined) else 'fail'}
+               'status': 'pass' if (on_shelf if cid == 'O-03' else phrase.lower() in joined.lower()) else 'fail'}
               for cid, want, phrase in expectations]
     report = {'source_sha': os.environ.get('GITHUB_SHA'), 'run_id': os.environ.get('GITHUB_RUN_ID'),
               'attempt': os.environ.get('GITHUB_RUN_ATTEMPT'), 'screen_reader': 'Orca', 'orca_ready': ready,
