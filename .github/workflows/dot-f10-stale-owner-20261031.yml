@@ -5,6 +5,7 @@ on:
     paths: [.github/workflows/dot-f10-stale-owner-20261031.yml]
 permissions:
   contents: read
+  actions: read
 defaults:
   run:
     shell: bash
@@ -19,6 +20,36 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify and print fixed historical observations before correction
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/stale/evidence/history
+          gh api repos/NoGod3524/EXReader/actions/artifacts/13063907551 > build/history-metadata.json
+          gh api repos/NoGod3524/EXReader/actions/artifacts/13063907551/zip > build/history.zip
+          python - <<'PY'
+          import hashlib,json,zipfile
+          from pathlib import Path
+          m=json.loads(Path('build/history-metadata.json').read_text())
+          expected='a4f4c436d92f77825832b653c21f33ce525c3f5bde2bc2b07dff940691bf7842'
+          b=Path('build/history.zip').read_bytes()
+          assert m['id']==13063907551 and m['size_in_bytes']==2452124 and len(b)==2452124
+          assert m['workflow_run']['id']==41257244190 and m['workflow_run']['head_sha']=='6230fc8d1dc531d9d7c4d574d79cc6d9c458bda0'
+          assert m['digest']=='sha256:'+expected and hashlib.sha256(b).hexdigest()==expected
+          records={}
+          with zipfile.ZipFile('build/history.zip') as z:
+              for name in ['callback-normal','sync-normal']:
+                  member='evidence/snapshot/'+name+'.json'
+                  assert z.namelist().count(member)==1
+                  info=z.getinfo(member)
+                  assert info.file_size<1048576
+                  record=json.loads(z.read(member))
+                  assert record['name']==name
+                  records[name]=record
+                  print(json.dumps({'historical_artifact':13063907551,'observation':record}))
+          Path('build/stale/evidence/history/observations.json').write_text(json.dumps({'artifact':13063907551,'sha256':expected,'records':records},indent=2)+'\n')
+          PY
       - name: Exact ownership and unchanged SDK guard
         run: |
           python - <<'PY'
@@ -28,6 +59,8 @@ jobs:
           assert sorted(changed)==sorted(m['allowed_paths']),changed
           phase=subprocess.check_output(['git','diff','--name-only',m['phase_base'],'HEAD'],text=True).splitlines()
           assert sorted(phase)==sorted(m['phase_paths']),phase
+          repair=subprocess.check_output(['git','diff','--name-only',m['repair_base'],'HEAD'],text=True).splitlines()
+          assert sorted(repair)==sorted(m['repair_paths']),repair
           subprocess.run(['git','diff','--exit-code',m['phase_base'],'HEAD','--',*m['frozen_paths']],check=True)
           subprocess.run(['git','diff','--exit-code',m['base'],'HEAD','--','src','include','cmake','CMakeLists.txt','bindings'],check=True)
           PY
