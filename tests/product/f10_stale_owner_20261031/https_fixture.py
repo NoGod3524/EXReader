@@ -72,7 +72,7 @@ def parse(text):
         if line.startswith('{'):result.update(json.loads(line))
     return result
 def run_suite(binary,old,boundary,out):
-    out.mkdir(parents=True,exist_ok=True);private=out.parent/'snapshot-private';private.mkdir(mode=0o700)
+    out.mkdir(parents=True,exist_ok=True);private=out.parent.parent/'snapshot-private';private.mkdir(mode=0o700)
     cert=private/'cert.pem';key=private/'key.pem'
     subprocess.run(['openssl','req','-x509','-newkey','rsa:2048','-nodes','-days','1','-keyout',str(key),'-out',str(cert),'-subj','/CN=127.0.0.1','-addext','subjectAltName=IP:127.0.0.1,DNS:localhost'],check=True,capture_output=True)
     sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'webdav'))
