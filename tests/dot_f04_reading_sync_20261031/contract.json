@@ -554,5 +554,53 @@
       "size_in_bytes": 20040466,
       "digest": "sha256:d734fa0187678d64c4e731108f44d7b1f6b98d2fcb12b3bb49685f86e72c8396"
     }
+  },
+  "apple_visibility_diagnostic": {
+    "case": "f04/apple-visible-diagnostic",
+    "producer_source": "2cdad2057d4877b4712af8155da72fb92b50e411",
+    "run_id": "41272334508",
+    "attempt": "1",
+    "max_runner_minutes": 55,
+    "diagnostic_only": true,
+    "F04_accepted": false,
+    "allowed_changed_paths": [
+      ".github/workflows/dot-f03-same-source-20261031.yml",
+      ".github/workflows/dot-f04-reading-sync-20261031.yml",
+      "tests/dot_f04_reading_sync_20261031/apple_driver.swift",
+      "tests/dot_f04_reading_sync_20261031/run.py",
+      "tests/dot_f04_reading_sync_20261031/contract.json",
+      "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+    ],
+    "sdk": {
+      "job_id": 124747494579,
+      "artifact_id": 13070191404,
+      "size_in_bytes": 22475654,
+      "digest": "sha256:1643061900c24deac54d8c2ad59982323a8f8470baa6ecbf691d5dd7f99d32b2"
+    },
+    "android": {
+      "job_id": 124748482840,
+      "artifact_id": 13070316514,
+      "size_in_bytes": 20040466,
+      "digest": "sha256:d734fa0187678d64c4e731108f44d7b1f6b98d2fcb12b3bb49685f86e72c8396"
+    },
+    "targets": {
+      "macos": 15,
+      "iphone": 20,
+      "ipad": 20
+    },
+    "sdk_simulator": {
+      "job_id": 124747494601,
+      "artifact_id": 13069453009,
+      "size_in_bytes": 22468302,
+      "digest": "sha256:0a5eb08040efe6566fe79166a7f9b8ed4cdb12fc153652a32d7d25f6c00e9383"
+    },
+    "previous_diagnostic": {
+      "run_id": "41274878352",
+      "source_sha": "aec50c89a500ed5a1ae7aa1767435877c5dcf741",
+      "artifact_id": 13070923378,
+      "size_in_bytes": 42342626,
+      "digest": "sha256:e147bf9f185c3141e3b01b4434c7124ca93c30ea5da48fa7da2f1b63a7ad29c7",
+      "passed": false
+    }
   }
 }

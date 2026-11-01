@@ -18,6 +18,10 @@ final class F04ReadingSyncUITests: XCTestCase {
     }
     private func tap(_ id: String) {
         XCTAssertTrue(e(id).waitForExistence(timeout: 30), id)
+        if id.hasPrefix("reading.jump.") || id.hasPrefix("reading.edit.") {
+            clickVisibleReadingRow(id)
+            return
+        }
         for _ in 0..<10 {
             if e(id).isHittable { break }
             let form = e("account.form")
@@ -26,6 +30,41 @@ final class F04ReadingSyncUITests: XCTestCase {
         }
         XCTAssertTrue(wait { e(id).exists && e(id).isEnabled && e(id).isHittable }, "\(id): \(app.debugDescription)")
         e(id).tap()
+    }
+    private func clickVisibleReadingRow(_ id: String) {
+        let lists = app.descendants(matching: .any).matching(identifier: "reading.list")
+        XCTAssertEqual(lists.count, 1, "Unique actual reading list required")
+        for attempt in 0..<10 {
+            let list = lists.element(boundBy: 0)
+            let matches = list.descendants(matching: .button).matching(identifier: id)
+            XCTAssertEqual(matches.count, 1, "Unique row action required: \(id)")
+            let button = matches.element(boundBy: 0)
+            let bounds = list.frame, frame = button.frame
+            diagnosticReadingState("row-visibility-\(attempt)", target: id)
+            XCTAssertTrue(bounds.width > 0 && bounds.height > 0 && frame.width > 0 && frame.height > 0)
+            if bounds.contains(frame) {
+                XCTAssertTrue(button.isEnabled && button.isHittable, "Visible row action must be enabled and hittable")
+                #if os(macOS)
+                button.click()
+                #else
+                button.tap()
+                #endif
+                return
+            }
+            XCTAssertTrue(frame.height <= bounds.height, "Row action cannot fit in the visible list")
+            if frame.minY < bounds.minY { list.swipeDown() }
+            else if frame.maxY > bounds.maxY { list.swipeUp() }
+            else { XCTFail("Row action outside horizontal list bounds"); return }
+            let deadline = Date().addingTimeInterval(3)
+            var moved = false
+            while Date() < deadline {
+                let refreshed = lists.element(boundBy: 0).descendants(matching: .button).matching(identifier: id)
+                if refreshed.count == 1 && refreshed.element(boundBy: 0).frame != frame { moved = true; break }
+                RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+            }
+            XCTAssertTrue(moved, "Actual list scroll did not move the target; no click issued")
+        }
+        XCTFail("Target did not enter the real list viewport; no click issued")
     }
     private func records() {
         #if os(iOS)
@@ -86,7 +125,7 @@ final class F04ReadingSyncUITests: XCTestCase {
     private func diagnosticReadingState(_ event: String, target: String) {
         guard "__MAC_DIAGNOSTIC__" == "1" else { return }
         var fields: [String: Any] = ["event": event, "target": target]
-        for id in ["reader.status", "reading.status", "reader.location", "reader.busy", "reading.cancel", target] {
+        for id in ["reader.status", "reading.status", "reader.location", "reader.busy", "reading.cancel", "reading.list", target] {
             let item = e(id)
             var value: [String: Any] = ["exists": item.exists]
             if item.exists {
