@@ -1650,7 +1650,7 @@
     "case": "f03/bootstrap-three-arm",
     "branch": "dot/f03-bootstrap-diagnostic-20261101",
     "base": "63f3e2035ba75248360faac4ba996302dd39182d",
-    "status": "prepared_not_run",
+    "status": "completed_evidence_collection_failure_arms_not_verified",
     "budget_runner_minutes": 25,
     "runs": 1,
     "retry": false,
@@ -1661,6 +1661,41 @@
     ],
     "old_apk_upgrade_accepted": false,
     "product_accepted": false,
-    "formal_count_credit": 0
+    "formal_count_credit": 0,
+    "result": {
+      "run_id": 41337241559,
+      "attempt": 1,
+      "source_sha": "85d2834e7974c9d923dd6a6a268e3ff826694d00",
+      "job_id": 124939550545,
+      "completed_at": "2026-11-01T18:40:35Z",
+      "conclusion": "failure",
+      "artifact": {
+        "id": 13096071870,
+        "node_id": "MDg6QXJ0aWZhY3QxMzA5NjA3MTg3MA==",
+        "name": "reader-suite-f03-bootstrap-diagnostic-41337241559-1",
+        "size_in_bytes": 11756,
+        "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13096071870",
+        "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13096071870/zip",
+        "expired": false,
+        "digest": "sha256:d1fed49895bad3376013c6b9f1a4b839265113935828759403a8649f3e9b24d5",
+        "created_at": "2026-11-01T18:40:31Z",
+        "updated_at": "2026-11-01T18:40:31Z",
+        "expires_at": "2027-01-30T18:33:34Z",
+        "workflow_run": {
+          "id": 41337241559,
+          "repository_id": 1421442522,
+          "head_repository_id": 1421442522,
+          "head_branch": "dot/f03-bootstrap-diagnostic-20261101",
+          "head_sha": "85d2834e7974c9d923dd6a6a268e3ff826694d00"
+        }
+      },
+      "build_succeeded": true,
+      "emulator_step_succeeded": true,
+      "report_pull_error": "run-as: unknown package: org.exreader.host",
+      "report_authentication_error": "JSONDecodeError: Expecting value",
+      "arms_verified": false,
+      "product_conclusion": "undetermined",
+      "formal_count_credit": 0
+    }
   }
 }
