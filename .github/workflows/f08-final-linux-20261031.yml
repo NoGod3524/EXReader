@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
       - run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libgtk-3-dev libx11-dev xvfb openbox dbus-x11
+          sudo apt-get install -y libgtk-3-dev libx11-dev xvfb openbox dbus-x11 python3-pil
       - name: Prove worker delays and missing generations survive the boundary
         run: |
           Xvfb :98 -screen 0 1440x900x24 -nolisten tcp > /tmp/f08-control-xvfb.log 2>&1 &
@@ -42,6 +42,7 @@ jobs:
         run: |
           python3 -m unittest discover -s tests/reader_f08_android_binding_20261031 -v
           python3 -m unittest discover -s tests/reader_f08_final_20261031 -p test_android_inputs.py -v
+          python3 -m unittest discover -s tests/reader_f08_final_20261031 -p "test_reader_*.py" -v
           python3 tests/reader_f08_windows_native_frame_20261031/native_audit.py --self-test
           mkdir -p build/f08-native-control/integration-latch
           javac -d build/f08-native-control/integration-latch examples/android/app/src/main/java/org/exreader/host/CatalogFrameLatch.java tests/reader_f08_android_binding_20261031/CatalogFrameLatchControl.java
