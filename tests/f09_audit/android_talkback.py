@@ -18,7 +18,7 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/f09'
 PKG = 'org.exreader.host'
-TALKBACK = 'com.google.android.marvin.talkback/com.google.android.marvin.talkback.TalkBackService'
+SERVICE = 'com.google.android.marvin.talkback.TalkBackService'
 
 
 def adb(*args, check=False):
@@ -44,21 +44,28 @@ def seek(fragment, limit=40):
     return any(fragment in s for s in spoken()[-3:])
 
 
-def main(tts_apk):
+def main(tts_apk, talkback_apk):
     result = {'source_sha': os.environ.get('GITHUB_SHA'), 'run_id': os.environ.get('GITHUB_RUN_ID'),
               'attempt': os.environ.get('GITHUB_RUN_ATTEMPT'), 'screen_reader': 'TalkBack (emulator)',
               'human_listening_verified': False}
     try:
-        installed = adb('shell', 'pm', 'list', 'packages', 'com.google.android.marvin.talkback').strip()
-        result['talkback_package'] = installed
+        # No API 34 x86_64 image ships TalkBack; the workflow builds Google's
+        # open-source TalkBack (pinned commit) and it is installed here.
+        if talkback_apk.is_file():
+            result['talkback_install'] = adb('install', '-r', '-g', str(talkback_apk)).strip()[-200:]
+        package = next((p for p in ('com.android.talkback', 'com.google.android.marvin.talkback')
+                        if adb('shell', 'pm', 'list', 'packages', p).strip()), None)
+        result['talkback_package'] = package
+        if not package:
+            raise RuntimeError('TalkBack is not installed')
         result['talkback_version'] = next((line.strip() for line in adb('shell', 'dumpsys', 'package',
-            'com.google.android.marvin.talkback').splitlines() if 'versionName=' in line), None)
-        if not installed:
-            raise RuntimeError('TalkBack is not installed on this system image')
+            package).splitlines() if 'versionName=' in line), None)
+        talkback = package + '/' + SERVICE
+        result['talkback_component'] = talkback
         adb('install', '-r', '-t', str(tts_apk), check=True)
         adb('shell', 'settings', 'put', 'secure', 'tts_default_synth', 'org.exreader.f09tts')
         adb('logcat', '-c')
-        adb('shell', 'settings', 'put', 'secure', 'enabled_accessibility_services', TALKBACK)
+        adb('shell', 'settings', 'put', 'secure', 'enabled_accessibility_services', talkback)
         adb('shell', 'settings', 'put', 'secure', 'accessibility_enabled', '1')
         time.sleep(12)
         adb('shell', 'am', 'force-stop', PKG)
@@ -96,4 +103,4 @@ def main(tts_apk):
 
 if __name__ == '__main__':
     assert os.environ.get('GITHUB_ACTIONS') == 'true', 'GitHub Actions only'
-    main(Path(sys.argv[1]).resolve())
+    main(Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve())
