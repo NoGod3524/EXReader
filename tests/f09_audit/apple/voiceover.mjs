@@ -51,6 +51,10 @@ try {
   result.accepted = result.checks.every((c) => c.status === 'pass');
 } catch (error) {
   result.error = String(error && error.stack || error);
+  // guidepup wraps the real start failure; keep the whole cause chain.
+  for (let cause = error && error.cause, depth = 0; cause && depth < 5; cause = cause.cause, depth++) {
+    result.error += '\ncaused by: ' + String(cause.stack || cause);
+  }
   result.accepted = false;
 } finally {
   result.steps = steps;
