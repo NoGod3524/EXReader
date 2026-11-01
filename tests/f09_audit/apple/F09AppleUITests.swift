@@ -55,6 +55,12 @@ final class F09AppleUITests: XCTestCase {
         target.tap()
     }
 
+    // The retained helper: macOS keeps StaticText content in value, iOS in label.
+    private func text(_ id: String) -> String {
+        guard let node = try? element(id).snapshot() else { return "" }
+        return node.label.isEmpty ? (node.value as? String ?? "") : node.label
+    }
+
     private func state() -> String {
         let title = element("library.title")
         guard title.exists else { return "" }
@@ -104,10 +110,10 @@ final class F09AppleUITests: XCTestCase {
         // verify the original, add, restart (second entry), remove, restart
         // (third entry, the one that opened no panel in run 41170540560).
         tap("organization.verify-original")
-        XCTAssertTrue(wait { self.element("organization.message").label.contains("原件验证完成") }, app.debugDescription)
+        XCTAssertTrue(wait { self.text("organization.message").contains("原件验证完成") }, app.debugDescription)
         bookRow().tap()
         tap("organization.add")
-        XCTAssertTrue(wait { (self.element("organization.membership").label) == "member" }, app.debugDescription)
+        XCTAssertTrue(wait { self.text("organization.membership") == "member" }, app.debugDescription)
         app.terminate()
         XCTAssertTrue(wait(15) { self.app.state == .notRunning })
         launch(fresh: false)
@@ -118,7 +124,7 @@ final class F09AppleUITests: XCTestCase {
         XCTAssertTrue(bookRow().waitForExistence(timeout: 60))
         bookRow().tap()
         tap("organization.remove")
-        XCTAssertTrue(wait { (self.element("organization.membership").label) == "not member" }, app.debugDescription)
+        XCTAssertTrue(wait { self.text("organization.membership") == "not member" }, app.debugDescription)
         app.terminate()
         XCTAssertTrue(wait(15) { self.app.state == .notRunning })
         launch(fresh: false)

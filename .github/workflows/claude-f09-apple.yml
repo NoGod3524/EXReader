@@ -415,7 +415,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: always() && matrix.platform == 'macos'
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Real screen reader - VoiceOver over the product host (macOS)
         if: always() && matrix.platform == 'macos'
         run: |
