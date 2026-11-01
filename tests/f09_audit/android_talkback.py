@@ -3,8 +3,8 @@
 Semantic-tree results say what an assistive client can query; they are not a
 screen-reader result. This lane enables the emulator's own TalkBack, routes its
 speech to tests/f09_audit/android_tts (a TTS engine that logs every utterance),
-moves only with TalkBack's keyboard commands (Alt+Right next, Alt+Enter
-activate) and reads the words TalkBack spoke. Human listening is a separate
+moves only with hardware keys (Tab, arrows, Enter, Escape) the way a keyboard
+user with TalkBack does, and reads the words TalkBack spoke. Human listening is a separate
 record this lane does not claim. Actions only.
 """
 import json
@@ -57,6 +57,24 @@ def seek(fragment, since, limit=40, exclude=None):
     return heard()
 
 
+def press(code):
+    adb('shell', 'input', 'keyevent', code)
+    moves.append(code)
+    time.sleep(0.9)
+
+
+def walk(code, fragment, since, limit, exclude=None):
+    """Press a hardware key until TalkBack has spoken a phrase containing
+    `fragment` after index `since`; returns that phrase."""
+    def heard():
+        return next((s for s in spoken()[since:] if fragment in s and not (exclude and exclude in s)), None)
+    for _ in range(limit):
+        if heard():
+            break
+        press(code)
+    return heard()
+
+
 def main(tts_apk, talkback_apk):
     result = {'source_sha': os.environ.get('GITHUB_SHA'), 'run_id': os.environ.get('GITHUB_RUN_ID'),
               'attempt': os.environ.get('GITHUB_RUN_ATTEMPT'), 'screen_reader': 'TalkBack (emulator)',
@@ -92,29 +110,34 @@ def main(tts_apk, talkback_apk):
         time.sleep(8)
         found = {}
         found['speech_captured'] = bool(spoken())
-        # The host reopens the last book; go back to the shelf with TalkBack.
+        # The host reopens the last book; Escape (the keyboard Back) returns to the shelf.
         mark = len(spoken())
-        if any(s.startswith('Opened ') for s in spoken()[-4:]) or seek('Back to shelf', mark, 12):
-            seek('Back to shelf', mark, 12)
-            chord('KEYCODE_ALT_LEFT', 'KEYCODE_ENTER')
-            time.sleep(5)
+        if any(s.startswith('Opened ') or 'Back to shelf' in s for s in spoken()[-4:]):
+            press('KEYCODE_ESCAPE')
+            time.sleep(4)
         mark = len(spoken())
         result['shelf_mark'] = mark
         adb('shell', 'uiautomator', 'dump', '/sdcard/f09tb.xml')
         (OUT / 'android-talkback-shelf.xml').write_text(adb('exec-out', 'cat', '/sdcard/f09tb.xml'), encoding='utf-8')
-        found['shelf_title'] = seek('EXReader shelf', mark)
-        found['book_row'] = seek('Sample.epub', mark, exclude='Opened')
+        # TalkBack's item navigation (Alt+Right) did not move past the heading on the emulator
+        # (rounds 14-17), so the shelf is walked as a keyboard user with TalkBack does:
+        # Tab moves input focus and TalkBack announces each focused control.
+        found['shelf_title'] = next((s for s in spoken()[mark - 4:] if 'EXReader shelf' in s), None) \
+            or seek('EXReader shelf', mark)
+        found['shelf_controls'] = walk('KEYCODE_TAB', 'Books', mark, 12)
+        found['book_row'] = walk('KEYCODE_DPAD_DOWN', 'Sample.epub', mark, 6, exclude='Opened')
         if found['book_row']:
             mark = len(spoken())
-            chord('KEYCODE_ALT_LEFT', 'KEYCODE_ENTER')
+            press('KEYCODE_ENTER')
             time.sleep(8)
             found['reader'] = next((s for s in spoken()[mark:] if s.startswith('Opened Sample')), None) \
-                or seek('Back to shelf', mark, 12)
+                or walk('KEYCODE_TAB', 'Back to shelf', mark, 12)
         result['found'] = found
         result['checks'] = [{'id': cid, 'status': 'pass' if found.get(key) else 'fail', 'expected': want}
                             for cid, key, want in (
                                 ('T-01', 'speech_captured', 'TalkBack speaks through the capture engine'),
                                 ('T-02', 'shelf_title', 'the shelf is announced'),
+                                ('T-02b', 'shelf_controls', 'Tab announces each shelf control up to the Books list'),
                                 ('T-03', 'book_row', 'the imported book row is spoken with its title'),
                                 ('T-04', 'reader', 'activating the row opens the reader, whose controls are spoken'))]
         result['accepted'] = all(c['status'] == 'pass' for c in result['checks'])
