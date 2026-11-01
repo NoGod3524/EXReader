@@ -767,3 +767,14 @@ Artifact reader-suite-f03-android-catalog-41325652110-1: id 13091163672, 1169448
 Explicit 16:43:39Z approval covers five existing paths: ImportMappingTest.java, F03 identity.py/caller/scope and this document. Base ab7c6fe5be7061f737d6f80515ff1a851fcb5869, independent dot/f03-android-importmapping-20261101. Only two original tests migrate: validate first native original revision and outbox then exact complete snapshots across repeat finalization; create valid typed PUT and DELETE with observed heads through NativeCatalog.applyBook, verify status/identity/retention, then ensure duplicate import preserves all revision/outbox rows, metadata, delete head and SDK note. No fabricated JSON/zero hash SQL history. Original 14 method names/order and other 12 methods remain byte-identical.
 
 Only new exact case f03/android-importmapping-retained / marker [F03-ANDROID-IMPORTMAPPING-120-ONE-RUN] admits the sixth fixed test blob 12f758e93e1c74589d0d624415973ba05e6d02fe. Prior five pins, original 26 paths, SDK/production guards and old routes remain. One complete original Android build/API34/--android-retained round, maximum 120 runner-min, no automatic retry, no GTK/cross-host chain, no product change and no formal count credit. Prepared, not executed; F03 remains pending/unaccepted.
+
+
+## 2026-11-01 Android import-mapping contract result (failure retained)
+
+Run https://github.com/NoGod3524/EXReader/actions/runs/41328199296 attempt 1, source e21331513a84cc225daa99f672b4c79384e1f34b, job 124912497495, completed 17:14:26Z. Exact admission and APK build succeeded. Original CatalogStoreTest 8/8 and ImportMappingTest 14/14 completed with zero skipped and zero failures. The printed import-mapping report accepted the 14 tests, all 8 catalog tests and both before/during killed-process recoveries. The original walkthrough/review/bounded driver reported completed with zero command/log/pull exits.
+
+Later owner instrumentation printed 18/18 tests, zero skipped and zero failed, but the owner result explicitly rejected with owner device execution failed. The organization device-report was missing and original all-exits/post-gates retained failure. Green instrumentation counts alone do not establish owner gate acceptance; the exact owner driver cause remains for read-only diagnosis. This round is not a passing complete Android retained suite or a cross-host acceptance.
+
+Authorized one run used 1/1 with no retry. GTK/six receives/cross-host audit were not scheduled; pending F03 and zero formal credit remain. No owner script or further old test was changed. Next step is read-only original owner driver/gate and existing evidence review before any new scope.
+
+Artifact reader-suite-f03-android-importmapping-41328199296-1: id 13093186163, 193531993 bytes, sha256:e8b2d81a33a62a6d47c718bfdea2e49d5075b9eb8de27048eaf3023b33f8f17f, created 2026-11-01T17:14:23Z. API identity verified; archive not downloaded locally.
