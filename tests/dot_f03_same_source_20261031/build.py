@@ -242,11 +242,20 @@ def receive_apple(a, stamp):
                 check=True,capture_output=True))
         import shutil
         cleanup("fixture-private",lambda:shutil.rmtree(fixture/"private"))
-        write_json(folder/"cleanup.json",{"passed":not failures,"errors":failures})
-        if failures:
+        def invalidate_receipt():
             receipt=folder/"projection.json"
-            if receipt.exists():receipt.rename(folder/"projection-before-failed-cleanup.json")
-            if not active_failure:raise RuntimeError("receiver fixture cleanup failed")
+            if receipt.exists():
+                receipt.rename(folder/"projection-before-failed-cleanup.json")
+        if active_failure or failures:
+            invalidate_receipt()
+        try:
+            write_json(folder/"cleanup.json",{"passed":not active_failure and not failures,"errors":failures})
+        except Exception:
+            invalidate_receipt()
+            if not active_failure:raise
+            print("Unable to write Apple cleanup evidence; native receiver remains failed",file=sys.stderr)
+        if failures and not active_failure:
+            raise RuntimeError("receiver fixture cleanup failed")
 
 def main():
     p = argparse.ArgumentParser()
