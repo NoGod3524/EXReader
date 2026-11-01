@@ -96,10 +96,29 @@ def main():
               {'stops': stops, 'closed': closed}, closed and not unnamed)
 
         # K-02 reach a book row by keyboard and open it with Enter.
+        def selected_row():
+            # A ListView keeps keyboard focus on the list and marks the row selected.
+            root = tree()
+            shelf = next((n for n in root.iter('node') if (n.get('resource-id') or '').endswith('/book_list')), None)
+            if shelf is None or shelf.get('focused') != 'true':
+                return None
+            row = next((n for n in shelf.iter('node') if n is not shelf and n.get('selected') == 'true'), None)
+            if row is None:
+                return None
+            text = ' '.join(t for t in (c.get('text') for c in row.iter('node')) if t)
+            return {'id': 'book_list', 'selected_row': text}
+
         row = None
         for _ in range(30):
             now = focused()
-            if now and 'Sample' in now['name'] and now['id'] != 'shelf_search':
+            if now and now['id'] == 'book_list':
+                if selected_row() is None:
+                    key('KEYCODE_DPAD_DOWN', 'select first row')
+                picked = selected_row()
+                if picked and 'Sample' in picked['selected_row']:
+                    row = picked
+                    break
+            elif now and 'Sample' in now['name'] and now['id'] != 'shelf_search':
                 row = now
                 break
             key('KEYCODE_TAB', 'seek book row')

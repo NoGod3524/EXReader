@@ -125,6 +125,12 @@ def main(payload):
             time.sleep(0.8)
             host.screenshot(str(OUT / ('import-%d-before-return.png' % index)))
             host.key('Return')
+            # The location bar may take the first Return to accept its completion
+            # (Orca run 41277347712: "Text unselected."); confirm once more then.
+            try:
+                host.window_named('Import book', False, 3)
+            except TimeoutError:
+                host.key('Return')
             opened = wait(lambda: host.number('host', 'book') > 0 and host.number('host', 'reader_visible') == 1, 60)
             if index == 0:
                 check('G-02b', 'reader', 'an imported book opens in the reader', host.section('host'), bool(opened))

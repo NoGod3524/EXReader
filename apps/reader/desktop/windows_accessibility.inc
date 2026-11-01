@@ -1279,6 +1279,25 @@ static void host_a11y_status_changed(void) {
   host_a11y_status_live();
   NotifyWinEvent(EVENT_OBJECT_NAMECHANGE, g.status, OBJID_CLIENT, CHILDID_SELF);
   NotifyWinEvent(EVENT_OBJECT_LIVEREGIONCHANGED, g.status, OBJID_CLIENT, CHILDID_SELF);
+  /* With a book open the page's own UIA provider also raises a notification
+     (Windows 10 1709+): the live-region event alone was not announced while
+     focus sat in the note editor (F09 NVDA: 已添加标注 unspoken). */
+  if (host_a11y_element && UiaClientsAreListening()) {
+    typedef HRESULT (WINAPI *notify_fn)(IRawElementProviderSimple *, int, int, BSTR, BSTR);
+    static notify_fn notify;
+    static int looked;
+    if (!looked) {
+      HMODULE core = GetModuleHandleW(L"UIAutomationCore.dll");
+      looked = 1;
+      if (core) notify = (notify_fn)(void *)GetProcAddress(core, "UiaRaiseNotificationEvent");
+    }
+    if (notify) {
+      BSTR text = SysAllocString(g.status_text), activity = SysAllocString(L"exreader.status");
+      if (text && activity) notify(&host_a11y_element->simple, 2 /* ActionCompleted */, 3 /* MostRecent */, text, activity);
+      SysFreeString(text);
+      SysFreeString(activity);
+    }
+  }
 }
 /* ---- keyboard continuity ------------------------------------------------ */
 /* A command that disables itself while it holds focus must hand focus on. */
