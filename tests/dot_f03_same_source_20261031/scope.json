@@ -830,6 +830,420 @@
     "original_source": "e21331513a84cc225daa99f672b4c79384e1f34b",
     "original_job": 124912497495,
     "original_artifact": 13093186163,
-    "authorization": "2026-11-01T17:21:22Z"
+    "authorization": "2026-11-01T17:21:22Z",
+    "result": {
+      "status": "completed_diagnostic_success",
+      "controller_source": "4f551ddba35828a8169b7235bdecf0163ec4101c",
+      "run_id": 41331632631,
+      "attempt": 1,
+      "job_id": 124922794483,
+      "completed_at": "2026-11-01T17:28:43Z",
+      "runs_used": 1,
+      "automatic_retry": false,
+      "report": {
+        "accepted": false,
+        "archive_verified": true,
+        "controller": {
+          "attempt": "1",
+          "run_id": "41331632631",
+          "source_sha": "4f551ddba35828a8169b7235bdecf0163ec4101c"
+        },
+        "controller_base": "99d1b754690fec199f41de2f0edb7070558b285a",
+        "device": {
+          "abi": "x86_64",
+          "api": 34,
+          "count": 18,
+          "failed": 0,
+          "known_checks": [
+            {
+              "id": "actualInstalledProviderAndJson",
+              "pass": true
+            },
+            {
+              "id": "persistedNativeCreateIds",
+              "pass": true
+            },
+            {
+              "id": "strictUtf16AndEmoji",
+              "pass": true
+            },
+            {
+              "id": "staleObservedHeadsAreAtomic",
+              "pass": true
+            },
+            {
+              "id": "explicitDeleteAndRestore",
+              "pass": true
+            },
+            {
+              "id": "metadataFailureRollsBackAndRetries",
+              "pass": true
+            },
+            {
+              "id": "outboxFailureRollsBackAndRetries",
+              "pass": true
+            },
+            {
+              "id": "membershipNeedsExplicitBookBootstrap",
+              "pass": true
+            },
+            {
+              "id": "publicSdkBootstrapKeepsCurrentProductTitle",
+              "pass": true
+            },
+            {
+              "id": "shelfAndSeriesMembershipOrder",
+              "pass": true
+            },
+            {
+              "id": "missingAndDeletedDependenciesRefused",
+              "pass": true
+            },
+            {
+              "id": "mapFailureKeepsSdkAndCommittedBookCommand",
+              "pass": true
+            },
+            {
+              "id": "nativeRejectsWrongOwner",
+              "pass": true
+            },
+            {
+              "id": "nativeRejectsClosedHandle",
+              "pass": true
+            },
+            {
+              "id": "twoNativeOwnersCompeteOnOneObservedHead",
+              "pass": true
+            },
+            {
+              "id": "sdkDatabaseRefusedWithoutModification",
+              "pass": true
+            },
+            {
+              "id": "opensClosedLegacySystemCatalog",
+              "pass": true
+            },
+            {
+              "id": "finalizeImportAutomaticallyBootstrapsOnce",
+              "pass": true
+            }
+          ],
+          "unexpected_check_count": 0
+        },
+        "diagnostic_completed": true,
+        "diagnostic_only": true,
+        "formal_count_credit": 0,
+        "full_F03_accepted": false,
+        "invalid": [],
+        "inventory_member_count": 748,
+        "manual_protocol": [
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "actualInstalledProviderAndJson"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "persistedNativeCreateIds"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "strictUtf16AndEmoji"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "staleObservedHeadsAreAtomic"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "explicitDeleteAndRestore"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "metadataFailureRollsBackAndRetries"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "outboxFailureRollsBackAndRetries"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "membershipNeedsExplicitBookBootstrap"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "publicSdkBootstrapKeepsCurrentProductTitle"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "shelfAndSeriesMembershipOrder"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "missingAndDeletedDependenciesRefused"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "mapFailureKeepsSdkAndCommittedBookCommand"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "nativeRejectsWrongOwner"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "nativeRejectsClosedHandle"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "twoNativeOwnersCompeteOnOneObservedHead"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "sdkDatabaseRefusedWithoutModification"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "opensClosedLegacySystemCatalog"
+          },
+          {
+            "identity_valid": true,
+            "status_code": 0,
+            "test": "finalizeImportAutomaticallyBootstrapsOnce"
+          }
+        ],
+        "manual_summary": {
+          "completion_count": 18,
+          "ending_codes": [
+            -1
+          ],
+          "failure_or_skip_status_count": 0,
+          "failures_marker_present": false,
+          "invalid_status_identity_count": 0,
+          "ok_18_present": true
+        },
+        "missing": [],
+        "observations": {
+          "device-abi.txt": true,
+          "device-api.txt": true,
+          "device_18_checks": true,
+          "device_api_abi": true,
+          "device_identity": true,
+          "kill_after": true,
+          "kill_before": true,
+          "manual_18": true,
+          "old_owner_gate_identity": true,
+          "old_owner_rejection_retained": true,
+          "original_steps_failure_retained": true,
+          "original_steps_identity": true,
+          "original_steps_records": true,
+          "original_steps_workflow": true,
+          "source.txt": true,
+          "xml_18": true
+        },
+        "old_owner_gate": {
+          "accepted": false,
+          "identity_matches": true,
+          "problem_count": 1,
+          "reported_owner_device_failure": true
+        },
+        "organization_device_report_present": false,
+        "original": {
+          "artifact_id": 13093186163,
+          "attempt": "1",
+          "job_id": 124912497495,
+          "run_id": "41328199296",
+          "source_sha": "e21331513a84cc225daa99f672b4c79384e1f34b"
+        },
+        "original_steps": {
+          "accepted": false,
+          "historical_owner_guard_reexecuted": false,
+          "steps": [
+            {
+              "command_sha256": "6318249671211f2aa815345956f66e39d6dd8feaea2d20c6ad761cd4850c23d0",
+              "exit_code": 1,
+              "index": 0
+            },
+            {
+              "command_sha256": "7300c5f91d9435685a21af00b36be45c0cf43b1a912be7c436c31d761214bad3",
+              "exit_code": 0,
+              "index": 1
+            },
+            {
+              "command_sha256": "dd3dae351a51ec14d1b98c8f820e2f5d8067f423fb328576d8f9d2af1d1b3e39",
+              "exit_code": 1,
+              "index": 2
+            },
+            {
+              "command_sha256": "84e53b477ea792028c0e8e91b1ef2acae46a8f95909292764c3fa5431890d371",
+              "exit_code": 1,
+              "index": 3
+            },
+            {
+              "command_sha256": "82ef67e2c33a1e96ea06c4d858884c5d0c18ec37a0e5a09b83c9a1b22e5e7ed3",
+              "exit_code": 1,
+              "index": 4
+            },
+            {
+              "command_sha256": "4383308aaf8bed4872e6ef8d0cb22e66ab68ca512285c635ff1619c9c40f7e7e",
+              "exit_code": 1,
+              "index": 5
+            },
+            {
+              "command_sha256": "fbdfb172ec821a37e263e5a750f99593574f9c48e6f0e66fd3bba631ccfd9be6",
+              "exit_code": 1,
+              "index": 6
+            },
+            {
+              "command_sha256": "9cc06ca9683a8c8364cd297f2a2c61c07f1b8c05f49f0aab159c345a6066a794",
+              "exit_code": 1,
+              "index": 7
+            },
+            {
+              "command_sha256": "174bab2307d757619ef97ca3cca3690e1ce5d9b439f387c665ed1e4af6e1a033",
+              "exit_code": 1,
+              "index": 8
+            },
+            {
+              "command_sha256": "d6bbc18989eda90ba1fad4e27d23fa202d34e45dc0e380c0aeb9fedad96e610d",
+              "exit_code": 1,
+              "index": 9
+            },
+            {
+              "command_sha256": "8f521afac9ca4721708abf730d4e2ed3140851abf95b89709f399445824f223c",
+              "exit_code": 1,
+              "index": 10
+            },
+            {
+              "command_sha256": "c9e2b0b8c3aa3870f7d035cfd79008e812d4fbabcef3fe700c2c55d1c7050e2f",
+              "exit_code": 1,
+              "index": 11
+            }
+          ],
+          "workflow": ".github/workflows/reader-organization-android.yml",
+          "workflow_sha256": "b7c3f359169cdf9f5d0a741dc5d7293df55beff0e98dc57ff12ca8bd1258cdd5"
+        },
+        "original_steps_shape": "dict",
+        "problems": [],
+        "product_reexecuted": false,
+        "provider_fully_authenticated": false,
+        "selected": {
+          "original-steps": {
+            "bytes": 2807,
+            "path": "f03-android-original-steps.json",
+            "sha256": "0e5ef6895abf3453fd1cc6f75e5cd02ef9312131f167f883741d1e7234cda03f"
+          },
+          "owner/device-abi.txt": {
+            "bytes": 7,
+            "path": "owner-android/device-abi.txt",
+            "sha256": "aaf631698ae5160ceb04a97681a14887fdcab47cd6e0f163c87485b3b1340b62"
+          },
+          "owner/device-api.txt": {
+            "bytes": 3,
+            "path": "owner-android/device-api.txt",
+            "sha256": "ea243e5457028e97f9bc93b37a72f8e80ea61ae081911bb037765590ee6aa435"
+          },
+          "owner/device-report.json": {
+            "bytes": 2879,
+            "path": "owner-android/device-report.json",
+            "sha256": "c8db5242ff7c6e8d423dc278d1a50d431b182bdebf417a9bbf0d8e8da74d296a"
+          },
+          "owner/owner-instrumentation.txt": {
+            "bytes": 10786,
+            "path": "owner-android/owner-instrumentation.txt",
+            "sha256": "e1361b3dbba9bb9991288ecef98f8e9edcc01553b514771fdc6356c665031988"
+          },
+          "owner/owner-reports/debug/TEST-emulator-5554 - 14-_app-.xml": {
+            "bytes": 2480,
+            "path": "owner-android/owner-reports/debug/TEST-emulator-5554 - 14-_app-.xml",
+            "sha256": "b94741bf8df30392429a666f3dd141f8d7310b44e6a582645db6622d14d98ed2"
+          },
+          "owner/recover-after.txt": {
+            "bytes": 91,
+            "path": "owner-android/recover-after.txt",
+            "sha256": "a203e53ed63e0606a735272a5cf35d9b61ff5c3d2048b318bbae67b75ab8861a"
+          },
+          "owner/recover-before.txt": {
+            "bytes": 92,
+            "path": "owner-android/recover-before.txt",
+            "sha256": "c0d833c425ee91787a07efb89810fdad725bf3f6bcbc9eb37127d4d68fd05b3b"
+          },
+          "owner/result.json": {
+            "bytes": 186,
+            "path": "owner-android/result.json",
+            "sha256": "1e55011cbc9f914b0c6f2eef49b8d57c87a946268e1f108d8dea3cd5813d1cc4"
+          },
+          "owner/seed-after.txt": {
+            "bytes": 74,
+            "path": "owner-android/seed-after.txt",
+            "sha256": "cc376fcd260b55a01f82c04af5e0a9ead88516f600131a38bdea1a3e05b10a8d"
+          },
+          "owner/seed-before.txt": {
+            "bytes": 74,
+            "path": "owner-android/seed-before.txt",
+            "sha256": "cc376fcd260b55a01f82c04af5e0a9ead88516f600131a38bdea1a3e05b10a8d"
+          },
+          "owner/source.txt": {
+            "bytes": 41,
+            "path": "owner-android/source.txt",
+            "sha256": "0ba49f4d16e125cc2f5e43b82f346fea2575420151324000e7d14aa3d3d7c426"
+          },
+          "owner/witness-after.txt": {
+            "bytes": 5,
+            "path": "owner-android/witness-after.txt",
+            "sha256": "f3176ea4064dc47ccab85eb06a79460c0a07325bfdc3da7863dbd974031ee89b"
+          },
+          "owner/witness-before.txt": {
+            "bytes": 5,
+            "path": "owner-android/witness-before.txt",
+            "sha256": "fdcc75483f5e22c93d36a3051dbe0fee0671d3bf55936a099d5724cb3ec307b0"
+          }
+        },
+        "xml_known_names": [
+          "actualInstalledProviderAndJson",
+          "explicitDeleteAndRestore",
+          "finalizeImportAutomaticallyBootstrapsOnce",
+          "mapFailureKeepsSdkAndCommittedBookCommand",
+          "membershipNeedsExplicitBookBootstrap",
+          "metadataFailureRollsBackAndRetries",
+          "missingAndDeletedDependenciesRefused",
+          "nativeRejectsClosedHandle",
+          "nativeRejectsWrongOwner",
+          "opensClosedLegacySystemCatalog",
+          "outboxFailureRollsBackAndRetries",
+          "persistedNativeCreateIds",
+          "publicSdkBootstrapKeepsCurrentProductTitle",
+          "sdkDatabaseRefusedWithoutModification",
+          "shelfAndSeriesMembershipOrder",
+          "staleObservedHeadsAreAtomic",
+          "strictUtf16AndEmoji",
+          "twoNativeOwnersCompeteOnOneObservedHead"
+        ]
+      },
+      "artifact": {
+        "id": 13094015229,
+        "name": "reader-suite-f03-owner-fixed-artifact-41331632631-1",
+        "size_in_bytes": 2911,
+        "digest": "sha256:0a91803bf340f9486805bc821ea08bf2d7df71be3ef7ef6255b1ef4a44735df7",
+        "created_at": "2026-11-01T17:28:39Z",
+        "expires_at": "2027-01-30T17:28:22Z"
+      }
+    }
   }
 }
