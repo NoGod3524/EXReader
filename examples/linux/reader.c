@@ -1202,9 +1202,10 @@ int main(int argc,char **argv) {
   gtk_entry_set_max_length(GTK_ENTRY(search),256);gtk_entry_set_text(GTK_ENTRY(search),shelf_query);
   atk_object_set_name(gtk_widget_get_accessible(search),"Search bookshelf");
   shelf_scroll=scroll(shelf);
-  /* Only the list carries the name: a same-named scroll pane around it was found
-     before the list (retained GTK audit shelf_list_named). */
-  atk_object_set_name(gtk_widget_get_accessible(shelf_scroll),"");
+  /* The list alone is "Bookshelf": a same-named scroll pane around it was found
+     before the list (retained GTK audit shelf_list_named). The pane is still a
+     focus stop on an empty shelf, so it keeps a name of its own. */
+  atk_object_set_name(gtk_widget_get_accessible(shelf_scroll),"Bookshelf scroll area");
 #ifdef EXR_READER_DROP_IMPORT_UI
   file_input_attach(shelf_scroll);
 #endif
