@@ -346,9 +346,11 @@ def main():
                     delete_conflict_displayed=False,stale_peer_did_not_resurrect=True,
                     old_put_after_tombstone=stale_proof,
                     uncovered="native deletion operation detail",explicit_user_restore=False)
+        store.checkpoint(out/"peer-delete-put","gtk-native-delete-then-old-parent-put")
         (out / "peer-contract.json").write_text(json.dumps({
             "entity_kind":"tag", "entity_key":tag, "common_parent":parent["heads"],
             "baseline":"peer-baseline", "remote_delete":"peer-delete",
+            "remote_delete_put":"peer-delete-put","old_put_after_tombstone":stale_proof,
             "simultaneous_online_peers":False}, indent=2) + "\n")
         edit(first, "Concurrent GTK first")
         edit(second, "Concurrent GTK second")
