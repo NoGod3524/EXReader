@@ -19,7 +19,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tests/reader_windows_account"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from fixture import Store
+from fixture import Store, write_role_receipt
 
 def main():
     if os.name != "nt" or os.environ.get("GITHUB_ACTIONS") != "true":
@@ -51,6 +51,41 @@ def main():
                            "attempt": os.environ["GITHUB_RUN_ATTEMPT"]},
               "host": "windows", "F05_accepted": False, "cases": [], "errors": [],
               "program_sha256": hashlib.sha256(args.candidate.read_bytes()).hexdigest()}
+    normalized, claim_refs, evidence = [], {}, ["coverage.json"]
+    previous_wire = {}
+    last_request = 0
+    def finish_case(claims, **semantic):
+        nonlocal previous_wire, last_request
+        raw = report["cases"][-1]
+        name = raw["name"]
+        observed = {who: sdk_originals(who) for who in ("first", "second")}
+        expected_sha = hashlib.sha256(original).hexdigest()
+        if any(len(items) != 1 or items[0]["sha256"] != expected_sha
+               or items[0]["bytes"] != len(original) for items in observed.values()):
+            raise AssertionError("native case changed exact SDK original set")
+        wire = {path: hashlib.sha256(body).hexdigest() for path, body in store.entries.items()}
+        if any(wire.get(path) != digest for path, digest in previous_wire.items()):
+            raise AssertionError("native case rewrote previously observed immutable wire")
+        screenshot = name + ".bmp"
+        A.M.screenshot(first.window, out / screenshot)
+        evidence.append(screenshot)
+        raw["sdk_original_readback"] = observed
+        raw["immutable_wire_inventory"] = wire
+        raw["screenshot"] = screenshot
+        segment = store.requests[last_request:]
+        observed_wire = any(r["authenticated"] and r["method"] in ("PUT", "GET", "PROPFIND")
+                            for r in segment)
+        item = {"id": name, "outcome": raw["outcome"],
+                "actual_host_actions": True, "receiver_database_injection": False,
+                "original_identity_preserved": True, "revision_bytes_preserved": True,
+                "peer_wire_observed": observed_wire,
+                "source_evidence": ["coverage.json", screenshot],
+                "source_pointer": "/cases/" + str(len(report["cases"]) - 1), **semantic}
+        normalized.append(item)
+        for claim, role in claims.items():
+            claim_refs.setdefault(claim, []).append({"case_id": name, "role": role})
+        previous_wire = wire
+        last_request = len(store.requests)
     def launch(name, existing=False):
         device = A.Device(args.candidate.resolve(), (args.package / "Reader.otf").resolve(),
                           out / name, existing=existing)
@@ -134,6 +169,8 @@ def main():
             "cancel_layer":"transport-original-GET-before-native-auto-receive",
             "actual_native_cancel":True,"before":before_cancel,"cancelled":cancelled_originals,
             "retry":retry_originals,"sdk_import_mid_commit_cancel_tested":False})
+        finish_case({"cancel_retry":"local"}, cancel_layer="transport", remote_boundary=True,
+                    native_cancel_observed=True, explicit_retry_passed=True)
         initial = snapshot("first")
         if snapshot("second")["heads"] != initial["heads"]:
             raise AssertionError("second actual host has not received initial head")
@@ -150,6 +187,7 @@ def main():
             raise AssertionError("real peer failed to converge after reconnect")
         report["cases"].append({"name": "offline_reconnect", "outcome": "passed",
                                 "before": initial, "offline": offline, "peer": snapshot("second")})
+        finish_case({"offline_reconnect":"author"})
         # Withhold the PUT response after the server commits. Kill the real host.
         edit(first, "Uncertain commit F05")
         pending = snapshot("first")
@@ -177,6 +215,12 @@ def main():
         report["cases"].append({"name": "kill_commit_ack_replay", "outcome": "passed",
                                 "terminated_pid": terminated_pid, "reopened_pid": first.process.pid,
                                 "before": pending, "after": snapshot("first")})
+        if terminated_pid == first.process.pid:
+            raise AssertionError("native process did not change after kill")
+        finish_case({"process_recovery":"local"}, remote_boundary=True,
+                    terminated_pid=terminated_pid, reopened_pid=first.process.pid,
+                    actual_process_termination=True, recovery_boundary="committed-PUT-before-ACK",
+                    durable_recovery_passed=True)
         # Both actual clients edit a shared parent without seeing the other edit.
         common = snapshot("first")
         store.checkpoint(out / "peer-baseline", "windows-native-book-common-parent")
@@ -202,32 +246,62 @@ def main():
         report["cases"].append({"name": "concurrent_heads_preserved", "outcome": "passed",
                                 "heads": sorted(expected), "first_ui": first_detail,
                                 "second_ui": second_detail})
+        finish_case({"concurrent_heads_preserved":"receiver"}, competing_heads=sorted(expected),
+                    final_heads=snapshot("first")["heads"], conflict_displayed=True,
+                    explicit_user_resolution=False)
         # Close and independently reopen the actual host, without network.
         first.close()
         store.offline = True
+        offline_start = len(store.requests)
+        original_before_reopen = sdk_originals("first")
         first = launch("first", existing=True)
         readable(first)
         if set(snapshot("first")["heads"]) != expected:
             raise AssertionError("offline reopen changed heads")
+        if len(store.requests) != offline_start or sdk_originals("first") != original_before_reopen:
+            raise AssertionError("offline reopened original changed or used the controlled sync endpoint")
         report["cases"].append({"name": "restart_offline_read", "outcome": "passed",
-                                "heads": sorted(expected)})
+                                "heads": sorted(expected), "controlled_sync_requests":0,
+                                "measurement":"runner-local F05 DAV endpoint only; not whole OS networking",
+                                "sdk_before":original_before_reopen,"sdk_after":sdk_originals("first")})
+        finish_case({"offline_read":"local"}, reopened_host_readable=True, network_requests=0,
+                    network_measurement="controlled F05 library sync endpoint")
     except Exception as error:
         report["errors"].append(str(error))
         raise
     finally:
-        for device in devices:
+        cleanup_errors = []
+        def cleanup(label, action):
+            try: action()
+            except BaseException as error:
+                cleanup_errors.append({"action":label, "error":repr(error).replace(password,"<fixture-secret>")})
+        def close_device(device):
             if device.process.poll() is None:
                 try: device.close()
-                except Exception:
+                except BaseException:
                     device.process.kill()
                     device.process.wait(timeout=20)
-        store.close()
+                    raise
+        for index, device in enumerate(devices):
+            cleanup("native-close-" + str(index), lambda device=device: close_device(device))
+        cleanup("fixture-close", store.close)
+        cleanup("remove-fixture-trust", lambda: subprocess.run(
+            ["certutil", "-delstore", "Root", fingerprint], check=True, capture_output=True))
+        cleanup("remove-fixture-private-key", lambda: key.unlink(missing_ok=True))
         report["requests"] = store.requests
-        report["uncovered"] = ["delete_put_tombstone_preserved", "cancel_receive_retry",
-                               "other five hosts", "independent original-artifact authentication"]
-        (out / "coverage.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
-        subprocess.run(["certutil", "-delstore", "Root", fingerprint], capture_output=True)
-        key.unlink(missing_ok=True)
+        report["cleanup_errors"] = cleanup_errors
+        report["uncovered"] = ["delete_put_tombstone_preserved",
+            "mid-SDK-import cancellation (not the exercised transport layer)",
+            "independent original-artifact authentication"]
+        try:
+            (out / "coverage.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n",encoding="utf-8")
+            write_role_receipt(out, "windows", args.candidate, report["identity"],
+                               normalized, claim_refs, evidence)
+        except BaseException as error:
+            print("F05 evidence write failed: " + repr(error).replace(password,"<fixture-secret>"),flush=True)
+            if not report["errors"]: raise
+        if cleanup_errors and not report["errors"]:
+            raise RuntimeError("F05 Windows cleanup failed; retain coverage cleanup_errors")
 
 
 def collect_provider(argv):
