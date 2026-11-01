@@ -71,11 +71,21 @@ static int original(void *context,const char *key,char *out,size_t size){
   if(name.size()>=size||!fs::exists(name))return 1;
   std::memcpy(out,name.c_str(),name.size()+1);return 0;
 }
-static int step(const fs::path &profile,const char *url,const char *wire_path,bool seed){
+static void inspect_received(reader_revisions *rev,const char *wire_path){
+  std::ifstream input(wire_path);std::string expected((std::istreambuf_iterator<char>(input)),{});
+  reader_revision_info info{};int code=reader_revision_validate_raw_v3(rev,expected.data(),expected.size(),nullptr,&info,nullptr);
+  if(code){row("inspect_error",code);return;}
+  char *wire=nullptr;size_t bytes=0;reader_revision_info actual{};
+  code=reader_revision_get_raw_v3(rev,info.revision_id,&wire,&bytes,&actual,nullptr);
+  row("received",code==READER_REV_OK);row("exact_wire",code==READER_REV_OK&&bytes==expected.size()&&std::memcmp(wire,expected.data(),bytes)==0);
+  reader_revision_bytes_free(wire);
+}
+static int step(const fs::path &profile,const char *url,const char *wire_path,bool seed,bool pull=false,bool inspect_only=false){
   reader_revisions *rev=nullptr;reader_revision_error re{};
   std::string db=(profile/"catalog.sqlite").string();
   int status=reader_revisions_open_raw_v3(db.c_str(),&rev,&re);
   if(status){row("status",status);return 1;}
+  if(inspect_only){inspect_received(rev,wire_path);reader_revisions_close(&rev,nullptr);return 0;}
   if(seed){
     std::ifstream in(wire_path);std::string wire((std::istreambuf_iterator<char>(in)),{});
     reader_revision_info info{};int created=0;
@@ -94,7 +104,8 @@ static int step(const fs::path &profile,const char *url,const char *wire_path,bo
   exr_webdav_control control{};std::string stop=(profile/"cancel").string();
   control.context=&stop;control.cancelled=[](void *p){return fs::exists(*(std::string*)p)?1:0;};
   if(!status)status=reader_sync_step_raw_v3(sync,0,"",100,&control,&result,&se);
-  row("status",status);row("pushed",result.pushed);row("dav_code",se.dav_code);
+  row("status",status);row("pushed",result.pushed);row("dav_code",se.dav_code);row("revision_code",se.revision_code);
+  if(pull){row("pulled",result.pulled);row("after_empty",result.after[0]==0);inspect_received(rev,wire_path);}
   unsigned pending=0;
   auto count=[](void *ctx,const reader_revision_outbox_row *){++*(unsigned*)ctx;return 0;};
   reader_revision_outbox_raw_v3(rev,100,count,&pending,nullptr);row("outbox",pending);
@@ -117,8 +128,9 @@ int main(int argc,char **argv){try{
     row("owned",1);raise(SIGKILL);return 8;
   }
 #if !defined(F10_BOUNDARY)
-  if(mode=="step"||mode=="seed"){if(argc!=5)return 2;return step(profile,argv[3],argv[4],mode=="seed");}
+  if(mode=="step"||mode=="seed"||mode=="pull"||mode=="inspect"){if(argc!=5)return 2;return step(profile,argv[3],argv[4],mode=="seed",mode=="pull",mode=="inspect");}
 #endif
+  if(mode=="recover-current"){exr_webdav_managed_snapshot view{};row("recover",exr_webdav_managed_recover_profile(profile.c_str(),&view));row("pending",view.cleanup_pending);return 0;}
   const char *url=argc>3?argv[3]:"https://localhost:1/dav/";
   exr_webdav_config cfg{};cfg.root_url=url;cfg.timeout_ms=10000;
   exr_webdav_client *dav=nullptr;exr_webdav_error error{};
