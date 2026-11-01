@@ -36,12 +36,17 @@ def chord(*keys):
     time.sleep(0.9)
 
 
-def seek(fragment, limit=40):
+def seek(fragment, since, limit=40, exclude=None):
+    """Move with TalkBack's next-item command until a phrase spoken after
+    index `since` contains `fragment` (and not `exclude`)."""
+    def heard():
+        return next((s for s in spoken()[since:] if fragment in s and not (exclude and exclude in s)), None)
     for _ in range(limit):
-        if any(fragment in s for s in spoken()[-3:]):
-            return True
+        phrase = heard()
+        if phrase:
+            return phrase
         chord('KEYCODE_ALT_LEFT', 'KEYCODE_DPAD_RIGHT')
-    return any(fragment in s for s in spoken()[-3:])
+    return heard()
 
 
 def main(tts_apk, talkback_apk):
@@ -68,17 +73,33 @@ def main(tts_apk, talkback_apk):
         adb('shell', 'settings', 'put', 'secure', 'enabled_accessibility_services', talkback)
         adb('shell', 'settings', 'put', 'secure', 'accessibility_enabled', '1')
         time.sleep(12)
+        # First enable opens TalkBack's own tutorial; leave it with Back.
+        for _ in range(3):
+            if not any('Welcome to TalkBack' in s for s in spoken()[-4:]):
+                break
+            adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+            time.sleep(2)
         adb('shell', 'am', 'force-stop', PKG)
         adb('shell', 'monkey', '-p', PKG, '-c', 'android.intent.category.LAUNCHER', '1')
         time.sleep(8)
         found = {}
         found['speech_captured'] = bool(spoken())
-        found['shelf_title'] = seek('shelf')
-        found['book_row'] = seek('Sample')
+        # The host reopens the last book; go back to the shelf with TalkBack.
+        mark = len(spoken())
+        if any(s.startswith('Opened ') for s in spoken()[-4:]) or seek('Back to shelf', mark, 12):
+            seek('Back to shelf', mark, 12)
+            chord('KEYCODE_ALT_LEFT', 'KEYCODE_ENTER')
+            time.sleep(5)
+        mark = len(spoken())
+        result['shelf_mark'] = mark
+        found['shelf_title'] = seek('EXReader shelf', mark)
+        found['book_row'] = seek('Sample.epub', mark, exclude='Opened')
         if found['book_row']:
+            mark = len(spoken())
             chord('KEYCODE_ALT_LEFT', 'KEYCODE_ENTER')
             time.sleep(8)
-        found['reader'] = seek('Back to shelf') or seek('Select') or seek('page')
+            found['reader'] = next((s for s in spoken()[mark:] if s.startswith('Opened Sample')), None) \
+                or seek('Back to shelf', mark, 12)
         result['found'] = found
         result['checks'] = [{'id': cid, 'status': 'pass' if found.get(key) else 'fail', 'expected': want}
                             for cid, key, want in (
