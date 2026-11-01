@@ -298,7 +298,13 @@ def main():
             except BaseException as error:
                 cleanup_errors.append({"action":label,"error":repr(error).replace(password,"<generated-fixture-secret>").replace(auth,"<generated-fixture-auth>")})
         report["cleanup_errors"]=cleanup_errors
-        (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+        try:
+            (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+        except BaseException as error:
+            safe=repr(error).replace(password,"<generated-fixture-secret>").replace(auth,"<generated-fixture-auth>")
+            print("F05 coverage write failed: "+safe,flush=True)
+            if "failure" not in report:
+                raise RuntimeError("F05 coverage write failed: "+safe) from None
         if cleanup_errors and "failure" not in report:
             raise RuntimeError("F05 Android cleanup failed; see coverage cleanup_errors")
 
