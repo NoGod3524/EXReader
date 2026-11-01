@@ -184,6 +184,12 @@ def main():
     if not command or command[0]!="xcodebuild":raise ValueError("actual xcodebuild required")
     if any("-only-testing" in v or "-resultBundlePath" in v for v in command):
         raise ValueError("driver owns exact phase/test result selection")
+    if command.count("-derivedDataPath")!=1:
+        raise ValueError("one actual derived-data directory required")
+    derived=Path(command[command.index("-derivedDataPath")+1]).resolve()
+    suffix="Debug" if a.platform=="macos" else "Debug-iphonesimulator"
+    if a.app.resolve()!=(derived/"Build/Products"/suffix/"EXReaderHost.app").resolve():
+        raise ValueError("retained app must be this xcodebuild's actual native product")
     a.output.mkdir(parents=True,exist_ok=False)
     contract=json.loads((a.peer/"peer-contract.json").read_text())
     if contract["entity_kind"]!="book":raise AssertionError("Apple book receiver requires book peers")
@@ -290,6 +296,17 @@ def main():
         server=Store(a.certificate,a.key,authorization)
         origin=server.expose_checkpoint(a.peer/contract["baseline"])
         report["producer"]=origin["author"]
+        candidates=[]
+        for path,body in server.entries.items():
+            if "/revisions/" not in path:continue
+            row=json.loads(body)
+            if row["entity_kind"]=="book" and row["entity_key"]==contract["entity_key"] and row["id"] in contract["common_parent"]:
+                candidates.append(row)
+        if len(candidates)!=1 or candidates[0]["operation"]!="put":
+            raise AssertionError("one actual baseline native book put required")
+        original_payload=candidates[0]["payload"]
+        report["original_identity"]={"sha256":original_payload["source_sha256"],
+            "bytes":original_payload["source_bytes"],"format":original_payload["format"]}
         if a.platform=="macos":
             expected_container=(Path.home()/"Library/Application Support/EXReader").resolve()
             if a.container is None or a.container.resolve()!=expected_container:
@@ -316,7 +333,7 @@ def main():
                 if cache.is_symlink() or not stat.S_ISREG(cache.stat().st_mode):
                     raise AssertionError("unsafe cache identity")
                 content=cache.read_bytes()
-                if hashlib.sha256(content).hexdigest()!=contract["entity_key"].split(":",1)[1]:
+                if hashlib.sha256(content).hexdigest()!=contract["entity_key"].split(":",1)[1] or len(content)!=original_payload["source_bytes"]:
                     raise AssertionError("cache bytes differ from actual peer original")
                 app_folder=cache.parent.parent
                 baseline=readback(app_folder)
@@ -413,7 +430,7 @@ def main():
                     raise AssertionError("actual retained Apple book heads differ")
                 if number==1 and observed["originals"]:
                     raise AssertionError("cancel before original response published SDK original")
-                if number>1 and (len(observed["originals"])!=1 or observed["originals"][0]["sha256"]!=contract["entity_key"].split(":",1)[1]):
+                if number>1 and (len(observed["originals"])!=1 or observed["originals"][0]["sha256"]!=contract["entity_key"].split(":",1)[1] or observed["originals"][0]["bytes"]!=original_payload["source_bytes"]):
                     raise AssertionError("actual Apple SDK original is absent, duplicate, or changed")
                 if number==5 and observed["outbox"]!=0:
                     raise AssertionError("killed native PUT was not acknowledged on actual retry")
