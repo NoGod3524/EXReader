@@ -7,6 +7,11 @@ on:
       - tests/f09_audit/**
       - .github/workflows/claude-f09-audit.yml
   workflow_dispatch:
+    inputs:
+      android:
+        description: Also run the Android lane (skip when nothing Android changed)
+        type: boolean
+        default: true
 permissions:
   contents: read
 env:
@@ -108,6 +113,11 @@ jobs:
             gdbus call --session --dest org.a11y.Bus --object-path /org/a11y/bus --method org.a11y.Bus.GetAddress || true
             python3 tests/f09_audit/baseline.py linux
           ' 2>&1 | tee build/f09/logs/linux-session.log
+      - name: Package identity of the audited GTK host
+        if: always()
+        run: |
+          pkg=build/gtk-raw-wave3/compact-package/EXReader-Linux
+          test -d "$pkg" && (cd "$pkg" && find . -type f -print0 | sort -z | xargs -0 sha256sum) > build/f09/gtk-package-sha256.txt || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -117,6 +127,7 @@ jobs:
             build/f06/linux/
           if-no-files-found: warn
   android:
+    if: github.event_name != 'workflow_dispatch' || inputs.android
     runs-on: ubuntu-latest
     timeout-minutes: 210
     steps:

@@ -326,6 +326,7 @@ typedef exr_status (*host_progress_fn)(void *context, unsigned percent);
 static void host_a11y_status_changed(void);
 static void host_a11y_prepare_note(void);
 static void host_a11y_owner_enabled(int enabled);
+static void host_a11y_command_name(HWND control, const wchar_t *name);
 
 static void set_status(const wchar_t *text) {
   if (!text) text = L"";
@@ -3210,6 +3211,7 @@ static void create_controls(HWND parent) {
                                   ES_AUTOHSCROLL, 0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_IMPORT_EDIT, NULL, NULL);
   SendMessageW(g.import_edit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
   g.import_button = make_button(parent, IDC_IMPORT_BUTTON, L"导入(&I)");
+  host_a11y_command_name(g.import_button, L"导入");
   g.open_button = make_button(parent, IDC_OPEN_BUTTON, L"打开(&O)");
   g.delete_button = make_button(parent, IDC_DELETE_BUTTON, L"删除(&D)");
   g.prev_button = make_button(parent, IDC_PREV, L"上一页(&P)");
