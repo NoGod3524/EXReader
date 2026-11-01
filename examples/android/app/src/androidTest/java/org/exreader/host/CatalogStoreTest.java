@@ -130,11 +130,11 @@ public final class CatalogStoreTest extends Instrumentation {
         try (CatalogStore catalog = new CatalogStore(context, file)) {
             ProductFixture db = ProductFixture.of(catalog);
             assertEquals(CatalogStore.APPLICATION_ID, scalar(db, "PRAGMA application_id"));
-            assertEquals(1, scalar(db, "PRAGMA user_version"));
+            assertEquals(3, scalar(db, "PRAGMA user_version"));
             assertEquals(1, scalar(db, "PRAGMA foreign_keys"));
             assertEquals(5000, scalar(db, "PRAGMA busy_timeout"));
             assertEquals(0, scalar(db, "PRAGMA trusted_schema"));
-            assertEquals(10, scalar(db, "SELECT count(*) FROM sqlite_master WHERE type='table'"));
+            assertCompletedSchema(db);
             insertShelf(db, 1, null);
         }
         try (CatalogStore reopened = new CatalogStore(context, file)) {
@@ -231,7 +231,7 @@ public final class CatalogStoreTest extends Instrumentation {
         }
         try (CatalogStore retried = new CatalogStore(context, file)) {
             assertEquals(CatalogStore.APPLICATION_ID, scalar(ProductFixture.of(retried), "PRAGMA application_id"));
-            assertEquals(10, scalar(ProductFixture.of(retried), "SELECT count(*) FROM sqlite_master WHERE type='table'"));
+            assertCompletedSchema(ProductFixture.of(retried));
         }
     }
 
@@ -297,7 +297,26 @@ public final class CatalogStoreTest extends Instrumentation {
             assertTrue(queryError.get() instanceof IllegalStateException);
             assertNotNull(closeError.get());
             assertTrue(closeError.get() instanceof IllegalStateException);
-            assertEquals(1, scalar(ProductFixture.of(catalog), "PRAGMA user_version"));
+            assertCompletedSchema(ProductFixture.of(catalog));
+        }
+    }
+
+    private static void assertCompletedSchema(ProductFixture db) {
+        assertEquals(3, scalar(db, "PRAGMA user_version"));
+        String[] expected = {
+                "reader_book_series", "reader_book_shelves", "reader_book_tags",
+                "reader_books", "reader_local_books", "reader_original_pending",
+                "reader_originals", "reader_outbox", "reader_revisions",
+                "reader_series", "reader_shelves", "reader_tags"
+        };
+        assertEquals(12, scalar(db, "SELECT count(*) FROM sqlite_master WHERE type='table'"));
+        try (Cursor cursor = db.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name", null)) {
+            for (String name : expected) {
+                assertTrue(cursor.moveToNext());
+                assertEquals(name, cursor.getString(0));
+            }
+            assertFalse(cursor.moveToNext());
         }
     }
 

@@ -670,5 +670,32 @@
       ],
       "next_step": "Read-only identify original test/schema contract and owner; no automatic old-test/product edits or rerun."
     }
+  },
+  "catalog_contract_blob_exceptions": {
+    "tools/check_android_host.py": "b03096584d45c8f415440c0f75699f5a8faf0ff1",
+    "docs/READER-ANDROID-HOST-IMPORT.md": "f6d681aec8c7bd968c30f29a73fc78eca8f2c78b",
+    "tests/reader_android_import_contract_20261101/check.py": "5419fb4dac40f79c4238f1639d81ec37a0f92d0a",
+    ".github/workflows/reader-android-import-contract-20261101.yml": "147de484f60332d50ca8a786b76541226fdaec46",
+    "examples/android/app/src/androidTest/java/org/exreader/host/CatalogStoreTest.java": "dc20e2ec8851b00c761e7332d32f885df946f209"
+  },
+  "android_catalog_retained_round": {
+    "case": "f03/android-catalog-retained",
+    "branch": "dot/f03-android-catalog-20261101",
+    "marker": "[F03-ANDROID-CATALOG-120-ONE-RUN]",
+    "status": "prepared_not_executed",
+    "base": "3b02dbe4464e0d63d855341ca03eca0a22ef9486",
+    "budget_runner_minutes": 120,
+    "jobs": {
+      "f03_android_catalog_retained": 120
+    },
+    "maximum_runs": 1,
+    "automatic_retry": false,
+    "formal_count_credit": 0,
+    "full_f03_accepted": false,
+    "authorization": "2026-11-01T16:13:55Z",
+    "original_catalog_test_count": 8,
+    "expected_completed_schema_version": 3,
+    "expected_completed_table_count": 12,
+    "asset_schema_version_unchanged": 1
   }
 }
