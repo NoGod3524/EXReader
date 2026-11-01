@@ -727,3 +727,8 @@ Exact source evidence:
 - [Controller submits to ImportEntry](https://github.com/NoGod3524/EXReader/blob/5a07f8079777f5297971b2f9d0d5ccf3eaadd2e6/examples/android/app/src/main/java/org/exreader/host/ImportController.java#L40-L64).
 - [Temporary-grant contract](https://github.com/NoGod3524/EXReader/blob/5a07f8079777f5297971b2f9d0d5ccf3eaadd2e6/extras/android-import-entry/android/importentry/src/main/java/org/exreader/importentry/ImportEntry.java#L59-L64).
 - [Private-copy and descriptor handling](https://github.com/NoGod3524/EXReader/blob/5a07f8079777f5297971b2f9d0d5ccf3eaadd2e6/extras/android-import-entry/android/importentry/src/main/java/org/exreader/importentry/ImportEntry.java#L400-L440).
+
+
+## 2026-11-01 same-run import-contract integration (prepared)
+
+Explicit approval at 15:42:06Z plus identity.py at 15:45:52Z: four existing paths only (caller, identity.py, scope.json, this document). Base 24653ccf25c91e7eebd054a6a19b8863384b1ae3 on dot/f03-import-contract-20261101. Unique case f03/two-host-import-contract and marker [F03-TWO-HOST-CONTRACT-160-ONE-RUN]. One GTK 20 + Android 120 + original audit 20, total maximum 160 runner-min; no automatic retry. Original 26-path admission remains intact for every old route; only this exact branch/case admits four previously reviewed files by exact Git blob. No checker, SDK, product, receiver, audit commands, assertions or original ownership rules are otherwise changed. Static run 41322302859 passed 34/34 but is not runtime acceptance. This new round is not executed yet; F03 remains pending/unaccepted, formal count credit zero. New run must produce its own source/run/A1-matched artifacts; no historical artifacts are substituted.

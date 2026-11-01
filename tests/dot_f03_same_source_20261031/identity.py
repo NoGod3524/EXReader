@@ -35,7 +35,21 @@ def check_candidate_fields(product_baseline, sdk_freeze, changed, historical_own
     require(historical_owner_guard_reexecuted is False, "historical owner guard falsely claimed")
     require(SCOPE.get("allowed_path_count") == 26 and len(SCOPE["allowed_paths"]) == 26 and
             len(set(SCOPE["allowed_paths"])) == 26, "authorized twenty-six-path contract malformed")
-    require(set(changed).issubset(set(SCOPE["allowed_paths"])), "outside authorized twenty-six paths")
+    extra = {}
+    import_case = os.environ.get("F03_IMPORT_CONTRACT_CASE", "")
+    if import_case:
+        require(import_case == "f03/two-host-import-contract" and
+                os.environ.get("GITHUB_REF") == "refs/heads/dot/f03-import-contract-20261101",
+                "import contract route mismatch")
+        extra = {'tools/check_android_host.py': 'b03096584d45c8f415440c0f75699f5a8faf0ff1', 'docs/READER-ANDROID-HOST-IMPORT.md': 'f6d681aec8c7bd968c30f29a73fc78eca8f2c78b', 'tests/reader_android_import_contract_20261101/check.py': '5419fb4dac40f79c4238f1639d81ec37a0f92d0a', '.github/workflows/reader-android-import-contract-20261101.yml': '147de484f60332d50ca8a786b76541226fdaec46'}
+        require(SCOPE.get("import_contract_blob_exceptions") == extra,
+                "import contract exact reviewed exception map mismatch")
+    require(set(changed).issubset(set(SCOPE["allowed_paths"]) | set(extra)),
+            "outside authorized twenty-six paths and reviewed import contract exception")
+    for path, expected_blob in extra.items():
+        actual_blob = subprocess.check_output(["git", "rev-parse", "HEAD:" + path],
+                                             cwd=ROOT, text=True).strip()
+        require(actual_blob == expected_blob, "reviewed import contract blob mismatch: " + path)
     production = SCOPE["authorized_production_blob_sha"]
     expected_production = {
         "apps/reader/desktop/windows_records_owner.cpp",
@@ -45,7 +59,7 @@ def check_candidate_fields(product_baseline, sdk_freeze, changed, historical_own
     require(set(production) == expected_production and
             set(SCOPE["authorized_production_paths"]) == expected_production,
             "authorized parser production paths mismatch")
-    require(not any(p.startswith(("examples/","apps/","tools/")) and p not in production
+    require(not any(p.startswith(("examples/","apps/","tools/")) and p not in production and p not in extra
                     for p in changed), "production or original owner source changed")
     for path, expected_blob in production.items():
         actual_blob = subprocess.check_output(["git", "rev-parse", "HEAD:" + path],
