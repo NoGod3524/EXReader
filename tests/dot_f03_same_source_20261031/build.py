@@ -300,6 +300,7 @@ def build_android_owner(audit):
     import shutil
     ca=ROOT/"tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt"
     ca.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(fixture/"public/ca.crt",ca)
+    sys.path.insert(0,str(ROOT/"tools"))
     spec=importlib.util.spec_from_file_location("f03_original_android_builder",
                                                ROOT/"tools/build_android_host.py")
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
