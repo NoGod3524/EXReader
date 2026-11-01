@@ -744,3 +744,10 @@ Artifact identities (API verified, ZIP not downloaded locally):
 - reader-suite-f03-gtk-41323172087-1: id 13090940445, 23011198 bytes, sha256:07e07760d7ed62cb911323dcfd5b419288e66f28bcdcd9812301a05492a41c42; created 2026-11-01T15:56:10Z.
 - reader-suite-f03-audit-41323172087-1: id 13090528495, 22953782 bytes, sha256:04868c819cfd8f57ad1ca42eef2ab004fbe33c211d1acb8a48551311737061f0; created 2026-11-01T16:06:04Z.
 - reader-suite-f03-android-41323172087-1: id 13090009581, 116867647 bytes, sha256:f9ca277711f46b41176f980cab801ff3b376092190ec98dd61669dc864dff8b0; created 2026-11-01T16:05:42Z.
+
+
+## 2026-11-01 Android retained catalog-contract round (prepared)
+
+Explicit approval at 16:13:55Z covers five existing paths: CatalogStoreTest.java, F03 identity.py, caller workflow, scope.json and this document. Base 3b02dbe4464e0d63d855341ca03eca0a22ef9486 on independent branch dot/f03-android-catalog-20261101. Only successful migration terminal checks are updated to version 3 and the fixed twelve table names (001 original ten plus reader_originals and reader_original_pending). Original eight test names/order, worker isolation, interrupted rollback-zero, reopen, foreign keys, busy timeout, trusted schema, triggers, immutable revisions and malformed/tampered asset rejection remain. Initial asset envelope schema 1 and invalid asset schema 2 are not changed. No product or SDK edits.
+
+Unique case f03/android-catalog-retained / marker [F03-ANDROID-CATALOG-120-ONE-RUN]: one Ubuntu Android job, maximum 120 runner-min, original complete build/API34/--android-retained all-exits and post-gates. No GTK, six cross-host receives, cross-host audit or static34 job. The exact new branch/case permits only the existing four reviewed import files plus the new fixed test blob dc20e2ec8851b00c761e7332d32f885df946f209; old routes and original 26-path contract remain. No automatic retry. Prepared only, not executed; F03 pending/unaccepted, zero formal credit.
