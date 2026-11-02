@@ -1,0 +1,32 @@
+name: F08 frame identity diagnostic 20261102
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: f08-frame-identity-diagnostic-20261102
+  cancel-in-progress: false
+jobs:
+  diagnostic:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/f08-frame-identity-diagnostic-20261102'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Six fixed diagnostic control groups
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostic-output
+          python3 -m unittest discover -s tests/f08_frame_identity_diagnostic_20261102 -p test_identity.py -v 2>&1 | tee diagnostic-output/controls.txt
+      - name: Classify authenticated retained prefix only
+        run: |
+          python3 tests/f08_frame_identity_diagnostic_20261102/diagnose.py --output diagnostic-output/classification.json
+      - name: Retain diagnostic evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f08-frame-identity-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: diagnostic-output/
+          if-no-files-found: error
