@@ -3,6 +3,7 @@ import copy
 import hashlib
 import json
 import re
+from g16_name_normalization import candidate_name, name_equals
 
 LEGACY_SHA256 = "0d330a6841831494a15fafbf1f318d8441cffd9bee0a068fca9b10b3105ed2f1"
 IDENTITY = ("source_sha", "run_id", "attempt", "artifact_id", "program_sha256",
@@ -115,10 +116,10 @@ def evaluate(raw, candidate, snapshot, evidence, trusted_receipts):
             raise ValueError("production reader.state must be absent")
         if mode == "review":
             item = reader.get("reader.state")
-            if not item or item.get("role") != "StaticText" or not item.get("name"):
+            if not item or item.get("role") != "StaticText" or not candidate_name(item):
                 raise ValueError("review reader.state must be present and named")
         item = shelf.get("library.empty")
-        if not item or item.get("role") != "StaticText" or item.get("name") != candidate["library_empty_name"]:
+        if not item or item.get("role") != "StaticText" or not name_equals(item, candidate["library_empty_name"]):
             raise ValueError("library.empty name mismatch")
         result["candidate_delta_passed"] = True
     except (ValueError, KeyError, TypeError) as error:
