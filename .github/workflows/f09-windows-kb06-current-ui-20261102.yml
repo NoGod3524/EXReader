@@ -10,7 +10,7 @@ permissions:
   contents: read
 jobs:
   kb06:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/audit/f09-windows-kb06-current-ui-20261102' && github.run_attempt == '1' && contains(github.event.head_commit.message, '[F09-WINDOWS-KB06-CURRENT-UI-20261102]') }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/audit/f09-windows-kb06-current-ui-20261102' && github.run_attempt == '1' && contains(github.event.head_commit.message, '[F09-WINDOWS-KB06-CURRENT-UI-R2-20261102]') }}
     runs-on: windows-2022
     timeout-minutes: 45
     env:
