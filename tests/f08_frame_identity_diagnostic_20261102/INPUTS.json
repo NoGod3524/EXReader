@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "measured_source": "1c4eac3eb5e2da98d535585f80fc3aba437661bd",
+  "native_identity": "native-lap25002-20261102T055639Z/A1",
+  "scope": "retained-prefix-not-complete-capture",
+  "files": [
+    {
+      "path": "raw/native-window-4238-1.jsonl",
+      "sha256": "b63a9fd77f69956f827263c80cb76d4e5bda15962b71a901cb9aa902b952eaee",
+      "bytes": 124166,
+      "original_path": "baseline\\reader\\pre-stop\\attempt-19\\windows\\window-4238-1.jsonl"
+    },
+    {
+      "path": "raw/reader-draw-window-4238-1.jsonl",
+      "sha256": "8648b82f857450991e84df38840e68210f47c931824c5e3594fc6f55e8f98406",
+      "bytes": 17024,
+      "original_path": "baseline/reader/windows/reader-draw/window-4238-1.jsonl"
+    }
+  ]
+}
