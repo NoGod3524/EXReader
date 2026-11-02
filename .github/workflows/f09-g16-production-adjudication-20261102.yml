@@ -1,0 +1,38 @@
+name: F09 independent production-rule adjudication
+on:
+  push:
+    branches: [audit/f09-g16-production-adjudication-20261102]
+    paths:
+      - tests/f09_audit/g16_production_adjudication_v1.json
+      - tests/f09_audit/g16_production_evidence_pins_20261102.json
+      - tools/f09_review/adjudicate_g16_production_20261102.py
+      - .github/workflows/f09-g16-production-adjudication-20261102.yml
+      - docs/reader-total-progress/F09_G16_PRODUCTION_ADJUDICATION_20261102.md
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f09-g16-production-adjudication-20261102
+  cancel-in-progress: false
+jobs:
+  adjudicate:
+    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 production rules independent adjudication]')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Inspect four fixed evidence archives without executing payload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/f09_review/adjudicate_g16_production_20261102.py
+      - name: Preserve independent results and unresolved history
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f09-production-adjudication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f09-g16-production-adjudication/report.json
+          if-no-files-found: error
+          retention-days: 14
