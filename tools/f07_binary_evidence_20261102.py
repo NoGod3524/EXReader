@@ -4,6 +4,8 @@ import hashlib,io,json,os,pathlib,re,shutil,stat,subprocess,sys,tempfile,time,ur
 REPO="NoGod3524/EXReader"
 SOURCE="ec11cf862ca3b44483d7e8c4726ae748ab438337"
 PARENT="fb67403e042890d75bc28b48c00d20e83d1c90e8"
+CONSUMER_PARENT="68a86723b4e19b8c1498e3f846c554cbfd5ece62"
+MODIFIED_PATH="tools/f07_binary_evidence_20261102.py"
 PRODUCER=41306566948
 AUDIT_RUN=41495920766
 AUDIT_ARTIFACT=13167080517
@@ -24,10 +26,10 @@ def consumer():
     def git(*args): return subprocess.check_output(["git",*args],text=True).strip()
     head=git("rev-parse","HEAD")
     assert head==os.environ["GITHUB_SHA"]
-    assert git("rev-parse","HEAD^")==PARENT
+    assert git("rev-parse","HEAD^")==CONSUMER_PARENT
     assert MARKER in git("log","-1","--format=%B")
-    assert sorted(git("diff","--no-renames","--name-status",PARENT,head).splitlines())==sorted("A\t"+p for p in PATHS)
-    return {"source_sha":head,"run_id":os.environ["GITHUB_RUN_ID"],"attempt":1,"added_paths":PATHS}
+    assert git("diff","--no-renames","--name-status",CONSUMER_PARENT,head).splitlines()==["M\t"+MODIFIED_PATH]
+    return {"source_sha":head,"run_id":os.environ["GITHUB_RUN_ID"],"attempt":1,"parent_sha":CONSUMER_PARENT,"modified_paths":[MODIFIED_PATH]}
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs): return None
 def api(path):
@@ -107,7 +109,7 @@ def controls():
 def tools_available():
     required={"nm":["--defined-only","--extern-only","--format","--undefined-only"],
               "readobj":["--file-header","--symbols","--coff-imports","--coff-exports",
-                         "--dyn-symbols","--needed-libs","--macho-dsymtab"]}
+                         "--dyn-symbols","--needed-libs","--macho-dysymtab"]}
     for suffix in ("","-20","-19","-18","-17","-16","-15","-14"):
         nm=shutil.which("llvm-nm"+suffix); ro=shutil.which("llvm-readobj"+suffix)
         if nm and ro:
@@ -174,7 +176,7 @@ def scan_binary(data,target,label,toolset,folder):
            ("undefined",toolset["nm"],["--undefined-only","--format=posix"])]
     extra={"PE":["--file-header","--symbols","--coff-imports","--coff-exports"],
            "ELF":["--file-header","--symbols","--dyn-symbols","--needed-libs"],
-           "MachO":["--file-header","--symbols","--needed-libs","--macho-dsymtab"]}[f]
+           "MachO":["--file-header","--symbols","--needed-libs","--macho-dysymtab"]}[f]
     plans.append(("object",toolset["readobj"],extra))
     for name,tool,args in plans:
         row["operations"].append(command(tool,args,path,"binary-"+str(index)+"-"+name))
