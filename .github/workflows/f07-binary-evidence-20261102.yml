@@ -1,0 +1,34 @@
+name: F07 offline sixhost binary evidence
+on:
+  push:
+    branches: [audit/f07-sixhost-binary-evidence-20261102]
+    paths:
+      - tools/f07_binary_evidence_20261102.py
+      - .github/workflows/f07-binary-evidence-20261102.yml
+      - docs/reader-total-progress/F07_BINARY_EVIDENCE_20261102.md
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f07-binary-evidence-20261102
+  cancel-in-progress: false
+jobs:
+  audit:
+    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[F07-BINARY-EVIDENCE-ONE-RUN]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Inspect pinned bytes with preinstalled LLVM only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/f07_binary_evidence_20261102.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f07-binary-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: f07-binary-evidence/
+          if-no-files-found: error
