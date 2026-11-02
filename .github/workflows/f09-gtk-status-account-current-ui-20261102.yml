@@ -1,0 +1,49 @@
+name: F09 GTK status and Account current UI
+on:
+  push:
+    branches: [audit/f09-gtk-status-account-current-ui-20261102]
+    paths:
+      - tests/f09_audit/gtk_status_account_current_ui.py
+      - .github/workflows/f09-gtk-status-account-current-ui-20261102.yml
+      - docs/reader-total-progress/F09_GTK_STATUS_ACCOUNT_20261102.md
+permissions:
+  contents: read
+jobs:
+  gtk-targeted:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/audit/f09-gtk-status-account-current-ui-20261102' && github.run_attempt == '1' && contains(github.event.head_commit.message, '[F09-GTK-STATUS-ACCOUNT-CURRENT-UI-20261102]') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install original GTK build and accessibility transport dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 gsettings-desktop-schemas dbus dbus-x11 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+      - name: Build exact full compact product with original 3.42 adapter and strict hash owner
+        run: /usr/bin/python3 tests/f09_audit/gtk_status_account_current_ui.py build
+      - name: Observe one invalid import and one Account Escape without repairing focus
+        run: |
+          mkdir -p build/f09-gtk-status-account
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox >build/f09-gtk-status-account/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm 2>/dev/null || true; wait $wm 2>/dev/null || true" EXIT
+            unset NO_AT_BRIDGE GTK_MODULES
+            export GTK_A11Y=atspi
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            gdbus call --session --dest org.a11y.Bus --object-path /org/a11y/bus --method org.a11y.Bus.GetAddress
+            /usr/bin/python3 tests/f09_audit/gtk_status_account_current_ui.py collect
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f09-gtk-status-account-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f09-gtk-status-account/
+            build/gtk-raw-wave3/*.log
+            build/gtk-raw-wave3/*-install.json
+            build/gtk-raw-wave3/compact-package/build.json
+          if-no-files-found: warn
