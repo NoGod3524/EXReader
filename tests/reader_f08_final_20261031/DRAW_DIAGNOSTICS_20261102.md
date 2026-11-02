@@ -80,3 +80,35 @@ not automatically relaxing uniqueness, excluding frames, changing acceptance or 
 - Hypothesis: NONE may yield a hardware Canvas in the hardware-attached View. It may instead break deterministic pixel restoration and does not guarantee frame association. All failures remain failures; no tolerance or deduplication is introduced.
 - If Canvas becomes hardware but strict association still fails, stop this layer direction. If Canvas stays software, record the hypothesis as not established; do not blindly tune.
 - Candidate prepared only: no B execution result is claimed here. Measurement source and authenticated run/artifact/native identities will be appended after the authorized round.
+
+
+## B terminal evidence: setup isolation failed (2026-11-02 04:35 UTC)
+
+- Measured source: e8332e88e9565122ae56dc9ed988a6b00106ee92. Documentation seal is not a new measured source.
+- CI: https://github.com/NoGod3524/EXReader/actions/runs/41386208377, attempt 1, completed success 04:06:37Z. Control 125087502337 and Android build 125087720070 succeeded; other six jobs skipped. All 18 diagnostic controls passed, with original reader control group reporting 116 tests.
+- Android artifact 13115119310, f08-final-android-build-41386208377-1, 23008205 bytes, SHA256 42887d4fde626eedc156824c3eefc3c1519605e854a52a5b298fd25785090bae. Real API receipt, 84 payloads and 18 bundled source files authenticated before execution.
+- Exclusive LAP directory: C:\Users\Oscar\exreader-f08-native-e8332e88-20261102T0408Z. Native identity native-lap25002-20261102T041007Z/A1.
+- Sample PID 23576 started 04:10:07.062222Z, ended 04:17:55.481978Z, exit 1; native measured elapsed 467.7371757999972 seconds. Wrapper 24688 exited 0 only as the wrapper, not sample success. Original 1200-second total cap was not exhausted or increased.
+- Shelf instrumentation failed in setup at ShelfWalkthroughTest.java:46 after 0.065 seconds: earlier shelf evidence must not be reused. No new B ten-case result was established.
+- Collected Shelf validation is explicitly old A: source c3739ec6cb8ae8d1b65bb734aac883079b83b5b9, native-lap25002-20261102T031755Z/A1, all ten cases carry that same old identity. Its SHA256 bf684164ca691b14d6173a7e057e9960ce0f919238a85c69571d58e9a53493fb matches the retained B manifest entry: that proves preserved stale bytes, not B execution.
+- Reader instrumentation similarly failed at ReaderF08UiTest.java:64 after 0.157 seconds: earlier reader evidence must not be reused. The original guard correctly rejected reuse before reader actions.
+- Reader orchestration then recorded JSONDecodeError and adb pidof/pull/logcat timeouts. No raw reader diagnostic stream was retrieved. Canvas hardware state, pixel restoration and strict frame association for B are UNASSESSED, not passed or disproven.
+- native_android.py line 710 creates a 20-second post-worker terminal collection deadline. Subsequent dumpsys calls exhausted that smaller collection window, producing the line 712 deadline/reserve error; do not label this the 1200-second total deadline failure.
+- Original result remains collection_complete=false, shelf_budget_accepted=false, reader_budget_accepted=false, f08_accepted=false. Physical display remained 1920x1200 at 60Hz.
+- Original wrapper shutdown failed because adb AVD-name query timed out. Under the separate 04:32:09 explicit owned-cleanup approval, PID 10996 and its child 23516 were checked against exact process names, AVD/port command, parent linkage and 04:09:31 launch times, then only those two owned processes were stopped. At 04:32:58.4826776Z remaining count was zero. This later cleanup does not retroactively make the original sample cleanup complete.
+- Static fresh_owned_packages code queries pm path and conditionally uninstalls four owned packages, requiring Success; it has no separate evidence-directory absence check. Actual fresh-owned operation records have not yet been read, so no claim is made that uninstall succeeded yet left files. Setup isolation failure is established; the exact persistence mechanism is not.
+- No A rerun, no B retry, no AVD wipe, no pixel tolerance change, no uniqueness relaxation. This round does not resolve F08 or add a formal completion item.
+
+### B retained evidence hashes
+
+| File | SHA256 |
+| --- | --- |
+| launch-record.json | 0960e7dd567e626d2c6dee457a6c3fd06ae4c31da49e222c93f74353490c33ac |
+| baseline/native-result.json | 25a0a360c792b6780b6265ee3c096c3876f6c7e252d410b6d3e6e70dbec27c58 |
+| baseline/reader/result.json | 4bd52846cef12ce71bc3e2915969dfc224e30f071a62aafebe7663be5573b159 |
+| baseline/reader/draw-diagnostics.json | b262ea0cdfd16f9a089aa02d05fa8e84b255b72de978be4815e6d0764bc798e3 |
+| baseline/execution/ui-instrumentation.txt | 5aa229b3540703110a941a83b0e56e271e27ab66d915321ac8c63ac47b8dd7c2 |
+| baseline/reader/reader-ui.stdout.txt | ba09b740aa89064f8295f2047b6c8e7d927f82b5dc802ee1470fe55c74f5f168 |
+| owned-emulator-cleanup-0433.json | 1a385e5f72e6f07b961129fa541a34db4e551adfc80feb862362cfe52db27e43 |
+
+Independent review caches on existing VM: /tmp/f08-e8332e88-ci-0407.json, /tmp/f08-e8332e88-native-evidence-0431.json, /tmp/f08-e8332e88-failure-0433.json, /tmp/f08-e8332e88-stale-0435.json. Original samples and logs remain unchanged.
