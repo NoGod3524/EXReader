@@ -1307,3 +1307,18 @@ P0 migration safety, conflict recovery and same-source SDK3.42 six-target closur
 This round's bounded jobs are terminal. Overall completion ETA is unknown; no evidence-based remaining-time estimate is available. Further F09 raw-artifact inspection or F08 metric-contract changes require their own specific scope and approval. This backup does not stop or complete EXReader, change the ledger, authorize new execution, merge canonical, create a PR/tag/release, or restore canceled tasks.
 
 Snapshot recorded at 2026-11-02T09:23:52.595840+00:00; source-data times above are not replaced by this write time.
+
+
+## 2026-11-02 10:22 UTC hourly evidence snapshot
+
+- Formal ledger remains 98/108 (90.74%); 10 items remain. No catalog or acceptance change. This append is continuity backup, not completion or stopping.
+- F03 production intake 48bd5a35 remains an independently reviewed four-path package from ec11; no build/test on intake tree. Recovery and candidate-contract evidence do not constitute full F03 acceptance.
+- F08 diagnostic 41410702571/A1 passed six classification controls while retaining all 284 callbacks; official F08 failure remains. Proposed callback-identity v2 changes the proof rule and has no approved implementation/native budget.
+- F09 41418084702/A1 failed in original product checker: direct /usr/lib/libsqlite3.dylib alongside installed product SQLite. Authorized artifact 13128971409 read-only inspection verified exact cause, not a keyboard test failure.
+- Authorized production-only overlay removal of -lsqlite3 was published as f5f5eec3. Run 41423427137/A1 stopped before SDK/build/tests because fetch-depth 2 omitted fixed baseline e9 from the new ancestry. This harness review omission is recorded; failure remains.
+- Authorized workflow-only full-history correction 483cd811 ran 41424732783/A1. Product build succeeded (executable SHA256 c8d89595e2de66648b35d68afcbffa7f92b8b00982d8523d5880695ce4f1e0f4). Normal invocation exited 64 with zero observed case completions; no large invocations. Explicit artifact 13131542994 read-only exception verified xcodebuild rejects -test-iterations 1. This was another caller defect, not an original keyboard assertion failure.
+- Authorized workflow-only deletion of that optional pair plus dedicated marker produced 190c52edccba76ea4054af2cbc3399f916a2269c, independently full-tree reviewed against 483. Original tests, product, SDK, limits and first-failure stop remain unchanged. Latest unique run 41427727468/A1, job125218299302, is in_progress as observed at 10:22; diagnostic step began 10:18:34 UTC. No result is presumed. Normal 1, large at most 3, macOS job at most 45 minutes, no automatic retry.
+- Source/run identity is distinct from document commit. Previous failed runs and artifacts are preserved, not replaced by later attempts. No dispatch duplication, default-branch push, PR, tag or release.
+- Actual work: F03 lane coordinates and independently reviews; F09 lane waits for one Actions job; F08 lane has completed diagnostic review and no active implementation. F12 capacity failure is not an active implementation lane. No claim of six simultaneous implementation workers. Other owner lanes remain unchanged/not freshly inspected.
+- P0 migration safety, conflict recovery, real old-profile coverage and SDK3.42 six-platform same-source closure remain unaccepted unless their existing item evidence says otherwise; this F09 harness progress adds no formal points. Remaining whole-project ETA cannot be estimated from available evidence. Current job has a 45-minute cap, not a completion guarantee.
+- Next: follow the existing run to terminal, preserve actual tests/identity and failure truthfully; any new product or CI scope requires explicit approval.
