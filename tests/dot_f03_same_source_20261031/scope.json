@@ -1725,7 +1725,8 @@
     "examples/android/app/src/main/java/org/exreader/host/BookStore.java": "0be5dc75bcc09018f9f7f8e788cc598849e4eb1d",
     "examples/android/app/src/main/java/org/exreader/host/OrganizationStore.java": "797aaebb6b04b6722460dd6d1effa1063dbac493",
     "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationTest.java": "683dbf6e5921d58d0a9527e88ec96aaae0f16f84",
-    "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationBootstrapRecoveryTest.java": "6cf2e3f9d6832785f23714f53d4054da1b58ef94"
+    "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationBootstrapRecoveryTest.java": "6cf2e3f9d6832785f23714f53d4054da1b58ef94",
+    "examples/android/app/src/main/java/org/exreader/host/MainActivity.java": "5ae80b939b816b91d92c9886c8486f088ee09f15"
   },
   "bootstrap_recovery_authorization": {
     "branch": "dot/f03-bootstrap-recovery-20261101",
@@ -1740,5 +1741,15 @@
     ],
     "new_tests": 12,
     "full_f03_accepted": false
+  },
+  "limit_status_followup_authorization": {
+    "approved_at": "2026-11-02T00:26:15Z",
+    "single_changed_production_path": "examples/android/app/src/main/java/org/exreader/host/MainActivity.java",
+    "change": "one early oversized-file status string only; 32MiB reading and128MiB staging unchanged",
+    "complete_android_minutes": 120,
+    "maximum_runs": 1,
+    "automatic_retry": false,
+    "previous_failed_run": 41360729084,
+    "diagnostic_run": 41365671003
   }
 }
