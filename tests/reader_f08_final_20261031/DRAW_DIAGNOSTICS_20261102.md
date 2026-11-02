@@ -112,3 +112,12 @@ not automatically relaxing uniqueness, excluding frames, changing acceptance or 
 | owned-emulator-cleanup-0433.json | 1a385e5f72e6f07b961129fa541a34db4e551adfc80feb862362cfe52db27e43 |
 
 Independent review caches on existing VM: /tmp/f08-e8332e88-ci-0407.json, /tmp/f08-e8332e88-native-evidence-0431.json, /tmp/f08-e8332e88-failure-0433.json, /tmp/f08-e8332e88-stale-0435.json. Original samples and logs remain unchanged.
+
+
+### 04:38 UTC isolation receipt addendum
+
+The earlier 04:35 note accurately described the then-unread receipt; it is now inspected and independently reviewed. baseline/fresh-owned-packages.json SHA256 is 6b7bb194c7d539ed960d7372355002f235fa82704f69a405de735ec6db80cfa2. All four owned packages (org.exreader.host.test, org.exreader.host.uitest.test, org.exreader.host.uitest, org.exreader.host) had nonempty previous_path and each uninstall returned code 0, stdout Success, empty stderr. The empty pm-path branch was NOT taken in this run and cannot explain this result.
+
+Exact Shelf source examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/ShelfWalkthroughTest.java lines 43?46 uses the instrumentation target context, then getExternalFilesDir(null)/shelf-evidence and asserts the directory absent. Successful uninstall receipts followed by an old A evidence directory visible to setup are established facts. The underlying persistence or restoration mechanism remains unproven. No old guard, tests, directory, AVD data, source or native result was modified by this investigation. Canvas/pixel/frame results remain unassessed.
+
+Additional original cache: /tmp/f08-e8332e88-isolation-0438.json. No new execution or retry was performed.
