@@ -2,13 +2,12 @@
   "additional_source_trees": {
     "extras/android-import-entry": "5ae49c0e7757ea101f0169240cbd56abe04bb2c7",
     "extras/opds": "f6eaf737da191a01568aaa89d1a549dddf1c7331",
-    "tests/reader_android_host_import": "07d61d80594cc59360c0437a83272da71e8c1067"
+    "tests/reader_android_host_import": "07d61d80594cc59360c0437a83272da71e8c1067",
+    "tests/reader_android_reading/debug/java/org/exreader/host/ReadingReview.java": "408757bbd7c3def0d21e0c291ab71360293496e0"
   },
   "approved_delta": [
     "tests/dot_f03_production_acceptance_20261102/admission.py",
     "tests/dot_f03_production_acceptance_20261102/contract.json",
-    "tests/dot_f03_production_acceptance_20261102/android_host_evidence_v342.py",
-    "tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py",
     ".github/workflows/reader-f03-production-acceptance-v342.yml"
   ],
   "branch": "dot/f03-production-acceptance-v342-20261102",
@@ -163,6 +162,14 @@
     "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/OrganizationBootstrapRecoveryTest.java": "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationBootstrapRecoveryTest.java",
     "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/OrganizationTest.java": "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationTest.java"
   },
+  "previous_correction_base": "b4d97d6d62c1366972d321174b728980e287b2cd",
+  "previous_correction_blobs": {
+    ".github/workflows/reader-f03-production-acceptance-v342.yml": "e247fe4c2ad8ae0bd4835e6433254e2315a80738",
+    "tests/dot_f03_production_acceptance_20261102/admission.py": "dbb5cb1a6e0ea10f78c6bd8f074c16fa36c343f1",
+    "tests/dot_f03_production_acceptance_20261102/android_host_evidence_v342.py": "377fa40c737957eeb12bd876f20a52c97f7e8fc7",
+    "tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py": "b2d035802b6add3d8cdc0164c33d21182a60d065",
+    "tests/dot_f03_production_acceptance_20261102/contract.json": "ddbd9fed9f14afe7b0e0451b173de77539c285af"
+  },
   "private_copy_blobs": {
     "examples/android/app/build.gradle": "716049afb9b91c6ee19ad026fa60f217ca2a8e4a",
     "examples/android/app/src/main/java/org/exreader/host/ImportController.java": "73293f99a393bd4f1f7bfa329372cf2ebead4b83",
@@ -175,6 +182,12 @@
   },
   "private_copy_policy": "temporary-grant-verified-private-copy-v1",
   "product_intake_head": "48bd5a35d99c3a21a8159288dd08ac8dbb41c677",
+  "provider_java_classes": [
+    "Lorg/exreader/hostimportsource/ControlReceiver;",
+    "Lorg/exreader/hostimportsource/SenderActivity;",
+    "Lorg/exreader/hostimportsource/SourceProvider;",
+    "Lorg/exreader/hostimportsource/Streams;"
+  ],
   "r1_package_blobs": {
     ".github/workflows/reader-f03-production-acceptance-v342.yml": "acd1c275b9f2b8167ea8748933f880b1431f1c42",
     "tests/dot_f03_production_acceptance_20261102/admission.py": "6d63141baf481658fae79fc3fa6b7bacc876aae8",
@@ -204,7 +217,7 @@
   "review_base": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
   "reviewed_acceptance_base": "61dc8d6190e65dc12886d2d0f0e97b501c52be56",
   "runtime_accepted": false,
-  "schema": 2,
+  "schema": 3,
   "sdk_frozen_paths": [
     "src",
     "include",
@@ -216,5 +229,13 @@
     ".github/workflows/reliability.yml"
   ],
   "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505",
-  "sdk_version": "3.42.0"
+  "sdk_version": "3.42.0",
+  "test_dependency_blobs": {
+    "tests/reader_android_host_import/java/org/exreader/host/HostImportUiTest.java": "c0a48388a7b5b2c6e21ff029c8bffc33041e7c93",
+    "tests/reader_android_reading/debug/java/org/exreader/host/ReadingReview.java": "408757bbd7c3def0d21e0c291ab71360293496e0"
+  },
+  "test_dependency_sources": {
+    "org/exreader/host/HostImportUiTest.java": "tests/reader_android_host_import/java/org/exreader/host/HostImportUiTest.java",
+    "org/exreader/host/ReadingReview.java": "tests/reader_android_reading/debug/java/org/exreader/host/ReadingReview.java"
+  }
 }

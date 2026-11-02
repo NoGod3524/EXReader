@@ -17,6 +17,7 @@ BASE = "94fb236a4a2da87dfbaf4f1dd2a47885d615a230"
 CANONICAL = "ec11cf862ca3b44483d7e8c4726ae748ab438337"
 INTAKE = "48bd5a35d99c3a21a8159288dd08ac8dbb41c677"
 REVIEWED_ACCEPTANCE = "61dc8d6190e65dc12886d2d0f0e97b501c52be56"
+PREVIOUS_CORRECTION = "b4d97d6d62c1366972d321174b728980e287b2cd"
 SDK = "8357eafa28423a7ab93ba08b823af80f01ad1505"
 FIXTURE_SOURCE = "39600d0d3a3a5e4bc2599a92e94e494a542f06f1"
 BRANCH = "dot/f03-production-acceptance-v342-20261102"
@@ -42,6 +43,7 @@ def configuration():
             (BASE, CANONICAL, INTAKE, SDK, "3.42.0", FIXTURE_SOURCE, BRANCH), "fixed admission identity")
     require(c.get("commit_marker") == MARKER, "fixed authorized commit marker")
     require(c["reviewed_acceptance_base"] == REVIEWED_ACCEPTANCE, "fixed R1 acceptance parent")
+    require(c["previous_correction_base"] == PREVIOUS_CORRECTION, "fixed preserved R2 parent")
     return c
 
 def verify_source():
@@ -55,9 +57,9 @@ def verify_source():
     require(MARKER in git("log", "-1", "--format=%B"), "authorized acceptance commit marker")
     source = git("rev-parse", "HEAD")
     require(source == os.environ["GITHUB_SHA"], "tested source differs from run")
-    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, REVIEWED_ACCEPTANCE],
-            "exact single corrective acceptance commit on preserved R1")
-    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, source)):
+    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, PREVIOUS_CORRECTION],
+            "exact single R3 acceptance correction on preserved R2")
+    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION), (PREVIOUS_CORRECTION, source)):
         require(git("merge-base", parent, child) == parent, "source ancestry mismatch")
     for start, end, key in ((BASE, CANONICAL, "canonical_delta"),
                             (CANONICAL, INTAKE, "intake_delta")):
@@ -73,13 +75,20 @@ def verify_source():
     for path, expected in c["r1_package_blobs"].items():
         require(git("rev-parse", REVIEWED_ACCEPTANCE + ":" + path) == expected, "preserved R1 package blob")
     require(set(c["r1_package_blobs"]) == set(c["new_paths"]), "complete R1 package pin")
-    require(set(git("diff", "--name-only", REVIEWED_ACCEPTANCE, source).splitlines()) == set(c["approved_delta"]),
-            "R2 must modify exactly the five authorized acceptance files")
+    require(set(git("diff", "--name-only", REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION).splitlines()) ==
+            set(c["previous_correction_blobs"]), "preserved exact R2 five-file correction")
+    require(len(c["previous_correction_blobs"]) == 5 and
+            all(line.startswith("M\t") for line in git("diff", "--name-status", REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION).splitlines()),
+            "preserved R2 modifications only")
+    for path, expected in c["previous_correction_blobs"].items():
+        require(git("rev-parse", PREVIOUS_CORRECTION + ":" + path) == expected, "preserved R2 package blob")
+    require(set(git("diff", "--name-only", PREVIOUS_CORRECTION, source).splitlines()) == set(c["approved_delta"]) and
+            len(c["approved_delta"]) == 3, "R3 must modify exactly the three authorized acceptance files")
     for path in c["new_paths"]:
         require(git("cat-file", "-t", source + ":" + path) == "blob", "new path must be a file")
         require((ROOT / path).read_bytes() == blob(source, path), "modified acceptance file: " + path)
-    require(all(line.startswith("M\t") for line in git("diff", "--name-status", REVIEWED_ACCEPTANCE, source).splitlines()),
-            "R2 only modifies existing acceptance files")
+    require(all(line.startswith("M\t") for line in git("diff", "--name-status", PREVIOUS_CORRECTION, source).splitlines()),
+            "R3 only modifies existing acceptance files")
     require(not git("diff", "--name-only", SDK, source, "--", *c["sdk_frozen_paths"]),
             "SDK and original fixture/workflow freeze")
     for path, expected in c["jni_blobs"].items():
@@ -120,8 +129,13 @@ def verify_source():
     for path, expected in c["additional_source_trees"].items():
         require(git("rev-parse", "HEAD:" + path) == expected, "frozen dependency/test source: " + path)
         require(not git("diff", "--name-only", "HEAD", "--", path), "dirty dependency/test source: " + path)
+    for path, expected in c["test_dependency_blobs"].items():
+        require(git("rev-parse", "HEAD:" + path) == expected and
+                (ROOT / path).read_bytes() == blob("HEAD", path), "unchanged complete test dependency: " + path)
+    require(set(c["test_dependency_sources"].values()) == set(c["test_dependency_blobs"]),
+            "complete test dependency manifest")
     capability = private_copy_contract()
-    return {"private_copy_capability": capability, "source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
+    return {"test_dependency_blobs": c["test_dependency_blobs"], "private_copy_capability": capability, "source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
             "product_intake_head": INTAKE, "sdk_source": SDK, "sdk_version": "3.42.0",
             "contract_sha256": digest((HERE / "contract.json").read_bytes()),
             "run_id": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
@@ -153,12 +167,18 @@ def prepare():
                     "overlay changed another original test")
     require(len(list(java.rglob("OrganizationTest.java"))) == 1 and
             len(list(java.rglob("OrganizationBootstrapRecoveryTest.java"))) == 1, "unique overlay classes")
-    host_test = ROOT / "tests/reader_android_host_import/java/org/exreader/host/HostImportUiTest.java"
-    target = java / "org/exreader/host/HostImportUiTest.java"
-    require(not target.exists(), "host import runner class collision")
-    shutil.copyfile(host_test, target)
-    require(len(list(java.rglob("HostImportUiTest.java"))) == 1 and target.read_bytes() == host_test.read_bytes(),
-            "one unchanged existing host import runner")
+    for relative, original in c["test_dependency_sources"].items():
+        target = java / relative
+        require(not target.exists(), "test dependency class collision: " + relative)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / original, target)
+        require(target.read_bytes() == blob("HEAD", original) and len(list(java.rglob(target.name))) == 1,
+                "one unchanged original test helper/runner: " + relative)
+    expected = {p.relative_to(old_root).as_posix() for p in old_root.rglob("*") if p.is_file()}
+    expected.update(overlay_names)
+    expected.update(c["test_dependency_sources"])
+    require({p.relative_to(java).as_posix() for p in java.rglob("*") if p.is_file()} == expected,
+            "complete test staging without extra or missing files")
     real_gradle = shutil.which("gradle")
     require(real_gradle and Path(real_gradle).is_file(), "installed Gradle 8.9 launcher")
     wrapper = temporary / "gradle"
@@ -267,7 +287,7 @@ def final_result():
     try:
         admitted = verify_source()
         outcomes = json.loads(os.environ["F03_UPSTREAM"])
-        required = {"admission", "prepare", "hash_owner", "build", "emulator", "catalog", "preflight", "gate48",
+        required = {"admission", "prepare", "hash_owner", "test_compile", "build", "emulator", "catalog", "preflight", "gate48",
                     "gate20", "host", "shelf", "shelf_gate", "owner", "owner_gate", "organization", "organization_gate"}
         require(set(outcomes) == required and all(v == "success" for v in outcomes.values()),
                 "a required original or new stage failed, skipped or was cancelled")
@@ -304,6 +324,9 @@ def final_result():
             value = json.loads((ROOT / records[name]).read_text())
             require(len(value["checks"]) == count, "original gate count: " + name)
         hash_owner = hash_owner_proof()
+        test_compilation_proof()
+        proofs["test_compilation"] = {"path": "build/f03-production/test-compilation.json",
+            "sha256": digest((ROOT / "build/f03-production/test-compilation.json").read_bytes())}
         imported = import20()
         require(imported["accepted"] is True, "actual private-copy import suite required")
         recovery()
@@ -510,6 +533,149 @@ def import20():
     return result
 
 
+
+def apk_classes(path):
+    """Read actual DEX class definitions, not source-name strings."""
+    import struct
+    import zipfile
+    result = set()
+    with zipfile.ZipFile(path) as archive:
+        names = [n for n in archive.namelist() if re.fullmatch(r"classes(?:[0-9]+)?\.dex", n)]
+        require(names and len(names) == len(set(names)), "APK DEX inventory")
+        for name in names:
+            data = archive.read(name)
+            require(len(data) >= 112 and data[:4] == b"dex\n", "actual DEX header")
+            def u32(offset):
+                require(0 <= offset <= len(data) - 4, "DEX offset bounds")
+                return struct.unpack_from("<I", data, offset)[0]
+            require(u32(40) == 0x12345678 and u32(32) == len(data), "DEX endian and file size")
+            strings, string_offset = u32(56), u32(60)
+            types, type_offset = u32(64), u32(68)
+            count, class_offset = u32(96), u32(100)
+            require(string_offset + 4 * strings <= len(data) and
+                    type_offset + 4 * types <= len(data) and
+                    class_offset + 32 * count <= len(data), "DEX table bounds")
+            for index in range(count):
+                type_index = u32(class_offset + 32 * index)
+                require(type_index < types, "DEX class type")
+                string_index = u32(type_offset + 4 * type_index)
+                require(string_index < strings, "DEX type string")
+                offset = u32(string_offset + 4 * string_index)
+                for _ in range(5):
+                    require(offset < len(data), "DEX string length bounds")
+                    byte = data[offset]
+                    offset += 1
+                    if byte < 128:
+                        break
+                else:
+                    raise ValueError("DEX string length encoding")
+                end = data.find(b"\0", offset, min(len(data), offset + 4096))
+                require(end >= offset, "DEX descriptor termination")
+                descriptor = data[offset:end].decode("utf-8")
+                require(descriptor not in result, "duplicate APK class definition")
+                result.add(descriptor)
+    return sorted(result)
+
+def test_compile_paths():
+    return {
+        "test": ROOT / "examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+        "provider": ROOT / "tests/reader_android_host_import/source/build/outputs/apk/debug/hostimportsource-debug.apk",
+        "app": ROOT / "examples/android/app/build/outputs/apk/debug/app-debug.apk",
+        "uitest": ROOT / "build/android-host/artifacts/uitest-debug-androidTest.apk"}
+
+def precompile_tests():
+    admitted = verify_source()
+    hash_owner_proof()
+    paths = test_compile_paths()
+    build = json.loads((ROOT / "build/android-host/build.json").read_text())
+    original_app = build["artifacts"]["app-debug.apk"]["sha256"]
+    require(digest(paths["app"].read_bytes()) == original_app, "main APK before test compilation")
+    java = Path(os.environ["F03_ANDROID_TEST_JAVA"])
+    staged = {p.relative_to(java).as_posix(): digest(p.read_bytes())
+              for p in sorted(java.rglob("*")) if p.is_file()}
+    admission = json.loads((ROOT / "build/f03-production/source-admission.json").read_text())
+    require(staged == admission["overlay_files_sha256"], "staged complete test sources changed")
+    for key in ("source_sha", "run_id", "attempt"):
+        require(admission[key] == admitted[key], "test stage source/run identity")
+    wrapper = Path(os.environ["F03_GRADLE"])
+    require(digest(wrapper.read_bytes()) == admission["gradle_wrapper_sha256"], "test Gradle wrapper changed")
+    command = [str(wrapper), "-p", str(ROOT / "examples/android"), "--no-daemon", "--stacktrace",
+               "-PexrSdk=" + str(ROOT / "stage/android-x86_64"),
+               "-PexrTestRunner=org.exreader.host.HostImportUiTest",
+               ":app:assembleDebugAndroidTest", ":hostimportsource:assembleDebug"]
+    subprocess.run(command, cwd=ROOT, check=True)
+    require(digest(paths["app"].read_bytes()) == original_app, "test preparation must not alter main APK")
+    configs = list((ROOT / "examples/android/app/build/generated/source/buildConfig/debug").rglob("BuildConfig.java"))
+    require(len(configs) == 1, "unique actual debug BuildConfig")
+    flags = ["READER_SYNC", "READER_SEARCH", "READER_NAVIGATION", "READER_READING",
+             "READER_PREFERENCES", "READER_PAGE_THEME", "READER_SELECTOR_BYTES_CANDIDATE", "READER_WAVE3"]
+    config = configs[0].read_text()
+    require(all(re.search(r"\bboolean\s+" + flag + r"\s*=\s*false\s*;", config) for flag in flags),
+            "no additional product capabilities may be enabled to acquire a test helper")
+    test_classes = apk_classes(paths["test"])
+    expected_classes = sorted("L" + p[:-5] + ";" for p in staged if p.endswith(".java"))
+    require(set(expected_classes) <= set(test_classes), "every complete staged Java class must be in test APK")
+    required = {"Lorg/exreader/host/" + name + ";" for name in
+                ("CatalogStoreTest", "ShelfCatalogTest", "ImportMappingTest", "ProductOwnerTest",
+                 "OrganizationTest", "OrganizationBootstrapRecoveryTest", "HostImportUiTest", "ReadingReview")}
+    require(required <= set(test_classes), "all retained runners plus actual import runner/helper compiled")
+    require("Lorg/exreader/host/ReadingReview;" not in apk_classes(paths["app"]),
+            "test helper must not enter the production APK")
+    ui_root = ROOT / "examples/android/uitest/src/androidTest/java"
+    ui_expected = {"L" + p.relative_to(ui_root).as_posix()[:-5] + ";" for p in ui_root.rglob("*.java")}
+    ui_classes = apk_classes(paths["uitest"])
+    require(ui_expected and ui_expected <= set(ui_classes), "all retained UI test classes compiled")
+    require(digest(paths["uitest"].read_bytes()) == build["artifacts"]["uitest-debug-androidTest.apk"]["sha256"],
+            "original UI runner APK unchanged")
+    provider_expected = set(configuration()["provider_java_classes"])
+    provider_classes = apk_classes(paths["provider"])
+    require(provider_expected and provider_expected <= set(provider_classes), "complete original provider compiled")
+    import zipfile
+    with zipfile.ZipFile(paths["provider"]) as archive:
+        for name in ("cover-import.epub", "pdf-public.pdf"):
+            require(archive.read("assets/" + name) == (ROOT / "tests/fixtures" / name).read_bytes(),
+                    "provider includes unchanged original source fixture: " + name)
+    destination = ROOT / "build/f03-production/precompiled-test-apks"
+    destination.mkdir(exist_ok=False)
+    records = {}
+    for name in ("test", "provider"):
+        target = destination / (name + ".apk")
+        shutil.copyfile(paths[name], target)
+        records[name] = {"path": target.relative_to(ROOT).as_posix(), "sha256": digest(target.read_bytes())}
+    report = {k: admitted[k] for k in ("source_sha", "run_id", "attempt")}
+    report.update(accepted=True, command=command, staged_files_sha256=staged,
+                  test_dependency_blobs=configuration()["test_dependency_blobs"], apks=records,
+                  main_apk_sha256=original_app, uitest_apk_sha256=digest(paths["uitest"].read_bytes()),
+                  build_config_sha256=digest(configs[0].read_bytes()), product_flags={f: False for f in flags},
+                  test_classes=test_classes, expected_test_classes=expected_classes,
+                  provider_classes=provider_classes, retained_ui_classes=ui_classes,
+                  runtime_accepted=False)
+    write_report(ROOT / "build/f03-production/test-compilation.json", report)
+    print(json.dumps({"test_compilation_accepted": True, "runtime_accepted": False,
+                      "main_apk_sha256": original_app, "staged_classes": len(expected_classes)}))
+
+def test_compilation_proof():
+    report = json.loads((ROOT / "build/f03-production/test-compilation.json").read_text())
+    require(report.get("accepted") is True and report.get("runtime_accepted") is False,
+            "complete pre-device test compilation required")
+    require(all(report.get(k) == os.environ[e] for k, e in
+                (("source_sha", "GITHUB_SHA"), ("run_id", "GITHUB_RUN_ID"), ("attempt", "GITHUB_RUN_ATTEMPT"))),
+            "test compilation same source/run")
+    require(report["test_dependency_blobs"] == configuration()["test_dependency_blobs"],
+            "compiled helper source identity")
+    java = Path(os.environ["F03_ANDROID_TEST_JAVA"])
+    require(report["staged_files_sha256"] ==
+            {p.relative_to(java).as_posix(): digest(p.read_bytes()) for p in sorted(java.rglob("*")) if p.is_file()},
+            "compiled staged test sources unchanged")
+    for record in report["apks"].values():
+        require(digest((ROOT / record["path"]).read_bytes()) == record["sha256"], "precompiled APK evidence changed")
+    paths = test_compile_paths()
+    require(digest(paths["app"].read_bytes()) == report["main_apk_sha256"], "main APK changed after test compilation")
+    require(digest(paths["provider"].read_bytes()) == report["apks"]["provider"]["sha256"], "provider APK changed")
+    require(digest(paths["uitest"].read_bytes()) == report["uitest_apk_sha256"], "retained UI runner APK changed")
+    return report
+
+
 def main():
     require(len(sys.argv) > 1, "explicit action required")
     action = sys.argv[1]
@@ -517,6 +683,8 @@ def main():
         print(json.dumps(verify_source()))
     elif action == "prepare":
         prepare()
+    elif action == "precompile-tests":
+        precompile_tests()
     elif action == "prepare-hash":
         prepare_hash_owner()
     elif action == "hash-proof":

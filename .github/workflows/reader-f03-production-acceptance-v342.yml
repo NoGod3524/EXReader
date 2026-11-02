@@ -71,6 +71,9 @@ jobs:
           python tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py --repo .
           mkdir -p examples/android/app/src/androidTest/assets/mapping
           cp build/android-host/fixtures/Sample.epub examples/android/app/src/androidTest/assets/mapping/
+      - name: Compile complete retained tests and unchanged provider before starting a device
+        id: test_compile
+        run: python3 tests/dot_f03_production_acceptance_20261102/admission.py precompile-tests
       - name: Enable emulator acceleration
         run: sudo chmod 666 /dev/kvm
       - name: Verify actual 2202-book UI, mapping recovery and unchanged original 66 on API34
@@ -219,7 +222,7 @@ jobs:
       - name: Require the complete actual host shelf owner organization and recovery chain
         if: always()
         env:
-          F03_UPSTREAM: '{"admission":"${{ steps.admission.outcome }}","prepare":"${{ steps.prepare.outcome }}","hash_owner":"${{ steps.hash_owner.outcome }}","build":"${{ steps.build.outcome }}","emulator":"${{ steps.emulator.outcome }}","catalog":"${{ steps.catalog.outcome }}","preflight":"${{ steps.preflight.outcome }}","gate48":"${{ steps.gate_review.outcome }}","gate20":"${{ steps.bounded_gate.outcome }}","host":"${{ steps.host_final.outcome }}","shelf":"${{ steps.shelf_final.outcome }}","shelf_gate":"${{ steps.shelf_gate.outcome }}","owner":"${{ steps.owner_final.outcome }}","owner_gate":"${{ steps.owner_gate.outcome }}","organization":"${{ steps.organization_final.outcome }}","organization_gate":"${{ steps.organization_gate.outcome }}"}'
+          F03_UPSTREAM: '{"admission":"${{ steps.admission.outcome }}","prepare":"${{ steps.prepare.outcome }}","hash_owner":"${{ steps.hash_owner.outcome }}","test_compile":"${{ steps.test_compile.outcome }}","build":"${{ steps.build.outcome }}","emulator":"${{ steps.emulator.outcome }}","catalog":"${{ steps.catalog.outcome }}","preflight":"${{ steps.preflight.outcome }}","gate48":"${{ steps.gate_review.outcome }}","gate20":"${{ steps.bounded_gate.outcome }}","host":"${{ steps.host_final.outcome }}","shelf":"${{ steps.shelf_final.outcome }}","shelf_gate":"${{ steps.shelf_gate.outcome }}","owner":"${{ steps.owner_final.outcome }}","owner_gate":"${{ steps.owner_gate.outcome }}","organization":"${{ steps.organization_final.outcome }}","organization_gate":"${{ steps.organization_gate.outcome }}"}'
         run: python3 tests/dot_f03_production_acceptance_20261102/admission.py final
       - name: Preserve source, native build and original catalog reports
         if: always()
