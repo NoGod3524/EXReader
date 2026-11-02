@@ -80,6 +80,45 @@ def error_excerpt(path):
             "redacted_tail": "\n".join(value.splitlines()[-40:]),
             "view": "redacted final at most 4096 input bytes / 40 lines"}
 
+def enumerate_devices_once():
+    args = ["xcrun", "simctl", "list", "devices", "available", "--json"]
+    log, error = OUT/"enumeration.log", OUT/"enumeration.stderr"
+    record = {"command": args, "limit_seconds": 60, "invocations": 1,
+              "output_mode": "regular files, not original stdout PIPE; no causal claim"}
+    REPORT["enumeration_observation"] = record
+    started = time.monotonic()
+    record["started_monotonic"] = started
+    proc = None
+    def cleanup():
+        # Only our explicitly created new session/process group, never a service PID.
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+            record["own_process_group_kill_sent"] = True
+        except ProcessLookupError:
+            record["own_process_group_already_gone"] = True
+        proc.wait(timeout=5)
+    try:
+        with log.open("wb") as out, error.open("wb") as err:
+            proc = subprocess.Popen(args, stdout=out, stderr=err, start_new_session=True)
+            record["pid"] = proc.pid
+            try:
+                proc.wait(timeout=remaining(60))
+            except subprocess.TimeoutExpired:
+                record["timed_out"] = True
+                record["poll_at_timeout"] = proc.poll()
+                cleanup()
+            record["returncode"] = proc.returncode
+    finally:
+        if proc is not None and proc.poll() is None:
+            cleanup()
+        record["ended_monotonic"] = time.monotonic()
+        record["elapsed_seconds"] = round(record["ended_monotonic"]-started, 3)
+        record["output"] = [error_excerpt(p) for p in (log, error) if p.exists()]
+        print("F09_ENUMERATION_OBSERVATION "+json.dumps(record, ensure_ascii=True))
+    if record.get("timed_out") or record.get("returncode") != 0:
+        raise RuntimeError("single device enumeration failed; no retry or device substitution")
+    return json.loads(log.read_bytes())
+
 def require(args, name, seconds=120, separate_error=False):
     rc = execute(args, name, seconds, separate_error)
     if rc:
@@ -214,8 +253,7 @@ try:
             "production-overlay", 120)
     require(["ruby", "tests/f09_audit/g16_evidence_overlay.rb", str(project),
              "tests/f09_audit/G16ProductionEvidenceUITests.swift"], "evidence-overlay", 120)
-    devices = json.loads(subprocess.check_output(
-        ["xcrun", "simctl", "list", "devices", "available", "--json"], timeout=remaining(60)))
+    devices = enumerate_devices_once()
     choices = [(runtime, d["name"], d["udid"]) for runtime, ds in devices["devices"].items()
                for d in ds if d.get("isAvailable") and d["name"] == "iPad mini (A17 Pro)"
                and ".iOS-" in runtime]
@@ -487,7 +525,7 @@ finally:
     save()
     brief = {k: REPORT.get(k) for k in ("acceptance_eligible", "diagnostic_source",
         "product_source_base", "sdk_receipt", "device", "application_build_settings", "built_program",
-        "configuration_probe", "runner_configuration", "runner-registration-before", "runner-registration-after", "error_excerpts", "retained_built_identity_files", "tests", "exact_query_records", "receipt", "installed_before", "installed_after", "stop_reason", "exit_code")}
+        "enumeration_observation", "configuration_probe", "runner_configuration", "runner-registration-before", "runner-registration-after", "error_excerpts", "retained_built_identity_files", "tests", "exact_query_records", "receipt", "installed_before", "installed_after", "stop_reason", "exit_code")}
     print("F09_G16_IPAD_EVIDENCE_RESULT_BEGIN")
     print(json.dumps(brief, ensure_ascii=False, indent=2))
     print("F09_G16_IPAD_EVIDENCE_RESULT_END")
