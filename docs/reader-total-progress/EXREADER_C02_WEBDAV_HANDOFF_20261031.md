@@ -1551,3 +1551,43 @@ The Android unresolved path currently shows a generic message and returns; the s
 Continue only the running F03 R3 job to its real terminal result. Review the approved F09 canonical-path candidate before any unique publication/run. Preserve F08's failed over-budget native evidence and require a separate concrete repair scope for stronger deadline enforcement/first-error visibility. Finish F07's readonly definition/coverage inventory and retain F05's product-owner dependency. Missing evidence is not a pass, and hourly snapshots do not authorize extra builds, device tests, retries, owner transfers or catalog changes.
 
 Snapshot recorded at 2026-11-02T21:22:27.228809+00:00 / 2026-11-02T16:22:27.228809-05:00 EST. Source observation times are explicitly stated above; this document commit is not a product source.
+
+
+## Independent handoff — 2026-11-02 17:22 EST (UTC−5)
+
+Actual save time is recorded below. This append was delayed by an interrupted coordination turn; it is not backdated. Earlier snapshots and all failed runs remain intact. The previous snapshot's final review-before-publication sentence was stale: its body correctly recorded KB06 R2 publication. That unique run has since completed, as below.
+
+### Formal ledger and owners
+**98/108 remains unchanged.** The five item owners are F03, F07, F09, F05 and F08. F03 recovery coordinates the single Desktop Commander route and independent handoffs; it is not a sixth product implementation lane. No catalog, product owner, SDK, old test or historical result was changed by this document.
+
+### F03: R3 failed; R4 is genuinely running
+R3 source9d493b2235d81c216767295948f417c1bd12bf2d, [run41525811486/A1](https://github.com/NoGod3524/EXReader/actions/runs/41525811486), failed at16:22:24 EST. Build and complete test/provider precompilation passed. Eight CatalogStoreTest cases completed with three failures: two expected schema1 but observed3; the rollback case expected10 tables but observed12. Earlier shelf12 and host UI10 cases passed; required later gates/import evidence were absent, and final accepted=false. This was not a complete product pass.
+Artifact13181250186:89,208,230 bytes, SHA256 `e2d0b7f2d7cafd5479ea3cee5637905445b02f70db5038c758fe82371f3aceee`. No new ZIP read occurred.
+
+Complete readonly comparison found that the intake omitted two already-revised tests from39600. The two source revisions have identical Gradle source-set configuration; this is not a reason to enable extra product flags. Asset schema1 and migrated runtime schema3/twelve exact tables are distinct contracts. Failure injection covers001, not faults during002/003. The revised mapping tests check typed original/edit/delete and full snapshots; ProductOwnerTest is unchanged.
+
+User approval16:57:09 EST covers R4: two original test files copied byte-for-byte into the exclusive overlay, plus admission.py, contract.json and workflow changes. Eight catalog cases, fourteen mapping cases, four recovery phases and all original runtime gates remain. F09 independently reviewed actual files and API full tree before unique non-force publication.
+R4 source `d9b36c36349a320e64f0bdf00d612c134c4eeeea`, tree `03af57bd7c6ac7c52530e6391cec3b1c6a10e8f6`, parent9d493b, is on dot/f03-production-acceptance-v342-20261102.
+Latest actual observation **22:17:31 UTC /17:17:31 EST**: [41535555757/A1](https://github.com/NoGod3524/EXReader/actions/runs/41535555757), job125586365508, in progress. Admission/syntax/staging/hash-owner checks passed; SDK/app build was running. No new precompile/device/final acceptance is claimed. Old39600 success is provenance, not a substitute for this run. One new Android job≤120 minutes, no automatic retry.
+
+### F09: current Windows KB06 passed; GTK remains an unpublished candidate
+[41527601615/A1](https://github.com/NoGod3524/EXReader/actions/runs/41527601615), source `77cbbe5e96303306dc22ca9025d9c1d760e87895`, succeeded. Actual UI observation ran16:26:09–16:26:16 EST; job completed16:26:23 EST. Independent review confirmed two real Space activations and four passing checks: Cancel returned directly to import Button102; successful import returned directly to new book ListItem119. Neither needed a recovery Tab. Actual PID6960 and built/before/after executable SHA256 agreed: `1199034a9eb64941af17146ed2d28a5251fb9b1e5f25d177766c6d7218befbce`. Owned cleanup succeeded.
+Artifact13180053900:64,177 bytes, SHA256 `ab30f768bc8548c3b7360cdc5ef63eb6396eada5c141f36f869c85612456bb8c`. Original log206,991 bytes, SHA256 `36fadacaa9a00c1d82e234fb74f697d18eeb1f792c5ad60c4afb89c00971aa0f`. This is bounded current-shell evidence, formal_acceptance=false and legacy_report_changed=false; earlier failures remain.
+
+GTK readonly investigation found that product focus restoration already exists. The old collector checked focus immediately and filtered status events using detail1 instead of independently interpreting event.type. Existing data do not establish a product defect.
+User approval16:58:09 EST covers three new files on audit/f09-gtk-status-account-current-ui-20261102, base77cb, one Ubuntu job≤45: one invalid-import status transition and one Account/Escape observation; no product focus repair, second Escape, old-suite rerun or old-test edit. Full build pre-review preserves the existing3.42 argument adaptation, preferences installation, original ABI/install/packager and canonical OPDSHash checks.
+Actual candidate review required a unique status anchor, final idle/nonzero-error state rather than loading-name change, and fail-closed callback errors/event bounds. These code refinements were independently read; the final doc-only newline correction was confirmed by original PID20072, terminal0. Collector SHA `c7b197aa14bffb0496653eeecae8c11d6d1a7fffb44f1ab6a0b87eeff0ef6ec3`; workflow SHA `9c79987940397cd81171d93933e1a86579e134fa9331c17284be441891ad7d78`; doc SHA `a9776a48cc6447931178c0f047be335696db6cb25756d8a9b36bd02560186902`. **No GTK Git objects, publication or CI yet.** Runtime behavior remains unverified.
+The fixed historical F09 catalog requires separate six-platform keyboard/accessibility/screen-reading evidence, without explicitly naming VoiceOver, a human operator or physical hardware. The requirement is not removed; AX/simulator observations are not full common-source acceptance.
+
+### F07: source-level historical edges fixed, installed ownership not fully bound
+At fixedec11, ReadingCommands uses public retained-raw-v1; ReadingState, AnnotationImport and AnnotationExport use public selector-bytes-v1 instead of the old private detail header. CMake installs public headers/export macros, and all six producer recipes select that configuration. These four historical source violations must not be called current implementation gaps.
+Recipe selection is not proof of actual installed header/archive/export ownership. Existing Apple artifacts13083581922 and13083354773 have identified raw-identity/sdk342-installed-identity members; C2 artifact13173861420 retains full Android stdout in binary-1-object.json through binary-4-object.json. No new ZIP exception was used to read those members. Full installed closure for Windows/GTK/Android remains unestablished by compact receipts. No rebuild, relink, expanded scan or new CI.
+
+### F08 and F05: actual blockers retained
+F08's sole native run remains FAIL/UNSEALED at1437.830 seconds (>1200), with reader collection never generated. All four exact owned processes were confirmed absent after cleanup. The meminfo timeout was a caught background PSS sampling exception, not proof of the main flow's blocking cause. Long-wait deadline enforcement and missing first-error visibility require a separately specified repair; no new sample was started.
+F05 retains the real Android conflict-details UI gap and need for its own GTK peer contract. Old F04 peer evidence cannot substitute. No product-owner transfer, new caller implementation or CI occurred.
+
+### Next bounded actions
+Follow the unique R4 run to its real terminal result. Prepare only the already-approved GTK objects after candidate review, independently review the full tree, then publish its unique authorized run. Preserve Windows success separately from remaining GTK/screen-reading/common-source obligations. Resolve F07 existing-artifact evidence under precise access scope; F05/F08 additional implementation or tests need their own exact authorization. None of these intermediate results changes98/108.
+
+Snapshot recorded 2026-11-02T22:25:40.153387+00:00 / 2026-11-02T17:25:40.153387-05:00 EST. Observation timestamps above are not rewritten to save time.
