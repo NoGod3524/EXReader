@@ -6,3 +6,5 @@ Purpose: identify the earliest original walkthrough failed/skipped item and dist
 Only Actions downloads/verifies/opens ZIP. Standard-library parser rejects traversal, duplicate paths, symlinks; selects only JSON/TXT/LOG under original android-host/evidence plus exact retained/strict summary paths, maximum24MiB per file and80MiB total. No payload execution, fixture mutation, build, emulator, tests or acceptance rerun. A host-changing redirect removes Authorization.
 Raw selected text is preserved with hashes; missing evidence fails explicitly. Diagnostic metadata keeps producer source/run/artifact separate from diagnostic source/run. Original results/catalog untouched.
 Budget 0/1 at preparation; independent fixed-tree review precedes one workflow_dispatch. No retry. A successful extraction is not product acceptance.
+
+Review hardening: also pin producer job125010333139 and exact artifact name, reject encrypted/special/noncanonical/normalized-duplicate paths, preserve missing/parse errors in result before failing, and restrict printed findings to bounded redacted test identifiers/status/errors. Raw selected evidence stays unchanged.
