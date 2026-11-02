@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   evidence:
-    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 g16 iphone evidence]')
+    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 g16 iphone reference-safe evidence]')
     runs-on: macos-15
     timeout-minutes: 45
     steps:
