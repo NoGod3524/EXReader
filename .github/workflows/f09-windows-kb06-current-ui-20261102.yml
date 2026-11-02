@@ -1,0 +1,45 @@
+name: F09 current Windows KB-06
+on:
+  push:
+    branches: [audit/f09-windows-kb06-current-ui-20261102]
+    paths:
+      - tests/f09_audit/windows_kb06_current_ui.py
+      - .github/workflows/f09-windows-kb06-current-ui-20261102.yml
+      - docs/reader-total-progress/F09_WINDOWS_KB06_CURRENT_UI_20261102.md
+permissions:
+  contents: read
+jobs:
+  kb06:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/audit/f09-windows-kb06-current-ui-20261102' && github.run_attempt == '1' && contains(github.event.head_commit.message, '[F09-WINDOWS-KB06-CURRENT-UI-20261102]') }}
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install original fixed UIA client
+        run: python -m pip install uiautomation==2.0.29
+      - name: Build unchanged F06 Windows product with installed OPDSHash
+        run: python tests/f09_audit/windows_kb06_current_ui.py build
+      - name: Observe actual Space cancel and successful import focus once
+        if: always()
+        run: python tests/f09_audit/windows_kb06_current_ui.py collect
+      - name: Retain build failure and exact current UI observation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f09-windows-kb06-current-ui-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f09-windows-kb06/*.json
+            build/f09-windows-kb06/*.log
+            build/f09-windows-kb06/*.stderr
+            build/f09-windows-kb06/f06/windows-build/logs/
+            build/f09-windows-kb06/f06/windows-payload/report.json
+          if-no-files-found: error
