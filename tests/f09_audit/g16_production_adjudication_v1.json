@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "version": "f09-production-adjudication-v1",
+  "legacy_contract_sha256": "0d330a6841831494a15fafbf1f318d8441cffd9bee0a068fca9b10b3105ed2f1",
+  "rules": {
+    "reader.state": {
+      "production": "absent",
+      "review": "required"
+    },
+    "library.empty": {
+      "name_equals": "\u4e66\u67b6\u4e3a\u7a7a\uff0c\u6253\u5f00\u6587\u4ef6\u5373\u53ef\u5bfc\u5165\u3002",
+      "normalization": "nonblank label else string value; compare strip"
+    }
+  },
+  "legacy_locators": {
+    "reader.state": [
+      "/states/reader.epub/required/5/id",
+      "/content_rules/0/element"
+    ],
+    "library.empty": [
+      "/states/library.empty/required/1/id",
+      "/states/library.empty/reading_sequence/1",
+      "/content_rules/2/state"
+    ]
+  },
+  "authorization": {
+    "at": "2026-11-02T15:12:55Z",
+    "message": "Sentinel_e2ae24ea310c8191b70916716f78d1a6",
+    "maintainer": "F09 audit agent: five new paths only",
+    "reviewer": "F03 independent reviewer",
+    "apple_production_owner_transferred": false
+  },
+  "legacy_finding_supersession_verified": false,
+  "f09_acceptance_eligible": false
+}

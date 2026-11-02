@@ -1,0 +1,136 @@
+{
+  "schema": 1,
+  "current": [
+    {
+      "platform": "iphone",
+      "id": 13145656551,
+      "name": "f09-g16-iphone-evidence-41452267498-1",
+      "size_in_bytes": 3289124,
+      "sha256": "3ebcdba45f2766610fd392c5e00af5c97b4f5f3039a18e09f0d76381697a69cf",
+      "source": "6293c9d6d5ccf968d36bbf2f3790d166da275c90",
+      "run": 41452267498,
+      "receipt": {
+        "source": "6293c9d6d5ccf968d36bbf2f3790d166da275c90",
+        "product_base": "e9e20eada714bc6b8045d3e943ac46ff26844559",
+        "run": "41452267498",
+        "attempt": "1",
+        "session": "C5763A05-6098-4E0C-9820-A43F8C636CDB",
+        "build_settings_sha256": "37c9cc385c29939855430f3cbcccdd6a473faf0a642e35d595b293964f2aeeff",
+        "raw_log_sha256": "d6222b487b50e8a8cf53211a9519d3ef3213720304d798efaef9b38ec0e3c4a0",
+        "raw_query_records_sha256": "508a230e14c68177250039e995f8dd43cd5a21887edf661a0714b21eb7160c07",
+        "built_program_sha256": "c8d89595e2de66648b35d68afcbffa7f92b8b00982d8523d5880695ce4f1e0f4",
+        "installed_before_sha256": "c8d89595e2de66648b35d68afcbffa7f92b8b00982d8523d5880695ce4f1e0f4",
+        "installed_after_sha256": "c8d89595e2de66648b35d68afcbffa7f92b8b00982d8523d5880695ce4f1e0f4",
+        "evidence_scope": "one iPhone production case; two current-app XCUI exact-ID queries",
+        "acceptance_eligible": false
+      },
+      "built_program": {
+        "bundle": "/Users/runner/work/EXReader/EXReader/build/f09-focus-derived/Build/Products/Debug-iphonesimulator/EXReaderHost.app",
+        "bundle_id": "org.exreader.host",
+        "executable": "EXReaderHost",
+        "executable_sha256": "c8d89595e2de66648b35d68afcbffa7f92b8b00982d8523d5880695ce4f1e0f4",
+        "info_plist_sha256": "2deacc0b9a682a855e3d21fa5d21ecb5a85da8d5adb0d27498760aa8947486d8",
+        "embedded_source": "6293c9d6d5ccf968d36bbf2f3790d166da275c90"
+      },
+      "case": "G16ProductionEvidenceUITests/testProductionG16Evidence",
+      "app_target": "EXReaderHost-iOS"
+    },
+    {
+      "platform": "ipad",
+      "id": 13150886644,
+      "name": "f09-g16-ipad-evidence-41462798565-1",
+      "size_in_bytes": 3299516,
+      "sha256": "c64add35cd0d9f08414e43929e3b8d8a47bfef3407c0c8e1ae35d8b98c40387b",
+      "source": "ee627f12ef41e1c2a9c7d62fcb1cd583fcdc3126",
+      "run": 41462798565,
+      "receipt": {
+        "source": "ee627f12ef41e1c2a9c7d62fcb1cd583fcdc3126",
+        "product_base": "e9e20eada714bc6b8045d3e943ac46ff26844559",
+        "run": "41462798565",
+        "attempt": "1",
+        "session": "676EEE60-965B-4BE2-8D86-2646C360E7F6",
+        "build_settings_sha256": "a24358c08dc874fd79a00837047bc4eddcd632bfb5696bec4926351308f2be74",
+        "raw_log_sha256": "108aa20f102ae37bc6be88d6706db584af3d32b2cda15969a6136225260802a2",
+        "raw_query_records_sha256": "9d5105550e22a26843886a1ba3e56a92b99e3522140c1a85f0a87478176bd9b8",
+        "built_program_sha256": "c8d89595e2de66648b35d68afcbffa7f92b8b00982d8523d5880695ce4f1e0f4",
+        "installed_before_sha256": "c8d89595e2de66648b35d68afcbffa7f92b8b00982d8523d5880695ce4f1e0f4",
+        "installed_after_sha256": "c8d89595e2de66648b35d68afcbffa7f92b8b00982d8523d5880695ce4f1e0f4",
+        "evidence_scope": "one iPad production case; two current-app XCUI exact-ID queries",
+        "acceptance_eligible": false
+      },
+      "built_program": {
+        "bundle": "/Users/runner/work/EXReader/EXReader/build/f09-focus-derived/Build/Products/Debug-iphonesimulator/EXReaderHost.app",
+        "bundle_id": "org.exreader.host",
+        "executable": "EXReaderHost",
+        "executable_sha256": "c8d89595e2de66648b35d68afcbffa7f92b8b00982d8523d5880695ce4f1e0f4",
+        "info_plist_sha256": "0b8fbbf8e38dcc3ef2e3adc2c57f0b5e82cd6d3c6780ae871d9408c59ae5f511",
+        "embedded_source": "ee627f12ef41e1c2a9c7d62fcb1cd583fcdc3126"
+      },
+      "case": "G16ProductionEvidenceUITests/testProductionG16Evidence",
+      "app_target": "EXReaderHost-iOS"
+    },
+    {
+      "platform": "macos",
+      "id": 13153191977,
+      "name": "f09-g16-macos-evidence-41466897163-1",
+      "size_in_bytes": 3198409,
+      "sha256": "d382c990334bc3c85c3991b811638fa77cdc0ff1e6e95ac3f8b3fe499d167e7a",
+      "source": "d41dc991d0cf04694a5b549fa12c4854182fe8da",
+      "run": 41466897163,
+      "receipt": {
+        "source": "d41dc991d0cf04694a5b549fa12c4854182fe8da",
+        "product_base": "e9e20eada714bc6b8045d3e943ac46ff26844559",
+        "run": "41466897163",
+        "attempt": "1",
+        "session": "14ED3556-B1E2-4BB0-A01D-D6D6F70B0AB4",
+        "build_settings_sha256": "6852e590c0511bd2f7057099fb0824ad66fe3148477dd94488cf3d1fc6b0171f",
+        "raw_log_sha256": "a2f39fad57e77623ac3c7e4a43e3efaa5ab39afdb424341918461e0076276c06",
+        "raw_query_records_sha256": "81485e3ccfbb0d6eccbce51df9ef160e9c2e787d34d507eb853382609bf8e72e",
+        "built_program_sha256": "fc118cb48b0f9197d5c4c07a6af0e15ea6d08ab1e55da87c579b21c660810dce",
+        "observed_running_program_sha256": "fc118cb48b0f9197d5c4c07a6af0e15ea6d08ab1e55da87c579b21c660810dce",
+        "post_case_file_sha256": "fc118cb48b0f9197d5c4c07a6af0e15ea6d08ab1e55da87c579b21c660810dce",
+        "evidence_scope": "one macOS production case; two current-app XCUI exact-ID queries",
+        "acceptance_eligible": false
+      },
+      "built_program": {
+        "bundle": "/Users/runner/work/EXReader/EXReader/build/f09-focus-derived/Build/Products/Debug/EXReaderHost.app",
+        "bundle_id": "org.exreader.host",
+        "executable": "EXReaderHost",
+        "executable_path": "/Users/runner/work/EXReader/EXReader/build/f09-focus-derived/Build/Products/Debug/EXReaderHost.app/Contents/MacOS/EXReaderHost",
+        "executable_sha256": "fc118cb48b0f9197d5c4c07a6af0e15ea6d08ab1e55da87c579b21c660810dce",
+        "info_plist_sha256": "261f93555e82d26a686abe882cdff9855fa8a4cedf546f611e43fc2ca666e9de",
+        "embedded_source": "d41dc991d0cf04694a5b549fa12c4854182fe8da"
+      },
+      "case": "G16MacProductionEvidenceUITests/testProductionG16Evidence",
+      "app_target": "EXReaderHost-macOS"
+    }
+  ],
+  "historical_report_references": {
+    "macos": {
+      "artifact_id": 13106229495,
+      "archive_sha256": "0f8aef287a742778eceb2b25844c0209d879d77686e7818c612f9aa181069d18",
+      "report_sha256": "6e7669eaf4aba04f9360e5e9765bb1f488543b9b7f9efa10aea28a8e55fe041e",
+      "report_path": "audit/macos/report.json"
+    },
+    "iphone": {
+      "artifact_id": 13106354573,
+      "archive_sha256": "b5083d8dc48d0cc7a79788bb834ec75f372a304a83710a3402282d33fbba2da2",
+      "report_sha256": "fd179ef4e182d1aab1ae680094ad7d751d23e0fa3675f95ec42192f601064fe6",
+      "report_path": "audit/iphone/report.json"
+    },
+    "ipad": {
+      "artifact_id": 13107061378,
+      "archive_sha256": "e26850c738007e51bf0569c010443f10856db57d5402fe5a9a3da260ea5f88de",
+      "report_sha256": "1aeb1344dae0055af4bf5c102ba04b7e75746b073c48dad36f5ce16449b34a8d",
+      "report_path": "audit/ipad/report.json"
+    }
+  },
+  "historical": {
+    "id": 13134519939,
+    "name": "f09-g16-raw-identity-41435384636-1",
+    "size_in_bytes": 237551,
+    "sha256": "7f640a3a08f5155df94f85d6f6bb37f5545e1492411a73a0aa9f9969ea314b39",
+    "source": "5737413cb60ea3205bef1e4d28005181fd3998d0",
+    "run": 41435384636
+  }
+}
