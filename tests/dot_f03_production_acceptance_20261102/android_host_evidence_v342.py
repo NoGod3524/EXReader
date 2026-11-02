@@ -36,16 +36,17 @@ SOURCE_PATHS += ['.github/workflows/reader-organization-android.yml', 'tools/che
 
 SOURCE_PATHS += ['tests/dot_f03_production_acceptance_20261102', '.github/workflows/reader-f03-production-acceptance-v342.yml']
 
+SOURCE_PATHS += ['extras/opds', 'extras/android-import-entry', 'tests/reader_android_host_import']
 
 def ownership():
-    from admission import verify_source, configuration
+    from admission import verify_source, configuration, hash_owner_proof
     admitted = verify_source()
     contract = configuration()
     return {'sdk_base': SDK_BASE, 'review_base': REVIEW_BASE,
             'ownership_head': admitted['ownership_head'], 'candidate_only': False,
             'tested_source': admitted['source_sha'],
             'changed_files': sorted(contract['canonical_delta']),
-            'production_admission': admitted}
+            'production_admission': admitted, 'installed_hash_owner': hash_owner_proof()}
 
 
 def require(value, message):

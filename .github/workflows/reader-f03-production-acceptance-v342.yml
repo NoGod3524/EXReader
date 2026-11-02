@@ -23,6 +23,7 @@ jobs:
         id: admission
         run: |
           python3 tests/dot_f03_production_acceptance_20261102/admission.py admit
+          python3 tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py --repo .
           python3 -m py_compile tests/dot_f03_production_acceptance_20261102/admission.py tests/dot_f03_production_acceptance_20261102/android_host_evidence_v342.py tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py tests/dot_f03_production_acceptance_20261102/check_evidence_gate_v342.py tests/dot_f03_production_acceptance_20261102/check_bounded_evidence_gate_v342.py
       - uses: actions/setup-java@v4
         with:
@@ -49,6 +50,9 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y patchelf
           python -m pip install ninja==1.11.1.1
+      - name: Install pinned standalone OPDSHash owner for every native and Gradle consumer
+        id: hash_owner
+        run: python3 tests/dot_f03_production_acceptance_20261102/admission.py prepare-hash
       - name: Build frozen SDK and actual catalog-driven application
         id: build
         run: |
@@ -154,6 +158,13 @@ jobs:
             adb shell am instrument -w -r -e source_sha $GITHUB_SHA -e run_id $GITHUB_RUN_ID -e attempt $GITHUB_RUN_ATTEMPT org.exreader.host.test/org.exreader.host.OrganizationBootstrapRecoveryTest > build/f03-recovery/instrumentation.txt
             adb exec-out run-as org.exreader.host cat files/f03-bootstrap-recovery.json > build/f03-recovery/device-report.json
             python tests/dot_f03_production_acceptance_20261102/admission.py recovery
+            mkdir -p build/android-host-import/test-apks
+            "$F03_GRADLE" -p examples/android --no-daemon --stacktrace -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.HostImportUiTest :app:assembleDebugAndroidTest :hostimportsource:assembleDebug
+            cmp build/organization-android/apks/app-debug.apk examples/android/app/build/outputs/apk/debug/app-debug.apk
+            cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-host-import/test-apks/host-import-ui.apk
+            adb install -r -t build/android-host-import/test-apks/host-import-ui.apk
+            python tests/reader_android_host_import/run_ui.py --output build/android-host-import/ui
+            python tests/dot_f03_production_acceptance_20261102/admission.py import20
             adb logcat -d -v threadtime > build/shelf-android/logcat.txt
       - name: Refuse failed, skipped, duplicated or missing catalog shelf cases
         id: catalog
@@ -208,7 +219,7 @@ jobs:
       - name: Require the complete actual host shelf owner organization and recovery chain
         if: always()
         env:
-          F03_UPSTREAM: '{"admission":"${{ steps.admission.outcome }}","prepare":"${{ steps.prepare.outcome }}","build":"${{ steps.build.outcome }}","emulator":"${{ steps.emulator.outcome }}","catalog":"${{ steps.catalog.outcome }}","preflight":"${{ steps.preflight.outcome }}","gate48":"${{ steps.gate_review.outcome }}","gate20":"${{ steps.bounded_gate.outcome }}","host":"${{ steps.host_final.outcome }}","shelf":"${{ steps.shelf_final.outcome }}","shelf_gate":"${{ steps.shelf_gate.outcome }}","owner":"${{ steps.owner_final.outcome }}","owner_gate":"${{ steps.owner_gate.outcome }}","organization":"${{ steps.organization_final.outcome }}","organization_gate":"${{ steps.organization_gate.outcome }}"}'
+          F03_UPSTREAM: '{"admission":"${{ steps.admission.outcome }}","prepare":"${{ steps.prepare.outcome }}","hash_owner":"${{ steps.hash_owner.outcome }}","build":"${{ steps.build.outcome }}","emulator":"${{ steps.emulator.outcome }}","catalog":"${{ steps.catalog.outcome }}","preflight":"${{ steps.preflight.outcome }}","gate48":"${{ steps.gate_review.outcome }}","gate20":"${{ steps.bounded_gate.outcome }}","host":"${{ steps.host_final.outcome }}","shelf":"${{ steps.shelf_final.outcome }}","shelf_gate":"${{ steps.shelf_gate.outcome }}","owner":"${{ steps.owner_final.outcome }}","owner_gate":"${{ steps.owner_gate.outcome }}","organization":"${{ steps.organization_final.outcome }}","organization_gate":"${{ steps.organization_gate.outcome }}"}'
         run: python3 tests/dot_f03_production_acceptance_20261102/admission.py final
       - name: Preserve source, native build and original catalog reports
         if: always()
@@ -218,6 +229,8 @@ jobs:
           path: |
             build/f03-production/
             build/f03-recovery/
+            build/android-host-import/
+            tests/reader_android_host_import/source/build/outputs/apk/
             build/organization-android/
             build/owner-android/
             build/shelf-android/
