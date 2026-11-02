@@ -1,0 +1,47 @@
+name: F09 historical G16 raw identity
+on:
+  push:
+    branches: [audit/f09-g16-raw-identity-20261102]
+    paths:
+      - tools/f09_review/inspect_g16_raw_identity_20261102.py
+      - .github/workflows/f09-g16-raw-identity-20261102.yml
+      - docs/reader-total-progress/F09_G16_RAW_IDENTITY_20261102.md
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 g16 raw identity]')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Exact three new files on fixed base
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          base = "fb05934bc68400359118d2b0ea67321fa53edbdd"
+          paths = {
+            "tools/f09_review/inspect_g16_raw_identity_20261102.py",
+            ".github/workflows/f09-g16-raw-identity-20261102.yml",
+            "docs/reader-total-progress/F09_G16_RAW_IDENTITY_20261102.md",
+          }
+          for extra in ([], ["--diff-filter=A"]):
+              actual = set(subprocess.check_output(["git", "diff"] + extra + ["--name-only", base, "HEAD"], text=True).splitlines())
+              assert actual == paths, actual
+          PY
+      - name: Authenticate and inspect three original archives without executing payload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/f09_review/inspect_g16_raw_identity_20261102.py
+      - name: Preserve inspection evidence including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f09-g16-raw-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f09-g16-raw-identity/
+          if-no-files-found: warn
+          retention-days: 14
