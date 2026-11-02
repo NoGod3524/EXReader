@@ -56,7 +56,29 @@ def execute(args, name, seconds=120, separate_error=False):
         except subprocess.TimeoutExpired:
             record["exit"] = 124
     record["seconds"] = round(time.monotonic()-started, 2)
+    if record["exit"]:
+        snippets = [error_excerpt(OUT/(name+suffix)) for suffix in (".log", ".stderr")]
+        REPORT.setdefault("error_excerpts", []).extend(snippets)
+        print("F09_DIAGNOSTIC_ERROR " + json.dumps({"step": name, "exit": record["exit"],
+              "excerpts": snippets}, ensure_ascii=True))
     return record["exit"]
+
+def error_excerpt(path):
+    # Only logs created by this runner; never inspect process environment.
+    size = path.stat().st_size
+    with path.open("rb") as stream:
+        stream.seek(max(0, size-4096))
+        raw = stream.read(4096)
+    value = raw.decode("utf-8", errors="replace")
+    value = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", value)
+    value = "".join(c for c in value if c in "\n\t" or (ord(c) >= 32 and not 127 <= ord(c) <= 159))
+    value = re.sub(r"(?i)(authorization\s*[:=]\s*)(?:bearer\s+|basic\s+)?\S+", r"\1[REDACTED]", value)
+    value = re.sub(r"(?i)((?:password|access_token|client_secret|cookie|credentials)\s*[:=]\s*)\S+", r"\1[REDACTED]", value)
+    value = re.sub(r"\b(?:gh[pousr]_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+)\b", "[REDACTED]", value)
+    value = re.sub(r"https?://[^\s<>\"']+", "[URL REDACTED]", value)
+    return {"path": path.name, "bytes": size, "sha256": sha(path),
+            "redacted_tail": "\n".join(value.splitlines()[-40:]),
+            "view": "redacted final at most 4096 input bytes / 40 lines"}
 
 def require(args, name, seconds=120, separate_error=False):
     rc = execute(args, name, seconds, separate_error)
@@ -331,7 +353,7 @@ finally:
     save()
     brief = {k: REPORT.get(k) for k in ("acceptance_eligible", "diagnostic_source",
         "product_source_base", "sdk_receipt", "device", "application_build_settings", "built_program",
-        "retained_built_identity_files", "tests", "exact_query_records", "receipt", "installed_before", "installed_after", "stop_reason", "exit_code")}
+        "error_excerpts", "retained_built_identity_files", "tests", "exact_query_records", "receipt", "installed_before", "installed_after", "stop_reason", "exit_code")}
     print("F09_G16_IPHONE_EVIDENCE_RESULT_BEGIN")
     print(json.dumps(brief, ensure_ascii=False, indent=2))
     print("F09_G16_IPHONE_EVIDENCE_RESULT_END")
