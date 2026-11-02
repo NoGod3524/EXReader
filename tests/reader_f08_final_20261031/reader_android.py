@@ -4,6 +4,8 @@ import hashlib
 import json
 import math
 import re
+import secrets
+import sys
 import threading
 import time
 import traceback
@@ -280,6 +282,7 @@ def analyze(root,identity,fixture,pss_total):
     binding=associate(events,frames);problems.extend(binding["problems"])
     ui=load(root/"ui/validation.json");cases=ui["cases"]
     need(ui==load(root/"pre-stop-ui.json"),"helper evidence changed after completed UI test")
+    validate_owned_stop_handshake(root,ui,identity,stop)
     cleanup=load(root/"owned-cleanup-before-final-pull.json")
     need(cleanup["after_confirmed_stream_close"] and cleanup["measured_pid"]==stop["pid"] and
          all(not r.get("pid_after") and not r.get("error") and not r.get("identity_error") for r in cleanup["packages"]),
@@ -420,9 +423,10 @@ def ready_prefix(snapshot,ui):
             "accepted_generations":report["accepted_generations"],"callbacks":len(frames),"prefix_files":[path.relative_to(snapshot).as_posix() for path in sorted(snapshot.rglob("*")) if path.is_file()]}
 
 
-def stop_capture(plan,root,command):
+def stop_capture(plan,root,command,ui=None):
     import native_android as N
-    ui=load(root/"pre-stop-ui.json");need(ui["identity"]==plan["identity"],"pre-stop UI identity")
+    ui=load(root/"pre-stop-ui.json") if ui is None else ui
+    need(ui["identity"]==plan["identity"],"pre-stop UI identity")
     deadline=time.monotonic()+10;attempts=[];ready=None
     for index in range(20):
         if time.monotonic()>=deadline:break
@@ -489,6 +493,128 @@ def close_barrier(plan,root):
     raise ValueError("native reader streams did not close after the owned signal")
 
 
+
+
+def owned_closed_elapsed(root,pid,window_id):
+    times=[]
+    for folder,field in ((root/"close-confirm/windows","footer_elapsed_ns"),
+                         (root/"close-confirm/windows/reader-draw","elapsed_ns")):
+        paths=list(folder.glob("*.jsonl"));need(len(paths)==1,"one authenticated closed stream")
+        rows=jsonl(paths[0]);header,footer=rows[0],rows[-1]
+        need(header["kind"]=="start" and header["pid"]==pid and header["window_id"]==window_id and
+             footer["kind"]=="stop" and footer["stop_reason"]=="owned_reader_stop","explicit close stream owner")
+        value=footer[field];need(type(value) is int and value>0,"native close clock")
+        times.append(value)
+    return max(times)
+
+
+def validate_owned_stop_handshake(root,ui,identity,stop):
+    raw=(root/"actions-ready.json").read_bytes();ready=json.loads(raw)
+    ack=load(root/"stop-ack.json");trace=load(root/"reader-ui-lifecycle.json")
+    need(ready["schema"]=="reader-owned-stop-ready-v1" and ack["schema"]=="reader-owned-stop-ack-v1",
+         "owned stop handshake schemas")
+    need(re.fullmatch(r"[0-9a-f]{64}",ready["nonce"]) and ready["nonce"]==ack["nonce"]==trace["nonce"],
+         "owned stop challenge binding")
+    need(ready["identity"]==ack["identity"]==ui["identity"]==identity,"owned stop handshake identities")
+    need(ack["confirmed"] is True and ack["product_pid"]==ready["product_pid"]==stop["pid"] and
+         ack["helper_pid"]==ready["helper_pid"] and ack["window_id"]==stop["window_id"],"owned stop handshake process/window")
+    need(ack["ready_sha256"]==trace["ready_sha256"]==hashlib.sha256(raw).hexdigest(),"owned stop readiness content binding")
+    need(trace["instrumentation_thread_alive"] is False and trace["instrumentation_error"] is None,
+         "instrumentation not completed after close")
+    need(ui["native_stop_handshake"]==ack and all(ui.get(k)==v for k,v in ready["validation"].items()),
+         "helper actions changed during stop/cleanup handshake")
+    native_end=owned_closed_elapsed(root,stop["pid"],stop["window_id"])
+    need(ack["native_closed_elapsed_ns"]==native_end and
+         ready["validation"]["cases"][-1]["finished_elapsed_ns"]<=ready["ready_elapsed_ns"]<=native_end<=
+         ui["cleanup"]["started_elapsed_ns"]<=ui["finished_elapsed_ns"]<=ready["deadline_elapsed_ns"],
+         "native close must precede helper cleanup within original cohort")
+    need(ready["deadline_elapsed_ns"]-ready["validation"]["started_elapsed_ns"]==180_000_000_000 and
+         ready["ready_elapsed_ns"]<ready["deadline_elapsed_ns"]-10_000_000_000,
+         "original cohort deadline and cleanup reserve")
+
+
+def run_ui_with_owned_stop(plan,root,command,*instrument_args,timeout=210):
+    """Keep the original UI cohort alive until its native collectors close explicitly."""
+    import native_android as N
+    nonce=secrets.token_hex(32)
+    deadline=min(time.monotonic()+timeout,plan["operation_deadline_mono"])
+    args=(*instrument_args[:-1],"-e","exr_stop_nonce",nonce,instrument_args[-1])
+    outcome={};trace={"nonce":nonce,"instrument_deadline_mono":deadline,"polls":0}
+    def remaining(cap):
+        left=deadline-time.monotonic()
+        need(left>0,"reader instrumentation absolute deadline exhausted")
+        return min(cap,left)
+    def bounded_command(name,*values,timeout=45,check=True):
+        return command(name,*values,timeout=remaining(timeout),check=check)
+    def invoke():
+        try:outcome["stdout"]=command("reader-ui",*args,timeout=remaining(timeout))
+        except Exception as error:outcome["error"]=repr(error)
+    task=threading.Thread(target=invoke,name="f08-owned-reader-instrumentation")
+    task.start()
+    remote="/sdcard/Android/data/"+N.HELPER+"/files/reader-evidence/"
+    try:
+        ready=None;raw=None
+        while time.monotonic()<deadline:
+            response=N.adb(plan,"shell","cat",remote+"actions-ready.json",raw=True,check=False,
+                           timeout=remaining(3))
+            trace["polls"]+=1
+            if response.returncode==0:
+                raw=response.stdout;ready=json.loads(raw);break
+            if not task.is_alive():raise ValueError("reader instrumentation ended before authenticated readiness: "+repr(outcome.get("error")))
+            time.sleep(min(.5,max(0,deadline-time.monotonic())))
+        need(ready is not None,"reader readiness deadline")
+        need(ready["schema"]=="reader-owned-stop-ready-v1" and ready["nonce"]==nonce and
+             ready["identity"]==plan["identity"],"fresh reader readiness identity")
+        need(type(ready["helper_pid"]) is int and ready["helper_pid"]>0 and
+             type(ready["product_pid"]) is int and ready["product_pid"]>0,"readiness PID types")
+        ui=ready["validation"]
+        need(ui["identity"]==plan["identity"] and [c["id"] for c in ui["cases"]]==list(CASES),
+             "exact original actions before close")
+        need(ready["deadline_elapsed_ns"]-ui["started_elapsed_ns"]==180_000_000_000 and
+             ui["cases"][-1]["finished_elapsed_ns"]<=ready["ready_elapsed_ns"]<
+             ready["deadline_elapsed_ns"]-10_000_000_000,"original cohort and cleanup reserve")
+        need(N.adb(plan,"shell","pidof",N.HELPER,timeout=remaining(3)).strip()==str(ready["helper_pid"]) and
+             N.adb(plan,"shell","pidof",N.APP,timeout=remaining(3)).strip()==str(ready["product_pid"]),
+             "readiness belongs to current owned processes")
+        (root/"actions-ready.json").write_bytes(raw)
+        trace["ready_sha256"]=hashlib.sha256(raw).hexdigest()
+        remaining(1)
+        stop_plan={**plan,"operation_deadline_mono":min(plan["operation_deadline_mono"],deadline)}
+        stop_capture(stop_plan,root,bounded_command,ui=ui)
+        closed=load(root/"close-confirm.json")
+        need(closed["confirmed"] is True and closed["pid"]==ready["product_pid"] and
+             type(closed["window_id"]) is int and closed["window_id"]>0,"close binds readiness owner")
+        ack={"schema":"reader-owned-stop-ack-v1","nonce":nonce,"identity":plan["identity"],
+             "helper_pid":ready["helper_pid"],"product_pid":ready["product_pid"],"window_id":closed["window_id"],
+             "confirmed":True,"ready_sha256":trace["ready_sha256"],
+             "native_closed_elapsed_ns":owned_closed_elapsed(root,closed["pid"],closed["window_id"])}
+        remaining(1)
+        save(root/"stop-ack.json",ack)
+        command("push-stop-ack","push",root/"stop-ack.json",remote+"stop-ack.json.tmp",
+                timeout=remaining(5))
+        command("publish-stop-ack","shell","mv",remote+"stop-ack.json.tmp",remote+"stop-ack.json",
+                timeout=remaining(3))
+        task.join(max(0,deadline-time.monotonic()))
+        need(not task.is_alive() and "error" not in outcome,"reader UI completion after native close: "+repr(outcome.get("error")))
+        return outcome["stdout"]
+    finally:
+        first_error=sys.exc_info()[1]
+        if task.is_alive():
+            # Never start another operation after this instrumentation deadline.
+            # The existing outer owned cleanup remains responsible on a timed-out path.
+            if time.monotonic()<deadline:
+                try:bounded_command("abort-owned-reader-instrumentation","shell","am","force-stop",N.HELPER,timeout=5)
+                except Exception as error:trace["abort_error"]=repr(error)
+            else:trace["cleanup_deferred_to_owned_outer_finally"]=True
+            task.join(max(0,min(10,plan["operation_deadline_mono"]-time.monotonic())))
+        trace["instrumentation_thread_alive"]=task.is_alive()
+        trace["instrumentation_error"]=outcome.get("error")
+        try:save(root/"reader-ui-lifecycle.json",trace)
+        except Exception as diagnostic_error:
+            if first_error is None:raise
+            print("reader lifecycle diagnostic write failed (original error preserved): "+repr(diagnostic_error),file=sys.stderr)
+
+
 def run(plan,root,proof,namespace):
     """Invoked inside the existing native worker's unchanged 1100-second parent cap."""
     import native_android as N
@@ -534,7 +660,7 @@ def run(plan,root,proof,namespace):
         command("push-reader-fixture","push",N.ROOT/"build/android-host/fixtures/Sample.epub","/sdcard/Download/Sample.epub")
         thread=threading.Thread(target=sample);thread.start()
         command("launch-reader-shelf","shell","am","start","-n",N.APP+"/.MainActivity","--ez","shelf_metrics","true")
-        ui=command("reader-ui","shell","am","instrument","-w","-r","-e","disableAnalytics","true",
+        ui=run_ui_with_owned_stop(plan,root,command,"shell","am","instrument","-w","-r","-e","disableAnalytics","true",
                    "-e","class","org.exreader.host.uitest.ReaderF08UiTest#reader",
                    "-e","source_sha",identity["source_sha"],"-e","run_id",identity["run_id"],"-e","attempt",identity["attempt"],
                    "-e","exr_fixture_name","Sample.epub","-e","exr_fixture_path","/sdcard/Download/Sample.epub",
@@ -542,7 +668,7 @@ def run(plan,root,proof,namespace):
                    "-e","exr_query","'Chapter three'",proof["final_build"]["reader_test_apk"]["runner"],timeout=210)
         ui_report=command("reader-ui-validation","shell","cat","/sdcard/Android/data/"+N.HELPER+"/files/reader-evidence/validation.json",timeout=10)
         save(root/"pre-stop-ui.json",json.loads(ui_report))
-        stop_capture(plan,root,command)
+        validate_owned_stop_handshake(root,load(root/"pre-stop-ui.json"),identity,load(root/"stop-request.json"))
         need("INSTRUMENTATION_CODE: -1" in ui and "FAILURES!!!" not in ui,"reader UI instrumentation failed")
     except Exception as error:result["problems"].append(repr(error))
     finally:

@@ -3,6 +3,12 @@ on:
   push:
     branches: [codex/f08-final-validation-20261031, codex/f08-final-adapter-check-20261031, codex/f08-final-build-check-20261031]
   workflow_dispatch:
+    inputs:
+      scope:
+        description: Validation scope (Android preparation is not all-platform acceptance)
+        type: choice
+        options: [full, android-native]
+        default: full
 permissions:
   contents: read
   actions: read
@@ -55,7 +61,7 @@ jobs:
           path: build/f08-native-control/
           if-no-files-found: warn
   sample:
-    if: github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031' && github.ref != 'refs/heads/codex/f08-final-build-check-20261031'
+    if: (github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031' && github.ref != 'refs/heads/codex/f08-final-build-check-20261031') && inputs.scope != 'android-native' && github.ref != 'refs/heads/codex/f08-reader-stop-handshake-20261101'
     needs: control
     runs-on: ubuntu-22.04
     timeout-minutes: 90
@@ -101,7 +107,7 @@ jobs:
           if-no-files-found: error
   audit:
     needs: sample
-    if: always() && needs.sample.outputs.artifact_id != ''
+    if: (always() && needs.sample.outputs.artifact_id != '') && inputs.scope != 'android-native' && github.ref != 'refs/heads/codex/f08-reader-stop-handshake-20261101'
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
@@ -126,7 +132,7 @@ jobs:
           if-no-files-found: error
 
   windows_build:
-    if: github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031'
+    if: (github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031') && inputs.scope != 'android-native' && github.ref != 'refs/heads/codex/f08-reader-stop-handshake-20261101'
     needs: control
     runs-on: windows-2022
     timeout-minutes: 20
@@ -240,7 +246,7 @@ jobs:
           retention-days: 30
 
   sdk:
-    if: github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031' && github.ref != 'refs/heads/codex/f08-final-build-check-20261031'
+    if: (github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031' && github.ref != 'refs/heads/codex/f08-final-build-check-20261031') && inputs.scope != 'android-native' && github.ref != 'refs/heads/codex/f08-reader-stop-handshake-20261101'
     needs: control
     name: SDK ${{ matrix.target }}
     runs-on: macos-15
@@ -273,6 +279,7 @@ jobs:
             build/raw3-ios-sdk/${{ matrix.target }}/*.json
           if-no-files-found: error
   apple_native:
+    if: inputs.scope != 'android-native' && github.ref != 'refs/heads/codex/f08-reader-stop-handshake-20261101'
     name: Native ${{ matrix.platform }}
     needs: sdk
     runs-on: macos-15
@@ -318,7 +325,7 @@ jobs:
 
   apple_audit:
     needs: [sdk, apple_native]
-    if: always() && github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031' && github.ref != 'refs/heads/codex/f08-final-build-check-20261031'
+    if: (always() && github.ref != 'refs/heads/codex/f08-final-adapter-check-20261031' && github.ref != 'refs/heads/codex/f08-final-build-check-20261031') && inputs.scope != 'android-native' && github.ref != 'refs/heads/codex/f08-reader-stop-handshake-20261101'
     runs-on: macos-15
     timeout-minutes: 20
     steps:
