@@ -492,6 +492,6 @@ def main():
                               "sdk_version": SCOPE["sdk_version"], "sdk_source": SCOPE["sdk_source"],
                               "in_memory_adapters": changes,
                               "product_source_changed": False,
-        "candidate_product_delta": ['examples/android/app/src/main/java/org/exreader/host/BookStore.java', 'examples/android/app/src/main/java/org/exreader/host/OrganizationStore.java'] if os.environ.get("F03_BOOTSTRAP_RECOVERY_CASE") else [], "complete_product_accepted": False})
+        "candidate_product_delta": ['examples/android/app/src/main/java/org/exreader/host/BookStore.java', 'examples/android/app/src/main/java/org/exreader/host/OrganizationStore.java', 'examples/android/app/src/main/java/org/exreader/host/MainActivity.java'] if os.environ.get("F03_BOOTSTRAP_RECOVERY_CASE") else [], "complete_product_accepted": False})
 if __name__ == "__main__":
     main()
