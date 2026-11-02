@@ -105,6 +105,8 @@ final class ShelfWindowMetrics implements AutoCloseable {
                         .put("layout_measure_ns",copy.getMetric(FrameMetrics.LAYOUT_MEASURE_DURATION))
                         .put("draw_ns",copy.getMetric(FrameMetrics.DRAW_DURATION))
                         .put("sync_ns",copy.getMetric(FrameMetrics.SYNC_DURATION))
+                        .put("command_issue_ns",copy.getMetric(FrameMetrics.COMMAND_ISSUE_DURATION))
+                        .put("swap_buffers_ns",copy.getMetric(FrameMetrics.SWAP_BUFFERS_DURATION))
                         .put("gpu_ns",copy.getMetric(FrameMetrics.GPU_DURATION)).put("deadline_ns",copy.getMetric(FrameMetrics.DEADLINE)));
             } catch(Exception error){fail(error);}
         };

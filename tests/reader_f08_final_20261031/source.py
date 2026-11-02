@@ -29,6 +29,36 @@ def contract():
         "ui_page_turn_frames", "ui_font_frames", "ui_locate_jump_frames"], "all seven frame groups")
     return value
 
+
+DIAGNOSTIC_PRODUCT_PATHS = frozenset(
+    "examples/android/app/src/main/java/org/exreader/host/" + name
+    for name in ("ReaderView.java", "ReaderFrameObserver.java", "ShelfWindowMetrics.java"))
+
+def diagnostic_binding_keys(contract):
+    bindings = contract.get("diagnostic_product_bindings")
+    if "diagnostic_product_bindings" not in contract:
+        bindings = {}
+    else:
+        need(type(bindings) is dict and set(bindings) == DIAGNOSTIC_PRODUCT_PATHS,
+             "exact three diagnostic product bindings")
+        for path, digest in bindings.items():
+            need(type(digest) is str and len(digest) == 64 and
+                 all(c in "0123456789abcdef" for c in digest), "diagnostic hash syntax")
+    return bindings
+
+def validate_diagnostic_bindings(contract, changed, actual_hashes):
+    bindings = diagnostic_binding_keys(contract)
+    need(type(changed) is list and all(type(p) is str for p in changed), "changed path list")
+    if bindings:
+        need(set(changed) & DIAGNOSTIC_PRODUCT_PATHS == DIAGNOSTIC_PRODUCT_PATHS,
+             "all three diagnostic changes declared")
+        for path,digest in bindings.items():
+            need(actual_hashes.get(path) == digest, "diagnostic product hash: " + path)
+    need(type(changed) is list and all(type(p) is str and
+         (p.startswith(contract["allowed_test_prefix"]) or p == contract["allowed_workflow"] or p in bindings)
+         for p in changed), "unreviewed diagnostic source")
+    return bindings
+
 def admission():
     need(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
     need(os.environ.get("GITHUB_REPOSITORY") == "NoGod3524/EXReader", "repository")
@@ -41,10 +71,10 @@ def admission():
     base = c["reviewed_source"]
     git("merge-base", "--is-ancestor", base, "HEAD")
     changed = git("diff", "--no-renames", "--name-only", base, "HEAD").splitlines()
-    need(all(p.startswith(c["allowed_test_prefix"]) or p == c["allowed_workflow"]
-             for p in changed), "unreviewed integration changes: " + repr(changed))
-    # The diff guard includes build recipes, fixtures, all production paths and
-    # the original test bodies. Only this final adapter and its workflow may differ.
+    bindings = validate_diagnostic_bindings(c, changed, {
+        p: sha(ROOT / p) for p in diagnostic_binding_keys(c)})
+    # Only the three explicitly reviewed diagnostic Java contents may additionally differ.
+    # Build recipes, SDK and original test bodies remain forbidden; reviewed_source is unchanged.
     return {**ident, "reviewed_source": base, "contract_sha256": sha(CONTRACT),
             "changed": changed, "adapter_files": {
-                p: sha(ROOT / p) for p in git("ls-files", c["allowed_test_prefix"], c["allowed_workflow"]).splitlines()}}
+                p: sha(ROOT / p) for p in sorted(set(git("ls-files", c["allowed_test_prefix"], c["allowed_workflow"]).splitlines()) | set(bindings))}}

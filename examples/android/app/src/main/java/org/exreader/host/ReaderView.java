@@ -481,6 +481,16 @@ public final class ReaderView extends View {
     private void endPan(){panning=false;if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(false);}
 
     @Override protected void onDraw(Canvas canvas) {
+        ReaderFrameObserver observer=BuildConfig.F08_REVIEW?f08Observer:null;
+        if(observer==null){drawProduct(canvas);return;}
+        long ordinal=0;
+        try {ordinal=observer.diagnosticBegin(this,canvas);}catch(Throwable ignored){}
+        boolean completed=false;
+        try {drawProduct(canvas);completed=true;}
+        finally {try {observer.diagnosticEnd(this,canvas,ordinal,completed);}catch(Throwable ignored){}}
+    }
+
+    private void drawProduct(Canvas canvas) {
         super.onDraw(canvas);
         canvas.drawColor(Color.rgb(247, 247, 242));
         if (page == null || page.bitmap == null) {
