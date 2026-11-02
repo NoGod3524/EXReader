@@ -38,6 +38,8 @@ project.targets.each do |target|
     conditions += ['EXR_APPLE_RAW3', 'EXR_APPLE_WAVE3', 'EXR_APPLE_PAGE_THEME']
     # Opt-in only: default G16 callers keep their original compilation conditions.
     if production
+      # Product SQLite provider is retained; production must not link system SQLite directly.
+      s['OTHER_LDFLAGS'].delete('-lsqlite3')
       conditions -= ['EXR_APPLE_HOST_REVIEW', 'EXR_APPLE_IMPORT_REVIEW', 'EXR_APPLE_READING_REVIEW']
       production_records << { target: target.name, configuration: config.name, before: before_conditions, after: conditions.uniq }
     end
