@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: MIT
+// Test-source overlay only. Original production and test files stay untouched.
+gradle.beforeProject { project ->
+    if (project.path == ':app') {
+        // Register before Android's plugin evaluation callbacks finalize the DSL.
+        project.afterEvaluate {
+            def root = System.getenv('GITHUB_WORKSPACE')
+            def staged = System.getenv('F03_ANDROID_TEST_JAVA')
+            if (!root || !staged ||
+                project.projectDir.canonicalFile != new File(root, 'examples/android/app').canonicalFile) {
+                throw new GradleException('F03 overlay requires the exact Actions app project')
+            }
+            def directory = new File(staged)
+            if (!directory.isDirectory() ||
+                !new File(directory, 'org/exreader/host/OrganizationTest.java').isFile() ||
+                !new File(directory, 'org/exreader/host/OrganizationBootstrapRecoveryTest.java').isFile()) {
+                throw new GradleException('F03 staged original tests and reviewed overlay are missing')
+            }
+            if (project.findProperty('exrSdkVersion') != '3.42.0') {
+                throw new GradleException('F03 requires the admitted SDK 3.42.0')
+            }
+            project.android.sourceSets.androidTest.java.setSrcDirs([directory])
+        }
+    }
+}
