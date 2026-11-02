@@ -5,7 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
-import runpy
+import importlib.util
 import shlex
 import shutil
 import subprocess
@@ -16,6 +16,7 @@ HERE = Path(__file__).resolve().parent
 BASE = "94fb236a4a2da87dfbaf4f1dd2a47885d615a230"
 CANONICAL = "ec11cf862ca3b44483d7e8c4726ae748ab438337"
 INTAKE = "48bd5a35d99c3a21a8159288dd08ac8dbb41c677"
+REVIEWED_ACCEPTANCE = "61dc8d6190e65dc12886d2d0f0e97b501c52be56"
 SDK = "8357eafa28423a7ab93ba08b823af80f01ad1505"
 FIXTURE_SOURCE = "39600d0d3a3a5e4bc2599a92e94e494a542f06f1"
 BRANCH = "dot/f03-production-acceptance-v342-20261102"
@@ -40,6 +41,7 @@ def configuration():
              c["sdk_version"], c["fixture_source"], c["branch"]) ==
             (BASE, CANONICAL, INTAKE, SDK, "3.42.0", FIXTURE_SOURCE, BRANCH), "fixed admission identity")
     require(c.get("commit_marker") == MARKER, "fixed authorized commit marker")
+    require(c["reviewed_acceptance_base"] == REVIEWED_ACCEPTANCE, "fixed R1 acceptance parent")
     return c
 
 def verify_source():
@@ -53,9 +55,9 @@ def verify_source():
     require(MARKER in git("log", "-1", "--format=%B"), "authorized acceptance commit marker")
     source = git("rev-parse", "HEAD")
     require(source == os.environ["GITHUB_SHA"], "tested source differs from run")
-    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, INTAKE],
-            "exact single acceptance commit directly on the fixed intake")
-    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, source)):
+    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, REVIEWED_ACCEPTANCE],
+            "exact single corrective acceptance commit on preserved R1")
+    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, source)):
         require(git("merge-base", parent, child) == parent, "source ancestry mismatch")
     for start, end, key in ((BASE, CANONICAL, "canonical_delta"),
                             (CANONICAL, INTAKE, "intake_delta")):
@@ -64,13 +66,20 @@ def verify_source():
         require(set(changed) == set(records), "exact reviewed delta paths: " + key)
         for path, expected in records.items():
             require(git("rev-parse", end + ":" + path) == expected, "fixed delta blob: " + path)
-    require(set(git("diff", "--name-only", INTAKE, source).splitlines()) == set(c["new_paths"]),
-            "acceptance commit must add exactly the ten authorized files")
+    require(set(git("diff", "--name-only", INTAKE, REVIEWED_ACCEPTANCE).splitlines()) == set(c["new_paths"]),
+            "preserved R1 exact ten-file package")
+    require(all(line.startswith("A\t") for line in git("diff", "--name-status", INTAKE, REVIEWED_ACCEPTANCE).splitlines()),
+            "preserved R1 additions only")
+    for path, expected in c["r1_package_blobs"].items():
+        require(git("rev-parse", REVIEWED_ACCEPTANCE + ":" + path) == expected, "preserved R1 package blob")
+    require(set(c["r1_package_blobs"]) == set(c["new_paths"]), "complete R1 package pin")
+    require(set(git("diff", "--name-only", REVIEWED_ACCEPTANCE, source).splitlines()) == set(c["approved_delta"]),
+            "R2 must modify exactly the five authorized acceptance files")
     for path in c["new_paths"]:
         require(git("cat-file", "-t", source + ":" + path) == "blob", "new path must be a file")
         require((ROOT / path).read_bytes() == blob(source, path), "modified acceptance file: " + path)
-    require(all(line.startswith("A\t") for line in git("diff", "--name-status", INTAKE, source).splitlines()),
-            "acceptance paths must be additions, not old-file modifications")
+    require(all(line.startswith("M\t") for line in git("diff", "--name-status", REVIEWED_ACCEPTANCE, source).splitlines()),
+            "R2 only modifies existing acceptance files")
     require(not git("diff", "--name-only", SDK, source, "--", *c["sdk_frozen_paths"]),
             "SDK and original fixture/workflow freeze")
     for path, expected in c["jni_blobs"].items():
@@ -108,7 +117,11 @@ def verify_source():
             "actual frozen SDK version, not a Gradle label")
     for relative, original in c["overlay_sources"].items():
         require((ROOT / relative).read_bytes() == blob(FIXTURE_SOURCE, original), "reviewed overlay bytes")
-    return {"source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
+    for path, expected in c["additional_source_trees"].items():
+        require(git("rev-parse", "HEAD:" + path) == expected, "frozen dependency/test source: " + path)
+        require(not git("diff", "--name-only", "HEAD", "--", path), "dirty dependency/test source: " + path)
+    capability = private_copy_contract()
+    return {"private_copy_capability": capability, "source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
             "product_intake_head": INTAKE, "sdk_source": SDK, "sdk_version": "3.42.0",
             "contract_sha256": digest((HERE / "contract.json").read_bytes()),
             "run_id": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
@@ -140,12 +153,22 @@ def prepare():
                     "overlay changed another original test")
     require(len(list(java.rglob("OrganizationTest.java"))) == 1 and
             len(list(java.rglob("OrganizationBootstrapRecoveryTest.java"))) == 1, "unique overlay classes")
+    host_test = ROOT / "tests/reader_android_host_import/java/org/exreader/host/HostImportUiTest.java"
+    target = java / "org/exreader/host/HostImportUiTest.java"
+    require(not target.exists(), "host import runner class collision")
+    shutil.copyfile(host_test, target)
+    require(len(list(java.rglob("HostImportUiTest.java"))) == 1 and target.read_bytes() == host_test.read_bytes(),
+            "one unchanged existing host import runner")
     real_gradle = shutil.which("gradle")
     require(real_gradle and Path(real_gradle).is_file(), "installed Gradle 8.9 launcher")
     wrapper = temporary / "gradle"
     init = HERE / "android-test-overlay.init.gradle"
-    wrapper.write_text("#!/usr/bin/env bash\nset -euo pipefail\nexec " + shlex.quote(real_gradle) +
-                       " --init-script " + shlex.quote(str(init)) + ' -PexrSdkVersion=3.42.0 "$@"\n')
+    wrapper.write_text("#!/usr/bin/env bash\nset -euo pipefail\n" +
+                       'test "${EXREADER_ORIGINAL_HASH_PREFIX:?missing installed hash owner}" = ' +
+                       shlex.quote(str(installed_hash_prefix())) + "\n" +
+                       "python3 " + shlex.quote(str(HERE / "admission.py")) + " hash-proof >/dev/null\n" +
+                       "exec " + shlex.quote(real_gradle) +
+                       " --init-script " + shlex.quote(str(init)) + ' -PexrSdkVersion=3.42.0 -PexrHostImport=true "$@"\n')
     wrapper.chmod(0o755)
     with open(os.environ["GITHUB_ENV"], "a") as stream:
         stream.write("F03_GRADLE=" + str(wrapper) + "\nF03_ANDROID_TEST_JAVA=" + str(java) + "\n")
@@ -157,20 +180,53 @@ def prepare():
 
 def original_build(arguments):
     verify_source()
+    hash_owner_proof()
     import android_host_evidence_v342 as versioned
     previous = sys.modules.get("android_host_evidence")
     old_argv = sys.argv[:]
+    extensions = []
+    module = None
+    original_product = None
     try:
-        # Process-local adapter: unchanged original driver receives the versioned ownership helper.
+        # Only this process gets the versioned ownership adapter. Original disk files remain unchanged.
         sys.modules["android_host_evidence"] = versioned
+        spec = importlib.util.spec_from_file_location("f03_retained_build", ROOT / "tools/build_android_host.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        original_product = module.build_product
+        def product_with_complete_install(product_stage, build):
+            original_run = module.run
+            def complete_catalog_install_targets(argv, *args, **kwargs):
+                values = list(map(str, argv))
+                if (len(values) == 8 and values[0] == shutil.which("cmake") and
+                        values[1] == "--build" and
+                        Path(values[2]).resolve() == (build / "catalog").resolve() and
+                        values[3:] == ["--parallel", "4", "--target", "reader_catalog", "--verbose"]):
+                    extended = list(argv[:-1]) + ["reader_original_import", argv[-1]]
+                    extensions.append({"original": values, "extended": list(map(str, extended))})
+                    return original_run(extended, *args, **kwargs)
+                return original_run(argv, *args, **kwargs)
+            module.run = complete_catalog_install_targets
+            try:
+                original_product(product_stage, build)
+            finally:
+                module.run = original_run
+            require(len(extensions) == 1, "exact original catalog build target observed once")
+        module.build_product = product_with_complete_install
         sys.argv = [str(ROOT / "tools/build_android_host.py"), *arguments]
-        runpy.run_path(sys.argv[0], run_name="__main__")
+        module.main()
+        hash_owner_proof()
     finally:
+        write_report(ROOT / "build/f03-production/build-adapter.json",
+                     {"catalog_install_target_extensions": extensions, "original_driver_modified": False})
+        if module is not None and original_product is not None:
+            module.build_product = original_product
         sys.argv = old_argv
         if previous is None:
             sys.modules.pop("android_host_evidence", None)
         else:
             sys.modules["android_host_evidence"] = previous
+
 
 def recovery():
     c = configuration()
@@ -211,7 +267,7 @@ def final_result():
     try:
         admitted = verify_source()
         outcomes = json.loads(os.environ["F03_UPSTREAM"])
-        required = {"admission", "prepare", "build", "emulator", "catalog", "preflight", "gate48",
+        required = {"admission", "prepare", "hash_owner", "build", "emulator", "catalog", "preflight", "gate48",
                     "gate20", "host", "shelf", "shelf_gate", "owner", "owner_gate", "organization", "organization_gate"}
         require(set(outcomes) == required and all(v == "success" for v in outcomes.values()),
                 "a required original or new stage failed, skipped or was cancelled")
@@ -247,6 +303,9 @@ def final_result():
         for name, count in (("gate48", 48), ("gate20", 20), ("shelf_gate", 19), ("owner_gate", 19)):
             value = json.loads((ROOT / records[name]).read_text())
             require(len(value["checks"]) == count, "original gate count: " + name)
+        hash_owner = hash_owner_proof()
+        imported = import20()
+        require(imported["accepted"] is True, "actual private-copy import suite required")
         recovery()
         recovered = json.loads((ROOT / "build/f03-recovery/result.json").read_text())
         require(recovered["recovery_accepted"] is True and all(recovered.get(k) == v for k, v in identity.items()),
@@ -255,12 +314,200 @@ def final_result():
                               "sha256": digest((ROOT / "build/f03-recovery/result.json").read_bytes())}
         result.update(accepted=True, source_admission=admitted, evidence=proofs,
                       original_host_checks=66, original_gate_checks=[48, 20],
-                      original_organization_cases=8, recovery_cases=12, upstream=outcomes)
+                      original_organization_cases=8, recovery_cases=12, import_cases=20,
+                      installed_hash_owner=hash_owner, private_copy_runtime=imported, upstream=outcomes)
     except Exception as error:
         result["problems"].append(type(error).__name__ + ": " + str(error))
     write_report(destination, result)
     print(json.dumps(result))
     return 0 if result["accepted"] else 1
+
+
+
+def private_copy_contract():
+    c = configuration()
+    for path, expected in c["private_copy_blobs"].items():
+        require(git("rev-parse", "HEAD:" + path) == expected and
+                (ROOT / path).read_bytes() == blob("HEAD", path), "private-copy source identity: " + path)
+    activity = (ROOT / "examples/android/app/src/main/java/org/exreader/host/MainActivity.java").read_text()
+    controller = (ROOT / "examples/android/app/src/main/java/org/exreader/host/ImportController.java").read_text()
+    entry = (ROOT / "extras/android-import-entry/android/importentry/src/main/java/org/exreader/importentry/ImportEntry.java").read_text()
+    required = [
+        (activity, ["ImportEntry.pickerIntent(true)", "imports.submit(data)", "imports.submit(intent)",
+                    "ready.size()>MAX_INPUT_BYTES", "32L * 1024 * 1024",
+                    "copyUri(Uri.fromFile(ready.file()), ready.id(), task)",
+                    'ready.id().startsWith(copied.sha256+".")', "store.finalizeImport(verified)"]),
+        (controller, ["context.getApplicationContext()", "ImportEntry.createWithDisplayFilename",
+                      'new File(context.getFilesDir(),"incoming")', "opened.pendingReady()", "owner.importReady(next)",
+                      "entry.release(request)", "files.execute"]),
+        (entry, ["ContentResolver.SCHEME_CONTENT", 'resolver.openAssetFileDescriptor(uri, "r")',
+                 "COPY_BUFFER_BYTES = 64 * 1024", "catch (SecurityException e)",
+                 "ImportError.Code.PERMISSION", "digest.update(buffer, 0, got)", "out.getFD().sync()",
+                 "StandardCopyOption.ATOMIC_MOVE", "public List<ReadyRequest> pendingReady()", "cleanStaging()"])]
+    for text, needles in required:
+        require(all(value in text for value in needles), "reviewed private-copy capability chain missing")
+    require(c["private_copy_policy"] == "temporary-grant-verified-private-copy-v1",
+            "explicit private-copy policy approval required")
+    return {"policy": c["private_copy_policy"], "source_blobs": c["private_copy_blobs"],
+            "persistent_uri_grant_required": False, "runtime_accepted": False}
+
+def installed_hash_prefix():
+    prefix = ROOT / "build/f03-production/hash/android/stage"
+    require(prefix == prefix.resolve() and not any(p.is_symlink() for p in [prefix, *prefix.parents]),
+            "hash prefix and ancestors must be real canonical directories")
+    return prefix
+
+def hash_inventory(prefix):
+    require(prefix.is_dir() and prefix == prefix.resolve(), "canonical installed hash prefix")
+    result = {}
+    for path in sorted(prefix.rglob("*")):
+        require(not path.is_symlink() and path.resolve().is_relative_to(prefix), "hash owner alias or escape")
+        if path.is_file():
+            result[path.relative_to(prefix).as_posix()] = {"bytes": path.stat().st_size,
+                                                         "sha256": digest(path.read_bytes())}
+    required = {"lib/libopds_sha256_stream.a", "include/exreader-opds-hash/opds_sha256_stream.h",
+                "lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashConfig.cmake",
+                "lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashConfigVersion.cmake",
+                "lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashTargets.cmake"}
+    require(required <= set(result), "installed hash owner incomplete")
+    data = (prefix / "lib/libopds_sha256_stream.a").read_bytes()
+    require(data.startswith(b"!<arch>\n"), "hash archive format")
+    offset, members = 8, 0
+    while offset < len(data):
+        header = data[offset:offset + 60]
+        require(len(header) == 60 and header[58:60] == b"\x60\n", "hash archive header")
+        size = int(header[48:58].strip())
+        body = data[offset + 60:offset + 60 + size]
+        require(len(body) == size, "hash archive truncation")
+        name = header[:16].decode("ascii").strip()
+        if name not in ("/", "//", "/SYM64/"):
+            require(body[:6] == b"\x7fELF\x02\x01" and len(body) >= 20 and
+                    int.from_bytes(body[16:18], "little") == 1 and
+                    int.from_bytes(body[18:20], "little") == 62, "hash owner must be x86_64 ELF64 relocatable objects")
+            members += 1
+        offset += 60 + size + size % 2
+    require(offset == len(data) and members > 0, "hash archive members missing")
+    return result
+
+def prepare_hash_owner():
+    source = verify_source()
+    prefix = installed_hash_prefix()
+    require(os.environ.get("EXREADER_ORIGINAL_HASH_PREFIX") in (None, "", str(prefix)), "foreign hash environment")
+    require(not os.environ.get("READER_ORIGINAL_HASH_PREFIX"), "conflicting hash selector")
+    require(not prefix.exists(), "hash installation must be fresh in this run")
+    prefix.mkdir(parents=True)
+    home = Path(os.environ["ANDROID_HOME"])
+    ndk = home / "ndk/27.0.12077973"
+    toolchain = ndk / "build/cmake/android.toolchain.cmake"
+    require(toolchain.is_file() and "Pkg.Revision = 27.0.12077973" in (ndk / "source.properties").read_text(),
+            "exact approved NDK hash-owner compiler")
+    build = prefix.parent / "build"
+    arguments = ["cmake", "-S", str(ROOT / "extras/opds"), "-B", str(build), "-G", "Ninja",
+                 "-DCMAKE_BUILD_TYPE=Release", "-DEXREADER_OPDS_HASH_ONLY=ON",
+                 "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", "-DCMAKE_INSTALL_PREFIX=" + str(prefix),
+                 "-DCMAKE_TOOLCHAIN_FILE=" + str(toolchain), "-DANDROID_ABI=x86_64",
+                 "-DANDROID_PLATFORM=android-26", "-DANDROID_STL=c++_static"]
+    for command in (arguments, ["cmake", "--build", str(build), "--parallel", "4", "--target", "install"]):
+        subprocess.run(command, cwd=ROOT, check=True)
+    cache = build / "CMakeCache.txt"
+    require("EXREADER_OPDS_HASH_ONLY:BOOL=ON" in cache.read_text(), "hash-only build identity")
+    report = {k: source[k] for k in ("source_sha", "run_id", "attempt")}
+    report.update(prefix=str(prefix), package="EXReaderOPDSHash", version="0.1.0",
+                  owner_source_tree=git("rev-parse", "HEAD:extras/opds"),
+                  configure=arguments, ndk="27.0.12077973", abi="x86_64", platform="android-26",
+                  toolchain_sha256=digest(toolchain.read_bytes()), cache_sha256=digest(cache.read_bytes()),
+                  files=hash_inventory(prefix))
+    write_report(ROOT / "build/f03-production/hash-owner.json", report)
+    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = str(prefix)
+    with open(os.environ["GITHUB_ENV"], "a") as stream:
+        stream.write("EXREADER_ORIGINAL_HASH_PREFIX=" + str(prefix) + "\n")
+    print(json.dumps({"hash_owner_installed": True, "prefix": str(prefix), "files": report["files"]}))
+
+def hash_owner_proof():
+    c = configuration()
+    prefix = installed_hash_prefix()
+    require(os.environ.get("EXREADER_ORIGINAL_HASH_PREFIX") == str(prefix), "hash prefix lost or replaced in child process")
+    require(git("rev-parse", "HEAD:extras/opds") == c["hash_source_tree"], "hash owner source changed")
+    report = json.loads((ROOT / "build/f03-production/hash-owner.json").read_text())
+    require(all(report.get(k) == os.environ[e] for k, e in
+                (("source_sha", "GITHUB_SHA"), ("run_id", "GITHUB_RUN_ID"), ("attempt", "GITHUB_RUN_ATTEMPT"))),
+            "hash owner belongs to another run")
+    require(report.get("prefix") == str(prefix) and report.get("owner_source_tree") == c["hash_source_tree"] and
+            report.get("version") == "0.1.0" and report.get("ndk") == "27.0.12077973" and
+            report.get("abi") == "x86_64" and report.get("platform") == "android-26",
+            "hash owner target identity")
+    require(report.get("files") == hash_inventory(prefix), "installed hash owner bytes changed")
+    cache = prefix.parent / "build/CMakeCache.txt"
+    require(report["cache_sha256"] == digest(cache.read_bytes()), "hash owner configuration changed")
+    toolchain = Path(os.environ["ANDROID_HOME"]) / "ndk/27.0.12077973/build/cmake/android.toolchain.cmake"
+    require(report["toolchain_sha256"] == digest(toolchain.read_bytes()), "hash compiler toolchain changed")
+    require(not os.environ.get("READER_ORIGINAL_HASH_PREFIX"), "conflicting hash selector")
+    return report
+
+def import20():
+    c = configuration()
+    root = ROOT / "build/android-host-import/ui"
+    report = json.loads((root / "result.json").read_text())
+    identity = {k: os.environ[e] for k, e in
+                (("source_sha", "GITHUB_SHA"), ("run_id", "GITHUB_RUN_ID"), ("attempt", "GITHUB_RUN_ATTEMPT"))}
+    require(all(report.get(k) == v for k, v in identity.items()), "host import same-run identity")
+    require(report.get("accepted") is True and report.get("checks") == 20 and report.get("api") == 34 and
+            report.get("abi") == "x86_64" and report.get("physical_device") is False and
+            report.get("reading_limit_bytes") == 32 * 1024 * 1024, "host import 20 actual checks")
+    phases = report["phases"]
+    expected = c["import20_cases"]
+    require([p["phase"] for p in phases] == c["import20_phase_order"] and len(phases) == 9 and
+            len({p["pid"] for p in phases}) == 9, "host import original nine process phases")
+    for phase in phases:
+        names = expected[phase["phase"]]
+        raw = json.loads((root / (phase["phase"] + "-raw-report.json")).read_text())
+        require(raw == phase and all(raw.get(k) == v for k, v in identity.items()) and
+                phase["passed"] is True and phase["count"] == len(names) and
+                [row["name"] for row in phase["checks"]] == names and
+                all(row["pass"] is True for row in phase["checks"]), "host import original phase assertions")
+    require(sum(p["count"] for p in phases) == 20, "host import complete case count")
+    protocol = report["marker_protocol"]
+    require(protocol["present_exit_code"] == 0 and protocol["absent_exit_code"] != 0, "real boundary marker probe")
+    stops = report["process_stops"]
+    require(len(stops) == 9 and all(s["force_stop"] is True and not s["pid_after_stop"] for s in stops),
+            "actual process stops")
+    held = [s for s in stops if s.get("held_boundary")]
+    require(len(held) == 4 and {s["phase"] for s in held} == {"kill-copy", "kill-stable", "kill-ready", "kill-published"},
+            "four original kill boundaries")
+    for stop in held:
+        raw = (root / (stop["phase"] + "-boundary-marker.json")).read_bytes()
+        marker = json.loads(raw)
+        phase_raw = (root / (stop["phase"] + "-raw-report.json")).read_bytes()
+        require(marker == stop["boundary_marker"] and digest(raw) == stop["marker_sha256"] and
+                all(marker.get(k) == v for k, v in identity.items()) and marker["phase"] == stop["phase"] and
+                marker["pid"] == stop["instrumentation_pid"] and
+                str(stop["instrumentation_pid"]) in stop["pid_before_stop"].split() and
+                len(phase_raw) == marker["report_bytes"] and digest(phase_raw) == marker["report_sha256"],
+                "held process/marker/raw report binding")
+    artifacts = {
+        "org.exreader.host": "examples/android/app/build/outputs/apk/debug/app-debug.apk",
+        "org.exreader.host.test": "build/android-host-import/test-apks/host-import-ui.apk",
+        "org.exreader.hostimportsource": "tests/reader_android_host_import/source/build/outputs/apk/debug/hostimportsource-debug.apk"}
+    require(len(report["apk_identities"]) == 3 and {a["package"] for a in report["apk_identities"]} == set(artifacts),
+            "three actually installed host import packages")
+    for apk in report["apk_identities"]:
+        path = artifacts[apk["package"]]
+        require(apk["artifact_path"] == path and apk["sha256"] == apk["installed_sha256"] ==
+                digest((ROOT / path).read_bytes()), "actual host import APK identity")
+    build = json.loads((ROOT / "build/android-host/build.json").read_text())
+    require(digest((ROOT / artifacts["org.exreader.host"]).read_bytes()) ==
+            build["artifacts"]["app-debug.apk"]["sha256"], "import suite replaced the original host APK")
+    require(any(v["name"] == "system-documentsui" and v["package"] == "com.android.documentsui"
+                for v in report["captures"]), "actual system picker evidence")
+    for capture in report["captures"]:
+        require(Path(capture["name"]).name == capture["name"], "capture path")
+        raw = (root / "captures" / (capture["name"] + ".png")).read_bytes()
+        require(raw.startswith(b"\x89PNG\r\n\x1a\n") and len(raw) == capture["bytes"] and
+                digest(raw) == capture["sha256"], "host import capture bytes")
+    result = {**identity, "accepted": True, "checks": 20, "phases": 9,
+              "policy": c["private_copy_policy"], "result_sha256": digest((root / "result.json").read_bytes())}
+    write_report(ROOT / "build/f03-production/import20-verification.json", result)
+    return result
 
 
 def main():
@@ -270,6 +517,12 @@ def main():
         print(json.dumps(verify_source()))
     elif action == "prepare":
         prepare()
+    elif action == "prepare-hash":
+        prepare_hash_owner()
+    elif action == "hash-proof":
+        print(json.dumps(hash_owner_proof()))
+    elif action == "import20":
+        print(json.dumps(import20()))
     elif action == "build":
         original_build(sys.argv[2:])
     elif action == "recovery":

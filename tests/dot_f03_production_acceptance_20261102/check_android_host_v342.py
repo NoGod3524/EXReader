@@ -19,6 +19,11 @@ DOC = ROOT/'docs/WP13-ANDROID.md'
 
 def static_checks():
     problems = []
+    try:
+        from admission import private_copy_contract
+        private_copy_contract()
+    except Exception as error:
+        problems.append("private-copy capability contract: " + str(error))
     required = [APP/'AndroidManifest.xml', APP/'res/layout/activity_main.xml', APP/'res/values/ids.xml',
         *[APP/('java/org/exreader/host/' + name + '.java') for name in
           ('MainActivity', 'ReaderView', 'NativeLibrary', 'ReflowSession', 'FixedSession')],
@@ -39,7 +44,7 @@ def static_checks():
     app_gradle = (ROOT/'examples/android/app/build.gradle').read_text()
     test, workflow, doc = TEST.read_text(), WORKFLOW.read_text(), DOC.read_text()
     layout = (APP/'res/layout/activity_main.xml').read_text()
-    for needle in ('newSingleThreadExecutor', 'onSaveInstanceState', 'takePersistableUriPermission',
+    for needle in ('newSingleThreadExecutor', 'onSaveInstanceState',
                    'MAX_INPUT_BYTES', 'saveProgress', 'setPosition', 'onStop'):
         if needle not in activity:
             problems.append('MainActivity lacks ' + needle)

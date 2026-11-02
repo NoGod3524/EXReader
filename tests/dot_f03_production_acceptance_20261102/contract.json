@@ -1,4 +1,16 @@
 {
+  "additional_source_trees": {
+    "extras/android-import-entry": "5ae49c0e7757ea101f0169240cbd56abe04bb2c7",
+    "extras/opds": "f6eaf737da191a01568aaa89d1a549dddf1c7331",
+    "tests/reader_android_host_import": "07d61d80594cc59360c0437a83272da71e8c1067"
+  },
+  "approved_delta": [
+    "tests/dot_f03_production_acceptance_20261102/admission.py",
+    "tests/dot_f03_production_acceptance_20261102/contract.json",
+    "tests/dot_f03_production_acceptance_20261102/android_host_evidence_v342.py",
+    "tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py",
+    ".github/workflows/reader-f03-production-acceptance-v342.yml"
+  ],
   "branch": "dot/f03-production-acceptance-v342-20261102",
   "budget": {
     "automatic_retry": false,
@@ -36,6 +48,7 @@
   "canonical_source": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
   "commit_marker": "[F03-PRODUCTION-ACCEPTANCE-V342-20261102]",
   "fixture_source": "39600d0d3a3a5e4bc2599a92e94e494a542f06f1",
+  "hash_source_tree": "f6eaf737da191a01568aaa89d1a549dddf1c7331",
   "immutable_worktree_paths": [
     "src",
     "include",
@@ -52,6 +65,57 @@
     "examples/android/app/src/main/cpp",
     "examples/android/app/src/androidTest/java",
     "examples/android/uitest/src/androidTest/java"
+  ],
+  "import20_cases": {
+    "first": [
+      "real_VIEW_epub_uses_existing_owner_stable_original_and_product_mapping",
+      "real_SEND_pdf_retains_original_after_staging_release",
+      "SEND_MULTIPLE_unknown_length_short_reads_and_untrusted_name",
+      "duplicate_redelivery_preserves_ids_paths_revisions_and_outbox",
+      "real_system_DocumentsUI_SAF_selects_granted_provider_document",
+      "rotation_during_real_provider_copy_keeps_single_process_controller",
+      "rotation_during_host_SDK_task_acknowledges_old_owner_and_retries_ready",
+      "user_cancel_before_publication_rolls_back_sdk_and_preserves_product",
+      "visible_copy_cancel_survives_rotation_and_preserves_sdk_product",
+      "provider_midstream_error_and_underreported_size_never_publish_prefix",
+      "128MiB_staging_does_not_raise_32MiB_host_reading_limit"
+    ],
+    "kill-copy": [
+      "prepare_real_process_kill_during_unfinished_provider_copy"
+    ],
+    "kill-published": [
+      "prepare_real_process_kill_after_stable_path_publication"
+    ],
+    "kill-ready": [
+      "prepare_real_process_kill_after_staging_before_host_publication"
+    ],
+    "kill-stable": [
+      "prepare_real_process_kill_with_unfinished_stable_host_copy"
+    ],
+    "recover-copy": [
+      "fresh_process_cleans_partial_and_requires_real_URI_redelivery"
+    ],
+    "recover-published": [
+      "fresh_process_repairs_mapping_then_releases_ready_and_reuses_stable_source"
+    ],
+    "recover-ready": [
+      "fresh_process_recovers_ready_without_provider_URI_permission",
+      "replayed_intent_after_recovery_is_exactly_idempotent"
+    ],
+    "recover-stable": [
+      "fresh_process_removes_stable_copy_partial_and_recovers_private_ready"
+    ]
+  },
+  "import20_phase_order": [
+    "first",
+    "kill-copy",
+    "recover-copy",
+    "kill-stable",
+    "recover-stable",
+    "kill-ready",
+    "recover-ready",
+    "kill-published",
+    "recover-published"
   ],
   "intake_delta": {
     "docs/reader-total-progress/DOT_F03_PRODUCTION_INTAKE_20261102.md": "413372d7a631ab74d0277e7a4c9cf00d90a7b083",
@@ -99,7 +163,30 @@
     "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/OrganizationBootstrapRecoveryTest.java": "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationBootstrapRecoveryTest.java",
     "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/OrganizationTest.java": "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationTest.java"
   },
+  "private_copy_blobs": {
+    "examples/android/app/build.gradle": "716049afb9b91c6ee19ad026fa60f217ca2a8e4a",
+    "examples/android/app/src/main/java/org/exreader/host/ImportController.java": "73293f99a393bd4f1f7bfa329372cf2ebead4b83",
+    "examples/android/app/src/main/java/org/exreader/host/MainActivity.java": "5ae80b939b816b91d92c9886c8486f088ee09f15",
+    "examples/android/settings.gradle": "86aedc0f1b403f69dc98989677a56fe72ad0ae08",
+    "extras/android-import-entry/android/importentry/build.gradle": "271f4c77a99af53461e520fd300f389c268e253c",
+    "extras/android-import-entry/android/importentry/src/main/java/org/exreader/importentry/ImportEntry.java": "5be62491b6250c9b0516b711265f17752cdf8baf",
+    "extras/android-import-entry/android/importentry/src/main/java/org/exreader/importentry/ImportTicket.java": "76bfe7cdbab4be93b64fa67c48b0bb197f0209ad",
+    "extras/android-import-entry/android/importentry/src/main/java/org/exreader/importentry/ReadyRequest.java": "80ac6f21a2da124b103a440c988bee731e6489db"
+  },
+  "private_copy_policy": "temporary-grant-verified-private-copy-v1",
   "product_intake_head": "48bd5a35d99c3a21a8159288dd08ac8dbb41c677",
+  "r1_package_blobs": {
+    ".github/workflows/reader-f03-production-acceptance-v342.yml": "acd1c275b9f2b8167ea8748933f880b1431f1c42",
+    "tests/dot_f03_production_acceptance_20261102/admission.py": "6d63141baf481658fae79fc3fa6b7bacc876aae8",
+    "tests/dot_f03_production_acceptance_20261102/android-test-overlay.init.gradle": "654581799460ac41e7ab42bf8302cdd2ffb108da",
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/OrganizationBootstrapRecoveryTest.java": "6cf2e3f9d6832785f23714f53d4054da1b58ef94",
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/OrganizationTest.java": "683dbf6e5921d58d0a9527e88ec96aaae0f16f84",
+    "tests/dot_f03_production_acceptance_20261102/android_host_evidence_v342.py": "5c2da67f2169c33a5b04984b0a19790c86b0d520",
+    "tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py": "2118bb2946c89ac06a12885a087ab9cc6f43ffe2",
+    "tests/dot_f03_production_acceptance_20261102/check_bounded_evidence_gate_v342.py": "d53324d987099aa8fc3a2f68bd418524068e1337",
+    "tests/dot_f03_production_acceptance_20261102/check_evidence_gate_v342.py": "4d95101c4f7231a7b2957659c296819034f3244f",
+    "tests/dot_f03_production_acceptance_20261102/contract.json": "841168161837eea8fc062ec6452a34217ab10981"
+  },
   "recovery_cases": [
     "currentAutomatic",
     "legacyDirect",
@@ -115,8 +202,9 @@
     "explicitDiscardAllowsAutomatic"
   ],
   "review_base": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
+  "reviewed_acceptance_base": "61dc8d6190e65dc12886d2d0f0e97b501c52be56",
   "runtime_accepted": false,
-  "schema": 1,
+  "schema": 2,
   "sdk_frozen_paths": [
     "src",
     "include",
