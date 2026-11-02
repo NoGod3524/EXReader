@@ -1,0 +1,34 @@
+name: F09 original evidence diagnostic 20261102
+on:
+  push:
+    branches: [audit/f09-original-evidence-20261102]
+    paths:
+      - .github/workflows/f09-original-evidence-20261102.yml
+      - tools/f09_review/diagnose_original_artifacts_20261102.py
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f09-original-evidence-20261102
+  cancel-in-progress: false
+jobs:
+  inspect:
+    if: github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Inspect six fixed original artifacts without product execution
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/f09_review/diagnose_original_artifacts_20261102.py
+      - name: Preserve diagnostic report (never acceptance)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f09-original-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: f09-original-evidence-output/
+          if-no-files-found: error
+          retention-days: 14
