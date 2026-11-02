@@ -18,6 +18,7 @@ CANONICAL = "ec11cf862ca3b44483d7e8c4726ae748ab438337"
 INTAKE = "48bd5a35d99c3a21a8159288dd08ac8dbb41c677"
 REVIEWED_ACCEPTANCE = "61dc8d6190e65dc12886d2d0f0e97b501c52be56"
 PREVIOUS_CORRECTION = "b4d97d6d62c1366972d321174b728980e287b2cd"
+TEST_CLOSURE_BASE = "9d493b2235d81c216767295948f417c1bd12bf2d"
 SDK = "8357eafa28423a7ab93ba08b823af80f01ad1505"
 FIXTURE_SOURCE = "39600d0d3a3a5e4bc2599a92e94e494a542f06f1"
 BRANCH = "dot/f03-production-acceptance-v342-20261102"
@@ -44,7 +45,66 @@ def configuration():
     require(c.get("commit_marker") == MARKER, "fixed authorized commit marker")
     require(c["reviewed_acceptance_base"] == REVIEWED_ACCEPTANCE, "fixed R1 acceptance parent")
     require(c["previous_correction_base"] == PREVIOUS_CORRECTION, "fixed preserved R2 parent")
+    require(c["test_closure_base"] == TEST_CLOSURE_BASE, "fixed preserved R3 parent")
     return c
+
+def catalog_schema_contract():
+    c = configuration()
+    expected = {
+    "asset_schema_version": 1,
+    "runtime_schema_version": 3,
+    "runtime_tables": [
+        "reader_book_series",
+        "reader_book_shelves",
+        "reader_book_tags",
+        "reader_books",
+        "reader_local_books",
+        "reader_original_pending",
+        "reader_originals",
+        "reader_outbox",
+        "reader_revisions",
+        "reader_series",
+        "reader_shelves",
+        "reader_tags"
+    ],
+    "catalog_cases": 8,
+    "mapping_cases": 14,
+    "mapping_phases": [
+        "seed-before",
+        "recover-before",
+        "seed-during",
+        "recover-during"
+    ],
+    "interrupted_migration_scope": "001_catalog.sql: SQLITE_CREATE_TABLE reader_book_shelves only",
+    "all_migration_interruptions_accepted": False,
+    "old_apk_upgrade_accepted": False
+}
+    require(c["catalog_schema_policy"] == expected, "asset v1 and runtime v3 are separate fixed contracts")
+    expected_blobs = {
+        "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/CatalogStoreTest.java": "dc20e2ec8851b00c761e7332d32f885df946f209",
+        "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/ImportMappingTest.java": "12f758e93e1c74589d0d624415973ba05e6d02fe"}
+    require(c["catalog_overlay_blobs"] == expected_blobs, "exact previously exercised catalog/mapping sources")
+    sources = {}
+    for relative, expected_blob in expected_blobs.items():
+        original = c["overlay_sources"][relative]
+        require(git("rev-parse", FIXTURE_SOURCE + ":" + original) == expected_blob and
+                (ROOT / relative).read_bytes() == blob(FIXTURE_SOURCE, original),
+                "catalog/mapping overlay is not byte-identical to reviewed source")
+        sources[relative] = {"source": FIXTURE_SOURCE, "path": original, "blob": expected_blob,
+                             "sha256": digest((ROOT / relative).read_bytes())}
+    protected = {
+        "apps/reader/store/001_catalog.sql", "apps/reader/store/002_originals.sql",
+        "apps/reader/store/003_original_staging.sql", "apps/reader/store/native/catalog.c",
+        "examples/android/app/src/main/java/org/exreader/host/CatalogStore.java",
+        "examples/android/app/src/main/java/org/exreader/host/BookStore.java",
+        "examples/android/app/src/debug/cpp/catalog_fixture.inc"}
+    require(set(c["catalog_runtime_blobs"]) == protected, "complete runtime catalog and fault-injection provenance")
+    for path, expected_blob in c["catalog_runtime_blobs"].items():
+        require(git("rev-parse", INTAKE + ":" + path) == expected_blob and
+                (ROOT / path).read_bytes() == blob(INTAKE, path), "unchanged product migration/fault source")
+    return {"policy": expected, "overlay_sources": sources,
+            "runtime_source_blobs": c["catalog_runtime_blobs"], "runtime_accepted": False}
+
 
 def verify_source():
     c = configuration()
@@ -57,9 +117,9 @@ def verify_source():
     require(MARKER in git("log", "-1", "--format=%B"), "authorized acceptance commit marker")
     source = git("rev-parse", "HEAD")
     require(source == os.environ["GITHUB_SHA"], "tested source differs from run")
-    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, PREVIOUS_CORRECTION],
-            "exact single R3 acceptance correction on preserved R2")
-    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION), (PREVIOUS_CORRECTION, source)):
+    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, TEST_CLOSURE_BASE],
+            "exact single R4 acceptance correction on preserved R3")
+    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION), (PREVIOUS_CORRECTION, TEST_CLOSURE_BASE), (TEST_CLOSURE_BASE, source)):
         require(git("merge-base", parent, child) == parent, "source ancestry mismatch")
     for start, end, key in ((BASE, CANONICAL, "canonical_delta"),
                             (CANONICAL, INTAKE, "intake_delta")):
@@ -82,13 +142,23 @@ def verify_source():
             "preserved R2 modifications only")
     for path, expected in c["previous_correction_blobs"].items():
         require(git("rev-parse", PREVIOUS_CORRECTION + ":" + path) == expected, "preserved R2 package blob")
-    require(set(git("diff", "--name-only", PREVIOUS_CORRECTION, source).splitlines()) == set(c["approved_delta"]) and
-            len(c["approved_delta"]) == 3, "R3 must modify exactly the three authorized acceptance files")
-    for path in c["new_paths"]:
-        require(git("cat-file", "-t", source + ":" + path) == "blob", "new path must be a file")
+    require(set(git("diff", "--name-only", PREVIOUS_CORRECTION, TEST_CLOSURE_BASE).splitlines()) ==
+            set(c["r3_package_blobs"]), "preserved exact R3 three-file correction")
+    require(len(c["r3_package_blobs"]) == 3 and
+            all(line.startswith("M\t") for line in git("diff", "--name-status", PREVIOUS_CORRECTION, TEST_CLOSURE_BASE).splitlines()),
+            "preserved R3 modifications only")
+    for path, expected in c["r3_package_blobs"].items():
+        require(git("rev-parse", TEST_CLOSURE_BASE + ":" + path) == expected, "preserved R3 package blob")
+    expected_delta = {**{p: "M" for p in c["r3_package_blobs"]},
+                      **{p: "A" for p in c["catalog_overlay_blobs"]}}
+    require(set(c["approved_delta"]) == set(expected_delta) and len(expected_delta) == 5,
+            "R4 exact two additions and three modifications")
+    require({row.split("\t", 1)[1]: row.split("\t", 1)[0]
+             for row in git("diff", "--name-status", TEST_CLOSURE_BASE, source).splitlines()} == expected_delta,
+            "R4 exact authorized delta status and paths")
+    for path in set(c["new_paths"]) | set(c["approved_delta"]):
+        require(git("cat-file", "-t", source + ":" + path) == "blob", "acceptance path must be a file")
         require((ROOT / path).read_bytes() == blob(source, path), "modified acceptance file: " + path)
-    require(all(line.startswith("M\t") for line in git("diff", "--name-status", PREVIOUS_CORRECTION, source).splitlines()),
-            "R3 only modifies existing acceptance files")
     require(not git("diff", "--name-only", SDK, source, "--", *c["sdk_frozen_paths"]),
             "SDK and original fixture/workflow freeze")
     for path, expected in c["jni_blobs"].items():
@@ -135,7 +205,8 @@ def verify_source():
     require(set(c["test_dependency_sources"].values()) == set(c["test_dependency_blobs"]),
             "complete test dependency manifest")
     capability = private_copy_contract()
-    return {"test_dependency_blobs": c["test_dependency_blobs"], "private_copy_capability": capability, "source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
+    schema_contract = catalog_schema_contract()
+    return {"catalog_schema_contract": schema_contract, "test_dependency_blobs": c["test_dependency_blobs"], "private_copy_capability": capability, "source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
             "product_intake_head": INTAKE, "sdk_source": SDK, "sdk_version": "3.42.0",
             "contract_sha256": digest((HERE / "contract.json").read_bytes()),
             "run_id": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
@@ -157,7 +228,7 @@ def prepare():
         target = java / Path(original).relative_to("examples/android/app/src/androidTest/java")
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / relative, target)
-    # Compare every staged original except the two explicitly reviewed overlay classes.
+    # Compare every staged original except the four explicitly reviewed overlay classes.
     old_root = ROOT / "examples/android/app/src/androidTest/java"
     overlay_names = {Path(p).relative_to("examples/android/app/src/androidTest/java").as_posix()
                      for p in c["overlay_sources"].values()}
@@ -165,8 +236,8 @@ def prepare():
         if path.is_file() and path.relative_to(old_root).as_posix() not in overlay_names:
             require((java / path.relative_to(old_root)).read_bytes() == path.read_bytes(),
                     "overlay changed another original test")
-    require(len(list(java.rglob("OrganizationTest.java"))) == 1 and
-            len(list(java.rglob("OrganizationBootstrapRecoveryTest.java"))) == 1, "unique overlay classes")
+    require(all(len(list(java.rglob(Path(name).name))) == 1 for name in overlay_names),
+            "every reviewed overlay class has exactly one staged definition")
     for relative, original in c["test_dependency_sources"].items():
         target = java / relative
         require(not target.exists(), "test dependency class collision: " + relative)
@@ -338,6 +409,7 @@ def final_result():
         result.update(accepted=True, source_admission=admitted, evidence=proofs,
                       original_host_checks=66, original_gate_checks=[48, 20],
                       original_organization_cases=8, recovery_cases=12, import_cases=20,
+                      original_catalog_cases=8, original_mapping_cases=14,
                       installed_hash_owner=hash_owner, private_copy_runtime=imported, upstream=outcomes)
     except Exception as error:
         result["problems"].append(type(error).__name__ + ": " + str(error))
@@ -645,6 +717,7 @@ def precompile_tests():
     report = {k: admitted[k] for k in ("source_sha", "run_id", "attempt")}
     report.update(accepted=True, command=command, staged_files_sha256=staged,
                   test_dependency_blobs=configuration()["test_dependency_blobs"], apks=records,
+                  catalog_schema_contract=admitted["catalog_schema_contract"],
                   main_apk_sha256=original_app, uitest_apk_sha256=digest(paths["uitest"].read_bytes()),
                   build_config_sha256=digest(configs[0].read_bytes()), product_flags={f: False for f in flags},
                   test_classes=test_classes, expected_test_classes=expected_classes,
@@ -663,6 +736,8 @@ def test_compilation_proof():
             "test compilation same source/run")
     require(report["test_dependency_blobs"] == configuration()["test_dependency_blobs"],
             "compiled helper source identity")
+    require(report["catalog_schema_contract"] == catalog_schema_contract(),
+            "compiled catalog/mapping test contract unchanged")
     java = Path(os.environ["F03_ANDROID_TEST_JAVA"])
     require(report["staged_files_sha256"] ==
             {p.relative_to(java).as_posix(): digest(p.read_bytes()) for p in sorted(java.rglob("*")) if p.is_file()},

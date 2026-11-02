@@ -8,7 +8,9 @@
   "approved_delta": [
     "tests/dot_f03_production_acceptance_20261102/admission.py",
     "tests/dot_f03_production_acceptance_20261102/contract.json",
-    ".github/workflows/reader-f03-production-acceptance-v342.yml"
+    ".github/workflows/reader-f03-production-acceptance-v342.yml",
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/CatalogStoreTest.java",
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/ImportMappingTest.java"
   ],
   "branch": "dot/f03-production-acceptance-v342-20261102",
   "budget": {
@@ -45,6 +47,48 @@
     "tests/dot_f04_reading_sync_20261031/windows_driver.py": "8044b57cd75e6a714f828f69a72a85edc8be945a"
   },
   "canonical_source": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+  "catalog_overlay_blobs": {
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/CatalogStoreTest.java": "dc20e2ec8851b00c761e7332d32f885df946f209",
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/ImportMappingTest.java": "12f758e93e1c74589d0d624415973ba05e6d02fe"
+  },
+  "catalog_runtime_blobs": {
+    "apps/reader/store/001_catalog.sql": "6d6230265e562a3743ca9982019f13f2884e5c3e",
+    "apps/reader/store/002_originals.sql": "1e0462cca8758a5d732e30f6a435340b96102817",
+    "apps/reader/store/003_original_staging.sql": "7d5b89327a1205f164a0beea5fb4ef5a52f89854",
+    "apps/reader/store/native/catalog.c": "d3983b0ae3666d98fe9a30e22d20c1c0a030f644",
+    "examples/android/app/src/debug/cpp/catalog_fixture.inc": "9e29e8a2c5f70a60043759051996fe1bbe1224cc",
+    "examples/android/app/src/main/java/org/exreader/host/BookStore.java": "0be5dc75bcc09018f9f7f8e788cc598849e4eb1d",
+    "examples/android/app/src/main/java/org/exreader/host/CatalogStore.java": "84acd508b2fcb1917d3b5cb88a08fb83fc505d2f"
+  },
+  "catalog_schema_policy": {
+    "all_migration_interruptions_accepted": false,
+    "asset_schema_version": 1,
+    "catalog_cases": 8,
+    "interrupted_migration_scope": "001_catalog.sql: SQLITE_CREATE_TABLE reader_book_shelves only",
+    "mapping_cases": 14,
+    "mapping_phases": [
+      "seed-before",
+      "recover-before",
+      "seed-during",
+      "recover-during"
+    ],
+    "old_apk_upgrade_accepted": false,
+    "runtime_schema_version": 3,
+    "runtime_tables": [
+      "reader_book_series",
+      "reader_book_shelves",
+      "reader_book_tags",
+      "reader_books",
+      "reader_local_books",
+      "reader_original_pending",
+      "reader_originals",
+      "reader_outbox",
+      "reader_revisions",
+      "reader_series",
+      "reader_shelves",
+      "reader_tags"
+    ]
+  },
   "commit_marker": "[F03-PRODUCTION-ACCEPTANCE-V342-20261102]",
   "fixture_source": "39600d0d3a3a5e4bc2599a92e94e494a542f06f1",
   "hash_source_tree": "f6eaf737da191a01568aaa89d1a549dddf1c7331",
@@ -159,6 +203,8 @@
     "tests/apple_host/record_compatibility"
   ],
   "overlay_sources": {
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/CatalogStoreTest.java": "examples/android/app/src/androidTest/java/org/exreader/host/CatalogStoreTest.java",
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/ImportMappingTest.java": "examples/android/app/src/androidTest/java/org/exreader/host/ImportMappingTest.java",
     "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/OrganizationBootstrapRecoveryTest.java": "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationBootstrapRecoveryTest.java",
     "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/OrganizationTest.java": "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationTest.java"
   },
@@ -200,6 +246,11 @@
     "tests/dot_f03_production_acceptance_20261102/check_evidence_gate_v342.py": "4d95101c4f7231a7b2957659c296819034f3244f",
     "tests/dot_f03_production_acceptance_20261102/contract.json": "841168161837eea8fc062ec6452a34217ab10981"
   },
+  "r3_package_blobs": {
+    ".github/workflows/reader-f03-production-acceptance-v342.yml": "93a565bf98a5efe4189cdc169a8c9eed27b54491",
+    "tests/dot_f03_production_acceptance_20261102/admission.py": "2f830269eb4d06be344ae02e93c09626f6bc0a08",
+    "tests/dot_f03_production_acceptance_20261102/contract.json": "4a84a3bda404f901128bdc24696cd3e8d4c098a4"
+  },
   "recovery_cases": [
     "currentAutomatic",
     "legacyDirect",
@@ -217,7 +268,7 @@
   "review_base": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
   "reviewed_acceptance_base": "61dc8d6190e65dc12886d2d0f0e97b501c52be56",
   "runtime_accepted": false,
-  "schema": 3,
+  "schema": 4,
   "sdk_frozen_paths": [
     "src",
     "include",
@@ -230,6 +281,7 @@
   ],
   "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505",
   "sdk_version": "3.42.0",
+  "test_closure_base": "9d493b2235d81c216767295948f417c1bd12bf2d",
   "test_dependency_blobs": {
     "tests/reader_android_host_import/java/org/exreader/host/HostImportUiTest.java": "c0a48388a7b5b2c6e21ff029c8bffc33041e7c93",
     "tests/reader_android_reading/debug/java/org/exreader/host/ReadingReview.java": "408757bbd7c3def0d21e0c291ab71360293496e0"
