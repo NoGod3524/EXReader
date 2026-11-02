@@ -1408,3 +1408,50 @@ F09: candidate audit implementation prepared, awaiting independent review; not c
 Remaining formal work includes adjudication result review and exact item-level acceptance mapping, historical finding linkage as explicitly limited above, other F09 gaps including human/reader evidence, and the existing non-F09 remaining items. No unsupported dependency list or owner transfer is invented. Total completion time cannot be reliably estimated; the next approved adjudication job has a ten-minute ceiling, not a completion promise for F09 or 108/108.
 
 Snapshot recorded 2026-11-02T15:23:29.536492+00:00; source/run times above remain distinct.
+
+
+## 2026-11-02 18:22 UTC hourly handoff — recovered connection, bounded work resumed
+
+This is a continuity backup, not completion or a stop instruction. Formal ledger remains **98/108 (90.74%)**, 10 remaining. No diagnostic success below grants a ledger item. Any conversational engineering percentage range is an estimate, not a weighted formal ledger.
+
+### Missing snapshots and recovery chronology
+- The 16:22 and 17:22 snapshots were **not written**: the only approved Desktop Commander route to lap25002 was unavailable. The last safely saved snapshot was commit 7396243fd20269a887361aeae477469525e0c36c (15:22 snapshot, recorded later at its stated time).
+- Control-plane checks at 16:18 and 16:49 reported Offline; 17:18 still reported Offline. No alternate route, repeated remote writes, or fake Git link was used.
+- User reported recovery at 17:37:41. At 17:38 the specified device returned Online with a recent heartbeat and list_sessions returned No active sessions. The earlier timed-out read was not replayed as a write. This append records those missing-hour facts now; it is not backdated.
+
+### F03: complete formal Android intake acceptance — one actual run, not yet accepted
+- Production intake parent: 48bd5a35d99c3a21a8159288dd08ac8dbb41c677; canonical product baseline ec11cf862ca3b44483d7e8c4726ae748ab438337. Frozen SDK 3.42 source 8357eafa28423a7ab93ba08b823af80f01ad1505 remains unchanged.
+- Independent branch: dot/f03-production-acceptance-v342-20261102. Tested source **61dc8d6190e65dc12886d2d0f0e97b501c52be56**, tree **168645e437356d70fe92ec12e993ecf0ce2f37b4**. Exactly 10 new acceptance/overlay/workflow files; old product, SDK and test files unchanged. Original 66 runtime checks, 48/20 negative gates, organization 8 cases, recovery 12 cases and host→shelf→owner→organization consumers retained.
+- Original writer prepared and published once. F09 independently read actual sources/diffs, reviewed build-helper/Gradle 3.42 and overlay wiring, then independently checked the API full tree and existing workflow triggers. Dedicated marker/branch/A1 limit is explicit. Static approval is not runtime acceptance.
+- Run **41498723252**, attempt **1**, job **125460387048**: https://github.com/NoGod3524/EXReader/actions/runs/41498723252 . Last actual writer observation **18:16:36 UTC**: in_progress; source admission/Python syntax preflight, dependencies and real overlay staging succeeded; SDK/product build began 18:16:10 and was ongoing. No device-suite or final accepted result was available at that observation. Do not infer later status from this snapshot.
+- Approved budget: one Android job <=120 minutes, 1/1 started, no automatic retry. P0 migration/recovery and full formal chain remain unclosed until actual retained gates and final acceptance pass at this source.
+
+### F07 B: authenticated existing six-host artifacts — completed, provider closure still missing
+- Consumer branch audit/f07-sixhost-existing-evidence-20261102; source **fb67403e042890d75bc28b48c00d20e83d1c90e8**, tree **7eefaeff479c6bd4e90594ee8f9e9221a9605e61**, parent ec11. Exactly three new audit files, independent full-tree/trigger review passed.
+- Run **41495920766/A1** succeeded, created **17:56:59Z**, completed **17:57:29Z**: https://github.com/NoGod3524/EXReader/actions/runs/41495920766 . Its historical producer is **41306566948/A1/source ec11**, not the consumer SHA.
+- All 11 locked archives / **219686970 bytes** authenticated; **1309** archive members inspected; six parser-safety checks passed, errors empty. These six checks are not product coverage or replacements for prior controls. The coordinator independently checked cached API identity and the emitted report.
+- Output artifact **13167080517**, name f07-existing-sixhost-41495920766-1, **473328 bytes**, SHA256 **9cc435d2d24b6a9c3751ef7a1714c3713f1e0afed787432d46bb1422848f3efb**.
+- No matching link_text was found in these selected archives; GTK package/runtime-dependencies.txt was present. This does not prove the entire build chain lacks link evidence, nor establish a unique SQLite provider or absence of private entry dependencies. Actual program hashes and source mappings are available; Android program.bin is an APK by its producer recipe, while Apple host programs come from peer artifacts, not the SDK-only builds.
+- B budget 1/1 completed; no rerun. A separate C package was explicitly approved at **18:17:42**: seven fixed archives / **40127329 bytes**, three new files on audit/f07-sixhost-binary-evidence-20261102 based on fb674, one Ubuntu <=10 minutes, static symbol/import/dependency reading only, no product execution/build/relink/tool installation/retry. C is currently in memory preparation, not committed or running.
+
+### F09, F05 and F08: concrete remaining boundaries
+- F09 new-version production adjudication already completed: source 5a57ff3cc0f295327676663236c6214b5736cb6a, run **41472105450/A1**, three platforms x two new rules passed from fixed authenticated evidence. Output artifact **13154784584 / 2710 bytes / SHA256 38c6fc37d9d4bbdccc81843775ebb1439aa7756ee4c752e4a24f8dfabe6fa536**. Historical finding rows were not reloaded; supersession_verified=false, legacy_blockers_cleared=0, old gate not executed. Three platform diagnostic SHAs remain distinct. This is not full F09, screen-reader listening or same-source six-platform acceptance. Next authorized work is read-only Windows KB-06/GTK remaining-gap investigation; no new F09 CI.
+- F05 at fixed 9ce943e1ff0c26b54db69f5c31eec057d2be216b: actual Android cancel/retry and committed-PUT-before-ACK process-recovery code exists; Java 3.42 shadow was approved/prepared, not unapproved as stale README text suggested. Latest static worker reading completed at **18:20:56**: program input is APK bytes, peer must satisfy the F05 GTK checkpoint contract (F04 peer is not directly compatible), TLS material is generated with the Android build and its CA embedded there. No secret contents were read. Caller and same-run producer wiring still require a precise implementation package; no new F05 CI was started and the old 265-minute budget was not silently reassigned.
+- F08 remains formally failed. Callback identity v2 is a proposed semantic change, not proof of physical-frame equivalence. Current worker is doing only the approved static compatibility/scope review; no v2 implementation, new 20+20-minute jobs or 1200-second native round has been authorized or run. Original v1/failed observations stay intact.
+
+### Actual work allocation and authorization handshake
+- F03 original acceptance writer (plan_f03_intake_acceptance): test waiting/monitoring the one actual Android run; not counted as active production implementation while waiting.
+- F07 original writer (advance_f07_provider): B completed; implementing the separately approved C candidate in memory, awaiting coordinated tools and independent review.
+- F09 original owner (review_f09_handoff): independent A review completed; read-only remaining-gap diagnosis queued. Apple product ownership did not transfer.
+- F05 original worker (advance_f05_conflicts): read-only caller/runtime-type diagnosis, now evidence analysis; no implementation or CI claim.
+- F08 original worker (advance_f08_performance): static compatibility review queued, no implementation/CI/native authorization.
+- F03 coordinator (advance_f03_recovery): sole DC sequencing, F07 independent audit and this document; not a sixth product implementation lane. Five assigned workers are not five active implementations. Auto-refill remains paused.
+- All source/Git/docs still use lap25002 Desktop Commander through normally saved instabox@0.8.52 login to VM m_agqxv2s72g5vwdtsifu5cnmml4. Existing owner boundaries, single-writer paths, no default/shared push, no PR/tag/release, and Actions-only builds/tests/archive processing remain in force. No credentials are included here.
+
+### Next steps and time confidence
+- Monitor only F03 run 41498723252 to its true terminal state; its authorized ceiling is 120 minutes, not an estimated completion guarantee. On failure preserve logs and stop; do not auto-retry.
+- Independently review/publish C within its exact seven-archive/three-file/single-10-minute scope, then report evidence gaps without automatically rebuilding six platforms.
+- Finish F05/F08/F09 approved static planning and obtain any genuinely new implementation/CI scope separately. Existing successful builds may be reused only with explicit source/artifact identity.
+- Whole-goal completion time remains unestimable: F03 full runtime acceptance, F05 real caller/peer chain, F07 final-provider proof, F08 semantics/performance and F09 remaining real-device/human checks are unresolved. No claimed finish date or formal item increase.
+
+Snapshot actually recorded at 2026-11-02T18:23:29.493328+00:00. Run observations retain their separate times above.
