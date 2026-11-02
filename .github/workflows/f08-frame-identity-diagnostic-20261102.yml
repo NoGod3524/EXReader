@@ -1,6 +1,8 @@
 name: F08 frame identity diagnostic 20261102
 on:
-  workflow_dispatch:
+  push:
+    branches: [codex/f08-frame-identity-diagnostic-20261102]
+    paths: [.github/workflows/f08-frame-identity-diagnostic-20261102.yml]
 permissions:
   contents: read
 concurrency:
@@ -8,17 +10,35 @@ concurrency:
   cancel-in-progress: false
 jobs:
   diagnostic:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/f08-frame-identity-diagnostic-20261102'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/f08-frame-identity-diagnostic-20261102' && contains(github.event.head_commit.message, '[f08-identity-diag-once-20261102]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: bfbafae97ce9d739579d2882cc5097916e254b2a
           fetch-depth: 0
-      - name: Six fixed diagnostic control groups
+      - name: Record distinct wrapper and fixed diagnostic source identities
         run: |
           set -euo pipefail
           mkdir -p diagnostic-output
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          tree = subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], text=True).strip()
+          assert head == "bfbafae97ce9d739579d2882cc5097916e254b2a"
+          assert tree == "8868a28e08f6e6250e4a26d98a742b64aaa2b06d"
+          report = {"controller_source": os.environ["GITHUB_SHA"], "controller_run": os.environ["GITHUB_RUN_ID"],
+                    "controller_attempt": os.environ["GITHUB_RUN_ATTEMPT"], "diagnostic_source": head,
+                    "diagnostic_tree": tree, "wrapper_source_differs": os.environ["GITHUB_SHA"] != head,
+                    "acceptance_override": False, "official_f08_result": "unchanged_failure"}
+          assert report["wrapper_source_differs"]
+          pathlib.Path("diagnostic-output/wrapper-source.json").write_text(json.dumps(report, indent=2) + "\n")
+          print(json.dumps(report))
+          PY
+      - name: Six fixed diagnostic control groups
+        run: |
+          set -euo pipefail
           python3 -m unittest discover -s tests/f08_frame_identity_diagnostic_20261102 -p test_identity.py -v 2>&1 | tee diagnostic-output/controls.txt
       - name: Classify authenticated retained prefix only
         run: |
