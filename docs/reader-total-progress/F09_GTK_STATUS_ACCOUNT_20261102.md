@@ -1,56 +1,86 @@
-# F09 GTK current-UI status and Account evidence
+# F09 GTK current-UI status and Account evidence - R2
 
-Authorized 2026-11-02 16:58:09 EST: Sentinel_4490477707ac8191b0fd908a27442549.
-Fixed product base: 77cbbe5e96303306dc22ca9025d9c1d760e87895.
-Independent branch: audit/f09-gtk-status-account-current-ui-20261102.
-Three additions; one commit/push and one Ubuntu 22.04 job, at most 45 minutes.
-No automatic retry. Old source, SDK, tests, reports and formal ledger remain unchanged.
+Original authorization: 2026-11-02 16:58:09 EST,
+Sentinel_4490477707ac8191b0fd908a27442549.
+R2 authorization: 2026-11-02 17:46:32 EST,
+Sentinel_151db1a116e081919a82464feb846fd7.
 
-## Build identity
+Product base stays 77cbbe5e96303306dc22ca9025d9c1d760e87895.
+R2 parent is 8047eef0cfeda7c765c5f2970f2cccc7cc9ed8d7, on
+audit/f09-gtk-status-account-current-ui-20261102.
+Exactly the existing three diagnostic files change. One non-force commit/push,
+one new Ubuntu 22.04 job at most 45 minutes, no automatic retry.
+Old product, SDK, tests, reports and formal ledger remain unchanged.
 
-The pinned baseline.py lines 77-107 are the build-only model, not an invocation
-of its entire Linux audit. The original raw GTK recipe is loaded unchanged;
-only its existing 3.41 command arguments are adapted to 3.42 exactly as in the
-already-used F09 wrapper. All original module installation and imported-target
-checks remain. Preferences are installed and enabled as in that wrapper.
-The unchanged packager validates executable --version == 3.42.0 1, ldd and
-forbidden browser dependencies, and produces its actual source/file manifest.
-An independently installed OPDSHash prefix is canonicalized by the same CMake
-REAL_PATH authority and passes the original exact package validator before
-any product build. Its files must stay unchanged.
+## Retained R1 result
 
-## Exactly two observations
+Run 41537973237/A1 built SDK 3.42.0 / ABI 1 successfully; the unchanged raw
+installation checks passed 34/34 and the actual running binary matched the
+package manifest. The single Return did not close the file chooser. No final
+refused-import state was observed; Account was not executed.
+There were 676 collector errors, all "AX sibling index unavailable".
+These are not evidence of a product status-event failure or an Account defect.
+The original run/artifact 13185480802 and all three approved log readbacks remain.
 
-1. One invalid EPUB import submission. Identify the unique exact initial STATUS-log-named label in the source-defined
-   direct main root box, then record its
-   actual structural indices, name, role and process identity before/after.
-   Save raw event types, detail fields, source identity and monotonic timestamps.
-   Compare the old detail1 filter separately from actual
-   object:property-change:accessible-name events for that same source.
-   A different name alone, unrecognized event format or missing source is not a pass.
-   Require original idle fields, a newer completed nonzero-error state and the
-   final log/AX name match; loading transitions cannot pass. Callback errors or
-   event overflow fail closed, including the exception-recording path.
-   No second import submission if the chooser or asynchronous operation fails.
+## Unchanged build
 
-2. One Ctrl+Shift+A Account opening and one Escape. Record the dialog and actual
-   focus, then a bounded 15-second focus timeline after Escape. Passing requires
-   the dialog to disappear and real focus to be inside the main window.
-   No focus setter, extra Escape, Tab workaround or product mutation.
-   Capture actual account control names; do not impose stale Scan-library labels.
+The pinned baseline.py lines 77-107 remain the build-only model; its full Linux
+audit is never invoked. Keep original raw GTK module installation, installed
+checks and the exact existing 3.41-to-3.42 command adapter, plus preferences.
+The original packager checks --version == 3.42.0 1, ldd and forbidden browser
+dependencies and records source/file hashes. OPDSHash is independently installed,
+canonicalized by CMake REAL_PATH, checked by the original package validator and
+verified unchanged after the product build. R2 does not rebuild different code
+or weaken any product/build check.
 
-Registration uses the running host PID. Built, /proc/PID/exe and after-test file
-hashes must agree. The existing driver launches the product and sends actual
-X11 keys. Initial window activation and final owned-process cleanup are not
-focus repair during the measured Escape operation.
+## One independent observation per path
 
-## Interpretation and limits
+Both cases use the same built binary but separate fresh profiles, one owned
+host launch and cleanup per case. Failure of the status case cannot skip the
+Account case. This is not a repeat of either observation.
 
-The complete bounded verdict and focus timeline are printed in the job log;
-the artifact retains the full event stream and original command logs.
-A failed prerequisite is not_executed/false rather than an inferred product
-defect. Missing observations fail the job. No old audit finding is retroactively
-cleared. Success is limited to these two current-source observations:
-formal_acceptance=false, screen_reader_verified=false. It does not prove
-GTK-wide accessibility, iOS software read-screen coverage or six-platform
-same-source acceptance. Formal 98/108 remains unchanged.
+Status:
+- Bind the unique exact STATUS-log-named label in its original root-box location.
+- Send F1 once. Wait for the owned chooser to be active and actually focused.
+- Send Ctrl+L; wait for its editable focused Location Layer entry, then enter
+  the invalid EPUB path once and read its exact full text back through AT-SPI.
+- Reuse the original compact flow: initial Return plus at most three further
+  confirmations, checking the same chooser and unchanged path each time.
+  Stop immediately when it closes. Never reopen F1 or retype/re-import.
+- Wait for original idle fields, a newer nonzero-error state and matching final
+  log/AX message. Loading transitions cannot pass.
+
+Account:
+- From its own fresh host, press Ctrl+Shift+A once, observe focus inside the
+  real dialog, then Escape once and capture a bounded 15-second focus timeline.
+- Require dialog disappearance and actual focus inside the main window.
+  No grab_focus, Tab workaround, repeated Escape or product modification.
+
+## Event identity and failures
+
+Save raw event type/detail/time before querying any source. Do not walk every
+transient chooser node's structural tree in the callback. Bind status events
+to the retained actual status GObject reference and owned PID, not just matching
+names/roles or screen coordinates. Check the target's structural identity
+before/after the operation. A target identity/query error, unidentifiable
+name-change source or overflow is a failure. A non-target source query error
+is retained and separately disclosed; it is not a claim of complete AX-stream
+coverage. The original detail1 filter is reported separately.
+Only an actual bound target name-change event can satisfy the status rule.
+
+The recorder pins its owner PID at creation. Raw-field errors fail closed.
+After deregistration it joins the event thread for at most five seconds, takes
+a locked final snapshot and rechecks late errors. Event shutdown/save failures
+never bypass owned-host cleanup. Incomplete shutdown stops the next case; a
+normal status assertion failure with clean shutdown does not skip Account.
+
+Per-case reports print the exact error, bounded first source errors, input and
+focus observations, program hashes and cleanup result in stdout. Full raw events
+and logs remain in the artifact. Missing readiness/evidence fails that case;
+there is no inferred pass or silent retry.
+
+Success remains limited to these two new-source observations:
+formal_acceptance=false, screen_reader_verified=false, old_suite_executed=false.
+It does not retroactively clear old failures or prove GTK-wide accessibility,
+iOS software read-screen support or six-platform same-source acceptance.
+Formal 98/108 remains unchanged.
