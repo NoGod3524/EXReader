@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   focus:
-    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 production baseline reachability diagnostic]')
+    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 production single invocation diagnostic]')
     runs-on: macos-15
     timeout-minutes: 45
     steps:
@@ -257,7 +257,7 @@ jobs:
                   result = OUT/(label+".xcresult")
                   args = ["xcodebuild", "test-without-building"]+common+[
                       "-resultBundlePath", str(result), "-parallel-testing-enabled", "NO",
-                      "-test-timeouts-enabled", "YES", "-test-iterations", "1", "-default-test-execution-time-allowance", "360",
+                      "-test-timeouts-enabled", "YES", "-default-test-execution-time-allowance", "360",
                       "-maximum-test-execution-time-allowance", "420",
                       "-only-testing:EXReaderHostUITests-iOS/F09AppleUITests/testHardwareKeyboardCommands"]
                   rc = execute(args, label, 480)
