@@ -46,6 +46,36 @@ final class OrganizationStore {
     private final BookStore books;
     final IntentJournal journal;
     OrganizationStore(BookStore books,SharedPreferences preferences) { this.books=books;journal=new IntentJournal(preferences); }
+
+    /** Automatic history must not compete with a durable organization bootstrap. */
+    boolean deferAutomaticBootstrap(BookStore.VerifiedSource source) {
+        synchronized(IntentJournal.LOCK) {
+            final IntentJournal.Pending pending;
+            try { pending=journal.read(); }
+            catch(Exception error) {
+                throw new IllegalStateException("Saved organization intent requires review before automatic book history",error);
+            }
+            if(pending==null||pending.bootstrap==null)return false;
+            IntentJournal.Command b=pending.bootstrap;
+            if(!b.book.equals(source.key)&&b.sdkId!=source.book.id)return false;
+            if(!b.book.equals(source.key)||b.sdkId!=source.book.id||!b.format.equals(source.format)||
+                    !b.sha.equals(source.sha256)||b.bytes!=source.bytes)
+                throw new IllegalStateException("Saved bootstrap original differs; review the retained intent");
+            Selection current=selection("book",source.key);
+            if(current.kind!=0||current.deleted||current.restore||b.heads.length!=0||
+                    pending.bootstrapDone||NativeCatalog.retained(owner(),b.revision))
+                throw new IllegalStateException("Saved bootstrap history differs; review the retained intent");
+            String[] metadata=NativeCatalog.metadata(owner(),source.key);
+            if(metadata==null||!b.format.equals(metadata[0])||!b.sha.equals(metadata[1])||
+                    b.bytes!=Long.parseLong(metadata[2])||!b.title.equals(metadata[3])||
+                    !b.author.equals(metadata[4])||!b.sort.equals(metadata[5])||
+                    b.favorite!="1".equals(metadata[6])||!"0".equals(metadata[7]))
+                throw new IllegalStateException("Product fields changed since bootstrap review; saved intent requires review");
+            // Only the existing explicit retry may submit this exact reviewed command.
+            return true;
+        }
+    }
+
     private long owner() { return books.productOwner(); }
     Selection selection(String kind,String key) { return new Selection(NativeCatalog.selection(owner(),kind,key)); }
     List<Group> groups(int kind,String parent,Group cursor,boolean before,boolean removed) {
