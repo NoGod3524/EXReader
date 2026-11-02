@@ -31,5 +31,10 @@
     "p99_ms": 33.34,
     "first_interactive_ms": 2000,
     "peak_rss_bytes": 536870912
+  },
+  "diagnostic_product_bindings": {
+    "examples/android/app/src/main/java/org/exreader/host/ReaderView.java": "30925c9f850926cee83e55c45bbf2653bbefb25c530a36964f910c3e3b26a05a",
+    "examples/android/app/src/main/java/org/exreader/host/ReaderFrameObserver.java": "7f2549b9176ef60349da351b961ec614afb1f61be1dfba3c2a0dd1c0fcc1c929",
+    "examples/android/app/src/main/java/org/exreader/host/ShelfWindowMetrics.java": "c7fd9f7dbcaba7b3ded9949860313c079da8f1bd87a6d97f4138626f8ef3638d"
   }
 }

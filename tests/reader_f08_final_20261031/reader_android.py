@@ -615,6 +615,85 @@ def run_ui_with_owned_stop(plan,root,command,*instrument_args,timeout=210):
             print("reader lifecycle diagnostic write failed (original error preserved): "+repr(diagnostic_error),file=sys.stderr)
 
 
+
+def inspect_draw_diagnostics(rows, draws, identity):
+    """Observational only: never supplies a native frame or changes associate()."""
+    problems=[];enters={};exits={}
+    def check(ok,message):
+        if not ok:problems.append(message)
+    check(bool(rows) and rows[0].get("kind")=="start","diagnostic header")
+    if not rows:return {"diagnostic_complete":False,"problems":problems}
+    h=rows[0]
+    check(h.get("schema")==1 and h.get("max_events")==20000 and h.get("max_bytes")==8*1024*1024
+          and h.get("max_pending")==256,"diagnostic frozen limits")
+    check(len(rows)<=20000,"diagnostic event bound")
+    check(sum(len((json.dumps(r,separators=(",",":"))+"\n").encode()) for r in rows)<=8*1024*1024,
+          "diagnostic byte bound")
+    check((h.get("pid"),h.get("window_id"))==identity,"diagnostic owner")
+    body=rows[1:-1] if rows[-1].get("kind")=="stop" else rows[1:]
+    clocks=[r.get("mono_ns") for r in body]
+    check(all(type(t) is int and t>0 for t in clocks),"diagnostic stream clocks")
+    if all(type(t) is int for t in clocks):
+        check(all(a<=b for a,b in zip(clocks,clocks[1:])),"diagnostic UI clock order")
+    for seq,r in enumerate(body,1):
+        check(r.get("sequence")==seq,"diagnostic sequence")
+        check((r.get("pid"),r.get("window_id"))==identity,"diagnostic owner")
+        check(r.get("window_identity")==h.get("window_identity"),"diagnostic window identity")
+        key=r.get("on_draw_id");kind=r.get("kind")
+        check(type(key) is int and key>0,"diagnostic ordinal")
+        check(kind in ("on_draw_enter","on_draw_exit"),"diagnostic event kind")
+        target=enters if kind=="on_draw_enter" else exits
+        check(key not in target,"duplicate diagnostic ordinal");target[key]=r
+        check(r.get("main_thread") is True and type(r.get("tid")) is int and r["tid"]==r.get("main_tid")==identity[0]
+              and type(r.get("thread_id")) is int and r["thread_id"]==r.get("main_thread_id"),
+              "not observed on main thread")
+        check(r.get("canvas_hardware") is True and r.get("view_hardware") is True,"non-hardware canvas/view")
+        check(type(r.get("mono_ns")) is int and r["mono_ns"]>0,"diagnostic clock")
+    check(bool(enters) and set(enters)==set(exits),"unpaired onDraw fences")
+    for key,a in enters.items():
+        b=exits.get(key)
+        if not b:continue
+        check(type(a.get("mono_ns")) is int and type(b.get("mono_ns")) is int and
+              a["mono_ns"]<b["mono_ns"],"onDraw clock order")
+        check(b.get("completed") is True,"onDraw did not complete")
+        check(all(a.get(k)==b.get(k) for k in ("view_identity","canvas_identity","tid","thread_id")),
+              "onDraw identity changed")
+    check(bool(draws),"diagnostic bitmap census absent")
+    for d in draws:
+        key=d.get("diagnostic_on_draw_id");a=enters.get(key);b=exits.get(key)
+        check(a is not None and b is not None,"bitmap missing onDraw fence")
+        if a is None or b is None:continue
+        check(all(d.get(k)==a.get(k)==b.get(k) for k in ("pid","window_id","view_identity","accept_id","request_generation")),
+              "bitmap/fence owner")
+        check(a.get("mono_ns",0)<=d.get("draw_begin_mono_ns",-1)<d.get("draw_end_mono_ns",-1)<=b.get("mono_ns",0),
+              "bitmap outside onDraw fence")
+    footer=rows[-1]
+    check(all(footer.get(k)==h.get(k) for k in ("pid","window_id","window_identity")),
+          "diagnostic footer identity")
+    check(footer.get("kind")=="stop" and footer.get("diagnostic_complete") is True
+          and footer.get("error") is None and footer.get("pending")==0
+          and footer.get("attempted")==len(body) and footer.get("events")==len(rows)-1,
+          "diagnostic footer/incomplete")
+    return {"diagnostic_complete":not problems,"problems":problems,
+            "on_draw_count":len(enters),"bitmap_count":len(draws),
+            "original_association_unchanged":True,"acceptance_override":False}
+
+def retain_draw_diagnostics(root):
+    root=Path(root);report={"diagnostic_complete":False,"acceptance_override":False,"problems":[]}
+    try:
+        files=list((root/"windows"/"reader-diagnostics").glob("*.jsonl"))
+        need(len(files)==1,"one diagnostic stream")
+        raw=files[0].read_bytes();need(len(raw)<=8*1024*1024 and raw.endswith(b"\n"),"diagnostic byte/line bound")
+        rows=[json.loads(line) for line in raw.splitlines()]
+        readers=list((root/"windows"/"reader-draw").glob("*.jsonl"));need(len(readers)==1,"one reader stream")
+        events=[json.loads(line) for line in readers[0].read_bytes().splitlines()]
+        h=events[0];draws=[e for e in events if e.get("kind")=="bitmap_draw"]
+        report=inspect_draw_diagnostics(rows,draws,(h["pid"],h["window_id"]))
+        report["raw_sha256"]=hashlib.sha256(raw).hexdigest()
+        report["raw_bytes"]=len(raw)
+    except Exception as error:report["problems"].append(repr(error))
+    save(root/"draw-diagnostics.json",report)
+
 def run(plan,root,proof,namespace):
     """Invoked inside the existing native worker's unchanged 1100-second parent cap."""
     import native_android as N
@@ -709,4 +788,9 @@ def run(plan,root,proof,namespace):
             result={**replay,"collection_problems":result["problems"],"accepted":replay["accepted"] and not result["problems"]}
         except Exception:result["problems"].append(traceback.format_exc())
         save(root/"result.json",result)
+        # Auxiliary observation never substitutes for the original result or its first failure.
+        try:retain_draw_diagnostics(root)
+        except Exception as error:
+            try:save(root/"draw-diagnostics-error.json",{"error":repr(error),"diagnostic_complete":False})
+            except Exception:pass
     return result

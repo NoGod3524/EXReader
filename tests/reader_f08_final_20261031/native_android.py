@@ -167,6 +167,36 @@ def producer_receipt(receipt, expected_source):
              "sha256": artifact["digest"].removeprefix("sha256:")})
 
 
+
+DIAGNOSTIC_PRODUCT_PATHS = frozenset(
+    "examples/android/app/src/main/java/org/exreader/host/" + name
+    for name in ("ReaderView.java", "ReaderFrameObserver.java", "ShelfWindowMetrics.java"))
+
+def diagnostic_binding_keys(contract):
+    bindings = contract.get("diagnostic_product_bindings")
+    if "diagnostic_product_bindings" not in contract:
+        bindings = {}
+    else:
+        need(type(bindings) is dict and set(bindings) == DIAGNOSTIC_PRODUCT_PATHS,
+             "exact three diagnostic product bindings")
+        for path, digest in bindings.items():
+            need(type(digest) is str and len(digest) == 64 and
+                 all(c in "0123456789abcdef" for c in digest), "diagnostic hash syntax")
+    return bindings
+
+def validate_diagnostic_bindings(contract, changed, actual_hashes):
+    bindings = diagnostic_binding_keys(contract)
+    need(type(changed) is list and all(type(p) is str for p in changed), "changed path list")
+    if bindings:
+        need(set(changed) & DIAGNOSTIC_PRODUCT_PATHS == DIAGNOSTIC_PRODUCT_PATHS,
+             "all three diagnostic changes declared")
+        for path,digest in bindings.items():
+            need(actual_hashes.get(path) == digest, "diagnostic product hash: " + path)
+    need(type(changed) is list and all(type(p) is str and
+         (p.startswith(contract["allowed_test_prefix"]) or p == contract["allowed_workflow"] or p in bindings)
+         for p in changed), "unreviewed diagnostic source")
+    return bindings
+
 def prepare(archive, out, expected_source, receipt, code):
     producer, artifact = producer_receipt(receipt, expected_source)
     need(code["execution_source_sha"] == expected_source and set(code["files"]) == set(BUNDLE_FILES), "same-source execution bundle")
@@ -198,11 +228,12 @@ def prepare(archive, out, expected_source, receipt, code):
              and final["debug"] is False and final["measurement_performed"] is False and final["f08_accepted"] is False, "final build admission")
         contract = load(HERE / "contract.json")
         need(source["reviewed_source"] == contract["reviewed_source"] and source["contract_sha256"] == sha(HERE / "contract.json"), "reviewed contract")
-        need(all(p.startswith(contract["allowed_test_prefix"]) or p == contract["allowed_workflow"] for p in source["changed"]), "unreviewed build source")
+        bindings = validate_diagnostic_bindings(contract, source["changed"], {
+            p: sha(ROOT / p) for p in diagnostic_binding_keys(contract)})
         need(json.loads(z.read("native-source/bundle.json")) == code and final["native_bundle_files"] == code["files"], "exact compiled native bundle")
         for name, digest in code["files"].items():
             need(sha(ROOT / name) == digest and hashlib.sha256(z.read("native-source/" + name)).hexdigest() == digest, "compiled bundle file: " + name)
-            if name.startswith(contract["allowed_test_prefix"]):need(source["adapter_files"].get(name) == digest, "admitted native source: " + name)
+            if name.startswith(contract["allowed_test_prefix"]) or name in bindings:need(source["adapter_files"].get(name) == digest, "admitted native source: " + name)
         observer = {"examples/android/app/src/main/java/org/exreader/host/" + name for name in
                     ("CatalogFrameLatch.java", "CatalogShelf.java", "MainActivity.java", "ReaderView.java", "ShelfWindowMetrics.java", "ReaderFrameObserver.java")}
         need(set(final["observer_source_sha256"]) == observer and all(

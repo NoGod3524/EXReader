@@ -32,8 +32,85 @@ final class ReaderFrameObserver implements AutoCloseable {
     private PageSnapshot accepted;
     private volatile boolean failed,closed;
 
+    // Separate bounded diagnostic stream. Failures never alter the primary collector.
+    private static final int DIAG_MAX_EVENTS=20000, DIAG_MAX_PENDING=256;
+    private static final long DIAG_MAX_BYTES=8L*1024*1024;
+    private final AtomicInteger diagPending=new AtomicInteger();
+    private final AtomicLong diagAttempted=new AtomicLong();
+    private final java.util.concurrent.atomic.AtomicReference<String> diagError=new java.util.concurrent.atomic.AtomicReference<>();
+    private FileOutputStream diagOutput;
+    private long diagEvents,diagBytes,diagOrdinal,currentDiagOrdinal;
+
+    private void diagFail(String reason) {
+        if(diagError.compareAndSet(null,reason))Log.e("EXRReaderDiagnostics",reason);
+    }
+    private void diagWrite(JSONObject event,boolean terminal)throws Exception {
+        byte[] raw=(event.toString()+"\n").getBytes(StandardCharsets.UTF_8);
+        if(diagEvents>=DIAG_MAX_EVENTS || diagBytes+raw.length>DIAG_MAX_BYTES-(terminal?0:4096))
+            throw new IllegalStateException("diagnostic event/byte bound");
+        if(diagOutput==null)throw new IllegalStateException("diagnostic output missing");
+        diagOutput.write(raw);diagBytes+=raw.length;diagEvents++;
+    }
+    private void diagSubmit(JSONObject event) {
+        long sequence=diagAttempted.incrementAndGet();
+        if(closed||diagError.get()!=null){diagFail("diagnostic closed/error");return;}
+        if(sequence>DIAG_MAX_EVENTS-2){diagFail("diagnostic event bound");return;}
+        if(diagPending.incrementAndGet()>DIAG_MAX_PENDING){
+            diagPending.decrementAndGet();diagFail("diagnostic queue bound");return;
+        }
+        try {event.put("sequence",sequence);}
+        catch(Exception error){diagPending.decrementAndGet();diagFail(error.toString());return;}
+        if(!handler.post(()->{
+            try {diagWrite(event,false);}
+            catch(Exception error){diagFail(error.toString());}
+            finally {diagPending.decrementAndGet();}
+        })){diagPending.decrementAndGet();diagFail("diagnostic handler stopped");}
+    }
+    private JSONObject diagFence(String kind,ReaderView view,android.graphics.Canvas canvas,long ordinal,boolean completed)throws Exception {
+        return base(kind).put("on_draw_id",ordinal).put("view_identity",System.identityHashCode(view))
+                .put("canvas_identity",System.identityHashCode(canvas))
+                .put("canvas_hardware",canvas.isHardwareAccelerated()).put("view_hardware",view.isHardwareAccelerated())
+                .put("tid",Process.myTid()).put("main_tid",Process.myPid())
+                .put("thread_id",Thread.currentThread().getId())
+                .put("main_thread_id",android.os.Looper.getMainLooper().getThread().getId())
+                .put("main_thread",android.os.Looper.myLooper()==android.os.Looper.getMainLooper())
+                .put("accept_id",acceptId).put("request_generation",generation).put("completed",completed);
+    }
+    long diagnosticBegin(ReaderView view,android.graphics.Canvas canvas) {
+        long ordinal=++diagOrdinal;currentDiagOrdinal=ordinal;
+        try {diagSubmit(diagFence("on_draw_enter",view,canvas,ordinal,false));}
+        catch(Exception error){diagFail(error.toString());}
+        return ordinal;
+    }
+    void diagnosticEnd(ReaderView view,android.graphics.Canvas canvas,long ordinal,boolean completed) {
+        try {diagSubmit(diagFence("on_draw_exit",view,canvas,ordinal,completed));}
+        catch(Exception error){diagFail(error.toString());}
+        finally {currentDiagOrdinal=0;}
+    }
+    private void diagClose(String reason) {
+        try {
+            if(diagOutput!=null)diagWrite(base("stop").put("events",diagEvents)
+                    .put("attempted",diagAttempted.get()).put("pending",diagPending.get())
+                    .put("diagnostic_complete",diagError.get()==null&&diagPending.get()==0)
+                    .put("error",diagError.get()==null?JSONObject.NULL:diagError.get())
+                    .put("stop_reason",reason),true);
+        }catch(Exception error){diagFail(error.toString());}
+        finally {if(diagOutput!=null)try {diagOutput.close();}catch(Exception error){diagFail(error.toString());}diagOutput=null;}
+    }
+
+
     ReaderFrameObserver(Window window,long windowId,Handler handler,File root,Consumer<Exception> parentFailure) {
         this.window=window;this.windowId=windowId;this.handler=handler;this.parentFailure=parentFailure;
+        File diagDirectory=new File(root,"reader-diagnostics");
+        File diagFile=new File(diagDirectory,"window-"+Process.myPid()+"-"+windowId+".jsonl");
+        handler.post(()->{
+            try {
+                if(!diagDirectory.isDirectory()&&!diagDirectory.mkdirs())throw new IllegalStateException("diagnostic folder");
+                diagOutput=new FileOutputStream(diagFile);
+                diagWrite(base("start").put("schema",1).put("max_events",DIAG_MAX_EVENTS)
+                        .put("max_bytes",DIAG_MAX_BYTES).put("max_pending",DIAG_MAX_PENDING),false);
+            }catch(Exception error){diagFail(error.toString());}
+        });
         File directory=new File(root,"reader-draw");
         File file=new File(directory,"window-"+Process.myPid()+"-"+windowId+".jsonl");
         handler.post(()->{
@@ -70,6 +147,7 @@ final class ReaderFrameObserver implements AutoCloseable {
         try {
             submit(snapshot(base("bitmap_draw"),view,page).put("draw_id",++drawId).put("accept_id",acceptId)
                     .put("request_generation",generation).put("accepted_snapshot",page==accepted)
+                    .put("diagnostic_on_draw_id",currentDiagOrdinal)
                     .put("same_current_page",page==view.page())
                     .put("draw_begin_mono_ns",beginNs).put("draw_end_mono_ns",endNs).put("painted",painted)
                     .put("pan_x",panX).put("pan_y",panY).put("pan_limit_x",limitX).put("pan_limit_y",limitY));
@@ -146,6 +224,7 @@ final class ReaderFrameObserver implements AutoCloseable {
     @Override public void close() {close("activity_destroy",SystemClock.elapsedRealtimeNanos());}
     void close(String reason,long requestedNs) {
         if(closed)return;closed=true;
+        if(!handler.post(()->diagClose(reason)))diagFail("diagnostic close handler stopped");
         if(!handler.post(()->{
             try {
                 if(output!=null){
