@@ -271,6 +271,140 @@ try:
                 raise RuntimeError("installed program differs from built: "+key)
         return identity
     REPORT["installed_before"] = installed_identity()
+    # Inspect the generated test configuration without changing the known
+    # project/scheme invocation. Unsupported formats or ambiguous targets stop.
+    product_root = derived/"Build/Products"
+    def confined(path):
+        path = Path(path)
+        try:
+            rel = path.relative_to(product_root)
+        except ValueError:
+            raise RuntimeError("test configuration path escapes products root")
+        if ".." in rel.parts:
+            raise RuntimeError("parent traversal in test configuration path")
+        current = product_root
+        if current.is_symlink():
+            raise RuntimeError("symlink products root")
+        for part in rel.parts:
+            current = current/part
+            if current.is_symlink():
+                raise RuntimeError("symlink test configuration path")
+        if not path.exists():
+            raise RuntimeError("test configuration path missing: "+str(rel))
+        return path
+    configs = list(product_root.glob("*.xctestrun"))
+    if len(configs) != 1:
+        raise RuntimeError("expected one generated xctestrun configuration")
+    config_path = confined(configs[0])
+    if not config_path.is_file() or config_path.stat().st_size > 4*1024*1024:
+        raise RuntimeError("invalid xctestrun metadata size/type")
+    config = plistlib.loads(config_path.read_bytes())
+    if not isinstance(config, dict):
+        raise RuntimeError("xctestrun root is not a dictionary")
+    REPORT["configuration_probe"] = {
+        "path": str(config_path), "bytes": config_path.stat().st_size,
+        "sha256": sha(config_path),
+        "top_level_keys": [str(k)[:120] for k in list(config)[:40]],
+        "keys_truncated": len(config) > 40
+    }
+    metadata = config.get("__xctestrun_metadata__", {})
+    if not isinstance(metadata, dict):
+        raise RuntimeError("malformed xctestrun metadata")
+    version = metadata.get("FormatVersion", 1)
+    REPORT["configuration_probe"]["format_version_repr"] = str(version)[:80]
+    if type(version) is not int:
+        raise RuntimeError("non-integer xctestrun FormatVersion")
+    if version == 2:
+        configurations = config.get("TestConfigurations")
+        if not isinstance(configurations, list) or len(configurations) != 1:
+            raise RuntimeError("expected one xctestrun test configuration")
+        if not isinstance(configurations[0], dict):
+            raise RuntimeError("malformed xctestrun test configuration")
+        targets = configurations[0].get("TestTargets")
+        if not isinstance(targets, list):
+            raise RuntimeError("missing xctestrun test targets")
+        matches = [x for x in targets if isinstance(x, dict) and
+                   x.get("BlueprintName") == "EXReaderHostUITests-iOS"]
+    elif version == 1:
+        item = config.get("EXReaderHostUITests-iOS")
+        matches = [item] if isinstance(item, dict) else []
+    else:
+        raise RuntimeError("unsupported xctestrun FormatVersion")
+    if len(matches) != 1:
+        raise RuntimeError("UI target not uniquely mapped in xctestrun")
+    target_config = matches[0]
+    permitted = ("BlueprintName", "TestHostPath", "TestBundlePath", "UITargetAppPath")
+    REPORT["configuration_probe"]["raw_fields"] = {
+        k: target_config.get(k)[:2048] if isinstance(target_config.get(k), str)
+           else "<missing-or-non-string>" for k in permitted}
+    if any(isinstance(target_config.get(k), str) and len(target_config[k]) > 2048 for k in permitted):
+        raise RuntimeError("oversized xctestrun permitted field")
+    def mapped(key, host=None):
+        value = target_config.get(key)
+        if not isinstance(value, str) or not value:
+            raise RuntimeError("missing configuration field: "+key)
+        value = value.replace("__TESTROOT__", str(product_root))
+        if host is not None:
+            value = value.replace("__TESTHOST__", str(host))
+        if "__" in value:
+            raise RuntimeError("unknown configuration placeholder: "+key)
+        candidate = Path(value)
+        if not candidate.is_absolute():
+            raise RuntimeError("unresolved relative configuration path: "+key)
+        return confined(candidate)
+    runner_bundle = mapped("TestHostPath")
+    test_bundle = mapped("TestBundlePath", runner_bundle)
+    target_app = mapped("UITargetAppPath", runner_bundle)
+    expected_runner = product_root/"Debug-iphonesimulator/EXReaderHostUITests-iOS-Runner.app"
+    expected_test = expected_runner/"PlugIns/EXReaderHostUITests-iOS.xctest"
+    if runner_bundle != expected_runner or test_bundle != expected_test or target_app != bundle:
+        raise RuntimeError("configuration paths do not match built scheme products")
+    runner_plist = confined(runner_bundle/"Info.plist")
+    runner_info = plistlib.loads(runner_plist.read_bytes())
+    runner_exe = runner_info.get("CFBundleExecutable")
+    if not isinstance(runner_exe, str) or Path(runner_exe).name != runner_exe:
+        raise RuntimeError("unsafe runner executable name")
+    confined(runner_bundle/runner_exe)
+    runner_built = program_identity(runner_bundle)
+    if runner_built["bundle_id"] != "org.exreader.host.uitests.xctrunner":
+        raise RuntimeError("unexpected runner bundle identifier")
+    test_info_path = confined(test_bundle/"Info.plist")
+    test_info = plistlib.loads(test_info_path.read_bytes())
+    if test_info.get("CFBundleIdentifier") != "org.exreader.host.uitests":
+        raise RuntimeError("unexpected UI test bundle identifier")
+    test_exe = test_info.get("CFBundleExecutable")
+    if not isinstance(test_exe, str) or Path(test_exe).name != test_exe:
+        raise RuntimeError("unsafe test executable name")
+    test_exe_path = confined(test_bundle/test_exe)
+    REPORT["runner_configuration"] = {
+        "format_version": version, "path": str(config_path),
+        "sha256": sha(config_path), "runner": runner_built,
+        "test_bundle": str(test_bundle), "test_executable_sha256": sha(test_exe_path),
+        "target_app": str(target_app),
+        "raw_fields": {k: target_config.get(k) for k in
+                       ("BlueprintName", "TestHostPath", "TestBundlePath", "UITargetAppPath")}
+    }
+    shutil.copyfile(config_path, OUT/"generated.xctestrun")
+    def runner_registration(label, required):
+        rc = execute(["xcrun", "simctl", "get_app_container", UDID,
+                      runner_built["bundle_id"], "app"], label, 30)
+        if rc:
+            REPORT[label] = {"query_exit": rc, "registered_identity": None,
+                             "classification": "container query unsuccessful; not proof of cause"}
+            if required:
+                raise RuntimeError("runner registration query failed after single install")
+            return
+        location = Path((OUT/(label+".log")).read_text().strip())
+        actual = program_identity(location)
+        REPORT[label] = {"query_exit": 0, "registered_identity": actual}
+        if required:
+            for key in ("bundle_id", "executable_sha256", "info_plist_sha256"):
+                if actual[key] != runner_built[key]:
+                    raise RuntimeError("registered runner identity mismatch: "+key)
+    runner_registration("runner-registration-before", False)
+    require(["xcrun", "simctl", "install", UDID, str(runner_bundle)],
+            "runner-single-install", 120)
+    runner_registration("runner-registration-after", True)
     require(["xcrun", "simctl", "ui", UDID, "content_size", "medium"], "normal-set-size", 60)
     REPORT["requested_content_size"] = "medium"
     REPORT["observed_content_size_raw"] = require(
@@ -353,7 +487,7 @@ finally:
     save()
     brief = {k: REPORT.get(k) for k in ("acceptance_eligible", "diagnostic_source",
         "product_source_base", "sdk_receipt", "device", "application_build_settings", "built_program",
-        "error_excerpts", "retained_built_identity_files", "tests", "exact_query_records", "receipt", "installed_before", "installed_after", "stop_reason", "exit_code")}
+        "configuration_probe", "runner_configuration", "runner-registration-before", "runner-registration-after", "error_excerpts", "retained_built_identity_files", "tests", "exact_query_records", "receipt", "installed_before", "installed_after", "stop_reason", "exit_code")}
     print("F09_G16_IPHONE_EVIDENCE_RESULT_BEGIN")
     print(json.dumps(brief, ensure_ascii=False, indent=2))
     print("F09_G16_IPHONE_EVIDENCE_RESULT_END")
