@@ -155,3 +155,29 @@ Only reader_android.py, new test_reader_preinstrument_isolation.py and this docu
 The gate has at most 20 seconds clipped to the original absolute worker deadline; at most 10000 entries / 256 MiB are admitted. The bounds are rejection limits, not a promise that copying finishes in 20 seconds. Any failure stops entry to the reader cohort and preserves the first failure; attempted removal without confirmed outcome is explicitly marked unconfirmed. No broad helper pm clear, APK manifest/AutoBackup change, SDK change, old-test edit or acceptance override is made. The original helper assertAbsent and pixel/frame/identity assertions remain unchanged.
 
 Fourteen new Actions control methods comprise two positive and twelve negative cases, covering no-op, complete preservation, wrong/escaping paths and symlinks, failed or timed-out queries, bounds, incomplete or corrupted copies, changing remote data, failed removal, remaining directory, and absolute deadlines. All existing tests, including the 18 diagnostics controls, remain unchanged. The approved verification budget is one control <=20 minutes plus Android build <=20 minutes (other platforms skipped), then one authenticated new-package native sample <=1200 seconds with original 180+10 cohort limits, no automatic retry. This is a corrective isolation mitigation, not proof of the underlying persistence cause or F08 completion. Actual candidate test/native results are pending.
+
+## 2026-11-02 06:24 UTC: pre-instrument isolation round terminal evidence
+
+Measured source: `1c4eac3eb5e2da98d535585f80fc3aba437661bd`; native identity `native-lap25002-20261102T055639Z/A1`. This documentation-only seal does not change the measured source.
+
+- Actions [41395573011](https://github.com/NoGod3524/EXReader/actions/runs/41395573011), attempt 1: control and Android build succeeded; six other jobs skipped. All 14 new isolation controls individually passed; reader control group reported 130 tests. This is not a formal F08 acceptance increment.
+- Authenticated native artifact `13119342736`, `f08-final-android-build-41395573011-1`, 23010761 bytes, SHA256 `76aae7f10761c55db680c2a7e14180a1b41d30fd93035aec905b95b1bdc599b9`; complete payload and 18 source-bundle files were checked against the producer receipt before execution.
+- Exclusive local output: `C:\Users\Oscar\exreader-f08-native-1c4eac3e-20261102T0555Z`. Sample started 05:56:39.221040Z and finished 06:03:39.684984Z, elapsed 418.9550353 seconds, sample exit 1. Wrapper exit 0 is not sample success.
+- Shelf validation has the current source/run identity and 10 passing cases. Reader actions-ready records seven passing actions plus body n/a, but these are intermediate observations only: final reader validation has `cases=[]`, and instrumentation stdout reports `Process crashed.` with `INSTRUMENTATION_CODE: 0`. Complete reader validation did not pass; crash cause is not established.
+- All 20 pre-stop snapshots retained the original strict association rejection: native callbacks (4238,1,176), (4238,1,177), (4238,1,207), (4238,1,208), and draw 9 report duplicate native key/sequence. No deduplication, uniqueness relaxation or acceptance override was applied. The pre-stop rejection precedes later missing stop/trace evidence; that ordering does not establish why the instrumentation crashed.
+- Existing diagnostic raw records contain 22 onDraw fence events (11 enter/exit pairs), all with Canvas hardware=true, View hardware=true and main thread=true. The stream has no completion footer, so `diagnostic_complete=false` with `diagnostic footer/incomplete`; observed hardware drawing is not a complete diagnostic pass. Hardware Canvas did not eliminate the original association rejection in this sample. Per the approved stopping condition, no further layer experiment is started.
+- The pre-reader isolation gate observed the exact reader-evidence directory already absent: noop=true, absence_verified=true, zero old files, first_error=null, no backup and no deletion attempted. Elapsed gate time was approximately 0.0363 seconds within its original 20-second clipped deadline. Therefore this device execution does not demonstrate the backup/delete branch; it does demonstrate fail-closed absence handling without bypassing the original stale-evidence assertion.
+- Owned emulator PID 14260 received normal emu-kill success and exited 0; the final process identity query returned no remaining matching process. No extra cleanup, automatic retry, new native sample or CI run followed.
+
+Original evidence hashes (SHA256), retained without rewriting:
+- native-result.json: `fb39a27fcc7ededfcf0df1133787277571ae604d233ecb6e0c98c8e6e2a41f02`
+- reader/result.json: `794704e3f791f6be68733485b7f8ec565c82aec4af0d28222b93a146bd8d3e6a`
+- reader/isolation-prereader/receipt.json: `5c80cb1a0c910fe5bbde90492a9f2b0449b5852db1e8b648a018ced470b64a08`
+- reader/actions-ready: `881f2b305059a051f9b44cba76683c5d6ab68e36210538a7569e989ae5d4d23a`
+- retained pre-stop attempts: `0549d7c09a89b7b83bea1d12216daa69d4e422f7c8a32f49ae92df0258023120`
+- Shelf validation: `ce4c0c0da565ef9c0f72aa39dd0ba3501e6bfb61f3700caf7bdaea9f24fab157`
+- final reader validation: `39e3f370303970bf9c21fc1a22b3523424c657c9fdbc96cd2fd03bb0e451b4a5`
+- diagnostic raw window-4238-1.jsonl (8664 bytes): `ad4454f89c1a260fe5d993a8403ca423bf14ba4c7b38c2c26f0974f5f34cee77`
+- owned cleanup receipt: `2426fb088535e61966543576f186ae0078f435715a63bfb24c6e90e5cbea4f67`
+
+Independent review cache: `/tmp/f08-1c4eac3e-native-evidence-0618.json`. F12 independently checked original file hashes and the observation/completion distinction. F08 remains unaccepted; the formal ledger is unchanged. This closes this authorized single native round, not the overall F08 objective.
