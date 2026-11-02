@@ -135,6 +135,8 @@ public final class ReaderF08UiTest {
                 until(()->"On this device".equals(text("shelf_summary")),"public shelf returned",10_000);
                 detail.put("source_counts",sourceCounts()).put("no_clear_or_delete_performed",true);
             });
+            try{awaitOwnedStop(validation);}
+            catch(Exception|AssertionError error){validation.put("native_stop_handshake_error",Log.getStackTraceString(error));throw error;}
         } finally {
             activeInputs=null;
             JSONObject cleanup;
@@ -361,6 +363,54 @@ public final class ReaderF08UiTest {
         return hex(digest.digest());
     }
     private static String hex(byte[] bytes){StringBuilder out=new StringBuilder();for(byte value:bytes)out.append(String.format(java.util.Locale.ROOT,"%02x",value&255));return out.toString();}
+
+    private void awaitOwnedStop(JSONObject validation)throws Exception {
+        String nonce=args.getString("exr_stop_nonce","");
+        assertTrue("fresh host stop nonce",nonce.matches("[0-9a-f]{64}"));
+        assertEquals("all fixed actions before stop handshake",PLAN.length,cases.length());
+        Set<String> seen=new HashSet<>();
+        for(int i=0;i<cases.length();i++){
+            JSONObject item=cases.getJSONObject(i);String id=item.getString("id");
+            assertEquals("fixed action order before stop",PLAN[i],id);
+            assertTrue("unique action before stop",seen.add(id));
+            assertEquals("successful action before stop","body_applicability".equals(id)?"n/a":"pass",item.getString("status"));
+        }
+        assertTrue("reserve original cleanup budget",SystemClock.elapsedRealtimeNanos()<deadline-CLEANUP_NS);
+        int productPid=pid();assertTrue("live owned product before handshake",productPid>0);
+        JSONObject ready=new JSONObject().put("schema","reader-owned-stop-ready-v1").put("nonce",nonce)
+                .put("identity",identity()).put("helper_pid",android.os.Process.myPid()).put("product_pid",productPid)
+                .put("ready_elapsed_ns",SystemClock.elapsedRealtimeNanos()).put("deadline_elapsed_ns",deadline)
+                .put("validation",validation);
+        File readyFile=new File(output,"actions-ready.json"),ackFile=new File(output,"stop-ack.json");
+        assertFalse("no stale ready",readyFile.exists());assertFalse("no stale ack",ackFile.exists());
+        writeAtomic(readyFile,ready);
+        while(!ackFile.isFile()&&SystemClock.elapsedRealtimeNanos()<deadline-CLEANUP_NS)SystemClock.sleep(100);
+        assertTrue("owned stop ack within unchanged cohort and cleanup reserve",ackFile.isFile()
+                &&SystemClock.elapsedRealtimeNanos()<deadline-CLEANUP_NS);
+        JSONObject ack=new JSONObject(new String(java.nio.file.Files.readAllBytes(ackFile.toPath()),StandardCharsets.UTF_8));
+        assertEquals("stop ack schema","reader-owned-stop-ack-v1",ack.getString("schema"));
+        assertEquals("stop ack nonce",nonce,ack.getString("nonce"));
+        JSONObject expected=identity(),actual=ack.getJSONObject("identity");
+        for(String key:new String[]{"source_sha","run_id","attempt"})assertEquals("stop ack identity "+key,expected.getString(key),actual.getString(key));
+        assertEquals("stop ack helper",android.os.Process.myPid(),ack.getInt("helper_pid"));
+        assertEquals("stop ack product",productPid,ack.getInt("product_pid"));
+        assertEquals("owned product unchanged before cleanup",productPid,pid());
+        assertTrue("positive native window",ack.getLong("window_id")>0);
+        assertTrue("native close independently confirmed",ack.getBoolean("confirmed"));
+        assertTrue("native closure precedes actual helper cleanup",ack.getLong("native_closed_elapsed_ns")>=ready.getLong("ready_elapsed_ns")
+                &&ack.getLong("native_closed_elapsed_ns")<=SystemClock.elapsedRealtimeNanos());
+        assertEquals("ack binds complete readiness bytes",handshakeDigest(readyFile),ack.getString("ready_sha256"));
+        validation.put("native_stop_handshake",ack);
+    }
+    private static String handshakeDigest(File file)throws Exception {
+        return hex(MessageDigest.getInstance("SHA-256").digest(java.nio.file.Files.readAllBytes(file.toPath())));
+    }
+    private static void writeAtomic(File file,JSONObject value)throws Exception {
+        File temp=new File(file.getParentFile(),file.getName()+".tmp");
+        assertFalse("fresh handshake temp",temp.exists());assertFalse("fresh handshake destination",file.exists());
+        write(temp,value);assertTrue("atomic readiness publication",temp.renameTo(file));
+    }
+
     private JSONObject closeOwnedActivity()throws Exception {
         JSONArray events=new JSONArray();JSONObject value=new JSONObject().put("events",events);
         long end=Math.min(deadline,SystemClock.elapsedRealtimeNanos()+CLEANUP_NS);int productBacks=0;String after=null;
