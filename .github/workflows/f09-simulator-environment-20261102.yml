@@ -1,0 +1,33 @@
+name: F09 simulator environment only
+on:
+  push:
+    branches: [audit/f09-simulator-environment-20261102]
+    paths:
+      - tools/f09_review/inspect_simulator_environment.py
+      - .github/workflows/f09-simulator-environment-20261102.yml
+      - docs/reader-total-progress/F09_SIMULATOR_ENVIRONMENT_20261102.md
+permissions:
+  contents: read
+concurrency:
+  group: f09-simulator-environment-20261102
+  cancel-in-progress: false
+jobs:
+  inspect:
+    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 simulator environment single observation]')
+    runs-on: macos-15
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Observe environment once without SDK or app
+        run: python3 tools/f09_review/inspect_simulator_environment.py
+      - name: Preserve observation and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f09-simulator-environment-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f09-simulator-environment/
+          if-no-files-found: error
+          retention-days: 14
