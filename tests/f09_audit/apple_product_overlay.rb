@@ -5,9 +5,12 @@
 # the current product host, not an SDK-only build. G16's targets, schemes, test
 # sources and compilation conditions are kept; only product settings are added.
 require 'xcodeproj'
+require 'json'
 raise 'Actions only' unless ENV['GITHUB_ACTIONS'] == 'true'
-project_path, products = ARGV
-raise 'usage: apple_product_overlay.rb <project> <products-prefix>' unless project_path && products
+project_path, products, option = ARGV
+production = option == '--production'
+raise 'usage: apple_product_overlay.rb <project> <products-prefix> [--production]' unless project_path && products && (ARGV.length == 2 || (ARGV.length == 3 && production))
+production_records = []
 project = Xcodeproj::Project.open(project_path)
 root = Dir.pwd
 project.targets.each do |target|
@@ -31,9 +34,16 @@ project.targets.each do |target|
       '-lreader_font_library', '-lreader_original_export', '-lreader_jump_history', '-lreader_sync_view', '-lexreader',
       '-lsqlite3', '-lc++', '-lxml2', '-framework', 'Foundation', '-framework', 'CoreFoundation', '-framework', 'Security']
     conditions = (s['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] || '$(inherited)').split(' ')
+    before_conditions = conditions.dup
     conditions += ['EXR_APPLE_RAW3', 'EXR_APPLE_WAVE3', 'EXR_APPLE_PAGE_THEME']
+    # Opt-in only: default G16 callers keep their original compilation conditions.
+    if production
+      conditions -= ['EXR_APPLE_HOST_REVIEW', 'EXR_APPLE_IMPORT_REVIEW', 'EXR_APPLE_READING_REVIEW']
+      production_records << { target: target.name, configuration: config.name, before: before_conditions, after: conditions.uniq }
+    end
     s['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = conditions.uniq.join(' ')
   end
 end
 project.save
 puts "product overlay applied to #{project_path} with #{products}"
+puts JSON.generate(mode: "production", application_conditions: production_records) if production
