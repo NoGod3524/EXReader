@@ -1494,3 +1494,60 @@ F03 coordinator handles serial DC, F07/KB06 review and this independent doc; thi
 Known completed work is separated above from candidates and tests still waiting. Formal count remains98. Runtime caps are not delivery estimates: A may use its remaining120-minute job cap; F08 may use remaining build cap plus at most1200s native once admitted; C2 at most10min and KB06 at most45min once actually started. Completion confidence is low until their actual gates return; total remaining ten-entry completion time is not defensibly estimable because F05 product scope and other acceptance gaps remain.
 
 Snapshot recorded at 2026-11-02T19:24:20.598356+00:00; source-data observation times are explicitly listed above and are not this save time.
+
+
+## Independent handoff ? 2026-11-02 16:22 EST (UTC?5)
+
+This append preserves the entire prior handoff. Recorded time below is the actual save time, not a reconstructed historical timestamp. The scheduled 15:22 EST snapshot was not saved: the Desktop Commander source-read response stalled and the original F08 native run subsequently required priority safety cleanup. No historical snapshot has been backdated.
+
+### Formal ledger and ownership
+
+Formal acceptance remains **98/108**; no new formal item is accepted by this snapshot. Diagnostic, build, synthetic, bounded UI and partial static results below do not change the catalog. Five item owners remain F03, F07, F09, F05 and F08; F03 recovery coordinates the single Desktop Commander route and independent handoffs, and is not a sixth product implementation lane. Engineering progress estimates previously discussed are not ledger percentages or weighted acceptance evidence.
+
+### F03 ? R3 has passed the new pre-device checks; final acceptance is still pending
+
+R2 `b4d97d6d62c1366972d321174b728980e287b2cd`, run [41508119609/A1](https://github.com/NoGod3524/EXReader/actions/runs/41508119609), failed before device cases because HostImportUiTest could not resolve ReadingReview (seven compile errors). Its successful product build does not erase the staging defect. Original artifact 13171133554 is 86,963,680 bytes, SHA256 `2842d041d06ea1438ac4e4ec2131a0bd88d1d9087c7ff9941e83b3ca24124e6f`; it was not downloaded under a new ZIP exception.
+
+The explicitly approved R3 modifies only admission.py, contract.json and the versioned workflow. It stages the original ReadingReview bytes as test-only code and adds complete AndroidTest/provider precompilation plus real DEX class definitions, unchanged main APK and unchanged eight product-flag checks. Original production code, SDK, tests and runtime gates remain unchanged.
+
+R3 source `9d493b2235d81c216767295948f417c1bd12bf2d`, tree `b80b2a3ba5f5a7b5377fc33c17707b28ac2790f9`, parent R2, was independently reviewed as exactly three modified files before the unique non-force publication to `dot/f03-production-acceptance-v342-20261102`. The earlier object request had been explicitly denied without execution; publication followed the user's new precise remote-write authorization.
+
+Latest actual observation **21:16:53 UTC / 16:16:53 EST**: [run41525811486/A1](https://github.com/NoGod3524/EXReader/actions/runs/41525811486), job125553128090, remains in progress. SDK/app build and the new complete test/provider precompile/DEX/main-APK/flags proof succeeded. The API34 device phase is now running. No final accepted=true result is claimed. This is the approved single new Android job, capped at120 minutes; it is not an automatic retry of an old run.
+
+### F08 ? Actions passed, but the sole native run failed and exceeded its approved duration
+
+Source `fdb124f8c313b99dc6d6c07bf01596abf90a4021` passed [Actions41508205211/A1](https://github.com/NoGod3524/EXReader/actions/runs/41508205211): control and Android build succeeded, six unrelated jobs skipped,20 new controls and150 reader tests passed. Artifact13172082704,23,012,661 bytes, SHA256 `b91f0482e1358edd1fe8a01b602a4a158fda51421666c8408f97ad30d590782c`, was authenticated with18 code-bundle files and84 payload entries before the specifically authorized LAP25002 native exception.
+
+The sole native sample began **20:13:28.044830 UTC /15:13:28 EST**, PID29120. It did not finish within1200 seconds. The original result records **1437.830 seconds**, exit1, collection/shelf/reader false and **UNSEALED**. The reader directory was never generated and worker.log was empty: this does not validate v2 matching on a native reader sample.
+
+At20:36:36 UTC, both measured monotonic and wall elapsed were1387.969 seconds. At20:37:25?29 UTC, after exact PID/creation-time/executable/command-line identity checks, the owned worker23908, qemu12020 and emulator27740 were stopped; sample29120 had already exited. All four were absent at final cleanup, with no cleanup error and no display setting change. The wrapper also exited1. No second sample or new native budget was used.
+
+Independent review authenticated17 retained raw files and the cleanup evidence. Readonly cause analysis found long blocking waits at both wrapper and native-controller levels, without an active wall-clock deadline check during each wait. A meminfo timeout arose in the Shelf background PSS sampler, whose exception was caught; this is not proof that meminfo blocked the main flow for the entire budget. The Shelf main flow did not return, and existing logs do not locate its exact blocking operation. The original performance failure remains open; no additional sampling is authorized by this handoff.
+
+### F09 ? KB06 never reached Space; a separately approved canonical-path repair is being prepared
+
+The original three-file current-UI collector was independently reviewed and published as `b62ef60e8830f7b515c1fb6234dc4187c429954e` on `audit/f09-windows-kb06-current-ui-20261102`. [Run41521295042/A1](https://github.com/NoGod3524/EXReader/actions/runs/41521295042) failed during product configure, after SDK configure/build/install succeeded. The original log reports ?Original hash prefix must be canonical? at the product's strict path guard. The collector correctly reports not_executed, zero Space activations and no UI checks. This is not a keyboard-focus assertion failure.
+
+Artifact13178011703 is16,635 bytes, SHA256 `a33f4ea61bf7bdf53c063ff137c26cdf12024fd3ed81103ad8e1210af7c7da91`. The existing job text was read; no new artifact ZIP was downloaded.
+
+Readonly investigation traced Windows str(prefix) into a strict CMake REAL_PATH equality check. The package also requires canonical origin/include/header/archive/imported locations, static-library identity and no extra transitive dependencies. The new precise approval at16:16:19 EST covers only the existing collector, workflow and explanation: derive the canonical path using the same CMake, retain all strict product checks, separate original product base5a57 from direct parentb62, and allow one new Windows job?45 minutes after independent review. The repair passed actual-file and independent full-tree review as exactly three modified files. Commit `77cbbe5e96303306dc22ca9025d9c1d760e87895`, tree `d6b63397728fd7fa5fb352b8d7580f22fe4db235`, parent b62, was uniquely non-force published and read back at16:21 EST. The immediate run index was empty; this is not evidence that no run will be triggered. No new run identity or result is claimed yet, and the ref will not be pushed again.
+
+The earlier Apple evidence and new two-rule adjudication remain separate: three platform diagnostics used different source SHAs; six new rule/evidence checks passed, but historical finding rows were not individually reloaded, supersession_verified=false and legacy_blockers_cleared=0. This is not full F09, VoiceOver or common-source three-platform acceptance.
+
+### F07 ? existing evidence authenticated; complete provider/module closure is not established
+
+The existing11-artifact audit and the corrected binary audit are complete. Corrected source `fa5bdfa68efd83af0927c1a918f7b88965fe6afc`, [run41512362350/A1](https://github.com/NoGod3524/EXReader/actions/runs/41512362350), succeeded as an audit process, but explicitly reports binary_observations_complete=false. macOS readobj output was truncated; iPhone/iPad readobj reached the output limit; Windows nm exposed no symbols. SQLite symbols observed in GTK/Apple hosts and the Android SDK library do not by themselves prove a single provider or absence of private module dependencies.
+
+Output artifact13173861420 is1,144,310 bytes, SHA256 `0e6947c228f69cb7295283ace676a04297d799bdf157d65e20a6be309dfe422b`. The original wrong-flag failure remains retained. Current work is only a targeted readonly check of original F07 contract, public/private interface definitions and exact module coverage. No extra binary scan, rebuild, larger output allowance or CI is authorized here.
+
+### F05 ? the remaining blocker includes a real product UI gap
+
+Static inspection established that Android --program consumes the actual installed APK bytes, while its peer must be the F05 GTK peer-contract plus three native checkpoints; the old F04 state.json cannot substitute. The existing F05 GTK build already produces received-sdk-inspect and uses the retained GTK payload, so there is no need to invent an inspector.
+
+The Android unresolved path currently shows a generic message and returns; the sync panel does not expose the put/delete head details required by the conflict scenarios. The two old delete-conflict test fields being false are not merely a wiring problem. Product-visible conflict details need explicit implementation-owner scope before a complete caller/acceptance package can be represented as executable. No F05 product change or new CI was performed, and the previous265-minute allocation was not silently reassigned.
+
+### Next decisions and evidence boundaries
+
+Continue only the running F03 R3 job to its real terminal result. Review the approved F09 canonical-path candidate before any unique publication/run. Preserve F08's failed over-budget native evidence and require a separate concrete repair scope for stronger deadline enforcement/first-error visibility. Finish F07's readonly definition/coverage inventory and retain F05's product-owner dependency. Missing evidence is not a pass, and hourly snapshots do not authorize extra builds, device tests, retries, owner transfers or catalog changes.
+
+Snapshot recorded at 2026-11-02T21:22:27.228809+00:00 / 2026-11-02T16:22:27.228809-05:00 EST. Source observation times are explicitly stated above; this document commit is not a product source.
