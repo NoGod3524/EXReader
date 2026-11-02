@@ -1,0 +1,53 @@
+name: F09 G16 candidate contract v2
+on:
+  push:
+    branches: [audit/f09-g16-contract-v2-20261102]
+    paths:
+      - tests/f09_audit/g16_contract_v2.json
+      - tests/f09_audit/g16_contract_v2_adapter.py
+      - tests/f09_audit/test_g16_contract_v2.py
+      - .github/workflows/f09-g16-contract-v2-20261102.yml
+      - docs/reader-total-progress/F09_G16_CONTRACT_V2_20261102.md
+permissions:
+  contents: read
+concurrency:
+  group: f09-g16-contract-v2-20261102
+  cancel-in-progress: false
+jobs:
+  controls:
+    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 g16 candidate contract v2]')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fixed baseline and five-file scope
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          base = "190c52edccba76ea4054af2cbc3399f916a2269c"
+          expected = {
+            "tests/f09_audit/g16_contract_v2.json",
+            "tests/f09_audit/g16_contract_v2_adapter.py",
+            "tests/f09_audit/test_g16_contract_v2.py",
+            ".github/workflows/f09-g16-contract-v2-20261102.yml",
+            "docs/reader-total-progress/F09_G16_CONTRACT_V2_20261102.md",
+          }
+          changed = set(subprocess.check_output(["git", "diff", "--name-only", base, "HEAD"], text=True).splitlines())
+          assert changed == expected, changed
+          added = set(subprocess.check_output(["git", "diff", "--diff-filter=A", "--name-only", base, "HEAD"], text=True).splitlines())
+          assert added == expected, added
+          PY
+      - name: Exactly twelve synthetic positive and negative controls
+        run: python3 tests/f09_audit/test_g16_contract_v2.py
+      - name: Preserve candidate result only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f09-g16-contract-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f09-g16-contract-v2/
+          if-no-files-found: warn
+          retention-days: 14

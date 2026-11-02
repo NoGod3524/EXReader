@@ -1,0 +1,15 @@
+{
+  "schema": 2,
+  "status": "candidate-only",
+  "legacy_path": "tests/reader_a11y_apple/a11y_contract.json",
+  "legacy_sha256": "0d330a6841831494a15fafbf1f318d8441cffd9bee0a068fca9b10b3105ed2f1",
+  "source_base": "190c52edccba76ea4054af2cbc3399f916a2269c",
+  "modes": {
+    "production": "absent",
+    "review": "required"
+  },
+  "reader_state_scope": "reader.epub",
+  "library_empty_name": "书架为空，打开文件即可导入。",
+  "other_rules": "preserve all legacy rules; candidate adapter evaluates only the declared deltas",
+  "acceptance_eligible": false
+}
