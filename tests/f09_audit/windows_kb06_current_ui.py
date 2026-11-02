@@ -15,8 +15,9 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "build/f09-windows-kb06"
 BASE = "5a57ff3cc0f295327676663236c6214b5736cb6a"
+PARENT = "b62ef60e8830f7b515c1fb6234dc4187c429954e"
 BRANCH = "audit/f09-windows-kb06-current-ui-20261102"
-MARKER = "[F09-WINDOWS-KB06-CURRENT-UI-20261102]"
+MARKER = "[F09-WINDOWS-KB06-CURRENT-UI-R2-20261102]"
 PATHS = {
     "tests/f09_audit/windows_kb06_current_ui.py",
     ".github/workflows/f09-windows-kb06-current-ui-20261102.yml",
@@ -49,12 +50,15 @@ def source():
          "exact approved push branch")
     need(IDENTITY["attempt"] == "1" and all(IDENTITY.values()), "single first attempt identity")
     head = git("rev-parse", "HEAD")
-    need(head == IDENTITY["source_sha"] and git("rev-list", "--parents", "-n", "1", head).split() == [head, BASE],
+    need(head == IDENTITY["source_sha"] and git("rev-list", "--parents", "-n", "1", head).split() == [head, PARENT],
          "fixed parent/source")
     need(MARKER in git("log", "-1", "--format=%B"), "authorized marker")
     changed = git("diff", "--name-status", BASE, head).splitlines()
     need(len(changed) == 3 and {line[2:] for line in changed} == PATHS
          and all(line.startswith("A\t") for line in changed), "exact three additions; all old bytes preserved")
+    current = git("diff", "--name-status", PARENT, head).splitlines()
+    need(len(current) == 3 and {line[2:] for line in current} == PATHS
+         and all(line.startswith("M\t") for line in current), "exact approved three-file R2 correction")
     need(not git("diff", "--name-only", "HEAD"), "tracked source modified")
     return {**IDENTITY, "product_source_base": BASE, "old_files_unchanged": True}
 
@@ -83,6 +87,64 @@ def command(label, argv, timeout=1800):
         raise timed_out
     need(done.returncode == 0, label + " exit " + str(done.returncode))
 
+def canonical_hash_prefix(prefix):
+    # Do not normalize spelling by guessing Windows case, drive or separators.
+    # CMake's own REAL_PATH is also the unchanged product's comparison authority.
+    prefix = Path(prefix)
+    need(prefix.is_absolute() and prefix.is_dir(), "installed hash directory missing")
+    for component in (prefix, *prefix.parents):
+        need(not component.is_symlink() and not component.is_junction(), "hash prefix path alias")
+    need(prefix.resolve(strict=True).is_relative_to(OUT.resolve(strict=True)), "hash prefix outside this run")
+    script = OUT / "hash-realpath.cmake"
+    canonical_file = OUT / "hash-canonical.txt"
+    script.write_text('file(REAL_PATH "${INPUT_PREFIX}" canonical)\nfile(WRITE "${OUTPUT_FILE}" "${canonical}")\n', encoding="utf-8")
+    command("hash-canonical", ["cmake", "-DINPUT_PREFIX=" + prefix.as_posix(),
+            "-DOUTPUT_FILE=" + canonical_file.as_posix(), "-P", script], 60)
+    canonical = canonical_file.read_text(encoding="utf-8")
+    need(canonical and canonical == canonical.strip() and not any(c in canonical for c in ("\n", "\r", ";")),
+         "invalid canonical path output")
+    real = Path(canonical)
+    need(real.is_absolute() and real.is_dir() and os.path.samefile(real, prefix),
+         "CMake canonical prefix does not identify the installed directory")
+    for component in (real, *real.parents):
+        need(not component.is_symlink() and not component.is_junction(), "canonical hash path alias")
+    need(real.resolve(strict=True).is_relative_to(OUT.resolve(strict=True)), "canonical prefix escaped run")
+    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = canonical
+    probe = OUT / "hash-package-admission"
+    probe.mkdir(exist_ok=False)
+    cmake = """cmake_minimum_required(VERSION 3.24)
+project(F09HashPackageAdmission LANGUAGES C)
+if(NOT "${READER_ORIGINAL_HASH_PREFIX}" STREQUAL "$ENV{EXREADER_ORIGINAL_HASH_PREFIX}")
+  message(FATAL_ERROR "F09 canonical selector disagreement")
+endif()
+file(REAL_PATH "${READER_ORIGINAL_HASH_PREFIX}" actual)
+if(NOT "${actual}" STREQUAL "${READER_ORIGINAL_HASH_PREFIX}")
+  message(FATAL_ERROR "F09 canonical roundtrip mismatch")
+endif()
+set(expected "${actual}/lib/cmake/EXReaderOPDSHash")
+find_package(EXReaderOPDSHash 0.1.0 EXACT CONFIG REQUIRED PATHS "${expected}" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+if(NOT "${EXReaderOPDSHash_DIR}" STREQUAL "${expected}")
+  message(FATAL_ERROR "F09 hash package escaped exact prefix")
+endif()
+exreader_opds_hash_validate("${actual}")
+"""
+    (probe / "CMakeLists.txt").write_text(cmake, encoding="utf-8")
+    command("hash-package-admission", ["cmake", "-S", probe, "-B", OUT / "hash-package-admission-build",
+            "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", "-DREADER_ORIGINAL_HASH_PREFIX=" + canonical], 120)
+    inventory = {}
+    for item in sorted(real.rglob("*")):
+        need(not item.is_symlink() and not item.is_junction(), "installed hash member alias")
+        if item.is_file():
+            inventory[item.relative_to(real).as_posix()] = {"bytes": item.stat().st_size, "sha256": sha(item)}
+    need(inventory and "lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashConfig.cmake" in inventory,
+         "hash package inventory missing")
+    receipt = {"requested": str(prefix), "requested_posix": prefix.as_posix(), "canonical": canonical,
+               "drive": real.drive, "same_directory": True, "cmake_package_admission": True,
+               "files": inventory, "source": IDENTITY}
+    save("hash-prefix-admission.json", receipt)
+    print(json.dumps({"hash_prefix_admission": receipt}), flush=True)
+    return receipt
+
 def build():
     report = {**IDENTITY, "build_complete": False, "accepted": False}
     try:
@@ -94,13 +156,21 @@ def build():
         command("hash-build", ["cmake", "--build", OUT / "hash-build", "--parallel", "4"])
         command("hash-install", ["cmake", "--install", OUT / "hash-build"])
         need(prefix.is_dir() and any(prefix.rglob("*Config.cmake")), "installed OPDSHash package missing")
-        os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = str(prefix)
+        hash_receipt = canonical_hash_prefix(prefix)
+        report["hash_prefix_admission"] = hash_receipt
         spec = importlib.util.spec_from_file_location("f09_kb06_f06", ROOT / "tests/reader_f06_packages/build.py")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         module.OUT = OUT / "f06"
         module.OUT.mkdir(parents=True, exist_ok=False)
         payload = module.windows() / "EXReader"
+        need(os.environ.get("EXREADER_ORIGINAL_HASH_PREFIX") == hash_receipt["canonical"],
+             "hash prefix changed during original F06 build")
+        for relative, identity in hash_receipt["files"].items():
+            item = Path(hash_receipt["canonical"]) / relative
+            need(item.is_file() and not item.is_symlink() and not item.is_junction()
+                 and {"bytes": item.stat().st_size, "sha256": sha(item)} == identity,
+                 "installed hash package changed during original build")
         exe = payload / "EXReader.exe"
         need(exe.is_file(), "F06 actual packaged EXReader.exe missing")
         command("fixtures", [sys.executable, ROOT / "tests/windows_host/make_fixtures.py", "--output", OUT / "fixtures"], 120)

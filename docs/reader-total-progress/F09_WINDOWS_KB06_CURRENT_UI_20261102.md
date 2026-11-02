@@ -39,3 +39,21 @@ After a real activation, a failure remains fail; no rerun or replacement occurs.
 A pass applies only to these two current-shell paths, not all F09 or accessibility.
 Other Windows/GTK failures, mobile VoiceOver gaps, and the formal 98/108 ledger
 remain unchanged. Historical G16 results are not touched.
+
+
+## R2: canonical installed hash prefix
+Parent: b62ef60e8830f7b515c1fb6234dc4187c429954e. Product baseline remains
+5a57ff3cc0f295327676663236c6214b5736cb6a. Only these three audit files change.
+The first run 41521295042 failed product configuration with the unchanged
+canonical-prefix assertion. Space activations were zero; the case was not executed.
+R2 obtains the prefix from the same CMake REAL_PATH operation used by the
+product, verifies directory identity and rejects symlinks/junctions. No case-folding
+or relaxed comparison replaces the original guard. Before rebuilding the SDK,
+a configure-only admission invokes the original exact OPDSHash 0.1.0 package
+validator, including imported target, archive, header and ownership checks.
+The canonical environment selector is inherited by all original F06 subprocesses.
+The installed package byte inventory is checked again after the original build.
+F06 source, SDK, product, all module flags/targets and original package checks
+remain unchanged. This adds no device cases: exactly the original cancel/import
+Space paths run once after a successful same-run build. One new Windows job
+at most 45 minutes, no automatic retry; all previous failures remain preserved.
