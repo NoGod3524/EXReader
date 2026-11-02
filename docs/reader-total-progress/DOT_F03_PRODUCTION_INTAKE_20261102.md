@@ -1,0 +1,15 @@
+# F03 production-only intake from canonical ec11
+## Authorized scope
+User explicitly approved on 2026-11-02 at 07:42:17 UTC: one commit and push on dot/f03-production-intake-20261102 from ec11cf862ca3b44483d7e8c4726ae748ab438337, exactly three verified production files plus this document, zero build/test/CI. Canonical is not updated.
+## Exact production blobs
+- examples/android/app/src/main/java/org/exreader/host/BookStore.java: 0be5dc75bcc09018f9f7f8e788cc598849e4eb1d.
+- examples/android/app/src/main/java/org/exreader/host/OrganizationStore.java: 797aaebb6b04b6722460dd6d1effa1063dbac493.
+- examples/android/app/src/main/java/org/exreader/host/MainActivity.java: 5ae80b939b816b91d92c9886c8486f088ee09f15.
+Canonical old blobs were respectively 8757f8977a5b1ce9fdf29545c332de7c72a1257d, ab4d94aefaf54f527109560f0a1de66e0d3f50f5, 24e18536e40ea450f95bfbc310f81d7163b05fa7. These equal the original F03 pre-fix blobs; no intervening differences in these three files were overwritten.
+BookStore and OrganizationStore together protect original pending bootstrap identities against competing automatic history on import/reopen/sync staging, using the original journal/lock. MainActivity changes only the early oversized-input message to include exceeds 32 MiB; the 32 MiB reading limit and 128 MiB staging explanation/control flow remain unchanged.
+## Evidence and limitations
+Verified source 39600d0d3a3a5e4bc2599a92e94e494a542f06f1 contains these exact three blobs. Complete Android run 41367420320/A1 passed original 45+10+11 cases, 48+20 strict gates, organization 8 and recovery 12, but retained overall failure because a formal shelf consumer requires accepted=true while the candidate producer correctly returns accepted=false.
+Independent contract run 41378042514/A1 on ec4675e1c70eea7058f5b25d865dd6569419f5b4 authenticated the old artifact and passed one positive plus 40 negative controls; formal/product acceptance remained false. Result artifact 13111513468, 4900 bytes, SHA256 059acaef6345c107e8ff83ec0ec5e9d08aba61eefc60c1d6e420ff5b2b2bb86f. Full evidence remains at docs/reader-total-progress/DOT_F03_CANDIDATE_CONTRACT_20261102.md on commit 81d166a322ffe33e395179502c500573fa22e974.
+This intake does NOT bring historical OrganizationTest fixture exceptions, new recovery tests, identity/scope pins, build scripts, candidate-contract code, workflows or old CI budgets. SDK, journal, all existing tests and every other canonical blob remain unchanged. This new canonical-based source is unbuilt and untested; historical pass results are not new-tree acceptance or formal ledger credit.
+## Trigger admission
+All 284 canonical workflow trigger sections were read statically; push allowlists exclude this new branch, with no matching/wildcard or unbounded push trigger admitted. The one intake commit uses [skip ci], no workflow dispatch is authorized, and no workflow files are modified. Stop before publishing if the target branch already exists, the exact four-path tree differs, or trigger review cannot establish zero new CI.

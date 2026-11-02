@@ -117,10 +117,13 @@ final class BookStore implements AutoCloseable {
     }
 
     private void ensureOriginalRevision(VerifiedSource source) {
-        if (!"0".equals(NativeCatalog.selection(catalog.nativeOwner(),"book",source.key)[0])) return;
-        String[] ids=NativeCatalog.prepareCreate(bookRequests,"book-"+source.key);
-        if(catalog.bootstrap(source,ids[0],new String[0]).status!=NativeCatalog.Result.OK)
-            throw new IllegalStateException("Book original identity could not be prepared");
+        synchronized(IntentJournal.LOCK) {
+            if (!"0".equals(NativeCatalog.selection(catalog.nativeOwner(),"book",source.key)[0])) return;
+            if (organization.deferAutomaticBootstrap(source)) return;
+            String[] ids=NativeCatalog.prepareCreate(bookRequests,"book-"+source.key);
+            if(catalog.bootstrap(source,ids[0],new String[0]).status!=NativeCatalog.Result.OK)
+                throw new IllegalStateException("Book original identity could not be prepared");
+        }
     }
 
     NativeCatalog.Result bootstrapBook(long id,String revision,String[] expected,HostTask task) throws IOException {
@@ -145,11 +148,15 @@ final class BookStore implements AutoCloseable {
         if(!directory.isDirectory()&&!directory.mkdirs())throw new IOException("同步目录创建失败");
         for(NativeLibrary.Book book:library.books()){
             task.check();VerifiedSource verified=verifySource(book,null,0,task);
-            String[] selection=NativeCatalog.selection(catalog.nativeOwner(),"book",verified.key);
-            if("0".equals(selection[0])){
-                String request="book-"+verified.key;String[] ids=NativeCatalog.prepareCreate(pending,request);
-                NativeCatalog.Result committed=catalog.bootstrap(verified,ids[0],new String[0]);
-                if(committed.status!=NativeCatalog.Result.OK)throw new IOException("书籍信息尚不能同步");
+            synchronized(IntentJournal.LOCK) {
+                String[] selection=NativeCatalog.selection(catalog.nativeOwner(),"book",verified.key);
+                if("0".equals(selection[0])){
+                    if(organization.deferAutomaticBootstrap(verified))
+                        throw new IOException("Review or retry the saved organization intent before syncing this book");
+                    String request="book-"+verified.key;String[] ids=NativeCatalog.prepareCreate(pending,request);
+                    NativeCatalog.Result committed=catalog.bootstrap(verified,ids[0],new String[0]);
+                    if(committed.status!=NativeCatalog.Result.OK)throw new IOException("书籍信息尚不能同步");
+                }
             }
             File staged=new File(directory,verified.sha256+"."+verified.format);
             if(staged.exists()){
