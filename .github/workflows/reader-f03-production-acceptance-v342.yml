@@ -71,9 +71,11 @@ jobs:
           python tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py --repo .
           mkdir -p examples/android/app/src/androidTest/assets/mapping
           cp build/android-host/fixtures/Sample.epub examples/android/app/src/androidTest/assets/mapping/
-      - name: Compile complete retained tests and unchanged provider before starting a device
+      - name: Verify byte-identical catalog v3 and mapping overlays then compile all retained tests before device
         id: test_compile
-        run: python3 tests/dot_f03_production_acceptance_20261102/admission.py precompile-tests
+        run: |
+          python3 tests/dot_f03_production_acceptance_20261102/admission.py admit
+          python3 tests/dot_f03_production_acceptance_20261102/admission.py precompile-tests
       - name: Enable emulator acceleration
         run: sudo chmod 666 /dev/kvm
       - name: Verify actual 2202-book UI, mapping recovery and unchanged original 66 on API34
