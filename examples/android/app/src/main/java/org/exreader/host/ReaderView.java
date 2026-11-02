@@ -266,7 +266,7 @@ public final class ReaderView extends View {
 
     private void init() {
         // Keep UI bitmap resampling deterministic in one viewport-sized software layer.
-        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        setLayerType(View.LAYER_TYPE_NONE, null);
         setFocusable(true);
         if(BuildConfig.READER_PREFERENCES)setFocusableInTouchMode(true);
         setClickable(true);

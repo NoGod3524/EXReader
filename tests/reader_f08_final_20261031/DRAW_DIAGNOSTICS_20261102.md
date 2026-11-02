@@ -69,3 +69,14 @@ F12 independently reviewed both candidate and native findings.
 F08 collection_complete, shelf_budget_accepted, reader_budget_accepted and f08_accepted remain false.
 Next step is static visual-determinism review and a separately scoped experiment proposal,
 not automatically relaxing uniqueness, excluding frames, changing acceptance or rerunning.
+
+
+## Authorized B: default layer comparison (2026-11-02)
+
+- Baseline A remains measured source c3739ec6cb8ae8d1b65bb734aac883079b83b5b9 and its retained failed sample; documentation-only base is 472702f4651c66972495ac81bca72f970c8d31f9. A is not rerun.
+- B changes only ReaderView init layer SOFTWARE to NONE, its exact contract content binding, and this document. The adjacent historical software-layer rationale remains as baseline context; B deliberately tests that mechanism, without changing paint or drawing behavior otherwise.
+- FILTER_BITMAP_FLAG and DITHER_FLAG, all pixel restoration assertions, original tests, 18 diagnostic controls, SDK, workflow, unique-vsync and DRAW association gates are unchanged.
+- New approval: 2026-11-02 03:58:44 UTC. One control <=20 minutes plus Android build <=20 minutes, other platforms skipped; one authenticated new package and native sample <=1200 seconds using the existing AVD. No automatic retry; existing 180+10, 20k-record/8MiB/queue256 limits remain.
+- Hypothesis: NONE may yield a hardware Canvas in the hardware-attached View. It may instead break deterministic pixel restoration and does not guarantee frame association. All failures remain failures; no tolerance or deduplication is introduced.
+- If Canvas becomes hardware but strict association still fails, stop this layer direction. If Canvas stays software, record the hypothesis as not established; do not blindly tune.
+- Candidate prepared only: no B execution result is claimed here. Measurement source and authenticated run/artifact/native identities will be appended after the authorized round.
