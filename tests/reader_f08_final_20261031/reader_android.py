@@ -694,6 +694,141 @@ def retain_draw_diagnostics(root):
     except Exception as error:report["problems"].append(repr(error))
     save(root/"draw-diagnostics.json",report)
 
+
+# Fixed owned helper evidence only; never a path learned from device output.
+READER_ISOLATION_PATH="/sdcard/Android/data/org.exreader.host.uitest/files/reader-evidence"
+READER_ISOLATION_MAX_ENTRIES=10000
+READER_ISOLATION_MAX_BYTES=256*1024*1024
+
+def reader_isolation_inventory(text):
+    if text=="ABSENT":
+        return {"exists":False,"entries":{},"hashes":{}}
+    lines=text.splitlines()
+    need(bool(lines) and lines[0]=="PRESENT" and lines.count("HASHES")==1,"isolation inventory framing")
+    split=lines.index("HASHES");entries={};hashes={}
+    for line in lines[1:split]:
+        fields=line.split("|",2);need(len(fields)==3,"isolation stat fields")
+        kind,size,path=fields
+        need(path.startswith(READER_ISOLATION_PATH+"/") and re.fullmatch(r"[A-Za-z0-9_./-]+",path),"isolation path outside fixed directory")
+        relative=path[len(READER_ISOLATION_PATH)+1:]
+        need(relative and all(part not in ("",".","..") for part in relative.split("/")) and relative not in entries,"isolation duplicate/escaping path")
+        need(kind in ("regular file","regular empty file","directory"),"isolation nonregular entry or symlink")
+        need(re.fullmatch(r"[0-9]+",size) is not None,"isolation invalid size")
+        entries[relative]={"kind":"directory" if kind=="directory" else "file","bytes":0 if kind=="directory" else int(size)}
+    for line in lines[split+1:]:
+        match=re.fullmatch(r"([0-9a-f]{64})  (.+)",line);need(match is not None,"isolation hash syntax")
+        digest,path=match.groups()
+        need(path.startswith(READER_ISOLATION_PATH+"/"),"isolation hash path")
+        relative=path[len(READER_ISOLATION_PATH)+1:]
+        need(relative not in hashes,"isolation duplicate hash");hashes[relative]=digest
+    need(set(hashes)=={p for p,e in entries.items() if e["kind"]=="file"},"isolation complete hash census")
+    need(len(entries)<=READER_ISOLATION_MAX_ENTRIES and sum(e["bytes"] for e in entries.values())<=READER_ISOLATION_MAX_BYTES,"isolation entry/byte cap")
+    return {"exists":True,"entries":entries,"hashes":hashes}
+
+def isolate_reader_evidence(root,identity,parent_deadline,execute,clock=time.monotonic):
+    """Bounded pre-instrument mitigation, not a root-cause or acceptance override.
+
+    execute receives (adb argument list, timeout) and returns raw CompletedProcess.
+    Existing public-UI assertAbsent remains unchanged.
+    """
+    started=clock();deadline=min(parent_deadline,started+20)
+    folder=Path(root)/"isolation-prereader"
+    need(not folder.exists(),"isolation destination already exists")
+    folder.mkdir()
+    record={"identity":dict(identity),"remote":READER_ISOLATION_PATH,
+            "started_mono":started,"deadline_mono":deadline,"parent_deadline_mono":parent_deadline,
+            "max_seconds":20,"max_entries":READER_ISOLATION_MAX_ENTRIES,
+            "max_bytes":READER_ISOLATION_MAX_BYTES,"commands":[],
+            "backup_verified":False,"deletion_attempted":False,"deleted":False,"absence_verified":False,"first_error":None,
+            "acceptance_override":False}
+    def persist():save(folder/"receipt.json",record)
+    def remaining(cap=20):
+        value=deadline-clock()
+        if value<=0:raise TimeoutError("reader pre-instrument isolation absolute deadline exhausted")
+        return min(cap,value)
+    def call(name,args):
+        entry={"name":name,"argv":[str(a) for a in args],"started_mono":clock()}
+        record["commands"].append(entry)
+        try:
+            result=execute(args,remaining())
+            entry.update(returncode=result.returncode,finished_mono=clock())
+            out=result.stdout;err=result.stderr
+            need(isinstance(out,bytes) and isinstance(err,bytes),"isolation raw command receipt")
+            (folder/(name+".stdout")).write_bytes(out)
+            (folder/(name+".stderr")).write_bytes(err)
+            entry.update(stdout_sha256=hashlib.sha256(out).hexdigest(),stderr_sha256=hashlib.sha256(err).hexdigest(),
+                         stdout_bytes=len(out),stderr_bytes=len(err))
+            need(len(out)<=4*1024*1024 and len(err)<=65536,"isolation command output cap")
+            need(result.returncode==0,"isolation command failed: "+name)
+            remaining()
+            return out.decode("utf-8").strip()
+        except Exception as error:
+            entry["error"]=repr(error)
+            try:persist()
+            except Exception as write_error:entry["receipt_write_error"]=repr(write_error)
+            raise
+        finally:
+            if "error" not in entry:persist()
+    d=READER_ISOLATION_PATH
+    script=("set -e; d='"+d+"'; if [ ! -e \"$d\" ] && [ ! -L \"$d\" ]; then echo ABSENT; exit 0; fi; "
+            "[ ! -L \"$d\" ]; [ -d \"$d\" ]; base=$(readlink -f /sdcard); actual=$(readlink -f \"$d\"); "
+            "[ \"$actual\" = \"$base"+d[len("/sdcard"):]+"\" ]; echo PRESENT; "
+            "entries=$(find \"$d\" -mindepth 1 -print) || exit 1; "
+            "printf '%s\\n' \"$entries\" | while IFS= read -r p; do [ -n \"$p\" ] || continue; "
+            "stat -c '%F|%s|%n' \"$p\" || exit 1; done; echo HASHES; "
+            "printf '%s\\n' \"$entries\" | while IFS= read -r p; do [ -n \"$p\" ] || continue; "
+            "if [ -f \"$p\" ] && [ ! -L \"$p\" ]; then sha256sum \"$p\" || exit 1; fi; done;")
+    try:
+        before=reader_isolation_inventory(call("inventory-before",["shell",script]))
+        record["before"]=before;persist()
+        if not before["exists"]:
+            record["absence_verified"]=True;record["noop"]=True
+            return record
+        target=folder/"backup"
+        call("backup-pull",["pull",d,str(target)])
+        need(target.is_dir() and not target.is_symlink(),"isolation backup root")
+        actual={}
+        for path in target.rglob("*"):
+            remaining();need(not path.is_symlink(),"isolation local symlink")
+            relative=path.relative_to(target).as_posix()
+            if path.is_dir():actual[relative]={"kind":"directory","bytes":0}
+            else:
+                need(path.is_file(),"isolation local nonregular file")
+                actual[relative]={"kind":"file","bytes":path.stat().st_size}
+                digest=hashlib.sha256()
+                with path.open("rb") as stream:
+                    while True:
+                        remaining();chunk=stream.read(1024*1024)
+                        if not chunk:break
+                        digest.update(chunk)
+                need(digest.hexdigest()==before["hashes"].get(relative),"isolation remote/local hash mismatch")
+        need(actual==before["entries"],"isolation backup inventory incomplete")
+        after=reader_isolation_inventory(call("inventory-after-backup",["shell",script]))
+        need(after==before,"isolation remote changed during backup")
+        record["backup_verified"]=True
+        record["backup_manifest_sha256"]=hashlib.sha256(json.dumps(before,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+        record["backup_verified_mono"]=clock();persist()
+        remaining()
+        # Only the fixed exact directory, after complete copy and second hash census.
+        record["deletion_attempted"]=True;persist()
+        call("remove-fixed-evidence",["shell","set -e; rm -rf -- '"+d+"'; [ ! -e '"+d+"' ] && [ ! -L '"+d+"' ]; echo REMOVED"])
+        record["deleted"]=True;persist()
+        final=reader_isolation_inventory(call("inventory-after-removal",["shell",script]))
+        need(not final["exists"],"isolation directory remains after removal")
+        record["absence_verified"]=True
+        return record
+    except Exception as error:
+        record["first_error"]=repr(error)
+        if record["deletion_attempted"] and not record["deleted"]:record["deletion_outcome"]="unconfirmed"
+        raise
+    finally:
+        record["finished_mono"]=clock()
+        # Preserve the first failure if recording itself also fails.
+        try:persist()
+        except Exception:
+            if record["first_error"] is None:raise
+
+
 def run(plan,root,proof,namespace):
     """Invoked inside the existing native worker's unchanged 1100-second parent cap."""
     import native_android as N
@@ -737,6 +872,9 @@ def run(plan,root,proof,namespace):
         command("pull-seed","pull","/sdcard/Android/data/"+N.APP+"/files/shelf-tests",root/"seed",timeout=120)
         command("stop-unmeasured-seeder","shell","am","force-stop",N.APP)
         command("push-reader-fixture","push",N.ROOT/"build/android-host/fixtures/Sample.epub","/sdcard/Download/Sample.epub")
+        need(N.HELPER=="org.exreader.host.uitest","fixed helper identity for pre-instrument isolation")
+        isolate_reader_evidence(root,identity,plan["operation_deadline_mono"],
+            lambda args,timeout:N.adb(plan,*args,raw=True,check=False,timeout=timeout))
         thread=threading.Thread(target=sample);thread.start()
         command("launch-reader-shelf","shell","am","start","-n",N.APP+"/.MainActivity","--ez","shelf_metrics","true")
         ui=run_ui_with_owned_stop(plan,root,command,"shell","am","instrument","-w","-r","-e","disableAnalytics","true",
