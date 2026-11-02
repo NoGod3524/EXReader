@@ -1,0 +1,52 @@
+name: F09 G16 name normalization
+on:
+  push:
+    branches: [audit/f09-g16-name-normalization-20261102]
+    paths:
+      - tests/f09_audit/g16_name_normalization.py
+      - tests/f09_audit/test_g16_name_normalization.py
+      - tests/f09_audit/g16_contract_v2_adapter.py
+      - .github/workflows/f09-g16-name-normalization-20261102.yml
+      - docs/reader-total-progress/F09_G16_NAME_NORMALIZATION_20261102.md
+permissions:
+  contents: read
+concurrency:
+  group: f09-g16-name-normalization-20261102
+  cancel-in-progress: false
+jobs:
+  controls:
+    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 g16 name normalization]')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fixed baseline and five-file scope
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          base = "5737413cb60ea3205bef1e4d28005181fd3998d0"
+          expected = {'tests/f09_audit/g16_contract_v2_adapter.py', 'docs/reader-total-progress/F09_G16_NAME_NORMALIZATION_20261102.md', '.github/workflows/f09-g16-name-normalization-20261102.yml', 'tests/f09_audit/test_g16_name_normalization.py', 'tests/f09_audit/g16_name_normalization.py'}
+          changed = set(subprocess.check_output(["git", "diff", "--name-only", base, "HEAD"], text=True).splitlines())
+          assert changed == expected, changed
+          added = set(subprocess.check_output(["git", "diff", "--diff-filter=A", "--name-only", base, "HEAD"], text=True).splitlines())
+          assert added == expected - {"tests/f09_audit/g16_contract_v2_adapter.py"}, added
+          PY
+      - name: Exactly twelve synthetic positive and negative controls
+        run: python3 tests/f09_audit/test_g16_contract_v2.py
+      - name: Exactly eight additional synthetic naming controls
+        if: always()
+        run: python3 tests/f09_audit/test_g16_name_normalization.py
+      - name: Preserve candidate result only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f09-g16-name-normalization-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f09-g16-contract-v2/
+            build/f09-g16-name-normalization/
+          if-no-files-found: warn
+          retention-days: 14
