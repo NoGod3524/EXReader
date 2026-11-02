@@ -1217,3 +1217,24 @@ Saved at 2026-11-02T04:22:59.497226+00:00. Entire earlier history, including the
 - Actual six-lane state: F03 completed this evidence round; F08 awaiting native B terminal; F09 completed diagnostic/review with gaps; F07 cached dependency review; F05/F10 integration blocked on their remaining deliveries. No new implementation command from this writer, no new Actions triggered here. Known completed CI is not described as live merely because a wrapper or review task exists.
 - Remaining P0/common-source, conflict, complete SDK, final packages/license and genuine old-profile upgrade evidence are still required. Reconstructed legacy pending-state recovery is not an old-APK upgrade certification. Overall ETA is unknown. Current1200 seconds is a cap, not an ETA or a pass promise.
 - All source/Git/docs remain on the approved lap25002 DC -> saved-login instabox0.8.52 -> original VM route. This update only appends the existing handoff on the separately approved docs branch, [skip ci], with no source/catalog change or CI. Executed budgets are one-shot; additional experiments require precise approval.
+
+
+## 2026-11-02 05:22 UTC hourly continuation
+
+Saved at 2026-11-02T05:23:51.569263+00:00. This is a resumable evidence snapshot, not completion or a stop instruction.
+
+Formal ledger remains 98/108 (90.74%); no newly accepted item this hour. Catalog blob bfafcaf5a49cbc07d444abbe775c3fb37373cd63 is unchanged. F02/F04 acceptance baseline remains 255ec5578063765334d37f967507926c79557a3e.
+
+Fresh branch heads (API read during this save):
+- dot/reader-suite-20261101: ec11cf862ca3b44483d7e8c4726ae748ab438337
+- codex/f08-reader-stop-handshake-20261101: 7ec18c8a6e4393f64bfdd7523fba5db2ccbe533b
+- dot/f03-candidate-contract-20261102: 81d166a322ffe33e395179502c500573fa22e974
+- audit/f09-original-evidence-20261102: 055d196789b26ecfe466cb14c7ada857fb9069d3
+
+F08: measured B source remains e8332e88e9565122ae56dc9ed988a6b00106ee92, CI 41386208377 attempt 1 succeeded only control and Android (other six skipped). Artifact 13115119310, 23008205 bytes, SHA256 42887d4fde626eedc156824c3eefc3c1519605e854a52a5b298fd25785090bae. Original B native failed on stale helper evidence before useful Canvas measurement; old failures remain.
+The first explicitly authorized isolation attempt failed after 6.632933 seconds before directory inspection or deletion; owned processes were stopped. The separately authorized corrected attempt completed in 69.1528299 seconds: both exact helper evidence directories were fully backed up and remote/local hashes verified before deletion, both absent afterward, owned processes absent. Receipt SHA256 798e98d592a6d80176dd007074e47888ed85f3c6638d25a287df42f3f5bb053b. This is maintenance evidence, not UI or F08 acceptance. Both attempts are sealed at 7ec18c8a6e4393f64bfdd7523fba5db2ccbe533b, tests/reader_f08_final_20261031/DRAW_DIAGNOSTICS_20261102.md.
+User 05:05:56 explicitly approved one additional native sample using the same authenticated B artifact, no new source or CI. The artifact, producer receipt and 18 source-bundle hashes were rechecked. New exclusive output C:\Users\Oscar\exreader-f08-native-e8332e88-resume-20261102T0510Z; original package directory remains read-only. Last confirmed sample start 05:09:03.031549Z, PID 26424, owned emulator 25744, wrapper 25844. The unchanged 1200-second upper bound is 05:29:03.031549Z. Terminal state is NOT yet checked; this snapshot does not assert it is still running. Planned terminal read after the bound, no automatic retry or clearing on a guard failure.
+
+Other lanes: F03 candidate contract run 41378042514 attempt 1 succeeded (1 positive and 40 negative controls), seal 81d166a322ffe33e395179502c500573fa22e974; original formal accepted=false and complete-run failure remain. Recovery 8 original plus 12 new tests passed, but cross-end F03 is pending. F07 Windows MAP/RSP/archive attribution is sealed; final common six-target provider and private-entry evidence remain incomplete. F09 original six-artifact diagnostic run 41379062673 is complete; review-mode/production-mode and accessibility evidence gaps remain, no repair run authorized. F05 conflict integration and F10 WebDAV cross-consumer delivery remain dependent on the final common candidate. F12 reviews and preserves handoff evidence; package/SDK/schema/old-profile upgrade/license closure remains outstanding.
+
+Activity: no new implementation or CI in this snapshot; F08 one authorized native operation awaits terminal evidence, other lanes are evidence review or dependency-bound, not six simultaneously blocked implementations. Canonical source is the freshly checked dot/reader-suite-20261101 head above, not the F04 preparation branch. No source, catalog, SDK, tests, mainline, PR, release, or display settings changed. Total completion ETA is unknown; 1200 seconds is the sample cap, not an ETA or a guarantee of success.
