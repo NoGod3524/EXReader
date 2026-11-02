@@ -1,0 +1,41 @@
+name: F09 G16 single iPhone production evidence
+on:
+  push:
+    branches: [audit/f09-g16-iphone-evidence-20261102]
+    paths:
+      - tests/f09_audit/G16ProductionEvidenceUITests.swift
+      - tests/f09_audit/g16_evidence_overlay.rb
+      - tools/f09_review/collect_iphone_g16_evidence.py
+      - .github/workflows/f09-g16-iphone-evidence-20261102.yml
+      - docs/reader-total-progress/F09_G16_IPHONE_EVIDENCE_20261102.md
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f09-g16-iphone-evidence-20261102
+  cancel-in-progress: false
+jobs:
+  evidence:
+    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 g16 iphone evidence]')
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Existing project generator dependency
+        timeout-minutes: 3
+        run: ruby -e "require 'xcodeproj'" || gem install --user-install xcodeproj --no-document
+      - name: Single real collector invocation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/f09_review/collect_iphone_g16_evidence.py
+      - name: Preserve actual evidence and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f09-g16-iphone-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f09-g16-iphone-evidence/
+          if-no-files-found: error
+          retention-days: 14
