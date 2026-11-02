@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   evidence:
-    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 g16 ipad single evidence]')
+    if: github.run_attempt == 1 && contains(github.event.head_commit.message, '[f09 g16 ipad file enumeration observation]')
     runs-on: macos-15
     timeout-minutes: 45
     steps:
