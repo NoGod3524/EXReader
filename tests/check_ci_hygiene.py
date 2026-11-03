@@ -56,6 +56,11 @@ def shell_controls(rule):
             result = subprocess.run([bash, '.github/scripts/ci.sh', step.as_posix()], cwd=ROOT, capture_output=True, text=True)
             assert result.returncode == 1 and 'control did not fail' in result.stdout + result.stderr
             print(result.stdout + result.stderr, end='')
+            step.write_text('ci_advisory python -c "import sys; print(\'raw advisory error\', file=sys.stderr); sys.exit(9)"\npython -c "raise SystemExit(37)"\necho continued > "' + marker.as_posix() + '"\n', encoding='utf-8')
+            result = subprocess.run([bash, '.github/scripts/ci.sh', step.as_posix()], cwd=ROOT, capture_output=True, text=True)
+            output = result.stdout + result.stderr
+            assert result.returncode == 37 and 'advisory=true accepted=false actual_exit=9' in output and 'raw advisory error' in output and not marker.exists(), output
+            print('PASS: advisory retains actual error; following non-performance failure still stops immediately')
     print('PASS: runtime ' + rule)
 
 
