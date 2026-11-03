@@ -15,9 +15,29 @@ from case_alignment import CASES, align_cases
 from fixture import write_role_receipt
 import native_runtime
 from driver import deletion_detail_contract, native_cleanup_contract
+from retained_diagnostics import targeted_return
 
 
 class RecoveryChecks(unittest.TestCase):
+    def test_import_return_targets_original_window_and_preserves_errors(self):
+        alive=Mock(returncode=0,stdout='456\n')
+        gone=Mock(returncode=1,stdout='')
+        send,record=Mock(return_value='sent'),Mock()
+        self.assertEqual(targeted_return('123',456,1,send,Mock(return_value=alive),record),'sent')
+        self.assertEqual(send.call_args.args,('xdotool','key','--window','123','--clearmodifiers','Return'))
+        send.reset_mock()
+        targeted_return('123',456,2,send,Mock(return_value=gone),record)
+        send.assert_not_called()
+        with self.assertRaises(RuntimeError):targeted_return('123',456,1,send,Mock(return_value=gone),record)
+        with self.assertRaises(AssertionError):targeted_return('123',999,1,send,Mock(return_value=alive),record)
+        failure=subprocess.CalledProcessError(1,['xdotool','key'])
+        send.side_effect=failure
+        with self.assertRaises(subprocess.CalledProcessError):
+            targeted_return('123',456,2,send,Mock(return_value=alive),record)
+        targeted_return('123',456,2,send,Mock(side_effect=[alive,gone]),record)
+        targeted_return('123',456,1,send,Mock(side_effect=[alive,gone]),record)
+        self.assertTrue(record.call_args.kwargs['closed_during_dispatch'])
+
     def test_full_run_cleanup_records_and_deadline(self):
         rows=[{"action":"native-close-"+str(i),"seconds":.1} for i in range(4)]
         self.assertEqual(native_cleanup_contract(rows),rows)
