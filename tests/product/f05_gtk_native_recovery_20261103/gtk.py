@@ -412,10 +412,10 @@ def main():
         sync(first)
         right = sync(second, heads)
         left = sync(first, heads)
-        key = snapshot(first)["entity_key"]
+        entity_key = snapshot(first)["entity_key"]
         for state in (left, right):
             if (int(state.get("conflict_rows", "0")) < 1
-                    or key not in state.get("conflict_keys", "")
+                    or entity_key not in state.get("conflict_keys", "")
                     or not all(head in state.get("conflict_heads", "") for head in heads)):
                 raise AssertionError("native conflict rows do not expose both retained heads")
         checks.append({"name": "concurrent_heads_preserved", "outcome": "passed",
@@ -475,7 +475,11 @@ def main():
                 ["sudo","rm","-f","--",str(trust)],check=True,capture_output=True))
             cleanup("refresh-runner-trust",lambda:subprocess.run(
                 ["sudo","update-ca-certificates"],check=True,capture_output=True))
-        cleanup("remove-fixture-key",lambda:key.unlink(missing_ok=True))
+        def remove_fixture_key():
+            key.unlink(missing_ok=True)
+            if key.exists() or key.is_symlink():
+                raise RuntimeError("fixture private key remains after cleanup")
+        cleanup("remove-fixture-key",remove_fixture_key)
         report["requests"]=store.requests if store is not None else []
         report["cleanup_errors"]=cleanup_errors
         report["uncovered"]=["native deletion operation detail","repeated-ID replay after tombstone (additional, not original hard gate)",
