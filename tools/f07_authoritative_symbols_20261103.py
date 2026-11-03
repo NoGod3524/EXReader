@@ -193,24 +193,31 @@ def classify_readobj(text):
 
 
 def classify_nm(text):
-    """Return counts and bounded identifier lists from `llvm-nm --format=posix`."""
+    """Tolerant parser for llvm-nm output (posix / bsd / just-symbols)."""
     defined, undefined, weak_def, weak_ref = [], [], [], []
+    hexish = re.compile(r'^(0x)?[0-9A-Fa-f]+$')
     for line in text.splitlines():
-        m = NM_POSIX.match(line.strip())
-        if not m:
+        parts = line.split()
+        if len(parts) < 2:
             continue
-        name = m.group(3).lstrip('_')
-        t = m.group(2)
-        if not name.startswith('sqlite3_'):
+        name = t = None
+        if len(parts[1]) == 1 and parts[1].isalpha():
+            name, t = parts[0], parts[1]                 # posix: name type [value]
+        elif len(parts) >= 3 and hexish.match(parts[0]) and len(parts[1]) == 1 and parts[1].isalpha():
+            name, t = parts[2], parts[1]                 # bsd: value type name
+        if not name:
             continue
-        if t in ('U', 'u'):
-            undefined.append(name)
-            if t == 'u':
-                weak_ref.append(name)
+        base = name.lstrip('_')
+        if not base.startswith('sqlite3_'):
+            continue
+        if t in ('U', 'u', 'w', 'v'):
+            undefined.append(base)
+            if t in ('u', 'w', 'v'):
+                weak_ref.append(base)
         else:
-            defined.append(name)
-            if t in ('W', 'w', 'V', 'v', 'C'):
-                weak_def.append(name)
+            defined.append(base)
+            if t in ('W', 'V', 'C'):
+                weak_def.append(base)
     return {'defined': sorted(set(defined)), 'undefined': sorted(set(undefined)),
             'weak_defined': sorted(set(weak_def)), 'weak_undefined': sorted(set(weak_ref))}
 
