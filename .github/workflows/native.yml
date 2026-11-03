@@ -421,7 +421,7 @@ jobs:
       - run: python -m pip install PyYAML==6.0.3
       - name: Check changed CI and exercise the rule
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || '342780237eb013350bff20c21bc92c335422526a' }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || 'origin/ledger/base-20261103' }}
           HYGIENE_RULE: ${{ matrix.rule }}
           HYGIENE_FAULT: ${{ inputs.fault || 'none' }}
         run: |
