@@ -1,0 +1,41 @@
+{
+  "source_sha": "8a268b8582903926dfa7198a07fabacb2cacd6fd",
+  "run_id": "41693082728",
+  "attempt": "1",
+  "name": "native6",
+  "script_sha256": "efb44d3cebb2156c8611530cccff5500475c01873b2c25e939c5c0ed3d0f8e9f",
+  "passed": true,
+  "inputs": {
+    "build/gtk-raw-wave3/retained-package/EXReader-Linux/bin/exreader-linux": {
+      "sha256": "3a357139a7782dcda9bb8b38f455cbb77b5605066de578bcb1aaf3f6c848dd2e",
+      "bytes": 10675648
+    },
+    "build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf": {
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "bytes": 16437364
+    },
+    "build/f05-consumers/inspect/received-sdk-inspect": {
+      "sha256": "f291582d0a78316a35df533abef34bf507119aa1f933ab92baae51a9f2a59123",
+      "bytes": 8464480
+    },
+    "build/f05-consumers/metadata-consumer/metadata-consumer": {
+      "sha256": "1377bb2eb47f2b7d4cc5d101af086a41a93f19d0196ebcc8a4fed70a8381dc23",
+      "bytes": 1830912
+    },
+    "build/f05-consumers/revision-consumer/revision-consumer": {
+      "sha256": "01ba9ce975a53dcb273556a19304711ed55da681f70276b6add58e2adcb8f635",
+      "bytes": 1753672
+    },
+    "build/f05-consumers/reading-probe/reading-v2-probe": {
+      "sha256": "e2ad11a7a9c5545d4a30db07ab65d938c09c255d5ffb6a8a3cedf3a0440a54a4",
+      "bytes": 9748920
+    }
+  },
+  "returncode": 0,
+  "process_reaped": true,
+  "elapsed_seconds": 169.498684958,
+  "inputs_unchanged": true,
+  "providers_unchanged": true,
+  "stdout_sha256": "d494ca7813f806ec643675de492fa6d8c53521b50949b9adf6a703854df82312",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

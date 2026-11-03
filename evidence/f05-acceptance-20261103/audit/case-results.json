@@ -1,0 +1,470 @@
+{
+  "cases": [
+    {
+      "id": "cancel_sync_retry",
+      "receipt_id": "cancel_sync_retry",
+      "outcome": "passed",
+      "executed": true
+    },
+    {
+      "id": "offline_reconnect",
+      "receipt_id": "offline_reconnect",
+      "outcome": "passed",
+      "executed": true
+    },
+    {
+      "id": "kill_commit_ack_replay",
+      "receipt_id": "kill_commit_ack_replay",
+      "outcome": "passed",
+      "executed": true
+    },
+    {
+      "id": "delete_put_tombstone_preserved",
+      "receipt_id": "delete_put_tombstone_preserved",
+      "outcome": "passed",
+      "executed": true
+    },
+    {
+      "id": "concurrent_heads_preserved",
+      "receipt_id": "concurrent_heads_preserved",
+      "outcome": "passed",
+      "executed": true
+    },
+    {
+      "id": "restart_offline_read",
+      "receipt_id": "restart_offline_read",
+      "outcome": "passed",
+      "executed": true
+    }
+  ],
+  "session_start_attempts": [
+    {
+      "host": "first",
+      "case_index": 0,
+      "fixture": {
+        "at": 369.575147752,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 369.577403294
+      },
+      "samples": [
+        {
+          "elapsed": 0.18089952500002937,
+          "session_present": "0",
+          "generation": "0"
+        },
+        {
+          "elapsed": 0.2833121390000315,
+          "session_present": "1",
+          "generation": "1"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "second",
+      "case_index": 0,
+      "fixture": {
+        "at": 381.427915425,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 381.430473311
+      },
+      "samples": [
+        {
+          "elapsed": 0.18372377700001152,
+          "session_present": "0",
+          "generation": "0"
+        },
+        {
+          "elapsed": 0.2852704489999951,
+          "session_present": "1",
+          "generation": "1"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "second",
+      "case_index": 0,
+      "fixture": {
+        "at": 385.209808116,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 385.212057297
+      },
+      "samples": [
+        {
+          "elapsed": 0.18056171400002086,
+          "session_present": "0",
+          "generation": "1"
+        },
+        {
+          "elapsed": 0.28211279399999967,
+          "session_present": "1",
+          "generation": "2"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "first",
+      "case_index": 1,
+      "fixture": {
+        "at": 395.266768592,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 395.269510882
+      },
+      "samples": [
+        {
+          "elapsed": 0.18101701000000503,
+          "session_present": "0",
+          "generation": "1"
+        },
+        {
+          "elapsed": 0.28274225699999533,
+          "session_present": "1",
+          "generation": "2"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "second",
+      "case_index": 1,
+      "fixture": {
+        "at": 403.950805197,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 403.953391436
+      },
+      "samples": [
+        {
+          "elapsed": 0.18181071900005463,
+          "session_present": "0",
+          "generation": "2"
+        },
+        {
+          "elapsed": 0.28431869300004564,
+          "session_present": "1",
+          "generation": "3"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "first",
+      "case_index": 2,
+      "fixture": {
+        "at": 413.724098404,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 413.72661316
+      },
+      "samples": [
+        {
+          "elapsed": 0.1807738699999959,
+          "session_present": "0",
+          "generation": "2"
+        },
+        {
+          "elapsed": 0.28251269199995477,
+          "session_present": "1",
+          "generation": "3"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "first",
+      "case_index": 2,
+      "fixture": {
+        "at": 417.960079856,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 417.962317396
+      },
+      "samples": [
+        {
+          "elapsed": 0.18181125200004544,
+          "session_present": "0",
+          "generation": "0"
+        },
+        {
+          "elapsed": 0.2840484330000095,
+          "session_present": "1",
+          "generation": "1"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "second",
+      "case_index": 2,
+      "fixture": {
+        "at": 426.932456046,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 426.934896834
+      },
+      "samples": [
+        {
+          "elapsed": 0.18098471399997607,
+          "session_present": "0",
+          "generation": "3"
+        },
+        {
+          "elapsed": 0.2827511069999673,
+          "session_present": "1",
+          "generation": "4"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "first",
+      "case_index": 3,
+      "fixture": {
+        "at": 437.94235477,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 437.944661558
+      },
+      "samples": [
+        {
+          "elapsed": 0.1810520760000145,
+          "session_present": "0",
+          "generation": "1"
+        },
+        {
+          "elapsed": 0.2834878250000088,
+          "session_present": "1",
+          "generation": "2"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "second",
+      "case_index": 3,
+      "fixture": {
+        "at": 446.739423351,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 446.74168216
+      },
+      "samples": [
+        {
+          "elapsed": 0.18057460099998934,
+          "session_present": "0",
+          "generation": "4"
+        },
+        {
+          "elapsed": 0.2827198179999755,
+          "session_present": "1",
+          "generation": "5"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "second",
+      "case_index": 3,
+      "fixture": {
+        "at": 460.630983637,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 460.633140607
+      },
+      "samples": [
+        {
+          "elapsed": 0.18088682499995912,
+          "session_present": "0",
+          "generation": "5"
+        },
+        {
+          "elapsed": 0.2834887199999798,
+          "session_present": "1",
+          "generation": "6"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "first",
+      "case_index": 3,
+      "fixture": {
+        "at": 469.326965259,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 469.329272728
+      },
+      "samples": [
+        {
+          "elapsed": 0.1816885389999925,
+          "session_present": "0",
+          "generation": "2"
+        },
+        {
+          "elapsed": 0.28408053600003313,
+          "session_present": "1",
+          "generation": "3"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "second",
+      "case_index": 3,
+      "fixture": {
+        "at": 477.924150422,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 477.926444628
+      },
+      "samples": [
+        {
+          "elapsed": 0.18072194799998442,
+          "session_present": "0",
+          "generation": "6"
+        },
+        {
+          "elapsed": 0.282272493999983,
+          "session_present": "1",
+          "generation": "7"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "first",
+      "case_index": 3,
+      "fixture": {
+        "at": 486.308832239,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 486.31099016
+      },
+      "samples": [
+        {
+          "elapsed": 0.181072271000005,
+          "session_present": "0",
+          "generation": "3"
+        },
+        {
+          "elapsed": 0.282720023999957,
+          "session_present": "1",
+          "generation": "4"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "first",
+      "case_index": 4,
+      "fixture": {
+        "at": 502.790251475,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 502.792486672
+      },
+      "samples": [
+        {
+          "elapsed": 0.18201080399995817,
+          "session_present": "0",
+          "generation": "4"
+        },
+        {
+          "elapsed": 0.28472773299995424,
+          "session_present": "1",
+          "generation": "5"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "second",
+      "case_index": 4,
+      "fixture": {
+        "at": 511.794309391,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 511.796704777
+      },
+      "samples": [
+        {
+          "elapsed": 0.18124574799998072,
+          "session_present": "0",
+          "generation": "7"
+        },
+        {
+          "elapsed": 0.28353640899996435,
+          "session_present": "1",
+          "generation": "8"
+        }
+      ],
+      "ready": true
+    },
+    {
+      "host": "first",
+      "case_index": 4,
+      "fixture": {
+        "at": 520.7858142,
+        "thread_alive": true,
+        "tls_ready": true,
+        "ready_at": 520.787966893
+      },
+      "samples": [
+        {
+          "elapsed": 0.18032150199996977,
+          "session_present": "0",
+          "generation": "5"
+        },
+        {
+          "elapsed": 0.2821361889999707,
+          "session_present": "1",
+          "generation": "6"
+        }
+      ],
+      "ready": true
+    }
+  ],
+  "cleanup_timings": [
+    {
+      "action": "native-close-0",
+      "seconds": 2.6650000108929817e-06
+    },
+    {
+      "action": "native-close-1",
+      "seconds": 0.0781546130000379
+    },
+    {
+      "action": "native-close-2",
+      "seconds": 2.173999973820173e-06
+    },
+    {
+      "action": "native-close-3",
+      "seconds": 1.3320000107341912e-06
+    },
+    {
+      "action": "fixture-close",
+      "seconds": 0.326223581000022
+    },
+    {
+      "action": "remove-fixture-trust",
+      "seconds": 0.009443243999953665
+    },
+    {
+      "action": "refresh-runner-trust",
+      "seconds": 0.7213787700000012
+    },
+    {
+      "action": "remove-fixture-key",
+      "seconds": 0.00018108799997662572
+    }
+  ],
+  "errors": [],
+  "producer_conclusion": "success",
+  "catalog_state_changed": false
+}

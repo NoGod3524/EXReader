@@ -1,0 +1,17 @@
+{
+  "source_sha": "8a268b8582903926dfa7198a07fabacb2cacd6fd",
+  "run_id": "41693082728",
+  "attempt": "1",
+  "predicate_controls": 8,
+  "actual_sync_invocations": 15,
+  "pending_projection": [
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "full_F05_accepted": false,
+  "delete_detail_accepted": false
+}

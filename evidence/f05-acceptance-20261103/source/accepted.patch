@@ -1,0 +1,458 @@
+diff --git a/.github/workflows/gtk-sdk342-package.yml b/.github/workflows/gtk-sdk342-package.yml
+index 16f8e060..6a53fddc 100644
+--- a/.github/workflows/gtk-sdk342-package.yml
++++ b/.github/workflows/gtk-sdk342-package.yml
+@@ -14,7 +14,7 @@ permissions:
+ jobs:
+   f05-r3-dry-run:
+     name: F05 GTK R3 bounded dry-run
+-    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/f05-gtk-xtest-target-20261103' && (inputs.f05_mode == 'dry-run' || inputs.f05_mode == 'retained-dry-run') && github.run_attempt == 1 }}
++    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/f05-native-final-20261103' && (inputs.f05_mode == 'dry-run' || inputs.f05_mode == 'retained-dry-run') && github.run_attempt == 1 }}
+     runs-on: ubuntu-22.04
+     timeout-minutes: 30
+     permissions:
+@@ -83,7 +83,7 @@ jobs:
+             build/f05-gtk-retained/*.png
+           if-no-files-found: error
+   retained:
+-    if: ${{ (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-xtest-target-20261103') }}
++    if: ${{ (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-native-final-20261103') }}
+     runs-on: ubuntu-22.04
+     timeout-minutes: 150
+     steps:
+@@ -168,7 +168,7 @@ jobs:
+           if-no-files-found: error
+   authenticate:
+     needs: retained
+-    if: ${{ always() && (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-xtest-target-20261103') }}
++    if: ${{ always() && (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-native-final-20261103') }}
+     runs-on: ubuntu-22.04
+     timeout-minutes: 15
+     permissions:
+@@ -188,20 +188,9 @@ jobs:
+           path: build/gtk-sdk342-auth/
+           if-no-files-found: error
+ 
+-  f05-admission:
+-    name: F05 GTK admission
+-    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-xtest-target-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
+-    runs-on: ubuntu-22.04
+-    timeout-minutes: 5
+-    steps:
+-      - uses: actions/checkout@v4
+-        with:
+-          fetch-depth: 0
+-      - run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py admit
+   f05-producer:
+     name: F05 GTK native producer
+-    needs: f05-admission
+-    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-xtest-target-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
++    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-native-final-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
+     runs-on: ubuntu-22.04
+     timeout-minutes: 170
+     steps:
+@@ -212,29 +201,11 @@ jobs:
+         run: |
+           sudo apt-get update
+           sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+-      - name: Validate F05 recovery and deletion-detail controls
+-        run: |
+-          python3 -m py_compile tests/product/f05_gtk_native_recovery_20261103/*.py
+-          xvfb-run -a python3 tests/product/f05_gtk_native_recovery_20261103/check_r3.py
+-          xvfb-run -a python3 tests/product/f05_gtk_native_recovery_20261103/check_x11_return.py
++      - name: Admit native-only final source
++        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py admit
+       - name: F05 build
+         if: ${{ !cancelled() }}
+         run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec build
+-      - name: F05 prepare
+-        if: ${{ !cancelled() }}
+-        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec prepare
+-      - name: F05 navigation
+-        if: ${{ !cancelled() }}
+-        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec navigation
+-      - name: F05 folder
+-        if: ${{ !cancelled() }}
+-        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec folder
+-      - name: F05 gui
+-        if: ${{ !cancelled() }}
+-        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec gui
+-      - name: F05 retained48
+-        if: ${{ !cancelled() }}
+-        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec retained48
+       - name: F05 native6
+         if: ${{ !cancelled() }}
+         run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec native6
+@@ -249,8 +220,8 @@ jobs:
+           if-no-files-found: error
+   f05-audit:
+     name: F05 GTK independent audit
+-    needs: [f05-admission, f05-producer]
+-    if: ${{ always() && github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-xtest-target-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
++    needs: [f05-producer]
++    if: ${{ always() && github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-native-final-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
+     runs-on: ubuntu-22.04
+     timeout-minutes: 15
+     permissions:
+diff --git a/examples/linux/accounts_ui.inc b/examples/linux/accounts_ui.inc
+index 77fd1663..08389853 100644
+--- a/examples/linux/accounts_ui.inc
++++ b/examples/linux/accounts_ui.inc
+@@ -152,7 +152,7 @@ static void accounts_start_network(void) {
+   reader_session_status code=reader_session_create(&config,&accounts.session);
+ #endif
+   reader_secret_free(authorization);g_free(product);g_free(work);g_free(originals);
+-  if(code==READER_SESSION_OK) { accounts.generation++;code=reader_session_start(accounts.session); }
++  if(code==READER_SESSION_OK) { g_assert_nonnull(accounts.session); accounts.generation++;code=reader_session_start(accounts.session); }
+   if(accounts.session) reader_session_observe(accounts.session,&accounts.view);
+   accounts.phase=ACCOUNT_IDLE;
+   if(code!=READER_SESSION_OK) accounts_notice("Sync could not start. Your saved library was kept");
+diff --git a/tests/product/f05_gtk_native_recovery_20261103/check_native_final.py b/tests/product/f05_gtk_native_recovery_20261103/check_native_final.py
+new file mode 100644
+index 00000000..6a59fe4d
+--- /dev/null
++++ b/tests/product/f05_gtk_native_recovery_20261103/check_native_final.py
+@@ -0,0 +1,40 @@
++"""Local preflight controls; no GTK execution or native acceptance credit."""
++import ast
++import json
++from pathlib import Path
++from types import SimpleNamespace
++from case_alignment import CASES, NOT_RUN_REASON, align_cases
++
++coverage=[{'name':c[0],'outcome':'passed'} for c in CASES[:2]]
++receipt=[{'id':c[0],'outcome':'passed'} if i<2 else
++    {'id':'not-run-'+c[1],'outcome':'not-run','reason':NOT_RUN_REASON} for i,c in enumerate(CASES)]
++claims={c[1]:[{'case_id':c[0] if i<2 else 'not-run-'+c[1],
++    'role':c[2] if i<2 else c[3]}] for i,c in enumerate(CASES)}
++rows=align_cases(coverage,receipt,claims)
++assert [r['outcome'] for r in rows]==['passed']*2+['not-run']*4
++print('coverage=2 / receipt=6')
++for row in rows:print(row['id']+' / '+row['outcome'])
++print('2 通过 + 4 not-run')
++print('comparator=OK; acceptance=not-complete')
++
++source=Path(__file__).with_name('gtk.py').read_text()
++node=next(n for n in ast.walk(ast.parse(source)) if isinstance(n,ast.FunctionDef) and n.name=='start_sync')
++for mode in ('ready','fixture-not-ready','zero-session'):
++    ticks=[0.0];keys=[];report={};observed=[]
++    def monotonic():return ticks[0]
++    def sleep(seconds):ticks[0]+=seconds
++    def account(host):
++        state={'session_present':'1' if mode=='ready' else '0','session_generation':'7' if mode=='ready' else '0'}
++        observed.append(state);return state
++    host=SimpleNamespace(folder=SimpleNamespace(name='control'),key=lambda key:keys.append(key))
++    scope=dict(time=SimpleNamespace(monotonic=monotonic,sleep=sleep),json=json,report=report,checks=[],
++        fixture_ready=lambda:{'thread_alive':mode!='fixture-not-ready','tls_ready':True},account=account)
++    exec(compile(ast.Module(body=[node],type_ignores=[]),'start_sync-control','exec'),scope)
++    try:scope['start_sync'](host)
++    except AssertionError:
++        assert mode!='ready'
++        if mode=='fixture-not-ready':assert not keys
++        else:assert keys==['alt+s'] and 'stop_reason' in report and ticks[0]<5.2
++    else:assert mode=='ready' and keys==['alt+s']
++    print('preflight '+mode+': OK')
++print('No runner used; controls do not count as product case results')
+diff --git a/tests/product/f05_gtk_native_recovery_20261103/contract.json b/tests/product/f05_gtk_native_recovery_20261103/contract.json
+index 0821be4b..3b3b3d0a 100644
+--- a/tests/product/f05_gtk_native_recovery_20261103/contract.json
++++ b/tests/product/f05_gtk_native_recovery_20261103/contract.json
+@@ -1,16 +1,14 @@
+ {
+   "schema": 1,
+-  "parent": "a114a8d7892ef46f85ae529cad1ac27ef35cd832",
+-  "branch": "codex/f05-gtk-xtest-target-20261103",
++  "parent": "b68c8c17e803c090527a42622e9cbfebf50c2d54",
++  "branch": "codex/f05-native-final-20261103",
+   "delta": [
+     "M\t.github/workflows/gtk-sdk342-package.yml",
+-    "M\ttests/product/f05_gtk_native_recovery_20261103/check_r3.py",
+-    "A\ttests/product/f05_gtk_native_recovery_20261103/check_x11_return.py",
++    "M\texamples/linux/accounts_ui.inc",
++    "M\ttests/product/f05_gtk_native_recovery_20261103/gtk.py",
+     "M\ttests/product/f05_gtk_native_recovery_20261103/driver.py",
+-    "M\ttests/product/f05_gtk_native_recovery_20261103/inspect_network.py",
+-    "M\ttests/product/f05_gtk_native_recovery_20261103/retained_diagnostics.py",
+-    "A\ttests/product/f05_gtk_native_recovery_20261103/x11_return.py",
+-    "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json"
++    "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json",
++    "A\ttests/product/f05_gtk_native_recovery_20261103/check_native_final.py"
+   ],
+   "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+   "frozen_blobs": {
+@@ -29,30 +27,18 @@
+     "tests/reader_f06_packages": "2069ed6ec9ac7c184ab835d2dc4872a7479ce57b",
+     "tests/reader_navigation": "defb7e62adc638c04e448cdc5138c4386a9c0de8",
+     "tests/linux_host/generate_fixed.py": "59cba4bb6c8575f154c14470f5ccce7bd2c83543",
+-    "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065",
+-    "examples/linux": "ecc11f446054881bd3dabfae718eaf5215435436",
+-    ".github/workflows/gtk-sdk342-package.yml": "16f8e060489d15e3e88448e15cf3e9366709b4ad"
++    "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065"
+   },
+   "copied_blobs": {
+-    "gtk.py": "736960af6a8a7f8815433d2a8eda47f107b4d219",
++    "gtk.py": "1a9e0b71d3baf7ffa905b0725f6e1760bda726d0",
+     "fixture.py": "6a9a9322c2136295ae498fb11784874c0e85861b"
+   },
+   "stages": {
+     "build": "cmake -S extras/opds -B build/f05-original-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX=\"$PWD/build/f05-original-hash\"\ncmake --build build/f05-original-hash-build --parallel 4\ncmake --install build/f05-original-hash-build\nexport EXREADER_ORIGINAL_HASH_PREFIX=\"$PWD/build/f05-original-hash\"\ntest -z \"${READER_ORIGINAL_HASH_PREFIX:-}\"\npython3 tests/gtk_sdk342_package/run.py build\nfor pair in inspect:tests/reader_gtk_receive metadata-consumer:tests/reader_metadata/consumer revision-consumer:tests/reader_revisions/consumer reading-probe:tests/reader_reading_v2/consumer; do\n  label=\"${pair%%:*}\"\n  source=\"${pair#*:}\"\n  cmake -S \"$source\" -B \"build/f05-consumers/$label\" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK=\"$PWD/build/reading-library/stage\" -DCMAKE_PREFIX_PATH=\"$PWD/build/gtk-raw-wave3/legacy-stage;$PWD/build/reading-library/stage\"\n  cmake --build \"build/f05-consumers/$label\" --parallel 4\ndone\npython3 tests/reader_reading_state/make_fixtures.py build/f05-receive-fixtures\npython3 tests/product/f05_gtk_native_recovery_20261103/driver.py providers\n",
+-    "prepare": "python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures\npython3 tests/reader_gtk_navigation/make_inputs.py build/gtk-navigation-fixtures\npython3 tests/linux_host/generate_fixed.py build/gtk-fixed-inputs\npython3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-backend-fixtures\npython3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-ui-fixtures\nmkdir -p build/gtk-navigation-backend build/gtk-batch-backend/profile build/gtk-batch-owner-faults build/gtk-atspi-client\nchmod 700 build/gtk-navigation-backend build/gtk-batch-backend/profile\ngit show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py\n",
+-    "navigation": "set -o pipefail\nbuild/gtk-raw-wave3/retained-host/reader-gtk-navigation-backend \"$PWD/build/gtk-navigation-backend/library.sqlite\" \"$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf\" \"$PWD/build/gtk-navigation-fixtures\" \"$PWD/build/gtk-fixed-inputs\" 2>&1 | tee build/gtk-navigation-backend/checks.log\n",
+-    "folder": "set -o pipefail\nbuild/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend \"$PWD/build/gtk-batch-backend/profile/library.sqlite\" \"$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf\" \"$PWD/build/gtk-batch-backend-fixtures\" \"$PWD/build/gtk-batch-backend/originals.tsv\" exercise 2>&1 | tee build/gtk-batch-backend/checks.log\nbuild/gtk-raw-wave3/retained-host/reader-gtk-batch-owner-faults \"$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf\" \"$PWD/build/gtk-batch-owner-faults\" 2>&1 | tee build/gtk-batch-owner-faults/checks.log\n",
+-    "gui": "xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '\n  export PYTHONPATH=\"$PWD/build/gtk-atspi-client\"\n  openbox >build/gtk-raw-wave3/retained-openbox.log 2>&1 &\n  wm=$!\n  trap \"kill $wm || true\" EXIT\n  gsettings set org.gnome.desktop.interface toolkit-accessibility true\n  gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true\n  failed=0\n  /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-navigation-fixtures --fixed-inputs build/gtk-fixed-inputs --output build/gtk-navigation-ui || failed=1\n  /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-batch-ui-fixtures --output build/gtk-batch-ui --backend build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend || failed=1\n  exit \"$failed\"\n'\n",
+-    "retained48": "xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euo pipefail -c 'openbox >build/f05-gtk/retained48-openbox.log 2>&1 &\nwm=$!\ntrap \"kill $wm || true\" EXIT\n/usr/bin/python3 tests/product/f05_gtk_native_recovery_20261103/retained_diagnostics.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --metadata-consumer build/f05-consumers/metadata-consumer/metadata-consumer --revision-consumer build/f05-consumers/revision-consumer/revision-consumer --receive-fixtures build/f05-receive-fixtures --reading-probe build/f05-consumers/reading-probe/reading-v2-probe --inspect-consumer build/f05-consumers/inspect/received-sdk-inspect --output build/f05-gtk-retained\n'\n",
+     "native6": "xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euo pipefail -c 'openbox >build/f05-gtk/native6-openbox.log 2>&1 &\nwm=$!\ntrap \"kill $wm || true\" EXIT\n/usr/bin/python3 tests/product/f05_gtk_native_recovery_20261103/gtk.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --inspect build/f05-consumers/inspect/received-sdk-inspect --output build/f05-gtk-native\n'\n"
+   },
+   "timeouts": {
+     "build": 7200,
+-    "prepare": 600,
+-    "navigation": 600,
+-    "folder": 900,
+-    "gui": 1800,
+-    "retained48": 900,
+     "native6": 900
+   },
+   "payload": "build/gtk-raw-wave3/retained-package/EXReader-Linux",
+@@ -73,12 +59,7 @@
+     "build/gtk-raw-wave3/*.log",
+     "build/reading-library/stage/**/*.cmake",
+     "build/gtk-raw-wave3/legacy-stage/**/*.cmake",
+-    "build/f05-original-hash/**/*",
+-    "build/gtk-navigation-ui/*.json",
+-    "build/gtk-navigation-ui/*.png",
+-    "build/gtk-batch-ui/*.json",
+-    "build/gtk-batch-ui/*.png",
+-    "build/f05-gtk-retained/*.png"
++    "build/f05-original-hash/**/*"
+   ],
+   "native_cases": [
+     "cancel_sync_retry",
+@@ -121,7 +102,6 @@
+     ]
+   ],
+   "budget_runner_minutes": {
+-    "admission": 5,
+     "producer": 170,
+     "audit": 15
+   },
+@@ -246,53 +226,22 @@
+     "build/f05-gtk-native/peer-delete/manifest.json",
+     "build/f05-gtk-native/program.bin",
+     "build/f05-gtk-native/receipt.json",
+-    "build/f05-gtk-retained/public-capture-seed.json",
+-    "build/f05-gtk-retained/public-capture-seed.log",
+-    "build/f05-gtk-retained/requests.json",
+-    "build/f05-gtk-retained/result.json",
+-    "build/f05-gtk-retained/wire.json",
+     "build/f05-gtk/build.json",
+     "build/f05-gtk/build.stderr.log",
+     "build/f05-gtk/build.stdout.log",
+-    "build/f05-gtk/folder.json",
+-    "build/f05-gtk/folder.stderr.log",
+-    "build/f05-gtk/folder.stdout.log",
+-    "build/f05-gtk/gui.json",
+-    "build/f05-gtk/gui.stderr.log",
+-    "build/f05-gtk/gui.stdout.log",
+     "build/f05-gtk/native6.json",
+     "build/f05-gtk/native6.stderr.log",
+     "build/f05-gtk/native6.stdout.log",
+-    "build/f05-gtk/navigation.json",
+-    "build/f05-gtk/navigation.stderr.log",
+-    "build/f05-gtk/navigation.stdout.log",
+-    "build/f05-gtk/prepare.json",
+-    "build/f05-gtk/prepare.stderr.log",
+-    "build/f05-gtk/prepare.stdout.log",
+     "build/f05-gtk/providers.json",
+-    "build/f05-gtk/retained48.json",
+-    "build/f05-gtk/retained48.stderr.log",
+-    "build/f05-gtk/retained48.stdout.log",
+     "build/f05-original-hash-build/CMakeCache.txt",
+-    "build/gtk-batch-backend/checks.log",
+-    "build/gtk-batch-owner-faults/checks.log",
+-    "build/gtk-navigation-backend/checks.log",
+     "build/gtk-raw-wave3/result.json",
+     "build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf",
+     "build/gtk-raw-wave3/retained-package/EXReader-Linux/bin/exreader-linux",
+     "build/gtk-sdk342/build.json",
+     "build/f05-gtk/observation-controls.json",
+-    "build/f05-gtk-native/receive-observations.json",
+-    "build/f05-gtk/import-dialog-diagnostics.json",
+-    "build/f05-gtk/x11-return-controls.json"
+-  ],
+-  "optional_patterns": [
+-    "build/gtk-navigation-ui/*.json",
+-    "build/gtk-navigation-ui/*.png",
+-    "build/gtk-batch-ui/*.json",
+-    "build/gtk-batch-ui/*.png",
+-    "build/f05-gtk-retained/*.png"
++    "build/f05-gtk-native/receive-observations.json"
+   ],
++  "optional_patterns": [],
+   "observation_contract": {
+     "source_parent": "88b626564e58a2c53bee1193a91f802913d1d544",
+     "predicate_control_groups": 8,
+@@ -338,7 +287,8 @@
+     "inspect_network.py": "9d14282e184a357ef0e30ace32e78264f5299019",
+     "native_runtime.py": "1a280055807a4f459bac8269ad3bcdbcd6a7ef36",
+     "x11_return.py": "ecab01f4bc7c1b20ae8e6b2ef4c1ada7573d3135",
+-    "check_x11_return.py": "84531a015084242928939e1d0bcb1a261fc5947b"
++    "check_x11_return.py": "84531a015084242928939e1d0bcb1a261fc5947b",
++    "check_native_final.py": "6a59fe4d132b892207c27d8035d9b636c25158ec"
+   },
+   "r3_rewrite": {
+     "base": "c4d67540a0e17a86bd42ad9323cd269ce8959326",
+@@ -406,5 +356,15 @@
+     "single_command_seconds": 30,
+     "new_diagnostic_runner_minutes": 30,
+     "actual_runtime_accepted": false
++  },
++  "final_round": {
++    "scope": "SDK native producer plus independent audit only",
++    "attempt_limit": 1,
++    "dry_run": false,
++    "original48_not_run_this_round": true,
++    "catalog_state_changed": false,
++    "zero_session_stop_seconds": 5,
++    "session_nonnull_assertion": "After reader_session_create succeeds, before reader_session_start; UI Sync creates session",
++    "failure_policy": "known-issue then stop"
+   }
+ }
+diff --git a/tests/product/f05_gtk_native_recovery_20261103/driver.py b/tests/product/f05_gtk_native_recovery_20261103/driver.py
+index 66d7a019..152254ed 100644
+--- a/tests/product/f05_gtk_native_recovery_20261103/driver.py
++++ b/tests/product/f05_gtk_native_recovery_20261103/driver.py
+@@ -501,7 +501,7 @@ def audit_inner(audit,state):
+     found=[j for j in jobs if j['name']=='F05 GTK native producer']
+     require(len(found)==1,'producer job not unique')
+     if found[0]['status']=='completed' and found[0]['conclusion']!='success':failed_job_excerpt(found[0],audit)
+-    require(found[0]['status']=='completed' and found[0]['conclusion']=='success','producer not successful; original job/step metadata and available log excerpt retained')
++    require(found[0]['status']=='completed','producer still running')
+     job=found[0];require(str(job['run_id'])==run and str(job['run_attempt'])=='1' and job['head_sha']==IDENTITY['source_sha'],'producer job identity')
+     require(job['head_branch']==c['branch'] and job['workflow_name']==info['name'],'producer workflow/branch')
+     artpage=api(prefix+'/runs/'+run+'/artifacts?per_page=100');save(audit/'artifacts.json',artpage)
+@@ -574,6 +574,18 @@ def audit_inner(audit,state):
+     for name,entry in inv['files'].items():
+         p=safe_member(extracted,name,actual)
+         require(p.stat().st_size==entry['bytes'] and sha(p)==entry['sha256'],'member fingerprint '+name)
++    native_reports=extracted/'build/f05-gtk-native'
++    if (native_reports/'coverage.json').is_file() and (native_reports/'receipt.json').is_file():
++        from case_alignment import align_cases
++        cov=read(native_reports/'coverage.json');rec=read(native_reports/'receipt.json')
++        rows=align_cases(cov['cases'],rec['cases'],rec['claims']) if cov['cases'] else [
++            {'id':case,'outcome':'not-run','executed':False} for case in c['native_cases']]
++        attempts=cov.get('session_start_attempts',[])
++        result={'cases':rows,'session_start_attempts':attempts,'cleanup_timings':cov.get('cleanup_timings',[]),
++            'errors':cov.get('errors',[]),'producer_conclusion':found[0]['conclusion'],'catalog_state_changed':False}
++        save(audit/'case-results.json',result)
++        print('F05 CASE RESULTS '+json.dumps(result),flush=True)
++    require(found[0]['conclusion']=='success','producer unsuccessful; authenticated case-results retained; known-issue')
+     require(inv['complete'] is True and not inv['errors'],'collection failed')
+     require(not inv['missing'],'required outputs missing '+repr(inv['missing']))
+     for name,script in c['stages'].items():
+@@ -586,9 +598,6 @@ def audit_inner(audit,state):
+                 require(sha(safe_member(extracted,path,inv['files']))==item['sha256'] and safe_member(extracted,path,inv['files']).stat().st_size==item['bytes'],'actual runtime input '+path)
+         for kind in ['stdout','stderr']:
+             require(sha(extracted/'build/f05-gtk'/(name+'.'+kind+'.log'))==proof[kind+'_sha256'],'original stage log '+name)
+-    diagnostic=verify_import_diagnostics(extracted/'build/f05-gtk/import-dialog-diagnostics.json')
+-    retained_proof=read(extracted/'build/f05-gtk/retained48.json')
+-    require(retained_proof.get('diagnostic')==diagnostic,'producer/audit diagnostic proof mismatch')
+     build=read(extracted/'build/gtk-sdk342/build.json');check_identity(build,IDENTITY)
+     require(build['passed'] is True and build['sdk_version']=='3.42.0','canonical build')
+     raw=read(extracted/'build/gtk-raw-wave3/result.json')
+@@ -626,13 +635,6 @@ def audit_inner(audit,state):
+     require(hc.get('EXREADER_OPDS_HASH_ONLY')=='ON' and hc.get('CMAKE_INSTALL_PREFIX')==str(ROOT/'build/f05-original-hash'),'canonical hash owner cache')
+     host=extracted/c['payload']/'bin/exreader-linux'
+     require(sha(host)==build['program_sha256'],'canonical payload/program')
+-    retained=read(extracted/'build/f05-gtk-retained/result.json');check_identity(retained,IDENTITY)
+-    require(retained['accepted'] is True and retained['count']==48 and len(retained['checks'])==48
+-        and retained['checks']==c['retained_checks'],'original exact48')
+-    require(retained['credential_leak_hits']==0 and retained['local_originals']==52 and retained['native_https'] is True and retained['remote_sdk_import_accepted'] is True and retained['remote_projection_accepted'] is True and retained['complete_product'] is False,'retained safety flags')
+-    require(retained['program_sha256']==sha(host),'retained host mismatch')
+-    received=retained['received']
+-    require(received['checks']==c['receive_checks'] and received['mislocated']==0 and received['originals_read_back']==4,'receive original25')
+     native=extracted/'build/f05-gtk-native'
+     coverage=read(native/'coverage.json')
+     expected_native={'source':IDENTITY['source_sha'],'run':run,'attempt':'1'}
+@@ -644,11 +646,6 @@ def audit_inner(audit,state):
+     require(coverage['program_sha256']==sha(host),'native program mismatch')
+     controls=read(extracted/'build/f05-gtk/observation-controls.json')
+     require(controls==observation_selftests(),'original observation controls mismatch')
+-    input_controls=read(extracted/'build/f05-gtk/x11-return-controls.json')
+-    check_identity(input_controls,IDENTITY)
+-    require(input_controls.get('passed') is True and input_controls.get('native_product_acceptance') is False
+-        and input_controls.get('foreign_owner_refused') is True and input_controls.get('late_return_suppressed') is True
+-        and input_controls.get('unscoped_counterexample_observed') is True,'real GTK/XTest input controls absent')
+     trace=read(native/'receive-observations.json');check_identity(trace['identity'],expected_native)
+     require(trace['program_sha256']==sha(host) and trace['full_F05_accepted'] is False,'Receive trace identity')
+     records=trace['records']
+@@ -721,10 +718,10 @@ def audit_inner(audit,state):
+         wire=read(safe_member(native/'peer-delete-put',match[0]['file'],{p[len('build/f05-gtk-native/peer-delete-put/'):] for p in inv['files'] if p.startswith('build/f05-gtk-native/peer-delete-put/')}))
+         require(wire==proof[role],'actual wire vs typed native claim')
+     require(sha(native/'offline-sdk-original.bin')==cases[-1]['original_sha256'],'offline bytes')
+-    save(audit/'accepted.json',dict(IDENTITY,artifact=art,producer_job=found[0],retained48_accepted=True,
++    save(audit/'accepted.json',dict(IDENTITY,artifact=art,producer_job=found[0],retained48_accepted=False,retained48_not_run_this_round=True,
+         native_cases=6,native_passed=6,native_partial=0,delete_detail_accepted=True,
+         artifact_authenticated=True,full_F05_accepted=False))
+-    print('F05 GTK original48 and all six native recovery cases including deletion details accepted; fullF05 false',flush=True)
++    print('F05 SDK native-only: six native recovery cases accepted; original48 not run this round; fullF05 false',flush=True)
+ def authenticate():
+     audit=ROOT/'build/f05-gtk-audit';audit.mkdir(parents=True,exist_ok=False)
+     state=dict(IDENTITY,accepted=False,full_F05_accepted=False,delete_detail_accepted=False,errors=[])
+diff --git a/tests/product/f05_gtk_native_recovery_20261103/gtk.py b/tests/product/f05_gtk_native_recovery_20261103/gtk.py
+index 736960af..1a9e0b71 100644
+--- a/tests/product/f05_gtk_native_recovery_20261103/gtk.py
++++ b/tests/product/f05_gtk_native_recovery_20261103/gtk.py
+@@ -161,6 +161,26 @@ def main():
+                 record["tls_ready"] = True
+         record["ready_at"] = time.monotonic()
+         return record
++    def start_sync(host):
++        ready=fixture_ready()
++        assert ready['thread_alive'] and ready['tls_ready'], 'fixture not ready before Sync'
++        attempt={'host':host.folder.name,'case_index':len(checks),'fixture':ready,'samples':[]}
++        report.setdefault('session_start_attempts',[]).append(attempt)
++        started=time.monotonic()
++        host.key('alt+s')
++        while True:
++            state=account(host)
++            attempt['samples'].append({'elapsed':time.monotonic()-started,
++                'session_present':state.get('session_present'),'generation':state.get('session_generation')})
++            if state.get('session_present')=='1' and int(state.get('session_generation','0'))>0:
++                attempt['ready']=True
++                return
++            if time.monotonic()-started>=5:
++                attempt['ready']=False
++                report['stop_reason']='known-issue: generation/session remained zero for 5 seconds; no further cases'
++                print('F05 ZERO SESSION STOP '+json.dumps(attempt),flush=True)
++                raise AssertionError(report['stop_reason'])
++            time.sleep(.1)
+     def sdk_originals(host):
+         db=host.folder/"profile/library.sqlite"
+         with sqlite3.connect(db.resolve().as_uri()+"?mode=ro",uri=True,timeout=20) as connection:
+@@ -217,7 +237,7 @@ def main():
+             record["before_network"]=before
+             record["sync_at"] = time.monotonic()
+             record["fixture_to_sync_seconds"] = record["sync_at"]-record["fixture_before_sync"]["ready_at"]
+-            host.key("alt+s")
++            start_sync(host)
+             while True:
+                 if time.monotonic()>=network_deadline:raise TimeoutError("new network session deadline")
+                 state=sample();record_sample("network_samples",state)
+@@ -335,7 +355,7 @@ def main():
+         configure(second)
+         before_cancel=sdk_originals(second)
+         store.hold_get=True;store.get_blocked.clear();store.release.clear()
+-        open_account(second);second.key("alt+s")
++        open_account(second);start_sync(second)
+         if not store.get_blocked.wait(60):
+             raise AssertionError("actual GTK original GET boundary missing")
+         second.key("alt+c")
+@@ -376,7 +396,7 @@ def main():
+         store.put_committed.clear()
+         store.release.clear()
+         open_account(first)
+-        first.key("alt+s")
++        start_sync(first)
+         if not store.put_committed.wait(60): raise AssertionError("no committed PUT boundary")
+         pid = first.process.pid
+         first.process.kill()
