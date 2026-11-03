@@ -111,5 +111,6 @@ install(TARGETS reader_original_import EXPORT EXReaderProductCatalogTargets ARCH
 install(FILES ../../original-import/original_import.h DESTINATION include/exreader-product)
 if(PROJECT_IS_TOP_LEVEL)
   add_executable(reader-original-import-check ../../../../tests/reader_catalog/original_import_check.cpp)
+  target_compile_features(reader-original-import-check PRIVATE cxx_std_17)
   target_link_libraries(reader-original-import-check PRIVATE reader_original_import)
 endif()

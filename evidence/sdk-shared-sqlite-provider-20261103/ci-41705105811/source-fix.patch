@@ -1,0 +1,56 @@
+diff --git a/.github/workflows/sdk-shared-sqlite-contract.yml b/.github/workflows/sdk-shared-sqlite-contract.yml
+index 203da3e3..c8bb4bb0 100644
+--- a/.github/workflows/sdk-shared-sqlite-contract.yml
++++ b/.github/workflows/sdk-shared-sqlite-contract.yml
+@@ -1,4 +1,4 @@
+-name: SDK shared SQLite contract
++name: SDK shared SQLite limited build validation
+ 
+ on:
+   push:
+@@ -7,7 +7,7 @@ on:
+   workflow_dispatch:
+     inputs:
+       candidate_sha:
+-        description: Exact reviewed SDK candidate commit (parent must be 95100501)
++        description: Exact reviewed SDK follow-up commit (parent must be 40ac811b)
+         type: string
+         required: true
+ 
+@@ -30,11 +30,12 @@ jobs:
+           python3 - <<'PY'
+           import json, os, pathlib, re, subprocess
+           base = '95100501eeef9c6325be8b3882aa400c99cf000f'
++          reviewed_parent = '40ac811b0a872587641e01ff0cfc33a376e93abc'
+           sha = os.environ['CANDIDATE_SHA']
+           if not re.fullmatch(r'[0-9a-f]{40}', sha):
+               raise SystemExit('exact candidate SHA required')
+           def git(*args): return subprocess.check_output(['git', *args], text=True).strip()
+-          if git('rev-parse', 'HEAD') != sha or git('rev-parse', 'HEAD^') != base:
++          if git('rev-parse', 'HEAD') != sha or git('rev-parse', 'HEAD^') != reviewed_parent:
+               raise SystemExit('candidate is not the reviewed replay on the fixed SDK line')
+           subprocess.run(['git', 'diff', '--exit-code', base, 'HEAD', '--',
+               'src', 'include', 'bindings', 'cmake/versions.cmake',
+@@ -50,8 +51,9 @@ jobs:
+               raise SystemExit('candidate contains changes outside the reviewed SDK contract')
+           out = pathlib.Path('evidence/sdk-shared-sqlite-provider-20261103/ci')
+           out.mkdir(parents=True, exist_ok=True)
+-          (out/'source.json').write_text(json.dumps({'base': base, 'candidate': sha,
+-              'changed': changed, 'acceptance_assessed': False}, indent=2))
++          (out/'source.json').write_text(json.dumps({'base': base, 'reviewed_parent': reviewed_parent, 'candidate': sha,
++              'changed': changed, 'validation_kind': 'limited build validation',
++              'apple_acceptance_assessed': False, 'acceptance_assessed': False}, indent=2))
+           PY
+       - name: Build and test the installed shared provider
+         run: |
+diff --git a/apps/reader/store/native/CMakeLists.txt b/apps/reader/store/native/CMakeLists.txt
+index a5da0119..0ac248ec 100644
+--- a/apps/reader/store/native/CMakeLists.txt
++++ b/apps/reader/store/native/CMakeLists.txt
+@@ -111,5 +111,6 @@ install(TARGETS reader_original_import EXPORT EXReaderProductCatalogTargets ARCH
+ install(FILES ../../original-import/original_import.h DESTINATION include/exreader-product)
+ if(PROJECT_IS_TOP_LEVEL)
+   add_executable(reader-original-import-check ../../../../tests/reader_catalog/original_import_check.cpp)
++  target_compile_features(reader-original-import-check PRIVATE cxx_std_17)
+   target_link_libraries(reader-original-import-check PRIVATE reader_original_import)
+ endif()
