@@ -39,6 +39,8 @@ def admit():
         require(git('rev-parse','HEAD:'+path)==git('rev-parse',c['sdk_freeze']+':'+path),'SDK changed '+path)
     for name in ['gtk.py','fixture.py']:
         require(git('hash-object',str(HERE/name))==c['copied_blobs'][name],'native scenario changed '+name)
+    spec=c['retained_diagnostics']
+    require(git('hash-object',str(HERE/'retained_diagnostics.py'))==spec['wrapper_blob'],'diagnostic wrapper changed')
     save(OUT/'observation-controls.json',observation_selftests())
     return c
 
@@ -238,6 +240,73 @@ def provider_proof():
                 hash_cache_sha256=sha(ROOT/'build/f05-original-hash-build/CMakeCache.txt'),passed=True)
     save(OUT/'providers.json',result)
     return result
+
+def verify_import_diagnostics(path):
+    c=contract();spec=c['retained_diagnostics']
+    require(path.is_file() and not path.is_symlink() and path.stat().st_size<=2*1024*1024,'diagnostic report absent/oversize')
+    report=read(path);check_identity(report,IDENTITY)
+    require(report.get('schema')==1 and report.get('complete') is True and not report.get('errors'),'diagnostic incomplete')
+    require(report.get('original_finished') is True and report.get('original_exception') is None,'original retained main did not finish')
+    require(report.get('accepted') is False,'diagnostic must not grant original acceptance')
+    require(report.get('timing_perturbation_possible') is True and report.get('extra_queries_only_after_failure') is True,'diagnostic scope')
+    require(report.get('report_limit_bytes')==2*1024*1024 and report.get('call_limit')==1024
+        and report.get('event_limit_per_call')==512 and report.get('failure_query_total_seconds')==5,'diagnostic limits')
+    require(set(report['original_sources'])==set(spec['source_blobs']),'diagnostic source set')
+    for source,blob in spec['source_blobs'].items():
+        item=report['original_sources'][source]
+        require(item['blob']==blob and git('rev-parse','HEAD:'+source)==blob
+            and item['sha256']==sha(ROOT/source),'diagnostic original source identity')
+    calls=report.get('calls')
+    require(isinstance(calls,list) and 52<=len(calls)<=1024,'original dialog call coverage')
+    def number(value):
+        return type(value) in (int,float) and math.isfinite(value) and value>=0
+    def win(value):
+        return isinstance(value,str) and re.fullmatch(r'[0-9]{1,20}',value) is not None and int(value)>0
+    for index,call in enumerate(calls,1):
+        require(type(call['ordinal']) is int and call['ordinal']==index and call.get('outcome')=='returned'
+            and call.get('truncated') is False,'original dialog failed/truncated')
+        require(type(call['host_pid']) is int and 0<call['host_pid']<2**63,'host process identity')
+        require(win(call.get('host_window')) and win(call.get('selected_window')),'original window identity')
+        fixture=call.get('fixture');require(isinstance(fixture,dict),'fixture observation missing')
+        kind=fixture.get('kind')
+        if kind=='fixture':
+            value=fixture.get('relative')
+            require(set(fixture)=={'kind','relative'} and isinstance(value,str) and len(value)<=240
+                and re.fullmatch(r'[A-Za-z0-9_./ -]+',value) is not None,'fixture relative name')
+            parts=PurePosixPath(value)
+            require(parts.parts and not parts.is_absolute() and parts.as_posix()==value and all(p not in ('..','.','profile','home','run') for p in parts.parts),'unsafe fixture relative name')
+        else:
+            require(set(fixture)=={'kind'} and kind in ('cancel','outside_fixture','unmapped_fixture','excluded_fixture','non_ascii_fixture'),'fixture category')
+        begin=call['started_monotonic'];end=call['finished_monotonic']
+        require(number(begin) and number(end) and end>=begin,'dialog clock order')
+        events=call['events'];require(isinstance(events,list) and 3<=len(events)<=512,'dialog event budget')
+        previous=begin;sync=[];states=[];searches=[]
+        for entry in events:
+            require(isinstance(entry,dict) and number(entry.get('monotonic'))
+                and previous<=entry['monotonic']<=end,'event clock order')
+            previous=entry['monotonic'];kind=entry.get('kind')
+            if kind=='original_state_read':
+                require(set(entry)=={'kind','monotonic','state'} and isinstance(entry['state'],dict)
+                    and set(entry['state']).issubset({'sequence','book','error','busy','visible'}),'state observation shape')
+                require(all(type(v) is int and -(2**63)<=v<2**63 for v in entry['state'].values()),'state integer fields')
+                states.append(entry)
+            elif kind=='original_sync_search_return':
+                require(set(entry)=={'kind','monotonic','window_ids'} and isinstance(entry['window_ids'],list)
+                    and 1<=len(entry['window_ids'])<=64 and all(win(v) for v in entry['window_ids']),'original sync search IDs')
+                sync.append(entry)
+            elif kind=='original_visible_search_return':
+                require(set(entry)=={'kind','monotonic','returncode','stdout_discarded','stderr_discarded'}
+                    and type(entry['returncode']) is int and -(2**31)<=entry['returncode']<2**31
+                    and entry['stdout_discarded'] is True and entry['stderr_discarded'] is True,'original visible search record')
+                searches.append(entry)
+            else:
+                require(False,'unexpected successful dialog event kind')
+        require(len(sync)==1 and call['selected_window']==sync[0]['window_ids'][-1],'missing/ambiguous original selected window')
+        require(states and type(states[0]['state'].get('sequence')) is int
+            and states[0]['monotonic']<=sync[0]['monotonic'],'missing original entry sequence')
+        require(searches and searches[-1]['returncode']==1,'original dialog close result missing')
+    return {'complete':True,'calls':len(calls),'sha256':sha(path),'original_main_finished':True,'original_acceptance_not_replaced':True}
+
 def execute(name):
     c=admit();require(name in c['stages'],'unknown stage')
     script=c['stages'][name];OUT.mkdir(parents=True,exist_ok=True)
@@ -257,6 +326,8 @@ def execute(name):
                                   stderr=subprocess.PIPE,text=True,encoding='utf-8',errors='replace',start_new_session=True)
         stdout,stderr=process.communicate(timeout=c['timeouts'][name])
         proof['returncode']=process.returncode;proof['passed']=process.returncode==0
+        if name=='retained48' and proof['passed']:
+            proof['diagnostic']=verify_import_diagnostics(OUT/'import-dialog-diagnostics.json')
     except BaseException as error:
         proof['error']=clean(repr(error))[:6000]
         proof['not_executed']=process is None
@@ -475,6 +546,9 @@ def audit_inner(audit,state):
                 require(sha(safe_member(extracted,path,inv['files']))==item['sha256'] and safe_member(extracted,path,inv['files']).stat().st_size==item['bytes'],'actual runtime input '+path)
         for kind in ['stdout','stderr']:
             require(sha(extracted/'build/f05-gtk'/(name+'.'+kind+'.log'))==proof[kind+'_sha256'],'original stage log '+name)
+    diagnostic=verify_import_diagnostics(extracted/'build/f05-gtk/import-dialog-diagnostics.json')
+    retained_proof=read(extracted/'build/f05-gtk/retained48.json')
+    require(retained_proof.get('diagnostic')==diagnostic,'producer/audit diagnostic proof mismatch')
     build=read(extracted/'build/gtk-sdk342/build.json');check_identity(build,IDENTITY)
     require(build['passed'] is True and build['sdk_version']=='3.42.0','canonical build')
     raw=read(extracted/'build/gtk-raw-wave3/result.json')

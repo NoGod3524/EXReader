@@ -1,9 +1,10 @@
 {
   "schema": 1,
-  "parent": "834aac8adea2f19b3ccda832608ffacc4049449f",
+  "parent": "4838d70103b4945e5d599796fcfcf35caeca1fc0",
   "branch": "dot/f05-gtk-native-recovery-20261103",
   "delta": [
-    "M\ttests/product/f05_gtk_native_recovery_20261103/gtk.py",
+    "A\ttests/product/f05_gtk_native_recovery_20261103/retained_diagnostics.py",
+    "M\ttests/product/f05_gtk_native_recovery_20261103/driver.py",
     "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json"
   ],
   "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
@@ -37,7 +38,7 @@
     "navigation": "set -o pipefail\nbuild/gtk-raw-wave3/retained-host/reader-gtk-navigation-backend \"$PWD/build/gtk-navigation-backend/library.sqlite\" \"$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf\" \"$PWD/build/gtk-navigation-fixtures\" \"$PWD/build/gtk-fixed-inputs\" 2>&1 | tee build/gtk-navigation-backend/checks.log\n",
     "folder": "set -o pipefail\nbuild/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend \"$PWD/build/gtk-batch-backend/profile/library.sqlite\" \"$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf\" \"$PWD/build/gtk-batch-backend-fixtures\" \"$PWD/build/gtk-batch-backend/originals.tsv\" exercise 2>&1 | tee build/gtk-batch-backend/checks.log\nbuild/gtk-raw-wave3/retained-host/reader-gtk-batch-owner-faults \"$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf\" \"$PWD/build/gtk-batch-owner-faults\" 2>&1 | tee build/gtk-batch-owner-faults/checks.log\n",
     "gui": "xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '\n  export PYTHONPATH=\"$PWD/build/gtk-atspi-client\"\n  openbox >build/gtk-raw-wave3/retained-openbox.log 2>&1 &\n  wm=$!\n  trap \"kill $wm || true\" EXIT\n  gsettings set org.gnome.desktop.interface toolkit-accessibility true\n  gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true\n  failed=0\n  /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-navigation-fixtures --fixed-inputs build/gtk-fixed-inputs --output build/gtk-navigation-ui || failed=1\n  /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-batch-ui-fixtures --output build/gtk-batch-ui --backend build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend || failed=1\n  exit \"$failed\"\n'\n",
-    "retained48": "xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euo pipefail -c 'openbox >build/f05-gtk/retained48-openbox.log 2>&1 &\nwm=$!\ntrap \"kill $wm || true\" EXIT\n/usr/bin/python3 tests/linux_host/check_account_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --metadata-consumer build/f05-consumers/metadata-consumer/metadata-consumer --revision-consumer build/f05-consumers/revision-consumer/revision-consumer --receive-fixtures build/f05-receive-fixtures --reading-probe build/f05-consumers/reading-probe/reading-v2-probe --inspect-consumer build/f05-consumers/inspect/received-sdk-inspect --output build/f05-gtk-retained\n'\n",
+    "retained48": "xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euo pipefail -c 'openbox >build/f05-gtk/retained48-openbox.log 2>&1 &\nwm=$!\ntrap \"kill $wm || true\" EXIT\n/usr/bin/python3 tests/product/f05_gtk_native_recovery_20261103/retained_diagnostics.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --metadata-consumer build/f05-consumers/metadata-consumer/metadata-consumer --revision-consumer build/f05-consumers/revision-consumer/revision-consumer --receive-fixtures build/f05-receive-fixtures --reading-probe build/f05-consumers/reading-probe/reading-v2-probe --inspect-consumer build/f05-consumers/inspect/received-sdk-inspect --output build/f05-gtk-retained\n'\n",
     "native6": "xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euo pipefail -c 'openbox >build/f05-gtk/native6-openbox.log 2>&1 &\nwm=$!\ntrap \"kill $wm || true\" EXIT\n/usr/bin/python3 tests/product/f05_gtk_native_recovery_20261103/gtk.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --inspect build/f05-consumers/inspect/received-sdk-inspect --output build/f05-gtk-native\n'\n"
   },
   "timeouts": {
@@ -276,7 +277,8 @@
     "build/gtk-raw-wave3/retained-package/EXReader-Linux/bin/exreader-linux",
     "build/gtk-sdk342/build.json",
     "build/f05-gtk/observation-controls.json",
-    "build/f05-gtk-native/receive-observations.json"
+    "build/f05-gtk-native/receive-observations.json",
+    "build/f05-gtk/import-dialog-diagnostics.json"
   ],
   "optional_patterns": [
     "build/gtk-navigation-ui/*.json",
@@ -303,5 +305,21 @@
     "preserve_cleanup_failure_guard": true,
     "fixture_private_key_removal_verified": true,
     "original_cases_unchanged": true
+  },
+  "retained_diagnostics": {
+    "source_parent": "4838d70103b4945e5d599796fcfcf35caeca1fc0",
+    "original_failed_run": "41636861038",
+    "wrapper_blob": "26c80812737a9ff1e7f8b6d33d747bc1fd483632",
+    "source_blobs": {
+      "tests/linux_host/check_account_ui.py": "56ae329b91597bd0fd0f51e871f6a5a458ea1f32",
+      "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065"
+    },
+    "report_limit_bytes": 2097152,
+    "post_failure_total_seconds": 5,
+    "old_source_bytes_unchanged": true,
+    "old_arguments_and_deadlines_unchanged": true,
+    "runtime_observation_may_affect_timing": true,
+    "original_failed_run_never_promoted": true,
+    "diagnostic_incomplete_rejects_new_package": true
   }
 }
