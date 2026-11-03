@@ -1,31 +1,23 @@
 {
+  "schema": 2,
+  "identity": [
+    "file",
+    "content_sha256",
+    "occurrence"
+  ],
   "generated_date_utc": "2026-11-03",
-  "source_commit": "39d55a970b55be1272cbd672bfb911f5510747b8",
-  "command": "python tools/check_ci_hygiene.py --emit-baseline",
-  "checker_sha256": "8230aae30ff15874fed7b6cfc0593785379e32bd59ecc34526d6a16077601940",
-  "baseline_sha256": "4dd7fe9b98b254da6023f7094685623b209f2770d2c9258fbb41d075745df62d",
+  "source_commit": "2c851890f26e54f9614deaef9049f5a447649a3f",
+  "command": "python tools/check_ci_hygiene.py --remap-baseline",
+  "entries": 531,
+  "rule_bindings": 533,
+  "checker_sha256": "9cba38eaf7458c189dc609ce355a0c03bc2d9c442a23bb05ccd7a33fba463287",
+  "baseline_sha256": "a7ef074e2afa6ce3c2bd8302d748439edcd7f4de380556fc70064d8a21021940",
   "patterns": {
     "failfast": 507,
     "negative": 15,
     "diagnostic": 7,
     "packaging": 4
   },
-  "shell_branches": {
-    "explicit_bash": {
-      "matched_steps": 1720,
-      "missing_shell_settings": 0
-    },
-    "default_bash": {
-      "matched_steps": 663,
-      "missing_shell_settings": 276
-    },
-    "powershell": {
-      "matched_steps": 159,
-      "missing_shell_settings": 158
-    },
-    "custom": {
-      "matched_steps": 35,
-      "missing_shell_settings": 0
-    }
-  }
+  "generator_commit": "0cb535813dd6e2871975ae0942806cdf752dacf7",
+  "source_commit_role": "workflow input and old baseline snapshot; generator bytes are pinned separately"
 }
