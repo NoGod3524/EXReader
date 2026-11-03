@@ -39,7 +39,144 @@ def admit():
         require(git('rev-parse','HEAD:'+path)==git('rev-parse',c['sdk_freeze']+':'+path),'SDK changed '+path)
     for name in ['gtk.py','fixture.py']:
         require(git('hash-object',str(HERE/name))==c['copied_blobs'][name],'native scenario changed '+name)
+    save(OUT/'observation-controls.json',observation_selftests())
     return c
+
+# Receive observations are scoped to a newly created network session, not a
+# fictional Receive counter. Only whitelisted account fields are archived.
+NETWORK_FINISHED = "Sync finished. This does not mean those books are readable yet; choose Receive books to add them to your shelf"
+RECEIVE_FINISHED = (
+    "Sync finished. Open a book to add it to this device's reading library",
+    "Sync finished. Some books have version conflicts; open the others to add them to this device",
+)
+OBS_NUMBERS = ('visible','owner_busy','preparing','phase','closing','session_present',
+               'session_state','session_status','session_generation','closed_generation',
+               'receive_enabled','projection_status','receive_seen','projected',
+               'conflicted','waiting','cancel_requested')
+OBS_FIELDS = (*OBS_NUMBERS, 'notice')
+SYNC_HOSTS = ['first','second','first','second','first','second','first','second',
+              'second','first','second','first','first','second','first']
+OBS_CONTROLS = ['fast_same_seen','visible_transition','old_generation','old_receive_terminal',
+                'network_only','generation_changed','no_dispatch_or_bad_fields','partial_and_wrong_notice']
+def observation_snapshot(value):
+    require(isinstance(value,dict),'account observation absent')
+    result={}
+    for key in OBS_NUMBERS:
+        raw=value.get(key)
+        require(isinstance(raw,str) and re.fullmatch(r'-?[0-9]{1,20}',raw) is not None,'invalid account field '+key)
+        require(key in ('session_status','projection_status') or int(raw)>=0,'negative account counter '+key)
+        result[key]=raw
+    notice=value.get('notice')
+    require(isinstance(notice,str) and len(notice)<=1024,'invalid account notice')
+    result['notice']=notice
+    for key in ('visible','owner_busy','preparing','closing','session_present','receive_enabled','cancel_requested'):
+        require(result[key] in ('0','1'),'invalid boolean '+key)
+    return result
+def receive_precondition(before,ready):
+    before=observation_snapshot(before);ready=observation_snapshot(ready)
+    require(int(ready['session_generation'])>int(before['session_generation']),'not a new network session')
+    require(all(ready[k]==v for k,v in {'visible':'1','owner_busy':'0','preparing':'0','phase':'0',
+        'closing':'0','session_present':'1','session_state':'4','session_status':'0',
+        'receive_enabled':'1','cancel_requested':'0'}.items()),'network not ready for Receive')
+    require(ready['notice']==NETWORK_FINISHED,'not network-only finish')
+    return int(ready['session_generation'])
+def receive_observation(ready,current,dispatched):
+    ready=observation_snapshot(ready);current=observation_snapshot(current)
+    require(dispatched is True,'Receive not dispatched')
+    require(current['session_generation']==ready['session_generation'],'network generation changed')
+    require(current['visible']=='1' and current['closing']=='0' and current['session_present']=='1'
+        and current['session_state']=='4' and current['session_status']=='0' and current['cancel_requested']=='0',
+        'Receive host/session no longer active')
+    idle=all(current[k]=='0' for k in ('phase','preparing','owner_busy'))
+    if not idle:return None
+    notice=current['notice']
+    if notice==NETWORK_FINISHED:return None
+    require(current['receive_enabled']=='1','Receive did not return to available')
+    if notice in RECEIVE_FINISHED:
+        require(current['projection_status']=='0','Receive completion has projection error')
+        return 'received'
+    match=re.fullmatch(r'Shelf organization: ([0-9]+) conflicting or incomplete versions; ([0-9]+) waiting for related items\. Sync or resolve them, then retry',notice)
+    if match:
+        require(int(match[1])+int(match[2])>0 and current['projection_status']!='0','invalid pending projection')
+        return 'pending_projection'
+    # The one in-progress text is not terminal even if observed with an older
+    # idle snapshot. No generic Sync finished prefix or arbitrary error passes.
+    if notice=='Adding received books to your shelf':return None
+    raise AssertionError('unexpected Receive terminal notice: '+notice)
+def verify_receive_trace(record):
+    require(isinstance(record,dict) and record.get('completed') is True,'incomplete Receive trace')
+    require(type(record.get('pid')) is int and record['pid']>0,'missing host PID')
+    generation=receive_precondition(record['before_network'],record['ready'])
+    require(record.get('generation')==generation,'trace generation binding')
+    require(record.get('dispatch_count')==1 and record.get('dispatch_ok') is True,'not one successful key dispatch')
+    dispatch=record.get('dispatch_elapsed')
+    require(type(dispatch) in (int,float) and math.isfinite(dispatch) and 0<=dispatch<=300,'invalid dispatch time')
+    samples=record.get('samples')
+    require(isinstance(samples,list) and 1<=len(samples)<=1300,'Receive trace sample budget')
+    network=record.get('network_samples')
+    require(isinstance(network,list) and 1<=len(network)<=2500,'network trace sample budget')
+    network_last=-1
+    for item in network:
+        elapsed=item.get('elapsed')
+        require(type(elapsed) in (int,float) and math.isfinite(elapsed)
+            and 0<=elapsed<240 and elapsed>=network_last,'network deadline/order')
+        require(item.get('pid')==record['pid'],'network host changed')
+        observation_snapshot(item['state']);network_last=elapsed
+    require(network[-1]['state']==record['ready'] and network_last<=dispatch,'network ready binding')
+    last=-1;outcome=None
+    for index,item in enumerate(samples):
+        elapsed=item.get('elapsed')
+        require(type(elapsed) in (int,float) and math.isfinite(elapsed)
+            and dispatch<=elapsed<dispatch+120 and elapsed>=last,'Receive deadline/order')
+        require(item.get('pid')==record['pid'],'host process changed')
+        require(outcome is None,'samples after terminal')
+        outcome=receive_observation(record['ready'],item['state'],True)
+        last=elapsed
+    require(outcome is not None and outcome==record.get('outcome'),'terminal evidence absent')
+    return outcome
+def observation_selftests():
+    base={key:'0' for key in OBS_NUMBERS}
+    base.update(visible='1',session_generation='10',notice='Loading this library')
+    ready=dict(base,session_generation='11',session_present='1',session_state='4',
+               receive_enabled='1',receive_seen='1',notice=NETWORK_FINISHED)
+    final=dict(ready,notice=RECEIVE_FINISHED[0])
+    active=dict(ready,preparing='1',phase='2',owner_busy='1',receive_enabled='0',
+                notice='Adding received books to your shelf')
+    def trace(states,**changes):
+        v={'pid':101,'before_network':base.copy(),'ready':ready.copy(),'generation':11,
+           'dispatch_count':1,'dispatch_ok':True,'dispatch_elapsed':1.0,
+           'network_samples':[{'elapsed':0.9,'pid':101,'state':ready.copy()}],
+           'samples':[{'elapsed':1.1+i*.1,'pid':101,'state':x.copy()} for i,x in enumerate(states)],
+           'outcome':'received','completed':True}
+        v.update(changes);return v
+    results=[]
+    def passed(name,good=(),bad=()):
+        for item in good:verify_receive_trace(item)
+        for item in bad:
+            try:verify_receive_trace(item)
+            except (AssertionError,KeyError,TypeError,ValueError):pass
+            else:raise AssertionError('negative observation control accepted '+name)
+        results.append({'name':name,'passed':True,'positive_variants':len(good),'negative_variants':len(bad)})
+    passed('fast_same_seen',[trace([final])])
+    passed('visible_transition',[trace([active,final])])
+    passed('old_generation',bad=[trace([final],before_network=dict(base,session_generation='11'))])
+    passed('old_receive_terminal',bad=[trace([final],ready=dict(ready,notice=RECEIVE_FINISHED[0]))])
+    passed('network_only',bad=[trace([ready])])
+    passed('generation_changed',bad=[trace([dict(final,session_generation='12')])])
+    missing=final.copy();missing.pop('receive_enabled')
+    passed('no_dispatch_or_bad_fields',bad=[
+        trace([final],dispatch_ok=False),trace([final],dispatch_count=0),
+        trace([missing]),trace([dict(final,receive_seen='NaN')]),
+        trace([final],samples=[{'elapsed':121.0,'pid':101,'state':final}])])
+    pending=dict(final,projection_status='1',notice='Shelf organization: 1 conflicting or incomplete versions; 0 waiting for related items. Sync or resolve them, then retry')
+    passed('partial_and_wrong_notice',[trace([pending],outcome='pending_projection')],[
+        trace([pending]),trace([dict(final,notice='Sync finished. Fake')]),
+        trace([dict(final,notice='Library update paused before the scan could finish. Select Retry to continue')]),
+        trace([dict(final,notice='Shelf organization: incomplete')]),
+        trace([dict(pending,projection_status='0')])])
+    require([v['name'] for v in results]==OBS_CONTROLS,'observation control set')
+    return dict(IDENTITY,checks=results,count=8,accepted=True,synthetic_predicate_controls_only=True)
+
 def clean(text):
     text=str(text)
     token=os.environ.get('GH_TOKEN','')
@@ -388,6 +525,23 @@ def audit_inner(audit,state):
     check_identity(coverage['identity'],expected_native)
     require(coverage['host']=='linux' and not coverage['errors'] and not coverage['cleanup_errors'],'native errors')
     require(coverage['program_sha256']==sha(host),'native program mismatch')
+    controls=read(extracted/'build/f05-gtk/observation-controls.json')
+    require(controls==observation_selftests(),'original observation controls mismatch')
+    trace=read(native/'receive-observations.json');check_identity(trace['identity'],expected_native)
+    require(trace['program_sha256']==sha(host) and trace['full_F05_accepted'] is False,'Receive trace identity')
+    records=trace['records']
+    require(len(records)==15 and [r['host'] for r in records]==SYNC_HOSTS,'original15 sync calls')
+    require([r['index'] for r in records]==list(range(1,16)),'Receive invocation order')
+    require([r['case_index'] for r in records]==[0,0,1,1,2,2,3,3,3,3,3,3,4,4,4],'Receive case mapping')
+    for row in records:verify_receive_trace(row)
+    require(records[0]['pid']==records[2]['pid'] and records[4]['pid']!=records[0]['pid'],'restarted first host identity')
+    for host_name,start,end in [('second',0,15),('first',0,4),('first',4,15)]:
+        segment=[r for r in records[start:end] if r['host']==host_name]
+        require(len({r['pid'] for r in segment})==1,'unexpected host replacement')
+        require(all(a['generation']<b['generation'] for a,b in zip(segment,segment[1:])),'network generation did not advance')
+    save(audit/'receive-observation-accepted.json',dict(IDENTITY,predicate_controls=8,
+        actual_sync_invocations=15,pending_projection=[r['index'] for r in records if r['outcome']=='pending_projection'],
+        full_F05_accepted=False,delete_detail_accepted=False))
     cases=coverage['cases']
     require([x['name'] for x in cases]==c['native_cases'],'six exact native cases')
     require([x['outcome'] for x in cases]==['passed','passed','passed','partial','passed','passed'],'partial must remain partial')

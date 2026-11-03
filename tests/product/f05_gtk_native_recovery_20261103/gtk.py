@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_linux_host import Session, command
 from fixture import Store, write_role_receipt
+from driver import observation_snapshot, receive_precondition, receive_observation, verify_receive_trace
 
 def main():
     if os.environ.get("GITHUB_ACTIONS") != "true":
@@ -34,12 +35,13 @@ def main():
     user, password = "f05", secrets.token_hex(24)
     auth = "Basic " + base64.b64encode((user + ":" + password).encode()).decode()
     devices, checks = [], []
+    receive_traces = []
     binary = (args.payload / "bin/exreader-linux").resolve()
     report = {"host": "linux", "F05_accepted": False, "cases": checks, "errors": [],
               "identity": {"source": os.environ["GITHUB_SHA"], "run": os.environ["GITHUB_RUN_ID"],
                            "attempt": os.environ["GITHUB_RUN_ATTEMPT"]},
               "program_sha256": hashlib.sha256(binary.read_bytes()).hexdigest()}
-    normalized, claim_refs, evidence = [], {}, ["coverage.json"]
+    normalized, claim_refs, evidence = [], {}, ["coverage.json", "receive-observations.json"]
     previous_wire, last_request = {}, 0
     def finish_case(claims, screenshot=None, screenshot_host=None, **semantic):
         nonlocal previous_wire, last_request
@@ -136,29 +138,80 @@ def main():
         return {"entity_key": next(iter(entity_keys)), "heads": sorted(ids - parents), "records": records, "outbox": pending}
     def sync(host, heads=None):
         open_account(host)
-        host.key("alt+s")
-        wait(host, lambda: account(host).get("session_state") == "4", 240)
-        # Retained history is not shelf projection. Observe the actual Receive
-        # action crossing its owner boundary; three pre-existing idle zeros
-        # cannot be accepted as completion of a click not yet processed.
-        before_receive = account(host)
-        host.key("alt+r")
-        wait(host, lambda: account(host).get("preparing") == "1"
-             or account(host).get("phase") != "0"
-             or int(account(host).get("receive_seen", "0")) >
-                int(before_receive.get("receive_seen", "0")), 120)
-        wait(host, lambda: account(host).get("phase") == "0"
-             and account(host).get("preparing") == "0"
-             and account(host).get("owner_busy") == "0"
-             and (account(host).get("notice", "").startswith("Sync finished.")
-                  or account(host).get("notice", "").startswith("Shelf organization:")), 120)
-        if heads is not None:
-            wait(host, lambda: set(snapshot(host)["heads"]) == set(heads))
-        state = account(host)
-        command("import", "-window", window(host, "Account and Sync"),
-                out / ("sync-" + host.folder.name + "-" + str(len(store.requests)) + ".png"))
-        close_account(host)
-        return state
+        started=time.monotonic();network_deadline=started+240
+        record={"index":len(receive_traces)+1,"host":host.folder.name,"pid":host.process.pid,
+                "case_index":len(checks),"dispatch_count":0,"dispatch_ok":False,
+                "network_samples":[],"samples":[],"completed":False}
+        receive_traces.append(record)
+        def sample():
+            if host.process.poll() is not None:raise AssertionError("Receive host exited")
+            raw=account(host)
+            if isinstance(raw.get("notice"),str):raw["notice"]=raw["notice"].replace(password,"<fixture-secret>")
+            return observation_snapshot(raw)
+        def elapsed():return time.monotonic()-started
+        def record_sample(target,state):
+            limit=2500 if target=="network_samples" else 1300
+            if len(record[target])>=limit:raise AssertionError("observation sample budget")
+            record[target].append({"elapsed":elapsed(),"pid":host.process.pid,"state":state})
+        def save_trace():
+            body={"identity":report["identity"],"program_sha256":report["program_sha256"],
+                  "records":receive_traces,"full_F05_accepted":False}
+            temporary=out/"receive-observations.tmp"
+            temporary.write_text(json.dumps(body,indent=2,allow_nan=False)+"\n",encoding="utf-8")
+            temporary.replace(out/"receive-observations.json")
+        try:
+            # Wait for the account-load owner to retire before the single Sync
+            # click. This uses the existing 240-second network deadline.
+            while True:
+                if time.monotonic()>=network_deadline:raise TimeoutError("network readiness deadline")
+                before=sample()
+                if all(before[k]==v for k,v in {"visible":"1","owner_busy":"0","preparing":"0",
+                       "closing":"0","session_present":"0"}.items()):break
+                time.sleep(.1)
+            record["before_network"]=before
+            host.key("alt+s")
+            while True:
+                if time.monotonic()>=network_deadline:raise TimeoutError("new network session deadline")
+                state=sample();record_sample("network_samples",state)
+                try:receive_precondition(before,state)
+                except AssertionError:
+                    time.sleep(.1);continue
+                record["ready"]=state;record["generation"]=int(state["session_generation"]);break
+            # One actual key dispatch. A new network-generation plus its exact
+            # network-only notice excludes both old Receive completion and idle.
+            record["dispatch_elapsed"]=elapsed()
+            receive_deadline=started+record["dispatch_elapsed"]+120
+            record["dispatch_count"]=1
+            host.key("alt+r")
+            record["dispatch_ok"]=True
+            while True:
+                if time.monotonic()>=receive_deadline:raise TimeoutError("Receive completion deadline")
+                state=sample();record_sample("samples",state)
+                outcome=receive_observation(record["ready"],state,record["dispatch_ok"])
+                if outcome is not None:
+                    record["outcome"]=outcome;record["completed"]=True
+                    verify_receive_trace(record);break
+                time.sleep(.1)
+            if heads is not None:
+                wait(host, lambda: set(snapshot(host)["heads"]) == set(heads))
+            state = account(host)
+            command("import", "-window", window(host, "Account and Sync"),
+                    out / ("sync-" + host.folder.name + "-" + str(len(store.requests)) + ".png"))
+            close_account(host)
+            return state
+        except BaseException as error:
+            record["error"]=str(error).replace(password,"<fixture-secret>")[:2000]
+            record["completed"]=False
+            raise
+        finally:
+            try:save_trace()
+            except BaseException as trace_error:
+                print("F05 RECEIVE TRACE WRITE FAILED "+str(trace_error).replace(password,"<fixture-secret>")[:2000],flush=True)
+                if "error" not in record:raise
+            summary={k:record.get(k) for k in ("index","host","pid","case_index","generation",
+                     "dispatch_count","dispatch_ok","completed","outcome","error")}
+            summary["last_sample"]=record["samples"][-1] if record["samples"] else None
+            print("F05 RECEIVE TRACE "+json.dumps(summary,allow_nan=False),flush=True)
     def collections(host):
         state = configparser.ConfigParser(interpolation=None)
         state.read(host.observe)
