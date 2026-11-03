@@ -1,0 +1,8 @@
+[
+  {
+    "file": "tests/reader_sdk_version/run.py",
+    "line": 132,
+    "literal": "3.42.0",
+    "purpose": "negative_case"
+  }
+]

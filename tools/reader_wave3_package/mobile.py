@@ -31,15 +31,14 @@ def android_properties(sdk, product):
 def install_android_features(sdk, product, build):
     sys.path.insert(0, str(ROOT / 'tools'))
     from build_android_host import MIN_SDK, ndk_home
-    version_header = (sdk / 'include/exr/base.h').read_text(encoding='utf-8')
-    if '#define EXR_VERSION "3.41.0"' not in version_header:
-        raise SystemExit('Delivery features require the unchanged installed SDK 3.41.0')
+    from sdk_version import installed_version
+    version = installed_version(sdk)
     common = ['-G', 'Ninja', '-DCMAKE_TOOLCHAIN_FILE=' + str(ndk_home() / 'build/cmake/android.toolchain.cmake'),
               '-DANDROID_ABI=x86_64', '-DANDROID_PLATFORM=android-' + str(MIN_SDK),
               '-DANDROID_STL=c++_static', '-DCMAKE_BUILD_TYPE=Release',
               '-DCMAKE_POSITION_INDEPENDENT_CODE=ON', '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH',
               '-DCMAKE_INSTALL_PREFIX=' + str(product), '-DCMAKE_PREFIX_PATH=' + str(product) + ';' + str(sdk),
-              '-DEXR_SDK=' + str(sdk), '-DEXR_SDK_VERSION=3.41.0', '-DREADER_PRODUCT_PREFIX=' + str(product),
+              '-DEXR_SDK=' + str(sdk), '-DEXR_SDK_VERSION=' + version, '-DREADER_PRODUCT_PREFIX=' + str(product),
               '-DEXR_READER_SELECTOR_BYTES_CANDIDATE=OFF']
     for name in MODULES:
         destination = build / name
@@ -55,7 +54,7 @@ def gradle_android(sdk, product, build, gradle, arguments):
         arguments = [*arguments, *android_properties(sdk, product)]
         profile = {'schema': 1, 'kind': 'android-native-delivery-profile',
                    'features': {name.lower(): True for name in FEATURES},
-                   'sdk_version': '3.41.0', 'sdk_prefix': str(sdk), 'product_prefix': str(product),
+                   'sdk_version': version, 'sdk_prefix': str(sdk), 'product_prefix': str(product),
                    'installed_modules': list(MODULES), 'gradle_properties': android_properties(sdk, product),
                    'source_sha': os.environ.get('GITHUB_SHA', ''),
                    'run_id': os.environ.get('GITHUB_RUN_ID', ''),

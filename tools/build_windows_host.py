@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """Package and check the Windows native reference host."""
+from sdk_version import header_text
 import argparse
 import hashlib
 import json
@@ -88,7 +89,7 @@ def main():
     if result.returncode != 0 or not report.exists():
         raise RuntimeError('Windows reference host self-check failed; see '+str(output/'application.log'))
     checked = json.loads(report.read_text())
-    expected = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk/'include/exr/base.h').read_text())[1]
+    expected = re.search(r'#define EXR_VERSION "([^"]+)"', header_text(sdk/'include/exr/base.h'))[1]
     if checked.get('passed') is not True or checked.get('checks', 0) < 26 or checked.get('engine_version') != expected:
         raise RuntimeError('Invalid Windows host report')
     source_sha = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()

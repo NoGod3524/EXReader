@@ -9,10 +9,7 @@ if(MSVC)
 endif()
 # Optional package: only the installed frozen SDK core component. No product
 # catalog, revision store, SQLite or SDK private header is used here.
-set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed SDK: frozen 3.40.0 or explicit 3.41.0 candidate")
-if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41)\\.0$")
-  message(FATAL_ERROR "Unsupported exact reader SDK version: ${EXR_SDK_VERSION}")
-endif()
+include("${CMAKE_CURRENT_LIST_DIR}/../../../cmake/InstalledSDKVersion.cmake")
 find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core
   PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
 find_package(Threads REQUIRED)

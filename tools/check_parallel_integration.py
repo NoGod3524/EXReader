@@ -361,7 +361,9 @@ def verify_baseline(source):
                 'baseline evidence: ' + kind + ' did not succeed at the registered candidate')
         evidence[kind] = {'run_id': run_id, 'attempt': run['run_attempt'], 'workflow': workflow, 'head_sha': run['head_sha']}
     header = base64.b64decode(fetch('contents/include/exr/base.h?ref=' + baseline)['content']).decode('utf-8')
-    version = re.search(r'#define EXR_VERSION "([^"]+)"', header)
+    if '#define EXR_VERSION EXR_SDK_VERSION' in header:
+        header += '\n' + base64.b64decode(fetch('contents/include/exr/version.h?ref=' + baseline)['content']).decode('utf-8')
+    version = re.search(r'#define EXR_(?:SDK_)?VERSION "([^"]+)"', header)
     abi = re.search(r'#define EXR_ABI_VERSION (\d+)u', header)
     require(version is not None and abi is not None, 'baseline: no public version or ABI declaration')
     require(registry.get('sdk_version') == version.group(1) and registry.get('sdk_abi') == int(abi.group(1)),

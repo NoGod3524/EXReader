@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """Compile the native Apple host with its installed product dependencies."""
+from sdk_version import header_text
 import argparse
 from pathlib import Path
 import subprocess
@@ -39,8 +40,8 @@ def flags(sdk, product_prefix=None, selector_bytes_candidate=False, wave3=False)
             raise RuntimeError('Actual installed raw package family differs')
         if wave3 and manifest.get('wave3_enabled') is not True:
             raise RuntimeError('Installed products do not declare the wave3 profile')
-        version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk / 'include/exr/base.h').read_text())
-        if version is None or version[1] != '3.41.0' or Path(manifest['sdk_prefix']).resolve() != sdk.resolve():
+        version = re.search(r'#define EXR_VERSION "([^"]+)"', header_text(sdk / 'include/exr/base.h'))
+        if version is None or version[1] != manifest.get('sdk_version') or Path(manifest['sdk_prefix']).resolve() != sdk.resolve():
             raise RuntimeError('Raw products are bound to another actual SDK')
         for name, version in expected.items():
             text = (product / 'lib/cmake' / name / (name + 'ConfigVersion.cmake')).read_text()

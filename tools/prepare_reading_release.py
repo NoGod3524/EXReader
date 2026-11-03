@@ -189,7 +189,9 @@ def prepare(source, run, output):
     verify_summary(summary, needs, artifacts, source, run, attempt, jobs, publisher)
     registered = verify_candidate_registry(summary['identity']['candidates'])
     header = source_text(source, 'include/exr/base.h')
-    sdk = re.search(r'^#define EXR_VERSION "([0-9]+\.[0-9]+\.[0-9]+)"$', header, re.M)
+    if '#define EXR_VERSION EXR_SDK_VERSION' in header:
+        header += '\n' + source_text(source, 'include/exr/version.h')
+    sdk = re.search(r'^#define EXR_(?:SDK_)?VERSION "([0-9]+\.[0-9]+\.[0-9]+)"$', header, re.M)
     abi = re.search(r'^#define EXR_ABI_VERSION ([0-9]+)u?$', header, re.M)
     library = re.search(r'^#define EXR_LIBRARY_VERSION "([^"]+)"$', source_text(source, 'include/exr/library.h'), re.M)
     require(sdk and abi and library, 'source SDK/library version declarations missing')

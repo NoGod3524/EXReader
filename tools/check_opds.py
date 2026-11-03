@@ -7,6 +7,7 @@ touched and writes one evidence JSON. Exit status 0 only when every check passed
 
 usage: check_opds.py --build DIR --repo DIR --out DIR --base SHA [--config Release]
 """
+from sdk_version import header_text
 import argparse
 import base64
 import hashlib
@@ -247,7 +248,7 @@ def main():
 
     # ---- default SDK untouched ----
     ident = {}
-    base_h = open(os.path.join(repo, "include", "exr", "base.h"), encoding="utf-8").read()
+    base_h = header_text(os.path.join(repo, "include", "exr", "base.h"))
     ver = re.search(r'#define EXR_VERSION "([^"]+)"', base_h).group(1)
     abi = int(re.search(r"#define EXR_ABI_VERSION (\d+)u", base_h).group(1))
     drv = report.get("driver", {})

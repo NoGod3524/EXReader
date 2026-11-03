@@ -3,7 +3,12 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import sys
 import subprocess
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
+from sdk_version import source_version
+_major, _minor, _patch = map(int, source_version().split('.'))
+FUTURE_SDK_VERSION = f'{_major}.{_minor + 1}.{_patch}'
 
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
 ROOT = Path.cwd()
@@ -129,7 +134,7 @@ negative = subprocess.run(['cmake', '-S', 'tests/reader_search/consumer', '-B', 
 (BUILD/'mixed-version.log').write_text(negative.stdout + negative.stderr)
 assert negative.returncode != 0 and '3.41.0' in negative.stdout + negative.stderr
 negative = subprocess.run(['cmake', '-S', 'apps/reader/search', '-B', str(BUILD/'invalid-version'), '-G', 'Ninja',
-    '-DEXR_SDK_VERSION=3.42.0'], capture_output=True, text=True)
+    '-DEXR_SDK_VERSION=' + FUTURE_SDK_VERSION], capture_output=True, text=True)
 (BUILD/'invalid-version.log').write_text(negative.stdout + negative.stderr)
 assert negative.returncode != 0 and 'Unsupported exact reader SDK version' in negative.stdout + negative.stderr
 result = dict(source_sha=os.environ['GITHUB_SHA'], run_id=os.environ['GITHUB_RUN_ID'], attempt=os.environ['GITHUB_RUN_ATTEMPT'],
