@@ -10,6 +10,7 @@ FetchContent_Declare(exreader_sqlite_source
   URL "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip"
   URL_HASH SHA256=68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d)
 FetchContent_MakeAvailable(exreader_sqlite_source)
+file(WRITE "${CMAKE_BINARY_DIR}/provider-source.txt" "${exreader_sqlite_source_SOURCE_DIR}")
 set(provider_options SQLITE_THREADSAFE=1 SQLITE_DQS=0 SQLITE_DEFAULT_FOREIGN_KEYS=1
   SQLITE_OMIT_LOAD_EXTENSION SQLITE_MAX_LENGTH=2147483647 SQLITE_ENABLE_FTS5)
 file(SHA256 "${exreader_sqlite_source_SOURCE_DIR}/sqlite3.c" provider_source_hash)
