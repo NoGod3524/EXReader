@@ -1,0 +1,104 @@
+{
+  "conclusion": "failure",
+  "createdAt": "2026-11-03T19:50:19Z",
+  "databaseId": 41706981519,
+  "event": "push",
+  "headBranch": "codex/sdk-shared-sqlite-provider-20261103",
+  "headSha": "64e514ae396ee73d37c72d732c21e99d1dc3b816",
+  "jobs": [
+    {
+      "completedAt": "2026-11-03T19:50:34Z",
+      "conclusion": "failure",
+      "databaseId": 126164781176,
+      "name": "apple-native",
+      "startedAt": "2026-11-03T19:50:22Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-03T19:50:23Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-03T19:50:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T19:50:29Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-03T19:50:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T19:50:30Z",
+          "conclusion": "failure",
+          "name": "Admit only the reviewed SDK replay",
+          "number": 3,
+          "startedAt": "2026-11-03T19:50:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T19:50:30Z",
+          "conclusion": "skipped",
+          "name": "Build and test the installed shared provider",
+          "number": 4,
+          "startedAt": "2026-11-03T19:50:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T19:50:30Z",
+          "conclusion": "skipped",
+          "name": "Build the SDK and product on the reviewed SDK line",
+          "number": 5,
+          "startedAt": "2026-11-03T19:50:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T19:50:30Z",
+          "conclusion": "skipped",
+          "name": "Run real product tests and the joint SDK product FTS5 test",
+          "number": 6,
+          "startedAt": "2026-11-03T19:50:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T19:50:30Z",
+          "conclusion": "skipped",
+          "name": "Reject actual Apple main and SDK binaries with embedded SQLite",
+          "number": 7,
+          "startedAt": "2026-11-03T19:50:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T19:50:30Z",
+          "conclusion": "failure",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 8,
+          "startedAt": "2026-11-03T19:50:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T19:50:31Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 16,
+          "startedAt": "2026-11-03T19:50:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T19:50:31Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 17,
+          "startedAt": "2026-11-03T19:50:31Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41706981519/job/126164781176"
+    }
+  ],
+  "status": "completed",
+  "updatedAt": "2026-11-03T19:50:34Z",
+  "url": "https://github.com/NoGod3524/EXReader/actions/runs/41706981519"
+}

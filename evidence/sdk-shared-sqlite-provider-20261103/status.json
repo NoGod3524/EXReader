@@ -78,9 +78,9 @@
     "runner": "macos-14",
     "timeout_minutes": 20,
     "run_count": 1,
-    "status": "Follow-up limited build validation authorized after documented preflight"
+    "status": "Limited build validation failed; known issue SDK-BUILD-002; no additional CI requested"
   },
-  "source_hash_scope": "Current local Windows working-tree source bytes, including uncommitted follow-up; tested CI candidate bound separately by immutable SHA.",
+  "source_hash_scope": "Source hashes match tested candidate 64e514ae; subsequent progress-only changes are confined to evidence.",
   "evidence_bytes_preserved": "Scoped .gitattributes disables newline normalization for raw evidence and recorded hashes.",
   "tested_candidate": "40ac811b0a872587641e01ff0cfc33a376e93abc",
   "ci_result": {
@@ -100,15 +100,34 @@
     "counts_toward_provider_acceptance": false
   },
   "local_followup": {
-    "committed": false,
-    "pushed": false,
+    "committed": true,
+    "pushed": true,
     "fix": "Declare cxx_std_17 on reader-original-import-check; test source and assertions unchanged",
     "validation": "Explicit directory C++98 default; target built successfully with -std=gnu++17",
-    "ci_authorization": "Approved once: macos-14, single job, <=20 minutes, no retry; limited build validation only",
+    "ci_authorization": "Consumed once; red; no retry or further CI round requested",
     "workflow_admission_parent": "40ac811b0a872587641e01ff0cfc33a376e93abc",
     "preflight": "limited-build-preflight/review.md",
     "consumer_cxx17_required": false,
     "on_red": "Record first error as known issue; no further CI round requested",
-    "on_green": "Close build item only; retain run and artifacts; no Apple acceptance claim"
+    "on_green": "Close build item only; retain run and artifacts; no Apple acceptance claim",
+    "commit": "64e514ae396ee73d37c72d732c21e99d1dc3b816"
+  },
+  "limited_build_validation": {
+    "run_id": 41706981519,
+    "job_id": 126164781176,
+    "attempt": 1,
+    "candidate": "64e514ae396ee73d37c72d732c21e99d1dc3b816",
+    "conclusion": "failure",
+    "classification": "限时构建验证；构建配置失败，非行为失败",
+    "first_error": "fatal: bad object 95100501eeef9c6325be8b3882aa400c99cf000f",
+    "known_issue": "SDK-BUILD-002",
+    "known_issue_state": "open",
+    "build_item_closed": false,
+    "artifacts": [],
+    "provider_acceptance_assessed": false,
+    "apple_acceptance_assessed": false,
+    "retry": false,
+    "further_ci_request": false,
+    "review": "ci-41706981519/review.md"
   }
 }
