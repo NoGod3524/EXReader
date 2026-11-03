@@ -1,0 +1,44 @@
+{
+  "fts5-provider.xml": {
+    "tests": "1",
+    "failures": "0",
+    "cases": [
+      {
+        "name": "sqlite-provider-check",
+        "classname": "sqlite-provider-check",
+        "time": "0.00343346",
+        "status": "run"
+      }
+    ]
+  },
+  "product-tests.xml": {
+    "tests": "2",
+    "failures": "0",
+    "cases": [
+      {
+        "name": "product-originals",
+        "classname": "product-originals",
+        "time": "0.0889748",
+        "status": "run"
+      },
+      {
+        "name": "native-product-catalog",
+        "classname": "native-product-catalog",
+        "time": "0.590874",
+        "status": "run"
+      }
+    ]
+  },
+  "fts5-integration.xml": {
+    "tests": "1",
+    "failures": "0",
+    "cases": [
+      {
+        "name": "shared-sqlite-sdk-product",
+        "classname": "shared-sqlite-sdk-product",
+        "time": "0.0083825",
+        "status": "run"
+      }
+    ]
+  }
+}

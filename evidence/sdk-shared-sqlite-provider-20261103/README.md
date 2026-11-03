@@ -1,3 +1,13 @@
+## 最新结果：授权第 2/2 次已结束，不再申请
+
+[Run 41708081512](https://github.com/NoGod3524/EXReader/actions/runs/41708081512)，候选 `e0c1c458`：准入、SDK/ProductCatalog/C++17 测试目标构建通过，原产品测试 **2/2**、FTS5 **2/2** 通过。
+负例步骤首条 error 为 `Process completed with exit code 1.`；作业整体红，转 **CI-CONTROLS-001 open**，未重跑、不再申请。Apple build-only 项未关闭。
+P 包 CI 卫生项 **CI-ADMISSION-001 已关闭**，不进入 F07 已知问题清单。
+
+**C++17 仅测试目标需要，对外契约未变，SDK 消费者不需要 C++17。**
+
+原始日志、run id、产物来源及哈希、JUnit 与四项证据状态见 [本次复核](ci-41708081512/review.md)。以下均为历史记录；“两项仍待 CI”保留原文，这两项现已在本 run 实际通过。catalog 未改，完整验收仍未完成。
+
 ## CI 准入修复：用户批准第 2/2 次限时构建验证
 
 原失败重分类为 **CI-ADMISSION-001**，归属 **P 包 CI 卫生**，不进入 F07 已知问题清单。
