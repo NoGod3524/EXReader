@@ -38,3 +38,8 @@ git -C . show <sha>:docs/reader-total-progress/catalog.json | python -c \
 顺序 V → P → C；本 C PR 现在仅开 draft，合并等待 P。R 候选必须取 P 和 F07 provider 最终落地后的提交，不能使用 21add50a。
 
 两个新 ledger workflow 从第一天满足收窄后的 CI hygiene：多命令 Bash 首行 set -euo pipefail，无裸 test -n，无隐式预期失败。authority 仅在目标分支 catalog 变化时触发；custody 仅手动触发；两者均无 push 事件。仓库存储的补丁保管不依赖 Actions。
+
+
+C 属未经 CI 的纯文档合并，风险限于 5 个新文档 + 2 个 workflow 文件。
+
+这里的五份治理文档为 LEDGER-AUTHORITY、EVIDENCE-CUSTODY、默认分支决策、保护盘点和 refreeze-scope；其余六份是既有 RESULT 与 custody 的原样归档快照。当前仍为 draft；实际 workflow 触发清单为空，没有把静态核对当作 CI 通过。
