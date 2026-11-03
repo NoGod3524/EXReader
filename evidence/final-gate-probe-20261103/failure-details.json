@@ -1,0 +1,78 @@
+[
+  {
+    "job": "desktop (macos-15)",
+    "job_id": 126231531571,
+    "conclusion": "failure",
+    "failed_step": "Native parsing, pagination, rendering and bookshelf tests",
+    "first_error": [
+      "  File \"/Users/runner/work/EXReader/EXReader/tests/check_benchmark.py\", line 134, in main",
+      "    assert summary[\"passed\"] and summary[\"identities_unchanged\"]",
+      "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "AssertionError"
+    ],
+    "log_sha256": "06b813948fdbf7c19bc6bbe0b215dad9676f94cd1f6c05f068e286e55e397df7",
+    "log_url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531571"
+  },
+  {
+    "job": "ci-hygiene (failfast)",
+    "job_id": 126231531592,
+    "conclusion": "failure",
+    "failed_step": "Check changed CI and exercise the rule",
+    "first_error": [
+      "ERROR: .github/workflows/acroform.yml:46 [failfast] expected=unchanged live exact baseline; actual=moved baseline line cannot acquire a new waiver; candidate=tools/ci_hygiene_baseline.json"
+    ],
+    "log_sha256": "4dbb74348f313fb7f75cbcc9b236cef5ad678848f00f27a26cca2ccd637f6f29",
+    "log_url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531592"
+  },
+  {
+    "job": "ci-hygiene (negative)",
+    "job_id": 126231531668,
+    "conclusion": "failure",
+    "failed_step": "Check changed CI and exercise the rule",
+    "first_error": [
+      "ERROR: .github/workflows/reader-desktop-drop.yml:68 [negative] expected=unchanged live exact baseline; actual=moved baseline line cannot acquire a new waiver; candidate=tools/ci_hygiene_baseline.json"
+    ],
+    "log_sha256": "37cb9e30460a2f6f29a3e21a1ef47fa605fa9ee81787877230a22609e259e654",
+    "log_url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531668"
+  },
+  {
+    "job": "desktop (ubuntu-22.04)",
+    "job_id": 126231531699,
+    "conclusion": "failure",
+    "failed_step": "Native parsing, pagination, rendering and bookshelf tests",
+    "first_error": [
+      "  File \"/home/runner/work/EXReader/EXReader/tests/check_benchmark.py\", line 134, in main",
+      "    assert summary[\"passed\"] and summary[\"identities_unchanged\"]",
+      "AssertionError"
+    ],
+    "log_sha256": "dc102f515ad2e6e6390bfbf58831e3e4cbcc45c20d9047eb8d7e3435e2502c9f",
+    "log_url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531699"
+  },
+  {
+    "job": "desktop (windows-latest)",
+    "job_id": 126231531549,
+    "conclusion": "failure",
+    "failed_step": "Native parsing, pagination, rendering and bookshelf tests",
+    "first_error": [
+      "  File \"D:\\a\\EXReader\\EXReader\\tests\\check_benchmark.py\", line 134, in main",
+      "    assert summary[\"passed\"] and summary[\"identities_unchanged\"]",
+      "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "AssertionError"
+    ],
+    "log_sha256": "58203e2af4fb5298168d14cd27bfcae249dade192f6c756e6c08a552fc6be04a",
+    "log_url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531549"
+  },
+  {
+    "job": "sanitizers",
+    "job_id": 126231531348,
+    "conclusion": "failure",
+    "failed_step": "Run ctest --test-dir build/asan --output-on-failure",
+    "first_error": [
+      "  File \"/home/runner/work/EXReader/EXReader/tests/check_benchmark.py\", line 134, in main",
+      "    assert summary[\"passed\"] and summary[\"identities_unchanged\"]",
+      "AssertionError"
+    ],
+    "log_sha256": "002906770cef47b2a5a2a9018da49a24fe75208b710412fc78bcc5557a9ba98c",
+    "log_url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531348"
+  }
+]
