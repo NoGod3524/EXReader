@@ -497,6 +497,7 @@ jobs:
     - android
     - apple
     - android-baseline
+    - projection-regression
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
@@ -519,7 +520,7 @@ jobs:
         path: build/f03-six-audit/*.json
         if-no-files-found: error
   projection-regression:
-    if: contains(github.event.head_commit.message, '[F03-PROJECTION]')
+    if: contains(github.event.head_commit.message, '[F03-PROJECTION]') || contains(github.event.head_commit.message, '[F03-FULL]')
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     strategy:
@@ -551,6 +552,9 @@ jobs:
         cmake -S tests/reader_organization_projection -B build/projection/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/projection/revisions;$PWD/build/projection/product"
         cmake --build build/projection/consumer --parallel 4
         python tests/reader_organization_projection/check.py build/projection/consumer/organization-consumer build/projection/original
+        cmake -S tests/reader_revisions/consumer -B build/projection/retained-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/projection/revisions;$PWD/build/projection/product"
+        cmake --build build/projection/retained-consumer --parallel 4
+        python tests/reader_projection/check_projection.py --consumer build/projection/retained-consumer/revision-consumer --output build/projection/retained
     - name: Compare fresh and previously synchronized native deletion projections
       run: python tests/f03_six_host_20261103/projection_replay.py --consumer build/projection/consumer/organization-consumer --output build/projection/replay
     - uses: actions/upload-artifact@v4
@@ -562,6 +566,7 @@ jobs:
           build/projection/original/
           build/projection/**/CMakeCache.txt
           build/projection/**/Testing/
+          build/projection/retained/
         if-no-files-found: error
 'on':
   push:

@@ -82,8 +82,9 @@ def android_baseline_admission(original):
     stamp = admission()
     c = original.configuration()
     # The non-sync APK's complete original 66/owner/organization chain is
-    # retained independently from the synchronization profile. All its input
-    # production, tests, overlays, builders and gates remain baseline-identical.
+    # retained independently from the synchronization profile. Its Android
+    # inputs stay baseline-identical; the reviewed shared projection fix is the
+    # one excluded path, separately covered by native and host regressions.
     run("git", "diff", "--exit-code", BASE, "HEAD", "--", "examples/android", "tools",
         "tests/android_host", "tests/reader_android_host_import", "apps", "extras/opds",
         "tests/dot_f03_production_acceptance_20261102/contract.json",
@@ -95,6 +96,7 @@ def android_baseline_admission(original):
             "contract_sha256": original.digest((original.HERE / "contract.json").read_bytes()),
             "source_admitted": True, "runtime_accepted": False,
             "integration_admission": "six-host-20261103", "historical_owner_guard_reexecuted": False,
+            "integration_base": BASE, "integration_changed_paths": git("diff", "--name-only", BASE, "HEAD").splitlines(),
             "picker_contract": original.picker_contract(),
             "host_import_status_contract": original.host_import_status_contract(),
             "owner_consumer_contract": original.owner_consumer_contract(),
