@@ -5,17 +5,17 @@
   "sdk_version": "3.41.0",
   "tools": {
     "llvm-nm": {
-      "path": "C:\\Users\\Oscar\\OneDrive\\\u6587\u6863\\ChatGPT\\EXReader\\.codex\\f07-closeout\\llvm-tools\\llvm-tools-1.99.0-x86_64-pc-windows-msvc\\llvm-tools-preview\\lib\\rustlib\\x86_64-pc-windows-msvc\\bin\\llvm-nm.exe",
+      "path": "<local-home>\\OneDrive\\\u6587\u6863\\ChatGPT\\EXReader\\.codex\\f07-closeout\\llvm-tools\\llvm-tools-1.99.0-x86_64-pc-windows-msvc\\llvm-tools-preview\\lib\\rustlib\\x86_64-pc-windows-msvc\\bin\\llvm-nm.exe",
       "sha256": "d200e7fce8d580e12cbc62daeb1c6a4d9a01e15e396b5e2dd3f870490cb3adc1",
       "version": "llvm-nm, compatible with GNU nm\nLLVM (http://llvm.org/):\n  LLVM version 23.1.1-rust-1.99.0-stable\n  Optimized build.\n"
     },
     "llvm-readobj": {
-      "path": "C:\\Users\\Oscar\\OneDrive\\\u6587\u6863\\ChatGPT\\EXReader\\.codex\\f07-closeout\\llvm-tools\\llvm-tools-1.99.0-x86_64-pc-windows-msvc\\llvm-tools-preview\\lib\\rustlib\\x86_64-pc-windows-msvc\\bin\\llvm-readobj.exe",
+      "path": "<local-home>\\OneDrive\\\u6587\u6863\\ChatGPT\\EXReader\\.codex\\f07-closeout\\llvm-tools\\llvm-tools-1.99.0-x86_64-pc-windows-msvc\\llvm-tools-preview\\lib\\rustlib\\x86_64-pc-windows-msvc\\bin\\llvm-readobj.exe",
       "sha256": "dce4429e4daf680dd538c0c24f4b4005b3a7371e8e008eea63deccac719c4f72",
       "version": "LLVM (http://llvm.org/):\n  LLVM version 23.1.1-rust-1.99.0-stable\n  Optimized build.\n"
     },
     "llvm-objdump": {
-      "path": "C:\\Users\\Oscar\\OneDrive\\\u6587\u6863\\ChatGPT\\EXReader\\.codex\\f07-closeout\\llvm-tools\\llvm-tools-1.99.0-x86_64-pc-windows-msvc\\llvm-tools-preview\\lib\\rustlib\\x86_64-pc-windows-msvc\\bin\\llvm-objdump.exe",
+      "path": "<local-home>\\OneDrive\\\u6587\u6863\\ChatGPT\\EXReader\\.codex\\f07-closeout\\llvm-tools\\llvm-tools-1.99.0-x86_64-pc-windows-msvc\\llvm-tools-preview\\lib\\rustlib\\x86_64-pc-windows-msvc\\bin\\llvm-objdump.exe",
       "sha256": "8e23bc80eb77a09609a60c9794fceb58f700c4852524ae740553c33d7cdc6c01",
       "version": "LLVM (http://llvm.org/):\n  LLVM version 23.1.1-rust-1.99.0-stable\n  Optimized build.\n\n\n  Registered Targets:\n    aarch64     - AArch64 (little endian)\n    aarch64_32  - AArch64 (little endian ILP32)\n    aarch64_be  - AArch64 (big endian)\n    amdgcn      - legacy name for amdgpu\n    amdgpu      - AMDGPU gfx6+\n    arm         - ARM\n    arm64       - ARM64 (little endian)\n    arm64_32    - ARM64 (little endian ILP32)\n    armeb       - ARM (big endian)\n    avr         - Atmel AVR Microcontroller\n    bpf         - BPF (host endian)\n    bpfeb       - BPF (big endian)\n    bpfel       - BPF (little endian)\n    csky        - C-SKY\n    hexagon     - Hexagon\n    loongarch32 - 32-bit LoongArch\n    loongarch64 - 64-bit LoongArch\n    m68k        - Motorola 68000 family\n    mips        - MIPS (32-bit big endian)\n    mips64      - MIPS (64-bit big endian)\n    mips64el    - MIPS (64-bit little endian)\n    mipsel      - MIPS (32-bit little endian)\n    msp430      - MSP430 [experimental]\n    nvptx       - NVIDIA PTX 32-bit\n    nvptx64     - NVIDIA PTX 64-bit\n    ppc32       - PowerPC 32\n    ppc32le     - PowerPC 32 LE\n    ppc64       - PowerPC 64\n    ppc64le     - PowerPC 64 LE\n    r600        - AMD GPUs HD2XXX-HD6XXX\n    riscv32     - 32-bit RISC-V\n    riscv32be   - 32-bit big endian RISC-V\n    riscv64     - 64-bit RISC-V\n    riscv64be   - 64-bit big endian RISC-V\n    sparc       - Sparc\n    sparcel     - Sparc LE\n    sparcv9     - Sparc V9\n    systemz     - SystemZ\n    thumb       - Thumb\n    thumbeb     - Thumb (big endian)\n    wasm32      - WebAssembly 32-bit\n    wasm64      - WebAssembly 64-bit\n    x86         - 32-bit X86: Pentium-Pro and above\n    x86-64      - 64-bit X86: EM64T and AMD64\n    xtensa      - Xtensa 32\n"
     }

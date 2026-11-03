@@ -1,13 +1,13 @@
 Traceback (most recent call last):
-  File "C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\tools\check_apple_product.py", line 211, in <module>
+  File "<worktree>\tools\check_apple_product.py", line 211, in <module>
     main()
     ~~~~^^
-  File "C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\tools\check_apple_product.py", line 168, in main
+  File "<worktree>\tools\check_apple_product.py", line 168, in main
     self_test_shared()
     ~~~~~~~~~~~~~~~~^^
-  File "C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\tools\check_apple_product.py", line 202, in self_test_shared
+  File "<worktree>\tools\check_apple_product.py", line 202, in self_test_shared
     validate_shared(altered, provider, sdk)
     ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\tools\check_apple_product.py", line 15, in validate_shared
+  File "<worktree>\tools\check_apple_product.py", line 15, in validate_shared
     raise RuntimeError('Shared-provider evidence checks require Python assertions enabled')
 RuntimeError: Shared-provider evidence checks require Python assertions enabled

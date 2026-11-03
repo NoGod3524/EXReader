@@ -17,7 +17,7 @@ workflow 读取 `build/sdk-provider/provider-source.txt`，不再解析 CMakeCac
 
 原始输出 SHA-256：
 
-- `read-source.log`: `025781781c9b92fdfa3889bb693743867f107101f70e7b14403c6688915c3f18`
+- `read-source.log`: `b09373c5dac522aede7fef8c3a08b7b495e31c7f181c2319dddacd6adca4e0b4`
 - `missing.log`: `caea1c3d930f02582edfd3f0a33afeae38121ce16e3eefdd6207eadc49648719`
 - `empty.log`: `caea1c3d930f02582edfd3f0a33afeae38121ce16e3eefdd6207eadc49648719`
-- `configure.log`: `3c502b8e996b576a3061fd6978ce70412f30639035ee26a878a0d02fd96a137e`
+- `configure.log`: `186cc054e0a3f7dc0d8b181bcb713d9d87538d3b7029dad437ed9cfc723b9d4b`

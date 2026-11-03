@@ -12,7 +12,7 @@
 		<properties>
 			<property name="cmake_labels" value="FTS5;SDKContract"/>
 		</properties>
-		<system-out>loaded_sqlite_provider=C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\build\sdk-stage\bin\libreader_sqlite3.dll
+		<system-out>loaded_sqlite_provider=<worktree>\build\sdk-stage\bin\libreader_sqlite3.dll
 Installed dynamic SDK, ProductCatalog and FTS5 share the public provider
 </system-out>
 	</testcase>

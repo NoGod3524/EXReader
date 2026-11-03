@@ -88,7 +88,7 @@
     "artifact_id": 13265761623,
     "artifact_bytes": 8820905,
     "artifact_sha256": "cf7318c9f0ffed79511867548de8123bb0388cdcc0a59722b2b3090516700ada",
-    "raw_archive_local_path": "C:\\Users\\Oscar\\.codex\\worktrees\\sdk-shared-sqlite-provider\\EXReader\\build\\sdk-ci-41705105811.zip",
+    "raw_archive_local_path": "<worktree>\\build\\sdk-ci-41705105811.zip",
     "review": "ci-41705105811/review.md",
     "authorized_runs": 1,
     "consumed_runs": 1,

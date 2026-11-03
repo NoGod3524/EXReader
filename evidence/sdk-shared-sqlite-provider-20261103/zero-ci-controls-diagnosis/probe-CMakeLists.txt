@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 project(FetchContentCacheProbe LANGUAGES NONE)
 include(FetchContent)
 FetchContent_Declare(exreader_sqlite_source
- URL "C:/Users/Oscar/.codex/worktrees/f07-shared-sqlite-provider/EXReader/build/f07-sqlite-source.zip"
+ URL "<worktree>/build/f07-sqlite-source.zip"
  URL_HASH SHA256=68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d)
 FetchContent_MakeAvailable(exreader_sqlite_source)
 message(STATUS "MakeAvailable completed")

@@ -1,10 +1,10 @@
 -- The C compiler identification is GNU 16.2.0
 -- Detecting C compiler ABI info
 -- Detecting C compiler ABI info - done
--- Check for working C compiler: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Check for working C compiler: <local-home>/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
 -- Detecting C compile features
 -- Detecting C compile features - done
--- Found PkgConfig: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/pkgconf.exe (found version "3.0.5")
+-- Found PkgConfig: <local-home>/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/pkgconf.exe (found version "3.0.5")
 -- Looking for dlfcn.h
 -- Looking for dlfcn.h - not found
 -- Looking for fcntl.h
@@ -62,7 +62,7 @@
 -- Configuration
 --   Generator .................. Ninja
 --   Build type ................. Release
---   Prefix ..................... C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage
+--   Prefix ..................... <worktree>/build/sdk-stage
 --   Shared libraries ........... OFF
 --   Character type ............. char (UTF-8)
 --   Library name postfix ....... 
@@ -91,4 +91,4 @@
 -- Performing Test COMPILER_HAS_DEPRECATED_ATTR - Success
 -- Configuring done (23.2s)
 -- Generating done (0.5s)
--- Build files have been written to: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-core
+-- Build files have been written to: <worktree>/build/sdk-core

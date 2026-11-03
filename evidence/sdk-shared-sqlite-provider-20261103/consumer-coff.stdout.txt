@@ -1,5 +1,5 @@
 
-File: C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\build\sdk-integration\shared-sqlite-consumer.exe
+File: <worktree>\build\sdk-integration\shared-sqlite-consumer.exe
 Format: COFF-x86-64
 Arch: x86_64
 AddressSize: 64bit

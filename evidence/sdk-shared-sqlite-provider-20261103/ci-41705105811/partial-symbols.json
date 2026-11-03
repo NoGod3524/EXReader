@@ -1,5 +1,5 @@
 {
-  "tool": "C:\\Users\\Oscar\\OneDrive\\\u6587\u6863\\ChatGPT\\EXReader\\.codex\\f07-closeout\\llvm-tools\\llvm-tools-1.99.0-x86_64-pc-windows-msvc\\llvm-tools-preview\\lib\\rustlib\\x86_64-pc-windows-msvc\\bin\\llvm-nm.exe",
+  "tool": "<local-home>\\OneDrive\\\u6587\u6863\\ChatGPT\\EXReader\\.codex\\f07-closeout\\llvm-tools\\llvm-tools-1.99.0-x86_64-pc-windows-msvc\\llvm-tools-preview\\lib\\rustlib\\x86_64-pc-windows-msvc\\bin\\llvm-nm.exe",
   "images": {
     "provider": {
       "sqlite_defined": 278,

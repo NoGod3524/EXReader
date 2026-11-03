@@ -1,11 +1,11 @@
 -- Install configuration: "Release"
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/share/exreader-sqlite/provider.json
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/lib/libreader_sqlite3.dll.a
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/bin/libreader_sqlite3.dll
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/include/exreader-sqlite/sqlite3.h
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/include/exreader-sqlite/sqlite3ext.h
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/share/exreader-sqlite/sqlite-public-domain.txt
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderTargets.cmake
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderTargets-release.cmake
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderConfig.cmake
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderConfigVersion.cmake
+-- Installing: <worktree>/build/sdk-stage/share/exreader-sqlite/provider.json
+-- Installing: <worktree>/build/sdk-stage/lib/libreader_sqlite3.dll.a
+-- Installing: <worktree>/build/sdk-stage/bin/libreader_sqlite3.dll
+-- Installing: <worktree>/build/sdk-stage/include/exreader-sqlite/sqlite3.h
+-- Installing: <worktree>/build/sdk-stage/include/exreader-sqlite/sqlite3ext.h
+-- Installing: <worktree>/build/sdk-stage/share/exreader-sqlite/sqlite-public-domain.txt
+-- Installing: <worktree>/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderTargets.cmake
+-- Installing: <worktree>/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderTargets-release.cmake
+-- Installing: <worktree>/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderConfig.cmake
+-- Installing: <worktree>/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderConfigVersion.cmake

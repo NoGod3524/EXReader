@@ -33,7 +33,7 @@ test_rc=1
 
 ```text
 -- MakeAvailable completed
--- normal_SOURCE_DIR=[C:/Users/Oscar/.codex/tmp/exr-fc001-20261103/_deps/exreader_sqlite_source-src]
+-- normal_SOURCE_DIR=[<local-home>/.codex/tmp/exr-fc001-20261103/_deps/exreader_sqlite_source-src]
 -- sqlite3.c exists=YES
 -- SOURCE_DIR_cache_key=NO
 ```

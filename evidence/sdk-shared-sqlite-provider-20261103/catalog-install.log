@@ -1,14 +1,14 @@
 -- Install configuration: "Release"
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/lib/libreader_catalog.a
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/include/exreader-product/catalog.h
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/include/exreader-product/sqlite3.h
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/share/exreader-product/001_catalog.sql
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/share/exreader-product/002_originals.sql
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/share/exreader-product/003_original_staging.sql
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/share/exreader-product/sqlite-public-domain.txt
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets.cmake
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets-release.cmake
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfig.cmake
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfigVersion.cmake
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/lib/libreader_original_import.a
--- Installing: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-stage/include/exreader-product/original_import.h
+-- Installing: <worktree>/build/sdk-stage/lib/libreader_catalog.a
+-- Installing: <worktree>/build/sdk-stage/include/exreader-product/catalog.h
+-- Installing: <worktree>/build/sdk-stage/include/exreader-product/sqlite3.h
+-- Installing: <worktree>/build/sdk-stage/share/exreader-product/001_catalog.sql
+-- Installing: <worktree>/build/sdk-stage/share/exreader-product/002_originals.sql
+-- Installing: <worktree>/build/sdk-stage/share/exreader-product/003_original_staging.sql
+-- Installing: <worktree>/build/sdk-stage/share/exreader-product/sqlite-public-domain.txt
+-- Installing: <worktree>/build/sdk-stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets.cmake
+-- Installing: <worktree>/build/sdk-stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets-release.cmake
+-- Installing: <worktree>/build/sdk-stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfig.cmake
+-- Installing: <worktree>/build/sdk-stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfigVersion.cmake
+-- Installing: <worktree>/build/sdk-stage/lib/libreader_original_import.a
+-- Installing: <worktree>/build/sdk-stage/include/exreader-product/original_import.h

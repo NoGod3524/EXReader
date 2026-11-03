@@ -1,7 +1,7 @@
 -- The CXX compiler identification is GNU 16.2.0
 -- Detecting CXX compiler ABI info
 -- Detecting CXX compiler ABI info - done
--- Check for working CXX compiler: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe - skipped
+-- Check for working CXX compiler: <local-home>/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
 -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
@@ -13,4 +13,4 @@
 -- consumer interface EXReaderSQLiteProvider::sqlite3: features-NOTFOUND
 -- Configuring done (2.8s)
 -- Generating done (0.0s)
--- Build files have been written to: C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-consumer-cxx98/out
+-- Build files have been written to: <worktree>/build/sdk-consumer-cxx98/out

@@ -1,5 +1,5 @@
 
-C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\build\sdk-integration\shared-sqlite-consumer.exe:	file format coff-x86-64
+<worktree>\build\sdk-integration\shared-sqlite-consumer.exe:	file format coff-x86-64
 
 Disassembly of section .text:
 
