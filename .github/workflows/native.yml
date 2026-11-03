@@ -5,16 +5,36 @@ on:
   pull_request:
   workflow_call:
   workflow_dispatch:
+    inputs:
+      scope:
+        description: Run the full workflow or only P acceptance jobs
+        type: choice
+        options: [full, p-hygiene, p-apple]
+        default: full
+      fault:
+        description: P acceptance only - mutate one temporary workflow copy
+        type: choice
+        options: [none, packaging, failfast, diagnostic, negative, baseline-new, baseline-modified, baseline-stale]
+        default: none
+      rule:
+        description: P hygiene rule to run (use all for the positive control)
+        type: choice
+        options: [all, packaging, failfast, diagnostic, negative]
+        default: all
 permissions:
   contents: read
 jobs:
   desktop:
+    if: github.event_name != 'workflow_dispatch' || inputs.scope == 'full'
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-22.04, macos-15]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash .github/scripts/ci.sh {0}
     steps:
       - uses: actions/checkout@v4
       - name: Configure native C
@@ -27,14 +47,14 @@ jobs:
       - name: Native parsing, pagination, rendering and bookshelf tests
         run: ctest --test-dir build/native -C Release --output-on-failure
       - name: Table continuation with a platform OpenType font
-        shell: bash
+        shell: bash .github/scripts/ci.sh {0}
         run: |
           if [ "${{ runner.os }}" = Windows ]; then font=C:/Windows/Fonts/arial.ttf; test=./build/native/Release/exreader-table-fragments-test.exe;
           elif [ "${{ runner.os }}" = macOS ]; then font=/System/Library/Fonts/Supplemental/Arial.ttf; test=./build/native/exreader-table-fragments-test;
           else font=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf; test=./build/native/exreader-table-fragments-test; fi
           "$test" tests/fixtures --font "$font"
       - name: Measure bounded single chapters and evicted-window recovery
-        shell: bash
+        shell: bash .github/scripts/ci.sh {0}
         run: |
           if [ "${{ runner.os }}" = Windows ]; then probe=build/native/Release/exreader-wp6-chapter-probe.exe;
           else probe=build/native/exreader-wp6-chapter-probe; fi
@@ -78,7 +98,10 @@ jobs:
           cmake --build build/sdk-cpp --config Release --parallel 4
       - name: Run the installed Windows SDK
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           ./stage/bin/exreader-render.exe tests/fixtures/sample.txt C:/Windows/Fonts/arial.ttf stage-page.png
           ./build/sdk-example/Release/exreader-construct-example.exe C:/Windows/Fonts/arial.ttf host-page.png
           ./build/sdk-cpp/Release/exreader-cpp-test.exe stage/examples/fonts/primary.ttf stage/examples/books/table-fragments-12.epub
@@ -154,19 +177,19 @@ jobs:
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
           python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /System/Library/Fonts/Supplemental/Arial.ttf build/performance --runs 1 --max-pages 8 --paging
       - name: Measure installed PDF group rendering
-        shell: bash
+        shell: bash .github/scripts/ci.sh {0}
         run: |
           if [ "${{ runner.os }}" = Windows ]; then runtime=./stage/bin/exreader.dll;
           elif [ "${{ runner.os }}" = macOS ]; then runtime=./stage/lib/libexreader.dylib;
           else runtime=./stage/lib/libexreader.so; fi
           python tools/benchmark_pdf_blend.py "$runtime" tests/fixtures/pdf-blend build/performance/pdf --runs 1 --scale 1 --case nonisolated --case ap-nonisolated
       - name: Bound table alignment memory against the installed SDK
-        shell: bash
+        shell: bash .github/scripts/ci.sh {0}
         run: |
           if [ "${{ runner.os }}" = Windows ]; then benchmark=./stage/bin/exreader-benchmark.exe; else benchmark=./stage/bin/exreader-benchmark; fi
           python tools/benchmark_table_layout.py "$benchmark" stage/examples/fonts/primary.ttf build/table-performance --runs 1 --check-memory
       - name: Build and run JNI host against installed SDK
-        shell: bash
+        shell: bash .github/scripts/ci.sh {0}
         run: |
           javac -encoding UTF-8 -d build/jni-java bindings/jni/EXReader.java bindings/jni/EXReaderException.java bindings/jni/Smoke.java
           if [ "${{ runner.os }}" = Windows ]; then native_dir="$PWD/stage/bin"; else native_dir="$PWD/stage/lib"; fi
@@ -174,10 +197,11 @@ jobs:
           java -Xcheck:jni -Djava.library.path="$native_dir" -cp build/jni-java org.exreader.Smoke stage/examples build/jni-unicode
       - name: Build and run Swift host against installed SDK
         if: runner.os == 'macOS'
-        shell: bash
+        shell: bash .github/scripts/ci.sh {0}
         run: |
           swiftc -I stage/include -L stage/lib -lexreader -Xlinker -rpath -Xlinker "$PWD/stage/lib" bindings/swift/EXReader.swift bindings/swift/Smoke.swift -o build/swift-sdk-example
           ./build/swift-sdk-example stage/examples
+          python3 tools/build_apple_product.py --sdk stage --target macos --build build/apple-products/macos
           python3 tools/build_apple_host.py --sdk stage --platform macos --output build/apple-host
           python3 tools/check_apple_host.py --bundle build/apple-host/EXReader.app --device macos --output build/apple-host-evidence
           ditto -c -k --sequesterRsrc --keepParent build/apple-host/EXReader.app build/EXReader-macOS.zip
@@ -221,8 +245,12 @@ jobs:
           name: diagnostics-${{ runner.os }}
           path: build/native/Testing/
   sanitizers:
+    if: github.event_name != 'workflow_dispatch' || inputs.scope == 'full'
     runs-on: ubuntu-22.04
     timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash .github/scripts/ci.sh {0}
     steps:
       - uses: actions/checkout@v4
       - run: cmake -S . -B build/asan -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_ENABLE_AAC=OFF
@@ -241,8 +269,12 @@ jobs:
             build/asan/native-convert*.json
           if-no-files-found: warn
   fuzz:
+    if: github.event_name != 'workflow_dispatch' || inputs.scope == 'full'
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash .github/scripts/ci.sh {0}
     steps:
       - uses: actions/checkout@v4
       - name: Configure the instrumented fuzz driver
@@ -304,12 +336,16 @@ jobs:
             build/fuzz/*.bin
             build/fuzz/*.bin.format
   android:
+    if: github.event_name != 'workflow_dispatch' || inputs.scope == 'full'
     runs-on: ubuntu-22.04
     timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash .github/scripts/ci.sh {0}
     steps:
       - uses: actions/checkout@v4
       - name: Build Android ARM64 shared engine
-        shell: bash
+        shell: bash .github/scripts/ci.sh {0}
         run: |
           ndk=$(ls -d "$ANDROID_HOME"/ndk/* | sort -V | tail -n1)
           cmake -S . -B build/android -DCMAKE_TOOLCHAIN_FILE="$ndk/build/cmake/android.toolchain.cmake" -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-24 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_AAC=OFF
@@ -320,12 +356,16 @@ jobs:
           name: EXReader-C-Android-arm64
           path: stage/
   apple-mobile:
+    if: github.event_name != 'workflow_dispatch' || inputs.scope == 'full'
     runs-on: macos-15
     timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash .github/scripts/ci.sh {0}
     steps:
       - uses: actions/checkout@v4
       - name: Build iOS and iPadOS device and simulator libraries
-        shell: bash
+        shell: bash .github/scripts/ci.sh {0}
         run: |
           for sdk in iphoneos iphonesimulator; do
             cmake -S . -B "build/$sdk" -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT="$sdk" -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO -DEXR_ENABLE_AAC=OFF
@@ -333,6 +373,11 @@ jobs:
             cmake --install "build/$sdk" --prefix "stage/$sdk"
             if [ "$sdk" = iphoneos ]; then target=arm64-apple-ios14.0; else target=arm64-apple-ios14.0-simulator; fi
             xcrun --sdk "$sdk" swiftc -target "$target" -sdk "$(xcrun --sdk "$sdk" --show-sdk-path)" -I "stage/$sdk/include" -typecheck bindings/swift/EXReader.swift
+          done
+      - name: Install iPhone and iPad product dependencies
+        run: |
+          for sdk in iphoneos iphonesimulator; do
+            python3 tools/build_apple_product.py --sdk "stage/$sdk" --target "$sdk" --build "build/apple-products/$sdk"
           done
       - name: Build and run the iPhone and iPad reference host
         run: |
@@ -355,3 +400,56 @@ jobs:
         with:
           name: EXReader-C-iOS-iPadOS-arm64
           path: stage/
+  ci-hygiene:
+    if: github.event_name != 'workflow_dispatch' || inputs.scope == 'full' || inputs.scope == 'p-hygiene'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        rule: ${{ fromJSON(inputs.rule && inputs.rule != 'all' && format('["{0}"]', inputs.rule) || '["packaging","failfast","diagnostic","negative"]') }}
+    defaults:
+      run:
+        shell: bash .github/scripts/ci.sh {0}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install PyYAML==6.0.3
+      - name: Check changed CI and exercise the rule
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || '342780237eb013350bff20c21bc92c335422526a' }}
+          HYGIENE_RULE: ${{ matrix.rule }}
+          HYGIENE_FAULT: ${{ inputs.fault || 'none' }}
+        run: |
+          python tools/check_ci_hygiene.py --base "$BASE_SHA" --rule "$HYGIENE_RULE"
+          python tests/check_ci_hygiene.py --rule "$HYGIENE_RULE" --fault "$HYGIENE_FAULT"
+  apple-packaging:
+    if: github.event_name == 'workflow_dispatch' && inputs.scope == 'p-apple'
+    runs-on: macos-15
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphoneos, iphonesimulator]
+    defaults:
+      run:
+        shell: bash .github/scripts/ci.sh {0}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install root SDK then product dependencies
+        env:
+          APPLE_TARGET: ${{ matrix.target }}
+        run: |
+          options=(-DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF)
+          if [ "$APPLE_TARGET" != macos ]; then
+            options+=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT="$APPLE_TARGET" -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          fi
+          cmake -S . -B build/p-sdk "${options[@]}"
+          cmake --build build/p-sdk --parallel 4
+          cmake --install build/p-sdk --prefix stage
+          python3 tools/build_apple_product.py --sdk stage --target "$APPLE_TARGET" --build build/p-products
+          PYTHONPATH=tools python3 -c 'from apple_swift import flags; print("PASS: installed Apple product includes and archives:", *flags("stage"), sep="\n")'
