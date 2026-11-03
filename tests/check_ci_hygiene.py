@@ -124,6 +124,14 @@ def main():
         for _, _, message in bad:
             print('ERROR: ' + message)
         return 1
+    if args.rule == 'failfast':
+        singles = ['python check.py', 'python -c "print(1); print(2)"', "python - <<'PY'\nprint('a;b')\nPY\n", 'python check.py \\\n  --flag value']
+        multiples = ['python a.py\npython b.py', 'python a.py | tee out', 'python a.py && python b.py', 'python a.py; python b.py', 'for x in a; do echo "$x"; done', 'if true; then echo yes; fi']
+        for body in singles:
+            assert not guard.command_shape(body)[1], body
+        for body in multiples:
+            assert guard.command_shape(body)[1], body
+        print('PASS: single/heredoc/quoted/continued commands exempt; multi/pipeline/and/semicolon/control strict')
     print('PASS: clean workflow accepted; one-change ' + args.rule + ' control rejected')
     shell_controls(args.rule)
     if args.rule == 'diagnostic':

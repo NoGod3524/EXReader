@@ -3,6 +3,7 @@
 """Check CI run steps; --base gates changed steps and reports existing debt."""
 import argparse
 from collections import Counter
+from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -46,6 +47,57 @@ def run_locations(text):
     return result
 
 
+def command_shape(body):
+    """Count shell commands, not Python/heredoc payload or quoted punctuation."""
+    commands, pending, current = [], [], ''
+    for line in body.splitlines():
+        if pending:
+            if line.strip() == pending[0]:
+                pending.pop(0)
+            continue
+        if not line.strip() or line.lstrip().startswith('#'):
+            continue
+        here = re.findall(r"<<-?\s*['\"]?([A-Za-z_][A-Za-z_0-9]*)['\"]?", line)
+        pending.extend(here)
+        line = re.sub(r"<<-?\s*['\"]?[A-Za-z_][A-Za-z_0-9]*['\"]?", ' HEREDOC ', line)
+        current += line.rstrip().removesuffix('\\') + ' '
+        if line.rstrip().endswith('\\'):
+            continue
+        commands.append(current.strip())
+        current = ''
+    if current.strip():
+        commands.append(current.strip())
+    compound = False
+    for command in commands:
+        # Quoted Python -c programs, regexes and strings are arguments.
+        masked = re.sub(r"'(?:[^']*)'|\"(?:\\.|[^\"\\])*\"", ' ARG ', command)
+        masked = re.sub(r'\$\{\{.*?\}\}', ' EXPR ', masked)
+        masked = masked.split('#', 1)[0]
+        if re.search(r'\|(?!=)|&&|;|\$\(|`|^\s*(?:for|while|until|if|case|select)\b', masked):
+            compound = True
+    return commands, len(commands) > 1 or compound
+
+
+def emit_baseline(root):
+    rows = {}
+    for path in sorted((root / '.github/workflows').glob('*.y*ml')):
+        text = path.read_text(encoding='utf-8')
+        lines = text.splitlines()
+        for (name, line, pattern), _, _ in issues(path.relative_to(root).as_posix(), text):
+            rows[name, line, pattern] = {'file': name, 'line': line, 'pattern': pattern, 'line_sha256': line_sha(lines[line - 1])}
+    data = '[\n' + ',\n'.join('  ' + json.dumps(row) for row in rows.values()) + '\n]\n'
+    (root / BASELINE).write_text(data, encoding='utf-8', newline='\n')
+    source = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
+    metadata = {'generated_date_utc': datetime.now(timezone.utc).date().isoformat(),
+                'source_commit': source, 'command': 'python tools/check_ci_hygiene.py --emit-baseline',
+                'checker_sha256': hashlib.sha256((root / 'tools/check_ci_hygiene.py').read_bytes()).hexdigest(),
+                'baseline_sha256': hashlib.sha256(data.encode()).hexdigest(),
+                'patterns': dict(Counter(row['pattern'] for row in rows.values()))}
+    (root / 'tools/ci_hygiene_baseline.meta.json').write_text(json.dumps(metadata, indent=2) + '\n', encoding='utf-8', newline='\n')
+    print(json.dumps(metadata))
+    return 0
+
+
 def issues(path, text, selected=None, added=()):
     document = load(text)
     result = []
@@ -66,9 +118,8 @@ def issues(path, text, selected=None, added=()):
 
         if step.get('continue-on-error') == 'true':
             error('failfast', 'continue-on-error=true', 'unhandled failures stop the job')
-        commands = [line for line in body.splitlines() if line.strip() and not line.lstrip().startswith('#')]
-        needs_strict = len(commands) > 1 or bool(re.search(r'[;|]', body))
-        if shell != SHELL and needs_strict:
+        commands, needs_strict = command_shape(body)
+        if shell != SHELL and (needs_strict or shell.startswith(('pwsh', 'powershell'))):
             if shell.startswith(('pwsh', 'powershell')):
                 if "$ErrorActionPreference = 'Stop'" not in body or '$PSNativeCommandUseErrorActionPreference = $true' not in body:
                     error('failfast', 'PowerShell native exit status is not fail-fast', 'Stop + PSNativeCommandUseErrorActionPreference=true')
@@ -200,7 +251,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base', help='PR base SHA for added-line detection (git diff -U0)')
     parser.add_argument('--rule', choices=RULES)
+    parser.add_argument('--emit-baseline', action='store_true', help='Explicit owner-approved regeneration; never run automatically in CI')
     args = parser.parse_args()
+    if args.emit_baseline:
+        return emit_baseline(ROOT)
     if args.base:
         subprocess.run(['git', '-C', str(ROOT), 'rev-parse', '--verify', args.base + '^{commit}'], check=True, stdout=subprocess.DEVNULL)
     return check(ROOT, args.base, args.rule)
