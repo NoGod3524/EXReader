@@ -28,6 +28,8 @@ EXACT_PATHS = {
     "tests/dot_f03_same_source_20261031/build.py",
     "tests/dot_f03_same_source_20261031/identity.py",
     "tests/dot_f03_production_acceptance_20261102/admission.py",
+    "tests/reader_wave3_c09/build.py", "tests/reader_windows_raw3/owner-probe/CMakeLists.txt",
+    "tests/reader_windows_raw3/owner-probe/probe.cpp",
     ".github/workflows/f03-six-host-20261103.yml",
     "docs/reader-total-progress/F03_SIX_HOST_20261103.md",
 }

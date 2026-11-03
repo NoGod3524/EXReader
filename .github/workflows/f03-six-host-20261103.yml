@@ -83,6 +83,9 @@ jobs:
           !build/**/*.key
 
           build/f03-receipts/
+          !build/**/private/**
+          !build/**/key.pem
+          !build/**/connection.json
         if-no-files-found: error
     needs:
     - gtk
@@ -178,6 +181,9 @@ jobs:
 
           build/f03-receipts/
           build/organization-ui/
+          !build/**/private/**
+          !build/**/key.pem
+          !build/**/connection.json
         if-no-files-found: error
     needs:
     - gtk
@@ -225,6 +231,9 @@ jobs:
           !build/**/*.key
 
           build/f03-receipts/
+          !build/**/private/**
+          !build/**/key.pem
+          !build/**/connection.json
         if-no-files-found: error
     needs:
     - gtk
@@ -476,6 +485,9 @@ jobs:
           build/android-host/gate-review.json
           build/android-host/bounded-gate-review.json
           build/import-android/
+          !build/**/private/**
+          !build/**/key.pem
+          !build/**/connection.json
         if-no-files-found: error
   audit:
     if: always() && contains(github.event.head_commit.message, '[F03-FULL]')
@@ -491,6 +503,9 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
     - name: Check verifier fixture and WAL preservation regression
       run: python tests/f03_six_host_20261103/test_audit.py
     - name: Authenticate current-attempt archives and require all six real hosts

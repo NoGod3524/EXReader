@@ -160,7 +160,8 @@ def main():
         def owner_probe():
             owner = OUT / 'raw-owner-probe'
             H.configure(ROOT / 'tests/reader_windows_raw3/owner-probe', owner,
-                        ['-DCMAKE_PREFIX_PATH=' + prefix, '-DEXR_SDK=' + str(sdk), '-DPROBE_RAW=ON'], 'raw-owner-probe')
+                        ['-DCMAKE_PREFIX_PATH=' + prefix, '-DEXR_SDK=' + str(sdk),
+                         '-DEXR_SDK_VERSION=3.41.0', '-DPROBE_RAW=ON'], 'raw-owner-probe')
             pdf = ROOT / 'tests/fixtures/pdf-public-text.pdf'
             H.owner_run(owner / 'windows-owner-probe.exe', 'suite', OUT / 'raw-owner-suite', pdf)
             H.owner_run(owner / 'windows-owner-probe.exe', 'fresh', OUT / 'raw-owner-suite', pdf)

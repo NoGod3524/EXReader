@@ -10,8 +10,9 @@ if(MSVC)
   add_compile_options(/utf-8)
 endif()
 option(PROBE_RAW "Use the exact installed raw family and real raw Windows owner" ON)
-set(EXR_SDK "" CACHE PATH "Installed SDK 3.41.0")
-find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core library
+set(EXR_SDK "" CACHE PATH "Installed SDK")
+set(EXR_SDK_VERSION "3.41.0" CACHE STRING "Exact installed SDK version")
+find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core library
   PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
 find_package(EXReaderProductCatalog 0.1.0 EXACT CONFIG REQUIRED)
 if(PROBE_RAW)
@@ -33,7 +34,8 @@ execute_process(COMMAND git rev-parse HEAD WORKING_DIRECTORY "${_root}"
 add_executable(windows-owner-probe probe.cpp "${_owner}")
 target_include_directories(windows-owner-probe PRIVATE "${_root}/apps/reader/desktop")
 target_compile_definitions(windows-owner-probe PRIVATE _CRT_SECURE_NO_WARNINGS
-  "PROBE_SOURCE_SHA=\"${_source_sha}\"" "PROBE_OWNER_SHA=\"${_owner_sha}\"")
+  "PROBE_SOURCE_SHA=\"${_source_sha}\"" "PROBE_OWNER_SHA=\"${_owner_sha}\""
+  "PROBE_SDK_VERSION=\"${EXR_SDK_VERSION}\"")
 if(PROBE_RAW)
   target_compile_definitions(windows-owner-probe PRIVATE EXR_READER_WINDOWS_RAW3=1)
 endif()
