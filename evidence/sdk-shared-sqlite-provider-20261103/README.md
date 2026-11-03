@@ -1,3 +1,12 @@
+## 最新定性：负例未完成，R 前阻断；零 CI 诊断
+
+本地原样命令确认：provider 配置目录与读取路径一致，但 `got=[]`；全部缓存 grep 无目标键。
+不带 override 的独立 Declare + MakeAvailable 实验成功展开源码、普通 SOURCE_DIR 有值，而同名缓存键不存在。
+这反证“必然生成缓存键”，并复现 P harness 把普通变量当缓存接口的缺陷；不能据此认定检查器接受了内嵌 SQLite。
+CI provider cache 未上传，现场具体根因不作独立确证。真实负例继续作为 **R 前阻断项，非普通 open item**。
+原样输出、实验日志和边界见 [零 CI 诊断](zero-ci-controls-diagnosis/review.md)；两条规则已进入 [P CI 卫生清单](ci-hygiene-CI-ADMISSION-001/P_CI_HYGIENE.md)。
+本次只改证据与 Markdown 行尾规则，未运行 CI，未改检查器或测试断言。以下为历史记录。
+
 ## 最新结果：授权第 2/2 次已结束，不再申请
 
 [Run 41708081512](https://github.com/NoGod3524/EXReader/actions/runs/41708081512)，候选 `e0c1c458`：准入、SDK/ProductCatalog/C++17 测试目标构建通过，原产品测试 **2/2**、FTS5 **2/2** 通过。

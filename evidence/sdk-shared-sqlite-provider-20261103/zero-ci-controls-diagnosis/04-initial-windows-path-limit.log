@@ -1,0 +1,13 @@
+-- Configuring incomplete, errors occurred!
+ninja: error: Stat(C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/fetchcontent-cache-probe/out/_deps/exreader_sqlite_source-subbuild/exreader_sqlite_source-populate-prefix/src/exreader_sqlite_source-populate-stamp/exreader_sqlite_source-populate-install): Filename longer than 260 characters
+
+CMake Error at C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1933 (message):
+  Build step for exreader_sqlite_source failed: 1
+Call Stack (most recent call first):
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1622 (__FetchContent_populateSubbuild)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160:EVAL:2 (__FetchContent_doPopulation)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160 (cmake_language)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2401 (__FetchContent_Populate)
+  CMakeLists.txt:7 (FetchContent_MakeAvailable)
+
+

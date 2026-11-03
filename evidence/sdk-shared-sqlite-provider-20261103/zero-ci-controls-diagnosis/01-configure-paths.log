@@ -1,0 +1,7 @@
+$ grep -n "cmake .*-B" .github/workflows/sdk-shared-sqlite-contract.yml
+61:          cmake -S extras/sqlite-provider -B build/sdk-provider -DCMAKE_BUILD_TYPE=Release \
+69:          cmake -S . -B build/sdk-core -DCMAKE_BUILD_TYPE=Release \
+77:          cmake -S apps/reader/store/native -B build/sdk-catalog -DCMAKE_BUILD_TYPE=Release \
+86:          cmake -S extras/sqlite-provider/integration -B build/sdk-integration \
+
+command_exit_code=0

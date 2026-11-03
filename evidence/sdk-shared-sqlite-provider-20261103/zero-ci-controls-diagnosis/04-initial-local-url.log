@@ -1,0 +1,22 @@
+-- Configuring incomplete, errors occurred!
+[1/9] Creating directories for 'exreader_sqlite_source-populate'
+[1/9] Performing download step (verify and extract) for 'exreader_sqlite_source-populate'
+CMake Error at exreader_sqlite_source-subbuild/exreader_sqlite_source-populate-prefix/src/exreader_sqlite_source-populate-stamp/verify-exreader_sqlite_source-populate.cmake:11 (message):
+  File not found:
+  /C:/Users/Oscar/.codex/worktrees/f07-shared-sqlite-provider/EXReader/build/f07-sqlite-source.zip
+
+
+FAILED: [code=1] exreader_sqlite_source-populate-prefix/src/exreader_sqlite_source-populate-stamp/exreader_sqlite_source-populate-download C:/Users/Oscar/.codex/tmp/exr-fc001-20261103/_deps/exreader_sqlite_source-subbuild/exreader_sqlite_source-populate-prefix/src/exreader_sqlite_source-populate-stamp/exreader_sqlite_source-populate-download 
+C:\Windows\system32\cmd.exe /C "cd /D C:\Users\Oscar\.codex\tmp\exr-fc001-20261103\_deps && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/Oscar/.codex/tmp/exr-fc001-20261103/_deps/exreader_sqlite_source-subbuild/exreader_sqlite_source-populate-prefix/src/exreader_sqlite_source-populate-stamp/verify-exreader_sqlite_source-populate.cmake && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/Oscar/.codex/tmp/exr-fc001-20261103/_deps/exreader_sqlite_source-subbuild/exreader_sqlite_source-populate-prefix/src/exreader_sqlite_source-populate-stamp/extract-exreader_sqlite_source-populate.cmake && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -E touch C:/Users/Oscar/.codex/tmp/exr-fc001-20261103/_deps/exreader_sqlite_source-subbuild/exreader_sqlite_source-populate-prefix/src/exreader_sqlite_source-populate-stamp/exreader_sqlite_source-populate-download"
+ninja: build stopped: subcommand failed.
+
+CMake Error at C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1933 (message):
+  Build step for exreader_sqlite_source failed: 1
+Call Stack (most recent call first):
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1622 (__FetchContent_populateSubbuild)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160:EVAL:2 (__FetchContent_doPopulation)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160 (cmake_language)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2401 (__FetchContent_Populate)
+  CMakeLists.txt:7 (FetchContent_MakeAvailable)
+
+
