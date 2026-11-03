@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """Strict Android host evidence validation. Build and execution happen only in CI."""
+from sdk_version import header_text
 import hashlib
 import json
 import math
@@ -391,7 +392,7 @@ def check_evidence(evidence, build_path, stage, upstream, expected=None):
     require(build.get('sdk_files_sha256') == inventory(stage), 'installed SDK bytes differ from the build')
     require(build.get('abi') == 'x86_64' and build.get('abi_version') == 1 and build.get('library_schema') == 7 and
             build.get('ndk') == '27.0.12077973' and build.get('gradle') == '8.9', 'SDK/toolchain identity mismatch')
-    header = (ROOT/'include/exr/base.h').read_text()
+    header = header_text(ROOT/'include/exr/base.h')
     require(build.get('sdk_version') == re.search(r'#define EXR_VERSION "([^"]+)"', header)[1], 'SDK version mismatch')
     evidence = Path(evidence)
     require(set(build.get('artifacts', {})) == set(PACKAGES), 'incomplete APK build set')

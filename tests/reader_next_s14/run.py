@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import sys
 import platform
 import re
 import shutil
@@ -13,6 +14,10 @@ import subprocess
 import tempfile
 import time
 import urllib.request
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
+from sdk_version import source_version
+_major, _minor, _patch = map(int, source_version().split('.'))
+FUTURE_SDK_VERSION = f'{_major}.{_minor + 1}.{_patch}'
 from fontTools.ttLib import TTCollection, TTFont
 from cases import (NATIVE_COMMON, NATIVE_POSIX, ORIGINAL_COMMON, ORIGINAL_POSIX, ORIGINAL_WINDOWS,
                    ROLES_COMMON, ROLES_POSIX, ROLES_WINDOWS, S14_COMMON, S14_HARNESS)
@@ -199,7 +204,7 @@ def main():
 
         rejected('build/s14-reject-invalid', 'configure-invalid-sdk', ['cmake', '-S', 'apps/reader/font-library', '-B', 'build/s14-reject-invalid',
                                         '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release', '-DREADER_FONT_LIBRARY_BUILD=ON',
-                                        '-DEXR_SDK_VERSION=3.42.0', '-DEXR_SDK=%s' % stage])
+                                        '-DEXR_SDK_VERSION=' + FUTURE_SDK_VERSION, '-DEXR_SDK=%s' % stage])
         invalid_log = (base / results['commands'][-1]['log']).read_text(encoding='utf-8')
         assert 'Unsupported exact reader SDK version' in invalid_log, 'invalid SDK selection not refused'
         results['checks'].append('s14-invalid-sdk-selection-rejected')

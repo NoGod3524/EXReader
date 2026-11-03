@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """Install product packages beside an already installed frozen Apple SDK."""
+from sdk_version import header_text, source_version
 import argparse
 import json
 import os
@@ -18,22 +19,23 @@ def main():
     parser.add_argument('--wave3', action='store_true', help='Install the explicit raw five-feature host profile')
     parser.add_argument('--selector-bytes-candidate', action='store_true',
                         default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
-    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'),
-                        default=os.environ.get('EXR_APPLE_SDK_VERSION', '3.40.0'))
+    parser.add_argument('--sdk-version', default=os.environ.get('EXR_APPLE_SDK_VERSION', source_version()))
     args = parser.parse_args()
-    if args.sdk_version not in ('3.40.0', '3.41.0'):
-        parser.error('Unsupported explicit Apple SDK version')
     root = Path(__file__).absolute().parents[1]
     sdk = args.sdk.absolute()
     stage = args.product_prefix.absolute() if args.product_prefix else sdk
     if os.environ.get('EXR_APPLE_RAW3', 'OFF') not in ('OFF', 'ON'):
         parser.error('EXR_APPLE_RAW3 must be explicitly OFF or ON')
-    if args.selector_bytes_candidate and (args.sdk_version != '3.41.0' or stage.resolve() == sdk.resolve()):
-        parser.error('Raw selector candidate requires SDK3.41 and an independent product prefix')
+    if args.selector_bytes_candidate and stage.resolve() == sdk.resolve():
+        parser.error('Raw selector candidate requires an independent product prefix')
     if args.wave3 and not args.selector_bytes_candidate:
         parser.error('--wave3 requires --selector-bytes-candidate')
-    version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk / 'include/exr/base.h').read_text())
-    if version is None or version[1] != args.sdk_version:
+    version = re.search(r'#define EXR_VERSION "([^"]+)"', header_text(sdk / 'include/exr/base.h'))
+    if version is None:
+        parser.error('Installed SDK version header missing')
+    if args.sdk_version is None:
+        args.sdk_version = version[1]
+    if version[1] != args.sdk_version:
         parser.error('Installed SDK version differs from the explicitly selected version')
     native = 'macosx' if args.target == 'macos' else args.target
     sysroot = subprocess.check_output(['xcrun', '--sdk', native, '--show-sdk-path'], text=True).strip()
@@ -86,7 +88,7 @@ def main():
         proof = args.build.absolute() / 'exact-family-source'
         proof.mkdir(parents=True, exist_ok=True)
         body = 'cmake_minimum_required(VERSION 3.24)\nproject(AppleRawFamily LANGUAGES C CXX)\n'
-        body += 'find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core library)\n'
+        body += f'find_package(EXReader {args.sdk_version} EXACT CONFIG REQUIRED COMPONENTS core library)\n'
         body += ''.join('find_package(' + name + ' ' + version + ' EXACT CONFIG REQUIRED)\n'
                         for name, version in family.items())
         (proof / 'CMakeLists.txt').write_text(body)

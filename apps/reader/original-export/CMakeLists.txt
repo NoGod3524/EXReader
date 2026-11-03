@@ -13,10 +13,7 @@ endif()
 # Exact installed SDK graph. The default stays the frozen 3.40.0 so existing
 # hosts keep their behavior; the approved 3.41.0 candidate must be requested
 # explicitly. Any other pin is refused before a target or header is used.
-set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed reader SDK: frozen 3.40.0 (default) or approved 3.41.0")
-if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41)\\.0$")
-  message(FATAL_ERROR "Unsupported exact reader SDK version: ${EXR_SDK_VERSION}")
-endif()
+include("${CMAKE_CURRENT_LIST_DIR}/../../../cmake/InstalledSDKVersion.cmake")
 find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS library)
 include("${CMAKE_CURRENT_SOURCE_DIR}/EXReaderSdkTargetGuard.cmake")
 _exr_sdk_target_provenance(EXReader::exr_library "${EXReader_DIR}" "${EXR_SDK_VERSION}")

@@ -19,10 +19,7 @@ endif()
 # 3.40.0 pin; 3.41.0 is the only explicitly selectable candidate. The same
 # value is written into the installed package config, so a consumer of the
 # installed package resolves the identical SDK and cannot mix two of them.
-set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed SDK: frozen 3.40.0 or explicit 3.41.0 candidate")
-if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41)\\.0$")
-  message(FATAL_ERROR "Unsupported exact reader SDK version: ${EXR_SDK_VERSION}")
-endif()
+include("${CMAKE_CURRENT_LIST_DIR}/../../../cmake/InstalledSDKVersion.cmake")
 find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core)
 include("${CMAKE_CURRENT_LIST_DIR}/EXReaderSdkTargetGuard.cmake")
 _exr_sdk_target_provenance(EXReader::exr_core "${EXReader_DIR}" "${EXR_SDK_VERSION}")

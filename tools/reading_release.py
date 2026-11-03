@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """Seal installed reading SDK candidates in CI; never publish a tag or release."""
+from sdk_version import header_text
 import argparse
 import gzip
 import hashlib
@@ -38,7 +39,7 @@ def load(path):
 
 
 def version(header):
-    text = Path(header).read_text(encoding='utf-8')
+    text = header_text(Path(header))
     sdk = re.search(r'^#define EXR_VERSION "([0-9]+\.[0-9]+\.[0-9]+)"$', text, re.M)
     abi = re.search(r'^#define EXR_ABI_VERSION ([0-9]+)u?$', text, re.M)
     require(sdk and abi, 'installed SDK version/ABI declaration missing')
