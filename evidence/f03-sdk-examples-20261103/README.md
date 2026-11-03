@@ -28,5 +28,30 @@ Integration starting commit: `232341db418ecd47c3b98216a3802c5ef565faf1`. Earlier
 
 - Source: `c583ebe7dadf971eed680fea60ab850bbb7a41ce`.
 - Run: https://github.com/NoGod3524/EXReader/actions/runs/41694251471, attempt 1.
-- Status: dispatched; result pending.
-- New-scope rounds consumed: 1 of 2. No rerun authorized by this contract.
+- Status: accepted. The exact archived audit result is [round-1-result.json](round-1-result.json): `accepted=true`, `problems=[]`.
+- New-scope rounds consumed: **1 of 2**. Verification stopped after success; round 2 was not dispatched.
+
+| Job | ID | Result |
+| --- | --- | --- |
+| GTK actual organization receive | 126120492531 | success |
+| Windows actual organization receive, unlocked SDK342 builder | 126124038150 | success |
+| macOS build-only | 126120491776 | success |
+| iPhone build-only | 126120492125 | success |
+| iPad build-only | 126120492259 | success |
+| Artifact/source/database audit | 126127326225 | success |
+
+Both examples have twelve accepted observations in total: six checkpoints each. Their complete organization snapshots, including retained revision bodies, have identical SHA-256 at every checkpoint. The audit read each archived actual product database and required it to match its receipt. Each checkpoint includes a real authenticated revision download and an actual process restart. GTK's original 27 organization UI checks also passed.
+
+Artifact identities:
+
+| Artifact | ID | Bytes | ZIP SHA-256 |
+| --- | --- | --- | --- |
+| GTK | 13261840048 | 23504349 | `a0a83d893d3d3a989f6b4c8140affd1488ea9e868cd883173afa78471a62a163` |
+| Windows | 13261900834 | 36084253 | `1482558adf35c4843ad2ced65098333ed6b90716c6808817057156bc0c34a5ef` |
+| Audit result | 13261530995 | 1261 | `e3cb5f5f435026368892cac90b34e9d3c3218c8b494c992f1bcad957c36cd15b` |
+
+The audit authenticated both producer archives using the GitHub artifact API, source/run/attempt and archive byte count/digest. The archived result ZIP was independently downloaded and its bytes/digest verified before copying the result into this directory. The GTK ZIP was also independently downloaded and its six receipts inspected. Complete logs, screenshots, retained databases and packages remain attached to the run.
+
+## Disposition
+
+The revised SDK/GTK/Windows scope is accepted on round 1. Apple results are build-only. Catalog state and historical formal counts remain unchanged. No six-host acceptance is claimed; no additional acceptance round is planned.

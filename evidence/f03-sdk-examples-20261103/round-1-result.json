@@ -1,0 +1,111 @@
+{
+  "accepted": true,
+  "apple_build_only": {
+    "ipad": "success",
+    "iphone": "success",
+    "macos": "success"
+  },
+  "artifacts": {
+    "gtk": {
+      "artifact_id": 13261840048,
+      "bytes": 23504349,
+      "job_id": 126120492531,
+      "sha256": "a0a83d893d3d3a989f6b4c8140affd1488ea9e868cd883173afa78471a62a163"
+    },
+    "windows": {
+      "artifact_id": 13261900834,
+      "bytes": 36084253,
+      "job_id": 126124038150,
+      "sha256": "1482558adf35c4843ad2ced65098333ed6b90716c6808817057156bc0c34a5ef"
+    }
+  },
+  "attempt": "1",
+  "catalog_state_changed": false,
+  "current_unfrozen_blobs": {
+    "apps/reader/desktop/windows_records_owner.cpp": "fb1b36b8ee6a0c48b81d8aff3b2097c7372c4b33",
+    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java": "9566f21b7f38c3652d9a416cabd73d1b76a959d6",
+    "examples/apple/HostReadingRecords.swift": "2c6185723fb523996b7c86ec5caf25f849a3f8cf"
+  },
+  "hosts": [
+    "gtk",
+    "windows"
+  ],
+  "observations": [
+    {
+      "host": "gtk",
+      "phase": "create",
+      "snapshot_sha256": "fd898aad77e5464ebcb1ec56dc6fab0231f09e32cb0adaef798e6231010bebc9"
+    },
+    {
+      "host": "windows",
+      "phase": "create",
+      "snapshot_sha256": "fd898aad77e5464ebcb1ec56dc6fab0231f09e32cb0adaef798e6231010bebc9"
+    },
+    {
+      "host": "gtk",
+      "phase": "delete",
+      "snapshot_sha256": "d423803e4d0808828da26b58cee70c28bcbe2b0b592c0d57742748df6ad427f5"
+    },
+    {
+      "host": "windows",
+      "phase": "delete",
+      "snapshot_sha256": "d423803e4d0808828da26b58cee70c28bcbe2b0b592c0d57742748df6ad427f5"
+    },
+    {
+      "host": "gtk",
+      "phase": "restore",
+      "snapshot_sha256": "39e58effda054841bafa771ef1cc1443fd8a774bc7d82917e8409592aa105735"
+    },
+    {
+      "host": "windows",
+      "phase": "restore",
+      "snapshot_sha256": "39e58effda054841bafa771ef1cc1443fd8a774bc7d82917e8409592aa105735"
+    },
+    {
+      "host": "gtk",
+      "phase": "member-remove",
+      "snapshot_sha256": "f37d51f4d661566763bd32e3b88399d835965c321f22ee1e317750ccbdb1e7f7"
+    },
+    {
+      "host": "windows",
+      "phase": "member-remove",
+      "snapshot_sha256": "f37d51f4d661566763bd32e3b88399d835965c321f22ee1e317750ccbdb1e7f7"
+    },
+    {
+      "host": "gtk",
+      "phase": "member-restore",
+      "snapshot_sha256": "67755b528f76bf1462edaa06c383de5489b5b93673a089e0ab5036117704fb7e"
+    },
+    {
+      "host": "windows",
+      "phase": "member-restore",
+      "snapshot_sha256": "67755b528f76bf1462edaa06c383de5489b5b93673a089e0ab5036117704fb7e"
+    },
+    {
+      "host": "gtk",
+      "phase": "restart",
+      "snapshot_sha256": "67755b528f76bf1462edaa06c383de5489b5b93673a089e0ab5036117704fb7e"
+    },
+    {
+      "host": "windows",
+      "phase": "restart",
+      "snapshot_sha256": "67755b528f76bf1462edaa06c383de5489b5b93673a089e0ab5036117704fb7e"
+    }
+  ],
+  "problems": [],
+  "producer_jobs": {
+    "gtk": "success",
+    "windows": "success"
+  },
+  "run_id": "41694251471",
+  "scope": "same SDK source; GTK and Windows examples receive organization data",
+  "sdk_objects": {
+    "CMakeLists.txt": "a5ed27fcca1d709c2217c585da47dc55dc23c1d0",
+    "bindings": "54c12f70a1a63cae6574984a388b66bf6248c38e",
+    "cmake": "505c604a2b30b72b3a251cd3f0bb7628e6d58fc1",
+    "include": "ef1bbaafc4a250053e5b0f88d329d1a25b22794b",
+    "src": "01dbab7c7c28aff175b5a953fea307e21d84eee2"
+  },
+  "six_host_acceptance": false,
+  "source_sha": "c583ebe7dadf971eed680fea60ab850bbb7a41ce"
+}
