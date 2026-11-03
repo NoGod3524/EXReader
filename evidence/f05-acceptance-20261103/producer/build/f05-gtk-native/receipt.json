@@ -1,0 +1,236 @@
+{
+  "schema": 2,
+  "host": "linux",
+  "identity": {
+    "source": "8a268b8582903926dfa7198a07fabacb2cacd6fd",
+    "run": "41693082728",
+    "attempt": "1"
+  },
+  "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "program_sha256": "3a357139a7782dcda9bb8b38f455cbb77b5605066de578bcb1aaf3f6c848dd2e",
+  "artifact_layout": {
+    "receipt": "receipt.json",
+    "program": "program.bin",
+    "coverage": "coverage.json"
+  },
+  "cases": [
+    {
+      "id": "cancel_sync_retry",
+      "outcome": "passed",
+      "actual_host_actions": true,
+      "receiver_database_injection": false,
+      "original_identity_preserved": true,
+      "revision_bytes_preserved": true,
+      "peer_wire_observed": true,
+      "source_evidence": [
+        "coverage.json",
+        "cancel_sync_retry.png"
+      ],
+      "source_pointer": "/cases/0",
+      "remote_boundary": true,
+      "cancel_layer": "transport",
+      "native_cancel_observed": true,
+      "explicit_retry_passed": true
+    },
+    {
+      "id": "offline_reconnect",
+      "outcome": "passed",
+      "actual_host_actions": true,
+      "receiver_database_injection": false,
+      "original_identity_preserved": true,
+      "revision_bytes_preserved": true,
+      "peer_wire_observed": true,
+      "source_evidence": [
+        "coverage.json",
+        "offline_reconnect.png"
+      ],
+      "source_pointer": "/cases/1"
+    },
+    {
+      "id": "kill_commit_ack_replay",
+      "outcome": "passed",
+      "actual_host_actions": true,
+      "receiver_database_injection": false,
+      "original_identity_preserved": true,
+      "revision_bytes_preserved": true,
+      "peer_wire_observed": true,
+      "source_evidence": [
+        "coverage.json",
+        "kill_commit_ack_replay.png"
+      ],
+      "source_pointer": "/cases/2",
+      "remote_boundary": true,
+      "terminated_pid": 14653,
+      "reopened_pid": 16116,
+      "actual_process_termination": true,
+      "recovery_boundary": "committed-PUT-before-ACK",
+      "durable_recovery_passed": true
+    },
+    {
+      "id": "delete_put_tombstone_preserved",
+      "outcome": "passed",
+      "actual_host_actions": true,
+      "receiver_database_injection": false,
+      "original_identity_preserved": true,
+      "revision_bytes_preserved": true,
+      "peer_wire_observed": true,
+      "source_evidence": [
+        "coverage.json",
+        "delete_put_tombstone_preserved.png",
+        "delete-detail-first.png",
+        "delete-detail-second.png"
+      ],
+      "source_pointer": "/cases/3",
+      "competing_heads": [
+        "65b81a946a2845838d848f6fe888e292",
+        "f3f126817f3243259033a19a24291a31"
+      ],
+      "final_heads": [
+        "65b81a946a2845838d848f6fe888e292",
+        "f3f126817f3243259033a19a24291a31"
+      ],
+      "tombstone_preserved": true,
+      "delete_conflict_displayed": true,
+      "stale_peer_did_not_resurrect": true,
+      "old_put_after_tombstone": {
+        "common_parent": [
+          "0a4569be536646beb180deb76a39e5b5"
+        ],
+        "put": {
+          "version": 1,
+          "id": "65b81a946a2845838d848f6fe888e292",
+          "entity_kind": "tag",
+          "entity_key": "116345877a5f492399d51a22778a2896",
+          "operation": "put",
+          "location_kind": "none",
+          "parents": [
+            "0a4569be536646beb180deb76a39e5b5"
+          ],
+          "payload": {
+            "name": "F05 offline tag edit"
+          }
+        },
+        "delete": {
+          "version": 1,
+          "id": "f3f126817f3243259033a19a24291a31",
+          "entity_kind": "tag",
+          "entity_key": "116345877a5f492399d51a22778a2896",
+          "operation": "delete",
+          "location_kind": "none",
+          "parents": [
+            "0a4569be536646beb180deb76a39e5b5"
+          ],
+          "payload": null
+        },
+        "put_commit": {
+          "index": 6,
+          "path": "/dav/exreader-sync-v1/revisions/65/65b81a946a2845838d848f6fe888e292-2d58a6de8a94ca647c7d1dbeb8fd62445c27a73bbbb7393abb4ae895bb9f2856.json",
+          "sha256": "2d58a6de8a94ca647c7d1dbeb8fd62445c27a73bbbb7393abb4ae895bb9f2856"
+        },
+        "delete_commit": {
+          "index": 5,
+          "path": "/dav/exreader-sync-v1/revisions/f3/f3f126817f3243259033a19a24291a31-ef071cdacf10e9c152b1ef6165c88a83e648f067eba1ad50d9923e5be3b2ded3.json",
+          "sha256": "ef071cdacf10e9c152b1ef6165c88a83e648f067eba1ad50d9923e5be3b2ded3"
+        },
+        "scope": "actual old-parent native put after tombstone; not a repeated-ID replay",
+        "restore_revision_created": false
+      },
+      "explicit_user_restore": false
+    },
+    {
+      "id": "concurrent_heads_preserved",
+      "outcome": "passed",
+      "actual_host_actions": true,
+      "receiver_database_injection": false,
+      "original_identity_preserved": true,
+      "revision_bytes_preserved": true,
+      "peer_wire_observed": true,
+      "source_evidence": [
+        "coverage.json",
+        "concurrent_heads_preserved.png"
+      ],
+      "source_pointer": "/cases/4",
+      "competing_heads": [
+        "1741419d337741ca87a9d097c2e4ff27",
+        "6752a3997f5f48d9a1e65a80f9b3c2d5"
+      ],
+      "final_heads": [
+        "1741419d337741ca87a9d097c2e4ff27",
+        "6752a3997f5f48d9a1e65a80f9b3c2d5"
+      ],
+      "conflict_displayed": true,
+      "explicit_user_resolution": false
+    },
+    {
+      "id": "restart_offline_read",
+      "outcome": "passed",
+      "actual_host_actions": true,
+      "receiver_database_injection": false,
+      "original_identity_preserved": true,
+      "revision_bytes_preserved": true,
+      "peer_wire_observed": false,
+      "source_evidence": [
+        "coverage.json",
+        "offline-reader.png"
+      ],
+      "source_pointer": "/cases/5",
+      "reopened_host_readable": true,
+      "network_requests": 0,
+      "network_measurement": "controlled F05 library sync endpoint"
+    }
+  ],
+  "claims": {
+    "cancel_retry": [
+      {
+        "case_id": "cancel_sync_retry",
+        "role": "local"
+      }
+    ],
+    "offline_reconnect": [
+      {
+        "case_id": "offline_reconnect",
+        "role": "author"
+      }
+    ],
+    "process_recovery": [
+      {
+        "case_id": "kill_commit_ack_replay",
+        "role": "local"
+      }
+    ],
+    "delete_put_tombstone_preserved": [
+      {
+        "case_id": "delete_put_tombstone_preserved",
+        "role": "receiver"
+      }
+    ],
+    "concurrent_heads_preserved": [
+      {
+        "case_id": "concurrent_heads_preserved",
+        "role": "receiver"
+      }
+    ],
+    "offline_read": [
+      {
+        "case_id": "restart_offline_read",
+        "role": "local"
+      }
+    ]
+  },
+  "evidence_members": [
+    "cancel_sync_retry.png",
+    "concurrent_heads_preserved.png",
+    "coverage.json",
+    "delete-detail-first.png",
+    "delete-detail-second.png",
+    "delete_put_tombstone_preserved.png",
+    "kill_commit_ack_replay.png",
+    "offline-reader.png",
+    "offline-sdk-original.bin",
+    "offline-sdk-readback.log",
+    "offline_reconnect.png",
+    "receive-observations.json"
+  ],
+  "F05_accepted": false,
+  "artifact_authenticated_by_producer": false
+}

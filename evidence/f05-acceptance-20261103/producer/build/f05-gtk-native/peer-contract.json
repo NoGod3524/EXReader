@@ -1,0 +1,54 @@
+{
+  "entity_kind": "tag",
+  "entity_key": "116345877a5f492399d51a22778a2896",
+  "common_parent": [
+    "0a4569be536646beb180deb76a39e5b5"
+  ],
+  "baseline": "peer-baseline",
+  "remote_delete": "peer-delete",
+  "remote_delete_put": "peer-delete-put",
+  "old_put_after_tombstone": {
+    "common_parent": [
+      "0a4569be536646beb180deb76a39e5b5"
+    ],
+    "put": {
+      "version": 1,
+      "id": "65b81a946a2845838d848f6fe888e292",
+      "entity_kind": "tag",
+      "entity_key": "116345877a5f492399d51a22778a2896",
+      "operation": "put",
+      "location_kind": "none",
+      "parents": [
+        "0a4569be536646beb180deb76a39e5b5"
+      ],
+      "payload": {
+        "name": "F05 offline tag edit"
+      }
+    },
+    "delete": {
+      "version": 1,
+      "id": "f3f126817f3243259033a19a24291a31",
+      "entity_kind": "tag",
+      "entity_key": "116345877a5f492399d51a22778a2896",
+      "operation": "delete",
+      "location_kind": "none",
+      "parents": [
+        "0a4569be536646beb180deb76a39e5b5"
+      ],
+      "payload": null
+    },
+    "put_commit": {
+      "index": 6,
+      "path": "/dav/exreader-sync-v1/revisions/65/65b81a946a2845838d848f6fe888e292-2d58a6de8a94ca647c7d1dbeb8fd62445c27a73bbbb7393abb4ae895bb9f2856.json",
+      "sha256": "2d58a6de8a94ca647c7d1dbeb8fd62445c27a73bbbb7393abb4ae895bb9f2856"
+    },
+    "delete_commit": {
+      "index": 5,
+      "path": "/dav/exreader-sync-v1/revisions/f3/f3f126817f3243259033a19a24291a31-ef071cdacf10e9c152b1ef6165c88a83e648f067eba1ad50d9923e5be3b2ded3.json",
+      "sha256": "ef071cdacf10e9c152b1ef6165c88a83e648f067eba1ad50d9923e5be3b2ded3"
+    },
+    "scope": "actual old-parent native put after tombstone; not a repeated-ID replay",
+    "restore_revision_created": false
+  },
+  "simultaneous_online_peers": false
+}

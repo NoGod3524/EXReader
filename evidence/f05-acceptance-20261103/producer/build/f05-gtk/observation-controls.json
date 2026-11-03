@@ -1,0 +1,58 @@
+{
+  "source_sha": "8a268b8582903926dfa7198a07fabacb2cacd6fd",
+  "run_id": "41693082728",
+  "attempt": "1",
+  "checks": [
+    {
+      "name": "fast_same_seen",
+      "passed": true,
+      "positive_variants": 1,
+      "negative_variants": 0
+    },
+    {
+      "name": "visible_transition",
+      "passed": true,
+      "positive_variants": 1,
+      "negative_variants": 0
+    },
+    {
+      "name": "old_generation",
+      "passed": true,
+      "positive_variants": 0,
+      "negative_variants": 1
+    },
+    {
+      "name": "old_receive_terminal",
+      "passed": true,
+      "positive_variants": 0,
+      "negative_variants": 1
+    },
+    {
+      "name": "network_only",
+      "passed": true,
+      "positive_variants": 0,
+      "negative_variants": 1
+    },
+    {
+      "name": "generation_changed",
+      "passed": true,
+      "positive_variants": 0,
+      "negative_variants": 1
+    },
+    {
+      "name": "no_dispatch_or_bad_fields",
+      "passed": true,
+      "positive_variants": 0,
+      "negative_variants": 5
+    },
+    {
+      "name": "partial_and_wrong_notice",
+      "passed": true,
+      "positive_variants": 1,
+      "negative_variants": 5
+    }
+  ],
+  "count": 8,
+  "accepted": true,
+  "synthetic_predicate_controls_only": true
+}

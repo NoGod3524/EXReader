@@ -1,0 +1,48 @@
+{
+  "source_sha": "8a268b8582903926dfa7198a07fabacb2cacd6fd",
+  "run_id": "41693082728",
+  "attempt": "1",
+  "accepted": true,
+  "full_F05_accepted": false,
+  "delete_detail_accepted": true,
+  "errors": [],
+  "run_received": true,
+  "native_cleanup": [
+    {
+      "action": "native-close-0",
+      "seconds": 2.6650000108929817e-06
+    },
+    {
+      "action": "native-close-1",
+      "seconds": 0.0781546130000379
+    },
+    {
+      "action": "native-close-2",
+      "seconds": 2.173999973820173e-06
+    },
+    {
+      "action": "native-close-3",
+      "seconds": 1.3320000107341912e-06
+    }
+  ],
+  "available_reports": [
+    "build/f05-gtk/build.json",
+    "build/f05-gtk/native6.json",
+    "build/f05-gtk/observation-controls.json",
+    "build/f05-gtk/providers.json",
+    "build/f05-gtk-native/coverage.json",
+    "build/f05-gtk-native/peer-baseline/manifest.json",
+    "build/f05-gtk-native/peer-contract.json",
+    "build/f05-gtk-native/peer-delete/manifest.json",
+    "build/f05-gtk-native/peer-delete-put/manifest.json",
+    "build/f05-gtk-native/receipt.json",
+    "build/f05-gtk-native/receive-observations.json",
+    "build/gtk-raw-wave3/legacy-install.json",
+    "build/gtk-raw-wave3/raw-backend.json",
+    "build/gtk-raw-wave3/raw-host-identity.json",
+    "build/gtk-raw-wave3/raw-install.json",
+    "build/gtk-raw-wave3/result.json",
+    "build/gtk-sdk342/build.json",
+    "inventory.json"
+  ]
+}

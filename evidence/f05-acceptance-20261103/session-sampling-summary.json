@@ -1,0 +1,43 @@
+{
+  "counted_session_start_attempts": 17,
+  "eventually_nonzero_attempts": 17,
+  "sync_receive_traces": 15,
+  "excluded_cases": [
+    {
+      "case_id": "restart_offline_read",
+      "reason": "该 case 无 Sync 会话，不计入 17 次分母",
+      "session_value": null,
+      "generation_value": null
+    }
+  ],
+  "raw_sample_rows": 34,
+  "zero_start_samples_preserved": true,
+  "note": "17 is the denominator for session-start attempts, not individual sample rows; transient zero values remain in raw evidence.",
+  "by_case": [
+    {
+      "case_id": "cancel_sync_retry",
+      "session_start_attempts": 3
+    },
+    {
+      "case_id": "offline_reconnect",
+      "session_start_attempts": 2
+    },
+    {
+      "case_id": "kill_commit_ack_replay",
+      "session_start_attempts": 3
+    },
+    {
+      "case_id": "delete_put_tombstone_preserved",
+      "session_start_attempts": 6
+    },
+    {
+      "case_id": "concurrent_heads_preserved",
+      "session_start_attempts": 3
+    },
+    {
+      "case_id": "restart_offline_read",
+      "session_start_attempts": 0
+    }
+  ],
+  "source": "producer/build/f05-gtk-native/coverage.json"
+}
