@@ -1643,3 +1643,77 @@ The original GTK run and its separately authorized three-log readback remain pre
 Finish independent review of the already approved thirteen-text evidence audit, publish only its approved independent branch, and inspect its one bounded Ubuntu result. Use the original redirected owner evidence plus the completed static consumer-chain comparison before proposing any new full Android acceptance round.
 For GTK, retain the successful Account observation and diagnose the status readiness boundary from authorized evidence; do not call an unexecuted final status test a product failure or silently start another run.
 Continue append-only handoff at real save times. This recovery entry adds no CI budget, no retry, no product change and no formal acceptance credit.
+
+
+## 20:22 EST checkpoint - 2026-11-02 (recorded at actual save time)
+
+Actual saved timestamp: 2026-11-02T20:26:26.576697-05:00 (EST, UTC-05:00); UTC 2026-11-03T01:26:26.576697+00:00.
+The scheduled checkpoint was 20:22 EST. Saving waited for the single remote window: a fixed-source read on PID 23580 had an output-read timeout, then the same PID was confirmed terminal exit 0 at approximately 20:24:30 EST. No command was restarted, and no CI was added. This timestamp is not backdated. The preceding complete ee9cc223 entry remains unchanged.
+
+### Ledger and six-role status accounting
+
+Formal status remains 98/108, carried forward from the existing formal ledger evidence (255ec lineage). No newly completed whole acceptance item is claimed, and no ledger file is changed by this document.
+These counts classify the six EXReader responsibility roles for this checkpoint; they are not a claim of six active implementation agents:
+- Implementation: 0.
+- Diagnosis: 1 - F03 is checking the remaining import/limit contract after the R5 failure.
+- Review: 1 - F09 independently reviewed R5's original final evidence and reviews this handoff separately from its writer.
+- Evidence/documentation: 1 - F03 coordination maintains the append-only handoff and the single remote execution window, not another product implementation owner.
+- Waiting for a running test: 0 - the approved R5 run is now terminal.
+- Blocked: 3 - F05 requires the product-owner conflict-detail implementation scope; F07 still needs actual installed manifest/exports/archive hashes and SQLite provider-origin bindings; F08 has no authorization for another repair/native sample.
+- Fully completed whole item: 0.
+Total roles: 6. Standby is not counted as implementation. The separate employment-research spreadsheet is not EXReader work and contributes no acceptance credit.
+
+### F03 evidence audit: the earlier owner execution was real
+
+The separately approved thirteen-text evidence audit completed successfully:
+source ca1e368d2bede9be0899f02907566199d0069a28; run 41553746977/A1; job 125647447427; terminal at 19:34:10 EST.
+All thirteen checks passed after validating the exact original R4 artifact identity and archive SHA. The original redirected owner device report recorded 18; manual instrumentation had 18 starts and 18 completions; XML recorded 18; both kill/recovery chains and witness transitions 1,1,0 to 1,1,1 were preserved.
+F09 independently checked the original audit stdout and metadata (PID 10200 terminal). This establishes that the prior second direct owner execution also completed eighteen cases; it does not rewrite the old R4 failure or accepted=false.
+Output artifact 13193213476: 22282 bytes, SHA256 28b54f30722195b953ae9af65db4902c721998bf20447dc8aecd7c6e0e0379a6.
+Original audit job log: 133267 bytes, SHA256 31d54c63dc2a9d256a141fe0c04751c497e5135b5709095697c256e37df163e7.
+No product build or device test was performed by this audit.
+
+### F03 R5: the owner and organization chains advanced, but import acceptance stopped
+
+The user approved the complete versioned eighteen-case consumption chain at 19:39:15 EST. The package contains exactly four new checkers/gates and three modified acceptance-package files, based on d9b36c, not the separate audit commit.
+Actual source: 0b5c77592a264f5cdb6f12f03dbe7b78bb698b7d.
+Tree: 98929534e762cfca586719457b0de6efa06744e4.
+Branch: dot/f03-production-acceptance-v342-20261102.
+The independent actual-file and API full-tree reviews confirmed the seven workflow call sites and two gate subprocess routes, all seventeen original workflow stages, the retained original tests/SDK/product source, and the new explicit count/source-hash conjunctions. The unique non-force ref update was read back before the one new Actions run; no dispatch or rerun was used.
+
+Run 41555544580/A1, job 125653426424, is now failure. Build, full staged Android tests/provider precompilation, main-APK identity and original product flags passed.
+The original log establishes the following current-run results:
+- Owner: accepted=true, eighteen owner cases and two kill/recovery operations.
+- Organization: eight native cases, eight UI cases and one retry path accepted.
+- Bootstrap recovery: twelve cases accepted.
+- The import first phase completed its first ten cases. Its eleventh case, 128MiB_staging_does_not_raise_32MiB_host_reading_limit, stopped at a UI-status text assertion.
+These are bounded successful components, not full formal acceptance. The master result is false.
+
+The exact recorded mismatch is:
+HostImportUiTest.java line 147 waited for "Current reader has a 32 MiB reading limit".
+The current UI reported "Selected book exceeds 32 MiB reading limit. The 128 MiB staging ceiling does not make larger books readable".
+The assertion failed before the eleventh case's later rollback/database-safety assertions. Those later assertions are not claimed to have passed. The following eight import phases containing the remaining nine cases were not reached. No claim is made that all twenty import cases ran.
+
+F09 independently checked the actual original log and API identity (PIDs 23672/23692 terminal): owner result at line 5933, organization at 6149, recovery at 6293, failed first-phase JSON at 6479 and actual UI text at 6508.
+Original log: 798849 bytes, 6819 lines, SHA256 5ff508276bc378b77d37421fdf10a31e52ae832e3420c9f9a928835cfe778750.
+Output artifact 13196780168: 187098123 bytes, SHA256 d43b6095e04defe46e26dc54ddf6256dd3ed82f24cef8a0c18bcfa6afa53db7b.
+No ZIP was downloaded for this diagnosis. R1 through R5 failures remain intact. The approved R5 one-run budget is consumed; no further Android run is authorized by this entry.
+
+### Next F03 scope is being established, not silently implemented
+
+The immediate work is a zero-CI comparison of the entire eleventh-case behavior and both the 32 MiB reading limit and 128 MiB staging ceiling, together with the remaining nine import cases and provider behavior. The requirements to preserve include all twenty cases, nine phase/process records, nine stop observations, four held-copy markers, three actual installed APK identities, permission revocation, process recovery and screenshots.
+The last fixed-source read completed, but its full text has not yet been retrieved and reviewed at this snapshot. Therefore no new test text, versioned overlay or complete next-run scope is declared approved or ready. The current evidence supports a text mismatch at the stopping point, not permission to delete a limit or skip the safety assertions. Once the complete static closure is reviewed, any new versioned package and CI budget must be proposed explicitly. There is no reliable completion-time estimate for the remaining 108-item program from this single mismatch.
+
+### Other routes: retained evidence and specific gaps
+
+F09: Windows KB06 has its previously independently verified bounded pass. GTK R2 source 0ff1cc0c/run 41541418049/A1 has a genuine independent Account-Escape focus restoration pass with no repair, but its status case stopped before typing because chooser readiness was not established; overall accepted=false. The false readiness predicate values were not retained, so no product-focus defect or removable active/focus condition is asserted. The Account case is not being rerun. Further R2 archive inspection or another GTK run requires its own exact authorization.
+
+F07: all four historical private-source dependency edges were verified repaired in ec11 source, and all six recipes select the public v1 configurations. This does not supply installed manifest, exported-header/archive hash and final SQLite-origin bindings for every real package. The earlier binary scan was explicitly partial; names or symbol counts alone do not prove a unique provider. The gap is concrete package-level evidence, not a claim that source repair remains undone.
+
+F08: the one approved native run remains failed at 1437.830 seconds against the original 1200-second ceiling; reader sampling never produced its result. Exact owned worker/emulator processes were cleaned up and the display was unchanged. The long-wait deadline and observability gaps are known, but no new native sample or local-test exception has been granted.
+
+F05: Android program/peer/TLS types and the existing GTK inspector path are known. The Android unresolved-conflict UI still lacks the required put/delete-head detail. That is a product-owner implementation boundary, not something an audit caller may fabricate or claim fixed. No production ownership has been transferred.
+
+### Continuation boundary
+
+Preserve all successful bounded evidence and all original failures. Finish the authorized read-only import-contract closure, then request the smallest complete versioned change and one bounded run if needed. Do not automatically add another CI round, alter an old assertion, change an SDK, transfer a product owner or increase the formal 98/108 count.
