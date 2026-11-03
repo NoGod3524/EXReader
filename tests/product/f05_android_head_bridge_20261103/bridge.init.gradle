@@ -1,0 +1,16 @@
+import groovy.json.JsonOutput
+gradle.beforeProject { project ->
+    if (project.path == ':app') {
+        project.afterEvaluate {
+            def extra = new File(project.rootProject.projectDir, '../../tests/product/f05_android_head_bridge_20261103/java').canonicalFile
+            def before = project.android.sourceSets.androidTest.java.srcDirs.collect { it.canonicalFile }
+            if (before.contains(extra)) throw new GradleException('Bridge source already present')
+            project.android.sourceSets.androidTest.java.srcDir(extra)
+            def actual = project.android.sourceSets.androidTest.java.srcDirs.collect { it.canonicalFile }
+            if (actual != before + [extra]) throw new GradleException('Unexpected bridge sourceSet')
+            def proof = new File(project.rootProject.projectDir, '../../build/f05-bridge/bridge-source-sets.json')
+            proof.parentFile.mkdirs()
+            proof.text = JsonOutput.prettyPrint(JsonOutput.toJson([before: before.collect { it.path }, after: actual.collect { it.path }, added: extra.path]))
+        }
+    }
+}
