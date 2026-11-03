@@ -2271,3 +2271,60 @@ F08 has no new native budget. Separate GTK status/UI gaps are not satisfied by F
 Six responsibility slots: test-result monitoring1(F05 current run), documentation/coordination1, waiting/blocked4(F03 six-target gap,F07 blocked evidence/publication,F08 no native budget,F09 waiting for this run's actual result). Active implementation0 and active independent review0 at this snapshot. Finished candidate reviews are not counted as ongoing implementation.
 
 No storage deletion/resize or new artifact exception occurred. All failed rounds, partials and source boundaries are preserved. This document authorizes no additional implementation, external communication, CI round or score.
+
+
+## Hourly continuation snapshot: 2026-11-03 09:22 EST scheduled
+
+Actual save time: 2026-11-03T14:20:29.210276+00:00 / 2026-11-03T09:20:29.210276-05:00. The previous document is preserved in full. This is a continuation backup, not completion or a new grant of authority. Formal catalog remains98verified/1partial/9pending of108.
+
+### F05 diagnostic-adapter round: old dialog problem did not recur, native network setup failed
+The specifically approved1A2M adapter sourcec4d67540a0e17a86bd42ad9323cd269ce8959326 was executed once as run41642819421/A1. It completed FAILURE at13:39:06UTC:
+https://github.com/NoGod3524/EXReader/actions/runs/41642819421
+Independent review read all48 retained checks as passed, accepted=true and52dialog-call diagnostic records complete/original_finished=true/errors empty. The52 count means dialog calls, not an independently asserted number of successful product imports. This run did not reproduce the previous import-dialog failure and therefore does not explain that previous failure.
+
+Native Receive traces1-4 completed received. Trace5, first host's newPID22911 in kill_commit_ack_replay, failed after restart at gtk.py323?sync174: new network session deadline after240seconds. This was not initial-readiness line166 and not a Receive120-second timeout. before_network had been saved, alt+s had returned, and network_samples were recorded. generation remained unassigned and Receive dispatch_count=0. last_sample=null referred to empty Receive samples, not absent network sampling or proof that no session ever existed.
+Collection was false with9missing entries including3patterns, errors empty and64858141copied bytes. Audit rejected the failed producer before ZIP authentication; accepted/fullF05/delete remained false.
+
+Producer log252913B,SHA256fc465f0bbbb4632cf00d50f69f6f726b3b4051e5fe159800f36b236b698d703b.
+Audit log130051B,SHA2564cd18cf5c27adf700b0be7c37fc5bdabf2d9536dfaec388d4251341971296cc0.
+Producer artifact13234044335:34886675B,SHA2564b9c81a902b5f95f77b54668f1269fb0acdcfbb4fb7c3dc5668fa6120cbc6eb8.
+Audit artifact13234064203:16895B,SHA25692f9efcff8c3abc88eb52570c1c4ebbd40c9ec6acad8b7da047e366a31364e80.
+The authorized190-minute round ended. No automatic device retry occurred.
+
+### Fixed-artifact network inspection: useful authenticated evidence, diagnostic job itself failed
+The user specifically approved a new independent-branch inspection script and isolated workflow task, one commit/push and one job up to10runner-minutes, without rerunning tests or changing products.
+After actual/full-tree review, source012ac42290bf26fd7cad9979c3b63661cb1755b4, parentc4d, was prepared on dot/f05-gtk-network-inspect-20261103. The first push was refused before execution. A new explicit user confirmation naming the branch, GitHub push and sole10-minute inspection enabled one same-operation/same-route review retry, which succeeded. No alternate route or duplicate push was used.
+
+Unique inspection run41649370294/A1, job125963179132, completed FAILURE; the other5jobs skipped:
+https://github.com/NoGod3524/EXReader/actions/runs/41649370294
+All5selected members passed original producer/archive/inventory hash and identity authentication. The diagnostic's only validation finding was an incorrect schema comparison: coverage listed2completed cases while receipt listed6claims including not-run placeholders. Independent fixed-source review of fixture.py186-237 confirms line199copies completed cases and203-208adds missing-claim placeholders. This is an inspection-comparison defect, not a contradiction in the original evidence. diagnostic_complete=false and the jobFAIL remain; no additional run was requested merely to turn that job green.
+
+The authenticated trace contains2344network samples from0.182 to239.920seconds. generation, session_present and state stayed0. From0.283776seconds, phase1 and the exact notice 'Enter a username and password within the secure storage limit' appeared; the preceding notice was 'Secure storage is unavailable. Choose this app session only'. Receive was never dispatched. This establishes a credential-precondition rejection before session creation, not whether input was empty, overlong, lost or overwritten, and not a proven product defect.
+A separate cleanup error was native-close-2 waiting20seconds for the original first process; the old key.unlink exception was absent. The failed original producer/native acceptance is not retroactively changed by these observations.
+
+### Read-only configuration-chain diagnosis and next proposal
+Fixedc4d source shows the restart path already calls configure; it was not simply omitted. Opening the account panel starts asynchronous ACCOUNT_LOAD, sets owner_busy and later fills root/user/password from LOAD results. The old helper waits only for panel visibility, fills fields, selects session-only with alt+h, applies with alt+a and waits only for bound==1. A reused profile can already be bound, so this does not prove the new LOAD finished or the new SET succeeded.
+The keys are correct; source establishes a real test-synchronization gap. It does not establish the precise order of lost/overwritten input in the failed run. The same validation notice can represent several empty/NULL/length preconditions and must not be used to infer one without evidence.
+
+The source provides distinct LOAD and SET-success notices. The minimal proposed3M acceptance change would wait for a newly opened panel's actual LOAD-ready state, record only safe boolean credential-presence information, apply once and require the current operation's exact session-only success state, with samePID/configuration-sequence evidence. Closed-panel confirmation, a fresh empty initial notice and distinct operation-specific notices prevent accepting an old LOAD/SET result; a fast SET need not be forced to expose a transient busy sample. Existing deadlines,48checks,native6,partial deletion-detail and product/SDK/old tests stay unchanged. Synthetic controls do not constitute host evidence.
+After the in-memory scope review, the user specifically approved these three versioned acceptance-file changes, one commit/push and one new round capped at190runner-minutes. Parent is c4d on the original GTK branch. The writer has resumed actual candidate preparation; at this snapshot no new candidate publication or CI is claimed. The precise occurrence of the original load/input race remains unproven.
+
+### F03 five-target work is now an active evidence-mapping task
+Android R8 run41588932707/source054df remains accepted within its limited scope. F03 formal acceptance still requires six-target shared shelf/organization consistency; old_apk_upgrade_accepted=false and complete_product=false remain. The coordinator is not claiming that F05 work is new F03 implementation.
+
+A new read-only mapping task resumed the original F03 owner. Fixed255ec catalog and four cited historical documents were actually read. Five non-Android host organization entries are already verified, but each explicitly excludes automatic transfer to a new six-target/common-source build:
+- Windows:40414564325/source0b54a15ee9b96a6a4f51beb3600eda72e57594c8, real native organization and second-Windows receive evidence.
+- GTK:40184639030/source d05946f0, gtk_base-only historical function evidence.
+- macOS:40635727935/source716c1409, six native organization cases passed within an otherwise failed run.
+- iPhone/iPad:40911140164/sourceb259db57, separate jobs123579118171/123579118889 and artifacts12913864927/12914004364; SDK3.41 six-UI cases plus real EPUB membership/delete/restore/restart evidence.
+An old Windows-GTK four-stage relay40423610797/source62ea549b passed with GTK legacy versus Windows raw and cross-runner TLS state transfer. Later composition40425627113/sourcee61b5eda failed at the GTK chooser. Neither proves the present common-source contract. Apple documentation likewise distinguishes isolated-source guards from merged-source evidence.
+
+Four exact historical workflow names were obtained from fixed run metadata: windows-organization-projection.yml, reader-gtk-341-final.yml, reader-apple-organization-common.yml and apple-ios-organization-members-resume-20261029.yml. Those four original/current054df workflow comparisons are now complete. Windows is byte-identical and still freezes a19f source with the old C09 builder; GTK's original65-minute workflow still uses SDK3.41 eddd provenance, and054df only changes two acceptance entrypoints rather than upgrading to3.42. Apple common has three60-minute jobs, stillSDK3.41/RAW3OFF/f34a-frozen and byte-identical in054df. The separate real-iOS-members workflow is absent in054df. These are concrete blockers to directly running the old entrypoints as a common-source package, not mere missing report links. The scoped proposal would require eight new validation-only files, including a cross-target relay and aggregate, rather than merely seven host adapters. It is not execution-ready: common production base/owners are not locked, incorporation of the b259 iOS membership repair is unknown, the complete SDK3.42 builder dependency chain is unreviewed, and no current Android relay output exists. Historical producer caps total485runner-minutes (240+65+3x60), excluding old verify/summary jobs without explicit timeouts; this is neither an approved budget nor a promised duration. No new cross-platform execution or product ownership transfer has occurred; unknown production owners remain unknown, and UI/Opus/F08 ownership is not taken over.
+The first four-document read was refused before execution under a mismatched task context. Direct user EXReader read-only confirmation was then provided for one same-operation retry, which succeeded. No alternate connector or replay beyond that grant was used.
+
+### Other lanes and responsibility states
+F07's full owner-supplied semantic Apple provenance remains durably preserved in b8e2a5, including complete three-host hashes, source chain and host-only/sentinel limits. This is not new execution or a full provider-closure proof. Its refused operations remain stopped. The parent reports F07 is waiting for the user to upload the ZIP; no upload receipt or contents are claimed here, and any parsing still requires the authorized Actions-only scope rather than reviving denied local reads. F08 has no new native execution budget.
+
+Six responsibility slots at this snapshot: implementation1(F05 newly approved test-handshake candidate), evidence mapping/planning1(F03 five-target work), documentation/coordination1, waiting/blocked3(F07,F08,F09 awaiting actual candidate). Active product implementation0 and running-test wait0. Completed diagnostics are not described as new builds. This role count does not claim six implementations.
+
+No new formal credit, disk deletion/resize or artifact exception is introduced. All old failures, incomplete traces, partials and denied-operation boundaries remain preserved.
