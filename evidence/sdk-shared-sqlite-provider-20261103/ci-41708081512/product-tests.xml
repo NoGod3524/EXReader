@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="2"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="0"
+	timestamp="2026-11-03T19:58:36"
+	>
+	<testcase name="product-originals" classname="product-originals" time="0.0889748" status="run">
+		<properties/>
+		<system-out>v1 migration, mapping preservation, staging, restart, transitions and deletion passed
+</system-out>
+	</testcase>
+	<testcase name="native-product-catalog" classname="native-product-catalog" time="0.590874" status="run">
+		<properties/>
+		<system-out>PASS migration_matches_source_and_reopens
+PASS foreign_identity_preserved
+PASS atomic_attach_rollback
+PASS verified_identity_and_mode_refusals
+PASS oldest_duplicate_keeps_true_mode
+PASS existing_metadata_and_history_retained
+PASS local_removal_retains_global_records
+PASS rejects_bad_inputs
+PASS owner_queue_and_no_reentry
+PASS busy_writer_retries
+PASS shelf_triggers_still_enforced
+SEARCH b USING INDEX reader_books_title (deleted=? AND (sort_title,book_key)&gt;(?,?))
+SEARCH l USING INDEX sqlite_autoindex_reader_local_books_1 (book_key=?) LEFT-JOIN
+PASS bounded_keyset_no_duplicates
+12 native catalog groups passed
+</system-out>
+	</testcase>
+</testsuite>

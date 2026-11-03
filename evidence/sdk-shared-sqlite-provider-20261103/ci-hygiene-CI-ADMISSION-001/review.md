@@ -28,3 +28,10 @@
 
 首次 run `41705105811` 仍分类为“构建配置失败，非行为失败”，不计入共享 provider 验收。
 原状态原文保留：**两项仍待 CI**。真实后续执行结果另记。
+
+## 修复验证结果
+
+状态：closed，P 包 CI 卫生项。
+run `41708081512` 的完整历史 checkout 和原样准入检查成功；`git cat-file -e <base>^{commit}` 在固定基线比较前已执行通过。
+随后 SDK/ProductCatalog/C++17 测试目标构建成功，原产品测试 2/2 与 FTS5 2/2 通过。
+作业因新的负例步骤错误而红，另记 CI-CONTROLS-001 open，不改变本卫生项的验证结果，也不关闭 Apple build-only 项。

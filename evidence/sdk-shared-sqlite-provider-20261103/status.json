@@ -19,10 +19,7 @@
   "ci_started": true,
   "committed": true,
   "required_notice": "两项仍待 CI",
-  "pending_ci_tests": [
-    "product-originals",
-    "native-product-catalog"
-  ],
+  "pending_ci_tests": [],
   "source_file_sha256": {
     "CMakeLists.txt": "8bbb9e8a5ff39387f2cc1137996cad49afb9ceafb1234672e065ae9a2af92468",
     "apps/reader/store/native/CMakeLists.txt": "3e41c68f966efb367e8e7e8a4fb25a0f07bdab31b38ce5fbfefe35066c910e1b",
@@ -62,7 +59,7 @@
       "negative": 6,
       "log": "apple-checker-local.log"
     },
-    "apple_real_embedded_controls": "Skipped in run 41705105811 after earlier compile failure; not executed"
+    "apple_real_embedded_controls": "No results in run 41708081512; step failed; CI-CONTROLS-001 open"
   },
   "validation": {
     "python_entrypoints_ast": "passed",
@@ -78,9 +75,9 @@
     "runner": "macos-14",
     "timeout_minutes": 20,
     "run_count": 1,
-    "status": "Attempt 2/2 approved; shallow-history preflight passed; candidate ready"
+    "status": "Authorized 2/2 completed red; CI-CONTROLS-001 open; no further request"
   },
-  "source_hash_scope": "Local source bytes for admission follow-up; tested SHA recorded separately after run creation",
+  "source_hash_scope": "Source hashes match e0c1c458 candidate; post-run changes only in evidence.",
   "evidence_bytes_preserved": "Scoped .gitattributes disables newline normalization for raw evidence and recorded hashes.",
   "tested_candidate": "40ac811b0a872587641e01ff0cfc33a376e93abc",
   "ci_result": {
@@ -143,6 +140,34 @@
     "on_new_failure": "Record first error as open item; no further request",
     "on_success": "Close Apple build-only item; retain run and artifact; no full Apple acceptance claim",
     "local_shallow_preflight": "passed: ordinary depth-2 clone fails base lookup, unshallow succeeds, cat-file -e exact base exits 0",
-    "history_policy": "fetch-depth: 0; explicit cat-file commit check"
+    "history_policy": "fetch-depth: 0; explicit cat-file commit check",
+    "run_id": 41708081512,
+    "github_run_attempt": 1,
+    "candidate": "e0c1c4586013910fcb4bd5c884b9a56dd07a9491",
+    "conclusion": "failure",
+    "ci_hygiene_issue": "CI-ADMISSION-001",
+    "ci_hygiene_owner": "P",
+    "ci_hygiene_state": "closed",
+    "apple_build_only_state": "open",
+    "new_open_item": "CI-CONTROLS-001",
+    "first_error": "Process completed with exit code 1.",
+    "further_ci_request": false,
+    "artifact_id": 13266086992,
+    "artifact_sha256": "d3a0a4c4c8b9436489600cfc2d75970f932e5dbc20f517d92969ae445a153294",
+    "artifact_bytes": 9058366,
+    "review": "ci-41708081512/review.md"
+  },
+  "historical_pending_notice": "两项仍待 CI",
+  "historical_notice_scope": "Earlier snapshot; product-originals and native-product-catalog passed in run 41708081512",
+  "apple_native_builds": {
+    "reader-original-import-check": "passed",
+    "SDK": "passed",
+    "ProductCatalog": "passed"
+  },
+  "actual_ci_tests": {
+    "product-originals": "1/1 passed",
+    "native-product-catalog": "1/1 passed",
+    "sqlite-provider-check": "1/1 passed",
+    "shared-sqlite-sdk-product": "1/1 passed"
   }
 }
