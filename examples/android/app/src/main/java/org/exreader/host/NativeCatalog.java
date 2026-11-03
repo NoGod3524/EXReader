@@ -31,6 +31,61 @@ final class NativeCatalog {
     /** Current product metadata, including deleted state; null only if absent. */
     static native String[] metadata(long owner, String bookKey);
     static native String[] heads(long owner, String kind, String key);
+    /** One bounded read of product heads; display only, never permission to edit or restore. */
+    static HeadSnapshot headDetails(long owner,String kind,String key) {
+        return new HeadSnapshot(headDetailsRows(owner,kind,key));
+    }
+    private static native String[][] headDetailsRows(long owner,String kind,String key);
+    static final class RevisionHead {
+        final String revisionId,operation,sha256;
+        final boolean complete,requiresRestore;
+        private RevisionHead(String[] row) {
+            if(row==null||row.length!=5)throw new IllegalStateException("Incomplete revision head");
+            revisionId=row[0];operation=row[1];sha256=row[2];
+            if(revisionId==null||!revisionId.matches("[0-9a-f]{32}")||
+                    sha256==null||!sha256.matches("[0-9a-f]{64}")||
+                    !("put".equals(operation)||"delete".equals(operation)||"restore".equals(operation)))
+                throw new IllegalStateException("Invalid revision head identity");
+            complete=headFlag(row[3]);requiresRestore=headFlag(row[4]);
+        }
+    }
+    static final class HeadSnapshot {
+        final long revisions,headCount,missingParents,foreignParents;
+        final boolean projectionSafe,deleted,requiresRestore;
+        final java.util.List<RevisionHead> heads;
+        private HeadSnapshot(String[][] rows) {
+            if(rows==null||rows.length==0||rows[0]==null||rows[0].length!=8||!"1".equals(rows[0][0]))
+                throw new IllegalStateException("Incomplete revision head snapshot");
+            String[] state=rows[0];
+            revisions=headCountValue(state[1]);headCount=headCountValue(state[2]);
+            missingParents=headCountValue(state[3]);foreignParents=headCountValue(state[4]);
+            projectionSafe=headFlag(state[5]);deleted=headFlag(state[6]);requiresRestore=headFlag(state[7]);
+            if(revisions>4096||headCount>revisions||headCount!=rows.length-1)
+                throw new IllegalStateException("Revision head snapshot exceeds its bound or is incomplete");
+            java.util.ArrayList<RevisionHead> copy=new java.util.ArrayList<>(rows.length-1);
+            java.util.HashSet<String> ids=new java.util.HashSet<>();
+            for(int i=1;i<rows.length;i++){
+                RevisionHead head=new RevisionHead(rows[i]);
+                if(!ids.add(head.revisionId))throw new IllegalStateException("Duplicate revision head");
+                copy.add(head);
+            }
+            heads=java.util.Collections.unmodifiableList(copy);
+        }
+    }
+    private static long headCountValue(String value) {
+        try {
+            long result=Long.parseLong(value);
+            if(result<0)throw new NumberFormatException("negative count");
+            return result;
+        } catch(NumberFormatException error) {
+            throw new IllegalStateException("Invalid revision graph count",error);
+        }
+    }
+    private static boolean headFlag(String value) {
+        if("0".equals(value))return false;
+        if("1".equals(value))return true;
+        throw new IllegalStateException("Invalid revision graph flag");
+    }
     /** Selection kind, deleted flag, restore flag, followed by every observed head. */
     static native String[] selection(long owner,String kind,String key);
     static native boolean retained(long owner,String revision);
