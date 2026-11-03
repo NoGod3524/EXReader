@@ -19,6 +19,7 @@ INTAKE = "48bd5a35d99c3a21a8159288dd08ac8dbb41c677"
 REVIEWED_ACCEPTANCE = "61dc8d6190e65dc12886d2d0f0e97b501c52be56"
 PREVIOUS_CORRECTION = "b4d97d6d62c1366972d321174b728980e287b2cd"
 TEST_CLOSURE_BASE = "9d493b2235d81c216767295948f417c1bd12bf2d"
+OWNER_CONSUMER_BASE = "d9b36c36349a320e64f0bdf00d612c134c4eeeea"
 SDK = "8357eafa28423a7ab93ba08b823af80f01ad1505"
 FIXTURE_SOURCE = "39600d0d3a3a5e4bc2599a92e94e494a542f06f1"
 BRANCH = "dot/f03-production-acceptance-v342-20261102"
@@ -46,6 +47,7 @@ def configuration():
     require(c["reviewed_acceptance_base"] == REVIEWED_ACCEPTANCE, "fixed R1 acceptance parent")
     require(c["previous_correction_base"] == PREVIOUS_CORRECTION, "fixed preserved R2 parent")
     require(c["test_closure_base"] == TEST_CLOSURE_BASE, "fixed preserved R3 parent")
+    require(c["owner_consumer_base"] == OWNER_CONSUMER_BASE, "fixed preserved R4 parent")
     return c
 
 def catalog_schema_contract():
@@ -106,6 +108,105 @@ def catalog_schema_contract():
             "runtime_source_blobs": c["catalog_runtime_blobs"], "runtime_accepted": False}
 
 
+
+def owner_consumer_contract():
+    """Exact source transformations and complete seven-plus-two call routing."""
+    c = configuration()
+    expected = json.loads(r'''{
+  "version": "native-owner18-organization-v1",
+  "paths": {
+    "owner": "tests/dot_f03_production_acceptance_20261102/check_reader_owner_android_v342.py",
+    "ownerGate": "tests/dot_f03_production_acceptance_20261102/check_owner_evidence_gate_v342.py",
+    "org": "tests/dot_f03_production_acceptance_20261102/check_reader_organization_android_v342.py",
+    "orgGate": "tests/dot_f03_production_acceptance_20261102/check_organization_evidence_gate_v342.py"
+  },
+  "owner_reference_source": "39600d0d3a3a5e4bc2599a92e94e494a542f06f1",
+  "owner_reference_blob": "b5a03e0657db93b413fdcc98671c92575c4437cb",
+  "product_owner_runner_blob": "fa504a46e3a545428037290efb4a2758a72d0e07",
+  "owner_cases": 18,
+  "typed_kill_cases": 2,
+  "organization_native_cases": 8,
+  "organization_ui_cases": 8,
+  "organization_process_retry_cases": 1,
+  "original_functional_checks": 112,
+  "original_gate_checks": 87,
+  "owner_gate_checks": 19,
+  "organization_gate_checks": 15,
+  "direct_call_counts": {
+    "owner": 3,
+    "organization": 2,
+    "owner_gate": 1,
+    "organization_gate": 1
+  },
+  "gate_subprocess_calls": 2,
+  "old_tools_modified": false,
+  "old_tests_modified": false
+}''')
+    require(c["owner_consumer_contract"] == expected, "fixed complete owner18 consumer contract")
+    paths = expected["paths"]
+    def replace_once(raw, before, after):
+        require(raw.count(before) == 1, "unique versioned source transformation")
+        return raw.replace(before, after, 1)
+    original_owner_path = "tools/check_reader_owner_android.py"
+    original_org_path = "tools/check_reader_organization_android.py"
+    owner_gate_path = "tests/android_host/check_owner_evidence_gate.py"
+    org_gate_path = "tests/android_host/check_organization_evidence_gate.py"
+    old_owner = blob(OWNER_CONSUMER_BASE, original_owner_path)
+    reviewed_owner = replace_once(old_owner,
+        b"'sdkDatabaseRefusedWithoutModification','opensClosedLegacySystemCatalog'}",
+        b"'sdkDatabaseRefusedWithoutModification','opensClosedLegacySystemCatalog','finalizeImportAutomaticallyBootstrapsOnce'}")
+    reviewed_owner = replace_once(reviewed_owner, b"'OK (17 tests)'", b"'OK (18 tests)'")
+    require(git("rev-parse", FIXTURE_SOURCE + ":" + original_owner_path) == expected["owner_reference_blob"] and
+            reviewed_owner == blob(FIXTURE_SOURCE, original_owner_path),
+            "exact previously reviewed owner18 implementation, not changed assertions")
+    new_owner = replace_once(reviewed_owner, b"import subprocess\n", b"import subprocess\nimport sys\n")
+    new_owner = replace_once(new_owner, b"import zipfile\n",
+        b'import zipfile\n\n# Only resolve the unchanged native_record helper from its original tools directory.\n'
+        b'sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))\n')
+    new_org = replace_once(blob(OWNER_CONSUMER_BASE, original_org_path),
+                           b"owner['owner_checks']==17", b"owner['owner_checks']==18")
+    new_org = replace_once(new_org, b"original_owner_checks=17", b"original_owner_checks=18")
+    expected_files = {
+        paths["owner"]: new_owner,
+        paths["org"]: new_org,
+        paths["ownerGate"]: replace_once(blob(OWNER_CONSUMER_BASE, owner_gate_path),
+            b"'tools/check_reader_owner_android.py'", ("'" + paths["owner"] + "'").encode()),
+        paths["orgGate"]: replace_once(blob(OWNER_CONSUMER_BASE, org_gate_path),
+            b"'tools/check_reader_organization_android.py'", ("'" + paths["org"] + "'").encode())}
+    for path, raw in expected_files.items():
+        require((ROOT / path).read_bytes() == raw, "exact versioned runtime/gate body: " + path)
+    runner = "examples/android/app/src/androidTest/java/org/exreader/host/ProductOwnerTest.java"
+    require(git("rev-parse", OWNER_CONSUMER_BASE + ":" + runner) == expected["product_owner_runner_blob"] and
+            (ROOT / runner).read_bytes() == blob(OWNER_CONSUMER_BASE, runner),
+            "unchanged actual eighteen-case owner runner")
+    protected = [original_owner_path, original_org_path, owner_gate_path, org_gate_path,
+                 "tools/android_host_evidence.py", runner]
+    for path in protected:
+        require((ROOT / path).read_bytes() == blob(OWNER_CONSUMER_BASE, path),
+                "original consumer/helper/test must remain unchanged: " + path)
+    workflow = ".github/workflows/reader-f03-production-acceptance-v342.yml"
+    desired = blob(OWNER_CONSUMER_BASE, workflow).decode()
+    routes = [(original_owner_path, paths["owner"], 3),
+              (original_org_path, paths["org"], 2),
+              (owner_gate_path, paths["ownerGate"], 1),
+              (org_gate_path, paths["orgGate"], 1)]
+    for old, new, count in routes:
+        require(desired.count(old) == count, "complete original workflow call inventory: " + old)
+        desired = desired.replace(old, new)
+    compile_line = ("python3 -m py_compile tests/dot_f03_production_acceptance_20261102/admission.py "
+        "tests/dot_f03_production_acceptance_20261102/android_host_evidence_v342.py "
+        "tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py "
+        "tests/dot_f03_production_acceptance_20261102/check_evidence_gate_v342.py "
+        "tests/dot_f03_production_acceptance_20261102/check_bounded_evidence_gate_v342.py")
+    desired = replace_once(desired, compile_line, compile_line + " " +
+                           " ".join(paths[key] for key in ("owner", "ownerGate", "org", "orgGate")))
+    require((ROOT / workflow).read_text() == desired, "exact seven call routes and four precompiled entries only")
+    require(all(old not in desired for old, _, _ in routes), "unversioned workflow consumer remains")
+    return {"policy": expected, "versioned_sha256": {path: digest(raw) for path, raw in expected_files.items()},
+            "original_source": OWNER_CONSUMER_BASE, "reviewed_owner_source": FIXTURE_SOURCE,
+            "workflow_sha256": digest(desired.encode()), "runtime_accepted": False}
+
+
 def verify_source():
     c = configuration()
     require(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
@@ -117,9 +218,9 @@ def verify_source():
     require(MARKER in git("log", "-1", "--format=%B"), "authorized acceptance commit marker")
     source = git("rev-parse", "HEAD")
     require(source == os.environ["GITHUB_SHA"], "tested source differs from run")
-    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, TEST_CLOSURE_BASE],
-            "exact single R4 acceptance correction on preserved R3")
-    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION), (PREVIOUS_CORRECTION, TEST_CLOSURE_BASE), (TEST_CLOSURE_BASE, source)):
+    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, OWNER_CONSUMER_BASE],
+            "exact single R5 owner18 acceptance correction on preserved R4")
+    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION), (PREVIOUS_CORRECTION, TEST_CLOSURE_BASE), (TEST_CLOSURE_BASE, OWNER_CONSUMER_BASE), (OWNER_CONSUMER_BASE, source)):
         require(git("merge-base", parent, child) == parent, "source ancestry mismatch")
     for start, end, key in ((BASE, CANONICAL, "canonical_delta"),
                             (CANONICAL, INTAKE, "intake_delta")):
@@ -149,13 +250,22 @@ def verify_source():
             "preserved R3 modifications only")
     for path, expected in c["r3_package_blobs"].items():
         require(git("rev-parse", TEST_CLOSURE_BASE + ":" + path) == expected, "preserved R3 package blob")
-    expected_delta = {**{p: "M" for p in c["r3_package_blobs"]},
-                      **{p: "A" for p in c["catalog_overlay_blobs"]}}
-    require(set(c["approved_delta"]) == set(expected_delta) and len(expected_delta) == 5,
-            "R4 exact two additions and three modifications")
+    r4_delta = {**{p: "M" for p in c["r3_package_blobs"]},
+                **{p: "A" for p in c["catalog_overlay_blobs"]}}
+    require(set(c["r4_package_blobs"]) == set(r4_delta) and len(r4_delta) == 5,
+            "preserved R4 exact two additions and three modifications")
     require({row.split("\t", 1)[1]: row.split("\t", 1)[0]
-             for row in git("diff", "--name-status", TEST_CLOSURE_BASE, source).splitlines()} == expected_delta,
-            "R4 exact authorized delta status and paths")
+             for row in git("diff", "--name-status", TEST_CLOSURE_BASE, OWNER_CONSUMER_BASE).splitlines()} == r4_delta,
+            "preserved R4 exact authorized delta")
+    for path, expected_blob in c["r4_package_blobs"].items():
+        require(git("rev-parse", OWNER_CONSUMER_BASE + ":" + path) == expected_blob, "preserved R4 package blob")
+    expected_delta = {**{p: "M" for p in c["r3_package_blobs"]},
+                      **{p: "A" for p in c["owner_consumer_contract"]["paths"].values()}}
+    require(set(c["approved_delta"]) == set(expected_delta) and len(expected_delta) == 7,
+            "R5 exact four additions and three modifications")
+    require({row.split("\t", 1)[1]: row.split("\t", 1)[0]
+             for row in git("diff", "--name-status", OWNER_CONSUMER_BASE, source).splitlines()} == expected_delta,
+            "R5 exact authorized delta status and paths")
     for path in set(c["new_paths"]) | set(c["approved_delta"]):
         require(git("cat-file", "-t", source + ":" + path) == "blob", "acceptance path must be a file")
         require((ROOT / path).read_bytes() == blob(source, path), "modified acceptance file: " + path)
@@ -206,7 +316,8 @@ def verify_source():
             "complete test dependency manifest")
     capability = private_copy_contract()
     schema_contract = catalog_schema_contract()
-    return {"catalog_schema_contract": schema_contract, "test_dependency_blobs": c["test_dependency_blobs"], "private_copy_capability": capability, "source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
+    consumers = owner_consumer_contract()
+    return {"owner_consumer_contract": consumers, "catalog_schema_contract": schema_contract, "test_dependency_blobs": c["test_dependency_blobs"], "private_copy_capability": capability, "source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
             "product_intake_head": INTAKE, "sdk_source": SDK, "sdk_version": "3.42.0",
             "contract_sha256": digest((HERE / "contract.json").read_bytes()),
             "run_id": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
@@ -391,9 +502,25 @@ def final_result():
                 require(value["checks"] and all(item.get("passed") is True for item in value["checks"]),
                         "gate checks incomplete: " + name)
             proofs[name] = {"path": relative, "sha256": digest(path.read_bytes())}
-        for name, count in (("gate48", 48), ("gate20", 20), ("shelf_gate", 19), ("owner_gate", 19)):
+        for name, count in (("gate48", 48), ("gate20", 20), ("shelf_gate", 19), ("owner_gate", 19), ("organization_gate", 15)):
             value = json.loads((ROOT / records[name]).read_text())
             require(len(value["checks"]) == count, "original gate count: " + name)
+        owner = json.loads((ROOT / records["owner"]).read_text())
+        organization = json.loads((ROOT / records["organization"]).read_text())
+        require(owner.get("owner_checks") == 18 and owner.get("typed_kill_checks") == 2 and
+                owner.get("original_functional_checks") == 112 and owner.get("original_gate_checks") == 87,
+                "full actual eighteen-case owner/provider and two real kills required")
+        require(organization.get("native_checks") == 8 and organization.get("real_ui_checks") == 8 and
+                organization.get("real_process_retry_checks") == 1 and
+                organization.get("original_owner_checks") == 18 and organization.get("original_typed_kill_checks") == 2 and
+                organization.get("original_functional_checks") == 112 and organization.get("original_gate_checks") == 87 and
+                organization.get("original_owner_altered_evidence_checks") == 19,
+                "organization consumes the complete actual owner18 chain")
+        for name, path_key in (("owner_gate", "ownerGate"), ("organization_gate", "orgGate")):
+            gate = json.loads((ROOT / records[name]).read_text())
+            gate_path = configuration()["owner_consumer_contract"]["paths"][path_key]
+            require(gate.get("script_sha256") == digest((ROOT / gate_path).read_bytes()),
+                    "actual versioned gate provenance: " + name)
         hash_owner = hash_owner_proof()
         test_compilation_proof()
         proofs["test_compilation"] = {"path": "build/f03-production/test-compilation.json",
@@ -410,6 +537,8 @@ def final_result():
                       original_host_checks=66, original_gate_checks=[48, 20],
                       original_organization_cases=8, recovery_cases=12, import_cases=20,
                       original_catalog_cases=8, original_mapping_cases=14,
+                       original_owner_cases=18, original_owner_kill_cases=2,
+                       original_organization_ui_cases=8, original_owner_gate_cases=19, original_organization_gate_cases=15,
                       installed_hash_owner=hash_owner, private_copy_runtime=imported, upstream=outcomes)
     except Exception as error:
         result["problems"].append(type(error).__name__ + ": " + str(error))

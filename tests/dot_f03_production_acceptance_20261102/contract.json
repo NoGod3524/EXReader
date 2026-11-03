@@ -9,8 +9,10 @@
     "tests/dot_f03_production_acceptance_20261102/admission.py",
     "tests/dot_f03_production_acceptance_20261102/contract.json",
     ".github/workflows/reader-f03-production-acceptance-v342.yml",
-    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/CatalogStoreTest.java",
-    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/ImportMappingTest.java"
+    "tests/dot_f03_production_acceptance_20261102/check_reader_owner_android_v342.py",
+    "tests/dot_f03_production_acceptance_20261102/check_owner_evidence_gate_v342.py",
+    "tests/dot_f03_production_acceptance_20261102/check_reader_organization_android_v342.py",
+    "tests/dot_f03_production_acceptance_20261102/check_organization_evidence_gate_v342.py"
   ],
   "branch": "dot/f03-production-acceptance-v342-20261102",
   "budget": {
@@ -268,7 +270,7 @@
   "review_base": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
   "reviewed_acceptance_base": "61dc8d6190e65dc12886d2d0f0e97b501c52be56",
   "runtime_accepted": false,
-  "schema": 4,
+  "schema": 5,
   "sdk_frozen_paths": [
     "src",
     "include",
@@ -289,5 +291,43 @@
   "test_dependency_sources": {
     "org/exreader/host/HostImportUiTest.java": "tests/reader_android_host_import/java/org/exreader/host/HostImportUiTest.java",
     "org/exreader/host/ReadingReview.java": "tests/reader_android_reading/debug/java/org/exreader/host/ReadingReview.java"
+  },
+  "owner_consumer_base": "d9b36c36349a320e64f0bdf00d612c134c4eeeea",
+  "r4_package_blobs": {
+    ".github/workflows/reader-f03-production-acceptance-v342.yml": "e9b26193b4c191d39ef10b3b7f8d23bff93fd77d",
+    "tests/dot_f03_production_acceptance_20261102/admission.py": "87a1c30e7bfdc74df076f502ee4782e7025adf0e",
+    "tests/dot_f03_production_acceptance_20261102/contract.json": "068f0bbebc8afcffa1cf4824f44847b9fe23f91c",
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/CatalogStoreTest.java": "dc20e2ec8851b00c761e7332d32f885df946f209",
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/ImportMappingTest.java": "12f758e93e1c74589d0d624415973ba05e6d02fe"
+  },
+  "owner_consumer_contract": {
+    "version": "native-owner18-organization-v1",
+    "paths": {
+      "owner": "tests/dot_f03_production_acceptance_20261102/check_reader_owner_android_v342.py",
+      "ownerGate": "tests/dot_f03_production_acceptance_20261102/check_owner_evidence_gate_v342.py",
+      "org": "tests/dot_f03_production_acceptance_20261102/check_reader_organization_android_v342.py",
+      "orgGate": "tests/dot_f03_production_acceptance_20261102/check_organization_evidence_gate_v342.py"
+    },
+    "owner_reference_source": "39600d0d3a3a5e4bc2599a92e94e494a542f06f1",
+    "owner_reference_blob": "b5a03e0657db93b413fdcc98671c92575c4437cb",
+    "product_owner_runner_blob": "fa504a46e3a545428037290efb4a2758a72d0e07",
+    "owner_cases": 18,
+    "typed_kill_cases": 2,
+    "organization_native_cases": 8,
+    "organization_ui_cases": 8,
+    "organization_process_retry_cases": 1,
+    "original_functional_checks": 112,
+    "original_gate_checks": 87,
+    "owner_gate_checks": 19,
+    "organization_gate_checks": 15,
+    "direct_call_counts": {
+      "owner": 3,
+      "organization": 2,
+      "owner_gate": 1,
+      "organization_gate": 1
+    },
+    "gate_subprocess_calls": 2,
+    "old_tools_modified": false,
+    "old_tests_modified": false
   }
 }
