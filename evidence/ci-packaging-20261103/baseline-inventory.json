@@ -1,0 +1,11 @@
+{
+  "base_sha": "342780237eb013350bff20c21bc92c335422526a",
+  "entries": 1786,
+  "patterns": {
+    "failfast": 1760,
+    "negative": 15,
+    "diagnostic": 7,
+    "packaging": 4
+  },
+  "f07_workflow_present": false
+}
