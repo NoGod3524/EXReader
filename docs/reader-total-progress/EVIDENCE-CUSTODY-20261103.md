@@ -1,5 +1,7 @@
 # Evidence custody · 2026-11-03
 
+当前收口：保留 #31 已入库的四份 patch 与 manifest，不重建、不应用。ledger-evidence-custody.yml 文件已携入，**待 R 后 owner 确认启用**；以下 dispatch 步骤是启用后的设计，不是本次触发授权。
+
 `ledger-evidence-custody.yml` 仅由 owner 手动 workflow_dispatch 触发。默认 commits 为 `0be9b393,c4d67540,e2776a35,a375fd9b`，retention_days 为 90。四个提交均已存在；本流程只搬运补丁，不校验、不重建、不 apply。对应 run 是工作线关联记录，不表示该 run 已通过或针对每个提交执行。
 
 | commit | 分支 | 主题 | 触及文件 | 对应 run | patch 文件名 | sha256（仓库 patch） |
@@ -24,3 +26,15 @@ git show <sha> --stat
 ```
 
 `git apply --check` 取决于当前工作树基线；已包含该提交的工作树可能报告不可重复应用。
+
+## #33 索引与接收边界补充
+
+以下“本C包”指 #33 当时仅增加索引、不复制原件的原始范围；#31 已有的 patch 和完整表格继续保留。
+
+本文件仅为索引；本C包不应用补丁、不复制原件、不触发workflow。ledger-evidence-custody.yml **待 R 后启用**。
+
+原件：[PR#28 custody固定目录](https://github.com/NoGod3524/EXReader/tree/7108a1662484b95f8e205795e2cc601acbe6aec9/evidence/custody-20261103)；完整路径/工件/过期日见[唯一INDEX](https://github.com/NoGod3524/EXReader/blob/de0832112e92c47bc1a47969236dd2376a0ed55f/evidence/INDEX.md)。
+
+上游 #33 的摘要表标注“转录原manifest，本包未重验”；四个来源 commit、原分支、patch 与 SHA256 均与上方完整表相同，合并后只保留一套完整数据行，不删除 run、触及文件和复验方法。
+
+关联run不是每份补丁的通过证明。接收方须核完整commit、摘要、目标基线与独占权限；不重复应用已包含提交，不挪用旧CI额度。仓库保管不等产品完成。
