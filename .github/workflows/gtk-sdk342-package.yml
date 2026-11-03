@@ -8,13 +8,13 @@ on:
       f05_mode:
         type: choice
         default: dry-run
-        options: [dry-run, formal]
+        options: [dry-run, retained-dry-run, formal]
 permissions:
   contents: read
 jobs:
   f05-r3-dry-run:
     name: F05 GTK R3 bounded dry-run
-    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/f05-gtk-delete-details-20261103' && inputs.f05_mode == 'dry-run' && github.run_attempt == 1 }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/f05-gtk-dialog-target-20261103' && (inputs.f05_mode == 'dry-run' || inputs.f05_mode == 'retained-dry-run') && github.run_attempt == 1 }}
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     permissions:
@@ -35,12 +35,14 @@ jobs:
           python3 -m py_compile tests/product/f05_gtk_native_recovery_20261103/*.py
           xvfb-run -a python3 tests/product/f05_gtk_native_recovery_20261103/check_r3.py
       - name: Reinterpret authenticated historical evidence
+        if: inputs.f05_mode == 'dry-run'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tests/product/f05_gtk_native_recovery_20261103/inspect_network.py
       - name: Build unchanged original GTK product
         run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec build
       - name: Legacy readiness control and corrected readiness experiment
+        if: inputs.f05_mode == 'dry-run'
         run: |
           mkdir -p build/f05-r3
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euo pipefail -c '
@@ -54,7 +56,13 @@ jobs:
             timeout --signal=TERM --kill-after=10s 480s /usr/bin/python3 tests/product/f05_gtk_native_recovery_20261103/gtk.py "${common[@]}" --configuration-mode ready --output build/f05-r3/ready >build/f05-r3/ready.log 2>&1
           '
       - name: Validate dry-run checkpoint and cleanup
+        if: inputs.f05_mode == 'dry-run'
         run: python3 tests/product/f05_gtk_native_recovery_20261103/check_dry_run.py
+      - name: Original retained48 through bounded import-window targeting
+        if: inputs.f05_mode == 'retained-dry-run'
+        run: |
+          python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec prepare
+          python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec retained48
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -70,9 +78,11 @@ jobs:
             build/f05-r3/*/receipt.json
             build/f05-r3/*/receive-observations.json
             build/f05-r3/*/*.png
+            build/f05-gtk-retained/result.json
+            build/f05-gtk-retained/*.png
           if-no-files-found: error
   retained:
-    if: ${{ (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-delete-details-20261103') }}
+    if: ${{ (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-dialog-target-20261103') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 150
     steps:
@@ -157,7 +167,7 @@ jobs:
           if-no-files-found: error
   authenticate:
     needs: retained
-    if: ${{ always() && (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-delete-details-20261103') }}
+    if: ${{ always() && (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-dialog-target-20261103') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     permissions:
@@ -179,7 +189,7 @@ jobs:
 
   f05-admission:
     name: F05 GTK admission
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-delete-details-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-dialog-target-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
     runs-on: ubuntu-22.04
     timeout-minutes: 5
     steps:
@@ -190,7 +200,7 @@ jobs:
   f05-producer:
     name: F05 GTK native producer
     needs: f05-admission
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-delete-details-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-dialog-target-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
     runs-on: ubuntu-22.04
     timeout-minutes: 170
     steps:
@@ -238,7 +248,7 @@ jobs:
   f05-audit:
     name: F05 GTK independent audit
     needs: [f05-admission, f05-producer]
-    if: ${{ always() && github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-delete-details-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-dialog-target-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     permissions:

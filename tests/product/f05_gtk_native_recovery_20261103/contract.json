@@ -1,10 +1,13 @@
 {
   "schema": 1,
-  "parent": "6db51e1cab2167e438f5e08905b139fa81c3d65d",
-  "branch": "codex/f05-gtk-delete-details-20261103",
+  "parent": "79143b3c25f8529d077afb9b0f0f2abcb4307279",
+  "branch": "codex/f05-gtk-dialog-target-20261103",
   "delta": [
+    "M\t.github/workflows/gtk-sdk342-package.yml",
     "M\ttests/product/f05_gtk_native_recovery_20261103/check_r3.py",
     "M\ttests/product/f05_gtk_native_recovery_20261103/driver.py",
+    "M\ttests/product/f05_gtk_native_recovery_20261103/inspect_network.py",
+    "M\ttests/product/f05_gtk_native_recovery_20261103/retained_diagnostics.py",
     "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json"
   ],
   "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
@@ -26,7 +29,7 @@
     "tests/linux_host/generate_fixed.py": "59cba4bb6c8575f154c14470f5ccce7bd2c83543",
     "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065",
     "examples/linux": "ecc11f446054881bd3dabfae718eaf5215435436",
-    ".github/workflows/gtk-sdk342-package.yml": "542fbe4d7fed17cabee61eeff298e80965475015"
+    ".github/workflows/gtk-sdk342-package.yml": "81902637c59659928198bf8f076a6bb7f109d1b7"
   },
   "copied_blobs": {
     "gtk.py": "736960af6a8a7f8815433d2a8eda47f107b4d219",
@@ -309,7 +312,7 @@
   "retained_diagnostics": {
     "source_parent": "4838d70103b4945e5d599796fcfcf35caeca1fc0",
     "original_failed_run": "41636861038",
-    "wrapper_blob": "26c80812737a9ff1e7f8b6d33d747bc1fd483632",
+    "wrapper_blob": "9303aa4b1f8d078c2760439bb34a46f6a6206719",
     "source_blobs": {
       "tests/linux_host/check_account_ui.py": "56ae329b91597bd0fd0f51e871f6a5a458ea1f32",
       "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065"
@@ -317,16 +320,19 @@
     "report_limit_bytes": 2097152,
     "post_failure_total_seconds": 5,
     "old_source_bytes_unchanged": true,
-    "old_arguments_and_deadlines_unchanged": true,
+    "old_arguments_and_deadlines_unchanged": false,
     "runtime_observation_may_affect_timing": true,
     "original_failed_run_never_promoted": true,
-    "diagnostic_incomplete_rejects_new_package": true
+    "diagnostic_incomplete_rejects_new_package": true,
+    "old_assertions_unchanged": true,
+    "old_deadlines_unchanged": true,
+    "input_adapter": "Only Return events inside the unchanged original Session.dialog are explicitly targeted to its originally selected window. A late second Return is not sent to the main window. Original case assertions, source blobs and close deadline remain unchanged."
   },
   "r3_blobs": {
     "case_alignment.py": "bf5f1196dea0a3b3860d753164a854d4b340bb17",
     "check_dry_run.py": "7ce18ba1c7592d2d8047dba946122f2e01497175",
-    "check_r3.py": "82d7ea8b0d43c92085ccd71ece08644f109407c1",
-    "inspect_network.py": "0b867dd74203f206872c441d7210b683d2295481",
+    "check_r3.py": "c7baf530191c13a2d77b10a004262efa94405fed",
+    "inspect_network.py": "a8779bd743efb11d4305c635f7d19562a1d93a6e",
     "native_runtime.py": "1a280055807a4f459bac8269ad3bcdbcd6a7ef36"
   },
   "r3_rewrite": {
@@ -367,5 +373,22 @@
     "dry_run_native_processes": 3,
     "per_process_seconds": 20,
     "historical_failed_result_preserved": true
+  },
+  "retained_input_failure": {
+    "run": "41684777550",
+    "source": "79143b3c25f8529d077afb9b0f0f2abcb4307279",
+    "call": 9,
+    "fixture": "Local-08.txt",
+    "old_window": "4209246",
+    "new_window": "4210990",
+    "host_pid": 15654,
+    "book_before": 8,
+    "book_after": 9,
+    "observed_error": 0,
+    "native6_not_executed": true,
+    "hypothesis": "Late unscoped Return reaches the main window after the first import chooser closes",
+    "root_cause_proven": false,
+    "new_dry_run_cap_minutes": 30,
+    "formal_accepted": false
   }
 }

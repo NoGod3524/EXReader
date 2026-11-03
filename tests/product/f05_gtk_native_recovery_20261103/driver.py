@@ -272,10 +272,11 @@ def verify_import_diagnostics(path):
     c=contract();spec=c['retained_diagnostics']
     require(path.is_file() and not path.is_symlink() and path.stat().st_size<=2*1024*1024,'diagnostic report absent/oversize')
     report=read(path);check_identity(report,IDENTITY)
-    require(report.get('schema')==1 and report.get('complete') is True and not report.get('errors'),'diagnostic incomplete')
+    require(report.get('schema')==2 and report.get('complete') is True and not report.get('errors'),'diagnostic incomplete')
     require(report.get('original_finished') is True and report.get('original_exception') is None,'original retained main did not finish')
     require(report.get('accepted') is False,'diagnostic must not grant original acceptance')
-    require(report.get('timing_perturbation_possible') is True and report.get('extra_queries_only_after_failure') is True,'diagnostic scope')
+    require(report.get('timing_perturbation_possible') is True and report.get('extra_queries_only_after_failure') is False
+        and report.get('input_targeting')=='exact_import_window_only','diagnostic/input adapter scope')
     require(report.get('report_limit_bytes')==2*1024*1024 and report.get('call_limit')==1024
         and report.get('event_limit_per_call')==512 and report.get('failure_query_total_seconds')==5,'diagnostic limits')
     require(set(report['original_sources'])==set(spec['source_blobs']),'diagnostic source set')
@@ -307,7 +308,7 @@ def verify_import_diagnostics(path):
         begin=call['started_monotonic'];end=call['finished_monotonic']
         require(number(begin) and number(end) and end>=begin,'dialog clock order')
         events=call['events'];require(isinstance(events,list) and 3<=len(events)<=512,'dialog event budget')
-        previous=begin;sync=[];states=[];searches=[]
+        previous=begin;sync=[];states=[];searches=[];returns=[]
         for entry in events:
             require(isinstance(entry,dict) and number(entry.get('monotonic'))
                 and previous<=entry['monotonic']<=end,'event clock order')
@@ -326,12 +327,23 @@ def verify_import_diagnostics(path):
                     and type(entry['returncode']) is int and -(2**31)<=entry['returncode']<2**31
                     and entry['stdout_discarded'] is True and entry['stderr_discarded'] is True,'original visible search record')
                 searches.append(entry)
+            elif kind=='targeted_import_return':
+                require(set(entry)=={'kind','monotonic','window_id','host_pid','return_index','dispatched','ignored_after_close','closed_during_dispatch'}
+                    and entry['window_id']==call['selected_window'] and entry['host_pid']==call['host_pid']
+                    and type(entry['return_index']) is int and entry['return_index']==len(returns)+1
+                    and type(entry['dispatched']) is bool and type(entry['ignored_after_close']) is bool
+                    and entry['dispatched']!=entry['ignored_after_close']
+                    and type(entry['closed_during_dispatch']) is bool
+                    and (not entry['closed_during_dispatch'] or entry['dispatched']),'invalid import Return targeting')
+                returns.append(entry)
             else:
                 require(False,'unexpected successful dialog event kind')
         require(len(sync)==1 and call['selected_window']==sync[0]['window_ids'][-1],'missing/ambiguous original selected window')
         require(states and type(states[0]['state'].get('sequence')) is int
             and states[0]['monotonic']<=sync[0]['monotonic'],'missing original entry sequence')
         require(searches and searches[-1]['returncode']==1,'original dialog close result missing')
+        if call['fixture']['kind']!='cancel':
+            require(1<=len(returns)<=2 and returns[0]['dispatched'] is True,'missing native import Return')
     return {'complete':True,'calls':len(calls),'sha256':sha(path),'original_main_finished':True,'original_acceptance_not_replaced':True}
 
 def execute(name):

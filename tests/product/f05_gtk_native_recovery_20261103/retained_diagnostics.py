@@ -21,13 +21,38 @@ BLOBS = {'tests/linux_host/check_account_ui.py': '56ae329b91597bd0fd0f51e871f6a5
          'tools/check_linux_host.py': 'a71f0761a00e5bbef39b2c2718d809f7fec1a065'}
 LIMIT = 2 * 1024 * 1024
 STATE_KEYS = ('sequence', 'book', 'error', 'busy', 'visible')
-REPORT = dict(IDENTITY, schema=1, complete=False, original_finished=False,
+REPORT = dict(IDENTITY, schema=2, complete=False, original_finished=False,
               original_exception=None, original_sources={}, calls=[], errors=[],
-              timing_perturbation_possible=True, extra_queries_only_after_failure=True,
+              timing_perturbation_possible=True, extra_queries_only_after_failure=False,
+              input_targeting='exact_import_window_only',
               report_limit_bytes=LIMIT, call_limit=1024, event_limit_per_call=512,
               failure_query_total_seconds=5, accepted=False)
 ACTIVE = None
 USED = 0
+
+def targeted_return(window,pid,index,send,probe,record):
+    def owner():
+        result=probe(['xdotool','getwindowpid',window],capture_output=True,text=True,timeout=5)
+        if result.returncode==1:return None
+        result.check_returncode()
+        if result.stdout.strip()!=str(pid):raise AssertionError('Import window belongs to another process')
+        return pid
+    def finished(dispatched,closed_during_dispatch=False):
+        record('targeted_import_return',window_id=window,host_pid=pid,return_index=index,
+               dispatched=dispatched,ignored_after_close=not dispatched,closed_during_dispatch=closed_during_dispatch)
+        return ''
+    if owner() is None:
+        if index>1:return finished(False)
+        raise RuntimeError('Import window vanished before its first Return')
+    try:
+        result=send('xdotool','key','--window',window,'--clearmodifiers','Return')
+    except subprocess.CalledProcessError:
+        # Accept may destroy the chooser before the matching key-up. The
+        # original case's book/error/database assertions still decide success.
+        if owner() is None:return finished(True,True)
+        raise
+    finished(True)
+    return result
 
 def issue(label):
     if len(REPORT['errors']) < 32:
@@ -145,6 +170,10 @@ def main():
         return result
 
     def observed_command(*args, **kwargs):
+        if ACTIVE is not None and tuple(map(str,args))==('xdotool','key','--clearmodifiers','Return'):
+            ACTIVE['return_count']=ACTIVE.get('return_count',0)+1
+            return targeted_return(ACTIVE['selected_window'],ACTIVE['host_pid'],ACTIVE['return_count'],
+                old_command,old_subprocess.run,event)
         result = old_command(*args, **kwargs)
         if ACTIVE is not None and tuple(map(str, args)) == (
                 'xdotool', 'search', '--sync', '--onlyvisible', '--name', '^Import book$'):
