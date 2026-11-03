@@ -161,6 +161,26 @@ def main():
                 record["tls_ready"] = True
         record["ready_at"] = time.monotonic()
         return record
+    def start_sync(host):
+        ready=fixture_ready()
+        assert ready['thread_alive'] and ready['tls_ready'], 'fixture not ready before Sync'
+        attempt={'host':host.folder.name,'case_index':len(checks),'fixture':ready,'samples':[]}
+        report.setdefault('session_start_attempts',[]).append(attempt)
+        started=time.monotonic()
+        host.key('alt+s')
+        while True:
+            state=account(host)
+            attempt['samples'].append({'elapsed':time.monotonic()-started,
+                'session_present':state.get('session_present'),'generation':state.get('session_generation')})
+            if state.get('session_present')=='1' and int(state.get('session_generation','0'))>0:
+                attempt['ready']=True
+                return
+            if time.monotonic()-started>=5:
+                attempt['ready']=False
+                report['stop_reason']='known-issue: generation/session remained zero for 5 seconds; no further cases'
+                print('F05 ZERO SESSION STOP '+json.dumps(attempt),flush=True)
+                raise AssertionError(report['stop_reason'])
+            time.sleep(.1)
     def sdk_originals(host):
         db=host.folder/"profile/library.sqlite"
         with sqlite3.connect(db.resolve().as_uri()+"?mode=ro",uri=True,timeout=20) as connection:
@@ -217,7 +237,7 @@ def main():
             record["before_network"]=before
             record["sync_at"] = time.monotonic()
             record["fixture_to_sync_seconds"] = record["sync_at"]-record["fixture_before_sync"]["ready_at"]
-            host.key("alt+s")
+            start_sync(host)
             while True:
                 if time.monotonic()>=network_deadline:raise TimeoutError("new network session deadline")
                 state=sample();record_sample("network_samples",state)
@@ -335,7 +355,7 @@ def main():
         configure(second)
         before_cancel=sdk_originals(second)
         store.hold_get=True;store.get_blocked.clear();store.release.clear()
-        open_account(second);second.key("alt+s")
+        open_account(second);start_sync(second)
         if not store.get_blocked.wait(60):
             raise AssertionError("actual GTK original GET boundary missing")
         second.key("alt+c")
@@ -376,7 +396,7 @@ def main():
         store.put_committed.clear()
         store.release.clear()
         open_account(first)
-        first.key("alt+s")
+        start_sync(first)
         if not store.put_committed.wait(60): raise AssertionError("no committed PUT boundary")
         pid = first.process.pid
         first.process.kill()

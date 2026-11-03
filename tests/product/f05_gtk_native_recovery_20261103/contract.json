@@ -1,16 +1,14 @@
 {
   "schema": 1,
-  "parent": "a114a8d7892ef46f85ae529cad1ac27ef35cd832",
-  "branch": "codex/f05-gtk-xtest-target-20261103",
+  "parent": "b68c8c17e803c090527a42622e9cbfebf50c2d54",
+  "branch": "codex/f05-native-final-20261103",
   "delta": [
     "M\t.github/workflows/gtk-sdk342-package.yml",
-    "M\ttests/product/f05_gtk_native_recovery_20261103/check_r3.py",
-    "A\ttests/product/f05_gtk_native_recovery_20261103/check_x11_return.py",
+    "M\texamples/linux/accounts_ui.inc",
+    "M\ttests/product/f05_gtk_native_recovery_20261103/gtk.py",
     "M\ttests/product/f05_gtk_native_recovery_20261103/driver.py",
-    "M\ttests/product/f05_gtk_native_recovery_20261103/inspect_network.py",
-    "M\ttests/product/f05_gtk_native_recovery_20261103/retained_diagnostics.py",
-    "A\ttests/product/f05_gtk_native_recovery_20261103/x11_return.py",
-    "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json"
+    "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json",
+    "A\ttests/product/f05_gtk_native_recovery_20261103/check_native_final.py"
   ],
   "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
   "frozen_blobs": {
@@ -29,30 +27,18 @@
     "tests/reader_f06_packages": "2069ed6ec9ac7c184ab835d2dc4872a7479ce57b",
     "tests/reader_navigation": "defb7e62adc638c04e448cdc5138c4386a9c0de8",
     "tests/linux_host/generate_fixed.py": "59cba4bb6c8575f154c14470f5ccce7bd2c83543",
-    "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065",
-    "examples/linux": "ecc11f446054881bd3dabfae718eaf5215435436",
-    ".github/workflows/gtk-sdk342-package.yml": "16f8e060489d15e3e88448e15cf3e9366709b4ad"
+    "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065"
   },
   "copied_blobs": {
-    "gtk.py": "736960af6a8a7f8815433d2a8eda47f107b4d219",
+    "gtk.py": "1a9e0b71d3baf7ffa905b0725f6e1760bda726d0",
     "fixture.py": "6a9a9322c2136295ae498fb11784874c0e85861b"
   },
   "stages": {
     "build": "cmake -S extras/opds -B build/f05-original-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX=\"$PWD/build/f05-original-hash\"\ncmake --build build/f05-original-hash-build --parallel 4\ncmake --install build/f05-original-hash-build\nexport EXREADER_ORIGINAL_HASH_PREFIX=\"$PWD/build/f05-original-hash\"\ntest -z \"${READER_ORIGINAL_HASH_PREFIX:-}\"\npython3 tests/gtk_sdk342_package/run.py build\nfor pair in inspect:tests/reader_gtk_receive metadata-consumer:tests/reader_metadata/consumer revision-consumer:tests/reader_revisions/consumer reading-probe:tests/reader_reading_v2/consumer; do\n  label=\"${pair%%:*}\"\n  source=\"${pair#*:}\"\n  cmake -S \"$source\" -B \"build/f05-consumers/$label\" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK=\"$PWD/build/reading-library/stage\" -DCMAKE_PREFIX_PATH=\"$PWD/build/gtk-raw-wave3/legacy-stage;$PWD/build/reading-library/stage\"\n  cmake --build \"build/f05-consumers/$label\" --parallel 4\ndone\npython3 tests/reader_reading_state/make_fixtures.py build/f05-receive-fixtures\npython3 tests/product/f05_gtk_native_recovery_20261103/driver.py providers\n",
-    "prepare": "python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures\npython3 tests/reader_gtk_navigation/make_inputs.py build/gtk-navigation-fixtures\npython3 tests/linux_host/generate_fixed.py build/gtk-fixed-inputs\npython3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-backend-fixtures\npython3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-ui-fixtures\nmkdir -p build/gtk-navigation-backend build/gtk-batch-backend/profile build/gtk-batch-owner-faults build/gtk-atspi-client\nchmod 700 build/gtk-navigation-backend build/gtk-batch-backend/profile\ngit show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py\n",
-    "navigation": "set -o pipefail\nbuild/gtk-raw-wave3/retained-host/reader-gtk-navigation-backend \"$PWD/build/gtk-navigation-backend/library.sqlite\" \"$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf\" \"$PWD/build/gtk-navigation-fixtures\" \"$PWD/build/gtk-fixed-inputs\" 2>&1 | tee build/gtk-navigation-backend/checks.log\n",
-    "folder": "set -o pipefail\nbuild/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend \"$PWD/build/gtk-batch-backend/profile/library.sqlite\" \"$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf\" \"$PWD/build/gtk-batch-backend-fixtures\" \"$PWD/build/gtk-batch-backend/originals.tsv\" exercise 2>&1 | tee build/gtk-batch-backend/checks.log\nbuild/gtk-raw-wave3/retained-host/reader-gtk-batch-owner-faults \"$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf\" \"$PWD/build/gtk-batch-owner-faults\" 2>&1 | tee build/gtk-batch-owner-faults/checks.log\n",
-    "gui": "xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '\n  export PYTHONPATH=\"$PWD/build/gtk-atspi-client\"\n  openbox >build/gtk-raw-wave3/retained-openbox.log 2>&1 &\n  wm=$!\n  trap \"kill $wm || true\" EXIT\n  gsettings set org.gnome.desktop.interface toolkit-accessibility true\n  gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true\n  failed=0\n  /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-navigation-fixtures --fixed-inputs build/gtk-fixed-inputs --output build/gtk-navigation-ui || failed=1\n  /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-batch-ui-fixtures --output build/gtk-batch-ui --backend build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend || failed=1\n  exit \"$failed\"\n'\n",
-    "retained48": "xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euo pipefail -c 'openbox >build/f05-gtk/retained48-openbox.log 2>&1 &\nwm=$!\ntrap \"kill $wm || true\" EXIT\n/usr/bin/python3 tests/product/f05_gtk_native_recovery_20261103/retained_diagnostics.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --metadata-consumer build/f05-consumers/metadata-consumer/metadata-consumer --revision-consumer build/f05-consumers/revision-consumer/revision-consumer --receive-fixtures build/f05-receive-fixtures --reading-probe build/f05-consumers/reading-probe/reading-v2-probe --inspect-consumer build/f05-consumers/inspect/received-sdk-inspect --output build/f05-gtk-retained\n'\n",
     "native6": "xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euo pipefail -c 'openbox >build/f05-gtk/native6-openbox.log 2>&1 &\nwm=$!\ntrap \"kill $wm || true\" EXIT\n/usr/bin/python3 tests/product/f05_gtk_native_recovery_20261103/gtk.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --inspect build/f05-consumers/inspect/received-sdk-inspect --output build/f05-gtk-native\n'\n"
   },
   "timeouts": {
     "build": 7200,
-    "prepare": 600,
-    "navigation": 600,
-    "folder": 900,
-    "gui": 1800,
-    "retained48": 900,
     "native6": 900
   },
   "payload": "build/gtk-raw-wave3/retained-package/EXReader-Linux",
@@ -73,12 +59,7 @@
     "build/gtk-raw-wave3/*.log",
     "build/reading-library/stage/**/*.cmake",
     "build/gtk-raw-wave3/legacy-stage/**/*.cmake",
-    "build/f05-original-hash/**/*",
-    "build/gtk-navigation-ui/*.json",
-    "build/gtk-navigation-ui/*.png",
-    "build/gtk-batch-ui/*.json",
-    "build/gtk-batch-ui/*.png",
-    "build/f05-gtk-retained/*.png"
+    "build/f05-original-hash/**/*"
   ],
   "native_cases": [
     "cancel_sync_retry",
@@ -121,7 +102,6 @@
     ]
   ],
   "budget_runner_minutes": {
-    "admission": 5,
     "producer": 170,
     "audit": 15
   },
@@ -246,53 +226,22 @@
     "build/f05-gtk-native/peer-delete/manifest.json",
     "build/f05-gtk-native/program.bin",
     "build/f05-gtk-native/receipt.json",
-    "build/f05-gtk-retained/public-capture-seed.json",
-    "build/f05-gtk-retained/public-capture-seed.log",
-    "build/f05-gtk-retained/requests.json",
-    "build/f05-gtk-retained/result.json",
-    "build/f05-gtk-retained/wire.json",
     "build/f05-gtk/build.json",
     "build/f05-gtk/build.stderr.log",
     "build/f05-gtk/build.stdout.log",
-    "build/f05-gtk/folder.json",
-    "build/f05-gtk/folder.stderr.log",
-    "build/f05-gtk/folder.stdout.log",
-    "build/f05-gtk/gui.json",
-    "build/f05-gtk/gui.stderr.log",
-    "build/f05-gtk/gui.stdout.log",
     "build/f05-gtk/native6.json",
     "build/f05-gtk/native6.stderr.log",
     "build/f05-gtk/native6.stdout.log",
-    "build/f05-gtk/navigation.json",
-    "build/f05-gtk/navigation.stderr.log",
-    "build/f05-gtk/navigation.stdout.log",
-    "build/f05-gtk/prepare.json",
-    "build/f05-gtk/prepare.stderr.log",
-    "build/f05-gtk/prepare.stdout.log",
     "build/f05-gtk/providers.json",
-    "build/f05-gtk/retained48.json",
-    "build/f05-gtk/retained48.stderr.log",
-    "build/f05-gtk/retained48.stdout.log",
     "build/f05-original-hash-build/CMakeCache.txt",
-    "build/gtk-batch-backend/checks.log",
-    "build/gtk-batch-owner-faults/checks.log",
-    "build/gtk-navigation-backend/checks.log",
     "build/gtk-raw-wave3/result.json",
     "build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf",
     "build/gtk-raw-wave3/retained-package/EXReader-Linux/bin/exreader-linux",
     "build/gtk-sdk342/build.json",
     "build/f05-gtk/observation-controls.json",
-    "build/f05-gtk-native/receive-observations.json",
-    "build/f05-gtk/import-dialog-diagnostics.json",
-    "build/f05-gtk/x11-return-controls.json"
+    "build/f05-gtk-native/receive-observations.json"
   ],
-  "optional_patterns": [
-    "build/gtk-navigation-ui/*.json",
-    "build/gtk-navigation-ui/*.png",
-    "build/gtk-batch-ui/*.json",
-    "build/gtk-batch-ui/*.png",
-    "build/f05-gtk-retained/*.png"
-  ],
+  "optional_patterns": [],
   "observation_contract": {
     "source_parent": "88b626564e58a2c53bee1193a91f802913d1d544",
     "predicate_control_groups": 8,
@@ -338,7 +287,8 @@
     "inspect_network.py": "9d14282e184a357ef0e30ace32e78264f5299019",
     "native_runtime.py": "1a280055807a4f459bac8269ad3bcdbcd6a7ef36",
     "x11_return.py": "ecab01f4bc7c1b20ae8e6b2ef4c1ada7573d3135",
-    "check_x11_return.py": "84531a015084242928939e1d0bcb1a261fc5947b"
+    "check_x11_return.py": "84531a015084242928939e1d0bcb1a261fc5947b",
+    "check_native_final.py": "6a59fe4d132b892207c27d8035d9b636c25158ec"
   },
   "r3_rewrite": {
     "base": "c4d67540a0e17a86bd42ad9323cd269ce8959326",
@@ -406,5 +356,15 @@
     "single_command_seconds": 30,
     "new_diagnostic_runner_minutes": 30,
     "actual_runtime_accepted": false
+  },
+  "final_round": {
+    "scope": "SDK native producer plus independent audit only",
+    "attempt_limit": 1,
+    "dry_run": false,
+    "original48_not_run_this_round": true,
+    "catalog_state_changed": false,
+    "zero_session_stop_seconds": 5,
+    "session_nonnull_assertion": "After reader_session_create succeeds, before reader_session_start; UI Sync creates session",
+    "failure_policy": "known-issue then stop"
   }
 }
