@@ -24,7 +24,7 @@ jobs:
         run: |
           python3 tests/dot_f03_production_acceptance_20261102/admission.py admit
           python3 tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py --repo .
-          python3 -m py_compile tests/dot_f03_production_acceptance_20261102/admission.py tests/dot_f03_production_acceptance_20261102/android_host_evidence_v342.py tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py tests/dot_f03_production_acceptance_20261102/check_evidence_gate_v342.py tests/dot_f03_production_acceptance_20261102/check_bounded_evidence_gate_v342.py
+          python3 -m py_compile tests/dot_f03_production_acceptance_20261102/admission.py tests/dot_f03_production_acceptance_20261102/android_host_evidence_v342.py tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py tests/dot_f03_production_acceptance_20261102/check_evidence_gate_v342.py tests/dot_f03_production_acceptance_20261102/check_bounded_evidence_gate_v342.py tests/dot_f03_production_acceptance_20261102/check_reader_owner_android_v342.py tests/dot_f03_production_acceptance_20261102/check_owner_evidence_gate_v342.py tests/dot_f03_production_acceptance_20261102/check_reader_organization_android_v342.py tests/dot_f03_production_acceptance_20261102/check_organization_evidence_gate_v342.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -67,7 +67,7 @@ jobs:
           python tests/reader_catalog/check_assets.py
           python tests/dot_f03_production_acceptance_20261102/admission.py build --stage stage/android-x86_64 --build-dir build/android-host --gradle "$F03_GRADLE" 2>&1 | tee build/shelf-android/build.log
           "$F03_GRADLE" -p examples/android --no-daemon --stacktrace :app:assembleRelease -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64
-          python tools/check_reader_owner_android.py --evidence build/owner-android --collect-native
+          python tests/dot_f03_production_acceptance_20261102/check_reader_owner_android_v342.py --evidence build/owner-android --collect-native
           python tests/dot_f03_production_acceptance_20261102/check_android_host_v342.py --repo .
           mkdir -p examples/android/app/src/androidTest/assets/mapping
           cp build/android-host/fixtures/Sample.epub examples/android/app/src/androidTest/assets/mapping/
@@ -134,7 +134,7 @@ jobs:
             adb shell am instrument -w -r -e phase seed-after org.exreader.host.test/org.exreader.host.ProductOwnerTest > build/owner-android/seed-after.txt
             adb exec-out run-as org.exreader.host cat files/owner-kill-after/witness.txt > build/owner-android/witness-after.txt
             adb shell am instrument -w -r -e phase recover-after org.exreader.host.test/org.exreader.host.ProductOwnerTest > build/owner-android/recover-after.txt
-            python tools/check_reader_owner_android.py --evidence build/owner-android
+            python tests/dot_f03_production_acceptance_20261102/check_reader_owner_android_v342.py --evidence build/owner-android
             mkdir -p build/organization-android
             "$F03_GRADLE" -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.OrganizationTest -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.OrganizationTest -Pandroid.testInstrumentationRunnerArguments.source_sha=$GITHUB_SHA -Pandroid.testInstrumentationRunnerArguments.run_id=$GITHUB_RUN_ID -Pandroid.testInstrumentationRunnerArguments.attempt=$GITHUB_RUN_ATTEMPT
             cp -r examples/android/app/build/outputs/androidTest-results/connected build/organization-android/reports
@@ -155,7 +155,7 @@ jobs:
             adb shell am instrument -w -r -e disableAnalytics true -e class org.exreader.host.uitest.OrganizationWalkthroughTest#organize -e exr_source_sha $GITHUB_SHA -e exr_run_id $GITHUB_RUN_ID -e exr_attempt $GITHUB_RUN_ATTEMPT org.exreader.host.uitest.test/androidx.test.runner.AndroidJUnitRunner > build/organization-android/ui-instrumentation.txt
             adb pull /sdcard/Android/data/org.exreader.host.uitest/files/organization-evidence build/organization-android/ui
             adb pull /sdcard/Android/data/org.exreader.host/files/organization-tests build/organization-android/phases
-            python tools/check_reader_organization_android.py --evidence build/organization-android
+            python tests/dot_f03_production_acceptance_20261102/check_reader_organization_android_v342.py --evidence build/organization-android
             mkdir -p build/f03-recovery
             "$F03_GRADLE" -p examples/android --no-daemon --stacktrace :app:assembleDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.OrganizationBootstrapRecoveryTest
             cmp build/organization-android/apks/app-debug.apk examples/android/app/build/outputs/apk/debug/app-debug.apk
@@ -210,17 +210,17 @@ jobs:
       - name: Require native owner plus unchanged 112 functional and 87 strict gate checks
         id: owner_final
         if: always()
-        run: python tools/check_reader_owner_android.py --evidence build/owner-android --all-exits
+        run: python tests/dot_f03_production_acceptance_20261102/check_reader_owner_android_v342.py --evidence build/owner-android --all-exits
       - name: Refuse altered owner provider process and original evidence
         id: owner_gate
-        run: python tests/android_host/check_owner_evidence_gate.py --evidence build/owner-android
+        run: python tests/dot_f03_production_acceptance_20261102/check_owner_evidence_gate_v342.py --evidence build/owner-android
       - name: Require actual organization UI and exact saved-intent recovery plus all original exits
         id: organization_final
         if: always()
-        run: python tools/check_reader_organization_android.py --evidence build/organization-android --all-exits
+        run: python tests/dot_f03_production_acceptance_20261102/check_reader_organization_android_v342.py --evidence build/organization-android --all-exits
       - name: Refuse altered incomplete or skipped organization evidence
         id: organization_gate
-        run: python tests/android_host/check_organization_evidence_gate.py --evidence build/organization-android
+        run: python tests/dot_f03_production_acceptance_20261102/check_organization_evidence_gate_v342.py --evidence build/organization-android
       - name: Require the complete actual host shelf owner organization and recovery chain
         if: always()
         env:
