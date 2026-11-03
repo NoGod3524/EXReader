@@ -16,7 +16,7 @@ defaults:
     shell: bash
 jobs:
   android:
-    if: ${{ !inputs.inspect_retained && github.ref != 'refs/heads/dot/f05-android-head-bridge-20261103' }}
+    if: ${{ !inputs.inspect_retained && github.ref != 'refs/heads/dot/f05-android-conflict-boundary-20261103' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -146,7 +146,7 @@ jobs:
             tests/reader_session_android/android/session/build/outputs/apk/
           if-no-files-found: error
   inspect:
-    if: ${{ inputs.inspect_retained && github.ref != 'refs/heads/dot/f05-android-head-bridge-20261103' }}
+    if: ${{ inputs.inspect_retained && github.ref != 'refs/heads/dot/f05-android-conflict-boundary-20261103' }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -157,7 +157,7 @@ jobs:
         run: python3 tests/reader_host_session_android/inspect.py
 
   f05_admission:
-    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dot/f05-android-head-bridge-20261103' && !inputs.inspect_retained }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dot/f05-android-conflict-boundary-20261103' && github.run_attempt == '1' && !inputs.inspect_retained }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -265,6 +265,8 @@ jobs:
           cp build/f05-bridge/apks/original-owner.apk examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           python tests/reader_host_session_android/audit.py --output build/host-session-android/native
           python tests/product/f05_android_head_bridge_20261103/driver.py package
+      - name: Build isolated Debug conflict probe without changing canonical APKs
+        run: python tests/product/f05_android_head_bridge_20261103/driver.py boundary-build
       - name: Enable the existing runner emulator acceleration
         run: sudo chmod 666 /dev/kvm
       - name: Original owner then retained sixteen then real read-only bridge ten
@@ -277,7 +279,7 @@ jobs:
           ram-size: 4096M
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          script: python tests/product/f05_android_head_bridge_20261103/driver.py runtime
+          script: python tests/product/f05_android_head_bridge_20261103/driver.py runtime-all
       - name: Retain every result including failures without fixture secrets
         if: always()
         env:
@@ -312,7 +314,7 @@ jobs:
         env:
           F05_SOURCE_ARTIFACT_ID: ${{ needs.f05_android.outputs.artifact_id }}
           F05_SOURCE_JOB_RESULT: ${{ needs.f05_android.result }}
-        run: python tests/product/f05_android_head_bridge_20261103/driver.py audit
+        run: python tests/product/f05_android_head_bridge_20261103/driver.py audit-all
       - name: Preserve final verdict
         if: always()
         uses: actions/upload-artifact@v4
