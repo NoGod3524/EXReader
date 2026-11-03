@@ -1,0 +1,9 @@
+$ sqlite_source=$(sed -n 's/^exreader_sqlite_source_SOURCE_DIR:[^=]*=//p' build/sdk-provider/CMakeCache.txt)
+test -n "$sqlite_source"
+rc=$?
+echo "got=[$sqlite_source]"
+echo "test_rc=$rc"
+got=[]
+test_rc=1
+
+command_exit_code=0

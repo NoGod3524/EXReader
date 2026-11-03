@@ -1,0 +1,13 @@
+$ find build -name CMakeCache.txt
+find build -name CMakeCache.txt -exec grep -Hn exreader_sqlite_source_SOURCE_DIR {} +
+build/sdk-catalog/CMakeCache.txt
+build/sdk-ci-41705105811/build/sdk-catalog/CMakeCache.txt
+build/sdk-ci-41705105811/build/sdk-core/CMakeCache.txt
+build/sdk-ci-41708081512/build/sdk-catalog/CMakeCache.txt
+build/sdk-ci-41708081512/build/sdk-core/CMakeCache.txt
+build/sdk-consumer-cxx98/out/CMakeCache.txt
+build/sdk-core/CMakeCache.txt
+build/sdk-integration/CMakeCache.txt
+build/sdk-provider/CMakeCache.txt
+
+command_exit_code=1

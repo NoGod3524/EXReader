@@ -149,13 +149,14 @@
     "ci_hygiene_owner": "P",
     "ci_hygiene_state": "closed",
     "apple_build_only_state": "open",
-    "new_open_item": "CI-CONTROLS-001",
+    "new_open_item": "CI-CONTROLS-001: R 前阻断项，非普通 open item",
     "first_error": "Process completed with exit code 1.",
     "further_ci_request": false,
     "artifact_id": 13266086992,
     "artifact_sha256": "d3a0a4c4c8b9436489600cfc2d75970f932e5dbc20f517d92969ae445a153294",
     "artifact_bytes": 9058366,
-    "review": "ci-41708081512/review.md"
+    "review": "ci-41708081512/review.md",
+    "blocks_R": true
   },
   "historical_pending_notice": "两项仍待 CI",
   "historical_notice_scope": "Earlier snapshot; product-originals and native-product-catalog passed in run 41708081512",
@@ -169,5 +170,16 @@
     "native-product-catalog": "1/1 passed",
     "sqlite-provider-check": "1/1 passed",
     "shared-sqlite-sdk-product": "1/1 passed"
+  },
+  "zero_ci_diagnosis": {
+    "review": "zero-ci-controls-diagnosis/review.md",
+    "workflow_paths_match": true,
+    "local_got": "",
+    "local_test_rc": 1,
+    "fetchcontent_without_override": "MakeAvailable completed; source exists; normal SOURCE_DIR set; no matching cache key",
+    "classification": "P harness cache-interface assumption reproduced locally; actual CI provider cache unavailable",
+    "core_embedding_rejection": "not verified; blocks R",
+    "ci_runs": 0,
+    "p_checklist": "ci-hygiene-CI-ADMISSION-001/P_CI_HYGIENE.md"
   }
 }
