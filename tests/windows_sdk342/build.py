@@ -1,10 +1,14 @@
 """Build the Windows Wave3 host against SDK 3.42 in GitHub Actions."""
 import os
+import argparse
 from pathlib import Path
 import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
+parser=argparse.ArgumentParser()
+parser.add_argument('--organization-only',action='store_true')
+arguments=parser.parse_args()
 sys.path.insert(0, str(ROOT / 'tests/reader_windows_raw3'))
 import host_build as H
 sys.path.insert(0, str(ROOT / 'tests/reader_wave3_c09'))
@@ -51,8 +55,9 @@ if not re.search(r'\bexr_webdav_download_observed\b', link_map):
 H.run([sys.executable, ROOT / 'tools/build_windows_host.py', '--sdk', sdk,
        '--binary', host / 'EXReaderWave3.exe', '--output', out / 'package',
        '--static-reading'], 'package')
-H.configure(ROOT / 'tests/reader_txt_progress/consumer', out / 'txt-consumer',
-            ['-DCMAKE_PREFIX_PATH=' + prefix], 'txt-consumer')
-H.run([sys.executable, ROOT / 'tests/reader_windows_preferences/make_fixtures.py',
-       '--output', out / 'fixtures'], 'fixtures')
-H.run([sys.executable, '-c', "from tools.host_font import fetch; fetch('build/host-font-cache')"], 'font')
+if not arguments.organization_only:
+    H.configure(ROOT / 'tests/reader_txt_progress/consumer', out / 'txt-consumer',
+                ['-DCMAKE_PREFIX_PATH=' + prefix], 'txt-consumer')
+    H.run([sys.executable, ROOT / 'tests/reader_windows_preferences/make_fixtures.py',
+           '--output', out / 'fixtures'], 'fixtures')
+    H.run([sys.executable, '-c', "from tools.host_font import fetch; fetch('build/host-font-cache')"], 'font')
