@@ -78,11 +78,45 @@ def command_shape(body):
     return commands, len(commands) > 1 or compound
 
 
+def shell_branch(shell):
+    if shell.strip() == 'bash':
+        return 'explicit_bash'
+    if shell.startswith(('pwsh', 'powershell')):
+        return 'powershell'
+    if not shell:
+        return 'default_bash'
+    return 'custom'
+
+
+def shell_problem(shell, body):
+    """Use the Actions shell invocation, not the presence of a stylistic preamble."""
+    branch = shell_branch(shell)
+    commands, compound = command_shape(body)
+    if branch == 'explicit_bash' or shell == SHELL:
+        return None  # Actions bash: --noprofile --norc -e -o pipefail {0}.
+    if branch == 'powershell':
+        stop = re.search(r"\$ErrorActionPreference\s*=\s*['\"]Stop['\"]", body, re.I)
+        native = re.search(r'\$PSNativeCommandUseErrorActionPreference\s*=\s*\$true\b', body, re.I)
+        return None if stop and native else 'PowerShell requires Stop and native error propagation'
+    if not compound:
+        return None  # One command propagates its own status under bash -e.
+    if commands and re.fullmatch(r'set -[A-Za-z]*e[A-Za-z]*u[A-Za-z]*o pipefail', commands[0].strip()):
+        return None
+    if branch == 'custom' and shell.startswith('bash ') and re.search(r'\s-[A-Za-z]*e[A-Za-z]*\b', shell) and re.search(r'(?:-o\s+pipefail|-[A-Za-z]*o\s+pipefail)', shell):
+        return None
+    return f'{branch} multi-command block lacks strict shell/preamble'
+
+
 def emit_baseline(root):
     rows = {}
+    branches = {}
     for path in sorted((root / '.github/workflows').glob('*.y*ml')):
         text = path.read_text(encoding='utf-8')
         lines = text.splitlines()
+        for _, _, step, shell in steps(load(text)):
+            stats = branches.setdefault(shell_branch(shell), {'matched_steps': 0, 'missing_shell_settings': 0})
+            stats['matched_steps'] += 1
+            stats['missing_shell_settings'] += int(shell_problem(shell, step['run']) is not None)
         for (name, line, pattern), _, _ in issues(path.relative_to(root).as_posix(), text):
             rows[name, line, pattern] = {'file': name, 'line': line, 'pattern': pattern, 'line_sha256': line_sha(lines[line - 1])}
     data = '[\n' + ',\n'.join('  ' + json.dumps(row) for row in rows.values()) + '\n]\n'
@@ -92,7 +126,7 @@ def emit_baseline(root):
                 'source_commit': source, 'command': 'python tools/check_ci_hygiene.py --emit-baseline',
                 'checker_sha256': hashlib.sha256((root / 'tools/check_ci_hygiene.py').read_bytes()).hexdigest(),
                 'baseline_sha256': hashlib.sha256(data.encode()).hexdigest(),
-                'patterns': dict(Counter(row['pattern'] for row in rows.values()))}
+                'patterns': dict(Counter(row['pattern'] for row in rows.values())), 'shell_branches': branches}
     (root / 'tools/ci_hygiene_baseline.meta.json').write_text(json.dumps(metadata, indent=2) + '\n', encoding='utf-8', newline='\n')
     print(json.dumps(metadata))
     return 0
@@ -118,15 +152,15 @@ def issues(path, text, selected=None, added=()):
 
         if step.get('continue-on-error') == 'true':
             error('failfast', 'continue-on-error=true', 'unhandled failures stop the job')
-        commands, needs_strict = command_shape(body)
-        if shell != SHELL and (needs_strict or shell.startswith(('pwsh', 'powershell'))):
-            if shell.startswith(('pwsh', 'powershell')):
-                if "$ErrorActionPreference = 'Stop'" not in body or '$PSNativeCommandUseErrorActionPreference = $true' not in body:
-                    error('failfast', 'PowerShell native exit status is not fail-fast', 'Stop + PSNativeCommandUseErrorActionPreference=true')
-            elif not re.fullmatch(r'set -[A-Za-z]*e[A-Za-z]*u[A-Za-z]*o pipefail', commands[0].strip()):
-                error('failfast', f'shell={shell or "runner default"} without strict preamble', SHELL + ' or explicit set -euo pipefail')
-        if re.search(r'\|\|\s*(?:true|:)\s*(?:$|;)', body, re.M):
-            error('failfast', 'failure swallowed by || true/:', 'preserve the first unhandled nonzero exit')
+        problem = shell_problem(shell, body)
+        if problem:
+            error('failfast', problem + f'; shell={shell or "runner default bash -e"}', 'Actions explicit bash, strict default-shell preamble, or PowerShell error propagation')
+        commands, _ = command_shape(body)
+        for command in commands:
+            masked = re.sub(r"'(?:[^']*)'|\"(?:\\.|[^\"\\])*\"", ' ARG ', command)
+            if re.search(r'\|\|\s*(?:true|:)\s*(?:$|;)|;\s*:\s*(?:$|;)', masked):
+                error('failfast', 'failure swallowed by || true/: or ; :', 'preserve the first unhandled nonzero exit')
+                break
         for offset, line in enumerate(body.splitlines()):
             if re.search(r'(?:^|;)\s*(?:test\s+-n\b|\[\s+-n\b)', line):
                 if not ('||' in line and all(word in line.lower() for word in ('expected', 'actual', 'candidate'))):

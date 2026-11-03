@@ -22,7 +22,7 @@ def altered(rule):
     if rule == 'packaging':
         return text.replace('python3 tools/build_apple_product.py --sdk stage --target macos', 'echo omitted-product-install --sdk stage --target macos', 1)
     if rule == 'failfast':
-        return text.replace(guard.SHELL, 'bash', 1)
+        return text.replace(guard.SHELL, 'bash {0}', 1)
     suffix = '          test -n "$sqlite_source"\n' if rule == 'diagnostic' else '          set +e\n          python -c "raise SystemExit(2)"\n          echo silently continued\n'
     return text + '  injected-control:\n    runs-on: ubuntu-22.04\n    defaults:\n      run:\n        shell: ' + guard.SHELL + '\n    steps:\n      - run: |\n' + suffix
 
@@ -136,6 +136,19 @@ def main():
             assert not guard.command_shape(body)[1], body
         for body in multiples:
             assert guard.command_shape(body)[1], body
+        assert guard.shell_problem('bash', 'python a.py\npython b.py') is None
+        assert guard.shell_problem('bash', 'python a.py | tee result') is None
+        assert guard.shell_problem('', 'python a.py') is None
+        assert guard.shell_problem('', 'python a.py\npython b.py')
+        assert guard.shell_problem('', 'set -euo pipefail\npython a.py\npython b.py') is None
+        assert guard.shell_problem('pwsh', 'python a.py')
+        assert guard.shell_problem('powershell', "$ErrorActionPreference='Stop'\n$PSNativeCommandUseErrorActionPreference=$true\npython a.py") is None
+        for masked in ('python a.py || true', 'python a.py; :'):
+            fixture = 'jobs:\n  probe:\n    runs-on: ubuntu-22.04\n    steps:\n      - shell: bash\n        run: |\n          ' + masked + '\n'
+            assert guard.issues('probe.yml', fixture, 'failfast'), masked
+        acroform = (ROOT / '.github/workflows/acroform.yml').read_text(encoding='utf-8')
+        assert not any(key[1] == 19 for key, _, _ in guard.issues('.github/workflows/acroform.yml', acroform, 'failfast'))
+        print('PASS: Actions explicit bash is strict; default compound requires preamble; PowerShell requires both settings; masking remains rejected')
         print('PASS: single/heredoc/quoted/continued commands exempt; multi/pipeline/and/semicolon/control strict')
     print('PASS: clean workflow accepted; one-change ' + args.rule + ' control rejected')
     shell_controls(args.rule)

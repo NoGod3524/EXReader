@@ -5,7 +5,7 @@ P 基于 V 已合入的 ledger/base-20261103（34278023），不修改 F07 provi
 ## Four rules
 
 - packaging：Apple host 之前必须安装同一 SDK 前缀的产品依赖。native.yml 的 macOS 与两种 iOS SDK 调用现有 build_apple_product.py。CI-DEPS-001 属打包遗漏。
-- failfast：native 使用 bash .github/scripts/ci.sh {0}，开启 -Eeuo pipefail，错误打印期望/实际退出码/命令/候选脚本位置后立即退出。Windows SDK 示例保留 pwsh，开启 ErrorActionPreference=Stop 与 PSNativeCommandUseErrorActionPreference=true。多命令 Bash 步骤允许显式首行 set -euo pipefail；单条命令沿用 Actions 的退出码传播。静态检查不解析任意外部脚本；共享 shell 的真实退出行为另有运行测试。
+- failfast：native 使用 bash .github/scripts/ci.sh {0}，开启 -Eeuo pipefail，错误打印期望/实际退出码/命令/候选脚本位置后立即退出。Windows SDK 示例保留 pwsh，开启 ErrorActionPreference=Stop 与 PSNativeCommandUseErrorActionPreference=true。显式 shell: bash 由 Actions 提供 -e -o pipefail，无须手写前奏；未指定 shell 的多命令块要求首行 set -euo pipefail，单条命令沿用退出码传播。静态检查不解析任意外部脚本；共享 shell 的真实退出行为另有运行测试。
 - diagnostic：禁止无诊断的独立 test -n / [ -n ]。使用 ci_require_nonempty "$actual" "期望的值与来源" candidate/path ...，或者同行 || 失败分支打印 expected / actual / candidate。
 - negative：用 ci_expect_failure command args ...；它显式 set +e、立即 rc=$?、set -e、检查 rc 非零，并原样打印被拒命令 stdout/stderr 与实际 rc。也接受内联同等结构；不能把错误丢入 /dev/null。
 
@@ -38,7 +38,7 @@ fault 的四项 packaging/failfast/diagnostic/negative 只改内存中的 native
 
 ## Narrowed command rule and regeneration
 
-单条 Bash 命令不要求严格前奏；引号内的 Python/正则内容、单条命令的 heredoc 和反斜线续行不算多个 shell 命令。多命令、多行独立命令、管道、&&、分号、循环/条件要求严格前奏。PowerShell 单命令也仍要求两项错误传播设置；continue-on-error 与 || true 不因收窄豁免。
+显式 `shell: bash` 按 GitHub 的 bash -e -o pipefail 执行，单/多命令都不要求手写前奏。未指定 shell 的 Linux 默认是 bash -e，无 pipefail：仅多命令、管道、&&、分号、循环/条件要求首行 set -euo pipefail；单命令、单个 heredoc、反斜线续行和引号内 Python 内容不算多个 shell 命令。pwsh/powershell 不论单/多命令均要求 ErrorActionPreference=Stop 与 PSNativeCommandUseErrorActionPreference=true。continue-on-error、|| true、; : 始终拦截。
 
 显式重生成命令：`python tools/check_ci_hygiene.py --emit-baseline`。基线 JSON 保留四字段逐行格式；旁边 ci_hygiene_baseline.meta.json 记录生成日期、源码 commit、生成器/基线 SHA-256 与 pattern 分布。CI 不自动生成或增补基线；此次重生成是 owner 明确批准的规则收窄，之后继续只减不增。
 
