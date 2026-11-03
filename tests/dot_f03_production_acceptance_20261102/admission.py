@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """F03 SDK 3.42 production admission and explicit original-driver adapter. Actions only."""
 import hashlib
+import difflib
 import json
 import os
 from pathlib import Path
@@ -22,6 +23,7 @@ TEST_CLOSURE_BASE = "9d493b2235d81c216767295948f417c1bd12bf2d"
 OWNER_CONSUMER_BASE = "d9b36c36349a320e64f0bdf00d612c134c4eeeea"
 IMPORT_STATUS_BASE = "0b5c77592a264f5cdb6f12f03dbe7b78bb698b7d"
 PICKER_BASE = "4b45dab950f04e499959ebcdf84e3f6460833a2a"
+RESTORE_BASE = "044f77dc1631b449f4dccff60b08bb7221d2bbe2"
 SDK = "8357eafa28423a7ab93ba08b823af80f01ad1505"
 FIXTURE_SOURCE = "39600d0d3a3a5e4bc2599a92e94e494a542f06f1"
 BRANCH = "dot/f03-production-acceptance-v342-20261102"
@@ -52,6 +54,7 @@ def configuration():
     require(c["owner_consumer_base"] == OWNER_CONSUMER_BASE, "fixed preserved R4 parent")
     require(c["import_status_base"] == IMPORT_STATUS_BASE, "fixed preserved R5 parent")
     require(c["picker_base"] == PICKER_BASE, "fixed preserved R6 parent")
+    require(c["restore_base"] == RESTORE_BASE, "fixed preserved R7 parent")
     return c
 
 def host_import_status_contract():
@@ -256,12 +259,12 @@ def picker_contract():
   "max_backward": 16,
   "max_forward": 16,
   "method_end": "    private void open(String name) throws Exception {",
-  "method_sha256": "7871d3c8c137f9dcb81236fb26a6cf8290f9d8ddd9175f15960ffe62dc3ab1d2",
+  "method_sha256": "06e3a7aa2d88ed2a71841b986240284761c62256e3cd6583cc8b53b9eb237c16",
   "method_start": "    private void pick(String name) throws Exception {",
   "old_tests_modified": false,
   "original_init_sha256": "8bb758fb095e7dc0803cdb096aac411dc15c38f25eac5271b3c8fa702e6f086a",
   "overlay": "tests/dot_f03_production_acceptance_20261102/uiTest/org/exreader/host/uitest/HostReviewTest.java",
-  "overlay_sha256": "28f7d98c915db86eec25c8861ecc2da558914394358de0675b0099058cf28f17",
+  "overlay_sha256": "c3cb8c739993dfe47a8994d7fde5f5039e26e001422cab1f628ecdf939c66507",
   "package": "com.android.documentsui",
   "return_timeout_ms": 10000,
   "review_cases": 10,
@@ -275,10 +278,39 @@ def picker_contract():
   "source": "examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/HostReviewTest.java",
   "source_blob": "7dab01c6d06e8b7e99aeb6b41014422b99bf31b1",
   "staged_path": "org/exreader/host/uitest/HostReviewTest.java",
-  "version": "documentsui-downloads-picker-v1",
+  "version": "documentsui-downloads-picker-v2-r8-restore-observation",
   "navigation_proof": "new visible live CollectionInfo subtree disjoint by ancestry from dir_list; unique clickable exact root row; drawer closes and Downloads list returns",
   "tree_max_depth": 32,
-  "tree_max_nodes_per_snapshot": 2048
+  "tree_max_nodes_per_snapshot": 2048,
+  "previous_overlay_blob": "230e7de330f2b17be50ca87ca21fb3739869da0a",
+  "previous_overlay_sha256": "28f7d98c915db86eec25c8861ecc2da558914394358de0675b0099058cf28f17",
+  "correction_diff_sha256": "a982e441a9ed94adf653be02f56d88be2254edc1d2aa4ba54fe115a995fb5ac3",
+  "large_wait_helper_sha256": "cb761791c34fae6a2441ce017beed13955f79bac77bdd0ccb2bccda52b28c66a",
+  "original_assertion_count": 96,
+  "root_geometry_policy": "Same original containment; retry invalid snapshots within original 30s; two consecutive identical valid unique root rectangles before touch; no click on invalid geometry",
+  "restore_observation": {
+    "calls": [
+      "review-recreate-commit",
+      "review-release-page49",
+      "review-restart-page50",
+      "budget-restart-page2"
+    ],
+    "max_ms": 45000,
+    "ordinary_page_ms": 20000,
+    "font_page_ms": 20000,
+    "pause_request_max_ms": 50000,
+    "pause_release_return_max_ms": 55000,
+    "unchanged_product_gate_ms": 60000,
+    "unchanged_native_query_ms": 5000,
+    "unchanged_worker_close_ms": 15000,
+    "original_20s_not_met_retained": true,
+    "performance_accepted": false,
+    "clock": "SystemClock.uptimeMillis; absolute deadline per operation; no polling reset",
+    "failure_cleanup": "finally covers tapNext and all pause assertions after request; cleanup preserves primary exception using addSuppressed and never converts failure to pass",
+    "identity": "Fresh exact log checkpoint; one fixed PID per endpoint: same process equals old PID, restart binds first unique non-old PID and rejects any second PID; same book, distinct owner attempt before release, actual page metric and original UI readiness",
+    "original_20_reference": "Separate monotonic start at original await point after launch status; operation deadline still begins before action",
+    "release_proof": "Both original and temporary marker must be absent; regular temporary marker atomically renamed to original path; all shell commands linked by && and exact F03_RELEASE_PUBLISHED_0 receipt; request <=50s and return <=55s, unchanged 60s product gate"
+  }
 }''')
     c = configuration()
     require(c["picker_contract"] == expected, "fixed Downloads navigation-only contract")
@@ -290,12 +322,33 @@ def picker_contract():
     start, end = expected["method_start"].encode(), expected["method_end"].encode()
     require(original.count(start) == original.count(end) == reviewed.count(start) == reviewed.count(end) == 1,
             "unique complete pick/open method boundaries")
+    previous = blob(RESTORE_BASE, expected["overlay"])
+    require(git("rev-parse", RESTORE_BASE + ":" + expected["overlay"]) == expected["previous_overlay_blob"] and
+            digest(previous) == expected["previous_overlay_sha256"], "fixed reviewed R7 UI source")
     a, b = original.index(start), original.index(end)
+    px, py = previous.index(start), previous.index(end)
     x, y = reviewed.index(start), reviewed.index(end)
-    require(a < b and x < y and original[:a] == reviewed[:x] and original[b:] == reviewed[y:],
-            "all code outside pick() must remain byte-identical, including every real rejection assertion")
-    require(digest(reviewed[x:y]) == expected["method_sha256"] and
-            digest(reviewed) == expected["overlay_sha256"], "exact reviewed bounded picker body")
+    require(a < b and px < py and x < y and original[:a] == previous[:px] and original[b:] == previous[py:],
+            "preserved R7 changed only original picker; original assertions remain the baseline")
+    delta = "".join(difflib.unified_diff(previous.decode().splitlines(True), reviewed.decode().splitlines(True),
+                                      fromfile="R7", tofile="R8")).encode()
+    require(digest(delta) == expected["correction_diff_sha256"] and
+            digest(reviewed[x:y]) == expected["method_sha256"] and digest(reviewed) == expected["overlay_sha256"],
+            "exact independently reviewed R8 picker plus four restore observation edits")
+    helper_start = b"    /** R8: bounded observation of four Large.epub restore endpoints, never a performance pass. */"
+    helper_end = b"    private void awaitPage(int page) throws Exception {"
+    require(reviewed.count(helper_start) == reviewed.count(helper_end) == 1 and
+            digest(reviewed[reviewed.index(helper_start):reviewed.index(helper_end)]) == expected["large_wait_helper_sha256"],
+            "complete reviewed restore helper; ordinary awaitPage remains separate")
+    assertions = [line.strip() for line in previous.decode().splitlines() if re.search(r"\bassert[A-Z]\w*\(", line)]
+    remaining = iter(reviewed.decode().splitlines())
+    require(len(assertions) == expected["original_assertion_count"] and
+            all(any(line.strip() == item for line in remaining) for item in assertions),
+            "every original assertion line remains in order")
+    for phase in expected["restore_observation"]["calls"]:
+        require(reviewed.count(('"' + phase + '"').encode()) == 1, "one exact authorized restore call: " + phase)
+    require(reviewed.count(b"awaitLargeRestorePage(") == 4 and reviewed.count(b".requireCommit(") == 1,
+            "exact four endpoint call sites; no ordinary/font wait expansion")
     init = HERE / "android-test-overlay.init.gradle"
     require(digest(blob(PICKER_BASE, init.relative_to(ROOT).as_posix())) == expected["original_init_sha256"] and
             digest(init.read_bytes()) == expected["reviewed_init_sha256"], "exact reviewed two-project test overlay")
@@ -333,9 +386,9 @@ def verify_source():
     require(MARKER in git("log", "-1", "--format=%B"), "authorized acceptance commit marker")
     source = git("rev-parse", "HEAD")
     require(source == os.environ["GITHUB_SHA"], "tested source differs from run")
-    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, PICKER_BASE],
-            "exact single R7 picker correction on preserved R6")
-    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION), (PREVIOUS_CORRECTION, TEST_CLOSURE_BASE), (TEST_CLOSURE_BASE, OWNER_CONSUMER_BASE), (OWNER_CONSUMER_BASE, IMPORT_STATUS_BASE), (IMPORT_STATUS_BASE, PICKER_BASE), (PICKER_BASE, source)):
+    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, RESTORE_BASE],
+            "exact single R8 observation correction on preserved R7")
+    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION), (PREVIOUS_CORRECTION, TEST_CLOSURE_BASE), (TEST_CLOSURE_BASE, OWNER_CONSUMER_BASE), (OWNER_CONSUMER_BASE, IMPORT_STATUS_BASE), (IMPORT_STATUS_BASE, PICKER_BASE), (PICKER_BASE, RESTORE_BASE), (RESTORE_BASE, source)):
         require(git("merge-base", parent, child) == parent, "source ancestry mismatch")
     for start, end, key in ((BASE, CANONICAL, "canonical_delta"),
                             (CANONICAL, INTAKE, "intake_delta")):
@@ -393,15 +446,22 @@ def verify_source():
             "preserved R6 exact delta")
     for path, expected in c["r6_package_blobs"].items():
         require(git("rev-parse", PICKER_BASE + ":" + path) == expected, "preserved R6 package blob")
-    expected_delta = {
+    r7_delta = {
         "tests/dot_f03_production_acceptance_20261102/admission.py": "M",
         "tests/dot_f03_production_acceptance_20261102/contract.json": "M",
         "tests/dot_f03_production_acceptance_20261102/android-test-overlay.init.gradle": "M",
         "tests/dot_f03_production_acceptance_20261102/uiTest/org/exreader/host/uitest/HostReviewTest.java": "A"}
-    require(set(c["approved_delta"]) == set(expected_delta), "R7 exact one addition and three modifications")
+    require(set(c["r7_package_blobs"]) == set(r7_delta), "preserved exact R7 package")
     require({row.split("\t", 1)[1]: row.split("\t", 1)[0]
-             for row in git("diff", "--name-status", PICKER_BASE, source).splitlines()} == expected_delta,
-            "R7 exact authorized delta status and paths")
+             for row in git("diff", "--name-status", PICKER_BASE, RESTORE_BASE).splitlines()} == r7_delta,
+            "preserved R7 exact authorized delta")
+    for path, expected_blob in c["r7_package_blobs"].items():
+        require(git("rev-parse", RESTORE_BASE + ":" + path) == expected_blob, "preserved R7 package blob")
+    expected_delta = {p: "M" for p in r7_delta if not p.endswith("android-test-overlay.init.gradle")}
+    require(set(c["approved_delta"]) == set(expected_delta), "R8 exact three modifications")
+    require({row.split("\t", 1)[1]: row.split("\t", 1)[0]
+             for row in git("diff", "--name-status", RESTORE_BASE, source).splitlines()} == expected_delta,
+            "R8 exact authorized delta status and paths")
     for path in set(c["new_paths"]) | set(c["approved_delta"]):
         require(git("cat-file", "-t", source + ":" + path) == "blob", "acceptance path must be a file")
         require((ROOT / path).read_bytes() == blob(source, path), "modified acceptance file: " + path)

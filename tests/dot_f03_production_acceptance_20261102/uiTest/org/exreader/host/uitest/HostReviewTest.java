@@ -189,26 +189,67 @@ public final class HostReviewTest {
             sequence.put("sequential_elapsed_ms", elapsed);
             int closedBefore = occurrences(logs, "worker shutdown complete");
             configure("--es review_pause progress-before-write");
+            final long pauseStart = SystemClock.uptimeMillis();
+            JSONObject oldAttempt = null;
+            boolean reviewReleased = false;
+            Throwable reviewFailure = null;
+            try {
             tapNext(); awaitText("Review progress-before-write");
-            JSONObject oldAttempt = lastProgressAttempt(device.executeShellCommand("logcat -d -s EXRHost:I '*:S'"));
+            oldAttempt = lastProgressAttempt(device.executeShellCommand("logcat -d -s EXRHost:I '*:S'"));
             assertNotNull(oldAttempt); assertEquals(49, oldAttempt.getInt("index"));
+            LargeRestoreWait commitWait = new LargeRestoreWait(
+                    "review-recreate-commit", oldAttempt.getLong("book"), false, pauseStart + 50000);
             configure("--ez review_recreate true");
             awaitText("Opening Large.epub...");
-            long waitingDeadline = SystemClock.uptimeMillis() + 20000;
+            commitWait.beginOriginalWindow();
+            long waitingDeadline = commitWait.deadline;
             JSONObject waiting = null;
             while (SystemClock.uptimeMillis() < waitingDeadline) {
+                commitWait.observe();
                 JSONObject attempt = lastProgressAttempt(device.executeShellCommand("logcat -d -s EXRHost:I '*:S'"));
-                if (attempt != null && attempt.getLong("owner") != oldAttempt.getLong("owner")
+                if (SystemClock.uptimeMillis() >= waitingDeadline) break;
+                if (attempt != null && attempt.getLong("book") == oldAttempt.getLong("book")
+                        && attempt.getLong("owner") != oldAttempt.getLong("owner")
                         && attempt.getInt("index") == 48) { waiting = attempt; break; }
                 SystemClock.sleep(100);
             }
+            android.util.Log.i("EXRReview", "restore observation commit candidate" + commitWait.detail());
             assertNotNull("rebuilt Activity must attempt its page-49 progress commit while old commit is paused", waiting);
+            commitWait.requireCommit(waiting, oldAttempt.getLong("owner"), 48);
             assertEquals(oldAttempt.getLong("book"), waiting.getLong("book"));
             assertNotNull("new Activity must remain loading until the old progress lock is released", find("loading_overlay"));
             assertTrue(text("loading_text").startsWith("Opening Large.epub"));
             assertFalse("new frame must not publish while old progress commit holds the lock", text("page_label").startsWith("p.49 ·"));
-            device.executeShellCommand("run-as " + APP + " touch files/review-release");
-            awaitPage(49);
+            LargeRestoreWait releasedWait = new LargeRestoreWait(
+                    "review-release-page49", waiting.getLong("book"), false, Long.MAX_VALUE);
+            assertTrue("old progress pause must still have ten seconds reserved before release",
+                    SystemClock.uptimeMillis() - pauseStart <= 50000);
+            String releaseReceipt = device.executeShellCommand("run-as " + APP + " sh -c " +
+                    "test${IFS}!${IFS}-e${IFS}files/review-release&&" +
+                    "test${IFS}!${IFS}-e${IFS}files/review-release-r8.tmp&&" +
+                    "touch${IFS}files/review-release-r8.tmp&&" +
+                    "test${IFS}-f${IFS}files/review-release-r8.tmp&&" +
+                    "mv${IFS}files/review-release-r8.tmp${IFS}files/review-release&&" +
+                    "echo${IFS}F03_RELEASE_PUBLISHED_0").trim();
+            assertEquals("real release marker must exist before atomic publication; all shell operations must exit zero",
+                    "F03_RELEASE_PUBLISHED_0", releaseReceipt);
+            reviewReleased = true;
+            assertTrue("release must finish before the unchanged sixty-second gate can expire",
+                    SystemClock.uptimeMillis() - pauseStart <= 55000);
+            awaitLargeRestorePage(49, releasedWait);
+            } catch (Exception | Error error) {
+                reviewFailure = error;
+                throw error;
+            } finally {
+                if (!reviewReleased) {
+                    // Best-effort cleanup preserves the first failure and never grants a pass.
+                    try { device.executeShellCommand("run-as " + APP + " touch files/review-release"); }
+                    catch (Exception | Error cleanup) {
+                        if (reviewFailure != null) reviewFailure.addSuppressed(cleanup);
+                        else throw cleanup;
+                    }
+                }
+            }
             long deadline = SystemClock.uptimeMillis() + 15000;
             boolean closed = false;
             while (SystemClock.uptimeMillis() < deadline) {
@@ -218,7 +259,9 @@ public final class HostReviewTest {
             }
             assertTrue("destroyed Activity worker did not complete real SDK/store cleanup", closed);
             next(50);
-            device.executeShellCommand("am force-stop " + APP); launch(""); awaitPage(50);
+            LargeRestoreWait restartWait = new LargeRestoreWait(
+                    "review-restart-page50", oldAttempt.getLong("book"), true, Long.MAX_VALUE);
+            device.executeShellCommand("am force-stop " + APP); launch(""); awaitLargeRestorePage(50, restartWait);
             a.add("49 actual pages require 49 native next calls, zero recovery replay; rebuilt owner attempts commit but remains loading without publishing until old progress commit is released; latest page 50 survives process restart");
         });
         int passed = 0;
@@ -339,7 +382,10 @@ public final class HostReviewTest {
             a.add("real workspace_budget=1MiB rejects next chapter with EXR_LIMIT, retains frame and persisted position, and default 8MiB retry opens that same chapter rather than treating LIMIT as EOF");
             reset(""); pick("Large.epub"); awaitText("Imported Large.epub"); open("Large.epub"); next(2);
             String saved=progressIdentity("before-budget");
-            device.executeShellCommand("am force-stop "+APP); launch(""); awaitPage(2);
+            JSONObject budgetBefore = lastProgressAttempt(logs()); assertNotNull(budgetBefore);
+            LargeRestoreWait budgetWait = new LargeRestoreWait(
+                    "budget-restart-page2", budgetBefore.getLong("book"), true, Long.MAX_VALUE);
+            device.executeShellCommand("am force-stop "+APP); launch(""); awaitLargeRestorePage(2, budgetWait);
             assertTrue("real 5s query budget must be observable",text("reader_status").contains("query budget exceeded"));
             assertTrue(logs().contains("bounded progress resolution budget exhausted"));
             Matcher query=Pattern.compile("bounded progress resolve elapsed_ms=(\\d+) state=-2").matcher(logs());
@@ -437,13 +483,17 @@ public final class HostReviewTest {
             boolean eventTop;
             int treeNodes, navigationCollections;
             String navigationKey = "";
+            String rootGeometry = "";
+            int geometryRetries, rootCandidates;
+            boolean invalidRootGeometry;
             java.util.Set<String> beforeCollections = new java.util.HashSet<>();
             long left() { return Math.max(0, deadline - SystemClock.uptimeMillis()); }
             String detail() {
                 return " [picker phase=" + phase + " root=" + header +
                         " matches=" + matches + " backward=" + backward +
                         " forward=" + forward + " nav_collections=" + navigationCollections +
-                        " tree_nodes=" + treeNodes + " elapsed_ms=" +
+                        " tree_nodes=" + treeNodes + " geometry_retries=" + geometryRetries +
+                        " root_geometry=" + rootGeometry + " elapsed_ms=" +
                         (30000 - left()) + "]";
             }
             void need(boolean value, String message) {
@@ -536,8 +586,15 @@ public final class HostReviewTest {
                                     (row.getActions() & android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK) != 0) {
                                 Rect bounds = new Rect(), container = new Rect();
                                 row.getBoundsInScreen(bounds); collection.getBoundsInScreen(container);
-                                need(!bounds.isEmpty() && container.contains(bounds),
-                                        "Actual root row bounds outside navigation collection");
+                                rootCandidates++;
+                                rootGeometry = "row=" + bounds.toShortString() + ",container=" + container.toShortString();
+                                // The same containment proof remains mandatory. A transient invalid
+                                // snapshot is observed again, never clicked or treated as valid.
+                                if (bounds.isEmpty() || !container.contains(bounds)) {
+                                    geometryRetries++;
+                                    invalidRootGeometry = true;
+                                    break;
+                                }
                                 rows.add(bounds); keys.add(key);
                                 break;
                             }
@@ -572,7 +629,7 @@ public final class HostReviewTest {
                 }
             }
             Rect rootRow() {
-                treeNodes = 0; navigationCollections = 0;
+                treeNodes = 0; navigationCollections = 0; rootCandidates = 0; invalidRootGeometry = false;
                 android.view.accessibility.AccessibilityNodeInfo root = automation.getRootInActiveWindow();
                 need(root != null, "Drawer tree missing");
                 List<Rect> rows = new ArrayList<>(); List<String> keys = new ArrayList<>();
@@ -582,6 +639,8 @@ public final class HostReviewTest {
                     navigation(root, 0, rows, keys);
                 } finally { root.recycle(); }
                 matches = rows.size();
+                need(rootCandidates <= 1, "Multiple exact Downloads navigation rows");
+                if (invalidRootGeometry) return null;
                 need(matches <= 1, "Multiple exact Downloads navigation rows");
                 if (matches == 0) return null;
                 need(navigationCollections == 1, "Ambiguous newly visible navigation collections");
@@ -757,9 +816,13 @@ public final class HostReviewTest {
                             if (row != null) {
                                 // Reacquire the complete live containment proof immediately before touch.
                                 String key = picker.navigationKey;
+                                picker.pause();
                                 Rect current = picker.rootRow();
-                                picker.need(current != null && key.equals(picker.navigationKey),
-                                        "Navigation root changed before touch");
+                                if (current == null || !key.equals(picker.navigationKey) || !row.equals(current)) {
+                                    picker.geometryRetries++;
+                                    picker.pause();
+                                    continue;
+                                }
                                 picker.need(picker.left() > 0 &&
                                         device.click(current.centerX(), current.centerY()),
                                         "Real Downloads root touch failed");
@@ -826,6 +889,127 @@ public final class HostReviewTest {
         UiObject2 view = waitId("reader_view", 10000); assertNotNull("reader surface missing before paging", view);
         Rect box = view.getVisibleBounds(); device.click(box.right - box.width()/6, box.centerY());
     }
+    /** R8: bounded observation of four Large.epub restore endpoints, never a performance pass. */
+    private final class LargeRestoreWait {
+        final String phase, anchor;
+        final long book, began, deadline, oldPid;
+        final boolean freshProcess;
+        long pid, owner = -1, commitIndex = -1;
+        int opens, resolves, pages, renderedPage = -1;
+        boolean oldTwentyExceeded;
+        long ordinaryBegan = -1;
+        String stages = "";
+        final Pattern hostLine = Pattern.compile(
+                "^\\S+\\s+\\S+\\s+(\\d+)\\s+\\d+\\s+[A-Z]\\s+EXRHost\\s*:\\s*(.*)$");
+        LargeRestoreWait(String phase, long book, boolean freshProcess, long outerDeadline) throws Exception {
+            this.phase = phase; this.book = book; this.freshProcess = freshProcess;
+            began = SystemClock.uptimeMillis();
+            deadline = Math.min(began + 45000, outerDeadline);
+            String before = logs();
+            String last = ""; long previousPid = -1;
+            for (String line : before.split("\\r?\\n")) {
+                Matcher record = hostLine.matcher(line);
+                if (!record.matches()) continue;
+                last = line;
+                if (record.group(2).startsWith("progress attempt ")) {
+                    JSONObject attempt = new JSONObject(record.group(2).substring("progress attempt ".length()));
+                    if (attempt.getLong("book") == book) previousPid = Long.parseLong(record.group(1));
+                }
+            }
+            assertTrue("Large restore requires a real preceding book/process identity", book > 0 && previousPid > 0 && !last.isEmpty());
+            anchor = last; oldPid = previousPid; pid = freshProcess ? 0 : oldPid;
+            assertTrue("Large restore has no remaining observation budget", SystemClock.uptimeMillis() < deadline);
+            android.util.Log.i("EXRReview", "restore observation begin " + phase + " book=" + book + " old_pid=" + oldPid);
+        }
+        void beginOriginalWindow() {
+            assertTrue("original twenty-second observation reference must start exactly once", ordinaryBegan < 0);
+            ordinaryBegan = SystemClock.uptimeMillis();
+        }
+        void observe() throws Exception {
+            long now = SystemClock.uptimeMillis();
+            if (ordinaryBegan >= 0 && now - ordinaryBegan >= 20000 && !oldTwentyExceeded) {
+                oldTwentyExceeded = true;
+                android.util.Log.i("EXRReview", "restore original_20s_not_met phase=" + phase);
+            }
+            String current = logs();
+            int boundary = current.lastIndexOf(anchor);
+            assertTrue("Large restore log checkpoint disappeared" + detail(), boundary >= 0);
+            String fresh = current.substring(boundary + anchor.length());
+            opens = 0; resolves = 0; pages = 0; renderedPage = -1; owner = -1; commitIndex = -1;
+            StringBuilder observed = new StringBuilder();
+            for (String line : fresh.split("\\r?\\n")) {
+                Matcher record = hostLine.matcher(line);
+                if (!record.matches()) continue;
+                long recordPid = Long.parseLong(record.group(1));
+                String message = record.group(2);
+                if (message.equals("storage mode book=" + book + " bounded=true")) {
+                    if (freshProcess) {
+                        assertTrue("restart must not reuse the old process" + detail(), recordPid != oldPid);
+                        if (pid == 0) pid = recordPid;
+                        else assertEquals("one restore cannot splice multiple process identities" + detail(), pid, recordPid);
+                    } else {
+                        assertEquals("Activity recreation must remain in its original process" + detail(), oldPid, recordPid);
+                    }
+                }
+                if (pid <= 0 || recordPid != pid) continue;
+                assertFalse("Large restore reported an actual operation error: " + message + detail(),
+                        message.startsWith("status Could not open ") || message.startsWith("status Page error:") ||
+                        message.startsWith("status Library error:") || message.equals("status Operation canceled"));
+                boolean keep = false;
+                if (message.startsWith("bounded open ")) { opens++; keep = true; }
+                if (message.startsWith("bounded progress resolve ")) { resolves++; keep = true; }
+                if (message.startsWith("bounded progress resolution budget exhausted")) keep = true;
+                if (message.startsWith("progress attempt ")) {
+                    JSONObject attempt = new JSONObject(message.substring("progress attempt ".length()));
+                    if (attempt.getLong("book") == book) {
+                        owner = attempt.getLong("owner"); commitIndex = attempt.getLong("index"); keep = true;
+                    }
+                }
+                if (message.startsWith("metric ")) {
+                    JSONObject metric = new JSONObject(message.substring("metric ".length()));
+                    if ("page".equals(metric.optString("event")) && metric.getLong("book") == book) {
+                        pages++; renderedPage = metric.getInt("page"); keep = true;
+                    }
+                }
+                if (keep && observed.length() < 3000) observed.append(message).append(" | ");
+            }
+            stages = observed.toString();
+        }
+        void requireCommit(JSONObject attempt, long oldOwner, int index) throws Exception {
+            observe();
+            assertTrue("new owner attempt must occur inside the single restore deadline" + detail(),
+                    SystemClock.uptimeMillis() < deadline);
+            assertTrue("real new owner/book/index attempt must precede release" + detail(),
+                    pid == oldPid && attempt.getLong("book") == book &&
+                    attempt.getLong("owner") != oldOwner && attempt.getInt("index") == index &&
+                    owner == attempt.getLong("owner") && commitIndex == index);
+        }
+        String detail() {
+            return " [restore phase=" + phase + " book=" + book + " pid=" + pid +
+                    " old_pid=" + oldPid + " elapsed_ms=" + (SystemClock.uptimeMillis() - began) +
+                    " original_20s_not_met=" + (ordinaryBegan >= 0 && (oldTwentyExceeded || SystemClock.uptimeMillis() - ordinaryBegan >= 20000)) +
+                    " open=" + opens + " resolve=" + resolves + " page_events=" + pages +
+                    " owner=" + owner + " index=" + commitIndex + " stages=" + stages + "]";
+        }
+    }
+    private void awaitLargeRestorePage(int page, LargeRestoreWait wait) throws Exception {
+        wait.beginOriginalWindow();
+        while (SystemClock.uptimeMillis() < wait.deadline) {
+            wait.observe();
+            UiObject2 label = find("page_label"), select = find("select_button");
+            if (label != null && label.getText().startsWith("p." + page + " \u00b7") &&
+                    find("loading_overlay") == null && select != null && select.isEnabled()) {
+                assertTrue("Large restore page must belong to its real operation" + wait.detail(),
+                        SystemClock.uptimeMillis() < wait.deadline && wait.pid > 0 && wait.pages > 0 && wait.renderedPage == page &&
+                        (!wait.freshProcess || wait.pid != wait.oldPid));
+                android.util.Log.i("EXRReview", "restore observation complete" + wait.detail());
+                return;
+            }
+            SystemClock.sleep(Math.min(100, Math.max(1, wait.deadline - SystemClock.uptimeMillis())));
+        }
+        throw new AssertionError("actual reader did not reach page " + page + wait.detail());
+    }
+
     private void awaitPage(int page) throws Exception {
         long deadline = SystemClock.uptimeMillis() + 20000;
         while (SystemClock.uptimeMillis() < deadline) {
