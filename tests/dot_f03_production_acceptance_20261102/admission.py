@@ -20,6 +20,7 @@ REVIEWED_ACCEPTANCE = "61dc8d6190e65dc12886d2d0f0e97b501c52be56"
 PREVIOUS_CORRECTION = "b4d97d6d62c1366972d321174b728980e287b2cd"
 TEST_CLOSURE_BASE = "9d493b2235d81c216767295948f417c1bd12bf2d"
 OWNER_CONSUMER_BASE = "d9b36c36349a320e64f0bdf00d612c134c4eeeea"
+IMPORT_STATUS_BASE = "0b5c77592a264f5cdb6f12f03dbe7b78bb698b7d"
 SDK = "8357eafa28423a7ab93ba08b823af80f01ad1505"
 FIXTURE_SOURCE = "39600d0d3a3a5e4bc2599a92e94e494a542f06f1"
 BRANCH = "dot/f03-production-acceptance-v342-20261102"
@@ -48,7 +49,43 @@ def configuration():
     require(c["previous_correction_base"] == PREVIOUS_CORRECTION, "fixed preserved R2 parent")
     require(c["test_closure_base"] == TEST_CLOSURE_BASE, "fixed preserved R3 parent")
     require(c["owner_consumer_base"] == OWNER_CONSUMER_BASE, "fixed preserved R4 parent")
+    require(c["import_status_base"] == IMPORT_STATUS_BASE, "fixed preserved R5 parent")
     return c
+
+def host_import_status_contract():
+    """Only the reviewed status literal changes; all twenty cases retain their bytes."""
+    expected = json.loads(r'''{
+  "version": "host-import-reading-limit-status-v1",
+  "source": "tests/reader_android_host_import/java/org/exreader/host/HostImportUiTest.java",
+  "source_blob": "c0a48388a7b5b2c6e21ff029c8bffc33041e7c93",
+  "overlay": "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/HostImportUiTest.java",
+  "staged_path": "org/exreader/host/HostImportUiTest.java",
+  "old_literal": "status(\"Current reader has a 32 MiB reading limit\");",
+  "new_literal": "status(\"Selected book exceeds 32 MiB reading limit. The 128 MiB staging ceiling does not make larger books readable\");",
+  "reading_limit_bytes": 33554432,
+  "staging_limit_bytes": 134217728,
+  "cases": 20,
+  "phases": 9,
+  "runtime_accepted": false
+}''')
+    c = configuration()
+    require(c["host_import_status_contract"] == expected, "fixed single-literal status contract")
+    source = expected["source"]
+    require(c["test_dependency_sources"][expected["staged_path"]] == source and
+            c["test_dependency_blobs"][source] == expected["source_blob"],
+            "original UI runner provenance remains pinned")
+    require(git("rev-parse", IMPORT_STATUS_BASE + ":" + source) == expected["source_blob"],
+            "fixed original UI runner blob")
+    original = blob(IMPORT_STATUS_BASE, source)
+    require((ROOT / source).read_bytes() == original, "original UI test must remain unchanged")
+    before, after = expected["old_literal"].encode(), expected["new_literal"].encode()
+    require(original.count(before) == 1 and original.count(after) == 0, "unique original status assertion")
+    reviewed = (ROOT / expected["overlay"]).read_bytes()
+    require(reviewed == original.replace(before, after, 1),
+            "only the approved status literal may change; all safety assertions retained")
+    require(reviewed == blob("HEAD", expected["overlay"]), "dirty status overlay")
+    return {"policy": expected, "source_sha256": digest(original),
+            "overlay_sha256": digest(reviewed), "runtime_accepted": False}
 
 def catalog_schema_contract():
     c = configuration()
@@ -218,9 +255,9 @@ def verify_source():
     require(MARKER in git("log", "-1", "--format=%B"), "authorized acceptance commit marker")
     source = git("rev-parse", "HEAD")
     require(source == os.environ["GITHUB_SHA"], "tested source differs from run")
-    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, OWNER_CONSUMER_BASE],
-            "exact single R5 owner18 acceptance correction on preserved R4")
-    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION), (PREVIOUS_CORRECTION, TEST_CLOSURE_BASE), (TEST_CLOSURE_BASE, OWNER_CONSUMER_BASE), (OWNER_CONSUMER_BASE, source)):
+    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, IMPORT_STATUS_BASE],
+            "exact single R6 status correction on preserved R5")
+    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION), (PREVIOUS_CORRECTION, TEST_CLOSURE_BASE), (TEST_CLOSURE_BASE, OWNER_CONSUMER_BASE), (OWNER_CONSUMER_BASE, IMPORT_STATUS_BASE), (IMPORT_STATUS_BASE, source)):
         require(git("merge-base", parent, child) == parent, "source ancestry mismatch")
     for start, end, key in ((BASE, CANONICAL, "canonical_delta"),
                             (CANONICAL, INTAKE, "intake_delta")):
@@ -259,13 +296,23 @@ def verify_source():
             "preserved R4 exact authorized delta")
     for path, expected_blob in c["r4_package_blobs"].items():
         require(git("rev-parse", OWNER_CONSUMER_BASE + ":" + path) == expected_blob, "preserved R4 package blob")
-    expected_delta = {**{p: "M" for p in c["r3_package_blobs"]},
-                      **{p: "A" for p in c["owner_consumer_contract"]["paths"].values()}}
-    require(set(c["approved_delta"]) == set(expected_delta) and len(expected_delta) == 7,
-            "R5 exact four additions and three modifications")
+    r5_delta = {**{p: "M" for p in c["r3_package_blobs"]},
+                **{p: "A" for p in c["owner_consumer_contract"]["paths"].values()}}
+    require(set(c["r5_package_blobs"]) == set(r5_delta) and len(r5_delta) == 7,
+            "preserved R5 exact four additions and three modifications")
     require({row.split("\t", 1)[1]: row.split("\t", 1)[0]
-             for row in git("diff", "--name-status", OWNER_CONSUMER_BASE, source).splitlines()} == expected_delta,
-            "R5 exact authorized delta status and paths")
+             for row in git("diff", "--name-status", OWNER_CONSUMER_BASE, IMPORT_STATUS_BASE).splitlines()} == r5_delta,
+            "preserved R5 exact delta")
+    for path, expected in c["r5_package_blobs"].items():
+        require(git("rev-parse", IMPORT_STATUS_BASE + ":" + path) == expected, "preserved R5 package blob")
+    expected_delta = {
+        "tests/dot_f03_production_acceptance_20261102/admission.py": "M",
+        "tests/dot_f03_production_acceptance_20261102/contract.json": "M",
+        "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/HostImportUiTest.java": "A"}
+    require(set(c["approved_delta"]) == set(expected_delta), "R6 exact one addition and two modifications")
+    require({row.split("\t", 1)[1]: row.split("\t", 1)[0]
+             for row in git("diff", "--name-status", IMPORT_STATUS_BASE, source).splitlines()} == expected_delta,
+            "R6 exact authorized delta status and paths")
     for path in set(c["new_paths"]) | set(c["approved_delta"]):
         require(git("cat-file", "-t", source + ":" + path) == "blob", "acceptance path must be a file")
         require((ROOT / path).read_bytes() == blob(source, path), "modified acceptance file: " + path)
@@ -317,7 +364,8 @@ def verify_source():
     capability = private_copy_contract()
     schema_contract = catalog_schema_contract()
     consumers = owner_consumer_contract()
-    return {"owner_consumer_contract": consumers, "catalog_schema_contract": schema_contract, "test_dependency_blobs": c["test_dependency_blobs"], "private_copy_capability": capability, "source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
+    status_contract = host_import_status_contract()
+    return {"host_import_status_contract": status_contract, "owner_consumer_contract": consumers, "catalog_schema_contract": schema_contract, "test_dependency_blobs": c["test_dependency_blobs"], "private_copy_capability": capability, "source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
             "product_intake_head": INTAKE, "sdk_source": SDK, "sdk_version": "3.42.0",
             "contract_sha256": digest((HERE / "contract.json").read_bytes()),
             "run_id": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
@@ -356,6 +404,13 @@ def prepare():
         shutil.copyfile(ROOT / original, target)
         require(target.read_bytes() == blob("HEAD", original) and len(list(java.rglob(target.name))) == 1,
                 "one unchanged original test helper/runner: " + relative)
+    status = host_import_status_contract()["policy"]
+    target = java / status["staged_path"]
+    require(target.read_bytes() == blob(IMPORT_STATUS_BASE, status["source"]),
+            "status override starts from the validated original runner")
+    shutil.copyfile(ROOT / status["overlay"], target)
+    require(target.read_bytes() == (ROOT / status["overlay"]).read_bytes() and
+            len(list(java.rglob(target.name))) == 1, "one exact reviewed status runner definition")
     expected = {p.relative_to(old_root).as_posix() for p in old_root.rglob("*") if p.is_file()}
     expected.update(overlay_names)
     expected.update(c["test_dependency_sources"])
@@ -798,6 +853,11 @@ def precompile_tests():
     require(staged == admission["overlay_files_sha256"], "staged complete test sources changed")
     for key in ("source_sha", "run_id", "attempt"):
         require(admission[key] == admitted[key], "test stage source/run identity")
+    require(admission["host_import_status_contract"] == admitted["host_import_status_contract"],
+            "prepared status contract matches admitted source")
+    status = admitted["host_import_status_contract"]
+    require(digest((java / status["policy"]["staged_path"]).read_bytes()) == status["overlay_sha256"],
+            "precompile must use the exact reviewed status overlay")
     wrapper = Path(os.environ["F03_GRADLE"])
     require(digest(wrapper.read_bytes()) == admission["gradle_wrapper_sha256"], "test Gradle wrapper changed")
     command = [str(wrapper), "-p", str(ROOT / "examples/android"), "--no-daemon", "--stacktrace",
@@ -846,6 +906,7 @@ def precompile_tests():
     report = {k: admitted[k] for k in ("source_sha", "run_id", "attempt")}
     report.update(accepted=True, command=command, staged_files_sha256=staged,
                   test_dependency_blobs=configuration()["test_dependency_blobs"], apks=records,
+                  host_import_status_contract=admitted["host_import_status_contract"],
                   catalog_schema_contract=admitted["catalog_schema_contract"],
                   main_apk_sha256=original_app, uitest_apk_sha256=digest(paths["uitest"].read_bytes()),
                   build_config_sha256=digest(configs[0].read_bytes()), product_flags={f: False for f in flags},
@@ -867,7 +928,11 @@ def test_compilation_proof():
             "compiled helper source identity")
     require(report["catalog_schema_contract"] == catalog_schema_contract(),
             "compiled catalog/mapping test contract unchanged")
+    status = host_import_status_contract()
+    require(report["host_import_status_contract"] == status, "compiled status contract unchanged")
     java = Path(os.environ["F03_ANDROID_TEST_JAVA"])
+    require(digest((java / status["policy"]["staged_path"]).read_bytes()) == status["overlay_sha256"],
+            "compiled status overlay identity")
     require(report["staged_files_sha256"] ==
             {p.relative_to(java).as_posix(): digest(p.read_bytes()) for p in sorted(java.rglob("*")) if p.is_file()},
             "compiled staged test sources unchanged")
