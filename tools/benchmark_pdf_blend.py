@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from perf_policy import advisory
 """Fresh-process PDF open/repaint measurements through the installed C ABI.
 
 The process high-water mark includes this Python/ctypes host. Compare identical
@@ -111,6 +112,7 @@ def main():
             ('open_ms','first_render_ms','repaint_p50_ms','repaint_p95_ms','peak_rss_bytes','incremental_peak_rss_bytes')}
         report['cases'][name]['pdf_sha256']=hashlib.sha256((args.fixtures/(name+'.pdf')).read_bytes()).hexdigest()
         print(name,report['cases'][name],flush=True)
+    advisory(report)
     (args.output/'summary.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
 
 

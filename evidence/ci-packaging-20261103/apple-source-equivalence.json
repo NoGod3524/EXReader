@@ -1,0 +1,9 @@
+{
+  "apple_run_source": "db0d2c1fdd50c8a5b616fea690fc3b1e625c57ee",
+  "current_code_source": "a2af0a57975de7f2f4dbdc343df6657f380432e2",
+  "all_workflow_content_except_ci_hygiene_job_identical": true,
+  "sha256_without_ci_hygiene_job": "74876fe2b694b3c9b9274a2f0a09ea56a49a152cd0bdedba7c3bcbd33f49c88f",
+  "other_changes_since_apple_run": [
+    "docs/CI-HYGIENE.md"
+  ]
+}

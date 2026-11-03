@@ -1,0 +1,75 @@
+{
+  "applied": true,
+  "ruleset_id": 25700819,
+  "before_required_checks": [
+    "reading-required"
+  ],
+  "proposed_required_checks": [
+    "reading-required-core"
+  ],
+  "payload": {
+    "name": "EXReader native reading delivery",
+    "target": "branch",
+    "enforcement": "active",
+    "conditions": {
+      "ref_name": {
+        "exclude": [],
+        "include": [
+          "~DEFAULT_BRANCH"
+        ]
+      }
+    },
+    "rules": [
+      {
+        "type": "deletion"
+      },
+      {
+        "type": "non_fast_forward"
+      },
+      {
+        "type": "pull_request",
+        "parameters": {
+          "required_approving_review_count": 0,
+          "dismiss_stale_reviews_on_push": false,
+          "required_reviewers": [],
+          "require_code_owner_review": false,
+          "require_last_push_approval": false,
+          "required_review_thread_resolution": true,
+          "require_extra_approval_for_unattributed_changes": true,
+          "allowed_merge_methods": [
+            "merge"
+          ]
+        }
+      },
+      {
+        "type": "required_status_checks",
+        "parameters": {
+          "strict_required_status_checks_policy": true,
+          "do_not_enforce_on_create": false,
+          "required_status_checks": [
+            {
+              "context": "reading-required-core",
+              "integration_id": 15368
+            }
+          ]
+        }
+      }
+    ],
+    "bypass_actors": []
+  },
+  "verification_constraints": [
+    "ruleset only matches ~DEFAULT_BRANCH = codex/framework",
+    "legacy reading-required PR filter excludes ledger/base-20261103",
+    "full native matrix is prohibited before R"
+  ],
+  "pending_owner_answers": [],
+  "other_rule_fields_unchanged": true,
+  "required_context_verified": "reading-required-core",
+  "temporary_pr_verification": "blocked: HTTP 422 evaluate not supported by plan",
+  "staging_creation_result": {
+    "id": null,
+    "enforcement": null,
+    "requested_enforcement": "evaluate",
+    "http_status": 422
+  }
+}

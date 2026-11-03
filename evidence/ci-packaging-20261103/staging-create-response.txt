@@ -1,0 +1,1 @@
+{"message":"Validation Failed","errors":["Enforcement evaluate option is not supported on this plan. Please upgrade to Enterprise to enable it."],"documentation_url":"https://docs.github.com/rest/repos/rules#create-a-repository-ruleset","status":"422"}gh: Validation Failed (HTTP 422)

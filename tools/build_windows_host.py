@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 import zipfile
 
 from host_font import fetch as host_font
@@ -49,6 +50,23 @@ def make_positive_epub(path):
             archive.writestr(entry, content)
 
 
+def require_package_inputs(sdk, binary):
+    """Reject absent build/install outputs before creating a package directory."""
+    include = sdk / 'apps/reader/desktop/windows_accessibility.inc'
+    for label, path in (('built exe', binary), ('installed windows_accessibility.inc', include)):
+        if not path.is_file():
+            message = f'EXPECTED {label} at {path}; got nothing'
+            print(message, file=sys.stderr)
+            for folder in dict.fromkeys((ROOT / 'build', binary.parent, include.parent)):
+                print(f'BUILD LISTING {folder}:', file=sys.stderr)
+                if folder.is_dir():
+                    for child in sorted(folder.iterdir()):
+                        print(f'  {child.name} ({"file" if child.is_file() else "dir"})', file=sys.stderr)
+                else:
+                    print('  <directory does not exist>', file=sys.stderr)
+            raise FileNotFoundError(message)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--sdk', type=Path, required=True)
@@ -57,6 +75,7 @@ def main():
     parser.add_argument('--static-reading', action='store_true', help='Package the installed lightweight static reading consumer')
     args = parser.parse_args()
     sdk, binary, output = args.sdk.absolute(), args.binary.absolute(), args.output.absolute()
+    require_package_inputs(sdk, binary)
     if output.exists():
         parser.error('Choose a new host evidence directory')
     payload = output/'EXReader'

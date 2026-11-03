@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run fresh-process EXReader measurements; OS disk caches are uncontrolled."""
 # SPDX-License-Identifier: MIT
+from perf_policy import advisory
 import argparse
 import hashlib
 import json
@@ -202,10 +203,14 @@ def main():
         all(hashlib.sha256(Path(p).read_bytes()).hexdigest() == sha
             for p, sha in summary["runtime_sha256"].items()))
     summary["passed"] = summary["identities_unchanged"] and all(c["passed"] for c in summary["cases"].values())
+    measurement_valid = summary["passed"]
+    summary["measurement_valid"] = measurement_valid
+    advisory(summary)
+    summary["passed"] = False  # E3 diagnostics cannot grant performance acceptance.
     (output / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
                                          encoding="utf-8")
     print(f"Saved {len(cases)*args.runs} fresh-process measurements and summary.json")
-    return 0 if summary["passed"] else 1
+    return 0 if measurement_valid else 1
 
 
 if __name__ == "__main__":
