@@ -1958,3 +1958,42 @@ The six responsibility slots are not six active implementations. Current actual 
 Read-only storage review found /data free811,839,488 bytes and separate/tmp free3,934,482,432 bytes. A partial inventory completed174 of233 workspace roots; it is not a complete ranking. Two build-directory candidates for later ownership/recoverability review are438,935,552 bytes under exreader-f08-apple-reader26-agent-20261031/build and302,673,920 bytes under exreader-f08-mac-reader-animation-agent-20261101/build. Their backups and regenerability are not established, so they are not approved deletion targets. terra-wave-20261028 is about1.29GiB across multiple worktrees rather than a single disposable package. No process cwd was observed in those workspaces at the check, which is not proof of inactivity. No files were deleted and no disk was resized.
 
 All original failed rounds, skipped stages and unarchived evidence limits remain preserved. This document authorizes no source/SDK/UI change, new CI round, artifact exception or formal credit.
+
+
+## Hourly continuation snapshot: 2026-11-03 03:22 EST scheduled
+
+Actual save time: 2026-11-03T08:23:37.381621+00:00 / 2026-11-03T03:23:37.381621-05:00. This new snapshot preserves the prior document unchanged and does not mark work stopped or completed. The formal catalog remains 98 verified, 1 partial and 9 pending out of 108.
+
+### F03: completed Android scope, not the six-target catalog item
+The previously independently verified R8 result is unchanged: source 054df69524eed483759febdcc0ce20e634921f82, run 41588932707/A1, master accepted=true with all 17 upstream stages and 9 formal reports. This is not a new execution. The original catalog F03 item still requires six-target shared shelf/organization consistency and remains pending. old_apk_upgrade_accepted=false and complete_product=false remain explicit. No additional F03 device run or ledger update occurred.
+
+### F05: validation failed before device checks
+The two-file read-only bridge remains published at 75d3115041016ae61149fd6f5a9a816c296cc085 on dot/f05-android-head-bridge-20261103, with its earlier independent static/full-tree/publication checks preserved.
+
+The separately approved five-new/one-modified validation package was independently reviewed and published at e4bd48c304106275c9f44ac22c4b456c371b84d0, parent 75d311. Its single authorized dispatch was run 41598794149/A1. The 5+120+15 runner-minute budget was not expanded and no automatic retry occurred.
+https://github.com/NoGod3524/EXReader/actions/runs/41598794149
+
+This run failed, but it was not a Gradle compilation failure. Three actual Gradle builds completed successfully, and the Debug/Release native audit was accepted. The first rejection was driver.py line 181, the exact runner/target check for original-owner.apk. The prior package/count check passed: the expected test package and exactly one instrumentation element were parsed. Actual attribute names and values were not printed in the original stdout, so neither a parser defect nor an incorrect APK configuration has yet been established. The original 18, retained 16 and new bridge 10 device checks were all skipped, not failed test cases.
+The original producer log was independently verified: 742110 bytes, SHA256 501e549843de9caddeb800c730bf6c0dc823c53ec658b9883a81ca4ff5afc9d2.
+Producer artifact 13213432032: 55310493 bytes, SHA256 87f8d3657ef39a4e1e1be0b97b15cb6cc4b139dba5263b4a54edb1b8532e43e3.
+Audit artifact 13213802236: 55311059 bytes, SHA256 4409f6e5b9ae92c76563478d653b36a5ad9cc9bd7608aecf23106758f0f111ad.
+
+### F05: one specifically approved read-only evidence job now queued
+The user separately approved one inspection script plus one workflow modification, an independent branch and one Actions job capped at 10 minutes. It reads only the fixed failed producer artifact, statically dumps three existing APK manifests and checks identity. It does not compile, install or execute an APK, start a device, modify the product bridge/SDK/UI/old tests, or rerun the failed validation.
+
+Actual candidate and full-tree/trigger reviews passed before publication. The inspection commit is 9578f09ce352d784ea92053916439e69a7a22d7e, parent e4bd, on dot/f05-head-bridge-manifest-inspect-20261103. Exactly one new file and one workflow modification were published; other jobs are excluded on this branch.
+The unique dispatch returned run 41602795048. At the actual 08:22 UTC observation it matched source 9578, attempt 1 and workflow_dispatch, and was queued with no jobs yet visible. This is not a completed inspection.
+https://github.com/NoGod3524/EXReader/actions/runs/41602795048
+Next planned check is the same run around 08:25 UTC. Index delays or failures do not authorize another dispatch.
+
+The inspection retains concrete errors and independently attempts all three approved APKs. Only the first original manifest text was generated before the prior failure; the other two original text files and packages.json must not be assumed present. Runtime installation proofs were not generated. Outer artifact authentication is kept separate from internal report-field validation and from mere file presence. The script's strict finite-number JSON handling and real producer identity schemas were statically checked. An inspection success would still not mean the bridge's runtime validation passed.
+
+### F07 and the remaining lanes
+F07's previously read Apple peer link-MAP/checker chain remains useful bounded evidence, not full F07 acceptance. Windows/GTK inventory and full linkage gaps remain open. Its installed-binding Git object actions were refused without execution; no commit, ref or CI exists for that candidate.
+The two-JSON artifact read and the distinct fixed ec11 modules/layers source query remained refused after their specific confirmation/review paths. No alternate route or replacement writer bypassed the refusal. No new F07 source text or artifact content was obtained in this hour. Existing user approvals are not described as withdrawn, but they do not license repeating denied operations.
+
+F08 remains at the failed, cleaned-up native 1/1 result with no new native budget. F09 completed independent reviews for the F05 validation failure and the new inspection package; it is now waiting for the actual inspection result. No new GTK run occurred.
+For the six responsibility slots at this snapshot: active implementation 0; documentation 1; diagnostic-result wait 1 (F05 inspection); waiting/blocked 4 (F03 scoped result complete but six-target work remains, F07 permission/evidence blockers, F08 no new native budget, F09 awaiting the inspection result). These are responsibility states, not six concurrent implementations.
+
+Storage findings from the previous snapshot are unchanged and no new disk scan is claimed. The identified build directories are only candidates for ownership/backup review, not approved deletion targets. No files were deleted or disk capacity changed.
+All failed rounds, skipped checks and evidence limitations remain preserved. This document adds no implementation authority, new CI round, artifact exception or formal credit.
