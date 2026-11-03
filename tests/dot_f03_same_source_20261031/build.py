@@ -151,6 +151,14 @@ def receive_apple(a, stamp):
                 str(fixture/"public/ca.crt")],check=True)
             a.destination="platform=iOS Simulator,id="+clone
         relay,server,config=wire_server(a.wire,fixture)
+        if a.host=="macos":
+            # HEAD has no revision/body side effect and the retained DAV handler
+            # does not count it as an authenticated product request. Observe
+            # system trust independently; native XCTest remains the actual gate.
+            probe=subprocess.run(["/usr/bin/curl","--head","--silent","--show-error","--max-time","10",
+                                  config["root"]],capture_output=True,text=True)
+            write_json(folder/"system-trust-observation.json",{
+                "exit_code":probe.returncode,"stdout":probe.stdout[-2000:],"stderr":probe.stderr[-2000:]})
         work=ROOT/"build/dot-f03-native"/a.host
         scheme="EXReaderHost-macOS" if a.host=="macos" else "EXReaderHost-iOS"
         environment=dict(os.environ)
@@ -172,6 +180,9 @@ def receive_apple(a, stamp):
         raw=result.stdout+result.stderr
         require(config["password"].encode() not in raw,"fixture secret appeared in XCTest output")
         (folder/"xcodebuild.log").write_bytes(raw)
+        attachments=folder/"attachments"
+        subprocess.run(["xcrun","xcresulttool","export","attachments","--path",
+                        str(folder/"receiver.xcresult"),"--output-path",str(attachments)],check=True)
         require(result.returncode==0,"actual XCTest receiver failed")
         sys.path.insert(0,str(ROOT/"tests/apple_host"))
         from collect_evidence import load_results
@@ -179,9 +190,6 @@ def receive_apple(a, stamp):
         require(len(cases)==1 and cases[0]["result"]=="Passed" and
                 "testF03ReceivedOrganizationVisibleAfterRestart" in cases[0]["name"],
                 "actual receiver XCTest missing, failed or skipped")
-        attachments=folder/"attachments"
-        subprocess.run(["xcrun","xcresulttool","export","attachments","--path",
-                        str(folder/"receiver.xcresult"),"--output-path",str(attachments)],check=True)
         attachment_manifest=json.loads((attachments/"manifest.json").read_text())
         steps=[]
         for group in attachment_manifest:
