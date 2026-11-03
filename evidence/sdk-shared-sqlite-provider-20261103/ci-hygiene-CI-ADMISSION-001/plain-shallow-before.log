@@ -1,0 +1,4 @@
+git rev-parse --is-shallow-repository
+true
+
+exit_code=0

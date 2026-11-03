@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       candidate_sha:
-        description: Exact reviewed SDK follow-up commit (parent must be 40ac811b)
+        description: Exact reviewed CI admission fix (parent must be 99353b5c)
         type: string
         required: true
 
@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.candidate_sha || github.sha }}
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Admit only the reviewed SDK replay
         env:
           CANDIDATE_SHA: ${{ inputs.candidate_sha || github.sha }}
@@ -30,13 +30,14 @@ jobs:
           python3 - <<'PY'
           import json, os, pathlib, re, subprocess
           base = '95100501eeef9c6325be8b3882aa400c99cf000f'
-          reviewed_parent = '40ac811b0a872587641e01ff0cfc33a376e93abc'
+          reviewed_parent = '99353b5ccaf033cb5d7fca52e92715438203a34a'
           sha = os.environ['CANDIDATE_SHA']
           if not re.fullmatch(r'[0-9a-f]{40}', sha):
               raise SystemExit('exact candidate SHA required')
           def git(*args): return subprocess.check_output(['git', *args], text=True).strip()
           if git('rev-parse', 'HEAD') != sha or git('rev-parse', 'HEAD^') != reviewed_parent:
               raise SystemExit('candidate is not the reviewed replay on the fixed SDK line')
+          subprocess.run(['git', 'cat-file', '-e', base + '^{commit}'], check=True)
           subprocess.run(['git', 'diff', '--exit-code', base, 'HEAD', '--',
               'src', 'include', 'bindings', 'cmake/versions.cmake',
               'docs/reader-total-progress/catalog.json'], check=True)

@@ -34,7 +34,7 @@
     "tools/build_apple_host.py": "c61c6615a010d083cf366d72971035dff7c82e85eb25e92ef42cb631ff449f1a",
     "tools/build_apple_product.py": "d6ec506adbc9ea56d90a24740af625a48bd631b1c2e1b774308a8b37bdca00b7",
     "tools/check_apple_product.py": "39a7ead259eeadbe852a25003da586e01c7f258fe2ff3ab94060a95212962e80",
-    ".github/workflows/sdk-shared-sqlite-contract.yml": "8f99cfebbc81a85da858d2818877bb86c9e1d75b82acae67708aa924be30c236",
+    ".github/workflows/sdk-shared-sqlite-contract.yml": "d5830349e4ddec85feefe2179342aeaa60194d7350d1f203a77b4c97c32e994e",
     "extras/sqlite-provider/CMakeLists.txt": "e75bda0aac7a36903345ee7f058aa2377231ee41c9793575301eab83c0b4060e",
     "extras/sqlite-provider/EXReaderSQLiteProviderConfig.cmake.in": "b7aa2b91ea912eb2a52b407ff2ce84792cd7ceb16fb89639cb3496690a7299e8",
     "extras/sqlite-provider/apple-negative/CMakeLists.txt": "e17fe899fd84d4ef975e6366b521e569a1fc80d593e807dd644b9204b5cbee68",
@@ -70,7 +70,7 @@
     "catalog_src_include_bindings_version_unchanged": true,
     "source_patch_reverse_check": "passed"
   },
-  "source_review_patch_sha256": "2a924e9f45919f3fed2b4a87ddc0dac7a7cfd0aa7b9d1a81f66a723eeceafce0",
+  "source_review_patch_sha256": "6f7a2c5cf5aac56ed93e7c1229ad009d79b9677ad5b4f35e7ceeae7586695f9c",
   "ci_proposal": {
     "workflow": ".github/workflows/sdk-shared-sqlite-contract.yml",
     "trigger": "Restricted first push to the reviewed candidate branch; only this workflow matches current paths",
@@ -78,9 +78,9 @@
     "runner": "macos-14",
     "timeout_minutes": 20,
     "run_count": 1,
-    "status": "Limited build validation failed; known issue SDK-BUILD-002; no additional CI requested"
+    "status": "Attempt 2/2 approved; shallow-history preflight passed; candidate ready"
   },
-  "source_hash_scope": "Source hashes match tested candidate 64e514ae; subsequent progress-only changes are confined to evidence.",
+  "source_hash_scope": "Local source bytes for admission follow-up; tested SHA recorded separately after run creation",
   "evidence_bytes_preserved": "Scoped .gitattributes disables newline normalization for raw evidence and recorded hashes.",
   "tested_candidate": "40ac811b0a872587641e01ff0cfc33a376e93abc",
   "ci_result": {
@@ -120,7 +120,7 @@
     "conclusion": "failure",
     "classification": "限时构建验证；构建配置失败，非行为失败",
     "first_error": "fatal: bad object 95100501eeef9c6325be8b3882aa400c99cf000f",
-    "known_issue": "SDK-BUILD-002",
+    "known_issue": "CI-ADMISSION-001",
     "known_issue_state": "open",
     "build_item_closed": false,
     "artifacts": [],
@@ -128,6 +128,21 @@
     "apple_acceptance_assessed": false,
     "retry": false,
     "further_ci_request": false,
-    "review": "ci-41706981519/review.md"
+    "review": "ci-41706981519/review.md",
+    "owner_package": "P",
+    "f07_known_issue": false
+  },
+  "consumer_contract_fact": "C++17 仅测试目标需要，对外契约未变，SDK 消费者不需要 C++17。",
+  "admission_followup": {
+    "authorized_attempt": 2,
+    "attempt_limit": 2,
+    "job_limit": 1,
+    "runner": "macos-14",
+    "timeout_minutes": 20,
+    "automatic_retry": false,
+    "on_new_failure": "Record first error as open item; no further request",
+    "on_success": "Close Apple build-only item; retain run and artifact; no full Apple acceptance claim",
+    "local_shallow_preflight": "passed: ordinary depth-2 clone fails base lookup, unshallow succeeds, cat-file -e exact base exits 0",
+    "history_policy": "fetch-depth: 0; explicit cat-file commit check"
   }
 }

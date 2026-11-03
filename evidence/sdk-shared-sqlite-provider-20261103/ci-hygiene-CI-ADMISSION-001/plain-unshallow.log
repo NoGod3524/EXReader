@@ -1,0 +1,5 @@
+git fetch --unshallow origin codex/sdk-shared-sqlite-provider-20261103
+From https://github.com/NoGod3524/EXReader
+ * branch              codex/sdk-shared-sqlite-provider-20261103 -> FETCH_HEAD
+
+exit_code=0
