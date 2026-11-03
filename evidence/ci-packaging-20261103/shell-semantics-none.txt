@@ -1,0 +1,7 @@
+source=0ec9e3a53ed938d18472f24ba492ee56ff680a62 run=41719429655 result=success
+ci-hygiene (failfast)	Check changed CI and exercise the rule	2026-11-03T21:11:15.2599094Z PASS: CI hygiene; violations=0; existing debt={'failfast': 507}
+ci-hygiene (failfast)	Check changed CI and exercise the rule	2026-11-03T21:11:15.4922545Z PASS: Actions explicit bash is strict; default compound requires preamble; PowerShell requires both settings; masking remains rejected
+ci-hygiene (failfast)	Check changed CI and exercise the rule	2026-11-03T21:11:15.4924099Z PASS: single/heredoc/quoted/continued commands exempt; multi/pipeline/and/semicolon/control strict
+ci-hygiene (failfast)	Check changed CI and exercise the rule	2026-11-03T21:11:15.4925112Z PASS: clean workflow accepted; one-change failfast control rejected
+ci-hygiene (failfast)	Check changed CI and exercise the rule	2026-11-03T21:11:15.4926273Z expected=command success; actual=exit 37 command=python -c "raise SystemExit(37)"; candidate=<temporary>/step.sh:1
+ci-hygiene (failfast)	Check changed CI and exercise the rule	2026-11-03T21:11:15.4927293Z PASS: runtime failfast

@@ -59,5 +59,18 @@
       "run": "python tests/reader_same_source/bounded_txt_guard.py --source \"$env:GITHUB_SHA\" --report build/composition-source-windows.json\nif ($LASTEXITCODE) { throw 'Composition source admission failed' }\npython -m py_compile tests/windows_organization_projection/check_ui.py tests/windows_organization_projection/cloud_ui.py tests/windows_organization_projection/verify.py\nif ($LASTEXITCODE) { throw 'Driver syntax failed' }\n",
       "in_baseline": true
     }
+  },
+  "core_branches_verified": [
+    "codex/framework",
+    "ledger/base-20261103"
+  ],
+  "rule_locations": {
+    "branch_classifier": 87,
+    "shell_policy": 97,
+    "explicit_bash": 101,
+    "powershell": 103,
+    "default_or_custom_compound": 107,
+    "continue_on_error": 159,
+    "masking": 168
   }
 }

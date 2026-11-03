@@ -9,4 +9,4 @@ Applied original ruleset 25700819: [reading-required/app15368] → [reading-requ
 Owner authorized a dedicated ledger/base evaluate ruleset. Creation was attempted exactly with enforcement=evaluate, ref refs/heads/ledger/base-20261103, only reading-required-core plus deletion/non-fast-forward, bypass empty. GitHub returned HTTP 422: Enforcement evaluate option is not supported on this plan. Please upgrade to Enterprise to enable it. No staging id was issued, no active fallback was attempted.
 
 
-C draft #31 targets ledger/base containing V 34278023. Actual C workflow run list is empty ([skip ci]); both added ledger workflows pass narrowed hygiene. P #30 remains draft. No catalog/assertion/SDK version change, default branch switch, force push or full native matrix run.
+C #31 merged into ledger/base (head d0c95336, merge68cc0ec5); the late handoff receipt and R-entry records merged through follow-up #34 (merge071c7914). Actual C workflow run list is empty ([skip ci]); both added ledger workflows pass narrowed hygiene. P #30 remains draft. No catalog/assertion/SDK version change, default branch switch, force push or full native matrix run.
