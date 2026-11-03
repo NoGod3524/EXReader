@@ -19,6 +19,55 @@ env:
   PYTHONUTF8: '1'
   EXR_APPLE_SDK_VERSION: '3.42.0'
 jobs:
+  android:
+    if: contains(github.event.head_commit.message, '[F03-ANDROID]')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      ORG_GRADLE_PROJECT_exrSdkVersion: '3.42.0'
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.9'}
+      - name: Exact source SDK and frozen parser admission
+        run: |
+          python -m pip install PyYAML ninja==1.11.1.1
+          python tests/f03_six_host_20261103/run.py admit
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+      - name: Build actual raw3 synchronization host and native test APKs
+        run: python tests/f03_six_host_20261103/run.py android-build
+      - name: Enable actual emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Retain native organization UI recovery and synchronization regressions
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: python tests/f03_six_host_20261103/run.py android-retained
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f03-six-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f03-android-sync/
+            build/wave3/artifacts/
+            build/wave3/logs/
+            build/wave3/network-fixture/public/
+            !build/**/*.key
+          if-no-files-found: error
   gtk:
     if: contains(github.event.head_commit.message, '[F03-SIX-HOST]')
     runs-on: ubuntu-22.04
@@ -67,7 +116,7 @@ jobs:
             !build/**/connection.json
           if-no-files-found: error
   windows:
-    if: contains(github.event.head_commit.message, '[F03-SIX-HOST]')
+    if: contains(github.event.head_commit.message, '[F03-SIX-HOST]') || contains(github.event.head_commit.message, '[F03-WINDOWS]')
     runs-on: windows-2022
     timeout-minutes: 90
     steps:

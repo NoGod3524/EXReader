@@ -25,6 +25,7 @@ EXACT_PATHS = {
     "examples/apple/HostCatalog.swift", "examples/apple/HostModel.swift", "examples/apple/HostViews.swift",
     "tests/dot_f03_same_source_20261031/AppleOrganizationInteropTests.swift",
     "tests/dot_f03_same_source_20261031/windows.py", "tests/dot_f03_same_source_20261031/gtk.py",
+    "tests/dot_f03_same_source_20261031/build.py",
     ".github/workflows/f03-six-host-20261103.yml",
     "docs/reader-total-progress/F03_SIX_HOST_20261103.md",
 }
@@ -134,15 +135,123 @@ def apple(platform, receive):
                         "original_test_sha256": identity.digest(tests / "OrganizationUITests.swift"),
                         "complete_product_accepted": False})
 
+def android_build():
+    identity = setup()
+    stamp = admission()
+    require(sys.platform.startswith("linux"), "Android compiler requires Linux runner")
+    os.environ["ORG_GRADLE_PROJECT_exrSdkVersion"] = "3.42.0"
+    builder = importlib.import_module("build")
+    changes = []
+    builder.build_linux_recipe("android", changes)
+    # The original recipe deliberately compiles the synchronization profile.
+    # Add the F03 receiver to its complete generated UI source set.
+    ui = ROOT / "build/wave3/candidate/java/org/exreader/host/uitest"
+    shutil.copyfile(LEGACY / "android/OrganizationInteropTest.java", ui / "OrganizationInteropTest.java")
+    work = ROOT / "build/f03-android-sync"
+    work.mkdir()
+    staged = work / "native-tests"
+    shutil.copytree(ROOT / "examples/android/app/src/androidTest/java", staged)
+    overlay = ROOT / "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host"
+    for name in ("CatalogStoreTest", "ImportMappingTest", "OrganizationTest", "OrganizationBootstrapRecoveryTest"):
+        shutil.copyfile(overlay / (name + ".java"), staged / "org/exreader/host" / (name + ".java"))
+    init = work / "tests.gradle"
+    init.write_text("gradle.beforeProject { p -> if (p.path == ':app') { "
+                    "p.pluginManager.withPlugin('com.android.application') { "
+                    "p.android.sourceSets.androidTest.java.setSrcDirs([new File('" + staged.as_posix() + "')]) } } }\n")
+    sdk, products = ROOT / "build/wave3/sdk-stage", ROOT / "build/wave3/stage"
+    args = ["gradle", "-p", "examples/android", "--no-daemon", "--stacktrace",
+            "-I", str(ROOT / "tests/reader_wave3_c11/candidate.init.gradle"), "-I", str(init),
+            "-PexrSdk=" + str(sdk), "-PexrProduct=" + str(products), "-PexrSdkVersion=3.42.0"]
+    for flag in ("Sync", "Search", "Navigation", "Reading", "Preferences", "SelectorBytes", "Wave3"):
+        args.append("-Pexr" + flag + "=true")
+    for flag in ("Wave3Prefix", "SearchPrefix", "NavigationPrefix", "PreferencesPrefix", "Dav", "Sideload"):
+        args.append("-Pexr" + flag + "=" + str(products))
+    identity.write_json(work / "gradle-args.json", args)
+    run(*args, "-PexrTestRunner=org.exreader.host.OrganizationTest", ":app:assembleDebugAndroidTest",
+        ":uitest:assembleDebugAndroidTest")
+    shutil.copyfile(ROOT / "examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+                    work / "organization-test.apk")
+    shutil.copyfile(ROOT / "examples/android/uitest/build/outputs/apk/androidTest/debug/uitest-debug-androidTest.apk",
+                    ROOT / "build/wave3/artifacts/uitest-debug-androidTest.apk")
+    run(*args, "-PexrTestRunner=org.exreader.host.OrganizationBootstrapRecoveryTest", ":app:assembleDebugAndroidTest")
+    shutil.copyfile(ROOT / "examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+                    work / "recovery-test.apk")
+    identity.write_json(work / "build.json", {**stamp, "sdk_version": "3.42.0", "sdk_source": SDK,
+                        "operation_completed": True, "profile": "raw3-wave3-sync",
+                        "program_sha256": identity.digest(ROOT / "build/wave3/artifacts/app-debug.apk"),
+                        "in_memory_version_adapters": changes, "complete_product_accepted": False})
+
+def android_retained():
+    identity = setup()
+    stamp = admission()
+    sys.path.insert(0, str(LEGACY))
+    from android import adb
+    work = ROOT / "build/f03-android-sync"
+    artifacts = ROOT / "build/wave3/artifacts"
+    output = work / "retained"
+    output.mkdir()
+    adb("install", "-r", "-t", artifacts / "app-debug.apk")
+    adb("install", "-r", "-t", artifacts / "organization-debug-androidTest.apk")
+    run(sys.executable, "tests/reader_android_organization_sync/run.py", "--fixture",
+        "build/wave3/network-fixture", "--output", str(output / "original-sync"))
+    adb("install", "-r", "-t", work / "organization-test.apk")
+    common = sum((["-e", key, value] for key, value in stamp.items()), [])
+    raw = adb("shell", "am", "instrument", "-w", "-r", *common,
+              "org.exreader.host.test/org.exreader.host.OrganizationTest", timeout=900)
+    (output / "native.txt").write_bytes(raw)
+    native = json.loads(adb("exec-out", "run-as", "org.exreader.host", "cat", "files/organization-report.json"))
+    identity.same_identity(native, stamp)
+    require(native["count"] == 8 and native["failed"] == 0 and all(r["pass"] is True for r in native["checks"]),
+            "native organization cases failed or missing")
+    require(b"OK (8 tests)" in raw and b"FAILURES" not in raw, "native organization instrumentation failed")
+    identity.write_json(output / "native.json", native)
+    raw = adb("shell", "am", "instrument", "-w", "-r", "-e", "phase", "seed-ui", *common,
+              "org.exreader.host.test/org.exreader.host.OrganizationTest", timeout=900)
+    (output / "seed-ui.txt").write_bytes(raw)
+    require(b"EXR_ORGANIZATION_PHASE seed-ui" in raw, "original UI seed failed")
+    for name in ("uitest-debug.apk", "uitest-debug-androidTest.apk"):
+        adb("install", "-r", "-t", artifacts / name)
+    adb("shell", "pm", "clear", "org.exreader.host.uitest")
+    args = sum((["-e", "exr_" + key, value] for key, value in stamp.items()), [])
+    raw = adb("shell", "am", "instrument", "-w", "-r", "-e", "disableAnalytics", "true",
+              "-e", "class", "org.exreader.host.uitest.OrganizationInteropTest#organize", *args,
+              "org.exreader.host.uitest.test/androidx.test.runner.AndroidJUnitRunner", timeout=1200)
+    (output / "ui.txt").write_bytes(raw)
+    adb("pull", "/sdcard/Android/data/org.exreader.host.uitest/files/organization-evidence", output / "ui")
+    ui = json.loads((output / "ui/validation.json").read_text())
+    identity.same_identity(ui, stamp)
+    require(ui["passed"] == 8 and ui["failed"] == 0 and ui["skipped"] == 0 and len(ui["cases"]) == 8,
+            "original organization UI cases failed or skipped")
+    require(b"OK (1 test)" in raw and b"FAILURES" not in raw, "organization UI instrumentation failed")
+    adb("install", "-r", "-t", work / "recovery-test.apk")
+    raw = adb("shell", "am", "instrument", "-w", "-r", *common,
+              "org.exreader.host.test/org.exreader.host.OrganizationBootstrapRecoveryTest", timeout=900)
+    (output / "recovery.txt").write_bytes(raw)
+    recovery = json.loads(adb("exec-out", "run-as", "org.exreader.host", "cat", "files/f03-bootstrap-recovery.json"))
+    identity.write_json(output / "recovery.json", recovery)
+    identity.same_identity(recovery, stamp)
+    require(recovery["count"] == 12 and recovery["failed"] == 0 and
+            all(row["passed"] is True and row["source_preserved"] is True for row in recovery["checks"]),
+            "recovery cases failed or missing")
+    require(b"OK (12 tests)" in raw and b"FAILURES" not in raw, "recovery instrumentation failed")
+    identity.write_json(output / "result.json", {**stamp, "accepted": True, "native_checks": 8,
+                        "ui_checks": 8, "recovery_checks": 12, "sync_checks": 5,
+                        "program_sha256": identity.digest(artifacts / "app-debug.apk"),
+                        "full_F03_accepted": False, "complete_product_accepted": False})
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("action", choices=["admit", "legacy", "apple", "apple-receive"])
+    p.add_argument("action", choices=["admit", "legacy", "apple", "apple-receive", "android-build", "android-retained"])
     p.add_argument("args", nargs=argparse.REMAINDER)
     a = p.parse_args()
     if a.action == "admit":
         print(json.dumps(admission()))
     elif a.action == "legacy":
         legacy(a.args[0], a.args[1:])
+    elif a.action == "android-build":
+        android_build()
+    elif a.action == "android-retained":
+        android_retained()
     else:
         apple(a.args[0], a.action == "apple-receive")
 
