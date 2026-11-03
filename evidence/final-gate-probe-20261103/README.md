@@ -92,3 +92,13 @@ AssertionError
 ```
 
 Full run/job conclusions are in probe.json; exact first-error blocks, job IDs and original log SHA-256 are in failure-details.json. Runtime timestamps/ANSI transport formatting are omitted from excerpts; diagnostic text is retained. No errors were repaired or assertions changed in this probe.
+
+
+## Owner-authorized P self-defect repairs after run 41726208700
+
+1. Producer-only E3 fix: tools/run_benchmarks.py keeps passed equal to measurement validity. advisory=true and accepted=false remain independent. Removed the forced passed=false assignment; tests/check_benchmark.py is byte-for-byte unchanged. The unchanged benchmark test passed locally with the existing native benchmark producer, and its timeout/invalid-report assertions remain intact.
+2. CI baseline identity is now (file, content_sha256, k-th occurrence in file), not a line number. Movement preserves identity; content edits and extra duplicates are new debt. Existing same-content duplicates are distinguished by occurrence. Exact-file scope and shrinking-only rule obligations remain enforced.
+
+Only the existing 533 entries were mapped: 531 content identities, 533 retained rule bindings, difference -2 identities because two physical lines each had both failfast and negative. Pattern counts remain failfast507 / negative15 / diagnostic7 / packaging4. Unmappable entries: **none**. No new waiver was generated. The two combined identities and mapping metadata are in baseline-remap.json.
+
+Local checks cover movement, repeated-content ordinals, new debt, changed content, stale entries and refusal to grow the baseline. No original benchmark assertion was changed or relaxed. A new native dispatch is authorized only after these repairs are integrated; core remains conditional on that native run being all green.
