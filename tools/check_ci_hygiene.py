@@ -134,6 +134,9 @@ def normalise_baseline(rows, text_for):
     for row in rows:
         if 'content_sha256' in row:
             key = baseline_key(row)
+            if key in declared:
+                raise ValueError('duplicate content identity')
+            declared.add(key)
             patterns = row['patterns']
             if key in result:
                 raise ValueError('duplicate content identity')
@@ -304,12 +307,15 @@ def check(root, base=None, selected=None):
             except (KeyError, ValueError, OSError, subprocess.SubprocessError) as error:
                 print(f'ERROR: {BASELINE}:1 expected=valid frozen base; actual={error}')
                 return 1
-    allowed, files, locations = {}, {}, {}
+    allowed, files, locations, declared = {}, {}, {}, set()
     for row in rows:
         name = row.get('file', '')
         reason, number = None, 1
         try:
             key = baseline_key(row)
+            if key in declared:
+                raise ValueError('duplicate content identity')
+            declared.add(key)
             patterns = row['patterns']
             if not isinstance(patterns, list) or not patterns or len(set(patterns)) != len(patterns) or not set(patterns) <= set(RULES):
                 raise ValueError('invalid rule obligations')
