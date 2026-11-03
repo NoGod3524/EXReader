@@ -1,0 +1,656 @@
+{
+  "artifacts": [
+    {
+      "id": 13261900834,
+      "name": "f03-sdk-windows-41694251471-1",
+      "bytes": 36084253,
+      "sha256": "1482558adf35c4843ad2ced65098333ed6b90716c6808817057156bc0c34a5ef",
+      "created_at": "2026-11-03T18:41:28Z",
+      "expires_at": "2027-02-01T18:29:08Z"
+    },
+    {
+      "id": 13261840048,
+      "name": "f03-sdk-gtk-41694251471-1",
+      "bytes": 23504349,
+      "sha256": "a0a83d893d3d3a989f6b4c8140affd1488ea9e868cd883173afa78471a62a163",
+      "created_at": "2026-11-03T18:35:30Z",
+      "expires_at": "2027-02-01T18:29:08Z"
+    },
+    {
+      "id": 13261530995,
+      "name": "f03-sdk-result-41694251471-1",
+      "bytes": 1261,
+      "sha256": "e3cb5f5f435026368892cac90b34e9d3c3218c8b494c992f1bcad957c36cd15b",
+      "created_at": "2026-11-03T18:42:15Z",
+      "expires_at": "2027-02-01T18:29:08Z"
+    },
+    {
+      "id": 13260756424,
+      "name": "f03-sdk-build-only-iphone-41694251471-1",
+      "bytes": 2940,
+      "sha256": "381e059049e0f1ce729b420695e3340715165a3a0be960d80eb6025e26791004",
+      "created_at": "2026-11-03T18:34:31Z",
+      "expires_at": "2027-02-01T18:29:08Z"
+    },
+    {
+      "id": 13260396683,
+      "name": "f03-sdk-build-only-ipad-41694251471-1",
+      "bytes": 2928,
+      "sha256": "d144f5461c1eef11dacd3071a936b5c6d1eb07a19c4b15379071a5ebacb52c6c",
+      "created_at": "2026-11-03T18:33:37Z",
+      "expires_at": "2027-02-01T18:29:08Z"
+    },
+    {
+      "id": 13258946647,
+      "name": "f03-sdk-build-only-macos-41694251471-1",
+      "bytes": 2970,
+      "sha256": "1859797869448050c5a2068ccbf2cd8856db3c1cd0b3f95abea6e6a5868c09c1",
+      "created_at": "2026-11-03T18:34:14Z",
+      "expires_at": "2027-02-01T18:29:08Z"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 126120491776,
+      "name": "apple-build (macos)",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Compile installed SDK and shipped Apple example only",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 8,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 9,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 126120492125,
+      "name": "apple-build (iphone)",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Compile installed SDK and shipped Apple example only",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 8,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 9,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 126120492259,
+      "name": "apple-build (ipad)",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Compile installed SDK and shipped Apple example only",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 8,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 9,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 126120492531,
+      "name": "gtk",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Admit exact SDK source and current example sources",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Native prerequisites",
+          "number": 5,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build SDK 3.42 installed product and actual GTK host",
+          "number": 6,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Author actual organization history and receive it in fresh GTK examples",
+          "number": 7,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 8,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "number": 15,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 16,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 17,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 126124038150,
+      "name": "windows",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run ilammy/msvc-dev-cmd@v1",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Admit current SDK and unfrozen example sources",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build with explicit unlocked SDK 3.42 example builder",
+          "number": 5,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "number": 6,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Receive all six organization checkpoints through native Windows UI",
+          "number": 7,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 8,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 16,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 17,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 126127326225,
+      "name": "audit",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify exact SDK sources and actual example receive evidence",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 5,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "number": 9,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 10,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 11,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "source_sha": "c583ebe7dadf971eed680fea60ab850bbb7a41ce",
+  "run_id": "41694251471",
+  "attempt": "1",
+  "copied_members": [
+    {
+      "path": "receipts/gtk/create/projection.json",
+      "bytes": 5223,
+      "sha256": "9ff5bbdb9bcedf4929057136e2248b4c45a2f6d5ba643fd51d1066f833f715e9",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/create/projection.json"
+    },
+    {
+      "path": "receipts/gtk/create/requests.json",
+      "bytes": 25747,
+      "sha256": "ca93c6110147a7828209bc26621bf98436e2f3c979e9eeb2b0055658f8f7ffe7",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/create/wire/requests.json"
+    },
+    {
+      "path": "screenshots/gtk/create/received.png",
+      "bytes": 30729,
+      "sha256": "c9b3f932d1c0f09971db9bd5ead63985699193a177cbcd6027a820134cdd5d84",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/create/received.png"
+    },
+    {
+      "path": "screenshots/gtk/create/restarted.png",
+      "bytes": 22331,
+      "sha256": "bb201f23430effbbbe294066537b70e067179adf10fc684ce001648084970954",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/create/restarted.png"
+    },
+    {
+      "path": "receipts/gtk/delete/projection.json",
+      "bytes": 6532,
+      "sha256": "988b578fb7046528a4cc45a34134a2dcf771f14bc9161528e54e05a7ab5379a3",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/delete/projection.json"
+    },
+    {
+      "path": "receipts/gtk/delete/requests.json",
+      "bytes": 26320,
+      "sha256": "38697a2d8dce026e47c3e77e89ff341381b8d62a46497725aee7d57fece3d3af",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/delete/wire/requests.json"
+    },
+    {
+      "path": "screenshots/gtk/delete/received.png",
+      "bytes": 30729,
+      "sha256": "c9b3f932d1c0f09971db9bd5ead63985699193a177cbcd6027a820134cdd5d84",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/delete/received.png"
+    },
+    {
+      "path": "screenshots/gtk/delete/restarted.png",
+      "bytes": 22331,
+      "sha256": "bb201f23430effbbbe294066537b70e067179adf10fc684ce001648084970954",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/delete/restarted.png"
+    },
+    {
+      "path": "receipts/gtk/restore/projection.json",
+      "bytes": 7953,
+      "sha256": "3695f3e11ff62133b25f31f465fd767c1407cc85be127132229b3ca9cc153956",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/restore/projection.json"
+    },
+    {
+      "path": "receipts/gtk/restore/requests.json",
+      "bytes": 26893,
+      "sha256": "6ab401109cee7bd582f793ea03229425e028d49d27acc646dc86dbbfddfc4232",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/restore/wire/requests.json"
+    },
+    {
+      "path": "screenshots/gtk/restore/received.png",
+      "bytes": 30729,
+      "sha256": "c9b3f932d1c0f09971db9bd5ead63985699193a177cbcd6027a820134cdd5d84",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/restore/received.png"
+    },
+    {
+      "path": "screenshots/gtk/restore/restarted.png",
+      "bytes": 22331,
+      "sha256": "bb201f23430effbbbe294066537b70e067179adf10fc684ce001648084970954",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/restore/restarted.png"
+    },
+    {
+      "path": "receipts/gtk/member-remove/projection.json",
+      "bytes": 9332,
+      "sha256": "74010e89fb91c5041a22eb1431556c16f592f6dd682a2259ba55aa036bcff25e",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/member-remove/projection.json"
+    },
+    {
+      "path": "receipts/gtk/member-remove/requests.json",
+      "bytes": 27466,
+      "sha256": "cd4f015cf218009bae30f70b2ff3fdebb8c47e8ba5e82fe7eb139c5f01bb8451",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/member-remove/wire/requests.json"
+    },
+    {
+      "path": "screenshots/gtk/member-remove/received.png",
+      "bytes": 30729,
+      "sha256": "c9b3f932d1c0f09971db9bd5ead63985699193a177cbcd6027a820134cdd5d84",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/member-remove/received.png"
+    },
+    {
+      "path": "screenshots/gtk/member-remove/restarted.png",
+      "bytes": 22331,
+      "sha256": "bb201f23430effbbbe294066537b70e067179adf10fc684ce001648084970954",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/member-remove/restarted.png"
+    },
+    {
+      "path": "receipts/gtk/member-restore/projection.json",
+      "bytes": 12040,
+      "sha256": "625d545c3096b67d25df16b6bae77ec790b1ec282066ce922f952ef3e5ba1146",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/member-restore/projection.json"
+    },
+    {
+      "path": "receipts/gtk/member-restore/requests.json",
+      "bytes": 28039,
+      "sha256": "a635cb959784622fea90dd0ab6a8b896a02eeb61cb0b60707bfad85b524ddfde",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/member-restore/wire/requests.json"
+    },
+    {
+      "path": "screenshots/gtk/member-restore/received.png",
+      "bytes": 30729,
+      "sha256": "c9b3f932d1c0f09971db9bd5ead63985699193a177cbcd6027a820134cdd5d84",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/member-restore/received.png"
+    },
+    {
+      "path": "screenshots/gtk/member-restore/restarted.png",
+      "bytes": 22331,
+      "sha256": "bb201f23430effbbbe294066537b70e067179adf10fc684ce001648084970954",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/member-restore/restarted.png"
+    },
+    {
+      "path": "receipts/gtk/restart/projection.json",
+      "bytes": 12040,
+      "sha256": "625d545c3096b67d25df16b6bae77ec790b1ec282066ce922f952ef3e5ba1146",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/restart/projection.json"
+    },
+    {
+      "path": "receipts/gtk/restart/requests.json",
+      "bytes": 28039,
+      "sha256": "a635cb959784622fea90dd0ab6a8b896a02eeb61cb0b60707bfad85b524ddfde",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/restart/wire/requests.json"
+    },
+    {
+      "path": "screenshots/gtk/restart/received.png",
+      "bytes": 30729,
+      "sha256": "c9b3f932d1c0f09971db9bd5ead63985699193a177cbcd6027a820134cdd5d84",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/restart/received.png"
+    },
+    {
+      "path": "screenshots/gtk/restart/restarted.png",
+      "bytes": 22331,
+      "sha256": "bb201f23430effbbbe294066537b70e067179adf10fc684ce001648084970954",
+      "artifact_id": 13261840048,
+      "archive_member": "f03-sdk-receipts/gtk/restart/restarted.png"
+    },
+    {
+      "path": "receipts/windows/create/projection.json",
+      "bytes": 5261,
+      "sha256": "9dd747d56ee2faa2eb4ce9d5b2c9d553e566e2bfc73f01f049877e2a21759a85",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/create/projection.json"
+    },
+    {
+      "path": "receipts/windows/create/requests.json",
+      "bytes": 25747,
+      "sha256": "ca93c6110147a7828209bc26621bf98436e2f3c979e9eeb2b0055658f8f7ffe7",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/create/wire/requests.json"
+    },
+    {
+      "path": "receipts/windows/delete/projection.json",
+      "bytes": 6570,
+      "sha256": "c52bdf5f481f059845024189859637152c5360a8bae7021a251e1a1385a5218b",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/delete/projection.json"
+    },
+    {
+      "path": "receipts/windows/delete/requests.json",
+      "bytes": 26320,
+      "sha256": "38697a2d8dce026e47c3e77e89ff341381b8d62a46497725aee7d57fece3d3af",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/delete/wire/requests.json"
+    },
+    {
+      "path": "receipts/windows/restore/projection.json",
+      "bytes": 7991,
+      "sha256": "7ca635ca7346be073aa0fa17b80214e9bc98457194b68d1330bc8accae4640bf",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/restore/projection.json"
+    },
+    {
+      "path": "receipts/windows/restore/requests.json",
+      "bytes": 26893,
+      "sha256": "6ab401109cee7bd582f793ea03229425e028d49d27acc646dc86dbbfddfc4232",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/restore/wire/requests.json"
+    },
+    {
+      "path": "receipts/windows/member-remove/projection.json",
+      "bytes": 9370,
+      "sha256": "d8c50a27ff3fc7b7219c952c92bc17ec78b2ba924a08d89214eb0e2ac651135c",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/member-remove/projection.json"
+    },
+    {
+      "path": "receipts/windows/member-remove/requests.json",
+      "bytes": 27466,
+      "sha256": "cd4f015cf218009bae30f70b2ff3fdebb8c47e8ba5e82fe7eb139c5f01bb8451",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/member-remove/wire/requests.json"
+    },
+    {
+      "path": "receipts/windows/member-restore/projection.json",
+      "bytes": 12078,
+      "sha256": "bc1d4b0332f9f98842b3915be1f454003e5aa6935d2774d61f7ef3dd932e8f42",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/member-restore/projection.json"
+    },
+    {
+      "path": "receipts/windows/member-restore/requests.json",
+      "bytes": 28039,
+      "sha256": "a635cb959784622fea90dd0ab6a8b896a02eeb61cb0b60707bfad85b524ddfde",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/member-restore/wire/requests.json"
+    },
+    {
+      "path": "receipts/windows/restart/projection.json",
+      "bytes": 12078,
+      "sha256": "bc1d4b0332f9f98842b3915be1f454003e5aa6935d2774d61f7ef3dd932e8f42",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/restart/projection.json"
+    },
+    {
+      "path": "receipts/windows/restart/requests.json",
+      "bytes": 28039,
+      "sha256": "a635cb959784622fea90dd0ab6a8b896a02eeb61cb0b60707bfad85b524ddfde",
+      "artifact_id": 13261900834,
+      "archive_member": "f03-sdk-receipts/windows/restart/wire/requests.json"
+    },
+    {
+      "path": "audit-result.zip",
+      "bytes": 1261,
+      "sha256": "e3cb5f5f435026368892cac90b34e9d3c3218c8b494c992f1bcad957c36cd15b",
+      "artifact_id": 13261530995,
+      "archive_member": null
+    },
+    {
+      "path": "audit-result.json",
+      "bytes": 2820,
+      "sha256": "52e6814d05e65f76064994b5538c637fc41a7c13427d6e7f53e254852c079f62",
+      "artifact_id": 13261530995,
+      "archive_member": "result.json"
+    }
+  ],
+  "expiry_rule": "90 days from workflow run creation; API expires_at confirmed"
+}

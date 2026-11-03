@@ -1,0 +1,472 @@
+{
+  "source_sha": "c583ebe7dadf971eed680fea60ab850bbb7a41ce",
+  "run_id": "41694251471",
+  "attempt": "1",
+  "accepted": true,
+  "jobs": [
+    {
+      "id": 126120491776,
+      "name": "apple-build (macos)",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Compile installed SDK and shipped Apple example only",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 8,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 9,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 126120492125,
+      "name": "apple-build (iphone)",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Compile installed SDK and shipped Apple example only",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 8,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 9,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 126120492259,
+      "name": "apple-build (ipad)",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Compile installed SDK and shipped Apple example only",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 8,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 9,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 126120492531,
+      "name": "gtk",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Admit exact SDK source and current example sources",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Native prerequisites",
+          "number": 5,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build SDK 3.42 installed product and actual GTK host",
+          "number": 6,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Author actual organization history and receive it in fresh GTK examples",
+          "number": 7,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 8,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "number": 15,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 16,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 17,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 126124038150,
+      "name": "windows",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run ilammy/msvc-dev-cmd@v1",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Admit current SDK and unfrozen example sources",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build with explicit unlocked SDK 3.42 example builder",
+          "number": 5,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "number": 6,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Receive all six organization checkpoints through native Windows UI",
+          "number": 7,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 8,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 16,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 17,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 126127326225,
+      "name": "audit",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify exact SDK sources and actual example receive evidence",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "number": 5,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "number": 9,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "number": 10,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "number": 11,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "host": "gtk",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "fd898aad77e5464ebcb1ec56dc6fab0231f09e32cb0adaef798e6231010bebc9",
+      "program_sha256": "65fe586eb11690d51e4a9b0ec1ac93b6acf187baffd6d8f54d84c1c81c4a62a1",
+      "phase": "create",
+      "receipt": "receipts/gtk/create/projection.json",
+      "request_log": "receipts/gtk/create/requests.json",
+      "received_screenshot": "screenshots/gtk/create/received.png",
+      "restart_screenshot": "screenshots/gtk/create/restarted.png"
+    },
+    {
+      "host": "windows",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "fd898aad77e5464ebcb1ec56dc6fab0231f09e32cb0adaef798e6231010bebc9",
+      "program_sha256": "ff2b59cdba5e79fbcc3b1073dcbcade9a07169ca5828e5bdde504a01b0cc56cc",
+      "phase": "create",
+      "receipt": "receipts/windows/create/projection.json",
+      "request_log": "receipts/windows/create/requests.json"
+    },
+    {
+      "host": "gtk",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "d423803e4d0808828da26b58cee70c28bcbe2b0b592c0d57742748df6ad427f5",
+      "program_sha256": "65fe586eb11690d51e4a9b0ec1ac93b6acf187baffd6d8f54d84c1c81c4a62a1",
+      "phase": "delete",
+      "receipt": "receipts/gtk/delete/projection.json",
+      "request_log": "receipts/gtk/delete/requests.json",
+      "received_screenshot": "screenshots/gtk/delete/received.png",
+      "restart_screenshot": "screenshots/gtk/delete/restarted.png"
+    },
+    {
+      "host": "windows",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "d423803e4d0808828da26b58cee70c28bcbe2b0b592c0d57742748df6ad427f5",
+      "program_sha256": "ff2b59cdba5e79fbcc3b1073dcbcade9a07169ca5828e5bdde504a01b0cc56cc",
+      "phase": "delete",
+      "receipt": "receipts/windows/delete/projection.json",
+      "request_log": "receipts/windows/delete/requests.json"
+    },
+    {
+      "host": "gtk",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "39e58effda054841bafa771ef1cc1443fd8a774bc7d82917e8409592aa105735",
+      "program_sha256": "65fe586eb11690d51e4a9b0ec1ac93b6acf187baffd6d8f54d84c1c81c4a62a1",
+      "phase": "restore",
+      "receipt": "receipts/gtk/restore/projection.json",
+      "request_log": "receipts/gtk/restore/requests.json",
+      "received_screenshot": "screenshots/gtk/restore/received.png",
+      "restart_screenshot": "screenshots/gtk/restore/restarted.png"
+    },
+    {
+      "host": "windows",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "39e58effda054841bafa771ef1cc1443fd8a774bc7d82917e8409592aa105735",
+      "program_sha256": "ff2b59cdba5e79fbcc3b1073dcbcade9a07169ca5828e5bdde504a01b0cc56cc",
+      "phase": "restore",
+      "receipt": "receipts/windows/restore/projection.json",
+      "request_log": "receipts/windows/restore/requests.json"
+    },
+    {
+      "host": "gtk",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "f37d51f4d661566763bd32e3b88399d835965c321f22ee1e317750ccbdb1e7f7",
+      "program_sha256": "65fe586eb11690d51e4a9b0ec1ac93b6acf187baffd6d8f54d84c1c81c4a62a1",
+      "phase": "member-remove",
+      "receipt": "receipts/gtk/member-remove/projection.json",
+      "request_log": "receipts/gtk/member-remove/requests.json",
+      "received_screenshot": "screenshots/gtk/member-remove/received.png",
+      "restart_screenshot": "screenshots/gtk/member-remove/restarted.png"
+    },
+    {
+      "host": "windows",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "f37d51f4d661566763bd32e3b88399d835965c321f22ee1e317750ccbdb1e7f7",
+      "program_sha256": "ff2b59cdba5e79fbcc3b1073dcbcade9a07169ca5828e5bdde504a01b0cc56cc",
+      "phase": "member-remove",
+      "receipt": "receipts/windows/member-remove/projection.json",
+      "request_log": "receipts/windows/member-remove/requests.json"
+    },
+    {
+      "host": "gtk",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "67755b528f76bf1462edaa06c383de5489b5b93673a089e0ab5036117704fb7e",
+      "program_sha256": "65fe586eb11690d51e4a9b0ec1ac93b6acf187baffd6d8f54d84c1c81c4a62a1",
+      "phase": "member-restore",
+      "receipt": "receipts/gtk/member-restore/projection.json",
+      "request_log": "receipts/gtk/member-restore/requests.json",
+      "received_screenshot": "screenshots/gtk/member-restore/received.png",
+      "restart_screenshot": "screenshots/gtk/member-restore/restarted.png"
+    },
+    {
+      "host": "windows",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "67755b528f76bf1462edaa06c383de5489b5b93673a089e0ab5036117704fb7e",
+      "program_sha256": "ff2b59cdba5e79fbcc3b1073dcbcade9a07169ca5828e5bdde504a01b0cc56cc",
+      "phase": "member-restore",
+      "receipt": "receipts/windows/member-restore/projection.json",
+      "request_log": "receipts/windows/member-restore/requests.json"
+    },
+    {
+      "host": "gtk",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "67755b528f76bf1462edaa06c383de5489b5b93673a089e0ab5036117704fb7e",
+      "program_sha256": "65fe586eb11690d51e4a9b0ec1ac93b6acf187baffd6d8f54d84c1c81c4a62a1",
+      "phase": "restart",
+      "receipt": "receipts/gtk/restart/projection.json",
+      "request_log": "receipts/gtk/restart/requests.json",
+      "received_screenshot": "screenshots/gtk/restart/received.png",
+      "restart_screenshot": "screenshots/gtk/restart/restarted.png"
+    },
+    {
+      "host": "windows",
+      "native_sync_completed": true,
+      "restart_verified": true,
+      "snapshot_sha256": "67755b528f76bf1462edaa06c383de5489b5b93673a089e0ab5036117704fb7e",
+      "program_sha256": "ff2b59cdba5e79fbcc3b1073dcbcade9a07169ca5828e5bdde504a01b0cc56cc",
+      "phase": "restart",
+      "receipt": "receipts/windows/restart/projection.json",
+      "request_log": "receipts/windows/restart/requests.json"
+    }
+  ]
+}
