@@ -285,7 +285,7 @@ int main(int argc,char **argv){
   if(argc<4){std::cerr<<"usage: windows-owner-probe MODE WORK-DIR REAL-NUL-PDF [PHASE MARKER]\n";return 2;}
   current_mode=argv[1];fs::path work=fs::u8path(argv[2]),pdf=fs::u8path(argv[3]);
   try{
-    require(std::getenv("GITHUB_ACTIONS")&&std::string(std::getenv("GITHUB_ACTIONS"))=="true","Actions-only execution");require(!std::strcmp(exr_version(),"3.41.0"),"Exact installed SDK3.41.0");
+    require(std::getenv("GITHUB_ACTIONS")&&std::string(std::getenv("GITHUB_ACTIONS"))=="true","Actions-only execution");require(!std::strcmp(exr_version(),PROBE_SDK_VERSION),"Exact configured installed SDK version");
     if(current_mode=="suite"){
       group("actual fixed owner",[&]{fixed_suite(work,pdf);});group("compatibility sources",[&]{compatibility(work,pdf);});
 #ifdef EXR_READER_WINDOWS_RAW3
