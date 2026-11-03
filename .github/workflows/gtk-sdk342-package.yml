@@ -8,6 +8,7 @@ permissions:
   contents: read
 jobs:
   retained:
+    if: ${{ github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 150
     steps:
@@ -92,7 +93,7 @@ jobs:
           if-no-files-found: error
   authenticate:
     needs: retained
-    if: always()
+    if: ${{ always() && github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     permissions:
@@ -110,4 +111,82 @@ jobs:
         with:
           name: gtk-sdk342-authentication-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/gtk-sdk342-auth/
+          if-no-files-found: error
+
+  f05-admission:
+    name: F05 GTK admission
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.run_attempt == 1 }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py admit
+  f05-producer:
+    name: F05 GTK native producer
+    needs: f05-admission
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.run_attempt == 1 }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 170
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Original GTK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: F05 build
+        if: ${{ !cancelled() }}
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec build
+      - name: F05 prepare
+        if: ${{ !cancelled() }}
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec prepare
+      - name: F05 navigation
+        if: ${{ !cancelled() }}
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec navigation
+      - name: F05 folder
+        if: ${{ !cancelled() }}
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec folder
+      - name: F05 gui
+        if: ${{ !cancelled() }}
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec gui
+      - name: F05 retained48
+        if: ${{ !cancelled() }}
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec retained48
+      - name: F05 native6
+        if: ${{ !cancelled() }}
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec native6
+      - name: Preserve original evidence including failures
+        if: always()
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py collect
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f05-gtk-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f05-gtk-evidence/
+          if-no-files-found: error
+  f05-audit:
+    name: F05 GTK independent audit
+    needs: [f05-admission, f05-producer]
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.run_attempt == 1 }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate original producer and evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f05-gtk-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f05-gtk-audit/
           if-no-files-found: error
