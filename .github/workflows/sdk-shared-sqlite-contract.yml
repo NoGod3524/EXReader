@@ -89,9 +89,14 @@ jobs:
           ctest --test-dir build/sdk-integration -L FTS5 --output-on-failure \
             --output-junit "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci/fts5-integration.xml"
       - name: Reject actual Apple main and SDK binaries with embedded SQLite
+        # R blocker: real embedded controls must be verified in the R candidate round.
         run: |
-          sqlite_source=$(sed -n 's/^exreader_sqlite_source_SOURCE_DIR:[^=]*=//p' build/sdk-provider/CMakeCache.txt)
-          test -n "$sqlite_source"
+          if [ ! -s build/sdk-provider/provider-source.txt ]; then
+            echo "EXPECTED provider-source.txt at build/sdk-provider/provider-source.txt; got nothing"
+            find build -name CMakeCache.txt
+            exit 1
+          fi
+          sqlite_source=$(cat build/sdk-provider/provider-source.txt)
           python3 extras/sqlite-provider/apple-negative/check.py --prefix "$PWD/build/sdk-stage" \
             --consumer "$PWD/build/sdk-integration/shared-sqlite-consumer" \
             --map "$PWD/build/sdk-integration/consumer.map" --sqlite-source "$sqlite_source" \
@@ -106,6 +111,7 @@ jobs:
             evidence/sdk-shared-sqlite-provider-20261103/ci/
             build/sdk-stage/
             build/sdk-provider/sqlite-provider.map
+            build/sdk-provider/provider-source.txt
             build/sdk-integration/consumer.map
             build/sdk-apple-negatives/embedded-main.map
             build/sdk-core/CMakeCache.txt

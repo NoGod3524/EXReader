@@ -1,0 +1,3 @@
+EXPECTED provider-source.txt at build/sdk-provider/provider-source.txt; got nothing
+
+exit_code=1
