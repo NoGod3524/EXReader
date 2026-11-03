@@ -147,6 +147,49 @@ def run(cmd, cwd=None):
 
 SYM_LINE = re.compile(r'^\s*(?:[0-9A-Za-z]+:)?([0-9A-Fa-f]+)?\s*([A-Za-z_][^\s]*)\s*$')
 NM_POSIX = re.compile(r'^(\S+)\s+([A-Za-z?])\s+(\S+)$')
+RO_NAME = re.compile(r'^\s*Name:\s+([^\s(]+)')
+
+
+def classify_readobj(text):
+    """Parse llvm-readobj --symbols / --macho-dsymtab blocks.
+
+    A block starts at each `Name:` line and runs to the next one; a symbol is
+    undefined when its block mentions Undefined, weak when it mentions Weak.
+    """
+    defined, undefined, weak_def, weak_ref = [], [], [], []
+    cur = None
+
+    def finish(rec):
+        if not rec:
+            return
+        nm = rec['name'].lstrip('_')
+        if not nm.startswith('sqlite3_'):
+            return
+        if rec['undef']:
+            undefined.append(nm)
+            if rec['weak']:
+                weak_ref.append(nm)
+        else:
+            defined.append(nm)
+            if rec['weak']:
+                weak_def.append(nm)
+
+    for line in text.splitlines():
+        m = RO_NAME.match(line)
+        if m:
+            finish(cur)
+            cur = {'name': m.group(1), 'undef': False, 'weak': False}
+            continue
+        if cur is None:
+            continue
+        low = line.lower()
+        if 'undefined' in low:
+            cur['undef'] = True
+        if 'weak' in low:
+            cur['weak'] = True
+    finish(cur)
+    return {'defined': sorted(set(defined)), 'undefined': sorted(set(undefined)),
+            'weak_defined': sorted(set(weak_def)), 'weak_undefined': sorted(set(weak_ref))}
 
 
 def classify_nm(text):
@@ -191,7 +234,8 @@ def analyse_payload(target, kind, path):
     merged = {'defined': [], 'undefined': [], 'weak_defined': [], 'weak_undefined': []}
     for r in ops:
         if r.get('out'):
-            c = classify_nm(r['out'])
+            parser = classify_readobj if 'llvm-readobj' in r.get('cmd', '') else classify_nm
+            c = parser(r['out'])
             for k in merged:
                 merged[k].extend(c[k])
     entry = {'target': target, 'kind': kind, 'member': os.path.basename(path),
