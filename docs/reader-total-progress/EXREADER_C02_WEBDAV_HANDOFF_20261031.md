@@ -2037,3 +2037,51 @@ F08 remains at its previous failed, cleaned-up native attempt with no new native
 For the six responsibility slots at this snapshot: implementation 1 (F05 approved test-package candidate), review 1 (F09), documentation/coordination 1, waiting or blocked 3 (F03 six-target gap, F07 review/evidence blockers, F08 no new native authority). Diagnostic-only and test-result-wait slots are 0. These are responsibility states, not six active implementations, and do not count already completed analysis as active work.
 
 Previous storage measurements remain historical; no new scan, deletion or expansion occurred. Shared working trees and other owners' files remain protected. All builds, syntax/tests, fixtures and artifact parsing remain confined to their authorized Actions scope or an exact previously granted single-use exception; this document grants no new exception, CI, implementation scope or formal credit.
+
+
+## Hourly continuation snapshot: 2026-11-03 05:22 EST scheduled
+
+Actual save time: 2026-11-03T10:22:21.673665+00:00 / 2026-11-03T05:22:21.673665-05:00. Prior document bytes are preserved. This is a continuation snapshot, not a stop/completion instruction. The formal catalog remains 98 verified, 1 partial and 9 pending out of 108; no score was added.
+
+### F03 remains accepted only within its Android scope
+Independently verified R8 source 054df69524eed483759febdcc0ce20e634921f82 / run 41588932707/A1 is unchanged: accepted=true/problems=[], 17 upstream stages and 9 formal reports. Catalog F03 still requires six-target shared shelf/organization consistency and remains pending. old_apk_upgrade_accepted=false and complete_product=false remain. No new F03 execution occurred this hour.
+
+### F05 Android: real conflict and history-boundary scope now accepted
+The previously accepted read-only bridge run 41604711611 at 0e547 remains preserved, including original owner18, retained16/4PIDs/2blocking boundaries, bridge10 and parser10. The earlier e4bd validation failure is not rewritten.
+
+The separately approved 2A4M package was statically reviewed, corrected within scope and independently full-tree/trigger reviewed before its unique publication and dispatch. Source f162b7f4db9e14d3ba677c22160af218fcd108d3, parent 0e547, is on dot/f05-android-conflict-boundary-20261103. The Actions-isolated Debug catalog_fixture.inc copy preserves its exact original prefix and adds a test probe; repository product source, SDK and old tests remain unchanged. It follows the actual API macros, not an assumed raw_v3 store. The source inventory, generated input bytes, isolated APK installation and audit chain were checked. The missing unconditional Gradle subprojects and other static-review findings were corrected before execution.
+
+Unique run 41611865502/A1 completed SUCCESS:
+https://github.com/NoGod3524/EXReader/actions/runs/41611865502
+Admission 125835495923, producer 125835602150 and audit 125840725624 succeeded; the two old jobs were skipped. The single authorized 5+120+15 runner-minute budget was not expanded.
+
+Independent terminal review checked the original logs and authenticated producer-to-audit artifact chain. Original owner18, retained16/4PIDs/2boundaries and bridge10 passed. The audit-all acceptance requires the eight named new checks, exact count/pass and raw completion marker: real put-put, delete-put and restore behavior; 4095/4096 history boundary; 4097 rollback, replay and reopen. The 4096 limit is entity history, not merely returned-head count. No SQL-forged head state was substituted. Parser10 and the original device assertions remained.
+This is evidence from the real audit's mandatory validation plus original stdout. The independent reviewer did not download the ZIP again to reload each of the eight original case bodies.
+
+Producer log: 769660 bytes, SHA256 5b40edd5ce4da7cb0d62140c95732412387fb34e393762a97d7c3a56feb7bab5.
+Audit log: 135494 bytes, SHA256 9aa71a78c442874d3708ce20830ee44d8875dbde61ddc5de3ee51701412fe149.
+Producer artifact 13218794826: 96289230 bytes, SHA256 f78cae979cfbc875f65d2f274da4b8d40eed8766507dbd37bd0e5f8b9804bbf3.
+Audit artifact 13219907826: 96290023 bytes, SHA256 257750bdb931900d0012f68a6c2e145e867617fd87aaf32cce1e82f6f08b0de4.
+
+fullF05, UI, transport and formal acceptance remain false. In particular, this test-only native receive probe does not replace the old full-contract native-host/network/UI roles. The old contract explicitly says receiver_injection_allowed=false and module_probe_is_host=false. No verified Opus receipt or UI integration SHA, or new Windows/Apple/GTK F05 delivery, was obtained from this Android result.
+
+### F05 GTK: separately approved native recovery package under review, not run
+Read-only inspection of fixed old 9ce and current f162b source established a reusable dual-native-host/TLS/wire/kill-before-ACK recovery skeleton. Old gtk.py retains a delete-put partial classification because deletion operation detail is absent. The existing 48 retained regressions include synthetic/local/fault-injection components and cannot alone count as new native-peer evidence. The old formatted role receipt explicitly says artifact_authenticated_by_producer=false and F05_accepted=false; new actual job/artifact authentication is required.
+
+At 10:00:07 UTC the user explicitly approved four new files and one workflow change, one independent-branch commit/push and one run capped at 190 runner-minutes (5+170+15), with no automatic retry. The old 265-minute budget is not transferred.
+Parent: f162b7f4db9e14d3ba677c22160af218fcd108d3.
+Branch: dot/f05-gtk-native-recovery-20261103.
+New files: tests/product/f05_gtk_native_recovery_20261103/{gtk.py,fixture.py,contract.json,driver.py}.
+Workflow: .github/workflows/gtk-sdk342-package.yml.
+The old gtk/fixture source is copied byte-for-byte. The original retained package route and navigation/batch GUI work remain, alongside exact 48 regression checks and six native recovery scenarios. Delete conflict detail remains partial, not automatically passed.
+
+Actual candidate files were saved; independent first review found safety and evidence-chain issues before any Git/CI. Same-scope R2 corrected ZIP/member/reference checks and stream limits, output collection allowlists and limits, process-group timeout cleanup, failed-stage handling and audit result retention, exact consumer/hash inventories, exact 48 names/raw-host acceptance and API job identity. R2 driver and contract were saved, with gtk, fixture and workflow unchanged; all save processes ended. Independent R2 review completed without publication approval: three remaining driver fixes were identified, covering validation of every receipt evidence-member path, preservation of results if post-run input verification or cleanup fails, and sanitized top-level exceptions. The writer has prepared those same-scope changes in memory; they have not yet been saved or independently re-reviewed at this snapshot. No new GTK Git commit/ref or Actions run has yet been created. No local syntax/project/ZIP execution was used to replace Actions validation.
+The proposed consumer build uses actual legacy 0.1 targets and the installed SDK 3.42 prefix as established from fixed source, rather than guessing target names or forcing raw3. The original raw.main behavior is preserved; optional full raw GUI coverage is not claimed.
+
+### Other lanes and actual responsibility states
+F07 still has bounded Apple peer MAP/checker evidence but not full acceptance. Its installed-binding publication and later fixed read-only queries remain blocked by explicit review refusals; no replacement writer or alternate route bypassed them. The two old B JSON files remain unavailable to this coordinator, and no new F07 artifact/source result is claimed.
+F08 remains at its previous failed, cleaned-up native attempt with no new native budget. GTK status from the separate F09 UI diagnostic remains unaccepted; the new F05 GTK proposal is not a rerun or completion of that status check.
+
+Six responsibility slots: implementation 1 (F05 approved GTK candidate); independent review 1 (F09); documentation/coordination 1; waiting or blocked 3 (F03 six-target gap, F07 review/evidence blockers, F08 no new native authority). Diagnostic-result-wait is 0 because the new GTK package has not run. Completed Android diagnosis and runtime validation are not counted as ongoing implementation.
+
+Storage measurements remain historical, not a fresh scan. No deletion or resize occurred. All old failures, partials, skipped stages and evidence limitations remain. This snapshot adds no new scope, CI round, artifact exception, external communication or formal credit.
