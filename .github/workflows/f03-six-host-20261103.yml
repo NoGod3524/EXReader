@@ -573,13 +573,4 @@ jobs:
           build/projection/retained/
         if-no-files-found: error
 'on':
-  push:
-    branches:
-    - codex/f03-six-host-20261103
-    paths:
-    - tests/f03_six_host_20261103/**
-    - tests/dot_f03_same_source_20261031/**
-    - examples/apple/HostCatalog.swift
-    - examples/apple/HostModel.swift
-    - examples/apple/HostViews.swift
-    - .github/workflows/f03-six-host-20261103.yml
+  workflow_dispatch: {}
