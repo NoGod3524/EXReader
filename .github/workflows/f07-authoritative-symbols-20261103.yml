@@ -20,18 +20,17 @@ permissions:
 jobs:
   authoritative:
     name: authoritative symbol observations
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
       - name: Record tool identity before reading any payload
         run: |
-          ( llvm-nm --version || llvm-nm-18 --version ) | head -2
-          ( llvm-readobj --version || llvm-readobj-18 --version ) | head -2
-          for o in --macho-dsymtab --version-info --needed-libs --symbols --dyn-syms --coff-imports --coff-exports; do
-            ( llvm-readobj "$o" --help 2>/dev/null || llvm-readobj-18 "$o" --help 2>/dev/null ) >/dev/null \
-              || echo "option-not-advertised $o"
+          ls -1 /usr/lib/llvm-*/bin/llvm-nm /usr/lib/llvm-*/bin/llvm-readobj 2>/dev/null || true
+          for b in llvm-nm llvm-readobj; do
+            p=$(ls -1 /usr/lib/llvm-*/bin/$b 2>/dev/null | sort -V | tail -1)
+            [ -n "$p" ] && "$p" --version | head -1 || echo "missing $b"
           done
 
       - name: Derive authoritative symbol observations

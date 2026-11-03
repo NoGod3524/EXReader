@@ -79,26 +79,62 @@ def tool_version(path):
     return (m.group(1) if m else None), text.strip().splitlines()[0][:120] if text.strip() else ''
 
 
+def _candidates(base):
+    """PATH entries (highest version first), then the plain name, then distro trees."""
+    from shutil import which
+    found = []
+    for v in range(21, 13, -1):
+        p = which('%s-%d' % (base, v))
+        if p:
+            found.append(p)
+    p = which(base)
+    if p:
+        found.append(p)
+    import glob
+    found.extend(sorted(glob.glob('/usr/lib/llvm-*/bin/' + base), reverse=True))
+    return found
+
+
+NM_BIN = None
+RO_BIN = None
+
+
 def preflight():
-    pairs = {}
-    for name, cands in (('nm', ['llvm-nm-18', 'llvm-nm-19', 'llvm-nm-17', 'llvm-nm']),
-                        ('readobj', ['llvm-readobj-18', 'llvm-readobj-19', 'llvm-readobj-17', 'llvm-readobj'])):
-        for c in cands:
-            from shutil import which
-            p = which(c)
-            if p:
-                ver, note = tool_version(p)
-                pairs[name] = {'path': p, 'version': ver, 'note': note}
-                break
-        else:
-            pairs[name] = {'path': None, 'version': None, 'note': 'not found'}
-    ok = bool(pairs['nm']['path'] and pairs['readobj']['path']
-              and pairs['nm']['version'] and pairs['nm']['version'] == pairs['readobj']['version'])
-    return pairs, ok
+    """Pick one llvm-nm / llvm-readobj pair whose parsed versions are identical."""
+    global NM_BIN, RO_BIN
+    pairs = {'nm': {'path': None, 'version': None, 'note': 'not found'},
+             'readobj': {'path': None, 'version': None, 'note': 'not found'}}
+    nm_all, ro_all = _candidates('llvm-nm'), _candidates('llvm-readobj')
+    pairs['nm']['note'] = 'searched %d candidate(s): %s' % (len(nm_all), nm_all)
+    pairs['readobj']['note'] = 'searched %d candidate(s): %s' % (len(ro_all), ro_all)
+    for n in nm_all:
+        vn, note_n = tool_version(n)
+        if not vn:
+            continue
+        for r in ro_all:
+            vr, note_r = tool_version(r)
+            if vr and vr == vn:
+                NM_BIN, RO_BIN = n, r
+                pairs['nm'] = {'path': n, 'version': vn, 'note': note_n}
+                pairs['readobj'] = {'path': r, 'version': vr, 'note': note_r}
+                return pairs, True
+    if nm_all:
+        vn, note_n = tool_version(nm_all[0])
+        pairs['nm'] = {'path': nm_all[0], 'version': vn, 'note': note_n}
+    if ro_all:
+        vr, note_r = tool_version(ro_all[0])
+        pairs['readobj'] = {'path': ro_all[0], 'version': vr, 'note': note_r}
+    return pairs, False
 
 
 def run(cmd, cwd=None):
     t0 = time.monotonic()
+    # resolve the bare tool names chosen by preflight (the runner only ships
+    # versioned or /usr/lib/llvm-*/bin paths, so the bare name may not exist)
+    cmd = [NM_BIN if c == 'llvm-nm' else RO_BIN if c == 'llvm-readobj' else c for c in cmd]
+    if any(c is None for c in cmd):
+        return {'cmd': ' '.join(str(c) for c in cmd), 'rc': None, 'stdout_bytes': 0,
+                'stderr': 'tool path unresolved', 'out': ''}
     try:
         p = subprocess.run(cmd, capture_output=True, timeout=min(READ_TIMEOUT, max(5, remaining())))
     except subprocess.TimeoutExpired:
