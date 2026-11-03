@@ -11,7 +11,7 @@ from pathlib import Path
 import runpy
 import subprocess
 import sys
-from identity import ROOT, SCOPE, identity, require, write_json, same_identity, read_snapshot, TABLES, canonical, digest
+from identity import ROOT, SCOPE, identity, require, write_json, same_identity, read_snapshot, TABLES, canonical, digest, retain_database
 
 class SDK342Loader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     """Version-only in-memory adapter; recorded source remains byte-for-byte unmodified."""
@@ -211,6 +211,7 @@ def receive_apple(a, stamp):
         if a.database is not None:
             require(a.database.resolve(strict=True)==database,"caller DB not current native account")
         actual=read_snapshot(database)
+        retain_database(database, folder / "native-catalog", actual)
         for table in TABLES:
             require(actual[table]==expected[table],"Apple projection differs: "+table)
         original={r["id"]:r["body"] for r in expected["revisions"]}

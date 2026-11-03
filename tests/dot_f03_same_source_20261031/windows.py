@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-from identity import ROOT, identity, require, snapshot_receipt, write_json, read_snapshot, canonical, digest, TABLES, SCOPE, same_identity
+from identity import ROOT, identity, require, snapshot_receipt, write_json, read_snapshot, canonical, digest, TABLES, SCOPE, same_identity, retain_database
 
 def receive(a, stamp):
     """A fresh real Windows profile receives authentic GTK/Apple wire and survives restart."""
@@ -52,6 +52,8 @@ def receive(a, stamp):
         app.wait_initial_shelf();app.wait_idle()
         require(read_snapshot(database)==actual,"Windows restart projection changed")
         module.ui.M.screenshot(app.window,a.output/"restarted.bmp")
+        app.process.kill();app.process.wait(timeout=20)
+        retain_database(database, a.output / "native-catalog", actual)
         value={**stamp,"host":"windows","sdk_version":SCOPE["sdk_version"],
                "program_sha256":digest(exe),"native_sync_completed":True,"restart_verified":True,
                "snapshot":actual,"snapshot_sha256":hashlib.sha256(canonical(actual)).hexdigest(),
