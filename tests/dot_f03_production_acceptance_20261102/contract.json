@@ -8,7 +8,8 @@
   "approved_delta": [
     "tests/dot_f03_production_acceptance_20261102/admission.py",
     "tests/dot_f03_production_acceptance_20261102/contract.json",
-    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/HostImportUiTest.java"
+    "tests/dot_f03_production_acceptance_20261102/android-test-overlay.init.gradle",
+    "tests/dot_f03_production_acceptance_20261102/uiTest/org/exreader/host/uitest/HostReviewTest.java"
   ],
   "branch": "dot/f03-production-acceptance-v342-20261102",
   "budget": {
@@ -349,5 +350,44 @@
     ".github/workflows/reader-f03-production-acceptance-v342.yml": "be780688ac515470198b0a55296d683dfc762ac8",
     "tests/dot_f03_production_acceptance_20261102/contract.json": "2b7f0b957cfa5de4c3003aa90f22cf73361cb9e7",
     "tests/dot_f03_production_acceptance_20261102/admission.py": "916deff60983357123989daebb5cd0624f87a68a"
+  },
+  "picker_base": "4b45dab950f04e499959ebcdf84e3f6460833a2a",
+  "picker_contract": {
+    "bounded_cases": 11,
+    "headers": [
+      "Files in Download",
+      "Files in Downloads"
+    ],
+    "max_backward": 16,
+    "max_forward": 16,
+    "method_end": "    private void open(String name) throws Exception {",
+    "method_sha256": "7871d3c8c137f9dcb81236fb26a6cf8290f9d8ddd9175f15960ffe62dc3ab1d2",
+    "method_start": "    private void pick(String name) throws Exception {",
+    "old_tests_modified": false,
+    "original_init_sha256": "8bb758fb095e7dc0803cdb096aac411dc15c38f25eac5271b3c8fa702e6f086a",
+    "overlay": "tests/dot_f03_production_acceptance_20261102/uiTest/org/exreader/host/uitest/HostReviewTest.java",
+    "overlay_sha256": "28f7d98c915db86eec25c8861ecc2da558914394358de0675b0099058cf28f17",
+    "package": "com.android.documentsui",
+    "return_timeout_ms": 10000,
+    "review_cases": 10,
+    "reviewed_init_sha256": "73e4504a78e60121c55a5f84baf746131071ac8be3ece70c9b175f096ddc9d4f",
+    "root_names": [
+      "Download",
+      "Downloads"
+    ],
+    "runtime_accepted": false,
+    "selection_timeout_ms": 30000,
+    "source": "examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/HostReviewTest.java",
+    "source_blob": "7dab01c6d06e8b7e99aeb6b41014422b99bf31b1",
+    "staged_path": "org/exreader/host/uitest/HostReviewTest.java",
+    "version": "documentsui-downloads-picker-v1",
+    "navigation_proof": "new visible live CollectionInfo subtree disjoint by ancestry from dir_list; unique clickable exact root row; drawer closes and Downloads list returns",
+    "tree_max_depth": 32,
+    "tree_max_nodes_per_snapshot": 2048
+  },
+  "r6_package_blobs": {
+    "tests/dot_f03_production_acceptance_20261102/admission.py": "c4a5a5ebb316dd7fc6e9a3ce17643009ee67c0bc",
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/HostImportUiTest.java": "65cce1933e62f3eaf500769991998d3496a7e12a",
+    "tests/dot_f03_production_acceptance_20261102/contract.json": "6e6a2d88d7de6ac1fb9a9b086c29198a3b0ee05e"
   }
 }
