@@ -2121,3 +2121,105 @@ F08 retains its earlier failed, cleaned-up native attempt and has no new native 
 Six responsibility slots at this snapshot: implementation 1 (F05 newly authorized observation candidate preparation); documentation/coordination 1; waiting or blocked 4 (F03 six-target gap, F07 evidence/review blockers, F08 no new native authority, F09 awaiting actual candidate). No additional implementation is inferred from an occupied role or completed diagnosis. No running test-result wait is claimed for the proposed next round.
 
 Prior storage findings remain historical. No cleanup, disk expansion, new artifact exception or local project/ZIP execution occurred. All previous failures, partial results and limits remain. This document does not authorize extra CI, change ownership, contact UI owners or increase formal credit.
+
+
+## Hourly continuation snapshot: 2026-11-03 07:22 EST scheduled
+
+Actual save time: 2026-11-03T12:20:17.620472+00:00 / 2026-11-03T07:20:17.620472-05:00. Prior document bytes remain intact. Work is continuing; this snapshot does not declare overall completion. Formal catalog stays 98 verified, 1 partial and 9 pending out of 108.
+
+### F03 and F05 Android: historical accepted scopes, no new formal credit
+F03 R8 source054df/run41588932707 remains accepted in its independently reviewed Android scope, but its six-target catalog requirement remains pending, old_apk_upgrade_accepted=false and complete_product=false. F05 bridge run41604711611/source0e547 and conflict/history-boundary run41611865502/sourcef162b remain accepted only in their declared Android scopes. Full F05, UI, transport and formal acceptance have not been granted. These are prior verified results, not new runs this hour.
+
+### F05 GTK observation correction: executed once, failed in cleanup
+The specifically approved three-file observation correction was independently actual/full-tree/trigger reviewed and published as 834aac8adea2f19b3ccda832608ffacc4049449f, parent88b626, on dot/f05-gtk-native-recovery-20261103. Workflow, product, SDK and old tests were unchanged. Its source validates a newly created generation, the correct pre-Receive network state and one actual alt+r followed by the same generation's Receive-specific terminal notice; it does not use receive_attempt or a monotonic receive_seen assumption. Fifteen original sync calls, eight synthetic admission controls, original deadlines, 48 regressions, six scenarios and the deletion-detail partial classification were preserved.
+
+Unique authorized run41629004820/A1 completed FAILURE:
+https://github.com/NoGod3524/EXReader/actions/runs/41629004820
+Producer125893568906 and audit125902684393 belong to that fixed source/run. Build/prepare/navigation/folder/GUI and all48 retained checks passed. The original stdout prints all48 by name and their accepted/source/run/A1 result. The new failure was gtk.py491 cleanup_errors guard after the main scenario body, not the previous120-second Receive observation timeout. Initial stdout only retained traces3-15 due tail truncation, so that initial read did not independently establish traces1-2. A PUT-thread SSLEOF message did not establish the cleanup cause.
+Collection complete=true/missing[]/errors[] with66553400 copied bytes means the whitelist was collected, not that acceptance passed. The normal audit refused failed-producer input and retained accepted/fullF05/delete_detail=false.
+Producer artifact13228252454:35461520B,SHA25664c29c211097d0e50f2fd7a73c44d4c9e7ee81f647d5eb766229c7da1f95fbd4.
+Audit artifact13228103552:16090B,SHA256606767c194fdd88390318c7707a1c2d3bf1d13d510b60011e9252ee8bd1f2878.
+The190-minute round is finished; it was not automatically retried.
+
+### Separately approved cleanup evidence job: precise root cause established
+The user separately approved one independent-branch read-only Actions inspection, one commit/push and one job capped at10minutes, with no product changes or test rerun. It added inspect_cleanup.py and one isolated workflow job. The exact seven-member allowlist, archive identity and bounded extraction were independently reviewed before publication.
+Diagnostic sourcecd4c57728d86ffa80a6af0eb70eaa6f8349e0c02, parent834aac8, branch dot/f05-gtk-cleanup-inspect-20261103.
+Unique run41633749476/A1 succeeded; only job125909579483 ran and the five old jobs skipped:
+https://github.com/NoGod3524/EXReader/actions/runs/41633749476
+Diagnostic artifact13230195150:7474B,SHA25698738062b16217b8f411936967205e7f9d612928b5ad8edbe53b2ea26b6c4d89.
+Independent terminal review verified the original stdout, fixed producer/archive/inventory authentication and all seven selected members, with missing/errors empty.
+
+The precise sole cleanup error is remove-fixture-key: AttributeError("'str' object has no attribute 'unlink'"). Original scenario errors are empty. Fixed source explains this as test-variable shadowing: gtk.py32 sets key to a Path, line415 in the same main assigns an entity-key string to key, and line478 calls key.unlink. This is not evidence of an SSLEOF product/network defect.
+Coverage and receipt both report five passed native cases plus delete-detail partial. All15 Receive traces were independently re-evaluated by the inspection's pure predicate and matched their recorded shape:1-9 received,10-15 pending_projection.
+The original diagnostic job log is30217B,SHA25637ec5b0d16a418b176225647bd1670bbec00c1c4e8681a2429fa0f8cd3673bfa.
+Original native runtime exit1, reaped=true, original producerFAIL and nativeaccepted=false remain preserved. The inspection cross-checks three report hashes but does not authenticate every unselected binary or independently reload all case attachments. Diagnostic success does not retroactively pass the failed run or complete formal F05. Any repair/publication/new device run needs its own specific authorization; no such new execution is claimed here.
+
+### Responsibility and remaining boundaries
+The user has now specifically approved the two-file GTK test/contract repair, separating the file-path and entity-key variables while preserving the cleanup failure guard, all48 regressions and all scenarios, one commit/push and one new full run capped at190runner-minutes. Parent is834aac8 on the original GTK branch, not the diagnostic branch. Product/SDK/old tests/UI remain unchanged. The exact two-file candidate has now been saved in an isolated directory and passed independent actual static review before this save. The difference is limited to entity_key variable separation and real fixture-path unlink plus exists/is_symlink residue rejection; the original cleanup catcher, receipt and failure guard remain. Object/full-tree review and publication still remain; no new repair publication or test run has been reported at snapshot preparation. Six responsibility slots: implementation1(F05 newly authorized repair), independent review1(F09), documentation/coordination1, waiting/blocked3(F03 six-target gap,F07 blocked evidence/publication,F08 no native budget). Test-result-wait0 at this recorded preparation state.
+F07's complete semantic Apple evidence record follows to remove reliance on a temporary cache. It grants no new F07 acceptance or permission to retry refused work. F08 and separate GTK status/UI gaps remain unchanged. No disk deletion or resize occurred. All old failures and partials remain.
+
+### Durable F07 Apple provenance record (semantic handoff, not a new F07 execution)
+The following is the complete semantic provenance record supplied by the F07 owner for durable preservation. It is not a byte-identical copy of the original pretty JSON. Original file: /tmp/f07-installed-binding-20261103/apple-peer-log-provenance-20261103.json, 9309 bytes, SHA256 0db92542091c4134ffb0ec50474f75ab2a6257bfb3c56b6c8124fe0ab54b6231. That hash identifies only those original bytes, not this reordered document section.
+
+Schema f07.apple-peer-log-provenance.v1; recorded UTC 2026-11-03T06:35:00Z; repository NoGod3524/EXReader; source ec11cf862ca3b44483d7e8c4726ae748ab438337; SDK content source 8357eafa28423a7ab93ba08b823af80f01ad1505; run41306566948/A1.
+Scope: source-checked existing producer-log evidence for actual Apple peer host SQLite sentinel ownership, not full F07 acceptance.
+Acquisition used the existing lap25002 saved instabox@0.8.52 route to VM m_agqxv2s72g5vwdtsifu5cnmml4. Existing job text was read with gh api actions/jobs/{id}/logs, captured as raw bytes, then terminal control sequences were sanitized and bounded JSON-escaped excerpts inspected. Fixed ec11 Git objects were read without checkout/index mutation. Processes 22652,11476,9064,22048,22416,13676,17744,3612,22356,19804 ended. New CI runs=0, Git writes=0, ZIP parsing=0. Raw full logs were not persisted.
+
+macOS actual peer:
+- job124850367899, log219634B, raw SHA256 5a379454f314343a86b0609385489aa1e208c7680f871fe9d30d6b8987e86160, provider line1345.
+- Program9653680B, SHA256 f897162e4c1b83ab5396e7da3554426a167fe9c38f222df081a7115801d94a3f; checker_binary_sha256 equals that exact hash.
+- Phase macos-peer; phase root build/apple-android/macos-peer; binary relative derived/Build/Products/Debug/EXReaderHost.app/Contents/MacOS/EXReaderHost; MAP relative derived/Build/Products/Debug/EXReaderHost.link.map.
+- SDK prefix team24-apple-sdk-macos-f04.
+- checker_accepted=true, selector_bytes_candidate=true, system_sqlite_fallback=false.
+- Actual sqlite_provider: [ 38] /Users/runner/work/EXReader/EXReader/sdk-input/team24-apple-sdk-macos-f04/raw-products/lib/libreader_catalog_sqlite.a(sqlite3.c.o).
+- Source log: https://github.com/NoGod3524/EXReader/actions/runs/41306566948/job/124850367899#step:9:1
+
+iPad Simulator actual peer:
+- job124850367715, log221413B, raw SHA256 1abfd181802ebb96c2c277c7d7c74f5555df7b125128312b0c7488b51e187f66, provider line1380.
+- Program9653248B, SHA256 6219512f607b78d89819ae8de1bbbb4d6a34e2c7c63709183041939e46af28fb; checker_binary_sha256 equals that exact hash.
+- Phase ipad-peer; phase root build/apple-android/ipad-peer; binary relative derived/Build/Products/Debug-iphonesimulator/EXReaderHost.app/EXReaderHost; MAP relative derived/Build/Products/Debug-iphonesimulator/EXReaderHost.link.map.
+- SDK prefix team24-apple-sdk-iphonesimulator-f04.
+- checker_accepted=true, selector_bytes_candidate=true, system_sqlite_fallback=false.
+- Actual sqlite_provider: [ 38] /Users/runner/work/EXReader/EXReader/sdk-input/team24-apple-sdk-iphonesimulator-f04/raw-products/lib/libreader_catalog_sqlite.a(sqlite3.c.o).
+- Source log: https://github.com/NoGod3524/EXReader/actions/runs/41306566948/job/124850367715#step:9:1
+
+iPhone Simulator actual peer:
+- job124850367757, log219269B, raw SHA256 9c6911a90dd21be7f7a92cae42b78532483fdf59f9f35ef69853fd3cbfae7f9b, provider line1344.
+- Program9653296B, SHA256 68c06e80a9173b681f79789e7ee3cdd0ab1f76325a5fe30d5ae036197d986ca0; checker_binary_sha256 equals that exact hash.
+- Phase iphone-peer; phase root build/apple-android/iphone-peer; binary relative derived/Build/Products/Debug-iphonesimulator/EXReaderHost.app/EXReaderHost; MAP relative derived/Build/Products/Debug-iphonesimulator/EXReaderHost.link.map.
+- SDK prefix team24-apple-sdk-iphonesimulator-f04.
+- checker_accepted=true, selector_bytes_candidate=true, system_sqlite_fallback=false.
+- Actual sqlite_provider: [ 38] /Users/runner/work/EXReader/EXReader/sdk-input/team24-apple-sdk-iphonesimulator-f04/raw-products/lib/libreader_catalog_sqlite.a(sqlite3.c.o).
+- Source log: https://github.com/NoGod3524/EXReader/actions/runs/41306566948/job/124850367757#step:9:1
+
+Fixed-source evidence chain:
+1. tools/check_apple_product.py, blob ed7f62597e01d4e045f679369805d27abc20b7bc, SHA256 551ddd87be7faf476a82bb391c29736454e7d501719a0a4913610fbcce195519, lines11-24,27-34,69-106. inspect reads actual otool -L and nm -g binary outputs and the supplied MAP. validate requires exactly one T/t _sqlite3_open_v2 definition, one libreader_catalog_sqlite.a/sqlite3.c.o object row and exactly one symbol address owner pointing to that archive member. Direct libsqlite3, libexr_library/core static archives and libreader_reading_state.a are rejected. Seven altered-evidence negative cases are rejected. Candidate checks selected raw-module symbols, not the full symbol universe.
+2. tests/apple_host/make_xcodeproj.rb, blob a51e70cf5cdbaa667e32213291f38c8ad5ef73ec, lines66-75,133-135. Xcode target enables LD_GENERATE_MAP_FILE and TARGET_BUILD_DIR/PRODUCT_NAME.link.map; postbuild checker receives that target executable and LD_MAP_FILE_PATH.
+3. tests/apple_android_relay/apple/run.py, blob7161b6e6dc04e096b78f3afcf10199f4f2a37025, lines154-162. It asserts actual app Info.plist source and bundle id, hashes the binary, and inspects that same binary with app.parent/EXReaderHost.link.map and selector_bytes_candidate=True.
+4. tests/dot_f04_reading_sync_20261031/run.py, blob af17a01dcdd14cb7f2c6b3c775931cfcd5a15bd0, lines16-24,26-118,164-165,474-502,932-950. retained compares frozen BASE94fb236a4a2da87dfbaf4f1dd2a47885d615a230 original driver bytes. stage_apple generates each peer without replacing its checker call, adjusts macOS app/binary paths and copies those same binary bytes to program.bin. prepare generates all three peers. seal_phase binds state/source/run/attempt, program hash/bytes, bundle identity and installed manifest hash to the same-run receipt. Main invokes the generated action driver.
+5. .github/workflows/dot-f04-reading-sync-20261031.yml, blob b518ad06c4a09cbcca4cc0cacdf60c5beb625962, lines417-433,489-505,561-577. Actual macOS/iPhone/iPad steps invoke their F04 peer plus seal-phase and upload state/report/program.bin/build-receipt/installed-identity.
+
+Established bounded conclusions:
+- The three producer-log checker reports are bound independently to the three actual peer program hashes; they are not bare SDK installation-manifest provider declarations.
+- The checked SQLite sentinel address owner is a product archive member. No direct system SQLite import was reported, and the source-checked inspect path executed its negative controls.
+- The fixed workflow-to-adapter-to-retained-caller-to-checker-to-program.bin/seal chain was read without editing source or executing tests.
+
+Limits preserved from the record:
+- Raw final MAP bytes and hashes were not retrieved or archived. These are source-checked producer-log results, not independently reparsed complete MAP evidence.
+- The checker covers _sqlite3_open_v2 and selected module symbols; it does not independently prove ownership of all 277 SQLite definitions or all implementations.
+- No complete per-host module/archive/object inventory, all undefined/weak/versioned symbols, public declaration/provider map or private-source/installed-include closure was established.
+- Windows/GTK final static-archive attribution and Android full dynamic-table analysis remain separate gaps.
+- The frozen three-file installed-binding candidate was not committed or run. Two earlier Git-object actions were denied before execution; this archival section does not authorize or replay them.
+- No F07 acceptance or total-progress score is raised.
+
+Additional coverage clarification established after the original file was sealed:
+Checker lines28-29 inspect only host otool/nm outputs, not recursively the SQLite definitions inside linked libexreader.dylib. Line13 counts only T/t open_v2 definitions, not every weak/versioned symbol or the full process image. This is specified-sentinel source-binding evidence, not full F07/full-SDK unique-provider closure. It also does not prove an actual dual-provider defect. Later Git/read-query refusals remain in force; this record is not a substitute for the refused code/CI publication.
+
+Frozen candidate fingerprints last verified in the original handoff:
+Root /tmp/f07-installed-binding-20261103.
+- tools/f07_installed_binding_20261103.py SHA256 50f97f3f47226eea3278ced85df9376b9a3dbae608bca6dfddc0097c598b9725.
+- .github/workflows/f07-installed-binding-20261103.yml SHA256 761de0e82e9be2d97953d3b31f78dd1f905e5b039ebe37b482ce10a76070fee1.
+- docs/reader-total-progress/F07_INSTALLED_BINDING_20261103.md SHA256 08b9296fe3cf05ffc691becd1bf9d1b8b8f5738425b73e0ffd710ec0b73f4081.
+The independent record write accessed only its new evidence file and did not re-read or modify these candidate files. This document likewise uses the supplied handoff, not a replay of refused reads.
+
+This continuation adds no new CI round, product/SDK/UI authority, artifact exception or score. Source/log fingerprints above retain their original provenance; newly formatted prose is not asserted to have the original evidence-file hash.
