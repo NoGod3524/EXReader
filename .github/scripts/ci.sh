@@ -26,4 +26,16 @@ ci_expect_failure() {
   [ "$rc" -ne 0 ] || { echo "control did not fail; expected=nonzero; actual=0; candidate=$*" >&2; exit 1; }
 }
 
+ci_advisory() {
+  local rc
+  trap - ERR
+  set +e
+  "$@"
+  rc=$?
+  set -e
+  trap 'rc=$?; printf "expected=command success; actual=exit %s command=%s; candidate=%s:%s\n" "$rc" "$BASH_COMMAND" "${BASH_SOURCE[0]}" "$LINENO" >&2; exit "$rc"' ERR
+  printf 'advisory=true accepted=false actual_exit=%s candidate=%s; tracking=32\n' "$rc" "$*"
+  return 0
+}
+
 source "$1"

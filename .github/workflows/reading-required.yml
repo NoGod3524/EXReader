@@ -1,3 +1,5 @@
+# E3: no longer the required check; retained performance evidence is advisory.
+# Required non-performance context: reading-required-core. Do not cite advisory results as acceptance.
 name: Required native reading SDK
 on:
   pull_request:
