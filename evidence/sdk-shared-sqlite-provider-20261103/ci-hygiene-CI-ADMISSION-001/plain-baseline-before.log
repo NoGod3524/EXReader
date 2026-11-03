@@ -1,0 +1,3 @@
+git cat-file -e 95100501eeef9c6325be8b3882aa400c99cf000f
+
+exit_code=1

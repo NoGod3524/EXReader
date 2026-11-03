@@ -1,8 +1,18 @@
+## CI 准入修复：用户批准第 2/2 次限时构建验证
+
+原失败重分类为 **CI-ADMISSION-001**，归属 **P 包 CI 卫生**，不进入 F07 已知问题清单。
+workflow 已显式设置 `fetch-depth: 0`；本地普通浅克隆补齐历史后 `git cat-file -e 95100501` 成功。
+单独卫生项、P 复用说明和原始先验日志见 [CI-ADMISSION-001](ci-hygiene-CI-ADMISSION-001/review.md)。
+
+**C++17 仅测试目标需要，对外契约未变，SDK 消费者不需要 C++17。**
+
+本次仅 Apple build-only 验证：macOS-14、单作业、20 分钟、不自动重试；结果另记，原始历史保留如下。
+
 ## 最新状态：限时构建验证红，转已知问题
 
 候选 `64e514ae396ee73d37c72d732c21e99d1dc3b816` 已提交并推送。
 [Run 41706981519](https://github.com/NoGod3524/EXReader/actions/runs/41706981519) 在源码准入阶段失败：`fatal: bad object 95100501…`。
-原因是 checkout 仅取得两层历史，漏取 SDK 基线对象。已记为 **SDK-BUILD-002**，不重跑、不再申请下一轮。
+原因是 checkout 仅取得两层历史，漏取 SDK 基线对象。已记为 **CI-ADMISSION-001**，不重跑、不再申请下一轮。
 本次为“限时构建验证”，构建配置失败，非行为失败；没有执行构建或测试，不计入共享 provider / Apple 验收。
 本次没有生成工件；已保留完整日志和元数据，见 [复核记录](ci-41706981519/review.md)。
 
