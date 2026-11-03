@@ -273,12 +273,30 @@ def main():
         wait(host, lambda: collections(host).get("kind") == "1")
         if identifier:
             ids = collections(host).get("group_ids", "").split(",")
+            if action == "inspect" and identifier not in ids:
+                host.key("alt+m")
+                wait(host, lambda: collections(host).get("removed")=="1"
+                    and identifier in collections(host).get("group_ids", "").split(","))
+                ids = collections(host).get("group_ids", "").split(",")
             if identifier not in ids: raise AssertionError("actual tag missing")
             host.key("alt+g", "Home")
             for _ in range(ids.index(identifier)): host.key("Down")
             wait(host, lambda: collections(host).get("selected_id") == identifier)
-        host.key("alt+" + {"create":"n", "edit":"r", "delete":"d"}[action])
+        shortcut = "s" if action == "inspect" and collections(host).get("selected_deleted")=="1" else {"create":"n", "edit":"r", "delete":"d", "inspect":"r"}[action]
+        host.key("alt+" + shortcut)
         window(host, "Collection details")
+        if action == "inspect":
+            wait(host, lambda: collections(host).get("editor_accept")=="0"
+                and "Deletion requested" in collections(host).get("editor_notice", ""))
+            observed = collections(host)
+            screenshot = "delete-detail-"+host.folder.name+".png"
+            command("import", "-window", window(host, "Collection details"), out/screenshot)
+            evidence.append(screenshot)
+            host.key("Escape")
+            window(host, "Collection details", False)
+            host.key("alt+F4")
+            window(host, "Library collections", False)
+            return {"state":observed, "screenshot":screenshot}
         if name is not None:
             host.key("alt+n", "ctrl+a")
             host.paste(name)
@@ -440,8 +458,18 @@ def main():
                 raise AssertionError("delete-put conflict lost a head")
             if "conflicting or incomplete versions" not in state.get("notice", ""):
                 raise AssertionError("native organization conflict notice missing")
-        checks.append({"name":"delete_put_tombstone_preserved", "outcome":"partial",
-            "preservation_passed":True,"deletion_conflict_ui_detail":False,
+        deletion_details={}
+        for label,host in (("first",first),("second",second)):
+            detail=group_action(host,"inspect",tag)
+            if (set(detail["state"].get("editor_conflict_heads", "").split(","))!=combined
+                    or "Edit retained" not in detail["state"].get("editor_notice", "")
+                    or detail["state"].get("editor_accept")!="0"
+                    or set(snapshot(host,"tag",tag)["heads"])!=combined):
+                raise AssertionError("native deletion detail must identify both operations without changing heads")
+            deletion_details[label]=detail
+        checks.append({"name":"delete_put_tombstone_preserved", "outcome":"passed",
+            "preservation_passed":True,"deletion_conflict_ui_detail":True,
+            "deletion_details":deletion_details,
             "entity_kind":"tag", "entity_key":tag, "common_parent":parent["heads"],
             "local_put":local_put, "delete":deletion,
             "retained_heads":sorted(combined), "first_native_state":left_group,
@@ -450,9 +478,10 @@ def main():
             "old_put_after_tombstone":stale_proof})
         finish_case({"delete_put_tombstone_preserved":"receiver"},competing_heads=sorted(combined),
                     final_heads=snapshot(first,"tag",tag)["heads"],tombstone_preserved=True,
-                    delete_conflict_displayed=False,stale_peer_did_not_resurrect=True,
+                    delete_conflict_displayed=True,stale_peer_did_not_resurrect=True,
                     old_put_after_tombstone=stale_proof,
-                    uncovered="native deletion operation detail",explicit_user_restore=False)
+                    explicit_user_restore=False)
+        normalized[-1]["source_evidence"].extend(row["screenshot"] for row in deletion_details.values())
         store.checkpoint(out/"peer-delete-put","gtk-native-delete-then-old-parent-put")
         (out / "peer-contract.json").write_text(json.dumps({
             "entity_kind":"tag", "entity_key":tag, "common_parent":parent["heads"],
@@ -540,7 +569,7 @@ def main():
         cleanup("remove-fixture-key",remove_fixture_key)
         report["requests"]=store.requests if store is not None else []
         report["cleanup_errors"]=cleanup_errors
-        report["uncovered"]=["native deletion operation detail","repeated-ID replay after tombstone (additional, not original hard gate)",
+        report["uncovered"]=["repeated-ID replay after tombstone (additional, not original hard gate)",
             "conditional explicit restore parents","SDK mid-import cancellation (not universal prerequisite)",
             "independent original-artifact authentication"]
         try:

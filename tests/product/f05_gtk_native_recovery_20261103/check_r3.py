@@ -14,9 +14,30 @@ sys.path.insert(0, str(ROOT / "tools"))
 from case_alignment import CASES, align_cases
 from fixture import write_role_receipt
 import native_runtime
+from driver import deletion_detail_contract
 
 
 class RecoveryChecks(unittest.TestCase):
+    def test_native_deletion_detail_counterexamples(self):
+        case={"entity_key":"tag-control", "retained_heads":["put-head","delete-head"],
+              "deletion_conflict_ui_detail":True,"deletion_details":{}}
+        for peer in ("first","second"):
+            case['deletion_details'][peer]={"screenshot":"delete-detail-"+peer+".png", "state":{
+                "visible":"1","editor":"1","editor_accept":"0","selected_id":"tag-control","kind":"1",
+                "editor_conflict_heads":"put-head,delete-head",
+                "editor_notice":"Version 1: Edit retained\\nVersion 2: Deletion requested"}}
+        deletion_detail_contract(case)
+        changes=[lambda c:c['deletion_details'].pop('second'),
+                 lambda c:c['deletion_details']['first']['state'].update(editor_accept='1'),
+                 lambda c:c['deletion_details']['first']['state'].update(editor='0'),
+                 lambda c:c['deletion_details']['first']['state'].update(selected_id='other-tag'),
+                 lambda c:c['deletion_details']['first']['state'].update(editor_conflict_heads='put-head'),
+                 lambda c:c['deletion_details']['first']['state'].update(editor_notice='Versions differ'),
+                 lambda c:c['deletion_details']['first'].update(screenshot='unrelated.png')]
+        for change in changes:
+            damaged=copy.deepcopy(case);change(damaged)
+            with self.assertRaises(AssertionError):deletion_detail_contract(damaged)
+
     def reports(self, count=2):
         coverage = [{"name":row[0], "outcome":"passed"} for row in CASES[:count]]
         normalized = [{"id":row[0], "outcome":"passed", "source_evidence":["coverage.json"]}

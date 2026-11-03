@@ -162,6 +162,7 @@ typedef struct {
   reader_collection_member *collection_members;size_t collection_member_count;
   reader_collection_group collection_selected,collection_navigation,collection_dependency_group;
   char *collection_book_key,*collection_book_title;
+  char *collection_conflict_details,*collection_conflict_heads;
   int has_account,account_response,account_credential_status,account_remember,account_bound,account_more;
   char *account_root,*account_id,*account_user,*account_password;
   uint64_t account_seen,account_prepared,account_existing,account_pending,account_failed,account_bootstraps;

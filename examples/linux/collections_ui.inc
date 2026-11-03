@@ -195,6 +195,12 @@ static void collections_show_editor(const reader_result *result) {
   gboolean ordered=collections.entity==0 ? collections.kind==0:collections.kind!=1;
   gtk_widget_set_sensitive(collections.ordinal,ordered && (collections.operation==0 || (collections.entity==1 && collections.operation==2)));
   collections.editor_message=gtk_label_new(result->collection_dependency ? "Restore the parent collection first":result->collection_conflict ? "Versions differ; refresh before changing this collection":result->message);
+  if(result->collection_conflict && !result->collection_dependency && result->collection_conflict_details && result->collection_conflict_details[0]) {
+    char *details=g_strdup_printf("Versions differ; refresh before changing this collection\n%s\nAll versions are kept. An edit does not restore a deleted collection.",result->collection_conflict_details);
+    gtk_label_set_text(GTK_LABEL(collections.editor_message),details);g_free(details);
+    g_object_set_data_full(G_OBJECT(collections.editor_message),"conflict-heads",g_strdup(result->collection_conflict_heads),g_free);
+  }
+  collections_access(collections.editor_message,"Collection version details");
   gtk_label_set_line_wrap(GTK_LABEL(collections.editor_message),TRUE);gtk_grid_attach(GTK_GRID(grid),collections.editor_message,0,line,2,1);
   if(result->collection_dependency) gtk_dialog_add_button(GTK_DIALOG(collections.editor),"_View parent",3);
   gtk_dialog_set_response_sensitive(GTK_DIALOG(collections.editor),GTK_RESPONSE_ACCEPT,!result->collection_dependency && !result->collection_conflict);
@@ -435,6 +441,10 @@ static char *collections_observation(void) {
   g_key_file_set_integer(file,"collections","editor_accept",collections.editor && !collections.closing && !closing &&
     gtk_widget_get_sensitive(gtk_dialog_get_widget_for_response(GTK_DIALOG(collections.editor),GTK_RESPONSE_ACCEPT)));
   g_key_file_set_string(file,"collections","editor_parent",collections.editor_parent ? collections.editor_parent:"");
+  GtkWidget *notice=collections.editor && !collections.editor_closing && !collections.closing ? collections.editor_message:NULL;
+  const char *conflict_heads=notice ? g_object_get_data(G_OBJECT(notice),"conflict-heads"):NULL;
+  g_key_file_set_string(file,"collections","editor_notice",notice ? gtk_label_get_text(GTK_LABEL(notice)):"");
+  g_key_file_set_string(file,"collections","editor_conflict_heads",conflict_heads ? conflict_heads:"");
   GtkWidget *buttons[]={collections.previous_groups,collections.next_groups,collections.previous_members,collections.next_members};
   const char *names[]={"group_before","group_after","member_before","member_after"};
   for(size_t i=0;i<G_N_ELEMENTS(buttons);i++) g_key_file_set_integer(file,"collections",names[i],!collections.closing && !closing && buttons[i] && gtk_widget_get_sensitive(buttons[i]));

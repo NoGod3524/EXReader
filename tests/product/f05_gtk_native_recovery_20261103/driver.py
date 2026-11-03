@@ -8,6 +8,21 @@ EVID=ROOT/'build/f05-gtk-evidence'
 IDENTITY={k:os.environ.get(e,'') for k,e in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]}
 def require(value,message):
     if not value: raise AssertionError(message)
+
+def deletion_detail_contract(case):
+    heads=case['retained_heads']
+    require(len(heads)==2 and len(set(heads))==2,'two deletion heads required')
+    require(case['deletion_conflict_ui_detail'] is True,'deletion details absent')
+    require(set(case['deletion_details'])=={'first','second'},'both actual peer dialogs required')
+    for peer,detail in case['deletion_details'].items():
+        state=detail['state'];notice=state.get('editor_notice','')
+        require(state.get('visible')=='1' and state.get('editor')=='1' and state.get('editor_accept')=='0',
+            'native conflict dialog must be visible and nonmutating')
+        require(state.get('selected_id')==case['entity_key'] and state.get('kind')=='1','wrong conflict entity')
+        require(set(state.get('editor_conflict_heads','').split(','))==set(heads),'dialog lost deletion head')
+        require(notice.count('Deletion requested')==1 and notice.count('Edit retained')==1
+            and len(re.findall(r'Version [12]: ',notice))==2,'both typed operations must be displayed')
+        require(detail.get('screenshot')=='delete-detail-'+peer+'.png','native detail screenshot required')
 def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def pairs(items):
     result={}
@@ -627,7 +642,8 @@ def audit_inner(audit,state):
         full_F05_accepted=False,delete_detail_accepted=False))
     cases=coverage['cases']
     require([x['name'] for x in cases]==c['native_cases'],'six exact native cases')
-    require([x['outcome'] for x in cases]==['passed','passed','passed','partial','passed','passed'],'partial must remain partial')
+    require([x['outcome'] for x in cases]==['passed']*6,'six native cases must pass')
+    deletion_detail_contract(cases[3])
     receipt=read(native/'receipt.json');check_identity(receipt['identity'],expected_native)
     from case_alignment import align_cases
     require(all(row['executed'] for row in align_cases(cases,receipt['cases'],receipt['claims'])),
@@ -652,8 +668,11 @@ def audit_inner(audit,state):
     require(recovery['terminated_pid']!=recovery['reopened_pid'] and recovery['actual_process_termination']
         and recovery['durable_recovery_passed'] and recovery['recovery_boundary']=='committed-PUT-before-ACK','real recovery boundary')
     deletion=by['delete_put_tombstone_preserved']
-    require(deletion['delete_conflict_displayed'] is False and deletion['explicit_user_restore'] is False
-        and deletion['tombstone_preserved'] and deletion['stale_peer_did_not_resurrect'],'deletion partial semantics')
+    require(deletion['delete_conflict_displayed'] is True and deletion['explicit_user_restore'] is False
+        and deletion['tombstone_preserved'] and deletion['stale_peer_did_not_resurrect'],'deletion conflict semantics')
+    for detail in cases[3]['deletion_details'].values():
+        require(detail['screenshot'] in deletion['source_evidence'],'detail screenshot not bound to case')
+        require((native/detail['screenshot']).read_bytes()[:8]==b'\x89PNG\r\n\x1a\n','detail screenshot is not PNG')
     proof=deletion['old_put_after_tombstone']
     require(proof['put']['operation']=='put' and proof['delete']['operation']=='delete'
         and proof['put']['parents']==proof['delete']['parents']==proof['common_parent'],'native parents/operation')
@@ -679,14 +698,14 @@ def audit_inner(audit,state):
         require(wire==proof[role],'actual wire vs typed native claim')
     require(sha(native/'offline-sdk-original.bin')==cases[-1]['original_sha256'],'offline bytes')
     save(audit/'accepted.json',dict(IDENTITY,artifact=art,producer_job=found[0],retained48_accepted=True,
-        native_cases=6,native_passed=5,native_partial=1,delete_detail_accepted=False,
+        native_cases=6,native_passed=6,native_partial=0,delete_detail_accepted=True,
         artifact_authenticated=True,full_F05_accepted=False))
-    print('F05 GTK original48 and five native recovery cases accepted; delete-put preservation partial; UI/fullF05 false',flush=True)
+    print('F05 GTK original48 and all six native recovery cases including deletion details accepted; fullF05 false',flush=True)
 def authenticate():
     audit=ROOT/'build/f05-gtk-audit';audit.mkdir(parents=True,exist_ok=False)
     state=dict(IDENTITY,accepted=False,full_F05_accepted=False,delete_detail_accepted=False,errors=[])
     try:
-        audit_inner(audit,state);state['accepted']=True
+        audit_inner(audit,state);state['accepted']=True;state['delete_detail_accepted']=True
     except Exception as error:
         state['errors'].append(clean(repr(error))[:6000])
         raise

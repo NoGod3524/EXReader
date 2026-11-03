@@ -225,6 +225,9 @@ void reader_result_free(reader_result *result) {
   free(result->w3_font_hashes);free(result->w3_font_names);g_free(result->w3_sync_text);
 #endif
   free(result->metadata_title);free(result->metadata_author);
+#ifdef EXR_READER_DESKTOP_METADATA
+  g_free(result->collection_conflict_details);g_free(result->collection_conflict_heads);
+#endif
   free(result->account_id);free(result->account_root);
   reader_secret_free(result->account_user);reader_secret_free(result->account_password);
   for(i=0;i<result->receive_conflict_count;i++) {
