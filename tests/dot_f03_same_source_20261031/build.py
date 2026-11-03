@@ -51,10 +51,10 @@ def prepare_hash(host, environment, audit):
     subprocess.run(["cmake", "--build", str(build), "--parallel", "4", "--target", "install"],
                    cwd=ROOT, env=environment, check=True)
     require(prefix.is_dir() and prefix == prefix.resolve(), "canonical installed hash prefix required")
-    environment["EXREADER_ORIGINAL_HASH_PREFIX"] = str(prefix)
-    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = str(prefix)
+    environment["EXREADER_ORIGINAL_HASH_PREFIX"] = prefix.as_posix()
+    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = prefix.as_posix()
     with Path(os.environ["GITHUB_ENV"]).open("a", encoding="utf-8") as stream:
-        stream.write("EXREADER_ORIGINAL_HASH_PREFIX=" + str(prefix) + "\n")
+        stream.write("EXREADER_ORIGINAL_HASH_PREFIX=" + prefix.as_posix() + "\n")
     audit.append({"dependency": "EXReaderOPDSHash 0.1.0", "target": host,
                   "source": "extras/opds", "configure": argv, "prefix": str(prefix)})
 
