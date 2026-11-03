@@ -22,9 +22,11 @@ class RecoveryChecks(unittest.TestCase):
     def test_import_return_targets_original_window_and_preserves_errors(self):
         alive=Mock(returncode=0,stdout='456\n')
         gone=Mock(returncode=1,stdout='')
-        send,record=Mock(return_value='sent'),Mock()
-        self.assertEqual(targeted_return('123',456,1,send,Mock(return_value=alive),record),'sent')
-        self.assertEqual(send.call_args.args,('xdotool','key','--window','123','--clearmodifiers','Return'))
+        reply={'window':'123','pid':456,'focus':'123','sent':True,'mechanism':'XTest-server-grab'}
+        send,record=Mock(return_value=json.dumps(reply)),Mock()
+        self.assertEqual(targeted_return('123',456,1,send,Mock(return_value=alive),record),'')
+        self.assertEqual(send.call_args.args[-2:],('123','456'))
+        self.assertTrue(send.call_args.args[1].endswith('x11_return.py'))
         send.reset_mock()
         targeted_return('123',456,2,send,Mock(return_value=gone),record)
         send.assert_not_called()
@@ -34,9 +36,12 @@ class RecoveryChecks(unittest.TestCase):
         send.side_effect=failure
         with self.assertRaises(subprocess.CalledProcessError):
             targeted_return('123',456,2,send,Mock(return_value=alive),record)
-        targeted_return('123',456,2,send,Mock(side_effect=[alive,gone]),record)
-        targeted_return('123',456,1,send,Mock(side_effect=[alive,gone]),record)
-        self.assertTrue(record.call_args.kwargs['closed_during_dispatch'])
+        send.side_effect=None;send.return_value=json.dumps(dict(reply,focus='999',sent=False))
+        targeted_return('123',456,2,send,Mock(return_value=alive),record)
+        self.assertTrue(record.call_args.kwargs['ignored_after_close'])
+        with self.assertRaises(RuntimeError):targeted_return('123',456,1,send,Mock(return_value=alive),record)
+        send.return_value=json.dumps(dict(reply,pid=999))
+        with self.assertRaises(AssertionError):targeted_return('123',456,2,send,Mock(return_value=alive),record)
 
     def test_full_run_cleanup_records_and_deadline(self):
         rows=[{"action":"native-close-"+str(i),"seconds":.1} for i in range(4)]

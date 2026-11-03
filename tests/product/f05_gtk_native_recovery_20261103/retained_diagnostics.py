@@ -25,6 +25,7 @@ REPORT = dict(IDENTITY, schema=2, complete=False, original_finished=False,
               original_exception=None, original_sources={}, calls=[], errors=[],
               timing_perturbation_possible=True, extra_queries_only_after_failure=False,
               input_targeting='exact_import_window_only',
+              input_mechanism='XTest-server-grab',
               report_limit_bytes=LIMIT, call_limit=1024, event_limit_per_call=512,
               failure_query_total_seconds=5, accepted=False)
 ACTIVE = None
@@ -44,15 +45,14 @@ def targeted_return(window,pid,index,send,probe,record):
     if owner() is None:
         if index>1:return finished(False)
         raise RuntimeError('Import window vanished before its first Return')
-    try:
-        result=send('xdotool','key','--window',window,'--clearmodifiers','Return')
-    except subprocess.CalledProcessError:
-        # Accept may destroy the chooser before the matching key-up. The
-        # original case's book/error/database assertions still decide success.
-        if owner() is None:return finished(True,True)
-        raise
+    result=json.loads(send(sys.executable,str(HERE/'x11_return.py'),window,str(pid)))
+    if result.get('window')!=window or result.get('pid')!=pid or result.get('mechanism')!='XTest-server-grab':
+        raise AssertionError('Unbound native Return result')
+    if result.get('sent') is not True:
+        if index>1 and result.get('focus')!=window:return finished(False)
+        raise RuntimeError('Import window lost focus before its first Return')
     finished(True)
-    return result
+    return ''
 
 def issue(label):
     if len(REPORT['errors']) < 32:

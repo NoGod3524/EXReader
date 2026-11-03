@@ -276,7 +276,8 @@ def verify_import_diagnostics(path):
     require(report.get('original_finished') is True and report.get('original_exception') is None,'original retained main did not finish')
     require(report.get('accepted') is False,'diagnostic must not grant original acceptance')
     require(report.get('timing_perturbation_possible') is True and report.get('extra_queries_only_after_failure') is False
-        and report.get('input_targeting')=='exact_import_window_only','diagnostic/input adapter scope')
+        and report.get('input_targeting')=='exact_import_window_only'
+        and report.get('input_mechanism')=='XTest-server-grab','diagnostic/input adapter scope')
     require(report.get('report_limit_bytes')==2*1024*1024 and report.get('call_limit')==1024
         and report.get('event_limit_per_call')==512 and report.get('failure_query_total_seconds')==5,'diagnostic limits')
     require(set(report['original_sources'])==set(spec['source_blobs']),'diagnostic source set')
@@ -643,6 +644,11 @@ def audit_inner(audit,state):
     require(coverage['program_sha256']==sha(host),'native program mismatch')
     controls=read(extracted/'build/f05-gtk/observation-controls.json')
     require(controls==observation_selftests(),'original observation controls mismatch')
+    input_controls=read(extracted/'build/f05-gtk/x11-return-controls.json')
+    check_identity(input_controls,IDENTITY)
+    require(input_controls.get('passed') is True and input_controls.get('native_product_acceptance') is False
+        and input_controls.get('foreign_owner_refused') is True and input_controls.get('late_return_suppressed') is True
+        and input_controls.get('unscoped_counterexample_observed') is True,'real GTK/XTest input controls absent')
     trace=read(native/'receive-observations.json');check_identity(trace['identity'],expected_native)
     require(trace['program_sha256']==sha(host) and trace['full_F05_accepted'] is False,'Receive trace identity')
     records=trace['records']
