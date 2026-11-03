@@ -35,26 +35,119 @@ def admission():
     for path,digest in CONTRACT["production_sha256"].items(): assert sha(ROOT/path)==digest,path
     for path,blob in CONTRACT["original_blobs"].items():
         assert command(["git","hash-object",path]).decode().strip()==blob,path
-    write("admission.json",{**IDENTITY,"accepted":True,"contract_sha256":sha(D/"contract.json"),"changes":actual,
+    write("admission.json",{**IDENTITY,"accepted":True,"manifest_parser_regression":manifest_parser_regression(),"contract_sha256":sha(D/"contract.json"),"changes":actual,
         "files":{p:sha(ROOT/p) for p in CONTRACT["paths"]},"sdk_freeze":CONTRACT["sdk_freeze"]})
 def xml_identity(text):
-    nodes=[];stack=[]
+    android_uri="http://schemas.android.com/apk/res/android"
+    nodes=[];stack=[];namespaces={}
     for line in text.splitlines():
         stripped=line.lstrip();indent=len(line)-len(stripped)
-        if stripped.startswith("E: "):
+        if stripped.startswith("N: "):
+            match=re.fullmatch(r"N: ([A-Za-z_][A-Za-z0-9_.-]*)=([^\s]+)(?: \(line=\d+\))?",stripped)
+            assert match,"Malformed namespace declaration"
+            prefix,uri=match.groups()
+            assert prefix not in namespaces,"Repeated namespace declaration"
+            namespaces[prefix]=uri
+        elif stripped.startswith("E: "):
             while stack and stack[-1][0]>=indent:stack.pop()
-            tag=stripped[3:].split()[0];node={"tag":tag,"attrs":{}}
+            tag=stripped[3:].split()[0]
+            node={"tag":tag,"attrs":{},"parent":stack[-1][1] if stack else None}
             nodes.append(node);stack.append((indent,node))
-        elif stripped.startswith("A: ") and stack:
-            match=re.match(r'A: ([^ (=]+)(?:\([^)]*\))?="([^"]*)"',stripped)
-            if match:
-                key,value=match.groups();attrs=stack[-1][1]["attrs"]
-                assert key not in attrs,"Duplicate XML attribute"
+        elif stripped.startswith("A: "):
+            assert stack and indent>stack[-1][0],"Attribute outside element"
+            match=re.fullmatch(r'A: ([^ (=]+)(?:\([^)]*\))?=(.+)',stripped)
+            assert match,"Malformed XML attribute"
+            key,raw_value=match.groups()
+            if key.startswith(android_uri+":"):
+                key="android:"+key[len(android_uri)+1:]
+            elif ":" in key:
+                prefix,local=key.split(":",1)
+                assert namespaces.get(prefix)==android_uri,"Unexpected XML attribute namespace"
+                key="android:"+local
+            attrs=stack[-1][1]["attrs"]
+            assert key not in attrs,"Duplicate canonical XML attribute"
+            quoted=re.fullmatch(r'"([^"]*)"(?: \(Raw: "([^"]*)"\))?',raw_value)
+            if key in ("package","android:name","android:targetPackage"):
+                assert quoted,"Identity XML attribute must have a complete quoted value"
+            if quoted:
+                value,raw_copy=quoted.groups()
+                assert raw_copy is None or raw_copy==value,"Conflicting XML raw value"
                 attrs[key]=value
+            else:
+                attrs[key]=raw_value
     roots=[n for n in nodes if n["tag"]=="manifest"]
+    assert len(roots)==1 and roots[0]["parent"] is None,"Manifest root missing, nested or repeated"
     runners=[n for n in nodes if n["tag"]=="instrumentation"]
-    assert len(roots)==1,"Manifest root missing or repeated"
+    assert all(n["parent"] is roots[0] for n in runners),"Instrumentation must be direct manifest child"
     return roots[0]["attrs"].get("package"),runners
+def require_manifest(text,runner):
+    package,runners=xml_identity(text)
+    assert package=="org.exreader.host.test" and len(runners)==1,"Instrumentation package/count"
+    attrs=runners[0]["attrs"]
+    assert attrs.get("android:name")=="org.exreader.host."+runner,"Exact instrumentation runner"
+    assert attrs.get("android:targetPackage")=="org.exreader.host","Exact instrumentation target"
+    return package,runners
+def manifest_parser_regression():
+    uri="http://schemas.android.com/apk/res/android"
+    template='''N: android=http://schemas.android.com/apk/res/android (line=2)
+  E: manifest (line=2)
+    A: http://schemas.android.com/apk/res/android:compileSdkVersion(0x01010572)=35
+    A: http://schemas.android.com/apk/res/android:compileSdkVersionCodename(0x01010573)="15" (Raw: "15")
+    A: package="org.exreader.host.test" (Raw: "org.exreader.host.test")
+    A: platformBuildVersionCode=35
+    A: platformBuildVersionName=15
+      E: uses-sdk (line=5)
+        A: http://schemas.android.com/apk/res/android:minSdkVersion(0x0101020c)=26
+        A: http://schemas.android.com/apk/res/android:targetSdkVersion(0x01010270)=35
+      E: instrumentation (line=9)
+        A: http://schemas.android.com/apk/res/android:label(0x01010001)="Tests for org.exreader.host" (Raw: "Tests for org.exreader.host")
+        A: http://schemas.android.com/apk/res/android:name(0x01010003)="org.exreader.host.RUNNER" (Raw: "org.exreader.host.RUNNER")
+        A: http://schemas.android.com/apk/res/android:targetPackage(0x01010021)="org.exreader.host" (Raw: "org.exreader.host")
+        A: http://schemas.android.com/apk/res/android:handleProfiling(0x01010022)=false
+        A: http://schemas.android.com/apk/res/android:functionalTest(0x01010023)=false
+      E: application (line=16)
+        A: http://schemas.android.com/apk/res/android:debuggable(0x0101000f)=true
+        A: http://schemas.android.com/apk/res/android:extractNativeLibs(0x010104ea)=false
+          E: uses-library (line=19)
+            A: http://schemas.android.com/apk/res/android:name(0x01010003)="android.test.runner" (Raw: "android.test.runner")
+'''
+    actual=[]
+    expected=[
+        ("ProductOwnerTest","b3beaf7e3e67b075c6326131f396b6a6db42c84b28175fadc83ade473646a22b"),
+        ("HostSyncTest","51bdd2b4334306b850d3cecabd3ad262cb86714189f0a4c2533880e014c0a8ad"),
+        ("HeadBridgeTest","673fd08e72a813259a266395bb3fc72bc42fa0badd5400938c0c870878e7fadf")]
+    checks=[]
+    for runner,expected_hash in expected:
+        text=template.replace("RUNNER",runner)
+        assert hashlib.sha256(text.encode()).hexdigest()==expected_hash,"Actual manifest fixture changed"
+        require_manifest(text,runner);actual.append(text)
+        checks.append({"name":"actual_"+runner,"passed":True,"sha256":expected_hash,"expected":"accept"})
+    text=actual[0]
+    short=text.replace("A: "+uri+":","A: android:")
+    require_manifest(short,"ProductOwnerTest")
+    checks.append({"name":"equivalent_bound_short_prefix","passed":True,"expected":"accept"})
+    name_line='        A: '+uri+':name(0x01010003)="org.exreader.host.ProductOwnerTest" (Raw: "org.exreader.host.ProductOwnerTest")\n'
+    duplicate=name_line+'        A: android:name(0x01010003)="org.exreader.host.ProductOwnerTest" (Raw: "org.exreader.host.ProductOwnerTest")\n'
+    negatives=[
+        ("wrong_namespace",text.replace(uri+":name",uri+"/impostor:name")),
+        ("duplicate_canonical_alias",text.replace(name_line,duplicate)),
+        ("wrong_runner",text.replace("org.exreader.host.ProductOwnerTest","org.exreader.host.WrongRunner")),
+        ("wrong_target",text.replace(':targetPackage(0x01010021)="org.exreader.host"',':targetPackage(0x01010021)="org.exreader.other"')),
+        ("nested_name_cannot_supply_runner",text.replace(name_line,"").replace('"android.test.runner"','"org.exreader.host.ProductOwnerTest"')),
+        ("duplicate_instrumentation",text+'      E: instrumentation (line=99)\n'+name_line)]
+    for name,negative in negatives:
+        variants=[negative]
+        if name=="duplicate_canonical_alias":
+            variants.append(text.replace(name_line,name_line+'        A: android:name(0x01010003)=123\n'))
+        elif name=="wrong_namespace":
+            variants.append(text.replace(name_line,'        A: '+uri+'/impostor:name(0x01010003)=123\n'))
+        for variant in variants:
+            try:require_manifest(variant,"ProductOwnerTest")
+            except AssertionError:pass
+            else:raise AssertionError("Malformed manifest accepted: "+name)
+        checks.append({"name":name,"passed":True,"expected":"reject","variants":len(variants)})
+    assert [row["name"] for row in checks]==CONTRACT["manifest_parser_checks"] and len(checks)==10
+    return {"checks":checks,"count":10,"passed":True,"actual_manifest_source_run":41602795048,"actual_manifest_source_artifact":13215501646,"runtime_accepted":False}
 def clean_error(value):
     text=str(value)
     text=re.sub(r"(?i)Basic\s+[A-Za-z0-9+/=]+","Basic <redacted>",text)
@@ -175,10 +268,8 @@ def package():
     for name,runner in (("original-owner.apk","ProductOwnerTest"),("host-sync.apk","HostSyncTest"),("head-bridge.apk","HeadBridgeTest")):
         path=apks/name;xml=command([aapt,"dump","xmltree",path,"--file","AndroidManifest.xml"]).decode()
         (OUT/(name+".manifest.txt")).write_text(xml)
-        test_package,runners=xml_identity(xml)
-        assert test_package=="org.exreader.host.test" and len(runners)==1,("Instrumentation package/count",name)
+        test_package,runners=require_manifest(xml,runner)
         attrs=runners[0]["attrs"]
-        assert attrs.get("android:name")=="org.exreader.host."+runner and attrs.get("android:targetPackage")=="org.exreader.host",("Exact runner/target",name)
         identities[name]={"sha256":sha(path),"bytes":path.stat().st_size,"runner":runner,"test_package":test_package,"target_package":attrs["android:targetPackage"],"manifest_sha256":sha(OUT/(name+".manifest.txt"))}
     for name in ("app-debug.apk","app-release-unsigned.apk"):
         path=apks/name;identities[name]={"sha256":sha(path),"bytes":path.stat().st_size}
@@ -310,6 +401,7 @@ def audit():
         docs[name]=json.loads((OUT/name).read_text())
     for name in ("admission.json","packages.json","runtime.json","host-native-audit/result.json"):
         identity(docs[name],name);require(docs[name]["accepted"] is True,name+" did not pass")
+    require(docs["admission.json"].get("manifest_parser_regression")==manifest_parser_regression(),"Parser regression evidence missing or changed")
     require(set(docs["runtime.json"]["stages"])=={"original_owner","retained","bridge"},"Runtime stage set changed")
     require(all(v["passed"] is True for v in docs["runtime.json"]["stages"].values()),"Runtime stage failure retained")
     for filename,names_key,name_key,marker in (
@@ -376,10 +468,7 @@ def audit():
     for name,row in packages.items():require(sha(OUT/"apks"/name)==row["sha256"] and (OUT/"apks"/name).stat().st_size==row["bytes"],"APK artifact identity "+name)
     for name,runner in (("original-owner.apk","ProductOwnerTest"),("host-sync.apk","HostSyncTest"),("head-bridge.apk","HeadBridgeTest")):
         manifest=OUT/(name+".manifest.txt");require(sha(manifest)==packages[name]["manifest_sha256"],"Manifest report hash "+name)
-        pkg,runners=xml_identity(manifest.read_text())
-        require(pkg=="org.exreader.host.test" and len(runners)==1,"Manifest package/count "+name)
-        attrs=runners[0]["attrs"]
-        require(attrs.get("android:name")=="org.exreader.host."+runner and attrs.get("android:targetPackage")=="org.exreader.host","Manifest runner/target "+name)
+        require_manifest(manifest.read_text(),runner)
     expected_installs=[("org.exreader.host","app-debug.apk"),("org.exreader.host.test","original-owner.apk"),
         ("org.exreader.host","app-debug.apk"),("org.exreader.host.test","host-sync.apk"),("org.exreader.host","app-debug.apk"),
         ("org.exreader.host.test","head-bridge.apk"),("org.exreader.host","app-debug.apk")]

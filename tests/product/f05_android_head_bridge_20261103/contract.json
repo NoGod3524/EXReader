@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "parent": "75d3115041016ae61149fd6f5a9a816c296cc085",
+  "parent": "e4bd48c304106275c9f44ac22c4b456c371b84d0",
   "branch": "dot/f05-android-head-bridge-20261103",
   "single_run": true,
   "max_attempt": 1,
@@ -21,12 +21,8 @@
     ".github/workflows/reader-host-session-android.yml"
   ],
   "changes": [
-    "A\ttests/product/f05_android_head_bridge_20261103/contract.json",
-    "A\ttests/product/f05_android_head_bridge_20261103/driver.py",
-    "A\ttests/product/f05_android_head_bridge_20261103/retained.py",
-    "A\ttests/product/f05_android_head_bridge_20261103/bridge.init.gradle",
-    "A\ttests/product/f05_android_head_bridge_20261103/java/org/exreader/host/HeadBridgeTest.java",
-    "M\t.github/workflows/reader-host-session-android.yml"
+    "M\ttests/product/f05_android_head_bridge_20261103/contract.json",
+    "M\ttests/product/f05_android_head_bridge_20261103/driver.py"
   ],
   "production_sha256": {
     "examples/android/app/src/main/java/org/exreader/host/NativeCatalog.java": "a31439a775f7aa9b742adad7910d514ab1ff8eae9b5ebcb5a2291dea73f77122",
@@ -111,8 +107,8 @@
       "provenance": "Original public SDK seeding remains regression, not new native peer author.",
       "instrumentation_source_path": "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
       "instrumentation_source_blob": "ec9bb60ae3233d914086e06c8bb93aa4580d6ceb",
-      "runtime_state": "approved_shadow_adapter_prepared_not_run",
-      "adapter_scope": "Approved generated Python CLI choice and single-expression Java 3.42 allowlist adapters; original source remains unchanged. Canonical build must run android.py retained-prepare before Gradle -I build/f05-driver/retained/init.gradle, then retained. Exact original 16 checks, four PIDs, two boundaries and actual SDK identity remain required; no CI has run."
+      "runtime_state": "shadow_build_passed_runtime_not_run",
+      "adapter_scope": "Approved generated Python CLI choice and single-expression Java 3.42 adapters unchanged. Prior run41598794149 built all APKs but stopped at manifest parser gate before runtime. This separate authorized run keeps original sixteen checks, four PIDs, two blocked boundaries and SDK identity; no assertion reduction."
     }
   },
   "retained_adapter_origin": "9ce943e1ff0c26b54db69f5c31eec057d2be216b:tests/product/f05_recovery_20261031/android.py:432-611",
@@ -133,5 +129,20 @@
     "hash_inventory",
     "prepare_hash_owner",
     "hash_owner_proof"
-  ]
+  ],
+  "manifest_parser_checks": [
+    "actual_ProductOwnerTest",
+    "actual_HostSyncTest",
+    "actual_HeadBridgeTest",
+    "equivalent_bound_short_prefix",
+    "wrong_namespace",
+    "duplicate_canonical_alias",
+    "wrong_runner",
+    "wrong_target",
+    "nested_name_cannot_supply_runner",
+    "duplicate_instrumentation"
+  ],
+  "prior_failed_run": 41598794149,
+  "manifest_evidence_run": 41602795048,
+  "manifest_evidence_artifact": 13215501646
 }
