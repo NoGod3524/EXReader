@@ -134,9 +134,6 @@ def normalise_baseline(rows, text_for):
     for row in rows:
         if 'content_sha256' in row:
             key = baseline_key(row)
-            if key in declared:
-                raise ValueError('duplicate content identity')
-            declared.add(key)
             patterns = row['patterns']
             if key in result:
                 raise ValueError('duplicate content identity')
