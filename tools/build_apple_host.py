@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """Build the native Apple reference host against an installed EXReader SDK."""
+from sdk_version import header_text, source_version
 import argparse
 import hashlib
 import json
@@ -32,13 +33,11 @@ def main():
     parser.add_argument('--wave3', action='store_true', help='Enable the installed five-feature product without review entry points')
     parser.add_argument('--selector-bytes-candidate', action='store_true',
                         default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
-    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'),
-                        default=os.environ.get('EXR_APPLE_SDK_VERSION', '3.40.0'))
+    parser.add_argument('--sdk-version', default=os.environ.get('EXR_APPLE_SDK_VERSION', source_version()),
+                        help='Exact installed SDK identity; defaults to its generated version header')
     parser.add_argument('--page-theme', action='store_true', default=os.environ.get('EXR_APPLE_PAGE_THEME', 'OFF') == 'ON',
                         help='Explicit SDK3.41 page-theme candidate')
     args = parser.parse_args()
-    if args.sdk_version not in ('3.40.0', '3.41.0'):
-        parser.error('Unsupported explicit Apple SDK version')
     if os.environ.get('EXR_APPLE_PAGE_THEME', 'OFF') not in ('OFF', 'ON'):
         parser.error('EXR_APPLE_PAGE_THEME must be explicitly OFF or ON')
     if os.environ.get('EXR_APPLE_RAW3', 'OFF') not in ('OFF', 'ON'):
@@ -46,8 +45,6 @@ def main():
     if sys.platform != 'darwin':
         parser.error('The Apple SDK build requires a macOS host')
     sdk, output = args.sdk.absolute(), args.output.absolute()
-    if args.page_theme and args.sdk_version != '3.41.0':
-        parser.error('--page-theme requires explicit --sdk-version=3.41.0')
     if args.wave3 and not args.selector_bytes_candidate:
         parser.error('--wave3 requires --selector-bytes-candidate')
     if output.exists():
@@ -56,8 +53,11 @@ def main():
                  ROOT/'examples/apple/HostSDK.swift']:
         if not path.exists():
             parser.error('Missing SDK or host source: '+str(path))
-    version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk/'include/exr/base.h').read_text())[1]
-    if version != args.sdk_version:
+    version = re.search(r'#define EXR_VERSION "([^"]+)"', header_text(sdk/'include/exr/base.h'))[1]
+    minimum_theme_version = (3, 41, 0)
+    if args.page_theme and tuple(map(int, args.sdk_version.split('.'))) < minimum_theme_version:
+        parser.error('--page-theme requires explicit --sdk-version=' + '.'.join(map(str, minimum_theme_version)))
+    if args.sdk_version is not None and version != args.sdk_version:
         parser.error('Installed SDK version differs from the explicitly selected version')
     output.mkdir(parents=True)
     app = output/'EXReader.app'

@@ -1,0 +1,3 @@
+PASS: SDK 3.42.0; ABI 1; 588 live exact literal exceptions
+CMakeLists.txt:3 -> project(EXReader VERSION 3.41.0 LANGUAGES C) vs expected 3.42.0 from ${EXR_SDK_VERSION}
+PASS: deliberate version drift rejected (exit 1)

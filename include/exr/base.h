@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_BASE_H
 #define EXR_BASE_H
+#include <exr/version.h>
 #include <stddef.h>
 #include <stdint.h>
 #if defined(EXR_STATIC)
@@ -14,8 +15,7 @@
 #else
 #define EXR_API __attribute__((visibility("default")))
 #endif
-#define EXR_VERSION "3.41.0"
-#define EXR_ABI_VERSION 1u
+#define EXR_VERSION EXR_SDK_VERSION
 #define EXR_CORE_VERSION "3.40.0"
 #ifdef __cplusplus
 extern "C" {

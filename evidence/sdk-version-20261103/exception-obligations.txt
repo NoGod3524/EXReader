@@ -1,0 +1,8 @@
+PASS: reject stale-line
+PASS: reject changed-literal
+PASS: reject frozen-bytes
+PASS: reject migration-reference
+PASS: reject migration-removal
+PASS: reject negative-assertion
+PASS: reject duplicate
+PASS: valid manifest and 7 refusal cases; all source bytes restored
