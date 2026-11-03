@@ -142,6 +142,14 @@ jobjectArray command_result(JNIEnv *env,reader_command_status status,const reade
 }
 int head(void *opaque,const reader_revision_head *value){static_cast<std::vector<std::string> *>(opaque)->emplace_back(value->revision_id);return 0;}
 struct organization_rows {std::vector<std::vector<std::string>> values;bool memory=false;};
+struct head_detail_rows {organization_rows rows;bool limit=false;};
+int copy_head_detail(void *opaque,const reader_revision_head *value){
+  auto &r=*static_cast<head_detail_rows *>(opaque);
+  if(r.rows.values.size()>=READER_REVISION_MAX_ENTITY_HISTORY){r.limit=true;return 1;}
+  try{r.rows.values.push_back({value->revision_id,value->operation,value->sha256,
+    std::to_string(value->complete),std::to_string(value->requires_restore)});return 0;}
+  catch(...){r.rows.memory=true;return 1;}
+}
 int copy_group(void *opaque,const reader_catalog_group_row *row){
   auto &r=*static_cast<organization_rows *>(opaque);try{r.values.push_back({row->id,row->name,row->parent_id?row->parent_id:"",
     std::to_string(row->ordinal),std::to_string(row->deleted)});return 0;}catch(...){r.memory=true;return 1;}
@@ -227,6 +235,20 @@ extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(metadata)(JNIEnv *env,jclas
 extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(heads)(JNIEnv *env,jclass,jlong id,jstring kind,jstring key){return call(env,id,[&](owner &o)->jobjectArray{
   auto k=utf8(env,kind),v=utf8(env,key);std::vector<std::string> result;reader_revision_state state{};reader_revision_error e{};
   database(reader_revision_heads(o.revisions,k.c_str(),v.c_str(),head,&result,&state,&e),e.message);return strings(env,result);
+});}
+extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(headDetailsRows)(JNIEnv *env,jclass,jlong id,jstring kind,jstring key){return call(env,id,[&](owner &o)->jobjectArray{
+  auto k=utf8(env,kind),v=utf8(env,key);head_detail_rows rows;reader_revision_state state{};reader_revision_error e{};
+  // The graph state and all head operations come from one read on the existing owner.
+  auto status=reader_revision_heads(o.revisions,k.c_str(),v.c_str(),copy_head_detail,&rows,&state,&e);
+  if(rows.rows.memory)reject("java/lang/OutOfMemoryError","Cannot copy bounded revision heads");
+  if(rows.limit)reject("java/lang/IllegalStateException","Revision head snapshot exceeds its bound");
+  database(status,e.message);
+  if(state.revisions>READER_REVISION_MAX_ENTITY_HISTORY||state.heads>state.revisions||rows.rows.values.size()!=state.heads)
+    reject("java/lang/IllegalStateException","Incomplete revision head snapshot");
+  rows.rows.values.insert(rows.rows.values.begin(),{"1",std::to_string(state.revisions),std::to_string(state.heads),
+    std::to_string(state.missing_parents),std::to_string(state.foreign_parents),std::to_string(state.projection_safe),
+    std::to_string(state.deleted),std::to_string(state.requires_restore)});
+  return organization_array(env,rows.rows);
 });}
 extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(selection)(JNIEnv *env,jclass,jlong id,jstring kind,jstring key){return call(env,id,[&](owner &o)->jobjectArray{
   auto k=utf8(env,kind),v=utf8(env,key);reader_revision_selection selected{};reader_revision_info info{};reader_revision_error e{};
