@@ -1,0 +1,36 @@
+run=41712283042 source=a2af0a57975de7f2f4dbdc343df6657f380432e2 result=success
+ci-hygiene (failfast)	Check changed CI and exercise the rule	2026-11-03T20:25:33.8537119Z PASS: CI hygiene; violations=0; existing debt={'failfast': 1760}
+ci-hygiene (failfast)	Check changed CI and exercise the rule	2026-11-03T20:25:34.0072935Z PASS: clean workflow accepted; one-change failfast control rejected
+ci-hygiene (failfast)	Check changed CI and exercise the rule	2026-11-03T20:25:34.0074024Z expected=command success; actual=exit 37 command=python -c "raise SystemExit(37)"; candidate=<temporary>/step.sh:1
+ci-hygiene (failfast)	Check changed CI and exercise the rule	2026-11-03T20:25:34.0074701Z PASS: runtime failfast
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.0977847Z PASS: CI hygiene; violations=0; existing debt={'diagnostic': 7}
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2206568Z PASS: clean workflow accepted; one-change diagnostic control rejected
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2207059Z expected=SOURCE_DIR from CMakeCache; actual=<empty>; candidates=build/provider/CMakeCache.txt build/stage
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2207520Z expected=command success; actual=exit 1 command=return 1; candidate=<temporary>/step.sh:1
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2207796Z PASS: runtime diagnostic
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2207946Z PASS: unchanged historical line retained
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2208111Z PASS: new violation rejected
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2208580Z ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$new"; candidate=.github/workflows/probe.yml jobs.probe.steps[1]
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2209321Z PASS: modified baseline line rejected
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2209804Z ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=unchanged live exact baseline; actual=baseline line hash changed; fix the touched step and remove its entry; candidate=tools/ci_hygiene_baseline.json
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2210797Z ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$modified"; candidate=.github/workflows/probe.yml jobs.probe.steps[0]
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2211339Z PASS: fixed line with stale baseline rejected
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2211850Z ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=unchanged live exact baseline; actual=baseline line hash changed; fix the touched step and remove its entry; candidate=tools/ci_hygiene_baseline.json
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2212443Z PASS: fixed line and removed baseline accepted
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2212648Z PASS: moved line cannot be re-waived
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2213099Z ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=unchanged live exact baseline; actual=moved baseline line cannot acquire a new waiver; candidate=tools/ci_hygiene_baseline.json
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2213795Z ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$source"; candidate=.github/workflows/probe.yml jobs.probe.steps[0]
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2214377Z PASS: new violation cannot be registered into baseline
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2214893Z ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=unchanged live exact baseline; actual=baseline cannot exempt an added/modified/moved line from git diff -U0; candidate=tools/ci_hygiene_baseline.json
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:27:07.2215724Z ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$new"; candidate=.github/workflows/probe.yml jobs.probe.steps[1]
+ci-hygiene (packaging)	Check changed CI and exercise the rule	2026-11-03T20:24:55.3834483Z PASS: CI hygiene; violations=0; existing debt={'packaging': 4}
+ci-hygiene (packaging)	Check changed CI and exercise the rule	2026-11-03T20:24:55.5688625Z PASS: clean workflow accepted; one-change packaging control rejected
+ci-hygiene (negative)	Check changed CI and exercise the rule	2026-11-03T20:24:57.6863977Z PASS: CI hygiene; violations=0; existing debt={'negative': 15}
+ci-hygiene (negative)	Check changed CI and exercise the rule	2026-11-03T20:24:57.8942702Z PASS: clean workflow accepted; one-change negative control rejected
+ci-hygiene (negative)	Check changed CI and exercise the rule	2026-11-03T20:24:57.8944772Z expected=nonzero exit; candidate command: python -c import sys; print('rejected-object: bad archive', file=sys.stderr); sys.exit(9)
+ci-hygiene (negative)	Check changed CI and exercise the rule	2026-11-03T20:24:57.8947556Z actual=exit 9; rejected candidate command: python -c import sys; print('rejected-object: bad archive', file=sys.stderr); sys.exit(9)
+ci-hygiene (negative)	Check changed CI and exercise the rule	2026-11-03T20:24:57.8949546Z rejected-object: bad archive
+ci-hygiene (negative)	Check changed CI and exercise the rule	2026-11-03T20:24:57.8951175Z expected=nonzero exit; candidate command: python -c print('unexpected acceptance')
+ci-hygiene (negative)	Check changed CI and exercise the rule	2026-11-03T20:24:57.8953942Z actual=exit 0; rejected candidate command: python -c print('unexpected acceptance')
+ci-hygiene (negative)	Check changed CI and exercise the rule	2026-11-03T20:24:57.8956097Z control did not fail; expected=nonzero; actual=0; candidate=python -c print('unexpected acceptance')
+ci-hygiene (negative)	Check changed CI and exercise the rule	2026-11-03T20:24:57.8957263Z PASS: runtime negative

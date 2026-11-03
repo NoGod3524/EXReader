@@ -1,0 +1,49 @@
+run=41711815286 source=db0d2c1fdd50c8a5b616fea690fc3b1e625c57ee result=success
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4651820Z PASS: installed Apple product includes and archives:
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4654810Z stage/include
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4655540Z stage/include/exreader-product
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4656240Z examples/apple/product
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4656730Z stage/lib/libreader_reading_commands.a
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4657190Z stage/lib/libreader_annotation_view.a
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4657690Z stage/lib/libreader_navigation.a
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4658540Z stage/lib/libreader_search.a
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4659040Z stage/lib/libreader_session.a
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4659540Z stage/lib/libreader_sync.a
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4660320Z stage/lib/libreader_commands.a
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4660800Z stage/lib/libreader_reading_state_codec.a
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4661380Z stage/lib/libreader_revisions.a
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4661830Z stage/lib/libreader_revision_hash.a
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4662300Z stage/lib/libreader_catalog.a
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:23:57.4662790Z stage/lib/libreader_catalog_sqlite.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7738250Z PASS: installed Apple product includes and archives:
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7739650Z stage/include
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7741070Z stage/include/exreader-product
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7742450Z examples/apple/product
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7743440Z stage/lib/libreader_reading_commands.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7744570Z stage/lib/libreader_annotation_view.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7745640Z stage/lib/libreader_navigation.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7746660Z stage/lib/libreader_search.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7747600Z stage/lib/libreader_session.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7748570Z stage/lib/libreader_sync.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7750550Z stage/lib/libreader_commands.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7751640Z stage/lib/libreader_reading_state_codec.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7752830Z stage/lib/libreader_revisions.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7753880Z stage/lib/libreader_revision_hash.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7754910Z stage/lib/libreader_catalog.a
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:23:54.7755960Z stage/lib/libreader_catalog_sqlite.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0231920Z PASS: installed Apple product includes and archives:
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0238680Z stage/include
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0241050Z stage/include/exreader-product
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0243360Z examples/apple/product
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0244240Z stage/lib/libreader_reading_commands.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0247230Z stage/lib/libreader_annotation_view.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0248350Z stage/lib/libreader_navigation.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0249220Z stage/lib/libreader_search.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0249770Z stage/lib/libreader_session.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0251110Z stage/lib/libreader_sync.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0254590Z stage/lib/libreader_commands.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0256810Z stage/lib/libreader_reading_state_codec.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0259820Z stage/lib/libreader_revisions.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0263450Z stage/lib/libreader_revision_hash.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0264160Z stage/lib/libreader_catalog.a
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:25:07.0265390Z stage/lib/libreader_catalog_sqlite.a

@@ -1,0 +1,17 @@
+run=41711874772 source=db0d2c1fdd50c8a5b616fea690fc3b1e625c57ee result=failure
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:01.7956086Z PASS: CI hygiene; violations=0; existing debt={'diagnostic': 7}
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0241385Z PASS: clean workflow accepted; one-change diagnostic control rejected
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0242661Z expected=SOURCE_DIR from CMakeCache; actual=<empty>; candidates=build/provider/CMakeCache.txt build/stage
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0244128Z expected=command success; actual=exit 1 command=return 1; candidate=<temporary>/step.sh:1
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0245030Z PASS: runtime diagnostic
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0245511Z PASS: unchanged historical line retained
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0246055Z PASS: new violation rejected
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0247709Z ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$new"; candidate=.github/workflows/probe.yml jobs.probe.steps[1]
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0249211Z PASS: modified baseline line rejected
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0250306Z ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=unchanged live exact baseline; actual=baseline line hash changed; fix the touched step and remove its entry; candidate=tools/ci_hygiene_baseline.json
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0252579Z ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$modified"; candidate=.github/workflows/probe.yml jobs.probe.steps[0]
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0253783Z PASS: fixed line with stale baseline rejected
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0254835Z ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=unchanged live exact baseline; actual=baseline line hash changed; fix the touched step and remove its entry; candidate=tools/ci_hygiene_baseline.json
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0255971Z Injected baseline control returns the actual checker exit 1
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0341792Z expected=command success; actual=exit 1 command=python tests/check_ci_hygiene.py --rule "$HYGIENE_RULE" --fault "$HYGIENE_FAULT"; candidate=<temporary>/step.sh:2
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:23:02.0355257Z ##[error]Process completed with exit code 1.
