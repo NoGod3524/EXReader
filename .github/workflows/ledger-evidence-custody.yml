@@ -1,0 +1,47 @@
+name: Ledger evidence custody
+on:
+  workflow_dispatch:
+    inputs:
+      commits:
+        description: Comma-separated commit SHAs
+        required: true
+        default: '0be9b393,c4d67540,e2776a35,a375fd9b'
+        type: string
+      retention_days:
+        description: Artifact retention in days
+        required: true
+        default: '90'
+        type: string
+permissions:
+  contents: read
+jobs:
+  custody:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export existing commits
+        shell: bash
+        env:
+          COMMITS: ${{ inputs.commits }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          printf 'commit full_sha patch sha256\n' > out/MANIFEST.txt
+          IFS=',' read -ra commits <<< "$COMMITS"
+          for sha in "${commits[@]}"; do
+            sha="${sha//[[:space:]]/}"
+            [[ "$sha" =~ ^[0-9a-fA-F]{7,40}$ ]] || { echo "Invalid SHA: $sha"; exit 1; }
+            full_sha=$(git rev-parse --verify "${sha}^{commit}")
+            git format-patch -1 --stdout "$full_sha" > "out/$sha.patch"
+            digest=$(sha256sum "out/$sha.patch")
+            printf '%s %s %s.patch %s\n' "$sha" "$full_sha" "$sha" "${digest%% *}" >> out/MANIFEST.txt
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ledger-evidence-custody-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out/
+          retention-days: ${{ inputs.retention_days }}
+          if-no-files-found: error
