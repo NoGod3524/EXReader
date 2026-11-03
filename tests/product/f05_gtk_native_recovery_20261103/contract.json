@@ -1,13 +1,11 @@
 {
   "schema": 1,
-  "parent": "f162b7f4db9e14d3ba677c22160af218fcd108d3",
+  "parent": "88b626564e58a2c53bee1193a91f802913d1d544",
   "branch": "dot/f05-gtk-native-recovery-20261103",
   "delta": [
-    "A\ttests/product/f05_gtk_native_recovery_20261103/gtk.py",
-    "A\ttests/product/f05_gtk_native_recovery_20261103/fixture.py",
-    "A\ttests/product/f05_gtk_native_recovery_20261103/contract.json",
-    "A\ttests/product/f05_gtk_native_recovery_20261103/driver.py",
-    "M\t.github/workflows/gtk-sdk342-package.yml"
+    "M\ttests/product/f05_gtk_native_recovery_20261103/gtk.py",
+    "M\ttests/product/f05_gtk_native_recovery_20261103/driver.py",
+    "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json"
   ],
   "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
   "frozen_blobs": {
@@ -26,10 +24,12 @@
     "tests/reader_f06_packages": "2069ed6ec9ac7c184ab835d2dc4872a7479ce57b",
     "tests/reader_navigation": "defb7e62adc638c04e448cdc5138c4386a9c0de8",
     "tests/linux_host/generate_fixed.py": "59cba4bb6c8575f154c14470f5ccce7bd2c83543",
-    "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065"
+    "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065",
+    "examples/linux": "7de02f11bdd68fa66b040c9220d170a494bd394e",
+    ".github/workflows/gtk-sdk342-package.yml": "0e3b53c7c73ca403601d81ce38a67fe6451e960c"
   },
   "copied_blobs": {
-    "gtk.py": "f941c668740688eecf38d43d2875d0c4e232a63d",
+    "gtk.py": "1bbdc2de3765d5f2469be09d691e7d52feebc475",
     "fixture.py": "6a9a9322c2136295ae498fb11784874c0e85861b"
   },
   "stages": {
@@ -275,7 +275,9 @@
     "build/gtk-raw-wave3/result.json",
     "build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf",
     "build/gtk-raw-wave3/retained-package/EXReader-Linux/bin/exreader-linux",
-    "build/gtk-sdk342/build.json"
+    "build/gtk-sdk342/build.json",
+    "build/f05-gtk/observation-controls.json",
+    "build/f05-gtk-native/receive-observations.json"
   ],
   "optional_patterns": [
     "build/gtk-navigation-ui/*.json",
@@ -283,5 +285,16 @@
     "build/gtk-batch-ui/*.json",
     "build/gtk-batch-ui/*.png",
     "build/f05-gtk-retained/*.png"
-  ]
+  ],
+  "observation_contract": {
+    "source_parent": "88b626564e58a2c53bee1193a91f802913d1d544",
+    "predicate_control_groups": 8,
+    "sync_invocations": 15,
+    "receive_deadline_seconds": 120,
+    "network_deadline_seconds": 240,
+    "network_generation_is_receive_counter": false,
+    "partial_is_successful_projection": false,
+    "original_failed_run": "41619466549",
+    "only_observation_and_diagnostics_changed": true
+  }
 }
