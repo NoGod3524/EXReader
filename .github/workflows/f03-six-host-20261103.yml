@@ -91,6 +91,7 @@ jobs:
     - gtk
   gtk:
     if: always() && (contains(github.event.head_commit.message, '[F03-SIX-HOST]') || contains(github.event.head_commit.message, '[F03-FULL]'))
+      || contains(github.event.head_commit.message, '[F03-APPLE-RECEIVE]')
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
@@ -191,15 +192,14 @@ jobs:
       EXR_COMPOSITION_CONTENT_BOUND: '1'
   apple:
     if: always() && (contains(github.event.head_commit.message, '[F03-SIX-HOST]') || contains(github.event.head_commit.message, '[F03-FULL]'))
+      || contains(github.event.head_commit.message, '[F03-APPLE-RECEIVE]')
     runs-on: macos-15
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        platform:
-        - macos
-        - iphone
-        - ipad
+        platform: ${{ fromJSON(contains(github.event.head_commit.message, '[F03-APPLE-RECEIVE]') && '["macos"]' || '["macos","iphone","ipad"]')
+          }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -211,12 +211,12 @@ jobs:
     - name: SDK 3.42 real host and unchanged six organization tests
       run: python3 tests/f03_six_host_20261103/run.py apple '${{ matrix.platform }}'
     - uses: actions/download-artifact@v4
-      if: contains(github.event.head_commit.message, '[F03-FULL]')
+      if: contains(github.event.head_commit.message, '[F03-FULL]') || contains(github.event.head_commit.message, '[F03-APPLE-RECEIVE]')
       with:
         name: f03-six-gtk-${{ github.run_id }}-${{ github.run_attempt }}
         path: build/f03-input
     - name: Six actual cross-host organization receives and process restarts
-      if: contains(github.event.head_commit.message, '[F03-FULL]')
+      if: contains(github.event.head_commit.message, '[F03-FULL]') || contains(github.event.head_commit.message, '[F03-APPLE-RECEIVE]')
       run: python3 tests/f03_six_host_20261103/run.py apple-receive '${{ matrix.platform }}'
     - uses: actions/upload-artifact@v4
       if: always()

@@ -294,13 +294,23 @@ final class AppleOrganizationInteropTests: XCTestCase {
             XCTAssertTrue(field.waitForExistence(timeout: 30)); field.tap(); field.typeText(password)
         }
         let remember = element("account.remember")
-        if remember.exists && (remember.value as? String == "1") { tap("account.remember") }
+        if remember.exists {
+            let enabled = (remember.value as? NSNumber)?.boolValue ?? (remember.value as? String == "1")
+            if enabled { tap("account.remember") }
+        }
         tap("account.connect")
         XCTAssertTrue(wait { !self.element("account.connect").exists &&
             self.element("account.sync.start").exists })
         tap("account.sync.start")
-        XCTAssertTrue(wait(180) { self.text("account.sync.state") == "本轮扫描完成" },
-                      "Actual native network receive did not finish")
+        let synchronized = wait(180) { self.text("account.sync.state") == "本轮扫描完成" }
+        if !synchronized {
+            tap("account.sync.details")
+            XCTFail("Actual native network receive did not finish; state=" + text("account.sync.details.state")
+                    + "; reason=" + text("account.sync.details.reason")
+                    + "; HTTP=" + text("account.sync.details.http")
+                    + "; shards=" + text("account.sync.details.shards"))
+            return
+        }
         XCTAssertTrue(wait(180) {
             let receive = self.text("account.receive.state")
             return receive.contains("组织待依赖或重扫 0 项") && receive.contains("待处理冲突 0 项")
