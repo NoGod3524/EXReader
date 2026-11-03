@@ -2085,3 +2085,39 @@ F08 remains at its previous failed, cleaned-up native attempt with no new native
 Six responsibility slots: implementation 1 (F05 approved GTK candidate); independent review 1 (F09); documentation/coordination 1; waiting or blocked 3 (F03 six-target gap, F07 review/evidence blockers, F08 no new native authority). Diagnostic-result-wait is 0 because the new GTK package has not run. Completed Android diagnosis and runtime validation are not counted as ongoing implementation.
 
 Storage measurements remain historical, not a fresh scan. No deletion or resize occurred. All old failures, partials, skipped stages and evidence limitations remain. This snapshot adds no new scope, CI round, artifact exception, external communication or formal credit.
+
+
+## Hourly continuation snapshot: 2026-11-03 06:22 EST scheduled
+
+Actual save time: 2026-11-03T11:22:32.946276+00:00 / 2026-11-03T06:22:32.946276-05:00. The entire previous document is preserved unchanged. This snapshot continues work and does not declare the overall project complete. Formal catalog remains 98 verified, 1 partial and 9 pending out of 108.
+
+### Previously accepted Android scopes remain bounded
+F03 R8 source 054df69524eed483759febdcc0ce20e634921f82 / run 41588932707/A1 remains accepted within the reviewed Android scope. Its six-target catalog item is still pending, with old_apk_upgrade_accepted=false and complete_product=false. No new F03 execution or ledger change occurred.
+F05 bridge run 41604711611 at 0e547 and conflict/history-boundary run 41611865502 at f162b remain independently verified successes within their declared Android scopes. Original owner18/retained16/4PIDs/2boundaries/bridge10/parser10 were preserved, and the latter audit validated eight new conflict/history checks. fullF05/UI/transport/formal remain false. These are historical verified results, not new executions this hour.
+
+### F05 GTK: first authorized native-recovery round failed at an observation boundary
+The 4A1M GTK package was corrected after independent review, then actual/full-tree/trigger reviewed before publication. Source 88b626564e58a2c53bee1193a91f802913d1d544, parent f162b, was published on dot/f05-gtk-native-recovery-20261103. Its unique run 41619466549/A1 completed FAILURE, not a build failure.
+https://github.com/NoGod3524/EXReader/actions/runs/41619466549
+Admission succeeded, producer was job 125861260421 and audit was job 125871036322; the two old jobs were skipped. Build, prepare, navigation, folder and GUI stages succeeded. Independent review read all 48 retained checks by name as passed and the original accepted/source/run/attempt result. This does not mean the full artifact audit or native recovery suite passed.
+
+The first native-stage error is explicitly at gtk.py line 248, offline_reconnect calling sync(first), then line 146 waiting for Receive preparing/phase/receive_seen, ending in the line 87 TimeoutError after 120 seconds. Source ordering shows the preceding cancel/retry finish_case was passed, but no independent ZIP reload of that case report is claimed. The native six-scenario contract was not completed. Later kill/delete/concurrent/final-offline work was not reached. Neither a network failure nor a product defect is established by this observation timeout.
+
+Collection honestly reported nine missing peer/offline outputs, errors=[] and 62585687 copied bytes. The separate audit refused acceptance because the producer failed and did not download producer inputs; accepted, fullF05 and delete_detail remained false.
+Producer artifact 13223823420: 34749659 bytes, SHA256 c602d46402dc1f2cb2ae364e4b20a89c6e55f18123130bf0325645d3c8893987.
+Audit artifact 13223579432: 17340 bytes, SHA256 c10e992ad6d54192d1fd87b94eb3215700a42003c0a87f61070b2e976f29139e.
+Independent terminal review completed without a new ZIP download or an extra CI round. The original 190-minute round is finished and its failure remains preserved.
+
+### GTK next round: new specific authorization, candidate preparation only
+Read-only inspection of fixed 88b626 production and test source established that receive_seen resets on each BEGIN and increments by received book count. receive_attempt belongs to RECEIVE_OPEN import, so it cannot identify completion of this Receive operation. The existing key helper's 150 ms delay before polling could miss a transient state, but the failed run did not record before/after snapshots; an actual missed transient is therefore not proven.
+Source also shows generation increments on successful creation, Receive-specific terminal wording comes from the received_apply success branch, and generic network-finish wording is different. A new observation rule must identify this operation rather than accept stale network completion.
+
+At 11:10 UTC the user separately approved a three-file observation correction on the original GTK branch, parent 88b626, one commit/push and one new run capped at 190 runner-minutes. Only versioned gtk.py, driver.py and contract.json are in scope. Workflow, product, SDK and old tests remain unchanged. The original 120-second limit, all 48 regressions, six native scenarios and partial deletion-detail classification must remain. The old failed round's budget is not reused. No automatic follow-on run is authorized.
+At snapshot preparation, the writer is preparing the new candidate in memory. No new actual candidate save, Git object/ref or CI result has been reported. Independent actual and full-tree review remain required before publication and dispatch. This proposed observation fix is not a claim that the product or all native cases now pass.
+
+### Other lanes and six responsibility states
+F07's bounded Apple peer MAP/checker evidence is unchanged. Windows/GTK installed/link closure gaps and explicit review refusals remain. No denied operation was repeated through a different route or writer, no new F07 source/artifact result was obtained, and the two B JSON files remain unavailable to this coordinator.
+F08 retains its earlier failed, cleaned-up native attempt and has no new native budget. The separate F09 GTK status diagnostic remains unaccepted; F05 recovery work does not substitute for it.
+
+Six responsibility slots at this snapshot: implementation 1 (F05 newly authorized observation candidate preparation); documentation/coordination 1; waiting or blocked 4 (F03 six-target gap, F07 evidence/review blockers, F08 no new native authority, F09 awaiting actual candidate). No additional implementation is inferred from an occupied role or completed diagnosis. No running test-result wait is claimed for the proposed next round.
+
+Prior storage findings remain historical. No cleanup, disk expansion, new artifact exception or local project/ZIP execution occurred. All previous failures, partial results and limits remain. This document does not authorize extra CI, change ownership, contact UI owners or increase formal credit.
