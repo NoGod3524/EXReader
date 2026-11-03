@@ -8,11 +8,7 @@
   "approved_delta": [
     "tests/dot_f03_production_acceptance_20261102/admission.py",
     "tests/dot_f03_production_acceptance_20261102/contract.json",
-    ".github/workflows/reader-f03-production-acceptance-v342.yml",
-    "tests/dot_f03_production_acceptance_20261102/check_reader_owner_android_v342.py",
-    "tests/dot_f03_production_acceptance_20261102/check_owner_evidence_gate_v342.py",
-    "tests/dot_f03_production_acceptance_20261102/check_reader_organization_android_v342.py",
-    "tests/dot_f03_production_acceptance_20261102/check_organization_evidence_gate_v342.py"
+    "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/HostImportUiTest.java"
   ],
   "branch": "dot/f03-production-acceptance-v342-20261102",
   "budget": {
@@ -270,7 +266,7 @@
   "review_base": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
   "reviewed_acceptance_base": "61dc8d6190e65dc12886d2d0f0e97b501c52be56",
   "runtime_accepted": false,
-  "schema": 5,
+  "schema": 6,
   "sdk_frozen_paths": [
     "src",
     "include",
@@ -329,5 +325,29 @@
     "gate_subprocess_calls": 2,
     "old_tools_modified": false,
     "old_tests_modified": false
+  },
+  "import_status_base": "0b5c77592a264f5cdb6f12f03dbe7b78bb698b7d",
+  "host_import_status_contract": {
+    "version": "host-import-reading-limit-status-v1",
+    "source": "tests/reader_android_host_import/java/org/exreader/host/HostImportUiTest.java",
+    "source_blob": "c0a48388a7b5b2c6e21ff029c8bffc33041e7c93",
+    "overlay": "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/HostImportUiTest.java",
+    "staged_path": "org/exreader/host/HostImportUiTest.java",
+    "old_literal": "status(\"Current reader has a 32 MiB reading limit\");",
+    "new_literal": "status(\"Selected book exceeds 32 MiB reading limit. The 128 MiB staging ceiling does not make larger books readable\");",
+    "reading_limit_bytes": 33554432,
+    "staging_limit_bytes": 134217728,
+    "cases": 20,
+    "phases": 9,
+    "runtime_accepted": false
+  },
+  "r5_package_blobs": {
+    "tests/dot_f03_production_acceptance_20261102/check_reader_owner_android_v342.py": "254099524345ef963013407729abebdec51e246f",
+    "tests/dot_f03_production_acceptance_20261102/check_owner_evidence_gate_v342.py": "c47029c4fa72314304a98edc34dae8a0d5d4caf4",
+    "tests/dot_f03_production_acceptance_20261102/check_reader_organization_android_v342.py": "46651ff9db161a5accdd8e3d1797abff2bcb9eb2",
+    "tests/dot_f03_production_acceptance_20261102/check_organization_evidence_gate_v342.py": "6bcaf5f5b6ed0a02960ba85238e996b6dc7e3b77",
+    ".github/workflows/reader-f03-production-acceptance-v342.yml": "be780688ac515470198b0a55296d683dfc762ac8",
+    "tests/dot_f03_production_acceptance_20261102/contract.json": "2b7f0b957cfa5de4c3003aa90f22cf73361cb9e7",
+    "tests/dot_f03_production_acceptance_20261102/admission.py": "916deff60983357123989daebb5cd0624f87a68a"
   }
 }
