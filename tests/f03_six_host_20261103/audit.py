@@ -62,6 +62,11 @@ def verify(data, stamp):
     identity = setup()
     require(set(data["hosts"]) == set(HOSTS) and len(data["hosts"]) == 6, "six hosts required")
     require(data["sdk_source"] == SDK and data["sdk_version"] == "3.42.0", "SDK mismatch")
+    require(set(data["native_regressions"]) == {"OFF", "ON"}, "both native projection formats required")
+    for report in data["native_regressions"].values():
+        same(report, stamp)
+        require(report["accepted"] is True and not report["warm_pending"] and
+                not report["cold_pending"] and not report["differences"], "native warm/cold regression failed")
     for host in HOSTS:
         require(set(data["receipts"].get(host, {})) == set(PHASES), "six phases required: " + host)
         build = data["builds"][host]
@@ -161,12 +166,14 @@ def collect(folder, stamp):
         artifacts = json.load(response)["artifacts"]
     require(len(artifacts) < 100 and len(jobs) < 100, "unexpected API pagination")
     provenance = {}
-    for host in [*HOSTS, "android-baseline"]:
-        job_name = "apple (" + host + ")" if host in ("macos", "iphone", "ipad") else host
+    for host in [*HOSTS, "android-baseline", "projection-OFF", "projection-ON"]:
+        native = host.startswith("projection-")
+        job_name = "projection-regression (" + host.split("-", 1)[1] + ")" if native else (
+            "apple (" + host + ")" if host in ("macos", "iphone", "ipad") else host)
         found = [j for j in jobs if j["name"] == job_name]
         require(len(found) == 1 and found[0]["status"] == "completed" and found[0]["conclusion"] == "success",
                 "producer failed/skipped/missing: " + host)
-        name = "f03-six-" + host + "-" + stamp["run_id"] + "-" + stamp["attempt"]
+        name = ("f03-" if native else "f03-six-") + host + "-" + stamp["run_id"] + "-" + stamp["attempt"]
         found_artifacts = [a for a in artifacts if a["name"] == name]
         require(len(found_artifacts) == 1, "current-attempt artifact missing: " + host)
         artifact = found_artifacts[0]
@@ -233,6 +240,8 @@ def collect(folder, stamp):
     original = folder / "gtk/f03-originals/gtk-organization.txt"
     data["book_key"] = "txt:" + sha(original)
     data["android_baseline"] = read(folder / "android-baseline/f03-production/result.json")
+    data["native_regressions"] = {mode: read(folder / ("projection-" + mode) / "replay/result.json")
+                                  for mode in ("OFF", "ON")}
     return data
 
 def controls(data, stamp):
@@ -254,6 +263,7 @@ def controls(data, stamp):
         ("no-sync", "native synchronization missing", lambda d: d["receipts"]["windows"]["create"].update(native_sync_completed=False)),
         ("no-authentication", "authenticated transport missing", lambda d: d["requests"]["ipad"].update(create=[])),
         ("failed-original-android", "Android original all-exits chain missing", lambda d: d["android_baseline"].update(accepted=False)),
+        ("failed-native-replay", "native warm/cold regression failed", lambda d: d["native_regressions"]["ON"].update(accepted=False)),
         ("missing-tag", "missing or extra organization", lambda d: snapshot_change(d, "ipad", "create", lambda s: s["reader_tags"].clear())),
         ("wrong-parent", "nested shelf order differs", lambda d: snapshot_change(d, "iphone", "create",
             lambda s: next(r for r in s["reader_shelves"] if r["name"] == "F03 Child").update(parent_id=None))),
