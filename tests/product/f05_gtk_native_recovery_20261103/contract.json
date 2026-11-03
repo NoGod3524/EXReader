@@ -1,11 +1,17 @@
 {
   "schema": 1,
-  "parent": "4838d70103b4945e5d599796fcfcf35caeca1fc0",
-  "branch": "dot/f05-gtk-native-recovery-20261103",
+  "parent": "c4d67540a0e17a86bd42ad9323cd269ce8959326",
+  "branch": "codex/f05-gtk-recovery-r3-20261103",
   "delta": [
-    "A\ttests/product/f05_gtk_native_recovery_20261103/retained_diagnostics.py",
+    "M\t.github/workflows/gtk-sdk342-package.yml",
+    "A\ttests/product/f05_gtk_native_recovery_20261103/case_alignment.py",
+    "A\ttests/product/f05_gtk_native_recovery_20261103/check_dry_run.py",
+    "A\ttests/product/f05_gtk_native_recovery_20261103/check_r3.py",
+    "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json",
     "M\ttests/product/f05_gtk_native_recovery_20261103/driver.py",
-    "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json"
+    "M\ttests/product/f05_gtk_native_recovery_20261103/gtk.py",
+    "A\ttests/product/f05_gtk_native_recovery_20261103/inspect_network.py",
+    "A\ttests/product/f05_gtk_native_recovery_20261103/native_runtime.py"
   ],
   "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
   "frozen_blobs": {
@@ -26,10 +32,10 @@
     "tests/linux_host/generate_fixed.py": "59cba4bb6c8575f154c14470f5ccce7bd2c83543",
     "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065",
     "examples/linux": "7de02f11bdd68fa66b040c9220d170a494bd394e",
-    ".github/workflows/gtk-sdk342-package.yml": "0e3b53c7c73ca403601d81ce38a67fe6451e960c"
+    ".github/workflows/gtk-sdk342-package.yml": "234285074797b178cb757a2d4637f31e1ccf2c49"
   },
   "copied_blobs": {
-    "gtk.py": "d75f2bd2709dd2be71216edd559993a8cb86aded",
+    "gtk.py": "32e50f020b81c7b261d658a48b24065a1d635482",
     "fixture.py": "6a9a9322c2136295ae498fb11784874c0e85861b"
   },
   "stages": {
@@ -296,7 +302,7 @@
     "network_generation_is_receive_counter": false,
     "partial_is_successful_projection": false,
     "original_failed_run": "41619466549",
-    "only_observation_and_diagnostics_changed": true
+    "only_observation_and_diagnostics_changed": false
   },
   "cleanup_fix": {
     "source_parent": "834aac8adea2f19b3ccda832608ffacc4049449f",
@@ -321,5 +327,24 @@
     "runtime_observation_may_affect_timing": true,
     "original_failed_run_never_promoted": true,
     "diagnostic_incomplete_rejects_new_package": true
+  },
+  "r3_blobs": {
+    "case_alignment.py": "bf5f1196dea0a3b3860d753164a854d4b340bb17",
+    "check_dry_run.py": "7ce18ba1c7592d2d8047dba946122f2e01497175",
+    "check_r3.py": "c30fb5a12c365ad7ba190950c20d9597d34b291f",
+    "inspect_network.py": "73fbaef95b12da95c151005b40e6fd10a59a705d",
+    "native_runtime.py": "1a280055807a4f459bac8269ad3bcdbcd6a7ef36"
+  },
+  "r3_rewrite": {
+    "base": "c4d67540a0e17a86bd42ad9323cd269ce8959326",
+    "r2_recovered": false,
+    "original_device_failure": "41642819421",
+    "original_forensic_failure": "41649370294",
+    "dry_run_runner_minutes": 30,
+    "dry_run_attempts": 1,
+    "original_six_cases_preserved": true,
+    "original48_preserved": true,
+    "full_F05_accepted": false,
+    "authorization": "2026-11-03 user explicitly authorized this repair/save, then all operations requiring authorization in this conversation. First new run is limited to one 30 runner-minute dry-run; no automatic rerun."
   }
 }
