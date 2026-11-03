@@ -60,7 +60,7 @@ def check(root):
     abi = re.search(r'set\(EXR_ABI_VERSION\s+(\d+)\)', source)[1]
     template = (root / 'cmake/version.h.in').read_text(encoding='utf-8')
     expected = template.replace('@EXR_SDK_VERSION@', version).replace('@EXR_ABI_VERSION@', abi)
-    if (root / 'include/exr/version.h').read_text(encoding='utf-8') != expected:
+    if (root / 'include/exr/version.h').read_bytes() != expected.encode('utf-8'):
         error('include/exr/version.h', 1, 'generated header differs', f'SDK {version}, ABI {abi}; run --sync-generated')
     cmake = read('CMakeLists.txt')
     project = next((i for i, line in enumerate(cmake, 1) if re.search(r'^project\(EXReader\b', line)), 0)
