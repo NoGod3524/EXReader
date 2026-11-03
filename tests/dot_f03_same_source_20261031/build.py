@@ -141,6 +141,13 @@ def receive_apple(a, stamp):
         else:
             require(a.udid is not None,"exact source simulator UDID required")
             # Trust only a receiver-owned clone; never reset the owner's simulator keychain.
+            inventory=json.loads(subprocess.check_output(["xcrun","simctl","list","devices","--json"]))
+            sources=[d for devices in inventory["devices"].values() for d in devices if d["udid"]==a.udid]
+            require(len(sources)==1 and sources[0]["state"] in ("Booted","Shutdown"),
+                    "source simulator is missing or transitioning")
+            write_json(folder/"source-simulator.json",{**stamp,"udid":a.udid,"state":sources[0]["state"]})
+            if sources[0]["state"]=="Booted":
+                subprocess.run(["xcrun","simctl","shutdown",a.udid],check=True)
             created=subprocess.check_output(["xcrun","simctl","clone",a.udid,
                 "F03-"+stamp["run_id"]+"-"+stamp["attempt"]+"-"+a.host],text=True).strip()
             clone=str(uuid.UUID(created))
