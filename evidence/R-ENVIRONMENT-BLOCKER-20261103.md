@@ -15,3 +15,19 @@
 2026-11-03 19:58 UTC只读回读run身份：39899829270 attempt1 success，head=887e1bb59ef6f28c15824cb7593654f3610f3cef，branch=codex/r3-frozen-baseline；40010390609及40010395155均attempt1 success，head=9442e84d60469de5551de7ce7e62191a0059d9d1，branch=codex/reading-cpu-baselines。它们是95100501配置引用的历史基准，不运行于95100501，不授当前树通过。
 
 R已停止，等待owner E1/E2/E3策略。未创建V之后候选，未重算八项protected_trees，未refreeze，未触发新run。若策略需要重建环境，它是独立前置；不得用hosted偶然分配冒充可复现环境。
+
+## R 入口条件：C PR33 基线测量（2026-11-03）
+结论：**受阻**。以下基线失败须作为 R 的入口条件处理，不以 C 纯文档包代替产品/打包修复。
+owner 定性原文：“既有问题，非本 PR 引起，不重跑”。
+
+### 基础与证据边界
+PR33 head 1761386d966ffdcbbeccaf25e68b184706cf9b8f，base ledger/base-20261103 @342780237eb013350bff20c21bc92c335422526a。GitHub files API确认仅9个新增docs/evidence文件、1400行，零生产源码/测试/workflow改动。
+这是对文档差异和运行身份的核实；“非本PR引起”为owner定性，未另跑base对照实验，不据此虚构根因定位或base独立测试通过。
+四run均2026-11-03T20:41:32Z创建、pull_request、attempt1、相同head：
+- bounded-library 41714890432：success。
+- reading-core 41714890813：success。
+- sdk-version-consistency 41714890397：success。
+- native 41714890473：failure；Windows job126192203761、macOS job126192203882、Apple mobile job126192204206失败，Android/fuzz/sanitizers/Ubuntu成功。
+三失败step注释均为“Process completed with exit code 1.”；详细step、13工件身份与保留期见 [C-PR33-BASELINE-20261103.md](C-PR33-BASELINE-20261103.md)。
+reading-required未在本PR触发；不得把3绿称六包/门禁全绿。
+R未执行，当前只封存入口证据。后续入口问题处理与refreeze由owner/对应writer决定，本会话不修产品、不重跑、不自行放宽门禁。
