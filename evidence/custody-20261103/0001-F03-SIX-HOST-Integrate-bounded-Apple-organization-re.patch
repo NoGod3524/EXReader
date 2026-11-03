@@ -1,0 +1,1065 @@
+From a375fd9baa70f040d5c144415c5ec0d2e541e5e6 Mon Sep 17 00:00:00 2001
+From: Yinuo Xu <124627035+NoGod3524@users.noreply.github.com>
+Date: Tue, 3 Nov 2026 11:57:50 -0500
+Subject: [PATCH] [F03-SIX-HOST] Integrate bounded Apple organization receive
+ and pin native validation source
+
+---
+ .github/workflows/f03-six-host-20261103.yml   | 124 +++++++
+ .../F03_SIX_HOST_20261103.md                  |  49 +++
+ examples/apple/HostCatalog.swift              |  54 +++
+ examples/apple/HostModel.swift                |  73 +++-
+ .../AppleOrganizationInteropTests.swift       | 351 ++++++++++++++++++
+ tests/dot_f03_same_source_20261031/gtk.py     |  24 +-
+ tests/dot_f03_same_source_20261031/windows.py | 116 ++++++
+ tests/f03_six_host_20261103/run.py            | 150 ++++++++
+ 8 files changed, 936 insertions(+), 5 deletions(-)
+ create mode 100644 .github/workflows/f03-six-host-20261103.yml
+ create mode 100644 docs/reader-total-progress/F03_SIX_HOST_20261103.md
+ create mode 100644 tests/dot_f03_same_source_20261031/AppleOrganizationInteropTests.swift
+ create mode 100644 tests/dot_f03_same_source_20261031/windows.py
+ create mode 100644 tests/f03_six_host_20261103/run.py
+
+diff --git a/.github/workflows/f03-six-host-20261103.yml b/.github/workflows/f03-six-host-20261103.yml
+new file mode 100644
+index 00000000..b4d1c554
+--- /dev/null
++++ b/.github/workflows/f03-six-host-20261103.yml
+@@ -0,0 +1,124 @@
++name: F03 six-host integration
++on:
++  push:
++    branches: [codex/f03-six-host-20261103]
++    paths:
++      - 'tests/f03_six_host_20261103/**'
++      - 'tests/dot_f03_same_source_20261031/**'
++      - 'examples/apple/HostCatalog.swift'
++      - 'examples/apple/HostModel.swift'
++      - 'examples/apple/HostViews.swift'
++      - '.github/workflows/f03-six-host-20261103.yml'
++permissions:
++  contents: read
++  actions: read
++concurrency:
++  group: f03-six-host-${{ github.ref }}
++  cancel-in-progress: false
++env:
++  PYTHONUTF8: '1'
++  EXR_APPLE_SDK_VERSION: '3.42.0'
++jobs:
++  gtk:
++    if: contains(github.event.head_commit.message, '[F03-SIX-HOST]')
++    runs-on: ubuntu-22.04
++    timeout-minutes: 60
++    steps:
++      - uses: actions/checkout@v4
++        with: {fetch-depth: 0}
++      - uses: actions/setup-python@v5
++        with: {python-version: '3.12'}
++      - name: Exact source SDK and frozen parser admission
++        run: |
++          python -m pip install PyYAML Pillow
++          python tests/f03_six_host_20261103/run.py admit
++      - name: Native prerequisites
++        run: |
++          sudo apt-get update -qq
++          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil ninja-build
++      - name: Build SDK 3.42 installed product and actual GTK host
++        run: python tests/f03_six_host_20261103/run.py legacy build --host gtk --output build/f03-gtk-build.json
++      - name: Original organization assertions and actual six-phase publication
++        run: |
++          python tests/f03_six_host_20261103/run.py legacy fixtures --output build/f03-originals
++          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
++            openbox >build/f03-openbox.log 2>&1 & wm=$!; trap "kill $wm || true" EXIT
++            for i in $(seq 1 100); do wmctrl -m >/dev/null 2>&1 && break; sleep .1; done
++            wmctrl -m
++            python tests/f03_six_host_20261103/run.py legacy gtk --mode retained --package build/package/EXReader-Linux --command-consumer build/command-consumer/command-consumer --output build/f03-retained-gtk
++            previous=""
++            for phase in create delete restore member-remove member-restore restart; do
++              args=(); if test -n "$previous"; then args=(--previous "build/f03-author/$previous/wire/state.json"); fi
++              python tests/f03_six_host_20261103/run.py legacy gtk --mode author --phase "$phase" --profile build/f03-author-profile --book build/f03-originals/gtk-organization.txt --package build/package/EXReader-Linux --output "build/f03-author/$phase" "${args[@]}"
++              previous="$phase"
++            done
++          '
++      - uses: actions/upload-artifact@v4
++        if: always()
++        with:
++          name: f03-six-gtk-${{ github.run_id }}-${{ github.run_attempt }}
++          path: |
++            build/f03-*/
++            build/f03-*.json
++            build/f03-*.log
++            build/package/EXReader-Linux/
++            !build/**/key.pem
++            !build/**/private/**
++            !build/**/connection.json
++          if-no-files-found: error
++  windows:
++    if: contains(github.event.head_commit.message, '[F03-SIX-HOST]')
++    runs-on: windows-2022
++    timeout-minutes: 90
++    steps:
++      - uses: actions/checkout@v4
++        with: {fetch-depth: 0}
++      - uses: ilammy/msvc-dev-cmd@v1
++      - name: Native display and UI dependencies
++        run: |
++          python -m pip install uiautomation==2.0.29 PyYAML Pillow
++          python tests/reader_native_owner_repairs/display.py
++          python tests/f03_six_host_20261103/run.py admit
++      - name: Actual SDK 3.42 composed host with original retained checks
++        run: python tests/f03_six_host_20261103/run.py legacy build --host windows --output build/f03-windows-build.json
++      - uses: actions/upload-artifact@v4
++        if: always()
++        with:
++          name: f03-six-windows-${{ github.run_id }}-${{ github.run_attempt }}
++          path: |
++            build/c09/report.json
++            build/c09/logs/
++            build/c09/package/
++            build/c09/compact22/
++            build/c09/extracted-ui/
++            build/f03-windows-build.json
++          if-no-files-found: error
++  apple:
++    if: contains(github.event.head_commit.message, '[F03-SIX-HOST]')
++    runs-on: macos-15
++    timeout-minutes: 60
++    strategy:
++      fail-fast: false
++      matrix:
++        platform: [macos, iphone, ipad]
++    steps:
++      - uses: actions/checkout@v4
++        with: {fetch-depth: 0}
++      - name: Native project dependencies and exact source admission
++        run: |
++          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document
++          python3 tests/f03_six_host_20261103/run.py admit
++      - name: SDK 3.42 real host and unchanged six organization tests
++        run: python3 tests/f03_six_host_20261103/run.py apple '${{ matrix.platform }}'
++      - uses: actions/upload-artifact@v4
++        if: always()
++        with:
++          name: f03-six-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
++          path: |
++            build/dot-f03-native/${{ matrix.platform }}/
++            build/f03-${{ matrix.platform }}-build.json
++            build/raw3-ios-sdk/**/sdk342-installed-identity.json
++            !build/**/derived/Index.noindex/**
++            !build/**/derived/ModuleCache.noindex/**
++            !build/**/*.key
++          if-no-files-found: error
+diff --git a/docs/reader-total-progress/F03_SIX_HOST_20261103.md b/docs/reader-total-progress/F03_SIX_HOST_20261103.md
+new file mode 100644
+index 00000000..78e8aeff
+--- /dev/null
++++ b/docs/reader-total-progress/F03_SIX_HOST_20261103.md
+@@ -0,0 +1,49 @@
++# F03 six-host integration — 2026-11-03
++
++Status: **pending**. Requirement: Windows, GTK, Android, macOS, iPhone and iPad
++share nested shelves, tags, series, group delete/restore, membership remove/restore,
++and retain consistent organization after actual process restart.
++
++The user authorized the necessary operations in this chat on 2026-11-03.
++Integration branch: `codex/f03-six-host-20261103`. Product baseline:
++`054df69524eed483759febdcc0ce20e634921f82`. SDK: 3.42.0,
++`8357eafa28423a7ab93ba08b823af80f01ad1505`; the five SDK paths have identical Git objects.
++The SDK repository default branch is not the reader composition baseline.
++
++## Frozen production Git blob IDs (SHA-1)
++
++- `apps/reader/desktop/windows_records_owner.cpp`: `fb1b36b8ee6a0c48b81d8aff3b2097c7372c4b33`
++- `examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java`: `9566f21b7f38c3652d9a416cabd73d1b76a959d6`
++- `examples/apple/HostReadingRecords.swift`: `2c6185723fb523996b7c86ec5caf25f849a3f8cf`
++
++These complete values come from the original fixed scope at baseline, and match
++the baseline tree. Every new native job verifies them; no SDK edit is planned.
++
++## Reviewed reuse
++
++The two Apple receive files are byte-identical between the older `94fb236a` and
++the current product baseline. Adopt the sealed two-file organization projection
++delta from `0fa23868a585c6a7698e05ea25a835f279063c8a`; it uses existing public
++bounded projection, preserves cancellation/account fencing, and surfaces unresolved
++dependencies and unsafe heads. Reuse its Windows receiver and XCTest receiver.
++No old test assertion or historical result is rewritten.
++
++Original job `124448286050` in run `41170540560/1` confirms six organization tests
++with one failure: iPad `testTagAndSeriesPersist`, `Missing organization.kind.tag`.
++Its failure hierarchy shows the library screen with no organization sheet.
++The cause still requires current-source execution. Original Android owner run
++`41333466356/1` is failed; run `41588932707/1` passes only the Android acceptance.
++
++## First integration round
++
++Run the new source's GTK build/original organization suite and six-phase native
++author, Windows 3.42 composed build/retained checks, and all three Apple targets'
++unchanged original six organization tests. Caps: GTK 60, Windows 90, Apple
++60 per target: at most 330 runner-minutes, no automatic reruns. Stop each job
++on its first mandatory failure and retain the evidence. This is an integration
++diagnostic round, not a six-host acceptance and not a reuse of any old CI budget.
++
++The final round must additionally execute all six actual receiver paths for all
++six phases, Android's retained chain, verify immutable wire/DB/UI/program identity,
++authenticate current-run artifacts, and reject negative controls. Until that
++complete evidence exists F03 stays pending and receives no formal count credit.
+diff --git a/examples/apple/HostCatalog.swift b/examples/apple/HostCatalog.swift
+index 9ce22371..b1f546e6 100644
+--- a/examples/apple/HostCatalog.swift
++++ b/examples/apple/HostCatalog.swift
+@@ -472,6 +472,12 @@ struct HostReceivedBook {
+     let key: String, revision: String, title: String, format: String, sha256: String
+     let bytes: UInt64
+ }
++struct HostOrganizationReceivePage {
++    var last: String?
++    var count = 0, projected = 0
++    var unsafe: Set<String> = []
++    var pending: Set<String> = []
++}
+ struct HostReceivePage {
+     var last: String?
+     var count = 0, projected = 0, conflicts = 0, retained = 0
+@@ -491,13 +497,61 @@ private let hostReceiveEntities = reader_revision_entities_page_raw_v3
+ private let hostReceiveSelected = reader_revision_selected_raw_v3
+ private let hostReceiveTitle = reader_revision_book_title_raw_v3
+ private let hostReceiveProject = reader_revision_project_raw_v3
++private let hostReceiveOrganization = reader_organization_project_page_raw_v3
+ #else
+ private let hostReceiveEntities = reader_revision_entities_page
+ private let hostReceiveSelected = reader_revision_selected
+ private let hostReceiveTitle = reader_revision_book_title
+ private let hostReceiveProject = reader_revision_project
++private let hostReceiveOrganization = reader_organization_project_page
+ #endif
+ extension HostCatalog {
++    // This is a native product receive path, not a test-side projector. The public
++    // API fences each safe head and commits only derived metadata; it does not
++    // write history, outbox or SDK state. Handles remain inside this owner item.
++    func receiveOrganizationPage(kind: String, after: String?,
++                                 checkCancellation: () throws -> Void) throws -> HostOrganizationReceivePage {
++        guard ["shelf", "tag", "series", "membership"].contains(kind) else {
++            throw HostCatalogError.invalid("组织接收类型无效")
++        }
++        try checkCancellation()
++        return try withHistory { history in
++            var rows = [reader_organization_projection_row](
++                repeating: reader_organization_projection_row(), count: 50)
++            var count = 0
++            var error = reader_revision_error()
++            let status = hostProductStrings([kind, after ?? ""]) { strings in
++                rows.withUnsafeMutableBufferPointer { buffer in
++                    hostReceiveOrganization(history, strings[0], after == nil ? nil : strings[1],
++                                            50, buffer.baseAddress, &count, &error)
++                }
++            }
++            guard status == READER_REV_OK else {
++                throw HostCatalogError.invalid("组织接收未完成；本页已处理 \(count) 项，已提交结果保留，可重试")
++            }
++            var page = HostOrganizationReceivePage()
++            page.count = count
++            for row in rows.prefix(count) {
++                let key = hostReceiveCString(row.entity_key)
++                page.last = key
++                switch row.result {
++                case READER_ORGANIZATION_PROJECTED:
++                    page.projected += 1
++                case READER_ORGANIZATION_UNSAFE_HISTORY:
++                    page.unsafe.insert(kind + ":" + key)
++                case READER_ORGANIZATION_PENDING_DEPENDENCY, READER_ORGANIZATION_HEAD_CHANGED:
++                    // Include the selected head: a new head must not look like a
++                    // stable unresolved dependency from the preceding scan.
++                    page.pending.insert(kind + ":" + key + ":" + hostReceiveCString(row.info.revision_id))
++                default:
++                    throw HostCatalogError.invalid("组织接收结果无效；保留原历史")
++                }
++            }
++            try checkCancellation()
++            return page
++        }
++    }
++
+     func receivePage(after: String?, checkCancellation: () throws -> Void) throws -> HostReceivePage {
+         try withHistory { history in
+             let copied = HostReceiveEntities()
+diff --git a/examples/apple/HostModel.swift b/examples/apple/HostModel.swift
+index afbebb7d..eba71f1c 100644
+--- a/examples/apple/HostModel.swift
++++ b/examples/apple/HostModel.swift
+@@ -29,6 +29,20 @@ struct HostPagePalette: Equatable {
+ }
+ #endif
+ 
++private struct HostOrganizationReceiveState {
++    let books: Int
++    let bookConflicts: Int
++    let retainedBooks: Int
++    var kindIndex = 0
++    var after: String?
++    var checked = 0
++    var scanPending: Set<String> = []
++    var scanUnsafe: Set<String> = []
++    var previousPending: Set<String>?
++    var unresolved: Set<String> = []
++    var unsafe: Set<String> = []
++}
++
+ // Product shelf state is independent of SDK pagination and its owner handles.
+ // Only three catalog pages are retained; async results carry a query generation.
+ final class HostShelf: ObservableObject {
+@@ -1809,8 +1823,9 @@ final class HostReaderModel: ObservableObject {
+         }
+     }
+ 
+-    // Explicit sync completion projects only newly received books. No frame,
+-    // SDK progress, existing product metadata, or local reading state is changed.
++    // Explicit sync completion first retains the existing new-book policy, then
++    // projects safe organization history through the public bounded API. No SDK
++    // progress or local reading state is changed; unsafe history stays pending.
+     func receiveAccountBooks() {
+         guard !syncPreparing, accountProfile != nil, accountSession?.running == false else { return }
+         let cancel = beginReceivePublication()
+@@ -1846,9 +1861,59 @@ final class HostReaderModel: ObservableObject {
+                 if page.count == 50 {
+                     self.receiveAccountPage(after: page.last, cancel: cancel, projected: count, conflicts: blocked, retained: kept)
+                 } else {
++                    self.receiveAccountOrganization(
++                        state: HostOrganizationReceiveState(books: count, bookConflicts: blocked,
++                                                            retainedBooks: kept), cancel: cancel)
++                }
++            } catch {
++                DispatchQueue.main.async {
++                    self.finishReceivePublication(cancel: cancel, message: self.describe(error))
++                }
++            }
++        }
++    }
++
++    private func receiveAccountOrganization(state: HostOrganizationReceiveState, cancel: HostCancelBox) {
++        queue.async {
++            do {
++                try cancel.check()
++                guard let catalog = self.catalog else { throw HostError.invalidInput("产品书库未就绪") }
++                let kinds = ["shelf", "tag", "series", "membership"]
++                var next = state
++                let page = try catalog.receiveOrganizationPage(kind: kinds[next.kindIndex],
++                                                               after: next.after,
++                                                               checkCancellation: cancel.check)
++                next.checked += page.projected
++                next.scanPending.formUnion(page.pending)
++                next.scanUnsafe.formUnion(page.unsafe)
++                if page.count == 50 {
++                    next.after = page.last
++                    self.receiveAccountOrganization(state: next, cancel: cancel)
++                    return
++                }
++                // At least one rescan after pending dependencies/head changes.
++                // Stop only at a stable unresolved set, not merely at a page end.
++                // Shelves settle before tags/series, then membership references.
++                if !next.scanPending.isEmpty && next.previousPending != next.scanPending {
++                    next.previousPending = next.scanPending
++                    next.scanPending = []; next.scanUnsafe = []; next.after = nil
++                    self.receiveAccountOrganization(state: next, cancel: cancel)
++                    return
++                }
++                next.unresolved.formUnion(next.scanPending)
++                next.unsafe.formUnion(next.scanUnsafe)
++                next.kindIndex += 1
++                next.after = nil; next.previousPending = nil
++                next.scanPending = []; next.scanUnsafe = []
++                if next.kindIndex < kinds.count {
++                    self.receiveAccountOrganization(state: next, cancel: cancel)
++                } else {
++                    try cancel.check()
++                    let message = "已接收 \(next.books) 本；组织投影检查 \(next.checked) 项；待处理冲突 \(next.bookConflicts + next.unsafe.count) 项；组织待依赖或重扫 \(next.unresolved.count) 项；保留本地元数据 \(next.retainedBooks) 项"
+                     DispatchQueue.main.async {
+-                        self.finishReceivePublication(cancel: cancel,
+-                            message: "已接收 \(count) 本；待处理冲突 \(blocked) 项；保留本地元数据 \(kept) 项")
++                        // Existing receiveCancel identity prevents a switched
++                        // account or older completion from publishing this state.
++                        self.finishReceivePublication(cancel: cancel, message: message)
+                     }
+                 }
+             } catch {
+diff --git a/tests/dot_f03_same_source_20261031/AppleOrganizationInteropTests.swift b/tests/dot_f03_same_source_20261031/AppleOrganizationInteropTests.swift
+new file mode 100644
+index 00000000..3d8fb247
+--- /dev/null
++++ b/tests/dot_f03_same_source_20261031/AppleOrganizationInteropTests.swift
+@@ -0,0 +1,351 @@
++// Preparation: retained six native lifecycle cases, not a six-device sync acceptance.
++// SPDX-License-Identifier: MIT
++import XCTest
++
++final class AppleOrganizationInteropTests: XCTestCase {
++    private var app: XCUIApplication!
++    private var steps: [String] = []
++
++    override func setUpWithError() throws {
++        continueAfterFailure = false
++        app = XCUIApplication()
++        steps = []
++    }
++
++    override func tearDownWithError() throws {
++        let payload: [String: Any] = ["test": name, "steps": steps]
++        if let data = try? JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys]),
++           let value = String(data: data, encoding: .utf8) {
++            let attachment = XCTAttachment(string: value)
++            attachment.name = "organization-steps-\(name).json"
++            attachment.lifetime = .keepAlways
++            add(attachment)
++        }
++        let screen = XCTAttachment(screenshot: app.screenshot())
++        screen.name = "organization-screen-\(name)"
++        screen.lifetime = .keepAlways
++        add(screen)
++        app.terminate()
++    }
++
++    private func element(_ id: String) -> XCUIElement {
++        app.descendants(matching: .any).matching(identifier: id).firstMatch
++    }
++    private func wait(_ timeout: TimeInterval = 60, _ condition: () -> Bool) -> Bool {
++        let deadline = Date().addingTimeInterval(timeout)
++        while Date() < deadline {
++            if condition() { return true }
++            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
++        }
++        return condition()
++    }
++    private func tapElement(_ target: XCUIElement, name: String) {
++        XCTAssertTrue(target.waitForExistence(timeout: 60), "Missing \(name): \(app.debugDescription)")
++        if !target.isHittable {
++            let scroll = app.scrollViews.firstMatch
++            if scroll.exists {
++                for _ in 0..<5 where !target.isHittable {
++#if os(macOS)
++                    scroll.scroll(byDeltaX: 0, deltaY: -200)
++#else
++                    scroll.swipeUp()
++#endif
++                }
++            }
++        }
++        XCTAssertTrue(wait { target.isEnabled && target.isHittable }, "Unavailable \(name): \(app.debugDescription)")
++        target.tap()
++    }
++    private func tap(_ id: String) { tapElement(element(id), name: id) }
++    private func text(_ id: String) -> String {
++        guard let node = try? element(id).snapshot() else { return "" }
++        return node.label.isEmpty ? (node.value as? String ?? "") : node.label
++    }
++    private func launch(fresh: Bool, pauseAfterStage: Bool = false, conflictReview: Bool = false) {
++        app.launchEnvironment = pauseAfterStage ? ["EXR_ORGANIZATION_PAUSE_AFTER_STAGE": "1"] : [:]
++        app.launchArguments = ["-EXRUITestFixtures", "1"] + (fresh ? ["-EXRFreshState", "1"] : [])
++            + (conflictReview ? ["-EXROrganizationConflictReview"] : [])
++        app.launch()
++        XCTAssertTrue(element("library.organization").waitForExistence(timeout: 90), app.debugDescription)
++        XCTAssertTrue(wait { !self.element("library.busy").exists })
++    }
++    private func restart() {
++        app.terminate()
++        XCTAssertTrue(wait(15) { self.app.state == .notRunning })
++        launch(fresh: false)
++        tap("library.organization")
++    }
++    private func enterName(_ value: String) {
++        let field = element("organization.name")
++        XCTAssertTrue(field.waitForExistence(timeout: 30))
++        XCTAssertTrue(wait { field.isEnabled && field.isHittable }, app.debugDescription)
++        field.tap()
++#if os(macOS)
++        field.typeKey("a", modifierFlags: .command)
++        field.typeText(XCUIKeyboardKey.delete.rawValue)
++#else
++        let old = (field.value as? String) ?? ""
++        if !old.isEmpty { field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count)) }
++#endif
++        field.typeText(value)
++    }
++    private func row(_ name: String) -> XCUIElement {
++        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@", "organization.group.", name)).firstMatch
++    }
++    private func select(_ name: String) {
++        let group = row(name)
++        XCTAssertTrue(group.waitForExistence(timeout: 60), "Missing group \(name): \(app.debugDescription)")
++        tapElement(group, name: name)
++        XCTAssertTrue(wait { self.text("organization.selected").contains(name) }, app.debugDescription)
++    }
++    private func create(_ name: String) {
++        tap("organization.create")
++        enterName(name)
++        tap("organization.save")
++        XCTAssertTrue(row(name).waitForExistence(timeout: 60), app.debugDescription)
++    }
++    private func kind(_ value: String) { tap("organization.kind.\(value)") }
++    private func book() -> XCUIElement {
++        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "organization.book.")).firstMatch
++    }
++
++    func testGroupLifecycleAndProcessRestart() {
++        launch(fresh: true)
++        tap("library.organization")
++        kind("shelf")
++        create("Acceptance Shelf")
++        steps.append("created")
++        select("Acceptance Shelf")
++        enterName("Renamed Shelf")
++        tap("organization.rename")
++        XCTAssertTrue(row("Renamed Shelf").waitForExistence(timeout: 60))
++        XCTAssertFalse(row("Acceptance Shelf").exists)
++        steps.append("renamed")
++        select("Renamed Shelf")
++        tap("organization.delete")
++        XCTAssertTrue(wait { !self.row("Renamed Shelf").exists })
++        steps.append("deleted")
++        tap("organization.removed")
++        select("Renamed Shelf")
++        tap("organization.restore")
++        tap("organization.removed")
++        XCTAssertTrue(row("Renamed Shelf").waitForExistence(timeout: 60))
++        steps.append("restored")
++        restart()
++        kind("shelf")
++        select("Renamed Shelf")
++        steps.append("restart")
++    }
++
++    func testMembershipAndProcessRestart() {
++        launch(fresh: true)
++        tap("library.import.epub")
++        XCTAssertTrue(wait(90) { !self.element("library.busy").exists && self.element("library.book.0").exists }, app.debugDescription)
++        steps.append("imported")
++        tap("library.organization")
++        kind("shelf")
++        create("Membership Shelf")
++        select("Membership Shelf")
++        XCTAssertTrue(book().waitForExistence(timeout: 60))
++        tapElement(book(), name: "organization book")
++        tap("organization.verify-original")
++        XCTAssertTrue(wait { self.text("organization.message").contains("原件验证完成") }, app.debugDescription)
++        XCTAssertTrue(wait { self.book().exists && self.book().isEnabled && self.book().isHittable })
++        tapElement(book(), name: "organization book")
++        tap("organization.add")
++        XCTAssertTrue(wait { self.text("organization.membership") == "member" }, app.debugDescription)
++        steps.append("added")
++        restart()
++        kind("shelf")
++        select("Membership Shelf")
++        XCTAssertTrue(book().waitForExistence(timeout: 60))
++        tapElement(book(), name: "organization book")
++        XCTAssertTrue(wait { self.text("organization.membership") == "member" }, app.debugDescription)
++        steps.append("restart")
++        tapElement(book(), name: "organization book")
++        tap("organization.remove")
++        XCTAssertTrue(wait { self.text("organization.membership") == "not member" }, app.debugDescription)
++        steps.append("removed")
++    }
++
++    func testTagAndSeriesPersist() {
++        launch(fresh: true)
++        tap("library.import.epub")
++        XCTAssertTrue(wait(90) { !self.element("library.busy").exists && self.element("library.book.0").exists })
++        tap("library.organization")
++        for (groupKind, name) in [("tag", "Acceptance Tag"), ("series", "Acceptance Series")] {
++            kind(groupKind); create(name); select(name)
++            steps.append(groupKind)
++            tapElement(book(), name: "organization book")
++            if groupKind == "tag" {
++                tap("organization.verify-original")
++                XCTAssertTrue(wait { self.text("organization.message").contains("原件验证完成") }, app.debugDescription)
++                tapElement(book(), name: "organization book")
++            }
++            let identity = book().identifier.replacingOccurrences(of: "organization.book.", with: "")
++            let member = element("organization.member." + identity)
++            tap("organization.add")
++            XCTAssertTrue(wait { member.exists && self.text("organization.membership") == "member" }, app.debugDescription)
++            restart(); kind(groupKind); select(name)
++            tapElement(book(), name: "organization book")
++            XCTAssertTrue(wait { member.exists && self.text("organization.membership") == "member" }, app.debugDescription)
++            tap("organization.remove")
++            XCTAssertTrue(wait { !member.exists && self.text("organization.membership") == "not member" }, app.debugDescription)
++            restart(); kind(groupKind); select(name)
++            tapElement(book(), name: "organization book")
++            XCTAssertTrue(wait { !member.exists && self.element("organization.restore-member").isEnabled }, app.debugDescription)
++            tap("organization.restore-member")
++            XCTAssertTrue(wait { member.exists && self.text("organization.membership") == "member" }, app.debugDescription)
++            let screenshot = XCTAttachment(screenshot: app.screenshot())
++            screenshot.name = "verified-\(groupKind)-membership-restore"; screenshot.lifetime = .keepAlways; add(screenshot)
++        }
++        restart()
++        kind("tag"); select("Acceptance Tag")
++        tapElement(book(), name: "organization book")
++        XCTAssertEqual(text("organization.membership"), "member")
++        kind("series"); select("Acceptance Series")
++        tapElement(book(), name: "organization book")
++        XCTAssertEqual(text("organization.membership"), "member")
++        steps.append("restart")
++    }
++    func testStagedIntentSurvivesTerminationAndRetry() {
++        launch(fresh: true, pauseAfterStage: true)
++        tap("library.organization")
++        kind("shelf")
++        tap("organization.create")
++        enterName("Recovered Shelf")
++        tap("organization.save")
++        XCTAssertTrue(element("organization.staged").waitForExistence(timeout: 60), app.debugDescription)
++        steps.append("staged")
++        app.terminate()
++        XCTAssertTrue(wait(15) { self.app.state == .notRunning })
++        launch(fresh: false)
++        tap("library.organization")
++        XCTAssertTrue(element("organization.retry").waitForExistence(timeout: 60), app.debugDescription)
++        steps.append("reopened")
++        tap("organization.retry")
++        kind("shelf")
++        XCTAssertTrue(row("Recovered Shelf").waitForExistence(timeout: 60), app.debugDescription)
++        steps.append("retried")
++        restart()
++        kind("shelf")
++        select("Recovered Shelf")
++        steps.append("persisted")
++    }
++
++    func testNestedShelfSurvivesRestart() {
++        launch(fresh: true)
++        tap("library.organization")
++        kind("shelf")
++        create("Parent Shelf")
++        select("Parent Shelf")
++        tap("organization.children")
++        create("Child Shelf")
++        steps.append("created")
++        restart()
++        kind("shelf")
++        select("Parent Shelf")
++        tap("organization.children")
++        select("Child Shelf")
++        steps.append("restart")
++    }
++
++    func testStaleEditDoesNotOverwriteCompetingRevision() {
++        launch(fresh: true, conflictReview: true)
++        tap("library.organization")
++        kind("shelf")
++        create("Original Shelf")
++        select("Original Shelf")
++        tap("organization.review-compete")
++        XCTAssertTrue(wait { self.text("organization.message").contains("竞争版本已提交") }, app.debugDescription)
++        steps.append("competing")
++        enterName("Stale Edit")
++        tap("organization.rename")
++        XCTAssertTrue(element("organization.retry").waitForExistence(timeout: 60), app.debugDescription)
++        steps.append("refused")
++        tap("organization.abandon")
++        tap("organization.refresh")
++        XCTAssertTrue(row("Concurrent Shelf").waitForExistence(timeout: 60), app.debugDescription)
++        XCTAssertFalse(row("Stale Edit").exists)
++        steps.append("preserved")
++    }
++
++    // Called only after an actual host sync phase. Expectations identify visible entities,
++    // never inject catalog rows or revisions. No missing-input skip is permitted.
++    func testF03ReceivedOrganizationVisibleAfterRestart() throws {
++        let environment = ProcessInfo.processInfo.environment
++        let raw = try XCTUnwrap(environment["F03_EXPECTED_GROUPS"])
++        let data = try XCTUnwrap(raw.data(using: .utf8))
++        let expected = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
++        XCTAssertFalse(expected.isEmpty, "Actual producer identities required")
++        launch(fresh: false)
++        let root = try XCTUnwrap(environment["F03_DAV_ROOT"])
++        XCTAssertTrue(root.hasPrefix("https://"), "Only fixture HTTPS")
++        tap("account.choose")
++        let rootField = element("account.root")
++        XCTAssertTrue(rootField.waitForExistence(timeout: 30))
++        rootField.tap(); rootField.typeText(root + "\n")
++        if let username = environment["F03_DAV_USERNAME"], !username.isEmpty {
++            let field = element("account.username")
++            XCTAssertTrue(field.waitForExistence(timeout: 30)); field.tap(); field.typeText(username)
++        }
++        if let password = environment["F03_DAV_PASSWORD"], !password.isEmpty {
++            let field = element("account.password")
++            XCTAssertTrue(field.waitForExistence(timeout: 30)); field.tap(); field.typeText(password)
++        }
++        let remember = element("account.remember")
++        if remember.exists && (remember.value as? String == "1") { tap("account.remember") }
++        tap("account.connect")
++        XCTAssertTrue(wait { !self.element("account.connect").exists &&
++            self.element("account.sync.start").exists })
++        tap("account.sync.start")
++        XCTAssertTrue(wait(180) { self.text("account.sync.state") == "本轮扫描完成" },
++                      "Actual native network receive did not finish")
++        XCTAssertTrue(wait(180) {
++            let receive = self.text("account.receive.state")
++            return receive.contains("组织待依赖或重扫 0 项") && receive.contains("待处理冲突 0 项")
++        }, "Native product organization receive did not settle without unresolved rows")
++        steps.append("f03-native-https-received")
++        tap("library.organization")
++        for entry in expected {
++            let groupKind = try XCTUnwrap(entry["kind"] as? String)
++            let name = try XCTUnwrap(entry["name"] as? String)
++            XCTAssertTrue(["shelf", "tag", "series"].contains(groupKind))
++            kind(groupKind)
++            if let parents = entry["parents"] as? [String] {
++                for parent in parents { select(parent); tap("organization.children") }
++            }
++            if entry["deleted"] as? Bool == true {
++                XCTAssertFalse(row(name).exists, "Deleted group remains active")
++                tap("organization.removed")
++                XCTAssertTrue(row(name).waitForExistence(timeout: 60), "Remote tombstone missing")
++                tap("organization.removed")
++            } else {
++                select(name)
++                if let key = entry["member_key"] as? String {
++                    let member = element("organization.member." + key)
++                    let present = try XCTUnwrap(entry["member_present"] as? Bool)
++                    XCTAssertTrue(wait { member.exists == present }, "Remote membership diverges")
++                }
++            }
++        }
++        steps.append("f03-received-groups-visible")
++        app.terminate()
++        XCTAssertTrue(wait(15) { self.app.state == .notRunning })
++        launch(fresh: false)
++        tap("library.organization")
++        for entry in expected where entry["deleted"] as? Bool != true {
++            kind(try XCTUnwrap(entry["kind"] as? String))
++            if let parents = entry["parents"] as? [String] {
++                for parent in parents { select(parent); tap("organization.children") }
++            }
++            select(try XCTUnwrap(entry["name"] as? String))
++            if let key = entry["member_key"] as? String {
++                let present = try XCTUnwrap(entry["member_present"] as? Bool)
++                XCTAssertTrue(wait { self.element("organization.member." + key).exists == present })
++            }
++        }
++        steps.append("f03-received-groups-persisted")
++    }
++
++}
+diff --git a/tests/dot_f03_same_source_20261031/gtk.py b/tests/dot_f03_same_source_20261031/gtk.py
+index dd18fd29..7fdfce2c 100644
+--- a/tests/dot_f03_same_source_20261031/gtk.py
++++ b/tests/dot_f03_same_source_20261031/gtk.py
+@@ -9,6 +9,7 @@ import time
+ from pathlib import Path
+ import subprocess
+ import sys
++from urllib.parse import urlsplit
+ from identity import ROOT, identity, require, snapshot_receipt, write_json, read_snapshot, digest, SCOPE, canonical
+ 
+ def author(a, stamp):
+@@ -190,7 +191,28 @@ def author(a, stamp):
+             require(read_snapshot(catalog)==before,"organization changed after restart")
+             event("restart",before)
+         host.key("alt+F4");window("Library collections",False)
+-        dav,user,password=relay.start(a.output/"wire",a.previous)
++        if a.previous is not None:
++            previous = json.loads(a.previous.read_bytes())
++            origin = urlsplit(previous["server"]["base"])
++            require(origin.scheme == "https" and origin.hostname == "127.0.0.1" and
++                    origin.port is not None and not origin.path and not origin.query and
++                    not origin.fragment and origin.username is None and origin.password is None,
++                    "predecessor must have a local HTTPS origin")
++            # The real account identity includes its root URL. Keep that origin
++            # while extending the preceding authentic wire, rather than switching
++            # the author to a fresh account after every lifecycle phase.
++            factory = relay.ThreadingHTTPServer
++            def same_origin(address, handler):
++                require(address == ("127.0.0.1", 0), "unexpected relay address")
++                return factory(("127.0.0.1", origin.port), handler)
++            relay.ThreadingHTTPServer = same_origin
++            try:
++                dav,user,password=relay.start(a.output/"wire",a.previous)
++            finally:
++                relay.ThreadingHTTPServer = factory
++            require(dav.base == previous["server"]["base"], "author account origin changed")
++        else:
++            dav,user,password=relay.start(a.output/"wire",a.previous)
+         host.key("F2","ctrl+shift+a");window("Account and Sync")
+         field("w",dav.base+"/dav/");field("u",user);field("p",password)
+         host.key("alt+h","alt+a")
+diff --git a/tests/dot_f03_same_source_20261031/windows.py b/tests/dot_f03_same_source_20261031/windows.py
+new file mode 100644
+index 00000000..eab57d9f
+--- /dev/null
++++ b/tests/dot_f03_same_source_20261031/windows.py
+@@ -0,0 +1,116 @@
++"""Run real retained Windows organization/relay UI. No manufactured revision or success."""
++import argparse
++import importlib.util
++import json
++import hashlib
++import os
++from pathlib import Path
++import subprocess
++import sys
++from identity import ROOT, identity, require, snapshot_receipt, write_json, read_snapshot, canonical, digest, TABLES, SCOPE, same_identity
++
++def receive(a, stamp):
++    """A fresh real Windows profile receives authentic GTK/Apple wire and survives restart."""
++    require(a.previous is not None and a.expectations is not None, "wire and author snapshot required")
++    a.output.mkdir(parents=True, exist_ok=False)
++    sys.path.insert(0, str(ROOT / "tests/reader_windows_gtk_interop"))
++    spec = importlib.util.spec_from_file_location("f03_windows_interop",
++        ROOT / "tests/reader_windows_gtk_interop/windows.py")
++    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
++    author_receipt = json.loads(a.expectations.read_text(encoding="utf-8"))
++    same_identity(author_receipt, stamp)
++    require(author_receipt.get("sdk_version") == SCOPE["sdk_version"], "author SDK differs")
++    expected = author_receipt["snapshot"]
++    app = None
++    dav, user, password = module.relay.start(a.output / "wire", a.previous)
++    exe, font = (a.package / "EXReader.exe").resolve(), (a.package / "Reader.otf").resolve()
++    try:
++        app = module.ui.App(exe, font, a.output / "profile")
++        app.wait_initial_shelf();app.wait_idle()
++        dialog = app.open_account()
++        app.fill(dialog,root=dav.base+"/dav/",user=user,password=password,remember=False)
++        app.apply(dialog,"仅本次会话");app.close_account(dialog)
++        dialog=app.open_account();app.run_sync(dialog);app.close_account(dialog);app.wait_idle()
++        database=Path(str(app.db)+".product.sqlite")
++        def projected():
++            if not database.is_file():return False
++            value=read_snapshot(database)
++            return all(value[table] == expected[table] for table in TABLES)
++        app.wait(projected,timeout=120)
++        actual=read_snapshot(database)
++        for table in TABLES:
++            require(actual[table] == expected[table], "Windows projection differs: "+table)
++        prior={row["id"]:row["body"] for row in expected["revisions"]}
++        received={row["id"]:row["body"] for row in actual["revisions"]}
++        require(all(received.get(key)==value for key,value in prior.items()), "Windows lost authentic revisions")
++        require(any(r["method"]=="GET" and "/revisions/" in r["path"] and r["authenticated"]
++                    for r in dav.requests), "no authenticated native receive")
++        module.ui.M.screenshot(app.window,a.output/"received.bmp")
++        # An actual process exit/relaunch, not a fresh DB or replayed receipt.
++        app.process.kill();app.process.wait(timeout=20)
++        app=module.ui.App(exe,font,a.output/"profile",existing=True)
++        app.wait_initial_shelf();app.wait_idle()
++        require(read_snapshot(database)==actual,"Windows restart projection changed")
++        module.ui.M.screenshot(app.window,a.output/"restarted.bmp")
++        value={**stamp,"host":"windows","sdk_version":SCOPE["sdk_version"],
++               "program_sha256":digest(exe),"native_sync_completed":True,"restart_verified":True,
++               "snapshot":actual,"snapshot_sha256":hashlib.sha256(canonical(actual)).hexdigest(),
++               "complete_product_accepted":False}
++        write_json(a.output/"projection.json",value)
++        module.relay.save(dav,a.output/"wire","f03-windows-receive",{"projection":"../projection.json"})
++        dav=None
++    finally:
++        if app and app.process.poll() is None:app.process.kill();app.process.wait(timeout=20)
++        if dav:
++            write_json(a.output/"failed-requests.json",dav.requests)
++            dav.server.shutdown();dav.server.server_close()
++            (a.output/"wire/key.pem").unlink(missing_ok=True)
++
++def main():
++    p = argparse.ArgumentParser()
++    p.add_argument("--mode", choices=["retained", "relay-first", "relay-return", "snapshot", "receive"], required=True)
++    p.add_argument("--output", type=Path, required=True)
++    p.add_argument("--package", type=Path, required=True)
++    p.add_argument("--fixtures", type=Path)
++    p.add_argument("--probe", type=Path)
++    p.add_argument("--command-consumer", type=Path)
++    p.add_argument("--revision-consumer", type=Path)
++    p.add_argument("--previous", type=Path)
++    p.add_argument("--database", type=Path)
++    p.add_argument("--expectations", type=Path)
++    a = p.parse_args()
++    stamp = identity()
++    require(os.name == "nt", "actual Windows runner required")
++    exe = a.package / "EXReader.exe"
++    require(exe.is_file(), "missing actual product executable")
++    if a.mode == "receive":
++        receive(a, stamp)
++        return
++    if a.mode == "snapshot":
++        require(a.database is not None, "database required")
++        snapshot_receipt("windows", a.database, exe, a.output, "readonly-projection")
++        return
++    require(a.probe is not None and a.probe.is_file(), "installed public readback probe required")
++    if a.mode == "retained":
++        require(all(x is not None and x.exists() for x in
++                    (a.fixtures, a.command_consumer, a.revision_consumer)), "retained inputs missing")
++        command = [sys.executable, str(ROOT / "tests/reader_windows_import_organize/check_ui.py"),
++                   "--candidate", str(exe), "--font", str(a.package / "Reader.otf"),
++                   "--fixtures", str(a.fixtures), "--cloud-probe", str(a.probe),
++                   "--command-consumer", str(a.command_consumer),
++                   "--revision-consumer", str(a.revision_consumer), "--output", str(a.output)]
++    else:
++        command = [sys.executable, str(ROOT / "tests/reader_windows_gtk_interop/windows.py"),
++                   "--phase", "windows-first" if a.mode == "relay-first" else "windows-return",
++                   "--out", str(a.output), "--package", str(a.package), "--probe", str(a.probe)]
++        if a.mode == "relay-return":
++            require(a.previous is not None and a.previous.is_file(), "real predecessor snapshot required")
++            command += ["--previous", str(a.previous)]
++    result = subprocess.run(command, cwd=ROOT, check=False)
++    write_json(a.output.parent / (a.output.name + "-driver.json"),
++               {**stamp, "host": "windows", "mode": a.mode, "argv": command,
++                "exit_code": result.returncode, "complete_product_accepted": False,
++                "scope": "unchanged native suite or original Windows/GTK tag relay only"})
++    require(result.returncode == 0, "retained Windows failure; do not waive")
++if __name__ == "__main__":
++    main()
+diff --git a/tests/f03_six_host_20261103/run.py b/tests/f03_six_host_20261103/run.py
+new file mode 100644
+index 00000000..0bbfb208
+--- /dev/null
++++ b/tests/f03_six_host_20261103/run.py
+@@ -0,0 +1,150 @@
++"""Same-source F03 integration. Reuse native drivers; never manufacture product history."""
++import argparse
++import importlib
++import json
++import os
++from pathlib import Path
++import runpy
++import shutil
++import subprocess
++import sys
++
++ROOT = Path(__file__).resolve().parents[2]
++HERE = Path(__file__).resolve().parent
++LEGACY = ROOT / "tests/dot_f03_same_source_20261031"
++BASE = "054df69524eed483759febdcc0ce20e634921f82"
++SDK = "8357eafa28423a7ab93ba08b823af80f01ad1505"
++HOSTS = ["windows", "gtk", "android", "macos", "iphone", "ipad"]
++PHASES = ["create", "delete", "restore", "member-remove", "member-restore", "restart"]
++FROZEN = {
++    "apps/reader/desktop/windows_records_owner.cpp": "fb1b36b8ee6a0c48b81d8aff3b2097c7372c4b33",
++    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java": "9566f21b7f38c3652d9a416cabd73d1b76a959d6",
++    "examples/apple/HostReadingRecords.swift": "2c6185723fb523996b7c86ec5caf25f849a3f8cf",
++}
++EXACT_PATHS = {
++    "examples/apple/HostCatalog.swift", "examples/apple/HostModel.swift", "examples/apple/HostViews.swift",
++    "tests/dot_f03_same_source_20261031/AppleOrganizationInteropTests.swift",
++    "tests/dot_f03_same_source_20261031/windows.py", "tests/dot_f03_same_source_20261031/gtk.py",
++    ".github/workflows/f03-six-host-20261103.yml",
++    "docs/reader-total-progress/F03_SIX_HOST_20261103.md",
++}
++
++def run(*args):
++    subprocess.run(list(map(str, args)), cwd=ROOT, check=True)
++
++def git(*args):
++    return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
++
++def require(value, message):
++    if not value:
++        raise AssertionError(message)
++
++def admission():
++    require(os.environ.get("GITHUB_ACTIONS") == "true", "Native execution requires Actions")
++    source = git("rev-parse", "HEAD")
++    require(source == os.environ["GITHUB_SHA"], "checkout/source mismatch")
++    run("git", "merge-base", "--is-ancestor", BASE, source)
++    run("git", "diff", "--exit-code", SDK, source, "--", "src", "include", "cmake", "CMakeLists.txt", "bindings")
++    changed = git("diff", "--name-only", BASE, source).splitlines()
++    require(all(p in EXACT_PATHS or p.startswith("tests/f03_six_host_20261103/") for p in changed),
++            "integration changed a path outside its contract")
++    for path, expected in FROZEN.items():
++        require(git("rev-parse", "HEAD:" + path) == expected, "frozen production blob changed: " + path)
++    tracked = subprocess.check_output(["git", "diff", "HEAD", "--name-only"], cwd=ROOT, text=True)
++    require(not tracked.strip(), "tracked sources changed during execution")
++    return {key: os.environ[env] for key, env in
++            (("source_sha", "GITHUB_SHA"), ("run_id", "GITHUB_RUN_ID"), ("attempt", "GITHUB_RUN_ATTEMPT"))}
++
++def setup():
++    sys.path.insert(0, str(LEGACY))
++    identity = importlib.import_module("identity")
++    identity.SCOPE = {**identity.SCOPE, "active_hosts": HOSTS, "hosts": HOSTS,
++                      "sdk_source": SDK, "sdk_version": "3.42.0"}
++    # The old 26-file partial admission belongs to its historical round. This
++    # integration has a separate, explicit source/SDK/frozen-blob admission above.
++    identity.identity = admission
++    return identity
++
++def legacy(script, args):
++    setup()
++    sys.argv = [str(LEGACY / (script + ".py")), *args]
++    runpy.run_path(sys.argv[0], run_name="__main__")
++
++def apple(platform, receive):
++    identity = setup()
++    stamp = admission()
++    require(sys.platform == "darwin", "Apple runner required")
++    target = "macos" if platform == "macos" else "iphonesimulator"
++    sdk = ROOT / "build/raw3-ios-sdk" / target / "sdk"
++    products = sdk.parent / "raw-products"
++    work = ROOT / "build/dot-f03-native" / platform
++    if receive:
++        destination = json.loads((work / "destination.json").read_text())
++        suffix = "Debug" if platform == "macos" else "Debug-iphonesimulator"
++        program = work / "derived/Build/Products" / suffix / "EXReaderHost.app"
++        program /= "Contents/MacOS/EXReaderHost" if platform == "macos" else "EXReaderHost"
++        for phase in PHASES:
++            author = ROOT / "build/f03-input/f03-author" / phase
++            args = ["--host", platform, "--apple-receive", "--wire", str(author / "wire/state.json"),
++                    "--expectations", str(author / "expected-groups.json"),
++                    "--projection-expectations", str(author / "projection.json"),
++                    "--program", str(program), "--destination", destination["destination"],
++                    "--output", str(ROOT / "build/f03-receipts" / platform / (phase + ".json"))]
++            if platform != "macos":
++                args += ["--udid", destination["udid"]]
++            legacy("build", args)
++        return
++    legacy("build", ["--host", platform, "--output", "build/f03-" + platform + "-build.json"])
++    work.mkdir(parents=True, exist_ok=False)
++    resources = work / "resources"
++    run(sys.executable, "tests/apple_host/prepare_fixtures.py", "--resources", resources)
++    if platform == "macos":
++        destination = {"destination": "platform=macOS", "udid": "macos"}
++    else:
++        devices = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "--json"]))
++        prefix = "iPhone" if platform == "iphone" else "iPad"
++        runtime, device, udid = max((runtime, d["name"], d["udid"]) for runtime, rows in devices["devices"].items()
++                                  for d in rows if d.get("isAvailable") and d["name"].startswith(prefix))
++        subprocess.run(["xcrun", "simctl", "shutdown", udid], capture_output=True)
++        run("xcrun", "simctl", "erase", udid)
++        run("xcrun", "simctl", "boot", udid)
++        run("xcrun", "simctl", "bootstatus", udid, "-b")
++        destination = {"destination": "platform=iOS Simulator,id=" + udid, "udid": udid,
++                       "runtime": runtime, "device": device}
++    identity.write_json(work / "destination.json", destination)
++    tests = work / "tests"
++    tests.mkdir()
++    shutil.copyfile(ROOT / "tests/apple_host/organization/ui/OrganizationUITests.swift", tests / "OrganizationUITests.swift")
++    shutil.copyfile(LEGACY / "AppleOrganizationInteropTests.swift", tests / "AppleOrganizationInteropTests.swift")
++    run("ruby", "tests/reader_team24_apple/make_project.rb", work / "project", resources, tests, "base")
++    scheme = "EXReaderHost-macOS" if platform == "macos" else "EXReaderHost-iOS"
++    suite = "EXReaderHostUITests-" + ("macOS" if platform == "macos" else "iOS")
++    result = work / "organization.xcresult"
++    args = ["xcodebuild", "test", "-project", work / "project/EXReaderHost.xcodeproj", "-scheme", scheme,
++            "-destination", destination["destination"], "-derivedDataPath", work / "derived", "-resultBundlePath", result,
++            "-parallel-testing-enabled", "NO", "-test-timeouts-enabled", "YES",
++            "-default-test-execution-time-allowance", "300", "-maximum-test-execution-time-allowance", "600",
++            "-only-testing:" + suite + "/OrganizationUITests", "EXR_SDK_DIR=" + str(sdk),
++            "EXR_PRODUCTS_DIR=" + str(products), "CODE_SIGNING_ALLOWED=" + ("YES" if platform == "macos" else "NO")]
++    run(*args)
++    app = work / "derived/Build/Products" / ("Debug" if platform == "macos" else "Debug-iphonesimulator") / "EXReaderHost.app"
++    run(sys.executable, "tests/apple_host/organization/collect.py", "--platform", platform,
++        "--result", result, "--app", app, "--output", work / "validated")
++    identity.write_json(work / "retained.json", {**stamp, "accepted": True,
++                        "original_test_sha256": identity.digest(tests / "OrganizationUITests.swift"),
++                        "complete_product_accepted": False})
++
++def main():
++    p = argparse.ArgumentParser()
++    p.add_argument("action", choices=["admit", "legacy", "apple", "apple-receive"])
++    p.add_argument("args", nargs=argparse.REMAINDER)
++    a = p.parse_args()
++    if a.action == "admit":
++        print(json.dumps(admission()))
++    elif a.action == "legacy":
++        legacy(a.args[0], a.args[1:])
++    else:
++        apple(a.args[0], a.action == "apple-receive")
++
++if __name__ == "__main__":
++    main()
+-- 
+2.55.0.windows.5
+
