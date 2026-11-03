@@ -14,10 +14,19 @@ sys.path.insert(0, str(ROOT / "tools"))
 from case_alignment import CASES, align_cases
 from fixture import write_role_receipt
 import native_runtime
-from driver import deletion_detail_contract
+from driver import deletion_detail_contract, native_cleanup_contract
 
 
 class RecoveryChecks(unittest.TestCase):
+    def test_full_run_cleanup_records_and_deadline(self):
+        rows=[{"action":"native-close-"+str(i),"seconds":.1} for i in range(4)]
+        self.assertEqual(native_cleanup_contract(rows),rows)
+        variants=[rows[:3], [], rows+[copy.deepcopy(rows[-1])],
+                  rows[:2]+[dict(rows[2],seconds=20.01)]+rows[3:],
+                  rows[:2]+[dict(rows[2],seconds=True)]+rows[3:]]
+        for damaged in variants:
+            with self.assertRaises(AssertionError):native_cleanup_contract(damaged)
+
     def test_native_deletion_detail_counterexamples(self):
         case={"entity_key":"tag-control", "retained_heads":["put-head","delete-head"],
               "deletion_conflict_ui_detail":True,"deletion_details":{}}

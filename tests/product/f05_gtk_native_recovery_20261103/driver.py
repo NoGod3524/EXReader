@@ -9,6 +9,16 @@ IDENTITY={k:os.environ.get(e,'') for k,e in [('source_sha','GITHUB_SHA'),('run_i
 def require(value,message):
     if not value: raise AssertionError(message)
 
+def native_cleanup_contract(timings):
+    require(isinstance(timings,list),'cleanup timings absent')
+    native=[row for row in timings if row.get('action','').startswith('native-close-')]
+    # Full execution launches the offline reader after the crash-recovery peer.
+    require([row.get('action') for row in native]==['native-close-'+str(i) for i in range(4)],
+        'four full-run native process cleanup records required')
+    require(all(type(row.get('seconds')) in (int,float) and 0<=row['seconds']<=20 for row in native),
+        'native cleanup exceeded 20 seconds')
+    return native
+
 def deletion_detail_contract(case):
     heads=case['retained_heads']
     require(len(heads)==2 and len(set(heads))==2,'two deletion heads required')
@@ -617,11 +627,7 @@ def audit_inner(audit,state):
     require(coverage['host']=='linux' and not coverage['errors'] and not coverage['cleanup_errors'],'native errors')
     require(coverage.get('dry_run') is False and coverage.get('configuration_mode')=='ready','formal native execution required')
     timings=coverage.get('cleanup_timings')
-    require(isinstance(timings,list),'cleanup timings absent')
-    native_timings=[row for row in timings if row.get('action','').startswith('native-close-')]
-    require([row.get('action') for row in native_timings]==['native-close-0','native-close-1','native-close-2']
-        and all(type(row.get('seconds')) in (int,float) and 0<=row['seconds']<=20 for row in native_timings),
-        'native cleanup exceeded 20 seconds')
+    state['native_cleanup']=native_cleanup_contract(timings)
     require(coverage['program_sha256']==sha(host),'native program mismatch')
     controls=read(extracted/'build/f05-gtk/observation-controls.json')
     require(controls==observation_selftests(),'original observation controls mismatch')
