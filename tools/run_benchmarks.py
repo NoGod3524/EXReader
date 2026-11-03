@@ -206,7 +206,6 @@ def main():
     measurement_valid = summary["passed"]
     summary["measurement_valid"] = measurement_valid
     advisory(summary)
-    summary["passed"] = False  # E3 diagnostics cannot grant performance acceptance.
     (output / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
                                          encoding="utf-8")
     print(f"Saved {len(cases)*args.runs} fresh-process measurements and summary.json")

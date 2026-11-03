@@ -13,13 +13,17 @@ P 基于 V 已合入的 ledger/base-20261103（34278023），不修改 F07 provi
 
 PR 取实际 base SHA 作 diff 基点；手动调度取 origin/ledger/base-20261103，不能永久固定 V 的旧提交。被固化的是 JSON 条目，不是一个永远忽略后续基线增长的旧 diff 基点。
 
-工具 tools/check_ci_hygiene.py 扫描所有 .github/workflows/*.yml / *.yaml。基线 tools/ci_hygiene_baseline.json 每条仅 file / line / pattern / line_sha256；pattern 是四种规则之一，哈希为该行去掉行结束符后的 UTF-8 SHA-256。全量扫描仍打印存量诊断。
+工具 tools/check_ci_hygiene.py 扫描所有 .github/workflows/*.yml / *.yaml。债务身份为 **(file, content_sha256, occurrence)**：SHA-256 对整行 UTF-8 内容计算（不含换行符），occurrence 是该内容在同一文件全部行中的第 k 次出现，从 1 开始。行号仅用于即时诊断，不参与身份。
 
-- 文件/行消失、行哈希改变、规则不再匹配或条目重复：错误。修好后必须删除对应基线条目。
-- git diff --no-renames -U0 BASE 的新增行不接受基线；未跟踪的新工作流全部视为新增行。新增或修改不按文件级豁免。
-- 已登记行的行号变化也拒绝；不能靠重新登记新行号延续豁免。基线首次固化后只允许删除条目，不允许增补或改写。
-- 不安全多命令步骤的新增正文行也受检，不能用未变化的首行基线覆盖它。
-- 基线不支持目录或文件白名单。F07 文件没有例外；当前暂存线尚无 sdk-shared-sqlite-contract.yml，不能登记不存在的行。进入此线时新增违规会被拒绝，实际脚本由 F07 修复。
+每个内容身份的 patterns 列表保存独立规则义务；同一行同时违反两条规则时合为一个身份、保留两个绑定，不能借一个规则的历史债务豁免另一个规则。
+
+- 行挪动且内容/同内容出现序号不变：身份保留，不失效。
+- 内容变更或新增重复项：新身份必须合规，不自动登记；与基线 source 比较内容出现集合，不把纯位置变化当新增。
+- 文件/内容消失、某个规则已修复、身份重复或义务失效：报错，同一 PR 必须删除对应条目/规则绑定。
+- 基线固化后只允许缩减身份或规则绑定，不允许新增豁免；没有目录级或文件级 waiver。
+- 不安全多命令块中真正新增的内容也受检，不能用旧首行身份覆盖新增违规。
+- `python tools/check_ci_hygiene.py --remap-baseline` 只映射已存在条目，不扫描追加新债；无法映射时逐条记录原因并停止写回。
+- 本次原 533 条全部映射，成为 531 个内容身份、533 个规则绑定；两处同一行的 failfast/negative 合并，零无法映射。详情见 evidence/final-gate-probe-20261103/baseline-remap.json。
 
 ## Focused acceptance
 
@@ -40,6 +44,6 @@ fault 的四项 packaging/failfast/diagnostic/negative 只改内存中的 native
 
 显式 `shell: bash` 按 GitHub 的 bash -e -o pipefail 执行，单/多命令都不要求手写前奏。未指定 shell 的 Linux 默认是 bash -e，无 pipefail：仅多命令、管道、&&、分号、循环/条件要求首行 set -euo pipefail；单命令、单个 heredoc、反斜线续行和引号内 Python 内容不算多个 shell 命令。pwsh/powershell 不论单/多命令均要求 ErrorActionPreference=Stop 与 PSNativeCommandUseErrorActionPreference=true。continue-on-error、|| true、; : 始终拦截。
 
-显式重生成命令：`python tools/check_ci_hygiene.py --emit-baseline`。基线 JSON 保留四字段逐行格式；旁边 ci_hygiene_baseline.meta.json 记录生成日期、源码 commit、生成器/基线 SHA-256 与 pattern 分布。CI 不自动生成或增补基线；此次重生成是 owner 明确批准的规则收窄，之后继续只减不增。
+显式重生成命令：`python tools/check_ci_hygiene.py --emit-baseline`。基线 JSON 记录 file/content_sha256/occurrence/patterns；旁边 ci_hygiene_baseline.meta.json 记录生成日期、源码 commit、生成器/基线 SHA-256 与 pattern 分布。CI 不自动生成或增补基线；此次重生成是 owner 明确批准的规则收窄，之后继续只减不增。
 
-删除耦合：删除文件或删除步骤的同一 PR 必须删除对应基线条目，否则 CI 报“条目失效”（missing / no match / stale entry）；不能把失效条目留给后续 PR。
+删除耦合：删除文件或删除步骤的同一 PR 必须删除对应内容身份/规则绑定，否则 CI 报“条目失效”（missing / no match / stale entry）；不能把失效条目留给后续 PR。

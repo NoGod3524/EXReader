@@ -15,8 +15,9 @@ from perf_policy import advisory
 
 def main():
     with patch('perf_policy.environment', return_value={'cpu': 'fixture', 'cores': 2, 'memory_bytes': 1024, 'os': 'fixture', 'kernel': 'fixture', 'compiler': 'fixture', 'flags': {}, 'runner_label': 'fixture'}):
-        report = advisory({'accepted': True, 'problems': ['retained raw failure']})
+        report = advisory({'passed': True, 'accepted': True, 'problems': ['retained raw failure']})
     assert report['advisory'] is True and report['accepted'] is False
+    assert report['passed'] is True
     assert report['problems'] == ['retained raw failure']
     assert report['policy']['issue'] == 32
     doc = yaml.load((ROOT / '.github/workflows/reading-required-core.yml').read_text(), Loader=yaml.BaseLoader)
