@@ -1,0 +1,746 @@
+{
+  "source_sha": "c0e3b33472f7be6dde795c0ba12fcec80c6b3e6d",
+  "runs": [
+    {
+      "control": "narrowed-positive",
+      "id": 41715416444,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715416444",
+      "expected": "success",
+      "conclusion": "success",
+      "headSha": "c0e3b33472f7be6dde795c0ba12fcec80c6b3e6d",
+      "jobs": [
+        {
+          "completedAt": "2026-11-03T20:45:23Z",
+          "conclusion": "success",
+          "databaseId": 126194015075,
+          "name": "ci-hygiene (negative)",
+          "startedAt": "2026-11-03T20:45:04Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-03T20:45:06Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-03T20:45:05Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:14Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-03T20:45:06Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:14Z",
+              "conclusion": "success",
+              "name": "Run actions/setup-python@v5",
+              "number": 3,
+              "startedAt": "2026-11-03T20:45:14Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:15Z",
+              "conclusion": "success",
+              "name": "Run python -m pip install PyYAML==6.0.3",
+              "number": 4,
+              "startedAt": "2026-11-03T20:45:14Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:20Z",
+              "conclusion": "success",
+              "name": "Check changed CI and exercise the rule",
+              "number": 5,
+              "startedAt": "2026-11-03T20:45:15Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:21Z",
+              "conclusion": "success",
+              "name": "Post Run actions/setup-python@v5",
+              "number": 9,
+              "startedAt": "2026-11-03T20:45:20Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:21Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 10,
+              "startedAt": "2026-11-03T20:45:21Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:21Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 11,
+              "startedAt": "2026-11-03T20:45:21Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715416444/job/126194015075"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:40Z",
+          "conclusion": "success",
+          "databaseId": 126194015623,
+          "name": "ci-hygiene (diagnostic)",
+          "startedAt": "2026-11-03T20:45:04Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-03T20:45:06Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-03T20:45:05Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:33Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-03T20:45:06Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:33Z",
+              "conclusion": "success",
+              "name": "Run actions/setup-python@v5",
+              "number": 3,
+              "startedAt": "2026-11-03T20:45:33Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:34Z",
+              "conclusion": "success",
+              "name": "Run python -m pip install PyYAML==6.0.3",
+              "number": 4,
+              "startedAt": "2026-11-03T20:45:33Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:38Z",
+              "conclusion": "success",
+              "name": "Check changed CI and exercise the rule",
+              "number": 5,
+              "startedAt": "2026-11-03T20:45:34Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:38Z",
+              "conclusion": "success",
+              "name": "Post Run actions/setup-python@v5",
+              "number": 9,
+              "startedAt": "2026-11-03T20:45:38Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:38Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 10,
+              "startedAt": "2026-11-03T20:45:38Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:38Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 11,
+              "startedAt": "2026-11-03T20:45:38Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715416444/job/126194015623"
+        },
+        {
+          "completedAt": "2026-11-03T20:46:05Z",
+          "conclusion": "success",
+          "databaseId": 126194016300,
+          "name": "ci-hygiene (failfast)",
+          "startedAt": "2026-11-03T20:45:05Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-03T20:45:06Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-03T20:45:06Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:53Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-03T20:45:06Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:53Z",
+              "conclusion": "success",
+              "name": "Run actions/setup-python@v5",
+              "number": 3,
+              "startedAt": "2026-11-03T20:45:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:56Z",
+              "conclusion": "success",
+              "name": "Run python -m pip install PyYAML==6.0.3",
+              "number": 4,
+              "startedAt": "2026-11-03T20:45:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:01Z",
+              "conclusion": "success",
+              "name": "Check changed CI and exercise the rule",
+              "number": 5,
+              "startedAt": "2026-11-03T20:45:56Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:01Z",
+              "conclusion": "success",
+              "name": "Post Run actions/setup-python@v5",
+              "number": 9,
+              "startedAt": "2026-11-03T20:46:01Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:01Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 10,
+              "startedAt": "2026-11-03T20:46:01Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:01Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 11,
+              "startedAt": "2026-11-03T20:46:01Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715416444/job/126194016300"
+        },
+        {
+          "completedAt": "2026-11-03T20:46:06Z",
+          "conclusion": "success",
+          "databaseId": 126194016420,
+          "name": "ci-hygiene (packaging)",
+          "startedAt": "2026-11-03T20:45:04Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-03T20:45:06Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-03T20:45:05Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:56Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-03T20:45:06Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:56Z",
+              "conclusion": "success",
+              "name": "Run actions/setup-python@v5",
+              "number": 3,
+              "startedAt": "2026-11-03T20:45:56Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:59Z",
+              "conclusion": "success",
+              "name": "Run python -m pip install PyYAML==6.0.3",
+              "number": 4,
+              "startedAt": "2026-11-03T20:45:56Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:04Z",
+              "conclusion": "success",
+              "name": "Check changed CI and exercise the rule",
+              "number": 5,
+              "startedAt": "2026-11-03T20:45:59Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:04Z",
+              "conclusion": "success",
+              "name": "Post Run actions/setup-python@v5",
+              "number": 9,
+              "startedAt": "2026-11-03T20:46:04Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:04Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 10,
+              "startedAt": "2026-11-03T20:46:04Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:04Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 11,
+              "startedAt": "2026-11-03T20:46:04Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715416444/job/126194016420"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:02Z",
+          "conclusion": "skipped",
+          "databaseId": 126194017060,
+          "name": "android",
+          "startedAt": "2026-11-03T20:45:02Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715416444/job/126194017060"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:02Z",
+          "conclusion": "skipped",
+          "databaseId": 126194017349,
+          "name": "fuzz",
+          "startedAt": "2026-11-03T20:45:02Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715416444/job/126194017349"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:02Z",
+          "conclusion": "skipped",
+          "databaseId": 126194017540,
+          "name": "sanitizers",
+          "startedAt": "2026-11-03T20:45:02Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715416444/job/126194017540"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:02Z",
+          "conclusion": "skipped",
+          "databaseId": 126194017689,
+          "name": "apple-mobile",
+          "startedAt": "2026-11-03T20:45:02Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715416444/job/126194017689"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:02Z",
+          "conclusion": "skipped",
+          "databaseId": 126194017703,
+          "name": "desktop",
+          "startedAt": "2026-11-03T20:45:02Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715416444/job/126194017703"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:02Z",
+          "conclusion": "skipped",
+          "databaseId": 126194083191,
+          "name": "apple-packaging",
+          "startedAt": "2026-11-03T20:45:10Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715416444/job/126194083191"
+        }
+      ],
+      "status": "completed"
+    },
+    {
+      "control": "narrowed-failfast",
+      "id": 41715423107,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715423107",
+      "expected": "failure",
+      "conclusion": "failure",
+      "headSha": "c0e3b33472f7be6dde795c0ba12fcec80c6b3e6d",
+      "jobs": [
+        {
+          "completedAt": "2026-11-03T20:47:22Z",
+          "conclusion": "failure",
+          "databaseId": 126194039075,
+          "name": "ci-hygiene (failfast)",
+          "startedAt": "2026-11-03T20:45:06Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-03T20:45:08Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-03T20:45:07Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:47Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-03T20:45:08Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:47Z",
+              "conclusion": "success",
+              "name": "Run actions/setup-python@v5",
+              "number": 3,
+              "startedAt": "2026-11-03T20:46:47Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:48Z",
+              "conclusion": "success",
+              "name": "Run python -m pip install PyYAML==6.0.3",
+              "number": 4,
+              "startedAt": "2026-11-03T20:46:47Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:53Z",
+              "conclusion": "failure",
+              "name": "Check changed CI and exercise the rule",
+              "number": 5,
+              "startedAt": "2026-11-03T20:46:48Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:53Z",
+              "conclusion": "skipped",
+              "name": "Post Run actions/setup-python@v5",
+              "number": 9,
+              "startedAt": "2026-11-03T20:46:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:54Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 10,
+              "startedAt": "2026-11-03T20:46:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:46:54Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 11,
+              "startedAt": "2026-11-03T20:46:54Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715423107/job/126194039075"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:05Z",
+          "conclusion": "skipped",
+          "databaseId": 126194041658,
+          "name": "android",
+          "startedAt": "2026-11-03T20:45:05Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715423107/job/126194041658"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:05Z",
+          "conclusion": "skipped",
+          "databaseId": 126194041690,
+          "name": "sanitizers",
+          "startedAt": "2026-11-03T20:45:05Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715423107/job/126194041690"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:05Z",
+          "conclusion": "skipped",
+          "databaseId": 126194041716,
+          "name": "apple-packaging",
+          "startedAt": "2026-11-03T20:45:05Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715423107/job/126194041716"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:05Z",
+          "conclusion": "skipped",
+          "databaseId": 126194041823,
+          "name": "desktop",
+          "startedAt": "2026-11-03T20:45:05Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715423107/job/126194041823"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:05Z",
+          "conclusion": "skipped",
+          "databaseId": 126194042056,
+          "name": "apple-mobile",
+          "startedAt": "2026-11-03T20:45:05Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715423107/job/126194042056"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:05Z",
+          "conclusion": "skipped",
+          "databaseId": 126194043076,
+          "name": "fuzz",
+          "startedAt": "2026-11-03T20:45:05Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715423107/job/126194043076"
+        }
+      ],
+      "status": "completed"
+    },
+    {
+      "control": "advisory-apple",
+      "id": 41715429567,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715429567",
+      "expected": "success",
+      "conclusion": "success",
+      "headSha": "c0e3b33472f7be6dde795c0ba12fcec80c6b3e6d",
+      "jobs": [
+        {
+          "completedAt": "2026-11-03T20:47:48Z",
+          "conclusion": "success",
+          "databaseId": 126194062615,
+          "name": "apple-packaging (iphonesimulator)",
+          "startedAt": "2026-11-03T20:45:10Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-03T20:45:12Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-03T20:45:11Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:26Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-03T20:45:12Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:47:44Z",
+              "conclusion": "success",
+              "name": "Install root SDK then product dependencies",
+              "number": 3,
+              "startedAt": "2026-11-03T20:45:26Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:47:44Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 6,
+              "startedAt": "2026-11-03T20:47:44Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:47:45Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 7,
+              "startedAt": "2026-11-03T20:47:44Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715429567/job/126194062615"
+        },
+        {
+          "completedAt": "2026-11-03T20:47:16Z",
+          "conclusion": "success",
+          "databaseId": 126194062684,
+          "name": "apple-packaging (iphoneos)",
+          "startedAt": "2026-11-03T20:45:20Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-03T20:45:20Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-03T20:45:20Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:36Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-03T20:45:20Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:47:13Z",
+              "conclusion": "success",
+              "name": "Install root SDK then product dependencies",
+              "number": 3,
+              "startedAt": "2026-11-03T20:45:36Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:47:14Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 6,
+              "startedAt": "2026-11-03T20:47:13Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:47:14Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 7,
+              "startedAt": "2026-11-03T20:47:14Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715429567/job/126194062684"
+        },
+        {
+          "completedAt": "2026-11-03T20:48:29Z",
+          "conclusion": "success",
+          "databaseId": 126194063408,
+          "name": "apple-packaging (macos)",
+          "startedAt": "2026-11-03T20:45:10Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-03T20:45:27Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-03T20:45:26Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:45:33Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-03T20:45:27Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:48:25Z",
+              "conclusion": "success",
+              "name": "Install root SDK then product dependencies",
+              "number": 3,
+              "startedAt": "2026-11-03T20:45:33Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:48:26Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 6,
+              "startedAt": "2026-11-03T20:48:25Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-03T20:48:27Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 7,
+              "startedAt": "2026-11-03T20:48:26Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715429567/job/126194063408"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:07Z",
+          "conclusion": "skipped",
+          "databaseId": 126194064504,
+          "name": "sanitizers",
+          "startedAt": "2026-11-03T20:45:07Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715429567/job/126194064504"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:07Z",
+          "conclusion": "skipped",
+          "databaseId": 126194064758,
+          "name": "android",
+          "startedAt": "2026-11-03T20:45:07Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715429567/job/126194064758"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:07Z",
+          "conclusion": "skipped",
+          "databaseId": 126194064910,
+          "name": "ci-hygiene",
+          "startedAt": "2026-11-03T20:45:07Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715429567/job/126194064910"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:07Z",
+          "conclusion": "skipped",
+          "databaseId": 126194065188,
+          "name": "desktop",
+          "startedAt": "2026-11-03T20:45:07Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715429567/job/126194065188"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:07Z",
+          "conclusion": "skipped",
+          "databaseId": 126194065257,
+          "name": "fuzz",
+          "startedAt": "2026-11-03T20:45:07Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715429567/job/126194065257"
+        },
+        {
+          "completedAt": "2026-11-03T20:45:07Z",
+          "conclusion": "skipped",
+          "databaseId": 126194111391,
+          "name": "apple-mobile",
+          "startedAt": "2026-11-03T20:45:13Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/41715429567/job/126194111391"
+        }
+      ],
+      "status": "completed"
+    }
+  ]
+}
