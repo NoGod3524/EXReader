@@ -1,13 +1,15 @@
 {
   "schema": 1,
-  "parent": "79143b3c25f8529d077afb9b0f0f2abcb4307279",
-  "branch": "codex/f05-gtk-dialog-target-20261103",
+  "parent": "a114a8d7892ef46f85ae529cad1ac27ef35cd832",
+  "branch": "codex/f05-gtk-xtest-target-20261103",
   "delta": [
     "M\t.github/workflows/gtk-sdk342-package.yml",
     "M\ttests/product/f05_gtk_native_recovery_20261103/check_r3.py",
+    "A\ttests/product/f05_gtk_native_recovery_20261103/check_x11_return.py",
     "M\ttests/product/f05_gtk_native_recovery_20261103/driver.py",
     "M\ttests/product/f05_gtk_native_recovery_20261103/inspect_network.py",
     "M\ttests/product/f05_gtk_native_recovery_20261103/retained_diagnostics.py",
+    "A\ttests/product/f05_gtk_native_recovery_20261103/x11_return.py",
     "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json"
   ],
   "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
@@ -29,7 +31,7 @@
     "tests/linux_host/generate_fixed.py": "59cba4bb6c8575f154c14470f5ccce7bd2c83543",
     "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065",
     "examples/linux": "ecc11f446054881bd3dabfae718eaf5215435436",
-    ".github/workflows/gtk-sdk342-package.yml": "81902637c59659928198bf8f076a6bb7f109d1b7"
+    ".github/workflows/gtk-sdk342-package.yml": "16f8e060489d15e3e88448e15cf3e9366709b4ad"
   },
   "copied_blobs": {
     "gtk.py": "736960af6a8a7f8815433d2a8eda47f107b4d219",
@@ -281,7 +283,8 @@
     "build/gtk-sdk342/build.json",
     "build/f05-gtk/observation-controls.json",
     "build/f05-gtk-native/receive-observations.json",
-    "build/f05-gtk/import-dialog-diagnostics.json"
+    "build/f05-gtk/import-dialog-diagnostics.json",
+    "build/f05-gtk/x11-return-controls.json"
   ],
   "optional_patterns": [
     "build/gtk-navigation-ui/*.json",
@@ -312,7 +315,7 @@
   "retained_diagnostics": {
     "source_parent": "4838d70103b4945e5d599796fcfcf35caeca1fc0",
     "original_failed_run": "41636861038",
-    "wrapper_blob": "9303aa4b1f8d078c2760439bb34a46f6a6206719",
+    "wrapper_blob": "f59e01a9f34504cc083c73de90e6e5a018ca33e4",
     "source_blobs": {
       "tests/linux_host/check_account_ui.py": "56ae329b91597bd0fd0f51e871f6a5a458ea1f32",
       "tools/check_linux_host.py": "a71f0761a00e5bbef39b2c2718d809f7fec1a065"
@@ -331,9 +334,11 @@
   "r3_blobs": {
     "case_alignment.py": "bf5f1196dea0a3b3860d753164a854d4b340bb17",
     "check_dry_run.py": "7ce18ba1c7592d2d8047dba946122f2e01497175",
-    "check_r3.py": "c7baf530191c13a2d77b10a004262efa94405fed",
-    "inspect_network.py": "a8779bd743efb11d4305c635f7d19562a1d93a6e",
-    "native_runtime.py": "1a280055807a4f459bac8269ad3bcdbcd6a7ef36"
+    "check_r3.py": "44c064c17a50916279bccbd98952c3264d3df2d9",
+    "inspect_network.py": "9d14282e184a357ef0e30ace32e78264f5299019",
+    "native_runtime.py": "1a280055807a4f459bac8269ad3bcdbcd6a7ef36",
+    "x11_return.py": "ecab01f4bc7c1b20ae8e6b2ef4c1ada7573d3135",
+    "check_x11_return.py": "84531a015084242928939e1d0bcb1a261fc5947b"
   },
   "r3_rewrite": {
     "base": "c4d67540a0e17a86bd42ad9323cd269ce8959326",
@@ -390,5 +395,16 @@
     "root_cause_proven": false,
     "new_dry_run_cap_minutes": 30,
     "formal_accepted": false
+  },
+  "xtest_input_candidate": {
+    "failed_run": "41688585101",
+    "failed_source": "a114a8d7892ef46f85ae529cad1ac27ef35cd832",
+    "first_import_completed": false,
+    "mechanism": "Native XTest with server-grab focus and PID fence",
+    "new_test": "Real GTK chooser closes once, held Control is cleared/restored, stale Return does not reach main; old global Return is a negative control",
+    "original_sources_and_assertions_unchanged": true,
+    "single_command_seconds": 30,
+    "new_diagnostic_runner_minutes": 30,
+    "actual_runtime_accepted": false
   }
 }
