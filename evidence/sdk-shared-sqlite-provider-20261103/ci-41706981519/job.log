@@ -1,0 +1,208 @@
+﻿2026-11-03T19:50:22.9333820Z Current runner version: '2.338.2'
+2026-11-03T19:50:22.9349450Z ##[group]Runner Image Provisioner
+2026-11-03T19:50:22.9350000Z Hosted Compute Agent
+2026-11-03T19:50:22.9351840Z Version: 20260828.587
+2026-11-03T19:50:22.9352980Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-11-03T19:50:22.9354240Z Build Date: 2026-08-28T16:44:25Z
+2026-11-03T19:50:22.9355400Z Worker ID: {c7ee9f66-a91a-4a46-9096-0ae91f150c2c}
+2026-11-03T19:50:22.9356630Z Azure Region: westus
+2026-11-03T19:50:22.9357590Z ##[endgroup]
+2026-11-03T19:50:22.9361060Z ##[group]Operating System
+2026-11-03T19:50:22.9362090Z macOS
+2026-11-03T19:50:22.9362930Z 14.8.9
+2026-11-03T19:50:22.9363770Z 23J631
+2026-11-03T19:50:22.9364680Z ##[endgroup]
+2026-11-03T19:50:22.9365610Z ##[group]Runner Image
+2026-11-03T19:50:22.9366620Z Image: macos-14-arm64
+2026-11-03T19:50:22.9367600Z Version: 20260831.0302.1
+2026-11-03T19:50:22.9370080Z Included Software: https://github.com/actions/runner-images/blob/macos-14-arm64/20260831.0302/images/macos/macos-14-arm64-Readme.md
+2026-11-03T19:50:22.9373230Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-14-arm64%2F20260831.0302
+2026-11-03T19:50:22.9375400Z ##[endgroup]
+2026-11-03T19:50:22.9376920Z ##[group]GITHUB_TOKEN Permissions
+2026-11-03T19:50:22.9379490Z Contents: read
+2026-11-03T19:50:22.9379850Z Metadata: read
+2026-11-03T19:50:22.9380200Z ##[endgroup]
+2026-11-03T19:50:22.9382010Z Secret source: Actions
+2026-11-03T19:50:22.9382580Z Cache mode: write
+2026-11-03T19:50:22.9383040Z Prepare workflow directory
+2026-11-03T19:50:22.9821110Z Prepare all required actions
+2026-11-03T19:50:22.9903010Z Getting action download info
+2026-11-03T19:50:23.3120810Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-03T19:50:23.6825750Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-03T19:50:23.9118730Z Complete job name: apple-native
+2026-11-03T19:50:23.9916520Z ##[group]Run actions/checkout@v4
+2026-11-03T19:50:23.9917510Z with:
+2026-11-03T19:50:23.9917910Z   ref: 64e514ae396ee73d37c72d732c21e99d1dc3b816
+2026-11-03T19:50:23.9918340Z   fetch-depth: 2
+2026-11-03T19:50:23.9918680Z   repository: NoGod3524/EXReader
+2026-11-03T19:50:23.9921910Z   token: ***
+2026-11-03T19:50:23.9922240Z   ssh-strict: true
+2026-11-03T19:50:23.9922570Z   ssh-user: git
+2026-11-03T19:50:23.9922920Z   persist-credentials: true
+2026-11-03T19:50:23.9923290Z   clean: true
+2026-11-03T19:50:23.9923630Z   sparse-checkout-cone-mode: true
+2026-11-03T19:50:23.9924030Z   fetch-tags: false
+2026-11-03T19:50:23.9924380Z   show-progress: true
+2026-11-03T19:50:23.9924720Z   lfs: false
+2026-11-03T19:50:23.9925030Z   submodules: false
+2026-11-03T19:50:23.9925370Z   set-safe-directory: true
+2026-11-03T19:50:23.9925750Z   allow-unsafe-pr-checkout: false
+2026-11-03T19:50:23.9926460Z ##[endgroup]
+2026-11-03T19:50:24.2572280Z Syncing repository: NoGod3524/EXReader
+2026-11-03T19:50:24.2575560Z ##[group]Getting Git version info
+2026-11-03T19:50:24.2576670Z Working directory is '/Users/runner/work/EXReader/EXReader'
+2026-11-03T19:50:24.2577710Z [command]/opt/homebrew/bin/git version
+2026-11-03T19:50:24.2828240Z git version 2.55.0
+2026-11-03T19:50:24.2841750Z ##[endgroup]
+2026-11-03T19:50:24.2852900Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/7d2248a6-7f64-4b6d-9c5a-b533549b483a/.gitconfig'
+2026-11-03T19:50:24.2875700Z Temporarily overriding HOME='/Users/runner/work/_temp/7d2248a6-7f64-4b6d-9c5a-b533549b483a' before making global git config changes
+2026-11-03T19:50:24.2876750Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-03T19:50:24.2877920Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/EXReader/EXReader
+2026-11-03T19:50:24.3019620Z Deleting the contents of '/Users/runner/work/EXReader/EXReader'
+2026-11-03T19:50:24.3028230Z ##[group]Initializing the repository
+2026-11-03T19:50:24.3032680Z [command]/opt/homebrew/bin/git init /Users/runner/work/EXReader/EXReader
+2026-11-03T19:50:24.3420330Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-03T19:50:24.3422570Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-03T19:50:24.3424620Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-03T19:50:24.3426170Z hint: call:
+2026-11-03T19:50:24.3427070Z hint:
+2026-11-03T19:50:24.3428170Z hint: 	git config --global init.defaultBranch <name>
+2026-11-03T19:50:24.3429430Z hint:
+2026-11-03T19:50:24.3430650Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-03T19:50:24.3432740Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-03T19:50:24.3434320Z hint:
+2026-11-03T19:50:24.3435290Z hint: 	git branch -m <name>
+2026-11-03T19:50:24.3436340Z hint:
+2026-11-03T19:50:24.3437700Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-03T19:50:24.3439760Z Initialized empty Git repository in /Users/runner/work/EXReader/EXReader/.git/
+2026-11-03T19:50:24.3443690Z [command]/opt/homebrew/bin/git remote add origin https://github.com/NoGod3524/EXReader
+2026-11-03T19:50:24.3572630Z ##[endgroup]
+2026-11-03T19:50:24.3574330Z ##[group]Disabling automatic garbage collection
+2026-11-03T19:50:24.3579710Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-11-03T19:50:24.3703480Z ##[endgroup]
+2026-11-03T19:50:24.3705050Z ##[group]Setting up auth
+2026-11-03T19:50:24.3707240Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-03T19:50:24.3817630Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-03T19:50:24.4966380Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-03T19:50:24.5079680Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-03T19:50:24.6253550Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-03T19:50:24.6560780Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-03T19:50:24.7883890Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-03T19:50:24.8303200Z ##[endgroup]
+2026-11-03T19:50:24.8366660Z ##[group]Fetching the repository
+2026-11-03T19:50:24.8370790Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=2 origin 64e514ae396ee73d37c72d732c21e99d1dc3b816
+2026-11-03T19:50:28.5906860Z From https://github.com/NoGod3524/EXReader
+2026-11-03T19:50:28.5919560Z  * branch            64e514ae396ee73d37c72d732c21e99d1dc3b816 -> FETCH_HEAD
+2026-11-03T19:50:28.5989280Z ##[endgroup]
+2026-11-03T19:50:28.5991290Z ##[group]Determining the checkout info
+2026-11-03T19:50:28.6003910Z ##[endgroup]
+2026-11-03T19:50:28.6020350Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-11-03T19:50:28.6108560Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-03T19:50:28.6174320Z ##[group]Checking out the ref
+2026-11-03T19:50:28.6273510Z [command]/opt/homebrew/bin/git checkout --progress --force 64e514ae396ee73d37c72d732c21e99d1dc3b816
+2026-11-03T19:50:29.7195620Z Updating files:  87% (5155/5885)
+2026-11-03T19:50:29.7300270Z Updating files:  88% (5179/5885)
+2026-11-03T19:50:29.7391460Z Updating files:  89% (5238/5885)
+2026-11-03T19:50:29.7466990Z Updating files:  90% (5297/5885)
+2026-11-03T19:50:29.7565360Z Updating files:  91% (5356/5885)
+2026-11-03T19:50:29.7768310Z Updating files:  92% (5415/5885)
+2026-11-03T19:50:29.7864740Z Updating files:  93% (5474/5885)
+2026-11-03T19:50:29.7960940Z Updating files:  94% (5532/5885)
+2026-11-03T19:50:29.8013030Z Updating files:  95% (5591/5885)
+2026-11-03T19:50:29.8128970Z Updating files:  96% (5650/5885)
+2026-11-03T19:50:29.8250550Z Updating files:  97% (5709/5885)
+2026-11-03T19:50:29.8321510Z Updating files:  98% (5768/5885)
+2026-11-03T19:50:29.8464580Z Updating files:  99% (5827/5885)
+2026-11-03T19:50:29.8467060Z Updating files: 100% (5885/5885)
+2026-11-03T19:50:29.8468570Z Updating files: 100% (5885/5885), done.
+2026-11-03T19:50:29.8576690Z HEAD is now at 64e514a fix(build): declare test C++17 for limited SDK validation
+2026-11-03T19:50:29.8608720Z ##[endgroup]
+2026-11-03T19:50:29.8768020Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-11-03T19:50:29.8836520Z 64e514ae396ee73d37c72d732c21e99d1dc3b816
+2026-11-03T19:50:29.9384930Z ##[group]Run python3 - <<'PY'
+2026-11-03T19:50:29.9385480Z [36;1mpython3 - <<'PY'[0m
+2026-11-03T19:50:29.9385960Z [36;1mimport json, os, pathlib, re, subprocess[0m
+2026-11-03T19:50:29.9386360Z [36;1mbase = '95100501eeef9c6325be8b3882aa400c99cf000f'[0m
+2026-11-03T19:50:29.9386830Z [36;1mreviewed_parent = '40ac811b0a872587641e01ff0cfc33a376e93abc'[0m
+2026-11-03T19:50:29.9387240Z [36;1msha = os.environ['CANDIDATE_SHA'][0m
+2026-11-03T19:50:29.9387670Z [36;1mif not re.fullmatch(r'[0-9a-f]{40}', sha):[0m
+2026-11-03T19:50:29.9388060Z [36;1m    raise SystemExit('exact candidate SHA required')[0m
+2026-11-03T19:50:29.9388630Z [36;1mdef git(*args): return subprocess.check_output(['git', *args], text=True).strip()[0m
+2026-11-03T19:50:29.9389240Z [36;1mif git('rev-parse', 'HEAD') != sha or git('rev-parse', 'HEAD^') != reviewed_parent:[0m
+2026-11-03T19:50:29.9389770Z [36;1m    raise SystemExit('candidate is not the reviewed replay on the fixed SDK line')[0m
+2026-11-03T19:50:29.9390470Z [36;1msubprocess.run(['git', 'diff', '--exit-code', base, 'HEAD', '--',[0m
+2026-11-03T19:50:29.9390830Z [36;1m    'src', 'include', 'bindings', 'cmake/versions.cmake',[0m
+2026-11-03T19:50:29.9391240Z [36;1m    'docs/reader-total-progress/catalog.json'], check=True)[0m
+2026-11-03T19:50:29.9391710Z [36;1mowned = {'CMakeLists.txt', 'cmake/deps.cmake', 'cmake/EXReaderConfig.cmake.in',[0m
+2026-11-03T19:50:29.9392320Z [36;1m    'cmake/install_dependencies.cmake', 'apps/reader/store/native/CMakeLists.txt',[0m
+2026-11-03T19:50:29.9392840Z [36;1m    'apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in',[0m
+2026-11-03T19:50:29.9393410Z [36;1m    'tools/apple_swift.py', 'tools/build_apple_product.py', 'tools/build_apple_host.py',[0m
+2026-11-03T19:50:29.9394010Z [36;1m    'tools/check_apple_product.py', '.github/workflows/sdk-shared-sqlite-contract.yml'}[0m
+2026-11-03T19:50:29.9394560Z [36;1mchanged = git('diff', '--name-only', base, 'HEAD').splitlines()[0m
+2026-11-03T19:50:29.9395010Z [36;1mif any(p not in owned and not p.startswith(('extras/sqlite-provider/',[0m
+2026-11-03T19:50:29.9395610Z [36;1m        'evidence/sdk-shared-sqlite-provider-20261103/')) for p in changed):[0m
+2026-11-03T19:50:29.9396230Z [36;1m    raise SystemExit('candidate contains changes outside the reviewed SDK contract')[0m
+2026-11-03T19:50:29.9396860Z [36;1mout = pathlib.Path('evidence/sdk-shared-sqlite-provider-20261103/ci')[0m
+2026-11-03T19:50:29.9397330Z [36;1mout.mkdir(parents=True, exist_ok=True)[0m
+2026-11-03T19:50:29.9397950Z [36;1m(out/'source.json').write_text(json.dumps({'base': base, 'reviewed_parent': reviewed_parent, 'candidate': sha,[0m
+2026-11-03T19:50:29.9398510Z [36;1m    'changed': changed, 'validation_kind': 'limited build validation',[0m
+2026-11-03T19:50:29.9399090Z [36;1m    'apple_acceptance_assessed': False, 'acceptance_assessed': False}, indent=2))[0m
+2026-11-03T19:50:29.9399540Z [36;1mPY[0m
+2026-11-03T19:50:29.9530950Z shell: /bin/bash -e {0}
+2026-11-03T19:50:29.9531770Z env:
+2026-11-03T19:50:29.9532440Z   CANDIDATE_SHA: 64e514ae396ee73d37c72d732c21e99d1dc3b816
+2026-11-03T19:50:29.9533300Z ##[endgroup]
+2026-11-03T19:50:30.3063920Z fatal: bad object 95100501eeef9c6325be8b3882aa400c99cf000f
+2026-11-03T19:50:30.3320500Z Traceback (most recent call last):
+2026-11-03T19:50:30.3333020Z   File "<stdin>", line 10, in <module>
+2026-11-03T19:50:30.3347860Z   File "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 578, in run
+2026-11-03T19:50:30.3372340Z     raise CalledProcessError(retcode, process.args,
+2026-11-03T19:50:30.3382800Z                              output=stdout, stderr=stderr)
+2026-11-03T19:50:30.3386220Z subprocess.CalledProcessError: Command '['git', 'diff', '--exit-code', '95100501eeef9c6325be8b3882aa400c99cf000f', 'HEAD', '--', 'src', 'include', 'bindings', 'cmake/versions.cmake', 'docs/reader-total-progress/catalog.json']' returned non-zero exit status 128.
+2026-11-03T19:50:30.3412030Z ##[error]Process completed with exit code 1.
+2026-11-03T19:50:30.3588110Z ##[group]Run actions/upload-artifact@v4
+2026-11-03T19:50:30.3588790Z with:
+2026-11-03T19:50:30.3589290Z   name: sdk-shared-sqlite-contract-41706981519-1
+2026-11-03T19:50:30.3591750Z   path: evidence/sdk-shared-sqlite-provider-20261103/ci/
+build/sdk-stage/
+build/sdk-provider/sqlite-provider.map
+build/sdk-integration/consumer.map
+build/sdk-apple-negatives/embedded-main.map
+build/sdk-core/CMakeCache.txt
+build/sdk-catalog/CMakeCache.txt
+
+2026-11-03T19:50:30.3594220Z   if-no-files-found: error
+2026-11-03T19:50:30.3594850Z   retention-days: 30
+2026-11-03T19:50:30.3595350Z   compression-level: 6
+2026-11-03T19:50:30.3595810Z   overwrite: false
+2026-11-03T19:50:30.3596320Z   include-hidden-files: false
+2026-11-03T19:50:30.3596850Z ##[endgroup]
+2026-11-03T19:50:30.5856070Z (node:1460) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-03T19:50:30.5870340Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-03T19:50:30.5921950Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-03T19:50:30.5936830Z The least common ancestor is /Users/runner/work/EXReader/EXReader. This will be the root directory of the artifact
+2026-11-03T19:50:30.5961460Z ##[error]No files were found with the provided path: evidence/sdk-shared-sqlite-provider-20261103/ci/
+build/sdk-stage/
+build/sdk-provider/sqlite-provider.map
+build/sdk-integration/consumer.map
+build/sdk-apple-negatives/embedded-main.map
+build/sdk-core/CMakeCache.txt
+build/sdk-catalog/CMakeCache.txt. No artifacts will be uploaded.
+2026-11-03T19:50:30.6162200Z Post job cleanup.
+2026-11-03T19:50:30.7850680Z [command]/opt/homebrew/bin/git version
+2026-11-03T19:50:30.7872080Z git version 2.55.0
+2026-11-03T19:50:30.7916560Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/29406283-4d3c-4617-a577-2eb1ab7ec622/.gitconfig'
+2026-11-03T19:50:30.7935970Z Temporarily overriding HOME='/Users/runner/work/_temp/29406283-4d3c-4617-a577-2eb1ab7ec622' before making global git config changes
+2026-11-03T19:50:30.7938400Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-03T19:50:30.7942200Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/EXReader/EXReader
+2026-11-03T19:50:30.8061810Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-03T19:50:30.8144510Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-03T19:50:30.8872020Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-03T19:50:30.8967410Z http.https://github.com/.extraheader
+2026-11-03T19:50:30.8979990Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-03T19:50:30.9081030Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-03T19:50:31.0603120Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-03T19:50:31.0907610Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-03T19:50:31.2637840Z Cleaning up orphan processes
+2026-11-03T19:50:31.8678220Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+

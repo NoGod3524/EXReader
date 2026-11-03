@@ -23,6 +23,10 @@
   "ci-41705105811/source-fix.patch": "ff2f7a4e73496e479283e0fed9a5f09b26ad750d32a8b758c0180159a30c6bad",
   "ci-41705105811/source.json": "33d85c5942b0e975ecac114124555f05942d33327f582d00432d62c08f98335d",
   "ci-41705105811/stage-sqlite-scan-from-artifact.json": "f8088342f6ae7096ebc590eca84bc04b8a26f4880586d97eaa84264c14e807cd",
+  "ci-41706981519/artifacts.json": "fb09a9699b26ad536855bb4263ff01baa31a107d9af48b348e96cb4a9eb2b8d9",
+  "ci-41706981519/job.log": "881aa370e601a034f057fb4559492e4025755eb2ea155947a6fb627ba65dd7d6",
+  "ci-41706981519/review.md": "f674bbb393cdd3d664e47bacf9ea22632be88cbdc14c2e5cddfa68f78c6b44c6",
+  "ci-41706981519/run.json": "c85b9ed0280169174adb7cce4940a7b499248a1c9bc7abb4931794c759b1dfea",
   "collect_windows_local.py": "8f935127c1d84127c7330905ebeea8afc86fc86ef7d60f2680124ba0fb5c1289",
   "consumer-coff.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "consumer-coff.stdout.txt": "d0915fe22f6451f75b83b0cb29278c93aa538d5636e07c92d6439bdf0a034df8",
@@ -57,7 +61,7 @@
   "provider-nm.stdout.txt": "8fb0db549c460b754dd473d2e1bb85b3acc76fb57486b726f657ed3dc69d8361",
   "provider.map": "14c7614bf46846b46fe38db37c7638c3520c6177a65769bb577deebefe2c3736",
   "push-trigger-audit.json": "365051a3fe5993988a58564713d02ab95d5e4dff50ddf6888457a74368f43dc9",
-  "README.md": "e37e6689565a00d0f5042351a7722900aa5669ac277530de0de1713e63747882",
+  "README.md": "457342c58e67ed5794ca26aacaebf3ab1eac55bfd6ddcfdc9855d54425ea5e2e",
   "sdk-build.log": "361a02ed82453cd945f3d197390782319a3bb5738074448324dc34ddf408b8d0",
   "sdk-coff.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "sdk-coff.stdout.txt": "bf989eb794858df9e619a5d57b5c4eb2aa4c77c7da61f13851e5622ca0db6546",
@@ -69,7 +73,7 @@
   "sdk-sqlite-thunks.stdout.txt": "762e7d5d073522086c2b0ab792ef20a8ea7ed42cfc59929086c4eda4abaef4f4",
   "source-review.patch": "2a924e9f45919f3fed2b4a87ddc0dac7a7cfd0aa7b9d1a81f66a723eeceafce0",
   "stage-sqlite-scan.txt": "73626e81e9a032ec7cd00e5bcf804bdcf890b5d16dba1213a2e1acd68a25e928",
-  "status.json": "005ec70feedf41299f7f1f7643364aa4a4b775c9500ea526f64ce4b8c0656dce",
+  "status.json": "efab88e4c4707a5bd684d3e88d3db09efdb863183bf38b7378c8405bebdc0444",
   "trigger-apple-static.txt": "aaf925c2b4d9588d9a5109872862b85d062790ba9bf93decbaaeff60d75359e5",
   "windows-local.json": "62e248188f816fce6d13bcc86a72fe7a96d445146c5d620606e0c15a59e25304"
 }
