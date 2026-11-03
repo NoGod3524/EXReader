@@ -1717,3 +1717,69 @@ F05: Android program/peer/TLS types and the existing GTK inspector path are know
 ### Continuation boundary
 
 Preserve all successful bounded evidence and all original failures. Finish the authorized read-only import-contract closure, then request the smallest complete versioned change and one bounded run if needed. Do not automatically add another CI round, alter an old assertion, change an SDK, transfer a product owner or increase the formal 98/108 count.
+
+
+## 21:22 EST checkpoint - 2026-11-02 (actual append time below)
+
+Actual record time: 2026-11-02T21:27:17.748544-05:00 EST (UTC-05:00), UTC 2026-11-03T02:27:17.748544+00:00.
+The scheduled 21:22 snapshot waited for the single remote window while F09 independently verified the original R6 terminal log. PIDs 3504, 10500 and 24516 were confirmed terminal before this write. No parallel command or additional test was started to meet the clock. This entry is not backdated, and the complete d80cd70c prefix is retained.
+
+### Formal ledger and actual responsibility state
+
+Formal acceptance remains 98/108, carried forward from the existing formal ledger evidence (255ec lineage); this document does not modify that ledger. Successful component cases are not a whole-item acceptance grant.
+The same six EXReader responsibility roles are classified by their current primary work: implementation 0; diagnosis 1 (F03 bounded evidence/consumer closure); review 1 (F09 terminal evidence and this document); evidence/documentation 1 (F03 coordination, not a sixth product implementation owner); waiting for a running test 0; blocked 3 (F05 product-owner conflict-detail scope, F07 actual installed/exports/archive/SQLite-origin evidence, F08 unapproved new repair/native execution); wholly completed acceptance items 0. Total responsibility roles: 6. Standby and an approved but not yet implemented future idea are not counted as implementation.
+
+### R6 authorized scope and immutable source
+
+The user approved R6 at 2026-11-03T01:38:58Z, 20:38:58 EST. The exact scope was one added versioned HostImportUiTest copy and two modified acceptance files, with only the eleventh-case expected status text changed. The 32 MiB reading limit, 128 MiB staging ceiling, twenty cases, nine phases and all existing safety assertions remained.
+Source 4b45dab950f04e499959ebcdf84e3f6460833a2a; tree 007db446ed107b768b87aa718b6979a48a9a9bf0; parent 0b5c77592a264f5cdb6f12f03dbe7b78bb698b7d.
+Branch dot/f03-production-acceptance-v342-20261102.
+F09's actual-file and independent API full-tree review verified exactly one addition and two modifications; all other tracked files, including the original workflow, SDK, product and old tests, remained unchanged. The Java delta was only the status literal: subsequent ready/empty-staging/catalog-count safety assertions were preserved byte for byte. Original staging verification precedes the unique versioned overlay, and precompile/final proof binds its source hash.
+The unique non-force ref update was read back, then the one authorized Android A1 run was tracked to terminal. No dispatch, rerun or second commit was used.
+
+### R6 current-run evidence: import20 now passed, formal bounded admission did not
+
+Run 41562134861/A1, job 125674968681, source 4b45dab9, ended failure.
+The SDK/application build completed at 20:53:32 EST. All staged test/provider compilation and unchanged-main-APK/original-flag proofs completed at 20:53:52 EST.
+The original current-run log and API were independently checked by F09. It establishes:
+- Owner eighteen cases plus two kill/recovery operations accepted.
+- Organization eight native cases, eight UI cases and one retry accepted.
+- Bootstrap recovery twelve cases accepted.
+- Import all twenty cases across all nine phases accepted, with nine independently observed PIDs. This includes the formerly blocked eleventh case and its remaining safety assertions, not merely the revised status text. The first phase completed eleven cases; the following eight phases completed the remaining nine.
+
+These are substantive current-run results. They do not erase the original R1-R5 failures or establish the entire F03 acceptance chain.
+The first explicit formal preflight rejection is at original log line 6550:
+ValueError: bounded: failed, skipped or inconsistent summary.
+A complete targeted search of the retained original job log did not find the bounded report's individual checks or summary body. Line 5726 records the bounded runner/log/pull exit codes as zero; that alone does not prove that the eleven bounded checks passed. There is no evidence yet identifying which bounded field/check is inconsistent, skipped or failed.
+The preflight step's displayed metadata conclusion is success, while its own acceptance output is false. The 48/20 negative-control gates and the downstream shelf/owner/organization gates were skipped. Later formal acceptance outputs and the master accepted result are false. No count mismatch or product defect is inferred from the generic bounded exception.
+
+Original R6 log: 822152 bytes, 6811 lines, SHA256 2047abbd4e757a3469385f17bd9573d9b818175bed5e5fcba7b0435d0433ac87.
+Output artifact: ID 13198529383, 187491150 bytes, SHA256 f7a4114c3916a81efa220da02ab34cec5808be9d7a885b0d7f89802cdfe22958.
+This artifact has not been downloaded or unpacked for this diagnosis. The approved R6 run budget is consumed, and no new Android run is authorized here.
+
+### Exact next evidence boundary
+
+Authorized next work is read-only: trace the actual bounded summary producer and its old/versioned consumers using the retained original log and fixed-source files. The actual device entry is tools/run_reader_shelf_ui.py, not a guessed runner filename. The comparison must include all bounded expectations and the precise report/member path; it must not simply guess a stale number or weaken a condition.
+If the necessary report body is absent from the existing permitted cache, identify the exact missing member and bounded readback scope before requesting any new artifact exception or Actions audit. No new ZIP read, source modification or CI is implied by this checkpoint. There is not yet a complete safe next implementation package or a reliable whole-program completion-time estimate.
+
+### GTK fixed three-log exception: bounded observations, no new GTK run
+
+The same 20:38:58 EST user approval included a one-time LAP25002 exception to unpack only three logs from the already existing GTK R2 artifact. The original artifact identity was fixed: run 41541418049/A1, source 0ff1cc0c4fa06bf9bd9c3b79e68b22b5e062e606, artifact 13186313577, 156503 bytes, SHA256 1ba93354e99bf3236cff4a1bbd9cdb522b08bbdbc2bb9209e006cfce831d22a1.
+Only status-events.json and the status session's keyboard/application logs were extracted to the independent LAP directory. No product or archive code was executed.
+The writer observed 439 events and only an F1 action before cleanup; there was no Ctrl+L, typing or Return. Later received callbacks include the owned Import book file chooser, activation and Files focus. The application log only shows startup and Ready. Callback arrival timestamps are not native event timestamps, so these do not establish that the chooser actually appeared twenty-one seconds late.
+The coordinator independently verified the receipt identity, event-file SHA and application-log SHA/content. A safety review rejected a second read of the file named keys.log; that file was not reopened by the coordinator, and its action content remains attributed to the writer's original authorized read. The original extraction did not explicitly inspect every central-directory encryption flag, and the archive was not retained on LAP. This limitation is preserved rather than claiming a complete second ZIP audit or redownloading it.
+Event file: 124874 bytes, SHA256 26da3c21ca963a370912a5d06644327c03790c77298c530e3c5a0a18b209a27d.
+Application log: 168 bytes, SHA256 4dc7d532b8a748a3a14025bf57b98beabf18037fc016a7899c631faaf35945e1.
+Keyboard-log identity from the receipt/writer: 32 bytes, SHA256 32bcdc52b7f1dde638d97c632889845ed4f4bdcfd85f761ab9d355264f7800b3.
+The status readiness/AT-SPI observation boundary still needs a precise diagnosis. No active/focus gate is removed. Account's independent one-Escape focus pass is retained and is not being rerun. There is no new GTK implementation or CI authorization.
+
+### Other routes and completion boundaries
+
+F07: the four historical source-private dependency edges are fixed, and six-platform source recipes select public v1. Actual installed manifests, exported-header/archive hashes and final SQLite provider-origin bindings remain incomplete. A successful producer configuration check is not full final-link ownership proof. No six-platform rebuild or new archive scan was performed.
+F08: the one native run remains failed at 1437.830 seconds against its original 1200-second ceiling. Its owned processes were cleaned up, display settings were unchanged, and reader sampling did not produce a result. Deadline/observation repair remains a proposal for the original owner, not a new local run.
+F05: consumer program/peer/TLS types and the GTK inspector producer are known, but Android put/delete-head conflict details remain a product-owner implementation gap. No ownership transfer or unapproved product change is made.
+The separately requested employment spreadsheet was copied once to its specified CMU employment/identity folder with exact byte/hash verification and no overwrite of the earlier Hartford file. That is unrelated user work, not EXReader implementation or formal progress.
+
+### Continue only within the approved scope
+
+Retain the now-complete import20 evidence, the owner/organization/recovery results and every earlier failure. Resolve the bounded report/consumer evidence gap before proposing another complete versioned change or test budget. Do not convert runner exit zero into check acceptance, silently skip gates or claim that the formal ledger increased.
