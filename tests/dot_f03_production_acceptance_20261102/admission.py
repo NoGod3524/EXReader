@@ -21,6 +21,7 @@ PREVIOUS_CORRECTION = "b4d97d6d62c1366972d321174b728980e287b2cd"
 TEST_CLOSURE_BASE = "9d493b2235d81c216767295948f417c1bd12bf2d"
 OWNER_CONSUMER_BASE = "d9b36c36349a320e64f0bdf00d612c134c4eeeea"
 IMPORT_STATUS_BASE = "0b5c77592a264f5cdb6f12f03dbe7b78bb698b7d"
+PICKER_BASE = "4b45dab950f04e499959ebcdf84e3f6460833a2a"
 SDK = "8357eafa28423a7ab93ba08b823af80f01ad1505"
 FIXTURE_SOURCE = "39600d0d3a3a5e4bc2599a92e94e494a542f06f1"
 BRANCH = "dot/f03-production-acceptance-v342-20261102"
@@ -50,6 +51,7 @@ def configuration():
     require(c["test_closure_base"] == TEST_CLOSURE_BASE, "fixed preserved R3 parent")
     require(c["owner_consumer_base"] == OWNER_CONSUMER_BASE, "fixed preserved R4 parent")
     require(c["import_status_base"] == IMPORT_STATUS_BASE, "fixed preserved R5 parent")
+    require(c["picker_base"] == PICKER_BASE, "fixed preserved R6 parent")
     return c
 
 def host_import_status_contract():
@@ -244,6 +246,82 @@ def owner_consumer_contract():
             "workflow_sha256": digest(desired.encode()), "runtime_accepted": False}
 
 
+def picker_contract():
+    expected = json.loads(r'''{
+  "bounded_cases": 11,
+  "headers": [
+    "Files in Download",
+    "Files in Downloads"
+  ],
+  "max_backward": 16,
+  "max_forward": 16,
+  "method_end": "    private void open(String name) throws Exception {",
+  "method_sha256": "7871d3c8c137f9dcb81236fb26a6cf8290f9d8ddd9175f15960ffe62dc3ab1d2",
+  "method_start": "    private void pick(String name) throws Exception {",
+  "old_tests_modified": false,
+  "original_init_sha256": "8bb758fb095e7dc0803cdb096aac411dc15c38f25eac5271b3c8fa702e6f086a",
+  "overlay": "tests/dot_f03_production_acceptance_20261102/uiTest/org/exreader/host/uitest/HostReviewTest.java",
+  "overlay_sha256": "28f7d98c915db86eec25c8861ecc2da558914394358de0675b0099058cf28f17",
+  "package": "com.android.documentsui",
+  "return_timeout_ms": 10000,
+  "review_cases": 10,
+  "reviewed_init_sha256": "73e4504a78e60121c55a5f84baf746131071ac8be3ece70c9b175f096ddc9d4f",
+  "root_names": [
+    "Download",
+    "Downloads"
+  ],
+  "runtime_accepted": false,
+  "selection_timeout_ms": 30000,
+  "source": "examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/HostReviewTest.java",
+  "source_blob": "7dab01c6d06e8b7e99aeb6b41014422b99bf31b1",
+  "staged_path": "org/exreader/host/uitest/HostReviewTest.java",
+  "version": "documentsui-downloads-picker-v1",
+  "navigation_proof": "new visible live CollectionInfo subtree disjoint by ancestry from dir_list; unique clickable exact root row; drawer closes and Downloads list returns",
+  "tree_max_depth": 32,
+  "tree_max_nodes_per_snapshot": 2048
+}''')
+    c = configuration()
+    require(c["picker_contract"] == expected, "fixed Downloads navigation-only contract")
+    source = expected["source"]
+    original = blob(PICKER_BASE, source)
+    require(git("rev-parse", PICKER_BASE + ":" + source) == expected["source_blob"] and
+            (ROOT / source).read_bytes() == original, "unchanged original HostReviewTest")
+    reviewed = (ROOT / expected["overlay"]).read_bytes()
+    start, end = expected["method_start"].encode(), expected["method_end"].encode()
+    require(original.count(start) == original.count(end) == reviewed.count(start) == reviewed.count(end) == 1,
+            "unique complete pick/open method boundaries")
+    a, b = original.index(start), original.index(end)
+    x, y = reviewed.index(start), reviewed.index(end)
+    require(a < b and x < y and original[:a] == reviewed[:x] and original[b:] == reviewed[y:],
+            "all code outside pick() must remain byte-identical, including every real rejection assertion")
+    require(digest(reviewed[x:y]) == expected["method_sha256"] and
+            digest(reviewed) == expected["overlay_sha256"], "exact reviewed bounded picker body")
+    init = HERE / "android-test-overlay.init.gradle"
+    require(digest(blob(PICKER_BASE, init.relative_to(ROOT).as_posix())) == expected["original_init_sha256"] and
+            digest(init.read_bytes()) == expected["reviewed_init_sha256"], "exact reviewed two-project test overlay")
+    require(not git("diff", "--name-only", PICKER_BASE, "HEAD", "--", "examples/android/uitest",
+                    "tools/build_android_host.py", "examples/android/ci/emulator.sh",
+                    "tools/run_android_host_evidence.py"), "original UI source/build/fixture transport frozen")
+    require(not git("diff", "--name-only", "HEAD", "--", "examples/android/uitest",
+                    "tools/build_android_host.py", "examples/android/ci/emulator.sh",
+                    "tools/run_android_host_evidence.py"), "original UI source/build/fixture transport dirty")
+    return {"policy": expected, "source_sha256": digest(original),
+            "overlay_sha256": digest(reviewed), "runtime_accepted": False}
+
+def ui_staging_proof():
+    policy = picker_contract()["policy"]
+    original = ROOT / "examples/android/uitest/src/androidTest/java"
+    java = Path(os.environ["F03_UI_TEST_JAVA"])
+    expected = {p.relative_to(original).as_posix(): digest(p.read_bytes())
+                for p in sorted(original.rglob("*")) if p.is_file()}
+    require(policy["staged_path"] in expected, "original UI class exists before overlay")
+    expected[policy["staged_path"]] = policy["overlay_sha256"]
+    actual = {p.relative_to(java).as_posix(): digest(p.read_bytes())
+              for p in sorted(java.rglob("*")) if p.is_file()}
+    require(actual == expected, "complete staged UI source set; only reviewed picker replacement")
+    require(len(list(java.rglob("HostReviewTest.java"))) == 1, "exactly one staged HostReviewTest")
+    return actual
+
 def verify_source():
     c = configuration()
     require(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
@@ -255,9 +333,9 @@ def verify_source():
     require(MARKER in git("log", "-1", "--format=%B"), "authorized acceptance commit marker")
     source = git("rev-parse", "HEAD")
     require(source == os.environ["GITHUB_SHA"], "tested source differs from run")
-    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, IMPORT_STATUS_BASE],
-            "exact single R6 status correction on preserved R5")
-    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION), (PREVIOUS_CORRECTION, TEST_CLOSURE_BASE), (TEST_CLOSURE_BASE, OWNER_CONSUMER_BASE), (OWNER_CONSUMER_BASE, IMPORT_STATUS_BASE), (IMPORT_STATUS_BASE, source)):
+    require(git("rev-list", "--parents", "-n", "1", source).split() == [source, PICKER_BASE],
+            "exact single R7 picker correction on preserved R6")
+    for parent, child in ((BASE, CANONICAL), (CANONICAL, INTAKE), (INTAKE, REVIEWED_ACCEPTANCE), (REVIEWED_ACCEPTANCE, PREVIOUS_CORRECTION), (PREVIOUS_CORRECTION, TEST_CLOSURE_BASE), (TEST_CLOSURE_BASE, OWNER_CONSUMER_BASE), (OWNER_CONSUMER_BASE, IMPORT_STATUS_BASE), (IMPORT_STATUS_BASE, PICKER_BASE), (PICKER_BASE, source)):
         require(git("merge-base", parent, child) == parent, "source ancestry mismatch")
     for start, end, key in ((BASE, CANONICAL, "canonical_delta"),
                             (CANONICAL, INTAKE, "intake_delta")):
@@ -305,14 +383,25 @@ def verify_source():
             "preserved R5 exact delta")
     for path, expected in c["r5_package_blobs"].items():
         require(git("rev-parse", IMPORT_STATUS_BASE + ":" + path) == expected, "preserved R5 package blob")
-    expected_delta = {
+    r6_delta = {
         "tests/dot_f03_production_acceptance_20261102/admission.py": "M",
         "tests/dot_f03_production_acceptance_20261102/contract.json": "M",
         "tests/dot_f03_production_acceptance_20261102/androidTest/org/exreader/host/HostImportUiTest.java": "A"}
-    require(set(c["approved_delta"]) == set(expected_delta), "R6 exact one addition and two modifications")
+    require(set(c["r6_package_blobs"]) == set(r6_delta), "preserved exact R6 package")
     require({row.split("\t", 1)[1]: row.split("\t", 1)[0]
-             for row in git("diff", "--name-status", IMPORT_STATUS_BASE, source).splitlines()} == expected_delta,
-            "R6 exact authorized delta status and paths")
+             for row in git("diff", "--name-status", IMPORT_STATUS_BASE, PICKER_BASE).splitlines()} == r6_delta,
+            "preserved R6 exact delta")
+    for path, expected in c["r6_package_blobs"].items():
+        require(git("rev-parse", PICKER_BASE + ":" + path) == expected, "preserved R6 package blob")
+    expected_delta = {
+        "tests/dot_f03_production_acceptance_20261102/admission.py": "M",
+        "tests/dot_f03_production_acceptance_20261102/contract.json": "M",
+        "tests/dot_f03_production_acceptance_20261102/android-test-overlay.init.gradle": "M",
+        "tests/dot_f03_production_acceptance_20261102/uiTest/org/exreader/host/uitest/HostReviewTest.java": "A"}
+    require(set(c["approved_delta"]) == set(expected_delta), "R7 exact one addition and three modifications")
+    require({row.split("\t", 1)[1]: row.split("\t", 1)[0]
+             for row in git("diff", "--name-status", PICKER_BASE, source).splitlines()} == expected_delta,
+            "R7 exact authorized delta status and paths")
     for path in set(c["new_paths"]) | set(c["approved_delta"]):
         require(git("cat-file", "-t", source + ":" + path) == "blob", "acceptance path must be a file")
         require((ROOT / path).read_bytes() == blob(source, path), "modified acceptance file: " + path)
@@ -365,7 +454,8 @@ def verify_source():
     schema_contract = catalog_schema_contract()
     consumers = owner_consumer_contract()
     status_contract = host_import_status_contract()
-    return {"host_import_status_contract": status_contract, "owner_consumer_contract": consumers, "catalog_schema_contract": schema_contract, "test_dependency_blobs": c["test_dependency_blobs"], "private_copy_capability": capability, "source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
+    picker = picker_contract()
+    return {"picker_contract": picker, "host_import_status_contract": status_contract, "owner_consumer_contract": consumers, "catalog_schema_contract": schema_contract, "test_dependency_blobs": c["test_dependency_blobs"], "private_copy_capability": capability, "source_sha": source, "review_base": BASE, "ownership_head": CANONICAL,
             "product_intake_head": INTAKE, "sdk_source": SDK, "sdk_version": "3.42.0",
             "contract_sha256": digest((HERE / "contract.json").read_bytes()),
             "run_id": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
@@ -416,6 +506,15 @@ def prepare():
     expected.update(c["test_dependency_sources"])
     require({p.relative_to(java).as_posix() for p in java.rglob("*") if p.is_file()} == expected,
             "complete test staging without extra or missing files")
+    ui = temporary / "uiTest-java"
+    shutil.copytree(ROOT / "examples/android/uitest/src/androidTest/java", ui)
+    picker = picker_contract()["policy"]
+    ui_target = ui / picker["staged_path"]
+    require(ui_target.read_bytes() == blob(PICKER_BASE, picker["source"]),
+            "UI replacement starts from the exact original class")
+    shutil.copyfile(ROOT / picker["overlay"], ui_target)
+    os.environ["F03_UI_TEST_JAVA"] = str(ui)
+    report["ui_staged_files_sha256"] = ui_staging_proof()
     real_gradle = shutil.which("gradle")
     require(real_gradle and Path(real_gradle).is_file(), "installed Gradle 8.9 launcher")
     wrapper = temporary / "gradle"
@@ -428,7 +527,8 @@ def prepare():
                        " --init-script " + shlex.quote(str(init)) + ' -PexrSdkVersion=3.42.0 -PexrHostImport=true "$@"\n')
     wrapper.chmod(0o755)
     with open(os.environ["GITHUB_ENV"], "a") as stream:
-        stream.write("F03_GRADLE=" + str(wrapper) + "\nF03_ANDROID_TEST_JAVA=" + str(java) + "\n")
+        stream.write("F03_GRADLE=" + str(wrapper) + "\nF03_ANDROID_TEST_JAVA=" + str(java) +
+                     "\nF03_UI_TEST_JAVA=" + str(ui) + "\n")
     report["overlay_files_sha256"] = {p.relative_to(java).as_posix(): digest(p.read_bytes())
                                      for p in sorted(java.rglob("*")) if p.is_file()}
     report["gradle_wrapper_sha256"] = digest(wrapper.read_bytes())
@@ -851,6 +951,9 @@ def precompile_tests():
               for p in sorted(java.rglob("*")) if p.is_file()}
     admission = json.loads((ROOT / "build/f03-production/source-admission.json").read_text())
     require(staged == admission["overlay_files_sha256"], "staged complete test sources changed")
+    ui_staged = ui_staging_proof()
+    require(ui_staged == admission["ui_staged_files_sha256"] and
+            admission["picker_contract"] == admitted["picker_contract"], "precompile exact reviewed UI source binding")
     for key in ("source_sha", "run_id", "attempt"):
         require(admission[key] == admitted[key], "test stage source/run identity")
     require(admission["host_import_status_contract"] == admitted["host_import_status_contract"],
@@ -885,6 +988,8 @@ def precompile_tests():
     ui_root = ROOT / "examples/android/uitest/src/androidTest/java"
     ui_expected = {"L" + p.relative_to(ui_root).as_posix()[:-5] + ";" for p in ui_root.rglob("*.java")}
     ui_classes = apk_classes(paths["uitest"])
+    require(ui_classes.count("Lorg/exreader/host/uitest/HostReviewTest;") == 1,
+            "exactly one actual HostReviewTest DEX definition")
     require(ui_expected and ui_expected <= set(ui_classes), "all retained UI test classes compiled")
     require(digest(paths["uitest"].read_bytes()) == build["artifacts"]["uitest-debug-androidTest.apk"]["sha256"],
             "original UI runner APK unchanged")
@@ -905,6 +1010,7 @@ def precompile_tests():
         records[name] = {"path": target.relative_to(ROOT).as_posix(), "sha256": digest(target.read_bytes())}
     report = {k: admitted[k] for k in ("source_sha", "run_id", "attempt")}
     report.update(accepted=True, command=command, staged_files_sha256=staged,
+                  ui_staged_files_sha256=ui_staged, picker_contract=admitted["picker_contract"],
                   test_dependency_blobs=configuration()["test_dependency_blobs"], apks=records,
                   host_import_status_contract=admitted["host_import_status_contract"],
                   catalog_schema_contract=admitted["catalog_schema_contract"],
@@ -929,6 +1035,8 @@ def test_compilation_proof():
     require(report["catalog_schema_contract"] == catalog_schema_contract(),
             "compiled catalog/mapping test contract unchanged")
     status = host_import_status_contract()
+    require(report["picker_contract"] == picker_contract() and
+            report["ui_staged_files_sha256"] == ui_staging_proof(), "final exact reviewed UI source binding")
     require(report["host_import_status_contract"] == status, "compiled status contract unchanged")
     java = Path(os.environ["F03_ANDROID_TEST_JAVA"])
     require(digest((java / status["policy"]["staged_path"]).read_bytes()) == status["overlay_sha256"],
