@@ -1,13 +1,31 @@
 {
   "generated_date_utc": "2026-11-03",
-  "source_commit": "c54dd749707a817b1cb28e00f0488c11ea860f97",
+  "source_commit": "39d55a970b55be1272cbd672bfb911f5510747b8",
   "command": "python tools/check_ci_hygiene.py --emit-baseline",
-  "checker_sha256": "99702ffab54c89d9c1986cc1795858cdd1afa7da9c15c45a3adc3c80657f7e6d",
-  "baseline_sha256": "ee4b8ab65a4ad612ecb6a2fd695d621c2b011c9531876404c1fc0effd2be232a",
+  "checker_sha256": "8230aae30ff15874fed7b6cfc0593785379e32bd59ecc34526d6a16077601940",
+  "baseline_sha256": "4dd7fe9b98b254da6023f7094685623b209f2770d2c9258fbb41d075745df62d",
   "patterns": {
-    "failfast": 1702,
+    "failfast": 507,
     "negative": 15,
     "diagnostic": 7,
     "packaging": 4
+  },
+  "shell_branches": {
+    "explicit_bash": {
+      "matched_steps": 1720,
+      "missing_shell_settings": 0
+    },
+    "default_bash": {
+      "matched_steps": 663,
+      "missing_shell_settings": 276
+    },
+    "powershell": {
+      "matched_steps": 159,
+      "missing_shell_settings": 158
+    },
+    "custom": {
+      "matched_steps": 35,
+      "missing_shell_settings": 0
+    }
   }
 }
