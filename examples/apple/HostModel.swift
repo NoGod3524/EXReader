@@ -29,6 +29,20 @@ struct HostPagePalette: Equatable {
 }
 #endif
 
+private struct HostOrganizationReceiveState {
+    let books: Int
+    let bookConflicts: Int
+    let retainedBooks: Int
+    var kindIndex = 0
+    var after: String?
+    var checked = 0
+    var scanPending: Set<String> = []
+    var scanUnsafe: Set<String> = []
+    var previousPending: Set<String>?
+    var unresolved: Set<String> = []
+    var unsafe: Set<String> = []
+}
+
 // Product shelf state is independent of SDK pagination and its owner handles.
 // Only three catalog pages are retained; async results carry a query generation.
 final class HostShelf: ObservableObject {
@@ -1809,8 +1823,9 @@ final class HostReaderModel: ObservableObject {
         }
     }
 
-    // Explicit sync completion projects only newly received books. No frame,
-    // SDK progress, existing product metadata, or local reading state is changed.
+    // Explicit sync completion first retains the existing new-book policy, then
+    // projects safe organization history through the public bounded API. No SDK
+    // progress or local reading state is changed; unsafe history stays pending.
     func receiveAccountBooks() {
         guard !syncPreparing, accountProfile != nil, accountSession?.running == false else { return }
         let cancel = beginReceivePublication()
@@ -1846,9 +1861,59 @@ final class HostReaderModel: ObservableObject {
                 if page.count == 50 {
                     self.receiveAccountPage(after: page.last, cancel: cancel, projected: count, conflicts: blocked, retained: kept)
                 } else {
+                    self.receiveAccountOrganization(
+                        state: HostOrganizationReceiveState(books: count, bookConflicts: blocked,
+                                                            retainedBooks: kept), cancel: cancel)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.finishReceivePublication(cancel: cancel, message: self.describe(error))
+                }
+            }
+        }
+    }
+
+    private func receiveAccountOrganization(state: HostOrganizationReceiveState, cancel: HostCancelBox) {
+        queue.async {
+            do {
+                try cancel.check()
+                guard let catalog = self.catalog else { throw HostError.invalidInput("产品书库未就绪") }
+                let kinds = ["shelf", "tag", "series", "membership"]
+                var next = state
+                let page = try catalog.receiveOrganizationPage(kind: kinds[next.kindIndex],
+                                                               after: next.after,
+                                                               checkCancellation: cancel.check)
+                next.checked += page.projected
+                next.scanPending.formUnion(page.pending)
+                next.scanUnsafe.formUnion(page.unsafe)
+                if page.count == 50 {
+                    next.after = page.last
+                    self.receiveAccountOrganization(state: next, cancel: cancel)
+                    return
+                }
+                // At least one rescan after pending dependencies/head changes.
+                // Stop only at a stable unresolved set, not merely at a page end.
+                // Shelves settle before tags/series, then membership references.
+                if !next.scanPending.isEmpty && next.previousPending != next.scanPending {
+                    next.previousPending = next.scanPending
+                    next.scanPending = []; next.scanUnsafe = []; next.after = nil
+                    self.receiveAccountOrganization(state: next, cancel: cancel)
+                    return
+                }
+                next.unresolved.formUnion(next.scanPending)
+                next.unsafe.formUnion(next.scanUnsafe)
+                next.kindIndex += 1
+                next.after = nil; next.previousPending = nil
+                next.scanPending = []; next.scanUnsafe = []
+                if next.kindIndex < kinds.count {
+                    self.receiveAccountOrganization(state: next, cancel: cancel)
+                } else {
+                    try cancel.check()
+                    let message = "已接收 \(next.books) 本；组织投影检查 \(next.checked) 项；待处理冲突 \(next.bookConflicts + next.unsafe.count) 项；组织待依赖或重扫 \(next.unresolved.count) 项；保留本地元数据 \(next.retainedBooks) 项"
                     DispatchQueue.main.async {
-                        self.finishReceivePublication(cancel: cancel,
-                            message: "已接收 \(count) 本；待处理冲突 \(blocked) 项；保留本地元数据 \(kept) 项")
+                        // Existing receiveCancel identity prevents a switched
+                        // account or older completion from publishing this state.
+                        self.finishReceivePublication(cancel: cancel, message: message)
                     }
                 }
             } catch {
