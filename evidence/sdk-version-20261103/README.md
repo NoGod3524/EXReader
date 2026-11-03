@@ -49,8 +49,10 @@ python tests/check_sdk_install_version.py --sdk "$SDK_PREFIX" --build-dir "$PROB
 python tools/check_version_consistency.py --sync-generated
 ```
 
-CI：sdk-version-consistency.yml 仅 pull_request / workflow_dispatch；identity 检查有效内容与登记义务，reject-version-drift 作业注入错误并断言子进程返回 1，精确输出位置与期望值。云端正例及真正红色负例的 run/source/日志将在实际执行后登记。
+CI：sdk-version-consistency.yml 仅 pull_request / workflow_dispatch；identity 检查有效内容与登记义务，reject-version-drift 作业注入错误并断言子进程返回 1，精确输出位置与期望值。云端正例 run 41707789559（source 8cfb2174cfc6e25e3227aa4418448e63f0bd383f）两作业 success；真实红色负例 run 41707978252（source 59385f74edfd69e68f3586e9d22fb3e826da7e9c，仅改错 project 一行）两作业 failure，实际日志包含 CMakeLists.txt:3 与 expected 3.42.0。见 cloud-verification.json、ci-positive.txt、ci-negative.txt。临时负例不进入 V 的产品提交。
 
 ## R 的前置关系
 
 本包改变 protected 集合中的 include、cmake、CMakeLists.txt 三项，native.yml 未改。**R 的候选必须基于 V 之后的提交，不能沿用 95100501 的散列。** 本包未 refreeze、不更新 SDK 基线登记/性能预算，不执行 C/R，不改 catalog、Settings、默认分支或其它会话分支。
+
+本地安装包三渠道已实测；完整 native 矩阵 run 41707789690 尚未结束，不据 SDK 专项 CI 授予整个 native 矩阵通过。

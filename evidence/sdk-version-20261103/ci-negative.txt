@@ -1,0 +1,2 @@
+2026-11-03T19:57:35.0981276Z CMakeLists.txt:3 -> project(EXReader VERSION 3.41.0 LANGUAGES C) vs expected 3.42.0 from ${EXR_SDK_VERSION}
+2026-11-03T19:57:35.1065007Z ##[error]Process completed with exit code 1.
