@@ -34,43 +34,44 @@ jobs:
           def git(*args):
               return subprocess.check_output(["git", *args], text=True, encoding="utf-8")
 
-          def fail(rule, ids, reason):
-              print(f"{rule} id={ids}: {reason}；应改为 note 而不是 state")
+          def fail(rule, ids, detail, hint=None):
+              print(f"{rule} id={ids}: {detail}" + (f"；{hint}" if hint else ""))
               raise SystemExit(1)
 
           def check(base, head, author, message, changed, audits):
               requirements = head.get("requirements", [])
-              if len(requirements) != 108 or collections.Counter(i.get("group") for i in requirements) != {"foundation": 12, "host": 84, "final": 12}:
-                  fail("R1", ",".join(str(i.get("id", "?")) for i in requirements), "分母必须为108，分组必须为12/84/12")
+              groups = collections.Counter(i.get("group") for i in requirements)
+              if len(requirements) != 108 or groups != {"foundation": 12, "host": 84, "final": 12}:
+                  fail("R1", f"items={len(requirements)}, foundation={groups['foundation']}, host={groups['host']}, final={groups['final']}", "分母或分组计数不符", hint="分母与分组必须恒为 108 / 12:84:12，不得改分母")
               old = {i["id"]: i for i in base["requirements"]}
               new = {i["id"]: i for i in requirements}
               if len(new) != len(requirements) or set(old) != set(new):
-                  fail("R2", ",".join(sorted(set(old) ^ set(new))) or "duplicate-id", "ID集合必须保持且不得重复")
+                  fail("R2", ",".join(sorted(set(old) ^ set(new))) or "duplicate-id", "ID集合必须保持且不得重复", hint="ID 与 group 必须保持")
               for key, item in new.items():
                   if item.get("group") != old[key].get("group"):
-                      fail("R2", key, "不得改变group")
+                      fail("R2", key, "不得改变group", hint="ID 与 group 必须保持")
                   if item.get("state") not in {"verified", "partial", "pending"}:
-                      fail("R3", key, "未知state")
+                      fail("R3", key, "未知state", hint="应改为 note 而不是 state")
               state_changes = [key for key in new if new[key].get("state") != old[key].get("state")]
               if state_changes and not (author == "github-actions[bot]" and re.search(r"^Ledger-Authority: audit$", message, re.M) and re.search(r"run[ =](\d{6,})", message)):
-                  fail("R3", ",".join(state_changes), "state 变更必须来自审计反写，人工提交只允许改 note/evidence")
+                  fail("R3", ",".join(state_changes), "state 变更必须来自审计反写，人工提交只允许改 note/evidence", hint="应改为 note 而不是 state")
               evidence = head.get("evidence", {})
               for key, item in new.items():
                   if item.get("state") != "verified":
                       continue
                   refs = item.get("evidence")
                   if not isinstance(refs, list) or not refs:
-                      fail("R4", key, "verified必须有非空evidence列表")
+                      fail("R4", key, "verified必须有非空evidence列表", hint="verified 项的 evidence key 必须存在于 evidence 映射")
                   for ref in refs:
                       value = evidence.get(ref) if isinstance(ref, str) else None
                       if not isinstance(value, dict) or not (type(value.get("run")) is int or isinstance(value.get("doc"), str)):
-                          fail("R4", key, f"evidence {ref!r} 缺少run(int)或doc(str)")
+                          fail("R4", key, f"evidence {ref!r} 缺少run(int)或doc(str)", hint="verified 项的 evidence key 必须存在于 evidence 映射")
               for path, audit in audits.items():
                   if not isinstance(audit, dict) or audit.get("evidence_ok") is not True or not audit.get("source_sha"):
-                      fail("R5", "all (" + path + ")", "审计必须含evidence_ok: true与source_sha")
+                      fail("R5", "all (" + path + ")", "审计必须含evidence_ok: true与source_sha", hint="审计文件必须含 evidence_ok: true 与 source_sha")
               mixed = [p for p in changed if re.match(r"^\.github/workflows/f03-", p) or re.match(r"^tests/product/f05_", p) or re.fullmatch(r"examples/apple/Host[^/]*\.swift", p)]
               if CATALOG in changed and mixed:
-                  fail("R6", "all", "catalog与产品路径必须拆PR: " + ", ".join(mixed))
+                  fail("R6", "all", "catalog与产品路径必须拆PR: " + ", ".join(mixed), hint="catalog 与产品路径必须拆 PR")
               print("PASS: R1-R6 (108 requirements)")
 
           def main():
@@ -88,7 +89,7 @@ jobs:
                           try:
                               audits[path] = json.loads(git("show", f"{head_sha}:{path}"))
                           except ValueError:
-                              fail("R5", "all (" + path + ")", "审计JSON无效")
+                              fail("R5", "all (" + path + ")", "审计JSON无效", hint="审计文件必须含 evidence_ok: true 与 source_sha")
               check(base, head, git("show", "-s", "--format=%an", head_sha).strip(), git("show", "-s", "--format=%B", head_sha), changed, audits)
 
           if __name__ == "__main__":
