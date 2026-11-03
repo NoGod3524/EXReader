@@ -22,6 +22,7 @@ FROZEN = {
     "examples/apple/HostReadingRecords.swift": "2c6185723fb523996b7c86ec5caf25f849a3f8cf",
 }
 EXACT_PATHS = {
+    "apps/reader/revisions/src/revisions.cpp",
     "examples/apple/HostCatalog.swift", "examples/apple/HostModel.swift", "examples/apple/HostViews.swift",
     "tests/dot_f03_same_source_20261031/AppleOrganizationInteropTests.swift",
     "tests/dot_f03_same_source_20261031/windows.py", "tests/dot_f03_same_source_20261031/gtk.py",
@@ -87,7 +88,8 @@ def android_baseline_admission(original):
         "tests/android_host", "tests/reader_android_host_import", "apps", "extras/opds",
         "tests/dot_f03_production_acceptance_20261102/contract.json",
         "tests/dot_f03_production_acceptance_20261102/androidTest",
-        "tests/dot_f03_production_acceptance_20261102/uiTest")
+        "tests/dot_f03_production_acceptance_20261102/uiTest",
+        ":(exclude)apps/reader/revisions/src/revisions.cpp")
     return {**stamp, "review_base": original.BASE, "ownership_head": original.CANONICAL,
             "product_intake_head": original.INTAKE, "sdk_source": SDK, "sdk_version": "3.42.0",
             "contract_sha256": original.digest((original.HERE / "contract.json").read_bytes()),

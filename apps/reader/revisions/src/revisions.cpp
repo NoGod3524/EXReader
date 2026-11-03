@@ -358,7 +358,45 @@ bool product_exists(sqlite3 *db,const std::string &table,const std::string &colu
 void require_active(sqlite3 *db,const std::string &table,const std::string &column,const std::string &key){
   if(!product_exists(db,table,column,key,true))reject(READER_REV_UNSAFE,"Referenced product metadata has not become active");
 }
-void apply_product(reader_revisions *store,const revision &r,const std::string &wire,const char *sort_title){
+struct group_metadata {
+  std::string name,parent;uint64_t ordinal=0;bool has_parent=false;
+  bool operator==(const group_metadata &other)const {
+    return name==other.name&&parent==other.parent&&ordinal==other.ordinal&&has_parent==other.has_parent;
+  }
+};
+group_metadata group_fields(reader_revisions *store,const revision &r,const std::string &wire){
+  json j(store->db,wire);size_t payload=j.field(0,"payload");group_metadata value;
+  value.name=j.string(j.field(payload,"name"));
+  if(r.kind=="shelf"){
+    size_t parent=j.field(payload,"parent_id");value.has_parent=j.at(parent).type!="null";
+    if(value.has_parent)value.parent=j.string(parent);
+    value.ordinal=j.integer(j.field(payload,"ordinal"));
+  }
+  return value;
+}
+group_metadata deleted_group_fields(reader_revisions *store,const revision &r){
+  group_metadata fallback;fallback.name=r.key;
+  std::vector<std::string> pending=r.parents;std::set<std::string> visited;
+  group_metadata selected;bool found=false,ambiguous=false;
+  // Only traverse deletion edges. The nearest put/restore on each branch is a
+  // display snapshot, never permission to reactivate a deleted entity. Different
+  // branch snapshots use the same identity-only tombstone on every replica.
+  while(!pending.empty()){
+    std::string id=std::move(pending.back());pending.pop_back();
+    if(!visited.insert(id).second)continue;
+    if(visited.size()>READER_REVISION_MAX_ENTITY_HISTORY)reject(READER_REV_LIMIT,"Tombstone ancestry limit exceeded");
+    std::string wire;revision parent=retained(store,id,&wire);
+    if(parent.kind!=r.kind||parent.key!=r.key)reject(READER_REV_UNSAFE,"Foreign tombstone display ancestor");
+    if(parent.operation=="delete")pending.insert(pending.end(),parent.parents.begin(),parent.parents.end());
+    else {
+      group_metadata candidate=group_fields(store,parent,wire);
+      if(found&&!(selected==candidate))ambiguous=true;
+      else if(!found){selected=std::move(candidate);found=true;}
+    }
+  }
+  return found&&!ambiguous?selected:fallback;
+}
+void apply_product(reader_revisions *store,const revision &r,const std::string &wire,const char *sort_title,bool projecting=false){
   if(r.kind=="progress"||r.kind=="annotation")reject(READER_REV_ARGUMENT,"Reading entities use selected payloads, not metadata or SDK writes");
   json j(store->db,wire);size_t payload=j.field(0,"payload");bool deleted=r.operation=="delete";
   if(r.kind=="book"){
@@ -380,12 +418,16 @@ void apply_product(reader_revisions *store,const revision &r,const std::string &
   if(r.kind=="shelf"||r.kind=="tag"||r.kind=="series"){
     std::string table=r.kind=="shelf"?"reader_shelves":r.kind=="tag"?"reader_tags":"reader_series";
     std::string column=r.kind=="shelf"?"shelf_id":r.kind=="tag"?"tag_id":"series_id";
-    bool exists=product_exists(store->db,table,column,r.key);std::string name=deleted?r.key:j.string(j.field(payload,"name"));
-    if(deleted&&exists){std::string sql="UPDATE "+table+" SET deleted=1 WHERE "+column+"=?1";statement q(store->db,sql.c_str());q.bind(1,r.key);q.next();return;}
+    bool exists=product_exists(store->db,table,column,r.key);
+    group_metadata fields=deleted?deleted_group_fields(store,r):group_fields(store,r,wire);
+    std::string name=fields.name;
     std::string sql=exists?"UPDATE "+table+" SET name=?2,deleted=?3":"INSERT INTO "+table+"("+column+",name,deleted";
     if(r.kind=="shelf"){
-      std::string parent;uint64_t ordinal=0;bool has_parent=false;
-      if(!deleted){size_t index=j.field(payload,"parent_id");has_parent=j.at(index).type!="null";if(has_parent){parent=j.string(index);require_active(store->db,"reader_shelves","shelf_id",parent);}ordinal=j.integer(j.field(payload,"ordinal"));}
+      std::string parent=fields.parent;uint64_t ordinal=fields.ordinal;bool has_parent=fields.has_parent;
+      if(has_parent){
+        if(deleted){if(!product_exists(store->db,"reader_shelves","shelf_id",parent))reject(READER_REV_UNSAFE,"Missing tombstone parent dependency");}
+        else require_active(store->db,"reader_shelves","shelf_id",parent);
+      }
       sql+=exists?",parent_id=?4,ordinal=?5 WHERE shelf_id=?1":",parent_id,ordinal) VALUES(?1,?2,?3,?4,?5)";
       statement q(store->db,sql.c_str());q.bind(1,r.key);q.bind(2,name);check(sqlite3_bind_int(q.s,3,deleted));if(has_parent)q.bind(4,parent);else check(sqlite3_bind_null(q.s,4));check(sqlite3_bind_int64(q.s,5,(sqlite3_int64)ordinal));q.next();
     }else{
@@ -396,7 +438,14 @@ void apply_product(reader_revisions *store,const revision &r,const std::string &
   std::string table=group=="shelf"?"reader_book_shelves":group=="tag"?"reader_book_tags":"reader_book_series";
   std::string column=group=="shelf"?"shelf_id":group=="tag"?"tag_id":"series_id";
   if(deleted){std::string sql="DELETE FROM "+table+" WHERE "+column+"=?1 AND book_key=?2";statement q(store->db,sql.c_str());q.bind(1,id);q.bind(2,book_key);q.next();return;}
-  require_active(store->db,"reader_books","book_key",book_key);require_active(store->db,group=="shelf"?"reader_shelves":group=="tag"?"reader_tags":"reader_series",column,id);
+  require_active(store->db,"reader_books","book_key",book_key);
+  std::string group_table=group=="shelf"?"reader_shelves":group=="tag"?"reader_tags":"reader_series";
+  if(projecting){
+    // Remote membership remains hidden with its deleted group. Keep its derived
+    // row so fresh and existing replicas converge; local writes still require
+    // an active group and explicit restoration through the unchanged commands.
+    if(!product_exists(store->db,group_table,column,id))reject(READER_REV_UNSAFE,"Missing membership group dependency");
+  }else require_active(store->db,group_table,column,id);
   std::string where=" WHERE "+column+"=?1 AND book_key=?2",lookup="SELECT 1 FROM "+table+where;statement found(store->db,lookup.c_str());found.bind(1,id);found.bind(2,book_key);bool exists=found.next()==SQLITE_ROW;
   if(group=="tag"&&exists)return;
   std::string sql=exists?"UPDATE "+table+" SET ordinal=?3"+where:"INSERT INTO "+table+"("+column+",book_key"+(group=="tag"?") VALUES(?1,?2)":",ordinal) VALUES(?1,?2,?3)");
@@ -496,7 +545,7 @@ static reader_revision_status reader_revision_project_impl(bool raw_api,reader_r
   if(out)std::memset(out,0,sizeof(*out));
   return call(error,[&]{guard owner(store,raw_api);if(!entity_kind||!entity_key||!expected||!kind(entity_kind))reject(READER_REV_ARGUMENT,"Missing restricted product projection identity");identifier(expected);transaction tx(store->db);
     graph current(store->db,entity_kind,entity_key,store->raw_v3);if(safe_head(current)!=expected)reject(READER_REV_UNSAFE,"Expected safe head changed before metadata projection");
-    std::string wire;revision r=retained(store,expected,&wire);apply_product(store,r,wire,sort_title);tx.commit();info(r,out);
+    std::string wire;revision r=retained(store,expected,&wire);apply_product(store,r,wire,sort_title,true);tx.commit();info(r,out);
   });
 }
 static reader_revision_status reader_revision_selected_impl(bool raw_api,reader_revisions *store,const char *entity_kind,const char *entity_key,char **wire,size_t *bytes,reader_revision_info *out,reader_revision_selection *selection,reader_revision_error *error){
