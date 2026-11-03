@@ -1,0 +1,9 @@
+2026-11-03T19:55:46.2186200Z PASS: SDK 3.42.0; ABI 1; 588 live exact literal exceptions
+2026-11-03T19:55:59.6308826Z PASS: reject stale-line
+2026-11-03T19:55:59.6309324Z PASS: reject changed-literal
+2026-11-03T19:55:59.6309779Z PASS: reject frozen-bytes
+2026-11-03T19:55:59.6310252Z PASS: reject migration-reference
+2026-11-03T19:55:59.6310933Z PASS: reject migration-removal
+2026-11-03T19:55:59.6311329Z PASS: reject negative-assertion
+2026-11-03T19:55:59.6311712Z PASS: reject duplicate
+2026-11-03T19:55:59.6312188Z PASS: valid manifest and 7 refusal cases; all source bytes restored
