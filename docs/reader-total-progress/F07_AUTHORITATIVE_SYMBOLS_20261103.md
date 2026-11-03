@@ -40,3 +40,5 @@
 - 六端 shipped program：同一 SQLite source-id `2026-10-09 15:46:58 be8d059e…`，每端仅一处；无任何外部 sqlite 依赖；
 - Apple 安装 SDK 74 个归档中只有两个定义 `sqlite3_*`，符号集 **288 / 288 完全相同**，两对象字节不同；
 - shipped program 与归档定义集**逐个相等（288 = 288，双向差集 0）**。
+
+<!-- dispatch marker [F07-AUTHORITATIVE-SYMBOLS-ONE-RUN] -->
