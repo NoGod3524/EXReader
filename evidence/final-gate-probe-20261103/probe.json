@@ -1,0 +1,16 @@
+{
+  "source_sha": "12f40f8a61adf0376035db54642fca60c0aa2ff3",
+  "ref": "ledger/base-20261103",
+  "native": {
+    "run_id": 41726208700,
+    "command": "gh workflow run native.yml --ref ledger/base-20261103",
+    "attempt_expected": 1,
+    "status": "dispatched"
+  },
+  "core": {
+    "status": "not-run",
+    "condition": "only if native all green"
+  },
+  "automatic_retries": false,
+  "changes_to_settings_default_or_catalog": false
+}
