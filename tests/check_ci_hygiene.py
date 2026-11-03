@@ -134,6 +134,8 @@ def main():
         print('PASS: single/heredoc/quoted/continued commands exempt; multi/pipeline/and/semicolon/control strict')
     print('PASS: clean workflow accepted; one-change ' + args.rule + ' control rejected')
     shell_controls(args.rule)
+    if args.rule == 'packaging':
+        subprocess.run([sys.executable, str(ROOT / 'tests/check_perf_policy.py')], check=True)
     if args.rule == 'diagnostic':
         baseline_controls(args.fault)
     return 0

@@ -32,6 +32,8 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-22.04, macos-15]
     runs-on: ${{ matrix.os }}
+    env:
+      PERF_RUNNER_LABEL: ${{ matrix.os }}
     defaults:
       run:
         shell: bash .github/scripts/ci.sh {0}
@@ -130,7 +132,11 @@ jobs:
           Copy-Item -LiteralPath stage/examples/fonts/fallback.ttf -Destination 'build/中文 example/回退字体.ttf'
           ./build/sdk-example/Release/exreader-font-example.exe 'build/中文 example/主字体.ttf' 'build/中文 example/回退字体.ttf' 'build/中文 example/字体页面.png'
           ./build/sdk-example/Release/exreader-page-example.exe 'build/中文 example/示例.epub' C:/Windows/Fonts/arial.ttf 'build/中文 example/续排页面.png'
+          $PSNativeCommandUseErrorActionPreference = $false
           python tools/run_benchmarks.py ./stage/bin/exreader-benchmark.exe C:/Windows/Fonts/arial.ttf build/performance --runs 1 --max-pages 8 --paging
+          $perfExit = $LASTEXITCODE
+          $PSNativeCommandUseErrorActionPreference = $true
+          Write-Output "advisory=true accepted=false actual_exit=$perfExit candidate=stage/bin/exreader-benchmark.exe tracking=32"
       - name: Run the installed Linux SDK
         if: runner.os == 'Linux'
         run: |
@@ -151,7 +157,7 @@ jobs:
           ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf pager-host-page.png
           ./build/sdk-example/exreader-lazy-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
-          python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf build/performance --runs 1 --max-pages 8 --paging
+          ci_advisory python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf build/performance --runs 1 --max-pages 8 --paging
       - name: Package and check the Windows reference reader
         if: runner.os == 'Windows'
         run: python tools/build_windows_host.py --sdk stage --binary build/sdk-example/Release/exreader-reader-example.exe --output build/windows-host
@@ -175,19 +181,19 @@ jobs:
           ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /System/Library/Fonts/Supplemental/Arial.ttf pager-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
-          python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /System/Library/Fonts/Supplemental/Arial.ttf build/performance --runs 1 --max-pages 8 --paging
+          ci_advisory python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /System/Library/Fonts/Supplemental/Arial.ttf build/performance --runs 1 --max-pages 8 --paging
       - name: Measure installed PDF group rendering
         shell: bash .github/scripts/ci.sh {0}
         run: |
           if [ "${{ runner.os }}" = Windows ]; then runtime=./stage/bin/exreader.dll;
           elif [ "${{ runner.os }}" = macOS ]; then runtime=./stage/lib/libexreader.dylib;
           else runtime=./stage/lib/libexreader.so; fi
-          python tools/benchmark_pdf_blend.py "$runtime" tests/fixtures/pdf-blend build/performance/pdf --runs 1 --scale 1 --case nonisolated --case ap-nonisolated
+          ci_advisory python tools/benchmark_pdf_blend.py "$runtime" tests/fixtures/pdf-blend build/performance/pdf --runs 1 --scale 1 --case nonisolated --case ap-nonisolated
       - name: Bound table alignment memory against the installed SDK
         shell: bash .github/scripts/ci.sh {0}
         run: |
           if [ "${{ runner.os }}" = Windows ]; then benchmark=./stage/bin/exreader-benchmark.exe; else benchmark=./stage/bin/exreader-benchmark; fi
-          python tools/benchmark_table_layout.py "$benchmark" stage/examples/fonts/primary.ttf build/table-performance --runs 1 --check-memory
+          ci_advisory python tools/benchmark_table_layout.py "$benchmark" stage/examples/fonts/primary.ttf build/table-performance --runs 1 --check-memory
       - name: Build and run JNI host against installed SDK
         shell: bash .github/scripts/ci.sh {0}
         run: |

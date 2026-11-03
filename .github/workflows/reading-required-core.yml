@@ -1,0 +1,47 @@
+# Non-performance required gate; E3 performance evidence remains advisory.
+name: Required native reading SDK core
+on:
+  pull_request:
+    branches: [codex/framework, ledger/base-20261103]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tests/check_reading_release.py
+      - run: python3 tests/check_reading_required.py
+      - run: python3 tests/check_reading_real_environments.py
+      - run: python3 tests/check_reading_cpu_export.py
+      - run: python3 tests/check_reading_release_plan.py
+  native:
+    uses: ./.github/workflows/native.yml
+  profiles:
+    uses: ./.github/workflows/reading-core.yml
+  platforms:
+    uses: ./.github/workflows/reading-platforms.yml
+  corpus:
+    uses: ./.github/workflows/r2-reading-corpus.yml
+  required:
+    name: reading-required-core
+    if: always()
+    needs: [protocol, native, profiles, platforms, corpus]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Require every non-performance group
+        shell: bash
+        env:
+          UPSTREAM_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, sys
+          results = json.loads(os.environ['UPSTREAM_RESULTS'])
+          expected = {'protocol', 'native', 'profiles', 'platforms', 'corpus'}
+          errors = {name: value.get('result') for name, value in results.items() if value.get('result') != 'success'}
+          print(json.dumps({'check': 'reading-required-core', 'expected_groups': sorted(expected), 'actual': results, 'performance_advisory': True, 'accepted': set(results) == expected and not errors}))
+          sys.exit(0 if set(results) == expected and not errors else 1)
+          PY

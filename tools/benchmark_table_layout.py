@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from perf_policy import advisory
 """Fresh-process table layout measurements, including expensive full-height alignment."""
 # SPDX-License-Identifier: MIT
 import argparse
@@ -44,6 +45,7 @@ def main():
         value={key:statistics.median(r[key] for r in records) for key in keys}
         value['input_sha256']=hashlib.sha256(book.read_bytes()).hexdigest();report['cases'][name]=value;print(name,value,flush=True)
     if args.check_memory:report['alignment_peak_ceiling_bytes']=report['cases']['fixed']['peak_rss_bytes']+64*1024*1024
+    advisory(report)
     (args.output/'summary.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
 
     if args.check_memory:
