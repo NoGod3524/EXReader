@@ -24,4 +24,9 @@ Per-round job timeout budget: GTK 60 + Windows 60 + Apple 3×25 + audit 10 = 205
 
 Integration starting commit: `232341db418ecd47c3b98216a3802c5ef565faf1`. Earlier six-host runs remain historical evidence and are not counted as new SDK rounds. Obsolete Apple diagnostics `41689770177` and `41691780081` are completed/cancelled. The earlier six-host workflow no longer has a push trigger.
 
-Round 1: prepared; not dispatched at this record's initial commit. Its exact source and run ID will be recorded after dispatch.
+## Round 1
+
+- Source: `c583ebe7dadf971eed680fea60ab850bbb7a41ce`.
+- Run: https://github.com/NoGod3524/EXReader/actions/runs/41694251471, attempt 1.
+- Status: dispatched; result pending.
+- New-scope rounds consumed: 1 of 2. No rerun authorized by this contract.
