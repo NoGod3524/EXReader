@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "parent": "e4bd48c304106275c9f44ac22c4b456c371b84d0",
-  "branch": "dot/f05-android-head-bridge-20261103",
+  "parent": "0e547f7b8f50bc793e30180d277276820129d9d8",
+  "branch": "dot/f05-android-conflict-boundary-20261103",
   "single_run": true,
   "max_attempt": 1,
   "budget_runner_minutes": {
@@ -18,12 +18,18 @@
     "tests/product/f05_android_head_bridge_20261103/retained.py",
     "tests/product/f05_android_head_bridge_20261103/bridge.init.gradle",
     "tests/product/f05_android_head_bridge_20261103/java/org/exreader/host/HeadBridgeTest.java",
+    "tests/product/f05_android_head_bridge_20261103/java/org/exreader/host/ConflictBoundaryTest.java",
+    "tests/product/f05_android_head_bridge_20261103/cpp/conflict_boundary_probe.inc",
     ".github/workflows/reader-host-session-android.yml"
   ],
   "changes": [
+    "A\ttests/product/f05_android_head_bridge_20261103/java/org/exreader/host/ConflictBoundaryTest.java",
+    "A\ttests/product/f05_android_head_bridge_20261103/cpp/conflict_boundary_probe.inc",
     "M\ttests/product/f05_android_head_bridge_20261103/contract.json",
-    "M\ttests/product/f05_android_head_bridge_20261103/driver.py"
-  ],
+    "M\ttests/product/f05_android_head_bridge_20261103/driver.py",
+    "M\ttests/product/f05_android_head_bridge_20261103/bridge.init.gradle",
+    "M\t.github/workflows/reader-host-session-android.yml"
+],
   "production_sha256": {
     "examples/android/app/src/main/java/org/exreader/host/NativeCatalog.java": "a31439a775f7aa9b742adad7910d514ab1ff8eae9b5ebcb5a2291dea73f77122",
     "examples/android/app/src/main/cpp/catalog_jni.cpp": "b0bae0e335e6948479cd482e228c27a5d6456eb62c7b3148d0e6f1f6918e5f80"
@@ -107,18 +113,18 @@
       "provenance": "Original public SDK seeding remains regression, not new native peer author.",
       "instrumentation_source_path": "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
       "instrumentation_source_blob": "ec9bb60ae3233d914086e06c8bb93aa4580d6ceb",
-      "runtime_state": "shadow_build_passed_runtime_not_run",
+      "runtime_state": "prior_run41604711611_original16_passed_keep_all_assertions",
       "adapter_scope": "Approved generated Python CLI choice and single-expression Java 3.42 adapters unchanged. Prior run41598794149 built all APKs but stopped at manifest parser gate before runtime. This separate authorized run keeps original sixteen checks, four PIDs, two blocked boundaries and SDK identity; no assertion reduction."
     }
   },
   "retained_adapter_origin": "9ce943e1ff0c26b54db69f5c31eec057d2be216b:tests/product/f05_recovery_20261031/android.py:432-611",
-  "scope": "Android read-only bridge only",
+  "scope": "Android bridge plus isolated Debug non-UI conflict and legal history boundary",
   "not_accepted": [
     "full F05",
     "Opus UI",
     "sessionprobe SDK3.40-only side workflow",
-    "real multihead conflict",
-    "4096 native boundary"
+    "transport end-to-end conflict",
+    "other platform conflict recovery"
   ],
   "new_bridge_fixture": "Actual NativeCatalog.applyGroup operations; ProductFixture SELECT only; no SQL writes",
   "head_sha_basis": "75d3115041016ae61149fd6f5a9a816c296cc085:apps/reader/revisions/src/revisions.cpp:251,276-282,332-333,457",
@@ -144,5 +150,24 @@
   ],
   "prior_failed_run": 41598794149,
   "manifest_evidence_run": 41602795048,
-  "manifest_evidence_artifact": 13215501646
+  "manifest_evidence_artifact": 13215501646,
+  "boundary_checks": [
+    "concurrent_put_put",
+    "concurrent_delete_put",
+    "explicit_restore_all_heads",
+    "history_4095_complete",
+    "history_4096_complete",
+    "history_4097_atomic_refusal",
+    "limit_exact_replay",
+    "limit_close_reopen_readonly"
+  ],
+  "boundary_overlay": {
+    "path": "examples/android/app/src/debug/cpp/catalog_fixture.inc",
+    "base_sha256": "2233452289480e4c699223c19d9a64dd0106846f501c9fafded16f1339464086",
+    "base_blob": "9e29e8a2c5f70a60043759051996fe1bbe1224cc",
+    "rule": "Actions isolated Debug copy only; exact original bytes plus newline plus new probe; repository original and first three APKs untouched"
+  },
+  "boundary_parent_success_run": 41604711611,
+  "boundary_api": "Use actual catalog owner API family; do not force raw_v3 or enable reading. Real dual-owner commands plus exact get/receive. Boundary roots use public local revision API, no SQL writer.",
+  "boundary_instrumentation_timeout_seconds": 1800
 }

@@ -285,12 +285,12 @@ def installed(package,expected):
     body=adb("exec-out","cat",paths[0])
     got=hashlib.sha256(body).hexdigest();assert got==expected,(package,got,expected)
     return {"package":package,"path":paths[0],"sha256":got,"bytes":len(body)}
-def instrument(runner,report_name,output_name):
+def instrument(runner,report_name,output_name,timeout=600):
     args=["shell","am","instrument","-w","-r"]
     for key,value in IDENTITY.items():args+=["-e",key,value]
     args+=["-e","sdk_version","3.42.0","org.exreader.host.test/org.exreader.host."+runner]
     failure=None
-    try:raw=adb(*args,timeout=600)
+    try:raw=adb(*args,timeout=timeout)
     except (subprocess.CalledProcessError,subprocess.TimeoutExpired) as error:
         raw=error.output or b"";failure=error
     if isinstance(raw,str):raw=raw.encode()
@@ -373,8 +373,8 @@ def collect():
         src=ROOT/path
         if src.exists():shutil.copytree(src,OUT/name,dirs_exist_ok=True)
     write("completion.json",{**IDENTITY,"job_status":os.environ.get("F05_JOB_STATUS","unknown"),
-        "scope":"Android read-only bridge; not whole F05",
-        "not_executed":["sessionprobe SDK3.40-only side workflow","GTK/Apple/Windows F05","Opus conflict detail UI","real multihead conflict integration","4096 native boundary"]})
+        "scope":"Android read-only bridge plus isolated conflict boundary; not whole F05",
+        "not_executed":["sessionprobe SDK3.40-only side workflow","GTK/Apple/Windows F05","Opus conflict detail UI"]})
     print("F05 collect: runtime_report="+str((OUT/"runtime.json").exists())+", packages_report="+str((OUT/"packages.json").exists())+", job_status="+os.environ.get("F05_JOB_STATUS","unknown"),flush=True)
     # No fixture private directory or generated login data is included.
 def require(ok,reason):
@@ -482,8 +482,164 @@ def audit():
 prepare_hash=prepare_hash_owner
 hash_proof=hash_owner_proof
 
+
+
+def boundary_build():
+    guard();hash_owner_proof()
+    stage=ROOT/"build/f05-boundary-stage"
+    require(not stage.exists(),"Boundary isolated stage must be fresh")
+    prefixes=("examples/android/","tests/reader_host_session_android/","tests/product/f05_android_head_bridge_20261103/","extras/webdav/android/webdav/","extras/credentials/android/credentials/","extras/android-import-entry/android/importentry/")
+    files=[p for p in git("ls-files").splitlines() if p.startswith(prefixes)]
+    inventory={}
+    for name in files:
+        source=ROOT/name
+        require(source.is_file() and not source.is_symlink(),"Only regular tracked stage source: "+name)
+        target=stage/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
+        inventory[name]=sha(source)
+    generated={};generated_directories={}
+    for name in ("examples/android/app/src/main/assets","examples/android/app/src/main/jniLibs","tests/reader_host_session_android/debug/res/raw"):
+        source=ROOT/name;require(source.is_dir() and not source.is_symlink(),"Generated canonical inputs missing: "+name)
+        generated_directories[name]=sorted(p.relative_to(source).as_posix() for p in source.rglob("*") if p.is_file())
+        require(bool(generated_directories[name]),"Generated directory must not be empty: "+name)
+        for p in source.rglob("*"):
+            if not p.is_file():continue
+            require(not p.is_symlink(),"Generated input symlink")
+            rel=p.relative_to(ROOT).as_posix();target=stage/rel;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,target)
+            generated[rel]=sha(p)
+            archived=OUT/"boundary-generated"/rel;archived.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,archived)
+            require(sha(target)==generated[rel] and sha(archived)==generated[rel],"Generated input copy changed")
+    overlay=CONTRACT["boundary_overlay"]
+    original=ROOT/overlay["path"];base=original.read_bytes();addition=(D/"cpp/conflict_boundary_probe.inc").read_bytes()
+    require(sha(original)==overlay["base_sha256"],"Original Debug review include changed")
+    modified=stage/overlay["path"];modified.write_bytes(base+b"\n"+addition)
+    (OUT/"boundary-probe-base.inc").write_bytes(base);(OUT/"boundary-probe-actual.inc").write_bytes(modified.read_bytes())
+    baseline={name:sha(OUT/"apks"/name) for name in ("app-debug.apk","app-release-unsigned.apk","original-owner.apk","host-sync.apk","head-bridge.apk")}
+    arguments=["gradle","-p",stage/"examples/android","--no-daemon","--stacktrace",
+        "-I",D/"bridge.init.gradle","-Pf05Boundary=true","-Pf05EvidenceDir="+str(OUT),
+        "-PexrSdk="+str(ROOT/"build/session-android/sdk-stage"),"-PexrSdkVersion=3.42.0",
+        "-PexrProduct="+str(ROOT/"build/session-android/product-stage"),"-PexrSync=true","-PexrPageTheme=false",
+        "-PexrDav="+str(ROOT/"build/webdav-android/stage-release"),"-PexrSideload="+str(ROOT/"build/session-android/sideload-stage"),
+        "-PexrTestRunner=org.exreader.host.ConflictBoundaryTest",":app:assembleDebug",":app:assembleDebugAndroidTest"]
+    write("boundary-build.json",{**IDENTITY,"accepted":False,"argv":list(map(str,arguments)),"baseline_apks":baseline,
+        "source_inventory":inventory,"generated_inputs":generated,"generated_directories":generated_directories,"overlay_path":overlay["path"],
+        "base_sha256":sha(original),"suffix_sha256":sha(D/"cpp/conflict_boundary_probe.inc"),"overlay_sha256":sha(modified)})
+    try:raw=command(arguments,timeout=1800)
+    except (subprocess.CalledProcessError,subprocess.TimeoutExpired) as error:
+        raw=error.output or b""
+        if isinstance(raw,str):raw=raw.encode()
+        (OUT/"boundary-build.log").write_bytes(raw)
+        print("Boundary build failed: "+clean_error(error)+"\n"+clean_error(raw.decode(errors="replace")),flush=True)
+        raise
+    (OUT/"boundary-build.log").write_bytes(raw)
+    for name,digest in inventory.items():
+        if name==overlay["path"]:require((stage/name).read_bytes()==base+b"\n"+addition,"Overlay is not original prefix plus probe")
+        else:require(sha(stage/name)==digest,"Staged tracked source changed: "+name)
+    require(all(sha(OUT/"apks"/name)==digest for name,digest in baseline.items()),"Original APK changed")
+    for name,entries in generated_directories.items():
+        for location in (ROOT,stage,OUT/"boundary-generated"):
+            require(sorted(p.relative_to(location/name).as_posix() for p in (location/name).rglob("*") if p.is_file())==entries,"Generated input file set changed")
+    for rel,digest_value in generated.items():
+        require(all(sha(location/rel)==digest_value for location in (ROOT,stage,OUT/"boundary-generated")),"Generated input bytes changed after build")
+
+    for name,path in (("boundary-app.apk","debug/app-debug.apk"),("conflict-boundary.apk","androidTest/debug/app-debug-androidTest.apk")):
+        shutil.copyfile(stage/"examples/android/app/build/outputs/apk"/path,OUT/"apks"/name)
+    aapt=Path(os.environ["ANDROID_HOME"])/"build-tools/35.0.0/aapt2"
+    text=command([aapt,"dump","xmltree",OUT/"apks/conflict-boundary.apk","--file","AndroidManifest.xml"]).decode()
+    require_manifest(text,"ConflictBoundaryTest");(OUT/"conflict-boundary.apk.manifest.txt").write_text(text)
+    app_text=command([aapt,"dump","xmltree",OUT/"apks/boundary-app.apk","--file","AndroidManifest.xml"]).decode()
+    app_package,app_runners=xml_identity(app_text);require(app_package=="org.exreader.host" and not app_runners,"Boundary target application identity")
+    (OUT/"boundary-app.apk.manifest.txt").write_text(app_text)
+    packages={name:{"sha256":sha(OUT/"apks"/name),"bytes":(OUT/"apks"/name).stat().st_size,
+        "manifest_sha256":sha(OUT/(name+".manifest.txt"))} for name in ("boundary-app.apk","conflict-boundary.apk")}
+    write("boundary-packages.json",{**IDENTITY,"accepted":True,"apks":packages})
+    report=json.loads((OUT/"boundary-build.json").read_text());report["accepted"]=True
+    report["tracked_stage_verified"]=True;report["original_apks_unchanged"]=True;report["generated_inputs_producer_verified"]=True;write("boundary-build.json",report)
+
+def boundary_runtime():
+    guard();packages=json.loads((OUT/"boundary-packages.json").read_text());installs=[]
+    identity(packages,"Boundary packages");require(packages["accepted"] is True,"Boundary packages incomplete")
+    try:
+        adb("shell","am","force-stop","org.exreader.host")
+        for package,name in (("org.exreader.host","boundary-app.apk"),("org.exreader.host.test","conflict-boundary.apk")):
+            adb("install","-r","-t",OUT/"apks"/name)
+            installs.append(installed(package,packages["apks"][name]["sha256"]))
+        installs.append(installed("org.exreader.host",packages["apks"]["boundary-app.apk"]["sha256"]))
+        raw,report=instrument("ConflictBoundaryTest","f05-conflict-boundary-report.json","boundary",timeout=1800)
+        require(report["count"]==8 and report["failed"]==0 and report["accepted"] is True,"Boundary eight checkpoints did not all pass")
+        require([c["name"] for c in report["checks"]]==CONTRACT["boundary_checks"] and all(c["pass"] is True for c in report["checks"]),"Boundary check identity/failure")
+        require(b"F05_CONFLICT_BOUNDARY_PASS" in raw and b"INSTRUMENTATION_CODE: -1" in raw,"Boundary completion marker")
+        write("boundary-runtime.json",{**IDENTITY,"accepted":True,"installed_apks":installs})
+    except Exception as error:
+        print("Boundary runtime failed: "+clean_error(error),flush=True)
+        if (OUT/"boundary.json").exists():
+            try:print(clean_error(json.dumps([c for c in json.loads((OUT/"boundary.json").read_text()).get("checks",[]) if c.get("pass") is not True])),flush=True)
+            except Exception:pass
+        write("boundary-runtime.json",{**IDENTITY,"accepted":False,"installed_apks":installs,"error":clean_error(error)})
+        raise
+
+def runtime_all():
+    failures=[]
+    for label,action in (("original_groups",runtime),("conflict_boundary",boundary_runtime)):
+        try:action()
+        except Exception as error:failures.append(label+": "+clean_error(error))
+    require(not failures,"; ".join(failures))
+
+def audit_all():
+    audit()
+    names=("boundary-build.json","boundary-packages.json","boundary-runtime.json","boundary.json")
+    docs={name:json.loads((OUT/name).read_text()) for name in names}
+    for name,value in docs.items():identity(value,name);require(value["accepted"] is True,name+" not accepted")
+    build=docs["boundary-build.json"];overlay=CONTRACT["boundary_overlay"]
+    base=(OUT/"boundary-probe-base.inc").read_bytes();actual=(OUT/"boundary-probe-actual.inc").read_bytes();suffix=(D/"cpp/conflict_boundary_probe.inc").read_bytes()
+    require(base==(ROOT/overlay["path"]).read_bytes() and digest(base)==overlay["base_sha256"],"Overlay base identity")
+    require(actual==base+b"\n"+suffix and digest(actual)==build["overlay_sha256"] and digest(suffix)==build["suffix_sha256"],"Native Debug overlay exact suffix")
+    require(build["base_sha256"]==digest(base) and build["overlay_path"]==overlay["path"],"Native overlay path binding")
+    require(build["tracked_stage_verified"] is True and build["original_apks_unchanged"] is True,"Staged source/original APK proof")
+    prefixes=("examples/android/","tests/reader_host_session_android/","tests/product/f05_android_head_bridge_20261103/","extras/webdav/android/webdav/","extras/credentials/android/credentials/","extras/android-import-entry/android/importentry/")
+    expected={p:sha(ROOT/p) for p in git("ls-files").splitlines() if p.startswith(prefixes)}
+    require(build["source_inventory"]==expected,"Exact staged source set")
+    require(set(build["baseline_apks"])=={"app-debug.apk","app-release-unsigned.apk","original-owner.apk","host-sync.apk","head-bridge.apk"},"Exactly five original baseline APKs")
+    for name,digest_value in build["baseline_apks"].items():require(sha(OUT/"apks"/name)==digest_value,"Original APK overwritten")
+    require(build["generated_inputs_producer_verified"] is True,"Generated inputs were not verified before/after the build")
+    dirs=build["generated_directories"]
+    require(set(dirs)=={"examples/android/app/src/main/assets","examples/android/app/src/main/jniLibs","tests/reader_host_session_android/debug/res/raw"},"Generated input directories differ")
+    generated=build["generated_inputs"];archive=OUT/"boundary-generated"
+    require({p.relative_to(archive).as_posix() for p in archive.rglob("*") if p.is_file()}==set(generated),"Archived generated input set")
+    for name,entries in dirs.items():
+        require(bool(entries) and sorted(p.relative_to(archive/name).as_posix() for p in (archive/name).rglob("*") if p.is_file())==entries,"Archived generated directory contents")
+    for rel,digest_value in generated.items():
+        require(not (archive/rel).is_symlink() and sha(archive/rel)==digest_value,"Archived generated input digest")
+    # The auditor rechecks the archived original bytes; the isolated build tree is producer-only.
+
+    packages=docs["boundary-packages.json"]["apks"];require(set(packages)=={"boundary-app.apk","conflict-boundary.apk"},"Boundary APK set")
+    for name,row in packages.items():
+        require(sha(OUT/"apks"/name)==row["sha256"] and (OUT/"apks"/name).stat().st_size==row["bytes"],"Boundary APK bytes")
+        require(sha(OUT/(name+".manifest.txt"))==row["manifest_sha256"],"Boundary manifest digest")
+    require_manifest((OUT/"conflict-boundary.apk.manifest.txt").read_text(),"ConflictBoundaryTest")
+    pkg,runners=xml_identity((OUT/"boundary-app.apk.manifest.txt").read_text());require(pkg=="org.exreader.host" and not runners,"Boundary app manifest")
+    installed_rows=docs["boundary-runtime.json"]["installed_apks"]
+    mapping=[("org.exreader.host","boundary-app.apk"),("org.exreader.host.test","conflict-boundary.apk"),("org.exreader.host","boundary-app.apk")]
+    require(len(installed_rows)==len(mapping),"Boundary actual installation proof")
+    for row,(pkg,name) in zip(installed_rows,mapping):
+        require(row["package"]==pkg and row["sha256"]==packages[name]["sha256"] and row["bytes"]==packages[name]["bytes"],"Boundary installed identity")
+    source_sets=json.loads((OUT/"boundary-source-sets.json").read_text())
+    require(source_sets["after"]==source_sets["before"]+[source_sets["added"]] and source_sets["added"] not in source_sets["before"],"Boundary unique additive sourceSet")
+    require(source_sets["added"].endswith("/build/f05-boundary-stage/tests/product/f05_android_head_bridge_20261103/java"),"Boundary isolated source root")
+    report=docs["boundary.json"]
+    require(report["api"]==34 and report["abi"]=="x86_64" and report["sdk_identity"][0]=="3.42.0" and report["sdk_identity"][1]==report["sdk_identity"][2],"Boundary actual SDK/API/ABI")
+    require(report["count"]==8 and report["failed"]==0 and [r["name"] for r in report["checks"]]==CONTRACT["boundary_checks"] and all(r["pass"] is True for r in report["checks"]),"Eight exact actual checkpoints")
+    provider=report["provider"];require(len(provider)==4 and provider[0]==provider[1] and "libexreader_product.so" in provider[0] and provider[2]=="4096","Actual native revision provider")
+    raw=(OUT/"boundary.instrumentation.txt").read_bytes()
+    require(b"F05_CONFLICT_BOUNDARY_PASS" in raw and b"INSTRUMENTATION_CODE: -1" in raw,"Boundary instrumentation complete")
+    for flag in ("f05_full_accepted","ui_accepted","transport_end_to_end_accepted"):require(report[flag] is False,"Out-of-scope acceptance")
+    require(report["multihead_product_commands"] is True and report["boundary_fixture"]=="public revision API, not SQL writes","Fixture provenance")
+    write("conflict-acceptance.json",{**IDENTITY,"artifact_id":os.environ["F05_SOURCE_ARTIFACT_ID"],"accepted":True,
+        "original_owner":18,"retained":16,"bridge":10,"parser_controls":10,"new_checkpoints":8,"generated_inputs_audit":"archived bytes rechecked; stage before/after checks certified by producer",
+        "android_non_ui_multihead":True,"legal_revision_limit":4096,"f05_full_accepted":False,"ui_accepted":False,"formal_accepted":False})
+    print("F05 actual Android conflict and history boundary accepted; original18/16/10 and parser10 preserved; fullF05/UI remain false",flush=True)
+
 if __name__=="__main__":
-    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("admission","prepare-hash","hash-proof","package","runtime","collect","audit"));mode=parser.parse_args().mode
+    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("admission","prepare-hash","hash-proof","package","runtime","runtime-all","boundary-build","boundary-runtime","collect","audit","audit-all"));mode=parser.parse_args().mode
     try:globals()[mode.replace("-","_")]()
     except Exception as error:
         reason=clean_error(type(error).__name__+": "+str(error)+"\n"+traceback.format_exc(limit=4))
