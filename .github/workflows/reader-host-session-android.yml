@@ -16,7 +16,7 @@ defaults:
     shell: bash
 jobs:
   android:
-    if: ${{ !inputs.inspect_retained && github.ref != 'refs/heads/dot/f05-android-head-bridge-20261103' }}
+    if: ${{ !inputs.inspect_retained && github.ref != 'refs/heads/dot/f05-android-head-bridge-20261103' && github.ref != 'refs/heads/dot/f05-head-bridge-manifest-inspect-20261103' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -146,7 +146,7 @@ jobs:
             tests/reader_session_android/android/session/build/outputs/apk/
           if-no-files-found: error
   inspect:
-    if: ${{ inputs.inspect_retained && github.ref != 'refs/heads/dot/f05-android-head-bridge-20261103' }}
+    if: ${{ inputs.inspect_retained && github.ref != 'refs/heads/dot/f05-android-head-bridge-20261103' && github.ref != 'refs/heads/dot/f05-head-bridge-manifest-inspect-20261103' }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -319,4 +319,37 @@ jobs:
         with:
           name: f05-android-head-bridge-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f05-bridge/
+          if-no-files-found: error
+
+  f05_manifest_inspect:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dot/f05-head-bridge-manifest-inspect-20261103' && github.run_attempt == '1' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Ensure the fixed read-only manifest tool is installed
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;35.0.0" > "$RUNNER_TEMP/f05-sdkmanager.log" 2>&1
+          test -x "$ANDROID_HOME/build-tools/35.0.0/aapt2"
+      - name: Inspect only the original failed producer artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/product/f05_android_head_bridge_20261103/inspect_manifest.py
+      - name: Preserve raw manifest and fixed producer identity
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f05-manifest-inspect-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f05-manifest-inspect/*.json
+            build/f05-manifest-inspect/*.manifest.txt
+            build/f05-manifest-inspect/original-text/
           if-no-files-found: error
