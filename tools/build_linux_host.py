@@ -9,6 +9,7 @@ import platform
 import shutil
 import subprocess
 from host_font import fetch
+from sdk_version import installed_version, source_version
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -16,11 +17,14 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--sdk', type=Path, required=True)
-    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'), default='3.40.0',
-                        help='Exact SDK version; the frozen default remains 3.40.0')
+    parser.add_argument('--sdk-version', default=source_version(), help='Exact SDK identity; defaults to the installed version header')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--binary', type=Path, help='Package this already-built native consumer instead of rebuilding the reference host')
     args = parser.parse_args()
+    installed = installed_version(args.sdk)
+    if args.sdk_version is not None and args.sdk_version != installed:
+        parser.error('Installed SDK differs from the explicitly selected version')
+    args.sdk_version = installed
     if platform.system() != 'Linux':
         parser.error('Build and run this consumer on Linux')
     output = args.output.resolve()

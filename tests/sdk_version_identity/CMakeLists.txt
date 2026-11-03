@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.24)
+project(SDKIdentityProbe LANGUAGES C)
+find_package(EXReader ${EXPECTED_VERSION} EXACT CONFIG REQUIRED)
+file(WRITE "${CMAKE_BINARY_DIR}/cmake-version.txt" "${EXReader_VERSION}\n")
+add_executable(version-probe main.c)
+target_link_libraries(version-probe PRIVATE EXReader::exreader)

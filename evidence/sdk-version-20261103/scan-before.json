@@ -1,0 +1,4082 @@
+[
+  {
+    "file": ".github/workflows/android-composition-candidate.yml",
+    "line": 81,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/android-composition-candidate.yml",
+    "line": 279,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/android-composition-candidate.yml",
+    "line": 294,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/android-composition-legacy-340.yml",
+    "line": 80,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/android-composition-legacy-340.yml",
+    "line": 88,
+    "version": "3.42.0"
+  },
+  {
+    "file": ".github/workflows/android-composition-legacy-340.yml",
+    "line": 124,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/android-composition-legacy-340.yml",
+    "line": 126,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/android-current-owner-340.yml",
+    "line": 80,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/android-current-owner-340.yml",
+    "line": 88,
+    "version": "3.42.0"
+  },
+  {
+    "file": ".github/workflows/android-current-owner-340.yml",
+    "line": 124,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/android-current-owner-340.yml",
+    "line": 126,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/android-organization-sync.yml",
+    "line": 79,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/android-real-original-save.yml",
+    "line": 85,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/gtk-organization-projection.yml",
+    "line": 98,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/gtk-organization-projection.yml",
+    "line": 103,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/gtk-organization-projection.yml",
+    "line": 109,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/gtk-organization-projection.yml",
+    "line": 114,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/gtk-organization-projection.yml",
+    "line": 164,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/gtk-organization-projection.yml",
+    "line": 182,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/gtk-raw-retained.yml",
+    "line": 35,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/integrated-bounded-txt-android.yml",
+    "line": 75,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/integrated-bounded-txt-android.yml",
+    "line": 273,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/integrated-bounded-txt-android.yml",
+    "line": 288,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/integrated-bounded-txt-apple.yml",
+    "line": 9,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/integrated-bounded-txt-gtk.yml",
+    "line": 36,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/r2-jpx-dependency.yml",
+    "line": 89,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/r2-jpx-dependency.yml",
+    "line": 97,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-font-reader.yml",
+    "line": 103,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-page-theme.yml",
+    "line": 76,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-page-theme.yml",
+    "line": 80,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-page-theme.yml",
+    "line": 84,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-page-theme.yml",
+    "line": 98,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-path-access.yml",
+    "line": 149,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-raw3.yml",
+    "line": 79,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-raw3.yml",
+    "line": 83,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-raw3.yml",
+    "line": 87,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-raw3.yml",
+    "line": 101,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-raw3.yml",
+    "line": 165,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-record-interop.yml",
+    "line": 86,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-record-interop.yml",
+    "line": 90,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-record-interop.yml",
+    "line": 94,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-android-record-interop.yml",
+    "line": 108,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-android-relay.yml",
+    "line": 14,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-android-relay.yml",
+    "line": 93,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-android-relay.yml",
+    "line": 289,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-android-relay.yml",
+    "line": 397,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-android-relay.yml",
+    "line": 412,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-import-mapping.yml",
+    "line": 10,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-import-mapping.yml",
+    "line": 10,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-navigation.yml",
+    "line": 10,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-navigation.yml",
+    "line": 10,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-page-theme.yml",
+    "line": 10,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-page-theme.yml",
+    "line": 37,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-raw3-ios-ready.yml",
+    "line": 10,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-raw3-ios.yml",
+    "line": 10,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-reading-records.yml",
+    "line": 13,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-reading-records.yml",
+    "line": 13,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-records-ready.yml",
+    "line": 15,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-records-ready.yml",
+    "line": 15,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-search.yml",
+    "line": 10,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-search.yml",
+    "line": 10,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf-publication.yml",
+    "line": 10,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "line": 20,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-simulator-ready.yml",
+    "line": 10,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-apple-simulator-ready.yml",
+    "line": 37,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-cloud-content-binding.yml",
+    "line": 18,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-cloud-content-binding.yml",
+    "line": 19,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-cloud-content-binding.yml",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-cloud-content-binding.yml",
+    "line": 21,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-cloud-pinned-source.yml",
+    "line": 18,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-cloud-pinned-source.yml",
+    "line": 19,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-cloud-pinned-source.yml",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-cloud-pinned-source.yml",
+    "line": 21,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-common-source-apple.yml",
+    "line": 8,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-composition-341.yml",
+    "line": 18,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-composition-341.yml",
+    "line": 39,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-composition-perf-gtk.yml",
+    "line": 47,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-composition-perf-gtk.yml",
+    "line": 53,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-composition-perf-gtk.yml",
+    "line": 61,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-composition-perf-windows.yml",
+    "line": 86,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-d21-apple-receive.yml",
+    "line": 11,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-d22-android-receive.yml",
+    "line": 77,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-d22-android-receive.yml",
+    "line": 261,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-d22-android-receive.yml",
+    "line": 369,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-d22-android-receive.yml",
+    "line": 384,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-d23-relay.yml",
+    "line": 123,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-d23-relay.yml",
+    "line": 135,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-d23-relay.yml",
+    "line": 137,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-d23-relay.yml",
+    "line": 140,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-d24-apple-large-type.yml",
+    "line": 11,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-d26-accessibility.yml",
+    "line": 13,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-341-final.yml",
+    "line": 93,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-341-final.yml",
+    "line": 96,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-341-final.yml",
+    "line": 103,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-341-final.yml",
+    "line": 108,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-341-final.yml",
+    "line": 134,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-341-final.yml",
+    "line": 153,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-341-final.yml",
+    "line": 163,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-341-final.yml",
+    "line": 166,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-341-final.yml",
+    "line": 172,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-341-final.yml",
+    "line": 181,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-341-final.yml",
+    "line": 337,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 122,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 125,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 132,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 137,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 163,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 182,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 192,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 195,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 201,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 210,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 214,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 217,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-compact.yml",
+    "line": 385,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-page-background.yml",
+    "line": 85,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-page-background.yml",
+    "line": 88,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-page-background.yml",
+    "line": 95,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-page-background.yml",
+    "line": 100,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-page-background.yml",
+    "line": 126,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-page-background.yml",
+    "line": 145,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-page-background.yml",
+    "line": 155,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-page-background.yml",
+    "line": 158,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-page-background.yml",
+    "line": 164,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-page-background.yml",
+    "line": 173,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-page-background.yml",
+    "line": 327,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw-wave3.yml",
+    "line": 18,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 122,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 125,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 132,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 137,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 163,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 182,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 192,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 195,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 201,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 210,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 214,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 217,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw3.yml",
+    "line": 385,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-record-compatibility.yml",
+    "line": 92,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-record-compatibility.yml",
+    "line": 95,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-record-compatibility.yml",
+    "line": 102,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-record-compatibility.yml",
+    "line": 107,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-record-compatibility.yml",
+    "line": 133,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-record-compatibility.yml",
+    "line": 152,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-record-compatibility.yml",
+    "line": 162,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-record-compatibility.yml",
+    "line": 165,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-record-compatibility.yml",
+    "line": 171,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-record-compatibility.yml",
+    "line": 180,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-gtk-record-compatibility.yml",
+    "line": 336,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-native-341-summary.yml",
+    "line": 42,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-next-s14.yml",
+    "line": 38,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-next-s14.yml",
+    "line": 39,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-next-s14.yml",
+    "line": 40,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-next-s14.yml",
+    "line": 41,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-next-s14.yml",
+    "line": 71,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-next-s15.yml",
+    "line": 79,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-next-s15.yml",
+    "line": 98,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-next-s15.yml",
+    "line": 101,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-next-s15.yml",
+    "line": 164,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-next-s15.yml",
+    "line": 182,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-perf-gtk.yml",
+    "line": 96,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-android.yml",
+    "line": 82,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-android.yml",
+    "line": 86,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-android.yml",
+    "line": 90,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-android.yml",
+    "line": 104,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-android.yml",
+    "line": 170,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-ios.yml",
+    "line": 10,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-records.yml",
+    "line": 15,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-records.yml",
+    "line": 15,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 126,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 129,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 136,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 141,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 167,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 186,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 196,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 199,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 205,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 214,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 218,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 221,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-gtk.yml",
+    "line": 389,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-windows.yml",
+    "line": 104,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-windows.yml",
+    "line": 113,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-windows.yml",
+    "line": 119,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-windows.yml",
+    "line": 160,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-windows.yml",
+    "line": 166,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-windows.yml",
+    "line": 223,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-windows.yml",
+    "line": 227,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-same-source-android.yml",
+    "line": 75,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-same-source-android.yml",
+    "line": 273,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-same-source-android.yml",
+    "line": 288,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-same-source-apple.yml",
+    "line": 9,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-same-source-gtk.yml",
+    "line": 36,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-txt-mixed-export.yml",
+    "line": 28,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-c10.yml",
+    "line": 13,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-c11.yml",
+    "line": 97,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 30,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 150,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 159,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 161,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 171,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 179,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 237,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 245,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 249,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 261,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 267,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 322,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 324,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 330,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 336,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 398,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 400,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 407,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-wave3-s20.yml",
+    "line": 528,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-341-common.yml",
+    "line": 94,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-341-common.yml",
+    "line": 103,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-341-common.yml",
+    "line": 142,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-341-common.yml",
+    "line": 148,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-341-common.yml",
+    "line": 205,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-341-common.yml",
+    "line": 209,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-compact.yml",
+    "line": 100,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-compact.yml",
+    "line": 109,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-compact.yml",
+    "line": 115,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-compact.yml",
+    "line": 156,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-compact.yml",
+    "line": 162,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-compact.yml",
+    "line": 219,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-compact.yml",
+    "line": 223,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-preferences-commit.yml",
+    "line": 62,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-preferences-commit.yml",
+    "line": 71,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-preferences-ui.yml",
+    "line": 168,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-preferences-ui.yml",
+    "line": 181,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-preferences-ui.yml",
+    "line": 190,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-original-full.yml",
+    "line": 100,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-original-full.yml",
+    "line": 109,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-original-full.yml",
+    "line": 115,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-original-full.yml",
+    "line": 156,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-original-full.yml",
+    "line": 162,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-original-full.yml",
+    "line": 219,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-original-full.yml",
+    "line": 223,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/sdk-bounded-txt-scan.yml",
+    "line": 45,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/sdk-page-background.yml",
+    "line": 80,
+    "version": "3.40.0"
+  },
+  {
+    "file": ".github/workflows/sdk-page-background.yml",
+    "line": 80,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/team24-apple.yml",
+    "line": 20,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/windows-gtk-organization-interop.yml",
+    "line": 107,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/windows-gtk-organization-interop.yml",
+    "line": 119,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/windows-gtk-organization-interop.yml",
+    "line": 121,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/windows-gtk-organization-interop.yml",
+    "line": 124,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "line": 9,
+    "version": "3.41.0"
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "line": 9,
+    "version": "3.40.0"
+  },
+  {
+    "file": "examples/CMakeLists.txt",
+    "line": 9,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/android/app/src/main/cpp/CMakeLists.txt",
+    "line": 11,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/android/app/src/main/cpp/CMakeLists.txt",
+    "line": 15,
+    "version": "3.40.0"
+  },
+  {
+    "file": "examples/android/app/src/main/cpp/CMakeLists.txt",
+    "line": 39,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/android/app/src/main/cpp/CMakeLists.txt",
+    "line": 40,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
+    "line": 11,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
+    "line": 12,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
+    "line": 12,
+    "version": "3.40.0"
+  },
+  {
+    "file": "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java",
+    "line": 13,
+    "version": "3.40.0"
+  },
+  {
+    "file": "examples/android/app/src/main/java/org/exreader/host/ReflowSession.java",
+    "line": 256,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/apple/HostCatalog.swift",
+    "line": 229,
+    "version": "3.40.0"
+  },
+  {
+    "file": "examples/apple/HostReadingRecords.swift",
+    "line": 255,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/apple/HostReadingRecords.swift",
+    "line": 256,
+    "version": "3.40.0"
+  },
+  {
+    "file": "examples/apple/HostReadingRecords.swift",
+    "line": 256,
+    "version": "3.40.0"
+  },
+  {
+    "file": "examples/apple/HostReadingRecords.swift",
+    "line": 256,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/apple/HostSearch.swift",
+    "line": 104,
+    "version": "3.40.0"
+  },
+  {
+    "file": "examples/linux/CMakeLists.txt",
+    "line": 5,
+    "version": "3.40.0"
+  },
+  {
+    "file": "examples/linux/CMakeLists.txt",
+    "line": 5,
+    "version": "3.40.0"
+  },
+  {
+    "file": "examples/linux/CMakeLists.txt",
+    "line": 5,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/linux/CMakeLists.txt",
+    "line": 17,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/linux/CMakeLists.txt",
+    "line": 18,
+    "version": "3.41.0"
+  },
+  {
+    "file": "examples/windows/CMakeLists.txt",
+    "line": 19,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/collect_ui.py",
+    "line": 73,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/collect_ui.py",
+    "line": 75,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/fast_import/run.py",
+    "line": 102,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/fast_import/run.py",
+    "line": 160,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/guard.py",
+    "line": 24,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/guard.py",
+    "line": 24,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/guard.py",
+    "line": 137,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/guard.py",
+    "line": 137,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/guard.py",
+    "line": 139,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/guard.py",
+    "line": 139,
+    "version": "3.42.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/guard.py",
+    "line": 156,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/run_native.py",
+    "line": 56,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/run_native.py",
+    "line": 58,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/run_native.py",
+    "line": 60,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/run_native.py",
+    "line": 83,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/run_native.py",
+    "line": 94,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/summarize.py",
+    "line": 65,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/page_theme/summarize.py",
+    "line": 83,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/raw3/RawRecordInterop.swift",
+    "line": 134,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/raw3/ios/reading/build_sdk.py",
+    "line": 31,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/raw3/ios/reading/build_sdk.py",
+    "line": 33,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/raw3/ios/reading/driver.py",
+    "line": 107,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/raw3/ios/reading/driver.py",
+    "line": 153,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/raw3/ios/reading/validate.py",
+    "line": 22,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/raw3/run.py",
+    "line": 54,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 11,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 11,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 12,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 12,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 13,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 13,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 14,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 14,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 15,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 15,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 16,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 16,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 17,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 17,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 18,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 19,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 21,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 22,
+    "version": "3.42.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 22,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 23,
+    "version": "3.42.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 23,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 24,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 25,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 26,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 26,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 27,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 27,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 28,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 28,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 29,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 30,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/ParserPolicyCheck.java",
+    "line": 30,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/RecordCompatibility.swift",
+    "line": 115,
+    "version": "3.42.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/RecordCompatibility.swift",
+    "line": 121,
+    "version": "3.42.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/run.py",
+    "line": 11,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/run.py",
+    "line": 12,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/run.py",
+    "line": 110,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/run.py",
+    "line": 116,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/run.py",
+    "line": 118,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/run.py",
+    "line": 123,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/run.py",
+    "line": 126,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/run.py",
+    "line": 129,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/run.py",
+    "line": 132,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/run.py",
+    "line": 132,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 21,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 22,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 23,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 24,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 25,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 26,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 27,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 28,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 29,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 30,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 31,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 32,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 33,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 34,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 35,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 36,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 37,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 57,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 58,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 152,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/apple_host/record_compatibility/verify.py",
+    "line": 152,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/check_reading_release.py",
+    "line": 23,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/check_reading_release.py",
+    "line": 43,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/check_reading_release.py",
+    "line": 125,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/check_reading_release_plan.py",
+    "line": 22,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/check_reading_release_plan.py",
+    "line": 27,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/check_reading_release_plan.py",
+    "line": 153,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/check_reading_required.py",
+    "line": 166,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/linux_host/check_bounded_ui.py",
+    "line": 108,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/linux_host/check_fixed_ui.py",
+    "line": 27,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/linux_host/check_fixed_ui.py",
+    "line": 27,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/linux_host/check_fixed_ui.py",
+    "line": 27,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/pdf_stream_cache/CMakeLists.txt",
+    "line": 3,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/r4_core/CMakeLists.txt",
+    "line": 4,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/r4_core/run.py",
+    "line": 87,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/r4_paint/CMakeLists.txt",
+    "line": 3,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_a11y_gtk/expectations.py",
+    "line": 12,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_a11y_gtk/expectations.py",
+    "line": 17,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_android_import_entry/stage_sdk.py",
+    "line": 76,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/audit.py",
+    "line": 12,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/audit.py",
+    "line": 28,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/candidate.py",
+    "line": 24,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/candidate.py",
+    "line": 25,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/candidate.py",
+    "line": 25,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/candidate.py",
+    "line": 71,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/check_evidence.py",
+    "line": 79,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/check_evidence.py",
+    "line": 94,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/check_evidence.py",
+    "line": 109,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/check_evidence.py",
+    "line": 113,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/run_ui.py",
+    "line": 43,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_page_theme/run_ui.py",
+    "line": 56,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_raw3/bundle.py",
+    "line": 20,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_raw3/bundle.py",
+    "line": 24,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_raw3/bundle.py",
+    "line": 24,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_raw3/candidate.py",
+    "line": 16,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_raw3/candidate.py",
+    "line": 17,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_raw3/candidate.py",
+    "line": 17,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_raw3/candidate.py",
+    "line": 20,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_raw3/candidate.py",
+    "line": 21,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_receive_d22/java/org/exreader/host/D22ReceiveTest.java",
+    "line": 90,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_android_receive_d22/java/org/exreader/host/D22ReceiveTest.java",
+    "line": 114,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_android_receive_d22/java/org/exreader/host/D22ReceiveTest.java",
+    "line": 114,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_android_receive_d22/java/org/exreader/host/D22ReceiveTest.java",
+    "line": 114,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_receive_d22/java/org/exreader/host/D22ReceiveTest.java",
+    "line": 162,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_android_receive_d22/run.py",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_android_receive_d22/run.py",
+    "line": 20,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_receive_d22/run.py",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_android_record_interop/CONTRACT.json",
+    "line": 12,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_record_interop/CONTRACT.json",
+    "line": 13,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_record_interop/CONTRACT.json",
+    "line": 13,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_record_interop/bundle.py",
+    "line": 20,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_record_interop/bundle.py",
+    "line": 24,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_record_interop/bundle.py",
+    "line": 24,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_android_record_interop/check_evidence.py",
+    "line": 39,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_annotation_export/make_fixtures.py",
+    "line": 63,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_annotation_view/consumer/probe.cpp",
+    "line": 144,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_annotation_view/consumer/probe.cpp",
+    "line": 309,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_apple_records_ready/guard.py",
+    "line": 83,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_apple_records_ready/raw3_driver.py",
+    "line": 111,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_apple_records_ready/raw3_driver.py",
+    "line": 157,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_batch_import/consumer/CMakeLists.txt",
+    "line": 9,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_catalog/check_windows_product.py",
+    "line": 90,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_content/run.py",
+    "line": 65,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_content/run.py",
+    "line": 65,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_cloud_content/run.py",
+    "line": 75,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_content/run.py",
+    "line": 114,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_content/run.py",
+    "line": 116,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_content/strict.py",
+    "line": 27,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_content/strict.py",
+    "line": 27,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_content/strict.py",
+    "line": 28,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_content/strict.py",
+    "line": 28,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_cloud_pinned/run.py",
+    "line": 54,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_pinned/run.py",
+    "line": 54,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_cloud_pinned/run.py",
+    "line": 64,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_pinned/run.py",
+    "line": 84,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_pinned/run.py",
+    "line": 86,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_pinned/strict.py",
+    "line": 27,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_pinned/strict.py",
+    "line": 27,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_pinned/strict.py",
+    "line": 28,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_cloud_pinned/strict.py",
+    "line": 28,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_d26_accessibility/current_expectations.py",
+    "line": 16,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_d26_accessibility/g13_current.py",
+    "line": 20,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/check_combined.py",
+    "line": 29,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/check_combined.py",
+    "line": 105,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/check_combined.py",
+    "line": 251,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/check_combined.py",
+    "line": 299,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/check_combined.py",
+    "line": 300,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/check_inventory.py",
+    "line": 29,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/check_inventory.py",
+    "line": 107,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/check_inventory.py",
+    "line": 147,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/check_inventory.py",
+    "line": 148,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/check_inventory.py",
+    "line": 149,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/check_inventory.py",
+    "line": 340,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_distribution_inventory/probe/CMakeLists.txt",
+    "line": 7,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_external_link_policy/consumer/CMakeLists.txt",
+    "line": 45,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_g1_integration/consumer/g1_chain.cpp",
+    "line": 61,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_g1_integration/run_suites.py",
+    "line": 50,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_g1_integration/run_suites.py",
+    "line": 50,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_g1_integration/run_suites.py",
+    "line": 163,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_g1_integration/run_suites.py",
+    "line": 168,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_g1_integration/run_suites.py",
+    "line": 176,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_341_final/aggregate.py",
+    "line": 34,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_341_final/aggregate.py",
+    "line": 34,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_341_final/aggregate.py",
+    "line": 121,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_compact/aggregate.py",
+    "line": 131,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_navigation/frame_proof.py",
+    "line": 189,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_page_background/aggregate.py",
+    "line": 29,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_page_background/aggregate.py",
+    "line": 29,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_page_background/aggregate.py",
+    "line": 115,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_page_background/check_evidence.py",
+    "line": 43,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_page_background/check_evidence.py",
+    "line": 43,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_page_background/check_evidence.py",
+    "line": 100,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/collect.py",
+    "line": 95,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/peer.py",
+    "line": 43,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/probe.c",
+    "line": 174,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/run.py",
+    "line": 35,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/run.py",
+    "line": 62,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/run.py",
+    "line": 69,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/run.py",
+    "line": 70,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/run.py",
+    "line": 80,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/run.py",
+    "line": 100,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/run.py",
+    "line": 101,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/run.py",
+    "line": 140,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw3/run.py",
+    "line": 140,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw_wave3/run.py",
+    "line": 89,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw_wave3/run.py",
+    "line": 149,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_raw_wave3/run.py",
+    "line": 241,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_receive/CMakeLists.txt",
+    "line": 5,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_record_compatibility/aggregate.py",
+    "line": 32,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_record_compatibility/aggregate.py",
+    "line": 32,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_record_compatibility/aggregate.py",
+    "line": 119,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_record_compatibility/compatibility_contract.py",
+    "line": 17,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_record_compatibility/compatibility_contract.py",
+    "line": 17,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_record_compatibility/diagnose.py",
+    "line": 144,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_record_compatibility/diagnose.py",
+    "line": 144,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_record_compatibility/run.py",
+    "line": 61,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_gtk_record_compatibility/run.py",
+    "line": 80,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_record_compatibility/run.py",
+    "line": 83,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_gtk_record_compatibility/run.py",
+    "line": 84,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
+    "line": 90,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
+    "line": 102,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
+    "line": 102,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
+    "line": 102,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
+    "line": 142,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_host_session_android/run_ui.py",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_host_session_android/run_ui.py",
+    "line": 20,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_host_session_android/run_ui.py",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/aggregate_native.py",
+    "line": 209,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/aggregate_native.py",
+    "line": 209,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/aggregate_native.py",
+    "line": 229,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/aggregate_native.py",
+    "line": 237,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/aggregate_native.py",
+    "line": 254,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/aggregate_native.py",
+    "line": 259,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/aggregate_native.py",
+    "line": 260,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/aggregate_native.py",
+    "line": 277,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/guard_composition.py",
+    "line": 32,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/guard_composition.py",
+    "line": 49,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/guard_composition.py",
+    "line": 67,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 13,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 14,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 47,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 69,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 87,
+    "version": "3.42.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 93,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 93,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 94,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 94,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 95,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 97,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 97,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 97,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/later_modules.py",
+    "line": 97,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/test_aggregate_native.py",
+    "line": 76,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/test_aggregate_native.py",
+    "line": 79,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/test_aggregate_native.py",
+    "line": 87,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/test_aggregate_native.py",
+    "line": 124,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/test_aggregate_native.py",
+    "line": 125,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/test_aggregate_native.py",
+    "line": 128,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/test_aggregate_native.py",
+    "line": 131,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_hosts_341/test_aggregate_native.py",
+    "line": 157,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_local_downloads/consumer/CMakeLists.txt",
+    "line": 9,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_module_composition/consumer/CMakeLists.txt",
+    "line": 28,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_module_composition/consumer/sdk_only/CMakeLists.txt",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_native_owner_repairs/gtk.py",
+    "line": 40,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_navigation/consumer/CMakeLists.txt",
+    "line": 13,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_c06/run.py",
+    "line": 97,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/consumer/CMakeLists.txt",
+    "line": 15,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/run.py",
+    "line": 22,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s14/run.py",
+    "line": 23,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/run.py",
+    "line": 24,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s14/run.py",
+    "line": 24,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/run.py",
+    "line": 158,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s14/run.py",
+    "line": 158,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/run.py",
+    "line": 170,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s14/run.py",
+    "line": 170,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/run.py",
+    "line": 170,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/run.py",
+    "line": 202,
+    "version": "3.42.0"
+  },
+  {
+    "file": "tests/reader_next_s14/verify.py",
+    "line": 24,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s14/verify.py",
+    "line": 25,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/verify.py",
+    "line": 29,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/verify.py",
+    "line": 30,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/verify.py",
+    "line": 31,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/verify.py",
+    "line": 32,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s14/verify.py",
+    "line": 314,
+    "version": "3.42.0"
+  },
+  {
+    "file": "tests/reader_next_s14/verify.py",
+    "line": 326,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s14/verify.py",
+    "line": 326,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 42,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 42,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 70,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 116,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 132,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 132,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 132,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 132,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 132,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 132,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 132,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 132,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 148,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 148,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_artifacts.py",
+    "line": 178,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 42,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 43,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 58,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 58,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 59,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 59,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 74,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 74,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 74,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 74,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 75,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 75,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 75,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_existing_targets.py",
+    "line": 75,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_export.py",
+    "line": 28,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_export.py",
+    "line": 77,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_export.py",
+    "line": 80,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_export.py",
+    "line": 81,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_export.py",
+    "line": 82,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_export.py",
+    "line": 82,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_export.py",
+    "line": 83,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_export.py",
+    "line": 100,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_frozen_sdk.py",
+    "line": 69,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_frozen_sdk.py",
+    "line": 71,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_frozen_sdk.py",
+    "line": 81,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_frozen_sdk.py",
+    "line": 82,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_frozen_sdk.py",
+    "line": 86,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_frozen_sdk.py",
+    "line": 87,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_frozen_sdk.py",
+    "line": 99,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_install_graph.py",
+    "line": 71,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_install_graph.py",
+    "line": 73,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_install_graph.py",
+    "line": 74,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_install_graph.py",
+    "line": 79,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_install_graph.py",
+    "line": 86,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_install_graph.py",
+    "line": 93,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_install_graph.py",
+    "line": 93,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_install_graph.py",
+    "line": 96,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_install_graph.py",
+    "line": 96,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_install_graph.py",
+    "line": 107,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_next_s15/check_install_graph.py",
+    "line": 112,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s15/consumer/probe.cpp",
+    "line": 124,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s16/check_artifacts.py",
+    "line": 196,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s16/check_artifacts.py",
+    "line": 266,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s16/check_raw.py",
+    "line": 267,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s16/run.py",
+    "line": 28,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s16/run.py",
+    "line": 182,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_next_s16/run.py",
+    "line": 182,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_perf_gtk/CMakeLists.txt",
+    "line": 7,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_perf_gtk/composition/CMakeLists.txt",
+    "line": 7,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_perf_protocol/check.py",
+    "line": 47,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_projection/check_entities.py",
+    "line": 54,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_projection/check_projection.py",
+    "line": 191,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_raw3_common/guard.py",
+    "line": 115,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_raw3_common_apple/README.md",
+    "line": 11,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_raw3_common_apple/guard.py",
+    "line": 120,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_raw3_common_apple/guard.py",
+    "line": 174,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_raw3_common_apple/test_guard.py",
+    "line": 40,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_raw3_common_apple/test_guard.py",
+    "line": 40,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_raw3_common_apple/test_guard.py",
+    "line": 63,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_raw_store_companions/profiles.py",
+    "line": 39,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_raw_store_companions/profiles.py",
+    "line": 41,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_raw_store_companions/profiles.py",
+    "line": 44,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_raw_store_companions/profiles.py",
+    "line": 45,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_raw_store_companions/profiles.py",
+    "line": 59,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_raw_store_companions/profiles.py",
+    "line": 60,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_raw_store_companions/strict.py",
+    "line": 43,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_reading_state_codec/codec.c",
+    "line": 16,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_reading_v2/check_annotations.py",
+    "line": 36,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_reading_v2/check_protocol.py",
+    "line": 39,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_reviewed_composition/check_gates.py",
+    "line": 112,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_reviewed_composition/check_gates.py",
+    "line": 112,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_reviewed_composition/cloud_consumer/CMakeLists.txt",
+    "line": 13,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_reviewed_composition/consumer/CMakeLists.txt",
+    "line": 28,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_reviewed_composition/consumer/sdk_only/CMakeLists.txt",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_reviewed_composition/suites.py",
+    "line": 26,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_reviewed_composition/suites.py",
+    "line": 26,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_revisions/check_protocol.py",
+    "line": 269,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_sdk_version/run.py",
+    "line": 12,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_sdk_version/run.py",
+    "line": 13,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_sdk_version/run.py",
+    "line": 57,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_sdk_version/run.py",
+    "line": 63,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_sdk_version/run.py",
+    "line": 82,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_sdk_version/run.py",
+    "line": 127,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_sdk_version/run.py",
+    "line": 127,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_sdk_version/run.py",
+    "line": 130,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_sdk_version/run.py",
+    "line": 132,
+    "version": "3.42.0"
+  },
+  {
+    "file": "tests/reader_sdk_version/run.py",
+    "line": 137,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_selector_bytes/run.py",
+    "line": 58,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_selector_bytes/run.py",
+    "line": 201,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_session_android/consumer/CMakeLists.txt",
+    "line": 5,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_startup_profile/CMakeLists.txt",
+    "line": 3,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_sync/check_sync.py",
+    "line": 353,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_team24_apple/build.py",
+    "line": 39,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_thumbnails/consumer/CMakeLists.txt",
+    "line": 14,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_txt_progress/build.py",
+    "line": 60,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_txt_progress/consumer/inject.cpp",
+    "line": 17,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_txt_progress/consumer/main.cpp",
+    "line": 245,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_txt_progress/consumer/main.cpp",
+    "line": 249,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_txt_progress/consumer/main.cpp",
+    "line": 278,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_txt_progress/consumer/main.cpp",
+    "line": 288,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_txt_progress/consumer/main.cpp",
+    "line": 313,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_txt_progress/consumer/main.cpp",
+    "line": 324,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_txt_progress/consumer/main.cpp",
+    "line": 357,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_txt_progress/consumer/main.cpp",
+    "line": 368,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_wave3_c09/build.py",
+    "line": 71,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_wave3_c09/build.py",
+    "line": 83,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_wave3_s20/selftest.py",
+    "line": 48,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_wave3_s20/selftest.py",
+    "line": 119,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_wave3_s20/selftest.py",
+    "line": 122,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_wave3_s20/selftest.py",
+    "line": 125,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_wave3_s20/summary.py",
+    "line": 128,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_wave3_s20/test_diagnostics.py",
+    "line": 37,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_wave3_s20/test_diagnostics.py",
+    "line": 46,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_wave3_s20/test_mobile.py",
+    "line": 47,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_webdav_import/consumer/CMakeLists.txt",
+    "line": 10,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_341/catalog.py",
+    "line": 10,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_341/catalog.py",
+    "line": 11,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/catalog.py",
+    "line": 30,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/cfi-consumer/CMakeLists.txt",
+    "line": 5,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/cloud-consumer/CMakeLists.txt",
+    "line": 8,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/guard.py",
+    "line": 30,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/guard.py",
+    "line": 37,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/identity.py",
+    "line": 41,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/identity.py",
+    "line": 45,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/identity.py",
+    "line": 45,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_341/identity.py",
+    "line": 49,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/identity.py",
+    "line": 49,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_341/identity.py",
+    "line": 54,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/identity.py",
+    "line": 55,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 45,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 47,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 58,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 59,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 64,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 65,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 93,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 127,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 144,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 145,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 146,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_341/verify.py",
+    "line": 147,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_account/check_account_ui.py",
+    "line": 544,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_account/consumer/probe.cpp",
+    "line": 4,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_compact/verify.py",
+    "line": 44,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_navigation/consumer/CMakeLists.txt",
+    "line": 5,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/reader_windows_preferences/guard.py",
+    "line": 4,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_preferences/guard.py",
+    "line": 60,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_preferences/guard.py",
+    "line": 66,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/authenticate.py",
+    "line": 85,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/authenticate.py",
+    "line": 126,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/host_build.py",
+    "line": 42,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/host_build.py",
+    "line": 130,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/host_build.py",
+    "line": 137,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/mac_peer.py",
+    "line": 43,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/owner-probe/CMakeLists.txt",
+    "line": 13,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/owner-probe/CMakeLists.txt",
+    "line": 14,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/owner-probe/README.md",
+    "line": 3,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/owner-probe/probe.cpp",
+    "line": 217,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/owner-probe/probe.cpp",
+    "line": 288,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/owner-probe/probe.cpp",
+    "line": 288,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/peer-owner/CMakeLists.txt",
+    "line": 12,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/peer-owner/CMakeLists.txt",
+    "line": 13,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/peer-owner/README.md",
+    "line": 13,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reader_windows_raw3/peer-owner/probe.cpp",
+    "line": 163,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reading_core/CMakeLists.txt",
+    "line": 4,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reading_corpus/CMakeLists.txt",
+    "line": 3,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reading_pdf/CMakeLists.txt",
+    "line": 4,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reading_real/CMakeLists.txt",
+    "line": 4,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reading_release/CMakeLists.txt",
+    "line": 9,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/reading_release/CMakeLists.txt",
+    "line": 11,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/sdk_cpp/CMakeLists.txt",
+    "line": 5,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/sdk_page_background/aggregate.py",
+    "line": 51,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/sdk_page_background/aggregate.py",
+    "line": 51,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/sdk_page_background/guard.py",
+    "line": 18,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/sdk_page_background/guard.py",
+    "line": 18,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/sdk_page_background/guard.py",
+    "line": 19,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/sdk_page_background/guard.py",
+    "line": 19,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/sdk_page_background/guard.py",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/sdk_page_background/guard.py",
+    "line": 24,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/sdk_page_background/guard.py",
+    "line": 24,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/sdk_page_background/guard.py",
+    "line": 25,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/txt_anchor_resolve/CMakeLists.txt",
+    "line": 3,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/windows_cloud_binding/CMakeLists.txt",
+    "line": 7,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/windows_host/bounded/CMakeLists.txt",
+    "line": 8,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/windows_host/bounded/check_bounded.py",
+    "line": 82,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/windows_host/check_evidence.py",
+    "line": 27,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/windows_host/check_evidence.py",
+    "line": 75,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/windows_host/check_evidence.py",
+    "line": 84,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/windows_host/check_evidence.py",
+    "line": 101,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/windows_host/check_evidence.py",
+    "line": 121,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tests/windows_host/worker_review/CMakeLists.txt",
+    "line": 8,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tests/windows_organization_projection/cloud/CMakeLists.txt",
+    "line": 7,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/apple_swift.py",
+    "line": 43,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/build_android_host.py",
+    "line": 126,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/build_apple_host.py",
+    "line": 35,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/build_apple_host.py",
+    "line": 35,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/build_apple_host.py",
+    "line": 36,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/build_apple_host.py",
+    "line": 40,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/build_apple_host.py",
+    "line": 40,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/build_apple_host.py",
+    "line": 49,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/build_apple_host.py",
+    "line": 50,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/build_apple_product.py",
+    "line": 21,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/build_apple_product.py",
+    "line": 21,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/build_apple_product.py",
+    "line": 22,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/build_apple_product.py",
+    "line": 24,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/build_apple_product.py",
+    "line": 24,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/build_apple_product.py",
+    "line": 31,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/build_apple_product.py",
+    "line": 89,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/build_linux_host.py",
+    "line": 19,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/build_linux_host.py",
+    "line": 19,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/build_linux_host.py",
+    "line": 19,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/build_linux_host.py",
+    "line": 20,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/check_linux_host.py",
+    "line": 165,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/check_reader_product_integration.py",
+    "line": 164,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/measure_reading_real.py",
+    "line": 198,
+    "version": "3.40.0"
+  },
+  {
+    "file": "tools/reader_composition/apple_annotation_independent.py",
+    "line": 147,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_composition/apple_build.py",
+    "line": 39,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_composition/apple_build.py",
+    "line": 43,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_composition/apple_build.py",
+    "line": 55,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_composition/total_progress.py",
+    "line": 151,
+    "version": "3.42.0"
+  },
+  {
+    "file": "tools/reader_composition/total_progress.py",
+    "line": 357,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_composition/total_progress.py",
+    "line": 428,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_composition/total_progress.py",
+    "line": 469,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_wave3_package/assemble.py",
+    "line": 29,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_wave3_package/desktop.py",
+    "line": 129,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_wave3_package/mobile.py",
+    "line": 35,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_wave3_package/mobile.py",
+    "line": 36,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_wave3_package/mobile.py",
+    "line": 42,
+    "version": "3.41.0"
+  },
+  {
+    "file": "tools/reader_wave3_package/mobile.py",
+    "line": 58,
+    "version": "3.41.0"
+  }
+]

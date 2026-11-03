@@ -8,6 +8,7 @@ line-oriented drive.log. This checker starts the real executable three times,
 then verifies persistence, anchored restore, cancellation, stale-task ownership
 and packaging hashes. Raw logs stay in the CI artifact.
 """
+from sdk_version import header_text
 import argparse
 import hashlib
 import json
@@ -272,7 +273,7 @@ def seal_inputs(package, sdk, manifest_path, selftest_path, consumer, steps_dir,
     source_sha = source_identity()
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
     base_header = sdk / 'include/exr/base.h'
-    version_match = re.search(r'#define EXR_VERSION "([^"]+)"', base_header.read_text(encoding='utf-8'))
+    version_match = re.search(r'#define EXR_VERSION "([^"]+)"', header_text(base_header))
     require(version_match is not None, 'installed SDK version is missing')
     version = version_match[1]
     require(type(manifest.get('schema')) is int and manifest['schema'] == 1 and manifest.get('passed') is True and

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 """Build the installed EXReader SDK for an Android x86_64 emulator, package the
 native host app, and materialize deterministic fixtures. Linux CI only."""
+from sdk_version import header_text
 import argparse
 import hashlib
 import json
@@ -66,7 +67,7 @@ def ndk_revision(ndk):
 
 
 def header_version(path, name):
-    text = Path(path).read_text()
+    text = header_text(path)
     match = re.search(r'#define\s+' + re.escape(name) + r'\s+"([^"]+)"', text)
     return match.group(1) if match else 'unknown'
 

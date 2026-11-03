@@ -4,7 +4,8 @@ project(EXReaderDistributionProbe LANGUAGES C)
 # identity, and its link command is the recorded dependency edge for the whole
 # installed SDK, so every distributed archive must appear on that line.
 list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
+include("${EXR_SDK}/lib/cmake/EXReader/EXReaderConfigVersion.cmake")
+find_package(EXReader ${PACKAGE_VERSION} EXACT CONFIG REQUIRED COMPONENTS core pdf)
 add_executable(probe probe.c)
 target_link_libraries(probe PRIVATE EXReader::exreader EXReader::exr_pdf)
 if(TARGET EXReader::exr_library)

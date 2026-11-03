@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(ReaderStartupProfile LANGUAGES C)
-find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core library PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
+include("${EXR_SDK}/lib/cmake/EXReader/EXReaderConfigVersion.cmake")
+find_package(EXReader ${PACKAGE_VERSION} EXACT CONFIG REQUIRED COMPONENTS core library PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
 add_subdirectory(../../apps/reader/store/native catalog)
 add_library(profile_adapter STATIC ../../apps/reader/desktop/catalog_sdk.c)
 target_include_directories(profile_adapter PUBLIC ../../apps/reader/desktop)

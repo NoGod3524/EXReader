@@ -11,7 +11,8 @@ if(MSVC)
 endif()
 option(PROBE_RAW "Use the exact installed raw family and real raw Windows owner" ON)
 set(EXR_SDK "" CACHE PATH "Installed SDK 3.41.0")
-find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core library
+include("${EXR_SDK}/lib/cmake/EXReader/EXReaderConfigVersion.cmake")
+find_package(EXReader ${PACKAGE_VERSION} EXACT CONFIG REQUIRED COMPONENTS core library
   PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
 find_package(EXReaderProductCatalog 0.1.0 EXACT CONFIG REQUIRED)
 if(PROBE_RAW)

@@ -1,0 +1,56 @@
+[
+  {
+    "kind": "positive",
+    "run_id": 41707789559,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/41707789559",
+    "source_sha": "8cfb2174cfc6e25e3227aa4418448e63f0bd383f",
+    "event": "pull_request",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 126167594008,
+        "name": "reject-version-drift",
+        "conclusion": "success",
+        "labels": [
+          "ubuntu-22.04"
+        ]
+      },
+      {
+        "id": 126167594623,
+        "name": "identity",
+        "conclusion": "success",
+        "labels": [
+          "ubuntu-22.04"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "negative",
+    "run_id": 41707978252,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/41707978252",
+    "source_sha": "59385f74edfd69e68f3586e9d22fb3e826da7e9c",
+    "event": "workflow_dispatch",
+    "status": "completed",
+    "conclusion": "failure",
+    "jobs": [
+      {
+        "id": 126168259978,
+        "name": "reject-version-drift",
+        "conclusion": "failure",
+        "labels": [
+          "ubuntu-22.04"
+        ]
+      },
+      {
+        "id": 126168260331,
+        "name": "identity",
+        "conclusion": "failure",
+        "labels": [
+          "ubuntu-22.04"
+        ]
+      }
+    ]
+  }
+]

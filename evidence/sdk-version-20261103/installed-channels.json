@@ -1,0 +1,13 @@
+{
+  "sdk": "3.42.0",
+  "abi": 1,
+  "cmake_package_version": "3.42.0",
+  "generated_header_version": "3.42.0",
+  "pkgconfig_version": "3.42.0",
+  "runtime": [
+    "header=3.42.0",
+    "runtime=3.42.0",
+    "abi=1"
+  ],
+  "profile": "Windows MinGW Release; optional PDF/audio/library/textindex/image codecs disabled; existing offline dependency sources"
+}
