@@ -35,3 +35,11 @@ gh workflow run native.yml --ref codex/ci-packaging-hygiene-20261103 -f scope=p-
 fault 的四项 packaging/failfast/diagnostic/negative 只改内存中的 native.yml 副本一处，对应规则 job 直接返回 exit 1 并打印诊断，不写仓库、不改远端 ref。baseline-new / baseline-modified / baseline-stale 在独立临时 Git fixture 里各造一次新增违规、修改基线行、修复却未删条目，diagnostic job 返回真实校验 exit 1。临时路径在入库证据中替换为 <temporary>。
 
 三种 Apple 产品安装为必要构建验证；不启动原 desktop/sanitizers/fuzz/android/apple-mobile 作业。不得为 P 运行完整 native 矩阵，也不执行 refreeze。
+
+## Narrowed command rule and regeneration
+
+单条 Bash 命令不要求严格前奏；引号内的 Python/正则内容、单条命令的 heredoc 和反斜线续行不算多个 shell 命令。多命令、多行独立命令、管道、&&、分号、循环/条件要求严格前奏。PowerShell 单命令也仍要求两项错误传播设置；continue-on-error 与 || true 不因收窄豁免。
+
+显式重生成命令：`python tools/check_ci_hygiene.py --emit-baseline`。基线 JSON 保留四字段逐行格式；旁边 ci_hygiene_baseline.meta.json 记录生成日期、源码 commit、生成器/基线 SHA-256 与 pattern 分布。CI 不自动生成或增补基线；此次重生成是 owner 明确批准的规则收窄，之后继续只减不增。
+
+删除耦合：删除文件或删除步骤的同一 PR 必须删除对应基线条目，否则 CI 报“条目失效”（missing / no match / stale entry）；不能把失效条目留给后续 PR。
