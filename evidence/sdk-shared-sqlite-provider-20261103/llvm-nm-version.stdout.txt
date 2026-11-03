@@ -1,0 +1,4 @@
+llvm-nm, compatible with GNU nm
+LLVM (http://llvm.org/):
+  LLVM version 23.1.1-rust-1.99.0-stable
+  Optimized build.

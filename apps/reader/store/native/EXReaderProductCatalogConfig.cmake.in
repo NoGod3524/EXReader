@@ -1,4 +1,11 @@
 @PACKAGE_INIT@
+set(EXReaderProductCatalog_USE_SHARED_SQLITE_PROVIDER @EXR_USE_SHARED_SQLITE_PROVIDER@)
 include(CMakeFindDependencyMacro)
 find_dependency(Threads)
+if(@EXR_USE_SHARED_SQLITE_PROVIDER@)
+  find_dependency(EXReaderSQLiteProvider 1.0.0 EXACT CONFIG REQUIRED)
+  if(NOT EXReaderSQLiteProvider_ID STREQUAL "@EXReaderSQLiteProvider_ID@")
+    message(FATAL_ERROR "ProductCatalog SQLite provider configuration differs")
+  endif()
+endif()
 include("${CMAKE_CURRENT_LIST_DIR}/EXReaderProductCatalogTargets.cmake")

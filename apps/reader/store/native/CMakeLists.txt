@@ -8,6 +8,17 @@ if(MSVC)
   add_compile_options(/utf-8)
 endif()
 include(FetchContent)
+option(EXR_USE_SHARED_SQLITE_PROVIDER "Use the installed public SQLite provider in SDK and product" OFF)
+find_package(Threads REQUIRED)
+if(EXR_USE_SHARED_SQLITE_PROVIDER)
+  find_package(EXReaderSQLiteProvider 1.0.0 EXACT CONFIG REQUIRED)
+  add_library(reader_catalog_sqlite INTERFACE)
+  target_link_libraries(reader_catalog_sqlite INTERFACE EXReaderSQLiteProvider::sqlite3)
+  get_target_property(_provider_includes EXReaderSQLiteProvider::sqlite3 INTERFACE_INCLUDE_DIRECTORIES)
+  find_path(_provider_sqlite_include sqlite3.h PATHS ${_provider_includes}
+    NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH REQUIRED)
+  set(reader_catalog_sqlite_header "${_provider_sqlite_include}/sqlite3.h")
+else()
 # A product dependency with its own public SQLite API; no SDK private headers.
 # Keep the same upstream version and compile limits as the frozen reading SDK.
 FetchContent_Declare(reader_catalog_sqlite_source
@@ -24,6 +35,8 @@ find_package(Threads REQUIRED)
 target_link_libraries(reader_catalog_sqlite PUBLIC Threads::Threads ${CMAKE_DL_LIBS})
 if(UNIX)
   target_link_libraries(reader_catalog_sqlite PUBLIC m)
+endif()
+set(reader_catalog_sqlite_header "${reader_catalog_sqlite_source_SOURCE_DIR}/sqlite3.h")
 endif()
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../001_catalog.sql" catalog_sql)
 string(REPLACE "\\" "\\\\" catalog_sql "${catalog_sql}")
@@ -47,7 +60,11 @@ add_library(reader_catalog STATIC catalog.c)
 target_include_directories(reader_catalog PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:include/exreader-product>
   PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(reader_catalog PRIVATE reader_catalog_sqlite Threads::Threads)
+if(EXR_USE_SHARED_SQLITE_PROVIDER)
+  target_link_libraries(reader_catalog PUBLIC reader_catalog_sqlite PRIVATE Threads::Threads)
+else()
+  target_link_libraries(reader_catalog PRIVATE reader_catalog_sqlite Threads::Threads)
+endif()
 if(MSVC)
   target_compile_options(reader_catalog PRIVATE /W4 /WX)
 else()
@@ -55,7 +72,7 @@ else()
 endif()
 include(CMakePackageConfigHelpers)
 install(TARGETS reader_catalog reader_catalog_sqlite EXPORT EXReaderProductCatalogTargets ARCHIVE DESTINATION lib)
-install(FILES catalog.h "${reader_catalog_sqlite_source_SOURCE_DIR}/sqlite3.h"
+install(FILES catalog.h "${reader_catalog_sqlite_header}"
   DESTINATION include/exreader-product)
 install(FILES ../001_catalog.sql ../002_originals.sql ../003_original_staging.sql ../../../../licenses/sqlite-public-domain.txt
   DESTINATION share/exreader-product)

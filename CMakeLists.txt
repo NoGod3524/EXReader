@@ -34,6 +34,7 @@ option(EXR_ENABLE_IMAGE_WEBP "Enable WebP still/animation decoding (libwebp)" ON
 option(EXR_ENABLE_IMAGE_TIFF "Enable TIFF multi-page decoding (libtiff)" ON)
 option(EXR_ENABLE_IMAGE_AVIF "Enable AVIF decoding (libavif + libaom)" ON)
 option(EXR_BUILD_SHARED_COMPAT "Build the legacy aggregate shared library" ON)
+option(EXR_USE_SHARED_SQLITE_PROVIDER "Use the installed public SQLite provider in SDK and product" OFF)
 if(EXR_ENABLE_PDF_EDIT AND NOT EXR_ENABLE_PDF)
   message(FATAL_ERROR "PDF editing requires EXR_ENABLE_PDF=ON")
 endif()

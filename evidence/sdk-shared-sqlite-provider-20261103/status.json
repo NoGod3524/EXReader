@@ -1,0 +1,85 @@
+{
+  "work_package": "SDK shared SQLite core contract",
+  "f07_attribution": false,
+  "empirical_runtime_regression_observed": false,
+  "trigger": "User-confirmed SDK core contract; existing dual definitions are static facts, potential runtime faults remain hypotheses.",
+  "sdk_base": "95100501eeef9c6325be8b3882aa400c99cf000f",
+  "sdk_version": "3.41.0",
+  "candidate_branch": "codex/sdk-shared-sqlite-provider-20261103",
+  "replayed": true,
+  "prior_ec11_branch": "codex/f07-shared-sqlite-provider-ec11-20261103",
+  "history_left_right": [
+    97,
+    239
+  ],
+  "catalog_state_changed": false,
+  "catalog_head_blob": "a651be85af940dfa35d633e44d39cdda5e63e4b5",
+  "local_only": true,
+  "acceptance_assessed": false,
+  "ci_started": false,
+  "committed": false,
+  "required_notice": "两项仍待 CI",
+  "pending_ci_tests": [
+    "product-originals",
+    "native-product-catalog"
+  ],
+  "source_file_sha256": {
+    "CMakeLists.txt": "8bbb9e8a5ff39387f2cc1137996cad49afb9ceafb1234672e065ae9a2af92468",
+    "apps/reader/store/native/CMakeLists.txt": "8d866e79afcb13d8d3b420fe5eff8491195633163b42760a2442dac5f4ea11b6",
+    "apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in": "a9b7e287ffcf0a1aa1ad3b8f76c6b2159c102db08c8ccad78fc39e7489990677",
+    "cmake/EXReaderConfig.cmake.in": "e01fc0e39c553187b49d9db53bad888be5e389da143b4a598afa4a5c4f569138",
+    "cmake/deps.cmake": "b5f1bddc7821951529d09731d7500cf526acf45a44f7a6b0760f90351c26bfc1",
+    "cmake/install_dependencies.cmake": "b7b71384d0e49ac86af379b5c93cdf4a85ba0032bb3d6322bdb56a1c375b8c74",
+    "tools/apple_swift.py": "02cd9a4dbc222dd932e51082154544134315c7e8c35f0cc755cad10459cb704a",
+    "tools/build_apple_host.py": "c61c6615a010d083cf366d72971035dff7c82e85eb25e92ef42cb631ff449f1a",
+    "tools/build_apple_product.py": "d6ec506adbc9ea56d90a24740af625a48bd631b1c2e1b774308a8b37bdca00b7",
+    "tools/check_apple_product.py": "39a7ead259eeadbe852a25003da586e01c7f258fe2ff3ab94060a95212962e80",
+    ".github/workflows/sdk-shared-sqlite-contract.yml": "b3fe648b34d42715644301de48a2c2fb3b7703cffc3faef41ef2b0c3fe682915",
+    "extras/sqlite-provider/CMakeLists.txt": "e75bda0aac7a36903345ee7f058aa2377231ee41c9793575301eab83c0b4060e",
+    "extras/sqlite-provider/EXReaderSQLiteProviderConfig.cmake.in": "b7aa2b91ea912eb2a52b407ff2ce84792cd7ceb16fb89639cb3496690a7299e8",
+    "extras/sqlite-provider/apple-negative/CMakeLists.txt": "e17fe899fd84d4ef975e6366b521e569a1fc80d593e807dd644b9204b5cbee68",
+    "extras/sqlite-provider/apple-negative/check.py": "9e1e275abb3c3e6e9e6cfc17874a3e67c67d65f6151b9294b34ca7591ad97198",
+    "extras/sqlite-provider/apple-negative/main.c": "c49758ba5363b51b729c15bba0f9f894d75d0e5850303a49389f5c128ab6f236",
+    "extras/sqlite-provider/integration/CMakeLists.txt": "6b168e9cb00ab5d21eac5243fae335ad88c806ee7f790417e56795af2b9d206f",
+    "extras/sqlite-provider/integration/main.c": "089329146ff0e78696fb3ad1d39bea0ec20bb5f3a2a6ef84af40e6618833105a",
+    "extras/sqlite-provider/test_provider.c": "c8a7e692d7ca2730459d20db910e55b53fd876d25b13facdc7144f6fcaeef3af"
+  },
+  "evidence": {
+    "symbol_ownership": "windows-local.json",
+    "raw_stage_scan": "stage-sqlite-scan.txt",
+    "fts5_tests": {
+      "sqlite-provider-check": {
+        "passed": 1,
+        "total": 1
+      },
+      "shared-sqlite-sdk-product": {
+        "passed": 1,
+        "total": 1
+      }
+    },
+    "apple_structural_controls": {
+      "positive": 1,
+      "negative": 6,
+      "log": "apple-checker-local.log"
+    },
+    "apple_real_embedded_controls": "prepared, not executed; CI required"
+  },
+  "validation": {
+    "python_entrypoints_ast": "passed",
+    "git_diff_check": "passed",
+    "catalog_src_include_bindings_version_unchanged": true,
+    "source_patch_reverse_check": "passed"
+  },
+  "source_review_patch_sha256": "8a73ad858d3c9025bfa4423108c7db922d80d2b48340ec1f0840e6bf2215d1c8",
+  "ci_proposal": {
+    "workflow": ".github/workflows/sdk-shared-sqlite-contract.yml",
+    "trigger": "Restricted first push to the reviewed candidate branch; only this workflow matches current paths",
+    "jobs": 1,
+    "runner": "macos-14",
+    "timeout_minutes": 20,
+    "run_count": 1,
+    "status": "prepared; commit/push/CI approval pending"
+  },
+  "source_hash_scope": "Local pre-commit Windows working-tree bytes; CI candidate is bound separately by its immutable commit SHA.",
+  "evidence_bytes_preserved": "Scoped .gitattributes disables newline normalization for raw evidence and recorded hashes."
+}

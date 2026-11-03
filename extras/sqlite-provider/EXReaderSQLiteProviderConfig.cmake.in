@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+set(EXReaderSQLiteProvider_ID "@EXReaderSQLiteProvider_ID@")
+include("${CMAKE_CURRENT_LIST_DIR}/EXReaderSQLiteProviderTargets.cmake")
+get_target_property(_exreader_sqlite_type EXReaderSQLiteProvider::sqlite3 TYPE)
+if(NOT _exreader_sqlite_type STREQUAL "SHARED_LIBRARY")
+  message(FATAL_ERROR "EXReaderSQLiteProvider must be a shared implementation")
+endif()
+check_required_components(EXReaderSQLiteProvider)

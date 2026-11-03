@@ -6,6 +6,31 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
+
+
+def validate_shared(images, provider_id, sdk_id):
+    """Validate the application-controlled main/SDK/provider image closure."""
+    if not __debug__:
+        raise RuntimeError('Shared-provider evidence checks require Python assertions enabled')
+    assert len(images) == 3 and set(images) == {'main', 'sdk', 'provider'}
+    assert provider_id != sdk_id and provider_id.startswith('@rpath/')
+    for role, image in images.items():
+        dependencies = re.findall(r'(?m)^\s+(\S+)\s+\(', image['dependencies'])
+        assert not re.search(r'libsqlite3(?:\.|\s)', image['dependencies']), 'system SQLite linked directly'
+        definitions = re.findall(r'(?m)^.*\b([A-Za-z?])\s+(_sqlite3_\w+)\s*$', image['symbols'])
+        defined = {name for kind, name in definitions if kind not in ('U', 'w', 'v')}
+        if role == 'provider':
+            assert {'_sqlite3_open_v2', '_sqlite3_close', '_sqlite3_prepare_v2'}.issubset(defined), 'incomplete public provider'
+        else:
+            assert not defined, role + ' embeds a second SQLite implementation'
+            refs = {name for kind, name in definitions if kind == 'U'}
+            assert refs, role + ' has no public SQLite reference'
+            assert dependencies.count(provider_id) == 1, role + ' does not bind the unique provider'
+        for dependency in re.findall(r'(?m)^\s+(@(?:rpath|loader_path|executable_path)/\S+)\s+\(', image['dependencies']):
+            assert dependency in (provider_id, sdk_id), 'unassessed application image: ' + dependency
+    assert re.findall(r'(?m)^\s+(\S+)\s+\(', images['main']['dependencies']).count(sdk_id) == 1, 'dynamic SDK missing or duplicated'
+    return provider_id
 
 
 def validate(dependencies, symbols, link_map):
@@ -24,14 +49,28 @@ def validate(dependencies, symbols, link_map):
     return providers[0]
 
 
-def inspect(binary, link_map, selector_bytes_candidate=False):
+def inspect(binary, link_map, selector_bytes_candidate=False, shared_provider=None, shared_sdk=None):
     dependencies = subprocess.check_output(['otool', '-L', str(binary)], text=True)
     symbols = subprocess.check_output(['nm', '-g', str(binary)], text=True)
     mapping = Path(link_map).read_text(encoding='utf-8', errors='surrogateescape')
     Path(str(link_map) + '.symbols.txt').write_text(symbols)
     Path(str(link_map) + '.dependencies.txt').write_text(dependencies)
+    shared_images = None
+    if shared_provider is not None:
+        assert shared_sdk is not None, 'shared profile requires the actual SDK image'
+        assert not re.search(r'libexr_(?:library|core)\.a', mapping), 'second static SDK provider'
+        assert 'libreader_reading_state.a' not in mapping, 'host must use its dynamic SDK resolver'
+        shared_images = {'main': {'dependencies': dependencies,
+            'symbols': subprocess.check_output(['nm', str(binary)], text=True)}}
+        for role, image in [('sdk', shared_sdk), ('provider', shared_provider)]:
+            shared_images[role] = {
+                'sha256': hashlib.sha256(Path(image).read_bytes()).hexdigest(),
+                'dependencies': subprocess.check_output(['otool', '-L', str(image)], text=True),
+                'symbols': subprocess.check_output(['nm', str(image)], text=True)}
+        provider_id = subprocess.check_output(['otool', '-D', str(shared_provider)], text=True).splitlines()[1].strip()
+        sdk_id = subprocess.check_output(['otool', '-D', str(shared_sdk)], text=True).splitlines()[1].strip()
     try:
-        provider = validate(dependencies, symbols, mapping)
+        provider = validate_shared(shared_images, provider_id, sdk_id) if shared_images else validate(dependencies, symbols, mapping)
     except AssertionError:
         print(json.dumps({'binary': str(binary),
                           'sqlite_open_symbols': [line for line in symbols.splitlines() if 'sqlite3_open' in line],
@@ -81,7 +120,7 @@ def inspect(binary, link_map, selector_bytes_candidate=False):
             assert len(definitions) == len(providers) == 1, 'missing/duplicate actual raw provider: ' + symbol
     wrong_owner = re.sub(r'(?m)^(0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s+\[\s*)\d+(\]\s+_sqlite3_open_v2\s*)$',
                          r'\g<1>999999\2', mapping)
-    cases = [('system_sqlite', dependencies + '\n/usr/lib/libsqlite3.dylib', symbols, mapping),
+    cases = [] if shared_images else [('system_sqlite', dependencies + '\n/usr/lib/libsqlite3.dylib', symbols, mapping),
              ('missing_symbol', dependencies, '', mapping),
              ('duplicate_symbol', dependencies, symbols + '\n0 T _sqlite3_open_v2\n', mapping),
              ('duplicate_provider', dependencies, symbols, mapping + '\n' + provider),
@@ -95,7 +134,25 @@ def inspect(binary, link_map, selector_bytes_candidate=False):
             rejected.append(name)
         else:
             raise AssertionError('accepted altered provider evidence: ' + name)
+    if shared_images:
+        import copy
+        for name, role, field, added in [
+            ('duplicate_main_sqlite', 'main', 'symbols', '\n0 T _sqlite3_open_v2\n'),
+            ('duplicate_sdk_sqlite', 'sdk', 'symbols', '\n0 T _sqlite3_open_v2\n'),
+            ('system_sqlite', 'main', 'dependencies', '\n /usr/lib/libsqlite3.dylib (compatibility version 1.0.0)\n'),
+            ('unassessed_image', 'sdk', 'dependencies', '\n @rpath/unknown.dylib (compatibility version 1.0.0)\n')]:
+            altered = copy.deepcopy(shared_images)
+            altered[role][field] += added
+            try:
+                validate_shared(altered, provider_id, sdk_id)
+            except AssertionError:
+                rejected.append(name)
+            else:
+                raise AssertionError('accepted altered shared-provider evidence: ' + name)
     return {'accepted': True, 'binary_sha256': hashlib.sha256(Path(binary).read_bytes()).hexdigest(),
+            'sqlite_provider_mode': 'shared' if shared_images else 'legacy',
+            'runtime_binding_assessed': False,
+            'shared_images': shared_images,
             'selector_bytes_candidate': selector_bytes_candidate,
             'sqlite_provider': provider, 'system_sqlite_fallback': False,
             'static_sdk_linked': False, 'reading_resolver_linked': False,
@@ -107,6 +164,9 @@ def inspect(binary, link_map, selector_bytes_candidate=False):
 
 
 def main():
+    if sys.argv[1:] == ['--self-test-shared']:
+        self_test_shared()
+        return
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--binary', type=Path, required=True)
     parser.add_argument('--map', type=Path, required=True)
@@ -115,6 +175,36 @@ def main():
     result = inspect(args.binary, args.map)
     args.output.write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps({key: value for key, value in result.items() if key != 'dependencies'}))
+
+
+def self_test_shared():
+    import copy
+    provider = '@rpath/libreader_sqlite3.1.dylib'
+    sdk = '@rpath/libexreader.1.dylib'
+    def dependency(name):
+        return '\t' + name + ' (compatibility version 1.0.0, current version 1.0.0)\n'
+    images = {
+        'main': {'dependencies': dependency(sdk) + dependency(provider), 'symbols': ' U _sqlite3_open_v2\n'},
+        'sdk': {'dependencies': dependency(sdk) + dependency(provider), 'symbols': ' U _sqlite3_close\n'},
+        'provider': {'dependencies': dependency(provider),
+                     'symbols': '0 T _sqlite3_open_v2\n1 T _sqlite3_close\n2 T _sqlite3_prepare_v2\n'}}
+    assert validate_shared(images, provider, sdk) == provider
+    for name, role, field, value in [
+        ('main_embedded', 'main', 'symbols', '0 T _sqlite3_open_v2\n'),
+        ('sdk_embedded', 'sdk', 'symbols', '0 T _sqlite3_close\n'),
+        ('missing_provider', 'sdk', 'dependencies', dependency(sdk)),
+        ('missing_sdk', 'main', 'dependencies', dependency(provider)),
+        ('wrong_provider', 'main', 'dependencies', dependency(sdk) + dependency('@rpath/other.dylib')),
+        ('empty_provider', 'provider', 'symbols', '')]:
+        altered = copy.deepcopy(images)
+        altered[role][field] = value
+        try:
+            validate_shared(altered, provider, sdk)
+        except AssertionError as exc:
+            print(name + ': rejected: ' + str(exc))
+        else:
+            raise AssertionError('accepted shared-provider negative: ' + name)
+    print('Shared Apple ownership positive/negative checks passed')
 
 
 if __name__ == '__main__':

@@ -1,0 +1,2 @@
+# Evidence logs are deliverables, overriding the repository's build-log rule.
+!*.log
