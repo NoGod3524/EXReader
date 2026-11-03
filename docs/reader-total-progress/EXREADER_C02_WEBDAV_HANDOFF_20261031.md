@@ -2223,3 +2223,51 @@ Root /tmp/f07-installed-binding-20261103.
 The independent record write accessed only its new evidence file and did not re-read or modify these candidate files. This document likewise uses the supplied handoff, not a replay of refused reads.
 
 This continuation adds no new CI round, product/SDK/UI authority, artifact exception or score. Source/log fingerprints above retain their original provenance; newly formatted prose is not asserted to have the original evidence-file hash.
+
+
+## Hourly continuation snapshot: 2026-11-03 08:22 EST scheduled
+
+Actual save time: 2026-11-03T13:21:49.329747+00:00 / 2026-11-03T08:21:49.329747-05:00. The complete prior document remains unchanged. This is a continuation backup, not project completion or a stop instruction. Formal catalog stays 98 verified, 1 partial and 9 pending out of108.
+
+### F03 and completed F05 Android scopes remain unchanged
+F03 R8 source054df/run41588932707 retains its independently verified Android acceptance; the six-target F03 item remains pending, old_apk_upgrade_accepted=false and complete_product=false.
+F05 bridge run41604711611/source0e547 and conflict/history-boundary run41611865502/sourcef162b retain their bounded Android acceptance. Full F05/UI/transport/formal acceptance remain false. No new Android run or formal score was added this hour.
+
+### GTK cleanup repair: published and tested once, but repair path was not reached
+The preceding diagnostic run41633749476/sourcecd4c established test-variable shadowing: a fixture-key Path was overwritten by an entity-key string before unlink. Its selected evidence showed15 valid Receive traces and5 native cases passed plus deletion detail partial, but original producerFAIL remained. That diagnostic did not grant full native acceptance.
+
+The user separately approved a two-file GTK test/contract correction, preserving the cleanup failure guard, all48 regressions and all scenarios, one commit/push and one new190-runner-minute round. Actual and complete-tree/trigger reviews passed. Source4838d70103b4945e5d599796fcfcf35caeca1fc0, parent834aac8, was published on the original GTK branch. Only gtk.py and contract.json changed: entity_key was separated from the fixture Path and actual unlink was followed by exists/is_symlink residue rejection. The old catch/report/failure guard and workflow remained.
+
+An execution-environment cooldown prevented the first object command before execution until12:30:13UTC. After that time the writer verified no attempt/object state existed before executing the original action once. No alternate route or premature retry was used.
+Unique run41636861038/A1 then completed FAILURE:
+https://github.com/NoGod3524/EXReader/actions/runs/41636861038
+Build/prepare/navigation/folder/GUI stages succeeded. The failure occurred earlier than the cleanup repair, during retained48 preparation: check_account_ui.py275 was inside the initial52-book import loop, before its first recorded check at286. check_linux_host.py103's sequence>before wait had returned; its subsequent30-second global title search never returned code1, and line111 raised Native import dialog did not close. This does not establish that no import happened or that focus was the cause.
+The native6 stage explicitly recorded prior-failed-stage/not_executed. The corrected key-removal logic was not exercised and therefore remains runtime-unverified. Collection was false with19 missing entries (including patterns), errors empty and51003085 copied bytes; the normal audit rejected producer failure before ZIP authentication.
+
+Independent review verified original logs and exact artifact identities:
+Producer log232964B,SHA256df314539432f85398688829ec6ca42fd82c36ec3d79802416895243e6a9ac40f.
+Audit log130052B,SHA256c77d17ee4d6dbd0df1aee3d983067dc9c906db84042f0836ee731233f0b14e42.
+Producer artifact13231513326:29536671B,SHA2561d278dd7db7da3b232c1214004739028adf8f0cca8ab9d9c8f4abfa802566645.
+Audit artifact13231962383:16968B,SHA256866fd0687667d173669c4054e963d888a3826186cdd53b0a2d1595fc1ed669ec.
+
+Fixed-source inspection found that the initial import loop did not preserve the failing index/source or window/focus snapshot, and its finally did not add them. The old collection allowlist did not retain the primary state/application logs. Another blind extraction job could not recover data that was never saved, so none was started for this failure.
+
+### New specifically approved observation-only adapter: actual run underway
+The user explicitly approved one new diagnostic file and two versioned acceptance-file modifications, one commit/push and one complete run up to190runner-minutes. Original test source, predicates and deadlines must remain; recording can slightly affect timing and does not guarantee reproduction.
+Parent4838; original branch dot/f05-gtk-native-recovery-20261103.
+New retained_diagnostics.py, modified driver.py and contract.json under tests/product/f05_gtk_native_recovery_20261103.
+
+Independent review required bounded output collection and a shared five-second deadline for additional failure-only queries, numeric window/PID fields, and mandatory per-call evidence rather than accepting empty observations. Those were corrected in the same approved scope before publication. The wrapper uses the unique original module/main, invokes each original method once with unchanged parameters including DEVNULL, preserves return values and original exceptions, and restores its hooks. Normal recording observes existing results; additional queries occur only after failure and are labelled as later observations. No extra unbounded old_read was added. Output is limited; over-limit or incomplete cleanup is explicit. Audit requires the actual original search/selection, sequence and final close-return evidence for each successful call, plus source identity and at least52 imports. Original48/native6/15Receive traces/8controls/deadlines and partial semantics remain.
+
+Actual sourcec4d67540a0e17a86bd42ad9323cd269ce8959326, parent4838, passed independent full-tree review as exactly1A2M with all other leaves and workflows unchanged. It was pushed once and dispatched once.
+Unique run41642819421/A1:
+https://github.com/NoGod3524/EXReader/actions/runs/41642819421
+At13:21UTC, the fixed run's admission had succeeded; producer125940466725 had completed build/prepare/navigation/folder and was running the originalGUI stage. Retained48 and native6 had not been reached. Exact source/branch/workflow_dispatch identity was verified and the run remained in progress. No final result is claimed. The authorized budget remains5+170+15=190; no automatic rerun is allowed.
+
+### Other lanes and actual responsibility states
+F07's complete owner-supplied semantic Apple provenance, three host hashes, fixed-source chain and sentinel/host-only/open_v2 limitations were durably preserved in the preceding b8e2a5 snapshot. That record is not the original9309-byte JSON, not new F07 execution and not a full provider-closure proof. Refused F07 operations remain stopped, and candidate files are retained without publication or newCI.
+F08 has no new native budget. Separate GTK status/UI gaps are not satisfied by F05 recovery testing. No verified Opus receipt or new UI integration SHA is claimed.
+
+Six responsibility slots: test-result monitoring1(F05 current run), documentation/coordination1, waiting/blocked4(F03 six-target gap,F07 blocked evidence/publication,F08 no native budget,F09 waiting for this run's actual result). Active implementation0 and active independent review0 at this snapshot. Finished candidate reviews are not counted as ongoing implementation.
+
+No storage deletion/resize or new artifact exception occurred. All failed rounds, partials and source boundaries are preserved. This document authorizes no additional implementation, external communication, CI round or score.
