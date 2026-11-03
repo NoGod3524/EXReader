@@ -1,0 +1,96 @@
+{
+  "sources": {
+    "9854061b": "9854061be331fe603a1822d9b2b36ee357154927",
+    "95100501": "95100501eeef9c6325be8b3882aa400c99cf000f",
+    "8ca964fc": "8ca964fc4adc572cf2da303f5d88100a5e844ccb",
+    "769e5095": "769e509566204f53c0020ddbdb94d568bb571efe"
+  },
+  "protected_objects": {
+    "src": {
+      "9854061b": "adc09002584fc20a99fd170e8148dbd870a27f52",
+      "95100501": "e6bb1079cd50675a21ffe19cd99a6c08590eb3cf",
+      "8ca964fc": "adc09002584fc20a99fd170e8148dbd870a27f52",
+      "769e5095": "e6bb1079cd50675a21ffe19cd99a6c08590eb3cf"
+    },
+    "include": {
+      "9854061b": "86fb444dbf1664771d997daeff772bb465d617a7",
+      "95100501": "775b4205dc86452d20e5744c73a3f1ae0a61d877",
+      "8ca964fc": "86fb444dbf1664771d997daeff772bb465d617a7",
+      "769e5095": "775b4205dc86452d20e5744c73a3f1ae0a61d877"
+    },
+    "cmake": {
+      "9854061b": "1194898d9b9545b1783b293ebdc7b3eecd957aba",
+      "95100501": "9ec9a577bc6b37c5527e12cbf5d600d5f199b483",
+      "8ca964fc": "1194898d9b9545b1783b293ebdc7b3eecd957aba",
+      "769e5095": "9ec9a577bc6b37c5527e12cbf5d600d5f199b483"
+    },
+    "CMakeLists.txt": {
+      "9854061b": "5d0083a0d7c05edae28ca43ddbab8f1c399ef34d",
+      "95100501": "15de1378caa992782fe18bf296cdaa638e607012",
+      "8ca964fc": "5d0083a0d7c05edae28ca43ddbab8f1c399ef34d",
+      "769e5095": "15de1378caa992782fe18bf296cdaa638e607012"
+    },
+    "tests/fixtures": {
+      "9854061b": "2a1fd5e58347f6ed8692996ba855c703f3c2da46",
+      "95100501": "2a1fd5e58347f6ed8692996ba855c703f3c2da46",
+      "8ca964fc": "2a1fd5e58347f6ed8692996ba855c703f3c2da46",
+      "769e5095": "2a1fd5e58347f6ed8692996ba855c703f3c2da46"
+    },
+    ".github/workflows/native.yml": {
+      "9854061b": "2df429e50fa80532026d0de46ee7fc5470b5274c",
+      "95100501": "2df429e50fa80532026d0de46ee7fc5470b5274c",
+      "8ca964fc": "2df429e50fa80532026d0de46ee7fc5470b5274c",
+      "769e5095": "2df429e50fa80532026d0de46ee7fc5470b5274c"
+    },
+    ".github/workflows/reliability.yml": {
+      "9854061b": "a27c1d1ca5a7aae1d590ceed356fdd5cd81abdb9",
+      "95100501": "a27c1d1ca5a7aae1d590ceed356fdd5cd81abdb9",
+      "8ca964fc": "a27c1d1ca5a7aae1d590ceed356fdd5cd81abdb9",
+      "769e5095": "a27c1d1ca5a7aae1d590ceed356fdd5cd81abdb9"
+    },
+    "bindings": {
+      "9854061b": "54c12f70a1a63cae6574984a388b66bf6248c38e",
+      "95100501": "54c12f70a1a63cae6574984a388b66bf6248c38e",
+      "8ca964fc": "54c12f70a1a63cae6574984a388b66bf6248c38e",
+      "769e5095": "54c12f70a1a63cae6574984a388b66bf6248c38e"
+    }
+  },
+  "relevant_file_objects": {
+    "CMakeLists.txt": {
+      "95100501": "15de1378caa992782fe18bf296cdaa638e607012",
+      "8ca964fc": "5d0083a0d7c05edae28ca43ddbab8f1c399ef34d",
+      "769e5095": "15de1378caa992782fe18bf296cdaa638e607012",
+      "a212dd59": "15de1378caa992782fe18bf296cdaa638e607012"
+    },
+    "include/exr/base.h": {
+      "95100501": "6426b81ae2c3f0357727395c42e60156eec20538",
+      "8ca964fc": "0823fe41d560aa9e8e85146fd403f4704650cc33",
+      "769e5095": "6426b81ae2c3f0357727395c42e60156eec20538",
+      "a212dd59": "6426b81ae2c3f0357727395c42e60156eec20538"
+    },
+    "examples/CMakeLists.txt": {
+      "95100501": "4e6810c73ca3dd90a430bc6fbcc67a1e0ea28819",
+      "8ca964fc": "bdfae94d9e0967ec9a14b5f98df2f1a6dc3c0422",
+      "769e5095": "4e6810c73ca3dd90a430bc6fbcc67a1e0ea28819",
+      "a212dd59": "4e6810c73ca3dd90a430bc6fbcc67a1e0ea28819"
+    },
+    "tools/build_apple_host.py": {
+      "95100501": "18b39351caf9d494ec55871873c5eb657518ada4",
+      "8ca964fc": "ae48184089a9c4cfc79acca8c3091dc57a5a4ff2",
+      "769e5095": "18b39351caf9d494ec55871873c5eb657518ada4",
+      "a212dd59": "18b39351caf9d494ec55871873c5eb657518ada4"
+    },
+    "tools/build_windows_host.py": {
+      "95100501": "8b039bb1eb9d3e22197152dd06b96ed741ee11ef",
+      "8ca964fc": "3a9ecc85a56b4c345393eb88331e57ec939baccd",
+      "769e5095": "8b039bb1eb9d3e22197152dd06b96ed741ee11ef",
+      "a212dd59": "8b039bb1eb9d3e22197152dd06b96ed741ee11ef"
+    },
+    ".github/workflows/native.yml": {
+      "95100501": "2df429e50fa80532026d0de46ee7fc5470b5274c",
+      "8ca964fc": "2df429e50fa80532026d0de46ee7fc5470b5274c",
+      "769e5095": "2df429e50fa80532026d0de46ee7fc5470b5274c",
+      "a212dd59": "2df429e50fa80532026d0de46ee7fc5470b5274c"
+    }
+  }
+}

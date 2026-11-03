@@ -1,0 +1,109 @@
+{
+  "run_id": 41691589828,
+  "attempt": 1,
+  "source_sha": "769e509566204f53c0020ddbdb94d568bb571efe",
+  "parents": [
+    "95100501eeef9c6325be8b3882aa400c99cf000f",
+    "8ca964fc4adc572cf2da303f5d88100a5e844ccb"
+  ],
+  "first_errors": [
+    {
+      "job_id": 126111282946,
+      "job_name": "performance / reading-performance",
+      "failed_step": "Measure fresh processes, selected reference pixels and evidence refusals",
+      "first_error": "{\"accepted\": false, \"measurement_valid\": false, \"source_sha\": \"769e509566204f53c0020ddbdb94d568bb571efe\", \"run_id\": \"41691589828\", \"run_attempt\": \"1\", \"problems\": [\"SDK protected tree changed\"], \"results\": null}",
+      "log_timestamp": "2026-11-03T18:14:57.5424723Z",
+      "classification": "identity assertion",
+      "origin": "95100501 side; retained in 769e5095"
+    },
+    {
+      "job_id": 126111283266,
+      "job_name": "native / apple-mobile",
+      "failed_step": "Build and run the iPhone and iPad reference host",
+      "first_error": "build_apple_host.py: error: Installed SDK version differs from the explicitly selected version",
+      "log_timestamp": "2026-11-03T18:16:44.0503090Z",
+      "classification": "identity assertion",
+      "origin": "95100501 side; retained in 769e5095"
+    },
+    {
+      "job_id": 126111283534,
+      "job_name": "native / desktop (macos-15)",
+      "failed_step": "Build and run Swift host against installed SDK",
+      "first_error": "build_apple_host.py: error: Installed SDK version differs from the explicitly selected version",
+      "log_timestamp": "2026-11-03T18:19:54.1772220Z",
+      "classification": "identity assertion",
+      "origin": "95100501 side; retained in 769e5095"
+    },
+    {
+      "job_id": 126111283484,
+      "job_name": "native / desktop (windows-latest)",
+      "failed_step": "Package and check the Windows reference reader",
+      "first_error": "FileNotFoundError: [Errno 2] No such file or directory: 'D:\\\\a\\\\EXReader\\\\EXReader\\\\build\\\\sdk-example\\\\Release\\\\exreader-reader-example.exe'",
+      "log_timestamp": "2026-11-03T18:24:46.7924686Z",
+      "classification": "unconfirmed in requested three categories; packaging input missing",
+      "origin": "95100501 side; retained in 769e5095"
+    }
+  ],
+  "historical_runs": [
+    {
+      "run_id": 40081814926,
+      "jobs": [
+        {
+          "job_id": 120836752664,
+          "name": "apple-mobile",
+          "conclusion": "success"
+        },
+        {
+          "job_id": 120836752691,
+          "name": "desktop (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "job_id": 120836752789,
+          "name": "desktop (macos-15)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "run_id": 41178177640,
+      "jobs": [
+        {
+          "job_id": 124469965187,
+          "name": "apple-mobile",
+          "conclusion": "success"
+        },
+        {
+          "job_id": 124469965218,
+          "name": "desktop (macos-15)",
+          "conclusion": "success"
+        },
+        {
+          "job_id": 124469965224,
+          "name": "desktop (windows-latest)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "run_id": 41686485577,
+      "jobs": [
+        {
+          "job_id": 126093483196,
+          "name": "desktop (windows-latest)",
+          "conclusion": "failure"
+        },
+        {
+          "job_id": 126093483512,
+          "name": "apple-mobile",
+          "conclusion": "failure"
+        },
+        {
+          "job_id": 126093483552,
+          "name": "desktop (macos-15)",
+          "conclusion": "failure"
+        }
+      ]
+    }
+  ]
+}
