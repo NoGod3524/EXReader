@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import sqlite3
 import subprocess
+import shutil
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
@@ -105,6 +106,18 @@ def write_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     require(not path.exists(), "refuse overwrite: " + str(path))
     path.write_bytes(canonical(value) + b"\n")
+
+def retain_database(database, output, expected):
+    """Copy a stopped application's real database and WAL, then verify its view."""
+    database, output = Path(database), Path(output)
+    output.mkdir(parents=True, exist_ok=False)
+    copy = output / database.name
+    for suffix in ("", "-wal", "-shm"):
+        source = Path(str(database) + suffix)
+        if source.exists():
+            shutil.copyfile(source, Path(str(copy) + suffix))
+    require(read_snapshot(copy) == expected, "retained product DB differs from native receipt")
+    return copy
 def snapshot_receipt(host, database, program, output, kind):
     require(host in SCOPE["hosts"], "unknown host")
     value = {**identity(), "host": host, "kind": kind, "sdk_version": SCOPE["sdk_version"],

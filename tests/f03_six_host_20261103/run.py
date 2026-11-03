@@ -26,6 +26,8 @@ EXACT_PATHS = {
     "tests/dot_f03_same_source_20261031/AppleOrganizationInteropTests.swift",
     "tests/dot_f03_same_source_20261031/windows.py", "tests/dot_f03_same_source_20261031/gtk.py",
     "tests/dot_f03_same_source_20261031/build.py",
+    "tests/dot_f03_same_source_20261031/identity.py",
+    "tests/dot_f03_production_acceptance_20261102/admission.py",
     ".github/workflows/f03-six-host-20261103.yml",
     "docs/reader-total-progress/F03_SIX_HOST_20261103.md",
 }
@@ -42,6 +44,8 @@ def require(value, message):
 
 def admission():
     require(os.environ.get("GITHUB_ACTIONS") == "true", "Native execution requires Actions")
+    require(os.environ.get("GITHUB_REF") == "refs/heads/codex/f03-six-host-20261103",
+            "integration requires its dedicated branch")
     source = git("rev-parse", "HEAD")
     require(source == os.environ["GITHUB_SHA"], "checkout/source mismatch")
     run("git", "merge-base", "--is-ancestor", BASE, source)
@@ -70,6 +74,68 @@ def legacy(script, args):
     setup()
     sys.argv = [str(LEGACY / (script + ".py")), *args]
     runpy.run_path(sys.argv[0], run_name="__main__")
+
+def android_baseline_admission(original):
+    stamp = admission()
+    c = original.configuration()
+    # The non-sync APK's complete original 66/owner/organization chain is
+    # retained independently from the synchronization profile. All its input
+    # production, tests, overlays, builders and gates remain baseline-identical.
+    run("git", "diff", "--exit-code", BASE, "HEAD", "--", "examples/android", "tools",
+        "tests/android_host", "tests/reader_android_host_import", "apps", "extras/opds",
+        "tests/dot_f03_production_acceptance_20261102/contract.json",
+        "tests/dot_f03_production_acceptance_20261102/androidTest",
+        "tests/dot_f03_production_acceptance_20261102/uiTest")
+    return {**stamp, "review_base": original.BASE, "ownership_head": original.CANONICAL,
+            "product_intake_head": original.INTAKE, "sdk_source": SDK, "sdk_version": "3.42.0",
+            "contract_sha256": original.digest((original.HERE / "contract.json").read_bytes()),
+            "source_admitted": True, "runtime_accepted": False,
+            "integration_admission": "six-host-20261103", "historical_owner_guard_reexecuted": False,
+            "picker_contract": original.picker_contract(),
+            "host_import_status_contract": original.host_import_status_contract(),
+            "owner_consumer_contract": original.owner_consumer_contract(),
+            "catalog_schema_contract": original.catalog_schema_contract(),
+            "test_dependency_blobs": c["test_dependency_blobs"],
+            "private_copy_capability": original.private_copy_contract()}
+
+def windows(receive):
+    identity = setup()
+    admission()
+    if receive:
+        for phase in PHASES:
+            author = ROOT / "build/f03-input/f03-author" / phase
+            legacy("windows", ["--mode", "receive", "--package", "build/c09/package/EXReader",
+                               "--previous", str(author / "wire/state.json"),
+                               "--expectations", str(author / "projection.json"),
+                               "--output", str(ROOT / "build/f03-receipts/windows" / phase)])
+        return
+    prefix = ";".join(str(ROOT / "build/c09" / name) for name in ("raw-stage", "product-stage", "sdk-stage"))
+    for source, output, flags in (
+        ("tests/reader_windows_raw3/metadata-consumer", "build/organization-consumer", ["-DRAW_METADATA=ON"]),
+        ("tests/windows_organization_projection/cloud", "build/cloud-readback", ["-DEXR_SDK_VERSION=3.42.0"]),
+        ("tests/reader_revisions/consumer", "build/revision-consumer", []),
+    ):
+        run("cmake", "-S", source, "-B", output, "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_PREFIX_PATH=" + prefix, *flags)
+        run("cmake", "--build", output, "--parallel", "4")
+    run(sys.executable, "tests/windows_organization_projection/check_ui.py")
+    report = json.loads((ROOT / "build/organization-ui/report.json").read_text())
+    identity.same_identity(report, admission())
+    require(report["accepted"] is True and not report["problems"], "original Windows organization rejected")
+
+def android_receive():
+    setup()
+    for phase in PHASES:
+        author = ROOT / "build/f03-input/f03-author" / phase
+        legacy("android", ["--mode", "receive", "--host-apk", "build/wave3/artifacts/app-debug.apk",
+                           "--owner-test-apk", "build/f03-android-sync/organization-test.apk",
+                           "--ui-apk", "build/wave3/artifacts/uitest-debug.apk",
+                           "--ui-test-apk", "build/wave3/artifacts/uitest-debug-androidTest.apk",
+                           "--wire", str(author / "wire/state.json"),
+                           "--tls-fixture", "build/wave3/network-fixture",
+                           "--expectations", str(author / "expected-groups.json"),
+                           "--projection-expectations", str(author / "projection.json"),
+                           "--output", str(ROOT / "build/f03-receipts/android" / phase)])
 
 def apple(platform, receive):
     identity = setup()
@@ -241,7 +307,8 @@ def android_retained():
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("action", choices=["admit", "legacy", "apple", "apple-receive", "android-build", "android-retained"])
+    p.add_argument("action", choices=["admit", "legacy", "apple", "apple-receive", "android-build", "android-retained",
+                                     "android-receive", "windows-retained", "windows-receive"])
     p.add_argument("args", nargs=argparse.REMAINDER)
     a = p.parse_args()
     if a.action == "admit":
@@ -252,6 +319,10 @@ def main():
         android_build()
     elif a.action == "android-retained":
         android_retained()
+    elif a.action == "android-receive":
+        android_receive()
+    elif a.action.startswith("windows-"):
+        windows(a.action == "windows-receive")
     else:
         apple(a.args[0], a.action == "apple-receive")
 

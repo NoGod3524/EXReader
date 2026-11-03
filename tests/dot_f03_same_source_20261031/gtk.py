@@ -10,7 +10,7 @@ from pathlib import Path
 import subprocess
 import sys
 from urllib.parse import urlsplit
-from identity import ROOT, identity, require, snapshot_receipt, write_json, read_snapshot, digest, SCOPE, canonical
+from identity import ROOT, identity, require, snapshot_receipt, write_json, read_snapshot, digest, SCOPE, canonical, retain_database
 
 def author(a, stamp):
     """Actual GTK UI authors the lifecycle; SQL is read-only and cannot manufacture a revision."""
@@ -236,6 +236,7 @@ def author(a, stamp):
                   not current.get("shelf_restoring"),timeout=60)
         require(read_snapshot(catalog)==projected,"author projection changed after real restart")
         host.close()
+        retain_database(catalog, a.output / "native-catalog", projected)
         write_json(a.output/"projection.json",{**stamp,"host":"gtk","sdk_version":SCOPE["sdk_version"],
             "program_sha256":digest(program),"native_sync_completed":True,"restart_verified":True,
             "snapshot":projected,"snapshot_sha256":hashlib.sha256(canonical(projected)).hexdigest(),

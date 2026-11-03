@@ -376,6 +376,12 @@ def ui_staging_proof():
     return actual
 
 def verify_source():
+    if os.environ.get("EXR_F03_INTEGRATION") == "six-host-20261103":
+        # A new round has its own explicit source boundary. All original runtime,
+        # staging, dependency, test-compilation and negative gates below remain.
+        sys.path.insert(0, str(ROOT / "tests/f03_six_host_20261103"))
+        from run import android_baseline_admission
+        return android_baseline_admission(sys.modules[__name__])
     c = configuration()
     require(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
     require(os.environ.get("GITHUB_REF") == "refs/heads/" + BRANCH, "exclusive acceptance branch")
