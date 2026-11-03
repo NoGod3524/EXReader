@@ -152,7 +152,7 @@ static void accounts_start_network(void) {
   reader_session_status code=reader_session_create(&config,&accounts.session);
 #endif
   reader_secret_free(authorization);g_free(product);g_free(work);g_free(originals);
-  if(code==READER_SESSION_OK) { accounts.generation++;code=reader_session_start(accounts.session); }
+  if(code==READER_SESSION_OK) { g_assert_nonnull(accounts.session); accounts.generation++;code=reader_session_start(accounts.session); }
   if(accounts.session) reader_session_observe(accounts.session,&accounts.view);
   accounts.phase=ACCOUNT_IDLE;
   if(code!=READER_SESSION_OK) accounts_notice("Sync could not start. Your saved library was kept");
