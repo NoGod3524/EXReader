@@ -1,0 +1,15 @@
+{
+  "run_id": 41707789690,
+  "job_id": 126167587852,
+  "job": "apple-mobile",
+  "source_sha": "8cfb2174cfc6e25e3227aa4418448e63f0bd383f",
+  "conclusion": "failure",
+  "failed_steps": [
+    "Build and run the iPhone and iPad reference host"
+  ],
+  "error": "Missing installed Apple product dependency",
+  "relative_dependency_path": "stage/iphonesimulator/include/exreader-product",
+  "cloud_workspace_prefix_omitted": true,
+  "url": "https://github.com/NoGod3524/EXReader/actions/runs/41707789690/job/126167587852",
+  "sdk_consistency_scope": "Failure is after the explicit installed SDK version comparison; no product dependency or native workflow change was made here."
+}
