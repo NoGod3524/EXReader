@@ -29,7 +29,13 @@ def steps(document):
         shell = job.get('defaults', {}).get('run', {}).get('shell', default)
         for index, step in enumerate(job.get('steps', [])):
             if 'run' in step:
-                result.append((job_id, index, step, step.get('shell', shell)))
+                effective = step.get('shell', shell)
+                runner = job.get('runs-on', '')
+                windows = isinstance(runner, str) and runner.lower().startswith('windows')
+                windows = windows or bool(re.search(r"runner\.os\s*==\s*['\"]Windows['\"]", step.get('if', ''), re.I))
+                if not effective and windows:
+                    effective = 'pwsh'  # Actions default on a known Windows runner.
+                result.append((job_id, index, step, effective))
     return result
 
 
