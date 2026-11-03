@@ -142,6 +142,8 @@ def main():
         assert guard.shell_problem('', 'python a.py\npython b.py')
         assert guard.shell_problem('', 'set -euo pipefail\npython a.py\npython b.py') is None
         assert guard.shell_problem('pwsh', 'python a.py')
+        windows = 'jobs:\n  probe:\n    runs-on: windows-latest\n    steps:\n      - run: python a.py\n'
+        assert any('PowerShell' in message for _, _, message in guard.issues('probe.yml', windows, 'failfast'))
         assert guard.shell_problem('powershell', "$ErrorActionPreference='Stop'\n$PSNativeCommandUseErrorActionPreference=$true\npython a.py") is None
         for masked in ('python a.py || true', 'python a.py; :'):
             fixture = 'jobs:\n  probe:\n    runs-on: ubuntu-22.04\n    steps:\n      - shell: bash\n        run: |\n          ' + masked + '\n'
