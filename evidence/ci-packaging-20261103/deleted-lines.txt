@@ -1,0 +1,16 @@
+Comparison base: 342780237eb013350bff20c21bc92c335422526a
+.github/workflows/native.yml:30:         shell: bash
+.github/workflows/native.yml:37:         shell: bash
+.github/workflows/native.yml:131:           python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf build/performance --runs 1 --max-pages 8 --paging
+.github/workflows/native.yml:155:           python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /System/Library/Fonts/Supplemental/Arial.ttf build/performance --runs 1 --max-pages 8 --paging
+.github/workflows/native.yml:157:         shell: bash
+.github/workflows/native.yml:162:           python tools/benchmark_pdf_blend.py "$runtime" tests/fixtures/pdf-blend build/performance/pdf --runs 1 --scale 1 --case nonisolated --case ap-nonisolated
+.github/workflows/native.yml:164:         shell: bash
+.github/workflows/native.yml:167:           python tools/benchmark_table_layout.py "$benchmark" stage/examples/fonts/primary.ttf build/table-performance --runs 1 --check-memory
+.github/workflows/native.yml:169:         shell: bash
+.github/workflows/native.yml:177:         shell: bash
+.github/workflows/native.yml:312:         shell: bash
+.github/workflows/native.yml:328:         shell: bash
+tools/run_benchmarks.py:208:     return 0 if summary["passed"] else 1
+
+Explanation: 12 deletions in native.yml are replacements by strict shell/advisory wrappers. The sole other deletion is tools/run_benchmarks.py:208: the return now reads measurement_valid, which holds the original summary["passed"] value before E3 sets report passed=false. This preserves measurement exit semantics and avoids treating advisory reporting as acceptance. No CMake or Windows packaging line is deleted.

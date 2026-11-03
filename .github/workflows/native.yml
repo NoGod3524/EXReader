@@ -9,7 +9,7 @@ on:
       scope:
         description: Run the full workflow or only P acceptance jobs
         type: choice
-        options: [full, p-hygiene, p-apple]
+        options: [full, p-hygiene, p-apple, p-windows]
         default: full
       fault:
         description: P acceptance only - mutate one temporary workflow copy
@@ -459,3 +459,33 @@ jobs:
           cmake --install build/p-sdk --prefix stage
           python3 tools/build_apple_product.py --sdk stage --target "$APPLE_TARGET" --build build/p-products
           PYTHONPATH=tools python3 -c 'from apple_swift import flags; print("PASS: installed Apple product includes and archives:", *flags("stage"), sep="\n")'
+  windows-packaging:
+    if: github.event_name == 'workflow_dispatch' && inputs.scope == 'p-windows'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash .github/scripts/ci.sh {0}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and install the Windows SDK including reader inputs
+        run: |
+          cmake -S . -B build/p-windows-sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/p-windows-sdk --config Release --parallel 4
+          cmake --install build/p-windows-sdk --config Release --prefix stage
+      - name: Build the actual reader against the installed SDK
+        run: |
+          cmake -S stage/examples -B build/p-windows-example -DEXR_SDK="$PWD/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/p-windows-example --config Release --target exreader-reader-example --parallel 4
+      - name: Package and run the Windows reference host
+        run: python tools/build_windows_host.py --sdk stage --binary build/p-windows-example/Release/exreader-reader-example.exe --output build/p-windows-host
+      - name: Reject a missing staged include and a missing executable
+        run: python tests/check_windows_package_inputs.py --sdk stage --binary build/p-windows-example/Release/exreader-reader-example.exe --package build/p-windows-host
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P-Windows-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/p-windows-host/
+            stage/apps/reader/desktop/windows_accessibility.inc
+          if-no-files-found: error
