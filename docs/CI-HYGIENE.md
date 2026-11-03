@@ -11,6 +11,8 @@ P 基于 V 已合入的 ledger/base-20261103（34278023），不修改 F07 provi
 
 ## Exact baseline, no directory waiver
 
+PR 取实际 base SHA 作 diff 基点；手动调度取 origin/ledger/base-20261103，不能永久固定 V 的旧提交。被固化的是 JSON 条目，不是一个永远忽略后续基线增长的旧 diff 基点。
+
 工具 tools/check_ci_hygiene.py 扫描所有 .github/workflows/*.yml / *.yaml。基线 tools/ci_hygiene_baseline.json 每条仅 file / line / pattern / line_sha256；pattern 是四种规则之一，哈希为该行去掉行结束符后的 UTF-8 SHA-256。全量扫描仍打印存量诊断。
 
 - 文件/行消失、行哈希改变、规则不再匹配或条目重复：错误。修好后必须删除对应基线条目。
