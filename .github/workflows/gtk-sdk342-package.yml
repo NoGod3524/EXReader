@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   retained:
-    if: ${{ github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' }}
+    if: ${{ github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/dot/f05-gtk-network-inspect-20261103' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 150
     steps:
@@ -93,7 +93,7 @@ jobs:
           if-no-files-found: error
   authenticate:
     needs: retained
-    if: ${{ always() && github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' }}
+    if: ${{ always() && github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/dot/f05-gtk-network-inspect-20261103' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     permissions:
@@ -189,4 +189,27 @@ jobs:
         with:
           name: f05-gtk-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f05-gtk-audit/
+          if-no-files-found: error
+
+  f05-network-inspection:
+    name: F05 GTK original network inspection
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dot/f05-gtk-network-inspect-20261103' && github.run_attempt == 1 }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Inspect five authenticated original evidence members
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/inspect_network.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f05-gtk-network-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f05-gtk-network-inspect/
           if-no-files-found: error
