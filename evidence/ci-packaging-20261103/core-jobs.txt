@@ -1,0 +1,7 @@
+$ git grep -E "^  (protocol|native|profiles|platforms|corpus|performance|required):" -- .github/workflows/reading-required-core.yml
+.github/workflows/reading-required-core.yml:  protocol:
+.github/workflows/reading-required-core.yml:  native:
+.github/workflows/reading-required-core.yml:  profiles:
+.github/workflows/reading-required-core.yml:  platforms:
+.github/workflows/reading-required-core.yml:  corpus:
+.github/workflows/reading-required-core.yml:  required:

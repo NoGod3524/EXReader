@@ -41,5 +41,11 @@
       "line_sha256": "75749720e25e537acf74c896e9aa8d1958c9a5db5394116f1c43ca2849d49ce5",
       "raw_line": "            [ -n \"$p\" ] && \"$p\" --version | head -1 || echo \"missing $b\""
     }
-  ]
+  ],
+  "remaining_failfast_reasons": {
+    "compound_or_multiple_commands": 1542,
+    "continue_on_error": 53,
+    "swallowed_failure": 6,
+    "powershell_error_propagation": 101
+  }
 }

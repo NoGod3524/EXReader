@@ -1,0 +1,12 @@
+{
+  "pr": 31,
+  "base": "ledger/base-20261103",
+  "sdk_version": "3.42.0",
+  "head_commit": "7a034640",
+  "actual_runs": [],
+  "new_workflows": {
+    "ledger-authority.yml": "PR catalog paths only; this PR has no catalog diff",
+    "ledger-evidence-custody.yml": "workflow_dispatch only"
+  },
+  "skip_ci": true
+}

@@ -23,6 +23,23 @@ performance 照跑照记，保留失败与原始样本；所有结果加 `adviso
 
 新 `.github/workflows/reading-required-core.yml` 不包含 performance；必需检查由 reading-required 改为 reading-required-core（GitHub Actions app 15368），规则集的删除、非快进、PR、strict、bypass 等其余字段保持不变。
 
-必须用仅加一行注释的一次性 PR 验证“core 为必需、legacy 仍运行但不阻塞”，然后关闭并删除临时分支。仅改检查名不算完成；分支监听、规则匹配或部署不足必须如实记为未完成。禁止为验证提前跑完整 native 矩阵。
+一次性 PR 仅加一行注释，验证 reading-required-core 确实注册并出现；staging 规则从 evaluate 起步，不含 reading-required。静态列出 core 的 protocol/native/profiles/platforms/corpus 且无 performance，替代“旧工作流在 ledger/base 也动态运行”的验收；原监听分支不改。验完关闭 PR 并删除临时分支。绿才切 active；红则保持 evaluate，登记首条 error/job 为 R 入口，不阻塞 P/C。禁止为此跑完整矩阵。仅改检查名不算拆分完成。
 
 reading-required.yml 与 reading-required-core.yml **均不在八项受保护树内**，native.yml 才在。因此门禁拆分本身不扩大 R 候选；native 的既有 P 变更已要求 R 候选在 P 之后。SDK 基线、预算数值和原有断言均不在此处修改。
+
+## Current ruleset state (2026-11-03)
+
+| 规则 | id | enforcement | required checks | 状态 |
+|---|---|---|---|---|
+| EXReader native reading delivery | 25700819 | active | reading-required-core (app 15368) | 原 ~DEFAULT_BRANCH 规则，仅替换检查名，其余字段相同 |
+| EXReader staging core (ledger/base-20261103) | 未创建 | 期望 evaluate，实际不存在 | 计划仅 reading-required-core | GitHub 422：当前套餐不支持 evaluate，需 Enterprise；未降级 active |
+
+staging 计划仅匹配 refs/heads/ledger/base-20261103，观察删除与非快进限制、core 检查；bypass 为空。当前 API 实查只有一条规则集，不能把创建失败的 staging 记为已存在。ledger/base 成为默认分支时必须删除 staging（若届时已创建），由原 ~DEFAULT_BRANCH 规则接管。
+
+## Default-branch migration checklist (not executed)
+
+- [ ] 旧默认分支失去 ~DEFAULT_BRANCH 保护后，明确留存与写入处置；若继续接受写入，先准备指向旧 ref 的独立保护，不能假定同名继承。
+- [ ] 新默认分支保护生效后删除 staging 规则集（当前未创建，不存在可删除 id），保留迁移前后规则清单与返回。
+- [ ] 同步分支过滤：reading-required.yml 的 push / pull_request 当前均为 codex/framework；native.yml 的 push 为 codex/framework，pull_request 当前无分支过滤。迁移时按最终分支名更新相应过滤，并再次核对，不在本步修改。
+
+部署验收状态见 [SPLIT-STATUS](../../evidence/ci-packaging-20261103/SPLIT-STATUS.md)。原规则集检查名已调整；evaluate 创建被套餐拒绝，注释 PR 验证未做，拆分未完成。
