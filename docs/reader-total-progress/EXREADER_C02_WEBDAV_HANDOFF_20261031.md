@@ -1783,3 +1783,45 @@ The separately requested employment spreadsheet was copied once to its specified
 ### Continue only within the approved scope
 
 Retain the now-complete import20 evidence, the owner/organization/recovery results and every earlier failure. Resolve the bounded report/consumer evidence gap before proposing another complete versioned change or test budget. Do not convert runner exit zero into check acceptance, silently skip gates or claim that the formal ledger increased.
+
+
+## 2026-11-02 22:22 EST scheduled handoff ? actual save 2026-11-02T22:25:08.570794-05:00
+
+Actual UTC 2026-11-03T03:25:08.570794+00:00; not backdated. This is the new hourly append authorized by the 2026-11-03T03:22Z automation, not the old c159 17:22EST snapshot. Prior c352 document bytes are preserved. Formal ledger remains **98/108**, existing255ec evidence lineage; no new whole item credited.
+
+### R6 complete archived-input audit
+
+R6 source4b45dab950f04e499959ebcdf84e3f6460833a2a / run41562134861 A1 remains FAILURE/master accepted=false. Actual owner18+kill2, organization8 native+8 UI+retry1, recovery12 and import20 across9 phases passed and were independently reviewed; bounded success is not full acceptance.
+
+Read-only audit branch audit/f03-r6-complete-evidence-20261103 added exactly3 files at652dd0b584244b5f7413036bd4a136b44f9d3a0d, parent4b45. Its sole Ubuntu run41569833902/A1 job125699902030 completed successfully2026-11-03T03:03:28Z (22:03:28EST);03:03:26Z was artifact upload/creation time. F09 independently verified actual source, API full tree/old triggers and terminal ledger. No product/device execution occurred in the audit.
+
+Input artifact13198529383/187491150B SHA256 f7a4114c3916a81efa220da02ab34cec5808be9d7a885b0d7f89802cdfe22958.
+Audit artifact13200348063/2042717B SHA256 14f4001367f84383e416b78cc226f3383f9b89d9135a5cb865818b8fc895944a.
+
+Original reports: walkthrough45/45, review10/10, bounded10/11. Unique bounded failure: bounded_progress_write_reject,33439ms, assertions=[], reader=false; HostReviewTest.java466: System picker did not list Sample.epub. SQLite progress-write rejection assertions were not reached. Do not call this a SQLite rejection failure.
+
+Five unique absent gate reports match original API/F03_UPSTREAM skipped outcomes; ten missing ledger records include duplicates. Four formal reports are false downstream of the blocked chain. Eight diagnostic findings include consequences of the same case/report fields, not eight separate product defects. Unarchived SDKstage, fixtures, RUNNER_TEMP, BuildConfig and hash-owner lifecycle inputs remain unknown. Audit completion/identity/output verification does not set all_inputs_complete or accepted true.
+
+Clarification of previous handoff: run_reader_shelf_ui.py is specifically shelf UI. Original host evidence uses examples/android/ci/emulator.sh -> tools/run_android_host_evidence.py, whose transport success does not prove every bounded assertion.
+
+### Proposed R7: awaiting explicit approval
+
+Completed read-only closure covered the full picker chain, later rejection assertions, fixture producer, build/source sets. Current init covers :app androidTest only; a versioned HostReviewTest needs an independent :uitest overlay. Original driver generates Sample.epub with manifest SHA and builds the fixed three APKs. Historical picker scroll position is unproven.
+
+Root requested1 added versioned test +3 acceptance-file modifications, parent4b45/current feature branch, one nonforce commit/push and one Android<=120minutes. Proposed picker selection is restricted to Downloads, return-to-top and unique exact file row within original30seconds; all rejection/safety assertions retained. At save this is not approved: no R7 candidate, Git or CI.
+
+### Other lanes
+
+F09 Windows KB06 two-Space and GTK Account Escape bounded evidence passed. GTK status remains blocked before final event assertion. Fixed R2 three-log LAP exception is finished; receipt/status/application independently read, keys content attributed only to authorized writer. Full central ZIP encryption flags were not separately checked and archive was not retained. No new GTK CI authorized.
+
+F07 four source private edges are fixed to publicv1; six recipes select capability. Installed manifest/exports/archive hashes and final SQLite ownership binding remain incomplete; source/configuration evidence is not installed/link proof.
+
+F08 previous native failed1437.830>1200seconds, UNSEALED/no reader output; owned cleanup verified. No new native; deadline/observability repair remains original owner.
+
+F05 deletion-specific conflict UI remains original product-owner gap, no new delivery/lock. Java3.42 shadow prepared_not_run.
+
+### Six-role actual snapshot
+
+Not six active implementations: implementation0; active diagnosis0 (current closure/audit completed); review1 (F09 document review); documentation1; running-test wait0; blocked/approval-or-owner-dependent4 (F03 awaiting R7, F05/F07/F08). Total6 roles. Newly completed whole formal items0; formal98 unchanged. Review of this exact new commit will be reported only after readback.
+
+Next is explicit R7 decision, not automatic execution. No new CI, product/SDK/old-test changes, mainline push, PR or release is granted by this record.
