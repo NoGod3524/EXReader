@@ -1914,3 +1914,47 @@ F08 native budget1/1 remains failed and cleaned up; no native restart is authori
 This is a responsibility-state count, not six active implementations: implementation0; active diagnosis1 (F07); active document backup1 (coordinator); test-result wait1 (F03 R8); blocked/waiting3 (F05 has no new execution receipt here, F08 no new native budget, F09 review completed and awaiting result). Routine standby is not implementation.
 Read-only storage measurement: /data free811,839,488 bytes; /tmp is a separate filesystem with3,934,482,432 bytes free. Thus /tmp evidence caches are not established as the cause of /data pressure. The /data recursive size read hit its45-second limit, so large-directory and deletion candidates are not yet known. No data was deleted or disk resized.
 All original failures, audit completeness limits, missing inputs and skipped gates remain preserved. This document adds no source changes, new CI budget, artifact permission, or formal acceptance credit.
+
+
+## Hourly continuation snapshot: 2026-11-03 02:22 EST scheduled
+
+Actual save time: 2026-11-03T07:23:47.278287+00:00 / 2026-11-03T02:23:47.278287-05:00. This is a continuation backup, not a stop/completion notice. The timestamp is actual, not backdated to the scheduled hour. The formal ledger remains 98 verified / 1 partial / 9 pending, total108.
+
+### F03 R8 is accepted within its declared Android scope
+Source 054df69524eed483759febdcc0ce20e634921f82, original production branch, unique run41588932707/A1, job125760870479 completed successfully at06:47:58Z. Fixed original stdout was independently read and checked: master accepted=true, problems=[], all17 upstream stages successful and all9 formal report hashes present. The actual original gates48/20 passed; shelf12/2202, Catalog8, Mapping14 with kill recovery, Owner18 plus2, organization8 native plus8 UI plus1 retry, recovery, and import20 across9 phases passed. Walkthrough45/review10 were directly visible; the complete66 entry passed through its original validation chain, without claiming a separate read of every bounded case JSON. Shelf/owner/organization gate counts19/19/15 passed.
+
+Original job log:899644 bytes, SHA2560f84a760fbfc4e7c09ac489f7ea5eb1ca7a89aefcf29b5b264ba647caa90144d.
+Artifact13211015204:187826139 bytes, SHA25698e071da032e2212a276f6f60eb4e3b3b7023aef59c26540bb39a662ed0ee919.
+Run: https://github.com/NoGod3524/EXReader/actions/runs/41588932707
+Independent terminal review passed before reporting acceptance. No additional Android round was started.
+
+This does not complete the formal six-target F03 catalog item. The catalog at255ec5578063765334d37f967507926c79557a3e has blobbfafcaf5a49cbc07d444abbe775c3fb37373cd63 and records F03 pending with no evidence entries. Its F03 wording matches the original18cac catalog and the current054df item: shared shelf/organization consistency across all six targets cannot be transferred from a single-target or simulator result. old_apk_upgrade_accepted=false and complete_product=false remain explicit in the accepted R8 report. Product performance is not granted by the four approved longer observation windows. No formal ledger score was changed.
+
+### F05 read-only bridge published; separate validation package being prepared
+The two-file bridge was independently statically reviewed, independently checked as a strict two-file tree, and published once to dot/f05-android-head-bridge-20261103:
+commit75d3115041016ae61149fd6f5a9a816c296cc085, parent48bd5a35d99c3a21a8159288dd08ac8dbb41c677.
+https://github.com/NoGod3524/EXReader/commit/75d3115041016ae61149fd6f5a9a816c296cc085
+Independent remote readback matched this commit and the branch Actions count was0. No CI, PR, default-branch or shared-worktree modification was performed for publication. The rejected first object action had not executed; the user's new specific07:03:05Z authorization enabled one same-action review.
+
+NativeCatalog.java and catalog_jni.cpp expose one read-only graph snapshot with revision heads, operation types and completeness/restore flags. Original SDK and UI remain unchanged. Static review verified owner-thread restrictions, snapshot consistency, limits and exception/resource handling. Runtime bridge behavior has not yet been tested, and parent edges are not exposed as new edit/restore authorization.
+
+The user separately approved a five-new/one-modified validation package at07:11:02Z, one commit/push and one run capped at140 runner-minutes (5+120+15). At this snapshot the six-file candidate exists only in memory: no validation candidate has been saved, committed or run. It preserves the original16 checks,4 processes and2 blocking boundaries and adds10 bridge checks. The old original-owner path is preserved; an unrelated legacy sessionprobe side branch with a3.40 package requirement is not copied or counted as tested.
+The exact head.sha256 assignment semantics still need a narrow source read before finalizing the new assertions. Planned triggering is one explicit dispatch on the exact dedicated branch, not automatic push execution; old jobs are excluded on that branch to prevent duplicate runs. This plan still requires actual candidate, full-tree and trigger review before execution. No original265-minute allocation is borrowed.
+
+### F07 actual evidence and exact permission blockers
+The successor owner read the fixedec11 three-Apple peer workflow, retained relay inspection caller and checker. Actual peer logs bind the program hash to the installed checker binary hash; the checker parses the real link MAP and identifies the product libreader_catalog_sqlite.a(sqlite3.c.o) provider for sqlite3_open_v2. The build/source/run/attempt sealing chain was traced. This is stronger than a manifest declaration, but its selected-symbol/module coverage and missing raw-MAP hash do not establish the entire F07 contract.
+
+The independent evidence record is preserved at /tmp/f07-installed-binding-20261103/apple-peer-log-provenance-20261103.json,9309 bytes,SHA2560db92542091c4134ffb0ec50474f75ab2a6257bfb3c56b6c8124fe0ab54b6231. Windows logs expose stage results but no final ownership table; GTK logs expose final-link and package identity summaries without archive-member attribution.
+The old B summary does not contain the full member inventory. Its two exact output JSONs would identify Windows build13082734165 and GTK build13083942264 inventory details; absence of archive paths in the compact summary does not prove the archives were absent.
+
+The user approved a one-time LAP read of those two JSONs from fixed artifact13167080517, but the preparatory original-route read was rejected twice without execution. No ZIP was downloaded or unpacked. The original F07 Git object action was also rejected twice without execution: there is no commit/ref/CI for the installed-binding candidate. Neither successor nor another route was used to bypass these refusals.
+A distinct fixedec11 modules/layers source read was later rejected before execution. The user provided new specific confirmation for one same-action review; it is queued after this snapshot, not yet executed. These are permission-review blockers, not missing user interest or proof that evidence does not exist.
+
+### Remaining lanes, role states and storage
+F08 remains at its failed, cleaned-up native1/1 result with no new native budget. F09's previously bounded Windows Space and GTK Account evidence remains unchanged; no new GTK test is authorized. F09 has completed independent R8/F05 publication reviews and is waiting for the F05 validation candidate and any permitted F07 readback script.
+
+The six responsibility slots are not six active implementations. Current actual state: implementation/preparation1(F05 validation candidate in memory); documentation1(coordinator snapshot); waiting/blocked4(F03 scoped run finished with six-target work remaining, F07 permission blockers, F08 no new native budget, F09 awaiting actual candidates). No background diagnosis or standby is relabeled as implementation.
+
+Read-only storage review found /data free811,839,488 bytes and separate/tmp free3,934,482,432 bytes. A partial inventory completed174 of233 workspace roots; it is not a complete ranking. Two build-directory candidates for later ownership/recoverability review are438,935,552 bytes under exreader-f08-apple-reader26-agent-20261031/build and302,673,920 bytes under exreader-f08-mac-reader-animation-agent-20261101/build. Their backups and regenerability are not established, so they are not approved deletion targets. terra-wave-20261028 is about1.29GiB across multiple worktrees rather than a single disposable package. No process cwd was observed in those workspaces at the check, which is not proof of inactivity. No files were deleted and no disk was resized.
+
+All original failed rounds, skipped stages and unarchived evidence limits remain preserved. This document authorizes no source/SDK/UI change, new CI round, artifact exception or formal credit.
