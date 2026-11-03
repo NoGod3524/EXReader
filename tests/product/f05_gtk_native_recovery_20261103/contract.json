@@ -1,17 +1,10 @@
 {
   "schema": 1,
-  "parent": "0be9b39384edd386b48b78d128515cf330611654",
+  "parent": "6db51e1cab2167e438f5e08905b139fa81c3d65d",
   "branch": "codex/f05-gtk-delete-details-20261103",
   "delta": [
-    "M\t.github/workflows/gtk-sdk342-package.yml",
-    "M\texamples/linux/collections.inc",
-    "M\texamples/linux/collections_ui.inc",
-    "M\texamples/linux/reading.c",
-    "M\texamples/linux/reading.h",
     "M\ttests/product/f05_gtk_native_recovery_20261103/check_r3.py",
     "M\ttests/product/f05_gtk_native_recovery_20261103/driver.py",
-    "M\ttests/product/f05_gtk_native_recovery_20261103/gtk.py",
-    "M\ttests/product/f05_gtk_native_recovery_20261103/inspect_network.py",
     "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json"
   ],
   "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
@@ -332,7 +325,7 @@
   "r3_blobs": {
     "case_alignment.py": "bf5f1196dea0a3b3860d753164a854d4b340bb17",
     "check_dry_run.py": "7ce18ba1c7592d2d8047dba946122f2e01497175",
-    "check_r3.py": "56d3af2ce2210bf912eb7d8fe269190e03d02c2b",
+    "check_r3.py": "82d7ea8b0d43c92085ccd71ece08644f109407c1",
     "inspect_network.py": "0b867dd74203f206872c441d7210b683d2295481",
     "native_runtime.py": "1a280055807a4f459bac8269ad3bcdbcd6a7ef36"
   },
@@ -364,5 +357,15 @@
     "actual_runtime_verified": false,
     "SDK_and_original_tests_changed": false,
     "authorization": "User authorized all operations requiring authorization in this conversation on 2026-11-03; isolated candidate only, existing production owner unchanged."
+  },
+  "full_run_cleanup_correction": {
+    "failed_audit_run": "41681029980",
+    "failed_audit_source": "0be9b39384edd386b48b78d128515cf330611654",
+    "producer_job_success": true,
+    "actual_cleanup_duration_not_inferred_from_count_error": true,
+    "full_execution_native_processes": 4,
+    "dry_run_native_processes": 3,
+    "per_process_seconds": 20,
+    "historical_failed_result_preserved": true
   }
 }
