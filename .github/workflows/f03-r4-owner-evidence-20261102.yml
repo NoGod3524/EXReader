@@ -1,0 +1,33 @@
+name: F03 R4 fixed owner evidence
+on:
+  push:
+    branches: [audit/f03-r4-owner-evidence-20261102]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f03-r4-owner-evidence-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  evidence:
+    if: ${{ github.run_attempt == 1 && contains(github.event.head_commit.message, '[F03-R4-OWNER-EVIDENCE-20261102]') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Authenticate fixed R4 artifact and thirteen original texts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 tests/f03_r4_owner_evidence_20261102/audit.py
+      - name: Preserve bounded original evidence and audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f03-r4-owner-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f03-r4-owner-evidence/
+          if-no-files-found: error
+          retention-days: 30
