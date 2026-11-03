@@ -384,6 +384,15 @@
       "source_prefix": "8f8acf3234cba747165f001c0c96efe1b911e6ad",
       "adapter": "f06_sdk342_40678657371"
     },
+    "f07_authoritative_symbols_20261103": {
+      "run": 41674663275,
+      "doc": "docs/reader-total-progress/F07_AUTHORITATIVE_SYMBOLS_20261103.md",
+      "source_prefix": "cf96cb82ae028e50f63f90478def5a610fdcb77f",
+      "expected_conclusion": "success",
+      "scope_excludes": [
+        "windows/gtk archive-level provider attribution"
+      ]
+    },
     "macos_organization_original": {
       "run": 40635727935,
       "doc": "docs/reader-total-progress/macos-organization-original.md",
@@ -1683,9 +1692,11 @@
       "id": "F07",
       "group": "final",
       "title": "最终宿主实际单 SDK/产品 SQLite 提供者与模块无私有入口依赖",
-      "state": "pending",
-      "evidence": [],
-      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+      "state": "verified",
+      "evidence": [
+        "f07_authoritative_symbols_20261103"
+      ],
+      "note": "六端shipped程序均为单一SQLite提供者：同一source-id(2026-10-09 15:46:58 be8d059e…)，每端一处；六端无任何外部sqlite依赖(无libsqlite3*/sqlite3.dll)。Android 277个定义集中于libexreader.so；GTK 291个定义；windows已剥离且导入表无sqlite DLL。Apple安装SDK 74个归档中仅两个定义sqlite3_*且符号集完全相同(288/288)，程序定义集与归档逐个相等，定义provider经原审计MAP定于libreader_catalog_sqlite.a(sqlite3.c.o)。weak/version由llvm 21.1.8权威观测：无sqlite弱符号、ELF/PE无版本段、Mach-O动态表不含sqlite(仅本地符号)。未覆盖：windows/gtk归档级定义provider(发布面不含.lib/.a/.map)，列为该条目显式残余范围。"
     },
     {
       "id": "F08",

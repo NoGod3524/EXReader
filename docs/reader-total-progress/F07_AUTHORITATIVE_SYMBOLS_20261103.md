@@ -42,3 +42,29 @@
 - shipped program 与归档定义集**逐个相等（288 = 288，双向差集 0）**。
 
 <!-- dispatch marker [F07-AUTHORITATIVE-SYMBOLS-ONE-RUN] -->
+
+## Runs (all retained; harness defects are not evidence)
+
+| run | attempt | 结论 | 说明 |
+|---|---|---|---|
+| `41673768227` | 1 | failure | 工具发现缺陷：`ubuntu-22.04` 上既无裸 `llvm-nm`/`llvm-readobj` 也无 `-1x` 后缀；在读任何 payload 前 fail closed。保留 |
+| `41674266462` | 1 | success（但不可用） | job 绿，计数全 0：`llvm-readobj` 输出不是 nm 行格式，解析器选错。**不作为证据**，保留 |
+| `41674511396` | 1 | success | 加入 readobj 块解析：android `277`、gtk `291` 正确；Apple 仍 0，因为 `--macho-dsymtab` 只列**动态**符号，而程序内的 `sqlite3_*` 是本地符号 |
+| `41674663275` | 1 | **success，本文件引用的证据轮** | 容错 nm 解析；artifact `13248959179` |
+
+最终观测（`llvm-nm`/`llvm-readobj` 21.1.8，同一版本对，`tools_ok=true`，`acceptance_assessed=false`）：
+
+| 目标 | 格式 | defined | undefined | weak | version 段 | 运行时装载原语 |
+|---|---|---:|---:|---:|---|---|
+| windows | PE | 0（已剥离） | 0 | 0 | 无 | `GetProcAddress`+`LoadLibraryExW` |
+| android `libexreader.so` | ELF | **277** | 0 | 0 | 无 | 无 |
+| android 其余三个 .so | ELF | 0 | 0 | 0 | 无 | 无 |
+| gtk | ELF | **291** | 0 | 0 | 无 | 无 |
+| macos / iphone / ipad | Mach-O | 动态表 0（仅本地符号） | 0 | 0 | 无 | `_dlsym` |
+
+**计数来源分工（不得混用）**：android 277 与 gtk 291 来自本 run 的权威工具；
+Apple 的 288 来自本地 `LC_SYMTAB` 解析与「程序定义集 = 归档定义集」的相等性，
+本 run 的动态表读数 0 与之相容（程序不导出这些符号），不是矛盾。
+
+**残余范围**：windows/gtk 归档级定义 provider 未覆盖（发布面不含 `.lib/.a/.map`）；
+A4（`dlsym`/`GetProcAddress` 目标）为 `a4_partial=true`，字面量数据流未做。
