@@ -14,7 +14,7 @@ permissions:
 jobs:
   f05-r3-dry-run:
     name: F05 GTK R3 bounded dry-run
-    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/f05-gtk-recovery-r3-20261103' && inputs.f05_mode == 'dry-run' && github.run_attempt == 1 }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/f05-gtk-delete-details-20261103' && inputs.f05_mode == 'dry-run' && github.run_attempt == 1 }}
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     permissions:
@@ -72,7 +72,7 @@ jobs:
             build/f05-r3/*/*.png
           if-no-files-found: error
   retained:
-    if: ${{ (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-recovery-r3-20261103') }}
+    if: ${{ (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-delete-details-20261103') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 150
     steps:
@@ -157,7 +157,7 @@ jobs:
           if-no-files-found: error
   authenticate:
     needs: retained
-    if: ${{ always() && (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-recovery-r3-20261103') }}
+    if: ${{ always() && (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-delete-details-20261103') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     permissions:
@@ -179,7 +179,7 @@ jobs:
 
   f05-admission:
     name: F05 GTK admission
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-recovery-r3-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-delete-details-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
     runs-on: ubuntu-22.04
     timeout-minutes: 5
     steps:
@@ -190,7 +190,7 @@ jobs:
   f05-producer:
     name: F05 GTK native producer
     needs: f05-admission
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-recovery-r3-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-delete-details-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
     runs-on: ubuntu-22.04
     timeout-minutes: 170
     steps:
@@ -201,6 +201,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Validate F05 recovery and deletion-detail controls
+        run: |
+          python3 -m py_compile tests/product/f05_gtk_native_recovery_20261103/*.py
+          xvfb-run -a python3 tests/product/f05_gtk_native_recovery_20261103/check_r3.py
       - name: F05 build
         if: ${{ !cancelled() }}
         run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec build
@@ -234,7 +238,7 @@ jobs:
   f05-audit:
     name: F05 GTK independent audit
     needs: [f05-admission, f05-producer]
-    if: ${{ always() && github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-recovery-r3-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-delete-details-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     permissions:

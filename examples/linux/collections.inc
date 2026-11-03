@@ -124,6 +124,32 @@ static void collections_next_token(linux_reader *reader,reader_result *result) {
   if(++reader->collection_token==0) ++reader->collection_token;
   result->collection_token=reader->collection_token;
 }
+typedef struct { GString *details,*heads;size_t count;int invalid; } collections_conflict_copy;
+static int collections_copy_conflict_head(void *context,const reader_revision_head *head) {
+  collections_conflict_copy *copy=context;
+  const char *operation=!strcmp(head->operation,"delete") ? "Deletion requested":
+    !strcmp(head->operation,"put") ? "Edit retained":!strcmp(head->operation,"restore") ? "Restoration requested":NULL;
+  if(!operation || copy->count>=32) { copy->invalid=1;return 1; }
+  if(copy->count++) { g_string_append_c(copy->details,'\n');g_string_append_c(copy->heads,','); }
+  g_string_append_printf(copy->details,"Version %zu: %s%s",copy->count,operation,
+    head->complete ? "":" (history incomplete)");
+  g_string_append(copy->heads,head->revision_id);return 0;
+}
+static exr_status collections_conflict_details(linux_reader *reader,const reader_command *command,reader_result *result) {
+  if(!command->collection_id || !command->collection_id[0]) return EXR_OK;
+  static const char *kinds[]={"shelf","tag","series"};
+  reader_revisions *revisions=NULL;reader_revision_state graph={0};
+  collections_conflict_copy copy={g_string_new(NULL),g_string_new(NULL),0,0};
+  reader_revision_status code=reader_revisions_open(reader->catalog_path,&revisions,NULL);
+  if(code==READER_REV_OK) code=reader_revision_heads(revisions,kinds[command->collection_kind],
+    command->collection_id,collections_copy_conflict_head,&copy,&graph,NULL);
+  reader_revision_status closed=reader_revisions_close(&revisions,NULL);
+  if(code!=READER_REV_OK || closed!=READER_REV_OK || copy.invalid || copy.count!=graph.heads) {
+    g_string_free(copy.details,TRUE);g_string_free(copy.heads,TRUE);return EXR_DATABASE;
+  }
+  result->collection_conflict_details=g_string_free(copy.details,FALSE);
+  result->collection_conflict_heads=g_string_free(copy.heads,FALSE);return EXR_OK;
+}
 static exr_status collections_prepare_group(linux_reader *reader,const reader_command *command,reader_result *result) {
   reader_catalog_group_kind native;reader_group_kind producer;
   if(!collections_kind(command->collection_kind,&native,&producer) || command->collection_operation<0 || command->collection_operation>2) return EXR_ARGUMENT;
@@ -141,6 +167,9 @@ static exr_status collections_prepare_group(linux_reader *reader,const reader_co
     (view->deleted && command->collection_operation!=2) ||
     (command->collection_operation==2 && !view->deleted) ||
     (command->collection_operation!=0 && (!view->present || !view->head_count));
+  if(result->collection_conflict) {
+    exr_status details=collections_conflict_details(reader,command,result);if(details!=EXR_OK) return details;
+  }
   if(command->collection_kind==0 && reader->collection_parent[0] && command->collection_operation!=1) {
     exr_status status=collections_find_group(reader,0,reader->collection_parent,&result->collection_dependency_group);
     if(status!=EXR_OK) return status;

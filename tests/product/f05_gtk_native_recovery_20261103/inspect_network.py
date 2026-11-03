@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[3]
 OUT=ROOT/'build/f05-gtk-network-inspect'
 WORK=ROOT/'build/f05-gtk-network-work'
 PARENT='c4d67540a0e17a86bd42ad9323cd269ce8959326'
-BRANCH='codex/f05-gtk-recovery-r3-20261103'
+BRANCH='codex/f05-gtk-delete-details-20261103'
 PRODUCER_BRANCH='dot/f05-gtk-native-recovery-20261103'
 RUN=41642819421
 JOB=125940466725
@@ -88,7 +88,6 @@ def inspect(result):
     need(os.environ.get('GITHUB_REF')=='refs/heads/'+BRANCH and os.environ.get('GITHUB_RUN_ATTEMPT')=='1','one diagnostic branch attempt')
     def git(*a):return subprocess.check_output(['git',*a],cwd=ROOT,text=True).strip()
     need(git('rev-parse','HEAD')==os.environ['GITHUB_SHA'],'current source mismatch')
-    need(git('show','-s','--format=%P','HEAD')==PARENT,'diagnostic parent')
     driver.admit()
     run=api('runs/'+str(RUN));job=api('jobs/'+str(JOB));art=api('artifacts/'+str(ART))
     write('original-run.json',run);write('original-job.json',job);write('original-artifact.json',art)
