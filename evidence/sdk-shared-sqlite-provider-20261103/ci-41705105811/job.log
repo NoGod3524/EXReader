@@ -1,0 +1,944 @@
+﻿2026-11-03T19:38:16.5792170Z Current runner version: '2.338.2'
+2026-11-03T19:38:16.5829650Z ##[group]Runner Image Provisioner
+2026-11-03T19:38:16.5830260Z Hosted Compute Agent
+2026-11-03T19:38:16.5830750Z Version: 20260828.587
+2026-11-03T19:38:16.5831180Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-11-03T19:38:16.5831680Z Build Date: 2026-08-28T16:44:25Z
+2026-11-03T19:38:16.5832220Z Worker ID: {f343be25-d61d-42ed-bc09-2bd5672d5a77}
+2026-11-03T19:38:16.5832730Z Azure Region: westus
+2026-11-03T19:38:16.5833230Z ##[endgroup]
+2026-11-03T19:38:16.5834650Z ##[group]Operating System
+2026-11-03T19:38:16.5835150Z macOS
+2026-11-03T19:38:16.5835480Z 14.8.9
+2026-11-03T19:38:16.5835920Z 23J631
+2026-11-03T19:38:16.5836370Z ##[endgroup]
+2026-11-03T19:38:16.5837120Z ##[group]Runner Image
+2026-11-03T19:38:16.5837750Z Image: macos-14-arm64
+2026-11-03T19:38:16.5838150Z Version: 20260831.0302.1
+2026-11-03T19:38:16.5839310Z Included Software: https://github.com/actions/runner-images/blob/macos-14-arm64/20260831.0302/images/macos/macos-14-arm64-Readme.md
+2026-11-03T19:38:16.5840640Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-14-arm64%2F20260831.0302
+2026-11-03T19:38:16.5841410Z ##[endgroup]
+2026-11-03T19:38:16.5842230Z ##[group]GITHUB_TOKEN Permissions
+2026-11-03T19:38:16.5843890Z Contents: read
+2026-11-03T19:38:16.5844240Z Metadata: read
+2026-11-03T19:38:16.5844590Z ##[endgroup]
+2026-11-03T19:38:16.5846390Z Secret source: Actions
+2026-11-03T19:38:16.5846950Z Cache mode: write
+2026-11-03T19:38:16.5847480Z Prepare workflow directory
+2026-11-03T19:38:16.6153190Z Prepare all required actions
+2026-11-03T19:38:16.6206930Z Getting action download info
+2026-11-03T19:38:16.7882990Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-03T19:38:17.2188710Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-03T19:38:17.4423930Z Complete job name: apple-native
+2026-11-03T19:38:17.5055430Z ##[group]Run actions/checkout@v4
+2026-11-03T19:38:17.5056170Z with:
+2026-11-03T19:38:17.5056580Z   ref: 40ac811b0a872587641e01ff0cfc33a376e93abc
+2026-11-03T19:38:17.5057070Z   fetch-depth: 2
+2026-11-03T19:38:17.5057450Z   repository: NoGod3524/EXReader
+2026-11-03T19:38:17.5060360Z   token: ***
+2026-11-03T19:38:17.5060720Z   ssh-strict: true
+2026-11-03T19:38:17.5061090Z   ssh-user: git
+2026-11-03T19:38:17.5061460Z   persist-credentials: true
+2026-11-03T19:38:17.5061870Z   clean: true
+2026-11-03T19:38:17.5062250Z   sparse-checkout-cone-mode: true
+2026-11-03T19:38:17.5062690Z   fetch-tags: false
+2026-11-03T19:38:17.5063070Z   show-progress: true
+2026-11-03T19:38:17.5063460Z   lfs: false
+2026-11-03T19:38:17.5063820Z   submodules: false
+2026-11-03T19:38:17.5064200Z   set-safe-directory: true
+2026-11-03T19:38:17.5064630Z   allow-unsafe-pr-checkout: false
+2026-11-03T19:38:17.5066680Z ##[endgroup]
+2026-11-03T19:38:18.0019020Z Syncing repository: NoGod3524/EXReader
+2026-11-03T19:38:18.0020800Z ##[group]Getting Git version info
+2026-11-03T19:38:18.0021440Z Working directory is '/Users/runner/work/EXReader/EXReader'
+2026-11-03T19:38:18.0022250Z [command]/opt/homebrew/bin/git version
+2026-11-03T19:38:18.0286450Z git version 2.55.0
+2026-11-03T19:38:18.0301950Z ##[endgroup]
+2026-11-03T19:38:18.0313100Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/e205804b-f839-4b86-9f5e-d91485b46089/.gitconfig'
+2026-11-03T19:38:18.0316540Z Temporarily overriding HOME='/Users/runner/work/_temp/e205804b-f839-4b86-9f5e-d91485b46089' before making global git config changes
+2026-11-03T19:38:18.0317890Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-03T19:38:18.0319000Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/EXReader/EXReader
+2026-11-03T19:38:18.0423640Z Deleting the contents of '/Users/runner/work/EXReader/EXReader'
+2026-11-03T19:38:18.0429370Z ##[group]Initializing the repository
+2026-11-03T19:38:18.0433410Z [command]/opt/homebrew/bin/git init /Users/runner/work/EXReader/EXReader
+2026-11-03T19:38:18.0643190Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-03T19:38:18.0645150Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-03T19:38:18.0645990Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-03T19:38:18.0646670Z hint: call:
+2026-11-03T19:38:18.0647060Z hint:
+2026-11-03T19:38:18.0647540Z hint: 	git config --global init.defaultBranch <name>
+2026-11-03T19:38:18.0648080Z hint:
+2026-11-03T19:38:18.0648580Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-03T19:38:18.0649380Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-03T19:38:18.0650010Z hint:
+2026-11-03T19:38:18.0650400Z hint: 	git branch -m <name>
+2026-11-03T19:38:18.0650820Z hint:
+2026-11-03T19:38:18.0651510Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-03T19:38:18.0652340Z Initialized empty Git repository in /Users/runner/work/EXReader/EXReader/.git/
+2026-11-03T19:38:18.0661300Z [command]/opt/homebrew/bin/git remote add origin https://github.com/NoGod3524/EXReader
+2026-11-03T19:38:18.0728550Z ##[endgroup]
+2026-11-03T19:38:18.0730620Z ##[group]Disabling automatic garbage collection
+2026-11-03T19:38:18.0732510Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-11-03T19:38:18.0780250Z ##[endgroup]
+2026-11-03T19:38:18.0782520Z ##[group]Setting up auth
+2026-11-03T19:38:18.0784770Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-03T19:38:18.0842760Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-03T19:38:18.1847150Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-03T19:38:18.1935650Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-03T19:38:18.2732780Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-03T19:38:18.2787440Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-03T19:38:18.3593790Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-03T19:38:18.3661270Z ##[endgroup]
+2026-11-03T19:38:18.3663280Z ##[group]Fetching the repository
+2026-11-03T19:38:18.3666330Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=2 origin 40ac811b0a872587641e01ff0cfc33a376e93abc
+2026-11-03T19:38:22.1012580Z From https://github.com/NoGod3524/EXReader
+2026-11-03T19:38:22.1014860Z  * branch            40ac811b0a872587641e01ff0cfc33a376e93abc -> FETCH_HEAD
+2026-11-03T19:38:22.1022940Z ##[endgroup]
+2026-11-03T19:38:22.1024260Z ##[group]Determining the checkout info
+2026-11-03T19:38:22.1025530Z ##[endgroup]
+2026-11-03T19:38:22.1034320Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-11-03T19:38:22.1179450Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-03T19:38:22.1232790Z ##[group]Checking out the ref
+2026-11-03T19:38:22.1241220Z [command]/opt/homebrew/bin/git checkout --progress --force 40ac811b0a872587641e01ff0cfc33a376e93abc
+2026-11-03T19:38:23.2128270Z Updating files:  62% (3673/5861)
+2026-11-03T19:38:23.2281830Z Updating files:  63% (3693/5861)
+2026-11-03T19:38:23.2355380Z Updating files:  64% (3752/5861)
+2026-11-03T19:38:23.2423540Z Updating files:  65% (3810/5861)
+2026-11-03T19:38:23.2494060Z Updating files:  66% (3869/5861)
+2026-11-03T19:38:23.2848660Z Updating files:  67% (3927/5861)
+2026-11-03T19:38:23.2934140Z Updating files:  68% (3986/5861)
+2026-11-03T19:38:23.3047570Z Updating files:  69% (4045/5861)
+2026-11-03T19:38:23.3098210Z Updating files:  70% (4103/5861)
+2026-11-03T19:38:23.3198590Z Updating files:  71% (4162/5861)
+2026-11-03T19:38:23.3709570Z Updating files:  72% (4220/5861)
+2026-11-03T19:38:23.3822720Z Updating files:  73% (4279/5861)
+2026-11-03T19:38:23.3932460Z Updating files:  74% (4338/5861)
+2026-11-03T19:38:23.3983500Z Updating files:  75% (4396/5861)
+2026-11-03T19:38:23.4567170Z Updating files:  76% (4455/5861)
+2026-11-03T19:38:23.4969050Z Updating files:  77% (4513/5861)
+2026-11-03T19:38:23.5083920Z Updating files:  78% (4572/5861)
+2026-11-03T19:38:23.5216000Z Updating files:  79% (4631/5861)
+2026-11-03T19:38:23.5324380Z Updating files:  80% (4689/5861)
+2026-11-03T19:38:23.5703130Z Updating files:  81% (4748/5861)
+2026-11-03T19:38:23.5805370Z Updating files:  82% (4807/5861)
+2026-11-03T19:38:23.6005330Z Updating files:  83% (4865/5861)
+2026-11-03T19:38:23.6107520Z Updating files:  84% (4924/5861)
+2026-11-03T19:38:23.6411430Z Updating files:  85% (4982/5861)
+2026-11-03T19:38:23.6517520Z Updating files:  86% (5041/5861)
+2026-11-03T19:38:23.6623410Z Updating files:  87% (5100/5861)
+2026-11-03T19:38:23.6724730Z Updating files:  88% (5158/5861)
+2026-11-03T19:38:23.7180410Z Updating files:  89% (5217/5861)
+2026-11-03T19:38:23.7258580Z Updating files:  90% (5275/5861)
+2026-11-03T19:38:23.7287440Z Updating files:  91% (5334/5861)
+2026-11-03T19:38:23.7680990Z Updating files:  92% (5393/5861)
+2026-11-03T19:38:23.7859140Z Updating files:  93% (5451/5861)
+2026-11-03T19:38:23.7925780Z Updating files:  94% (5510/5861)
+2026-11-03T19:38:23.8026950Z Updating files:  95% (5568/5861)
+2026-11-03T19:38:23.8042950Z Updating files:  96% (5627/5861)
+2026-11-03T19:38:23.8415310Z Updating files:  97% (5686/5861)
+2026-11-03T19:38:23.8573470Z Updating files:  98% (5744/5861)
+2026-11-03T19:38:23.8650050Z Updating files:  99% (5803/5861)
+2026-11-03T19:38:23.8650970Z Updating files: 100% (5861/5861)
+2026-11-03T19:38:23.8651380Z Updating files: 100% (5861/5861), done.
+2026-11-03T19:38:23.9004790Z HEAD is now at 40ac811 feat(sdk): share SQLite provider across SDK and product
+2026-11-03T19:38:23.9053680Z ##[endgroup]
+2026-11-03T19:38:23.9190660Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-11-03T19:38:23.9320950Z 40ac811b0a872587641e01ff0cfc33a376e93abc
+2026-11-03T19:38:23.9646840Z ##[group]Run python3 - <<'PY'
+2026-11-03T19:38:23.9647700Z [36;1mpython3 - <<'PY'[0m
+2026-11-03T19:38:23.9648300Z [36;1mimport json, os, pathlib, re, subprocess[0m
+2026-11-03T19:38:23.9649120Z [36;1mbase = '95100501eeef9c6325be8b3882aa400c99cf000f'[0m
+2026-11-03T19:38:23.9649820Z [36;1msha = os.environ['CANDIDATE_SHA'][0m
+2026-11-03T19:38:23.9650450Z [36;1mif not re.fullmatch(r'[0-9a-f]{40}', sha):[0m
+2026-11-03T19:38:23.9651170Z [36;1m    raise SystemExit('exact candidate SHA required')[0m
+2026-11-03T19:38:23.9652160Z [36;1mdef git(*args): return subprocess.check_output(['git', *args], text=True).strip()[0m
+2026-11-03T19:38:23.9653270Z [36;1mif git('rev-parse', 'HEAD') != sha or git('rev-parse', 'HEAD^') != base:[0m
+2026-11-03T19:38:23.9654490Z [36;1m    raise SystemExit('candidate is not the reviewed replay on the fixed SDK line')[0m
+2026-11-03T19:38:23.9655980Z [36;1msubprocess.run(['git', 'diff', '--exit-code', base, 'HEAD', '--',[0m
+2026-11-03T19:38:23.9656640Z [36;1m    'src', 'include', 'bindings', 'cmake/versions.cmake',[0m
+2026-11-03T19:38:23.9656980Z [36;1m    'docs/reader-total-progress/catalog.json'], check=True)[0m
+2026-11-03T19:38:23.9657380Z [36;1mowned = {'CMakeLists.txt', 'cmake/deps.cmake', 'cmake/EXReaderConfig.cmake.in',[0m
+2026-11-03T19:38:23.9657860Z [36;1m    'cmake/install_dependencies.cmake', 'apps/reader/store/native/CMakeLists.txt',[0m
+2026-11-03T19:38:23.9658310Z [36;1m    'apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in',[0m
+2026-11-03T19:38:23.9658950Z [36;1m    'tools/apple_swift.py', 'tools/build_apple_product.py', 'tools/build_apple_host.py',[0m
+2026-11-03T19:38:23.9659460Z [36;1m    'tools/check_apple_product.py', '.github/workflows/sdk-shared-sqlite-contract.yml'}[0m
+2026-11-03T19:38:23.9660420Z [36;1mchanged = git('diff', '--name-only', base, 'HEAD').splitlines()[0m
+2026-11-03T19:38:23.9660920Z [36;1mif any(p not in owned and not p.startswith(('extras/sqlite-provider/',[0m
+2026-11-03T19:38:23.9661370Z [36;1m        'evidence/sdk-shared-sqlite-provider-20261103/')) for p in changed):[0m
+2026-11-03T19:38:23.9661860Z [36;1m    raise SystemExit('candidate contains changes outside the reviewed SDK contract')[0m
+2026-11-03T19:38:23.9662320Z [36;1mout = pathlib.Path('evidence/sdk-shared-sqlite-provider-20261103/ci')[0m
+2026-11-03T19:38:23.9662690Z [36;1mout.mkdir(parents=True, exist_ok=True)[0m
+2026-11-03T19:38:23.9663110Z [36;1m(out/'source.json').write_text(json.dumps({'base': base, 'candidate': sha,[0m
+2026-11-03T19:38:23.9663520Z [36;1m    'changed': changed, 'acceptance_assessed': False}, indent=2))[0m
+2026-11-03T19:38:23.9663830Z [36;1mPY[0m
+2026-11-03T19:38:23.9742110Z shell: /bin/bash -e {0}
+2026-11-03T19:38:23.9742420Z env:
+2026-11-03T19:38:23.9742650Z   CANDIDATE_SHA: 40ac811b0a872587641e01ff0cfc33a376e93abc
+2026-11-03T19:38:23.9742920Z ##[endgroup]
+2026-11-03T19:38:24.2978870Z ##[group]Run cmake -S extras/sqlite-provider -B build/sdk-provider -DCMAKE_BUILD_TYPE=Release \
+2026-11-03T19:38:24.2979580Z [36;1mcmake -S extras/sqlite-provider -B build/sdk-provider -DCMAKE_BUILD_TYPE=Release \[0m
+2026-11-03T19:38:24.2980150Z [36;1m  -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_SQLITE_PROVIDER_BUILD_TESTS=ON[0m
+2026-11-03T19:38:24.2980620Z [36;1mcmake --build build/sdk-provider --parallel 3[0m
+2026-11-03T19:38:24.2981010Z [36;1mctest --test-dir build/sdk-provider -L FTS5 --output-on-failure \[0m
+2026-11-03T19:38:24.2983050Z [36;1m  --output-junit "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci/fts5-provider.xml"[0m
+2026-11-03T19:38:24.2985270Z [36;1mcmake --install build/sdk-provider[0m
+2026-11-03T19:38:24.3042330Z shell: /bin/bash -e {0}
+2026-11-03T19:38:24.3042750Z ##[endgroup]
+2026-11-03T19:38:26.6113630Z -- The C compiler identification is AppleClang 15.0.0.15000309
+2026-11-03T19:38:27.2555850Z -- Detecting C compiler ABI info
+2026-11-03T19:38:28.0416780Z -- Detecting C compiler ABI info - done
+2026-11-03T19:38:28.0555430Z -- Check for working C compiler: /usr/bin/cc - skipped
+2026-11-03T19:38:28.0567410Z -- Detecting C compile features
+2026-11-03T19:38:28.0586280Z -- Detecting C compile features - done
+2026-11-03T19:38:28.0760930Z -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+2026-11-03T19:38:28.2651250Z -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+2026-11-03T19:38:28.2667960Z -- Found Threads: TRUE
+2026-11-03T19:38:28.8996460Z -- Configuring done (4.5s)
+2026-11-03T19:38:28.9110990Z -- Generating done (0.0s)
+2026-11-03T19:38:28.9122560Z -- Build files have been written to: /Users/runner/work/EXReader/EXReader/build/sdk-provider
+2026-11-03T19:38:28.9554780Z [ 25%] Building C object CMakeFiles/reader_sqlite3.dir/_deps/exreader_sqlite_source-src/sqlite3.c.o
+2026-11-03T19:38:49.6704040Z [ 50%] Linking C shared library libreader_sqlite3.dylib
+2026-11-03T19:38:49.8049730Z [ 50%] Built target reader_sqlite3
+2026-11-03T19:38:49.8296490Z [ 75%] Building C object CMakeFiles/sqlite-provider-check.dir/test_provider.c.o
+2026-11-03T19:38:49.8955980Z [100%] Linking C executable sqlite-provider-check
+2026-11-03T19:38:49.9493080Z [100%] Built target sqlite-provider-check
+2026-11-03T19:38:50.0077720Z Test project /Users/runner/work/EXReader/EXReader/build/sdk-provider
+2026-11-03T19:38:50.0098770Z     Start 1: sqlite-provider-check
+2026-11-03T19:38:50.0134310Z 1/1 Test #1: sqlite-provider-check ............   Passed    0.00 sec
+2026-11-03T19:38:50.0138330Z 
+2026-11-03T19:38:50.0139050Z 100% tests passed out of 1
+2026-11-03T19:38:50.0139780Z 
+2026-11-03T19:38:50.0140290Z Label Time Summary:
+2026-11-03T19:38:50.0141150Z FTS5           =   0.00 sec*proc (1 test)
+2026-11-03T19:38:50.0142200Z SDKContract    =   0.00 sec*proc (1 test)
+2026-11-03T19:38:50.0142900Z 
+2026-11-03T19:38:50.0149800Z Total Test time (real) =   0.01 sec
+2026-11-03T19:38:50.0222720Z -- Install configuration: "Release"
+2026-11-03T19:38:50.0223780Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader-sqlite/provider.json
+2026-11-03T19:38:50.0226380Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libreader_sqlite3.1.0.0.dylib
+2026-11-03T19:38:50.0229960Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libreader_sqlite3.1.dylib
+2026-11-03T19:38:50.0233040Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libreader_sqlite3.dylib
+2026-11-03T19:38:50.0235760Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exreader-sqlite/sqlite3.h
+2026-11-03T19:38:50.0238450Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exreader-sqlite/sqlite3ext.h
+2026-11-03T19:38:50.0240520Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader-sqlite/sqlite-public-domain.txt
+2026-11-03T19:38:50.0242870Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderTargets.cmake
+2026-11-03T19:38:50.0246290Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderTargets-release.cmake
+2026-11-03T19:38:50.0248550Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderConfig.cmake
+2026-11-03T19:38:50.0250970Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderConfigVersion.cmake
+2026-11-03T19:38:50.0316690Z ##[group]Run cmake -S . -B build/sdk-core -DCMAKE_BUILD_TYPE=Release \
+2026-11-03T19:38:50.0317180Z [36;1mcmake -S . -B build/sdk-core -DCMAKE_BUILD_TYPE=Release \[0m
+2026-11-03T19:38:50.0317730Z [36;1m  -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_USE_SHARED_SQLITE_PROVIDER=ON \[0m
+2026-11-03T19:38:50.0318360Z [36;1m  -DEXReaderSQLiteProvider_DIR="$PWD/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider" \[0m
+2026-11-03T19:38:50.0318960Z [36;1m  -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AUDIO=OFF \[0m
+2026-11-03T19:38:50.0319500Z [36;1m  -DEXR_ENABLE_PDF=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_ICC=OFF \[0m
+2026-11-03T19:38:50.0320090Z [36;1m  -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF[0m
+2026-11-03T19:38:50.0320510Z [36;1mcmake --build build/sdk-core --parallel 3[0m
+2026-11-03T19:38:50.0320940Z [36;1mcmake --install build/sdk-core[0m
+2026-11-03T19:38:50.0321570Z [36;1mcmake -S apps/reader/store/native -B build/sdk-catalog -DCMAKE_BUILD_TYPE=Release \[0m
+2026-11-03T19:38:50.0322190Z [36;1m  -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_USE_SHARED_SQLITE_PROVIDER=ON \[0m
+2026-11-03T19:38:50.0322750Z [36;1m  -DEXReaderSQLiteProvider_DIR="$PWD/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider"[0m
+2026-11-03T19:38:50.0323280Z [36;1mcmake --build build/sdk-catalog --parallel 3[0m
+2026-11-03T19:38:50.0323670Z [36;1mcmake --install build/sdk-catalog[0m
+2026-11-03T19:38:50.0419120Z shell: /bin/bash -e {0}
+2026-11-03T19:38:50.0420040Z ##[endgroup]
+2026-11-03T19:38:50.2671390Z -- The C compiler identification is AppleClang 15.0.0.15000309
+2026-11-03T19:38:50.3107210Z -- Detecting C compiler ABI info
+2026-11-03T19:38:50.4557120Z -- Detecting C compiler ABI info - done
+2026-11-03T19:38:50.4715680Z -- Check for working C compiler: /usr/bin/cc - skipped
+2026-11-03T19:38:50.4724040Z -- Detecting C compile features
+2026-11-03T19:38:50.4730860Z -- Detecting C compile features - done
+2026-11-03T19:38:51.7224470Z -- Found PkgConfig: /opt/homebrew/bin/pkg-config (found version "3.0.6")
+2026-11-03T19:38:51.7248710Z -- Looking for unistd.h
+2026-11-03T19:38:51.9383940Z -- Looking for unistd.h - found
+2026-11-03T19:38:51.9412110Z -- Looking for fcntl.h
+2026-11-03T19:38:52.1596070Z -- Looking for fcntl.h - found
+2026-11-03T19:38:53.5611000Z -- Looking for dlfcn.h
+2026-11-03T19:38:53.7592190Z -- Looking for dlfcn.h - found
+2026-11-03T19:38:53.7648690Z -- Looking for inttypes.h
+2026-11-03T19:38:53.9274330Z -- Looking for inttypes.h - found
+2026-11-03T19:38:53.9277350Z -- Looking for memory.h
+2026-11-03T19:38:54.0796500Z -- Looking for memory.h - found
+2026-11-03T19:38:54.0797210Z -- Looking for stdint.h
+2026-11-03T19:38:54.2279260Z -- Looking for stdint.h - found
+2026-11-03T19:38:54.2280080Z -- Looking for stdlib.h
+2026-11-03T19:38:54.4496000Z -- Looking for stdlib.h - found
+2026-11-03T19:38:54.4496710Z -- Looking for strings.h
+2026-11-03T19:38:54.5912450Z -- Looking for strings.h - found
+2026-11-03T19:38:54.5913450Z -- Looking for string.h
+2026-11-03T19:38:54.7540260Z -- Looking for string.h - found
+2026-11-03T19:38:54.7641730Z -- Looking for sys/stat.h
+2026-11-03T19:38:54.9452060Z -- Looking for sys/stat.h - found
+2026-11-03T19:38:54.9453010Z -- Looking for sys/types.h
+2026-11-03T19:38:55.0992040Z -- Looking for sys/types.h - found
+2026-11-03T19:38:55.0999380Z -- Looking for getpagesize
+2026-11-03T19:38:55.2672330Z -- Looking for getpagesize - found
+2026-11-03T19:38:55.2676870Z -- Looking for mmap
+2026-11-03T19:38:55.4275970Z -- Looking for mmap - found
+2026-11-03T19:38:55.4282140Z -- Looking for getrandom
+2026-11-03T19:38:55.5382360Z -- Looking for getrandom - not found
+2026-11-03T19:38:55.5387920Z -- Performing Test HAVE_ARC4RANDOM_BUF
+2026-11-03T19:38:55.6966240Z -- Performing Test HAVE_ARC4RANDOM_BUF - Success
+2026-11-03T19:38:55.6967070Z -- Performing Test HAVE_ARC4RANDOM
+2026-11-03T19:38:55.8675160Z -- Performing Test HAVE_ARC4RANDOM - Success
+2026-11-03T19:38:55.8677480Z -- Looking for 4 include files stdlib.h, ..., float.h
+2026-11-03T19:38:56.0223690Z -- Looking for 4 include files stdlib.h, ..., float.h - found
+2026-11-03T19:38:56.0224770Z -- Performing Test HAVE_OFF_T
+2026-11-03T19:38:56.1703050Z -- Performing Test HAVE_OFF_T - Success
+2026-11-03T19:38:56.1703650Z -- Performing Test HAVE_GETENTROPY
+2026-11-03T19:38:56.3292840Z -- Performing Test HAVE_GETENTROPY - Success
+2026-11-03T19:38:56.3294120Z -- Performing Test HAVE_SYSCALL_GETRANDOM
+2026-11-03T19:38:56.4618990Z -- Performing Test HAVE_SYSCALL_GETRANDOM - Failed
+2026-11-03T19:38:56.4623090Z -- Performing Test _FLAG_DETECTION_UNUSABLE
+2026-11-03T19:38:56.5413210Z -- Performing Test _FLAG_DETECTION_UNUSABLE - Failed
+2026-11-03T19:38:56.5418200Z -- Performing Test FLAG_WSTRICT_ALIASING
+2026-11-03T19:38:56.6796880Z -- Performing Test FLAG_WSTRICT_ALIASING - Failed
+2026-11-03T19:38:56.6801120Z -- Performing Test FLAG_WIMPLICIT_FALLTHROUGH
+2026-11-03T19:38:56.8265310Z -- Performing Test FLAG_WIMPLICIT_FALLTHROUGH - Success
+2026-11-03T19:38:56.8269450Z -- Performing Test FLAG_VISIBILITY
+2026-11-03T19:38:56.9641010Z -- Performing Test FLAG_VISIBILITY - Success
+2026-11-03T19:38:56.9641910Z -- Looking for cos in m
+2026-11-03T19:38:57.1136840Z -- Looking for cos in m - found
+2026-11-03T19:38:57.1211580Z -- ===========================================================================
+2026-11-03T19:38:57.1212610Z -- 
+2026-11-03T19:38:57.1213820Z -- CMake version in use ......... 4.4.3
+2026-11-03T19:38:57.1214550Z -- 
+2026-11-03T19:38:57.1215070Z -- Configuration
+2026-11-03T19:38:57.1215770Z --   Generator .................. Unix Makefiles
+2026-11-03T19:38:57.1217400Z --   Build type ................. Release
+2026-11-03T19:38:57.1218510Z --   Prefix ..................... /Users/runner/work/EXReader/EXReader/build/sdk-stage
+2026-11-03T19:38:57.1219570Z --   Shared libraries ........... OFF
+2026-11-03T19:38:57.1220260Z --   Character type ............. char (UTF-8)
+2026-11-03T19:38:57.1221080Z --   Library name postfix ....... 
+2026-11-03T19:38:57.1221690Z -- 
+2026-11-03T19:38:57.1222360Z --   Build documentation ........ OFF
+2026-11-03T19:38:57.1222910Z --   Build examples ............. OFF
+2026-11-03T19:38:57.1223560Z --   Build fuzzers .............. OFF
+2026-11-03T19:38:57.1224310Z --   Build tests ................ OFF
+2026-11-03T19:38:57.1224960Z --   Build tools (xmlwf) ........ OFF
+2026-11-03T19:38:57.1225700Z --   Build pkg-config file ...... ON
+2026-11-03T19:38:57.1227150Z --   Install files .............. OFF
+2026-11-03T19:38:57.1227760Z -- 
+2026-11-03T19:38:57.1228200Z --   Features
+2026-11-03T19:38:57.1228760Z --     // Advanced options, changes not advised
+2026-11-03T19:38:57.1229510Z --     Context bytes ............ 1024
+2026-11-03T19:38:57.1230040Z --     DTD support .............. ON
+2026-11-03T19:38:57.1230750Z --     General entities ......... ON
+2026-11-03T19:38:57.1231390Z --     Large size ............... OFF
+2026-11-03T19:38:57.1232140Z --     Namespace support ........ ON
+2026-11-03T19:38:57.1232750Z -- 
+2026-11-03T19:38:57.1233290Z --   Entropy sources
+2026-11-03T19:38:57.1233740Z --     arc4random ............... 1
+2026-11-03T19:38:57.1234290Z --     arc4random_buf ........... 1
+2026-11-03T19:38:57.1234890Z --     getentropy ............... 1
+2026-11-03T19:38:57.1236130Z --     getrandom ................ 
+2026-11-03T19:38:57.1236750Z --     syscall SYS_getrandom .... 
+2026-11-03T19:38:57.1237470Z --     /dev/urandom ............. OFF
+2026-11-03T19:38:57.1238080Z -- 
+2026-11-03T19:38:57.1238440Z -- Continue with
+2026-11-03T19:38:57.1239040Z --   make
+2026-11-03T19:38:57.1239400Z -- 
+2026-11-03T19:38:57.1239830Z -- ===========================================================================
+2026-11-03T19:38:57.8335100Z CMake Warning (deprecated) at build/sdk-core/_deps/miniz-src/CMakeLists.txt:1 (cmake_minimum_required):
+2026-11-03T19:38:57.8336420Z   Compatibility with CMake < 3.10 will be removed from a future version of
+2026-11-03T19:38:57.8337510Z   CMake.
+2026-11-03T19:38:57.8337640Z 
+2026-11-03T19:38:57.8338260Z   Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+2026-11-03T19:38:57.8338860Z   to tell CMake that the project requires at least <min> but has been updated
+2026-11-03T19:38:57.8339310Z   to work with policies introduced by <max> or earlier.
+2026-11-03T19:38:57.8339730Z This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+2026-11-03T19:38:57.8340110Z to suppress it.
+2026-11-03T19:38:57.8340220Z 
+2026-11-03T19:38:57.8370800Z -- Performing Test COMPILER_HAS_HIDDEN_VISIBILITY
+2026-11-03T19:38:57.9795470Z -- Performing Test COMPILER_HAS_HIDDEN_VISIBILITY - Success
+2026-11-03T19:38:57.9802470Z -- Performing Test COMPILER_HAS_HIDDEN_INLINE_VISIBILITY
+2026-11-03T19:38:58.1448150Z -- Performing Test COMPILER_HAS_HIDDEN_INLINE_VISIBILITY - Success
+2026-11-03T19:38:58.1450260Z -- Performing Test COMPILER_HAS_DEPRECATED_ATTR
+2026-11-03T19:38:58.2854570Z -- Performing Test COMPILER_HAS_DEPRECATED_ATTR - Success
+2026-11-03T19:38:59.3656360Z -- Configuring done (9.3s)
+2026-11-03T19:38:59.4443870Z -- Generating done (0.1s)
+2026-11-03T19:38:59.4463020Z -- Build files have been written to: /Users/runner/work/EXReader/EXReader/build/sdk-core
+2026-11-03T19:38:59.5031940Z [  1%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/autofit/autofit.c.o
+2026-11-03T19:38:59.5040470Z [  1%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xcs.c.o
+2026-11-03T19:38:59.5070630Z [  2%] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz.c.o
+2026-11-03T19:38:59.5542730Z [  3%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmlparse.c.o
+2026-11-03T19:38:59.6349200Z [  3%] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz_zip.c.o
+2026-11-03T19:39:00.1303750Z [  4%] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz_tinfl.c.o
+2026-11-03T19:39:00.3382010Z [  5%] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz_tdef.c.o
+2026-11-03T19:39:00.4335330Z [  6%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbase.c.o
+2026-11-03T19:39:00.5002920Z [  7%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmlrole.c.o
+2026-11-03T19:39:00.6072480Z [  7%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmltok.c.o
+2026-11-03T19:39:00.7245210Z [  8%] Linking C static library libminiz.a
+2026-11-03T19:39:01.2723890Z [  8%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbbox.c.o
+2026-11-03T19:39:01.3416830Z [  9%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_arc4random.c.o
+2026-11-03T19:39:01.3791790Z [ 10%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbdf.c.o
+2026-11-03T19:39:01.4069590Z [ 11%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_arc4random_buf.c.o
+2026-11-03T19:39:01.4552030Z [ 12%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbitmap.c.o
+2026-11-03T19:39:01.4692110Z [ 13%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_getentropy.c.o
+2026-11-03T19:39:01.5259300Z [ 13%] Linking C static library libexpat.a
+2026-11-03T19:39:01.6247690Z [ 14%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftcid.c.o
+2026-11-03T19:39:01.7032760Z [ 14%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftfstype.c.o
+2026-11-03T19:39:01.7805230Z [ 15%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftgasp.c.o
+2026-11-03T19:39:01.8591840Z [ 16%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftglyph.c.o
+2026-11-03T19:39:01.9624560Z [ 17%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftgxval.c.o
+2026-11-03T19:39:02.0342320Z [ 17%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftinit.c.o
+2026-11-03T19:39:02.0623970Z /usr/bin/ar qc libminiz.a CMakeFiles/miniz.dir/miniz.c.o CMakeFiles/miniz.dir/miniz_zip.c.o CMakeFiles/miniz.dir/miniz_tinfl.c.o CMakeFiles/miniz.dir/miniz_tdef.c.o
+2026-11-03T19:39:02.0726160Z /usr/bin/ranlib libminiz.a
+2026-11-03T19:39:02.0827750Z [ 17%] Built target miniz
+2026-11-03T19:39:02.0989700Z [ 17%] Building C object CMakeFiles/exr_layout_objects.dir/src/chapter_reader.c.o
+2026-11-03T19:39:02.1069980Z [ 17%] Built target expat
+2026-11-03T19:39:02.1134580Z [ 18%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftmm.c.o
+2026-11-03T19:39:02.1309260Z [ 18%] Building C object CMakeFiles/exr_render_objects.dir/src/raster.c.o
+2026-11-03T19:39:02.1968730Z [ 19%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftotval.c.o
+2026-11-03T19:39:02.2888990Z [ 20%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftpatent.c.o
+2026-11-03T19:39:02.3009860Z [ 21%] Building C object CMakeFiles/exr_layout_objects.dir/src/display_bidi.c.o
+2026-11-03T19:39:02.3486050Z [ 21%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftpfr.c.o
+2026-11-03T19:39:02.3571510Z [ 21%] Built target exr_render_objects
+2026-11-03T19:39:02.3819960Z [ 22%] Building C object CMakeFiles/exr_library_objects.dir/src/library.c.o
+2026-11-03T19:39:02.4077300Z [ 23%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftstroke.c.o
+2026-11-03T19:39:02.4607770Z [ 24%] Building C object CMakeFiles/exr_layout_objects.dir/src/floats.c.o
+2026-11-03T19:39:02.5429040Z [ 24%] Building C object CMakeFiles/exr_layout_objects.dir/src/flow.c.o
+2026-11-03T19:39:02.6351690Z [ 25%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftsynth.c.o
+2026-11-03T19:39:02.7162560Z [ 26%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/fttype1.c.o
+2026-11-03T19:39:02.7755790Z [ 26%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftwinfnt.c.o
+2026-11-03T19:39:02.8004540Z [ 27%] Building C object CMakeFiles/exr_layout_objects.dir/src/inline.c.o
+2026-11-03T19:39:02.8169250Z [ 27%] Built target exr_library_objects
+2026-11-03T19:39:02.8370200Z [ 28%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/bdf/bdf.c.o
+2026-11-03T19:39:02.8442540Z [ 28%] Building C object CMakeFiles/exr_textindex_objects.dir/src/text_index.c.o
+2026-11-03T19:39:02.9588560Z [ 28%] Built target exr_textindex_objects
+2026-11-03T19:39:02.9834780Z [ 29%] Building C object CMakeFiles/exr_base_objects.dir/src/case.c.o
+2026-11-03T19:39:03.0850610Z [ 30%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/bzip2/ftbzip2.c.o
+2026-11-03T19:39:03.1345670Z [ 31%] Building C object CMakeFiles/exr_base_objects.dir/src/common.c.o
+2026-11-03T19:39:03.1391520Z [ 32%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cache/ftcache.c.o
+2026-11-03T19:39:03.3011990Z [ 32%] Building C object CMakeFiles/exr_base_objects.dir/src/core.c.o
+2026-11-03T19:39:03.3918510Z [ 33%] Building C object CMakeFiles/exr_base_objects.dir/src/map.c.o
+2026-11-03T19:39:03.4602510Z [ 34%] Building C object CMakeFiles/exr_base_objects.dir/src/memory.c.o
+2026-11-03T19:39:03.4937050Z [ 34%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cff/cff.c.o
+2026-11-03T19:39:03.5274900Z [ 35%] Building C object CMakeFiles/exr_base_objects.dir/src/normalize.c.o
+2026-11-03T19:39:03.6495300Z [ 35%] Building C object CMakeFiles/exr_base_objects.dir/src/numbering.c.o
+2026-11-03T19:39:03.7198770Z [ 36%] Building C object CMakeFiles/exr_base_objects.dir/src/source.c.o
+2026-11-03T19:39:03.7600790Z [ 37%] Building C object CMakeFiles/exr_base_objects.dir/src/transfer.c.o
+2026-11-03T19:39:03.8491300Z [ 38%] Building C object CMakeFiles/exr_base_objects.dir/src/viewport.c.o
+2026-11-03T19:39:03.8492450Z [ 39%] Building C object CMakeFiles/exr_layout_objects.dir/src/layout.c.o
+2026-11-03T19:39:03.9112110Z [ 39%] Built target exr_base_objects
+2026-11-03T19:39:03.9336230Z [ 40%] Building C object CMakeFiles/exr_graphics_objects.dir/src/affine_image.c.o
+2026-11-03T19:39:03.9701660Z [ 41%] Building C object CMakeFiles/exr_layout_objects.dir/src/pager.c.o
+2026-11-03T19:39:04.0851460Z [ 42%] Building C object CMakeFiles/exr_graphics_objects.dir/src/blend.c.o
+2026-11-03T19:39:04.0890870Z [ 43%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cid/type1cid.c.o
+2026-11-03T19:39:04.2886440Z [ 44%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/gzip/ftgzip.c.o
+2026-11-03T19:39:04.4404050Z [ 45%] Building C object CMakeFiles/exr_graphics_objects.dir/src/canvas.c.o
+2026-11-03T19:39:04.5208880Z [ 45%] Building C object CMakeFiles/exr_layout_objects.dir/src/pager_table.c.o
+2026-11-03T19:39:04.7317770Z [ 45%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/hvf/hvf.c.o
+2026-11-03T19:39:04.7665050Z [ 45%] Building C object CMakeFiles/exr_graphics_objects.dir/src/curves.c.o
+2026-11-03T19:39:04.7996540Z [ 46%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/lzw/ftlzw.c.o
+2026-11-03T19:39:04.8869800Z [ 47%] Building C object CMakeFiles/exr_graphics_objects.dir/src/dash.c.o
+2026-11-03T19:39:04.9170880Z [ 48%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pcf/pcf.c.o
+2026-11-03T19:39:05.0044030Z [ 49%] Building C object CMakeFiles/exr_graphics_objects.dir/src/icc.c.o
+2026-11-03T19:39:05.0662410Z [ 50%] Building C object CMakeFiles/exr_graphics_objects.dir/src/image_formats.c.o
+2026-11-03T19:39:05.1010000Z [ 51%] Building C object CMakeFiles/exr_layout_objects.dir/src/positioned.c.o
+2026-11-03T19:39:05.1172540Z [ 52%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pfr/pfr.c.o
+2026-11-03T19:39:05.1868630Z [ 52%] Building C object CMakeFiles/exr_graphics_objects.dir/src/images.c.o
+2026-11-03T19:39:05.2599320Z [ 53%] Building C object CMakeFiles/exr_layout_objects.dir/src/publication.c.o
+2026-11-03T19:39:05.3870770Z [ 54%] Building C object CMakeFiles/exr_layout_objects.dir/src/ruby.c.o
+2026-11-03T19:39:05.4432490Z [ 54%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/psaux/psaux.c.o
+2026-11-03T19:39:05.5973260Z [ 54%] Building C object CMakeFiles/exr_layout_objects.dir/src/style.c.o
+2026-11-03T19:39:06.0106940Z [ 54%] Built target exr_layout_objects
+2026-11-03T19:39:06.0283230Z [ 55%] Building C object CMakeFiles/exr_graphics_objects.dir/src/stroke.c.o
+2026-11-03T19:39:06.1804530Z [ 56%] Building C object CMakeFiles/exr_doc_objects.dir/src/anchor.c.o
+2026-11-03T19:39:06.4952220Z [ 57%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pshinter/pshinter.c.o
+2026-11-03T19:39:06.5367800Z [ 58%] Building C object CMakeFiles/exr_doc_objects.dir/src/annotation.c.o
+2026-11-03T19:39:06.6018370Z [ 59%] Building C object CMakeFiles/exr_graphics_objects.dir/src/vector.c.o
+2026-11-03T19:39:06.6839750Z [ 60%] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi.c.o
+2026-11-03T19:39:06.7172320Z [ 60%] Built target exr_graphics_objects
+2026-11-03T19:39:06.7713330Z [ 61%] Building C object CMakeFiles/exr_formats_objects.dir/src/docx.c.o
+2026-11-03T19:39:07.0074930Z [ 61%] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_text.c.o
+2026-11-03T19:39:07.0197230Z [ 62%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/psnames/psnames.c.o
+2026-11-03T19:39:07.1791950Z [ 63%] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_index.c.o
+2026-11-03T19:39:07.2009440Z [ 64%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/raster/raster.c.o
+2026-11-03T19:39:07.2836120Z [ 65%] Building C object CMakeFiles/exr_formats_objects.dir/src/epub_write.c.o
+2026-11-03T19:39:07.3264760Z [ 66%] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_window.c.o
+2026-11-03T19:39:07.5462030Z [ 66%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/sdf/sdf.c.o
+2026-11-03T19:39:07.5911810Z [ 67%] Building C object CMakeFiles/exr_formats_objects.dir/src/export_epub.c.o
+2026-11-03T19:39:07.6918280Z [ 68%] Building C object CMakeFiles/exr_doc_objects.dir/src/construct.c.o
+2026-11-03T19:39:07.8100420Z [ 68%] Building C object CMakeFiles/exr_formats_objects.dir/src/export_text.c.o
+2026-11-03T19:39:07.8202210Z [ 68%] Building C object CMakeFiles/exr_doc_objects.dir/src/document.c.o
+2026-11-03T19:39:07.8937340Z [ 69%] Building C object CMakeFiles/exr_formats_objects.dir/src/fb2.c.o
+2026-11-03T19:39:07.9043700Z [ 70%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/sfnt/sfnt.c.o
+2026-11-03T19:39:07.9898110Z [ 71%] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed.c.o
+2026-11-03T19:39:08.0102200Z [ 72%] Building C object CMakeFiles/exr_formats_objects.dir/src/formats.c.o
+2026-11-03T19:39:08.1110250Z [ 73%] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed_text.c.o
+2026-11-03T19:39:08.1920970Z [ 73%] Built target exr_doc_objects
+2026-11-03T19:39:08.2375310Z [ 74%] Linking C static library libexr_base.a
+2026-11-03T19:39:08.3158810Z [ 74%] Built target exr_base
+2026-11-03T19:39:08.3489720Z [ 74%] Linking C static library libexr_graphics.a
+2026-11-03T19:39:08.4140950Z [ 74%] Built target exr_graphics
+2026-11-03T19:39:08.4527040Z [ 75%] Building C object CMakeFiles/exr_formats_objects.dir/src/huff.c.o
+2026-11-03T19:39:08.4631120Z [ 76%] Linking C static library libexr_textindex.a
+2026-11-03T19:39:08.5244290Z [ 76%] Built target exr_textindex
+2026-11-03T19:39:08.5360030Z [ 77%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/smooth/smooth.c.o
+2026-11-03T19:39:08.6108880Z [ 77%] Building C object CMakeFiles/exr_formats_objects.dir/src/kf8.c.o
+2026-11-03T19:39:08.7868110Z [ 78%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/svg/svg.c.o
+2026-11-03T19:39:08.9012050Z [ 78%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/truetype/truetype.c.o
+2026-11-03T19:39:09.0667890Z [ 79%] Building C object CMakeFiles/exr_formats_objects.dir/src/navigation.c.o
+2026-11-03T19:39:09.1305870Z [ 80%] Building C object CMakeFiles/exr_formats_objects.dir/src/rtf.c.o
+2026-11-03T19:39:09.1796020Z [ 81%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/type1/type1.c.o
+2026-11-03T19:39:09.5373270Z [ 82%] Building C object CMakeFiles/exr_formats_objects.dir/src/xmp.c.o
+2026-11-03T19:39:09.5588150Z [ 83%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/type42/type42.c.o
+2026-11-03T19:39:09.6548170Z [ 83%] Built target exr_formats_objects
+2026-11-03T19:39:09.6653080Z [ 84%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/winfonts/winfnt.c.o
+2026-11-03T19:39:09.7295290Z [ 84%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/builds/unix/ftsystem.c.o
+2026-11-03T19:39:09.7812440Z [ 85%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftdebug.c.o
+2026-11-03T19:39:10.4258470Z [ 86%] Linking C static library libfreetype.a
+2026-11-03T19:39:10.4920550Z [ 86%] Built target freetype
+2026-11-03T19:39:10.5230800Z [ 87%] Building C object CMakeFiles/exr_text_objects.dir/src/bidi.c.o
+2026-11-03T19:39:10.5355500Z [ 88%] Building C object CMakeFiles/exr_text_objects.dir/src/font_bitmap.c.o
+2026-11-03T19:39:10.5477190Z [ 88%] Building C object CMakeFiles/exr_text_objects.dir/src/font_color.c.o
+2026-11-03T19:39:10.6246620Z [ 89%] Building C object CMakeFiles/exr_text_objects.dir/src/font_colr_v1.c.o
+2026-11-03T19:39:10.7659270Z [ 91%] Building C object CMakeFiles/exr_text_objects.dir/src/font_path.c.o
+2026-11-03T19:39:10.7760720Z [ 90%] Building C object CMakeFiles/exr_text_objects.dir/src/font_outline.c.o
+2026-11-03T19:39:10.7868640Z [ 91%] Building C object CMakeFiles/exr_text_objects.dir/src/font_svg.c.o
+2026-11-03T19:39:10.8301130Z [ 92%] Building C object CMakeFiles/exr_text_objects.dir/src/fonts.c.o
+2026-11-03T19:39:10.8413910Z [ 93%] Building C object CMakeFiles/exr_text_objects.dir/src/hyphen.c.o
+2026-11-03T19:39:10.9464970Z [ 94%] Building C object CMakeFiles/exr_text_objects.dir/src/opentype.c.o
+2026-11-03T19:39:11.3068700Z [ 94%] Building C object CMakeFiles/exr_text_objects.dir/src/text.c.o
+2026-11-03T19:39:11.3797320Z [ 95%] Building C object CMakeFiles/exr_text_objects.dir/src/variable.c.o
+2026-11-03T19:39:11.9779490Z [ 95%] Built target exr_text_objects
+2026-11-03T19:39:12.0018510Z [ 96%] Linking C static library libexr_text.a
+2026-11-03T19:39:12.0523480Z [ 96%] Built target exr_text
+2026-11-03T19:39:12.0815290Z [ 96%] Linking C static library libexr_doc.a
+2026-11-03T19:39:12.1439310Z [ 96%] Built target exr_doc
+2026-11-03T19:39:12.1749560Z [ 96%] Linking C static library libexr_formats.a
+2026-11-03T19:39:12.2349900Z [ 96%] Built target exr_formats
+2026-11-03T19:39:12.2569020Z [ 97%] Linking C static library libexr_layout.a
+2026-11-03T19:39:12.2594050Z [ 98%] Linking C static library libexr_library.a
+2026-11-03T19:39:12.3297260Z [ 98%] Built target exr_library
+2026-11-03T19:39:12.3383870Z [ 98%] Built target exr_layout
+2026-11-03T19:39:12.3562050Z [ 99%] Linking C static library libexr_render.a
+2026-11-03T19:39:12.3931730Z [ 99%] Built target exr_render
+2026-11-03T19:39:12.4141290Z [100%] Linking C shared library libexreader.dylib
+2026-11-03T19:39:12.4513920Z ld: warning: ignoring duplicate libraries: 'libexr_base.a', 'libexr_doc.a', 'libexr_formats.a', 'libexr_graphics.a', 'libexr_layout.a', 'libexr_text.a'
+2026-11-03T19:39:12.5039730Z [100%] Built target exreader
+2026-11-03T19:39:12.5231660Z -- Install configuration: "Release"
+2026-11-03T19:39:12.5234300Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexreader.3.41.0.dylib
+2026-11-03T19:39:12.5236120Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexreader.1.dylib
+2026-11-03T19:39:13.0622400Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexreader.dylib
+2026-11-03T19:39:13.0623300Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexr_base.a
+2026-11-03T19:39:13.0749190Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexr_graphics.a
+2026-11-03T19:39:13.0880810Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexr_text.a
+2026-11-03T19:39:13.1009890Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexr_doc.a
+2026-11-03T19:39:13.1160420Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexr_formats.a
+2026-11-03T19:39:13.1331580Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexr_layout.a
+2026-11-03T19:39:13.1480930Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexr_render.a
+2026-11-03T19:39:13.1657610Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexr_library.a
+2026-11-03T19:39:13.1773330Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/libexr_textindex.a
+2026-11-03T19:39:13.1879250Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/cmake/EXReader/EXReaderTargets.cmake
+2026-11-03T19:39:13.1880910Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/cmake/EXReader/EXReaderTargets-release.cmake
+2026-11-03T19:39:13.1882750Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/cmake/EXReader/EXReaderConfig.cmake
+2026-11-03T19:39:13.1884730Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/cmake/EXReader/EXReaderConfigVersion.cmake
+2026-11-03T19:39:13.1886300Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exreader.h
+2026-11-03T19:39:13.1887830Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr
+2026-11-03T19:39:13.1888710Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/core.h
+2026-11-03T19:39:13.1890880Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/formats.h
+2026-11-03T19:39:13.1892270Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/text.h
+2026-11-03T19:39:13.1893640Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/library.h
+2026-11-03T19:39:13.1895040Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/audio.h
+2026-11-03T19:39:13.1896560Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/layout.h
+2026-11-03T19:39:13.1897930Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/document.h
+2026-11-03T19:39:13.1899800Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/pdf_edit.h
+2026-11-03T19:39:13.1900990Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/graphics.h
+2026-11-03T19:39:13.1902340Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/pdf.h
+2026-11-03T19:39:13.1903770Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/textindex.h
+2026-11-03T19:39:13.1905630Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/render.h
+2026-11-03T19:39:13.1906860Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/exr/base.h
+2026-11-03T19:39:13.1909300Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/exreader/libexr_vendor_miniz.a
+2026-11-03T19:39:13.1910720Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/exreader/libexr_vendor_expat.a
+2026-11-03T19:39:13.1912580Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/exreader/libexr_vendor_freetype.a
+2026-11-03T19:39:13.1914340Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/lib/cmake/EXReader/EXReaderDependencies.cmake
+2026-11-03T19:39:13.1916690Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/LICENSE
+2026-11-03T19:39:13.1918380Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/THIRD_PARTY_NOTICES.md
+2026-11-03T19:39:13.1922140Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/licenses/freetype/FTL.TXT
+2026-11-03T19:39:13.1924280Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/licenses/freetype/LICENSE.TXT
+2026-11-03T19:39:13.1927570Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/licenses/expat/COPYING
+2026-11-03T19:39:13.1929940Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/licenses/expat/upstream-root/COPYING
+2026-11-03T19:39:13.1933430Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/licenses/miniz/LICENSE
+2026-11-03T19:39:13.1935550Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/licenses/stb/LICENSE
+2026-11-03T19:39:13.1937800Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/licenses/sqlite/sqlite-public-domain.txt
+2026-11-03T19:39:13.1940170Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/licenses/unicode/LICENSE.txt
+2026-11-03T19:39:13.1942640Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/licenses/pdf-font-data/adobe-glyph-list.txt
+2026-11-03T19:39:13.1943850Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/licenses/pdf-font-data/pdfjs.txt
+2026-11-03T19:39:13.1945690Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/README.md
+2026-11-03T19:39:13.1946930Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/CHANGELOG.md
+2026-11-03T19:39:13.1948630Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/LICENSE
+2026-11-03T19:39:13.1949950Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/THIRD_PARTY_NOTICES.md
+2026-11-03T19:39:13.1952190Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/VERSIONING.md
+2026-11-03T19:39:13.1953610Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/SDK_COMPATIBILITY.md
+2026-11-03T19:39:13.1955290Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/SUPPORT_MATRIX.md
+2026-11-03T19:39:13.1957110Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/WP7-SCRIPTS.md
+2026-11-03T19:39:13.1958500Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/WP8_COLR_V1.md
+2026-11-03T19:39:13.1960090Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/WP8_SVG_FONTS.md
+2026-11-03T19:39:13.1962130Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/WP12A-FORMATS.md
+2026-11-03T19:39:13.1963320Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/WP12A-STREAMING.md
+2026-11-03T19:39:13.1964840Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/CONVERSION.md
+2026-11-03T19:39:13.1966320Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/WP6-BOUNDED-READER.md
+2026-11-03T19:39:13.1967820Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/NATIVE_API.md
+2026-11-03T19:39:13.1969450Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/NATIVE_VALIDATION.md
+2026-11-03T19:39:13.1970750Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/PERFORMANCE.md
+2026-11-03T19:39:13.1972330Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/native-page.png
+2026-11-03T19:39:13.1973940Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/styled-page.png
+2026-11-03T19:39:13.1975580Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/docs/complex-text.png
+2026-11-03T19:39:13.1977790Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/share/exreader/licenses/wp7-fonts/noto-sans-test-fonts.txt
+2026-11-03T19:39:13.1978990Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples
+2026-11-03T19:39:13.1980060Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple
+2026-11-03T19:39:13.1981310Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostSearch.swift
+2026-11-03T19:39:13.1982880Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/LegacySelfTest.swift
+2026-11-03T19:39:13.1984570Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostAccount.swift
+2026-11-03T19:39:13.1985980Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/SelectableText.swift
+2026-11-03T19:39:13.1987230Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostRaw3Review.swift
+2026-11-03T19:39:13.1989480Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostModel.swift
+2026-11-03T19:39:13.2000650Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostWave3Review.swift
+2026-11-03T19:39:13.2003030Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostSearchViews.swift
+2026-11-03T19:39:13.2004060Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostCatalog.swift
+2026-11-03T19:39:13.2004670Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/product
+2026-11-03T19:39:13.2006460Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/product/ReaderProduct.h
+2026-11-03T19:39:13.2007230Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/product/module.modulemap
+2026-11-03T19:39:13.2010250Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/product/ProductSQLite.h
+2026-11-03T19:39:13.2010960Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostNavigationViews.swift
+2026-11-03T19:39:13.2011630Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostAccountViews.swift
+2026-11-03T19:39:13.2012250Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostWave3Views.swift
+2026-11-03T19:39:13.2014660Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostSDK.swift
+2026-11-03T19:39:13.2015300Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostNavigation.swift
+2026-11-03T19:39:13.2016060Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostReadingRecordViews.swift
+2026-11-03T19:39:13.2017910Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/ReaderApp.swift
+2026-11-03T19:39:13.2018550Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostPageThemeViews.swift
+2026-11-03T19:39:13.2019750Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostReadingRecords.swift
+2026-11-03T19:39:13.2020570Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostViews.swift
+2026-11-03T19:39:13.2021300Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/apple/HostWave3.swift
+2026-11-03T19:39:13.2021910Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/CMakeLists.txt
+2026-11-03T19:39:13.2023240Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/compat.c
+2026-11-03T19:39:13.2024500Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/lazy.c
+2026-11-03T19:39:13.2025080Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/wave.c
+2026-11-03T19:39:13.2025710Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/font.c
+2026-11-03T19:39:13.2027930Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/pcm.c
+2026-11-03T19:39:13.2029340Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/entry.h
+2026-11-03T19:39:13.2030120Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/search.c
+2026-11-03T19:39:13.2032060Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/construct.c
+2026-11-03T19:39:13.2034030Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/reader.c
+2026-11-03T19:39:13.2034770Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/page.c
+2026-11-03T19:39:13.2036460Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/hyphen.c
+2026-11-03T19:39:13.2037600Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/shaping.c
+2026-11-03T19:39:13.2039010Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fixed.c
+2026-11-03T19:39:13.2040350Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux
+2026-11-03T19:39:13.2041480Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/metadata.inc
+2026-11-03T19:39:13.2043330Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/reading.c
+2026-11-03T19:39:13.2044710Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/CMakeLists.txt
+2026-11-03T19:39:13.2047750Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/wave3_ui.inc
+2026-11-03T19:39:13.2049680Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/navigation_backend.inc
+2026-11-03T19:39:13.2052440Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/received.inc
+2026-11-03T19:39:13.2053090Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/batch_import_ui.inc
+2026-11-03T19:39:13.2056870Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/batch_import_backend.inc
+2026-11-03T19:39:13.2058960Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/metadata_ui.inc
+2026-11-03T19:39:13.2060130Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/navigation_ui.inc
+2026-11-03T19:39:13.2062030Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/collections_ui.inc
+2026-11-03T19:39:13.2063900Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/reader.c
+2026-11-03T19:39:13.2065000Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/reading.h
+2026-11-03T19:39:13.2066000Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/drop_import_ui.inc
+2026-11-03T19:39:13.2066650Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/accounts_ui.inc
+2026-11-03T19:39:13.2068740Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/reading_records_ui.inc
+2026-11-03T19:39:13.2069470Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/search_backend.inc
+2026-11-03T19:39:13.2071080Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/collections.inc
+2026-11-03T19:39:13.2072500Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/reading_records_backend.inc
+2026-11-03T19:39:13.2074540Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/search_ui.inc
+2026-11-03T19:39:13.2075740Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/preferences_ui.inc
+2026-11-03T19:39:13.2077130Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/accounts.inc
+2026-11-03T19:39:13.2079290Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/linux/wave3_backend.inc
+2026-11-03T19:39:13.2080080Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android
+2026-11-03T19:39:13.2081110Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app
+2026-11-03T19:39:13.2082000Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/build.gradle
+2026-11-03T19:39:13.2083340Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src
+2026-11-03T19:39:13.2084120Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/androidTest
+2026-11-03T19:39:13.2085180Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/androidTest/java
+2026-11-03T19:39:13.2086070Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/androidTest/java/org
+2026-11-03T19:39:13.2086960Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/androidTest/java/org/exreader
+2026-11-03T19:39:13.2088040Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/androidTest/java/org/exreader/host
+2026-11-03T19:39:13.2090170Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/androidTest/java/org/exreader/host/ProductFixture.java
+2026-11-03T19:39:13.2092430Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/androidTest/java/org/exreader/host/ShelfCatalogTest.java
+2026-11-03T19:39:13.2093370Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/androidTest/java/org/exreader/host/CatalogStoreTest.java
+2026-11-03T19:39:13.2095540Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/androidTest/java/org/exreader/host/OrganizationTest.java
+2026-11-03T19:39:13.2097310Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/androidTest/java/org/exreader/host/ProductOwnerTest.java
+2026-11-03T19:39:13.2100840Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/androidTest/java/org/exreader/host/ImportMappingTest.java
+2026-11-03T19:39:13.2101680Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main
+2026-11-03T19:39:13.2102370Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/res
+2026-11-03T19:39:13.2103140Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/res/layout
+2026-11-03T19:39:13.2103990Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/res/layout/activity_main.xml
+2026-11-03T19:39:13.2105090Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/res/values
+2026-11-03T19:39:13.2115330Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/res/values/styles.xml
+2026-11-03T19:39:13.2116150Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/res/values/strings.xml
+2026-11-03T19:39:13.2117500Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/res/values/ids.xml
+2026-11-03T19:39:13.2118300Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/AndroidManifest.xml
+2026-11-03T19:39:13.2118920Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java
+2026-11-03T19:39:13.2119490Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org
+2026-11-03T19:39:13.2120130Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader
+2026-11-03T19:39:13.2120840Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host
+2026-11-03T19:39:13.2121750Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/OrganizationPanel.java
+2026-11-03T19:39:13.2122600Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NavigationPanel.java
+2026-11-03T19:39:13.2123460Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/JumpPanel.java
+2026-11-03T19:39:13.2132760Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/AnnotationPanel.java
+2026-11-03T19:39:13.2133540Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/FixedSession.java
+2026-11-03T19:39:13.2134830Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ReadingRecord.java
+2026-11-03T19:39:13.2137860Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/PageTheme.java
+2026-11-03T19:39:13.2140260Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/FontPanel.java
+2026-11-03T19:39:13.2141490Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ReadingControl.java
+2026-11-03T19:39:13.2143490Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativeLibrary.java
+2026-11-03T19:39:13.2144360Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ReflowSession.java
+2026-11-03T19:39:13.2145350Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativeReadingSdk.java
+2026-11-03T19:39:13.2146220Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/Selection.java
+2026-11-03T19:39:13.2147030Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/BookStore.java
+2026-11-03T19:39:13.2147770Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/HostTask.java
+2026-11-03T19:39:13.2149430Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ReadingRequests.java
+2026-11-03T19:39:13.2150400Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/OrganizationStore.java
+2026-11-03T19:39:13.2151480Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/MainActivity.java
+2026-11-03T19:39:13.2152270Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/PageLoad.java
+2026-11-03T19:39:13.2153110Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativeCatalog.java
+2026-11-03T19:39:13.2154100Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/OriginalExportPanel.java
+2026-11-03T19:39:13.2154950Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/AccountStore.java
+2026-11-03T19:39:13.2155730Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/FontSelection.java
+2026-11-03T19:39:13.2156490Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/CatalogStore.java
+2026-11-03T19:39:13.2157390Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativeWave3.java
+2026-11-03T19:39:13.2158130Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/SearchPanel.java
+2026-11-03T19:39:13.2158870Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ReadingHistory.java
+2026-11-03T19:39:13.2159720Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ReadingCapture.java
+2026-11-03T19:39:13.2160490Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/IntentJournal.java
+2026-11-03T19:39:13.2161380Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativeCbz.java
+2026-11-03T19:39:13.2162140Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/Wave3Dialog.java
+2026-11-03T19:39:13.2163420Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/Wave3Host.java
+2026-11-03T19:39:13.2164600Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ShelfWindowMetrics.java
+2026-11-03T19:39:13.2166410Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ReadingPreferences.java
+2026-11-03T19:39:13.2168410Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativeReadingProduct.java
+2026-11-03T19:39:13.2169350Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/CatalogShelf.java
+2026-11-03T19:39:13.2171200Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativePreferences.java
+2026-11-03T19:39:13.2172650Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ReadingPanel.java
+2026-11-03T19:39:13.2173600Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ReaderView.java
+2026-11-03T19:39:13.2175080Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativeSearch.java
+2026-11-03T19:39:13.2176990Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativeOriginalExport.java
+2026-11-03T19:39:13.2179780Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/SyncController.java
+2026-11-03T19:39:13.2181260Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/SyncPanel.java
+2026-11-03T19:39:13.2188640Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativeSync.java
+2026-11-03T19:39:13.2190110Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativeNavigation.java
+2026-11-03T19:39:13.2191420Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/BoundedEpub.java
+2026-11-03T19:39:13.2192660Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ThemeReflow.java
+2026-11-03T19:39:13.2194240Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/SyncOriginal.java
+2026-11-03T19:39:13.2195100Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ImportController.java
+2026-11-03T19:39:13.2196150Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ShelfStatusView.java
+2026-11-03T19:39:13.2197680Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/Wave3Files.java
+2026-11-03T19:39:13.2199210Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/NativeFonts.java
+2026-11-03T19:39:13.2200890Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/PreferencesPanel.java
+2026-11-03T19:39:13.2202310Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java
+2026-11-03T19:39:13.2203650Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/PageSnapshot.java
+2026-11-03T19:39:13.2205390Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/host/ReadingVersion.java
+2026-11-03T19:39:13.2206550Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/EXReaderException.java
+2026-11-03T19:39:13.2208000Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/java/org/exreader/EXReader.java
+2026-11-03T19:39:13.2209250Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp
+2026-11-03T19:39:13.2210380Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/cbz_renderer_jni.inc
+2026-11-03T19:39:13.2211870Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/preferences_jni.inc
+2026-11-03T19:39:13.2213170Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/navigation_jni.inc
+2026-11-03T19:39:13.2214340Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/CMakeLists.txt
+2026-11-03T19:39:13.2215780Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/page_theme_jni.inc
+2026-11-03T19:39:13.2217040Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/wave3_product_jni.inc
+2026-11-03T19:39:13.2218270Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/bounded_epub_jni.inc
+2026-11-03T19:39:13.2220260Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/search_jni.inc
+2026-11-03T19:39:13.2221250Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/exreader_host_jni.c
+2026-11-03T19:39:13.2222770Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/wave3_sdk_jni.inc
+2026-11-03T19:39:13.2224240Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/reading_product_jni.inc
+2026-11-03T19:39:13.2225520Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/catalog_jni.cpp
+2026-11-03T19:39:13.2226920Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/sync_jni.cpp
+2026-11-03T19:39:13.2228550Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/main/cpp/reading_sdk_jni.inc
+2026-11-03T19:39:13.2229570Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/debug
+2026-11-03T19:39:13.2230360Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/debug/cpp
+2026-11-03T19:39:13.2231250Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/app/src/debug/cpp/catalog_fixture.inc
+2026-11-03T19:39:13.2232370Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/ci
+2026-11-03T19:39:13.2233300Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/ci/emulator.sh
+2026-11-03T19:39:13.2235460Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/.gitignore
+2026-11-03T19:39:13.2236480Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/build.gradle
+2026-11-03T19:39:13.2237630Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest
+2026-11-03T19:39:13.2238600Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/build.gradle
+2026-11-03T19:39:13.2240380Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src
+2026-11-03T19:39:13.2241160Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/androidTest
+2026-11-03T19:39:13.2242100Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/androidTest/java
+2026-11-03T19:39:13.2242950Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/androidTest/java/org
+2026-11-03T19:39:13.2243870Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/androidTest/java/org/exreader
+2026-11-03T19:39:13.2244710Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/androidTest/java/org/exreader/host
+2026-11-03T19:39:13.2245890Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/androidTest/java/org/exreader/host/uitest
+2026-11-03T19:39:13.2246870Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/OrganizationWalkthroughTest.java
+2026-11-03T19:39:13.2248060Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/HostWalkthroughTest.java
+2026-11-03T19:39:13.2249680Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/ShelfWalkthroughTest.java
+2026-11-03T19:39:13.2252090Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/HostReviewTest.java
+2026-11-03T19:39:13.2252960Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/main
+2026-11-03T19:39:13.2264300Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/uitest/src/main/AndroidManifest.xml
+2026-11-03T19:39:13.2265440Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/gradle.properties
+2026-11-03T19:39:13.2266090Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/android/settings.gradle
+2026-11-03T19:39:13.2267180Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/text.c
+2026-11-03T19:39:13.2267710Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/anchor.c
+2026-11-03T19:39:13.2268210Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/windows
+2026-11-03T19:39:13.2268840Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/windows/CMakeLists.txt
+2026-11-03T19:39:13.2269920Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/windows/README.md
+2026-11-03T19:39:13.2270550Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/window.c
+2026-11-03T19:39:13.2271160Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fixed-pages/pdf-public.pdf
+2026-11-03T19:39:13.2271800Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fixed-pages/pdf-public-text.pdf
+2026-11-03T19:39:13.2272930Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fixed-pages/comic.cbz
+2026-11-03T19:39:13.2274430Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts
+2026-11-03T19:39:13.2275580Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/oversize.ttf
+2026-11-03T19:39:13.2277150Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/uvs.ttf
+2026-11-03T19:39:13.2278800Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/pdf-cubic.otf
+2026-11-03T19:39:13.2280090Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/fallback.ttf
+2026-11-03T19:39:13.2282000Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/vertical-vrt2.ttf
+2026-11-03T19:39:13.2283370Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/pdf-names.ttf
+2026-11-03T19:39:13.2284830Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/bitmap.ttf
+2026-11-03T19:39:13.2286370Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/pdf-symbol.ttf
+2026-11-03T19:39:13.2287460Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/marks.ttf
+2026-11-03T19:39:13.2288820Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/cbdt.ttf
+2026-11-03T19:39:13.2290240Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/primary.ttf
+2026-11-03T19:39:13.2291390Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/colrv1.ttf
+2026-11-03T19:39:13.2292830Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/pdf-cid.otf
+2026-11-03T19:39:13.2294230Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/color.ttf
+2026-11-03T19:39:13.2295710Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/README.md
+2026-11-03T19:39:13.2297040Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/collection.ttc
+2026-11-03T19:39:13.2298700Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/svgfont.ttf
+2026-11-03T19:39:13.2300400Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/vertical-vert.ttf
+2026-11-03T19:39:13.2302080Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/variable.ttf
+2026-11-03T19:39:13.2303710Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/svgfont.json
+2026-11-03T19:39:13.2305540Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/colrv1-var.ttf
+2026-11-03T19:39:13.2307050Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/pdf-unicode.ttf
+2026-11-03T19:39:13.2308360Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/emoji.ttf
+2026-11-03T19:39:13.2309630Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/vertical-plain.ttf
+2026-11-03T19:39:13.2311670Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/fonts/glyph-only.ttf
+2026-11-03T19:39:13.2313880Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/shaping-fonts/shaping.ttf
+2026-11-03T19:39:13.2316210Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/shaping-fonts/README.md
+2026-11-03T19:39:13.2319380Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/audio/pcm.wav
+2026-11-03T19:39:13.2320880Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/audio/metadata.m4b
+2026-11-03T19:39:13.2324150Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/layout.epub
+2026-11-03T19:39:13.2324950Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-long.epub
+2026-11-03T19:39:13.2328580Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-canonical.epub
+2026-11-03T19:39:13.2330430Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-compound.epub
+2026-11-03T19:39:13.2331960Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-rewrite-long.epub
+2026-11-03T19:39:13.2333660Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-rematch-long.epub
+2026-11-03T19:39:13.2336020Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-boundary-ri.epub
+2026-11-03T19:39:13.2336660Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-bidi-long.epub
+2026-11-03T19:39:13.2339200Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-bidi-leading.epub
+2026-11-03T19:39:13.2341610Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-bidi-future-neutral.epub
+2026-11-03T19:39:13.2348850Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-insertion-long.epub
+2026-11-03T19:39:13.2350720Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-case-insertion.epub
+2026-11-03T19:39:13.2353480Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-stem-long.epub
+2026-11-03T19:39:13.2354760Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/hyphen-stem-case.epub
+2026-11-03T19:39:13.2355560Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/table-fragments-12.epub
+2026-11-03T19:39:13.2356250Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/float-both.epub
+2026-11-03T19:39:13.2356990Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/float-long-main.epub
+2026-11-03T19:39:13.2357710Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/examples/books/float-bfc-stream.epub
+2026-11-03T19:39:13.2358450Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/include/module.modulemap
+2026-11-03T19:39:13.2359030Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/bindings/swift
+2026-11-03T19:39:13.2359530Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/bindings/swift/EXReader.swift
+2026-11-03T19:39:13.2360170Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/bindings/swift/Smoke.swift
+2026-11-03T19:39:13.2361850Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/bindings/jni
+2026-11-03T19:39:13.2362510Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/bindings/jni/consumer-rules.pro
+2026-11-03T19:39:13.2364290Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/bindings/jni/EXReaderException.java
+2026-11-03T19:39:13.2366250Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/bindings/jni/Smoke.java
+2026-11-03T19:39:13.2367490Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/bindings/jni/exreader_jni.c
+2026-11-03T19:39:13.2369220Z -- Installing: /Users/runner/work/EXReader/EXReader/build/sdk-stage/bindings/jni/EXReader.java
+2026-11-03T19:39:13.3698820Z -- The C compiler identification is AppleClang 15.0.0.15000309
+2026-11-03T19:39:14.1511040Z -- The CXX compiler identification is AppleClang 15.0.0.15000309
+2026-11-03T19:39:14.1747230Z -- Detecting C compiler ABI info
+2026-11-03T19:39:14.3639100Z -- Detecting C compiler ABI info - done
+2026-11-03T19:39:14.3844630Z -- Check for working C compiler: /usr/bin/cc - skipped
+2026-11-03T19:39:14.3857170Z -- Detecting C compile features
+2026-11-03T19:39:14.3860770Z -- Detecting C compile features - done
+2026-11-03T19:39:14.3917570Z -- Detecting CXX compiler ABI info
+2026-11-03T19:39:14.5578740Z -- Detecting CXX compiler ABI info - done
+2026-11-03T19:39:14.5767740Z -- Check for working CXX compiler: /usr/bin/c++ - skipped
+2026-11-03T19:39:14.5772270Z -- Detecting CXX compile features
+2026-11-03T19:39:14.5794250Z -- Detecting CXX compile features - done
+2026-11-03T19:39:14.5906940Z -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+2026-11-03T19:39:14.8050850Z -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+2026-11-03T19:39:14.8152010Z -- Found Threads: TRUE
+2026-11-03T19:39:14.8253000Z -- Configuring done (1.6s)
+2026-11-03T19:39:14.8311950Z -- Generating done (0.0s)
+2026-11-03T19:39:14.8318010Z -- Build files have been written to: /Users/runner/work/EXReader/EXReader/build/sdk-catalog
+2026-11-03T19:39:14.8764340Z [ 10%] Building C object CMakeFiles/reader_catalog.dir/catalog.c.o
+2026-11-03T19:39:15.1407430Z [ 20%] Linking C static library libreader_catalog.a
+2026-11-03T19:39:15.1713420Z [ 20%] Built target reader_catalog
+2026-11-03T19:39:15.1903270Z [ 50%] Building CXX object CMakeFiles/reader_original_import.dir/Users/runner/work/EXReader/EXReader/apps/reader/original-import/original_import.cpp.o
+2026-11-03T19:39:15.1904990Z [ 50%] Building C object CMakeFiles/reader-originals-check.dir/Users/runner/work/EXReader/EXReader/tests/reader_catalog/originals_check.c.o
+2026-11-03T19:39:15.1913130Z [ 50%] Building C object CMakeFiles/reader-catalog-check.dir/Users/runner/work/EXReader/EXReader/tests/reader_catalog/native_catalog_check.c.o
+2026-11-03T19:39:15.2663440Z [ 60%] Linking C executable reader-originals-check
+2026-11-03T19:39:15.3109810Z [ 70%] Linking C executable reader-catalog-check
+2026-11-03T19:39:15.3331020Z [ 70%] Built target reader-originals-check
+2026-11-03T19:39:15.4387660Z [ 70%] Built target reader-catalog-check
+2026-11-03T19:39:16.3658870Z [ 80%] Linking CXX static library libreader_original_import.a
+2026-11-03T19:39:16.4080200Z [ 80%] Built target reader_original_import
+2026-11-03T19:39:16.4278130Z [ 90%] Building CXX object CMakeFiles/reader-original-import-check.dir/Users/runner/work/EXReader/EXReader/tests/reader_catalog/original_import_check.cpp.o
+2026-11-03T19:39:16.6736490Z /Users/runner/work/EXReader/EXReader/tests/reader_catalog/original_import_check.cpp:25:51: error: expected ';' at end of declaration
+2026-11-03T19:39:16.6738170Z   reader_catalog *c=nullptr;reader_catalog_error e{}; require(!reader_catalog_open(db,&c,&e),e.message);
+2026-11-03T19:39:16.6738660Z                                                   ^
+2026-11-03T19:39:16.6738930Z                                                   ;
+2026-11-03T19:39:16.6739830Z /Users/runner/work/EXReader/EXReader/tests/reader_catalog/original_import_check.cpp:37:55: error: expected ';' at end of declaration
+2026-11-03T19:39:16.6742490Z     int event=mode[5]-'0';reader_original_callbacks cb{&event,nullptr,stop};
+2026-11-03T19:39:16.6743710Z                                                       ^
+2026-11-03T19:39:16.6744370Z                                                       ;
+2026-11-03T19:39:16.6745760Z /Users/runner/work/EXReader/EXReader/tests/reader_catalog/original_import_check.cpp:47:45: error: expected ';' at end of declaration
+2026-11-03T19:39:16.6747320Z     int calls=0;reader_original_callbacks cb{&calls,cancel,nullptr};
+2026-11-03T19:39:16.6748110Z                                             ^
+2026-11-03T19:39:16.6748750Z                                             ;
+2026-11-03T19:39:16.6886140Z 3 errors generated.
+2026-11-03T19:39:16.6907200Z make[2]: *** [CMakeFiles/reader-original-import-check.dir/Users/runner/work/EXReader/EXReader/tests/reader_catalog/original_import_check.cpp.o] Error 1
+2026-11-03T19:39:16.6915660Z make[1]: *** [CMakeFiles/reader-original-import-check.dir/all] Error 2
+2026-11-03T19:39:16.6916420Z make: *** [all] Error 2
+2026-11-03T19:39:16.6963160Z ##[error]Process completed with exit code 2.
+2026-11-03T19:39:16.7154840Z ##[group]Run actions/upload-artifact@v4
+2026-11-03T19:39:16.7155560Z with:
+2026-11-03T19:39:16.7155740Z   name: sdk-shared-sqlite-contract-41705105811-1
+2026-11-03T19:39:16.7156610Z   path: evidence/sdk-shared-sqlite-provider-20261103/ci/
+build/sdk-stage/
+build/sdk-provider/sqlite-provider.map
+build/sdk-integration/consumer.map
+build/sdk-apple-negatives/embedded-main.map
+build/sdk-core/CMakeCache.txt
+build/sdk-catalog/CMakeCache.txt
+
+2026-11-03T19:39:16.7157480Z   if-no-files-found: error
+2026-11-03T19:39:16.7157650Z   retention-days: 30
+2026-11-03T19:39:16.7157800Z   compression-level: 6
+2026-11-03T19:39:16.7157950Z   overwrite: false
+2026-11-03T19:39:16.7158100Z   include-hidden-files: false
+2026-11-03T19:39:16.7158270Z ##[endgroup]
+2026-11-03T19:39:17.2708580Z (node:8077) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-03T19:39:17.2709370Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-03T19:39:17.3225820Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-03T19:39:17.3227140Z The least common ancestor is /Users/runner/work/EXReader/EXReader. This will be the root directory of the artifact
+2026-11-03T19:39:17.3228040Z With the provided path, there will be 301 files uploaded
+2026-11-03T19:39:17.3228470Z Artifact name is valid!
+2026-11-03T19:39:17.3228640Z Root directory input is valid!
+2026-11-03T19:39:17.5245920Z Beginning upload of artifact content to blob storage
+2026-11-03T19:39:18.3094230Z (node:8077) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-03T19:39:18.5445400Z Uploaded bytes 8388608
+2026-11-03T19:39:18.5738620Z Uploaded bytes 8820905
+2026-11-03T19:39:18.5886400Z Finished uploading artifact content to blob storage!
+2026-11-03T19:39:18.5887310Z SHA256 digest of uploaded artifact zip is cf7318c9f0ffed79511867548de8123bb0388cdcc0a59722b2b3090516700ada
+2026-11-03T19:39:18.5888280Z Finalizing artifact upload
+2026-11-03T19:39:19.0852270Z Artifact sdk-shared-sqlite-contract-41705105811-1.zip successfully finalized. Artifact ID 13265761623
+2026-11-03T19:39:19.0855770Z Artifact sdk-shared-sqlite-contract-41705105811-1 has been successfully uploaded! Final size is 8820905 bytes. Artifact ID is 13265761623
+2026-11-03T19:39:19.0885750Z Artifact download URL: https://github.com/NoGod3524/EXReader/actions/runs/41705105811/artifacts/13265761623
+2026-11-03T19:39:19.1453790Z Post job cleanup.
+2026-11-03T19:39:19.4633730Z [command]/opt/homebrew/bin/git version
+2026-11-03T19:39:19.5043160Z git version 2.55.0
+2026-11-03T19:39:19.5118610Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/49978665-fed8-4a64-8116-8c95a57a1954/.gitconfig'
+2026-11-03T19:39:19.5145060Z Temporarily overriding HOME='/Users/runner/work/_temp/49978665-fed8-4a64-8116-8c95a57a1954' before making global git config changes
+2026-11-03T19:39:19.5150290Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-03T19:39:19.5159590Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/EXReader/EXReader
+2026-11-03T19:39:19.5401620Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-03T19:39:19.5593460Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-03T19:39:19.6545690Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-03T19:39:19.6587800Z http.https://github.com/.extraheader
+2026-11-03T19:39:19.6600750Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-03T19:39:19.6641830Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-03T19:39:19.7196180Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-03T19:39:19.7239870Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-03T19:39:19.8277460Z Cleaning up orphan processes
+2026-11-03T19:39:20.3435420Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+

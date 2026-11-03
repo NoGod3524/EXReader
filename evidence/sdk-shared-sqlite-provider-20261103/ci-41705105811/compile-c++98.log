@@ -1,0 +1,16 @@
+tests/reader_catalog/original_import_check.cpp: In function 'int main(int, char**)':
+tests/reader_catalog/original_import_check.cpp:25:21: error: 'nullptr' was not declared in this scope
+   25 |   reader_catalog *c=nullptr;reader_catalog_error e{}; require(!reader_catalog_open(db,&c,&e),e.message);
+      |                     ^~~~~~~
+tests/reader_catalog/original_import_check.cpp:25:51: warning: extended initializer lists only available with '-std=c++11' or '-std=gnu++11' [-Wc++11-extensions]
+   25 |   reader_catalog *c=nullptr;reader_catalog_error e{}; require(!reader_catalog_open(db,&c,&e),e.message);
+      |                                                   ^
+tests/reader_catalog/original_import_check.cpp:37:55: warning: extended initializer lists only available with '-std=c++11' or '-std=gnu++11' [-Wc++11-extensions]
+   37 |     int event=mode[5]-'0';reader_original_callbacks cb{&event,nullptr,stop};
+      |                                                       ^
+tests/reader_catalog/original_import_check.cpp:47:45: warning: extended initializer lists only available with '-std=c++11' or '-std=gnu++11' [-Wc++11-extensions]
+   47 |     int calls=0;reader_original_callbacks cb{&calls,cancel,nullptr};
+      |                                             ^
+tests/reader_catalog/original_import_check.cpp:67:48: warning: extended initializer lists only available with '-std=c++11' or '-std=gnu++11' [-Wc++11-extensions]
+   67 |     int calls=260; reader_original_callbacks cb{&calls,cancel,nullptr}; held=nullptr; bytes=0;
+      |                                                ^

@@ -1,3 +1,15 @@
+## 首次 Apple CI 的实际结果（2026-11-03）
+
+候选 `40ac811b0a872587641e01ff0cfc33a376e93abc` 已提交并推送。
+[run 41705105811](https://github.com/NoGod3524/EXReader/actions/runs/41705105811)，attempt 1，失败于 ProductCatalog C++ 测试编译。
+首次失败分类为“构建配置失败，非行为失败”，不计入共享 provider 验收。
+公开 provider 的 FTS5 测试 1/1 通过；两个原产品测试、联合 FTS5 和真实内嵌负例均未执行。
+**两项仍待 CI**。已授权的一次额度已用完，没有重跑。
+
+复核、原始日志、JUnit、工件来源/哈希、部分符号表与 stage 扫描见 [ci-41705105811/review.md](ci-41705105811/review.md)。
+本地已补测试目标的 C++17 声明，显式 C++98 默认下验证目标以 C++17 编译通过；后续修复尚未提交或推送。
+以下 Windows 结果和首次运行前的方案保留其原有范围。
+
 # SDK 共享 SQLite 核心契约：候选与证据
 
 本包按用户确认的契约实施：**整个应用的 SDK／产品映像共用一个 SQLite 实现**。
@@ -78,9 +90,9 @@
 - 这不是实际 Mach-O 负例。`extras/sqlite-provider/apple-negative/` 已准备真实 native 控制：
   从与 provider 相同、hash 相等的完整 `sqlite3.c` 编译一个对象，再分别故意内嵌到主程序和 SDK dylib。
   `check.py` 必须捕获上述精确错误；因缺依赖等其他原因失败不算该负例通过。
-- 真实 Apple 二进制负例尚未执行。workflow `sdk-shared-sqlite-contract.yml` 已准备，
+- 真实 Apple 二进制负例在首次 CI 中因前序编译失败而跳过。workflow `sdk-shared-sqlite-contract.yml` 已准备，
   首次仅由指定候选分支新增该 workflow 文件的 push 触发；拟一次 `macos-14` 作业、上限 20 分钟，
-  提交/推送和这次 CI 执行前仍须具体授权。
+  首次已获授权并执行；该次额度已用完，后续已获一次有条件的“限时构建验证”授权，前置核对见 `limited-build-preflight/review.md`。
   它也会执行上面仍待 CI 的两个原产品测试，保留 JUnit、原始符号、MAP、stage 与失败输出。
   首次注册采用受限分支 push，后续才有手动入口；这与 [GitHub 的 workflow_dispatch 规则](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_dispatch)一致。
   当前所有 push 规则已按候选分支和变更路径核对，只有该 SDK 作业匹配，记录在 `push-trigger-audit.json`。
@@ -95,6 +107,6 @@ SDK 与 ProductCatalog 显式启用 `EXR_USE_SHARED_SQLITE_PROVIDER=ON` 后引�
 
 Windows 证据可由 `collect_windows_local.py --llvm-bin <同版 LLVM 工具目录>` 重读当前本地构建产物。
 Apple 结构负例：`python tools/check_apple_product.py --self-test-shared`。
-真实 Apple 控制与该 workflow 均尚未运行。
+workflow 已执行一次并在 ProductCatalog C++ 测试编译阶段失败；真实 Apple 控制未执行。
 
-本地通过不等于验收通过。当前未提交、未推送、未启动 CI，也未修改 catalog。
+本地通过不等于验收通过。已提交并推送候选 `40ac811b`，首次 CI 失败；本地后续修复未提交、未推送。catalog 未修改。

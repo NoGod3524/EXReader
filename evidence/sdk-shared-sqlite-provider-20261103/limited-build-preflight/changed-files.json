@@ -1,0 +1,564 @@
+{
+  "sdk_base": "95100501eeef9c6325be8b3882aa400c99cf000f",
+  "followup_parent": "40ac811b0a872587641e01ff0cfc33a376e93abc",
+  "files": [
+    {
+      "path": ".github/workflows/sdk-shared-sqlite-contract.yml",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "CMakeLists.txt",
+      "followup_changed": false,
+      "protected_tree": true,
+      "disposition": "进入 R 候选"
+    },
+    {
+      "path": "apps/reader/store/native/CMakeLists.txt",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "cmake/EXReaderConfig.cmake.in",
+      "followup_changed": false,
+      "protected_tree": true,
+      "disposition": "进入 R 候选"
+    },
+    {
+      "path": "cmake/deps.cmake",
+      "followup_changed": false,
+      "protected_tree": true,
+      "disposition": "进入 R 候选"
+    },
+    {
+      "path": "cmake/install_dependencies.cmake",
+      "followup_changed": false,
+      "protected_tree": true,
+      "disposition": "进入 R 候选"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/.gitattributes",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/.gitignore",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/README.md",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/apple-checker-local.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/apple-optimized-rejected.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/artifact-sha256.json",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/catalog-build.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/catalog-configure.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/catalog-install.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/artifacts.json",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/compile-c++17.log",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/compile-c++98.log",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/fix-build.log",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/fix-configure.log",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/fts5-provider.xml",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/job.log",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/partial-symbols.json",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/provider-nm.stderr.txt",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/provider-nm.stdout.txt",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/review.md",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/run.json",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/sdk-nm.stderr.txt",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/sdk-nm.stdout.txt",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/source-fix.patch",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/source.json",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/ci-41705105811/stage-sqlite-scan-from-artifact.json",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/collect_windows_local.py",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/consumer-coff.stderr.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/consumer-coff.stdout.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/consumer-nm.stderr.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/consumer-nm.stdout.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/consumer-sqlite-thunks.stderr.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/consumer-sqlite-thunks.stdout.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/consumer.map",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/fts5-integration.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/fts5-integration.xml",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/fts5-provider.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/fts5-provider.xml",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/integration-build.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/integration-configure.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/limited-build-preflight/changed-files.json",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/limited-build-preflight/consumer-CMakeLists.txt",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/limited-build-preflight/consumer-build.log",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/limited-build-preflight/consumer-configure.log",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/limited-build-preflight/consumer-cxx98.cpp",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/limited-build-preflight/consumer-run.log",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/limited-build-preflight/review.md",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/llvm-nm-version.stderr.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/llvm-nm-version.stdout.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/llvm-objdump-version.stderr.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/llvm-objdump-version.stdout.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/llvm-readobj-version.stderr.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/llvm-readobj-version.stdout.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/provider-coff.stderr.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/provider-coff.stdout.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/provider-install.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/provider-nm.stderr.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/provider-nm.stdout.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/provider.map",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/push-trigger-audit.json",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/sdk-build.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/sdk-coff.stderr.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/sdk-coff.stdout.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/sdk-configure.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/sdk-install.log",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/sdk-nm.stderr.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/sdk-nm.stdout.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/sdk-sqlite-thunks.stderr.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/sdk-sqlite-thunks.stdout.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/source-review.patch",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/stage-sqlite-scan.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/status.json",
+      "followup_changed": true,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/trigger-apple-static.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "evidence/sdk-shared-sqlite-provider-20261103/windows-local.json",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "extras/sqlite-provider/CMakeLists.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "extras/sqlite-provider/EXReaderSQLiteProviderConfig.cmake.in",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "extras/sqlite-provider/apple-negative/CMakeLists.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "extras/sqlite-provider/apple-negative/check.py",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "extras/sqlite-provider/apple-negative/main.c",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "extras/sqlite-provider/integration/CMakeLists.txt",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "extras/sqlite-provider/integration/main.c",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "extras/sqlite-provider/test_provider.c",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "tools/apple_swift.py",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "tools/build_apple_host.py",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "tools/build_apple_product.py",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    },
+    {
+      "path": "tools/check_apple_product.py",
+      "followup_changed": false,
+      "protected_tree": false,
+      "disposition": "独立 SDK 候选范围"
+    }
+  ]
+}

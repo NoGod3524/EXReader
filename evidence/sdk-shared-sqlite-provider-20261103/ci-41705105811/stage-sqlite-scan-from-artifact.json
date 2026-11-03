@@ -1,0 +1,70 @@
+{
+  "scope": "Downloaded partial stage; SDK installed, ProductCatalog install not reached. ZIP symlinks may be materialized as copies.",
+  "files": [
+    {
+      "path": "examples/apple/product/ProductSQLite.h",
+      "bytes": 56,
+      "sha256": "3d6c57ed7975372d6f495ade3db3cfd24bf3bcfa0c9336db8b1815325ced5999"
+    },
+    {
+      "path": "include/exreader-sqlite/sqlite3.h",
+      "bytes": 695737,
+      "sha256": "cd20a2877bc82b94e36c1093b727dd87cfa3c1d581aac6e240925535cbd90166"
+    },
+    {
+      "path": "include/exreader-sqlite/sqlite3ext.h",
+      "bytes": 39547,
+      "sha256": "48963abfefb41ac329ef9d706acb5eadba952a99a748285c9ded6b5e0942721b"
+    },
+    {
+      "path": "lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderConfig.cmake",
+      "bytes": 1340,
+      "sha256": "835af5ff4a6c26352ea5b44992361408025b8052040f160b6695a47d43ee5c9d"
+    },
+    {
+      "path": "lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderConfigVersion.cmake",
+      "bytes": 3277,
+      "sha256": "37422f8e516d1f3076644c4785d9c1121322f567acc2bf5f2dc35fee32107aa5"
+    },
+    {
+      "path": "lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderTargets-release.cmake",
+      "bytes": 975,
+      "sha256": "2663aa6159dcc4fd301f4e4443808e6b282370b48156bdeed65773b22d325b72"
+    },
+    {
+      "path": "lib/cmake/EXReaderSQLiteProvider/EXReaderSQLiteProviderTargets.cmake",
+      "bytes": 4215,
+      "sha256": "7e974909ef9c1d12ac0b40cc36e7b88eed8630d140e91f70081a4d72c8707e36"
+    },
+    {
+      "path": "lib/libreader_sqlite3.1.0.0.dylib",
+      "bytes": 1525040,
+      "sha256": "dca03535e8e4cba8395854efd969370013aaf8ece799c84d375c4918d80ab7ea"
+    },
+    {
+      "path": "lib/libreader_sqlite3.1.dylib",
+      "bytes": 1525040,
+      "sha256": "dca03535e8e4cba8395854efd969370013aaf8ece799c84d375c4918d80ab7ea"
+    },
+    {
+      "path": "lib/libreader_sqlite3.dylib",
+      "bytes": 1525040,
+      "sha256": "dca03535e8e4cba8395854efd969370013aaf8ece799c84d375c4918d80ab7ea"
+    },
+    {
+      "path": "share/exreader/licenses/sqlite/sqlite-public-domain.txt",
+      "bytes": 761,
+      "sha256": "abc1b93c15fe0a92ec55020569e10fb8206de2cf535c30e70f7f9d5428e20bcc"
+    },
+    {
+      "path": "share/exreader-sqlite/provider.json",
+      "bytes": 441,
+      "sha256": "86896e97db05885b782971b08c1d083f8bcc7b450cd3fb7e7ddb6974d778275a"
+    },
+    {
+      "path": "share/exreader-sqlite/sqlite-public-domain.txt",
+      "bytes": 761,
+      "sha256": "abc1b93c15fe0a92ec55020569e10fb8206de2cf535c30e70f7f9d5428e20bcc"
+    }
+  ]
+}

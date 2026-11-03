@@ -14,10 +14,10 @@
   ],
   "catalog_state_changed": false,
   "catalog_head_blob": "a651be85af940dfa35d633e44d39cdda5e63e4b5",
-  "local_only": true,
+  "local_only": false,
   "acceptance_assessed": false,
-  "ci_started": false,
-  "committed": false,
+  "ci_started": true,
+  "committed": true,
   "required_notice": "两项仍待 CI",
   "pending_ci_tests": [
     "product-originals",
@@ -25,7 +25,7 @@
   ],
   "source_file_sha256": {
     "CMakeLists.txt": "8bbb9e8a5ff39387f2cc1137996cad49afb9ceafb1234672e065ae9a2af92468",
-    "apps/reader/store/native/CMakeLists.txt": "8d866e79afcb13d8d3b420fe5eff8491195633163b42760a2442dac5f4ea11b6",
+    "apps/reader/store/native/CMakeLists.txt": "3e41c68f966efb367e8e7e8a4fb25a0f07bdab31b38ce5fbfefe35066c910e1b",
     "apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in": "a9b7e287ffcf0a1aa1ad3b8f76c6b2159c102db08c8ccad78fc39e7489990677",
     "cmake/EXReaderConfig.cmake.in": "e01fc0e39c553187b49d9db53bad888be5e389da143b4a598afa4a5c4f569138",
     "cmake/deps.cmake": "b5f1bddc7821951529d09731d7500cf526acf45a44f7a6b0760f90351c26bfc1",
@@ -34,7 +34,7 @@
     "tools/build_apple_host.py": "c61c6615a010d083cf366d72971035dff7c82e85eb25e92ef42cb631ff449f1a",
     "tools/build_apple_product.py": "d6ec506adbc9ea56d90a24740af625a48bd631b1c2e1b774308a8b37bdca00b7",
     "tools/check_apple_product.py": "39a7ead259eeadbe852a25003da586e01c7f258fe2ff3ab94060a95212962e80",
-    ".github/workflows/sdk-shared-sqlite-contract.yml": "b3fe648b34d42715644301de48a2c2fb3b7703cffc3faef41ef2b0c3fe682915",
+    ".github/workflows/sdk-shared-sqlite-contract.yml": "8f99cfebbc81a85da858d2818877bb86c9e1d75b82acae67708aa924be30c236",
     "extras/sqlite-provider/CMakeLists.txt": "e75bda0aac7a36903345ee7f058aa2377231ee41c9793575301eab83c0b4060e",
     "extras/sqlite-provider/EXReaderSQLiteProviderConfig.cmake.in": "b7aa2b91ea912eb2a52b407ff2ce84792cd7ceb16fb89639cb3496690a7299e8",
     "extras/sqlite-provider/apple-negative/CMakeLists.txt": "e17fe899fd84d4ef975e6366b521e569a1fc80d593e807dd644b9204b5cbee68",
@@ -62,7 +62,7 @@
       "negative": 6,
       "log": "apple-checker-local.log"
     },
-    "apple_real_embedded_controls": "prepared, not executed; CI required"
+    "apple_real_embedded_controls": "Skipped in run 41705105811 after earlier compile failure; not executed"
   },
   "validation": {
     "python_entrypoints_ast": "passed",
@@ -70,7 +70,7 @@
     "catalog_src_include_bindings_version_unchanged": true,
     "source_patch_reverse_check": "passed"
   },
-  "source_review_patch_sha256": "8a73ad858d3c9025bfa4423108c7db922d80d2b48340ec1f0840e6bf2215d1c8",
+  "source_review_patch_sha256": "2a924e9f45919f3fed2b4a87ddc0dac7a7cfd0aa7b9d1a81f66a723eeceafce0",
   "ci_proposal": {
     "workflow": ".github/workflows/sdk-shared-sqlite-contract.yml",
     "trigger": "Restricted first push to the reviewed candidate branch; only this workflow matches current paths",
@@ -78,8 +78,37 @@
     "runner": "macos-14",
     "timeout_minutes": 20,
     "run_count": 1,
-    "status": "prepared; commit/push/CI approval pending"
+    "status": "Follow-up limited build validation authorized after documented preflight"
   },
-  "source_hash_scope": "Local pre-commit Windows working-tree bytes; CI candidate is bound separately by its immutable commit SHA.",
-  "evidence_bytes_preserved": "Scoped .gitattributes disables newline normalization for raw evidence and recorded hashes."
+  "source_hash_scope": "Current local Windows working-tree source bytes, including uncommitted follow-up; tested CI candidate bound separately by immutable SHA.",
+  "evidence_bytes_preserved": "Scoped .gitattributes disables newline normalization for raw evidence and recorded hashes.",
+  "tested_candidate": "40ac811b0a872587641e01ff0cfc33a376e93abc",
+  "ci_result": {
+    "run_id": 41705105811,
+    "attempt": 1,
+    "job_id": 126158207426,
+    "conclusion": "failure",
+    "artifact_id": 13265761623,
+    "artifact_bytes": 8820905,
+    "artifact_sha256": "cf7318c9f0ffed79511867548de8123bb0388cdcc0a59722b2b3090516700ada",
+    "raw_archive_local_path": "C:\\Users\\Oscar\\.codex\\worktrees\\sdk-shared-sqlite-provider\\EXReader\\build\\sdk-ci-41705105811.zip",
+    "review": "ci-41705105811/review.md",
+    "authorized_runs": 1,
+    "consumed_runs": 1,
+    "automatic_rerun": false,
+    "failure_classification": "构建配置失败，非行为失败",
+    "counts_toward_provider_acceptance": false
+  },
+  "local_followup": {
+    "committed": false,
+    "pushed": false,
+    "fix": "Declare cxx_std_17 on reader-original-import-check; test source and assertions unchanged",
+    "validation": "Explicit directory C++98 default; target built successfully with -std=gnu++17",
+    "ci_authorization": "Approved once: macos-14, single job, <=20 minutes, no retry; limited build validation only",
+    "workflow_admission_parent": "40ac811b0a872587641e01ff0cfc33a376e93abc",
+    "preflight": "limited-build-preflight/review.md",
+    "consumer_cxx17_required": false,
+    "on_red": "Record first error as known issue; no further CI round requested",
+    "on_green": "Close build item only; retain run and artifacts; no Apple acceptance claim"
+  }
 }

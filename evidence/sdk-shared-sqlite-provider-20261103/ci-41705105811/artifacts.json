@@ -1,0 +1,23 @@
+{
+  "artifacts": [
+    {
+      "id": 13265761623,
+      "name": "sdk-shared-sqlite-contract-41705105811-1",
+      "size_in_bytes": 8820905,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13265761623",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13265761623/zip",
+      "expired": false,
+      "created_at": "2026-11-03T19:39:18Z",
+      "expires_at": "2026-12-03T19:39:17Z",
+      "updated_at": "2026-11-03T19:39:18Z",
+      "digest": "sha256:cf7318c9f0ffed79511867548de8123bb0388cdcc0a59722b2b3090516700ada",
+      "workflow_run": {
+        "id": 41705105811,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/sdk-shared-sqlite-provider-20261103",
+        "head_sha": "40ac811b0a872587641e01ff0cfc33a376e93abc"
+      }
+    }
+  ]
+}

@@ -1,3 +1,122 @@
+diff --git a/.github/workflows/sdk-shared-sqlite-contract.yml b/.github/workflows/sdk-shared-sqlite-contract.yml
+new file mode 100644
+index 00000000..c8bb4bb0
+--- /dev/null
++++ b/.github/workflows/sdk-shared-sqlite-contract.yml
+@@ -0,0 +1,113 @@
++name: SDK shared SQLite limited build validation
++
++on:
++  push:
++    branches: [codex/sdk-shared-sqlite-provider-20261103]
++    paths: [.github/workflows/sdk-shared-sqlite-contract.yml]
++  workflow_dispatch:
++    inputs:
++      candidate_sha:
++        description: Exact reviewed SDK follow-up commit (parent must be 40ac811b)
++        type: string
++        required: true
++
++permissions:
++  contents: read
++
++jobs:
++  apple-native:
++    runs-on: macos-14
++    timeout-minutes: 20
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          ref: ${{ inputs.candidate_sha || github.sha }}
++          fetch-depth: 2
++      - name: Admit only the reviewed SDK replay
++        env:
++          CANDIDATE_SHA: ${{ inputs.candidate_sha || github.sha }}
++        run: |
++          python3 - <<'PY'
++          import json, os, pathlib, re, subprocess
++          base = '95100501eeef9c6325be8b3882aa400c99cf000f'
++          reviewed_parent = '40ac811b0a872587641e01ff0cfc33a376e93abc'
++          sha = os.environ['CANDIDATE_SHA']
++          if not re.fullmatch(r'[0-9a-f]{40}', sha):
++              raise SystemExit('exact candidate SHA required')
++          def git(*args): return subprocess.check_output(['git', *args], text=True).strip()
++          if git('rev-parse', 'HEAD') != sha or git('rev-parse', 'HEAD^') != reviewed_parent:
++              raise SystemExit('candidate is not the reviewed replay on the fixed SDK line')
++          subprocess.run(['git', 'diff', '--exit-code', base, 'HEAD', '--',
++              'src', 'include', 'bindings', 'cmake/versions.cmake',
++              'docs/reader-total-progress/catalog.json'], check=True)
++          owned = {'CMakeLists.txt', 'cmake/deps.cmake', 'cmake/EXReaderConfig.cmake.in',
++              'cmake/install_dependencies.cmake', 'apps/reader/store/native/CMakeLists.txt',
++              'apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in',
++              'tools/apple_swift.py', 'tools/build_apple_product.py', 'tools/build_apple_host.py',
++              'tools/check_apple_product.py', '.github/workflows/sdk-shared-sqlite-contract.yml'}
++          changed = git('diff', '--name-only', base, 'HEAD').splitlines()
++          if any(p not in owned and not p.startswith(('extras/sqlite-provider/',
++                  'evidence/sdk-shared-sqlite-provider-20261103/')) for p in changed):
++              raise SystemExit('candidate contains changes outside the reviewed SDK contract')
++          out = pathlib.Path('evidence/sdk-shared-sqlite-provider-20261103/ci')
++          out.mkdir(parents=True, exist_ok=True)
++          (out/'source.json').write_text(json.dumps({'base': base, 'reviewed_parent': reviewed_parent, 'candidate': sha,
++              'changed': changed, 'validation_kind': 'limited build validation',
++              'apple_acceptance_assessed': False, 'acceptance_assessed': False}, indent=2))
++          PY
++      - name: Build and test the installed shared provider
++        run: |
++          cmake -S extras/sqlite-provider -B build/sdk-provider -DCMAKE_BUILD_TYPE=Release \
++            -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_SQLITE_PROVIDER_BUILD_TESTS=ON
++          cmake --build build/sdk-provider --parallel 3
++          ctest --test-dir build/sdk-provider -L FTS5 --output-on-failure \
++            --output-junit "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci/fts5-provider.xml"
++          cmake --install build/sdk-provider
++      - name: Build the SDK and product on the reviewed SDK line
++        run: |
++          cmake -S . -B build/sdk-core -DCMAKE_BUILD_TYPE=Release \
++            -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_USE_SHARED_SQLITE_PROVIDER=ON \
++            -DEXReaderSQLiteProvider_DIR="$PWD/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider" \
++            -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AUDIO=OFF \
++            -DEXR_ENABLE_PDF=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_ICC=OFF \
++            -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
++          cmake --build build/sdk-core --parallel 3
++          cmake --install build/sdk-core
++          cmake -S apps/reader/store/native -B build/sdk-catalog -DCMAKE_BUILD_TYPE=Release \
++            -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_USE_SHARED_SQLITE_PROVIDER=ON \
++            -DEXReaderSQLiteProvider_DIR="$PWD/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider"
++          cmake --build build/sdk-catalog --parallel 3
++          cmake --install build/sdk-catalog
++      - name: Run real product tests and the joint SDK product FTS5 test
++        run: |
++          ctest --test-dir build/sdk-catalog --output-on-failure \
++            --output-junit "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci/product-tests.xml"
++          cmake -S extras/sqlite-provider/integration -B build/sdk-integration \
++            -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/sdk-stage"
++          cmake --build build/sdk-integration --parallel 3
++          ctest --test-dir build/sdk-integration -L FTS5 --output-on-failure \
++            --output-junit "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci/fts5-integration.xml"
++      - name: Reject actual Apple main and SDK binaries with embedded SQLite
++        run: |
++          sqlite_source=$(sed -n 's/^exreader_sqlite_source_SOURCE_DIR:[^=]*=//p' build/sdk-provider/CMakeCache.txt)
++          test -n "$sqlite_source"
++          python3 extras/sqlite-provider/apple-negative/check.py --prefix "$PWD/build/sdk-stage" \
++            --consumer "$PWD/build/sdk-integration/shared-sqlite-consumer" \
++            --map "$PWD/build/sdk-integration/consumer.map" --sqlite-source "$sqlite_source" \
++            --build "$PWD/build/sdk-apple-negatives" \
++            --output "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci"
++          find build/sdk-stage -iname '*sqlite*' -print > evidence/sdk-shared-sqlite-provider-20261103/ci/stage-sqlite-scan.txt
++      - uses: actions/upload-artifact@v4
++        if: always()
++        with:
++          name: sdk-shared-sqlite-contract-${{ github.run_id }}-${{ github.run_attempt }}
++          path: |
++            evidence/sdk-shared-sqlite-provider-20261103/ci/
++            build/sdk-stage/
++            build/sdk-provider/sqlite-provider.map
++            build/sdk-integration/consumer.map
++            build/sdk-apple-negatives/embedded-main.map
++            build/sdk-core/CMakeCache.txt
++            build/sdk-catalog/CMakeCache.txt
++          if-no-files-found: error
++          retention-days: 30
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 index 15de1378..75ef0ae2 100644
 --- a/CMakeLists.txt
@@ -11,7 +130,7 @@ index 15de1378..75ef0ae2 100644
    message(FATAL_ERROR "PDF editing requires EXR_ENABLE_PDF=ON")
  endif()
 diff --git a/apps/reader/store/native/CMakeLists.txt b/apps/reader/store/native/CMakeLists.txt
-index 6654c6ad..a5da0119 100644
+index 6654c6ad..0ac248ec 100644
 --- a/apps/reader/store/native/CMakeLists.txt
 +++ b/apps/reader/store/native/CMakeLists.txt
 @@ -8,6 +8,17 @@ if(MSVC)
@@ -63,6 +182,13 @@ index 6654c6ad..a5da0119 100644
    DESTINATION include/exreader-product)
  install(FILES ../001_catalog.sql ../002_originals.sql ../003_original_staging.sql ../../../../licenses/sqlite-public-domain.txt
    DESTINATION share/exreader-product)
+@@ -94,5 +111,6 @@ install(TARGETS reader_original_import EXPORT EXReaderProductCatalogTargets ARCH
+ install(FILES ../../original-import/original_import.h DESTINATION include/exreader-product)
+ if(PROJECT_IS_TOP_LEVEL)
+   add_executable(reader-original-import-check ../../../../tests/reader_catalog/original_import_check.cpp)
++  target_compile_features(reader-original-import-check PRIVATE cxx_std_17)
+   target_link_libraries(reader-original-import-check PRIVATE reader_original_import)
+ endif()
 diff --git a/apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in b/apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in
 index 32640d41..8cc442c2 100644
 --- a/apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in
@@ -138,6 +264,374 @@ index 0fc6b4ee..0157c177 100644
    get_target_property(vendor_files ${vendor} EXR_VENDOR_FILES)
    if(NOT vendor_files)
      set(vendor_files ${vendor})
+diff --git a/extras/sqlite-provider/CMakeLists.txt b/extras/sqlite-provider/CMakeLists.txt
+new file mode 100644
+index 00000000..83a285dc
+--- /dev/null
++++ b/extras/sqlite-provider/CMakeLists.txt
+@@ -0,0 +1,91 @@
++# SPDX-License-Identifier: MIT
++cmake_minimum_required(VERSION 3.24)
++project(EXReaderSQLiteProvider VERSION 1.0.0 LANGUAGES C)
++include(FetchContent)
++include(CMakePackageConfigHelpers)
++find_package(Threads REQUIRED)
++
++# This public dependency is shared by the SDK and product; neither embeds it.
++FetchContent_Declare(exreader_sqlite_source
++  URL "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip"
++  URL_HASH SHA256=68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d)
++FetchContent_MakeAvailable(exreader_sqlite_source)
++set(provider_options SQLITE_THREADSAFE=1 SQLITE_DQS=0 SQLITE_DEFAULT_FOREIGN_KEYS=1
++  SQLITE_OMIT_LOAD_EXTENSION SQLITE_MAX_LENGTH=2147483647 SQLITE_ENABLE_FTS5)
++file(SHA256 "${exreader_sqlite_source_SOURCE_DIR}/sqlite3.c" provider_source_hash)
++string(SHA256 EXReaderSQLiteProvider_ID "${provider_source_hash};${provider_options}")
++add_library(reader_sqlite3 SHARED "${exreader_sqlite_source_SOURCE_DIR}/sqlite3.c")
++add_library(EXReaderSQLiteProvider::sqlite3 ALIAS reader_sqlite3)
++set_target_properties(reader_sqlite3 PROPERTIES EXPORT_NAME sqlite3 VERSION ${PROJECT_VERSION}
++  SOVERSION 1 C_STANDARD 11 C_STANDARD_REQUIRED YES)
++target_compile_definitions(reader_sqlite3 PRIVATE ${provider_options})
++target_include_directories(reader_sqlite3 PUBLIC
++  $<BUILD_INTERFACE:${exreader_sqlite_source_SOURCE_DIR}>
++  $<INSTALL_INTERFACE:include/exreader-sqlite>)
++target_link_libraries(reader_sqlite3 PRIVATE Threads::Threads ${CMAKE_DL_LIBS})
++if(UNIX)
++  target_link_libraries(reader_sqlite3 PRIVATE m)
++endif()
++if(WIN32)
++  target_compile_definitions(reader_sqlite3 PRIVATE "SQLITE_API=__declspec(dllexport)"
++    "SQLITE_EXTERN=extern __declspec(dllexport)")
++  target_compile_definitions(reader_sqlite3 INTERFACE "SQLITE_API=__declspec(dllimport)"
++    "SQLITE_EXTERN=extern __declspec(dllimport)")
++endif()
++if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
++  set_target_properties(reader_sqlite3 PROPERTIES FRAMEWORK TRUE OUTPUT_NAME ReaderSQLite
++    FRAMEWORK_VERSION A MACOSX_FRAMEWORK_IDENTIFIER org.exreader.sqlite3
++    MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${PROJECT_VERSION}
++    MACOSX_FRAMEWORK_BUNDLE_VERSION ${PROJECT_VERSION}
++    PUBLIC_HEADER "${exreader_sqlite_source_SOURCE_DIR}/sqlite3.h;${exreader_sqlite_source_SOURCE_DIR}/sqlite3ext.h")
++endif()
++if(APPLE)
++  set_target_properties(reader_sqlite3 PROPERTIES INSTALL_NAME_DIR "@rpath")
++endif()
++if(ANDROID)
++  target_link_options(reader_sqlite3 PRIVATE -Wl,-z,max-page-size=16384)
++endif()
++if(MSVC)
++  target_link_options(reader_sqlite3 PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/sqlite-provider.map")
++elseif(APPLE)
++  target_link_options(reader_sqlite3 PRIVATE "LINKER:-map,${CMAKE_CURRENT_BINARY_DIR}/sqlite-provider.map")
++else()
++  target_link_options(reader_sqlite3 PRIVATE "LINKER:-Map,${CMAKE_CURRENT_BINARY_DIR}/sqlite-provider.map")
++endif()
++if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
++  set(provider_runtime "Frameworks/ReaderSQLite.framework/ReaderSQLite")
++elseif(WIN32)
++  set(provider_runtime "bin/$<TARGET_FILE_NAME:reader_sqlite3>")
++else()
++  set(provider_runtime "lib/$<TARGET_FILE_NAME:reader_sqlite3>")
++endif()
++string(REPLACE ";" "\",\"" provider_options_json "${provider_options}")
++file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/provider-$<CONFIG>.json" CONTENT
++  "{\"package\":\"EXReaderSQLiteProvider\",\"version\":\"${PROJECT_VERSION}\",\"config_id\":\"${EXReaderSQLiteProvider_ID}\",\"source_sha256\":\"${provider_source_hash}\",\"runtime_library\":\"${provider_runtime}\",\"compile_options\":[\"${provider_options_json}\"]}\n")
++install(FILES "${CMAKE_CURRENT_BINARY_DIR}/provider-$<CONFIG>.json"
++  DESTINATION share/exreader-sqlite RENAME provider.json)
++install(TARGETS reader_sqlite3 EXPORT EXReaderSQLiteProviderTargets
++  RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib
++  FRAMEWORK DESTINATION Frameworks PUBLIC_HEADER DESTINATION include/exreader-sqlite)
++install(FILES "${exreader_sqlite_source_SOURCE_DIR}/sqlite3.h"
++  "${exreader_sqlite_source_SOURCE_DIR}/sqlite3ext.h" DESTINATION include/exreader-sqlite)
++install(FILES ../../licenses/sqlite-public-domain.txt DESTINATION share/exreader-sqlite)
++install(EXPORT EXReaderSQLiteProviderTargets NAMESPACE EXReaderSQLiteProvider::
++  DESTINATION lib/cmake/EXReaderSQLiteProvider)
++configure_package_config_file(EXReaderSQLiteProviderConfig.cmake.in
++  "${CMAKE_CURRENT_BINARY_DIR}/EXReaderSQLiteProviderConfig.cmake"
++  INSTALL_DESTINATION lib/cmake/EXReaderSQLiteProvider)
++write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXReaderSQLiteProviderConfigVersion.cmake"
++  VERSION ${PROJECT_VERSION} COMPATIBILITY ExactVersion)
++install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderSQLiteProviderConfig.cmake"
++  "${CMAKE_CURRENT_BINARY_DIR}/EXReaderSQLiteProviderConfigVersion.cmake"
++  DESTINATION lib/cmake/EXReaderSQLiteProvider)
++
++option(EXR_SQLITE_PROVIDER_BUILD_TESTS "Run the real SQLite/FTS5 provider smoke test" OFF)
++if(EXR_SQLITE_PROVIDER_BUILD_TESTS)
++  enable_testing()
++  add_executable(sqlite-provider-check test_provider.c)
++  target_link_libraries(sqlite-provider-check PRIVATE EXReaderSQLiteProvider::sqlite3)
++  add_test(NAME sqlite-provider-check COMMAND sqlite-provider-check)
++  set_tests_properties(sqlite-provider-check PROPERTIES LABELS "FTS5;SDKContract")
++endif()
+diff --git a/extras/sqlite-provider/EXReaderSQLiteProviderConfig.cmake.in b/extras/sqlite-provider/EXReaderSQLiteProviderConfig.cmake.in
+new file mode 100644
+index 00000000..f334f688
+--- /dev/null
++++ b/extras/sqlite-provider/EXReaderSQLiteProviderConfig.cmake.in
+@@ -0,0 +1,8 @@
++@PACKAGE_INIT@
++set(EXReaderSQLiteProvider_ID "@EXReaderSQLiteProvider_ID@")
++include("${CMAKE_CURRENT_LIST_DIR}/EXReaderSQLiteProviderTargets.cmake")
++get_target_property(_exreader_sqlite_type EXReaderSQLiteProvider::sqlite3 TYPE)
++if(NOT _exreader_sqlite_type STREQUAL "SHARED_LIBRARY")
++  message(FATAL_ERROR "EXReaderSQLiteProvider must be a shared implementation")
++endif()
++check_required_components(EXReaderSQLiteProvider)
+diff --git a/extras/sqlite-provider/apple-negative/CMakeLists.txt b/extras/sqlite-provider/apple-negative/CMakeLists.txt
+new file mode 100644
+index 00000000..0fe78922
+--- /dev/null
++++ b/extras/sqlite-provider/apple-negative/CMakeLists.txt
+@@ -0,0 +1,29 @@
++cmake_minimum_required(VERSION 3.24)
++project(SharedSQLiteAppleNegatives LANGUAGES C)
++if(NOT APPLE)
++  message(FATAL_ERROR "These are real Mach-O negative controls; build them on Apple")
++endif()
++find_package(EXReader CONFIG REQUIRED COMPONENTS library)
++find_package(EXReaderSQLiteProvider 1.0.0 EXACT CONFIG REQUIRED)
++if(NOT SQLITE_SOURCE_DIR OR NOT PROVIDER_PREFIX)
++  message(FATAL_ERROR "Supply the verified SQLite source directory and installed provider prefix")
++endif()
++file(READ "${PROVIDER_PREFIX}/share/exreader-sqlite/provider.json" provider_json)
++string(JSON expected_source GET "${provider_json}" source_sha256)
++file(SHA256 "${SQLITE_SOURCE_DIR}/sqlite3.c" actual_source)
++if(NOT actual_source STREQUAL expected_source)
++  message(FATAL_ERROR "Negative control source differs from the actual provider")
++endif()
++# Compile a complete second implementation once, then embed it in both mutants.
++add_library(embedded_sqlite OBJECT "${SQLITE_SOURCE_DIR}/sqlite3.c")
++set_target_properties(embedded_sqlite PROPERTIES POSITION_INDEPENDENT_CODE ON)
++target_compile_definitions(embedded_sqlite PRIVATE SQLITE_THREADSAFE=1 SQLITE_DQS=0
++  SQLITE_DEFAULT_FOREIGN_KEYS=1 SQLITE_OMIT_LOAD_EXTENSION SQLITE_MAX_LENGTH=2147483647 SQLITE_ENABLE_FTS5)
++add_executable(embedded_main main.c $<TARGET_OBJECTS:embedded_sqlite>)
++target_link_libraries(embedded_main PRIVATE EXReader::exreader EXReaderSQLiteProvider::sqlite3)
++target_link_options(embedded_main PRIVATE "LINKER:-map,${CMAKE_CURRENT_BINARY_DIR}/embedded-main.map")
++add_library(embedded_sdk SHARED $<TARGET_OBJECTS:embedded_sqlite>)
++set_target_properties(embedded_sdk PROPERTIES OUTPUT_NAME exreader VERSION ${EXReader_VERSION}
++  SOVERSION 1 LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bad-sdk" INSTALL_NAME_DIR "@rpath"
++  BUILD_WITH_INSTALL_NAME_DIR ON LINKER_LANGUAGE C)
++target_link_libraries(embedded_sdk PRIVATE m)
+diff --git a/extras/sqlite-provider/apple-negative/check.py b/extras/sqlite-provider/apple-negative/check.py
+new file mode 100644
+index 00000000..26e0efc0
+--- /dev/null
++++ b/extras/sqlite-provider/apple-negative/check.py
+@@ -0,0 +1,69 @@
++"""Run the real Mach-O positive and deliberately embedded-implementation controls."""
++import argparse
++import contextlib
++import hashlib
++import io
++import json
++from pathlib import Path
++import subprocess
++import sys
++
++ROOT = Path(__file__).resolve().parents[3]
++sys.path.insert(0, str(ROOT / 'tools'))
++from check_apple_product import inspect
++
++
++def main():
++    p = argparse.ArgumentParser()
++    p.add_argument('--prefix', type=Path, required=True)
++    p.add_argument('--consumer', type=Path, required=True)
++    p.add_argument('--map', type=Path, required=True)
++    p.add_argument('--sqlite-source', type=Path, required=True)
++    p.add_argument('--build', type=Path, required=True)
++    p.add_argument('--output', type=Path, required=True)
++    args = p.parse_args()
++    if sys.platform != 'darwin':
++        p.error('Real Apple controls require an Apple host')
++    args.output.mkdir(parents=True, exist_ok=True)
++    metadata = json.loads((args.prefix / 'share/exreader-sqlite/provider.json').read_text())
++    provider = args.prefix / metadata['runtime_library']
++    sdk = args.prefix / 'lib/libexreader.dylib'
++    positive = inspect(args.consumer, args.map, shared_provider=provider, shared_sdk=sdk)
++    (args.output / 'apple-positive.json').write_text(json.dumps(positive, indent=2), encoding='utf-8')
++    for role, image in [('consumer', args.consumer), ('sdk', sdk), ('provider', provider)]:
++        for tool, argv in [('nm', ['nm', str(image)]), ('dependencies', ['otool', '-L', str(image)])]:
++            (args.output / (role + '-' + tool + '.txt')).write_text(
++                subprocess.check_output(argv, text=True), encoding='utf-8')
++    subprocess.run(['cmake', '-S', str(Path(__file__).parent), '-B', str(args.build),
++        '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_PREFIX_PATH=' + str(args.prefix),
++        '-DSQLITE_SOURCE_DIR=' + str(args.sqlite_source), '-DPROVIDER_PREFIX=' + str(args.prefix)], check=True)
++    subprocess.run(['cmake', '--build', str(args.build), '--parallel', '3'], check=True)
++    sdk_mutants = list((args.build / 'bad-sdk').glob('libexreader.*.*.dylib'))
++    if len(sdk_mutants) != 1:
++        raise RuntimeError('Expected one actual SDK mutant image')
++    cases = [('main_embedded', args.build / 'embedded_main', args.build / 'embedded-main.map', sdk,
++              'main embeds a second SQLite implementation'),
++             ('sdk_embedded', args.consumer, args.map, sdk_mutants[0],
++              'sdk embeds a second SQLite implementation')]
++    results = []
++    for name, binary, mapping, sdk_image, required_error in cases:
++        transcript = io.StringIO()
++        try:
++            with contextlib.redirect_stdout(transcript):
++                inspect(binary, mapping, shared_provider=provider, shared_sdk=sdk_image)
++        except AssertionError as exc:
++            if required_error not in str(exc):
++                raise RuntimeError(name + ' failed for a different reason: ' + str(exc)) from exc
++            results.append({'name': name, 'rejected': True, 'error': str(exc),
++                'main_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(),
++                'sdk_sha256': hashlib.sha256(sdk_image.read_bytes()).hexdigest()})
++            (args.output / (name + '.log')).write_text(transcript.getvalue() + '\n' + str(exc), encoding='utf-8')
++        else:
++            raise RuntimeError('Accepted the real embedded-SQLite mutant: ' + name)
++    (args.output / 'apple-real-negatives.json').write_text(json.dumps({
++        'acceptance_assessed': False, 'controls': results, 'passed': len(results), 'total': 2}, indent=2), encoding='utf-8')
++    print('Real Apple embedded-implementation controls rejected: 2/2')
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/extras/sqlite-provider/apple-negative/main.c b/extras/sqlite-provider/apple-negative/main.c
+new file mode 100644
+index 00000000..541fd7d6
+--- /dev/null
++++ b/extras/sqlite-provider/apple-negative/main.c
+@@ -0,0 +1,14 @@
++/* SPDX-License-Identifier: MIT */
++#include <exr/library.h>
++#include <sqlite3.h>
++
++int main(void) {
++    exr_library *sdk = 0;
++    exr_error error = {0};
++    sqlite3 *db = 0;
++    if (exr_library_open(":memory:", &sdk, &error) != EXR_OK) return 1;
++    if (sqlite3_open(":memory:", &db) != SQLITE_OK) return 2;
++    sqlite3_close(db);
++    exr_library_close(sdk);
++    return 0;
++}
+diff --git a/extras/sqlite-provider/integration/CMakeLists.txt b/extras/sqlite-provider/integration/CMakeLists.txt
+new file mode 100644
+index 00000000..cf6b365d
+--- /dev/null
++++ b/extras/sqlite-provider/integration/CMakeLists.txt
+@@ -0,0 +1,22 @@
++cmake_minimum_required(VERSION 3.24)
++project(SharedSQLiteConsumer LANGUAGES C)
++set(SDK_CONTRACT_VERSION "3.41.0" CACHE STRING "Exact SDK line under contract verification")
++find_package(EXReader ${SDK_CONTRACT_VERSION} EXACT CONFIG REQUIRED COMPONENTS library)
++find_package(EXReaderProductCatalog CONFIG REQUIRED)
++find_package(EXReaderSQLiteProvider 1.0.0 EXACT CONFIG REQUIRED)
++if(NOT EXReader_USE_SHARED_SQLITE_PROVIDER OR NOT EXReaderProductCatalog_USE_SHARED_SQLITE_PROVIDER)
++  message(FATAL_ERROR "The integration consumer requires both SDK and ProductCatalog shared-provider profiles")
++endif()
++add_executable(shared-sqlite-consumer main.c)
++target_link_libraries(shared-sqlite-consumer PRIVATE EXReader::exreader
++  EXReaderProductCatalog::reader_catalog EXReaderSQLiteProvider::sqlite3)
++if(MSVC)
++  target_link_options(shared-sqlite-consumer PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/consumer.map")
++elseif(APPLE)
++  target_link_options(shared-sqlite-consumer PRIVATE "LINKER:-map,${CMAKE_CURRENT_BINARY_DIR}/consumer.map")
++else()
++  target_link_options(shared-sqlite-consumer PRIVATE "LINKER:-Map,${CMAKE_CURRENT_BINARY_DIR}/consumer.map")
++endif()
++enable_testing()
++add_test(NAME shared-sqlite-sdk-product COMMAND shared-sqlite-consumer)
++set_tests_properties(shared-sqlite-sdk-product PROPERTIES LABELS "FTS5;SDKContract")
+diff --git a/extras/sqlite-provider/integration/main.c b/extras/sqlite-provider/integration/main.c
+new file mode 100644
+index 00000000..d4e278ca
+--- /dev/null
++++ b/extras/sqlite-provider/integration/main.c
+@@ -0,0 +1,64 @@
++/* SPDX-License-Identifier: MIT */
++#include <exr/library.h>
++#include <exreader-product/catalog.h>
++#include <sqlite3.h>
++#include <stdio.h>
++#include <string.h>
++#ifdef _WIN32
++#include <windows.h>
++#endif
++#ifdef __APPLE__
++#include <mach-o/dyld.h>
++#endif
++
++static int visit(void *context, const reader_catalog_row *row) {
++    (void)row;
++    ++*(int *)context;
++    return 0;
++}
++
++int main(void) {
++    exr_library *sdk = NULL;
++    exr_error error = {0};
++    reader_catalog *product = NULL;
++    reader_catalog_error product_error = {0};
++    sqlite3 *db = NULL;
++    sqlite3_stmt *stmt = NULL;
++    int rows = 0;
++    if (strcmp(exr_version(), EXR_VERSION) != 0) return 13;
++    if (exr_library_open(":memory:", &sdk, &error) != EXR_OK) return 1;
++    if (reader_catalog_open(":memory:", &product, &product_error) != 0) return 2;
++    if (sqlite3_open(":memory:", &db) != SQLITE_OK) return 3;
++    if (sqlite3_exec(db, "CREATE VIRTUAL TABLE f USING fts5(value);"
++        "INSERT INTO f VALUES('one shared implementation');", NULL, NULL, NULL) != SQLITE_OK) return 4;
++    exr_library_close(sdk);
++    if (reader_catalog_page(product, NULL, NULL, 10, visit, &rows, &product_error) != 0 || rows != 0) return 5;
++    if (reader_catalog_close(&product, &product_error) != 0) return 6;
++    if (sqlite3_prepare_v2(db, "SELECT value FROM f WHERE f MATCH 'shared'", -1,
++                         &stmt, NULL) != SQLITE_OK) return 7;
++    if (sqlite3_step(stmt) != SQLITE_ROW ||
++        strcmp((const char *)sqlite3_column_text(stmt, 0), "one shared implementation")) return 8;
++#ifdef _WIN32
++    HMODULE provider = GetModuleHandleW(L"libreader_sqlite3.dll");
++    if (!provider) provider = GetModuleHandleW(L"reader_sqlite3.dll");
++    if (!provider || (int (*)(void))GetProcAddress(provider, "sqlite3_libversion_number") != sqlite3_libversion_number)
++        return 9;
++    char provider_path[32768];
++    if (!GetModuleFileNameA(provider, provider_path, sizeof(provider_path))) return 11;
++    printf("loaded_sqlite_provider=%s\n", provider_path);
++#endif
++#ifdef __APPLE__
++    unsigned providers = 0;
++    for (uint32_t i = 0; i < _dyld_image_count(); ++i) {
++        const char *name = _dyld_get_image_name(i);
++        if (name && (strstr(name, "libreader_sqlite3") || strstr(name, "ReaderSQLite.framework/"))) {
++            ++providers;
++            printf("loaded_sqlite_provider=%s\n", name);
++        }
++    }
++    if (providers != 1) return 12;
++#endif
++    if (sqlite3_finalize(stmt) != SQLITE_OK || sqlite3_close(db) != SQLITE_OK) return 10;
++    puts("Installed dynamic SDK, ProductCatalog and FTS5 share the public provider");
++    return 0;
++}
+diff --git a/extras/sqlite-provider/test_provider.c b/extras/sqlite-provider/test_provider.c
+new file mode 100644
+index 00000000..96de36d1
+--- /dev/null
++++ b/extras/sqlite-provider/test_provider.c
+@@ -0,0 +1,23 @@
++/* SPDX-License-Identifier: MIT */
++#include <sqlite3.h>
++#include <stdio.h>
++#include <string.h>
++
++int main(void) {
++    sqlite3 *db = NULL;
++    sqlite3_stmt *stmt = NULL;
++    if (!sqlite3_compileoption_used("ENABLE_FTS5") ||
++        !sqlite3_compileoption_used("OMIT_LOAD_EXTENSION") || sqlite3_threadsafe() != 1)
++        return 1;
++    if (sqlite3_open(":memory:", &db) != SQLITE_OK) return 2;
++    if (sqlite3_exec(db, "CREATE VIRTUAL TABLE books USING fts5(title);"
++        "INSERT INTO books VALUES('shared provider');", NULL, NULL, NULL) != SQLITE_OK)
++        return 3;
++    if (sqlite3_prepare_v2(db, "SELECT title FROM books WHERE books MATCH 'shared'", -1,
++                         &stmt, NULL) != SQLITE_OK) return 4;
++    if (sqlite3_step(stmt) != SQLITE_ROW ||
++        strcmp((const char *)sqlite3_column_text(stmt, 0), "shared provider") != 0) return 5;
++    if (sqlite3_finalize(stmt) != SQLITE_OK || sqlite3_close(db) != SQLITE_OK) return 6;
++    puts("Shared SQLite provider: FTS5 and public API passed");
++    return 0;
++}
 diff --git a/tools/apple_swift.py b/tools/apple_swift.py
 index ce514dd9..310b38d5 100644
 --- a/tools/apple_swift.py
@@ -450,479 +944,3 @@ index ed7f6259..ba4680b6 100644
 +
  if __name__ == '__main__':
      main()
-diff --git a/.github/workflows/sdk-shared-sqlite-contract.yml b/.github/workflows/sdk-shared-sqlite-contract.yml
-new file mode 100644
---- /dev/null
-+++ b/.github/workflows/sdk-shared-sqlite-contract.yml
-@@ -0,0 +1,111 @@
-+name: SDK shared SQLite contract
-+
-+on:
-+  push:
-+    branches: [codex/sdk-shared-sqlite-provider-20261103]
-+    paths: [.github/workflows/sdk-shared-sqlite-contract.yml]
-+  workflow_dispatch:
-+    inputs:
-+      candidate_sha:
-+        description: Exact reviewed SDK candidate commit (parent must be 95100501)
-+        type: string
-+        required: true
-+
-+permissions:
-+  contents: read
-+
-+jobs:
-+  apple-native:
-+    runs-on: macos-14
-+    timeout-minutes: 20
-+    steps:
-+      - uses: actions/checkout@v4
-+        with:
-+          ref: ${{ inputs.candidate_sha || github.sha }}
-+          fetch-depth: 2
-+      - name: Admit only the reviewed SDK replay
-+        env:
-+          CANDIDATE_SHA: ${{ inputs.candidate_sha || github.sha }}
-+        run: |
-+          python3 - <<'PY'
-+          import json, os, pathlib, re, subprocess
-+          base = '95100501eeef9c6325be8b3882aa400c99cf000f'
-+          sha = os.environ['CANDIDATE_SHA']
-+          if not re.fullmatch(r'[0-9a-f]{40}', sha):
-+              raise SystemExit('exact candidate SHA required')
-+          def git(*args): return subprocess.check_output(['git', *args], text=True).strip()
-+          if git('rev-parse', 'HEAD') != sha or git('rev-parse', 'HEAD^') != base:
-+              raise SystemExit('candidate is not the reviewed replay on the fixed SDK line')
-+          subprocess.run(['git', 'diff', '--exit-code', base, 'HEAD', '--',
-+              'src', 'include', 'bindings', 'cmake/versions.cmake',
-+              'docs/reader-total-progress/catalog.json'], check=True)
-+          owned = {'CMakeLists.txt', 'cmake/deps.cmake', 'cmake/EXReaderConfig.cmake.in',
-+              'cmake/install_dependencies.cmake', 'apps/reader/store/native/CMakeLists.txt',
-+              'apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in',
-+              'tools/apple_swift.py', 'tools/build_apple_product.py', 'tools/build_apple_host.py',
-+              'tools/check_apple_product.py', '.github/workflows/sdk-shared-sqlite-contract.yml'}
-+          changed = git('diff', '--name-only', base, 'HEAD').splitlines()
-+          if any(p not in owned and not p.startswith(('extras/sqlite-provider/',
-+                  'evidence/sdk-shared-sqlite-provider-20261103/')) for p in changed):
-+              raise SystemExit('candidate contains changes outside the reviewed SDK contract')
-+          out = pathlib.Path('evidence/sdk-shared-sqlite-provider-20261103/ci')
-+          out.mkdir(parents=True, exist_ok=True)
-+          (out/'source.json').write_text(json.dumps({'base': base, 'candidate': sha,
-+              'changed': changed, 'acceptance_assessed': False}, indent=2))
-+          PY
-+      - name: Build and test the installed shared provider
-+        run: |
-+          cmake -S extras/sqlite-provider -B build/sdk-provider -DCMAKE_BUILD_TYPE=Release \
-+            -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_SQLITE_PROVIDER_BUILD_TESTS=ON
-+          cmake --build build/sdk-provider --parallel 3
-+          ctest --test-dir build/sdk-provider -L FTS5 --output-on-failure \
-+            --output-junit "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci/fts5-provider.xml"
-+          cmake --install build/sdk-provider
-+      - name: Build the SDK and product on the reviewed SDK line
-+        run: |
-+          cmake -S . -B build/sdk-core -DCMAKE_BUILD_TYPE=Release \
-+            -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_USE_SHARED_SQLITE_PROVIDER=ON \
-+            -DEXReaderSQLiteProvider_DIR="$PWD/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider" \
-+            -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AUDIO=OFF \
-+            -DEXR_ENABLE_PDF=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_ICC=OFF \
-+            -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
-+          cmake --build build/sdk-core --parallel 3
-+          cmake --install build/sdk-core
-+          cmake -S apps/reader/store/native -B build/sdk-catalog -DCMAKE_BUILD_TYPE=Release \
-+            -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_USE_SHARED_SQLITE_PROVIDER=ON \
-+            -DEXReaderSQLiteProvider_DIR="$PWD/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider"
-+          cmake --build build/sdk-catalog --parallel 3
-+          cmake --install build/sdk-catalog
-+      - name: Run real product tests and the joint SDK product FTS5 test
-+        run: |
-+          ctest --test-dir build/sdk-catalog --output-on-failure \
-+            --output-junit "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci/product-tests.xml"
-+          cmake -S extras/sqlite-provider/integration -B build/sdk-integration \
-+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/sdk-stage"
-+          cmake --build build/sdk-integration --parallel 3
-+          ctest --test-dir build/sdk-integration -L FTS5 --output-on-failure \
-+            --output-junit "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci/fts5-integration.xml"
-+      - name: Reject actual Apple main and SDK binaries with embedded SQLite
-+        run: |
-+          sqlite_source=$(sed -n 's/^exreader_sqlite_source_SOURCE_DIR:[^=]*=//p' build/sdk-provider/CMakeCache.txt)
-+          test -n "$sqlite_source"
-+          python3 extras/sqlite-provider/apple-negative/check.py --prefix "$PWD/build/sdk-stage" \
-+            --consumer "$PWD/build/sdk-integration/shared-sqlite-consumer" \
-+            --map "$PWD/build/sdk-integration/consumer.map" --sqlite-source "$sqlite_source" \
-+            --build "$PWD/build/sdk-apple-negatives" \
-+            --output "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci"
-+          find build/sdk-stage -iname '*sqlite*' -print > evidence/sdk-shared-sqlite-provider-20261103/ci/stage-sqlite-scan.txt
-+      - uses: actions/upload-artifact@v4
-+        if: always()
-+        with:
-+          name: sdk-shared-sqlite-contract-${{ github.run_id }}-${{ github.run_attempt }}
-+          path: |
-+            evidence/sdk-shared-sqlite-provider-20261103/ci/
-+            build/sdk-stage/
-+            build/sdk-provider/sqlite-provider.map
-+            build/sdk-integration/consumer.map
-+            build/sdk-apple-negatives/embedded-main.map
-+            build/sdk-core/CMakeCache.txt
-+            build/sdk-catalog/CMakeCache.txt
-+          if-no-files-found: error
-+          retention-days: 30
-diff --git a/extras/sqlite-provider/CMakeLists.txt b/extras/sqlite-provider/CMakeLists.txt
-new file mode 100644
---- /dev/null
-+++ b/extras/sqlite-provider/CMakeLists.txt
-@@ -0,0 +1,91 @@
-+# SPDX-License-Identifier: MIT
-+cmake_minimum_required(VERSION 3.24)
-+project(EXReaderSQLiteProvider VERSION 1.0.0 LANGUAGES C)
-+include(FetchContent)
-+include(CMakePackageConfigHelpers)
-+find_package(Threads REQUIRED)
-+
-+# This public dependency is shared by the SDK and product; neither embeds it.
-+FetchContent_Declare(exreader_sqlite_source
-+  URL "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip"
-+  URL_HASH SHA256=68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d)
-+FetchContent_MakeAvailable(exreader_sqlite_source)
-+set(provider_options SQLITE_THREADSAFE=1 SQLITE_DQS=0 SQLITE_DEFAULT_FOREIGN_KEYS=1
-+  SQLITE_OMIT_LOAD_EXTENSION SQLITE_MAX_LENGTH=2147483647 SQLITE_ENABLE_FTS5)
-+file(SHA256 "${exreader_sqlite_source_SOURCE_DIR}/sqlite3.c" provider_source_hash)
-+string(SHA256 EXReaderSQLiteProvider_ID "${provider_source_hash};${provider_options}")
-+add_library(reader_sqlite3 SHARED "${exreader_sqlite_source_SOURCE_DIR}/sqlite3.c")
-+add_library(EXReaderSQLiteProvider::sqlite3 ALIAS reader_sqlite3)
-+set_target_properties(reader_sqlite3 PROPERTIES EXPORT_NAME sqlite3 VERSION ${PROJECT_VERSION}
-+  SOVERSION 1 C_STANDARD 11 C_STANDARD_REQUIRED YES)
-+target_compile_definitions(reader_sqlite3 PRIVATE ${provider_options})
-+target_include_directories(reader_sqlite3 PUBLIC
-+  $<BUILD_INTERFACE:${exreader_sqlite_source_SOURCE_DIR}>
-+  $<INSTALL_INTERFACE:include/exreader-sqlite>)
-+target_link_libraries(reader_sqlite3 PRIVATE Threads::Threads ${CMAKE_DL_LIBS})
-+if(UNIX)
-+  target_link_libraries(reader_sqlite3 PRIVATE m)
-+endif()
-+if(WIN32)
-+  target_compile_definitions(reader_sqlite3 PRIVATE "SQLITE_API=__declspec(dllexport)"
-+    "SQLITE_EXTERN=extern __declspec(dllexport)")
-+  target_compile_definitions(reader_sqlite3 INTERFACE "SQLITE_API=__declspec(dllimport)"
-+    "SQLITE_EXTERN=extern __declspec(dllimport)")
-+endif()
-+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-+  set_target_properties(reader_sqlite3 PROPERTIES FRAMEWORK TRUE OUTPUT_NAME ReaderSQLite
-+    FRAMEWORK_VERSION A MACOSX_FRAMEWORK_IDENTIFIER org.exreader.sqlite3
-+    MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${PROJECT_VERSION}
-+    MACOSX_FRAMEWORK_BUNDLE_VERSION ${PROJECT_VERSION}
-+    PUBLIC_HEADER "${exreader_sqlite_source_SOURCE_DIR}/sqlite3.h;${exreader_sqlite_source_SOURCE_DIR}/sqlite3ext.h")
-+endif()
-+if(APPLE)
-+  set_target_properties(reader_sqlite3 PROPERTIES INSTALL_NAME_DIR "@rpath")
-+endif()
-+if(ANDROID)
-+  target_link_options(reader_sqlite3 PRIVATE -Wl,-z,max-page-size=16384)
-+endif()
-+if(MSVC)
-+  target_link_options(reader_sqlite3 PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/sqlite-provider.map")
-+elseif(APPLE)
-+  target_link_options(reader_sqlite3 PRIVATE "LINKER:-map,${CMAKE_CURRENT_BINARY_DIR}/sqlite-provider.map")
-+else()
-+  target_link_options(reader_sqlite3 PRIVATE "LINKER:-Map,${CMAKE_CURRENT_BINARY_DIR}/sqlite-provider.map")
-+endif()
-+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-+  set(provider_runtime "Frameworks/ReaderSQLite.framework/ReaderSQLite")
-+elseif(WIN32)
-+  set(provider_runtime "bin/$<TARGET_FILE_NAME:reader_sqlite3>")
-+else()
-+  set(provider_runtime "lib/$<TARGET_FILE_NAME:reader_sqlite3>")
-+endif()
-+string(REPLACE ";" "\",\"" provider_options_json "${provider_options}")
-+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/provider-$<CONFIG>.json" CONTENT
-+  "{\"package\":\"EXReaderSQLiteProvider\",\"version\":\"${PROJECT_VERSION}\",\"config_id\":\"${EXReaderSQLiteProvider_ID}\",\"source_sha256\":\"${provider_source_hash}\",\"runtime_library\":\"${provider_runtime}\",\"compile_options\":[\"${provider_options_json}\"]}\n")
-+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/provider-$<CONFIG>.json"
-+  DESTINATION share/exreader-sqlite RENAME provider.json)
-+install(TARGETS reader_sqlite3 EXPORT EXReaderSQLiteProviderTargets
-+  RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib
-+  FRAMEWORK DESTINATION Frameworks PUBLIC_HEADER DESTINATION include/exreader-sqlite)
-+install(FILES "${exreader_sqlite_source_SOURCE_DIR}/sqlite3.h"
-+  "${exreader_sqlite_source_SOURCE_DIR}/sqlite3ext.h" DESTINATION include/exreader-sqlite)
-+install(FILES ../../licenses/sqlite-public-domain.txt DESTINATION share/exreader-sqlite)
-+install(EXPORT EXReaderSQLiteProviderTargets NAMESPACE EXReaderSQLiteProvider::
-+  DESTINATION lib/cmake/EXReaderSQLiteProvider)
-+configure_package_config_file(EXReaderSQLiteProviderConfig.cmake.in
-+  "${CMAKE_CURRENT_BINARY_DIR}/EXReaderSQLiteProviderConfig.cmake"
-+  INSTALL_DESTINATION lib/cmake/EXReaderSQLiteProvider)
-+write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXReaderSQLiteProviderConfigVersion.cmake"
-+  VERSION ${PROJECT_VERSION} COMPATIBILITY ExactVersion)
-+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderSQLiteProviderConfig.cmake"
-+  "${CMAKE_CURRENT_BINARY_DIR}/EXReaderSQLiteProviderConfigVersion.cmake"
-+  DESTINATION lib/cmake/EXReaderSQLiteProvider)
-+
-+option(EXR_SQLITE_PROVIDER_BUILD_TESTS "Run the real SQLite/FTS5 provider smoke test" OFF)
-+if(EXR_SQLITE_PROVIDER_BUILD_TESTS)
-+  enable_testing()
-+  add_executable(sqlite-provider-check test_provider.c)
-+  target_link_libraries(sqlite-provider-check PRIVATE EXReaderSQLiteProvider::sqlite3)
-+  add_test(NAME sqlite-provider-check COMMAND sqlite-provider-check)
-+  set_tests_properties(sqlite-provider-check PROPERTIES LABELS "FTS5;SDKContract")
-+endif()
-diff --git a/extras/sqlite-provider/EXReaderSQLiteProviderConfig.cmake.in b/extras/sqlite-provider/EXReaderSQLiteProviderConfig.cmake.in
-new file mode 100644
---- /dev/null
-+++ b/extras/sqlite-provider/EXReaderSQLiteProviderConfig.cmake.in
-@@ -0,0 +1,8 @@
-+@PACKAGE_INIT@
-+set(EXReaderSQLiteProvider_ID "@EXReaderSQLiteProvider_ID@")
-+include("${CMAKE_CURRENT_LIST_DIR}/EXReaderSQLiteProviderTargets.cmake")
-+get_target_property(_exreader_sqlite_type EXReaderSQLiteProvider::sqlite3 TYPE)
-+if(NOT _exreader_sqlite_type STREQUAL "SHARED_LIBRARY")
-+  message(FATAL_ERROR "EXReaderSQLiteProvider must be a shared implementation")
-+endif()
-+check_required_components(EXReaderSQLiteProvider)
-diff --git a/extras/sqlite-provider/apple-negative/CMakeLists.txt b/extras/sqlite-provider/apple-negative/CMakeLists.txt
-new file mode 100644
---- /dev/null
-+++ b/extras/sqlite-provider/apple-negative/CMakeLists.txt
-@@ -0,0 +1,29 @@
-+cmake_minimum_required(VERSION 3.24)
-+project(SharedSQLiteAppleNegatives LANGUAGES C)
-+if(NOT APPLE)
-+  message(FATAL_ERROR "These are real Mach-O negative controls; build them on Apple")
-+endif()
-+find_package(EXReader CONFIG REQUIRED COMPONENTS library)
-+find_package(EXReaderSQLiteProvider 1.0.0 EXACT CONFIG REQUIRED)
-+if(NOT SQLITE_SOURCE_DIR OR NOT PROVIDER_PREFIX)
-+  message(FATAL_ERROR "Supply the verified SQLite source directory and installed provider prefix")
-+endif()
-+file(READ "${PROVIDER_PREFIX}/share/exreader-sqlite/provider.json" provider_json)
-+string(JSON expected_source GET "${provider_json}" source_sha256)
-+file(SHA256 "${SQLITE_SOURCE_DIR}/sqlite3.c" actual_source)
-+if(NOT actual_source STREQUAL expected_source)
-+  message(FATAL_ERROR "Negative control source differs from the actual provider")
-+endif()
-+# Compile a complete second implementation once, then embed it in both mutants.
-+add_library(embedded_sqlite OBJECT "${SQLITE_SOURCE_DIR}/sqlite3.c")
-+set_target_properties(embedded_sqlite PROPERTIES POSITION_INDEPENDENT_CODE ON)
-+target_compile_definitions(embedded_sqlite PRIVATE SQLITE_THREADSAFE=1 SQLITE_DQS=0
-+  SQLITE_DEFAULT_FOREIGN_KEYS=1 SQLITE_OMIT_LOAD_EXTENSION SQLITE_MAX_LENGTH=2147483647 SQLITE_ENABLE_FTS5)
-+add_executable(embedded_main main.c $<TARGET_OBJECTS:embedded_sqlite>)
-+target_link_libraries(embedded_main PRIVATE EXReader::exreader EXReaderSQLiteProvider::sqlite3)
-+target_link_options(embedded_main PRIVATE "LINKER:-map,${CMAKE_CURRENT_BINARY_DIR}/embedded-main.map")
-+add_library(embedded_sdk SHARED $<TARGET_OBJECTS:embedded_sqlite>)
-+set_target_properties(embedded_sdk PROPERTIES OUTPUT_NAME exreader VERSION ${EXReader_VERSION}
-+  SOVERSION 1 LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bad-sdk" INSTALL_NAME_DIR "@rpath"
-+  BUILD_WITH_INSTALL_NAME_DIR ON LINKER_LANGUAGE C)
-+target_link_libraries(embedded_sdk PRIVATE m)
-diff --git a/extras/sqlite-provider/apple-negative/check.py b/extras/sqlite-provider/apple-negative/check.py
-new file mode 100644
---- /dev/null
-+++ b/extras/sqlite-provider/apple-negative/check.py
-@@ -0,0 +1,69 @@
-+"""Run the real Mach-O positive and deliberately embedded-implementation controls."""
-+import argparse
-+import contextlib
-+import hashlib
-+import io
-+import json
-+from pathlib import Path
-+import subprocess
-+import sys
-+
-+ROOT = Path(__file__).resolve().parents[3]
-+sys.path.insert(0, str(ROOT / 'tools'))
-+from check_apple_product import inspect
-+
-+
-+def main():
-+    p = argparse.ArgumentParser()
-+    p.add_argument('--prefix', type=Path, required=True)
-+    p.add_argument('--consumer', type=Path, required=True)
-+    p.add_argument('--map', type=Path, required=True)
-+    p.add_argument('--sqlite-source', type=Path, required=True)
-+    p.add_argument('--build', type=Path, required=True)
-+    p.add_argument('--output', type=Path, required=True)
-+    args = p.parse_args()
-+    if sys.platform != 'darwin':
-+        p.error('Real Apple controls require an Apple host')
-+    args.output.mkdir(parents=True, exist_ok=True)
-+    metadata = json.loads((args.prefix / 'share/exreader-sqlite/provider.json').read_text())
-+    provider = args.prefix / metadata['runtime_library']
-+    sdk = args.prefix / 'lib/libexreader.dylib'
-+    positive = inspect(args.consumer, args.map, shared_provider=provider, shared_sdk=sdk)
-+    (args.output / 'apple-positive.json').write_text(json.dumps(positive, indent=2), encoding='utf-8')
-+    for role, image in [('consumer', args.consumer), ('sdk', sdk), ('provider', provider)]:
-+        for tool, argv in [('nm', ['nm', str(image)]), ('dependencies', ['otool', '-L', str(image)])]:
-+            (args.output / (role + '-' + tool + '.txt')).write_text(
-+                subprocess.check_output(argv, text=True), encoding='utf-8')
-+    subprocess.run(['cmake', '-S', str(Path(__file__).parent), '-B', str(args.build),
-+        '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_PREFIX_PATH=' + str(args.prefix),
-+        '-DSQLITE_SOURCE_DIR=' + str(args.sqlite_source), '-DPROVIDER_PREFIX=' + str(args.prefix)], check=True)
-+    subprocess.run(['cmake', '--build', str(args.build), '--parallel', '3'], check=True)
-+    sdk_mutants = list((args.build / 'bad-sdk').glob('libexreader.*.*.dylib'))
-+    if len(sdk_mutants) != 1:
-+        raise RuntimeError('Expected one actual SDK mutant image')
-+    cases = [('main_embedded', args.build / 'embedded_main', args.build / 'embedded-main.map', sdk,
-+              'main embeds a second SQLite implementation'),
-+             ('sdk_embedded', args.consumer, args.map, sdk_mutants[0],
-+              'sdk embeds a second SQLite implementation')]
-+    results = []
-+    for name, binary, mapping, sdk_image, required_error in cases:
-+        transcript = io.StringIO()
-+        try:
-+            with contextlib.redirect_stdout(transcript):
-+                inspect(binary, mapping, shared_provider=provider, shared_sdk=sdk_image)
-+        except AssertionError as exc:
-+            if required_error not in str(exc):
-+                raise RuntimeError(name + ' failed for a different reason: ' + str(exc)) from exc
-+            results.append({'name': name, 'rejected': True, 'error': str(exc),
-+                'main_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(),
-+                'sdk_sha256': hashlib.sha256(sdk_image.read_bytes()).hexdigest()})
-+            (args.output / (name + '.log')).write_text(transcript.getvalue() + '\n' + str(exc), encoding='utf-8')
-+        else:
-+            raise RuntimeError('Accepted the real embedded-SQLite mutant: ' + name)
-+    (args.output / 'apple-real-negatives.json').write_text(json.dumps({
-+        'acceptance_assessed': False, 'controls': results, 'passed': len(results), 'total': 2}, indent=2), encoding='utf-8')
-+    print('Real Apple embedded-implementation controls rejected: 2/2')
-+
-+
-+if __name__ == '__main__':
-+    main()
-diff --git a/extras/sqlite-provider/apple-negative/main.c b/extras/sqlite-provider/apple-negative/main.c
-new file mode 100644
---- /dev/null
-+++ b/extras/sqlite-provider/apple-negative/main.c
-@@ -0,0 +1,14 @@
-+/* SPDX-License-Identifier: MIT */
-+#include <exr/library.h>
-+#include <sqlite3.h>
-+
-+int main(void) {
-+    exr_library *sdk = 0;
-+    exr_error error = {0};
-+    sqlite3 *db = 0;
-+    if (exr_library_open(":memory:", &sdk, &error) != EXR_OK) return 1;
-+    if (sqlite3_open(":memory:", &db) != SQLITE_OK) return 2;
-+    sqlite3_close(db);
-+    exr_library_close(sdk);
-+    return 0;
-+}
-diff --git a/extras/sqlite-provider/integration/CMakeLists.txt b/extras/sqlite-provider/integration/CMakeLists.txt
-new file mode 100644
---- /dev/null
-+++ b/extras/sqlite-provider/integration/CMakeLists.txt
-@@ -0,0 +1,22 @@
-+cmake_minimum_required(VERSION 3.24)
-+project(SharedSQLiteConsumer LANGUAGES C)
-+set(SDK_CONTRACT_VERSION "3.41.0" CACHE STRING "Exact SDK line under contract verification")
-+find_package(EXReader ${SDK_CONTRACT_VERSION} EXACT CONFIG REQUIRED COMPONENTS library)
-+find_package(EXReaderProductCatalog CONFIG REQUIRED)
-+find_package(EXReaderSQLiteProvider 1.0.0 EXACT CONFIG REQUIRED)
-+if(NOT EXReader_USE_SHARED_SQLITE_PROVIDER OR NOT EXReaderProductCatalog_USE_SHARED_SQLITE_PROVIDER)
-+  message(FATAL_ERROR "The integration consumer requires both SDK and ProductCatalog shared-provider profiles")
-+endif()
-+add_executable(shared-sqlite-consumer main.c)
-+target_link_libraries(shared-sqlite-consumer PRIVATE EXReader::exreader
-+  EXReaderProductCatalog::reader_catalog EXReaderSQLiteProvider::sqlite3)
-+if(MSVC)
-+  target_link_options(shared-sqlite-consumer PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/consumer.map")
-+elseif(APPLE)
-+  target_link_options(shared-sqlite-consumer PRIVATE "LINKER:-map,${CMAKE_CURRENT_BINARY_DIR}/consumer.map")
-+else()
-+  target_link_options(shared-sqlite-consumer PRIVATE "LINKER:-Map,${CMAKE_CURRENT_BINARY_DIR}/consumer.map")
-+endif()
-+enable_testing()
-+add_test(NAME shared-sqlite-sdk-product COMMAND shared-sqlite-consumer)
-+set_tests_properties(shared-sqlite-sdk-product PROPERTIES LABELS "FTS5;SDKContract")
-diff --git a/extras/sqlite-provider/integration/main.c b/extras/sqlite-provider/integration/main.c
-new file mode 100644
---- /dev/null
-+++ b/extras/sqlite-provider/integration/main.c
-@@ -0,0 +1,64 @@
-+/* SPDX-License-Identifier: MIT */
-+#include <exr/library.h>
-+#include <exreader-product/catalog.h>
-+#include <sqlite3.h>
-+#include <stdio.h>
-+#include <string.h>
-+#ifdef _WIN32
-+#include <windows.h>
-+#endif
-+#ifdef __APPLE__
-+#include <mach-o/dyld.h>
-+#endif
-+
-+static int visit(void *context, const reader_catalog_row *row) {
-+    (void)row;
-+    ++*(int *)context;
-+    return 0;
-+}
-+
-+int main(void) {
-+    exr_library *sdk = NULL;
-+    exr_error error = {0};
-+    reader_catalog *product = NULL;
-+    reader_catalog_error product_error = {0};
-+    sqlite3 *db = NULL;
-+    sqlite3_stmt *stmt = NULL;
-+    int rows = 0;
-+    if (strcmp(exr_version(), EXR_VERSION) != 0) return 13;
-+    if (exr_library_open(":memory:", &sdk, &error) != EXR_OK) return 1;
-+    if (reader_catalog_open(":memory:", &product, &product_error) != 0) return 2;
-+    if (sqlite3_open(":memory:", &db) != SQLITE_OK) return 3;
-+    if (sqlite3_exec(db, "CREATE VIRTUAL TABLE f USING fts5(value);"
-+        "INSERT INTO f VALUES('one shared implementation');", NULL, NULL, NULL) != SQLITE_OK) return 4;
-+    exr_library_close(sdk);
-+    if (reader_catalog_page(product, NULL, NULL, 10, visit, &rows, &product_error) != 0 || rows != 0) return 5;
-+    if (reader_catalog_close(&product, &product_error) != 0) return 6;
-+    if (sqlite3_prepare_v2(db, "SELECT value FROM f WHERE f MATCH 'shared'", -1,
-+                         &stmt, NULL) != SQLITE_OK) return 7;
-+    if (sqlite3_step(stmt) != SQLITE_ROW ||
-+        strcmp((const char *)sqlite3_column_text(stmt, 0), "one shared implementation")) return 8;
-+#ifdef _WIN32
-+    HMODULE provider = GetModuleHandleW(L"libreader_sqlite3.dll");
-+    if (!provider) provider = GetModuleHandleW(L"reader_sqlite3.dll");
-+    if (!provider || (int (*)(void))GetProcAddress(provider, "sqlite3_libversion_number") != sqlite3_libversion_number)
-+        return 9;
-+    char provider_path[32768];
-+    if (!GetModuleFileNameA(provider, provider_path, sizeof(provider_path))) return 11;
-+    printf("loaded_sqlite_provider=%s\n", provider_path);
-+#endif
-+#ifdef __APPLE__
-+    unsigned providers = 0;
-+    for (uint32_t i = 0; i < _dyld_image_count(); ++i) {
-+        const char *name = _dyld_get_image_name(i);
-+        if (name && (strstr(name, "libreader_sqlite3") || strstr(name, "ReaderSQLite.framework/"))) {
-+            ++providers;
-+            printf("loaded_sqlite_provider=%s\n", name);
-+        }
-+    }
-+    if (providers != 1) return 12;
-+#endif
-+    if (sqlite3_finalize(stmt) != SQLITE_OK || sqlite3_close(db) != SQLITE_OK) return 10;
-+    puts("Installed dynamic SDK, ProductCatalog and FTS5 share the public provider");
-+    return 0;
-+}
-diff --git a/extras/sqlite-provider/test_provider.c b/extras/sqlite-provider/test_provider.c
-new file mode 100644
---- /dev/null
-+++ b/extras/sqlite-provider/test_provider.c
-@@ -0,0 +1,23 @@
-+/* SPDX-License-Identifier: MIT */
-+#include <sqlite3.h>
-+#include <stdio.h>
-+#include <string.h>
-+
-+int main(void) {
-+    sqlite3 *db = NULL;
-+    sqlite3_stmt *stmt = NULL;
-+    if (!sqlite3_compileoption_used("ENABLE_FTS5") ||
-+        !sqlite3_compileoption_used("OMIT_LOAD_EXTENSION") || sqlite3_threadsafe() != 1)
-+        return 1;
-+    if (sqlite3_open(":memory:", &db) != SQLITE_OK) return 2;
-+    if (sqlite3_exec(db, "CREATE VIRTUAL TABLE books USING fts5(title);"
-+        "INSERT INTO books VALUES('shared provider');", NULL, NULL, NULL) != SQLITE_OK)
-+        return 3;
-+    if (sqlite3_prepare_v2(db, "SELECT title FROM books WHERE books MATCH 'shared'", -1,
-+                         &stmt, NULL) != SQLITE_OK) return 4;
-+    if (sqlite3_step(stmt) != SQLITE_ROW ||
-+        strcmp((const char *)sqlite3_column_text(stmt, 0), "shared provider") != 0) return 5;
-+    if (sqlite3_finalize(stmt) != SQLITE_OK || sqlite3_close(db) != SQLITE_OK) return 6;
-+    puts("Shared SQLite provider: FTS5 and public API passed");
-+    return 0;
-+}

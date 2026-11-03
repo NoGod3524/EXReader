@@ -1,0 +1,16 @@
+{
+  "tool": "C:\\Users\\Oscar\\OneDrive\\\u6587\u6863\\ChatGPT\\EXReader\\.codex\\f07-closeout\\llvm-tools\\llvm-tools-1.99.0-x86_64-pc-windows-msvc\\llvm-tools-preview\\lib\\rustlib\\x86_64-pc-windows-msvc\\bin\\llvm-nm.exe",
+  "images": {
+    "provider": {
+      "sqlite_defined": 278,
+      "sqlite_undefined": 0,
+      "binary_sha256": "dca03535e8e4cba8395854efd969370013aaf8ece799c84d375c4918d80ab7ea"
+    },
+    "sdk": {
+      "sqlite_defined": 0,
+      "sqlite_undefined": 38,
+      "binary_sha256": "6c59c8b6549d0587ae7b3fe0218b54ef074208bba96cabb91bc3ee38e23ca6df"
+    }
+  },
+  "scope": "Provider and SDK only; consumer not built; full evidence incomplete"
+}
