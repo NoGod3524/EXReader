@@ -1,0 +1,1431 @@
+{
+  "source_sha": "12f40f8a61adf0376035db54642fca60c0aa2ff3",
+  "ref": "ledger/base-20261103",
+  "native": {
+    "run_id": 41726208700,
+    "command": "gh workflow run native.yml --ref ledger/base-20261103",
+    "attempt_expected": 1,
+    "status": "completed",
+    "jobs": [
+      {
+        "completedAt": "2026-11-03T22:15:57Z",
+        "conclusion": "success",
+        "databaseId": 126231531097,
+        "name": "apple-mobile",
+        "startedAt": "2026-11-03T21:55:52Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-03T21:55:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-03T21:55:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:55:57Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:23Z",
+            "conclusion": "success",
+            "name": "Build iOS and iPadOS device and simulator libraries",
+            "number": 3,
+            "startedAt": "2026-11-03T21:55:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:48Z",
+            "conclusion": "success",
+            "name": "Install iPhone and iPad product dependencies",
+            "number": 4,
+            "startedAt": "2026-11-03T21:59:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:15:41Z",
+            "conclusion": "success",
+            "name": "Build and run the iPhone and iPad reference host",
+            "number": 5,
+            "startedAt": "2026-11-03T22:00:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:15:45Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 6,
+            "startedAt": "2026-11-03T22:15:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:15:51Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 7,
+            "startedAt": "2026-11-03T22:15:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:15:52Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 14,
+            "startedAt": "2026-11-03T22:15:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:15:55Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 15,
+            "startedAt": "2026-11-03T22:15:52Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531097"
+      },
+      {
+        "completedAt": "2026-11-03T21:59:54Z",
+        "conclusion": "success",
+        "databaseId": 126231531301,
+        "name": "fuzz",
+        "startedAt": "2026-11-03T21:55:52Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-03T21:55:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-03T21:55:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:04Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:26Z",
+            "conclusion": "success",
+            "name": "Configure the instrumented fuzz driver",
+            "number": 3,
+            "startedAt": "2026-11-03T21:56:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:57:30Z",
+            "conclusion": "success",
+            "name": "Run cmake --build build/fuzz --parallel 4",
+            "number": 4,
+            "startedAt": "2026-11-03T21:56:26Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:57:30Z",
+            "conclusion": "success",
+            "name": "Verify exact crash records and parser routing",
+            "number": 5,
+            "startedAt": "2026-11-03T21:57:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:58:09Z",
+            "conclusion": "success",
+            "name": "Bounded parser campaign (seeded, reproducible)",
+            "number": 6,
+            "startedAt": "2026-11-03T21:57:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:58:17Z",
+            "conclusion": "success",
+            "name": "Verify font, pagination and rendering pipeline contracts",
+            "number": 7,
+            "startedAt": "2026-11-03T21:58:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:58:36Z",
+            "conclusion": "success",
+            "name": "Bounded font, layout and rendering campaigns",
+            "number": 8,
+            "startedAt": "2026-11-03T21:58:17Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:51Z",
+            "conclusion": "success",
+            "name": "Verify measured CPU evidence and strict aggregation on all four targets",
+            "number": 9,
+            "startedAt": "2026-11-03T21:58:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:52Z",
+            "conclusion": "success",
+            "name": "Preserve measured evidence on success and failure",
+            "number": 10,
+            "startedAt": "2026-11-03T21:59:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:52Z",
+            "conclusion": "skipped",
+            "name": "Keep the triggering input when the campaign fails",
+            "number": 11,
+            "startedAt": "2026-11-03T21:59:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:52Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 22,
+            "startedAt": "2026-11-03T21:59:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:52Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 23,
+            "startedAt": "2026-11-03T21:59:52Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531301"
+      },
+      {
+        "completedAt": "2026-11-03T22:09:42Z",
+        "conclusion": "failure",
+        "databaseId": 126231531348,
+        "name": "sanitizers",
+        "startedAt": "2026-11-03T21:55:52Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-03T21:55:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-03T21:55:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:02Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:23Z",
+            "conclusion": "success",
+            "name": "Run cmake -S . -B build/asan -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_ENABLE_AAC=OFF",
+            "number": 3,
+            "startedAt": "2026-11-03T21:56:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:58:03Z",
+            "conclusion": "success",
+            "name": "Run cmake --build build/asan --parallel 4",
+            "number": 4,
+            "startedAt": "2026-11-03T21:56:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:09:40Z",
+            "conclusion": "failure",
+            "name": "Run ctest --test-dir build/asan --output-on-failure",
+            "number": 5,
+            "startedAt": "2026-11-03T21:58:03Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:09:41Z",
+            "conclusion": "success",
+            "name": "Preserve sanitizer test evidence",
+            "number": 6,
+            "startedAt": "2026-11-03T22:09:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:09:41Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 12,
+            "startedAt": "2026-11-03T22:09:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:09:41Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-11-03T22:09:41Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531348"
+      },
+      {
+        "completedAt": "2026-11-03T21:56:40Z",
+        "conclusion": "success",
+        "databaseId": 126231531443,
+        "name": "ci-hygiene (packaging)",
+        "startedAt": "2026-11-03T21:55:52Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-03T21:55:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-03T21:55:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:30Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:30Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@v5",
+            "number": 3,
+            "startedAt": "2026-11-03T21:56:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:34Z",
+            "conclusion": "success",
+            "name": "Run python -m pip install PyYAML==6.0.3",
+            "number": 4,
+            "startedAt": "2026-11-03T21:56:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:39Z",
+            "conclusion": "success",
+            "name": "Check changed CI and exercise the rule",
+            "number": 5,
+            "startedAt": "2026-11-03T21:56:34Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:39Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-python@v5",
+            "number": 9,
+            "startedAt": "2026-11-03T21:56:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:39Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 10,
+            "startedAt": "2026-11-03T21:56:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:39Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 11,
+            "startedAt": "2026-11-03T21:56:39Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531443"
+      },
+      {
+        "completedAt": "2026-11-03T21:57:55Z",
+        "conclusion": "success",
+        "databaseId": 126231531446,
+        "name": "android",
+        "startedAt": "2026-11-03T21:55:52Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-03T21:55:54Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:00Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-03T21:55:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:57:47Z",
+            "conclusion": "success",
+            "name": "Build Android ARM64 shared engine",
+            "number": 3,
+            "startedAt": "2026-11-03T21:56:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:57:52Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 4,
+            "startedAt": "2026-11-03T21:57:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:57:52Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 8,
+            "startedAt": "2026-11-03T21:57:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:57:52Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 9,
+            "startedAt": "2026-11-03T21:57:52Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531446"
+      },
+      {
+        "completedAt": "2026-11-03T22:03:12Z",
+        "conclusion": "failure",
+        "databaseId": 126231531549,
+        "name": "desktop (windows-latest)",
+        "startedAt": "2026-11-03T21:55:52Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-03T21:55:54Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:11Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-03T21:55:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:58:08Z",
+            "conclusion": "success",
+            "name": "Configure native C",
+            "number": 3,
+            "startedAt": "2026-11-03T21:56:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:44Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 4,
+            "startedAt": "2026-11-03T21:58:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:44Z",
+            "conclusion": "skipped",
+            "name": "Verify compiled layer dependencies",
+            "number": 5,
+            "startedAt": "2026-11-03T22:00:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "failure",
+            "name": "Native parsing, pagination, rendering and bookshelf tests",
+            "number": 6,
+            "startedAt": "2026-11-03T22:00:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Table continuation with a platform OpenType font",
+            "number": 7,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Measure bounded single chapters and evicted-window recovery",
+            "number": 8,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "success",
+            "name": "Preserve bounded chapter measurements",
+            "number": 9,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Install portable SDK with license notices",
+            "number": 10,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Build and run installed static components",
+            "number": 11,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Build and test core without optional components",
+            "number": 12,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Verify storage without playback or PDF",
+            "number": 13,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Build host examples against the installed SDK",
+            "number": 14,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Run the installed Windows SDK",
+            "number": 15,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Run the installed Linux SDK",
+            "number": 16,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Package and check the Windows reference reader",
+            "number": 17,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Run the installed macOS SDK",
+            "number": 18,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Measure installed PDF group rendering",
+            "number": 19,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Bound table alignment memory against the installed SDK",
+            "number": 20,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Build and run JNI host against installed SDK",
+            "number": 21,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Build and run Swift host against installed SDK",
+            "number": 22,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 23,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 24,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:04Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 25,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:06Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 26,
+            "startedAt": "2026-11-03T22:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:06Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 27,
+            "startedAt": "2026-11-03T22:03:06Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:08Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 28,
+            "startedAt": "2026-11-03T22:03:06Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:10Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 56,
+            "startedAt": "2026-11-03T22:03:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:03:10Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 57,
+            "startedAt": "2026-11-03T22:03:10Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531549"
+      },
+      {
+        "completedAt": "2026-11-03T21:59:36Z",
+        "conclusion": "failure",
+        "databaseId": 126231531571,
+        "name": "desktop (macos-15)",
+        "startedAt": "2026-11-03T21:55:52Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-03T21:55:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-03T21:55:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:55:59Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:48Z",
+            "conclusion": "success",
+            "name": "Configure native C",
+            "number": 3,
+            "startedAt": "2026-11-03T21:55:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:58:02Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 4,
+            "startedAt": "2026-11-03T21:56:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:58:02Z",
+            "conclusion": "skipped",
+            "name": "Verify compiled layer dependencies",
+            "number": 5,
+            "startedAt": "2026-11-03T21:58:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "failure",
+            "name": "Native parsing, pagination, rendering and bookshelf tests",
+            "number": 6,
+            "startedAt": "2026-11-03T21:58:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Table continuation with a platform OpenType font",
+            "number": 7,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Measure bounded single chapters and evicted-window recovery",
+            "number": 8,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "success",
+            "name": "Preserve bounded chapter measurements",
+            "number": 9,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Install portable SDK with license notices",
+            "number": 10,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Build and run installed static components",
+            "number": 11,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Build and test core without optional components",
+            "number": 12,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Verify storage without playback or PDF",
+            "number": 13,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Build host examples against the installed SDK",
+            "number": 14,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Run the installed Windows SDK",
+            "number": 15,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Run the installed Linux SDK",
+            "number": 16,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Package and check the Windows reference reader",
+            "number": 17,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Run the installed macOS SDK",
+            "number": 18,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Measure installed PDF group rendering",
+            "number": 19,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Bound table alignment memory against the installed SDK",
+            "number": 20,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Build and run JNI host against installed SDK",
+            "number": 21,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Build and run Swift host against installed SDK",
+            "number": 22,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 23,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 24,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:29Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 25,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:31Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 26,
+            "startedAt": "2026-11-03T21:59:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:31Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 27,
+            "startedAt": "2026-11-03T21:59:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:32Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 28,
+            "startedAt": "2026-11-03T21:59:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:32Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 56,
+            "startedAt": "2026-11-03T21:59:32Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:59:33Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 57,
+            "startedAt": "2026-11-03T21:59:32Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531571"
+      },
+      {
+        "completedAt": "2026-11-03T21:56:40Z",
+        "conclusion": "failure",
+        "databaseId": 126231531592,
+        "name": "ci-hygiene (failfast)",
+        "startedAt": "2026-11-03T21:55:52Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-03T21:55:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-03T21:55:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:27Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:28Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@v5",
+            "number": 3,
+            "startedAt": "2026-11-03T21:56:27Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:33Z",
+            "conclusion": "success",
+            "name": "Run python -m pip install PyYAML==6.0.3",
+            "number": 4,
+            "startedAt": "2026-11-03T21:56:28Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:38Z",
+            "conclusion": "failure",
+            "name": "Check changed CI and exercise the rule",
+            "number": 5,
+            "startedAt": "2026-11-03T21:56:33Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:38Z",
+            "conclusion": "skipped",
+            "name": "Post Run actions/setup-python@v5",
+            "number": 9,
+            "startedAt": "2026-11-03T21:56:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:38Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 10,
+            "startedAt": "2026-11-03T21:56:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:38Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 11,
+            "startedAt": "2026-11-03T21:56:38Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531592"
+      },
+      {
+        "completedAt": "2026-11-03T21:56:32Z",
+        "conclusion": "failure",
+        "databaseId": 126231531668,
+        "name": "ci-hygiene (negative)",
+        "startedAt": "2026-11-03T21:55:52Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-03T21:55:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:23Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:24Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@v5",
+            "number": 3,
+            "startedAt": "2026-11-03T21:56:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:25Z",
+            "conclusion": "success",
+            "name": "Run python -m pip install PyYAML==6.0.3",
+            "number": 4,
+            "startedAt": "2026-11-03T21:56:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:29Z",
+            "conclusion": "failure",
+            "name": "Check changed CI and exercise the rule",
+            "number": 5,
+            "startedAt": "2026-11-03T21:56:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:29Z",
+            "conclusion": "skipped",
+            "name": "Post Run actions/setup-python@v5",
+            "number": 9,
+            "startedAt": "2026-11-03T21:56:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:30Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 10,
+            "startedAt": "2026-11-03T21:56:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:30Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 11,
+            "startedAt": "2026-11-03T21:56:30Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531668"
+      },
+      {
+        "completedAt": "2026-11-03T21:56:25Z",
+        "conclusion": "success",
+        "databaseId": 126231531671,
+        "name": "ci-hygiene (diagnostic)",
+        "startedAt": "2026-11-03T21:55:52Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-03T21:55:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-03T21:55:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:11Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:11Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@v5",
+            "number": 3,
+            "startedAt": "2026-11-03T21:56:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:18Z",
+            "conclusion": "success",
+            "name": "Run python -m pip install PyYAML==6.0.3",
+            "number": 4,
+            "startedAt": "2026-11-03T21:56:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:23Z",
+            "conclusion": "success",
+            "name": "Check changed CI and exercise the rule",
+            "number": 5,
+            "startedAt": "2026-11-03T21:56:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:23Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-python@v5",
+            "number": 9,
+            "startedAt": "2026-11-03T21:56:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:23Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 10,
+            "startedAt": "2026-11-03T21:56:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:24Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 11,
+            "startedAt": "2026-11-03T21:56:23Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531671"
+      },
+      {
+        "completedAt": "2026-11-03T22:00:16Z",
+        "conclusion": "failure",
+        "databaseId": 126231531699,
+        "name": "desktop (ubuntu-22.04)",
+        "startedAt": "2026-11-03T21:55:52Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-03T21:55:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:02Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-03T21:55:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:56:22Z",
+            "conclusion": "success",
+            "name": "Configure native C",
+            "number": 3,
+            "startedAt": "2026-11-03T21:56:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:58:17Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 4,
+            "startedAt": "2026-11-03T21:56:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T21:58:17Z",
+            "conclusion": "success",
+            "name": "Verify compiled layer dependencies",
+            "number": 5,
+            "startedAt": "2026-11-03T21:58:17Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:07Z",
+            "conclusion": "failure",
+            "name": "Native parsing, pagination, rendering and bookshelf tests",
+            "number": 6,
+            "startedAt": "2026-11-03T21:58:17Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:07Z",
+            "conclusion": "skipped",
+            "name": "Table continuation with a platform OpenType font",
+            "number": 7,
+            "startedAt": "2026-11-03T22:00:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:07Z",
+            "conclusion": "skipped",
+            "name": "Measure bounded single chapters and evicted-window recovery",
+            "number": 8,
+            "startedAt": "2026-11-03T22:00:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "success",
+            "name": "Preserve bounded chapter measurements",
+            "number": 9,
+            "startedAt": "2026-11-03T22:00:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Install portable SDK with license notices",
+            "number": 10,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Build and run installed static components",
+            "number": 11,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Build and test core without optional components",
+            "number": 12,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Verify storage without playback or PDF",
+            "number": 13,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Build host examples against the installed SDK",
+            "number": 14,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Run the installed Windows SDK",
+            "number": 15,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Run the installed Linux SDK",
+            "number": 16,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Package and check the Windows reference reader",
+            "number": 17,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Run the installed macOS SDK",
+            "number": 18,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Measure installed PDF group rendering",
+            "number": 19,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Bound table alignment memory against the installed SDK",
+            "number": 20,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Build and run JNI host against installed SDK",
+            "number": 21,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Build and run Swift host against installed SDK",
+            "number": 22,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 23,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 24,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:08Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 25,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:09Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 26,
+            "startedAt": "2026-11-03T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:09Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 27,
+            "startedAt": "2026-11-03T22:00:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:10Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 28,
+            "startedAt": "2026-11-03T22:00:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:10Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 56,
+            "startedAt": "2026-11-03T22:00:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-03T22:00:10Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 57,
+            "startedAt": "2026-11-03T22:00:10Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231531699"
+      },
+      {
+        "completedAt": "2026-11-03T21:55:50Z",
+        "conclusion": "skipped",
+        "databaseId": 126231532955,
+        "name": "windows-packaging",
+        "startedAt": "2026-11-03T21:55:50Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231532955"
+      },
+      {
+        "completedAt": "2026-11-03T21:55:50Z",
+        "conclusion": "skipped",
+        "databaseId": 126231533382,
+        "name": "apple-packaging",
+        "startedAt": "2026-11-03T21:55:50Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700/job/126231533382"
+      }
+    ],
+    "conclusion": "failure",
+    "headSha": "12f40f8a61adf0376035db54642fca60c0aa2ff3",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/41726208700",
+    "run_attempt": 1,
+    "created_at_utc": "2026-11-03T21:55:48Z",
+    "completed_at_utc": "2026-11-03T22:15:58Z"
+  },
+  "core": {
+    "status": "not-run",
+    "run_id": null,
+    "reason": "native failure; step2 condition not met"
+  },
+  "automatic_retries": false,
+  "changes_to_settings_default_or_catalog": false,
+  "stop_reason": "native_failed"
+}

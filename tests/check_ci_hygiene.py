@@ -73,7 +73,7 @@ def baseline_controls(fault):
         (root / 'tools').mkdir()
         original = 'on: workflow_dispatch\njobs:\n  probe:\n    runs-on: ubuntu-22.04\n    steps:\n      - run: test -n "$source"\n'
         path.write_text(original, encoding='utf-8')
-        row = {'file': file, 'line': 6, 'pattern': 'diagnostic', 'line_sha256': guard.line_sha(original.splitlines()[5])}
+        row = {'file': file, 'content_sha256': guard.line_sha(original.splitlines()[5]), 'occurrence': 1, 'patterns': ['diagnostic']}
         manifest = root / guard.BASELINE
         manifest.write_text(json.dumps([row]), encoding='utf-8')
         def git(*args):
@@ -94,6 +94,9 @@ def baseline_controls(fault):
                 print('Injected baseline control returns the actual checker exit 1')
                 raise SystemExit(result)
         verify('unchanged historical line retained', False)
+        manifest.write_text(json.dumps([row, dict(row, patterns=['negative'])]), encoding='utf-8')
+        verify('same identity cannot be split across rule rows', True)
+        manifest.write_text(json.dumps([row]), encoding='utf-8')
         path.write_text(original + '      - run: test -n "$new"\n', encoding='utf-8')
         verify('new violation rejected', True)
         path.write_text(original.replace('$source', '$modified'), encoding='utf-8')
@@ -103,14 +106,27 @@ def baseline_controls(fault):
         manifest.write_text('[]', encoding='utf-8')
         verify('fixed line and removed baseline accepted', False)
         path.write_text('\n' + original, encoding='utf-8')
-        row['line'] = 7
         manifest.write_text(json.dumps([row]), encoding='utf-8')
-        verify('moved line cannot be re-waived', True)
+        verify('moved identical content retains identity', False)
         path.write_text(original + '      - run: test -n "$new"\n', encoding='utf-8')
-        row['line'] = 6
-        extra = dict(row, line=7, line_sha256=guard.line_sha(path.read_text().splitlines()[6]))
+        extra = dict(row, content_sha256=guard.line_sha(path.read_text().splitlines()[6]))
         manifest.write_text(json.dumps([row, extra]), encoding='utf-8')
         verify('new violation cannot be registered into baseline', True)
+        # Two identical lines keep distinct ordinal identities, even after moves.
+        duplicated = original + original.splitlines()[5] + '\n'
+        path.write_text(duplicated, encoding='utf-8')
+        second = dict(row, occurrence=2)
+        manifest.write_text(json.dumps([row, second]), encoding='utf-8')
+        git('add', '.')
+        git('-c', 'user.name=CI probe', '-c', 'user.email=ci-probe@example.invalid', '-c', 'core.autocrlf=false', 'commit', '-qm', 'duplicate fixture')
+        base = git('rev-parse', 'HEAD')
+        verify('identical content distinguished by occurrence 1/2', False)
+        path.write_text('\n' + duplicated, encoding='utf-8')
+        verify('duplicate identities survive line movement', False)
+        path.write_text(duplicated + original.splitlines()[5] + '\n', encoding='utf-8')
+        verify('third identical occurrence is new debt', True)
+        path.write_text(duplicated.replace('$source', '$changed', 1), encoding='utf-8')
+        verify('changed duplicate content cannot inherit waiver', True)
 
 
 
