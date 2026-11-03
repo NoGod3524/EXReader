@@ -1,0 +1,33 @@
+name: F03 R7 complete archived evidence audit
+on:
+  push:
+    branches: [audit/f03-r7-complete-evidence-20261103]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f03-r7-complete-evidence-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  evidence:
+    if: ${{ github.run_attempt == 1 && contains(github.event.head_commit.message, '[F03-R7-COMPLETE-EVIDENCE-20261103]') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Authenticate fixed R7 archive and audit complete retained input graph
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 tests/dot_f03_r7_complete_evidence_20261103/audit.py
+      - name: Preserve bounded original evidence and audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f03-r7-complete-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f03-r7-complete-evidence/
+          if-no-files-found: error
+          retention-days: 30
