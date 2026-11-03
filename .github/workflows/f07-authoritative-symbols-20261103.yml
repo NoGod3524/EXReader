@@ -1,0 +1,51 @@
+name: F07 authoritative symbols
+
+# Read-only. Downloads the six already-accepted peer artifacts of the fixed
+# six-host product run and re-derives the SQLite binding observations with the
+# CI-preinstalled LLVM pair. No build, no install, no link, no execution of any
+# retrieved payload. One dispatch, no automatic rerun.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/f07_authoritative_symbols_20261103.py'
+      - '.github/workflows/f07-authoritative-symbols-20261103.yml'
+      - 'docs/reader-total-progress/F07_AUTHORITATIVE_SYMBOLS_20261103.md'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  authoritative:
+    name: authoritative symbol observations
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record tool identity before reading any payload
+        run: |
+          ( llvm-nm --version || llvm-nm-18 --version ) | head -2
+          ( llvm-readobj --version || llvm-readobj-18 --version ) | head -2
+          for o in --macho-dsymtab --version-info --needed-libs --symbols --dyn-syms --coff-imports --coff-exports; do
+            ( llvm-readobj "$o" --help 2>/dev/null || llvm-readobj-18 "$o" --help 2>/dev/null ) >/dev/null \
+              || echo "option-not-advertised $o"
+          done
+
+      - name: Derive authoritative symbol observations
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 -X utf8 tools/f07_authoritative_symbols_20261103.py
+
+      - name: Upload observations even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f07-authoritative-symbols-${{ github.run_id }}-${{ github.run_attempt }}
+          path: f07-authoritative-symbols/
+          if-no-files-found: warn
+          retention-days: 90
