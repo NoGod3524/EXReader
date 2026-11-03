@@ -1,0 +1,124 @@
+name: F03 six-host integration
+on:
+  push:
+    branches: [codex/f03-six-host-20261103]
+    paths:
+      - 'tests/f03_six_host_20261103/**'
+      - 'tests/dot_f03_same_source_20261031/**'
+      - 'examples/apple/HostCatalog.swift'
+      - 'examples/apple/HostModel.swift'
+      - 'examples/apple/HostViews.swift'
+      - '.github/workflows/f03-six-host-20261103.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f03-six-host-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  PYTHONUTF8: '1'
+  EXR_APPLE_SDK_VERSION: '3.42.0'
+jobs:
+  gtk:
+    if: contains(github.event.head_commit.message, '[F03-SIX-HOST]')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Exact source SDK and frozen parser admission
+        run: |
+          python -m pip install PyYAML Pillow
+          python tests/f03_six_host_20261103/run.py admit
+      - name: Native prerequisites
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil ninja-build
+      - name: Build SDK 3.42 installed product and actual GTK host
+        run: python tests/f03_six_host_20261103/run.py legacy build --host gtk --output build/f03-gtk-build.json
+      - name: Original organization assertions and actual six-phase publication
+        run: |
+          python tests/f03_six_host_20261103/run.py legacy fixtures --output build/f03-originals
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/f03-openbox.log 2>&1 & wm=$!; trap "kill $wm || true" EXIT
+            for i in $(seq 1 100); do wmctrl -m >/dev/null 2>&1 && break; sleep .1; done
+            wmctrl -m
+            python tests/f03_six_host_20261103/run.py legacy gtk --mode retained --package build/package/EXReader-Linux --command-consumer build/command-consumer/command-consumer --output build/f03-retained-gtk
+            previous=""
+            for phase in create delete restore member-remove member-restore restart; do
+              args=(); if test -n "$previous"; then args=(--previous "build/f03-author/$previous/wire/state.json"); fi
+              python tests/f03_six_host_20261103/run.py legacy gtk --mode author --phase "$phase" --profile build/f03-author-profile --book build/f03-originals/gtk-organization.txt --package build/package/EXReader-Linux --output "build/f03-author/$phase" "${args[@]}"
+              previous="$phase"
+            done
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f03-six-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f03-*/
+            build/f03-*.json
+            build/f03-*.log
+            build/package/EXReader-Linux/
+            !build/**/key.pem
+            !build/**/private/**
+            !build/**/connection.json
+          if-no-files-found: error
+  windows:
+    if: contains(github.event.head_commit.message, '[F03-SIX-HOST]')
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Native display and UI dependencies
+        run: |
+          python -m pip install uiautomation==2.0.29 PyYAML Pillow
+          python tests/reader_native_owner_repairs/display.py
+          python tests/f03_six_host_20261103/run.py admit
+      - name: Actual SDK 3.42 composed host with original retained checks
+        run: python tests/f03_six_host_20261103/run.py legacy build --host windows --output build/f03-windows-build.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f03-six-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c09/report.json
+            build/c09/logs/
+            build/c09/package/
+            build/c09/compact22/
+            build/c09/extracted-ui/
+            build/f03-windows-build.json
+          if-no-files-found: error
+  apple:
+    if: contains(github.event.head_commit.message, '[F03-SIX-HOST]')
+    runs-on: macos-15
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Native project dependencies and exact source admission
+        run: |
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document
+          python3 tests/f03_six_host_20261103/run.py admit
+      - name: SDK 3.42 real host and unchanged six organization tests
+        run: python3 tests/f03_six_host_20261103/run.py apple '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f03-six-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/dot-f03-native/${{ matrix.platform }}/
+            build/f03-${{ matrix.platform }}-build.json
+            build/raw3-ios-sdk/**/sdk342-installed-identity.json
+            !build/**/derived/Index.noindex/**
+            !build/**/derived/ModuleCache.noindex/**
+            !build/**/*.key
+          if-no-files-found: error

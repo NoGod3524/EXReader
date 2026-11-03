@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 import subprocess
 import sys
+from urllib.parse import urlsplit
 from identity import ROOT, identity, require, snapshot_receipt, write_json, read_snapshot, digest, SCOPE, canonical
 
 def author(a, stamp):
@@ -190,7 +191,28 @@ def author(a, stamp):
             require(read_snapshot(catalog)==before,"organization changed after restart")
             event("restart",before)
         host.key("alt+F4");window("Library collections",False)
-        dav,user,password=relay.start(a.output/"wire",a.previous)
+        if a.previous is not None:
+            previous = json.loads(a.previous.read_bytes())
+            origin = urlsplit(previous["server"]["base"])
+            require(origin.scheme == "https" and origin.hostname == "127.0.0.1" and
+                    origin.port is not None and not origin.path and not origin.query and
+                    not origin.fragment and origin.username is None and origin.password is None,
+                    "predecessor must have a local HTTPS origin")
+            # The real account identity includes its root URL. Keep that origin
+            # while extending the preceding authentic wire, rather than switching
+            # the author to a fresh account after every lifecycle phase.
+            factory = relay.ThreadingHTTPServer
+            def same_origin(address, handler):
+                require(address == ("127.0.0.1", 0), "unexpected relay address")
+                return factory(("127.0.0.1", origin.port), handler)
+            relay.ThreadingHTTPServer = same_origin
+            try:
+                dav,user,password=relay.start(a.output/"wire",a.previous)
+            finally:
+                relay.ThreadingHTTPServer = factory
+            require(dav.base == previous["server"]["base"], "author account origin changed")
+        else:
+            dav,user,password=relay.start(a.output/"wire",a.previous)
         host.key("F2","ctrl+shift+a");window("Account and Sync")
         field("w",dav.base+"/dav/");field("u",user);field("p",password)
         host.key("alt+h","alt+a")
