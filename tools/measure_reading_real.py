@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Real-document Linux baseline. All execution and evidence computation belong in Actions."""
 # SPDX-License-Identifier: MIT
+from perf_policy import advisory
 import argparse
 import copy
 import json
@@ -633,6 +634,7 @@ def main():
             summary["problems"].append("baseline_only: numeric performance and reviewed pixel budgets are not frozen")
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
         summary["problems"].append(str(error))
+    advisory(summary, ROOT / "build/reading-core")
     (output / "summary.json").write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     print(json.dumps({key: summary[key] for key in ("accepted", "measurement_valid", "source_sha", "run_id", "run_attempt",
                                                   "problems", "results")}, allow_nan=False))

@@ -1,0 +1,29 @@
+{
+  "pr": 31,
+  "base": "ledger/base-20261103",
+  "sdk_version": "3.42.0",
+  "head_commit": "d0c95336535e7c8e9a3607dfc444e252690c8ec0",
+  "actual_runs": [],
+  "new_workflows": {
+    "ledger-authority.yml": "PR catalog paths only; this PR has no catalog diff",
+    "ledger-evidence-custody.yml": "workflow_dispatch only"
+  },
+  "skip_ci": true,
+  "risk_statement": "C 属未经 CI 的纯文档合并，风险限于 5 个新文档 + 2 个 workflow 文件。",
+  "state": "MERGED",
+  "merge_commit": "68cc0ec5bee308bbb9593b274a0772cb868ca97a",
+  "source_import": {
+    "pr": 33,
+    "commit": "1761386d966ffdcbbeccaf25e68b184706cf9b8f",
+    "unique_paths_checked_out": 7,
+    "blobs_identical_at_import": true,
+    "overlap_union": [
+      "LEDGER-AUTHORITY.md",
+      "EVIDENCE-CUSTODY-20261103.md"
+    ]
+  },
+  "late_receipt_pr": 34,
+  "late_receipt_merge": "071c7914fac51d7902cf50bb2e6095c660a8c40d",
+  "late_receipt_path": "evidence/C-HANDOFF-20261103.md",
+  "late_receipt_source": "93f223b2be986b63fb7f63fb5b74a75574263887:evidence/C-PR33-HANDOFF-20261103.md"
+}

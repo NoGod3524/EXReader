@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "generated_date_utc": "2026-11-03",
+    "source_commit": "c54dd749707a817b1cb28e00f0488c11ea860f97",
+    "command": "python tools/check_ci_hygiene.py --emit-baseline",
+    "checker_sha256": "99702ffab54c89d9c1986cc1795858cdd1afa7da9c15c45a3adc3c80657f7e6d",
+    "baseline_sha256": "ee4b8ab65a4ad612ecb6a2fd695d621c2b011c9531876404c1fc0effd2be232a",
+    "patterns": {
+      "failfast": 1702,
+      "negative": 15,
+      "diagnostic": 7,
+      "packaging": 4
+    }
+  },
+  "reproduction_byte_identical": true,
+  "old_distribution": {
+    "failfast": 1760,
+    "negative": 15,
+    "diagnostic": 7,
+    "packaging": 4
+  },
+  "samples": [
+    {
+      "file": ".github/workflows/acroform.yml",
+      "line": 19,
+      "pattern": "failfast",
+      "line_sha256": "fcac6fcb773367fb61561513f737b74a1892e493c351f776e0962e0c9a88a851",
+      "raw_line": "          git rev-parse HEAD"
+    },
+    {
+      "file": ".github/workflows/conversion-memory.yml",
+      "line": 18,
+      "pattern": "negative",
+      "line_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea",
+      "raw_line": "          set +e"
+    },
+    {
+      "file": ".github/workflows/f07-authoritative-symbols-20261103.yml",
+      "line": 33,
+      "pattern": "diagnostic",
+      "line_sha256": "75749720e25e537acf74c896e9aa8d1958c9a5db5394116f1c43ca2849d49ce5",
+      "raw_line": "            [ -n \"$p\" ] && \"$p\" --version | head -1 || echo \"missing $b\""
+    }
+  ],
+  "remaining_failfast_reasons": {
+    "compound_or_multiple_commands": 1542,
+    "continue_on_error": 53,
+    "swallowed_failure": 6,
+    "powershell_error_propagation": 101
+  }
+}

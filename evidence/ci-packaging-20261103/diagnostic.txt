@@ -1,0 +1,6 @@
+run=41711857541 source=db0d2c1fdd50c8a5b616fea690fc3b1e625c57ee result=failure
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:22:37.6562030Z PASS: CI hygiene; violations=0; existing debt={'diagnostic': 7}
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:22:37.8364623Z Injected one change into a temporary copy of native.yml; repository unchanged
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:22:37.8456171Z expected=command success; actual=exit 1 command=python tests/check_ci_hygiene.py --rule "$HYGIENE_RULE" --fault "$HYGIENE_FAULT"; candidate=<temporary>/step.sh:2
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:22:37.8458843Z ERROR: .github/workflows/native.yml:463 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$sqlite_source"; candidate=.github/workflows/native.yml jobs.injected-control.steps[0]
+ci-hygiene (diagnostic)	Check changed CI and exercise the rule	2026-11-03T20:22:37.8471551Z ##[error]Process completed with exit code 1.

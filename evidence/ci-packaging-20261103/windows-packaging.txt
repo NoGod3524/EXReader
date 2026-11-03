@@ -1,0 +1,42 @@
+source=3702c9de run=41723739955 job=windows-packaging result=success
+windows-packaging	Package and run the Windows reference host	2026-11-03T21:43:17.4566290Z 26 Windows native host checks passed
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8161414Z PASS: real package exists; exe=<workspace>\build\p-windows-example\Release\exreader-reader-example.exe; installed include=<workspace>\stage\apps\reader\desktop\windows_accessibility.inc
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8163556Z EXPECTED installed windows_accessibility.inc at <workspace>\stage\apps\reader\desktop\windows_accessibility.inc; got nothing
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8164652Z BUILD LISTING <workspace>\build:
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8165110Z   host-font-cache (dir)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8165515Z   p-windows-example (dir)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8165855Z   p-windows-host (dir)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8166174Z   p-windows-sdk (dir)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8166679Z BUILD LISTING <workspace>\build\p-windows-example\Release:
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8167316Z   exreader-reader-example.exe (file)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8167719Z   exreader.dll (file)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8168164Z BUILD LISTING <workspace>\stage\apps\reader\desktop:
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8168733Z Traceback (most recent call last):
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8169348Z   File "<workspace>\tools\build_windows_host.py", line 128, in <module>
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8169717Z     main()
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8169992Z   File "<workspace>\tools\build_windows_host.py", line 78, in main
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8170369Z     require_package_inputs(sdk, binary)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8170788Z   File "<workspace>\tools\build_windows_host.py", line 67, in require_package_inputs
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8171236Z     raise FileNotFoundError(message)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8171876Z FileNotFoundError: EXPECTED installed windows_accessibility.inc at <workspace>\stage\apps\reader\desktop\windows_accessibility.inc; got nothing
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8172571Z PASS: missing staged include rejected; actual_exit=1
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8173149Z EXPECTED built exe at <workspace>\build\p-windows-example\Release\deliberately-missing-reader.exe; got nothing
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8173697Z BUILD LISTING <workspace>\build:
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8173960Z   host-font-cache (dir)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8174167Z   p-windows-example (dir)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8174382Z   p-windows-host (dir)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8174571Z   p-windows-sdk (dir)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8175666Z BUILD LISTING <workspace>\build\p-windows-example\Release:
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8176027Z   exreader-reader-example.exe (file)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8176267Z   exreader.dll (file)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8176534Z BUILD LISTING <workspace>\stage\apps\reader\desktop:
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8176873Z   windows_accessibility.inc (file)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8177115Z Traceback (most recent call last):
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8177465Z   File "<workspace>\tools\build_windows_host.py", line 128, in <module>
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8177825Z     main()
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8178101Z   File "<workspace>\tools\build_windows_host.py", line 78, in main
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8178470Z     require_package_inputs(sdk, binary)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8178888Z   File "<workspace>\tools\build_windows_host.py", line 67, in require_package_inputs
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8179319Z     raise FileNotFoundError(message)
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8179910Z FileNotFoundError: EXPECTED built exe at <workspace>\build\p-windows-example\Release\deliberately-missing-reader.exe; got nothing
+windows-packaging	Reject a missing staged include and a missing executable	2026-11-03T21:43:17.8180538Z PASS: missing exe rejected; actual_exit=1

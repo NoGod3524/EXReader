@@ -1,0 +1,6 @@
+run=41711848661 source=db0d2c1fdd50c8a5b616fea690fc3b1e625c57ee result=failure
+ci-hygiene (packaging)	Check changed CI and exercise the rule	2026-11-03T20:22:02.3287168Z PASS: CI hygiene; violations=0; existing debt={'packaging': 4}
+ci-hygiene (packaging)	Check changed CI and exercise the rule	2026-11-03T20:22:02.5117174Z Injected one change into a temporary copy of native.yml; repository unchanged
+ci-hygiene (packaging)	Check changed CI and exercise the rule	2026-11-03T20:22:02.5119010Z ERROR: .github/workflows/native.yml:205 [packaging] expected=product install before host for SDK stage; actual=installed prefixes <none>; candidate=stage/include/exreader-product and stage/lib in jobs.desktop.steps[20]
+ci-hygiene (packaging)	Check changed CI and exercise the rule	2026-11-03T20:22:02.5195878Z expected=command success; actual=exit 1 command=python tests/check_ci_hygiene.py --rule "$HYGIENE_RULE" --fault "$HYGIENE_FAULT"; candidate=<temporary>/step.sh:2
+ci-hygiene (packaging)	Check changed CI and exercise the rule	2026-11-03T20:22:02.5209840Z ##[error]Process completed with exit code 1.

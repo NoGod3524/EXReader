@@ -1,0 +1,76 @@
+{
+  "metadata": {
+    "generated_date_utc": "2026-11-03",
+    "source_commit": "39d55a970b55be1272cbd672bfb911f5510747b8",
+    "command": "python tools/check_ci_hygiene.py --emit-baseline",
+    "checker_sha256": "8230aae30ff15874fed7b6cfc0593785379e32bd59ecc34526d6a16077601940",
+    "baseline_sha256": "4dd7fe9b98b254da6023f7094685623b209f2770d2c9258fbb41d075745df62d",
+    "patterns": {
+      "failfast": 507,
+      "negative": 15,
+      "diagnostic": 7,
+      "packaging": 4
+    },
+    "shell_branches": {
+      "explicit_bash": {
+        "matched_steps": 1720,
+        "missing_shell_settings": 0
+      },
+      "default_bash": {
+        "matched_steps": 663,
+        "missing_shell_settings": 276
+      },
+      "powershell": {
+        "matched_steps": 159,
+        "missing_shell_settings": 158
+      },
+      "custom": {
+        "matched_steps": 35,
+        "missing_shell_settings": 0
+      }
+    }
+  },
+  "command": "python tools/check_ci_hygiene.py --emit-baseline",
+  "same_command_baseline_bytes_identical": true,
+  "same_command_metadata_bytes_identical": true,
+  "former_acroform_19_false_positive_removed": true,
+  "samples": {
+    "default_bash": {
+      "file": ".github/workflows/acroform.yml",
+      "line": 46,
+      "effective_shell": "default bash -e",
+      "raw_line": "          sudo apt-get update",
+      "run": "sudo apt-get update\nsudo apt-get install -y qpdf poppler-utils\npython3 -m pip install --quiet --upgrade pypdf\n",
+      "in_baseline": true
+    },
+    "explicit_bash": {
+      "file": ".github/workflows/acroform.yml",
+      "line": 76,
+      "effective_shell": "bash",
+      "raw_line": "        run: git rev-parse HEAD",
+      "run": "git rev-parse HEAD",
+      "in_baseline": false
+    },
+    "powershell": {
+      "file": ".github/workflows/integrated-bounded-txt-windows.yml",
+      "line": 25,
+      "effective_shell": "pwsh",
+      "raw_line": "          python tests/reader_same_source/bounded_txt_guard.py --source \"$env:GITHUB_SHA\" --report build/composition-source-windows.json",
+      "run": "python tests/reader_same_source/bounded_txt_guard.py --source \"$env:GITHUB_SHA\" --report build/composition-source-windows.json\nif ($LASTEXITCODE) { throw 'Composition source admission failed' }\npython -m py_compile tests/windows_organization_projection/check_ui.py tests/windows_organization_projection/cloud_ui.py tests/windows_organization_projection/verify.py\nif ($LASTEXITCODE) { throw 'Driver syntax failed' }\n",
+      "in_baseline": true
+    }
+  },
+  "core_branches_verified": [
+    "codex/framework",
+    "ledger/base-20261103"
+  ],
+  "rule_locations": {
+    "branch_classifier": 87,
+    "shell_policy": 97,
+    "explicit_bash": 101,
+    "powershell": 103,
+    "default_or_custom_compound": 107,
+    "continue_on_error": 159,
+    "masking": 168
+  }
+}

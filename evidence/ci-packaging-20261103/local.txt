@@ -1,0 +1,113 @@
+$ python tests/check_ci_hygiene.py --rule packaging
+PASS: clean workflow accepted; one-change packaging control rejected
+exit=0
+
+$ python tests/check_ci_hygiene.py --rule failfast
+PASS: clean workflow accepted; one-change failfast control rejected
+expected=command success; actual=exit 37 command=python -c "raise SystemExit(37)"; candidate=<temporary>/step.sh:1
+PASS: runtime failfast
+exit=0
+
+$ python tests/check_ci_hygiene.py --rule diagnostic
+PASS: clean workflow accepted; one-change diagnostic control rejected
+expected=SOURCE_DIR from CMakeCache; actual=<empty>; candidates=build/provider/CMakeCache.txt build/stage
+expected=command success; actual=exit 1 command=return 1; candidate=<temporary>/step.sh:1
+PASS: runtime diagnostic
+PASS: unchanged historical line retained
+PASS: new violation rejected
+ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$new"; candidate=.github/workflows/probe.yml jobs.probe.steps[1]
+PASS: modified baseline line rejected
+ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=unchanged live exact baseline; actual=baseline line hash changed; fix the touched step and remove its entry; candidate=tools/ci_hygiene_baseline.json
+ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$modified"; candidate=.github/workflows/probe.yml jobs.probe.steps[0]
+PASS: fixed line with stale baseline rejected
+ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=unchanged live exact baseline; actual=baseline line hash changed; fix the touched step and remove its entry; candidate=tools/ci_hygiene_baseline.json
+PASS: fixed line and removed baseline accepted
+PASS: moved line cannot be re-waived
+ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=unchanged live exact baseline; actual=moved baseline line cannot acquire a new waiver; candidate=tools/ci_hygiene_baseline.json
+ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$source"; candidate=.github/workflows/probe.yml jobs.probe.steps[0]
+PASS: new violation cannot be registered into baseline
+ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=unchanged live exact baseline; actual=baseline cannot exempt an added/modified/moved line from git diff -U0; candidate=tools/ci_hygiene_baseline.json
+ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$new"; candidate=.github/workflows/probe.yml jobs.probe.steps[1]
+exit=0
+
+$ python tests/check_ci_hygiene.py --rule negative
+PASS: clean workflow accepted; one-change negative control rejected
+expected=nonzero exit; candidate command: python -c import sys; print('rejected-object: bad archive', file=sys.stderr); sys.exit(9)
+actual=exit 9; rejected candidate command: python -c import sys; print('rejected-object: bad archive', file=sys.stderr); sys.exit(9)
+rejected-object: bad archive
+expected=nonzero exit; candidate command: python -c print('unexpected acceptance')
+unexpected acceptance
+actual=exit 0; rejected candidate command: python -c print('unexpected acceptance')
+control did not fail; expected=nonzero; actual=0; candidate=python -c print('unexpected acceptance')
+PASS: runtime negative
+exit=0
+
+$ python tools/check_ci_hygiene.py --base 342780237eb013350bff20c21bc92c335422526a
+PASS: CI hygiene; violations=0; existing debt={'failfast': 1760, 'negative': 15, 'diagnostic': 7, 'packaging': 4}
+exit=0
+
+$ python tests/check_ci_hygiene.py --rule packaging --fault packaging
+Injected one change into a temporary copy of native.yml; repository unchanged
+ERROR: .github/workflows/native.yml:205 [packaging] expected=product install before host for SDK stage; actual=installed prefixes <none>; candidate=stage/include/exreader-product and stage/lib in jobs.desktop.steps[20]
+exit=1 (expected)
+
+$ python tests/check_ci_hygiene.py --rule failfast --fault failfast
+Injected one change into a temporary copy of native.yml; repository unchanged
+ERROR: .github/workflows/native.yml:76 [failfast] expected=bash .github/scripts/ci.sh {0} or explicit set -euo pipefail; actual=shell=bash without strict preamble; candidate=.github/workflows/native.yml jobs.desktop.steps[9]
+ERROR: .github/workflows/native.yml:81 [failfast] expected=bash .github/scripts/ci.sh {0} or explicit set -euo pipefail; actual=shell=bash without strict preamble; candidate=.github/workflows/native.yml jobs.desktop.steps[10]
+ERROR: .github/workflows/native.yml:90 [failfast] expected=bash .github/scripts/ci.sh {0} or explicit set -euo pipefail; actual=shell=bash without strict preamble; candidate=.github/workflows/native.yml jobs.desktop.steps[11]
+ERROR: .github/workflows/native.yml:95 [failfast] expected=bash .github/scripts/ci.sh {0} or explicit set -euo pipefail; actual=shell=bash without strict preamble; candidate=.github/workflows/native.yml jobs.desktop.steps[12]
+ERROR: .github/workflows/native.yml:137 [failfast] expected=bash .github/scripts/ci.sh {0} or explicit set -euo pipefail; actual=shell=bash without strict preamble; candidate=.github/workflows/native.yml jobs.desktop.steps[14]
+ERROR: .github/workflows/native.yml:161 [failfast] expected=bash .github/scripts/ci.sh {0} or explicit set -euo pipefail; actual=shell=bash without strict preamble; candidate=.github/workflows/native.yml jobs.desktop.steps[16]
+exit=1 (expected)
+
+$ python tests/check_ci_hygiene.py --rule diagnostic --fault diagnostic
+Injected one change into a temporary copy of native.yml; repository unchanged
+ERROR: .github/workflows/native.yml:463 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$sqlite_source"; candidate=.github/workflows/native.yml jobs.injected-control.steps[0]
+exit=1 (expected)
+
+$ python tests/check_ci_hygiene.py --rule negative --fault negative
+Injected one change into a temporary copy of native.yml; repository unchanged
+ERROR: .github/workflows/native.yml:463 [negative] expected=set +e; command; rc=$?; set -e; [ "$rc" -ne 0 ] || fail; actual=incomplete expected-failure wrapper; candidate=.github/workflows/native.yml jobs.injected-control.steps[0]
+exit=1 (expected)
+
+$ python tests/check_ci_hygiene.py --rule diagnostic --fault baseline-new
+PASS: clean workflow accepted; one-change diagnostic control rejected
+expected=SOURCE_DIR from CMakeCache; actual=<empty>; candidates=build/provider/CMakeCache.txt build/stage
+expected=command success; actual=exit 1 command=return 1; candidate=<temporary>/step.sh:1
+PASS: runtime diagnostic
+PASS: unchanged historical line retained
+PASS: new violation rejected
+ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$new"; candidate=.github/workflows/probe.yml jobs.probe.steps[1]
+Injected baseline control returns the actual checker exit 1
+exit=1 (expected)
+
+$ python tests/check_ci_hygiene.py --rule diagnostic --fault baseline-modified
+PASS: clean workflow accepted; one-change diagnostic control rejected
+expected=SOURCE_DIR from CMakeCache; actual=<empty>; candidates=build/provider/CMakeCache.txt build/stage
+expected=command success; actual=exit 1 command=return 1; candidate=<temporary>/step.sh:1
+PASS: runtime diagnostic
+PASS: unchanged historical line retained
+PASS: new violation rejected
+ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$new"; candidate=.github/workflows/probe.yml jobs.probe.steps[1]
+PASS: modified baseline line rejected
+ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=unchanged live exact baseline; actual=baseline line hash changed; fix the touched step and remove its entry; candidate=tools/ci_hygiene_baseline.json
+ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$modified"; candidate=.github/workflows/probe.yml jobs.probe.steps[0]
+Injected baseline control returns the actual checker exit 1
+exit=1 (expected)
+
+$ python tests/check_ci_hygiene.py --rule diagnostic --fault baseline-stale
+PASS: clean workflow accepted; one-change diagnostic control rejected
+expected=SOURCE_DIR from CMakeCache; actual=<empty>; candidates=build/provider/CMakeCache.txt build/stage
+expected=command success; actual=exit 1 command=return 1; candidate=<temporary>/step.sh:1
+PASS: runtime diagnostic
+PASS: unchanged historical line retained
+PASS: new violation rejected
+ERROR: .github/workflows/probe.yml:7 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$new"; candidate=.github/workflows/probe.yml jobs.probe.steps[1]
+PASS: modified baseline line rejected
+ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=unchanged live exact baseline; actual=baseline line hash changed; fix the touched step and remove its entry; candidate=tools/ci_hygiene_baseline.json
+ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=nonempty check prints expected / actual / candidate paths (or ci_require_nonempty); actual=test -n "$modified"; candidate=.github/workflows/probe.yml jobs.probe.steps[0]
+PASS: fixed line with stale baseline rejected
+ERROR: .github/workflows/probe.yml:6 [diagnostic] expected=unchanged live exact baseline; actual=baseline line hash changed; fix the touched step and remove its entry; candidate=tools/ci_hygiene_baseline.json
+Injected baseline control returns the actual checker exit 1
+exit=1 (expected)

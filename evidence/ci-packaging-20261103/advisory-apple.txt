@@ -1,0 +1,4 @@
+source=c0e3b33472f7be6dde795c0ba12fcec80c6b3e6d run=41715429567 result=success
+apple-packaging (iphonesimulator)	Install root SDK then product dependencies	2026-11-03T20:47:44.0608150Z PASS: installed Apple product includes and archives:
+apple-packaging (iphoneos)	Install root SDK then product dependencies	2026-11-03T20:47:13.8381710Z PASS: installed Apple product includes and archives:
+apple-packaging (macos)	Install root SDK then product dependencies	2026-11-03T20:48:25.7061450Z PASS: installed Apple product includes and archives:

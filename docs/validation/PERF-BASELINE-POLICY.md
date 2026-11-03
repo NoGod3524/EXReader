@@ -1,0 +1,45 @@
+# Performance baseline policy — E1 + E3
+
+Owner 决定日期：2026-11-03（America/New_York）。跟踪：[issue #32](https://github.com/NoGod3524/EXReader/issues/32)。当前 SDK 真源 **3.42.0**、ABI epoch 1；同号不同源见 [VERSION-LINES](../VERSION-LINES.md)，refreeze 完成后统一升 3.43.0。
+
+## E1: four switches
+
+1. **Environment recording ON**：逐次采样记录 CPU 型号、核数、内存、OS、内核、实际编译器及编译 flags、runner label；保留源码 SHA、run/attempt、二进制及原始样本散列。缺失项明确记 unknown，不猜测或借用另一环境。
+2. **Per-environment budgets ON**：预算按实测环境登记，不能把 EPYC 7763 / EPYC 9V45 / Xeon 8573C 视作同一环境或最近邻替代。
+3. **Cross-environment hard gate OFF**：跨环境只作弱约束和诊断；同环境历史 p95 超过 1.5× 必须人工复核，不自动解释成通过或性能退化。复核记录环境、样本与判断依据。
+4. **Raw-sample derivation ONLY**：预算必须由保管的原始样本经脚本导出，登记样本/导出器散列、命令、环境、统计方法和 run；禁止手填。沿用现有 export_reading_real_budgets.py / export_reading_cpu_baseline.py 的原始证据链，不改历史冻结对象。
+
+## E3: advisory time box
+
+performance 照跑照记，保留失败与原始样本；所有结果加 `advisory: true`、`accepted: false`，不得引用为“通过”、不得用于授予性能验收或发布信用。运行成功只证明采集/诊断命令完成，不代表预算获准。
+
+非性能的 protocol / native / profiles / platforms / corpus 继续是硬门禁，由 reading-required-core 聚合。原 reading-required.yml 保留原逻辑，仅增加 advisory/不再必需的注释；它仍运行，其失败不阻塞合并。不能把协议、构建或产品失败改成 advisory。native 中的性能测量由显式 advisory 包裹记录真实退出码，其余命令仍 fail-fast。
+
+恢复严格性能门禁必须同时满足：E1 四开关落地、P 与 F07 provider 后的实际候选完成一次严格复验、所有原始样本/环境/导出预算/源码/run 绑定完整，并由 owner 记录恢复决定。不得复用 95100501 或 21add50a 的证据冒充新树。
+
+最长六周；硬截止 **2026-12-15 00:00 America/New_York**。到期未完成恢复条件，默认分支回退为只读发布：保留读取与证据归档，停止可写发布，不延长 advisory、不宣称通过。此处不切换默认分支；到期处置与严格复验由 issue #32 跟踪。
+
+## Gate deployment and protected trees
+
+新 `.github/workflows/reading-required-core.yml` 不包含 performance；必需检查由 reading-required 改为 reading-required-core（GitHub Actions app 15368），规则集的删除、非快进、PR、strict、bypass 等其余字段保持不变。
+
+验收方式（owner 最新判定）：静态核对 + 第一次真实 PR 活体验证。reading-required-core.yml 的 pull_request 同时包含 codex/framework 与 ledger/base-20261103，五个非性能组齐全且无 performance。第一次真实 PR 再记录 core 检查注册、源码/run 与结果；当前 [skip ci] 的 P/C 不冒充已受活体 CI 验证。不再尝试 evaluate，也不为此打开一次性 PR 或运行完整矩阵；原工作流保留分支过滤。
+
+reading-required.yml 与 reading-required-core.yml **均不在八项受保护树内**，native.yml 才在。因此门禁拆分本身不扩大 R 候选；native 的既有 P 变更已要求 R 候选在 P 之后。SDK 基线、预算数值和原有断言均不在此处修改。
+
+## Current ruleset state (2026-11-03)
+
+| 规则 | id | enforcement | required checks | 状态 |
+|---|---|---|---|---|
+| EXReader native reading delivery | 25700819 | active | reading-required-core (app 15368) | 原 ~DEFAULT_BRANCH 规则，仅替换检查名，其余字段相同 |
+| EXReader staging core (ledger/base-20261103) | 未创建 | evaluate 被拒绝，方案停止 | 计划仅 reading-required-core | GitHub 422：当前套餐不支持 evaluate，需 Enterprise；未降级 active |
+
+此前 staging 方案仅匹配 refs/heads/ledger/base-20261103，观察删除与非快进限制、core 检查；bypass 为空。当前 API 实查只有一条规则集，不能把创建失败的 staging 记为已存在。ledger/base 成为默认分支时必须删除 staging（若届时已创建），由原 ~DEFAULT_BRANCH 规则接管。
+
+## Default-branch migration checklist (not executed)
+
+- [ ] 旧默认分支失去 ~DEFAULT_BRANCH 保护后，明确留存与写入处置；若继续接受写入，先准备指向旧 ref 的独立保护，不能假定同名继承。
+- [ ] 新默认分支保护生效后删除 staging 规则集（当前未创建，不存在可删除 id），保留迁移前后规则清单与返回。
+- [ ] 同步分支过滤：reading-required.yml 的 push / pull_request 当前均为 codex/framework；native.yml 的 push 为 codex/framework，pull_request 当前无分支过滤。迁移时按最终分支名更新相应过滤，并再次核对，不在本步修改。
+
+部署验收状态见 [SPLIT-STATUS](../../evidence/ci-packaging-20261103/SPLIT-STATUS.md)。原规则集检查名已调整，PR 分支与五组 job 静态核对通过；活体验证留给第一次真实 PR。evaluate 的 422 已被接受，不再重试。
