@@ -518,6 +518,51 @@ jobs:
         name: f03-six-final-${{ github.run_id }}-${{ github.run_attempt }}
         path: build/f03-six-audit/*.json
         if-no-files-found: error
+  projection-regression:
+    if: contains(github.event.head_commit.message, '[F03-PROJECTION]')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        raw:
+        - 'OFF'
+        - 'ON'
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Admit pinned source and build installed hash owner
+      run: |
+        python tests/f03_six_host_20261103/run.py admit
+        cmake -S extras/opds -B build/projection/hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/projection/hash"
+        cmake --build build/projection/hash-build --parallel 4 --target install
+        echo "EXREADER_ORIGINAL_HASH_PREFIX=$PWD/build/projection/hash" >> "$GITHUB_ENV"
+    - name: Build actual catalog revisions and original installed projection consumer
+      run: |
+        cmake -S apps/reader/store/native -B build/projection/catalog-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/projection/product"
+        cmake --build build/projection/catalog-build --parallel 4 --target install
+        ctest --test-dir build/projection/catalog-build --output-on-failure --no-tests=error
+        cmake -S apps/reader/revisions -B build/projection/revisions-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$PWD/build/projection/product" -DCMAKE_INSTALL_PREFIX="$PWD/build/projection/revisions" -DEXR_READER_SELECTOR_BYTES_CANDIDATE=${{ matrix.raw }}
+        cmake --build build/projection/revisions-build --parallel 4 --target install
+        cmake -S tests/reader_organization_projection -B build/projection/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/projection/revisions;$PWD/build/projection/product"
+        cmake --build build/projection/consumer --parallel 4
+        python tests/reader_organization_projection/check.py build/projection/consumer/organization-consumer build/projection/original
+    - name: Compare fresh and previously synchronized native deletion projections
+      run: python tests/f03_six_host_20261103/projection_replay.py --consumer build/projection/consumer/organization-consumer --output build/projection/replay
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: f03-projection-${{ matrix.raw }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: |
+          build/projection/replay/
+          build/projection/original/
+          build/projection/**/CMakeCache.txt
+          build/projection/**/Testing/
+        if-no-files-found: error
 'on':
   push:
     branches:
