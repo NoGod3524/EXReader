@@ -56,3 +56,5 @@ CI：sdk-version-consistency.yml 仅 pull_request / workflow_dispatch；identity
 本包改变 protected 集合中的 include、cmake、CMakeLists.txt 三项，native.yml 未改。**R 的候选必须基于 V 之后的提交，不能沿用 95100501 的散列。** 本包未 refreeze、不更新 SDK 基线登记/性能预算，不执行 C/R，不改 catalog、Settings、默认分支或其它会话分支。
 
 本地安装包三渠道已实测；完整 native 矩阵 run 41707789690 尚未结束，不据 SDK 专项 CI 授予整个 native 矩阵通过。
+
+后续 native 观测：apple-mobile job 126167587852 已越过 SDK 版本比较，当前失败是缺少 `stage/iphonesimulator/include/exreader-product`，非 SDK 版本不符。原 run/job 链接与失败步骤见 native-observation.json；本包未扩展为产品依赖修复。
