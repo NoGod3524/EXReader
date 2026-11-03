@@ -1,10 +1,9 @@
 {
   "schema": 1,
-  "parent": "88b626564e58a2c53bee1193a91f802913d1d544",
+  "parent": "834aac8adea2f19b3ccda832608ffacc4049449f",
   "branch": "dot/f05-gtk-native-recovery-20261103",
   "delta": [
     "M\ttests/product/f05_gtk_native_recovery_20261103/gtk.py",
-    "M\ttests/product/f05_gtk_native_recovery_20261103/driver.py",
     "M\ttests/product/f05_gtk_native_recovery_20261103/contract.json"
   ],
   "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
@@ -29,7 +28,7 @@
     ".github/workflows/gtk-sdk342-package.yml": "0e3b53c7c73ca403601d81ce38a67fe6451e960c"
   },
   "copied_blobs": {
-    "gtk.py": "1bbdc2de3765d5f2469be09d691e7d52feebc475",
+    "gtk.py": "d75f2bd2709dd2be71216edd559993a8cb86aded",
     "fixture.py": "6a9a9322c2136295ae498fb11784874c0e85861b"
   },
   "stages": {
@@ -296,5 +295,13 @@
     "partial_is_successful_projection": false,
     "original_failed_run": "41619466549",
     "only_observation_and_diagnostics_changed": true
+  },
+  "cleanup_fix": {
+    "source_parent": "834aac8adea2f19b3ccda832608ffacc4049449f",
+    "original_failed_run": "41629004820",
+    "diagnostic_run": "41633749476",
+    "preserve_cleanup_failure_guard": true,
+    "fixture_private_key_removal_verified": true,
+    "original_cases_unchanged": true
   }
 }
