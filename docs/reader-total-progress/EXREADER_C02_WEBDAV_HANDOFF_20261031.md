@@ -1884,3 +1884,33 @@ F09 continues independent F03/document review. Existing Windows KB06/GTK Account
 At save: implementation0; diagnosis/scope preparation2 (F05/F07); review1 (F09, this snapshot); documentation1 (coordinator); test-result wait1 (F03's published evidence-audit run not yet indexed); blocked/no-new-native1 (F08). Total6 responsibility roles, not six concurrent implementations. R7 product-device round is finished1/1; only the separately authorized evidence audit is pending.
 
 Next: observe the single audit run to terminal and independently verify all report gaps; finish already authorized precise source reads for owner proposals; request specific new scope/budget before any further product/device round. Hourly reporting remains active. No mainline/PR/release or old product/SDK/test mutation is authorized by this snapshot.
+
+
+## Hourly continuation snapshot: 2026-11-03 01:22 EST scheduled
+
+This is a new continuation backup, not a stop/completion notice. Actual save time: 2026-11-03T06:22:19.442739+00:00 / 2026-11-03T01:22:19.442739-05:00. Scheduled time is not substituted for the actual save time. The formal accepted ledger remains 98; no diagnostic or partial result adds an accepted item.
+
+### F03 actual source and current authorized run
+Production branch dot/f03-production-acceptance-v342-20261102 now reads 054df69524eed483759febdcc0ce20e634921f82, parent 044f77dc1631b449f4dccff60b08bb7221d2bbe2. R8 is exactly three modified versioned acceptance files; product, SDK, old tests and workflow are unchanged. Actual candidate review and independent full-tree review passed before the unique non-force update. The first object attempt was explicitly rejected without execution; the user's new specific 06:14:07Z confirmation permitted one same-route review, which succeeded. This does not authorize additional attempts or rounds.
+
+R8 unique Android run: https://github.com/NoGod3524/EXReader/actions/runs/41588932707
+Attempt 1, job 125760870479, exact source 054df695. Latest actual observation at 06:20:49Z: in_progress, SDK/main app build running; source admission, staging, SDK3.42 adapter and OPDSHash steps succeeded. Runtime acceptance has not been established. Next planned bounded observation is the same run/job around 06:28Z, not another trigger. Original single Android 120-minute budget remains unchanged.
+
+The explicit R8 contract changes are four Large-book restore observation points with at most 45 seconds, and repeated valid root-row geometry observations within the existing 30-second picker deadline. Ordinary paging and font waits remain 20 seconds, native query 5 seconds and all existing safety assertions remain. Original pause gate 60 seconds and conservative 50/55-second release safeguards are retained. This does not establish acceptable product performance.
+
+### R7 preserved failure and completed evidence audit
+R7 device run 41579562550/A1 at 044f remains failed. The independent full evidence audit 41583512871/A1 at 3c7a7371cc0588d865114096d10071b82c95af23 succeeded as an audit only. Its fixed artifact 13206494790 is 2,044,141 bytes, SHA256 e0931cb79e3a67f30393736300f9813b9066cb0a1da11d8588ac8ad409a3382d.
+Actual original results: walkthrough 45/45, review 9/10, bounded 9/11. The three failures are destroyed_activity_releases_worker, bounded_schema6_upgrade, and bounded_budget_limit_preserves_frame. The previously failing progress_write_reject passed. Owner18 plus two kills, organization8 native plus8 UI plus1 retry, recovery12, shelf12/2202 and import20 across9 phases passed, but the five formal gates were skipped and downstream formal acceptance stayed false.
+
+The specifically authorized four-log LAP read was completed and independently checked without executing payloads. Review recreation and budget first force-stop recovery each spent about 7.4s opening, 5s querying, and 7.1s reopening before the original 20-second observation failed. Both retained the original selector with state=-2; these logs do not prove completed rendering/commit. Budget initial page2 and saved selector had succeeded; failure preceded font adjustment. Picker root geometry was not recorded in R7, so an animation cause is not asserted. Unarchived temporary inputs remain unknown.
+
+### F07 and other work boundaries
+F07 full ownership is with the team's assigned F07 owner, not an unspecified external owner. The installed-binding audit candidate is independently reviewed but both authorized object attempts were explicitly rejected without execution. No F07 commit, ref or CI exists for that candidate, and the replacement owner will not bypass the denied write.
+Current F07 work is read-only evidence analysis. Existing ec11 job metadata and six old job text logs were read. Three Apple logs contain sqlite_provider entries naming raw-products/lib/libreader_catalog_sqlite.a(sqlite3.c.o); their exact surrounding link/MAP provenance is still under review. These lines are new leads, not proof of unique final SQLite ownership. Installed package binding and final link provenance must remain distinct.
+F05 is also owned by this team; UI/animation stays with Opus. Last verified F05 branch remains9ce943e1, with no actual caller/job/artifact for the prepared Java shadow. No new F05 run or implementation is asserted in this snapshot.
+F08 native budget1/1 remains failed and cleaned up; no native restart is authorized. F09's bounded Windows Space and GTK Account results remain as previously recorded; no new GTK round is authorized. Its current independent R8 review is completed, not an active implementation.
+
+### Current six-role responsibility states and storage
+This is a responsibility-state count, not six active implementations: implementation0; active diagnosis1 (F07); active document backup1 (coordinator); test-result wait1 (F03 R8); blocked/waiting3 (F05 has no new execution receipt here, F08 no new native budget, F09 review completed and awaiting result). Routine standby is not implementation.
+Read-only storage measurement: /data free811,839,488 bytes; /tmp is a separate filesystem with3,934,482,432 bytes free. Thus /tmp evidence caches are not established as the cause of /data pressure. The /data recursive size read hit its45-second limit, so large-directory and deletion candidates are not yet known. No data was deleted or disk resized.
+All original failures, audit completeness limits, missing inputs and skipped gates remain preserved. This document adds no source changes, new CI budget, artifact permission, or formal acceptance credit.
