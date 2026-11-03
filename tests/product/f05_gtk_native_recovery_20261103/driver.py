@@ -39,6 +39,8 @@ def admit():
         require(git('rev-parse','HEAD:'+path)==git('rev-parse',c['sdk_freeze']+':'+path),'SDK changed '+path)
     for name in ['gtk.py','fixture.py']:
         require(git('hash-object',str(HERE/name))==c['copied_blobs'][name],'native scenario changed '+name)
+    for name, blob in c['r3_blobs'].items():
+        require(git('hash-object',str(HERE/name))==blob,'R3 supporting source changed '+name)
     spec=c['retained_diagnostics']
     require(git('hash-object',str(HERE/'retained_diagnostics.py'))==spec['wrapper_blob'],'diagnostic wrapper changed')
     save(OUT/'observation-controls.json',observation_selftests())
@@ -598,6 +600,13 @@ def audit_inner(audit,state):
     expected_native={'source':IDENTITY['source_sha'],'run':run,'attempt':'1'}
     check_identity(coverage['identity'],expected_native)
     require(coverage['host']=='linux' and not coverage['errors'] and not coverage['cleanup_errors'],'native errors')
+    require(coverage.get('dry_run') is False and coverage.get('configuration_mode')=='ready','formal native execution required')
+    timings=coverage.get('cleanup_timings')
+    require(isinstance(timings,list),'cleanup timings absent')
+    native_timings=[row for row in timings if row.get('action','').startswith('native-close-')]
+    require([row.get('action') for row in native_timings]==['native-close-0','native-close-1','native-close-2']
+        and all(type(row.get('seconds')) in (int,float) and 0<=row['seconds']<=20 for row in native_timings),
+        'native cleanup exceeded 20 seconds')
     require(coverage['program_sha256']==sha(host),'native program mismatch')
     controls=read(extracted/'build/f05-gtk/observation-controls.json')
     require(controls==observation_selftests(),'original observation controls mismatch')
@@ -620,6 +629,9 @@ def audit_inner(audit,state):
     require([x['name'] for x in cases]==c['native_cases'],'six exact native cases')
     require([x['outcome'] for x in cases]==['passed','passed','passed','partial','passed','passed'],'partial must remain partial')
     receipt=read(native/'receipt.json');check_identity(receipt['identity'],expected_native)
+    from case_alignment import align_cases
+    require(all(row['executed'] for row in align_cases(cases,receipt['cases'],receipt['claims'])),
+        'native case not executed')
     require(receipt['schema']==2 and receipt['host']=='linux' and receipt['sdk_freeze']==c['sdk_freeze'],'receipt schema')
     require(receipt['F05_accepted'] is False and receipt['artifact_authenticated_by_producer'] is False,'receipt claims')
     require(receipt['program_sha256']==sha(host)==sha(native/'program.bin'),'receipt actual binary')

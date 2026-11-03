@@ -8,6 +8,8 @@ import json
 import os
 from pathlib import Path
 import secrets
+import socket
+import ssl
 import sqlite3
 import subprocess
 import sys
@@ -15,7 +17,8 @@ import time
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from check_linux_host import Session, command
+from check_linux_host import command
+from native_runtime import Session
 from fixture import Store, write_role_receipt
 from driver import observation_snapshot, receive_precondition, receive_observation, verify_receive_trace
 
@@ -26,6 +29,8 @@ def main():
     parser.add_argument("--payload", type=Path, required=True)
     parser.add_argument("--inspect", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--configuration-mode", choices=("ready", "legacy"), default="ready")
     args = parser.parse_args()
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -40,7 +45,11 @@ def main():
     report = {"host": "linux", "F05_accepted": False, "cases": checks, "errors": [],
               "identity": {"source": os.environ["GITHUB_SHA"], "run": os.environ["GITHUB_RUN_ID"],
                            "attempt": os.environ["GITHUB_RUN_ATTEMPT"]},
-              "program_sha256": hashlib.sha256(binary.read_bytes()).hexdigest()}
+              "program_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
+              "dry_run": args.dry_run, "configuration_mode": args.configuration_mode,
+              "configuration_events": [], "cleanup_timings": []}
+    if not args.dry_run and args.configuration_mode != "ready":
+        raise RuntimeError("legacy control is restricted to dry-run")
     normalized, claim_refs, evidence = [], {}, ["coverage.json", "receive-observations.json"]
     previous_wire, last_request = {}, 0
     def finish_case(claims, screenshot=None, screenshot_host=None, **semantic):
@@ -88,13 +97,18 @@ def main():
             time.sleep(.1)
         raise TimeoutError("GTK boundary not reached")
     def window(host, title, present=True):
+        appearance_deadline = time.monotonic() + 5
         def find():
+            remaining = appearance_deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("GTK window appearance exceeded 5 seconds")
             result = subprocess.run(["xdotool", "search", "--onlyvisible", "--all",
                     "--pid", str(host.process.pid), "--name", "^" + title + "$"],
-                    capture_output=True, text=True, timeout=5)
+                    capture_output=True, text=True, timeout=min(30, remaining))
+            if result.returncode not in (0, 1):result.check_returncode()
             if not present: return not result.stdout.strip()
             return result.stdout.splitlines()[-1] if result.stdout.strip() else None
-        target = wait(host, find, 30)
+        target = wait(host, find, 5)
         if present: command("xdotool", "windowactivate", "--sync", target)
         return target
     def account(host):
@@ -113,12 +127,40 @@ def main():
         wait(host, lambda: account(host).get("session_present") == "0")
     def configure(host):
         open_account(host)
+        event = {"host":host.folder.name,"pid":host.process.pid,"opened":time.monotonic(),
+                 "mode":args.configuration_mode}
+        report["configuration_events"].append(event)
+        if args.configuration_mode == "ready":
+            wait(host, lambda: all(account(host).get(k)==v for k,v in
+                {"owner_busy":"0","form_enabled":"1","preparing":"0","closing":"0"}.items()))
+        event["form_ready"] = time.monotonic()
         for shortcut, value in (("w", store.root), ("u", user), ("p", password)):
             host.key("alt+" + shortcut, "ctrl+a")
             host.paste(value)
+        event["apply_dispatched"] = time.monotonic()
         host.key("alt+h", "alt+a")
-        wait(host, lambda: account(host).get("bound") == "1")
+        if args.configuration_mode == "ready":
+            wait(host, lambda: all(account(host).get(k)==v for k,v in
+                {"bound":"1","owner_busy":"0","credential_status":"0",
+                 "has_user":"1","has_password":"1","form_enabled":"1"}.items())
+                and account(host).get("notice")=="Using credentials for this app session only")
+        else:
+            wait(host, lambda: account(host).get("bound") == "1")
+        event["apply_observed"] = time.monotonic()
+        event["credential_state"] = {k:account(host).get(k) for k in
+            ("bound","owner_busy","credential_status","has_user","has_password","notice")}
         close_account(host)
+    def fixture_ready():
+        record = {"at":time.monotonic(),"thread_alive":store.thread.is_alive(),
+                  "tls_ready":False}
+        if not record["thread_alive"]:
+            raise AssertionError("network fixture thread exited")
+        context = ssl.create_default_context(cafile=str(cert))
+        with socket.create_connection(store.server.server_address, timeout=5) as connection:
+            with context.wrap_socket(connection, server_hostname="127.0.0.1"):
+                record["tls_ready"] = True
+        record["ready_at"] = time.monotonic()
+        return record
     def sdk_originals(host):
         db=host.folder/"profile/library.sqlite"
         with sqlite3.connect(db.resolve().as_uri()+"?mode=ro",uri=True,timeout=20) as connection:
@@ -143,6 +185,10 @@ def main():
                 "case_index":len(checks),"dispatch_count":0,"dispatch_ok":False,
                 "network_samples":[],"samples":[],"completed":False}
         receive_traces.append(record)
+        record["fixture_before_sync"] = fixture_ready()
+        record["credential_before_sync"] = {k:account(host).get(k) for k in
+            ("credential_status","has_user","has_password","owner_busy","bound")}
+        record["session_handle_before_sync"] = account(host).get("session_present")
         def sample():
             if host.process.poll() is not None:raise AssertionError("Receive host exited")
             raw=account(host)
@@ -169,6 +215,8 @@ def main():
                        "closing":"0","session_present":"0"}.items()):break
                 time.sleep(.1)
             record["before_network"]=before
+            record["sync_at"] = time.monotonic()
+            record["fixture_to_sync_seconds"] = record["sync_at"]-record["fixture_before_sync"]["ready_at"]
             host.key("alt+s")
             while True:
                 if time.monotonic()>=network_deadline:raise TimeoutError("new network session deadline")
@@ -321,6 +369,12 @@ def main():
         first = launch("first")
         configure(first)
         sync(first)
+        if args.dry_run:
+            report["dry_run_checkpoint"] = {"passed":True,"sync_index":5,
+                "new_pid":first.process.pid,"old_pid":pid,
+                "generation":receive_traces[-1]["generation"],
+                "session_present_at_network_ready":receive_traces[-1]["ready"]["session_present"]}
+            return
         sync(second, pending["heads"])
         if snapshot(first)["outbox"] or any(store.entries.get(k) != v for k, v in before.items()):
             raise AssertionError("uncertain replay mismatch")
@@ -458,14 +512,18 @@ def main():
     finally:
         cleanup_errors=[]
         def cleanup(label,action):
+            started = time.monotonic()
             try:action()
             except BaseException as error:
                 cleanup_errors.append({"action":label,"error":repr(error).replace(password,"<fixture-secret>")})
+            finally:
+                report["cleanup_timings"].append({"action":label,"seconds":time.monotonic()-started})
         def close_host(host):
             if host.process.poll() is None:
                 try:host.close()
-                except BaseException:
-                    host.process.kill();host.process.wait(timeout=20)
+                except BaseException as primary:
+                    try:host.process.kill();host.process.wait(timeout=5)
+                    except BaseException as error:primary.f05_cleanup_errors = [repr(error)]
                     raise
         for index,host in enumerate(devices):
             cleanup("native-close-"+str(index),lambda host=host:close_host(host))

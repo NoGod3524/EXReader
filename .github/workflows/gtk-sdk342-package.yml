@@ -4,11 +4,75 @@ on:
   push:
     branches: [codex/dot-gtk-sdk342-package, codex/windows-gtk-sdk342-common-20261028]
   workflow_dispatch:
+    inputs:
+      f05_mode:
+        type: choice
+        default: dry-run
+        options: [dry-run, formal]
 permissions:
   contents: read
 jobs:
+  f05-r3-dry-run:
+    name: F05 GTK R3 bounded dry-run
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/f05-gtk-recovery-r3-20261103' && inputs.f05_mode == 'dry-run' && github.run_attempt == 1 }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Admit exact R3 source
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py admit
+      - name: GTK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: R3 syntax and counterexamples
+        run: |
+          python3 -m py_compile tests/product/f05_gtk_native_recovery_20261103/*.py
+          xvfb-run -a python3 tests/product/f05_gtk_native_recovery_20261103/check_r3.py
+      - name: Reinterpret authenticated historical evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/inspect_network.py
+      - name: Build unchanged original GTK product
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/driver.py exec build
+      - name: Legacy readiness control and corrected readiness experiment
+        run: |
+          mkdir -p build/f05-r3
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euo pipefail -c '
+            openbox >build/f05-r3/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            common=(--payload build/gtk-raw-wave3/retained-package/EXReader-Linux --inspect build/f05-consumers/inspect/received-sdk-inspect --dry-run)
+            legacy=0
+            timeout --signal=TERM --kill-after=10s 480s /usr/bin/python3 tests/product/f05_gtk_native_recovery_20261103/gtk.py "${common[@]}" --configuration-mode legacy --output build/f05-r3/legacy >build/f05-r3/legacy.log 2>&1 || legacy=$?
+            echo "$legacy" >build/f05-r3/legacy-exit.txt
+            timeout --signal=TERM --kill-after=10s 480s /usr/bin/python3 tests/product/f05_gtk_native_recovery_20261103/gtk.py "${common[@]}" --configuration-mode ready --output build/f05-r3/ready >build/f05-r3/ready.log 2>&1
+          '
+      - name: Validate dry-run checkpoint and cleanup
+        run: python3 tests/product/f05_gtk_native_recovery_20261103/check_dry_run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f05-gtk-r3-dry-run-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f05-gtk-network-inspect/
+            build/f05-gtk/*.json
+            build/f05-gtk/*.log
+            build/f05-r3/*.json
+            build/f05-r3/*.log
+            build/f05-r3/*.txt
+            build/f05-r3/*/coverage.json
+            build/f05-r3/*/receipt.json
+            build/f05-r3/*/receive-observations.json
+            build/f05-r3/*/*.png
+          if-no-files-found: error
   retained:
-    if: ${{ github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' }}
+    if: ${{ (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-recovery-r3-20261103') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 150
     steps:
@@ -93,7 +157,7 @@ jobs:
           if-no-files-found: error
   authenticate:
     needs: retained
-    if: ${{ always() && github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' }}
+    if: ${{ always() && (github.ref != 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.ref != 'refs/heads/codex/f05-gtk-recovery-r3-20261103') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     permissions:
@@ -115,7 +179,7 @@ jobs:
 
   f05-admission:
     name: F05 GTK admission
-    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.run_attempt == 1 }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-recovery-r3-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
     runs-on: ubuntu-22.04
     timeout-minutes: 5
     steps:
@@ -126,7 +190,7 @@ jobs:
   f05-producer:
     name: F05 GTK native producer
     needs: f05-admission
-    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.run_attempt == 1 }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-recovery-r3-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
     runs-on: ubuntu-22.04
     timeout-minutes: 170
     steps:
@@ -170,7 +234,7 @@ jobs:
   f05-audit:
     name: F05 GTK independent audit
     needs: [f05-admission, f05-producer]
-    if: ${{ always() && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' && github.run_attempt == 1 }}
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/dot/f05-gtk-native-recovery-20261103' || (github.ref == 'refs/heads/codex/f05-gtk-recovery-r3-20261103' && inputs.f05_mode == 'formal')) && github.run_attempt == 1 }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     permissions:
