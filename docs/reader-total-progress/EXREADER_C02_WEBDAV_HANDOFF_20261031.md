@@ -1997,3 +1997,43 @@ For the six responsibility slots at this snapshot: active implementation 0; docu
 
 Storage findings from the previous snapshot are unchanged and no new disk scan is claimed. The identified build directories are only candidates for ownership/backup review, not approved deletion targets. No files were deleted or disk capacity changed.
 All failed rounds, skipped checks and evidence limitations remain preserved. This document adds no implementation authority, new CI round, artifact exception or formal credit.
+
+
+## Hourly continuation snapshot: 2026-11-03 04:22 EST scheduled
+
+Actual save time: 2026-11-03T09:23:08.517304+00:00 / 2026-11-03T04:23:08.517304-05:00. Prior content is preserved byte-for-byte. This is a continuation backup, not an instruction to stop work. Formal catalog remains 98 verified, 1 partial and 9 pending out of 108.
+
+### F03: Android acceptance is real; six-target item is still pending
+R8 source 054df69524eed483759febdcc0ce20e634921f82 and run 41588932707/A1 remain independently verified accepted=true/problems=[], with 17 upstream stages and 9 formal reports. No new F03 device run occurred. Catalog F03 still requires six-target shared shelf/organization consistency and remains pending; old_apk_upgrade_accepted=false and complete_product=false remain. No ledger score was raised.
+
+### F05: manifest failure diagnosed, parser repaired and runtime scope accepted
+The earlier validation run 41598794149 at e4bd remains failed before device tests; its three APK builds and native audit had succeeded. The separately approved fixed-artifact inspection run 41602795048/A1 at 9578f09ce352d784ea92053916439e69a7a22d7e completed successfully. Actual APK runners/targets were correct. The old parser kept full Android namespace URI keys but looked up short android:name/targetPackage keys. The original owner manifest text and fresh static dump were identical. Inspection did not execute an APK.
+
+The user specifically approved the two-file parser/contract correction and one new complete validation round. Independently reviewed source 0e547f7b8f50bc793e30180d277276820129d9d8, parent e4bd, was published on dot/f05-android-head-bridge-20261103 with only driver.py and contract.json modified. Exact namespace canonicalization, duplicate-key and wrong-namespace checks apply before value-type handling; required identity values remain quoted. Ten parser regression groups include numeric/unquoted negative variants. Product bridge, SDK, old tests, UI and workflow were unchanged.
+
+The one new run 41604711611/A1 completed SUCCESS. Original owner 18, retained 16 with 4 independent PIDs and 2 actual blocking boundaries, and bridge 10 passed and were consumed by the real audit. Ten parser regression groups were mandatory in admission and re-executed by audit before comparison with the admission report.
+https://github.com/NoGod3524/EXReader/actions/runs/41604711611
+Independent review checked the original producer/audit stdout, run/source/attempt identity and authenticated artifact chain. The logs expose group results rather than all 44 case bodies; no separate ZIP download of every original case report is claimed.
+Producer job 125811666517 log: 766975 bytes, SHA256 92242530665f31253c0f35f457a294649ddd1c9dba0880911e3e26e1012328a1.
+Audit job 125814520589 log: 134923 bytes, SHA256 763c629d4c117d1f8fa70b3f991be449863fa327e10f9acb344a2b2948a28bc9.
+Producer artifact 13216596501: 61994363 bytes, SHA256 230142f429e5d7eb18ad219ef4ed0a09dcc984fe392f8d544580779eb055ea72.
+Audit artifact 13217190271: 61994721 bytes, SHA256 5c2fa86e1067ddb45089c66d5bb6ef101b02bd1a20b4187f32cab61162a13213.
+
+This accepts only the declared Android read-only bridge runtime scope. fullF05=false remains explicit. It does not certify six targets, UI integration, real concurrent heads or the 4096 history boundary. No verified Opus receipt, UI integration source SHA or new Windows/GTK/Apple F05 delivery identity is available in the current coordination evidence. The previous failed round remains preserved.
+
+### F05: separately approved real-head/history-boundary package, not yet executed
+At 09:09:48 UTC the user approved a new two-added/four-modified test package, one commit/push and one run capped at 140 runner-minutes. Its parent is 0e547f7b and proposed branch is dot/f05-android-conflict-boundary-20261103. This is a separate authorization, not unused time from the completed round.
+Six exclusive paths are driver.py, contract.json, bridge.init.gradle, new java/org/exreader/host/ConflictBoundaryTest.java and cpp/conflict_boundary_probe.inc under tests/product/f05_android_head_bridge_20261103, plus the existing reader-host-session-android workflow.
+
+Static inspection established that 4096 bounds all history for one entity, not merely returned heads. The 4097th transaction must roll back. Real SDK operations, not SQL-forged rows, are required. The current build does not enable exrSelectorBytes, so SDK 3.42 alone does not imply a raw_v3 store. The initial record-interop idea depended on reading support and was not used. The actual candidate uses an Actions-isolated Debug copy of catalog_fixture.inc with its exact original prefix plus the new probe; no repository product include, SDK or old test is edited, and no reading/raw3/recordInterop flag is enabled.
+
+Candidate text was actually saved and is under independent full review. Last candidate-save processes 12120 and 23328 terminated; manifest and complete six-file text are present in the isolated cache. At this recorded preparation point no new Git object/ref or CI has been created for this package. The first independent read pass found a concrete must-fix before any Git or CI: the isolated stage omitted webdav, credentials and importentry subprojects unconditionally referenced by settings.gradle, and its relative native dependency closure must be complete. Review is not yet passed; the writer must correct the same approved scope and obtain actual re-review. Static review is not compilation or runtime acceptance. Original owner18/retained16/bridge10 must remain, alongside the new independently identified Debug test group. Any failed new run does not authorize another round.
+
+### Other lanes, actual roles and restrictions
+F07's independently traced Apple peer MAP/checker chain remains bounded evidence for selected symbol/provider ownership. It is stronger than a manifest declaration but not full F07 acceptance. Windows/GTK inventory and closure gaps remain. Its installed-binding Git action and later fixed read-only queries were refused without execution even after their specific confirmation/review paths. No alternate route, replacement writer or repeated refused action was used. The two historical B JSON files remain unavailable to this coordinator; no new local ZIP/JSON parsing or Actions round is authorized by this snapshot.
+
+F08 remains at its previous failed, cleaned-up native attempt with no new native execution budget. GTK status remains unaccepted; no new GTK run occurred. F09 is actively reviewing the new F05 package after completing independent review of the successful Android bridge round.
+
+For the six responsibility slots at this snapshot: implementation 1 (F05 approved test-package candidate), review 1 (F09), documentation/coordination 1, waiting or blocked 3 (F03 six-target gap, F07 review/evidence blockers, F08 no new native authority). Diagnostic-only and test-result-wait slots are 0. These are responsibility states, not six active implementations, and do not count already completed analysis as active work.
+
+Previous storage measurements remain historical; no new scan, deletion or expansion occurred. Shared working trees and other owners' files remain protected. All builds, syntax/tests, fixtures and artifact parsing remain confined to their authorized Actions scope or an exact previously granted single-use exception; this document grants no new exception, CI, implementation scope or formal credit.
