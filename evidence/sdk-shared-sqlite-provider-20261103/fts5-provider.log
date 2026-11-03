@@ -1,0 +1,11 @@
+Test project C:/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/build/sdk-provider
+    Start 1: sqlite-provider-check
+1/1 Test #1: sqlite-provider-check ............   Passed    0.09 sec
+
+100% tests passed out of 1
+
+Label Time Summary:
+FTS5           =   0.09 sec*proc (1 test)
+SDKContract    =   0.09 sec*proc (1 test)
+
+Total Test time (real) =   0.10 sec

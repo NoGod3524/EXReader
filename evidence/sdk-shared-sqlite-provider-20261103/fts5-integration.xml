@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="1"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="0"
+	timestamp="2026-11-03T13:34:33"
+	>
+	<testcase name="shared-sqlite-sdk-product" classname="shared-sqlite-sdk-product" time="0.114473" status="run">
+		<properties>
+			<property name="cmake_labels" value="FTS5;SDKContract"/>
+		</properties>
+		<system-out>loaded_sqlite_provider=C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\build\sdk-stage\bin\libreader_sqlite3.dll
+Installed dynamic SDK, ProductCatalog and FTS5 share the public provider
+</system-out>
+	</testcase>
+</testsuite>

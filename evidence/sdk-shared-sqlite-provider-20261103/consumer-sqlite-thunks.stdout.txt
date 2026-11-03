@@ -1,0 +1,109 @@
+
+C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\build\sdk-integration\shared-sqlite-consumer.exe:	file format coff-x86-64
+
+Disassembly of section .text:
+
+00000001400080c0 <sqlite3_step>:
+1400080c0:     	jmpq	*0xd3d2(%rip)           # 0x140015498 <__imp_sqlite3_step>
+1400080c6:     	nop
+1400080c7:     	nop
+
+00000001400080c8 <sqlite3_prepare_v2>:
+1400080c8:     	jmpq	*0xd3c2(%rip)           # 0x140015490 <__imp_sqlite3_prepare_v2>
+1400080ce:     	nop
+1400080cf:     	nop
+
+00000001400080d0 <sqlite3_open_v2>:
+1400080d0:     	jmpq	*0xd3b2(%rip)           # 0x140015488 <__imp_sqlite3_open_v2>
+1400080d6:     	nop
+1400080d7:     	nop
+
+00000001400080d8 <sqlite3_open>:
+1400080d8:     	jmpq	*0xd3a2(%rip)           # 0x140015480 <__imp_sqlite3_open>
+1400080de:     	nop
+1400080df:     	nop
+
+00000001400080e0 <sqlite3_libversion_number>:
+1400080e0:     	jmpq	*0xd392(%rip)           # 0x140015478 <__imp_sqlite3_libversion_number>
+1400080e6:     	nop
+1400080e7:     	nop
+
+00000001400080e8 <sqlite3_finalize>:
+1400080e8:     	jmpq	*0xd382(%rip)           # 0x140015470 <__imp_sqlite3_finalize>
+1400080ee:     	nop
+1400080ef:     	nop
+
+00000001400080f0 <sqlite3_extended_result_codes>:
+1400080f0:     	jmpq	*0xd372(%rip)           # 0x140015468 <__imp_sqlite3_extended_result_codes>
+1400080f6:     	nop
+1400080f7:     	nop
+
+00000001400080f8 <sqlite3_exec>:
+1400080f8:     	jmpq	*0xd362(%rip)           # 0x140015460 <__imp_sqlite3_exec>
+1400080fe:     	nop
+1400080ff:     	nop
+
+0000000140008100 <sqlite3_errmsg>:
+140008100:     	jmpq	*0xd352(%rip)           # 0x140015458 <__imp_sqlite3_errmsg>
+140008106:     	nop
+140008107:     	nop
+
+0000000140008108 <sqlite3_db_filename>:
+140008108:     	jmpq	*0xd342(%rip)           # 0x140015450 <__imp_sqlite3_db_filename>
+14000810e:     	nop
+14000810f:     	nop
+
+0000000140008110 <sqlite3_column_type>:
+140008110:     	jmpq	*0xd332(%rip)           # 0x140015448 <__imp_sqlite3_column_type>
+140008116:     	nop
+140008117:     	nop
+
+0000000140008118 <sqlite3_column_text>:
+140008118:     	jmpq	*0xd322(%rip)           # 0x140015440 <__imp_sqlite3_column_text>
+14000811e:     	nop
+14000811f:     	nop
+
+0000000140008120 <sqlite3_column_int64>:
+140008120:     	jmpq	*0xd312(%rip)           # 0x140015438 <__imp_sqlite3_column_int64>
+140008126:     	nop
+140008127:     	nop
+
+0000000140008128 <sqlite3_column_int>:
+140008128:     	jmpq	*0xd302(%rip)           # 0x140015430 <__imp_sqlite3_column_int>
+14000812e:     	nop
+14000812f:     	nop
+
+0000000140008130 <sqlite3_close_v2>:
+140008130:     	jmpq	*0xd2f2(%rip)           # 0x140015428 <__imp_sqlite3_close_v2>
+140008136:     	nop
+140008137:     	nop
+
+0000000140008138 <sqlite3_close>:
+140008138:     	jmpq	*0xd2e2(%rip)           # 0x140015420 <__imp_sqlite3_close>
+14000813e:     	nop
+14000813f:     	nop
+
+0000000140008140 <sqlite3_changes>:
+140008140:     	jmpq	*0xd2d2(%rip)           # 0x140015418 <__imp_sqlite3_changes>
+140008146:     	nop
+140008147:     	nop
+
+0000000140008148 <sqlite3_busy_timeout>:
+140008148:     	jmpq	*0xd2c2(%rip)           # 0x140015410 <__imp_sqlite3_busy_timeout>
+14000814e:     	nop
+14000814f:     	nop
+
+0000000140008150 <sqlite3_bind_text>:
+140008150:     	jmpq	*0xd2b2(%rip)           # 0x140015408 <__imp_sqlite3_bind_text>
+140008156:     	nop
+140008157:     	nop
+
+0000000140008158 <sqlite3_bind_int64>:
+140008158:     	jmpq	*0xd2a2(%rip)           # 0x140015400 <__imp_sqlite3_bind_int64>
+14000815e:     	nop
+14000815f:     	nop
+
+0000000140008160 <sqlite3_bind_int>:
+140008160:     	jmpq	*0xd292(%rip)           # 0x1400153f8 <__imp_sqlite3_bind_int>
+140008166:     	nop
+140008167:     	nop

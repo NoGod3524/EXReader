@@ -23,9 +23,28 @@ WAVE3_MODULES = (
 )
 
 
+def shared_provider_files(sdk, product_prefix=None):
+    product = Path(product_prefix) if product_prefix else Path(sdk)
+    manifest_path = product / 'share/exreader-apple/product.json'
+    manifest = json.loads(manifest_path.read_text()) if manifest_path.is_file() else {}
+    if manifest.get('sqlite_provider_mode') != 'shared':
+        return {}
+    prefix = Path(manifest['sqlite_provider_prefix']).resolve()
+    runtime = (prefix / manifest['sqlite_provider_runtime']).resolve()
+    if not runtime.is_relative_to(prefix) or not runtime.is_file():
+        raise RuntimeError('Shared SQLite runtime missing or outside its prefix')
+    sdk_runtime = Path(sdk) / 'lib/libexreader.dylib'
+    if not sdk_runtime.is_file():
+        raise RuntimeError('Shared profile requires the installed dynamic SDK')
+    return {'shared_provider': runtime, 'shared_sdk': sdk_runtime}
+
+
 def flags(sdk, product_prefix=None, selector_bytes_candidate=False, wave3=False):
     sdk = Path(sdk).absolute()
     product = Path(product_prefix).absolute() if product_prefix else sdk
+    manifest_path = product / 'share/exreader-apple/product.json'
+    manifest = json.loads(manifest_path.read_text()) if manifest_path.is_file() else {}
+    shared_sqlite = manifest.get('sqlite_provider_mode') == 'shared'
     if wave3 and not selector_bytes_candidate:
         raise RuntimeError('Wave3 requires the explicit raw selector product family')
     if selector_bytes_candidate:
@@ -51,7 +70,20 @@ def flags(sdk, product_prefix=None, selector_bytes_candidate=False, wave3=False)
     if product != sdk:
         includes = (product / 'include', sdk / 'include', product / 'include/exreader-product', module)
     libraries = tuple(target for _, target, _ in WAVE3_MODULES) + LIBRARIES if wave3 else LIBRARIES
+    if shared_sqlite:
+        libraries = tuple(name for name in libraries if name != 'reader_catalog_sqlite')
     archives = [product / 'lib' / ('lib' + name + '.a') for name in libraries]
+    if shared_sqlite:
+        provider_prefix = Path(manifest['sqlite_provider_prefix']).resolve()
+        provider = json.loads((provider_prefix / 'share/exreader-sqlite/provider.json').read_text())
+        if (provider.get('config_id') != manifest.get('sqlite_provider_id')
+                or provider.get('runtime_library') != manifest.get('sqlite_provider_runtime')):
+            raise RuntimeError('Product SQLite provider differs from the installed public package')
+        runtime = (provider_prefix / provider['runtime_library']).resolve()
+        if not runtime.is_relative_to(provider_prefix):
+            raise RuntimeError('SQLite provider runtime escaped its installed prefix')
+        archives.append(runtime)
+        includes = (*includes, provider_prefix / 'include/exreader-sqlite')
     if wave3:
         bridge = Path(__file__).absolute().parents[1] / 'apps/reader/apple-feature-integration/include'
         includes = (*includes, bridge)
@@ -98,7 +130,8 @@ def main():
     raw_include = ['-I', str(args.product_prefix.absolute() / 'include')] if args.selector_bytes_candidate and args.product_prefix else []
     subprocess.run(['xcrun', 'swiftc', *raw_include, *arguments, *flags(args.sdk, args.product_prefix, args.selector_bytes_candidate), '-Xlinker', '-map',
                     '-Xlinker', str(mapping)], check=True)
-    Path(str(output) + '.product.json').write_text(json.dumps(inspect(output, mapping, args.selector_bytes_candidate), indent=2) + '\n')
+    Path(str(output) + '.product.json').write_text(json.dumps(inspect(output, mapping, args.selector_bytes_candidate,
+        **shared_provider_files(args.sdk, args.product_prefix)), indent=2) + '\n')
 
 
 if __name__ == '__main__':

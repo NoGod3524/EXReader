@@ -1,0 +1,7 @@
+main_embedded: rejected: main embeds a second SQLite implementation
+sdk_embedded: rejected: sdk embeds a second SQLite implementation
+missing_provider: rejected: sdk does not bind the unique provider
+missing_sdk: rejected: dynamic SDK missing or duplicated
+wrong_provider: rejected: main does not bind the unique provider
+empty_provider: rejected: incomplete public provider
+Shared Apple ownership positive/negative checks passed

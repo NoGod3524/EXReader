@@ -1,0 +1,1576 @@
+
+File: C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\build\sdk-stage\bin\libreader_sqlite3.dll
+Format: COFF-x86-64
+Arch: x86_64
+AddressSize: 64bit
+Import {
+  Name: KERNEL32.dll
+  ImportLookupTableRVA: 0x1990B8
+  ImportAddressTableRVA: 0x1993D0
+  Symbol: AcquireSRWLockExclusive (0)
+  Symbol: AreFileApisANSI (37)
+  Symbol: CloseHandle (151)
+  Symbol: CreateFileMappingW (220)
+  Symbol: CreateFileW (223)
+  Symbol: DeleteCriticalSection (295)
+  Symbol: DeleteFileW (300)
+  Symbol: EnterCriticalSection (333)
+  Symbol: FlushFileBuffers (446)
+  Symbol: FlushViewOfFile (449)
+  Symbol: FormatMessageW (454)
+  Symbol: FreeLibrary (458)
+  Symbol: GetCurrentProcessId (569)
+  Symbol: GetCurrentThreadId (573)
+  Symbol: GetDriveTypeW (594)
+  Symbol: GetFileAttributesExW (616)
+  Symbol: GetFileAttributesW (619)
+  Symbol: GetFileSizeEx (627)
+  Symbol: GetFullPathNameW (640)
+  Symbol: GetLastError (648)
+  Symbol: GetModuleHandleA (670)
+  Symbol: GetOverlappedResult (708)
+  Symbol: GetProcAddress (730)
+  Symbol: GetProcessHeap (737)
+  Symbol: GetSystemInfo (785)
+  Symbol: GetSystemTimeAsFileTime (791)
+  Symbol: GetTempPathW (806)
+  Symbol: GetTickCount64 (826)
+  Symbol: HeapAlloc (889)
+  Symbol: HeapCompact (890)
+  Symbol: HeapCreate (891)
+  Symbol: HeapDestroy (893)
+  Symbol: HeapFree (895)
+  Symbol: HeapReAlloc (899)
+  Symbol: HeapSize (901)
+  Symbol: HeapValidate (905)
+  Symbol: InitializeCriticalSection (918)
+  Symbol: InitializeSRWLock (925)
+  Symbol: LeaveCriticalSection (1012)
+  Symbol: LoadLibraryA (1016)
+  Symbol: LocalFree (1030)
+  Symbol: LockFileEx (1043)
+  Symbol: MapViewOfFile (1047)
+  Symbol: MultiByteToWideChar (1064)
+  Symbol: OutputDebugStringA (1106)
+  Symbol: QueryPerformanceCounter (1161)
+  Symbol: ReadFile (1201)
+  Symbol: ReleaseSRWLockExclusive (1227)
+  Symbol: SetEndOfFile (1335)
+  Symbol: SetFilePointerEx (1355)
+  Symbol: Sleep (1449)
+  Symbol: TlsGetValue (1485)
+  Symbol: TryAcquireSRWLockExclusive (1491)
+  Symbol: TryEnterCriticalSection (1493)
+  Symbol: UnlockFileEx (1502)
+  Symbol: UnmapViewOfFile (1503)
+  Symbol: VirtualProtect (1533)
+  Symbol: VirtualQuery (1535)
+  Symbol: WaitForSingleObject (1544)
+  Symbol: WaitForSingleObjectEx (1545)
+  Symbol: WideCharToMultiByte (1588)
+  Symbol: WriteFile (1608)
+}
+Import {
+  Name: api-ms-win-crt-heap-l1-1-0.dll
+  ImportLookupTableRVA: 0x1992B0
+  ImportAddressTableRVA: 0x1995C8
+  Symbol: calloc (24)
+  Symbol: free (25)
+  Symbol: malloc (26)
+  Symbol: realloc (27)
+}
+Import {
+  Name: api-ms-win-crt-math-l1-1-0.dll
+  ImportLookupTableRVA: 0x1992D8
+  ImportAddressTableRVA: 0x1995F0
+  Symbol: log (188)
+}
+Import {
+  Name: api-ms-win-crt-private-l1-1-0.dll
+  ImportLookupTableRVA: 0x1992E8
+  ImportAddressTableRVA: 0x199600
+  Symbol: memchr (1086)
+  Symbol: memcmp (1087)
+  Symbol: memcpy (1088)
+  Symbol: memmove (1089)
+  Symbol: strchr (1092)
+  Symbol: strrchr (1093)
+}
+Import {
+  Name: api-ms-win-crt-runtime-l1-1-0.dll
+  ImportLookupTableRVA: 0x199320
+  ImportAddressTableRVA: 0x199638
+  Symbol: _beginthreadex (20)
+  Symbol: _endthreadex (32)
+  Symbol: _execute_onexit_table (34)
+  Symbol: _exit (35)
+  Symbol: _initialize_onexit_table (53)
+  Symbol: _initterm (56)
+  Symbol: _initterm_e (57)
+  Symbol: _register_onexit_function (62)
+  Symbol: abort (86)
+}
+Import {
+  Name: api-ms-win-crt-stdio-l1-1-0.dll
+  ImportLookupTableRVA: 0x199370
+  ImportAddressTableRVA: 0x199688
+  Symbol: __acrt_iob_func (0)
+  Symbol: __stdio_common_vfprintf (3)
+}
+Import {
+  Name: api-ms-win-crt-string-l1-1-0.dll
+  ImportLookupTableRVA: 0x199388
+  ImportAddressTableRVA: 0x1996A0
+  Symbol: memset (160)
+  Symbol: strcmp (163)
+  Symbol: strcspn (167)
+  Symbol: strlen (168)
+  Symbol: strncmp (171)
+  Symbol: strspn (176)
+}
+Import {
+  Name: api-ms-win-crt-time-l1-1-0.dll
+  ImportLookupTableRVA: 0x1993C0
+  ImportAddressTableRVA: 0x1996D8
+  Symbol: _localtime64 (45)
+}
+Export {
+  Ordinal: 1
+  Name: sqlite3_aggregate_context
+  RVA: 0x680D0
+}
+Export {
+  Ordinal: 2
+  Name: sqlite3_aggregate_count
+  RVA: 0x2E460
+}
+Export {
+  Ordinal: 3
+  Name: sqlite3_auto_extension
+  RVA: 0xEEEA0
+}
+Export {
+  Ordinal: 4
+  Name: sqlite3_autovacuum_pages
+  RVA: 0xFA480
+}
+Export {
+  Ordinal: 5
+  Name: sqlite3_backup_finish
+  RVA: 0x4F460
+}
+Export {
+  Ordinal: 6
+  Name: sqlite3_backup_init
+  RVA: 0xD7A50
+}
+Export {
+  Ordinal: 7
+  Name: sqlite3_backup_pagecount
+  RVA: 0x2DE20
+}
+Export {
+  Ordinal: 8
+  Name: sqlite3_backup_remaining
+  RVA: 0x2DE10
+}
+Export {
+  Ordinal: 9
+  Name: sqlite3_backup_step
+  RVA: 0xD6D70
+}
+Export {
+  Ordinal: 10
+  Name: sqlite3_bind_blob
+  RVA: 0x6C6A0
+}
+Export {
+  Ordinal: 11
+  Name: sqlite3_bind_blob64
+  RVA: 0x6C970
+}
+Export {
+  Ordinal: 12
+  Name: sqlite3_bind_double
+  RVA: 0x574A0
+}
+Export {
+  Ordinal: 13
+  Name: sqlite3_bind_int
+  RVA: 0x57A10
+}
+Export {
+  Ordinal: 14
+  Name: sqlite3_bind_int64
+  RVA: 0x47C70
+}
+Export {
+  Ordinal: 15
+  Name: sqlite3_bind_null
+  RVA: 0x56FE0
+}
+Export {
+  Ordinal: 16
+  Name: sqlite3_bind_parameter_count
+  RVA: 0x2E940
+}
+Export {
+  Ordinal: 17
+  Name: sqlite3_bind_parameter_index
+  RVA: 0x2E9B0
+}
+Export {
+  Ordinal: 18
+  Name: sqlite3_bind_parameter_name
+  RVA: 0x2E950
+}
+Export {
+  Ordinal: 19
+  Name: sqlite3_bind_pointer
+  RVA: 0x57770
+}
+Export {
+  Ordinal: 20
+  Name: sqlite3_bind_text
+  RVA: 0x6C090
+}
+Export {
+  Ordinal: 21
+  Name: sqlite3_bind_text16
+  RVA: 0x6C390
+}
+Export {
+  Ordinal: 22
+  Name: sqlite3_bind_text64
+  RVA: 0x6D270
+}
+Export {
+  Ordinal: 23
+  Name: sqlite3_bind_value
+  RVA: 0x6CFD0
+}
+Export {
+  Ordinal: 24
+  Name: sqlite3_bind_zeroblob
+  RVA: 0x57210
+}
+Export {
+  Ordinal: 25
+  Name: sqlite3_bind_zeroblob64
+  RVA: 0x47B50
+}
+Export {
+  Ordinal: 26
+  Name: sqlite3_blob_bytes
+  RVA: 0x2EC90
+}
+Export {
+  Ordinal: 27
+  Name: sqlite3_blob_close
+  RVA: 0x127F70
+}
+Export {
+  Ordinal: 28
+  Name: sqlite3_blob_open
+  RVA: 0x10F250
+}
+Export {
+  Ordinal: 29
+  Name: sqlite3_blob_read
+  RVA: 0x1278E0
+}
+Export {
+  Ordinal: 30
+  Name: sqlite3_blob_reopen
+  RVA: 0x11FFA0
+}
+Export {
+  Ordinal: 31
+  Name: sqlite3_blob_write
+  RVA: 0x127B20
+}
+Export {
+  Ordinal: 32
+  Name: sqlite3_busy_handler
+  RVA: 0xF7DE0
+}
+Export {
+  Ordinal: 33
+  Name: sqlite3_busy_timeout
+  RVA: 0xF7F30
+}
+Export {
+  Ordinal: 34
+  Name: sqlite3_cancel_auto_extension
+  RVA: 0x2EDC0
+}
+Export {
+  Ordinal: 35
+  Name: sqlite3_changes
+  RVA: 0xF7BE0
+}
+Export {
+  Ordinal: 36
+  Name: sqlite3_changes64
+  RVA: 0xF7B90
+}
+Export {
+  Ordinal: 37
+  Name: sqlite3_clear_bindings
+  RVA: 0x2DEA0
+}
+Export {
+  Ordinal: 38
+  Name: sqlite3_close
+  RVA: 0xF7DC0
+}
+Export {
+  Ordinal: 39
+  Name: sqlite3_close_v2
+  RVA: 0xF7DD0
+}
+Export {
+  Ordinal: 40
+  Name: sqlite3_collation_needed
+  RVA: 0xFC120
+}
+Export {
+  Ordinal: 41
+  Name: sqlite3_collation_needed16
+  RVA: 0xFC1A0
+}
+Export {
+  Ordinal: 42
+  Name: sqlite3_column_blob
+  RVA: 0x76F50
+}
+Export {
+  Ordinal: 43
+  Name: sqlite3_column_bytes
+  RVA: 0x6EC70
+}
+Export {
+  Ordinal: 44
+  Name: sqlite3_column_bytes16
+  RVA: 0x6EB10
+}
+Export {
+  Ordinal: 45
+  Name: sqlite3_column_count
+  RVA: 0x2E470
+}
+Export {
+  Ordinal: 46
+  Name: sqlite3_column_decltype
+  RVA: 0x77320
+}
+Export {
+  Ordinal: 47
+  Name: sqlite3_column_decltype16
+  RVA: 0x757E0
+}
+Export {
+  Ordinal: 48
+  Name: sqlite3_column_double
+  RVA: 0x59FA0
+}
+Export {
+  Ordinal: 49
+  Name: sqlite3_column_int
+  RVA: 0x2E4C0
+}
+Export {
+  Ordinal: 50
+  Name: sqlite3_column_int64
+  RVA: 0x2E610
+}
+Export {
+  Ordinal: 51
+  Name: sqlite3_column_name
+  RVA: 0x6EFF0
+}
+Export {
+  Ordinal: 52
+  Name: sqlite3_column_name16
+  RVA: 0x75910
+}
+Export {
+  Ordinal: 53
+  Name: sqlite3_column_text
+  RVA: 0x75CC0
+}
+Export {
+  Ordinal: 54
+  Name: sqlite3_column_text16
+  RVA: 0x6F540
+}
+Export {
+  Ordinal: 55
+  Name: sqlite3_column_type
+  RVA: 0x2E860
+}
+Export {
+  Ordinal: 56
+  Name: sqlite3_column_value
+  RVA: 0x2E770
+}
+Export {
+  Ordinal: 57
+  Name: sqlite3_commit_hook
+  RVA: 0xFA300
+}
+Export {
+  Ordinal: 58
+  Name: sqlite3_compileoption_get
+  RVA: 0x16AB70
+}
+Export {
+  Ordinal: 59
+  Name: sqlite3_compileoption_used
+  RVA: 0x16A960
+}
+Export {
+  Ordinal: 60
+  Name: sqlite3_complete
+  RVA: 0x2F980
+}
+Export {
+  Ordinal: 61
+  Name: sqlite3_complete16
+  RVA: 0x75DB0
+}
+Export {
+  Ordinal: 62
+  Name: sqlite3_config
+  RVA: 0x2F9D0
+}
+Export {
+  Ordinal: 63
+  Name: sqlite3_context_db_handle
+  RVA: 0x2E3E0
+}
+Export {
+  Ordinal: 64
+  Name: sqlite3_create_collation
+  RVA: 0xFB990
+}
+Export {
+  Ordinal: 65
+  Name: sqlite3_create_collation16
+  RVA: 0xFBFD0
+}
+Export {
+  Ordinal: 66
+  Name: sqlite3_create_collation_v2
+  RVA: 0xFBCB0
+}
+Export {
+  Ordinal: 67
+  Name: sqlite3_create_filename
+  RVA: 0x16A440
+}
+Export {
+  Ordinal: 68
+  Name: sqlite3_create_function
+  RVA: 0xF80F0
+}
+Export {
+  Ordinal: 69
+  Name: sqlite3_create_function16
+  RVA: 0xF91F0
+}
+Export {
+  Ordinal: 70
+  Name: sqlite3_create_function_v2
+  RVA: 0xF84F0
+}
+Export {
+  Ordinal: 71
+  Name: sqlite3_create_module
+  RVA: 0x7D540
+}
+Export {
+  Ordinal: 72
+  Name: sqlite3_create_module_v2
+  RVA: 0x7D5C0
+}
+Export {
+  Ordinal: 73
+  Name: sqlite3_create_window_function
+  RVA: 0xF8B80
+}
+Export {
+  Ordinal: 74
+  Name: sqlite3_data_count
+  RVA: 0x2E490
+}
+Export {
+  Ordinal: 75
+  Name: sqlite3_data_directory
+  RVA: 0x1950A0
+}
+Export {
+  Ordinal: 76
+  Name: sqlite3_database_file_object
+  RVA: 0x2DDC0
+}
+Export {
+  Ordinal: 77
+  Name: sqlite3_db_cacheflush
+  RVA: 0xF77C0
+}
+Export {
+  Ordinal: 78
+  Name: sqlite3_db_config
+  RVA: 0xF7950
+}
+Export {
+  Ordinal: 79
+  Name: sqlite3_db_filename
+  RVA: 0x16A880
+}
+Export {
+  Ordinal: 80
+  Name: sqlite3_db_handle
+  RVA: 0x2EAC0
+}
+Export {
+  Ordinal: 81
+  Name: sqlite3_db_mutex
+  RVA: 0xF7700
+}
+Export {
+  Ordinal: 82
+  Name: sqlite3_db_name
+  RVA: 0x16A800
+}
+Export {
+  Ordinal: 83
+  Name: sqlite3_db_readonly
+  RVA: 0x16A900
+}
+Export {
+  Ordinal: 84
+  Name: sqlite3_db_release_memory
+  RVA: 0xF7710
+}
+Export {
+  Ordinal: 85
+  Name: sqlite3_db_status
+  RVA: 0x2D720
+}
+Export {
+  Ordinal: 86
+  Name: sqlite3_db_status64
+  RVA: 0x2CEE0
+}
+Export {
+  Ordinal: 87
+  Name: sqlite3_declare_vtab
+  RVA: 0x164570
+}
+Export {
+  Ordinal: 88
+  Name: sqlite3_deserialize
+  RVA: 0x12E9B0
+}
+Export {
+  Ordinal: 89
+  Name: sqlite3_drop_modules
+  RVA: 0x7D410
+}
+Export {
+  Ordinal: 90
+  Name: sqlite3_enable_shared_cache
+  RVA: 0x2DE00
+}
+Export {
+  Ordinal: 91
+  Name: sqlite3_errcode
+  RVA: 0xFABE0
+}
+Export {
+  Ordinal: 92
+  Name: sqlite3_errmsg
+  RVA: 0xFA630
+}
+Export {
+  Ordinal: 93
+  Name: sqlite3_errmsg16
+  RVA: 0xFA9B0
+}
+Export {
+  Ordinal: 94
+  Name: sqlite3_error_offset
+  RVA: 0xFA900
+}
+Export {
+  Ordinal: 95
+  Name: sqlite3_errstr
+  RVA: 0xFB6B0
+}
+Export {
+  Ordinal: 96
+  Name: sqlite3_exec
+  RVA: 0x12C190
+}
+Export {
+  Ordinal: 97
+  Name: sqlite3_expanded_sql
+  RVA: 0x6DCD0
+}
+Export {
+  Ordinal: 98
+  Name: sqlite3_expired
+  RVA: 0x2DE30
+}
+Export {
+  Ordinal: 99
+  Name: sqlite3_extended_errcode
+  RVA: 0xFB560
+}
+Export {
+  Ordinal: 100
+  Name: sqlite3_extended_result_codes
+  RVA: 0xFC4E0
+}
+Export {
+  Ordinal: 101
+  Name: sqlite3_file_control
+  RVA: 0xFC540
+}
+Export {
+  Ordinal: 102
+  Name: sqlite3_filename_database
+  RVA: 0x16A770
+}
+Export {
+  Ordinal: 103
+  Name: sqlite3_filename_journal
+  RVA: 0x16A7A0
+}
+Export {
+  Ordinal: 104
+  Name: sqlite3_filename_wal
+  RVA: 0x16A7C0
+}
+Export {
+  Ordinal: 105
+  Name: sqlite3_finalize
+  RVA: 0x127D20
+}
+Export {
+  Ordinal: 106
+  Name: sqlite3_free
+  RVA: 0x81E0
+}
+Export {
+  Ordinal: 107
+  Name: sqlite3_free_filename
+  RVA: 0x16A5F0
+}
+Export {
+  Ordinal: 108
+  Name: sqlite3_free_table
+  RVA: 0x2EEA0
+}
+Export {
+  Ordinal: 109
+  Name: sqlite3_get_autocommit
+  RVA: 0xFC430
+}
+Export {
+  Ordinal: 110
+  Name: sqlite3_get_auxdata
+  RVA: 0x2E410
+}
+Export {
+  Ordinal: 111
+  Name: sqlite3_get_clientdata
+  RVA: 0xFC220
+}
+Export {
+  Ordinal: 112
+  Name: sqlite3_get_table
+  RVA: 0x13DE80
+}
+Export {
+  Ordinal: 113
+  Name: sqlite3_global_recover
+  RVA: 0xFC420
+}
+Export {
+  Ordinal: 114
+  Name: sqlite3_hard_heap_limit64
+  RVA: 0x31150
+}
+Export {
+  Ordinal: 115
+  Name: sqlite3_incomplete
+  RVA: 0x2F030
+}
+Export {
+  Ordinal: 116
+  Name: sqlite3_initialize
+  RVA: 0x30A20
+}
+Export {
+  Ordinal: 117
+  Name: sqlite3_interrupt
+  RVA: 0xF80D0
+}
+Export {
+  Ordinal: 118
+  Name: sqlite3_is_interrupted
+  RVA: 0xF80E0
+}
+Export {
+  Ordinal: 119
+  Name: sqlite3_keyword_check
+  RVA: 0x2F000
+}
+Export {
+  Ordinal: 120
+  Name: sqlite3_keyword_count
+  RVA: 0x2EFF0
+}
+Export {
+  Ordinal: 121
+  Name: sqlite3_keyword_name
+  RVA: 0x2EFB0
+}
+Export {
+  Ordinal: 122
+  Name: sqlite3_last_insert_rowid
+  RVA: 0xF7AF0
+}
+Export {
+  Ordinal: 123
+  Name: sqlite3_libversion
+  RVA: 0x2F9A0
+}
+Export {
+  Ordinal: 124
+  Name: sqlite3_libversion_number
+  RVA: 0x2F9B0
+}
+Export {
+  Ordinal: 125
+  Name: sqlite3_limit
+  RVA: 0xFB710
+}
+Export {
+  Ordinal: 126
+  Name: sqlite3_log
+  RVA: 0x3AA50
+}
+Export {
+  Ordinal: 127
+  Name: sqlite3_malloc
+  RVA: 0x31200
+}
+Export {
+  Ordinal: 128
+  Name: sqlite3_malloc64
+  RVA: 0x31270
+}
+Export {
+  Ordinal: 129
+  Name: sqlite3_memory_alarm
+  RVA: 0x2D810
+}
+Export {
+  Ordinal: 130
+  Name: sqlite3_memory_highwater
+  RVA: 0x2D870
+}
+Export {
+  Ordinal: 131
+  Name: sqlite3_memory_used
+  RVA: 0x2D820
+}
+Export {
+  Ordinal: 132
+  Name: sqlite3_mprintf
+  RVA: 0xD9100
+}
+Export {
+  Ordinal: 133
+  Name: sqlite3_msize
+  RVA: 0x2D8F0
+}
+Export {
+  Ordinal: 134
+  Name: sqlite3_mutex_alloc
+  RVA: 0x30EF0
+}
+Export {
+  Ordinal: 135
+  Name: sqlite3_mutex_enter
+  RVA: 0x2D7A0
+}
+Export {
+  Ordinal: 136
+  Name: sqlite3_mutex_free
+  RVA: 0x2D780
+}
+Export {
+  Ordinal: 137
+  Name: sqlite3_mutex_leave
+  RVA: 0x2D7E0
+}
+Export {
+  Ordinal: 138
+  Name: sqlite3_mutex_try
+  RVA: 0x2D7C0
+}
+Export {
+  Ordinal: 139
+  Name: sqlite3_next_stmt
+  RVA: 0x2EB40
+}
+Export {
+  Ordinal: 140
+  Name: sqlite3_open
+  RVA: 0xFB800
+}
+Export {
+  Ordinal: 141
+  Name: sqlite3_open16
+  RVA: 0xFB820
+}
+Export {
+  Ordinal: 142
+  Name: sqlite3_open_v2
+  RVA: 0xFB810
+}
+Export {
+  Ordinal: 143
+  Name: sqlite3_os_end
+  RVA: 0x2DDB0
+}
+Export {
+  Ordinal: 144
+  Name: sqlite3_os_init
+  RVA: 0x30D20
+}
+Export {
+  Ordinal: 145
+  Name: sqlite3_overload_function
+  RVA: 0xF9720
+}
+Export {
+  Ordinal: 146
+  Name: sqlite3_prepare
+  RVA: 0x109310
+}
+Export {
+  Ordinal: 147
+  Name: sqlite3_prepare16
+  RVA: 0x109AF0
+}
+Export {
+  Ordinal: 148
+  Name: sqlite3_prepare16_v2
+  RVA: 0x109B20
+}
+Export {
+  Ordinal: 149
+  Name: sqlite3_prepare16_v3
+  RVA: 0x109B50
+}
+Export {
+  Ordinal: 150
+  Name: sqlite3_prepare_v2
+  RVA: 0x109340
+}
+Export {
+  Ordinal: 151
+  Name: sqlite3_prepare_v3
+  RVA: 0x109370
+}
+Export {
+  Ordinal: 152
+  Name: sqlite3_profile
+  RVA: 0xFA290
+}
+Export {
+  Ordinal: 153
+  Name: sqlite3_progress_handler
+  RVA: 0xF7E70
+}
+Export {
+  Ordinal: 154
+  Name: sqlite3_randomness
+  RVA: 0x323C0
+}
+Export {
+  Ordinal: 155
+  Name: sqlite3_realloc
+  RVA: 0x318F0
+}
+Export {
+  Ordinal: 156
+  Name: sqlite3_realloc64
+  RVA: 0x319B0
+}
+Export {
+  Ordinal: 157
+  Name: sqlite3_release_memory
+  RVA: 0x2D800
+}
+Export {
+  Ordinal: 158
+  Name: sqlite3_reset
+  RVA: 0x126E90
+}
+Export {
+  Ordinal: 159
+  Name: sqlite3_reset_auto_extension
+  RVA: 0x32150
+}
+Export {
+  Ordinal: 160
+  Name: sqlite3_result_blob
+  RVA: 0x88BE0
+}
+Export {
+  Ordinal: 161
+  Name: sqlite3_result_blob64
+  RVA: 0x8CA10
+}
+Export {
+  Ordinal: 162
+  Name: sqlite3_result_double
+  RVA: 0x2E240
+}
+Export {
+  Ordinal: 163
+  Name: sqlite3_result_error
+  RVA: 0x6A920
+}
+Export {
+  Ordinal: 164
+  Name: sqlite3_result_error16
+  RVA: 0x6AAD0
+}
+Export {
+  Ordinal: 165
+  Name: sqlite3_result_error_code
+  RVA: 0x8DE40
+}
+Export {
+  Ordinal: 166
+  Name: sqlite3_result_error_nomem
+  RVA: 0xD21B0
+}
+Export {
+  Ordinal: 167
+  Name: sqlite3_result_error_toobig
+  RVA: 0x673D0
+}
+Export {
+  Ordinal: 168
+  Name: sqlite3_result_int
+  RVA: 0x2E2C0
+}
+Export {
+  Ordinal: 169
+  Name: sqlite3_result_int64
+  RVA: 0x2E2F0
+}
+Export {
+  Ordinal: 170
+  Name: sqlite3_result_null
+  RVA: 0x2E320
+}
+Export {
+  Ordinal: 171
+  Name: sqlite3_result_pointer
+  RVA: 0x2E340
+}
+Export {
+  Ordinal: 172
+  Name: sqlite3_result_str
+  RVA: 0x8D530
+}
+Export {
+  Ordinal: 173
+  Name: sqlite3_result_subtype
+  RVA: 0x2E3C0
+}
+Export {
+  Ordinal: 174
+  Name: sqlite3_result_text
+  RVA: 0x88660
+}
+Export {
+  Ordinal: 175
+  Name: sqlite3_result_text16
+  RVA: 0x89030
+}
+Export {
+  Ordinal: 176
+  Name: sqlite3_result_text16be
+  RVA: 0x89430
+}
+Export {
+  Ordinal: 177
+  Name: sqlite3_result_text16le
+  RVA: 0x89830
+}
+Export {
+  Ordinal: 178
+  Name: sqlite3_result_text64
+  RVA: 0x8BE40
+}
+Export {
+  Ordinal: 179
+  Name: sqlite3_result_value
+  RVA: 0x6B840
+}
+Export {
+  Ordinal: 180
+  Name: sqlite3_result_zeroblob
+  RVA: 0x675B0
+}
+Export {
+  Ordinal: 181
+  Name: sqlite3_result_zeroblob64
+  RVA: 0x67490
+}
+Export {
+  Ordinal: 182
+  Name: sqlite3_rollback_hook
+  RVA: 0xFA400
+}
+Export {
+  Ordinal: 183
+  Name: sqlite3_serialize
+  RVA: 0x13E6D0
+}
+Export {
+  Ordinal: 184
+  Name: sqlite3_set_authorizer
+  RVA: 0x2ECB0
+}
+Export {
+  Ordinal: 185
+  Name: sqlite3_set_auxdata
+  RVA: 0x597E0
+}
+Export {
+  Ordinal: 186
+  Name: sqlite3_set_clientdata
+  RVA: 0xFC2C0
+}
+Export {
+  Ordinal: 187
+  Name: sqlite3_set_errmsg
+  RVA: 0xFA7A0
+}
+Export {
+  Ordinal: 188
+  Name: sqlite3_set_last_insert_rowid
+  RVA: 0xF7B40
+}
+Export {
+  Ordinal: 189
+  Name: sqlite3_setlk_timeout
+  RVA: 0xF80B0
+}
+Export {
+  Ordinal: 190
+  Name: sqlite3_shutdown
+  RVA: 0x32260
+}
+Export {
+  Ordinal: 191
+  Name: sqlite3_sleep
+  RVA: 0xFC490
+}
+Export {
+  Ordinal: 192
+  Name: sqlite3_snprintf
+  RVA: 0x38BF0
+}
+Export {
+  Ordinal: 193
+  Name: sqlite3_soft_heap_limit
+  RVA: 0x31140
+}
+Export {
+  Ordinal: 194
+  Name: sqlite3_soft_heap_limit64
+  RVA: 0x31030
+}
+Export {
+  Ordinal: 195
+  Name: sqlite3_sourceid
+  RVA: 0x16AB90
+}
+Export {
+  Ordinal: 196
+  Name: sqlite3_sql
+  RVA: 0x2EC70
+}
+Export {
+  Ordinal: 197
+  Name: sqlite3_status
+  RVA: 0x48A20
+}
+Export {
+  Ordinal: 198
+  Name: sqlite3_status64
+  RVA: 0x3AA80
+}
+Export {
+  Ordinal: 199
+  Name: sqlite3_step
+  RVA: 0x12D780
+}
+Export {
+  Ordinal: 200
+  Name: sqlite3_stmt_busy
+  RVA: 0x2EB20
+}
+Export {
+  Ordinal: 201
+  Name: sqlite3_stmt_explain
+  RVA: 0x12BDA0
+}
+Export {
+  Ordinal: 202
+  Name: sqlite3_stmt_isexplain
+  RVA: 0x2EB00
+}
+Export {
+  Ordinal: 203
+  Name: sqlite3_stmt_readonly
+  RVA: 0x2EAE0
+}
+Export {
+  Ordinal: 204
+  Name: sqlite3_stmt_status
+  RVA: 0x2EBB0
+}
+Export {
+  Ordinal: 205
+  Name: sqlite3_str_append
+  RVA: 0x63CB0
+}
+Export {
+  Ordinal: 206
+  Name: sqlite3_str_appendall
+  RVA: 0x63D20
+}
+Export {
+  Ordinal: 207
+  Name: sqlite3_str_appendchar
+  RVA: 0x66AD0
+}
+Export {
+  Ordinal: 208
+  Name: sqlite3_str_appendf
+  RVA: 0x38DB0
+}
+Export {
+  Ordinal: 209
+  Name: sqlite3_str_errcode
+  RVA: 0x2D910
+}
+Export {
+  Ordinal: 210
+  Name: sqlite3_str_finish
+  RVA: 0x3A910
+}
+Export {
+  Ordinal: 211
+  Name: sqlite3_str_free
+  RVA: 0x2DAC0
+}
+Export {
+  Ordinal: 212
+  Name: sqlite3_str_length
+  RVA: 0x2D930
+}
+Export {
+  Ordinal: 213
+  Name: sqlite3_str_new
+  RVA: 0xE73A0
+}
+Export {
+  Ordinal: 214
+  Name: sqlite3_str_reset
+  RVA: 0x2D990
+}
+Export {
+  Ordinal: 215
+  Name: sqlite3_str_truncate
+  RVA: 0x2D940
+}
+Export {
+  Ordinal: 216
+  Name: sqlite3_str_value
+  RVA: 0x2D960
+}
+Export {
+  Ordinal: 217
+  Name: sqlite3_str_vappendf
+  RVA: 0x34ED0
+}
+Export {
+  Ordinal: 218
+  Name: sqlite3_strglob
+  RVA: 0x2ED40
+}
+Export {
+  Ordinal: 219
+  Name: sqlite3_stricmp
+  RVA: 0x2DC00
+}
+Export {
+  Ordinal: 220
+  Name: sqlite3_strlike
+  RVA: 0x2ED80
+}
+Export {
+  Ordinal: 221
+  Name: sqlite3_strnicmp
+  RVA: 0x2DC90
+}
+Export {
+  Ordinal: 222
+  Name: sqlite3_system_errno
+  RVA: 0xFB650
+}
+Export {
+  Ordinal: 223
+  Name: sqlite3_table_column_metadata
+  RVA: 0x10C4C0
+}
+Export {
+  Ordinal: 224
+  Name: sqlite3_temp_directory
+  RVA: 0x1950A8
+}
+Export {
+  Ordinal: 225
+  Name: sqlite3_test_control
+  RVA: 0x169860
+}
+Export {
+  Ordinal: 226
+  Name: sqlite3_thread_cleanup
+  RVA: 0xFC480
+}
+Export {
+  Ordinal: 227
+  Name: sqlite3_threadsafe
+  RVA: 0x2F9C0
+}
+Export {
+  Ordinal: 228
+  Name: sqlite3_total_changes
+  RVA: 0xF7C80
+}
+Export {
+  Ordinal: 229
+  Name: sqlite3_total_changes64
+  RVA: 0xF7C30
+}
+Export {
+  Ordinal: 230
+  Name: sqlite3_trace
+  RVA: 0xFA150
+}
+Export {
+  Ordinal: 231
+  Name: sqlite3_trace_v2
+  RVA: 0xFA1E0
+}
+Export {
+  Ordinal: 232
+  Name: sqlite3_transfer_bindings
+  RVA: 0x2EA50
+}
+Export {
+  Ordinal: 233
+  Name: sqlite3_txn_state
+  RVA: 0xF7CD0
+}
+Export {
+  Ordinal: 234
+  Name: sqlite3_update_hook
+  RVA: 0xFA380
+}
+Export {
+  Ordinal: 235
+  Name: sqlite3_uri_boolean
+  RVA: 0x16A6E0
+}
+Export {
+  Ordinal: 236
+  Name: sqlite3_uri_int64
+  RVA: 0x16A720
+}
+Export {
+  Ordinal: 237
+  Name: sqlite3_uri_key
+  RVA: 0x16A660
+}
+Export {
+  Ordinal: 238
+  Name: sqlite3_uri_parameter
+  RVA: 0x16A640
+}
+Export {
+  Ordinal: 239
+  Name: sqlite3_user_data
+  RVA: 0x2E3D0
+}
+Export {
+  Ordinal: 240
+  Name: sqlite3_value_blob
+  RVA: 0x76600
+}
+Export {
+  Ordinal: 241
+  Name: sqlite3_value_bytes
+  RVA: 0x6EC30
+}
+Export {
+  Ordinal: 242
+  Name: sqlite3_value_bytes16
+  RVA: 0x6EAD0
+}
+Export {
+  Ordinal: 243
+  Name: sqlite3_value_double
+  RVA: 0x59F60
+}
+Export {
+  Ordinal: 244
+  Name: sqlite3_value_dup
+  RVA: 0x67790
+}
+Export {
+  Ordinal: 245
+  Name: sqlite3_value_encoding
+  RVA: 0x2E130
+}
+Export {
+  Ordinal: 246
+  Name: sqlite3_value_free
+  RVA: 0x2E170
+}
+Export {
+  Ordinal: 247
+  Name: sqlite3_value_frombind
+  RVA: 0x2E160
+}
+Export {
+  Ordinal: 248
+  Name: sqlite3_value_int
+  RVA: 0x2DFB0
+}
+Export {
+  Ordinal: 249
+  Name: sqlite3_value_int64
+  RVA: 0x2E030
+}
+Export {
+  Ordinal: 250
+  Name: sqlite3_value_nochange
+  RVA: 0x2E140
+}
+Export {
+  Ordinal: 251
+  Name: sqlite3_value_numeric_type
+  RVA: 0x5A510
+}
+Export {
+  Ordinal: 252
+  Name: sqlite3_value_pointer
+  RVA: 0x2E0C0
+}
+Export {
+  Ordinal: 253
+  Name: sqlite3_value_subtype
+  RVA: 0x2E0B0
+}
+Export {
+  Ordinal: 254
+  Name: sqlite3_value_text
+  RVA: 0x75A70
+}
+Export {
+  Ordinal: 255
+  Name: sqlite3_value_text16
+  RVA: 0x6F480
+}
+Export {
+  Ordinal: 256
+  Name: sqlite3_value_text16be
+  RVA: 0x6F4C0
+}
+Export {
+  Ordinal: 257
+  Name: sqlite3_value_text16le
+  RVA: 0x6F500
+}
+Export {
+  Ordinal: 258
+  Name: sqlite3_value_type
+  RVA: 0x2E110
+}
+Export {
+  Ordinal: 259
+  Name: sqlite3_version
+  RVA: 0x185490
+}
+Export {
+  Ordinal: 260
+  Name: sqlite3_vfs_find
+  RVA: 0x30A40
+}
+Export {
+  Ordinal: 261
+  Name: sqlite3_vfs_register
+  RVA: 0x30B30
+}
+Export {
+  Ordinal: 262
+  Name: sqlite3_vfs_unregister
+  RVA: 0x30DC0
+}
+Export {
+  Ordinal: 263
+  Name: sqlite3_vmprintf
+  RVA: 0x3A830
+}
+Export {
+  Ordinal: 264
+  Name: sqlite3_vsnprintf
+  RVA: 0x38DE0
+}
+Export {
+  Ordinal: 265
+  Name: sqlite3_vtab_collation
+  RVA: 0x99180
+}
+Export {
+  Ordinal: 266
+  Name: sqlite3_vtab_config
+  RVA: 0x3AB80
+}
+Export {
+  Ordinal: 267
+  Name: sqlite3_vtab_distinct
+  RVA: 0x2EFA0
+}
+Export {
+  Ordinal: 268
+  Name: sqlite3_vtab_in
+  RVA: 0x2EF60
+}
+Export {
+  Ordinal: 269
+  Name: sqlite3_vtab_in_first
+  RVA: 0x6DE80
+}
+Export {
+  Ordinal: 270
+  Name: sqlite3_vtab_in_next
+  RVA: 0x72040
+}
+Export {
+  Ordinal: 271
+  Name: sqlite3_vtab_nochange
+  RVA: 0x2E3F0
+}
+Export {
+  Ordinal: 272
+  Name: sqlite3_vtab_on_conflict
+  RVA: 0x2EF40
+}
+Export {
+  Ordinal: 273
+  Name: sqlite3_vtab_rhs_value
+  RVA: 0x82030
+}
+Export {
+  Ordinal: 274
+  Name: sqlite3_wal_autocheckpoint
+  RVA: 0xFA4F0
+}
+Export {
+  Ordinal: 275
+  Name: sqlite3_wal_checkpoint
+  RVA: 0x13DC20
+}
+Export {
+  Ordinal: 276
+  Name: sqlite3_wal_checkpoint_v2
+  RVA: 0x12D5D0
+}
+Export {
+  Ordinal: 277
+  Name: sqlite3_wal_hook
+  RVA: 0xFA5B0
+}
+Export {
+  Ordinal: 278
+  Name: sqlite3_win32_mbcs_to_utf8
+  RVA: 0x31F20
+}
+Export {
+  Ordinal: 279
+  Name: sqlite3_win32_mbcs_to_utf8_v2
+  RVA: 0x31FB0
+}
+Export {
+  Ordinal: 280
+  Name: sqlite3_win32_set_directory
+  RVA: 0xE36C0
+}
+Export {
+  Ordinal: 281
+  Name: sqlite3_win32_set_directory16
+  RVA: 0xE3620
+}
+Export {
+  Ordinal: 282
+  Name: sqlite3_win32_set_directory8
+  RVA: 0xE3500
+}
+Export {
+  Ordinal: 283
+  Name: sqlite3_win32_sleep
+  RVA: 0x2DDA0
+}
+Export {
+  Ordinal: 284
+  Name: sqlite3_win32_unicode_to_utf8
+  RVA: 0x31EE0
+}
+Export {
+  Ordinal: 285
+  Name: sqlite3_win32_utf8_to_mbcs
+  RVA: 0x32040
+}
+Export {
+  Ordinal: 286
+  Name: sqlite3_win32_utf8_to_mbcs_v2
+  RVA: 0x320D0
+}
+Export {
+  Ordinal: 287
+  Name: sqlite3_win32_utf8_to_unicode
+  RVA: 0x31DC0
+}
+Export {
+  Ordinal: 288
+  Name: sqlite3_win32_write_debug
+  RVA: 0x2DD10
+}

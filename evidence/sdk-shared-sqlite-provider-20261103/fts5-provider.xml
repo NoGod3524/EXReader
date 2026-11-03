@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="1"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="0"
+	timestamp="2026-11-03T13:24:42"
+	>
+	<testcase name="sqlite-provider-check" classname="sqlite-provider-check" time="0.0863034" status="run">
+		<properties>
+			<property name="cmake_labels" value="FTS5;SDKContract"/>
+		</properties>
+		<system-out>Shared SQLite provider: FTS5 and public API passed
+</system-out>
+	</testcase>
+</testsuite>

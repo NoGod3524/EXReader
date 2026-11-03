@@ -1,0 +1,6 @@
+# Preserve exact raw logs, symbol tables and their recorded byte hashes.
+* -text -whitespace
+# Keep source/prose checks, accepting their recorded Windows line endings.
+*.py whitespace=cr-at-eol
+README.md whitespace=cr-at-eol
+.gitattributes whitespace=cr-at-eol

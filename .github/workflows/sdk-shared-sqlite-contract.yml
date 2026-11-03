@@ -1,0 +1,111 @@
+name: SDK shared SQLite contract
+
+on:
+  push:
+    branches: [codex/sdk-shared-sqlite-provider-20261103]
+    paths: [.github/workflows/sdk-shared-sqlite-contract.yml]
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Exact reviewed SDK candidate commit (parent must be 95100501)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  apple-native:
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.candidate_sha || github.sha }}
+          fetch-depth: 2
+      - name: Admit only the reviewed SDK replay
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha || github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re, subprocess
+          base = '95100501eeef9c6325be8b3882aa400c99cf000f'
+          sha = os.environ['CANDIDATE_SHA']
+          if not re.fullmatch(r'[0-9a-f]{40}', sha):
+              raise SystemExit('exact candidate SHA required')
+          def git(*args): return subprocess.check_output(['git', *args], text=True).strip()
+          if git('rev-parse', 'HEAD') != sha or git('rev-parse', 'HEAD^') != base:
+              raise SystemExit('candidate is not the reviewed replay on the fixed SDK line')
+          subprocess.run(['git', 'diff', '--exit-code', base, 'HEAD', '--',
+              'src', 'include', 'bindings', 'cmake/versions.cmake',
+              'docs/reader-total-progress/catalog.json'], check=True)
+          owned = {'CMakeLists.txt', 'cmake/deps.cmake', 'cmake/EXReaderConfig.cmake.in',
+              'cmake/install_dependencies.cmake', 'apps/reader/store/native/CMakeLists.txt',
+              'apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in',
+              'tools/apple_swift.py', 'tools/build_apple_product.py', 'tools/build_apple_host.py',
+              'tools/check_apple_product.py', '.github/workflows/sdk-shared-sqlite-contract.yml'}
+          changed = git('diff', '--name-only', base, 'HEAD').splitlines()
+          if any(p not in owned and not p.startswith(('extras/sqlite-provider/',
+                  'evidence/sdk-shared-sqlite-provider-20261103/')) for p in changed):
+              raise SystemExit('candidate contains changes outside the reviewed SDK contract')
+          out = pathlib.Path('evidence/sdk-shared-sqlite-provider-20261103/ci')
+          out.mkdir(parents=True, exist_ok=True)
+          (out/'source.json').write_text(json.dumps({'base': base, 'candidate': sha,
+              'changed': changed, 'acceptance_assessed': False}, indent=2))
+          PY
+      - name: Build and test the installed shared provider
+        run: |
+          cmake -S extras/sqlite-provider -B build/sdk-provider -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_SQLITE_PROVIDER_BUILD_TESTS=ON
+          cmake --build build/sdk-provider --parallel 3
+          ctest --test-dir build/sdk-provider -L FTS5 --output-on-failure \
+            --output-junit "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci/fts5-provider.xml"
+          cmake --install build/sdk-provider
+      - name: Build the SDK and product on the reviewed SDK line
+        run: |
+          cmake -S . -B build/sdk-core -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_USE_SHARED_SQLITE_PROVIDER=ON \
+            -DEXReaderSQLiteProvider_DIR="$PWD/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider" \
+            -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AUDIO=OFF \
+            -DEXR_ENABLE_PDF=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_ICC=OFF \
+            -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
+          cmake --build build/sdk-core --parallel 3
+          cmake --install build/sdk-core
+          cmake -S apps/reader/store/native -B build/sdk-catalog -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/sdk-stage" -DEXR_USE_SHARED_SQLITE_PROVIDER=ON \
+            -DEXReaderSQLiteProvider_DIR="$PWD/build/sdk-stage/lib/cmake/EXReaderSQLiteProvider"
+          cmake --build build/sdk-catalog --parallel 3
+          cmake --install build/sdk-catalog
+      - name: Run real product tests and the joint SDK product FTS5 test
+        run: |
+          ctest --test-dir build/sdk-catalog --output-on-failure \
+            --output-junit "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci/product-tests.xml"
+          cmake -S extras/sqlite-provider/integration -B build/sdk-integration \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/sdk-stage"
+          cmake --build build/sdk-integration --parallel 3
+          ctest --test-dir build/sdk-integration -L FTS5 --output-on-failure \
+            --output-junit "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci/fts5-integration.xml"
+      - name: Reject actual Apple main and SDK binaries with embedded SQLite
+        run: |
+          sqlite_source=$(sed -n 's/^exreader_sqlite_source_SOURCE_DIR:[^=]*=//p' build/sdk-provider/CMakeCache.txt)
+          test -n "$sqlite_source"
+          python3 extras/sqlite-provider/apple-negative/check.py --prefix "$PWD/build/sdk-stage" \
+            --consumer "$PWD/build/sdk-integration/shared-sqlite-consumer" \
+            --map "$PWD/build/sdk-integration/consumer.map" --sqlite-source "$sqlite_source" \
+            --build "$PWD/build/sdk-apple-negatives" \
+            --output "$PWD/evidence/sdk-shared-sqlite-provider-20261103/ci"
+          find build/sdk-stage -iname '*sqlite*' -print > evidence/sdk-shared-sqlite-provider-20261103/ci/stage-sqlite-scan.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sdk-shared-sqlite-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            evidence/sdk-shared-sqlite-provider-20261103/ci/
+            build/sdk-stage/
+            build/sdk-provider/sqlite-provider.map
+            build/sdk-integration/consumer.map
+            build/sdk-apple-negatives/embedded-main.map
+            build/sdk-core/CMakeCache.txt
+            build/sdk-catalog/CMakeCache.txt
+          if-no-files-found: error
+          retention-days: 30

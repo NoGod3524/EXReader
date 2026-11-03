@@ -15,6 +15,8 @@ def main():
     parser.add_argument('--target', choices=('macos', 'iphonesimulator', 'iphoneos'), required=True)
     parser.add_argument('--build', type=Path, required=True)
     parser.add_argument('--product-prefix', type=Path)
+    parser.add_argument('--shared-sqlite-provider', action='store_true')
+    parser.add_argument('--sqlite-provider-prefix', type=Path)
     parser.add_argument('--wave3', action='store_true', help='Install the explicit raw five-feature host profile')
     parser.add_argument('--selector-bytes-candidate', action='store_true',
                         default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
@@ -26,6 +28,22 @@ def main():
     root = Path(__file__).absolute().parents[1]
     sdk = args.sdk.absolute()
     stage = args.product_prefix.absolute() if args.product_prefix else sdk
+    provider = None
+    provider_prefix = args.sqlite_provider_prefix.resolve() if args.sqlite_provider_prefix else sdk.resolve()
+    if args.sqlite_provider_prefix and not args.shared_sqlite_provider:
+        parser.error('--sqlite-provider-prefix requires --shared-sqlite-provider')
+    if args.shared_sqlite_provider:
+        if any(path.exists() for path in (stage / 'lib/libreader_catalog_sqlite.a',
+                                         sdk / 'lib/exreader/libexr_vendor_exr_sqlite.a')):
+            parser.error('Shared-provider profile requires clean prefixes without legacy SQLite archives')
+        provider = json.loads((provider_prefix / 'share/exreader-sqlite/provider.json').read_text())
+        if provider.get('package') != 'EXReaderSQLiteProvider' or provider.get('version') != '1.0.0':
+            parser.error('Wrong public SQLite provider package')
+        if not (provider_prefix / provider['runtime_library']).is_file():
+            parser.error('Public SQLite provider runtime is missing')
+        sdk_config = (sdk / 'lib/cmake/EXReader/EXReaderConfig.cmake').read_text()
+        if not re.search(r'set\(EXReader_USE_SHARED_SQLITE_PROVIDER\s+ON\)', sdk_config):
+            parser.error('Shared product requires SDK built with the same shared-provider profile')
     if os.environ.get('EXR_APPLE_RAW3', 'OFF') not in ('OFF', 'ON'):
         parser.error('EXR_APPLE_RAW3 must be explicitly OFF or ON')
     if args.selector_bytes_candidate and (args.sdk_version != '3.41.0' or stage.resolve() == sdk.resolve()):
@@ -55,6 +73,9 @@ def main():
                 'EXReaderWebDAV', 'EXReaderSync', 'EXReaderSession', 'EXReaderCredentials', 'EXReaderReadingState',
                 'EXReaderSearch', 'EXReaderNavigation', 'EXReaderReadingCommands', 'EXReaderAnnotationView')
     common += ['-D' + name + '_DIR=' + str((sdk if name == 'EXReader' else stage) / 'lib/cmake' / name) for name in packages]
+    if provider:
+        common += ['-DEXR_USE_SHARED_SQLITE_PROVIDER=ON',
+                   '-DEXReaderSQLiteProvider_DIR=' + str(provider_prefix / 'lib/cmake/EXReaderSQLiteProvider')]
     common += ['-DEXR_READER_SELECTOR_BYTES_CANDIDATE=' + ('ON' if args.selector_bytes_candidate else 'OFF')]
     modules = [('catalog', 'apps/reader/store/native'), ('revisions', 'apps/reader/revisions'),
                ('commands', 'apps/reader/commands'), ('webdav', 'extras/webdav'),
@@ -101,6 +122,10 @@ def main():
                     product_prefix=str(stage), sdk_prefix=str(sdk),
                     exact_candidate_family=family if args.selector_bytes_candidate else {})
     (stage / 'share/exreader-apple').mkdir(parents=True, exist_ok=True)
+    if provider:
+        manifest.update(sqlite_provider='EXReaderSQLiteProvider::sqlite3', sqlite_provider_mode='shared',
+                        sqlite_provider_prefix=str(provider_prefix), sqlite_provider_id=provider['config_id'],
+                        sqlite_provider_runtime=provider['runtime_library'])
     (stage / 'share/exreader-apple/product.json').write_text(json.dumps(manifest, indent=2) + '\n')
 
 

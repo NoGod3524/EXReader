@@ -14,6 +14,7 @@ import sys
 from host_font import fetch as host_font
 from run_benchmarks import make_epub
 from apple_swift import flags as product_flags
+from apple_swift import shared_provider_files
 from check_apple_product import inspect as inspect_product
 
 ROOT = Path(__file__).absolute().parents[1]
@@ -83,7 +84,9 @@ def main():
     if args.page_theme:
         command += ['-D', 'EXR_APPLE_PAGE_THEME']
     run(*command)
-    (output/'product-link.json').write_text(json.dumps(inspect_product(executable, output/'product-link.map', args.selector_bytes_candidate), indent=2)+'\n')
+    shared_files = shared_provider_files(sdk, args.product_prefix)
+    (output/'product-link.json').write_text(json.dumps(inspect_product(executable, output/'product-link.map',
+        args.selector_bytes_candidate, **shared_files), indent=2)+'\n')
     source_sha = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
     info = {'CFBundleExecutable': 'EXReader', 'CFBundleIdentifier': 'org.exreader.host',
             'CFBundleName': 'EXReader', 'CFBundleDisplayName': 'EXReader',
@@ -122,6 +125,19 @@ def main():
     for library in libraries:
         shutil.copyfile(library, frameworks/library.name)
         run('codesign', '--force', '--sign', '-', frameworks/library.name)
+    if shared_files:
+        provider = shared_files['shared_provider']
+        framework = next((p for p in provider.parents if p.suffix == '.framework'), None)
+        if framework:
+            installed = frameworks / framework.name
+            shutil.copytree(framework, installed, symlinks=True)
+        else:
+            prefix = Path(json.loads(((args.product_prefix or sdk)/'share/exreader-apple/product.json').read_text())['sqlite_provider_prefix'])
+            for library in (prefix/'lib').glob('libreader_sqlite3*.dylib'):
+                shutil.copyfile(library, frameworks/library.name)
+                run('codesign', '--force', '--sign', '-', frameworks/library.name)
+            installed = frameworks / provider.name
+        run('codesign', '--force', '--sign', '-', installed)
     run('codesign', '--force', '--deep', '--sign', '-', app)
     manifest = {'schema': 1, 'source_sha': source_sha, 'sdk_version': version,
                 'page_theme_enabled': args.page_theme,

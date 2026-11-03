@@ -1,0 +1,10 @@
+[1/10] Building C object CMakeFiles/reader_catalog.dir/catalog.c.obj
+[2/10] Linking C static library libreader_catalog.a
+[3/10] Building C object CMakeFiles/reader-originals-check.dir/C_/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/tests/reader_catalog/originals_check.c.obj
+[4/10] Building C object CMakeFiles/reader-catalog-check.dir/C_/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/tests/reader_catalog/native_catalog_check.c.obj
+[5/10] Building CXX object CMakeFiles/reader_original_import.dir/C_/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/apps/reader/original-import/original_import.cpp.obj
+[6/10] Linking CXX static library libreader_original_import.a
+[7/10] Linking C executable reader-originals-check.exe
+[8/10] Linking C executable reader-catalog-check.exe
+[9/10] Building CXX object CMakeFiles/reader-original-import-check.dir/C_/Users/Oscar/.codex/worktrees/sdk-shared-sqlite-provider/EXReader/tests/reader_catalog/original_import_check.cpp.obj
+[10/10] Linking CXX executable reader-original-import-check.exe

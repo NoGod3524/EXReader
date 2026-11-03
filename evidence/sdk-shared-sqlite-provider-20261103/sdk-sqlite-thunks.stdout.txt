@@ -1,0 +1,194 @@
+
+C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\build\sdk-stage\bin\libexreader.dll:	file format coff-x86-64
+
+Disassembly of section .text:
+
+00000002e6f9b640 <sqlite3_step>:
+2e6f9b640:     	jmpq	*0xc8242(%rip)          # 0x2e7063888 <__imp_sqlite3_step>
+2e6f9b646:     	nop
+2e6f9b647:     	nop
+
+00000002e6f9b648 <sqlite3_reset>:
+2e6f9b648:     	jmpq	*0xc8232(%rip)          # 0x2e7063880 <__imp_sqlite3_reset>
+2e6f9b64e:     	nop
+2e6f9b64f:     	nop
+
+00000002e6f9b650 <sqlite3_progress_handler>:
+2e6f9b650:     	jmpq	*0xc8222(%rip)          # 0x2e7063878 <__imp_sqlite3_progress_handler>
+2e6f9b656:     	nop
+2e6f9b657:     	nop
+
+00000002e6f9b658 <sqlite3_prepare_v2>:
+2e6f9b658:     	jmpq	*0xc8212(%rip)          # 0x2e7063870 <__imp_sqlite3_prepare_v2>
+2e6f9b65e:     	nop
+2e6f9b65f:     	nop
+
+00000002e6f9b660 <sqlite3_open_v2>:
+2e6f9b660:     	jmpq	*0xc8202(%rip)          # 0x2e7063868 <__imp_sqlite3_open_v2>
+2e6f9b666:     	nop
+2e6f9b667:     	nop
+
+00000002e6f9b668 <sqlite3_mutex_leave>:
+2e6f9b668:     	jmpq	*0xc81f2(%rip)          # 0x2e7063860 <__imp_sqlite3_mutex_leave>
+2e6f9b66e:     	nop
+2e6f9b66f:     	nop
+
+00000002e6f9b670 <sqlite3_mutex_enter>:
+2e6f9b670:     	jmpq	*0xc81e2(%rip)          # 0x2e7063858 <__imp_sqlite3_mutex_enter>
+2e6f9b676:     	nop
+2e6f9b677:     	nop
+
+00000002e6f9b678 <sqlite3_last_insert_rowid>:
+2e6f9b678:     	jmpq	*0xc81d2(%rip)          # 0x2e7063850 <__imp_sqlite3_last_insert_rowid>
+2e6f9b67e:     	nop
+2e6f9b67f:     	nop
+
+00000002e6f9b680 <sqlite3_finalize>:
+2e6f9b680:     	jmpq	*0xc81c2(%rip)          # 0x2e7063848 <__imp_sqlite3_finalize>
+2e6f9b686:     	nop
+2e6f9b687:     	nop
+
+00000002e6f9b688 <sqlite3_extended_errcode>:
+2e6f9b688:     	jmpq	*0xc81b2(%rip)          # 0x2e7063840 <__imp_sqlite3_extended_errcode>
+2e6f9b68e:     	nop
+2e6f9b68f:     	nop
+
+00000002e6f9b690 <sqlite3_exec>:
+2e6f9b690:     	jmpq	*0xc81a2(%rip)          # 0x2e7063838 <__imp_sqlite3_exec>
+2e6f9b696:     	nop
+2e6f9b697:     	nop
+
+00000002e6f9b698 <sqlite3_errmsg>:
+2e6f9b698:     	jmpq	*0xc8192(%rip)          # 0x2e7063830 <__imp_sqlite3_errmsg>
+2e6f9b69e:     	nop
+2e6f9b69f:     	nop
+
+00000002e6f9b6a0 <sqlite3_db_mutex>:
+2e6f9b6a0:     	jmpq	*0xc8182(%rip)          # 0x2e7063828 <__imp_sqlite3_db_mutex>
+2e6f9b6a6:     	nop
+2e6f9b6a7:     	nop
+
+00000002e6f9b6a8 <sqlite3_db_config>:
+2e6f9b6a8:     	jmpq	*0xc8172(%rip)          # 0x2e7063820 <__imp_sqlite3_db_config>
+2e6f9b6ae:     	nop
+2e6f9b6af:     	nop
+
+00000002e6f9b6b0 <sqlite3_compileoption_used>:
+2e6f9b6b0:     	jmpq	*0xc8162(%rip)          # 0x2e7063818 <__imp_sqlite3_compileoption_used>
+2e6f9b6b6:     	nop
+2e6f9b6b7:     	nop
+
+00000002e6f9b6b8 <sqlite3_column_type>:
+2e6f9b6b8:     	jmpq	*0xc8152(%rip)          # 0x2e7063810 <__imp_sqlite3_column_type>
+2e6f9b6be:     	nop
+2e6f9b6bf:     	nop
+
+00000002e6f9b6c0 <sqlite3_column_text>:
+2e6f9b6c0:     	jmpq	*0xc8142(%rip)          # 0x2e7063808 <__imp_sqlite3_column_text>
+2e6f9b6c6:     	nop
+2e6f9b6c7:     	nop
+
+00000002e6f9b6c8 <sqlite3_column_int64>:
+2e6f9b6c8:     	jmpq	*0xc8132(%rip)          # 0x2e7063800 <__imp_sqlite3_column_int64>
+2e6f9b6ce:     	nop
+2e6f9b6cf:     	nop
+
+00000002e6f9b6d0 <sqlite3_column_int>:
+2e6f9b6d0:     	jmpq	*0xc8122(%rip)          # 0x2e70637f8 <__imp_sqlite3_column_int>
+2e6f9b6d6:     	nop
+2e6f9b6d7:     	nop
+
+00000002e6f9b6d8 <sqlite3_column_double>:
+2e6f9b6d8:     	jmpq	*0xc8112(%rip)          # 0x2e70637f0 <__imp_sqlite3_column_double>
+2e6f9b6de:     	nop
+2e6f9b6df:     	nop
+
+00000002e6f9b6e0 <sqlite3_column_bytes>:
+2e6f9b6e0:     	jmpq	*0xc8102(%rip)          # 0x2e70637e8 <__imp_sqlite3_column_bytes>
+2e6f9b6e6:     	nop
+2e6f9b6e7:     	nop
+
+00000002e6f9b6e8 <sqlite3_column_blob>:
+2e6f9b6e8:     	jmpq	*0xc80f2(%rip)          # 0x2e70637e0 <__imp_sqlite3_column_blob>
+2e6f9b6ee:     	nop
+2e6f9b6ef:     	nop
+
+00000002e6f9b6f0 <sqlite3_close_v2>:
+2e6f9b6f0:     	jmpq	*0xc80e2(%rip)          # 0x2e70637d8 <__imp_sqlite3_close_v2>
+2e6f9b6f6:     	nop
+2e6f9b6f7:     	nop
+
+00000002e6f9b6f8 <sqlite3_clear_bindings>:
+2e6f9b6f8:     	jmpq	*0xc80d2(%rip)          # 0x2e70637d0 <__imp_sqlite3_clear_bindings>
+2e6f9b6fe:     	nop
+2e6f9b6ff:     	nop
+
+00000002e6f9b700 <sqlite3_changes>:
+2e6f9b700:     	jmpq	*0xc80c2(%rip)          # 0x2e70637c8 <__imp_sqlite3_changes>
+2e6f9b706:     	nop
+2e6f9b707:     	nop
+
+00000002e6f9b708 <sqlite3_busy_timeout>:
+2e6f9b708:     	jmpq	*0xc80b2(%rip)          # 0x2e70637c0 <__imp_sqlite3_busy_timeout>
+2e6f9b70e:     	nop
+2e6f9b70f:     	nop
+
+00000002e6f9b710 <sqlite3_blob_write>:
+2e6f9b710:     	jmpq	*0xc80a2(%rip)          # 0x2e70637b8 <__imp_sqlite3_blob_write>
+2e6f9b716:     	nop
+2e6f9b717:     	nop
+
+00000002e6f9b718 <sqlite3_blob_read>:
+2e6f9b718:     	jmpq	*0xc8092(%rip)          # 0x2e70637b0 <__imp_sqlite3_blob_read>
+2e6f9b71e:     	nop
+2e6f9b71f:     	nop
+
+00000002e6f9b720 <sqlite3_blob_open>:
+2e6f9b720:     	jmpq	*0xc8082(%rip)          # 0x2e70637a8 <__imp_sqlite3_blob_open>
+2e6f9b726:     	nop
+2e6f9b727:     	nop
+
+00000002e6f9b728 <sqlite3_blob_close>:
+2e6f9b728:     	jmpq	*0xc8072(%rip)          # 0x2e70637a0 <__imp_sqlite3_blob_close>
+2e6f9b72e:     	nop
+2e6f9b72f:     	nop
+
+00000002e6f9b730 <sqlite3_blob_bytes>:
+2e6f9b730:     	jmpq	*0xc8062(%rip)          # 0x2e7063798 <__imp_sqlite3_blob_bytes>
+2e6f9b736:     	nop
+2e6f9b737:     	nop
+
+00000002e6f9b738 <sqlite3_bind_text>:
+2e6f9b738:     	jmpq	*0xc8052(%rip)          # 0x2e7063790 <__imp_sqlite3_bind_text>
+2e6f9b73e:     	nop
+2e6f9b73f:     	nop
+
+00000002e6f9b740 <sqlite3_bind_parameter_count>:
+2e6f9b740:     	jmpq	*0xc8042(%rip)          # 0x2e7063788 <__imp_sqlite3_bind_parameter_count>
+2e6f9b746:     	nop
+2e6f9b747:     	nop
+
+00000002e6f9b748 <sqlite3_bind_null>:
+2e6f9b748:     	jmpq	*0xc8032(%rip)          # 0x2e7063780 <__imp_sqlite3_bind_null>
+2e6f9b74e:     	nop
+2e6f9b74f:     	nop
+
+00000002e6f9b750 <sqlite3_bind_int64>:
+2e6f9b750:     	jmpq	*0xc8022(%rip)          # 0x2e7063778 <__imp_sqlite3_bind_int64>
+2e6f9b756:     	nop
+2e6f9b757:     	nop
+
+00000002e6f9b758 <sqlite3_bind_int>:
+2e6f9b758:     	jmpq	*0xc8012(%rip)          # 0x2e7063770 <__imp_sqlite3_bind_int>
+2e6f9b75e:     	nop
+2e6f9b75f:     	nop
+
+00000002e6f9b760 <sqlite3_bind_double>:
+2e6f9b760:     	jmpq	*0xc8002(%rip)          # 0x2e7063768 <__imp_sqlite3_bind_double>
+2e6f9b766:     	nop
+2e6f9b767:     	nop
+
+00000002e6f9b768 <sqlite3_bind_blob>:
+2e6f9b768:     	jmpq	*0xc7ff2(%rip)          # 0x2e7063760 <__imp_sqlite3_bind_blob>
+2e6f9b76e:     	nop
+2e6f9b76f:     	nop

@@ -1,0 +1,27 @@
+{
+  "candidate_branch": "codex/sdk-shared-sqlite-provider-20261103",
+  "automatic_matches": [
+    ".github/workflows/sdk-shared-sqlite-contract.yml"
+  ],
+  "eligible_push_workflows": [
+    {
+      "workflow": ".github/workflows/f07-authoritative-symbols-20261103.yml",
+      "paths": [
+        "tools/f07_authoritative_symbols_20261103.py",
+        ".github/workflows/f07-authoritative-symbols-20261103.yml",
+        "docs/reader-total-progress/F07_AUTHORITATIVE_SYMBOLS_20261103.md"
+      ],
+      "matches": []
+    },
+    {
+      "workflow": ".github/workflows/sdk-shared-sqlite-contract.yml",
+      "paths": [
+        ".github/workflows/sdk-shared-sqlite-contract.yml"
+      ],
+      "matches": [
+        ".github/workflows/sdk-shared-sqlite-contract.yml"
+      ]
+    }
+  ],
+  "scope": "Current candidate paths; no push performed"
+}

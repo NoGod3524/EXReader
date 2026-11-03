@@ -1,0 +1,1563 @@
+
+File: C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\build\sdk-stage\bin\libexreader.dll
+Format: COFF-x86-64
+Arch: x86_64
+AddressSize: 64bit
+Import {
+  Name: libreader_sqlite3.dll
+  ImportLookupTableRVA: 0x2B3118
+  ImportAddressTableRVA: 0x2B3760
+  Symbol: sqlite3_bind_blob (9)
+  Symbol: sqlite3_bind_double (11)
+  Symbol: sqlite3_bind_int (12)
+  Symbol: sqlite3_bind_int64 (13)
+  Symbol: sqlite3_bind_null (14)
+  Symbol: sqlite3_bind_parameter_count (15)
+  Symbol: sqlite3_bind_text (19)
+  Symbol: sqlite3_blob_bytes (25)
+  Symbol: sqlite3_blob_close (26)
+  Symbol: sqlite3_blob_open (27)
+  Symbol: sqlite3_blob_read (28)
+  Symbol: sqlite3_blob_write (30)
+  Symbol: sqlite3_busy_timeout (32)
+  Symbol: sqlite3_changes (34)
+  Symbol: sqlite3_clear_bindings (36)
+  Symbol: sqlite3_close_v2 (38)
+  Symbol: sqlite3_column_blob (41)
+  Symbol: sqlite3_column_bytes (42)
+  Symbol: sqlite3_column_double (47)
+  Symbol: sqlite3_column_int (48)
+  Symbol: sqlite3_column_int64 (49)
+  Symbol: sqlite3_column_text (52)
+  Symbol: sqlite3_column_type (54)
+  Symbol: sqlite3_compileoption_used (58)
+  Symbol: sqlite3_db_config (77)
+  Symbol: sqlite3_db_mutex (80)
+  Symbol: sqlite3_errmsg (91)
+  Symbol: sqlite3_exec (95)
+  Symbol: sqlite3_extended_errcode (98)
+  Symbol: sqlite3_finalize (104)
+  Symbol: sqlite3_last_insert_rowid (121)
+  Symbol: sqlite3_mutex_enter (134)
+  Symbol: sqlite3_mutex_leave (136)
+  Symbol: sqlite3_open_v2 (141)
+  Symbol: sqlite3_prepare_v2 (149)
+  Symbol: sqlite3_progress_handler (152)
+  Symbol: sqlite3_reset (157)
+  Symbol: sqlite3_step (198)
+}
+Import {
+  Name: KERNEL32.dll
+  ImportLookupTableRVA: 0x2B3250
+  ImportAddressTableRVA: 0x2B3898
+  Symbol: CloseHandle (151)
+  Symbol: CreateEventA (208)
+  Symbol: CreateFileA (215)
+  Symbol: CreateFileMappingA (216)
+  Symbol: CreateFileMappingW (220)
+  Symbol: CreateFileW (223)
+  Symbol: CreateSemaphoreA (254)
+  Symbol: DeleteCriticalSection (295)
+  Symbol: DuplicateHandle (325)
+  Symbol: EnterCriticalSection (333)
+  Symbol: FreeLibrary (458)
+  Symbol: GetCurrentProcess (568)
+  Symbol: GetCurrentProcessId (569)
+  Symbol: GetCurrentThread (572)
+  Symbol: GetCurrentThreadId (573)
+  Symbol: GetFileSizeEx (627)
+  Symbol: GetLastError (648)
+  Symbol: GetModuleHandleA (670)
+  Symbol: GetProcAddress (730)
+  Symbol: GetProcessAffinityMask (731)
+  Symbol: GetProcessHeap (737)
+  Symbol: GetSystemTimeAsFileTime (791)
+  Symbol: GetThreadContext (807)
+  Symbol: GetThreadPriority (818)
+  Symbol: GetTickCount (825)
+  Symbol: HeapAlloc (889)
+  Symbol: HeapFree (895)
+  Symbol: HeapReAlloc (899)
+  Symbol: InitializeCriticalSection (918)
+  Symbol: LeaveCriticalSection (1012)
+  Symbol: LoadLibraryA (1016)
+  Symbol: MapViewOfFile (1047)
+  Symbol: MultiByteToWideChar (1064)
+  Symbol: OpenProcess (1097)
+  Symbol: OutputDebugStringA (1106)
+  Symbol: QueryPerformanceCounter (1161)
+  Symbol: QueryPerformanceFrequency (1162)
+  Symbol: RaiseException (1184)
+  Symbol: ReadFile (1201)
+  Symbol: ReleaseSemaphore (1229)
+  Symbol: ResetEvent (1247)
+  Symbol: ResumeThread (1254)
+  Symbol: SetEvent (1341)
+  Symbol: SetLastError (1370)
+  Symbol: SetProcessAffinityMask (1381)
+  Symbol: SetThreadContext (1407)
+  Symbol: SetThreadPriority (1417)
+  Symbol: Sleep (1449)
+  Symbol: SuspendThread (1458)
+  Symbol: TlsAlloc (1483)
+  Symbol: TlsGetValue (1485)
+  Symbol: TlsSetValue (1487)
+  Symbol: TryEnterCriticalSection (1493)
+  Symbol: UnmapViewOfFile (1503)
+  Symbol: VirtualProtect (1533)
+  Symbol: VirtualQuery (1535)
+  Symbol: WaitForMultipleObjects (1542)
+  Symbol: WaitForSingleObject (1544)
+}
+Import {
+  Name: api-ms-win-crt-convert-l1-1-0.dll
+  ImportLookupTableRVA: 0x2B3428
+  ImportAddressTableRVA: 0x2B3A70
+  Symbol: mbsrtowcs (92)
+  Symbol: strtod (97)
+  Symbol: strtof (98)
+  Symbol: strtol (100)
+  Symbol: strtoul (102)
+}
+Import {
+  Name: api-ms-win-crt-environment-l1-1-0.dll
+  ImportLookupTableRVA: 0x2B3458
+  ImportAddressTableRVA: 0x2B3AA0
+  Symbol: getenv (18)
+}
+Import {
+  Name: api-ms-win-crt-filesystem-l1-1-0.dll
+  ImportLookupTableRVA: 0x2B3468
+  ImportAddressTableRVA: 0x2B3AB0
+  Symbol: _wstat64i32 (94)
+  Symbol: remove (98)
+}
+Import {
+  Name: api-ms-win-crt-heap-l1-1-0.dll
+  ImportLookupTableRVA: 0x2B3480
+  ImportAddressTableRVA: 0x2B3AC8
+  Symbol: calloc (24)
+  Symbol: free (25)
+  Symbol: malloc (26)
+  Symbol: realloc (27)
+}
+Import {
+  Name: api-ms-win-crt-math-l1-1-0.dll
+  ImportLookupTableRVA: 0x2B34A8
+  ImportAddressTableRVA: 0x2B3AF0
+  Symbol: acos (84)
+  Symbol: atan2 (93)
+  Symbol: ceil (120)
+  Symbol: cos (134)
+  Symbol: floor (167)
+  Symbol: fmax (171)
+  Symbol: fmaxf (172)
+  Symbol: fmin (173)
+  Symbol: fminf (174)
+  Symbol: fmod (175)
+  Symbol: hypot (178)
+  Symbol: llround (186)
+  Symbol: lround (200)
+  Symbol: lroundf (201)
+  Symbol: pow (213)
+  Symbol: roundf (222)
+  Symbol: sin (227)
+  Symbol: sqrt (231)
+  Symbol: tan (233)
+  Symbol: trunc (239)
+}
+Import {
+  Name: api-ms-win-crt-private-l1-1-0.dll
+  ImportLookupTableRVA: 0x2B3550
+  ImportAddressTableRVA: 0x2B3B98
+  Symbol: __intrinsic_setjmp (35)
+  Symbol: longjmp (1085)
+  Symbol: memchr (1086)
+  Symbol: memcmp (1087)
+  Symbol: memcpy (1088)
+  Symbol: memmove (1089)
+  Symbol: strchr (1092)
+  Symbol: strrchr (1093)
+  Symbol: strstr (1094)
+}
+Import {
+  Name: api-ms-win-crt-runtime-l1-1-0.dll
+  ImportLookupTableRVA: 0x2B35A0
+  ImportAddressTableRVA: 0x2B3BE8
+  Symbol: _assert (18)
+  Symbol: _beginthreadex (20)
+  Symbol: _endthreadex (32)
+  Symbol: _errno (33)
+  Symbol: _execute_onexit_table (34)
+  Symbol: _exit (35)
+  Symbol: _initialize_onexit_table (53)
+  Symbol: _initterm (56)
+  Symbol: _initterm_e (57)
+  Symbol: _register_onexit_function (62)
+  Symbol: abort (86)
+}
+Import {
+  Name: api-ms-win-crt-stdio-l1-1-0.dll
+  ImportLookupTableRVA: 0x2B3600
+  ImportAddressTableRVA: 0x2B3C48
+  Symbol: __acrt_iob_func (0)
+  Symbol: __stdio_common_vfprintf (3)
+  Symbol: __stdio_common_vsprintf (13)
+  Symbol: _fileno (51)
+  Symbol: _fseeki64 (62)
+  Symbol: _ftelli64 (67)
+  Symbol: _setmode (118)
+  Symbol: _wfopen (133)
+  Symbol: _wfopen_s (134)
+  Symbol: _wfreopen_s (136)
+  Symbol: fclose (153)
+  Symbol: fflush (156)
+  Symbol: fputs (167)
+  Symbol: fread (170)
+  Symbol: fseek (175)
+  Symbol: ftell (179)
+  Symbol: fwrite (180)
+}
+Import {
+  Name: api-ms-win-crt-string-l1-1-0.dll
+  ImportLookupTableRVA: 0x2B3690
+  ImportAddressTableRVA: 0x2B3CD8
+  Symbol: _strdup (51)
+  Symbol: isalnum (128)
+  Symbol: isalpha (129)
+  Symbol: isspace (138)
+  Symbol: isxdigit (154)
+  Symbol: memset (160)
+  Symbol: strcat (161)
+  Symbol: strcmp (163)
+  Symbol: strcpy (165)
+  Symbol: strcspn (167)
+  Symbol: strlen (168)
+  Symbol: strncmp (171)
+  Symbol: strncpy (172)
+  Symbol: strspn (176)
+  Symbol: tolower (180)
+}
+Import {
+  Name: api-ms-win-crt-time-l1-1-0.dll
+  ImportLookupTableRVA: 0x2B3710
+  ImportAddressTableRVA: 0x2B3D58
+  Symbol: _gmtime64_s (42)
+  Symbol: _localtime64 (45)
+  Symbol: _mktime64 (53)
+  Symbol: _time64 (63)
+  Symbol: _utime64 (69)
+  Symbol: strftime (89)
+}
+Import {
+  Name: api-ms-win-crt-utility-l1-1-0.dll
+  ImportLookupTableRVA: 0x2B3748
+  ImportAddressTableRVA: 0x2B3D90
+  Symbol: qsort (28)
+  Symbol: rand_s (31)
+}
+Export {
+  Ordinal: 1
+  Name: exr_abi_version
+  RVA: 0x3490
+}
+Export {
+  Ordinal: 2
+  Name: exr_anchor_create
+  RVA: 0x748E0
+}
+Export {
+  Ordinal: 3
+  Name: exr_anchor_free
+  RVA: 0x74890
+}
+Export {
+  Ordinal: 4
+  Name: exr_anchor_resolve
+  RVA: 0x75280
+}
+Export {
+  Ordinal: 5
+  Name: exr_anchor_resolve_ex
+  RVA: 0x74F50
+}
+Export {
+  Ordinal: 6
+  Name: exr_audio_bookmarks_free
+  RVA: 0x10D350
+}
+Export {
+  Ordinal: 7
+  Name: exr_audio_checkpoint_free
+  RVA: 0x10CA30
+}
+Export {
+  Ordinal: 8
+  Name: exr_bidi_analyze
+  RVA: 0x43150
+}
+Export {
+  Ordinal: 9
+  Name: exr_bidi_base_level
+  RVA: 0x431C0
+}
+Export {
+  Ordinal: 10
+  Name: exr_bidi_free
+  RVA: 0x43550
+}
+Export {
+  Ordinal: 11
+  Name: exr_bidi_mirror
+  RVA: 0x42B40
+}
+Export {
+  Ordinal: 12
+  Name: exr_bidi_reorder
+  RVA: 0x431E0
+}
+Export {
+  Ordinal: 13
+  Name: exr_bidi_scalars
+  RVA: 0x43190
+}
+Export {
+  Ordinal: 14
+  Name: exr_bitmap_free
+  RVA: 0x3C00
+}
+Export {
+  Ordinal: 15
+  Name: exr_bitmap_write_bmp
+  RVA: 0x3C30
+}
+Export {
+  Ordinal: 16
+  Name: exr_bitmap_write_png
+  RVA: 0x5760
+}
+Export {
+  Ordinal: 17
+  Name: exr_books_free
+  RVA: 0x106B30
+}
+Export {
+  Ordinal: 18
+  Name: exr_canvas_begin_group
+  RVA: 0x1CCA0
+}
+Export {
+  Ordinal: 19
+  Name: exr_canvas_begin_layer
+  RVA: 0x1CA70
+}
+Export {
+  Ordinal: 20
+  Name: exr_canvas_bitmap
+  RVA: 0x192F0
+}
+Export {
+  Ordinal: 21
+  Name: exr_canvas_blend
+  RVA: 0x1BE20
+}
+Export {
+  Ordinal: 22
+  Name: exr_canvas_clip
+  RVA: 0x19EF0
+}
+Export {
+  Ordinal: 23
+  Name: exr_canvas_create
+  RVA: 0x189D0
+}
+Export {
+  Ordinal: 24
+  Name: exr_canvas_end_layer
+  RVA: 0x1CEF0
+}
+Export {
+  Ordinal: 25
+  Name: exr_canvas_free
+  RVA: 0x18D40
+}
+Export {
+  Ordinal: 26
+  Name: exr_canvas_get_sink
+  RVA: 0x1BD00
+}
+Export {
+  Ordinal: 27
+  Name: exr_canvas_get_sink_ex
+  RVA: 0x1C400
+}
+Export {
+  Ordinal: 28
+  Name: exr_canvas_image
+  RVA: 0x1A810
+}
+Export {
+  Ordinal: 29
+  Name: exr_canvas_image_cmyk
+  RVA: 0x1AA00
+}
+Export {
+  Ordinal: 30
+  Name: exr_canvas_memory_size
+  RVA: 0x19190
+}
+Export {
+  Ordinal: 31
+  Name: exr_canvas_paint
+  RVA: 0x1AC20
+}
+Export {
+  Ordinal: 32
+  Name: exr_canvas_path
+  RVA: 0x19740
+}
+Export {
+  Ordinal: 33
+  Name: exr_canvas_path_cmyk
+  RVA: 0x19780
+}
+Export {
+  Ordinal: 34
+  Name: exr_canvas_restore
+  RVA: 0x19570
+}
+Export {
+  Ordinal: 35
+  Name: exr_canvas_save
+  RVA: 0x19440
+}
+Export {
+  Ordinal: 36
+  Name: exr_canvas_set_layer_budget
+  RVA: 0x1C840
+}
+Export {
+  Ordinal: 37
+  Name: exr_canvas_take
+  RVA: 0x19320
+}
+Export {
+  Ordinal: 38
+  Name: exr_chapter_options_defaults
+  RVA: 0xBE740
+}
+Export {
+  Ordinal: 39
+  Name: exr_document_blocks
+  RVA: 0x889C0
+}
+Export {
+  Ordinal: 40
+  Name: exr_document_cfi_create
+  RVA: 0x79F40
+}
+Export {
+  Ordinal: 41
+  Name: exr_document_cfi_create_quoted
+  RVA: 0x7B9F0
+}
+Export {
+  Ordinal: 42
+  Name: exr_document_cfi_path_create
+  RVA: 0x78620
+}
+Export {
+  Ordinal: 43
+  Name: exr_document_cfi_path_create_quoted
+  RVA: 0x7A800
+}
+Export {
+  Ordinal: 44
+  Name: exr_document_cfi_path_resolve
+  RVA: 0x79050
+}
+Export {
+  Ordinal: 45
+  Name: exr_document_cfi_range_create
+  RVA: 0x7B0D0
+}
+Export {
+  Ordinal: 46
+  Name: exr_document_cfi_range_resolve
+  RVA: 0x7B530
+}
+Export {
+  Ordinal: 47
+  Name: exr_document_cfi_resolve
+  RVA: 0x7A2D0
+}
+Export {
+  Ordinal: 48
+  Name: exr_document_chapters
+  RVA: 0x86210
+}
+Export {
+  Ordinal: 49
+  Name: exr_document_create
+  RVA: 0x846E0
+}
+Export {
+  Ordinal: 50
+  Name: exr_document_export
+  RVA: 0x9DC80
+}
+Export {
+  Ordinal: 51
+  Name: exr_document_export_control
+  RVA: 0x9CE20
+}
+Export {
+  Ordinal: 52
+  Name: exr_document_export_epub
+  RVA: 0x9CB40
+}
+Export {
+  Ordinal: 53
+  Name: exr_document_export_html_bundle
+  RVA: 0x9CB70
+}
+Export {
+  Ordinal: 54
+  Name: exr_document_find
+  RVA: 0x88A10
+}
+Export {
+  Ordinal: 55
+  Name: exr_document_format
+  RVA: 0x88A00
+}
+Export {
+  Ordinal: 56
+  Name: exr_document_free
+  RVA: 0x88900
+}
+Export {
+  Ordinal: 57
+  Name: exr_document_memory_size
+  RVA: 0x88AF0
+}
+Export {
+  Ordinal: 58
+  Name: exr_document_navigation
+  RVA: 0xB1B30
+}
+Export {
+  Ordinal: 59
+  Name: exr_document_nodes
+  RVA: 0x861D0
+}
+Export {
+  Ordinal: 60
+  Name: exr_document_open
+  RVA: 0xA67A0
+}
+Export {
+  Ordinal: 61
+  Name: exr_document_open_memory
+  RVA: 0xA6600
+}
+Export {
+  Ordinal: 62
+  Name: exr_document_resolve
+  RVA: 0xA3F40
+}
+Export {
+  Ordinal: 63
+  Name: exr_document_resource
+  RVA: 0xA3C30
+}
+Export {
+  Ordinal: 64
+  Name: exr_document_resources
+  RVA: 0x86250
+}
+Export {
+  Ordinal: 65
+  Name: exr_document_text
+  RVA: 0x88960
+}
+Export {
+  Ordinal: 66
+  Name: exr_document_title
+  RVA: 0x889A0
+}
+Export {
+  Ordinal: 67
+  Name: exr_draw_style_defaults
+  RVA: 0x18980
+}
+Export {
+  Ordinal: 68
+  Name: exr_epub_location_free
+  RVA: 0x107CB0
+}
+Export {
+  Ordinal: 69
+  Name: exr_epub_metadata_write
+  RVA: 0x96F40
+}
+Export {
+  Ordinal: 70
+  Name: exr_epub_notes_free
+  RVA: 0x108D30
+}
+Export {
+  Ordinal: 71
+  Name: exr_fixed_anchor_create
+  RVA: 0x75620
+}
+Export {
+  Ordinal: 72
+  Name: exr_fixed_anchor_free
+  RVA: 0x755C0
+}
+Export {
+  Ordinal: 73
+  Name: exr_fixed_anchor_resolve
+  RVA: 0x75AF0
+}
+Export {
+  Ordinal: 74
+  Name: exr_fixed_create
+  RVA: 0x88F70
+}
+Export {
+  Ordinal: 75
+  Name: exr_fixed_draw
+  RVA: 0x8A980
+}
+Export {
+  Ordinal: 76
+  Name: exr_fixed_draw_ex
+  RVA: 0x8ADF0
+}
+Export {
+  Ordinal: 77
+  Name: exr_fixed_free
+  RVA: 0x88EE0
+}
+Export {
+  Ordinal: 78
+  Name: exr_fixed_load_annotations
+  RVA: 0x89D90
+}
+Export {
+  Ordinal: 79
+  Name: exr_fixed_load_metadata
+  RVA: 0x89930
+}
+Export {
+  Ordinal: 80
+  Name: exr_fixed_load_text
+  RVA: 0x8A720
+}
+Export {
+  Ordinal: 81
+  Name: exr_fixed_memory_size
+  RVA: 0x89920
+}
+Export {
+  Ordinal: 82
+  Name: exr_fixed_notes_free
+  RVA: 0x10C180
+}
+Export {
+  Ordinal: 83
+  Name: exr_fixed_pages
+  RVA: 0x898E0
+}
+Export {
+  Ordinal: 84
+  Name: exr_fixed_render
+  RVA: 0x8B290
+}
+Export {
+  Ordinal: 85
+  Name: exr_fixed_text_create
+  RVA: 0x8B840
+}
+Export {
+  Ordinal: 86
+  Name: exr_fixed_text_find
+  RVA: 0x8BEA0
+}
+Export {
+  Ordinal: 87
+  Name: exr_fixed_text_free
+  RVA: 0x8B780
+}
+Export {
+  Ordinal: 88
+  Name: exr_fixed_text_hit
+  RVA: 0x8C230
+}
+Export {
+  Ordinal: 89
+  Name: exr_fixed_text_memory_size
+  RVA: 0x8B830
+}
+Export {
+  Ordinal: 90
+  Name: exr_fixed_text_regions
+  RVA: 0x8B7F0
+}
+Export {
+  Ordinal: 91
+  Name: exr_fixed_text_select
+  RVA: 0x8BF40
+}
+Export {
+  Ordinal: 92
+  Name: exr_fixed_text_string
+  RVA: 0x8B7C0
+}
+Export {
+  Ordinal: 93
+  Name: exr_fixed_title
+  RVA: 0x898D0
+}
+Export {
+  Ordinal: 94
+  Name: exr_font_axes
+  RVA: 0x72EE0
+}
+Export {
+  Ordinal: 95
+  Name: exr_font_color_info_get
+  RVA: 0x4B140
+}
+Export {
+  Ordinal: 96
+  Name: exr_font_color_layers
+  RVA: 0x473F0
+}
+Export {
+  Ordinal: 97
+  Name: exr_font_color_palettes
+  RVA: 0x47000
+}
+Export {
+  Ordinal: 98
+  Name: exr_font_count
+  RVA: 0x56DE0
+}
+Export {
+  Ordinal: 99
+  Name: exr_font_create
+  RVA: 0x568E0
+}
+Export {
+  Ordinal: 100
+  Name: exr_font_create_glyphs
+  RVA: 0x56900
+}
+Export {
+  Ordinal: 101
+  Name: exr_font_create_variable
+  RVA: 0x73170
+}
+Export {
+  Ordinal: 102
+  Name: exr_font_free
+  RVA: 0x56E40
+}
+Export {
+  Ordinal: 103
+  Name: exr_font_glyph_image
+  RVA: 0x46E30
+}
+Export {
+  Ordinal: 104
+  Name: exr_font_glyph_outline
+  RVA: 0x4C7A0
+}
+Export {
+  Ordinal: 105
+  Name: exr_font_has_glyph
+  RVA: 0x56DF0
+}
+Export {
+  Ordinal: 106
+  Name: exr_font_open
+  RVA: 0x56920
+}
+Export {
+  Ordinal: 107
+  Name: exr_font_source
+  RVA: 0x56E70
+}
+Export {
+  Ordinal: 108
+  Name: exr_free
+  RVA: 0x4410
+}
+Export {
+  Ordinal: 109
+  Name: exr_glyph_matrix
+  RVA: 0xD3C30
+}
+Export {
+  Ordinal: 110
+  Name: exr_hyphenation_breaks
+  RVA: 0x5FD30
+}
+Export {
+  Ordinal: 111
+  Name: exr_hyphenation_free
+  RVA: 0x5FD70
+}
+Export {
+  Ordinal: 112
+  Name: exr_hyphenation_memory_size
+  RVA: 0x5FD60
+}
+Export {
+  Ordinal: 113
+  Name: exr_hyphenator_breaks
+  RVA: 0x5FB80
+}
+Export {
+  Ordinal: 114
+  Name: exr_hyphenator_create
+  RVA: 0x5E890
+}
+Export {
+  Ordinal: 115
+  Name: exr_hyphenator_create_discretionary
+  RVA: 0x5E960
+}
+Export {
+  Ordinal: 116
+  Name: exr_hyphenator_create_patterns
+  RVA: 0x5FB10
+}
+Export {
+  Ordinal: 117
+  Name: exr_hyphenator_create_patterns_ex
+  RVA: 0x5EA30
+}
+Export {
+  Ordinal: 118
+  Name: exr_hyphenator_free
+  RVA: 0x5FEB0
+}
+Export {
+  Ordinal: 119
+  Name: exr_hyphenator_memory_size
+  RVA: 0x5FDD0
+}
+Export {
+  Ordinal: 120
+  Name: exr_hyphenator_query
+  RVA: 0x5FBC0
+}
+Export {
+  Ordinal: 121
+  Name: exr_image_decode
+  RVA: 0x3D8F0
+}
+Export {
+  Ordinal: 122
+  Name: exr_image_decode_page
+  RVA: 0x22250
+}
+Export {
+  Ordinal: 123
+  Name: exr_image_page_count
+  RVA: 0x216E0
+}
+Export {
+  Ordinal: 124
+  Name: exr_image_page_dimensions
+  RVA: 0x21750
+}
+Export {
+  Ordinal: 125
+  Name: exr_layout_boxes
+  RVA: 0xD46B0
+}
+Export {
+  Ordinal: 126
+  Name: exr_layout_config_defaults
+  RVA: 0xD3DD0
+}
+Export {
+  Ordinal: 127
+  Name: exr_layout_create
+  RVA: 0xD3EC0
+}
+Export {
+  Ordinal: 128
+  Name: exr_layout_create_ex
+  RVA: 0xD3E30
+}
+Export {
+  Ordinal: 129
+  Name: exr_layout_create_hyphenated
+  RVA: 0xE1B10
+}
+Export {
+  Ordinal: 130
+  Name: exr_layout_create_positioned
+  RVA: 0xEE8F0
+}
+Export {
+  Ordinal: 131
+  Name: exr_layout_defaults
+  RVA: 0xD3DB0
+}
+Export {
+  Ordinal: 132
+  Name: exr_layout_font
+  RVA: 0xD3C00
+}
+Export {
+  Ordinal: 133
+  Name: exr_layout_free
+  RVA: 0xD3F60
+}
+Export {
+  Ordinal: 134
+  Name: exr_layout_glyphs
+  RVA: 0xD40F0
+}
+Export {
+  Ordinal: 135
+  Name: exr_layout_hit_test
+  RVA: 0xD42E0
+}
+Export {
+  Ordinal: 136
+  Name: exr_layout_image
+  RVA: 0xD46F0
+}
+Export {
+  Ordinal: 137
+  Name: exr_layout_lines
+  RVA: 0xD40B0
+}
+Export {
+  Ordinal: 138
+  Name: exr_layout_memory_size
+  RVA: 0xD51E0
+}
+Export {
+  Ordinal: 139
+  Name: exr_layout_page_at
+  RVA: 0xD4190
+}
+Export {
+  Ordinal: 140
+  Name: exr_layout_pages
+  RVA: 0xD4070
+}
+Export {
+  Ordinal: 141
+  Name: exr_layout_paints
+  RVA: 0xD4130
+}
+Export {
+  Ordinal: 142
+  Name: exr_layout_writing_mode
+  RVA: 0xD3C20
+}
+Export {
+  Ordinal: 143
+  Name: exr_library_audio_bookmark
+  RVA: 0x10CF30
+}
+Export {
+  Ordinal: 144
+  Name: exr_library_audio_bookmarks
+  RVA: 0x10D3D0
+}
+Export {
+  Ordinal: 145
+  Name: exr_library_audio_resume
+  RVA: 0x10CA70
+}
+Export {
+  Ordinal: 146
+  Name: exr_library_audio_resume_get
+  RVA: 0x10CCD0
+}
+Export {
+  Ordinal: 147
+  Name: exr_library_backup
+  RVA: 0x10BA70
+}
+Export {
+  Ordinal: 148
+  Name: exr_library_blob
+  RVA: 0x107420
+}
+Export {
+  Ordinal: 149
+  Name: exr_library_books
+  RVA: 0x106B90
+}
+Export {
+  Ordinal: 150
+  Name: exr_library_clear_audio
+  RVA: 0x10D980
+}
+Export {
+  Ordinal: 151
+  Name: exr_library_clear_progress
+  RVA: 0x10A2D0
+}
+Export {
+  Ordinal: 152
+  Name: exr_library_close
+  RVA: 0x105380
+}
+Export {
+  Ordinal: 153
+  Name: exr_library_cover
+  RVA: 0x1079E0
+}
+Export {
+  Ordinal: 154
+  Name: exr_library_delete
+  RVA: 0x10B820
+}
+Export {
+  Ordinal: 155
+  Name: exr_library_document
+  RVA: 0x107660
+}
+Export {
+  Ordinal: 156
+  Name: exr_library_epub_info_get
+  RVA: 0x107B80
+}
+Export {
+  Ordinal: 157
+  Name: exr_library_epub_note
+  RVA: 0x108620
+}
+Export {
+  Ordinal: 158
+  Name: exr_library_epub_notes
+  RVA: 0x108DB0
+}
+Export {
+  Ordinal: 159
+  Name: exr_library_epub_progress
+  RVA: 0x107CF0
+}
+Export {
+  Ordinal: 160
+  Name: exr_library_epub_progress_get
+  RVA: 0x1080E0
+}
+Export {
+  Ordinal: 161
+  Name: exr_library_fixed
+  RVA: 0x1077F0
+}
+Export {
+  Ordinal: 162
+  Name: exr_library_fixed_note
+  RVA: 0x10BB60
+}
+Export {
+  Ordinal: 163
+  Name: exr_library_fixed_notes
+  RVA: 0x10C1E0
+}
+Export {
+  Ordinal: 164
+  Name: exr_library_fixed_source
+  RVA: 0x106AE0
+}
+Export {
+  Ordinal: 165
+  Name: exr_library_import
+  RVA: 0x105A60
+}
+Export {
+  Ordinal: 166
+  Name: exr_library_import_file
+  RVA: 0x1065A0
+}
+Export {
+  Ordinal: 167
+  Name: exr_library_import_file_unique
+  RVA: 0x106830
+}
+Export {
+  Ordinal: 168
+  Name: exr_library_import_source
+  RVA: 0x1064F0
+}
+Export {
+  Ordinal: 169
+  Name: exr_library_import_source_unique
+  RVA: 0x106530
+}
+Export {
+  Ordinal: 170
+  Name: exr_library_import_unique
+  RVA: 0x106090
+}
+Export {
+  Ordinal: 171
+  Name: exr_library_note
+  RVA: 0x10A590
+}
+Export {
+  Ordinal: 172
+  Name: exr_library_note_text
+  RVA: 0x10B320
+}
+Export {
+  Ordinal: 173
+  Name: exr_library_notes
+  RVA: 0x10B520
+}
+Export {
+  Ordinal: 174
+  Name: exr_library_open
+  RVA: 0x104DC0
+}
+Export {
+  Ordinal: 175
+  Name: exr_library_progress
+  RVA: 0x109870
+}
+Export {
+  Ordinal: 176
+  Name: exr_library_progress_get
+  RVA: 0x109D80
+}
+Export {
+  Ordinal: 177
+  Name: exr_library_reanchor
+  RVA: 0x10DC60
+}
+Export {
+  Ordinal: 178
+  Name: exr_library_relocation_free
+  RVA: 0x10DC20
+}
+Export {
+  Ordinal: 179
+  Name: exr_library_remove_audio_bookmark
+  RVA: 0x10D890
+}
+Export {
+  Ordinal: 180
+  Name: exr_library_remove_epub_note
+  RVA: 0x1096F0
+}
+Export {
+  Ordinal: 181
+  Name: exr_library_remove_fixed_note
+  RVA: 0x10C940
+}
+Export {
+  Ordinal: 182
+  Name: exr_library_remove_note
+  RVA: 0x10B980
+}
+Export {
+  Ordinal: 183
+  Name: exr_library_source
+  RVA: 0x105430
+}
+Export {
+  Ordinal: 184
+  Name: exr_library_update
+  RVA: 0x107120
+}
+Export {
+  Ordinal: 185
+  Name: exr_metadata_free
+  RVA: 0x4470
+}
+Export {
+  Ordinal: 186
+  Name: exr_metadata_read_xmp
+  RVA: 0xBAA00
+}
+Export {
+  Ordinal: 187
+  Name: exr_navigation_free
+  RVA: 0xB1490
+}
+Export {
+  Ordinal: 188
+  Name: exr_node_attribute
+  RVA: 0x86290
+}
+Export {
+  Ordinal: 189
+  Name: exr_notes_free
+  RVA: 0x10B4D0
+}
+Export {
+  Ordinal: 190
+  Name: exr_page_annotations_free
+  RVA: 0x89D10
+}
+Export {
+  Ordinal: 191
+  Name: exr_pager_anchor_create
+  RVA: 0xE14D0
+}
+Export {
+  Ordinal: 192
+  Name: exr_pager_anchor_resolve
+  RVA: 0xE1630
+}
+Export {
+  Ordinal: 193
+  Name: exr_pager_cached_bytes
+  RVA: 0xE0E10
+}
+Export {
+  Ordinal: 194
+  Name: exr_pager_cached_count
+  RVA: 0xE0E00
+}
+Export {
+  Ordinal: 195
+  Name: exr_pager_cfi_create
+  RVA: 0xE1210
+}
+Export {
+  Ordinal: 196
+  Name: exr_pager_cfi_resolve
+  RVA: 0xE1380
+}
+Export {
+  Ordinal: 197
+  Name: exr_pager_chapter_statistics
+  RVA: 0xE1130
+}
+Export {
+  Ordinal: 198
+  Name: exr_pager_create
+  RVA: 0xD8270
+}
+Export {
+  Ordinal: 199
+  Name: exr_pager_free
+  RVA: 0xE1AF0
+}
+Export {
+  Ordinal: 200
+  Name: exr_pager_get
+  RVA: 0xE0740
+}
+Export {
+  Ordinal: 201
+  Name: exr_pager_next
+  RVA: 0xE0580
+}
+Export {
+  Ordinal: 202
+  Name: exr_pager_position
+  RVA: 0xE10E0
+}
+Export {
+  Ordinal: 203
+  Name: exr_pager_read_text
+  RVA: 0xE1780
+}
+Export {
+  Ordinal: 204
+  Name: exr_pager_set_cache
+  RVA: 0xE05F0
+}
+Export {
+  Ordinal: 205
+  Name: exr_pager_set_checkpoints
+  RVA: 0xE0E20
+}
+Export {
+  Ordinal: 206
+  Name: exr_pager_set_control
+  RVA: 0xE0F20
+}
+Export {
+  Ordinal: 207
+  Name: exr_pager_set_hyphenator
+  RVA: 0xE0F90
+}
+Export {
+  Ordinal: 208
+  Name: exr_pager_statistics
+  RVA: 0xE10A0
+}
+Export {
+  Ordinal: 209
+  Name: exr_publication_cfi_create
+  RVA: 0xF1540
+}
+Export {
+  Ordinal: 210
+  Name: exr_publication_cfi_create_quoted
+  RVA: 0xF1620
+}
+Export {
+  Ordinal: 211
+  Name: exr_publication_cfi_resolve
+  RVA: 0xF1740
+}
+Export {
+  Ordinal: 212
+  Name: exr_publication_create
+  RVA: 0xF0A30
+}
+Export {
+  Ordinal: 213
+  Name: exr_publication_free
+  RVA: 0xF0A10
+}
+Export {
+  Ordinal: 214
+  Name: exr_publication_load
+  RVA: 0xF1420
+}
+Export {
+  Ordinal: 215
+  Name: exr_publication_navigation
+  RVA: 0xF1310
+}
+Export {
+  Ordinal: 216
+  Name: exr_publication_open
+  RVA: 0xF1150
+}
+Export {
+  Ordinal: 217
+  Name: exr_publication_open_memory
+  RVA: 0xF1020
+}
+Export {
+  Ordinal: 218
+  Name: exr_publication_open_source
+  RVA: 0xF10C0
+}
+Export {
+  Ordinal: 219
+  Name: exr_publication_pager_create
+  RVA: 0xBE760
+}
+Export {
+  Ordinal: 220
+  Name: exr_publication_parts
+  RVA: 0xF12D0
+}
+Export {
+  Ordinal: 221
+  Name: exr_publication_title
+  RVA: 0xF1270
+}
+Export {
+  Ordinal: 222
+  Name: exr_render_page
+  RVA: 0x1022C0
+}
+Export {
+  Ordinal: 223
+  Name: exr_render_page_background
+  RVA: 0x102380
+}
+Export {
+  Ordinal: 224
+  Name: exr_render_page_color
+  RVA: 0x102300
+}
+Export {
+  Ordinal: 225
+  Name: exr_render_page_ex
+  RVA: 0x102340
+}
+Export {
+  Ordinal: 226
+  Name: exr_session_cached
+  RVA: 0xF1A10
+}
+Export {
+  Ordinal: 227
+  Name: exr_session_cached_bytes
+  RVA: 0xF1A20
+}
+Export {
+  Ordinal: 228
+  Name: exr_session_clear
+  RVA: 0xF1980
+}
+Export {
+  Ordinal: 229
+  Name: exr_session_create
+  RVA: 0xF1BE0
+}
+Export {
+  Ordinal: 230
+  Name: exr_session_free
+  RVA: 0xF19F0
+}
+Export {
+  Ordinal: 231
+  Name: exr_session_get
+  RVA: 0xF1E30
+}
+Export {
+  Ordinal: 232
+  Name: exr_session_set_budget
+  RVA: 0xF1A30
+}
+Export {
+  Ordinal: 233
+  Name: exr_session_set_hyphenator
+  RVA: 0xF1AF0
+}
+Export {
+  Ordinal: 234
+  Name: exr_shape
+  RVA: 0x712F0
+}
+Export {
+  Ordinal: 235
+  Name: exr_shape_defaults
+  RVA: 0x712B0
+}
+Export {
+  Ordinal: 236
+  Name: exr_shape_vertical
+  RVA: 0x71340
+}
+Export {
+  Ordinal: 237
+  Name: exr_text_analyze
+  RVA: 0x72B70
+}
+Export {
+  Ordinal: 238
+  Name: exr_text_annotation_export
+  RVA: 0x76E90
+}
+Export {
+  Ordinal: 239
+  Name: exr_text_annotation_free
+  RVA: 0x76E30
+}
+Export {
+  Ordinal: 240
+  Name: exr_text_annotation_import
+  RVA: 0x772B0
+}
+Export {
+  Ordinal: 241
+  Name: exr_text_index_available
+  RVA: 0x10F320
+}
+Export {
+  Ordinal: 242
+  Name: exr_text_index_close
+  RVA: 0x10F340
+}
+Export {
+  Ordinal: 243
+  Name: exr_text_index_open
+  RVA: 0x10F380
+}
+Export {
+  Ordinal: 244
+  Name: exr_text_index_put
+  RVA: 0x10F880
+}
+Export {
+  Ordinal: 245
+  Name: exr_text_index_query
+  RVA: 0x10FF00
+}
+Export {
+  Ordinal: 246
+  Name: exr_text_index_remove
+  RVA: 0x10F920
+}
+Export {
+  Ordinal: 247
+  Name: exr_text_index_replace
+  RVA: 0x10F990
+}
+Export {
+  Ordinal: 248
+  Name: exr_text_query_free
+  RVA: 0x10FE80
+}
+Export {
+  Ordinal: 249
+  Name: exr_text_query_next
+  RVA: 0x110420
+}
+Export {
+  Ordinal: 250
+  Name: exr_txt_anchor_create_source
+  RVA: 0xA7D60
+}
+Export {
+  Ordinal: 251
+  Name: exr_txt_anchor_resolve_source
+  RVA: 0xA8270
+}
+Export {
+  Ordinal: 252
+  Name: exr_txt_cursor_checkpoint
+  RVA: 0xA7690
+}
+Export {
+  Ordinal: 253
+  Name: exr_txt_cursor_create
+  RVA: 0xA71E0
+}
+Export {
+  Ordinal: 254
+  Name: exr_txt_cursor_free
+  RVA: 0xA7790
+}
+Export {
+  Ordinal: 255
+  Name: exr_txt_cursor_next
+  RVA: 0xA75F0
+}
+Export {
+  Ordinal: 256
+  Name: exr_txt_cursor_restore
+  RVA: 0xA7700
+}
+Export {
+  Ordinal: 257
+  Name: exr_txt_find_source
+  RVA: 0xA7960
+}
+Export {
+  Ordinal: 258
+  Name: exr_txt_pager_create
+  RVA: 0xBF1B0
+}
+Export {
+  Ordinal: 259
+  Name: exr_txt_scan_source
+  RVA: 0xA77D0
+}
+Export {
+  Ordinal: 260
+  Name: exr_version
+  RVA: 0x3480
+}
+Export {
+  Ordinal: 261
+  Name: exr_viewport_create
+  RVA: 0x5BC0
+}

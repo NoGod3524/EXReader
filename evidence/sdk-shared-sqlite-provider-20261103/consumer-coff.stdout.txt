@@ -1,0 +1,142 @@
+
+File: C:\Users\Oscar\.codex\worktrees\sdk-shared-sqlite-provider\EXReader\build\sdk-integration\shared-sqlite-consumer.exe
+Format: COFF-x86-64
+Arch: x86_64
+AddressSize: 64bit
+Import {
+  Name: libexreader.dll
+  ImportLookupTableRVA: 0x150F0
+  ImportAddressTableRVA: 0x153D8
+  Symbol: exr_library_close (151)
+  Symbol: exr_library_open (173)
+  Symbol: exr_version (259)
+}
+Import {
+  Name: libreader_sqlite3.dll
+  ImportLookupTableRVA: 0x15110
+  ImportAddressTableRVA: 0x153F8
+  Symbol: sqlite3_bind_int (12)
+  Symbol: sqlite3_bind_int64 (13)
+  Symbol: sqlite3_bind_text (19)
+  Symbol: sqlite3_busy_timeout (32)
+  Symbol: sqlite3_changes (34)
+  Symbol: sqlite3_close (37)
+  Symbol: sqlite3_close_v2 (38)
+  Symbol: sqlite3_column_int (48)
+  Symbol: sqlite3_column_int64 (49)
+  Symbol: sqlite3_column_text (52)
+  Symbol: sqlite3_column_type (54)
+  Symbol: sqlite3_db_filename (78)
+  Symbol: sqlite3_errmsg (91)
+  Symbol: sqlite3_exec (95)
+  Symbol: sqlite3_extended_result_codes (99)
+  Symbol: sqlite3_finalize (104)
+  Symbol: sqlite3_libversion_number (123)
+  Symbol: sqlite3_open (139)
+  Symbol: sqlite3_open_v2 (141)
+  Symbol: sqlite3_prepare_v2 (149)
+  Symbol: sqlite3_step (198)
+}
+Import {
+  Name: KERNEL32.dll
+  ImportLookupTableRVA: 0x151C0
+  ImportAddressTableRVA: 0x154A8
+  Symbol: CloseHandle (151)
+  Symbol: CreateFileW (223)
+  Symbol: DeleteCriticalSection (295)
+  Symbol: EnterCriticalSection (333)
+  Symbol: FreeLibrary (458)
+  Symbol: GetCurrentThreadId (573)
+  Symbol: GetDriveTypeW (594)
+  Symbol: GetFinalPathNameByHandleW (631)
+  Symbol: GetLastError (648)
+  Symbol: GetModuleFileNameA (668)
+  Symbol: GetModuleHandleA (670)
+  Symbol: GetModuleHandleW (673)
+  Symbol: GetProcAddress (730)
+  Symbol: GetVolumePathNameW (854)
+  Symbol: InitializeCriticalSection (918)
+  Symbol: LeaveCriticalSection (1012)
+  Symbol: LoadLibraryA (1016)
+  Symbol: MultiByteToWideChar (1064)
+  Symbol: SetUnhandledExceptionFilter (1433)
+  Symbol: Sleep (1449)
+  Symbol: TlsGetValue (1485)
+  Symbol: VirtualProtect (1533)
+  Symbol: VirtualQuery (1535)
+  Symbol: __C_specific_handler (1625)
+}
+Import {
+  Name: api-ms-win-crt-environment-l1-1-0.dll
+  ImportLookupTableRVA: 0x15288
+  ImportAddressTableRVA: 0x15570
+  Symbol: __p__environ (0)
+}
+Import {
+  Name: api-ms-win-crt-heap-l1-1-0.dll
+  ImportLookupTableRVA: 0x15298
+  ImportAddressTableRVA: 0x15580
+  Symbol: _set_new_mode (23)
+  Symbol: calloc (24)
+  Symbol: free (25)
+  Symbol: malloc (26)
+}
+Import {
+  Name: api-ms-win-crt-locale-l1-1-0.dll
+  ImportLookupTableRVA: 0x152C0
+  ImportAddressTableRVA: 0x155A8
+  Symbol: _configthreadlocale (9)
+}
+Import {
+  Name: api-ms-win-crt-math-l1-1-0.dll
+  ImportLookupTableRVA: 0x152D0
+  ImportAddressTableRVA: 0x155B8
+  Symbol: __setusermatherr (9)
+}
+Import {
+  Name: api-ms-win-crt-private-l1-1-0.dll
+  ImportLookupTableRVA: 0x152E0
+  ImportAddressTableRVA: 0x155C8
+  Symbol: memcpy (1088)
+}
+Import {
+  Name: api-ms-win-crt-runtime-l1-1-0.dll
+  ImportLookupTableRVA: 0x152F0
+  ImportAddressTableRVA: 0x155D8
+  Symbol: __p___argc (4)
+  Symbol: __p___argv (5)
+  Symbol: _cexit (22)
+  Symbol: _configure_narrow_argv (24)
+  Symbol: _crt_atexit (30)
+  Symbol: _exit (35)
+  Symbol: _initialize_narrow_environment (51)
+  Symbol: _set_app_type (54)
+  Symbol: _initterm (56)
+  Symbol: _initterm_e (57)
+  Symbol: _set_invalid_parameter_handler (73)
+  Symbol: abort (86)
+  Symbol: exit (87)
+  Symbol: signal (101)
+}
+Import {
+  Name: api-ms-win-crt-stdio-l1-1-0.dll
+  ImportLookupTableRVA: 0x15368
+  ImportAddressTableRVA: 0x15650
+  Symbol: __acrt_iob_func (0)
+  Symbol: __p__commode (1)
+  Symbol: __p__fmode (2)
+  Symbol: __stdio_common_vfprintf (3)
+  Symbol: __stdio_common_vsprintf (13)
+  Symbol: fflush (156)
+  Symbol: puts (190)
+  Symbol: setvbuf (195)
+}
+Import {
+  Name: api-ms-win-crt-string-l1-1-0.dll
+  ImportLookupTableRVA: 0x153B0
+  ImportAddressTableRVA: 0x15698
+  Symbol: memset (160)
+  Symbol: strcmp (163)
+  Symbol: strlen (168)
+  Symbol: strncmp (171)
+}
