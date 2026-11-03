@@ -1591,3 +1591,55 @@ F05 retains the real Android conflict-details UI gap and need for its own GTK pe
 Follow the unique R4 run to its real terminal result. Prepare only the already-approved GTK objects after candidate review, independently review the full tree, then publish its unique authorized run. Preserve Windows success separately from remaining GTK/screen-reading/common-source obligations. Resolve F07 existing-artifact evidence under precise access scope; F05/F08 additional implementation or tests need their own exact authorization. None of these intermediate results changes98/108.
 
 Snapshot recorded 2026-11-02T22:25:40.153387+00:00 / 2026-11-02T17:25:40.153387-05:00 EST. Observation timestamps above are not rewritten to save time.
+
+
+## Recovery snapshot for missed 18:22 and 19:22 EST checkpoints ? 2026-11-02
+
+Recorded now: 2026-11-02T19:29:09.868768-05:00 EST (UTC-05:00); original UTC: 2026-11-03T00:29:09.868768+00:00.
+This is an append-only recovery entry, not a document saved at either missed checkpoint.
+The complete prior c15934de entry and all historical results remain unchanged.
+
+### Connection and observation boundary
+
+At 18:15 EST the user explicitly said the computer was temporarily shut down. At 18:22 EST no device probe or document write was attempted; at 19:22 EST no new saved snapshot existed either. The last durable snapshot was c15934de3014ed527e5a7b4b30ab888e4d97c0bc, scheduled at 17:22 and actually recorded at 17:25:40 EST. The unavailable route did not prove that background Actions had failed.
+At 19:24:09 EST the user said the computer was back on and authorized resuming the already approved work. At 19:24:43 EST the original lap25002 Desktop Commander route returned No active sessions. The earlier GTK read-only index call had left no expected cache files; its outcome was resolved by one read-only run lookup, not by another push or workflow dispatch. All source and CI work continues through the original route. No new native sample was started.
+
+### Formal ledger and responsibilities
+
+Formal acceptance remains 98/108. Engineering evidence, bounded cases and new audit reports do not increment this ledger or retroactively clear old failures.
+F03 implementation remains with its original writer; F09 independently reviews the F03 audit/acceptance packages. F09 owns its new diagnostics and is independently reviewed by F03. F07 handles provider evidence, F08 its performance protocol, and F05 the recovery/conflict boundary. F03 coordinates the single remote window; it is not a sixth product implementation owner.
+
+### F03 R4: real progress, but the complete acceptance still failed
+
+Source d9b36c36349a320e64f0bdf00d612c134c4eeeea; run 41535555757/A1; job 125586365508 ended at 17:40:15 EST.
+The full build and pre-device test/provider compilation succeeded. CatalogStoreTest completed 8/8, ImportMappingTest 14/14 and its two actual kill/recovery operations passed; the shelf evidence retained 12 passing cases and 2202 actual source records. These are real current-run results, not borrowed historical passes.
+The Gradle ProductOwnerTest phase also completed 18/18 successfully. A second direct instrumentation command redirected its output to owner-instrumentation.txt and pulled a device report; the following original owner checker reported owner device execution failed. Its redirected report contents have not yet been independently recovered. Organization, recovery12 and import20 were not reached, and the master accepted flag remains false.
+Static comparison of all 18 differences between the original intake and the known 39600 source found a remaining admission-chain mismatch: the original owner checker expects 17 and the older OK(17 tests) text, whereas the existing 39600 version includes the real eighteenth case. The organization checker also retains hard-coded 17-count consumption and the gates call old checker paths. This is a concrete versioned-consumer gap, not authority to change old assertions or to claim the second direct run passed.
+Original R4 artifact: f03-production-v342-41535555757-1, ID 13186375494, 165174785 bytes, SHA256 e14667bc8dec077dbac1e855d640c0cae2a2bb6c9f98ff17a79777da80161eeb.
+Original log: 669259 bytes, SHA256 c730166335f900a8e029264b7edd8227fb663bc60290467159780d324fbc2dad. All earlier R1/R2/R3 failures remain retained.
+
+At 17:59:50 EST the user specifically approved a separate three-new-file evidence audit, based on d9b36c on audit/f03-r4-owner-evidence-20261102: one commit/push and one Ubuntu job at most ten minutes, reading only thirteen fixed text members from that existing artifact, with selected text bounded to 8 MiB. It performs no product build, device test or archive execution. This is not approval for R5 or the proposed owner/organization consumer migration.
+After recovery its actual candidate was saved at /tmp/f03-r4-owner-evidence-20261102. At this snapshot the independent review has read the three files and requested ZIP-path/type hardening and complete stdout identity/check summaries. There is no Git commit, remote ref or CI run for that audit yet. Actual approval and actual execution are deliberately listed separately.
+
+### F09 GTK R2: Account focus passed, status evidence remains blocked
+
+Fixed source 0ff1cc0c4fa06bf9bd9c3b79e68b22b5e062e606; run 41541418049/A1; job 125606245449 completed failure at 18:01:18 EST on November 2. This result was obtained after connection recovery and independently read from the original stdout/API cache; it was not known at the missed checkpoints.
+The unchanged production build succeeded. In the independent Account case, one Escape closed the dialog and actual focus returned directly to Search bookshelf. There was no focus repair or repeated Escape. Actual PID 10533 and the executable hash matched before and after; cleanup exited 0. This is bounded Account evidence, not complete GTK accessibility acceptance.
+In the status case, startup and the exact Ready status anchor were established, but the chooser readiness predicate did not become true before any path typing. The final refused-import status/name-event assertion was never reached. The final case error is ValueError: chooser never became ready; cleanup stopped the owned host (exit -9). The report does not show which readiness predicate was false. It is not evidence that the product failed to emit the final status event, and no readiness condition is silently removed.
+Both recorder threads stopped. Non-target transient-node source errors were separately disclosed (46 status, 172 Account); final target error lists were empty. The overall report remains accepted=false, formal_acceptance=false and screen_reader_verified=false.
+Built/running executable SHA256: 564922be8fcb4221c46e6960acca758d78888be50bc56e1696108d45b6203ed7.
+Output artifact: f09-gtk-status-account-41541418049-1, ID 13186313577, 156503 bytes, SHA256 1ba93354e99bf3236cff4a1bbd9cdb522b08bbdbc2bb9209e006cfce831d22a1.
+Original log: 300190 bytes, SHA256 d02301283e915e350e14804f4123141e5163b443dac53bd3ed0a7e8a7efd899a.
+The original GTK run and its separately authorized three-log readback remain preserved. No additional GTK CI round or R2 ZIP read was performed during recovery. Windows KB06's previously bounded successful result remains separate; none of these results grant six-platform common-source acceptance.
+
+### Other open work, without new execution authority
+
+- F07: the four historical private-source dependency edges are fixed in current ec11 source, and six-platform recipes select the public v1 configuration. Actual installed headers/exports/archive ownership are not yet fully bound across all six outputs. The earlier binary audit was partial; symbol occurrence alone is not proof of a unique provider. No new ZIP scan or build is authorized by this recovery entry.
+- F08: the single authorized native run failed at 1437.830 seconds against the original 1200-second bound. Its reader result was never produced. The exact owned worker/emulator processes were cleaned up, the display remained unchanged, and no second native sample was started. A future deadline/observability repair needs its own explicit scope.
+- F05: APK/peer/TLS types and the existing GTK inspector producer are now known, but Android unresolved conflict details remain a product-owner implementation gap. A generic conflict message is not the required put/delete-head detail. No production ownership or implementation permission has been transferred.
+
+### Next concrete actions
+
+Finish independent review of the already approved thirteen-text evidence audit, publish only its approved independent branch, and inspect its one bounded Ubuntu result. Use the original redirected owner evidence plus the completed static consumer-chain comparison before proposing any new full Android acceptance round.
+For GTK, retain the successful Account observation and diagnose the status readiness boundary from authorized evidence; do not call an unexecuted final status test a product failure or silently start another run.
+Continue append-only handoff at real save times. This recovery entry adds no CI budget, no retry, no product change and no formal acceptance credit.
