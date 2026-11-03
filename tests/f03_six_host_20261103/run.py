@@ -313,7 +313,7 @@ def android_retained():
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("action", choices=["admit", "legacy", "apple", "apple-receive", "android-build", "android-retained",
+    p.add_argument("action", choices=["admit", "legacy", "apple", "apple-tls", "apple-receive", "android-build", "android-retained",
                                      "android-receive", "windows-retained", "windows-receive"])
     p.add_argument("args", nargs=argparse.REMAINDER)
     a = p.parse_args()
@@ -321,6 +321,8 @@ def main():
         print(json.dumps(admission()))
     elif a.action == "legacy":
         legacy(a.args[0], a.args[1:])
+    elif a.action == "apple-tls":
+        legacy("build",["--host",a.args[0],"--fixture-preflight","--output","build/f03-"+a.args[0]+"-tls.json"])
     elif a.action == "android-build":
         android_build()
     elif a.action == "android-retained":

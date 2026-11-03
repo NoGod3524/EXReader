@@ -208,6 +208,8 @@ jobs:
       run: |
         ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document
         python3 tests/f03_six_host_20261103/run.py admit
+    - name: Reject malformed fixture certificates before native build
+      run: python3 tests/f03_six_host_20261103/run.py apple-tls '${{ matrix.platform }}'
     - name: SDK 3.42 real host and unchanged six organization tests
       run: python3 tests/f03_six_host_20261103/run.py apple '${{ matrix.platform }}'
     - uses: actions/download-artifact@v4
@@ -234,6 +236,8 @@ jobs:
           !build/**/private/**
           !build/**/key.pem
           !build/**/connection.json
+          build/f03-tls-preflight/
+          build/f03-*-tls.json
         if-no-files-found: error
     needs:
     - gtk

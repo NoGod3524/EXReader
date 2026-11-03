@@ -109,6 +109,38 @@ def build_linux_recipe(host, audit):
             environment["PATH"] = str(Path(sdk_root) / "platform-tools") + os.pathsep + environment["PATH"]
 
 
+def prepare_apple_tls(fixture):
+    """Use one explicit CA extension set across OpenSSL and LibreSSL defaults."""
+    fixture=Path(fixture)
+    fixture.parent.mkdir(parents=True,exist_ok=True)
+    configuration=fixture.parent/(fixture.name+"-openssl.cnf")
+    configuration.write_text("[req]\ndistinguished_name=dn\nx509_extensions=ca_defaults\n"
+        "[dn]\n[ca_defaults]\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid:always\n"
+        "keyUsage=critical,keyCertSign,cRLSign\n",encoding="utf-8")
+    spec=importlib.util.spec_from_file_location("f03_apple_tls_prepare",ROOT/"tests/webdav_android/fixture.py")
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    previous=os.environ.get("OPENSSL_CONF")
+    try:
+        # prepare() supplies basicConstraints exactly once via -addext. The
+        # platform's default v3_ca section must not add a duplicate extension.
+        os.environ["OPENSSL_CONF"]=str(configuration.resolve())
+        module.prepare(fixture)
+    finally:
+        if previous is None:os.environ.pop("OPENSSL_CONF",None)
+        else:os.environ["OPENSSL_CONF"]=previous
+    extensions={}
+    for name in ("ca","server"):
+        path=fixture/"public"/(name+".crt")
+        text=subprocess.check_output(["openssl","x509","-in",str(path),"-noout","-text"],text=True)
+        require(text.count("X509v3 Basic Constraints:")==1,"fixture certificate has duplicate/missing basic constraints")
+        extensions[name]={"sha256":digest(path),"basic_constraints_extensions":1}
+    validation=subprocess.run(["openssl","verify","-purpose","sslserver","-CAfile",
+        str(fixture/"public/ca.crt"),str(fixture/"public/server.crt")],capture_output=True,text=True)
+    write_json(fixture.parent/(fixture.name+"-certificate-validation.json"),{
+        **identity(),"certificates":extensions,"chain_verified":validation.returncode==0,
+        "stdout":validation.stdout,"stderr":validation.stderr})
+    require(validation.returncode==0,"fixture certificate chain is invalid")
+
 def receive_apple(a, stamp):
     """Actual XCTest session under fixture TLS; no lower-level revision application."""
     require(sys.platform == "darwin" and a.host in ("macos","iphone","ipad"), "Apple runner required")
@@ -116,9 +148,6 @@ def receive_apple(a, stamp):
                 (a.wire,a.expectations,a.projection_expectations,a.program,a.destination)),
             "exact Apple receiver inputs required")
     from android import wire_server
-    fixture_spec=importlib.util.spec_from_file_location("f03_apple_tls_prepare",
-        ROOT/"tests/webdav_android/fixture.py")
-    module=importlib.util.module_from_spec(fixture_spec);fixture_spec.loader.exec_module(module)
     folder=a.output.parent / (a.output.stem + "-receiver")
     folder.mkdir(parents=True,exist_ok=False)
     fixture=folder/"fixture"
@@ -128,7 +157,7 @@ def receive_apple(a, stamp):
     expected=expected_receipt["snapshot"]
     server=None; trusted_fingerprint=None; clone=None
     try:
-        module.prepare(fixture)
+        prepare_apple_tls(fixture)
         if a.host=="macos":
             fingerprint=subprocess.check_output(["openssl","x509","-in",str(fixture/"public/ca.crt"),
                 "-noout","-fingerprint","-sha1"],text=True).strip().split("=",1)[1].replace(":","")
@@ -403,6 +432,7 @@ def main():
     p.add_argument("--native-tests", action="store_true")
     p.add_argument("--android-retained", action="store_true")
     p.add_argument("--apple-receive", action="store_true")
+    p.add_argument("--fixture-preflight", action="store_true")
     for name in ("wire","expectations","projection-expectations","database","program"):
         p.add_argument("--"+name,type=Path)
     p.add_argument("--udid")
@@ -416,7 +446,14 @@ def main():
     changes = []
     accepted = False
     try:
-        if a.android_retained:
+        if a.fixture_preflight:
+            require(sys.platform=="darwin" and a.host in ("macos","iphone","ipad"),"Apple fixture preflight only")
+            fixture=ROOT/"build/f03-tls-preflight"/a.host/"fixture"
+            try:prepare_apple_tls(fixture)
+            finally:
+                import shutil
+                if (fixture/"private").exists():shutil.rmtree(fixture/"private")
+        elif a.android_retained:
             require(a.host == "android", "Android only")
             run_android_retained()
         elif a.apple_receive:
@@ -486,7 +523,7 @@ def main():
         accepted = True
     finally:
         write_json(a.output, {**stamp, "host": a.host, "operation_completed": accepted,
-                              "operation": "android-retained" if a.android_retained else ("apple-receive" if a.apple_receive else "build"),
+                              "operation": "fixture-preflight" if a.fixture_preflight else ("android-retained" if a.android_retained else ("apple-receive" if a.apple_receive else "build")),
                               "sdk_version": SCOPE["sdk_version"], "sdk_source": SCOPE["sdk_source"],
                               "in_memory_adapters": changes,
                               "product_source_changed": False, "complete_product_accepted": False})
