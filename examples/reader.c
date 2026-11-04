@@ -3328,12 +3328,32 @@ static void paint_selection(HDC dc) {
   }
 }
 
+static HDC page_buffer_dc;
+static HBITMAP page_buffer_bitmap;
+static HGDIOBJ page_buffer_old;
+static int page_buffer_width, page_buffer_height;
+static void page_buffer_release(void) {
+  if(page_buffer_dc) { SelectObject(page_buffer_dc,page_buffer_old); DeleteObject(page_buffer_bitmap);DeleteDC(page_buffer_dc); }
+  page_buffer_dc=NULL;page_buffer_bitmap=NULL;page_buffer_width=page_buffer_height=0;
+}
 static void paint_page_view(HWND window) {
   host_probe_log("paint",0);
   PAINTSTRUCT paint;
-  HDC dc = BeginPaint(window, &paint);
+  double paint_start=host_probe_ms();
+  HDC screen = BeginPaint(window, &paint), dc;
   RECT area;
   GetClientRect(window, &area);
+  if(area.right<=0 || area.bottom<=0){EndPaint(window,&paint);return;}
+  if(!page_buffer_dc || page_buffer_width!=area.right || page_buffer_height!=area.bottom) {
+    page_buffer_release();
+    page_buffer_dc=CreateCompatibleDC(screen);
+    page_buffer_bitmap=CreateCompatibleBitmap(screen,area.right,area.bottom);
+    if(!page_buffer_dc || !page_buffer_bitmap){page_buffer_release();EndPaint(window,&paint);return;}
+    page_buffer_old=SelectObject(page_buffer_dc,page_buffer_bitmap);
+    page_buffer_width=area.right;page_buffer_height=area.bottom;
+    host_probe_log("buffer_alloc",1);
+  }
+  dc=page_buffer_dc;
   FillRect(dc, &area, (HBRUSH)GetStockObject(WHITE_BRUSH));
   if (g.frame.valid && compute_view()) {
     BITMAPINFO info;
@@ -3364,7 +3384,10 @@ static void paint_page_view(HWND window) {
     focus.left += 1; focus.top += 1; focus.right -= 1; focus.bottom -= 1;
     DrawFocusRect(dc, &focus);
   }
+  BitBlt(screen,paint.rcPaint.left,paint.rcPaint.top,paint.rcPaint.right-paint.rcPaint.left,
+         paint.rcPaint.bottom-paint.rcPaint.top,dc,paint.rcPaint.left,paint.rcPaint.top,SRCCOPY);
   EndPaint(window, &paint);
+  host_probe_log("paint_ms",host_probe_ms()-paint_start);
 }
 
 static size_t point_offset(int x, int y, int at_end) {
@@ -3440,6 +3463,7 @@ static void selection_report(void) {
 
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
   switch (message) {
+    case WM_ERASEBKGND: return 1;
     case WM_PAINT:
       paint_page_view(window);
       return 0;
@@ -3453,6 +3477,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
     case WM_GETOBJECT:
       return host_a11y_page_object(window, wparam, lparam);
     case WM_NCDESTROY:
+      page_buffer_release();
       host_a11y_page_destroyed();
       return DefWindowProcW(window, message, wparam, lparam);
     case HOST_A11Y_CALL: {
@@ -6198,6 +6223,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   INT_PTR result = 1;
   (void)previous;
   (void)command;
+  {
+    typedef BOOL (WINAPI *dpi_context_fn)(HANDLE);
+    dpi_context_fn dpi=(dpi_context_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetProcessDpiAwarenessContext");
+    if(dpi) dpi((HANDLE)(INT_PTR)-4); else SetProcessDPIAware();
+  }
   if (!argv) return 2;
   if (argc > 1 && !wcscmp(argv[1], L"--self-test")) {
     result = selftest(argv, argc);
