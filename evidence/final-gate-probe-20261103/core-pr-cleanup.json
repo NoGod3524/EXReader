@@ -1,0 +1,16 @@
+{
+  "pr": {
+    "closedAt": "2026-11-04T04:56:48Z",
+    "headRefName": "codex/core-pr-probe-20261103",
+    "mergedAt": null,
+    "number": 36,
+    "state": "CLOSED"
+  },
+  "remote_branch_exists": false,
+  "local_branch_deleted": true,
+  "only_added_line": "<!-- One-time ledger/base core PR trigger, 2026-11-03. -->",
+  "head_sha": "160ed1dd9c2105640deb91d066d6906d1ecc91f3",
+  "base_sha": "f19788b7449f03a2cefac7a59a24727c1674b81c",
+  "merge_test_sha": "bc19505315e5a00aebfb1d15b5b596ef57631a0b",
+  "reruns": 0
+}

@@ -14,6 +14,7 @@ from sdk_version import ROOT, source_version
 
 MANIFEST = 'tools/version_literal_exceptions.json'
 LITERAL = re.compile(r'(?<![0-9])3\.4[0-9]\.0(?![0-9])')
+CONSUMER_VERSION = re.compile(r'find_package\s*\(\s*EXReader\s+"?(\d+(?:\.\d+){0,3})"?(?=[\s)])', re.I)
 
 
 def sha(data):
@@ -155,13 +156,25 @@ def check(root):
 
     seen = set()
     for name in tracked(root):
-        if not (name.startswith('tests/') or (name.startswith('.github/workflows/') and name.endswith(('.yml', '.yaml')))):
+        consumer = Path(name).name == 'CMakeLists.txt' or name.endswith(('.cmake', '.cmake.in'))
+        if not (consumer or name.startswith('tests/') or (name.startswith('.github/workflows/') and name.endswith(('.yml', '.yaml')))):
             continue
-        if Path(name).suffix not in {'.py', '.c', '.h', '.cpp', '.java', '.swift', '.json', '.md', '.sh', '.cmake', '.txt', '.yml', '.yaml'} and Path(name).name != 'CMakeLists.txt':
+        if not consumer and Path(name).suffix not in {'.py', '.c', '.h', '.cpp', '.java', '.swift', '.json', '.md', '.sh', '.cmake', '.txt', '.yml', '.yaml'} and Path(name).name != 'CMakeLists.txt':
             continue
         try:
             lines = read(name)
         except UnicodeError:
+            continue
+        if consumer:
+            text = '\n'.join(lines)
+            for match in CONSUMER_VERSION.finditer(text):
+                number = text.count('\n', 0, match.start(1)) + 1
+                literal = match[1]
+                key = (name, number, literal)
+                seen.add(key)
+                if literal != version and key not in allowed:
+                    error(name, number, literal, version + '; 改为读取安装包 version file，或登记豁免')
+        if not (name.startswith('tests/') or name.startswith('.github/workflows/')):
             continue
         for number, line in enumerate(lines, 1):
             if name.startswith('.github/') and not re.search(r'EXR_(?:HOST_)?SDK_VERSION', line):
@@ -213,6 +226,18 @@ def main():
             if result.returncode != 1 or 'CMakeLists.txt:3' not in result.stdout or version not in result.stdout:
                 raise AssertionError('wrong version was not rejected at exact location')
             print('PASS: deliberate version drift rejected (exit 1)')
+        finally:
+            path.write_bytes(original)
+        path = ROOT / 'tests/reading_corpus/CMakeLists.txt'
+        original = path.read_bytes()
+        try:
+            path.write_text(original.decode().replace('find_package(EXReader CONFIG', f'find_package(EXReader {wrong} EXACT CONFIG', 1), encoding='utf-8', newline='\n')
+            result = subprocess.run([sys.executable, __file__], text=True, capture_output=True, encoding='utf-8', errors='replace')
+            print(result.stdout, end='')
+            expected = f'tests/reading_corpus/CMakeLists.txt:3 -> {wrong} vs expected {version}; 改为读取安装包 version file，或登记豁免'
+            if result.returncode != 1 or expected not in result.stdout:
+                raise AssertionError('wrong consumer literal was not rejected with version-file guidance')
+            print('PASS: deliberate consumer version drift rejected (exit 1)')
         finally:
             path.write_bytes(original)
         return 0

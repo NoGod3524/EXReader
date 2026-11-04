@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 project(EXReaderOCR VERSION 0.1.0 LANGUAGES C CXX)
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core)
+find_package(EXReader CONFIG REQUIRED COMPONENTS core)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(TESS REQUIRED IMPORTED_TARGET tesseract>=5)
 add_library(exreader_ocr STATIC exr_ocr.cpp)

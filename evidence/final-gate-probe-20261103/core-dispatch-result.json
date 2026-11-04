@@ -1,0 +1,11 @@
+{
+  "command": "gh workflow run reading-required-core.yml --ref ledger/base-20261103",
+  "attempts": 1,
+  "exit_code": 1,
+  "result": "not_started",
+  "run_id": null,
+  "error": "HTTP 404: workflow reading-required-core.yml not found on the default branch (https://api.github.com/repos/NoGod3524/EXReader/actions/workflows/reading-required-core.yml)",
+  "candidate_commit": "f19788b7449f03a2cefac7a59a24727c1674b81c",
+  "retry": false,
+  "settings_changed": false
+}
