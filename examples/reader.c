@@ -541,6 +541,22 @@ static void page_cache_put(host_frame *frame) {
   if(i<0)i=(int)(page_cache_next++%4);
   frame_move(&page_cache[i],frame);
 }
+static int compute_view(void);
+static void page_dirty(HWND window,int full) {
+  RECT client,dirty,old;GetClientRect(window,&client);dirty=client;
+  if(!full && g.frame.valid && g.view.valid) {
+    old.left=g.view.dx;old.top=g.view.dy;
+    old.right=old.left+(LONG)(g.frame.bitmap.width*g.view.scale)+2;
+    old.bottom=old.top+(LONG)(g.frame.bitmap.height*g.view.scale)+2;
+    if(compute_view()) {
+      RECT now={g.view.dx,g.view.dy,g.view.dx+(LONG)(g.frame.bitmap.width*g.view.scale)+2,g.view.dy+(LONG)(g.frame.bitmap.height*g.view.scale)+2};
+      UnionRect(&dirty,&old,&now);IntersectRect(&dirty,&dirty,&client);
+    }
+  }
+  InvalidateRect(window,&dirty,FALSE);
+}
+static long wheel_delta;
+#define PAGE_WHEEL_TIMER 0x5750
 static void book_clear(exr_book *book) {
   free(book->title);
   free(book->author);
@@ -582,7 +598,7 @@ static void session_clear(host_session *session) {
 
 static void selection_clear(void) {
   memset(&g.selection, 0, sizeof(g.selection));
-  if (g.page) InvalidateRect(g.page, NULL, FALSE);
+  if (g.page && !g.frame.valid) page_dirty(g.page,1);
 }
 
 #ifdef EXR_READER_WINDOWS_PREFERENCES
@@ -1298,7 +1314,7 @@ static void job_start(host_job *job) {
   g.hit_pending = 0; g.gesture++;
   if (GetCapture() == g.page) ReleaseCapture();
   memset(&g.selection, 0, sizeof(g.selection));
-  if (g.page) InvalidateRect(g.page, NULL, TRUE);
+  /* Keep the accepted page visible until the new frame is ready. */
   }
   InterlockedIncrement(&job->refs);
   handle = _beginthreadex(NULL, 0, job_thread, job, 0, &thread_id);
@@ -3501,11 +3517,11 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       paint_page_view(window);
       return 0;
     case WM_SIZE:
-      InvalidateRect(window, NULL, TRUE);
+      page_dirty(window,1);
       return 0;
     case WM_SETFOCUS:
     case WM_KILLFOCUS:
-      InvalidateRect(window, NULL, TRUE);
+      page_dirty(window,1);
       return 0;
     case WM_GETOBJECT:
       return host_a11y_page_object(window, wparam, lparam);
@@ -3542,7 +3558,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
         g.selection.page = g.frame.page;
         g.selection.fixed = g.frame.fixed;
         SetCapture(window);
-        InvalidateRect(window, NULL, FALSE);
+        page_dirty(window,0);
       }
       return 0;
     case WM_MOUSEMOVE:
@@ -3552,7 +3568,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
         size_t offset = point_offset((short)LOWORD(lparam), (short)HIWORD(lparam), 1);
         if (offset != SIZE_MAX && offset != g.selection.end) {
           g.selection.end = offset;
-          InvalidateRect(window, NULL, FALSE);
+          page_dirty(window,0);
         }
       }
       return 0;
@@ -3576,7 +3592,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
           memset(&g.selection, 0, sizeof(g.selection));
           if (g.job || g.pending) prefs_turn_pending = turn;
           else page_step(turn);
-          InvalidateRect(window, NULL, FALSE);
+          page_dirty(window,0);
           return 0;
         }
       }
@@ -3596,16 +3612,24 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
           g.selection.active = start < end;
         }
         selection_report();
-        InvalidateRect(window, NULL, FALSE);
+        page_dirty(window,0);
         host_a11y_page_changed(1);
       }
       return 0;
     case WM_MOUSEWHEEL:
       host_probe_log("wheel",(short)HIWORD(wparam));
-      if (g.job || g.pending) return 0;
-      if ((short)HIWORD(wparam) < 0) page_step(1);
-      else page_step(-1);
+      wheel_delta += (short)HIWORD(wparam);
+      SetTimer(window,PAGE_WHEEL_TIMER,16,NULL);
       return 0;
+    case WM_TIMER:
+      if(wparam==PAGE_WHEEL_TIMER) {
+        if(g.job || g.pending)return 0;
+        if(wheel_delta<=-WHEEL_DELTA) { wheel_delta+=WHEEL_DELTA;page_step(1); }
+        else if(wheel_delta>=WHEEL_DELTA) { wheel_delta-=WHEEL_DELTA;page_step(-1); }
+        else KillTimer(window,PAGE_WHEEL_TIMER);
+        return 0;
+      }
+      break;
     case WM_KEYDOWN:
       host_probe_log("key",(double)wparam);
       if (g.job || g.pending) return 0;
@@ -3808,7 +3832,7 @@ static void apply_pending_selection(void) {
   g.selection.page = g.frame.page;
   g.selection.start = start;
   g.selection.end = end;
-  InvalidateRect(g.page, NULL, FALSE);
+  page_dirty(g.page,0);
   set_statusf(L"已跳转到标注位置（第 %llu 页），并高亮原文。",
               (unsigned long long)(g.frame.page + 1));
 }
@@ -4042,7 +4066,7 @@ static void select_all_page(void) {
   } else {
     selection_report();
   }
-  InvalidateRect(g.page, NULL, FALSE);
+  page_dirty(g.page,0);
   host_a11y_page_changed(1);
 }
 
@@ -4179,7 +4203,7 @@ static void jump_selected_note(void) {
         g.selection.page = g.frame.page;
         g.selection.start = note->start;
         g.selection.end = note->end;
-        InvalidateRect(g.page, NULL, FALSE);
+        page_dirty(g.page,0);
         set_statusf(L"已定位到当前页标注（第 %llu 页）。", (unsigned long long)(note->page + 1));
       } else {
         set_status(L"标注范围超出当前页文字，未高亮。");
@@ -4293,7 +4317,7 @@ static void show_deleted_book(int64_t id) {
 #endif
     settings_save();
     update_page_label();
-    InvalidateRect(g.page, NULL, TRUE);
+    page_dirty(g.page,1);
   }
   if (reload_shelf() != EXR_OK) return;
   host_update_controls();
@@ -4556,7 +4580,7 @@ static void handle_job_complete(host_job *job) {
       g.selection.end = job->hit_offset;
       g.selection.active = g.selection.start != g.selection.end;
       if (job->hit_up) { dragging = 0; selection_report(); }
-      InvalidateRect(g.page, NULL, FALSE);
+      page_dirty(g.page,0);
       if (g.hit_pending) {
         float x = g.hit_x, y = g.hit_y; int up = g.hit_up;
         g.hit_pending = g.hit_up = 0; bounded_hit(x, y, 0, up);
@@ -5439,7 +5463,7 @@ static int drive_execute(void) {
     g.selection.end = end;
     g.selection.page = g.frame.page;
     g.selection.fixed = g.frame.fixed;
-    InvalidateRect(g.page, NULL, FALSE);
+    page_dirty(g.page,0);
     drive_step_finish(g.selection.active, "selection applied");
     return 0;
   } else if (!strcmp(action, "drag")) {
@@ -5935,7 +5959,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       g.window_width = bounds.right - bounds.left;
       g.window_height = bounds.bottom - bounds.top;
       layout_controls();
-      InvalidateRect(g.page, NULL, TRUE);
+      page_dirty(g.page,1);
       return 0;
     }
     case WM_GETMINMAXINFO: {
@@ -6022,6 +6046,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if (!job || job != g.job) return 0;
       /* The completion is posted after all SDK work; join only the final ref
          release before the UI accepts/frees the job's owned candidates. */
+      int repaint = job->kind != JOB_SAVE;
       WaitForSingleObject(job->thread, INFINITE);
       g.job = NULL;
       handle_job_complete(job);
@@ -6032,7 +6057,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       compact_complete(job);
 #endif
       job_release(job);
-      InvalidateRect(g.page, NULL, FALSE);
+      if(repaint)page_dirty(g.page,0);
       if (!g.job && g.pending) {
         host_job *next = g.pending;
         g.pending = NULL;
