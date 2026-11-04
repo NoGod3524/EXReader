@@ -138,6 +138,8 @@ typedef struct {
   exr_layout *hit_layout;
   exr_fixed_text *fixed_text;
   exr_page_geometry geometry;
+  HBITMAP display_bitmap;
+  int display_width,display_height;
 } host_frame;
 
 typedef struct {
@@ -510,6 +512,7 @@ static int format_for_path(const wchar_t *path, exr_format *format) {
 }
 
 static void frame_clear(host_frame *frame) {
+  if(frame->display_bitmap)DeleteObject(frame->display_bitmap);
   exr_layout_free(frame->hit_layout);
   exr_fixed_text_free(frame->fixed_text);
   exr_bitmap_free(&frame->bitmap);
@@ -521,6 +524,31 @@ static void frame_clear(host_frame *frame) {
   memset(frame, 0, sizeof(*frame));
 }
 
+/* GDI display bitmap is owned by the frame and prepared on the SDK worker.
+   It is never selected into a UI DC until that worker has been joined. */
+static int frame_prepare_display(host_frame *frame) {
+  RECT area;if(!frame->valid || !frame->dib || !g.page)return 0;
+  if(!GetClientRect(g.page,&area))return 0;
+  double scale=fmin((area.right-8.0)/frame->bitmap.width,(area.bottom-8.0)/frame->bitmap.height);
+  int w=(int)(frame->bitmap.width*scale),h=(int)(frame->bitmap.height*scale);
+  if(w<=0 || h<=0)return 0;
+  if(frame->display_bitmap && frame->display_width==w && frame->display_height==h)return 1;
+  BITMAPINFO target={0},source={0};void *bits=NULL;
+  target.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);target.bmiHeader.biWidth=w;
+  target.bmiHeader.biHeight=-h;target.bmiHeader.biPlanes=1;target.bmiHeader.biBitCount=32;
+  HDC dc=CreateCompatibleDC(NULL);if(!dc)return 0;
+  HBITMAP bitmap=CreateDIBSection(dc,&target,DIB_RGB_COLORS,&bits,NULL,0);
+  if(!bitmap){DeleteDC(dc);return 0;}
+  HGDIOBJ old=SelectObject(dc,bitmap);
+  source.bmiHeader=target.bmiHeader;source.bmiHeader.biWidth=(LONG)frame->bitmap.width;
+  source.bmiHeader.biHeight=-(LONG)frame->bitmap.height;
+  SetStretchBltMode(dc,HALFTONE);SetBrushOrgEx(dc,0,0,NULL);
+  int copied=StretchDIBits(dc,0,0,w,h,0,0,frame->bitmap.width,frame->bitmap.height,frame->dib,&source,DIB_RGB_COLORS,SRCCOPY);
+  SelectObject(dc,old);DeleteDC(dc);
+  if(!copied || copied==GDI_ERROR){DeleteObject(bitmap);return 0;}
+  if(frame->display_bitmap)DeleteObject(frame->display_bitmap);
+  frame->display_bitmap=bitmap;frame->display_width=w;frame->display_height=h;return 1;
+}
 static void frame_move(host_frame *dst, host_frame *src) {
   frame_clear(dst);
   *dst = *src;
@@ -541,14 +569,14 @@ static void page_cache_put(host_frame *frame) {
   if(i<0)i=(int)(page_cache_next++%4);
   frame_move(&page_cache[i],frame);
 }
+static RECT last_page_rect;
+static int last_page_rect_valid;
 static int compute_view(void);
 static void compose_page_view(HWND window);
 static void page_dirty(HWND window,int full) {
   RECT client,dirty,old;GetClientRect(window,&client);dirty=client;
   if(!full && g.frame.valid && g.view.valid) {
-    old.left=g.view.dx;old.top=g.view.dy;
-    old.right=old.left+(LONG)(g.frame.bitmap.width*g.view.scale)+2;
-    old.bottom=old.top+(LONG)(g.frame.bitmap.height*g.view.scale)+2;
+    old=last_page_rect_valid?last_page_rect:client;
     if(compute_view()) {
       RECT now={g.view.dx,g.view.dy,g.view.dx+(LONG)(g.frame.bitmap.width*g.view.scale)+2,g.view.dy+(LONG)(g.frame.bitmap.height*g.view.scale)+2};
       UnionRect(&dirty,&old,&now);IntersectRect(&dirty,&dirty,&client);
@@ -2465,6 +2493,7 @@ static exr_status job_bounded_batch(host_job *job) {
   exr_control control={job_cancel_check,NULL,job};exr_status status=EXR_OK;
   size_t count=0,page=g.frame.page,part=candidate.part;
   const exr_part *parts=exr_publication_parts(candidate.publication,&count);
+  if(!parts || part>=count)return EXR_FORMAT;
   candidate.hold_progress=0;
   size_t left=(size_t)(job->batch_delta<0?-(int64_t)job->batch_delta:job->batch_delta);
   while(left && status==EXR_OK) {
@@ -2565,7 +2594,7 @@ static exr_status job_go(host_job *job) {
   if(!job->use_offset) {
     int i=page_cache_find(g.session.book_id,g.session.part,job->target_page);
     if(i>=0) {
-      frame_move(&job->frame,&page_cache[i]);job->frame.generation=++g.frame_sequence;
+      frame_move(&job->frame,&page_cache[i]);job->frame.generation=++g.frame_sequence;job->frame.hold_progress=0;
       job->have_frame=1;job->applied_page=job->frame.page;job->page_count=g.session.page_count;
       host_probe_log("cache_hit",(double)job->frame.page);
       host_probe_log("cache_layout_delta",(double)(host_probe_layout_calls-layout_before));
@@ -3001,6 +3030,7 @@ static unsigned __stdcall job_thread(void *context) {
     job->status = EXR_CANCELLED;
   else
     job->status = job_run(job);
+  if(job->status==EXR_OK && job->frame.valid)frame_prepare_display(&job->frame);
 #ifdef EXR_HOST_WORKER_REVIEW
   if (job->status == EXR_OK) {
     int stage=job->kind==JOB_OPEN ? 4:job->kind==JOB_GO ? 2:0;
@@ -3457,6 +3487,8 @@ static void compose_page_view(HWND window) {
   dc=page_buffer_dc;
   FillRect(dc, &area, (HBRUSH)GetStockObject(WHITE_BRUSH));
   if (g.frame.valid && compute_view()) {
+    last_page_rect=(RECT){g.view.dx,g.view.dy,g.view.dx+(LONG)(g.frame.bitmap.width*g.view.scale)+2,g.view.dy+(LONG)(g.frame.bitmap.height*g.view.scale)+2};
+    last_page_rect_valid=1;
     BITMAPINFO info;
     memset(&info, 0, sizeof(info));
     info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -3467,7 +3499,14 @@ static void compose_page_view(HWND window) {
     info.bmiHeader.biCompression = BI_RGB;
     SetStretchBltMode(dc, HALFTONE);
     SetBrushOrgEx(dc, 0, 0, NULL);
-    StretchDIBits(dc, g.view.dx, g.view.dy,
+    if(frame_prepare_display(&g.frame)) {
+      HDC source=CreateCompatibleDC(dc);
+      if(source) {
+        HGDIOBJ old=SelectObject(source,g.frame.display_bitmap);
+        BitBlt(dc,g.view.dx,g.view.dy,g.frame.display_width,g.frame.display_height,source,0,0,SRCCOPY);
+        SelectObject(source,old);DeleteDC(source);
+      }
+    } else StretchDIBits(dc, g.view.dx, g.view.dy,
                   (int)(g.frame.bitmap.width * g.view.scale),
                   (int)(g.frame.bitmap.height * g.view.scale),
                   0, 0, (int)g.frame.bitmap.width, (int)g.frame.bitmap.height,
@@ -5412,16 +5451,14 @@ static int drive_execute(void) {
     drive_step_finish(1, "waited");
     return 0;
   }
+  if(!strcmp(action,"probe_move")) { page_step(atoi(drive_args[1]));drive_expect_idle=1;return 1; }
   if(!strcmp(action,"probe_wait")) {
     if(GetTickCount()-drive_step_start<(DWORD)atoi(drive_args[1]))return 1;
     drive_step_finish(1,"waited without blocking UI");return 0;
   }
   if(!strcmp(action,"probe_resize")) {
-    typedef HANDLE (WINAPI *thread_dpi_fn)(HANDLE);
-    thread_dpi_fn fn=(thread_dpi_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetThreadDpiAwarenessContext");
-    HANDLE old=fn?fn((HANDLE)(INT_PTR)-4):NULL;
-    SetWindowPos(g.window,NULL,100,100,atoi(drive_args[1]),atoi(drive_args[2]),SWP_NOZORDER|SWP_NOACTIVATE);
-    if(fn && old)fn(old);drive_step_finish(1,"physical window size set");return 0;
+    SetWindowPos(g.window,HWND_TOPMOST,100,100,atoi(drive_args[1]),atoi(drive_args[2]),SWP_SHOWWINDOW);
+    drive_step_finish(1,"test window sized");return 0;
   }
   if(!strcmp(action,"probe_mark")) { host_probe_log(drive_args[1],0);drive_step_finish(1,"marked");return 0; }
   if(!strcmp(action,"probe_title")) {
@@ -5430,6 +5467,15 @@ static int drive_execute(void) {
     host_probe_log("client_w",area.right);host_probe_log("client_h",area.bottom);
     MapWindowPoints(g.page,g.window,&pt,1);GetClientRect(g.page,&area);
     host_probe_log("roi_x",pt.x);host_probe_log("roi_y",pt.y);host_probe_log("roi_w",area.right);host_probe_log("roi_h",area.bottom);
+    RECT logical,physical,client;POINT client_origin={0,0};
+    GetWindowRect(g.window,&logical);GetClientRect(g.window,&client);ClientToScreen(g.window,&client_origin);
+    typedef HANDLE (WINAPI *probe_dpi_fn)(HANDLE);
+    probe_dpi_fn fn=(probe_dpi_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetThreadDpiAwarenessContext");
+    HANDLE old=fn?fn((HANDLE)(INT_PTR)-4):NULL;GetWindowRect(g.window,&physical);if(fn && old)fn(old);
+    double ratio=(double)(physical.right-physical.left)/(logical.right-logical.left);
+    host_probe_log("cap_x",physical.left+(client_origin.x-logical.left)*ratio);
+    host_probe_log("cap_y",physical.top+(client_origin.y-logical.top)*ratio);
+    host_probe_log("cap_w",client.right*ratio);host_probe_log("cap_h",client.bottom*ratio);
     host_probe_log("record_ready",0);drive_step_finish(1,"record ready");return 0;
   }
   if(!strcmp(action,"probe_wheel_burst")) {
