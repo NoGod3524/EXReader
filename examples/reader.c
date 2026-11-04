@@ -3954,6 +3954,7 @@ static void page_step(int direction) {
   if (!direction) return;
   if (direction <= -1000000) target = 0;
   else if (direction >= 1000000) target = (size_t)-1;
+  else if (direction < 0 && (g.frame.fixed || !g.session.bounded) && (size_t)(-direction) > g.frame.page) target = 0;
   else target = (direction > 0) ? g.frame.page + (size_t)direction : g.frame.page - (size_t)(-direction);
   if (g.frame.fixed) {
     if (direction <= -1000000) target = 0;
@@ -3962,8 +3963,9 @@ static void page_step(int direction) {
       set_status(L"已经是第一页。");
       return;
     } else if (target >= g.frame.page_count) {
-      set_status(L"已到最后一页；当前页未改变。");
-      return;
+      if (direction > 1 && direction < 1000000 && g.frame.page_count) target = g.frame.page_count - 1;
+      else { set_status(L"已到最后一页；当前页未改变。");
+        return; }
     }
   } else if (direction < 0 && g.frame.page == 0 && !g.session.bounded) {
     set_status(L"已经是第一页。");
