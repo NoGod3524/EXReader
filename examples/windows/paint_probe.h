@@ -35,3 +35,16 @@ static void host_probe_present(double generation) {
     GdiFlush();host_probe_log("present_gen",generation);
   }
 }
+
+/* Opt-in visual stamp: synchronization byte, generation, and its complement.
+   Decoder rejects torn stamps; normal product UI never enables this marker. */
+static void host_probe_stamp(HDC dc,const RECT *area,unsigned long generation) {
+  if(!GetEnvironmentVariableW(L"EXR_PAINT_MARKER",NULL,0))return;
+  uint64_t g16=generation&0xffffu;
+  uint64_t code=((uint64_t)0xa5<<32)|(g16<<16)|((~g16)&0xffffu);
+  int left=area->right/2-80,top=area->bottom/2-4;
+  RECT band={left,top,left+160,top+8};FillRect(dc,&band,(HBRUSH)GetStockObject(WHITE_BRUSH));
+  for(int i=0;i<40;i++)if(code&((uint64_t)1<<(39-i))) {
+    RECT bit={left+i*4,top,left+(i+1)*4,top+8};FillRect(dc,&bit,(HBRUSH)GetStockObject(BLACK_BRUSH));
+  }
+}

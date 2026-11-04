@@ -3525,6 +3525,7 @@ static void compose_page_view(HWND window) {
     focus.left += 1; focus.top += 1; focus.right -= 1; focus.bottom -= 1;
     DrawFocusRect(dc, &focus);
   }
+  host_probe_stamp(dc,&area,g.frame.generation);
   ReleaseDC(window,screen);
   host_probe_log("compose_ms",host_probe_ms()-paint_start);
 }
