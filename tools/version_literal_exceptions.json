@@ -10839,25 +10839,6 @@
     }
   },
   {
-    "file": "tests/reading_corpus/CMakeLists.txt",
-    "line": 3,
-    "literal": "3.41.0",
-    "line_sha256": "fb93055b8938b0475beac8436046cd6cf6bd90f516501eaf097498436c956cc2",
-    "purpose": "frozen_baseline",
-    "explanation": "Retained historical test/consumer contract at the recorded fixture commit, bound to the immutable SDK header below; not a current SDK declaration.",
-    "frozen_object": {
-      "commit": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
-      "path": "include/exr/base.h",
-      "sha256": "461f33b1f17c4650229935630179d369b715b5a9a24d2181f3f653864bed47a0"
-    },
-    "frozen_fixture": {
-      "commit": "95100501eeef9c6325be8b3882aa400c99cf000f",
-      "path": "tests/reading_corpus/CMakeLists.txt",
-      "sha256": "cd5cb7783c0bcdf8ab40ff01ab20436750e0bdd93592ce028c1d329e858cb7ce",
-      "line": 3
-    }
-  },
-  {
     "file": "tests/sdk_page_background/aggregate.py",
     "line": 51,
     "literal": "3.40.0",
