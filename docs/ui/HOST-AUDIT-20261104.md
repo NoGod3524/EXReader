@@ -1,0 +1,183 @@
+# EXReader Windows 宿主审计（2026-11-04）
+
+**本轮未改任何代码，未触碰 `examples/` 与受保护树。** 本目录四份文档是本轮全部产出。
+
+- 审计基线：`origin/main` @ `4efd3366`，也就是交付包 `EXReader-Windows-4efd3366.zip` 的源码。下文 `reader.c:N` 均指这一提交的 `examples/reader.c`。
+- 只读参考：`codex/windows-page-paint-20261104` @ `b486096f`（另一会话的绘制分支）、`origin/claude/windows-studio-ui-20261031` @ `effb5b7d`（Studio）。
+- 未运行程序。结论来自读源码和按源码常量计算，人日是工程估计，不是实测。
+
+## 0. 先看这五条
+
+1. **“17 个按钮”实为 16 个按钮 + 1 个输入框。** 顶栏第一行有导入路径框和 3 个按钮，第二行有 13 个按钮（`reader.c:3083` 起创建，`reader.c:3166` 起布局）。下表 17 行按“17 个可操作控件”计，第 1 行是输入框。
+2. **真正只服务验收调试的只有 1 项（导入路径框）。** 其余 16 项都是阅读流程要用的能力，问题在于它们全部常驻、平铺在顶栏，而不是能力多余。所以重写的工作是“换入口”，不是“删功能”。
+3. **模糊和每行字数太少的根因不是 GDI。** 正文固定排成 720×1040 的位图再整页拉伸（§B）。只换 Direct2D、不改排版尺寸，观感不会变好。
+4. **交付包里没有目录、搜索、设置。** `examples/CMakeLists.txt` 不定义任何 `EXR_READER_*` 宏，这些功能只在 `EXReaderWave3` 等目标中编译。线框里的目录和设置对交付包是新增集成，不是搬位置。
+5. **仓库里已有一个 D2D 客户端（Studio），未合入 main。** 它缺选择、复制、标注（§D5）。用它做底座还是只借渲染层，需要在实现前决定。
+
+## A. 按钮 → 能力映射（17 行）
+
+分类：**阅读** = 阅读必需；**调试** = 验收调试专用；**兼有** = 两者兼有。全部 17 项都同时进入 `--debug-ui`（清单见 [INTERACTION-20261104.md](INTERACTION-20261104.md) §8），“重写后入口”一列只写普通模式。
+
+| # | 控件（ID） | 处理函数 | SDK 接口 | 分类 | 重写后入口（普通模式） |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 导入路径框（101） | `host_command` 读其文本（`reader.c:4738`）后传给 `import_path`（`:4264`） | 无（Win32 文本） | 调试 | **移除**，只在 `--debug-ui` |
+| 2 | 导入（102） | `import_path` → `JOB_IMPORT` | `exr_library_import_source_unique`（EPUB，`:2824`）、`exr_library_import_unique`（其他，`:2870`）；回滚 `exr_library_delete`（`:2746`） | 阅读 | 系统文件对话框：左栏按钮、空书架按钮、Ctrl+O |
+| 3 | 打开（103） | `open_selected_book`，`:4188` | `exr_library_fixed_source`（`:2318`）、`exr_library_source` + `exr_publication_open_source`（`:2351`）、`exr_library_document` + `exr_pager_create`（`:2357`）、进度恢复 `exr_library_*progress_get` | 阅读 | 双击书卡 / Enter |
+| 4 | 删除（104） | `delete_selected_book`，`:4241` | `exr_library_delete` | 阅读 | 书卡右键菜单 / Del，**新增确认**（现状无确认直接删） |
+| 5 | 上一页（105） | `page_step(-1)`，`:3755` | `exr_pager_get`（`:1438`）+ `exr_render_page_ex` / `_background`（`:1452` / `:1448`）；固定页 `exr_fixed_render`（`:1570`） | 阅读 | 键盘、点击左区、滚轮，无按钮 |
+| 6 | 下一页（106） | `page_step(1)` | 同上 | 阅读 | 键盘、点击右区、滚轮，无按钮 |
+| 7 | 全选本页（107） | `select_all_page`，`:3965` | 处理函数不调 SDK；绘制走 `exr_layout_glyphs` / `exr_fixed_text_select`（`:3305`） | 兼有 | Ctrl+A、页面右键菜单 |
+| 8 | 复制引用（108） | `copy_quote`，`:3988` | `exr_fixed_text_string`（固定页）；流式取帧内 UTF-8；剪贴板是 Win32 | 阅读 | Ctrl+C、选区右键菜单 |
+| 9 | 添加标注（109） | `add_note`，`:4037` → `JOB_NOTE_ADD` | `exr_anchor_create`、`exr_pager_anchor_create`、`exr_library_note`（`:2794`）/ `_epub_note`（`:2784`）/ `_fixed_note`（`:2772`） | 阅读 | 选区右键菜单、Ctrl+M |
+| 10 | 更新标注（110） | `update_note`，`:4059` | `exr_library_note_text`（`:2789`） | 阅读 | 标注行右键菜单 → 编辑 |
+| 11 | 删除标注（111） | `delete_note`，`:4078` | `exr_library_remove_note` / `_remove_epub_note` / `_remove_fixed_note` | 阅读 | 标注行右键菜单 / Del |
+| 12 | 跳转标注（112） | `jump_selected_note`，`:4106` → `JOB_GO` | `exr_pager_anchor_resolve`（`:2451`）、`exr_anchor_resolve_ex`（`:2503`）；固定页走页号 | 阅读 | 单击标注行 |
+| 13 | 字号-（113） | `change_font`，`:3791` → `JOB_LAYOUT` | `exr_anchor_create`、`exr_pager_create`（`:2635`）、`exr_anchor_resolve_ex`（`:2641`） | 阅读 | 设置面板、Ctrl+- |
+| 14 | 字号+（114） | 同上 | 同上 | 阅读 | 设置面板、Ctrl+= |
+| 15 | 缩放-（115） | `change_zoom`，`:3870` → `JOB_GO` | `exr_fixed_render(scale)` | 阅读（仅 PDF/CBZ） | 设置面板、Ctrl+-、Ctrl+滚轮 |
+| 16 | 缩放+（116） | 同上 | 同上 | 阅读（仅 PDF/CBZ） | 设置面板、Ctrl+=、Ctrl+滚轮 |
+| 17 | 取消（117） | `job_cancel_button`，`:1350` | 不直接调用；置 `job->cancel`，经 `exr_control.cancelled` 生效 | 兼有 | 慢任务提示条的“取消”按钮、Esc |
+
+统计：阅读 14，兼有 2，调试 1。合计 17，无遗漏。
+
+### 17 行之外还有的控件（不计入 17）
+
+只在带功能宏的构建中出现，同样需要归属：
+
+| 控件 | 宏 | 重写后入口 |
+| --- | --- | --- |
+| 书内查找（`IDC_INBOOK`） | `EXR_READER_WINDOWS_SEARCH` | Ctrl+F |
+| 目录（`IDC_DIRECTORY`） | `EXR_READER_WINDOWS_NAVIGATION` | 顶栏“目录” |
+| 阅读记录（`IDC_RECORDS`） | `EXR_READER_WINDOWS_RECORDS` | 左栏“标注”页签、Ctrl+L |
+| 刷新（`IDC_SHELF_REFRESH`） | `EXR_READER_PRODUCT_CATALOG` | 书架自动刷新；手动入口只在 `--debug-ui` |
+| 详情（`IDC_METADATA_BUTTON`） | `EXR_READER_DESKTOP_METADATA` | 书卡右键菜单 |
+| 账号（`IDC_ACCOUNT_BUTTON`） | `EXR_READER_WINDOWS_ACCOUNT` | 设置面板底部入口、Ctrl+Shift+A |
+| 云盘导入、批量整理、导出原件、同步状态、标注导入导出、字体库、前进后退 | `EXR_READER_WINDOWS_*` | 现有菜单项进书卡右键菜单或设置面板，快捷键不变 |
+
+## B. 布局来源
+
+| 项 | 现状 | 来源 |
+| --- | --- | --- |
+| 正文绘制函数 | `paint_page_view` 把一张位图 `StretchDIBits`（`HALFTONE`）到页面窗口 | `reader.c:3331`、`:3348` |
+| 缩放比例 | `min((宽-8)/位图宽, (高-8)/位图高)`，水平垂直居中 | `compute_view`，`:3246` |
+| 排版页尺寸 | **写死** 720×1040 | `session_configure`，`:1373` |
+| 页边距 | **写死** 36（四边同值） | 同上 |
+| 字号 | `28 × font_percent / 100`，默认 150%，即 **42** | 同上；`settings_load`，`:579` |
+| 行高 | **写死** 1.5 倍；段距 10 | 同上 |
+| 行宽 | 720 − 2×36 = **648**，与窗口无关 | 由上面推出 |
+| 窗口变宽时 | **不重排**。`WM_SIZE` 只移动控件并重绘（`:5865`），位图重新拉伸 | `page_procedure` / `procedure` |
+| 设置项（仅 Wave3） | 字号 24、行距 1.6、段距 12、边距 48，页面仍是 720×1040 | `preferences.c:125`、`windows_preferences_state.inc:9` |
+
+默认窗口实算（外框 1180×900，按 Win11 标准边框估算客户区 1164×861，96 DPI）：
+
+| 量 | 算式 | 结果 |
+| --- | --- | --- |
+| 页面控件内区 | 857×741 | |
+| 拉伸比例 | min(849/720, 733/1040) | **0.705** |
+| 屏幕上的页 | 720×0.705, 1040×0.705 | 507×733，左右闲置 350 |
+| 每行汉字 | 648 / 42 | **15 字**（目标 28–34） |
+| 每行拉丁字符 | 648 / (42×0.466) | **约 33 个**（目标 65–75） |
+| 屏幕字号 | 42×0.705 | 29.6 px，且经过插值 |
+
+结论：页面尺寸和字号都是常量，窗口大小只改变位图的拉伸倍数。正文几乎总在非 1:1 插值下显示。
+
+DPI：`examples/`、`apps/reader/desktop/` 和打包脚本里都没有 DPI 感知声明，也没有 `WM_DPICHANGED` 处理。进程按 DPI 无感知运行，125% / 150% 缩放时系统再做一次位图放大，等于插值两次。
+
+## C. 状态机现状
+
+| 状态 | 存放位置 | 驱动代码 | 是否独立模块 |
+| --- | --- | --- | --- |
+| 滚动 | **不存在**。只有分页，滚轮等于翻页（`:3544`） | — | 否 |
+| 翻页 | `g.session.page`、`g.frame.page`、`g.job`、`g.pending` | `page_step` → `JOB_GO` → 单一工作线程 | 否 |
+| 选中 | `g.selection` + 文件级 `static int dragging`（`:297`） | `page_procedure`、`bounded_mouse` + `JOB_HIT` | 否 |
+| 标注 | `g.reflow_notes`、`g.epub_notes`、`g.fixed_notes` | `reload_notes`、`JOB_NOTE_*` | 否 |
+| 当前选中项 | **存在原生控件里**：书架和标注都用 `LB_GETCURSEL` 读取 | `open_selected_book`、`notes_selected` | 否 |
+
+- 全部状态在一个全局 `static host_state g`（`:296`），6375 行单翻译单元。可选功能的 `.inc` 文件被 `#include` 进同一单元，共享 `g`，不是模块边界。
+- **值得保留的部分**：单工作线程任务模型（`job_submit`、`g.job`、`g.pending`、`job_commit_barrier`）已被多轮可靠性验收覆盖，任务提交也已和界面解耦。重写应换界面层，不动这一层。
+- **重写时必须处理的耦合**：选中项从 HWND 移到状态结构；`host_update_controls`（`:4332`）直接对按钮 `EnableWindow`，要改成状态派生。
+
+验收绑定：21 个工作流引用这些宿主目标；`tests/reader_a11y_windows/flows.py` 有 20 处按控件 ID 定位；`--drive` 脚本（`tests/windows_host/phase-*.txt`，165 行）在进程内调用命令。`--debug-ui` 保留原控件 ID 就是为了让这些测试低成本迁移。
+
+## D. 绘制后端结论
+
+### D1. 结论
+
+**用 Direct2D + DirectWrite，但只用于界面外壳；正文继续由引擎光栅化，D2D 按物理像素 1:1 贴图。**
+
+- 正文不用 DirectWrite：命中测试、选区、标注锚点都依赖引擎字形，换掉等于重写阅读核心，且与其他平台不一致。
+- 决定观感的改动是“按物理像素排版、1:1 显示”，它与后端无关，两个方案都必须做。
+- D2D 多花约 3 人日，换来令牌要求的抗锯齿圆角、五态、深色主题，不依赖未公开的原生控件深色接口。
+
+### D2. 工作量（人日，±30%，未实测）
+
+| 两方案都要做 | 人日 |
+| --- | --- |
+| 新外壳：屏幕路由与状态结构 | 3 |
+| 正文按物理像素重排（版心、防抖、锚点保持、固定页 scale） | 3 |
+| Per-Monitor V2 与 `WM_DPICHANGED` | 1.5 |
+| 目录与书内搜索接入交付包 | 3 |
+| 设置持久化与主题管线 | 2 |
+| 右键菜单与键盘映射（接 `apps/reader/keyboard-actions`） | 2 |
+| 导入对话框、空状态、错误态 | 1.5 |
+| `--debug-ui` | 1.5 |
+| 验收驱动与无障碍审计迁移 | 4 |
+| **小计** | **21.5** |
+
+| 后端相关 | GDI | D2D + DirectWrite |
+| --- | --- | --- |
+| 渲染层、设备丢失、位图上传 | 0 | 3 |
+| 文本、图标、CJK 回退 | 含在下一行 | 2 |
+| 自绘控件、命中测试、焦点、五态 | 4 | 4 |
+| 抗锯齿圆角（GDI 需引入 GDI+ 或预渲染位图） | 2 | 0 |
+| 原生 LISTBOX / EDIT / 菜单深色 | 3 | 0 |
+| 书架网格与滚动 | 2 | 1 |
+| UIA（GDI 可留部分原生 HWND；D2D 每个控件都要 Fragment） | 1 | 4 |
+| C++ 桥接、CMake、打包校验 | 0 | 1 |
+| **小计** | **12** | **15** |
+| **总计** | **33.5** | **36.5** |
+
+Studio 的渲染层若可复用，D2D 可能再省 3–5 人日，未经验证，未计入。
+
+### D3. 风险
+
+| 风险 | 方案 | 影响 | 处理 |
+| --- | --- | --- | --- |
+| 自绘后丢失原生控件的无障碍角色 | D2D 高，GDI 中 | 现有审计（`docs/READER-A11Y-WINDOWS.md`）已有 8 个阻断项，不能再退步 | UIA Fragment 与控件同批交付；普通模式也跑审计 |
+| 与绘制分支冲突 | 两者 | `b486096f` 改 `reader.c` 的绘制路径 | **等它合入后再开工**。帧缓存、预渲染、滚轮累计可沿用；后备缓冲会被 D2D 目标取代；探针要改接 |
+| 窗口拖动时频繁重排 | 两者 | 每次都新建 pager，大 TXT 尤其慢 | 防抖 150 ms，只在页面尺寸或字号变化时重排（窗口只变宽不重排，变高会重排），需用语料实测 |
+| 新建 pager 后位置漂移 | 两者 | 锚点需落回同一内容 | 沿用 `JOB_LAYOUT` 的锚点路径，保留验收清单第 5、6 项 |
+| C 项目引入 COM | D2D | `examples/windows` 现为 `LANGUAGES C` | 沿用 `windows_wave3_bridge.cpp` 的 C++ 桥接做法 |
+| CI 无 GPU | D2D | 硬件目标可能创建失败 | 回退软件渲染（WARP），验收机上实测 |
+| 全屏或窗口切换导致设备丢失 | D2D | 需重建位图 | 处理 `D2DERR_RECREATE_TARGET`，Studio 已有写法（`ui.cpp:442`） |
+
+### D4. DPI 影响
+
+| | 现状 | GDI 方案 | D2D 方案 |
+| --- | --- | --- | --- |
+| 进程感知 | 无感知，系统放大 | PMv2 | PMv2 |
+| 正文 | 引擎位图经两次插值 | 物理像素 1:1 | 物理像素 1:1 |
+| 外壳坐标 | 写死像素 | 每处手算 DPI | DIP，由目标 DPI 换算 |
+| 外壳文字 | `DEFAULT_GUI_FONT`，位图放大 | 每个 DPI 重建 HFONT | DirectWrite 按 DIP 设字号 |
+| 跨屏移动 | 系统缩放 | 重建字体与布局 | 更新目标 DPI，重排正文 |
+| 非整数缩放（125%） | 模糊 | 需逐处取整 | 贴图矩形对齐物理像素 |
+
+### D5. Studio 的现状（只读核对）
+
+Studio 分支 tip `effb5b7d`：`ui.cpp` 2416 行，`engine.cpp` 890 行，已有 D2D（`ID2D1HwndRenderTarget`）、PMv2、UIA Provider、窗口驱动测试。
+
+| 能力 | 在 Studio 中的 grep 结果 |
+| --- | --- |
+| 标注（`exr_library_*note`） | 0 处 |
+| 选区命中（`exr_layout_hit_test`、`exr_fixed_text_hit`） | 0 处 |
+| 剪贴板 | 0 处 |
+| 书内查找（`exr_document_find` 等） | 0 处 |
+| 删除书籍、固定页渲染、UIA | 有 |
+
+因此它覆盖不了第 7–12 行，且书库与主宿主独立。**建议：不以 Studio 为底座替换 `reader.c`，只评估复用其渲染层和自绘控件。** 这一点需要在实现阶段开始前确认。
+
+## E. 已知缺口
+
+- SDK 公开头文件中按关键词（outline、bookmark）没有找到 PDF 大纲读取接口，PDF 目录暂按“没有目录”处理（文案见 INTERACTION §7）。
+- `HOST_IMPORT_LIMIT` 为 96 MiB（`reader.c:52`），流式 EPUB 也受此限制（`import_bounded_epub`）。这是大书体验的硬上限，是否放宽不在本轮范围。
+- 拉丁字符数按 `Reader.otf`（Noto Sans CJK SC）的 hmtx 和英文字母频率估算，未计大写和标点，实际书籍需在实现时复核。
