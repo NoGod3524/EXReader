@@ -1,0 +1,62 @@
+[
+  {
+    "job": "corpus / R2 real document acceptance",
+    "job_id": 126390680248,
+    "run_id": 41774219995,
+    "first_error": [
+      "CMake Error at CMakeLists.txt:3 (find_package):",
+      "  Could not find a configuration file for package \"EXReader\" that exactly",
+      "  matches requested version \"3.41.0\".",
+      "  The following configuration files were considered but not accepted:",
+      "    /home/runner/work/EXReader/EXReader/build/reading-core/stage/lib/cmake/EXReader/EXReaderConfig.cmake, version: 3.42.0"
+    ],
+    "excerpt_format": "timestamp/ANSI and blank lines removed; first five nonblank diagnostic lines",
+    "log_sha256": "c4221cce1d74fb742001ed1d1e76c682d4edc7af86377381df01f4a6a3a6d5d2"
+  },
+  {
+    "job": "reading-required-core",
+    "job_id": 126396873731,
+    "run_id": 41774219995,
+    "first_error": [
+      "##[error]Process completed with exit code 1."
+    ],
+    "aggregation": {
+      "check": "reading-required-core",
+      "expected_groups": [
+        "corpus",
+        "native",
+        "platforms",
+        "profiles",
+        "protocol"
+      ],
+      "actual": {
+        "protocol": {
+          "result": "success",
+          "outputs": {}
+        },
+        "native": {
+          "result": "success",
+          "outputs": {}
+        },
+        "profiles": {
+          "result": "success",
+          "outputs": {}
+        },
+        "platforms": {
+          "result": "success",
+          "outputs": {}
+        },
+        "corpus": {
+          "result": "failure",
+          "outputs": {
+            "accepted": "",
+            "manifest_sha256": ""
+          }
+        }
+      },
+      "performance_advisory": true,
+      "accepted": false
+    },
+    "log_sha256": "b398b69945b70c4a2aef9db8747807cf6f330a7b2d54b47fe49cd06c928d860d"
+  }
+]

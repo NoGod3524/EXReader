@@ -1,0 +1,6 @@
+PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions
+CMakeLists.txt:3 -> project(EXReader VERSION 3.41.0 LANGUAGES C) vs expected 3.42.0 from ${EXR_SDK_VERSION}
+PASS: deliberate version drift rejected (exit 1)
+tests/reading_corpus/CMakeLists.txt:3 -> 3.41.0 vs expected 3.42.0; 改为读取安装包 version file，或登记豁免
+tests/reading_corpus/CMakeLists.txt:3 -> 3.41.0 vs expected 3.42.0 or an exact evidence-bound exception
+PASS: deliberate consumer version drift rejected (exit 1)
