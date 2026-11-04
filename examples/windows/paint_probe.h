@@ -20,3 +20,18 @@ static exr_status host_probe_render(const exr_layout *layout, const exr_control 
   }
   return status;
 }
+
+static LONG host_probe_layout_calls;
+static int host_probe_burst_left;
+#define HOST_PROBE_BURST_TIMER 0x7e91
+static exr_status host_probe_pager_get(exr_pager *pager,size_t page,const exr_layout **layout,exr_error *error) {
+  InterlockedIncrement(&host_probe_layout_calls);return exr_pager_get(pager,page,layout,error);
+}
+#define exr_pager_get host_probe_pager_get
+static void host_probe_present(double generation) {
+  if(GetEnvironmentVariableW(L"EXR_PAINT_TRACE",NULL,0)) {
+    typedef HRESULT (WINAPI *flush_fn)(void);static HMODULE module;static flush_fn flush;
+    if(!module){module=LoadLibraryW(L"dwmapi.dll");if(module)flush=(flush_fn)GetProcAddress(module,"DwmFlush");}
+    GdiFlush();if(flush)flush();host_probe_log("present_gen",generation);
+  }
+}

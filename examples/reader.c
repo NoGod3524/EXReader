@@ -1286,7 +1286,7 @@ static void metadata_failed_to_start(host_job *job);
 static void job_start(host_job *job) {
   uintptr_t handle;
   unsigned thread_id = 0;
-  if(job->kind==JOB_OPEN || job->kind==JOB_LAYOUT || job->kind==JOB_IMPORT || job->kind==JOB_PREFERENCES || job->kind==JOB_PRODUCT_DELETE)page_cache_clear();
+  if(job->kind==JOB_OPEN || job->kind==JOB_LAYOUT || job->kind==JOB_IMPORT || job->kind==JOB_PREFERENCES || job->kind==JOB_PRODUCT_DELETE || (job->zoom_percent>0 && job->zoom_percent!=g.zoom_percent))page_cache_clear();
   g.job = job;
   if (job->kind != JOB_HIT && job->kind != JOB_SAVE && job->kind != JOB_PREFETCH && job->kind != JOB_IMPORT_ORGANIZE
 #ifdef EXR_READER_WINDOWS_WAVE3
@@ -2512,6 +2512,7 @@ static exr_status job_bounded_go(host_job *job) {
 }
 
 static exr_status job_go(host_job *job) {
+  LONG layout_before=host_probe_layout_calls;
   exr_error error = {0};
   exr_status status;
   if (!g.session.active) return EXR_ARGUMENT;
@@ -2522,6 +2523,7 @@ static exr_status job_go(host_job *job) {
       frame_move(&job->frame,&page_cache[i]);job->frame.generation=++g.frame_sequence;
       job->have_frame=1;job->applied_page=job->frame.page;job->page_count=g.session.page_count;
       host_probe_log("cache_hit",(double)job->frame.page);
+      host_probe_log("cache_layout_delta",(double)(host_probe_layout_calls-layout_before));
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       return prefs_commit(job,EXR_OK);
 #else
@@ -3444,6 +3446,7 @@ static void paint_page_view(HWND window) {
          paint.rcPaint.bottom-paint.rcPaint.top,dc,paint.rcPaint.left,paint.rcPaint.top,SRCCOPY);
   EndPaint(window, &paint);
   host_probe_log("paint_ms",host_probe_ms()-paint_start);
+  host_probe_present((double)g.frame.generation);
 }
 
 static size_t point_offset(int x, int y, int at_end) {
@@ -3629,6 +3632,11 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       SetTimer(window,PAGE_WHEEL_TIMER,16,NULL);
       return 0;
     case WM_TIMER:
+      if(wparam==HOST_PROBE_BURST_TIMER) {
+        SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,-WHEEL_DELTA),0);
+        if(--host_probe_burst_left<=0)KillTimer(window,HOST_PROBE_BURST_TIMER);
+        return 0;
+      }
       if(wparam==PAGE_WHEEL_TIMER) {
         if((g.job && g.job->kind!=JOB_PREFETCH) || g.pending)return 0;
         if(wheel_delta<=-WHEEL_DELTA) { wheel_delta+=WHEEL_DELTA;page_step(1); }
@@ -5350,8 +5358,21 @@ static int drive_execute(void) {
     drive_step_finish(1, "waited");
     return 0;
   }
+  if(!strcmp(action,"probe_mark")) { host_probe_log(drive_args[1],0);drive_step_finish(1,"marked");return 0; }
+  if(!strcmp(action,"probe_title")) {
+    wchar_t *title=host_wide(drive_args[1],strlen(drive_args[1]));SetWindowTextW(g.window,title);free(title);
+    RECT area;POINT pt={0,0};GetClientRect(g.window,&area);
+    host_probe_log("client_w",area.right);host_probe_log("client_h",area.bottom);
+    MapWindowPoints(g.page,g.window,&pt,1);GetClientRect(g.page,&area);
+    host_probe_log("roi_x",pt.x);host_probe_log("roi_y",pt.y);host_probe_log("roi_w",area.right);host_probe_log("roi_h",area.bottom);
+    host_probe_log("record_ready",0);drive_step_finish(1,"record ready");return 0;
+  }
+  if(!strcmp(action,"probe_wheel_burst")) {
+    host_probe_burst_left=100;SetTimer(g.page,HOST_PROBE_BURST_TIMER,10,NULL);drive_expect_idle=1;return 1;
+  }
   if (!strcmp(action, "probe_key") || !strcmp(action, "probe_wheel")) {
     SetFocus(g.page);
+    host_probe_log("input_gen",(double)g.frame.generation);
     SendMessageW(g.page,!strcmp(action,"probe_key")?WM_KEYDOWN:WM_MOUSEWHEEL,!strcmp(action,"probe_key")?VK_NEXT:MAKEWPARAM(0,-WHEEL_DELTA),0);
     drive_expect_idle=1;return 1;
   }
@@ -5663,7 +5684,7 @@ static void drive_tick(void) {
       continue;
     }
     if (drive_expect_idle) {
-      if (g.job || g.pending) {
+      if (g.job || g.pending || host_probe_burst_left || wheel_delta<=-WHEEL_DELTA || wheel_delta>=WHEEL_DELTA) {
         if (GetTickCount() - drive_step_start > 120000) {
           drive_step_finish(0, "timeout waiting for task");
           continue;
