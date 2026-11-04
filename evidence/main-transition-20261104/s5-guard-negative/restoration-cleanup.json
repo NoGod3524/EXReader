@@ -1,0 +1,16 @@
+{
+  "pr": {
+    "closedAt": "2026-11-04T20:17:42Z",
+    "mergedAt": null,
+    "number": 40,
+    "state": "CLOSED"
+  },
+  "negative_head": "66cda7de3eeb5064fe7226b42c55ee29a29abd8f",
+  "restoration_commit": "b43b1fb94ad55719b061f0823535ddec5cfe83e4",
+  "restored_entire_tree_equals_base_main_682e1ab5": true,
+  "restoration_pushed": true,
+  "restoration_skips_ci": true,
+  "remote_branch_deleted": true,
+  "local_branch_deleted": true,
+  "negative_merged": false
+}
