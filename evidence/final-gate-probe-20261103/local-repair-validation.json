@@ -1,0 +1,21 @@
+{
+  "source_commit": "f19788b7449f03a2cefac7a59a24727c1674b81c",
+  "benchmark_test_blob_before": "7affbe82112687b7c50a65de9b70f64281b793ed",
+  "benchmark_test_blob_after": "7affbe82112687b7c50a65de9b70f64281b793ed",
+  "benchmark_test_unchanged": true,
+  "checks": {
+    "unchanged_benchmark_test": "PASS: Benchmark eager/paged JSON, bounded continuation, render samples, runner and invalid arguments verified",
+    "perf_policy": "PASS",
+    "ci_hygiene_diagnostic_and_identity_lifecycle": "PASS",
+    "ci_hygiene_failfast": "PASS",
+    "ci_hygiene_negative": "PASS",
+    "ci_hygiene_packaging": "PASS",
+    "current_baseline_validation": "PASS: 0 violations; failfast507 / negative15 / diagnostic7 / packaging4"
+  },
+  "baseline_mapping": {
+    "before_rule_rows": 533,
+    "after_content_identities": 531,
+    "after_rule_bindings": 533,
+    "unmapped": []
+  }
+}
