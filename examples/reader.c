@@ -542,6 +542,7 @@ static void page_cache_put(host_frame *frame) {
   frame_move(&page_cache[i],frame);
 }
 static int compute_view(void);
+static void compose_page_view(HWND window);
 static void page_dirty(HWND window,int full) {
   RECT client,dirty,old;GetClientRect(window,&client);dirty=client;
   if(!full && g.frame.valid && g.view.valid) {
@@ -553,6 +554,7 @@ static void page_dirty(HWND window,int full) {
       UnionRect(&dirty,&old,&now);IntersectRect(&dirty,&dirty,&client);
     }
   }
+  compose_page_view(window);
   InvalidateRect(window,&dirty,FALSE);
 }
 static long wheel_delta;
@@ -975,6 +977,7 @@ struct host_job {
   size_t target_offset;
   int use_offset;
   int direction;
+  int batch_delta;
   int font_percent;
   int zoom_percent;
   exr_anchor anchor;
@@ -2455,7 +2458,49 @@ static exr_status chapter_last_page(exr_pager *pager, size_t *page, exr_error *e
   *page = lo; memset(error, 0, sizeof(*error)); return EXR_OK;
 }
 
+/* Resolve a coalesced wheel move across publication parts without rendering
+   the skipped pages. Own at most one temporary pager until UI acceptance. */
+static exr_status job_bounded_batch(host_job *job) {
+  host_session candidate=g.session;exr_pager *owned=NULL;exr_error error={0};
+  exr_control control={job_cancel_check,NULL,job};exr_status status=EXR_OK;
+  size_t count=0,page=g.frame.page,part=candidate.part;
+  const exr_part *parts=exr_publication_parts(candidate.publication,&count);
+  candidate.hold_progress=0;
+  size_t left=(size_t)(job->batch_delta<0?-(int64_t)job->batch_delta:job->batch_delta);
+  while(left && status==EXR_OK) {
+    if(job_cancel_check(job)) { status=EXR_CANCELLED;break; }
+    if(job->batch_delta>0) {
+      const exr_layout *layout=NULL;size_t last;
+      if(left>SIZE_MAX-page) { status=EXR_LIMIT;break; }
+      status=exr_pager_get(candidate.pager,page+left,&layout,&error);
+      if(status==EXR_OK) { page+=left;break; }
+      if(!pager_eof(status,&error))break;
+      status=chapter_last_page(candidate.pager,&last,&error);if(status!=EXR_OK)break;
+      left-=last-page+1;
+      size_t next=part+1;while(next<count && !parts[next].in_reading_order)next++;
+      if(next==count) { page=last;job->at_end=1;break; }
+      part=next;page=0;
+    } else {
+      if(left<=page) { page-=left;break; }
+      left-=page+1;size_t prev=part;
+      while(prev && !parts[--prev].in_reading_order) {}
+      if(prev==part || !parts[prev].in_reading_order) {page=0;break;}
+      part=prev;
+    }
+    exr_pager *next=NULL;status=bounded_pager(&candidate,part,&next,&error);
+    if(status!=EXR_OK)break;
+    exr_pager_free(owned);owned=next;candidate.pager=next;candidate.part=part;
+    if(job->batch_delta<0)status=chapter_last_page(next,&page,&error);
+  }
+  if(status==EXR_OK)status=render_reflow(&candidate,page,&job->frame,&control,&error);
+  if(status==EXR_OK) {
+    job->have_frame=1;job->applied_page=page;
+    if(owned) {job->candidate_pager=owned;owned=NULL;job->candidate_config=candidate.config;}
+  } else job->error=error;
+  exr_pager_free(owned);return status;
+}
 static exr_status job_bounded_go(host_job *job) {
+  if(!job->use_offset && (job->batch_delta>1 || job->batch_delta<-1))return job_bounded_batch(job);
   host_session candidate = g.session; exr_pager *pager = NULL;
   exr_error error = {0}; exr_status status = EXR_OK;
   exr_control control = {job_cancel_check, NULL, job};
@@ -3394,19 +3439,17 @@ static void page_buffer_release(void) {
   page_buffer_old=NULL;
   page_buffer_dc=NULL;page_buffer_bitmap=NULL;page_buffer_width=page_buffer_height=0;
 }
-static void paint_page_view(HWND window) {
-  host_probe_log("paint",0);
-  PAINTSTRUCT paint;
+static void compose_page_view(HWND window) {
   double paint_start=host_probe_ms();
-  HDC screen = BeginPaint(window, &paint), dc;
+  HDC screen = GetDC(window), dc;
   RECT area;
   GetClientRect(window, &area);
-  if(area.right<=0 || area.bottom<=0){EndPaint(window,&paint);return;}
+  if(area.right<=0 || area.bottom<=0){ReleaseDC(window,screen);return;}
   if(!page_buffer_dc || page_buffer_width!=area.right || page_buffer_height!=area.bottom) {
     page_buffer_release();
     page_buffer_dc=CreateCompatibleDC(screen);
     page_buffer_bitmap=CreateCompatibleBitmap(screen,area.right,area.bottom);
-    if(!page_buffer_dc || !page_buffer_bitmap){page_buffer_release();EndPaint(window,&paint);return;}
+    if(!page_buffer_dc || !page_buffer_bitmap){page_buffer_release();ReleaseDC(window,screen);return;}
     page_buffer_old=SelectObject(page_buffer_dc,page_buffer_bitmap);
     page_buffer_width=area.right;page_buffer_height=area.bottom;
     host_probe_log("buffer_alloc",1);
@@ -3442,10 +3485,18 @@ static void paint_page_view(HWND window) {
     focus.left += 1; focus.top += 1; focus.right -= 1; focus.bottom -= 1;
     DrawFocusRect(dc, &focus);
   }
-  BitBlt(screen,paint.rcPaint.left,paint.rcPaint.top,paint.rcPaint.right-paint.rcPaint.left,
-         paint.rcPaint.bottom-paint.rcPaint.top,dc,paint.rcPaint.left,paint.rcPaint.top,SRCCOPY);
-  EndPaint(window, &paint);
-  host_probe_log("paint_ms",host_probe_ms()-paint_start);
+  ReleaseDC(window,screen);
+  host_probe_log("compose_ms",host_probe_ms()-paint_start);
+}
+static void paint_page_view(HWND window) {
+  PAINTSTRUCT paint;double start=host_probe_ms();
+  host_probe_log("paint",0);
+  if(!page_buffer_dc)compose_page_view(window);
+  HDC screen=BeginPaint(window,&paint);
+  if(page_buffer_dc)BitBlt(screen,paint.rcPaint.left,paint.rcPaint.top,
+    paint.rcPaint.right-paint.rcPaint.left,paint.rcPaint.bottom-paint.rcPaint.top,
+    page_buffer_dc,paint.rcPaint.left,paint.rcPaint.top,SRCCOPY);
+  EndPaint(window,&paint);host_probe_log("paint_ms",host_probe_ms()-start);
   host_probe_present((double)g.frame.generation);
 }
 
@@ -3639,9 +3690,11 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       }
       if(wparam==PAGE_WHEEL_TIMER) {
         if((g.job && g.job->kind!=JOB_PREFETCH) || g.pending)return 0;
-        if(wheel_delta<=-WHEEL_DELTA) { wheel_delta+=WHEEL_DELTA;page_step(1); }
-        else if(wheel_delta>=WHEEL_DELTA) { wheel_delta-=WHEEL_DELTA;page_step(-1); }
-        else KillTimer(window,PAGE_WHEEL_TIMER);
+        int steps=(int)(wheel_delta/WHEEL_DELTA);
+        if(steps) {
+          if(g.session.txt)steps=steps>0?1:-1;
+          wheel_delta-=(long)steps*WHEEL_DELTA;page_step(-steps);
+        } else KillTimer(window,PAGE_WHEEL_TIMER);
         return 0;
       }
       break;
@@ -3883,6 +3936,7 @@ static void page_step(int direction) {
   if (!job) { set_status(L"内存不足，无法翻页。"); return; }
   job->book_id = g.current.id;
   job->target_page = target;
+  job->batch_delta = (direction>-1000000 && direction<1000000)?direction:0;
   job->direction = direction > 0 ? 1 : -1;
   if (g.session.bounded && direction < 0 && direction > -1000000 && g.frame.page == 0) job->target_page = SIZE_MAX;
   job_submit(job);
@@ -5357,6 +5411,17 @@ static int drive_execute(void) {
     Sleep((DWORD)atoi(drive_args[1]));
     drive_step_finish(1, "waited");
     return 0;
+  }
+  if(!strcmp(action,"probe_wait")) {
+    if(GetTickCount()-drive_step_start<(DWORD)atoi(drive_args[1]))return 1;
+    drive_step_finish(1,"waited without blocking UI");return 0;
+  }
+  if(!strcmp(action,"probe_resize")) {
+    typedef HANDLE (WINAPI *thread_dpi_fn)(HANDLE);
+    thread_dpi_fn fn=(thread_dpi_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetThreadDpiAwarenessContext");
+    HANDLE old=fn?fn((HANDLE)(INT_PTR)-4):NULL;
+    SetWindowPos(g.window,NULL,100,100,atoi(drive_args[1]),atoi(drive_args[2]),SWP_NOZORDER|SWP_NOACTIVATE);
+    if(fn && old)fn(old);drive_step_finish(1,"physical window size set");return 0;
   }
   if(!strcmp(action,"probe_mark")) { host_probe_log(drive_args[1],0);drive_step_finish(1,"marked");return 0; }
   if(!strcmp(action,"probe_title")) {
