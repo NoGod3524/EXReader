@@ -1,0 +1,2740 @@
+{
+  "conclusion": "success",
+  "createdAt": "2026-11-04T06:31:30Z",
+  "databaseId": 41786091768,
+  "event": "pull_request",
+  "headSha": "5bdfc4dd919b52cc14a030dde0c78a10dd977a9f",
+  "jobs": [
+    {
+      "completedAt": "2026-11-04T06:31:41Z",
+      "conclusion": "success",
+      "databaseId": 126428447638,
+      "name": "protocol",
+      "startedAt": "2026-11-04T06:31:32Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:33Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:36Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:36Z",
+          "conclusion": "success",
+          "name": "Run python3 tests/check_reading_release.py",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:37Z",
+          "conclusion": "success",
+          "name": "Run python3 tests/check_reading_required.py",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:37Z",
+          "conclusion": "success",
+          "name": "Run python3 tests/check_reading_real_environments.py",
+          "number": 5,
+          "startedAt": "2026-11-04T06:31:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:38Z",
+          "conclusion": "success",
+          "name": "Run python3 tests/check_reading_cpu_export.py",
+          "number": 6,
+          "startedAt": "2026-11-04T06:31:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:38Z",
+          "conclusion": "success",
+          "name": "Run python3 tests/check_reading_release_plan.py",
+          "number": 7,
+          "startedAt": "2026-11-04T06:31:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:38Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 14,
+          "startedAt": "2026-11-04T06:31:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:38Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-11-04T06:31:38Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428447638"
+    },
+    {
+      "completedAt": "2026-11-04T06:34:19Z",
+      "conclusion": "success",
+      "databaseId": 126428447864,
+      "name": "corpus / R2 real document acceptance",
+      "startedAt": "2026-11-04T06:31:32Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:34Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:38Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:51Z",
+          "conclusion": "success",
+          "name": "Install independent source inspector",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:51Z",
+          "conclusion": "success",
+          "name": "Verify declaration before any engine process",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:51Z",
+          "conclusion": "success",
+          "name": "Verify bounded collector retry and download refusals",
+          "number": 5,
+          "startedAt": "2026-11-04T06:31:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:58Z",
+          "conclusion": "success",
+          "name": "Recover eight frozen originals and verify current publisher licenses",
+          "number": 6,
+          "startedAt": "2026-11-04T06:31:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:16Z",
+          "conclusion": "success",
+          "name": "Build and install current native reading SDK",
+          "number": 7,
+          "startedAt": "2026-11-04T06:31:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:16Z",
+          "conclusion": "success",
+          "name": "Build public installed reading consumers",
+          "number": 8,
+          "startedAt": "2026-11-04T06:33:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:16Z",
+          "conclusion": "success",
+          "name": "Exercise real consumers and rejected evidence paths",
+          "number": 9,
+          "startedAt": "2026-11-04T06:33:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:11Z",
+          "conclusion": "success",
+          "name": "Complete all-page and reopen-selector acceptance",
+          "number": 10,
+          "startedAt": "2026-11-04T06:33:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:17Z",
+          "conclusion": "success",
+          "name": "Preserve all inputs, failures and source-bound results",
+          "number": 11,
+          "startedAt": "2026-11-04T06:34:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:17Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 22,
+          "startedAt": "2026-11-04T06:34:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:17Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 23,
+          "startedAt": "2026-11-04T06:34:17Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428447864"
+    },
+    {
+      "completedAt": "2026-11-04T06:35:06Z",
+      "conclusion": "success",
+      "databaseId": 126428447875,
+      "name": "platforms / reading windows-2022 (reading-library)",
+      "startedAt": "2026-11-04T06:31:32Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:34Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:44Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:44Z",
+          "conclusion": "success",
+          "name": "Verify accepted integration ancestor",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:44Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:50Z",
+          "conclusion": "success",
+          "name": "Install pinned Ninja",
+          "number": 5,
+          "startedAt": "2026-11-04T06:31:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:56Z",
+          "conclusion": "success",
+          "name": "Enter MSVC x64 developer environment",
+          "number": 6,
+          "startedAt": "2026-11-04T06:31:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:59Z",
+          "conclusion": "success",
+          "name": "Record toolchain and workspace paths",
+          "number": 7,
+          "startedAt": "2026-11-04T06:31:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:14Z",
+          "conclusion": "success",
+          "name": "Configure explicit reading preset",
+          "number": 8,
+          "startedAt": "2026-11-04T06:31:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:21Z",
+          "conclusion": "success",
+          "name": "Build and install selected components",
+          "number": 9,
+          "startedAt": "2026-11-04T06:33:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:25Z",
+          "conclusion": "success",
+          "name": "Compile installed C consumers and C++ headers",
+          "number": 10,
+          "startedAt": "2026-11-04T06:34:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:26Z",
+          "conclusion": "success",
+          "name": "Declare and hash the exact consumer program set",
+          "number": 11,
+          "startedAt": "2026-11-04T06:34:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:27Z",
+          "conclusion": "success",
+          "name": "Run installed consumer tests",
+          "number": 12,
+          "startedAt": "2026-11-04T06:34:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:28Z",
+          "conclusion": "success",
+          "name": "Run predeclared nine-format fixture smoke",
+          "number": 13,
+          "startedAt": "2026-11-04T06:34:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:28Z",
+          "conclusion": "success",
+          "name": "Run the benchmark program once on a fixture (loader evidence, no performance claim)",
+          "number": 14,
+          "startedAt": "2026-11-04T06:34:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:28Z",
+          "conclusion": "success",
+          "name": "Execute the installed stored-chapter probe (loader and persistence evidence)",
+          "number": 15,
+          "startedAt": "2026-11-04T06:34:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:29Z",
+          "conclusion": "success",
+          "name": "Gate installed files, program identity, dependencies, executions and toolchain",
+          "number": 16,
+          "startedAt": "2026-11-04T06:34:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:47Z",
+          "conclusion": "success",
+          "name": "Rejection regression for the evidence gate",
+          "number": 17,
+          "startedAt": "2026-11-04T06:34:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:48Z",
+          "conclusion": "success",
+          "name": "Require complete release license materials on this installed stage",
+          "number": 18,
+          "startedAt": "2026-11-04T06:34:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:49Z",
+          "conclusion": "success",
+          "name": "Execute the installed SDK identity and schema consumer",
+          "number": 19,
+          "startedAt": "2026-11-04T06:34:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:59Z",
+          "conclusion": "success",
+          "name": "Seal a native platform candidate without granting quality or publication",
+          "number": 20,
+          "startedAt": "2026-11-04T06:34:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:02Z",
+          "conclusion": "success",
+          "name": "Preserve source-bound evidence and installed SDK",
+          "number": 21,
+          "startedAt": "2026-11-04T06:34:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:02Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 41,
+          "startedAt": "2026-11-04T06:35:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:04Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 42,
+          "startedAt": "2026-11-04T06:35:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:04Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 43,
+          "startedAt": "2026-11-04T06:35:04Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428447875"
+    },
+    {
+      "completedAt": "2026-11-04T06:46:34Z",
+      "conclusion": "success",
+      "databaseId": 126428447969,
+      "name": "native / apple-mobile",
+      "startedAt": "2026-11-04T06:31:33Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:34Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:38Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:39Z",
+          "conclusion": "success",
+          "name": "Build iOS and iPadOS device and simulator libraries",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:02Z",
+          "conclusion": "success",
+          "name": "Install iPhone and iPad product dependencies",
+          "number": 4,
+          "startedAt": "2026-11-04T06:34:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:46:21Z",
+          "conclusion": "success",
+          "name": "Build and run the iPhone and iPad reference host",
+          "number": 5,
+          "startedAt": "2026-11-04T06:36:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:46:24Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 6,
+          "startedAt": "2026-11-04T06:46:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:46:30Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 7,
+          "startedAt": "2026-11-04T06:46:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:46:31Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 14,
+          "startedAt": "2026-11-04T06:46:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:46:32Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-11-04T06:46:31Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428447969"
+    },
+    {
+      "completedAt": "2026-11-04T06:40:41Z",
+      "conclusion": "success",
+      "databaseId": 126428448003,
+      "name": "native / desktop (macos-15)",
+      "startedAt": "2026-11-04T06:31:33Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:36Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:40Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:52Z",
+          "conclusion": "success",
+          "name": "Configure native C",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:22Z",
+          "conclusion": "success",
+          "name": "Build",
+          "number": 4,
+          "startedAt": "2026-11-04T06:32:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:22Z",
+          "conclusion": "skipped",
+          "name": "Verify compiled layer dependencies",
+          "number": 5,
+          "startedAt": "2026-11-04T06:34:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:01Z",
+          "conclusion": "success",
+          "name": "Native parsing, pagination, rendering and bookshelf tests",
+          "number": 6,
+          "startedAt": "2026-11-04T06:34:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:05Z",
+          "conclusion": "success",
+          "name": "Table continuation with a platform OpenType font",
+          "number": 7,
+          "startedAt": "2026-11-04T06:36:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:37Z",
+          "conclusion": "success",
+          "name": "Measure bounded single chapters and evicted-window recovery",
+          "number": 8,
+          "startedAt": "2026-11-04T06:36:05Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:38Z",
+          "conclusion": "success",
+          "name": "Preserve bounded chapter measurements",
+          "number": 9,
+          "startedAt": "2026-11-04T06:36:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:40Z",
+          "conclusion": "success",
+          "name": "Install portable SDK with license notices",
+          "number": 10,
+          "startedAt": "2026-11-04T06:36:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:43Z",
+          "conclusion": "success",
+          "name": "Build and run installed static components",
+          "number": 11,
+          "startedAt": "2026-11-04T06:36:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:12Z",
+          "conclusion": "success",
+          "name": "Build and test core without optional components",
+          "number": 12,
+          "startedAt": "2026-11-04T06:36:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:43Z",
+          "conclusion": "success",
+          "name": "Verify storage without playback or PDF",
+          "number": 13,
+          "startedAt": "2026-11-04T06:38:12Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:45Z",
+          "conclusion": "success",
+          "name": "Build host examples against the installed SDK",
+          "number": 14,
+          "startedAt": "2026-11-04T06:38:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:45Z",
+          "conclusion": "skipped",
+          "name": "Run the installed Windows SDK",
+          "number": 15,
+          "startedAt": "2026-11-04T06:38:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:45Z",
+          "conclusion": "skipped",
+          "name": "Run the installed Linux SDK",
+          "number": 16,
+          "startedAt": "2026-11-04T06:38:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:45Z",
+          "conclusion": "skipped",
+          "name": "Package and check the Windows reference reader",
+          "number": 17,
+          "startedAt": "2026-11-04T06:38:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:46Z",
+          "conclusion": "success",
+          "name": "Run the installed macOS SDK",
+          "number": 18,
+          "startedAt": "2026-11-04T06:38:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:47Z",
+          "conclusion": "success",
+          "name": "Measure installed PDF group rendering",
+          "number": 19,
+          "startedAt": "2026-11-04T06:38:46Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:48Z",
+          "conclusion": "success",
+          "name": "Bound table alignment memory against the installed SDK",
+          "number": 20,
+          "startedAt": "2026-11-04T06:38:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:50Z",
+          "conclusion": "success",
+          "name": "Build and run JNI host against installed SDK",
+          "number": 21,
+          "startedAt": "2026-11-04T06:38:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:40:28Z",
+          "conclusion": "success",
+          "name": "Build and run Swift host against installed SDK",
+          "number": 22,
+          "startedAt": "2026-11-04T06:38:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:40:28Z",
+          "conclusion": "skipped",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 23,
+          "startedAt": "2026-11-04T06:40:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:40:30Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 24,
+          "startedAt": "2026-11-04T06:40:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:40:31Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 25,
+          "startedAt": "2026-11-04T06:40:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:40:33Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 26,
+          "startedAt": "2026-11-04T06:40:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:40:36Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 27,
+          "startedAt": "2026-11-04T06:40:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:40:36Z",
+          "conclusion": "skipped",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 28,
+          "startedAt": "2026-11-04T06:40:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:40:37Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 56,
+          "startedAt": "2026-11-04T06:40:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:40:39Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 57,
+          "startedAt": "2026-11-04T06:40:37Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448003"
+    },
+    {
+      "completedAt": "2026-11-04T06:45:25Z",
+      "conclusion": "success",
+      "databaseId": 126428448010,
+      "name": "native / sanitizers",
+      "startedAt": "2026-11-04T06:31:33Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:34Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:36Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:02Z",
+          "conclusion": "success",
+          "name": "Run cmake -S . -B build/asan -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_ENABLE_AAC=OFF",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:41Z",
+          "conclusion": "success",
+          "name": "Run cmake --build build/asan --parallel 4",
+          "number": 4,
+          "startedAt": "2026-11-04T06:32:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:45:17Z",
+          "conclusion": "success",
+          "name": "Run ctest --test-dir build/asan --output-on-failure",
+          "number": 5,
+          "startedAt": "2026-11-04T06:33:41Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:45:18Z",
+          "conclusion": "success",
+          "name": "Preserve sanitizer test evidence",
+          "number": 6,
+          "startedAt": "2026-11-04T06:45:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:45:18Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 12,
+          "startedAt": "2026-11-04T06:45:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:45:19Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 13,
+          "startedAt": "2026-11-04T06:45:18Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448010"
+    },
+    {
+      "completedAt": "2026-11-04T06:34:35Z",
+      "conclusion": "success",
+      "databaseId": 126428448092,
+      "name": "platforms / reading macos-15 (reading-library)",
+      "startedAt": "2026-11-04T06:31:34Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:36Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:43Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:43Z",
+          "conclusion": "success",
+          "name": "Verify accepted integration ancestor",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:43Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:46Z",
+          "conclusion": "success",
+          "name": "Install pinned Ninja",
+          "number": 5,
+          "startedAt": "2026-11-04T06:31:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:46Z",
+          "conclusion": "skipped",
+          "name": "Enter MSVC x64 developer environment",
+          "number": 6,
+          "startedAt": "2026-11-04T06:31:46Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:48Z",
+          "conclusion": "success",
+          "name": "Record toolchain and workspace paths",
+          "number": 7,
+          "startedAt": "2026-11-04T06:31:46Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:01Z",
+          "conclusion": "success",
+          "name": "Configure explicit reading preset",
+          "number": 8,
+          "startedAt": "2026-11-04T06:31:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:54Z",
+          "conclusion": "success",
+          "name": "Build and install selected components",
+          "number": 9,
+          "startedAt": "2026-11-04T06:33:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:58Z",
+          "conclusion": "success",
+          "name": "Compile installed C consumers and C++ headers",
+          "number": 10,
+          "startedAt": "2026-11-04T06:33:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:58Z",
+          "conclusion": "success",
+          "name": "Declare and hash the exact consumer program set",
+          "number": 11,
+          "startedAt": "2026-11-04T06:33:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:58Z",
+          "conclusion": "success",
+          "name": "Run installed consumer tests",
+          "number": 12,
+          "startedAt": "2026-11-04T06:33:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:59Z",
+          "conclusion": "success",
+          "name": "Run predeclared nine-format fixture smoke",
+          "number": 13,
+          "startedAt": "2026-11-04T06:33:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:59Z",
+          "conclusion": "success",
+          "name": "Run the benchmark program once on a fixture (loader evidence, no performance claim)",
+          "number": 14,
+          "startedAt": "2026-11-04T06:33:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:59Z",
+          "conclusion": "success",
+          "name": "Execute the installed stored-chapter probe (loader and persistence evidence)",
+          "number": 15,
+          "startedAt": "2026-11-04T06:33:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:02Z",
+          "conclusion": "success",
+          "name": "Gate installed files, program identity, dependencies, executions and toolchain",
+          "number": 16,
+          "startedAt": "2026-11-04T06:33:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:21Z",
+          "conclusion": "success",
+          "name": "Rejection regression for the evidence gate",
+          "number": 17,
+          "startedAt": "2026-11-04T06:34:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:22Z",
+          "conclusion": "success",
+          "name": "Require complete release license materials on this installed stage",
+          "number": 18,
+          "startedAt": "2026-11-04T06:34:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:24Z",
+          "conclusion": "success",
+          "name": "Execute the installed SDK identity and schema consumer",
+          "number": 19,
+          "startedAt": "2026-11-04T06:34:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:26Z",
+          "conclusion": "success",
+          "name": "Seal a native platform candidate without granting quality or publication",
+          "number": 20,
+          "startedAt": "2026-11-04T06:34:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:30Z",
+          "conclusion": "success",
+          "name": "Preserve source-bound evidence and installed SDK",
+          "number": 21,
+          "startedAt": "2026-11-04T06:34:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:30Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 41,
+          "startedAt": "2026-11-04T06:34:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:31Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 42,
+          "startedAt": "2026-11-04T06:34:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:33Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 43,
+          "startedAt": "2026-11-04T06:34:31Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448092"
+    },
+    {
+      "completedAt": "2026-11-04T06:31:51Z",
+      "conclusion": "success",
+      "databaseId": 126428448117,
+      "name": "native / ci-hygiene (failfast)",
+      "startedAt": "2026-11-04T06:31:33Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:34Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:39Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:39Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:43Z",
+          "conclusion": "success",
+          "name": "Run python -m pip install PyYAML==6.0.3",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:48Z",
+          "conclusion": "success",
+          "name": "Check changed CI and exercise the rule",
+          "number": 5,
+          "startedAt": "2026-11-04T06:31:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:48Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 9,
+          "startedAt": "2026-11-04T06:31:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:48Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 10,
+          "startedAt": "2026-11-04T06:31:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:48Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 11,
+          "startedAt": "2026-11-04T06:31:48Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448117"
+    },
+    {
+      "completedAt": "2026-11-04T06:34:31Z",
+      "conclusion": "success",
+      "databaseId": 126428448120,
+      "name": "native / fuzz",
+      "startedAt": "2026-11-04T06:31:32Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:34Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:36Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:52Z",
+          "conclusion": "success",
+          "name": "Configure the instrumented fuzz driver",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:34Z",
+          "conclusion": "success",
+          "name": "Run cmake --build build/fuzz --parallel 4",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:34Z",
+          "conclusion": "success",
+          "name": "Verify exact crash records and parser routing",
+          "number": 5,
+          "startedAt": "2026-11-04T06:32:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:56Z",
+          "conclusion": "success",
+          "name": "Bounded parser campaign (seeded, reproducible)",
+          "number": 6,
+          "startedAt": "2026-11-04T06:32:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:02Z",
+          "conclusion": "success",
+          "name": "Verify font, pagination and rendering pipeline contracts",
+          "number": 7,
+          "startedAt": "2026-11-04T06:32:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:14Z",
+          "conclusion": "success",
+          "name": "Bounded font, layout and rendering campaigns",
+          "number": 8,
+          "startedAt": "2026-11-04T06:33:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:28Z",
+          "conclusion": "success",
+          "name": "Verify measured CPU evidence and strict aggregation on all four targets",
+          "number": 9,
+          "startedAt": "2026-11-04T06:33:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:29Z",
+          "conclusion": "success",
+          "name": "Preserve measured evidence on success and failure",
+          "number": 10,
+          "startedAt": "2026-11-04T06:34:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:29Z",
+          "conclusion": "skipped",
+          "name": "Keep the triggering input when the campaign fails",
+          "number": 11,
+          "startedAt": "2026-11-04T06:34:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:30Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 22,
+          "startedAt": "2026-11-04T06:34:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:30Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 23,
+          "startedAt": "2026-11-04T06:34:30Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448120"
+    },
+    {
+      "completedAt": "2026-11-04T06:34:47Z",
+      "conclusion": "success",
+      "databaseId": 126428448133,
+      "name": "platforms / reading windows-2022 (reading-core)",
+      "startedAt": "2026-11-04T06:31:33Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:35Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:44Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:45Z",
+          "conclusion": "success",
+          "name": "Verify accepted integration ancestor",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:45Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:51Z",
+          "conclusion": "success",
+          "name": "Install pinned Ninja",
+          "number": 5,
+          "startedAt": "2026-11-04T06:31:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:57Z",
+          "conclusion": "success",
+          "name": "Enter MSVC x64 developer environment",
+          "number": 6,
+          "startedAt": "2026-11-04T06:31:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:00Z",
+          "conclusion": "success",
+          "name": "Record toolchain and workspace paths",
+          "number": 7,
+          "startedAt": "2026-11-04T06:31:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:12Z",
+          "conclusion": "success",
+          "name": "Configure explicit reading preset",
+          "number": 8,
+          "startedAt": "2026-11-04T06:32:00Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:09Z",
+          "conclusion": "success",
+          "name": "Build and install selected components",
+          "number": 9,
+          "startedAt": "2026-11-04T06:33:12Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:12Z",
+          "conclusion": "success",
+          "name": "Compile installed C consumers and C++ headers",
+          "number": 10,
+          "startedAt": "2026-11-04T06:34:09Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:13Z",
+          "conclusion": "success",
+          "name": "Declare and hash the exact consumer program set",
+          "number": 11,
+          "startedAt": "2026-11-04T06:34:12Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:13Z",
+          "conclusion": "success",
+          "name": "Run installed consumer tests",
+          "number": 12,
+          "startedAt": "2026-11-04T06:34:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:14Z",
+          "conclusion": "success",
+          "name": "Run predeclared nine-format fixture smoke",
+          "number": 13,
+          "startedAt": "2026-11-04T06:34:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:14Z",
+          "conclusion": "success",
+          "name": "Run the benchmark program once on a fixture (loader evidence, no performance claim)",
+          "number": 14,
+          "startedAt": "2026-11-04T06:34:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:14Z",
+          "conclusion": "skipped",
+          "name": "Execute the installed stored-chapter probe (loader and persistence evidence)",
+          "number": 15,
+          "startedAt": "2026-11-04T06:34:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:15Z",
+          "conclusion": "success",
+          "name": "Gate installed files, program identity, dependencies, executions and toolchain",
+          "number": 16,
+          "startedAt": "2026-11-04T06:34:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:28Z",
+          "conclusion": "success",
+          "name": "Rejection regression for the evidence gate",
+          "number": 17,
+          "startedAt": "2026-11-04T06:34:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:29Z",
+          "conclusion": "success",
+          "name": "Require complete release license materials on this installed stage",
+          "number": 18,
+          "startedAt": "2026-11-04T06:34:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:30Z",
+          "conclusion": "success",
+          "name": "Execute the installed SDK identity and schema consumer",
+          "number": 19,
+          "startedAt": "2026-11-04T06:34:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:39Z",
+          "conclusion": "success",
+          "name": "Seal a native platform candidate without granting quality or publication",
+          "number": 20,
+          "startedAt": "2026-11-04T06:34:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:43Z",
+          "conclusion": "success",
+          "name": "Preserve source-bound evidence and installed SDK",
+          "number": 21,
+          "startedAt": "2026-11-04T06:34:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:43Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 41,
+          "startedAt": "2026-11-04T06:34:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:45Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 42,
+          "startedAt": "2026-11-04T06:34:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:45Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 43,
+          "startedAt": "2026-11-04T06:34:45Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448133"
+    },
+    {
+      "completedAt": "2026-11-04T06:32:37Z",
+      "conclusion": "success",
+      "databaseId": 126428448144,
+      "name": "native / android",
+      "startedAt": "2026-11-04T06:31:32Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:33Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:36Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:32Z",
+          "conclusion": "success",
+          "name": "Build Android ARM64 shared engine",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:36Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 4,
+          "startedAt": "2026-11-04T06:32:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:36Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 8,
+          "startedAt": "2026-11-04T06:32:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:36Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 9,
+          "startedAt": "2026-11-04T06:32:36Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448144"
+    },
+    {
+      "completedAt": "2026-11-04T06:33:08Z",
+      "conclusion": "success",
+      "databaseId": 126428448149,
+      "name": "profiles / reading (reading-core)",
+      "startedAt": "2026-11-04T06:31:32Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:34Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:38Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:38Z",
+          "conclusion": "success",
+          "name": "Verify accepted integration ancestor",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:56Z",
+          "conclusion": "success",
+          "name": "Configure explicit reading preset",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:55Z",
+          "conclusion": "success",
+          "name": "Build and install selected components",
+          "number": 5,
+          "startedAt": "2026-11-04T06:31:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:57Z",
+          "conclusion": "success",
+          "name": "Compile installed C consumers and C++ headers",
+          "number": 6,
+          "startedAt": "2026-11-04T06:32:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:57Z",
+          "conclusion": "success",
+          "name": "Verify exported composition and measure installed size",
+          "number": 7,
+          "startedAt": "2026-11-04T06:32:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:58Z",
+          "conclusion": "success",
+          "name": "Run predeclared nine-format fixture smoke",
+          "number": 8,
+          "startedAt": "2026-11-04T06:32:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:58Z",
+          "conclusion": "success",
+          "name": "Check measurement failure handling",
+          "number": 9,
+          "startedAt": "2026-11-04T06:32:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:58Z",
+          "conclusion": "success",
+          "name": "Record initial fresh-process reflow measurements",
+          "number": 10,
+          "startedAt": "2026-11-04T06:32:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:59Z",
+          "conclusion": "success",
+          "name": "Require complete release license materials on this installed stage",
+          "number": 11,
+          "startedAt": "2026-11-04T06:32:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:59Z",
+          "conclusion": "success",
+          "name": "Execute the installed SDK identity and schema consumer",
+          "number": 12,
+          "startedAt": "2026-11-04T06:32:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:04Z",
+          "conclusion": "success",
+          "name": "Seal a candidate archive without granting quality or publication",
+          "number": 13,
+          "startedAt": "2026-11-04T06:32:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:06Z",
+          "conclusion": "success",
+          "name": "Preserve source-bound evidence and installed SDK",
+          "number": 14,
+          "startedAt": "2026-11-04T06:33:04Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:06Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 28,
+          "startedAt": "2026-11-04T06:33:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:06Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 29,
+          "startedAt": "2026-11-04T06:33:06Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448149"
+    },
+    {
+      "completedAt": "2026-11-04T06:33:46Z",
+      "conclusion": "success",
+      "databaseId": 126428448158,
+      "name": "profiles / reading (reading-library)",
+      "startedAt": "2026-11-04T06:31:33Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:34Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:39Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:39Z",
+          "conclusion": "success",
+          "name": "Verify accepted integration ancestor",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:03Z",
+          "conclusion": "success",
+          "name": "Configure explicit reading preset",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:30Z",
+          "conclusion": "success",
+          "name": "Build and install selected components",
+          "number": 5,
+          "startedAt": "2026-11-04T06:32:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:32Z",
+          "conclusion": "success",
+          "name": "Compile installed C consumers and C++ headers",
+          "number": 6,
+          "startedAt": "2026-11-04T06:33:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:33Z",
+          "conclusion": "success",
+          "name": "Verify exported composition and measure installed size",
+          "number": 7,
+          "startedAt": "2026-11-04T06:33:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:33Z",
+          "conclusion": "success",
+          "name": "Run predeclared nine-format fixture smoke",
+          "number": 8,
+          "startedAt": "2026-11-04T06:33:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:33Z",
+          "conclusion": "success",
+          "name": "Check measurement failure handling",
+          "number": 9,
+          "startedAt": "2026-11-04T06:33:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:34Z",
+          "conclusion": "success",
+          "name": "Record initial fresh-process reflow measurements",
+          "number": 10,
+          "startedAt": "2026-11-04T06:33:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:34Z",
+          "conclusion": "success",
+          "name": "Require complete release license materials on this installed stage",
+          "number": 11,
+          "startedAt": "2026-11-04T06:33:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:34Z",
+          "conclusion": "success",
+          "name": "Execute the installed SDK identity and schema consumer",
+          "number": 12,
+          "startedAt": "2026-11-04T06:33:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:40Z",
+          "conclusion": "success",
+          "name": "Seal a candidate archive without granting quality or publication",
+          "number": 13,
+          "startedAt": "2026-11-04T06:33:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:43Z",
+          "conclusion": "success",
+          "name": "Preserve source-bound evidence and installed SDK",
+          "number": 14,
+          "startedAt": "2026-11-04T06:33:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:44Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 28,
+          "startedAt": "2026-11-04T06:33:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:44Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 29,
+          "startedAt": "2026-11-04T06:33:44Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448158"
+    },
+    {
+      "completedAt": "2026-11-04T06:31:51Z",
+      "conclusion": "success",
+      "databaseId": 126428448180,
+      "name": "native / ci-hygiene (diagnostic)",
+      "startedAt": "2026-11-04T06:31:38Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:40Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:44Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:44Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:45Z",
+          "conclusion": "success",
+          "name": "Run python -m pip install PyYAML==6.0.3",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:49Z",
+          "conclusion": "success",
+          "name": "Check changed CI and exercise the rule",
+          "number": 5,
+          "startedAt": "2026-11-04T06:31:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:49Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 9,
+          "startedAt": "2026-11-04T06:31:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:49Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 10,
+          "startedAt": "2026-11-04T06:31:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:49Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 11,
+          "startedAt": "2026-11-04T06:31:49Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448180"
+    },
+    {
+      "completedAt": "2026-11-04T06:35:37Z",
+      "conclusion": "success",
+      "databaseId": 126428448278,
+      "name": "platforms / reading macos-15 (reading-core)",
+      "startedAt": "2026-11-04T06:33:10Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:33:12Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:33:10Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:19Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:33:12Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:19Z",
+          "conclusion": "success",
+          "name": "Verify accepted integration ancestor",
+          "number": 3,
+          "startedAt": "2026-11-04T06:33:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:19Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 4,
+          "startedAt": "2026-11-04T06:33:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:22Z",
+          "conclusion": "success",
+          "name": "Install pinned Ninja",
+          "number": 5,
+          "startedAt": "2026-11-04T06:33:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:22Z",
+          "conclusion": "skipped",
+          "name": "Enter MSVC x64 developer environment",
+          "number": 6,
+          "startedAt": "2026-11-04T06:33:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:23Z",
+          "conclusion": "success",
+          "name": "Record toolchain and workspace paths",
+          "number": 7,
+          "startedAt": "2026-11-04T06:33:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:34:31Z",
+          "conclusion": "success",
+          "name": "Configure explicit reading preset",
+          "number": 8,
+          "startedAt": "2026-11-04T06:33:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:13Z",
+          "conclusion": "success",
+          "name": "Build and install selected components",
+          "number": 9,
+          "startedAt": "2026-11-04T06:34:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:15Z",
+          "conclusion": "success",
+          "name": "Compile installed C consumers and C++ headers",
+          "number": 10,
+          "startedAt": "2026-11-04T06:35:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:15Z",
+          "conclusion": "success",
+          "name": "Declare and hash the exact consumer program set",
+          "number": 11,
+          "startedAt": "2026-11-04T06:35:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:15Z",
+          "conclusion": "success",
+          "name": "Run installed consumer tests",
+          "number": 12,
+          "startedAt": "2026-11-04T06:35:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:16Z",
+          "conclusion": "success",
+          "name": "Run predeclared nine-format fixture smoke",
+          "number": 13,
+          "startedAt": "2026-11-04T06:35:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:16Z",
+          "conclusion": "success",
+          "name": "Run the benchmark program once on a fixture (loader evidence, no performance claim)",
+          "number": 14,
+          "startedAt": "2026-11-04T06:35:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:16Z",
+          "conclusion": "skipped",
+          "name": "Execute the installed stored-chapter probe (loader and persistence evidence)",
+          "number": 15,
+          "startedAt": "2026-11-04T06:35:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:18Z",
+          "conclusion": "success",
+          "name": "Gate installed files, program identity, dependencies, executions and toolchain",
+          "number": 16,
+          "startedAt": "2026-11-04T06:35:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:25Z",
+          "conclusion": "success",
+          "name": "Rejection regression for the evidence gate",
+          "number": 17,
+          "startedAt": "2026-11-04T06:35:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:26Z",
+          "conclusion": "success",
+          "name": "Require complete release license materials on this installed stage",
+          "number": 18,
+          "startedAt": "2026-11-04T06:35:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:27Z",
+          "conclusion": "success",
+          "name": "Execute the installed SDK identity and schema consumer",
+          "number": 19,
+          "startedAt": "2026-11-04T06:35:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:29Z",
+          "conclusion": "success",
+          "name": "Seal a native platform candidate without granting quality or publication",
+          "number": 20,
+          "startedAt": "2026-11-04T06:35:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:32Z",
+          "conclusion": "success",
+          "name": "Preserve source-bound evidence and installed SDK",
+          "number": 21,
+          "startedAt": "2026-11-04T06:35:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:33Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 41,
+          "startedAt": "2026-11-04T06:35:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:33Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 42,
+          "startedAt": "2026-11-04T06:35:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:33Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 43,
+          "startedAt": "2026-11-04T06:35:33Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448278"
+    },
+    {
+      "completedAt": "2026-11-04T06:38:09Z",
+      "conclusion": "success",
+      "databaseId": 126428448291,
+      "name": "native / desktop (ubuntu-22.04)",
+      "startedAt": "2026-11-04T06:31:33Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:34Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:38Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:32:00Z",
+          "conclusion": "success",
+          "name": "Configure native C",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:50Z",
+          "conclusion": "success",
+          "name": "Build",
+          "number": 4,
+          "startedAt": "2026-11-04T06:32:00Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:50Z",
+          "conclusion": "success",
+          "name": "Verify compiled layer dependencies",
+          "number": 5,
+          "startedAt": "2026-11-04T06:33:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:35Z",
+          "conclusion": "success",
+          "name": "Native parsing, pagination, rendering and bookshelf tests",
+          "number": 6,
+          "startedAt": "2026-11-04T06:33:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:35:39Z",
+          "conclusion": "success",
+          "name": "Table continuation with a platform OpenType font",
+          "number": 7,
+          "startedAt": "2026-11-04T06:35:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:05Z",
+          "conclusion": "success",
+          "name": "Measure bounded single chapters and evicted-window recovery",
+          "number": 8,
+          "startedAt": "2026-11-04T06:35:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:07Z",
+          "conclusion": "success",
+          "name": "Preserve bounded chapter measurements",
+          "number": 9,
+          "startedAt": "2026-11-04T06:36:05Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:07Z",
+          "conclusion": "success",
+          "name": "Install portable SDK with license notices",
+          "number": 10,
+          "startedAt": "2026-11-04T06:36:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:08Z",
+          "conclusion": "success",
+          "name": "Build and run installed static components",
+          "number": 11,
+          "startedAt": "2026-11-04T06:36:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:37:18Z",
+          "conclusion": "success",
+          "name": "Build and test core without optional components",
+          "number": 12,
+          "startedAt": "2026-11-04T06:36:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:37:54Z",
+          "conclusion": "success",
+          "name": "Verify storage without playback or PDF",
+          "number": 13,
+          "startedAt": "2026-11-04T06:37:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:37:56Z",
+          "conclusion": "success",
+          "name": "Build host examples against the installed SDK",
+          "number": 14,
+          "startedAt": "2026-11-04T06:37:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:37:56Z",
+          "conclusion": "skipped",
+          "name": "Run the installed Windows SDK",
+          "number": 15,
+          "startedAt": "2026-11-04T06:37:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:37:56Z",
+          "conclusion": "success",
+          "name": "Run the installed Linux SDK",
+          "number": 16,
+          "startedAt": "2026-11-04T06:37:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:37:56Z",
+          "conclusion": "skipped",
+          "name": "Package and check the Windows reference reader",
+          "number": 17,
+          "startedAt": "2026-11-04T06:37:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:37:56Z",
+          "conclusion": "skipped",
+          "name": "Run the installed macOS SDK",
+          "number": 18,
+          "startedAt": "2026-11-04T06:37:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:37:57Z",
+          "conclusion": "success",
+          "name": "Measure installed PDF group rendering",
+          "number": 19,
+          "startedAt": "2026-11-04T06:37:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:37:59Z",
+          "conclusion": "success",
+          "name": "Bound table alignment memory against the installed SDK",
+          "number": 20,
+          "startedAt": "2026-11-04T06:37:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:01Z",
+          "conclusion": "success",
+          "name": "Build and run JNI host against installed SDK",
+          "number": 21,
+          "startedAt": "2026-11-04T06:37:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:01Z",
+          "conclusion": "skipped",
+          "name": "Build and run Swift host against installed SDK",
+          "number": 22,
+          "startedAt": "2026-11-04T06:38:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:01Z",
+          "conclusion": "skipped",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 23,
+          "startedAt": "2026-11-04T06:38:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:01Z",
+          "conclusion": "skipped",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 24,
+          "startedAt": "2026-11-04T06:38:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:02Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 25,
+          "startedAt": "2026-11-04T06:38:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:03Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 26,
+          "startedAt": "2026-11-04T06:38:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:07Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 27,
+          "startedAt": "2026-11-04T06:38:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:07Z",
+          "conclusion": "skipped",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 28,
+          "startedAt": "2026-11-04T06:38:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:07Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 56,
+          "startedAt": "2026-11-04T06:38:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:07Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 57,
+          "startedAt": "2026-11-04T06:38:07Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448291"
+    },
+    {
+      "completedAt": "2026-11-04T06:31:42Z",
+      "conclusion": "success",
+      "databaseId": 126428448329,
+      "name": "native / ci-hygiene (negative)",
+      "startedAt": "2026-11-04T06:31:32Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:33Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:36Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:37Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:38Z",
+          "conclusion": "success",
+          "name": "Run python -m pip install PyYAML==6.0.3",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:41Z",
+          "conclusion": "success",
+          "name": "Check changed CI and exercise the rule",
+          "number": 5,
+          "startedAt": "2026-11-04T06:31:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:41Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 9,
+          "startedAt": "2026-11-04T06:31:41Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:41Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 10,
+          "startedAt": "2026-11-04T06:31:41Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:41Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 11,
+          "startedAt": "2026-11-04T06:31:41Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448329"
+    },
+    {
+      "completedAt": "2026-11-04T06:43:45Z",
+      "conclusion": "success",
+      "databaseId": 126428448367,
+      "name": "native / desktop (windows-latest)",
+      "startedAt": "2026-11-04T06:31:33Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:35Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:42Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:33:45Z",
+          "conclusion": "success",
+          "name": "Configure native C",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:42Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:20Z",
+          "conclusion": "success",
+          "name": "Build",
+          "number": 4,
+          "startedAt": "2026-11-04T06:33:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:36:20Z",
+          "conclusion": "skipped",
+          "name": "Verify compiled layer dependencies",
+          "number": 5,
+          "startedAt": "2026-11-04T06:36:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:39Z",
+          "conclusion": "success",
+          "name": "Native parsing, pagination, rendering and bookshelf tests",
+          "number": 6,
+          "startedAt": "2026-11-04T06:36:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:38:49Z",
+          "conclusion": "success",
+          "name": "Table continuation with a platform OpenType font",
+          "number": 7,
+          "startedAt": "2026-11-04T06:38:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:39:18Z",
+          "conclusion": "success",
+          "name": "Measure bounded single chapters and evicted-window recovery",
+          "number": 8,
+          "startedAt": "2026-11-04T06:38:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:39:19Z",
+          "conclusion": "success",
+          "name": "Preserve bounded chapter measurements",
+          "number": 9,
+          "startedAt": "2026-11-04T06:39:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:39:20Z",
+          "conclusion": "success",
+          "name": "Install portable SDK with license notices",
+          "number": 10,
+          "startedAt": "2026-11-04T06:39:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:39:27Z",
+          "conclusion": "success",
+          "name": "Build and run installed static components",
+          "number": 11,
+          "startedAt": "2026-11-04T06:39:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:42:19Z",
+          "conclusion": "success",
+          "name": "Build and test core without optional components",
+          "number": 12,
+          "startedAt": "2026-11-04T06:39:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:10Z",
+          "conclusion": "success",
+          "name": "Verify storage without playback or PDF",
+          "number": 13,
+          "startedAt": "2026-11-04T06:42:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:21Z",
+          "conclusion": "success",
+          "name": "Build host examples against the installed SDK",
+          "number": 14,
+          "startedAt": "2026-11-04T06:43:10Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:23Z",
+          "conclusion": "success",
+          "name": "Run the installed Windows SDK",
+          "number": 15,
+          "startedAt": "2026-11-04T06:43:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:23Z",
+          "conclusion": "skipped",
+          "name": "Run the installed Linux SDK",
+          "number": 16,
+          "startedAt": "2026-11-04T06:43:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:25Z",
+          "conclusion": "success",
+          "name": "Package and check the Windows reference reader",
+          "number": 17,
+          "startedAt": "2026-11-04T06:43:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:25Z",
+          "conclusion": "skipped",
+          "name": "Run the installed macOS SDK",
+          "number": 18,
+          "startedAt": "2026-11-04T06:43:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:26Z",
+          "conclusion": "success",
+          "name": "Measure installed PDF group rendering",
+          "number": 19,
+          "startedAt": "2026-11-04T06:43:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:29Z",
+          "conclusion": "success",
+          "name": "Bound table alignment memory against the installed SDK",
+          "number": 20,
+          "startedAt": "2026-11-04T06:43:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:33Z",
+          "conclusion": "success",
+          "name": "Build and run JNI host against installed SDK",
+          "number": 21,
+          "startedAt": "2026-11-04T06:43:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:33Z",
+          "conclusion": "skipped",
+          "name": "Build and run Swift host against installed SDK",
+          "number": 22,
+          "startedAt": "2026-11-04T06:43:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:36Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 23,
+          "startedAt": "2026-11-04T06:43:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:36Z",
+          "conclusion": "skipped",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 24,
+          "startedAt": "2026-11-04T06:43:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:37Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 25,
+          "startedAt": "2026-11-04T06:43:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:38Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 26,
+          "startedAt": "2026-11-04T06:43:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:42Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 27,
+          "startedAt": "2026-11-04T06:43:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:42Z",
+          "conclusion": "skipped",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 28,
+          "startedAt": "2026-11-04T06:43:42Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:44Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 56,
+          "startedAt": "2026-11-04T06:43:42Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:43:44Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 57,
+          "startedAt": "2026-11-04T06:43:44Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448367"
+    },
+    {
+      "completedAt": "2026-11-04T06:31:46Z",
+      "conclusion": "success",
+      "databaseId": 126428448429,
+      "name": "native / ci-hygiene (packaging)",
+      "startedAt": "2026-11-04T06:31:33Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:31:34Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:31:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:39Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T06:31:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:39Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "startedAt": "2026-11-04T06:31:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:40Z",
+          "conclusion": "success",
+          "name": "Run python -m pip install PyYAML==6.0.3",
+          "number": 4,
+          "startedAt": "2026-11-04T06:31:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:45Z",
+          "conclusion": "success",
+          "name": "Check changed CI and exercise the rule",
+          "number": 5,
+          "startedAt": "2026-11-04T06:31:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:45Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 9,
+          "startedAt": "2026-11-04T06:31:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:45Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 10,
+          "startedAt": "2026-11-04T06:31:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:31:45Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 11,
+          "startedAt": "2026-11-04T06:31:45Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428448429"
+    },
+    {
+      "completedAt": "2026-11-04T06:31:30Z",
+      "conclusion": "skipped",
+      "databaseId": 126428449441,
+      "name": "native / windows-packaging",
+      "startedAt": "2026-11-04T06:31:31Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428449441"
+    },
+    {
+      "completedAt": "2026-11-04T06:31:30Z",
+      "conclusion": "skipped",
+      "databaseId": 126428449767,
+      "name": "native / apple-packaging",
+      "startedAt": "2026-11-04T06:31:31Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126428449767"
+    },
+    {
+      "completedAt": "2026-11-04T06:46:44Z",
+      "conclusion": "success",
+      "databaseId": 126433764618,
+      "name": "reading-required-core",
+      "startedAt": "2026-11-04T06:46:36Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T06:46:42Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T06:46:42Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:46:42Z",
+          "conclusion": "success",
+          "name": "Require every non-performance group",
+          "number": 2,
+          "startedAt": "2026-11-04T06:46:42Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T06:46:42Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 3,
+          "startedAt": "2026-11-04T06:46:42Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768/job/126433764618"
+    }
+  ],
+  "status": "completed",
+  "updatedAt": "2026-11-04T06:46:44Z",
+  "url": "https://github.com/NoGod3524/EXReader/actions/runs/41786091768"
+}

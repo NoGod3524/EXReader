@@ -1,0 +1,68 @@
+{
+  "S1": {
+    "action": "create main pointer without a new commit",
+    "main_initial_tip": "1e709837cb8a50816e94bf611ca4404f19f80abf",
+    "ledger_base_tip": "1e709837cb8a50816e94bf611ca4404f19f80abf",
+    "equal": true
+  },
+  "S2": {
+    "commit": "682e1ab5a62229ee477b2b192de81d34e8ab37fe",
+    "subject": "ci(gate): include main in required core triggers",
+    "file": ".github/workflows/reading-required-core.yml",
+    "changed_lines": {
+      "insertions": 1,
+      "deletions": 1
+    },
+    "branches": [
+      "codex/framework",
+      "ledger/base-20261103",
+      "main"
+    ],
+    "jobs_changed": false,
+    "required_status_checks_changed": false
+  },
+  "S3": {
+    "pr": 39,
+    "draft": true,
+    "base": "main",
+    "head": "5bdfc4dd919b52cc14a030dde0c78a10dd977a9f",
+    "run_id": 41786091768,
+    "workflow": "Required native reading SDK core",
+    "registered": true,
+    "started": true,
+    "attempt": 1,
+    "result": "success",
+    "pr_closed_without_merge": true,
+    "remote_branch_deleted": true,
+    "local_branch_deleted": true,
+    "tested_merge_tree": "6c9c27a4def3d6d621ae2a445ee21332a05efee9"
+  },
+  "S4": {
+    "state": "owner-confirmed successful",
+    "before": "codex/framework",
+    "after": "main",
+    "patch_http_status": 502,
+    "readback": "main",
+    "retried": false
+  },
+  "S5": {
+    "state": "changes prepared for protected-branch PR",
+    "workflow_commit": "234048093a56f4f2f0c58fdbff1beca92ac9eb08",
+    "readme_commit": "80bd7d6502b21a06d5cb1762aa0762e76249b07e",
+    "archive_tags": {
+      "archive/codex-framework-20261031": "8ca964fc4adc572cf2da303f5d88100a5e844ccb",
+      "archive/ledger-base-20261103": "1e709837cb8a50816e94bf611ca4404f19f80abf"
+    },
+    "negative_pr": 40,
+    "negative_run": 41902048351,
+    "required_check": "reading-required-core",
+    "isRequired": true,
+    "conclusion": "FAILURE",
+    "mergeable_state": "blocked",
+    "negative_restored_closed_deleted": true
+  },
+  "final_remote_refs": {
+    "refs/heads/ledger/base-20261103": "1e709837cb8a50816e94bf611ca4404f19f80abf",
+    "refs/heads/main": "682e1ab5a62229ee477b2b192de81d34e8ab37fe"
+  }
+}

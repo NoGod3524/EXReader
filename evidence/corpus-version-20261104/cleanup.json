@@ -1,0 +1,22 @@
+{
+  "pr": {
+    "closedAt": "2026-11-04T06:17:18Z",
+    "headRefName": "codex/core-corpus-probe-20261104",
+    "mergedAt": null,
+    "number": 38,
+    "state": "CLOSED"
+  },
+  "remote_branch_exists": false,
+  "local_branch_deleted": true,
+  "base_commit": "1e709837cb8a50816e94bf611ca4404f19f80abf",
+  "head_commit": "fc394ad31349b3c64fd7f715f587961c1930246e",
+  "pr_merge_tree_commit": "9fcf1270403d0cfd7011bf6351bfda6beddbc870",
+  "head_diff": {
+    "file": "README.md",
+    "insertions": 1,
+    "deletions": 0
+  },
+  "core_attempts": 1,
+  "dispatch_attempts": 0,
+  "reruns": 0
+}
