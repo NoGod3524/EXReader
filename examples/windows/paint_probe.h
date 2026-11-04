@@ -28,10 +28,10 @@ static exr_status host_probe_pager_get(exr_pager *pager,size_t page,const exr_la
   InterlockedIncrement(&host_probe_layout_calls);return exr_pager_get(pager,page,layout,error);
 }
 #define exr_pager_get host_probe_pager_get
+/* Record completed GDI submission; do not wait for the compositor here,
+   because doing so changes paint coalescing in the baseline being measured. */
 static void host_probe_present(double generation) {
   if(GetEnvironmentVariableW(L"EXR_PAINT_TRACE",NULL,0)) {
-    typedef HRESULT (WINAPI *flush_fn)(void);static HMODULE module;static flush_fn flush;
-    if(!module){module=LoadLibraryW(L"dwmapi.dll");if(module)flush=(flush_fn)GetProcAddress(module,"DwmFlush");}
-    GdiFlush();if(flush)flush();host_probe_log("present_gen",generation);
+    GdiFlush();host_probe_log("present_gen",generation);
   }
 }
