@@ -527,6 +527,20 @@ static void frame_move(host_frame *dst, host_frame *src) {
   memset(src, 0, sizeof(*src));
 }
 
+/* Four owned frames; only the serialized worker and joined completion touch
+   these slots. Opening/reformatting a book invalidates every borrowed SDK view. */
+static host_frame page_cache[4];
+static unsigned page_cache_next;
+static void page_cache_clear(void) { for(int i=0;i<4;i++)frame_clear(&page_cache[i]); }
+static int page_cache_find(int64_t book,size_t part,size_t page) {
+  for(int i=0;i<4;i++)if(page_cache[i].valid && page_cache[i].book_id==book && page_cache[i].part==part && page_cache[i].page==page)return i;
+  return -1;
+}
+static void page_cache_put(host_frame *frame) {
+  int i=page_cache_find(frame->book_id,frame->part,frame->page);
+  if(i<0)i=(int)(page_cache_next++%4);
+  frame_move(&page_cache[i],frame);
+}
 static void book_clear(exr_book *book) {
   free(book->title);
   free(book->author);
@@ -1255,6 +1269,7 @@ static void metadata_failed_to_start(host_job *job);
 static void job_start(host_job *job) {
   uintptr_t handle;
   unsigned thread_id = 0;
+  if(job->kind==JOB_OPEN || job->kind==JOB_LAYOUT || job->kind==JOB_IMPORT || job->kind==JOB_PREFERENCES || job->kind==JOB_PRODUCT_DELETE)page_cache_clear();
   g.job = job;
   if (job->kind != JOB_HIT && job->kind != JOB_SAVE && job->kind != JOB_IMPORT_ORGANIZE
 #ifdef EXR_READER_WINDOWS_WAVE3
@@ -1436,6 +1451,7 @@ static exr_status render_reflow(host_session *session, size_t page, host_frame *
   size_t count = 0, size = 0;
   exr_status status;
   memset(out, 0, sizeof(*out));
+  host_probe_log("layout_request",(double)page);
   status = exr_pager_get(session->pager, page, &layout, error);
   if (status != EXR_OK) return status;
   info = exr_layout_pages(layout, &count);
@@ -2483,6 +2499,20 @@ static exr_status job_go(host_job *job) {
   exr_status status;
   if (!g.session.active) return EXR_ARGUMENT;
   if (job->book_id && job->book_id != g.session.book_id) return EXR_CANCELLED;
+  if(!job->use_offset) {
+    int i=page_cache_find(g.session.book_id,g.session.part,job->target_page);
+    if(i>=0) {
+      frame_move(&job->frame,&page_cache[i]);job->frame.generation=++g.frame_sequence;
+      job->have_frame=1;job->applied_page=job->frame.page;job->page_count=g.session.page_count;
+      host_probe_log("cache_hit",(double)job->frame.page);
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+      return prefs_commit(job,EXR_OK);
+#else
+      return EXR_OK;
+#endif
+    }
+  }
+
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
   if (g.session.txt) return job_txt_go(job);
 #endif
@@ -3333,7 +3363,10 @@ static HBITMAP page_buffer_bitmap;
 static HGDIOBJ page_buffer_old;
 static int page_buffer_width, page_buffer_height;
 static void page_buffer_release(void) {
-  if(page_buffer_dc) { SelectObject(page_buffer_dc,page_buffer_old); DeleteObject(page_buffer_bitmap);DeleteDC(page_buffer_dc); }
+  if(page_buffer_dc && page_buffer_old)SelectObject(page_buffer_dc,page_buffer_old);
+  if(page_buffer_bitmap)DeleteObject(page_buffer_bitmap);
+  if(page_buffer_dc)DeleteDC(page_buffer_dc);
+  page_buffer_old=NULL;
   page_buffer_dc=NULL;page_buffer_bitmap=NULL;page_buffer_width=page_buffer_height=0;
 }
 static void paint_page_view(HWND window) {
@@ -4647,6 +4680,7 @@ static void handle_job_complete(host_job *job) {
           if (g.session.txt) g.session.txt_source = job->candidate.txt_source;
           g.session.config = job->candidate_config;
         }
+        if(job->kind==JOB_GO && g.frame.valid && g.frame.book_id==job->frame.book_id && g.frame.part==job->frame.part)page_cache_put(&g.frame);
         frame_move(&g.frame, &job->frame);
         g.session.part = g.frame.part;
         g.session.hold_progress = g.frame.hold_progress;
@@ -6172,6 +6206,7 @@ static void host_cleanup(void) {
     job_release(g.discard);
     g.discard = NULL;
   }
+  page_cache_clear();
   session_clear(&g.session);
   frame_clear(&g.frame);
   notes_clear();
