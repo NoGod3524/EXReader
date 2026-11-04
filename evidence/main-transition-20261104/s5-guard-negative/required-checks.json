@@ -1,0 +1,22 @@
+{
+  "headRefOid": "66cda7de3eeb5064fe7226b42c55ee29a29abd8f",
+  "isDraft": true,
+  "mergeStateStatus": "BLOCKED",
+  "mergeable": "MERGEABLE",
+  "number": 40,
+  "required": [
+    {
+      "checkSuite": {
+        "app": {
+          "databaseId": 15368,
+          "slug": "github-actions"
+        }
+      },
+      "conclusion": "FAILURE",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41902048351/job/126837237202",
+      "isRequired": true,
+      "name": "reading-required-core",
+      "status": "COMPLETED"
+    }
+  ]
+}

@@ -1,0 +1,231 @@
+{
+  "baseRefName": "ledger/base-20261103",
+  "headRefOid": "fc394ad31349b3c64fd7f715f587961c1930246e",
+  "isDraft": true,
+  "number": 38,
+  "state": "OPEN",
+  "statusCheckRollup": [
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T05:58:00Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821019",
+      "name": "protocol",
+      "startedAt": "2026-11-04T05:57:50Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:07:39Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821084",
+      "name": "native / desktop (windows-latest)",
+      "startedAt": "2026-11-04T05:57:50Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:04:45Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821226",
+      "name": "native / desktop (ubuntu-22.04)",
+      "startedAt": "2026-11-04T05:57:50Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:07:11Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821080",
+      "name": "native / desktop (macos-15)",
+      "startedAt": "2026-11-04T05:57:51Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:11:33Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821119",
+      "name": "native / sanitizers",
+      "startedAt": "2026-11-04T05:58:00Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:02:01Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821000",
+      "name": "native / fuzz",
+      "startedAt": "2026-11-04T05:57:50Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T05:59:11Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821125",
+      "name": "native / android",
+      "startedAt": "2026-11-04T05:57:50Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:16:34Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821183",
+      "name": "native / apple-mobile",
+      "startedAt": "2026-11-04T05:57:50Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T05:58:07Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821155",
+      "name": "native / ci-hygiene (packaging)",
+      "startedAt": "2026-11-04T05:57:50Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T05:58:19Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821291",
+      "name": "native / ci-hygiene (failfast)",
+      "startedAt": "2026-11-04T05:58:00Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T05:58:01Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821209",
+      "name": "native / ci-hygiene (diagnostic)",
+      "startedAt": "2026-11-04T05:57:50Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T05:58:10Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821344",
+      "name": "native / ci-hygiene (negative)",
+      "startedAt": "2026-11-04T05:57:50Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T05:57:48Z",
+      "conclusion": "SKIPPED",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416822061",
+      "name": "native / apple-packaging",
+      "startedAt": "2026-11-04T05:57:48Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T05:57:48Z",
+      "conclusion": "SKIPPED",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416822296",
+      "name": "native / windows-packaging",
+      "startedAt": "2026-11-04T05:57:48Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T05:59:26Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821095",
+      "name": "profiles / reading (reading-core)",
+      "startedAt": "2026-11-04T05:57:49Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T05:59:58Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821116",
+      "name": "profiles / reading (reading-library)",
+      "startedAt": "2026-11-04T05:58:00Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:00:55Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416820939",
+      "name": "platforms / reading windows-2022 (reading-core)",
+      "startedAt": "2026-11-04T05:57:50Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:01:32Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821120",
+      "name": "platforms / reading windows-2022 (reading-library)",
+      "startedAt": "2026-11-04T05:58:00Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:01:55Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821195",
+      "name": "platforms / reading macos-15 (reading-core)",
+      "startedAt": "2026-11-04T05:59:27Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:00:21Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821262",
+      "name": "platforms / reading macos-15 (reading-library)",
+      "startedAt": "2026-11-04T05:57:50Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:00:25Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126416821543",
+      "name": "corpus / R2 real document acceptance",
+      "startedAt": "2026-11-04T05:58:00Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-04T06:16:40Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456/job/126423228426",
+      "name": "reading-required-core",
+      "startedAt": "2026-11-04T06:16:37Z",
+      "status": "COMPLETED",
+      "workflowName": "Required native reading SDK core"
+    }
+  ],
+  "url": "https://github.com/NoGod3524/EXReader/pull/38",
+  "registration_observed": true
+}

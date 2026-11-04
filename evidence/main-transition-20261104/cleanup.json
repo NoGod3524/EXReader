@@ -1,0 +1,14 @@
+{
+  "pr": {
+    "closedAt": "2026-11-04T06:47:26Z",
+    "headRefName": "codex/main-core-probe-20261104",
+    "mergedAt": null,
+    "number": 39,
+    "state": "CLOSED"
+  },
+  "remote_branch_exists": false,
+  "local_branch_deleted": true,
+  "default_branch": "codex/framework",
+  "S4_executed": false,
+  "S5_executed": false
+}
