@@ -1,0 +1,47 @@
+[
+  {
+    "conclusion": "cancelled",
+    "event": "pull_request",
+    "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/41782427402",
+    "id": 41782427402,
+    "name": "SDK version consistency",
+    "run_attempt": 1,
+    "status": "completed"
+  },
+  {
+    "conclusion": "cancelled",
+    "event": "pull_request",
+    "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/41782427476",
+    "id": 41782427476,
+    "name": "Native reading profiles",
+    "run_attempt": 1,
+    "status": "completed"
+  },
+  {
+    "conclusion": "cancelled",
+    "event": "pull_request",
+    "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/41782427453",
+    "id": 41782427453,
+    "name": "Native C engine",
+    "run_attempt": 1,
+    "status": "completed"
+  },
+  {
+    "conclusion": "cancelled",
+    "event": "pull_request",
+    "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/41782427304",
+    "id": 41782427304,
+    "name": "Bounded library source",
+    "run_attempt": 1,
+    "status": "completed"
+  },
+  {
+    "conclusion": "success",
+    "event": "pull_request",
+    "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/41782427456",
+    "id": 41782427456,
+    "name": "Required native reading SDK core",
+    "run_attempt": 1,
+    "status": "completed"
+  }
+]

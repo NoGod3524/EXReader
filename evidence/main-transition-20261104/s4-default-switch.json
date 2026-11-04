@@ -1,0 +1,16 @@
+{
+  "command": "gh api -X PATCH /repos/NoGod3524/EXReader -f default_branch=main",
+  "before": "codex/framework",
+  "patch_response": {
+    "http_status": 502,
+    "message": "Server Error"
+  },
+  "readback": {
+    "full_name": "NoGod3524/EXReader",
+    "default_branch": "main"
+  },
+  "owner_confirmed_success": true,
+  "patch_retried": false,
+  "S5_stopped_on_initial_error": true,
+  "S5_resumed_only_after_owner_authorization": true
+}

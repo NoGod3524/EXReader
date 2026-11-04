@@ -1,0 +1,40 @@
+{
+  "summary": {
+    "check": "reading-required-core",
+    "expected_groups": [
+      "corpus",
+      "native",
+      "platforms",
+      "profiles",
+      "protocol"
+    ],
+    "actual": {
+      "protocol": {
+        "result": "success",
+        "outputs": {}
+      },
+      "native": {
+        "result": "success",
+        "outputs": {}
+      },
+      "profiles": {
+        "result": "success",
+        "outputs": {}
+      },
+      "platforms": {
+        "result": "success",
+        "outputs": {}
+      },
+      "corpus": {
+        "result": "success",
+        "outputs": {
+          "accepted": "true",
+          "manifest_sha256": "f71f8a24faff664a03b7e15a7f424ec354f83c53fbd14f602d4b050f3fd19de1"
+        }
+      }
+    },
+    "performance_advisory": true,
+    "accepted": true
+  },
+  "log_sha256": "5856311ab4477fbb50b6f8234c03d799731ddb5da74f96ed3da9946b58468fce"
+}

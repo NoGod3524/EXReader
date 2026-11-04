@@ -209,3 +209,7 @@ The corpus consumer requested exact 3.41.0; the installed package reported 3.42.
 PR #36 is **CLOSED, not merged**. Its remote and local temporary branches are deleted, verified via an empty git ls-remote result. Cleanup metadata: core-pr-cleanup.json. The PR also automatically launched four independent workflows (Bounded library source, Native C engine, SDK version consistency, Native reading profiles); those extra runs were cancelled, retaining only the single core run and its reusable sub-workflows. IDs and final states: core-pr-related-runs.json.
 
 **Final result: core registered on ledger/base but failed in corpus; stop.** The prior native milestone remains valid. No rerun, second PR, Settings edit, default switch, catalog state change or F03/F05/F07 product edit was made.
+
+## Corpus fix follow-up: core passes on ledger/base
+
+Corpus consumer/package-version repair PR #37 merged as 1e709837. One-time PR #38 registered Required native reading SDK core and [run41782427456](https://github.com/NoGod3524/EXReader/actions/runs/41782427456) passed all five groups plus final reading-required-core. [Complete per-job evidence and cleanup](../corpus-version-20261104/README.md#single-pr-core-rerun-pass). PR #38 is closed without merge; temporary branch deleted. Native milestone 41732293021 plus this core pass complete both requested gates. Default-branch transition remains pending owner authorization; no Settings/default switch occurred.

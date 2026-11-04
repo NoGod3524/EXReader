@@ -2,7 +2,7 @@
 name: Required native reading SDK core
 on:
   pull_request:
-    branches: [codex/framework, ledger/base-20261103, main]
+    branches: [codex/framework, main]
   workflow_dispatch:
 permissions:
   contents: read
