@@ -557,6 +557,7 @@ static void page_dirty(HWND window,int full) {
 }
 static long wheel_delta;
 #define PAGE_WHEEL_TIMER 0x5750
+#define PAGE_PREFETCH_TIMER 0x5751
 static void book_clear(exr_book *book) {
   free(book->title);
   free(book->author);
@@ -937,7 +938,7 @@ enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB
   JOB_METADATA_PREPARE, JOB_METADATA_SAVE, JOB_METADATA_RETRY, JOB_METADATA_DISCARD,
   JOB_ACCOUNT_LOAD, JOB_ACCOUNT_SET, JOB_ACCOUNT_FORGET, JOB_ACCOUNT_STAGE, JOB_ACCOUNT_RECEIVE,
   JOB_SEARCH_BATCH, JOB_SEARCH_OPEN, JOB_NAVIGATION_ROWS, JOB_NAVIGATION_OPEN, JOB_RECORDS, JOB_IMPORT_ORGANIZE,
-  JOB_PREFERENCES, JOB_WAVE3
+  JOB_PREFERENCES, JOB_WAVE3, JOB_PREFETCH
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   , JOB_TXT_PROGRESS
 #endif
@@ -1287,7 +1288,7 @@ static void job_start(host_job *job) {
   unsigned thread_id = 0;
   if(job->kind==JOB_OPEN || job->kind==JOB_LAYOUT || job->kind==JOB_IMPORT || job->kind==JOB_PREFERENCES || job->kind==JOB_PRODUCT_DELETE)page_cache_clear();
   g.job = job;
-  if (job->kind != JOB_HIT && job->kind != JOB_SAVE && job->kind != JOB_IMPORT_ORGANIZE
+  if (job->kind != JOB_HIT && job->kind != JOB_SAVE && job->kind != JOB_PREFETCH && job->kind != JOB_IMPORT_ORGANIZE
 #ifdef EXR_READER_WINDOWS_WAVE3
       && job->kind != JOB_WAVE3
 #endif
@@ -3024,6 +3025,12 @@ static exr_status job_run(host_job *job) {
 #endif
     case JOB_OPEN: return job_open(job);
     case JOB_GO: return job_go(job);
+    case JOB_PREFETCH: {
+      exr_control control={job_cancel_check,NULL,job};exr_error error={0};
+      host_probe_log("prefetch_begin",(double)job->target_page);
+      if(g.session.fixed) return render_fixed(&g.session,job->target_page,g.zoom_percent,&job->frame,&control,&error);
+      return render_reflow(&g.session,job->target_page,&job->frame,&control,&error);
+    }
     case JOB_LAYOUT: return job_layout(job);
     case JOB_IMPORT: return job_import(job);
     case JOB_NOTE_ADD: case JOB_NOTE_UPDATE: return job_note(job);
@@ -3623,7 +3630,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       return 0;
     case WM_TIMER:
       if(wparam==PAGE_WHEEL_TIMER) {
-        if(g.job || g.pending)return 0;
+        if((g.job && g.job->kind!=JOB_PREFETCH) || g.pending)return 0;
         if(wheel_delta<=-WHEEL_DELTA) { wheel_delta+=WHEEL_DELTA;page_step(1); }
         else if(wheel_delta>=WHEEL_DELTA) { wheel_delta-=WHEEL_DELTA;page_step(-1); }
         else KillTimer(window,PAGE_WHEEL_TIMER);
@@ -3632,7 +3639,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       break;
     case WM_KEYDOWN:
       host_probe_log("key",(double)wparam);
-      if (g.job || g.pending) return 0;
+      if ((g.job && g.job->kind!=JOB_PREFETCH) || g.pending) return 0;
       switch (wparam) {
 #ifdef EXR_READER_WINDOWS_PREFERENCES
         /* An open input-method composition owns the key: never turn a page. */
@@ -3840,7 +3847,7 @@ static void apply_pending_selection(void) {
 static void page_step(int direction) {
   size_t target;
   host_job *job;
-  if (!g.has_current || !g.frame.valid || g.job || g.pending) return;
+  if (!g.has_current || !g.frame.valid || (g.job && g.job->kind!=JOB_PREFETCH) || g.pending) return;
   if (g.session.txt && direction >= 1000000) { set_status(L"TXT 跳到末页尚未实现。"); return; }
   if (!direction) return;
   if (direction <= -1000000) target = 0;
@@ -4422,8 +4429,8 @@ static void host_update_controls(void) {
   EnableWindow(g.import_button, !busy);
   EnableWindow(g.open_button, g.shelf_count > 0);
   EnableWindow(g.delete_button, !busy && g.shelf_count > 0);
-  EnableWindow(g.prev_button, !busy && can_page && (g.frame.page > 0 || (g.session.bounded && g.frame.part > 0)));
-  EnableWindow(g.next_button, !busy && can_page);
+  EnableWindow(g.prev_button, (!busy || (g.job && g.job->kind==JOB_PREFETCH)) && can_page && (g.frame.page > 0 || (g.session.bounded && g.frame.part > 0)));
+  EnableWindow(g.next_button, (!busy || (g.job && g.job->kind==JOB_PREFETCH)) && can_page);
   EnableWindow(g.select_button, !busy && can_page);
   EnableWindow(g.copy_button, !busy && can_page);
   EnableWindow(g.add_button, !busy && has);
@@ -4468,6 +4475,12 @@ static void host_update_controls(void) {
 }
 
 static void handle_job_complete(host_job *job) {
+  if(job->kind==JOB_PREFETCH) {
+    if(job->status==EXR_OK && !job_cancel_flag(job) && !g.closing && job->frame.book_id==g.session.book_id && job->frame.part==g.session.part) {
+      page_cache_put(&job->frame);host_probe_log("prefetch_ready",(double)job->target_page);
+    }
+    return;
+  }
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
   if(job->original_recovery_failed) {
     g.product_pending=1;g.product_ready=0;
@@ -6046,7 +6059,8 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if (!job || job != g.job) return 0;
       /* The completion is posted after all SDK work; join only the final ref
          release before the UI accepts/frees the job's owned candidates. */
-      int repaint = job->kind != JOB_SAVE;
+      int repaint = job->kind != JOB_SAVE && job->kind != JOB_PREFETCH;
+      int schedule_prefetch = job->have_frame && job->status==EXR_OK;
       WaitForSingleObject(job->thread, INFINITE);
       g.job = NULL;
       handle_job_complete(job);
@@ -6058,6 +6072,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #endif
       job_release(job);
       if(repaint)page_dirty(g.page,0);
+      if(schedule_prefetch)SetTimer(window,PAGE_PREFETCH_TIMER,150,NULL);
       if (!g.job && g.pending) {
         host_job *next = g.pending;
         g.pending = NULL;
@@ -6082,6 +6097,16 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       return 0;
     }
     case WM_TIMER:
+      if(wparam==PAGE_PREFETCH_TIMER) {
+        KillTimer(window,PAGE_PREFETCH_TIMER);
+        if(g.closing || !g.session.active || !g.frame.valid || g.session.txt)return 0;
+        if(g.job || g.pending) { SetTimer(window,PAGE_PREFETCH_TIMER,20,NULL);return 0; }
+        if(page_cache_find(g.session.book_id,g.session.part,g.frame.page+1)>=0)return 0;
+        if(g.session.fixed && g.frame.page+1>=g.session.page_count)return 0;
+        host_job *next=job_new(JOB_PREFETCH);
+        if(next) { next->book_id=g.session.book_id;next->target_page=g.frame.page+1;job_start(next); }
+        return 0;
+      }
 #ifdef EXR_READER_PRODUCT_CATALOG
       if(wparam==3) { KillTimer(window,3);product_shelf_dispatch();return 0; }
       if(wparam==4) { KillTimer(window,4);if(!g.closing) settings_save();return 0; }
