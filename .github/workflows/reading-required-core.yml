@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - run: python3 -c "raise SystemExit('S5.5 deliberate required-core rejection probe')"
+      - run: python3 tests/check_reading_release.py
       - run: python3 tests/check_reading_required.py
       - run: python3 tests/check_reading_real_environments.py
       - run: python3 tests/check_reading_cpu_export.py
