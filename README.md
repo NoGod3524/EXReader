@@ -285,3 +285,4 @@ exreader-fixed-example book.pdf page.png 0 fallback.ttf
 该入口使用固定页面模型；重排文档仍使用 `exr_document_open` 和 layout/pager 接口。
 
 当前进度、量化验收目标、构建复现和待办顺序见 [交接文档](docs/HANDOFF.md)。
+<!-- One-time core probe after corpus consumer repair, 2026-11-04. -->
