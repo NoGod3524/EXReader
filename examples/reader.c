@@ -19,6 +19,7 @@
 #include <shellapi.h>
 #include <process.h>
 #include <exreader.h>
+#include "windows/paint_probe.h"
 #include <math.h>
 #include <limits.h>
 #include <stdint.h>
@@ -1445,11 +1446,10 @@ static exr_status render_reflow(host_session *session, size_t page, host_frame *
   if (!session->bounded && (!text || info->end > size)) return EXR_FORMAT;
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   if (session->themed)
-    status = exr_render_page_background(layout, exr_layout_font(layout), 0, 4, session->background,
-                                        control, &out->bitmap, error);
+    status = host_probe_render(layout, control, &out->bitmap, error, session->background);
   else
 #endif
-  status = exr_render_page_ex(layout, exr_layout_font(layout), 0, 4, control, &out->bitmap, error);
+  status = host_probe_render(layout, control, &out->bitmap, error, 0xffffffff);
   if (status != EXR_OK) return status;
   out->text_bytes = info->end - info->start;
   out->utf8 = malloc(out->text_bytes + 1);
@@ -3329,6 +3329,7 @@ static void paint_selection(HDC dc) {
 }
 
 static void paint_page_view(HWND window) {
+  host_probe_log("paint",0);
   PAINTSTRUCT paint;
   HDC dc = BeginPaint(window, &paint);
   RECT area;
@@ -3542,11 +3543,13 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       }
       return 0;
     case WM_MOUSEWHEEL:
+      host_probe_log("wheel",(short)HIWORD(wparam));
       if (g.job || g.pending) return 0;
       if ((short)HIWORD(wparam) < 0) page_step(1);
       else page_step(-1);
       return 0;
     case WM_KEYDOWN:
+      host_probe_log("key",(double)wparam);
       if (g.job || g.pending) return 0;
       switch (wparam) {
 #ifdef EXR_READER_WINDOWS_PREFERENCES
@@ -5250,6 +5253,11 @@ static int drive_execute(void) {
     Sleep((DWORD)atoi(drive_args[1]));
     drive_step_finish(1, "waited");
     return 0;
+  }
+  if (!strcmp(action, "probe_key") || !strcmp(action, "probe_wheel")) {
+    SetFocus(g.page);
+    SendMessageW(g.page,!strcmp(action,"probe_key")?WM_KEYDOWN:WM_MOUSEWHEEL,!strcmp(action,"probe_key")?VK_NEXT:MAKEWPARAM(0,-WHEEL_DELTA),0);
+    drive_expect_idle=1;return 1;
   }
   if (!strcmp(action, "quit")) {
     drive_step_finish(1, "closing");
