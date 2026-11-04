@@ -3031,6 +3031,7 @@ static unsigned __stdcall job_thread(void *context) {
   else
     job->status = job_run(job);
   if(job->status==EXR_OK && job->frame.valid)frame_prepare_display(&job->frame);
+  if(job->kind==JOB_GO && job->status==EXR_OK && job->frame.valid)host_probe_log("frame_ready_gen",(double)job->frame.generation);
 #ifdef EXR_HOST_WORKER_REVIEW
   if (job->status == EXR_OK) {
     int stage=job->kind==JOB_OPEN ? 4:job->kind==JOB_GO ? 2:0;
@@ -3977,6 +3978,7 @@ static void page_step(int direction) {
   job->target_page = target;
   job->batch_delta = (direction>-1000000 && direction<1000000)?direction:0;
   job->direction = direction > 0 ? 1 : -1;
+  host_probe_log("frame_request",(double)target);
   if (g.session.bounded && direction < 0 && direction > -1000000 && g.frame.page == 0) job->target_page = SIZE_MAX;
   job_submit(job);
 }
