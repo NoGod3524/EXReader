@@ -1,0 +1,46 @@
+{
+  "assets": [
+    {
+      "browser_download_url": "https://github.com/NoGod3524/EXReader/releases/download/windows-preview-20261104-4efd3366/BUILD.md",
+      "digest": "sha256:96bb32ef908c22eb45b250b9c743466a906a75fe73729661df48cca27c6ef830",
+      "id": 710886176,
+      "name": "BUILD.md",
+      "size": 2456
+    },
+    {
+      "browser_download_url": "https://github.com/NoGod3524/EXReader/releases/download/windows-preview-20261104-4efd3366/CHECKLIST.md",
+      "digest": "sha256:751420f5b404b07530d8e38d8633d8e167b8147c90cacba56670475e8d238f04",
+      "id": 710886180,
+      "name": "CHECKLIST.md",
+      "size": 5828
+    },
+    {
+      "browser_download_url": "https://github.com/NoGod3524/EXReader/releases/download/windows-preview-20261104-4efd3366/EXReader-Windows-4efd3366.zip",
+      "digest": "sha256:d9b914a33af1a668dd3344f11f0c06f4a25d903205acd6c2b8d6bcf00d709d71",
+      "id": 710886173,
+      "name": "EXReader-Windows-4efd3366.zip",
+      "size": 17614556
+    },
+    {
+      "browser_download_url": "https://github.com/NoGod3524/EXReader/releases/download/windows-preview-20261104-4efd3366/PACKAGE-FILES.txt",
+      "digest": "sha256:44e44ba7f2da8e35d2811ac632866db900c52c238dc16b07af7ed4dabda4d687",
+      "id": 710886174,
+      "name": "PACKAGE-FILES.txt",
+      "size": 3515
+    },
+    {
+      "browser_download_url": "https://github.com/NoGod3524/EXReader/releases/download/windows-preview-20261104-4efd3366/SHA256SUMS.txt",
+      "digest": "sha256:ee04124b18c038c61a4672d448c2ba7b0998ced2ddf416559b99c2a045505aff",
+      "id": 710886175,
+      "name": "SHA256SUMS.txt",
+      "size": 97
+    }
+  ],
+  "draft": false,
+  "html_url": "https://github.com/NoGod3524/EXReader/releases/tag/windows-preview-20261104-4efd3366",
+  "id": 434437476,
+  "prerelease": true,
+  "published_at": "2026-11-04T20:49:30Z",
+  "tag_name": "windows-preview-20261104-4efd3366",
+  "target_commitish": "4efd33666640e8bd8409e15c432767572894226c"
+}

@@ -1,0 +1,165 @@
+{
+  "conclusion": "success",
+  "createdAt": "2026-11-04T20:42:48Z",
+  "databaseId": 41909199114,
+  "event": "workflow_dispatch",
+  "headSha": "4efd33666640e8bd8409e15c432767572894226c",
+  "jobs": [
+    {
+      "completedAt": "2026-11-04T20:45:45Z",
+      "conclusion": "success",
+      "databaseId": 126851942072,
+      "name": "windows-packaging",
+      "startedAt": "2026-11-04T20:42:54Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-04T20:42:56Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-04T20:42:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T20:43:03Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-04T20:42:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T20:45:33Z",
+          "conclusion": "success",
+          "name": "Build and install the Windows SDK including reader inputs",
+          "number": 3,
+          "startedAt": "2026-11-04T20:43:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T20:45:37Z",
+          "conclusion": "success",
+          "name": "Build the actual reader against the installed SDK",
+          "number": 4,
+          "startedAt": "2026-11-04T20:45:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T20:45:40Z",
+          "conclusion": "success",
+          "name": "Package and run the Windows reference host",
+          "number": 5,
+          "startedAt": "2026-11-04T20:45:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T20:45:40Z",
+          "conclusion": "success",
+          "name": "Reject a missing staged include and a missing executable",
+          "number": 6,
+          "startedAt": "2026-11-04T20:45:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T20:45:42Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 7,
+          "startedAt": "2026-11-04T20:45:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T20:45:44Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 14,
+          "startedAt": "2026-11-04T20:45:42Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-04T20:45:44Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-11-04T20:45:44Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41909199114/job/126851942072"
+    },
+    {
+      "completedAt": "2026-11-04T20:42:50Z",
+      "conclusion": "skipped",
+      "databaseId": 126851944089,
+      "name": "apple-packaging",
+      "startedAt": "2026-11-04T20:42:51Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41909199114/job/126851944089"
+    },
+    {
+      "completedAt": "2026-11-04T20:42:50Z",
+      "conclusion": "skipped",
+      "databaseId": 126851944488,
+      "name": "desktop",
+      "startedAt": "2026-11-04T20:42:51Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41909199114/job/126851944488"
+    },
+    {
+      "completedAt": "2026-11-04T20:42:50Z",
+      "conclusion": "skipped",
+      "databaseId": 126851944530,
+      "name": "apple-mobile",
+      "startedAt": "2026-11-04T20:42:51Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41909199114/job/126851944530"
+    },
+    {
+      "completedAt": "2026-11-04T20:42:50Z",
+      "conclusion": "skipped",
+      "databaseId": 126851944593,
+      "name": "sanitizers",
+      "startedAt": "2026-11-04T20:42:51Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41909199114/job/126851944593"
+    },
+    {
+      "completedAt": "2026-11-04T20:42:50Z",
+      "conclusion": "skipped",
+      "databaseId": 126851944617,
+      "name": "android",
+      "startedAt": "2026-11-04T20:42:51Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41909199114/job/126851944617"
+    },
+    {
+      "completedAt": "2026-11-04T20:42:50Z",
+      "conclusion": "skipped",
+      "databaseId": 126851944667,
+      "name": "fuzz",
+      "startedAt": "2026-11-04T20:42:51Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41909199114/job/126851944667"
+    },
+    {
+      "completedAt": "2026-11-04T20:42:50Z",
+      "conclusion": "skipped",
+      "databaseId": 126851945198,
+      "name": "ci-hygiene",
+      "startedAt": "2026-11-04T20:42:51Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/41909199114/job/126851945198"
+    }
+  ],
+  "status": "completed",
+  "updatedAt": "2026-11-04T20:45:46Z",
+  "url": "https://github.com/NoGod3524/EXReader/actions/runs/41909199114"
+}
