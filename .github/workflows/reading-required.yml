@@ -2,10 +2,6 @@
 # Required non-performance context: reading-required-core. Do not cite advisory results as acceptance.
 name: Required native reading SDK
 on:
-  pull_request:
-    branches: [codex/framework]
-  push:
-    branches: [codex/framework]
   workflow_dispatch:
 permissions:
   contents: read
