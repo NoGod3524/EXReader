@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* EXReader Windows native reference host.
  *
- * Win32 host for the installed EXReader SDK: SQLite-backed bookshelf, non-blocking
+ * Win32 host for the installed EXReader SDK: SQLite-backed bookshelf, queued
  * import, reflow and fixed-page reading, text selection, annotations, anchored
  * progress restore and a UI-level acceptance driver. The original 26-check
  * --self-test path is kept below for the packaging tool.
@@ -19,6 +19,7 @@
 #include <shellapi.h>
 #include <process.h>
 #include <exreader.h>
+#include "windows/paint_probe.h"
 #include <math.h>
 #include <limits.h>
 #include <stdint.h>
@@ -106,6 +107,7 @@ enum {
 
 #define WM_HOST_COMPLETE (WM_APP + 1)
 #define WM_HOST_PROGRESS (WM_APP + 2)
+#define WM_HOST_SDK_JOB (WM_APP + 0x590)
 
 typedef struct {
   exr_bitmap bitmap;
@@ -137,6 +139,8 @@ typedef struct {
   exr_layout *hit_layout;
   exr_fixed_text *fixed_text;
   exr_page_geometry geometry;
+  HBITMAP display_bitmap;
+  int display_width,display_height;
 } host_frame;
 
 typedef struct {
@@ -509,6 +513,8 @@ static int format_for_path(const wchar_t *path, exr_format *format) {
 }
 
 static void frame_clear(host_frame *frame) {
+  host_probe_require_ui();
+  if(frame->display_bitmap)DeleteObject(frame->display_bitmap);
   exr_layout_free(frame->hit_layout);
   exr_fixed_text_free(frame->fixed_text);
   exr_bitmap_free(&frame->bitmap);
@@ -520,12 +526,70 @@ static void frame_clear(host_frame *frame) {
   memset(frame, 0, sizeof(*frame));
 }
 
+/* GDI display bitmap is owned by the frame and prepared on the SDK worker.
+   It is never selected into a UI DC until that worker has been joined. */
+static int frame_prepare_display(host_frame *frame) {
+  RECT area;if(!frame->valid || !frame->dib || !g.page)return 0;
+  if(!GetClientRect(g.page,&area))return 0;
+  double scale=fmin((area.right-8.0)/frame->bitmap.width,(area.bottom-8.0)/frame->bitmap.height);
+  int w=(int)(frame->bitmap.width*scale),h=(int)(frame->bitmap.height*scale);
+  if(w<=0 || h<=0)return 0;
+  if(frame->display_bitmap && frame->display_width==w && frame->display_height==h)return 1;
+  BITMAPINFO target={0},source={0};void *bits=NULL;
+  target.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);target.bmiHeader.biWidth=w;
+  target.bmiHeader.biHeight=-h;target.bmiHeader.biPlanes=1;target.bmiHeader.biBitCount=32;
+  HDC dc=CreateCompatibleDC(NULL);if(!dc)return 0;
+  HBITMAP bitmap=CreateDIBSection(dc,&target,DIB_RGB_COLORS,&bits,NULL,0);
+  if(!bitmap){DeleteDC(dc);return 0;}
+  HGDIOBJ old=SelectObject(dc,bitmap);
+  source.bmiHeader=target.bmiHeader;source.bmiHeader.biWidth=(LONG)frame->bitmap.width;
+  source.bmiHeader.biHeight=-(LONG)frame->bitmap.height;
+  SetStretchBltMode(dc,HALFTONE);SetBrushOrgEx(dc,0,0,NULL);
+  int copied=StretchDIBits(dc,0,0,w,h,0,0,frame->bitmap.width,frame->bitmap.height,frame->dib,&source,DIB_RGB_COLORS,SRCCOPY);
+  SelectObject(dc,old);DeleteDC(dc);
+  if(!copied || copied==GDI_ERROR){DeleteObject(bitmap);return 0;}
+  if(frame->display_bitmap)DeleteObject(frame->display_bitmap);
+  frame->display_bitmap=bitmap;frame->display_width=w;frame->display_height=h;return 1;
+}
 static void frame_move(host_frame *dst, host_frame *src) {
   frame_clear(dst);
   *dst = *src;
   memset(src, 0, sizeof(*src));
 }
 
+/* Four UI-owned frames. The pixel worker only touches its unpublished job
+   frame; UI joins it before accepting or freeing any of those pixels. */
+static host_frame page_cache[4];
+static unsigned page_cache_next;
+static void page_cache_clear(void) { for(int i=0;i<4;i++)frame_clear(&page_cache[i]); }
+static int page_cache_find(int64_t book,size_t part,size_t page) {
+  for(int i=0;i<4;i++)if(page_cache[i].valid && page_cache[i].book_id==book && page_cache[i].part==part && page_cache[i].page==page)return i;
+  return -1;
+}
+static void page_cache_put(host_frame *frame) {
+  int i=page_cache_find(frame->book_id,frame->part,frame->page);
+  if(i<0)i=(int)(page_cache_next++%4);
+  frame_move(&page_cache[i],frame);
+}
+static RECT last_page_rect;
+static int last_page_rect_valid;
+static int compute_view(void);
+static void compose_page_view(HWND window);
+static void page_dirty(HWND window,int full) {
+  RECT client,dirty,old;GetClientRect(window,&client);dirty=client;
+  if(!full && g.frame.valid && g.view.valid) {
+    old=last_page_rect_valid?last_page_rect:client;
+    if(compute_view()) {
+      RECT now={g.view.dx,g.view.dy,g.view.dx+(LONG)(g.frame.bitmap.width*g.view.scale)+2,g.view.dy+(LONG)(g.frame.bitmap.height*g.view.scale)+2};
+      UnionRect(&dirty,&old,&now);IntersectRect(&dirty,&dirty,&client);
+    }
+  }
+  compose_page_view(window);
+  InvalidateRect(window,&dirty,FALSE);
+}
+static long wheel_delta;
+#define PAGE_WHEEL_TIMER 0x5750
+#define PAGE_PREFETCH_TIMER 0x5751
 static void book_clear(exr_book *book) {
   free(book->title);
   free(book->author);
@@ -558,6 +622,7 @@ static exr_status local_book_copy(int64_t id,exr_book *out,exr_error *error) {
 }
 
 static void session_clear(host_session *session) {
+  host_probe_require_ui();
   if (session->fixed_document) exr_fixed_free(session->fixed_document);
   if (session->pager) exr_pager_free(session->pager);
   if (session->publication) exr_publication_free(session->publication);
@@ -567,7 +632,7 @@ static void session_clear(host_session *session) {
 
 static void selection_clear(void) {
   memset(&g.selection, 0, sizeof(g.selection));
-  if (g.page) InvalidateRect(g.page, NULL, FALSE);
+  if (g.page && !g.frame.valid) page_dirty(g.page,1);
 }
 
 #ifdef EXR_READER_WINDOWS_PREFERENCES
@@ -906,7 +971,7 @@ enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB
   JOB_METADATA_PREPARE, JOB_METADATA_SAVE, JOB_METADATA_RETRY, JOB_METADATA_DISCARD,
   JOB_ACCOUNT_LOAD, JOB_ACCOUNT_SET, JOB_ACCOUNT_FORGET, JOB_ACCOUNT_STAGE, JOB_ACCOUNT_RECEIVE,
   JOB_SEARCH_BATCH, JOB_SEARCH_OPEN, JOB_NAVIGATION_ROWS, JOB_NAVIGATION_OPEN, JOB_RECORDS, JOB_IMPORT_ORGANIZE,
-  JOB_PREFERENCES, JOB_WAVE3
+  JOB_PREFERENCES, JOB_WAVE3, JOB_PREFETCH
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   , JOB_TXT_PROGRESS
 #endif
@@ -943,6 +1008,7 @@ struct host_job {
   size_t target_offset;
   int use_offset;
   int direction;
+  int batch_delta;
   int font_percent;
   int zoom_percent;
   exr_anchor anchor;
@@ -1185,6 +1251,7 @@ static void w3_failed_to_start(host_job *job);
 #endif
 
 static void job_free(host_job *job) {
+  host_probe_require_ui();
   if (!job) return;
 #ifdef EXR_READER_WINDOWS_WAVE3
   w3_job_free(job->w3);
@@ -1251,11 +1318,29 @@ static exr_status job_run(host_job *job);
 static void metadata_failed_to_start(host_job *job);
 #endif
 
+static void job_start_failed(host_job *job) {
+#ifdef EXR_READER_PRODUCT_CATALOG
+    if(product_job_kind(job->kind)) g.product_pending=1;
+#endif
+    g.job = NULL;
+    job->status = EXR_MEMORY;
+    strcpy(job->error.message, "Cannot create host worker thread");
+#ifdef EXR_READER_WINDOWS_WAVE3
+    w3_failed_to_start(job);
+#endif
+#ifdef EXR_READER_DESKTOP_METADATA
+    if(metadata_job_kind(job->kind)) metadata_failed_to_start(job);
+#endif
+    job_release(job);
+    set_status(L"无法创建后台任务线程。");
+    host_update_controls();
+}
+
 static void job_start(host_job *job) {
-  uintptr_t handle;
-  unsigned thread_id = 0;
+  host_probe_require_ui();
+  if(job->kind==JOB_OPEN || job->kind==JOB_LAYOUT || job->kind==JOB_IMPORT || job->kind==JOB_PREFERENCES || job->kind==JOB_PRODUCT_DELETE || (job->zoom_percent>0 && job->zoom_percent!=g.zoom_percent))page_cache_clear();
   g.job = job;
-  if (job->kind != JOB_HIT && job->kind != JOB_SAVE && job->kind != JOB_IMPORT_ORGANIZE
+  if (job->kind != JOB_HIT && job->kind != JOB_SAVE && job->kind != JOB_PREFETCH && job->kind != JOB_IMPORT_ORGANIZE
 #ifdef EXR_READER_WINDOWS_WAVE3
       && job->kind != JOB_WAVE3
 #endif
@@ -1282,30 +1367,22 @@ static void job_start(host_job *job) {
   g.hit_pending = 0; g.gesture++;
   if (GetCapture() == g.page) ReleaseCapture();
   memset(&g.selection, 0, sizeof(g.selection));
-  if (g.page) InvalidateRect(g.page, NULL, TRUE);
+  /* Keep the accepted page visible until the new frame is ready. */
   }
-  InterlockedIncrement(&job->refs);
-  handle = _beginthreadex(NULL, 0, job_thread, job, 0, &thread_id);
-  if (!handle) {
-#ifdef EXR_READER_PRODUCT_CATALOG
-    if(product_job_kind(job->kind)) g.product_pending=1;
-#endif
-    InterlockedDecrement(&job->refs);
-    g.job = NULL;
-    job->status = EXR_MEMORY;
-    strcpy(job->error.message, "Cannot create host worker thread");
-#ifdef EXR_READER_WINDOWS_WAVE3
-    w3_failed_to_start(job);
-#endif
-#ifdef EXR_READER_DESKTOP_METADATA
-    if(metadata_job_kind(job->kind)) metadata_failed_to_start(job);
-#endif
-    job_release(job);
-    set_status(L"无法创建后台任务线程。");
-    host_update_controls();
-    return;
+  if (!PostMessageW(g.window, WM_HOST_SDK_JOB, 0, (LPARAM)job)) job_start_failed(job);
+  else host_update_controls();
+}
+
+static void job_launch_pixels(host_job *job) {
+  unsigned thread_id=0;
+  uintptr_t handle=_beginthreadex(NULL,0,job_thread,job,0,&thread_id);
+  if(!handle) {
+    /* SDK transactions already ran on UI; retain their result if pixels
+       cannot get a worker, instead of reporting a false SDK failure. */
+    if(job->status==EXR_OK && job->frame.valid)frame_prepare_display(&job->frame);
+    PostMessageW(g.window,WM_HOST_COMPLETE,0,(LPARAM)job);return;
   }
-  job->thread = (HANDLE)handle;
+  job->thread=(HANDLE)handle;
   host_update_controls();
 }
 
@@ -1435,6 +1512,7 @@ static exr_status render_reflow(host_session *session, size_t page, host_frame *
   size_t count = 0, size = 0;
   exr_status status;
   memset(out, 0, sizeof(*out));
+  host_probe_log("layout_request",(double)page);
   status = exr_pager_get(session->pager, page, &layout, error);
   if (status != EXR_OK) return status;
   info = exr_layout_pages(layout, &count);
@@ -1445,11 +1523,10 @@ static exr_status render_reflow(host_session *session, size_t page, host_frame *
   if (!session->bounded && (!text || info->end > size)) return EXR_FORMAT;
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   if (session->themed)
-    status = exr_render_page_background(layout, exr_layout_font(layout), 0, 4, session->background,
-                                        control, &out->bitmap, error);
+    status = host_probe_render(layout, control, &out->bitmap, error, session->background);
   else
 #endif
-  status = exr_render_page_ex(layout, exr_layout_font(layout), 0, 4, control, &out->bitmap, error);
+  status = host_probe_render(layout, control, &out->bitmap, error, 0xffffffff);
   if (status != EXR_OK) return status;
   out->text_bytes = info->end - info->start;
   out->utf8 = malloc(out->text_bytes + 1);
@@ -2422,7 +2499,50 @@ static exr_status chapter_last_page(exr_pager *pager, size_t *page, exr_error *e
   *page = lo; memset(error, 0, sizeof(*error)); return EXR_OK;
 }
 
+/* Resolve a coalesced wheel move across publication parts without rendering
+   the skipped pages. Own at most one temporary pager until UI acceptance. */
+static exr_status job_bounded_batch(host_job *job) {
+  host_session candidate=g.session;exr_pager *owned=NULL;exr_error error={0};
+  exr_control control={job_cancel_check,NULL,job};exr_status status=EXR_OK;
+  size_t count=0,page=g.frame.page,part=candidate.part;
+  const exr_part *parts=exr_publication_parts(candidate.publication,&count);
+  if(!parts || part>=count)return EXR_FORMAT;
+  candidate.hold_progress=0;
+  size_t left=(size_t)(job->batch_delta<0?-(int64_t)job->batch_delta:job->batch_delta);
+  while(left && status==EXR_OK) {
+    if(job_cancel_check(job)) { status=EXR_CANCELLED;break; }
+    if(job->batch_delta>0) {
+      const exr_layout *layout=NULL;size_t last;
+      if(left>SIZE_MAX-page) { status=EXR_LIMIT;break; }
+      status=exr_pager_get(candidate.pager,page+left,&layout,&error);
+      if(status==EXR_OK) { page+=left;break; }
+      if(!pager_eof(status,&error))break;
+      status=chapter_last_page(candidate.pager,&last,&error);if(status!=EXR_OK)break;
+      left-=last-page+1;
+      size_t next=part+1;while(next<count && !parts[next].in_reading_order)next++;
+      if(next==count) { page=last;job->at_end=1;break; }
+      part=next;page=0;
+    } else {
+      if(left<=page) { page-=left;break; }
+      left-=page+1;size_t prev=part;
+      while(prev && !parts[--prev].in_reading_order) {}
+      if(prev==part || !parts[prev].in_reading_order) {page=0;break;}
+      part=prev;
+    }
+    exr_pager *next=NULL;status=bounded_pager(&candidate,part,&next,&error);
+    if(status!=EXR_OK)break;
+    exr_pager_free(owned);owned=next;candidate.pager=next;candidate.part=part;
+    if(job->batch_delta<0)status=chapter_last_page(next,&page,&error);
+  }
+  if(status==EXR_OK)status=render_reflow(&candidate,page,&job->frame,&control,&error);
+  if(status==EXR_OK) {
+    job->have_frame=1;job->applied_page=page;
+    if(owned) {job->candidate_pager=owned;owned=NULL;job->candidate_config=candidate.config;}
+  } else job->error=error;
+  exr_pager_free(owned);return status;
+}
 static exr_status job_bounded_go(host_job *job) {
+  if(!job->use_offset && (job->batch_delta>1 || job->batch_delta<-1))return job_bounded_batch(job);
   host_session candidate = g.session; exr_pager *pager = NULL;
   exr_error error = {0}; exr_status status = EXR_OK;
   exr_control control = {job_cancel_check, NULL, job};
@@ -2479,10 +2599,26 @@ static exr_status job_bounded_go(host_job *job) {
 }
 
 static exr_status job_go(host_job *job) {
+  LONG layout_before=host_probe_layout_calls;
   exr_error error = {0};
   exr_status status;
   if (!g.session.active) return EXR_ARGUMENT;
   if (job->book_id && job->book_id != g.session.book_id) return EXR_CANCELLED;
+  if(!job->use_offset) {
+    int i=page_cache_find(g.session.book_id,g.session.part,job->target_page);
+    if(i>=0) {
+      frame_move(&job->frame,&page_cache[i]);job->frame.generation=++g.frame_sequence;job->frame.hold_progress=0;
+      job->have_frame=1;job->applied_page=job->frame.page;job->page_count=g.session.page_count;
+      host_probe_log("cache_hit",(double)job->frame.page);
+      host_probe_log("cache_layout_delta",(double)(host_probe_layout_calls-layout_before));
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+      return prefs_commit(job,EXR_OK);
+#else
+      return EXR_OK;
+#endif
+    }
+  }
+
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
   if (g.session.txt) return job_txt_go(job);
 #endif
@@ -2900,13 +3036,16 @@ static exr_status job_import(host_job *job) {
 #ifdef EXR_READER_WINDOWS_PREFERENCES
 #include "../apps/reader/desktop/windows_preferences.inc"
 #endif
+/* SDK entry points execute in WM_HOST_SDK_JOB on the UI thread. This worker
+   borrows the job until UI joins it; it never calls exr_* or frees SDK objects. */
 static unsigned __stdcall job_thread(void *context) {
-  host_job *job = context;
+  host_job *job=context;
+  double start=host_probe_ms();
+  host_probe_log("pixel_thread_id",(double)GetCurrentThreadId());
   job_pause(job);
-  if (job_cancel_flag(job) && job->kind != JOB_ROLLBACK && job->kind != JOB_IMPORT_ORGANIZE && !job_commit_barrier(job->kind))
-    job->status = EXR_CANCELLED;
-  else
-    job->status = job_run(job);
+  if(job->status==EXR_OK && job->frame.valid)frame_prepare_display(&job->frame);
+  host_probe_log("pixel_copy_ms",host_probe_ms()-start);
+  if(job->kind==JOB_GO && job->status==EXR_OK && job->frame.valid)host_probe_log("frame_ready_gen",(double)job->frame.generation);
 #ifdef EXR_HOST_WORKER_REVIEW
   if (job->status == EXR_OK) {
     int stage=job->kind==JOB_OPEN ? 4:job->kind==JOB_GO ? 2:0;
@@ -2916,6 +3055,12 @@ static unsigned __stdcall job_thread(void *context) {
     review_pause(stage,job);
   }
 #endif
+  PostMessageW(g.window,WM_HOST_COMPLETE,0,(LPARAM)job);
+  return 0;
+}
+
+static void job_finish_sdk(host_job *job) {
+  host_probe_require_ui();
   if (job->status == EXR_OK && job_cancel_flag(job) && job->kind != JOB_NOTE_ADD && job->kind != JOB_NOTE_UPDATE
       && !job_preferences_committed(job)
 #ifdef EXR_READER_WINDOWS_WAVE3
@@ -2936,11 +3081,6 @@ static unsigned __stdcall job_thread(void *context) {
   )
     job->status = job->kind == JOB_IMPORT ? rollback_import(job) : EXR_CANCELLED;
   if (job->status == EXR_CANCELLED) frame_clear(&job->frame);
-  if (!PostMessageW(g.window, WM_HOST_COMPLETE, 0, (LPARAM)job)) {
-    /* Window gone; the UI-side reference is released during shutdown. */
-  }
-  job_release(job);
-  return 0;
 }
 
 static exr_status job_hit(host_job *job) {
@@ -2966,6 +3106,7 @@ static exr_status job_save(host_job *job) {
 }
 
 static exr_status job_run(host_job *job) {
+  host_probe_require_ui();
   switch (job->kind) {
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
     case JOB_IMPORT_ORGANIZE: return winio_job_run(job);
@@ -2978,6 +3119,12 @@ static exr_status job_run(host_job *job) {
 #endif
     case JOB_OPEN: return job_open(job);
     case JOB_GO: return job_go(job);
+    case JOB_PREFETCH: {
+      exr_control control={job_cancel_check,NULL,job};exr_error error={0};
+      host_probe_log("prefetch_begin",(double)job->target_page);
+      if(g.session.fixed) return render_fixed(&g.session,job->target_page,g.zoom_percent,&job->frame,&control,&error);
+      return render_reflow(&g.session,job->target_page,&job->frame,&control,&error);
+    }
     case JOB_LAYOUT: return job_layout(job);
     case JOB_IMPORT: return job_import(job);
     case JOB_NOTE_ADD: case JOB_NOTE_UPDATE: return job_note(job);
@@ -3243,7 +3390,7 @@ static void layout_controls(void) {
 static int compute_view(void);
 #include "../apps/reader/desktop/windows_accessibility.inc"
 
-static int compute_view(void) {
+static int compute_view_impl(void) {
   RECT area;
   double scale;
   g.view.valid = 0;
@@ -3260,6 +3407,11 @@ static int compute_view(void) {
   g.view.dy = (int)((area.bottom - g.frame.bitmap.height * scale) / 2);
   g.view.valid = 1;
   return 1;
+}
+
+static int compute_view(void) {
+  double start=host_probe_ms();int valid=compute_view_impl();
+  host_probe_log("shift_ms",host_probe_ms()-start);return valid;
 }
 
 static void selection_bounds(size_t *start, size_t *end) {
@@ -3328,13 +3480,38 @@ static void paint_selection(HDC dc) {
   }
 }
 
-static void paint_page_view(HWND window) {
-  PAINTSTRUCT paint;
-  HDC dc = BeginPaint(window, &paint);
+static HDC page_buffer_dc;
+static HBITMAP page_buffer_bitmap;
+static HGDIOBJ page_buffer_old;
+static int page_buffer_width, page_buffer_height;
+static void page_buffer_release(void) {
+  if(page_buffer_dc && page_buffer_old)SelectObject(page_buffer_dc,page_buffer_old);
+  if(page_buffer_bitmap)DeleteObject(page_buffer_bitmap);
+  if(page_buffer_dc)DeleteDC(page_buffer_dc);
+  page_buffer_old=NULL;
+  page_buffer_dc=NULL;page_buffer_bitmap=NULL;page_buffer_width=page_buffer_height=0;
+}
+static void compose_page_view(HWND window) {
+  double paint_start=host_probe_ms();
+  host_probe_log("compose_begin_gen",(double)g.frame.generation);
+  HDC screen = GetDC(window), dc;
   RECT area;
   GetClientRect(window, &area);
+  if(area.right<=0 || area.bottom<=0){ReleaseDC(window,screen);return;}
+  if(!page_buffer_dc || page_buffer_width!=area.right || page_buffer_height!=area.bottom) {
+    page_buffer_release();
+    page_buffer_dc=CreateCompatibleDC(screen);
+    page_buffer_bitmap=CreateCompatibleBitmap(screen,area.right,area.bottom);
+    if(!page_buffer_dc || !page_buffer_bitmap){page_buffer_release();ReleaseDC(window,screen);return;}
+    page_buffer_old=SelectObject(page_buffer_dc,page_buffer_bitmap);
+    page_buffer_width=area.right;page_buffer_height=area.bottom;
+    host_probe_log("buffer_alloc",1);
+  }
+  dc=page_buffer_dc;
   FillRect(dc, &area, (HBRUSH)GetStockObject(WHITE_BRUSH));
   if (g.frame.valid && compute_view()) {
+    last_page_rect=(RECT){g.view.dx,g.view.dy,g.view.dx+(LONG)(g.frame.bitmap.width*g.view.scale)+2,g.view.dy+(LONG)(g.frame.bitmap.height*g.view.scale)+2};
+    last_page_rect_valid=1;
     BITMAPINFO info;
     memset(&info, 0, sizeof(info));
     info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -3345,7 +3522,14 @@ static void paint_page_view(HWND window) {
     info.bmiHeader.biCompression = BI_RGB;
     SetStretchBltMode(dc, HALFTONE);
     SetBrushOrgEx(dc, 0, 0, NULL);
-    StretchDIBits(dc, g.view.dx, g.view.dy,
+    if(frame_prepare_display(&g.frame)) {
+      HDC source=CreateCompatibleDC(dc);
+      if(source) {
+        HGDIOBJ old=SelectObject(source,g.frame.display_bitmap);
+        BitBlt(dc,g.view.dx,g.view.dy,g.frame.display_width,g.frame.display_height,source,0,0,SRCCOPY);
+        SelectObject(source,old);DeleteDC(source);
+      }
+    } else StretchDIBits(dc, g.view.dx, g.view.dy,
                   (int)(g.frame.bitmap.width * g.view.scale),
                   (int)(g.frame.bitmap.height * g.view.scale),
                   0, 0, (int)g.frame.bitmap.width, (int)g.frame.bitmap.height,
@@ -3363,7 +3547,22 @@ static void paint_page_view(HWND window) {
     focus.left += 1; focus.top += 1; focus.right -= 1; focus.bottom -= 1;
     DrawFocusRect(dc, &focus);
   }
-  EndPaint(window, &paint);
+  host_probe_stamp(dc,&area,g.frame.generation);
+  ReleaseDC(window,screen);
+  host_probe_log("compose_ms",host_probe_ms()-paint_start);
+}
+static void paint_page_view(HWND window) {
+  PAINTSTRUCT paint;double start=host_probe_ms();
+  host_probe_log("paint",0);
+  if(!page_buffer_dc)compose_page_view(window);
+  HDC screen=BeginPaint(window,&paint);
+  double blit_start=host_probe_ms();
+  if(page_buffer_dc)BitBlt(screen,paint.rcPaint.left,paint.rcPaint.top,
+    paint.rcPaint.right-paint.rcPaint.left,paint.rcPaint.bottom-paint.rcPaint.top,
+    page_buffer_dc,paint.rcPaint.left,paint.rcPaint.top,SRCCOPY);
+  host_probe_log("blit_ms",host_probe_ms()-blit_start);
+  EndPaint(window,&paint);host_probe_log("paint_ms",host_probe_ms()-start);
+  host_probe_present((double)g.frame.generation);
 }
 
 static size_t point_offset(int x, int y, int at_end) {
@@ -3439,19 +3638,21 @@ static void selection_report(void) {
 
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
   switch (message) {
+    case WM_ERASEBKGND: return 1;
     case WM_PAINT:
       paint_page_view(window);
       return 0;
     case WM_SIZE:
-      InvalidateRect(window, NULL, TRUE);
+      page_dirty(window,1);
       return 0;
     case WM_SETFOCUS:
     case WM_KILLFOCUS:
-      InvalidateRect(window, NULL, TRUE);
+      page_dirty(window,1);
       return 0;
     case WM_GETOBJECT:
       return host_a11y_page_object(window, wparam, lparam);
     case WM_NCDESTROY:
+      page_buffer_release();
       host_a11y_page_destroyed();
       return DefWindowProcW(window, message, wparam, lparam);
     case HOST_A11Y_CALL: {
@@ -3483,7 +3684,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
         g.selection.page = g.frame.page;
         g.selection.fixed = g.frame.fixed;
         SetCapture(window);
-        InvalidateRect(window, NULL, FALSE);
+        page_dirty(window,0);
       }
       return 0;
     case WM_MOUSEMOVE:
@@ -3493,7 +3694,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
         size_t offset = point_offset((short)LOWORD(lparam), (short)HIWORD(lparam), 1);
         if (offset != SIZE_MAX && offset != g.selection.end) {
           g.selection.end = offset;
-          InvalidateRect(window, NULL, FALSE);
+          page_dirty(window,0);
         }
       }
       return 0;
@@ -3517,7 +3718,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
           memset(&g.selection, 0, sizeof(g.selection));
           if (g.job || g.pending) prefs_turn_pending = turn;
           else page_step(turn);
-          InvalidateRect(window, NULL, FALSE);
+          page_dirty(window,0);
           return 0;
         }
       }
@@ -3537,17 +3738,34 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
           g.selection.active = start < end;
         }
         selection_report();
-        InvalidateRect(window, NULL, FALSE);
+        page_dirty(window,0);
         host_a11y_page_changed(1);
       }
       return 0;
     case WM_MOUSEWHEEL:
-      if (g.job || g.pending) return 0;
-      if ((short)HIWORD(wparam) < 0) page_step(1);
-      else page_step(-1);
+      host_probe_log("wheel",(short)HIWORD(wparam));
+      wheel_delta += (short)HIWORD(wparam);
+      SetTimer(window,PAGE_WHEEL_TIMER,16,NULL);
       return 0;
+    case WM_TIMER:
+      if(wparam==HOST_PROBE_BURST_TIMER) {
+        SendMessageW(window,WM_MOUSEWHEEL,MAKEWPARAM(0,-WHEEL_DELTA),0);
+        if(--host_probe_burst_left<=0)KillTimer(window,HOST_PROBE_BURST_TIMER);
+        return 0;
+      }
+      if(wparam==PAGE_WHEEL_TIMER) {
+        if((g.job && g.job->kind!=JOB_PREFETCH) || g.pending)return 0;
+        int steps=(int)(wheel_delta/WHEEL_DELTA);
+        if(steps) {
+          if(g.session.txt)steps=steps>0?1:-1;
+          wheel_delta-=(long)steps*WHEEL_DELTA;page_step(-steps);
+        } else KillTimer(window,PAGE_WHEEL_TIMER);
+        return 0;
+      }
+      break;
     case WM_KEYDOWN:
-      if (g.job || g.pending) return 0;
+      host_probe_log("key",(double)wparam);
+      if ((g.job && g.job->kind!=JOB_PREFETCH) || g.pending) return 0;
       switch (wparam) {
 #ifdef EXR_READER_WINDOWS_PREFERENCES
         /* An open input-method composition owns the key: never turn a page. */
@@ -3747,7 +3965,7 @@ static void apply_pending_selection(void) {
   g.selection.page = g.frame.page;
   g.selection.start = start;
   g.selection.end = end;
-  InvalidateRect(g.page, NULL, FALSE);
+  page_dirty(g.page,0);
   set_statusf(L"已跳转到标注位置（第 %llu 页），并高亮原文。",
               (unsigned long long)(g.frame.page + 1));
 }
@@ -3755,11 +3973,12 @@ static void apply_pending_selection(void) {
 static void page_step(int direction) {
   size_t target;
   host_job *job;
-  if (!g.has_current || !g.frame.valid || g.job || g.pending) return;
+  if (!g.has_current || !g.frame.valid || (g.job && g.job->kind!=JOB_PREFETCH) || g.pending) return;
   if (g.session.txt && direction >= 1000000) { set_status(L"TXT 跳到末页尚未实现。"); return; }
   if (!direction) return;
   if (direction <= -1000000) target = 0;
   else if (direction >= 1000000) target = (size_t)-1;
+  else if (direction < 0 && (g.frame.fixed || !g.session.bounded) && (size_t)(-direction) > g.frame.page) target = 0;
   else target = (direction > 0) ? g.frame.page + (size_t)direction : g.frame.page - (size_t)(-direction);
   if (g.frame.fixed) {
     if (direction <= -1000000) target = 0;
@@ -3768,8 +3987,9 @@ static void page_step(int direction) {
       set_status(L"已经是第一页。");
       return;
     } else if (target >= g.frame.page_count) {
-      set_status(L"已到最后一页；当前页未改变。");
-      return;
+      if (direction > 1 && direction < 1000000 && g.frame.page_count) target = g.frame.page_count - 1;
+      else { set_status(L"已到最后一页；当前页未改变。");
+        return; }
     }
   } else if (direction < 0 && g.frame.page == 0 && !g.session.bounded) {
     set_status(L"已经是第一页。");
@@ -3783,7 +4003,9 @@ static void page_step(int direction) {
   if (!job) { set_status(L"内存不足，无法翻页。"); return; }
   job->book_id = g.current.id;
   job->target_page = target;
+  job->batch_delta = (direction>-1000000 && direction<1000000)?direction:0;
   job->direction = direction > 0 ? 1 : -1;
+  host_probe_log("frame_request",(double)target);
   if (g.session.bounded && direction < 0 && direction > -1000000 && g.frame.page == 0) job->target_page = SIZE_MAX;
   job_submit(job);
 }
@@ -3981,7 +4203,7 @@ static void select_all_page(void) {
   } else {
     selection_report();
   }
-  InvalidateRect(g.page, NULL, FALSE);
+  page_dirty(g.page,0);
   host_a11y_page_changed(1);
 }
 
@@ -4118,7 +4340,7 @@ static void jump_selected_note(void) {
         g.selection.page = g.frame.page;
         g.selection.start = note->start;
         g.selection.end = note->end;
-        InvalidateRect(g.page, NULL, FALSE);
+        page_dirty(g.page,0);
         set_statusf(L"已定位到当前页标注（第 %llu 页）。", (unsigned long long)(note->page + 1));
       } else {
         set_status(L"标注范围超出当前页文字，未高亮。");
@@ -4232,7 +4454,7 @@ static void show_deleted_book(int64_t id) {
 #endif
     settings_save();
     update_page_label();
-    InvalidateRect(g.page, NULL, TRUE);
+    page_dirty(g.page,1);
   }
   if (reload_shelf() != EXR_OK) return;
   host_update_controls();
@@ -4337,8 +4559,8 @@ static void host_update_controls(void) {
   EnableWindow(g.import_button, !busy);
   EnableWindow(g.open_button, g.shelf_count > 0);
   EnableWindow(g.delete_button, !busy && g.shelf_count > 0);
-  EnableWindow(g.prev_button, !busy && can_page && (g.frame.page > 0 || (g.session.bounded && g.frame.part > 0)));
-  EnableWindow(g.next_button, !busy && can_page);
+  EnableWindow(g.prev_button, (!busy || (g.job && g.job->kind==JOB_PREFETCH)) && can_page && (g.frame.page > 0 || (g.session.bounded && g.frame.part > 0)));
+  EnableWindow(g.next_button, (!busy || (g.job && g.job->kind==JOB_PREFETCH)) && can_page);
   EnableWindow(g.select_button, !busy && can_page);
   EnableWindow(g.copy_button, !busy && can_page);
   EnableWindow(g.add_button, !busy && has);
@@ -4383,6 +4605,12 @@ static void host_update_controls(void) {
 }
 
 static void handle_job_complete(host_job *job) {
+  if(job->kind==JOB_PREFETCH) {
+    if(job->status==EXR_OK && !job_cancel_flag(job) && !g.closing && job->frame.book_id==g.session.book_id && job->frame.part==g.session.part) {
+      page_cache_put(&job->frame);host_probe_log("prefetch_ready",(double)job->target_page);
+    }
+    return;
+  }
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
   if(job->original_recovery_failed) {
     g.product_pending=1;g.product_ready=0;
@@ -4495,7 +4723,7 @@ static void handle_job_complete(host_job *job) {
       g.selection.end = job->hit_offset;
       g.selection.active = g.selection.start != g.selection.end;
       if (job->hit_up) { dragging = 0; selection_report(); }
-      InvalidateRect(g.page, NULL, FALSE);
+      page_dirty(g.page,0);
       if (g.hit_pending) {
         float x = g.hit_x, y = g.hit_y; int up = g.hit_up;
         g.hit_pending = g.hit_up = 0; bounded_hit(x, y, 0, up);
@@ -4619,6 +4847,7 @@ static void handle_job_complete(host_job *job) {
           if (g.session.txt) g.session.txt_source = job->candidate.txt_source;
           g.session.config = job->candidate_config;
         }
+        if(job->kind==JOB_GO && g.frame.valid && g.frame.book_id==job->frame.book_id && g.frame.part==job->frame.part)page_cache_put(&g.frame);
         frame_move(&g.frame, &job->frame);
         g.session.part = g.frame.part;
         g.session.hold_progress = g.frame.hold_progress;
@@ -5251,6 +5480,42 @@ static int drive_execute(void) {
     drive_step_finish(1, "waited");
     return 0;
   }
+  if(!strcmp(action,"probe_move")) { page_step(atoi(drive_args[1]));drive_expect_idle=1;return 1; }
+  if(!strcmp(action,"probe_wait")) {
+    if(GetTickCount()-drive_step_start<(DWORD)atoi(drive_args[1]))return 1;
+    drive_step_finish(1,"waited without blocking UI");return 0;
+  }
+  if(!strcmp(action,"probe_resize")) {
+    SetWindowPos(g.window,HWND_TOPMOST,100,100,atoi(drive_args[1]),atoi(drive_args[2]),SWP_SHOWWINDOW);
+    drive_step_finish(1,"test window sized");return 0;
+  }
+  if(!strcmp(action,"probe_mark")) { host_probe_log(drive_args[1],0);drive_step_finish(1,"marked");return 0; }
+  if(!strcmp(action,"probe_title")) {
+    wchar_t *title=host_wide(drive_args[1],strlen(drive_args[1]));SetWindowTextW(g.window,title);free(title);
+    RECT area;POINT pt={0,0};GetClientRect(g.window,&area);
+    host_probe_log("client_w",area.right);host_probe_log("client_h",area.bottom);
+    MapWindowPoints(g.page,g.window,&pt,1);GetClientRect(g.page,&area);
+    host_probe_log("roi_x",pt.x);host_probe_log("roi_y",pt.y);host_probe_log("roi_w",area.right);host_probe_log("roi_h",area.bottom);
+    RECT logical,physical,client;POINT client_origin={0,0};
+    GetWindowRect(g.window,&logical);GetClientRect(g.window,&client);ClientToScreen(g.window,&client_origin);
+    typedef HANDLE (WINAPI *probe_dpi_fn)(HANDLE);
+    probe_dpi_fn fn=(probe_dpi_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetThreadDpiAwarenessContext");
+    HANDLE old=fn?fn((HANDLE)(INT_PTR)-4):NULL;GetWindowRect(g.window,&physical);if(fn && old)fn(old);
+    double ratio=(double)(physical.right-physical.left)/(logical.right-logical.left);
+    host_probe_log("cap_x",physical.left+(client_origin.x-logical.left)*ratio);
+    host_probe_log("cap_y",physical.top+(client_origin.y-logical.top)*ratio);
+    host_probe_log("cap_w",client.right*ratio);host_probe_log("cap_h",client.bottom*ratio);
+    host_probe_log("record_ready",0);drive_step_finish(1,"record ready");return 0;
+  }
+  if(!strcmp(action,"probe_wheel_burst")) {
+    host_probe_burst_left=100;SetTimer(g.page,HOST_PROBE_BURST_TIMER,10,NULL);drive_expect_idle=1;return 1;
+  }
+  if (!strcmp(action, "probe_key") || !strcmp(action, "probe_wheel")) {
+    SetFocus(g.page);
+    host_probe_log("input_gen",(double)g.frame.generation);
+    SendMessageW(g.page,!strcmp(action,"probe_key")?WM_KEYDOWN:WM_MOUSEWHEEL,!strcmp(action,"probe_key")?VK_NEXT:MAKEWPARAM(0,-WHEEL_DELTA),0);
+    drive_expect_idle=1;return 1;
+  }
   if (!strcmp(action, "quit")) {
     drive_step_finish(1, "closing");
     g.drive_done = 1;
@@ -5372,7 +5637,7 @@ static int drive_execute(void) {
     g.selection.end = end;
     g.selection.page = g.frame.page;
     g.selection.fixed = g.frame.fixed;
-    InvalidateRect(g.page, NULL, FALSE);
+    page_dirty(g.page,0);
     drive_step_finish(g.selection.active, "selection applied");
     return 0;
   } else if (!strcmp(action, "drag")) {
@@ -5559,7 +5824,7 @@ static void drive_tick(void) {
       continue;
     }
     if (drive_expect_idle) {
-      if (g.job || g.pending) {
+      if (g.job || g.pending || host_probe_burst_left || wheel_delta<=-WHEEL_DELTA || wheel_delta>=WHEEL_DELTA) {
         if (GetTickCount() - drive_step_start > 120000) {
           drive_step_finish(0, "timeout waiting for task");
           continue;
@@ -5868,7 +6133,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       g.window_width = bounds.right - bounds.left;
       g.window_height = bounds.bottom - bounds.top;
       layout_controls();
-      InvalidateRect(g.page, NULL, TRUE);
+      page_dirty(g.page,1);
       return 0;
     }
     case WM_GETMINMAXINFO: {
@@ -5946,6 +6211,22 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if (code == 0 || code == BN_CLICKED) host_command(id);
       return 0;
     }
+    case WM_HOST_SDK_JOB: {
+      host_job *job=(host_job *)lparam;
+      if(!job || job!=g.job)return 0;
+      host_probe_require_ui();
+      host_probe_log("sdk_thread_id",(double)GetCurrentThreadId());
+      host_probe_log("sdk_job_begin",(double)job->kind);
+      host_probe_pager_ms=host_probe_raster_ms=0;
+      if(job_cancel_flag(job) && job->kind!=JOB_ROLLBACK && job->kind!=JOB_IMPORT_ORGANIZE && !job_commit_barrier(job->kind))job->status=EXR_CANCELLED;
+      else job->status=job_run(job);
+      host_probe_log("stage_anchor_pager_ms",host_probe_pager_ms);
+      host_probe_log("stage_raster_ms",host_probe_raster_ms);
+      host_probe_log("sdk_job_end",(double)job->kind);
+      if(job->frame.valid)host_probe_log("sdk_ready_gen",(double)job->frame.generation);
+      job_launch_pixels(job);
+      return 0;
+    }
     case WM_HOST_PROGRESS:
       if (g.job && g.job->kind == JOB_IMPORT && !job_cancel_flag(g.job))
         set_statusf(L"正在导入… %ld%%（读取文件，可点取消）", (long)g.job->progress);
@@ -5953,9 +6234,12 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_HOST_COMPLETE: {
       host_job *job = (host_job *)lparam;
       if (!job || job != g.job) return 0;
-      /* The completion is posted after all SDK work; join only the final ref
-         release before the UI accepts/frees the job's owned candidates. */
-      WaitForSingleObject(job->thread, INFINITE);
+      /* UI owns SDK objects; join the pixel borrower before accepting/freeing. */
+      int repaint = job->kind != JOB_SAVE && job->kind != JOB_PREFETCH;
+      int schedule_prefetch = job->have_frame && job->status==EXR_OK;
+      if(job->thread)WaitForSingleObject(job->thread, INFINITE);
+      host_probe_log("ui_complete_gen",(double)job->frame.generation);
+      job_finish_sdk(job);
       g.job = NULL;
       handle_job_complete(job);
 #ifdef EXR_READER_WINDOWS_WAVE3
@@ -5965,7 +6249,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       compact_complete(job);
 #endif
       job_release(job);
-      InvalidateRect(g.page, NULL, FALSE);
+      host_probe_log("ui_accepted_gen",(double)g.frame.generation);
+      if(repaint)page_dirty(g.page,0);
+      if(schedule_prefetch)SetTimer(window,PAGE_PREFETCH_TIMER,150,NULL);
       if (!g.job && g.pending) {
         host_job *next = g.pending;
         g.pending = NULL;
@@ -5990,6 +6276,16 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       return 0;
     }
     case WM_TIMER:
+      if(wparam==PAGE_PREFETCH_TIMER) {
+        KillTimer(window,PAGE_PREFETCH_TIMER);
+        if(g.closing || !g.session.active || !g.frame.valid || g.session.txt)return 0;
+        if(g.job || g.pending) { SetTimer(window,PAGE_PREFETCH_TIMER,20,NULL);return 0; }
+        if(page_cache_find(g.session.book_id,g.session.part,g.frame.page+1)>=0)return 0;
+        if(g.session.fixed && g.frame.page+1>=g.session.page_count)return 0;
+        host_job *next=job_new(JOB_PREFETCH);
+        if(next) { next->book_id=g.session.book_id;next->target_page=g.frame.page+1;job_start(next); }
+        return 0;
+      }
 #ifdef EXR_READER_PRODUCT_CATALOG
       if(wparam==3) { KillTimer(window,3);product_shelf_dispatch();return 0; }
       if(wparam==4) { KillTimer(window,4);if(!g.closing) settings_save();return 0; }
@@ -6139,6 +6435,7 @@ static void host_cleanup(void) {
     job_release(g.discard);
     g.discard = NULL;
   }
+  page_cache_clear();
   session_clear(&g.session);
   frame_clear(&g.frame);
   notes_clear();
@@ -6188,8 +6485,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   wchar_t phase[32] = L"0";
   int i;
   INT_PTR result = 1;
+  host_probe_ui_thread=GetCurrentThreadId();
+  host_probe_log("ui_thread_id",(double)host_probe_ui_thread);
   (void)previous;
   (void)command;
+  {
+    typedef BOOL (WINAPI *dpi_context_fn)(HANDLE);
+    dpi_context_fn dpi=(dpi_context_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetProcessDpiAwarenessContext");
+    if(dpi) dpi((HANDLE)(INT_PTR)-4); else SetProcessDPIAware();
+  }
   if (!argv) return 2;
   if (argc > 1 && !wcscmp(argv[1], L"--self-test")) {
     result = selftest(argv, argc);
