@@ -6,9 +6,35 @@ import io
 import json
 from pathlib import Path
 import sys
+from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 import check_version_consistency as guard
+
+
+def check_archive_scope(root):
+    major, minor, patch = map(int, guard.source_version(root).split('.'))
+    data = f'find_package(EXReader {major}.{minor - 1}.{patch} EXACT CONFIG REQUIRED)\n'
+    (root / 'archive').mkdir(exist_ok=True)
+    with TemporaryDirectory(prefix='version-scope-', dir=root / 'archive') as archived:
+        snapshot = Path(archived) / 'CMakeLists.txt'
+        snapshot.write_text(data, encoding='utf-8')
+        assert snapshot.relative_to(root).as_posix() in guard.tracked(root)
+        output = io.StringIO()
+        with redirect_stdout(output):
+            assert not guard.check(root), output.getvalue()
+        print('PASS: archive historical consumer excluded by path')
+        with TemporaryDirectory(prefix='version-scope-', dir=root / 'tests') as current:
+            consumer = Path(current) / 'CMakeLists.txt'
+            consumer.write_bytes(snapshot.read_bytes())
+            name = consumer.relative_to(root).as_posix()
+            assert name in guard.tracked(root)
+            output = io.StringIO()
+            with redirect_stdout(output):
+                assert guard.check(root), 'current consumer mismatch accepted'
+            assert name + ':1' in output.getvalue(), output.getvalue()
+            print(output.getvalue(), end='')
+            print('PASS: identical current consumer mismatch rejected')
 
 
 def main():
@@ -79,6 +105,7 @@ def main():
     finally:
         for target, data in originals.items():
             target.write_bytes(data)
+    check_archive_scope(root)
     print(f'PASS: valid manifest and {cases} refusal cases; all source bytes restored')
 
 

@@ -156,6 +156,9 @@ def check(root):
 
     seen = set()
     for name in tracked(root):
+        # Historical snapshots are evidence, not current SDK consumers.
+        if name.startswith('archive/'):
+            continue
         consumer = Path(name).name == 'CMakeLists.txt' or name.endswith(('.cmake', '.cmake.in'))
         if not (consumer or name.startswith('tests/') or (name.startswith('.github/workflows/') and name.endswith(('.yml', '.yaml')))):
             continue

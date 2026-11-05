@@ -1,0 +1,503 @@
+{
+  "main_trigger_summary": {
+    "base": "f22a764979ff14b23b407a438a4387c5eeae6434",
+    "main_automatic_workflows": 11,
+    "total_files": 256,
+    "method": "push/pull_request target branch; include unfiltered and filters matching main; honor branches-ignore; ignore paths for potential-main cost"
+  },
+  "main_trigger_workflows": [
+    {
+      "path": ".github/workflows/bounded-library.yml",
+      "main_automatic": true,
+      "reasons": [
+        {
+          "event": "pull_request",
+          "branches": null,
+          "reason": "unfiltered"
+        }
+      ],
+      "on": {
+        "push": {
+          "branches": [
+            "codex/r5-library-source"
+          ]
+        },
+        "pull_request": "",
+        "workflow_dispatch": ""
+      }
+    },
+    {
+      "path": ".github/workflows/f07-authoritative-symbols-20261103.yml",
+      "main_automatic": true,
+      "reasons": [
+        {
+          "event": "push",
+          "branches": null,
+          "reason": "unfiltered"
+        }
+      ],
+      "on": {
+        "workflow_dispatch": "",
+        "push": {
+          "paths": [
+            "tools/f07_authoritative_symbols_20261103.py",
+            ".github/workflows/f07-authoritative-symbols-20261103.yml",
+            "docs/reader-total-progress/F07_AUTHORITATIVE_SYMBOLS_20261103.md"
+          ]
+        }
+      }
+    },
+    {
+      "path": ".github/workflows/native.yml",
+      "main_automatic": true,
+      "reasons": [
+        {
+          "event": "pull_request",
+          "branches": null,
+          "reason": "unfiltered"
+        }
+      ],
+      "on": {
+        "push": {
+          "branches": [
+            "codex/framework"
+          ]
+        },
+        "pull_request": "",
+        "workflow_call": "",
+        "workflow_dispatch": {
+          "inputs": {
+            "scope": {
+              "description": "Run the full workflow or only P acceptance jobs",
+              "type": "choice",
+              "options": [
+                "full",
+                "p-hygiene",
+                "p-apple",
+                "p-windows"
+              ],
+              "default": "full"
+            },
+            "fault": {
+              "description": "P acceptance only - mutate one temporary workflow copy",
+              "type": "choice",
+              "options": [
+                "none",
+                "packaging",
+                "failfast",
+                "diagnostic",
+                "negative",
+                "baseline-new",
+                "baseline-modified",
+                "baseline-stale"
+              ],
+              "default": "none"
+            },
+            "rule": {
+              "description": "P hygiene rule to run (use all for the positive control)",
+              "type": "choice",
+              "options": [
+                "all",
+                "packaging",
+                "failfast",
+                "diagnostic",
+                "negative"
+              ],
+              "default": "all"
+            }
+          }
+        }
+      }
+    },
+    {
+      "path": ".github/workflows/reader-catalog-android.yml",
+      "main_automatic": true,
+      "reasons": [
+        {
+          "event": "pull_request",
+          "branches": null,
+          "reason": "unfiltered"
+        }
+      ],
+      "on": {
+        "push": {
+          "branches": [
+            "codex/reader-catalog-hosts"
+          ]
+        },
+        "pull_request": {
+          "paths": [
+            "apps/reader/store/**",
+            "examples/android/**",
+            "tools/reader_catalog_assets.py",
+            "tools/build_android_host.py",
+            "tools/check_reader_catalog_android.py",
+            "tools/android_host_evidence.py",
+            "tests/reader_catalog/**",
+            ".github/workflows/reader-catalog-android.yml"
+          ]
+        },
+        "workflow_dispatch": ""
+      }
+    },
+    {
+      "path": ".github/workflows/reader-catalog-apple.yml",
+      "main_automatic": true,
+      "reasons": [
+        {
+          "event": "pull_request",
+          "branches": null,
+          "reason": "unfiltered"
+        }
+      ],
+      "on": {
+        "push": {
+          "branches": [
+            "codex/reader-apple-catalog"
+          ]
+        },
+        "pull_request": {
+          "paths": [
+            "apps/reader/store/**",
+            "examples/apple/**",
+            "tests/reader_catalog/**",
+            "tests/apple_host/**",
+            "tools/build_apple_host.py",
+            "tools/check_apple_model_review.py",
+            ".github/workflows/reader-catalog-apple.yml"
+          ]
+        },
+        "workflow_dispatch": ""
+      }
+    },
+    {
+      "path": ".github/workflows/reader-catalog-native.yml",
+      "main_automatic": true,
+      "reasons": [
+        {
+          "event": "pull_request",
+          "branches": null,
+          "reason": "unfiltered"
+        }
+      ],
+      "on": {
+        "push": {
+          "branches": [
+            "codex/reader-desktop-catalog"
+          ]
+        },
+        "pull_request": {
+          "paths": [
+            "apps/reader/store/**",
+            "tests/reader_catalog/native_catalog_check.c",
+            ".github/workflows/reader-catalog-native.yml"
+          ]
+        },
+        "workflow_dispatch": ""
+      }
+    },
+    {
+      "path": ".github/workflows/reader-modules.yml",
+      "main_automatic": true,
+      "reasons": [
+        {
+          "event": "pull_request",
+          "branches": null,
+          "reason": "unfiltered"
+        }
+      ],
+      "on": {
+        "push": {
+          "branches": [
+            "codex/reader-modules-v1"
+          ]
+        },
+        "pull_request": {
+          "paths": [
+            "extras/sideload/**",
+            "apps/reader/store/**",
+            "tests/sideload/**",
+            "tests/reader_catalog/**",
+            ".github/workflows/reader-modules.yml"
+          ]
+        },
+        "workflow_dispatch": ""
+      }
+    },
+    {
+      "path": ".github/workflows/reading-core.yml",
+      "main_automatic": true,
+      "reasons": [
+        {
+          "event": "pull_request",
+          "branches": null,
+          "reason": "unfiltered"
+        }
+      ],
+      "on": {
+        "push": {
+          "branches": [
+            "codex/r1-reading-core"
+          ]
+        },
+        "pull_request": "",
+        "workflow_call": "",
+        "workflow_dispatch": ""
+      }
+    },
+    {
+      "path": ".github/workflows/reading-licenses.yml",
+      "main_automatic": true,
+      "reasons": [
+        {
+          "event": "pull_request",
+          "branches": null,
+          "reason": "unfiltered"
+        }
+      ],
+      "on": {
+        "push": {
+          "branches": [
+            "handoff/reading-h5-licenses"
+          ]
+        },
+        "pull_request": {
+          "paths": [
+            "CMakeLists.txt",
+            "CMakePresets.json",
+            "cmake/**",
+            "licenses/**",
+            "LICENSE",
+            "THIRD_PARTY_NOTICES.md",
+            "tests/fixtures/unicode/LICENSE.txt",
+            "tools/check_reading_licenses.py",
+            "tools/check_reading_profile.py",
+            "tests/check_reading_licenses.py",
+            ".github/workflows/reading-licenses.yml"
+          ]
+        },
+        "workflow_dispatch": {
+          "inputs": {
+            "pin_materials_only": {
+              "description": "Print proposed repository material hashes; not release acceptance",
+              "type": "boolean",
+              "default": "false"
+            }
+          }
+        }
+      }
+    },
+    {
+      "path": ".github/workflows/reading-required-core.yml",
+      "main_automatic": true,
+      "reasons": [
+        {
+          "event": "pull_request",
+          "branches": [
+            "codex/framework",
+            "main"
+          ],
+          "reason": "main matches branch filter"
+        }
+      ],
+      "on": {
+        "pull_request": {
+          "branches": [
+            "codex/framework",
+            "main"
+          ]
+        },
+        "workflow_dispatch": ""
+      }
+    },
+    {
+      "path": ".github/workflows/sdk-version-consistency.yml",
+      "main_automatic": true,
+      "reasons": [
+        {
+          "event": "pull_request",
+          "branches": null,
+          "reason": "unfiltered"
+        }
+      ],
+      "on": {
+        "pull_request": "",
+        "workflow_dispatch": ""
+      }
+    }
+  ],
+  "assertion_workflows": {
+    "groups": 7,
+    "direct_workflow_targets": 13,
+    "all_256_workflow_blobs_unchanged": true,
+    "native_and_reliability_unchanged": true,
+    "workflows": [
+      {
+        "assertion": "tests/reader_next_s14/guard.py:79",
+        "workflow": ".github/workflows/reader-next-s14.yml",
+        "blob": "f42066c9da2065ddc35eeb536463a7414e526064",
+        "on_sha256": "24ea12c3da82d645a6f7a7204e12b125e4509faaf031fc4f02bb62227bf78f83",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tests/reader_apple_records_ready/guard.py:37",
+        "workflow": ".github/workflows/reader-apple-records-ready.yml",
+        "blob": "3c1cea82b25b62b2813b004408dea9e5b78a30d1",
+        "on_sha256": "5144f039d956a91fd2cd290057708d23d5d0b5e087e9f0adcb0c5f2d4da49df8",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tests/reader_perf_protocol/check.py:44",
+        "workflow": ".github/workflows/reader-composition-perf-gtk.yml",
+        "blob": "fe5db13ea536f28da65ac3975c9c0ee3696a0606",
+        "on_sha256": "76df765d92bacf05e7307ef8ad264c91f687e20efecd5c8bb21e6367e78aa70c",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tests/reader_perf_protocol/check.py:44",
+        "workflow": ".github/workflows/reader-composition-perf-windows.yml",
+        "blob": "bd9bb720395391aa758dea32fd068e4f9f9896fc",
+        "on_sha256": "e31b83812b2cde1f2fb082774e37338d1a2db462f9eddce6f44f86d3bbb77d48",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tests/apple_host/page_theme/guard.py:81",
+        "workflow": ".github/workflows/reader-apple-navigation.yml",
+        "blob": "478a17959f51f12547e066d3e3e5787fbc841489",
+        "on_sha256": "992896f61ac12e4a87c8d05a8d5cb36057d1dda6a913b6db7690bf8b588ddc87",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tests/apple_host/page_theme/guard.py:81",
+        "workflow": ".github/workflows/reader-apple-search.yml",
+        "blob": "f188c82d6f317546c3bd9a2aff129db30c613bbf",
+        "on_sha256": "70824f5d6c3e352cd4ccfe513dd45ea5e481e96c86c2a4646d9da332c07c34e1",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tests/apple_host/page_theme/guard.py:81",
+        "workflow": ".github/workflows/reader-apple-reading-records.yml",
+        "blob": "9fbb1d2acacfbbdd2f2a6a737901dcc4687c61fe",
+        "on_sha256": "e24c71b06f3ba8ca92901d750b200eba4404f40ec1c264963280bef449a43b31",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tests/apple_host/page_theme/guard.py:81",
+        "workflow": ".github/workflows/reader-apple-shelf.yml",
+        "blob": "b85e24583c5531e85daa869898eccc4de43e8736",
+        "on_sha256": "1d066bb8d7234fcd1ebc1ac36a0332dcc7e83c391580d56ed710c5f4f1404150",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tests/apple_host/page_theme/guard.py:81",
+        "workflow": ".github/workflows/reader-apple-import-mapping.yml",
+        "blob": "1a0ea63423ca3ce9e5aa1c4c4ec709589c06c333",
+        "on_sha256": "71d7f5ad820fcb2e369b8301256482154b3fd70a341cc9b210b89274d137f8b9",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tests/apple_host/page_theme/guard.py:81",
+        "workflow": ".github/workflows/wp13-apple.yml",
+        "blob": "f2b5c0db32a5d6156a4dc5e88c559508a48b068c",
+        "on_sha256": "655f12f315121d590babcdb89e716f797bd4a1c16177b169d458691e5a2c8703",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tests/apple_host/page_theme/simulator_ready.py:28",
+        "workflow": ".github/workflows/reader-apple-simulator-ready.yml",
+        "blob": "a7abd0465c03d7fb8197ec70a303ab24ed89158b",
+        "on_sha256": "13c98983c0dd45cc8223d955892866a9c7c321bd723de55072d525a55dd778c4",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tests/reader_apple_records_ready/raw3_guard.py:54",
+        "workflow": ".github/workflows/reader-apple-raw3-ios-ready.yml",
+        "blob": "d0bcef47391318d223917309edd2cd712fbc7e0d",
+        "on_sha256": "dd471452357c99c4aebbafcf621a90b2ae78285a87e1b15d91b9e5e1d7a8f198",
+        "on_unchanged": true,
+        "file_unchanged": true
+      },
+      {
+        "assertion": "tools/check_version_consistency.py:56",
+        "workflow": ".github/workflows/reader-apple-record-compatibility.yml",
+        "blob": "50efef860e214886103998d11122e457c0edbb9a",
+        "on_sha256": "766a02014803e23407524166e549670b4f68f688053b41829354ea5d4449490b",
+        "on_unchanged": true,
+        "file_unchanged": true
+      }
+    ]
+  },
+  "version_scan": {
+    "archive_files_excluded": 34655,
+    "archive_consumer_files_previously_considered": 4208,
+    "active_scan_files": 1605,
+    "scan_classes": {
+      "workflow": 256,
+      "consumer_cmake": 191,
+      "tests": 1158
+    },
+    "archive_mismatches_removed": 27,
+    "archive_mismatch_versions": {
+      "3.41.0": 14,
+      "3.40.0": 13
+    },
+    "current_errors": 0,
+    "literal_exceptions": 587,
+    "exception_purposes": {
+      "frozen_baseline": 530,
+      "negative_case": 50,
+      "migration_compat": 7
+    },
+    "exception_literals": {
+      "3.41.0": 387,
+      "3.40.0": 197,
+      "3.42.0": 3
+    },
+    "purpose_by_literal": {
+      "frozen_baseline": {
+        "3.41.0": 355,
+        "3.40.0": 175
+      },
+      "negative_case": {
+        "3.40.0": 19,
+        "3.41.0": 28,
+        "3.42.0": 3
+      },
+      "migration_compat": {
+        "3.41.0": 4,
+        "3.40.0": 3
+      }
+    },
+    "new_literal_waivers": 0
+  },
+  "local_validation": {
+    "commands": [
+      {
+        "command": "python tools/check_version_consistency.py --sync-generated",
+        "exit_code": 0
+      },
+      {
+        "command": "python tests/check_version_consistency.py",
+        "exit_code": 0
+      },
+      {
+        "command": "python tools/check_version_consistency.py --self-test",
+        "exit_code": 0
+      }
+    ],
+    "generated_bytes_unchanged": true,
+    "exception_manifest_unchanged": true,
+    "archive_and_workflows_unchanged": true
+  }
+}
