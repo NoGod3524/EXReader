@@ -1,0 +1,51 @@
+name: D17 actual macOS picker and all17 independent storage boundaries
+on:
+  push:
+    branches: [codex/reader-wave3-d17]
+    paths: ['tests/reader_wave3_d17/**', '.github/workflows/reader-wave3-d17.yml']
+permissions: {contents: read, actions: read}
+concurrency: {group: reader-wave3-d17, cancel-in-progress: false}
+jobs:
+  native:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact new scope and frozen SDK guard
+        run: |
+          python3 -m py_compile tests/reader_wave3_d17/*.py
+          python3 tests/reader_wave3_d17/guard.py
+      - name: Native project generator dependency
+        run: ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document
+      - name: Exact-source APP public observer and all original17 operations
+        run: python3 tests/reader_wave3_d17/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d17-native-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/d17/**
+            !build/d17/sdk/**
+            !build/d17/sdk-build/**
+            !build/d17/product-build/**
+            !build/d17/derived/**
+          retention-days: 90
+          if-no-files-found: error
+  verify:
+    needs: native
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Authenticate original ZIP program snapshots and exact no-write rules
+        env: {GH_TOKEN: '${{github.token}}'}
+        run: python3 tests/reader_wave3_d17/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d17-verification-${{github.run_id}}-${{github.run_attempt}}
+          path: build/d17-verify/verification.json
+          retention-days: 90
+          if-no-files-found: error

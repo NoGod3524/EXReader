@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "base": "2743f32a4eccd5823657da19cb4f77f2411424af",
+  "case_ids": [
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M05",
+    "M06",
+    "M07",
+    "M08",
+    "M09",
+    "M10"
+  ],
+  "providers": {
+    "migration": null,
+    "publication": null,
+    "host": null
+  },
+  "frozen": [
+    "tests/migration/windows_recovery_native_20261029",
+    "tests/migration/recovery_preflight_20261029",
+    "tests/migration/recovery_handoff_20261029",
+    "tests/migration/recovery_integration_20261029",
+    "tests/migration/new_target_recovery_20261029",
+    "tests/migration/windows_record_20261029",
+    "tests/windows_migration_startup",
+    "extras/migration",
+    "apps",
+    "src",
+    "include",
+    "cmake",
+    "CMakeLists.txt",
+    "tests/fixtures"
+  ],
+  "claims": {
+    "full_p0_acceptance": false,
+    "physical_power_loss_qualified": false,
+    "directory_fsync_equivalent": false
+  }
+}

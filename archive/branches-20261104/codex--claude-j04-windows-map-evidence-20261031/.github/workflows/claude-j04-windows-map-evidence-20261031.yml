@@ -1,0 +1,31 @@
+name: J04 Windows link-map evidence parser
+on:
+  push:
+    branches: [codex/claude-j04-windows-map-evidence-20261031]
+    paths:
+      - tools/validation/claude-j04-windows-map-evidence-20261031/**
+      - .github/workflows/claude-j04-windows-map-evidence-20261031.yml
+permissions:
+  contents: read
+  actions: read
+jobs:
+  j04:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 82c4a08c51ba2bfa67cb8899bb9e26609dc47eaf
+          path: c09-src
+      - name: Analyse the retained C09 Windows map
+        env:
+          GH_TOKEN: ${{ github.token }}
+          C09_CHECKOUT: ${{ github.workspace }}/c09-src
+        run: python3 -I tools/validation/claude-j04-windows-map-evidence-20261031/j04_map.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: j04-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: j04-evidence
+          if-no-files-found: warn

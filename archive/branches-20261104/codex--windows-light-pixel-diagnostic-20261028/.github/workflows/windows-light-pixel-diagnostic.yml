@@ -1,0 +1,28 @@
+name: Windows light pixel retained screenshot diagnostic
+on:
+  push:
+    branches: [codex/windows-light-pixel-diagnostic-20261028]
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download original same-run evidence to the runner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p diagnostic
+          gh api repos/NoGod3524/EXReader/actions/artifacts/12795210910/zip > diagnostic/source.zip
+      - name: Inspect exact retained screenshot and verify artifact identity
+        run: python3 tests/windows_light_pixel_diagnostic/inspect.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-light-pixel-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: diagnostic/result.json
+          if-no-files-found: warn

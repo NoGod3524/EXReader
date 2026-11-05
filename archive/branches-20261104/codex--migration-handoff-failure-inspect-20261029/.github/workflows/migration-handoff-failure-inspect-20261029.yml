@@ -1,0 +1,61 @@
+name: Inspect retained Linux handoff S5 failure
+on:
+  push:
+    branches: [codex/migration-handoff-failure-inspect-20261029]
+    paths: [.github/workflows/migration-handoff-failure-inspect-20261029.yml]
+permissions: {contents: read, actions: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pin completed failed producer and original ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/inspection
+          gh api repos/NoGod3524/EXReader/actions/runs/40946864068 > build/inspection/run.json
+          gh api repos/NoGod3524/EXReader/actions/jobs/123704417518 > build/inspection/job.json
+          gh api repos/NoGod3524/EXReader/actions/artifacts/12929848394 > build/inspection/artifact.json
+          gh api repos/NoGod3524/EXReader/actions/artifacts/12929848394/zip > build/inspection/original.zip
+      - name: Inspect exact retained case and control bytes without extraction
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,zipfile
+          from pathlib import Path,PurePosixPath
+          assert os.environ['GITHUB_ACTIONS']=='true'
+          p=Path('build/inspection');run=json.loads((p/'run.json').read_text());job=json.loads((p/'job.json').read_text());artifact=json.loads((p/'artifact.json').read_text())
+          source='00e12b8b66ac2c66245e462ef4931a724671cd34'
+          assert run['id']==40946864068 and run['head_sha']==source and run['run_attempt']==1
+          assert job['id']==123704417518 and job['status']=='completed' and job['conclusion']=='failure'
+          raw=(p/'original.zip').read_bytes();digest=hashlib.sha256(raw).hexdigest()
+          assert artifact['id']==12929848394 and artifact['size_in_bytes']==len(raw)==19159055
+          assert digest=='45cfbbfadc3d17eb6bfd773736a96472826e1cf0be908279fb1b9bce63f2ffe4'
+          with zipfile.ZipFile(p/'original.zip') as z:
+              names=z.namelist();assert len(names)==len(set(names)) and len(names)<30000
+              for name in names:
+                  q=PurePosixPath(name);assert not q.is_absolute() and '..' not in q.parts and '\\' not in name
+              report_names=[n for n in names if n.endswith('recovery-handoff/evidence.json')];assert len(report_names)==1
+              report=json.loads(z.read(report_names[0]));assert report['source_sha']==source and len(report['cases'])==22 and not report['passed']
+              failed=[c for c in report['cases'] if not c['passed']];assert len(failed)==1 and failed[0]['name']=='crash-S5'
+              case=failed[0];controls={}
+              for name in names:
+                  if '/crash-S5/' in '/'+name and name.endswith(('.go','.ready','.stdout.txt','.stderr.txt')):
+                      info=z.getinfo(name);assert info.file_size<=16*1024*1024
+                      data=z.read(name)
+                      controls[name]={'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'text':data[-8192:].decode('utf-8','replace')}
+              result=dict(producer_source=source,producer_run=run['id'],producer_job=job['id'],artifact=artifact['id'],bytes=len(raw),sha256=digest,
+                  error=case.get('error'),traceback=case.get('traceback'),last_checks=case['checks'][-12:],controls=controls,
+                  original_22_count=22,formal_acceptance=False)
+              (p/'failure.json').write_text(json.dumps(result,indent=2)+'\n')
+              print(json.dumps({k:v for k,v in result.items() if k!='controls'},indent=2))
+              for name,item in controls.items():print(json.dumps(dict(path=name,**item)))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-handoff-S5-inspection-${{ github.sha }}
+          path: build/inspection/*.json
+          if-no-files-found: error

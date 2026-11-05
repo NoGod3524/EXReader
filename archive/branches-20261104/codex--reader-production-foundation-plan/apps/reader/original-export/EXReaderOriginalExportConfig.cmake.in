@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(EXReader @EXR_SDK_VERSION@ EXACT CONFIG COMPONENTS library)
+include("${CMAKE_CURRENT_LIST_DIR}/EXReaderSdkTargetGuard.cmake")
+_exr_sdk_target_provenance(EXReader::exr_library "${EXReader_DIR}" "@EXR_SDK_VERSION@")
+find_dependency(Threads)
+include("${CMAKE_CURRENT_LIST_DIR}/EXReaderOriginalExportTargets.cmake")

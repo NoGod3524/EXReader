@@ -1,0 +1,24 @@
+name: SDK 3.42 retained installed identity inventory
+on:
+  push:
+    branches: [codex/sdk342-module-identity-diagnostic-20261028]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inventory:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate and inspect original artifacts without rebuilding
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/sdk342_identity_diagnostic/inventory.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sdk342-installed-identities-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/sdk342-identity-diagnostic/
+          if-no-files-found: error

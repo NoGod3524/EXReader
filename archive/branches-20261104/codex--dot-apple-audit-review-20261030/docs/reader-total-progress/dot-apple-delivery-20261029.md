@@ -1,0 +1,17 @@
+# Dot Apple task delivery receipt
+
+2026-10-29 America/New_York 23:10: root sent the complete Apple repair and validation task to the user's actual Dot 102 through its logged-in Edge conversation, after user approved this one-time send. The message and full pasted-text attachment are visible in the conversation; Dot displayed typing/thinking. This proves delivery, not execution or access to InstaBox.
+
+Conversation: https://chatgpt.com/dots/dd71f6a9-ec17-4f80-abcd-7171b802968e~6abd141201dc81a0a66986707b501640
+
+Task packet: docs/reader-total-progress/DOT_APPLE_TASK_20261029.md at audit commit 1ba643b3. Local copy C:/Users/Oscar/Downloads/EXReader_Dot_Apple_task_20261029.md.
+
+Root pauses Apple source edits now to prevent concurrent changes. Dot is asked to confirm normal saved-login InstaBox CLI access and record actual acceptance on GitHub, diagnose source55 original ZIPs in Actions, fix current Apple faults, run original5 on both devices then full39x3+12, and deliver DOT_APPLE_RESULT_20261029.md. Root retains common-branch composition, non-Apple scopes, independent audit and final overall handoff. No common branch advance or final product acceptance has occurred.
+
+Current source55e9c203fc58c5b94d3d951dad17c32d7f15a08f/run40992359608 is terminal failure: iPad4/5 annotation240s timeout; iPhone3/5 annotation240s timeout plus history193s failed. SDK builds succeeded. Latest original ZIP diagnosis remains to be performed by Dot. Do not promote SDK success or message delivery to product/execution success.
+
+All original constraints and frozen assertions/counts/budgets remain. Existing main worktree89 staged paths are preserved. Eight original/review agents remain stopped. No new worker or Claude was started. This is delegation progress, not the final closure handoff.
+Dot actual reply, visible in the same conversation after delivery:
+“收到，这次只恢复 EXReader Apple 手机／平板修复与完整验证。我先完整读取附件、核实既有 InstaBox 正常 CLI 是否可用，再写接手回执并推进最新失败的原 ZIP 诊断；共同整合和总 handoff 仍由原工作聊天负责。”
+
+This confirms receipt and intended scoped acceptance. Actual CLI access/execution remains to be confirmed by its GitHub receipt; do not count it as verified running yet. Screenshot saved locally C:/Users/Oscar/Downloads/EXReader_Dot_delivery_20261029.png. Root will read Dot results and retain integration ownership; Apple source writing remains paused.

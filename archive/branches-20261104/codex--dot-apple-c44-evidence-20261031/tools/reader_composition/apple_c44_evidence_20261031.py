@@ -1,0 +1,320 @@
+"""Actions-only inspection of c44 Apple failure/observation and independent F09 legacy evidence; no product execution."""
+import hashlib, io, json, math, os, re, stat, subprocess, sys, traceback, zipfile
+from datetime import datetime
+from pathlib import Path, PurePosixPath
+assert os.environ.get("GITHUB_ACTIONS") == "true" and sys.platform == "darwin"
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+from check_parallel_integration import fetch, download_artifact_zip
+SOURCE = "c44a9cf211fffa4ed6f2720ffa49a186c3b4d196"
+RUN, ATTEMPT = 41161011007, 1
+PINS = [("iphone",124419218830,"Focused original five iphone",13028001843,"focused-original-five-iphone",181108941,"42b1ce664a7e2a37c1e66bd35876ce7e35c4ddfaf3a457a6b8f6ae55957289f9")]
+OUT = ROOT / "build/dot-apple-c44-evidence"
+OUT.mkdir(parents=True, exist_ok=True)
+receipt = dict(producer_source=SOURCE, run=RUN, attempt=ATTEMPT, inspection_source=os.environ["GITHUB_SHA"], diagnostic_only=True, product_acceptance=False, artifacts=[], errors=[])
+def save(path, obj):
+ path.parent.mkdir(parents=True, exist_ok=True)
+ path.write_text(json.dumps(obj, indent=2) + "\n")
+def inspect(pin):
+ label, jid, jname, aid, stem, size, digest = pin
+ dest = OUT / label
+ dest.mkdir(parents=True, exist_ok=True)
+ job, meta = fetch(f"actions/jobs/{jid}"), fetch(f"actions/artifacts/{aid}")
+ save(dest/"job.json", job); save(dest/"metadata.json",meta)
+ assert (job["head_sha"],job["run_id"],job["run_attempt"],job["name"],job["status"],job["conclusion"]) == (SOURCE,RUN,ATTEMPT,jname,"completed","failure")
+ assert (meta["workflow_run"]["head_sha"],meta["workflow_run"]["id"],meta["name"],meta["size_in_bytes"],meta["digest"],meta["expired"]) == (SOURCE,RUN,f"{stem}-{RUN}-{ATTEMPT}",size,"sha256:"+digest,False)
+ raw = download_artifact_zip(aid)
+ assert len(raw)==size and hashlib.sha256(raw).hexdigest()==digest
+ entry=dict(label=label,job=jid,artifact=aid,bytes=size,sha256=digest,raw_zip_verified=True)
+ receipt["artifacts"].append(entry)
+ with zipfile.ZipFile(io.BytesIO(raw)) as z:
+  infos=z.infolist(); names=[x.filename for x in infos]
+  assert len(names)==len(set(names)) and sum(x.file_size for x in infos)<4*1024**3
+  canonical=set()
+  for item in infos:
+   p=PurePosixPath(item.filename)
+   assert not p.is_absolute() and ".." not in p.parts and "\\" not in item.filename and ":" not in item.filename
+   key=str(p); assert key not in canonical; canonical.add(key)
+   assert stat.S_IFMT(item.external_attr>>16) in (0,stat.S_IFREG,stat.S_IFDIR) and not item.flag_bits&1
+  save(dest/"members.json",[dict(name=i.filename,bytes=i.file_size) for i in infos])
+  selected=[]
+  for item in infos:
+   if item.is_dir(): continue
+   name=item.filename
+   bundle = any(part.endswith(".xcresult") and part=="wave3.xcresult" for part in PurePosixPath(name).parts)
+   regular = name.endswith((".log",".json",".txt")) and ".xcresult/" not in name
+   if not (bundle or regular): continue
+   assert item.file_size < 256*1024**2
+   data=z.read(name); target=dest/"extracted"/name
+   target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
+   selected.append(dict(name=name,bytes=len(data),sha256=hashlib.sha256(data).hexdigest()))
+   if regular and name.endswith(".json"):
+    try:
+     obj=json.loads(data)
+     if isinstance(obj,dict) and ("failures" in obj or "accepted" in obj):
+      print("PRODUCER_REPORT "+label+" "+name+" "+json.dumps({k:obj[k] for k in ("accepted","failures","failure","source_sha","run_id","attempt") if k in obj}),flush=True)
+    except (ValueError,UnicodeError): pass
+   if regular and name.endswith(".log"):
+    lines=data.decode("utf-8","replace").splitlines()
+    matches=[]
+    for n,line in enumerate(lines):
+     if any(s in line for s in ("error:","XCTAssert","Assertion Failure","Exceeded","Restarting after","Test Case","Timed out")):
+      matches.append(dict(line=n+1,context=lines[max(0,n-15):min(len(lines),n+25)]))
+    save(dest/("contexts-"+hashlib.sha256(name.encode()).hexdigest()[:12]+".json"),matches)
+  save(dest/"extracted-hashes.json",selected)
+ if label in ("iphone","ipad"):
+  bundles=list((dest/"extracted").rglob("wave3.xcresult"))
+  assert len(bundles)==1,("expected one original xcresult",bundles)
+  bundle=bundles[0]
+  for kind in ("summary","tests"):
+   result=subprocess.run(["xcrun","xcresulttool","get","test-results",kind,"--path",str(bundle),"--format","json"],capture_output=True,text=True,timeout=120)
+   (dest/(kind+".json")).write_text(result.stdout);(dest/(kind+".stderr.txt")).write_text(result.stderr)
+   assert result.returncode==0,(kind,result.returncode)
+  result=subprocess.run(["xcrun","xcresulttool","get","object","--legacy","--path",str(bundle),"--format","json"],capture_output=True,text=True,timeout=120)
+  assert result.returncode==0,result.stderr
+  obj=json.loads(result.stdout);save(dest/"legacy.json",obj)
+  print("FIRST_ISSUES "+label+" "+json.dumps(obj.get("issues",{})),flush=True)
+  pending=[]; seen=set()
+  def refs(value):
+   if isinstance(value,dict):
+    for key,val in value.items():
+     if key in ("testsRef","summaryRef") and isinstance(val,dict):
+      ident=val.get("id",{}).get("_value")
+      if ident and ident not in seen and ident not in pending: pending.append(ident)
+     refs(val)
+   elif isinstance(value,list):
+    for val in value: refs(val)
+  refs(obj)
+  while pending:
+   ident=pending.pop(0)
+   if ident in seen: continue
+   assert len(seen)<64,"bounded xcresult reference traversal exceeded"
+   seen.add(ident)
+   result=subprocess.run(["xcrun","xcresulttool","get","object","--legacy","--path",str(bundle),"--id",ident,"--format","json"],capture_output=True,text=True,timeout=120)
+   assert result.returncode==0,result.stderr
+   node=json.loads(result.stdout)
+   save(dest/"activities"/(hashlib.sha256(ident.encode()).hexdigest()+".json"),node)
+   refs(node)
+  entry["xcresult_reference_objects"]=len(seen)
+  result=subprocess.run(["xcrun","xcresulttool","export","attachments","--path",str(bundle),"--output-path",str(dest/"attachments")],capture_output=True,text=True,timeout=120)
+  save(dest/"attachment-export.json",dict(exit=result.returncode,stdout=result.stdout,stderr=result.stderr))
+  assert result.returncode==0,result.stderr
+def unwrap(v):
+ if isinstance(v,dict):
+  if "_value" in v:return v["_value"]
+  if "_values" in v:return [unwrap(x) for x in v["_values"]]
+  return {k:unwrap(x) for k,x in v.items() if k!="_type"}
+ if isinstance(v,list):return [unwrap(x) for x in v]
+ return v
+def timestamp(v):
+ try:
+  n=float(v)
+ except (ValueError,TypeError):
+  try:n=datetime.fromisoformat(str(v).replace("Z","+00:00")).timestamp()
+  except (ValueError,TypeError):return None
+ return n if math.isfinite(n) else None
+def interval(a):
+ s,e=timestamp(a.get("start")),timestamp(a.get("finish"))
+ return (s,e) if s is not None and e is not None and e>=s else None
+def union_length(intervals):
+ merged=[]
+ for s,e in sorted(intervals):
+  if merged and s<=merged[-1][1]:merged[-1][1]=max(merged[-1][1],e)
+  else:merged.append([s,e])
+ return sum(e-s for s,e in merged)
+def walk_activity(a,parent,path,depth,rows):
+ title=a.get("title","")
+ here=path+[title]
+ iv=interval(a); kids=a.get("subactivities",[])
+ if not isinstance(kids,list):kids=[]
+ clipped=[]
+ if iv:
+  for child in kids:
+   ci=interval(child)
+   if ci and min(iv[1],ci[1])>=max(iv[0],ci[0]):clipped.append((max(iv[0],ci[0]),min(iv[1],ci[1])))
+ row=dict(index=len(rows),parent=parent,path=here,depth=depth,title=title,start=a.get("start"),finish=a.get("finish"),inclusive=(iv[1]-iv[0]) if iv else None,exclusive=max(0,iv[1]-iv[0]-union_length(clipped)) if iv else None)
+ rows.append(row)
+ for child in kids:walk_activity(child,row["index"],here,depth+1,rows)
+def cases(node):
+ if isinstance(node,dict):
+  if isinstance(node.get("activitySummaries"),list):yield node
+  for v in node.values():yield from cases(v)
+ elif isinstance(node,list):
+  for v in node:yield from cases(v)
+def analyze(label):
+ dest=OUT/label
+ target="testNativeAnnotationPreviewConfirmCancelAndDuplicate"
+ logname="wave3-native-ui.log"
+ activity_cases=[]
+ for i in sorted((dest/"activities").glob("*.json")):
+  if i.is_file():
+   obj=unwrap(json.loads(i.read_text()))
+   for case in cases(obj):
+    ident=str(case.get("testIdentifier",case.get("name",case.get("testName",""))))
+    rows=[]
+    for a in case["activitySummaries"]:walk_activity(a,None,[],0,rows)
+    failures=case.get("failureSummaries",[])
+    activity_cases.append(dict(member=str(i.relative_to(OUT)),identifier=ident,failures=failures,activities=rows))
+ save(OUT/(label+"-activities.json"),activity_cases)
+ selected=[c for c in activity_cases if target in c["identifier"]]
+ if not selected:
+  print("CASE_SELECTION_UNCERTAIN "+label+" "+json.dumps([c["identifier"] for c in activity_cases]),flush=True)
+  raise AssertionError("target annotation activities missing; preserve evidence without substitution")
+ for case in selected:
+  rows=case["activities"]
+  print("CASE_FAILURES "+label+" "+json.dumps(dict(identifier=case["identifier"],failures=case["failures"])),flush=True)
+  ranked=sorted((r for r in rows if r["inclusive"] is not None),key=lambda r:r["inclusive"],reverse=True)
+  print("SLOWEST_ACTIVITIES "+label+" "+json.dumps(ranked[:20]),flush=True)
+  exclusive=sorted((r for r in rows if r["exclusive"] is not None),key=lambda r:r["exclusive"],reverse=True)
+  print("SLOWEST_EXCLUSIVE "+label+" "+json.dumps(exclusive[:20]),flush=True)
+ logs=list((dest/"extracted").rglob(logname))
+ assert len(logs)==1,(label,logs)
+ lines=logs[0].read_text(errors="replace").splitlines()
+ evidence_lines=[]
+ for n,line in enumerate(lines,1):
+  if "snapshot-tap-frame " in line or "background assertion" in line:
+   evidence_lines.append(dict(member=str(logs[0].relative_to(OUT)),line=n,context=lines[max(0,n-5):n+4]))
+  if "identifier:" in line and any(key in line for key in ("features.status","features.cancel","features.annotations.snapshot")):
+   evidence_lines.append(dict(member=str(logs[0].relative_to(OUT)),line=n,text=line))
+ for p in sorted((dest/"attachments").rglob("*")):
+  if not p.is_file() or p.suffix.lower() not in (".txt",".json") or p.stat().st_size>8*1024**2:continue
+  content=p.read_text(errors="replace").splitlines()
+  for n,line in enumerate(content,1):
+   if "identifier:" in line and any(key in line for key in ("features.status","features.cancel","features.annotations.snapshot")):
+    evidence_lines.append(dict(member=str(p.relative_to(OUT)),line=n,text=line))
+ save(OUT/(label+"-frame-status-launch.json"),evidence_lines)
+ for record in evidence_lines:print("FRAME_STATUS_LAUNCH "+label+" "+json.dumps(record),flush=True)
+ segments=[];segment=None;launch=0;active=False
+ for n,line in enumerate(lines,1):
+  if "Restarting after" in line or "Running tests" in line:
+   launch+=1
+  if "Test Case" in line and "started" in line:
+   active=target in line
+   if active:
+    segment=dict(launch=launch,start_line=n,lines=[],markers=[],timed_actions=[],failure_context=[])
+    segments.append(segment)
+  if active and segment is not None:
+   segment["lines"].append(dict(line=n,text=line))
+   match=re.search(r"t\s*=\s*([0-9.]+)s\s+(.*)",line)
+   if match:
+    t=float(match.group(1))
+    segment["timed_actions"].append(dict(line=n,t=t,text=match.group(2)))
+   if any(m in line for m in ("font-distinct-applied","font-invalid-preserved","font-reader-exit-released","font-lease-released","annotation","MARK","snapshot-tap-frame")):
+    segment["markers"].append(dict(line=n,text=line))
+   if any(m in line.lower() for m in ("exceeded","timed out","timeout","restarting after","error:","assertion failure")):
+    segment["failure_context"].append(dict(line=n,context=lines[max(0,n-6):n+5]))
+   if "Restarting after" in line or ("Test Case" in line and ("passed" in line or "failed" in line)):
+    active=False
+ save(OUT/(label+"-log-segments.json"),segments)
+ assert segments,"target annotation log segment missing"
+ for segment in segments:
+  actions=segment["timed_actions"];gaps=[]
+  for a,b in zip(actions,actions[1:]):
+   if b["t"]>=a["t"]:gaps.append(dict(seconds=b["t"]-a["t"],before=a,after=b))
+  before240=[g for g in gaps if g["before"]["t"]<240]
+  print("LOG_SEGMENT "+label+" "+json.dumps(dict(launch=segment["launch"],start_line=segment["start_line"],markers=segment["markers"],failure_context=segment["failure_context"],slowest_gaps=sorted(gaps,key=lambda x:x["seconds"],reverse=True)[:10],slowest_pre240_gaps=sorted(before240,key=lambda x:x["seconds"],reverse=True)[:10],tail=segment["lines"][-20:])),flush=True)
+ receipt.setdefault("timelines",[]).append(dict(label=label,activity_cases=len(activity_cases),selected_cases=len(selected),log_segments=len(segments)))
+
+def small_evidence(label, source, run_id, attempt, job_id, aid, name, size, digest):
+ dest=OUT/label;dest.mkdir(parents=True,exist_ok=True)
+ run=fetch(f"actions/runs/{run_id}");job=fetch(f"actions/jobs/{job_id}");meta=fetch(f"actions/artifacts/{aid}")
+ assert (run["head_sha"],run["run_attempt"],run["status"],run["conclusion"])==(source,attempt,"completed","failure")
+ assert (job["head_sha"],job["run_id"],job["run_attempt"],job["status"],job["conclusion"])==(source,run_id,attempt,"completed","failure")
+ assert (meta["workflow_run"]["head_sha"],meta["workflow_run"]["id"],meta["name"],meta["size_in_bytes"],meta["digest"],meta["expired"])==(source,run_id,name,size,"sha256:"+digest,False)
+ raw=download_artifact_zip(aid)
+ assert len(raw)==size and hashlib.sha256(raw).hexdigest()==digest
+ result=dict(source=source,run=run_id,attempt=attempt,job=job_id,artifact=aid,bytes=size,sha256=digest,raw_zip_verified=True,diagnostic_only=True,product_acceptance=False)
+ objects={};texts={}
+ with zipfile.ZipFile(io.BytesIO(raw)) as z:
+  items=z.infolist();seen=set()
+  assert len(items)<=1000 and sum(i.file_size for i in items)<32*1024**2
+  for item in items:
+   p=PurePosixPath(item.filename);key=str(p)
+   assert not p.is_absolute() and ".." not in p.parts and "\\" not in item.filename and ":" not in item.filename and key not in seen
+   seen.add(key)
+   assert stat.S_IFMT(item.external_attr>>16) in (0,stat.S_IFREG,stat.S_IFDIR) and not item.flag_bits&1
+   if item.is_dir() or p.suffix not in (".json",".log",".txt"):continue
+   assert item.file_size<8*1024**2
+   data=z.read(item)
+   if label!="f09-legacy":
+    target=dest/"extracted"/key;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
+   if p.suffix==".json":objects[key]=json.loads(data)
+   else:texts[key]=data.decode("utf-8","replace")
+ save(dest/"metadata.json",meta)
+ if label=="apple-observe":
+  receipts=[v for k,v in objects.items() if PurePosixPath(k).name=="receipt.json"]
+  assert len(receipts)==1
+  original=receipts[0]
+  assert (original["source"],str(original["run"]),str(original["attempt"]),original["platform"])==(source,str(run_id),str(attempt),"iphone")
+  result["original_receipt"]=original
+  print("APPLE_OBSERVATION_RECEIPT "+json.dumps(original),flush=True)
+  samples=[v for k,v in objects.items() if PurePosixPath(k).name=="process-timeline.json"]
+  timelines=[v for k,v in objects.items() if PurePosixPath(k).name=="ui-timeline-redacted.json"]
+  assert len(samples)==len(timelines)==1 and samples[0] and timelines[0]
+  gaps=[]
+  for a,b in zip(samples[0],samples[0][1:]):
+   sa,sb=timestamp(a.get("utc")),timestamp(b.get("utc"))
+   if sa is not None and sb is not None:gaps.append(dict(before=a["utc"],after=b["utc"],seconds=sb-sa))
+  result["ps_timeout_timestamp"]="not recorded by producer; gaps are not exact timeout timestamps"
+  result["largest_sample_gaps"]=sorted(gaps,key=lambda x:x["seconds"],reverse=True)[:20]
+  result["process_samples"]=len(samples[0])
+  print("APPLE_PROCESS_WINDOW "+json.dumps({k:result[k] for k in ("ps_timeout_timestamp","largest_sample_gaps","process_samples")}),flush=True)
+  # All entries contain only the producer's redacted action/ID/numeric data.
+  save(dest/"ui-timeline.json",timelines[0])
+  print("APPLE_UI_TIMELINE "+json.dumps(timelines[0]),flush=True)
+  for key,obj in objects.items():
+   if PurePosixPath(key).name in ("app-window-log-redacted.json","crash-summaries.json"):
+    print("APPLE_REDACTED_EVENTS "+key+" "+json.dumps(obj),flush=True)
+ else:
+  verdicts=[v for k,v in objects.items() if PurePosixPath(k).name=="verdict.json"]
+  assert len(verdicts)==1
+  result["verdict_passed"]=verdicts[0].get("passed")
+  codes=[]
+  def scan(value,path):
+   if isinstance(value,dict):
+    for key,v in value.items():
+     if key in ("probe_returncode","returncode","return_code","exit_code","exitCode"):
+      assert type(v) is int and -2**31<=v<=2**32-1, ("invalid exit code",path+[key],type(v).__name__)
+      codes.append(dict(path=path+[key],raw=v,unsigned32=v&0xffffffff,signed32=((v+2**31)%2**32)-2**31,hex32=f"0x{v&0xffffffff:08X}"))
+     elif isinstance(v,(dict,list)):scan(v,path+[key])
+   elif isinstance(value,list):
+    for n,v in enumerate(value):scan(v,path+[str(n)])
+  for key,obj in objects.items():scan(obj,[key])
+  assert codes,"no producer exit codes found; do not infer a crash"
+  result["exit_codes"]=codes
+  print("F09_EXIT_CODES "+json.dumps(codes),flush=True)
+  stages=[]
+  for key,text in texts.items():
+   if PurePosixPath(key).name not in ("stdout.log","stages.log"):continue
+   for n,line in enumerate(text.splitlines(),1):
+    if "F09-NATIVE" in line:
+     # Whitelist stage markers only; no arbitrary surrounding text/credentials.
+     tokens=re.findall(r"(?i)\b(?:F09-NATIVE|convert|conversion|selected|selection|GetText|range|start|begin|end|done|returned|before|after|managed|native|legacy)\b",line)
+     stages.append(dict(member=key,line=n,tokens=tokens))
+  result["stage_markers"]=stages
+  print("F09_STAGE_MARKERS "+json.dumps(stages),flush=True)
+  for key,obj in objects.items():
+   if PurePosixPath(key).name=="observation.json" and isinstance(obj,dict):
+    print("F09_OBSERVATION "+key+" "+json.dumps({k:obj.get(k) for k in ("probe_returncode","passed","consumer","host_sha256")}),flush=True)
+ save(dest/"receipt.json",result);receipt.setdefault("independent_evidence",[]).append(result)
+
+run=fetch(f"actions/runs/{RUN}")
+save(OUT/"producer-run.json",run)
+assert (run["head_sha"],run["run_attempt"],run["status"],run["conclusion"])==(SOURCE,ATTEMPT,"completed","failure")
+for pin in PINS:
+ try:
+  inspect(pin);analyze(pin[0])
+ except Exception as error:
+  receipt["errors"].append(dict(label=pin[0],type=type(error).__name__,message=str(error),traceback=traceback.format_exc()))
+  save(OUT/"receipt.json",receipt)
+small_pins=[
+ ("apple-observe",SOURCE,RUN,1,124419218830,13027627711,"apple-observe-iphone-41161011007-1",14382,"ac30db434949c44a5b440915ed25b356be46f00a3aa0cccc1f2a2621883be240"),
+ ("f09-legacy","9ab7076114a0213bd0513921b77152dd9014c9ce",41162331946,1,124422399406,13027487617,"f09-legacy-41162331946-1",37960,"967c46e2e7f00286d7df8c1b26b76c400d7d81dcdc7daa2c565fca14c2b8009e"),
+]
+for pin in small_pins:
+ try:small_evidence(*pin)
+ except Exception as error:
+  receipt["errors"].append(dict(label=pin[0],type=type(error).__name__,message=str(error),traceback=traceback.format_exc()))
+save(OUT/"receipt.json",receipt)
+print("DIAGNOSTIC_RECEIPT "+json.dumps(receipt),flush=True)
+assert not receipt["errors"],"Retain diagnostic errors; no product acceptance"

@@ -1,0 +1,43 @@
+name: Apple SDK 3.42 test-only RAW3 semantic proof
+on:
+  push:
+    branches: [codex/apple-sdk342-raw3-proof-20261028]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native:
+    name: Actual Apple 3.41 export and 3.42 receiver
+    runs-on: macos-15
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Test-only policy with actual old RAW3, duplicate and selector negatives
+        run: python3 tests/apple_sdk342_records/annotation_driver.py --test-only-policy
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-sdk342-annotation-interop-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-sdk342-annotation/evidence/
+          if-no-files-found: error
+          retention-days: 30
+  authenticate:
+    needs: native
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original test-only proof
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECT_TEST_ONLY: 'true'
+        run: python3 tests/apple_sdk342_records/authenticate_interop.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-sdk342-annotation-interop-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-sdk342-annotation-summary/summary.json
+          if-no-files-found: error
+          retention-days: 30

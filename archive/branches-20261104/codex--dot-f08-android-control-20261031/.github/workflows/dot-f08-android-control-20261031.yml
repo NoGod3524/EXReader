@@ -1,0 +1,56 @@
+name: F08 Android native ListView platform control
+on:
+  push:
+    branches: [codex/dot-f08-android-control-20261031]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  control:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build the isolated platform control
+        shell: bash
+        run: |
+          python3 -m py_compile tests/reader_f08_android_control_20261031/run.py
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "emulator" "system-images;android-34;default;x86_64"
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          python3 tests/reader_f08_android_control_20261031/run.py build
+      - name: Measure the native list with the unchanged Window collector
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          heap-size: 512M
+          cores: 4
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -camera-back none
+          disable-animations: false
+          script: python3 tests/reader_f08_android_control_20261031/run.py sample
+      - name: Seal the control including failures
+        if: always()
+        run: python3 tests/reader_f08_android_control_20261031/run.py seal
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-android-control-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-android-control/
+          if-no-files-found: error

@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "candidate_checks_passed": false,
+  "parser_and_boundary_checks_passed": true,
+  "original_f5_checks_passed": false,
+  "scope": "Independent unaccepted SDK patch candidate; original F5 failure retained",
+  "base_sdk_sha": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "f5_sha": "278d63691a4c73e7aa932d71a40a5938c5427514",
+  "candidate": {
+    "patch": "candidates/reader-next-c04/rtf-root-tail-padding.patch",
+    "patch_sha256": "2542b50eb2ae0d814b97670226ba704799fed44d347f60003d44982ef45a21fd",
+    "base_rtf_c_sha256": "14a1537048e7e8bd412976c513d35b693672ed9a05afc09436773076f90c32d6",
+    "patched_rtf_c_sha256": "ea3fc050cc4ff2383fa97727e15568754cf9aa8ef12007e1e06311ed2ee56662",
+    "base_src_tree": "01753c0ada7a8c948a19173b965fbc0f42c1341b",
+    "candidate_src_tree": "3ee25bdb732e3f426e06cd1c11669517570a62e0",
+    "base_sdk_tree": "a2539bedd524520bc52727e777bae5d3f6a3cbe0",
+    "candidate_sdk_tree": "813d2120f0387ef3ff863b425d9031de2e7ed5b8",
+    "changed_sdk_paths": ["src/rtf.c"],
+    "reserved_list_id_extension": "Read-only compatibility with observed Word listid -2; signed int32 exact equality, not a normative allowance of reserved -1..-5",
+    "font_index_range": [0, 32767],
+    "font_pointer_table_slots": 32768,
+    "metadata_budget_bytes": 67108864
+  },
+  "original_inputs": [
+    {"id": "rtf-crowley-policy", "bytes": 63797, "sha256": "de6126e84aed9fa4204f4f7e84b1da6bedf4ef647479caa6a39befd40e9c5656", "original_query": "Policy and Procedure TTR"},
+    {"id": "rtf-micro-republics", "bytes": 36814, "sha256": "6fb4362622c633fff641dcc50935d52b552bdee669eeaba108914d139bd52b84", "original_query": "Micro Republics"}
+  ],
+  "root_full_rounds": {
+    "used": 1,
+    "limit": 3,
+    "run_id": 40234424624,
+    "attempt": 1,
+    "source_sha": "bfc6447798d533c4d5d5fe7ca02e9a54fc928999",
+    "conclusion": "failure",
+    "jobs": [
+      {"id": 121292908221, "name": "guard", "conclusion": "success"},
+      {"id": 121292976812, "name": "diagnose", "conclusion": "success"},
+      {"id": 121292976819, "name": "Linux acceptance", "conclusion": "failure", "sdk_ctest_passed": 169, "sdk_ctest_total": 169, "boundary_checks": 100},
+      {"id": 121292976758, "name": "Windows acceptance", "conclusion": "failure", "sdk_ctest_passed": 169, "sdk_ctest_total": 169, "boundary_checks": 100},
+      {"id": 121295538634, "name": "aggregate", "conclusion": "failure"}
+    ],
+    "both_platforms": {
+      "base_original_public_open_status": 5,
+      "base_original_public_open_document": false,
+      "candidate_original_public_open_status": 0,
+      "candidate_original_public_open_document": true,
+      "micro_republics_original_f5": "accepted",
+      "crowley_original_f5": "failed",
+      "crowley_passed": ["import", "readback", "open", "metadata.title", "metadata.entries", "toc", "pages.first", "pages.middle", "pages.last", "pages.sequential", "pages.back", "reopen"],
+      "crowley_failed": ["find", "anchor.capture", "anchor.resolve", "anchor.resolve_reopen"]
+    },
+    "pages": {"Linux": {"crowley": 5, "micro_republics": 16}, "Windows": {"crowley": 4, "micro_republics": 14}},
+    "artifacts": [
+      {"id": 12614945718, "name": "windows", "bytes": 92221, "digest": "sha256:5a8b0e866058952509841c382d0e0cff45a1791469281096d27c4c51db321e59", "expires_at": "2026-11-24T21:24:03Z"},
+      {"id": 12614860189, "name": "linux", "bytes": 90319, "digest": "sha256:6c0414532d9f84cfa371c6bb13b90a7b888cba7f93676f3f14d1e4edb37a4842", "expires_at": "2026-11-24T21:17:03Z"},
+      {"id": 12614676483, "name": "diagnose", "bytes": 15617, "digest": "sha256:55abfdc3cbc4461eb8893e7e588f2bce9ccc5a636e8e43fb0760deaf0f6a529f", "expires_at": "2027-01-23T21:12:55Z"},
+      {"id": 12614302231, "name": "guard", "bytes": 797, "digest": "sha256:657337c619eb5c3de8fd25e0b5915dc673421cf0ecde2cb68900bbd93f121dec", "expires_at": "2027-01-23T21:12:55Z"}
+    ],
+    "raw_zips_authenticated_in_actions_run": 40234893385
+  },
+  "public_projection_diagnosis": {
+    "run_id": 40235597650,
+    "attempt": 1,
+    "source_sha": "ddb03807fc93f0aebcefbbbed124dd73831f4e3a",
+    "conclusion": "success",
+    "job_id": 121296586532,
+    "candidate_tree_and_patch_identical_to_full_round": true,
+    "installed_public_api": "exr_document_open + exr_document_text",
+    "text_bytes": 9215,
+    "text_sha256": "3335a98106684c882c5f5737db2e6d8bd13e7bb8631ecf9cbbde9ac9c18dadef",
+    "original_query_exact_offset": -1,
+    "original_query_casefold_offset": -1,
+    "original_query_whitespace_collapsed_casefold_offset": -1,
+    "text_head": "EH123 Rhetoric and Composition I\nFall 2008\nAssistant Professor Adam Crowley1",
+    "query_context": {"Policy": "Attendance Policy", "TTR": "Class Time: TTR 11:00-12:15", "Procedure": "absent"},
+    "consumer_sha256": "2db9c14649fd1b6b5a362611ffd0abee67fc6f5b943f88e2c20f71bb3f11e8f0",
+    "installed_libexr_formats_sha256": "8df92572cb4cf7aa2db23bea5d287b337cc31b1813ccc7f3d9af6039ebf6ae85",
+    "raw_zip_authenticated_in_actions_run": 40236000909,
+    "artifact": {"id": 12614124922, "bytes": 32994, "digest": "sha256:be6fb61dad9f6b67260b4215363ddcaa312b19272b79192fa6546ea2f28a4735", "expires_at": "2027-01-23T21:27:44Z"}
+  },
+  "final_authentication": {
+    "run_id": 40236000909,
+    "attempt": 1,
+    "source_sha": "651aee78724d62049aa6f0e7fd1427d76f9ea173",
+    "conclusion": "success",
+    "artifact": {"id": 12614444667, "bytes": 840550, "digest": "sha256:fb896ce839c8cf6b4d606316c4e3b5e8cc4840161d81772fad31696ddfd241ab", "expires_at": "2027-01-23T21:32:49Z"},
+    "scope": "All three prior failed full runs and successful public-projection run: original ZIP digest/bytes/expiry/source/run/attempt verified in Actions; no acceptance granted"
+  },
+  "earlier_failed_runs_retained": [40226933116, 40227936319, 40234424624],
+  "historical_wrapper_defect": "Relative corpus path was joined twice by the frozen F5 runner; root wrapper now passes absolute paths. Historical Cannot open file does not describe parser behavior.",
+  "current_blocker": "Original F5 Crowley query copies the Internet Archive item title, which is not present in the public document text. Original F5 expectations remain unchanged and failing.",
+  "next_proposal": "F5-MANIFEST-CORRECTION-PROPOSAL.md",
+  "local_execution": "Source/document/Git and read-only API/text logs only; all syntax, builds, tests, original downloads, ZIP authentication/extraction and text processing ran in Actions"
+}

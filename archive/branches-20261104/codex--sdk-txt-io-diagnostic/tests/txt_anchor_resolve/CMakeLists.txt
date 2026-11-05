@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.24)
+project(TxtAnchorResolve LANGUAGES C)
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED)
+add_executable(txt-anchor-resolve check.c)
+target_link_libraries(txt-anchor-resolve PRIVATE EXReader::exr_core)
+enable_testing()
+add_test(NAME txt-anchor-resolve COMMAND txt-anchor-resolve)

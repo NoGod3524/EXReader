@@ -1,0 +1,39 @@
+name: F08 Windows native desktop-frame capability
+on:
+  push:
+    branches: [codex/dot-f08-windows-duplication-20261031]
+permissions:
+  contents: read
+env:
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: '1'
+jobs:
+  probe:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile only the native capability observer
+        run: |
+          python -m py_compile tests/reader_f08_windows_duplication_20261031/run.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake -S tests/reader_f08_windows_duplication_20261031 -B build/f08-duplication-build -A x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build/f08-duplication-build --config Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify native desktop frames against isolated GDI paint content
+        run: python tests/reader_f08_windows_duplication_20261031/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-windows-duplication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-windows-duplication/
+          if-no-files-found: error

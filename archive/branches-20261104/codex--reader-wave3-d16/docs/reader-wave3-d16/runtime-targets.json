@@ -1,0 +1,756 @@
+{
+  "source": "Actions D16_TARGET_REPORT log records",
+  "targets": [
+    {
+      "schema": 1,
+      "package": "D16",
+      "platform": "macos",
+      "harness_sha": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+      "target_sha": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+      "sdk_sha": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+      "run_id": "40275499967",
+      "attempt": "1",
+      "job": "audit",
+      "program": {
+        "executable_sha256": "688a6eb8ecd811daf3cb72029b5861458f710230b605f5598fde5656d6553461",
+        "info_sha256": "8315c9844e9a30f4452055825d0f5dc93c9b99a34717ca90584d8846c206640b",
+        "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+        "sdk_version": "3.41.0",
+        "page_theme": false
+      },
+      "review_macros": [],
+      "page_theme": "OFF",
+      "launch_scope": "default [] and separately labelled unchanged fixture regression",
+      "destination": [
+        "platform=macOS",
+        "macos",
+        "macOS host",
+        "macOS"
+      ],
+      "system_content_sizes": {
+        "large": "pending: no platform-supported system large-font setting exercised"
+      },
+      "checks": [
+        {
+          "label": "import",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01ProductionBodyNamesAndActualEdgeTap()",
+              "result": "Passed",
+              "duration": "25s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T05:49:22.923935+00:00",
+              "pid": 26698,
+              "ppid": 1,
+              "command": "/Users/runner/work/EXReader/EXReader/target/build/d16/DerivedData/Build/Products/Debug/EXReaderHost.app/Contents/MacOS/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "688a6eb8ecd811daf3cb72029b5861458f710230b605f5598fde5656d6553461"
+            }
+          ],
+          "passed": true
+        },
+        {
+          "label": "normal-light",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "14s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Passed",
+              "duration": "59s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T05:49:54.821267+00:00",
+              "pid": 27878,
+              "ppid": 1,
+              "command": "/Users/runner/work/EXReader/EXReader/target/build/d16/DerivedData/Build/Products/Debug/EXReaderHost.app/Contents/MacOS/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "688a6eb8ecd811daf3cb72029b5861458f710230b605f5598fde5656d6553461"
+            },
+            {
+              "observed_at": "2026-10-26T05:50:08.690067+00:00",
+              "pid": 28503,
+              "ppid": 1,
+              "command": "/Users/runner/work/EXReader/EXReader/target/build/d16/DerivedData/Build/Products/Debug/EXReaderHost.app/Contents/MacOS/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "688a6eb8ecd811daf3cb72029b5861458f710230b605f5598fde5656d6553461"
+            }
+          ],
+          "passed": true,
+          "screenshot_count": 32
+        },
+        {
+          "label": "normal-dark",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "13s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Passed",
+              "duration": "58s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T05:51:15.659922+00:00",
+              "pid": 30758,
+              "ppid": 1,
+              "command": "/Users/runner/work/EXReader/EXReader/target/build/d16/DerivedData/Build/Products/Debug/EXReaderHost.app/Contents/MacOS/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "688a6eb8ecd811daf3cb72029b5861458f710230b605f5598fde5656d6553461"
+            },
+            {
+              "observed_at": "2026-10-26T05:51:29.179480+00:00",
+              "pid": 31134,
+              "ppid": 1,
+              "command": "/Users/runner/work/EXReader/EXReader/target/build/d16/DerivedData/Build/Products/Debug/EXReaderHost.app/Contents/MacOS/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "688a6eb8ecd811daf3cb72029b5861458f710230b605f5598fde5656d6553461"
+            }
+          ],
+          "passed": true,
+          "screenshot_count": 32
+        },
+        {
+          "label": "original-compact",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test02CompactReaderActualTurnFontAndNotes()",
+              "result": "Passed",
+              "duration": "22s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T05:52:35.084569+00:00",
+              "pid": 33396,
+              "ppid": 1,
+              "command": "/Users/runner/work/EXReader/EXReader/target/build/d16/DerivedData/Build/Products/Debug/EXReaderHost.app/Contents/MacOS/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "688a6eb8ecd811daf3cb72029b5861458f710230b605f5598fde5656d6553461"
+            }
+          ],
+          "passed": true
+        }
+      ],
+      "problems": [],
+      "audit_completed": true,
+      "default_ui_accepted": false,
+      "ax_semantics_accepted": false,
+      "dynamic_type_accepted": false,
+      "voiceover_accepted": false,
+      "physical_device_execution": false,
+      "complete_product": false,
+      "unverified": [
+        "VoiceOver speech/rotor",
+        "physical iPhone/iPad",
+        "focus owner and restoration order",
+        "mobile hardware keyboard",
+        "macOS system large-font setting",
+        "system picker import (existing app fixture button used separately)",
+        "actual search query/result navigation (dialog reachability only)",
+        "text clipping inside labels requires visual review",
+        "full settings/theme: default page-theme OFF; font increase/decrease and account chooser tested separately"
+      ]
+    },
+    {
+      "schema": 1,
+      "package": "D16",
+      "platform": "iphone",
+      "harness_sha": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+      "target_sha": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+      "sdk_sha": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+      "run_id": "40275499967",
+      "attempt": "1",
+      "job": "audit",
+      "program": {
+        "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443",
+        "info_sha256": "143961eb2400f2e995e7247c141c242b056ab2b05ffe7141bad0a6c284cb6957",
+        "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+        "sdk_version": "3.41.0",
+        "page_theme": false
+      },
+      "review_macros": [],
+      "page_theme": "OFF",
+      "launch_scope": "default [] and separately labelled unchanged fixture regression",
+      "destination": [
+        "platform=iOS Simulator,id=48B2DA2E-AF18-4E36-BB25-B25969A4EBCF",
+        "48B2DA2E-AF18-4E36-BB25-B25969A4EBCF",
+        "iPhone SE (3rd generation)",
+        "com.apple.CoreSimulator.SimRuntime.iOS-26-2"
+      ],
+      "system_content_sizes": {
+        "normal": "medium",
+        "large": "accessibility-extra-extra-extra-large"
+      },
+      "checks": [
+        {
+          "label": "import",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01ProductionBodyNamesAndActualEdgeTap()",
+              "result": "Passed",
+              "duration": "50s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T05:49:22.679330+00:00",
+              "pid": 32402,
+              "ppid": 24892,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/AF9D3EB3-885E-43EC-B57C-869120D2BADA/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true
+        },
+        {
+          "label": "normal-light",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "37s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Passed",
+              "duration": "1m 46s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T05:51:02.840566+00:00",
+              "pid": 35979,
+              "ppid": 24892,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/736C91AA-5CB6-4778-84C4-B5B139F55532/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            },
+            {
+              "observed_at": "2026-10-26T05:51:33.174171+00:00",
+              "pid": 37899,
+              "ppid": 24892,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/736C91AA-5CB6-4778-84C4-B5B139F55532/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true,
+          "screenshot_count": 32
+        },
+        {
+          "label": "normal-dark",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "32s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Passed",
+              "duration": "1m 49s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T05:58:03.097745+00:00",
+              "pid": 54989,
+              "ppid": 24892,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/373D7891-D0A9-4069-B234-6E734DD6CCBA/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            },
+            {
+              "observed_at": "2026-10-26T05:58:32.710414+00:00",
+              "pid": 56447,
+              "ppid": 24892,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/373D7891-D0A9-4069-B234-6E734DD6CCBA/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true,
+          "screenshot_count": 32
+        },
+        {
+          "label": "large-light",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "24s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Passed",
+              "duration": "2m 3s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T05:54:51.327587+00:00",
+              "pid": 47090,
+              "ppid": 24892,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/4512325B-81D8-4B87-B988-04EF0F0EF8EB/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            },
+            {
+              "observed_at": "2026-10-26T05:55:14.669385+00:00",
+              "pid": 47930,
+              "ppid": 24892,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/4512325B-81D8-4B87-B988-04EF0F0EF8EB/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true,
+          "screenshot_count": 42
+        },
+        {
+          "label": "large-dark",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "25s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Passed",
+              "duration": "1m 53s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T06:01:01.450947+00:00",
+              "pid": 63024,
+              "ppid": 24892,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/FB251B66-7015-4AD2-8D0E-76489098D15E/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            },
+            {
+              "observed_at": "2026-10-26T06:01:22.967041+00:00",
+              "pid": 64229,
+              "ppid": 24892,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/FB251B66-7015-4AD2-8D0E-76489098D15E/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true,
+          "screenshot_count": 42
+        },
+        {
+          "label": "original-large",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test02CompactReaderActualTurnFontAndNotes()",
+              "result": "Passed",
+              "duration": "40s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T05:53:50.332954+00:00",
+              "pid": 43588,
+              "ppid": 24892,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/FACA9D92-EAAB-43F2-A89A-EA1BC892EC4B/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true
+        }
+      ],
+      "problems": [],
+      "audit_completed": true,
+      "default_ui_accepted": false,
+      "ax_semantics_accepted": false,
+      "dynamic_type_accepted": false,
+      "voiceover_accepted": false,
+      "physical_device_execution": false,
+      "complete_product": false,
+      "unverified": [
+        "VoiceOver speech/rotor",
+        "physical iPhone/iPad",
+        "focus owner and restoration order",
+        "mobile hardware keyboard",
+        "macOS system large-font setting",
+        "system picker import (existing app fixture button used separately)",
+        "actual search query/result navigation (dialog reachability only)",
+        "text clipping inside labels requires visual review",
+        "full settings/theme: default page-theme OFF; font increase/decrease and account chooser tested separately"
+      ]
+    },
+    {
+      "schema": 1,
+      "package": "D16",
+      "platform": "ipad",
+      "harness_sha": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+      "target_sha": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+      "sdk_sha": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+      "run_id": "40275499967",
+      "attempt": "1",
+      "job": "audit",
+      "program": {
+        "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443",
+        "info_sha256": "143961eb2400f2e995e7247c141c242b056ab2b05ffe7141bad0a6c284cb6957",
+        "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+        "sdk_version": "3.41.0",
+        "page_theme": false
+      },
+      "review_macros": [],
+      "page_theme": "OFF",
+      "launch_scope": "default [] and separately labelled unchanged fixture regression",
+      "destination": [
+        "platform=iOS Simulator,id=9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF",
+        "9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF",
+        "iPad mini (A17 Pro)",
+        "com.apple.CoreSimulator.SimRuntime.iOS-26-2"
+      ],
+      "system_content_sizes": {
+        "normal": "medium",
+        "large": "accessibility-extra-extra-extra-large"
+      },
+      "checks": [
+        {
+          "label": "import",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01ProductionBodyNamesAndActualEdgeTap()",
+              "result": "Passed",
+              "duration": "48s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T06:04:57.394581+00:00",
+              "pid": 21701,
+              "ppid": 13060,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF/data/Containers/Bundle/Application/DA05D97A-77B4-45A0-A62D-BFA9FEBF7155/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true
+        },
+        {
+          "label": "normal-light",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "41s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Passed",
+              "duration": "1m 42s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T06:06:08.365266+00:00",
+              "pid": 25136,
+              "ppid": 13060,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF/data/Containers/Bundle/Application/4EE3A5AA-BF64-4D42-A6BF-22FDB406888A/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            },
+            {
+              "observed_at": "2026-10-26T06:06:49.907732+00:00",
+              "pid": 27192,
+              "ppid": 13060,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF/data/Containers/Bundle/Application/4EE3A5AA-BF64-4D42-A6BF-22FDB406888A/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true,
+          "screenshot_count": 32
+        },
+        {
+          "label": "normal-dark",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "28s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Passed",
+              "duration": "1m 23s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T06:13:50.842025+00:00",
+              "pid": 45933,
+              "ppid": 13060,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF/data/Containers/Bundle/Application/9BF91CC6-2EC2-432D-9892-25873A3064D7/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            },
+            {
+              "observed_at": "2026-10-26T06:14:16.040391+00:00",
+              "pid": 47078,
+              "ppid": 13060,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF/data/Containers/Bundle/Application/9BF91CC6-2EC2-432D-9892-25873A3064D7/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true,
+          "screenshot_count": 32
+        },
+        {
+          "label": "large-light",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "42s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Passed",
+              "duration": "2m 4s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T06:10:30.178539+00:00",
+              "pid": 36811,
+              "ppid": 13060,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF/data/Containers/Bundle/Application/8F0B0C75-6BDC-4520-A1A5-301D30CA688A/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            },
+            {
+              "observed_at": "2026-10-26T06:11:10.279897+00:00",
+              "pid": 38499,
+              "ppid": 13060,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF/data/Containers/Bundle/Application/8F0B0C75-6BDC-4520-A1A5-301D30CA688A/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true,
+          "screenshot_count": 35
+        },
+        {
+          "label": "large-dark",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "34s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Passed",
+              "duration": "1m 43s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T06:16:11.209261+00:00",
+              "pid": 52179,
+              "ppid": 13060,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF/data/Containers/Bundle/Application/7C03AA25-AE96-4946-B466-5A7E3799D184/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            },
+            {
+              "observed_at": "2026-10-26T06:16:36.943788+00:00",
+              "pid": 54400,
+              "ppid": 13060,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF/data/Containers/Bundle/Application/7C03AA25-AE96-4946-B466-5A7E3799D184/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true,
+          "screenshot_count": 35
+        },
+        {
+          "label": "original-large",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test02CompactReaderActualTurnFontAndNotes()",
+              "result": "Passed",
+              "duration": "49s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "native_processes": [
+            {
+              "observed_at": "2026-10-26T06:09:19.496843+00:00",
+              "pid": 33452,
+              "ppid": 13060,
+              "command": "/Users/runner/Library/Developer/CoreSimulator/Devices/9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF/data/Containers/Bundle/Application/C14A07B5-7AD0-4329-9663-5AA6C02A40DD/EXReaderHost.app/EXReaderHost",
+              "source": "8104bcd872c49da2c683fb482b8c67e958aa4747",
+              "run_id": "40275499967",
+              "attempt": "1",
+              "executable_sha256": "9b3dbb19748c608b6f1a021a03a0b928b2147711df9c4a78dc52863907417443"
+            }
+          ],
+          "passed": true
+        }
+      ],
+      "problems": [],
+      "audit_completed": true,
+      "default_ui_accepted": false,
+      "ax_semantics_accepted": false,
+      "dynamic_type_accepted": false,
+      "voiceover_accepted": false,
+      "physical_device_execution": false,
+      "complete_product": false,
+      "unverified": [
+        "VoiceOver speech/rotor",
+        "physical iPhone/iPad",
+        "focus owner and restoration order",
+        "mobile hardware keyboard",
+        "macOS system large-font setting",
+        "system picker import (existing app fixture button used separately)",
+        "actual search query/result navigation (dialog reachability only)",
+        "text clipping inside labels requires visual review",
+        "full settings/theme: default page-theme OFF; font increase/decrease and account chooser tested separately"
+      ]
+    }
+  ]
+}

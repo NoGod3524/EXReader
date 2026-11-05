@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "purpose": "System Settings renderer control; no EXReader/F08 acceptance",
+  "runner": "ubuntu-24.04",
+  "api": 34,
+  "abi": "x86_64",
+  "avd": "pixel_6",
+  "ram_mib": 4096,
+  "heap_mib": 512,
+  "cores": 4,
+  "gpu_modes": [
+    "swiftshader_indirect",
+    "swangle",
+    "lavapipe"
+  ],
+  "animation_scale": 1,
+  "swipes": 8,
+  "swipe_duration_ms": 400,
+  "minimum_ordinary_completed_frames": 30,
+  "display_size_override": false,
+  "limits": [
+    "Settings is an environment control, not an EXReader performance substitute.",
+    "dumpsys gfxinfo retains a bounded frame ring; the full product frame census is not claimed.",
+    "GPU modes are separate predeclared environment candidates; old product profile and failures remain unchanged."
+  ],
+  "references": [
+    "https://developer.android.com/studio/run/emulator-acceleration",
+    "https://developer.android.com/reference/android/view/FrameMetrics"
+  ]
+}

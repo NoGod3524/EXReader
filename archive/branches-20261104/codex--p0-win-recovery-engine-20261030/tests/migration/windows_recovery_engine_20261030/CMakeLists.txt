@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.24)
+project(WindowsEngineInstalledCheck C)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
+find_package(EXReader CONFIG REQUIRED COMPONENTS core library)
+add_executable(windows-engine-check consumer.c)
+target_compile_definitions(windows-engine-check PRIVATE _CRT_SECURE_NO_WARNINGS _WIN32_WINNT=0x0A00)
+target_include_directories(windows-engine-check PRIVATE "${ENGINE_PREFIX}/include/exreader-migration-windows-engine")
+target_link_libraries(windows-engine-check PRIVATE "${ENGINE_PREFIX}/lib/exreader-migration-windows-engine.lib" EXReader::exr_library advapi32 psapi)
+target_link_options(windows-engine-check PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/consumer-provider.map")
+
+add_executable(windows-engine-stall stall.c)
+
+add_executable(windows-engine-descendant descendant.c)
+add_executable(windows-engine-boundary boundary_checks.c)
+target_compile_definitions(windows-engine-boundary PRIVATE _CRT_SECURE_NO_WARNINGS _WIN32_WINNT=0x0A00 LM_WE_SOURCE="$ENV{GITHUB_SHA}")
+target_include_directories(windows-engine-boundary PRIVATE "${ENGINE_PREFIX}/include/exreader-migration-windows-engine")
+target_link_libraries(windows-engine-boundary PRIVATE "${ENGINE_PREFIX}/lib/exreader-migration-windows-engine.lib" EXReader::exr_library advapi32 psapi)

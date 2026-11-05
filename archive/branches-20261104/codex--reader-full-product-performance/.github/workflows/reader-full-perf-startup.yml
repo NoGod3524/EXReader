@@ -1,0 +1,41 @@
+name: Full Windows cold-start phase observation
+on:
+  push:
+    branches: [codex/reader-full-product-performance]
+    paths: ['.github/workflows/reader-full-perf-startup.yml', 'tests/reader_perf_startup/**']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  observe:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Check observer source and authenticate retained full product
+        shell: pwsh
+        run: |
+          python -m py_compile tests/reader_perf_startup/stage.py tests/reader_perf_startup/observe.py
+          if ($LASTEXITCODE) { throw 'Observer syntax failed' }
+          python tests/reader_perf_startup/stage.py
+          if ($LASTEXITCODE) { throw 'Retained package or seed identity failed' }
+      - name: Observe fresh profiles and alternating catalog reads
+        shell: pwsh
+        run: |
+          python tests/reader_perf_startup/observe.py
+          if ($LASTEXITCODE) { throw 'One or more startup observations failed' }
+      - name: Preserve raw timings, logs and source identity
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-perf-startup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/startup-stage/source.json
+            build/startup-observation/*.json
+            build/startup-observation/*.log
+          if-no-files-found: warn

@@ -1,0 +1,365 @@
+{
+  "package": "D03-original-export",
+  "branch": "codex/dot-reader-original-export",
+  "fixed_start": "a826a65c9c66e43620eff61b49cb79f941a3c953",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "tested_sha": "9fdcb28dcf5bc6fe93618d260441ad483d88bc4d",
+  "tested_tree": "09f179920364bf658705377ce68d0f528787da69",
+  "evidence_commit": "The docs-only [skip ci] child of tested_sha; exact evidence HEAD is returned in the handoff.",
+  "evidence_delta": [
+    "docs/READER-ORIGINAL-EXPORT.md",
+    "docs/validation/reader-original-export.json"
+  ],
+  "measured_capability_accepted": true,
+  "full_task_acceptance": "pending root review of explicitly recorded limitations",
+  "run": {
+    "id": 40171470925,
+    "attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171470925"
+  },
+  "jobs": [
+    {
+      "id": 121103001681,
+      "name": "original export (macos-15)",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "9fdcb28dcf5bc6fe93618d260441ad483d88bc4d",
+      "run_attempt": 1
+    },
+    {
+      "id": 121103001763,
+      "name": "original export (ubuntu-22.04)",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "9fdcb28dcf5bc6fe93618d260441ad483d88bc4d",
+      "run_attempt": 1
+    },
+    {
+      "id": 121103001812,
+      "name": "original export (windows-2022)",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "9fdcb28dcf5bc6fe93618d260441ad483d88bc4d",
+      "run_attempt": 1
+    },
+    {
+      "id": 121103815311,
+      "name": "strict original-export evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "9fdcb28dcf5bc6fe93618d260441ad483d88bc4d",
+      "run_attempt": 1
+    }
+  ],
+  "named_results": {
+    "Linux": {
+      "count": 33,
+      "checks": [
+        "installed_c_abi",
+        "nine_format_byte_roundtrips",
+        "temporary_readback_verified",
+        "selected_unselected_isolation",
+        "duplicate_same_bytes",
+        "valid_unicode_destination",
+        "batch_preflight_atomic",
+        "same_title_distinct_bytes",
+        "existing_conflict_no_overwrite",
+        "display_name_restricted",
+        "bad_utf8",
+        "device_name_rejected",
+        "traversal_rejected",
+        "per_book_limit",
+        "batch_limit",
+        "hard_limit",
+        "owner_refusal",
+        "wrong_thread",
+        "missing_source",
+        "cancel_before_start",
+        "count_101_rejected",
+        "count_100_accepted",
+        "callback_reentry",
+        "cancel_after_commit",
+        "directory_alias_rejected",
+        "target_alias_rejected",
+        "cleanup_receipt",
+        "process_kill_reopen_retry",
+        "process_kill_after_commit_retry",
+        "posix_real_midstream_write_failure",
+        "sdk_original_notes_progress_unchanged",
+        "product_history_outbox_unchanged",
+        "source_invalidated_mid_read"
+      ],
+      "failures": [],
+      "limitations": []
+    },
+    "Windows": {
+      "count": 33,
+      "checks": [
+        "installed_c_abi",
+        "nine_format_byte_roundtrips",
+        "temporary_readback_verified",
+        "selected_unselected_isolation",
+        "duplicate_same_bytes",
+        "valid_unicode_destination",
+        "batch_preflight_atomic",
+        "same_title_distinct_bytes",
+        "existing_conflict_no_overwrite",
+        "display_name_restricted",
+        "bad_utf8",
+        "device_name_rejected",
+        "traversal_rejected",
+        "per_book_limit",
+        "batch_limit",
+        "hard_limit",
+        "owner_refusal",
+        "wrong_thread",
+        "missing_source",
+        "cancel_before_start",
+        "count_101_rejected",
+        "count_100_accepted",
+        "callback_reentry",
+        "cancel_after_commit",
+        "directory_alias_rejected",
+        "target_alias_rejected",
+        "cleanup_receipt",
+        "process_kill_reopen_retry",
+        "process_kill_after_commit_retry",
+        "windows_actual_locked_cleanup_failure",
+        "sdk_original_notes_progress_unchanged",
+        "product_history_outbox_unchanged",
+        "source_invalidated_mid_read"
+      ],
+      "failures": [],
+      "limitations": [
+        "Windows mid-stream disk-full/fsync failure injection UNAVAILABLE; actual locked-temp cleanup and no-overwrite publication failure exercised."
+      ]
+    },
+    "macOS": {
+      "count": 33,
+      "checks": [
+        "installed_c_abi",
+        "nine_format_byte_roundtrips",
+        "temporary_readback_verified",
+        "selected_unselected_isolation",
+        "duplicate_same_bytes",
+        "valid_unicode_destination",
+        "batch_preflight_atomic",
+        "same_title_distinct_bytes",
+        "existing_conflict_no_overwrite",
+        "display_name_restricted",
+        "bad_utf8",
+        "device_name_rejected",
+        "traversal_rejected",
+        "per_book_limit",
+        "batch_limit",
+        "hard_limit",
+        "owner_refusal",
+        "wrong_thread",
+        "missing_source",
+        "cancel_before_start",
+        "count_101_rejected",
+        "count_100_accepted",
+        "callback_reentry",
+        "cancel_after_commit",
+        "directory_alias_rejected",
+        "target_alias_rejected",
+        "cleanup_receipt",
+        "process_kill_reopen_retry",
+        "process_kill_after_commit_retry",
+        "posix_real_midstream_write_failure",
+        "sdk_original_notes_progress_unchanged",
+        "product_history_outbox_unchanged",
+        "source_invalidated_mid_read"
+      ],
+      "failures": [],
+      "limitations": []
+    }
+  },
+  "verifier_rejection_cases": {
+    "Linux": [
+      "wrong_source",
+      "wrong_attempt",
+      "missing_case",
+      "duplicate_case",
+      "false_success",
+      "wrong_platform",
+      "missing_module",
+      "tampered_binary",
+      "tampered_module",
+      "tampered_original",
+      "changed_history",
+      "duplicate_json_key",
+      "duplicate_zip",
+      "missing_report",
+      "unsafe_zip"
+    ],
+    "Windows": [
+      "wrong_source",
+      "wrong_attempt",
+      "missing_case",
+      "duplicate_case",
+      "false_success",
+      "wrong_platform",
+      "missing_module",
+      "tampered_binary",
+      "tampered_module",
+      "tampered_original",
+      "changed_history",
+      "duplicate_json_key",
+      "duplicate_zip",
+      "missing_report",
+      "unsafe_zip"
+    ],
+    "macOS": [
+      "wrong_source",
+      "wrong_attempt",
+      "missing_case",
+      "duplicate_case",
+      "false_success",
+      "wrong_platform",
+      "missing_module",
+      "tampered_binary",
+      "tampered_module",
+      "tampered_original",
+      "changed_history",
+      "duplicate_json_key",
+      "duplicate_zip",
+      "missing_report",
+      "unsafe_zip"
+    ]
+  },
+  "artifacts": [
+    {
+      "id": 12590965106,
+      "name": "reader-original-export-Linux-40171470925-1",
+      "size_in_bytes": 8429078,
+      "digest": "sha256:f956f3cd83ada1bb60fcca50bed03d0e5994eb133a1956822b86eb12d76edace",
+      "expires_at": "2027-01-23T07:05:24Z",
+      "expired": false,
+      "source_sha": "9fdcb28dcf5bc6fe93618d260441ad483d88bc4d",
+      "run_id": 40171470925,
+      "zip_recomputed_in_actions": true
+    },
+    {
+      "id": 12590631427,
+      "name": "reader-original-export-macOS-40171470925-1",
+      "size_in_bytes": 7375892,
+      "digest": "sha256:e2dd5093e3d6bb4e7097733640f85eaad0ea90db4db9aff0a34adf22caad3c5e",
+      "expires_at": "2027-01-23T07:05:24Z",
+      "expired": false,
+      "source_sha": "9fdcb28dcf5bc6fe93618d260441ad483d88bc4d",
+      "run_id": 40171470925,
+      "zip_recomputed_in_actions": true
+    },
+    {
+      "id": 12590436778,
+      "name": "reader-original-export-Windows-40171470925-1",
+      "size_in_bytes": 6313140,
+      "digest": "sha256:7b8b601603fb6532483ead9df0af6d38726d02b78200272bb84f981d830a557f",
+      "expires_at": "2027-01-23T07:05:24Z",
+      "expired": false,
+      "source_sha": "9fdcb28dcf5bc6fe93618d260441ad483d88bc4d",
+      "run_id": 40171470925,
+      "zip_recomputed_in_actions": true
+    },
+    {
+      "id": 12590292236,
+      "name": "reader-original-export-evidence-40171470925-1",
+      "size_in_bytes": 1404,
+      "digest": "sha256:dd4376556ea846067aabaabe4f41d7d029e75227ce49a6461d3c69e643b71f9b",
+      "expires_at": "2027-01-23T07:05:24Z",
+      "expired": false,
+      "source_sha": "9fdcb28dcf5bc6fe93618d260441ad483d88bc4d",
+      "run_id": 40171470925,
+      "zip_recomputed_in_actions": false
+    }
+  ],
+  "binaries": {
+    "Linux": {
+      "probe": {
+        "member": "oe-evidence/binaries/original-export-probe",
+        "sha256": "be80e01a1e876838a562c09201b477104cdfbc54b4139560edaa03bc232c6c70",
+        "bytes": 8746336
+      },
+      "c_consumer": {
+        "member": "oe-evidence/binaries/original-export-c-consumer",
+        "sha256": "fc63c97d6b2e1f63eb67135b6fb435cd409ef9da1fd668839d8a6cb4a061e79d",
+        "bytes": 8484368
+      },
+      "module": {
+        "member": "oe-evidence/binaries/libreader_original_export.a",
+        "sha256": "fab1986129057b6a8564867e1d17206fb1e322e62444bb84afdd695f6c61780a",
+        "bytes": 45384
+      }
+    },
+    "Windows": {
+      "probe": {
+        "member": "oe-evidence/binaries/original-export-probe.exe",
+        "sha256": "8e53eb5d8038323de5ed8a48837afc79fa97013e7e85bf160fa2c594440379ba",
+        "bytes": 6306816
+      },
+      "c_consumer": {
+        "member": "oe-evidence/binaries/original-export-c-consumer.exe",
+        "sha256": "e85f387869ca75208aea5d276edee04406d013444ac28a06a8232cbb17f3ba5b",
+        "bytes": 4691456
+      },
+      "module": {
+        "member": "oe-evidence/binaries/reader_original_export.lib",
+        "sha256": "6b81f188923fcecb35c58bc2cc7401f79672040ed261f6a11c8b26b234a8255e",
+        "bytes": 352494
+      }
+    },
+    "macOS": {
+      "probe": {
+        "member": "oe-evidence/binaries/original-export-probe",
+        "sha256": "ec97a4b207a1827a9fc3325951fec319bfd7b72f8b40426ad0ac6bfe00f9a700",
+        "bytes": 7138904
+      },
+      "c_consumer": {
+        "member": "oe-evidence/binaries/original-export-c-consumer",
+        "sha256": "02c8633f677e6cecf71b1fc473188b3c51b6c1856adb1b833dcd5c3a035f95d2",
+        "bytes": 6913752
+      },
+      "module": {
+        "member": "oe-evidence/binaries/libreader_original_export.a",
+        "sha256": "3366d9a9a211dd0872b0a5435c63e2432f4baec0ab3f4ac3b05a2e5e3a225c1c",
+        "bytes": 30096
+      }
+    }
+  },
+  "retained_runs": [
+    {
+      "sha": "a64e239a8554aa08e5e1537ba636abbd3a2c70f6",
+      "run_id": 40170953790,
+      "attempt": 1,
+      "conclusion": "success",
+      "producer_checks_each": 30,
+      "verifier_rejections_each": 15,
+      "artifact_ids": [
+        12590151409,
+        12589578937,
+        12590495866,
+        12590291318
+      ]
+    }
+  ],
+  "retained_ci_failures": [],
+  "assertions_weakened": false,
+  "local_build_test_syntax_fixture_artifact_execution": false,
+  "codex_tasks_started": false,
+  "os_share_ui_accepted": false,
+  "six_device_accepted": false,
+  "host_integration_accepted": false,
+  "remaining_gaps": [
+    "Windows mid-stream disk-full/fsync failure injection UNAVAILABLE. Actual Windows locked-temporary cleanup failure and no-overwrite conflict publication were exercised; no synthetic injection pass is claimed.",
+    "Public SDK format discovery enumerates/copies all matching library rows/title/author/tags; frozen SDK item guard is 4,194,304, no small aggregate metadata-byte bound. 64 KiB bounds the original-byte copy buffer only. Future bounded per-ID public format getter required for O(selection) metadata memory.",
+    "Destination remains stable and host-controlled during export. Static symlinks/junctions/hardlink aliases are rejected; hostile concurrent POSIX ancestor/temporary-entry renames are not an accepted threat model.",
+    "Crash recovery requires host-journaled exact temporary receipts and host-verified explicit orphan cleanup. No unattended orphan discovery. Real kills before and after commit plus reopen/retry passed.",
+    "Power-loss/device/filesystem durability beyond fsync/write-through syscall success is not physically tested.",
+    "System share UI, host wiring and six-device connections are outside measured scope."
+  ]
+}

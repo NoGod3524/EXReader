@@ -1,0 +1,76 @@
+name: Reader final S07 raw multi-peer faults
+on:
+  push:
+    branches: [codex/reader-fw-s07]
+    paths:
+      - 'tests/reader_final_s07/**'
+      - '.github/workflows/reader-final-s07.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  peers:
+    name: three-peer regression (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 170
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Enter native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install Linux native TLS dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
+      - name: Frozen capture core, frozen raw7 tests, frozen G07 suite, three-peer regression
+        shell: bash
+        run: python tests/reader_final_s07/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s07-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/reader-final-s07/
+            !build/reader-final-s07/three-peers/devices/
+            !build/reader-final-s07/**/*.key
+          if-no-files-found: error
+  summary:
+    name: strict same-attempt aggregate
+    needs: [peers]
+    if: always()
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate same-attempt platform artifacts and re-derive every claim
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_final_s07/strict.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s07-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-final-s07-summary/
+          if-no-files-found: error

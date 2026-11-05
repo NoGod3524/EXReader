@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "package": "C02",
+  "accepted": false,
+  "reason": "No Actions run has been executed yet for the tested implementation source.",
+  "fixed_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "gtk_producer": "57203a52aee439be5194ee0a4b13563a975e8daf",
+  "tested_source": null,
+  "docs_seal_source": null,
+  "runs": [],
+  "budget_approved": false,
+  "frame_time_measured": false
+}

@@ -1,0 +1,87 @@
+name: Windows F07 original static ownership audit
+on:
+  push:
+    branches: [codex/reader-windows-f07-audit-20261028]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  protocol:
+    name: windows-ownership-protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python tests/reader_windows_f07_audit_20261028/run.py guard
+          python -m py_compile tests/reader_windows_f07_audit_20261028/*.py
+          python tests/reader_windows_f07_audit_20261028/test_contract.py -v
+  inspect:
+    name: windows-ownership-inspection
+    needs: protocol
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      PYTHONUTF8: '1'
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Authenticate retained upload and inspect actual inputs (no build or launch)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_windows_f07_audit_20261028/run.py inspect
+      - uses: actions/upload-artifact@v4
+        id: upload
+        if: always()
+        with:
+          name: windows-ownership-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/reader-windows-f07-audit-20261028/*.json
+            build/reader-windows-f07-audit-20261028/native/
+          if-no-files-found: error
+  authenticate:
+    name: windows-ownership-authentication
+    needs: [protocol, inspect]
+    if: always()
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Independently redownload original bytes and replay ownership
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INSPECTION_RESULT: ${{ needs.inspect.result }}
+          AUDIT_ARTIFACT_ID: ${{ needs.inspect.outputs.artifact_id }}
+          AUDIT_ARTIFACT_DIGEST: ${{ needs.inspect.outputs.artifact_digest }}
+        run: python tests/reader_windows_f07_audit_20261028/run.py authenticate
+      - name: Fail closed on unresolved F07 scope and private imports
+        run: python tests/reader_windows_f07_audit_20261028/run.py admit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-ownership-authenticated-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/reader-windows-f07-audit-20261028/*.json
+            build/reader-windows-f07-audit-20261028/native/
+          if-no-files-found: error

@@ -1,0 +1,99 @@
+name: D19 GTK complete two-stage bounded lifecycle
+on:
+  push:
+    branches: [codex/reader-wave3-d19]
+    paths: ['tests/reader_wave3_d19/**', '.github/workflows/reader-wave3-d19.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-wave3-d19-${{ github.ref }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+jobs:
+  lifecycle:
+    name: lifecycle (gtk)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: target
+          fetch-depth: 0
+      - name: Exact owned-source boundary and unchanged D14 negative controls
+        run: |
+          python3 -m py_compile tests/reader_wave3_d19/*.py
+          python3 tests/reader_wave3_d19/guard.py
+      - name: GTK and accessibility dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ninja-build libglib2.0-dev libgtk-3-dev libsecret-1-dev libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil python3-psutil dbus-x11 gsettings-desktop-schemas
+      - name: Actual fixed-seed candidate and public SDK catalog readback consumer
+        run: |
+          set -o pipefail
+          /usr/bin/python3 tests/reader_wave3_d19/build.py 2>&1 | tee build-d19.log
+      - name: Complete GTK 24 cycles and 30-second dwells with live phase handshake
+        timeout-minutes: 45
+        run: |
+          mkdir atspi
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > atspi/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+            openbox >openbox-d19.log 2>&1 & wm=$!
+            trap "kill $wm || true" EXIT
+            for ready in $(seq 1 50); do
+              if xprop -root _NET_SUPPORTING_WM_CHECK | grep -q "window id # 0x"; then break; fi
+              sleep .1
+            done
+            xprop -root _NET_SUPPORTING_WM_CHECK | grep -q "window id # 0x"
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_wave3_d19/run.py
+          '
+      - name: Seal actual finished producer files including failures
+        if: always()
+        run: |
+          mkdir -p evidence
+          cp build-d19.log evidence/build-d19.log || true
+          cp openbox-d19.log evidence/openbox-d19.log || true
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path('evidence')
+          (p/'bundle.json').write_text(json.dumps({f.relative_to(p).as_posix():{'bytes':f.stat().st_size,'sha256':hashlib.sha256(f.read_bytes()).hexdigest()} for f in p.rglob('*') if f.is_file() and f.name!='bundle.json'},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d19-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          retention-days: 30
+          if-no-files-found: error
+  authenticate:
+    if: always()
+    needs: lifecycle
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Original ZIP and full-stage judge plus real PID SDK catalog receipts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_wave3_d19/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d19-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: authentication/
+          retention-days: 30
+          if-no-files-found: error

@@ -1,0 +1,82 @@
+name: iOS organization SDK342 acceptance 20261028
+on:
+  push:
+    branches: [codex/apple-ios-organization-acceptance-20261028]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  organization:
+    name: iOS organization ${{ matrix.platform }}
+    runs-on: macos-15
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iphone, ipad]
+    env:
+      EXR_APPLE_SDK_VERSION: '3.42.0'
+      EXR_APPLE_PAGE_THEME: 'ON'
+      EXR_APPLE_RAW3: 'ON'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Xcode project generator dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document
+      - name: Preserve old source and build exact SDK342 product
+        run: python3 tests/apple_ios_organization_20261028/prepare.py
+      - name: Select and reset simulator
+        run: |
+          python3 - '${{ matrix.platform }}' > build/ios-organization/evidence/destination.txt <<'PY'
+          import json, subprocess, sys
+          prefix = 'iPhone' if sys.argv[1] == 'iphone' else 'iPad'
+          data = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))
+          choices = [(runtime, d['name'], d['udid']) for runtime, devices in data['devices'].items()
+                     for d in devices if d.get('isAvailable') and d['name'].startswith(prefix)]
+          assert choices, 'requested simulator family unavailable'
+          runtime, name, udid = max(choices)
+          subprocess.run(['xcrun', 'simctl', 'shutdown', udid], check=False, capture_output=True)
+          subprocess.run(['xcrun', 'simctl', 'erase', udid], check=True)
+          print('platform=iOS Simulator,id=' + udid + '\n' + udid + '\n' + name + '\n' + runtime)
+          PY
+      - name: Run dedicated native organization cases
+        run: |
+          set -o pipefail
+          destination=$(sed -n '1p' build/ios-organization/evidence/destination.txt)
+          xcodebuild test -project build/ios-organization/project/EXReaderHost.xcodeproj -scheme EXReaderHost-iOS \
+            -destination "$destination" -derivedDataPath build/ios-organization/DerivedData \
+            -resultBundlePath build/ios-organization/evidence/organization.xcresult -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 300 -maximum-test-execution-time-allowance 600 \
+            EXR_SDK_DIR="$PWD/build/apple-sdk342/iphonesimulator/sdk" \
+            EXR_PRODUCTS_DIR="$PWD/build/apple-sdk342/iphonesimulator/products" CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee build/ios-organization/evidence/xcodebuild.log
+      - name: Collect exact native evidence including failed results
+        if: always()
+        run: python3 tests/apple_ios_organization_20261028/collect.py --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-organization-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ios-organization/evidence/
+          if-no-files-found: error
+  authenticate:
+    name: Authenticate original iOS organization evidence
+    needs: organization
+    if: always()
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bind producer jobs and original artifact ZIP digests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_ios_organization_20261028/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-organization-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ios-organization-authentication/summary.json
+          if-no-files-found: error

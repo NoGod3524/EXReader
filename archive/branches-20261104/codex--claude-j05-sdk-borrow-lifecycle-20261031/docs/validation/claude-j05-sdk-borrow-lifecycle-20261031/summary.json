@@ -1,0 +1,487 @@
+{
+  "sdk_commit": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "sdk_version_reported": "3.42.0",
+  "checks": 65,
+  "failed": 0,
+  "failed_detail": [],
+  "matrix": {
+    "no_borrow_close": [
+      {
+        "check": "db_open",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 2
+      },
+      {
+        "check": "db_closed_immediately",
+        "pass": true,
+        "db_fds": 0,
+        "seq": 3
+      }
+    ],
+    "release_order_012": [
+      {
+        "check": "pagers_and_source_created",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 5
+      },
+      {
+        "check": "pager_reads_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 6
+      },
+      {
+        "check": "db_open_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 7
+      },
+      {
+        "check": "db_still_open_after_close_request",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 9
+      },
+      {
+        "check": "borrowers_still_function",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 10
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 12
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 14
+      },
+      {
+        "check": "db_closed_after_last_release",
+        "pass": true,
+        "db_fds": 0,
+        "seq": 16
+      }
+    ],
+    "release_order_021": [
+      {
+        "check": "pagers_and_source_created",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 18
+      },
+      {
+        "check": "pager_reads_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 19
+      },
+      {
+        "check": "db_open_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 20
+      },
+      {
+        "check": "db_still_open_after_close_request",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 22
+      },
+      {
+        "check": "borrowers_still_function",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 23
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 25
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 27
+      },
+      {
+        "check": "db_closed_after_last_release",
+        "pass": true,
+        "db_fds": 0,
+        "seq": 29
+      }
+    ],
+    "release_order_102": [
+      {
+        "check": "pagers_and_source_created",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 31
+      },
+      {
+        "check": "pager_reads_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 32
+      },
+      {
+        "check": "db_open_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 33
+      },
+      {
+        "check": "db_still_open_after_close_request",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 35
+      },
+      {
+        "check": "borrowers_still_function",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 36
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 38
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 40
+      },
+      {
+        "check": "db_closed_after_last_release",
+        "pass": true,
+        "db_fds": 0,
+        "seq": 42
+      }
+    ],
+    "release_order_120": [
+      {
+        "check": "pagers_and_source_created",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 44
+      },
+      {
+        "check": "pager_reads_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 45
+      },
+      {
+        "check": "db_open_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 46
+      },
+      {
+        "check": "db_still_open_after_close_request",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 48
+      },
+      {
+        "check": "borrowers_still_function",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 49
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 51
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 53
+      },
+      {
+        "check": "db_closed_after_last_release",
+        "pass": true,
+        "db_fds": 0,
+        "seq": 55
+      }
+    ],
+    "release_order_201": [
+      {
+        "check": "pagers_and_source_created",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 57
+      },
+      {
+        "check": "pager_reads_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 58
+      },
+      {
+        "check": "db_open_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 59
+      },
+      {
+        "check": "db_still_open_after_close_request",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 61
+      },
+      {
+        "check": "borrowers_still_function",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 62
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 64
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 66
+      },
+      {
+        "check": "db_closed_after_last_release",
+        "pass": true,
+        "db_fds": 0,
+        "seq": 68
+      }
+    ],
+    "release_order_210": [
+      {
+        "check": "pagers_and_source_created",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 70
+      },
+      {
+        "check": "pager_reads_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 71
+      },
+      {
+        "check": "db_open_before_close",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 72
+      },
+      {
+        "check": "db_still_open_after_close_request",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 74
+      },
+      {
+        "check": "borrowers_still_function",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 75
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 77
+      },
+      {
+        "check": "db_open_while_borrow_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 79
+      },
+      {
+        "check": "db_closed_after_last_release",
+        "pass": true,
+        "db_fds": 0,
+        "seq": 81
+      }
+    ],
+    "cancel": [
+      {
+        "check": "pager",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 83
+      },
+      {
+        "check": "db_open_after_close_request",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 84
+      },
+      {
+        "check": "get_returns_cancelled",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 86
+      },
+      {
+        "check": "db_still_open_borrow_alive",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 87
+      },
+      {
+        "check": "db_closed_after_free",
+        "pass": true,
+        "db_fds": 0,
+        "seq": 88
+      }
+    ],
+    "create_failure": [
+      {
+        "check": "source",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 90
+      },
+      {
+        "check": "create_fails_and_no_pager",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 92
+      },
+      {
+        "check": "caller_keeps_source_ownership",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 93
+      },
+      {
+        "check": "db_open_while_caller_source_alive",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 94
+      },
+      {
+        "check": "db_closed_after_manual_release",
+        "pass": true,
+        "db_fds": 0,
+        "seq": 95
+      }
+    ],
+    "io_invalidation": [
+      {
+        "check": "pager",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 97
+      },
+      {
+        "check": "second_connection",
+        "pass": true,
+        "db_fds": 2,
+        "seq": 98
+      },
+      {
+        "check": "pager_reports_failure_not_stale_success",
+        "pass": true,
+        "db_fds": 2,
+        "seq": 101
+      },
+      {
+        "check": "owner_borrow_gone_other_connection_remains",
+        "pass": true,
+        "db_fds": 1,
+        "seq": 102
+      },
+      {
+        "check": "db_closed_after_all_released",
+        "pass": true,
+        "db_fds": 0,
+        "seq": 103
+      }
+    ]
+  },
+  "installed_files_sha256": {
+    "examples/apple/product/ProductSQLite.h": "3d6c57ed7975372d6f495ade3db3cfd24bf3bcfa0c9336db8b1815325ced5999",
+    "examples/apple/product/ReaderProduct.h": "e68b4aa8aee5afdce1bbfef734dd147a3266475d695d6d47f97455d1a82a3cf5",
+    "examples/entry.h": "a499a3a350ac5bf1b8972ebc5e2802c8cfd86ceb43ef04f43ad372eb05cab9ae",
+    "examples/linux/reading.h": "fc529bb747ee9a2b5f2dfd92b88d96adb0832fd5b25ea6491c08ea33f2707927",
+    "include/aom/aom.h": "b25cc7277ade68ba9c43903c0139b8aad081a301d085f48390439ce6ebe76982",
+    "include/aom/aom_codec.h": "2771dcd2e2250a130821b5742cf188109487784b032f1c3500650cf587809f82",
+    "include/aom/aom_decoder.h": "39aa4e4328bab8aee530e47cf4ef920b8428db7db4b262ed52501c896c4b32b6",
+    "include/aom/aom_frame_buffer.h": "33393bcc818b2d0c22526515b875d14a74417d29b4e8580b760469c265007ee2",
+    "include/aom/aom_image.h": "4dfe0362cff3b7f995be867b93bb90667ed03e9d7f1d9f1d6f24cde1d49d58af",
+    "include/aom/aom_integer.h": "9af5a90e9cfd1290e2b763647efc7abdb1ad3113382986fcfa300f23176bb106",
+    "include/aom/aomdx.h": "2df31f09ec3053873b8ee9bc46eadeb5b1b3d361c3596dfdbef7272a864fe161",
+    "include/exr/audio.h": "cac99ff20ece707958be51ac5c8f0d6d96eef15adb4e368ba4104cc9bcb4a201",
+    "include/exr/base.h": "f6a28f2492713da9c63ff3a5c52246d8adb387dce683054fe2b615fc8d8857ab",
+    "include/exr/core.h": "927283b6ec31dbf2c495a88725fc98ed7af75879cdaa3502d5f54e5144679990",
+    "include/exr/document.h": "448be21ba9ef508dd52e318a42bc6e0b635bba4a1c2ce824ab362f08c47df3e8",
+    "include/exr/formats.h": "3f7d2cd90fa5b7514b0507d8fb279ec4fef86e622918af9b114f3bb18d1c370b",
+    "include/exr/graphics.h": "3b383a57d542fdbc9553334ba33e4abf8274b3b5c4090b8a0f8d78b45c4f74b1",
+    "include/exr/layout.h": "eb357136dedb897096d068fb3b4c885feee39b3e4d24cf3fa6dfb631e4df37be",
+    "include/exr/library.h": "9874664063f15c02daeed8cd11634f9f233f2fe4736075107a7c7092b0a30742",
+    "include/exr/pdf.h": "b62c6b5e7bb483fd7d87af48d1d3ccd792a9b4e43ce1f0cbea11e46385eef448",
+    "include/exr/pdf_edit.h": "1865e5a4a2c5dca06b9e3d7cb5f5f7b1267f74301676af79adc6f8f4d5ebc0e1",
+    "include/exr/render.h": "ad90ca6713937076a7b6b1d5ac9aa4eaf97a8517ea65b134f94e1ab972289436",
+    "include/exr/text.h": "c6fb1adda319b620179177ec6775b1098628444d5cc40f61163d34ab3ae159cf",
+    "include/exr/textindex.h": "d0f51a23480542adc4865601ca5bf5ece26ab334a20efc7cc0fe71aa748c5e79",
+    "include/exreader.h": "69ba8847b65a583b257360caf9f76b9fc3fc1ff113231da2fef7dc3c82f53c9f",
+    "include/webp/decode.h": "300db34c56d965ee8304f0f0e947ba226403362833ce5d956c6d5f9814a5297f",
+    "include/webp/demux.h": "984983b09785e2af7e8c5cefd2e2f08d2116870c13108445665b11256aa82fec",
+    "include/webp/encode.h": "009eb07d15f117b7e26484d0bc0c2a6a571ba378c7ddac0ea4322596167aeab1",
+    "include/webp/mux.h": "c72cf593f8194c671efcade33f1678294380120d45a337511d612a3acb643f35",
+    "include/webp/mux_types.h": "d3313ad38c26d17abd244ab683e662dedead1489ec0f910bc31eba7ce2f8838c",
+    "include/webp/sharpyuv/sharpyuv.h": "c55431721d8800d9a9db37e3851f145f5d4402d3881645ea3a28e4ac503e0ec6",
+    "include/webp/sharpyuv/sharpyuv_csp.h": "80c23c727edb1ce6a42b38f9458c3d75c572856c898f0cd913ba03468afb9d3a",
+    "include/webp/types.h": "5ec7cd176fa921379ae463cecb2ab1616068031e58ad705f51c1f3bbc7d70aa3",
+    "lib/exreader/libexr_vendor_aom.a": "08e0943464b811bad9e6a89934f0a4b06590ab8a39fb914d264930925d166e1b",
+    "lib/exreader/libexr_vendor_avif.a": "d4cd9ac05d5052f9dd4ac69c1910d2948b765ba767fcc60bf2154ca8fbc584d6",
+    "lib/exreader/libexr_vendor_expat.a": "5aef8de139273c47f7ac66118ff48fe395d9ec4182cd3021f0632401eb5bb070",
+    "lib/exreader/libexr_vendor_exr_crypto.a": "d66b02b38fa882119005dfaa6d0e68ab645fb01d52d582918d3b90ae8dd70589",
+    "lib/exreader/libexr_vendor_exr_jpx.a": "281377c618e9f51b765590d6b8640d90ba90c1e4a528fa3af26bd53cfd153dc6",
+    "lib/exreader/libexr_vendor_exr_lcms.a": "2582c2565a8a30f83b88b307bf1a1fdf16e78866ae062821f092006eb98d5695",
+    "lib/exreader/libexr_vendor_exr_sqlite.a": "b46e4b0d32d8a7e069d1aef164a24db5d4ed3e20b4b4e4216c251f2417fec44e",
+    "lib/exreader/libexr_vendor_freetype.a": "ed289a06cbddcb5c558728f6c21c3381a4ee759b37e273acd6cf75e3eab7a447",
+    "lib/exreader/libexr_vendor_miniz.a": "5920ec69d5750c9fd08694357d334f4ac7caeff1f0ea392144caa62a9e2f25a6",
+    "lib/exreader/libexr_vendor_sharpyuv.a": "6fa8bc6bf1c68ce88430a32e6485cc2e03f1b499a926809db41fe4d28342b197",
+    "lib/exreader/libexr_vendor_tiff.a": "4621f001da09d8d1af0408f5240de7abefefc367ea44244e43e47ba3308f6e70",
+    "lib/exreader/libexr_vendor_webp.a": "5732b10d19145be5f20bd4bdd963e0f50924223998374d80b38e284059a02a74",
+    "lib/exreader/libexr_vendor_webpdemux.a": "a629655a06afa020ad0324ba910c5cee8d132cb57f6ad8e929267323381070db",
+    "lib/exreader/libexr_vendor_zlibstatic.a": "9b313b57e00f3ebdfc50ecf96dc4b3c216a3d40ee33f85205a6c1fa34d6262ee",
+    "lib/libaom.a": "08e0943464b811bad9e6a89934f0a4b06590ab8a39fb914d264930925d166e1b",
+    "lib/libexr_base.a": "0f7ff9cbbdbae909a960e3a3523312854c780795256a01716d60ca48d45fce89",
+    "lib/libexr_doc.a": "a56b52dc89d3c246239cd509f03641215426fe49324952c2970e0e8e90bd3b87",
+    "lib/libexr_formats.a": "b648245fb839b15fe496ef03c6d2d0956e6cc24577a5a32a821c598428ee7ed2",
+    "lib/libexr_graphics.a": "eca97b9253728c822a2b369c6fad564919405aed296678ce44230261748a010c",
+    "lib/libexr_layout.a": "3b48d52d59f48af26aa8520844232950c0010544c4326c8f61e02fa20c44086d",
+    "lib/libexr_library.a": "2430122975c63009074ed851e51be9983d460272be423fcb726972865c6b0136",
+    "lib/libexr_pdf.a": "a4cdddca6f3ced5b7c26cc18b3024f2bb155f3058cda05ee07cf097694b11dcb",
+    "lib/libexr_render.a": "864ad0021250c76cfd5a7f1589ba12860931e7d61575ef35b3902f0604b24508",
+    "lib/libexr_text.a": "1211e70f8bf71d08e800edf2cd92e17930e4dbe3dd098f3b9a575f1fcd033706",
+    "lib/libsharpyuv.a": "6fa8bc6bf1c68ce88430a32e6485cc2e03f1b499a926809db41fe4d28342b197",
+    "lib/libwebp.a": "5732b10d19145be5f20bd4bdd963e0f50924223998374d80b38e284059a02a74",
+    "lib/libwebpdecoder.a": "9c17327388533f905741b588d94c6e265b885497cb3f5644d9b40890fc3a4664",
+    "lib/libwebpdemux.a": "a629655a06afa020ad0324ba910c5cee8d132cb57f6ad8e929267323381070db",
+    "lib/libwebpmux.a": "290766fd76aff97633b1a02922d884e56b702b2068a80ef43333629672e13a1d"
+  },
+  "observation": "/proc/self/fd entries for the library database and its -wal/-shm/-journal sidecars",
+  "binding_scope": "C ABI, Linux x86_64 only; not Android/JNI, Swift, Windows or six-platform",
+  "not_tested": "repeated close/release (undefined by header contract); delete-book invalidation",
+  "gate_integration": false
+}

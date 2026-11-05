@@ -1,0 +1,87 @@
+name: iPhone organization activation diagnostic 20261029
+on:
+  push:
+    branches: [codex/apple-ios-organization-activation-probe-20261029]
+permissions:
+  contents: read
+jobs:
+  probe:
+    name: iPhone organization activation diagnostic
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      EXR_APPLE_SDK_VERSION: '3.42.0'
+      EXR_APPLE_PAGE_THEME: 'ON'
+      EXR_APPLE_RAW3: 'ON'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Admit first attempt and generator dependency
+        run: |
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document
+      - name: Admit exactly five additions and build unchanged SDK342 product
+        run: python3 tests/apple_ios_organization_activation_probe_20261029/prepare.py
+      - name: Pin and erase the observed fixture simulator
+        run: |
+          python3 - > build/ios-organization-activation-probe/evidence/destination.txt <<'PY'
+          import json, subprocess
+          runtime = 'com.apple.CoreSimulator.SimRuntime.iOS-26-2'
+          name = 'iPhone SE (3rd generation)'
+          data = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))
+          devices = [d for d in data['devices'].get(runtime, []) if d.get('isAvailable') and d['name'] == name]
+          assert len(devices) == 1, 'exact observed simulator unavailable or ambiguous'
+          udid = devices[0]['udid']
+          subprocess.run(['xcrun', 'simctl', 'shutdown', udid], check=False, capture_output=True)
+          subprocess.run(['xcrun', 'simctl', 'erase', udid], check=True)
+          print('platform=iOS Simulator,id=' + udid + '\n' + udid + '\n' + name + '\n' + runtime)
+          PY
+      - name: Run only six new diagnostic prefixes, no retries
+        run: |
+          set -o pipefail
+          root=build/ios-organization-activation-probe
+          destination=$(sed -n '1p' "$root/evidence/destination.txt")
+          xcodebuild test -project "$root/project/EXReaderHost.xcodeproj" -scheme EXReaderHost-iOS \
+            -destination "$destination" -derivedDataPath "$root/DerivedData" \
+            -resultBundlePath "$root/evidence/activation.xcresult" -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 300 -maximum-test-execution-time-allowance 600 \
+            -only-testing:EXReaderHostUITests-iOS/IOSOrganizationActivationProbeTests/test01Control \
+            -only-testing:EXReaderHostUITests-iOS/IOSOrganizationActivationProbeTests/test02Return \
+            -only-testing:EXReaderHostUITests-iOS/IOSOrganizationActivationProbeTests/test03Control \
+            -only-testing:EXReaderHostUITests-iOS/IOSOrganizationActivationProbeTests/test04Return \
+            -only-testing:EXReaderHostUITests-iOS/IOSOrganizationActivationProbeTests/test05Control \
+            -only-testing:EXReaderHostUITests-iOS/IOSOrganizationActivationProbeTests/test06Return \
+            EXR_SDK_DIR="$PWD/build/apple-sdk342/iphonesimulator/sdk" \
+            EXR_PRODUCTS_DIR="$PWD/build/apple-sdk342/iphonesimulator/products" CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee "$root/evidence/xcodebuild.log"
+      - name: Retain all outcomes without promoting diagnostic success
+        if: always()
+        run: python3 tests/apple_ios_organization_activation_probe_20261029/collect.py collect
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-organization-activation-probe-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ios-organization-activation-probe/evidence/
+          if-no-files-found: error
+  audit:
+    name: Authenticate diagnostic completeness, not product acceptance
+    needs: probe
+    if: always()
+    runs-on: macos-15
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bind original ZIP and all six native outcomes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_ios_organization_activation_probe_20261029/collect.py audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-organization-activation-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ios-organization-activation-audit/
+          if-no-files-found: error

@@ -1,0 +1,9 @@
+gradle.beforeProject { project ->
+    if (project.path == ':app') {
+        project.pluginManager.withPlugin('com.android.application') {
+            def source = new File(project.rootProject.projectDir, '../../build/android-sdk342-record/java').canonicalFile
+            if (!source.isDirectory()) throw new GradleException('SDK 3.42 record probe missing')
+            project.android.sourceSets.androidTest.java.srcDir(source)
+        }
+    }
+}

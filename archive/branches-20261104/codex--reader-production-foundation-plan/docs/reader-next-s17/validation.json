@@ -1,0 +1,170 @@
+{
+  "package": "S17 sync-status-view raw family (session 0.2)",
+  "status": "not accepted: the acceptance reports were produced and green, but the package-level aggregation never ran, so nothing here is an authenticated artifact identity",
+  "accepted": false,
+  "adopted": false,
+  "fixedSource": {
+    "start": "e67d87cbeabb2457e0852f681ef0b27b2c0da4d8",
+    "approvedSdk341": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+    "frozenSdk340": "9854061be331fe603a1822d9b2b36ee357154927",
+    "ciVerifiedSourceSha": "ef5f3898393efea169add05b79c8c210082de121",
+    "branch": "codex/reader-next-s17",
+    "workflow": ".github/workflows/reader-next-s17.yml",
+    "sdkTreeUnchangedVsApproved341": true,
+    "rawModulesAndOldJudgesUnchanged": true,
+    "changedPaths": [
+      "apps/reader/sync-status-view/CMakeLists.txt",
+      "apps/reader/sync-status-view/EXReaderSyncViewConfig.cmake.in",
+      "apps/reader/sync-status-view/include/reader_sync_view.h",
+      "apps/reader/sync-status-view/src/sync_view.cpp",
+      ".github/workflows/reader-next-s17.yml",
+      "tests/reader_next_s17/",
+      "docs/reader-next-s17/"
+    ]
+  },
+  "runs": [
+    {
+      "run": 40227353076,
+      "attempt": 1,
+      "sourceSha": "a7f54f3c2a69ed70ea144a99313837b0f81a8b3b",
+      "conclusion": "failure",
+      "stage": "both candidate jobs fail in the install ladder",
+      "rootCause": "run.py used the same directory as CMake build dir and install prefix; configure_package_config_file writes <Name>Config.cmake into the build tree, so find_package(EXReaderRevisions) preferred the half-installed file over lib/cmake/<Name>",
+      "fixedBy": "771ba50e (build dirs moved under build/ and every stage keeps a -stage suffix)"
+    },
+    {
+      "run": 40227554690,
+      "attempt": 1,
+      "sourceSha": "771ba50ecfb2f1d68eb75e1e0c0ea7ec1bd6bfd7",
+      "conclusion": "failure",
+      "stage": "both candidate jobs fail right after the product install",
+      "rootCause": "ctest --test-dir still pointed at the pre-fix build location (build/reader-next-s17/product)",
+      "fixedBy": "ef5f3898 (build/reader-next-s17/build/product)"
+    },
+    {
+      "run": 40227736624,
+      "attempt": 1,
+      "sourceSha": "ef5f3898393efea169add05b79c8c210082de121",
+      "conclusion": "failure",
+      "stage": "acceptance green on both platforms, package aggregation and mix matrix never executed",
+      "jobs": {
+        "ubuntu22_04": 121272616077,
+        "windows2022": 121272616328,
+        "aggregate": 121273310787
+      },
+      "rootCause": [
+        "run.py:217 asserted report['adopted'] on the frozen legacy report, which the untouched original check_status_view.py never writes -> KeyError: 'adopted' before result.json, so the five mixed-install rejections after that loop were never exercised",
+        "strict.py:49 called actions/runs/<id>/attempts/<n>/artifacts, which GitHub answers with 404, so gh api exited 1 before any digest or identity check (the same URL pattern is present in tests/reader_raw_store_companions/strict.py, which this package does not own)"
+      ],
+      "notFixed": "the three-round CI budget was used, so both defects are documented and left in the verified tree instead of being patched after the last run"
+    }
+  ],
+  "acceptance": {
+    "frozenLegacyDefaultFamily": {
+      "script": "tests/reader_sync_status_view/check_status_view.py (unchanged)",
+      "consumer": "tests/reader_sync_status_view/consumer (unchanged)",
+      "ubuntu22_04": {
+        "checks": 22,
+        "passed": 22,
+        "reportedAccepted": true
+      },
+      "windows2022": {
+        "checks": 22,
+        "passed": 22,
+        "reportedAccepted": true
+      }
+    },
+    "rawFamily": {
+      "script": "tests/reader_next_s17/check_raw_view.py",
+      "consumer": "tests/reader_next_s17/consumer",
+      "ubuntu22_04": {
+        "checks": 20,
+        "passed": 20,
+        "reportedAccepted": true,
+        "platform": "linux"
+      },
+      "windows2022": {
+        "checks": 20,
+        "passed": 20,
+        "reportedAccepted": true,
+        "platform": "win32"
+      },
+      "profile": {
+        "view": "0.2.0",
+        "session": "0.2.0",
+        "sync": "0.2.0",
+        "revisions": "0.4.0",
+        "raw": 1
+      },
+      "mirroredFields": 16,
+      "checks": [
+        "installed_raw_c_and_cpp_consumers_report_their_exact_capability",
+        "idle_session_only_capture_is_read_only_and_requests_nothing",
+        "empty_pending_page_keeps_the_original_argument_contract",
+        "view_mirrors_every_session_value_while_idle_syncing_and_cancelled",
+        "cancelled_snapshot_keeps_the_real_cursor_and_partial_raw_history_resumable",
+        "resume_generation_completes_one_256_shard_sweep_that_is_not_a_library",
+        "raw_outbox_page_counts_distinct_records_and_pages_inside_the_snapshot",
+        "conflict_probe_is_opt_in_and_marks_only_listed_raw_records",
+        "retried_records_and_fixed_reason_come_from_raw_module_tokens",
+        "rows_expose_only_closed_tokens_and_ids",
+        "a_handle_from_the_other_family_is_refused_without_a_snapshot",
+        "row_limit_hard_bounds_and_default_are_enforced",
+        "owner_and_thread_contracts_fail_closed_or_scale_without_a_snapshot_leak",
+        "repeated_captures_leave_raw_storage_byte_identical_and_add_no_file",
+        "bounded_raw_page_records_are_published_and_acknowledged_by_the_real_session",
+        "credential_failure_maps_to_one_fixed_safe_reason",
+        "unreachable_native_transport_is_reported_as_offline",
+        "pending_original_is_surfaced_and_never_acknowledged",
+        "closing_closed_and_snapshot_outliving_both_owners_stay_observable",
+        "evidence_contains_no_credentials_server_body_or_origin_text"
+      ]
+    }
+  },
+  "programHashesReportedByTheAcceptance": {
+    "ubuntu22_04": {
+      "rawViewConsumerSha256": "4628a1ff70669fad85f5a754f461ec654e2dcdbc2e3b3c0d53112b98ad09a38c",
+      "rawViewCConsumerSha256": "daaf3269957169d984c4e9effe16fe01cb35d4d0c22e75f69ef1c06209d3bbdd"
+    },
+    "windows2022": {
+      "rawViewConsumerSha256": "c9c33fef7dd2afdb685a12512147595c0a4b0a7cc6c90e2c155b95e287c49ea8",
+      "rawViewCConsumerSha256": "eac7c7fef70eb67168825a39adebfe7ba0f5ee0377e22db0daafae41acd48f16"
+    },
+    "note": "these digests come from the acceptance report, not from a builder manifest"
+  },
+  "artifacts": [
+    {
+      "name": "reader-next-s17-Linux-40227736624-1",
+      "id": 12611856569,
+      "sizeInBytes": 17705301,
+      "digestAsReportedByGitHub": "sha256:a3198651f665cefab6e0e66608acbdc53df5a5defe5cbae514473badd995aa62",
+      "expiresAt": "2027-01-23T19:48:01Z",
+      "expired": false,
+      "authenticated": false,
+      "reason": "the aggregate job failed before recomputing the ZIP digest, so size/digest are only GitHub's own report; there is no same-run/attempt strict authentication"
+    },
+    {
+      "name": "reader-next-s17-Windows-40227736624-1",
+      "id": 12612261164,
+      "sizeInBytes": 23997479,
+      "digestAsReportedByGitHub": "sha256:b8e0ed09f1acac5abeecf04d7db6a1e79af6447a09250d20417640e0ac6ebd37",
+      "expiresAt": "2027-01-23T19:48:01Z",
+      "expired": false,
+      "authenticated": false,
+      "reason": "same as above"
+    }
+  ],
+  "unverified": [
+    "five mixed-install rejections (two source builds, two installed-package version refusals, one already-imported legacy target) never ran in CI",
+    "package-level result.json (accepted/raw_symbols_absent_from_default/mixed_profiles_refused) never written",
+    "artifact ZIP digest, size, expiry and inner-report identity never recomputed or authenticated",
+    "cross-platform named-check equality never machine-compared (both logs list the same 20 raw checks and 22 frozen checks, but that is a log reading, not the aggregator's assertion)",
+    "macOS, Debug configuration, and any real Windows/GTK/Apple/Android host wiring",
+    "the aggregate job still needs a working artifacts listing endpoint"
+  ],
+  "nonClaims": [
+    "no SDK patch, no schema/wire/anchor change, no root host, no product UI wiring",
+    "no PR, tag or release was created",
+    "nothing in this package is accepted or adopted; only the root can accept it"
+  ]
+}

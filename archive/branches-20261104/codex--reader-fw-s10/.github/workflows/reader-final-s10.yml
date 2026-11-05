@@ -1,0 +1,239 @@
+name: S10 computer transfer entries
+# One live run per branch; only this package's paths trigger it. No matrix is
+# used, so no matrix can exceed max-parallel=2: four independent producer jobs
+# plus one strict summary that only reads this attempt's authenticated ZIPs.
+on:
+  push:
+    branches: [codex/reader-fw-s10]
+    paths:
+      - 'tests/reader_final_s10/**'
+      - '.github/workflows/reader-final-s10.yml'
+  workflow_dispatch:
+concurrency:
+  group: reader-final-s10-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+jobs:
+  guards:
+    name: guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Ownership guards (only this package may change)
+        run: |
+          mkdir -p build/guards
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python tests/reader_final_s10/check_guards.py --output build/guards
+      - name: Actual manifest, native entry and file coordination contract with named negatives
+        run: python tests/reader_final_s10/check_entries.py --output build/guards
+      - name: Generate this run's transfer fixtures
+        run: |
+          python tests/reader_final_s10/make_fixtures.py --output build/s10-fixtures > build/guards/fixtures.log
+          cp build/s10-fixtures/manifest.json build/guards/fixtures-manifest.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s10-guards-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/guards/
+          if-no-files-found: error
+
+  android:
+    name: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install pinned Android tools
+        run: |
+          mkdir -p build/android
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk/emulator" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" \
+            "build-tools;35.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+          python -m pip install ninja==1.11.1.1
+      - name: This run's fixtures
+        run: python tests/reader_final_s10/make_fixtures.py --output build/s10-fixtures > build/android/fixtures.log
+      - name: Build the unchanged frozen SDK and the import-entry native owner
+        run: |
+          python tests/reader_android_import_entry/stage_sdk.py \
+            --prefix "$PWD/stage/entry" --work "$PWD/build/native" 2>&1 | tee build/android/stage-sdk.log
+      - name: Build the existing probe host and this package's SAF sender
+        run: |
+          gradle -p tests/reader_android_import_entry/android --no-daemon :app:assembleDebug \
+            -PexrSdk="$PWD/stage/entry" 2>&1 | tee build/android/gradle-probe.log
+          gradle -p tests/reader_final_s10/android --no-daemon :sender:assembleDebug \
+            2>&1 | tee build/android/gradle-sender.log
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Deliver a real file to the existing import owner on API 34
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            python tests/reader_final_s10/run_android.py --fixtures build/s10-fixtures --output build/android
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s10-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android/
+          if-no-files-found: error
+
+  apple:
+    name: apple
+    runs-on: macos-15
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: This run's fixtures
+        run: |
+          mkdir -p build/apple
+          python3 tests/reader_final_s10/make_fixtures.py --output build/s10-fixtures > build/apple/fixtures.log
+      - name: Build the unchanged iphonesimulator SDK and its product modules
+        run: |
+          cmake -S . -B build/sdk -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
+            -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF \
+            -DEXR_ENABLE_AAC=OFF -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO 2>&1 | tee build/apple/sdk-configure.log
+          cmake --build build/sdk --parallel 4 2>&1 | tee build/apple/sdk-build.log
+          cmake --install build/sdk --prefix stage/iphonesimulator 2>&1 | tee build/apple/sdk-install.log
+          python3 tools/build_apple_product.py --sdk stage/iphonesimulator --target iphonesimulator \
+            --build build/apple-product 2>&1 | tee build/apple/product.log
+      - name: Resources of the existing Apple host owner
+        run: python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources > build/apple/resources.log
+      - name: Deliver the file into the Files-shared container on the iPhone simulator
+        run: |
+          python3 tests/reader_final_s10/run_apple.py --sdk stage/iphonesimulator \
+            --resources build/apple-resources --fixtures build/s10-fixtures --output build/apple/iphone \
+            --family iPhone 2>&1 | tee build/apple/iphone.log
+      - name: Deliver the file into the Files-shared container on the iPad simulator
+        run: |
+          python3 tests/reader_final_s10/run_apple.py --sdk stage/iphonesimulator \
+            --resources build/apple-resources --fixtures build/s10-fixtures --output build/apple/ipad \
+            --family iPad 2>&1 | tee build/apple/ipad.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s10-apple-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple/
+          if-no-files-found: error
+
+  desktop:
+    name: desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: This run's fixtures
+        run: |
+          mkdir -p build/desktop-evidence
+          python3 tests/reader_final_s10/make_fixtures.py --output build/s10-fixtures > build/desktop-evidence/fixtures.log
+      - name: Build the unchanged Linux SDK, sideload and desktop-drop modules
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF \
+            -DEXR_ENABLE_AAC=OFF 2>&1 | tee build/desktop-evidence/sdk-configure.log
+          cmake --build build/sdk --parallel 4 2>&1 | tee build/desktop-evidence/sdk-build.log
+          cmake --install build/sdk --prefix stage/linux 2>&1 | tee build/desktop-evidence/sdk-install.log
+          cmake -S extras/sideload -B build/sideload -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/stage/linux" \
+            -DCMAKE_INSTALL_PREFIX="$PWD/stage/linux" 2>&1 | tee build/desktop-evidence/sideload-configure.log
+          cmake --build build/sideload --parallel 4 && cmake --install build/sideload
+          cmake -S extras/desktop-drop -B build/drop -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/stage/linux" -DEXR_DESKTOP_DROP_GTK=ON \
+            2>&1 | tee build/desktop-evidence/drop-configure.log
+          cmake --build build/drop --parallel 4 && cmake --install build/drop
+          cmake -S tests/reader_final_s10/desktop -B build/desktop -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$PWD/stage/linux" 2>&1 | tee build/desktop-evidence/consumer-configure.log
+          cmake --build build/desktop --parallel 4 2>&1 | tee build/desktop-evidence/consumer-build.log
+      - name: Drop a real file through the desktop entry and read the original back
+        run: |
+          python3 tests/reader_final_s10/run_desktop.py --binary build/desktop/entry_check \
+            --fixtures build/s10-fixtures --output build/desktop-evidence 2>&1 | tee build/desktop-evidence/run.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s10-desktop-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/desktop-evidence/
+          if-no-files-found: error
+
+  summary:
+    name: summary
+    needs: [guards, android, apple, desktop]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate this attempt's producer jobs and raw artifact ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/summary
+          python tests/reader_final_s10/authenticate_artifacts.py \
+            --output build/in --evidence build/summary/authenticated-artifacts.json
+      - name: Strict summary; refuse any mixed source, run, attempt or incomplete platform
+        run: |
+          python tests/reader_final_s10/summarize.py --guards build/in/guards --android build/in/android \
+            --apple build/in/apple --desktop build/in/desktop \
+            --authenticated build/summary/authenticated-artifacts.json --output build/summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s10-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/summary/
+          if-no-files-found: error

@@ -1,0 +1,147 @@
+{
+  "schema": 1,
+  "package": "Windows TXT reading position over product content identity",
+  "branch": "codex/windows-txt-progress",
+  "base": "a0c01289bdc230773bc12b06118f3bb0d3fe084c",
+  "tested_source": "42c090d58d85236575134ad7d73360d0db217b41",
+  "workflow": ".github/workflows/windows-txt-progress.yml",
+  "run": {
+    "id": 40589410782,
+    "attempt": 1,
+    "conclusion": "success",
+    "jobs": 5,
+    "jobs_passed": 5
+  },
+  "component": {
+    "windows_2022_legacy": "success",
+    "windows_2022_raw": "success",
+    "ubuntu_22_04_legacy": "success",
+    "ubuntu_22_04_raw": "success",
+    "probe_checks_per_job": 16,
+    "retained_records_verified": [
+      "book revisions 3",
+      "progress revisions 6",
+      "outbox rows 8",
+      "concurrent heads retained",
+      "anchor v1 bytes unchanged",
+      "anchor v2 points carry no quote"
+    ]
+  },
+  "host": {
+    "legacy": {
+      "accepted": true,
+      "checks": [
+        "native TXT import adds one product original after the SDK book",
+        "shelf selection opens the 16792975-byte original at its first page",
+        "six forward page turns move to later numbered content",
+        "font increase relayouts and keeps the content position",
+        "product progress history exists for the content identity",
+        "close and restart restore the same content position",
+        "a different book identity starts at its own first page",
+        "restart keeps both content identities independent",
+        "a refused write keeps the retained record and still exits",
+        "restart after the refused write restores the durable position",
+        "existing SDK fixed-page book reopens with its single page"
+      ],
+      "report_sha256": "d321531afdfd192106f112e894a53c77c3e5d9fa7d873a794d1e99f96294e08c",
+      "host_sha256": "83531d9db0c12f3dd70e1fba6dec7002fffd435672f19f9f6ae0af22d270f3b1"
+    },
+    "raw": {
+      "accepted": true,
+      "checks": [
+        "native TXT import adds one product original after the SDK book",
+        "shelf selection opens the 16792975-byte original at its first page",
+        "six forward page turns move to later numbered content",
+        "font increase relayouts and keeps the content position",
+        "product progress history exists for the content identity",
+        "close and restart restore the same content position",
+        "a different book identity starts at its own first page",
+        "restart keeps both content identities independent",
+        "a refused write keeps the retained record and still exits",
+        "restart after the refused write restores the durable position",
+        "existing SDK fixed-page book reopens with its single page"
+      ],
+      "report_sha256": "7c36bbb2b1e9874249a0a0dcef82174e97ddff8eea70ecdda3fe16983a2ef9c6",
+      "host_sha256": "208b241b6a97685c06112e5f920c933682622ed3aea667f263b9044635313b00"
+    }
+  },
+  "artifacts": [
+    {
+      "name": "txt-progress-host-40589410782-1",
+      "bytes": 2362522,
+      "digest": "sha256:71c100b8533c0e147155b3fbff14b48da8ffd0807138a46dc2cc068e2e0cea76"
+    },
+    {
+      "name": "txt-progress-windows-2022-legacy-40589410782-1",
+      "bytes": 24949,
+      "digest": "sha256:e976ba99ffd30c94a819a2291b2752acd10f57422623669ae1a9b35ef1747b33"
+    },
+    {
+      "name": "txt-progress-windows-2022-raw-40589410782-1",
+      "bytes": 24826,
+      "digest": "sha256:af7a6d33d25e98f2479c45a2f525c3e24c13ec24b1dd4f4cb91192ef58952525"
+    },
+    {
+      "name": "txt-progress-ubuntu-22.04-legacy-40589410782-1",
+      "bytes": 24601,
+      "digest": "sha256:0c08d855d4fd0f68bc324bdf2356ce19a738f75c11f285cdbd649628560dc437"
+    },
+    {
+      "name": "txt-progress-ubuntu-22.04-raw-40589410782-1",
+      "bytes": 24523,
+      "digest": "sha256:bbbeab3b46787e29c9b95fbff2a4e418c794b96b8b24a391c5877ec0c4f97e2c"
+    }
+  ],
+  "inherited_regression": {
+    "workflow": "sdk-bounded-txt-windows-host.yml",
+    "run": 40586124176,
+    "attempt": 1,
+    "conclusion": "success",
+    "source": "e543606740013270df1688308a865ddc4197e9a5",
+    "covers": "installed host build, original compact UI on four formats, owner recovery and kill, bulk v3, account window and peer owner",
+    "note": "same TXT source family without the TXT options; proves the inherited suites stay green"
+  },
+  "retained_failures": [
+    40538358238,
+    40539155034,
+    40540129409,
+    40543063956,
+    40544101844,
+    40544941676,
+    40545705281,
+    40546576701,
+    40547391464,
+    40548185504,
+    40548998389,
+    40549918335,
+    40550752728,
+    40551647305,
+    40552378907,
+    40576573424,
+    40577481289,
+    40578400320,
+    40579214519,
+    40579908526,
+    40580736296,
+    40581457435,
+    40582156529,
+    40582922676,
+    40583707637,
+    40584551803,
+    40587530857,
+    40588179325
+  ],
+  "limits": [
+    "type sizes the frozen TXT pager rejects (observed at 160% of the 28 pt base) keep the current page and report an error; no record is written",
+    "TXT sessions still have no bookmark, note, search, text selection or last-page jump",
+    "positions persist once the accepted page moves 32 KiB of projected text, and always on close, book switch and relayout; a crash can lose movement inside that window",
+    "an uncertain restore (conflict, pending parents, legacy anchor v1, mismatched window) starts at the first page, keeps every retained record and suppresses automatic writes for that session",
+    "4096 revisions per entity is the store limit; the throttle keeps a 16 MiB original at roughly 512 writes for a full read"
+  ],
+  "not_done": [
+    "mainline merge",
+    "tag",
+    "release",
+    "performance budget acceptance"
+  ]
+}

@@ -1,0 +1,76 @@
+name: D02 Windows DPI keyboard and contrast audit
+on:
+  push:
+    branches: [codex/reader-final-d02]
+    paths: ['tests/reader_final_d02/**', '.github/workflows/reader-final-d02.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-final-d02
+  cancel-in-progress: false
+jobs:
+  native:
+    name: native-windows-audit
+    runs-on: windows-2022
+    timeout-minutes: 50
+    outputs:
+      artifact_id: ${{ steps.raw.outputs.artifact-id }}
+      artifact_digest: ${{ steps.raw.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Preserve guards and validate harness syntax only in Actions
+        shell: bash
+        run: |
+          python tests/reader_final_d02/guard.py
+          python -m py_compile tests/reader_final_d02/*.py
+      - name: Authenticate original ZIP bytes, producer job, source and exact OFF ON executables
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_final_d02/artifacts.py producer
+      - name: Install original pinned UIA utility dependency
+        shell: bash
+        run: python -m pip install uiautomation==2.0.29
+      - name: Default OFF actual native host audit
+        id: off
+        shell: bash
+        run: python tests/reader_final_d02/audit.py --mode OFF --output build/d02-evidence/OFF
+      - name: Explicit ON actual native host audit
+        if: ${{ !cancelled() && steps.off.outcome != 'skipped' }}
+        shell: bash
+        run: python tests/reader_final_d02/audit.py --mode ON --output build/d02-evidence/ON
+      - name: Preserve original observations even on failure
+        id: raw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-d02-raw-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/d02-evidence/
+            !build/d02-evidence/**/profile-*/
+          if-no-files-found: error
+          retention-days: 30
+  strict:
+    name: strict-artifact-verification
+    needs: native
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate raw ZIP, expiry, upstream job and every observation identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NATIVE_RESULT: ${{ needs.native.result }}
+          ARTIFACT_ID: ${{ needs.native.outputs.artifact_id }}
+          UPLOAD_DIGEST: ${{ needs.native.outputs.artifact_digest }}
+        run: python tests/reader_final_d02/artifacts.py summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-d02-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/d02-summary/validation.json
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,143 @@
+name: Apple query helper focused validation
+on:
+  push:
+    branches: [codex/dot-apple-query-observation-20261030]
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.42.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  sdk:
+    name: Team24 Apple installed ${{ matrix.target }}
+    runs-on: macos-15
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact qualified Apple source and independent full wrapper
+        run: python3 tools/reader_composition/dot_apple_complete_admission_20261029.py
+      - name: Original checker and retained runner unchanged
+        run: |
+          test "$(git rev-parse HEAD:tools/check_apple_product.py)" = ed7f62597e01d4e045f679369805d27abc20b7bc
+          git diff --exit-code 4a68d80fbaa524fc28f899d209d795248627080b HEAD -- \
+            tests/reader_team24_apple/run_ui.py \
+            tests/apple_host/EXReaderHostUITests.swift tests/apple_host/reading/ui \
+            tests/apple_host/navigation/ui tests/apple_host/search/ui tests/apple_host/page_theme/ui
+          test "$(git rev-parse HEAD:tests/reader_team24_apple/ui/FeaturesUITests.swift)" = b77b88583cff33bbebac2160e13d6f87a58e6f05
+          python3 - <<'PY'
+          import subprocess
+          path = 'tests/reader_team24_apple/ui/FeaturesUITests.swift'
+          marker = b'    func testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot()'
+          old = subprocess.check_output(['git', 'show', '622b9558f79eda07211e15c51bffcd728da6c553:' + path])
+          new = subprocess.check_output(['git', 'show', 'HEAD:' + path])
+          assert old.count(marker) == new.count(marker) == 1
+          assert old[old.index(marker):] == new[new.index(marker):], 'original five feature bodies changed'
+          PY
+          git diff --exit-code 4a68d80fbaa524fc28f899d209d795248627080b HEAD -- \
+            tests/apple_host/account tests/apple_host/organization tests/reader_apple_font/ui tests/apple_native_original/ui ':(exclude)tests/apple_native_original/ui/OriginalSaveUITests.swift' ':(exclude)tests/reader_apple_font/ui/FontReaderUITests.swift'
+      - name: Checkout isolated original Apple owner
+        uses: actions/checkout@v4
+        with:
+          ref: 937f61057b06c5c9de3b562046e52c91b5be62b9
+          path: apple-owner-candidate
+          fetch-depth: 0
+      - name: Original strict Apple owner guard
+        working-directory: apple-owner-candidate
+        run: env GITHUB_SHA=937f61057b06c5c9de3b562046e52c91b5be62b9 python3 tests/reader_team24_apple/guard_owner.py
+      - name: Actions-only driver syntax
+        run: |
+          python3 -m compileall -q tests/apple_sdk342_host tests/reader_team24_apple
+          ruby -c tests/apple_host/make_xcodeproj.rb
+          ruby -c tests/reader_team24_apple/make_project.rb
+      - name: Actual frozen 3.42 SDK and same-source installed modules
+        run: python3 tests/apple_sdk342_host/build.py --target '${{ matrix.target }}'
+      - name: Retain original owner guard
+        run: cp apple-owner-candidate/build/team24-apple-guard.json build/raw3-ios-sdk/${{ matrix.target }}/team24-apple-guard.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: team24-apple-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            build/raw3-ios-sdk/${{ matrix.target }}/sdk/
+            build/raw3-ios-sdk/${{ matrix.target }}/raw-products/
+            build/raw3-ios-sdk/${{ matrix.target }}/*.json
+          retention-days: 30
+          if-no-files-found: error
+  focused:
+    name: Focused original five ${{ matrix.platform }}
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: team24-apple-sdk-*
+          path: sdk-input
+      - name: Original project generator dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Original five cases and real 3.42 program identity
+        run: python3 tests/apple_features_repair_20261029/focused_runner.py --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: focused-original-five-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/team24-apple/${{ matrix.platform }}/evidence/
+          retention-days: 30
+          if-no-files-found: error
+  focused-font:
+    name: Focused Apple 3.42 ${{ matrix.suite }} ${{ matrix.platform }}
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iphone, ipad]
+        suite: [font]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: team24-apple-sdk-*
+          path: sdk-input
+      - name: Original project generator dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Unchanged original suite on authenticated same-run 3.42 installation
+        run: python3 tests/apple_sdk342_host/supplemental.py --platform '${{ matrix.platform }}' --suite '${{ matrix.suite }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-sdk342-supplemental-${{ matrix.suite }}-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/apple-sdk342-supplemental/${{ matrix.platform }}/${{ matrix.suite }}/
+            build/apple-font/${{ matrix.platform }}/evidence/
+            build/apple-native-original/${{ matrix.platform }}/*.log
+            build/apple-native-original/${{ matrix.platform }}/result.json
+            build/apple-native-original/${{ matrix.platform }}/native.xcresult/
+            build/apple-native-original/${{ matrix.platform }}/source.epub
+            build/apple-native-original/${{ matrix.platform }}/saved.epub
+            build/account-terminal/
+            !build/**/derived/**
+            !build/**/account-derived/**
+            !build/**/failure-derived/**
+            !build/**/*.key
+          retention-days: 30
+          if-no-files-found: error

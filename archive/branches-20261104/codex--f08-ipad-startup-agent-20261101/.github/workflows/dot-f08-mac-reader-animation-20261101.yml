@@ -1,0 +1,67 @@
+name: F08 Mac reader native animation diagnostic
+on:
+  push:
+    branches: [codex/f08-mac-reader-animation-agent-20261101]
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.42.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+  F08_APPLE_DIAGNOSTIC: 'false'
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+jobs:
+  native:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Authenticate943 inputs, build Release and retain four actual reader cases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_mac_reader_animation_20261101/run.py native
+      - name: Seal only after original deadline and owned-writer terminal checks
+        id: seal
+        if: always()
+        run: python3 tests/reader_f08_mac_reader_animation_20261101/run.py seal
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.seal.outcome == 'success'
+        with:
+          name: f08-mac-reader-animation-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-mac-reader-animation/macos/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.seal.outcome != 'success'
+        with:
+          name: f08-mac-reader-animation-unsealed-control-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-mac-reader-animation/macos/control/UNSEALED.json
+          if-no-files-found: error
+  audit:
+    needs: native
+    if: always()
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Independently authenticate source, program, protocol, screenshots and native metrics
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_mac_reader_animation_20261101/run.py audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-mac-reader-animation-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-mac-reader-animation-audit/report.json
+          if-no-files-found: error

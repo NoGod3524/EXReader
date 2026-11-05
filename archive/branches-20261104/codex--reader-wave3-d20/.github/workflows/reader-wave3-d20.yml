@@ -1,0 +1,79 @@
+name: D20 actual Windows DPI and high contrast capability
+on:
+  push:
+    branches: [codex/reader-wave3-d20]
+    paths: ['tests/reader_wave3_d20/**', '.github/workflows/reader-wave3-d20.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-wave3-d20
+  cancel-in-progress: false
+jobs:
+  native:
+    name: d20-native
+    runs-on: windows-2022
+    timeout-minutes: 90
+    outputs:
+      artifact_id: ${{ steps.raw.outputs.artifact-id }}
+      artifact_digest: ${{ steps.raw.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Actions-only syntax fixed seed and exact owned-path guard
+        run: |
+          python -m compileall -q tests/reader_wave3_d20
+          if ($LASTEXITCODE) { throw 'D20 syntax failed' }
+          python tests/reader_wave3_d20/guard.py
+          if ($LASTEXITCODE) { throw 'D20 source scope failed' }
+          python tests/reader_wave3_d20/negative.py
+          if ($LASTEXITCODE) { throw 'D20 refusal controls failed' }
+      - name: Enumerate actual display and session before any display requests
+        run: |
+          python tests/reader_wave3_d20/display.py --inventory
+          if ($LASTEXITCODE) { throw 'D20 native display inventory failed' }
+      - name: Fresh installed frozen SDK and current-seed compact host
+        run: |
+          python tests/reader_wave3_d20/reuse.py build
+          if ($LASTEXITCODE) { throw 'D20 fresh build failed' }
+      - name: Actual Settings scale readback and native high contrast regressions
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: utf-8
+        run: |
+          python tests/reader_wave3_d20/run.py
+          if ($LASTEXITCODE) { throw 'D20 evidence incomplete; preserved raw failures' }
+      - uses: actions/upload-artifact@v4
+        id: raw
+        if: always()
+        with:
+          name: reader-wave3-d20-raw-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/d20-evidence/
+            !build/d20-evidence/**/profile-*/
+          retention-days: 30
+          if-no-files-found: error
+  strict:
+    name: d20-strict
+    needs: native
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Authenticate same-run original ZIP and unchanged historical helpers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NATIVE_RESULT: ${{ needs.native.result }}
+          ARTIFACT_ID: ${{ needs.native.outputs.artifact_id }}
+          UPLOAD_DIGEST: ${{ needs.native.outputs.artifact_digest }}
+        run: python3 tests/reader_wave3_d20/strict.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-wave3-d20-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/d20-summary/validation.json
+          retention-days: 30
+          if-no-files-found: error

@@ -1,0 +1,13 @@
+// Test-only optimized app, signed with the ephemeral CI test certificate.
+gradle.beforeProject { suite ->
+    if (suite.path == ':app') {
+        suite.pluginManager.withPlugin('com.android.application') {
+            suite.androidComponents.finalizeDsl { extension ->
+                extension.testBuildType = 'release'
+                extension.buildTypes.release.signingConfig = extension.signingConfigs.debug
+                extension.sourceSets.androidTest.java.setSrcDirs([
+                    new File(suite.rootProject.projectDir, '../../build/f08-android/release-tests')])
+            }
+        }
+    }
+}

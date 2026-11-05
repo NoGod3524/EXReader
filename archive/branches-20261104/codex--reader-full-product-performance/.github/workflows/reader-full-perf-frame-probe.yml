@@ -1,0 +1,50 @@
+name: GTK frame-clock probe diagnostic
+on:
+  push:
+    branches: [codex/reader-full-product-performance]
+    paths: ['.github/workflows/reader-full-perf-frame-probe.yml', 'tests/reader_perf_frame_clock/**']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build instrument and synthetic GTK workload
+        run: |
+          set -euxo pipefail
+          mkdir -p build/frame-probe/raw
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev xvfb pkg-config
+          cc -shared -fPIC -Wall -Wextra -Werror tests/reader_perf_frame_clock/trace.c -o build/frame-probe/trace.so $(pkg-config --cflags --libs gtk+-3.0) -ldl
+          cc -Wall -Wextra -Werror tests/reader_perf_frame_clock/probe.c -o build/frame-probe/probe $(pkg-config --cflags --libs gtk+-3.0)
+          sha256sum build/frame-probe/trace.so build/frame-probe/probe | tee build/frame-probe/hashes.txt
+          git rev-parse HEAD | tee build/frame-probe/source.txt
+      - name: Capture and validate real GDK after-paint clock samples
+        run: |
+          set -euxo pipefail
+          export EXR_FRAME_TRACE_DIR="$PWD/build/frame-probe/raw"
+          export LD_PRELOAD="$PWD/build/frame-probe/trace.so"
+          xvfb-run -a ./build/frame-probe/probe
+          unset LD_PRELOAD
+          python3 - <<'PY'
+          from pathlib import Path
+          paths = list(Path('build/frame-probe/raw').glob('*.tsv'))
+          assert len(paths) == 1, paths
+          rows = [line.split('\t') for line in paths[0].read_text().splitlines()]
+          assert len(rows) >= 5, len(rows)
+          clocks = {r[0] for r in rows}
+          assert len(clocks) == 1, clocks
+          values = [int(r[1]) for r in rows]
+          assert all(b > a for a, b in zip(values, values[1:])), values
+          assert all(int(r[2]) > 0 for r in rows)
+          print('after-paint records:', len(rows), 'clock span us:', values[-1] - values[0])
+          print('This is a toolkit frame-clock cadence probe under Xvfb, not physical presentation.')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-perf-frame-probe-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/frame-probe/
+          if-no-files-found: warn

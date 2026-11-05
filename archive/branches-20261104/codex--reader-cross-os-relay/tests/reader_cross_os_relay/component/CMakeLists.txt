@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MIT
+cmake_minimum_required(VERSION 3.24)
+project(EXRCrossOsRelay VERSION 0.1.0 LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8)
+endif()
+add_library(exr_relay STATIC src/relay.cpp)
+target_include_directories(exr_relay PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+if(MSVC)
+  target_compile_options(exr_relay PRIVATE /W4 /WX)
+  target_compile_definitions(exr_relay PRIVATE _CRT_SECURE_NO_WARNINGS)
+else()
+  target_compile_options(exr_relay PRIVATE -Wall -Wextra -Werror)
+endif()
+include(CMakePackageConfigHelpers)
+install(TARGETS exr_relay EXPORT EXRCrossOsRelayTargets ARCHIVE DESTINATION lib)
+install(FILES include/exr_relay.h DESTINATION include)
+install(EXPORT EXRCrossOsRelayTargets NAMESPACE EXRCrossOsRelay:: DESTINATION lib/cmake/EXRCrossOsRelay)
+configure_package_config_file(EXRCrossOsRelayConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/EXRCrossOsRelayConfig.cmake"
+  INSTALL_DESTINATION lib/cmake/EXRCrossOsRelay)
+write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXRCrossOsRelayConfigVersion.cmake" VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMinorVersion)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXRCrossOsRelayConfig.cmake" "${CMAKE_CURRENT_BINARY_DIR}/EXRCrossOsRelayConfigVersion.cmake"
+  DESTINATION lib/cmake/EXRCrossOsRelay)

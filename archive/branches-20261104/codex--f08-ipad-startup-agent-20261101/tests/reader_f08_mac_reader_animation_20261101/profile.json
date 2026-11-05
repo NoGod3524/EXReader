@@ -1,0 +1,100 @@
+{
+  "schema": "f08-mac-reader-animation-v1",
+  "diagnostic_only": true,
+  "f08_accepted": false,
+  "source_base": "943938213560d329177b9afbdb2fc0953fbfc4ac",
+  "producer_source_sha": "943938213560d329177b9afbdb2fc0953fbfc4ac",
+  "producer_run": 41273725066,
+  "producer_attempt": 1,
+  "producer_workflow": ".github/workflows/f08-final-linux-20261031.yml",
+  "producer_sdk_job": "sdk",
+  "environment": {
+    "runner": "macos-15",
+    "xcode_version_line": "Xcode 16.4",
+    "developer_dir": "/Applications/Xcode_16.4.app/Contents/Developer"
+  },
+  "inputs": [
+    {
+      "kind": "macos",
+      "id": 13070547601,
+      "bytes": 70261525,
+      "sha256": "2245282ff2b7dec193d1bebd94680e6e8cf575cc6fdf683198418c386a44e2d3"
+    },
+    {
+      "kind": "macos-sdk",
+      "id": 13070004975,
+      "bytes": 22517920,
+      "sha256": "04d40a7fdc6b6aef619982d1f0584ccd829a54fe1f0365471e5f5eded4b98aa8"
+    },
+    {
+      "kind": "iphonesimulator-sdk",
+      "id": 13070610751,
+      "bytes": 22510401,
+      "sha256": "95adaf903a76cfdd815a10db7ba4e29a08fee25972fb6227e60c4330cf10851c"
+    }
+  ],
+  "clock": "DispatchTime.uptimeNanoseconds",
+  "signpost": {
+    "subsystem": "org.exreader.f08",
+    "category": "NativeUI",
+    "name": "ReaderWorkloadFrames"
+  },
+  "cases": {
+    "11": "F08ReaderAnimationUITests/test16FrozenFontLocateNativeFrames",
+    "12": "F08ReaderAnimationUITests/test17SampleNextFontLocateNativeFrames"
+  },
+  "action_lists": {
+    "11": [
+      "font_increase",
+      "font_decrease",
+      "locate:Offline"
+    ],
+    "12": [
+      "page_next",
+      "font_increase",
+      "font_decrease",
+      "locate:C00P040W00"
+    ]
+  },
+  "screenshot_phases": {
+    "11": [
+      "before",
+      "larger",
+      "restored",
+      "located"
+    ],
+    "12": [
+      "before",
+      "next",
+      "larger",
+      "restored",
+      "located"
+    ]
+  },
+  "iterations": 6,
+  "warmup_index": 0,
+  "measured_iterations": 5,
+  "native_job_minutes": 20,
+  "audit_job_minutes": 20,
+  "main_soft_deadline_s": 900,
+  "main_hard_deadline_s": 1050,
+  "limits_unchanged": {
+    "first_interactive_ms": 2000,
+    "peak_rss_bytes": 536870912,
+    "animation_hitch_time_ratio_ms_per_s": 10
+  },
+  "native_ratio_scope": "IPC/capture-expanded diagnostic; never the frozen original budget",
+  "raw_case11_scope": "original frozen Book0201; original page/body coverage false retained",
+  "raw_case12_scope": "original Apple-generated Sample.epub only; next (not previous), font/locate; first reset after stop; frozen_cohort_acceptance=false",
+  "fixture_source": "only15 Resources from authenticated943 Mac native; never Android Sample or old resource producer",
+  "baseline_cases": [
+    "F08ReaderUITests/test11FrozenOriginalFontAndLocateMetrics",
+    "F08ReaderUITests/test12LongReaderPageFontAndLocateDiagnostic"
+  ],
+  "baseline_setup_preparation": "Generated driver only: one approved actual Window preparation after original app.launch outside measure; original11/12/nativeMetrics function bodies exact.",
+  "screenshot_method": "Public reader.page XCUIElement.screenshot is reader-element ROI. Located additionally preserves actual app.windows target Window.screenshot; exact geometric recrop of its original PNG equals element body after excluding bottom2points. Neither PNG nor ACK is a native FrameCount or presentation fence.",
+  "image_decoder": "Pillow==12.0.0",
+  "window_screenshot_phase": "after located reader-element capture and before end request, once per iteration",
+  "python_version": "3.13",
+  "input_span_semantics": "Conservative public action-sequence call bounds include original readiness/assertion work, not claimed physical input latency."
+}

@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "source_sha": "c7205a9da1c11c0cc23fb04920dbd7a8071659d8",
+  "run_id": 40237292306,
+  "attempt": 1,
+  "root_round": 3,
+  "accepted": true,
+  "scope": "independent optional installed font package and SDK-target provenance",
+  "profiles": ["Linux SDK3.40", "Linux SDK3.41", "Windows SDK3.41", "macOS SDK3.41"],
+  "preloaded_real_controls_each": 4,
+  "additional_strict_mutation_refusals_each": 4,
+  "original_strict_mutation_refusals_retained": 42,
+  "sdk_target_helper_git_blob": "98d0c8ddaf006591014203141f1faf650cc3ba4c",
+  "reused_module_implementation_pin": "1563f4abb85ccd28c3a0aae3e9913f4330536215",
+  "sdk_changed": false,
+  "module_public_header_or_implementation_changed": false,
+  "host_ui_accepted": false,
+  "performance_accepted": false,
+  "complete_product": false,
+  "jobs": [
+    {"id": 121301462552, "name": "font library (ubuntu-22.04, SDK340)", "conclusion": "success"},
+    {"id": 121301462751, "name": "guard fixed source and replay verifier contracts", "conclusion": "success"},
+    {"id": 121301462770, "name": "font library (macos-15, SDK341)", "conclusion": "success"},
+    {"id": 121301462793, "name": "font library (ubuntu-22.04, SDK341)", "conclusion": "success"},
+    {"id": 121301462814, "name": "font library (windows-2022, SDK341)", "conclusion": "success"},
+    {"id": 121302224604, "name": "same-run S14 evidence and negative verifier cases", "conclusion": "success"}
+  ],
+  "artifacts": [
+    {"id": 12615582577, "name": "reader-s14-font-verified-40237292306-1", "bytes": 6453, "digest": "sha256:090af4630313908958c59a68c0986d36d1db837eaca75dc4f79ec34063ccdb18"},
+    {"id": 12615187532, "name": "reader-s14-font-library-Windows-SDK341-40237292306-1", "bytes": 8787574, "digest": "sha256:543a0492b41b61fdb38d62ebba1a0104496f353bc88c0c68272f70dd4885b1d6"},
+    {"id": 12615147716, "name": "reader-s14-font-library-macOS-SDK341-40237292306-1", "bytes": 9506869, "digest": "sha256:cacf7eabd6f795dc20b1dd8b1b4b3abad504be91c085c842c047d8c08d0eff5b"},
+    {"id": 12615058177, "name": "reader-s14-font-library-Linux-SDK341-40237292306-1", "bytes": 10286505, "digest": "sha256:f5da8538c671ea0dbe3dbb43178b63117314ea3a7548514ed94a917e872db545"},
+    {"id": 12614858618, "name": "reader-s14-font-library-Linux-SDK340-40237292306-1", "bytes": 10286816, "digest": "sha256:26fd6d6914bd418ffbecfd9fcaf94c97a18dc3751a0a55512a26c36d57ccb49a"}
+  ],
+  "artifacts_expire_at": "2027-01-23T21:49:32Z",
+  "evidence_access": "Actual ZIP and member processing in Actions only; local access limited to Git, GitHub metadata and completed text logs."
+}

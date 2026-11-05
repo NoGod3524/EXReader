@@ -1,0 +1,248 @@
+name: S12 Unicode paths and library state regression
+on:
+  push:
+    branches: [codex/reader-fw-s12]
+    paths:
+      - 'tests/reader_final_s12/**'
+      - '.github/workflows/reader-final-s12.yml'
+      - 'docs/reader-final-s12/**'
+      - 'HANDOFF-RESULT.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  S12_BASE: 0889f7d1e9a537c6c1b05456547e016b26e1cd85
+  S12_SDK: edddc463c06ed5731195cdb8f06b2df6dff7699e
+jobs:
+  source-preflight:
+    name: source-preflight
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require this source, the fixed start and unchanged owner trees
+        run: |
+          set -euo pipefail
+          mkdir -p build/logs
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$S12_BASE" HEAD
+          git diff --exit-code "$S12_SDK" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings
+          git diff --exit-code "$S12_BASE" HEAD -- apps/reader/store/001_catalog.sql
+          git diff --exit-code "$S12_BASE" HEAD -- apps/reader/store apps/reader/revisions apps/reader/commands \
+            apps/reader/desktop-metadata apps/reader/account-profiles
+          git diff --name-only "$S12_BASE" HEAD > build/logs/changed-paths.txt
+          allowed='^(tests/reader_final_s12/|\.github/workflows/reader-final-s12\.yml$|docs/reader-final-s12/|HANDOFF-RESULT\.md$)'
+          if grep -Ev "$allowed" build/logs/changed-paths.txt; then
+            echo 'changed paths outside this package' >&2
+            exit 1
+          fi
+          cat build/logs/changed-paths.txt
+      - name: Freeze the fixtures and require static agreement
+        run: |
+          set -euo pipefail
+          python3 tests/reader_final_s12/fixtures.py --out build/fixtures 2>&1 | tee build/logs/fixtures.log
+          python3 tests/reader_final_s12/static_check.py --expected build/fixtures/expected.json 2>&1 | tee build/logs/static.log
+      - name: Write the source report
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          expected = json.load(open('build/fixtures/expected.json', encoding='utf-8'))
+          report = {
+              'source': os.environ['GITHUB_SHA'],
+              'source_preflight_passed': True,
+              'static_agreement': True,
+              'base': os.environ['S12_BASE'],
+              'sdk': os.environ['S12_SDK'],
+              'consumer_records': len(expected['required_consumer']),
+              'c_records': len(expected['required_c']),
+              'changed_paths': open('build/logs/changed-paths.txt', encoding='utf-8').read().split(),
+              'ui_or_release_grant': False,
+          }
+          json.dump(report, open('build/report.json', 'w', encoding='utf-8'), indent=1, sort_keys=True)
+          print(json.dumps(report, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s12-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/report.json
+            build/logs/
+            build/fixtures/cases.bin
+            build/fixtures/expected.json
+            build/fixtures/meta.json
+          if-no-files-found: error
+
+  regression:
+    name: unicode-regression (${{ matrix.os }})
+    needs: source-preflight
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        os: [windows-2022, ubuntu-22.04]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require this source on this host
+        run: |
+          set -euo pipefail
+          mkdir -p build/logs
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$S12_BASE" HEAD
+          git diff --exit-code "$S12_SDK" HEAD -- src include cmake CMakeLists.txt
+          git diff --exit-code "$S12_BASE" HEAD -- apps/reader
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      - name: Enter the Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs "VC\Auxiliary\Build\vcvars64.bat"
+          $lines = cmd /c ('"' + $bat + '" >nul && set')
+          $lines | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the unchanged public packages
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "S12_WS=$ws" >> "$GITHUB_ENV"
+          stage="$ws/build/stage"
+          cmake -S apps/reader/store/native -B build/product -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$stage" 2>&1 | tee build/logs/product-configure.log
+          cmake --build build/product --parallel 4 --verbose 2>&1 | tee build/logs/product-build.log
+          cmake --install build/product 2>&1 | tee build/logs/product-install.log
+          for module in revisions commands desktop-metadata; do
+            cmake -S "apps/reader/$module" -B "build/$module" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_PREFIX_PATH="$stage" -DREADER_PRODUCT_PREFIX="$stage" \
+              -DCMAKE_INSTALL_PREFIX="$stage" -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON \
+              2>&1 | tee "build/logs/$module-configure.log"
+            cmake --build "build/$module" --parallel 4 --verbose 2>&1 | tee "build/logs/$module-build.log"
+            cmake --install "build/$module" 2>&1 | tee "build/logs/$module-install.log"
+          done
+          cmake -S apps/reader/account-profiles -B build/account-profiles -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$stage" 2>&1 | tee build/logs/account-profiles-configure.log
+          cmake --build build/account-profiles --parallel 4 --verbose 2>&1 | tee build/logs/account-profiles-build.log
+          cmake --install build/account-profiles 2>&1 | tee build/logs/account-profiles-install.log
+      - name: Build the two independent installed consumers
+        run: |
+          set -euo pipefail
+          cmake -S tests/reader_final_s12 -B build/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$S12_WS/build/stage" 2>&1 | tee build/logs/consumer-configure.log
+          cmake --build build/consumer --parallel 4 --verbose 2>&1 | tee build/logs/consumer-build.log
+      - name: Freeze the request container and the expectation
+        run: |
+          set -euo pipefail
+          python3 tests/reader_final_s12/fixtures.py --out build/fixtures 2>&1 | tee build/logs/fixtures.log
+      - name: Run both consumers on Unicode, spaced, long and non-BMP paths
+        run: |
+          set -euo pipefail
+          mkdir -p build/evidence
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; root=$(cygpath -w "$PWD/build/s12-run"); else exe=; root="$PWD/build/s12-run"; fi
+          "build/consumer/s12-consumer$exe" --input build/fixtures/cases.bin --root "$root" \
+            --output build/evidence/observations.txt --local build/evidence/platform-local.txt \
+            2>&1 | tee build/logs/consumer-run.log
+          "build/consumer/s12-c-consumer$exe" --input build/fixtures/cases.bin --root "$root" \
+            --output build/evidence/c-observations.txt 2>&1 | tee build/logs/c-consumer-run.log
+      - name: Compare every observation with the frozen expectation
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; root=$(cygpath -w "$PWD/build/s12-run"); else exe=; root="$PWD/build/s12-run"; fi
+          platform=$(echo "$RUNNER_OS" | tr 'A-Z' 'a-z')
+          python3 tests/reader_final_s12/check_s12.py --fixtures build/fixtures --root "$root" \
+            --observations build/evidence/observations.txt --c-observations build/evidence/c-observations.txt \
+            --local build/evidence/platform-local.txt \
+            --consumer "build/consumer/s12-consumer$exe" --c-consumer "build/consumer/s12-c-consumer$exe" \
+            --platform "$platform" --source "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
+            --output build/evidence 2>&1 | tee build/logs/check.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s12-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/logs/
+            build/evidence/
+            build/fixtures/cases.bin
+            build/fixtures/expected.json
+            build/fixtures/meta.json
+            build/consumer/s12-consumer*
+            build/consumer/s12-c-consumer*
+            build/consumer/*.map
+          if-no-files-found: error
+
+  compare:
+    name: cross-platform byte equality
+    needs: regression
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-final-s12-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/platforms
+      - name: Require identical observation bytes on both hosts
+        run: |
+          set -euo pipefail
+          run="$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          base=build/platforms
+          python3 tests/reader_final_s12/compare_platforms.py --source "$GITHUB_SHA" --run "$GITHUB_RUN_ID" \
+            --attempt "$GITHUB_RUN_ATTEMPT" --output build/compare \
+            --observations "Windows=$base/reader-final-s12-Windows-$run/evidence/observations.txt" \
+            --observations "Linux=$base/reader-final-s12-Linux-$run/evidence/observations.txt" \
+            --c-observations "Windows=$base/reader-final-s12-Windows-$run/evidence/c-observations.txt" \
+            --c-observations "Linux=$base/reader-final-s12-Linux-$run/evidence/c-observations.txt" \
+            --report "Windows=$base/reader-final-s12-Windows-$run/evidence/report.json" \
+            --report "Linux=$base/reader-final-s12-Linux-$run/evidence/report.json" \
+            2>&1 | tee build/compare.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s12-compare-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/compare/
+            build/compare.log
+          if-no-files-found: error
+
+  strict:
+    name: strict artifact authentication
+    needs: [regression, compare]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Re-hash the original artifacts of this attempt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 tests/reader_final_s12/strict.py 2>&1 | tee build/strict.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s12-strict-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/strict/report.json
+            build/strict.log
+          if-no-files-found: warn

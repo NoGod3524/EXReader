@@ -1,0 +1,57 @@
+{
+  "scope": "S15 optional original-export package exact installed SDK graph only",
+  "accepted": true,
+  "complete_product": false,
+  "host_wiring_accepted": false,
+  "tested_source": "1ca21a1a52b565c1e4de5f79a8e10921c0c77b46",
+  "run": 40236846254,
+  "attempt": 1,
+  "conclusion": "success",
+  "sdk_guard_blob": "98d0c8ddaf006591014203141f1faf650cc3ba4c",
+  "original_public_header_and_cpp_unchanged_from": "25cd7b4b15d952e3f7a10e39ed80ae16a3d9a3ee",
+  "sdk_boundary_unchanged_from": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "old_checks_per_desktop_platform": 44,
+  "old_frozen_checks": 6,
+  "preloaded_target_checks": 16,
+  "foreign_preloads_refused": 8,
+  "matching_preloads_accepted_without_replacement": 8,
+  "preload_modes": ["full", "private"],
+  "module_entry_routes": ["source", "installed"],
+  "jobs": [
+    {"platform": "Linux", "id": 121300132295, "conclusion": "success"},
+    {"platform": "Windows", "id": 121300132211, "conclusion": "success"},
+    {"platform": "macOS", "id": 121300132400, "conclusion": "success"},
+    {"name": "frozen and preloaded targets", "id": 121300132015, "conclusion": "success"},
+    {"name": "strict S15 evidence", "id": 121301127628, "conclusion": "success"}
+  ],
+  "artifact_expires_at": "2027-01-23T21:43:45Z",
+  "artifacts": [
+    {"id": 12615027727, "name": "reader-next-s15-Linux-40236846254-1", "bytes": 8491223,
+      "sha256": "e3742ec428229b92385a98bd917a2bfc96af3c970d6e6890d09290e52b257084"},
+    {"id": 12615177178, "name": "reader-next-s15-Windows-40236846254-1", "bytes": 7063466,
+      "sha256": "d22c9d12f8ce5ee658a218338f77a9d9afb950027002d67fe39e628bc09bc65f"},
+    {"id": 12615337273, "name": "reader-next-s15-macOS-40236846254-1", "bytes": 7430523,
+      "sha256": "56ae85ec899cef723f2dae9983271bc9eb82e1151260bd86071a06c1a820982e"},
+    {"id": 12615771287, "name": "reader-next-s15-frozen-340-40236846254-1", "bytes": 4862793,
+      "sha256": "84e87ad3840f417cb6249b8efcdb5c8816693f2a8322da0c832deb68992c0e58"},
+    {"id": 12615497123, "name": "reader-next-s15-evidence-40236846254-1", "bytes": 1704,
+      "sha256": "c7dc48077b2b842858ecccf7b990dd011dfbee0d1f447d3bde08665180376046", "api_metadata_only": true}
+  ],
+  "retained_reproduction": {
+    "source": "827bda743e5f67af3d84b9f91d7ee2878be961c2",
+    "run": 40236360132,
+    "attempt": 1,
+    "conclusion": "failure",
+    "real_foreign_targets_escaped": 4,
+    "matching_positive_controls_passed": 4,
+    "original_44_check_matrix": "three platforms success",
+    "cause": "EXACT selected Config metadata while CMake exports retained pre-existing imported SDK targets"
+  },
+  "full_actions_rounds_used": 2,
+  "local_builds_tests_syntax_or_artifact_processing": false,
+  "limitations": [
+    "Independent candidate only; common-source adoption and host wiring require root revalidation",
+    "No mobile, selector/share UI, six-platform or performance grant",
+    "Original Windows mid-stream disk-full/fsync UNAVAILABLE remains"
+  ]
+}

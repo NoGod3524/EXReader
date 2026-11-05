@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+project(MigrationReviewClose C)
+find_package(EXReader CONFIG REQUIRED COMPONENTS core library)
+add_executable(review-close-source ../review_close_source.c)
+target_link_libraries(review-close-source PRIVATE EXReader::exr_library)

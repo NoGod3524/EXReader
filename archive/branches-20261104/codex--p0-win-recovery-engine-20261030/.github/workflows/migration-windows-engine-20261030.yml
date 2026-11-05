@@ -1,0 +1,49 @@
+name: Windows private installed observer engine
+on:
+  push:
+    branches: [codex/p0-win-recovery-engine-20261030]
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  engine:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Exact source admission
+        run: |
+          set -euo pipefail
+          mkdir -p build/engine-evidence
+          python tests/migration/windows_recovery_engine_20261030/admit.py
+      - name: Build and install frozen SDK plus opt-in private engine
+        run: |
+          set -euo pipefail
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
+          cmake --build build/sdk --config Release --parallel 4
+          cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage"
+          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DEXR_MIGRATION_WINDOWS_ENGINE_CANDIDATE=ON -DEXR_WINDOWS_ENGINE_SOURCE="$GITHUB_SHA"
+          cmake --build build/migration --config Release --parallel 4
+          cmake --install build/migration --config Release --prefix "$GITHUB_WORKSPACE/engine-stage"
+      - name: Actual separately compiled installed consumer
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/windows_recovery_engine_20261030 -B build/engine-check -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DENGINE_PREFIX="$GITHUB_WORKSPACE/engine-stage"
+          cmake --build build/engine-check --config Release --parallel 4
+          python tests/migration/windows_recovery_engine_20261030/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-engine-${{ github.sha }}
+          path: |
+            build/engine-evidence/
+            build/migration/windows_recovery_engine_20261030/observer-provider.map
+            build/engine-check/consumer-provider.map
+            engine-stage/bin/exreader-migration-windows-observer.exe
+            engine-stage/lib/exreader-migration-windows-engine.lib
+            engine-stage/include/exreader-migration-windows-engine/
+          if-no-files-found: error

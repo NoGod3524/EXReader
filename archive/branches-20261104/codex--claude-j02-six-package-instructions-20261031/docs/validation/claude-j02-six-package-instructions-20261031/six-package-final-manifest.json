@@ -1,0 +1,58 @@
+{
+  "task": "J02",
+  "sdk_version": "3.42.0",
+  "source": "8f8acf3234cba747165f001c0c96efe1b911e6ad",
+  "producer_run": 40678657371,
+  "producer_attempt": 1,
+  "packages": {
+    "windows": {
+      "file": "exreader-windows-sdk342-j02-candidate.zip",
+      "bytes": 17697464,
+      "sha256": "abec7f77a5f070c9fae67615344d3dbcfe78ed424cd128654001d4c721e4f080",
+      "source": "original F06 artifact 12812276328",
+      "outer_sha256": "0206e54988ca50e3feae37d7f83457ab959d052ef350fb55eb9269007c2c9cd2",
+      "original_f06_inner_sha256": "6c4719028b0ff76a4ec09334cb3a91423e9e5655e2956cadbd82a1744194b490"
+    },
+    "linux": {
+      "file": "exreader-linux-sdk342-j02-candidate.zip",
+      "bytes": 18545835,
+      "sha256": "a5fce847fb5a773df743c03e14087276c8ea1709315ad502148a143e80dfe257",
+      "source": "original F06 artifact 12811449234",
+      "outer_sha256": "be3a91161939b3b61bce041feaa06679d03120af9f53abea02bab141d5665641",
+      "original_f06_inner_sha256": "64e457ea504a1472c575eb11f944cfde58e430ad19600ef9ccc21e074a940286"
+    },
+    "macos": {
+      "file": "exreader-macos-sdk342-j02-candidate.zip",
+      "bytes": 27502770,
+      "sha256": "62a5462e8e094304eb5b1b5af0331d42d74a0ed3719c7f608794ad12979af12a",
+      "source": "original F06 artifact 12811976629",
+      "outer_sha256": "f480b2a8489f8b21aa00c795b38fbd4a85261200a654cb2daf6c880bb538b599",
+      "original_f06_inner_sha256": "b44172354029995d7a47dd25804d4913f12f0761c66d00725d5c50fdea28e3dd"
+    },
+    "android": {
+      "file": "exreader-android-sdk342-j02-candidate.zip",
+      "bytes": 19726915,
+      "sha256": "582433983617c471ccedfe4c61daaf3946cbe791b883618c3046fa6edf253b2b",
+      "source": "J01 candidate artifact 13023043154",
+      "outer_sha256": "944ead0934115f7a92a03e500417b1a0398cf05f29675a7096970f1a0a267f55",
+      "original_f06_inner_sha256": "4533e63c20c9f248beb6afc7690dd5da54eda5b8360aea899e99522b7a6a0e53"
+    },
+    "iphone": {
+      "file": "exreader-iphone-sdk342-j02-candidate.zip",
+      "bytes": 27506585,
+      "sha256": "4edf5aeb2353ea687247b708e7ebc6f97f6c6592e6119cf07f38bab7dfbf0db7",
+      "source": "original F06 artifact 12813015622",
+      "outer_sha256": "c56a913aca689f4290a4d66787666e3b22617c39308c3acfc45bd1b3794f3c3b",
+      "original_f06_inner_sha256": "35f810de9ee9af6113d04c97e300eb7ea95aa2eea01cf29cc37b823281cf0502"
+    },
+    "ipad": {
+      "file": "exreader-ipad-sdk342-j02-candidate.zip",
+      "bytes": 27506558,
+      "sha256": "6ff5cc0dadf2ec75aab2dbac1044a5f9aab2849f09e0b78027a15def91fb0e7e",
+      "source": "original F06 artifact 12812242328",
+      "outer_sha256": "34cb0a2b9b56f5b6cd4f3347f08505aac3abe128aba59e982cf208e93829acf9",
+      "original_f06_inner_sha256": "f3b0d84946f4fd3390fdbb0998e63fc8d69b5dd77446b8d2cee410c0fe167d4c"
+    }
+  },
+  "note": "outer hashes live only here, never inside the ZIPs (no circular hash)"
+}

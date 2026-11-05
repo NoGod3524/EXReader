@@ -1,0 +1,634 @@
+# Apple password privacy — bounded F10 source candidate
+
+Base: `8f8acf3234cba747165f001c0c96efe1b911e6ad`; installed SDK **3.42.0**.
+Proposed branch: `codex/apple-password-privacy-20261028`.
+Owned additions: `tests/apple_password_privacy_20261028/**`, this document,
+`.github/workflows/apple-password-privacy-20261028.yml` only.
+
+**Native acceptance remains ungranted.** The first published source
+`7dc199ce383877aee1f45a44be8453b7d4268219` ran in Actions
+[40773724953](https://github.com/NoGod3524/EXReader/actions/runs/40773724953):
+all 18 scanner/archive controls and both SDK builds passed, while all three
+native jobs failed during setup and authentication correctly refused.
+The original failure artifacts are retained unchanged.
+
+A diagnostic-only publication was denied at 21:52 UTC, then the exact reviewed
+two-file payload was retried once after the user's named-package authorization
+at 21:59:11 UTC. Source `8845cf2886f50a69d56c577e34f317d449f2f103`, Actions
+[40776849750](https://github.com/NoGod3524/EXReader/actions/runs/40776849750),
+authenticated the pinned prior macOS ZIP and printed its sanitized project log:
+`make_project.rb:31` raised `TypeError: no implicit conversion of Array into String`.
+This diagnostic skipped SDK/native/authentication rather than repeating
+successful builds solely to retrieve a log; it is not privacy acceptance.
+
+The new adapter repair normalizes xcodeproj's String/Array flag representation,
+preserves every existing token, and adds only the required raw metadata flags.
+New Actions-only controls cover both forms, quoted paths, malformed/invalid
+values, and actual xcodeproj save/reopen. Repaired full run
+[40777254345](https://github.com/NoGod3524/EXReader/actions/runs/40777254345),
+source `b45971a955446310d2e4fc85a94690aa5a6703dd`, passed these controls and both
+SDKs but all three native jobs refused the first post-termination observation.
+Safe retained-artifact diagnostics
+[40780733484](https://github.com/NoGod3524/EXReader/actions/runs/40780733484) and
+[40781522760](https://github.com/NoGod3524/EXReader/actions/runs/40781522760)
+authenticated every retained member without rebuilding SDK/native products.
+Profile/container files were clean; each process unified log matched only
+`user:raw`, `user:json`, `user:url`, `user:url-lower-escape`. For the synthetic
+ASCII username those four labels represent identical bytes, not four distinct
+leaks. No password, user:password or Authorization variant was detected in that
+first-checkpoint scan. This is not owner-callsite attribution or full-F10 proof.
+
+The failed scan manifest retained its digest/size/hits, but the original harness
+refused before archiving the raw unified log. The evidence-retention repair now
+writes complete captured stdout/stderr with private runner file modes and a
+safe hash manifest before the unchanged privacy verdict. Synthetic-sensitive
+raw bytes stay in retained Actions artifacts, never console/chat; access follows
+repository/Actions artifact access controls, not an independently configured
+private store. Original failed runs remain unchanged. New fixed-enum event
+attribution reports only sender-image category, credential role and counts;
+JSON decoding may normalize encodings, so the original streaming byte scan
+remains authoritative. An image category is not a proven production callsite.
+All existing privacy predicates and budgets are unchanged. Purposeful native
+reproduction now retains complete failed evidence; its result is recorded below.
+
+## Additive diagnostic continuation — never a replacement green
+
+Reproduction [40782857602](https://github.com/NoGod3524/EXReader/actions/runs/40782857602),
+source `af51c760bec76454b0db6547cf592ddb7338de0b`, passed all 28 controls and both
+SDK builds, but all three strict native jobs still failed at the first scan.
+Complete raw synthetic logs are now retained. Safe event analysis found only
+username matching roles, all in the `test-framework-image` category: macOS 28,
+iPhone 50, iPad 50 events. This supports instrumentation noise, not a proven
+production password leak; sender-image categories are not source callsites.
+Original strict failure artifacts and verdicts remain unchanged.
+
+An additive, explicitly marked `[privacy-continuation]` probe uses a distinct
+test class/case, generated test-file reference, native job/artifact names and
+independent diagnostic verifier. It performs the same actual account controls,
+termination/restart, authenticated sweeps and missing-credential check. A 204
+callback means all observation evidence and its strict verdict were recorded,
+**not** that privacy passed. Every strict scan result is retained, independently
+rescanned and reported per stage. Recording a failed privacy observation allows
+this new diagnostic case to attempt later operations; it does not alter or
+rerun the original strict case with filtered logs or relaxed assertions.
+
+The probe always reports `accepted: false`, `diagnostic_only: true` and
+`full_f10_accepted: false`, even if every scan were clean. Its only possible
+success is `sequence_complete`/`probe_integrity_verified`; privacy failures
+remain explicit in `failed_strict_checkpoints` and per-root encoded match
+labels. Safe image-category attribution and any password findings remain
+narrow observations, not unrestricted absence or production-callsite proof.
+The ordinary strict run remains the only route to strict slice acceptance.
+Existing hard stops are retained: for example, a direct macOS preferences hit
+still refuses before checkpoint completion, as do incomplete capture,
+unreadable/linked/special entries, mutations and failed structural/network/UI
+checks. Thus this probe can advance after a completely captured whole-root
+privacy failure, not every conceivable privacy or evidence failure.
+
+The marker selects separate jobs within the one owned workflow; unmarked runs
+retain original strict native/authentication behavior. No old test file,
+production owner, SDK, timeout or budget changes. Five Actions-only controls
+reject incomplete/nonboolean stage reports and strict-case replay, and prove
+that continuation cannot award strict acceptance. The independent verifier
+also checks generated project structures differ only in the new test reference,
+all original bytes, current-run SDK/program identity, actual case/screenshots,
+network roles, originals, snapshots and raw-log manifests. Summary upload is
+safe JSON only; original synthetic-sensitive artifacts stay on their producers.
+Continuation source review and Actions execution remain pending.
+No local build, syntax check, fixture generation, test or artifact parsing
+was performed. Source reading/writing and source-file hashing are not execution
+evidence. No Codex task, user computer, main push, PR, tag or release is used.
+
+## Real credential route, with an explicit missing feature
+
+The unchanged `HostAccountViews.swift` presents Remember / Update, but no
+dedicated Forget control. The unchanged `HostAccounts.updateCredentials` deletes
+the profile's stored credential when Remember is off, while keeping the supplied
+authorization transiently in that process. This package exercises that actual
+UI route; it does not add a Forget button, call the owner directly, replace the
+credential backend, or label uncheck-and-update as a dedicated Forget action.
+
+| Stage | Actual native operation | Required independent observation |
+|---|---|---|
+| `remember_closed` | Connect with Remember on; import one fixture EPUB; terminate | Account/original intact, no unexpected sync, clean captured private files/logs |
+| `remember_reopened` | Launch a new process and manually sync | Full 256-shard sweep authenticated with the remembered synthetic credential |
+| `session_closed` | New process; Update with a different synthetic credential and Remember off; sync; terminate | Full sweep uses only the new session credential; original unchanged |
+| `session_reopened_missing` | New process; manually sync again | Native missing-credential failure and no new server request |
+
+The new test runs separately on macOS, iPhone Simulator and iPad Simulator.
+Actual loopback TLS uses a one-run certificate trusted only on the disposable
+Actions runner/simulator; no public account/server is contacted. Credentials are
+cryptographically random synthetic canaries generated only in Actions. The
+fixture records credential *roles*, not Authorization bytes. Synthetic oracle
+inputs are deliberately retained, labeled as test inputs, separately from
+product snapshots so authentication can reconstruct every search variant.
+
+Opening Update also observes the displayed username and SecureField values.
+**An empty or masked SecureField is not evidence that a secret is absent.**
+Restart behavior, authenticated network identity, and the retained byte scans
+are separate evidence. Compact sync controls put state in their label and
+failure detail in accessibility value; the test handles both layouts without
+changing the product UI.
+
+## Streaming privacy scope
+
+At each checkpoint the app is terminated before inspection. Every regular file
+under the actual product roots is streamed, including hidden files, SQLite/WAL,
+cache, downloads and files larger than 64 MiB. macOS roots are the EXReader
+Application Support profile and this package's preferences, cache and saved
+state; absent optional roots are reported. Simulator scope is the **entire app
+data container**. Captured EXReaderHost unified logs include info/debug events.
+No extension whitelist, file-count cap, unreadable-file exemption, symlink
+following or large-file skip can produce acceptance. Special/linked entries
+and unreadable files refuse. Empty primary roots refuse.
+
+Search variants include raw username/password, user:password, Basic header,
+hex in both cases, padded/unpadded standard and URL-safe base64, ordinary and
+fully percent-escaped URL forms, UTF-16/UTF-32 endian forms, and JSON escaping.
+Overlap is the longest needle minus one, so a match spanning a chunk boundary
+is not lost. These are enumerated variants, **not a claim about every possible
+encoding, encryption, fragmentation or transformed secret**.
+
+File identity, size, mtime and ctime are checked before/after streaming; a final
+directory/file inventory detects mutations of earlier files and already-scanned
+directory prefixes while later files or roots are read. Actual archive members
+are then streamed and compared with scan digests; all roots are rescanned before
+the checkpoint is published. Copied macOS preferences are checked against the
+actual source again. This requires quiescent product output, not an adversarial
+filesystem that can perfectly forge/change metadata between observations.
+The complete optional macOS-root namespace is inventoried with `lstat` before
+classification and rechecked at publication: a previously absent preference,
+cache or saved-state root appearing late refuses, as does a dangling symlink.
+
+Actions-only rejection fixtures cover every configured encoded variant across
+chunk boundaries, clean and leaking files over 64 MiB, symlinks, unreadable and
+empty roots, in-place overwrite of an already-read prefix, earlier-file and
+earlier-root mutation, additions in an earlier directory, late creation of an
+absent optional root, dangling optional roots, and canaries in file or empty
+directory names. Reports contain variant labels, not matching secret bytes. These
+scanner tests never count as product privacy acceptance.
+
+## Retained identity and independent authentication
+
+The scope guard requires the exact base as ancestor, exact checked-out source,
+and **additions only** in the owned paths. Frozen SDK, production owners, old
+tests/assertions and existing budgets remain unchanged. The existing SDK342
+builder supplies raw selector/wave3/page-theme products. A new adapter changes
+only generated SDK-version guards, generated bundle/configuration, and selects
+the new test target. All production Swift source bytes are recorded unchanged.
+The existing review fixture import control supplies the EPUB; this does not
+award production-import UI coverage or replace the credential controls.
+
+Actions retains the original xcresult, stage screenshots, typed-input oracle,
+request-role log, all private snapshots, source EPUB, actual program ZIP,
+packaged SDK runtime, link map, SDK identity and original/derived generators.
+The aggregate job authenticates same-source/run/attempt producer jobs and API
+artifact ID/digest/size/expiry, checks every member's digest, rereads the original
+native case and attachments, rescans every snapshot byte independently, verifies
+the actual account and original EPUB BLOB, and repeats actual program/provider
+inspection. Older greens or synthetic scanner fixtures cannot satisfy it.
+Before extraction, the entire ZIP namespace rejects normalized NFC/case-folded
+parent aliases, duplicate names and file/directory collisions, along with links,
+special entries and traversal. Archive resource limits are 8 GiB per member and
+32 GiB total uncompressed bytes: exceeding a limit fails the whole evidence
+gate, never truncates or skips a file. These extraction safeguards are distinct
+from the streaming scanner, which has no per-file size exclusion. Actions-only
+controls cover case/Unicode aliases, parent aliases, file/directory collisions,
+ordinary implicit/explicit directories and both resource-limit refusals.
+
+The workflow has one proposed feature-branch push trigger, no dispatch and no
+built-in retry. New job limits: contract 10, SDK 90, native 90, authentication 30
+minutes; the new native case uses default/max 240/360 seconds. Existing suite
+limits are untouched. All builds/tests/fixtures/artifact work is Actions-only.
+
+## Remaining gaps and stopping boundary
+
+* **Dedicated Forget UI is absent and untested; full F10 stays false.** A future
+  owner/UI change needs separate scope/authorization.
+* Physical-device Keychain/access-group behavior is not established by a macOS
+  host and simulators. Keychain bytes are not dumped/scanned: remembered storage
+  there is expected, and deletion is inferred from the real restart/network
+  behavior, not direct database inspection or forensic erasure.
+* Logs means the retained readable unified-log export and logs inside the named
+  product roots. Private/redacted OS logging payloads, arbitrary system logs,
+  process memory, crash/core dumps outside those roots, and separately isolated
+  product stdout/stderr are not proven secret-free. XCTest activity logs and the
+  synthetic input file intentionally contain test inputs and are not mislabeled
+  as product-output absence evidence.
+* Simulator TLS trust, macOS Keychain prompts, native field values, real sweep
+  completion and emitted log coverage remain runtime questions. A failure must
+  stay failed/blocked; do not loosen assertions, skip bytes or change an owner.
+* Scanner/archive controls and the diagnostic-only pinned setup-artifact check
+  passed in Actions. No real credential UI case or full original-native-artifact
+  authentication has passed; there is no product acceptance to grant.
+
+## 2026-10-29: retained failure diagnosis and finite UI-state reproduction
+
+The additive continuation at `0533fadf8d5cc41959a7ae81ef1dbd294c7d096e`,
+run `40794326091`, failed all three native sequences after the first checkpoint.
+Its 33 controls, both current-source SDK builds and flags regressions passed.
+Original strict failures and complete synthetic evidence remain preserved.
+
+Four bounded Actions-only diagnostic runs inspected the same pinned original
+uploads without rebuilding SDK/native jobs: `40801553322` (37 controls),
+`40802297629` (39), `40803228570` (41), `40804595108` (43), all successful.
+The first checkpoint completed on all three and callbacks did not fail. macOS
+then performed 272 remembered-role authenticated requests after actual restart,
+including all 256 revision shards. iPhone/iPad recorded no later requests; that
+alone does not prove credential failure. All three native xcresults contain
+execution-time-allowance-exceeded signatures. Subsequent sync-state polling
+lasted macOS 73.41–253.42s, iPhone 155.28–309.62s, iPad 134.49–289.39s.
+
+Each exported result has one first-stage PNG, one text attachment and 15 opaque
+extension attachments. The text contains no literal UTF8 status tokens, but
+UTF16/escaped/opaque data and image interpretation were not covered; missing
+actual displayed-state evidence is not a claim that no error was displayed.
+No production/password defect or scanner bottleneck has been inferred.
+
+The next purposeful continuation reproduction adds finite codes for the actual
+already-queried accessibility snapshot label/value, value type, credential-missing
+indicator, phase and monotonic elapsed time. Unknown text becomes `other`; no raw
+label/value, username, password, framework error or root URL is printed. Changes
+and five-second heartbeats are emitted, without extra snapshot requests. The
+original label-return predicate, controls, case sequence, 180-second sync wait,
+90-second checkpoint wait, native/global job budgets and full all-file privacy
+scans remain unchanged. An Actions-only source contract removes only the
+observation wrapper and checks byte equality with the original continuation UI.
+The independent authenticator recomputes these finite records from the retained
+native log. Four new controls precede any current-source SDK/native work.
+
+This instrumentation is diagnostic only. It cannot convert username log noise
+into strict acceptance, prove secret absence from a masked field, validate a
+production owner callsite, or grant full F10. No dedicated Forget UI exists.
+
+## Actual UI-state reproduction and bounded next repair (2026-10-29)
+
+Run [40810434512](https://github.com/NoGod3524/EXReader/actions/runs/40810434512),
+attempt1, source `a703af3e7b7394d337b522fbbf2fc0aafe1de0e5`: all47 controls and
+both SDK builds passed. All three native continuations and independent aggregate
+failed; strict remember_closed remained false, sequence/full-F10 remained false.
+Original username/test-framework-image observations remained28/50/50 groups.
+
+The same-snapshot finite observation now establishes a macOS harness mismatch:
+label was empty, value running57.637s then finished59.139s and through237.164s;
+the original label-only predicate missed the completed state. iPhone instead
+reported label failed121.596–300.770s; iPad failed143.179–287.595s, both with absent
+value. Their separate expanded-view detail text was not part of that snapshot.
+False missing-credential flags therefore do not classify the simulator failures.
+
+Retained native uploads, all tied to this exact source/run/attempt:
+
+| Platform | Artifact ID | ZIP bytes | SHA256 |
+|---|---:|---:|---|
+| macOS |12870153932|114145694|9e6a8f7150662bb1da325b32bf49dbbeaf7157b60a94555e5cfee72a67ff9eac|
+| iPhone |12870921660|94991384|64a8b9a791ba19c8f0804b9469bdbe43c98bd9120bfc922177aa4ebabea5db88|
+| iPad |12871070896|93351932|353b8cc257a5b40755d06f831a2d911cd952df990d80d39ae544035d5013efc5|
+
+Proposed source-only four-file repair changes the continuation accessor on macOS
+only: a nonempty label remains authoritative even against a contradictory value;
+an empty label permits only an exact whitelisted state string in value. iOS keeps
+label-only interpretation. Eight native control assertions cover exact states,
+contradictory label/value, message/unknown/nonstring refusals and unchanged iOS.
+The original strict UI source stays untouched. The byte-equivalence control
+allows exactly this accessor and two diagnostic calls; every original assertion,
+expected state, UI action/key, restart, wait and global budget remains identical.
+
+Finite additional observations query six fixed save-status strings only while
+the existing initial Update sheet is open, and query the fixed re-enter-credentials
+phrase once per failed sync phase. Output contains only status enums, booleans,
+phase and bounded elapsed time. These are accessibility existence observations,
+not raw strings, visible-pixel proof, secret absence, native OSStatus or acceptance.
+Missing observations remain distinct from an observed false/absent result. Two
+new Actions controls cover finite metadata, encoded/truncated operands, duplicate,
+misordered and unbound detail records (proposed total49 controls).
+
+Simulator signing/entitlement mismatch is only a source-derived hypothesis:
+the base host generator disables iOS signing, whereas the standalone credentials
+probe declares keychain entitlements. No signing, product owner or SDK change is
+made in this repair; no claim that missing entitlement is the observed cause.
+This source proposal does not authorize publication or a further native run.
+
+## Observed save failures and retained-member refusal (2026-10-29)
+
+Run40813760224/1 at a16304c989aa9c1b94ce6e9bb6644a075b3e326b passed49
+controls and both SDK builds. macOS reported initial saved and completed real
+remembered and session syncs (73.891s/144.054s), reaching three checkpoints;
+the later fourth stage failed. iPhone/iPad reported initial save-incomplete,
+then after restart the fixed missing-credential text existed. Exact Keychain
+OSStatus remains unknown; no simulator signing or product patch was made.
+Strict username/framework findings remain failures and fullF10 stays false.
+
+Retained macOS diagnostic runs40816526995,40817724459,40818904202 did not
+rebuild SDK/native jobs. Their controls passed51/54/57 respectively, but original
+member authentication refused. The final diagnostic checked1761 members:
+only checkpoints.json mismatched, with unequal size AND SHA256; all1760 other
+members matched. Original artifact12871319916 (169232203B,
+sha25619cc7e4b40b3ba01a6c10bf0c143bc911e2772927d6e9742a1d973dbc5e7f3c9)
+is preserved, not relabelled valid. No native failure text is parsed past this
+gate. Safe classification artifact12873791914 (485B,
+sha25615cd21f013e5d4e4aeecdfb61efc5439839b36c433fb273063224169d0b4b9ee)
+records the bounded result without arbitrary member names or bytes.
+
+## Continuation-only drain and evidence-seal repair
+
+Source tracing found daemon fixture handlers could outlive server shutdown and
+write checkpoints during final manifest construction. This is an actual source
+ownership gap consistent with the observed mismatch, not a proven event trace.
+The independently reviewed six-path design was expressly approved for
+implementation/review/publication/verification on2026-10-29 at04:53:43UTC.
+
+Only continuation opts into whole-request-thread admission/counting, bounded
+TLS handshakes and a stopped-serving plus zero-active drain. Closing admission
+rejects late queued handlers. All producer operations and teardown/cleanup
+share a4800-second monotonic ceiling beginning before native build/launch;
+drain also has a90-second cap. This tightens the shared outer bound, never
+increases existing240/360 XCTest,180-second sync or90-second checkpoint budgets.
+Certificate and simulator cleanup are bounded and cannot claim success when
+timed out or skipped. Strict callers retain the original fixture defaults.
+
+After successful drain/cleanup, requests/failures/checkpoints are snapshotted
+without callback writers. Complete regular-file inventories and streamed hashes
+are rechecked twice, including large files, earlier prefixes and directory
+identity. A normal result is published atomically only after sealing; independent
+authentication still rereads every artifact member and requires the exact
+lifecycle receipt. Any later external change continues to fail that hash gate.
+
+On failed drain/cleanup/seal there is no normal result/files manifest: only a
+fixed unsealed refusal is written, and process exit terminates daemon writers
+before Actions uploads raw failure evidence. No timeout becomes success, no old
+manifest is regenerated and no known-mutable-file exclusion is introduced.
+Eleven additive Actions-only controls (proposed total68) cover delayed/disconnected
+callbacks, timeout subprocess exit, late admission/underflow, blocked TLS and
+cleanup, lingering descendant output, FIFO substitution, large-file/namespace
+mutation, atomic failure and forged receipts. Native/log captures remain complete
+(no16MiB truncation); frozen inspectors execute in bounded owned helper processes,
+without changing the strict helpers or printing arbitrary errors.
+Final source review cleared the six-file implementation. Its single native
+run40822937279/1 at256ec70d1d30d80d1e2069959d5c6409bcc76779 passed all68
+controls and both SDK jobs, but all three native sequences and aggregate failed.
+All producers reported sealed evidence, drained/stopped handlers and completed
+required cleanup. No old artifact was repaired or relabeled valid.
+
+The separately approved diagnostic-only run40825933387/1 at
+cc0cc5021badfb73d29bb03d57da1871b8c79cd8 passed69 controls and skipped all
+SDK/native work. It independently checked all1776 manifested members of the
+current original macOS artifact with zero mismatches and validated its lifecycle
+receipt. Native failure localizes to the checkpoint callback URL request timeout,
+Swift209/210, with three checkpoints complete and both authenticated256-shard
+sweeps present. It is not evidence of a failed final credential predicate.
+The90-second checkpoint and240/360 XCTest limits remain unchanged.
+
+## Comparative simulator entitlement admission — authored, unrun
+
+Owner separately approved the seven-path implementation/review/publication/
+verification scope at2026-10-29T05:51:43Z. This is an isolated Actions test host,
+not a production credential implementation or user-device signing change.
+Current iPhone/iPad evidence remains initial save-incomplete followed by missing
+credentials after a real restart; exact OSStatus and historical cause are unknown.
+
+Only the generated iOS application target gains a linker-created
+__TEXT,__entitlements section containing the exact existing isolated test bundle,
+its single identical keychain group and boolean get-task-allow. Full generated
+project dictionaries are compared before build and independently after upload;
+the only differences permitted are the existing Swift test reference and this
+one iOS application linker token. Other targets, signing settings, SDK/product
+sources, strict UI and all budgets remain unchanged.
+
+After build-for-testing, capture the pre-sign app, then plain ad-hoc sign only
+that host and capture it again before test-without-building. No --deep, profile,
+developer account, foreign group or subsequent rebuild/re-sign. Thin64-bit
+simulator Mach-O section bounds and exact XML dictionary are checked directly;
+unsupported/fat/malformed input refuses. Actual codesign display and strict
+verification are retained without printing arbitrary output. Pre-sign failed
+verification is explicitly observed, never treated as required native success.
+
+On native failure as well as success, inspect and archive the actual installed
+app before bounded shutdown/erase. Missing installed evidence refuses; it is
+never inferred from built bytes. Before/post/installed SDK framework bytes and
+Info identities must match, and installed executable must equal the signed
+one. Packaged libexreader bytes are also compared to the installed SDK input.
+The independent verifier re-extracts all three original app archives, rehashes
+all members, reads the real entitlement section and reruns signature checks.
+
+All added producer commands use the existing owned process-group helper and
+remaining4800-second deadline; no new callback-drain/cleanup/seal exemption.
+Six additional authored controls (proposed total75) cover duplicate/foreign
+entitlements, section/platform/bounds substitution, exact project deltas,
+zero-exit signature spoofing, built/installed byte substitution and actual
+blocked inspection with retained output/unsealed refusal. No local execution.
+At its first source freeze this seven-file implementation was unrun; final
+review and Actions results follow below. A changed save/restart outcome is a bounded comparative
+result, not proof of the old OSStatus or strict/full-F10 acceptance.
+
+## Current comparative results and bounded macOS detail accessor
+
+Final source review and exact owner publication approval completed. Run
+40828331893/1 at45a8f94b29e4e36467ffc4b8004f32c6d7fa2d63 passed75 controls
+and both SDKs; all three native jobs and aggregate remained failed. Both iOS
+hosts now reported saved and completed remembered sync after real process
+restart. Both producer built/installed comparison receipts and all three sealed
+lifecycle receipts passed. iPad retained all four checkpoints; iPhone two and
+macOS three. This changed comparative outcome does not prove the old OSStatus.
+
+Retained-only diagnostic40831408314/1 atc004d498fa5fb5523e0eca63b3877686510a93ba
+passed77 controls. MacOS1776 and iPhone1134 manifested files matched exactly.
+MacOS native failure was the fixed session-only credential-message assertion
+at Swift262, despite a separate finite query observing the fixed detail text.
+The actual state had already failed as expected after restart. The assertion
+queried static-text labels or the sync-state value, while the existing detail
+observation also queried the separate static-text value. This is a test lookup
+discrepancy, not evidence that credentials survived or a product patch request.
+iPhone independent admission refused an extra app-archive namespace; iPad was
+not reached. No namespace exception or independent signing credit is granted.
+
+This source-only three-path repair adds only a macOS empty-label fallback for
+the SAME fixed missing-credential phrase. Nonempty labels remain authoritative,
+contradictory values/unknown values/nonstrings refuse, and iOS retains its label-
+only predicate. The existing30-second assertion, expected phrase, state check,
+all UI actions/restarts and60/90/240/360/4800 budgets remain unchanged. The
+original strict UI is untouched. The macOS query excludes nonempty contradictory
+labels before firstMatch, so they cannot shadow a later original label match.
+Ten native positive/negative assertions (including that query-order control) and
+one additive Actions source-equivalence control cover this exact exception;
+reconstruction still byte-matches the frozen original outside the two bounded
+accessor corrections and finite observation wrapper.
+
+The separate retained-only successor40833424008/1 at7727657dcae63b036b58bac65d5b53a3391dd24e
+passed80 controls and diagnosed all three platforms. All original manifested
+members1776/1134/1156 matched. Both iOS xcresults report XCTest test timeout,
+both credential roles completed256-shard sweeps, and both installed archives
+contain one extra metadata-named file. No namespace waiver was granted.
+
+Classification-only run40836549748/1 at85893a685af48c233dbeea739858a50d874b7166
+passed88 controls. Both extras are232-byte AppleDouble-v2/copyfile-ATTR structures
+paired to the actual executable: zero32-byte FinderInfo, empty resource fork,
+two nonzero16-byte xattrs with opaque names/content (only hashes and finite
+categories output). All18/19/20 app+metadata files were completely scanned and
+replayed, no synthetic variant hits, and exact app manifests matched. This is
+not a semantic harmlessness/signature proof. The unchanged namespace guard
+still refuses both iOS archives; all native/strict failures remain preserved.
+
+## Authorized combined accessor and checkpoint timing experiment
+
+Owner approved the exact seven-path plan on2026-10-29 at07:39:14 UTC:
+the reviewed macOS accessor plus continuation runner/contract/contract tests,
+independent continuation authenticator and this status document. Implementation
+is source-only at this point, with final exact-byte review and Actions pending.
+No SDK/workflow/production/strict path changed. The AppleDouble classifier and
+fatal admission namespace predicate remain unchanged by this timing packet.
+
+At most four original ordered callback records measure fixed phase boundaries
+from the existing lifecycle's process-local monotonic origin. Entry/exit and
+completed/failed/open phases are distinct; unique checkpoint identities bind
+to the original profile/archive/network/strict-verdict fields without printing
+them. Counts come from already verified scan records, not additional walks.
+Measurement adds no early acknowledgement, asynchronous scanner, timeout,
+compression change, cached scan, shorter log window, or root/byte exclusion.
+Complete callback return does not prove HTTP204 was sent or received.
+
+Timing is exported only after the unchanged serving-stop/whole-handler drain
+fence; a timing failure records finite unavailable status without overwriting
+the original failure or discarding raw evidence. The aggregate independently
+replays each current-attempt original's exact inventory/hashes, sealed receipt,
+timing schema/checkpoint identities and original scan counts, including on a
+native timeout. That diagnostic pass grants no native/signature/F10 credit.
+The original all-producers-success gate and every complete native/program/
+admission/privacy predicate remain mandatory for full continuation integrity.
+Independent timing replay proves byte/structure consistency, not an external
+clock measurement. Original uploads remain retained; downloaded diagnostic
+copies are temporary, with only safe finite timing summaries re-exported.
+
+Eight new Actions timing controls and the one B source control bring the
+authored Python total to97; none is claimed passed before Actions. Finalized
+open callbacks refuse after drain; aggregate controls distinguish a failed
+native run, a later full-validator refusal and failed control/SDK prerequisites.
+The old
+checkpoint body/full validator are reconstructed and byte-hash checked by
+additive controls. One authorized automatic native run, zero automatic repair/
+rerun rounds. Configured ceiling10 Ubuntu+480 macOS runner-minutes (not wall
+time/billing), all original60/90/240/360/4800 budgets unchanged. Dedicated
+Forget UI and strict/full-F10 acceptance remain absent.
+
+## Terminal timing evidence and retained failure localization
+
+The timing packet was published at `abd16571fda41b5bc936fcbcfb9a125554992c2e`.
+[Run40839064448](https://github.com/NoGod3524/EXReader/actions/runs/40839064448)
+passed97 controls and both SDK jobs; all three native jobs failed. Independent
+Actions replay verified all1815/1151/1056 original members plus sealed receipts,
+timing schemas, checkpoint identities, scan counts and producer summaries.
+The original all-producer-success gate still refused full validation.
+
+macOS callbacks completed41.454/53.725/89.239seconds; iPhone35.228/37.319/137.912.
+The third macOS callback spent28.124s in capture/retention and36.227s in
+attribution, with652637635 log bytes. iPhone's third spent82.439s and31.956s,
+with352600985 bytes. Capture/retention includes post-command reads/writes/hashes;
+82.439s is not proof the log command exceeded its60-second cap. These timings
+are bound producer monotonic values, not an external clock or HTTP204 receipt.
+iPad had zero callbacks/state queries, not a fast or successful sample.
+
+Retained-only source `25e0e3932482e680e19788504bdc0d7a168a5184`,
+[run40844019214](https://github.com/NoGod3524/EXReader/actions/runs/40844019214),
+passed98 controls and skipped SDK/native work. All three original inventories
+again matched. macOS/iPhone native logs identify Swift245's checkpoint URLSession
+XCTAssertNil with the fixed request-timeout signature. macOS and iPad xcresults
+show execution-timeout issues; iPad has no source position, one launch3.91s,
+zero requests and an absent/null first-checkpoint boundary. Its stuck operation
+and cause are unknown. iPhone diagnosis later refuses fixture-failure-shape;
+iPad retains fatal installed extra-namespace refusal. No timeout, namespace,
+privacy, signing or F10 acceptance was waived.
+
+## Authorized retained-only capture/attribution comparison
+
+Owner approved seven paths on2026-10-29 at09:02:25 UTC: continuation lifecycle,
+new continuation_log_capture.py, continuation runner/contract controls, existing
+retained inspector/workflow and this document. Implementation is not a measured
+speedup or native repair. Independent final-byte review precedes publication.
+The new `[privacy-capture-profile]` mode rejects mixed markers, requires controls,
+and skips every SDK/native/authentication/old diagnostic job. Exactly one run:
+10Ubuntu controls+20macOS profile=30 configured runner-minutes;18-minute internal
+profile deadline enforced by an owned parent timer as well as child/loop limits,
+zero automatic repair/rerun. The exact session writer preserves finite phase/
+sample/refusal breadcrumbs on a stalled parent or owned-child timeout, disarms/
+restores the timer before fixed-summary finalization, and grants no cleanup seal
+after interruption. A later native run needs separate
+permission; this workflow never starts it automatically.
+
+The candidate writes complete stdout/stderr directly into fresh0700/0600 owned
+files, retaining both partial streams on failure. No valid manifest is published
+before writer termination and descriptor/path identity checks; timeout or
+descendant ambiguity is unsealed. No size skip, shortened log window, missing
+root, deferred/background scan, early acknowledgement or budget increase.
+Original strict helpers and authenticator remain byte-unchanged. The existing
+full first/second scans, archive replay, optional-root verification, lifecycle
+drain/seal and all strict privacy failures remain mandatory.
+
+Attribution keeps the original JSON decoder/category semantics and deduplicates
+only equal byte needles with complete role unions. Empty/cross-role/overlapping
+needles and original malformed/Unicode exception behavior have authored parity
+controls. The independent native authenticator still uses the ORIGINAL matcher.
+New controls reconstruct the original lifecycle/checkpoint/workflow bytes and
+pin unchanged imports/authenticator; no assertion or time budget is removed.
+
+The profile authenticates the exact three native originals from40839064448/1,
+all members and sealed receipts before measuring. It uses all six complete
+macOS/iPhone stream pairs; iPad absence is not a zero-time sample. Historical
+capture+retain and imports are byte-pinned toabd16571, not the edited default
+relabeled as reference. Frozen synthetic-oracle identity/shape is validated
+before generating every original encoding variant. Each capture/attribution
+sample is measured in AB thenBA order, with fresh outputs, exact byte/manifest/
+scan/reference-role equality and all samples retained in a finite summary.
+Complete original bytes are rechecked afterwards. Only safe summary JSON is
+uploaded; original raw logs remain pinned and are not re-exported.
+
+Performance eligibility requires both-order aggregate capture+attribution time
+at most80% of reference and no sample paired-mean regression above10%, in addition
+to all parity checks. Replay measures retained-byte transport, not Apple log
+generation or HTTP latency; cache/order effects remain explicit. No speedup is
+claimed before Actions, no next native run is authorized by a green profile,
+and the iPad pre-callback gap remains separate. Strict/F10 acceptance stays false.
+
+## Completed capture profile and authorized literal-search successor
+
+The prior packet was published at `65eacff875176565dc68931d354b25bed9f56acb`.
+[Run40851993660](https://github.com/NoGod3524/EXReader/actions/runs/40851993660)
+passed all111 controls and completed all six full stream pairs and48 paired
+measurements with exact byte/manifest/scan/reference-role parity. SDK/native
+work was skipped. The unchanged20% performance gate failed: AB improved10.297%
+(108.680739830 to97.489731835seconds), BA8.437% (107.107708247 to98.071374331).
+No sample regressed over10%; macOS remember_reopened regressed2.978%. The safe
+1712-byte artifact12887363117 has SHA256
+`3ab8e4f72d377345d0c8069231db91bcc034a45de2110d9c20779d359b8377db`.
+The one-run/zero-repair allowance is consumed; the failed criterion is retained.
+
+Owner approved the next exact three paths on2026-10-29 at10:09:27 UTC:
+continuation_log_capture.py, test_continuation_contract.py and this document.
+Independent actual-source review precedes Git tree/commit/feature publication.
+The unchanged profile-only topology permits ONE new30-minute configured run,
+zero repair/rerun and no native work. All111 existing controls remain; eight
+additional Actions-only controls are authored (119 total, not yet executed).
+
+Only the candidate matcher changes: escaped literal-byte alternatives sorted
+longest-first, complete containment role closure, empty-needle roles preserved,
+and overlap search resumed at the prior start+1. Original JSON decoding,
+exception behavior and sender categories remain the semantic reference.
+Per-invocation preparation and finite path counters are charged inside every
+candidate attribution timer; each call runs in a fresh process. Reference
+fallback is explicit and cannot qualify for candidate performance, even when
+semantically equal. No pattern, message or exception operand is emitted.
+
+The original48 AB/BA measurements and20%/10% gates are unchanged. Afterwards,
+six separate calls report bounded decode/preparation/complete-event-loop/total
+durations, tied to the six original stream hashes; missing phases are null.
+These observations never replace eligibility samples. Their literal path and
+counts must agree with both paired calls, and all calls remain under the same
+18-minute parent deadline and final original-byte replay. No extra raw artifact
+is uploaded. The independent native authenticator still uses the original
+matcher; all strict helpers, workflow, runner and lifecycle are unchanged.
+
+Attribution was about74% of the previous candidate measured work, but the old
+profile did not isolate decoding from matching. The new algorithm is an unrun
+hypothesis, not an established speedup or60-second callback fix. Retained replay
+excludes actual Apple log generation; iPad's pre-callback timeout, opaque iOS
+AppleDouble namespace, strict privacy failures and dedicated Forget UI gap
+remain unresolved. Neither this experiment nor a green performance result
+grants native/F10 acceptance or authority for a new native run.

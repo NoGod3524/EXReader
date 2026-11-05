@@ -1,0 +1,50 @@
+name: Read-only sealed native owner evidence inspection
+on:
+  push:
+    branches: [codex/reader-native-owner-evidence-auth]
+  workflow_dispatch:
+    inputs:
+      producer_run:
+        description: Original sealed producer run
+        type: string
+        default: '40245803457'
+      producer_attempt:
+        description: Original sealed producer attempt
+        type: string
+        default: '1'
+      producer_source:
+        description: Actual tested runtime source
+        type: string
+        default: '4bdf59ade3389b9a3e454511f6a30de7d0ddc112'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Inspect actual original attempt ZIPs and preserved native business assertions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRODUCER_RUN: ${{ inputs.producer_run || '40245803457' }}
+          PRODUCER_ATTEMPT: ${{ inputs.producer_attempt || '1' }}
+          PRODUCER_SOURCE: ${{ inputs.producer_source || '4bdf59ade3389b9a3e454511f6a30de7d0ddc112' }}
+        run: |
+          python -m compileall -q tests/reader_native_owner_repairs
+          python tests/reader_native_owner_repairs/inspect_sealed.py --producer-run "$PRODUCER_RUN" --producer-attempt "$PRODUCER_ATTEMPT" --producer-source "$PRODUCER_SOURCE"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-owner-sealed-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/native-owner-inspection/
+            build/windows-owner-authentication/*.json
+            build/native-owner-authentication/*.json
+          if-no-files-found: error

@@ -1,0 +1,48 @@
+cmake_minimum_required(VERSION 3.24)
+project(ReaderPublicBoundaryV1 LANGUAGES C CXX)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8)
+endif()
+find_package(EXReaderReadingCommands 0.2.0 EXACT CONFIG REQUIRED)
+find_package(EXReaderAnnotationImport 0.2.0 EXACT CONFIG REQUIRED)
+find_package(EXReaderAnnotationExport 0.2.0 EXACT CONFIG REQUIRED)
+find_package(EXReaderAnnotationView 0.2.0 EXACT CONFIG REQUIRED)
+add_executable(public-codec-v1 codec_v1.c)
+set_target_properties(public-codec-v1 PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(public-codec-v1 PRIVATE EXReaderRevisions::reader_revisions)
+add_executable(public-retained-v1 retained_v1.cpp)
+target_link_libraries(public-retained-v1 PRIVATE EXReaderReadingState::reader_reading_state EXReaderReadingCommands::reader_reading_commands)
+# Original assertions and original source files, not a rewritten behavioral test.
+add_executable(original-selector-bytes ../reader_selector_bytes/probe.cpp ../reader_selector_bytes/api.c ../reader_selector_bytes/base_api.c)
+target_link_libraries(original-selector-bytes PRIVATE EXReaderAnnotationView::reader_annotation_view
+  EXReaderReadingCommands::reader_reading_commands EXReaderReadingState::reader_reading_state
+  EXReaderProductCatalog::reader_catalog_sqlite)
+add_executable(original-c06 ../reader_next_c06/consumer/probe.cpp ../reader_next_c06/consumer/api.c)
+target_link_libraries(original-c06 PRIVATE EXReaderAnnotationExport::reader_annotation_export
+  EXReaderAnnotationImport::reader_annotation_import EXReaderReadingState::reader_reading_state
+  EXReaderProductCatalog::reader_catalog_sqlite)
+foreach(target public-codec-v1 public-retained-v1 original-selector-bytes original-c06)
+  if(MSVC)
+    if(target MATCHES "^public-")
+      target_compile_options(${target} PRIVATE /W4 /WX)
+    endif()
+    target_link_options(${target} PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/${target}.map")
+  else()
+    if(target MATCHES "^public-")
+      target_compile_options(${target} PRIVATE -Wall -Wextra -Werror)
+    endif()
+    if(APPLE)
+      target_link_options(${target} PRIVATE "-Wl,-map,${CMAKE_CURRENT_BINARY_DIR}/${target}.map")
+    else()
+      target_link_options(${target} PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/${target}.map")
+    endif()
+  endif()
+endforeach()
+
+# Evaluated imported-target locations from the actual configured installed set.
+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/bound-targets-$<CONFIG>.txt" CONTENT
+"EXReaderRevisions::reader_revisions\t$<TARGET_FILE:EXReaderRevisions::reader_revisions>\nEXReaderReadingState::reader_reading_state_codec\t$<TARGET_FILE:EXReaderReadingState::reader_reading_state_codec>\nEXReaderReadingCommands::reader_reading_commands\t$<TARGET_FILE:EXReaderReadingCommands::reader_reading_commands>\nEXReaderAnnotationImport::reader_annotation_import\t$<TARGET_FILE:EXReaderAnnotationImport::reader_annotation_import>\nEXReaderAnnotationExport::reader_annotation_export\t$<TARGET_FILE:EXReaderAnnotationExport::reader_annotation_export>\n")

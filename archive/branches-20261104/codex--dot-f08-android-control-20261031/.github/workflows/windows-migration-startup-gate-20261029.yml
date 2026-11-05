@@ -1,0 +1,95 @@
+name: Windows public-source actual product migration startup gate
+on:
+  push:
+    branches: [codex/windows-public-migration-resume-20261029, codex/public-product-resume-20261029]
+    paths: ['.github/workflows/windows-migration-startup-gate-20261029.yml']
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  native:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      PYTHONUTF8: '1'
+      BASE_SOURCE: bd28d4946f17a184dd3cd47a584cf49fce34e973
+      ORIGINAL_GATE_SOURCE: 2fff53ff6734ec2b495c841e6669aef562e170d7
+      OLD_SDK_REF: c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Exact host gate additions and unchanged SDK and prior tests
+        run: |
+          set -euo pipefail
+          mkdir -p build/startup-gate-logs
+          python - <<'PY'
+          import os,subprocess
+          current=subprocess.check_output(['git','diff','--name-status',os.environ['BASE_SOURCE'],'HEAD'],text=True,encoding='utf-8').splitlines()
+          expected={status+chr(9)+path for status,path in [
+            ('M','examples/reader.c'),('M','apps/reader/desktop/windows_catalog.inc'),
+            ('A','apps/reader/desktop/windows_migration_gate.h'),
+            ('A','tests/windows_migration_startup/check.py'),
+            ('A','.github/workflows/windows-migration-startup-gate-20261029.yml'),
+            ('A','docs/WINDOWS-MIGRATION-STARTUP-GATE-20261029.md'),
+            ('M','tools/build_apple_product.py'),
+            ('M','.github/workflows/apple-sdk342-full-handoff-20261029.yml'),
+            ('M','tests/reader_team24_apple/ui/FeaturesUITests.swift'),
+            ('A','docs/reader-total-progress/public-product-resume-20261029.md')]}
+          assert set(current)==expected,current
+          subprocess.run(['git','diff','--exit-code',os.environ['BASE_SOURCE'],'HEAD','--','src','include','cmake','CMakeLists.txt'],check=True)
+          subprocess.run(['git','diff','--exit-code',os.environ['ORIGINAL_GATE_SOURCE'],'HEAD','--',
+            'examples/reader.c','apps/reader/desktop/windows_catalog.inc',
+            'apps/reader/desktop/windows_migration_gate.h','tests/windows_migration_startup/check.py'],check=True)
+          source=open('examples/reader.c',encoding='utf-8').read()
+          startup=source[source.index('int WINAPI WinMain('):]
+          assert startup.index('reader_windows_migration_startup_allowed(')<startup.index('exr_library_open(path,')
+          print('Exact changed paths, source SDK and pre-open host gate verified')
+          PY
+      - name: Build and install actual same-source SDK 3.42
+        run: |
+          set -euo pipefail
+          cmake --preset reading-library -B build/startup-sdk-build -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/build/startup-sdk" 2>&1 | tee build/startup-gate-logs/sdk-configure.txt
+          cmake --build build/startup-sdk-build --parallel 4 2>&1 | tee build/startup-gate-logs/sdk-build.txt
+          cmake --install build/startup-sdk-build 2>&1 | tee build/startup-gate-logs/sdk-install.txt
+      - name: Build and install independent public OPDSHash owner
+        run: |
+          set -euo pipefail
+          cmake -S extras/opds -B build/startup-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/build/startup-hash" 2>&1 | tee build/startup-gate-logs/hash-configure.txt
+          cmake --build build/startup-hash-build --parallel 4 2>&1 | tee build/startup-gate-logs/hash-build.txt
+          cmake --install build/startup-hash-build 2>&1 | tee build/startup-gate-logs/hash-install.txt
+      - name: Build actual product host with the gate
+        run: |
+          set -euo pipefail
+          HASH_PREFIX=$(cygpath -m "$GITHUB_WORKSPACE/build/startup-hash")
+          cmake -S apps/reader/desktop -B build/startup-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$GITHUB_WORKSPACE/build/startup-sdk" -DEXR_SDK_VERSION=3.42.0 -DREADER_ORIGINAL_HASH_PREFIX:PATH="$HASH_PREFIX" 2>&1 | tee build/startup-gate-logs/host-configure.txt
+          cmake --build build/startup-host --target EXReaderProduct --parallel 4 2>&1 | tee build/startup-gate-logs/host-build.txt
+      - name: Actual SDK 3.40 original schema6 fixture producer
+        run: |
+          set -euo pipefail
+          mkdir -p build/startup-old-source
+          git archive "$OLD_SDK_REF" | tar -xf - -C build/startup-old-source
+          cmake -S build/startup-old-source -B build/startup-old-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/startup-gate-logs/old-configure.txt
+          cmake --build build/startup-old-sdk --parallel 4 2>&1 | tee build/startup-gate-logs/old-build.txt
+          cmake --install build/startup-old-sdk --prefix "$GITHUB_WORKSPACE/build/startup-old-stage"
+          cmake -S build/startup-old-source/extras/migration -B build/startup-old-tool -G Ninja -DEXR_SDK="$GITHUB_WORKSPACE/build/startup-old-stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/startup-old-tool --target exreader-legacy-migrate --parallel 4
+      - name: Actual product refusal, normal startup and ready native dialog controls
+        run: |
+          set -euo pipefail
+          python tests/reader_native_owner_repairs/display.py
+          python tests/windows_migration_startup/check.py --host build/startup-host/EXReaderProduct.exe --old-tool build/startup-old-tool/exreader-legacy-migrate.exe --font tests/fixtures/fonts/primary.ttf --output build/startup-gate-evidence 2>&1 | tee build/startup-gate-logs/native.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-migration-startup-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/startup-gate-logs/
+            build/startup-gate-evidence/
+            build/startup-host/EXReaderProduct.exe
+            build/startup-host/windows-host.map
+            build/native-owner-preflight/display.json
+          if-no-files-found: error

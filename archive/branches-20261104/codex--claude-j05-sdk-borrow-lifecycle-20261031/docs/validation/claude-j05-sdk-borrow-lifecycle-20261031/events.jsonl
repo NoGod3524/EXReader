@@ -1,0 +1,105 @@
+{"sdk_version":"3.42.0","expected":"3.42.0","text_bytes":399937}
+{"seq":1,"scenario":"no_borrow_close","op":"open+import","status":0,"db_fds":1,"note":"library open, original stored"}
+{"seq":2,"scenario":"no_borrow_close","check":"db_open","pass":true,"db_fds":1}
+{"seq":3,"scenario":"no_borrow_close","check":"db_closed_immediately","pass":true,"db_fds":0}
+{"seq":4,"scenario":"release_order_012","op":"open+import","status":0,"db_fds":1,"note":"library open, original stored"}
+{"seq":5,"scenario":"release_order_012","check":"pagers_and_source_created","pass":true,"db_fds":1}
+{"seq":6,"scenario":"release_order_012","check":"pager_reads_before_close","pass":true,"db_fds":1}
+{"seq":7,"scenario":"release_order_012","check":"db_open_before_close","pass":true,"db_fds":1}
+{"seq":8,"scenario":"release_order_012","op":"library_close","status":0,"db_fds":1,"note":"close requested with 3 live borrows"}
+{"seq":9,"scenario":"release_order_012","check":"db_still_open_after_close_request","pass":true,"db_fds":1}
+{"seq":10,"scenario":"release_order_012","check":"borrowers_still_function","pass":true,"db_fds":1}
+{"seq":11,"scenario":"release_order_012","op":"free_pager","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":12,"scenario":"release_order_012","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":13,"scenario":"release_order_012","op":"free_pager","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":14,"scenario":"release_order_012","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":15,"scenario":"release_order_012","op":"release_source","status":0,"db_fds":0,"note":"last borrow"}
+{"seq":16,"scenario":"release_order_012","check":"db_closed_after_last_release","pass":true,"db_fds":0}
+{"seq":17,"scenario":"release_order_021","op":"open+import","status":0,"db_fds":1,"note":"library open, original stored"}
+{"seq":18,"scenario":"release_order_021","check":"pagers_and_source_created","pass":true,"db_fds":1}
+{"seq":19,"scenario":"release_order_021","check":"pager_reads_before_close","pass":true,"db_fds":1}
+{"seq":20,"scenario":"release_order_021","check":"db_open_before_close","pass":true,"db_fds":1}
+{"seq":21,"scenario":"release_order_021","op":"library_close","status":0,"db_fds":1,"note":"close requested with 3 live borrows"}
+{"seq":22,"scenario":"release_order_021","check":"db_still_open_after_close_request","pass":true,"db_fds":1}
+{"seq":23,"scenario":"release_order_021","check":"borrowers_still_function","pass":true,"db_fds":1}
+{"seq":24,"scenario":"release_order_021","op":"free_pager","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":25,"scenario":"release_order_021","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":26,"scenario":"release_order_021","op":"release_source","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":27,"scenario":"release_order_021","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":28,"scenario":"release_order_021","op":"free_pager","status":0,"db_fds":0,"note":"last borrow"}
+{"seq":29,"scenario":"release_order_021","check":"db_closed_after_last_release","pass":true,"db_fds":0}
+{"seq":30,"scenario":"release_order_102","op":"open+import","status":0,"db_fds":1,"note":"library open, original stored"}
+{"seq":31,"scenario":"release_order_102","check":"pagers_and_source_created","pass":true,"db_fds":1}
+{"seq":32,"scenario":"release_order_102","check":"pager_reads_before_close","pass":true,"db_fds":1}
+{"seq":33,"scenario":"release_order_102","check":"db_open_before_close","pass":true,"db_fds":1}
+{"seq":34,"scenario":"release_order_102","op":"library_close","status":0,"db_fds":1,"note":"close requested with 3 live borrows"}
+{"seq":35,"scenario":"release_order_102","check":"db_still_open_after_close_request","pass":true,"db_fds":1}
+{"seq":36,"scenario":"release_order_102","check":"borrowers_still_function","pass":true,"db_fds":1}
+{"seq":37,"scenario":"release_order_102","op":"free_pager","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":38,"scenario":"release_order_102","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":39,"scenario":"release_order_102","op":"free_pager","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":40,"scenario":"release_order_102","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":41,"scenario":"release_order_102","op":"release_source","status":0,"db_fds":0,"note":"last borrow"}
+{"seq":42,"scenario":"release_order_102","check":"db_closed_after_last_release","pass":true,"db_fds":0}
+{"seq":43,"scenario":"release_order_120","op":"open+import","status":0,"db_fds":1,"note":"library open, original stored"}
+{"seq":44,"scenario":"release_order_120","check":"pagers_and_source_created","pass":true,"db_fds":1}
+{"seq":45,"scenario":"release_order_120","check":"pager_reads_before_close","pass":true,"db_fds":1}
+{"seq":46,"scenario":"release_order_120","check":"db_open_before_close","pass":true,"db_fds":1}
+{"seq":47,"scenario":"release_order_120","op":"library_close","status":0,"db_fds":1,"note":"close requested with 3 live borrows"}
+{"seq":48,"scenario":"release_order_120","check":"db_still_open_after_close_request","pass":true,"db_fds":1}
+{"seq":49,"scenario":"release_order_120","check":"borrowers_still_function","pass":true,"db_fds":1}
+{"seq":50,"scenario":"release_order_120","op":"free_pager","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":51,"scenario":"release_order_120","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":52,"scenario":"release_order_120","op":"release_source","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":53,"scenario":"release_order_120","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":54,"scenario":"release_order_120","op":"free_pager","status":0,"db_fds":0,"note":"last borrow"}
+{"seq":55,"scenario":"release_order_120","check":"db_closed_after_last_release","pass":true,"db_fds":0}
+{"seq":56,"scenario":"release_order_201","op":"open+import","status":0,"db_fds":1,"note":"library open, original stored"}
+{"seq":57,"scenario":"release_order_201","check":"pagers_and_source_created","pass":true,"db_fds":1}
+{"seq":58,"scenario":"release_order_201","check":"pager_reads_before_close","pass":true,"db_fds":1}
+{"seq":59,"scenario":"release_order_201","check":"db_open_before_close","pass":true,"db_fds":1}
+{"seq":60,"scenario":"release_order_201","op":"library_close","status":0,"db_fds":1,"note":"close requested with 3 live borrows"}
+{"seq":61,"scenario":"release_order_201","check":"db_still_open_after_close_request","pass":true,"db_fds":1}
+{"seq":62,"scenario":"release_order_201","check":"borrowers_still_function","pass":true,"db_fds":1}
+{"seq":63,"scenario":"release_order_201","op":"release_source","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":64,"scenario":"release_order_201","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":65,"scenario":"release_order_201","op":"free_pager","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":66,"scenario":"release_order_201","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":67,"scenario":"release_order_201","op":"free_pager","status":0,"db_fds":0,"note":"last borrow"}
+{"seq":68,"scenario":"release_order_201","check":"db_closed_after_last_release","pass":true,"db_fds":0}
+{"seq":69,"scenario":"release_order_210","op":"open+import","status":0,"db_fds":1,"note":"library open, original stored"}
+{"seq":70,"scenario":"release_order_210","check":"pagers_and_source_created","pass":true,"db_fds":1}
+{"seq":71,"scenario":"release_order_210","check":"pager_reads_before_close","pass":true,"db_fds":1}
+{"seq":72,"scenario":"release_order_210","check":"db_open_before_close","pass":true,"db_fds":1}
+{"seq":73,"scenario":"release_order_210","op":"library_close","status":0,"db_fds":1,"note":"close requested with 3 live borrows"}
+{"seq":74,"scenario":"release_order_210","check":"db_still_open_after_close_request","pass":true,"db_fds":1}
+{"seq":75,"scenario":"release_order_210","check":"borrowers_still_function","pass":true,"db_fds":1}
+{"seq":76,"scenario":"release_order_210","op":"release_source","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":77,"scenario":"release_order_210","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":78,"scenario":"release_order_210","op":"free_pager","status":0,"db_fds":1,"note":"borrow remains"}
+{"seq":79,"scenario":"release_order_210","check":"db_open_while_borrow_remains","pass":true,"db_fds":1}
+{"seq":80,"scenario":"release_order_210","op":"free_pager","status":0,"db_fds":0,"note":"last borrow"}
+{"seq":81,"scenario":"release_order_210","check":"db_closed_after_last_release","pass":true,"db_fds":0}
+{"seq":82,"scenario":"cancel","op":"open+import","status":0,"db_fds":1,"note":"library open, original stored"}
+{"seq":83,"scenario":"cancel","check":"pager","pass":true,"db_fds":1}
+{"seq":84,"scenario":"cancel","check":"db_open_after_close_request","pass":true,"db_fds":1}
+{"seq":85,"scenario":"cancel","op":"pager_get_cancelled","status":9,"db_fds":1,"note":"Operation cancelled"}
+{"seq":86,"scenario":"cancel","check":"get_returns_cancelled","pass":true,"db_fds":1}
+{"seq":87,"scenario":"cancel","check":"db_still_open_borrow_alive","pass":true,"db_fds":1}
+{"seq":88,"scenario":"cancel","check":"db_closed_after_free","pass":true,"db_fds":0}
+{"seq":89,"scenario":"create_failure","op":"open+import","status":0,"db_fds":1,"note":"library open, original stored"}
+{"seq":90,"scenario":"create_failure","check":"source","pass":true,"db_fds":1}
+{"seq":91,"scenario":"create_failure","op":"txt_pager_create_null_font","status":1,"db_fds":1,"note":"Invalid TXT pager arguments"}
+{"seq":92,"scenario":"create_failure","check":"create_fails_and_no_pager","pass":true,"db_fds":1}
+{"seq":93,"scenario":"create_failure","check":"caller_keeps_source_ownership","pass":true,"db_fds":1}
+{"seq":94,"scenario":"create_failure","check":"db_open_while_caller_source_alive","pass":true,"db_fds":1}
+{"seq":95,"scenario":"create_failure","check":"db_closed_after_manual_release","pass":true,"db_fds":0}
+{"seq":96,"scenario":"io_invalidation","op":"open+import","status":0,"db_fds":1,"note":"library open, original stored"}
+{"seq":97,"scenario":"io_invalidation","check":"pager","pass":true,"db_fds":1}
+{"seq":98,"scenario":"io_invalidation","check":"second_connection","pass":true,"db_fds":2}
+{"seq":99,"scenario":"io_invalidation","op":"other_connection_commit","status":0,"db_fds":2,"note":"real commit through another connection"}
+{"seq":100,"scenario":"io_invalidation","op":"pager_get_after_invalidation","status":3,"db_fds":2,"note":"Invalid TXT source read"}
+{"seq":101,"scenario":"io_invalidation","check":"pager_reports_failure_not_stale_success","pass":true,"db_fds":2}
+{"seq":102,"scenario":"io_invalidation","check":"owner_borrow_gone_other_connection_remains","pass":true,"db_fds":1}
+{"seq":103,"scenario":"io_invalidation","check":"db_closed_after_all_released","pass":true,"db_fds":0}
+{"summary":true,"failures":0}

@@ -1,0 +1,466 @@
+"""Independently authenticate each same-run original upload, then replay its contract."""
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import sys
+import subprocess
+import re
+import zipfile
+import package_contract as C
+sys.path.insert(0,str(C.ROOT/'tools'))
+from check_parallel_integration import fetch,pages,download_artifact_zip
+
+
+def main():
+    C.actions_only();source=C.guard();ident=C.identity();out=C.ROOT/'build/hash-authentication';out.mkdir(parents=True)
+    result=dict(ident,accepted=False,f07_accepted=False,full_six_accepted=False,targets={},failures=[])
+    try:
+        C.require(os.environ['PROTOCOL_RESULT']=='success' and os.environ['PRODUCERS_RESULT']=='success','upstream job failed')
+        run=fetch(f'actions/runs/{ident["run_id"]}/attempts/{ident["attempt"]}')
+        C.require(run['head_sha']==ident['source_sha'] and run['head_branch']==C.BRANCH and run['path']==C.WORKFLOW and
+            run['run_attempt']==int(ident['attempt']),'run identity differs')
+        jobs=pages(f'actions/runs/{ident["run_id"]}/attempts/{ident["attempt"]}/jobs','jobs')
+        for name in ('protocol',*('produce ('+t+')' for t in C.TARGETS)):
+            rows=[j for j in jobs if j['name']==name]
+            C.require(len(rows)==1 and rows[0]['head_sha']==ident['source_sha'] and rows[0]['conclusion']=='success','producer job missing/failed: '+name)
+        artifacts=pages(f'actions/runs/{ident["run_id"]}/artifacts','artifacts')
+        for target in C.TARGETS:
+            name=f'original-hash-{target}-{ident["run_id"]}-{ident["attempt"]}'
+            matches=[a for a in artifacts if a['name']==name];C.require(len(matches)==1,'missing/duplicate upload: '+name);a=matches[0]
+            C.require(not a['expired'] and a['workflow_run']['id']==int(ident['run_id']) and a['workflow_run']['head_sha']==ident['source_sha'] and
+                datetime.fromisoformat(a['expires_at'].replace('Z','+00:00'))>datetime.now(timezone.utc),'artifact identity/expiry')
+            path=out/(target+'-upload.zip')
+            with path.open('w+b') as f:download_artifact_zip(a['id'],output=f)
+            C.require(path.stat().st_size==a['size_in_bytes'] and 'sha256:'+C.digest(path)==a['digest'],'original upload byte identity')
+            with zipfile.ZipFile(path) as z:
+                C.require(set(C.safe_members(z))=={'manifest.json','envelope.json','result.json','evidence.zip'},'unexpected transport membership')
+                dest=C.extract(z,out/(target+'-upload'))
+            envelope=json.loads((dest/'envelope.json').read_text());manifest=json.loads((dest/'manifest.json').read_text())
+            C.require(all(envelope[k]==v for k,v in ident.items()) and envelope['target']==target,'envelope identity')
+            C.require(C.record(dest/'evidence.zip')==envelope['archive'] and C.record(dest/'manifest.json')==envelope['manifest'],'nested byte identity')
+            with zipfile.ZipFile(dest/'evidence.zip') as z:folder=C.extract(z,out/(target+'-evidence'))
+            checked=C.validate(folder,manifest)
+            from test_contract import evidence_mutations
+            C.require(evidence_mutations(folder,manifest)==json.loads((folder/'mutation-controls.json').read_text()),
+                'independent actual-evidence mutation replay differs')
+            C.require(checked['target']==target and json.loads((dest/'result.json').read_text())==dict(ident,**checked),'producer/replay mismatch')
+            result['targets'][target]=dict(checked,artifact=dict(id=a['id'],name=a['name'],size_in_bytes=a['size_in_bytes'],digest=a['digest'],expires_at=a['expires_at']))
+        result.update(accepted=True,scope='public streaming hash boundary; desktop behavior, all six target links; no mobile runtime or full F07')
+        C.save(out/'github.json',dict(run=run,jobs=jobs,source=source))
+    except Exception as error:result['failures'].append(str(error))
+    finally:C.save(out/'authentication.json',result)
+    print(json.dumps(result,sort_keys=True),flush=True)
+    C.require(result['accepted'],'same-source boundary authentication failed')
+
+def inspect_prior_archive():
+    """Pinned failed-original forensic replay; never turns its failure into admission."""
+    C.actions_only();C.guard();out=C.ROOT/'build/hash-archive-diagnostic';out.mkdir(parents=True)
+    prior_sha='3597b549340450929c693c31fd3d2f7bf254bbf6';prior_run=40813101185
+    pin=dict(id=12871351856,name='original-hash-failed-macos-40813101185-1',size_in_bytes=15151587,
+        digest='sha256:ff875ece2f5d27128a83798f0309f237a72daeb5997ab5118fe8f0794fe03b16')
+    run=fetch(f'actions/runs/{prior_run}/attempts/1')
+    C.require(run['head_sha']==prior_sha and run['head_branch']==C.BRANCH and run['path']==C.WORKFLOW and
+        run['run_attempt']==1 and run['status']=='completed' and run['conclusion']=='failure','original failed run identity differs')
+    jobs=pages(f'actions/runs/{prior_run}/attempts/1/jobs','jobs')
+    producer=[j for j in jobs if j['name']=='produce (macos)']
+    C.require(len(producer)==1 and producer[0]['id']==123247837566 and producer[0]['head_sha']==prior_sha and
+        producer[0]['status']=='completed' and producer[0]['conclusion']=='failure','original macOS failure identity differs')
+    artifact=fetch('actions/artifacts/'+str(pin['id']))
+    C.require(all(artifact[k]==v for k,v in pin.items()) and not artifact['expired'] and
+        artifact['workflow_run']['id']==prior_run and artifact['workflow_run']['head_sha']==prior_sha,'pinned failed upload metadata differs')
+    original=out/'original-upload.zip'
+    with original.open('w+b') as stream:download_artifact_zip(pin['id'],output=stream)
+    C.require(original.stat().st_size==pin['size_in_bytes'] and 'sha256:'+C.digest(original)==pin['digest'],'original failed upload bytes differ')
+    with zipfile.ZipFile(original) as z:folder=C.extract(z,out/'original')
+    source=json.loads((folder/'source.json').read_text())
+    C.require(source['source_sha']==prior_sha and source['run_id']==str(prior_run) and source['attempt']=='1' and
+        source['base_sha']==C.BASE and source['source_scope_passed'] is True,'retained original source identity differs')
+    C.require(all(source['files'][p]==C.record(C.ROOT/p) for p in C.OWNER_PATHS),'owner source changed since failed original')
+    native=json.loads((folder/'native.json').read_text());dependency=json.loads((folder/'dependency.json').read_text())
+    def raw_records(raw):
+        C.archive_members(raw)  # strict complete archive grammar/bounds first
+        records=[];offset=8
+        while offset<len(raw):
+            header=raw[offset:offset+60];size=int(header[48:58]);start=offset+60;end=start+size
+            records.append(dict(offset=offset,header_hex=header.hex(),name_field=header[:16].decode('ascii').rstrip(),
+                mtime=header[16:28].decode('ascii').strip(),uid=header[28:34].decode('ascii').strip(),
+                gid=header[34:40].decode('ascii').strip(),mode=header[40:48].decode('ascii').strip(),bytes=size,
+                payload_sha256=hashlib.sha256(raw[start:end]).hexdigest(),padding_hex=raw[end:end+size%2].hex()))
+            offset=end+size%2
+        return records
+    report=dict(C.identity(),diagnostic_only=True,original_artifact=pin,original_source_sha=prior_sha,
+        original_run_id=prior_run,original_attempt=1,owner_source_unchanged=True,
+        original_failed=True,accepted=False,f07_accepted=False,full_six_accepted=False,archives={})
+    paths={'hash':('trees/hash-build/libopds_sha256_stream.a','prefix/hash/lib/libopds_sha256_stream.a'),
+        'importer':('trees/catalog/libreader_original_import.a','prefix/product/lib/libreader_original_import.a')}
+    for owner,(built,installed) in paths.items():
+        C.require(dependency[owner]['build_archive']==built and native[owner]['archive']==installed,'retained archive role/path differs')
+        before=(folder/built).read_bytes();after=(folder/installed).read_bytes()
+        bm=C.archive_members(before);am=C.archive_members(after)
+        br=raw_records(before);ar=raw_records(after)
+        count=0;preview=[]
+        for i in range(max(len(before),len(after))):
+            if before[i:i+1]!=after[i:i+1]:
+                count+=1
+                if len(preview)<64:preview.append(i)
+        report['archives'][owner]=dict(build_path=built,installed_path=installed,
+            build=C.record(folder/built),installed=C.record(folder/installed),exact_archive_equal=before==after,
+            object_payloads_equal=bm==am,build_records=br,installed_records=ar,
+            build_members=[dict(name=n,bytes=len(p),sha256=hashlib.sha256(p).hexdigest()) for n,p in bm],
+            installed_members=[dict(name=n,bytes=len(p),sha256=hashlib.sha256(p).hexdigest()) for n,p in am],
+            differing_byte_count=count,first_64_differing_offsets=preview,
+            difference_preview_truncated=count>64)
+        report['archives'][owner]['first_bsd_index']=dict(build=C.bsd_index_record(before),installed=C.bsd_index_record(after))
+        report['archives'][owner]['equivalence']=C.archive_equivalence(before,after,'macos')
+    C.require(report['archives']['hash']['equivalence']['mode']=='exact' and
+        report['archives']['importer']['equivalence']['mode']=='macos-first-bsd-index-timestamp' and
+        report['archives']['importer']['equivalence']['normalization']['differing_offsets']==[33],
+        'original measured archive difference changed')
+    C.save(out/'diagnostic.json',report)
+    print(json.dumps(report,sort_keys=True),flush=True)
+
+def inspect_retained(dependency_profile=False,mutation_profile=False):
+    """No native build: exact original failures plus explicitly partial green replay."""
+    C.actions_only();C.guard();out=C.ROOT/'build/hash-retained-diagnostic';out.mkdir(parents=True)
+    prior='1198abce384aabe78bc23450db0c38be487706e1';run_id=40816180401
+    ident=dict(source_sha=prior,run_id=str(run_id),attempt='1')
+    pins={
+        'windows':(123257727505,'failure',12872172780,20484861,'3c583f239db3ce44bf1c42a74a663e379a626e1ab3b72387545687ed45a4f438'),
+        'android':(123257727506,'failure',12872796406,34983147,'b6e5147f78106c453e95acc8f210cc8579e35e82a1f06044e8b80207c175e56d'),
+        'ios-simulator':(123257727410,'failure',12873070476,15080497,'5091108aed26fa040c09306dd8d059f835eb8405fed8d9863c84ff55971a63e6'),
+        'linux':(123257727441,'success',12872257369,15257989,'0af1380ab4c84ea1ef5acbc3105c566ac4c96d9ba4cf73fd794e8777fb469852'),
+        'macos':(123257727355,'success',12872318239,14784426,'69f4d3e3c511ecdf1bf425d42bccb510ba6cd039ed48bea9000e6a2891d1378f'),
+        'ios-device':(123257727411,'success',12872328343,14590280,'26869f8a1ffd1e35bf6bc6bea043406cb5a37776251ae29dbdc295073d21cfaf')}
+    protocol_id=123257662840
+    if dependency_profile:
+        prior='900366e7d91b973f13fe2e52945d25742e0bee71';run_id=40821799960
+        ident=dict(source_sha=prior,run_id=str(run_id),attempt='1');protocol_id=123275728402
+        pins={
+            'windows':(123275789262,'failure',12875360361,20484989,'2d754b498ad2be7b7a3730627a79542228c4974b673357b4b486e7ac6150cea7'),
+            'linux':(123275789267,'success',12874529508,15258480,'1ff0c0bb3816b5f543262a6ba9784e054ab3f800fd362d6aad24397c68ac2971'),
+            'macos':(123275789243,'success',12875370278,14782010,'ec6da98495eac389e3a5e2dd774a457140b43ad120170117eecc6185a0659833'),
+            'android':(123275789348,'success',12874567875,34491610,'fbff0d41cb37aa74a16231309bc7d1fbb51b121bdc6e28aae864ac48e32eb236'),
+            'ios-device':(123275789231,'success',12875445075,14591047,'543a4b3e22259c4e66ed547265c012df0c3b09cebeb5d983c83b6ee89dbbf3de'),
+            'ios-simulator':(123275789242,'success',12873984761,14778425,'13a4d8213482393f8cb1af1ed217a04dfca091197844ce62c3a678fb83791a8f')}
+    if mutation_profile:
+        prior='c84893379e1ccbad45ab3df9437e7edcd7455dfd';run_id=40825325047
+        ident=dict(source_sha=prior,run_id=str(run_id),attempt='1');protocol_id=123286924098
+        pins={
+            'windows':(123286981351,'success',12876905027,20081004,'4ad4571920240e9625b8682745d7668f542f667f5e0d2ce3d17134c806582a81'),
+            'linux':(123286981320,'success',12876396853,15258177,'6bb920a01278c9b4eeb8a4f984c9895a387212a812d4587eede76217087e01ba'),
+            'macos':(123286981400,'success',12876531376,14783790,'c394cf006f335ea85707ef4e75b99db95f7e854c0bd26563d46f68c48da35dfe'),
+            'android':(123286981316,'failure',12876665880,34983116,'e86fe75004ad0a0687ae6c437179b5fe8c8470e4216d7f290c5f5a4b0b8f9d22'),
+            'ios-device':(123286981398,'success',12876515705,14589274,'3c8736bd45d33ae74cc12d614b41b66b267b92d8ec55ff47d05b50d17e339c7b'),
+            'ios-simulator':(123286981384,'success',12876800060,14775972,'76779c5cade9baa6ede7c9969ec600ed7e702b4b33c28a7ca3a7e7cce5c3476a')}
+    result=dict(C.identity(),original_identity=ident,diagnostic_only=True,accepted=False,f07_accepted=False,
+        full_six_accepted=False,diagnostic_complete=False,failures=[],original_artifacts={},failed_producer_details={},
+        independently_replayed_original_green={},scope='original-source partial replay; no current-source native acceptance')
+    try:
+        run=fetch(f'actions/runs/{run_id}/attempts/1')
+        C.require(run['head_sha']==prior and run['head_branch']==C.BRANCH and run['path']==C.WORKFLOW and
+            run['run_attempt']==1 and run['status']=='completed' and run['conclusion']=='failure','original full run identity differs')
+        jobs=pages(f'actions/runs/{run_id}/attempts/1/jobs','jobs')
+        protocol=[j for j in jobs if j['name']=='protocol']
+        C.require(len(protocol)==1 and protocol[0]['id']==protocol_id and protocol[0]['head_sha']==prior and protocol[0]['conclusion']=='success','original protocol identity differs')
+        subprocess.run(['git','merge-base','--is-ancestor',prior,'HEAD'],cwd=C.ROOT,check=True)
+        paths=C.OWNER_PATHS+C.VALIDATION_PATHS
+        changed=subprocess.check_output(['git','diff','--name-only',C.BASE,prior],cwd=C.ROOT,text=True).splitlines()
+        C.require(set(changed)==set(paths),'historical source escaped sixteen-file scope')
+        sources={p:subprocess.check_output(['git','show',prior+':'+p],cwd=C.ROOT) for p in paths}
+        original_source=dict(ident,base_sha=C.BASE,source_scope_passed=True,
+            files={p:dict(bytes=len(b),sha256=hashlib.sha256(b).hexdigest()) for p,b in sources.items()})
+        C.require(all(original_source['files'][p]==C.record(C.ROOT/p) for p in C.OWNER_PATHS),'owner bytes changed since retained run')
+        # Replay exact historical verifier/control bytes, not the new diagnostic's predicates.
+        code=out/'historical-verifier';code.mkdir()
+        for name in ('package_contract.py','test_contract.py'):
+            (code/name).write_bytes(sources['tests/reader_original_hash_boundary_20261029/'+name])
+        spec=importlib.util.spec_from_file_location('original_hash_contract',code/'package_contract.py')
+        old=importlib.util.module_from_spec(spec);spec.loader.exec_module(old)
+        old.ROOT=C.ROOT;old.identity=lambda:dict(ident);old.guard=lambda:original_source
+        saved=sys.modules['package_contract'];sys.modules['package_contract']=old
+        try:
+            spec=importlib.util.spec_from_file_location('original_hash_controls',code/'test_contract.py')
+            controls=importlib.util.module_from_spec(spec);spec.loader.exec_module(controls)
+        finally:sys.modules['package_contract']=saved
+        result['historical_replay_verifier']={name:C.record(code/name) for name in ('package_contract.py','test_contract.py')}
+        result['historical_identity_binding']='exact prior git source/16-path guard and original run identity; never relabeled current source'
+        target_order=tuple(t for t in C.TARGETS if pins[t][1]=='success')+tuple(t for t in C.TARGETS if pins[t][1]=='failure')
+        for target in target_order:
+            job_id,conclusion,artifact_id,size,digest=pins[target]
+            rows=[j for j in jobs if j['name']=='produce ('+target+')']
+            C.require(len(rows)==1 and rows[0]['id']==job_id and rows[0]['head_sha']==prior and
+                rows[0]['status']=='completed' and rows[0]['conclusion']==conclusion,'original producer identity differs: '+target)
+            artifact=fetch('actions/artifacts/'+str(artifact_id))
+            name=f'original-hash-{"failed-" if conclusion=="failure" else ""}{target}-{run_id}-1'
+            pin=dict(id=artifact_id,name=name,size_in_bytes=size,digest='sha256:'+digest)
+            C.require(all(artifact[k]==v for k,v in pin.items()) and not artifact['expired'] and
+                artifact['workflow_run']['id']==run_id and artifact['workflow_run']['head_sha']==prior,'original upload metadata differs: '+target)
+            original=out/(target+'-original.zip')
+            with original.open('w+b') as stream:download_artifact_zip(artifact_id,output=stream)
+            C.require(original.stat().st_size==size and C.digest(original)==digest,'original upload bytes differ: '+target)
+            with zipfile.ZipFile(original) as z:
+                if conclusion=='success':C.require(set(C.safe_members(z))=={'manifest.json','envelope.json','result.json','evidence.zip'},'unexpected successful transport membership')
+                folder=C.extract(z,out/(target+'-original'))
+            result['original_artifacts'][target]=pin
+            if conclusion=='success':
+                envelope=json.loads((folder/'envelope.json').read_text());manifest=json.loads((folder/'manifest.json').read_text())
+                C.require(all(envelope[k]==v for k,v in ident.items()) and envelope['target']==target,'original envelope identity')
+                C.require(C.record(folder/'evidence.zip')==envelope['archive'] and C.record(folder/'manifest.json')==envelope['manifest'],'original nested upload identity')
+                with zipfile.ZipFile(folder/'evidence.zip') as z:evidence=C.extract(z,out/(target+'-evidence'))
+                checked=old.validate(evidence,manifest)
+                C.require(controls.evidence_mutations(evidence,manifest)==json.loads((evidence/'mutation-controls.json').read_text()),'original actual-evidence control replay differs')
+                C.require(checked['target']==target and json.loads((folder/'result.json').read_text())==dict(ident,**checked),'original producer/replay mismatch')
+                result['independently_replayed_original_green'][target]=checked
+                continue
+            C.require(json.loads((folder/'source.json').read_text())==original_source,'failed retained source identity differs')
+            report=json.loads((folder/'report.json').read_text())
+            C.require(all(report[k]==v for k,v in ident.items()) and report['target']==target,'failed retained target identity differs')
+            native=json.loads((folder/'native.json').read_text());commands=json.loads((folder/'commands.json').read_text())
+            def command_record(path):
+                rows=[r for r in commands if r['output']==path]
+                C.require(len(rows)==1 and rows[0]['output_record']==C.record(folder/path) and rows[0]['returncode']==0,'diagnostic output not bound to original command')
+                return rows[0]
+            if mutation_profile:
+                C.require(target=='android','unexpected failed mutation producer')
+                derived=dict(ident,target=target,files={p.relative_to(folder).as_posix():C.record(p) for p in sorted(folder.rglob('*')) if p.is_file()})
+                original_checked=old.validate(folder,derived,require_mutations=False)
+                try:controls.evidence_mutations(folder,derived);original_failure=None
+                except ValueError as error:original_failure=str(error)
+                C.require(original_failure=='unsupported dependency object key','original mutation selector failure differs')
+                dependency=json.loads((folder/'dependency.json').read_text());item=dependency['importer']
+                command=command_record(item['deps'])
+                C.require(command['argv']==['ninja','-C',item['original_build'],'-t','deps'],'Android original dependency command differs')
+                groups=C.deps_groups((folder/item['deps']).read_text())
+                C.require(len(groups)<=4096 and all(len(k)<=1024 for k in groups),'Android diagnostic group limit')
+                details=dict(original_contract_checked=original_checked,original_mutation_failure=original_failure,
+                    expected_objects=item['objects'],actual_dependency_keys=list(groups),deps_command=command,admitted=False)
+                result['failed_producer_details'][target]=details
+                # Counterfactual validator/control replay, never new native acceptance.
+                spec=importlib.util.spec_from_file_location('repaired_android_contract',C.ROOT/'tests/reader_original_hash_boundary_20261029/package_contract.py')
+                repaired=importlib.util.module_from_spec(spec);spec.loader.exec_module(repaired)
+                repaired.ROOT=C.ROOT;repaired.identity=lambda:dict(ident);repaired.guard=lambda:original_source
+                replay=dict(manifest_origin='diagnostic inventory reconstructed from authenticated original failed ZIP; not an original producer manifest',
+                    verifier_source_sha=C.identity()['source_sha'],evidence_source_sha=prior,native_acceptance=False,f07_accepted=False)
+                details['repaired_contract_replay']=replay
+                replay['checked']=repaired.validate(folder,derived,require_mutations=False)
+                saved=sys.modules['package_contract'];sys.modules['package_contract']=repaired
+                try:
+                    spec=importlib.util.spec_from_file_location('repaired_android_controls',C.ROOT/'tests/reader_original_hash_boundary_20261029/test_contract.py')
+                    repaired_controls=importlib.util.module_from_spec(spec);spec.loader.exec_module(repaired_controls)
+                finally:sys.modules['package_contract']=saved
+                replay['actual_mutation_controls']=repaired_controls.evidence_mutations(folder,derived)
+                continue
+            if dependency_profile:
+                C.require(target=='windows','unexpected failed dependency producer')
+                dependency=json.loads((folder/'dependency.json').read_text());details={}
+                C.require(set(dependency)=={'hash','importer'},'dependency owner set differs')
+                result['failed_producer_details'][target]=dict(dependencies=details,admitted=False,
+                    coverage_predicate_changed=False,lexical_comparisons_are_diagnostic_only=True)
+                for owner,item in dependency.items():
+                    expected=item['objects'];C.require(0<len(expected)<=64 and len(set(expected))==len(expected),'dependency expected-object bounds/duplicates')
+                    deps=(folder/item['deps']).read_text();groups=C.deps_groups(deps)
+                    C.require(len(groups)<=4096 and all(len(k)<=1024 for k in (*expected,*groups)),'dependency key diagnostic bounds')
+                    detail=dict(expected_objects=expected,actual_group_keys=list(groups),
+                        exact_missing=sorted(set(expected)-set(groups)),admitted=False)
+                    details[owner]=detail
+                    command=command_record(item['deps'])
+                    C.require(command['argv']==['ninja','-C',item['original_build'],'-t','deps'],'original dependency invocation differs')
+                    ninja=(folder/item['ninja']).read_text()
+                    rule=re.search(r'^build '+re.escape(item['archive_output'])+r':[^\n]*',ninja,re.M)
+                    C.require(rule is not None,'retained archive rule missing')
+                    linked=re.findall(r'[^\s:]+\.(?:o|obj)(?=\s|$)',rule.group())
+                    C.require(linked==expected,'retained archive rule/object list differs')
+                    cache_path='trees/'+Path(item['original_build']).name+'/CMakeCache.txt'
+                    homes=re.findall(r'^CMAKE_CACHEFILE_DIR:INTERNAL=(.+)$',(folder/cache_path).read_text(),re.M)
+                    C.require(len(homes)==1 and C.canonical_dependency(homes[0],homes[0])==C.canonical_dependency(item['original_build'],item['original_build']),
+                        'dependency original CWD not cache-bound')
+                    statuses={m[1]:dict(count=int(m[2]),status=m[3]) for line in deps.splitlines()
+                        if (m:=re.fullmatch(r'(.*): #deps (\d+), deps mtime \d+ \((VALID|STALE)\)',line))}
+                    C.require(set(statuses)==set(groups),'dependency status/key inventory differs')
+                    detail['actual_groups']=statuses
+                    normalized={}
+                    for key in groups:normalized.setdefault(C.canonical_dependency(key,item['original_build']),[]).append(key)
+                    comparisons=[];detail['comparisons']=comparisons
+                    for key in expected:
+                        matches=normalized.get(C.canonical_dependency(key,item['original_build']),[])
+                        original_object_path=item['object_files'][key]
+                        retained_path=original_object_path.replace('\\','/')
+                        C.require(retained_path.startswith('trees/'+Path(item['original_build']).name+'/') and
+                            all(part not in ('','.','..') and ':' not in part for part in retained_path.split('/')),
+                            'unsafe retained Windows object spelling')
+                        # Original ZIP members are safe POSIX names; only diagnostic
+                        # materialization changes separators, never the coverage key.
+                        comparisons.append(dict(expected=key,exact_present=key in groups,lexical_matches=matches,
+                            matched_statuses={k:statuses[k] for k in matches},
+                            retained_object=dict(original_spelling=original_object_path,path=retained_path,
+                                **C.record(folder/retained_path))))
+                    detail.update(
+                        canonical_collisions={k:v for k,v in normalized.items() if len(v)>1},
+                        original_build=item['original_build'],cache=dict(path=cache_path,**C.record(folder/cache_path)),
+                        ninja=dict(path=item['ninja'],**C.record(folder/item['ninja'])),
+                        archive_rule=rule.group(),deps_command=command,admitted=False)
+                C.require(any(d['exact_missing'] for d in details.values()),'original exact dependency refusal not reproduced')
+                # The original failed upload has no completed producer manifest.
+                # Build an explicitly diagnostic inventory from its authenticated
+                # ZIP, then exercise repaired predicates under historical identity.
+                spec=importlib.util.spec_from_file_location('repaired_dependency_contract',C.ROOT/'tests/reader_original_hash_boundary_20261029/package_contract.py')
+                repaired=importlib.util.module_from_spec(spec);spec.loader.exec_module(repaired)
+                repaired.ROOT=C.ROOT;repaired.identity=lambda:dict(ident);repaired.guard=lambda:original_source
+                derived=dict(ident,target=target,files={p.relative_to(folder).as_posix():C.record(p) for p in sorted(folder.rglob('*')) if p.is_file()})
+                replay=dict(manifest_origin='diagnostic inventory reconstructed from authenticated original failed ZIP; not an original producer manifest',
+                    verifier_source_sha=C.identity()['source_sha'],evidence_source_sha=prior,
+                    native_acceptance=False,f07_accepted=False)
+                result['failed_producer_details'][target]['repaired_contract_replay']=replay
+                replay['checked']=repaired.validate(folder,derived,require_mutations=False)
+                saved=sys.modules['package_contract'];sys.modules['package_contract']=repaired
+                try:
+                    spec=importlib.util.spec_from_file_location('repaired_dependency_controls',C.ROOT/'tests/reader_original_hash_boundary_20261029/test_contract.py')
+                    repaired_controls=importlib.util.module_from_spec(spec);spec.loader.exec_module(repaired_controls)
+                finally:sys.modules['package_contract']=saved
+                replay['actual_mutation_controls']=repaired_controls.evidence_mutations(folder,derived)
+                continue
+            if target=='windows':
+                details=[];parser_failures=[];common_details=[]
+                result['failed_producer_details'][target]=dict(weak_externals=details,parser_failures=parser_failures,
+                    common_data=common_details,admitted=False)
+                for owner,entry in native.items():
+                    members=C.archive_members((folder/entry['archive']).read_bytes())
+                    C.require([n for n,_ in members]==[m['name'] for m in entry['members']],'original COFF member set differs')
+                    for (name,payload),member in zip(members,entry['members']):
+                        C.require((folder/member['object']).read_bytes()==payload,'original COFF member bytes differ')
+                        row=command_record(member['symbols'])
+                        C.require(row['subjects']=={member['object']:C.record(folder/member['object'])} and len(row['argv'])==3 and
+                            row['argv'][:2]==['dumpbin','/symbols'] and row['argv'][2].replace('\\','/').endswith('/evidence/'+member['object']),'original dumpbin invocation differs')
+                        symbol_text=(folder/member['symbols']).read_text()
+                        try:C.symbols(symbol_text,'windows',payload,owner)
+                        except ValueError as error:
+                            # Diagnostic continuation only: every rejection remains
+                            # an aggregate failure, never an accepted native member.
+                            C.require(len(parser_failures)<64,'Windows parser diagnostic limit')
+                            failure=dict(owner=owner,member=name,object=C.record(folder/member['object']),
+                                symbols=C.record(folder/member['symbols']),error=str(error)[:2048])
+                            parser_failures.append(failure)
+                            result['failures'].append('Windows retained member rejected: '+owner+'/'+name+': '+failure['error'])
+                        binary_fallbacks=C.coff_weak_fallbacks(payload)
+                        common=C.coff_common_data(payload,owner)
+                        if common:
+                            C.require(len(common)==1 and C.COFF_STDIO_COMMON in common,'unexpected retained common data inventory')
+                            try:old.symbols(symbol_text,'windows');original_common_failure=None
+                            except ValueError as error:original_common_failure=str(error)
+                            C.require(original_common_failure=='COFF common symbol is not a function import','historical common-data refusal differs')
+                            bound=common[C.COFF_STDIO_COMMON];table=int.from_bytes(payload[8:12],'little');record=table+bound['index']*18
+                            negatives=[]
+                            for label,offset,value in (('size',record+8,(16).to_bytes(4,'little')),
+                                    ('function-type',record+14,(0x20).to_bytes(2,'little'))):
+                                altered=payload[:offset]+value+payload[offset+len(value):]
+                                try:C.symbols(symbol_text,'windows',altered,owner)
+                                except ValueError as error:C.require('common data record or owner' in str(error),'common mutation hit unrelated guard')
+                                else:raise ValueError('actual common-data mutation accepted')
+                                negatives.append(label)
+                            try:C.symbols(symbol_text,'windows',payload,'hash')
+                            except ValueError as error:C.require('common data record or owner' in str(error),'common owner mutation hit unrelated guard')
+                            else:raise ValueError('actual common-data owner mutation accepted')
+                            negatives.append('hash-owner')
+                            common_details.append(dict(owner=owner,member=name,object=C.record(folder/member['object']),
+                                symbols=C.record(folder/member['symbols']),binary_bound_data=common,
+                                original_failure=original_common_failure,actual_negative_controls=negatives,
+                                function_or_api_grant=False,final_provider_claim=False))
+                        lines=symbol_text.splitlines();weak=[i for i,l in enumerate(lines) if 'WeakExternal' in l]
+                        if weak:
+                            try:old.symbols(symbol_text,'windows');original_failure=None
+                            except ValueError as error:original_failure=str(error)
+                            C.require(original_failure=='weak COFF external is unsupported','original weak refusal differs')
+                            negative_controls=[]
+                            table=int.from_bytes(payload[8:12],'little')
+                            for weak_name,bound in binary_fallbacks.items():
+                                auxiliary=table+(bound['index']+1)*18
+                                for label,offset,value,reason in (
+                                    ('library-search',auxiliary+4,(2).to_bytes(4,'little'),'no-library-search'),
+                                    ('self-fallback',auxiliary,bound['index'].to_bytes(4,'little'),'same-object strong function')):
+                                    altered=payload[:offset]+value+payload[offset+4:]
+                                    try:C.coff_weak_fallbacks(altered)
+                                    except ValueError as error:C.require(reason in str(error),'COFF mutation hit unrelated guard')
+                                    else:raise ValueError('actual COFF mutation accepted')
+                                    negative_controls.append(weak_name+':'+label)
+                            C.require(len(lines)<=100000 and len(weak)<=4096,'weak diagnostic resource bound')
+                            groups=[]
+                            for i in weak:
+                                context=lines[max(0,i-1):i+3]
+                                indices=re.findall(r'Default index\s+([0-9A-Fa-f]+)','\n'.join(context),re.I)
+                                fallbacks=[line for line in lines if (label:=re.match(r'^\s*([0-9A-Fa-f]+)\s',line)) and
+                                    any(int(label[1],16)==int(index,16) for index in indices)]
+                                groups.append(dict(line=i+1,context=context,advertised_default_indices=indices,fallback_rows=fallbacks))
+                            details.append(dict(owner=owner,member=name,archive=entry['archive'],object=C.record(folder/member['object']),
+                                symbols=C.record(folder/member['symbols']),weak_groups=groups,original_failure=original_failure,
+                                current_binary_bound_fallbacks=binary_fallbacks,actual_negative_controls=negative_controls,final_provider_claim=False))
+                C.require(details,'original weak COFF failure not reproduced in retained diagnostics')
+                C.require(len(common_details)==5 and [d['owner'] for d in common_details].count('normal')==4 and
+                    [d['owner'] for d in common_details].count('revision')==1,'measured original common-data coverage differs')
+            elif target=='android':
+                links=json.loads((folder/'links.json').read_text());details={}
+                C.require(set(links)=={'installed','relocated','normal-first','hash-first','revision-first','hash-revision'},'Android link inventory differs')
+                for name,link in links.items():
+                    command_record(link['commands']);command,inputs,responses=C.link_closure(folder,link)
+                    cache_path='trees/'+name+'-build/CMakeCache.txt';cache=(folder/cache_path).read_text()
+                    try:old.android_binding(cache,command,name in ('installed','relocated'));failure=None
+                    except ValueError as error:failure=str(error)
+                    current=C.android_binding(cache,command,name in ('installed','relocated'))
+                    C.require(current['dependency_output']=='CMakeFiles/probe.dir/link.d','retained Android dependency output differs')
+                    negative_controls=[]
+                    for label,operand in (('escape','../foreign.lib'),('library-injection','CMakeFiles/probe.dir/link.d,-lprivate')):
+                        altered=command.replace('--dependency-file=CMakeFiles/probe.dir/link.d','--dependency-file='+operand)
+                        C.require(altered!=command,'actual Android mutation operand absent')
+                        try:C.android_binding(cache,altered,name in ('installed','relocated'))
+                        except ValueError as error:C.require('unclassified Android linker escape' in str(error),'Android mutation hit unrelated guard')
+                        else:raise ValueError('actual Android dependency-output mutation accepted')
+                        negative_controls.append(label)
+                    details[name]=dict(final_command=command,inputs=inputs,responses=responses,cache=C.record(folder/cache_path),
+                        image=C.record(folder/link['image']),map=C.record(folder/link['map']),binding_failure=failure,current_predicate=current,
+                        actual_negative_controls=negative_controls)
+                C.require(any(d['binding_failure']=='unclassified Android linker escape' for d in details.values()),'original Android escape failure not reproduced')
+                result['failed_producer_details'][target]=dict(links=details,admitted=False)
+            else:
+                dependency=json.loads((folder/'dependency.json').read_text());details={}
+                for owner,(built,installed) in {'hash':('trees/hash-build/libopds_sha256_stream.a','prefix/hash/lib/libopds_sha256_stream.a'),
+                        'importer':('trees/catalog/libreader_original_import.a','prefix/product/lib/libreader_original_import.a')}.items():
+                    C.require(dependency[owner]['build_archive']==built and native[owner]['archive']==installed,'original simulator archive role differs')
+                    before=(folder/built).read_bytes();after=(folder/installed).read_bytes();count=0;preview=[];outside=0
+                    for i in range(max(len(before),len(after))):
+                        if before[i:i+1]!=after[i:i+1]:
+                            count+=1;outside+=not 24<=i<36
+                            if len(preview)<64:preview.append(i)
+                    details[owner]=dict(build=C.record(folder/built),installed=C.record(folder/installed),
+                        build_index=C.bsd_index_record(before),installed_index=C.bsd_index_record(after),
+                        exact_archive_equal=before==after,ordered_object_payloads_equal=C.archive_members(before)==C.archive_members(after),
+                        differing_byte_count=count,first_64_differing_offsets=preview,preview_truncated=count>64,
+                        differing_bytes_outside_first_timestamp=outside,current_predicate=C.archive_equivalence(before,after,'ios-simulator'))
+                    changed=bytearray(before);changed[C.bsd_index_record(before)['payload_offset']]^=1
+                    try:C.archive_equivalence(bytes(changed),after,'ios-simulator')
+                    except ValueError as error:C.require('non-timestamp bytes differ' in str(error),'simulator index mutation hit unrelated guard')
+                    else:raise ValueError('actual simulator index-content mutation accepted')
+                    details[owner]['actual_index_content_negative_passed']=True
+                C.require(any(not d['exact_archive_equal'] for d in details.values()),'original simulator archive failure not reproduced')
+                C.require(details['hash']['current_predicate']['mode']=='exact' and
+                    details['importer']['current_predicate']['mode']=='ios-simulator-first-bsd-index-timestamp' and
+                    details['importer']['current_predicate']['normalization']['differing_offsets']==[33],'measured simulator predicate differs')
+                result['failed_producer_details'][target]=dict(archives=details,admitted=False,
+                    criterion='original 1198 requires exact bytes; new bounded simulator predicate is separate, not native acceptance')
+        C.require(set(result['failed_producer_details'])=={t for t in C.TARGETS if pins[t][1]=='failure'} and
+            set(result['independently_replayed_original_green'])=={t for t in C.TARGETS if pins[t][1]=='success'},'partial diagnostic coverage incomplete')
+        C.require(not result['failures'],'retained parser rejections remain unresolved')
+        result['diagnostic_complete']=True
+    except Exception as error:result['failures'].append(str(error))
+    finally:C.save(out/'diagnostic.json',result)
+    print(json.dumps(result,sort_keys=True),flush=True)
+    C.require(result['diagnostic_complete'],'retained diagnostic/partial replay failed')
+
+if __name__=='__main__':
+    if sys.argv[1:]==['--archive-diagnostic']:inspect_prior_archive()
+    elif sys.argv[1:]==['--retained-diagnostic']:inspect_retained()
+    elif sys.argv[1:]==['--dependency-diagnostic']:inspect_retained(dependency_profile=True)
+    elif sys.argv[1:]==['--mutation-diagnostic']:inspect_retained(mutation_profile=True)
+    else:
+        C.require(not sys.argv[1:],'unsupported authentication mode');main()

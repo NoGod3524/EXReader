@@ -1,0 +1,47 @@
+name: Independent original Windows publication ZIP audit
+on:
+  push:
+    branches: [codex/p0-win-crossdir-publish-audit-20261030]
+    paths: [tests/migration/windows_publish_20261030/audit_original_zip.py, .github/workflows/migration-windows-publish-audit-20261030.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Independent scope and pinned producer source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code c45d01c8fdec63851c5f4539813a8f66885eceb1 HEAD -- src include cmake CMakeLists.txt bindings extras/migration .github/workflows/migration-windows-publish-20261030.yml tests/migration/windows_record_20261029 tests/migration/recovery_integration_20261029 tests/migration/windows_publish_20261030/probe.c tests/migration/windows_publish_20261030/run.py tests/migration/windows_publish_20261030/CMakeLists.txt
+          python - <<'PY'
+          import subprocess
+          paths=subprocess.check_output(['git','diff','--name-only','7273822abdc27e13bd859bc31bc0d9fe19ddb321','HEAD'],text=True).splitlines()
+          allowed={'tests/migration/windows_publish_20261030/audit_original_zip.py','.github/workflows/migration-windows-publish-audit-20261030.yml','docs/MIGRATION-WINDOWS-PUBLISH-AUDIT-20261030.md'}
+          assert paths and set(paths)<=allowed,paths
+          PY
+      - name: Download exact original artifact only inside Actions
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/publish-independent-audit
+          gh api repos/NoGod3524/EXReader/actions/runs/41022476473 > build/publish-independent-audit/run.json
+          gh api repos/NoGod3524/EXReader/actions/jobs/123952756428 > build/publish-independent-audit/job.json
+          gh api repos/NoGod3524/EXReader/actions/artifacts/12962371134 > build/publish-independent-audit/artifact.json
+          gh api repos/NoGod3524/EXReader/actions/artifacts/12962371134/zip > build/publish-independent-audit/original.zip
+      - name: Independently rehash, validate original receipts and exercise nine rejection controls
+        run: python tests/migration/windows_publish_20261030/audit_original_zip.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-publish-audit-${{ github.sha }}
+          path: build/publish-independent-audit/
+          if-no-files-found: error

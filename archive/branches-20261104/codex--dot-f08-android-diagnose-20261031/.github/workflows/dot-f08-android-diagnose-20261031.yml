@@ -1,0 +1,33 @@
+name: F08 Android pinned frame-phase diagnosis
+on:
+  push:
+    branches: [codex/dot-f08-android-diagnose-20261031]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate failed-budget ZIP and analyze all original frames
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m py_compile tests/reader_f08_android_20261031/diagnose.py
+          python3 tests/reader_f08_android_20261031/diagnose.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-android-diagnosis-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-android-diagnosis/diagnosis.json
+            build/f08-android-diagnosis/metadata.json
+          if-no-files-found: error

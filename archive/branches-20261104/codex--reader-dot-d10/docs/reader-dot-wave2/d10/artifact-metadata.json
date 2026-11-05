@@ -1,0 +1,103 @@
+{
+  "run_id": 40229896420,
+  "attempt": 1,
+  "head_sha": "d2e1b55c9cd4ded4201cbb4d1351bc490ef644df",
+  "artifacts": [
+    {
+      "id": 12614246023,
+      "name": "d10-validation-40229896420-1",
+      "size_in_bytes": 12780,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12614246023",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12614246023/zip",
+      "expired": false,
+      "created_at": "2026-10-25T21:03:14Z",
+      "expires_at": "2026-11-24T21:03:14Z",
+      "updated_at": "2026-10-25T21:03:14Z",
+      "digest": "sha256:f28dafae736953dbc5fa68bf8bdefb5839c2648a1c71a561793335db4393ee67",
+      "workflow_run": {
+        "id": 40229896420,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/reader-dot-d10",
+        "head_sha": "d2e1b55c9cd4ded4201cbb4d1351bc490ef644df"
+      }
+    },
+    {
+      "id": 12613856654,
+      "name": "d10-iphone-40229896420-1",
+      "size_in_bytes": 271519328,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12613856654",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12613856654/zip",
+      "expired": false,
+      "created_at": "2026-10-25T20:47:55Z",
+      "expires_at": "2026-11-24T20:47:29Z",
+      "updated_at": "2026-10-25T20:47:55Z",
+      "digest": "sha256:742e8af853e21afe6d207f6c3886a82d3ac5062e40a2e59e1b0612f4835f6aa3",
+      "workflow_run": {
+        "id": 40229896420,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/reader-dot-d10",
+        "head_sha": "d2e1b55c9cd4ded4201cbb4d1351bc490ef644df"
+      }
+    },
+    {
+      "id": 12613438587,
+      "name": "d10-ipad-40229896420-1",
+      "size_in_bytes": 84160891,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12613438587",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12613438587/zip",
+      "expired": false,
+      "created_at": "2026-10-25T21:02:31Z",
+      "expires_at": "2026-11-24T21:02:21Z",
+      "updated_at": "2026-10-25T21:02:31Z",
+      "digest": "sha256:d404a51ddba859e2c04be0b468a4c045fee91bb6b289ce1b5da2348c034c5e2f",
+      "workflow_run": {
+        "id": 40229896420,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/reader-dot-d10",
+        "head_sha": "d2e1b55c9cd4ded4201cbb4d1351bc490ef644df"
+      }
+    },
+    {
+      "id": 12612821233,
+      "name": "d10-macos-40229896420-1",
+      "size_in_bytes": 22235435,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12612821233",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12612821233/zip",
+      "expired": false,
+      "created_at": "2026-10-25T20:29:51Z",
+      "expires_at": "2026-11-24T20:29:47Z",
+      "updated_at": "2026-10-25T20:29:51Z",
+      "digest": "sha256:078e5407bf2912798e8551582ab26e1d413e32eae8c5734af72237f7bb919e52",
+      "workflow_run": {
+        "id": 40229896420,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/reader-dot-d10",
+        "head_sha": "d2e1b55c9cd4ded4201cbb4d1351bc490ef644df"
+      }
+    },
+    {
+      "id": 12612134636,
+      "name": "d10-prior-review-40229896420-1",
+      "size_in_bytes": 8659,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12612134636",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12612134636/zip",
+      "expired": false,
+      "created_at": "2026-10-25T20:15:39Z",
+      "expires_at": "2026-11-24T20:15:38Z",
+      "updated_at": "2026-10-25T20:15:39Z",
+      "digest": "sha256:545089eee0dd129dbd180cb9e3e39409d792bdc7ab8306156a7847af355e049c",
+      "workflow_run": {
+        "id": 40229896420,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/reader-dot-d10",
+        "head_sha": "d2e1b55c9cd4ded4201cbb4d1351bc490ef644df"
+      }
+    }
+  ],
+  "note": "Three target ZIPs authenticated by verifier job121290384110. Validation and prior-review summary artifacts are API/upload-metadata-only: no downstream original-byte rehash of those summaries; no fourth run."
+}

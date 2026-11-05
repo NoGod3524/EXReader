@@ -1,0 +1,79 @@
+name: Diagnose retained iPhone organization failure
+on:
+  push:
+    branches: [codex/apple-organization-diagnose-20261029]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate fixed original ZIP and read retained xcresult
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, pathlib, stat, subprocess, sys, zipfile
+          assert os.environ['GITHUB_ACTIONS'] == 'true'
+          sys.path.insert(0, 'tools')
+          from check_parallel_integration import fetch, download_artifact_zip
+          source = '9019f94c56245043d68422e6a70948f8fd227e8b'
+          job = fetch('actions/jobs/123734021433')
+          assert job['head_sha'] == source and job['run_id'] == 40951570390
+          assert job['status'] == 'completed' and job['conclusion'] == 'failure'
+          artifact = fetch('actions/artifacts/12933684799')
+          assert artifact['workflow_run']['head_sha'] == source
+          assert artifact['workflow_run']['id'] == 40951570390 and not artifact['expired']
+          raw = download_artifact_zip(12933684799)
+          assert len(raw) == artifact['size_in_bytes'] == 240212146
+          digest = hashlib.sha256(raw).hexdigest()
+          assert digest == '8dbabafab0f5a1693323d1342ecc2c251131d6eab69db55a047f6260dd0fbb85'
+          assert artifact['digest'] == 'sha256:' + digest
+          out = pathlib.Path('build/organization-failure-diagnostic')
+          out.mkdir(parents=True, exist_ok=False)
+          (out/'input.json').write_text(json.dumps({'source':source,'producer_run':40951570390,
+            'producer_job':123734021433,'artifact':12933684799,'bytes':len(raw),'sha256':digest,
+            'diagnostic_only':True,'accepted':False}, indent=2))
+          with zipfile.ZipFile(io.BytesIO(raw)) as z:
+            assert len(z.namelist()) == len(set(z.namelist()))
+            assert sum(i.file_size for i in z.infolist()) < 2 * 1024**3
+            for i in z.infolist():
+              p = pathlib.PurePosixPath(i.filename)
+              assert not p.is_absolute() and '..' not in p.parts and '\\' not in i.filename
+              assert not stat.S_ISLNK(i.external_attr >> 16)
+              if 'organization.xcresult' in p.parts or p.suffix == '.log':
+                z.extract(i, out)
+          for path in out.rglob('*.log'):
+            lines = path.read_text(errors='replace').splitlines()
+            for n, line in enumerate(lines):
+              if 'error:' in line or 'XCTAssert' in line or 'failed (' in line:
+                print(str(path) + '\n' + '\n'.join(lines[max(0,n-120):n+160]), flush=True)
+          if sys.platform != 'darwin':
+            print('Raw logs inspected; retained macOS diagnostic run reads xcresult separately.', flush=True)
+            sys.exit(0)
+          bundles = list(out.rglob('organization.xcresult'))
+          assert len(bundles) == 1
+          bundle = bundles[0]
+          for kind in ('summary', 'tests'):
+            value = subprocess.check_output(['xcrun','xcresulttool','get','test-results',kind,
+              '--path',str(bundle),'--format','json'], text=True)
+            (out/(kind+'.json')).write_text(value)
+            print(kind + ': ' + value, flush=True)
+          value = subprocess.check_output(['xcrun','xcresulttool','get','object','--legacy',
+            '--path',str(bundle),'--format','json'], text=True)
+          (out/'legacy.json').write_text(value)
+          issues = json.loads(value).get('issues', {})
+          print('issues: ' + json.dumps(issues), flush=True)
+          subprocess.run(['xcrun','xcresulttool','export','attachments','--path',str(bundle),
+            '--output-path',str(out/'attachments')], check=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: organization-failure-diagnostic-${{ github.run_id }}
+          path: build/organization-failure-diagnostic/
+          retention-days: 30
+          if-no-files-found: error

@@ -1,0 +1,38 @@
+name: F08 Apple native frame capture capability
+on:
+  push:
+    branches: [codex/f08-apple-capture-agent-20261031]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: All targets, or one focused capability check
+        type: choice
+        options: [all, macos, iphone, ipad]
+        default: all
+permissions:
+  contents: read
+  actions: read
+env:
+  DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+jobs:
+  capability:
+    name: Capture ${{ matrix.platform }}
+    runs-on: macos-15
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ${{ fromJSON(github.event_name == 'push' && '["macos"]' || inputs.platform == 'all' && '["macos","iphone","ipad"]' || format('["{0}"]', inputs.platform)) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate native Release bundle and inspect ScreenCaptureKit display times
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_apple_capture_20261031/probe.py '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-apple-capture-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-apple-capture-${{ matrix.platform }}/
+          include-hidden-files: true
+          if-no-files-found: error

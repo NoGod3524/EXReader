@@ -1,0 +1,61 @@
+name: Reader Apple display leases
+on:
+  push:
+    branches: [codex/dot-reader-apple-display]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  guard:
+    name: guard
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash tests/reader_apple_display/check_scope.sh
+  native:
+    name: native (${{ matrix.platform }})
+    runs-on: macos-14
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad, iphoneos]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash tests/reader_apple_display/check_scope.sh
+      - name: Install independent native module; compile fresh consumer; exercise actual OS
+        run: python3 tests/reader_apple_display/run_native.py "${{ matrix.platform }}" --out "$RUNNER_TEMP/d06/${{ matrix.platform }}"
+      - name: Bind original native named cases to installed module and actual executable
+        run: python3 tests/reader_apple_display/verify.py collect "${{ matrix.platform }}" "$RUNNER_TEMP/d06/${{ matrix.platform }}"
+      - name: Preserve original binaries, reports and all failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-apple-display-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/d06/${{ matrix.platform }}/
+          if-no-files-found: error
+          retention-days: 14
+  authenticate:
+    name: authenticate
+    needs: [guard, native]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash tests/reader_apple_display/check_scope.sh
+      - name: Authenticate completed same-source jobs, API artifact metadata and recomputed ZIP bytes; reject altered copies
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_apple_display/verify.py aggregate

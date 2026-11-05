@@ -1,0 +1,24 @@
+name: Inspect Windows cold-start observation
+on:
+  push:
+    branches: [codex/reader-full-product-performance]
+    paths: ['.github/workflows/reader-full-perf-startup-inspect.yml', 'tests/reader_perf_startup_inspect/inspect.py']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate and summarize original startup evidence in Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_perf_startup_inspect/inspect.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: startup-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/startup-inspection/result.json
+          if-no-files-found: warn

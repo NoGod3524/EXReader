@@ -1,0 +1,26 @@
+[
+  {
+    "input": "<absolute>",
+    "line": 71
+  },
+  {
+    "input": "<linker-defined>",
+    "line": 100
+  },
+  {
+    "input": "reader.c.obj",
+    "line": 101
+  },
+  {
+    "input": "windows_wave3_bridge.cpp.obj",
+    "line": 126
+  },
+  {
+    "input": "<common>",
+    "line": 16796
+  },
+  {
+    "input": "* linker generated manifest res *",
+    "line": 53496
+  }
+]

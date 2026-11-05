@@ -1,0 +1,59 @@
+name: Apple maximum-type organizer focused diagnostic
+on:
+  push:
+    branches: [codex/dot-apple-large-type-drivers]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  sdk:
+    runs-on: macos-15
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve original SDK, modules, tests and budgets
+        run: |
+          git diff --exit-code 716c1409168960a276e282ce694d32ed82497bc9 HEAD -- src include bindings cmake CMakeLists.txt apps/reader tests/apple_host tests/apple_d24 tests/reader_team24_apple tests/reader_a11y_apple tools
+          python3 -m compileall -q tests/apple_large_type_drivers
+      - name: Build same-source SDK and modules
+        run: python3 tests/reader_team24_apple/build.py --target iphonesimulator
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-large-type-focus-sdk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/raw3-ios-sdk/iphonesimulator/sdk/
+            build/raw3-ios-sdk/iphonesimulator/raw-products/
+            build/raw3-ios-sdk/iphonesimulator/*.json
+          if-no-files-found: error
+  native:
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: apple-large-type-focus-sdk-*
+          path: sdk-input
+      - name: Project dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Real app import setup then actual maximum system type reading and organizer
+        run: python3 tests/apple_large_type_drivers/focus.py --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-large-type-focus-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-large-type-focus/${{ matrix.platform }}/evidence/
+          if-no-files-found: error

@@ -1,0 +1,45 @@
+name: TXT mixed original export installed API
+on:
+  push:
+    branches: [codex/windows-txt-original-export]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  installed-consumer:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and install approved SDK and exporter
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          cmake --preset reading-library
+          cmake --build --preset reading-library --parallel 4
+          cmake --install build/reading-library
+          sdk="$PWD/build/reading-library/stage"
+          stage="$PWD/build/mixed-stage"
+          cmake -S apps/reader/original-export -B build/mixed-exporter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$sdk" -DEXR_SDK_VERSION=3.41.0 -DCMAKE_INSTALL_PREFIX="$stage"
+          cmake --build build/mixed-exporter --parallel 4
+          cmake --install build/mixed-exporter
+          cmake -S tests/reader_txt_mixed_export -B build/mixed-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$stage;$sdk"
+          cmake --build build/mixed-consumer --parallel 4
+      - name: Verify mixed originals and refusal cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/mixed-output build/mixed-evidence
+          printf '%s\n%s\n%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > build/mixed-evidence/identity.txt
+          build/mixed-consumer/txt-mixed-export "$PWD/build/mixed-output" | tee build/mixed-evidence/result.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: txt-mixed-export-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/mixed-evidence/
+          if-no-files-found: warn

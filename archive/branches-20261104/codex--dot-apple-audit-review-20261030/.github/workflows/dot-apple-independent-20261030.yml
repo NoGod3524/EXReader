@@ -1,0 +1,25 @@
+name: Independent Apple exact nineteen ZIP authentication
+on:
+  push:
+    branches: [codex/dot-apple-authenticate-20261030]
+    paths: ['tools/reader_composition/dot_apple_independent_20261030.py', '.github/workflows/dot-apple-independent-20261030.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  authenticate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exact producer metadata and unchanged original ZIP auditor
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/dot_apple_independent_20261030.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dot-apple-independent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/dot-apple-independent/
+            build/closure-apple-independent/result.json
+          retention-days: 30
+          if-no-files-found: error

@@ -1,0 +1,43 @@
+# F07 Linux installed managed GTK provider binding
+Initial run completed with a retained auxiliary-test configure failure. One Linux 120-minute job and one independent 15-minute audit; no automatic correction round.
+User authorization Sentinel_2f4c8c19b1d481919217a02c7c58cab8.
+Product base 044824f91ddae2ea49994350d308d079a69048ab; SDK 7271829a829bfa6aaa47b73077c493f71af27ad3; unchanged cleanup core dba079b550f9ec83054e6b7b0b7475f43bc1739f.
+Only this document, the new workflow, and five files under tests/reader_f07_provider_binding_20261031 are owned. No product, frozen test, SDK or catalog edits.
+## Scope
+Reuse the unchanged installed GTK build recipe at the product base, including its old 77 TLS regression, package equality/version check, capability prefix controls and installed hook checks. Additional flags only on final host configuration: export compile commands, GNU cross-reference and SQLite symbol traces. Existing real host map stays enabled. Diagnostic binary identity is new; no claim it equals the prior package hash.
+Actual host must have managed/raw3/account/reading-records enabled, match its packaged bytes, bind all product family prefixes and SDK3.42/ABI1, retain its full link command/map, extracted SQLite archive member, symbol definitions and dynamic dependency inventory. Two built SQLite archives alone are not evidence of two runtime providers.
+The source contract deliberately places the product SQLite before SDK vendor archives. The audit requires exactly that extracted provider in the actual host, rejects ambiguity and retains original evidence if it differs. System libraries may themselves depend on SQLite; a dynamic library name is not alone a claim the host calls it. Undefined host dynamic sqlite3 symbols fail this static attribution.
+Two installed auxiliary consumers report SQLite sourceid/version/compile options. The codec-only consumer actually calls reader_rs_free and must not bring SDK library/SQLite into its map. The SDK-linked auxiliary uses the public SQLite header installed with the product and the SDK library's transitive vendor archive. Its runtime output is not a runtime observation of the GTK process.
+No new UI automation, credentials, user books, production hooks or test interception. The actual packaged host's existing --version execution is retained; live in-process GTK SQLite address tracing is not provided. host_runtime_provider_observed=false remains even if static link attribution passes.
+## Evidence and controls
+Same run/attempt/source job success and artifact identity, original ZIP hash/size retained; bounded flat ZIP members, no execution of artifact code. Independently recompute actual host nm output. Installed target archives and all retained files are hash-bound.
+One genuine wrong canonical SDK prefix configure must reject F07_SDK_PREFIX. Audit one positive plus six negative controls: missing map, ambiguous extracted provider, wrong SDK target prefix, wrong version, hook symbol and archive hash tamper. Semantic controls recompute inner hash inventory before rejection, so an outer hash cannot mask their target rule.
+Only whitelisted provider evidence is uploaded; original TLS fixture keys and profiles are outside this upload. Original product recipe and its test assertions stay untouched.
+F07_accepted=false; formal95/108 and six-platform F07 remain unchanged. A failed/missing map or unsupported format is a real evidence gap, never normalized into a pass.
+
+## Initial authorized run: retained failure
+Source f7f632a30c7b396707fe327d7bd784e2924aef33; run [41181794849](https://github.com/NoGod3524/EXReader/actions/runs/41181794849), attempt 1. The one authorized round is used; no automatic correction or rerun.
+Linux job124480540642 failed in the NEW auxiliary consumer CMake configure (build.py line37). The unchanged product recipe had already completed: original77 TLS accepted true; installed no-hook/package checks; actual packaged host --version printed 3.42.0 1. Built and packaged host were both10158144 bytes/SHA256 e6553ff51512d6803db11ca68cdcd8c7adb3d7eb9312d80315001ab9dab10aba.
+The wrapper used check_output without printing/persisting its captured output on failure. Therefore the exact CMake diagnostic is not in the ordinary job log; do not invent it.
+Independent static diagnosis: fixed SDK7271829a cmake/modules.cmake68 defines exr_core as INTERFACE, line70 links exr_render. This new test erroneously asks TARGET_FILE:EXReader::exr_core and expects libexr_core.a. That is a test-design defect and a strong configure-failure explanation, not a quoted original stderr. A future authorized correction should preserve interface TYPE/dependency identity and bind concrete exr_base/exr_render archives instead; never fabricate an interface archive. It should also preserve auxiliary configure stdout/stderr and copy already-built host evidence before auxiliary configure.
+Audit job124480978407 correctly refused producer_job; audit_completed=false/audit_passed=false/F07_accepted=false. It did not download or inspect producer ZIP, adjudicate provider maps, run the six negative controls, or independently inspect final host symbols. Auxiliary runtime consumers and the wrong-prefix control were not reached. No product failure or dual-SQLite runtime conclusion is established.
+Artifacts (API metadata verified, not locally downloaded):
+- producer13035367114,30585 bytes,SHA256 f15bcf53c03bad2126b18943db18898103599e73706fbced418a2876653338c6; upload logs report36 retained recipe configure/build logs.
+- audit13035690977,221 bytes,SHA256 3618276ff0a6cf09017f56c0d12608f7da59f55351dc360a23b15e7286b27ddb.
+The already-built host/map were not copied into the new evidence directory before this auxiliary failure. Their successful construction is supported by original recipe log output, not by a claimed retained binary audit. Formal95/108 and six-platform F07 remain unchanged.
+
+## Explicitly authorized one correction
+User Sentinel_c755c0f0301881919ceb713442152ace approved one additional Linux120+audit15-minute run. Only the new test CMake/build/checker record core as INTERFACE_LIBRARY with its exact EXReader::exr_render dependency and bind concrete exr_base/exr_render installed archives. Public target_link_libraries remains unchanged. Wrapper commands now persist captured stdout/stderr, print failure output and preserve the nonzero return. No product/old test changes; six audit negative controls remain unchanged. Original failure above is retained. No automatic third run.
+
+
+## Correction result 2026-10-31
+
+Run 41182600094/A1 at 334aa9659426ddd3f3b1adcdcb70db86c32ae511 succeeded: Linux job124482898836, audit124483544959. The separately approved correction round is consumed; no further run is authorized. Initial failure remains above.
+
+Actual managed GTK host/package: 10158144 bytes, SHA256 e6553ff51512d6803db11ca68cdcd8c7adb3d7eb9312d80315001ab9dab10aba. Package prints 3.42.0 ABI1; original77 TLS checks passed. Core is INTERFACE_LIBRARY -> EXReader::exr_render; concrete base/render archives were separately bound.
+
+Independent Actions audit authenticated original ZIP/internal hashes, actual link/map/archive members and recomputed host symbols. Actual host and codec-only control extract product libreader_catalog_sqlite.a(sqlite3.c.o); independent SDK consumer extracts SDK libexr_vendor_exr_sqlite.a(sqlite3.c.o). Dynamic dependency inventory retained. Positive1/negative6 all passed, exact refusal reasons: missing_map, provider_ambiguous, target_prefix, sdk_version_abi, test_hook, file_hash.
+
+Producer artifact13035623286:11793200 bytes/SHA256 922fbf4f782ea31c1b431d1cf612a2f25d7e8806eb4ba1728e6d991269c494a0. Audit artifact13034649803:16488586 bytes/SHA256 e390045e3f926be3314e0c4ce2be278a17e0cd0cff82d6b47da6d2b594ea74a0.
+
+Audit completed/passed true, errors empty. host_runtime_provider_observed=false: executed sourceid/compile options belong only to independent public consumers, not live GTK address attribution. Diagnostic linker flags are recorded; no untested package binary-equivalence claim. F07_accepted=false, formal95/108 unchanged, not six-platform acceptance. No local build/test/ZIP processing.

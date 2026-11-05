@@ -1,0 +1,66 @@
+{
+  "accepted": false,
+  "complete_product": false,
+  "physical_device": false,
+  "diagnostic_source": "798a96c52932ab67635023b8a2623c7297d281b7",
+  "producer_source": "bd8c3638019280bea6496b778339abf04629bd27",
+  "producer_run": 40229070687,
+  "producer_attempt": 1,
+  "producer_job": 121276697202,
+  "diagnostic_run": 40233907741,
+  "diagnostic_attempt": 1,
+  "diagnostic_job": 121291268449,
+  "groups": [
+    {"name": "original-control", "passed_checks": 18, "failed": false},
+    {"name": "original-apk-trace", "passed_checks": 0, "failed": true, "reason": "probe signer differs; Android Permission Denial"},
+    {"name": "rebuilt-pair-trace", "passed_checks": 18, "failed": false, "same_original_apk": false},
+    {"name": "rebuilt-pair-fresh", "passed_checks": 18, "failed": false, "same_original_apk": false}
+  ],
+  "artifact": {
+    "id": 12613604629,
+    "name": "android-navigation-freshness-40233907741-1",
+    "bytes": 22249008,
+    "sha256": "86489765d5b7fd4a2f9de75c5c5b9e9d1d815c4e8af4662d9946cd2387bc6b29",
+    "expires_at": "2027-01-23T21:06:28Z"
+  },
+  "cloud_authenticated_inspection": {"run": 40234679542, "job": 121293588163, "emulator": false},
+  "cache_observation": {
+    "phase": "first",
+    "check": "hierarchy_unicode_fragment_selects_independently_verified_part",
+    "window_id": 181,
+    "before_sequence": 1,
+    "after_sequence": 2,
+    "same_ready": "目录 · 45 项 · 本批 32 项",
+    "same_native_live": 1,
+    "before_rows": 0,
+    "after_visible_enabled_rows": 5,
+    "clear_cache_return": true,
+    "original_group_failure_causally_proven": false,
+    "group_check_window": 187,
+    "group_visible_enabled_row_before_and_after": 1
+  },
+  "original_host": {
+    "sha256": "ddf7b77259280e030a8f3e1a770a2a164771265e79d0acef0dd2ecd5867931e3",
+    "certificate_sha256": "59cfaac1f05a5a117fb36e475824ac0359fe6117eb40c0eaa96d0a56c6d4a3a5"
+  },
+  "rebuilt_host": {
+    "sha256": "9c4bbaa9d2010dc3090804fbf9c1c3ae5714baadca56a7550dad281975de3451",
+    "certificate_sha256": "d511ef723375088937ff16f4bc6f4ca4fd02270faa3c8ac8a645dda6ab5a6fd4",
+    "same_original_apk": false,
+    "same_native_dso_bytes": ["libexreader.so", "libexreader_host.so", "libexreader_jni.so"],
+    "different_native_dso_bytes": ["libexreader_product.so"]
+  },
+  "invariants": {
+    "original_java_unchanged": true,
+    "owner_source_unchanged": true,
+    "expected_checks": 18,
+    "phase_timeout_seconds": 900,
+    "query_wait_ms": 30000,
+    "owner_config_selector_candidate": false,
+    "native_config_selector_candidate": false,
+    "reused_stage_files_unchanged": 357
+  },
+  "earlier_diagnostic_failed_runs": [40232637095, 40233313404],
+  "earlier_read_only_inspection_runs": [40233119316, 40233225167],
+  "scope": "Accessibility cache observation only; no original failure replacement or product grant"
+}

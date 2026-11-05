@@ -1,0 +1,60 @@
+name: Read-only C02 Windows timeout diagnosis
+on:
+  push:
+    branches: [codex/reader-c02-timeout-diagnostic]
+    paths:
+      - 'tests/reader_c02_timeout_diagnostic/**'
+      - '.github/workflows/reader-c02-timeout-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-c02-timeout-diagnostic-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+defaults:
+  run:
+    shell: bash
+jobs:
+  inspect:
+    name: Authenticate both original Windows ZIPs and read their 21-file evidence
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse only the new diagnostic in Actions and authenticate original evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m py_compile tests/reader_c02_timeout_diagnostic/diagnose.py
+          python3 tests/reader_c02_timeout_diagnostic/diagnose.py inspect
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-timeout-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c02-timeout-inspection/report.json
+          if-no-files-found: error
+  reproduce:
+    name: Bounded native compact-host persistent-query observation (at most 60 seconds)
+    needs: inspect
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reuse the exact original executable font and public-SDK seed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_c02_timeout_diagnostic/diagnose.py reproduce
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-timeout-bounded-reproduction-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c02-timeout-reproduction/report.json
+          if-no-files-found: error

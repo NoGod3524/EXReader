@@ -1,0 +1,48 @@
+name: F11 mobile delivery binary identity candidate
+on:
+  push:
+    branches: [codex/dot-f11-mobile-delivery-identity-20261031]
+permissions:
+  contents: read
+jobs:
+  elf-fixture:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile minimal ELF shared-object fixture (not Android deployment)
+        run: |
+          mkdir -p build/f11-elf
+          printf 'int fixture(void) { return 0; }\n' > build/f11-elf/minimal.c
+          cc -shared -fPIC build/f11-elf/minimal.c -o build/f11-elf/libfixture.so
+          readelf -h build/f11-elf/libfixture.so
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f11-elf-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f11-elf/libfixture.so
+          if-no-files-found: error
+  identity:
+    needs: elf-fixture
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: f11-elf-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f11-elf
+      - name: Preserve unchanged original ten protocol checks and mobile assertions
+        run: |
+          python tests/reader_wave3_s20/selftest.py
+          python tests/reader_wave3_s20/test_mobile.py
+      - name: Mandatory binary identity gate contract (3 positive and 16 negative)
+        run: python tests/reader_f11_mobile_identity_20261031/test_contract.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f11-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f11/receipt.json
+          if-no-files-found: error

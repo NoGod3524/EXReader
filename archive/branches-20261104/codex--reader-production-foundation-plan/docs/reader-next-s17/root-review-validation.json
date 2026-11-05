@@ -1,0 +1,49 @@
+{
+  "accepted": true,
+  "adopted": false,
+  "scope": "explicit sync-status-view raw session0.2 installed family on Windows and Linux",
+  "tested_source": "537460e563874de1237d2e9d9bf2b0ca130c64d9",
+  "run_id": 40230047146,
+  "attempt": 1,
+  "conclusion": "success",
+  "job_ids": [
+    121279617048,
+    121279617270,
+    121280349092
+  ],
+  "per_platform_checks": {
+    "mixed_profile_rejections": 5,
+    "raw": 20,
+    "legacy": 22
+  },
+  "cross_platform_checks_identical": true,
+  "module_implementation_changed_by_root": false,
+  "original_failures_retained": true,
+  "artifacts": [
+    {
+      "bytes": 756,
+      "expires_at": "2027-01-23T20:17:14Z",
+      "id": 12612704079,
+      "name": "reader-next-s17-summary-40230047146-1",
+      "sha256": "sha256:d3ab5a82d7fe1625eb8d06afbf2897cf69c9e5f328b1b2bab71a7d2aebebb50e"
+    },
+    {
+      "bytes": 24000975,
+      "expires_at": "2027-01-23T20:17:14Z",
+      "id": 12611749440,
+      "name": "reader-next-s17-Windows-40230047146-1",
+      "sha256": "sha256:06d4c64bd068e666e138ca07432f702158477cacef70b2f01ea06a1532b27980"
+    },
+    {
+      "bytes": 17708572,
+      "expires_at": "2027-01-23T20:17:14Z",
+      "id": 12611714537,
+      "name": "reader-next-s17-Linux-40230047146-1",
+      "sha256": "sha256:44c763ff9d30c0f2c218eae493b103f0466d29e6163e78c7dd805e26f4f73947"
+    }
+  ],
+  "actual_hosts": false,
+  "physical_device": false,
+  "performance_accepted": false,
+  "complete_product": false
+}

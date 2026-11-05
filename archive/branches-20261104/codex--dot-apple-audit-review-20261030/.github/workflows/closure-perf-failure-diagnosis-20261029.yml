@@ -1,0 +1,23 @@
+name: Closure current GTK scroll failure original ZIP diagnosis
+on:
+  push:
+    branches: [codex/handoff-evidence-resume-20261029]
+    paths: ['tools/reader_composition/closure_perf_failure_diagnosis.py', '.github/workflows/closure-perf-failure-diagnosis-20261029.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/reader_composition/closure_perf_failure_diagnosis.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: closure-perf-failure-diagnosis-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/closure-perf-diagnosis/
+          if-no-files-found: error

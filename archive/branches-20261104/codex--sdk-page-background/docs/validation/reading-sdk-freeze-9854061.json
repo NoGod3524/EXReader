@@ -1,0 +1,688 @@
+{
+  "schema": 1,
+  "scope": "reading SDK source/API/schema freeze",
+  "sdk_freeze_accepted": true,
+  "source_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+  "versions": {
+    "sdk": "3.40.0",
+    "core": "3.39.0",
+    "library": "3.34.0",
+    "abi": 1,
+    "schema": 7
+  },
+  "execution_jobs": 18,
+  "artifacts": 30,
+  "protected_trees": {
+    "src": "adc09002584fc20a99fd170e8148dbd870a27f52",
+    "include": "86fb444dbf1664771d997daeff772bb465d617a7",
+    "cmake": "1194898d9b9545b1783b293ebdc7b3eecd957aba",
+    "CMakeLists.txt": "5d0083a0d7c05edae28ca43ddbab8f1c399ef34d",
+    "tests/fixtures": "2a1fd5e58347f6ed8692996ba855c703f3c2da46",
+    ".github/workflows/native.yml": "2df429e50fa80532026d0de46ee7fc5470b5274c",
+    ".github/workflows/reliability.yml": "a27c1d1ca5a7aae1d590ceed356fdd5cd81abdb9",
+    "bindings": "54c12f70a1a63cae6574984a388b66bf6248c38e"
+  },
+  "evidence_origin": "GitHub Actions; metadata and completed logs read through GitHub connector; no local artifact download or recomputation",
+  "runs": [
+    {
+      "group": "native",
+      "id": 39897572352,
+      "source_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39897572352",
+      "jobs": [
+        {
+          "id": 120231435075,
+          "name": "android",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231435195,
+          "name": "sanitizers",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231435227,
+          "name": "desktop (windows-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231435259,
+          "name": "fuzz",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231435339,
+          "name": "desktop (macos-15)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231435371,
+          "name": "apple-mobile",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231435464,
+          "name": "desktop (ubuntu-22.04)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12478435298,
+          "name": "EXReader-reference-iPhone-iPad",
+          "size_in_bytes": 25315970,
+          "digest": "sha256:7201cc74d603f393897693f75e382730281bc553a6691f219a1113845246a7f9",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12478360099,
+          "name": "EXReader-conversion-Windows",
+          "size_in_bytes": 14308,
+          "digest": "sha256:93d8f492eacb4d6e35bf415450d189e64ff5c6c474848b79d1cbf00a5cba76d1",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12478240614,
+          "name": "EXReader-reference-Windows",
+          "size_in_bytes": 17504730,
+          "digest": "sha256:22d3e39745de5a0e83062c93b3ce701fdbd0168a7327fa3c575dfb9b37f4e1a1",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12478096557,
+          "name": "sanitizer-native-tests",
+          "size_in_bytes": 28212,
+          "digest": "sha256:644d788955ec857753f9e8be341da258810acd33124f49f28db17db0d10301d9",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12478095543,
+          "name": "EXReader-performance-macOS",
+          "size_in_bytes": 14392,
+          "digest": "sha256:06413752e0a1c0dd2115b80394a9258072b0ef1c052e42cf85eefe9ad262350f",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12478060954,
+          "name": "EXReader-reference-macOS",
+          "size_in_bytes": 25442923,
+          "digest": "sha256:4475d4ad8c44b3aa3c466371b97a3c4e3d5fd223ad0d577efb9029a8acc9f276",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477962303,
+          "name": "EXReader-performance-Windows",
+          "size_in_bytes": 14418,
+          "digest": "sha256:07396cbcc778c118635fcff51b0127fa91b489bc0337ebfe3d79b2f89e51bdd5",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477906756,
+          "name": "EXReader-WP6-Windows",
+          "size_in_bytes": 28565,
+          "digest": "sha256:9042a33ab88c49d30349cc20a64868f69d367bdac77c045b2fc35ef8726d4558",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477866270,
+          "name": "EXReader-WP6-Linux",
+          "size_in_bytes": 28746,
+          "digest": "sha256:74bac0aac99eec532d41db7e5ef78384fccf9c89d0a8c84499b8938e01d0c87d",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477711721,
+          "name": "EXReader-WP6-macOS",
+          "size_in_bytes": 27781,
+          "digest": "sha256:17727bb2dec4acd16588fc15f7fdabd1a203a034f77fffe5d2d33a829410fb7b",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477672433,
+          "name": "EXReader-conversion-macOS",
+          "size_in_bytes": 14358,
+          "digest": "sha256:07479fb6545e01bbf2de1817859fb3ed6e06788fe2e80a191e5d0a66a16421e9",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477568779,
+          "name": "EXReader-C-Windows",
+          "size_in_bytes": 14823489,
+          "digest": "sha256:a21115a8527b70fcd8ccdbb26bc38af1dce9874c084337a1a7db29b52412dd2f",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477508431,
+          "name": "EXReader-C-macOS",
+          "size_in_bytes": 18875782,
+          "digest": "sha256:21059a499676108d3bc4e89b293a69a1501f68040e03e3743e987c50aadf5d38",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477482545,
+          "name": "EXReader-C-Android-arm64",
+          "size_in_bytes": 34740236,
+          "digest": "sha256:88841b38b34c978ccb73f02819178b6c378885144175f23660ed3f3000f97c18",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477357382,
+          "name": "EXReader-conversion-Linux",
+          "size_in_bytes": 14042,
+          "digest": "sha256:1adb0da7d66d4d5d9eaa5e07d57be33ae9a6f32099e00703a21a5532c4b6dfa6",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477149410,
+          "name": "EXReader-C-iOS-iPadOS-arm64",
+          "size_in_bytes": 37328849,
+          "digest": "sha256:e28579699ded98e9825760e7d7332bfa8708c39b09257bb25543f33af7b85bd1",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477147522,
+          "name": "reliability-native-smoke",
+          "size_in_bytes": 23583,
+          "digest": "sha256:774c8f1fc2e89affb160e40a8cfdadf0032274a859c251f0a150312bcd31cac5",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477048233,
+          "name": "EXReader-performance-Linux",
+          "size_in_bytes": 14429,
+          "digest": "sha256:cff7aa3711127a3aa8036d53405c2d22f1e7aa18e643e5e66ae6ec961bc31f16",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12476973444,
+          "name": "EXReader-C-Linux",
+          "size_in_bytes": 21732799,
+          "digest": "sha256:ec048834dc7aa26be77274ffe741204e700d60b52eca8494864650d9ae9caa2f",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:28Z",
+          "workflow_run": {
+            "id": 39897572352,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        }
+      ]
+    },
+    {
+      "group": "bounded-library",
+      "id": 39897574492,
+      "source_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39897574492",
+      "jobs": [
+        {
+          "id": 120231441523,
+          "name": "source (ON)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231441725,
+          "name": "source (OFF)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12477725859,
+          "name": "bounded-library-OFF-39897574492-1",
+          "size_in_bytes": 11701372,
+          "digest": "sha256:010c66a0746b7ae424271debd19ad5dce43901d8e126ca372f49f0c891acb8d2",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:30Z",
+          "workflow_run": {
+            "id": 39897574492,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477048331,
+          "name": "bounded-library-ON-39897574492-1",
+          "size_in_bytes": 42465110,
+          "digest": "sha256:f5db4eeb3b55c846237b6fed8579154755655a8cdf5354c0a42133706c4a3bb7",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:30Z",
+          "workflow_run": {
+            "id": 39897574492,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        }
+      ]
+    },
+    {
+      "group": "reading-linux",
+      "id": 39897576838,
+      "source_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39897576838",
+      "jobs": [
+        {
+          "id": 120231448948,
+          "name": "reading (reading-library)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231449111,
+          "name": "reading (reading-core)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12477965598,
+          "name": "reading-reading-core-39897576838-1",
+          "size_in_bytes": 12972501,
+          "digest": "sha256:e955965c9ea7e15c3335db810870bd6e7d18d2dc0dcfd28aeb441295bb82da57",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:32Z",
+          "workflow_run": {
+            "id": 39897576838,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477029142,
+          "name": "reading-reading-library-39897576838-1",
+          "size_in_bytes": 14580206,
+          "digest": "sha256:c34c546dbeee7769fa5f52470691a13b528d7ee989b72c75bcaff88b9e1f34d0",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:32Z",
+          "workflow_run": {
+            "id": 39897576838,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        }
+      ]
+    },
+    {
+      "group": "reading-windows-macos",
+      "id": 39897579058,
+      "source_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39897579058",
+      "jobs": [
+        {
+          "id": 120231455822,
+          "name": "reading windows-2022 (reading-library)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231456017,
+          "name": "reading windows-2022 (reading-core)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231456063,
+          "name": "reading macos-15 (reading-library)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231456082,
+          "name": "reading macos-15 (reading-core)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12477751320,
+          "name": "reading-platform-macOS-reading-core-39897579058-1",
+          "size_in_bytes": 11537707,
+          "digest": "sha256:1b4b84a8d93214a998ea42b96cd3d83dbfcdf79fd76a6eff542aaf9799f8e0ff",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:33Z",
+          "workflow_run": {
+            "id": 39897579058,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477463101,
+          "name": "reading-platform-Windows-reading-library-39897579058-1",
+          "size_in_bytes": 19692000,
+          "digest": "sha256:f4b04094942139ee5f47d0c55b3eecae5e088cef84db8c8b7b5d2eaa28266804",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:33Z",
+          "workflow_run": {
+            "id": 39897579058,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12477032820,
+          "name": "reading-platform-macOS-reading-library-39897579058-1",
+          "size_in_bytes": 13139144,
+          "digest": "sha256:d551cfb17a661704a9319d29a4cd50c34d896a4e7903599e09c99a5c7f670365",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:33Z",
+          "workflow_run": {
+            "id": 39897579058,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12476569753,
+          "name": "reading-platform-Windows-reading-core-39897579058-1",
+          "size_in_bytes": 17271907,
+          "digest": "sha256:8eee595f276a2851e46bf1c035f5413ef88f55b3aa123dec6200c913d1e4297f",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:33Z",
+          "workflow_run": {
+            "id": 39897579058,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        }
+      ]
+    },
+    {
+      "group": "licenses",
+      "id": 39897581729,
+      "source_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39897581729",
+      "jobs": [
+        {
+          "id": 120231465622,
+          "name": "licenses (reading-library)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231465990,
+          "name": "licenses (reading-core)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120231466942,
+          "name": "material-pins",
+          "status": "completed",
+          "conclusion": "skipped"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12477537098,
+          "name": "reading-licenses-reading-library-39897581729-1",
+          "size_in_bytes": 83700,
+          "digest": "sha256:0486aff5e131c9e336d152ebb988b61eb5d2c92e795c91fcc2fb856c93b36926",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:35Z",
+          "workflow_run": {
+            "id": 39897581729,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        },
+        {
+          "id": 12476599286,
+          "name": "reading-licenses-reading-core-39897581729-1",
+          "size_in_bytes": 82811,
+          "digest": "sha256:8ef3d0aea2162a8091e79516e69a8f45871210b776469d4b36e8c14a683895cd",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:35Z",
+          "workflow_run": {
+            "id": 39897581729,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        }
+      ]
+    },
+    {
+      "group": "reading-pdf",
+      "id": 39897583781,
+      "source_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39897583781",
+      "jobs": [
+        {
+          "id": 120231472060,
+          "name": "native-measurement",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12477187332,
+          "name": "reading-pdf-39897583781-1",
+          "size_in_bytes": 3173408,
+          "digest": "sha256:0f4037926f14fcbfbaa2fc8d5ffd72dd668729882cfbe79e95ee88a11e87627d",
+          "expired": false,
+          "expires_at": "2027-01-21T03:55:37Z",
+          "workflow_run": {
+            "id": 39897583781,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/r6-reading-release",
+            "head_sha": "9854061be331fe603a1822d9b2b36ee357154927"
+          }
+        }
+      ]
+    }
+  ],
+  "host_revalidation": {
+    "accepted": false,
+    "status": "rejected_android_failure; Apple pending",
+    "source_sha": "da1c1833d89932612d8e4549fee5aec378555ad4",
+    "runs": {
+      "windows": 39899820869,
+      "linux": 39899823392,
+      "apple": 39899825998,
+      "android": 39899828858
+    },
+    "android_failure": "pdf_process_restart frame mismatch; original walkthrough 44/45, review 10/10, bounded 11/11; final strict acceptance refused"
+  },
+  "formal_performance_accepted": false,
+  "required_release_gate_accepted": false,
+  "published": false,
+  "complete_product": false,
+  "wp16_accepted": false,
+  "wp16_cpu_credit_seconds": 0
+}

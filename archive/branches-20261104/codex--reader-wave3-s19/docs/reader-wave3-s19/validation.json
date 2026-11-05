@@ -1,0 +1,127 @@
+{
+  "accepted": false,
+  "package": "S19",
+  "scope": "installed SDK 3.41.0 plus the five reviewed optional packages linked into one product DSO and one host executable, one SDK implementation and one product store provider",
+  "seed": "d263ce5228838ac90c0a0dc13a5193d4a7739681",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "sdk_version": "3.41.0",
+  "tested_source": "1423a0f09f176793c6a0068e34b90e034ca72493",
+  "run_id": 40246747578,
+  "attempt": 1,
+  "jobs": [
+    {
+      "name": "fixed source and owned paths",
+      "id": 121329803025,
+      "conclusion": "success"
+    },
+    {
+      "name": "one SDK and one store (linux)",
+      "id": 121329834343,
+      "conclusion": "failure"
+    },
+    {
+      "name": "one SDK and one store (windows)",
+      "id": 121329834345,
+      "conclusion": "failure"
+    },
+    {
+      "name": "one SDK and one store (macos)",
+      "id": 121329834472,
+      "conclusion": "failure"
+    },
+    {
+      "name": "same-run identities and artifact digests",
+      "conclusion": "skipped"
+    }
+  ],
+  "artifacts": [],
+  "reached": {
+    "guard": "seed ancestry, SDK tree identity, ownership allow-list, python syntax",
+    "install": "SDK 3.41.0 plus 13 installed packages in one prefix on linux, windows and macos",
+    "closure": "declare()/attach() accepted the real graph; the installed provenance guard authenticated EXReader::exreader",
+    "compile": "the five-module feature translation unit compiled on all three platforms",
+    "macos_link": "libreader_host_features.dylib and reader-host-probe linked; three of six mixed graphs refused",
+    "refusals_observed": [
+      "negative-dso-static-sdk",
+      "negative-two-feature-dso",
+      "negative-host-links-module"
+    ]
+  },
+  "failures": [
+    {
+      "platform": "linux",
+      "step": "product DSO link",
+      "message": "relocation R_X86_64_TPOFF32 against `_ZN12_GLOBAL__N_16activeE' can not be used when making a shared object; recompile with -fPIC",
+      "cause": "the optional packages are installed without CMAKE_POSITION_INDEPENDENT_CODE, so their archives cannot enter a shared object",
+      "fix": "install every package with -DCMAKE_POSITION_INDEPENDENT_CODE=ON for a DSO consumer",
+      "applied": false
+    },
+    {
+      "platform": "windows",
+      "step": "product DSO link",
+      "message": "error LNK2005: exr_library_open/exr_document_open_memory/exr_anchor_create/exr_font_count/exr_version ... already defined in exreader.lib(exreader.dll); fatal error LNK1169",
+      "cause": "MSVC pulls the SDK archive members that the module interfaces carry even when the shared import library is linked first",
+      "fix": "use the static single-SDK closure on Windows (SDK_LINK static, host executable linking no SDK)",
+      "applied": false
+    },
+    {
+      "platform": "macos",
+      "step": "negative control assertion",
+      "message": "AssertionError: ('negative-module-outside-prefix', 'resolved outside every declared install prefix', ...)",
+      "cause": "the refusal happened with exactly that text, but CMake wrapped the message across two lines so the driver's substring assertion missed it",
+      "fix": "normalize whitespace before comparing the refusal text",
+      "applied": false
+    }
+  ],
+  "previous_runs": [
+    {
+      "run_id": 40245903358,
+      "source": "f751e8131b3d15fe47007d7ef3f4840b44a54189",
+      "conclusion": "cancelled",
+      "reason": "cancelled at queue time after a static review found a dangling path string in the original export call"
+    },
+    {
+      "run_id": 40245998177,
+      "source": "fa5f3cd9bc494a4f79d44c15a5d74f13559590e4",
+      "conclusion": "failure",
+      "reason": "CMake flattened the helper's module table into one list; declare() failed on list(GET) on all three platforms"
+    },
+    {
+      "run_id": 40246303666,
+      "source": "e700b01b2914465f459328d421d2e895597d947d",
+      "conclusion": "cancelled",
+      "reason": "cancelled while the matrix was building, after the evidence verifier's SDK module name was found to need prefix matching"
+    },
+    {
+      "run_id": 40246373859,
+      "source": "c885289d968acc7d24473673eb7f72eec7eff94f",
+      "conclusion": "failure",
+      "reason": "features.cpp used READER_ANNOTATION_IMPORT_OK (the real name is READER_AI_OK) and MSVC rejected the entry points for different linkage"
+    }
+  ],
+  "unverified": [
+    "the five real business paths were never executed (the driver stops at the first refusal mismatch on macOS and at the DSO link on Linux and Windows)",
+    "single loaded SDK module, exr_version pointer identity, symbol-table evidence and the store-provider split were not produced",
+    "the remaining three refusal controls (module-outside-prefix, standalone-alongside-dso, private-second-store) were not asserted on any platform",
+    "no artifact was uploaded by this attempt, so no ZIP identity exists",
+    "the Windows static single-SDK profile was not built or measured",
+    "the raw selector family, host UI, physical devices and packaged installers are out of scope and untouched"
+  ],
+  "boundaries": {
+    "changed_paths": [
+      "tools/reader_host_feature_link.cmake",
+      "apps/reader/host-feature-link/",
+      "tests/reader_wave3_s19/",
+      "docs/reader-wave3-s19/",
+      ".github/workflows/reader-wave3-s19.yml"
+    ],
+    "five_packages_unchanged": true,
+    "sdk_tree_unchanged": true,
+    "desktop_hosts_unchanged": true,
+    "root_cmake_unchanged": true,
+    "schema_unchanged": true,
+    "pr_or_tag_or_release": false,
+    "local_build_or_test": false,
+    "subagents": 0
+  }
+}

@@ -1,0 +1,84 @@
+name: Actual authenticated Android to macOS raw3 receive
+on:
+  push:
+    branches: [codex/reader-apple-raw3-android-receive]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  native:
+    name: Actual macOS raw host and original controls
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact sealed Mac production and unchanged complete judges
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/raw3/android_receive/guard.py
+      - name: Actions syntax and original complete actual Mac acceptance
+        run: |
+          python3 -m compileall -q tests/apple_host/raw3/android_receive
+          python3 tests/apple_host/raw3/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-raw3-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-raw3/evidence/
+          if-no-files-found: error
+  original-strict:
+    name: Original unchanged macOS strict summary
+    needs: native
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Original strict judge before any new receiver artifact exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/raw3/verify.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apple-raw3-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-raw3-summary/summary.json
+          if-no-files-found: error
+  receive:
+    name: Actual authenticated Android to macOS receive
+    needs: original-strict
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Actual original owner and AccountSession with authenticated Android packet
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/raw3/android_receive/receive.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-raw3-android-receive-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-android-raw3-receive/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+  summary:
+    if: always()
+    needs: [native, original-strict, receive]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Close original source APK SDK wire graph and actual Mac receiver proofs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/raw3/android_receive/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-raw3-android-receive-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-android-raw3-summary/summary.json
+          if-no-files-found: error

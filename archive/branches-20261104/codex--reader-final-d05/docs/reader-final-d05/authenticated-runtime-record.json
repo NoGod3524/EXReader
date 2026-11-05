@@ -1,0 +1,407 @@
+{
+  "artifact": {
+    "id": 12607774224,
+    "node_id": "MDg6QXJ0aWZhY3QxMjYwNzc3NDIyNA==",
+    "name": "reader-final-d05-40216989166-1",
+    "size_in_bytes": 25092124,
+    "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12607774224",
+    "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12607774224/zip",
+    "expired": false,
+    "digest": "sha256:7935b3ffd9eac7304141c67cebf84ef0410bb3e27429d30d548c8820dd00f021",
+    "created_at": "2026-10-25T17:43:31Z",
+    "updated_at": "2026-10-25T17:43:31Z",
+    "expires_at": "2026-11-24T17:43:28Z",
+    "workflow_run": {
+      "id": 40216989166,
+      "repository_id": 1421442522,
+      "head_repository_id": 1421442522,
+      "head_branch": "codex/reader-final-d05",
+      "head_sha": "d770aeacf2a2134daf03ec29216b46e77c11c62b"
+    }
+  },
+  "zip_bytes": 25092124,
+  "zip_sha256": "7935b3ffd9eac7304141c67cebf84ef0410bb3e27429d30d548c8820dd00f021",
+  "producer_job": 121240153914,
+  "verifier_source": "d770aeacf2a2134daf03ec29216b46e77c11c62b",
+  "corruption_checks": [
+    {
+      "kind": "missing",
+      "rejected": true
+    },
+    {
+      "kind": "wrong_size",
+      "rejected": true
+    },
+    {
+      "kind": "tampered_hash",
+      "rejected": true
+    }
+  ],
+  "result": {
+    "harness_sha": "d770aeacf2a2134daf03ec29216b46e77c11c62b",
+    "target_sha": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+    "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+    "run_id": "40216989166",
+    "attempt": "1",
+    "apk_sha256": "40836d0fa3fd2d3ddfed812aab33b40f3ec66f978b855b26790210673cb86741",
+    "sdk_so_sha256": "6372f49de6d7840cda8f9435f6ff5c185dc33e395bcbad79605e9dcedfd37407",
+    "sdk_version": "3.41.0",
+    "core_version": "3.40.0",
+    "abi": 1,
+    "image": "system-images;android-34;default;x86_64",
+    "configuration": "owner app-debug; all optional feature macros default false",
+    "audit_completed": true,
+    "default_ui_accepted": false,
+    "semantics_accepted": false,
+    "font_scale_accepted": false,
+    "font_scale_tree_checks_passed": false,
+    "rotation_accepted": false,
+    "rotation_visual_checks_passed": false,
+    "talkback_execution": "pending",
+    "talkback_accepted": false,
+    "physical_device_execution": false,
+    "complete_product": false,
+    "checks": {
+      "legacy": {
+        "pass": 5,
+        "fail": 10
+      },
+      "delta": {
+        "pass": 2,
+        "fail": 19
+      }
+    },
+    "findings": [
+      {
+        "group": "legacy",
+        "verdict": "fail",
+        "finding": "import_result_not_reported",
+        "patch": "The import result must be reported to the user",
+        "id": "import_picker",
+        "captures": [
+          "04-system-picker",
+          "05-shelf-imported"
+        ],
+        "started_elapsed_ns": 55236481467,
+        "finished_elapsed_ns": 136284087135
+      },
+      {
+        "group": "legacy",
+        "verdict": "fail",
+        "finding": "organize_container_clickable",
+        "patch": "Drop setClickable(true) / the container contentDescription in OrganizationPanel so an empty-area container is not announced as an activatable control",
+        "id": "organize_panel",
+        "captures": [
+          "08-organize"
+        ],
+        "started_elapsed_ns": 140404570565,
+        "finished_elapsed_ns": 143506205760
+      },
+      {
+        "group": "legacy",
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: the imported shelf row must be clickable",
+        "test_source_line": 1024,
+        "id": "back_navigation",
+        "captures": [
+          "09-back-organize"
+        ],
+        "started_elapsed_ns": 143707629142,
+        "finished_elapsed_ns": 165448182207
+      },
+      {
+        "group": "legacy",
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: the imported shelf row must be clickable",
+        "test_source_line": 1024,
+        "id": "reader_line_nodes",
+        "captures": [],
+        "started_elapsed_ns": 165649095329,
+        "finished_elapsed_ns": 185733367725
+      },
+      {
+        "group": "legacy",
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: reader_view must be present",
+        "test_source_line": 322,
+        "id": "reader_page_turn",
+        "captures": [
+          "13-reader-actions"
+        ],
+        "started_elapsed_ns": 185934337711,
+        "finished_elapsed_ns": 186155516889
+      },
+      {
+        "group": "legacy",
+        "verdict": "fail",
+        "finding": "missing_view:back_button",
+        "patch": "Capture 15-reader-toolbar does not expose back_button",
+        "id": "reader_toolbar_state",
+        "captures": [
+          "15-reader-toolbar"
+        ],
+        "started_elapsed_ns": 186356290017,
+        "finished_elapsed_ns": 187385347656
+      },
+      {
+        "group": "legacy",
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: control missing or not ready: select_button",
+        "test_source_line": 1047,
+        "id": "annotate_flow",
+        "captures": [],
+        "started_elapsed_ns": 187586051947,
+        "finished_elapsed_ns": 207651630821
+      },
+      {
+        "group": "legacy",
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: control missing or not ready: notes_button",
+        "test_source_line": 1047,
+        "id": "notes_panel",
+        "captures": [],
+        "started_elapsed_ns": 207852601447,
+        "finished_elapsed_ns": 227874590939
+      },
+      {
+        "group": "legacy",
+        "verdict": "fail",
+        "finding": "rotation_lost_book",
+        "patch": "The same book must stay open across the orientation change",
+        "id": "rotation",
+        "captures": [
+          "22-reader-portrait",
+          "23-reader-landscape"
+        ],
+        "started_elapsed_ns": 228075645734,
+        "finished_elapsed_ns": 233914371998
+      },
+      {
+        "group": "legacy",
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: the imported shelf row must be clickable",
+        "test_source_line": 1024,
+        "id": "large_font",
+        "captures": [
+          "24-shelf-font200"
+        ],
+        "started_elapsed_ns": 234115409068,
+        "finished_elapsed_ns": 266201451450
+      },
+      {
+        "group": "delta",
+        "id": "import_cancel",
+        "start_ms": 285356,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: cancel did not return shelf",
+        "stack": "java.lang.AssertionError: cancel did not return shelf\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$4(FinalAuditTest.java:63)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$yO-o5ynUXWsjI3rpqysS8_gfdBI(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda8.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:63)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "002-import_cancel-failure",
+        "end_ms": 299768
+      },
+      {
+        "group": "delta",
+        "id": "import_sample",
+        "start_ms": 299838,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: import completion not reported",
+        "stack": "java.lang.AssertionError: import completion not reported\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$9(FinalAuditTest.java:68)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$P9DK89TRiUYacNsZVUvNL9oVJXw(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda9.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:64)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "004-import_sample-failure",
+        "end_ms": 351604
+      },
+      {
+        "group": "delta",
+        "id": "touch_page",
+        "start_ms": 351629,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$11(FinalAuditTest.java:69)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$l3S6rTBmgFKc6EjztzrrW7xiNio(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda10.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:69)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "005-touch_page-failure",
+        "end_ms": 351865
+      },
+      {
+        "group": "delta",
+        "id": "annotation_ui",
+        "start_ms": 351873,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$15(FinalAuditTest.java:70)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$1Hc12xWYQHMXyEmJBp3ptX23oeM(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda12.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:70)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "006-annotation_ui-failure",
+        "end_ms": 352105
+      },
+      {
+        "group": "delta",
+        "id": "font_1.0",
+        "start_ms": 352114,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$16(FinalAuditTest.java:72)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$qM6VD5BLejVV2eUyLv3aoSNHibQ(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda13.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:72)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "008-font_1.0-failure",
+        "end_ms": 356990
+      },
+      {
+        "group": "delta",
+        "id": "rotation_1.0",
+        "start_ms": 357003,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$18(FinalAuditTest.java:73)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$g7otQbokCBeGe5NBZGwM2zpDLMs(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda14.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:73)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "009-rotation_1.0-failure",
+        "end_ms": 357230
+      },
+      {
+        "group": "delta",
+        "id": "rebuild_1.0",
+        "start_ms": 357244,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$20(FinalAuditTest.java:74)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$JIvCdX1OhiqhJaC2f7CN2Ob0kdM(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda15.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:74)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "010-rebuild_1.0-failure",
+        "end_ms": 359670
+      },
+      {
+        "group": "delta",
+        "id": "font_1.3",
+        "start_ms": 359687,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$16(FinalAuditTest.java:72)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$qM6VD5BLejVV2eUyLv3aoSNHibQ(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda13.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:72)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "012-font_1.3-failure",
+        "end_ms": 364022
+      },
+      {
+        "group": "delta",
+        "id": "rotation_1.3",
+        "start_ms": 364038,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$18(FinalAuditTest.java:73)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$g7otQbokCBeGe5NBZGwM2zpDLMs(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda14.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:73)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "013-rotation_1.3-failure",
+        "end_ms": 364262
+      },
+      {
+        "group": "delta",
+        "id": "rebuild_1.3",
+        "start_ms": 364285,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$20(FinalAuditTest.java:74)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$JIvCdX1OhiqhJaC2f7CN2Ob0kdM(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda15.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:74)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "014-rebuild_1.3-failure",
+        "end_ms": 366715
+      },
+      {
+        "group": "delta",
+        "id": "font_2.0",
+        "start_ms": 366733,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$16(FinalAuditTest.java:72)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$qM6VD5BLejVV2eUyLv3aoSNHibQ(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda13.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:72)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "016-font_2.0-failure",
+        "end_ms": 371063
+      },
+      {
+        "group": "delta",
+        "id": "rotation_2.0",
+        "start_ms": 371083,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$18(FinalAuditTest.java:73)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$g7otQbokCBeGe5NBZGwM2zpDLMs(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda14.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:73)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "017-rotation_2.0-failure",
+        "end_ms": 371306
+      },
+      {
+        "group": "delta",
+        "id": "rebuild_2.0",
+        "start_ms": 371329,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$20(FinalAuditTest.java:74)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$JIvCdX1OhiqhJaC2f7CN2Ob0kdM(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda15.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:74)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "018-rebuild_2.0-failure",
+        "end_ms": 373752
+      },
+      {
+        "group": "delta",
+        "id": "annotation_after_rebuild",
+        "start_ms": 373777,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$21(FinalAuditTest.java:76)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$dtCMsd-1yyzIDybOlfyRhVpkD-Y(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda16.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:76)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "019-annotation_after_rebuild-failure",
+        "end_ms": 374005
+      },
+      {
+        "group": "delta",
+        "id": "default_entry_书内搜索",
+        "start_ms": 378806,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$25(FinalAuditTest.java:78)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$TEWP1HibPRqZBk6yrCALkQowzqI(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda6.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:78)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "023-default_entry_书内搜索-failure",
+        "end_ms": 379059
+      },
+      {
+        "group": "delta",
+        "id": "default_entry_目录 / 按页入口",
+        "start_ms": 379098,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$25(FinalAuditTest.java:78)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$TEWP1HibPRqZBk6yrCALkQowzqI(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda6.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:78)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "024-default_entry_目录 _ 按页入口-failure",
+        "end_ms": 379334
+      },
+      {
+        "group": "delta",
+        "id": "default_entry_阅读记录",
+        "start_ms": 379372,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$25(FinalAuditTest.java:78)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$TEWP1HibPRqZBk6yrCALkQowzqI(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda6.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:78)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "025-default_entry_阅读记录-failure",
+        "end_ms": 379872
+      },
+      {
+        "group": "delta",
+        "id": "default_entry_阅读设置",
+        "start_ms": 379914,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: imported title row not reachable in book_list",
+        "stack": "java.lang.AssertionError: imported title row not reachable in book_list\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.open(FinalAuditTest.java:34)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$25(FinalAuditTest.java:78)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$TEWP1HibPRqZBk6yrCALkQowzqI(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda6.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:78)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "026-default_entry_阅读设置-failure",
+        "end_ms": 380142
+      },
+      {
+        "group": "delta",
+        "id": "default_account",
+        "start_ms": 380181,
+        "verdict": "fail",
+        "error": "java.lang.AssertionError: default account/sync entry absent",
+        "stack": "java.lang.AssertionError: default account/sync entry absent\n\tat org.exreader.a11y.FinalAuditTest.require(FinalAuditTest.java:25)\n\tat org.exreader.a11y.FinalAuditTest.lambda$audit$26(FinalAuditTest.java:79)\n\tat org.exreader.a11y.FinalAuditTest.$r8$lambda$e6lOXv92ewtXnPFDub0SUyg5zOk(Unknown Source:0)\n\tat org.exreader.a11y.FinalAuditTest$$ExternalSyntheticLambda7.run(D8$$SyntheticClass:0)\n\tat org.exreader.a11y.FinalAuditTest.test(FinalAuditTest.java:58)\n\tat org.exreader.a11y.FinalAuditTest.audit(FinalAuditTest.java:79)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2402)\n",
+        "last_capture": "028-default_account-failure",
+        "end_ms": 381403
+      }
+    ],
+    "unverified": [
+      "TalkBack speech and gestures",
+      "physical device and keyboard",
+      "other API/locales",
+      "glyph clipping/contrast visual review",
+      "stable raw reading offset and records across rotation",
+      "default-macro gated feature flows",
+      "release APK"
+    ],
+    "font_scales_actual": [
+      "1.0",
+      "1.3",
+      "2.0"
+    ],
+    "dimensions_actual": [
+      "1080x2400"
+    ],
+    "density_actual": [
+      "Physical density: 420"
+    ],
+    "image_source_properties": "Pkg.Desc=Android SDK System Image\nPkg.UserSrc=false\nPkg.Revision=2\nPkg.Dependencies=emulator#29.1.11\nAndroidVersion.ApiLevel=34\nAndroidVersion.ExtensionLevel=7\nAndroidVersion.IsBaseSdk=true\nSystemImage.Abi=x86_64\nSystemImage.GpuSupport=true\nSystemImage.TagId=default\nSystemImage.TagDisplay=Default Android System Image\n",
+    "device_fingerprint": [
+      "[ro.build.fingerprint]: [Android/sdk_phone64_x86_64/emu64x:14/UE1A.230829.036.A1/11228894:userdebug/test-keys]"
+    ]
+  }
+}

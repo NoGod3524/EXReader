@@ -1,0 +1,166 @@
+name: Reader final S11 import persistence
+
+# S11 only: the four existing public import surfaces under real disk, permission,
+# original-change, interruption and reopen faults. One branch, one live run.
+on:
+  push:
+    branches: [codex/reader-fw-s11]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  s11:
+    name: S11 import faults (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require the fixed start, the approved SDK and package path ownership
+        run: |
+          FIXED=0889f7d1e9a537c6c1b05456547e016b26e1cd85
+          K341=edddc463c06ed5731195cdb8f06b2df6dff7699e
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$FIXED" HEAD
+          git diff --exit-code "$K341" HEAD -- src include cmake CMakeLists.txt bindings tests/fixtures
+          allowed='^(tests/reader_final_s11/|[.]github/workflows/reader-final-s11[.]yml$|docs/reader-final-s11/|HANDOFF-RESULT[.]md$)'
+          changed=$(git diff --name-only "$FIXED" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the build and fixture tooling
+        run: |
+          python -m pip install ninja==1.11.1.1
+          if [ "$RUNNER_OS" = Linux ]; then
+            sudo apt-get update
+            sudo apt-get install -y libcurl4-openssl-dev libxml2-dev pkg-config
+          elif [ "$RUNNER_OS" = macOS ]; then
+            brew install openssl@3
+            echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"
+          fi
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record the source and configure the approved 3.41.0 SDK
+        run: |
+          mkdir -p build/s11-logs
+          git rev-parse HEAD > build/s11-logs/source.txt
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "S11_PREFIX=$ws/build/s11-prefix" >> "$GITHUB_ENV"
+          echo "S11_SDK=$ws/build/reading-library/stage" >> "$GITHUB_ENV"
+          cmake --preset reading-library 2>&1 | tee build/s11-logs/sdk-configure.log
+      - name: Build and install the unchanged reading SDK
+        run: |
+          set -o pipefail
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/s11-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/s11-logs/sdk-install.log
+      - name: Build and install the unchanged sideload and WebDAV packages
+        run: |
+          set -o pipefail
+          apple=OFF
+          if [ "$RUNNER_OS" = macOS ]; then apple=ON; fi
+          cmake -S extras/sideload -B build/s11-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$S11_SDK" -DCMAKE_INSTALL_PREFIX="$S11_PREFIX" 2>&1 | tee build/s11-logs/sideload-configure.log
+          cmake --build build/s11-sideload --parallel 4 2>&1 | tee build/s11-logs/sideload-build.log
+          cmake --install build/s11-sideload 2>&1 | tee build/s11-logs/sideload-install.log
+          cmake -S extras/webdav -B build/s11-webdav -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_WEBDAV_APPLE_URLSESSION=$apple -DCMAKE_INSTALL_PREFIX="$S11_PREFIX" 2>&1 | tee build/s11-logs/webdav-configure.log
+          cmake --build build/s11-webdav --parallel 4 2>&1 | tee build/s11-logs/webdav-build.log
+          cmake --install build/s11-webdav 2>&1 | tee build/s11-logs/webdav-install.log
+      - name: Build and install the unchanged product catalog
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/store/native -B build/s11-catalog -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$S11_PREFIX" 2>&1 | tee build/s11-logs/catalog-configure.log
+          cmake --build build/s11-catalog --target reader_catalog --parallel 4 2>&1 | tee build/s11-logs/catalog-build.log
+          cmake --install build/s11-catalog 2>&1 | tee build/s11-logs/catalog-install.log
+      - name: Build and install the four unchanged import packages
+        run: |
+          set -o pipefail
+          for package in batch-import cloud-import local-downloads; do
+            cmake -S "apps/reader/$package" -B "build/s11-$package" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$S11_SDK" -DCMAKE_PREFIX_PATH="$S11_PREFIX;$S11_SDK" -DCMAKE_INSTALL_PREFIX="$S11_PREFIX" 2>&1 | tee "build/s11-logs/$package-configure.log"
+            cmake --build "build/s11-$package" --parallel 4 2>&1 | tee "build/s11-logs/$package-build.log"
+            cmake --install "build/s11-$package" 2>&1 | tee "build/s11-logs/$package-install.log"
+          done
+      - name: Compile the independent consumer from installed packages only
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_final_s11/consumer -B build/s11-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S11_PREFIX;$S11_SDK" 2>&1 | tee build/s11-logs/consumer-configure.log
+          cmake --build build/s11-consumer --target s11-probe --parallel 4 2>&1 | tee build/s11-logs/consumer-build.log
+      - name: Generate the fixtures inside this job
+        run: |
+          set -o pipefail
+          python3 tests/reader_final_s11/make_fixtures.py --fixtures tests/fixtures --out build/s11-fixtures 2>&1 | tee build/s11-logs/fixtures.log
+      - name: Run the fault matrix and judge every receipt
+        run: |
+          set -o pipefail
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
+          python3 tests/reader_final_s11/check_s11.py --probe "build/s11-consumer/s11-probe$exe" --fixtures build/s11-fixtures --work build/s11-work --output build/s11-evidence --module-prefix build/s11-prefix 2>&1 | tee build/s11-logs/checks.log
+      - name: Preserve source-bound logs, databases, staging trees and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s11-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/s11-logs/
+            build/s11-evidence/
+            !build/s11-evidence/webdav-certificates/*.key
+            build/s11-work/
+            build/s11-fixtures/
+            build/s11-prefix/
+            build/s11-consumer/s11-probe*
+            build/s11-consumer/CMakeCache.txt
+            build/s11-batch-import/CMakeCache.txt
+            build/s11-cloud-import/CMakeCache.txt
+            build/s11-local-downloads/CMakeCache.txt
+          if-no-files-found: error
+  evidence:
+    name: same-run artifact evidence
+    needs: s11
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify job conclusions, artifact ids, bytes, digests and expiry
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/s11-artifact-evidence
+          set -o pipefail
+          python3 tests/reader_final_s11/check_artifacts.py --output build/s11-artifact-evidence 2>&1 | tee build/s11-artifact-evidence/evidence.log
+      - name: Preserve the artifact verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s11-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s11-artifact-evidence/
+          if-no-files-found: error

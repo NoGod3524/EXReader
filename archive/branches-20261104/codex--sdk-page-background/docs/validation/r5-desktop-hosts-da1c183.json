@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "scope": "Windows and Linux host acceptance at the same registered source; cloud logs and artifact metadata audit",
+  "source_sha": "da1c1833d89932612d8e4549fee5aec378555ad4",
+  "sdk_candidate": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_freeze_granted_by_this_record": false,
+  "complete_product": false,
+  "local_execution": false,
+  "local_artifact_download": false,
+  "windows": {
+    "workflow": ".github/workflows/wp13-windows.yml",
+    "run_id": 39899820869,
+    "run_attempt": 1,
+    "job_id": 120238574838,
+    "conclusion": "success",
+    "all_job_steps_successful": true,
+    "job_step_count": 17,
+    "native_selftest_checks": 26,
+    "original_ui": {
+      "passed": true,
+      "steps": 158,
+      "passed_steps": 158,
+      "failed_steps": 0,
+      "screenshots": 8,
+      "errors": []
+    },
+    "evidence_selftests": {
+      "passed": true,
+      "checks": 51
+    },
+    "bounded_ui": {
+      "accepted": true,
+      "checks": 80,
+      "failures": [],
+      "same_source_confirmed_in_success_output": true,
+      "sdk_ancestor_and_eight_protected_trees_enforced": true
+    },
+    "worker_review": {
+      "passed": true,
+      "candidate_passed": 11,
+      "baseline_rejected": 11,
+      "reverse_verification": true,
+      "same_source_and_run_confirmed_in_success_output": true
+    },
+    "artifact": {
+      "id": 12478376923,
+      "name": "EXReader-WP13-Windows",
+      "size_in_bytes": 39921321,
+      "digest": "sha256:7f26df559def2230a4676862b0bc9c4fdc23a6a991febedd2f7ca174ac564d67",
+      "expired_at_audit": false,
+      "api_source_and_run_match": true
+    }
+  },
+  "linux": {
+    "workflow": ".github/workflows/wp13-linux.yml",
+    "run_id": 39899823392,
+    "run_attempt": 1,
+    "job_id": 120238583837,
+    "conclusion": "success",
+    "all_job_steps_successful": true,
+    "job_step_count": 11,
+    "original_ui": {
+      "passed": true,
+      "checks": 20,
+      "report_sha256": "2d04a9184fcaf19d7be81a3cda992590678046fccd2885fcde277135eaef627d",
+      "screenshot_sha256": "c4e78401438fd831aef556e6bb39d270a83478e0167defee24508397a87aa807"
+    },
+    "negative_groups": {
+      "passed": true,
+      "count": 4,
+      "already_exited_child_statuses": [23, 0],
+      "real_notes_failure_checks": 26,
+      "font_restore_mutant_rejected_at_ui_check": 13,
+      "mutant_prior_checks_passed": 12,
+      "expected_font": 26,
+      "mutant_restored_font": 24
+    },
+    "bounded_ui": {
+      "accepted": true,
+      "checks": 37,
+      "sdk_ancestor_and_eight_protected_trees_verified_in_ci": true,
+      "long_native_turns": 65,
+      "windows_evicted": 6,
+      "projection_bytes": 1279999,
+      "index_bytes": 789460,
+      "peak_parse_workspace_bytes": 2296896,
+      "explicit_snapshot_bytes": 0,
+      "original_pid": 5764,
+      "reopened_pid": 5917,
+      "real_worker_input_response_ms": 14.659140000048865,
+      "cancel_code": 9,
+      "screenshots": 2
+    },
+    "independent_backend": {
+      "backend_passed": true,
+      "checks": 82,
+      "actual_success_output_observed": true
+    },
+    "artifact": {
+      "id": 12478975430,
+      "name": "WP13-Linux-da1c1833d89932612d8e4549fee5aec378555ad4",
+      "size_in_bytes": 33046721,
+      "digest": "sha256:b4edcef54e13dbe014d51a77af8b8a7216d1aeac6be3252974194af7f06bff34",
+      "expired_at_audit": false,
+      "api_source_and_run_match": true
+    }
+  }
+}

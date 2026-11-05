@@ -1,0 +1,10 @@
+// Generated same-source HostSync342Test candidate; the frozen original driver stays untouched.
+gradle.beforeProject { project ->
+    if (project.path == ':app') {
+        project.pluginManager.withPlugin('com.android.application') {
+            def candidate = new File(project.rootProject.projectDir, '../../build/installed-sync/candidate/java').canonicalFile
+            if (!candidate.isDirectory()) throw new GradleException('HostSync342Test candidate is missing')
+            project.android.sourceSets.androidTest.java.srcDir candidate
+        }
+    }
+}

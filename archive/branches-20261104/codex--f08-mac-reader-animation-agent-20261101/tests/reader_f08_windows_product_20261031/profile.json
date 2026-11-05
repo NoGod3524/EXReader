@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "scope": "Windows complete wave-3 host, non-frame observations first; frame and all-target F08 acceptance remain pending",
+  "sdk_version": "3.42.0",
+  "runner": "windows-2022",
+  "screen_width": 1280,
+  "screen_height": 800,
+  "real_sdk_sources": 2202,
+  "budgets": {
+    "first_interactive_max_ms": 2000,
+    "peak_working_set_bytes": 536870912,
+    "ordinary_frame_p95_ms": 16.67,
+    "ordinary_frame_p99_ms": 33.34
+  },
+  "rationale": "Frozen before measuring this full Windows package: two-second first interaction, 512 MiB working set, 60 Hz single-frame P95 and two-frame P99 targets.",
+  "f08_accepted": false
+}

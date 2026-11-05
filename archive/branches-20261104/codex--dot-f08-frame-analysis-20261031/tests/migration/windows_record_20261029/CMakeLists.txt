@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.24)
+project(WindowsInstalledRecordCandidateCheck LANGUAGES C)
+if(NOT WIN32)
+  message(FATAL_ERROR "Native Windows consumer required")
+endif()
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+find_package(EXReader 3.42.0 EXACT CONFIG REQUIRED COMPONENTS core library PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
+add_library(installed-record STATIC IMPORTED)
+set_target_properties(installed-record PROPERTIES
+  IMPORTED_LOCATION "${RECORD_PREFIX}/lib/exreader-migration-windows-record.lib"
+  INTERFACE_INCLUDE_DIRECTORIES "${RECORD_PREFIX}/include/exreader-migration-candidate")
+add_executable(windows-record-check probe.c)
+target_compile_definitions(windows-record-check PRIVATE _WIN32_WINNT=0x0A00 _CRT_SECURE_NO_WARNINGS "CANDIDATE_SOURCE_SHA=\"${SOURCE_SHA}\"")
+target_compile_options(windows-record-check PRIVATE /utf-8 /W4 /WX)
+target_link_libraries(windows-record-check PRIVATE installed-record EXReader::exr_library advapi32 psapi)
+target_link_options(windows-record-check PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/record-consumer.map")

@@ -1,0 +1,395 @@
+name: Reader final C02 product performance measurement
+on:
+  push:
+    branches: [codex/reader-fw-c02]
+    paths:
+      - 'tests/reader_final_c02/**'
+      - '.github/workflows/reader-final-c02.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-final-c02-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  # Consumer = this branch (tools). Windows producer = the same checkout, owner trees equal to this start.
+  C02_START: 0889f7d1e9a537c6c1b05456547e016b26e1cd85
+  # GTK compact producer is a separate commit, checked out a second time into ./producer.
+  GTK_PRODUCER: 57203a52aee439be5194ee0a4b13563a975e8daf
+  GTK_SDK_SOURCE: edddc463c06ed5731195cdb8f06b2df6dff7699e
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: '1'
+defaults:
+  run:
+    shell: bash
+jobs:
+  preflight:
+    name: source guard and tool self-tests
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Whitelist and fixed-start guard
+        run: python3 tests/reader_final_c02/guard.py --output build/c02-guard.json
+      - name: Parse every C02 tool and run the shared rule and aggregation self-tests
+        run: |
+          python3 -m py_compile tests/reader_final_c02/common.py tests/reader_final_c02/guard.py tests/reader_final_c02/aggregate.py tests/reader_final_c02/verify.py tests/reader_final_c02/win_perf.py tests/reader_final_c02/gtk_perf.py
+          python3 tests/reader_final_c02/common.py
+          python3 tests/reader_final_c02/aggregate.py --self-test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c02-guard.json
+          if-no-files-found: warn
+
+  windows-build:
+    name: build the compact Windows product host once
+    needs: preflight
+    runs-on: windows-2022
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard
+        run: python tests/reader_final_c02/guard.py --output build/c02-win-build/guard.json
+      - name: Enter the Windows native compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install common SDK3.41 and one product provider
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          prefix="$ws/build/winsearch-stage"
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "WS_PREFIX=$prefix" >> "$GITHUB_ENV"
+          mkdir -p build/winsearch-logs build/c02-win-build/logs
+          cmake --preset reading-library -B build/reading-library -DCMAKE_INSTALL_PREFIX="$ws/build/reading-library/stage" 2>&1 | tee build/winsearch-logs/sdk-configure.log
+          cmake --build build/reading-library --parallel 4 2>&1 | tee build/winsearch-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/winsearch-logs/sdk-install.log
+          cmake -S apps/reader/store/native -B build/ws-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/ws-product --parallel 4
+          cmake --install build/ws-product
+      - name: Install unchanged public dependencies into one prefix
+        run: |
+          set -o pipefail
+          prefix="$WS_PREFIX"
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/search apps/reader/navigation apps/reader/cloud-import apps/reader/bulk-organization apps/reader/preferences; do
+            name=$(basename "$module")
+            cmake -S "$module" -B "build/ws-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/winsearch-logs/$name-configure.log"
+            cmake --build "build/ws-$name" --parallel 4 2>&1 | tee "build/winsearch-logs/$name-build.log"
+            cmake --install "build/ws-$name"
+          done
+      - name: Build the actual compact host and the corpus seed against the same installed SDK
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/windows-account -B build/compact-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON -DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON -DEXR_READER_WINDOWS_PREFERENCES=ON -DEXR_READER_WINDOWS_COMPACT=ON 2>&1 | tee build/winsearch-logs/compact-configure.log
+          cmake --build build/compact-host --target EXReaderProduct 2>&1 | tee build/winsearch-logs/compact-build.log
+          cmake -S tests/reader_final_c02 -B build/c02-seed -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" 2>&1 | tee build/winsearch-logs/seed-configure.log
+          cmake --build build/c02-seed 2>&1 | tee build/winsearch-logs/seed-build.log
+          python -c "from tools.host_font import fetch; fetch('build/host-font-cache')"
+      - name: Stage the program, font and seed with their identity
+        run: |
+          set -o pipefail
+          cp build/compact-host/EXReaderProduct.exe build/c02-win-build/EXReaderProduct.exe
+          cp build/host-font-cache/Reader.otf build/c02-win-build/Reader.otf
+          cp build/c02-seed/c02_seed.exe build/c02-win-build/c02_seed.exe
+          cp build/winsearch-logs/*.log build/c02-win-build/logs/
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path('build/c02-win-build')
+          def digest(name):
+              return hashlib.sha256((root / name).read_bytes()).hexdigest()
+          identity = {'platform': 'windows', 'consumer_sha': os.environ['GITHUB_SHA'],
+                      'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                      'producer_source': os.environ['C02_START'], 'sdk_version': '3.41.0',
+                      'ui_variant': 'EXR_READER_WINDOWS_COMPACT=ON',
+                      'program_sha256': digest('EXReaderProduct.exe'),
+                      'program_bytes': (root / 'EXReaderProduct.exe').stat().st_size,
+                      'font_sha256': digest('Reader.otf'), 'seed_sha256': digest('c02_seed.exe')}
+          (root / 'build-identity.json').write_text(json.dumps(identity, indent=2, sort_keys=True) + '\n')
+          print(json.dumps(identity, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-win-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c02-win-build
+          if-no-files-found: error
+
+  gtk-build:
+    name: build the compact GTK product host once (second checkout of the pinned producer)
+    needs: preflight
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.GTK_PRODUCER }}
+          path: producer
+          fetch-depth: 1
+      - name: Guard consumer whitelist and the pinned producer commit
+        run: python3 tests/reader_final_c02/guard.py --output build/c02-gtk-build/guard.json --producer producer --producer-sha "$GTK_PRODUCER"
+      - name: Install native GTK TLS XML and Secret Service dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build
+      - name: Build and install the producer's modules and SDK3.41 exactly as its own compact workflow
+        working-directory: producer
+        run: |
+          set -o pipefail
+          mkdir -p build/account-logs
+          prefix="$PWD/build/account-stage"
+          echo "ACCOUNT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S extras/desktop-drop -B build/drop-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/drop-stage"
+          cmake --build build/drop-module --parallel 4
+          cmake --install build/drop-module
+          cmake -S apps/reader/store/native -B build/account-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-product --parallel 4
+          cmake --install build/account-product
+          cmake -S extras/webdav -B build/account-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-dav --parallel 4
+          cmake --install build/account-dav
+          cmake -S apps/reader/revisions -B build/account-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-revisions --parallel 4
+          cmake --install build/account-revisions
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/account-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/account-$module" --parallel 4
+            cmake --install "build/account-$module"
+          done
+          cmake -S extras/credentials -B build/account-credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-credentials --parallel 4
+          cmake --install build/account-credentials
+          cmake --preset reading-library 2>&1 | tee build/account-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/account-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/account-logs/sdk-install.log
+          cmake -S extras/sideload -B build/account-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-sideload --parallel 4
+          cmake --install build/account-sideload
+          cmake -S apps/reader/batch-import -B build/gtk-batch-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$prefix;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/gtk-batch-module --parallel 4
+          cmake --install build/gtk-batch-module
+          cmake -S apps/reader/reading-state -B build/account-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$prefix;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-reading-state --parallel 4
+          cmake --install build/account-reading-state
+          for module in reading-commands annotation-view; do
+            cmake -S "apps/reader/$module" -B "build/records-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/records-$module" --parallel 4
+            cmake --install "build/records-$module"
+          done
+          cmake -S apps/reader/preferences -B build/preferences-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/preferences-package --parallel 4
+          cmake --install build/preferences-package
+          cmake -S apps/reader/search -B build/gtk-search-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/gtk-search-module --parallel 4
+          cmake --install build/gtk-search-module
+          cmake -S apps/reader/navigation -B build/gtk-navigation-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/gtk-navigation-module --parallel 4
+          cmake --install build/gtk-navigation-module
+      - name: Build the actual compact GTK host and package it
+        working-directory: producer
+        run: |
+          set -o pipefail
+          mkdir -p build/compact
+          cmake -S apps/reader/desktop -B build/compact-desktop -DEXR_READER_GTK_COMPACT=ON -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_READER_PAGE_BACKGROUND=ON -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_BATCH_IMPORT=ON -DEXR_READER_GTK_DROP_IMPORT=ON -DREADER_DESKTOP_DROP_PREFIX="$PWD/build/drop-stage" -DREADER_BATCH_IMPORT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DREADER_PREFERENCES_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_SEARCH=ON -DREADER_SEARCH_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_READING_RECORDS=ON -DREADER_READING_RECORDS_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DEXR_READER_GTK_NAVIGATION=ON -DREADER_NAVIGATION_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_READER_BUILD_GTK=ON 2>&1 | tee build/compact/configure.log
+          cmake --build build/compact-desktop --parallel 4 --target exreader-linux 2>&1 | tee build/compact/build.log
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.41.0 --binary build/compact-desktop/gtk-host/exreader-linux --output build/compact-package
+          grep -q 'EXR_READER_GTK_COMPACT:BOOL=ON' build/compact-desktop/CMakeCache.txt
+          build/compact-package/EXReader-Linux/bin/exreader-linux --version | tee build/compact/version.txt
+          ! grep -Eic 'webkit|webview|libcef|electron' build/compact-package/runtime-dependencies.txt
+      - name: Build the corpus seed from the consumer tree against the producer's installed SDK
+        run: |
+          cmake -S tests/reader_final_c02 -B build/c02-seed -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/producer/build/reading-library/stage"
+          cmake --build build/c02-seed
+      - name: Pack the payload and seed with their identity (a tar keeps the executable bits)
+        run: |
+          set -o pipefail
+          mkdir -p build/c02-gtk-build/logs
+          cp build/c02-seed/c02_seed build/c02-gtk-build/c02_seed
+          cp producer/build/compact/*.log producer/build/compact/version.txt producer/build/account-logs/*.log build/c02-gtk-build/logs/
+          tar -C producer/build -cf build/c02-gtk-build/payload.tar compact-package
+          python3 - <<'PY'
+          import hashlib, json, os, subprocess
+          from pathlib import Path
+          root = Path('build/c02-gtk-build')
+          binary = Path('producer/build/compact-package/EXReader-Linux/bin/exreader-linux')
+          def digest(path):
+              return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          identity = {'platform': 'gtk', 'consumer_sha': os.environ['GITHUB_SHA'],
+                      'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                      'producer_source': os.environ['GTK_PRODUCER'], 'sdk_source': os.environ['GTK_SDK_SOURCE'],
+                      'sdk_version': subprocess.check_output([str(binary), '--version'], text=True).strip(),
+                      'ui_variant': 'EXR_READER_GTK_COMPACT=ON',
+                      'program_sha256': digest(binary), 'program_bytes': binary.stat().st_size,
+                      'payload_tar_sha256': digest(root / 'payload.tar'),
+                      'seed_sha256': digest(root / 'c02_seed')}
+          (root / 'build-identity.json').write_text(json.dumps(identity, indent=2, sort_keys=True) + '\n')
+          print(json.dumps(identity, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-gtk-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c02-gtk-build
+          if-no-files-found: error
+
+  windows-measure:
+    name: Windows round ${{ matrix.round }} (independent runner and launches)
+    needs: windows-build
+    runs-on: windows-2022
+    timeout-minutes: 170
+    strategy:
+      max-parallel: 2
+      fail-fast: false
+      matrix:
+        round: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: c02-win-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c02-win-build
+      - name: Require the consumed program to match the build identity
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path('build/c02-win-build')
+          identity = json.loads((root / 'build-identity.json').read_text())
+          for name, key in (('EXReaderProduct.exe', 'program_sha256'), ('Reader.otf', 'font_sha256'),
+                            ('c02_seed.exe', 'seed_sha256')):
+              actual = hashlib.sha256((root / name).read_bytes()).hexdigest()
+              assert actual == identity[key], (name, actual, identity[key])
+          print('consumed build identity ok')
+          PY
+      - name: Measure the compact Windows host on 500 and 5000 original shelves
+        run: |
+          python tests/reader_final_c02/win_perf.py --exe build/c02-win-build/EXReaderProduct.exe --font build/c02-win-build/Reader.otf --seed build/c02-win-build/c02_seed.exe --output build/c02-win-round${{ matrix.round }} --round ${{ matrix.round }} --producer-source "$C02_START" --sdk-version 3.41.0 2>&1 | tee build/c02-win-round${{ matrix.round }}.log
+      - name: Keep the round log next to the evidence
+        if: always()
+        run: |
+          mkdir -p build/c02-win-round${{ matrix.round }}/external
+          cp build/c02-win-round${{ matrix.round }}.log build/c02-win-round${{ matrix.round }}/external/driver.log 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-win-round${{ matrix.round }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c02-win-round${{ matrix.round }}
+          if-no-files-found: error
+
+  gtk-measure:
+    name: GTK round ${{ matrix.round }} (independent runner and launches)
+    needs: [gtk-build, windows-measure]
+    if: ${{ always() && needs.gtk-build.result == 'success' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 170
+    strategy:
+      max-parallel: 2
+      fail-fast: false
+      matrix:
+        round: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: c02-gtk-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c02-gtk-build
+      - name: Install the fixed native desktop observation toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev libglib2.0-dev libsecret-1-dev libcurl4-openssl-dev libxml2-dev pkg-config xvfb openbox xdotool xclip x11-utils dbus dbus-x11 at-spi2-core
+      - name: Unpack and authenticate the consumed program
+        run: |
+          set -o pipefail
+          tar -C build/c02-gtk-build -xf build/c02-gtk-build/payload.tar
+          chmod +x build/c02-gtk-build/c02_seed build/c02-gtk-build/compact-package/EXReader-Linux/bin/exreader-linux
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path('build/c02-gtk-build')
+          identity = json.loads((root / 'build-identity.json').read_text())
+          def digest(path):
+              return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          assert digest(root / 'payload.tar') == identity['payload_tar_sha256']
+          assert digest(root / 'compact-package/EXReader-Linux/bin/exreader-linux') == identity['program_sha256']
+          assert digest(root / 'c02_seed') == identity['seed_sha256']
+          print('consumed build identity ok')
+          PY
+          python3 -m py_compile tests/reader_perf_gtk/observe.py tests/reader_perf_gtk/sample.py
+      - name: Measure the compact GTK host on 500 and 5000 original shelves
+        run: |
+          set -o pipefail
+          Xvfb :99 -screen 0 1440x900x24 -nolisten tcp > build/c02-xvfb.log 2>&1 &
+          xvfb=$!
+          trap 'kill $xvfb 2>/dev/null || true' EXIT
+          sleep 2
+          export DISPLAY=:99
+          dbus-run-session -- bash -euc '
+            openbox > build/c02-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm 2>/dev/null || true" EXIT
+            sleep 1
+            xdpyinfo > build/c02-xdpyinfo.txt
+            python3 tests/reader_final_c02/gtk_perf.py \
+              --payload build/c02-gtk-build/compact-package/EXReader-Linux \
+              --seed build/c02-gtk-build/c02_seed \
+              --output build/c02-gtk-round${{ matrix.round }} \
+              --round ${{ matrix.round }} \
+              --producer-source "$GTK_PRODUCER" --sdk-source "$GTK_SDK_SOURCE" 2>&1 | tee build/c02-gtk-round${{ matrix.round }}.log
+            pkill -x xclip 2>/dev/null || true
+          '
+      - name: Keep the round log and display identity next to the evidence
+        if: always()
+        run: |
+          mkdir -p build/c02-gtk-round${{ matrix.round }}/external
+          cp build/c02-gtk-round${{ matrix.round }}.log build/c02-xvfb.log build/c02-openbox.log build/c02-xdpyinfo.txt build/c02-gtk-round${{ matrix.round }}/external/ 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-gtk-round${{ matrix.round }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c02-gtk-round${{ matrix.round }}
+          if-no-files-found: error
+
+  verify:
+    name: authenticate this run's artifacts and aggregate per CPU stratum
+    needs: [preflight, windows-build, gtk-build, windows-measure, gtk-measure]
+    if: ${{ always() && needs.preflight.result == 'success' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download, digest-check and aggregate every artifact of this exact run and attempt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_final_c02/verify.py --output build/c02-verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c02-verify/summary.json
+            build/c02-verify/artifact-identity.json
+          if-no-files-found: warn

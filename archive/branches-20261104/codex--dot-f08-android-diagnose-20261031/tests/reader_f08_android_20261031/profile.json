@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "scope": "Android shelf only; not the complete F08 gate",
+  "sdk_version": "3.42.0",
+  "runner": "ubuntu-24.04",
+  "api": 34,
+  "abi": "x86_64",
+  "avd": "pixel_6",
+  "ram_mib": 4096,
+  "heap_mib": 512,
+  "cores": 4,
+  "gpu": "swiftshader_indirect",
+  "animation_scale": 1,
+  "real_sdk_sources": 2202,
+  "budgets": {
+    "ordinary_window_frame_p95_ms": 16.67,
+    "ordinary_window_frame_p99_ms": 33.34,
+    "first_interactive_ms": 2000,
+    "sampled_peak_pss_kib": 524288
+  },
+  "rationale": "Predeclared before the first measurement: 60 Hz single-frame P95 and two-frame P99 targets; two-second first interaction; 512 MiB sampled process PSS ceiling.",
+  "limits": [
+    "Window callback duration is not physical display presentation.",
+    "PSS is sampled about once a second, not a continuous peak.",
+    "This lane does not cover reader-body scroll, page/font changes or locate/jump.",
+    "Other five target platforms require their own evidence."
+  ],
+  "f08_accepted": false,
+  "frame_budget_scope": "All ordinary Window callbacks and each original forward/reverse scroll interval."
+}

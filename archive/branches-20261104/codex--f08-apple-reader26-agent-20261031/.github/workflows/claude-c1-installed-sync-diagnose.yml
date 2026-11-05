@@ -1,0 +1,26 @@
+name: Claude C1 read-only diagnosis of retained run 40949194972
+on:
+  push:
+    branches: [claude/local-c1-android-sync-20261029]
+    paths:
+      - tests/reader_android_installed_sync_handoff/diagnose.py
+      - .github/workflows/claude-c1-installed-sync-diagnose.yml
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read-only diagnosis of the fixed original ZIP (nothing from it is executed)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I tests/reader_android_installed_sync_handoff/diagnose.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: claude-c1-diagnosis-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/diagnose-report.json
+          if-no-files-found: warn

@@ -1,0 +1,14 @@
+{
+  "candidate_outer": {
+    "name": "exreader-android-j01-candidate.zip",
+    "bytes": 19721199,
+    "sha256": "944ead0934115f7a92a03e500417b1a0398cf05f29675a7096970f1a0a267f55"
+  },
+  "candidate_inner": {
+    "bytes": 19723399,
+    "sha256": "5be6e7789266eb8c7929e90013c979d90c7f498019eb08bb6cc48439b6eb6922"
+  },
+  "original_outer_sha256": "e120fb8a3d73aafb19578aed9d114788177ae104a00f1f754b2cb413c174760e",
+  "original_inner_sha256": "4533e63c20c9f248beb6afc7690dd5da54eda5b8360aea899e99522b7a6a0e53",
+  "apk_sha256_unchanged": "b6adf2d4208be647573090d77490b63fea9e37e2c89c760b2871fc4aec5f9519"
+}

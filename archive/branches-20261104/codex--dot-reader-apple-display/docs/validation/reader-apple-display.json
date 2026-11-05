@@ -1,0 +1,1565 @@
+{
+  "schema": 1,
+  "package": "D06 Apple reader display",
+  "branch": "codex/dot-reader-apple-display",
+  "fixedStart": "a826a65c9c66e43620eff61b49cb79f941a3c953",
+  "frozenTask": "37acdb3cf89e30f8f1f6287f932a5cb2db1c26a9",
+  "frozenSDK": "9854061be331fe603a1822d9b2b36ee357154927",
+  "testedSHA": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b",
+  "testedTree": "4ef7851b81346f87cd7f5c4f284ceb6793faf79b",
+  "evidenceCommitPolicy": "Separate [skip ci] child of testedSHA; only docs/validation/reader-apple-display.json is added. Final evidence HEAD is supplied in handoff because a commit cannot contain its own SHA.",
+  "completion": "IMPLEMENTED_AND_CI_PASSED_FOR_MEASURED_SCOPE; FULL_PRODUCT_AND_PHYSICAL_BRIGHTNESS_PENDING",
+  "validationLocation": "GitHub Actions only. Local work was source/document editing and Git; connectors read metadata/logs only. No Codex task, user computer operation, local build, test, syntax check, fixture, service or artifact download/parse.",
+  "nativeContract": "Installed Objective-C static library and public header; no host/shared builder/theme/SDK/schema edits. Main-thread scene-bound iOS leases; process-wide idle reference count; exclusive screen brightness with conditional restore. macOS owns separate public IOPM display-idle assertion IDs. macOS brightness is UNSUPPORTED.",
+  "finalRun": {
+    "id": 40171836777,
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171836777",
+    "status": "completed",
+    "conclusion": "success",
+    "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b",
+    "started_at": "2026-10-25T07:11:19Z",
+    "completed_by": "2026-10-25T07:18:00Z",
+    "jobs": [
+      {
+        "id": 121104109881,
+        "name": "native (iphone)",
+        "status": "completed",
+        "conclusion": "success",
+        "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b",
+        "run": 40171836777,
+        "attempt": 1,
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171836777/job/121104109881",
+        "started_at": "2026-10-25T07:11:43Z",
+        "completed_at": "2026-10-25T07:15:48Z"
+      },
+      {
+        "id": 121104109944,
+        "name": "native (iphoneos)",
+        "status": "completed",
+        "conclusion": "success",
+        "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b",
+        "run": 40171836777,
+        "attempt": 1,
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171836777/job/121104109944",
+        "started_at": "2026-10-25T07:13:22Z",
+        "completed_at": "2026-10-25T07:13:47Z"
+      },
+      {
+        "id": 121104109973,
+        "name": "native (ipad)",
+        "status": "completed",
+        "conclusion": "success",
+        "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b",
+        "run": 40171836777,
+        "attempt": 1,
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171836777/job/121104109973",
+        "started_at": "2026-10-25T07:13:34Z",
+        "completed_at": "2026-10-25T07:17:47Z"
+      },
+      {
+        "id": 121104109989,
+        "name": "native (macos)",
+        "status": "completed",
+        "conclusion": "success",
+        "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b",
+        "run": 40171836777,
+        "attempt": 1,
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171836777/job/121104109989",
+        "started_at": "2026-10-25T07:13:26Z",
+        "completed_at": "2026-10-25T07:13:40Z"
+      },
+      {
+        "id": 121104110014,
+        "name": "guard",
+        "status": "completed",
+        "conclusion": "success",
+        "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b",
+        "run": 40171836777,
+        "attempt": 1,
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171836777/job/121104110014",
+        "started_at": "2026-10-25T07:11:21Z",
+        "completed_at": "2026-10-25T07:11:26Z"
+      },
+      {
+        "id": 121105326512,
+        "name": "authenticate",
+        "status": "completed",
+        "conclusion": "success",
+        "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b",
+        "run": 40171836777,
+        "attempt": 1,
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171836777/job/121105326512",
+        "started_at": "2026-10-25T07:17:49Z",
+        "completed_at": "2026-10-25T07:18:00Z"
+      }
+    ]
+  },
+  "authenticatedProof": {
+    "artifacts": [
+      {
+        "expires_at": "2026-11-08T07:13:37Z",
+        "id": 12590257737,
+        "name": "reader-apple-display-macos-40171836777-1",
+        "sha256": "1a315a9c8d741d13ee7629cc43f8e2db8891b0722c57d990ae6d3e3786e430b8",
+        "size": 54432
+      },
+      {
+        "expires_at": "2026-11-08T07:15:31Z",
+        "id": 12590347772,
+        "name": "reader-apple-display-iphone-40171836777-1",
+        "sha256": "0c4c9657c92b1c7504b3497ecee2a89aefa5ef315da922c292386caaf63e8291",
+        "size": 93195
+      },
+      {
+        "expires_at": "2026-11-08T07:17:31Z",
+        "id": 12591325162,
+        "name": "reader-apple-display-ipad-40171836777-1",
+        "sha256": "d23c95d5ae1cf899250a161cdff8ea97c483b7a86cc20aed0c92d2579f1f76ed",
+        "size": 93097
+      },
+      {
+        "expires_at": "2026-11-08T07:13:42Z",
+        "id": 12590327659,
+        "name": "reader-apple-display-iphoneos-40171836777-1",
+        "sha256": "fcb60f01454c749ee655e0ebde34e0eb312a4cd944aadb56742ca2e4218b2cc2",
+        "size": 80749
+      }
+    ],
+    "attempt": "1",
+    "authenticatedJobs": [
+      {
+        "conclusion": "success",
+        "id": 121104109881,
+        "name": "native (iphone)",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "id": 121104109944,
+        "name": "native (iphoneos)",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "id": 121104109973,
+        "name": "native (ipad)",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "id": 121104109989,
+        "name": "native (macos)",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "id": 121104110014,
+        "name": "guard",
+        "status": "completed"
+      }
+    ],
+    "fullProductAcceptance": "PENDING",
+    "results": [
+      {
+        "acceptance": "PENDING_PHYSICAL_DEVICE_AND_HOST_INTEGRATION",
+        "appInfoSHA256": "",
+        "binary": "display-probe",
+        "binarySHA256": "08ae849dc57f116d8847b26576df75d8511076b4326c73abb9a5e0ff12c9638e",
+        "deviceRuntime": "actual-native-process",
+        "headerSHA256": "8cd7813bd526c2ff36868f7f92726fbdf01729663adc581735a03db1e223882e",
+        "librarySHA256": "be19feab6f2130150aee2777f3574ebc7cd418dd0030c5f6e4bb03fd97bb5329",
+        "namedCases": [
+          {
+            "detail": "real native API observation",
+            "name": "mac_create",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_initial_no_assertion",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_host_inactive",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_real_assertion_created",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_real_assertion_query",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_repeated_enable_same_id",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_dual_distinct_ids",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_close_preserves_other",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_released_id_absent",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_close_idempotent",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_closed_update_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_policy_deactivate_release",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_policy_reactivate",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_nan_releases",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_inf_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_negative_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_above_one_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_brightness_unsupported",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_retry_after_error",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_wrong_thread_no_mutation",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_cancel_releases",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_lease_limit",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_limit_recovery",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "mac_deallocation_release",
+            "status": "PASS"
+          },
+          {
+            "detail": "Hosted runner has no observed physical display/sleep measurement",
+            "name": "mac_physical_sleep",
+            "status": "PENDING"
+          }
+        ],
+        "passed": 24,
+        "pending": [
+          "mac_physical_sleep"
+        ],
+        "platform": "macos",
+        "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b"
+      },
+      {
+        "acceptance": "PENDING_PHYSICAL_DEVICE_AND_HOST_INTEGRATION",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "binary": "DisplayProbe.app/DisplayProbe",
+        "binarySHA256": "2cc4416f8dc8ba4302798b112c4075b2031fddedad7677adf49874b6f8e2a26f",
+        "deviceRuntime": "actual-native-process",
+        "headerSHA256": "8cd7813bd526c2ff36868f7f92726fbdf01729663adc581735a03db1e223882e",
+        "librarySHA256": "48871508891e625d8bc1276325c0eba97f366bfff1699c14fca6ee80aa333d1a",
+        "namedCases": [
+          {
+            "detail": "real native API observation",
+            "name": "ios_real_active_scene",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_initial_idle_baseline",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_nil_window_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_unconnected_window_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_create",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_host_inactive",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_idle_enable",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_dual_lease",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_close_preserves_other",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_last_close_restores",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_close_idempotent",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_closed_update_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_cancel_releases",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_nan_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_inf_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_negative_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_above_one_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_wrong_type_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_retry_after_error",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_wrong_thread_no_mutation",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_external_idle_preserved",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_saved_true_restored",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_hidden_window_releases",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_visible_window_reacquires",
+            "status": "PASS"
+          },
+          {
+            "detail": "requested=0.37 observed=0.50000000 status=6 owns=0; simulator is not physical backlight evidence",
+            "name": "ios_brightness_readback",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real property unavailable; exclusivity not awarded",
+            "name": "ios_brightness_conflict",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real property unavailable; exclusivity not awarded",
+            "name": "ios_conflict_no_partial_idle",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real simulator property did not accept/read back request; no physical capability granted",
+            "name": "ios_brightness_conditional_restore",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Simulator did not support required real property writes",
+            "name": "ios_brightness_external_preserved",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real simulator property did not accept/read back request; no physical capability granted",
+            "name": "ios_brightness_retry",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real brightness holding unavailable",
+            "name": "ios_brightness_invalid_releases",
+            "status": "PENDING"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_lease_limit",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_limit_recovery",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_deallocation_release",
+            "status": "PASS"
+          },
+          {
+            "detail": "Simulator property state is not physical backlight evidence",
+            "name": "ios_physical_backlight",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Simulator app state is not physical idle-sleep evidence",
+            "name": "ios_physical_sleep",
+            "status": "PENDING"
+          },
+          {
+            "detail": "No real external screen connected; brightness intentionally unsupported there",
+            "name": "ios_external_screen",
+            "status": "PENDING"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_lifecycle_active_holds",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_lifecycle_background_releases",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_lifecycle_foreground_reacquires",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_new_process_no_saved_lease",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_new_process_idle_baseline",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_new_process_active_scene",
+            "status": "PASS"
+          },
+          {
+            "detail": "UIKit reports supportsMultipleScenes=false on this simulator",
+            "name": "ios_multiscene_real_sessions",
+            "status": "PENDING"
+          },
+          {
+            "detail": "UIKit reports supportsMultipleScenes=false on this simulator",
+            "name": "ios_multiscene_isolation",
+            "status": "PENDING"
+          },
+          {
+            "detail": "UIKit reports supportsMultipleScenes=false on this simulator",
+            "name": "ios_scene_disconnect_releases",
+            "status": "PENDING"
+          }
+        ],
+        "passed": 33,
+        "pending": [
+          "ios_brightness_readback",
+          "ios_brightness_conflict",
+          "ios_conflict_no_partial_idle",
+          "ios_brightness_conditional_restore",
+          "ios_brightness_external_preserved",
+          "ios_brightness_retry",
+          "ios_brightness_invalid_releases",
+          "ios_physical_backlight",
+          "ios_physical_sleep",
+          "ios_external_screen",
+          "ios_multiscene_real_sessions",
+          "ios_multiscene_isolation",
+          "ios_scene_disconnect_releases"
+        ],
+        "platform": "iphone",
+        "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b"
+      },
+      {
+        "acceptance": "PENDING_PHYSICAL_DEVICE_AND_HOST_INTEGRATION",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "binary": "DisplayProbe.app/DisplayProbe",
+        "binarySHA256": "16db3fa22060b2214b7a1d2dad52dbb9d0d0f0908cff02951bf0e18a25dd12dc",
+        "deviceRuntime": "actual-native-process",
+        "headerSHA256": "8cd7813bd526c2ff36868f7f92726fbdf01729663adc581735a03db1e223882e",
+        "librarySHA256": "b285f6135e0d587a1a9568537700c264c4c18939f3629b478910b87efe28790f",
+        "namedCases": [
+          {
+            "detail": "real native API observation",
+            "name": "ios_real_active_scene",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_initial_idle_baseline",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_nil_window_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_unconnected_window_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_create",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_host_inactive",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_idle_enable",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_dual_lease",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_close_preserves_other",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_last_close_restores",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_close_idempotent",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_closed_update_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_cancel_releases",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_nan_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_inf_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_negative_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_above_one_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_wrong_type_rejected",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_retry_after_error",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_wrong_thread_no_mutation",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_external_idle_preserved",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_saved_true_restored",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_hidden_window_releases",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_visible_window_reacquires",
+            "status": "PASS"
+          },
+          {
+            "detail": "requested=0.37 observed=0.50000000 status=6 owns=0; simulator is not physical backlight evidence",
+            "name": "ios_brightness_readback",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real property unavailable; exclusivity not awarded",
+            "name": "ios_brightness_conflict",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real property unavailable; exclusivity not awarded",
+            "name": "ios_conflict_no_partial_idle",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real simulator property did not accept/read back request; no physical capability granted",
+            "name": "ios_brightness_conditional_restore",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Simulator did not support required real property writes",
+            "name": "ios_brightness_external_preserved",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real simulator property did not accept/read back request; no physical capability granted",
+            "name": "ios_brightness_retry",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real brightness holding unavailable",
+            "name": "ios_brightness_invalid_releases",
+            "status": "PENDING"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_lease_limit",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_limit_recovery",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_deallocation_release",
+            "status": "PASS"
+          },
+          {
+            "detail": "Simulator property state is not physical backlight evidence",
+            "name": "ios_physical_backlight",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Simulator app state is not physical idle-sleep evidence",
+            "name": "ios_physical_sleep",
+            "status": "PENDING"
+          },
+          {
+            "detail": "No real external screen connected; brightness intentionally unsupported there",
+            "name": "ios_external_screen",
+            "status": "PENDING"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_lifecycle_active_holds",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_lifecycle_background_releases",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_lifecycle_foreground_reacquires",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_new_process_no_saved_lease",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_new_process_idle_baseline",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_new_process_active_scene",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_multiscene_real_sessions",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_multiscene_isolation",
+            "status": "PASS"
+          },
+          {
+            "detail": "real native API observation",
+            "name": "ios_scene_disconnect_releases",
+            "status": "PASS"
+          }
+        ],
+        "passed": 36,
+        "pending": [
+          "ios_brightness_readback",
+          "ios_brightness_conflict",
+          "ios_conflict_no_partial_idle",
+          "ios_brightness_conditional_restore",
+          "ios_brightness_external_preserved",
+          "ios_brightness_retry",
+          "ios_brightness_invalid_releases",
+          "ios_physical_backlight",
+          "ios_physical_sleep",
+          "ios_external_screen"
+        ],
+        "platform": "ipad",
+        "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b"
+      },
+      {
+        "acceptance": "PENDING_PHYSICAL_DEVICE_AND_HOST_INTEGRATION",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "binary": "DisplayProbe.app/DisplayProbe",
+        "binarySHA256": "aa75f30f118e48819f81df730ee9ac29ee0191800f716af6e0717e2e2305c8ed",
+        "deviceRuntime": "NOT_RUN",
+        "headerSHA256": "8cd7813bd526c2ff36868f7f92726fbdf01729663adc581735a03db1e223882e",
+        "librarySHA256": "2b5329213c6c1ac58595207ee0e18ea11f86ae25007f989cb9cfb8d7f2c27cef",
+        "namedCases": [],
+        "passed": 0,
+        "pending": [],
+        "platform": "iphoneos",
+        "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b"
+      }
+    ],
+    "run": "40171836777",
+    "runURL": "https://github.com/NoGod3524/EXReader/actions/runs/40171836777",
+    "schema": 1,
+    "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b",
+    "verifierRejections": [
+      {
+        "name": "reject_duplicate_zip_member",
+        "rejection": "duplicate ZIP member",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_missing_raw_report",
+        "rejection": "'raw-core.json'",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_duplicate_json_key",
+        "rejection": "duplicate JSON key: schema",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_source",
+        "rejection": "wrong source",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_attempt",
+        "rejection": "wrong attempt",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_run",
+        "rejection": "wrong run",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_original_module_source",
+        "rejection": "wrong original module source",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_original_module_hash",
+        "rejection": "runtime/build binding mismatch librarySHA256",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_actual_binary",
+        "rejection": "wrong actual binary bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_installed_archive",
+        "rejection": "wrong actual library bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_installed_header",
+        "rejection": "wrong actual header bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_replaced_probe_source",
+        "rejection": "not original native probe source",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_missing_named_case",
+        "rejection": "duplicate/missing/extra named case",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_duplicate_named_case",
+        "rejection": "duplicate/missing/extra named case",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_failed_case",
+        "rejection": "failed/invalid case mac_create",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_unpermitted_pending",
+        "rejection": "unpermitted pending case",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_physical_effect_overclaim",
+        "rejection": "physical capability overclaim",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_fake_termination",
+        "rejection": "no real SIGKILL",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_missing_linked_module",
+        "rejection": "installed module missing from actual link map",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_forged_summary",
+        "rejection": "summary not derivable from original native results",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_api_digest",
+        "rejection": "ZIP API digest mismatch",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_api_size",
+        "rejection": "ZIP API size mismatch",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_empty_artifact",
+        "rejection": "empty artifact bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_expired_artifact",
+        "rejection": "expired artifact",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_past_expiry",
+        "rejection": "artifact expiry in past",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_artifact_wrong_run",
+        "rejection": "artifact workflow source/run mismatch",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_artifact_wrong_source",
+        "rejection": "artifact workflow source/run mismatch",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_duplicate_artifact_name",
+        "rejection": "missing/duplicate artifact name",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_duplicate_artifact_id",
+        "rejection": "duplicate artifact ID",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_missing_artifact",
+        "rejection": "missing/duplicate artifact name",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_pending_upstream_job",
+        "rejection": "upstream not completed/success native (macos)",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_failed_upstream_job",
+        "rejection": "upstream not completed/success native (macos)",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_upstream_source",
+        "rejection": "upstream source/run mismatch",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_upstream_attempt",
+        "rejection": "upstream attempt mismatch",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_upstream_run",
+        "rejection": "upstream source/run mismatch",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_duplicate_upstream_job",
+        "rejection": "missing/duplicate upstream job native (macos)",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_wrong_runtime_bundle",
+        "rejection": "runtime bundle identity",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_changed_app_info",
+        "rejection": "app Info.plist identity",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_same_process_reopen",
+        "rejection": "no distinct reopened process",
+        "status": "PASS"
+      },
+      {
+        "name": "reject_swapped_lifecycle_process",
+        "rejection": "lifecycle not same native process",
+        "status": "PASS"
+      }
+    ]
+  },
+  "processEvidence": {
+    "macos": {
+      "hold": {
+        "identity": {
+          "appInfoSHA256": "",
+          "attempt": "1",
+          "binarySHA256": "08ae849dc57f116d8847b26576df75d8511076b4326c73abb9a5e0ff12c9638e",
+          "bundleIdentifier": "",
+          "executableName": "display-probe",
+          "headerSHA256": "8cd7813bd526c2ff36868f7f92726fbdf01729663adc581735a03db1e223882e",
+          "librarySHA256": "be19feab6f2130150aee2777f3574ebc7cd418dd0030c5f6e4bb03fd97bb5329",
+          "librarySource": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b",
+          "pid": 1560,
+          "platform": "macos",
+          "run": "40171836777",
+          "source": "bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b"
+        },
+        "queriedProperties": true,
+        "snapshot": {
+          "assertionID": 33168,
+          "closed": false,
+          "enabled": true,
+          "hostActive": true,
+          "lastStatus": 0,
+          "nativeCode": 0,
+          "ownsBrightness": false,
+          "ownsIdle": true
+        },
+        "status": 0
+      },
+      "termination": "Actual hold PID 1560 killed by SIGKILL. Separate invocations of the same bound Mach-O queried IOPMCopyAssertionsByProcess before (>0 display assertions) and after (0); verifier required exit -9 and exact PID. Original hold.json, query-before.json, query-after-0.json, termination.json remain in the authenticated macOS artifact."
+    },
+    "iphone": [
+      {
+        "sequence": 1,
+        "stage": "complete",
+        "pid": 4431,
+        "binarySHA256": "2cc4416f8dc8ba4302798b112c4075b2031fddedad7677adf49874b6f8e2a26f",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [
+          "ios_real_active_scene",
+          "ios_initial_idle_baseline",
+          "ios_nil_window_rejected",
+          "ios_unconnected_window_rejected",
+          "ios_create",
+          "ios_host_inactive",
+          "ios_idle_enable",
+          "ios_dual_lease",
+          "ios_close_preserves_other",
+          "ios_last_close_restores",
+          "ios_close_idempotent",
+          "ios_closed_update_rejected",
+          "ios_cancel_releases",
+          "ios_nan_rejected",
+          "ios_inf_rejected",
+          "ios_negative_rejected",
+          "ios_above_one_rejected",
+          "ios_wrong_type_rejected",
+          "ios_retry_after_error",
+          "ios_wrong_thread_no_mutation",
+          "ios_external_idle_preserved",
+          "ios_saved_true_restored",
+          "ios_hidden_window_releases",
+          "ios_visible_window_reacquires",
+          "ios_lease_limit",
+          "ios_limit_recovery",
+          "ios_deallocation_release"
+        ],
+        "pending": [
+          {
+            "detail": "requested=0.37 observed=0.50000000 status=6 owns=0; simulator is not physical backlight evidence",
+            "name": "ios_brightness_readback",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real property unavailable; exclusivity not awarded",
+            "name": "ios_brightness_conflict",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real property unavailable; exclusivity not awarded",
+            "name": "ios_conflict_no_partial_idle",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real simulator property did not accept/read back request; no physical capability granted",
+            "name": "ios_brightness_conditional_restore",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Simulator did not support required real property writes",
+            "name": "ios_brightness_external_preserved",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real simulator property did not accept/read back request; no physical capability granted",
+            "name": "ios_brightness_retry",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real brightness holding unavailable",
+            "name": "ios_brightness_invalid_releases",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Simulator property state is not physical backlight evidence",
+            "name": "ios_physical_backlight",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Simulator app state is not physical idle-sleep evidence",
+            "name": "ios_physical_sleep",
+            "status": "PENDING"
+          },
+          {
+            "detail": "No real external screen connected; brightness intentionally unsupported there",
+            "name": "ios_external_screen",
+            "status": "PENDING"
+          }
+        ]
+      },
+      {
+        "sequence": 2,
+        "stage": "active",
+        "pid": 4819,
+        "binarySHA256": "2cc4416f8dc8ba4302798b112c4075b2031fddedad7677adf49874b6f8e2a26f",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [
+          "ios_lifecycle_active_holds"
+        ],
+        "pending": []
+      },
+      {
+        "sequence": 3,
+        "stage": "background",
+        "pid": 4819,
+        "binarySHA256": "2cc4416f8dc8ba4302798b112c4075b2031fddedad7677adf49874b6f8e2a26f",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [
+          "ios_lifecycle_active_holds",
+          "ios_lifecycle_background_releases"
+        ],
+        "pending": []
+      },
+      {
+        "sequence": 4,
+        "stage": "resumed",
+        "pid": 4819,
+        "binarySHA256": "2cc4416f8dc8ba4302798b112c4075b2031fddedad7677adf49874b6f8e2a26f",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [
+          "ios_lifecycle_active_holds",
+          "ios_lifecycle_background_releases",
+          "ios_lifecycle_foreground_reacquires"
+        ],
+        "pending": []
+      },
+      {
+        "sequence": 5,
+        "stage": "complete",
+        "pid": 5307,
+        "binarySHA256": "2cc4416f8dc8ba4302798b112c4075b2031fddedad7677adf49874b6f8e2a26f",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [
+          "ios_new_process_no_saved_lease",
+          "ios_new_process_idle_baseline",
+          "ios_new_process_active_scene"
+        ],
+        "pending": []
+      },
+      {
+        "sequence": 6,
+        "stage": "complete",
+        "pid": 5608,
+        "binarySHA256": "2cc4416f8dc8ba4302798b112c4075b2031fddedad7677adf49874b6f8e2a26f",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [],
+        "pending": [
+          {
+            "detail": "UIKit reports supportsMultipleScenes=false on this simulator",
+            "name": "ios_multiscene_real_sessions",
+            "status": "PENDING"
+          },
+          {
+            "detail": "UIKit reports supportsMultipleScenes=false on this simulator",
+            "name": "ios_multiscene_isolation",
+            "status": "PENDING"
+          },
+          {
+            "detail": "UIKit reports supportsMultipleScenes=false on this simulator",
+            "name": "ios_scene_disconnect_releases",
+            "status": "PENDING"
+          }
+        ]
+      }
+    ],
+    "ipad": [
+      {
+        "sequence": 1,
+        "stage": "complete",
+        "pid": 4501,
+        "binarySHA256": "16db3fa22060b2214b7a1d2dad52dbb9d0d0f0908cff02951bf0e18a25dd12dc",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [
+          "ios_real_active_scene",
+          "ios_initial_idle_baseline",
+          "ios_nil_window_rejected",
+          "ios_unconnected_window_rejected",
+          "ios_create",
+          "ios_host_inactive",
+          "ios_idle_enable",
+          "ios_dual_lease",
+          "ios_close_preserves_other",
+          "ios_last_close_restores",
+          "ios_close_idempotent",
+          "ios_closed_update_rejected",
+          "ios_cancel_releases",
+          "ios_nan_rejected",
+          "ios_inf_rejected",
+          "ios_negative_rejected",
+          "ios_above_one_rejected",
+          "ios_wrong_type_rejected",
+          "ios_retry_after_error",
+          "ios_wrong_thread_no_mutation",
+          "ios_external_idle_preserved",
+          "ios_saved_true_restored",
+          "ios_hidden_window_releases",
+          "ios_visible_window_reacquires",
+          "ios_lease_limit",
+          "ios_limit_recovery",
+          "ios_deallocation_release"
+        ],
+        "pending": [
+          {
+            "detail": "requested=0.37 observed=0.50000000 status=6 owns=0; simulator is not physical backlight evidence",
+            "name": "ios_brightness_readback",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real property unavailable; exclusivity not awarded",
+            "name": "ios_brightness_conflict",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real property unavailable; exclusivity not awarded",
+            "name": "ios_conflict_no_partial_idle",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real simulator property did not accept/read back request; no physical capability granted",
+            "name": "ios_brightness_conditional_restore",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Simulator did not support required real property writes",
+            "name": "ios_brightness_external_preserved",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real simulator property did not accept/read back request; no physical capability granted",
+            "name": "ios_brightness_retry",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Real brightness holding unavailable",
+            "name": "ios_brightness_invalid_releases",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Simulator property state is not physical backlight evidence",
+            "name": "ios_physical_backlight",
+            "status": "PENDING"
+          },
+          {
+            "detail": "Simulator app state is not physical idle-sleep evidence",
+            "name": "ios_physical_sleep",
+            "status": "PENDING"
+          },
+          {
+            "detail": "No real external screen connected; brightness intentionally unsupported there",
+            "name": "ios_external_screen",
+            "status": "PENDING"
+          }
+        ]
+      },
+      {
+        "sequence": 2,
+        "stage": "active",
+        "pid": 4839,
+        "binarySHA256": "16db3fa22060b2214b7a1d2dad52dbb9d0d0f0908cff02951bf0e18a25dd12dc",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [
+          "ios_lifecycle_active_holds"
+        ],
+        "pending": []
+      },
+      {
+        "sequence": 3,
+        "stage": "background",
+        "pid": 4839,
+        "binarySHA256": "16db3fa22060b2214b7a1d2dad52dbb9d0d0f0908cff02951bf0e18a25dd12dc",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [
+          "ios_lifecycle_active_holds",
+          "ios_lifecycle_background_releases"
+        ],
+        "pending": []
+      },
+      {
+        "sequence": 4,
+        "stage": "resumed",
+        "pid": 4839,
+        "binarySHA256": "16db3fa22060b2214b7a1d2dad52dbb9d0d0f0908cff02951bf0e18a25dd12dc",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [
+          "ios_lifecycle_active_holds",
+          "ios_lifecycle_background_releases",
+          "ios_lifecycle_foreground_reacquires"
+        ],
+        "pending": []
+      },
+      {
+        "sequence": 5,
+        "stage": "complete",
+        "pid": 5370,
+        "binarySHA256": "16db3fa22060b2214b7a1d2dad52dbb9d0d0f0908cff02951bf0e18a25dd12dc",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [
+          "ios_new_process_no_saved_lease",
+          "ios_new_process_idle_baseline",
+          "ios_new_process_active_scene"
+        ],
+        "pending": []
+      },
+      {
+        "sequence": 6,
+        "stage": "complete",
+        "pid": 5394,
+        "binarySHA256": "16db3fa22060b2214b7a1d2dad52dbb9d0d0f0908cff02951bf0e18a25dd12dc",
+        "bundleIdentifier": "org.exreader.displayprobe",
+        "appInfoSHA256": "87d0146cb795c1ade9afb62ab4dee247dc864247d269423ade4921b2d26b1a86",
+        "passed": [
+          "ios_multiscene_real_sessions",
+          "ios_multiscene_isolation",
+          "ios_scene_disconnect_releases"
+        ],
+        "pending": []
+      }
+    ],
+    "iOSTermination": "simctl terminate followed by host process-table absence, then real new app process. iPhone lifecycle PID 4819 -> reopened PID 5307; iPad 4839 -> 5370. The authenticated verifier checks original phase identity equality and distinct restart PID.",
+    "ipadMultiScene": "Actual two scene sessions, independent close/idle ownership and real scene-disconnect notification passed in PID 5394. No synthetic scene/window objects or fake lifecycle notifications.",
+    "brightnessReadback": "Both actual simulator apps requested 0.37 and read 0.50000000, native status ADRStatusUnavailable=6, ownsBrightness=0. Seven brightness-dependent named cases per simulator remain PENDING; no mock grants."
+  },
+  "retainedHistory": [
+    {
+      "source": "0e08c4ef942c01b5e0a0998621e902eeb586aec2",
+      "run": 40171263318,
+      "attempt": 1,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171263318",
+      "conclusion": "failure",
+      "reason": "Strict macOS collector rejected queriedProperties emitted as numeric 1 rather than Boolean true. Real 24 macOS functional cases and actual SIGKILL/query already ran; original failed artifact retained. Producer was changed to emit @YES/@NO, verifier and original expectations not weakened.",
+      "artifacts": [
+        {
+          "id": 12590456477,
+          "name": "reader-apple-display-ipad-40171263318-1",
+          "size": 90641,
+          "sha256": "a73c89f63b9aff46380c56f298879cecbe610663c9b55e153c2304a9a8601236",
+          "expires_at": "2026-11-08T07:06:05Z",
+          "expired": false,
+          "source": "0e08c4ef942c01b5e0a0998621e902eeb586aec2"
+        },
+        {
+          "id": 12590176668,
+          "name": "reader-apple-display-iphoneos-40171263318-1",
+          "size": 78893,
+          "sha256": "5b42d7861171420faf877fd578c5bc1f4b9d0877cbbe780b191b55eed83fd546",
+          "expires_at": "2026-11-08T07:02:22Z",
+          "expired": false,
+          "source": "0e08c4ef942c01b5e0a0998621e902eeb586aec2"
+        },
+        {
+          "id": 12589724203,
+          "name": "reader-apple-display-iphone-40171263318-1",
+          "size": 90673,
+          "sha256": "be22f153d7e456d21638e05e7135051868e8bc8caefb7b8e8707a213d0105ab1",
+          "expires_at": "2026-11-08T07:05:47Z",
+          "expired": false,
+          "source": "0e08c4ef942c01b5e0a0998621e902eeb586aec2"
+        },
+        {
+          "id": 12589289541,
+          "name": "reader-apple-display-macos-40171263318-1",
+          "size": 51386,
+          "sha256": "6b1816a884629378814565ba4c39901e6daf5c82c238f74d30278809bf0ffa8a",
+          "expires_at": "2026-11-08T07:02:25Z",
+          "expired": false,
+          "source": "0e08c4ef942c01b5e0a0998621e902eeb586aec2"
+        }
+      ],
+      "acceptance": "NOT_GRANTED_FROM_FAILED_RUN"
+    },
+    {
+      "source": "f0352a50040efbac62629d7954604fe4006ed391",
+      "run": 40171403331,
+      "attempt": 1,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171403331",
+      "conclusion": "success",
+      "reason": "Superseded green source: 24 macOS + 33 iPhone + 33 iPad PASS, unsigned iphoneos build, 36 verifier rejection cases. iPad multi-scene activation still returned a real system error. Final revision adds all iPad orientations and explicit UIWindowScene/requestingScene configuration; original pending observations preserved here.",
+      "artifacts": [
+        {
+          "expires_at": "2026-11-08T07:06:32Z",
+          "id": 12590900111,
+          "name": "reader-apple-display-macos-40171403331-1",
+          "sha256": "a0b2dfd40002a2315a40a90a32653e1bf214a7df4f23437a8a31b4b7bb388bb1",
+          "size": 53676
+        },
+        {
+          "expires_at": "2026-11-08T07:11:18Z",
+          "id": 12590367216,
+          "name": "reader-apple-display-iphone-40171403331-1",
+          "sha256": "e2fdf64697933237bbea003d83f21b264ff27610805ac2587fbd9b422adfcf9e",
+          "size": 90666
+        },
+        {
+          "expires_at": "2026-11-08T07:10:25Z",
+          "id": 12591090502,
+          "name": "reader-apple-display-ipad-40171403331-1",
+          "sha256": "a75f50330e2519444d9abf7eae8c63f836253d97e66a2fd48b1ad353b9b38c4d",
+          "size": 90371
+        },
+        {
+          "expires_at": "2026-11-08T07:06:35Z",
+          "id": 12590576329,
+          "name": "reader-apple-display-iphoneos-40171403331-1",
+          "sha256": "7db200922ff9717ef84ca39a0cb7efb26c08d930b1f326ced12999b523ccfe50",
+          "size": 78890
+        }
+      ],
+      "results": [
+        {
+          "platform": "macos",
+          "passed": 24,
+          "pending": [
+            "mac_physical_sleep"
+          ],
+          "binarySHA256": "b8db0cfda1572b125cf7ce5d09cf0d09e0c790be6fb879a079beb9dad8ccfbfe",
+          "librarySHA256": "cdbfa45d17e7813d0bbdb03f8ce8b3aaa202bebc03257c13d0aece75fff0f48c"
+        },
+        {
+          "platform": "iphone",
+          "passed": 33,
+          "pending": [
+            "ios_brightness_readback",
+            "ios_brightness_conflict",
+            "ios_conflict_no_partial_idle",
+            "ios_brightness_conditional_restore",
+            "ios_brightness_external_preserved",
+            "ios_brightness_retry",
+            "ios_brightness_invalid_releases",
+            "ios_physical_backlight",
+            "ios_physical_sleep",
+            "ios_external_screen",
+            "ios_multiscene_real_sessions",
+            "ios_multiscene_isolation",
+            "ios_scene_disconnect_releases"
+          ],
+          "binarySHA256": "8dafe766734a18c5f33d07d83a5a4174475993e2c71776810b72672d6fcd6593",
+          "librarySHA256": "ffa6996d8bdd1462459f3bb6991cdc9d734cb77c83da9236bb19e21d25197a41"
+        },
+        {
+          "platform": "ipad",
+          "passed": 33,
+          "pending": [
+            "ios_brightness_readback",
+            "ios_brightness_conflict",
+            "ios_conflict_no_partial_idle",
+            "ios_brightness_conditional_restore",
+            "ios_brightness_external_preserved",
+            "ios_brightness_retry",
+            "ios_brightness_invalid_releases",
+            "ios_physical_backlight",
+            "ios_physical_sleep",
+            "ios_external_screen",
+            "ios_multiscene_real_sessions",
+            "ios_multiscene_isolation",
+            "ios_scene_disconnect_releases"
+          ],
+          "binarySHA256": "32e94c3063a929e4c2f1efdba901f2f987c8e096c678ccc188be8713d23bf852",
+          "librarySHA256": "a1921d73497d570bbbd4b3ea848f7b68dbc57dec29109868dc8ca9d6795e2ea5"
+        },
+        {
+          "platform": "iphoneos",
+          "passed": 0,
+          "pending": [],
+          "binarySHA256": "fdcb80c8064e2c3eb985c62689c671e35c5d4d0d06d9f8a3ca3995a81b399398",
+          "librarySHA256": "839c4a38258799f39275170064adaea4b8e427d56f227386e50d7581e1be24b2"
+        }
+      ]
+    }
+  ],
+  "remainingGaps": [
+    "Physical iPhone/iPad brightness acquisition, conflict, conditional restore, external Control Center changes and abrupt-termination brightness behavior need actual hardware; the simulator returned UNAVAILABLE and no such coverage is awarded.",
+    "Actual physical idle sleep/backlight effects were not measured on hosted macOS or simulators.",
+    "iPhone simulator reports supportsMultipleScenes=false; its three multi-scene cases remain pending. iPad real multi-scene cases passed.",
+    "No external display attached; external-screen brightness is deliberately UNSUPPORTED.",
+    "iphoneos target was compiled unsigned, not executed, signed for distribution, uploaded or released.",
+    "Host wiring and root common-source/integration review remain unperformed by design. Same-value external writes cannot be distinguished by UIKit's public property API."
+  ],
+  "deniedActions": [],
+  "uncertainActions": [],
+  "evidenceSource": "Authenticated completed job 121105326512 log line D06_AUTHENTICATED_EVIDENCE plus read-only GitHub REST run/jobs/artifact metadata. All primary artifact ZIP bytes were downloaded, unpacked and rehashed only inside that GitHub Actions job."
+}

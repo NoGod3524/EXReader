@@ -1,0 +1,190 @@
+{
+  "schema": 1,
+  "parent": "79143b3c25f8529d077afb9b0f0f2abcb4307279",
+  "branch": "codex/f05-android-delete-details-20261103",
+  "single_run": true,
+  "max_attempt": 1,
+  "budget_runner_minutes": {
+    "admission": 5,
+    "android": 120,
+    "audit": 15
+  },
+  "trigger": "workflow_dispatch only; existing push branches unchanged",
+  "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "sdk_version": "3.42.0",
+  "paths": [
+    "tests/product/f05_android_head_bridge_20261103/contract.json",
+    "tests/product/f05_android_head_bridge_20261103/driver.py",
+    "tests/product/f05_android_head_bridge_20261103/retained.py",
+    "tests/product/f05_android_head_bridge_20261103/bridge.init.gradle",
+    "tests/product/f05_android_head_bridge_20261103/java/org/exreader/host/HeadBridgeTest.java",
+    "tests/product/f05_android_head_bridge_20261103/java/org/exreader/host/ConflictBoundaryTest.java",
+    "tests/product/f05_android_head_bridge_20261103/cpp/conflict_boundary_probe.inc",
+    ".github/workflows/reader-host-session-android.yml",
+    "examples/android/app/src/main/java/org/exreader/host/OrganizationPanel.java",
+    "examples/android/app/src/main/java/org/exreader/host/OrganizationStore.java"
+  ],
+  "changes": [
+    "M\t.github/workflows/reader-host-session-android.yml",
+    "M\texamples/android/app/src/main/java/org/exreader/host/OrganizationPanel.java",
+    "M\texamples/android/app/src/main/java/org/exreader/host/OrganizationStore.java",
+    "M\ttests/product/f05_android_head_bridge_20261103/driver.py",
+    "M\ttests/product/f05_android_head_bridge_20261103/java/org/exreader/host/HeadBridgeTest.java",
+    "M\ttests/product/f05_android_head_bridge_20261103/contract.json"
+  ],
+  "production_sha256": {
+    "examples/android/app/src/main/java/org/exreader/host/NativeCatalog.java": "a31439a775f7aa9b742adad7910d514ab1ff8eae9b5ebcb5a2291dea73f77122",
+    "examples/android/app/src/main/cpp/catalog_jni.cpp": "b0bae0e335e6948479cd482e228c27a5d6456eb62c7b3148d0e6f1f6918e5f80",
+    "examples/android/app/src/main/java/org/exreader/host/OrganizationPanel.java": "0f4a64b48a7e3dec0827f776b428eab0c8d5322275961625c4efe78828252f8b",
+    "examples/android/app/src/main/java/org/exreader/host/OrganizationStore.java": "58e49e9d6243661b215c3ea9514d4c7762082ecd74b614268574906a88a43c86"
+  },
+  "original_blobs": {
+    "examples/android/app/src/androidTest/java/org/exreader/host/ProductOwnerTest.java": "fa504a46e3a545428037290efb4a2758a72d0e07",
+    "examples/android/app/src/androidTest/java/org/exreader/host/ProductFixture.java": "cdd9b1fc764f69f246f86431a26e3c09a66a34a3",
+    "tests/reader_host_session_android/run_ui.py": "7ffae7d6e2ede90848efa954031561b145725e4e",
+    "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java": "ec9bb60ae3233d914086e06c8bb93aa4580d6ceb",
+    "tests/reader_host_session_android/audit.py": "63850f861af2f06e2bd0e247060e609f0b15da69"
+  },
+  "original_owner_checks": [
+    "actualInstalledProviderAndJson",
+    "persistedNativeCreateIds",
+    "strictUtf16AndEmoji",
+    "staleObservedHeadsAreAtomic",
+    "explicitDeleteAndRestore",
+    "metadataFailureRollsBackAndRetries",
+    "outboxFailureRollsBackAndRetries",
+    "membershipNeedsExplicitBookBootstrap",
+    "publicSdkBootstrapKeepsCurrentProductTitle",
+    "shelfAndSeriesMembershipOrder",
+    "missingAndDeletedDependenciesRefused",
+    "mapFailureKeepsSdkAndCommittedBookCommand",
+    "nativeRejectsWrongOwner",
+    "nativeRejectsClosedHandle",
+    "twoNativeOwnersCompeteOnOneObservedHead",
+    "sdkDatabaseRefusedWithoutModification",
+    "opensClosedLegacySystemCatalog",
+    "finalizeImportAutomaticallyBootstrapsOnce"
+  ],
+  "bridge_checks": [
+    "empty_snapshot",
+    "put_identity",
+    "delete_state",
+    "explicit_restore_state",
+    "stale_write_still_refused",
+    "repeat_read_preserves_product",
+    "immutable_snapshot",
+    "wrong_thread_refused",
+    "closed_handle_refused",
+    "malformed_entity_refused",
+    "native_operation_detail_text_readonly"
+  ],
+  "retained_suites": {
+    "android-host-sync-16": {
+      "hosts": [
+        "android"
+      ],
+      "source_path": "tests/reader_host_session_android/run_ui.py",
+      "source_blob": "7ffae7d6e2ede90848efa954031561b145725e4e",
+      "phases": {
+        "first": [
+          "public_sdk_seed_then_real_activity",
+          "real_settings_secure_storage",
+          "ui_cancel_blocked_native_request_then_retry",
+          "explicit_receive_preserves_sdk_and_product",
+          "receive_exact_retry_does_not_duplicate",
+          "explicit_close_waits_for_closed_then_destroy"
+        ],
+        "secure-reopen": [
+          "secure_credentials_and_originals_survive_process_restart",
+          "background_close_does_not_wait_on_ui",
+          "manual_sync_after_background_reopens_owned_session",
+          "forget_credentials_keeps_library_and_binding",
+          "explicit_session_only_credentials"
+        ],
+        "session-reopen": [
+          "session_only_credential_not_restored_after_kill"
+        ],
+        "semantics": [
+          "polite_status_semantics",
+          "organizer_hides_covered_shelf_semantics",
+          "reader_semantic_scroll_changes_real_page",
+          "font_value_and_large_font_controls"
+        ]
+      },
+      "count": 16,
+      "report_kind": "phase-ordered-checks",
+      "distinct_pids": 4,
+      "real_blocked_boundaries": 2,
+      "provenance": "Original public SDK seeding remains regression, not new native peer author.",
+      "instrumentation_source_path": "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
+      "instrumentation_source_blob": "ec9bb60ae3233d914086e06c8bb93aa4580d6ceb",
+      "runtime_state": "prior_run41604711611_original16_passed_keep_all_assertions",
+      "adapter_scope": "Approved generated Python CLI choice and single-expression Java 3.42 adapters unchanged. Prior run41598794149 built all APKs but stopped at manifest parser gate before runtime. This separate authorized run keeps original sixteen checks, four PIDs, two blocked boundaries and SDK identity; no assertion reduction."
+    }
+  },
+  "retained_adapter_origin": "9ce943e1ff0c26b54db69f5c31eec057d2be216b:tests/product/f05_recovery_20261031/android.py:432-611",
+  "scope": "Android bridge plus isolated Debug non-UI conflict and legal history boundary",
+  "not_accepted": [
+    "full F05",
+    "Opus UI",
+    "sessionprobe SDK3.40-only side workflow",
+    "transport end-to-end conflict",
+    "other platform conflict recovery"
+  ],
+  "new_bridge_fixture": "Actual NativeCatalog.applyGroup operations; ProductFixture SELECT only; no SQL writes",
+  "head_sha_basis": "75d3115041016ae61149fd6f5a9a816c296cc085:apps/reader/revisions/src/revisions.cpp:251,276-282,332-333,457",
+  "hash_source_tree": "f6eaf737da191a01568aaa89d1a549dddf1c7331",
+  "hash_recipe_source": "054df69524eed483759febdcc0ce20e634921f82:tests/dot_f03_production_acceptance_20261102/admission.py",
+  "hash_recipe_functions": [
+    "installed_hash_prefix",
+    "hash_inventory",
+    "prepare_hash_owner",
+    "hash_owner_proof"
+  ],
+  "manifest_parser_checks": [
+    "actual_ProductOwnerTest",
+    "actual_HostSyncTest",
+    "actual_HeadBridgeTest",
+    "equivalent_bound_short_prefix",
+    "wrong_namespace",
+    "duplicate_canonical_alias",
+    "wrong_runner",
+    "wrong_target",
+    "nested_name_cannot_supply_runner",
+    "duplicate_instrumentation"
+  ],
+  "prior_failed_run": 41598794149,
+  "manifest_evidence_run": 41602795048,
+  "manifest_evidence_artifact": 13215501646,
+  "boundary_checks": [
+    "concurrent_put_put",
+    "concurrent_delete_put",
+    "explicit_restore_all_heads",
+    "history_4095_complete",
+    "history_4096_complete",
+    "history_4097_atomic_refusal",
+    "limit_exact_replay",
+    "limit_close_reopen_readonly"
+  ],
+  "boundary_overlay": {
+    "path": "examples/android/app/src/debug/cpp/catalog_fixture.inc",
+    "base_sha256": "2233452289480e4c699223c19d9a64dd0106846f501c9fafded16f1339464086",
+    "base_blob": "9e29e8a2c5f70a60043759051996fe1bbe1224cc",
+    "rule": "Actions isolated Debug copy only; exact original bytes plus newline plus new probe; repository original and first three APKs untouched"
+  },
+  "boundary_parent_success_run": 41604711611,
+  "boundary_api": "Use actual catalog owner API family; do not force raw_v3 or enable reading. Real dual-owner commands plus exact get/receive. Boundary roots use public local revision API, no SQL writer.",
+  "boundary_instrumentation_timeout_seconds": 1800,
+  "deletion_detail_candidate": {
+    "base": "79143b3c25f8529d077afb9b0f0f2abcb4307279",
+    "native_JNI_bridge_unchanged": true,
+    "group_selection_snapshot_crosscheck": true,
+    "read_only_dialog": true,
+    "heads_per_visible_page": 50,
+    "all_original_bridge_checks_preserved": true,
+    "new_control": "actual native operation text renderer and read-only state only",
+    "native_dialog_runtime_accepted": false,
+    "full_F05_accepted": false,
+    "authorization": "2026-11-03 user authorized all necessary operations; isolated candidate only, existing production owners unchanged."
+  }
+}

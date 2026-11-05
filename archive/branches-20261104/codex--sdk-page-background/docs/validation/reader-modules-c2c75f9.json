@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "scope": "standalone sideload installed consumers and product catalog storage contract",
+  "accepted": true,
+  "complete_product": false,
+  "webdav_client_accepted": false,
+  "native_product_ui_accepted": false,
+  "mobile_sideload_adoption_accepted": false,
+  "source_sha": "c2c75f99a1f3c4b47ea296bf04a5aeabf0fc31af",
+  "run_id": 39980923147,
+  "run_attempt": 1,
+  "conclusion": "success",
+  "jobs": [
+    {"id": 120507675701, "platform": "Linux", "source_consumer_passed": 1, "installed_consumer_passed": 1},
+    {"id": 120507675710, "platform": "Windows", "source_consumer_passed": 1, "installed_consumer_passed": 1},
+    {"id": 120507675754, "platform": "macOS", "source_consumer_passed": 1, "installed_consumer_passed": 1},
+    {"id": 120507675399, "scope": "catalog", "passed_groups": 9, "failed_groups": 0}
+  ],
+  "sideload": {
+    "formats": 9,
+    "public_sdk_only": true,
+    "installed_target": "EXReaderSideload::exr_sideload",
+    "streamed_input_limit_bytes": 134217728,
+    "snapshot_input_limit_bytes": 33554432,
+    "rollback_injection_after_delivered_bytes": 65536,
+    "source_ownership_transferred": false,
+    "automatic_book_deletion": false,
+    "pdf_requires_stable_private_path": true,
+    "pdf_in_call_cancellation": false,
+    "snapshot_sdk_in_call_cancellation": false
+  },
+  "catalog": {
+    "application_id": 1163416144,
+    "schema_version": 1,
+    "schema_sha256": "d3d4a7d2f0f855286f212e73f165ec4c7109786be984e1f51440a4727197f473",
+    "sqlite_version": "3.37.2",
+    "metadata_rows": 3500,
+    "visible_rows": 3465,
+    "page_limit": 73,
+    "ordered_page_queries": 3,
+    "ui_frame_time_measured": false,
+    "wire_json_validation_implemented": false,
+    "conflict_resolution_implemented": false
+  },
+  "artifacts": [
+    {"id": 12514041003, "name": "reader-sideload-Linux-39980923147-1", "size_in_bytes": 24580, "digest": "sha256:b6db9e8951078c8cec2c9e39eeeb507dabf9acb8fa59d1e99ed9d935ec242110"},
+    {"id": 12513447200, "name": "reader-sideload-Windows-39980923147-1", "size_in_bytes": 27575, "digest": "sha256:74a63e1d8e46cf8285e64dc86e1a268500b5e554a7b1e310a91136d138dc7dc2"},
+    {"id": 12512808768, "name": "reader-sideload-macOS-39980923147-1", "size_in_bytes": 24196, "digest": "sha256:e53316484483cd5054d6743c631e2d9b83ec2356e7bb242c688f3c36acc0565c"},
+    {"id": 12513117427, "name": "reader-catalog-39980923147-1", "size_in_bytes": 604, "digest": "sha256:9ba2ea2231722c3a04593ee747dc348c319398022966d3e834e40a80f8e70153"}
+  ],
+  "artifact_metadata_and_upload_digests_match": true,
+  "expired_artifacts_at_audit": 0,
+  "retained_failed_module_run": {
+    "source_sha": "1ed8360673be8c3c7ad66886c2bbd80c2a1463d8",
+    "run_id": 39977249550,
+    "failed_sideload_jobs": 3,
+    "passed_catalog_jobs": 1,
+    "problem": "The original rollback fixture was refused in metadata parsing before the intended copy phase."
+  },
+  "separate_pr_integration_failure": {
+    "run_id": 39983960079,
+    "performance_job_id": 120518180321,
+    "problem": "pg84-frankenstein frozen source identity changed during collection",
+    "collected_documents": 7,
+    "required_documents": 8,
+    "engine_executed": false,
+    "native_processes": 0,
+    "reference_processes": 0,
+    "accepted": false
+  },
+  "sdk_candidate": "9854061be331fe603a1822d9b2b36ee357154927",
+  "protected_sdk_trees_unchanged": true,
+  "local_execution": false,
+  "local_artifact_download": false,
+  "wp16_cpu_credit_seconds": 0
+}

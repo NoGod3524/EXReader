@@ -1,0 +1,70 @@
+# 产品性能同源观测入口
+
+产品计划的 F08 仍待验收：产品 UI 的帧时间、内存和首次可交互预算须在固定设备及书库规模下测量并经批准冻结。SDK 已有预算和真实文档引擎基线见 `docs/READING-REAL-PERFORMANCE.md`、`docs/READING-CPU-BASELINES.md`；它们不替代 UI 预算。这里不新增阈值。
+
+## 可复用测量与边界
+
+原始 `reader-perf-windows.yml`、`reader-perf-gtk.yml` 及其原验证器、GTK 3.40 探针保留原有固定起点、冻结树和文件白名单检查。下列独立组合入口以当前实际源码和组件身份为依据，观测完整性检查不证明旧冻结门禁通过，也不覆盖原门禁。路径拆分后的入口已进行轻量协议校验，下一次需要组合测量时再执行完整采样；下列历史结果仍属于当时运行的源码和原工作流路径。
+
+- Windows：`.github/workflows/reader-composition-perf-windows.yml` 支持手动触发和 `workflow_call`，以调用者源码构建 3.41 SDK 和实际桌面宿主，使用 `tests/windows_host/seed_shelf.c` 生成的 2202 本 SDK 原件，测量首屏、分页、搜索、翻页、恢复、导入响应和进程工作集。它记录源码、组件树、可执行文件、字体、语料、环境、逐进程结果和打包清单；不是帧时间。历史实测及 16 MiB TXT 拒绝见 `docs/READER-PERF-WINDOWS.md`。
+- Linux GTK：`.github/workflows/reader-composition-perf-gtk.yml` 支持手动触发和 `workflow_call`，使用 2202 本 SDK 原件、真实 X11 输入及宿主观测；汇总所有计划样本、RSS、包身份和环境，并以独立作业核对同次工件。没有帧时钟数据；旧实测见 `docs/READER-PERF-GTK.md`。
+- Android：`tools/run_reader_shelf_ui.py` 和 `.github/workflows/reader-shelf-android.yml` 已有 2202 本真实 SDK 原件与模拟器进程 PSS 原始采样；`tools/check_reader_shelf_android.py` 明确 `performance_accepted=false`、`physical_device_execution=false`。原工作流固定旧 SDK 和宿主树，不能直接将历史结果视作当前源码的性能结果。
+- Apple：`tests/apple_host/shelf/collect_shelf_evidence.py` 和 `.github/workflows/reader-apple-shelf.yml` 已记录 2202 本原件、原生布局观测、进程峰值 RSS、程序文件散列和运行目标；报告明确无硬性能预算或真机授予。原工作流按分支选择旧 SDK/检查，需适配最终源码后再运行。
+
+两个桌面入口当前构建的宿主功能选项以各自构建日志和 CMakeCache 为准；这不是最终全部功能配置的包。汇总者必须核对所测程序与最终交付包的散列、源码 SHA、运行和 attempt，再将其与目标设备、书库、可交互定义及获批准预算逐项关联。不同 runner 的绝对数值不可直接当作同设备对比。保留失败、原始记录及日志，不从观测完整性推导性能达标，也不从模拟器推导真机达标。
+
+调用示例（在最终源码的工作流中调用对应文件）：
+
+```yaml
+jobs:
+  windows-observation:
+    uses: ./.github/workflows/reader-composition-perf-windows.yml
+  gtk-observation:
+    uses: ./.github/workflows/reader-composition-perf-gtk.yml
+```
+
+这两个入口分别构建程序，并非接收外部已发布包；若最终交付包由其他构建产生，必须核对实际包身份，不能仅凭源码相同授予同一包。Android、Apple 和帧级采样仍需要在最终源码与实际目标上完成；不能以这些桌面结果标记 F08 或六平台通过。
+
+## 2026-10-26 当前组合 GTK 观测
+
+源码 `c11b8cfc7d8872db22f967b919cf650f58efbb2a`，Actions [40381215897](https://github.com/NoGod3524/EXReader/actions/runs/40381215897)，attempt 1：Linux `ubuntu-22.04`、Xvfb，32 次启动、520/520 样本，11 项观测完整性检查与独立工件身份核验通过。包中程序 SHA-256 `a31ca88780befa05fe06ef267dff0c7062b3c821f409f287fdc22a0989207aca`，归档 SHA-256 `10fc2387ec67e056a798c5fac0ff807526b83bbb6428b7c728cd37cc2bd11335`，27 文件共 25,873,656 字节。工件 `reader-perf-gtk-40381215897-1`，ID `12678228026`，SHA-256 `01907e96ac668d8d71fe3371c03051644fd39951eb0de1910c35ba7b663e4985`，有效期至 2027-01-24。
+
+首个 50 行书架从启动到观测 p50/p95/max 为 147.066/247.908/3492.426 ms（24 次）；下一页输入至首次绘制 p50/p95/max 为 33.807/36.480/40.829 ms（112 次）；进程 RSS 高水位最大 208,604 KiB。完整原始样本、环境、冷/热策略和包配置在工件中；这些是端到端观测，不是逐帧时间，且未冻结 UI 数值预算。早期失败 [40380951236](https://github.com/NoGod3524/EXReader/actions/runs/40380951236) 保留：打包工具当时仍默认 3.40，后续显式传入 3.41。
+
+## 2026-10-26 当前组合 Windows 观测
+
+源码 `c11b8cfc7d8872db22f967b919cf650f58efbb2a`，Actions [40381230058](https://github.com/NoGod3524/EXReader/actions/runs/40381230058)，attempt 1：Windows Server 2022、AMD EPYC 9V74、4 逻辑处理器。实际打包程序 SDK 3.41/ABI 1，自检 26 项；EXE 为 7,224,832 字节，SHA-256 `28533c0bc7573c3b78a054fc30cff1d93f0270b931518194ce850643fee93ccb`。48 次测量启动，冷书架、热书架、阅读、EPUB 导入各 12 次，同源完整性门通过；`performance_accepted=false`。
+
+热书架首屏可交互 p50/p95/max 为 136.961/151.575/151.575 ms（12 次）；书内翻页 p50/p95/max 为 24.644/33.212/34.582 ms（96 次）；阅读组进程工作集峰值 p50/p95/max 为 48,179,200/48,340,992/48,340,992 字节。测量是控件状态的端到端延迟，不是帧时间。原 16 MiB TXT 输入诊断依旧为 `import_rejected`，该 TXT 测量组跳过；EPUB 是单独组，不能代替 TXT 结论。
+
+原始工件 `reader-perf-windows-40381230058-1`，ID `12677938567`，SHA-256 `9eb4492cd034423a034406afc3f4c98433c1bbf8cbb60ba6d7753eda9e477c88`，有效期至 2027-01-24；原始工件经 Actions [40382511094](https://github.com/NoGod3524/EXReader/actions/runs/40382511094) 下载解析。旧版运行 [40380841008](https://github.com/NoGod3524/EXReader/actions/runs/40380841008) 在宿主构建阶段失败，保留其日志；后续运行显式选择 3.41。
+
+## 组合入口轻量校验
+
+源码 `be53824393b3621a233181dfe01d7094dd20ed65`，[Actions 40383580356](https://github.com/NoGod3524/EXReader/actions/runs/40383580356) attempt 1 成功：actionlint 解析两个入口；Python 编译检查、引用文件和 CMake 种子路径检查通过；GTK 采样计划和百分位计算、直接运行及可复用调用的模拟身份检查通过，并拒绝跨 attempt 或被修改的工件；Windows 缺失或跨源码证据被拒绝。原冻结工作流、验证器和探针与起点 `11042994` 完全一致。记录工件 `reader-composition-perf-protocol-40383580356-1`，ID `12678184505`，SHA-256 `b954d55f4bd7b8927a7fcb92625a1a8f26ef18431df09a106ba977ce4d540ed6`。
+
+这些是合成证据协议检查，没有构建产品、运行实际可复用调用或重新采样；真实宿主及产物身份仍须由下次组合测量核验。
+
+## Apple same-source observation preparation
+
+The separate `.github/workflows/reader-composition-perf-apple.yml` builds SDK 3.41 and the Apple shelf host from the checked-out source with page themes enabled. It records the source and component trees, SDK inventories, program files, destination, original-byte identities, native UI attachments and layout traces. It reuses the existing seven shelf cases and collector on macOS, iPhone simulator and iPad simulator, along with the original native seed, account and accessibility checks. The historical `.github/workflows/reader-apple-shelf.yml` and its frozen-source guards remain unchanged; this composition entry records current identity instead of claiming that the old frozen source guard passed. The `reading_sdk_baseline` field in the inherited SDK identity denotes the historical reference, not a claim that the current SDK tree equals that reference.
+
+The first push-triggered run is [40627054463](https://github.com/NoGod3524/EXReader/actions/runs/40627054463), attempt 1, source `517fda00d5dd8a36077cd080307e7343f5f062ed`. Its final result and observations must be checked in Actions; a pending or failed run grants no measurement completeness or acceptance. Uploads retain raw per-platform evidence on failure. The summary's `accepted` field is the inherited shelf evidence gate, not product performance acceptance. This workflow builds an instrumented test host, not a verified final shipping package. Native layout timing is not frame presentation time, RSS is process peak, and simulator results are not physical-device measurements. Android same-source sampling, delivery-package matching, frame-level Apple measurements and approved fixed-device budgets remain open; F08 remains unaccepted.
+
+## Android same-source observation and retained failure
+
+`.github/workflows/reader-composition-perf-android.yml` prepares an API 34 x86_64 emulator observation using the existing ten-case real SDK shelf collector. The candidate-mode builder uses the current source as its identity boundary; it does not claim the historical frozen SDK or original Android host acceptance gates passed. The performance-only wrapper also builds the current catalog's `reader_original_import` install target, required by the current catalog install. The verifier checks source/run/attempt, the SDK inventory and native build IDs, fixture and font identity, and the bytes of all four installed APKs, then re-analyzes the original UI/frame/PSS evidence. No SDK budget or existing UI assertion is changed. The APK is an instrumented debug configuration, not a matched shipping package.
+
+First run [40627733870](https://github.com/NoGod3524/EXReader/actions/runs/40627733870), source `adec22bb8ee6a09a2879c500a6ae6dd4af96206b`, failed before measurement because the inherited builder did not build `libreader_original_import.a` before catalog installation. The follow-up [40628057571](https://github.com/NoGod3524/EXReader/actions/runs/40628057571), attempt 1, source `9f0783ae449ad73cc803d7019892ee8f3c417a64`, built and ran the host, but failed the last required UI case: nine passed, one failed. The test expected `Imported NewReview.txt`; the retained screenshot shows `Imported NewReview`. This evidence does not establish why the title differs or whether the subsequent catalog-search assertion would pass. Resolving the current host/test contract is outside this performance-only work; the original assertion remains intact. The run's multi-line emulator action also executed each line in a separate shell, losing exit variables; `run_observation.sh` corrects that separately but has not been executed in a new full run.
+
+The failed run retained artifact `12789724765` (`reader-composition-perf-android-40628057571-1`, SHA-256 `13e0ef76d656bf4c43b659e4f720149983d52d51d23595b51822eccf2328a1c6`). Actions-only inspection [40629322699](https://github.com/NoGod3524/EXReader/actions/runs/40629322699) authenticated the artifact, checked the four installed APKs against their build outputs, and extracted diagnostic samples. The host APK SHA-256 is `778055fc913eb0c5ef2aa4a507723e2baa47872b4feadaa11bb048f01d1ae7c6`; SDK version was 3.41.0 with 296 inventoried files. Before refusing the UI result, the same-run verifier checked SDK inventory, native build IDs and fixtures; the complete inventories and other APK hashes are in the artifacts.
+
+**Partial failed-run observations only:** first interactive 3,639.963 ms; 5,141 completed ordinary Window callbacks p50/p95/p99/max 68.402/116.986/130.597/895.672 ms, zero reported callback drops; 248 PID-stable PSS samples, median 48,843 KiB and sampled peak 114,117 KiB. Two window traces lack a clean stop and the force-stop path can lose undelivered callbacks. Instrumentation and sampling add overhead; callback duration is not display presentation time, and the PSS peak is sampled rather than continuous. These numbers are neither a complete ten-case observation nor an approved threshold, physical-device result, final-package result or F08 acceptance. After the host/test contract is resolved without weakening frozen assertions, run the current entry on the intended source and review the full same-run artifact in Actions.
+
+## Android complete same-source observation after import filename repair
+
+On source `09ce13895f58828099b114a82832e79236dbd9a2`, [Actions run 40630232645](https://github.com/NoGod3524/EXReader/actions/runs/40630232645), attempt 1, succeeded. The actual API 34 x86_64 debug emulator host passed all ten unchanged UI cases, including selecting `NewReview.txt`, observing the full filename in the import status and finding it in the catalog. The three focused filename tests passed, including unchanged default extension stripping, actual filename spelling, sanitization and the UTF-8 bound. The original raw collector and independent verifier passed: `observation_complete=true`, `performance_accepted=false`, `physical_device_execution=false`, `problems=[]`. The verifier checked the source/run/attempt, SDK file inventory, matching native build IDs, fixtures, font and byte-identical installed APKs. The actual host APK was 25,897,958 bytes, SHA-256 `8243fa9c2de8b81148024abb5e73ad05af269fd5eab3bb91a495a63611062e32`; SDK was 3.41.0. Artifact `reader-composition-perf-android-40630232645-1`, ID `12791467691`, 93,227,000 bytes, SHA-256 `62ac0ae626bc6c1a2ca7354f835423a2a86a24a810312f02207e706efe82e48b`, expires 2027-01-26; it contains raw samples, source/SDK/build identities and installed APKs.
+
+The 2,202-original shelf observation recorded first interactive 1,688.550 ms; 5,787 completed ordinary Window callbacks p50/p95/p99/max 49.926/86.435/101.109/506.926 ms, with zero reported callback drops; 195 stable process PSS samples, median 49,595 KiB and sampled peak 122,876 KiB. This is an instrumented debug emulator, not a physical device or a matched final release package. Completed callback duration is not display presentation time, force-stop can omit undelivered callbacks, and PSS peak is sampled. No performance threshold or F08 acceptance is inferred. The failed 9/10 run and its diagnostic samples above remain historical failure evidence, not part of this successful sample.
+
+The Android host naming change and integration caveats are documented in [the Android owner handoff](handoffs/android-import-filename-performance.md). The full retained Android import-entry and host lifecycle suites remain to be revalidated on the final composition; this observation does not claim those gates passed.

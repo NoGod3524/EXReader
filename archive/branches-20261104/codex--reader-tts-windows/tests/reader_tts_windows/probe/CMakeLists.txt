@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MIT
+# Independent C++ probe: consumes only the installed EXReaderTTSWindows package.
+cmake_minimum_required(VERSION 3.22)
+project(EXReaderTTSWindowsProbe LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8 /W4 /WX /DNOMINMAX)
+else()
+  add_compile_options(-Wall -Wextra -Werror)
+endif()
+find_package(EXReaderTTSWindows 0.1 CONFIG REQUIRED)
+add_executable(tts-probe probe.cpp)
+target_link_libraries(tts-probe PRIVATE EXReaderTTSWindows::reader_tts)

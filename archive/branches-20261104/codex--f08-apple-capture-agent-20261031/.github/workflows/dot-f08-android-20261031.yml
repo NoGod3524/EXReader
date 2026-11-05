@@ -1,0 +1,104 @@
+name: F08 Android same-source shelf measurements
+on:
+  push:
+    branches: [codex/dot-f08-android-20261031]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  C11_NDK: '27.0.12077973'
+jobs:
+  sample:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard test-only source and measurement controls
+        run: |
+          python3 -m py_compile tests/reader_f08_android_20261031/*.py
+          python3 tests/reader_f08_android_20261031/lane.py guard
+          python3 tests/reader_f08_android_20261031/lane.py controls
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Prepare Android tools
+        run: |
+          python3 -m pip install 'PyYAML==6.0.3'
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk/emulator" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;${C11_NDK}" "emulator" "system-images;android-34;default;x86_64"
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build SDK 3.42 and the original shelf suites
+        run: python3 tests/reader_f08_android_20261031/build.py
+      - name: Measure 2202-source shelf on the installed package
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          heap-size: 512M
+          cores: 4
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -camera-back none
+          disable-animations: false
+          script: python3 tests/reader_f08_android_20261031/lane.py sample
+      - name: Seal all raw observations including failures
+        if: always()
+        run: python3 tests/reader_f08_android_20261031/lane.py seal
+      - uses: actions/upload-artifact@v4
+        id: upload
+        if: always()
+        with:
+          name: f08-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-android/
+          if-no-files-found: error
+          retention-days: 30
+  audit:
+    needs: sample
+    if: ${{ always() && needs.sample.outputs.artifact_id != '' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate the same-run ZIP and recompute measurements
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F08_ARTIFACT_ID: ${{ needs.sample.outputs.artifact_id }}
+          F08_ARTIFACT_DIGEST: ${{ needs.sample.outputs.artifact_digest }}
+        run: python3 tests/reader_f08_android_20261031/lane.py audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-android-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-android-audit/audit.json
+            build/f08-android-audit/metadata.json
+          if-no-files-found: error

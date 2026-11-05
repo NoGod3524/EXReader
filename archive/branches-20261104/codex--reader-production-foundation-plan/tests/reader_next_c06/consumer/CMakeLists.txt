@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: MIT
+cmake_minimum_required(VERSION 3.24)
+project(ReaderNextC06Consumer LANGUAGES C CXX)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8)
+endif()
+# Installed packages only. C06_RAW=ON selects the exact raw0.2 family, OFF the
+# unchanged default 0.1.0 family; a mixed install fails here at configure time.
+option(C06_RAW "Explicit raw0.2 installed family" ON)
+if(C06_RAW)
+  find_package(EXReaderAnnotationExport 0.2.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderAnnotationImport 0.2.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderReadingState 0.2.0 EXACT CONFIG REQUIRED)
+else()
+  find_package(EXReaderAnnotationExport 0.1.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderAnnotationImport 0.1.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderReadingState 0.1.0 EXACT CONFIG REQUIRED)
+endif()
+add_executable(c06-probe probe.cpp api.c)
+target_link_libraries(c06-probe PRIVATE EXReaderAnnotationExport::reader_annotation_export
+  EXReaderAnnotationImport::reader_annotation_import EXReaderReadingState::reader_reading_state
+  EXReaderProductCatalog::reader_catalog_sqlite)
+if(MSVC)
+  target_link_options(c06-probe PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/c06-link.map")
+elseif(APPLE)
+  target_link_options(c06-probe PRIVATE "-Wl,-map,${CMAKE_CURRENT_BINARY_DIR}/c06-link.map")
+else()
+  target_link_options(c06-probe PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/c06-link.map")
+endif()

@@ -1,0 +1,63 @@
+name: reader-final-d01
+on:
+  push:
+    branches: [codex/reader-final-d01]
+    paths:
+      - 'tests/reader_final_d01/**'
+      - '.github/workflows/reader-final-d01.yml'
+      - 'docs/reader-final-d01/**'
+      - 'docs/validation/reader-final-d01.json'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-final-d01
+  cancel-in-progress: false
+jobs:
+  audit:
+    name: trace-audit
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate source matrix, reject negative controls, inspect original remote metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_final_d01/audit.py
+      - uses: actions/upload-artifact@v4
+        id: upload
+        if: always()
+        with:
+          name: reader-final-d01-raw-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-final-d01/
+          if-no-files-found: error
+          retention-days: 90
+  strict:
+    name: strict-same-run-audit
+    needs: audit
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate original audit ZIP and all matrix/report bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRODUCER_RESULT: ${{ needs.audit.result }}
+          ARTIFACT_ID: ${{ needs.audit.outputs.artifact_id }}
+          UPLOAD_DIGEST: ${{ needs.audit.outputs.artifact_digest }}
+        run: python3 tests/reader_final_d01/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-d01-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-final-d01-summary/
+          if-no-files-found: error
+          retention-days: 90

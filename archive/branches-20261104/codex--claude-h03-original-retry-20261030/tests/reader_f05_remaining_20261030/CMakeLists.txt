@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.24)
+project(F05RemovedPaging LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 17)
+find_package(EXReaderCommands 0.1.0 EXACT CONFIG REQUIRED)
+add_executable(removed-paging paging.cpp)
+target_link_libraries(removed-paging PRIVATE EXReaderCommands::reader_commands EXReaderProductCatalog::reader_catalog EXReaderProductCatalog::reader_catalog_sqlite)

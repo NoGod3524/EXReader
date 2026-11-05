@@ -1,0 +1,6 @@
+@PACKAGE_INIT@
+# The narrow host-feature link closure for the five reviewed optional packages.
+# Consuming this package adds no target, no header and no library of its own.
+set(EXReaderHostFeatureLink_MODULE "${CMAKE_CURRENT_LIST_DIR}/EXReaderHostFeatureLink.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/EXReaderHostFeatureLink.cmake")
+check_required_components(EXReaderHostFeatureLink)

@@ -1,0 +1,15 @@
+Source: 8104bcd872c49da2c683fb482b8c67e958aa4747
+Run: 40275499967 / attempt 1 / job 121417392698
+Verbatim selected Actions job log lines (not a local artifact download or parser execution).
+The two measured pairs are large-light then large-dark. Full AX trees/screenshots/XCTest results remain in original target ZIP.
+
+2026-10-26T05:55:44.3190340Z D16_NATIVE_SCROLL {"control":"reader.font.decrease","delta_x":147.75,"frame_before":{"height":77.5,"width":100.5,"x":-10.5,"y":532},"iteration":0,"viewport":{"height":77.5,"width":375,"x":0,"y":532},"window":{"height":667,"width":375,"x":0,"y":0}}
+2026-10-26T05:55:45.7040180Z D16_NATIVE_SCROLL_RESULT {"control":"reader.font.decrease","frame_after":{"height":77.5,"width":100.5,"x":127.5,"y":532},"iteration":0}
+2026-10-26T06:01:53.9536420Z D16_NATIVE_SCROLL {"control":"reader.font.decrease","delta_x":147.75,"frame_before":{"height":77.5,"width":100.5,"x":-10.5,"y":532},"iteration":0,"viewport":{"height":77.5,"width":375,"x":0,"y":532},"window":{"height":667,"width":375,"x":0,"y":0}}
+2026-10-26T06:01:55.3508350Z D16_NATIVE_SCROLL_RESULT {"control":"reader.font.decrease","frame_after":{"height":77.5,"width":100.5,"x":127.5,"y":532},"iteration":0}
+
+All four reader journeys (normal-light, large-light, normal-dark, large-dark):
+2026-10-26T05:53:17.4422060Z Test Case '-[EXReaderHostUITests_iOS.DefaultUITests test02DefaultReaderLowFrequencyJourney]' passed (106.268 seconds).
+2026-10-26T05:57:16.5388570Z Test Case '-[EXReaderHostUITests_iOS.DefaultUITests test02DefaultReaderLowFrequencyJourney]' passed (123.292 seconds).
+2026-10-26T06:00:19.9451350Z Test Case '-[EXReaderHostUITests_iOS.DefaultUITests test02DefaultReaderLowFrequencyJourney]' passed (109.570 seconds).
+2026-10-26T06:03:15.0230840Z Test Case '-[EXReaderHostUITests_iOS.DefaultUITests test02DefaultReaderLowFrequencyJourney]' passed (113.919 seconds).

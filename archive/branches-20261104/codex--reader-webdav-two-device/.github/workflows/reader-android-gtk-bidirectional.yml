@@ -1,0 +1,48 @@
+name: Authenticate Android GTK bidirectional run
+on:
+  push:
+    branches: [codex/reader-webdav-two-device]
+    paths: ['.github/workflows/reader-android-gtk-bidirectional.yml']
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 9ea6d1d56d6d38942cc996734776f865d0a18681
+          path: source
+      - name: Build public SDK inspector from exact tested source
+        run: |
+          test "$(git -C source rev-parse HEAD)" = 9ea6d1d56d6d38942cc996734776f865d0a18681
+          cd source
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+          cmake -S tests/reader_gtk_receive -B build/interop-sdk-inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/interop-sdk-inspect --parallel 4
+      - name: Independently authenticate bidirectional run and public SDK original bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFY_RUN: '40390699668'
+          VERIFY_SOURCE: '9ea6d1d56d6d38942cc996734776f865d0a18681'
+          VERIFY_ARTIFACT: '12685855227'
+          VERIFY_BIDIRECTIONAL: 'true'
+        run: |
+          python3 tests/reader_android_real_dav/verify_run.py
+          python3 tests/reader_android_real_dav/verify_sdk_originals.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-gtk-bidirectional-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/android-gtk-sdk-originals/
+            build/android-gtk-verified/
+          if-no-files-found: warn

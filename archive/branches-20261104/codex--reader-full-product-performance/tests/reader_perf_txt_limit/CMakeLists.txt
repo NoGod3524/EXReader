@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+project(TxtLimitProbe LANGUAGES C)
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
+add_executable(txt_limit_probe probe.c)
+target_link_libraries(txt_limit_probe PRIVATE EXReader::exr_core)

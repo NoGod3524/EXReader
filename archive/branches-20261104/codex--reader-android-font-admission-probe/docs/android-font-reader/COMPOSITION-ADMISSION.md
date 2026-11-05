@@ -1,0 +1,45 @@
+# Android font common-source admission
+
+[Actions 40592584270, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40592584270)
+successfully checked candidate `248e02e9b7205e4c793dbf4d372876023987776d`
+using the Android font, D21 Apple, D22 Android and D25 real-corpus admission
+guards. The probe workflow source was `fc05d7918bd5e8fd13b839a7423ccf346bd92037`;
+it checked out the exact candidate and set the source identity for these guards.
+
+The guard check does not build or exercise the product. The Android font
+candidate's emulator run and each full common-source platform gate remain
+separate. No frozen test or SDK path was changed by the admission probe.
+
+
+The same four admission guards passed on the combined Android-font and Windows
+TXT-search-history candidate `d21978f401781b311ad6168d0eb474f1657c9fb2` in
+[Actions 40593986721/1](https://github.com/NoGod3524/EXReader/actions/runs/40593986721).
+This checks source ownership and pinned bytes only; the candidate still requires
+its product and platform runs.
+
+[Actions 40604679182/1](https://github.com/NoGod3524/EXReader/actions/runs/40604679182)
+passed the D23 Windows admission and Android font, D21, D22, D25 and
+Android system-save source checks on candidate
+`b9dca7c5b4b21b69aa6d63a5893a0141eaa814d5`. The probe workflow source was
+`9f962a8980046e4c6f537cef7dc390a736422998`.
+
+The preceding probe [40604422777/1](https://github.com/NoGod3524/EXReader/actions/runs/40604422777)
+failed because the newly integrated save tests and audited evidence paths had
+not yet been registered. The corrected candidate pins these files to their
+recorded source commits; all existing source guards remain active. This run
+checks source admission only. The product and same-source platform runs remain
+separate.
+
+[Actions 40606993495/1](https://github.com/NoGod3524/EXReader/actions/runs/40606993495)
+passed the same platform and D23 source admissions for candidate
+`6a113c16e06cce1add3934f996929db1f19978fa` with the paragraph-checkpoint SDK
+pinned to `25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab`.
+Probe source `06e9ccfac8a47f79caf8b438b19970335d188ce4` ran both jobs.
+This is source admission; the candidate still needs same-source product tests.
+
+[Actions 40614955797/1](https://github.com/NoGod3524/EXReader/actions/runs/40614955797)
+passed the platform and D23 source admissions on candidate
+`5447b05a6b942d6ad568f65179c43a946c2890e3`, including the independently
+audited Apple history progress evidence. This only checks source ownership;
+the TXT performance result and final same-source product acceptance remain
+separate.

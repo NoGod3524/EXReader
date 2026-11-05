@@ -1,0 +1,106 @@
+{
+  "linux": {
+    "source_sha": "2c6adb62585331264892c2f2d2e08a6e62d7bd61",
+    "run_id": "41224385272",
+    "attempt": "1",
+    "profile": "tests/reader_f08_linux_product_20261031/profile.json",
+    "receipt": {
+      "id": 13051737488,
+      "name": "f08-linux-product-audit-41224385272-1",
+      "bytes": 4813,
+      "sha256": "eeae61199d38b47fa34d7b7006bdae030a56e9e5bf430d78ebfcd90a17d0a443"
+    },
+    "raw": [
+      {
+        "id": 13051587875,
+        "name": "f08-linux-product-41224385272-1",
+        "bytes": 49861625,
+        "sha256": "8ec746fc23c5e649419cfb812578c3862fd94c5b38286e13940f3899fb3d98a7"
+      }
+    ]
+  },
+  "windows": {
+    "source_sha": "6bb0a7083c218b8899f9451336654c650b53495c",
+    "run_id": "41188896369",
+    "attempt": "1",
+    "profile": "tests/reader_f08_windows_product_20261031/profile.json",
+    "receipt": {
+      "id": 13038675062,
+      "name": "f08-windows-product-audit-41188896369-1",
+      "bytes": 1882,
+      "sha256": "fb1d8e9e7172eb4e87753413593fa186f3078ffde18f46aca95ae03d01a95931"
+    },
+    "raw": [
+      {
+        "id": 13038192218,
+        "name": "f08-windows-product-41188896369-1",
+        "bytes": 46042724,
+        "sha256": "94433d419c3bdee542e968d682a2ede7102527036a4a64e82b8cdf77a0145877"
+      }
+    ]
+  },
+  "android": {
+    "source_sha": "37cbd2566167f633fe70387eb4d0c139751a5b0b",
+    "run_id": "41181554393",
+    "attempt": "1",
+    "profile": "tests/reader_f08_android_20261031/profile.json",
+    "receipt": {
+      "id": 13034638819,
+      "name": "f08-android-audit-41181554393-1",
+      "bytes": 1161,
+      "sha256": "28190621f1ff8f30cb7e5286bf3ef421add737060082e7ad5c222512ec851355"
+    },
+    "raw": [
+      {
+        "id": 13035511879,
+        "name": "f08-android-41181554393-1",
+        "bytes": 43723256,
+        "sha256": "1dceb5cf0f747d0226a15cc7c310eb8dd2f6f070b8e47af580b03f85dc4d4931"
+      }
+    ]
+  },
+  "apple": {
+    "source_sha": "ea3875a9fb96d9c5e4c79c058ffaacb1d1663c1b",
+    "run_id": "41186932079",
+    "attempt": "1",
+    "profile": "tests/reader_f08_apple_20261031/profile.json",
+    "receipt": {
+      "id": 13039400765,
+      "name": "f08-apple-audit-41186932079-1",
+      "bytes": 5736,
+      "sha256": "a3bd7b323b7bc44ec8d325672059d467f3aeb0391cf3cc95ff48eb9fd0804d63"
+    },
+    "raw": [
+      {
+        "id": 13039480840,
+        "name": "f08-apple-ipad-41186932079-1",
+        "bytes": 74777837,
+        "sha256": "9e47d8391f0055ceb973f6e3ccbe0d5dcb4de7906790a1c1911bb9f41cb90c00"
+      },
+      {
+        "id": 13038628059,
+        "name": "f08-apple-iphone-41186932079-1",
+        "bytes": 72986478,
+        "sha256": "0f91591435e2636f15d4b2821dc45e1628e27acb7eb4c9c02b9d851b53c92f49"
+      },
+      {
+        "id": 13037818282,
+        "name": "f08-apple-macos-41186932079-1",
+        "bytes": 64814306,
+        "sha256": "7f2693fa03351b6dea5a87583bdc8a257ce6a00e5a609bafe17f69c21c7f32e0"
+      },
+      {
+        "id": 13037815575,
+        "name": "f08-apple-iphonesimulator-sdk-41186932079-1",
+        "bytes": 22498648,
+        "sha256": "c58e70e50ebe8adfe3302249a34a427ae7046eceed03fc3ed8a50ff0255d82a6"
+      },
+      {
+        "id": 13037241824,
+        "name": "f08-apple-macos-sdk-41186932079-1",
+        "bytes": 22505890,
+        "sha256": "eb882b4795e4bf1756c9e3363d4928786b60f2980587f311a2f5a625a4550abe"
+      }
+    ]
+  }
+}

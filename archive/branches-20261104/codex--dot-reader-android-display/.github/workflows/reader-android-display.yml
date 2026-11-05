@@ -1,0 +1,90 @@
+name: Reader Android window display
+on:
+  push:
+    branches: [codex/dot-reader-android-display]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  android:
+    name: Android API34 native display
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Fixed source, SDK, product and exclusive path guard
+        run: bash tests/reader_android_display/check_scope.sh
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.9'}
+      - name: Android toolchain
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "emulator" "system-images;android-34;default;x86_64"
+      - name: Build and install native library before independent consumer
+        run: |
+          set -euo pipefail
+          mkdir -p build/android-display/{logs,stage,consumer,evidence}
+          gradle -p extras/android-reader-display --no-daemon --stacktrace :display:assembleRelease :display:lintRelease 2>&1 | tee build/android-display/logs/library-build.log
+          cp extras/android-reader-display/display/build/outputs/aar/display-release.aar build/android-display/stage/exreader-android-display-0.1.0.aar
+          cp extras/android-reader-display/README.md build/android-display/stage/
+          consumer="$RUNNER_TEMP/display-consumer-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$consumer"
+          cp -R tests/reader_android_display/android/. "$consumer/"
+          gradle -p "$consumer" --no-daemon --stacktrace :probe:assembleDebug -PdisplayAar="$PWD/build/android-display/stage/exreader-android-display-0.1.0.aar" -PsourceSha="$GITHUB_SHA" -PrunId="$GITHUB_RUN_ID" -PrunAttempt="$GITHUB_RUN_ATTEMPT" 2>&1 | tee build/android-display/logs/consumer-build.log
+          cp "$consumer/probe/build/outputs/apk/debug/probe-debug.apk" build/android-display/consumer/
+          python3 -m py_compile tests/reader_android_display/*.py
+      - name: Emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Actual installed API34 UI and process-lifetime cases
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: python3 tests/reader_android_display/run_probe.py
+      - name: Preserve original reports, installed AAR/APK and all failure logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-android-display-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-display/
+          if-no-files-found: error
+          retention-days: 30
+  report:
+    name: Android display evidence verifier
+    needs: [android]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Fixed source, SDK, product and exclusive path guard
+        run: bash tests/reader_android_display/check_scope.sh
+      - name: Authenticate actual completed upstream job and exact archive bytes
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: python3 tests/reader_android_display/aggregate.py
+      - name: Executable rejection cases against authenticated actual evidence
+        run: python3 tests/reader_android_display/check_evidence.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-android-display-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/aggregate/
+          if-no-files-found: error
+          retention-days: 30

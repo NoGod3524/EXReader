@@ -1,0 +1,119 @@
+name: Inspect retained Android performance failure
+# This diagnostic reads the fixed failed run without executing the host.
+on:
+  push:
+    branches: [codex/terra-wave-product-performance]
+    paths: ['.github/workflows/reader-perf-android-inspect.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Install screenshot text reader
+        run: sudo apt-get update -qq && sudo apt-get install -y tesseract-ocr
+      - name: Authenticate and inspect failed UI evidence on Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, math, os, re, statistics, subprocess, urllib.request, urllib.error, zipfile
+          from pathlib import Path, PurePosixPath
+          api = os.environ['GITHUB_API_URL'] + '/repos/' + os.environ['GITHUB_REPOSITORY']
+          run, artifact, source = 40628057571, 12789724765, '9f0783ae449ad73cc803d7019892ee8f3c417a64'
+          size, digest = 93258529, 'sha256:13e0ef76d656bf4c43b659e4f720149983d52d51d23595b51822eccf2328a1c6'
+          headers = {'Authorization':'Bearer '+os.environ['GH_TOKEN'], 'Accept':'application/vnd.github+json', 'User-Agent':'EXReader-perf-inspection'}
+          def get(path):
+              with urllib.request.urlopen(urllib.request.Request(api+path,headers=headers),timeout=60) as r: return json.load(r)
+          info, meta = get('/actions/runs/'+str(run)), get('/actions/artifacts/'+str(artifact))
+          assert info['head_sha'] == source and info['status'] == 'completed' and info['conclusion'] == 'failure'
+          assert meta['workflow_run']['id'] == run and meta['workflow_run']['head_sha'] == source and meta['size_in_bytes'] == size and meta['digest'] == digest and not meta['expired']
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, request, stream, code, message, headers, url): return None
+          try: stream = urllib.request.build_opener(NoRedirect).open(urllib.request.Request(api+'/actions/artifacts/'+str(artifact)+'/zip',headers=headers),timeout=60)
+          except urllib.error.HTTPError as error:
+              assert error.code == 302 and error.headers['Location'].startswith('https://')
+              stream = urllib.request.urlopen(error.headers['Location'],timeout=60)
+          with stream: raw = stream.read(size+1)
+          assert len(raw) == size and 'sha256:'+hashlib.sha256(raw).hexdigest() == digest
+          archive = zipfile.ZipFile(io.BytesIO(raw)); names = archive.namelist()
+          assert len(names) == len(set(names)) and sum(x.file_size for x in archive.infolist()) < 1024**3
+          assert all(not PurePosixPath(x).is_absolute() and '..' not in PurePosixPath(x).parts and '\\' not in x for x in names)
+          def read(suffix):
+              matches=[x for x in names if x.endswith(suffix)]
+              assert len(matches)==1, suffix
+              return archive.read(matches[0])
+          ui=json.loads(read('/ui-execution/ui/validation.json'))
+          assert ui['source_sha']==source and ui['run_id']==str(run) and ui['attempt']=='1'
+          report={'diagnostic_only':True,'performance_accepted':False,'source_sha':source,'run_id':run,'artifact_id':artifact,'digest':digest,
+                  'passed':ui['passed'],'failed':ui['failed'],'skipped':ui['skipped'],
+                  'cases':[{'id':case['id'],'status':case['status'],'error':case.get('error'),'test_source_line':case.get('test_source_line'),'detail':case.get('detail') if case['status']!='pass' else None} for case in ui['cases']],
+                  'collector':json.loads(read('/ui-execution/result.json')),
+                  'verifier':json.loads(read('/observation-verification.json'))}
+          build=json.loads(read('/android-host/build.json'))
+          assert build['source_sha']==source and build['run_id']==str(run) and build['attempt']=='1'
+          assert build['ownership']['candidate_only'] and build['ownership']['tested_source']==source
+          packages={}
+          for filename in ('app-debug.apk','uitest-debug.apk','uitest-debug-androidTest.apk','app-debug-androidTest.apk'):
+              installed=read('/perf-android/installed/'+filename)
+              original=read(('/androidTest/debug/' if filename=='app-debug-androidTest.apk' else '/android-host/artifacts/')+filename)
+              sha=hashlib.sha256(installed).hexdigest()
+              assert installed==original
+              if filename in build['artifacts']: assert build['artifacts'][filename]['sha256']==sha
+              packages[filename]={'sha256':sha,'bytes':len(installed)}
+          report['program_identity']={'installed_apks':packages,'sdk_version':build['sdk_version'],
+              'sdk_file_count':len(build['sdk_files_sha256']),'native':build['native'],
+              'source_tree_ids':read('/perf-android/source-identities.txt').decode(),
+              'note':'Build verifier checked SDK inventory, native build IDs and fixtures before refusing failed UI.'}
+          frames=[]; pids=set(); drops=0; windows=[]
+          for name in sorted(x for x in names if '/ui-execution/windows/' in x and x.endswith('.jsonl')):
+              data=archive.read(name); assert data and data.endswith(b'\n')
+              rows=[json.loads(line) for line in data.splitlines()]; header=rows[0]
+              assert header['kind']=='start' and header['schema']==1
+              pid, window, seq=header['pid'],header['window_id'],0; pids.add(pid)
+              for row in rows[1:]:
+                  assert row['kind'] in ('frame','stop')
+                  if row['kind']=='stop':
+                      assert row['frames']==seq
+                      continue
+                  seq+=1
+                  assert row['pid']==pid and row['window_id']==window and row['sequence']==seq
+                  assert type(row['total_ns']) is int and row['total_ns']>=0 and row['first_draw'] in (0,1) and row['drop_count']>=0
+                  drops+=row['drop_count']
+                  if row['first_draw']==0: frames.append(row['total_ns']/1e6)
+              assert seq>0
+              windows.append({'pid':pid,'callbacks':seq,'sha256':hashlib.sha256(data).hexdigest(),'closed_cleanly':rows[-1]['kind']=='stop'})
+          memory=json.loads(read('/ui-execution/pss-sampling.json')); samples=[]
+          assert not memory['errors'] and [x['slot'] for x in memory['samples']]==list(range(len(memory['samples'])))
+          for item in memory['samples']:
+              if item.get('total_pss_kib') is None: continue
+              rawpss=read('/ui-execution/pss/'+str(item['slot'])+'.txt').decode(errors='replace')
+              match=re.search(r'\*\* MEMINFO in pid (\d+) \[org\.exreader\.host\] \*\*',rawpss)
+              total=re.search(r'TOTAL PSS:\s*(\d+)',rawpss) or re.search(r'^\s*TOTAL\s+(\d+)\s',rawpss,re.M)
+              assert match and total and int(match.group(1))==item['pid'] and int(total.group(1))==item['total_pss_kib']
+              assert item['pid'] in pids and not item.get('process_changed_during_sample') and item['total_pss_kib']>0
+              samples.append(item['total_pss_kib'])
+          assert frames and samples
+          ordered=sorted(frames)
+          report['partial_observations']={'complete':False, 'reason':'one required UI case failed',
+              'first_interactive_ms':ui['cases'][0]['detail']['observation']['first_interactive_ms'],
+              'ordinary_completed_window_frames':{'count':len(frames),'p50_ms':ordered[math.ceil(.5*len(ordered))-1],
+                  'p95_ms':ordered[math.ceil(.95*len(ordered))-1],'p99_ms':ordered[math.ceil(.99*len(ordered))-1],
+                  'max_ms':max(frames),'callback_drops':drops,'windows':windows},
+              'stable_process_pss_kib':{'samples':len(samples),'median':statistics.median(samples),'sampled_peak':max(samples)},
+              'limits':'Failed ten-case run; debug emulator; completed callback durations are not presentation timing; PSS peak is sampled.'}
+          output=Path('build/perf-inspection');output.mkdir(parents=True)
+          (output/'failed-case.png').write_bytes(read('/ui-execution/ui/shots/system_picker_import_appears_in_product_search.png'))
+          report['screenshot_text'] = subprocess.check_output(['tesseract',str(output/'failed-case.png'),'stdout'],stderr=subprocess.DEVNULL,text=True)
+          (output/'inspection.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-perf-android-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/perf-inspection/
+          if-no-files-found: warn

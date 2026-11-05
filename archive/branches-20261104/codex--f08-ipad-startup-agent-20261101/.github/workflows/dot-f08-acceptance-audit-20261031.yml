@@ -1,0 +1,31 @@
+name: F08 authenticated six-target evidence coverage
+on:
+  push:
+    branches: [codex/dot-f08-acceptance-audit-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f08-acceptance-audit-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check only the additive audit
+        run: python3 -m py_compile tests/reader_f08_acceptance_audit_20261031/audit.py
+      - name: Authenticate native receipts and report remaining acceptance gaps
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_acceptance_audit_20261031/audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-acceptance-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-acceptance-audit/
+          include-hidden-files: true
+          if-no-files-found: error

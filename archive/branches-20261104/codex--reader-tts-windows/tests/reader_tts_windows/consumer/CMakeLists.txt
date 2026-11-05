@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MIT
+# Consumes only the installed EXReaderTTSWindows package.
+cmake_minimum_required(VERSION 3.22)
+project(EXReaderTTSWindowsConsumer LANGUAGES C)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8 /W4 /WX)
+else()
+  add_compile_options(-Wall -Wextra -Werror)
+endif()
+find_package(EXReaderTTSWindows 0.1 CONFIG REQUIRED)
+add_executable(tts-consumer main.c suite.c)
+target_link_libraries(tts-consumer PRIVATE EXReaderTTSWindows::reader_tts)

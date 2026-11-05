@@ -1,0 +1,31 @@
+name: F08 Apple Release budget evidence audit
+on:
+  push:
+    branches: [codex/dot-f08-apple-budget-20261031]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse the additive read-only budget auditor
+        run: python3 -m py_compile tests/reader_f08_apple_budget_20261031/audit.py
+      - name: Authenticate and assess fixed Release evidence for all three platforms
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_apple_budget_20261031/audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-apple-budget-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-apple-budget/assessment.json
+            build/f08-apple-budget/*/assessment.json
+            build/f08-apple-budget/*/api-metadata.json
+            build/f08-apple-budget/*/metric-attachments/
+          if-no-files-found: error

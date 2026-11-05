@@ -1,0 +1,24 @@
+name: Authenticate retained Android 3.40 sender without rebuilding
+on:
+  push:
+    branches: [codex/dot-android340-sender-evidence]
+    paths: ['.github/workflows/android340-sender-seal.yml', 'tests/android340_sender/seal.py']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  seal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original ZIP and exact UI wire provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/android340_sender/seal.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android340-sender-sealed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android340-sender-sealed/
+          if-no-files-found: error

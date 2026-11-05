@@ -1,0 +1,129 @@
+{
+  "schema": "exreader-f08-mac26-reader-capability-v1",
+  "diagnostic_only": true,
+  "f08_accepted": false,
+  "source_base": "9a656853faf4e54697683a2f6d7d223d341ea3fc",
+  "input_source_sha": "9a656853faf4e54697683a2f6d7d223d341ea3fc",
+  "producer_run": 41261877498,
+  "producer_attempt": 1,
+  "producer_workflow": ".github/workflows/f08-final-linux-20261031.yml",
+  "producer_sdk_job": "apple_sdk",
+  "targets": [
+    "macos"
+  ],
+  "environment": {
+    "runner": "macos-26",
+    "host_major": 26,
+    "xcode_version_line": "Xcode 26.2",
+    "developer_dir": "/Applications/Xcode_26.2.app/Contents/Developer"
+  },
+  "inputs": [
+    {
+      "kind": "macos",
+      "id": 13066885489,
+      "bytes": 40373053,
+      "sha256": "ad0bebc222ed954da4e4f45764c0456a0d266ff0a2b633bf6692ff7e962bde2d"
+    },
+    {
+      "kind": "macos-sdk",
+      "id": 13065148539,
+      "bytes": 22513310,
+      "sha256": "ca182a2418927385224d97f9b7819ab8aece939d6b9f2936c826ddb4adf06bf8"
+    },
+    {
+      "kind": "iphonesimulator-sdk",
+      "id": 13065303619,
+      "bytes": 22505919,
+      "sha256": "d2864b4c42311f65d1fb86ab1d5bc6e787ef3d155f80656f84cc24c240701d33"
+    }
+  ],
+  "macos_cases": [
+    "F08ReaderUITests/test11FrozenOriginalFontAndLocateMetrics",
+    "F08ReaderUITests/test12LongReaderPageFontAndLocateDiagnostic"
+  ],
+  "measured_iterations": 5,
+  "default_warmup_retained": true,
+  "native_job_limit_minutes": 20,
+  "audit_job_limit_minutes": 20,
+  "native_collector_soft_limit_s": 900,
+  "native_main_maximum_budget_s": 1050,
+  "settings_query_limit_s": 120,
+  "build_limit_s": 300,
+  "budgets_unchanged": {
+    "first_interactive_ms": 2000,
+    "peak_rss_bytes": 536870912,
+    "animation_hitch_time_ratio_ms_per_s": 10
+  },
+  "normal_swiftui_image_path": true,
+  "program_source": "Compiled from the real diagnostic HEAD; EXRSourceSHA is never replaced with producer source.",
+  "resource_source": "Only the 15 authenticated Resources from the 9a native Mac archive; its collector job-field failure remains recorded and is not accepted/transferred.",
+  "window_preparation": "After original reader app.launch in setUp, before original test11/12 bodies and every measure block. Actual standard New Window only if no window exists; failures retained. No launch09 or TTI evidence.",
+  "restore_metadata": "Only explicitly named declared-environment and preference subsets; no assertion that the entire environment or saved restore state is empty. These keys have no stability/public-API promise.",
+  "coverage": "Native XCTHitchMetric must actually configure in a successful case, with exactly five finite nonnegative hitch values in ms per s and five finite positive frame values. Missing, negative, non-finite or failed-case metrics remain missing/failing; raw values are retained without a clock/SDK ordinal proxy.",
+  "limitations": [
+    "This separate macOS26/Xcode26.2 diagnostic does not upgrade the macos15 profile or accept F08.",
+    "Reader12 adds Sample.epub and keeps frozen_cohort_acceptance=false.",
+    "All original 5 measurements and warmup, reader bodies, budgets and normal Image path remain unchanged."
+  ],
+  "source_mapping": {
+    "source_commit": "1d6236351f76dcb27ea81fadbc2b05c934a5e926",
+    "launch_runner_path": "tests/reader_f08_apple_launch_diag_20261031/run.py",
+    "io_helper_path": "tests/reader_f08_apple_cap26_20261031/run.py",
+    "copied_helper_functions": {
+      "need": "1c972e8f66627baaa4d238387f85b6b323535b08c56449fca9098d3dda4b34d9",
+      "sha": "e06729923af2c5a5b18bae5d47797a96ffa5554dd78e314c162db9de2e2e594a",
+      "save": "57efcd4a4ce532efce48c0c6dcd6471661b65f1e1ea0e38555aae281f233ebc3",
+      "identity": "610d5112f43338ae31979748673183dacaa15a8d1cd2adec2ad63f659365553f",
+      "api": "d0bee059dc63ffae90eeeec4b8ce670d08dca232a38648acea074e1af22a2f1f",
+      "archive_bytes": "fc2aa15d36da18c5a056fb1466a47dd8c3acf75ecd84fcf1b13f665e1324f61e",
+      "binary": "53867196f96125fbc9516273fdce03c9b5dd69fa33bb300512f90841b4b4f63d"
+    },
+    "launch_runner_function_sources": {
+      "native": "c31c605f65f3e55cebce964bc496ce321ad68a38550bf3b35df3cc30e70ab227",
+      "seal": "942509e629b636523ab221d1702e2d11cd2e22de91ae5b74b2fffaa39df185c3",
+      "audit": "604bdcffecc29026bad8ae415bc1567a6da45d05899c87fa154bb772ed5df181",
+      "prepare_inputs": "795005d9e0547a20fe413d34c92dd5d540516fb469d3fa54c1e9b2bb6dc83e46",
+      "verify_program": "2b397e76634551fe716007eee4d1394e2ca1ac5bc77aa48be445bbabd66579bc",
+      "verify_configuration": "aafbb836f0b37513359be275ef8a386453740eb266378db0a0f3fd8e4e97c303",
+      "process_group_snapshot": "683edb1af6173c7dbbc3906542fee900d9a844bc0d9047e6c6219d23f3f6612c",
+      "group_has_live_members": "3421dd54ce286e6af74e923bc8b73c641981461d71b21da446bc62966918b53f",
+      "observations": "f40ec2e6128f65cc5741fdf93becfa9df3e24aac9510dbc28873786d88e7a459",
+      "runtime_row_identity": "ac33bee856b1c66b111b30ae262d27482b83455c3a38b1001028d4a6dca93180",
+      "binding_status": "c7a68faee906015cd48c799b0ab285d58cc661a56fa5a09daf8a5b4e87d392e5"
+    },
+    "adaptations": [
+      "Mac26 reader-only selection; original reader bodies/nativeMetrics remain byte-identical",
+      "Original native subprocess/settings/process-group cancellation; global input/command deadline added",
+      "Only Resources extracted from 9a native ZIP; two original 9a SDK identities retained without job relabel",
+      "Existing actual File > New Window operation relocated to reader setup outside measurement; no launch/TTI claim",
+      "No Simulator, font15, scroll, or new metric implementation"
+    ],
+    "new_or_adapted_functions": [
+      "guard",
+      "command (same subprocess behavior; timeout=min(original120,remaining))",
+      "validate_zip (same checks; remaining-budget checks)",
+      "prepare_inputs (fixed authenticated9a source/workflow/job; only15 Resources)",
+      "driver_text (original11/12/nativeMetrics exact; setup-only actual Window preparation)",
+      "native (original bounded process-group driver; Mac26/reader-only/deadline/source metadata)",
+      "audit (same byte/native replay; reader setup identity and native-unit coverage)",
+      "files_under (original inventory/hashes; remaining-budget check per file)"
+    ],
+    "original_reader_source": {
+      "commit": "9a656853faf4e54697683a2f6d7d223d341ea3fc",
+      "path": "tests/reader_f08_apple_20261031/Metrics.swift",
+      "sha256": "bbd1339d80711d5c1a2926f70a938e6e73a33e75c1196fefb1724f9b6d1437fc"
+    },
+    "adapted_native_parser": {
+      "function": "load_native_tools",
+      "original_function_sha256": "603e25d457f253258d77c8384e370e1524913d7e8a01075fb99708c1336d736c",
+      "change": "Same original native parsers; their xcrun command functions are temporarily bound to the shared remaining-deadline command, then restored."
+    }
+  },
+  "deadline_policy": "One 900 s deadline begins before input authentication. Metadata/download commands and both original native parsers use timeout=min(original120,remaining); native children use min(their original cap,remaining); ZIP and file inventories check remaining per payload. Original bounded owned-group cancellation/final display cleanup leave main under 1050 s, with 20 min native job. No stage resets the deadline. All xcodebuild stages, including version/settings/build/native, observe and clean the owned process group after reaping within the 1050 s hard deadline. Unobserved or live group state aborts collection; an unverified terminal writer prevents sealing/upload.",
+  "native_metric_api_basis": [
+    "https://developer.apple.com/documentation/xctest/xcthitchmetric",
+    "https://developer.apple.com/tutorials/data/documentation/xctest/xcthitchmetric.json"
+  ],
+  "native_metric_availability": "Official DocC metadata: macOS introducedAt26.0; original nativeMetrics compiler>=6.2/runtime>=26 branch remains unchanged.",
+  "historical_cap_scope": "The previous macOS26 capability run failed initial ready/search before reader11 measurement; reader12 was not selected. It did not establish a measured Mac reader negative result."
+}

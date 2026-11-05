@@ -1,0 +1,34 @@
+name: C02 diagnostic closure control flow only
+on:
+  push:
+    branches: [codex/reader-c02-close-protocol]
+    paths:
+      - 'tests/reader_c02_root_review/**'
+      - '.github/workflows/reader-c02-close-protocol.yml'
+permissions:
+  contents: read
+concurrency:
+  group: c02-close-protocol-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin all original sources and full measurement workflow
+        run: python3 tests/reader_c02_root_review/guard.py --output build/c02-close-guard.json
+      - name: Check syntax and controlled closure ordering without native UI or timing experiments
+        run: |
+          python3 -m py_compile tests/reader_c02_root_review/gtk_adapter.py tests/reader_c02_root_review/test_close_protocol.py
+          python3 tests/reader_c02_root_review/test_close_protocol.py --output build/c02-close-protocol.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-close-protocol-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c02-close-guard.json
+            build/c02-close-protocol.json
+          if-no-files-found: error

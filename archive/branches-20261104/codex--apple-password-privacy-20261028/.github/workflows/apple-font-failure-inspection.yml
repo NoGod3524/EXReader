@@ -1,0 +1,75 @@
+name: Inspect retained Apple font failure
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/terra-wave-apple-font]
+    paths: [.github/workflows/apple-font-failure-inspection.yml]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            artifact: 12666310175
+            bytes: 467513155
+            sha256: 9d1f1ff7cba7c4f4c3a1b7a3e068a12e891aa99e2b4fae16a8ad7e2a493b7f10
+          - platform: iphone
+            artifact: 12666891416
+            bytes: 498552736
+            sha256: 88e7a002ccce6681ffccfc2d97295e29f79b0efe7910a93512c7c9f952a06fea
+          - platform: ipad
+            artifact: 12667336303
+            bytes: 551157105
+            sha256: 3a39d13a6328c5c42b1029a531d7882ff6928f6d0a67f35a6e30c00c2ca6f845
+    steps:
+      - name: Authenticate original ZIP and inspect the font case log
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ matrix.artifact }}
+          EXPECTED_BYTES: ${{ matrix.bytes }}
+          EXPECTED_SHA: ${{ matrix.sha256 }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess, zipfile
+
+          artifact = os.environ['ARTIFACT_ID']
+          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/{artifact}"
+          item = json.loads(subprocess.check_output(['gh', 'api', api]))
+          assert item['workflow_run']['id'] == 40350153254
+          assert item['workflow_run']['head_sha'] == 'd9ca5805952f8069ecbdb7a724af43662d9b0a6e'
+          assert not item['expired'] and item['size_in_bytes'] == int(os.environ['EXPECTED_BYTES'])
+          assert item['digest'] == 'sha256:' + os.environ['EXPECTED_SHA']
+          path = pathlib.Path('original.zip')
+          with path.open('wb') as out:
+              subprocess.run(['gh', 'api', api + '/zip'], stdout=out, check=True)
+          h = hashlib.sha256()
+          with path.open('rb') as source:
+              for block in iter(lambda: source.read(1024 * 1024), b''): h.update(block)
+          digest = h.hexdigest()
+          assert path.stat().st_size == int(os.environ['EXPECTED_BYTES']) and digest == os.environ['EXPECTED_SHA']
+          with zipfile.ZipFile(path) as archive:
+              matches = [n for n in archive.namelist() if n.endswith('wave3-native-ui.log')]
+              assert len(matches) == 1, matches
+              raw = archive.read(matches[0])
+          lines = raw.decode('utf-8', 'replace').splitlines()
+          case = 'testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot'
+          starts = [i for i, line in enumerate(lines) if case in line and 'started' in line.lower()]
+          assert len(starts) == 1, starts
+          start = starts[0]
+          ends = [i for i in range(start + 1, len(lines)) if case in lines[i] and ('failed' in lines[i].lower() or 'passed' in lines[i].lower())]
+          assert ends, 'missing case result'
+          end = ends[0]
+          print(f"platform={os.environ['PLATFORM']} original_run=40350153254 attempt=1 artifact={artifact} zip_sha256={digest}")
+          print(f"log={matches[0]} log_sha256={hashlib.sha256(raw).hexdigest()} lines={start + 1}-{end + 1}")
+          print('\n'.join(lines[start:end + 1]))
+          PY

@@ -1,0 +1,69 @@
+name: F08 Windows actual product ETW
+on:
+  push:
+    branches: [codex/dot-f08-windows-product-frames-20261031]
+permissions:
+  contents: read
+  actions: read
+env:
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: '1'
+defaults:
+  run:
+    shell: bash
+jobs:
+  capture:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    outputs:
+      artifact_id: ${{ steps.artifact.outputs.artifact-id }}
+      artifact_digest: ${{ steps.artifact.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare unchanged native dialog helper
+        run: python -m pip install uiautomation==2.0.29
+      - name: Parse additive test adapter
+        run: python -m py_compile tests/reader_f08_windows_product_frames_20261031/frames.py
+      - name: Authenticate fixed full product and trace unchanged interaction cohort
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_f08_windows_product_frames_20261031/frames.py capture
+      - uses: actions/upload-artifact@v4
+        if: always()
+        id: artifact
+        with:
+          name: f08-windows-product-frames-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-windows-product-frames/
+          include-hidden-files: true
+          if-no-files-found: error
+  audit:
+    needs: capture
+    if: always()
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reauthenticate product and independently replay every complete ETL
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F08_ARTIFACT_ID: ${{ needs.capture.outputs.artifact_id }}
+          F08_ARTIFACT_DIGEST: ${{ needs.capture.outputs.artifact_digest }}
+        run: python tests/reader_f08_windows_product_frames_20261031/frames.py audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-windows-product-frames-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-windows-product-frames-audit/audit.json
+            build/f08-windows-product-frames-audit/metadata.json
+          if-no-files-found: error

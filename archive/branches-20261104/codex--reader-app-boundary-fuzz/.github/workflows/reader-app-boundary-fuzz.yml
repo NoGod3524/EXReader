@@ -1,0 +1,146 @@
+name: Reader application boundary fuzz
+on:
+  push:
+    branches: [codex/reader-app-boundary-fuzz]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  ASAN_OPTIONS: detect_leaks=1:abort_on_error=1:strict_string_checks=1:detect_stack_use_after_return=1
+  UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+  LSAN_OPTIONS: exitcode=23
+jobs:
+  boundary:
+    name: app boundary fuzz (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, start, protected SDK, schema and J23 ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+          if git diff --name-only f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD | grep -v -E '^(tests/reader_app_boundary_fuzz/|\.github/workflows/reader-app-boundary-fuzz\.yml$|docs/READER-APP-BOUNDARY-FUZZ\.md$|docs/validation/reader-app-boundary-fuzz\.json$)'; then
+            echo "files outside the J23 ownership list changed"
+            exit 1
+          fi
+      - name: Fix the sanitizer toolchain for every installed package and consumer
+        run: |
+          clang --version | tee build-clang-version.log
+          clang++ --version | tee build-clangxx-version.log
+          {
+            echo "CC=clang"
+            echo "CXX=clang++"
+            echo "SAN=-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -g -O1"
+          } >> "$GITHUB_ENV"
+      - name: Build and install the product catalog, revisions and preferences
+        run: |
+          set -euo pipefail
+          ws="$PWD"
+          stage="$ws/build/fuzz-stage"
+          mkdir -p build/fuzz-logs
+          echo "FUZZ_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          echo "FUZZ_STAGE=$stage" >> "$GITHUB_ENV"
+          echo "FUZZ_SDK_STAGE=$ws/build/reading-library/stage" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/fuzz-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$stage" 2>&1 | tee build/fuzz-logs/product-configure.log
+          cmake --build build/fuzz-product --parallel 4 2>&1 | tee build/fuzz-logs/product-build.log
+          cmake --install build/fuzz-product 2>&1 | tee build/fuzz-logs/product-install.log
+          cmake -S apps/reader/revisions -B build/fuzz-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$stage" -DCMAKE_INSTALL_PREFIX="$stage" -DCMAKE_C_FLAGS="$SAN" -DCMAKE_CXX_FLAGS="$SAN" 2>&1 | tee build/fuzz-logs/revisions-configure.log
+          cmake --build build/fuzz-revisions --parallel 4 2>&1 | tee build/fuzz-logs/revisions-build.log
+          cmake --install build/fuzz-revisions 2>&1 | tee build/fuzz-logs/revisions-install.log
+          cmake -S apps/reader/preferences -B build/fuzz-preferences -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$stage" -DCMAKE_C_FLAGS="$SAN" 2>&1 | tee build/fuzz-logs/preferences-configure.log
+          cmake --build build/fuzz-preferences --parallel 4 2>&1 | tee build/fuzz-logs/preferences-build.log
+          cmake --install build/fuzz-preferences 2>&1 | tee build/fuzz-logs/preferences-install.log
+      - name: Build and install the unmodified reading SDK
+        run: |
+          set -euo pipefail
+          cmake --preset reading-library 2>&1 | tee build/fuzz-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/fuzz-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/fuzz-logs/sdk-install.log
+      - name: Build and install the sanitized reading-state adapter against installed packages
+        run: |
+          set -euo pipefail
+          cmake -S apps/reader/reading-state -B build/fuzz-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$FUZZ_SDK_STAGE" -DCMAKE_PREFIX_PATH="$FUZZ_STAGE" -DCMAKE_INSTALL_PREFIX="$FUZZ_STAGE" -DCMAKE_CXX_FLAGS="$SAN" 2>&1 | tee build/fuzz-logs/reading-state-configure.log
+          cmake --build build/fuzz-reading-state --parallel 4 2>&1 | tee build/fuzz-logs/reading-state-build.log
+          cmake --install build/fuzz-reading-state 2>&1 | tee build/fuzz-logs/reading-state-install.log
+      - name: Require the installed headers to be byte-identical to the source tree
+        run: |
+          set -euo pipefail
+          cmp apps/reader/preferences/include/reader_preferences.h "$FUZZ_STAGE/include/reader_preferences.h"
+          cmp apps/reader/revisions/include/reader_revisions.h "$FUZZ_STAGE/include/reader_revisions.h"
+          cmp apps/reader/reading-state/include/reader_reading_state.h "$FUZZ_STAGE/include/reader_reading_state.h"
+          cmp include/exr/document.h "$FUZZ_SDK_STAGE/include/exr/document.h"
+          cmp include/exr/layout.h "$FUZZ_SDK_STAGE/include/exr/layout.h"
+          cmp include/exr/library.h "$FUZZ_SDK_STAGE/include/exr/library.h"
+      - name: Compile the installed C and C++ consumers with the sanitizers
+        run: |
+          set -euo pipefail
+          cmake -S tests/reader_app_boundary_fuzz/consumer -B build/fuzz-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$FUZZ_STAGE;$FUZZ_SDK_STAGE" -DCMAKE_C_FLAGS="$SAN" -DCMAKE_CXX_FLAGS="$SAN" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" 2>&1 | tee build/fuzz-logs/consumer-configure.log
+          cmake --build build/fuzz-consumer --parallel 4 --verbose 2>&1 | tee build/fuzz-logs/consumer-build.log
+      - name: Generate the fixed corpus and run the bounded sanitizer regression
+        run: |
+          set -euo pipefail
+          python3 tests/reader_app_boundary_fuzz/make_boundary_seeds.py build/fuzz-seeds 2>&1 | tee build/fuzz-logs/seeds.log
+          python3 tests/reader_app_boundary_fuzz/run_boundary_fuzz.py \
+            --consumer build/fuzz-consumer/boundary-cpp-consumer \
+            --c-consumer build/fuzz-consumer/boundary-c-consumer \
+            --fixtures build/fuzz-seeds \
+            --installed-prefix "$FUZZ_STAGE" \
+            --sdk-prefix "$FUZZ_SDK_STAGE" \
+            --output build/app-boundary-fuzz \
+            --iterations 2500 \
+            --budget-ms 90000 \
+            --seed 0x6A32332D66757A7A 2>&1 | tee build/fuzz-logs/driver.log
+      - name: Preserve the installed tree, consumers, corpus and every failure
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p build/fuzz-artifacts/consumer build/fuzz-artifacts/stage build/fuzz-artifacts/run build/fuzz-artifacts/logs
+          cp -a build-clang-version.log build-clangxx-version.log build/fuzz-artifacts/logs/ 2>/dev/null || true
+          cp -a build/fuzz-logs/. build/fuzz-artifacts/logs/ 2>/dev/null || true
+          cp -a build/fuzz-seeds/. build/fuzz-artifacts/seeds/ 2>/dev/null || true
+          cp -a build/app-boundary-fuzz/. build/fuzz-artifacts/run/ 2>/dev/null || true
+          cp -a build/fuzz-consumer/boundary-cpp-consumer build/fuzz-consumer/boundary-c-consumer build/fuzz-artifacts/consumer/ 2>/dev/null || true
+          cp -a build/fuzz-consumer/CMakeCache.txt build/fuzz-artifacts/logs/consumer-CMakeCache.txt 2>/dev/null || true
+          if [ -d "$FUZZ_STAGE" ]; then
+            cp -a "$FUZZ_STAGE/include" "$FUZZ_STAGE/lib" build/fuzz-artifacts/stage/ 2>/dev/null || true
+          fi
+          printf 'boundary job artifact marker\n' > build/fuzz-artifacts/STATUS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-app-boundary-fuzz-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/fuzz-artifacts/
+          if-no-files-found: error
+  evidence:
+    name: strict boundary evidence
+    needs: [boundary]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-app-boundary-fuzz-linux-*
+          path: build/fuzz-downloaded
+      - name: Recompute the exact ZIP, its contents and the named results
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_app_boundary_fuzz/check_artifacts.py build/fuzz-summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-app-boundary-fuzz-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/fuzz-summary/
+          if-no-files-found: error
