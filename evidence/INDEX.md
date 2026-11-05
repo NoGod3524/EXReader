@@ -1,5 +1,7 @@
 # Evidence index
 
+- 本轮分支清理 recoverable=no 共 86 条，内容不可恢复；清单见 [DELETED-BRANCHES.csv](../archive/DELETED-BRANCHES.csv)。
+
 - Branch deletion register: [archive/DELETED-BRANCHES.csv](../archive/DELETED-BRANCHES.csv) (tip SHA, deletion date, reason, remote recovery status).
 
 - 2026-11-03 — [E1/E3 performance baseline policy](../docs/validation/PERF-BASELINE-POLICY.md): environment-bound raw-sample budgets, advisory until strict re-verification; hard expiry 2026-12-15 America/New_York; [tracking #32](https://github.com/NoGod3524/EXReader/issues/32). P evidence: [ci-packaging-20261103](ci-packaging-20261103/RESULT.md).
