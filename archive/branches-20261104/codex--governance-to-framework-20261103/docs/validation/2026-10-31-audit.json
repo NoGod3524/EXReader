@@ -1,0 +1,137 @@
+{
+  "schema": 1,
+  "audit_date": "2026-10-31",
+  "kind": "source-audit",
+  "branch": "codex/reliability-convert-memory",
+  "head": "9dfb155a1e42a5ee82fabc4beea41db575a309fa",
+  "engine_version": "3.39.0",
+  "includes_uncommitted_changes": true,
+  "preexisting_modified_files": [
+    "CHANGELOG.md",
+    "docs/CONVERSION.md",
+    "examples/apple/ReaderApp.swift",
+    "src/cbz.c",
+    "src/font_svg.c",
+    "src/image_formats.c",
+    "tests/check_convert_cli.py",
+    "tests/fixtures/fonts/README.md",
+    "tests/test_cbz.c",
+    "tests/test_cbz_formats.c",
+    "tests/test_font_svg.c",
+    "tests/test_image_formats.c",
+    "tools/build_apple_host.py",
+    "tools/check_apple_host.py",
+    "tools/convert.c",
+    "tools/convert_json.c"
+  ],
+  "implementation_modified_by_audit": false,
+  "platform": "Windows x64",
+  "compiler": "MinGW GCC",
+  "build_type": "Release",
+  "instrumented": false,
+  "findings": [
+    {
+      "id": "F01",
+      "priority": "P1",
+      "title": "Batch path-comparison failure double-frees its error message",
+      "file": "tools/convert.c",
+      "start": 664,
+      "end": 668,
+      "evidence": "build/audit-20261031/converter-final/converter-probes.json",
+      "case": "invalid_path_batch",
+      "observed_exit_code": 3221226356
+    },
+    {
+      "id": "F02",
+      "priority": "P1",
+      "title": "Saving CBZ progress or favorites invalidates the active streaming reader",
+      "file": "src/library.c",
+      "start": 536,
+      "end": 541,
+      "evidence": "build/audit-20261031/library-probe.log",
+      "observed_status_after_updates": "EXR_IO",
+      "reopen_control": "EXR_OK"
+    },
+    {
+      "id": "F03",
+      "priority": "P2",
+      "title": "Windows Unicode case aliases bypass duplicate-output preflight",
+      "file": "tools/convert_io.c",
+      "start": 121,
+      "end": 127,
+      "evidence": "build/audit-20261031/converter-final/converter-probes.json",
+      "case": "unicode_duplicate",
+      "output_hash_matches_report": [
+        false,
+        true
+      ]
+    },
+    {
+      "id": "F04",
+      "priority": "P2",
+      "title": "Report publication can overwrite the input batch manifest without overwrite authorization",
+      "file": "tools/convert.c",
+      "start": 1107,
+      "end": 1118,
+      "evidence": "build/audit-20261031/converter-final/converter-probes.json",
+      "case": "manifest_report",
+      "manifest_preserved": false
+    }
+  ],
+  "validation": {
+    "build": "passed incremental build",
+    "ctest": {
+      "passed": 161,
+      "failed": 0,
+      "excluded_tests_run_separately": [
+        "native-convert-cli",
+        "native-convert-benchmark"
+      ],
+      "log": "build/audit-20261031/ctest.log"
+    },
+    "cli": {
+      "passed": 52,
+      "failed": 0,
+      "evidence": "build/audit-20261031/cli.json"
+    },
+    "benchmark": {
+      "items": 100,
+      "elapsed_seconds": 15.531119,
+      "peak_rss_bytes": 29585408,
+      "output_bytes": 5385793,
+      "single_peak_rss_bytes": 27516928,
+      "peak_delta_bytes": 2068480,
+      "queue_note": "manifest is loaded once; items are converted and released one at a time; no 100-document queue",
+      "unfinished": 0,
+      "failed": 0
+    },
+    "memory_budget_bytes": 33554432,
+    "memory_budget_passed": true,
+    "temporary_files_remaining": 0
+  },
+  "source_sha256": {
+    "tools/convert.c": "62baa3677d343cf606687be8b52f0a755f153235fc16441e6de6ad8511bef9e5",
+    "tools/convert_io.c": "e60baff662b225b0977a55d3f682521c27068e2a4038ffa966197e2d1c7373ff",
+    "tools/convert_json.c": "61bc8cd843b3aa1be77b2bc49b75d452985ac6e70c8c98600a4a6f2e2feba91a",
+    "src/library.c": "b907cabf4da8e042a1ea4435d9fd76fc96860fd81892a763d6de08e56cad21a8",
+    "src/cbz.c": "84196363811514c181490372debab674fb587ae586d6b091066a9ddd27bbd969",
+    "src/image_formats.c": "8c244ef66ec4331cdebb4492e4990f29f6592096bcefc61405421b2474b24664",
+    "src/font_svg.c": "70bb9e49f9988bbddc0b28e3cbb091425636676fff2d4fab78e8daaa67cac584",
+    "examples/apple/ReaderApp.swift": "6bf0a136c685e9783ad4b36f56738fb7a3f5dcc6ca306ade2d44a24ec0430beb",
+    "include/exr/library.h": "277e707af559b3c79ae50fc51e8fdbb0fac8e0f11498f6b6197c5512272f6c5e"
+  },
+  "binary_sha256": {
+    "exreader-convert.exe": "a0c04499155f878a7668bf35897516aa5ff604e775f44dd506abdfd8e5ff51c8",
+    "libexreader.dll": "2a6dbaf0e3d248960b4ef3493b8f6e59cfce63303db4645c9d0b819c6462e574"
+  },
+  "probe_sha256": {
+    "probe_converter.py": "6315561f7f3d2c2d268627f0e234f0a538fb0159a388af88e1c0045f407c3355",
+    "probe_library.c": "0f6e4c4898e8e58f604ceb36e22b83ff82a351526d0494887d2af8216d887f85",
+    "probe_library.exe": "e50cce620bed8e4ac6684261a2eda867260180d2440f40163d0538fb2163bced"
+  },
+  "report": "docs/AUDIT-2026-10-31.md",
+  "scope_limits": [
+    "Apple host statically reviewed only",
+    "No Linux sanitizer, macOS runtime or mobile-device run"
+  ]
+}

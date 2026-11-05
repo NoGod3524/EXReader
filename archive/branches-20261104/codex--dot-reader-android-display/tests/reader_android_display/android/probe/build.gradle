@@ -1,0 +1,21 @@
+plugins { id 'com.android.application' }
+def aar = file(project.property('displayAar'))
+android {
+    namespace 'org.exreader.display.probe'
+    compileSdk 35
+    buildFeatures { buildConfig true }
+    defaultConfig {
+        applicationId 'org.exreader.display.probe'
+        minSdk 26; targetSdk 35; versionCode 1; versionName '0.1.0'
+        buildConfigField 'String', 'SOURCE_SHA', '"' + project.property('sourceSha') + '"'
+        buildConfigField 'String', 'RUN_ID', '"' + project.property('runId') + '"'
+        buildConfigField 'String', 'RUN_ATTEMPT', '"' + project.property('runAttempt') + '"'
+        buildConfigField 'String', 'AAR_SHA256', '"' + java.security.MessageDigest.getInstance('SHA-256').digest(aar.bytes).encodeHex().toString() + '"'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { abortOnError true }
+}
+dependencies { implementation files(aar) }

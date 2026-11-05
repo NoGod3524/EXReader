@@ -1,0 +1,202 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "kind": "audit-fixes",
+  "branch": "codex/reliability-convert-memory",
+  "head": "9dfb155a1e42a5ee82fabc4beea41db575a309fa",
+  "includes_uncommitted_changes": true,
+  "engine_version": "3.39.0",
+  "abi": 1,
+  "library_schema": 6,
+  "audit": "docs/AUDIT-2026-10-31.md",
+  "audit_index": "docs/validation/2026-10-31-audit.json",
+  "report": "docs/AUDIT-FIXES-2026-10-31.md",
+  "platform": "Windows x64",
+  "build_type": "Release",
+  "instrumented": false,
+  "fixed_findings": [
+    {
+      "id": "F01",
+      "priority": "P1",
+      "status": "fixed",
+      "files": [
+        "tools/convert.c"
+      ],
+      "fix": "Free the path comparison error exactly once; preserve independent batch work.",
+      "regressions": [
+        "batch-invalid-output-path"
+      ]
+    },
+    {
+      "id": "F02",
+      "priority": "P1",
+      "status": "fixed",
+      "files": [
+        "src/library.c"
+      ],
+      "fix": "Reseek the SQLite blob before reads and check its length under the database mutex; invalidate tracked readers on deletion before row ID reuse.",
+      "regressions": [
+        "two active CBZ readers after repeated progress/favorite updates",
+        "cover update preserves rendered pixels",
+        "delete and reimport cannot redirect an old reader",
+        "reader remains usable after library close following a metadata update"
+      ]
+    },
+    {
+      "id": "F03",
+      "priority": "P2",
+      "status": "fixed",
+      "files": [
+        "tools/convert_io.c"
+      ],
+      "fix": "Use UTF-16 CompareStringOrdinal and remove the UTF-8 byte-length equality prerequisite.",
+      "regressions": [
+        "unicode-output-alias-accent",
+        "unicode-output-alias-unequal-utf8",
+        "unicode-output-alias-distinct-long-s"
+      ]
+    },
+    {
+      "id": "F04",
+      "priority": "P2",
+      "status": "fixed",
+      "files": [
+        "tools/convert.c"
+      ],
+      "fix": "Protect the batch manifest and its aliases from report and conversion output publication, including explicit overwrite.",
+      "regressions": [
+        "manifest-report-direct",
+        "manifest-report-overwrite",
+        "manifest-report-hardlink",
+        "manifest-output-direct",
+        "manifest-output-hardlink"
+      ]
+    }
+  ],
+  "validation": {
+    "gcc": {
+      "build": {
+        "status": "passed",
+        "log": "build/audit-fixes-20261031/build-r2.log"
+      },
+      "ctest": {
+        "passed": 161,
+        "failed": 0,
+        "elapsed_seconds": 136.27,
+        "excluded_tests_run_separately": [
+          "native-convert-cli",
+          "native-convert-benchmark"
+        ],
+        "log": "build/audit-fixes-20261031/ctest.log"
+      },
+      "cli": {
+        "passed": 61,
+        "failed": 0,
+        "elapsed_seconds": 10.42,
+        "evidence": "build/audit-fixes-20261031/gcc-cli.json"
+      },
+      "stream_library": {
+        "checks_passed": 115,
+        "log": "build/audit-fixes-20261031/library-final.log"
+      }
+    },
+    "msvc": {
+      "build": {
+        "status": "passed",
+        "targets": [
+          "exreader-convert",
+          "exreader-library-stream-test"
+        ],
+        "log": "build/audit-fixes-20261031/msvc-build.log"
+      },
+      "cli": {
+        "passed": 61,
+        "failed": 0,
+        "elapsed_seconds": 11.858,
+        "evidence": "build/audit-fixes-20261031/msvc-cli-final.json"
+      },
+      "stream_library": {
+        "checks_passed": 115,
+        "log": "build/audit-fixes-20261031/msvc-library.log"
+      }
+    },
+    "benchmark": {
+      "items": 100,
+      "elapsed_seconds": 13.363256,
+      "peak_rss_bytes": 29978624,
+      "output_bytes": 5385699,
+      "single_peak_rss_bytes": 27516928,
+      "peak_delta_bytes": 2461696,
+      "queue_note": "manifest is loaded once; items are converted and released one at a time; no 100-document queue",
+      "unfinished": 0,
+      "failed": 0,
+      "memory_budget_bytes": 33554432,
+      "memory_budget_passed": true,
+      "temporary_files_remaining": 0,
+      "evidence": "build/audit-fixes-20261031/benchmark.json"
+    },
+    "negative_baseline": {
+      "cli": {
+        "new_scenarios": 9,
+        "defect_scenarios_failed": 8,
+        "distinct_name_control_passed": 1,
+        "tool_sha256": "592518f86f5460c66560a467dc3c8db464f6387462bab95d1024eeeb70662587",
+        "evidence": "build/audit-fixes-20261031/cli-msvc-before.json"
+      },
+      "stream_library": {
+        "expected_failure": "EXR_IO when rendering after metadata update",
+        "log": "build/audit-fixes-20261031/library-before.log"
+      }
+    },
+    "invocation_note": "Formal CLI and benchmark runs use absolute arguments and fresh work directories. cli-final.json and msvc-cli.json are earlier relative-path invocation failures because the driver changes the child working directory; they are not the final validation results."
+  },
+  "source_sha256": {
+    "tools/convert.c": "59627b8daac3f89a7f96a774f566a401ebe883d5ccd3d888d4503d954c232a07",
+    "tools/convert_io.c": "22debfb751e9a481c7fc6fb8e55e00b38cb493d7f1b79d4aecbb2a9a3cb778d9",
+    "src/library.c": "7ccd96988abe12c9a4013f2ab2b67aea9463276da8beb979aac1f15b115ed9b9",
+    "tests/check_convert_cli.py": "dbda17929a46a6ebc97aba4ef22934f13e520e346217b792416d3641b01c3f85",
+    "tests/test_library_stream.c": "2c601a4cd9ea03f899908cd7410b7a5bb3bb5766db9a5bcc07fa6bcc4c616f6a"
+  },
+  "binaries": {
+    "gcc_converter": {
+      "path": "build/wp7-integration-20261020/gcc/exreader-convert.exe",
+      "sha256": "d6664b69bd5796fcd6ad7fb0775853b900d5f8d5f350a6fd06a570d18c1166fc"
+    },
+    "gcc_library": {
+      "path": "build/wp7-integration-20261020/gcc/libexreader.dll",
+      "sha256": "b1345ba8fec581e07413b51c71f15c12c12a44e1025aa08812f44151442c063a"
+    },
+    "gcc_stream_test": {
+      "path": "build/wp7-integration-20261020/gcc/exreader-library-stream-test.exe",
+      "sha256": "60469c7a4d6d1ebc6da59f3ccc6ad5db102713eb34816193fc1a5de17881d0b6"
+    },
+    "msvc_converter": {
+      "path": "build/wp7-integration-20261020/msvc/Release/exreader-convert.exe",
+      "sha256": "772b4d0ccd1a3bf76c93377bb65bb3e6e50e130884eff8dfa167c28ab43809db"
+    },
+    "msvc_library": {
+      "path": "build/wp7-integration-20261020/msvc/Release/exreader.dll",
+      "sha256": "08514240bb5fd955d1893c88b45442ba2425009206c6569dc6372669439e2709"
+    },
+    "msvc_stream_test": {
+      "path": "build/wp7-integration-20261020/msvc/Release/exreader-library-stream-test.exe",
+      "sha256": "8900bc7a571d93f7b003e186be879b4ba076c0cf8ba4ec54de8adb6fb1264eb4"
+    }
+  },
+  "evidence_sha256": {
+    "build/audit-fixes-20261031/build-r2.log": "1b386575d193018b50f9565c99d476a21b991391cf51e6e10ad93648fd164c94",
+    "build/audit-fixes-20261031/ctest.log": "17601202b561cdcb71013a29c380d1ebc5ab22d52ef350e56a5200dd7065136a",
+    "build/audit-fixes-20261031/gcc-cli.json": "3ad6cf1ffcc96408ed527b16b3ca1975b81d65dece4c31af8eb26c6ad2a1c15b",
+    "build/audit-fixes-20261031/library-final.log": "ca970c804897b200e39fdb0632b1d5a38ba409401b801a88bb7ec18f9121b007",
+    "build/audit-fixes-20261031/msvc-build.log": "8bc5d8acf0f6d073e77312cc1d5abb26178d5c7758bd9bbde1e199ceb948fc6e",
+    "build/audit-fixes-20261031/msvc-cli-final.json": "eb3571abb859073cebd8a7590ba167d2e109e8a0584697c3675464563ac548f9",
+    "build/audit-fixes-20261031/msvc-library.log": "ca970c804897b200e39fdb0632b1d5a38ba409401b801a88bb7ec18f9121b007",
+    "build/audit-fixes-20261031/benchmark.json": "16de87f624f7e0d372f9fb83700c3d66ff90f03084392e66ecc838410d9b8ad9",
+    "build/audit-fixes-20261031/cli-msvc-before.json": "b1c8f24b8dab77b3046de791cd1a0a95d66b8b29cdfe1aeed05d20994ea1d0d2",
+    "build/audit-fixes-20261031/library-before.log": "59cb83ec5bbe2244280537b97293336668281cf2f620f9e7fe298c7bb0d7e32f"
+  },
+  "scope_limits": [
+    "No Linux sanitizer run",
+    "No macOS or mobile-device runtime validation"
+  ]
+}

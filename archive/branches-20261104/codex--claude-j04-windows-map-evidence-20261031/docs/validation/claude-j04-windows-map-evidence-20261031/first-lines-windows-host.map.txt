@@ -1,0 +1,120 @@
+ EXReaderWave3
+
+ Timestamp is 6ae4c82b (Fri Oct 30 16:39:07 2026)
+
+ Preferred load address is 0000000140000000
+
+ Start         Length     Name                   Class
+ 0001:00000000 00000140H .text$di                CODE
+ 0001:00000140 004c2830H .text$mn                CODE
+ 0001:004c2970 00000210H .text$mn$00             CODE
+ 0001:004c2b80 000010a0H .text$mn$21             CODE
+ 0001:004c3c20 00008400H .text$x                 CODE
+ 0001:004cc020 0000015cH .text$yd                CODE
+ 0002:00000000 000009f8H .idata$5                DATA
+ 0002:000009f8 00000038H .00cfg                  DATA
+ 0002:00000a30 00000008H .CRT$XCA                DATA
+ 0002:00000a38 00000008H .CRT$XCAA               DATA
+ 0002:00000a40 00000018H .CRT$XCC                DATA
+ 0002:00000a58 00000010H .CRT$XCL                DATA
+ 0002:00000a68 00000018H .CRT$XCU                DATA
+ 0002:00000a80 00000008H .CRT$XCZ                DATA
+ 0002:00000a88 00000008H .CRT$XIA                DATA
+ 0002:00000a90 00000008H .CRT$XIAA               DATA
+ 0002:00000a98 00000008H .CRT$XIAC               DATA
+ 0002:00000aa0 00000030H .CRT$XIC                DATA
+ 0002:00000ad0 00000008H .CRT$XIZ                DATA
+ 0002:00000ad8 00000008H .CRT$XLA                DATA
+ 0002:00000ae0 00000008H .CRT$XLZ                DATA
+ 0002:00000ae8 00000008H .CRT$XPA                DATA
+ 0002:00000af0 00000010H .CRT$XPX                DATA
+ 0002:00000b00 00000008H .CRT$XPXA               DATA
+ 0002:00000b08 00000008H .CRT$XPZ                DATA
+ 0002:00000b10 00000008H .CRT$XTA                DATA
+ 0002:00000b18 000000e8H .CRT$XTZ                DATA
+ 0002:00000b20 00000000H .gehcont$y              DATA
+ 0002:00000b20 00000000H .gfids$y                DATA
+ 0002:00000b20 00000000H .giats$y                DATA
+ 0002:00000c00 00283610H .rdata                  DATA
+ 0002:00284210 00000170H .rdata$00               DATA
+ 0002:00284380 00000000H .rdata$CastGuardVftablesA DATA
+ 0002:00284380 00000000H .rdata$CastGuardVftablesC DATA
+ 0002:00284380 00000028H .rdata$T                DATA
+ 0002:002843a8 00001514H .rdata$r                DATA
+ 0002:002858bc 00000d38H .rdata$voltmd           DATA
+ 0002:002865f4 00000454H .rdata$zzzdbg           DATA
+ 0002:00286a48 00000008H .rtc$IAA                DATA
+ 0002:00286a50 00000008H .rtc$IZZ                DATA
+ 0002:00286a58 00000008H .rtc$TAA                DATA
+ 0002:00286a60 00000008H .rtc$TZZ                DATA
+ 0002:00286a68 00000008H .tls                    DATA
+ 0002:00286a70 00000060H .tls$                   DATA
+ 0002:00286ad0 00000008H .tls$ZZZ                DATA
+ 0002:00286ad8 00045508H .xdata                  DATA
+ 0002:002cbfe0 00000c2cH .xdata$x                DATA
+ 0002:002ccc0c 00000000H .edata                  DATA
+ 0002:002ccc0c 0000012cH .idata$2                DATA
+ 0002:002ccd38 00000018H .idata$3                DATA
+ 0002:002ccd50 000009f8H .idata$4                DATA
+ 0002:002cd748 000015eaH .idata$6                DATA
+ 0003:00000000 00009e70H .data                   DATA
+ 0003:00009e70 00000650H .data$r                 DATA
+ 0003:0000a4c0 00000640H .data$rs                DATA
+ 0003:0000ab00 000bd480H .bss                    DATA
+ 0004:00000000 00031a88H .pdata                  DATA
+ 0005:00000000 00000100H .fptable                DATA
+ 0006:00000000 00000060H .rsrc$01                DATA
+ 0006:00000060 00000180H .rsrc$02                DATA
+
+  Address         Publics by Value              Rva+Base               Lib:Object
+
+ 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
+ 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
+ 0000:00000000       __enclave_config           0000000000000000     <absolute>
+ 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_delayload_iat 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_delayload_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map          0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
+ 0000:00000000       __hybrid_image_info_bitfield 0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points_count 0000000000000000     <absolute>
+ 0000:00000100       __guard_flags              0000000000000100     <absolute>
+ 0000:00000000       __ImageBase                0000000140000000     <linker-defined>
+ 0001:00001ad0       WinMain                    0000000140002ad0 f   reader.c.obj
+ 0001:00002d20       __local_stdio_printf_options 0000000140003d20 f i reader.c.obj
+ 0001:00010ce0       fprintf                    0000000140011ce0 f i reader.c.obj
+ 0001:0002a540       snprintf                   000000014002b540 f i reader.c.obj
+ 0001:0002a5a0       sprintf                    000000014002b5a0 f i reader.c.obj
+ 0001:0002ad40       swprintf                   000000014002bd40 f i reader.c.obj
+ 0001:0002f2a0       ?_Get_deleter@_Ref_count_base@std@@UEBAPEAXAEBVtype_info@@@Z 00000001400302a0 f   reader_font_library:library.cpp.obj
+ 0001:0002f2a0       ?showmanyc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA_JXZ 00000001400302a0 f   reader_sync:sync.cpp.obj
+ 0001:0002f2a0       ?sync@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ 00000001400302a0 f   reader_sync:sync.cpp.obj
+ 0001:0002f2a0       __scrt_exe_initialize_mta  00000001400302a0 f   LIBCMT:utility_desktop.obj
+ 0001:0002f2a0       __scrt_initialize_winrt    00000001400302a0 f   LIBCMT:utility_desktop.obj
+ 0001:0002f2a0       __scrt_stub_for_initialize_mta 00000001400302a0 f   LIBCMT:utility_desktop.obj
+ 0001:0002f2a0       _get_startup_commit_mode   00000001400302a0 f   LIBCMT:commit_mode.obj
+ 0001:0002f2a0       _get_startup_new_mode      00000001400302a0 f   LIBCMT:new_mode.obj
+ 0001:0002f2a0       _get_startup_thread_locale_mode 00000001400302a0 f   LIBCMT:thread_locale.obj
+ 0001:0002f2a0       _matherr                   00000001400302a0 f   LIBCMT:matherr.obj
+ 0001:0002f2a0       opj_has_thread_support     00000001400302a0 f   exr_vendor_exr_jpx:thread.c.obj
+ 0001:0002f2a0       opj_mutex_create           00000001400302a0 f   exr_vendor_exr_jpx:thread.c.obj
+ 0001:0002f2a0       opj_stream_default_seek    00000001400302a0 f   exr_vendor_exr_jpx:cio.c.obj
+ 0001:00036df0       ?do_encoding@codecvt_base@std@@MEBAHXZ 0000000140037df0 f   reader_sync:sync.cpp.obj

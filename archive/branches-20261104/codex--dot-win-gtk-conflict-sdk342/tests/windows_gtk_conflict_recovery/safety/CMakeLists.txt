@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.24)
+project(DesktopConflictSafety LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+find_package(EXReaderDesktopMetadata 0.1.0 EXACT CONFIG REQUIRED)
+add_executable(conflict-safety main.cpp)
+target_link_libraries(conflict-safety PRIVATE EXReaderDesktopMetadata::reader_desktop_metadata)

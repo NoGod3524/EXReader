@@ -1,0 +1,322 @@
+name: iPhone Verify generation-only preflight 20261029
+on:
+  push:
+    branches: [codex/apple-ios-organization-verify-phase-preflight-20261029]
+permissions:
+  contents: read
+jobs:
+  preflight:
+    name: All 76 anchors, 19 roundtrips, syntax and synthetic protocol only
+    runs-on: macos-15
+    timeout-minutes: 5
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Retain identity before generator admission
+        shell: bash
+        run: |
+          mkdir -p build/ios-verify-phase-preflight/evidence build/ios-verify-phase-preflight/refusal
+          printf 'source=%s\nrun=%s\nattempt=%s\nbranch=%s\nnative_cases_run=0\nformal_credit=0\n' \
+            "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_REF_NAME" \
+            > build/ios-verify-phase-preflight/evidence/bootstrap.txt
+          cp build/ios-verify-phase-preflight/evidence/bootstrap.txt build/ios-verify-phase-preflight/refusal/bootstrap.txt
+      - name: Execute pure generation, reversible-source controls and explicit syntax tools
+        id: gate
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import importlib
+          import json
+          import os
+          from pathlib import Path
+          import signal
+          import stat
+          import subprocess
+          import sys
+          import time
+          import traceback
+
+          ROOT = Path.cwd()
+          OUT = ROOT / 'build/ios-verify-phase-preflight/evidence'
+          PARENT = 'bf0c838e9b76f866f7d5a574a2e5fef13f5c1b1c'
+          BRANCH = 'codex/apple-ios-organization-verify-phase-preflight-20261029'
+          PACKAGE = 'tests/apple_ios_organization_verify_phase_probe_20261029/'
+          WORKFLOW = '.github/workflows/apple-ios-organization-verify-phase-preflight-20261029.yml'
+          FROZEN = {
+              'examples/apple/HostViews.swift': 'cab945a039c848ca437613417d6f68d1a57d1497c24074b90c29896d5a0b68a8',
+              'examples/apple/HostModel.swift': '18805cd581726321f4a719d5f77a843ca36ec95e0469a56eec6d15d789c04c35',
+              'examples/apple/HostOrganization.swift': '9190911839eeda7e2ba9f13254b86e0845524c4c43be2d73d6abb6ecbc024238',
+              'tests/apple_ios_organization_20261028/ui/IOSOrganizationAcceptanceTests.swift': 'deeed62b7083fb4a3e85ccd866a9a9eb4fdbca8e0c86bb88136b0fca400161ff',
+              'tests/apple_host/make_xcodeproj.rb': '47ed88d6b06cd9ce5bfd1ffc146c3c7f3115b5322f4b3899d4c1294f9e10e823',
+              'tests/reader_team24_apple/make_project.rb': 'a62e6321c04241a30e9046e87dec37e9cd4bb87a2f750547bf61ff9547acf831',
+          }
+          EXPECTED = sorted(['host/' + n for n in ('HostViews.swift', 'HostModel.swift',
+              'HostOrganization.swift', 'AppPhaseRecorder.swift')] +
+              ['ui/VerifyPhaseTests.swift', 'make_xcodeproj_phase.rb', 'make_project_phase.rb'])
+          DEADLINE = time.monotonic() + 210
+          COMMANDS, INSTANCES, CALLS, BLOCKED = [], [], [], []
+          SUMMARY = {'source_sha': os.environ.get('GITHUB_SHA'), 'run_id': os.environ.get('GITHUB_RUN_ID'),
+              'attempt': os.environ.get('GITHUB_RUN_ATTEMPT'), 'branch': os.environ.get('GITHUB_REF_NAME'),
+              'parent': PARENT, 'native_cases_run': 0, 'formal_credit': 0, 'product_accepted': False,
+              'root_cause_proved': False, 'complete': False, 'stages': {}, 'problems': []}
+
+          def require(value, message):
+              if not value:
+                  raise ValueError(message)
+
+          def sha(value):
+              return hashlib.sha256(value if isinstance(value, bytes) else value.encode()).hexdigest()
+
+          def save(name, value):
+              path = OUT / name
+              path.parent.mkdir(parents=True, exist_ok=True)
+              data = (json.dumps(value, indent=2, sort_keys=True) + '\n').encode()
+              require(len(data) <= 2 * 1024 ** 2, 'single receipt limit')
+              path.write_bytes(data)
+
+          def evidence_inventory():
+              count = total = 0
+              pending = [OUT]
+              while pending:
+                  directory = pending.pop()
+                  with os.scandir(directory) as entries:
+                      for entry in entries:
+                          count += 1
+                          require(count <= 200, 'evidence entry limit')
+                          info = entry.stat(follow_symlinks=False)
+                          if stat.S_ISDIR(info.st_mode):
+                              pending.append(Path(entry.path))
+                          else:
+                              require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, 'evidence type/link refused')
+                              total += info.st_size
+                              require(total <= 20 * 1024 ** 2, 'evidence byte limit')
+              return {'entries': count, 'bytes': total}
+
+          def limits():
+              require(time.monotonic() < DEADLINE, 'preflight deadline exhausted')
+              return evidence_inventory()
+
+          def command(argv, timeout=20):
+              limits()
+              index = len(COMMANDS)
+              record = {'argv': argv, 'timeout_seconds': timeout, 'returncode': None}
+              COMMANDS.append(record)
+              paths = [OUT / ('command-%02d-%s.txt' % (index, label)) for label in ('stdout', 'stderr')]
+              started = time.monotonic()
+              process = None
+              try:
+                  with paths[0].open('wb') as stdout, paths[1].open('wb') as stderr:
+                      process = subprocess.Popen(argv, cwd=ROOT, stdin=subprocess.DEVNULL,
+                          stdout=stdout, stderr=stderr, start_new_session=True)
+                      while process.poll() is None:
+                          require(time.monotonic() - started < timeout, 'fixed command timeout')
+                          require(all(p.stat().st_size <= 256 * 1024 for p in paths), 'command log limit')
+                          limits()
+                          time.sleep(0.05)
+                      require(all(p.stat().st_size <= 256 * 1024 for p in paths), 'command final log limit')
+                      record['returncode'] = process.returncode
+                      require(process.returncode == 0, 'fixed command failed: ' + argv[0])
+              finally:
+                  if process is not None and process.poll() is None:
+                      os.killpg(process.pid, signal.SIGKILL)
+                      process.wait(timeout=3)
+                  for path in paths:
+                      if path.exists() and path.stat().st_size > 256 * 1024:
+                          with path.open('r+b') as stream:
+                              stream.truncate(256 * 1024)
+                          record['log_truncated'] = True
+                  record['elapsed_seconds'] = time.monotonic() - started
+                  record['logs'] = {p.name: sha(p.read_bytes()) for p in paths if p.exists()}
+                  save('commands.json', COMMANDS)
+              limits()
+              return paths[0].read_text().strip()
+
+          def forbidden(*args, **kwargs):
+              BLOCKED.append({'argument_types': [type(x).__name__ for x in args]})
+              raise ValueError('command invocation forbidden during pure generation/protocol controls')
+
+          def expired(signum, frame):
+              raise TimeoutError('210-second preflight deadline')
+
+          signal.signal(signal.SIGALRM, expired)
+          signal.alarm(210)
+          try:
+              require(os.environ.get('GITHUB_ACTIONS') == 'true' and sys.platform == 'darwin', 'macOS Actions only')
+              require(SUMMARY['attempt'] == '1' and SUMMARY['branch'] == BRANCH, 'one named push attempt only')
+              source = command(['git', 'rev-parse', 'HEAD'])
+              require(source == SUMMARY['source_sha'], 'HEAD differs')
+              require(command(['git', 'rev-parse', 'HEAD^']) == PARENT, 'exact remote parent required')
+              require(command(['git', 'diff', '--name-status', PARENT, source]).splitlines() ==
+                  ['A\t' + WORKFLOW, 'M\t' + PACKAGE + 'prepare.py'], 'exact two-path delta required')
+              require(not command(['git', 'status', '--porcelain', '--untracked-files=all']), 'dirty source')
+              require(all(sha((ROOT / p).read_bytes()) == value for p, value in FROZEN.items()), 'frozen source differs')
+              SUMMARY['frozen_inputs'] = FROZEN
+              SUMMARY['package_files'] = {p: sha((ROOT / p).read_bytes()) for p in
+                  [WORKFLOW] + [PACKAGE + n for n in ('prepare.py', 'collect.py', 'AppPhaseRecorder.swift', 'VerifyPhaseTests.swift')]}
+              SUMMARY['stages']['source'] = True
+              # Syntax compilation does not execute either module's main entrypoint.
+              for name in ('prepare.py', 'collect.py'):
+                  path = ROOT / PACKAGE / name
+                  compile(path.read_bytes(), str(path), 'exec')
+              SUMMARY['stages']['python_syntax'] = True
+              sys.path.insert(0, str(ROOT / PACKAGE))
+              prepare = importlib.import_module('prepare')
+              collect = importlib.import_module('collect')
+              collect.DEADLINE = DEADLINE
+              original_methods = (prepare.Rewrite.__init__, prepare.Rewrite.once, prepare.Rewrite.finish)
+              originals = [(prepare, 'run', prepare.run), (prepare, 'command', prepare.command),
+                  (collect, 'command', collect.command), (subprocess, 'Popen', subprocess.Popen),
+                  (subprocess, 'run', subprocess.run), (subprocess, 'check_output', subprocess.check_output),
+                  (os, 'system', os.system)]
+              for module, name, original in originals:
+                  setattr(module, name, forbidden)
+              try:
+                  def tracked_init(self, text):
+                      original_methods[0](self, text)
+                      self.trace_index = len(INSTANCES)
+                      INSTANCES.append({'id': self.trace_index, 'original_sha256': sha(text),
+                          'caller': sys._getframe(1).f_code.co_name, 'finished': False, 'reverse': []})
+
+                  def tracked_once(self, old, new):
+                      limits()
+                      frame = sys._getframe(1)
+                      row = {'ordinal': len(CALLS) + 1, 'instance': self.trace_index,
+                          'caller': frame.f_code.co_name, 'line': frame.f_lineno,
+                          'before_sha256': sha(self.text), 'old_sha256': sha(old), 'new_sha256': sha(new),
+                          'old_count': self.text.count(old), 'succeeded': False}
+                      CALLS.append(row)
+                      original_methods[1](self, old, new)
+                      row.update(after_sha256=sha(self.text), succeeded=True)
+
+                  def tracked_finish(self):
+                      row = INSTANCES[self.trace_index]
+                      require(row['finished'] is False, 'repeated finish')
+                      reverse = self.text
+                      for old, new in reversed(self.pairs):
+                          step = {'new_count': reverse.count(new), 'before_sha256': sha(reverse),
+                              'old_sha256': sha(old), 'new_sha256': sha(new)}
+                          row['reverse'].append(step)
+                          require(step['new_count'] == 1, 'observed reverse anchor ambiguous')
+                          reverse = reverse.replace(new, old)
+                          step['after_sha256'] = sha(reverse)
+                      row['original_bytes_equal'] = reverse == self.original
+                      value = original_methods[2](self)
+                      require(row['original_bytes_equal'], 'observed reconstruction differs')
+                      row.update(finished=True, output_sha256=sha(value), pair_count=len(self.pairs))
+                      return value
+
+                  prepare.Rewrite.__init__, prepare.Rewrite.once, prepare.Rewrite.finish = tracked_init, tracked_once, tracked_finish
+                  try:
+                      first = prepare.generated(ROOT)
+                      require(len(CALLS) == 76 and len(INSTANCES) == 19, 'fixed 76/19 inventory differs')
+                      require(all(r['old_count'] == 1 and r['succeeded'] for r in CALLS), 'forward trace incomplete')
+                      require(all(r['finished'] and r['original_bytes_equal'] for r in INSTANCES), 'reverse trace incomplete')
+                      require(sum(len(r['reverse']) for r in INSTANCES) == 76, 'reverse count differs')
+                      require(sorted(r['pair_count'] for r in INSTANCES) == sorted([1] + [2] * 10 + [3] * 3 + [4, 5, 6, 10, 21]),
+                          'per-instance inventory differs')
+                      require(sorted(first) == EXPECTED, 'seven generated paths differ')
+                  finally:
+                      prepare.Rewrite.__init__, prepare.Rewrite.once, prepare.Rewrite.finish = original_methods
+                      save('rewrite-trace.json', {'instances': INSTANCES, 'calls': CALLS})
+                  second = prepare.generated(ROOT)
+                  require(first == second and sorted(second) == EXPECTED, 'second generation differs')
+                  for name, value in first.items():
+                      path = OUT / 'generated' / name
+                      path.parent.mkdir(parents=True, exist_ok=True)
+                      path.write_text(value)
+                  SUMMARY['generated'] = {name: sha(value) for name, value in first.items()}
+                  SUMMARY['stages']['generation'] = {'once': 76, 'finish': 19, 'reverse_steps': 76,
+                      'fragment_and_class_guards': True, 'second_pass_byte_equal': True}
+                  controls = {}
+                  def negative(name, action, reason):
+                      try:
+                          action()
+                      except ValueError as error:
+                          require(reason in str(error), 'unexpected rewriter rejection reason')
+                          controls[name] = True
+                      else:
+                          raise ValueError('rewriter negative admitted: ' + name)
+                  negative('missing_anchor', lambda: prepare.Rewrite('a').once('z', 'b'), 'unique source anchor')
+                  negative('duplicate_anchor', lambda: prepare.Rewrite('aa').once('a', 'b'), 'unique source anchor')
+                  def ambiguous():
+                      r = prepare.Rewrite('ab'); r.once('a', 'b'); r.finish()
+                  negative('reverse_ambiguity', ambiguous, 'reverse anchor ambiguous')
+                  def modified():
+                      r = prepare.Rewrite('a'); r.once('a', 'b'); r.text += 'x'; r.finish()
+                  negative('output_mutation', modified, 'original byte reconstruction differs')
+                  r = prepare.Rewrite('a'); r.once('a', 'b'); r.once('b', 'c')
+                  require(r.finish() == 'c', 'dependent reverse-order control failed')
+                  controls['dependent_reverse_order'] = True
+                  save('rewriter-controls.json', controls)
+                  collect.protocol_controls(OUT / 'protocol-controls.json')
+                  protocol = json.loads((OUT / 'protocol-controls.json').read_text())
+                  require(protocol and all(v is True for v in protocol.values()), 'protocol controls incomplete')
+                  require(not BLOCKED, 'forbidden command attempted')
+                  SUMMARY['stages']['rewriter_controls'] = controls
+                  SUMMARY['stages']['protocol_controls'] = protocol
+              finally:
+                  for module, name, original in originals:
+                      setattr(module, name, original)
+                  save('blocked-commands.json', BLOCKED)
+              # Explicit syntax tools are separate from pure-stage command interception.
+              syntax = {}
+              for name in ('make_xcodeproj_phase.rb', 'make_project_phase.rb'):
+                  syntax[name] = command(['ruby', '-c', str(OUT / 'generated' / name)])
+              sdk = command(['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-path'])
+              require(Path(sdk).is_absolute() and Path(sdk).is_dir() and 'iPhoneSimulator' in sdk, 'simulator SDK path required')
+              common = ['xcrun', 'swiftc', '-frontend', '-parse', '-swift-version', '5',
+                  '-target', 'arm64-apple-ios15.0-simulator', '-sdk', sdk, '-D', 'DEBUG']
+              host = ['-D', 'EXR_APPLE_PAGE_THEME', '-D', 'EXR_APPLE_HOST_REVIEW',
+                  '-D', 'EXR_APPLE_RAW3', '-D', 'EXR_APPLE_WAVE3', '-Xcc', '-DEXR_READER_SELECTOR_BYTES_CANDIDATE=1',
+                  '-Xcc', '-DEXR_APPLE_WAVE3=1', '-Xcc', '-DDEBUG=1']
+              for name in EXPECTED:
+                  if name.endswith('.swift'):
+                      flags = host if name.startswith('host/') else ['-Xcc', '-DDEBUG=1']
+                      command(common + flags + [str(OUT / 'generated' / name)])
+                      syntax[name] = True
+              SUMMARY['stages']['ruby_swift_syntax'] = syntax
+              require(not command(['git', 'status', '--porcelain', '--untracked-files=all']), 'source changed during preflight')
+              SUMMARY['resource_inventory'] = limits()
+              SUMMARY['complete'] = True
+          except BaseException as error:
+              SUMMARY['problems'].append(type(error).__name__ + ': ' + str(error)[:2000])
+              save('failure.json', {'traceback': traceback.format_exc()[-16000:]})
+          finally:
+              signal.alarm(0)
+              save('rewrite-trace.json', {'instances': INSTANCES, 'calls': CALLS})
+              save('commands.json', COMMANDS)
+              save('summary.json', SUMMARY)
+              # Time-independent final admission also runs after timeout failures.
+              # A refused oversized/type-unsafe tree is not uploaded as evidence.
+              selected = ROOT / 'build/ios-verify-phase-preflight/refusal'
+              try:
+                  SUMMARY['final_inventory'] = evidence_inventory()
+                  save('summary.json', SUMMARY)
+                  evidence_inventory()
+                  selected = OUT
+              except BaseException as error:
+                  SUMMARY['complete'] = False
+                  SUMMARY['problems'].append('final evidence refused: ' + str(error)[:2000])
+                  refusal = {k: SUMMARY[k] for k in ('source_sha', 'run_id', 'attempt', 'branch',
+                      'parent', 'native_cases_run', 'formal_credit', 'product_accepted',
+                      'root_cause_proved', 'complete', 'problems')}
+                  refusal['partial_tree_uploaded'] = False
+                  # Keep the original partial tree on the runner, but upload only
+                  # this bounded refusal and the pre-existing bootstrap identity.
+                  (selected / 'refusal.json').write_text(json.dumps(refusal, indent=2) + '\n')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+                  stream.write('evidence_path=' + str(selected.relative_to(ROOT)) + '\n')
+              print(json.dumps(SUMMARY, sort_keys=True))
+          sys.exit(0 if SUMMARY['complete'] else 1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-verify-phase-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.gate.outputs.evidence_path || 'build/ios-verify-phase-preflight/refusal/' }}
+          include-hidden-files: true
+          if-no-files-found: error

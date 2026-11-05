@@ -1,0 +1,25 @@
+name: Android 3.40 historical sender evidence inventory
+on:
+  push:
+    branches: [codex/dot-android340-sender-evidence]
+    paths: ['.github/workflows/android340-sender-inventory.yml', 'tests/android340_sender/inventory.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate existing historical artifacts without rebuilding
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/android340_sender/inventory.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android340-sender-inventory-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android340-sender-inventory/
+          if-no-files-found: error

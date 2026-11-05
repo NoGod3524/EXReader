@@ -1,0 +1,41 @@
+name: Android history retained failure inspection
+on:
+  push:
+    branches: [codex/dot-android-history-evidence]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate and print retained failure, only inside Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/history-prior-failure
+          python - <<'PY'
+          import subprocess,json,hashlib,io,zipfile
+          from pathlib import Path
+          repo='repos/NoGod3524/EXReader/'
+          item=json.loads(subprocess.check_output(['gh','api',repo+'actions/artifacts/12793667212']))
+          assert item['workflow_run']['id']==40634524405
+          assert item['workflow_run']['head_sha']=='70962e9ea73fe879f6a1f38df5d5094591061fd1'
+          data=subprocess.check_output(['gh','api',repo+'actions/artifacts/12793667212/zip'])
+          assert len(data)==item['size_in_bytes'] and 'sha256:'+hashlib.sha256(data).hexdigest()==item['digest']
+          Path('build/history-prior-failure/identity.json').write_text(json.dumps(item,indent=2))
+          with zipfile.ZipFile(io.BytesIO(data)) as z:
+              print(z.namelist())
+              for name in z.namelist():
+                  if name.endswith('.txt') or name.endswith('.json'):
+                      text=z.read(name).decode(errors='replace')
+                      print('EVIDENCE',name,text)
+                      Path('build/history-prior-failure/'+Path(name).name).write_text(text)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-history-prior-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/history-prior-failure/

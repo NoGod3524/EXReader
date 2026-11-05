@@ -1,0 +1,18 @@
+{
+  "package": "J11 explicit conflict actions",
+  "base_commit": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "tested_commit": "be093a95d5eb6beceb23ce5ba76cac3a79610555",
+  "workflow": ".github/workflows/reader-explicit-conflict-actions.yml",
+  "run_id": 40140153887,
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40140153887",
+  "platforms": {"ubuntu-22.04": "success", "windows-2022": "success", "macos-14": "success"},
+  "summary_job": "success (identical SHA, OS set and 29-check list on every platform)",
+  "checks": 29,
+  "scope_covered": [
+    "real two-client concurrency", "late parent", "tombstone then put/explicit restore for book, group, membership",
+    "32/33 head bound", "foreign revision after prepare", "stable-ID retry", "cancellation before commit",
+    "native transaction failure rollback", "owner/reentry rules", "installed C and C++ consumers",
+    "history and schema preserved, no SDK files"
+  ],
+  "scope_not_covered": ["host UI wiring", "SDK original verification", "simulator/desktop/device runs", "audio/reading aloud", "cross-process durable retry intent"]
+}

@@ -1,0 +1,124 @@
+name: F03 live collection selection consistency
+on:
+  push:
+    branches: [codex/dot-f03-gtk-selection-20261031]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  host-linux:
+    name: GTK original collections and 51 live group selection
+    runs-on: ubuntu-22.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require exact three-file additive scope
+        run: |
+          git merge-base --is-ancestor cfdaf6a4531548be63b4dd0c2bccd6b050a93124 HEAD
+          python3 - <<'PY'
+          import subprocess
+          expected={'tests/reader_f03_gtk_selection_20261031/run.py','.github/workflows/dot-f03-gtk-selection-20261031.yml','docs/reader-total-progress/DOT_F03_GTK_SELECTION_20261031.md'}
+          changed=set(subprocess.check_output(['git','diff','--name-only','cfdaf6a4531548be63b4dd0c2bccd6b050a93124','HEAD'],text=True).splitlines())
+          assert changed==expected,changed
+          PY
+          python3 -m py_compile tests/reader_f03_gtk_selection_20261031/run.py
+      - name: Install native GTK TLS XML and Secret Service dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build at-spi2-core xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil python3-pyatspi dbus-x11
+      - name: Build product and metadata changes with unchanged TLS, revision, sync and session modules
+        run: |
+          mkdir -p build/f05-logs
+          prefix="$PWD/build/f05-stage"
+          echo "ACCOUNT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S extras/opds -B build/f05-hash -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/f05-hash-stage"
+          cmake --build build/f05-hash
+          cmake --install build/f05-hash
+          export EXREADER_ORIGINAL_HASH_PREFIX="$PWD/build/f05-hash-stage"
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$EXREADER_ORIGINAL_HASH_PREFIX" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/f05-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/f05-product --parallel 4
+          cmake --install build/f05-product
+          cmake -S extras/webdav -B build/f05-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/f05-dav --parallel 4
+          cmake --install build/f05-dav
+          cmake -S apps/reader/revisions -B build/f05-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/f05-revisions --parallel 4
+          cmake --install build/f05-revisions
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/f05-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/f05-$module" --parallel 4
+            cmake --install "build/f05-$module"
+          done
+          cmake -S extras/credentials -B build/f05-credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/f05-credentials --parallel 4
+          cmake --install build/f05-credentials
+          cmake -S tests/reader_revisions/consumer -B build/f05-revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/f05-revision-consumer --parallel 4
+          cmake -S tests/reader_commands/consumer -B build/f05-command-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/f05-command-consumer --parallel 4
+      - name: Preserve unchanged installed metadata regression assertions
+        run: |
+          cmake -S tests/reader_metadata/consumer -B build/f05-metadata-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX"
+          cmake --build build/f05-metadata-consumer --parallel 4 --verbose 2>&1 | tee build/f05-logs/metadata-consumer-build.log
+          python3 tests/reader_metadata/check_metadata.py --consumer build/f05-metadata-consumer/metadata-consumer --c-consumer build/f05-metadata-consumer/metadata-c-consumer --command-consumer build/f05-command-consumer/command-consumer --product-prefix "$ACCOUNT_PREFIX" --link-map build/f05-metadata-consumer/metadata-link.map --build-log build/f05-logs/metadata-consumer-build.log --output build/f05-metadata-regression-evidence
+      - name: Install the repository SDK and public original export module
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/f05-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/f05-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/f05-logs/sdk-install.log
+          cmake -S extras/sideload -B build/f05-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/f05-sideload --parallel 4
+          cmake --install build/f05-sideload
+          cmake -S apps/reader/reading-state -B build/f05-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/f05-reading-state --parallel 4
+          cmake --install build/f05-reading-state
+      - name: Build and package the actual GTK host with account integration
+        id: build
+        run: |
+          cmake -S apps/reader/desktop -B build/f05-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_BUILD_GTK=ON -DEXR_READER_FIXTURES="$PWD/tests/fixtures" 2>&1 | tee build/f05-logs/host-configure.log
+          cmake --build build/f05-desktop --parallel 4 --verbose 2>&1 | tee build/f05-logs/host-build.log
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.42.0 --binary build/f05-desktop/gtk-host/exreader-linux --output build/f05-package
+      - name: Preserve all original 27 collections UI checks
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/f05-logs/original-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tests/linux_host/check_collections_ui.py --payload build/f05-package/EXReader-Linux --command-consumer build/f05-command-consumer/command-consumer --output build/f03-original
+          '
+      - name: Fifteen live 51-group UI selection checks
+        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
+        run: |
+          set -o pipefail
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export NO_AT_BRIDGE=0 GTK_MODULES=gail:atk-bridge
+            openbox >build/f05-logs/f03-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            /usr/bin/python3 tests/reader_f03_gtk_selection_20261031/run.py --payload build/f05-package/EXReader-Linux --command-consumer build/f05-command-consumer/command-consumer --output build/f03-selection
+          ' 2>&1 | tee build/f05-logs/f03-selection.log
+      - name: Retain failures and separate original/new counts
+        if: always()
+        run: |
+          cat build/f03-original/result.json || true
+          cat build/f03-selection/result.json || true
+      - name: Preserve evidence and original logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f03-selection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f03-original/
+            build/f03-selection/
+            build/f05-logs/
+            build/f05-metadata-regression-evidence/
+            build/f05-package/build.json
+            build/f05-package/runtime-dependencies.txt
+          if-no-files-found: error

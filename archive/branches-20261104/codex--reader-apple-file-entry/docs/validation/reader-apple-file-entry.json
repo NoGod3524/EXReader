@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "package": "J05 Apple file entry",
+  "branch": "codex/reader-apple-file-entry",
+  "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "tested_source_sha": "cb0dcfc854ea33caa7b86750279344a6e3515f2d",
+  "run": {
+    "id": 40147364965,
+    "attempt": 1,
+    "workflow": ".github/workflows/reader-apple-file-entry.yml",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40147364965"
+  },
+  "jobs": {
+    "scope and negative regressions": 121031464475,
+    "SDK macos": 121031464620,
+    "SDK iphonesimulator": 121031464654,
+    "native macos": 121031944415,
+    "native iphone": 121031944429,
+    "native ipad": 121031944330,
+    "same-source report": 121032820389
+  },
+  "results": {
+    "per_platform": {
+      "probe_checks": 33,
+      "consumer_checks": 15,
+      "total": 48,
+      "failed": 0,
+      "skipped": 0
+    },
+    "platforms": [
+      "macos",
+      "iphone-simulator",
+      "ipad-simulator"
+    ],
+    "evidence_regressions": 33,
+    "formats_read_back_through_public_sdk": 9
+  },
+  "artifacts": {
+    "macos": {
+      "id": 12581153765,
+      "bytes": 446136,
+      "sha256": "2d602d92892eed54a567d5dc993e55118bf208d554311b255a69920bd1f702e0"
+    },
+    "iphone": {
+      "id": 12581129263,
+      "bytes": 450567,
+      "sha256": "6dff1fb8a5de0626b539a81d95abd0d5c64a9ac844b2f07165e9affadc769a56"
+    },
+    "ipad": {
+      "id": 12580339394,
+      "bytes": 450597,
+      "sha256": "0ed0a48287a58422fe18aa349dc842ef2a6246eef65dc07d546e335858d29970"
+    },
+    "report": {
+      "id": 12580669957,
+      "bytes": 1289
+    },
+    "regressions": {
+      "id": 12580353957,
+      "bytes": 770
+    },
+    "expires_at": "2027-01-23T00:36:39Z"
+  },
+  "environment": {
+    "runner": "macos-15",
+    "xcode": "Xcode 16.4 (16F6)",
+    "ios_simulator_runtime": "iOS 26.2",
+    "iphone": "iPhone 11",
+    "ipad": "iPad Pro (12.9-inch) (3rd generation)"
+  },
+  "retained_failures": [
+    {
+      "run": 40116197175,
+      "source": "a5f42e7a5602b91b7c9e2fce8699c4c41e49279d",
+      "cause": "Swift compile error: POSIX close shadowed by FileEntryStagingArea.close(); all three native jobs failed"
+    },
+    {
+      "run": 40143622985,
+      "cause": "probe hung on the FIFO case (NSFileCoordinator blocks on a FIFO) until the 1500 s timeout; no progress retained"
+    },
+    {
+      "run": 40145777002,
+      "cause": "FIFO hang again (now bounded at 420 s) and unicode-names check: Foundation canonicalized the NFC name; consumer 15/15 passed"
+    },
+    {
+      "run": 40146792227,
+      "cause": "one probe test bug: iCloud scope balance expected 1/1 for two staging attempts (2/2); component behavior was correct; 32/33 probe, consumer 15/15"
+    }
+  ],
+  "fixes": [
+    "qualify POSIX close as Darwin.close",
+    "reject non-regular files before coordination",
+    "displayName from the on-disk name bytes",
+    "corrected test scope count"
+  ],
+  "pending_not_exercised": [
+    "real iCloud Drive / third-party File Provider downloads; not-downloaded exercised through the ubiquity seam only",
+    "system picker UI interaction (FileEntryPicker compiled for macOS and iOS simulator, not driven)",
+    "app-sandbox security-scoped URLs from a real picker or bookmark; live start/stop returns false for plain URLs, pairing exercised through the scope seam",
+    "Files app / Finder file-sharing delivery into Documents/Inbox; layout reproduced on disk",
+    "physical iPhone/iPad hardware",
+    "macOS App Sandbox entitlements"
+  ],
+  "scope_note": "Module acceptance only; host wiring, product UI and six-platform interop belong to root."
+}

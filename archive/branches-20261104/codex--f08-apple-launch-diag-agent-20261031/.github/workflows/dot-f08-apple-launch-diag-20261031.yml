@@ -1,0 +1,59 @@
+name: F08 Apple launch predicate diagnosis
+on:
+  push:
+    branches: [codex/f08-apple-launch-diag-agent-20261031]
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.42.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone]
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare the existing project generator
+        run: gem list -i xcodeproj || gem install xcodeproj --no-document
+      - name: Measure the original endpoint and separate Mac window capability
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_apple_launch_diag_20261031/run.py native --platform ${{ matrix.platform }}
+      - name: Seal all observations including failures
+        if: always()
+        run: python3 tests/reader_f08_apple_launch_diag_20261031/run.py seal --platform ${{ matrix.platform }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-apple-launch-diag-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-apple-launch-diag/${{ matrix.platform }}/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 6
+  audit:
+    if: ${{ always() && !cancelled() }}
+    needs: native
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Independently authenticate bytes and native candidate events
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_apple_launch_diag_20261031/run.py audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-apple-launch-diag-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-apple-launch-diag-audit/report.json
+          if-no-files-found: error

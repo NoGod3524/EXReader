@@ -1,0 +1,35 @@
+name: F02 retained Android online evidence
+on:
+  push:
+    branches: [codex/gpt-f02-android-online-evidence-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f02-android-online-evidence-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  diagnose:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate retained original and diagnose without product execution
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m py_compile tools/reader_composition/f02_android_online_evidence_20261031.py
+          python tools/reader_composition/f02_android_online_evidence_20261031.py
+      - name: Preserve bounded diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f02-android-online-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f02-android-online-evidence/
+          if-no-files-found: warn
+          overwrite: false

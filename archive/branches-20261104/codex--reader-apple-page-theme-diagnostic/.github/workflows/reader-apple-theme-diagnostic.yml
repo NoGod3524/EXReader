@@ -1,0 +1,38 @@
+name: Preserved Apple navigation failure inspection only
+on:
+  push:
+    branches: [codex/reader-apple-page-theme-diagnostic]
+    paths: [.github/workflows/reader-apple-theme-diagnostic.yml, tests/apple_host/page_theme/inspect_navigation_failure.py]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require unchanged frozen production and two diagnostic-only additions
+        run: |
+          git merge-base --is-ancestor f4aa876c4e077201ade122c6a558a90731327daa HEAD
+          while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/reader-apple-theme-diagnostic.yml|tests/apple_host/page_theme/inspect_navigation_failure.py) ;;
+              *) echo "Unowned diagnostic change: $path"; exit 1 ;;
+            esac
+          done < <(git diff --name-only f4aa876c4e077201ade122c6a558a90731327daa HEAD)
+      - name: Authenticate retained ZIP and inspect original failed UI observations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m py_compile tests/apple_host/page_theme/inspect_navigation_failure.py
+          python3 tests/apple_host/page_theme/inspect_navigation_failure.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-theme-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-theme-diagnostic/
+          if-no-files-found: error

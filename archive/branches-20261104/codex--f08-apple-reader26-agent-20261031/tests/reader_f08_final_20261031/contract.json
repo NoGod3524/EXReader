@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "reviewed_source": "b882ab312bd248ba0bc5fc9c2587a1a4e0cb5b38",
+  "allowed_test_prefix": "tests/reader_f08_final_20261031/",
+  "allowed_workflow": ".github/workflows/f08-final-linux-20261031.yml",
+  "platforms_required_for_f08": [
+    "windows",
+    "linux",
+    "android",
+    "macos",
+    "iphone",
+    "ipad"
+  ],
+  "linux_launches": {
+    "perf-evidence": 32,
+    "perf-interactions": 12,
+    "f08-causal": 6,
+    "body-jump": 4
+  },
+  "linux_frame_groups": [
+    "ui_all_frames",
+    "ui_reader_frames",
+    "ui_shelf_frames",
+    "ui_body_frames",
+    "ui_page_turn_frames",
+    "ui_font_frames",
+    "ui_locate_jump_frames"
+  ],
+  "linux_budgets": {
+    "p95_ms": 16.67,
+    "p99_ms": 33.34,
+    "first_interactive_ms": 2000,
+    "peak_rss_bytes": 536870912
+  }
+}

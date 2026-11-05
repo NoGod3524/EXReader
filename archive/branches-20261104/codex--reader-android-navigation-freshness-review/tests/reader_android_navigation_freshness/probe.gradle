@@ -1,0 +1,15 @@
+allprojects { target ->
+    target.afterEvaluate {
+        if (target.path == ':app') {
+            target.android.sourceSets.androidTest.java.setSrcDirs([
+                new File(target.rootProject.projectDir, '../../build/navigation-freshness/generated')
+            ])
+        }
+        target.tasks.configureEach { task ->
+            if (target.findProperty('diagSkipNative') == 'true' &&
+                (task.name.toLowerCase().contains('native') || task.name.toLowerCase().contains('cmake'))) {
+                task.enabled = false
+            }
+        }
+    }
+}

@@ -1,0 +1,23 @@
+name: Windows sync early account evidence authentication
+on:
+  push:
+    branches: [codex/windows-sync-early-evidence-20261028]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify early account report from exact source and run
+        run: python3 tests/windows_sync_early_evidence/check.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-sync-early-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          if-no-files-found: warn

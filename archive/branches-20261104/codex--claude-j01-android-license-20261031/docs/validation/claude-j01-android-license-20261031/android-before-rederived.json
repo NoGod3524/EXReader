@@ -1,0 +1,387 @@
+{
+  "materials": [
+    {
+      "component": "freetype",
+      "source": "docs/FTL.TXT",
+      "installed": "share/exreader/licenses/freetype/FTL.TXT",
+      "expected_sha256": "5a5ee54c5001bbad1cdc1a57cc3dd4c42199b2da09d39c7ee41fab002d02967f",
+      "condition": "",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "freetype",
+      "source": "LICENSE.TXT",
+      "installed": "share/exreader/licenses/freetype/LICENSE.TXT",
+      "expected_sha256": "bd36c8b474855fa294c2ec5c184544478ef3720aad37d65a6296a4f264fd2d3b",
+      "condition": "",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "expat",
+      "source": "expat/COPYING",
+      "installed": "share/exreader/licenses/expat/COPYING",
+      "expected_sha256": "31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87",
+      "condition": "",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "expat",
+      "source": "COPYING",
+      "installed": "share/exreader/licenses/expat/upstream-root/COPYING",
+      "expected_sha256": "73cc92f80889ab23c7287b1a11dd50fdec190c3f26ebe5938c579043817d651e",
+      "condition": "",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "miniz",
+      "source": "LICENSE",
+      "installed": "share/exreader/licenses/miniz/LICENSE",
+      "expected_sha256": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3",
+      "condition": "",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "stb",
+      "source": "LICENSE",
+      "installed": "share/exreader/licenses/stb/LICENSE",
+      "expected_sha256": "bebfe904b14301657e4e5d655c811d51fd31b97c455b9cc2d8600d6bac6cff63",
+      "condition": "",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "libwebp",
+      "source": "COPYING",
+      "installed": "share/exreader/licenses/libwebp/COPYING",
+      "expected_sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf",
+      "condition": "EXR_ENABLE_IMAGE_WEBP",
+      "state": "not_applicable",
+      "applicability": false,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "libwebp",
+      "source": "PATENTS",
+      "installed": "share/exreader/licenses/libwebp/PATENTS",
+      "expected_sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c",
+      "condition": "EXR_ENABLE_IMAGE_WEBP",
+      "state": "not_applicable",
+      "applicability": false,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "zlib",
+      "source": "LICENSE",
+      "installed": "share/exreader/licenses/zlib/LICENSE",
+      "expected_sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243",
+      "condition": "EXR_ENABLE_IMAGE_TIFF",
+      "state": "not_applicable",
+      "applicability": false,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "libtiff",
+      "source": "LICENSE.md",
+      "installed": "share/exreader/licenses/libtiff/LICENSE.md",
+      "expected_sha256": "0780558a8bfba0af1160ec1ff11ade4f41c0d7deafd6ecfc796b492a788e380d",
+      "condition": "EXR_ENABLE_IMAGE_TIFF",
+      "state": "not_applicable",
+      "applicability": false,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "libaom",
+      "source": "LICENSE",
+      "installed": "share/exreader/licenses/libaom/LICENSE",
+      "expected_sha256": "4764a286d8b2faeaf42f4418e7d7a28d58fc8fd4d00a3d0a7f44b0a4099de7f2",
+      "condition": "EXR_ENABLE_IMAGE_AVIF",
+      "state": "not_applicable",
+      "applicability": false,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "libaom",
+      "source": "PATENTS",
+      "installed": "share/exreader/licenses/libaom/PATENTS",
+      "expected_sha256": "661fb8e504744e95587b556b94a58343448300606a41bea8c7a9b97125696e61",
+      "condition": "EXR_ENABLE_IMAGE_AVIF",
+      "state": "not_applicable",
+      "applicability": false,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "libavif",
+      "source": "LICENSE",
+      "installed": "share/exreader/licenses/libavif/LICENSE",
+      "expected_sha256": "165abf92cc04b39e80d29cadea7a6a7e8fddf59407d4ad2616507a7ebe8216f9",
+      "condition": "EXR_ENABLE_IMAGE_AVIF",
+      "state": "not_applicable",
+      "applicability": false,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "mbedtls",
+      "source": "LICENSE",
+      "installed": "share/exreader/licenses/mbedtls/LICENSE",
+      "expected_sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b",
+      "condition": "EXR_ENABLE_PDF&EXR_ENABLE_PDF_CRYPTO",
+      "state": "not_applicable",
+      "applicability": false,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "openjpeg",
+      "source": "LICENSE",
+      "installed": "share/exreader/licenses/openjpeg/LICENSE",
+      "expected_sha256": "a6af136f3e15038a666b61f376612a07d9a4e48cb7c01adbf3e33b3f14ab49b6",
+      "condition": "EXR_ENABLE_PDF&EXR_ENABLE_PDF_JPX",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "lcms",
+      "source": "LICENSE",
+      "installed": "share/exreader/licenses/lcms/LICENSE",
+      "expected_sha256": "6dbd60437f8ef91d8de1f08ad75882547fd4931bfcc3566a0735f28db1484d31",
+      "condition": "EXR_ENABLE_ICC",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "sqlite",
+      "source": "licenses/sqlite-public-domain.txt",
+      "installed": "share/exreader/licenses/sqlite/sqlite-public-domain.txt",
+      "expected_sha256": "abc1b93c15fe0a92ec55020569e10fb8206de2cf535c30e70f7f9d5428e20bcc",
+      "condition": "EXR_ENABLE_LIBRARY|EXR_BUILD_TEXT_INDEX",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "minimp3",
+      "source": "LICENSE",
+      "installed": "share/exreader/licenses/minimp3/LICENSE",
+      "expected_sha256": null,
+      "condition": "EXR_ENABLE_AUDIO&EXR_ENABLE_MP3",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "faad2",
+      "source": "COPYING",
+      "installed": "share/exreader/licenses/faad2/COPYING",
+      "expected_sha256": null,
+      "condition": "EXR_ENABLE_AUDIO&EXR_ENABLE_AAC",
+      "state": "not_applicable",
+      "applicability": false,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "faad2",
+      "source": "licenses/faad2-notice.txt",
+      "installed": "share/exreader/licenses/faad2/faad2-notice.txt",
+      "expected_sha256": "f7a7eda5854c387fc25e0c6ad4c9fa22cad27d83b3bbfa283bc9ae42a9376e3c",
+      "condition": "EXR_ENABLE_AUDIO&EXR_ENABLE_AAC",
+      "state": "not_applicable",
+      "applicability": false,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "unicode",
+      "source": "tests/fixtures/unicode/LICENSE.txt",
+      "installed": "share/exreader/licenses/unicode/LICENSE.txt",
+      "expected_sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+      "condition": "",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "argyll-cmyk",
+      "source": "licenses/default-cmyk-profile.txt",
+      "installed": "share/exreader/licenses/default-cmyk-profile.txt",
+      "expected_sha256": "45d3e9b11893bcae1724cd0e6d377c2ed842269de495307ba6153e1b0b80e1da",
+      "condition": "EXR_ENABLE_ICC",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "adobe-glyph-list",
+      "source": "licenses/adobe-glyph-list.txt",
+      "installed": "share/exreader/licenses/pdf-font-data/adobe-glyph-list.txt",
+      "expected_sha256": "c85f2b0da9de3e0a96cb42594708d19f7696945bb185cfd98c262f8f2d6f3aa7",
+      "condition": "",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "pdfjs-data",
+      "source": "licenses/pdfjs.txt",
+      "installed": "share/exreader/licenses/pdf-font-data/pdfjs.txt",
+      "expected_sha256": "8d1fb64269e430755e4f12c2eb113d71b4b2a33ad11db0069e09ebb47415ca53",
+      "condition": "",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "noto-test-fonts",
+      "source": "licenses/noto-sans-test-fonts.txt",
+      "installed": "share/exreader/licenses/wp7-fonts/noto-sans-test-fonts.txt",
+      "expected_sha256": "754f0e221aa7d5a915489f3bf1f20fe53ddc35ab2834a4d91656d78f9622de70",
+      "condition": "",
+      "state": "missing_required",
+      "applicability": true,
+      "paths": [],
+      "matched": [],
+      "applicability_basis": "source recipe, not observed cache; actual full dependency closure unresolved"
+    },
+    {
+      "component": "first_party",
+      "state": "present_verified",
+      "matched": [
+        "LICENSE"
+      ],
+      "paths": [
+        "LICENSE"
+      ],
+      "expected_sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+    },
+    {
+      "component": "notice",
+      "state": "present_verified",
+      "matched": [
+        "THIRD_PARTY_NOTICES.md"
+      ],
+      "paths": [
+        "THIRD_PARTY_NOTICES.md"
+      ],
+      "expected_sha256": "aca41304e60a5f617bf232f5024fc101fc2ba32f79f55e50c88cd74aeda213b6"
+    },
+    {
+      "component": "host_noto_font",
+      "fonts": [
+        "APK/assets/Reader.otf"
+      ],
+      "paths": [
+        "APK/assets/OFL.txt"
+      ],
+      "state": "present_verified",
+      "expected_sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2"
+    }
+  ],
+  "installation_notes": {
+    "installation": {
+      "state": "text_candidate",
+      "lines": [
+        {
+          "line": 7,
+          "text": "## 怎么运行"
+        },
+        {
+          "line": 10,
+          "text": "2. adb install -r artifacts/app-debug.apk，然后启动 org.exreader.host。"
+        }
+      ]
+    },
+    "import": {
+      "state": "text_candidate",
+      "lines": [
+        {
+          "line": 11,
+          "text": "3. 首次打开时用自带的 Sample 书试读：本地导入 → 打开 → 翻页 → 设置 → 搜索/目录。"
+        }
+      ]
+    },
+    "sync": {
+      "state": "missing_from_installation_notes",
+      "lines": []
+    },
+    "conflict_recovery": {
+      "state": "missing_from_installation_notes",
+      "lines": []
+    },
+    "backup": {
+      "state": "missing_from_installation_notes",
+      "lines": []
+    },
+    "upgrade": {
+      "state": "missing_from_installation_notes",
+      "lines": []
+    }
+  },
+  "additional_document_paths": [
+    "安装说明-中文.md"
+  ],
+  "registered_materials_complete": false,
+  "materials_complete": false,
+  "instructions_complete": false,
+  "instructions_limit": "Keyword locations are candidates only, not validated procedures. Other document paths retained for review.",
+  "runtime_dependency_completeness": "unresolved: retained package bytes do not establish every linked/system dependency",
+  "legal_compliance_assessed": false,
+  "F12_promoted": false
+}

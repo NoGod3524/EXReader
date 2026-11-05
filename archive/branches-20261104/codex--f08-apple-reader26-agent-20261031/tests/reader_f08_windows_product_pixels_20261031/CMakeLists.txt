@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.20)
+project(f08_product_pixels LANGUAGES CXX)
+add_executable(f08_product_pixels observer.cpp)
+target_compile_features(f08_product_pixels PRIVATE cxx_std_17)
+target_compile_definitions(f08_product_pixels PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+target_link_libraries(f08_product_pixels PRIVATE d3d11 dxgi user32)

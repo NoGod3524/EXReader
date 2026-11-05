@@ -1,0 +1,358 @@
+[
+  {
+    "name": "windows-sdk342/logs/font.log",
+    "bytes": 0
+  },
+  {
+    "name": "windows-sdk342/logs/fixtures.log",
+    "bytes": 104
+  },
+  {
+    "name": "provider-desktop/windows/result.json",
+    "bytes": 326
+  },
+  {
+    "name": "windows-sdk342/logs/host-build.log",
+    "bytes": 5512
+  },
+  {
+    "name": "windows-sdk342/logs/host-configure.log",
+    "bytes": 1177
+  },
+  {
+    "name": "windows-sdk342/logs/module-annotation-export-build.log",
+    "bytes": 1237
+  },
+  {
+    "name": "windows-sdk342/logs/module-annotation-export-configure.log",
+    "bytes": 1342
+  },
+  {
+    "name": "windows-sdk342/logs/module-annotation-export-install.log",
+    "bytes": 898
+  },
+  {
+    "name": "windows-sdk342/logs/module-annotation-import-build.log",
+    "bytes": 1237
+  },
+  {
+    "name": "windows-sdk342/logs/module-annotation-import-configure.log",
+    "bytes": 1342
+  },
+  {
+    "name": "windows-sdk342/logs/module-annotation-import-install.log",
+    "bytes": 898
+  },
+  {
+    "name": "windows-sdk342/logs/module-annotation-view-build.log",
+    "bytes": 1189
+  },
+  {
+    "name": "windows-sdk342/logs/module-annotation-view-configure.log",
+    "bytes": 1340
+  },
+  {
+    "name": "windows-sdk342/logs/module-annotation-view-install.log",
+    "bytes": 774
+  },
+  {
+    "name": "windows-sdk342/logs/module-bulk-organization-build.log",
+    "bytes": 1018
+  },
+  {
+    "name": "windows-sdk342/logs/module-bulk-organization-configure.log",
+    "bytes": 1342
+  },
+  {
+    "name": "windows-sdk342/logs/module-bulk-organization-install.log",
+    "bytes": 768
+  },
+  {
+    "name": "windows-sdk342/logs/module-cloud-import-build.log",
+    "bytes": 1989
+  },
+  {
+    "name": "windows-sdk342/logs/module-cloud-import-configure.log",
+    "bytes": 622
+  },
+  {
+    "name": "windows-sdk342/logs/module-cloud-import-install.log",
+    "bytes": 1467
+  },
+  {
+    "name": "windows-sdk342/logs/module-commands-configure.log",
+    "bytes": 1333
+  },
+  {
+    "name": "windows-sdk342/logs/module-commands-build.log",
+    "bytes": 969
+  },
+  {
+    "name": "windows-sdk342/logs/module-commands-install.log",
+    "bytes": 712
+  },
+  {
+    "name": "windows-sdk342/logs/module-credentials-build.log",
+    "bytes": 1231
+  },
+  {
+    "name": "windows-sdk342/logs/module-credentials-configure.log",
+    "bytes": 655
+  },
+  {
+    "name": "windows-sdk342/logs/module-credentials-install.log",
+    "bytes": 839
+  },
+  {
+    "name": "windows-sdk342/logs/module-desktop-metadata-build.log",
+    "bytes": 1150
+  },
+  {
+    "name": "windows-sdk342/logs/module-desktop-metadata-configure.log",
+    "bytes": 1341
+  },
+  {
+    "name": "windows-sdk342/logs/module-font-library-build.log",
+    "bytes": 968
+  },
+  {
+    "name": "windows-sdk342/logs/module-desktop-metadata-install.log",
+    "bytes": 776
+  },
+  {
+    "name": "windows-sdk342/logs/module-font-library-configure.log",
+    "bytes": 1303
+  },
+  {
+    "name": "windows-sdk342/logs/module-font-library-install.log",
+    "bytes": 867
+  },
+  {
+    "name": "windows-sdk342/logs/module-jump-history-build.log",
+    "bytes": 1169
+  },
+  {
+    "name": "windows-sdk342/logs/module-jump-history-configure.log",
+    "bytes": 1337
+  },
+  {
+    "name": "windows-sdk342/logs/module-jump-history-install.log",
+    "bytes": 744
+  },
+  {
+    "name": "windows-sdk342/logs/module-navigation-configure.log",
+    "bytes": 1301
+  },
+  {
+    "name": "windows-sdk342/logs/module-navigation-build.log",
+    "bytes": 924
+  },
+  {
+    "name": "windows-sdk342/logs/module-navigation-install.log",
+    "bytes": 732
+  },
+  {
+    "name": "windows-sdk342/logs/module-original-export-build.log",
+    "bytes": 1005
+  },
+  {
+    "name": "windows-sdk342/logs/module-original-export-configure.log",
+    "bytes": 1306
+  },
+  {
+    "name": "windows-sdk342/logs/module-original-export-install.log",
+    "bytes": 900
+  },
+  {
+    "name": "windows-sdk342/logs/module-preferences-build.log",
+    "bytes": 1749
+  },
+  {
+    "name": "windows-sdk342/logs/module-preferences-configure.log",
+    "bytes": 655
+  },
+  {
+    "name": "windows-sdk342/logs/module-preferences-install.log",
+    "bytes": 742
+  },
+  {
+    "name": "windows-sdk342/logs/module-reading-commands-build.log",
+    "bytes": 1200
+  },
+  {
+    "name": "windows-sdk342/logs/module-reading-commands-configure.log",
+    "bytes": 1341
+  },
+  {
+    "name": "windows-sdk342/logs/module-reading-commands-install.log",
+    "bytes": 784
+  },
+  {
+    "name": "windows-sdk342/logs/module-reading-state-build.log",
+    "bytes": 2307
+  },
+  {
+    "name": "windows-sdk342/logs/module-reading-state-configure.log",
+    "bytes": 1304
+  },
+  {
+    "name": "windows-sdk342/logs/module-reading-state-install.log",
+    "bytes": 1081
+  },
+  {
+    "name": "windows-sdk342/logs/module-revisions-build.log",
+    "bytes": 3516
+  },
+  {
+    "name": "windows-sdk342/logs/module-revisions-install.log",
+    "bytes": 1006
+  },
+  {
+    "name": "windows-sdk342/logs/module-revisions-configure.log",
+    "bytes": 1307
+  },
+  {
+    "name": "windows-sdk342/logs/module-search-build.log",
+    "bytes": 880
+  },
+  {
+    "name": "windows-sdk342/logs/module-search-configure.log",
+    "bytes": 1297
+  },
+  {
+    "name": "windows-sdk342/logs/module-search-install.log",
+    "bytes": 692
+  },
+  {
+    "name": "windows-sdk342/logs/module-session-build.log",
+    "bytes": 958
+  },
+  {
+    "name": "windows-sdk342/logs/module-session-configure.log",
+    "bytes": 978
+  },
+  {
+    "name": "windows-sdk342/logs/module-session-install.log",
+    "bytes": 702
+  },
+  {
+    "name": "windows-sdk342/logs/module-sideload-build.log",
+    "bytes": 1363
+  },
+  {
+    "name": "windows-sdk342/logs/module-sideload-configure.log",
+    "bytes": 639
+  },
+  {
+    "name": "windows-sdk342/logs/module-sideload-install.log",
+    "bytes": 579
+  },
+  {
+    "name": "windows-sdk342/logs/module-sync-build.log",
+    "bytes": 951
+  },
+  {
+    "name": "windows-sdk342/logs/module-sync-configure.log",
+    "bytes": 975
+  },
+  {
+    "name": "windows-sdk342/logs/module-sync-status-view-build.log",
+    "bytes": 1001
+  },
+  {
+    "name": "windows-sdk342/logs/module-sync-status-view-configure.log",
+    "bytes": 987
+  },
+  {
+    "name": "windows-sdk342/logs/module-sync-install.log",
+    "bytes": 672
+  },
+  {
+    "name": "windows-sdk342/logs/module-sync-status-view-install.log",
+    "bytes": 714
+  },
+  {
+    "name": "windows-sdk342/logs/module-txt-progress-build.log",
+    "bytes": 1156
+  },
+  {
+    "name": "windows-sdk342/logs/module-txt-progress-configure.log",
+    "bytes": 1303
+  },
+  {
+    "name": "windows-sdk342/logs/module-txt-progress-install.log",
+    "bytes": 744
+  },
+  {
+    "name": "windows-sdk342/logs/module-webdav-build.log",
+    "bytes": 788
+  },
+  {
+    "name": "windows-sdk342/logs/module-webdav-configure.log",
+    "bytes": 662
+  },
+  {
+    "name": "windows-sdk342/logs/package.log",
+    "bytes": 38
+  },
+  {
+    "name": "windows-sdk342/logs/module-webdav-install.log",
+    "bytes": 1055
+  },
+  {
+    "name": "windows-sdk342/logs/product-build.log",
+    "bytes": 7092
+  },
+  {
+    "name": "windows-sdk342/logs/product-configure.log",
+    "bytes": 1186
+  },
+  {
+    "name": "windows-sdk342/logs/product-install.log",
+    "bytes": 1651
+  },
+  {
+    "name": "windows-sdk342/logs/sdk-configure.log",
+    "bytes": 15855
+  },
+  {
+    "name": "windows-sdk342/logs/sdk-build.log",
+    "bytes": 61279
+  },
+  {
+    "name": "windows-sdk342/logs/sdk-install.log",
+    "bytes": 40463
+  },
+  {
+    "name": "windows-sdk342/logs/txt-consumer-build.log",
+    "bytes": 4022
+  },
+  {
+    "name": "windows-sdk342/logs/txt-consumer-configure.log",
+    "bytes": 831
+  },
+  {
+    "name": "windows-sdk342/host/CMakeCache.txt",
+    "bytes": 23467
+  },
+  {
+    "name": "windows-sdk342/host/windows-host.map",
+    "bytes": 6514500
+  },
+  {
+    "name": "windows-sdk342/package/report.json",
+    "bytes": 99
+  },
+  {
+    "name": "windows-sdk342/package/build.json",
+    "bytes": 3495
+  },
+  {
+    "name": "windows-sdk342/host/EXReaderWave3.exe",
+    "bytes": 8240640
+  },
+  {
+    "name": "windows-sdk342/package/EXReader/EXReader.exe",
+    "bytes": 8240640
+  }
+]

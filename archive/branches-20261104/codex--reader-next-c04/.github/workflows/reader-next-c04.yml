@@ -1,0 +1,258 @@
+name: Reader next C04 real RTF compatibility candidate
+
+on:
+  push:
+    branches: [codex/reader-next-c04]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reader-next-c04
+  cancel-in-progress: false
+
+env:
+  SDK_SHA: edddc463c06ed5731195cdb8f06b2df6dff7699e
+  F5_SHA: 278d63691a4c73e7aa932d71a40a5938c5427514
+  PATCH: candidates/reader-next-c04/rtf-root-tail-padding.patch
+
+jobs:
+  guard:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SDK_SHA }}
+          path: sdk-base
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.F5_SHA }}
+          path: f5
+      - name: Syntax of the C04 scripts
+        run: python3 -m py_compile tests/reader_next_c04/guard.py tests/reader_next_c04/rtf_scan.py tests/reader_next_c04/diag_instrument.py tests/reader_next_c04/run_c04.py tests/reader_next_c04/aggregate.py
+      - name: Fixed inputs, owned paths and single-file patch
+        run: python3 tests/reader_next_c04/guard.py --sdk sdk-base --f5 f5 --patch "$PATCH" --out build/c04/guard.json
+      - name: Patch applies cleanly to the approved SDK source
+        run: git -C sdk-base apply --check "$GITHUB_WORKSPACE/$PATCH"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-next-c04-guard-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c04/guard.json
+          if-no-files-found: error
+
+  diagnose:
+    needs: guard
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SDK_SHA }}
+          path: sdk-base
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.F5_SHA }}
+          path: f5
+      - name: Download and verify the original RTF bytes
+        run: python3 tests/reader_next_c04/run_c04.py fetch --f5 f5 --out build/c04/corpus
+      - name: Survey the original bytes
+        run: python3 tests/reader_next_c04/rtf_scan.py build/c04/corpus/assets/rtf-crowley-policy.rtf build/c04/corpus/assets/rtf-micro-republics.rtf --out build/c04/scan.json
+      - name: Name the failing exit of the unmodified and the candidate parser
+        run: |
+          set -eu
+          font=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+          mkdir -p build/c04/diag
+          for v in base cand; do
+            rm -rf "diag-$v"; mkdir "diag-$v"; cp -r sdk-base/. "diag-$v/"
+            if [ "$v" = cand ]; then git -C "diag-$v" apply "$GITHUB_WORKSPACE/$PATCH"; fi
+            python3 tests/reader_next_c04/diag_instrument.py "diag-$v/src/rtf.c" "diag-$v/src/rtf.c"
+            cmake -S "diag-$v" -B "build/diag-$v" -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+            cmake --build "build/diag-$v" --config Release --parallel 4
+            cmake --install "build/diag-$v" --config Release --prefix "stage-diag-$v"
+            cmake -S f5/tests/reader_real_corpus -B "build/diag-consumer-$v" -DEXR_SDK="$GITHUB_WORKSPACE/stage-diag-$v" -DCMAKE_BUILD_TYPE=Release
+            cmake --build "build/diag-consumer-$v" --config Release --parallel 4
+            for pair in "rtf-crowley-policy|Policy and Procedure TTR" "rtf-micro-republics|Micro Republics"; do
+              id="${pair%%|*}"; query="${pair#*|}"
+              rm -rf "build/c04/diag/$v-$id"; mkdir -p "build/c04/diag/$v-$id"
+              set +e
+              "build/diag-consumer-$v/exreader-real-corpus-consumer" --format RTF --file "build/c04/corpus/assets/$id.rtf" --font "$font" --out "build/c04/diag/$v-$id" --query "$query" > "build/c04/diag/$v-$id.stdout.json" 2> "build/c04/diag/$v-$id.stderr.txt"
+              echo "$?" > "build/c04/diag/$v-$id.exit"
+              set -e
+            done
+          done
+          grep -H -A4 "RTF-FAIL" build/c04/diag/*.stderr.txt || echo "no instrumented exit was taken"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-next-c04-diagnose-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c04/scan.json
+            build/c04/diag/*.stderr.txt
+            build/c04/diag/*.stdout.json
+            build/c04/diag/*.exit
+            build/c04/corpus/downloads.json
+          if-no-files-found: error
+
+  acceptance:
+    needs: guard
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            python: python
+            font: C:/Windows/Fonts/arial.ttf
+            exe: .exe
+            bin: Release/
+          - os: ubuntu-22.04
+            python: python3
+            font: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+            exe: ""
+            bin: ""
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Keep checked-out text byte-identical to Git
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SDK_SHA }}
+          path: sdk-base
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.F5_SHA }}
+          path: f5
+      - name: Download and verify the original RTF bytes
+        run: ${{ matrix.python }} tests/reader_next_c04/run_c04.py fetch --f5 f5 --out build/c04/corpus
+      - name: Survey the original bytes
+        run: ${{ matrix.python }} tests/reader_next_c04/rtf_scan.py build/c04/corpus/assets/rtf-crowley-policy.rtf build/c04/corpus/assets/rtf-micro-republics.rtf --out build/c04/scan.json
+      - name: Apply the candidate patch to a copy of the approved SDK
+        run: |
+          set -eu
+          cp -r sdk-base sdk-cand
+          git -C sdk-cand apply "$GITHUB_WORKSPACE/$PATCH"
+          git -C sdk-cand add -A
+          {
+            echo "os=$RUNNER_OS"
+            echo "run_id=$GITHUB_RUN_ID"
+            echo "attempt=$GITHUB_RUN_ATTEMPT"
+            echo "branch_sha=$GITHUB_SHA"
+            echo "sdk_sha=$(git -C sdk-base rev-parse HEAD)"
+            echo "f5_sha=$(git -C f5 rev-parse HEAD)"
+            echo "patch_sha256=$(sha256sum "$PATCH" | cut -d' ' -f1)"
+            echo "base_rtf_c_sha256=$(sha256sum sdk-base/src/rtf.c | cut -d' ' -f1)"
+            echo "cand_rtf_c_sha256=$(sha256sum sdk-cand/src/rtf.c | cut -d' ' -f1)"
+            echo "base_src_tree=$(git -C sdk-base rev-parse 'HEAD:src')"
+            echo "cand_src_tree=$(git -C sdk-cand write-tree)"
+            echo "cand_diff_files=$(git -C sdk-cand diff --cached --name-only | tr '\n' ' ')"
+          } > build/c04/identity.txt
+          cat build/c04/identity.txt
+      - name: Build and install the unmodified approved SDK
+        run: |
+          set -eu
+          cmake -S sdk-base -B build/sdk-base -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/sdk-base --config Release --parallel 4
+          cmake --install build/sdk-base --config Release --prefix stage-base
+      - name: Build the candidate SDK with its full test suite
+        run: |
+          set -eu
+          cmake -S sdk-cand -B build/sdk-cand -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/sdk-cand --config Release --parallel 4
+      - name: Run every SDK regression on the candidate
+        run: |
+          set +e
+          ctest --test-dir build/sdk-cand -C Release --output-on-failure --output-junit "$GITHUB_WORKSPACE/build/c04/ctest-junit.xml" 2>&1 | tee build/c04/ctest.log
+          code=${PIPESTATUS[0]}
+          echo "$code" > build/c04/ctest.exit
+          exit "$code"
+      - name: Install the candidate SDK
+        if: ${{ !cancelled() }}
+        run: cmake --install build/sdk-cand --config Release --prefix stage-cand
+      - name: Build the F5 consumer and the boundary test against each installed SDK
+        if: ${{ !cancelled() }}
+        run: |
+          set -eu
+          for v in base cand; do
+            cmake -S f5/tests/reader_real_corpus -B "build/consumer-$v" -DEXR_SDK="$GITHUB_WORKSPACE/stage-$v" -DCMAKE_BUILD_TYPE=Release
+            cmake --build "build/consumer-$v" --config Release --parallel 4
+            cmake -S tests/reader_next_c04 -B "build/boundary-$v" -DEXR_SDK="$GITHUB_WORKSPACE/stage-$v" -DCMAKE_BUILD_TYPE=Release
+            cmake --build "build/boundary-$v" --config Release --parallel 4
+          done
+      - name: Boundary checks through the public API (candidate must pass; unmodified result is kept)
+        if: ${{ !cancelled() }}
+        run: |
+          set +e
+          "build/boundary-base/${{ matrix.bin }}exreader-rtf-real-boundary${{ matrix.exe }}" > build/c04/boundary-base.out 2> build/c04/boundary-base.err
+          echo "$?" > build/c04/boundary-base.exit
+          "build/boundary-cand/${{ matrix.bin }}exreader-rtf-real-boundary${{ matrix.exe }}" > build/c04/boundary-cand.out 2> build/c04/boundary-cand.err
+          code=$?
+          echo "$code" > build/c04/boundary-cand.exit
+          cat build/c04/boundary-base.err build/c04/boundary-cand.err build/c04/boundary-cand.out
+          exit "$code"
+      - name: F5 real-document operations on the unmodified SDK (original failure is retained, not asserted away)
+        if: ${{ !cancelled() }}
+        run: |
+          ${{ matrix.python }} tests/reader_next_c04/run_c04.py run --f5 f5 --corpus build/c04/corpus --out build/c04/run-base --summary build/c04/summary-base.json --consumer "build/consumer-base/${{ matrix.bin }}exreader-real-corpus-consumer${{ matrix.exe }}" --font "${{ matrix.font }}" --label base --stage-name stage-base
+      - name: F5 real-document operations on the candidate SDK
+        if: ${{ !cancelled() }}
+        run: |
+          ${{ matrix.python }} tests/reader_next_c04/run_c04.py run --f5 f5 --corpus build/c04/corpus --out build/c04/run-cand --summary build/c04/summary-cand.json --consumer "build/consumer-cand/${{ matrix.bin }}exreader-real-corpus-consumer${{ matrix.exe }}" --font "${{ matrix.font }}" --label candidate --stage-name stage-cand
+      - name: Before/after comparison and program identity
+        if: always()
+        run: |
+          ${{ matrix.python }} tests/reader_next_c04/run_c04.py compare --base build/c04/summary-base.json --candidate build/c04/summary-cand.json --out build/c04/compare.json || true
+          find stage-base stage-cand build/consumer-base build/consumer-cand build/boundary-base build/boundary-cand -type f \( -name '*.a' -o -name '*.lib' -o -name '*.dll' -o -name '*.so*' -o -name 'exreader-real-corpus-consumer*' -o -name 'exreader-rtf-real-boundary*' \) -not -name '*.obj' -not -name '*.o' -exec sha256sum {} + > build/c04/program-hashes.txt || true
+          cat build/c04/program-hashes.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-next-c04-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c04/identity.txt
+            build/c04/scan.json
+            build/c04/compare.json
+            build/c04/summary-base.json
+            build/c04/summary-cand.json
+            build/c04/run-base/results/
+            build/c04/run-cand/results/
+            build/c04/corpus/downloads.json
+            build/c04/ctest.log
+            build/c04/ctest.exit
+            build/c04/ctest-junit.xml
+            build/c04/boundary-*.out
+            build/c04/boundary-*.err
+            build/c04/boundary-*.exit
+            build/c04/program-hashes.txt
+          retention-days: 30
+          if-no-files-found: warn
+
+  aggregate:
+    if: always()
+    needs: [guard, diagnose, acceptance]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-next-c04-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/artifacts
+      - name: Join both platforms; the result stays an unaccepted candidate
+        run: python3 tests/reader_next_c04/aggregate.py --dir build/artifacts --out build/c04/aggregate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-next-c04-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c04/aggregate.json
+          if-no-files-found: error

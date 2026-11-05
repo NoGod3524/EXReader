@@ -1,0 +1,30 @@
+name: Inspect pinned input iPad annotation failure
+on:
+  push:
+    branches: [codex/dot-apple-input-ipad-diagnose-20261031]
+    paths: ['tools/reader_composition/dot_apple_input_ipad_diagnose_20261031.py', '.github/workflows/dot-apple-input-ipad-diagnose-20261031.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact independent diagnostic-only scope
+        run: |
+          git diff --exit-code 3d7edd5258d5a9991bc0d3039f9e21126bd1c814 HEAD -- . ':!tools/reader_composition/dot_apple_input_ipad_diagnose_20261031.py' ':!.github/workflows/dot-apple-input-ipad-diagnose-20261031.yml' ':!docs/reader-total-progress/dot-apple-input-ipad-diagnose-20261031.md'
+          python3 -m py_compile tools/reader_composition/dot_apple_input_ipad_diagnose_20261031.py
+      - name: Authenticate one original failed iPad ZIP and print annotation activity timeline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/dot_apple_input_ipad_diagnose_20261031.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dot-apple-input-ipad-diagnose-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/dot-apple-input-ipad-diagnose/
+            !build/dot-apple-input-ipad-diagnose/**/extracted/**/*.xcresult/**
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,30 @@
+name: Inspect pinned query Apple failures
+on:
+  push:
+    branches: [codex/dot-apple-query-diagnose-20261030]
+    paths: ['tools/reader_composition/dot_apple_query_diagnose_20261030.py', '.github/workflows/dot-apple-query-diagnose-20261030.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact independent diagnostic-only scope
+        run: |
+          git diff --exit-code 8ec841fe5127b810ad37f14662de51650c0b51c2 HEAD -- . ':!tools/reader_composition/dot_apple_query_diagnose_20261030.py' ':!.github/workflows/dot-apple-query-diagnose-20261030.yml' ':!docs/reader-total-progress/dot-apple-query-diagnose-20261030.md'
+          python3 -m py_compile tools/reader_composition/dot_apple_query_diagnose_20261030.py
+      - name: Authenticate two original failed ZIPs and print annotation activity timeline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/dot_apple_query_diagnose_20261030.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dot-apple-query-diagnose-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/dot-apple-query-diagnose/
+            !build/dot-apple-query-diagnose/**/extracted/**/*.xcresult/**
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,29 @@
+name: GTK sync account evidence adapter
+on:
+  push:
+    branches: [codex/terra-wave-linux-sync]
+    paths: ['tools/reader_composition/gtk_sync_evidence.py', '.github/workflows/reader-gtk-sync-evidence.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original run and all 29 named checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: tools
+        run: |
+          set -o pipefail
+          mkdir -p build/gtk-sync-evidence
+          python3 tools/reader_composition/gtk_sync_evidence.py | tee build/gtk-sync-evidence/proof.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-sync-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/gtk-sync-evidence/
+          if-no-files-found: error

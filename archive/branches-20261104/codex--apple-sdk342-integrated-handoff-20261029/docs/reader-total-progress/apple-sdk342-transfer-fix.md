@@ -1,0 +1,7 @@
+# SDK 3.42 artifact admission repair
+
+Original run 40935524467 at 148a5b11f9e65e87520eddff98e5365e83e98c30 built both SDK installations successfully, then native admission failed before the original 39-case runner began. Independent inspection 40936609291 authenticated the original two SDK ZIP digests and counts: each SDK expected 444 files and contained 443; the sole missing file was examples/android/.gitignore. Each raw product stage retained all 135 files, and all transported file hashes matched. The SDK upload now explicitly includes hidden files. Expected file sets and hashes remain strict and complete.
+
+The native wrapper creates an empty evidence directory before input admission and records any early failure there. Immediately before invoking the unchanged original runner, it removes only that still-empty directory, because the original runner creates it with exist_ok=False. The original runner, 39 cases, 240/360-second budgets, shared checker and old-suite sources remain unchanged.
+
+This source also takes the exact FeaturesUITests helper blob 3aaa8003c61fd523b5286a9ea2c06f328e68f6a0 from 55ec49020383ef5073f47502b300ab0b5d0a7cae. Only helper behavior changed upstream; all five feature test function bodies remain unchanged. The separate SDK 3.41 run 40935165396 was still validating this helper when this source was prepared. This source must build its own SDKs and run its own 39-case suites. Original failed run and artifacts remain; no source identity is reassigned.

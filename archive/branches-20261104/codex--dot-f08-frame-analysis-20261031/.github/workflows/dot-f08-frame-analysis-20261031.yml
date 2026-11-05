@@ -1,0 +1,42 @@
+name: F08 pinned frame analysis
+on:
+  push:
+    branches: [codex/dot-f08-frame-analysis-20261031]
+    paths:
+      - tests/reader_f08_frame_analysis_20261031/**
+      - .github/workflows/dot-f08-frame-analysis-20261031.yml
+      - docs/reader-total-progress/DOT_F08_FRAME_ANALYSIS_20261031.md
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f08-frame-analysis-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  analyze:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact three additive paths and unchanged original validator
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          base='cfdaf6a4531548be63b4dd0c2bccd6b050a93124'
+          subprocess.run(['git','merge-base','--is-ancestor',base,'HEAD'],check=True)
+          actual=set(subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          assert actual=={'tests/reader_f08_frame_analysis_20261031/analyze.py','.github/workflows/dot-f08-frame-analysis-20261031.yml','docs/reader-total-progress/DOT_F08_FRAME_ANALYSIS_20261031.md'},actual
+          PY
+      - name: Analyze four authenticated original archives without product execution
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_frame_analysis_20261031/analyze.py
+      - name: Preserve original archives, actual numerical results and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f08-frame-analysis-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-analysis/
+          if-no-files-found: error

@@ -1,0 +1,179 @@
+{
+  "accepted": true,
+  "scope": "certified read-only copies plus independent shipped public SDK on API34 default x86_64 emulator only",
+  "source_sha": "d521585af1a540f082b6cf4de42203480795b83f",
+  "branch": "codex/reader-next-c08-root-review",
+  "review_start_final_claude_head": "dddd4fa81e5913cce2dddecc385d20978b3adc72",
+  "fixed_start": "e67d87cbeabb2457e0852f681ef0b27b2c0da4d8",
+  "run_id": 40232710223,
+  "attempt": 1,
+  "conclusion": "success",
+  "root_rounds_used": 2,
+  "root_round_limit": 3,
+  "jobs": [
+    {"id": 121287650091, "role": "static", "conclusion": "success"},
+    {"id": 121287879964, "role": "emulator", "conclusion": "success"},
+    {"id": 121288570030, "role": "strict summary", "conclusion": "success"}
+  ],
+  "artifacts": [
+    {
+      "id": 12613427587,
+      "name": "reader-next-c08-static-40232710223-1",
+      "size_in_bytes": 10747,
+      "digest": "sha256:f9207a6cd161eabcce8523e63711fc6f1d3504063a0474dc474f9193e3401619",
+      "expires_at": "2027-01-23T20:51:14Z"
+    },
+    {
+      "id": 12613129814,
+      "name": "reader-next-c08-emulator-40232710223-1",
+      "size_in_bytes": 24837875,
+      "digest": "sha256:10950a879785cf846696e8833fd65eda5ef24acb696d33d6c38b8ffd6935c389",
+      "expires_at": "2027-01-23T20:51:14Z"
+    },
+    {
+      "id": 12613777459,
+      "name": "reader-next-c08-summary-40232710223-1",
+      "size_in_bytes": 3281,
+      "digest": "sha256:65297851644a6628dc5c9e23166fd97ba6b1fda161476e73638d93f7446d34be",
+      "expires_at": "2027-01-23T20:51:14Z"
+    }
+  ],
+  "strict_summary": {
+    "accepted": true,
+    "problems": [],
+    "current_original_zips_downloaded_and_authenticated_in_actions": true,
+    "api_source_headers_and_sdk_object_authenticated": true,
+    "all_three_actual_api_stages_independently_rejudged": true,
+    "all_target_and_copy_snapshots_unchanged": true
+  },
+  "emulator_checks": {"total": 34, "passed": 33, "mandatory_total": 32, "mandatory_failed": []},
+  "original_apk": {
+    "producer_source": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+    "producer_run_id": 40207467982,
+    "attempt": 1,
+    "producer_job_id": 121211376063,
+    "artifact_id": 12604412854,
+    "artifact_size_in_bytes": 113970957,
+    "artifact_digest": "sha256:c3db2ad1a2e31bc53d01620f2ef90e02a976e3b4f90ac76ed2e179c7c9052805",
+    "member": "apks/host-debug.apk",
+    "apk_bytes": 29721554,
+    "apk_sha256": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3",
+    "installed_base_apk_bytes_equal": true,
+    "repackaged": false,
+    "resigned": false,
+    "classes_or_preferences_injected": false,
+    "target_access_control_changed": false
+  },
+  "sdk_and_consumer": {
+    "sdk_stage_artifact_id": 12604537792,
+    "sdk_stage_artifact_bytes": 133598571,
+    "sdk_stage_artifact_digest": "sha256:9ea2858145313296d39792d867794db1be687eb70dec38f155dcd1dfe156bf06",
+    "sdk_version": "3.41.0",
+    "abi_version": 1,
+    "public_headers_origin": "authenticated producer SDK staging tree",
+    "public_headers_compared_to_producer_source": 14,
+    "library_h_sha256": "b131f24db63b71385a74c5b5a9713cad7b39d6ab321191364da3cc312a130f95",
+    "c_api_source_sha256": "2181d7546cb5d00601d2f2ec945140a4619061eb16b5ccb5e3bdcaf588a89c59",
+    "consumer_program_bytes": 16176,
+    "consumer_program_sha256": "e7eb47f71bada77a5f2fbee281c3468a6bb400983c10c9d99f19933af44a3d7d",
+    "actual_executable": "/data/local/tmp/c08/c08_consumer",
+    "uid": 2000,
+    "euid": 2000,
+    "selinux": "u:r:shell:s0",
+    "stage_pids": [2900, 3034, 3208],
+    "loaded_sdk_object": "/data/app/~~_SeTfrGs6wv7iJ9n3nCUeA==/org.exreader.host-UV8KRcWRXKcWRhhtrTlpRw==/base.apk!/lib/x86_64/libexreader.so",
+    "all_16_resolved_public_symbols_belong_to_loaded_sdk_object": true,
+    "installed_apk_sdk_member_sha256": "a345ab4c1def2e864a76b9e879da8a372e8821ad09b7991c8fe4e04626b2e8ac"
+  },
+  "actual_public_api_values_identical_in_all_three_stages": {
+    "stages": ["1-after-first-close", "2-after-fresh-reopen", "3-after-offline-reopen"],
+    "required_call_statuses": {
+      "exr_library_open": 0,
+      "exr_library_books": 0,
+      "exr_library_source": 0,
+      "exr_library_progress_get": 0,
+      "exr_library_notes": 0
+    },
+    "book": {"count": 1, "id": 1, "format": 1, "title": "c08-original", "author": "", "tags": "", "favorite": 0, "status": 0, "position": 1482},
+    "source": {
+      "status": 0,
+      "bytes": 10635,
+      "read": 10635,
+      "sha256": "fe0e65a92ff83503015b42253a17ac643e4894058a062bb532ba61aaf5bf583b",
+      "read_at": [{"offset": 0, "requested": 10635, "returned": 10635}]
+    },
+    "progress": {
+      "status": 0,
+      "state": 1,
+      "start": 1482,
+      "end": 1482,
+      "exact_present": true,
+      "exact": "",
+      "prefix": " and paragraph layout. 中文排版与分页。\n",
+      "suffix": "This sentence verifies search, b",
+      "chapter_present": false
+    },
+    "notes": {"status": 0, "count": 1, "rows": [{"id": 1, "start": 1666, "end": 1691, "text": "c08note"}]}
+  },
+  "ui_progress_relationship": {
+    "initial_pages": [1, 2, 3],
+    "fresh_reopen_page": 3,
+    "offline_reopen_page": 3,
+    "same_ui_and_public_api_book_id": 1,
+    "public_api_page_number": null,
+    "public_api_offset": 1482,
+    "actual_values_stable_across_three_separate_cold_reads": true,
+    "independent_exact_page3_resolution_accepted": false,
+    "explanation": "Public progress_get returns normalized-text offsets/selectors, not a page number. UI p3 and equal actual public offsets are independently recorded and joined by book ID; positive offset alone is not exact page-3 navigation."
+  },
+  "required_real_ui_note": {"created": true, "counter_observed": "NOTES (1)", "public_text": "c08note", "empty_expectation_fallback": false},
+  "readonly_observation": {
+    "target_file_count_each_stage": 5,
+    "target_content_size_mtime_unchanged_during_each_consumer_phase": true,
+    "copy_full_file_inventory_metadata_and_hashes_unchanged_each_stage": true,
+    "copy_file": "library.db",
+    "copy_bytes": 77824,
+    "copy_sha256": "435a4eca6e509c0d8d1f1cb38f175f977a371bd1c4bd50e31855de0cc2680f01",
+    "copy_bytes_authenticated_against_target_snapshot": true,
+    "private_sdk_sql_queried": false,
+    "only_test_owned_copy_made_readonly": true
+  },
+  "offline": {"airplane_mode_on": 1, "wifi_on": 0, "mobile_data": 0, "ping_exit": 2},
+  "same_uid_gap": {
+    "accepted": false,
+    "status": "pending: execution denied",
+    "stages": 3,
+    "variants_per_stage": ["apk-direct-map", "extracted-copy"],
+    "attempts_total": 6,
+    "actual_adb_exit": 0,
+    "actual_stdout": "run-as: exec failed for /data/local/tmp/c08/c08_consumer: Permission denied\n",
+    "api_json_report_present": false,
+    "adb_zero_exit_not_treated_as_execution_success": true,
+    "all_refusal_contexts_retained_in_strict_summary": true,
+    "target_uid_permissions_and_selinux_context_record": "emulator-report.json observed.identities",
+    "elevation_permission_changes_resigning_or_injection_attempted": false
+  },
+  "previous_failed_runs": [
+    {"run_id": 40227150857, "attempt": 1, "source_sha": "26a54232fee19bcd9561d70450a6af5f41b037c8", "conclusion": "failure", "reason": "Incorrect APK member path prefix; no emulator execution."},
+    {"run_id": 40227267225, "attempt": 1, "source_sha": "6fef79931b2cc8c1bbf98d27ce74d71628e0e8b4", "conclusion": "failure", "reason": "Probe tapped the import status label rather than the actual shelf row."},
+    {"run_id": 40227848141, "attempt": 1, "source_sha": "5c53e1da591a315799078aac555425775570774f", "conclusion": "failure", "reason": "Case-sensitive Notes (1) check missed real NOTES (1), replaced expected notes with empty list; fresh/offline API reads did not execute."}
+  ],
+  "previous_cancelled_run": {"run_id": 40227112046, "attempt": 1, "source_sha": "be0fd3db5917fa9583d4e98543ea453ad0d91ad7", "conclusion": "cancelled", "reason": "Original agent cancelled for script line endings."},
+  "superseded_successful_root_round": {
+    "run_id": 40232266125,
+    "attempt": 1,
+    "source_sha": "9ad9a768c90ba3d57956335951c6497d8a4e4aec",
+    "conclusion": "success",
+    "artifact_ids": [12613606905, 12613453620, 12613736976],
+    "reason_for_second_full_round": "SameUID route was correctly refused, but pending detail serialization filtered only nonzero adb exit and omitted zero-exit Permission denied context. Scope flags were always false."
+  },
+  "original_claude_worktree_untouched": true,
+  "upstream_reported_local_artifact_download_violation": true,
+  "root_local_execution": {"syntax": false, "builds": false, "tests": false, "emulator": false, "artifact_download_or_parsing": false},
+  "same_uid_execution_accepted": false,
+  "physical_device_execution": false,
+  "signing_or_store_distribution_accepted": false,
+  "performance_accepted": false,
+  "complete_product": false,
+  "unverified": ["SameUID consumer execution", "Independent exact offset-to-page-3 resolution", "Product reader-catalog.db private API", "Physical devices, signing/store distribution and performance"]
+}

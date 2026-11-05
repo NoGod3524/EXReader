@@ -1,0 +1,18 @@
+{
+  "package": "D04",
+  "tested_harness_sha": "0b5e29fa3458327828e1803258a93f88a866aaca",
+  "run_id": "40219612607",
+  "attempt": "1",
+  "accepted": false,
+  "audit_completed": false,
+  "default_ui_accepted": false,
+  "ax_semantics_accepted": false,
+  "dynamic_type_accepted": false,
+  "voiceover_accepted": false,
+  "physical_device_execution": false,
+  "complete_product": false,
+  "detail": "../reader-final-d04/validation.json",
+  "artifact_authentication": true,
+  "verifier_job_id": 121256918613,
+  "failed_rounds": 3
+}

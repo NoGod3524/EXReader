@@ -1,0 +1,1449 @@
+{
+  "harness_sha": "9eb9f65ba258f3e00f6e67f9d090dbce8a879029",
+  "run_id": "40225647982",
+  "attempt": "1",
+  "artifacts": [
+    {
+      "id": 12610927746,
+      "name": "d11-source-40225647982-1",
+      "size_in_bytes": 140689,
+      "digest": "sha256:960ce72f01ec93a0efe2131ab392f92d3c2c4ee998a33be9dc1660926c1219fd",
+      "expires_at": "2027-01-23T19:21:30Z"
+    },
+    {
+      "id": 12611033116,
+      "name": "d11-windows-40225647982-1",
+      "size_in_bytes": 18687402,
+      "digest": "sha256:2e7e7b8f386aa32220f5f1593f4e44771cbad6cb8a440c2b9630fc05c4bc1132",
+      "expires_at": "2027-01-23T19:21:30Z"
+    },
+    {
+      "id": 12610414399,
+      "name": "d11-gtk-40225647982-1",
+      "size_in_bytes": 36897927,
+      "digest": "sha256:a7cf16dffa7ed346c3ea69017c39b0f32a4535f9dd29697b3fcf7f7249d18ead",
+      "expires_at": "2027-01-23T19:21:30Z"
+    },
+    {
+      "id": 12610649310,
+      "name": "d11-android-40225647982-1",
+      "size_in_bytes": 20091651,
+      "digest": "sha256:c98b4262c2befad3dab187c56ab0be8639670474c097e7c7ef3a9799bdd973d3",
+      "expires_at": "2027-01-23T19:21:30Z"
+    },
+    {
+      "id": 12611098543,
+      "name": "d11-macos-40225647982-1",
+      "size_in_bytes": 140498126,
+      "digest": "sha256:b9062b3090e75a74754c59705bf52225bf53da3d4e31a2d88860f648f3231cca",
+      "expires_at": "2027-01-23T19:21:30Z"
+    },
+    {
+      "id": 12611084733,
+      "name": "d11-iphone-40225647982-1",
+      "size_in_bytes": 42744948,
+      "digest": "sha256:8dcb44106533ec5bc4aa20957933d1aa7bc1dc91f4d890aecc5057fb075b579b",
+      "expires_at": "2027-01-23T19:21:30Z"
+    },
+    {
+      "id": 12611414014,
+      "name": "d11-ipad-40225647982-1",
+      "size_in_bytes": 43171013,
+      "digest": "sha256:e20dd411aac5ee1a3f2a1a1a09f21e4899ff76ea3f1bde03399cff421f5c197c",
+      "expires_at": "2027-01-23T19:21:30Z"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 121266308892,
+      "name": "guard",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121266392000,
+      "name": "native (ipad, macos-15, 5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121266392038,
+      "name": "native (macos, macos-15, 15dab6b2270dc296ed6239db67ced2e22d255e65)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 121266392051,
+      "name": "native (gtk, ubuntu-22.04, 803098e9df1a365a9b8e206805c2d179aca8501f)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121266392118,
+      "name": "native (iphone, macos-15, 5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121266392131,
+      "name": "native (windows, windows-2022, 9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 121266392144,
+      "name": "native (android, ubuntu-latest, 4a04a9cc74dde67f755c87e87b278d63a254a3ac)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 121271132989,
+      "name": "verify",
+      "status": "in_progress",
+      "conclusion": null
+    }
+  ],
+  "errors": [
+    "windows: native execution failed",
+    "gtk: AssertionError: ",
+    "android: native execution failed",
+    "macos: native execution failed"
+  ],
+  "accepted": false,
+  "scope_refusal": "missing or extra target",
+  "negative_controls": [
+    {
+      "name": "missing-target",
+      "rejected": true
+    },
+    {
+      "name": "source-declaration-only",
+      "rejected": true
+    },
+    {
+      "name": "touch-as-keyboard",
+      "rejected": true
+    },
+    {
+      "name": "main-window-focus-as-modal",
+      "rejected": true
+    },
+    {
+      "name": "duplicate-action",
+      "rejected": true
+    },
+    {
+      "name": "wrong-program",
+      "rejected": true
+    },
+    {
+      "name": "partial-report",
+      "rejected": true
+    },
+    {
+      "name": "failed-action",
+      "rejected": true
+    },
+    {
+      "name": "invisible-focus",
+      "rejected": true
+    },
+    {
+      "name": "wrong-source",
+      "rejected": true
+    }
+  ],
+  "platforms": {
+    "windows": {
+      "target_sha": "9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08",
+      "programs": {
+        "actual": {
+          "path": "windows-build/programs/EXReaderProduct.exe",
+          "sha256": "8afd251eba9f4f669a83b704eed9ccd77ada0f746bac25f0f8e374a89298e394",
+          "bytes": 7820800
+        }
+      },
+      "accepted": false,
+      "actions": [
+        {
+          "action": "back",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "resume",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "import",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "cancel",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "next",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "previous",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "search",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "directory",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "records",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "settings",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "close.search",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "close.directory",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "close.records",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "close.settings",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "disabled_noop",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "continue_after_return",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "no_unexpected_revision",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        }
+      ]
+    },
+    "android": {
+      "target_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+      "programs": {
+        "host": {
+          "path": "/home/runner/work/EXReader/EXReader/build/d11/android-producer/examples/android/app/build/outputs/apk/debug/app-debug.apk",
+          "sha256": "a4627d562df9c2436a9f91f1371112de5ad6801e4f43544546c412195e1d0c74"
+        },
+        "installed": {
+          "path": "/data/app/~~lN3dXD4Hf0xvdmFLboKhDA==/org.exreader.host-7Ec1FZ1p7XHPFUFlxn7MdQ==/base.apk",
+          "sha256": "a4627d562df9c2436a9f91f1371112de5ad6801e4f43544546c412195e1d0c74"
+        }
+      },
+      "accepted": false,
+      "actions": [
+        {
+          "action": "back",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "resume",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "import",
+          "exposed": true,
+          "enabled": true,
+          "executed": true,
+          "result": "passed",
+          "input": "emulator adb touch/key; not external keyboard",
+          "focus": [],
+          "raw": {}
+        },
+        {
+          "action": "cancel",
+          "exposed": true,
+          "enabled": true,
+          "executed": true,
+          "result": "passed",
+          "input": "emulator adb touch/key; not external keyboard",
+          "focus": [],
+          "raw": {}
+        },
+        {
+          "action": "next",
+          "exposed": true,
+          "enabled": true,
+          "executed": true,
+          "result": "passed",
+          "input": "emulator adb touch/key; not external keyboard",
+          "focus": [],
+          "raw": {
+            "before": "p.1 · 2.0 MiB · 93 ms",
+            "after": "p.2 · 2.0 MiB · 79 ms"
+          }
+        },
+        {
+          "action": "previous",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "search",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "directory",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "records",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "settings",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "close.search",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "close.directory",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "close.records",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "close.settings",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "disabled_noop",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "no disabled reading control observed on empty shelf; do not force product state"
+        },
+        {
+          "action": "continue_after_return",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "no_unexpected_revision",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        }
+      ],
+      "producer": {
+        "id": 12604537792,
+        "node_id": "MDg6QXJ0aWZhY3QxMjYwNDUzNzc5Mg==",
+        "name": "reader-android-page-theme-40207467982-1",
+        "size_in_bytes": 133598571,
+        "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12604537792",
+        "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12604537792/zip",
+        "expired": false,
+        "digest": "sha256:9ea2858145313296d39792d867794db1be687eb70dec38f155dcd1dfe156bf06",
+        "created_at": "2026-10-25T15:54:58Z",
+        "updated_at": "2026-10-25T15:54:58Z",
+        "expires_at": "2027-01-23T15:33:00Z",
+        "workflow_run": {
+          "id": 40207467982,
+          "repository_id": 1421442522,
+          "head_repository_id": 1421442522,
+          "head_branch": "codex/reader-android-raw3-candidate",
+          "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac"
+        },
+        "producer_attempt": 1,
+        "producer_jobs": [
+          {
+            "id": 121211375764,
+            "name": "protocol",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 121211376063,
+            "name": "android",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 121216568574,
+            "name": "summary",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ],
+        "zip_sha256": "9ea2858145313296d39792d867794db1be687eb70dec38f155dcd1dfe156bf06",
+        "authenticated_in_run": "40225647982",
+        "harness_sha": "9eb9f65ba258f3e00f6e67f9d090dbce8a879029",
+        "scope": "old producer bytes, not new execution"
+      }
+    },
+    "macos": {
+      "target_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+      "programs": {
+        "Build/Products/Debug/EXReaderHost.app/Contents/MacOS/EXReaderHost": {
+          "sha256": "c7b04981cb7d18330e43af15774e7e3846147f8e13fa6d959f55646130527602",
+          "bytes": 6938416
+        }
+      },
+      "accepted": false,
+      "actions": [
+        {
+          "action": "back",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.back",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "resume",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "library.book.0",
+          "result": "passed",
+          "value": "reopen; dedicated Continue missing"
+        },
+        {
+          "action": "import",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "library.import.epub",
+          "result": "passed",
+          "value": "authored fixture via native entry"
+        },
+        {
+          "action": "cancel",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "next",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.next",
+          "result": "passed",
+          "value": "第 1 章 · 第 2 页"
+        },
+        {
+          "action": "previous",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.previous",
+          "result": "passed",
+          "value": "第 1 章 · 第 1 页"
+        },
+        {
+          "action": "search",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "search.query",
+          "result": "passed",
+          "value": "没有匹配结果"
+        },
+        {
+          "action": "directory",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.navigation",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "records",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.records",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "settings",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.theme",
+          "result": "passed",
+          "value": "page theme only; not full F3 preferences"
+        },
+        {
+          "action": "close.search",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "search.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "close.directory",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "navigation.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "close.records",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reading.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "close.settings",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "theme.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "disabled_noop",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "continue_after_return",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.next",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "no_unexpected_revision",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        }
+      ],
+      "test_cases": [
+        {
+          "name": "testPickerCancel()",
+          "result": "Failed",
+          "duration": "16s",
+          "steps": [],
+          "step_count": 0
+        },
+        {
+          "name": "testReadingActions()",
+          "result": "Passed",
+          "duration": "46s",
+          "steps": [],
+          "step_count": 0
+        }
+      ],
+      "configuration": {
+        "test_source_directory": "/Users/runner/work/EXReader/EXReader/build/d11/macos-tests/accessibility/ui",
+        "generated_project_sha256": "df89959e3bf3c41bf0761d8133439d7003f22089b6b40085aaf456ffe5bf78e2",
+        "review_macros_present": false,
+        "page_theme_enabled": true,
+        "signing_allowed": false
+      },
+      "producer": {
+        "id": 12603310238,
+        "node_id": "MDg6QXJ0aWZhY3QxMjYwMzMxMDIzOA==",
+        "name": "raw3-ios-sdk-macos-40203714083-1",
+        "size_in_bytes": 21887403,
+        "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12603310238",
+        "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12603310238/zip",
+        "expired": false,
+        "digest": "sha256:9d454bb6a9ba9d354562dc5316059b1857277b45ffbf69b74a576fe040dc2150",
+        "created_at": "2026-10-25T14:48:29Z",
+        "updated_at": "2026-10-25T14:48:29Z",
+        "expires_at": "2027-01-23T14:45:16Z",
+        "workflow_run": {
+          "id": 40203714083,
+          "repository_id": 1421442522,
+          "head_repository_id": 1421442522,
+          "head_branch": "codex/reader-apple-raw3-ios",
+          "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5"
+        },
+        "producer_attempt": 1,
+        "producer_jobs": [
+          {
+            "id": 121200082586,
+            "name": "Installed SDK and exact raw products macos",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 121200082795,
+            "name": "Installed SDK and exact raw products iphonesimulator",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 121200931637,
+            "name": "Actual raw iOS UI iphone",
+            "status": "completed",
+            "conclusion": "failure"
+          },
+          {
+            "id": 121200931638,
+            "name": "Actual raw iOS UI ipad",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 121207225700,
+            "name": "summary",
+            "status": "completed",
+            "conclusion": "failure"
+          }
+        ],
+        "zip_sha256": "9d454bb6a9ba9d354562dc5316059b1857277b45ffbf69b74a576fe040dc2150",
+        "authenticated_in_run": "40225647982",
+        "harness_sha": "9eb9f65ba258f3e00f6e67f9d090dbce8a879029",
+        "scope": "old producer bytes, not new execution"
+      }
+    },
+    "iphone": {
+      "target_sha": "5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a",
+      "programs": {
+        "Build/Products/Debug-iphonesimulator/EXReaderHost.app/EXReaderHost": {
+          "sha256": "a42b293beb428a25a4cb640a8daf944972306be6434f9e3e8164f9bd355d6203",
+          "bytes": 6973664
+        }
+      },
+      "accepted": true,
+      "actions": [
+        {
+          "action": "back",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.back",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "resume",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "library.book.0",
+          "result": "passed",
+          "value": "reopen; dedicated Continue missing"
+        },
+        {
+          "action": "import",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "library.import.epub",
+          "result": "passed",
+          "value": "authored fixture via native entry"
+        },
+        {
+          "action": "cancel",
+          "case": "-[ActionFocusTests testPickerCancel]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "library.import.picker",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "next",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.next",
+          "result": "passed",
+          "value": "第 1 章 · 第 2 页"
+        },
+        {
+          "action": "previous",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.previous",
+          "result": "passed",
+          "value": "第 1 章 · 第 1 页"
+        },
+        {
+          "action": "search",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "search.query",
+          "result": "passed",
+          "value": "没有匹配结果"
+        },
+        {
+          "action": "directory",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.navigation",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "records",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.records",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "settings",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.theme",
+          "result": "passed",
+          "value": "page theme only; not full F3 preferences"
+        },
+        {
+          "action": "close.search",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "search.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "close.directory",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "navigation.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "close.records",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reading.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "close.settings",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "theme.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "disabled_noop",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "continue_after_return",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.next",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "no_unexpected_revision",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        }
+      ],
+      "test_cases": [
+        {
+          "name": "testPickerCancel()",
+          "result": "Passed",
+          "duration": "31s",
+          "steps": [],
+          "step_count": 0
+        },
+        {
+          "name": "testReadingActions()",
+          "result": "Passed",
+          "duration": "1m 23s",
+          "steps": [],
+          "step_count": 0
+        }
+      ],
+      "configuration": {
+        "test_source_directory": "/Users/runner/work/EXReader/EXReader/build/d11/iphone-tests/accessibility/ui",
+        "generated_project_sha256": "fe0fef6e5f2efd616b7a7a7d0cae4e0de86ffdf2c8ed047bb934222aa0dfef1e",
+        "review_macros_present": false,
+        "page_theme_enabled": true,
+        "signing_allowed": false
+      },
+      "producer": {
+        "id": 12603156296,
+        "node_id": "MDg6QXJ0aWZhY3QxMjYwMzE1NjI5Ng==",
+        "name": "raw3-ios-sdk-iphonesimulator-40203714083-1",
+        "size_in_bytes": 21891156,
+        "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12603156296",
+        "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12603156296/zip",
+        "expired": false,
+        "digest": "sha256:538d6c2888505d6398e1ce7294f8178de0008d0ddee119d969025cb278845cc1",
+        "created_at": "2026-10-25T14:48:52Z",
+        "updated_at": "2026-10-25T14:48:52Z",
+        "expires_at": "2027-01-23T14:45:16Z",
+        "workflow_run": {
+          "id": 40203714083,
+          "repository_id": 1421442522,
+          "head_repository_id": 1421442522,
+          "head_branch": "codex/reader-apple-raw3-ios",
+          "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5"
+        },
+        "producer_attempt": 1,
+        "producer_jobs": [
+          {
+            "id": 121200082586,
+            "name": "Installed SDK and exact raw products macos",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 121200082795,
+            "name": "Installed SDK and exact raw products iphonesimulator",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 121200931637,
+            "name": "Actual raw iOS UI iphone",
+            "status": "completed",
+            "conclusion": "failure"
+          },
+          {
+            "id": 121200931638,
+            "name": "Actual raw iOS UI ipad",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 121207225700,
+            "name": "summary",
+            "status": "completed",
+            "conclusion": "failure"
+          }
+        ],
+        "zip_sha256": "538d6c2888505d6398e1ce7294f8178de0008d0ddee119d969025cb278845cc1",
+        "authenticated_in_run": "40225647982",
+        "harness_sha": "9eb9f65ba258f3e00f6e67f9d090dbce8a879029",
+        "scope": "old producer bytes, not new execution"
+      }
+    },
+    "ipad": {
+      "target_sha": "5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a",
+      "programs": {
+        "Build/Products/Debug-iphonesimulator/EXReaderHost.app/EXReaderHost": {
+          "sha256": "e9af0446b1fe9fa03e9a820faa3c9fc6ac2040f9b7421a61519e7642b705782c",
+          "bytes": 6973616
+        }
+      },
+      "accepted": true,
+      "actions": [
+        {
+          "action": "back",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.back",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "resume",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "library.book.0",
+          "result": "passed",
+          "value": "reopen; dedicated Continue missing"
+        },
+        {
+          "action": "import",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "library.import.epub",
+          "result": "passed",
+          "value": "authored fixture via native entry"
+        },
+        {
+          "action": "cancel",
+          "case": "-[ActionFocusTests testPickerCancel]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "library.import.picker",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "next",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.next",
+          "result": "passed",
+          "value": "第 1 章 · 第 2 页"
+        },
+        {
+          "action": "previous",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.previous",
+          "result": "passed",
+          "value": "第 1 章 · 第 1 页"
+        },
+        {
+          "action": "search",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "search.query",
+          "result": "passed",
+          "value": "没有匹配结果"
+        },
+        {
+          "action": "directory",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.navigation",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "records",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.records",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "settings",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.theme",
+          "result": "passed",
+          "value": "page theme only; not full F3 preferences"
+        },
+        {
+          "action": "close.search",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "search.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "close.directory",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "navigation.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "close.records",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reading.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "close.settings",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "theme.close",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "disabled_noop",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        },
+        {
+          "action": "continue_after_return",
+          "case": "-[ActionFocusTests testReadingActions]",
+          "enabled": true,
+          "executed": true,
+          "exposed": true,
+          "focus": "unverified",
+          "input": "native-pointer",
+          "native_id": "reader.next",
+          "result": "passed",
+          "value": ""
+        },
+        {
+          "action": "no_unexpected_revision",
+          "exposed": null,
+          "enabled": null,
+          "executed": false,
+          "result": "pending",
+          "input": null,
+          "focus": null,
+          "reason": "not reached"
+        }
+      ],
+      "test_cases": [
+        {
+          "name": "testPickerCancel()",
+          "result": "Passed",
+          "duration": "41s",
+          "steps": [],
+          "step_count": 0
+        },
+        {
+          "name": "testReadingActions()",
+          "result": "Passed",
+          "duration": "2m 9s",
+          "steps": [],
+          "step_count": 0
+        }
+      ],
+      "configuration": {
+        "test_source_directory": "/Users/runner/work/EXReader/EXReader/build/d11/ipad-tests/accessibility/ui",
+        "generated_project_sha256": "16a802c37301e35d316128b983e0f317c242e5405480b4b6229f3d896dac0e36",
+        "review_macros_present": false,
+        "page_theme_enabled": true,
+        "signing_allowed": false
+      },
+      "producer": {
+        "id": 12603156296,
+        "node_id": "MDg6QXJ0aWZhY3QxMjYwMzE1NjI5Ng==",
+        "name": "raw3-ios-sdk-iphonesimulator-40203714083-1",
+        "size_in_bytes": 21891156,
+        "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12603156296",
+        "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12603156296/zip",
+        "expired": false,
+        "digest": "sha256:538d6c2888505d6398e1ce7294f8178de0008d0ddee119d969025cb278845cc1",
+        "created_at": "2026-10-25T14:48:52Z",
+        "updated_at": "2026-10-25T14:48:52Z",
+        "expires_at": "2027-01-23T14:45:16Z",
+        "workflow_run": {
+          "id": 40203714083,
+          "repository_id": 1421442522,
+          "head_repository_id": 1421442522,
+          "head_branch": "codex/reader-apple-raw3-ios",
+          "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5"
+        },
+        "producer_attempt": 1,
+        "producer_jobs": [
+          {
+            "id": 121200082586,
+            "name": "Installed SDK and exact raw products macos",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 121200082795,
+            "name": "Installed SDK and exact raw products iphonesimulator",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 121200931637,
+            "name": "Actual raw iOS UI iphone",
+            "status": "completed",
+            "conclusion": "failure"
+          },
+          {
+            "id": 121200931638,
+            "name": "Actual raw iOS UI ipad",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 121207225700,
+            "name": "summary",
+            "status": "completed",
+            "conclusion": "failure"
+          }
+        ],
+        "zip_sha256": "538d6c2888505d6398e1ce7294f8178de0008d0ddee119d969025cb278845cc1",
+        "authenticated_in_run": "40225647982",
+        "harness_sha": "9eb9f65ba258f3e00f6e67f9d090dbce8a879029",
+        "scope": "old producer bytes, not new execution"
+      }
+    }
+  }
+}

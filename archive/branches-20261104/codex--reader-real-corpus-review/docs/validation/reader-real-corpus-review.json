@@ -1,0 +1,129 @@
+{
+  "accepted": false,
+  "review_completed": true,
+  "branch": "codex/reader-real-corpus-review",
+  "tested_source": "80946aa4e16ef708c47d01252cb6c129d5d3af25",
+  "run_id": 40070449808,
+  "attempt": 1,
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_source_changed": false,
+  "sdk_profile": "reading-library",
+  "sdk_version": "3.40.0",
+  "prior_delivery": {
+    "source": "278d63691a4c73e7aa932d71a40a5938c5427514",
+    "run_id": 40067425188,
+    "document_head": "e9751245805cc83efcc555e0e55a6a9b560bc7b4",
+    "counts": {
+      "Linux": 14,
+      "Windows": 12
+    },
+    "start": "cdfe48231853d6e70fba2c41b42bdd187155901a"
+  },
+  "counts": {
+    "real_files": 18,
+    "formats": 9,
+    "Linux": {
+      "passed": 14,
+      "failed": 4
+    },
+    "Windows": {
+      "passed": 14,
+      "failed": 4
+    },
+    "both_platforms_passed": 14,
+    "protocol": 20,
+    "boundary_per_platform": 3,
+    "legacy_1710_credit": 0
+  },
+  "fixed": {
+    "id": "windows-command-query-encoding",
+    "original_queries_differed_from_manifest": true,
+    "diagnostic_only": true,
+    "diagnostic_accepted": false,
+    "diagnostic_artifact": 12550634589,
+    "consumer_fix": "wmain UTF-16 to explicit CP_UTF8; exact query equality required before accepting search evidence",
+    "sdk_find_implementation_changed": false
+  },
+  "remaining": [
+    {
+      "format": "RTF",
+      "files": 2,
+      "outcome": "EXR_FORMAT; original Word/WordPad streams retained",
+      "next": "separate compatibility investigation under the SDK freeze process"
+    },
+    {
+      "format": "CBZ",
+      "files": 2,
+      "outcome": "leading-slash archive member names refused by existing path policy",
+      "next": "separate read-only archive policy review; no path validation relaxation in this package"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 120802545944,
+      "name": "prepare",
+      "conclusion": "success"
+    },
+    {
+      "id": 120802596189,
+      "name": "protocol",
+      "conclusion": "success"
+    },
+    {
+      "id": 120802597462,
+      "name": "pin",
+      "conclusion": "skipped"
+    },
+    {
+      "id": 120802640640,
+      "name": "acceptance (windows-latest, python, C:/Windows/Fonts/arial.ttf, build/reader-consumer/Release/exr...",
+      "conclusion": "failure"
+    },
+    {
+      "id": 120802640676,
+      "name": "acceptance (ubuntu-22.04, python3, /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf, build/reader-...",
+      "conclusion": "failure"
+    },
+    {
+      "id": 120803520635,
+      "name": "aggregate",
+      "conclusion": "failure"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12551092323,
+      "name": "reader-real-corpus-windows-latest",
+      "size_in_bytes": 18870879,
+      "digest": "sha256:53922a9d5c428f65a3e6189bf2efa7f6be9063f82e9f4d4a0d037fd41fb3d739",
+      "expires_at": "2026-11-23T06:34:57Z",
+      "expired": false
+    },
+    {
+      "id": 12550694337,
+      "name": "reader-real-corpus-ubuntu-22.04",
+      "size_in_bytes": 18871086,
+      "digest": "sha256:6c50edc860892eac4dab00b76f5dbe0881e52a7e55b5d55a5debf3ae69b0b4f8",
+      "expires_at": "2026-11-23T06:33:28Z",
+      "expired": false
+    },
+    {
+      "id": 12550659987,
+      "name": "reader-real-corpus-aggregate",
+      "size_in_bytes": 701,
+      "digest": "sha256:5a0b78c97f6a2b93e1b1d3ada924ffd0a7c58896f4ebaa25c3e3d683c0640d9d",
+      "expires_at": "2026-11-23T06:35:09Z",
+      "expired": false
+    },
+    {
+      "id": 12550634589,
+      "name": "reader-corpus-original-query-diagnostic-40070449808-1",
+      "size_in_bytes": 602,
+      "digest": "sha256:4d9edf72237a47f56399475e820b944025ae8e450168481f354c7e7b6b2bef4b",
+      "expires_at": "2027-01-22T06:30:08Z",
+      "expired": false
+    }
+  ],
+  "complete_product": false,
+  "performance_accepted": false
+}

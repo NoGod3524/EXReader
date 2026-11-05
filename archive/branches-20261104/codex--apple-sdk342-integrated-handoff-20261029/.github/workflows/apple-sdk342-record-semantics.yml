@@ -1,0 +1,42 @@
+name: Apple SDK 3.42 old record semantic proof
+on:
+  push:
+    branches: [codex/apple-sdk342-old-records-20261028]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  semantic:
+    name: Apple old-record test-only semantic proof
+    runs-on: macos-15
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Retain original 19 checks and test actual old owner records with test-only admission
+        run: python3 tests/apple_sdk342_records/semantic.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-sdk342-record-semantics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-sdk342-records/evidence/
+          if-no-files-found: error
+          retention-days: 30
+  authenticate:
+    needs: semantic
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original evidence ZIP and scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_sdk342_records/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-sdk342-record-semantics-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-sdk342-record-summary/summary.json
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,3752 @@
+[
+  {
+    "archive": "reader_font_library",
+    "member": "library.cpp.obj",
+    "line": 107
+  },
+  {
+    "archive": "reader_sync",
+    "member": "sync.cpp.obj",
+    "line": 108
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "utility_desktop.obj",
+    "line": 110
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "commit_mode.obj",
+    "line": 113
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "new_mode.obj",
+    "line": 114
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "thread_locale.obj",
+    "line": 115
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "matherr.obj",
+    "line": 116
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "thread.c.obj",
+    "line": 117
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "cio.c.obj",
+    "line": 119
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_compress.c.obj",
+    "line": 122
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "argv_mode.obj",
+    "line": 123
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "j2k.c.obj",
+    "line": 125
+  },
+  {
+    "archive": "reader_catalog_sdk",
+    "member": "catalog_sdk.c.obj",
+    "line": 127
+  },
+  {
+    "archive": "reader_desktop_metadata",
+    "member": "metadata.cpp.obj",
+    "line": 131
+  },
+  {
+    "archive": "reader_original_export",
+    "member": "original_export.cpp.obj",
+    "line": 143
+  },
+  {
+    "archive": "reader_navigation",
+    "member": "navigation.cpp.obj",
+    "line": 144
+  },
+  {
+    "archive": "reader_windows_records_w3",
+    "member": "windows_records_owner.cpp.obj",
+    "line": 146
+  },
+  {
+    "archive": "exr_webdav",
+    "member": "webdav.cpp.obj",
+    "line": 184
+  },
+  {
+    "archive": "reader_search",
+    "member": "search.cpp.obj",
+    "line": 189
+  },
+  {
+    "archive": "libcpmt",
+    "member": "xthrow.obj",
+    "line": 200
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "throw_bad_alloc.obj",
+    "line": 259
+  },
+  {
+    "archive": "reader_sync_view",
+    "member": "sync_view.cpp.obj",
+    "line": 280
+  },
+  {
+    "archive": "reader_annotation_import",
+    "member": "annotation_import.cpp.obj",
+    "line": 284
+  },
+  {
+    "archive": "reader_session",
+    "member": "session.cpp.obj",
+    "line": 341
+  },
+  {
+    "archive": "exr_credentials",
+    "member": "store.c.obj",
+    "line": 360
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "delete_scalar.obj",
+    "line": 361
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "utils.c.obj",
+    "line": 362
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_win32.c.obj",
+    "line": 363
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "mem.c.obj",
+    "line": 364
+  },
+  {
+    "archive": "exr_base",
+    "member": "memory.c.obj",
+    "line": 366
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_calculator.c.obj",
+    "line": 367
+  },
+  {
+    "archive": "exr_vendor_miniz",
+    "member": "miniz.c.obj",
+    "line": 368
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "opj_malloc.c.obj",
+    "line": 369
+  },
+  {
+    "archive": "reader_revisions",
+    "member": "revisions.cpp.obj",
+    "line": 370
+  },
+  {
+    "archive": "reader_reading_state_codec",
+    "member": "reading_state.cpp.obj",
+    "line": 371
+  },
+  {
+    "archive": "exr_credentials",
+    "member": "windows.c.obj",
+    "line": 378
+  },
+  {
+    "archive": "exr_sideload",
+    "member": "sideload.c.obj",
+    "line": 381
+  },
+  {
+    "archive": "exr_sideload",
+    "member": "export.c.obj",
+    "line": 383
+  },
+  {
+    "archive": "reader_cloud_import_content_bound",
+    "member": "cloud_import.c.obj",
+    "line": 458
+  },
+  {
+    "archive": "reader_bulk",
+    "member": "bulk.cpp.obj",
+    "line": 464
+  },
+  {
+    "archive": "reader_preferences",
+    "member": "preferences.c.obj",
+    "line": 473
+  },
+  {
+    "archive": "reader_preferences",
+    "member": "json.c.obj",
+    "line": 482
+  },
+  {
+    "archive": "reader_preferences",
+    "member": "file.c.obj",
+    "line": 484
+  },
+  {
+    "archive": "reader_annotation_export",
+    "member": "annotation_export.cpp.obj",
+    "line": 492
+  },
+  {
+    "archive": "reader_jump_history",
+    "member": "jump_history.cpp.obj",
+    "line": 515
+  },
+  {
+    "archive": "reader_commands",
+    "member": "commands.cpp.obj",
+    "line": 526
+  },
+  {
+    "archive": "reader_original_import",
+    "member": "original_import.cpp.obj",
+    "line": 599
+  },
+  {
+    "archive": "reader_txt_progress",
+    "member": "txt_progress.cpp.obj",
+    "line": 602
+  },
+  {
+    "archive": "reader_annotation_view",
+    "member": "annotation_view.cpp.obj",
+    "line": 609
+  },
+  {
+    "archive": "reader_reading_state",
+    "member": "reading_resolve.cpp.obj",
+    "line": 615
+  },
+  {
+    "archive": "exr_render",
+    "member": "raster.c.obj",
+    "line": 620
+  },
+  {
+    "archive": "exr_layout",
+    "member": "layout.c.obj",
+    "line": 623
+  },
+  {
+    "archive": "exr_layout",
+    "member": "publication.c.obj",
+    "line": 633
+  },
+  {
+    "archive": "exr_doc",
+    "member": "fixed.c.obj",
+    "line": 640
+  },
+  {
+    "archive": "exr_layout",
+    "member": "positioned.c.obj",
+    "line": 643
+  },
+  {
+    "archive": "exr_layout",
+    "member": "pager.c.obj",
+    "line": 644
+  },
+  {
+    "archive": "exr_layout",
+    "member": "chapter_reader.c.obj",
+    "line": 665
+  },
+  {
+    "archive": "exr_layout",
+    "member": "style.c.obj",
+    "line": 668
+  },
+  {
+    "archive": "exr_layout",
+    "member": "flow.c.obj",
+    "line": 672
+  },
+  {
+    "archive": "exr_layout",
+    "member": "display_bidi.c.obj",
+    "line": 686
+  },
+  {
+    "archive": "exr_layout",
+    "member": "inline.c.obj",
+    "line": 709
+  },
+  {
+    "archive": "exr_layout",
+    "member": "floats.c.obj",
+    "line": 726
+  },
+  {
+    "archive": "exr_layout",
+    "member": "pager_table.c.obj",
+    "line": 731
+  },
+  {
+    "archive": "exr_layout",
+    "member": "ruby.c.obj",
+    "line": 739
+  },
+  {
+    "archive": "exr_library",
+    "member": "library.c.obj",
+    "line": 742
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_document.c.obj",
+    "line": 775
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "cbz.c.obj",
+    "line": 780
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_objects.c.obj",
+    "line": 783
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_annotations.c.obj",
+    "line": 798
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_pages.c.obj",
+    "line": 799
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_font.c.obj",
+    "line": 801
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_content.c.obj",
+    "line": 808
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_annotation_paint.c.obj",
+    "line": 811
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_crypto.c.obj",
+    "line": 812
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_ccitt.c.obj",
+    "line": 816
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_cmap.c.obj",
+    "line": 817
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_encoding.c.obj",
+    "line": 821
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_color.c.obj",
+    "line": 825
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_softmask_parse.c.obj",
+    "line": 836
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_shading.c.obj",
+    "line": 837
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_paint.c.obj",
+    "line": 838
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_function.c.obj",
+    "line": 839
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_shading_mesh.c.obj",
+    "line": 847
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_softmask.c.obj",
+    "line": 848
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_image.c.obj",
+    "line": 849
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_face.c.obj",
+    "line": 851
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "bitreader.c.obj",
+    "line": 857
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "stream.c.obj",
+    "line": 858
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "function_list.c.obj",
+    "line": 860
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_raster.c.obj",
+    "line": 864
+  },
+  {
+    "archive": "exr_pdf",
+    "member": "pdf_jpx.c.obj",
+    "line": 865
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "ftdebug.c.obj",
+    "line": 869
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "dec_sse2.c.obj",
+    "line": 871
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "dec_sse41.c.obj",
+    "line": 872
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "filters_sse2.c.obj",
+    "line": 873
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "dec_clip_tables.c.obj",
+    "line": 874
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "lossless_sse2.c.obj",
+    "line": 875
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "lossless_sse41.c.obj",
+    "line": 876
+  },
+  {
+    "archive": "exr_vendor_webpdemux",
+    "member": "demux.c.obj",
+    "line": 877
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "alpha_processing_sse2.c.obj",
+    "line": 878
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "alpha_processing_sse41.c.obj",
+    "line": 879
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "yuv_sse2.c.obj",
+    "line": 880
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "yuv_sse41.c.obj",
+    "line": 881
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "upsampling_sse2.c.obj",
+    "line": 884
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "upsampling_sse41.c.obj",
+    "line": 885
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "rescaler_sse2.c.obj",
+    "line": 888
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_read.c.obj",
+    "line": 889
+  },
+  {
+    "archive": "libcpmt",
+    "member": "asan_noop.obj",
+    "line": 890
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "guard_support.obj",
+    "line": 892
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "denormal_control.obj",
+    "line": 893
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "invalid_parameter_handler.obj",
+    "line": 894
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "thread_common.c.obj",
+    "line": 895
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "reconinter.c.obj",
+    "line": 897
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "restoration.c.obj",
+    "line": 898
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "av1_txfm.c.obj",
+    "line": 899
+  },
+  {
+    "archive": "exr_formats",
+    "member": "formats.c.obj",
+    "line": 903
+  },
+  {
+    "archive": "exr_formats",
+    "member": "navigation.c.obj",
+    "line": 924
+  },
+  {
+    "archive": "exr_formats",
+    "member": "xmp.c.obj",
+    "line": 927
+  },
+  {
+    "archive": "exr_formats",
+    "member": "docx.c.obj",
+    "line": 928
+  },
+  {
+    "archive": "exr_formats",
+    "member": "kf8.c.obj",
+    "line": 929
+  },
+  {
+    "archive": "exr_formats",
+    "member": "huff.c.obj",
+    "line": 931
+  },
+  {
+    "archive": "exr_formats",
+    "member": "rtf.c.obj",
+    "line": 934
+  },
+  {
+    "archive": "exr_formats",
+    "member": "fb2.c.obj",
+    "line": 935
+  },
+  {
+    "archive": "exr_formats",
+    "member": "export_epub.c.obj",
+    "line": 936
+  },
+  {
+    "archive": "exr_doc",
+    "member": "fixed_text.c.obj",
+    "line": 937
+  },
+  {
+    "archive": "exr_text",
+    "member": "hyphen.c.obj",
+    "line": 944
+  },
+  {
+    "archive": "exr_doc",
+    "member": "anchor.c.obj",
+    "line": 945
+  },
+  {
+    "archive": "exr_doc",
+    "member": "document.c.obj",
+    "line": 960
+  },
+  {
+    "archive": "exr_doc",
+    "member": "cfi.c.obj",
+    "line": 985
+  },
+  {
+    "archive": "exr_doc",
+    "member": "chapter_index.c.obj",
+    "line": 987
+  },
+  {
+    "archive": "exr_doc",
+    "member": "chapter_window.c.obj",
+    "line": 996
+  },
+  {
+    "archive": "exr_doc",
+    "member": "construct.c.obj",
+    "line": 999
+  },
+  {
+    "archive": "exr_doc",
+    "member": "cfi_text.c.obj",
+    "line": 1000
+  },
+  {
+    "archive": "exr_text",
+    "member": "fonts.c.obj",
+    "line": 1002
+  },
+  {
+    "archive": "exr_text",
+    "member": "font_color.c.obj",
+    "line": 1017
+  },
+  {
+    "archive": "exr_text",
+    "member": "font_colr_v1.c.obj",
+    "line": 1018
+  },
+  {
+    "archive": "exr_text",
+    "member": "font_svg.c.obj",
+    "line": 1019
+  },
+  {
+    "archive": "exr_text",
+    "member": "font_bitmap.c.obj",
+    "line": 1021
+  },
+  {
+    "archive": "exr_text",
+    "member": "variable.c.obj",
+    "line": 1024
+  },
+  {
+    "archive": "exr_text",
+    "member": "text.c.obj",
+    "line": 1033
+  },
+  {
+    "archive": "exr_text",
+    "member": "bidi.c.obj",
+    "line": 1036
+  },
+  {
+    "archive": "exr_text",
+    "member": "opentype.c.obj",
+    "line": 1054
+  },
+  {
+    "archive": "exr_text",
+    "member": "font_outline.c.obj",
+    "line": 1061
+  },
+  {
+    "archive": "exr_graphics",
+    "member": "images.c.obj",
+    "line": 1062
+  },
+  {
+    "archive": "exr_graphics",
+    "member": "image_formats.c.obj",
+    "line": 1068
+  },
+  {
+    "archive": "exr_graphics",
+    "member": "canvas.c.obj",
+    "line": 1074
+  },
+  {
+    "archive": "exr_graphics",
+    "member": "icc.c.obj",
+    "line": 1098
+  },
+  {
+    "archive": "exr_graphics",
+    "member": "affine_image.c.obj",
+    "line": 1107
+  },
+  {
+    "archive": "exr_graphics",
+    "member": "blend.c.obj",
+    "line": 1109
+  },
+  {
+    "archive": "exr_graphics",
+    "member": "curves.c.obj",
+    "line": 1121
+  },
+  {
+    "archive": "exr_graphics",
+    "member": "stroke.c.obj",
+    "line": 1124
+  },
+  {
+    "archive": "exr_graphics",
+    "member": "dash.c.obj",
+    "line": 1125
+  },
+  {
+    "archive": "exr_graphics",
+    "member": "vector.c.obj",
+    "line": 1126
+  },
+  {
+    "archive": "exr_base",
+    "member": "viewport.c.obj",
+    "line": 1128
+  },
+  {
+    "archive": "exr_base",
+    "member": "core.c.obj",
+    "line": 1129
+  },
+  {
+    "archive": "exr_base",
+    "member": "transfer.c.obj",
+    "line": 1137
+  },
+  {
+    "archive": "exr_base",
+    "member": "common.c.obj",
+    "line": 1139
+  },
+  {
+    "archive": "exr_base",
+    "member": "source.c.obj",
+    "line": 1154
+  },
+  {
+    "archive": "exr_base",
+    "member": "map.c.obj",
+    "line": 1155
+  },
+  {
+    "archive": "exr_base",
+    "member": "numbering.c.obj",
+    "line": 1158
+  },
+  {
+    "archive": "exr_base",
+    "member": "normalize.c.obj",
+    "line": 1159
+  },
+  {
+    "archive": "exr_base",
+    "member": "case.c.obj",
+    "line": 1160
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "webp_dec.c.obj",
+    "line": 1163
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "buffer_dec.c.obj",
+    "line": 1170
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "vp8_dec.c.obj",
+    "line": 1176
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "vp8l_dec.c.obj",
+    "line": 1185
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "rescaler_utils.c.obj",
+    "line": 1194
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "io_dec.c.obj",
+    "line": 1199
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "frame_dec.c.obj",
+    "line": 1200
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "alpha_dec.c.obj",
+    "line": 1209
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "bit_reader_utils.c.obj",
+    "line": 1211
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "thread_utils.c.obj",
+    "line": 1218
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "tree_dec.c.obj",
+    "line": 1219
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "quant_dec.c.obj",
+    "line": 1222
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "dec.c.obj",
+    "line": 1223
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "yuv.c.obj",
+    "line": 1224
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "rescaler.c.obj",
+    "line": 1229
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "alpha_processing.c.obj",
+    "line": 1236
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "color_cache_utils.c.obj",
+    "line": 1241
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "huffman_utils.c.obj",
+    "line": 1244
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "bio.c.obj",
+    "line": 1246
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "t2.c.obj",
+    "line": 1247
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "lossless.c.obj",
+    "line": 1251
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_dirinfo.c.obj",
+    "line": 1265
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "filters.c.obj",
+    "line": 1276
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "upsampling.c.obj",
+    "line": 1277
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "random_utils.c.obj",
+    "line": 1286
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "quant_levels_dec_utils.c.obj",
+    "line": 1287
+  },
+  {
+    "archive": "exr_vendor_webpdemux",
+    "member": "anim_decode.c.obj",
+    "line": 1288
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_close.c.obj",
+    "line": 1297
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_dir.c.obj",
+    "line": 1300
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_getimage.c.obj",
+    "line": 1309
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_open.c.obj",
+    "line": 1313
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmslut.c.obj",
+    "line": 1317
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "image.c.obj",
+    "line": 1320
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "delete_scalar_size.obj",
+    "line": 1321
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "delete_array.obj",
+    "line": 1322
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_hash_set.c.obj",
+    "line": 1330
+  },
+  {
+    "archive": "exr_vendor_miniz",
+    "member": "miniz_tdef.c.obj",
+    "line": 1336
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "ftbase.c.obj",
+    "line": 1338
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_flush.c.obj",
+    "line": 1349
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_error.c.obj",
+    "line": 1350
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_dirread.c.obj",
+    "line": 1361
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_warning.c.obj",
+    "line": 1372
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_swab.c.obj",
+    "line": 1373
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_aux.c.obj",
+    "line": 1407
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_strip.c.obj",
+    "line": 1417
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_tile.c.obj",
+    "line": 1426
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_color.c.obj",
+    "line": 1435
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_codec.c.obj",
+    "line": 1441
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_write.c.obj",
+    "line": 1442
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_dirwrite.c.obj",
+    "line": 1444
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_dumpmode.c.obj",
+    "line": 1446
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_packbits.c.obj",
+    "line": 1447
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_fax3.c.obj",
+    "line": 1448
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_thunder.c.obj",
+    "line": 1453
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_next.c.obj",
+    "line": 1454
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_lzw.c.obj",
+    "line": 1455
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_zip.c.obj",
+    "line": 1456
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_pixarlog.c.obj",
+    "line": 1457
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_luv.c.obj",
+    "line": 1458
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_predict.c.obj",
+    "line": 1464
+  },
+  {
+    "archive": "exr_vendor_zlibstatic",
+    "member": "deflate.c.obj",
+    "line": 1466
+  },
+  {
+    "archive": "exr_vendor_zlibstatic",
+    "member": "inflate.c.obj",
+    "line": 1472
+  },
+  {
+    "archive": "exr_vendor_zlibstatic",
+    "member": "adler32.c.obj",
+    "line": 1477
+  },
+  {
+    "archive": "exr_vendor_zlibstatic",
+    "member": "crc32.c.obj",
+    "line": 1479
+  },
+  {
+    "archive": "exr_vendor_zlibstatic",
+    "member": "zutil.c.obj",
+    "line": 1481
+  },
+  {
+    "archive": "exr_vendor_zlibstatic",
+    "member": "trees.c.obj",
+    "line": 1484
+  },
+  {
+    "archive": "exr_vendor_zlibstatic",
+    "member": "inftrees.c.obj",
+    "line": 1489
+  },
+  {
+    "archive": "exr_vendor_zlibstatic",
+    "member": "inffast.c.obj",
+    "line": 1490
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "avif.c.obj",
+    "line": 1491
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "reformat.c.obj",
+    "line": 1520
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "read.c.obj",
+    "line": 1524
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "codec_aom.c.obj",
+    "line": 1532
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "rawdata.c.obj",
+    "line": 1535
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "diag.c.obj",
+    "line": 1538
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "utils.c.obj",
+    "line": 1540
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "alpha.c.obj",
+    "line": 1552
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "colr.c.obj",
+    "line": 1556
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "reformat_libyuv.c.obj",
+    "line": 1557
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "exif.c.obj",
+    "line": 1561
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "io.c.obj",
+    "line": 1562
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "scale.c.obj",
+    "line": 1564
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "obu.c.obj",
+    "line": 1583
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "gainmap.c.obj",
+    "line": 1584
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "planar_functions.c.obj",
+    "line": 1588
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "row_common.c.obj",
+    "line": 1590
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "scale_common.c.obj",
+    "line": 1593
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "scale_any.c.obj",
+    "line": 1613
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "aom_codec.c.obj",
+    "line": 1617
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "aom_decoder.c.obj",
+    "line": 1624
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "av1_dx_iface.c.obj",
+    "line": 1627
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "aom_integer.c.obj",
+    "line": 1628
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "aom_image.c.obj",
+    "line": 1629
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "bitreader_buffer.c.obj",
+    "line": 1637
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "aom_thread.c.obj",
+    "line": 1644
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "alloccommon.c.obj",
+    "line": 1645
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "aom_mem.c.obj",
+    "line": 1657
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "tile_common.c.obj",
+    "line": 1662
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "frame_buffers.c.obj",
+    "line": 1672
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "obu_util.c.obj",
+    "line": 1677
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "decoder.c.obj",
+    "line": 1687
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "decodeframe.c.obj",
+    "line": 1698
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "grain_synthesis.c.obj",
+    "line": 1711
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "obu.c.obj",
+    "line": 1712
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "yv12config.c.obj",
+    "line": 1714
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "yv12extend.c.obj",
+    "line": 1726
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "av1_loopfilter.c.obj",
+    "line": 1735
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "cdef.c.obj",
+    "line": 1743
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "quant_common.c.obj",
+    "line": 1764
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "av1_rtcd.c.obj",
+    "line": 1770
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "aom_dsp_rtcd.c.obj",
+    "line": 1771
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "aom_scale_rtcd.c.obj",
+    "line": 1772
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "reconintra.c.obj",
+    "line": 1773
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "entdec.c.obj",
+    "line": 1781
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "binary_codes_reader.c.obj",
+    "line": 1788
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "seg_common.c.obj",
+    "line": 1789
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "entropy.c.obj",
+    "line": 1795
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "entropymode.c.obj",
+    "line": 1797
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "scale.c.obj",
+    "line": 1803
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "blockd.c.obj",
+    "line": 1805
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "cfl.c.obj",
+    "line": 1812
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "idct.c.obj",
+    "line": 1944
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "mvref_common.c.obj",
+    "line": 1948
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "warped_motion.c.obj",
+    "line": 1960
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "resize.c.obj",
+    "line": 1965
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "decodemv.c.obj",
+    "line": 1968
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "decodetxb.c.obj",
+    "line": 1970
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "detokenize.c.obj",
+    "line": 1971
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "timing.c.obj",
+    "line": 1972
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "convolve.c.obj",
+    "line": 1973
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "loopfilter.c.obj",
+    "line": 1994
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "cdef_block.c.obj",
+    "line": 2034
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "blend_a64_hmask.c.obj",
+    "line": 2044
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "blend_a64_mask.c.obj",
+    "line": 2046
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "blend_a64_vmask.c.obj",
+    "line": 2050
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "intrapred.c.obj",
+    "line": 2052
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "entropymv.c.obj",
+    "line": 2432
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "av1_inv_txfm2d.c.obj",
+    "line": 2433
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "aom_convolve.c.obj",
+    "line": 2454
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "pred_common.c.obj",
+    "line": 2456
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "av1_inv_txfm1d.c.obj",
+    "line": 2476
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsplugin.c.obj",
+    "line": 2488
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmserr.c.obj",
+    "line": 2524
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsio0.c.obj",
+    "line": 2591
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmspcs.c.obj",
+    "line": 2621
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsvirt.c.obj",
+    "line": 2637
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsxform.c.obj",
+    "line": 2642
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsintrp.c.obj",
+    "line": 2651
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsgamma.c.obj",
+    "line": 2657
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmspack.c.obj",
+    "line": 2677
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmstypes.c.obj",
+    "line": 2683
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmscnvrt.c.obj",
+    "line": 2694
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsopt.c.obj",
+    "line": 2697
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsmtrx.c.obj",
+    "line": 2700
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmswtpnt.c.obj",
+    "line": 2707
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsnamed.c.obj",
+    "line": 2713
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsio1.c.obj",
+    "line": 2736
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsgmt.c.obj",
+    "line": 2745
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmsalpha.c.obj",
+    "line": 2750
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmshalf.c.obj",
+    "line": 2751
+  },
+  {
+    "archive": "exr_vendor_exr_lcms",
+    "member": "cmssamp.c.obj",
+    "line": 2753
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "ftsynth.c.obj",
+    "line": 2894
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "ftinit.c.obj",
+    "line": 2896
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "ftcid.c.obj",
+    "line": 2899
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "ftmm.c.obj",
+    "line": 2901
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "ftsystem.c.obj",
+    "line": 2908
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "ftbitmap.c.obj",
+    "line": 2911
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "autofit.c.obj",
+    "line": 2918
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "truetype.c.obj",
+    "line": 2919
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "pshinter.c.obj",
+    "line": 2920
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "ftgzip.c.obj",
+    "line": 2921
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "ftlzw.c.obj",
+    "line": 2923
+  },
+  {
+    "archive": "exr_vendor_expat",
+    "member": "xmlparse.c.obj",
+    "line": 2925
+  },
+  {
+    "archive": "exr_vendor_expat",
+    "member": "xcs.c.obj",
+    "line": 2943
+  },
+  {
+    "archive": "exr_vendor_expat",
+    "member": "random_rand_s.c.obj",
+    "line": 2944
+  },
+  {
+    "archive": "exr_vendor_expat",
+    "member": "xmltok.c.obj",
+    "line": 2945
+  },
+  {
+    "archive": "exr_vendor_expat",
+    "member": "xmlrole.c.obj",
+    "line": 2955
+  },
+  {
+    "archive": "exr_vendor_miniz",
+    "member": "miniz_tinfl.c.obj",
+    "line": 2965
+  },
+  {
+    "archive": "exr_vendor_miniz",
+    "member": "miniz_zip.c.obj",
+    "line": 2967
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "openjpeg.c.obj",
+    "line": 3008
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "event.c.obj",
+    "line": 3032
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "jp2.c.obj",
+    "line": 3051
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "pi.c.obj",
+    "line": 3072
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "tcd.c.obj",
+    "line": 3075
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "dwt.c.obj",
+    "line": 3085
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "mct.c.obj",
+    "line": 3087
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "tgt.c.obj",
+    "line": 3090
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "t1.c.obj",
+    "line": 3095
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "sparse_array.c.obj",
+    "line": 3099
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "mqc.c.obj",
+    "line": 3108
+  },
+  {
+    "archive": "exr_vendor_exr_jpx",
+    "member": "ht_dec.c.obj",
+    "line": 3113
+  },
+  {
+    "archive": "exr_vendor_exr_crypto",
+    "member": "aes.c.obj",
+    "line": 3114
+  },
+  {
+    "archive": "exr_vendor_exr_crypto",
+    "member": "md5.c.obj",
+    "line": 3122
+  },
+  {
+    "archive": "exr_vendor_exr_crypto",
+    "member": "sha256.c.obj",
+    "line": 3129
+  },
+  {
+    "archive": "exr_vendor_exr_crypto",
+    "member": "sha512.c.obj",
+    "line": 3131
+  },
+  {
+    "archive": "exr_vendor_exr_crypto",
+    "member": "constant_time.c.obj",
+    "line": 3133
+  },
+  {
+    "archive": "exr_vendor_exr_crypto",
+    "member": "platform_util.c.obj",
+    "line": 3134
+  },
+  {
+    "archive": "exr_vendor_exr_sqlite",
+    "member": "sqlite3.c.obj",
+    "line": 3135
+  },
+  {
+    "archive": "libucrt",
+    "member": "argv_data.obj",
+    "line": 3293
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "env_mode.obj",
+    "line": 3294
+  },
+  {
+    "archive": "opds_sha256_stream",
+    "member": "opds_sha256_stream.c.obj",
+    "line": 3360
+  },
+  {
+    "archive": "reader_reading_commands",
+    "member": "reading_commands.cpp.obj",
+    "line": 3373
+  },
+  {
+    "archive": "reader_revisions",
+    "member": "organization_projection.cpp.obj",
+    "line": 3424
+  },
+  {
+    "archive": "reader_revisions",
+    "member": "selector_bytes_v1.cpp.obj",
+    "line": 3425
+  },
+  {
+    "archive": "reader_catalog",
+    "member": "catalog.c.obj",
+    "line": 3427
+  },
+  {
+    "archive": "reader_revision_hash",
+    "member": "opds_core.c.obj",
+    "line": 3448
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "gs_report.obj",
+    "line": 3501
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "gshandler.obj",
+    "line": 3505
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "chkstk.obj",
+    "line": 3507
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "amdsecgs.obj",
+    "line": 3509
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "exe_winmain.obj",
+    "line": 3510
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "new_scalar.obj",
+    "line": 3511
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "gshandlereh4.obj",
+    "line": 3512
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "std_type_info_static.obj",
+    "line": 3513
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "ehvecctr.obj",
+    "line": 3515
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "ehvecdtr.obj",
+    "line": 3516
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "utility.obj",
+    "line": 3518
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "new_scalar_nothrow.obj",
+    "line": 3526
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "cpu_disp.obj",
+    "line": 3527
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "gs_support.obj",
+    "line": 3528
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "file_mode.obj",
+    "line": 3529
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "tncleanup.obj",
+    "line": 3530
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "default_local_stdio_options.obj",
+    "line": 3531
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "matherr_detection.obj",
+    "line": 3532
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "dyn_tls_init.obj",
+    "line": 3533
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "dyn_tls_dtor.obj",
+    "line": 3534
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "initsect.obj",
+    "line": 3542
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "ucrt_detection.obj",
+    "line": 3546
+  },
+  {
+    "archive": "libcpmt",
+    "member": "vector_algorithms.obj",
+    "line": 3547
+  },
+  {
+    "archive": "libcpmt",
+    "member": "excptptr.obj",
+    "line": 3566
+  },
+  {
+    "archive": "libcpmt",
+    "member": "syserror_import_lib.obj",
+    "line": 3585
+  },
+  {
+    "archive": "libcpmt",
+    "member": "cthread.obj",
+    "line": 3587
+  },
+  {
+    "archive": "libcpmt",
+    "member": "syserror.obj",
+    "line": 3589
+  },
+  {
+    "archive": "libcpmt",
+    "member": "filesystem.obj",
+    "line": 3591
+  },
+  {
+    "archive": "libcpmt",
+    "member": "mutex.obj",
+    "line": 3605
+  },
+  {
+    "archive": "libcpmt",
+    "member": "cond.obj",
+    "line": 3607
+  },
+  {
+    "archive": "libcpmt",
+    "member": "xnotify.obj",
+    "line": 3610
+  },
+  {
+    "archive": "libcpmt",
+    "member": "thread0.obj",
+    "line": 3611
+  },
+  {
+    "archive": "libcpmt",
+    "member": "xlock.obj",
+    "line": 3613
+  },
+  {
+    "archive": "libcpmt",
+    "member": "uncaught_exception.obj",
+    "line": 3617
+  },
+  {
+    "archive": "libcpmt",
+    "member": "locale0.obj",
+    "line": 3618
+  },
+  {
+    "archive": "libcpmt",
+    "member": "_tolower.obj",
+    "line": 3630
+  },
+  {
+    "archive": "libcpmt",
+    "member": "_toupper.obj",
+    "line": 3632
+  },
+  {
+    "archive": "libcpmt",
+    "member": "ios.obj",
+    "line": 3633
+  },
+  {
+    "archive": "libcpmt",
+    "member": "fiopen.obj",
+    "line": 3636
+  },
+  {
+    "archive": "libcpmt",
+    "member": "xtime.obj",
+    "line": 3637
+  },
+  {
+    "archive": "libcpmt",
+    "member": "xmtx.obj",
+    "line": 3641
+  },
+  {
+    "archive": "libcpmt",
+    "member": "iosptrs.obj",
+    "line": 3645
+  },
+  {
+    "archive": "libcpmt",
+    "member": "stllcmapstringa.obj",
+    "line": 3646
+  },
+  {
+    "archive": "libcpmt",
+    "member": "winapisupp.obj",
+    "line": 3647
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "strchr.obj",
+    "line": 3648
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "strrchr.obj",
+    "line": 3649
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "strstr.obj",
+    "line": 3650
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "wcsrchr.obj",
+    "line": 3651
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "wcsstr.obj",
+    "line": 3652
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "std_exception.obj",
+    "line": 3653
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "throw.obj",
+    "line": 3655
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "risctrnsctrl.obj",
+    "line": 3656
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "ehhelpers.obj",
+    "line": 3679
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "longjmpc.obj",
+    "line": 3686
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "riscchandler.obj",
+    "line": 3687
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "purevirt.obj",
+    "line": 3688
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "initialization.obj",
+    "line": 3690
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "std_type_info.obj",
+    "line": 3692
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "uncaught_exception.obj",
+    "line": 3693
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "per_thread_data.obj",
+    "line": 3694
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "ehstate.obj",
+    "line": 3700
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "frame.obj",
+    "line": 3708
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "jbcxrval.obj",
+    "line": 3725
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "notify.obj",
+    "line": 3727
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "locks.obj",
+    "line": 3730
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "winapi_downlevel.obj",
+    "line": 3732
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "handlers.obj",
+    "line": 3737
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcsncat.obj",
+    "line": 3741
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcsncmp.obj",
+    "line": 3742
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcsncpy.obj",
+    "line": 3743
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcsicmp.obj",
+    "line": 3744
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcsnicmp.obj",
+    "line": 3748
+  },
+  {
+    "archive": "libucrt",
+    "member": "fmax.obj",
+    "line": 3751
+  },
+  {
+    "archive": "libucrt",
+    "member": "fmin.obj",
+    "line": 3752
+  },
+  {
+    "archive": "libucrt",
+    "member": "thread.obj",
+    "line": 3753
+  },
+  {
+    "archive": "libucrt",
+    "member": "_file.obj",
+    "line": 3755
+  },
+  {
+    "archive": "libucrt",
+    "member": "fopen.obj",
+    "line": 3761
+  },
+  {
+    "archive": "libucrt",
+    "member": "output.obj",
+    "line": 3764
+  },
+  {
+    "archive": "libucrt",
+    "member": "fclose.obj",
+    "line": 3834
+  },
+  {
+    "archive": "libucrt",
+    "member": "fflush.obj",
+    "line": 3835
+  },
+  {
+    "archive": "libucrt",
+    "member": "fgets.obj",
+    "line": 3839
+  },
+  {
+    "archive": "libucrt",
+    "member": "fputs.obj",
+    "line": 3840
+  },
+  {
+    "archive": "libucrt",
+    "member": "calloc.obj",
+    "line": 3841
+  },
+  {
+    "archive": "libucrt",
+    "member": "free.obj",
+    "line": 3842
+  },
+  {
+    "archive": "libucrt",
+    "member": "malloc.obj",
+    "line": 3843
+  },
+  {
+    "archive": "libucrt",
+    "member": "strtod.obj",
+    "line": 3844
+  },
+  {
+    "archive": "libucrt",
+    "member": "strtox.obj",
+    "line": 3870
+  },
+  {
+    "archive": "libucrt",
+    "member": "atox.obj",
+    "line": 3878
+  },
+  {
+    "archive": "libucrt",
+    "member": "getenv.obj",
+    "line": 3881
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcscmpc.obj",
+    "line": 3883
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcscpy.obj",
+    "line": 3884
+  },
+  {
+    "archive": "libucrt",
+    "member": "strnlen.obj",
+    "line": 3885
+  },
+  {
+    "archive": "libucrt",
+    "member": "invalid_parameter.obj",
+    "line": 3888
+  },
+  {
+    "archive": "libucrt",
+    "member": "terminate.obj",
+    "line": 3896
+  },
+  {
+    "archive": "libucrt",
+    "member": "fread.obj",
+    "line": 3897
+  },
+  {
+    "archive": "libucrt",
+    "member": "fseek.obj",
+    "line": 3900
+  },
+  {
+    "archive": "libucrt",
+    "member": "ftell.obj",
+    "line": 3902
+  },
+  {
+    "archive": "libucrt",
+    "member": "_ctype.obj",
+    "line": 3905
+  },
+  {
+    "archive": "libucrt",
+    "member": "tolower_toupper.obj",
+    "line": 3913
+  },
+  {
+    "archive": "libucrt",
+    "member": "errno.obj",
+    "line": 3917
+  },
+  {
+    "archive": "libucrt",
+    "member": "wunlink.obj",
+    "line": 3922
+  },
+  {
+    "archive": "libucrt",
+    "member": "fdopen.obj",
+    "line": 3923
+  },
+  {
+    "archive": "libucrt",
+    "member": "feoferr.obj",
+    "line": 3926
+  },
+  {
+    "archive": "libucrt",
+    "member": "fullpath.obj",
+    "line": 3927
+  },
+  {
+    "archive": "libucrt",
+    "member": "close.obj",
+    "line": 3933
+  },
+  {
+    "archive": "libucrt",
+    "member": "osfinfo.obj",
+    "line": 3937
+  },
+  {
+    "archive": "libucrt",
+    "member": "pow.obj",
+    "line": 3947
+  },
+  {
+    "archive": "libucrt",
+    "member": "fgetc.obj",
+    "line": 3948
+  },
+  {
+    "archive": "libucrt",
+    "member": "fwrite.obj",
+    "line": 3951
+  },
+  {
+    "archive": "libucrt",
+    "member": "ungetc.obj",
+    "line": 3954
+  },
+  {
+    "archive": "libucrt",
+    "member": "fmaxf.obj",
+    "line": 3956
+  },
+  {
+    "archive": "libucrt",
+    "member": "fminf.obj",
+    "line": 3957
+  },
+  {
+    "archive": "libucrt",
+    "member": "lroundf.obj",
+    "line": 3958
+  },
+  {
+    "archive": "libucrt",
+    "member": "ceil.obj",
+    "line": 3959
+  },
+  {
+    "archive": "libucrt",
+    "member": "ceilf.obj",
+    "line": 3960
+  },
+  {
+    "archive": "libucrt",
+    "member": "floor.obj",
+    "line": 3961
+  },
+  {
+    "archive": "libucrt",
+    "member": "floorf.obj",
+    "line": 3962
+  },
+  {
+    "archive": "libucrt",
+    "member": "realloc.obj",
+    "line": 3963
+  },
+  {
+    "archive": "libucrt",
+    "member": "qsort.obj",
+    "line": 3964
+  },
+  {
+    "archive": "libucrt",
+    "member": "strcspn.obj",
+    "line": 3965
+  },
+  {
+    "archive": "libucrt",
+    "member": "strspn.obj",
+    "line": 3966
+  },
+  {
+    "archive": "libucrt",
+    "member": "copysign.obj",
+    "line": 3967
+  },
+  {
+    "archive": "libucrt",
+    "member": "hypot.obj",
+    "line": 3968
+  },
+  {
+    "archive": "libucrt",
+    "member": "fma.obj",
+    "line": 3970
+  },
+  {
+    "archive": "libucrt",
+    "member": "sqrt.obj",
+    "line": 3972
+  },
+  {
+    "archive": "libucrt",
+    "member": "trunc.obj",
+    "line": 3973
+  },
+  {
+    "archive": "libucrt",
+    "member": "atan2.obj",
+    "line": 3974
+  },
+  {
+    "archive": "libucrt",
+    "member": "cos.obj",
+    "line": 3975
+  },
+  {
+    "archive": "libucrt",
+    "member": "fmod.obj",
+    "line": 3976
+  },
+  {
+    "archive": "libucrt",
+    "member": "log.obj",
+    "line": 3977
+  },
+  {
+    "archive": "libucrt",
+    "member": "log10.obj",
+    "line": 3978
+  },
+  {
+    "archive": "libucrt",
+    "member": "sin.obj",
+    "line": 3979
+  },
+  {
+    "archive": "libucrt",
+    "member": "tan.obj",
+    "line": 3980
+  },
+  {
+    "archive": "libucrt",
+    "member": "lround.obj",
+    "line": 3981
+  },
+  {
+    "archive": "libucrt",
+    "member": "round.obj",
+    "line": 3982
+  },
+  {
+    "archive": "libucrt",
+    "member": "acos.obj",
+    "line": 3984
+  },
+  {
+    "archive": "libucrt",
+    "member": "gmtime.obj",
+    "line": 3985
+  },
+  {
+    "archive": "libucrt",
+    "member": "time.obj",
+    "line": 3989
+  },
+  {
+    "archive": "libucrt",
+    "member": "bsearch.obj",
+    "line": 3990
+  },
+  {
+    "archive": "libucrt",
+    "member": "exp.obj",
+    "line": 3991
+  },
+  {
+    "archive": "libucrt",
+    "member": "rand.obj",
+    "line": 3992
+  },
+  {
+    "archive": "libucrt",
+    "member": "expf.obj",
+    "line": 3993
+  },
+  {
+    "archive": "libucrt",
+    "member": "log10f.obj",
+    "line": 3995
+  },
+  {
+    "archive": "libucrt",
+    "member": "logf.obj",
+    "line": 3997
+  },
+  {
+    "archive": "libucrt",
+    "member": "powf.obj",
+    "line": 3999
+  },
+  {
+    "archive": "libucrt",
+    "member": "sqrtf.obj",
+    "line": 4000
+  },
+  {
+    "archive": "libucrt",
+    "member": "nanf.obj",
+    "line": 4001
+  },
+  {
+    "archive": "libucrt",
+    "member": "unlink.obj",
+    "line": 4002
+  },
+  {
+    "archive": "libucrt",
+    "member": "rand_s.obj",
+    "line": 4003
+  },
+  {
+    "archive": "libucrt",
+    "member": "localtime.obj",
+    "line": 4004
+  },
+  {
+    "archive": "libucrt",
+    "member": "mktime.obj",
+    "line": 4005
+  },
+  {
+    "archive": "libucrt",
+    "member": "msize.obj",
+    "line": 4007
+  },
+  {
+    "archive": "libucrt",
+    "member": "fgetpos.obj",
+    "line": 4009
+  },
+  {
+    "archive": "libucrt",
+    "member": "fputc.obj",
+    "line": 4010
+  },
+  {
+    "archive": "libucrt",
+    "member": "fsetpos.obj",
+    "line": 4012
+  },
+  {
+    "archive": "libucrt",
+    "member": "setvbuf.obj",
+    "line": 4013
+  },
+  {
+    "archive": "libucrt",
+    "member": "input.obj",
+    "line": 4014
+  },
+  {
+    "archive": "libucrt",
+    "member": "exception_filter.obj",
+    "line": 4047
+  },
+  {
+    "archive": "libucrt",
+    "member": "report_runtime_error.obj",
+    "line": 4048
+  },
+  {
+    "archive": "libucrt",
+    "member": "matherr.obj",
+    "line": 4050
+  },
+  {
+    "archive": "libucrt",
+    "member": "argv_parsing.obj",
+    "line": 4054
+  },
+  {
+    "archive": "libucrt",
+    "member": "environment_initialization.obj",
+    "line": 4056
+  },
+  {
+    "archive": "libucrt",
+    "member": "argv_winmain.obj",
+    "line": 4060
+  },
+  {
+    "archive": "libucrt",
+    "member": "initterm.obj",
+    "line": 4061
+  },
+  {
+    "archive": "libucrt",
+    "member": "exit.obj",
+    "line": 4063
+  },
+  {
+    "archive": "libucrt",
+    "member": "setmode.obj",
+    "line": 4069
+  },
+  {
+    "archive": "libucrt",
+    "member": "wsetlocale.obj",
+    "line": 4072
+  },
+  {
+    "archive": "libucrt",
+    "member": "new_mode.obj",
+    "line": 4081
+  },
+  {
+    "archive": "libucrt",
+    "member": "ncommode.obj",
+    "line": 4083
+  },
+  {
+    "archive": "libucrt",
+    "member": "new_handler.obj",
+    "line": 4084
+  },
+  {
+    "archive": "libucrt",
+    "member": "onexit.obj",
+    "line": 4089
+  },
+  {
+    "archive": "libucrt",
+    "member": "initialization.obj",
+    "line": 4093
+  },
+  {
+    "archive": "libucrt",
+    "member": "abort.obj",
+    "line": 4095
+  },
+  {
+    "archive": "libucrt",
+    "member": "initctype.obj",
+    "line": 4096
+  },
+  {
+    "archive": "libucrt",
+    "member": "locks.obj",
+    "line": 4099
+  },
+  {
+    "archive": "libucrt",
+    "member": "setlocale.obj",
+    "line": 4105
+  },
+  {
+    "archive": "libucrt",
+    "member": "ctype.obj",
+    "line": 4106
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcsdup.obj",
+    "line": 4107
+  },
+  {
+    "archive": "libucrt",
+    "member": "strncnt.obj",
+    "line": 4108
+  },
+  {
+    "archive": "libucrt",
+    "member": "strcpy_s.obj",
+    "line": 4109
+  },
+  {
+    "archive": "libucrt",
+    "member": "towlower.obj",
+    "line": 4110
+  },
+  {
+    "archive": "libucrt",
+    "member": "per_thread_data.obj",
+    "line": 4111
+  },
+  {
+    "archive": "libucrt",
+    "member": "locale_update.obj",
+    "line": 4118
+  },
+  {
+    "archive": "libucrt",
+    "member": "_test.obj",
+    "line": 4122
+  },
+  {
+    "archive": "libucrt",
+    "member": "calloc_base.obj",
+    "line": 4125
+  },
+  {
+    "archive": "libucrt",
+    "member": "free_base.obj",
+    "line": 4126
+  },
+  {
+    "archive": "libucrt",
+    "member": "winapi_thunks.obj",
+    "line": 4127
+  },
+  {
+    "archive": "libucrt",
+    "member": "win_policies.obj",
+    "line": 4152
+  },
+  {
+    "archive": "libucrt",
+    "member": "closeall.obj",
+    "line": 4154
+  },
+  {
+    "archive": "libucrt",
+    "member": "_freebuf.obj",
+    "line": 4155
+  },
+  {
+    "archive": "libucrt",
+    "member": "ioinit.obj",
+    "line": 4156
+  },
+  {
+    "archive": "libucrt",
+    "member": "stream.obj",
+    "line": 4158
+  },
+  {
+    "archive": "libucrt",
+    "member": "openfile.obj",
+    "line": 4160
+  },
+  {
+    "archive": "libucrt",
+    "member": "malloc_base.obj",
+    "line": 4162
+  },
+  {
+    "archive": "libucrt",
+    "member": "cvt.obj",
+    "line": 4163
+  },
+  {
+    "archive": "libucrt",
+    "member": "wctomb.obj",
+    "line": 4164
+  },
+  {
+    "archive": "libucrt",
+    "member": "mbtowc.obj",
+    "line": 4165
+  },
+  {
+    "archive": "libucrt",
+    "member": "mbrtoc32.obj",
+    "line": 4167
+  },
+  {
+    "archive": "libucrt",
+    "member": "c16rtomb.obj",
+    "line": 4169
+  },
+  {
+    "archive": "libucrt",
+    "member": "mbrtowc.obj",
+    "line": 4170
+  },
+  {
+    "archive": "libucrt",
+    "member": "fileno.obj",
+    "line": 4172
+  },
+  {
+    "archive": "libucrt",
+    "member": "printf_count_output.obj",
+    "line": 4173
+  },
+  {
+    "archive": "libucrt",
+    "member": "_sftbuf.obj",
+    "line": 4174
+  },
+  {
+    "archive": "libucrt",
+    "member": "commit.obj",
+    "line": 4177
+  },
+  {
+    "archive": "libucrt",
+    "member": "write.obj",
+    "line": 4178
+  },
+  {
+    "archive": "libucrt",
+    "member": "iswctype.obj",
+    "line": 4181
+  },
+  {
+    "archive": "libucrt",
+    "member": "isctype.obj",
+    "line": 4182
+  },
+  {
+    "archive": "libucrt",
+    "member": "fegetround.obj",
+    "line": 4183
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcscpy_s.obj",
+    "line": 4184
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcsnicol.obj",
+    "line": 4185
+  },
+  {
+    "archive": "libucrt",
+    "member": "strnicol.obj",
+    "line": 4186
+  },
+  {
+    "archive": "libucrt",
+    "member": "read.obj",
+    "line": 4187
+  },
+  {
+    "archive": "libucrt",
+    "member": "_filbuf.obj",
+    "line": 4189
+  },
+  {
+    "archive": "libucrt",
+    "member": "lseek.obj",
+    "line": 4190
+  },
+  {
+    "archive": "libucrt",
+    "member": "lcmapstringa.obj",
+    "line": 4194
+  },
+  {
+    "archive": "libucrt",
+    "member": "strnicmp.obj",
+    "line": 4195
+  },
+  {
+    "archive": "libucrt",
+    "member": "getcwd.obj",
+    "line": 4197
+  },
+  {
+    "archive": "libucrt",
+    "member": "multibytetowidechar.obj",
+    "line": 4198
+  },
+  {
+    "archive": "libucrt",
+    "member": "widechartomultibyte.obj",
+    "line": 4199
+  },
+  {
+    "archive": "libucrt",
+    "member": "math_err.obj",
+    "line": 4201
+  },
+  {
+    "archive": "libucrt",
+    "member": "fma3_available.obj",
+    "line": 4207
+  },
+  {
+    "archive": "libucrt",
+    "member": "_flsbuf.obj",
+    "line": 4208
+  },
+  {
+    "archive": "libucrt",
+    "member": "_getbuf.obj",
+    "line": 4209
+  },
+  {
+    "archive": "libucrt",
+    "member": "fpexcept.obj",
+    "line": 4210
+  },
+  {
+    "archive": "libucrt",
+    "member": "libm_error.obj",
+    "line": 4215
+  },
+  {
+    "archive": "libucrt",
+    "member": "floorceil_sse41.obj",
+    "line": 4219
+  },
+  {
+    "archive": "libucrt",
+    "member": "realloc_base.obj",
+    "line": 4224
+  },
+  {
+    "archive": "libucrt",
+    "member": "checkcfg.obj",
+    "line": 4225
+  },
+  {
+    "archive": "libucrt",
+    "member": "fpctrl.obj",
+    "line": 4226
+  },
+  {
+    "archive": "libucrt",
+    "member": "_unscale.obj",
+    "line": 4234
+  },
+  {
+    "archive": "libucrt",
+    "member": "fma_bwr.obj",
+    "line": 4235
+  },
+  {
+    "archive": "libucrt",
+    "member": "remainder_piby2_forasm.obj",
+    "line": 4237
+  },
+  {
+    "archive": "libucrt",
+    "member": "remainder_piby2_forfma3.obj",
+    "line": 4238
+  },
+  {
+    "archive": "libucrt",
+    "member": "sincos_special.obj",
+    "line": 4240
+  },
+  {
+    "archive": "libucrt",
+    "member": "log_special.obj",
+    "line": 4243
+  },
+  {
+    "archive": "libucrt",
+    "member": "exp_special.obj",
+    "line": 4248
+  },
+  {
+    "archive": "libucrt",
+    "member": "pow_special.obj",
+    "line": 4250
+  },
+  {
+    "archive": "libucrt",
+    "member": "timeset.obj",
+    "line": 4251
+  },
+  {
+    "archive": "libucrt",
+    "member": "tzset.obj",
+    "line": 4260
+  },
+  {
+    "archive": "libucrt",
+    "member": "drive.obj",
+    "line": 4262
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcspbrk.obj",
+    "line": 4263
+  },
+  {
+    "archive": "libucrt",
+    "member": "open.obj",
+    "line": 4264
+  },
+  {
+    "archive": "libucrt",
+    "member": "heap_handle.obj",
+    "line": 4268
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcscat_s.obj",
+    "line": 4272
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcsncpy_s.obj",
+    "line": 4273
+  },
+  {
+    "archive": "libucrt",
+    "member": "argv_wildcards.obj",
+    "line": 4274
+  },
+  {
+    "archive": "libucrt",
+    "member": "getmodulefilenamea.obj",
+    "line": 4276
+  },
+  {
+    "archive": "libucrt",
+    "member": "mbctype.obj",
+    "line": 4277
+  },
+  {
+    "archive": "libucrt",
+    "member": "ismbbyte.obj",
+    "line": 4280
+  },
+  {
+    "archive": "libucrt",
+    "member": "get_environment_from_os.obj",
+    "line": 4282
+  },
+  {
+    "archive": "libucrt",
+    "member": "setenv.obj",
+    "line": 4284
+  },
+  {
+    "archive": "libucrt",
+    "member": "peb_access.obj",
+    "line": 4286
+  },
+  {
+    "archive": "libucrt",
+    "member": "txtmode.obj",
+    "line": 4288
+  },
+  {
+    "archive": "libucrt",
+    "member": "initmon.obj",
+    "line": 4289
+  },
+  {
+    "archive": "libucrt",
+    "member": "initnum.obj",
+    "line": 4291
+  },
+  {
+    "archive": "libucrt",
+    "member": "inittime.obj",
+    "line": 4293
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcsncat_s.obj",
+    "line": 4295
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcscspn.obj",
+    "line": 4296
+  },
+  {
+    "archive": "libucrt",
+    "member": "getstringtypea.obj",
+    "line": 4297
+  },
+  {
+    "archive": "libucrt",
+    "member": "locale_refcounting.obj",
+    "line": 4298
+  },
+  {
+    "archive": "libucrt",
+    "member": "get_qualified_locale.obj",
+    "line": 4306
+  },
+  {
+    "archive": "libucrt",
+    "member": "getqloc_downlevel.obj",
+    "line": 4307
+  },
+  {
+    "archive": "libucrt",
+    "member": "recalloc.obj",
+    "line": 4308
+  },
+  {
+    "archive": "libucrt",
+    "member": "shared_initialization.obj",
+    "line": 4310
+  },
+  {
+    "archive": "libucrt",
+    "member": "signal.obj",
+    "line": 4312
+  },
+  {
+    "archive": "libucrt",
+    "member": "getlocaleinfoa.obj",
+    "line": 4315
+  },
+  {
+    "archive": "libucrt",
+    "member": "mbstowcs.obj",
+    "line": 4316
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcstombs.obj",
+    "line": 4317
+  },
+  {
+    "archive": "libucrt",
+    "member": "lcmapstringw.obj",
+    "line": 4318
+  },
+  {
+    "archive": "libucrt",
+    "member": "lcidtoname_downlevel.obj",
+    "line": 4319
+  },
+  {
+    "archive": "libucrt",
+    "member": "_fptostr.obj",
+    "line": 4321
+  },
+  {
+    "archive": "libucrt",
+    "member": "cfout.obj",
+    "line": 4322
+  },
+  {
+    "archive": "libucrt",
+    "member": "c32rtomb.obj",
+    "line": 4323
+  },
+  {
+    "archive": "libucrt",
+    "member": "common_utf8.obj",
+    "line": 4324
+  },
+  {
+    "archive": "libucrt",
+    "member": "isatty.obj",
+    "line": 4326
+  },
+  {
+    "archive": "libucrt",
+    "member": "putwch.obj",
+    "line": 4327
+  },
+  {
+    "archive": "libucrt",
+    "member": "getstringtypew.obj",
+    "line": 4328
+  },
+  {
+    "archive": "libucrt",
+    "member": "_fenvutils.obj",
+    "line": 4329
+  },
+  {
+    "archive": "libucrt",
+    "member": "comparestringw.obj",
+    "line": 4335
+  },
+  {
+    "archive": "libucrt",
+    "member": "comparestringa.obj",
+    "line": 4336
+  },
+  {
+    "archive": "libucrt",
+    "member": "fegetexceptflag.obj",
+    "line": 4337
+  },
+  {
+    "archive": "libucrt",
+    "member": "fesetexceptflag.obj",
+    "line": 4338
+  },
+  {
+    "archive": "libucrt",
+    "member": "_norm.obj",
+    "line": 4339
+  },
+  {
+    "archive": "libucrt",
+    "member": "chsize.obj",
+    "line": 4341
+  },
+  {
+    "archive": "libucrt",
+    "member": "strncpy_s.obj",
+    "line": 4343
+  },
+  {
+    "archive": "libucrt",
+    "member": "strpbrk.obj",
+    "line": 4344
+  },
+  {
+    "archive": "libucrt",
+    "member": "mbsdec.obj",
+    "line": 4345
+  },
+  {
+    "archive": "libucrt",
+    "member": "setenvironmentvariablea.obj",
+    "line": 4347
+  },
+  {
+    "archive": "libucrt",
+    "member": "xtoa.obj",
+    "line": 4348
+  },
+  {
+    "archive": "libucrt",
+    "member": "wcrtomb.obj",
+    "line": 4349
+  },
+  {
+    "archive": "libucrt",
+    "member": "contrlfp.obj",
+    "line": 4350
+  },
+  {
+    "archive": "libucrt",
+    "member": "fegetenv.obj",
+    "line": 4351
+  },
+  {
+    "archive": "libucrt",
+    "member": "fesetenv.obj",
+    "line": 4352
+  },
+  {
+    "archive": "libucrt",
+    "member": "feholdexcept.obj",
+    "line": 4353
+  },
+  {
+    "archive": "libucrt",
+    "member": "initcon.obj",
+    "line": 4354
+  },
+  {
+    "archive": "libucrt",
+    "member": "fetestexcept.obj",
+    "line": 4357
+  },
+  {
+    "archive": "libucrt",
+    "member": "ieee.obj",
+    "line": 4358
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "pesect.obj",
+    "line": 4362
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "gshandlerseh.obj",
+    "line": 4365
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "gshandlereh.obj",
+    "line": 4366
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "chandler_noexcept.obj",
+    "line": 4367
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "jmpuwind.obj",
+    "line": 4368
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "wcschr.obj",
+    "line": 4369
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "guard_dispatch.obj",
+    "line": 4370
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "guard_xfg_dispatch.obj",
+    "line": 4371
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "setjmp.obj",
+    "line": 4372
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "longjmp.obj",
+    "line": 4374
+  },
+  {
+    "archive": "libucrt",
+    "member": "dispatchcfg.obj",
+    "line": 4375
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "memchr.obj",
+    "line": 4377
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "memcmp.obj",
+    "line": 4378
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "memcpy.obj",
+    "line": 4379
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "memset.obj",
+    "line": 4383
+  },
+  {
+    "archive": "libucrt",
+    "member": "strncmp.obj",
+    "line": 4385
+  },
+  {
+    "archive": "libucrt",
+    "member": "strncpy.obj",
+    "line": 4386
+  },
+  {
+    "archive": "libucrt",
+    "member": "strcmp.obj",
+    "line": 4387
+  },
+  {
+    "archive": "libucrt",
+    "member": "strcat.obj",
+    "line": 4388
+  },
+  {
+    "archive": "libucrt",
+    "member": "strlen.obj",
+    "line": 4391
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "softmemtag.obj",
+    "line": 4717
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "initializers.obj",
+    "line": 4718
+  },
+  {
+    "archive": "libucrt",
+    "member": "stdio_initializer.obj",
+    "line": 4721
+  },
+  {
+    "archive": "libucrt",
+    "member": "fma3_initializer.obj",
+    "line": 4722
+  },
+  {
+    "archive": "libucrt",
+    "member": "timeset_initializer.obj",
+    "line": 4723
+  },
+  {
+    "archive": "libucrt",
+    "member": "multibyte_initializer.obj",
+    "line": 4724
+  },
+  {
+    "archive": "libucrt",
+    "member": "fmode_initializer.obj",
+    "line": 4725
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "tlssup.obj",
+    "line": 4727
+  },
+  {
+    "archive": "libucrt",
+    "member": "locale_initializer.obj",
+    "line": 4730
+  },
+  {
+    "archive": "libucrt",
+    "member": "console_output_initializer.obj",
+    "line": 4731
+  },
+  {
+    "archive": "uuid",
+    "member": "unknwn_i.obj",
+    "line": 7347
+  },
+  {
+    "archive": "uuid",
+    "member": "shguids.obj",
+    "line": 7348
+  },
+  {
+    "archive": "uuid",
+    "member": "uiautomationcore_i.obj",
+    "line": 7350
+  },
+  {
+    "archive": "exr_vendor_tiff",
+    "member": "tif_fax3sm.c.obj",
+    "line": 11405
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "common_data.c.obj",
+    "line": 11986
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "scan.c.obj",
+    "line": 11995
+  },
+  {
+    "archive": "exr_vendor_aom",
+    "member": "txb_common.c.obj",
+    "line": 11996
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "type1.c.obj",
+    "line": 12558
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "cff.c.obj",
+    "line": 12613
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "type1cid.c.obj",
+    "line": 12619
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "hvf.c.obj",
+    "line": 12643
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "pfr.c.obj",
+    "line": 12645
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "type42.c.obj",
+    "line": 12650
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "winfnt.c.obj",
+    "line": 12654
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "pcf.c.obj",
+    "line": 12658
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "bdf.c.obj",
+    "line": 12678
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "psaux.c.obj",
+    "line": 12767
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "psnames.c.obj",
+    "line": 12835
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "sfnt.c.obj",
+    "line": 12844
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "smooth.c.obj",
+    "line": 12857
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "raster.c.obj",
+    "line": 12860
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "sdf.c.obj",
+    "line": 12863
+  },
+  {
+    "archive": "exr_vendor_freetype",
+    "member": "svg.c.obj",
+    "line": 12873
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "std_nothrow.obj",
+    "line": 15425
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "undname.obj",
+    "line": 15533
+  },
+  {
+    "archive": "libucrt",
+    "member": "nlsdata.obj",
+    "line": 15737
+  },
+  {
+    "archive": "libucrt",
+    "member": "exp_data.obj",
+    "line": 15869
+  },
+  {
+    "archive": "libucrt",
+    "member": "pow_log_data.obj",
+    "line": 15870
+  },
+  {
+    "archive": "libucrt",
+    "member": "_values.obj",
+    "line": 15873
+  },
+  {
+    "archive": "libucrt",
+    "member": "lsincos_array.obj",
+    "line": 15874
+  },
+  {
+    "archive": "libucrt",
+    "member": "log_256_lead_tail_table.obj",
+    "line": 15876
+  },
+  {
+    "archive": "libucrt",
+    "member": "log_f_inv_qword_table.obj",
+    "line": 15878
+  },
+  {
+    "archive": "libucrt",
+    "member": "log10_256_lead_tail_table.obj",
+    "line": 15881
+  },
+  {
+    "archive": "libucrt",
+    "member": "days.obj",
+    "line": 15883
+  },
+  {
+    "archive": "libucrt",
+    "member": "two_to_jby64_table.obj",
+    "line": 15885
+  },
+  {
+    "archive": "libucrt",
+    "member": "two_to_jby64_head_tail_table.obj",
+    "line": 15886
+  },
+  {
+    "archive": "libucrt",
+    "member": "log10_128_lead_tail_table.obj",
+    "line": 15889
+  },
+  {
+    "archive": "libucrt",
+    "member": "log_f_inv_dword_table.obj",
+    "line": 15891
+  },
+  {
+    "archive": "libucrt",
+    "member": "log_128_lead_tail_table.obj",
+    "line": 15892
+  },
+  {
+    "archive": "libucrt",
+    "member": "l2_by_pi_bits.obj",
+    "line": 16381
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "loadcfg.obj",
+    "line": 16386
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "cpu.c.obj",
+    "line": 16603
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "gs_cookie.obj",
+    "line": 16614
+  },
+  {
+    "archive": "LIBCMT",
+    "member": "fltused.obj",
+    "line": 16616
+  },
+  {
+    "archive": "libucrt",
+    "member": "localeconv.obj",
+    "line": 16629
+  },
+  {
+    "archive": "libucrt",
+    "member": "glstatus.obj",
+    "line": 16641
+  },
+  {
+    "archive": "libcpmt",
+    "member": "locale.obj",
+    "line": 16717
+  },
+  {
+    "archive": "libcpmt",
+    "member": "wlocale.obj",
+    "line": 16728
+  },
+  {
+    "archive": "libcpmt",
+    "member": "xlocale.obj",
+    "line": 16750
+  },
+  {
+    "archive": "libvcruntime",
+    "member": "purevirt_data.obj",
+    "line": 16759
+  },
+  {
+    "archive": "libucrt",
+    "member": "umask.obj",
+    "line": 16795
+  },
+  {
+    "archive": "exr_vendor_webp",
+    "member": "palette.c.obj",
+    "line": 27146
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "properties.c.obj",
+    "line": 27345
+  },
+  {
+    "archive": "exr_vendor_avif",
+    "member": "colrconvert.c.obj",
+    "line": 27357
+  },
+  {
+    "archive": "libcpmt",
+    "member": "xstoul.obj",
+    "line": 33344
+  },
+  {
+    "archive": "libcpmt",
+    "member": "xstoull.obj",
+    "line": 33346
+  }
+]

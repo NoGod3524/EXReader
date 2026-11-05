@@ -1,0 +1,49 @@
+name: F08 full GTK product package for causal measurement
+on:
+  push:
+    branches: [codex/dot-f08-linux-package-20261031]
+permissions:
+  contents: read
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+jobs:
+  package:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install the fixed full product toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev libglib2.0-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build xvfb openbox xdotool xclip x11-utils dbus dbus-x11 at-spi2-core gsettings-desktop-schemas
+      - name: Build the identical full source and original corpus without waiting for the long sampling cohort
+        run: |
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0,"tests/reader_f08_linux_product_20261031")
+          import run as R
+          R.FILES.add(".github/workflows/dot-f08-linux-package-20261031.yml")
+          R.need(set(R.command(["git","diff","--name-only","2bd45f2f764b4cba33037d3366baea3adee1086b","HEAD"],text=True).splitlines())==
+                 {".github/workflows/dot-f08-linux-package-20261031.yml"},"workflow-only package lane")
+          R.build()
+          PY
+      - name: Seal full compiler identity, exact payload and original seed
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0,"tests/reader_f08_linux_product_20261031")
+          import run as R
+          R.FILES.add(".github/workflows/dot-f08-linux-package-20261031.yml")
+          R.seal()
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-linux-product-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-linux-product/evidence/
+          include-hidden-files: true
+          if-no-files-found: error

@@ -1,0 +1,100 @@
+{
+  "schema": 2,
+  "sdk_version": "3.42.0",
+  "runner": "macos-15",
+  "real_sdk_sources": 2202,
+  "targets": [
+    "macos",
+    "iphone",
+    "ipad"
+  ],
+  "selection": "One recorded native macOS runner, or the latest available matching iPhone/iPad simulator on that runner; the concrete destination and runtime are retained.",
+  "configuration": {
+    "generator": "tests/reader_team24_apple/make_project.rb",
+    "mode": "wave3",
+    "page_theme": true,
+    "iterations": 5,
+    "forward_scrolls_per_iteration": 10,
+    "return_scrolls_outside_measurement": 10,
+    "build_configuration": "Release",
+    "swift_optimization": "-O",
+    "debugger_enabled": false,
+    "code_coverage_enabled": false,
+    "sanitizers_enabled": false,
+    "main_thread_checker_enabled": false,
+    "only_active_architecture": true,
+    "native_review_observer": "EXR_APPLE_F08_REVIEW (MetricKit extended launch plus read-only bitmap identity)",
+    "developer_dir": "Runner default; the actual xcodebuild version and SDK paths are retained. Original successful ea3875a used Xcode 16.4; explicit Xcode26.2 diagnostics remain preserved.",
+    "diagnostic_job_timeout_minutes": 20,
+    "additional_native_shelf_animation_cohort": {
+      "iterations": 5,
+      "forward_scrolls_per_iteration": 10,
+      "return_scrolls_outside_measurement": 10,
+      "interval": "Existing ScrollView native interacting/decelerating/animating until idle; tracking-only and idle time excluded; no animation or visible view is created.",
+      "initial_state": "Fresh app process and exact frozen 2202 library copy before measurement; original test08 is unchanged and separate."
+    },
+    "push_collection": "Full original seven cases, unchanged original test08, and additive measurement groups in the original 90-minute native channel.",
+    "preserved_diagnostic_configuration_deviations": [
+      {
+        "source_sha": "9bb71b2f19eb0195b4aa701d69f03912a37c3946",
+        "run_id": 41243202901,
+        "native_job_timeout_minutes": 25,
+        "classification": "Retained diagnostic configuration deviation; subsequent diagnostics return to 20 minutes."
+      }
+    ],
+    "collection_group_limits": "Original full native job: 90 minutes; full scroll cohorts: 1200 seconds per group. Diagnostic native job: 20 minutes; additive groups: 480 seconds. A collection timeout remains a failed observation, requests native cancellation, and is retained in command metadata."
+  },
+  "budgets": {
+    "animation_hitch_time_ratio_ms_per_s": 10,
+    "first_interactive_ms": 2000,
+    "process_peak_rss_bytes": 536870912
+  },
+  "budget_basis": "Limits are declared before measurement. Numeric evaluation requires verified native metric units and positive frame coverage.",
+  "limits": [
+    "Original seven shelf UI cases remain unchanged and are executed separately.",
+    "XCTest animation aggregates do not provide a per-frame P95/P99 distribution.",
+    "Simulator and hosted macOS results are tied to the recorded runner and device profile.",
+    "The frozen 2202 short TXT originals cannot prove long-document page turns. The separate long-reader diagnostic does not close frozen-cohort coverage.",
+    "A diagnostic run omits the full seven-case traversal and original scroll cohort, records collection_complete=false, and cannot accept F08.",
+    "The original test08 scrolling body remains unchanged. The independent test14 repeats its gesture cohort with native animation signposts; missing hitch metrics or zero native frames remain missing coverage."
+  ],
+  "f08_accepted": false,
+  "previous_debug_run": {
+    "source_sha": "edc5da8e624b1ad96ba3787d5665edfbcd41f046",
+    "run_id": 41183331986,
+    "classification": "preserved functional and diagnostic evidence; does not prove Release performance"
+  },
+  "launch": {
+    "iterations": 5,
+    "cold_process": true,
+    "fresh_2202_library_copy_each_iteration": true,
+    "native_extended_metric": "iOS/iPadOS only: XCTApplicationLaunchMetric(waitUntilResponsive:false) with MXMetricManager extended shelf task. The actual frozen Xcode16.4 SDK marks these MetricKit launch APIs unavailable on macOS.",
+    "semantic_end": "empty-query, generation-current, nonloading shelf with restored top and visible keys unchanged for 350ms; native search control verified enabled and hittable by XCTest",
+    "native_responsive_metric": "iOS/iPadOS only: XCTApplicationLaunchMetric(waitUntilResponsive:true). macOS records Clock plus native stable-layout readiness and its launch-request upper bound separately.",
+    "clock_upper_bound": "XCTClockMetric includes launch call, XCTest quiescence, native shelf verification and AX polling; no subtraction",
+    "phase_observations": "Read-only in-memory uptime phases, including host view/model construction; detailed arrays enter the accessibility view only after the native endpoint or a native API failure.",
+    "observer_control": "Separate native responsive-launch case with identical image, SDK, 2202 library and native metric, omitting MX extended task calls; phase-only observer retained.",
+    "native_layout_upper_bound": "Both processes record ProcessInfo.systemUptime, with the same system-boot origin. Start is immediately before the test driver launch request; end is the app native stable-layout callback. This excludes later AX polling by choosing the actual native endpoint, with no subtraction. An upper bound over budget alone does not prove the product exceeds it."
+  },
+  "reader": {
+    "frozen_cohort": "Book 0201 real stored TXT, font bitmap change and independently resolved same-page Offline search",
+    "long_diagnostic": "2202 frozen originals plus the existing Sample.epub imported through the actual product; never counts as frozen-cohort acceptance",
+    "long_diagnostic_actions": [
+      "next page with distinct location and bitmap",
+      "font increase/decrease",
+      "C00P040W00 exact search and explicit user jump"
+    ],
+    "native_hitches": "XCTHitchMetric requested only with compiler 6.2+ and OS26+; configured metric types/runtime retained. No emitted data remains missing.",
+    "body_scroll": "paged bitmap reader has no body scrolling UI",
+    "observation_transport": "The existing 200-unicode-scalar shelf accessibility chunk transport is reused under reader.f08; the normal Image path and reader.page location value are retained."
+  },
+  "native_api_references": [
+    "https://developer.apple.com/documentation/xctest/xctapplicationlaunchmetric/init(waituntilresponsive:)",
+    "https://developer.apple.com/documentation/metrickit/mxmetricmanager/extendlaunchmeasurement(fortaskid:)",
+    "https://developer.apple.com/documentation/metrickit/mxmetricmanager/finishextendedlaunchmeasurement(fortaskid:)",
+    "https://developer.apple.com/documentation/metrickit/mxlaunchtaskid/init(rawvalue:)",
+    "https://developer.apple.com/documentation/foundation/processinfo/systemuptime",
+    "https://developer.apple.com/videos/play/wwdc2020/10077/",
+    "https://developer.apple.com/documentation/swiftui/view/onscrollphasechange(_:)"
+  ]
+}

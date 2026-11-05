@@ -1,0 +1,16 @@
+name: Prepared independent auditors syntax only
+on:
+  push:
+    branches: [codex/handoff-evidence-resume-20261029]
+    paths: ['tools/reader_composition/closure_*_independent.py', '.github/workflows/closure-final-independent-20261029.yml']
+permissions: {contents: read}
+jobs:
+  syntax-only-no-product-acceptance:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Check auditor syntax only; acceptance remains pending exact repair source
+        run: python3 -m py_compile tools/reader_composition/closure_*_independent.py

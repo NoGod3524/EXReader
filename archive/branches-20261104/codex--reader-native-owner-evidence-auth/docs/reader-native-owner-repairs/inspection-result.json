@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "accepted": true,
+  "runtime_authentication_only": true,
+  "producer_source_sha": "4bdf59ade3389b9a3e454511f6a30de7d0ddc112",
+  "producer_run_id": 40245803457,
+  "producer_attempt": 1,
+  "original_run_conclusion": "failure",
+  "original_authentication_job_id": 121330899113,
+  "original_authentication_conclusion": "failure",
+  "original_history_accepted": false,
+  "original_same_run_success_granted": false,
+  "inspection": {
+    "source_sha": "27dbaad95f20dee50219d3835eb3fbc31a77def6",
+    "run_id": 40273450356,
+    "attempt": 1,
+    "job_id": 121411078942,
+    "conclusion": "success",
+    "python_version": "3.12.15",
+    "workflow": ".github/workflows/reader-native-owner-evidence-auth.yml",
+    "environment_identity_rewritten": false,
+    "runtime_source_unchanged": true,
+    "build_or_gui_execution": false
+  },
+  "inspection_artifact": {
+    "id": 12629261631,
+    "name": "native-owner-sealed-inspection-40273450356-1",
+    "bytes": 9842,
+    "digest": "sha256:8cb0b45d6f54810167f41a1d0eefb2abae489b39714443ad092c2c1d83fdad60",
+    "expires_at": "2027-01-24T05:17:49Z"
+  },
+  "exact_owner_patch": {
+    "base": "96270a2b478b673eb45b7e2467e2e2acb6b64a88",
+    "source": "4bdf59ade3389b9a3e454511f6a30de7d0ddc112",
+    "file": "owner.diff",
+    "bytes": 12797,
+    "sha256": "faee69bca57635030a20fdba9d704d23d94cdde45f0368116d86f1a3b3fd82e5",
+    "paths": [
+      "apps/reader/desktop/windows_navigation.inc",
+      "apps/reader/desktop/windows_preferences_ui.inc",
+      "apps/reader/desktop/windows_records.inc",
+      "apps/reader/desktop/windows_records_owner.cpp",
+      "apps/reader/desktop/windows_records_owner.h",
+      "apps/reader/desktop/windows_search.inc",
+      "examples/linux/reading_records_ui.inc",
+      "examples/reader.c"
+    ]
+  },
+  "authenticated_scope": {
+    "windows_original_owner_reports": 9,
+    "windows_compact_checks_per_profile": 22,
+    "windows_bulk_checks_per_profile": 21,
+    "windows_actual_mac_receive_and_independent_all11": true,
+    "windows_native_focus_bounds_selection_and_null_proofs": true,
+    "windows_native_refusal_controls": 14,
+    "gtk_original_compact_checks": 45,
+    "gtk_original_d09_environments": 4,
+    "gtk_raw_legacy_owner_kill_mac_and_native_records_focus_proofs": true,
+    "gtk_original_owner_refusal_controls": 7,
+    "producer_identity_refusals": ["head_sha", "run_attempt", "conclusion", "path"],
+    "business_judge_reverse_projections_exact": true,
+    "original_zip_bytes_digests_expiry_reports_and_programs_authenticated": true
+  },
+  "original_gtk_off35_rerun": false,
+  "original_windows_off_f3_atomic13_rerun": false,
+  "dpi_150_200_accepted": false,
+  "screen_reader_accepted": false,
+  "six_platform_accepted": false,
+  "same_source_bidirectional_accepted": false,
+  "complete_product": false
+}

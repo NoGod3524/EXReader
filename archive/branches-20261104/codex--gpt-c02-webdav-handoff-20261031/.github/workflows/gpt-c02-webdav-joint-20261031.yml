@@ -1,0 +1,186 @@
+name: Linux C02 plus managed WebDAV joint candidate
+on:
+  push:
+    branches: [codex/gpt-c02-webdav-joint-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: gpt-c02-webdav-joint
+  cancel-in-progress: false
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+defaults:
+  run:
+    shell: bash
+jobs:
+  admission:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact source, frozen blob, syntax and round admission
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          python3 -m py_compile tests/c02_webdav_joint_20261031/*.py
+          python3 tests/c02_webdav_joint_20261031/guard.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: joint-admission-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c02-webdav-joint/admission.json
+          if-no-files-found: error
+  c02_linux:
+    needs: admission
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Native dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ninja-build libxml2-dev libssl-dev
+      - name: Original C02 native, historical and actual migration assertions
+        run: python tests/c02_webdav_joint_20261031/c02.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: joint-c02-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c02-webdav-joint/*.json
+            build/c02-webdav-joint/*.log
+            build/c02-webdav-joint/derived-*.py
+            build/c02-webdav-joint/native/
+            build/c02-webdav-joint/native-independent/
+            build/c02-webdav-joint/migration/
+            build/c02-webdav-joint/legacy-result.json
+            build/c02-webdav-joint/c02-check/posix-c02-admission-check
+            build/c02-webdav-joint/c02-prefix/bin/
+          include-hidden-files: true
+          if-no-files-found: error
+  gtk:
+    needs: admission
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Native GTK and HTTPS dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ninja-build libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil dbus-x11
+      - name: Exact installed managed GTK plus original C02 retained-borrow checks
+        run: python3 tests/c02_webdav_joint_20261031/build.py gtk
+      - name: Original transport matrix without changed assertions
+        run: python3 tests/gtk_managed_webdav_20261031/matrix.py
+      - name: Original installed GTK scenarios and six cross groups
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+            openbox >build/c02-webdav-joint/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/c02_webdav_joint_20261031/ui.py
+            /usr/bin/python3 tests/c02_webdav_joint_20261031/joint.py
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: joint-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c02-webdav-joint/*.json
+            build/c02-webdav-joint/*.log
+            build/c02-webdav-joint/derived-*.py
+            build/c02-webdav-joint/cross/
+            build/c02-webdav-joint/gtk-original/
+            build/c02-webdav-joint/gtk-native-audit/
+            build/c02-webdav-joint/c02-prefix/bin/
+            build/c02-webdav-joint/c02-owner/exreader-c02-migrate-controls
+            build/gtk-managed/*.json
+            build/gtk-managed/*.log
+            build/gtk-managed/prefix/
+            build/gtk-managed/host/gtk-host/exreader-linux
+            build/gtk-managed/host/gtk-account-host.map
+            build/gtk-managed/host/CMakeCache.txt
+            build/gtk-managed/probes/managed-consumer
+            build/gtk-managed/probes/managed-fault-worker
+            build/gtk-managed/probes/*.map
+            build/gtk-managed/package/
+            build/gtk-managed/matrix/
+            build/gtk-managed/ui/
+            build/gtk-managed/old-webdav-evidence/
+            !build/**/*.key
+          include-hidden-files: true
+          if-no-files-found: error
+  compatibility:
+    name: Legacy ${{ matrix.platform }}
+    needs: admission
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {platform: Windows, os: windows-2022}
+          - {platform: macOS, os: macos-15}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Native build tooling
+        run: |
+          python -m pip install ninja==1.11.1.1
+          if [ "$RUNNER_OS" = macOS ]; then
+            brew install openssl@3
+            echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"
+          fi
+      - name: Original default TLS and asynchronous session consumers
+        run: python tests/c02_webdav_joint_20261031/build.py compat
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: joint-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-managed/*.json
+            build/gtk-managed/*.log
+            build/gtk-managed/legacy/
+            build/gtk-managed/legacy-tls-evidence/
+            build/gtk-managed/legacy-session-evidence/
+            !build/**/*.key
+          include-hidden-files: true
+          if-no-files-found: error
+  audit:
+    needs: [admission, c02_linux, gtk, compatibility]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Authenticate same-run ZIPs, recompute original bytes and negative controls
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: python3 tests/c02_webdav_joint_20261031/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: joint-independent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c02-webdav-joint/independent/
+            build/c02-webdav-joint/audit-*.log
+            build/c02-webdav-joint/native-protocol-source-adaptation.json
+            build/c02-webdav-joint/derived-native-decoder.py
+          include-hidden-files: true
+          if-no-files-found: error

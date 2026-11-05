@@ -1,0 +1,484 @@
+name: Current common source GTK full native acceptance
+on:
+  push:
+    branches: [codex/dot-gtk-common-gate]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  EXR_SDK_VERSION: '3.41.0'
+  EXR_GTK_ANNOTATION_EXPORT: '1'
+  ATSPI_SOURCE: 67e2f8c4941205c5581e82fd5a1469d18f696019
+jobs:
+  gtk:
+    name: Installed five modules and the real GTK host
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Bind current source and freeze SDK and historical tests
+        run: |
+          python3 tests/gtk_common_gate/guard.py
+      - name: Check independent current driver syntax on Actions
+        run: python3 -m py_compile tests/reader_d26_accessibility/*.py
+      - name: Native GTK accessibility and Secret Service dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring \
+            libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor \
+            python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick \
+            python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Install the exact SDK candidate into one stage
+        run: |
+          set -o pipefail
+          mkdir -p build/c10-logs
+          echo "C10_SDK=$PWD/build/reading-library/stage" >> "$GITHUB_ENV"
+          echo "C10_PREFIX=$PWD/build/c10-prefix" >> "$GITHUB_ENV"
+          cmake --preset reading-library 2>&1 | tee build/c10-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/c10-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/c10-logs/sdk-install.log
+      - name: Install every product owner and the five reviewed modules into one prefix
+        run: |
+          set -o pipefail
+          prefix="$C10_PREFIX"
+          sdk="$C10_SDK"
+          logs=build/c10-logs
+          build_module() {
+            name="$1"; source="$2"; shift 2
+            cmake -S "$source" -B "build/c10-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DEXR_SDK_VERSION="$EXR_SDK_VERSION" -DCMAKE_PREFIX_PATH="$prefix;$sdk" \
+              -DCMAKE_INSTALL_PREFIX="$prefix" "$@" 2>&1 | tee "$logs/$name-configure.log"
+            cmake --build "build/c10-$name" --parallel 4 2>&1 | tee "$logs/$name-build.log"
+            cmake --install "build/c10-$name" 2>&1 | tee "$logs/$name-install.log"
+          }
+          cmake -S extras/desktop-drop -B build/c10-drop -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/c10-drop-stage" 2>&1 | tee build/c10-logs/drop-configure.log
+          cmake --build build/c10-drop --parallel 4 2>&1 | tee build/c10-logs/drop-build.log
+          cmake --install build/c10-drop 2>&1 | tee build/c10-logs/drop-install.log
+          build_module product apps/reader/store/native
+          build_module revisions apps/reader/revisions -DREADER_PRODUCT_PREFIX="$prefix"
+          build_module webdav extras/webdav
+          build_module credentials extras/credentials
+          build_module sideload extras/sideload -DEXR_SDK="$sdk"
+          build_module sync apps/reader/sync
+          build_module session apps/reader/session
+          build_module commands apps/reader/commands
+          build_module metadata apps/reader/desktop-metadata
+          build_module reading-state apps/reader/reading-state -DEXR_SDK="$sdk"
+          build_module search apps/reader/search -DEXR_SDK="$sdk"
+          build_module navigation apps/reader/navigation -DEXR_SDK="$sdk"
+          build_module reading-commands apps/reader/reading-commands
+          build_module annotation-view apps/reader/annotation-view
+          build_module annotation-export apps/reader/annotation-export
+          build_module batch-import apps/reader/batch-import -DEXR_SDK="$sdk"
+          build_module preferences apps/reader/preferences
+          build_module font-library apps/reader/font-library -DREADER_FONT_LIBRARY_BUILD=ON -DEXR_SDK="$sdk"
+          build_module original-export apps/reader/original-export -DEXR_SDK="$sdk"
+          build_module jump-history apps/reader/jump-history -DEXR_SDK="$sdk"
+          build_module sync-status-view apps/reader/sync-status-view -DEXR_SDK="$sdk"
+          build_module annotation-import apps/reader/annotation-import -DREADER_ANNOTATION_IMPORT_BUILD=ON
+      - name: Build the non-compact host with the five tools and every reviewed owner
+        run: |
+          set -o pipefail
+          prefix="$C10_PREFIX"; sdk="$C10_SDK"
+          cmake -S apps/reader/desktop -B build/c10-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK_VERSION="$EXR_SDK_VERSION" -DEXR_SDK="$sdk" \
+            -DCMAKE_PREFIX_PATH="$prefix;$sdk" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" \
+            -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" \
+            -DREADER_BATCH_IMPORT_PREFIX="$prefix" -DREADER_PREFERENCES_PREFIX="$prefix" \
+            -DREADER_SEARCH_PREFIX="$prefix" -DREADER_NAVIGATION_PREFIX="$prefix" \
+            -DREADER_READING_RECORDS_PREFIX="$prefix" \
+            -DREADER_DESKTOP_DROP_PREFIX="$PWD/build/c10-drop-stage" \
+            -DREADER_WAVE3_PREFIX="$prefix" \
+            -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DEXR_READER_GTK_SEARCH=ON \
+            -DEXR_READER_GTK_NAVIGATION=ON -DEXR_READER_GTK_READING_RECORDS=ON \
+            -DEXR_READER_GTK_BATCH_IMPORT=ON -DEXR_READER_GTK_DROP_IMPORT=ON \
+            -DEXR_READER_GTK_WAVE3=ON -DEXR_READER_PAGE_BACKGROUND=ON \
+            -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON \
+            2>&1 | tee build/c10-logs/host-configure.log
+          cmake --build build/c10-desktop --parallel 4 2>&1 | tee build/c10-logs/host-build.log
+          ctest --test-dir build/c10-desktop --output-on-failure --no-tests=error --timeout 180 \
+            --output-junit "$PWD/build/c10-logs/desktop-tests.xml" 2>&1 | tee build/c10-logs/host-ctest.log
+          python3 tools/build_linux_host.py --sdk "$sdk" --sdk-version "$EXR_SDK_VERSION" \
+            --binary build/c10-desktop/gtk-host/exreader-linux --output build/c10-package 2>&1 | tee build/c10-logs/package.log
+      - name: Build the compact host the tools live in
+        run: |
+          set -o pipefail
+          prefix="$C10_PREFIX"; sdk="$C10_SDK"
+          cmake -S apps/reader/desktop -B build/c10-compact -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK_VERSION="$EXR_SDK_VERSION" -DEXR_SDK="$sdk" \
+            -DCMAKE_PREFIX_PATH="$prefix;$sdk" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" \
+            -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" \
+            -DREADER_BATCH_IMPORT_PREFIX="$prefix" -DREADER_PREFERENCES_PREFIX="$prefix" \
+            -DREADER_SEARCH_PREFIX="$prefix" -DREADER_NAVIGATION_PREFIX="$prefix" \
+            -DREADER_READING_RECORDS_PREFIX="$prefix" \
+            -DREADER_DESKTOP_DROP_PREFIX="$PWD/build/c10-drop-stage" \
+            -DREADER_WAVE3_PREFIX="$prefix" \
+            -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DEXR_READER_GTK_SEARCH=ON \
+            -DEXR_READER_GTK_NAVIGATION=ON -DEXR_READER_GTK_READING_RECORDS=ON \
+            -DEXR_READER_GTK_BATCH_IMPORT=ON -DEXR_READER_GTK_DROP_IMPORT=ON \
+            -DEXR_READER_GTK_WAVE3=ON -DEXR_READER_GTK_COMPACT=ON -DEXR_READER_PAGE_BACKGROUND=ON \
+            -DEXR_READER_BUILD_GTK=ON \
+            2>&1 | tee build/c10-logs/compact-configure.log
+          cmake --build build/c10-compact --parallel 4 --target exreader-linux 2>&1 | tee build/c10-logs/compact-build.log
+          python3 tools/build_linux_host.py --sdk "$sdk" --sdk-version "$EXR_SDK_VERSION" \
+            --binary build/c10-compact/gtk-host/exreader-linux --output build/c10-compact-package 2>&1 | tee build/c10-logs/compact-package.log
+      - name: Fixtures and the owner level probe of all five tools
+        run: |
+          python3 tests/reader_gtk_compact/make_inputs.py build/compact-fixtures
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-ui-fixtures
+          python3 tests/reader_gtk_drop_import/make_inputs.py tests/fixtures build/c10-drop-fixtures
+          python3 tests/reader_search/make_search_fixtures.py build/gtk-search-fixtures
+          python3 tests/reader_gtk_search/make_inputs.py build/gtk-search-fixtures
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures
+          python3 tests/reader_gtk_navigation/make_inputs.py build/gtk-navigation-fixtures
+          python3 tests/reader_reading_commands/make_fixtures.py build/records-command-fixtures
+          python3 tests/linux_host/generate_fixed.py build/c10-fixed-inputs
+          mkdir -p build/c10-navigation-backend
+          chmod 700 build/c10-navigation-backend
+          build/c10-desktop/reader-gtk-navigation-backend \
+            "$PWD/build/c10-navigation-backend/library.sqlite" \
+            "$PWD/build/c10-package/EXReader-Linux/Reader.otf" \
+            "$PWD/build/gtk-navigation-fixtures" "$PWD/build/c10-fixed-inputs" \
+            2>&1 | tee build/c10-logs/navigation-backend.log
+          mkdir -p build/wave3-backend/a build/wave3-backend/b build/wave3-backend/work
+          chmod 700 build/wave3-backend/a build/wave3-backend/b
+          build/c10-desktop/reader-gtk-wave3-backend \
+            "$PWD/build/wave3-backend/a/library.sqlite" "$PWD/build/wave3-backend/b/library.sqlite" \
+            "$PWD/build/c10-package/EXReader-Linux/Reader.otf" "$PWD/tests/fixtures/fonts" \
+            "$PWD/build/wave3-backend/work" 2>&1 | tee build/c10-logs/wave3-backend.log
+          python3 tests/reader_gtk_drop_import/check_backend.py \
+            --probe build/c10-desktop/reader-gtk-drop-backend \
+            --font build/c10-package/EXReader-Linux/Reader.otf --fixtures build/c10-drop-fixtures \
+            --output build/c10-drop-backend
+      - name: Current complete five-tool user flow with visible chooser interaction
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/c10-logs/d26-tools-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q "Name: Openbox"; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q "Name: Openbox"
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_d26_accessibility/tools_current.py --payload build/c10-compact-package/EXReader-Linux \
+              --book build/wave3-backend/work/history.txt --annotations build/wave3-backend/work/annotations.jsonl \
+              --font tests/fixtures/fonts/primary.ttf --output build/d26-tools-current
+          '
+      - name: Complete corrected current G13 behavior audit (all original intents)
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox >build/c10-logs/d26-g13-current-openbox.log 2>&1 & wm=$!
+            trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q "Name: Openbox"; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q "Name: Openbox"
+            unset NO_AT_BRIDGE || true
+            export GTK_A11Y=atspi
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_d26_accessibility/audit_current.py --payload build/c10-package/EXReader-Linux --output build/d26-g13-current
+          '
+      - name: Require complete current accessibility acceptance and validator mutations
+        if: always()
+        run: |
+          /usr/bin/python3 tests/reader_d26_accessibility/gate_current.py --report build/d26-g13-current/result.json --self-test --require-accepted
+      - name: Account status event and keyboard error recovery
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox >build/c10-logs/d26-account-openbox.log 2>&1 & wm=$!
+            trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q "Name: Openbox"; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q "Name: Openbox"
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_d26_accessibility/account_status.py --payload build/c10-package/EXReader-Linux --output build/d26-account
+          '
+      - name: Preserve exact original-to-current driver diffs
+        if: always()
+        run: python3 tests/reader_d26_accessibility/driver_provenance.py --output build/d26-driver-provenance
+      - name: Bind build handoff for retained native regressions
+        if: always()
+        run: python3 tests/reader_d26_accessibility/build_handoff.py create --root build
+      - name: Preserve current diagnostics and the single compiled build
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-d26-current-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/
+          include-hidden-files: true
+          if-no-files-found: error
+
+  regressions:
+    name: Retained historical audit and native regression on identical build
+    needs: gtk
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore and verify same-source same-run compiled build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_d26_accessibility/build_handoff.py restore --root build
+      - name: Install original native runtime dependencies (no rebuild)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Preserve the original forty-five compact checks with the five tools present
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/c10-logs/compact-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q "Name: Openbox"; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q "Name: Openbox"
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_compact/check_ui.py --payload build/c10-compact-package/EXReader-Linux \
+              --fixtures build/compact-fixtures --output build/c10-compact-ui
+          '
+      - name: Retain historical five-tool outcome without granting current acceptance
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/c10-logs/wave3-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q "Name: Openbox"; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q "Name: Openbox"
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_d26_accessibility/retain_history.py --kind tools --report build/c10-wave3-ui/result.json -- /usr/bin/python3 tests/reader_wave3_c10/check_ui.py --payload build/c10-compact-package/EXReader-Linux \
+              --book build/wave3-backend/work/history.txt --annotations build/wave3-backend/work/annotations.jsonl \
+              --font tests/fixtures/fonts/primary.ttf --output build/c10-wave3-ui
+          '
+      - name: Real G13 ten production fixes on the non-compact host
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/c10-logs/atspi-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q "Name: Openbox"; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q "Name: Openbox"
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_wave3_c10/g13_diagnostic.py --payload build/c10-package/EXReader-Linux \
+              --output build/c10-atspi-fixes
+          '
+      - name: Retained search directory records and import business suites
+        if: ${{ !cancelled() }}
+        run: |
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/d26-retained-batch-inputs
+          python3 tests/reader_gtk_drop_import/make_inputs.py tests/fixtures build/d26-retained-drop-inputs
+          python3 tests/reader_d26_accessibility/fixture_provenance.py
+          mkdir -p build/gtk-atspi-client
+          git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/c10-logs/suites-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q "Name: Openbox"; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q "Name: Openbox"
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            failed=0
+            /usr/bin/python3 tests/reader_gtk_search/check_ui.py --payload build/c10-package/EXReader-Linux \
+              --fixtures build/gtk-search-fixtures --fixed-inputs build/c10-fixed-inputs --output build/c10-search-ui || failed=1
+            /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/c10-package/EXReader-Linux \
+              --fixtures build/gtk-navigation-fixtures --fixed-inputs build/c10-fixed-inputs --output build/c10-navigation-ui || failed=1
+            /usr/bin/python3 tests/reader_gtk_reading_records/check_ui.py --payload build/c10-package/EXReader-Linux \
+              --fixtures build/records-command-fixtures --output build/c10-records-ui \
+              --backend build/c10-desktop/reader-gtk-reading-records-backend || failed=1
+            /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/c10-package/EXReader-Linux \
+              --fixtures build/d26-retained-batch-inputs --output build/c10-batch-ui \
+              --backend build/c10-desktop/reader-gtk-batch-import-backend || failed=1
+            /usr/bin/python3 tests/reader_gtk_drop_import/check_ui.py --payload build/c10-package/EXReader-Linux \
+              --fixtures build/d26-retained-drop-inputs --output build/c10-drop-ui \
+              --backend build/c10-desktop/reader-gtk-drop-backend \
+              --native-source build/c10-desktop/reader-gtk-drop-native-source || failed=1
+            exit "$failed"
+          '
+      - name: Complete unchanged G13 audit on current SDK binding
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox >build/c10-logs/d26-g13-openbox.log 2>&1 & wm=$!
+            trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q "Name: Openbox"; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q "Name: Openbox"
+            unset NO_AT_BRIDGE || true
+            export GTK_A11Y=atspi
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_d26_accessibility/g13_current.py audit --payload build/c10-package/EXReader-Linux --output build/d26-g13
+          '
+      - name: Preserve original G13 gate failure as explicit historical evidence
+        if: always()
+        run: |
+          /usr/bin/python3 tests/reader_d26_accessibility/retain_history.py --kind g13 --report build/d26-g13/result.json -- /usr/bin/python3 tests/reader_d26_accessibility/g13_current.py gate --report build/d26-g13/result.json --self-test
+          /usr/bin/python3 tests/reader_d26_accessibility/retain_history.py --kind g13 --report build/d26-g13/result.json -- /usr/bin/python3 tests/reader_d26_accessibility/g13_current.py gate --report build/d26-g13/result.json --require-accepted
+      - name: Expose original per-check results in Actions logs
+        if: always()
+        run: |
+          cat build/d26-g13/result.json
+          cat build/d26-g13-current/result.json
+          cat build/d26-tools-current/result.json
+      - name: Preserve source bound evidence and both packages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-wave3-c10-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c10-logs/
+            build/d26-g13/
+            build/d26-g13-current/
+            build/d26-tools-current/
+            build/d26-driver-provenance/
+            build/d26-build-handoff.json
+            build/d26-handoff-verified.json
+            build/d26-fixture-provenance.json
+            build/d26-account/
+            build/c10-package/
+            build/c10-compact-package/
+            build/c10-desktop/gtk-host/exreader-linux
+            build/c10-desktop/reader-gtk-wave3-backend
+            build/c10-desktop/reader-gtk-reading-records-backend
+            build/c10-desktop/reader-gtk-batch-import-backend
+            build/c10-desktop/reader-gtk-drop-backend
+            build/c10-desktop/reader-gtk-drop-native-source
+            build/c10-desktop/CMakeCache.txt
+            build/c10-compact/CMakeCache.txt
+            build/c10-desktop/Testing/Temporary/LastTest.log
+            build/c10-logs/desktop-tests.xml
+            build/wave3-backend/
+            build/c10-wave3-ui/
+            build/c10-compact-ui/
+            build/c10-atspi-fixes/
+            build/c10-search-ui/
+            build/c10-navigation-ui/
+            build/c10-records-ui/
+            build/c10-batch-ui/
+            build/c10-drop-ui/
+            build/gtk-common-source.json
+            build/c10-drop-backend/
+            build/c10-drop-fixtures/manifest.json
+            build/c10-navigation-backend/
+            build/gtk-navigation-fixtures/*.cfi
+          if-no-files-found: error
+
+  authenticate:
+    name: Strict current acceptance and explicit historical outcomes
+    needs: [gtk, regressions, retained-account]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download this run's own artifact and authenticate it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          D26_GTK_RESULT: ${{ needs.gtk.result }}
+          D26_REGRESSION_RESULT: ${{ needs.regressions.result }}
+          D26_ACCOUNT_RESULT: ${{ needs['retained-account'].result }}
+        run: |
+          mkdir -p build/c10-artifact
+          artifact_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
+            --jq ".artifacts[] | select(.name == \"reader-wave3-c10-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT\") | .id")
+          test -n "$artifact_id"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > build/c10-original.zip
+          unzip -q build/c10-original.zip -d build/c10-artifact
+          account_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
+            --jq ".artifacts[] | select(.name == \"reader-d26-account-retained-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT\") | .id")
+          test -n "$account_id"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$account_id/zip" > build/d26-account-original.zip
+          unzip -q build/d26-account-original.zip -d build/d26-account-artifact
+          python3 tests/gtk_common_gate/collect.py --artifact build/c10-artifact \
+            --archive build/c10-original.zip --account-artifact build/d26-account-artifact \
+            --account-archive build/d26-account-original.zip --output build/c10-authentication/identity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-d26-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c10-authentication/identity.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-d26-original-zip-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c10-original.zip
+          if-no-files-found: error
+
+  retained-account:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install original GTK account suite dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Unchanged raw legacy owner account HTTPS and reading recovery
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_gtk_raw3/run.py --mode full
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-d26-account-retained-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/gtk-raw3/
+          include-hidden-files: true
+          if-no-files-found: error

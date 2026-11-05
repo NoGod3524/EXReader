@@ -1,0 +1,9 @@
+gradle.beforeProject { project ->
+    if (project.path == ':app') {
+        project.pluginManager.withPlugin('com.android.application') {
+            def candidate = new File(project.rootProject.projectDir, '../../build/android-owner-current/java').canonicalFile
+            if (!candidate.isDirectory()) throw new GradleException('Current owner fixture missing')
+            project.android.sourceSets.androidTest.java.srcDir candidate
+        }
+    }
+}

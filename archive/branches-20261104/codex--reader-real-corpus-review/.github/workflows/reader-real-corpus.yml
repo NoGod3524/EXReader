@@ -1,0 +1,193 @@
+name: Reader real corpus
+
+on:
+  push:
+    branches: [codex/reader-real-corpus, codex/reader-real-corpus-review]
+    paths:
+      - tests/reader_real_corpus/**
+      - .github/workflows/reader-real-corpus.yml
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "pin records byte counts and SHA-256 without running the SDK; accept runs the installed SDK"
+        type: choice
+        options: [accept, pin]
+        default: accept
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: reader-real-corpus
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-22.04
+    outputs:
+      pinned: ${{ steps.check.outputs.pinned }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require frozen SDK and product schema on the review branch
+        if: github.ref_name == 'codex/reader-real-corpus-review'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor c3511a011eefbf1fba1d20908f000cef22b1ced2 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f1e7485f2e67f588c3ff1ca4775eb451507a9ec5 HEAD -- apps/reader/store/001_catalog.sql
+          git diff --name-only f1e7485f2e67f588c3ff1ca4775eb451507a9ec5 HEAD | while IFS= read -r path; do
+            case "$path" in tests/reader_real_corpus/*|.github/workflows/reader-real-corpus.yml|docs/READER-REAL-CORPUS.md|docs/validation/reader-real-corpus.json|docs/READER-REAL-CORPUS-REVIEW.md|docs/validation/reader-real-corpus-review.json) ;; *) echo "Unexpected path: $path"; exit 1;; esac
+          done
+      - name: Check whether every digest is pinned
+        id: check
+        run: |
+          python3 -c "import json; m=json.load(open('tests/reader_real_corpus/manifest.json')); print('pinned=' + ('true' if m['files'] and all(f['source'].get('sha256') for f in m['files']) else 'false'))" >> "$GITHUB_OUTPUT"
+
+  pin:
+    needs: prepare
+    if: github.event_name == 'push' && needs.prepare.outputs.pinned == 'false' || github.event_name == 'workflow_dispatch' && inputs.mode == 'pin'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect pinned sizes and hashes (no SDK)
+        run: python3 tests/reader_real_corpus/run_acceptance.py pin --out build/reader-corpus-pin
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-real-corpus-pin
+          path: |
+            build/reader-corpus-pin/pin.json
+            build/reader-corpus-pin/assets/
+          retention-days: 30
+          if-no-files-found: warn
+
+  protocol:
+    needs: prepare
+    if: needs.prepare.outputs.pinned == 'true' && (github.event_name == 'push' || inputs.mode == 'accept')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Protocol checks (no corpus download, no engine)
+        run: python3 tests/reader_real_corpus/protocol_check.py --manifest tests/reader_real_corpus/manifest.json
+      - name: Diagnose the retained original Windows process query without granting acceptance
+        if: github.ref_name == 'codex/reader-real-corpus-review'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_real_corpus/diagnose_delivery.py
+      - uses: actions/upload-artifact@v4
+        if: always() && github.ref_name == 'codex/reader-real-corpus-review'
+        with:
+          name: reader-corpus-original-query-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-corpus-original-query-diagnostic.json
+
+  acceptance:
+    if: needs.prepare.outputs.pinned == 'true' && (github.event_name == 'push' || inputs.mode == 'accept')
+    needs: [prepare, protocol]
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            python: python
+            font: C:/Windows/Fonts/arial.ttf
+            consumer: build/reader-consumer/Release/exreader-real-corpus-consumer.exe
+          - os: ubuntu-22.04
+            python: python3
+            font: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+            consumer: build/reader-consumer/exreader-real-corpus-consumer
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enter Windows native compiler environment for the reading preset
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Configure the frozen SDK
+        shell: bash
+        run: cmake --preset reading-library -B build/sdk
+      - name: Build and install the frozen SDK
+        shell: bash
+        run: |
+          cmake --build build/sdk --config Release --parallel 4
+          cmake --install build/sdk --config Release --prefix stage
+      - name: Build the consumer against the installed SDK
+        shell: bash
+        run: |
+          cmake -S tests/reader_real_corpus -B build/reader-consumer -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/reader-consumer --config Release --parallel 4
+      - name: Run the real-document acceptance
+        shell: bash
+        run: |
+          ${{ matrix.python }} tests/reader_real_corpus/run_acceptance.py run \
+            --manifest tests/reader_real_corpus/manifest.json \
+            --out build/reader-corpus \
+            --consumer "${{ matrix.consumer }}" \
+            --font "${{ matrix.font }}" \
+            --source-commit "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
+            --attempt "$GITHUB_RUN_ATTEMPT"
+      - name: Boundary fixtures (separate, never counted as real)
+        if: always()
+        shell: bash
+        run: |
+          ${{ matrix.python }} tests/reader_real_corpus/make_boundary.py \
+            --consumer "${{ matrix.consumer }}" \
+            --font "${{ matrix.font }}" \
+            --out build/reader-boundary.json
+      - name: Preserve inputs, outputs and per-operation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-real-corpus-${{ matrix.os }}
+          path: |
+            build/reader-corpus/summary.json
+            build/reader-corpus/downloads.json
+            build/reader-corpus/license-evidence.json
+            build/reader-corpus/assets/
+            build/reader-corpus/licenses/
+            build/reader-corpus/results/
+            build/reader-boundary.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  aggregate:
+    if: always() && needs.acceptance.result != 'skipped'
+    needs: acceptance
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-real-corpus-*
+          path: build/artifacts
+      - name: Strict cross-platform aggregate
+        run: |
+          set -eu
+          win=$(find build/artifacts -path '*windows-latest*/summary.json' -print -quit)
+          linux=$(find build/artifacts -path '*ubuntu-22.04*/summary.json' -print -quit)
+          test -n "$win"
+          test -n "$linux"
+          python3 tests/reader_real_corpus/run_acceptance.py aggregate --summaries "$win" "$linux" --out build/aggregate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-real-corpus-aggregate
+          path: build/aggregate.json
+          retention-days: 30
+          if-no-files-found: warn

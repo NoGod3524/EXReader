@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.16)
+project(f08_desktop_duplication CXX)
+add_executable(f08_duplication probe.cpp)
+target_compile_features(f08_duplication PRIVATE cxx_std_17)
+target_compile_definitions(f08_duplication PRIVATE UNICODE _UNICODE NOMINMAX)
+target_link_libraries(f08_duplication PRIVATE d3d11 dxgi user32 gdi32)

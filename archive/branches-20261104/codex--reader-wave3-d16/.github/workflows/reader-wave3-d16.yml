@@ -1,0 +1,115 @@
+name: Reader wave3 D16 measured Apple large-font driver
+on:
+  push:
+    branches: [codex/reader-wave3-d16]
+    paths: ['tests/reader_wave3_d16/**', '.github/workflows/reader-wave3-d16.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-wave3-d16
+  cancel-in-progress: false
+env:
+  SDK_SHA: edddc463c06ed5731195cdb8f06b2df6dff7699e
+  EXR_APPLE_SDK_VERSION: 3.41.0
+  EXR_APPLE_PAGE_THEME: 'OFF'
+jobs:
+  prior:
+    name: D16 retain original failed D10 full replay
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original D10 ZIPs without granting new-source coverage
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_wave3_d16/verify.py --review-d10-final
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d16-prior-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/prior-verification/
+          retention-days: 30
+          if-no-files-found: error
+  audit:
+    needs: prior
+    name: D16 audit ${{ matrix.platform }}
+    runs-on: macos-15
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        platform: [macos, iphone, ipad]
+    env:
+      TARGET_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard exact owned additions and unchanged original assertion projection
+        run: |
+          git fetch --no-tags origin 7e4fcac25120199dd4818a86039e2257f28132a1
+          python3 tests/reader_wave3_d16/guard.py
+          python3 tests/reader_a11y_apple/a11y_overlap_regression.py --output build/overlap-regression.json
+          python3 tests/reader_wave3_d16/contract.py
+          python3 -m py_compile tests/reader_wave3_d16/*.py
+          bash -n tests/reader_wave3_d16/run.sh
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: target
+      - name: Build exact frozen SDK and same-source product for every target
+        run: |
+          set -euo pipefail
+          git -C target diff --exit-code
+          test "$(git -C target rev-parse HEAD)" = "$GITHUB_SHA"
+          for path in src include cmake CMakeLists.txt bindings; do
+            test "$(git -C target rev-parse HEAD:$path)" = "$(git rev-parse $SDK_SHA:$path)"
+          done
+          target=iphonesimulator
+          options=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          if [ '${{ matrix.platform }}' = macos ]; then target=macos; options=(-DCMAKE_OSX_SYSROOT=macosx); fi
+          cmake -S target -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${options[@]}"
+          cmake --build build/sdk --parallel 2
+          cmake --install build/sdk --prefix "$PWD/target/stage"
+          cd target
+          python3 tools/build_apple_product.py --sdk stage --target "$target" --build build/product
+      - name: Replay all original and default UI journeys without changed assertions
+        id: ui
+        continue-on-error: true
+        run: bash tests/reader_wave3_d16/run.sh '${{ matrix.platform }}'
+      - name: Preserve actual outcomes, screenshots and native process identity
+        id: collect
+        if: always()
+        continue-on-error: true
+        run: python3 tests/reader_wave3_d16/collect.py '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d16-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/evidence/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Preserve failed scope
+        if: always() && (steps.ui.outcome != 'success' || steps.collect.outcome != 'success')
+        run: exit 1
+  verify:
+    name: D16 strict original ZIP verifier
+    needs: audit
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate each same-source same-attempt original ZIP and native program
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_wave3_d16/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d16-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/verification/
+          retention-days: 30
+          if-no-files-found: error

@@ -1,0 +1,30 @@
+name: Android original save failed-screen diagnostic
+on:
+  push:
+    branches: [codex/android-original-save-diagnostic]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-real-original-save
+          run-id: 40600894354
+          github-token: ${{ github.token }}
+          path: evidence
+      - name: Inspect captured failure screen and system UI logs
+        run: |
+          set -euo pipefail
+          command -v tesseract >/dev/null || (sudo apt-get update && sudo apt-get install -y tesseract-ocr)
+          find evidence -name screen.png -print
+          screen=$(find evidence -name screen.png -print -quit)
+          test -n "$screen"
+          tesseract "$screen" stdout 2>/dev/null
+          log=$(find evidence -name logcat.txt -print -quit)
+          if [ -n "$log" ]; then
+            grep -E 'DocumentsUI|ActivityTaskManager|EXRWave3|org.exreader.host' "$log" | tail -100 || true
+          fi

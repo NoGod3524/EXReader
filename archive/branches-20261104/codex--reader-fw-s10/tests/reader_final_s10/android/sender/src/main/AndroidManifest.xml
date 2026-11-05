@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:label="S10Transfer" android:allowBackup="false">
+        <provider android:name=".S10Provider"
+            android:authorities="org.exreader.s10docs.docs"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter><action android:name="android.content.action.DOCUMENTS_PROVIDER" /></intent-filter>
+        </provider>
+        <activity android:name=".S10Sender" android:exported="true" android:theme="@android:style/Theme.NoDisplay" />
+    </application>
+</manifest>

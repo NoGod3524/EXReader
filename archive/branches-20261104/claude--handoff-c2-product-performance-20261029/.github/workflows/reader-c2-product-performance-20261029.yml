@@ -1,0 +1,313 @@
+name: C2 product performance gate (SDK 3.42)
+on:
+  push:
+    branches: [claude/handoff-c2-product-performance-20261029]
+    paths: ['.github/workflows/reader-c2-product-performance-20261029.yml', 'tests/reader_product_performance_handoff/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: '1'
+defaults:
+  run:
+    shell: bash
+jobs:
+  gtk:
+    name: GTK 3.42 product performance sampling (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record exact source and component identities
+        run: |
+          mkdir -p build/perf-guards build/perf-logs
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True).strip()
+          components = {path: git('rev-parse', 'HEAD:' + path)
+                        for path in ('src', 'include', 'apps/reader', 'examples/linux')}
+          Path('build/perf-guards/guards.json').write_text(json.dumps({
+              'head': git('rev-parse', 'HEAD'), 'github_sha': os.environ['GITHUB_SHA'],
+              'components': components}, indent=2) + '\n')
+          PY
+      - name: Install the fixed native desktop toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev libglib2.0-dev pkg-config ninja-build xvfb openbox \
+            xdotool xclip x11-utils dbus dbus-x11 at-spi2-core
+      - name: Build the frozen SDK, the GTK product host, the payload and the corpus probe
+        run: |
+          set -o pipefail
+          cmake --preset reading-library 2>&1 | tee build/perf-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/perf-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/perf-logs/sdk-install.log
+          cmake -S apps/reader/desktop -B build/perf-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DEXR_READER_BUILD_GTK=ON \
+            -DEXR_READER_FIXTURES="$PWD/tests/fixtures" 2>&1 | tee build/perf-logs/host-configure.log
+          cmake --build build/perf-desktop --parallel 4 2>&1 | tee build/perf-logs/host-build.log
+          cmake -S tests/reader_perf_gtk/composition -B build/perf-probe -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$PWD/build/reading-library/stage" 2>&1 | tee build/perf-logs/probe-configure.log
+          cmake --build build/perf-probe --parallel 4 2>&1 | tee build/perf-logs/probe-build.log
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.42.0 \
+            --binary build/perf-desktop/gtk-host/exreader-linux --output build/perf-package
+          ls -l build/perf-package | tee build/perf-logs/package-archive.txt
+          stat -c '%s %n' build/perf-package/EXReader-Linux.tar.gz | tee -a build/perf-logs/package-archive.txt
+      - name: Prove the packaged host identity and the absence of any WebView runtime
+        run: |
+          set -o pipefail
+          build/perf-package/EXReader-Linux/bin/exreader-linux --version | tee build/perf-logs/host-version.txt
+          grep -qx '3.42.0 1' build/perf-logs/host-version.txt
+          ! grep -Eic 'webkit|webview|libcef|electron' build/perf-package/runtime-dependencies.txt
+          python3 -m py_compile tests/reader_perf_gtk/observe.py tests/reader_perf_gtk/sample.py \
+            tests/reader_perf_gtk/composition/summarize.py tests/reader_perf_gtk/composition/verify.py
+      - name: Thirty-two independent launches on a fixed Xvfb, window manager and resolution
+        run: |
+          set -o pipefail
+          xdpyinfo > build/perf-logs/pre-xdpyinfo.txt 2>&1 || true
+          Xvfb :99 -screen 0 1440x900x24 -nolisten tcp > build/perf-logs/xvfb.log 2>&1 &
+          xvfb=$!
+          trap 'kill $xvfb 2>/dev/null || true' EXIT
+          sleep 2
+          export DISPLAY=:99
+          dbus-run-session -- bash -euc '
+            openbox > build/perf-logs/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm 2>/dev/null || true" EXIT
+            sleep 1
+            xdpyinfo > build/perf-logs/xdpyinfo.txt
+            xwininfo -root -tree > build/perf-logs/root-tree.txt
+            python3 tests/reader_perf_gtk/sample.py \
+              --payload build/perf-package/EXReader-Linux \
+              --tarball "$PWD/build/perf-package/EXReader-Linux.tar.gz" \
+              --seed build/perf-probe/seed_library \
+              --output build/perf-evidence \
+              --launches 32 2>&1 | tee build/perf-logs/sampler.log
+            pkill -x xclip 2>/dev/null || true
+          '
+      - name: Preserve the raw logs next to the raw samples
+        if: always()
+        run: |
+          mkdir -p build/perf-evidence/logs
+          cp build/perf-logs/*.log build/perf-logs/*.txt build/perf-evidence/logs/ 2>/dev/null || true
+          cp build/perf-desktop/CMakeCache.txt build/perf-package/build.json build/perf-package/runtime-dependencies.txt \
+            build/perf-evidence/logs/ 2>/dev/null || true
+      - name: Aggregate without new budgets and require complete planned coverage
+        if: always()
+        run: |
+          set -o pipefail
+          python3 tests/reader_perf_gtk/composition/summarize.py --output build/perf-evidence \
+            --guards build/perf-guards/guards.json 2>&1 | tee build/perf-logs/summarize.log
+      - name: C2 candidate-ceiling gate on the same evidence
+        if: always()
+        run: |
+          python3 -m py_compile tests/reader_product_performance_handoff/gate.py
+          python3 tests/reader_product_performance_handoff/gate.py self-test
+          python3 tests/reader_product_performance_handoff/gate.py gtk --evidence build/perf-evidence \
+            --output build/perf-evidence/c2-gate-gtk.json 2>&1 | tee build/perf-logs/c2-gate.log
+      - name: Preserve the raw CSV, JSON, logs and environment of this attempt
+        if: always()
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-c2-perf-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/perf-evidence/
+          if-no-files-found: error
+
+  windows:
+    name: Windows 3.42 product performance
+    runs-on: windows-2022
+    timeout-minutes: 120
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Record the exact source and component trees
+        run: |
+          mkdir -p build/perf-gate
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git rev-parse HEAD | tee build/perf-gate/head.txt
+          git rev-parse HEAD:src HEAD:include HEAD:apps/reader HEAD:examples/reader.c | tee build/perf-gate/component-identities.txt
+
+      - name: Enter the native Windows compiler environment
+        shell: pwsh
+        run: |
+          $programFiles = [Environment]::GetEnvironmentVariable('ProgramFiles(x86)')
+          $vswhere = Join-Path $programFiles 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          $script = Join-Path $env:RUNNER_TEMP 'exreader-vcvars.bat'
+          Set-Content -LiteralPath $script -Encoding ascii -Value @('@echo off', ('call "' + $bat + '" >nul'), 'set')
+          & cmd.exe /c $script | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Parse and self-check the measurement, diagnosis, gate and artifact recorder
+        run: |
+          python -m py_compile tests/reader_perf_windows/perf_windows.py tests/reader_perf_windows/diagnose_txt_import.py tests/reader_perf_windows/verify_composition.py tests/reader_perf_windows/record_artifact.py
+          python tests/reader_perf_windows/perf_windows.py --self-check | tee build/perf-gate/self-check.log
+
+      - name: Build the installed reading SDK and the product catalog stack
+        run: |
+          ws=$(cygpath -m "$PWD")
+          echo "PERF_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          prefix="$ws/build/desktop-product-stage"
+          echo "DESKTOP_PRODUCT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/desktop-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/perf-gate/store-configure.log
+          cmake --build build/desktop-product --parallel 4 2>&1 | tee build/perf-gate/store-build.log
+          cmake --install build/desktop-product 2>&1 | tee build/perf-gate/store-install.log
+          cmake -S apps/reader/revisions -B build/desktop-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/perf-gate/revisions.log
+          cmake --build build/desktop-revisions --parallel 4 2>&1 | tee -a build/perf-gate/revisions.log
+          cmake --install build/desktop-revisions 2>&1 | tee -a build/perf-gate/revisions.log
+          cmake -S apps/reader/commands -B build/desktop-commands -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/perf-gate/commands.log
+          cmake --build build/desktop-commands --parallel 4 2>&1 | tee -a build/perf-gate/commands.log
+          cmake --install build/desktop-commands 2>&1 | tee -a build/perf-gate/commands.log
+          cmake -S apps/reader/desktop-metadata -B build/desktop-metadata -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/perf-gate/metadata.log
+          cmake --build build/desktop-metadata --parallel 4 2>&1 | tee -a build/perf-gate/metadata.log
+          cmake --install build/desktop-metadata 2>&1 | tee -a build/perf-gate/metadata.log
+          cmake --preset reading-library 2>&1 | tee build/perf-gate/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/perf-gate/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/perf-gate/sdk-install.log
+
+      - name: Compile the real Windows product host against the installed public SDK
+        run: |
+          ws="$PERF_WORKSPACE"
+          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$ws/build/reading-library/stage" -DREADER_METADATA_PREFIX="$DESKTOP_PRODUCT_PREFIX" -DEXR_READER_FIXTURES="$ws/tests/fixtures" -DEXR_READER_WINDOWS_SHELF_TESTS=ON 2>&1 | tee build/perf-gate/host-configure.log
+          cmake --build build/desktop-sdk --parallel 4 2>&1 | tee build/perf-gate/host-build.log
+          ctest --test-dir build/desktop-sdk --output-on-failure --no-tests=error --timeout 180 --output-junit "$ws/build/perf-gate/host-tests.xml" 2>&1 | tee build/perf-gate/host-tests.log
+
+      - name: Package the actual product host and check its original self-test
+        run: |
+          python tools/build_windows_host.py --sdk build/reading-library/stage --binary build/desktop-sdk/EXReaderProduct.exe --output build/desktop-windows-package --static-reading 2>&1 | tee build/perf-gate/package.log
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          manifest = json.loads(Path('build/desktop-windows-package/build.json').read_text())
+          exe = Path('build/desktop-windows-package/EXReader/EXReader.exe')
+          assert manifest['passed'] is True and manifest['selftest_checks'] >= 26
+          assert manifest['files']['EXReader.exe'] == hashlib.sha256(exe.read_bytes()).hexdigest()
+          print(json.dumps({'selftest_checks': manifest['selftest_checks'],
+                            'sdk_version': manifest['sdk_version'],
+                            'linkage': manifest.get('linkage'),
+                            'exe_bytes': exe.stat().st_size,
+                            'exe_sha256': hashlib.sha256(exe.read_bytes()).hexdigest()}))
+          PY
+
+      - name: Diagnose the original 16 MiB TXT import path with separated facts
+        run: |
+          python tests/reader_perf_windows/diagnose_txt_import.py --package build/desktop-windows-package/EXReader --seed build/desktop-sdk/reader-windows-shelf-seed.exe --output build/perf-txt-diagnosis --runs 3 2>&1 | tee build/perf-gate/txt-diagnosis.log
+
+      - name: Observe the actual product host with real native controls
+        run: |
+          python tests/reader_perf_windows/perf_windows.py --package build/desktop-windows-package/EXReader --seed build/desktop-sdk/reader-windows-shelf-seed.exe --output build/perf-windows --cohorts cold_shelf,warm_shelf,reading,import,import_epub --launches-per-cohort 12 --txt-diagnostic build/perf-txt-diagnosis/diagnosis.json 2>&1 | tee build/perf-gate/measurement.log
+
+      - name: Require complete same-source performance evidence
+        if: always()
+        run: |
+          python tests/reader_perf_windows/verify_composition.py --summary build/perf-windows/summary.json --package build/desktop-windows-package/EXReader --start "$GITHUB_SHA" --launches 30 --per-cohort 10 2>&1 | tee build/perf-gate/verify.log
+
+      - name: C2 candidate-ceiling gate on the same evidence
+        if: always()
+        run: |
+          python -m py_compile tests/reader_product_performance_handoff/gate.py
+          python tests/reader_product_performance_handoff/gate.py self-test
+          python tests/reader_product_performance_handoff/gate.py windows --evidence build/perf-windows \
+            --package-build build/desktop-windows-package/build.json --output build/perf-windows/c2-gate-windows.json 2>&1 | tee build/perf-gate/c2-gate.log
+
+      - name: Upload the observation and its raw samples
+        if: always()
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-c2-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/perf-windows/
+            build/perf-txt-diagnosis/
+            build/perf-gate/
+            build/desktop-windows-package/build.json
+            build/desktop-windows-package/report.json
+            build/desktop-sdk/windows-host.map
+          if-no-files-found: error
+
+      - name: Record the uploaded artifact identity
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          name="reader-c2-perf-windows-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          url="$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"
+          python tests/reader_perf_windows/record_artifact.py --api-url "$url" --name "$name" --output build/artifact-identity/artifact-identity.json 2>&1 | tee build/artifact-identity.log
+
+      - name: Upload the artifact identity record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-c2-perf-windows-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/artifact-identity/
+            build/artifact-identity.log
+          if-no-files-found: warn
+
+  aggregate:
+    name: C2 aggregate record
+    needs: [gtk, windows]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-c2-perf-*
+          path: build/c2-in
+      - name: Record exact per-job identities and gate results
+        env:
+          GTK_RESULT: ${{ needs.gtk.result }}
+          WINDOWS_RESULT: ${{ needs.windows.result }}
+          GTK_ARTIFACT_ID: ${{ needs.gtk.outputs.artifact_id }}
+          GTK_ARTIFACT_DIGEST: ${{ needs.gtk.outputs.artifact_digest }}
+          WINDOWS_ARTIFACT_ID: ${{ needs.windows.outputs.artifact_id }}
+          WINDOWS_ARTIFACT_DIGEST: ${{ needs.windows.outputs.artifact_digest }}
+        run: |
+          mkdir -p build/c2-out
+          python3 - <<'PY'
+          import glob, json, os
+          record = {'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
+                    'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'sdk': '3.42.0', 'f08_granted': False,
+                    'platforms': {}}
+          for key, pattern, prefix in (('linux', 'build/c2-in/*/c2-gate-gtk.json', 'GTK'),
+                                       ('windows', 'build/c2-in/*/c2-gate-windows.json', 'WINDOWS')):
+              files = glob.glob(pattern)
+              record['platforms'][key] = {
+                  'job_result': os.environ[prefix + '_RESULT'],
+                  'artifact_id': os.environ[prefix + '_ARTIFACT_ID'],
+                  'artifact_digest': os.environ[prefix + '_ARTIFACT_DIGEST'],
+                  'gate': json.load(open(files[0])) if files else None}
+          json.dump(record, open('build/c2-out/c2-record.json', 'w'), indent=2)
+          for key, value in record['platforms'].items():
+              gate = value['gate']
+              print(key, value['job_result'], value['artifact_id'], value['artifact_digest'])
+              print('  gate:', None if gate is None else {x: gate[x] for x in (
+                  'identity_and_coverage_passed', 'candidate_ceilings_passed', 'failed_checks', 'failed_ceilings')})
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reader-c2-perf-record-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c2-out/
+          if-no-files-found: error

@@ -1,0 +1,33 @@
+name: F08 Android pinned product and control audit
+on:
+  push:
+    branches: [codex/dot-f08-android-control-audit-20261031]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate both ZIPs and recompute unchanged traces
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m py_compile tests/reader_f08_android_control_20261031/audit.py
+          python3 tests/reader_f08_android_control_20261031/audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-android-control-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-android-control-audit/audit.json
+            build/f08-android-control-audit/*/metadata.json
+          if-no-files-found: error

@@ -1,0 +1,31 @@
+name: Pinned original Sync iPhone archive grammar diagnostic
+on:
+  push:
+    branches: [codex/reader-sync-ios-archive-diagnostic-20261029]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: sync-ios-archive-diagnostic-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  original-archive-diagnostic:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact two-addition scope and bounded parser controls
+        run: python3 tests/reader_sync_ios_archive_diagnostic_20261029.py --self-test
+      - name: Authenticate original iPhone pair and describe archive grammar only
+        run: python3 tests/reader_sync_ios_archive_diagnostic_20261029.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sync-ios-archive-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/sync-ios-archive-diagnostic/report.json
+          if-no-files-found: error

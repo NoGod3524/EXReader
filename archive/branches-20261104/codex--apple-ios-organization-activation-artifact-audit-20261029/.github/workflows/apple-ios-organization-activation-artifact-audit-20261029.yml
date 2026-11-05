@@ -1,0 +1,28 @@
+name: Original iPhone activation artifact extraction 20261029
+on:
+  push:
+    branches: [codex/apple-ios-organization-activation-artifact-audit-20261029]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  extract:
+    name: Read original six trials without running UI
+    runs-on: macos-15
+    timeout-minutes: 15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate and parse the one immutable original artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_ios_organization_activation_artifact_audit_20261029.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-activation-original-artifact-extraction-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ios-activation-original-artifact-extraction/
+          if-no-files-found: error

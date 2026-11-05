@@ -1,0 +1,8 @@
+plugins { id 'com.android.library' }
+android {
+    namespace 'org.exreader.tts'
+    compileSdk 35
+    defaultConfig { minSdk 26; targetSdk 35; consumerProguardFiles 'consumer-rules.pro' }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    lint { abortOnError true }
+}

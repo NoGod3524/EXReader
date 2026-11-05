@@ -1,0 +1,65 @@
+name: F08 Windows raw graphics ETW capability
+on:
+  push:
+    branches: [codex/dot-f08-windows-etw-20261031]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  capture:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile unchanged positive controls and new test collector
+        shell: pwsh
+        run: |
+          python -m py_compile tests/reader_f08_windows_etw_20261031/capture.py
+          cmake -S tests/reader_f08_windows_frame_capability_20261031 -B build/f08-win-control -A x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build/f08-win-control --config Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Capture raw provider events for DXGI and GDI controls
+        run: python tests/reader_f08_windows_etw_20261031/capture.py capture
+      - uses: actions/upload-artifact@v4
+        id: upload
+        if: always()
+        with:
+          name: f08-windows-etw-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-windows-etw/
+          if-no-files-found: error
+  audit:
+    needs: capture
+    if: ${{ always() && needs.capture.outputs.artifact_id != '' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate ZIP and independently recount raw events
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F08_ARTIFACT_ID: ${{ needs.capture.outputs.artifact_id }}
+          F08_ARTIFACT_DIGEST: ${{ needs.capture.outputs.artifact_digest }}
+        run: python3 tests/reader_f08_windows_etw_20261031/capture.py audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-windows-etw-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-windows-etw-audit/audit.json
+            build/f08-windows-etw-audit/metadata.json
+          if-no-files-found: error

@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.24)
+project(TxtMixedExport LANGUAGES C CXX)
+find_package(EXReaderOriginalExport 0.1.0 EXACT CONFIG REQUIRED)
+add_executable(txt-mixed-export mixed.c)
+set_target_properties(txt-mixed-export PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(txt-mixed-export PRIVATE EXReaderOriginalExport::reader_original_export)

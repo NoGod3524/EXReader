@@ -1,0 +1,80 @@
+{
+  "windows": {
+    "status": "passed",
+    "topics": {
+      "## 备份": true,
+      "## 升级": true,
+      "## 升级失败的停止条件与恢复": true,
+      "## 校验": true,
+      "## 范围与限制": true,
+      "## 尚未验证": true
+    },
+    "instruction_sha256": "9fffc2d0721b047a4fd39f8a3079bf54b1720abce6784288fca1cf8d2bd48d5d",
+    "inner_sha256": "e50f4631e7d4167c90629effdcb802307ead139f6574f3b8a23308c06bed230a"
+  },
+  "linux": {
+    "status": "passed",
+    "topics": {
+      "## 备份": true,
+      "## 升级": true,
+      "## 升级失败的停止条件与恢复": true,
+      "## 校验": true,
+      "## 范围与限制": true,
+      "## 尚未验证": true
+    },
+    "instruction_sha256": "d74b931c099c44d0087918be696eb8364628165a911c46051d9475c88aa21ccb",
+    "inner_sha256": "66002880e295b085515b11762f18453c118e646d57ca23927f800902d477aad9"
+  },
+  "macos": {
+    "status": "passed",
+    "topics": {
+      "## 备份": true,
+      "## 升级": true,
+      "## 升级失败的停止条件与恢复": true,
+      "## 校验": true,
+      "## 范围与限制": true,
+      "## 尚未验证": true
+    },
+    "instruction_sha256": "972593d18cec9486ecd2e4551a21e0d17a91a66301a7b37be9139b4b2e45609b",
+    "inner_sha256": "779e1eec0bdbbcda6402bc8c50a2fc661fe4cfef78100bcf3a3d3d4f93a4ef6c"
+  },
+  "android": {
+    "status": "passed",
+    "topics": {
+      "## 备份": true,
+      "## 升级": true,
+      "## 升级失败的停止条件与恢复": true,
+      "## 校验": true,
+      "## 范围与限制": true,
+      "## 尚未验证": true
+    },
+    "instruction_sha256": "bde42f94e3855362c2e9ffc8e607fdd879770d20d62e26ddebe685cf9741ec52",
+    "inner_sha256": "3d99280f4f638111fe75d30ec774d9eb71c4ad707a4c8f2b7399b4fa8f33ae7b"
+  },
+  "iphone": {
+    "status": "passed",
+    "topics": {
+      "## 备份": true,
+      "## 升级": true,
+      "## 升级失败的停止条件与恢复": true,
+      "## 校验": true,
+      "## 范围与限制": true,
+      "## 尚未验证": true
+    },
+    "instruction_sha256": "608fdd862f1a8f6a9882a0b65b75aff2e83d4f1037cec3c005a5dbba25265c44",
+    "inner_sha256": "7c8573dfbcc7ba39434378ba456a6c507d565608c3654283c3083abacda5e6cf"
+  },
+  "ipad": {
+    "status": "passed",
+    "topics": {
+      "## 备份": true,
+      "## 升级": true,
+      "## 升级失败的停止条件与恢复": true,
+      "## 校验": true,
+      "## 范围与限制": true,
+      "## 尚未验证": true
+    },
+    "instruction_sha256": "9b4bc49a4b12af6605298a3e35e92b4722c45d3c56a12f5137913be55122ab59",
+    "inner_sha256": "839c8b9c862f7480f5ab789b49071963cc50df482263d91c1410ba9a7e5bc9f5"
+  }
+}

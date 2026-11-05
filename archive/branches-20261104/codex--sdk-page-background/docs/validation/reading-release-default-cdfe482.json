@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "scope": "R6 required-check repair adoption and default-branch original-archive preparation",
+  "complete_product": false,
+  "published": false,
+  "wp16_cpu_credit_seconds": 0,
+  "local_execution": false,
+  "local_artifact_download": false,
+  "merge": {
+    "pr": 3,
+    "method": "merge",
+    "head_sha": "f797d5351c3159ebbf181eddb8128c4c39fa8ad6",
+    "tested_merge_sha": "c55c8d4656fd198ec4612c08a5bfe122f3387820",
+    "default_branch": "codex/framework",
+    "default_branch_sha": "cdfe48231853d6e70fba2c41b42bdd187155901a"
+  },
+  "required_check": {
+    "run_id": 39972628703,
+    "attempt": 1,
+    "jobs": 17,
+    "artifacts": 28,
+    "conclusion": "success",
+    "accepted": true,
+    "problems": [],
+    "publisher_integration_id": 15368,
+    "check_id": 120485845075,
+    "summary_artifact": {
+      "id": 12511230478,
+      "size_in_bytes": 3263,
+      "digest": "sha256:4c1f8a1b69d216d5d376ef365655bd0537d5a7887ab0d902b424b784c19bf566"
+    },
+    "corpus_full_passed": 8,
+    "corpus_location_passed": 8,
+    "native_processes": 40,
+    "reference_processes": 12,
+    "frozen_budgets_changed": false
+  },
+  "ruleset": {
+    "id": 25700819,
+    "enforcement": "active",
+    "strict_required_check": "reading-required",
+    "publisher_integration_id": 15368,
+    "bypass_actors": []
+  },
+  "subsequent_default_push": {
+    "run_id": 39974986212,
+    "attempt": 1,
+    "source_sha": "cdfe48231853d6e70fba2c41b42bdd187155901a",
+    "jobs": 17,
+    "artifacts": 28,
+    "conclusion": "success",
+    "accepted": true,
+    "problems": [],
+    "check_id": 120493476026,
+    "publisher_integration_id": 15368,
+    "summary_artifact": {
+      "id": 12510859645,
+      "size_in_bytes": 3258,
+      "digest": "sha256:4e4a8c33aab0641d8a66f1edf4d0fbff5fce6ee8aa237cf2b0e18e60f188aeb3"
+    },
+    "pr_acceptance_transferred": false
+  },
+  "default_branch_prepare": {
+    "run_id": 39975024792,
+    "job_id": 120487259637,
+    "attempt": 1,
+    "workflow_source_sha": "cdfe48231853d6e70fba2c41b42bdd187155901a",
+    "package_source_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+    "accepted_run_id": 39902467216,
+    "accepted_run_attempt": 1,
+    "protocol_checks": 58,
+    "artifact_retry_checks": 27,
+    "conclusion": "success",
+    "prepared": true,
+    "published": false,
+    "problems": [],
+    "output_files": 8,
+    "original_archives": 6,
+    "rebuild_or_repack": false,
+    "archive_identity_record": "reading-release-activation-31e4117.json#/verified_prepare/plan/archives",
+    "all_archive_and_manifest_hashes_match_prior_record": true,
+    "artifact": {
+      "id": 12509844337,
+      "name": "reading-release-plan-39975024792-1",
+      "size_in_bytes": 43359803,
+      "digest": "sha256:798cffda7b421dc7956dfe0b93e87655b6a24be39e94e3ecf42c087a21722255",
+      "expired_at_audit": false
+    }
+  },
+  "retained_failed_runs": [39908471213, 39908383274, 39909333920, 39910333730, 39911517657],
+  "retained_failure_reasons": [
+    "Repository-root URL returned HTTP 404",
+    "Baseline CPU mismatch refused before sampling",
+    "Moby font-open p95 exceeded frozen budget",
+    "Original corpus publisher HTTP 429 and separate baseline environment refusal",
+    "GitHub baseline artifact ZIP HTTP 503 before sampling"
+  ],
+  "sdk_candidate": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "library_schema": 7
+}

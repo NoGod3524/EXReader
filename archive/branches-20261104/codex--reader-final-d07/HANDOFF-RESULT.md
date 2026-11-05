@@ -1,0 +1,22 @@
+# D07 中文用户指南交回
+
+- package=D07 branch=codex/reader-final-d07
+- tested_harness_sha=7b9132104785686b6923bddc6c40a26730b6bdf3
+- final_docs_head=包含本交回的 `[skip ci]` 封存提交；准确 SHA 在最终交回消息。
+- docs_only_diff=true；正文、来源表与全部 harness/workflow 保持受测字节。
+- guide_entry=docs/reader-final-d07/guide.zh-CN.md
+- source_inventory=docs/reader-final-d07/source-inventory.json
+- validation=docs/reader-final-d07/validation.json（同内容 docs/validation/reader-final-d07.json）
+- run_id=40216162458 attempt=1 conclusion=success
+- jobs=121237624305/D07 document audit/success；121237704419/D07 artifact authentication/success
+- artifact=12607149925/reader-final-d07-payload-40216162458-1/24989B/SHA256:2dedfe83bc0494fc963f64e325594c765ef825974d8eeca54996bded8469c938/expires:2026-11-24T17:22:52Z
+- artifact=12607312379/reader-final-d07-evidence-40216162458-1/1525B/SHA256:b77b671e98427494fd8b9f68d46c943f9e1d18b8dd0e794d9998fcaf9a31d562/expires:2026-11-24T17:23:11Z
+- 两个原ZIP均在同轮Actions下载重算并核验大小、digest、有效期。evidence自身上传后认证记录在job日志D07_SELF_ZIP_AUTHENTICATED；不是自包含伪证。
+- steps_total=17 source_checked=68 linked=16 external_HTTP200=6 manual_unverified=全部17组实际运行步骤
+- guide_reviewed=true links_accepted=true product_accepted=false complete_product=false
+- 10具名检查通过；错源/缺检查/重复检查/非法产品授予/篡改ZIP五负例拒绝；坏相对路径、坏中文锚点、缺来源另有反例。
+- 实际执行程序=Python文档检查器与Node github-slugger 2.0.0，目标ubuntu-22.04；没有EXReader/SDK二进制执行，批准SDK身份仅为文档精确引用。
+- earlier_failed_runs=40215722278/1/989abc10e1cc4cddd69be941c4144648add5b0f3；遗漏隐藏workflow使严格认证失败，已保留，详情docs/reader-final-d07/findings.md。
+- broken_or_unverified_links=[]（仅受测正文/来源说明链接；HTTP200不授予内容/功能）。
+- findings=GTK Delete F10实际删标注；Windows旧README路径叙述与CMake不一致；可选编译开关、compact/raw3候选、Android暂存/宿主上限均明确分离。
+- root_followups=以统一发布源核对平台功能开关，完成真实安装/设备/账号/恢复/互通验收后再更新指南；Apple移动整轮失败保持未授予。

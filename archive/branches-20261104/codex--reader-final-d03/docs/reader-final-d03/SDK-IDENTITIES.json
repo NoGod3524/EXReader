@@ -1,0 +1,201 @@
+{
+  "harness_sha": "81a67f582ddfe8906b64e6eef4e7969127415ba8",
+  "target_sha": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "run_id": "40218375669",
+  "attempt": "1",
+  "files": {
+    "target/build/reading-library/stage/lib/libwebpdecoder.a": {
+      "bytes": 599780,
+      "sha256": "9c17327388533f905741b588d94c6e265b885497cb3f5644d9b40890fc3a4664"
+    },
+    "target/build/reading-library/stage/lib/libexr_doc.a": {
+      "bytes": 194748,
+      "sha256": "a56b52dc89d3c246239cd509f03641215426fe49324952c2970e0e8e90bd3b87"
+    },
+    "target/build/reading-library/stage/lib/libwebpdemux.a": {
+      "bytes": 17514,
+      "sha256": "a629655a06afa020ad0324ba910c5cee8d132cb57f6ad8e929267323381070db"
+    },
+    "target/build/reading-library/stage/lib/libexr_formats.a": {
+      "bytes": 395926,
+      "sha256": "9812477c22ce4925afc8285d63a87f1b34cbf9f7a3122a4bebcabc8de969e153"
+    },
+    "target/build/reading-library/stage/lib/libexr_render.a": {
+      "bytes": 32624,
+      "sha256": "864ad0021250c76cfd5a7f1589ba12860931e7d61575ef35b3902f0604b24508"
+    },
+    "target/build/reading-library/stage/lib/libwebpmux.a": {
+      "bytes": 59192,
+      "sha256": "290766fd76aff97633b1a02922d884e56b702b2068a80ef43333629672e13a1d"
+    },
+    "target/build/reading-library/stage/lib/libsharpyuv.a": {
+      "bytes": 50620,
+      "sha256": "6fa8bc6bf1c68ce88430a32e6485cc2e03f1b499a926809db41fe4d28342b197"
+    },
+    "target/build/reading-library/stage/lib/libexr_text.a": {
+      "bytes": 494844,
+      "sha256": "2071d0435f391430594c5ca91921c61a60273caf21c0fed059374fa6feb5fd64"
+    },
+    "target/build/reading-library/stage/lib/libexr_library.a": {
+      "bytes": 138832,
+      "sha256": "8e0a35b5978046372b866c7af7e66e079cfa0c01c835b4c7acab7366970781e6"
+    },
+    "target/build/reading-library/stage/lib/libwebp.a": {
+      "bytes": 1047658,
+      "sha256": "5732b10d19145be5f20bd4bdd963e0f50924223998374d80b38e284059a02a74"
+    },
+    "target/build/reading-library/stage/lib/libexr_base.a": {
+      "bytes": 279336,
+      "sha256": "3537fc62d27671b40f004786323f24c35f2c9d9d36e6ae701c254927f6aa1354"
+    },
+    "target/build/reading-library/stage/lib/libexr_pdf.a": {
+      "bytes": 783500,
+      "sha256": "f2631884a0903f732325ab41d48ad3b8231826d497e5d42bac695464cea81d4e"
+    },
+    "target/build/reading-library/stage/lib/libexr_layout.a": {
+      "bytes": 438002,
+      "sha256": "1e24408cba12e5bfb698cfc7184f016e8be7eebdc24b461ca286ce0bef5c1586"
+    },
+    "target/build/reading-library/stage/lib/libexr_graphics.a": {
+      "bytes": 810966,
+      "sha256": "eca97b9253728c822a2b369c6fad564919405aed296678ce44230261748a010c"
+    },
+    "target/build/reading-library/stage/lib/libaom.a": {
+      "bytes": 2079606,
+      "sha256": "08e0943464b811bad9e6a89934f0a4b06590ab8a39fb914d264930925d166e1b"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_exr_crypto.a": {
+      "bytes": 49714,
+      "sha256": "d66b02b38fa882119005dfaa6d0e68ab645fb01d52d582918d3b90ae8dd70589"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_miniz.a": {
+      "bytes": 121184,
+      "sha256": "5920ec69d5750c9fd08694357d334f4ac7caeff1f0ea392144caa62a9e2f25a6"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_aom.a": {
+      "bytes": 2079606,
+      "sha256": "08e0943464b811bad9e6a89934f0a4b06590ab8a39fb914d264930925d166e1b"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_webp.a": {
+      "bytes": 1047658,
+      "sha256": "5732b10d19145be5f20bd4bdd963e0f50924223998374d80b38e284059a02a74"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_webpdemux.a": {
+      "bytes": 17514,
+      "sha256": "a629655a06afa020ad0324ba910c5cee8d132cb57f6ad8e929267323381070db"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_tiff.a": {
+      "bytes": 833296,
+      "sha256": "11919eb0fd4ffd42ffda3f9230c1999cd4bc3d28ca129ca3d8b8e6ea733e5747"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_expat.a": {
+      "bytes": 393870,
+      "sha256": "5aef8de139273c47f7ac66118ff48fe395d9ec4182cd3021f0632401eb5bb070"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_sharpyuv.a": {
+      "bytes": 50620,
+      "sha256": "6fa8bc6bf1c68ce88430a32e6485cc2e03f1b499a926809db41fe4d28342b197"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_exr_sqlite.a": {
+      "bytes": 1759486,
+      "sha256": "b46e4b0d32d8a7e069d1aef164a24db5d4ed3e20b4b4e4216c251f2417fec44e"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_exr_jpx.a": {
+      "bytes": 590608,
+      "sha256": "281377c618e9f51b765590d6b8640d90ba90c1e4a528fa3af26bd53cfd153dc6"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_zlibstatic.a": {
+      "bytes": 146708,
+      "sha256": "9b313b57e00f3ebdfc50ecf96dc4b3c216a3d40ee33f85205a6c1fa34d6262ee"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_exr_lcms.a": {
+      "bytes": 905336,
+      "sha256": "2582c2565a8a30f83b88b307bf1a1fdf16e78866ae062821f092006eb98d5695"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_freetype.a": {
+      "bytes": 1209360,
+      "sha256": "ed289a06cbddcb5c558728f6c21c3381a4ee759b37e273acd6cf75e3eab7a447"
+    },
+    "target/build/reading-library/stage/lib/exreader/libexr_vendor_avif.a": {
+      "bytes": 387760,
+      "sha256": "d4cd9ac05d5052f9dd4ac69c1910d2948b765ba767fcc60bf2154ca8fbc584d6"
+    },
+    "target/build/d03-apps-reader-annotation-view/CMakeCache.txt": {
+      "bytes": 16713,
+      "sha256": "e5f3b6e5c7c432e62de3147ee7367002f3ed457d5b8f80b2cbe4fb92e80073e6"
+    },
+    "target/build/d03-apps-reader-reading-commands/CMakeCache.txt": {
+      "bytes": 16723,
+      "sha256": "3ed9ee87a8ba7ca30cde2fab32eb720a083b5ebf8c03969b3f70f1e76cf8ca8c"
+    },
+    "target/build/d03-extras-sideload/CMakeCache.txt": {
+      "bytes": 14278,
+      "sha256": "951f0d536b1eb2b3da61e523dbb418351a0ad818726133e5b14b8348ae5acc9a"
+    },
+    "target/build/d03-apps-reader-commands/CMakeCache.txt": {
+      "bytes": 16269,
+      "sha256": "b0d075746415192d72bcbc82829629ed2f25adbc9d346f8c44613cef107e37f8"
+    },
+    "target/build/d03-apps-reader-revisions/CMakeCache.txt": {
+      "bytes": 16087,
+      "sha256": "a725bfc8aeede07066daae2ab39b3667acfaf604de7037c5d044214d95d5e1ab"
+    },
+    "target/build/d03-apps-reader-navigation/CMakeCache.txt": {
+      "bytes": 16075,
+      "sha256": "012ab347599130a013467a6bd5228c14697220ae28798b44bbda48b442990941"
+    },
+    "target/build/d03-apps-reader-sync/CMakeCache.txt": {
+      "bytes": 22188,
+      "sha256": "9029ed1b9b5c697d02825938b2bf1db97cfbba02dc4c128c958ddd5303bbf6a5"
+    },
+    "target/build/d03-extras-credentials/CMakeCache.txt": {
+      "bytes": 21132,
+      "sha256": "5fa897b29b1440e1855fe6d328f9ae5be091e82102766dd9c4566a7576f0f4c9"
+    },
+    "target/build/d03-apps-reader-search/CMakeCache.txt": {
+      "bytes": 16035,
+      "sha256": "5495e623fe92fcb20263c928165d61799a4f58031e809a3d9032c74788c3cd46"
+    },
+    "target/build/d03-apps-reader-session/CMakeCache.txt": {
+      "bytes": 22395,
+      "sha256": "ae5393e2d75a6b86cb342646cbc0a58f4bb1560eed58e05234eb74bd398f6afc"
+    },
+    "target/build/d03-extras-webdav/CMakeCache.txt": {
+      "bytes": 21903,
+      "sha256": "886484cd6c46fe003d046bdcb2ae3c62a00807d958c9e0ed84f4ffb160a1bce5"
+    },
+    "target/build/d03-apps-reader-preferences/CMakeCache.txt": {
+      "bytes": 14005,
+      "sha256": "dc4b7293e7607227faeddacc79d3f08793da846996b732cbb5a0fa8f59662241"
+    },
+    "target/build/d03-apps-reader-desktop-metadata/CMakeCache.txt": {
+      "bytes": 16534,
+      "sha256": "fcc64dd607a1d6c6b66c5d811e19d063eb32dd46d71138b56aa8f9d973665ecf"
+    },
+    "target/build/d03-OFF/CMakeCache.txt": {
+      "bytes": 43191,
+      "sha256": "283beeb427e38d7b54daf3e7511776cec67a2c0b031a5bbc2300e5b030faaac8"
+    },
+    "target/build/d03-extras-desktop-drop/CMakeCache.txt": {
+      "bytes": 23284,
+      "sha256": "344ebb3212dce9ca4997852eb6c90e50fb3dba8f50931a702f4cae9d367f517d"
+    },
+    "target/build/d03-apps-reader-store-native/CMakeCache.txt": {
+      "bytes": 14997,
+      "sha256": "d99c74d7ad34e5b625288a501bfd703a601cf1bf9b03b347e3df03c796436be8"
+    },
+    "target/build/d03-ON/CMakeCache.txt": {
+      "bytes": 43185,
+      "sha256": "b7c2d7a6075ae3f11b3a8a331f03258634808fa30b783f699e5cb9cf25c4ba89"
+    },
+    "target/build/d03-apps-reader-batch-import/CMakeCache.txt": {
+      "bytes": 14541,
+      "sha256": "eff2eb510b91d5a99a3f0962c15523eb2ba7258a74efe73ee3451acb986a6712"
+    },
+    "target/build/d03-apps-reader-reading-state/CMakeCache.txt": {
+      "bytes": 16500,
+      "sha256": "03b60e1fbcee62adbd28b3b831ee2717b8b54c3587a5fa34f082dcd5383e4258"
+    }
+  }
+}

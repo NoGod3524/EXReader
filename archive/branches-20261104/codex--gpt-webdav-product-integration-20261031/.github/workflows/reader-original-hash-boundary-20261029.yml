@@ -1,0 +1,139 @@
+name: Original import public hash boundary 20261029
+on:
+  push:
+    branches: [codex/reader-original-hash-boundary-20261029]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact sixteen-file scope and parser controls
+        run: |
+          python -c "import sys; sys.path.insert(0,'tests/reader_original_hash_boundary_20261029'); import package_contract as C; C.guard()"
+          python tests/reader_original_hash_boundary_20261029/test_contract.py
+          python -m py_compile tests/reader_original_hash_boundary_20261029/*.py
+  produce:
+    name: produce (${{ matrix.target }})
+    needs: protocol
+    if: ${{ !contains(github.event.head_commit.message, '[hash-archive-diagnostic]') && !contains(github.event.head_commit.message, '[hash-retained-diagnostic]') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {target: windows, os: windows-2022}
+          - {target: linux, os: ubuntu-22.04}
+          - {target: macos, os: macos-15}
+          - {target: android, os: ubuntu-22.04}
+          - {target: ios-device, os: macos-15}
+          - {target: ios-simulator, os: macos-15}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set Windows compiler without changing runtime flags
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          cmd /c "`"$vs\VC\Auxiliary\Build\vcvars64.bat`" >nul && set" | ForEach-Object { if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 } }
+      - name: Install declared Android NDK
+        if: matrix.target == 'android'
+        run: |
+          if [ ! -f "$ANDROID_HOME/ndk/27.0.12077973/build/cmake/android.toolchain.cmake" ]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.0.12077973"
+          fi
+      - name: New isolated owners and original-preserving validation
+        run: python tests/reader_original_hash_boundary_20261029/run.py ${{ matrix.target }}
+      - name: Upload exact complete evidence
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-hash-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/hash-boundary/evidence.zip
+            build/hash-boundary/manifest.json
+            build/hash-boundary/envelope.json
+            build/hash-boundary/result.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve original failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-hash-failed-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/hash-boundary/evidence
+          if-no-files-found: warn
+          retention-days: 90
+  authenticate:
+    needs: [protocol, produce]
+    if: ${{ always() && !contains(github.event.head_commit.message, '[hash-archive-diagnostic]') && !contains(github.event.head_commit.message, '[hash-retained-diagnostic]') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Independent original-upload authentication and semantic replay
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROTOCOL_RESULT: ${{ needs.protocol.result }}
+          PRODUCERS_RESULT: ${{ needs.produce.result }}
+        run: python tests/reader_original_hash_boundary_20261029/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-hash-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/hash-authentication/authentication.json
+            build/hash-authentication/github.json
+          if-no-files-found: error
+          retention-days: 90
+  archive-diagnostic:
+    needs: protocol
+    if: ${{ contains(github.event.head_commit.message, '[hash-archive-diagnostic]') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate and compare original failed macOS archive bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_original_hash_boundary_20261029/authenticate.py --archive-diagnostic
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-hash-archive-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/hash-archive-diagnostic/diagnostic.json
+          if-no-files-found: error
+          retention-days: 90
+  retained-diagnostic:
+    needs: protocol
+    if: ${{ contains(github.event.head_commit.message, '[hash-retained-diagnostic]') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate original Android control failure and replay five original green producers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_original_hash_boundary_20261029/authenticate.py --mutation-diagnostic
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-hash-retained-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/hash-retained-diagnostic/diagnostic.json
+          if-no-files-found: error
+          retention-days: 90

@@ -1,0 +1,44 @@
+name: J01 Android license material candidate
+
+on:
+  push:
+    branches: [codex/claude-j01-android-license-20261031]
+    paths:
+      - tools/validation/claude-j01-android-license-20261031/**
+      - .github/workflows/claude-j01-android-license-20261031.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  j01:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: c03b1d9a3b30b745a903eeab9be2871f18360e33
+          path: f12-src
+      - uses: actions/checkout@v4
+        with:
+          ref: 8f8acf3234cba747165f001c0c96efe1b911e6ad
+          path: source-8f8acf32
+      - name: Run J01
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F12_CHECKOUT: ${{ github.workspace }}/f12-src
+          SOURCE_CHECKOUT: ${{ github.workspace }}/source-8f8acf32
+        run: python3 -I tools/validation/claude-j01-android-license-20261031/j01_android_license.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: j01-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: j01-evidence
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: j01-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: j01-candidate

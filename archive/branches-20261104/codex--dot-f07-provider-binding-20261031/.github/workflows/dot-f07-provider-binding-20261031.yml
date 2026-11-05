@@ -1,0 +1,59 @@
+name: F07 actual managed GTK provider binding
+on:
+  push:
+    branches: [codex/dot-f07-provider-binding-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: dot-f07-provider-binding
+  cancel-in-progress: false
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Original GTK build dependencies and read-only inspectors
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build binutils libglib2.0-dev libgtk-3-dev libsecret-1-dev libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
+      - name: Same-source installed managed GTK and codec separation
+        run: python3 tests/reader_f07_provider_binding_20261031/build.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f07-provider-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f07/*.json
+            build/f07/*.txt
+            build/f07/*.log
+            build/f07/*.map
+            build/f07/*.h
+            build/f07/*.cmake
+            build/f07/*.a
+            build/f07/*.nm
+            build/f07/host
+            build/f07/package-host
+            build/f07/host.dynamic
+            build/f07/host.dynsym
+            build/f07/host.ldd
+          if-no-files-found: warn
+  audit:
+    needs: linux
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Independent original ZIP and actual linked-provider adjudication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f07_provider_binding_20261031/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f07-provider-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f07-audit/
+          if-no-files-found: error

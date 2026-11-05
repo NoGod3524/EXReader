@@ -1,0 +1,11 @@
+# Apple–Android bookmark relay candidate
+
+F04 remains pending. Independent run 40610075586/1 at `65daff8875ca74394997ea097bf55400743f8f9f` proved an EPUB progress relay between an iPhone simulator and Android emulator, not bookmark or annotation exchange. Composition run 40620445332 failed its retained iPhone suite and authentication; its failure is not replaced by that independent result.
+
+This additive candidate keeps the original relay and failure evidence intact. It uses the same authenticated staged HTTPS snapshots and real app controls: Apple creates a point bookmark; Android receives and jumps to it, edits its text, and syncs; a fresh Apple simulator displays the edited note and jumps to its anchor. The audit binds the two revisions to the same annotation identity and original selector, requires the Android revision to descend from the Apple revision, and checks the native displayed positions. The prior progress assertions remain in the copied scenario. The services are sequential snapshots, not simultaneous online clients. Physical devices, range highlights, other host pairs and six-target interoperability remain unproved.
+
+All builds, tests, fixture work and artifact analysis run in Actions. A successful complete same-run authentication is required before this candidate is accepted; source changes alone do not establish a pass.
+
+Push run 40627142540/1 at `1db34c00c83d9e121e7146fe334bd14cf16a9e51` failed Android admission before build: the inherited guard rejected `.github/workflows/reader-android-font-reader.yml`. No build artifacts existed to upload. The original failure-evidence job passed. The follow-up admission pins the three pre-existing composition files to `f34a4f27` and retains the historical SDK and test pins.
+
+Push run 40627308600/1 at `b42041ff18c569fd748349d4c02e2a3911467bbc` passed admission and compiled the new Android relay instrumentation. At handoff the Android retained receive checks were running and both Apple SDK jobs were queued, so neither the two-host scenario nor its authentication had completed. Continue by inspecting that run and its preserved job evidence; do not treat the candidate as accepted or start a duplicate run while it is pending.

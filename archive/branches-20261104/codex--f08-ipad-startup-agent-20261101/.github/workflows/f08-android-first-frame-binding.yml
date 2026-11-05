@@ -1,0 +1,57 @@
+name: F08 Android first-frame binding controls
+on:
+  push:
+    branches: [codex/f08-android-first-frame-binding-20261031]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Guard exact capture-only source range
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          base='03ecfa21f6cd8d8e354145d56ffdf24244ecbe61'
+          host='examples/android/app/src/main/java/org/exreader/host/'
+          allowed={host+x for x in ['CatalogFrameLatch.java','CatalogShelf.java','MainActivity.java','ShelfWindowMetrics.java']}
+          test='tests/reader_f08_android_binding_20261031/'
+          allowed|={test+x for x in ['audit.py','test_audit.py','CatalogFrameLatchControl.java','README.md']}
+          allowed.add('.github/workflows/f08-android-first-frame-binding.yml')
+          changed=set(subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          assert changed==allowed,(changed-allowed,allowed-changed)
+          PY
+      - name: Exact association negative controls
+        run: python3 -m unittest discover -s tests/reader_f08_android_binding_20261031 -v
+      - name: Actual latch state controls
+        run: |
+          mkdir -p build/f08-binding-controls
+          javac -d build/f08-binding-controls examples/android/app/src/main/java/org/exreader/host/CatalogFrameLatch.java tests/reader_f08_android_binding_20261031/CatalogFrameLatchControl.java
+          java -cp build/f08-binding-controls org.exreader.host.CatalogFrameLatchControl | tee build/f08-binding-controls/state-result.json
+      - name: Compile actual observer against public API34
+        run: |
+          if [ ! -f "$ANDROID_HOME/platforms/android-34/android.jar" ]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-34'
+          fi
+          mkdir -p build/f08-binding-api/org/exreader/host
+          cat > build/f08-binding-api/org/exreader/host/BuildConfig.java <<'JAVA'
+          package org.exreader.host;
+          final class BuildConfig { static final boolean DEBUG=false,F08_REVIEW=true; }
+          JAVA
+          javac -cp "$ANDROID_HOME/platforms/android-34/android.jar" -d build/f08-binding-api build/f08-binding-api/org/exreader/host/BuildConfig.java examples/android/app/src/main/java/org/exreader/host/CatalogFrameLatch.java examples/android/app/src/main/java/org/exreader/host/ShelfWindowMetrics.java
+      - name: Retain control result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f08-android-binding-controls
+          path: build/f08-binding-controls/state-result.json
+          if-no-files-found: warn

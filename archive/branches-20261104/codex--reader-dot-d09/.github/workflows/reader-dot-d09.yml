@@ -1,0 +1,72 @@
+name: Reader Dot D09 GTK scale modal focus audit
+on:
+  push:
+    branches: [codex/reader-dot-d09]
+    paths: ['tests/reader_dot_wave2/d09/**', '.github/workflows/reader-dot-d09.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-dot-d09
+  cancel-in-progress: false
+jobs:
+  audit:
+    name: GTK native scale audit
+    runs-on: ubuntu-22.04
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: 803098e9df1a365a9b8e206805c2d179aca8501f
+          path: target
+          fetch-depth: 0
+      - name: Guard isolated source and syntax
+        run: |
+          python3 tests/reader_dot_wave2/d09/guard.py
+          python3 -m py_compile tests/reader_dot_wave2/d09/*.py
+          bash -n tests/reader_dot_wave2/d09/*.sh
+      - name: Native dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ninja-build libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils x11-xserver-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11
+      - name: Build pinned raw3 compact actual host without review macros
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          cd target
+          bash ../tests/reader_dot_wave2/d09/build.sh 2>&1 | tee ../evidence/build.log
+      - name: Four actual keyboard scaling and theme sessions
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tests/reader_dot_wave2/d09/run.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-dot-d09-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          retention-days: 14
+          if-no-files-found: error
+  verify:
+    name: Authenticate ZIP and same-source coverage
+    needs: audit
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original ZIP bytes identity expiry and report completeness
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_dot_wave2/d09/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-dot-d09-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: verification.json
+          retention-days: 14
+          if-no-files-found: warn

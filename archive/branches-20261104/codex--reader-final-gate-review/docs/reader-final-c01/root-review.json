@@ -1,0 +1,32 @@
+{
+  "accepted": true,
+  "accepted_scope": "C01 root-reviewed evidence gate tool only",
+  "complete_product": false,
+  "product_source": null,
+  "root_approved_scope_policy_count": 0,
+  "tested_source": "bdf0df3ef274ff4ffc58ff8219a40481b4697674",
+  "run_id": 40220698824,
+  "attempt": 1,
+  "conclusion": "success",
+  "jobs": [
+    121251443247,
+    121251476692
+  ],
+  "changes": [
+    "Six distinct host/default-UI cells: Windows, GTK, Android, macOS, iPhone, iPad",
+    "Executable host recognition excludes archives and shared libraries",
+    "Root-reviewed source/run/attempt scope report policy required",
+    "Physical-device facts and approved budget hash must be demonstrated"
+  ],
+  "remaining": [
+    "Set common product source only after joint same-source validation",
+    "Add root-reviewed policies only for actual complete reports",
+    "Current historical runs authenticate without counting as joint product proof"
+  ],
+  "artifact": {
+    "id": 12608727763,
+    "bytes": 17746,
+    "expires_at": "2027-01-23T18:19:32Z",
+    "sha256": "7be85c2eebac290043faeacee33768474d0bb94fe8babe766ffbc53637ced1f7"
+  }
+}

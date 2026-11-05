@@ -1,0 +1,590 @@
+[
+  {
+    "harness_sha": "5a8a210cf524303dae9748c8130aa9def20176d3",
+    "run_id": "40215135700",
+    "attempt": "1",
+    "artifact_authentication": true,
+    "negative_rejections": [
+      "macos/expired",
+      "macos/size_in_bytes",
+      "macos/digest",
+      "macos/name",
+      "macos/expires_at",
+      "iphone/expired",
+      "iphone/size_in_bytes",
+      "iphone/digest",
+      "iphone/name",
+      "iphone/expires_at",
+      "ipad/expired",
+      "ipad/size_in_bytes",
+      "ipad/digest",
+      "ipad/name",
+      "ipad/expires_at"
+    ],
+    "accepted": false,
+    "correction": "Mobile actual compiler macros HOST_REVIEW+IMPORT_REVIEW; original report review_macros=[] false. Not default UI. Mac build never started.",
+    "targets": [
+      {
+        "platform": "macos",
+        "job": {
+          "id": 121234532673,
+          "name": "D04 audit macos",
+          "conclusion": "failure"
+        },
+        "artifact": {
+          "id": 12607650309,
+          "name": "d04-macos-40215135700-1",
+          "size_in_bytes": 1131,
+          "digest": "sha256:c43f46cf191cd95dc950d4e07628746cc24f03c30cd084f1002dc03ea87ac4d6",
+          "expires_at": "2026-11-24T17:11:46Z"
+        },
+        "zip_sha256": "c43f46cf191cd95dc950d4e07628746cc24f03c30cd084f1002dc03ea87ac4d6",
+        "program": {},
+        "checks": [
+          {
+            "label": "import",
+            "exit": null,
+            "cases": [],
+            "passed": false
+          },
+          {
+            "label": "normal",
+            "exit": null,
+            "cases": [],
+            "passed": false
+          },
+          {
+            "label": "original-compact",
+            "exit": null,
+            "cases": [],
+            "passed": false
+          }
+        ],
+        "audit_completed": false,
+        "problems": [
+          "import: no xcresult",
+          "normal: no xcresult",
+          "original-compact: no xcresult",
+          "actual program missing",
+          "normal: default journey incomplete"
+        ]
+      },
+      {
+        "platform": "iphone",
+        "job": {
+          "id": 121234532463,
+          "name": "D04 audit iphone",
+          "conclusion": "failure"
+        },
+        "artifact": {
+          "id": 12607248437,
+          "name": "d04-iphone-40215135700-1",
+          "size_in_bytes": 277017649,
+          "digest": "sha256:aeda9f83b76f46c09ae2cf9fa98c686b489df5e8076e0990e0d04939e69fe6b3",
+          "expires_at": "2026-11-24T17:32:32Z"
+        },
+        "zip_sha256": "aeda9f83b76f46c09ae2cf9fa98c686b489df5e8076e0990e0d04939e69fe6b3",
+        "program": {
+          "executable_sha256": "e630b428b0529df8911046ff5431d366bca9c51fbba59e13fcee8c72e2d7a3eb",
+          "info_sha256": "8d51c7f0e381c6779ac26dc6ae2975968a827c1b515e26514d6291632068bf16",
+          "source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+          "sdk_version": "3.41.0",
+          "page_theme": false
+        },
+        "checks": [
+          {
+            "label": "import",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test01ProductionBodyNamesAndActualEdgeTap()",
+                "result": "Failed",
+                "duration": "49s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false
+          },
+          {
+            "label": "normal",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test01DefaultShelfAndAccountDismissal()",
+                "result": "Passed",
+                "duration": "33s",
+                "steps": [],
+                "step_count": 0
+              },
+              {
+                "name": "test02DefaultReaderLowFrequencyJourney()",
+                "result": "Failed",
+                "duration": "1m 39s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false
+          },
+          {
+            "label": "original-large",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test02CompactReaderActualTurnFontAndNotes()",
+                "result": "Failed",
+                "duration": "1m 42s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false
+          },
+          {
+            "label": "large",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test01DefaultShelfAndAccountDismissal()",
+                "result": "Passed",
+                "duration": "31s",
+                "steps": [],
+                "step_count": 0
+              },
+              {
+                "name": "test02DefaultReaderLowFrequencyJourney()",
+                "result": "Failed",
+                "duration": "1m 40s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false
+          }
+        ],
+        "audit_completed": false,
+        "problems": [
+          "normal: default journey incomplete",
+          "large: default journey incomplete"
+        ]
+      },
+      {
+        "platform": "ipad",
+        "job": {
+          "id": 121234532680,
+          "name": "D04 audit ipad",
+          "conclusion": "failure"
+        },
+        "artifact": {
+          "id": 12607982878,
+          "name": "d04-ipad-40215135700-1",
+          "size_in_bytes": 289482651,
+          "digest": "sha256:0a00351a5a35ce8bece7e9abef0a710de434e8b719122c07d52ee6b422619c84",
+          "expires_at": "2026-11-24T17:36:02Z"
+        },
+        "zip_sha256": "0a00351a5a35ce8bece7e9abef0a710de434e8b719122c07d52ee6b422619c84",
+        "program": {
+          "executable_sha256": "e630b428b0529df8911046ff5431d366bca9c51fbba59e13fcee8c72e2d7a3eb",
+          "info_sha256": "8d51c7f0e381c6779ac26dc6ae2975968a827c1b515e26514d6291632068bf16",
+          "source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+          "sdk_version": "3.41.0",
+          "page_theme": false
+        },
+        "checks": [
+          {
+            "label": "import",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test01ProductionBodyNamesAndActualEdgeTap()",
+                "result": "Failed",
+                "duration": "1m 32s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false
+          },
+          {
+            "label": "normal",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test01DefaultShelfAndAccountDismissal()",
+                "result": "Passed",
+                "duration": "55s",
+                "steps": [],
+                "step_count": 0
+              },
+              {
+                "name": "test02DefaultReaderLowFrequencyJourney()",
+                "result": "Failed",
+                "duration": "1m 40s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false
+          },
+          {
+            "label": "original-large",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test02CompactReaderActualTurnFontAndNotes()",
+                "result": "Failed",
+                "duration": "1m 40s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false
+          },
+          {
+            "label": "large",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test01DefaultShelfAndAccountDismissal()",
+                "result": "Passed",
+                "duration": "25s",
+                "steps": [],
+                "step_count": 0
+              },
+              {
+                "name": "test02DefaultReaderLowFrequencyJourney()",
+                "result": "Failed",
+                "duration": "1m 53s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false
+          }
+        ],
+        "audit_completed": false,
+        "problems": [
+          "normal: default journey incomplete",
+          "large: default journey incomplete"
+        ]
+      }
+    ]
+  },
+  {
+    "harness_sha": "4f342940fbe1c3bbd74022e33b2e6fdea6f572b6",
+    "run_id": "40217426634",
+    "attempt": "1",
+    "artifact_authentication": true,
+    "negative_rejections": [
+      "macos/expired",
+      "macos/size_in_bytes",
+      "macos/digest",
+      "macos/name",
+      "macos/expires_at",
+      "macos/project-review-leak",
+      "macos/compiler-review-leak",
+      "iphone/expired",
+      "iphone/size_in_bytes",
+      "iphone/digest",
+      "iphone/name",
+      "iphone/expires_at",
+      "iphone/project-review-leak",
+      "iphone/compiler-review-leak",
+      "ipad/expired",
+      "ipad/size_in_bytes",
+      "ipad/digest",
+      "ipad/name",
+      "ipad/expires_at",
+      "ipad/project-review-leak",
+      "ipad/compiler-review-leak"
+    ],
+    "accepted": false,
+    "correction": "Actual no-review config authenticated. Mac new test compared label instead of value; phone/pad direct Menu hit-test and G16 offscreen-query limitations; not proof of user-facing product bug.",
+    "targets": [
+      {
+        "platform": "macos",
+        "job": {
+          "id": 121241505014,
+          "name": "D04 audit macos",
+          "conclusion": "failure"
+        },
+        "artifact": {
+          "id": 12607444182,
+          "name": "d04-macos-40217426634-1",
+          "size_in_bytes": 110048461,
+          "digest": "sha256:84fc5b0568461272ec2ee154287c1752d4908f24e96f932cefce6e9afeba251e",
+          "expires_at": "2026-11-24T17:45:48Z"
+        },
+        "zip_sha256": "84fc5b0568461272ec2ee154287c1752d4908f24e96f932cefce6e9afeba251e",
+        "program": {
+          "executable_sha256": "9cdf3c48dda1933bca57f7ebb3e0bab30fc7158414b0c7c9ccde33875ebb24e4",
+          "info_sha256": "af16af4b4a857fb2deb1d1f78f537e089ddfb422aaf27f633e257cf224cd4825",
+          "source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+          "sdk_version": "3.41.0",
+          "page_theme": false
+        },
+        "checks": [
+          {
+            "label": "import",
+            "exit": 0,
+            "cases": [
+              {
+                "name": "test01ProductionBodyNamesAndActualEdgeTap()",
+                "result": "Passed",
+                "duration": "27s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": true
+          },
+          {
+            "label": "normal",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test01DefaultShelfAndAccountDismissal()",
+                "result": "Passed",
+                "duration": "16s",
+                "steps": [],
+                "step_count": 0
+              },
+              {
+                "name": "test02DefaultReaderLowFrequencyJourney()",
+                "result": "Failed",
+                "duration": "1m 11s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false,
+            "screenshot_count": 10
+          },
+          {
+            "label": "original-compact",
+            "exit": 0,
+            "cases": [
+              {
+                "name": "test02CompactReaderActualTurnFontAndNotes()",
+                "result": "Passed",
+                "duration": "22s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": true
+          }
+        ],
+        "audit_completed": false,
+        "problems": [
+          "normal: default journey incomplete"
+        ]
+      },
+      {
+        "platform": "iphone",
+        "job": {
+          "id": 121241505197,
+          "name": "D04 audit iphone",
+          "conclusion": "failure"
+        },
+        "artifact": {
+          "id": 12608685044,
+          "name": "d04-iphone-40217426634-1",
+          "size_in_bytes": 138943897,
+          "digest": "sha256:8fe2d0836f2ad9c20e859530a3a96af14fef31a874f9d94b98a881d968975365",
+          "expires_at": "2026-11-24T17:51:54Z"
+        },
+        "zip_sha256": "8fe2d0836f2ad9c20e859530a3a96af14fef31a874f9d94b98a881d968975365",
+        "program": {
+          "executable_sha256": "a810c1f4dfdb3f72fcd15b29fcc20afc2dcd3d45b5d8d6e6ba1c276704231151",
+          "info_sha256": "8d51c7f0e381c6779ac26dc6ae2975968a827c1b515e26514d6291632068bf16",
+          "source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+          "sdk_version": "3.41.0",
+          "page_theme": false
+        },
+        "checks": [
+          {
+            "label": "import",
+            "exit": 0,
+            "cases": [
+              {
+                "name": "test01ProductionBodyNamesAndActualEdgeTap()",
+                "result": "Passed",
+                "duration": "42s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": true
+          },
+          {
+            "label": "normal",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test01DefaultShelfAndAccountDismissal()",
+                "result": "Passed",
+                "duration": "29s",
+                "steps": [],
+                "step_count": 0
+              },
+              {
+                "name": "test02DefaultReaderLowFrequencyJourney()",
+                "result": "Failed",
+                "duration": "51s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false,
+            "screenshot_count": 24
+          },
+          {
+            "label": "original-large",
+            "exit": 0,
+            "cases": [
+              {
+                "name": "test02CompactReaderActualTurnFontAndNotes()",
+                "result": "Passed",
+                "duration": "44s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": true
+          },
+          {
+            "label": "large",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test01DefaultShelfAndAccountDismissal()",
+                "result": "Passed",
+                "duration": "25s",
+                "steps": [],
+                "step_count": 0
+              },
+              {
+                "name": "test02DefaultReaderLowFrequencyJourney()",
+                "result": "Failed",
+                "duration": "12s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false,
+            "screenshot_count": 7
+          }
+        ],
+        "audit_completed": false,
+        "problems": [
+          "normal: default journey incomplete",
+          "large: default journey incomplete"
+        ]
+      },
+      {
+        "platform": "ipad",
+        "job": {
+          "id": 121241505194,
+          "name": "D04 audit ipad",
+          "conclusion": "failure"
+        },
+        "artifact": {
+          "id": 12609011728,
+          "name": "d04-ipad-40217426634-1",
+          "size_in_bytes": 168892898,
+          "digest": "sha256:a8ef37d3edfc8bb6023cfcf5f9ebbb5b2df410eb5ce88ba790c193f7f4b269fc",
+          "expires_at": "2026-11-24T18:04:36Z"
+        },
+        "zip_sha256": "a8ef37d3edfc8bb6023cfcf5f9ebbb5b2df410eb5ce88ba790c193f7f4b269fc",
+        "program": {
+          "executable_sha256": "b6efb976d75e2208c8bf4eab2d6a7fbc141f36cf976103b1790739aebd2b6524",
+          "info_sha256": "8d51c7f0e381c6779ac26dc6ae2975968a827c1b515e26514d6291632068bf16",
+          "source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+          "sdk_version": "3.41.0",
+          "page_theme": false
+        },
+        "checks": [
+          {
+            "label": "import",
+            "exit": 0,
+            "cases": [
+              {
+                "name": "test01ProductionBodyNamesAndActualEdgeTap()",
+                "result": "Passed",
+                "duration": "59s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": true
+          },
+          {
+            "label": "normal",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test01DefaultShelfAndAccountDismissal()",
+                "result": "Passed",
+                "duration": "1m 5s",
+                "steps": [],
+                "step_count": 0
+              },
+              {
+                "name": "test02DefaultReaderLowFrequencyJourney()",
+                "result": "Failed",
+                "duration": "1m 8s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false,
+            "screenshot_count": 24
+          },
+          {
+            "label": "original-large",
+            "exit": 0,
+            "cases": [
+              {
+                "name": "test02CompactReaderActualTurnFontAndNotes()",
+                "result": "Passed",
+                "duration": "52s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": true
+          },
+          {
+            "label": "large",
+            "exit": 65,
+            "cases": [
+              {
+                "name": "test01DefaultShelfAndAccountDismissal()",
+                "result": "Passed",
+                "duration": "31s",
+                "steps": [],
+                "step_count": 0
+              },
+              {
+                "name": "test02DefaultReaderLowFrequencyJourney()",
+                "result": "Failed",
+                "duration": "12s",
+                "steps": [],
+                "step_count": 0
+              }
+            ],
+            "passed": false,
+            "screenshot_count": 7
+          }
+        ],
+        "audit_completed": false,
+        "problems": [
+          "normal: default journey incomplete",
+          "large: default journey incomplete"
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,128 @@
+name: Windows retained record-slot bridge
+on:
+  push:
+    branches: [codex/p0-win-record-bridge-20261030]
+    paths: [extras/migration/windows_record_bridge_20261030/**, tests/migration/windows_record_bridge_20261030/**, extras/migration/windows_publish_20261030/**, .github/workflows/migration-windows-record-bridge-20261030.yml]
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  record:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env: {PYTHONUTF8: '1'}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Frozen source and qualification identity
+        run: |
+          set -euo pipefail
+          mkdir -p build/record-evidence
+          git diff --exit-code 00e12b8b66ac2c66245e462ef4931a724671cd34 HEAD -- src include cmake CMakeLists.txt bindings extras/migration/src/lm_recovery.c extras/migration/src/lm_recovery_win32_platform.c extras/migration/src/lm_recovery_win32_platform.h tests/migration/recovery_preflight_20261029 tests/migration/windows_recovery_native_20261029
+      - name: Additive scope admission without weakening original guard
+        run: |
+          python - <<'PY'
+          import subprocess
+          base='826bfc527c6305d41b4a8a2c61be5dbc1315ddb6'
+          paths=subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines()
+          prefixes=('extras/migration/windows_record_bridge_20261030/','tests/migration/windows_record_bridge_20261030/')
+          exact={'.github/workflows/migration-windows-record-bridge-20261030.yml','docs/MIGRATION-WINDOWS-RECORD-BRIDGE-20261030.md','extras/migration/windows_publish_20261030/include/lm_win_publish.h','extras/migration/windows_publish_20261030/src/lm_win_publish.c'}
+          assert paths and all(p.startswith(prefixes) or p in exact for p in paths),paths
+          PY
+      - name: Build installed SDK and separately opted-in production record library
+        run: |
+          set -euo pipefail
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
+          cmake --build build/sdk --config Release --parallel 4
+          cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage"
+          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release -DEXR_MIGRATION_WINDOWS_RECORD_CANDIDATE=ON
+          cmake --build build/migration --config Release --parallel 4
+          cmake --install build/migration --config Release --prefix "$GITHUB_WORKSPACE/migration-stage"
+      - name: Build actual installed consumer and original Windows refusal fixture
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/windows_record_20261029 -B build/record-check -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage" -DSOURCE_SHA="$GITHUB_SHA" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/record-check --config Release --parallel 4
+          cmake -S tests/migration/recovery_integration_20261029 -B build/integration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/integration --config Release --parallel 4
+      - name: Actual NTFS records, full-width collision controls and retained old-format refusals
+        run: |
+          set -euo pipefail
+          PRIVATE_ROOT=$(cygpath -w "$GITHUB_WORKSPACE/build/record-evidence/private-state")
+          build/record-check/Release/windows-record-check.exe "$PRIVATE_ROOT" | tee build/record-evidence/native.json
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path('build/record-evidence');r=json.loads((p/'native.json').read_text())
+          assert r['source']==os.environ['GITHUB_SHA'] and r['passed'] and r['checks']==r['expected']==27
+          assert r['identity_bytes']==49 and len(r['target'])==48 and r['sdk_open_attempts']==0 and r['recovery_admission'] is False
+          files={q.name:{'bytes':q.stat().st_size,'sha256':hashlib.sha256(q.read_bytes()).hexdigest()} for q in (p/'private-state').iterdir()}
+          assert set(files)=={'target.fixture','record-00.json'},files
+          record=json.loads((p/'private-state/record-00.json').read_bytes());assert record['magic']=='EXRWINRECOVERY1' and record['version']==1 and record['target']==r['target']
+          for name in ('root','parent','target'):assert len(record[name])==48 and set(record[name])<=set('0123456789abcdef')
+          built=Path('build/migration/Release/exreader-migration-windows-record.lib');installed=Path('migration-stage/lib/exreader-migration-windows-record.lib')
+          assert built.read_bytes()==installed.read_bytes()
+          (p/'receipt.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],checks=r,files=files,installed_library_sha256=hashlib.sha256(installed.read_bytes()).hexdigest(),full_p0_acceptance=False),indent=2)+'\n')
+          PY
+      - name: Build installed publication primitive and separate installed consumer
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_publish_20261030 -B build/publish -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage"
+          cmake --build build/publish --config Release --parallel 4
+          cmake --install build/publish --config Release --prefix "$GITHUB_WORKSPACE/publish-stage"
+          cmake -S tests/migration/windows_publish_20261030 -B build/publish-check -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage" -DPUBLISH_PREFIX="$GITHUB_WORKSPACE/publish-stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/publish-check --config Release --parallel 4
+          python tests/migration/windows_publish_20261030/run.py --probe build/publish-check/Release/windows-publish-check.exe --work build/publish-evidence
+      - name: Build installed bridge and installed consumer; native negatives and death cuts
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_record_bridge_20261030 -B build/bridge -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage" -DPUBLISH_PREFIX="$GITHUB_WORKSPACE/publish-stage"
+          cmake --build build/bridge --config Release --parallel 4
+          cmake --install build/bridge --config Release --prefix "$GITHUB_WORKSPACE/bridge-stage"
+          cmake -S tests/migration/windows_record_bridge_20261030 -B build/bridge-check -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage" -DPUBLISH_PREFIX="$GITHUB_WORKSPACE/publish-stage" -DBRIDGE_PREFIX="$GITHUB_WORKSPACE/bridge-stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/bridge-check --config Release --parallel 4
+          python tests/migration/windows_record_bridge_20261030/run.py --probe build/bridge-check/Release/windows-record-bridge-check.exe --work build/bridge-evidence
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          pairs={'bridge':('build/bridge/Release/exreader-migration-windows-record-bridge.lib','bridge-stage/lib/exreader-migration-windows-record-bridge.lib'),'publish':('build/publish/Release/exreader-migration-windows-publish.lib','publish-stage/lib/exreader-migration-windows-publish.lib'),'record':('build/migration/Release/exreader-migration-windows-record.lib','migration-stage/lib/exreader-migration-windows-record.lib')}
+          result={}
+          for key,(built,installed) in pairs.items():
+            a=Path(built).read_bytes();b=Path(installed).read_bytes();assert a==b
+            result[key]={'sha256':hashlib.sha256(b).hexdigest(),'bytes':len(b)}
+          Path('build/bridge-evidence/installed.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],libraries=result),indent=2))
+          PY
+      - name: Original eight Windows recovery capability refusals
+        run: |
+          set -euo pipefail
+          python tests/migration/recovery_integration_20261029/run.py --harness-preflight build/harness-admission
+          python tests/migration/recovery_integration_20261029/run.py --candidate migration-stage/bin/exreader-legacy-migrate-recovery.exe --tool build/migration/Release/exreader-legacy-migrate-tx.exe --old-tool build/migration/Release/exreader-legacy-migrate.exe --fixture build/integration/Release/migration-recovery-fixture.exe --font tests/fixtures/fonts/primary.ttf --fixtures tests/fixtures --harness-admission build/harness-admission/admission.json --work build/recovery-integration
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('build/recovery-integration/evidence.json').read_text());assert len(r['cases'])==8 and r['passed'] and all(c['passed'] for c in r['cases'])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-record-bridge-${{ github.sha }}
+          path: |
+            build/bridge-evidence/
+            build/bridge-check/bridge-consumer.map
+            bridge-stage/
+            build/bridge/Release/exreader-migration-windows-record-bridge.lib
+            build/publish/Release/exreader-migration-windows-publish.lib
+            build/migration/Release/exreader-migration-windows-record.lib
+            build/publish-evidence/
+            build/publish-check/publish-consumer.map
+            publish-stage/
+            build/record-evidence/
+            build/record-check/record-consumer.map
+            build/recovery-integration/
+            build/harness-admission/
+            migration-stage/lib/exreader-migration-windows-record.lib
+            migration-stage/include/exreader-migration-candidate/
+          if-no-files-found: error

@@ -1,0 +1,48 @@
+name: F08 native window observer build
+on:
+  push:
+    branches: [codex/f08-window-capture-20261031]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the external observer
+        shell: pwsh
+        run: |
+          cmake -S tests/reader_f08_window_capture_20261031 -B build/f08-wgc -A x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build/f08-wgc --config Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force -Path build/f08-window-observer | Out-Null
+          Copy-Item -LiteralPath build/f08-wgc/Release/f08_window_capture.exe -Destination build/f08-window-observer/observer.exe
+          & build/f08-window-observer/observer.exe 0 0 absent.stop build/f08-window-observer/invalid-window > build/f08-window-observer/invalid-window.jsonl
+          if ($LASTEXITCODE -ne 1) { throw "Invalid HWND must be rejected" }
+          $record = Get-Content -LiteralPath build/f08-window-observer/invalid-window.jsonl | ConvertFrom-Json
+          if ($record.kind -ne 'fatal') { throw "Invalid window result" }
+          & build/f08-window-observer/observer.exe --check-png build/f08-window-observer/image-selftest.png
+          if ($LASTEXITCODE -ne 0) { throw "Lossless PNG roundtrip failed" }
+          $LASTEXITCODE = 0
+          $metadata = @{
+            source_sha = $env:GITHUB_SHA
+            run_id = $env:GITHUB_RUN_ID
+            attempt = $env:GITHUB_RUN_ATTEMPT
+            observer_sha256 = (Get-FileHash -LiteralPath build/f08-window-observer/observer.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+            observer_bytes = (Get-Item -LiteralPath build/f08-window-observer/observer.exe).Length
+            invalid_window_rejected = $true
+            png_roundtrip_passed = $true
+            product_sampled = $false
+            f08_accepted = $false
+          }
+          if ($metadata.source_sha.Length -ne 40 -or $metadata.run_id -notmatch '^\d+$' -or $metadata.attempt -notmatch '^\d+$') { throw "Build identity missing" }
+          $metadata | ConvertTo-Json | Set-Content -LiteralPath build/f08-window-observer/metadata.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-window-observer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-window-observer/
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,67 @@
+name: Repair original five Apple mobile feature cases
+on:
+  push:
+    branches: [codex/repair-apple-features-20261029]
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.42.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  sdk:
+    runs-on: macos-15
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Frozen original organization tests and checker remain exact
+        run: |
+          python3 tools/reader_composition/repair_apple_features_admission_20261029.py
+          python3 -m compileall -q tests/apple_sdk342_host tools/build_apple_product.py
+      - name: Same-source frozen SDK and public product installations
+        run: python3 tests/apple_sdk342_host/build.py --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: team24-apple-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            build/raw3-ios-sdk/${{ matrix.target }}/sdk/
+            build/raw3-ios-sdk/${{ matrix.target }}/raw-products/
+            build/raw3-ios-sdk/${{ matrix.target }}/*.json
+          retention-days: 30
+          if-no-files-found: error
+  original-five:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iphone, ipad]
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: team24-apple-sdk-*
+          path: sdk-input
+      - name: Original project generator dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Original five feature cases and original per-case budgets
+        run: python3 tests/apple_features_repair_20261029/admission.py --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: repair-mobile-original-five-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/team24-apple/${{ matrix.platform }}/evidence/
+          retention-days: 30
+          if-no-files-found: error

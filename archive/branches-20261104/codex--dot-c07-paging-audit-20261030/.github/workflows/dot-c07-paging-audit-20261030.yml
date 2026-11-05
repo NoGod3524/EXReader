@@ -1,0 +1,88 @@
+name: C07 independent paging evidence audit
+on:
+  push:
+    branches: [codex/dot-c07-paging-audit-20261030]
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    outputs:
+      artifact_id: ${{ steps.evidence.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin additive scope and unchanged legacy auditor
+        run: |
+          base=2b5222ad2af4c92e7f239d6ab4d355fba6859974
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$base" HEAD
+          git diff --exit-code "$base" HEAD -- scripts/audit/claude_c07_conflict_audit_20261030.py
+          git diff --name-only "$base" HEAD > changed-paths.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          allowed={'scripts/audit/dot_c07_paging_audit_20261030.py',
+                   '.github/workflows/dot-c07-paging-audit-20261030.yml',
+                   'docs/reader-total-progress/DOT_C07_PAGING_AUDIT_20261030.md'}
+          assert set(Path('changed-paths.txt').read_text().splitlines()) <= allowed
+          PY
+      - name: Syntax check within Actions only
+        run: python3 -I -m py_compile scripts/audit/dot_c07_paging_audit_20261030.py
+      - name: Original 97 controls and additive 30 controls then pinned producer audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/audit/dot_c07_paging_audit_20261030.py
+      - name: Preserve original ZIP and all failure receipts
+        if: always()
+        id: evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: dot-c07-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/dot-c07-audit/
+          if-no-files-found: error
+  rehash:
+    needs: audit
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Retrieve exact audit artifact from this run
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.audit.outputs.artifact_id }}
+          path: rehash-input
+          merge-multiple: true
+      - name: Independently rehash retained original bytes
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          p=pathlib.Path('rehash-input')
+          receipt=json.loads((p/'receipt.json').read_text())
+          assert receipt['accepted'] is True
+          assert receipt['audit_source_sha']==os.environ['GITHUB_SHA']
+          assert receipt['audit_run_id']==os.environ['GITHUB_RUN_ID']
+          assert receipt['audit_attempt']==int(os.environ['GITHUB_RUN_ATTEMPT'])
+          expected={'sha':'7f15fe49374cd9389e2106837351d4bbd5e56113','run_id':'41134343005','attempt':'1','artifact_id':'13016305109'}
+          assert receipt['producer']==expected
+          raw=(p/'original.zip').read_bytes()
+          digest=hashlib.sha256(raw).hexdigest()
+          assert len(raw)==1011359
+          assert digest=='0c926a7cdc47e6a870d0ee237c6c3de4b3e794713f9d8f7d0c2db03f4b76ba38'
+          assert receipt['retained_original_zip']=={'path':'original.zip','bytes':len(raw),'sha256':digest}
+          report={'accepted':True,'producer':expected,'bytes':len(raw),'sha256':digest,
+                  'audit_run_id':os.environ['GITHUB_RUN_ID'],'audit_attempt':int(os.environ['GITHUB_RUN_ATTEMPT']),
+                  'scope':'independent rehash of retained bytes, not a second producer download'}
+          pathlib.Path('rehash.json').write_text(json.dumps(report,sort_keys=True)+'\n')
+          print(json.dumps(report,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dot-c07-rehash-${{ github.run_id }}-${{ github.run_attempt }}
+          path: rehash.json
+          if-no-files-found: error

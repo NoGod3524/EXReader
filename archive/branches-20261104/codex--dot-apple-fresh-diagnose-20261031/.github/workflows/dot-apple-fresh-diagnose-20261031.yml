@@ -1,0 +1,30 @@
+name: Inspect pinned fresh-candidate Apple failures
+on:
+  push:
+    branches: [codex/dot-apple-fresh-diagnose-20261031]
+    paths: ['tools/reader_composition/dot_apple_fresh_diagnose_20261031.py', '.github/workflows/dot-apple-fresh-diagnose-20261031.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact independent diagnostic-only scope
+        run: |
+          git diff --exit-code a9a22319825d97b9d94b4d2f11e7ca0a5635a673 HEAD -- . ':!tools/reader_composition/dot_apple_fresh_diagnose_20261031.py' ':!.github/workflows/dot-apple-fresh-diagnose-20261031.yml' ':!docs/reader-total-progress/dot-apple-fresh-diagnose-20261031.md'
+          python3 -m py_compile tools/reader_composition/dot_apple_fresh_diagnose_20261031.py
+      - name: Authenticate two original failed ZIPs and print frame status and launch evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/dot_apple_fresh_diagnose_20261031.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dot-apple-fresh-diagnose-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/dot-apple-fresh-diagnose/
+            !build/dot-apple-fresh-diagnose/**/extracted/**/*.xcresult/**
+          if-no-files-found: error
+          retention-days: 30

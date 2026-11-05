@@ -1,0 +1,228 @@
+name: C10 desktop accessibility (GTK and Windows)
+
+on:
+  push:
+    branches: ['claude/dot-c10-a11y-desktop-20261030']
+    paths:
+      - 'tests/reader_final_a11y_desktop_20261030/**'
+      - '.github/workflows/claude_c10_a11y_desktop_20261030.yml'
+      - 'scripts/audit/claude_c10_a11y_desktop_20261030.py'
+      - 'docs/reader-total-progress/CLAUDE_C10_A11Y_DESKTOP_20261030.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: claude-c10-a11y-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  gtk:
+    name: GTK keyboard + AT-SPI tree on Xvfb (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Owner guard and verdict-rule self-test
+        run: |
+          set -euo pipefail
+          mkdir -p build/c10 build/a11y-logs
+          python3 -m py_compile scripts/audit/claude_c10_a11y_desktop_20261030.py tests/reader_final_a11y_desktop_20261030/*.py
+          python3 scripts/audit/claude_c10_a11y_desktop_20261030.py guard --report build/c10/source-guard-gtk.json
+          python3 scripts/audit/claude_c10_a11y_desktop_20261030.py selftest
+      - name: Install GTK, AT-SPI, X11 input and evidence tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring \
+            libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build \
+            at-spi2-core python3-gi gir1.2-atspi-2.0 gsettings-desktop-schemas \
+            dbus xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+      - name: Build installed product modules, SDK and the GTK host package
+        run: |
+          set -euo pipefail
+          prefix="$PWD/build/a11y-stage"
+          echo "A11Y_PREFIX=$prefix" >> "$GITHUB_ENV"
+          b() { # name source extra...
+            local name="$1" src="$2"; shift 2
+            cmake -S "$src" -B "build/a11y-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" "$@" 2>&1 | tee "build/a11y-logs/$name-configure.log"
+            cmake --build "build/a11y-$name" --parallel 4 2>&1 | tee "build/a11y-logs/$name-build.log"
+            cmake --install "build/a11y-$name" 2>&1 | tee "build/a11y-logs/$name-install.log"
+          }
+          b product apps/reader/store/native
+          b dav extras/webdav
+          b revisions apps/reader/revisions -DREADER_PRODUCT_PREFIX="$prefix"
+          for module in commands desktop-metadata sync session; do
+            b "$module" "apps/reader/$module" -DCMAKE_PREFIX_PATH="$prefix"
+          done
+          b credentials extras/credentials
+          cmake --preset reading-library 2>&1 | tee build/a11y-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/a11y-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/a11y-logs/sdk-install.log
+          b sideload extras/sideload -DEXR_SDK="$PWD/build/reading-library/stage"
+          cmake -S apps/reader/desktop -B build/a11y-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$PWD/build/reading-library/stage" \
+            -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" \
+            -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_BUILD_GTK=ON \
+            -DEXR_READER_FIXTURES="$PWD/tests/fixtures" 2>&1 | tee build/a11y-logs/host-configure.log
+          cmake --build build/a11y-desktop --parallel 4 2>&1 | tee build/a11y-logs/host-build.log
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage \
+            --binary build/a11y-desktop/gtk-host/exreader-linux --output build/a11y-package 2>&1 | tee build/a11y-logs/package.log
+      - name: Keyboard + AT-SPI audit of shelf, import, reading, annotation and settings
+        run: |
+          set -euo pipefail
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox > build/a11y-logs/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            unset -v NO_AT_BRIDGE GTK_MODULES || true
+            export GTK_A11Y=atspi
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true || true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true || true
+            python3 tests/reader_a11y_gtk/audit_gtk_a11y.py --payload build/a11y-package/EXReader-Linux --output build/a11y-evidence
+          ' 2>&1 | tee build/a11y-logs/audit.log
+      - name: Exit by keyboard
+        if: always()
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox > build/a11y-logs/openbox-exit.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            unset -v NO_AT_BRIDGE GTK_MODULES || true
+            export GTK_A11Y=atspi
+            python3 tests/reader_final_a11y_desktop_20261030/exit_probe.py gtk --payload build/a11y-package/EXReader-Linux --output build/a11y-exit
+          ' 2>&1 | tee build/a11y-logs/exit.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c10-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/a11y-evidence/
+            build/a11y-exit/
+            build/a11y-logs/
+            build/c10/
+            build/a11y-package/build.json
+            build/a11y-package/runtime-dependencies.txt
+          if-no-files-found: error
+
+  windows:
+    name: Win32 keyboard + UI Automation tree (windows-2022)
+    runs-on: windows-2022
+    timeout-minutes: 120
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Owner guard and verdict-rule self-test
+        run: |
+          set -euo pipefail
+          mkdir -p build/c10 build/a11y-gate
+          python -m py_compile scripts/audit/claude_c10_a11y_desktop_20261030.py tests/reader_final_a11y_desktop_20261030/*.py
+          python scripts/audit/claude_c10_a11y_desktop_20261030.py guard --report build/c10/source-guard-windows.json
+          python scripts/audit/claude_c10_a11y_desktop_20261030.py selftest
+          query session || qwinsta || true
+      - name: Enter the native Windows compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          $wrapper = Join-Path $env:RUNNER_TEMP 'vcvars-export.bat'
+          $quote = [char]34
+          Set-Content -LiteralPath $wrapper -Encoding ascii -Value ('@call ' + $quote + $bat + $quote + ' >nul')
+          Add-Content -LiteralPath $wrapper -Encoding ascii -Value '@set'
+          foreach ($line in (& cmd.exe /c $wrapper)) {
+            if ($line -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build SDK, product modules and the Windows host package
+        run: |
+          set -euo pipefail
+          ws=$(cygpath -m "$PWD")
+          prefix="$ws/build/product-stage"
+          echo "PRODUCT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake --preset reading-library 2>&1 | tee build/a11y-gate/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/a11y-gate/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/a11y-gate/sdk-install.log
+          b() { # name source extra...
+            local name="$1" src="$2"; shift 2
+            cmake -S "$src" -B "build/product-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" "$@"
+            cmake --build "build/product-$name" --parallel 4
+            cmake --install "build/product-$name"
+          }
+          b store apps/reader/store/native
+          b revisions apps/reader/revisions -DREADER_PRODUCT_PREFIX="$prefix"
+          b commands apps/reader/commands -DCMAKE_PREFIX_PATH="$prefix"
+          b metadata apps/reader/desktop-metadata -DCMAKE_PREFIX_PATH="$prefix"
+          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$ws/build/reading-library/stage" -DREADER_METADATA_PREFIX="$PRODUCT_PREFIX" \
+            -DEXR_READER_FIXTURES="$ws/tests/fixtures" 2>&1 | tee build/a11y-gate/host-configure.log
+          cmake --build build/desktop-sdk --parallel 4 2>&1 | tee build/a11y-gate/host-build.log
+          python tools/build_windows_host.py --sdk build/reading-library/stage \
+            --binary build/desktop-sdk/EXReaderProduct.exe --output build/a11y-package --static-reading
+          python tests/windows_host/make_fixtures.py --output build/a11y-fixtures
+      - name: Install the UI Automation client
+        run: python -m pip install --disable-pip-version-check "uiautomation==2.0.29"
+      - name: Keyboard + UI Automation audit of shelf, import, reading, annotation and settings
+        run: |
+          python tests/reader_a11y_windows/run_audit.py \
+            --payload build/a11y-package/EXReader --fixtures build/a11y-fixtures --output build/a11y-evidence \
+            --source "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --keep-data --verbose
+      - name: Exit by keyboard
+        if: always()
+        run: python tests/reader_final_a11y_desktop_20261030/exit_probe.py windows --payload build/a11y-package/EXReader --output build/a11y-exit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c10-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/a11y-evidence/
+            build/a11y-exit/
+            build/a11y-gate/
+            build/c10/
+            build/a11y-package/build.json
+            build/a11y-package/report.json
+            build/a11y-package/application.log
+          if-no-files-found: error
+
+  aggregate:
+    name: Combine both hosts into the six-surface verdict
+    needs: [gtk, windows]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: c10-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/in/gtk
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: c10-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/in/windows
+        continue-on-error: true
+      - name: Aggregate (job results gtk=${{ needs.gtk.result }} windows=${{ needs.windows.result }})
+        run: |
+          python3 scripts/audit/claude_c10_a11y_desktop_20261030.py aggregate \
+            --gtk build/in/gtk --windows build/in/windows --output build/c10-final/final-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c10-final-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c10-final/
+          if-no-files-found: error

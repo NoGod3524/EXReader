@@ -1,0 +1,10 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+include("${CMAKE_CURRENT_LIST_DIR}/EXReaderTTSAppleTargets.cmake")
+# Frameworks are resolved per consuming SDK (macOS or iOS), never baked in as an
+# absolute path from the building machine.
+find_library(EXReaderTTSApple_AVFOUNDATION AVFoundation REQUIRED)
+find_library(EXReaderTTSApple_Foundation Foundation REQUIRED)
+set_property(TARGET EXReaderTTSApple::reader_tts APPEND PROPERTY
+  INTERFACE_LINK_LIBRARIES "${EXReaderTTSApple_AVFOUNDATION}" "${EXReaderTTSApple_Foundation}")
+check_required_components(EXReaderTTSApple)

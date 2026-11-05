@@ -1,0 +1,37 @@
+name: Inspect Apple maximum-type landscape failure
+on:
+  push:
+    branches: [codex/dot-apple-large-type-evidence]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-large-type-focus-iphone-40673513910-1
+          run-id: 40673513910
+          github-token: ${{ github.token }}
+          path: prior
+      - name: Preserve failed landscape production frames
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('prior/maximum.log').read_text(errors='replace')
+          start=text.find('testMaximumTypeLandscapeOrganizationAndReturn')
+          end=text.find('testMaximumTypePortraitOrganizationAndReturn',start)
+          selected=text[start:end]
+          Path('landscape-failure.txt').write_text(selected)
+          for line in selected.splitlines():
+              if any(word in line for word in ['error:', 'organization.', 'Window (Main)', 'ORGANIZATION LARGE', 'ScrollView', 'Activation point', 'failed']):
+                  print(line)
+          assert 'organization.close' in selected and 'Activation point invalid' in selected
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apple-large-type-landscape-failure-${{ github.run_id }}
+          path: landscape-failure.txt
+          if-no-files-found: error

@@ -1,0 +1,190 @@
+{
+  "package": "S15 existing original export on the approved SDK 3.41 install graph",
+  "branch": "codex/reader-next-s15",
+  "fixed_start": "e67d87cbeabb2457e0852f681ef0b27b2c0da4d8",
+  "approved_sdk": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "reused_module": "25cd7b4b15d952e3f7a10e39ed80ae16a3d9a3ee",
+  "workflow": ".github/workflows/reader-next-s15.yml",
+  "accepted": true,
+  "tested_source_sha": "c1737e2a599d7d2cfc6d87569ab5e65093206a54",
+  "tested_tree_sha": "71bc03d1af030326c8d2645f00caf28ec4df9aa8",
+  "run": {
+    "id": 40227960455,
+    "attempt": 1,
+    "conclusion": "success"
+  },
+  "jobs": [
+    {
+      "platform": "Linux",
+      "runner": "ubuntu-22.04",
+      "id": 121273316640,
+      "name": "original export 3.41 (ubuntu-22.04)",
+      "conclusion": "success",
+      "checks": 44
+    },
+    {
+      "platform": "Windows",
+      "runner": "windows-2022",
+      "id": 121273316691,
+      "name": "original export 3.41 (windows-2022)",
+      "conclusion": "success",
+      "checks": 44
+    },
+    {
+      "platform": "macOS",
+      "runner": "macos-15",
+      "id": 121273316467,
+      "name": "original export 3.41 (macos-15)",
+      "conclusion": "success",
+      "checks": 44
+    },
+    {
+      "platform": "Linux",
+      "runner": "ubuntu-22.04",
+      "id": 121273316693,
+      "name": "frozen 3.40 default graph (ubuntu-22.04)",
+      "conclusion": "success",
+      "checks": 6
+    },
+    {
+      "platform": "-",
+      "runner": "ubuntu-22.04",
+      "id": 121274056739,
+      "name": "strict S15 evidence",
+      "conclusion": "success"
+    }
+  ],
+  "sdk_identity": {
+    "version": "3.41.0",
+    "abi": 1,
+    "pin_recorded_in_module_config": "3.41.0"
+  },
+  "artifacts": [
+    {
+      "id": 12611617179,
+      "name": "reader-next-s15-Linux-40227960455-1",
+      "size_in_bytes": 8489753,
+      "digest": "sha256:ee5a5d22d81db7694d3360189d542d4c88c8b6e58eaccb4523b8d079befaaeb4",
+      "expires_at": "2027-01-23T19:50:49Z"
+    },
+    {
+      "id": 12612585832,
+      "name": "reader-next-s15-Windows-40227960455-1",
+      "size_in_bytes": 7061984,
+      "digest": "sha256:f14555afe5e03287e8e95718bea0d3daa53958a18f8966ceedeee2a97af6a664",
+      "expires_at": "2027-01-23T19:50:49Z"
+    },
+    {
+      "id": 12612376433,
+      "name": "reader-next-s15-macOS-40227960455-1",
+      "size_in_bytes": 7429078,
+      "digest": "sha256:6336225ba1a238c32eecf64ba49fc8d0debe95725593cacee94a66f5ce0a5b25",
+      "expires_at": "2027-01-23T19:50:49Z"
+    },
+    {
+      "id": 12612175886,
+      "name": "reader-next-s15-frozen-340-40227960455-1",
+      "size_in_bytes": 4189173,
+      "digest": "sha256:2a8c1135d869368955d64825ad2c98df1c380bc138a49ab864998bdfe9526820",
+      "expires_at": "2027-01-23T19:50:49Z"
+    },
+    {
+      "id": 12612501126,
+      "name": "reader-next-s15-evidence-40227960455-1",
+      "size_in_bytes": 1705,
+      "digest": "sha256:bbf485e1f0a8adb76fdbaf651f9dafa066f9074fdb7da296a4f8b7191acd79c9",
+      "expires_at": "2027-01-23T19:50:49Z",
+      "note": "terminal evidence ZIP; API identity metadata only"
+    }
+  ],
+  "binaries": {
+    "Linux": {
+      "probe": {
+        "sha256": "c234d85f539442c11496dab9eb42de39df365f7bc102420c25e8e8d8cca57e0d",
+        "bytes": 8770936
+      },
+      "c_consumer": {
+        "sha256": "54db9672c0f5b4cceb94a7f56673842225997728890e52101fe597b1d4348883",
+        "bytes": 8484528
+      },
+      "module": {
+        "sha256": "fab1986129057b6a8564867e1d17206fb1e322e62444bb84afdd695f6c61780a",
+        "bytes": 45384
+      }
+    },
+    "Windows": {
+      "probe": {
+        "sha256": "9853ef2871568fd89bb12b099b13704f3f29a9401fdf8b79a0a848b5b6984a27",
+        "bytes": 6329856
+      },
+      "c_consumer": {
+        "sha256": "a52de4e2fcdfe66de548f8753f726326ac29bf8749e9cd70bd25f5d4a3bf4b9c",
+        "bytes": 6054912
+      },
+      "module": {
+        "sha256": "127865c8850c79850a3c6f4d8fa38934de47b14002f2a4da68da76a14e6f8fba",
+        "bytes": 352494
+      }
+    },
+    "macOS": {
+      "probe": {
+        "sha256": "e64d9d6027709f30ee3bd5ff1f1dc6bcbffcb0a7ed6610407e92493cb5e63c1c",
+        "bytes": 7157768
+      },
+      "c_consumer": {
+        "sha256": "ff7388a8f1dbb17dd01c53fa5e402330d658e77445d0e5a48ff07e3e198bd9cc",
+        "bytes": 6913832
+      },
+      "module": {
+        "sha256": "1ddbcafcd77b45a6288a4b50b236fe443b2b49290b3b1d7be62dd32edfe63bf7",
+        "bytes": 30096
+      }
+    }
+  },
+  "verifier_rejections_per_platform": 17,
+  "verifier_rejections_total": 51,
+  "frozen_graph_checks": [
+    "frozen_sdk_340_install_identity",
+    "frozen_sdk_default_pin_accepted",
+    "frozen_sdk_explicit_341_refused",
+    "frozen_sdk_c_abi_link",
+    "frozen_sdk_original_byte_identity",
+    "frozen_sdk_existing_target_not_overwritten"
+  ],
+  "retained_failures": [
+    {
+      "run": 40227126835,
+      "attempt": 1,
+      "source": "fd71d1d5be949fd2a3524e06ec453ac99dbc6b6b",
+      "conclusion": "failure",
+      "cause": "mixed-SDK control raised TypeError: unsupported operand type(s) for +: 'PosixPath'/'WindowsPath' and 'str' (the three other refusals and the relabelled 3.40 control passed)",
+      "jobs_failed": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
+    },
+    {
+      "run": 40227526450,
+      "attempt": 1,
+      "source": "a66712854f05face1fa4d80e4443a59393896f99",
+      "conclusion": "failure",
+      "cause": "installed C consumer exported from a database that was opened before seeding, so book 1 was missing (AssertionError('C ABI export: '))",
+      "jobs_failed": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
+    }
+  ],
+  "limitations": [
+    "Windows mid-stream disk-full/fsync fault injection is UNAVAILABLE; only the real locked-temporary cleanup failure and no-overwrite publication failure are exercised there.",
+    "The mixed-SDK negative on each platform relabels only the package metadata of the approved 3.41 install (shipped archives hashed before and after); the authentic frozen-3.40 graph refusal is the separate ubuntu job.",
+    "Orphan discovery after process death remains host-owned via the STAGED/COPYING receipt; no unattended crash cleanup is claimed.",
+    "This module build stays an unadopted candidate; SDK adoption and final same-source verification belong to root.",
+    "No host selector, UI, share registration, six-device or physical power-loss claim is made."
+  ],
+  "system_share_ui": false,
+  "six_devices": false
+}

@@ -1,0 +1,45 @@
+name: Linux F07 exact installed ownership and private-interface audit
+on:
+  push:
+    branches: [codex/reader-linux-f07-audit-20261028]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: New audit source guard and Actions-only negative fixtures
+        run: |
+          python3 -m py_compile tests/reader_linux_f07_audit_20261028/*.py
+          python3 tests/reader_linux_f07_audit_20261028/run.py guard
+          python3 tests/reader_linux_f07_audit_20261028/test_lf07.py
+  audit:
+    needs: protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install audit inspectors and original platform dependency family
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binutils libglib2.0-0 libgtk-3-0 libsecret-1-0 libcurl4 libxml2 libssl3
+      - name: Authenticate original upload and adjudicate exact native ownership
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_linux_f07_audit_20261028/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-f07-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/linux-f07-audit/
+          if-no-files-found: error
+          include-hidden-files: true
+          compression-level: 0

@@ -1,0 +1,27 @@
+name: Authenticate existing Windows Android record relay without rebuilding
+on:
+  push:
+    branches: [codex/dot-win-android-record-audit]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  authenticate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate fixed producer artifacts and phase-specific HTTP contract
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RECORD_PRODUCER_SHA: ed7549d52eda3ea39d301b7f56aaf15a0b7c6952
+          RECORD_PRODUCER_RUN: '40655240186'
+          RECORD_PRODUCER_ATTEMPT: '1'
+        run: python tests/windows_android_record_relay/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: records-existing-producer-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/records-authentication/
+          if-no-files-found: error

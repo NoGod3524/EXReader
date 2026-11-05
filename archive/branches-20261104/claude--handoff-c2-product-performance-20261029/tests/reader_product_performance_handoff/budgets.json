@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "status": "candidate-not-approved",
+  "note": "No product-owner-approved F08 budget exists. These ceilings are the candidate rules already written in docs/READER-PERF-WINDOWS.md (Windows table) and, for GTK, the same rule applied to the recorded 2026-10-26 composition run (docs/READER-PRODUCT-PERFORMANCE.md) and the G11 table (docs/READER-PERF-GTK.md), taking the lower of the two sources. They are fixed here before any 3.42 measurement and are never loosened by the gate. Exceeding one fails the gate; meeting all of them does not grant F08.",
+  "gtk": {
+    "latency_p95_ms": {
+      "startup_shelf_rows": {"max": 372, "basis": "first screen: composition p95 247.908 x 1.5"},
+      "search_title_unique": {"max": 552, "basis": "G11 p95 275.799 x 2 (includes 200 ms debounce)"},
+      "open_book_painted": {"max": 768, "basis": "G11 p95 511.486 x 1.5"},
+      "page_turn_forward": {"max": 73, "basis": "composition p95 36.480 x 2 (not a frame-time budget)"},
+      "page_turn_backward": {"max": 44, "basis": "G11 p95 21.757 x 2 (not a frame-time budget)"},
+      "resume_frame_painted": {"max": 892, "basis": "G11 p95 594.276 x 1.5"},
+      "import_input_response": {"max": 18, "basis": "G11 p95 4.509 x 4"}
+    },
+    "rss_high_water_max_kb": {"max": 260755, "basis": "composition max 208604 KiB x 1.25"}
+  },
+  "windows": {
+    "latency_p95_ms": {
+      "cold_shelf.first_screen_interactive_ms": {"max": 4140, "basis": "docs/READER-PERF-WINDOWS.md p95 x 1.5"},
+      "warm_shelf.first_screen_interactive_ms": {"max": 222, "basis": "p95 x 1.5"},
+      "warm_shelf.shelf_next_page_ms": {"max": 249, "basis": "p95 x 2"},
+      "warm_shelf.search_result_ms": {"max": 455, "basis": "p95 x 2 (includes 200 ms debounce)"},
+      "reading.book_page_turn_ms": {"max": 71, "basis": "p95 x 2 (not a frame-time budget)"},
+      "reading.resume_ms": {"max": 870, "basis": "p95 x 1.5"},
+      "import_epub.input_during_import_p50_ms": {"max": 5, "basis": "p95 x 4 floored at 5 ms"}
+    },
+    "peak_working_set_p95_bytes": {
+      "cold_shelf.peak_working_set_bytes": {"max": 51194880, "basis": "p95 x 1.25"}
+    }
+  },
+  "not_covered_by_existing_drivers": [
+    "font-size switch latency",
+    "continuous scroll / per-frame frame time (no frame-clock signal in either frozen host)",
+    "locate/jump latency",
+    "steady-state (non-peak) memory over a long session"
+  ]
+}

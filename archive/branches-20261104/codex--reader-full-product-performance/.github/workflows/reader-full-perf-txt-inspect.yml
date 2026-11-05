@@ -1,0 +1,24 @@
+name: Inspect full Windows TXT diagnostic
+on:
+  push:
+    branches: [codex/reader-full-product-performance]
+    paths: ['.github/workflows/reader-full-perf-txt-inspect.yml', 'tests/reader_perf_txt_inspect/**']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate and report retained TXT facts in Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_perf_txt_inspect/inspect.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-perf-txt-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/txt-inspect/
+          if-no-files-found: warn

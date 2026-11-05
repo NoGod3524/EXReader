@@ -1,0 +1,29 @@
+name: F08 Linux catalog WAL root-cause and recovery checks
+on:
+  push:
+    branches: [codex/f08-linux-catalog-wal-20261031]
+permissions:
+  contents: read
+concurrency:
+  group: f08-linux-catalog-wal-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  compare:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install native build prerequisites
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libglib2.0-dev libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build
+      - name: Compare actual repair paths and verify crash recovery
+        run: python3 tests/reader_f08_catalog_wal_20261031/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-catalog-wal-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-catalog-wal/evidence/
+          if-no-files-found: error

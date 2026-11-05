@@ -1,0 +1,76 @@
+name: Android installed Sync/WebDAV runtime
+on:
+  push:
+    branches: [claude/handoff-c1-android-sync-20261029]
+    paths:
+      - 'tests/reader_android_installed_sync_handoff/**'
+      - '.github/workflows/android-installed-sync-handoff-20261029.yml'
+permissions:
+  contents: read
+concurrency:
+  group: android-installed-sync-${{ github.sha }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+  C11_NDK: '27.0.12077973'
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Prepare Android tools
+        run: |
+          python3 -m pip install 'PyYAML==6.0.3'
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;${C11_NDK}" "emulator" "system-images;android-34;default;x86_64"
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build hash owner, SDK 3.42 product and host linking it, and the unchanged-assertion runner
+        run: python3 tests/reader_android_installed_sync_handoff/build.py
+      - name: Run installed host Sync/WebDAV on API 34
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          heap-size: 512M
+          cores: 4
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -camera-back none
+          disable-animations: true
+          script: python3 tests/reader_android_installed_sync_handoff/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-installed-sync-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/installed-sync/evidence/
+            build/installed-sync/build.json
+            build/installed-sync/candidate/provenance.json
+            build/installed-sync/step-*.sh
+            build/wave3/logs/
+            build/wave3/artifacts/sha256.txt
+          include-hidden-files: true
+          if-no-files-found: warn

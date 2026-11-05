@@ -1,0 +1,42 @@
+name: F11 fixed historical simulator package identity audit
+on:
+  push:
+    branches: [codex/dot-f11-real-package-20261031]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Enforce pinned gate ancestry and exactly three new paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=9b5d0d6914671c99fc20b8cc7361f700b83ca778
+          git merge-base --is-ancestor "$base" HEAD
+          test "$(git rev-parse "$base:tools/reader_f11_mobile_identity_20261031/verify.py")" = "$(git rev-parse HEAD:tools/reader_f11_mobile_identity_20261031/verify.py)"
+          actual=$(git diff --name-status "$base" HEAD | LC_ALL=C sort)
+          expected=$(printf 'A\t.github/workflows/dot-f11-real-package-20261031.yml\nA\ttests/reader_f11_real_package_20261031/source_lock.json\nA\ttests/reader_f11_real_package_20261031/verify_package.py\n' | LC_ALL=C sort)
+          test "$actual" = "$expected"
+      - name: Preserve original ten checks and mobile assertions without product rebuild
+        run: |
+          python tests/reader_wave3_s20/selftest.py
+          python tests/reader_wave3_s20/test_mobile.py
+      - name: Authenticate fixed original package and inspect actual Mach-O bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_f11_real_package_20261031/verify_package.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f11-real-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f11-real-package/
+          if-no-files-found: error

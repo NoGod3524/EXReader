@@ -1,0 +1,318 @@
+name: WP13 Apple host
+on:
+  push:
+    branches: ['codex/wp13-apple', 'codex/wp13-apple-review', 'codex/r5-apple-bounded']
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  H9_SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
+
+jobs:
+  sdk:
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator, iphoneos]
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the frozen reading SDK trees
+        run: |
+          git fetch --no-tags --depth=1 origin "$H9_SDK_BASELINE"
+          git diff --exit-code "$H9_SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt \
+            tests/fixtures bindings licenses tools/layers.json \
+            .github/workflows/native.yml .github/workflows/reliability.yml
+          echo "H9 frozen SDK baseline: $H9_SDK_BASELINE"
+      - uses: actions/cache@v4
+        id: sdk-cache
+        with:
+          path: stage/${{ matrix.target }}
+          key: exreader-wp13-review-v2-${{ matrix.target }}-${{ github.sha }}
+      - name: Build and install the ${{ matrix.target }} SDK
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          target="${{ matrix.target }}"
+          if [ "$target" = macos ]; then
+            cmake -S . -B "build/sdk-$target" -DCMAKE_BUILD_TYPE=Release \
+              -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF
+          else
+            cmake -S . -B "build/sdk-$target" -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT="$target" \
+              -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
+              -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF \
+              -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO -DEXR_ENABLE_AAC=OFF
+          fi
+          cmake --build "build/sdk-$target" --parallel 4
+          cmake --install "build/sdk-$target" --prefix "stage/$target"
+          test -f "stage/$target/lib/libexreader.dylib"
+      - name: Record SDK identity
+        run: |
+          python3 tests/apple_host/evidence_contract.py sdk \
+            --root "stage/${{ matrix.target }}" --platform "${{ matrix.target }}" \
+            --output build/sdk-identity.json
+      - name: Compile the bounded Swift consumer before scheduling UI jobs
+        if: matrix.target == 'macos'
+        run: |
+          mkdir -p build/apple-preflight
+          xcrun swiftc -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
+            -I stage/macos/include -L stage/macos/lib -lexreader \
+            -Xlinker -rpath -Xlinker "$PWD/stage/macos/lib" \
+            examples/apple/HostSDK.swift examples/apple/HostModel.swift examples/apple/SelectableText.swift \
+            tests/apple_host/bounded_review/BoundedReview.swift -o build/apple-preflight/bounded-review
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wp13-apple-sdk-${{ matrix.target }}
+          path: |
+            stage/${{ matrix.target }}/
+            build/sdk-identity.json
+          # The installed SDK ships examples/, and the Android example keeps a
+          # .gitignore there. Dropping hidden files would change the downloaded
+          # tree and break the recorded SDK file identity.
+          include-hidden-files: true
+          retention-days: 30
+
+  uitest:
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wp13-apple-sdk-*
+          path: sdk-artifact
+      - name: Stage the installed SDKs
+        run: |
+          set -euo pipefail
+          mkdir -p stage
+          cp -R sdk-artifact/*/stage/* stage/
+          ls stage
+      - name: Build fixtures and the UI test project
+        run: |
+          set -euo pipefail
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-host build/apple-resources
+          xcodebuild -project build/apple-host/EXReaderHost.xcodeproj -list
+      - name: Select destination and reset simulator state
+        id: destination
+        run: |
+          set -euo pipefail
+          python3 - "${{ matrix.platform }}" > build/destination.txt <<'PY'
+          import json, subprocess, sys
+          platform = sys.argv[1]
+          if platform == 'macos':
+              print('platform=macOS')
+              print('macos')
+              print('macOS host')
+              print('macOS')
+              sys.exit()
+          prefix = 'iPhone' if platform == 'iphone' else 'iPad'
+          data = json.loads(subprocess.check_output(
+              ['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))
+          best = None
+          for runtime, devices in data['devices'].items():
+              for device in devices:
+                  name = device['name']
+                  if not device.get('isAvailable') or not name.startswith(prefix):
+                      continue
+                  key = (runtime, name)
+                  if best is None or key > best[0]:
+                      best = (key, device, runtime)
+          if best is None:
+              sys.exit('no available ' + prefix + ' simulator')
+          print('platform=iOS Simulator,id=' + best[1]['udid'])
+          print(best[1]['udid'])
+          print(best[1]['name'])
+          print(best[2])
+          PY
+          if [ "${{ matrix.platform }}" != macos ]; then
+            udid=$(sed -n '2p' build/destination.txt)
+            xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true
+            xcrun simctl erase "$udid"
+          fi
+      - name: Run UI acceptance on ${{ matrix.platform }}
+        id: uitest
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          platform="${{ matrix.platform }}"
+          destination=$(sed -n '1p' build/destination.txt)
+          if [ "$platform" = macos ]; then
+            scheme=EXReaderHost-macOS
+            sdk_dir="$PWD/stage/macos"
+            signing=YES
+          else
+            scheme=EXReaderHost-iOS
+            sdk_dir="$PWD/stage/iphonesimulator"
+            signing=NO
+          fi
+          mkdir -p build/results
+          xcodebuild test \
+            -project build/apple-host/EXReaderHost.xcodeproj \
+            -scheme "$scheme" \
+            -destination "$destination" \
+            -derivedDataPath build/DerivedData \
+            -resultBundlePath "build/results/${platform}.xcresult" \
+            -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 180 \
+            -maximum-test-execution-time-allowance 300 \
+            EXR_SDK_DIR="$sdk_dir" \
+            CODE_SIGNING_ALLOWED="$signing" \
+            2>&1 | tee "build/results/${platform}-xcodebuild.log"
+      - name: Collect per-case evidence and persisted state
+        id: collect
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          platform="${{ matrix.platform }}"
+          udid=$(sed -n '2p' build/destination.txt)
+          if [ "$platform" = macos ]; then
+            container="$HOME/Library/Application Support/EXReader"
+            sdk_target=macos
+            app=build/DerivedData/Build/Products/Debug/EXReaderHost.app
+          else
+            container=$(python3 tests/apple_host/resolve_container.py --udid "$udid" \
+              --output "build/results/${platform}-container.json")
+            sdk_target=iphonesimulator
+            app=build/DerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+          fi
+          python3 tests/apple_host/collect_evidence.py \
+            --platform "$platform" --xcresult "build/results/${platform}.xcresult" \
+            --output "build/evidence/${platform}" --container "$container" \
+            --sdk-root "stage/$sdk_target" \
+            --sdk-identity "sdk-artifact/wp13-apple-sdk-$sdk_target/build/sdk-identity.json" \
+            --app "$app" --fixtures build/apple-resources/manifest.json \
+            --destination-file build/destination.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wp13-apple-${{ matrix.platform }}
+          path: |
+            build/results/
+            build/evidence/
+            build/destination.txt
+            build/apple-resources/manifest.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Enforce the UI and evidence results
+        if: always() && (steps.uitest.outcome != 'success' || steps.collect.outcome != 'success')
+        run: |
+          echo "UI acceptance failed for ${{ matrix.platform }}"
+          exit 1
+
+  package:
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wp13-apple-sdk-*
+          path: sdk-artifact
+      - name: Stage the installed SDKs
+        run: |
+          set -euo pipefail
+          mkdir -p stage
+          cp -R sdk-artifact/*/stage/* stage/
+          ls stage
+      - name: Build shared fixtures and run the real SDK bridge review
+        run: |
+          set -euo pipefail
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          python3 tests/apple_host/run_sdk_review.py --sdk stage/macos \
+            --resources build/apple-resources --out build/package/sdk-review
+      - name: Run the real session and persistence review
+        run: |
+          python3 tools/check_apple_model_review.py --sdk stage/macos \
+            --resources build/apple-resources --output build/package/model-review
+      - name: Run bounded EPUB storage, chapter, notes and long source review
+        run: |
+          python3 tests/apple_host/run_bounded_review.py --sdk stage/macos \
+            --resources build/apple-resources --output build/package/bounded-review
+      - name: Build and self-check the macOS reference host
+        run: |
+          set -euo pipefail
+          python3 tools/build_apple_host.py --sdk stage/macos --platform macos --output build/package/macos
+          python3 tools/check_apple_host.py --bundle build/package/macos/EXReader.app --device macos \
+            --output build/package/evidence-macos
+      - name: Build and self-check the iPhone and iPad simulator hosts
+        run: |
+          set -euo pipefail
+          python3 tools/build_apple_host.py --sdk stage/iphonesimulator --platform simulator --output build/package/simulator
+          python3 tools/check_apple_host.py --bundle build/package/simulator/EXReader.app --device iphone \
+            --output build/package/evidence-iphone
+          python3 tools/check_apple_host.py --bundle build/package/simulator/EXReader.app --device ipad \
+            --output build/package/evidence-ipad
+      - name: Build the unsigned iOS device package
+        run: |
+          set -euo pipefail
+          python3 tools/build_apple_host.py --sdk stage/iphoneos --platform iphoneos --output build/package/device
+      - name: Bind the package to this cloud run and attempt
+        run: |
+          python3 tests/apple_host/evidence_contract.py identity --platform package \
+            --output build/package/package-identity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wp13-apple-package
+          path: build/package/
+          if-no-files-found: error
+          retention-days: 30
+
+  summary:
+    needs: [sdk, uitest, package]
+    if: always()
+    runs-on: macos-15
+    timeout-minutes: 25
+    env:
+      WP13_APPLE_UPSTREAM_RESULTS: ${{ toJSON(needs) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wp13-apple-*
+          path: build/artifacts
+      - name: Revalidate all platform, program, SDK, state and package evidence
+        id: gate
+        continue-on-error: true
+        run: |
+          python3 tests/apple_host/assemble_validation.py --artifacts build/artifacts \
+            --output build/validation --source-sha "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
+      - name: Reject missing, mismatched and failed evidence using real cloud outputs
+        id: regressions
+        continue-on-error: true
+        if: steps.gate.outcome == 'success'
+        run: |
+          python3 tests/apple_host/review_evidence_gate.py --artifacts build/artifacts \
+            --output build/validation/wp13-apple-gate-review.json
+      - name: Bind the final acceptance to the gate regression result
+        id: final
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 tests/apple_host/assemble_validation.py --artifacts build/artifacts \
+            --output build/validation --source-sha "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
+            --require-gate-review build/validation/wp13-apple-gate-review.json
+      - name: Preserve the strict acceptance result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wp13-apple-validation
+          path: build/validation/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Enforce the combined evidence result
+        if: always() && (steps.gate.outcome != 'success' || steps.regressions.outcome != 'success' || steps.final.outcome != 'success')
+        run: exit 1

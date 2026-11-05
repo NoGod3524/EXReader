@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.24)
+project(H04AnchorEvidence LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 17)
+find_package(EXReaderCommands 0.1.0 EXACT CONFIG REQUIRED)
+add_executable(anchor-evidence anchor.cpp)
+target_link_libraries(anchor-evidence PRIVATE EXReaderCommands::reader_commands EXReaderProductCatalog::reader_catalog EXReaderProductCatalog::reader_catalog_sqlite)

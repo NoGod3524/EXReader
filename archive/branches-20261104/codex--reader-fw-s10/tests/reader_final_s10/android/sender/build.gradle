@@ -1,0 +1,16 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'org.exreader.s10docs'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'org.exreader.s10docs'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '0.1.0'
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    buildTypes { release { minifyEnabled false } }
+    lint { abortOnError false; checkReleaseBuilds false }
+}

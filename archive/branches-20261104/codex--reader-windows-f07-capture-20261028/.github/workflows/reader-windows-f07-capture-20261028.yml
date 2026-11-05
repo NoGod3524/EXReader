@@ -1,0 +1,96 @@
+name: Windows F07 same-source raw dependency capture
+on:
+  push:
+    branches: [codex/reader-windows-f07-capture-20261028]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  protocol:
+    name: capture-protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: New source guard, syntax and negative contract tests
+        run: |
+          python tests/reader_windows_f07_capture_20261028/run.py guard
+          python -m py_compile tests/reader_windows_f07_capture_20261028/*.py
+          python -m unittest discover -s tests/reader_windows_f07_capture_20261028 -p 'test_*.py' -v
+  windows:
+    name: windows-capture
+    needs: protocol
+    runs-on: windows-2022
+    timeout-minutes: 100
+    env:
+      PYTHONUTF8: '1'
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Guard exact source and unchanged SDK/product/old tests
+        id: guard
+        run: python tests/reader_windows_f07_capture_20261028/run.py guard
+      - name: Unchanged F06 Windows build and relocated package identity
+        id: build
+        shell: pwsh
+        run: |
+          python -u tests/reader_windows_f07_capture_20261028/run.py build 2>&1 | Tee-Object -FilePath build/reader-windows-f07-capture-20261028/producer-console.log
+          if ($LASTEXITCODE) { throw 'Original F06 producer failed' }
+      - name: Retain actual SDK/product/module installs, host and link inputs
+        if: ${{ always() && steps.guard.outcome == 'success' && steps.build.outcome != 'skipped' }}
+        run: python tests/reader_windows_f07_capture_20261028/run.py capture
+      - uses: actions/upload-artifact@v4
+        id: upload
+        if: always()
+        with:
+          name: windows-f07-capture-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/reader-windows-f07-capture-20261028/snapshot.zip
+            build/reader-windows-f07-capture-20261028/inventory.json
+            build/reader-windows-f07-capture-20261028/report.json
+            build/reader-windows-f07-capture-20261028/source.json
+            build/reader-windows-f07-capture-20261028/producer.json
+            build/reader-windows-f07-capture-20261028/producer-console.log
+          compression-level: 0
+          if-no-files-found: error
+  authenticate:
+    name: authenticate-capture
+    if: always()
+    needs: [protocol, windows]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate original upload bytes and recompute capture bindings
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROTOCOL_RESULT: ${{ needs.protocol.result }}
+          WINDOWS_RESULT: ${{ needs.windows.result }}
+          CAPTURE_ARTIFACT_ID: ${{ needs.windows.outputs.artifact_id }}
+          CAPTURE_ARTIFACT_DIGEST: ${{ needs.windows.outputs.artifact_digest }}
+        run: python tests/reader_windows_f07_capture_20261028/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-f07-capture-authenticated-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-windows-f07-capture-20261028/authentication/
+          if-no-files-found: error
