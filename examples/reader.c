@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* EXReader Windows native reference host.
  *
- * Win32 host for the installed EXReader SDK: SQLite-backed bookshelf, non-blocking
+ * Win32 host for the installed EXReader SDK: SQLite-backed bookshelf, queued
  * import, reflow and fixed-page reading, text selection, annotations, anchored
  * progress restore and a UI-level acceptance driver. The original 26-check
  * --self-test path is kept below for the packaging tool.
@@ -107,6 +107,7 @@ enum {
 
 #define WM_HOST_COMPLETE (WM_APP + 1)
 #define WM_HOST_PROGRESS (WM_APP + 2)
+#define WM_HOST_SDK_JOB (WM_APP + 0x590)
 
 typedef struct {
   exr_bitmap bitmap;
@@ -512,6 +513,7 @@ static int format_for_path(const wchar_t *path, exr_format *format) {
 }
 
 static void frame_clear(host_frame *frame) {
+  host_probe_require_ui();
   if(frame->display_bitmap)DeleteObject(frame->display_bitmap);
   exr_layout_free(frame->hit_layout);
   exr_fixed_text_free(frame->fixed_text);
@@ -555,8 +557,8 @@ static void frame_move(host_frame *dst, host_frame *src) {
   memset(src, 0, sizeof(*src));
 }
 
-/* Four owned frames; only the serialized worker and joined completion touch
-   these slots. Opening/reformatting a book invalidates every borrowed SDK view. */
+/* Four UI-owned frames. The pixel worker only touches its unpublished job
+   frame; UI joins it before accepting or freeing any of those pixels. */
 static host_frame page_cache[4];
 static unsigned page_cache_next;
 static void page_cache_clear(void) { for(int i=0;i<4;i++)frame_clear(&page_cache[i]); }
@@ -620,6 +622,7 @@ static exr_status local_book_copy(int64_t id,exr_book *out,exr_error *error) {
 }
 
 static void session_clear(host_session *session) {
+  host_probe_require_ui();
   if (session->fixed_document) exr_fixed_free(session->fixed_document);
   if (session->pager) exr_pager_free(session->pager);
   if (session->publication) exr_publication_free(session->publication);
@@ -1248,6 +1251,7 @@ static void w3_failed_to_start(host_job *job);
 #endif
 
 static void job_free(host_job *job) {
+  host_probe_require_ui();
   if (!job) return;
 #ifdef EXR_READER_WINDOWS_WAVE3
   w3_job_free(job->w3);
@@ -1314,9 +1318,26 @@ static exr_status job_run(host_job *job);
 static void metadata_failed_to_start(host_job *job);
 #endif
 
+static void job_start_failed(host_job *job) {
+#ifdef EXR_READER_PRODUCT_CATALOG
+    if(product_job_kind(job->kind)) g.product_pending=1;
+#endif
+    g.job = NULL;
+    job->status = EXR_MEMORY;
+    strcpy(job->error.message, "Cannot create host worker thread");
+#ifdef EXR_READER_WINDOWS_WAVE3
+    w3_failed_to_start(job);
+#endif
+#ifdef EXR_READER_DESKTOP_METADATA
+    if(metadata_job_kind(job->kind)) metadata_failed_to_start(job);
+#endif
+    job_release(job);
+    set_status(L"无法创建后台任务线程。");
+    host_update_controls();
+}
+
 static void job_start(host_job *job) {
-  uintptr_t handle;
-  unsigned thread_id = 0;
+  host_probe_require_ui();
   if(job->kind==JOB_OPEN || job->kind==JOB_LAYOUT || job->kind==JOB_IMPORT || job->kind==JOB_PREFERENCES || job->kind==JOB_PRODUCT_DELETE || (job->zoom_percent>0 && job->zoom_percent!=g.zoom_percent))page_cache_clear();
   g.job = job;
   if (job->kind != JOB_HIT && job->kind != JOB_SAVE && job->kind != JOB_PREFETCH && job->kind != JOB_IMPORT_ORGANIZE
@@ -1348,28 +1369,20 @@ static void job_start(host_job *job) {
   memset(&g.selection, 0, sizeof(g.selection));
   /* Keep the accepted page visible until the new frame is ready. */
   }
-  InterlockedIncrement(&job->refs);
-  handle = _beginthreadex(NULL, 0, job_thread, job, 0, &thread_id);
-  if (!handle) {
-#ifdef EXR_READER_PRODUCT_CATALOG
-    if(product_job_kind(job->kind)) g.product_pending=1;
-#endif
-    InterlockedDecrement(&job->refs);
-    g.job = NULL;
-    job->status = EXR_MEMORY;
-    strcpy(job->error.message, "Cannot create host worker thread");
-#ifdef EXR_READER_WINDOWS_WAVE3
-    w3_failed_to_start(job);
-#endif
-#ifdef EXR_READER_DESKTOP_METADATA
-    if(metadata_job_kind(job->kind)) metadata_failed_to_start(job);
-#endif
-    job_release(job);
-    set_status(L"无法创建后台任务线程。");
-    host_update_controls();
-    return;
+  if (!PostMessageW(g.window, WM_HOST_SDK_JOB, 0, (LPARAM)job)) job_start_failed(job);
+  else host_update_controls();
+}
+
+static void job_launch_pixels(host_job *job) {
+  unsigned thread_id=0;
+  uintptr_t handle=_beginthreadex(NULL,0,job_thread,job,0,&thread_id);
+  if(!handle) {
+    /* SDK transactions already ran on UI; retain their result if pixels
+       cannot get a worker, instead of reporting a false SDK failure. */
+    if(job->status==EXR_OK && job->frame.valid)frame_prepare_display(&job->frame);
+    PostMessageW(g.window,WM_HOST_COMPLETE,0,(LPARAM)job);return;
   }
-  job->thread = (HANDLE)handle;
+  job->thread=(HANDLE)handle;
   host_update_controls();
 }
 
@@ -3023,14 +3036,15 @@ static exr_status job_import(host_job *job) {
 #ifdef EXR_READER_WINDOWS_PREFERENCES
 #include "../apps/reader/desktop/windows_preferences.inc"
 #endif
+/* SDK entry points execute in WM_HOST_SDK_JOB on the UI thread. This worker
+   borrows the job until UI joins it; it never calls exr_* or frees SDK objects. */
 static unsigned __stdcall job_thread(void *context) {
-  host_job *job = context;
+  host_job *job=context;
+  double start=host_probe_ms();
+  host_probe_log("pixel_thread_id",(double)GetCurrentThreadId());
   job_pause(job);
-  if (job_cancel_flag(job) && job->kind != JOB_ROLLBACK && job->kind != JOB_IMPORT_ORGANIZE && !job_commit_barrier(job->kind))
-    job->status = EXR_CANCELLED;
-  else
-    job->status = job_run(job);
   if(job->status==EXR_OK && job->frame.valid)frame_prepare_display(&job->frame);
+  host_probe_log("pixel_copy_ms",host_probe_ms()-start);
   if(job->kind==JOB_GO && job->status==EXR_OK && job->frame.valid)host_probe_log("frame_ready_gen",(double)job->frame.generation);
 #ifdef EXR_HOST_WORKER_REVIEW
   if (job->status == EXR_OK) {
@@ -3041,6 +3055,12 @@ static unsigned __stdcall job_thread(void *context) {
     review_pause(stage,job);
   }
 #endif
+  PostMessageW(g.window,WM_HOST_COMPLETE,0,(LPARAM)job);
+  return 0;
+}
+
+static void job_finish_sdk(host_job *job) {
+  host_probe_require_ui();
   if (job->status == EXR_OK && job_cancel_flag(job) && job->kind != JOB_NOTE_ADD && job->kind != JOB_NOTE_UPDATE
       && !job_preferences_committed(job)
 #ifdef EXR_READER_WINDOWS_WAVE3
@@ -3061,11 +3081,6 @@ static unsigned __stdcall job_thread(void *context) {
   )
     job->status = job->kind == JOB_IMPORT ? rollback_import(job) : EXR_CANCELLED;
   if (job->status == EXR_CANCELLED) frame_clear(&job->frame);
-  if (!PostMessageW(g.window, WM_HOST_COMPLETE, 0, (LPARAM)job)) {
-    /* Window gone; the UI-side reference is released during shutdown. */
-  }
-  job_release(job);
-  return 0;
 }
 
 static exr_status job_hit(host_job *job) {
@@ -3091,6 +3106,7 @@ static exr_status job_save(host_job *job) {
 }
 
 static exr_status job_run(host_job *job) {
+  host_probe_require_ui();
   switch (job->kind) {
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
     case JOB_IMPORT_ORGANIZE: return winio_job_run(job);
@@ -3374,7 +3390,7 @@ static void layout_controls(void) {
 static int compute_view(void);
 #include "../apps/reader/desktop/windows_accessibility.inc"
 
-static int compute_view(void) {
+static int compute_view_impl(void) {
   RECT area;
   double scale;
   g.view.valid = 0;
@@ -3391,6 +3407,11 @@ static int compute_view(void) {
   g.view.dy = (int)((area.bottom - g.frame.bitmap.height * scale) / 2);
   g.view.valid = 1;
   return 1;
+}
+
+static int compute_view(void) {
+  double start=host_probe_ms();int valid=compute_view_impl();
+  host_probe_log("shift_ms",host_probe_ms()-start);return valid;
 }
 
 static void selection_bounds(size_t *start, size_t *end) {
@@ -3472,6 +3493,7 @@ static void page_buffer_release(void) {
 }
 static void compose_page_view(HWND window) {
   double paint_start=host_probe_ms();
+  host_probe_log("compose_begin_gen",(double)g.frame.generation);
   HDC screen = GetDC(window), dc;
   RECT area;
   GetClientRect(window, &area);
@@ -3534,9 +3556,11 @@ static void paint_page_view(HWND window) {
   host_probe_log("paint",0);
   if(!page_buffer_dc)compose_page_view(window);
   HDC screen=BeginPaint(window,&paint);
+  double blit_start=host_probe_ms();
   if(page_buffer_dc)BitBlt(screen,paint.rcPaint.left,paint.rcPaint.top,
     paint.rcPaint.right-paint.rcPaint.left,paint.rcPaint.bottom-paint.rcPaint.top,
     page_buffer_dc,paint.rcPaint.left,paint.rcPaint.top,SRCCOPY);
+  host_probe_log("blit_ms",host_probe_ms()-blit_start);
   EndPaint(window,&paint);host_probe_log("paint_ms",host_probe_ms()-start);
   host_probe_present((double)g.frame.generation);
 }
@@ -6187,6 +6211,22 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if (code == 0 || code == BN_CLICKED) host_command(id);
       return 0;
     }
+    case WM_HOST_SDK_JOB: {
+      host_job *job=(host_job *)lparam;
+      if(!job || job!=g.job)return 0;
+      host_probe_require_ui();
+      host_probe_log("sdk_thread_id",(double)GetCurrentThreadId());
+      host_probe_log("sdk_job_begin",(double)job->kind);
+      host_probe_pager_ms=host_probe_raster_ms=0;
+      if(job_cancel_flag(job) && job->kind!=JOB_ROLLBACK && job->kind!=JOB_IMPORT_ORGANIZE && !job_commit_barrier(job->kind))job->status=EXR_CANCELLED;
+      else job->status=job_run(job);
+      host_probe_log("stage_anchor_pager_ms",host_probe_pager_ms);
+      host_probe_log("stage_raster_ms",host_probe_raster_ms);
+      host_probe_log("sdk_job_end",(double)job->kind);
+      if(job->frame.valid)host_probe_log("sdk_ready_gen",(double)job->frame.generation);
+      job_launch_pixels(job);
+      return 0;
+    }
     case WM_HOST_PROGRESS:
       if (g.job && g.job->kind == JOB_IMPORT && !job_cancel_flag(g.job))
         set_statusf(L"正在导入… %ld%%（读取文件，可点取消）", (long)g.job->progress);
@@ -6194,11 +6234,12 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_HOST_COMPLETE: {
       host_job *job = (host_job *)lparam;
       if (!job || job != g.job) return 0;
-      /* The completion is posted after all SDK work; join only the final ref
-         release before the UI accepts/frees the job's owned candidates. */
+      /* UI owns SDK objects; join the pixel borrower before accepting/freeing. */
       int repaint = job->kind != JOB_SAVE && job->kind != JOB_PREFETCH;
       int schedule_prefetch = job->have_frame && job->status==EXR_OK;
-      WaitForSingleObject(job->thread, INFINITE);
+      if(job->thread)WaitForSingleObject(job->thread, INFINITE);
+      host_probe_log("ui_complete_gen",(double)job->frame.generation);
+      job_finish_sdk(job);
       g.job = NULL;
       handle_job_complete(job);
 #ifdef EXR_READER_WINDOWS_WAVE3
@@ -6208,6 +6249,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       compact_complete(job);
 #endif
       job_release(job);
+      host_probe_log("ui_accepted_gen",(double)g.frame.generation);
       if(repaint)page_dirty(g.page,0);
       if(schedule_prefetch)SetTimer(window,PAGE_PREFETCH_TIMER,150,NULL);
       if (!g.job && g.pending) {
@@ -6443,6 +6485,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   wchar_t phase[32] = L"0";
   int i;
   INT_PTR result = 1;
+  host_probe_ui_thread=GetCurrentThreadId();
+  host_probe_log("ui_thread_id",(double)host_probe_ui_thread);
   (void)previous;
   (void)command;
   {
