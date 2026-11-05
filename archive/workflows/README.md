@@ -26,7 +26,7 @@ Archived workflows without a registered run: 3.
 ## Unresolved preparation dependencies
 
 - Retained reading-required.yml calls ./.github/workflows/reading-real.yml, which is outside the selected retained set. Its performance reusable workflow reference would be missing. The required reading-required-core.yml call graph is complete.
-- CI hygiene baseline contains 531 content bindings. 512 belong to archived files; deletion coupling requires removing these stale bindings in the same PR. The other 19 remain in retained workflows. No baseline or checker is changed in this mechanical preparation.
+- CI hygiene baseline contains 531 content-identity entries (533 rule bindings). 512 entries (514 rule bindings) belong to archived files; deletion coupling requires removing these stale bindings in the same PR. The other 19 remain in retained workflows. No baseline or checker is changed in this mechanical preparation.
 - tests/check_ci_hygiene.py:167 reads .github/workflows/acroform.yml. The archived copy retains the exact bytes; the test path needs a coordinated update without changing its assertion.
 - Version-literal registration has 144 frozen_baseline entries for archived workflows and 7 migration_compat proofs pointing to reader-apple-record-compatibility.yml. The latter require an active workflow. sdk-version-consistency.yml is also outside the selected retained set. Resolve these references before treating the preparation as merge-ready; no exception, literal, guard or assertion was changed here.
 
