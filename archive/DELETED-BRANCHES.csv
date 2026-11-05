@@ -1,0 +1,875 @@
+branch,tip_sha,deleted_at,reason,recoverable
+audit/f03-r4-owner-evidence-20261102,ca1e368d2bede9be0899f02907566199d0069a28,2026-11-05,initial: archived under archive/branch/audit--f03-r4-owner-evidence-20261102,yes
+audit/f03-r6-complete-evidence-20261103,652dd0b584244b5f7413036bd4a136b44f9d3a0d,2026-11-05,initial: archived under archive/branch/audit--f03-r6-complete-evidence-20261103,yes
+audit/f03-r7-complete-evidence-20261103,3c7a7371cc0588d865114096d10071b82c95af23,2026-11-05,initial: archived under archive/branch/audit--f03-r7-complete-evidence-20261103,yes
+audit/f07-authoritative-symbols-20261103,95100501eeef9c6325be8b3882aa400c99cf000f,2026-11-05,initial: merged into main,yes
+audit/f07-sixhost-binary-evidence-20261102,fa5bdfa68efd83af0927c1a918f7b88965fe6afc,2026-11-05,initial: archived under archive/branch/audit--f07-sixhost-binary-evidence-20261102,yes
+audit/f07-sixhost-existing-evidence-20261102,fb67403e042890d75bc28b48c00d20e83d1c90e8,2026-11-05,initial: archived under archive/branch/audit--f07-sixhost-existing-evidence-20261102,yes
+audit/f09-g16-contract-v2-20261102,fb05934bc68400359118d2b0ea67321fa53edbdd,2026-11-05,mechanical-round: archived under archive/branch/audit--f09-g16-ipad-evidence-20261102,yes
+audit/f09-g16-ipad-evidence-20261102,ee627f12ef41e1c2a9c7d62fcb1cd583fcdc3126,2026-11-05,initial: archived under archive/branch/audit--f09-g16-ipad-evidence-20261102,yes
+audit/f09-g16-iphone-evidence-20261102,6293c9d6d5ccf968d36bbf2f3790d166da275c90,2026-11-05,initial: archived under archive/branch/audit--f09-g16-iphone-evidence-20261102,yes
+audit/f09-g16-macos-evidence-20261102,d41dc991d0cf04694a5b549fa12c4854182fe8da,2026-11-05,initial: archived under archive/branch/audit--f09-g16-macos-evidence-20261102,yes
+audit/f09-g16-name-normalization-20261102,5511a29328c214d63bfaa96e5a8d7552699f77a3,2026-11-05,mechanical-round: archived under archive/branch/audit--f09-g16-ipad-evidence-20261102,yes
+audit/f09-g16-production-adjudication-20261102,5a57ff3cc0f295327676663236c6214b5736cb6a,2026-11-05,round2: archived under archive/branch/audit--f09-g16-production-adjudication-20261102,yes
+audit/f09-g16-raw-identity-20261102,5737413cb60ea3205bef1e4d28005181fd3998d0,2026-11-05,mechanical-round: archived under archive/branch/audit--f09-g16-ipad-evidence-20261102,yes
+audit/f09-gtk-status-account-current-ui-20261102,0ff1cc0c4fa06bf9bd9c3b79e68b22b5e062e606,2026-11-05,round2: archived under archive/branch/audit--f09-gtk-status-account-current-ui-20261102,yes
+audit/f09-iphone-production-focus-20261102,190c52edccba76ea4054af2cbc3399f916a2269c,2026-11-05,round2: archived under archive/branch/audit--f09-iphone-production-focus-20261102,yes
+audit/f09-original-evidence-20261102,055d196789b26ecfe466cb14c7ada857fb9069d3,2026-11-05,initial: archived under archive/branch/audit--f09-original-evidence-20261102,yes
+audit/f09-simulator-environment-20261102,8af9f4a3de33461aa95ead04d864c3559d9554f6,2026-11-05,round2: archived under archive/branch/audit--f09-simulator-environment-20261102,yes
+audit/f09-windows-kb06-current-ui-20261102,77cbbe5e96303306dc22ca9025d9c1d760e87895,2026-11-05,round2: archived under archive/branch/audit--f09-windows-kb06-current-ui-20261102,yes
+claude/dot-c06-engine-audit-20261030,6edd0b0f49b60e372b2b0a33450c7d8d38a5935c,2026-11-05T16:37:42.050600+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/dot-c07-conflict-audit-20261030,2b5222ad2af4c92e7f239d6ab4d355fba6859974,2026-11-05T16:37:43.971650+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/dot-c08-privacy-failure-20261030,289e51e9e420c5298818e76a7441fa1b0f9f47eb,2026-11-05T16:37:45.933072+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/dot-c09-provider-desktop-20261030,e0346467b3b56a6474c0537756ac0353e979155f,2026-11-05T16:37:47.731689+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/dot-c10-a11y-desktop-20261030,a515bb72c773f6578771afcf52adbd9c8c3ae64e,2026-11-05T16:37:49.672833+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/dot-f05-host-20261030,c0ec6edf0e4b6fcf34895e79874edca74387c9a3,2026-11-05T16:37:51.596584+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/dot-f07-provider-20261030,fa561f3d40c352bb37f66dde91b5cd50d86bc549,2026-11-05T16:37:53.369786+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/dot-f10-privacy-20261030,5963488997a7169f2ae40a8d6d33abae15eb3f36,2026-11-05T16:37:55.354076+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/dot-p0-coordinator-20261030,f7829848d18e0ee27cd9436ff5c1a4c502d05c7b,2026-11-05T16:37:57.148450+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/dot-p0-lease-20261030,ccd7fec67eb8aa463b09533ce320820f2da472d9,2026-11-05T16:37:58.897039+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/f09-android-20261101,c8e00973ea2129dd0b5cb9e05586ca731f4184aa,2026-11-05,mechanical-round: archived under archive/branch/claude--f09-joint-20261101,yes
+claude/f09-apple-20261101,a2199efe17240154b01bef16f0b361817ec336e5,2026-11-05,mechanical-round: archived under archive/branch/claude--f09-joint-20261101,yes
+claude/f09-audit-20261101,22e70edcecac88af037931582df8052f8d706fed,2026-11-05,mechanical-round: archived under archive/branch/claude--f09-joint-20261101,yes
+claude/f09-gtk-20261101,7c65c5865c51e4fe2c7e2f5b64c0ef33ccdb3b55,2026-11-05,mechanical-round: archived under archive/branch/claude--f09-joint-20261101,yes
+claude/f09-joint-20261101,e9e20eada714bc6b8045d3e943ac46ff26844559,2026-11-05,round2: archived under archive/branch/claude--f09-joint-20261101,yes
+claude/f09-windows-20261101,153c7ceab847d44395af421216f96334debed782,2026-11-05,mechanical-round: archived under archive/branch/claude--f09-joint-20261101,yes
+claude/handoff-c1-android-sync-20261029,46f12193409c9746aee0127b754c6e58f440b6fb,2026-11-05T16:38:00.503662+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/handoff-c2-product-performance-20261029,e46a36e89d5ca7020469037f63aeb95b983d6a2d,2026-11-05T16:38:02.176187+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/handoff-c3-delivery-licenses-20261029,a6aca08a5cbb73126f7fea63db78fc4739e8854d,2026-11-05T16:38:03.918705+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/handoff-c3-delivery-licenses-u937hy,73665f53d31bfac6c27714c459bcc34029d88d7b,2026-11-05T16:38:05.740890+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/k01-webdav-evidence-20261031,c0a8dad8203801585df520addb2a941c85476f4c,2026-11-05T16:38:07.510624+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/k03-linux-portable-upgrade-20261031,6669351b7bf44c4bdda94a70dcd2c5d7e0f50498,2026-11-05T16:38:09.271585+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/local-c1-android-sync-20261029,8590ccc2438eaf723a6324f2b5cdb2cf969e479f,2026-11-05T16:38:11.022798+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/local-c2-product-performance-20261029,509edec7e62e050a4c32eac0ba1735f0b19754a8,2026-11-05T16:38:13.259210+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/local-c3-delivery-licenses-20261029,f913898586c930e08f71697bce3175838acfbec3,2026-11-05T16:38:15.112094+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+claude/project-reading-docs-sync-fd53c3,2e3e2f1764e0f605122ec4cbced1e05deb96a9e8,2026-11-05,initial: merged into main,yes
+claude/reading-h1-platforms,2e8e981b6dd44d855a23931480fe5e0d5c791762,2026-11-05,initial: merged into main,yes
+claude/windows-studio-ui-20261031,effb5b7db5868dbdb52e7f28063283835fbcff8a,2026-11-05T16:38:17.112249+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/android-340-parameter-audit,9c2ef76776f1a1e0c555c05eb993d87d7699012e,2026-11-05T16:38:18.923947+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/android-combined-sdk-versions,b7b59192d290f5c20fca5ffbc71176c5f7bb377d,2026-11-05,initial: merged into main,yes
+codex/android-composed-candidate,3112821251707ba9fc82431b6b428e2016715d73,2026-11-05,initial: merged into main,yes
+codex/android-current-owner-regression,398945975a0bd3f3120c1f423a37e9fe7817c0e7,2026-11-05T16:38:20.689485+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/android-evidence-audit,e7aa0e139686f89acbf103136d5e83ebb62289b2,2026-11-05T16:38:22.633883+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/android-export-process-recovery,31d34f87b2013ef18201268b50db5b6b1ccafd71,2026-11-05,initial: merged into main,yes
+codex/android-export-restore,8995d7589c68f10b90a1a44500775d08252c6da0,2026-11-05,initial: merged into main,yes
+codex/android-f07-audit-20261028,e53f0886798f75f7b0a67360e69f68187ecd9ac2,2026-11-05,mechanical-round: archived under archive/branch/codex--android-f07-audit-20261028,yes
+codex/android-f07-capture-20261028,ffdb3e5a84dbc05159c8f1982160dc39dff0f951,2026-11-05,mechanical-round: archived under archive/branch/codex--android-f07-audit-20261028,yes
+codex/android-frame-metrics-ab,4d56e08419297bafcf7856dfc4eeb2ee80585bdf,2026-11-05T16:38:24.648564+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/android-frozen-340,c9e4b3ac1634748179ae33cba48a0b20df950a22,2026-11-05,mechanical-round: archived under archive/branch/codex--android-shared-evidence-audit,yes
+codex/android-host-sync-sdk-version,3dd099b882749ed2bb5a1a31ef7db6af6164d931,2026-11-05,initial: merged into main,yes
+codex/android-legacy-340-host,4d0d9d549f8412f3453b1e5a87485f5ae80bbe65,2026-11-05,initial: merged into main,yes
+codex/android-merge-prep,1c42ddf6fe7e57f6bd0ac45f1ed78717bd4f3092,2026-11-05,initial: merged into main,yes
+codex/android-navigation-scroll-recovery,c4d55bab38afd296b73f565a96582f3a687e3fb9,2026-11-05T16:38:28.329718+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/android-organization-sync,51ee764e434678f8f15cc35f7f4996243b934a45,2026-11-05,initial: merged into main,yes
+codex/android-original-save-diagnostic,963657c0364e6f59bd120442e9ad390b7dcac8a6,2026-11-05T16:38:34.729291+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/android-owner-current-regression,57585506a297921246a6e9476de49464caef4982,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/android-path-descriptors,b7284b8dfe23528b929f9217e5999825cedd8b0f,2026-11-05,round2: archived under archive/branch/codex--android-path-descriptors,yes
+codex/android-reading-page-position,aa75071c626485f8b249d2f7deba09270f278e54,2026-11-05,initial: merged into main,yes
+codex/android-real-original-save,748e93713c643243a96bab54f5ca1464a2f39efd,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/android-sdk342-package-20261028,9cdc1817a53f1de271e35d3e8b6cde875c04f3d4,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/android-sdk342-record-evidence-20261028,bdca8c4bfbcae5566cebd569be1d4e56d1cc2872,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/android-shared-desktop,532b9f0dd6ce3e2ee94ec7b002e57f8a43a3bce9,2026-11-05,mechanical-round: archived under archive/branch/codex--android-shared-evidence-audit,yes
+codex/android-shared-evidence-audit,c2fb0f5357d4f4cfe94487a466a97ad244b71a13,2026-11-05,mechanical-round: archived under archive/branch/codex--android-shared-evidence-audit,yes
+codex/android-shared-io,715fc865a9f063ae453c4d97e44f927772139fc3,2026-11-05,mechanical-round: archived under archive/branch/codex--android-shared-evidence-audit,yes
+codex/apple-annotation-artifact-wiring-20261028,d364d71e3ee6e38de0e3084015bf0896c62a71f6,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-annotation-ipad-log-inspection-20261028,yes
+codex/apple-annotation-common-proof-20261028,476aebf3d16d853de26872ac64277c3205c16f8f,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-annotation-controls-resume-20261029,yes
+codex/apple-annotation-controls-resume-20261029,622b9558f79eda07211e15c51bffcd728da6c553,2026-11-05,round2: archived under archive/branch/codex--apple-annotation-controls-resume-20261029,yes
+codex/apple-annotation-ipad-log-inspection-20261028,70fbd24d304095074b28d180c4e074b54f1ce837,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-annotation-ipad-log-inspection-20261028,yes
+codex/apple-annotation-macos-disclosure-20261029,d26b37aac808edaff426d34796ce9feb7564b945,2026-11-05T16:38:36.599019+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-annotation-system-save-resume-20261029,d5327faa540d2e19978e5b76e387f99457a60936,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-annotation-controls-resume-20261029,yes
+codex/apple-four-evidence-audit-20261029,6f7dc3bf71926c7c68de8781da31989fd2a537b6,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-apple-diagnostic-20261030,yes
+codex/apple-ios-organization-acceptance-20261028,59d350c225b9c0b644cbc4b7a266c52726518e35,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-ios-verify-build-comparison-20261029,yes
+codex/apple-ios-organization-activation-artifact-audit-20261029,43395c7a41088a5ce47f2d9923e27414fe03c8a9,2026-11-05T16:38:38.296299+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-ios-organization-activation-probe-20261029,6a6615373474d993ba02f651325fb7c5d3ccbed0,2026-11-05T16:38:40.115294+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-ios-organization-members-resume-20261029,b259db57103cd7661ed3f1c3fc6bd0c49c08981c,2026-11-05T16:38:41.945468+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-ios-organization-verify-phase-build-log-reader-20261029,d7a9038d4b5619440371dbdb177fb3d561973e2e,2026-11-05T16:38:43.689071+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-ios-organization-verify-phase-preflight-20261029,e1385f56aefeef0275737c546b0b34e503323c02,2026-11-05T16:38:45.324156+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-ios-organization-verify-phase-probe-20261029,db27e55a807f23c91b9d1968edc56645bb963595,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-ios-verify-build-comparison-20261029,yes
+codex/apple-ios-organization-verify-refusal-reader-20261029,53d652ed116668535ab09b30d4e051debfc8464e,2026-11-05T16:38:47.088757+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-ios-verify-build-comparison-20261029,f3e0209e23b9a39e39283efde31f511fec5f5c90,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-ios-verify-build-comparison-20261029,yes
+codex/apple-ipad-picker-diagnostic-20261028,3d387bec322ef097d10b23bd914775ed6f5f23b8,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-ipad-picker-diagnostic-20261028,yes
+codex/apple-mobile-annotation-directory-resume-20261029,89320ac409c0db84f384f0823a75da4acc5c311f,2026-11-05T16:38:48.847082+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-mobile-annotations-handoff-20261029,55ec49020383ef5073f47502b300ab0b5d0a7cae,2026-11-05T16:38:50.539546+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-mobile-failure-inspect-resume-20261029,45a49ce266d4649d2c27a0ab5e1743dcffd674d5,2026-11-05T16:38:52.135694+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-opdshash-resume-20261029,820b894623963d2834757fa6e9d800802c373475,2026-11-05T16:38:53.632559+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-organization-diagnose-20261029,24646208394d6d4e9ce47457e67c4a2154d6782d,2026-11-05T16:38:55.379231+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-organization-reopen-20261028,c25e073598be758e9f7f2c78ac261bebfa362870,2026-11-05T16:38:57.325746+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-organization-toggle-20261028,3e998ec31cce1fe3d720885f675937dafa358fef,2026-11-05T16:38:58.881388+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-organization-toggle-hitarea-20261029,9019f94c56245043d68422e6a70948f8fd227e8b,2026-11-05T16:39:00.405331+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-original-inline-rename-20261028,e0926aee809ac94ccad46ee57bda6ca52a5f5656,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-ipad-picker-diagnostic-20261028,yes
+codex/apple-original-ios-picker-resume-20261029,127cdb7c62772fd293c10cc032547c28904bd1c2,2026-11-05T16:39:02.237705+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-original-iphone-picker-20261028,4d188cb5682f8f0ac0b90ee7baea8b078757bb55,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-ipad-picker-diagnostic-20261028,yes
+codex/apple-password-privacy-20261028,80ea85dabb8933d3a87e1bd3dce84455f0391da6,2026-11-05T16:39:04.178364+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-sdk342-full-handoff-20261029,bd28d4946f17a184dd3cd47a584cf49fce34e973,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/apple-sdk342-host-continuation-stage-20261029,4a68d80fbaa524fc28f899d209d795248627080b,2026-11-05,round2: archived under archive/branch/codex--apple-sdk342-host-continuation-stage-20261029,yes
+codex/apple-sdk342-integrated-handoff-20261029,6be10b3de1e7f9e98bab72db586a66e571199034,2026-11-05T16:39:05.789223+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-sdk342-old-records-20261028,b2a7da87de9f41efe4e4ebfa2541f0aafe2ae1b2,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-sdk342-host-continuation-stage-20261029,yes
+codex/apple-sdk342-optin-20261028,4971c75f9037bb9e95498435efe5d179b87dcea6,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-sdk342-host-continuation-stage-20261029,yes
+codex/apple-sdk342-production-old-records-20261028,b6e0e7308e06ae9f84fa0284ee08ef384b674b2c,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-sdk342-host-continuation-stage-20261029,yes
+codex/apple-sdk342-public-full-prep-20261029,81a67f7dc2c423306b10addf44b63e66dfb26316,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/apple-sdk342-raw3-proof-20261028,d1d08eafce9e8dd32afa7d4f8c132f0456ff62e8,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-sdk342-host-continuation-stage-20261029,yes
+codex/apple-sdk342-records-acceptance-20261028,5a862788be30ea8b09816ebd68600db9e98b6ef9,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-sdk342-host-continuation-stage-20261029,yes
+codex/apple-sdk342-theme-optin-20261028,300107692f908bea4c348682e5e45a10891d073e,2026-11-05T16:39:07.377891+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-sdk342-transfer-inspect-20261029,6ae596c2614b97a9cb2d3f3c3571d06d861354d6,2026-11-05T16:39:09.100045+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/apple-sdk342-unified-20261028,80da967f5411e0c76d25e8bb21ec23c5f2b22385,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-sdk342-host-continuation-stage-20261029,yes
+codex/apple-sync-details-resume-20261029,6c7d043d416c1ab1075016695ae510c7b23dd2e5,2026-11-05T16:39:10.567586+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/audit-media-fixes,fc309e0791be5f4a4d9d512ee1a6c45b4b911a5d,2026-11-05,initial: merged into main,yes
+codex/c-handoff-receipt-20261103,dd22d5db31f1c10d0a6ad23d22654e12112c0017,2026-11-05,initial: merged into main,yes
+codex/c-pr33-baseline-evidence-20261103,2f31336b3fe5bab23877b4eeddaa858ff723ad38,2026-11-05,round2: archived under archive/branch/codex--c-pr33-baseline-evidence-20261103,yes
+codex/ci-packaging-hygiene-20261103,a65bc8f4f08225aba3f4fee5993859700cb841e7,2026-11-05,initial: merged into main,yes
+codex/claude-h01-domain-gate-20261030,0d33b0a94797f78f275220ca1a1480de9fc6b167,2026-11-05T16:39:12.201310+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/claude-h02-acct-fix-20261030,cc95ea9d6af51284113a65bdcbeb7054be528332,2026-11-05T16:39:13.817914+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/claude-h02-credential-refusal-20261030,f8a90b83ac15d9af2c0c542a655977219287692a,2026-11-05T16:39:15.398464+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/claude-h03-original-retry-20261030,22e84472ae684c901ab20a1f52c8601568ef7e0c,2026-11-05T16:39:17.075895+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/claude-h04-anchor-evidence-20261030,d9e44b22c6e5f6d51547061c9b92b0b9a88216d6,2026-11-05T16:39:18.663221+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/claude-j01-android-license-20261031,b387637ee3ae76e86f6be39aad4293e9f2a73c67,2026-11-05T16:39:20.240817+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/claude-j02-six-package-instructions-20261031,cb50a8f38d968a77e997ddf0228acbedd1028d4d,2026-11-05T16:39:21.797132+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/claude-j03-gtk-removed-ui-20261031,8b1328f105b25c46711a11348f2ca313874947e4,2026-11-05T16:39:23.553382+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/claude-j04-windows-map-evidence-20261031,2db0b5ce285dade99da734ee15d2c841462812e8,2026-11-05T16:39:25.169597+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/claude-j05-sdk-borrow-lifecycle-20261031,e96ed4f0a7956aea8c3a952b98fa2b3bc899d601,2026-11-05T16:39:26.752133+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/closure-candidate-20261029,9330be495bffdf3bf421bdc32b963e3fbfc4c9fe,2026-11-05T16:39:28.304714+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/cloud-import-source-review-20261028,930a16655a2c636125794eb3b214df04a8ae2483,2026-11-05T16:39:29.981134+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/combined-wal-candidate,ede0107b10a181458cb9a503730323a643341854,2026-11-05,initial: merged into main,yes
+codex/combined-windows-android,9a8ae10c726f4cc1745cae734c2f1baabd9b3e96,2026-11-05,initial: merged into main,yes
+codex/compat-corpus-manifest,6a1735a24d3f70c63f7a16260c355fbdad11824e,2026-11-05,round2: archived under archive/branch/codex--compat-corpus-manifest,yes
+codex/corpus-consumer-version-20261104,e5551b62b72fe28a108fe51c70053bd509213a9a,2026-11-05,initial: merged into main,yes
+codex/corpus-core-results-20261104,fc2927b45979a83fffcec1d02f9fff4c9ac24a49,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/cross-bookmark-compile-repair-20261028,0c28a7e1fa1c3d758c9a35f39515967a9e781627,2026-11-05T16:39:31.741392+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-android-font-reader,41870a040bb6ff995a7adddc13756880ada8c731,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/dot-android-history-compat,ce2711779fa19881c4126f0fea98fcd2235095a6,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-android-history-compat,yes
+codex/dot-android-history-evidence,80881d1967ffdba20bf09d79d753c635b2126f54,2026-11-05T16:39:33.603101+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-android-import-filename,5d14db2012bc3f01c63ae5456248badf5279951e,2026-11-05T16:39:35.287106+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-android340-sender-evidence,bbc4d2691793fceaac286c9a77feb66355c98ba3,2026-11-05T16:39:37.027744+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-android-relay,65daff8875ca74394997ea097bf55400743f8f9f,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/dot-apple-audit-review-20261030,55b32042ec68b1182aeaaf2b8f0d822483e3291f,2026-11-05T16:39:39.060603+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-b2f-diagnose-20261030,af3f4bd0979a0d3c947f2ec2fcdc40582be539da,2026-11-05T16:39:40.893935+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-c44-evidence-20261031,eda2a398fab706486be9446f1ca6738b668224ef,2026-11-05T16:39:42.544484+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-common-gate,2d920fa845e2f2d5b774bb30de0f37032a527de5,2026-11-05T16:39:44.138511+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-complete-20261029,b2f4e6e1363d0ee20fcb87a6acef548e0624318a,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/dot-apple-diagnostic-20261030,d996af734d6e37792b19d120f8ec1d87571fdca1,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-apple-diagnostic-20261030,yes
+codex/dot-apple-file-entry-review,be5f65026b981456eb672d85d475eba6e520ae24,2026-11-05T16:39:45.904321+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-fresh-diagnose-20261031,dc66d5a56d60dbd782badec208ac38d3f2d270e7,2026-11-05T16:39:47.614963+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-fresh-focused-20261031,a9a22319825d97b9d94b4d2f11e7ca0a5635a673,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/dot-apple-input-focused-20261030,3d7edd5258d5a9991bc0d3039f9e21126bd1c814,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/dot-apple-input-ipad-diagnose-20261031,9705d2e8a87a4d74f22ad80a27be0bcadd3dcffe,2026-11-05T16:39:49.397193+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-ipad-full-evidence-20261031,b3b7fa3a5f9efcc9425dbcd5045c64c361a5e5d4,2026-11-05T16:39:51.274369+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-large-type-drivers,a575754a505b16832d48012f776e8a0c624545ad,2026-11-05T16:39:53.223466+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-large-type-evidence,83e909def5c43eb3d86ae11c4611980d68f8789f,2026-11-05T16:39:54.892515+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-observe-focused-20261031,c44a9cf211fffa4ed6f2720ffa49a186c3b4d196,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/dot-apple-query-diagnose-20261030,517a577423f73e5b35dc6ff906ac9f39d24c9b39,2026-11-05T16:39:56.729703+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-query-observation-20261030,8ec841fe5127b810ad37f14662de51650c0b51c2,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/dot-apple-receipt-20261030,b2bb6cc754972cdec75f439e68a27a7064172bdd,2026-11-05T16:39:58.366513+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-apple-tap-decision-full-20261031,94fb236a4a2da87dfbaf4f1dd2a47885d615a230,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/dot-apple-tap-decision-measure-20261031,94fb236a4a2da87dfbaf4f1dd2a47885d615a230,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/dot-c02-cas-contract-20261030,a8d0b162d8c21617e4c2c837e3eb2b2174bbf69b,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-c02-native-journal-20261030,yes
+codex/dot-c02-native-journal-20261030,721188e553be4c8cffe9fbfb204f8a544a64bfe9,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-c02-native-journal-20261030,yes
+codex/dot-c02-ordering-fix-20261030,1f0444b32e5b13c1a004383a8350cca8519248c3,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-c02-native-journal-20261030,yes
+codex/dot-c02-regressions-20261030,27ca2f173eaed91dac35ab198723b3387bbaedac,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-c02-native-journal-20261030,yes
+codex/dot-c07-paging-audit-20261030,2938e0af7632f8316808f238afe1d301d528015e,2026-11-05T16:40:00.190147+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-conflict-actions-review,71fe0f1e2be179783febc95c15f841803feb43a9,2026-11-05T16:40:01.977274+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-cross-os-relay-review,70c1e2fdd3d68416581e1b246846e925a8813b1c,2026-11-05T16:40:04.295734+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-d21-apple-receive,25bb4a3a7391ba55cd94ef2d4719328e16080544,2026-11-05,initial: merged into main,yes
+codex/dot-d21-d26-integration,37d09d8aed047f3e8ffc62cf330a6f8f5f9ca207,2026-11-05,initial: merged into main,yes
+codex/dot-d22-android-receive,92d453e374725896a7d1666c313e5d369ff83b3c,2026-11-05,initial: merged into main,yes
+codex/dot-d23-windows-gtk-relay,722fa9c8ce7ec5be5bdea230ce4a41de5d45f6ff,2026-11-05,initial: merged into main,yes
+codex/dot-d24-apple-large-type,12daa641d8bbe925a3776c6101a2a2ab9f7003f4,2026-11-05,initial: merged into main,yes
+codex/dot-d25-real-formats,297be15d29db3b3fb87aba05865b2ebfae69c4dc,2026-11-05,initial: merged into main,yes
+codex/dot-d26-gtk-accessibility,20580f714ba31dbd70676479621db285f3c90cff,2026-11-05,initial: merged into main,yes
+codex/dot-diagnostic-report-review,5e1b6daf21d5143cc92539837171bcd219901690,2026-11-05T16:40:06.247645+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f02-win-gtk-transfer-20261031,f59425f00af9069a22dc9cef2399ae84e3a62648,2026-11-05,mechanical-round: archived under archive/branch/codex--gpt-f02-same-source-win-android-20261031,yes
+codex/dot-f03-gtk-selection-20261031,ada6beda9f9a7db12beac0017861fc60f9fd0ba2,2026-11-05T16:40:08.163584+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f05-gtk-restore-recovery-20261030,f74ddf22092dd86ea3e0ed2f7d90133aebf38250,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f05-gtk-restore-recovery-20261030,yes
+codex/dot-f05-paging-evidence-20261030,7f15fe49374cd9389e2106837351d4bbd5e56113,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f05-gtk-restore-recovery-20261030,yes
+codex/dot-f07-desktop-header-evidence-20261031,7131426ba6a4a0ff7782e4cafd0ff908b9a88a9b,2026-11-05,mechanical-round: archived under archive/branch/dot--f07-link-evidence-20261031,yes
+codex/dot-f07-desktop-provider-20261031,d513c08d289692bbadb535beaca09f69c3d72269,2026-11-05T16:40:10.100521+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f07-provider-binding-20261031,32974008c3506b40d9cea0c542fe7d7af601f416,2026-11-05T16:40:11.779259+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f08-acceptance-audit-20261031,19ac07d8b241d394f07e877ca5cc957a03714642,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-android-20261031,37cbd2566167f633fe70387eb4d0c139751a5b0b,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-android-control-20261031,c759bf40e6d77253b6023e0e5c69cc08d50ebfc8,2026-11-05T16:40:13.379495+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f08-android-control-audit-20261031,bd61b61f70ebfe8a50d28d3da71872b75ceccac3,2026-11-05T16:40:15.364856+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f08-android-diagnose-20261031,dc551a6b95529d6c8f2359111cb6fdac02c1579c,2026-11-05T16:40:17.150035+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f08-apple-20261031,ea3875a9fb96d9c5e4c79c058ffaacb1d1663c1b,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-apple-budget-20261031,4157a6d02e9ccc47e7fe0986e45663e6f4784ce0,2026-11-05T16:40:18.913247+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f08-apple-trace-20261031,43505c7b745bc64b498bd4ea37fedf8e57c370ed,2026-11-05T16:40:20.592147+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f08-causal-failure-audit-20261031,ea74ceccb867c2567fdf7824bb1c11839651e796,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-causal-frame-20261031,aa070c9032ae114650d1dcc1e4a1f8c002ec961d,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-causal-frame-fix-20261031,8052bcc6b7ac112ce9b35c19117b18241aa47e05,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-evidence-inspect-20261031,e1f60b76c99e3484ede1fb1e45b800f316a60c2c,2026-11-05T16:40:22.383749+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f08-frame-analysis-20261031,4137f9fa88102f4330065883265e909ff520094d,2026-11-05T16:40:24.240034+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f08-gtk-frameclock-20261031,cfdaf6a4531548be63b4dd0c2bccd6b050a93124,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-linux-cold-audit-20261031,632c7fb65a834f254021a0bcc83462a464ed694c,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-linux-compact-20261031,97312b6fb49f70e89b0aa166afdf3eade708ebd3,2026-11-05T16:40:26.075000+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f08-linux-package-20261031,1c39ec9f0b5015d3aa1f12c0a39bcfa4719568b2,2026-11-05T16:40:27.639692+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f08-linux-product-20261031,2bd45f2f764b4cba33037d3366baea3adee1086b,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-linux-viewport-20261031,2c6adb62585331264892c2f2d2e08a6e62d7bd61,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-shelf-content-20261031,714482fa388ab24195f13f48c09cf68a30628f57,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-windows-duplication-20261031,dcce81889859e66149f9544f2493898b84549d60,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-windows-etw-20261031,b81c45d5a1fa05ef84786cf0ef10cfebca350d81,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-windows-etw-inspect-20261031,fb1197d607a2d3401488427f8bfdfcaea32568bd,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-windows-frame-audit-20261031,8dbd61b5c3aebf17e178615763bf319d1c7e488b,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-windows-frame-capability-20261031,5ddf0aa8f2d628649289fc1bcfd9d536a566910c,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-windows-frame-modes-20261031,22b207d142bf11de35aa5ffd0c64d7935ea3e6a9,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-windows-pixel-phases-20261031,ede0972d89e73e294a4d6c8fdf72aed067ba2b13,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-windows-product-20261031,6bb0a7083c218b8899f9451336654c650b53495c,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-windows-product-frames-20261031,f17e7df7502813493045912f23a336644665c38a,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-windows-product-pixels-20261031,c4697bc6ebf0ddbacbabfa53c70683f3a1fceb38,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/dot-f08-windows-product-replay-20261031,1748184e4671fb088a357086c3e941e53239b998,2026-11-05T16:40:29.247985+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f09-av-stack-20261031,570b320a3b6b80dc8019dbbfa6b8dde6c373d599,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f09-consumer-compare-20261031,5f69c1e7ecc518b1635e044faa64ea8eb863de7e,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f09-dpi-aware-20261031,a473aa48e4a7605fd713dbe328966f3c25865805,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f09-dpi-wave3-20261031,5c255d33326ff45fd612f036bd147fc7d9a822a1,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f09-escape-routing-20261031,a8352f3623078e4d64b222c5af4dc7a2f2bfa379,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f09-escape-selection-20261031,ba1dd10ea2f2da5b553099ad70a3fd309d15a31c,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f09-handle-control-20261031,15ea33d9e914e8b353f0d6ec5c31b021cfaa04a4,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f09-handle-diff-20261031,6f519876e6ee3bdb1bdd25952f6733ffba994aa6,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f09-legacy-uia-20261031,506402b25797d40831755254ce29a94e6ef91623,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f09-narrator-package-20261031,1e3a1bc66b9465e42a3afb3cd72c8294d0bfcf39,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f09-reference-host-20261031,6c5f68e62c0ea95d8e3b4818ad4fadf7424b9e5d,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f09-visible-range-20261031,068bf454388b2576883ef8b8f60f80be878faf58,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f09-dpi-wave3-20261031,yes
+codex/dot-f10-annotation-private-20261031,9a0f93397db01bde7b751f67be51af582d6eeb23,2026-11-05T16:40:31.125193+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f11-mobile-delivery-identity-20261031,9b5d0d6914671c99fc20b8cc7361f700b83ca778,2026-11-05T16:40:33.034230+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f11-real-package-20261031,c957fa56fb15a8e5a536f94dda2a546af7a5e76b,2026-11-05T16:40:34.767178+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-f12-package-material-audit-20261030,c03b1d9a3b30b745a903eeab9be2871f18360e33,2026-11-05T16:40:36.697591+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-gtk-android-org-diagnostic,4ce6c07495d85b76f6a014baf7032aed79145500,2026-11-05T16:40:38.531355+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-gtk-android-organization-relay,f8550accfcc20e092e5729a8ebc7eafe31c895d2,2026-11-05T16:40:40.585610+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-gtk-common-gate,b73ad578edc31599342b28fa276ec0d453fd5361,2026-11-05T16:40:42.548031+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-gtk-native-conflict-sdk342,3d1d51f8e8e6ad94773d4563d55505c1d26027a1,2026-11-05T16:40:44.456189+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-gtk-sdk342-package,ef3356c30046d0646cf1cc6d37b53fe942121e38,2026-11-05,round2: archived under archive/branch/codex--dot-gtk-sdk342-package,yes
+codex/dot-integration-candidate-20261031,39fc7f06000a9bec914f3716c2b1a7b266f596ac,2026-11-05T16:40:49.480611+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-opds-browser-review,f786d241e6cf185bc5845fa0c3f8582f883146b0,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-opds-browser-review,yes
+codex/dot-ot-cache-acceptance,133b97cb81dad003f6e1b802852c80272f08b5a3,2026-11-05T16:40:51.490611+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-reader-android-display,0fcbb9578a6b2a5a5e53c0968241ebcdf5b69ba5,2026-11-05T16:40:53.311006+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-reader-annotation-import,382d5baac09c2ffc36f367c3daa3879c26e52fa2,2026-11-05T16:40:55.414137+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-reader-apple-display,8173bfeaacaa2c843df36a60ad157e816424810e,2026-11-05T16:40:57.406474+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-reader-desktop-display,1103512bf2ff5882e78e00bccc9b9c48cdb99576,2026-11-05T16:40:59.232010+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-reader-font-library,1b15f67d382c5095221cd7970d8fa7488131c8a5,2026-11-05T16:41:01.118392+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-reader-original-export,25cd7b4b15d952e3f7a10e39ed80ae16a3d9a3ee,2026-11-05T16:41:02.983525+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-reviewed-composition,386b2cdf5071ccde299c04f5941eaee69c9b77bd,2026-11-05,initial: merged into main,yes
+codex/dot-sdk-record-migration,5cd73a39971338944c2615b5e5e7a6960705352e,2026-11-05T16:41:04.962470+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-six-platform-package-identity,0b16cf4cabcb573ade064114f5db76e91fa1a620,2026-11-05T16:41:06.721507+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-txt-search-restore,85b67775e368d84115e83cdea5c3e058a5e981bc,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/dot-webdav-managed-cleanup-audit-20261031,5f05c86f4f9b36579539279a000d695ad7af5454,2026-11-05T16:41:08.544270+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-webdav-managed-cleanup-core-20261031,dba079b550f9ec83054e6b7b0b7475f43bc1739f,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-webdav-managed-cleanup-core-20261031,yes
+codex/dot-webdav-managed-cleanup-tests-20261031,2a6bada9b391e741425556e5ac67c6191a1f145a,2026-11-05T16:41:10.248131+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-webdav-temp-cleanup-proof-20261031,5dffc953109d13b7537f27de6fbaa6125eb19993,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-webdav-managed-cleanup-core-20261031,yes
+codex/dot-webdav-temp-cleanup-retry-20261031,666d0d81730ac3cf7caea52b05ca1f01b1d183b1,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-webdav-managed-cleanup-core-20261031,yes
+codex/dot-win-android-book-relay,ae9ca1c0d1eb73801652792ef11abf9b43aad153,2026-11-05T16:41:11.952592+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-win-android-record-audit,3420f120a1756f1b1c55923fa907414fd06ce98d,2026-11-05T16:41:13.500005+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-win-android-record-relay,ed7549d52eda3ea39d301b7f56aaf15a0b7c6952,2026-11-05T16:41:15.088871+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-win-gtk-conflict-recovery,0c737428c6a85869f5191a3ed64f9e54beb1138f,2026-11-05T16:41:17.148927+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-win-gtk-conflict-sdk342,0f6780328fc70ff187be3fa59aa6875bfbf80296,2026-11-05T16:41:19.227608+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-windows-common-gate,e330a415b733db18dea5aa6010d13cf3063587fd,2026-11-05T16:41:21.296083+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-windows-common-pixel-diagnostic,57d621ab2983615205f6a1d38ffe272b82d6b1f8,2026-11-05T16:41:23.337967+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-windows-f3-focus-fix,8d35ff9bd3fdd33d30544b9e42c5738f88b63ee3,2026-11-05T16:41:24.985723+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-windows-import-organize,7d8a2ef5aa2b12444bb4f968efc8828080c1bb53,2026-11-05,initial: merged into main,yes
+codex/dot-windows-txt-forward-ot,cf54bdccdbf60d1d5d0ca2bf54b3fcb8b5e013cf,2026-11-05T16:41:26.678875+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dot-windows-txt-forward-scan,2070866ad76bc0d5b1eb222e4f4c2390b326244a,2026-11-05T16:41:28.686264+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/dsf-android-ui-close,7752663d285ce9d47621b12a4e902d4da4f5cb6d,2026-11-05,initial: merged into main,yes
+codex/dsf-apple-ui-close,937f61057b06c5c9de3b562046e52c91b5be62b9,2026-11-05,initial: merged into main,yes
+codex/dsf-gtk-export-close,0633dcdad1ab36efbc96a19380108808e199f295,2026-11-05,round2: archived under archive/branch/codex--dsf-gtk-export-close,yes
+codex/dsf-gtk-raw-wave3,77d4c5ec055d463c818b26414f34b15fc9bf01ad,2026-11-05,initial: merged into main,yes
+codex/dsf-windows-ui-close,0d2903e62fdb0f1979f50722c3c972bf586ae085,2026-11-05,initial: merged into main,yes
+codex/f03-six-host-20261103,99050ed7c86ebcfd12c60f046090cdf2464bcc5a,2026-11-05,round2: archived under archive/branch/codex--f03-six-host-20261103,yes
+codex/f05-android-delete-details-20261103,980a817b36245bb0e4b4041fb2b33e4821e0b08e,2026-11-05T16:41:30.287302+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f05-conflict-recovery-20261030,4fbad77802f2a7bc6001989fae910c603783d0eb,2026-11-05T16:41:32.023164+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f05-gtk-delete-details-20261103,79143b3c25f8529d077afb9b0f0f2abcb4307279,2026-11-05,mechanical-round: archived under archive/branch/codex--f05-native-final-20261103,yes
+codex/f05-gtk-dialog-target-20261103,a114a8d7892ef46f85ae529cad1ac27ef35cd832,2026-11-05,mechanical-round: archived under archive/branch/codex--f05-native-final-20261103,yes
+codex/f05-gtk-recovery-r3-20261103,0be9b39384edd386b48b78d128515cf330611654,2026-11-05,round2: archived under archive/branch/codex--f05-gtk-recovery-r3-20261103,yes
+codex/f05-gtk-xtest-target-20261103,b68c8c17e803c090527a42622e9cbfebf50c2d54,2026-11-05,mechanical-round: archived under archive/branch/codex--f05-native-final-20261103,yes
+codex/f05-native-final-20261103,e98cdc3f259a43af4ffc5e5d7f17680df60ebc2c,2026-11-05,mechanical-round: archived under archive/branch/codex--f05-native-final-20261103,yes
+codex/f05-remaining-20261030,cbe52cce90680cd043ca38ad0b1771ae6e66bd55,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-f05-gtk-restore-recovery-20261030,yes
+codex/f06-windows-identity-fix-20261028,90c8773fe863e39157ac6e4f9a82a2d66d84cd93,2026-11-05,mechanical-round: archived under archive/branch/codex--f06-windows-identity-fix-20261028,yes
+codex/f06-windows-sdk342-20261028,08eb7f1fdf09fca815a40400634354ef393f3225,2026-11-05,mechanical-round: archived under archive/branch/codex--f06-windows-identity-fix-20261028,yes
+codex/f08-android-first-frame-binding-20261031,f0ca94433a8e2bea18cd7de7cbecff34484d28fd,2026-11-05T16:41:33.720614+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f08-android-frame-diagnostic-20261031,49c298289223644d530bc232978f763edaa1d20b,2026-11-05T16:41:35.438382+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f08-android-framefloor-20261031,7fae9b37f1c2210a538b3924b31093df7db24dc2,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-android-hwui-20261031,181eccc83acb846b87e179aab74e3210813d569b,2026-11-05T16:41:37.484013+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f08-android-release-review-20261031,03ecfa21f6cd8d8e354145d56ffdf24244ecbe61,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-android-startup-heads-20261031,5d4152744ef0fd9a1f2775cdcdae0e542b08476d,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-android-startup-key-20261031,1c5eb2f7f12ec59cab182ceaeb574672cee4968b,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-android-startup-phases-20261031,89ad06714250667a82851253d24398eab47acf63,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-apple-agent-20261031,77b2789de3416f4143f3eb2a37ee09a704d34750,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-apple-cap26-agent-20261031,4bcdec0a52d1804933d70f26fbdb759444b1e32b,2026-11-05T16:41:39.526468+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f08-apple-capture-agent-20261031,0e0d158212535f9e440a4e47c5b77af38b3de36a,2026-11-05T16:41:41.231185+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f08-apple-launch-diag-agent-20261031,1d6236351f76dcb27ea81fadbc2b05c934a5e926,2026-11-05T16:41:43.094461+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f08-apple-reader26-agent-20261031,7906990dcc2c919e2d79ece52b93e9eefba13483,2026-11-05T16:41:44.740955+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f08-final-adapter-check-20261031,ac21fa69cbe6b2973ce101c253defd2f9b5e7d56,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-final-build-check-20261031,943938213560d329177b9afbdb2fc0953fbfc4ac,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-final-integration-20261031,b7970bfbe7d1a54e2b41dcbde25bbe4d27472fa0,2026-11-05,round2: evidence branch deleted with SHA-only record,yes
+codex/f08-final-validation-20261031,b7970bfbe7d1a54e2b41dcbde25bbe4d27472fa0,2026-11-05,round2: evidence branch deleted with SHA-only record,yes
+codex/f08-final-windows-build-20261031,19016327ceee74d8b943347394ceccdc12e872c0,2026-11-05T16:41:46.646091+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f08-frame-identity-diagnostic-20261102,6f594df400389dd354075a46482893405c0066b6,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-ipad-startup-agent-20261101,f96829255c23680235d40a3d58363f57e3f785ef,2026-11-05T16:41:48.563242+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f08-lap25002-native-20261031,7601f5fc73605b5bfbcfd608c0465db47e3e425c,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-linux-agent-20261031,34423007204481654bf3f2c2887c39174504d6be,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-linux-body-jump-20261031,d981f2d7c8e0bae6408f27a137bc423638e11026,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-linux-catalog-wal-20261031,a2d3bdd6f7258b6c27188093b253dcad3038c6ca,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-linux-mutter-20261031,0c89ee0bee126c2316b2a6445bde7a5a47bb42f3,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-linux-wal-product-20261031,da12b2b2ea1a727e2d5038d0219a608742227b3b,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-mac-reader-animation-agent-20261101,c3c26f6fdbb61039fda2f385394fef546264eb97,2026-11-05T16:41:50.308575+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/f08-native-local-probe-20261031,41322fc257a7d4e83167c2e9a0f2d055c1189afc,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-native-window-receipt-20261031,dd58dbd13088e1a13d7ff201e4df5b33a3669a62,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-reader-stop-handshake-20261101,fdb124f8c313b99dc6d6c07bf01596abf90a4021,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/f08-window-capture-20261031,8a4f7f90b33142ccc4dfb4722c8c99a8f728eac0,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/f08-windows-agent-20261031,7c6dcd74dad88385a7c35e954bd4e7d531747aea,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/final-gate-probe-20261103,2c851890f26e54f9614deaef9049f5a447649a3f,2026-11-05,initial: merged into main,yes
+codex/governance-to-framework-20261103,aa753fb9cbfccb2afaf7021ea1f13981e6fd572b,2026-11-05T16:41:52.325650+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/governance-to-ledger-20261103,1761386d966ffdcbbeccaf25e68b184706cf9b8f,2026-11-05,round2: evidence branch deleted with SHA-only record,yes
+codex/gpt-c02-webdav-handoff-20261031,76638698416bba665731c048700020b8ec41916c,2026-11-05T16:41:54.171140+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/gpt-c02-webdav-joint-20261031,d872ea96e9ad224774c0f159bd25562f198d75d7,2026-11-05T16:41:56.051166+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/gpt-f02-acceptance-98-20261101,9631c50851dc8c3b8e47f04705f76916ebc1bded,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/gpt-f02-android-online-evidence-20261031,b6dd4b9b8ab30047650a7bb64447d1ebf3d5b54d,2026-11-05T16:41:57.904678+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/gpt-f02-cold-cache-validation-20261031,86d38aec32a53bafff80d8f01fd677e10a4e5e64,2026-11-05,mechanical-round: archived under archive/branch/codex--gpt-f02-same-source-win-android-20261031,yes
+codex/gpt-f02-online-observation-20261031,3ba9dbefe975b60cd6d3b6d2dac6d186f43c637b,2026-11-05,mechanical-round: archived under archive/branch/codex--gpt-f02-same-source-win-android-20261031,yes
+codex/gpt-f02-same-source-win-android-20261031,81d4df704526dfe3a2bd4f63a5e4c06a8ecd0e3a,2026-11-05,mechanical-round: archived under archive/branch/codex--gpt-f02-same-source-win-android-20261031,yes
+codex/gpt-f02-win-android-transfer-20261031,f47f7c374524d2774e9a61cba44f63a5b7580916,2026-11-05,mechanical-round: archived under archive/branch/codex--gpt-f02-same-source-win-android-20261031,yes
+codex/gpt-f04-acceptance-97-20261101,4d85994b0434a53c0b77e4fd75ac9b295f120fb1,2026-11-05,initial: merged into main,yes
+codex/gpt-iphone-acceptance-96-20261031,ac0f128d7714b4fe944e9d392b87bba805c5d673,2026-11-05,initial: merged into main,yes
+codex/gpt-iphone-annotation-evidence-20261031,15682faeedec11c196f6a6232ae55a01eb00ea17,2026-11-05T16:41:59.736406+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/gpt-webdav-product-integration-20261031,d1383f8c4b27b61f97ebfbd510520e5fb9b74a0c,2026-11-05T16:42:01.565900+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/gtk-accessibility-crash-diagnostic,a2d2c73858d5a7ad6d7668534f60d82f7a272904,2026-11-05T16:42:03.561307+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/gtk-annotation-export,cc75214cb5e6dce389625e33399e1b120aedf4c4,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/gtk-d26-diagnostics,34c21cf9f37918940e57922468c6ebe0da408225,2026-11-05T16:42:05.493622+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/gtk-organization-boundaries,6fd3143b0380b890900867324b2b3ed91aec0f8d,2026-11-05T16:42:07.293222+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/gtk-organization-projection,3047fcb4ed470f6ae276f94f7e45c4adb7ab1a69,2026-11-05,initial: merged into main,yes
+codex/gtk-raw-retained,4380c6162cb36426537664997108a5d51031da8a,2026-11-05,initial: merged into main,yes
+codex/handoff-evidence-resume-20261029,4010785f201c84a8fdaf18397880b4011f1aa51d,2026-11-05T16:42:09.160706+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/handoff-independent-acceptance-20261029,8867f522a108815fa5b9f6a7a7392485cb20a046,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-apple-diagnostic-20261030,yes
+codex/ledger-governance-c-20261103,d0c95336535e7c8e9a3607dfc444e252690c8ec0,2026-11-05,initial: merged into main,yes
+codex/ledger-guard-20261103,7d822dca6d96b7de8d940a84ba28deeea3613672,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/macos-native-sharing-repair,99f47a52e6057a91ee1f1b5cdb50e89dd36a7e06,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/macos-sharing-404352-investigate,9168bf1a6cedccc0af53f07bdaf933ec5f9bc984,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/macos-sharing-probe,691e40ec29f20e2bf51b0ea5ea841f04e3d75617,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/main-default-followup-20261104,5544ef083badd4be469cce1b9ec530ce5f3f01df,2026-11-05,initial: merged into main,yes
+codex/main-transition-evidence-20261104,f2fa9251e99208152baaa2db2fd836775db2a841,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/migration-compat-20261028,e771f3c5d1567412f26184ad304730b7c640235d,2026-11-05,mechanical-round: archived under archive/branch/codex--migration-mainline-handoff-20261029,yes
+codex/migration-handoff-failure-inspect-20261029,cc74d281ecb1fedcb13bc08d36110e3e7dc7198c,2026-11-05T16:42:10.892195+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/migration-mainline-handoff-20261029,0c0a24bf53b1efecb515ac5e6a8dfcf1a8f8e101,2026-11-05,mechanical-round: archived under archive/branch/codex--migration-mainline-handoff-20261029,yes
+codex/migration-mirror-safety-matrix-20261028,fedac0c42c4253f686be4239c4cf45e7e3bf1e1b,2026-11-05,mechanical-round: archived under archive/branch/codex--migration-mainline-handoff-20261029,yes
+codex/migration-new-target-recovery-20261029,acf892d4fe852dda4ed668589af53f7b3694f679,2026-11-05,mechanical-round: archived under archive/branch/codex--migration-mainline-handoff-20261029,yes
+codex/migration-recovery-handoff-qualification-20261029,14e3d0c60428a9baf33f2982d70689c0d654d3e0,2026-11-05,mechanical-round: archived under archive/branch/codex--migration-mainline-handoff-20261029,yes
+codex/migration-recovery-integration-20261029,65dd64a5cd7b616aa15a262f635ea01870ba1e13,2026-11-05,mechanical-round: archived under archive/branch/codex--migration-mainline-handoff-20261029,yes
+codex/migration-recovery-integration-harness-20261029,e1cbfb31ac965fd34dd7d96356c157746a399418,2026-11-05,mechanical-round: archived under archive/branch/codex--migration-mainline-handoff-20261029,yes
+codex/migration-recovery-preflight-20261029,c16c44dc5a9c8ea31460fddc5741ac332ec28e74,2026-11-05,mechanical-round: archived under archive/branch/codex--migration-mainline-handoff-20261029,yes
+codex/migration-regression-triage-20261028,d32c96ec8b6fbdaba43657847766e3207c62312e,2026-11-05T16:42:12.595017+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/migration-review-latest-20261028,19cef90840c4712b3d7436a368bbd9bbfca49d42,2026-11-05T16:42:14.522917+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/migration-shared-lock-20261028,51ac316873f71d783e4c17b9ad7fdd161fd1b8c4,2026-11-05,mechanical-round: archived under archive/branch/codex--migration-mainline-handoff-20261029,yes
+codex/migration-transaction-candidate,9b1dd7740bc752831ef06b797743f1cdfcab2e63,2026-11-05,mechanical-round: archived under archive/branch/codex--migration-mainline-handoff-20261029,yes
+codex/migration-transaction-review-tests,430a5e3b03f074f8a0f829d31af6baa374d17f2b,2026-11-05T16:42:16.368251+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/migration-windows-native-qualification-20261029,5db9c2c0b574b0e63675a38b0653f3a9bdd2cb1c,2026-11-05,mechanical-round: archived under archive/branch/codex--migration-mainline-handoff-20261029,yes
+codex/organization-projection,a67fe8c6c094c4bb59ffc94f4a84c90261d5e722,2026-11-05,initial: merged into main,yes
+codex/p-self-defects-20261103,d56de773796b92685961a480feff47cdb682f69c,2026-11-05,initial: merged into main,yes
+codex/p-self-defects-probe-20261103,6db1181a6db56b23df79a3686688dfc0b80d23d7,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/p0-native-host-lifecycle-20261030,3b41bbb0bb921aba8df3e2928f8ad137df162119,2026-11-05T16:42:17.962362+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/p0-win-crossdir-publish-20261030,7273822abdc27e13bd859bc31bc0d9fe19ddb321,2026-11-05,mechanical-round: archived under archive/branch/codex--p0-win-restart-window-lock-20261030,yes
+codex/p0-win-crossdir-publish-audit-20261030,826bfc527c6305d41b4a8a2c61be5dbc1315ddb6,2026-11-05,mechanical-round: archived under archive/branch/codex--p0-win-restart-window-lock-20261030,yes
+codex/p0-win-fault-acceptance-20261030,4ec1b35cf9d40763928aa18fa5fef5b6f57b413b,2026-11-05T16:42:19.692839+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/p0-win-record-bridge-20261030,99ac7522ab5d2cdd512b494d5427b5c95c0a2b98,2026-11-05,mechanical-round: archived under archive/branch/codex--p0-win-restart-window-lock-20261030,yes
+codex/p0-win-record-bridge-audit-20261030,39f30d8488362d0c35796e75de34a8342eca7b02,2026-11-05T16:42:21.463218+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/p0-win-recovery-engine-20261030,b6b6c616980d3450b896283a98e991a49ca89f93,2026-11-05T16:42:23.089645+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/p0-win-restart-reader-20261030,638976413692412fd7cc15d7e508d0382d1faffd,2026-11-05,mechanical-round: archived under archive/branch/codex--p0-win-restart-window-lock-20261030,yes
+codex/p0-win-restart-window-lock-20261030,052fb26b7ed47399b15f968bc00b7885fb4568bb,2026-11-05,mechanical-round: archived under archive/branch/codex--p0-win-restart-window-lock-20261030,yes
+codex/parallel-integration,1480b03d3f10ac750ff810e810eea3a1325b0ce0,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/pdf-jpx-integration,d041a02fe8c4424fb8cf3f69357874432aedc1b0,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/progress-android-sync-20261028,b075d0070285dafcf25a4c3664b4dfa971f84771,2026-11-05T16:42:24.925656+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/progress-f06-macos-20261028,693be5cc4e689d888f7f00770c9c5846e23864a9,2026-11-05T16:42:26.773424+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/progress-windows-sync-20261028,02ced9bb4881d98c120471d66731cb85f7a87fc0,2026-11-05,initial: merged into main,yes
+codex/project-description,8c25d2f67c5846b548a2aafa0060f06036c1d364,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/public-product-resume-20261029,343bb94eb6513beaf5b344e7828342f6602a3b7b,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/r1-reading-core,b529513b7e8e8992786f8c679c0ec6c92110b035,2026-11-05,initial: merged into main,yes
+codex/r2-pdf-jpx-dependency,ffeec54bc46539f8560a642cd2fc02639e9be497,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/r2-pdf-stream-cache,546e9fc4bc38dfce8d3c59b3d2e691c6a0094cb0,2026-11-05,initial: merged into main,yes
+codex/r2-real-corpus,7463afe6b4e879c922e4bb82b48a1682fee2b089,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/r3-frozen-baseline,f9da13c41dd830ae8c3c725c04277339e95227d2,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/r3-pdf-measurements,ea3d4d1a24c0febd8d14f110594b7226e2527c82,2026-11-05,initial: merged into main,yes
+codex/r3-real-performance,5ba32dc457dd9eeeb48ef88270e26f1c2cc153af,2026-11-05,initial: merged into main,yes
+codex/r3-strict-record,d334e3489cec2eda52c785109383e9671f3d9a8e,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/r4-bitmap-identity,d78abd7911c3ceb7b723cb4605765e88f0dd6785,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/r4-core-hotspots,c3388d72293e93aa7ad9ce50980ce9005f3e4ab7,2026-11-05T16:42:28.632013+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/r5-android-bounded,29b892c1158aa17f2150a88636133fa55cb8ea4f,2026-11-05,initial: merged into main,yes
+codex/r5-apple-bounded,86c3219f36501aa334c4ef6fc91b2efc5be000f5,2026-11-05,initial: merged into main,yes
+codex/r5-apple-bounded-diagnostic,11d80be3724b9d2bcb5c295379bd5010d46f737c,2026-11-05,initial: merged into main,yes
+codex/r5-apple-bounded-handoff,0ce4e681d459e7433029eb7a8ae0fcb862c7fbeb,2026-11-05,initial: merged into main,yes
+codex/r5-desktop-s5bc805a-record,c7bcffb1b6d138f0aca8d46dfc5255ef693f2298,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/r5-library-source,6f0d7592ea431394d175d221b04b054facf4a26c,2026-11-05,initial: merged into main,yes
+codex/r5-linux-bounded,49edfd4c9b47e710d4b8828c16e767a89814a07b,2026-11-05,initial: merged into main,yes
+codex/r5-windows-bounded,2b6f46256cc214d981975931c7086546c2541d1a,2026-11-05,initial: merged into main,yes
+codex/r6-platform-candidates,8cc7de3abf9e25c7101676c4bdf0c3d550fee74c,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/r6-reading-release,5b2e05b5aa69d76e88716e1552aba1ad31201cfe,2026-11-05,initial: merged into main,yes
+codex/r6-reading-release-plan,a86b965fa574fa76e31716486e543731e5d7ef55,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-0.1.1,ac070674634a8988c49585b10dacd7132762232b,2026-11-05,initial: merged into main,yes
+codex/reader-a11y-android,da243829feaccf664ae75b595ba1e6ea7647ee76,2026-11-05,initial: merged into main,yes
+codex/reader-a11y-apple,c2e172d1da9352bee9e0b49003ca25f7e35aa829,2026-11-05,initial: merged into main,yes
+codex/reader-a11y-gtk,10117b08879624d5142e974d668ba2b068fbb81a,2026-11-05,initial: merged into main,yes
+codex/reader-a11y-windows,881ab6216a158d76b7c5bbbaf765ea3363291d4c,2026-11-05,initial: merged into main,yes
+codex/reader-account-profiles,2d67b87830a1fabad602aef2ac7bdb3ef579190e,2026-11-05,initial: merged into main,yes
+codex/reader-account-profiles-review,a0746156b37db7cd750fb805899a616ef2c6a80f,2026-11-05,initial: merged into main,yes
+codex/reader-all-combined,b723a9a3a20af7b31729fa1a47b695b20a0c4b8f,2026-11-05,initial: merged into main,yes
+codex/reader-android-341-common-prep,69bc0c88e8adbf884bc71f94188e89b219349ca3,2026-11-05,initial: merged into main,yes
+codex/reader-android-cbz-reading,6b43e83537aa6b03bda889d258fe73c0e317acb1,2026-11-05,initial: merged into main,yes
+codex/reader-android-cbz-reading-proof,234389f986f8ea8c83d1b8e3c6e0f8174c3469a6,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-android-fixed-pan,c5f55fbedcd15a910a40626624e997b58f8fd1b6,2026-11-05,initial: merged into main,yes
+codex/reader-android-fixed-pan-proof,ea13fc5351175d14c0422a5dee0aecea675fc6d3,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-android-font-admission-probe,9bc92a3370d2a69e94f1992bcd99847b6ecbf9b5,2026-11-05T16:42:30.334611+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-android-font-composition-prep,248e02e9b7205e4c793dbf4d372876023987776d,2026-11-05,initial: merged into main,yes
+codex/reader-android-font-integration,b912062a47d737887adde29a7632ffc4c65f3c02,2026-11-05T16:42:32.346013+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-android-history-common-prep-20261028,e98d2b6bbb63bc8f67497ecdca29025778b0728c,2026-11-05T16:42:34.034497+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-android-host-import,8a564e817fec01538d9c6efc35d173c6f24d8fec,2026-11-05,initial: merged into main,yes
+codex/reader-android-import-common-prep-20261028,7950a4053388d9a868a2c835febe364eb9965d01,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-android-import-entry,635ddcb3f865059fd481f8deb9f7927e75743c6d,2026-11-05,initial: merged into main,yes
+codex/reader-android-import-entry-review,e4f20df783872dd536f40a7431b200352aa2da17,2026-11-05,initial: merged into main,yes
+codex/reader-android-navigation-freshness-review,ad2e6372a40da74901e88d59687cba8034dcff76,2026-11-05T16:42:36.066802+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-android-navigation-ui,b5d312d0b20a77fc7630cd464f9e12325438b91c,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-android-organization,3f50a165d0fee790974c8851799d084f64b7ce81,2026-11-05,initial: merged into main,yes
+codex/reader-android-page-theme,1b3cfd1413fa5ebade31be6958f835f6de3b5290,2026-11-05,initial: merged into main,yes
+codex/reader-android-preferences-proof,9dc28784e28c010307b0bba4de7941fa76dfc325,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-android-preferences-ui,91270f8e7b5a3085430992b97dd27f612666480a,2026-11-05,initial: merged into main,yes
+codex/reader-android-raw3-candidate,caa84411ae79c866c28cf982243b6cb80b4bbe49,2026-11-05,initial: merged into main,yes
+codex/reader-android-reading-proof,ef9433153dc04cb5846946fbf5dcbddaf8f6d967,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-android-reading-ui,5d7da81495e545901f7fc802af00e0b779d1d8c4,2026-11-05,initial: merged into main,yes
+codex/reader-android-record-incoming-prep,e82b5e22da53c394409011eca94bc5f5211adea0,2026-11-05T16:42:37.893365+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-android-record-interop,ff28b662b3acd006c938492f02b2ac0733526a22,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-android-search-ui,6bbc49bffd2de66b562a6afc1b7e6a8b91ffa8fa,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-android-sync-common-20261028,8b61f1646eb1dc36b1d0088b34cafbf50f3314c8,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-android-sync-session,27b8daddf9649c28dc639c2bbd8f6032b1474c9b,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-android-txt-composition-prep,edeec8ca7ca53d8d95bb0b3df2700e906ec86d07,2026-11-05,initial: merged into main,yes
+codex/reader-android130-candidate-admission,9fb36c2aae690d90269df36850516cd689244962,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-android-history-compat,yes
+codex/reader-annotation-export,0f0728b8abfe8245382d40747bc73f657c717b52,2026-11-05,initial: merged into main,yes
+codex/reader-annotation-view,0527476aed2f099e19bbc7dbeb8271dc662a3636,2026-11-05,initial: merged into main,yes
+codex/reader-app,24a3e04b6fc456fa3fa68fa7bd6d9cc3b5c4e383,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-app-boundary-fuzz,3c5f2e1ed9fb3cc94cbb523fac298aa679dd711a,2026-11-05T16:42:39.685027+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-app-boundary-fuzz-review,30658d45dad17aaadc403b770b2bf336dc12ab7a,2026-11-05T16:42:41.613162+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-apple-404304-inspect,adbf0754ee14397e919f94865164691e1a7dd720,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-apple-404352-inspect,e9fdbd401da30bfc4fa06e6b9d759885767716f2,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-apple-android-composition,0b6e996bcaf6d57ba748d230e040c795fc348908,2026-11-05,initial: merged into main,yes
+codex/reader-apple-candidate-integration,17c565df702bd85caf5f06edf08a3e3db106c572,2026-11-05T16:42:43.292426+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-apple-common-callers,22b5407d2d45740891dd85e6a58c128c5b8c8969,2026-11-05,initial: merged into main,yes
+codex/reader-apple-feature-common-prep-20261028,5bc11100a4ef31430c7f9a2d865f58d9e705b3e1,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-apple-file-entry,3c355b4ea3faab974861f4863893c6018653740c,2026-11-05T16:42:45.034859+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-apple-host-account,a1a41b08a3661bb01170e37031913649b2b296db,2026-11-05,initial: merged into main,yes
+codex/reader-apple-hosts-final,8bba2f5328e738b40b3c72050004cbe6157583a7,2026-11-05,initial: merged into main,yes
+codex/reader-apple-navigation-ui,d9912609a88fd10787013f42dfabd093a5121fa6,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-apple-organization-common-20261028,716c1409168960a276e282ce694d32ed82497bc9,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-apple-original-common-prep-20261028,3aab2d80670291765908fe8b7f06e057e0c3d7f5,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-apple-page-theme,f4aa876c4e077201ade122c6a558a90731327daa,2026-11-05,initial: merged into main,yes
+codex/reader-apple-page-theme-diagnostic,6a6d4b85b9bf15932a056081f595d1866dda14eb,2026-11-05T16:42:46.898649+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-apple-picker-common-prep-20261028,9f6bc74b21b9cbd694b8c421d7097bb0c88bdef3,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-apple-raw3,44eabdc86b3b84d986f81dbaf8cee92b1829cea8,2026-11-05,initial: merged into main,yes
+codex/reader-apple-raw3-android-receive,cd6fbe2e4f86c8ebd564d06518427c2642d045f6,2026-11-05T16:42:48.806470+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-apple-raw3-ios,72c6bbdd14ebf3be453fa7f0da81119d52675eb5,2026-11-05,initial: merged into main,yes
+codex/reader-apple-raw3-ios-inspect72,981b0f6649d4b35fa1cb4f0c16203c3ac28ca671,2026-11-05T16:42:50.670919+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-apple-raw3-ios-ready,3ee3b7de96cb2ec950c3ec78a36726fc7c3eb9a4,2026-11-05,initial: merged into main,yes
+codex/reader-apple-reading-inspect25,421837e9957f6dd4b37db218624d51bea85d659f,2026-11-05T16:42:52.535872+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-apple-reading-records-ui,0f0cf3ba374b13d0e8a3c8fc1e04b3f3cfb6c9f6,2026-11-05,initial: merged into main,yes
+codex/reader-apple-record-compatibility,a67ad5e62f3b87e83bc9b775fa499cf30fda0cf4,2026-11-05,initial: merged into main,yes
+codex/reader-apple-record-interop,f8e5df8bd9b385e2ae08262ad48ca47108ec2df4,2026-11-05T16:42:54.486617+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-apple-records-ready,aab2f207f355d00089a7165aa23e68caf3e5ff6c,2026-11-05,initial: merged into main,yes
+codex/reader-apple-search-evidence,7dd3b7cb0de8c3b048fce2be7536863ae667afcb,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-apple-search-ui,356c57a4c641f05e10cff13850e24bd94336454e,2026-11-05,initial: merged into main,yes
+codex/reader-apple-shelf-publication,897f8973c1a8c74fa5aaf9a470d02e6914faeded,2026-11-05,initial: merged into main,yes
+codex/reader-apple-simulator-ready,7c457fb68a24d917ac3bd60aa1f961b16fe9ae6b,2026-11-05,initial: merged into main,yes
+codex/reader-apple-sync-common-20261028,aefe6107f8f073847f0ed590f0ad9602fa720f3d,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-batch-import,e0d6f339e7c05b37014187406d2e92f2bc63814d,2026-11-05,initial: merged into main,yes
+codex/reader-batch-import-review,33fd98ad8dffc9de99fde1e3d1349b92a62fb960,2026-11-05,initial: merged into main,yes
+codex/reader-book-information,e32fa06aeb3508eb07f0c7ef7443a3750a1f0e43,2026-11-05,initial: merged into main,yes
+codex/reader-book-information-review,723cd5e7f9849fe050f2159a9f3a125848cdbec4,2026-11-05,initial: merged into main,yes
+codex/reader-bulk-organization,5b601e83d81f815a0d58120d7c80188e8b8b92e7,2026-11-05,initial: merged into main,yes
+codex/reader-bulk-organization-review,757249aaed9a1dc6be981354f6af97e813233f04,2026-11-05,initial: merged into main,yes
+codex/reader-c02-close-protocol,0d15dc2febe1c04371786ae5feb5eb7d07861e03,2026-11-05T16:42:56.427284+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-c02-root-review,05ca595be28ee96ed96d784046e390727a5705d8,2026-11-05T16:42:58.075388+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-c02-timeout-diagnostic,fd03b888f318136c74b4344efff1c3b339f94b34,2026-11-05T16:43:00.031136+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-cloud-content-binding,ccb1dd27f4e179799aec7c32522eb7f06dc32c85,2026-11-05,initial: merged into main,yes
+codex/reader-cloud-import-review,0d07d23bf53cd288de7a0af152d48553c18be241,2026-11-05,initial: merged into main,yes
+codex/reader-cloud-pinned-source,c92a2e06a73d5813e86537e5a5f4a8e76a32bbcd,2026-11-05,initial: merged into main,yes
+codex/reader-common-source-integration,c63c860d9a346fa9973689f14a5fd82908a190ce,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-composition-341,7ac0ac74e40155391dce2ba28b098fe1ee83f39f,2026-11-05,initial: merged into main,yes
+codex/reader-credentials,51df983235d37d30836f00071faf90b41670cf06,2026-11-05,initial: merged into main,yes
+codex/reader-credentials-review,e62cb2fd2dcad83c744a4b3e6650afb83e3b2970,2026-11-05,initial: merged into main,yes
+codex/reader-cross-os-relay,9ff063dcc6b898fb0c776edabadf743919045a7d,2026-11-05T16:43:01.890093+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-desktop-drop,986f2f0132ecdf753d6d428ba821a58175cd0d0c,2026-11-05,initial: merged into main,yes
+codex/reader-desktop-metadata,a9d2d5bba2a4490224e86fd916afa2c3aecce073,2026-11-05,initial: merged into main,yes
+codex/reader-desktop-organization,ae584ccfc4c241196bcf8e6513ae512b7ac0ca9e,2026-11-05,initial: merged into main,yes
+codex/reader-diagnostic-report,4793224343950b279a3591c8398f5a2a8514d754,2026-11-05T16:43:03.651353+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-distribution-inventory,b7bdd62d02a6c85ab57ab7bc36b8b8212dfe090b,2026-11-05,initial: merged into main,yes
+codex/reader-distribution-unix,9919608678f2764e74d3075c949303443e35e03d,2026-11-05T16:43:05.461331+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-distribution-unix-review,c11b7b05e23db00521465f9a2cba66b792b63e0b,2026-11-05T16:43:07.053424+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-distribution-windows,901bc8cf3ceec7ebc8ba2a0db261d5f8581e0f92,2026-11-05T16:43:08.657174+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-dot-d08,30158c44dcd9ebf27e028b85f60c4fe374b9c90b,2026-11-05T16:43:10.662779+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-dot-d09,8f55aa391cf14472dbe4025b3fa2acba20d4cac9,2026-11-05T16:43:12.312195+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-dot-d10,7e4fcac25120199dd4818a86039e2257f28132a1,2026-11-05T16:43:14.128708+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-dot-d11,da3ba2d1544edff6dc5004dd9d9d88aa732f9b12,2026-11-05T16:43:16.154509+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-dot-d12,df78d4f5248deb7c1ac04b6cf7376a8fe0f80b6b,2026-11-05T16:43:17.857385+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-dot-d14,93c2f583c7e54eb2aebcba13a18b532bd0a967f5,2026-11-05T16:43:19.727564+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-dot-txt-evidence-draft,58ee31b5db8a2e168a3b96527c04c0a8157c166c,2026-11-05,initial: merged into main,yes
+codex/reader-dot-txt-integration,a7020b07b8515e0d4b8e2693522920e2ec78eb35,2026-11-05,initial: merged into main,yes
+codex/reader-dot-txt-validation,5da384a6b4f7faccade2d84c8c5d5f8809ae9498,2026-11-05,initial: merged into main,yes
+codex/reader-drop-coexistence,5988ee7fed3cfbf823f0ff55ffc1906a5166d145,2026-11-05,initial: merged into main,yes
+codex/reader-explicit-conflict-actions,37fdc830d75eee8590120d52d4d881102e0d9dc4,2026-11-05T16:43:21.926648+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-external-link-policy,4175e1de8e61ebc68dc4a1313e32408a4956f1c7,2026-11-05,initial: merged into main,yes
+codex/reader-f06-sdk342-prep,d1e6bd072a904150bb292994d0cf7d95ccde5c19,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-final-d01,1a7f45881874cd65bb70d45303a4b291599022d7,2026-11-05T16:43:23.698643+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-final-d02,c51bdb533d2f86e710c5c14a9faab462334b2a81,2026-11-05T16:43:25.700159+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-final-d03,c484ce52540851a4f35056bc8ca41afcfcab889e,2026-11-05T16:43:27.613252+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-final-d04,207d86185a9ddb61bcb276ecb926c63b1a1d3989,2026-11-05T16:43:29.677344+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-final-d05,e65fb45571bbb267fa32c56ae6ec1aa22ad55c8d,2026-11-05T16:43:31.595992+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-final-d06,ffb41165e41f1e20f4b6d78b8edf2e045546ea82,2026-11-05T16:43:33.452063+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-final-d07,2ceb78b22224047438937a7f9847a5638abc5368,2026-11-05T16:43:35.180222+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-final-gate-review,7b789b280bac615f56b94306f57d1157dfad6e9b,2026-11-05T16:43:37.228574+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-font-common-20261028,b4192fd7690caf4a9bd76939bdd10659e7256da2,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-font-forward-composition-20261028,adc7c1b52d9bb7de7d34fde91c8866534547cf51,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-format-combination,0d330c3bdc027a4b9b42b8f402675c13f43a96c1,2026-11-05T16:43:39.172262+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-format-combination-plan,c675aec09c67447fd0ff533ffc2df85056fee294,2026-11-05T16:43:40.917719+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-full-product-performance,58db5790f6cd3a38588dee3ba57a95d4641a0a05,2026-11-05T16:43:42.706748+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-c01,06a6f9b8f10593584e773da136f54e2eae43fd27,2026-11-05T16:43:44.739581+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-c02,72a7c0da8755d15400e90e436e9c56e2730df367,2026-11-05T16:43:46.769813+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-c03,0c5acb992a6c06611dcf075a75c0b3dc94554629,2026-11-05T16:43:48.593210+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s01,0fb0262c3b312f26b66cc395f399e2980080fede,2026-11-05T16:43:50.228758+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s02,c426c13205b91186cdd6f20339c8e59e2be730e2,2026-11-05T16:43:52.207416+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s03,5eb46b26136c6638154040b4e968ace9caee404c,2026-11-05T16:44:05.144647+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s04,c66cd3c690ac660e5c9a8a302dff82b8c5215130,2026-11-05T16:44:08.175034+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s04-root-review,116da77ed915b9a80fceade4b41dcea7093f9966,2026-11-05T16:44:10.180488+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s05,9f413f89348bec926a895af9ee2edcbcbd46ea40,2026-11-05T16:44:12.885410+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s05-root-review,e4a32bcbb361d4b857bd5506eb3915dabb8c333d,2026-11-05T16:44:14.779903+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s06,a9d91ab820d7df4f6bdeca966b5cf0d4e9d1040e,2026-11-05T16:44:16.701060+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s07,db4608b08b62ae7776f5c6dbc5fbf5c0aeba6e17,2026-11-05T16:44:18.798362+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s08,f457baa331e5aa0c6faa7c9a2cebac811d89fdc6,2026-11-05T16:44:20.735063+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s09,0e760079f35d19d35e27ce0ce2515117cb24e68c,2026-11-05T16:44:22.570148+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s10,3f8ee5791a6366c08e541103177c8d56302706f8,2026-11-05T16:44:24.361257+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s11,963b0cd0f015208e3b78a08176caa2a7a9b182d7,2026-11-05T16:44:26.181901+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s12,00a015c51cd639789c4f0af3a7bfdf71e4dd6b71,2026-11-05T16:44:28.001254+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-fw-s12-root-review,3d4989040cf879b65f5b5e075f4f338d91b88f69,2026-11-05T16:44:29.673376+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-g1-integration,3bcc6511c928665c0889a33bc98cf5e1bfadaccc,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-341-common-prep,10d313e375c8767f7981b53424e1574a443e4e25,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-341-final-integration,37e592375e365a510293c41b8716e7917a682a7a,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-account,0d5511a40c967dcd51fe8f81525e98fd5a14c425,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-batch-failure-inspect,c4530571be3274a7440a559c3e3c24ef50f2d9ed,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-gtk-batch-import-ui,374e6fbb88bfd7a0fd966ff2e85d7dbb698551fe,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-batch-owned,2df6040666635bcd7b0349b035b8f4885757fdd0,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-collections,d140aee2d6da0470f5c32b842103f21d6799efbb,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-compact,9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-composition-prep,b0269fd2d2365ba20e54cda7e181493a39f75091,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-drop-import-ui,eaa6852c8e965720c4ad07cfd223c30c282803f8,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-navigation-driver,600ef981fb44acd91dca618850a25d1725de18f7,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-navigation-frame-proof,b2c798af1a0884180062ac63c017afef77d1ebf1,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-navigation-ui,1ad762a0b68372c56b712d0129be8129d38b651f,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-page-background-ui,7290245f5ce0c85e76ea31bcf9d2de6b12723b5c,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-raw3-candidate,69c60ace09f7f995e92c55494b1bdf80e6474621,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-reading-records-ui,401729ba9537b58c8566372fb953384ce61381d7,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-receive,8a7cab996f7b3a876254f16a90dab69bbeb9f15a,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-record-compatibility,21fd7a671ed82d157b66b34c1a9dcc179b80c8a4,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-search-ui,9762a7dd4ede02b11339105ccd64b8d187f5d6bf,2026-11-05,initial: merged into main,yes
+codex/reader-gtk-settings,8a5e8a68c627196116e80ea456f12165a4e3209c,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-history-font-composition,875525a72b32c5c181f3a865ee311372ddc28869,2026-11-05,initial: merged into main,yes
+codex/reader-history-gtk-composition,f34a4f27161061d08ecc40f5cebfb6f5018aa77f,2026-11-05,initial: merged into main,yes
+codex/reader-history-ot-relay-prep,52792cade18f160cbf1ee3d139105b48a61163ff,2026-11-05T16:44:31.610797+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-hosts-341-final,25bc0c67971f81491f50e0a3caaaf7e509bb7e35,2026-11-05,initial: merged into main,yes
+codex/reader-hosts-integration,07ebe8786434ef384c97ccdb451242d3c6aee6cb,2026-11-05,initial: merged into main,yes
+codex/reader-independent-handoffs,fd7a27c7b98c96c42bd0119f2572e99c22f3821f,2026-11-05T16:44:33.625147+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-integrated-bounded-txt,6cf24162bc97e0054faa54b30ec3dab9972ccaeb,2026-11-05,initial: merged into main,yes
+codex/reader-integrated-evidence,97a28f6e44e4c793761c3b5956aa3fceeb552a25,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-integrated-progress,c45ac1a7508842f071e3d892635fdd9af444ae90,2026-11-05,initial: merged into main,yes
+codex/reader-ios-sync-session,254466e7eea97d7099bab983b7443507faf2ecb7,2026-11-05T16:44:35.583568+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-jump-history,496b426219d8b9ff50329c4a3a0336ae742acd94,2026-11-05,initial: merged into main,yes
+codex/reader-jump-history-review,561208ede9e85263c98e9563470349c7fa39ccb5,2026-11-05,initial: merged into main,yes
+codex/reader-keyboard-actions,74804bbfff63fdc65d3e07037a8138cefff1cf75,2026-11-05,initial: merged into main,yes
+codex/reader-library-health,71f271eb48b2c15f1be18be6fc140a620163cf82,2026-11-05T16:44:37.494814+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-library-health-review,cac8ec718647afb99b66a9b3fdc8a968f83dd002,2026-11-05T16:44:39.608450+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-linux-f07-audit-20261028,f331d5da3ac491143d8f525089140f5d2365fa97,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-linux-f07-capture-20261028,ffea3f173415a7c46afd6d69d09539e71b0648a1,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-local-downloads,1f04538dec1595b4af1373915de344766dda284f,2026-11-05,initial: merged into main,yes
+codex/reader-localization,e2e60f6e42491aa1e78342fce00398d29fbaf381,2026-11-05T16:44:41.817071+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-localization-review,15f78e1ca69b6ff6f27563f78767ef468e04c334,2026-11-05T16:44:43.735242+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-migration-common-prep-20261028,51638abee6d287de3e92b47d453f2b52b1eb710c,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-module-composition,8edfb28ab9853374073be1c6564ee2e277419653,2026-11-05,initial: merged into main,yes
+codex/reader-modules-sdk342-candidate,378d9651b4a66605ed18d9b5eb73034eb7265d3e,2026-11-05T16:44:45.570579+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-native-341-collector-prep,87119e2a7fb0ba3a7a0f8e458b68d99e329a27bf,2026-11-05,initial: merged into main,yes
+codex/reader-native-341-protocol,b1b1639639cffa6a7decce51a1f54027802429a3,2026-11-05,initial: merged into main,yes
+codex/reader-native-341-source-preflight,4643354a61c8b46afb4e788681c99f109fb6fe50,2026-11-05,initial: merged into main,yes
+codex/reader-native-341-verifier-fix,af86975a5dae00ef8168be5dbd43769b0224eff1,2026-11-05T16:44:47.300952+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-native-341-windows-contract,63dff918e552d7c648b39ca3a1fc59880a24b323,2026-11-05,initial: merged into main,yes
+codex/reader-native-owner-evidence-auth,d0c147736b52937f5a24e87bfc6defc9794f4d87,2026-11-05T16:44:49.740848+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-native-owner-repairs,4bdf59ade3389b9a3e454511f6a30de7d0ddc112,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-native-source-audit,5c95501a5c176798f6158adc8d13b69ecaa26ec4,2026-11-05T16:44:51.756903+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-navigation,13fd6dc1408fba0e71f5bc5a919e225a97c972c3,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-next-c04,255871b38f3b3252a917e920a11641255cc2b485,2026-11-05T16:44:53.787095+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-next-c04-root-review,4ba25590c71e9be2de29b72c64348d5dcbc0fba1,2026-11-05T16:44:55.760476+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-next-c05,61176eddd9af103a14e6b29325d5874c43322c63,2026-11-05T16:44:57.522273+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-next-c06,4f4a8b1658737afaf90cd6d2f5a15ed50467d382,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-next-c06-root-review,8bf3c904862a7ff47768b7d4c707337999d5c5cd,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-next-c07,0e8e7301ba5ce08294bd737fb2b636fa5d16e01c,2026-11-05,mechanical-round: archived under archive/branch/codex--reader-next-c07-root-review,yes
+codex/reader-next-c07-root-review,e9ee30431200057f848fb72038a295b2fd6974de,2026-11-05,mechanical-round: archived under archive/branch/codex--reader-next-c07-root-review,yes
+codex/reader-next-c08,dddd4fa81e5913cce2dddecc385d20978b3adc72,2026-11-05T16:44:59.410611+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-next-c08-root-review,6a7c85aceab778671a6f9c60c82768d77a1191d0,2026-11-05T16:45:01.504451+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-next-s13,0a7dbb72cb660831e4b2567a134c92fc4c01a186,2026-11-05T16:45:03.559940+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-next-s13-root-review,15e652a998420f768dc5e580d8efd33553386376,2026-11-05T16:45:05.314184+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-next-s14,1892853303dd6f9568d5ee3ed7d4e8a80a09d56e,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-next-s14-root-review,393399477ea68f149cfd323c6a6ce970445415ab,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-next-s15,6e64ecd5f913b1242067818f7acd84936a6628e7,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-next-s15-root-review,3fc87a2aadb3425a2826ff6dc3f2a74db934045c,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-next-s16,777c56b33c2a9c01f38cc2cbd2a064220b7525a0,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-next-s16-root-review,33beb37ddef85b12cbc9262560b952d6f004198b,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-next-s17,c91ef21e27c0c1b2a59a665e50e485a3c25bce1d,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-next-s17-root-review,abd3d841bdd091ae9a98a4dddb43f7507c31e27a,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-ocr-overlay,607d3778839f97a0f5ecca45db120f3a3ef1550d,2026-11-05T16:45:07.187623+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-ocr-overlay-review,2eee7c8d8104183d96084fc7da59df21c84927f7,2026-11-05T16:45:09.431058+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-offset-composition-prep,700af40fed2eeb0492baf4d500e2063af9987cb7,2026-11-05,initial: merged into main,yes
+codex/reader-opds-browser,3ca9d9fed564dbcba11fc95a034244c5cfe8c762,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-opds-browser-review,yes
+codex/reader-original-hash-boundary-20261029,9413782c1f2b8109faec066606de7f28a32a1a95,2026-11-05T16:45:11.463612+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-ot-context-miss-composition,346bab9ad7b0c16086fbae70059c7b4590e1119e,2026-11-05,initial: merged into main,yes
+codex/reader-ot-relay-composition,ba4b5b040c02aee5d1ec762c00a4acd3e9eb64d2,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-parser-tag-interop,e8ed25c1cd7ccb33405611e27f9ad47fba8c9e34,2026-11-05,initial: merged into main,yes
+codex/reader-perf-gtk,ae504e504710554719376d88c8c317d12d41db95,2026-11-05,initial: merged into main,yes
+codex/reader-perf-windows,4d824967bc696320cd52246231ad556475b9aa28,2026-11-05,initial: merged into main,yes
+codex/reader-preferences,f453af14852ad3d8833d27c0eb6888f804c12050,2026-11-05,initial: merged into main,yes
+codex/reader-preferences-review,430d2ec0841f0e37879e22dcda491ce960a2eeeb,2026-11-05,initial: merged into main,yes
+codex/reader-private-capture,4ad6f956a9ebe33f50a5f341b51b24bd538e871a,2026-11-05,initial: merged into main,yes
+codex/reader-product-perf-evidence,88ee217898d900a7ccc18780b1f410afe5f5f355,2026-11-05,initial: merged into main,yes
+codex/reader-production-foundation-plan,ef73c27252304fc857cc3e76338ee31e59b75d70,2026-11-05T16:45:13.426224+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-progress-android-font,5c99149193949931adb27ba567472d9382c95ae0,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-progress-android-jump,d62a0b8892e7651815b060e8ef48a38be0b148f2,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-progress-android-original,cf48a9ed5bd1ae3f430b97f895b2e7937b273628,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-progress-apple-history,ddf424e6ab2ba0c1956f97032bccdf9eb04f93a0,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-progress-combined-20261028,8757ed37695f4772b026939aeea7cecfd36aab39,2026-11-05,initial: merged into main,yes
+codex/reader-progress-dot-d21,3d70d399920be68d5ab2650f322c0cef52bb8d14,2026-11-05,initial: merged into main,yes
+codex/reader-progress-gtk-annotation,aff2f64dc24836bb454205192b00835d6ed095b6,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-progress-oct24,3d40db4badeacaf3d04e76f3d7fd1c8dc2938c36,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-public-boundary-cache-diagnostic-20261029,a67d7144d20707f96fad6492904d5fe49eb8be83,2026-11-05T16:45:15.510313+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-public-boundary-v1-20261028,cbaece83b65adb94115e861e519e0147e0e0786f,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-raw-store-companions,0793b26256e1397ba0f60d27de7d090fad61af81,2026-11-05,initial: merged into main,yes
+codex/reader-raw3-common-guard,49383afab9a78d33a604d83bc3e76b4997496e94,2026-11-05,initial: merged into main,yes
+codex/reader-raw3-common-integration,96270a2b478b673eb45b7e2467e2e2acb6b64a88,2026-11-05,initial: merged into main,yes
+codex/reader-raw3-common-runtime,f2c6d2b37ffa50c52e78d6fbfb06cedd744a49f5,2026-11-05,initial: merged into main,yes
+codex/reader-reading-commands,e1d306e2e03ffafc5c1a121c63cec6401d5201f5,2026-11-05,initial: merged into main,yes
+codex/reader-reading-state,0f9127edb2a0c2e6eb611c3474a4d15a62427646,2026-11-05,initial: merged into main,yes
+codex/reader-reading-v2,f43baf9182d75907c0cb5d6f77048f27bca8c950,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),yes
+codex/reader-real-corpus,e9751245805cc83efcc555e0e55a6a9b560bc7b4,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-real-corpus-review,1ea0e160bc1805619c222bd121028cc1373d50e3,2026-11-05T16:45:17.343708+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-relay-common-prep-20261028,fae5b4ebe8143be6d0175c2d6969d72b140c3483,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-reviewed-composition-review,4f7d830733d6cafd61ae2edfdaa895420e1931c0,2026-11-05,initial: merged into main,yes
+codex/reader-same-source-integration,2f215f5793a7344d22db350276ba9f8a07abe86f,2026-11-05,initial: merged into main,yes
+codex/reader-sdk-version-support,9f7880f3b06028818721bb90178c0a76cccea6a0,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-sdk342-windows-sync-composition,b46678362308863d75acddaf5818ce2d48f74f6f,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-search,b17fb4cadd81cfbac9327fb7eacf95aac542aa3a,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/reader-search-integration-prep,6f3a39ea6ba172df0665070c0faefb13e44f2099,2026-11-05,initial: merged into main,yes
+codex/reader-search-review,93a63bf52c7044e1c4ee805cce5521cc3da86552,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reader-selector-bytes-candidate,0737d03c1316295a210aa527833c05054d29c1d4,2026-11-05,initial: merged into main,yes
+codex/reader-shelf-inspect,6ab9fc2d3c46d8c55eef51969ffe89aede9ca7ee,2026-11-05,initial: merged into main,yes
+codex/reader-startup-mapping,4e4a2f906a65180025b4f5e25f4b83eb10dfab27,2026-11-05,initial: merged into main,yes
+codex/reader-sync-apple,12df3f966f22d6d4850cd1197eeb806ef45b9ced,2026-11-05,initial: merged into main,yes
+codex/reader-sync-ios-archive-diagnostic-20261029,e7a59eab87c6338fddfb59fe90d0586d9803a4ed,2026-11-05T16:45:19.483684+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-sync-public-hash-20261029,e6b899284744b95dc832db92ed16324711ff5362,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/reader-sync-public-hash-cache-diagnostic-20261029,20796c871a90af7210bd1ad8e2ab9e70b2f49ab5,2026-11-05T16:45:21.283814+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-sync-resilience,50f158d2d049f957c7f6c9a44013596e474e1b67,2026-11-05,initial: merged into main,yes
+codex/reader-sync-session,3ec8b0f02cb9788ce7c78cedb110608b9fdb5876,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),yes
+codex/reader-sync-status-review,0bcb4d06bbeab6dd844954b19ee979e4bede50bd,2026-11-05,initial: merged into main,yes
+codex/reader-sync-status-view,823bd01962432b70cd8f0728443fab95ca55404f,2026-11-05,initial: merged into main,yes
+codex/reader-thumbnails,46cab80997a3c2a708564181fb436b754d8d4ddf,2026-11-05,initial: merged into main,yes
+codex/reader-tts-android,5993381e4507cffb7c63465642c2052f5760deb3,2026-11-05T16:45:23.121511+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-tts-android-review,774247e10639c7536ff6a73376250e5b3def6fd5,2026-11-05T16:45:25.378049+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-tts-apple,24c498c6c69e382b1ff4dfaa50401a4031df400a,2026-11-05T16:45:27.219676+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-tts-apple-review,25e67f6bff5d768243583b311f279094efbbdce0,2026-11-05T16:45:29.228016+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-tts-linux,fc40e84746c11d32d4029b8b284b697343f6835b,2026-11-05T16:45:31.133641+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-tts-windows,242f07c9804fd33340f1aa4e475f440b93820338,2026-11-05T16:45:33.788556+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-tts-windows-review,601457807a48e4ff4cb77c850f6de982f2c6bbbe,2026-11-05T16:45:35.801843+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-txt-account,f881c325ecd53fd07ce666983068ed38bee520bf,2026-11-05,initial: merged into main,yes
+codex/reader-txt-checkpoint-composition,5447b05a6b942d6ad568f65179c43a946c2890e3,2026-11-05,initial: merged into main,yes
+codex/reader-txt-drag-staging,5acb3b04421ca46765bbdcb87984211b987beae0,2026-11-05,initial: merged into main,yes
+codex/reader-txt-records-integration-prep,360c494471517c8b2103f45691f264e41f6014b2,2026-11-05T16:45:38.168222+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-txt-sdk-composition-prep,b9dca7c5b4b21b69aa6d63a5893a0141eaa814d5,2026-11-05,initial: merged into main,yes
+codex/reader-txt-select-copy,ca6521811487a6955210ba853949bf99d71dd7cb,2026-11-05,initial: merged into main,yes
+codex/reader-unicode-interop,faa6b59edbcce4670fae904acad986fff29591ce,2026-11-05,initial: merged into main,yes
+codex/reader-unified-staging,172f740ff885c5cea6b0e5b20f909cd054488a14,2026-11-05,initial: merged into main,yes
+codex/reader-wave3-base,d263ce5228838ac90c0a0dc13a5193d4a7739681,2026-11-05,initial: merged into main,yes
+codex/reader-wave3-c09,310b4223a3d119555f1d04384af7f5b16b7b582f,2026-11-05,initial: merged into main,yes
+codex/reader-wave3-c10,05c8494eb8320c22b9e7b439cca82e21bc36a461,2026-11-05,initial: merged into main,yes
+codex/reader-wave3-c11,28f49ee0399d48518cc2afb0048009b6c38edcfa,2026-11-05,initial: merged into main,yes
+codex/reader-wave3-d15,4b0d44977c571efa3de2d7f73b6999343e08e438,2026-11-05T16:45:40.363893+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-wave3-d16,b3882b4b7fba1d268f5132f98448786d6987d9ca,2026-11-05T16:45:42.282273+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-wave3-d17,09c58ae48cb7c08ff4eb7bd3c8179230b1176bea,2026-11-05T16:45:44.114020+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-wave3-d18,813dca944f70c767eadd74f91a9e33ca946051ff,2026-11-05T16:45:46.092558+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-wave3-d19,85e976e23a69066073e92b87f63b5e646fc4fc9e,2026-11-05T16:45:47.729579+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-wave3-d20,36119da12d96b4097af7d244275bbceee9d3fe71,2026-11-05T16:45:49.685782+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-wave3-s18,0860724c185c2089347b6ad451517645fd3a2ce8,2026-11-05T16:45:51.961065+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-wave3-s19,dab40686b1ca0d7ae0f5706f1dfe171c9300e9bd,2026-11-05T16:45:53.796155+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-wave3-s20,c228c51b0c0fcd1a2188f152833712435a3d1311,2026-11-05,initial: merged into main,yes
+codex/reader-webdav-android,b0bee51451d870fb5884875b80a0a5f094ec9198,2026-11-05,initial: merged into main,yes
+codex/reader-webdav-apple,69ac089fae4fb4bba41bf6fc7e22cb07f4678310,2026-11-05,initial: merged into main,yes
+codex/reader-webdav-compat,c7109e63c693feb2ce3e39fbf728c9dde2625d7f,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),yes
+codex/reader-webdav-import,547711bc4fd728189c21f7edc968b7aba7ebb2b6,2026-11-05,initial: merged into main,yes
+codex/reader-webdav-interop,1a7ce44fd53ed47478465785ba255c7544af0160,2026-11-05,initial: merged into main,yes
+codex/reader-webdav-sigpipe-candidate,98fa8e0f87dc47197677a0cc860e648dbae5b59b,2026-11-05,initial: merged into main,yes
+codex/reader-webdav-two-device,e4e2ea53263878e7e569b679ac16a2b94b069db6,2026-11-05T16:45:55.491659+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-windows-341-candidate-admission,aec1a685c40a2afd86467840eeec208a470609e2,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-android-history-compat,yes
+codex/reader-windows-341-common,d62816120b55b1e9b7e814e6202c089adc1bd1b6,2026-11-05T16:45:57.522328+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-windows-account,8995ffbf421cf070e29c58f50f49d0a682fdca92,2026-11-05,initial: merged into main,yes
+codex/reader-windows-compact,f355525b74ae261db536c56200e46643919ef323,2026-11-05,initial: merged into main,yes
+codex/reader-windows-f07-audit-20261028,a8fcff19f4fb4111bfe5b23d2085e93840c73f95,2026-11-05T16:45:59.625662+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-windows-f07-capture-20261028,739089d782c2d76f2708446175ccd24fce3b2e3b,2026-11-05T16:46:01.737737+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reader-windows-metadata,934e01d5fadbc25994700064d6eca44102781efc,2026-11-05,initial: merged into main,yes
+codex/reader-windows-navigation-ui,89252d4f1377c37917b2ad59cf54faa8103d6b67,2026-11-05,initial: merged into main,yes
+codex/reader-windows-original-raw3,53b7fa46632ce82861812766825134de6b4d335f,2026-11-05,initial: merged into main,yes
+codex/reader-windows-owner-auth-only,c4bb1feac3e2b404777810a526da43198b106723,2026-11-05,initial: merged into main,yes
+codex/reader-windows-owner-probe,325c8e0d6dc1acdc686ff95899b504f9dabfeb8d,2026-11-05,initial: merged into main,yes
+codex/reader-windows-preferences-commit-review,2dcf333aeb2081ba34ff5764d92f13a54be9bd84,2026-11-05,initial: merged into main,yes
+codex/reader-windows-preferences-ui,dd7900146ba0b73771d251c356585a40241cc371,2026-11-05,initial: merged into main,yes
+codex/reader-windows-raw3-candidate,10f9d207ede8bf1cd234436bc7bd91f5db9abc76,2026-11-05,initial: merged into main,yes
+codex/reader-windows-raw3-peer-owner,34fb5c86fb7af656820556fad078bd9397059ec4,2026-11-05,initial: merged into main,yes
+codex/reader-windows-reading-records-ui,2dcd325b31590bbb5374842e6c7f26fa2dcedd21,2026-11-05,initial: merged into main,yes
+codex/reader-windows-search-ui,12f4f06cae2115fba90d3d43ebb0c291ea11e99a,2026-11-05,initial: merged into main,yes
+codex/reader-windows-txt-search,2e4b3900fb18b0203b7e4a82e3a77e84218b3936,2026-11-05,initial: merged into main,yes
+codex/reading-9v74-baseline,dece0d50ac6c678778c8f1b20f612d76bf617b5e,2026-11-05,mechanical-round: archived under archive/branch/codex--reading-9v74-baseline,yes
+codex/reading-artifact-retry,7eb23342694e9cd318ef199ff95f59fb982d0a3f,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),yes
+codex/reading-corpus-retry,bad0f791392193946a7b3e5db36e82d6caa5bb22,2026-11-05T16:46:04.015907+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reading-cpu-baseline-export,9f0a9f16990fc8e8f0b1761d4567043fca1f50a6,2026-11-05,initial: merged into main,yes
+codex/reading-cpu-candidates,d92e4931fc49dbfb374a8edf289992b5ea626594,2026-11-05T16:46:05.893127+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reading-cpu-enforcing-audit,57ad488423dc393b2ecd15526beec0806e0501f8,2026-11-05,initial: merged into main,yes
+codex/reading-cpu-rejection-audit,312f2c867e659399723aad2b4a80ce43387c9f94,2026-11-05,mechanical-round: archived under archive/branch/codex--reading-9v74-baseline,yes
+codex/reading-handoffs,40e30a3bbae646954c4bed0f61895c8a3bfeee5b,2026-11-05T16:46:07.867105+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/reading-license-fixes,e0efc43a334677d100f1d12dcfb01e33df9826dd,2026-11-05,initial: merged into main,yes
+codex/reading-package-integration,9bd2b2c3caf1f63dc4437e0af978247494e87145,2026-11-05,initial: merged into main,yes
+codex/reading-release-root-url,f797d5351c3159ebbf181eddb8128c4c39fa8ad6,2026-11-05,initial: merged into main,yes
+codex/reading-required-fa54027-record,287ad20957ec644b3ec31e708c457d2579b1f75c,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/reliability-convert-memory,f732c8b09371b0e116c9ddddca03c4a420ff8962,2026-11-05,round2: evidence branch deleted with SHA-only record,yes
+codex/repair-apple-features-20261029,c66b5590e42adcf708365ba4fa315a811e475aaa,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/repair-apple-ui-20261029,a6e2e506f70a86afc56fe7da5db9fa8186caf1f8,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/repair-perf-scroll-20261029,c1de24844830e5f389c37a4cfe744ed60e2d0b51,2026-11-05,mechanical-round: archived under archive/branch/codex--f08-frame-identity-diagnostic-20261102,yes
+codex/sdk-bounded-txt-candidate,8552a5089e4fb1c41709f4afa264a596331d35db,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/sdk-ot-context-miss-cache,f984fec1392ec24c2632d80a49b51f18a8701804,2026-11-05T16:46:09.862924+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/sdk-page-background,d2ee66f5ce63cf34052fcf1d3ba08b74967c0885,2026-11-05T16:46:11.698382+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/sdk-txt-anchor-resolve,8fabe0cb462c80b6cf9c5b5bbe3d6ecd1ebd73d9,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/sdk-txt-io-diagnostic,647a036dd84992995ec52cee026ffc79ea448136,2026-11-05T16:46:13.952155+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/sdk-txt-paragraph-checkpoints,25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/sdk-txt-span-lookup,7a9d59977e8561fdd6909639fab53a94ab789402,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/sdk-version-single-source-20261103,13e377135970bb679de91940155684ee470c3a0d,2026-11-05,initial: merged into main,yes
+codex/sdk342-aggregate-admission-20261028,bece11fd5309966368bf4feabf7a74947cdcb850,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/sdk342-module-identity-diagnostic-20261028,aa501518372d5c76b1cf9dd458c9b711230f1c6d,2026-11-05T16:46:15.664630+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/sdk342-six-handoff-20261028,f623a07f9034cb70e3429ecb235a52009ea2acc3,2026-11-05T16:46:17.404052+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/sdk342-six-source-20261028,8f8acf3234cba747165f001c0c96efe1b911e6ad,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/team24-android,59f8ca9607cf9e2a864f2a1f57bd1c40f2c76baf,2026-11-05,initial: merged into main,yes
+codex/team24-apple,8ebef083aa17272c5019c8f778c03ace78e9ea96,2026-11-05,initial: merged into main,yes
+codex/team24-composition,369189eab7a970e432cbb14c88970c97b6faf2e4,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/team24-core,db17bcf387f068049f6d7d092832b493fec755db,2026-11-05T16:46:19.643584+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/team24-core-pure-capture,13ad401d86e354b060d50ff50ac832efbee71b31,2026-11-05T16:46:21.650067+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/team24-delivery,f9572141b5a191201e5d126cd5948691226032bb,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/team24-gtk,36d5deec9d42197f3185d787bab07365848d9804,2026-11-05,initial: merged into main,yes
+codex/team24-windows,d9c4c20f751f5f277e5ab89c2b111b794b80e551,2026-11-05,round2: evidence branch deleted with SHA-only record,no
+codex/terra-wave-android-sync,c68b30dbb61755f2825fe9766df80bb18708cfb9,2026-11-05T16:46:23.551372+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/terra-wave-apple-annotations,0a7b9c21174801e1b13a49a934fdd9489c60d76a,2026-11-05,mechanical-round: archived under archive/branch/codex--apple-annotation-ipad-log-inspection-20261028,yes
+codex/terra-wave-apple-export,f07303f8c97654506adf248401211d244d41e167,2026-11-05T16:46:25.629717+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/terra-wave-apple-font,c8c8011d3199226463b25e3e9069401605545a0a,2026-11-05T16:46:27.850823+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/terra-wave-apple-organization,947b353c9e8b302e626efbe4e85c4393571ead43,2026-11-05T16:46:29.500098+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/terra-wave-apple-sync,c4f66c1bce96cfc0f9d8bdb22aebbd575a8417f8,2026-11-05T16:46:31.581164+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/terra-wave-cross-records,2b90f2b58dea32c69c068d755d03abef1b09fa70,2026-11-05T16:46:33.587645+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/terra-wave-linux-sync,50eb85dc40096ab4cf698218ac4fbfb9d5a5de6e,2026-11-05T16:46:35.779505+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/terra-wave-product-performance,89d4ad46897b1118c90baba450eabdd4ca887f4f,2026-11-05T16:46:37.805093+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/terra-wave-upgrade-delivery,d46241cc9b4dbb57e46753fd67980d0bd73182e8,2026-11-05,mechanical-round: archived under archive/branch/dot--f10-safety-20261031,yes
+codex/terra-wave-windows-font,3d13c73454db65a9faa2a34a0ff873a0fe1e949d,2026-11-05T16:46:39.854804+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/terra-wave-windows-sync,3d6638e8436bd6c93367a9d12c4b48ac3196a2d6,2026-11-05T16:46:42.070975+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/txt-export-retained-audit,67fef611f5b932957a2ee8fd64ac2e868331e434,2026-11-05T16:46:44.097278+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-anchor-composition-prep,cdde8f37b81061c3c02d01af4f554f4bbfb15e96,2026-11-05,initial: merged into main,yes
+codex/windows-android-combined,d1b97161461f8fec6f6bdfebedd67a8ac9d0911e,2026-11-05,initial: merged into main,yes
+codex/windows-bounded-txt-host,23b772eeb0df5d7afd1b17f2ca64c23fc4196a11,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-bounded-txt-page-turn,d3e94bba422c35e110e1f191c49f1ba4e52ea886,2026-11-05,initial: merged into main,yes
+codex/windows-cloud-ui-binding,0dd5a62603cbf4d90b28a5819bc54ab2bf0c26ba,2026-11-05,initial: merged into main,yes
+codex/windows-coordinator-hardening-20261030,b830486c21bfa82cf69a1d816b424fe2fc53d29b,2026-11-05,mechanical-round: archived under archive/branch/codex--dot-c02-native-journal-20261030,yes
+codex/windows-create-groups,c4f0e9c950fcfbfae2c0973604cd37689a26573d,2026-11-05,initial: merged into main,yes
+codex/windows-f3-focus-sample-20261028,b756d807a08bbcd0406be20292bfcf064c22c490,2026-11-05T16:46:45.994079+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-group-anchor-recovery,722ae03130b773dd9825dbc730352cb9e0eb2019,2026-11-05,initial: merged into main,yes
+codex/windows-group-browse,570852bcdc6902faf72a10442fed0c37b8424eb1,2026-11-05,initial: merged into main,yes
+codex/windows-group-composed-candidate,0749579f2f9398ee543d2aec6a1f766fec8940ed,2026-11-05,initial: merged into main,yes
+codex/windows-group-membership,0b54a15ee9b96a6a4f51beb3600eda72e57594c8,2026-11-05,initial: merged into main,yes
+codex/windows-gtk-composition-proof,e61b5edab505755edffaf1f6dc6cffe6f4297c26,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),yes
+codex/windows-gtk-organization-interop,52e932d22405a6003f84994e2af44e2e5d146f1d,2026-11-05T16:46:47.890179+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-gtk-relay-selector,f92e31c8f9db0cf71f098782223a0f9a54daf292,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),yes
+codex/windows-gtk-sdk342-common-20261028,d81e0d6f8bc944baf5d7e1b5c47eb9acde3e980c,2026-11-05,round2: evidence branch deleted with SHA-only record,yes
+codex/windows-host-sdk342-candidate,e97b197fa62f3602f0179804b45f7546af2f155e,2026-11-05,mechanical-round: archived under archive/branch/codex--f06-windows-identity-fix-20261028,yes
+codex/windows-j10-triage,d68582903932229142deba3eb77d4f7091e561fa,2026-11-05T16:46:50.049768+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-large-txt-product,da67f03589141357deb6150350bab93cd67e47bd,2026-11-05T16:46:52.028471+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-light-pixel-diagnostic-20261028,99c0820d747b630747af9ad6df5b92bd36b62bbc,2026-11-05T16:46:54.062015+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-organization-projection,1be614da31240ee588d519024586bb494a4d4604,2026-11-05,initial: merged into main,yes
+codex/windows-page-paint-20261104,1433ed4e6bb1f7c5dbce2b8a18e3212126c24881,2026-11-05,initial: merged into main,yes
+codex/windows-public-migration-resume-20261029,10672a5325e721b6ae43be43e3f2e6865e1cf4d0,2026-11-05T16:46:56.061213+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-record-format-candidate-20261029,b21b1af08fb06f6568859c097f0fa995e3538f2c,2026-11-05T16:46:58.090543+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-recovery-public-stage-20261029,5b6939628e54979125a712ef7a047122037e3885,2026-11-05T16:47:00.235831+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-startup-migration-gate-handoff-20261029,2fff53ff6734ec2b495c841e6669aef562e170d7,2026-11-05T16:47:02.512322+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-sync-conflict-semantics-20261028,9f0067dc852965dd6e6b4e4ab11a5aa477cef4b4,2026-11-05T16:47:04.799178+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-sync-early-evidence-20261028,87a039e0c4e3f3ae0f7fe4995f1dcfb20617ea5c,2026-11-05T16:47:06.886856+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-sync-original-retry-20261028,4ad77dc0b5b728633162cacccce7a9439d417967,2026-11-05T16:47:08.919216+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-txt-annotation-exchange,a11c52e74b549c94c5831fe0f7a273f7f9cd99a2,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-txt-deep-page-observation,ae7caf0f33088fd3072891676c97e7f7f3aded64,2026-11-05T16:47:11.089670+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-txt-failure-inspect,902a7b0df8e42384ceaa6457bd66406ce2768ab4,2026-11-05T16:47:13.206820+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-txt-font-library,7088178710a4b9449366373f61d591e35d71dae7,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-txt-forward-page-hint,088592a231a296790d8f551f196bd4719e2189c1,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-txt-history-anchor-recovery,2624797968f375ee165d84ad2480516ca1b89d89,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-txt-history-resolved-point,c5688c4adf0506d44e097b076be30e1985341012,2026-11-05,initial: merged into main,yes
+codex/windows-txt-limit-diagnostic,3dec3f46b6bf00bdf48a4aff93a338a2154e7d00,2026-11-05T16:47:15.163659+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-txt-offset-seek,e21c0287defac1615230bc8bddfe57885f837efb,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-txt-original-export,408a620823ba2890ca3699991e9ac4f3016cc4e2,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-txt-pager-reuse,a87c1315218d20aaa456aebf51b1663be40960cf,2026-11-05,initial: merged into main,yes
+codex/windows-txt-pagination-trace,a608104554d48783e14e1f0094aecaf2042c2a02,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-txt-progress,ccc0700ca3c74354fedbda6d6533911442b86cf9,2026-11-05T16:47:17.027863+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+codex/windows-txt-progress-cloud,f9c0270941f5bc26f16bfa26281f50cc2a6a29cb,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-txt-reading-records,fb78446962587039bed2da278d62e60cdf5160e3,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-txt-search-history,3ed6dd9ff76cf290f75f95723b775e4bbc085b59,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-txt-search-history-checkpoint,3dc0284417bab16dd1fa1f51ad10fcd311fbefe5,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/windows-wave3-txt-progress,5bcee7b3a5b1d2e7472f6ffc65f6cd436c18da6b,2026-11-05,initial: merged into main,yes
+codex/wp11-ocr-adapter,bbe7139862e1705e7e8954b97c0b9dfbb639287e,2026-11-05,initial: merged into main,yes
+codex/wp12-legacy-migration,65156404587efec76ca0576d37f1681d8bf36f17,2026-11-05,initial: merged into main,yes
+codex/wp12-lite-convert,45e21b3f8a0732bcab320265e86b4f250713e6d3,2026-11-05,initial: merged into main,yes
+codex/wp12-migration-review,b048e5a094253d2625254bc098bbe24daaf9a0b9,2026-11-05,initial: merged into main,yes
+codex/wp12a-media,245484870f2059a548e5951dc8f28c5e62c08540,2026-11-05,initial: merged into main,yes
+codex/wp13-android,9b57cc64094a9c5fc0474ec87ca660d2dc935b74,2026-11-05,initial: merged into main,yes
+codex/wp13-android-review,31b36f305085cb8b1468b1d9b9b1ea2d67ee1656,2026-11-05,initial: merged into main,yes
+codex/wp13-apple,3bd85cd97efc04e46b10bfd1bc8bb80c45b6dab7,2026-11-05,initial: merged into main,yes
+codex/wp13-apple-diagnostics,b93c49a2f57172bbad2fcac11b2ed850d0be3241,2026-11-05,mechanical-round: all changed paths subsequently modified on main (file-level supersession),no
+codex/wp13-apple-review,535f6baff40234427d9d0584fee1432dfecf099b,2026-11-05,initial: merged into main,yes
+codex/wp13-linux-host,8ae82da506f4c7a1616f25a4544fe3ba77e90f08,2026-11-05,initial: merged into main,yes
+codex/wp13-linux-review,175adc9155836209b6a951b2a46c59fee88a1298,2026-11-05,initial: merged into main,yes
+codex/wp13-windows,2d99fcd3a912eb05ad6df8257a13a6c929c860a8,2026-11-05,initial: merged into main,yes
+codex/wp13-windows-evidence-review,70868f85ff195b5a544c4fa40a10006e3671412d,2026-11-05,initial: merged into main,yes
+codex/wp13-windows-worker-review,f24fad18ed2dae30038afa4bf26f1e1cb35c29bd,2026-11-05,initial: merged into main,yes
+codex/wp15-catalog-features,47d8fda0bea9aca6eb1f3f595344b31c0ec51d08,2026-11-05,initial: merged into main,yes
+codex/wp15-opds,45cff9e4853229a2affe6b8c5ddcfe55f8ac2b4a,2026-11-05,initial: merged into main,yes
+codex/wp15-opds-review,9a98f3256f4b1af457521ad188759812266cf0a2,2026-11-05,initial: merged into main,yes
+codex/wp5-border-spacing,a0bb9d2d6988b74e62aa1592faed681cee1950d4,2026-11-05,initial: merged into main,yes
+codex/wp6-bounded-chapters,91a5933ea1b22f65b563106962ce8eeca17de351,2026-11-05,initial: merged into main,yes
+codex/wp6-complete,60043da2863c011171cce22f9bb64b7df4f9573c,2026-11-05,initial: merged into main,yes
+codex/wp7-scripts,245484870f2059a548e5951dc8f28c5e62c08540,2026-11-05,initial: merged into main,yes
+codex/wp8-color-fonts,245484870f2059a548e5951dc8f28c5e62c08540,2026-11-05,initial: merged into main,yes
+codex/wp9-acroform,97e33452a96f1c042dcc98510b51f3e4af7253ef,2026-11-05,initial: merged into main,yes
+docs/evidence-index-20261103,a643e8be9996140a1abeda4fccbc4e04087ab1c8,2026-11-05T16:47:18.985122+00:00,file-archive-round: verified non-deleted file bytes in 80c85c71463835970b6c899e88cb51b7c6f84ba6; manifest archive/branches-20261104/MANIFEST.csv,yes
+dot/f03-android-catalog-20261101,ab7c6fe5be7061f737d6f80515ff1a851fcb5869,2026-11-05,initial: archived under archive/branch/dot--f03-android-catalog-20261101,yes
+dot/f03-android-importmapping-20261101,99d1b754690fec199f41de2f0edb7070558b285a,2026-11-05,initial: archived under archive/branch/dot--f03-android-importmapping-20261101,yes
+dot/f03-android-owner-20261101,63f3e2035ba75248360faac4ba996302dd39182d,2026-11-05,initial: archived under archive/branch/dot--f03-android-owner-20261101,yes
+dot/f03-bootstrap-diagnostic-20261101,75cbe80dc92aa5465bce0581b9275388c6600372,2026-11-05,initial: archived under archive/branch/dot--f03-bootstrap-diagnostic-20261101,yes
+dot/f03-bootstrap-recovery-20261101,a1ad810dee83fe679d50d1bf325be23d36ef5ba7,2026-11-05,initial: archived under archive/branch/dot--f03-bootstrap-recovery-20261101,yes
+dot/f03-candidate-contract-20261102,81d166a322ffe33e395179502c500573fa22e974,2026-11-05,initial: archived under archive/branch/dot--f03-candidate-contract-20261102,yes
+dot/f03-gtk-ready-20261101,f12da3b05c95bb14c4b7193850ba50e8a1f99e74,2026-11-05,initial: archived under archive/branch/dot--f03-gtk-ready-20261101,yes
+dot/f03-import-contract-20261101,3b02dbe4464e0d63d855341ca03eca0a22ef9486,2026-11-05,initial: archived under archive/branch/dot--f03-import-contract-20261101,yes
+dot/f03-owner-artifact-20261101,21ffb3ef36a2daedf20b7a2ca4d0b78cadfad932,2026-11-05,initial: archived under archive/branch/dot--f03-owner-artifact-20261101,yes
+dot/f03-owner-core-20261101,a21e83049ac2fdb7debad04b5476d7e16185e38d,2026-11-05,initial: archived under archive/branch/dot--f03-owner-core-20261101,yes
+dot/f03-production-acceptance-v342-20261102,054df69524eed483759febdcc0ce20e634921f82,2026-11-05,initial: archived under archive/branch/dot--f03-production-acceptance-v342-20261102,yes
+dot/f03-production-intake-20261102,48bd5a35d99c3a21a8159288dd08ac8dbb41c677,2026-11-05,initial: archived under archive/branch/dot--f03-production-intake-20261102,yes
+dot/f03-retained-evidence-20261102,290e72a9449e7664934da60b0a9dc5c7f6c861e4,2026-11-05,initial: archived under archive/branch/dot--f03-retained-evidence-20261102,yes
+dot/f03-same-source-20261031,0fa23868a585c6a7698e05ea25a835f279063c8a,2026-11-05,initial: archived under archive/branch/dot--f03-same-source-20261031,yes
+dot/f04-reading-sync-20261031,3e6dc1d9cd1430afa29e264173b7f541ee0d071f,2026-11-05,initial: archived under archive/branch/dot--f04-reading-sync-20261031,yes
+dot/f05-android-conflict-boundary-20261103,f162b7f4db9e14d3ba677c22160af218fcd108d3,2026-11-05,initial: archived under archive/branch/dot--f05-android-conflict-boundary-20261103,yes
+dot/f05-android-head-bridge-20261103,0e547f7b8f50bc793e30180d277276820129d9d8,2026-11-05,initial: archived under archive/branch/dot--f05-android-head-bridge-20261103,yes
+dot/f05-client-recovery-20261031,9ce943e1ff0c26b54db69f5c31eec057d2be216b,2026-11-05,initial: archived under archive/branch/dot--f05-client-recovery-20261031,yes
+dot/f05-gtk-cleanup-inspect-20261103,cd4c57728d86ffa80a6af0eb70eaa6f8349e0c02,2026-11-05,initial: archived under archive/branch/dot--f05-gtk-cleanup-inspect-20261103,yes
+dot/f05-gtk-native-recovery-20261103,c4d67540a0e17a86bd42ad9323cd269ce8959326,2026-11-05,initial: archived under archive/branch/dot--f05-gtk-native-recovery-20261103,yes
+dot/f05-gtk-network-inspect-20261103,012ac42290bf26fd7cad9979c3b63661cb1755b4,2026-11-05,initial: archived under archive/branch/dot--f05-gtk-network-inspect-20261103,yes
+dot/f05-head-bridge-manifest-inspect-20261103,9578f09ce352d784ea92053916439e69a7a22d7e,2026-11-05,initial: archived under archive/branch/dot--f05-head-bridge-manifest-inspect-20261103,yes
+dot/f07-artifact-audit-20261101,11c395d6fc7c5e5764377d801ea71f10ec05f4ba,2026-11-05,initial: archived under archive/branch/dot--f07-artifact-audit-20261101,yes
+dot/f07-link-evidence-20261031,697448abd8188580304806163ba9b543e76ba9ba,2026-11-05,initial: archived under archive/branch/dot--f07-link-evidence-20261031,yes
+dot/f07-windows-provider-20261101,cf02a46e2756c917b4ee13f8d99d85ff8b40bfc2,2026-11-05,initial: archived under archive/branch/dot--f07-windows-provider-20261101,yes
+dot/f10-safety-20261031,e3fac494afdb6b24a1448e8eeb665860f98f4d27,2026-11-05,round2: archived under archive/branch/dot--f10-safety-20261031,yes
+dot/f10-safety-diagnose-20261031,075fcfcf464be704bb48197a03ff96f187914d89,2026-11-05,round2: archived under archive/branch/dot--f10-safety-diagnose-20261031,yes
+dot/f10-stale-owner-20261031,4db961144b00c9004e2775b9e1e57e6ea7a31cb7,2026-11-05,round2: archived under archive/branch/dot--f10-stale-owner-20261031,yes
+dot/f12-delivery-20261101,64729214788a99ae96de7dda1a6376337324f9e4,2026-11-05,round2: archived under archive/branch/dot--f12-delivery-20261101,yes
+dot/reader-suite-20261101,ec11cf862ca3b44483d7e8c4726ae748ab438337,2026-11-05,round2: archived under archive/branch/dot--reader-suite-20261101,yes
+handoff/reading-h5-licenses,b365de7d31a2daca4f208dc625d064691fc331ec,2026-11-05,initial: merged into main,yes
+handoff/reading-h6-platform-gate,27d95e9dc38d065dcd51a271aa1b019da2a0e9db,2026-11-05,initial: merged into main,yes
+handoff/reading-h7-doc-state,6fac0a06c393f330596f07d9541b71582fa3914f,2026-11-05,initial: merged into main,yes
+ledger/base-20261103,1e709837cb8a50816e94bf611ca4404f19f80abf,2026-11-05,initial: merged into main,yes
+master,ac070674634a8988c49585b10dacd7132762232b,2026-11-05,initial: merged into main,yes
