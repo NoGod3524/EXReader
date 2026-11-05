@@ -257,22 +257,35 @@ Studio 分支 tip `effb5b7d`：`ui.cpp` 2416 行，`engine.cpp` 890 行，已有
 
 ### G4. 开工条件（按顺序）
 
-1. PR #42 的 `reading-required-core` 真正运行并通过。
-2. `codex/windows-page-paint-20261104` 推到远端并合入。
+| 条件 | 状态（2026-11-05） |
+| --- | --- |
+| `codex/windows-page-paint-20261104` 合入 | 已满足：PR #43，merge `26dac733` |
+| PR #42 的 `reading-required-core` 通过 | `3f1ee7da` 上已通过；head 变化后以新 head 为准 |
+| PR #42 合入 main | **未满足** |
 
-两者都满足前不开 2a 实现分支。
+PR #42 合入前不开 2a 实现分支。
 
 ### G5. 2a 子步骤
 
-人日合计 8，是估计值。文件是预计范围，以绘制分支合入后的代码为准。
+基线：`main` 含 `26dac733`，`reader.c` 行号已与本文 §A–§D 的 `4efd3366` 不同，实现时重新定位。人日合计 8，是估计值。
 
-| # | 步骤 | 人日 | 可测结果 | 预计改动文件 |
-| --- | --- | --- | --- | --- |
-| 1 | 独立的 D2D 外壳模块（C 接口、设备丢失重建），接入两套构建，暂不显示新界面 | 1.5 | 模块单独编译通过；交付包构建通过，`--self-test` 26 项全过；`phase-a/b/c` 结果不变；包内不新增 DLL | 新增 `examples/windows/shell_d2d.h`、`shell_d2d.cpp`；`examples/CMakeLists.txt`、`examples/windows/CMakeLists.txt` |
-| 2 | 阅读屏路由与极简顶栏：打开书后隐藏旧控件，顶栏 48 只有书名、目录、设置；Alt+← 回书库视图 | 1 | UIA 枚举阅读屏，可操作元素恰为目录、设置、正文 3 个，名称和焦点顺序正确；返回后 17 个控件 ID 全部可达 | `examples/reader.c`、`examples/windows/shell_d2d.cpp`；新增 `tests/windows_host/phase-d.txt` |
-| 3 | 物理像素重排与 Per-Monitor V2：页面尺寸按窗口和 DPI 计算，防抖 150 ms 后重排并保持锚点。`--drive` 默认仍用 720×1040，脚本显式开启才走新尺寸，避免旧脚本的页码断言失效 | 2 | 宿主内 1280×800、1920×1080、2560×1440 与 125%、150%：显示比例恒为 1.000，每行汉字 28–34，边距 ≥ 48，行距比值 1.600；来回改窗口后首行文字不变；最小窗口符合窄窗规则 | `examples/reader.c`；`tests/windows_host/phase-d.txt` |
-| 4 | 接入双缓冲与帧缓存：缓存键加入页面尺寸和字号，尺寸变化后作废 | 0.5 | `EXR_PAINT_TRACE` 显示缓存命中时排版调用增量为 0；改尺寸后不出现旧尺寸帧；产出宿主内翻页 p95，替换 F1 的第 1、2 项局限（通过阈值待定） | `examples/reader.c`；视需要改 `examples/windows/paint_probe.h` |
-| 5 | 设置面板：字号步进、浅色 / 深色 / 跟随系统，写入 `host.ini`；正文文字色走 `user_css`，背景走 `exr_render_page_background` | 1.5 | 改字号后首行文字不变；深色截图背景像素为 `#15161A`，浅色为 `#FBFBF9`，文字对比度符合 UI-SPEC；重启后设置保留；未改过设置的旧安装不被静默迁移 | `examples/reader.c`、`examples/windows/shell_d2d.cpp`；`tests/windows_host/phase-d.txt` |
-| 6 | 最小目录面板（顶栏“目录”必须可用）与整体验收：EPUB 用 `exr_publication_navigation`，无目录显示空状态 | 1.5 | 点目录行落到对应章节；TXT、PDF 显示“这本书没有目录”；人工清单第 3、4、5、6、8 项通过；普通阅读屏跑无障碍审计，阻断项不多于现有 8 个 | `examples/reader.c`、`examples/windows/shell_d2d.cpp`；`tests/reader_a11y_windows/flows.py` |
+**改动范围只允许 `examples/` 与 `docs/ui/`。** 由此定下三条做法：
 
-每步单独提交，验收结果不满足就不进入下一步。
+1. 新界面用宏 `EXR_READER_WINDOWS_SHELL` 开启，只由 `examples/CMakeLists.txt` 和 `examples/windows/CMakeLists.txt` 定义。`EXReaderProduct`、`EXReaderWave3` 由 `apps/reader/desktop/` 构建，不定义此宏，界面和链接都不变，现有无障碍审计继续针对旧界面运行。
+2. `--drive` 默认走旧布局和 720×1040，现有 `phase-a/b/c` 与 `--self-test` 不改；脚本写 `shell|on` 才走新界面。
+3. 新验收脚本放 `examples/windows/acceptance/`，不改 `tests/` 和 `tools/`。
+
+下表的阈值是依据 §F 加约 30% 余量提出的建议值，实测后由 owner 确认。
+
+| # | 步骤 | 人日 | 可测结果 | 预计改动文件 | 不做（留给 2b 或之后） |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 外壳模块与构建接线，无可见变化 | 1 | 模块不含 `reader.c` 单独编译通过；交付包文件数不增加；`--self-test` 26/26；`phase-a/b/c` 失败数 0；开宏与不开宏的旧布局截图逐像素相同 | 新增 `examples/windows/shell_d2d.h`、`shell_d2d.cpp`；`examples/CMakeLists.txt`、`examples/windows/CMakeLists.txt` | 任何新界面；借用 Studio 代码 |
+| 2 | 阅读屏与极简顶栏：打开书后全窗口阅读，Alt+← 回旧面板 | 1 | 截图：顶栏高 48，只有书名、目录、设置，旧控件零可见。UIA：可操作元素恰为 3 个（目录、设置、正文）。回旧面板后 17 个控件 ID 全部可达 | `examples/reader.c`、`shell_d2d.cpp`；新增 `examples/windows/acceptance/shell-2a.txt` | 书库左栏、收窄栏、状态行、全屏；目录和设置只给焦点与可访问名称，点击无效果 |
+| 3 | 物理像素重排与 Per-Monitor V2。**到此“重排 + 顶栏”这一屏可跑** | 2 | 三档分辨率加 125%、150%：显示比例 1.000；每行汉字中位 28–34；文字到左右窗口边 ≥ 48 px，左右差 ≤ 1 px；行距比值 1.600 ± 0.005。改尺寸再改回，首行文字不变。720×560：版心 ≤ 576 DIP | `examples/reader.c`、`shell-2a.txt`；新增 `examples/windows/acceptance/check_shell_2a.py` | 用户可调版心；固定页平移；PDF 大纲 |
+| 4 | 对接已合入的双缓冲与帧缓存，宿主内复测 | 0.5 | 新路径走 `BitBlt`，不走 `StretchDIBits`；缓存命中时排版调用增量 0；改尺寸后零旧尺寸帧；未命中“排版 + 渲染” p95：1280×800 ≤ 20 ms，2560×1440 ≤ 30 ms。结果写回 §F，替换 F1 第 1、2 项局限 | `examples/reader.c`，视需要 `examples/windows/paint_probe.h`、`check_shell_2a.py`；`docs/ui/HOST-AUDIT-20261104.md` | 改缓存容量、预取策略 |
+| 5 | 设置面板：字号步进和浅色 / 深色 / 跟随系统，写入 `host.ini` | 1.5 | 字号 14–32 逐档切换，首行文字不变；截图背景像素：深色 `#15161A`、浅色 `#FBFBF9`，误差 0；正文对比度 ≥ 14；重启后两项保留；无新键的旧 `host.ini` 启动不报错、不改写书架 | `examples/reader.c`、`shell_d2d.cpp`、`shell-2a.txt`、`check_shell_2a.py` | 行距、段距、每行字数、翻页方式、PDF 缩放的设置项；账号入口 |
+| 6 | 最小目录面板与 2a 总验收 | 2 | 3 本带目录的 EPUB 各抽 5 行，点击后落到对应章节，5/5 正确；无目录的书显示“这本书没有目录”；人工清单第 3、4、5、6、8 项通过；新阅读屏 UIA 无未命名控件 | `examples/reader.c`、`shell_d2d.cpp`、`shell-2a.txt`、`check_shell_2a.py` | 标注页签、目录搜索、多级折叠 |
+
+**2a 全部不做，归 2b**：书库左栏与书架网格、书内和书架搜索、标注右键与标注面板、错误态整屏改版、`--debug-ui`，以及把新界面开放给 `EXReaderProduct`。
+
+每步单独提交，可测结果不满足就不进入下一步。
