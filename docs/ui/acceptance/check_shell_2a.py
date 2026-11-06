@@ -250,7 +250,11 @@ def main():
     fonts = next((c for c in checks if "latin_simulations" in c), {})
     reach = [c for c in checks if "reachable" in c]
 
-    result = {"exit": exit_code, "steps": len(steps), "failed_steps": failed}
+    notes = [line for line in log.read_text(encoding="utf-8").splitlines() if line.startswith("NOTE	")]
+    activations = [n for n in notes if "activating window for focus checks" in n]
+    for n in activations:
+        print("activating window for focus checks (drive step %s)" % n.split("	")[1])
+    result = {"exit": exit_code, "steps": len(steps), "failed_steps": failed, "focus_activations": len(activations)}
     shots = {}
     if shell_check.get("client_origin"):
         for key, name in (("31", "31-shell"), ("32", "32-hover-toc"), ("33", "33-pressed-settings"),
