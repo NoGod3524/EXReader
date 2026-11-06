@@ -1,0 +1,31 @@
+Test project C:/Users/Oscar/Documents/Codex/cjk-kinsoku-20261106/build
+      Start  10: native-hyphen-layout
+      Start 132: native-bidi
+      Start 142: native-pager
+      Start 134: native-complex-layout
+ 1/13 Test #134: native-complex-layout ............   Passed    0.09 sec
+      Start 133: native-shaping
+ 2/13 Test #133: native-shaping ...................   Passed    0.05 sec
+      Start 144: native-checkpoints
+ 3/13 Test #142: native-pager .....................   Passed    0.22 sec
+      Start  56: native-vertical
+ 4/13 Test #144: native-checkpoints ...............   Passed    0.09 sec
+      Start 131: native-text
+ 5/13 Test  #56: native-vertical ..................   Passed    0.02 sec
+      Start 135: native-line-boundary
+ 6/13 Test #131: native-text ......................   Passed    0.06 sec
+      Start   7: native-hyphen
+ 7/13 Test #135: native-line-boundary .............   Passed    0.11 sec
+      Start   8: native-hyphen-replacements
+ 8/13 Test   #8: native-hyphen-replacements .......   Passed    0.06 sec
+      Start  77: native-flow
+ 9/13 Test  #77: native-flow ......................   Passed    0.23 sec
+      Start 143: native-page-cache
+10/13 Test   #7: native-hyphen ....................   Passed    0.40 sec
+11/13 Test #132: native-bidi ......................   Passed    0.83 sec
+12/13 Test #143: native-page-cache ................   Passed    0.74 sec
+13/13 Test  #10: native-hyphen-layout .............   Passed   13.71 sec
+
+100% tests passed out of 13
+
+Total Test time (real) =  13.71 sec

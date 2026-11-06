@@ -20,3 +20,5 @@ Windows 打包正例必须来自实际安装后的 SDK 和实际生成的 exe。
 R 必须取包含本次 `src/style.c` 修复及此前 V/P/provider 变更的后续候选提交，不能沿用旧 src 树的证据。本步未 refreeze、未跑全矩阵。数字、逐页像素回归与边界见 [CSS-ALIASES.md](../real-books-20261105/CSS-ALIASES.md)。
 
 明确未做：`text-combine-upright` 的实际合字排版；其前缀名归一化不表示已有该能力。
+
+2026-11-06 — `codex/cjk-kinsoku-20261106` 触及受保护树 **src/**：仅 `src/inline.c`，为 SP + U+FF1A/U+FF1B 共用软断行过滤并设置 GLUE（feed/display_scan 两入口）；不改变默认 Unicode 分析或硬换行。R 后续候选须包含此修复；本轮仅本地验收、未跑 CI，数字与逐页像素证据见 [REPORT.md](../cjk-kinsoku-20261106/REPORT.md)。
