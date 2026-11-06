@@ -17,4 +17,4 @@
 - 归属：**引擎能力，后续引擎版本，不在2a范围**。本轮只登记。
 - 事实：SDK已有 hyphenator 与 `exr_pager_set_hyphenator` API；本轮视觉CLI未加载断词字典或设置hyphenator，图片没有断词不能用来证明SDK完全缺少该能力。
 - 未完成范围：所需语言字典/模式、断词策略及实际效果的后续引擎验收；不得随宿主第3步/第5步的样式验收一并宣告完成。
-- 首行缩进是另一项：作者CSS声明与SDK初始0缩进已核查，缺省CJK阅读策略归第5步，见 [TEXT-INDENT.md](TEXT-INDENT.md)。
+- 首行缩进独立结案：Pachinko第257页[像素判定A](TEXT-INDENT-PIXELS.md)，作者显式1.2em已应用，不登记为引擎缺陷。作者未指定时的CJK缺省策略仍归第5步，见 [TEXT-INDENT.md](TEXT-INDENT.md)。
