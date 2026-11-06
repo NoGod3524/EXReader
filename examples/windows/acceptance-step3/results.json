@@ -1,0 +1,1747 @@
+{
+  "baseline": "4519bd5b",
+  "date": "2026-11-06",
+  "toolchain": "MinGW GCC/G++ 16.2.0, Release, SDK 3.42.0",
+  "layout": {
+    "horizontal": {
+      "1280": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 420,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.599999333333334,
+        "actual_margins_min_lrtb": [
+          334.0,
+          334.0,
+          88.000001,
+          107.20012100000002
+        ],
+        "geometry_margins_lr": [
+          334,
+          334
+        ],
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 18.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "2560": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 860,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.5999993333333324,
+        "actual_margins_min_lrtb": [
+          974.0,
+          974.0,
+          88.000001,
+          113.60002300000002
+        ],
+        "geometry_margins_lr": [
+          974,
+          974
+        ],
+        "client": [
+          2560,
+          1440
+        ],
+        "page": [
+          612,
+          1264
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 18.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "125": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 460,
+        "count_median": 33.0,
+        "count_p5": 33.0,
+        "count_p95": 33.0,
+        "han_median": 33.0,
+        "baseline_ratio": 1.6,
+        "actual_margins_min_lrtb": [
+          577.0,
+          584.0,
+          110.0,
+          142.0
+        ],
+        "geometry_margins_lr": [
+          577,
+          578
+        ],
+        "client": [
+          1920,
+          1080
+        ],
+        "page": [
+          765,
+          860
+        ],
+        "dpi": 120,
+        "native_window_dpi": 120,
+        "font_px": 22.5,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "150": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 540,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.6000004444444451,
+        "actual_margins_min_lrtb": [
+          821.0,
+          821.0,
+          131.999998,
+          141.59992600000004
+        ],
+        "geometry_margins_lr": [
+          821,
+          821
+        ],
+        "client": [
+          2560,
+          1440
+        ],
+        "page": [
+          918,
+          1176
+        ],
+        "dpi": 144,
+        "native_window_dpi": 120,
+        "font_px": 27.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      }
+    },
+    "vertical": {
+      "1280": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 420,
+        "count_median": 32.0,
+        "count_p5": 32.0,
+        "count_p95": 32.0,
+        "han_median": 32.0,
+        "baseline_ratio": 1.5999993333333324,
+        "actual_margins_min_lrtb": [
+          341.200121,
+          333.999987,
+          104.0,
+          120.0
+        ],
+        "geometry_margins_lr": [
+          334,
+          334
+        ],
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          592
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 18.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 1,
+        "vertical_glyphs": 13440
+      },
+      "2560": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 420,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.5999993333333324,
+        "actual_margins_min_lrtb": [
+          981.200121,
+          973.999987,
+          104.0,
+          724.0
+        ],
+        "geometry_margins_lr": [
+          974,
+          974
+        ],
+        "client": [
+          2560,
+          1440
+        ],
+        "page": [
+          612,
+          612
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 18.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 1,
+        "vertical_glyphs": 14280
+      },
+      "125": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 420,
+        "count_median": 33.0,
+        "count_p5": 33.0,
+        "count_p95": 33.0,
+        "han_median": 33.0,
+        "baseline_ratio": 1.6,
+        "actual_margins_min_lrtb": [
+          586.0,
+          578.0,
+          130.0,
+          191.0
+        ],
+        "geometry_margins_lr": [
+          577,
+          578
+        ],
+        "client": [
+          1920,
+          1080
+        ],
+        "page": [
+          765,
+          765
+        ],
+        "dpi": 120,
+        "native_window_dpi": 120,
+        "font_px": 22.5,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 1,
+        "vertical_glyphs": 13860
+      },
+      "150": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 420,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.6000004444444451,
+        "actual_margins_min_lrtb": [
+          831.799816,
+          821.000011,
+          156.0,
+          366.0
+        ],
+        "geometry_margins_lr": [
+          821,
+          821
+        ],
+        "client": [
+          2560,
+          1440
+        ],
+        "page": [
+          918,
+          918
+        ],
+        "dpi": 144,
+        "native_window_dpi": 120,
+        "font_px": 27.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 1,
+        "vertical_glyphs": 14280
+      }
+    }
+  },
+  "matrix": {
+    "1280": {
+      "14": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 540,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.5999995714285709,
+        "actual_margins_min_lrtb": [
+          402.0,
+          402.0,
+          88.000001,
+          107.20003700000004
+        ],
+        "geometry_margins_lr": [
+          402,
+          402
+        ],
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          476,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 14.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "17": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 440,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.6000007058823504,
+        "actual_margins_min_lrtb": [
+          351.0,
+          351.0,
+          88.0,
+          113.59986499999995
+        ],
+        "geometry_margins_lr": [
+          351,
+          351
+        ],
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          578,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 17.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "18": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 420,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.599999333333334,
+        "actual_margins_min_lrtb": [
+          334.0,
+          334.0,
+          88.000001,
+          107.20012100000002
+        ],
+        "geometry_margins_lr": [
+          334,
+          334
+        ],
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 18.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "24": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 320,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.5999997499999996,
+        "actual_margins_min_lrtb": [
+          232.0,
+          232.0,
+          88.0,
+          97.599998
+        ],
+        "geometry_margins_lr": [
+          232,
+          232
+        ],
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          816,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 24.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "32": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 240,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.600000374999997,
+        "actual_margins_min_lrtb": [
+          96.0,
+          96.0,
+          87.999998,
+          97.59992600000002
+        ],
+        "geometry_margins_lr": [
+          96,
+          96
+        ],
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          1088,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 32.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      }
+    },
+    "1000": {
+      "14": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 540,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.5999995714285709,
+        "actual_margins_min_lrtb": [
+          262.0,
+          262.0,
+          88.000001,
+          107.20003700000004
+        ],
+        "geometry_margins_lr": [
+          262,
+          262
+        ],
+        "client": [
+          1000,
+          800
+        ],
+        "page": [
+          476,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 14.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "17": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 440,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.6000007058823504,
+        "actual_margins_min_lrtb": [
+          211.0,
+          211.0,
+          88.0,
+          113.59986499999995
+        ],
+        "geometry_margins_lr": [
+          211,
+          211
+        ],
+        "client": [
+          1000,
+          800
+        ],
+        "page": [
+          578,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 17.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "18": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 420,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.599999333333334,
+        "actual_margins_min_lrtb": [
+          194.0,
+          194.0,
+          88.000001,
+          107.20012100000002
+        ],
+        "geometry_margins_lr": [
+          194,
+          194
+        ],
+        "client": [
+          1000,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 18.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "24": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 320,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.5999997499999996,
+        "actual_margins_min_lrtb": [
+          92.0,
+          92.0,
+          88.0,
+          97.599998
+        ],
+        "geometry_margins_lr": [
+          92,
+          92
+        ],
+        "client": [
+          1000,
+          800
+        ],
+        "page": [
+          816,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 24.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "32": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 240,
+        "count_median": 28.0,
+        "count_p5": 28.0,
+        "count_p95": 28.0,
+        "han_median": 28.0,
+        "baseline_ratio": 1.600000374999997,
+        "actual_margins_min_lrtb": [
+          48.0,
+          56.0,
+          87.999998,
+          97.59992600000002
+        ],
+        "geometry_margins_lr": [
+          48,
+          48
+        ],
+        "client": [
+          1000,
+          800
+        ],
+        "page": [
+          904,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 32.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      }
+    },
+    "999": {
+      "14": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 540,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.5999995714285709,
+        "actual_margins_min_lrtb": [
+          261.0,
+          262.0,
+          88.000001,
+          107.20003700000004
+        ],
+        "geometry_margins_lr": [
+          261,
+          262
+        ],
+        "client": [
+          999,
+          800
+        ],
+        "page": [
+          476,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 14.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "17": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 440,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.6000007058823504,
+        "actual_margins_min_lrtb": [
+          210.0,
+          211.0,
+          88.0,
+          113.59986499999995
+        ],
+        "geometry_margins_lr": [
+          210,
+          211
+        ],
+        "client": [
+          999,
+          800
+        ],
+        "page": [
+          578,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 17.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "18": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 420,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.599999333333334,
+        "actual_margins_min_lrtb": [
+          193.0,
+          194.0,
+          88.000001,
+          107.20012100000002
+        ],
+        "geometry_margins_lr": [
+          193,
+          194
+        ],
+        "client": [
+          999,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 18.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "24": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 320,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.5999997499999996,
+        "actual_margins_min_lrtb": [
+          91.0,
+          92.0,
+          88.0,
+          97.599998
+        ],
+        "geometry_margins_lr": [
+          91,
+          92
+        ],
+        "client": [
+          999,
+          800
+        ],
+        "page": [
+          816,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 24.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "32": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 240,
+        "count_median": 28.0,
+        "count_p5": 28.0,
+        "count_p95": 28.0,
+        "han_median": 28.0,
+        "baseline_ratio": 1.600000374999997,
+        "actual_margins_min_lrtb": [
+          48.0,
+          55.0,
+          87.999998,
+          97.59992600000002
+        ],
+        "geometry_margins_lr": [
+          48,
+          48
+        ],
+        "client": [
+          999,
+          800
+        ],
+        "page": [
+          903,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 32.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      }
+    },
+    "720": {
+      "14": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 540,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.5999995714285709,
+        "actual_margins_min_lrtb": [
+          122.0,
+          122.0,
+          88.000001,
+          107.20003700000004
+        ],
+        "geometry_margins_lr": [
+          122,
+          122
+        ],
+        "client": [
+          720,
+          800
+        ],
+        "page": [
+          476,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 14.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "17": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 440,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.6000007058823504,
+        "actual_margins_min_lrtb": [
+          71.0,
+          71.0,
+          88.0,
+          113.59986499999995
+        ],
+        "geometry_margins_lr": [
+          71,
+          71
+        ],
+        "client": [
+          720,
+          800
+        ],
+        "page": [
+          578,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 17.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "18": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 420,
+        "count_median": 34.0,
+        "count_p5": 34.0,
+        "count_p95": 34.0,
+        "han_median": 34.0,
+        "baseline_ratio": 1.599999333333334,
+        "actual_margins_min_lrtb": [
+          54.0,
+          54.0,
+          88.000001,
+          107.20012100000002
+        ],
+        "geometry_margins_lr": [
+          54,
+          54
+        ],
+        "client": [
+          720,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 18.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "24": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 320,
+        "count_median": 26.0,
+        "count_p5": 26.0,
+        "count_p95": 26.0,
+        "han_median": 26.0,
+        "baseline_ratio": 1.5999997499999996,
+        "actual_margins_min_lrtb": [
+          48.0,
+          48.0,
+          88.0,
+          97.599998
+        ],
+        "geometry_margins_lr": [
+          48,
+          48
+        ],
+        "client": [
+          720,
+          800
+        ],
+        "page": [
+          624,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 24.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      },
+      "32": {
+        "samples": 20,
+        "distinct_pages": 20,
+        "valid_lines_or_columns": 240,
+        "count_median": 19.0,
+        "count_p5": 19.0,
+        "count_p95": 19.0,
+        "han_median": 19.0,
+        "baseline_ratio": 1.600000374999997,
+        "actual_margins_min_lrtb": [
+          48.0,
+          64.0,
+          87.999998,
+          97.59992600000002
+        ],
+        "geometry_margins_lr": [
+          48,
+          48
+        ],
+        "client": [
+          720,
+          800
+        ],
+        "page": [
+          624,
+          624
+        ],
+        "dpi": 96,
+        "native_window_dpi": 120,
+        "font_px": 32.0,
+        "scale": 1.0,
+        "target_dpi": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ],
+        "mode": 0,
+        "vertical_glyphs": 0
+      }
+    }
+  },
+  "latin": {
+    "samples": 20,
+    "distinct_pages": 20,
+    "valid_lines_or_columns": 420,
+    "count_median": 69.0,
+    "count_p5": 66.0,
+    "count_p95": 72.0,
+    "han_median": 0.0,
+    "baseline_ratio": 1.599999333333334,
+    "actual_margins_min_lrtb": [
+      334.0,
+      341.27600099999995,
+      88.000001,
+      107.20012100000002
+    ],
+    "geometry_margins_lr": [
+      334,
+      334
+    ],
+    "client": [
+      1280,
+      800
+    ],
+    "page": [
+      612,
+      624
+    ],
+    "dpi": 96,
+    "native_window_dpi": 120,
+    "font_px": 18.0,
+    "scale": 1.0,
+    "target_dpi": [
+      96.0,
+      96.0,
+      96.0,
+      96.0
+    ],
+    "mode": 0,
+    "vertical_glyphs": 0
+  },
+  "legacy": {
+    "phases": {
+      "off1": {
+        "a": [
+          "STEP\t115\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=第 4 页。"
+        ],
+        "b": [
+          "STEP\t5\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。"
+        ],
+        "c": []
+      },
+      "off2": {
+        "a": [
+          "STEP\t115\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=第 4 页。"
+        ],
+        "b": [
+          "STEP\t5\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。"
+        ],
+        "c": []
+      },
+      "step3-off": {
+        "a": [
+          "STEP\t115\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=第 4 页。"
+        ],
+        "b": [
+          "STEP\t5\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。"
+        ],
+        "c": []
+      },
+      "step3-on-legacy": {
+        "a": [
+          "STEP\t115\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=第 4 页。"
+        ],
+        "b": [
+          "STEP\t5\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。"
+        ],
+        "c": []
+      }
+    },
+    "client_diffpx": {
+      "off2": {
+        "a\\00-empty-shelf.png": 0,
+        "a\\01-epub-page1.png": 0,
+        "a\\02-resized.png": 0,
+        "a\\03-pdf-page1.png": 0,
+        "a\\04-stale-final.png": 0,
+        "b\\10-restored.png": 0,
+        "b\\11-font-changed.png": 0,
+        "c\\20-restored-after-font.png": 0
+      },
+      "step3-off": {
+        "a\\00-empty-shelf.png": 0,
+        "a\\01-epub-page1.png": 0,
+        "a\\02-resized.png": 0,
+        "a\\03-pdf-page1.png": 0,
+        "a\\04-stale-final.png": 0,
+        "b\\10-restored.png": 0,
+        "b\\11-font-changed.png": 0,
+        "c\\20-restored-after-font.png": 0
+      },
+      "step3-on-legacy": {
+        "a\\00-empty-shelf.png": 0,
+        "a\\01-epub-page1.png": 0,
+        "a\\02-resized.png": 0,
+        "a\\03-pdf-page1.png": 0,
+        "a\\04-stale-final.png": 0,
+        "b\\10-restored.png": 0,
+        "b\\11-font-changed.png": 0,
+        "c\\20-restored-after-font.png": 0
+      }
+    },
+    "negative": {
+      "client_rgb_one": 1,
+      "nonclient_one": 0
+    },
+    "negative_exit_codes": {
+      "client_rgb_one": 1,
+      "nonclient_one": 0
+    }
+  },
+  "stress": {
+    "horizontal": {
+      "before": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "font": 18.0,
+        "range": [
+          14994,
+          17136
+        ],
+        "epoch": 5,
+        "frame_epoch": 5,
+        "builds": 3
+      },
+      "busy-roundtrip": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "font": 18.0,
+        "range": [
+          14994,
+          17136
+        ],
+        "epoch": 11,
+        "frame_epoch": 11,
+        "builds": 8
+      },
+      "busy": {
+        "client": [
+          1262,
+          803
+        ],
+        "page": [
+          612,
+          627
+        ],
+        "font": 18.0,
+        "range": [
+          14994,
+          17136
+        ],
+        "epoch": 10,
+        "frame_epoch": 10,
+        "builds": 7
+      },
+      "cap": {
+        "client": [
+          1000,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "font": 18.0,
+        "range": [
+          14994,
+          17136
+        ],
+        "epoch": 5,
+        "frame_epoch": 5,
+        "builds": 3
+      },
+      "dpi-roundtrip": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "font": 18.0,
+        "range": [
+          14994,
+          17136
+        ],
+        "epoch": 15,
+        "frame_epoch": 15,
+        "builds": 12
+      },
+      "dpi120": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          765,
+          580
+        ],
+        "font": 22.5,
+        "range": [
+          14256,
+          15840
+        ],
+        "epoch": 12,
+        "frame_epoch": 12,
+        "builds": 9
+      },
+      "dpi144": {
+        "client": [
+          1280,
+          849
+        ],
+        "page": [
+          918,
+          585
+        ],
+        "font": 27.0,
+        "range": [
+          14586,
+          15912
+        ],
+        "epoch": 13,
+        "frame_epoch": 13,
+        "builds": 10
+      },
+      "legacy": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          720,
+          1040
+        ],
+        "font": 42.0,
+        "range": [
+          14850,
+          15525
+        ],
+        "epoch": 16,
+        "frame_epoch": 16,
+        "builds": 13
+      },
+      "roundtrip": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "font": 18.0,
+        "range": [
+          14994,
+          17136
+        ],
+        "epoch": 7,
+        "frame_epoch": 7,
+        "builds": 5
+      },
+      "same": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "font": 18.0,
+        "range": [
+          14994,
+          17136
+        ],
+        "epoch": 7,
+        "frame_epoch": 7,
+        "builds": 5
+      },
+      "shell-again": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          624
+        ],
+        "font": 18.0,
+        "range": [
+          14994,
+          17136
+        ],
+        "epoch": 17,
+        "frame_epoch": 17,
+        "builds": 14
+      },
+      "small": {
+        "client": [
+          720,
+          560
+        ],
+        "page": [
+          612,
+          384
+        ],
+        "font": 18.0,
+        "range": [
+          14586,
+          15912
+        ],
+        "epoch": 6,
+        "frame_epoch": 6,
+        "builds": 4
+      }
+    },
+    "vertical": {
+      "before": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          592
+        ],
+        "font": 18.0,
+        "range": [
+          14112,
+          16128
+        ],
+        "epoch": 5,
+        "frame_epoch": 5,
+        "builds": 3
+      },
+      "busy-roundtrip": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          592
+        ],
+        "font": 18.0,
+        "range": [
+          14112,
+          16128
+        ],
+        "epoch": 11,
+        "frame_epoch": 11,
+        "builds": 8
+      },
+      "busy": {
+        "client": [
+          1262,
+          803
+        ],
+        "page": [
+          612,
+          595
+        ],
+        "font": 18.0,
+        "range": [
+          12474,
+          14553
+        ],
+        "epoch": 10,
+        "frame_epoch": 10,
+        "builds": 7
+      },
+      "cap": {
+        "client": [
+          1000,
+          800
+        ],
+        "page": [
+          612,
+          592
+        ],
+        "font": 18.0,
+        "range": [
+          14112,
+          16128
+        ],
+        "epoch": 5,
+        "frame_epoch": 5,
+        "builds": 3
+      },
+      "dpi-roundtrip": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          592
+        ],
+        "font": 18.0,
+        "range": [
+          14112,
+          16128
+        ],
+        "epoch": 15,
+        "frame_epoch": 15,
+        "builds": 12
+      },
+      "dpi120": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          765,
+          540
+        ],
+        "font": 22.5,
+        "range": [
+          13041,
+          14490
+        ],
+        "epoch": 12,
+        "frame_epoch": 12,
+        "builds": 9
+      },
+      "dpi144": {
+        "client": [
+          1280,
+          849
+        ],
+        "page": [
+          918,
+          537
+        ],
+        "font": 27.0,
+        "range": [
+          13167,
+          14364
+        ],
+        "epoch": 13,
+        "frame_epoch": 13,
+        "builds": 10
+      },
+      "legacy": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          720,
+          1040
+        ],
+        "font": 42.0,
+        "range": [
+          13800,
+          14490
+        ],
+        "epoch": 16,
+        "frame_epoch": 16,
+        "builds": 13
+      },
+      "roundtrip": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          592
+        ],
+        "font": 18.0,
+        "range": [
+          14112,
+          16128
+        ],
+        "epoch": 7,
+        "frame_epoch": 7,
+        "builds": 5
+      },
+      "same": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          592
+        ],
+        "font": 18.0,
+        "range": [
+          14112,
+          16128
+        ],
+        "epoch": 7,
+        "frame_epoch": 7,
+        "builds": 5
+      },
+      "shell-again": {
+        "client": [
+          1280,
+          800
+        ],
+        "page": [
+          612,
+          592
+        ],
+        "font": 18.0,
+        "range": [
+          14112,
+          16128
+        ],
+        "epoch": 17,
+        "frame_epoch": 17,
+        "builds": 14
+      },
+      "small": {
+        "client": [
+          720,
+          560
+        ],
+        "page": [
+          612,
+          352
+        ],
+        "font": 18.0,
+        "range": [
+          13167,
+          14364
+        ],
+        "epoch": 6,
+        "frame_epoch": 6,
+        "builds": 4
+      }
+    }
+  },
+  "selftest": {
+    "schema": 1,
+    "passed": true,
+    "platform": "Windows",
+    "checks": 26,
+    "engine_version": "3.42.0"
+  },
+  "inputs": {
+    "horizontal.epub": "01aa6d66a51c3423bc59e964a4f52ba4847df72db21665f2a028fdafefe71fdb",
+    "vertical.epub": "334251a6810dbcde623b03a903cf926363bad6eb432e9e452e90353ff06d85e8"
+  },
+  "hashes": {
+    "release_exe": "f2c803265f6763fcfb969aca3a127a57229a0bd9dbb055418870bac992f92c15",
+    "layout_exe": "8ff545e065fb72a4bebd3c802f8eeacf050c5cc714f631741692c9b964b86066",
+    "baseline_exe": "2ea1efcb25de2d057d10dd56afb30822ac71bf8b5c4f1506cf482b0eedd15167",
+    "macro_off_exe": "0dea3296c36c5daf8f9422241047f564e7ecbf45bc2ab06af28651a5e1187cbc",
+    "matrix_exe": "8ce30d5d0d518ff22018520ee4efc8937527d97776ed3f7ff3994b9fae3ac676",
+    "sdk": "57e74866783dfc10b07688020082f868dcf4f48fb85d2c1c017b86e55eef1c74",
+    "font": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+  },
+  "native_kusamakura": {
+    "mode": 0,
+    "dpi": 120,
+    "font": 22.5,
+    "scale": 1.0,
+    "vertical_glyphs": 0,
+    "sha256": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7"
+  },
+  "dpi_validation": {
+    "dpi_request": 1,
+    "dpi_error": 0,
+    "pmv2": 1,
+    "actual_window_dpi": 120,
+    "scale": 1.0,
+    "target_dpi": [
+      96.0,
+      96.0,
+      96.0,
+      96.0
+    ]
+  },
+  "foreground_observations": 0,
+  "unmet": [
+    "Native 150% monitor / real cross-monitor WM_DPICHANGED was not exercised; 144 DPI was injected on a native 120 DPI desktop.",
+    "Original kusamakura -epub-writing-mode is horizontal in this SDK (mode=0, vertical glyphs=0); standard writing-mode fixture passes.",
+    "TXT product-specific compile options and MSVC were not built locally."
+  ],
+  "selection_clipboard_contains": "归唐率"
+}
