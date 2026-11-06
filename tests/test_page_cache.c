@@ -250,6 +250,60 @@ static void images(void) {
   exr_document_free(doc);
 }
 
+/* Leading margins consume cover space; preceding text/images still turn pages. */
+static void leading_image(void) {
+  unsigned char encoded = 1;
+  exr_attribute margin = {"style", "margin:8px 0 0 0"};
+  exr_attribute image[] = {{"src", "pixel.custom"}, {"style", "width:128px;height:128px"}};
+  exr_attribute text = {"style", "margin:0;line-height:20px"};
+  exr_chapter_input chapter = {"cover", "cover.unit", 1, 1};
+  exr_resource_input resource = {{"pixel", "pixel.custom", "image/custom", ""}, &encoded, 1};
+  size_t mode;
+  for (mode = 0; mode < 3; mode++) {
+    exr_node_input nodes[6] = {
+      {EXR_NODE_DOCUMENT, SIZE_MAX, NULL, NULL, NULL, 0},
+      {EXR_NODE_CHAPTER, 0, NULL, NULL, NULL, 0},
+      {EXR_NODE_PARAGRAPH, 1, NULL, NULL, &margin, 1}};
+    size_t n = 3, count, images = 0, j;
+    exr_document *doc = NULL;
+    exr_layout *page = NULL;
+    image_provider source = {0};
+    exr_layout_config config = exr_layout_config_defaults();
+    if (mode == 1) {
+      nodes[n++] = (exr_node_input){EXR_NODE_PARAGRAPH, 2, NULL, NULL, &text, 1};
+      nodes[n++] = (exr_node_input){EXR_NODE_TEXT, 3, NULL, "AAAA", NULL, 0};
+    } else if (mode == 2) {
+      nodes[n++] = (exr_node_input){EXR_NODE_IMAGE, 2, NULL, NULL, image, 2};
+    }
+    nodes[n++] = (exr_node_input){EXR_NODE_IMAGE, 2, NULL, NULL, image, 2};
+    exr_document_input input = {"Leading image", nodes, n, &chapter, 1, &resource, 1};
+    config.page = (exr_layout_options){128, 128, 0, 16, 1.25f, 0};
+    config.decode_image = decode; config.release_image = release; config.image_context = &source;
+    OK(exr_document_create(&input, &doc, &error));
+    OK(exr_pager_create(doc, font, &config, &source.pager, &error));
+    OK(exr_pager_next(source.pager, &page, &error)); CHECK(page);
+    const exr_box *boxes = exr_layout_boxes(page, &count);
+    for (j = 0; j < count; j++) if (boxes[j].kind == EXR_BOX_IMAGE) {
+      images++;
+      CHECK(boxes[j].y == 8 && boxes[j].height == 120);
+    }
+    CHECK(images == (mode == 1 ? 0u : 1u));
+    exr_layout_free(page); page = NULL;
+    if (mode) {
+      OK(exr_pager_next(source.pager, &page, &error)); CHECK(page);
+      images = 0; boxes = exr_layout_boxes(page, &count);
+      for (j = 0; j < count; j++) if (boxes[j].kind == EXR_BOX_IMAGE) {
+        images++;
+        CHECK(boxes[j].y == 0 && boxes[j].height == 128);
+      }
+      CHECK(images == 1);
+      exr_layout_free(page); page = NULL;
+    }
+    OK(exr_pager_next(source.pager, &page, &error)); CHECK(!page);
+    exr_pager_free(source.pager); exr_document_free(doc);
+  }
+}
+
 /* Eight 16 MiB images must fit a sequential reader which releases old pages,
    while retained pages and the 64 MiB per-operation limit remain protected. */
 static exr_status large_decode(void *context, const exr_resource *resource,
@@ -367,6 +421,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < 5; i++) exr_layout_free(expected[i]);
   exr_document_free(doc);
   images();
+  leading_image();
   bounded_images();
   exr_font_free(font);
   printf("%u page cache checks passed\n", checks);

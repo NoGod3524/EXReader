@@ -1,0 +1,205 @@
+{
+  "base": "7b20c5a0044a449aef462b2df4db0dac38577f2e",
+  "raw_directory": "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106",
+  "configure": [
+    "cmake",
+    "-S",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106",
+    "-B",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\build",
+    "-G",
+    "Ninja",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DEXR_BUILD_TESTS=ON",
+    "-DEXR_ENABLE_AAC=OFF",
+    "-DEXR_ENABLE_MP3=OFF",
+    "-DEXR_ENABLE_PDF_CRYPTO=OFF",
+    "-DEXR_ENABLE_PDF_JPX=ON",
+    "-DEXR_ENABLE_ICC=OFF",
+    "-DEXR_ENABLE_IMAGE_WEBP=OFF",
+    "-DEXR_ENABLE_IMAGE_TIFF=OFF",
+    "-DEXR_ENABLE_IMAGE_AVIF=OFF",
+    "-DEXR_BUILD_JNI=OFF",
+    "-DFETCHCONTENT_SOURCE_DIR_FREETYPE=C:/Users/Oscar/exr-deps/freetype-VER-2-15-0",
+    "-DFETCHCONTENT_SOURCE_DIR_EXPAT=C:/Users/Oscar/exr-deps/expat",
+    "-DFETCHCONTENT_SOURCE_DIR_MINIZ=C:/Users/Oscar/exr-deps/miniz",
+    "-DFETCHCONTENT_SOURCE_DIR_STB=C:/Users/Oscar/exr-deps/stb",
+    "-DFETCHCONTENT_SOURCE_DIR_SQLITE=C:/Users/Oscar/exr-deps/sqlite",
+    "-DFETCHCONTENT_SOURCE_DIR_OPENJPEG=C:/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4"
+  ],
+  "sha256": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\examples\\reader.c": "4cd263aca31356e3aa219b73a255b6d048edab7d062005f9b366d5faf87de329",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\src\\flow.c": "3ac645c2b614fc09b0fd0bca52bd0b780dbdfbfc6368d21ff2250b6b26473706",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\tests\\test_page_cache.c": "ba56a6fd2cf34ae4021b9a5b11be525e21f11b7ad1d4e5180ebcdcab68e191b8",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\ci-packaging-20261103\\R-PROTECTED-TREES.md": "6e1ee92107ba39ff39eaccaee4cc0419b11f6344668e1ad41c8beeeac8ef5a52",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Sample.epub": "a8eca70ae5221739a2a40332f98c5d107368987425513dd47b27bd0e50118f2f",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "C:\\Windows\\Fonts\\arial.ttf": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\build.py": "31d77e7c16b0b2379fcccfc64c6a6478de22d74d2a0f2c83b26f077e3f213890",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\host_compile.py": "dc70f2316373f56da09adc53dbf26f21937584873a995fc480e5ee07a217cb6b",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\host_link.py": "7945479fb3225791ba3f3a4745f5f8b997883102ec54c5e16b245b41d473f16d",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\measure.py": "06fb38bc2d4656f99828a88a8373208ea07a73176a1ffe09473cae2b2839b8b8",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\phases.py": "b52d1f8babf44325dce062beac16d7d8726c65c450479850bf5bde4dce74cd4a",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\cover_probe.c": "c4a592beeee6050cfd4d0001bdc1a2f37f37f891994963ffa4e3ded645070c55",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\restore_probe.c": "ab854e7bb4c776e120f588a6e486aa68caecc11e98522c69092e1c7c3dca8d1f",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\before\\libexreader.dll": "e8008dbc44a4a08c7e24ab170d7a61b26d6adda6476cf216a7e6830d9d502353",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\before\\libexreader.dll.a": "50b8dcde3162331d21de4a25e7d2a2cbf2786411b2d815dbd5fe676d9f3803cc",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\before\\sample_probe.exe": "f0323e2f80cc8577e3bb3356f1696a4148ec8dc2048a933067b666cfea20f111",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\before\\cjk_measure.exe": "7aebcbec7b8a42e30c831b947175d0028889d934f1d611b809981abd726bc941",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\before\\cover_probe.exe": "888dfce520b4189dd38c4039c332abc1924794fd219b5f9f7fbaac9155f6971c",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\after\\libexreader.dll": "c99cb5915946f290d28190c47cb10e9db6afa8d304e2859db6610757b5ee0108",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\after\\libexreader.dll.a": "33af0f0473e815132a8341fbcd56957f4da2f6f130050e6ae793ff6b06dfbf65",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\after\\sample_probe.exe": "f0323e2f80cc8577e3bb3356f1696a4148ec8dc2048a933067b666cfea20f111",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\after\\cjk_measure.exe": "7aebcbec7b8a42e30c831b947175d0028889d934f1d611b809981abd726bc941",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\after\\cover_probe.exe": "888dfce520b4189dd38c4039c332abc1924794fd219b5f9f7fbaac9155f6971c",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\host\\EXReader.exe": "f5aebc7eabffb01ab49de9f27ec4bd118d434120ce2a5daf21fae04fc135138f",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\host\\EXReader-8m.exe": "cc023470c74f52937c9e221f09f9a946c948856f23a21e5c1c14f99a341365f1",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-first\\DRIVE.txt": "8b5fffd591e83d3eea97e95c18d132bdfcc10bf4d7f6beef2947fed1600b7789",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-first\\first-cover.client.json": "34ebd7463c0b49f80ef4668da1af723801e98a1ff7f8c8966d1991a9f8b5e7c8",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-first\\first-cover.json": "b2e6a38f5ef92aa72ca259d6d6d1adecbd190103d56d5fd92dfe3d461cb2d0ef",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-first\\first-cover.png": "057517bef8df949683ee63c6485376b4df736a6a7513dd4beea02b7527654116",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-first\\process.json": "8d79a3e02dd4ecfd2350ec649a93cb8d396d513cce9bac2fd00f3255bef41c8a",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-first\\run.drive": "c89dc50f6a68d895bfae2f63cd7ec2c92f3cff6da8ceeb217a518d7f087b3c94",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-restore\\DRIVE.txt": "22b6a885cf3e07d7e24725f58ec1f105648209a4b3fc9fcc55ea4d6a37502ee1",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-restore\\process.json": "374b923240dd169ed88f3327cb7675fd4f072ee2faa27a3baefeddd9998def34",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-restore\\restored-cover.client.json": "34ebd7463c0b49f80ef4668da1af723801e98a1ff7f8c8966d1991a9f8b5e7c8",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-restore\\restored-cover.json": "b2e6a38f5ef92aa72ca259d6d6d1adecbd190103d56d5fd92dfe3d461cb2d0ef",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-restore\\restored-cover.png": "057517bef8df949683ee63c6485376b4df736a6a7513dd4beea02b7527654116",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-restore\\run.drive": "78d9c95f84286a6edc8c783d569a9e758ac7a8750889253c0f2957205a9d390b",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-fault\\DRIVE.txt": "3a3f4906be19c6e847698b1aed59223523526e26b47224decdd1a719fa927605",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-fault\\fault.client.json": "34ebd7463c0b49f80ef4668da1af723801e98a1ff7f8c8966d1991a9f8b5e7c8",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-fault\\fault.png": "9d86aadecae311e9b8381bfb1f089f7d121a4396a6842045b2bdbf48b194a91c",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-fault\\process.json": "e06cdc3c4e7a651f039519a4835acdd24d0936355150b0bbe3d3c2192b2bc348",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\ui-fault\\run.drive": "f07aed9dc1227122cc59bac595238f4a2bfd3c9e7bacd98977ce949feb772971",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\evidence\\cjk-host-open-fix-20261106\\run_offscreen.py": "21ed38e366426fd0a1d0fae1cf3295738652517f1b58c92fe9d4792d714eca07"
+  },
+  "ui_permission": "explicitly approved by user: offscreen (-32000,-32000), PrintWindow only; no foreground activation or mouse movement",
+  "manual_ci_runs": 0,
+  "workflow_runs_cancelled": 0,
+  "ui_validation": {
+    "first": {
+      "command": [
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\host\\EXReader.exe",
+        "--offscreen",
+        "--font",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Reader.otf",
+        "--drive",
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\first.drive",
+        "--data",
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\first-data",
+        "--evidence",
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\ui-first"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 1.327,
+      "observations": 62,
+      "foreground_observations": 0,
+      "window_rectangles": [
+        [
+          -32000,
+          -32000,
+          -30940,
+          -31256
+        ],
+        [
+          -32000,
+          -32000,
+          -30940,
+          -31248
+        ]
+      ],
+      "violations": [],
+      "executable_sha256": "f5aebc7eabffb01ab49de9f27ec4bd118d434120ce2a5daf21fae04fc135138f",
+      "steps_passed": 17,
+      "screenshot_size": [
+        1060,
+        752
+      ],
+      "screenshot": "ui-first/first-cover.png",
+      "screenshot_sha256": "057517bef8df949683ee63c6485376b4df736a6a7513dd4beea02b7527654116"
+    },
+    "restore": {
+      "command": [
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\host\\EXReader.exe",
+        "--offscreen",
+        "--font",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Reader.otf",
+        "--drive",
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\restore.drive",
+        "--data",
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\restore-data",
+        "--evidence",
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\ui-restore"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 1.284,
+      "observations": 60,
+      "foreground_observations": 0,
+      "window_rectangles": [
+        [
+          -32000,
+          -32000,
+          -30940,
+          -31256
+        ],
+        [
+          -32000,
+          -32000,
+          -30940,
+          -31248
+        ]
+      ],
+      "violations": [],
+      "executable_sha256": "f5aebc7eabffb01ab49de9f27ec4bd118d434120ce2a5daf21fae04fc135138f",
+      "steps_passed": 16,
+      "screenshot_size": [
+        1060,
+        752
+      ],
+      "screenshot": "ui-restore/restored-cover.png",
+      "screenshot_sha256": "057517bef8df949683ee63c6485376b4df736a6a7513dd4beea02b7527654116"
+    },
+    "fault": {
+      "command": [
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\host\\EXReader-8m.exe",
+        "--offscreen",
+        "--font",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Reader.otf",
+        "--drive",
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\fault.drive",
+        "--data",
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\fault-data",
+        "--evidence",
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\ui-fault"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 1.14,
+      "observations": 43,
+      "foreground_observations": 0,
+      "window_rectangles": [
+        [
+          -32000,
+          -32000,
+          -30940,
+          -31256
+        ],
+        [
+          -32000,
+          -32000,
+          -30940,
+          -31248
+        ]
+      ],
+      "violations": [],
+      "executable_sha256": "cc023470c74f52937c9e221f09f9a946c948856f23a21e5c1c14f99a341365f1",
+      "steps_passed": 13,
+      "screenshot_size": [
+        1060,
+        752
+      ],
+      "screenshot": "ui-fault/fault.png",
+      "screenshot_sha256": "9d86aadecae311e9b8381bfb1f089f7d121a4396a6842045b2bdbf48b194a91c"
+    }
+  }
+}

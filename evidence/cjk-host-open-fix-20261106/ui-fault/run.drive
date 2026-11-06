@@ -1,0 +1,13 @@
+wait_idle
+shell|on
+shell_dpi|96
+shell_client|1000|705
+shell_font|17
+wait_idle
+open|紅樓夢
+wait_idle
+check|no_book
+check|status|contains|Page exceeds the pager cache byte budget
+state|fault
+snapshot|fault
+quit

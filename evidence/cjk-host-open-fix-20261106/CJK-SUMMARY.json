@@ -1,0 +1,38 @@
+{
+  "before": {
+    "vertical": false,
+    "parts": 31,
+    "pages": 1632,
+    "columns": 36712,
+    "head_violations": 0,
+    "head_observations": 1,
+    "soft_wrap": 0,
+    "forced_break": 1,
+    "paragraph_start": 0,
+    "unbreakable_overflow": 0,
+    "tail_violations": 0,
+    "punctuation_pairs": 15383,
+    "glyphs": 821108,
+    "excluded_ruby_glyphs": 0,
+    "wrong_mode_pages": 0,
+    "status": 0
+  },
+  "after": {
+    "vertical": false,
+    "parts": 31,
+    "pages": 1632,
+    "columns": 36712,
+    "head_violations": 0,
+    "head_observations": 1,
+    "soft_wrap": 0,
+    "forced_break": 1,
+    "paragraph_start": 0,
+    "unbreakable_overflow": 0,
+    "tail_violations": 0,
+    "punctuation_pairs": 15383,
+    "glyphs": 821108,
+    "excluded_ruby_glyphs": 0,
+    "wrong_mode_pages": 0,
+    "status": 0
+  }
+}
