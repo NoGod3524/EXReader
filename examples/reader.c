@@ -20,6 +20,11 @@
 #include <process.h>
 #include <exreader.h>
 #include "windows/paint_probe.h"
+#ifdef EXR_READER_WINDOWS_SHELL
+#include "windows/shell_d2d.h"
+/* Created with the main window; draws the reading screen (windows/shell_screen.inc). */
+static shell_d2d *host_shell;
+#endif
 #include <math.h>
 #include <limits.h>
 #include <stdint.h>
@@ -3227,6 +3232,10 @@ static HWND make_static(HWND parent, int id, const wchar_t *text) {
 #include "../apps/reader/desktop/windows_compact_ui.inc"
 #endif
 
+#ifdef EXR_READER_WINDOWS_SHELL
+static void shell_create(HWND parent);
+static void layout_controls(void);
+#endif
 static void create_controls(HWND parent) {
   g.import_label = make_static(parent, IDC_IMPORT_LABEL, L"导入路径");
   g.import_edit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP |
@@ -3308,9 +3317,19 @@ static void create_controls(HWND parent) {
 #ifdef EXR_READER_WINDOWS_COMPACT
   compact_create(parent);
 #endif
+#ifdef EXR_READER_WINDOWS_SHELL
+  shell_create(parent);
+#endif
 }
 
+#ifdef EXR_READER_WINDOWS_SHELL
+#include "windows/shell_screen.inc"
+#endif
+
 static void layout_controls(void) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_layout()) return;
+#endif
 #ifdef EXR_READER_WINDOWS_COMPACT
   if (compact_layout()) return;
 #endif
@@ -3542,6 +3561,10 @@ static void compose_page_view(HWND window) {
     SetTextColor(dc, RGB(90, 90, 90));
     DrawTextW(dc, hint, -1, &text, DT_CENTER | DT_VCENTER | DT_WORDBREAK);
   }
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_page_focus(window, dc, &area)) {
+  } else
+#endif
   if (GetFocus() == window) {
     RECT focus = area;
     focus.left += 1; focus.top += 1; focus.right -= 1; focus.bottom -= 1;
@@ -3663,6 +3686,15 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
     }
     case WM_GETDLGCODE:
       return DLGC_WANTARROWS | DLGC_WANTCHARS;
+#ifdef EXR_READER_WINDOWS_SHELL
+    case WM_UPDATEUISTATE:
+      /* The focus outline depends on the cue state; the buffer must follow it. */
+      {
+        LRESULT done = DefWindowProcW(window, message, wparam, lparam); /* updates the state first */
+        if (shell_active) page_dirty(window, 1);
+        return done;
+      }
+#endif
     case WM_LBUTTONDOWN:
       if (g.job || g.pending || !g.frame.valid) return 0;
       SetFocus(window);
@@ -4410,6 +4442,9 @@ static void jump_selected_note(void) {
 static void open_selected_book(void) {
   LRESULT index;
   host_job *job;
+#ifdef EXR_READER_WINDOWS_SHELL
+  shell_legacy = 0; /* opening a book returns to the reading screen */
+#endif
   if (!g.books) return;
   index = SendMessageW(g.books, LB_GETCURSEL, 0, 0);
   if (index == LB_ERR || (size_t)index >= g.shelf_count) {
@@ -4601,6 +4636,9 @@ static void host_update_controls(void) {
   host_a11y_owner_reapply();
 #ifdef EXR_READER_WINDOWS_COMPACT
   compact_controls();
+#endif
+#ifdef EXR_READER_WINDOWS_SHELL
+  shell_sync();
 #endif
 }
 
@@ -5538,6 +5576,109 @@ static int drive_execute(void) {
     drive_step_finish(1, "window resized");
     return 0;
   }
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (!strcmp(action, "shell")) {
+    shell_drive_on = !strcmp(drive_args[1], "on");
+    shell_sync();
+    drive_step_finish(1, shell_active ? "reading screen" : "legacy panel");
+    return 0;
+  }
+  if (!strcmp(action, "shell_key")) {
+    /* Alt+Left / Alt+Right as the keyboard delivers them: WM_SYSKEYDOWN with
+       the context bit, posted to the focused window and read by the loop. */
+    static int posted;
+    int want = !strcmp(drive_args[1], "right");
+    if (!posted) {
+      HWND focus = GetFocus();
+      WPARAM key = want ? VK_RIGHT : VK_LEFT;
+      if (!focus) focus = g.window;
+      PostMessageW(focus, WM_SYSKEYDOWN, key, (LPARAM)(1u | (1u << 29)));
+      PostMessageW(focus, WM_SYSKEYUP, key, (LPARAM)(1u | (1u << 29) | (1u << 30) | (1u << 31)));
+      posted = 1;
+      return 1; /* run again once the loop has read the key */
+    }
+    if (shell_active != want && GetTickCount() - drive_step_start < 5000) return 1;
+    posted = 0;
+    drive_step_finish(shell_active == want, shell_active ? "reading screen" : "legacy panel");
+    return 0;
+  }
+  if (!strcmp(action, "shell_hover")) {
+    /* The real hover path is WM_MOUSEMOVE + TrackMouseEvent; the screenshot
+       needs the state to survive the cursor being elsewhere, so it is pinned. */
+    HWND button = shell_button_named(drive_args[1]), previous = shell_hover;
+    if (button) SendMessageW(button, WM_MOUSEMOVE, 0, MAKELPARAM(SHELL_BUTTON_BOX / 2, SHELL_BUTTON_BOX / 2));
+    shell_hover = button;
+    shell_hover_pinned = button != NULL;
+    if (previous) InvalidateRect(previous, NULL, FALSE);
+    if (button) { InvalidateRect(button, NULL, FALSE); UpdateWindow(button); }
+    drive_step_finish(!strcmp(drive_args[1], "none") || button != NULL, button ? "hover pinned" : "hover cleared");
+    return 0;
+  }
+  if (!strcmp(action, "activate")) {
+    /* Test setup: focus states only exist in the foreground window. At most
+       one SetForegroundWindow per run, announced first and never retried; if
+       the foreground is refused the step fails and says so. The 500 ms below
+       only waits for that one request to take effect. */
+    static int requests, waiting;
+    if (!waiting) {
+      if (requests) { drive_step_finish(0, "activation already used in this run; not retried"); return 0; }
+      requests = 1;
+      drive_log("NOTE", "activate", 1, "activating window for focus checks");
+      SetForegroundWindow(g.window);
+      waiting = 1;
+    }
+    if (GetForegroundWindow() != g.window && GetTickCount() - drive_step_start < 500) return 1;
+    waiting = 0;
+    drive_step_finish(GetForegroundWindow() == g.window,
+                      GetForegroundWindow() == g.window ? "foreground" : "无法获得前台 (foreground refused; not retried)");
+    return 0;
+  }
+  if (!strcmp(action, "key_tab")) {
+    /* A real Tab keystroke through the input queue (the window must be in the
+       foreground); waits until keyboard focus has moved. */
+    static HWND before;
+    static int sent;
+    if (!sent) {
+      INPUT key[2];
+      memset(key, 0, sizeof(key));
+      key[0].type = key[1].type = INPUT_KEYBOARD;
+      key[0].ki.wVk = key[1].ki.wVk = VK_TAB;
+      key[1].ki.dwFlags = KEYEVENTF_KEYUP;
+      before = GetFocus();
+      sent = 1;
+      if (GetForegroundWindow() != g.window || SendInput(2, key, sizeof(INPUT)) != 2) {
+        sent = 0;
+        drive_step_finish(0, "not foreground or SendInput failed");
+        return 0;
+      }
+      return 1;
+    }
+    if (GetFocus() == before && GetTickCount() - drive_step_start < 2000) return 1;
+    sent = 0;
+    drive_step_finish(GetFocus() != before, GetFocus() != before ? "focus moved" : "focus did not move");
+    return 0;
+  }
+  if (!strcmp(action, "ui_cues")) {
+    /* Test setup: the focus-cue state a mouse-started session has (hide) or a
+       keyboard-started one has (show); the real switch is IsDialogMessage. */
+    SendMessageW(g.window, WM_CHANGEUISTATE, MAKEWPARAM(!strcmp(drive_args[1], "show") ? UIS_CLEAR : UIS_SET,
+                 UISF_HIDEFOCUS), 0);
+    drive_step_finish(1, "focus cues set");
+    return 0;
+  }
+  if (!strcmp(action, "shell_press")) {
+    HWND button = shell_button_named(drive_args[1]);
+    if (button) { SendMessageW(button, BM_SETSTATE, atoi(drive_args[2]) != 0, 0); UpdateWindow(button); }
+    drive_step_finish(button != NULL, "button state set");
+    return 0;
+  }
+  if (!strcmp(action, "shell_enable")) {
+    HWND button = shell_button_named(drive_args[1]);
+    if (button) { EnableWindow(button, atoi(drive_args[2]) != 0); UpdateWindow(button); }
+    drive_step_finish(button != NULL, "button enabled state set");
+    return 0;
+  }
+#endif
   if (!strcmp(action, "tab")) {
     int count = drive_args[1][0] ? atoi(drive_args[1]) : 1;
     int i;
@@ -5692,6 +5833,68 @@ static int drive_execute(void) {
     const char *what = drive_args[1];
     int pass = 0;
     char number[64];
+#ifdef EXR_READER_WINDOWS_SHELL
+    if (!strcmp(what, "shell")) {
+      RECT client, page, frame;
+      POINT origin = {0, 0};
+      int visible = shell_visible_children();
+      GetClientRect(g.window, &client);
+      GetWindowRect(g.page, &page); MapWindowPoints(NULL, g.window, (POINT *)&page, 2);
+      ClientToScreen(g.window, &origin);
+      GetWindowRect(g.window, &frame);
+      origin.x -= frame.left; origin.y -= frame.top;
+      if (atoi(drive_args[2]))
+        pass = shell_active && visible == 3 && page.top == SHELL_TOPBAR_H && page.left == 0 &&
+               page.right == client.right && page.bottom == client.bottom &&
+               !(GetWindowLongPtrW(g.page, GWL_EXSTYLE) & WS_EX_CLIENTEDGE) &&
+               IsWindowVisible(shell_toc) && IsWindowVisible(shell_settings);
+      else pass = !shell_active && !IsWindowVisible(shell_toc) && !IsWindowVisible(shell_settings);
+      snprintf(number, sizeof(number), "%d", shell_active); detail_add(detail, sizeof(detail), "active", number);
+      snprintf(number, sizeof(number), "%d", visible); detail_add(detail, sizeof(detail), "visible_children", number);
+      snprintf(number, sizeof(number), "%ld", (long)page.top); detail_add(detail, sizeof(detail), "page_top", number);
+      snprintf(number, sizeof(number), "%d", (GetWindowLongPtrW(g.page, GWL_EXSTYLE) & WS_EX_CLIENTEDGE) != 0);
+      detail_add(detail, sizeof(detail), "page_edge", number);
+      snprintf(number, sizeof(number), "%ld,%ld", (long)origin.x, (long)origin.y);
+      detail_add(detail, sizeof(detail), "client_origin", number);
+      snprintf(number, sizeof(number), "%ldx%ld", (long)client.right, (long)client.bottom);
+      detail_add(detail, sizeof(detail), "client", number);
+    } else if (!strcmp(what, "legacy_ids")) {
+      char missing[160];
+      int reachable = shell_legacy_reachable(missing, sizeof(missing));
+      pass = reachable == 17;
+      snprintf(number, sizeof(number), "%d", reachable); detail_add(detail, sizeof(detail), "reachable", number);
+      detail_add(detail, sizeof(detail), "missing", missing);
+    } else if (!strcmp(what, "shell_fonts")) {
+      unsigned latin = 0, cjk = 0;
+      char *title = host_utf8(shell_d2d_family(host_shell, SHELL_TEXT_TITLE));
+      char *icon = host_utf8(shell_d2d_family(host_shell, SHELL_TEXT_ICON));
+      shell_d2d_title_faces(host_shell, &latin, &cjk);
+      pass = latin == 0 && cjk == 0;
+      detail_add(detail, sizeof(detail), "title_family", title ? title : "");
+      detail_add(detail, sizeof(detail), "icon_family", icon ? icon : "");
+      snprintf(number, sizeof(number), "%u", latin); detail_add(detail, sizeof(detail), "latin_simulations", number);
+      snprintf(number, sizeof(number), "%u", cjk); detail_add(detail, sizeof(detail), "cjk_simulations", number);
+      free(title); free(icon);
+    } else if (!strcmp(what, "focus")) {
+      HWND want = !strcmp(drive_args[2], "page") ? g.page : shell_button_named(drive_args[2]);
+      HWND focus = GetFocus();
+      pass = want && focus == want;
+      char focus_class[64] = "";
+      if (focus) GetClassNameA(focus, focus_class, (int)sizeof(focus_class));
+      detail_add(detail, sizeof(detail), "focus", focus == g.page ? "page" : focus == shell_toc ? "toc" :
+                 focus == shell_settings ? "settings" : focus ? "other" : "none");
+      detail_add(detail, sizeof(detail), "focus_class", focus_class);
+      snprintf(number, sizeof(number), "%d", GetForegroundWindow() == g.window);
+      detail_add(detail, sizeof(detail), "foreground", number);
+      snprintf(number, sizeof(number), "%ld", (long)(focus ? SendMessageW(focus, WM_QUERYUISTATE, 0, 0) : -1));
+      detail_add(detail, sizeof(detail), "uistate", number);
+      {
+        HWND next = focus ? GetNextDlgTabItem(g.window, focus, FALSE) : NULL;
+        snprintf(number, sizeof(number), "%d", next ? GetDlgCtrlID(next) : -1);
+        detail_add(detail, sizeof(detail), "next_tab_id", number);
+      }
+    } else
+#endif
     if (!strcmp(what, "part")) {
       pass = g.frame.valid && g.frame.part == (size_t)atoi(drive_args[2]);
       snprintf(number, sizeof(number), "%llu", (unsigned long long)g.frame.part); detail_add(detail, sizeof(detail), "part", number);
@@ -6126,16 +6329,33 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       g.window = window;
       create_controls(window);
       layout_controls();
+#ifdef EXR_READER_WINDOWS_SHELL
+      if (FAILED(shell_d2d_create(window, &host_shell))) host_shell = NULL;
+#endif
       return 0;
     case WM_SIZE: {
       RECT bounds;
       GetWindowRect(window, &bounds);
       g.window_width = bounds.right - bounds.left;
       g.window_height = bounds.bottom - bounds.top;
+#ifdef EXR_READER_WINDOWS_SHELL
+      if (host_shell) shell_d2d_resize(host_shell, LOWORD(lparam), HIWORD(lparam));
+#endif
       layout_controls();
       page_dirty(g.page,1);
       return 0;
     }
+#ifdef EXR_READER_WINDOWS_SHELL
+    case WM_ERASEBKGND:
+      if (shell_active) return 1;
+      break;
+    case WM_PAINT:
+      if (shell_active) { shell_paint(window); return 0; }
+      break;
+    case WM_DRAWITEM:
+      if (shell_draw_item((const DRAWITEMSTRUCT *)lparam)) return TRUE;
+      break;
+#endif
     case WM_GETMINMAXINFO: {
       MINMAXINFO *limits = (MINMAXINFO *)lparam;
       limits->ptMinTrackSize.x = 1060;
@@ -6169,6 +6389,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_COMMAND: {
       int id = LOWORD(wparam);
       int code = HIWORD(wparam);
+#ifdef EXR_READER_WINDOWS_SHELL
+      if (id == IDC_SHELL_TOC || id == IDC_SHELL_SETTINGS) return 0;
+#endif
 #ifdef EXR_READER_WINDOWS_COMPACT
       if (code == 0 && compact_command(id)) return 0;
 #endif
@@ -6345,6 +6568,10 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       prefs_destroy_menu(window);
 #endif
       settings_save();
+#ifdef EXR_READER_WINDOWS_SHELL
+      shell_d2d_destroy(host_shell);
+      host_shell = NULL;
+#endif
       PostQuitMessage(g.drive_mode ? (g.drive_failures ? 1 : 0) : 0);
       return 0;
   }
@@ -6409,6 +6636,9 @@ static int message_loop(void) {
 #endif
 #ifdef EXR_READER_WINDOWS_COMPACT
     if (compact_translate(&message)) continue;
+#endif
+#ifdef EXR_READER_WINDOWS_SHELL
+    if (shell_translate(&message)) continue;
 #endif
     if (g.window && IsDialogMessageW(g.window, &message)) continue;
     TranslateMessage(&message);

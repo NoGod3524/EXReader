@@ -33,3 +33,17 @@
 - 2026-11-04 — [Main transition S1–S3](main-transition-20261104/README.md): main created equal to ledger/base1e709837; single trigger-line commit682e1ab5; PR #39 core run41786091768 registered and passed. PR closed, temporary branch deleted. S4/S5 not executed; default remains codex/framework pending separate owner authorization.
 
 - 2026-11-04 — **默认分支切换与 S5 门禁拦截验证**：[完整记录](main-transition-20261104/README.md#s4-owner-confirmed-switch-and-s5-closure)。S1 main 初始 sha `1e709837cb8a50816e94bf611ca4404f19f80abf`；S2 `682e1ab5`；S3 run `41786091768` 通过；S4 `default_branch: codex/framework → main`（PATCH502，回读 main，owner 确认成功）；S5 tag `archive/codex-framework-20261031 → 8ca964fc`、`archive/ledger-base-20261103 → 1e709837`。S5.5 [PR #40 / run41902048351](main-transition-20261104/s5-guard-negative/README.md)：`reading-required-core` **required=true、红**，`mergeable=true` 且 `mergeable_state=blocked` / `mergeStateStatus=BLOCKED`；负例已恢复，PR 已关闭、临时分支已删除。两条原分支保留。
+
+## 已知在 main 上失败
+
+以下失败在 main 上原本就存在，与 2a 系列 PR 无关，不要当作新问题。
+
+- 2026-11-05 — `wp13-windows.yml` [run 42071165411](https://github.com/NoGod3524/EXReader/actions/runs/42071165411)，main `f22a7649`：
+  - **H8**（“Require H8 default bounded long-chapter and cross-part UI acceptance”）失败：`{"accepted": false, "checks": 2, "failures": ["ValueError: unchanged-SDK-tree/src"]}`。门禁要求 SDK 树与固定提交相同，而 main 的 `src/` 已变化。
+  - **worker 检查**（“Preserve worker ownership, SQL-failure and reverse-verification gates”）失败：`fixed-note-cancel`、`fixed-note-update-cancel`、`rollback-sql-busy` 三项 `TimeoutError: Expected host transition did not complete`；汇总 `candidate_passed 8`、`baseline_rejected 11`。
+  - 同一 run 的 UI 验收三个 phase 通过（158/158，失败 0），自检 26 项通过。
+
+## 已知问题
+
+- 2026-11-05 — **MinGW 链接缺 UIA 库**：用 MinGW 构建 `examples/` 的 reader 时缺 `UiaRaiseAutomationEvent` 等符号，开不开 `EXR_READER_WINDOWS_SHELL` 都一样。原因是 `apps/reader/desktop/windows_accessibility.inc` 用 MSVC 专用的 `#pragma comment(lib, ...)` 声明 `uiautomationcore`、`oleacc`、`oleaut32`、`usp10`，MinGW 不处理这个指令。MSVC 构建不受影响。暂不修；本地验证时在命令行补 `-luiautomationcore -loleacc -loleaut32 -lusp10 -lole32 -luuid`。
+- 2026-11-05 — **本机 MinGW 的 phase 失败 2 个**：phase-a 第 115 步、phase-b 第 5 步，CI（MSVC）上未复现。见 [issue #45](https://github.com/NoGod3524/EXReader/issues/45)，根因未查明。

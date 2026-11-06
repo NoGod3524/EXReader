@@ -1,0 +1,55 @@
+# 2a step 2: flat reading screen and top bar. Needs a reader built with
+# EXR_READER_WINDOWS_SHELL=ON. check_shell_2a.py fills @@SAMPLE@@, runs this
+# script, reads UI Automation from outside during the two probe_wait|12000
+# steps (after snapshots 35 and 36) and measures the screenshots.
+#
+# Focus states only exist in the foreground window, so the keyboard part runs
+# right after `activate`, before the long UI Automation pause, and uses a real
+# Tab keystroke (SendInput). A run on a desktop that is in use can still lose
+# the foreground; it then fails visibly instead of passing by accident.
+state|start
+import|@@SAMPLE@@\Sample.epub
+open|EXReader benchmark
+check|book|EXReader benchmark
+# --drive stays on the legacy panel until the script asks for the shell.
+check|shell|0
+check|legacy_ids
+snapshot|30-legacy-before
+shell|on
+check|shell|1
+check|shell_fonts
+activate
+# a mouse-started session: focus cues hidden until the keyboard is used
+ui_cues|hide
+check|focus|page
+# normal state of both buttons; focus is on the page, cues hidden
+snapshot|31-shell
+shell_hover|toc
+snapshot|32-hover-toc
+shell_hover|none
+shell_press|settings|1
+snapshot|33-pressed-settings
+shell_press|settings|0
+# focus by keyboard: Tab from the page goes to 目录 and shows the outline
+key_tab
+check|focus|toc
+snapshot|34-focus-toc
+shell_enable|settings|0
+snapshot|35-disabled-settings
+shell_enable|settings|1
+probe_wait|12000
+# Alt+Left: back to the legacy panel; all 17 controls must be reachable.
+shell_key|left
+check|shell|0
+check|legacy_ids
+snapshot|36-legacy-after
+probe_wait|12000
+# Alt+Right: back to the reading screen; paging still works there.
+shell_key|right
+check|shell|1
+check|page|1
+next
+check|page|2
+check|shell|1
+snapshot|37-shell-page2
+quit
