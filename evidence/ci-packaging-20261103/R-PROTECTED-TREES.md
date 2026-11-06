@@ -22,3 +22,5 @@ R 必须取包含本次 `src/style.c` 修复及此前 V/P/provider 变更的后�
 明确未做：`text-combine-upright` 的实际合字排版；其前缀名归一化不表示已有该能力。
 
 2026-11-06 — `codex/cjk-kinsoku-20261106` 触及受保护树 **src/**：仅 `src/inline.c`，为 SP + U+FF1A/U+FF1B 共用软断行过滤并设置 GLUE（feed/display_scan 两入口）；不改变默认 Unicode 分析或硬换行。R 后续候选须包含此修复；本轮仅本地验收、未跑 CI，数字与逐页像素证据见 [REPORT.md](../cjk-kinsoku-20261106/REPORT.md)。
+
+2026-11-06 — `codex/cjk-punctuation-compression-20261106` 触及受保护树 **src/**（仅 `src/inline.c`）与 **tests/fixtures/**（新增 `fonts/cjk-punctuation.ttf`、`fonts/latin-punctuation.ttf` 两个原创矩形字体）。相邻全角中文标点每处通过 advance 减少 0.5em；预断行、最终行、intrinsic/pending 测宽共用判定，跨行不压缩。R 后续候选须包含本轮源代码及夹具；数字、逐页哈希和本地全量测试见 [REPORT.md](../cjk-punctuation-compression-20261106/REPORT.md)。未手动触发 CI。
