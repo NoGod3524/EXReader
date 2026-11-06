@@ -162,7 +162,14 @@ phase 结果：三组都是 A 120 步只第 115 步失败、B 29 步只第 5 步
   - 按规则对照组不为 0，本轮开宏比对不作数。仅供参考：`off2`/`on` 8 张均为 0，负例报 `client_diffpx 1`。
   - 重跑的一轮在 owner 要求停止全部 GUI 运行时被中止，没有结果。
 - **因此第 5 条（客户区零差异）的有效证据**是 §3.1 那一轮：开宏 `1a4a40d6adce`，对照组 0、`off1`/`on` 0、负例 1。
-  - 之后对 `reader.c` 的改动只在 `EXR_READER_WINDOWS_SHELL` 宏内、且只涉及驱动动作（`activate` 的次数限制）。不开宏时，`gcc -E -P` 预处理的结果与提交 `aedf8ea7`（即 `1a4a40d6` 那一轮的代码）逐字节相同：4,023,985 字节、96,090 行。这是命令行比对，没有用 GUI 重测。
+  - 之后对 `reader.c` 的改动只在 `EXR_READER_WINDOWS_SHELL` 宏内、且只涉及驱动动作（`activate` 的次数限制）。证据链是“源码预处理结果相同 + 编译参数相同 + 工具链相同 → 生成的代码相同”。MinGW 每次链接写入的时间戳不同，所以两次构建的二进制哈希本来就不会相同，这里比的是编译单元，不是二进制。下面是这条链的三个环节：
+  - **编译参数与 `1a4a40d6` 那轮一致**：两轮都用同一个本地构建目录（`b-OFF` / `b-ON`），其 `CMakeCache.txt` 写于 17:54，早于 `1a4a40d6` 的构建，之后没有改过；`examples/CMakeLists.txt` 和 `examples/windows/CMakeLists.txt` 在 `aedf8ea7..4de16bd6` 之间也没有改动。reader 的编译参数两轮都是 `-O3 -DNDEBUG -std=gnu11 -isystem <stage>/include`，开宏时再加 `-DEXR_READER_WINDOWS_SHELL=1`。
+  - **工具链**：同一个 gcc 16.2.0（MinGW-W64 x86_64-ucrt-posix-seh，WinLibs）。
+  - **预处理比对，按尝试顺序如实记录**：
+    1. 第 1 次：只加了 `-DNDEBUG` 和包含路径，没有用构建参数。我先判为“无效”：`ls | cut` 把文件大小截成“3985”，看着像只有约 4 KB；grep 又把 `strerror` 声明数成了 493 个 error。随后核对发现两份输出其实都是 4,023,985 字节、96,090 行，并非错误文本，所以“4 KB 错误文本”的说法本身是我看错了。但这次没有用构建参数，作为证据不够，不采用。
+    2. 第 2 次：加上构建参数，从两个提交各取一份源码。两份都失败（退出码 1，各 395 字节错误）：临时目录里缺 `apps/reader/desktop/windows_accessibility.inc`。结论无效。
+    3. 第 3 次：补上该文件（它在两个提交之间没有变化），参数 `-O3 -DNDEBUG -std=gnu11 -isystem build/reading-library/stage/include`。两份退出码都是 0、错误输出都是 0 字节，输出均为 4,665,678 字节、112,556 行，**逐字节相同**。只采用这一次。
+  - 以上都是命令行比对，没有用 GUI 重测。
 
 ## 8. 未覆盖
 
