@@ -21,7 +21,8 @@ typedef struct shell_d2d shell_d2d;
 enum { SHELL_TEXT_TITLE = 0, /* 17, weight 600, left, one line with ellipsis */
        SHELL_TEXT_ICON = 1,  /* icon font 20, centred */
        SHELL_TEXT_PAGE_NUMBER = 2,
-       SHELL_TEXT_STYLES = 3 };
+       SHELL_TEXT_UI = 3,
+       SHELL_TEXT_STYLES = 4 };
 
 /* One owner-drawn round icon button. Colours are 0xRRGGBB. */
 typedef struct shell_d2d_button {
@@ -32,7 +33,14 @@ typedef struct shell_d2d_button {
   int has_fill, has_ring;
   float diameter;      /* the circle; the outline sits outside it */
   float ring_width;    /* drawn just outside the circle */
+  float offset_y;
 } shell_d2d_button;
+
+/* variant: 0 standard, 1 primary, 2 ghost. State bits: hover=1,
+   pressed=2, focus=4, disabled=8. Retains each BUTTON's native UIA proxy. */
+HRESULT shell_d2d_control(shell_d2d *, HDC, const RECT *, const wchar_t *,
+                          int dark, int variant, unsigned state);
+HRESULT shell_d2d_panel(shell_d2d *, HDC, const RECT *, int dark, const wchar_t *font, const uint32_t *background);
 
 HRESULT shell_d2d_create(HWND window, shell_d2d **out);
 void shell_d2d_destroy(shell_d2d *shell);

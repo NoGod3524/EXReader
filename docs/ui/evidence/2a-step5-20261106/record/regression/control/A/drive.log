@@ -1,0 +1,20 @@
+HOST	phase=1	engine=3.42.0	pid=24460
+STEP	1	import	PASS	page=0;status=已导入《EXReader benchmark》并写入书架。
+STEP	2	wait_idle	PASS	page=0;status=已导入《EXReader benchmark》并写入书架。
+STEP	3	ui_cues	PASS	focus cues set
+SHOT	4	01	PASS	file=01;nonzero=1
+STEP	4	snapshot	PASS	screenshot written
+STEP	5	open	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+STEP	6	wait_idle	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+SHOT	7	02	PASS	file=02;nonzero=1
+STEP	7	snapshot	PASS	screenshot written
+STEP	8	probe_key	PASS	page=2;status=第 2 页。
+SHOT	9	03	PASS	file=03;nonzero=1
+STEP	9	snapshot	PASS	screenshot written
+STEP	10	probe_key	PASS	page=3;status=第 3 页。
+SHOT	11	04	PASS	file=04;nonzero=1
+STEP	11	snapshot	PASS	screenshot written
+SHOT	12	05	PASS	file=05;nonzero=1
+STEP	12	snapshot	PASS	screenshot written
+STEP	13	quit	PASS	closing
+DONE	13	eof	PASS	script finished

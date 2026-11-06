@@ -48,3 +48,20 @@ static int shell_measure(const char *name) {
   fprintf(out,"\"}\n");
   return fclose(out)==0;
 }
+
+static int shell_settings_measure(const char *name) {
+  wchar_t filename[256],path[HOST_PATH];
+  wchar_t *wide=host_wide(name,strlen(name));swprintf(filename,256,L"%ls.json",wide);free(wide);
+  path_join(path,HOST_PATH,g.evidence_dir,filename);FILE *out=_wfopen(path,L"wb");if(!out) return 0;
+  RECT outer,client;POINT origin={0,0};GetWindowRect(g.window,&outer);GetClientRect(g.window,&client);ClientToScreen(g.window,&origin);
+  LOGBRUSH brush={0};GetObject((HBRUSH)GetClassLongPtrW(g.window,GCLP_HBRBACKGROUND),sizeof(brush),&brush);
+  fprintf(out,"{\"font\":%.0f,\"theme\":%d,\"dark\":%d,\"open\":%d,\"animating\":%d,\"animation_ms\":%.6f,\"class_bg\":%lu,\"foreground\":%d,\"window\":[%ld,%ld],\"client_box\":[%ld,%ld,%ld,%ld],\"controls\":{",
+    (double)shell_font,shell_theme_mode,shell_is_dark(),shell_panel_open,shell_animating,shell_animation_elapsed,
+    (unsigned long)brush.lbColor,GetForegroundWindow()==g.window,outer.left,outer.top,origin.x-outer.left,origin.y-outer.top,client.right,client.bottom);
+  const char *names[]={"minus","plus","light","dark","system"};
+  for(int i=0;i<5;i++) {
+    RECT box;GetWindowRect(shell_button_named(names[i]),&box);MapWindowPoints(NULL,g.window,(POINT *)&box,2);
+    fprintf(out,"%s\"%s\":[%ld,%ld,%ld,%ld]",i?",":"",names[i],box.left,box.top,box.right,box.bottom);
+  }
+  fprintf(out,"}}\n");return fclose(out)==0;
+}

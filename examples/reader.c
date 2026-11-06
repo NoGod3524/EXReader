@@ -126,6 +126,15 @@ static BOOL shell_dpi_requested;
 static DWORD shell_dpi_error;
 static int shell_pmv2, shell_dpi_changing, shell_layout_waiting, shell_vertical;
 static float shell_font = SHELL_BODY_DEFAULT_FONT;
+static int shell_theme_mode=2; /* light, dark, system */
+static int shell_system_dark(void) {
+  DWORD value=1,bytes=sizeof(value);
+  RegGetValueW(HKEY_CURRENT_USER,L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+    L"AppsUseLightTheme",RRF_RT_REG_DWORD,NULL,&value,&bytes);
+  return value==0;
+}
+static int shell_is_dark(void) { return shell_theme_mode==1 || (shell_theme_mode==2 && shell_system_dark()); }
+static void shell_step_font(int delta);
 static unsigned long shell_epoch = 1, shell_pager_builds, shell_failed_epoch;
 static shell_geometry shell_target;
 static void shell_request_layout(void);
@@ -137,6 +146,7 @@ typedef struct {
   shell_geometry shell_geometry;
   unsigned long shell_epoch;
   int writing_mode;
+  int display_shell_theme;
   exr_line *shell_lines;
   size_t shell_line_count;
 #endif
@@ -610,7 +620,7 @@ static int frame_prepare_display(host_frame *frame) {
     memcpy(bits, frame->dib, (size_t)w * h * sizeof(uint32_t));
     SelectObject(dc,old);DeleteDC(dc);
     if(frame->display_bitmap)DeleteObject(frame->display_bitmap);
-    frame->display_bitmap=bitmap;frame->display_width=w;frame->display_height=h;return 1;
+    frame->display_shell_theme=0;frame->display_bitmap=bitmap;frame->display_width=w;frame->display_height=h;return 1;
   }
 #endif
   SetStretchBltMode(dc,HALFTONE);SetBrushOrgEx(dc,0,0,NULL);
@@ -618,6 +628,9 @@ static int frame_prepare_display(host_frame *frame) {
   SelectObject(dc,old);DeleteDC(dc);
   if(!copied || copied==GDI_ERROR){DeleteObject(bitmap);return 0;}
   if(frame->display_bitmap)DeleteObject(frame->display_bitmap);
+#ifdef EXR_READER_WINDOWS_SHELL
+  frame->display_shell_theme=0;
+#endif
   frame->display_bitmap=bitmap;frame->display_width=w;frame->display_height=h;return 1;
 }
 static void frame_move(host_frame *dst, host_frame *src) {
@@ -718,6 +731,13 @@ static void prefs_initialize(void);
 
 /* Settings: host preferences only. Books, progress and annotations live in SQLite. */
 static void settings_load(void) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  shell_theme_mode=(int)GetPrivateProfileIntW(L"Host",L"ShellTheme",2,g.settings_path);
+  if(shell_theme_mode<0 || shell_theme_mode>2) shell_theme_mode=2;
+  int font=(int)GetPrivateProfileIntW(L"Host",L"ShellFont",SHELL_BODY_DEFAULT_FONT,g.settings_path);
+  for(size_t i=0;i<sizeof(SHELL_FONT_STEPS)/sizeof(*SHELL_FONT_STEPS);i++)
+    if(font==SHELL_FONT_STEPS[i]) shell_font=(float)font;
+#endif
   g.font_percent = (int)GetPrivateProfileIntW(L"Host", L"FontPercent", 150, g.settings_path);
   g.zoom_percent = (int)GetPrivateProfileIntW(L"Host", L"ZoomPercent", 100, g.settings_path);
   g.window_width = (int)GetPrivateProfileIntW(L"Host", L"WindowWidth", 1180, g.settings_path);
@@ -750,6 +770,12 @@ static void settings_load(void) {
 static void settings_save(void) {
   wchar_t number[64];
   if (!g.settings_path[0]) return;
+#ifdef EXR_READER_WINDOWS_SHELL
+  swprintf(number,64,L"%d",shell_theme_mode);
+  WritePrivateProfileStringW(L"Host",L"ShellTheme",number,g.settings_path);
+  swprintf(number,64,L"%.0f",(double)shell_font);
+  WritePrivateProfileStringW(L"Host",L"ShellFont",number,g.settings_path);
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   product_shelf_remember();
   wchar_t *query=host_wide(g.shelf_query ? g.shelf_query:"",g.shelf_query ? strlen(g.shelf_query):0);
@@ -3686,6 +3712,13 @@ static void compose_page_view(HWND window) {
     host_probe_log("buffer_alloc",1);
   }
   dc=page_buffer_dc;
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(shell_active) {
+    HBRUSH bg=CreateSolidBrush(shell_colorref(shell_colors->layer_page));
+    FillRect(dc,&area,bg);DeleteObject(bg);
+    shell_color_display(&g.frame);
+  } else
+#endif
   FillRect(dc, &area, (HBRUSH)GetStockObject(WHITE_BRUSH));
   if (g.frame.valid && compute_view()) {
     last_page_rect=(RECT){g.view.dx,g.view.dy,g.view.dx+(LONG)(g.frame.bitmap.width*g.view.scale)+2,g.view.dy+(LONG)(g.frame.bitmap.height*g.view.scale)+2};
@@ -3723,6 +3756,9 @@ static void compose_page_view(HWND window) {
     const wchar_t *hint = L"打开一本书开始阅读\n\n导入 EPUB/PDF/CBZ 后从左侧书架打开";
     RECT text = area;
     SetBkMode(dc, TRANSPARENT);
+#ifdef EXR_READER_WINDOWS_SHELL
+    if(shell_active) SetTextColor(dc,shell_colorref(shell_colors->text_secondary));else
+#endif
     SetTextColor(dc, RGB(90, 90, 90));
     DrawTextW(dc, hint, -1, &text, DT_CENTER | DT_VCENTER | DT_WORDBREAK);
   }
@@ -3751,6 +3787,13 @@ static void paint_page_view(HWND window) {
   host_probe_log("blit_ms",host_probe_ms()-blit_start);
   EndPaint(window,&paint);host_probe_log("paint_ms",host_probe_ms()-start);
   host_probe_present((double)g.frame.generation);
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(shell_active) {
+    host_probe_log("presented",1);
+    if(shell_is_dark()) host_probe_log("dark_presented",1);
+    if(!page_buffer_dc || !g.frame.valid) host_probe_log("blank",1);
+  }
+#endif
 }
 
 static size_t point_offset(int x, int y, int at_end) {
@@ -4217,8 +4260,7 @@ static void page_step(int direction) {
 static void change_font(int delta) {
 #ifdef EXR_READER_WINDOWS_SHELL
   if (shell_active && !g.frame.fixed) {
-    shell_font = fmaxf(SHELL_BODY_MIN_FONT, fminf(SHELL_BODY_MAX_FONT, shell_font + (delta > 0 ? 1 : -1)));
-    shell_request_layout(); return;
+    shell_step_font(delta); return;
   }
 #endif
   int next;
@@ -5600,6 +5642,20 @@ static int snapshot_png(const char *name) {
   }
   previous = SelectObject(memory, bitmap);
   ok = (int)PrintWindow(g.window, memory, 2 /* PW_RENDERFULLCONTENT */);
+#ifdef EXR_READER_WINDOWS_SHELL
+  /* PrintWindow's recursive child pass does not preserve an overlapping
+     D2D/GDI sibling's z-order. Capture the actual overlay HWND last. */
+  if(ok && shell_active && IsWindowVisible(shell_panel)) {
+    RECT panel;GetWindowRect(shell_panel,&panel);
+    HDC overlay=CreateCompatibleDC(memory);
+    HBITMAP image=CreateCompatibleBitmap(memory,panel.right-panel.left,panel.bottom-panel.top);
+    HGDIOBJ old=SelectObject(overlay,image);
+    if(PrintWindow(shell_panel,overlay,0))
+      BitBlt(memory,panel.left-area.left,panel.top-area.top,panel.right-panel.left,panel.bottom-panel.top,overlay,0,0,SRCCOPY);
+    else ok=0;
+    SelectObject(overlay,old);DeleteObject(image);DeleteDC(overlay);
+  }
+#endif
   if (!ok && !host_offscreen) {
     x = area.left; y = area.top;
     BitBlt(memory, 0, 0, width, height, screen, x, y, SRCCOPY);
@@ -5806,6 +5862,21 @@ static int drive_execute(void) {
     return 0;
   }
 #ifdef EXR_READER_WINDOWS_SHELL
+  if (!strcmp(action,"shell_click")) {
+    HWND button=shell_button_named(drive_args[1]);
+    if(button) SendMessageW(button,BM_CLICK,0,0);
+    drive_step_finish(button!=NULL,"button invoked");return 0;
+  }
+  if (!strcmp(action,"shell_render_focus")) {
+    HWND previous=shell_render_focus;
+    shell_render_focus=shell_button_named(drive_args[1]);
+    if(previous) InvalidateRect(previous,NULL,FALSE);
+    if(shell_render_focus) InvalidateRect(shell_render_focus,NULL,FALSE);
+    drive_step_finish(host_offscreen,"offscreen drawing-state injection; no activation");return 0;
+  }
+  if (!strcmp(action,"settings_measure")) {
+    drive_step_finish(shell_settings_measure(drive_args[1]),"settings captured");return 0;
+  }
   if (!strcmp(action, "shell_client")) {
     RECT client = {0, 0, atoi(drive_args[1]), atoi(drive_args[2])};
     /* The actual window DPI controls its nonclient frame, even for injected DPI tests. */
@@ -6282,7 +6353,7 @@ static void drive_tick(void) {
     if (drive_expect_idle) {
       if (
 #ifdef EXR_READER_WINDOWS_SHELL
-          shell_layout_waiting ||
+          shell_layout_waiting || shell_animating ||
 #endif
           g.job || g.pending || host_probe_burst_left || wheel_delta<=-WHEEL_DELTA || wheel_delta>=WHEEL_DELTA) {
         if (GetTickCount() - drive_step_start > 120000) {
@@ -6594,6 +6665,8 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #ifdef EXR_READER_WINDOWS_SHELL
       if (FAILED(shell_d2d_create(window, &host_shell))) host_shell = NULL;
       shell_update_dpi(window);
+      shell_apply_theme();
+      if(host_shell) shell_prepare_settings();
 #endif
       return 0;
     case WM_SIZE: {
@@ -6623,11 +6696,15 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
         RECT client; GetClientRect(window, &client);
         shell_d2d_set_dpi(host_shell, shell_dpi);
         shell_d2d_resize(host_shell, (UINT)client.right, (UINT)client.bottom);
+        shell_prepare_settings();
       }
       layout_controls(); shell_request_layout(); page_dirty(g.page, 1);
       InvalidateRect(window, NULL, FALSE);
       return 0;
     }
+    case WM_SETTINGCHANGE:
+    case WM_THEMECHANGED:
+      shell_apply_theme(); break;
     case WM_ERASEBKGND:
       if (shell_active) return 1;
       break;
@@ -6683,7 +6760,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       int id = LOWORD(wparam);
       int code = HIWORD(wparam);
 #ifdef EXR_READER_WINDOWS_SHELL
-      if (id == IDC_SHELL_TOC || id == IDC_SHELL_SETTINGS) return 0;
+      if (id == IDC_SHELL_SETTINGS) { shell_toggle_settings(); return 0; }
+      if (shell_settings_command(id)) return 0;
+      if (id == IDC_SHELL_TOC) return 0;
 #endif
 #ifdef EXR_READER_WINDOWS_COMPACT
       if (code == 0 && compact_command(id)) return 0;
@@ -6802,6 +6881,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     }
     case WM_TIMER:
 #ifdef EXR_READER_WINDOWS_SHELL
+      if (wparam == 0x5753) { shell_animate(); return 0; }
       if (wparam == 0x5752) {
         KillTimer(window, 0x5752); shell_layout_waiting = 0; shell_pump_layout(); return 0;
       }
@@ -6895,7 +6975,11 @@ static int register_host_classes(HINSTANCE instance) {
   type.lpfnWndProc = procedure;
   type.hInstance = instance;
   type.hCursor = LoadCursor(NULL, IDC_ARROW);
+#ifdef EXR_READER_WINDOWS_SHELL
+  type.hbrBackground = CreateSolidBrush(shell_colorref(shell_is_dark() ? shell_theme_dark.layer_page : shell_theme_light.layer_page));
+#else
   type.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+#endif
   type.lpszClassName = L"EXReaderHost";
   if (!RegisterClassW(&type)) return 0;
   memset(&type, 0, sizeof(type));
@@ -6903,7 +6987,11 @@ static int register_host_classes(HINSTANCE instance) {
   type.lpfnWndProc = page_procedure;
   type.hInstance = instance;
   type.hCursor = LoadCursor(NULL, IDC_IBEAM);
+#ifdef EXR_READER_WINDOWS_SHELL
+  type.hbrBackground = CreateSolidBrush(shell_colorref(shell_is_dark() ? shell_theme_dark.layer_page : shell_theme_light.layer_page));
+#else
   type.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+#endif
   type.lpszClassName = L"EXReaderPage";
   if (!RegisterClassW(&type)) return 0;
   return 1;
