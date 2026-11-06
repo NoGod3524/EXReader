@@ -298,11 +298,165 @@ static void cjk_space_punctuation(void) {
     CHECK(heads==2);exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
   }
 }
+/* Exercise feed, emergency wrapping and display_scan independently, with the
+   protected boundary crossing an inline node in the original source. */
+static void kinsoku_layout(const char *left,const char *right,uint32_t protected_cp) {
+  char replacement[64],prefix[64],suffix[64],style[80];
+  exr_hyphen_discretionary_provider provider={sizeof(provider),cjk_replacement,NULL,replacement};
+  exr_hyphenator *h=NULL;exr_layout_config c=config();size_t mode;
+  snprintf(replacement,sizeof(replacement),"%s%s",left,right);
+  OK(exr_hyphenator_create_discretionary(&provider,&h,&error));
+  for(mode=0;mode<4;mode++) {
+    exr_document *doc=NULL;exr_layout *l=NULL;size_t n,nl,i,j,found=0,generated=0;
+    const exr_glyph *g;const exr_line *lines;
+    snprintf(prefix,sizeof(prefix),"%s%s",mode==3 ? "aaaaaaaa ":"",left);
+    snprintf(suffix,sizeof(suffix),"%s\xe7\x94\xb2",right);
+    snprintf(style,sizeof(style),"width:%upx;margin:0;hyphens:auto",mode==0 ? 1:mode==1 ? 35:mode==2 ? 300:70);
+    {
+      exr_attribute attrs[]={{"style",style},{"lang","und"}};
+      exr_node_input nodes[]={
+        {EXR_NODE_DOCUMENT,SIZE_MAX,NULL,NULL,NULL,0},{EXR_NODE_CHAPTER,0,NULL,NULL,NULL,0},
+        {EXR_NODE_PARAGRAPH,1,"p",NULL,attrs,2},{EXR_NODE_TEXT,2,NULL,prefix,NULL,0},
+        {EXR_NODE_ELEMENT,2,"span",NULL,NULL,0},{EXR_NODE_TEXT,4,NULL,suffix,NULL,0}};
+      exr_chapter_input chapter={"kinsoku","kinsoku.unit",1,1};
+      exr_document_input input={"Kinsoku spaces",nodes,6,&chapter,1,NULL,0};
+      OK(exr_document_create(&input,&doc,&error));
+    }
+    OK(exr_layout_create_hyphenated(doc,font,&c,mode==3 ? h:NULL,&l,&error));
+    g=exr_layout_glyphs(l,&n);lines=exr_layout_lines(l,&nl);
+    for(i=0;i<n;i++)if(g[i].codepoint==protected_cp) {
+      CHECK((g[i].boundaries&EXR_BOUNDARY_GLUE) && !(g[i].boundaries&EXR_BOUNDARY_LINE));
+      found++;generated+=!!(g[i].flags&EXR_GLYPH_GENERATED);
+      for(j=0;j<nl;j++)if(i>=lines[j].glyph_start && i<lines[j].glyph_start+lines[j].glyph_count) {
+        size_t k=i;
+        while(k>lines[j].glyph_start && (g[k-1].codepoint==32 || (g[k-1].flags&EXR_GLYPH_HIDDEN)))k--;
+        CHECK(k>lines[j].glyph_start);break;
+      }
+      CHECK(j<nl);
+    }
+    CHECK(found==(mode==3 ? 2:1) && generated==(mode==3 ? 1:0));
+    exr_layout_free(l);if(mode<3)modes(doc,&c);exr_document_free(doc);
+  }
+  exr_hyphenator_free(h);
+}
+static void cjk_space_kinsoku_set(void) {
+  /* All 16 members of the probe's head_bad | tail_bad, not a colon-only sample. */
+  const struct {const char *utf8;uint32_t cp;} punctuation[]={
+    {"\xe3\x80\x82",0x3002},{"\xe3\x80\x81",0x3001},{"\xef\xbc\x8c",0xff0c},
+    {"\xef\xbc\x8e",0xff0e},{"\xef\xbc\x89",0xff09},{"\xe3\x80\x8d",0x300d},
+    {"\xe3\x80\x8f",0x300f},{"\xef\xbc\x81",0xff01},{"\xef\xbc\x9f",0xff1f},
+    {"\xef\xbc\x9a",0xff1a},{"\xef\xbc\x9b",0xff1b},{"\xe2\x80\x9d",0x201d},
+    {"\xef\xbc\x88",0xff08},{"\xe3\x80\x8c",0x300c},{"\xe3\x80\x8e",0x300e},
+    {"\xe2\x80\x9c",0x201c}};
+  size_t i;scenario="SP plus every Chinese kinsoku scalar stays on one line";
+  for(i=0;i<sizeof(punctuation)/sizeof(*punctuation);i++) {
+    char right[32];snprintf(right,sizeof(right),"%s\xe4\xb9\x99",punctuation[i].utf8);
+    kinsoku_layout("\xe7\x94\xb2\xe7\x94\xb2 ",right,punctuation[i].cp);
+  }
+}
+static void cjk_opening_space_text(void) {
+  const char *opening[]={"\xef\xbc\x88","\xe3\x80\x8c","\xe3\x80\x8e","\xe2\x80\x9c"};
+  size_t i;scenario="opening punctuation plus SP plus text cannot leave an opening at the tail";
+  for(i=0;i<sizeof(opening)/sizeof(*opening);i++) {
+    char left[32];snprintf(left,sizeof(left),"\xe7\x94\xb2%s ",opening[i]);
+    kinsoku_layout(left,"\xe4\xb9\x99",0x4e59);
+  }
+}
+static void latin_quote_spaces(void) {
+  const char *texts[]={"A \xe2\x80\x9c" "A","A \xe2\x80\x9d" "A","A\xe2\x80\x9c A"};
+  exr_layout_config c=config();size_t t;
+  scenario="Latin quote spaces retain default Unicode boundaries";
+  for(t=0;t<sizeof(texts)/sizeof(*texts);t++) {
+    unsigned char *map=NULL;exr_document *doc=document(texts[t],"width:35px;margin:0",0);
+    exr_layout *l=layout(doc,&c);size_t n,i;const exr_glyph *g=exr_layout_glyphs(l,&n);
+    unsigned mask=EXR_BOUNDARY_LINE|EXR_BOUNDARY_GLUE|EXR_BOUNDARY_MANDATORY;
+    OK(exr_text_analyze(texts[t],strlen(texts[t]),&map,&error));
+    for(i=0;i<n;i++)CHECK((g[i].boundaries&mask)==(map[g[i].start]&mask));
+    exr_free(map);exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+  }
+}
+static void cjk_punctuation_pair(void) {
+  exr_layout_config c=config();
+  exr_document *doc=document("\xe3\x80\x82\xe3\x80\x8c","width:30px;margin:0",0);
+  exr_layout *l=layout(doc,&c);size_t n;
+  const exr_glyph *g=exr_layout_glyphs(l,&n);
+  const exr_line *lines;
+  scenario="two fullwidth punctuation fit in 1.5em";
+  CHECK(n==2);lines=exr_layout_lines(l,&n);CHECK(n==1);
+  CHECK(near(g[0].advance,10) && near(g[1].advance,20));
+  CHECK(near(g[1].x-g[0].x,10) && near(lines[0].width,30));
+  CHECK(near(g[0].size,20) && near(g[1].size,20));
+  CHECK(near(g[0].offset_x,0) && near(g[1].offset_x,0));
+  exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+}
+static void cjk_punctuation_three(void) {
+  exr_layout_config c=config();
+  exr_document *doc=document("\xe3\x80\x82\xe3\x80\x8d\xe3\x80\x8c","width:40px;margin:0",0);
+  exr_layout *l=layout(doc,&c);size_t n;
+  const exr_glyph *g=exr_layout_glyphs(l,&n);const exr_line *lines;
+  scenario="three punctuation save 1em without reducing below 0.5em";
+  CHECK(n==3);lines=exr_layout_lines(l,&n);CHECK(n==1);
+  CHECK(near(g[0].advance,10) && near(g[1].advance,10) && near(g[2].advance,20));
+  CHECK(near(g[1].x-g[0].x,10) && near(g[2].x-g[1].x,10));
+  CHECK(near(g[2].x+g[2].advance-g[0].x,40) && near(lines[0].width,40));
+  exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+}
+static void cjk_punctuation_wrap(void) {
+  exr_layout_config c=config();size_t hard;
+  scenario="punctuation across soft and hard line breaks stays fullwidth";
+  for(hard=0;hard<2;hard++) {
+    exr_document *doc;
+    exr_layout *l;size_t n,i,found=0;
+    if(hard) {
+      exr_node_input nodes[]={
+        {EXR_NODE_DOCUMENT,SIZE_MAX,NULL,NULL,NULL,0},{EXR_NODE_CHAPTER,0,NULL,NULL,NULL,0},
+        {EXR_NODE_PARAGRAPH,1,"p",NULL,NULL,0},{EXR_NODE_TEXT,2,NULL,"\xe3\x80\x82",NULL,0},
+        {EXR_NODE_BREAK,2,"br",NULL,NULL,0},{EXR_NODE_TEXT,2,NULL,"\xe3\x80\x8c",NULL,0}};
+      exr_chapter_input chapter={"compression","compression.unit",1,1};
+      exr_document_input input={"Hard break",nodes,6,&chapter,1,NULL,0};
+      doc=NULL;OK(exr_document_create(&input,&doc,&error));
+    } else doc=document("\xe3\x80\x82\xe3\x80\x8c","width:20px;margin:0",0);
+    l=layout(doc,&c);
+    const exr_glyph *g=exr_layout_glyphs(l,&n);const exr_line *lines;
+    for(i=0;i<n;i++)if(g[i].codepoint==0x3002 || g[i].codepoint==0x300c) {
+      CHECK(near(g[i].advance,20));found++;
+    }
+    CHECK(found==2);lines=exr_layout_lines(l,&n);CHECK(n==2);
+    CHECK(near(lines[0].width,20) && near(lines[1].width,20));
+    exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+  }
+}
+static void cjk_punctuation_exclusions(void) {
+  const char *texts[]={",.","\xe3\x80\x82 \xe3\x80\x8c","\xe3\x80\x82" "A\xe3\x80\x8c"};
+  exr_layout_config c=config();size_t k;
+  scenario="ASCII punctuation and intervening spaces/text stay unchanged";
+  for(k=0;k<3;k++) {
+    exr_document *doc=document(texts[k],"width:100px;margin:0",0);
+    exr_layout *l=layout(doc,&c);size_t n,i;const exr_glyph *g=exr_layout_glyphs(l,&n);
+    for(i=0;i<n;i++)CHECK(near(g[i].advance,20));
+    exr_layout_free(l);exr_document_free(doc);
+  }
+}
 int main(int argc, char **argv) {
   scenario = "setup"; CHECK(argc == 3);
   font = open_font(argv[1], "line-boundary.ttf");
   pair_boundaries(); cursive_and_arabic(); pagination(); long_inline_marks(); queue_budget(argv[2]);
   cjk_space_punctuation();
+  exr_font_free(font);
+  font = open_font(argv[2], "cjk-punctuation.ttf");
+  cjk_space_kinsoku_set();cjk_opening_space_text();
+  cjk_punctuation_pair();cjk_punctuation_three();cjk_punctuation_wrap();cjk_punctuation_exclusions();
+  exr_font_free(font);
+  font = open_font(argv[2], "latin-punctuation.ttf");
+  latin_quote_spaces();
+  {
+    exr_layout_config c=config();
+    exr_document *doc=document("\xe2\x80\x94\xe2\x80\x94\xe2\x80\x9c\xe2\x80\x9d","width:100px;margin:0",0);
+    exr_layout *l=layout(doc,&c);size_t n,i;const exr_glyph *g=exr_layout_glyphs(l,&n);
+    scenario="Latin em dashes and quotes stay unchanged even with em-wide metrics";
+    CHECK(n==4);for(i=0;i<n;i++)CHECK(near(g[i].advance,20));
+    exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+  }
   exr_font_free(font);
   printf("EXReader line boundaries: %u checks passed\n", checks);
   return 0;
