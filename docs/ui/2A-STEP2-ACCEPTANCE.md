@@ -115,6 +115,30 @@ phase 结果：三组都是 A 120 步只第 115 步失败、B 29 步只第 5 步
 | disabled 底 / 图标最深像素 | `#FFFFFF` / `#AEAEB2` | 无叠加 / `text.disabled` |
 | 书名字面 | `Segoe UI Variable Text`；拉丁 simulations 0，CJK（`Microsoft YaHei UI`）simulations 0 | 无伪粗 |
 
+### 3.3 MSVC `/W4 /WX`：证据类型——间接（附配置行号）
+
+CI：PR #50 头 `d76f5333`，run 42158204510，作业 127697311831 `desktop (windows-latest)`，MSVC 19.51.36260.0，作业通过。
+
+推理链：**配置确实对该目标启用 `/W4 /WX` + 该目标编译成功 ⇒ 0 警告**（`/WX` 把任何警告变成错误，有警告就不会生成 `.lib`）。
+
+1. **配置**：`examples/CMakeLists.txt`（`d76f5333`），第 28–30 行：
+   ```cmake
+   28  add_library(exreader-shell-d2d STATIC windows/shell_d2d.cpp)
+   29  target_compile_features(exreader-shell-d2d PRIVATE cxx_std_17)
+   30  target_compile_options(exreader-shell-d2d PRIVATE $<IF:$<CXX_COMPILER_ID:MSVC>,/W4 /WX,-Wall -Wextra -Werror>)
+   ```
+   该作业的这一步执行 `cmake -S stage/examples ...`，`stage/examples` 是本 PR 的 `examples/` 安装后的副本。
+2. **编译成功**：日志原文
+   ```
+   shell_d2d.cpp
+   exreader-shell-d2d.vcxproj -> D:\EXReader\EXReaderuild\sdk-example\Release\exreader-shell-d2d.lib
+   ```
+3. **警告计数**：日志里没有 MSBuild 的 `Warning(s)` 汇总行（整份日志 0 处），所以无法引用计数原文。改为直接统计：含 `shell_d2d` 或 `exreader-shell-d2d.vcxproj` 的 warning 行 0 条、error 行 0 条；examples 构建这一步的 warning 行 0 条。
+
+**为什么不是直接证据**：日志里没有这个文件的 `cl.exe` 命令行（MSBuild 只打印文件名），没有 `.vcxproj` 的 `WarningLevel` / `TreatWarningAsError`，配置阶段也没打印 `CMAKE_CXX_FLAGS`。没有为此修改 `native.yml`。
+
+**已知缺口**：`/W4 /WX` 只加在独立静态库目标 `exreader-shell-d2d` 上。从 SDK 安装树构建 `EXReader` 时，`examples/windows/CMakeLists.txt` 第 26–36 行开宏，第 29 行 `target_sources(EXReader PRIVATE shell_d2d.cpp)` 把同一源文件编进 `EXReader`，这里没有 `/W4 /WX`。源文件相同，所以上面的结论覆盖它的代码，但这条构建路径本身不受该门槛约束。如需补齐，留待后续步骤，作为 `examples/` 内的改动。
+
 ## 4. 环境限制（先读这节）
 
 **GUI 测试需要 owner 明确许可（2026-11-05 起）。** 驱动脚本、`check_shell_2a.py`、phase-a/b/c 和像素对照组都会在本机桌面打开 EXReader 窗口，焦点段还会把它强制拉到前台。owner 的反馈是窗口“一直在前台疯狂弹出”。
