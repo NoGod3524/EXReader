@@ -123,6 +123,7 @@ R2/R3报告必须绑定同source/run/attempt及冻结清单/测量契约/预算�
 
 GitHub默认分支当前`codex/framework`，规则25700819已active并云端读回；About已更新为原生多格式/自有PDF/无WebView和MIT核心、可选依赖分别许可的说明。
 实际check为reading-required，绑定GitHub Actions发布者15368，当前用户也无绕过权限。
+（后续变更：上两行是R6当时状态。默认分支现为`main`；2026-11-03起必需检查改为`reading-required-core`（protocol/native/profiles/platforms/corpus五组，发布者15368，strict，无bypass）；performance当前为advisory，不授予性能验收（E3，[issue #32](https://github.com/NoGod3524/EXReader/issues/32)，硬截止2026-12-15 America/New_York，见[E3性能政策](validation/PERF-BASELINE-POLICY.md)）。）
 发布动作与候选封装分开；最终产物只能使用已接受源码、固定版本及同次工件，回退指向原有不可变版本，
 不覆盖旧tag、工件或失败。门禁接线及发布准备已实际执行，正式tag/Release仍待发布授权。
 
