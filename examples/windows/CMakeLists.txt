@@ -27,6 +27,13 @@ option(EXR_READER_WINDOWS_SHELL "Build the reader with the 2a Windows shell" OFF
 if(EXR_READER_WINDOWS_SHELL)
   enable_language(CXX)
   target_sources(EXReader PRIVATE shell_d2d.cpp)
+  # The same warning gate as the standalone exreader-shell-d2d library, on this
+  # one file only: the C sources of EXReader keep their own flags.
+  if(MSVC)
+    set_source_files_properties(shell_d2d.cpp PROPERTIES COMPILE_OPTIONS "/W4;/WX")
+  else()
+    set_source_files_properties(shell_d2d.cpp PROPERTIES COMPILE_OPTIONS "-Wall;-Wextra;-Werror")
+  endif()
   target_compile_features(EXReader PRIVATE cxx_std_17)
   target_compile_definitions(EXReader PRIVATE EXR_READER_WINDOWS_SHELL=1)
   target_link_libraries(EXReader PRIVATE d2d1 dwrite)
