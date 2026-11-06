@@ -469,6 +469,23 @@ static void cjk_spaces(void) {
   projected_space("\U00020000\n", "\U00030000", "\U00020000\U00030000");
 }
 
+static void cjk_punctuation_spaces(void) {
+  const char *marks[]={"\u2018","\u2019","\u201a","\u201b","\u201c","\u201d",
+    "\u2026","\u2014","\u2015","\u00b7","\u3000","\u303f",
+    "\uff00","\uffef","\ufe10","\ufe1f","\ufe30","\ufe4f"};
+  size_t i;
+  for(i=0;i<sizeof(marks)/sizeof(*marks);i++) {
+    char left[32],expected[32];
+    snprintf(left,sizeof(left),"\uff1a  %s ",marks[i]);
+    snprintf(expected,sizeof(expected),"\uff1a%s\u7532",marks[i]);
+    projected_space(left,"\u7532",expected);
+    snprintf(left,sizeof(left),"A %s ",marks[i]);
+    snprintf(expected,sizeof(expected),"A %s B",marks[i]);
+    projected_space(left,"B",expected);
+  }
+  projected_space("\u3002  ","\u201d","\u3002\u201d");
+}
+
 static void mixed_spaces(void) {
   projected_space("GPU ", "\u52a0\u901f", "GPU \u52a0\u901f");
   projected_space("\u52a0\u901f \t", " GPU", "\u52a0\u901f GPU");
@@ -502,6 +519,7 @@ int main(int argc, char **argv) {
   generic_names();
   validation();
   cjk_spaces();
+  cjk_punctuation_spaces();
   mixed_spaces();
   exr_font_free(font);
   printf("%u document construction checks passed\n", checks);
