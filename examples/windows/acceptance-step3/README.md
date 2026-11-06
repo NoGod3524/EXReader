@@ -91,3 +91,5 @@ python examples/windows/check_step3.py --phases BASELINE_OFF STEP3_OFF STEP3_ON 
 构建沿用 examples/windows/CMakeLists.txt，`-DEXR_SDK=<prefix> -DEXR_READER_WINDOWS_SHELL=ON -DCMAKE_BUILD_TYPE=Release`。本地旧 SDK 的导出链接集缺 UIA，基线和新构建均额外使用 C/CXX_STANDARD_LIBRARIES 中的 `-luiautomationcore -lole32 -loleaut32 -luuid` 和既有 Win32 库；没有修改 CMake 文件。基线离屏补丁用 `git apply --unidiff-zero` 应用到 4519bd5b 源码副本，必须沿用其 windows_accessibility.inc。详细原始日志、逐页 line/glyph、客户区矩形与截图在本工作区 `examples/windows/build/`，提交的 results.json 保存汇总、样本/SDK/字体/各阶段二进制 SHA-256。
 
 `results.json` 的 layout_exe 是主矩阵和 phase 像素组所用构建，release_exe 另外验证了窄 shell 返回旧面板的最小尺寸修复；该最后修复只在 shell_leave 执行，phase 保持旧布局不会调用。两阶段均保留其二进制哈希。固定页和最新锚点往返用 release_exe 验证。
+
+<!-- ci touch 2026-11-06 -->
