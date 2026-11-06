@@ -270,9 +270,52 @@ static void outline_geometry(const char *directory) {
   CHECK(right-left>bottom-top); /* Rotated triangle has the expected physical axes. */
   exr_bitmap_free(&bitmap); exr_layout_free(layout); exr_document_free(doc); exr_font_free(font);
 }
+static void property_aliases(const char *directory) {
+  static const char *prefixes[]={"-epub-","-webkit-"};
+  static const char *legacy[]={"writing-mode","text-orientation","text-combine"};
+  static const char *canonical[]={"writing-mode","text-orientation","text-combine-upright"};
+  static const char *values[]={"vertical-rl","upright","all"};
+  exr_font *font=open_font(directory,"vrt2");
+  exr_document *doc=document("\xe7\x94\xb2" "A\xe3\x80\x88\xe3\x80\x81");
+  size_t i,j,k;
+  for(i=0;i<3;i++) for(j=0;j<2;j++) {
+    char a[200],b[200];exr_layout *reference=NULL,*alias=NULL;
+    exr_layout_config c;size_t na,nb,pa,pb;
+    const exr_glyph *ga,*gb;
+    const char *context=i ? "writing-mode:vertical-rl;" : "";
+    snprintf(a,sizeof(a),"#body{%s%s:%s}",context,canonical[i],values[i]);
+    snprintf(b,sizeof(b),"#body{%s%s%s:%s}",context,prefixes[j],legacy[i],values[i]);
+    c=config(a);OK(exr_layout_create_ex(doc,font,&c,&reference,&error));
+    c=config(b);OK(exr_layout_create_ex(doc,font,&c,&alias,&error));
+    CHECK(exr_layout_writing_mode(reference)==exr_layout_writing_mode(alias));
+    exr_layout_pages(reference,&pa);exr_layout_pages(alias,&pb);CHECK(pa==pb);
+    ga=exr_layout_glyphs(reference,&na);gb=exr_layout_glyphs(alias,&nb);CHECK(na==nb && na);
+    for(k=0;k<na;k++) {
+      CHECK(ga[k].glyph==gb[k].glyph && ga[k].flags==gb[k].flags && near(ga[k].size,gb[k].size));
+      CHECK(near(ga[k].x,gb[k].x) && near(ga[k].baseline,gb[k].baseline) && near(ga[k].advance,gb[k].advance));
+    }
+    /* text-combine-upright has no layout implementation yet; aliases preserve
+       the canonical property's existing ignored behavior. */
+    exr_layout_free(alias);exr_layout_free(reference);
+  }
+  {
+    const char *css[]={"#body{writing-mode:horizontal-tb;-epub-writing-mode:vertical-rl}",
+      "#body{-epub-writing-mode:vertical-rl;writing-mode:horizontal-tb}",
+      "#body{-WEBKIT-WRITING-MODE:vertical-rl!important;writing-mode:horizontal-tb}"};
+    const exr_writing_mode expected[]={EXR_WRITING_VERTICAL_RL,EXR_WRITING_HORIZONTAL_TB,EXR_WRITING_VERTICAL_RL};
+    for(i=0;i<3;i++) {
+      exr_layout *lay=NULL;exr_layout_config c=config(css[i]);
+      OK(exr_layout_create_ex(doc,font,&c,&lay,&error));CHECK(exr_layout_writing_mode(lay)==expected[i]);
+      exr_layout_free(lay);
+    }
+  }
+  exr_document_free(doc);exr_font_free(font);
+  puts("6 prefixed/canonical equivalence cases and 3 cascade cases passed");
+}
 int main(int argc,char **argv) {
   CHECK(argc==2); shaping(argv[1]); layouts(argv[1]); overrides(argv[1]); logical_anchors(argv[1]);
   clusters_and_modes(argv[1]); outline_geometry(argv[1]);
+  property_aliases(argv[1]);
   CHECK(exr_layout_writing_mode(NULL)==EXR_WRITING_HORIZONTAL_TB);
   { double m[6]={1,1,1,1,1,1}; size_t i; CHECK(exr_glyph_matrix(NULL,m,&error)==EXR_ARGUMENT);
     for(i=0;i<6;i++) CHECK(!m[i]); }
