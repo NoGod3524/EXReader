@@ -1,5 +1,16 @@
 # Evidence index
 
+## 台账计数口径（v1 108 项）
+
+| 口径 | 数值 | 依据 |
+| --- | --- | --- |
+| 名义（catalog 记账） | 99/108（verified 99、partial 1、pending 8） | [catalog.json](../docs/reader-total-progress/catalog.json) |
+| 有总台账审计支撑 | 95/108 | [run 40928834086](https://github.com/NoGod3524/EXReader/actions/runs/40928834086)（#29 attempt 2，开始于 2026-10-29T18:17:09Z）`report.json`：current_done=95、evidence_ok=true；96–99 为未审计记账，见 [LEDGER-AUTHORITY](../docs/reader-total-progress/LEDGER-AUTHORITY.md#exceptions) |
+| 当前树可复现 | 未知 | 尚无绑定当前 main SHA 的完整台账复验 |
+| 产品级 final 组（F 项） | 名义 4/12（F02/F04/F06/F07） | catalog 记账；不是当前树产品验收 4/12。上述审计 run 当时 final 组为 1/12 |
+
+99/108 是历史记账，不能当作当前整树通过。
+
 - **已知失败（已修复）**：版本扫描曾将归档历史消费方计入当前源码，产生27条错版本诊断；`tools/check_version_consistency.py` 已按 `archive/**` 排除历史快照，验证结果见 [PR #46](https://github.com/NoGod3524/EXReader/pull/46)。
 
 - **已知问题／损失**：本轮分支清理 recoverable=no 共 86 条，内容不可恢复；清单见 [DELETED-BRANCHES.csv](../archive/DELETED-BRANCHES.csv)。297条分支的归档实物仅保存在标签 `refs/tags/archive/branches-20261104`（`56c6ccfc`），[查看快照](https://github.com/NoGod3524/EXReader/tree/56c6ccfcb8b3662a976f7c4e5f704ae2f6f766f1/archive/branches-20261104)；main 保留登记，不包含归档实物目录。
