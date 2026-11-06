@@ -65,19 +65,20 @@ static void shell_panel_layout(void) {
   RECT area;GetClientRect(g.window,&area);
   int kpad=shell_px(SHELL_SHADOW_PAD,shell_dpi);
   int w=shell_px(SHELL_PANEL_W,shell_dpi)+2*kpad;
-  int h=shell_px(SHELL_PANEL_H,shell_dpi)+2*kpad;
+  int top=shell_px(SHELL_SHADOW_TOP,shell_dpi);
+  int h=shell_px(SHELL_PANEL_H,shell_dpi)+top+kpad;
   /* The panel's shadow bounds are an ordinary child, above the page HWND. */
   SetWindowPos(shell_panel,HWND_TOP,area.right-shell_px(SHELL_SPACE_2,shell_dpi)-w+kpad,
     shell_px(SHELL_TOPBAR_H,shell_dpi),w,(int)(h*shell_animation_value+.5f),SWP_NOACTIVATE);
   HWND controls[5]={shell_minus,shell_plus,shell_segments[0],shell_segments[1],shell_segments[2]};
-  int xs[5]={SHELL_SPACE_3,SHELL_PANEL_W-SHELL_SPACE_3-SHELL_STEPPER_W,
-    SHELL_SPACE_3,SHELL_SPACE_3+SHELL_SEGMENT_W+SHELL_SPACE_1,SHELL_SPACE_3+2*(SHELL_SEGMENT_W+SHELL_SPACE_1)};
+  int xs[5]={111,215,24,74,124};
+  int widths[5]={34,34,50,50,76};
   for(int i=0;i<5;i++) {
-    int frame=shell_px(SHELL_CONTROL_FRAME,shell_dpi);
-    int y=i<2 ? SHELL_SPACE_5 : SHELL_SPACE_5*2+SHELL_SPACE_4;
-    MoveWindow(controls[i],kpad+shell_px(xs[i],shell_dpi)-frame,kpad+shell_px(y,shell_dpi)-frame,
-      shell_px(i<2 ? SHELL_STEPPER_W : SHELL_SEGMENT_W,shell_dpi)+2*frame,
-      shell_px(SHELL_CONTROL_H,shell_dpi)+2*frame,TRUE);
+    int frame=shell_px(i<2 ? SHELL_CONTROL_FRAME : SHELL_SEGMENT_PAD,shell_dpi);
+    int y=i<2 ? 44 : 122;
+    MoveWindow(controls[i],kpad+shell_px(xs[i],shell_dpi)-(i<2 ? frame : 0),top+shell_px(y,shell_dpi)-frame,
+      shell_px(widths[i],shell_dpi)+(i<2 ? 2*frame : 0),
+      shell_px(i<2 ? SHELL_CONTROL_H : SHELL_SEGMENT_H,shell_dpi)+2*frame,TRUE);
   }
 }
 
@@ -131,7 +132,7 @@ static LRESULT CALLBACK shell_panel_procedure(HWND window,UINT message,WPARAM wp
     case WM_PRINTCLIENT: {
       PAINTSTRUCT paint;RECT box;GetClientRect(window,&box);
       /* Animate by clipping, never rescaling the content/shadow. */
-      box.bottom=shell_px(SHELL_PANEL_H+2*SHELL_SHADOW_PAD,shell_dpi);
+      box.bottom=shell_px(SHELL_PANEL_H+SHELL_SHADOW_TOP+SHELL_SHADOW_PAD,shell_dpi);
       HDC dc=message==WM_PAINT ? BeginPaint(window,&paint) : (HDC)wp;
       wchar_t font[32];swprintf(font,32,L"%.0f px",(double)shell_font);
       if(host_shell) {
@@ -190,7 +191,7 @@ static int shell_draw_settings(const DRAWITEMSTRUCT *item) {
 
 /* Warm the cached blur before input starts the animation clock. */
 static void shell_prepare_settings(void) {
-  RECT box={0,0,shell_px(SHELL_PANEL_W+2*SHELL_SHADOW_PAD,shell_dpi),shell_px(SHELL_PANEL_H+2*SHELL_SHADOW_PAD,shell_dpi)};
+  RECT box={0,0,shell_px(SHELL_PANEL_W+2*SHELL_SHADOW_PAD,shell_dpi),shell_px(SHELL_PANEL_H+SHELL_SHADOW_TOP+SHELL_SHADOW_PAD,shell_dpi)};
   HDC dc=CreateCompatibleDC(NULL);if(!dc) return;
   HDC screen=GetDC(g.window);
   HBITMAP bitmap=CreateCompatibleBitmap(screen,box.right,box.bottom);ReleaseDC(g.window,screen);

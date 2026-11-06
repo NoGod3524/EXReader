@@ -23,6 +23,8 @@
 #ifdef EXR_READER_WINDOWS_SHELL
 #include "windows/shell_d2d.h"
 #include "windows/shell_geometry.h"
+int shell_epub_source(exr_source *source);
+int shell_style_document(exr_document **document);
 /* Created with the main window; draws the reading screen (windows/shell_screen.inc). */
 static shell_d2d *host_shell;
 #endif
@@ -356,6 +358,8 @@ static shell_geometry shell_snapshot(void) {
   return out;
 }
 static void shell_apply_config(exr_layout_config *config, shell_geometry geometry) {
+  /* Pager creation copies CSS. Host jobs are serialized, including reflow. */
+  static char css[2048];
   if (!geometry.enabled) return;
   config->page.width = (float)geometry.width;
   config->page.height = (float)geometry.height;
@@ -363,6 +367,19 @@ static void shell_apply_config(exr_layout_config *config, shell_geometry geometr
   config->page.font_size = geometry.font * geometry.dpi / 96.0f;
   config->page.line_height = SHELL_BODY_LINE_HEIGHT;
   config->page.paragraph_spacing = SHELL_BODY_PARAGRAPH_EM * config->page.font_size;
+  float leading=(float)shell_px(geometry.font*1.75f,geometry.dpi);
+  snprintf(css,sizeof(css),
+    ".exr-shell-cjk{line-height:%.6fpx}"
+    ".exr-shell-latin{line-height:1.6}"
+    ".exr-shell-cjk.exr-shell-paragraph{text-indent:2em;%s}"
+    ".exr-shell-latin.exr-shell-paragraph{text-indent:0;%s}",
+    (double)leading,geometry.vertical ? "margin-right:0;margin-left:0.5em" : "margin-top:0;margin-bottom:0.5em",
+    geometry.vertical ? "margin-right:0;margin-left:0.8em" : "margin-top:0;margin-bottom:0.8em");
+  for(int i=1;i<=16;i++) {
+    size_t used=strlen(css);
+    snprintf(css+used,sizeof(css)-used,".exr-shell-cjk.exr-shell-indent-%d{text-indent:%dem}",i,2-i);
+  }
+  config->user_css=css;
 }
 #endif
 #ifdef EXR_HOST_WORKER_REVIEW
@@ -1566,6 +1583,7 @@ static void session_configure(host_session *session, host_job *job) {
   session->shell_geometry = job ? job->shell_geometry : (shell_geometry){0};
   if (session->shell_geometry.enabled) {
     shell_apply_config(&session->config, session->shell_geometry);
+    if(session->txt) session->config.user_css=NULL;
     return;
   }
 #endif
@@ -2593,11 +2611,21 @@ static exr_status job_open(host_job *job) {
       status = exr_library_source(g.library, book.id, &source, &error);
       if (status == EXR_OK) {
         source.control.cancelled = host_cancel_check;
+#ifdef EXR_READER_WINDOWS_SHELL
+        if(!shell_epub_source(&source)) {
+          source.release(source.context);status=EXR_FORMAT;
+        } else
+#endif
+        {
         status = exr_publication_open_source(&source, &session.publication, &error);
         if (status != EXR_OK) source.release(source.context);
+        }
       }
     } else if (status == EXR_OK) status = exr_library_document(g.library, book.id, &session.document, &error);
     LeaveCriticalSection(&g.library_lock);
+#ifdef EXR_READER_WINDOWS_SHELL
+    if(status==EXR_OK && !session.bounded && !shell_style_document(&session.document)) status=EXR_FORMAT;
+#endif
     if (status == EXR_OK && !session.bounded)
       status = exr_pager_create(session.document, g.font, &session.config, &session.pager, &error);
     if (status == EXR_OK && !session.bounded) status = exr_pager_set_cache(session.pager, 2, 0, &error);
@@ -2921,6 +2949,8 @@ static exr_status job_layout(host_job *job) {
                          &copy, 0, FALSE, DUPLICATE_SAME_ACCESS)) return EXR_IO;
     source.context = copy;
     candidate.config = config;
+    candidate.config.user_css = NULL; /* The public TXT pager has no CSS interface. */
+    config.user_css = NULL;
 #ifdef EXR_READER_WINDOWS_SHELL
     candidate.shell_geometry = job->shell_geometry;
 #endif
