@@ -440,6 +440,44 @@ static void validation(void) {
   }
 }
 
+static void projected_space(const char *left, const char *right, const char *expected) {
+  exr_node_input nodes[] = {
+      {EXR_NODE_DOCUMENT, SIZE_MAX, NULL, NULL, NULL, 0},
+      {EXR_NODE_CHAPTER, 0, NULL, NULL, NULL, 0},
+      {EXR_NODE_PARAGRAPH, 1, NULL, NULL, NULL, 0},
+      {EXR_NODE_TEXT, 2, NULL, left, NULL, 0},
+      {EXR_NODE_ELEMENT, 2, "http://www.w3.org/1999/xhtml|span", NULL, NULL, 0},
+      {EXR_NODE_TEXT, 4, NULL, right, NULL, 0}};
+  exr_chapter_input chapter = {"chapter", "chapter.xhtml", 1, 1};
+  exr_document_input input = {NULL, nodes, 6, &chapter, 1, NULL, 0};
+  exr_document *doc = NULL;
+  const exr_node *built;
+  size_t size;
+  OK(exr_document_create(&input, &doc, &error));
+  CHECK(!strcmp(exr_document_text(doc, &size), expected));
+  built = exr_document_nodes(doc, NULL);
+  CHECK(built[5].end == size && built[4].end == size && built[2].end == size);
+  CHECK(!strcmp(built[3].text, left) && !strcmp(built[5].text, right));
+  exr_document_free(doc);
+}
+
+static void cjk_spaces(void) {
+  projected_space("\u4f60 ", "\u597d", "\u4f60\u597d");
+  projected_space("\u63a2\n\t ", " \r\u6625", "\u63a2\u6625");
+  projected_space("\u7b2c\u4e00\u7ae0 \u603b\u8bba", "", "\u7b2c\u4e00\u7ae0\u603b\u8bba");
+  projected_space("\u4f60\uff0c\n", "\uff08 \u597d \uff09", "\u4f60\uff0c\uff08\u597d\uff09");
+  projected_space("\U00020000\n", "\U00030000", "\U00020000\U00030000");
+}
+
+static void mixed_spaces(void) {
+  projected_space("GPU ", "\u52a0\u901f", "GPU \u52a0\u901f");
+  projected_space("\u52a0\u901f \t", " GPU", "\u52a0\u901f GPU");
+  projected_space("\u7b2c 1 ", "\u7ae0", "\u7b2c 1 \u7ae0");
+  projected_space("  one \n two\t", " three  ", "one two three");
+  projected_space("\u4f60 ! ", "\u597d", "\u4f60 ! \u597d");
+  projected_space("\u4f60 \u03b1 ", "\u597d", "\u4f60 \u03b1 \u597d");
+}
+
 int main(int argc, char **argv) {
   const char *font_path = getenv("EXR_TEST_FONT");
   if (argc < 2 || argc > 3) {
@@ -463,6 +501,8 @@ int main(int argc, char **argv) {
   integration();
   generic_names();
   validation();
+  cjk_spaces();
+  mixed_spaces();
   exr_font_free(font);
   printf("%u document construction checks passed\n", checks);
   return 0;

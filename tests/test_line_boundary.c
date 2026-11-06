@@ -273,8 +273,8 @@ static void cjk_space_punctuation(void) {
   }
   exr_hyphenator_free(h);
   {
-    /* A different NS scalar keeps its default SP opportunity. */
-    exr_document *doc=document("\xe7\x94\xb2 \xe3\x80\x85\xe4\xb9\x99","width:300px;margin:0",0);
+    /* A Latin left neighbor retains SP and its default NS opportunity. */
+    exr_document *doc=document("A \xe3\x80\x85\xe4\xb9\x99","width:300px;margin:0",0);
     exr_layout *l=layout(doc,&c);size_t n,i;const exr_glyph *g=exr_layout_glyphs(l,&n);
     for(i=0;i<n;i++)if(g[i].codepoint==0x3005)CHECK((g[i].boundaries&EXR_BOUNDARY_LINE) && !(g[i].boundaries&EXR_BOUNDARY_GLUE));
     exr_layout_free(l);exr_document_free(doc);
@@ -322,6 +322,7 @@ static void kinsoku_layout(const char *left,const char *right,uint32_t protected
       exr_document_input input={"Kinsoku spaces",nodes,6,&chapter,1,NULL,0};
       OK(exr_document_create(&input,&doc,&error));
     }
+    CHECK(strchr(exr_document_text(doc,NULL),' ')!=NULL);
     OK(exr_layout_create_hyphenated(doc,font,&c,mode==3 ? h:NULL,&l,&error));
     g=exr_layout_glyphs(l,&n);lines=exr_layout_lines(l,&nl);
     for(i=0;i<n;i++)if(g[i].codepoint==protected_cp) {
@@ -351,7 +352,8 @@ static void cjk_space_kinsoku_set(void) {
   size_t i;scenario="SP plus every Chinese kinsoku scalar stays on one line";
   for(i=0;i<sizeof(punctuation)/sizeof(*punctuation);i++) {
     char right[32];snprintf(right,sizeof(right),"%s\xe4\xb9\x99",punctuation[i].utf8);
-    kinsoku_layout("\xe7\x94\xb2\xe7\x94\xb2 ",right,punctuation[i].cp);
+    /* Latin A keeps the SP in the projection so this still tests tailoring. */
+    kinsoku_layout("\xe7\x94\xb2" "A ",right,punctuation[i].cp);
   }
 }
 static void cjk_opening_space_text(void) {
@@ -359,7 +361,7 @@ static void cjk_opening_space_text(void) {
   size_t i;scenario="opening punctuation plus SP plus text cannot leave an opening at the tail";
   for(i=0;i<sizeof(opening)/sizeof(*opening);i++) {
     char left[32];snprintf(left,sizeof(left),"\xe7\x94\xb2%s ",opening[i]);
-    kinsoku_layout(left,"\xe4\xb9\x99",0x4e59);
+    kinsoku_layout(left,"A",0x41);
   }
 }
 static void latin_quote_spaces(void) {
@@ -427,9 +429,9 @@ static void cjk_punctuation_wrap(void) {
   }
 }
 static void cjk_punctuation_exclusions(void) {
-  const char *texts[]={",.","\xe3\x80\x82 \xe3\x80\x8c","\xe3\x80\x82" "A\xe3\x80\x8c"};
+  const char *texts[]={",.","\xe3\x80\x82\xc2\xa0\xe3\x80\x8c","\xe3\x80\x82" "A\xe3\x80\x8c"};
   exr_layout_config c=config();size_t k;
-  scenario="ASCII punctuation and intervening spaces/text stay unchanged";
+  scenario="ASCII punctuation and intervening NBSP/text stay unchanged";
   for(k=0;k<3;k++) {
     exr_document *doc=document(texts[k],"width:100px;margin:0",0);
     exr_layout *l=layout(doc,&c);size_t n,i;const exr_glyph *g=exr_layout_glyphs(l,&n);
