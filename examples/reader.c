@@ -22,6 +22,7 @@
 #include "windows/paint_probe.h"
 #ifdef EXR_READER_WINDOWS_SHELL
 #include "windows/shell_d2d.h"
+#include "windows/shell_geometry.h"
 /* Created with the main window; draws the reading screen (windows/shell_screen.inc). */
 static shell_d2d *host_shell;
 #endif
@@ -114,7 +115,31 @@ enum {
 #define WM_HOST_PROGRESS (WM_APP + 2)
 #define WM_HOST_SDK_JOB (WM_APP + 0x590)
 
+static int host_offscreen;
+/* Offscreen acceptance must never activate the shared desktop. Applies to included host UI too. */
+static HWND host_focus(HWND window) { return host_offscreen ? GetFocus() : SetFocus(window); }
+#define SetFocus host_focus
+#ifdef EXR_READER_WINDOWS_SHELL
+static int shell_drive_on, shell_legacy, shell_active;
+static unsigned shell_dpi = 96;
+static BOOL shell_dpi_requested;
+static DWORD shell_dpi_error;
+static int shell_pmv2, shell_dpi_changing, shell_layout_waiting, shell_vertical;
+static float shell_font = SHELL_BODY_DEFAULT_FONT;
+static unsigned long shell_epoch = 1, shell_pager_builds, shell_failed_epoch;
+static shell_geometry shell_target;
+static void shell_request_layout(void);
+static void shell_pump_layout(void);
+#endif
+
 typedef struct {
+#ifdef EXR_READER_WINDOWS_SHELL
+  shell_geometry shell_geometry;
+  unsigned long shell_epoch;
+  int writing_mode;
+  exr_line *shell_lines;
+  size_t shell_line_count;
+#endif
   exr_bitmap bitmap;
   uint32_t *dib;
   wchar_t *text;
@@ -176,6 +201,9 @@ typedef struct {
   exr_pager *pager;
   exr_fixed_document *fixed_document;
   exr_layout_config config;
+#ifdef EXR_READER_WINDOWS_SHELL
+  shell_geometry shell_geometry;
+#endif
   size_t page;
   size_t page_count;
 #if defined(EXR_READER_WINDOWS_SEARCH) || defined(EXR_READER_WINDOWS_NAVIGATION) || defined(EXR_READER_WINDOWS_RECORDS)
@@ -304,6 +332,28 @@ typedef struct {
 
 static host_state g;
 static int dragging;
+#ifdef EXR_READER_WINDOWS_SHELL
+static int shell_wants_reading(void) {
+  return host_shell && (g.drive_mode ? shell_drive_on : 1) && !shell_legacy;
+}
+static shell_geometry shell_snapshot(void) {
+  RECT client = {0}; shell_geometry out = {0};
+  if (shell_wants_reading() && !IsIconic(g.window)) {
+    GetClientRect(g.window, &client);
+    out = shell_geometry_for(client.right, client.bottom, shell_dpi, shell_font, shell_vertical);
+  }
+  return out;
+}
+static void shell_apply_config(exr_layout_config *config, shell_geometry geometry) {
+  if (!geometry.enabled) return;
+  config->page.width = (float)geometry.width;
+  config->page.height = (float)geometry.height;
+  config->page.margin = 0;
+  config->page.font_size = geometry.font * geometry.dpi / 96.0f;
+  config->page.line_height = SHELL_BODY_LINE_HEIGHT;
+  config->page.paragraph_spacing = SHELL_BODY_PARAGRAPH_EM * config->page.font_size;
+}
+#endif
 #ifdef EXR_HOST_WORKER_REVIEW
 static int review_query_failure(int kind);
 #endif
@@ -520,6 +570,9 @@ static int format_for_path(const wchar_t *path, exr_format *format) {
 static void frame_clear(host_frame *frame) {
   host_probe_require_ui();
   if(frame->display_bitmap)DeleteObject(frame->display_bitmap);
+#ifdef EXR_READER_WINDOWS_SHELL
+  free(frame->shell_lines);
+#endif
   exr_layout_free(frame->hit_layout);
   exr_fixed_text_free(frame->fixed_text);
   exr_bitmap_free(&frame->bitmap);
@@ -537,6 +590,9 @@ static int frame_prepare_display(host_frame *frame) {
   RECT area;if(!frame->valid || !frame->dib || !g.page)return 0;
   if(!GetClientRect(g.page,&area))return 0;
   double scale=fmin((area.right-8.0)/frame->bitmap.width,(area.bottom-8.0)/frame->bitmap.height);
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (frame->shell_geometry.enabled) scale = 1.0;
+#endif
   int w=(int)(frame->bitmap.width*scale),h=(int)(frame->bitmap.height*scale);
   if(w<=0 || h<=0)return 0;
   if(frame->display_bitmap && frame->display_width==w && frame->display_height==h)return 1;
@@ -549,6 +605,14 @@ static int frame_prepare_display(host_frame *frame) {
   HGDIOBJ old=SelectObject(dc,bitmap);
   source.bmiHeader=target.bmiHeader;source.bmiHeader.biWidth=(LONG)frame->bitmap.width;
   source.bmiHeader.biHeight=-(LONG)frame->bitmap.height;
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (frame->shell_geometry.enabled) {
+    memcpy(bits, frame->dib, (size_t)w * h * sizeof(uint32_t));
+    SelectObject(dc,old);DeleteDC(dc);
+    if(frame->display_bitmap)DeleteObject(frame->display_bitmap);
+    frame->display_bitmap=bitmap;frame->display_width=w;frame->display_height=h;return 1;
+  }
+#endif
   SetStretchBltMode(dc,HALFTONE);SetBrushOrgEx(dc,0,0,NULL);
   int copied=StretchDIBits(dc,0,0,w,h,0,0,frame->bitmap.width,frame->bitmap.height,frame->dib,&source,DIB_RGB_COLORS,SRCCOPY);
   SelectObject(dc,old);DeleteDC(dc);
@@ -568,7 +632,11 @@ static host_frame page_cache[4];
 static unsigned page_cache_next;
 static void page_cache_clear(void) { for(int i=0;i<4;i++)frame_clear(&page_cache[i]); }
 static int page_cache_find(int64_t book,size_t part,size_t page) {
-  for(int i=0;i<4;i++)if(page_cache[i].valid && page_cache[i].book_id==book && page_cache[i].part==part && page_cache[i].page==page)return i;
+  for(int i=0;i<4;i++)if(page_cache[i].valid &&
+#ifdef EXR_READER_WINDOWS_SHELL
+    page_cache[i].shell_epoch == shell_epoch &&
+#endif
+    page_cache[i].book_id==book && page_cache[i].part==part && page_cache[i].page==page)return i;
   return -1;
 }
 static void page_cache_put(host_frame *frame) {
@@ -581,6 +649,9 @@ static int last_page_rect_valid;
 static int compute_view(void);
 static void compose_page_view(HWND window);
 static void page_dirty(HWND window,int full) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_active) full = 1; /* the footer changes with every accepted frame */
+#endif
   RECT client,dirty,old;GetClientRect(window,&client);dirty=client;
   if(!full && g.frame.valid && g.view.valid) {
     old=last_page_rect_valid?last_page_rect:client;
@@ -999,6 +1070,10 @@ struct host_job {
   winio_job *io;
 #endif
   LONG refs;
+#ifdef EXR_READER_WINDOWS_SHELL
+  shell_geometry shell_geometry;
+  unsigned long shell_epoch;
+#endif
   volatile LONG cancel;
   int kind;
   int64_t book_id;
@@ -1181,6 +1256,10 @@ static host_job *job_new(int kind) {
   job->refs = 1;
   job->kind = kind;
   job->zoom_percent = g.zoom_percent;
+#ifdef EXR_READER_WINDOWS_SHELL
+  job->shell_geometry = shell_snapshot();
+  job->shell_epoch = shell_epoch;
+#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   /* Immutable value snapshot: the worker never reads the owner's record. */
   prefs_job_init(job);
@@ -1454,6 +1533,13 @@ static void session_configure(host_session *session, host_job *job) {
   session->config = exr_layout_config_defaults();
   session->config.page.width = 720;
   session->config.page.height = 1040;
+#ifdef EXR_READER_WINDOWS_SHELL
+  session->shell_geometry = job ? job->shell_geometry : (shell_geometry){0};
+  if (session->shell_geometry.enabled) {
+    shell_apply_config(&session->config, session->shell_geometry);
+    return;
+  }
+#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   /* An explicitly chosen F3 record replaces the legacy percent mapping. Until
      then the original mapping below is what an untouched install still uses. */
@@ -1508,6 +1594,32 @@ static int pager_eof(exr_status status, const exr_error *error) {
   return status == EXR_ARGUMENT && error && !strcmp(error->message, "Page index is outside the document");
 }
 
+#ifdef EXR_READER_WINDOWS_SHELL
+/* Copy while the pager owns layout; no UI pointer into a bounded pager survives. */
+static int shell_capture_layout(host_frame *frame, const host_session *session, const exr_layout *layout) {
+  const exr_line *lines; const exr_glyph *glyphs;
+  frame->writing_mode = (int)exr_layout_writing_mode(layout);
+  frame->shell_geometry = session->shell_geometry;
+  if (!session->shell_geometry.enabled) return 1;
+  lines = exr_layout_lines(layout, &frame->shell_line_count);
+  if (frame->shell_line_count) {
+    frame->shell_lines = malloc(frame->shell_line_count * sizeof(*lines));
+    if (!frame->shell_lines) return 0;
+    memcpy(frame->shell_lines, lines, frame->shell_line_count * sizeof(*lines));
+  }
+  if (!frame->glyphs) {
+    glyphs = exr_layout_glyphs(layout, &frame->glyph_count);
+    if (frame->glyph_count > HOST_PAGE_GLYPH_LIMIT) return 0;
+    if (frame->glyph_count) {
+      frame->glyphs = malloc(frame->glyph_count * sizeof(*glyphs));
+      if (!frame->glyphs) return 0;
+      memcpy(frame->glyphs, glyphs, frame->glyph_count * sizeof(*glyphs));
+    }
+  }
+  return 1;
+}
+#endif
+
 static exr_status render_reflow(host_session *session, size_t page, host_frame *out,
                                 const exr_control *control, exr_error *error) {
   const exr_layout *layout = NULL;
@@ -1548,6 +1660,9 @@ static exr_status render_reflow(host_session *session, size_t page, host_frame *
   out->utf8[out->text_bytes] = 0;
   out->text = session->bounded ? NULL : host_wide(out->utf8, out->text_bytes);
   if (!session->bounded && !out->text) { frame_clear(out); return EXR_MEMORY; }
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (!shell_capture_layout(out, session, layout)) { frame_clear(out); return EXR_MEMORY; }
+#endif
   out->bounded = session->bounded; out->part = session->part;
   out->hold_progress = session->hold_progress;
   out->generation = ++g.frame_sequence;
@@ -1632,6 +1747,10 @@ static exr_status render_fixed(host_session *session, size_t page, int zoom_perc
   if (!(width > 0) || !(height > 0) || !isfinite(width) || !isfinite(height)) return EXR_FORMAT;
   base = fmin(1.0, 1440.0 / fmax(width, height));
   scale = base * ((double)zoom_percent / 100.0);
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (session->shell_geometry.enabled)
+    scale = fmin(session->shell_geometry.width / width, session->shell_geometry.height / height);
+#endif
   if (!isfinite(scale) || scale <= 0) return EXR_ARGUMENT;
   if (width * scale > 4096.0 || height * scale > 4096.0) {
 #ifdef EXR_READER_WINDOWS_PREFERENCES
@@ -1974,6 +2093,9 @@ static exr_status txt_frame(host_session *session, const exr_source *source, con
       (*frame).dib[i]=(r<<16)|(g<<8)|bl;
     }
   }
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (!shell_capture_layout(frame, session, layout)) { status=EXR_MEMORY;goto done; }
+#endif
   (*frame).valid=1; (*frame).render_scale=1; (*frame).generation=++g.frame_sequence;
   frame->hold_progress=session->hold_progress;
   frame->page=page;
@@ -2388,6 +2510,9 @@ static exr_status job_open(host_job *job) {
     session.themed = 1;
   }
 #endif
+#ifdef EXR_READER_WINDOWS_SHELL
+  session.shell_geometry = job->shell_geometry;
+#endif
   if (session.fixed) {
     exr_fixed_open_options options = {0};
     const exr_fixed_page *pages;
@@ -2687,6 +2812,14 @@ static exr_status job_layout(host_job *job) {
     themed = 1;
   }
 #endif
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (g.session.fixed) {
+    host_session candidate = g.session; candidate.shell_geometry = job->shell_geometry;
+    status = render_fixed(&candidate, g.frame.page, job->zoom_percent, &job->frame, &control, &error);
+    job->have_frame = status == EXR_OK; job->error = error;
+    return status;
+  }
+#endif
   config = g.session.config;
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   if (job->prefs_valid) {
@@ -2697,6 +2830,12 @@ static exr_status job_layout(host_job *job) {
   } else
 #endif
   config.page.font_size = 28.0f * (float)job->font_percent / 100.0f;
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (job->shell_geometry.enabled || g.session.shell_geometry.enabled) {
+    host_session target = {0}; session_configure(&target, job); config = target.config;
+    shell_pager_builds++;
+  }
+#endif
   config.control.cancelled = host_cancel_check;
   config.control.context = NULL;
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
@@ -2709,6 +2848,9 @@ static exr_status job_layout(host_job *job) {
                          &copy, 0, FALSE, DUPLICATE_SAME_ACCESS)) return EXR_IO;
     source.context = copy;
     candidate.config = config;
+#ifdef EXR_READER_WINDOWS_SHELL
+    candidate.shell_geometry = job->shell_geometry;
+#endif
     status = exr_txt_pager_create(&source, g.font, &config, &pager, &error);
     if (status != EXR_OK) { CloseHandle(copy); return status; }
     copy = NULL; /* the new pager owns this handle */
@@ -2738,8 +2880,12 @@ static exr_status job_layout(host_job *job) {
   if (job->book_id && job->book_id != g.session.book_id) return EXR_CANCELLED;
   if (g.session.bounded) {
     host_session candidate = g.session; exr_anchor point = {0}; exr_anchor_match match;
-    status = exr_pager_anchor_create(g.session.pager, g.frame.range_start, g.frame.range_start, &control, &point, &error);
+    status = job->has_anchor ? (host_anchor_copy(&point, &job->anchor) ? EXR_OK : EXR_MEMORY) :
+      exr_pager_anchor_create(g.session.pager, g.frame.range_start, g.frame.range_start, &control, &point, &error);
     candidate.config = config;
+#ifdef EXR_READER_WINDOWS_SHELL
+    candidate.shell_geometry = job->shell_geometry;
+#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
     candidate.background = background;
     candidate.foreground = foreground;
@@ -2800,6 +2946,9 @@ static exr_status job_layout(host_job *job) {
     host_session candidate = g.session;
     candidate.pager = pager;
     candidate.config = config;
+#ifdef EXR_READER_WINDOWS_SHELL
+    candidate.shell_geometry = job->shell_geometry;
+#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
     candidate.background = background;
     candidate.foreground = foreground;
@@ -3416,6 +3565,16 @@ static int compute_view_impl(void) {
   if (!g.frame.valid || !g.frame.bitmap.width || !g.frame.bitmap.height || !g.page) return 0;
   GetClientRect(g.page, &area);
   if (area.right < 16 || area.bottom < 16) return 0;
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_active && g.frame.shell_geometry.enabled) {
+    g.view.scale = 1.0;
+    g.view.bw = (int)g.frame.bitmap.width; g.view.bh = (int)g.frame.bitmap.height;
+    g.view.dx = (area.right - g.view.bw) / 2;
+    g.view.dy = shell_px(shell_vertical ? SHELL_SPACE_5 : SHELL_BODY_TOP, shell_dpi);
+    g.view.valid = 1;
+    return 1;
+  }
+#endif
   scale = fmin((area.right - 8.0) / g.frame.bitmap.width,
                (area.bottom - 8.0) / g.frame.bitmap.height);
   if (!(scale > 0) || !isfinite(scale)) return 0;
@@ -3548,7 +3707,13 @@ static void compose_page_view(HWND window) {
         BitBlt(dc,g.view.dx,g.view.dy,g.frame.display_width,g.frame.display_height,source,0,0,SRCCOPY);
         SelectObject(source,old);DeleteDC(source);
       }
-    } else StretchDIBits(dc, g.view.dx, g.view.dy,
+    }
+#ifdef EXR_READER_WINDOWS_SHELL
+    else if (g.frame.shell_geometry.enabled) SetDIBitsToDevice(dc, g.view.dx, g.view.dy,
+      g.frame.bitmap.width, g.frame.bitmap.height, 0, 0, 0, g.frame.bitmap.height,
+      g.frame.dib, &info, DIB_RGB_COLORS);
+#endif
+    else StretchDIBits(dc, g.view.dx, g.view.dy,
                   (int)(g.frame.bitmap.width * g.view.scale),
                   (int)(g.frame.bitmap.height * g.view.scale),
                   0, 0, (int)g.frame.bitmap.width, (int)g.frame.bitmap.height,
@@ -3639,6 +3804,13 @@ static void bounded_hit(float x, float y, int down, int up) {
 
 static void bounded_mouse(int x, int y, int down, int up) {
   if (!g.view.valid && !compute_view()) return;
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_active && (x < g.view.dx || y < g.view.dy ||
+      x >= g.view.dx + g.view.bw || y >= g.view.dy + g.view.bh)) {
+    if (up) { dragging = 0; if (GetCapture() == g.page) ReleaseCapture(); }
+    return;
+  }
+#endif
   if (down) {
     g.gesture++; g.hit_pending = g.hit_up = 0; memset(&g.selection, 0, sizeof(g.selection));
     dragging = 1; SetCapture(g.page);
@@ -4043,6 +4215,12 @@ static void page_step(int direction) {
 }
 
 static void change_font(int delta) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_active && !g.frame.fixed) {
+    shell_font = fmaxf(SHELL_BODY_MIN_FONT, fminf(SHELL_BODY_MAX_FONT, shell_font + (delta > 0 ? 1 : -1)));
+    shell_request_layout(); return;
+  }
+#endif
   int next;
   host_job *job;
   exr_anchor anchor = {0};
@@ -4643,6 +4821,25 @@ static void host_update_controls(void) {
 }
 
 static void handle_job_complete(host_job *job) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (job->kind == JOB_OPEN && job->status == EXR_OK &&
+      !shell_geometry_equal(job->shell_geometry, shell_snapshot())) {
+    host_job *latest = job_new(JOB_OPEN);
+    if (latest && !g.pending) {
+      latest->book_id = job->book_id; latest->font_percent = job->font_percent;
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+      memcpy(latest->product_key, job->product_key, sizeof(latest->product_key));
+#endif
+      job_submit(latest);
+    } else if (latest) job_release(latest);
+    return;
+  }
+  if (job->kind == JOB_LAYOUT && job->status != EXR_OK && job->shell_epoch == shell_epoch)
+    shell_failed_epoch = shell_epoch;
+  if ((job->kind == JOB_LAYOUT || job->kind == JOB_GO || job->kind == JOB_PREFETCH) &&
+      (job->shell_epoch != shell_epoch || (job->frame.valid &&
+       !shell_geometry_equal(job->frame.shell_geometry, shell_target)))) return;
+#endif
   if(job->kind==JOB_PREFETCH) {
     if(job->status==EXR_OK && !job_cancel_flag(job) && !g.closing && job->frame.book_id==g.session.book_id && job->frame.part==g.session.part) {
       page_cache_put(&job->frame);host_probe_log("prefetch_ready",(double)job->target_page);
@@ -4880,10 +5077,16 @@ static void handle_job_complete(host_job *job) {
     } else if (job->kind == JOB_GO || job->kind == JOB_LAYOUT) {
       if (job->have_frame && g.has_current && job->book_id == g.current.id &&
           job->frame.book_id == g.current.id && g.session.book_id == g.current.id) {
+#ifdef EXR_READER_WINDOWS_SHELL
+        if (job->kind == JOB_LAYOUT && g.session.fixed) g.session.shell_geometry = job->shell_geometry;
+#endif
         if (job->candidate_pager) {
           exr_pager_free(g.session.pager); g.session.pager = job->candidate_pager; job->candidate_pager = NULL;
           if (g.session.txt) g.session.txt_source = job->candidate.txt_source;
           g.session.config = job->candidate_config;
+#ifdef EXR_READER_WINDOWS_SHELL
+          g.session.shell_geometry = job->shell_geometry;
+#endif
         }
         if(job->kind==JOB_GO && g.frame.valid && g.frame.book_id==job->frame.book_id && g.frame.part==job->frame.part)page_cache_put(&g.frame);
         frame_move(&g.frame, &job->frame);
@@ -4891,7 +5094,11 @@ static void handle_job_complete(host_job *job) {
         g.session.hold_progress = g.frame.hold_progress;
         memset(&g.selection, 0, sizeof(g.selection));
         g.session.page = g.frame.page;
-        if (job->kind == JOB_LAYOUT && job->font_percent > 0) g.font_percent = job->font_percent;
+        if (job->kind == JOB_LAYOUT && job->font_percent > 0
+#ifdef EXR_READER_WINDOWS_SHELL
+            && !job->shell_geometry.enabled
+#endif
+        ) g.font_percent = job->font_percent;
         if (job->zoom_percent > 0) g.zoom_percent = job->zoom_percent;
         update_page_label();
 #ifdef EXR_READER_WINDOWS_WAVE3
@@ -5371,6 +5578,7 @@ static int snapshot_png(const char *name) {
   int width, height, x, y, ok, nonzero = 0;
   size_t i, total;
   if (!g.evidence_dir[0] || !g.window) return 0;
+  if (host_offscreen) RedrawWindow(g.window, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
   GetWindowRect(g.window, &area);
   width = area.right - area.left;
   height = area.bottom - area.top;
@@ -5392,9 +5600,12 @@ static int snapshot_png(const char *name) {
   }
   previous = SelectObject(memory, bitmap);
   ok = (int)PrintWindow(g.window, memory, 2 /* PW_RENDERFULLCONTENT */);
-  if (!ok) {
+  if (!ok && !host_offscreen) {
     x = area.left; y = area.top;
     BitBlt(memory, 0, 0, width, height, screen, x, y, SRCCOPY);
+  }
+  if (!ok && host_offscreen) {
+    SelectObject(memory, previous); DeleteObject(bitmap); DeleteDC(memory); ReleaseDC(NULL, screen); return 0;
   }
   SelectObject(memory, previous);
   total = (size_t)width * height;
@@ -5437,6 +5648,17 @@ static int snapshot_png(const char *name) {
     detail_add(detail, sizeof(detail), "file", name);
     detail_add(detail, sizeof(detail), "nonzero", nonzero ? "1" : "0");
     drive_log("SHOT", name, 1, detail);
+    if (host_offscreen) {
+      RECT client, outer; POINT origin = {0,0}; FILE *metadata;
+      GetClientRect(g.window, &client); GetWindowRect(g.window, &outer); ClientToScreen(g.window, &origin);
+      wchar_t *wide_name = host_wide(name, strlen(name));
+      swprintf(filename, 256, L"%ls.client.json", wide_name ? wide_name : L"shot"); free(wide_name);
+      path_join(path, HOST_PATH, g.evidence_dir, filename);
+      metadata = _wfopen(path, L"wb");
+      if (!metadata) return 0;
+      fprintf(metadata, "[%ld,%ld,%ld,%ld]\n", origin.x-outer.left, origin.y-outer.top, client.right, client.bottom);
+      fclose(metadata);
+    }
   }
   return 1;
 }
@@ -5499,11 +5721,18 @@ static int check_selection(int minimum, const char *needle) {
   }
 }
 
+#ifdef EXR_READER_WINDOWS_SHELL
+#include "windows/shell_measure.inc"
+#endif
+
 static int drive_execute(void) {
   const char *action = drive_args[0];
   char detail[1024];
   int launches = 0;
   memset(detail, 0, sizeof(detail));
+  if (host_offscreen && (!strcmp(action, "activate") || !strcmp(action, "key_tab") || !strcmp(action, "probe_resize"))) {
+    drive_step_finish(0, "action requires foreground; forbidden by --offscreen"); return 0;
+  }
   if (!strcmp(action, "wait_idle")) {
     drive_expect_idle = 1;
     return 1;
@@ -5577,6 +5806,30 @@ static int drive_execute(void) {
     return 0;
   }
 #ifdef EXR_READER_WINDOWS_SHELL
+  if (!strcmp(action, "shell_client")) {
+    RECT client = {0, 0, atoi(drive_args[1]), atoi(drive_args[2])};
+    /* The actual window DPI controls its nonclient frame, even for injected DPI tests. */
+    typedef UINT (WINAPI *dpi_fn)(HWND);
+    dpi_fn dpi = (dpi_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"), "GetDpiForWindow");
+    shell_adjust_client(&client, g.window, dpi ? dpi(g.window) : 96);
+    SetWindowPos(g.window, NULL, 0, 0, client.right-client.left, client.bottom-client.top,
+                 SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    drive_expect_idle = 1; return 1;
+  }
+  if (!strcmp(action, "shell_dpi")) {
+    RECT bounds; GetWindowRect(g.window, &bounds);
+    if (!host_offscreen) { drive_step_finish(0, "injected DPI requires --offscreen"); return 0; }
+    SendMessageW(g.window, WM_DPICHANGED, MAKEWPARAM(atoi(drive_args[1]), atoi(drive_args[1])), (LPARAM)&bounds);
+    drive_expect_idle = 1; return 1;
+  }
+  if (!strcmp(action, "shell_font")) {
+    float font = (float)atof(drive_args[1]);
+    if (font < SHELL_BODY_MIN_FONT || font > SHELL_BODY_MAX_FONT) { drive_step_finish(0, "font outside range"); return 0; }
+    shell_font = font; shell_request_layout(); drive_expect_idle = 1; return 1;
+  }
+  if (!strcmp(action, "shell_measure")) {
+    drive_step_finish(shell_measure(drive_args[1]), "physical layout captured"); return 0;
+  }
   if (!strcmp(action, "shell")) {
     shell_drive_on = !strcmp(drive_args[1], "on");
     shell_sync();
@@ -6027,7 +6280,11 @@ static void drive_tick(void) {
       continue;
     }
     if (drive_expect_idle) {
-      if (g.job || g.pending || host_probe_burst_left || wheel_delta<=-WHEEL_DELTA || wheel_delta>=WHEEL_DELTA) {
+      if (
+#ifdef EXR_READER_WINDOWS_SHELL
+          shell_layout_waiting ||
+#endif
+          g.job || g.pending || host_probe_burst_left || wheel_delta<=-WHEEL_DELTA || wheel_delta>=WHEEL_DELTA) {
         if (GetTickCount() - drive_step_start > 120000) {
           drive_step_finish(0, "timeout waiting for task");
           continue;
@@ -6305,6 +6562,11 @@ static void finish_close(HWND window) {
 }
 
 static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+  if (host_offscreen && message == WM_WINDOWPOSCHANGING) {
+    WINDOWPOS *position = (WINDOWPOS *)lparam;
+    position->flags |= SWP_NOACTIVATE;
+    if (!(position->flags & SWP_NOMOVE)) position->x = position->y = -32000;
+  }
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
   if(message==WM_CONTEXTMENU && winio_context((HWND)wparam,lparam)) return 0;
 #endif
@@ -6331,6 +6593,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       layout_controls();
 #ifdef EXR_READER_WINDOWS_SHELL
       if (FAILED(shell_d2d_create(window, &host_shell))) host_shell = NULL;
+      shell_update_dpi(window);
 #endif
       return 0;
     case WM_SIZE: {
@@ -6339,13 +6602,32 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       g.window_width = bounds.right - bounds.left;
       g.window_height = bounds.bottom - bounds.top;
 #ifdef EXR_READER_WINDOWS_SHELL
+      if (shell_dpi_changing) return 0;
       if (host_shell) shell_d2d_resize(host_shell, LOWORD(lparam), HIWORD(lparam));
+      if (wparam != SIZE_MINIMIZED) shell_request_layout();
 #endif
       layout_controls();
       page_dirty(g.page,1);
       return 0;
     }
 #ifdef EXR_READER_WINDOWS_SHELL
+    case WM_DPICHANGED: {
+      RECT *suggested = (RECT *)lparam;
+      shell_dpi = HIWORD(wparam);
+      shell_dpi_changing = 1;
+      SetWindowPos(window, NULL, suggested->left, suggested->top,
+                   suggested->right - suggested->left, suggested->bottom - suggested->top,
+                   SWP_NOZORDER | SWP_NOACTIVATE);
+      shell_dpi_changing = 0;
+      if (host_shell) {
+        RECT client; GetClientRect(window, &client);
+        shell_d2d_set_dpi(host_shell, shell_dpi);
+        shell_d2d_resize(host_shell, (UINT)client.right, (UINT)client.bottom);
+      }
+      layout_controls(); shell_request_layout(); page_dirty(g.page, 1);
+      InvalidateRect(window, NULL, FALSE);
+      return 0;
+    }
     case WM_ERASEBKGND:
       if (shell_active) return 1;
       break;
@@ -6360,12 +6642,23 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       MINMAXINFO *limits = (MINMAXINFO *)lparam;
       limits->ptMinTrackSize.x = 1060;
       limits->ptMinTrackSize.y = 660;
+#ifdef EXR_READER_WINDOWS_SHELL
+      if (shell_active) {
+        RECT minimum = {0, 0, shell_px(SHELL_MIN_CLIENT_W, shell_dpi), shell_px(SHELL_MIN_CLIENT_H, shell_dpi)};
+        shell_adjust_client(&minimum, window, shell_dpi);
+        limits->ptMinTrackSize.x = minimum.right - minimum.left;
+        limits->ptMinTrackSize.y = minimum.bottom - minimum.top;
+      }
+#endif
 #ifdef EXR_READER_WINDOWS_COMPACT
       if (!compact_expanded) {
         limits->ptMinTrackSize.x = 640;
         limits->ptMinTrackSize.y = 420;
       }
 #endif
+      if (host_offscreen) {
+        limits->ptMaxTrackSize.x = limits->ptMaxTrackSize.y = 32767;
+      }
       RECT work;
       if (host_work_area(window, &work)) {
         if (limits->ptMinTrackSize.x > work.right - work.left) limits->ptMinTrackSize.x = work.right - work.left;
@@ -6443,6 +6736,12 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       host_probe_pager_ms=host_probe_raster_ms=0;
       if(job_cancel_flag(job) && job->kind!=JOB_ROLLBACK && job->kind!=JOB_IMPORT_ORGANIZE && !job_commit_barrier(job->kind))job->status=EXR_CANCELLED;
       else job->status=job_run(job);
+#ifdef EXR_READER_WINDOWS_SHELL
+      if (job->frame.valid) {
+        job->frame.shell_epoch = job->shell_epoch;
+        if (job->frame.fixed) job->frame.shell_geometry = job->shell_geometry;
+      }
+#endif
       host_probe_log("stage_anchor_pager_ms",host_probe_pager_ms);
       host_probe_log("stage_raster_ms",host_probe_raster_ms);
       host_probe_log("sdk_job_end",(double)job->kind);
@@ -6495,13 +6794,24 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #ifdef EXR_READER_WINDOWS_NAVIGATION
       winnav_controls();
 #endif
+#ifdef EXR_READER_WINDOWS_SHELL
+      shell_pump_layout();
+#endif
       if (g.closing) finish_close(window);
       return 0;
     }
     case WM_TIMER:
+#ifdef EXR_READER_WINDOWS_SHELL
+      if (wparam == 0x5752) {
+        KillTimer(window, 0x5752); shell_layout_waiting = 0; shell_pump_layout(); return 0;
+      }
+#endif
       if(wparam==PAGE_PREFETCH_TIMER) {
         KillTimer(window,PAGE_PREFETCH_TIMER);
         if(g.closing || !g.session.active || !g.frame.valid || g.session.txt)return 0;
+#ifdef EXR_READER_WINDOWS_SHELL
+        if (shell_layout_waiting || !shell_geometry_equal(g.session.shell_geometry, shell_target)) return 0;
+#endif
         if(g.job || g.pending) { SetTimer(window,PAGE_PREFETCH_TIMER,20,NULL);return 0; }
         if(page_cache_find(g.session.book_id,g.session.part,g.frame.page+1)>=0)return 0;
         if(g.session.fixed && g.frame.page+1>=g.session.page_count)return 0;
@@ -6666,6 +6976,9 @@ static void host_cleanup(void) {
     g.discard = NULL;
   }
   page_cache_clear();
+#ifdef EXR_READER_WINDOWS_SHELL
+  exr_anchor_free(&shell_anchor); shell_anchor_valid = 0;
+#endif
   session_clear(&g.session);
   frame_clear(&g.frame);
   notes_clear();
@@ -6722,7 +7035,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   {
     typedef BOOL (WINAPI *dpi_context_fn)(HANDLE);
     dpi_context_fn dpi=(dpi_context_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetProcessDpiAwarenessContext");
+#ifdef EXR_READER_WINDOWS_SHELL
+    SetLastError(0);
+    shell_dpi_requested = dpi ? dpi((HANDLE)(INT_PTR)-4) : SetProcessDPIAware();
+    shell_dpi_error = shell_dpi_requested ? 0 : GetLastError();
+#else
     if(dpi) dpi((HANDLE)(INT_PTR)-4); else SetProcessDPIAware();
+#endif
   }
   if (!argv) return 2;
   if (argc > 1 && !wcscmp(argv[1], L"--self-test")) {
@@ -6732,7 +7051,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   }
   for (i = 1; i < argc; i++) {
     const wchar_t *value = (i + 1 < argc) ? argv[i + 1] : L"";
-    if (!wcscmp(argv[i], L"--drive")) { copy_wstring(script, HOST_PATH, value); i++; }
+    if (!wcscmp(argv[i], L"--offscreen")) { host_offscreen = 1; }
+    else if (!wcscmp(argv[i], L"--drive")) { copy_wstring(script, HOST_PATH, value); i++; }
     else if (!wcscmp(argv[i], L"--evidence")) { copy_wstring(evidence, HOST_PATH, value); i++; }
     else if (!wcscmp(argv[i], L"--data")) { copy_wstring(data_dir, HOST_PATH, value); i++; }
     else if (!wcscmp(argv[i], L"--library")) { copy_wstring(library_override, HOST_PATH, value); i++; }
@@ -6831,8 +7151,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     LocalFree(argv);
     return 2;
   }
-  g.window = CreateWindowW(L"EXReaderHost", L"EXReader", WS_OVERLAPPEDWINDOW,
-                           CW_USEDEFAULT, CW_USEDEFAULT, g.window_width, g.window_height,
+  g.drive_mode = script[0] != 0;
+  g.window = CreateWindowExW(host_offscreen ? WS_EX_NOACTIVATE : 0, L"EXReaderHost", L"EXReader", WS_OVERLAPPEDWINDOW,
+                           host_offscreen ? -32000 : CW_USEDEFAULT, host_offscreen ? -32000 : CW_USEDEFAULT, g.window_width, g.window_height,
                            NULL, NULL, instance, NULL);
   if (!g.window) {
     host_cleanup();
@@ -6843,8 +7164,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     LONG_PTR style = GetWindowLongPtrW(g.window, GWL_EXSTYLE);
     SetWindowLongPtrW(g.window, GWL_EXSTYLE, style | WS_EX_CONTROLPARENT);
   }
-  host_fit_work_area(g.window);
-  ShowWindow(g.window, show ? show : SW_SHOWNORMAL);
+  if (!host_offscreen) host_fit_work_area(g.window);
+  ShowWindow(g.window, host_offscreen ? SW_SHOWNOACTIVATE : (show ? show : SW_SHOWNORMAL));
   UpdateWindow(g.window);
 #ifdef EXR_READER_WINDOWS_WAVE3
   w3_startup();

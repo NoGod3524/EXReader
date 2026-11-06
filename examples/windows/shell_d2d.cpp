@@ -16,6 +16,7 @@ struct shell_d2d {
   IDWriteTextFormat *format[SHELL_TEXT_STYLES];
   const wchar_t *family[SHELL_TEXT_STYLES];
   unsigned recreated;
+  unsigned dpi;
 };
 
 /* 96 dpi: one unit is one physical pixel, the host's own coordinate space. */
@@ -55,14 +56,15 @@ static HRESULT make_format(shell_d2d *shell, int style) {
   static const wchar_t *const title[] = {L"Segoe UI Variable Text", L"Segoe UI"};
   static const wchar_t *const icon[] = {L"Segoe Fluent Icons", L"Segoe MDL2 Assets"};
   const bool is_title = style == SHELL_TEXT_TITLE;
-  const wchar_t *name = is_title ? title[1] : icon[1];
-  IDWriteFontFamily *family = find_family(shell, is_title ? title : icon, 2, &name);
+  const bool is_icon = style == SHELL_TEXT_ICON;
+  const wchar_t *name = is_icon ? icon[1] : title[1];
+  IDWriteFontFamily *family = find_family(shell, is_icon ? icon : title, 2, &name);
   if (family) family->Release();
   IDWriteTextFormat *format = nullptr;
   HRESULT hr = shell->write->CreateTextFormat(name, nullptr,
                                               is_title ? DWRITE_FONT_WEIGHT_SEMI_BOLD : DWRITE_FONT_WEIGHT_NORMAL,
                                               DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-                                              is_title ? 17.0f : 20.0f, L"zh-cn", &format);
+                                              (is_title ? 17.0f : is_icon ? 20.0f : 13.0f) * shell->dpi / 96.0f, L"zh-cn", &format);
   if (FAILED(hr)) return hr;
   format->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
   format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
@@ -75,6 +77,7 @@ static HRESULT make_format(shell_d2d *shell, int style) {
       ellipsis->Release();
     }
   }
+  if (shell->format[style]) shell->format[style]->Release();
   shell->format[style] = format;
   shell->family[style] = name;
   return S_OK;
@@ -85,6 +88,7 @@ extern "C" HRESULT shell_d2d_create(HWND window, shell_d2d **out) {
   shell_d2d *shell = new (std::nothrow) shell_d2d();
   if (!shell) return E_OUTOFMEMORY;
   shell->window = window;
+  shell->dpi = 96;
   HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &shell->factory);
   if (SUCCEEDED(hr))
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
@@ -104,6 +108,23 @@ extern "C" void shell_d2d_destroy(shell_d2d *shell) {
   if (shell->write) shell->write->Release();
   if (shell->factory) shell->factory->Release();
   delete shell;
+}
+
+extern "C" void shell_d2d_target_dpi(const shell_d2d *shell, float values[4]) {
+  for (int i = 0; i < 4; i++) values[i] = 0;
+  if (shell->target) shell->target->GetDpi(&values[0], &values[1]);
+  if (shell->dc_target) shell->dc_target->GetDpi(&values[2], &values[3]);
+}
+
+extern "C" HRESULT shell_d2d_set_dpi(shell_d2d *shell, unsigned dpi) {
+  if (!shell || !dpi) return E_INVALIDARG;
+  if (shell->dpi == dpi) return S_OK;
+  shell->dpi = dpi;
+  for (int style = 0; style < SHELL_TEXT_STYLES; style++) {
+    HRESULT hr = make_format(shell, style);
+    if (FAILED(hr)) return hr;
+  }
+  return S_OK;
 }
 
 extern "C" HRESULT shell_d2d_resize(shell_d2d *shell, UINT width, UINT height) {
@@ -185,6 +206,26 @@ extern "C" HRESULT shell_d2d_icon_button(shell_d2d *shell, HDC dc, const RECT *b
     shell->dc_brush->SetColor(D2D1::ColorF(look->ring));
     shell->dc_target->DrawEllipse(D2D1::Ellipse(centre, ring, ring), shell->dc_brush, look->ring_width);
   }
+  hr = shell->dc_target->EndDraw();
+  if (hr == D2DERR_RECREATE_TARGET) { drop_dc_target(shell); shell->recreated++; return S_FALSE; }
+  return hr;
+}
+
+extern "C" HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text, uint32_t color) {
+  if (!shell->dc_target) {
+    const D2D1_RENDER_TARGET_PROPERTIES properties =
+      pixel_properties(D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE));
+    HRESULT hr = shell->factory->CreateDCRenderTarget(&properties, &shell->dc_target);
+    if (SUCCEEDED(hr)) hr = shell->dc_target->CreateSolidColorBrush(D2D1::ColorF(color), &shell->dc_brush);
+    if (FAILED(hr)) { drop_dc_target(shell); return hr; }
+    shell->dc_target->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+  }
+  HRESULT hr = shell->dc_target->BindDC(dc, box);
+  if (FAILED(hr)) return hr;
+  shell->dc_target->BeginDraw();
+  shell->dc_brush->SetColor(D2D1::ColorF(color));
+  shell->dc_target->DrawText(text, (UINT32)wcslen(text), shell->format[SHELL_TEXT_PAGE_NUMBER],
+    D2D1::RectF(0, 0, (float)(box->right - box->left), (float)(box->bottom - box->top)), shell->dc_brush);
   hr = shell->dc_target->EndDraw();
   if (hr == D2DERR_RECREATE_TARGET) { drop_dc_target(shell); shell->recreated++; return S_FALSE; }
   return hr;
