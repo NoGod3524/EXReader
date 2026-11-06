@@ -5,7 +5,7 @@
 [NATIVE_API.md](NATIVE_API.md) 与 [PERFORMANCE.md](PERFORMANCE.md)；本表随每批交付更新，
 发行时以本表为准。
 
-- 版本：**3.40.0 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
+- 版本：**3.42.0 开发版**，ABI epoch **1**，书库 schema **7**（三者独立管理；版本见 `cmake/versions.cmake`，schema 见 `src/library.c` 的 `PRAGMA user_version`）
 - 标记：**支持** = 有公开接口、边界与回归；**部分** = 有实现但覆盖/兼容未完整；**未支持** = 明确拒绝或不存在接口
 - 回归：`ctest` 名称。3.40.0 的 Windows GCC 默认及关闭可选图像解码器配置（均含 fuzz）各169/169，Linux ASan/UBSan 配置159/159；测试数随组件、fuzz和参考工具配置变化，见 `docs/validation/2026-10-21-png-reliability.json`
 
@@ -68,7 +68,7 @@ WP6已验收，冻结 SDK 候选的 WP16 五项登记出口已闭合，同源四
 | CSS 子集 | 部分 | 块/行内、字体、颜色、边距、对齐；完整 CSS 未冻结 | `native-complex-layout` |
 | 表格 | 支持 | 指定/auto/fixed/百分比 列宽、top/middle/bottom/baseline、border-collapse（solid/dashed/dotted/double 线型）、rowspan、跨页续排、分页时重复 `<thead>` | `native-table-*` |
 | 边框 | 支持 | 四边独立 width/style/color；`border` 与 `border-top` 等简写、1–4 值 `border-width`/`border-color`/`border-style`；块级、separate 单元格与 collapse 网格 | `native-border-edges` |
-| 表格间距 | **不支持** | `border-spacing` 尚未实现：`border-collapse: separate` 的单元格按 0 间距排列；显式指定间距的表格会比参考实现更紧凑 | — |
+| 表格间距 | 支持 | `border-spacing` 接受 1–2 个非负长度（一值两轴共用，两值为水平/垂直），支持 `inherit`/`initial`/`unset` 与相对单位；百分比、`auto`、负值和多余记号作废该声明。`separate` 模型在外缘与轨道间保留间距，跨列/跨行单元格包含其跨越的间隙，竖排时物理轴互换；`collapse` 表格保留计算值但按 0 间距排列。见 [WP5 记录](WP5_BORDER_SPACING.md) | `native-table-spacing` |
 | 浮动与绕排 | 支持 | float/clear、逐行绕排、长浮动/嵌套续排 | `native-float`、`native-table-fragments` |
 | 分页与检查点 | 支持 | 页级续排、LRU 1–64 段、缓存字节/页预算、checkpoint 恢复 | `native-pager`、`native-page-cache`、`native-checkpoints` |
 | 定位与命中 | 支持 | UTF-8 源偏移、CFI、TextQuote 锚点、改版后重定位 | `native-cfi-text`、`native-anchor` |
@@ -88,7 +88,8 @@ WP6已验收，冻结 SDK 候选的 WP16 五项登记出口已闭合，同源四
 | 色彩 | 部分 | Device/Indexed/CalGray/CalRGB/Lab、ICCBased v2/v4→sRGB、Separation/All/None/DeviceN、Type 0 函数；支持匹配尺寸软遮罩的原生分量Matte还原（先于ICC）；**OutputIntent 未支持**；默认DeviceCMYK完整Argyll ICC按zlib内嵌（414,609字节），不同于SWOP；关闭ICC时使用朴素换算 | `native-pdf-color`、`native-pdf-calculator`、`native-render-audit` |
 | 合成 | 部分 | 16种混合、RGB/Gray/CMYK、隔离/非隔离/挖空及区域缓冲；128个嵌套探针、24组整图对照。DeviceCMYK路径/图像/1–7型渐变保留原生墨色；零opacity保留shape，64个PDF与192个画布组合覆盖。ICCBased/DeviceN到组空间及其他边界仍待扩展 | `native-blend`、`native-zero-opacity`、`native-nested-groups`、`native-inks` |
 | 图形状态软遮罩 | 部分 | Alpha/Luminosity、BC、Identity及Type 0/2/3/4 TR、精确变换BBox、K/I、q/Q/None和单次整组提交；活跃mask聚合64MiB，嵌套共享工作预算。原41场景+8拒绝、作用域27+3、新函数/图像/几何72+8。AIS及图片内在shape/opacity已接入，新增166场景+4拒绝值与192个画布组合；外部参考差异逐项记录 | `native-mask-scope`、`native-mask-functions`、`native-pdf-raster`；[对照口径](MASK_SEMANTICS.md) |
-| 标注 | 部分 | Text/Highlight/Underline/StrikeOut/Squiggly 增删改与外观；**其余类型与 AcroForm 未支持** | `native-pdf-markup`、`native-pdf-appearance`、`native-pdf-write` |
+| 标注 | 部分 | Text/Highlight/Underline/StrikeOut/Squiggly 增删改与外观；**其余类型未支持**；AcroForm 见下行 | `native-pdf-markup`、`native-pdf-appearance`、`native-pdf-write` |
+| AcroForm 表单 | 部分 | `exr_pdf_form_read`：独立快照，FT/Ff/V/DV/DA/Q/MaxLen/Opt 沿校验后的字段树继承；默认上限 4096 字段、16384 widget、64 层、8 MiB 文本；环、共享子节点、重复限定名与 Parent 不一致整体失败；XFA 只记录并阻止写入。`exr_pdf_form_write`：原子增量写回，保留原字节，Tx、checkbox/radio、Ch 值与所有 widget 外观同步更新，检查 ReadOnly/Required/MaxLen/选项与单多选。**password/multiline/file-select/rich-text/comb 文本及可编辑 combo 返回 UNSUPPORTED；Sig/pushbutton/未知类型、XFA、动作、旋转与签名权限约束不可修改；不执行格式化、计算、校验动作或 JS**。边界以 `include/exr/pdf_edit.h` 为准 | `native-pdf-form` |
 | 安全 redaction | 未支持 | 现有增量删除保留历史原文，不能充当擦除 | — |
 | OCR | 部分 | 独立可选 Tesseract 5 适配器，不进入默认 SDK；清晰数字印刷中英/混排、显式旋转、文字/置信度/字框与页坐标映射已验收；真实扫描、高精度字框、自动方向检测、PDF文字层写回及搜索/选文/标注闭环未完成 | `docs/validation/wp11-ocr-adapter.json` |
 
@@ -108,7 +109,7 @@ WP6已验收，冻结 SDK 候选的 WP16 五项登记出口已闭合，同源四
 | --- | --- | --- | --- |
 | C SDK | 支持 | 默认完整包324个公开命名函数导出（原316个全部保留，章阅读新增8个）；组件裁剪按包内目标消费，`struct_size` 前缀兼容 | `native-abi`、`native-core`；导出证据见 `docs/validation/2026-10-20-wp6-window-reader.json` |
 | C++ / Swift / JNI 适配 | 支持 | 安装后消费示例与 `-Xcheck:jni` | `native-fixed-example`、`native-wave-example` |
-| 安装与包配置 | 支持 | `find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED)` | CI 安装作业 |
+| 安装与包配置 | 支持 | `find_package(EXReader 3.42.0 EXACT CONFIG REQUIRED)` | CI 安装作业 |
 | 桌面三平台 | 支持 | Windows/Linux/macOS 全量 CTest + 安装消费 | CI `desktop` |
 | Android / iOS / iPadOS | 部分 | 库交叉编译、Swift适配、iPhone/iPad模拟器阅读自检；真机安装暂缓 | CI `android`、`apple-mobile` |
 | 原生参考阅读 App | 部分 | Windows宿主覆盖书架、重排/固定页、选文标注、进度恢复及后台任务，但未接有界大章入口；Linux GTK宿主覆盖≤8MiB原书的重排阅读、书架、标注与恢复；macOS/iPhone/iPad仍为最小参考应用；完整跨平台生命周期、无障碍和移动真机验收未完成 | `docs/validation/wp13-windows-worker-review.json`、`docs/validation/wp13-windows-evidence-review.json`、`docs/validation/wp13-linux-review.json`；Apple自检见 `docs/validation/parallel-integration.json` |

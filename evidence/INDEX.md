@@ -1,5 +1,17 @@
 # Evidence index
 
+## 台账计数口径（v1 108 项）
+
+| 口径 | 数值 | 依据 |
+| --- | --- | --- |
+| 名义（catalog 记账） | 99/108（verified 99、partial 1、pending 8） | [catalog.json](../docs/reader-total-progress/catalog.json) |
+| 有总台账审计支撑 | 95/108 | [run 40928834086](https://github.com/NoGod3524/EXReader/actions/runs/40928834086)（#29 attempt 2，开始于 2026-10-29T18:17:09Z）`report.json`：current_done=95、evidence_ok=true；96–99 为未审计记账，见 [LEDGER-AUTHORITY](../docs/reader-total-progress/LEDGER-AUTHORITY.md#exceptions) |
+| 当前树可复现 | 未知 | 尚无绑定当前 main SHA 的完整台账复验 |
+| 产品级 final 组（F 项） | 名义 4/12（F02/F04/F06/F07） | catalog 记账；不是当前树产品验收 4/12。上述审计 run 当时 final 组为 1/12 |
+
+99/108 是历史记账，不能当作当前整树通过。
+
+
 - 2026-11-05 — [Pachinko首行缩进像素复核：A](real-books-20261105/TEXT-INDENT-PIXELS.md)：原PNG同段首行/续行66/44px（差22px），另一段65/44px（差21px），匹配1.2em×18px；布局原点差21.600002px。撤回“首行齐平／缩进缺失”观察，不登记为引擎缺陷；未指定作者样式的宿主CJK默认2em需求仍归第5步。
 
 - 2026-11-05 — [CJK验收范围与责任分流](real-books-20261105/CJK-READABILITY-CHECKLIST.md)：原15本中文样本0；草枕日文结果不能替代中文验证。已查 [text-indent](real-books-20261105/TEXT-INDENT.md)：草枕普通段1em，葡语Pachinko普通段1.2em，均有显式零缩进；缺省2em策略归第5步。行宽/上边距归宿主第3步；hyphenation归后续引擎版本，不在2a范围。
