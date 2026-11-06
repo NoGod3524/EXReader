@@ -4,7 +4,7 @@
    layout_controls; it uses the host state `g` from there.
 
    Once a book is open the window shows the flat top bar (UI-SPEC, 2026-11-05):
-   56 high, layer.page with a 6% hairline on its last row, the title on the left
+   56 high, DeckMark bg with a line-token hairline on its last row, the title on the left
    (17, weight 600) and two 40x40 round icon buttons on the right (目录, 设置).
    Below it the page fills the window with no 3D edge. Every legacy control is
    hidden. Alt+Left returns to the legacy panel, Alt+Right comes back, and
@@ -15,7 +15,7 @@
 
    The buttons stay real BUTTON windows (BS_OWNERDRAW): their UIA proxies keep
    the name, role and Invoke, while every pixel is drawn here. In this step
-   they only take focus and carry a name; clicking does nothing. */
+   settings opens the owner-drawn child panel. */
 #include "shell_tokens.h"
 
 enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, SHELL_HIDDEN_MAX = 128 };
@@ -23,10 +23,20 @@ enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, SHELL_HIDDEN_MAX = 128 };
 enum { SHELL_BUTTON_BOX = SHELL_TARGET + 2 * SHELL_FOCUS_STROKE };
 
 static HWND shell_toc, shell_settings;
+static HWND shell_panel, shell_minus, shell_plus, shell_segments[3];
+static int shell_panel_open, shell_animating;
+static double shell_animation_start, shell_animation_elapsed;
+static float shell_animation_from, shell_animation_value;
+static void shell_panel_layout(void);
+static void shell_apply_theme(void);
+static void shell_toggle_settings(void);
+static int shell_settings_command(int id);
+static int shell_draw_settings(const DRAWITEMSTRUCT *item);
 static HWND shell_hidden[SHELL_HIDDEN_MAX];
 static size_t shell_hidden_count;
 static const shell_theme *shell_colors = &shell_theme_light;
 static WNDPROC shell_button_base;
+static HWND shell_render_focus; /* offscreen drive: inject only the drawing state */
 static HWND shell_hover;       /* the button under the mouse */
 static int shell_hover_pinned; /* --drive only: keep the hover state for a screenshot */
 
@@ -136,9 +146,11 @@ static HWND shell_make_button(HWND parent, int id, const wchar_t *name) {
   return button;
 }
 
+static void shell_create_panel(HWND parent);
 static void shell_create(HWND parent) {
   shell_toc = shell_make_button(parent, IDC_SHELL_TOC, L"目录");
   shell_settings = shell_make_button(parent, IDC_SHELL_SETTINGS, L"设置");
+  shell_create_panel(parent);
 }
 
 /* Circle positions from WIREFRAMES section 2: 设置 16 from the right edge,
@@ -164,6 +176,7 @@ static int shell_layout(void) {
              shell_px(SHELL_BUTTON_BOX, shell_dpi), TRUE);
   MoveWindow(g.page, 0, shell_px(SHELL_TOPBAR_H, shell_dpi), area.right, area.bottom > shell_px(SHELL_TOPBAR_H, shell_dpi) ? area.bottom - shell_px(SHELL_TOPBAR_H, shell_dpi) : 0,
              TRUE);
+  shell_panel_layout();
   return 1;
 }
 
@@ -188,7 +201,9 @@ static void shell_enter(void) {
   for (i = 0; i < shell_hidden_count; i++) ShowWindow(shell_hidden[i], SW_HIDE);
   SetWindowLongPtrW(g.window, GWL_STYLE, GetWindowLongPtrW(g.window, GWL_STYLE) | WS_CLIPCHILDREN);
   shell_page_edge(0);
+  SetWindowLongPtrW(g.page,GWL_STYLE,GetWindowLongPtrW(g.page,GWL_STYLE)|WS_CLIPSIBLINGS);
   shell_active = 1;
+  shell_apply_theme();
   shell_layout();
   shell_request_layout();
   ShowWindow(shell_toc, SW_SHOW);
@@ -199,13 +214,17 @@ static void shell_enter(void) {
 
 static void shell_leave(void) {
   size_t i;
+  shell_panel_open=0; shell_animating=0; shell_animation_value=0;
+  KillTimer(g.window,0x5753); ShowWindow(shell_panel,SW_HIDE);
   shell_active = 0;
+  shell_apply_theme();
   shell_hover = NULL;
   shell_hover_pinned = 0;
   ShowWindow(shell_toc, SW_HIDE);
   ShowWindow(shell_settings, SW_HIDE);
   SetWindowLongPtrW(g.window, GWL_STYLE, GetWindowLongPtrW(g.window, GWL_STYLE) & ~(LONG_PTR)WS_CLIPCHILDREN);
   shell_page_edge(1);
+  SetWindowLongPtrW(g.page,GWL_STYLE,GetWindowLongPtrW(g.page,GWL_STYLE)&~(LONG_PTR)WS_CLIPSIBLINGS);
   for (i = 0; i < shell_hidden_count; i++) ShowWindow(shell_hidden[i], SW_SHOW);
   shell_hidden_count = 0;
   {
@@ -244,6 +263,7 @@ static void shell_sync(void) {
     GetClientRect(g.window, &bar);
     bar.bottom = shell_px(SHELL_TOPBAR_H, shell_dpi);
     InvalidateRect(g.window, &bar, FALSE); /* the title may have changed */
+    if(shell_panel_open) InvalidateRect(shell_panel,NULL,FALSE);
   }
 }
 
@@ -254,7 +274,7 @@ static void shell_paint(HWND window) {
   BeginPaint(window, &paint);
   GetClientRect(window, &area);
   if (SUCCEEDED(shell_d2d_begin(host_shell, shell_colors->layer_page))) {
-    shell_d2d_fill(host_shell, 0, (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1), (float)area.right, 1, shell_colors->hairline);
+    shell_d2d_fill(host_shell, 0, (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1), (float)area.right, 1, shell_blend(shell_colors->layer_page,shell_colors->line_rgb,SHELL_LINE_ALPHA));
     if (g.has_current && g.current.title) title = host_wide(g.current.title, strlen(g.current.title));
     /* Left at 24; it may run up to 16 before the 目录 circle. */
     shell_button_circle(shell_toc, area.right, &circle);
@@ -272,17 +292,20 @@ static void shell_paint(HWND window) {
 static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   shell_d2d_button look;
   int disabled, pressed, hover, focus;
+  if (shell_draw_settings(item)) return 1;
   if (!host_shell || (item->hwndItem != shell_toc && item->hwndItem != shell_settings)) return 0;
   disabled = (item->itemState & ODS_DISABLED) != 0;
   pressed = !disabled && (item->itemState & ODS_SELECTED) != 0;
   hover = !disabled && shell_hover == item->hwndItem;
   /* The outline follows the keyboard: hidden while the window hides focus cues. */
-  focus = (item->itemState & ODS_FOCUS) && !(item->itemState & ODS_NOFOCUSRECT);
+  focus = ((item->itemState & ODS_FOCUS) && !(item->itemState & ODS_NOFOCUSRECT)) ||
+          (host_offscreen && g.drive_mode && shell_render_focus==item->hwndItem);
   memset(&look, 0, sizeof(look));
   look.background = shell_colors->layer_page;
   look.has_fill = pressed || hover;
-  look.fill = shell_mix(shell_colors->layer_page, shell_colors->accent, pressed ? SHELL_PRESSED_PERCENT : SHELL_HOVER_PERCENT);
-  look.icon = disabled ? shell_colors->text_disabled : shell_colors->text;
+  look.fill = shell_colors->surface2;
+  look.offset_y = pressed ? SHELL_PRESSED_Y * shell_dpi / 96.f : 0;
+  look.icon = disabled ? shell_blend(shell_colors->layer_page,shell_colors->text_secondary,SHELL_DISABLED_ALPHA) : shell_colors->text_secondary;
   look.has_ring = focus;
   look.ring = shell_colors->accent;
   look.diameter = (float)shell_px(SHELL_TARGET, shell_dpi);
@@ -317,6 +340,12 @@ static int shell_page_focus(HWND page, HDC dc, const RECT *area) {
 }
 
 static int shell_translate(const MSG *message) {
+  if(shell_panel_open && message->message==WM_KEYDOWN && message->wParam==VK_ESCAPE) {
+    shell_toggle_settings(); return 1;
+  }
+  if(shell_panel_open && message->message==WM_LBUTTONDOWN && message->hwnd!=shell_settings &&
+     message->hwnd!=shell_panel && !IsChild(shell_panel,message->hwnd)) shell_toggle_settings();
+  if(shell_panel_open && IsDialogMessageW(shell_panel,(MSG *)message)) return 1;
   if (message->message != WM_SYSKEYDOWN || !host_shell || !g.window ||
       (message->hwnd != g.window && !IsChild(g.window, message->hwnd)))
     return 0;
@@ -359,5 +388,10 @@ static int shell_visible_children(void) {
 }
 
 static HWND shell_button_named(const char *name) {
-  return !strcmp(name, "toc") ? shell_toc : !strcmp(name, "settings") ? shell_settings : NULL;
+  return !strcmp(name,"minus") ? shell_minus : !strcmp(name,"plus") ? shell_plus :
+    !strcmp(name,"light") ? shell_segments[0] : !strcmp(name,"dark") ? shell_segments[1] :
+    !strcmp(name,"system") ? shell_segments[2] :
+    !strcmp(name, "toc") ? shell_toc : !strcmp(name, "settings") ? shell_settings : NULL;
 }
+
+#include "shell_settings.inc"
