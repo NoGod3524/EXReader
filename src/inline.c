@@ -516,6 +516,13 @@ static exr_status display_group(flow *f,exr_layout *l,size_t first,size_t end) {
   }
   return status;
 }
+static unsigned inline_boundary(unsigned flags,uint32_t previous,uint32_t cp) {
+  /* Tailor SP before fullwidth colon/semicolon for Chinese layout, including
+     emergency wrapping. Keep the public Unicode analyzer and hard breaks intact. */
+  if(previous==0x20 && (cp==0xff1a || cp==0xff1b) && !(flags&EXR_BOUNDARY_MANDATORY))
+    flags=(flags&~EXR_BOUNDARY_LINE)|EXR_BOUNDARY_GLUE;
+  return flags;
+}
 /* Display graphemes control wrapping independently of protected source ranges.
    A new join can enlarge source affiliation, never invent an original offset. */
 static exr_status display_scan(flow *f,exr_layout *l,int project,
@@ -527,7 +534,8 @@ static exr_status display_scan(flow *f,exr_layout *l,int project,
     if(!(i&255) && exr_control_cancel(&f->config->control,f->error)!=EXR_OK) return EXR_CANCELLED;
     if(!deleted_placeholder(g)) {
       display_cursor next=tail;uint32_t cp=g->flags&EXR_GLYPH_RUBY_ITEM ? 0xfffc : g->codepoint;
-      next.at=i+1;flags=exr_text_step(state,cp,display_next,&next);*previous=cp;*node=g->node;
+      next.at=i+1;flags=inline_boundary(exr_text_step(state,cp,display_next,&next),*previous,cp);
+      *previous=cp;*node=g->node;
     }
     if(!i) flags|=EXR_BOUNDARY_GRAPHEME;
     if(!deleted_placeholder(g) && (flags&EXR_BOUNDARY_GRAPHEME)) {
@@ -1685,6 +1693,7 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
   {
     inline_text_cursor cursor = {f, g.node, g.end,0};
     g.boundaries = exr_text_step(&b->text, g.codepoint, following_inline_scalar, &cursor);
+    g.boundaries = inline_boundary(g.boundaries,b->display_previous,g.codepoint);
   }
   if(b->track_display) {
     if(g.boundaries&EXR_BOUNDARY_GRAPHEME) {
