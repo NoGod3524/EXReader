@@ -355,6 +355,21 @@ static int match(css *c, const exr_document *d, size_t node, const char *selecto
   return found;
 }
 static int property(const char *s, size_t n) {
+  static const struct { const char *alias, *canonical; } aliases[] = {
+      {"-epub-writing-mode", "writing-mode"},
+      {"-webkit-writing-mode", "writing-mode"},
+      {"-epub-text-orientation", "text-orientation"},
+      {"-webkit-text-orientation", "text-orientation"},
+      {"-epub-text-combine", "text-combine-upright"},
+      {"-webkit-text-combine", "text-combine-upright"}};
+  size_t alias;
+  for (alias = 0; alias < sizeof(aliases) / sizeof(aliases[0]); alias++) {
+    if (equal(s, n, aliases[alias].alias)) {
+      s = aliases[alias].canonical;
+      n = strlen(s);
+      break;
+    }
+  }
   static const char *names[PROPERTIES] = {
       "font-size",    "font-weight",   "font-style",     "color",         "line-height",
       "text-align",   "text-indent",   "display",        "width",         "height",
