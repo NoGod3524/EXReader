@@ -542,7 +542,7 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
   const exr_style *s = &logical;
   const exr_bitmap *bitmap;
   size_t resource;
-  float w, h, scale;
+  float w, h, scale, room;
   exr_box *b;
   exr_status status = image_asset(f, node, &resource, &bitmap);
   if (status != EXR_OK)
@@ -561,7 +561,23 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
   h *= scale;
   if (w <= 0 || h <= 0)
     return EXR_OK;
-  scale = fminf(1, fminf(width / w, exr_flow_room(f) / h));
+  room = exr_flow_room(f);
+  if (f->paginate && !f->force_break && f->layout->page_count &&
+      !f->layout->pages[f->layout->page_count - 1].line_count) {
+    size_t i;
+    int has_image = 0;
+    for (i = f->layout->box_count; i > 0; i--) {
+      const exr_box *box = &f->layout->boxes[i - 1];
+      if (box->page == f->layout->page_count - 1 && box->kind == EXR_BOX_IMAGE) {
+        has_image = 1;
+        break;
+      }
+    }
+    /* A leading margin must not push an otherwise empty cover to a new page. */
+    if (!has_image && exr_flow_bottom(f) > f->y)
+      room = fminf(room, exr_flow_bottom(f) - f->y);
+  }
+  scale = fminf(1, fminf(width / w, room / h));
   if (s->max_width.value >= 0)
     scale = fminf(scale, used(s->max_width, width) / w);
   if (s->max_height.value >= 0)
