@@ -5615,10 +5615,22 @@ static int drive_execute(void) {
     return 0;
   }
   if (!strcmp(action, "activate")) {
-    /* Test setup: focus states only exist in the foreground window. */
-    SetForegroundWindow(g.window);
-    if (GetForegroundWindow() != g.window && GetTickCount() - drive_step_start < 3000) return 1;
-    drive_step_finish(GetForegroundWindow() == g.window, GetForegroundWindow() == g.window ? "foreground" : "not foreground");
+    /* Test setup: focus states only exist in the foreground window. At most
+       one SetForegroundWindow per run, announced first and never retried; if
+       the foreground is refused the step fails and says so. The 500 ms below
+       only waits for that one request to take effect. */
+    static int requests, waiting;
+    if (!waiting) {
+      if (requests) { drive_step_finish(0, "activation already used in this run; not retried"); return 0; }
+      requests = 1;
+      drive_log("NOTE", "activate", 1, "activating window for focus checks");
+      SetForegroundWindow(g.window);
+      waiting = 1;
+    }
+    if (GetForegroundWindow() != g.window && GetTickCount() - drive_step_start < 500) return 1;
+    waiting = 0;
+    drive_step_finish(GetForegroundWindow() == g.window,
+                      GetForegroundWindow() == g.window ? "foreground" : "无法获得前台 (foreground refused; not retried)");
     return 0;
   }
   if (!strcmp(action, "key_tab")) {
