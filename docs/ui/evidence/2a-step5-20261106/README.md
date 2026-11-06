@@ -1,6 +1,8 @@
 # 2a step 5 evidence
 
-**Overall FAIL: the nonzero page-head anchor moves when stepping font size.**
+**Current PASS: font reflow preserves the exact visible content head. Final check exit=0; 12/12 stepped transitions, 8/8 requested cycle transitions; all eight existing checks green; fixed-font Latin Sample 12 images, 0 differing client pixels.**
+
+See [anchor fix report](../../2A-STEP5-ANCHOR-FIX.md) and [current evidence](anchor-fix/README.md). The record/ links below retain the previous 3096ca7f run, including its historical failure.
 
 See [acceptance report](../../2A-STEP5-ACCEPTANCE.md) for the eight numbered measurements, all 30 control state colour comparisons, INI before/after and the failing first-line offsets.
 

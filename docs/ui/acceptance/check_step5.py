@@ -33,7 +33,7 @@ HIDDEN=subprocess.CREATE_NO_WINDOW
 def dump(path,value):
     path.write_text(json.dumps(value,ensure_ascii=False,indent=2),encoding='utf-8')
 
-def run(exe,font,script,data,out,allowed_failures=0):
+def run(exe,font,script,data,out,allowed_failures=0,timeout_seconds=180):
     out.mkdir(parents=True,exist_ok=True);data.mkdir(parents=True,exist_ok=True)
     drive=out/'run.drive';drive.write_text(script,encoding='utf-8')
     env=dict(os.environ,EXREADER_HOST_ACCEPTANCE='1',EXR_PAINT_TRACE=str(out/'paint.csv'))
@@ -50,7 +50,7 @@ def run(exe,font,script,data,out,allowed_failures=0):
     while p.poll() is None:
         pid=W.DWORD();U.GetWindowThreadProcessId(U.GetForegroundWindow(),C.byref(pid))
         foreground+=pid.value==p.pid;U.EnumWindows(visit,0)
-        if time.monotonic()-start>180: p.kill();raise RuntimeError('drive timeout')
+        if time.monotonic()-start>timeout_seconds: p.kill();raise RuntimeError('drive timeout')
         time.sleep(.02)
     stdout,stderr=p.communicate()
     result=dict(exit=p.returncode,foreground_observations=foreground,positions=sorted(positions),
@@ -227,7 +227,9 @@ def main():
     result['presented']=sum(l[0]=='presented' for l in trace);result['blank']=sum(l[0]=='blank' for l in trace)
     assert result['presented']>0 and result['blank']==0
     result.update(remaining(exe,baseline,font,book,out))
-    result['pass']=result['nonzero_head_preserved']
+    from check_font_anchors import check
+    result['font_anchors']=check(exe,font,out/'font-anchors')
+    result['pass']=result['nonzero_head_preserved'] and result['font_anchors']['pass_']
     dump(out/'result.json',result)
     print(json.dumps(result,ensure_ascii=False,indent=2))
     return 0 if result['pass'] else 1

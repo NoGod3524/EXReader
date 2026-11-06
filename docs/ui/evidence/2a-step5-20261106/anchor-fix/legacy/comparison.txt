@@ -1,0 +1,18 @@
+control A/00-empty-shelf.png 1180x900 diffpx 0 client_diffpx 0
+control A/01-epub-page1.png 1180x900 diffpx 0 client_diffpx 0
+control A/02-resized.png 1120x820 diffpx 0 client_diffpx 0
+control A/03-pdf-page1.png 1120x820 diffpx 0 client_diffpx 0
+control A/04-stale-final.png 1120x820 diffpx 0 client_diffpx 0
+control B/10-restored.png 1120x820 diffpx 0 client_diffpx 0
+control B/11-font-changed.png 1120x820 diffpx 0 client_diffpx 0
+control C/20-restored-after-font.png 1120x820 diffpx 0 client_diffpx 0
+control images=8 nonzero=0 (client area, rows >= 38)
+changed A/00-empty-shelf.png 1180x900 diffpx 0 client_diffpx 0
+changed A/01-epub-page1.png 1180x900 diffpx 0 client_diffpx 0
+changed A/02-resized.png 1120x820 diffpx 0 client_diffpx 0
+changed A/03-pdf-page1.png 1120x820 diffpx 0 client_diffpx 0
+changed A/04-stale-final.png 1120x820 diffpx 0 client_diffpx 0
+changed B/10-restored.png 1120x820 diffpx 0 client_diffpx 0
+changed B/11-font-changed.png 1120x820 diffpx 0 client_diffpx 0
+changed C/20-restored-after-font.png 1120x820 diffpx 0 client_diffpx 0
+changed images=8 nonzero=0 (client area, rows >= 38)

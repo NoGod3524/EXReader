@@ -149,6 +149,7 @@ typedef struct {
   int display_shell_theme;
   exr_line *shell_lines;
   size_t shell_line_count;
+  int shell_anchored;
 #endif
   exr_bitmap bitmap;
   uint32_t *dib;
@@ -194,7 +195,7 @@ typedef struct {
   int fixed;
   int txt; /* Product original, with no SDK book identity. */
   int txt_pager_invalid; /* Recreate after a failed or cancelled layout. */
-#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+#if defined(EXR_READER_WINDOWS_TXT_RECOVERY) || defined(EXR_READER_WINDOWS_SHELL)
   int txt_checkpoint_valid;
   exr_txt_checkpoint txt_checkpoint;
 #endif
@@ -1188,10 +1189,12 @@ struct host_job {
   char product_key[READER_BOOK_KEY_CAPACITY];
   host_shelf_cursor *product_cursors;
 #endif
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) || defined(EXR_READER_WINDOWS_SHELL)
+  uint64_t txt_offset;
+#endif
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   /* Copied values for one TXT position write; the worker never reads UI state. */
   char txt_key[73];
-  uint64_t txt_offset;
   char txt_context[READER_TXP_CONTEXT_BYTES + 1];
   size_t txt_context_bytes;
   uint64_t txt_saved_offset;
@@ -1748,7 +1751,11 @@ static exr_status render_reflow(host_session *session, size_t page, host_frame *
       out->text = host_wide(out->utf8, out->text_bytes);
       if (!out->text) status = EXR_MEMORY;
     }
-    if (status == EXR_OK) status = exr_pager_anchor_create(session->pager, info->start, info->start, control, &out->point, error);
+    size_t head = info->start;
+#ifdef EXR_READER_WINDOWS_SHELL
+    if (out->shell_line_count) head = out->shell_lines[0].start;
+#endif
+    if (status == EXR_OK) status = exr_pager_anchor_create(session->pager, head, head, control, &out->point, error);
     if (status != EXR_OK) { frame_clear(out); return status; }
     out->chapter_stats = exr_pager_chapter_statistics(session->pager);
   }
@@ -2042,7 +2049,7 @@ static exr_status bounded_restore(host_session *session, const exr_control *cont
   exr_epub_location_free(&location); return status;
 }
 
-#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+#if defined(EXR_READER_WINDOWS_TXT_RECOVERY) || defined(EXR_READER_WINDOWS_SHELL)
 /* The verified handle is the source: no path reopen between verification and read.
    The pager owns this context after successful creation. The worker serializes
    catalog operations and session disposal; Windows sharing prevents mutation. */
@@ -2132,6 +2139,8 @@ static exr_status txt_frame(host_session *session, const exr_source *source, con
   return status;
 }
 
+#endif
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
 static exr_status txt_restore(host_session *session, const char *key, size_t *page,
                               wchar_t *note, size_t capacity, exr_error *error);
@@ -2754,12 +2763,50 @@ static exr_status job_bounded_go(host_job *job) {
   exr_pager_free(pager); if (status != EXR_OK) job->error = error; return status;
 }
 
+#ifdef EXR_READER_WINDOWS_SHELL
+#include "windows/shell_anchor.inc"
+#endif
+
 static exr_status job_go(host_job *job) {
   LONG layout_before=host_probe_layout_calls;
   exr_error error = {0};
   exr_status status;
   if (!g.session.active) return EXR_ARGUMENT;
   if (job->book_id && job->book_id != g.session.book_id) return EXR_CANCELLED;
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (g.session.shell_geometry.enabled && g.frame.shell_anchored && !job->use_offset &&
+      job->direction > 0 && job->batch_delta == 1) {
+    exr_control control = {job_cancel_check, NULL, job};
+    size_t page = g.frame.page, offset = g.frame.range_end;
+    const exr_layout *layout = NULL;
+    /* The joined viewport ends in this page or a nearby following page.
+       Walk that tail; do not replay a distant book from page zero. */
+    for (;;) {
+      size_t count = 0;
+      status = exr_pager_get(g.session.pager, page, &layout, &error);
+      if (status != EXR_OK) break;
+      const exr_page *info = exr_layout_pages(layout, &count);
+      if (!info || !count) { status = EXR_FORMAT; break; }
+      if (offset < info->end) break;
+      page++;
+    }
+    if (status == EXR_OK) {
+      if (g.session.txt) {
+        if (status == EXR_OK) status = txt_frame(&g.session, &g.session.txt_source, layout, page, &job->frame, &error);
+      } else
+      status = render_reflow(&g.session, page, &job->frame, &control, &error);
+    }
+    if (status == EXR_OK && offset < job->frame.range_end) {
+      status = shell_align_anchor(&g.session, offset, &job->frame, &control, &error);
+      if (status == EXR_OK) { job->have_frame = 1; job->applied_page = page; job->page_count = g.session.page_count; }
+      else job->error = error;
+      return status;
+    }
+    frame_clear(&job->frame);
+    /* At chapter EOF the existing next-chapter path still owns traversal. */
+    if (status != EXR_OK && !pager_eof(status, &error)) { job->error = error; return status; }
+  }
+#endif
   if(!job->use_offset) {
     int i=page_cache_find(g.session.book_id,g.session.part,job->target_page);
     if(i>=0) {
@@ -2864,7 +2911,7 @@ static exr_status job_layout(host_job *job) {
 #endif
   config.control.cancelled = host_cancel_check;
   config.control.context = NULL;
-#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) || defined(EXR_READER_WINDOWS_SHELL)
   if (g.session.txt) {
     host_session candidate = g.session;
     exr_source source = g.session.txt_source;
@@ -2890,6 +2937,9 @@ static exr_status job_layout(host_job *job) {
     if (status == EXR_OK) status = exr_pager_get(pager, page, &laid, &error);
     if (status == EXR_OK && !laid) status = EXR_FORMAT;
     if (status == EXR_OK) status = txt_frame(&candidate, &source, laid, page, &job->frame, &error);
+#ifdef EXR_READER_WINDOWS_SHELL
+    if (status == EXR_OK) status = shell_align_anchor(&candidate, (size_t)job->txt_offset, &job->frame, &control, &error);
+#endif
     if (status == EXR_OK) {
       job->candidate_pager = pager; pager = NULL;
       job->candidate_config = config;
@@ -2922,6 +2972,7 @@ static exr_status job_layout(host_job *job) {
     if (status == EXR_OK) status = exr_pager_anchor_resolve(pager, &point, &control, &match, &error);
     if (status == EXR_OK) {
       size_t target = match.state == EXR_ANCHOR_FOUND ? match.start : point.start;
+      offset = target;
       if (match.state != EXR_ANCHOR_FOUND) {
         host_text_sink sink = {NULL, 0, 0};
         status = exr_pager_read_text(pager, target, target, page_text_sink, &sink, &control, &error);
@@ -2931,6 +2982,9 @@ static exr_status job_layout(host_job *job) {
       if (status == EXR_OK) status = page_for_offset(&candidate, target, &control, &page, NULL, NULL, &error);
     }
     if (status == EXR_OK) status = render_reflow(&candidate, page, &job->frame, &control, &error);
+#ifdef EXR_READER_WINDOWS_SHELL
+    if (status == EXR_OK) status = shell_align_anchor(&candidate, offset, &job->frame, &control, &error);
+#endif
     exr_anchor_free(&point);
     if (status == EXR_OK) {
       job->candidate_pager = pager; job->candidate_config = config; job->have_frame = 1; job->applied_page = page;
@@ -2983,6 +3037,9 @@ static exr_status job_layout(host_job *job) {
     status = page_for_offset(&candidate, offset, &control, &page, NULL, NULL, &error);
     if (status == EXR_OK)
       status = render_reflow(&candidate, page, &job->frame, &control, &error);
+#ifdef EXR_READER_WINDOWS_SHELL
+    if (status == EXR_OK) status = shell_align_anchor(&candidate, offset, &job->frame, &control, &error);
+#endif
     if (status == EXR_OK) {
       job->candidate_pager = pager; pager = NULL;
       job->candidate_config = config;
@@ -5862,6 +5919,14 @@ static int drive_execute(void) {
     return 0;
   }
 #ifdef EXR_READER_WINDOWS_SHELL
+  if (!strcmp(action, "shell_page")) {
+    long target = strtol(drive_args[1], NULL, 10)-1;
+    if (!host_offscreen || target < 0 || target >= 1000000 || !g.frame.valid) {
+      drive_step_finish(0, "offscreen page target invalid"); return 0;
+    }
+    if ((size_t)target == g.frame.page) { drive_step_finish(1, "already at page"); return 0; }
+    page_step((int)(target-(long)g.frame.page)); drive_expect_idle = 1; return 1;
+  }
   if (!strcmp(action,"shell_click")) {
     HWND button=shell_button_named(drive_args[1]);
     if(button) SendMessageW(button,BM_CLICK,0,0);
