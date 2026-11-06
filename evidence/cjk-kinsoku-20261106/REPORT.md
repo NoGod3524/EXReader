@@ -83,3 +83,5 @@ ctest --test-dir <build> -R "^native-(line-boundary|text|hyphen|hyphen-replaceme
 ```
 
 完整 CMake 配置与源文件、输入、工具、原始输出哈希保存于 PROVENANCE.json。测量进程用 CREATE_NO_WINDOW 启动。提交使用 `[skip ci]`，用于遵守本次不跑 CI 的要求。
+
+<!-- ci trigger 2026-11-06 -->
