@@ -1,0 +1,3 @@
+IMAGE y=8.500000 height=520.500000 bottom=529.000000
+COVER glyphs=0 images=1 cache_bytes=15372040 sha256=f788e74352073637227e0ebfa57391a1205003dcf7c4ae2474acf086cdcdfde2
+STATUS 0
