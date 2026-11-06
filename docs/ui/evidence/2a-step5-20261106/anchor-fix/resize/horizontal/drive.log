@@ -1,0 +1,58 @@
+HOST	phase=0	engine=3.42.0	pid=7284
+STEP	1	import	PASS	page=0;status=已导入《horizontal》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《horizontal》 · 从首个阅读章节开始。
+STEP	3	shell	PASS	reading screen
+STEP	4	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	5	shell_font	PASS	page=1;status=第 1 页。
+STEP	6	shell_client	PASS	page=1;status=第 1 页。
+STEP	7	wait_idle	PASS	page=1;status=第 1 页。
+STEP	8	next	PASS	page=2;status=第 2 页。
+STEP	9	wait_idle	PASS	page=2;status=第 2 页。
+STEP	10	next	PASS	page=3;status=第 3 页。
+STEP	11	wait_idle	PASS	page=3;status=第 3 页。
+STEP	12	next	PASS	page=4;status=第 4 页。
+STEP	13	wait_idle	PASS	page=4;status=第 4 页。
+STEP	14	next	PASS	page=5;status=第 5 页。
+STEP	15	wait_idle	PASS	page=5;status=第 5 页。
+STEP	16	next	PASS	page=6;status=第 6 页。
+STEP	17	wait_idle	PASS	page=6;status=第 6 页。
+STEP	18	next	PASS	page=7;status=第 7 页。
+STEP	19	wait_idle	PASS	page=7;status=第 7 页。
+STEP	20	next	PASS	page=8;status=第 8 页。
+STEP	21	wait_idle	PASS	page=8;status=第 8 页。
+STEP	22	shell_measure	PASS	physical layout captured
+STEP	23	shell_client	PASS	page=8;status=第 8 页。
+STEP	24	shell_measure	PASS	physical layout captured
+STEP	25	shell_client	PASS	page=12;status=第 12 页。
+STEP	26	shell_measure	PASS	physical layout captured
+STEP	27	shell_client	PASS	page=8;status=第 8 页。
+STEP	28	shell_measure	PASS	physical layout captured
+STEP	29	shell_font	PASS	page=8;status=第 8 页。
+STEP	30	shell_measure	PASS	physical layout captured
+STEP	31	delay	PASS	delay_ms set
+STEP	32	resize	PASS	window resized
+STEP	33	probe_wait	PASS	waited without blocking UI
+STEP	34	resize	PASS	window resized
+STEP	35	resize	PASS	window resized
+STEP	36	probe_wait	PASS	waited without blocking UI
+STEP	37	wait_idle	PASS	page=8;status=第 8 页。
+STEP	38	delay	PASS	delay_ms set
+STEP	39	shell_measure	PASS	physical layout captured
+STEP	40	shell_client	PASS	page=8;status=第 8 页。
+STEP	41	shell_measure	PASS	physical layout captured
+STEP	42	shell_dpi	PASS	page=10;status=第 10 页。
+STEP	43	shell_measure	PASS	physical layout captured
+STEP	44	shell_dpi	PASS	page=12;status=第 12 页。
+STEP	45	shell_measure	PASS	physical layout captured
+STEP	46	shell_dpi	PASS	page=7;status=第 7 页。
+STEP	47	shell_client	PASS	page=8;status=第 8 页。
+STEP	48	shell_measure	PASS	physical layout captured
+STEP	49	shell	PASS	legacy panel
+STEP	50	wait_idle	PASS	page=23;status=第 23 页。
+STEP	51	check	PASS	reachable=17;missing=;window_status=第 23 页。
+STEP	52	shell_measure	PASS	physical layout captured
+STEP	53	shell	PASS	reading screen
+STEP	54	wait_idle	PASS	page=8;status=第 8 页。
+STEP	55	shell_measure	PASS	physical layout captured
+STEP	56	quit	PASS	closing
+DONE	56	eof	PASS	script finished

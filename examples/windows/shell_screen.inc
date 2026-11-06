@@ -40,7 +40,7 @@ static HWND shell_render_focus; /* offscreen drive: inject only the drawing stat
 static HWND shell_hover;       /* the button under the mouse */
 static int shell_hover_pinned; /* --drive only: keep the hover state for a screenshot */
 
-/* Keep the first requested page-head anchor through resize round trips.
+/* Keep the first requested page-head anchor through resize and font changes.
    Navigation outside that content range starts a new anchor. */
 static exr_anchor shell_anchor;
 static int shell_anchor_valid;
@@ -55,9 +55,10 @@ static void shell_request_layout(void) {
   if (!shell_anchor_valid && g.frame.valid && !g.frame.fixed) {
     exr_error error = {0};
     shell_anchor_book = g.frame.book_id; shell_anchor_offset = g.frame.range_start; shell_anchor_part = g.frame.part;
+    if (g.frame.shell_line_count) shell_anchor_offset = g.frame.shell_lines[0].start;
     if (g.session.txt) shell_anchor_valid = 1;
     else if (g.session.bounded) shell_anchor_valid = host_anchor_copy(&shell_anchor, &g.frame.point);
-    else shell_anchor_valid = exr_anchor_create(g.session.document, g.frame.range_start, g.frame.range_start,
+    else shell_anchor_valid = exr_anchor_create(g.session.document, shell_anchor_offset, shell_anchor_offset,
                                                 &shell_anchor, &error) == EXR_OK;
     if (!shell_anchor_valid) { set_status(L"无法建立重排内容锚点。"); return; }
   }
@@ -81,7 +82,7 @@ static void shell_pump_layout(void) {
     if (!g.session.txt && !host_anchor_copy(&job->anchor, &shell_anchor)) { job_release(job); return; }
     job->has_anchor = !g.session.txt;
     job->target_offset = shell_anchor_offset;
-#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) || defined(EXR_READER_WINDOWS_SHELL)
     job->txt_offset = (uint64_t)shell_anchor_offset;
 #endif
   }

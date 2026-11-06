@@ -1,0 +1,428 @@
+HOST	phase=1	engine=3.42.0	pid=23292
+STEP	1	import	PASS	page=0;status=已导入《EXReader benchmark》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+STEP	3	wait_idle	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+STEP	4	shell	PASS	reading screen
+STEP	5	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	6	shell_client	PASS	page=1;status=第 1 页。
+STEP	7	wait_idle	PASS	page=1;status=第 1 页。
+STEP	8	shell_click	PASS	button invoked
+STEP	9	wait_idle	PASS	page=1;status=第 1 页。
+STEP	10	shell_click	PASS	button invoked
+STEP	11	wait_idle	PASS	page=1;status=第 1 页。
+STEP	12	settings_measure	PASS	settings captured
+STEP	13	shell_measure	PASS	physical layout captured
+SHOT	14	light	PASS	file=light;nonzero=1
+STEP	14	snapshot	PASS	screenshot written
+STEP	15	shell_enable	PASS	button enabled state set
+STEP	16	shell_press	PASS	button state set
+STEP	17	shell_hover	PASS	hover cleared
+STEP	18	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	19	ui_cues	PASS	focus cues set
+SHOT	20	light-stepper-normal	PASS	file=light-stepper-normal;nonzero=1
+STEP	20	snapshot	PASS	screenshot written
+STEP	21	shell_enable	PASS	button enabled state set
+STEP	22	shell_press	PASS	button state set
+STEP	23	shell_enable	PASS	button enabled state set
+STEP	24	shell_press	PASS	button state set
+STEP	25	shell_hover	PASS	hover cleared
+STEP	26	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	27	ui_cues	PASS	focus cues set
+STEP	28	shell_hover	PASS	hover pinned
+SHOT	29	light-stepper-hover	PASS	file=light-stepper-hover;nonzero=1
+STEP	29	snapshot	PASS	screenshot written
+STEP	30	shell_enable	PASS	button enabled state set
+STEP	31	shell_press	PASS	button state set
+STEP	32	shell_enable	PASS	button enabled state set
+STEP	33	shell_press	PASS	button state set
+STEP	34	shell_hover	PASS	hover cleared
+STEP	35	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	36	ui_cues	PASS	focus cues set
+STEP	37	shell_hover	PASS	hover pinned
+STEP	38	shell_press	PASS	button state set
+SHOT	39	light-stepper-pressed	PASS	file=light-stepper-pressed;nonzero=1
+STEP	39	snapshot	PASS	screenshot written
+STEP	40	shell_enable	PASS	button enabled state set
+STEP	41	shell_press	PASS	button state set
+STEP	42	shell_enable	PASS	button enabled state set
+STEP	43	shell_press	PASS	button state set
+STEP	44	shell_hover	PASS	hover cleared
+STEP	45	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	46	ui_cues	PASS	focus cues set
+STEP	47	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+SHOT	48	light-stepper-focus	PASS	file=light-stepper-focus;nonzero=1
+STEP	48	snapshot	PASS	screenshot written
+STEP	49	shell_enable	PASS	button enabled state set
+STEP	50	shell_press	PASS	button state set
+STEP	51	shell_enable	PASS	button enabled state set
+STEP	52	shell_press	PASS	button state set
+STEP	53	shell_hover	PASS	hover cleared
+STEP	54	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	55	ui_cues	PASS	focus cues set
+STEP	56	shell_enable	PASS	button enabled state set
+SHOT	57	light-stepper-disabled	PASS	file=light-stepper-disabled;nonzero=1
+STEP	57	snapshot	PASS	screenshot written
+STEP	58	shell_enable	PASS	button enabled state set
+STEP	59	shell_press	PASS	button state set
+STEP	60	shell_enable	PASS	button enabled state set
+STEP	61	shell_press	PASS	button state set
+STEP	62	shell_hover	PASS	hover cleared
+STEP	63	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	64	ui_cues	PASS	focus cues set
+SHOT	65	light-ghost-normal	PASS	file=light-ghost-normal;nonzero=1
+STEP	65	snapshot	PASS	screenshot written
+STEP	66	shell_enable	PASS	button enabled state set
+STEP	67	shell_press	PASS	button state set
+STEP	68	shell_enable	PASS	button enabled state set
+STEP	69	shell_press	PASS	button state set
+STEP	70	shell_hover	PASS	hover cleared
+STEP	71	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	72	ui_cues	PASS	focus cues set
+STEP	73	shell_hover	PASS	hover pinned
+SHOT	74	light-ghost-hover	PASS	file=light-ghost-hover;nonzero=1
+STEP	74	snapshot	PASS	screenshot written
+STEP	75	shell_enable	PASS	button enabled state set
+STEP	76	shell_press	PASS	button state set
+STEP	77	shell_enable	PASS	button enabled state set
+STEP	78	shell_press	PASS	button state set
+STEP	79	shell_hover	PASS	hover cleared
+STEP	80	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	81	ui_cues	PASS	focus cues set
+STEP	82	shell_hover	PASS	hover pinned
+STEP	83	shell_press	PASS	button state set
+SHOT	84	light-ghost-pressed	PASS	file=light-ghost-pressed;nonzero=1
+STEP	84	snapshot	PASS	screenshot written
+STEP	85	shell_enable	PASS	button enabled state set
+STEP	86	shell_press	PASS	button state set
+STEP	87	shell_enable	PASS	button enabled state set
+STEP	88	shell_press	PASS	button state set
+STEP	89	shell_hover	PASS	hover cleared
+STEP	90	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	91	ui_cues	PASS	focus cues set
+STEP	92	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+SHOT	93	light-ghost-focus	PASS	file=light-ghost-focus;nonzero=1
+STEP	93	snapshot	PASS	screenshot written
+STEP	94	shell_enable	PASS	button enabled state set
+STEP	95	shell_press	PASS	button state set
+STEP	96	shell_enable	PASS	button enabled state set
+STEP	97	shell_press	PASS	button state set
+STEP	98	shell_hover	PASS	hover cleared
+STEP	99	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	100	ui_cues	PASS	focus cues set
+STEP	101	shell_enable	PASS	button enabled state set
+SHOT	102	light-ghost-disabled	PASS	file=light-ghost-disabled;nonzero=1
+STEP	102	snapshot	PASS	screenshot written
+STEP	103	shell_enable	PASS	button enabled state set
+STEP	104	shell_press	PASS	button state set
+STEP	105	shell_enable	PASS	button enabled state set
+STEP	106	shell_press	PASS	button state set
+STEP	107	shell_hover	PASS	hover cleared
+STEP	108	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	109	ui_cues	PASS	focus cues set
+SHOT	110	light-primary-normal	PASS	file=light-primary-normal;nonzero=1
+STEP	110	snapshot	PASS	screenshot written
+STEP	111	shell_enable	PASS	button enabled state set
+STEP	112	shell_press	PASS	button state set
+STEP	113	shell_enable	PASS	button enabled state set
+STEP	114	shell_press	PASS	button state set
+STEP	115	shell_hover	PASS	hover cleared
+STEP	116	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	117	ui_cues	PASS	focus cues set
+STEP	118	shell_hover	PASS	hover pinned
+SHOT	119	light-primary-hover	PASS	file=light-primary-hover;nonzero=1
+STEP	119	snapshot	PASS	screenshot written
+STEP	120	shell_enable	PASS	button enabled state set
+STEP	121	shell_press	PASS	button state set
+STEP	122	shell_enable	PASS	button enabled state set
+STEP	123	shell_press	PASS	button state set
+STEP	124	shell_hover	PASS	hover cleared
+STEP	125	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	126	ui_cues	PASS	focus cues set
+STEP	127	shell_hover	PASS	hover pinned
+STEP	128	shell_press	PASS	button state set
+SHOT	129	light-primary-pressed	PASS	file=light-primary-pressed;nonzero=1
+STEP	129	snapshot	PASS	screenshot written
+STEP	130	shell_enable	PASS	button enabled state set
+STEP	131	shell_press	PASS	button state set
+STEP	132	shell_enable	PASS	button enabled state set
+STEP	133	shell_press	PASS	button state set
+STEP	134	shell_hover	PASS	hover cleared
+STEP	135	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	136	ui_cues	PASS	focus cues set
+STEP	137	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+SHOT	138	light-primary-focus	PASS	file=light-primary-focus;nonzero=1
+STEP	138	snapshot	PASS	screenshot written
+STEP	139	shell_enable	PASS	button enabled state set
+STEP	140	shell_press	PASS	button state set
+STEP	141	shell_enable	PASS	button enabled state set
+STEP	142	shell_press	PASS	button state set
+STEP	143	shell_hover	PASS	hover cleared
+STEP	144	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	145	ui_cues	PASS	focus cues set
+STEP	146	shell_enable	PASS	button enabled state set
+SHOT	147	light-primary-disabled	PASS	file=light-primary-disabled;nonzero=1
+STEP	147	snapshot	PASS	screenshot written
+STEP	148	shell_enable	PASS	button enabled state set
+STEP	149	shell_press	PASS	button state set
+STEP	150	shell_click	PASS	button invoked
+STEP	151	wait_idle	PASS	page=1;status=第 1 页。
+STEP	152	settings_measure	PASS	settings captured
+STEP	153	shell_measure	PASS	physical layout captured
+SHOT	154	dark	PASS	file=dark;nonzero=1
+STEP	154	snapshot	PASS	screenshot written
+STEP	155	shell_enable	PASS	button enabled state set
+STEP	156	shell_press	PASS	button state set
+STEP	157	shell_hover	PASS	hover cleared
+STEP	158	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	159	ui_cues	PASS	focus cues set
+SHOT	160	dark-stepper-normal	PASS	file=dark-stepper-normal;nonzero=1
+STEP	160	snapshot	PASS	screenshot written
+STEP	161	shell_enable	PASS	button enabled state set
+STEP	162	shell_press	PASS	button state set
+STEP	163	shell_enable	PASS	button enabled state set
+STEP	164	shell_press	PASS	button state set
+STEP	165	shell_hover	PASS	hover cleared
+STEP	166	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	167	ui_cues	PASS	focus cues set
+STEP	168	shell_hover	PASS	hover pinned
+SHOT	169	dark-stepper-hover	PASS	file=dark-stepper-hover;nonzero=1
+STEP	169	snapshot	PASS	screenshot written
+STEP	170	shell_enable	PASS	button enabled state set
+STEP	171	shell_press	PASS	button state set
+STEP	172	shell_enable	PASS	button enabled state set
+STEP	173	shell_press	PASS	button state set
+STEP	174	shell_hover	PASS	hover cleared
+STEP	175	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	176	ui_cues	PASS	focus cues set
+STEP	177	shell_hover	PASS	hover pinned
+STEP	178	shell_press	PASS	button state set
+SHOT	179	dark-stepper-pressed	PASS	file=dark-stepper-pressed;nonzero=1
+STEP	179	snapshot	PASS	screenshot written
+STEP	180	shell_enable	PASS	button enabled state set
+STEP	181	shell_press	PASS	button state set
+STEP	182	shell_enable	PASS	button enabled state set
+STEP	183	shell_press	PASS	button state set
+STEP	184	shell_hover	PASS	hover cleared
+STEP	185	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	186	ui_cues	PASS	focus cues set
+STEP	187	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+SHOT	188	dark-stepper-focus	PASS	file=dark-stepper-focus;nonzero=1
+STEP	188	snapshot	PASS	screenshot written
+STEP	189	shell_enable	PASS	button enabled state set
+STEP	190	shell_press	PASS	button state set
+STEP	191	shell_enable	PASS	button enabled state set
+STEP	192	shell_press	PASS	button state set
+STEP	193	shell_hover	PASS	hover cleared
+STEP	194	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	195	ui_cues	PASS	focus cues set
+STEP	196	shell_enable	PASS	button enabled state set
+SHOT	197	dark-stepper-disabled	PASS	file=dark-stepper-disabled;nonzero=1
+STEP	197	snapshot	PASS	screenshot written
+STEP	198	shell_enable	PASS	button enabled state set
+STEP	199	shell_press	PASS	button state set
+STEP	200	shell_enable	PASS	button enabled state set
+STEP	201	shell_press	PASS	button state set
+STEP	202	shell_hover	PASS	hover cleared
+STEP	203	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	204	ui_cues	PASS	focus cues set
+SHOT	205	dark-ghost-normal	PASS	file=dark-ghost-normal;nonzero=1
+STEP	205	snapshot	PASS	screenshot written
+STEP	206	shell_enable	PASS	button enabled state set
+STEP	207	shell_press	PASS	button state set
+STEP	208	shell_enable	PASS	button enabled state set
+STEP	209	shell_press	PASS	button state set
+STEP	210	shell_hover	PASS	hover cleared
+STEP	211	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	212	ui_cues	PASS	focus cues set
+STEP	213	shell_hover	PASS	hover pinned
+SHOT	214	dark-ghost-hover	PASS	file=dark-ghost-hover;nonzero=1
+STEP	214	snapshot	PASS	screenshot written
+STEP	215	shell_enable	PASS	button enabled state set
+STEP	216	shell_press	PASS	button state set
+STEP	217	shell_enable	PASS	button enabled state set
+STEP	218	shell_press	PASS	button state set
+STEP	219	shell_hover	PASS	hover cleared
+STEP	220	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	221	ui_cues	PASS	focus cues set
+STEP	222	shell_hover	PASS	hover pinned
+STEP	223	shell_press	PASS	button state set
+SHOT	224	dark-ghost-pressed	PASS	file=dark-ghost-pressed;nonzero=1
+STEP	224	snapshot	PASS	screenshot written
+STEP	225	shell_enable	PASS	button enabled state set
+STEP	226	shell_press	PASS	button state set
+STEP	227	shell_enable	PASS	button enabled state set
+STEP	228	shell_press	PASS	button state set
+STEP	229	shell_hover	PASS	hover cleared
+STEP	230	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	231	ui_cues	PASS	focus cues set
+STEP	232	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+SHOT	233	dark-ghost-focus	PASS	file=dark-ghost-focus;nonzero=1
+STEP	233	snapshot	PASS	screenshot written
+STEP	234	shell_enable	PASS	button enabled state set
+STEP	235	shell_press	PASS	button state set
+STEP	236	shell_enable	PASS	button enabled state set
+STEP	237	shell_press	PASS	button state set
+STEP	238	shell_hover	PASS	hover cleared
+STEP	239	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	240	ui_cues	PASS	focus cues set
+STEP	241	shell_enable	PASS	button enabled state set
+SHOT	242	dark-ghost-disabled	PASS	file=dark-ghost-disabled;nonzero=1
+STEP	242	snapshot	PASS	screenshot written
+STEP	243	shell_enable	PASS	button enabled state set
+STEP	244	shell_press	PASS	button state set
+STEP	245	shell_enable	PASS	button enabled state set
+STEP	246	shell_press	PASS	button state set
+STEP	247	shell_hover	PASS	hover cleared
+STEP	248	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	249	ui_cues	PASS	focus cues set
+SHOT	250	dark-primary-normal	PASS	file=dark-primary-normal;nonzero=1
+STEP	250	snapshot	PASS	screenshot written
+STEP	251	shell_enable	PASS	button enabled state set
+STEP	252	shell_press	PASS	button state set
+STEP	253	shell_enable	PASS	button enabled state set
+STEP	254	shell_press	PASS	button state set
+STEP	255	shell_hover	PASS	hover cleared
+STEP	256	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	257	ui_cues	PASS	focus cues set
+STEP	258	shell_hover	PASS	hover pinned
+SHOT	259	dark-primary-hover	PASS	file=dark-primary-hover;nonzero=1
+STEP	259	snapshot	PASS	screenshot written
+STEP	260	shell_enable	PASS	button enabled state set
+STEP	261	shell_press	PASS	button state set
+STEP	262	shell_enable	PASS	button enabled state set
+STEP	263	shell_press	PASS	button state set
+STEP	264	shell_hover	PASS	hover cleared
+STEP	265	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	266	ui_cues	PASS	focus cues set
+STEP	267	shell_hover	PASS	hover pinned
+STEP	268	shell_press	PASS	button state set
+SHOT	269	dark-primary-pressed	PASS	file=dark-primary-pressed;nonzero=1
+STEP	269	snapshot	PASS	screenshot written
+STEP	270	shell_enable	PASS	button enabled state set
+STEP	271	shell_press	PASS	button state set
+STEP	272	shell_enable	PASS	button enabled state set
+STEP	273	shell_press	PASS	button state set
+STEP	274	shell_hover	PASS	hover cleared
+STEP	275	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	276	ui_cues	PASS	focus cues set
+STEP	277	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+SHOT	278	dark-primary-focus	PASS	file=dark-primary-focus;nonzero=1
+STEP	278	snapshot	PASS	screenshot written
+STEP	279	shell_enable	PASS	button enabled state set
+STEP	280	shell_press	PASS	button state set
+STEP	281	shell_enable	PASS	button enabled state set
+STEP	282	shell_press	PASS	button state set
+STEP	283	shell_hover	PASS	hover cleared
+STEP	284	shell_render_focus	PASS	offscreen drawing-state injection; no activation
+STEP	285	ui_cues	PASS	focus cues set
+STEP	286	shell_enable	PASS	button enabled state set
+SHOT	287	dark-primary-disabled	PASS	file=dark-primary-disabled;nonzero=1
+STEP	287	snapshot	PASS	screenshot written
+STEP	288	shell_enable	PASS	button enabled state set
+STEP	289	shell_press	PASS	button state set
+STEP	290	shell_hover	PASS	hover cleared
+STEP	291	ui_cues	PASS	focus cues set
+STEP	292	shell_click	PASS	button invoked
+STEP	293	wait_idle	PASS	page=1;status=第 1 页。
+STEP	294	shell_measure	PASS	physical layout captured
+STEP	295	shell_click	PASS	button invoked
+STEP	296	wait_idle	PASS	page=1;status=第 1 页。
+STEP	297	shell_measure	PASS	physical layout captured
+STEP	298	shell_click	PASS	button invoked
+STEP	299	wait_idle	PASS	page=1;status=第 1 页。
+STEP	300	shell_measure	PASS	physical layout captured
+STEP	301	shell_click	PASS	button invoked
+STEP	302	wait_idle	PASS	page=1;status=第 1 页。
+STEP	303	shell_measure	PASS	physical layout captured
+STEP	304	shell_click	PASS	button invoked
+STEP	305	wait_idle	PASS	page=1;status=第 1 页。
+STEP	306	shell_measure	PASS	physical layout captured
+STEP	307	shell_click	PASS	button invoked
+STEP	308	wait_idle	PASS	page=1;status=第 1 页。
+STEP	309	shell_measure	PASS	physical layout captured
+STEP	310	shell_click	PASS	button invoked
+STEP	311	wait_idle	PASS	page=1;status=第 1 页。
+STEP	312	shell_measure	PASS	physical layout captured
+STEP	313	shell_click	PASS	button invoked
+STEP	314	wait_idle	PASS	page=1;status=第 1 页。
+STEP	315	shell_measure	PASS	physical layout captured
+STEP	316	shell_click	PASS	button invoked
+STEP	317	wait_idle	PASS	page=1;status=第 1 页。
+STEP	318	shell_measure	PASS	physical layout captured
+STEP	319	shell_click	PASS	button invoked
+STEP	320	wait_idle	PASS	page=1;status=第 1 页。
+STEP	321	shell_measure	PASS	physical layout captured
+STEP	322	shell_click	PASS	button invoked
+STEP	323	wait_idle	PASS	page=1;status=第 1 页。
+STEP	324	shell_measure	PASS	physical layout captured
+STEP	325	shell_click	PASS	button invoked
+STEP	326	wait_idle	PASS	page=1;status=第 1 页。
+STEP	327	shell_measure	PASS	physical layout captured
+STEP	328	shell_click	PASS	button invoked
+STEP	329	wait_idle	PASS	page=1;status=第 1 页。
+STEP	330	shell_measure	PASS	physical layout captured
+STEP	331	shell_click	PASS	button invoked
+STEP	332	wait_idle	PASS	page=1;status=第 1 页。
+STEP	333	shell_measure	PASS	physical layout captured
+STEP	334	shell_click	PASS	button invoked
+STEP	335	wait_idle	PASS	page=1;status=第 1 页。
+STEP	336	shell_measure	PASS	physical layout captured
+STEP	337	shell_click	PASS	button invoked
+STEP	338	wait_idle	PASS	page=1;status=第 1 页。
+STEP	339	shell_measure	PASS	physical layout captured
+STEP	340	shell_click	PASS	button invoked
+STEP	341	wait_idle	PASS	page=1;status=第 1 页。
+STEP	342	shell_measure	PASS	physical layout captured
+STEP	343	shell_click	PASS	button invoked
+STEP	344	wait_idle	PASS	page=1;status=第 1 页。
+STEP	345	shell_measure	PASS	physical layout captured
+STEP	346	shell_click	PASS	button invoked
+STEP	347	wait_idle	PASS	page=1;status=第 1 页。
+STEP	348	shell_measure	PASS	physical layout captured
+STEP	349	shell_click	PASS	button invoked
+STEP	350	wait_idle	PASS	page=1;status=第 1 页。
+STEP	351	shell_measure	PASS	physical layout captured
+STEP	352	shell_click	PASS	button invoked
+STEP	353	wait_idle	PASS	page=1;status=第 1 页。
+STEP	354	shell_measure	PASS	physical layout captured
+STEP	355	shell_click	PASS	button invoked
+STEP	356	wait_idle	PASS	page=1;status=第 1 页。
+STEP	357	shell_measure	PASS	physical layout captured
+STEP	358	shell_click	PASS	button invoked
+STEP	359	wait_idle	PASS	page=1;status=第 1 页。
+STEP	360	shell_measure	PASS	physical layout captured
+STEP	361	shell_click	PASS	button invoked
+STEP	362	wait_idle	PASS	page=1;status=第 1 页。
+STEP	363	shell_measure	PASS	physical layout captured
+STEP	364	shell_click	PASS	button invoked
+STEP	365	wait_idle	PASS	page=1;status=第 1 页。
+STEP	366	shell_measure	PASS	physical layout captured
+STEP	367	shell_click	PASS	button invoked
+STEP	368	wait_idle	PASS	page=1;status=第 1 页。
+STEP	369	settings_measure	PASS	settings captured
+STEP	370	probe_key	PASS	page=2;status=第 2 页。
+STEP	371	probe_key	PASS	page=3;status=第 3 页。
+STEP	372	probe_key	PASS	page=4;status=第 4 页。
+STEP	373	probe_key	PASS	page=5;status=第 5 页。
+STEP	374	probe_key	PASS	page=6;status=第 6 页。
+STEP	375	probe_key	PASS	page=7;status=第 7 页。
+STEP	376	probe_key	PASS	page=8;status=第 8 页。
+STEP	377	probe_key	PASS	page=9;status=第 9 页。
+STEP	378	probe_key	PASS	page=10;status=第 10 页。
+STEP	379	probe_key	PASS	page=11;status=第 11 页。
+STEP	380	probe_key	PASS	page=12;status=第 12 页。
+STEP	381	probe_key	PASS	page=13;status=第 13 页。
+STEP	382	probe_key	PASS	page=14;status=第 14 页。
+STEP	383	probe_key	PASS	page=15;status=第 15 页。
+STEP	384	probe_key	PASS	page=16;status=第 16 页。
+STEP	385	probe_key	PASS	page=17;status=第 17 页。
+STEP	386	probe_key	PASS	page=18;status=第 18 页。
+STEP	387	probe_key	PASS	page=19;status=第 19 页。
+STEP	388	probe_key	PASS	page=20;status=第 20 页。
+STEP	389	probe_key	PASS	page=21;status=第 21 页。
+STEP	390	probe_wheel_burst	PASS	page=121;status=第 121 页。
+STEP	391	wait_idle	PASS	page=121;status=第 121 页。
+SHOT	392	dark-final	PASS	file=dark-final;nonzero=1
+STEP	392	snapshot	PASS	screenshot written
+STEP	393	quit	PASS	closing
+DONE	393	eof	PASS	script finished
