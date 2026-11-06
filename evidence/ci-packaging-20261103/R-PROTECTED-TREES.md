@@ -10,3 +10,13 @@
 R 候选必须取 #30 合并之后 ledger/base-20261103 的提交，并包含 provider 最终变更；不得使用 0dba1b85 或此前提交，也不得把旧候选的证据授予新树。本步不 refreeze、不跑完整矩阵。
 
 Windows 打包正例必须来自实际安装后的 SDK 和实际生成的 exe。缺失 staged include 的负例记录实际退出码与 EXPECTED 完整路径；另验证缺 exe 会在创建输出目录前失败。
+
+## 2026-11-05 — CSS 竖排属性别名修复
+
+本轮新增受保护项 **src/**，具体文件 `src/style.c:357`（别名表及规范名归一化入口）。原因：真实日文竖排 EPUB《草枕》使用 `-epub-writing-mode`，原属性识别忽略了它，导致全书横排。修复仅增加六项属性名别名，不改布局、分页或字形逻辑。
+
+与 V/P 去重后的 R 候选受保护项现为五项：**src、include、cmake、CMakeLists.txt、.github/workflows/native.yml**。本轮 `tests/test_vertical.c:273` 仅新增回归断言，不属于 `tests/fixtures/` 受保护树；夹具、字号、视口及书籍原包均未变。
+
+R 必须取包含本次 `src/style.c` 修复及此前 V/P/provider 变更的后续候选提交，不能沿用旧 src 树的证据。本步未 refreeze、未跑全矩阵。数字、逐页像素回归与边界见 [CSS-ALIASES.md](../real-books-20261105/CSS-ALIASES.md)。
+
+明确未做：`text-combine-upright` 的实际合字排版；其前缀名归一化不表示已有该能力。
