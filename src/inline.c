@@ -546,10 +546,38 @@ static exr_status display_group(flow *f,exr_layout *l,size_t first,size_t end) {
   }
   return status;
 }
-static unsigned inline_boundary(unsigned flags,uint32_t previous,uint32_t cp) {
-  /* Tailor SP before fullwidth colon/semicolon for Chinese layout, including
-     emergency wrapping. Keep the public Unicode analyzer and hard breaks intact. */
-  if(previous==0x20 && (cp==0xff1a || cp==0xff1b) && !(flags&EXR_BOUNDARY_MANDATORY))
+enum { CJK_HEAD=1, CJK_TAIL=2 };
+static unsigned cjk_kinsoku(flow *f,size_t node,uint32_t cp) {
+  unsigned kind;size_t order[32],count,i;
+  /* Exactly head_bad() / tail_bad() in tools/probes/cjk_measure.c. Their union
+     protects SP before punctuation; CJK_TAIL also protects opening + SP + text.
+     This set is independent of the broader punctuation-compression set. */
+  switch(cp) {
+    case 0x201d: case 0x3002: case 0x3001: case 0xff0c: case 0xff0e:
+    case 0xff09: case 0x300d: case 0x300f: case 0xff01: case 0xff1f:
+    case 0xff1a: case 0xff1b: kind=CJK_HEAD;break;
+    case 0x201c: case 0xff08: case 0x300c: case 0x300e: kind=CJK_TAIL;break;
+    default: return 0;
+  }
+  /* Curly quotes are shared with Latin. As with compression, require the
+     selected quote face to cover ideographic full stop for Chinese tailoring. */
+  if(cp<0x3000) {
+    const exr_style *style=exr_doc_style(f->doc,f->styles,node);
+    count=exr_font_order(f->font,style->family,style->flags,exr_doc_node(f->doc,node).chapter,order);
+    for(i=0;i<count;i++)if(exr_font_has_glyph(f->font,order[i],cp))
+      return exr_font_has_glyph(f->font,order[i],0x3002) ? kind:0;
+    return 0;
+  }
+  return kind;
+}
+static unsigned inline_boundary(flow *f,size_t node,exr_text_state *state,uint32_t cp,exr_text_next next,void *context) {
+  uint32_t previous=state->line.previous.cp,base=state->line.space_base.cp;
+  unsigned flags=exr_text_step(state,cp,next,context);
+  /* space_base is the last non-SP scalar, including across inline nodes and
+     folded source newlines. Share this tailoring with display reconstruction;
+     keep the public Unicode analyzer and mandatory breaks intact. */
+  if(previous==0x20 && (cjk_kinsoku(f,node,cp) || (cjk_kinsoku(f,node,base)&CJK_TAIL)) &&
+     !(flags&EXR_BOUNDARY_MANDATORY))
     flags=(flags&~EXR_BOUNDARY_LINE)|EXR_BOUNDARY_GLUE;
   return flags;
 }
@@ -564,7 +592,7 @@ static exr_status display_scan(flow *f,exr_layout *l,int project,
     if(!(i&255) && exr_control_cancel(&f->config->control,f->error)!=EXR_OK) return EXR_CANCELLED;
     if(!deleted_placeholder(g)) {
       display_cursor next=tail;uint32_t cp=g->flags&EXR_GLYPH_RUBY_ITEM ? 0xfffc : g->codepoint;
-      next.at=i+1;flags=inline_boundary(exr_text_step(state,cp,display_next,&next),*previous,cp);
+      next.at=i+1;flags=inline_boundary(f,g->node,state,cp,display_next,&next);
       *previous=cp;*node=g->node;
     }
     if(!i) flags|=EXR_BOUNDARY_GRAPHEME;
@@ -1726,8 +1754,7 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
   }
   {
     inline_text_cursor cursor = {f, g.node, g.end,0};
-    g.boundaries = exr_text_step(&b->text, g.codepoint, following_inline_scalar, &cursor);
-    g.boundaries = inline_boundary(g.boundaries,b->display_previous,g.codepoint);
+    g.boundaries = inline_boundary(f,g.node,&b->text,g.codepoint,following_inline_scalar,&cursor);
   }
   if(b->track_display) {
     if(g.boundaries&EXR_BOUNDARY_GRAPHEME) {
