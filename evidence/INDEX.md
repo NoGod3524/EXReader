@@ -11,6 +11,17 @@
 
 99/108 是历史记账，不能当作当前整树通过。
 
+
+- 2026-11-05 — [Pachinko首行缩进像素复核：A](real-books-20261105/TEXT-INDENT-PIXELS.md)：原PNG同段首行/续行66/44px（差22px），另一段65/44px（差21px），匹配1.2em×18px；布局原点差21.600002px。撤回“首行齐平／缩进缺失”观察，不登记为引擎缺陷；未指定作者样式的宿主CJK默认2em需求仍归第5步。
+
+- 2026-11-05 — [CJK验收范围与责任分流](real-books-20261105/CJK-READABILITY-CHECKLIST.md)：原15本中文样本0；草枕日文结果不能替代中文验证。已查 [text-indent](real-books-20261105/TEXT-INDENT.md)：草枕普通段1em，葡语Pachinko普通段1.2em，均有显式零缩进；缺省2em策略归第5步。行宽/上边距归宿主第3步；hyphenation归后续引擎版本，不在2a范围。
+
+- 2026-11-05 — [视觉评审落盘及相邻页定性](real-books-20261105/VISUAL-REVIEW.md)：owner确认草枕竖排列序/图文位置正确；Pachinko第257页为第10章末页，文本范围耗尽20145/20145，第258页为独立装饰图，第259页开始第11章。仅登记 [SDK max_measure 缺口](real-books-20261105/SDK-GAPS.md)及后续排版验收项。原始15本语言为英文13、葡语1、意语1、日文0；草枕日文另列补充样本。
+
+- 2026-11-05 — **构造型扫描件已通过，owner 授权记账**：[来源与验收范围](real-books-20261105/SOURCES.md#1-构造型扫描件)。Malcolm X 前 20 页以 200 dpi 构造成 image-only PDF；20 页解析/渲染成功、文字层为 0。标注“构造型扫描件，结构等价，非扫描噪点样本”；不计 OCR 或真实扫描噪点覆盖，文件不入库。
+
+- 2026-11-05 — [真实竖排 EPUB 的 CSS 前缀别名修复](real-books-20261105/CSS-ALIASES.md)：《草枕》竖排字形 0→107609、462/462 页 vertical-rl、空白页 0；标准对照保持 199；Pachinko 1194/1194 页像素哈希一致。横排 314 页与竖排 462 页不可比；输入/字体/字号/视口不变。本轮 src/style.c 触及受保护树，已登记 [R 候选变更清单](ci-packaging-20261103/R-PROTECTED-TREES.md#2026-11-05--css-竖排属性别名修复)。未实现 text-combine-upright 合字排版。
+
 - **已知失败（已修复）**：版本扫描曾将归档历史消费方计入当前源码，产生27条错版本诊断；`tools/check_version_consistency.py` 已按 `archive/**` 排除历史快照，验证结果见 [PR #46](https://github.com/NoGod3524/EXReader/pull/46)。
 
 - **已知问题／损失**：本轮分支清理 recoverable=no 共 86 条，内容不可恢复；清单见 [DELETED-BRANCHES.csv](../archive/DELETED-BRANCHES.csv)。297条分支的归档实物仅保存在标签 `refs/tags/archive/branches-20261104`（`56c6ccfc`），[查看快照](https://github.com/NoGod3524/EXReader/tree/56c6ccfcb8b3662a976f7c4e5f704ae2f6f766f1/archive/branches-20261104)；main 保留登记，不包含归档实物目录。
