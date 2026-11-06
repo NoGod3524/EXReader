@@ -1,5 +1,7 @@
 # Evidence index
 
+- 2026-11-05 — [视觉评审落盘及相邻页定性](real-books-20261105/VISUAL-REVIEW.md)：owner确认草枕竖排列序/图文位置正确；Pachinko第257页为第10章末页，文本范围耗尽20145/20145，第258页为独立装饰图，第259页开始第11章。仅登记 [SDK max_measure 缺口](real-books-20261105/SDK-GAPS.md)及后续排版验收项。原始15本语言为英文13、葡语1、意语1、日文0；草枕日文另列补充样本。
+
 - 2026-11-05 — **构造型扫描件已通过，owner 授权记账**：[来源与验收范围](real-books-20261105/SOURCES.md#1-构造型扫描件)。Malcolm X 前 20 页以 200 dpi 构造成 image-only PDF；20 页解析/渲染成功、文字层为 0。标注“构造型扫描件，结构等价，非扫描噪点样本”；不计 OCR 或真实扫描噪点覆盖，文件不入库。
 
 - 2026-11-05 — [真实竖排 EPUB 的 CSS 前缀别名修复](real-books-20261105/CSS-ALIASES.md)：《草枕》竖排字形 0→107609、462/462 页 vertical-rl、空白页 0；标准对照保持 199；Pachinko 1194/1194 页像素哈希一致。横排 314 页与竖排 462 页不可比；输入/字体/字号/视口不变。本轮 src/style.c 触及受保护树，已登记 [R 候选变更清单](ci-packaging-20261103/R-PROTECTED-TREES.md#2026-11-05--css-竖排属性别名修复)。未实现 text-combine-upright 合字排版。
