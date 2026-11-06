@@ -1,5 +1,9 @@
 # Evidence index
 
+- **已知失败（已修复）**：版本扫描曾将归档历史消费方计入当前源码，产生27条错版本诊断；`tools/check_version_consistency.py` 已按 `archive/**` 排除历史快照，验证结果见 [PR #46](https://github.com/NoGod3524/EXReader/pull/46)。
+
+- **已知问题／损失**：本轮分支清理 recoverable=no 共 86 条，内容不可恢复；清单见 [DELETED-BRANCHES.csv](../archive/DELETED-BRANCHES.csv)。297条分支的归档实物仅保存在标签 `refs/tags/archive/branches-20261104`（`56c6ccfc`），[查看快照](https://github.com/NoGod3524/EXReader/tree/56c6ccfcb8b3662a976f7c4e5f704ae2f6f766f1/archive/branches-20261104)；main 保留登记，不包含归档实物目录。
+
 - 2026-11-03 — [E1/E3 performance baseline policy](../docs/validation/PERF-BASELINE-POLICY.md): environment-bound raw-sample budgets, advisory until strict re-verification; hard expiry 2026-12-15 America/New_York; [tracking #32](https://github.com/NoGod3524/EXReader/issues/32). P evidence: [ci-packaging-20261103](ci-packaging-20261103/RESULT.md).
 
 - E1/E3 deployment verification status: [SPLIT-STATUS.md](ci-packaging-20261103/SPLIT-STATUS.md). Required context changed; evaluate limitation accepted; static core branch/job checks complete, live verification deferred to the first real PR.
