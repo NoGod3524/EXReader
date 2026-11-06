@@ -1,0 +1,34 @@
+{
+  "command": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\host\\EXReader-8m.exe",
+    "--offscreen",
+    "--font",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Reader.otf",
+    "--drive",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\fault.drive",
+    "--data",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\fault-data",
+    "--evidence",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-host-open-fix-20261106\\ui-fault"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 1.14,
+  "observations": 43,
+  "foreground_observations": 0,
+  "window_rectangles": [
+    [
+      -32000,
+      -32000,
+      -30940,
+      -31256
+    ],
+    [
+      -32000,
+      -32000,
+      -30940,
+      -31248
+    ]
+  ],
+  "violations": [],
+  "executable_sha256": "cc023470c74f52937c9e221f09f9a946c948856f23a21e5c1c14f99a341365f1"
+}
