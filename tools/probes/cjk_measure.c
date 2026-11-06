@@ -7,8 +7,10 @@
 typedef struct {size_t i;float column,along;} item;
 static int vertical=1;
 static int space(uint32_t c){return c<=32 || c==0xa0 || c==0x3000 || c==0xfeff || c==0x200b;}
-static int head_bad(uint32_t c){return c==0x3002||c==0x3001||c==0xff0c||c==0xff0e||c==0xff09||c==0x300d||c==0x300f||c==0xff01||c==0xff1f||c==0xff1a||c==0xff1b;}
-static int tail_bad(uint32_t c){return c==0xff08||c==0x300c||c==0x300e;}
+/* Chinese convention: closing curly quote cannot start a line; opening curly
+   quote cannot end one. Both also participate in adjacent punctuation pairs. */
+static int head_bad(uint32_t c){return c==0x201d||c==0x3002||c==0x3001||c==0xff0c||c==0xff0e||c==0xff09||c==0x300d||c==0x300f||c==0xff01||c==0xff1f||c==0xff1a||c==0xff1b;}
+static int tail_bad(uint32_t c){return c==0x201c||c==0xff08||c==0x300c||c==0x300e;}
 static int punct(uint32_t c){return head_bad(c)||tail_bad(c)||c==0x2026||c==0x2025||c==0x2014||c==0x2015;}
 static int cjk(uint32_t c){return c>=0x4e00 && c<=0x9fff;}
 static int ruby(const exr_node *nodes,size_t count,size_t node){
@@ -25,10 +27,40 @@ static int compare(const void *aa,const void *bb){
   if(fabsf(a->along-b->along)>0.001f)return a->along<b->along ? -1:1;
   return a->i<b->i ? -1:a->i>b->i;
 }
+enum {SOFT_WRAP,FORCED_BREAK,PARAGRAPH_START,UNBREAKABLE_OVERFLOW};
+static const char *const reasons[]={"soft_wrap","forced_break","paragraph_start","unbreakable_overflow"};
+static int head_reason(const exr_document *doc,const exr_node *nodes,size_t count,
+                       const exr_glyph *first,int overflow){
+  size_t nb=0,bytes=0;const exr_block *blocks=exr_document_blocks(doc,&nb);
+  const char *text=exr_document_text(doc,&bytes);
+  if(first->boundaries&EXR_BOUNDARY_MANDATORY)return FORCED_BREAK;
+  for(size_t b=0;b<nb;b++)if(first->start>=blocks[b].start && first->start<blocks[b].end){
+    size_t at=blocks[b].start;
+    while(at<first->start && at<bytes && (unsigned char)text[at]<=32)at++;
+    if(at==first->start){
+      /* A projected block can start after <br/> inside the same paragraph.
+         Inspect structure, not the presence of Han characters on the line. */
+      for(size_t node=first->node;node<count;){
+        if(nodes[node].kind==EXR_NODE_PARAGRAPH && nodes[node].start==blocks[b].start)
+          return PARAGRAPH_START;
+        size_t parent=nodes[node].parent;if(parent==node)break;node=parent;
+      }
+      for(size_t node=first->node;node>0 && node<=count;){
+        const exr_node *n=&nodes[--node];
+        if(n->kind==EXR_NODE_BREAK)return FORCED_BREAK;
+        if(n->kind==EXR_NODE_TEXT && n->end>n->start)break;
+      }
+      return PARAGRAPH_START;
+    }
+    break;
+  }
+  return overflow && (first->boundaries&EXR_BOUNDARY_GLUE) ? UNBREAKABLE_OVERFLOW:SOFT_WRAP;
+}
 static int example_main(int argc,char **argv){
   exr_font *font=NULL;exr_publication *pub=NULL;exr_document *doc=NULL;exr_pager *pager=NULL;exr_layout *page=NULL;
   exr_error e={0};exr_status s=EXR_ARGUMENT;int rc=1;
   size_t parts=0,pages=0,columns=0,heads=0,tails=0,pairs=0,glyphs=0,annotations=0,wrong_mode=0;
+  size_t head_counts[4]={0};
   if(argc!=4)return 2;
   vertical=atoi(argv[3]);
   exr_layout_config config=exr_layout_config_defaults();config.page=(exr_layout_options){720,1040,36,28,1.5f,10};
@@ -60,7 +92,11 @@ static int example_main(int argc,char **argv){
         columns++;
         const exr_glyph *first=&g[items[begin].i],*last=&g[items[end-1].i];
         if(head_bad(first->codepoint)){
-          heads++;printf("EDGE {\"page\":%zu,\"part\":%zu,\"edge\":\"head\",\"codepoint\":%u,\"column\":%.6f,\"along\":%.6f,\"source_start\":%zu}\n",pages,part,first->codepoint,items[begin].column,items[begin].along,first->start);
+          float available=vertical ? config.page.height-2*config.page.margin:config.page.width-2*config.page.margin;
+          int overflow=items[end-1].along+last->advance-items[begin].along>available+0.02f;
+          int reason=head_reason(doc,nodes,nn,first,overflow);
+          heads++;head_counts[reason]++;
+          printf("EDGE {\"page\":%zu,\"part\":%zu,\"edge\":\"head\",\"reason\":\"%s\",\"codepoint\":%u,\"column\":%.6f,\"along\":%.6f,\"source_start\":%zu}\n",pages,part,reasons[reason],first->codepoint,items[begin].column,items[begin].along,first->start);
         }
         if(tail_bad(last->codepoint)){
           tails++;printf("EDGE {\"page\":%zu,\"part\":%zu,\"edge\":\"tail\",\"codepoint\":%u,\"column\":%.6f,\"along\":%.6f,\"source_start\":%zu}\n",pages,part,last->codepoint,items[begin].column,items[end-1].along,last->start);
@@ -82,8 +118,8 @@ static int example_main(int argc,char **argv){
   }
   rc=0;
 done:
-  printf("CJK_SUMMARY {\"vertical\":%s,\"parts\":%zu,\"pages\":%zu,\"columns\":%zu,\"head_violations\":%zu,\"tail_violations\":%zu,\"punctuation_pairs\":%zu,\"glyphs\":%zu,\"excluded_ruby_glyphs\":%zu,\"wrong_mode_pages\":%zu,\"status\":%d}\n",vertical ? "true":"false",parts,pages,columns,heads,tails,pairs,glyphs,annotations,wrong_mode,(int)s);
+  printf("CJK_SUMMARY {\"vertical\":%s,\"parts\":%zu,\"pages\":%zu,\"columns\":%zu,\"head_violations\":%zu,\"head_observations\":%zu,\"soft_wrap\":%zu,\"forced_break\":%zu,\"paragraph_start\":%zu,\"unbreakable_overflow\":%zu,\"tail_violations\":%zu,\"punctuation_pairs\":%zu,\"glyphs\":%zu,\"excluded_ruby_glyphs\":%zu,\"wrong_mode_pages\":%zu,\"status\":%d}\n",vertical ? "true":"false",parts,pages,columns,head_counts[SOFT_WRAP],heads,head_counts[SOFT_WRAP],head_counts[FORCED_BREAK],head_counts[PARAGRAPH_START],head_counts[UNBREAKABLE_OVERFLOW],tails,pairs,glyphs,annotations,wrong_mode,(int)s);
   if(rc)fprintf(stderr,"CJK error %d: %s\n",(int)s,e.message);
   exr_layout_free(page);exr_pager_free(pager);exr_document_free(doc);exr_publication_free(pub);exr_font_free(font);return rc;
 }
-#include "C:/Users/Oscar/Documents/Codex/EXReader-real-books-20261105/examples/entry.h"
+#include "../../examples/entry.h"

@@ -217,10 +217,92 @@ static void queue_budget(const char *directory) {
   CHECK(strstr(error.message, "Line buffer") != NULL);
   exr_pager_free(pager); exr_document_free(doc); exr_font_free(font); font = saved; free(text);
 }
+static exr_status cjk_replacement(void *context,const char *language,const char *word,size_t size,
+                                exr_hyphen_emit_fn emit,void *target,const exr_control *control,exr_error *e) {
+  exr_hyphen_break item={4,3,8,"aa",context,2,strlen(context)};
+  (void)language;(void)control;
+  return size==8 && !memcmp(word,"aaaaaaaa",8) ? emit(target,&item,e):EXR_OK;
+}
+static void cjk_space_punctuation(void) {
+  const char *punctuation[]={"\xef\xbc\x9a","\xef\xbc\x9b"};
+  char replacement[32];
+  exr_hyphen_discretionary_provider provider={sizeof(provider),cjk_replacement,NULL,replacement};
+  exr_hyphenator *h=NULL;
+  exr_layout_config c=config();
+  size_t p,mode;
+  scenario="Chinese SP colon/semicolon tailoring and display reconstruction";
+  OK(exr_hyphenator_create_discretionary(&provider,&h,&error));
+  for(p=0;p<2;p++)for(mode=0;mode<4;mode++) {
+    char text[128],style[128],prefix[128];unsigned char *map=NULL;
+    exr_document *doc;exr_layout *l=NULL;
+    size_t n,nl,i,j,found=0,inserted=0;const exr_glyph *g;const exr_line *lines;
+    uint32_t cp=p ? 0xff1b:0xff1a;
+    snprintf(replacement,sizeof(replacement),"\xe7\x94\xb2 %s\xe4\xb9\x99",punctuation[p]);
+    snprintf(text,sizeof(text),"%s\xe7\x94\xb2\xe4\xb9\x99 %s\xe4\xb8\x99\xe4\xb8\x81",
+             mode==3 ? "aaaaaaaa ":"",punctuation[p]);
+    /* The public analyzer must continue to apply default Unicode LB18. */
+    OK(exr_text_analyze(text,strlen(text),&map,&error));
+    i=(mode==3 ? 9:0)+7;
+    CHECK((map[i]&EXR_BOUNDARY_LINE) && !(map[i]&EXR_BOUNDARY_GLUE));exr_free(map);
+    snprintf(style,sizeof(style),"width:%upx;margin:0;hyphens:auto",mode==0 ? 1:mode==1 ? 35:mode==2 ? 300:70);
+    {
+      exr_attribute attrs[]={{"style",style},{"lang","und"}};
+      exr_node_input nodes[]={
+        {EXR_NODE_DOCUMENT,SIZE_MAX,NULL,NULL,NULL,0},{EXR_NODE_CHAPTER,0,NULL,NULL,NULL,0},
+        {EXR_NODE_PARAGRAPH,1,"p",NULL,attrs,2},{EXR_NODE_TEXT,2,NULL,prefix,NULL,0},
+        {EXR_NODE_ELEMENT,2,"span",NULL,NULL,0},{EXR_NODE_TEXT,4,NULL,text+i,NULL,0}};
+      exr_chapter_input chapter={"kinsoku","kinsoku.unit",1,1};
+      exr_document_input input={"Cross-node punctuation",nodes,6,&chapter,1,NULL,0};
+      memcpy(prefix,text,i);prefix[i]=0;doc=NULL;
+      OK(exr_document_create(&input,&doc,&error));
+    }
+    OK(exr_layout_create_hyphenated(doc,font,&c,mode==3 ? h:NULL,&l,&error));
+    g=exr_layout_glyphs(l,&n);lines=exr_layout_lines(l,&nl);
+    for(i=0;i<n;i++) {
+      if(g[i].codepoint==cp) {
+        CHECK((g[i].boundaries&EXR_BOUNDARY_GLUE) && !(g[i].boundaries&EXR_BOUNDARY_LINE));
+        found++;inserted+=!!(g[i].flags&EXR_GLYPH_GENERATED);
+      }
+    }
+    CHECK(found==(mode==3 ? 2:1) && inserted==(mode==3 ? 1:0));
+    for(i=0;i<nl;i++)for(j=lines[i].glyph_start;j<lines[i].glyph_start+lines[i].glyph_count;j++) {
+      if((g[j].flags&EXR_GLYPH_HIDDEN) || g[j].codepoint==32)continue;
+      CHECK(g[j].codepoint!=cp);break;
+    }
+    exr_layout_free(l);if(mode<3)modes(doc,&c);exr_document_free(doc);
+  }
+  exr_hyphenator_free(h);
+  {
+    /* A different NS scalar keeps its default SP opportunity. */
+    exr_document *doc=document("\xe7\x94\xb2 \xe3\x80\x85\xe4\xb9\x99","width:300px;margin:0",0);
+    exr_layout *l=layout(doc,&c);size_t n,i;const exr_glyph *g=exr_layout_glyphs(l,&n);
+    for(i=0;i<n;i++)if(g[i].codepoint==0x3005)CHECK((g[i].boundaries&EXR_BOUNDARY_LINE) && !(g[i].boundaries&EXR_BOUNDARY_GLUE));
+    exr_layout_free(l);exr_document_free(doc);
+  }
+  {
+    /* Keep explicit <br/> and paragraph-start punctuation at the line head. */
+    exr_node_input nodes[]={
+      {EXR_NODE_DOCUMENT,SIZE_MAX,NULL,NULL,NULL,0},{EXR_NODE_CHAPTER,0,NULL,NULL,NULL,0},
+      {EXR_NODE_PARAGRAPH,1,"p",NULL,NULL,0},{EXR_NODE_TEXT,2,NULL,"\xe7\x94\xb2 ",NULL,0},
+      {EXR_NODE_BREAK,2,"br",NULL,NULL,0},{EXR_NODE_TEXT,2,NULL,"\xef\xbc\x9a\xe4\xb9\x99",NULL,0},
+      {EXR_NODE_PARAGRAPH,1,"p",NULL,NULL,0},{EXR_NODE_TEXT,6,NULL,"\xef\xbc\x9b\xe4\xb9\x99",NULL,0}};
+    exr_chapter_input chapter={"kinsoku","kinsoku.unit",1,1};
+    exr_document_input input={"Hard breaks",nodes,8,&chapter,1,NULL,0};
+    exr_document *doc=NULL;exr_layout *l;size_t n,i,heads=0;
+    const exr_line *lines;const exr_glyph *g;
+    OK(exr_document_create(&input,&doc,&error));l=layout(doc,&c);
+    g=exr_layout_glyphs(l,NULL);lines=exr_layout_lines(l,&n);
+    for(i=0;i<n;i++)if(lines[i].glyph_count) {
+      uint32_t cp=g[lines[i].glyph_start].codepoint;heads+=cp==0xff1a || cp==0xff1b;
+    }
+    CHECK(heads==2);exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+  }
+}
 int main(int argc, char **argv) {
   scenario = "setup"; CHECK(argc == 3);
   font = open_font(argv[1], "line-boundary.ttf");
   pair_boundaries(); cursive_and_arabic(); pagination(); long_inline_marks(); queue_budget(argv[2]);
+  cjk_space_punctuation();
   exr_font_free(font);
   printf("EXReader line boundaries: %u checks passed\n", checks);
   return 0;

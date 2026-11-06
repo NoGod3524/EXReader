@@ -1,0 +1,68 @@
+{
+  "base": "24c12bcdaac897defdd330b7e264bd8215451f59",
+  "configure": [
+    "cmake",
+    "-S",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-evidence-20261105",
+    "-B",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-kinsoku-20261106\\build",
+    "-G",
+    "Ninja",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DEXR_BUILD_TESTS=ON",
+    "-DEXR_ENABLE_AAC=OFF",
+    "-DEXR_ENABLE_MP3=OFF",
+    "-DEXR_ENABLE_PDF_CRYPTO=OFF",
+    "-DEXR_ENABLE_PDF_JPX=OFF",
+    "-DEXR_ENABLE_ICC=OFF",
+    "-DEXR_ENABLE_IMAGE_WEBP=OFF",
+    "-DEXR_ENABLE_IMAGE_TIFF=OFF",
+    "-DEXR_ENABLE_IMAGE_AVIF=OFF",
+    "-DEXR_BUILD_JNI=OFF",
+    "-DFETCHCONTENT_SOURCE_DIR_FREETYPE=C:/Users/Oscar/exr-deps/freetype-VER-2-15-0",
+    "-DFETCHCONTENT_SOURCE_DIR_EXPAT=C:/Users/Oscar/exr-deps/expat",
+    "-DFETCHCONTENT_SOURCE_DIR_MINIZ=C:/Users/Oscar/exr-deps/miniz",
+    "-DFETCHCONTENT_SOURCE_DIR_STB=C:/Users/Oscar/exr-deps/stb",
+    "-DFETCHCONTENT_SOURCE_DIR_SQLITE=C:/Users/Oscar/exr-deps/sqlite"
+  ],
+  "inputs_sha256": {
+    "hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "xingshihengyan-24239.epub": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+    "tangshi300-52323.epub": "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945",
+    "Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+    "arial.ttf": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+  },
+  "artifacts_sha256": {
+    "before/libexreader.dll": "31b56c75d6fd31f5f1e26727cc7dc8f051b49cd3981da72dd9d886b5a8be7400",
+    "before/cjk_measure.exe": "74371e300f5106d38f4268b89545f963cc2f5d81fa273db44365c579c7211d13",
+    "before/exreader-check-document-alias.exe": "dc06e6752558989e675b49c3720071b06e55fb1739b959cb9b39e172ddd77b93",
+    "after/libexreader.dll": "75df4db862312f246c29ee2de5f59b76762ae951dc53c3cd4b924d6ae8101c1a",
+    "after/cjk_measure.exe": "a6575485c2351f18ce232eaaa5726c44698f09491778a0c878676866e83e3b49",
+    "after/exreader-check-document-alias.exe": "dc06e6752558989e675b49c3720071b06e55fb1739b959cb9b39e172ddd77b93"
+  },
+  "sources_sha256": {
+    "src/inline.c": "4083568153b67ecd0835365df0b444f63a57114b60e1560f256940ee8a99fb99",
+    "tools/probes/cjk_measure.c": "00648fc19288af3c8b873964eefab22400e9ab66b2e3baae216e485cfdae4496",
+    "tools/probes/alias_page_probe.c": "fcd3f8e1692484001a8cbf9c51ea70d2d258e8590ac5f7723cee969e1f71d6dd"
+  },
+  "pachinko_pages": 1194,
+  "pachinko_changed_pixel_hashes": 0,
+  "historical_changed_pixel_hashes": 0,
+  "hash_definition": "SHA-256 of three little-endian DWORDs (width,height,channels), followed by width*4 RGBA bytes per row, excluding stride padding",
+  "raw_outputs_directory": "C:\\Users\\Oscar\\Documents\\Codex\\cjk-kinsoku-20261106",
+  "raw_outputs_sha256": {
+    "after-hongloumeng-24264.out": "fa8a1039b69b426699ee4dd9f592984b2ba49d4989d42c824b8bc0b8bcd2ba48",
+    "after-pachinko.out": "0dcb4826f64b65c462256bce80691b23a45322608b046722ae332fb64a8b05b1",
+    "after-tangshi300-52323.out": "b5c8f0f143afd89af1b4a47b353508eb3aa11b072b3c8c77a56c781d7678a831",
+    "after-xingshihengyan-24239.out": "5eb14efe4a53e522752fea204c1573e951206e5c5c14fbf91e8cc656a18dfae1",
+    "before-hongloumeng-24264.out": "e4eb3da46cadfd9b65d8378195eaa226f81e8ccd13e801075abace7899918fed",
+    "before-pachinko.out": "ecbbf3d617c77c74e73ef98412d47e853aaec2cd48e45d77f01c79fc9fbcbc62",
+    "before-tangshi300-52323.out": "b5c8f0f143afd89af1b4a47b353508eb3aa11b072b3c8c77a56c781d7678a831",
+    "before-xingshihengyan-24239.out": "5eb14efe4a53e522752fea204c1573e951206e5c5c14fbf91e8cc656a18dfae1",
+    "original-before-hongloumeng-24264.out": "645ed5301624580ebbfc92a103c1ba65949a485489cffa4771cb8ed91e39230c",
+    "original-before-pachinko.out": "c8c8de75b8d7d390956d3a736c0c1eed7db458f97077ab62c70a1438bd0c8ef9",
+    "original-before-tangshi300-52323.out": "0c2452cdfb4fbdb1c750b0f444d2a0ba9fe669c95fd359b74e46821f2d91a02e",
+    "original-before-xingshihengyan-24239.out": "5559b70e2c3f63d08784ab91c35976a093c3561f2aad233e312c29eccb0e90ae"
+  }
+}
