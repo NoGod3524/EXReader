@@ -131,7 +131,7 @@ CI：PR #50 头 `d76f5333`，run 42158204510，作业 127697311831 `desktop (win
 2. **编译成功**：日志原文
    ```
    shell_d2d.cpp
-   exreader-shell-d2d.vcxproj -> D:\EXReader\EXReaderuild\sdk-example\Release\exreader-shell-d2d.lib
+   exreader-shell-d2d.vcxproj -> D:\a\EXReader\EXReader\build\sdk-example\Release\exreader-shell-d2d.lib
    ```
 3. **警告计数**：日志里没有 MSBuild 的 `Warning(s)` 汇总行（整份日志 0 处），所以无法引用计数原文。改为直接统计：含 `shell_d2d` 或 `exreader-shell-d2d.vcxproj` 的 warning 行 0 条、error 行 0 条；examples 构建这一步的 warning 行 0 条。
 
