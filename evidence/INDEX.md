@@ -1,5 +1,7 @@
 # Evidence index
 
+- 2026-11-05 — [CJK验收范围与责任分流](real-books-20261105/CJK-READABILITY-CHECKLIST.md)：原15本中文样本0；草枕日文结果不能替代中文验证。已查 [text-indent](real-books-20261105/TEXT-INDENT.md)：草枕普通段1em，葡语Pachinko普通段1.2em，均有显式零缩进；缺省2em策略归第5步。行宽/上边距归宿主第3步；hyphenation归后续引擎版本，不在2a范围。
+
 - 2026-11-05 — [视觉评审落盘及相邻页定性](real-books-20261105/VISUAL-REVIEW.md)：owner确认草枕竖排列序/图文位置正确；Pachinko第257页为第10章末页，文本范围耗尽20145/20145，第258页为独立装饰图，第259页开始第11章。仅登记 [SDK max_measure 缺口](real-books-20261105/SDK-GAPS.md)及后续排版验收项。原始15本语言为英文13、葡语1、意语1、日文0；草枕日文另列补充样本。
 
 - 2026-11-05 — **构造型扫描件已通过，owner 授权记账**：[来源与验收范围](real-books-20261105/SOURCES.md#1-构造型扫描件)。Malcolm X 前 20 页以 200 dpi 构造成 image-only PDF；20 页解析/渲染成功、文字层为 0。标注“构造型扫描件，结构等价，非扫描噪点样本”；不计 OCR 或真实扫描噪点覆盖，文件不入库。
