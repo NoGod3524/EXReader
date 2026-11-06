@@ -262,11 +262,11 @@ Studio 分支 tip `effb5b7d`：`ui.cpp` 2416 行，`engine.cpp` 890 行，已有
 | 条件 | 状态（2026-11-05） |
 | --- | --- |
 | `codex/windows-page-paint-20261104` 合入 | 已满足：PR #43，merge `26dac733` |
-| owner 在网页点 PR #42 的 Update branch | **未满足**；本会话不自行合并 main |
-| `reading-required-core` 在更新后的新 head 上通过 | **未满足**；`3f1ee7da` 上的通过不再算数 |
-| PR #42 合入 main | **未满足** |
+| owner 在网页点 PR #42 的 Update branch | 已满足 |
+| `reading-required-core` 在新 head 上通过 | 已满足：`f7e03563` |
+| PR #42 合入 main | 已满足：merge `f22a7649` |
 
-三条不可减：strict 规则下两个 PR 会互相要求对方先合，且 2a 要改 `examples/CMakeLists.txt`，从干净的 main 拉分支最省事。在此之前只做文档，不开 2a 实现分支。
+三条不可减：strict 规则下两个 PR 会互相要求对方先合，且 2a 要改 `examples/CMakeLists.txt`，从干净的 main 拉分支最省事。
 
 ### G4a. 2a 期间的无障碍缺口
 
@@ -290,14 +290,16 @@ Studio 分支 tip `effb5b7d`：`ui.cpp` 2416 行，`engine.cpp` 890 行，已有
 
 | # | 步骤 | 人日 | 可测结果 | 预计改动文件 | 不做（留给 2b 或之后） |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 外壳模块与构建接线，无可见变化 | 1 | 模块不含 `reader.c` 单独编译通过；交付包文件数不增加；`--self-test` 26/26；`phase-a/b/c` 失败数 0；开宏与不开宏的旧布局截图逐像素相同 | 新增 `examples/windows/shell_d2d.h`、`shell_d2d.cpp`；`examples/CMakeLists.txt`、`examples/windows/CMakeLists.txt` | 任何新界面；借用 Studio 代码 |
+| 1 | 外壳模块与构建接线，无可见变化 | 1 | 模块不含 `reader.c` 单独编译通过；交付包文件数不增加；`--self-test` 退出码 = 0 且报告 `checks` = 26；`phase-a/b/c` 失败数 ≤ 2，且不新增失败；若出现第 3 个失败 → 本次验收不通过。基线 2（issue #45）；开宏与不开宏的旧布局截图逐像素相同 | 新增 `examples/windows/shell_d2d.h`、`shell_d2d.cpp`；`examples/CMakeLists.txt`、`examples/windows/CMakeLists.txt` | 任何新界面；借用 Studio 代码 |
 | 2 | 阅读屏与极简顶栏：打开书后全窗口阅读，Alt+← 回旧面板 | 1 | 截图：顶栏高 48，只有书名、目录、设置，旧控件零可见。UIA：可操作元素恰为 3 个（目录、设置、正文）。回旧面板后 17 个控件 ID 全部可达 | `examples/reader.c`、`shell_d2d.cpp`；新增 `examples/windows/acceptance/shell-2a.txt` | 书库左栏、收窄栏、状态行、全屏；目录和设置只给焦点与可访问名称，点击无效果 |
 | 3 | 物理像素重排与 Per-Monitor V2。**到此“重排 + 顶栏”这一屏可跑** | 2 | 三档分辨率加 125%、150%：显示比例 1.000；每行汉字中位 28–34；文字到左右窗口边 ≥ 48 px，左右差 ≤ 1 px；行距比值 1.600 ± 0.005。改尺寸再改回，首行文字不变。720×560：版心 ≤ 576 DIP | `examples/reader.c`、`shell-2a.txt`；新增 `examples/windows/acceptance/check_shell_2a.py` | 用户可调版心；固定页平移；PDF 大纲 |
 | 4 | 对接已合入的双缓冲与帧缓存，宿主内复测 | 0.5 | 新路径走 `BitBlt`，不走 `StretchDIBits`；缓存命中时排版调用增量 0；改尺寸后零旧尺寸帧；未命中“排版 + 渲染” p95：1280×800 ≤ 25 ms，2560×1440 ≤ 35 ms。**硬判据：新路径空白帧计数 = 0，光有时延不算过。** 结果写回 §F，替换 F1 第 1、2 项局限 | `examples/reader.c`、`examples/windows/paint_probe.h`、`check_shell_2a.py`；`docs/ui/HOST-AUDIT-20261104.md`、`docs/ui/evidence/` | 改缓存容量、预取策略 |
 | 5 | 设置面板：字号步进和浅色 / 深色 / 跟随系统，写入 `host.ini` | 1.5 | 字号 14–32 逐档切换，首行文字不变；截图背景像素：深色 `#15161A`、浅色 `#FBFBF9`，误差 0；正文对比度 ≥ 12（14 为优，不作门槛）；深色主题下空白帧计数 = 0，且窗口类背景色改为主题色（不再用 `WHITE_BRUSH`）；重启后两项保留；无新键的旧 `host.ini` 启动不报错、不改写书架 | `examples/reader.c`、`shell_d2d.cpp`、`shell-2a.txt`、`check_shell_2a.py` | 行距、段距、每行字数、翻页方式、PDF 缩放的设置项；账号入口 |
-| 6 | 最小目录面板与 2a 总验收 | 2 | 3 本带目录的 EPUB 各抽 5 行，点击后落到对应章节，5/5 正确；无目录的书显示“这本书没有目录”；人工清单第 3、4、5、6、8 项通过；同一本书翻 20 页空白帧计数 = 0、每行 28–34 字；面板关闭时 UIA 可操作元素恰为 3 个、无未命名控件，Alt+← 可回旧面板 | `examples/reader.c`、`shell_d2d.cpp`、`shell-2a.txt`、`check_shell_2a.py` | 标注页签、目录搜索、多级折叠 |
+| 6 | 最小目录面板与 2a 总验收 | 2 | 3 本带目录的 EPUB 各抽 5 行，点击后落到对应章节，5/5 正确；无目录的书显示“这本书没有目录”；`phase-a/b/c` 失败数 ≤ 2，且不新增失败；若出现第 3 个失败 → 本次验收不通过。人工清单第 3、4、5、6、8 项通过；同一本书翻 20 页空白帧计数 = 0、每行 28–34 字；面板关闭时 UIA 可操作元素恰为 3 个、无未命名控件，Alt+← 可回旧面板 | `examples/reader.c`、`shell_d2d.cpp`、`shell-2a.txt`、`check_shell_2a.py` | 标注页签、目录搜索、多级折叠 |
 
 **2a 全部不做，归 2b**：书库左栏与书架网格、书内和书架搜索、标注右键与标注面板、错误态整屏改版、`--debug-ui`，以及把新界面开放给 `EXReaderProduct`。
+
+**phase 基线**：失败数 2（不是 0），判据为 ≤2 且不得新增；实测来源是 `26dac733` 与 `4efd3366` 各两轮（本机 MinGW），均为 2，失败步骤都是 phase-a 第 115 步和 phase-b 第 5 步。官方 run 42071165411（main `f22a7649`，MSVC）结果是 0，所以官方基线以 CI 为准为 0；本机 MinGW 仍按“≤2 且不得新增”判。缺陷：issue #45。详见 `2A-STEP1-ACCEPTANCE.md`。
 
 每步单独提交，可测结果不满足就不进入下一步。
 
