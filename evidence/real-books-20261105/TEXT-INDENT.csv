@@ -1,0 +1,46 @@
+﻿book,language,book_sha256,file,line,selector,value,referenced_by_documents
+kusamakura,日文,6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7,OPS/css/horizontal.css,32,h2,0em,16
+kusamakura,日文,6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7,OPS/css/horizontal.css,104,p.author,0em,16
+kusamakura,日文,6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7,OPS/css/horizontal.css,121,".main_text > p,
+.about >p",1em,16
+kusamakura,日文,6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7,OPS/css/horizontal.css,127,".main_text p.conversation,
+.main_text p.translation,
+.main_text p.continued_sentence",0em,16
+kusamakura,日文,6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7,OPS/css/vertical.css,35,h2,0em,16
+kusamakura,日文,6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7,OPS/css/vertical.css,107,p.author,0em,16
+kusamakura,日文,6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7,OPS/css/vertical.css,124,".main_text > p,
+.about >p",1em,16
+kusamakura,日文,6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7,OPS/css/vertical.css,130,".main_text p.conversation,
+.main_text p.translation,
+.main_text p.continued_sentence",0em,16
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,11,.agradecimentos,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,23,.assinatura,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,82,.calibre7,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,126,.calibre12,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,138,.calibre13,1.2em,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,175,.citacao,1.2em,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,187,.citacao-top,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,199,.creditos,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,211,.creditos-top,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,223,.data,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,236,.dedicatoria,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,248,.epigrafe,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,260,.epigrafe_ass,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,272,.epigrafe_txt,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,286,.finais,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,293,.fonte,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,321,.livro-nome,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,335,.livro-numero,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,347,.macaca,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,369,.nota-recuo,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,381,.nota1,-1.2em,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,400,.relacionados,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,412,.sem-recuo,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,424,.sem-recuo-inicio,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,436,.sem-recuo-top,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,444,.sumario,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,455,.sumario-avancar,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,463,.sumario-recuo,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,470,.sumario-top,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,483,.titulo,0,132
+pachinko,葡语（非CJK对照）,7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033,stylesheet.css,495,.top,1.2em,132
