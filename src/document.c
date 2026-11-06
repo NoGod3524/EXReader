@@ -370,17 +370,30 @@ typedef struct {
   exr_buffer text;
   size_t block;
   int pending_space;
+  uint32_t previous;
 } projection;
+int exr_projection_cjk(uint32_t cp) {
+  return (cp >= 0x3400 && cp <= 0x4dbf) || (cp >= 0x4e00 && cp <= 0x9fff) ||
+         (cp >= 0xf900 && cp <= 0xfaff) || (cp >= 0x20000 && cp <= 0x2ee5f) ||
+         (cp >= 0x2f800 && cp <= 0x2fa1f) || (cp >= 0x30000 && cp <= 0x3347f) ||
+         (cp >= 0x3000 && cp <= 0x303f) || (cp >= 0xfe10 && cp <= 0xfe1f) ||
+         (cp >= 0xfe30 && cp <= 0xfe4f) || (cp >= 0xff01 && cp <= 0xff60) ||
+         (cp >= 0xffe0 && cp <= 0xffe6);
+}
 static void end_block(projection *p) {
   p->block = SIZE_MAX;
   p->pending_space = 0;
 }
 static int project_text(projection *p, exr_node *node, unsigned heading) {
   const char *s = node->text;
-  size_t i;
+  size_t i = 0, length = s ? strlen(s) : 0;
   node->start = SIZE_MAX;
-  for (i = 0; s && s[i]; i++) {
-    if (whitespace((unsigned char)s[i])) {
+  while (i < length) {
+    size_t start = i;
+    uint32_t cp;
+    if (!exr_next(s, length, &i, &cp))
+      return 0;
+    if (cp < 0x80 && whitespace((unsigned char)cp)) {
       if (p->block != SIZE_MAX)
         p->pending_space = 1;
       continue;
@@ -399,11 +412,14 @@ static int project_text(projection *p, exr_node *node, unsigned heading) {
     }
     if (node->start == SIZE_MAX)
       node->start = p->text.size;
-    if (p->pending_space && !exr_append(&p->text, " ", 1))
+    /* Source wrapping and literal spaces share the same rule, across inline nodes. */
+    if (p->pending_space && !(exr_projection_cjk(p->previous) && exr_projection_cjk(cp)) &&
+        !exr_append(&p->text, " ", 1))
       return 0;
     p->pending_space = 0;
-    if (!exr_append(&p->text, s + i, 1))
+    if (!exr_append(&p->text, s + start, i - start))
       return 0;
+    p->previous = cp;
     p->doc->blocks[p->block].end = p->text.size;
   }
   if (node->start == SIZE_MAX)

@@ -20,6 +20,7 @@ struct exr_chapter_index {
   index_frame stack[257];
   size_t depth;
   uint32_t text_node;
+  uint32_t previous;
   int block, pending_space, finished, allocation_limited;
 };
 static void memory_peak(exr_chapter_index *p) { if(p->bytes>p->peak_bytes) p->peak_bytes=p->bytes; }
@@ -192,7 +193,7 @@ static void XMLCALL end_element(void *context, const char *name) {
 static void XMLCALL text_data(void *context, const char *text, int size) {
   exr_chapter_index *p = context;
   exr_chapter_entry *n;
-  size_t i;
+  size_t i = 0;
   if (!size || p->failed) return;
   if (p->text_node == EXR_CHAPTER_NONE)
     p->text_node = append_node(p, EXR_NODE_TEXT, NULL,
@@ -201,16 +202,23 @@ static void XMLCALL text_data(void *context, const char *text, int size) {
   n = entry(p,p->text_node);
   n->source_end = (uint32_t)(XML_GetCurrentByteIndex64(p->parser) + XML_GetCurrentByteCount64(p->parser));
   if (p->stack[p->depth].hidden) return;
-  for (i = 0; i < (size_t)size; i++) {
-    if (white((unsigned char)text[i])) { if (p->block) p->pending_space = 1; continue; }
+  while (i < (size_t)size) {
+    size_t start = i;
+    uint32_t cp;
+    if (!exr_next(text, (size_t)size, &i, &cp)) {
+      stop(p, EXR_FORMAT, "Invalid chapter projection UTF-8"); return;
+    }
+    if (cp < 0x80 && white((unsigned char)cp)) { if (p->block) p->pending_space = 1; continue; }
     if (!p->block) {
       if (p->text_size) p->text_size++;
       p->block = 1;
     }
     if (n->start == EXR_CHAPTER_NONE) n->start = (uint32_t)p->text_size;
-    if (p->pending_space) p->text_size++;
+    if (p->pending_space && !(exr_projection_cjk(p->previous) && exr_projection_cjk(cp))) p->text_size++;
     p->pending_space = 0;
-    if (++p->text_size > EXR_MAX_INPUT) { stop(p, EXR_LIMIT, "Chapter projection exceeds limit"); return; }
+    p->previous = cp;
+    p->text_size += i - start;
+    if (p->text_size > EXR_MAX_INPUT) { stop(p, EXR_LIMIT, "Chapter projection exceeds limit"); return; }
   }
 }
 static void XMLCALL entity_decl(void *context, const char *name, int parameter,
