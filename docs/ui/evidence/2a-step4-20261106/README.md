@@ -42,3 +42,5 @@ python docs/ui/acceptance/check_step4.py EXReader.exe Reader.otf SAMPLE_DIR NEW_
 `SAMPLE_DIR` 须包含自检原样使用的 Sample.epub、Sample.pdf。宿主由 `examples/windows/CMakeLists.txt` 开宏构建；MinGW 的 UIA 链接补充见 `build.json`。运行器只使用 --offscreen 和 PrintWindow；超出时延门槛时仍完成其他项目，然后以非零退出。
 
 `shell-1280/`、`shell-2560/`、`legacy/` 保存未裁减的 paint.csv、drive.tsv、驱动脚本、进程记录及结果。每组还用真实日志构造四个负例，分别把 total_presented 改为 0、total_blank 改为 1、cache_layout_delta 改为 1、缓冲宽改为 -1；四种均被判定器拒绝，结果保存在各组 JSON。没有手动运行 CI。
+
+<!-- required checks rerun 2026-11-06 -->
