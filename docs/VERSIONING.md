@@ -24,7 +24,7 @@
 历史提交、预览发行附件、测试与性能原始记录保留原声明，不补打与旧产物不符的标签。
 S013–S100继续作为历史接口步骤标识。本次只重编历史与同步元数据，不新增引擎功能。
 
-安装消费使用`find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED)`；二进制和所有权
+安装消费使用`find_package(EXReader 3.42.0 EXACT CONFIG REQUIRED)`；二进制和所有权
 约定见[SDK兼容说明](SDK_COMPATIBILITY.md)。以下路线中的原检查点编号按历史语境保留。
 
 ## 后续兼容目标与验收顺序
