@@ -18,3 +18,10 @@
 - 事实：SDK已有 hyphenator 与 `exr_pager_set_hyphenator` API；本轮视觉CLI未加载断词字典或设置hyphenator，图片没有断词不能用来证明SDK完全缺少该能力。
 - 未完成范围：所需语言字典/模式、断词策略及实际效果的后续引擎验收；不得随宿主第3步/第5步的样式验收一并宣告完成。
 - 首行缩进独立结案：Pachinko第257页[像素判定A](TEXT-INDENT-PIXELS.md)，作者显式1.2em已应用，不登记为引擎缺陷。作者未指定时的CJK缺省策略仍归第5步，见 [TEXT-INDENT.md](TEXT-INDENT.md)。
+
+## SDK-CJK-003 — 连续标点未观察到挤压
+
+- 草枕原包462页的字形坐标中，74组连续标点的两字总占位/单字advance均为2.000，平均每标点1.000；横排坐标控制的同一74组结果一致。
+- 代表组合：第57页`。「`，两个advance均19px，合计38px，参照单字19px。未达到本轮“小于一字”的压缩判据。
+- 归属：引擎CJK排版能力，后续版本；只记录、不修复，不归宿主默认缩进或宿主行宽。
+- 详情与轴向口径见 [CJK-LINEBREAK.md](CJK-LINEBREAK.md)，统计数据见 [CJK-PUNCTUATION.csv](CJK-PUNCTUATION.csv)。指定避头尾字符集违规为0，禁则与标点挤压分别结论。

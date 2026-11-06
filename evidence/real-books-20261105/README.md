@@ -114,3 +114,11 @@ Pachinko第257页的“首行齐平／缩进缺失”观察已撤回：[像素�
 ## 扫描/竖排补充覆盖
 
 来源、许可、构造标注和引擎实测见 [SOURCES.md](SOURCES.md)，两项结果单列 [SUPPLEMENTAL-RESULTS.csv](SUPPLEMENTAL-RESULTS.csv)，不改变去重后的 15 本原始语料配额。
+
+## 五位置抽样与CJK坐标验收
+
+15本×5位置共75次实际栅格化，75成功/0失败，结果见 [RESULTS-PAGES.csv](RESULTS-PAGES.csv)，最慢及同书>10倍差异见 [PAGES-SUMMARY.md](PAGES-SUMMARY.md)。本轮使用已保存的别名修复DLL，计时只覆盖渲染API；未重跑CI。
+
+草枕462页、6857正文列，指定避头尾字符集违规0；74组连续标点的两字总占位/单字均为2.000（平均每标点1.000），未观察到挤压。竖排Y与横排X控制分开记录，见 [CJK-LINEBREAK.md](CJK-LINEBREAK.md) / [坐标统计](CJK-PUNCTUATION.csv)。此为日文补充样本，不能替代中文验证。
+
+方法论：视觉结论必须由像素测量确认，缩略图只能作为假设来源。text-indent原观察撤回，作者1.2em已正确生效。
