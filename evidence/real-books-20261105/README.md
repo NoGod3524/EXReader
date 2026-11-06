@@ -29,6 +29,8 @@
 
 缺口归属已分开：宿主第3步负责正文行宽与上边距；作者CSS未指定时的CJK默认2em缩进是第5步设置项（本次两书均有声明，见 [TEXT-INDENT.md](TEXT-INDENT.md)）；断词归后续引擎版本、不在2a范围。
 
+Pachinko第257页的“首行齐平／缩进缺失”观察已撤回：[像素判定A](TEXT-INDENT-PIXELS.md)，正文同段首行/续行66/44px，差22px；布局原点差21.600002px，匹配1.2em×18px。作者样式已生效，不登记为引擎缩进缺陷。
+
 后续视觉验收：owner 已确认草枕竖排有效；Pachinko第257页已定性为正常章末。详见 [VISUAL-REVIEW.md](VISUAL-REVIEW.md)。SDK最大行宽配置缺口与仅登记的第3步排版项见 [SDK-GAPS.md](SDK-GAPS.md)。
 
 ## 隐藏运行证据
