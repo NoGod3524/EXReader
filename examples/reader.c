@@ -20,6 +20,11 @@
 #include <process.h>
 #include <exreader.h>
 #include "windows/paint_probe.h"
+#ifdef EXR_READER_WINDOWS_SHELL
+#include "windows/shell_d2d.h"
+/* 2a step 1: created with the main window; nothing is drawn with it yet. */
+static shell_d2d *host_shell;
+#endif
 #include <math.h>
 #include <limits.h>
 #include <stdint.h>
@@ -6126,6 +6131,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       g.window = window;
       create_controls(window);
       layout_controls();
+#ifdef EXR_READER_WINDOWS_SHELL
+      if (FAILED(shell_d2d_create(window, &host_shell))) host_shell = NULL;
+#endif
       return 0;
     case WM_SIZE: {
       RECT bounds;
@@ -6345,6 +6353,10 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       prefs_destroy_menu(window);
 #endif
       settings_save();
+#ifdef EXR_READER_WINDOWS_SHELL
+      shell_d2d_destroy(host_shell);
+      host_shell = NULL;
+#endif
       PostQuitMessage(g.drive_mode ? (g.drive_failures ? 1 : 0) : 0);
       return 0;
   }
