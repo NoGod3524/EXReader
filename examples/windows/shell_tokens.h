@@ -27,11 +27,19 @@ static const shell_theme shell_theme_dark = {
 enum {
   SHELL_SPACE_1 = 8, SHELL_SPACE_2 = 16, SHELL_SPACE_3 = 24, SHELL_SPACE_4 = 32, SHELL_SPACE_5 = 48,
   SHELL_TOPBAR_H = 56,
+  SHELL_BODY_DEFAULT_FONT = 17, SHELL_BODY_MIN_FONT = 14, SHELL_BODY_MAX_FONT = 32,
+  SHELL_BODY_MIN_EM = 28, SHELL_BODY_MAX_EM = 34,
+  SHELL_BODY_TOP = 32, SHELL_BODY_BOTTOM = 32, SHELL_BODY_GAP = 32,
+  SHELL_PAGE_NUMBER_H = 24, SHELL_REFLOW_MS = 150,
+  SHELL_MIN_CLIENT_W = 720, SHELL_MIN_CLIENT_H = 560,
   SHELL_TARGET = 40,       /* round icon button diameter */
   SHELL_FOCUS_STROKE = 2,  /* focus outline width, drawn 2 outside the shape */
   SHELL_HOVER_PERCENT = 6, /* accent over the layer colour */
   SHELL_PRESSED_PERCENT = 12
 };
+
+#define SHELL_BODY_LINE_HEIGHT 1.6f
+#define SHELL_BODY_PARAGRAPH_EM 0.8f
 
 /* The accent laid over a layer colour at a percentage, rounded per channel. */
 static inline uint32_t shell_mix(uint32_t base, uint32_t top, unsigned percent) {

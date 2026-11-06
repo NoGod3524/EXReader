@@ -22,7 +22,6 @@ enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, SHELL_HIDDEN_MAX = 128 };
 /* A button window is the circle plus room for the focus outline around it. */
 enum { SHELL_BUTTON_BOX = SHELL_TARGET + 2 * SHELL_FOCUS_STROKE };
 
-static int shell_drive_on, shell_legacy, shell_active;
 static HWND shell_toc, shell_settings;
 static HWND shell_hidden[SHELL_HIDDEN_MAX];
 static size_t shell_hidden_count;
@@ -30,6 +29,76 @@ static const shell_theme *shell_colors = &shell_theme_light;
 static WNDPROC shell_button_base;
 static HWND shell_hover;       /* the button under the mouse */
 static int shell_hover_pinned; /* --drive only: keep the hover state for a screenshot */
+
+/* Keep the first requested page-head anchor through resize round trips.
+   Navigation outside that content range starts a new anchor. */
+static exr_anchor shell_anchor;
+static int shell_anchor_valid;
+static int64_t shell_anchor_book;
+static size_t shell_anchor_offset, shell_anchor_part;
+
+static void shell_request_layout(void) {
+  shell_geometry target = shell_snapshot();
+  if (shell_dpi_changing || IsIconic(g.window) || !g.window) return;
+  if (shell_wants_reading() && !target.enabled) return;
+  if (shell_geometry_equal(target, shell_target)) return;
+  if (!shell_anchor_valid && g.frame.valid && !g.frame.fixed) {
+    exr_error error = {0};
+    shell_anchor_book = g.frame.book_id; shell_anchor_offset = g.frame.range_start; shell_anchor_part = g.frame.part;
+    if (g.session.txt) shell_anchor_valid = 1;
+    else if (g.session.bounded) shell_anchor_valid = host_anchor_copy(&shell_anchor, &g.frame.point);
+    else shell_anchor_valid = exr_anchor_create(g.session.document, g.frame.range_start, g.frame.range_start,
+                                                &shell_anchor, &error) == EXR_OK;
+    if (!shell_anchor_valid) { set_status(L"无法建立重排内容锚点。"); return; }
+  }
+  shell_target = target; shell_epoch++;
+  if (g.frame.valid && shell_geometry_equal(g.session.shell_geometry, target)) g.frame.shell_epoch = shell_epoch;
+  page_cache_clear();
+  shell_layout_waiting = 1;
+  SetTimer(g.window, 0x5752, SHELL_REFLOW_MS, NULL);
+}
+
+static void shell_pump_layout(void) {
+  host_job *job;
+  if (shell_failed_epoch == shell_epoch || shell_layout_waiting || g.job || g.pending || g.closing || !g.frame.valid || !g.session.active || IsIconic(g.window)) return;
+  if (shell_geometry_equal(g.session.shell_geometry, shell_target)) return;
+  if (shell_target.enabled && (shell_target.width <= 0 || shell_target.height <= 0)) return;
+  job = job_new(JOB_LAYOUT);
+  if (!job) { set_status(L"内存不足，无法重排。"); return; }
+  job->book_id = g.session.book_id;
+  job->font_percent = g.font_percent;
+  if (shell_anchor_valid && shell_anchor_book == g.frame.book_id && shell_anchor_part == g.frame.part) {
+    if (!g.session.txt && !host_anchor_copy(&job->anchor, &shell_anchor)) { job_release(job); return; }
+    job->has_anchor = !g.session.txt;
+    job->target_offset = shell_anchor_offset;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    job->txt_offset = (uint64_t)shell_anchor_offset;
+#endif
+  }
+  job_submit(job);
+}
+
+static void shell_adjust_client(RECT *rect, HWND window, unsigned dpi) {
+  typedef BOOL (WINAPI *adjust_fn)(LPRECT, DWORD, BOOL, DWORD, UINT);
+  adjust_fn adjust = (adjust_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"), "AdjustWindowRectExForDpi");
+  DWORD style = (DWORD)GetWindowLongPtrW(window, GWL_STYLE), ex = (DWORD)GetWindowLongPtrW(window, GWL_EXSTYLE);
+  if (adjust) adjust(rect, style, FALSE, ex, dpi);
+  else AdjustWindowRectEx(rect, style, FALSE, ex);
+}
+
+static void shell_update_dpi(HWND window) {
+  typedef UINT (WINAPI *get_dpi_fn)(HWND);
+  typedef HANDLE (WINAPI *get_context_fn)(HWND);
+  typedef BOOL (WINAPI *equal_context_fn)(HANDLE, HANDLE);
+  HMODULE user = GetModuleHandleW(L"user32.dll");
+  get_dpi_fn dpi = (get_dpi_fn)GetProcAddress(user, "GetDpiForWindow");
+  get_context_fn context = (get_context_fn)GetProcAddress(user, "GetWindowDpiAwarenessContext");
+  equal_context_fn equal = (equal_context_fn)GetProcAddress(user, "AreDpiAwarenessContextsEqual");
+  shell_dpi = dpi ? dpi(window) : 96;
+  if (!shell_dpi) shell_dpi = 96;
+  shell_pmv2 = context && equal && equal(context(window), (HANDLE)(INT_PTR)-4);
+  if (host_shell) shell_d2d_set_dpi(host_shell, shell_dpi);
+}
 
 static LRESULT CALLBACK shell_button_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
   switch (message) {
@@ -75,12 +144,12 @@ static void shell_create(HWND parent) {
 /* Circle positions from WIREFRAMES section 2: 设置 16 from the right edge,
    目录 8 to its left, both 8 below the top. */
 static void shell_button_circle(HWND button, int client_width, RECT *circle) {
-  int right = client_width - SHELL_SPACE_2;
-  if (button == shell_toc) right -= SHELL_TARGET + SHELL_SPACE_1;
-  circle->left = right - SHELL_TARGET;
+  int right = client_width - shell_px(SHELL_SPACE_2, shell_dpi);
+  if (button == shell_toc) right -= shell_px(SHELL_TARGET, shell_dpi) + shell_px(SHELL_SPACE_1, shell_dpi);
+  circle->left = right - shell_px(SHELL_TARGET, shell_dpi);
   circle->right = right;
-  circle->top = SHELL_SPACE_1;
-  circle->bottom = SHELL_SPACE_1 + SHELL_TARGET;
+  circle->top = shell_px(SHELL_SPACE_1, shell_dpi);
+  circle->bottom = shell_px(SHELL_SPACE_1, shell_dpi) + shell_px(SHELL_TARGET, shell_dpi);
 }
 
 static int shell_layout(void) {
@@ -88,12 +157,12 @@ static int shell_layout(void) {
   if (!shell_active) return 0;
   GetClientRect(g.window, &area);
   shell_button_circle(shell_toc, area.right, &circle);
-  MoveWindow(shell_toc, circle.left - SHELL_FOCUS_STROKE, circle.top - SHELL_FOCUS_STROKE, SHELL_BUTTON_BOX,
-             SHELL_BUTTON_BOX, TRUE);
+  MoveWindow(shell_toc, circle.left - shell_px(SHELL_FOCUS_STROKE, shell_dpi), circle.top - shell_px(SHELL_FOCUS_STROKE, shell_dpi), shell_px(SHELL_BUTTON_BOX, shell_dpi),
+             shell_px(SHELL_BUTTON_BOX, shell_dpi), TRUE);
   shell_button_circle(shell_settings, area.right, &circle);
-  MoveWindow(shell_settings, circle.left - SHELL_FOCUS_STROKE, circle.top - SHELL_FOCUS_STROKE, SHELL_BUTTON_BOX,
-             SHELL_BUTTON_BOX, TRUE);
-  MoveWindow(g.page, 0, SHELL_TOPBAR_H, area.right, area.bottom > SHELL_TOPBAR_H ? area.bottom - SHELL_TOPBAR_H : 0,
+  MoveWindow(shell_settings, circle.left - shell_px(SHELL_FOCUS_STROKE, shell_dpi), circle.top - shell_px(SHELL_FOCUS_STROKE, shell_dpi), shell_px(SHELL_BUTTON_BOX, shell_dpi),
+             shell_px(SHELL_BUTTON_BOX, shell_dpi), TRUE);
+  MoveWindow(g.page, 0, shell_px(SHELL_TOPBAR_H, shell_dpi), area.right, area.bottom > shell_px(SHELL_TOPBAR_H, shell_dpi) ? area.bottom - shell_px(SHELL_TOPBAR_H, shell_dpi) : 0,
              TRUE);
   return 1;
 }
@@ -121,6 +190,7 @@ static void shell_enter(void) {
   shell_page_edge(0);
   shell_active = 1;
   shell_layout();
+  shell_request_layout();
   ShowWindow(shell_toc, SW_SHOW);
   ShowWindow(shell_settings, SW_SHOW);
   InvalidateRect(g.window, NULL, FALSE);
@@ -138,12 +208,33 @@ static void shell_leave(void) {
   shell_page_edge(1);
   for (i = 0; i < shell_hidden_count; i++) ShowWindow(shell_hidden[i], SW_SHOW);
   shell_hidden_count = 0;
+  {
+    RECT bounds; MINMAXINFO limits = {0};
+    /* The legacy toolbar needs its original minimum, even after a narrow shell. */
+    SendMessageW(g.window, WM_GETMINMAXINFO, 0, (LPARAM)&limits);
+    GetWindowRect(g.window, &bounds);
+    int width = bounds.right - bounds.left, height = bounds.bottom - bounds.top;
+    if (width < limits.ptMinTrackSize.x || height < limits.ptMinTrackSize.y)
+      SetWindowPos(g.window, NULL, 0, 0,
+        width < limits.ptMinTrackSize.x ? limits.ptMinTrackSize.x : width,
+        height < limits.ptMinTrackSize.y ? limits.ptMinTrackSize.y : height,
+        SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+  }
   layout_controls();
+  shell_request_layout();
   InvalidateRect(g.window, NULL, TRUE);
   SetFocus(g.page);
 }
 
 static void shell_sync(void) {
+  if (shell_anchor_valid && (shell_anchor_book != g.frame.book_id || shell_anchor_part != g.frame.part ||
+      shell_anchor_offset < g.frame.range_start || shell_anchor_offset >= g.frame.range_end)) {
+    exr_anchor_free(&shell_anchor); shell_anchor_valid = 0;
+  }
+  if (g.frame.valid && !g.frame.fixed && shell_vertical != g.frame.writing_mode) {
+    shell_vertical = g.frame.writing_mode;
+    shell_request_layout();
+  }
   int want = host_shell && g.window && (g.drive_mode ? shell_drive_on : 1) && !shell_legacy &&
              g.has_current && g.frame.valid;
   if (want && !shell_active) shell_enter();
@@ -151,7 +242,7 @@ static void shell_sync(void) {
   else if (shell_active) {
     RECT bar;
     GetClientRect(g.window, &bar);
-    bar.bottom = SHELL_TOPBAR_H;
+    bar.bottom = shell_px(SHELL_TOPBAR_H, shell_dpi);
     InvalidateRect(g.window, &bar, FALSE); /* the title may have changed */
   }
 }
@@ -163,13 +254,13 @@ static void shell_paint(HWND window) {
   BeginPaint(window, &paint);
   GetClientRect(window, &area);
   if (SUCCEEDED(shell_d2d_begin(host_shell, shell_colors->layer_page))) {
-    shell_d2d_fill(host_shell, 0, (float)(SHELL_TOPBAR_H - 1), (float)area.right, 1, shell_colors->hairline);
+    shell_d2d_fill(host_shell, 0, (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1), (float)area.right, 1, shell_colors->hairline);
     if (g.has_current && g.current.title) title = host_wide(g.current.title, strlen(g.current.title));
     /* Left at 24; it may run up to 16 before the 目录 circle. */
     shell_button_circle(shell_toc, area.right, &circle);
-    if (title && circle.left - SHELL_SPACE_2 > SHELL_SPACE_3)
-      shell_d2d_text(host_shell, SHELL_TEXT_TITLE, title, (float)SHELL_SPACE_3, 0,
-                     (float)(circle.left - SHELL_SPACE_2 - SHELL_SPACE_3), (float)(SHELL_TOPBAR_H - 1),
+    if (title && circle.left - shell_px(SHELL_SPACE_2, shell_dpi) > shell_px(SHELL_SPACE_3, shell_dpi))
+      shell_d2d_text(host_shell, SHELL_TEXT_TITLE, title, (float)shell_px(SHELL_SPACE_3, shell_dpi), 0,
+                     (float)(circle.left - shell_px(SHELL_SPACE_2, shell_dpi) - shell_px(SHELL_SPACE_3, shell_dpi)), (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1),
                      shell_colors->text);
     if (shell_d2d_end(host_shell) == S_FALSE) InvalidateRect(window, NULL, FALSE);
   }
@@ -194,8 +285,8 @@ static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   look.icon = disabled ? shell_colors->text_disabled : shell_colors->text;
   look.has_ring = focus;
   look.ring = shell_colors->accent;
-  look.diameter = (float)SHELL_TARGET;
-  look.ring_width = (float)SHELL_FOCUS_STROKE;
+  look.diameter = (float)shell_px(SHELL_TARGET, shell_dpi);
+  look.ring_width = (float)shell_px(SHELL_FOCUS_STROKE, shell_dpi);
   shell_d2d_icon_button(host_shell, item->hDC, &item->rcItem, item->hwndItem == shell_toc ? 0xE8FD : 0xE713, &look);
   return 1;
 }
@@ -203,6 +294,13 @@ static int shell_draw_item(const DRAWITEMSTRUCT *item) {
 /* In the reading screen the page shows keyboard focus as a 2 px accent
    outline inside its edge, only while focus cues are shown. */
 static int shell_page_focus(HWND page, HDC dc, const RECT *area) {
+  if (shell_active && g.frame.valid) {
+    wchar_t text[96]; RECT number = *area;
+    number.bottom = area->bottom - shell_px(SHELL_BODY_BOTTOM, shell_dpi);
+    number.top = number.bottom - shell_px(SHELL_PAGE_NUMBER_H, shell_dpi);
+    swprintf(text, 96, L"%llu · %llu", (unsigned long long)(g.frame.part + 1), (unsigned long long)(g.frame.page + 1));
+    shell_d2d_dc_text(host_shell, dc, &number, text, shell_colors->text_secondary);
+  }
   HBRUSH brush;
   RECT edge;
   int i;
@@ -210,7 +308,7 @@ static int shell_page_focus(HWND page, HDC dc, const RECT *area) {
   if (GetFocus() != page || (SendMessageW(page, WM_QUERYUISTATE, 0, 0) & UISF_HIDEFOCUS)) return 1;
   brush = CreateSolidBrush(RGB((shell_colors->accent >> 16) & 0xFF, (shell_colors->accent >> 8) & 0xFF,
                                shell_colors->accent & 0xFF));
-  for (i = 0, edge = *area; i < SHELL_FOCUS_STROKE; i++) {
+  for (i = 0, edge = *area; i < shell_px(SHELL_FOCUS_STROKE, shell_dpi); i++) {
     FrameRect(dc, &edge, brush);
     InflateRect(&edge, -1, -1);
   }
