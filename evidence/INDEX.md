@@ -46,6 +46,12 @@
 
 - 2026-11-04 — **默认分支切换与 S5 门禁拦截验证**：[完整记录](main-transition-20261104/README.md#s4-owner-confirmed-switch-and-s5-closure)。S1 main 初始 sha `1e709837cb8a50816e94bf611ca4404f19f80abf`；S2 `682e1ab5`；S3 run `41786091768` 通过；S4 `default_branch: codex/framework → main`（PATCH502，回读 main，owner 确认成功）；S5 tag `archive/codex-framework-20261031 → 8ca964fc`、`archive/ledger-base-20261103 → 1e709837`。S5.5 [PR #40 / run41902048351](main-transition-20261104/s5-guard-negative/README.md)：`reading-required-core` **required=true、红**，`mergeable=true` 且 `mergeable_state=blocked` / `mergeStateStatus=BLOCKED`；负例已恢复，PR 已关闭、临时分支已删除。两条原分支保留。
 
+- 2026-11-05 — [中文语料禁则与标点测量](cjk-corpus-20261105/REPORT.md)：3本公版繁体书 紅樓夢/醒世恆言/唐詩 1652/1170/86 页，横排 37154/26510/1786 行（[RESULTS.csv](cjk-corpus-20261105/RESULTS.csv) 前3行有效，后3行 vertical=1 为测量假象、作废）。行尾违规 0/0/0；行首违规 4/0/0（紅樓夢 p83/203/1148 `：`、p1033 `，`）。有效 PAIR 11406 对（54+11352，唐詩 0 对无法测）挤压 0 对；U+2014 advance 47px=1.68em。最小清单5项：达标1、未达标3、无法测量1。
+
+- 2026-11-05 — [15本×5位置抽样渲染](real-books-20261105/PAGES-SUMMARY.md)：[RESULTS-PAGES.csv](real-books-20261105/RESULTS-PAGES.csv) 75 次栅格化，75 成功/0 失败，未重试；最慢 Malcolm X PDF 50% 位置 page_index=139，53.741800ms；7 本同书最慢/最快 >10 倍（最大 76.588 倍）。计时只覆盖渲染 API；未跑 CI。
+
+- 2026-11-05 — [草枕 CJK 禁则与标点挤压测量](real-books-20261105/CJK-LINEBREAK.md)：462 页、6857 正文列，指定避头尾字符集行首/行尾违规 0/0；74 组连续标点两字总占位÷单字均为 2.000（每标点 1.000），横排控制 74/74 一致，挤压 0 对；登记 [SDK-CJK-003](real-books-20261105/SDK-GAPS.md)，坐标见 [CJK-PUNCTUATION.csv](real-books-20261105/CJK-PUNCTUATION.csv)（148 条）。日文样本，不能替代中文验证。
+
 ## 已知在 main 上失败
 
 以下失败在 main 上原本就存在，与 2a 系列 PR 无关，不要当作新问题。
