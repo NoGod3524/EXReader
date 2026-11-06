@@ -1,4 +1,0 @@
-module CReaderAppleFeatures [system] {
-  header "ReaderAppleFeatures.h"
-  export *
-}
