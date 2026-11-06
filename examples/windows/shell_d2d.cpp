@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: MIT */
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include "shell_d2d.h"
 #include "shell_tokens.h"
 #include <vector>
