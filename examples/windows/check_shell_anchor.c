@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
     initial.shell_geometry = shell_geometry_for(1280,800,96,17,mode==2);
     initial.font_percent = 150;
     g.session.active = 1; g.session.book_id = 1;
+    g.session.txt = mode == 1;
     session_configure(&g.session, &initial);
     if (mode == 1) {
       wchar_t *path = host_wide(argv[2], strlen(argv[2])); WIN32_FILE_ATTRIBUTE_DATA attr;

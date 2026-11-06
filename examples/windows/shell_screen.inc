@@ -4,8 +4,8 @@
    layout_controls; it uses the host state `g` from there.
 
    Once a book is open the window shows the flat top bar (UI-SPEC, 2026-11-05):
-   56 high, DeckMark bg with a line-token hairline on its last row, the title on the left
-   (17, weight 600) and two 40x40 round icon buttons on the right (目录, 设置).
+   56 high, DeckMark surface with a line-token hairline on its last row, the title on the left
+   (15, weight 650) and two 32x32 rounded icon buttons on the right (目录, 设置).
    Below it the page fills the window with no 3D edge. Every legacy control is
    hidden. Alt+Left returns to the legacy panel, Alt+Right comes back, and
    opening a book comes back too. --drive keeps the legacy layout unless the
@@ -19,8 +19,8 @@
 #include "shell_tokens.h"
 
 enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, SHELL_HIDDEN_MAX = 128 };
-/* A button window is the circle plus room for the focus outline around it. */
-enum { SHELL_BUTTON_BOX = SHELL_TARGET + 2 * SHELL_FOCUS_STROKE };
+/* The 32px visual has 4px per side for the offset keyboard outline. */
+enum { SHELL_BUTTON_BOX = SHELL_ICON_SIZE + 2 * SHELL_CONTROL_FRAME };
 
 static HWND shell_toc, shell_settings;
 static HWND shell_panel, shell_minus, shell_plus, shell_segments[3];
@@ -154,15 +154,14 @@ static void shell_create(HWND parent) {
   shell_create_panel(parent);
 }
 
-/* Circle positions from WIREFRAMES section 2: 设置 16 from the right edge,
-   目录 8 to its left, both 8 below the top. */
+/* P0 visual bounds: 32px, 6px gap, 12px right inset. */
 static void shell_button_circle(HWND button, int client_width, RECT *circle) {
-  int right = client_width - shell_px(SHELL_SPACE_2, shell_dpi);
-  if (button == shell_toc) right -= shell_px(SHELL_TARGET, shell_dpi) + shell_px(SHELL_SPACE_1, shell_dpi);
-  circle->left = right - shell_px(SHELL_TARGET, shell_dpi);
+  int right = client_width - shell_px(SHELL_BAR_RIGHT, shell_dpi);
+  if (button == shell_toc) right -= shell_px(SHELL_ICON_SIZE + SHELL_ICON_GAP, shell_dpi);
+  circle->left = right - shell_px(SHELL_ICON_SIZE, shell_dpi);
   circle->right = right;
-  circle->top = shell_px(SHELL_SPACE_1, shell_dpi);
-  circle->bottom = shell_px(SHELL_SPACE_1, shell_dpi) + shell_px(SHELL_TARGET, shell_dpi);
+  circle->top = shell_px((SHELL_TOPBAR_H-SHELL_ICON_SIZE)/2, shell_dpi);
+  circle->bottom = circle->top + shell_px(SHELL_ICON_SIZE, shell_dpi);
 }
 
 static int shell_layout(void) {
@@ -170,10 +169,10 @@ static int shell_layout(void) {
   if (!shell_active) return 0;
   GetClientRect(g.window, &area);
   shell_button_circle(shell_toc, area.right, &circle);
-  MoveWindow(shell_toc, circle.left - shell_px(SHELL_FOCUS_STROKE, shell_dpi), circle.top - shell_px(SHELL_FOCUS_STROKE, shell_dpi), shell_px(SHELL_BUTTON_BOX, shell_dpi),
+  MoveWindow(shell_toc, circle.left - shell_px(SHELL_CONTROL_FRAME, shell_dpi), circle.top - shell_px(SHELL_CONTROL_FRAME, shell_dpi), shell_px(SHELL_BUTTON_BOX, shell_dpi),
              shell_px(SHELL_BUTTON_BOX, shell_dpi), TRUE);
   shell_button_circle(shell_settings, area.right, &circle);
-  MoveWindow(shell_settings, circle.left - shell_px(SHELL_FOCUS_STROKE, shell_dpi), circle.top - shell_px(SHELL_FOCUS_STROKE, shell_dpi), shell_px(SHELL_BUTTON_BOX, shell_dpi),
+  MoveWindow(shell_settings, circle.left - shell_px(SHELL_CONTROL_FRAME, shell_dpi), circle.top - shell_px(SHELL_CONTROL_FRAME, shell_dpi), shell_px(SHELL_BUTTON_BOX, shell_dpi),
              shell_px(SHELL_BUTTON_BOX, shell_dpi), TRUE);
   MoveWindow(g.page, 0, shell_px(SHELL_TOPBAR_H, shell_dpi), area.right, area.bottom > shell_px(SHELL_TOPBAR_H, shell_dpi) ? area.bottom - shell_px(SHELL_TOPBAR_H, shell_dpi) : 0,
              TRUE);
@@ -274,14 +273,14 @@ static void shell_paint(HWND window) {
   wchar_t *title = NULL;
   BeginPaint(window, &paint);
   GetClientRect(window, &area);
-  if (SUCCEEDED(shell_d2d_begin(host_shell, shell_colors->layer_page))) {
-    shell_d2d_fill(host_shell, 0, (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1), (float)area.right, 1, shell_blend(shell_colors->layer_page,shell_colors->line_rgb,SHELL_LINE_ALPHA));
+  if (SUCCEEDED(shell_d2d_begin(host_shell, shell_colors->layer_side))) {
+    shell_d2d_fill(host_shell, 0, (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1), (float)area.right, 1, shell_blend(shell_colors->layer_side,shell_colors->line_rgb,SHELL_LINE_ALPHA));
     if (g.has_current && g.current.title) title = host_wide(g.current.title, strlen(g.current.title));
-    /* Left at 24; it may run up to 16 before the 目录 circle. */
+    /* P0 title inset; retain the existing ellipsis limit before the controls. */
     shell_button_circle(shell_toc, area.right, &circle);
-    if (title && circle.left - shell_px(SHELL_SPACE_2, shell_dpi) > shell_px(SHELL_SPACE_3, shell_dpi))
-      shell_d2d_text(host_shell, SHELL_TEXT_TITLE, title, (float)shell_px(SHELL_SPACE_3, shell_dpi), 0,
-                     (float)(circle.left - shell_px(SHELL_SPACE_2, shell_dpi) - shell_px(SHELL_SPACE_3, shell_dpi)), (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1),
+    if (title && circle.left - shell_px(SHELL_SPACE_2, shell_dpi) > shell_px(SHELL_TITLE_LEFT, shell_dpi))
+      shell_d2d_text(host_shell, SHELL_TEXT_TITLE, title, (float)shell_px(SHELL_TITLE_LEFT, shell_dpi), 0,
+                     (float)(circle.left - shell_px(SHELL_SPACE_2, shell_dpi) - shell_px(SHELL_TITLE_LEFT, shell_dpi)), (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1),
                      shell_colors->text);
     if (shell_d2d_end(host_shell) == S_FALSE) InvalidateRect(window, NULL, FALSE);
   }
@@ -302,14 +301,14 @@ static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   focus = ((item->itemState & ODS_FOCUS) && !(item->itemState & ODS_NOFOCUSRECT)) ||
           (host_offscreen && g.drive_mode && shell_render_focus==item->hwndItem);
   memset(&look, 0, sizeof(look));
-  look.background = shell_colors->layer_page;
+  look.background = shell_colors->layer_side;
   look.has_fill = pressed || hover;
-  look.fill = shell_colors->surface2;
-  look.offset_y = pressed ? SHELL_PRESSED_Y * shell_dpi / 96.f : 0;
-  look.icon = disabled ? shell_blend(shell_colors->layer_page,shell_colors->text_secondary,SHELL_DISABLED_ALPHA) : shell_colors->text_secondary;
+  look.fill = pressed ? shell_colors->surface3 : shell_colors->surface2;
+  look.offset_y = 0;
+  look.icon = disabled ? shell_blend(shell_colors->layer_side,shell_colors->text_secondary,SHELL_DISABLED_ALPHA) : (hover || pressed) ? shell_colors->text : shell_colors->text_secondary;
   look.has_ring = focus;
   look.ring = shell_colors->accent;
-  look.diameter = (float)shell_px(SHELL_TARGET, shell_dpi);
+  look.diameter = (float)shell_px(SHELL_ICON_SIZE, shell_dpi);
   look.ring_width = (float)shell_px(SHELL_FOCUS_STROKE, shell_dpi);
   shell_d2d_icon_button(host_shell, item->hDC, &item->rcItem, item->hwndItem == shell_toc ? 0xE8FD : 0xE713, &look);
   return 1;

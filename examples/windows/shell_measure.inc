@@ -63,5 +63,17 @@ static int shell_settings_measure(const char *name) {
     RECT box;GetWindowRect(shell_button_named(names[i]),&box);MapWindowPoints(NULL,g.window,(POINT *)&box,2);
     fprintf(out,"%s\"%s\":[%ld,%ld,%ld,%ld]",i?",":"",names[i],box.left,box.top,box.right,box.bottom);
   }
-  fprintf(out,"}}\n");return fclose(out)==0;
+  fprintf(out,"},\"icons\":{");
+  HWND icons[]={shell_toc,shell_settings};
+  for(int i=0;i<2;i++) {
+    RECT box;shell_button_circle(icons[i],client.right,&box);
+    fprintf(out,"%s\"%s\":[%ld,%ld,%ld,%ld]",i?",":"",i?"settings":"toc",box.left,box.top,box.right,box.bottom);
+  }
+  RECT panel;GetWindowRect(shell_panel,&panel);MapWindowPoints(NULL,g.window,(POINT *)&panel,2);
+  panel.left+=shell_px(SHELL_SHADOW_PAD,shell_dpi);panel.right-=shell_px(SHELL_SHADOW_PAD,shell_dpi);
+  panel.top+=shell_px(SHELL_SHADOW_TOP,shell_dpi);panel.bottom-=shell_px(SHELL_SHADOW_PAD,shell_dpi);
+  float metrics[8]={0};if(host_shell) shell_d2d_metrics(host_shell,metrics);
+  fprintf(out,"},\"panel\":[%ld,%ld,%ld,%ld],\"typography\":[%.3f,%.0f,%.3f,%.0f,%.3f,%.0f,%.3f,%.3f]}\n",
+    panel.left,panel.top,panel.right,panel.bottom,(double)metrics[0],(double)metrics[1],(double)metrics[2],(double)metrics[3],(double)metrics[4],(double)metrics[5],(double)metrics[6],(double)metrics[7]);
+  return fclose(out)==0;
 }

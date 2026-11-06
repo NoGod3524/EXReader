@@ -118,8 +118,8 @@ def remaining(exe,baseline,font,book,out):
     for label,binary in [('baseline',baseline),('changed',exe),('control',baseline)]:
         target=out/'regression'/label
         run(binary,font,legacy_script,target/'profile',target/'A')
-        run(binary,font,'snapshot|10\nprobe_key\nsnapshot|11\nquit\n',target/'profile',target/'B')
-        run(binary,font,'snapshot|20\nquit\n',target/'profile',target/'C')
+        run(binary,font,'wait_idle\nui_cues|hide\nsnapshot|10\nprobe_key\nsnapshot|11\nquit\n',target/'profile',target/'B')
+        run(binary,font,'wait_idle\nui_cues|hide\nsnapshot|20\nquit\n',target/'profile',target/'C')
     from compare_shots import compare,self_test
     rows=[];a=out/'regression/baseline'
     counts={}
@@ -172,27 +172,29 @@ def main():
           ('#f5f5f2','#ffffff','#1b1b1f','#5c5c65','#141420','#4553e0','#3946cc') if theme=='light' else
           ('#141416','#1e1e21','#f2f2f4','#b3b3bc','#ffffff','#7c88ff','#929cff'))
         surface2='#efeeea' if theme=='light' else '#28282c'
-        result['colours'][theme]={'bg':hx(im.getpixel((8,300))),'surface':hx(im.getpixel((1000,250)))}
+        result['colours'][theme]={'bg':hx(im.getpixel((8,300))),'surface':hx(im.getpixel((m['panel'][2]-20,m['panel'][1]+50)))}
         assert result['colours'][theme]=={'bg':bg,'surface':surface}
         assert m['class_bg']==int.from_bytes(bytes(rgb(bg)),'little')
         for kind,control in (('stepper','plus'),('ghost','system'),('primary',theme)):
             x,y,r,b=m['controls'][control];w,h=r-x,b-y
             for state in ('normal','hover','pressed','focus','disabled'):
                 shot=client(evidence,f'{theme}-{kind}-{state}',m)
-                fill=accent if kind=='primary' else surface
-                if state in ('hover','pressed'):fill=accent_hover if kind=='primary' else surface2
-                expected=blend(surface,fill,.4) if state=='disabled' else rgb(fill)
-                actual=shot.getpixel((x+12,y+h//2))
+                base=surface if kind=='stepper' else surface2
+                fill=surface2 if kind=='ghost' else surface
+                if state=='hover' and kind=='stepper':fill=surface2
+                if state=='pressed':fill='#e7e6e1' if theme=='light' else '#313136'
+                expected=blend(base,fill,.4) if state=='disabled' else rgb(fill)
+                actual=shot.getpixel((x+(8 if kind=='stepper' else 5),y+h//2))
                 # Find an un-antialiased glyph interior inside the text box.
-                ink='#ffffff' if kind=='primary' else secondary if kind=='ghost' else text
-                want_ink=blend(surface,ink,.4) if state=='disabled' else rgb(ink)
-                pixels=list(shot.crop((x+14,y+8,r-14,b-8)).getdata())
+                ink=secondary if kind=='ghost' and state not in ('hover','pressed') else text
+                want_ink=blend(base,ink,.4) if state=='disabled' else rgb(ink)
+                pixels=list(shot.crop((x+10,y+8,r-10,b-8)).getdata())
                 assert want_ink in pixels,(theme,kind,state,'ink',want_ink)
                 row=dict(theme=theme,control=kind,state=state,fill=hx(actual),expected_fill=hx(expected),
                          text=hx(want_ink),expected_text=hx(want_ink))
                 assert actual==expected,row
                 if state=='focus':
-                    row['ring']=hx(shot.getpixel((x+w//2,y+2)));assert row['ring']==accent,row
+                    row['ring']=hx(shot.getpixel((x+w//2,y+(2 if kind=='stepper' else 1))));assert row['ring']==accent,row
                 if kind=='stepper':
                     border=blend(fill,line,.13*(.4 if state=='disabled' else 1))
                     row['border']=hx(shot.getpixel((x+4,y+h//2)));row['expected_border']=hx(border)
