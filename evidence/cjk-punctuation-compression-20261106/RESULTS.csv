@@ -1,0 +1,7 @@
+book,phase,compressed_pairs,uncompressed_pairs,vertical,parts,pages,columns,head_violations,head_observations,soft_wrap,forced_break,paragraph_start,unbreakable_overflow,tail_violations,punctuation_pairs,glyphs,excluded_ruby_glyphs,wrong_mode_pages,status
+hongloumeng-24264,before,0,15170,False,31,1652,37155,0,1,0,1,0,0,2,15170,821108,0,0,0
+hongloumeng-24264,after,15363,15,False,31,1632,36707,1,2,1,1,0,0,7,15378,821108,0,0,0
+xingshihengyan-24239,before,0,11352,False,21,1170,26510,0,0,0,0,0,0,0,11352,562814,0,0,0
+xingshihengyan-24239,after,11472,0,False,21,1167,26357,0,0,0,0,0,0,0,11472,562814,0,0,0
+tangshi300-52323,before,0,0,False,3,86,1786,0,0,0,0,0,0,0,0,50095,0,0,0
+tangshi300-52323,after,0,0,False,3,86,1786,0,0,0,0,0,0,0,0,50095,0,0,0

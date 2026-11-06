@@ -1,0 +1,110 @@
+{
+  "base": "2c0407dc40ca63cb5aea0e5983f71d469d4ece4b",
+  "baseline_inline_sha256": "4083568153b67ecd0835365df0b444f63a57114b60e1560f256940ee8a99fb99",
+  "configure": [
+    "cmake",
+    "-S",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-evidence-20261105",
+    "-B",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-punctuation-compression-20261106\\build",
+    "-G",
+    "Ninja",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DEXR_BUILD_TESTS=ON",
+    "-DEXR_ENABLE_AAC=OFF",
+    "-DEXR_ENABLE_MP3=OFF",
+    "-DEXR_ENABLE_PDF_CRYPTO=OFF",
+    "-DEXR_ENABLE_PDF_JPX=ON",
+    "-DEXR_ENABLE_ICC=OFF",
+    "-DEXR_ENABLE_IMAGE_WEBP=OFF",
+    "-DEXR_ENABLE_IMAGE_TIFF=OFF",
+    "-DEXR_ENABLE_IMAGE_AVIF=OFF",
+    "-DEXR_BUILD_JNI=OFF",
+    "-DFETCHCONTENT_SOURCE_DIR_FREETYPE=C:/Users/Oscar/exr-deps/freetype-VER-2-15-0",
+    "-DFETCHCONTENT_SOURCE_DIR_EXPAT=C:/Users/Oscar/exr-deps/expat",
+    "-DFETCHCONTENT_SOURCE_DIR_MINIZ=C:/Users/Oscar/exr-deps/miniz",
+    "-DFETCHCONTENT_SOURCE_DIR_STB=C:/Users/Oscar/exr-deps/stb",
+    "-DFETCHCONTENT_SOURCE_DIR_SQLITE=C:/Users/Oscar/exr-deps/sqlite",
+    "-DFETCHCONTENT_SOURCE_DIR_OPENJPEG=C:\\Users\\Oscar\\Documents\\Codex\\cjk-punctuation-compression-20261106\\deps\\openjpeg-2.5.4"
+  ],
+  "inputs_sha256": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\xingshihengyan-24239.epub": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\tangshi300-52323.epub": "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+    "C:\\Windows\\Fonts\\arial.ttf": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+  },
+  "sources_sha256": {
+    "src/inline.c": "915b4f5d31b2e018d5cf603445dc6d8f1b55766229793059e136594084d1a1a1",
+    "tests/test_line_boundary.c": "bf11de84caa3d427218de9c99127101dc309a62398a2c3d17ad7d199c4b8dec4",
+    "tools/generate_test_fonts.py": "4ff90b4863110e8c595f5bc42a7b9a8c3357194fa302eb33151cc4a9e976db87",
+    "tests/fixtures/fonts/cjk-punctuation.ttf": "231d54b7240f192b28d84a21e51a65851af4a64c897afe72ff08fe737fae20b1",
+    "tests/fixtures/fonts/latin-punctuation.ttf": "c8f75a2ec17f2db1d49ad7be3d6013d6d71d9c38372cbf7609479d6efdb2cd76",
+    "tools/probes/cjk_measure.c": "00648fc19288af3c8b873964eefab22400e9ab66b2e3baae216e485cfdae4496",
+    "tools/probes/alias_page_probe.c": "fcd3f8e1692484001a8cbf9c51ea70d2d258e8590ac5f7723cee969e1f71d6dd"
+  },
+  "artifacts_sha256": {
+    "before/libexreader.dll": "dee35756ae585e856627818f45af81746d0aa94b93234a4f512e840922889443",
+    "before/libexreader.dll.a": "56b451410e968783099da06ff2d22af7ab7ec2bdf8a2c9906fe04dfb7b93e189",
+    "before/cjk_measure.exe": "ebba7680dc4f3e5347ccfa34c324ebdb4b92d8058399aaaefc00ca8f828d40a8",
+    "before/exreader-check-document-alias.exe": "dc06e6752558989e675b49c3720071b06e55fb1739b959cb9b39e172ddd77b93",
+    "after/libexreader.dll": "305bfb2ff9eb2503b17b6df9ad71d39cb52484ab9f3c309fbf1c0666cd4dbbf8",
+    "after/libexreader.dll.a": "24e58b9516779be59f930bff654494312fd70e0b0afb54f9a6e5c359d88d127d",
+    "after/cjk_measure.exe": "99f732665e745ed332c4b04e79a7e4fb0d14868b85085697eb001b0b04ff6c72",
+    "after/exreader-check-document-alias.exe": "dc06e6752558989e675b49c3720071b06e55fb1739b959cb9b39e172ddd77b93"
+  },
+  "raw_outputs_directory": "C:\\Users\\Oscar\\Documents\\Codex\\cjk-punctuation-compression-20261106",
+  "raw_outputs_sha256": {
+    "after-hongloumeng-24264.out": "76a4bfe2709283855bd9e5fab710b1d2646002774001ec1683e76f5fbd994f16",
+    "after-pachinko.out": "a502e755bb14cd41501356a25a7355bf77cfcb7cf34c8901e3973376a09f3dee",
+    "after-tangshi300-52323.out": "b5c8f0f143afd89af1b4a47b353508eb3aa11b072b3c8c77a56c781d7678a831",
+    "after-xingshihengyan-24239.out": "c6f27edd239957b20ad9b140a8f5c4f9e7c0a00df8a1a679031895963f168b95",
+    "before-hongloumeng-24264.out": "fa8a1039b69b426699ee4dd9f592984b2ba49d4989d42c824b8bc0b8bcd2ba48",
+    "before-pachinko.out": "3f6a955131738a796b49355c9c9c9132bc5a4fcf7d18ecf2575a255b8c7a98a2",
+    "before-tangshi300-52323.out": "b5c8f0f143afd89af1b4a47b353508eb3aa11b072b3c8c77a56c781d7678a831",
+    "before-xingshihengyan-24239.out": "5eb14efe4a53e522752fea204c1573e951206e5c5c14fbf91e8cc656a18dfae1"
+  },
+  "verification_logs_sha256": {
+    "after-build.log": "e631b0a4cf296b64acc8ffd7408e9e3ea13fd25d097615a74c903a52166a2ab2",
+    "after-probe-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "all-build.log": "6b2d183250a84466cbb1f2b64dc6048cd29f4b63c66445e4086089a228260ad8",
+    "baseline-build.log": "ba3b29f65eb4b64e92addd9a68b016ff0a6bbd5eea3132a1e6391a6c272ffae1",
+    "baseline-probe-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "baseline-rebuild.log": "ed57d0ac76a784aa36a783b606e2349b4cbb110674f83c4d93a45d8f7c29d0e4",
+    "before-probe-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "configure-jpx-fixed.log": "70a0ccc471809b2c3acdb936b85feed2262b9d3f7dde60d2fa01cb3d60071f0e",
+    "configure-jpx.log": "111f65d225b4a07012b22ed32108e3ddc3249a5c630389c50fd8d255df1a2556",
+    "configure.log": "0d30a224d53e7fed0043150e3cd501cc3c9a0b3beeb3c3ba8c2904161111a178",
+    "ctest-jpx-off.log": "176dadb9575cb94f22afd7b23aee93fe5b6ec88596fc4be9ce3fdfec876436e0",
+    "ctest.log": "60edd27d0694d065fd52b2967b40532b90c2eb5d6595fde09674bd276c223d30",
+    "final-build.log": "3dc07369c432868c16fde6b81f2311fbfb91cdee3891b8130803d0ca37e3b989",
+    "jpx-build.log": "45de778b144cd815cc86d111e28ec85d6c2e15443cbb838fa98a4b0ded1724b2",
+    "new-test-after.log": "5249baa0dc6e080fa112eb0a1e93e42c9751126c65228eab0b1fc3d629ef2415",
+    "new-test-on-baseline.log": "a0f5e77ef934e7ebe552d92b0bbe5adc69e00f36221a4e22b4465c8d3ae6e274"
+  },
+  "comparison": {
+    "hongloumeng-24264": {
+      "common_pairs": 14598,
+      "before_only": 572,
+      "after_only": 780
+    },
+    "xingshihengyan-24239": {
+      "common_pairs": 11045,
+      "before_only": 307,
+      "after_only": 427
+    },
+    "tangshi300-52323": {
+      "common_pairs": 0,
+      "before_only": 0,
+      "after_only": 0
+    }
+  },
+  "pachinko_pages": 1194,
+  "pachinko_changed_pixel_hashes": 0,
+  "ctest_passed": 169,
+  "ctest_failed": 0,
+  "hash_definition": "SHA-256 of three little-endian DWORDs (width,height,channels), then width*4 RGBA bytes per row, excluding stride padding",
+  "process_creation": "subprocess.CREATE_NO_WINDOW",
+  "note": "Both baseline and final measurement DLLs rebuilt with JPX enabled; baseline from git show HEAD:src/inline.c, modified file restored in finally. No workflow dispatch or manual CI run."
+}

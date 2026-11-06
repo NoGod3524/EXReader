@@ -298,11 +298,86 @@ static void cjk_space_punctuation(void) {
     CHECK(heads==2);exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
   }
 }
+static void cjk_punctuation_pair(void) {
+  exr_layout_config c=config();
+  exr_document *doc=document("\xe3\x80\x82\xe3\x80\x8c","width:30px;margin:0",0);
+  exr_layout *l=layout(doc,&c);size_t n;
+  const exr_glyph *g=exr_layout_glyphs(l,&n);
+  const exr_line *lines;
+  scenario="two fullwidth punctuation fit in 1.5em";
+  CHECK(n==2);lines=exr_layout_lines(l,&n);CHECK(n==1);
+  CHECK(near(g[0].advance,10) && near(g[1].advance,20));
+  CHECK(near(g[1].x-g[0].x,10) && near(lines[0].width,30));
+  CHECK(near(g[0].size,20) && near(g[1].size,20));
+  CHECK(near(g[0].offset_x,0) && near(g[1].offset_x,0));
+  exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+}
+static void cjk_punctuation_three(void) {
+  exr_layout_config c=config();
+  exr_document *doc=document("\xe3\x80\x82\xe3\x80\x8d\xe3\x80\x8c","width:40px;margin:0",0);
+  exr_layout *l=layout(doc,&c);size_t n;
+  const exr_glyph *g=exr_layout_glyphs(l,&n);const exr_line *lines;
+  scenario="three punctuation save 1em without reducing below 0.5em";
+  CHECK(n==3);lines=exr_layout_lines(l,&n);CHECK(n==1);
+  CHECK(near(g[0].advance,10) && near(g[1].advance,10) && near(g[2].advance,20));
+  CHECK(near(g[1].x-g[0].x,10) && near(g[2].x-g[1].x,10));
+  CHECK(near(g[2].x+g[2].advance-g[0].x,40) && near(lines[0].width,40));
+  exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+}
+static void cjk_punctuation_wrap(void) {
+  exr_layout_config c=config();size_t hard;
+  scenario="punctuation across soft and hard line breaks stays fullwidth";
+  for(hard=0;hard<2;hard++) {
+    exr_document *doc;
+    exr_layout *l;size_t n,i,found=0;
+    if(hard) {
+      exr_node_input nodes[]={
+        {EXR_NODE_DOCUMENT,SIZE_MAX,NULL,NULL,NULL,0},{EXR_NODE_CHAPTER,0,NULL,NULL,NULL,0},
+        {EXR_NODE_PARAGRAPH,1,"p",NULL,NULL,0},{EXR_NODE_TEXT,2,NULL,"\xe3\x80\x82",NULL,0},
+        {EXR_NODE_BREAK,2,"br",NULL,NULL,0},{EXR_NODE_TEXT,2,NULL,"\xe3\x80\x8c",NULL,0}};
+      exr_chapter_input chapter={"compression","compression.unit",1,1};
+      exr_document_input input={"Hard break",nodes,6,&chapter,1,NULL,0};
+      doc=NULL;OK(exr_document_create(&input,&doc,&error));
+    } else doc=document("\xe3\x80\x82\xe3\x80\x8c","width:20px;margin:0",0);
+    l=layout(doc,&c);
+    const exr_glyph *g=exr_layout_glyphs(l,&n);const exr_line *lines;
+    for(i=0;i<n;i++)if(g[i].codepoint==0x3002 || g[i].codepoint==0x300c) {
+      CHECK(near(g[i].advance,20));found++;
+    }
+    CHECK(found==2);lines=exr_layout_lines(l,&n);CHECK(n==2);
+    CHECK(near(lines[0].width,20) && near(lines[1].width,20));
+    exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+  }
+}
+static void cjk_punctuation_exclusions(void) {
+  const char *texts[]={",.","\xe3\x80\x82 \xe3\x80\x8c","\xe3\x80\x82" "A\xe3\x80\x8c"};
+  exr_layout_config c=config();size_t k;
+  scenario="ASCII punctuation and intervening spaces/text stay unchanged";
+  for(k=0;k<3;k++) {
+    exr_document *doc=document(texts[k],"width:100px;margin:0",0);
+    exr_layout *l=layout(doc,&c);size_t n,i;const exr_glyph *g=exr_layout_glyphs(l,&n);
+    for(i=0;i<n;i++)CHECK(near(g[i].advance,20));
+    exr_layout_free(l);exr_document_free(doc);
+  }
+}
 int main(int argc, char **argv) {
   scenario = "setup"; CHECK(argc == 3);
   font = open_font(argv[1], "line-boundary.ttf");
   pair_boundaries(); cursive_and_arabic(); pagination(); long_inline_marks(); queue_budget(argv[2]);
   cjk_space_punctuation();
+  exr_font_free(font);
+  font = open_font(argv[2], "cjk-punctuation.ttf");
+  cjk_punctuation_pair();cjk_punctuation_three();cjk_punctuation_wrap();cjk_punctuation_exclusions();
+  exr_font_free(font);
+  font = open_font(argv[2], "latin-punctuation.ttf");
+  {
+    exr_layout_config c=config();
+    exr_document *doc=document("\xe2\x80\x94\xe2\x80\x94\xe2\x80\x9c\xe2\x80\x9d","width:100px;margin:0",0);
+    exr_layout *l=layout(doc,&c);size_t n,i;const exr_glyph *g=exr_layout_glyphs(l,&n);
+    scenario="Latin em dashes and quotes stay unchanged even with em-wide metrics";
+    CHECK(n==4);for(i=0;i<n;i++)CHECK(near(g[i].advance,20));
+    exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+  }
   exr_font_free(font);
   printf("EXReader line boundaries: %u checks passed\n", checks);
   return 0;
