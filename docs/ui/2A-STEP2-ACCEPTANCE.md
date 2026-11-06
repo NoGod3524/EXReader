@@ -137,7 +137,9 @@ CI：PR #50 头 `d76f5333`，run 42158204510，作业 127697311831 `desktop (win
 
 **为什么不是直接证据**：日志里没有这个文件的 `cl.exe` 命令行（MSBuild 只打印文件名），没有 `.vcxproj` 的 `WarningLevel` / `TreatWarningAsError`，配置阶段也没打印 `CMAKE_CXX_FLAGS`。没有为此修改 `native.yml`。
 
-**已知缺口**：`/W4 /WX` 只加在独立静态库目标 `exreader-shell-d2d` 上。从 SDK 安装树构建 `EXReader` 时，`examples/windows/CMakeLists.txt` 第 26–36 行开宏，第 29 行 `target_sources(EXReader PRIVATE shell_d2d.cpp)` 把同一源文件编进 `EXReader`，这里没有 `/W4 /WX`。源文件相同，所以上面的结论覆盖它的代码，但这条构建路径本身不受该门槛约束。如需补齐，留待后续步骤，作为 `examples/` 内的改动。
+**覆盖范围（如实）**：`/W4 /WX` 只作用于独立静态库目标 `exreader-shell-d2d`。从 SDK 安装树构建 `EXReader` 时，`examples/windows/CMakeLists.txt` 用 `target_sources(EXReader PRIVATE shell_d2d.cpp)` 编译同一个文件，**当时不带这两个参数**。因此 §3.3 的“0 警告”只覆盖独立库目标这一条构建路径，不覆盖 `EXReader` 主构建。
+
+**修复**（#50 合并后的单独小 PR）：在 `examples/windows/CMakeLists.txt` 里只对这一个文件设置 `set_source_files_properties(shell_d2d.cpp PROPERTIES COMPILE_OPTIONS ...)`，MSVC 用 `/W4;/WX`，其他编译器用 `-Wall;-Wextra;-Werror`，与独立库目标一致。`EXReader` 的 C 源文件不加 `/WX`。本机 MinGW 验证结果：`shell_d2d.cpp` 的编译命令带 `-Wall -Wextra -Werror`、编译通过；`reader.c` 仍只有 `-O3 -DNDEBUG -std=gnu11`。MSVC 这条路径（`/W4;/WX`）要等 CI 验证。
 
 ## 4. 环境限制（先读这节）
 
@@ -171,7 +173,16 @@ CI：PR #50 头 `d76f5333`，run 42158204510，作业 127697311831 `desktop (win
 - 中途试过为 Tab 加 `WM_NEXTDLGCTL` 处理。用真实按键对比过，不加也能移动焦点，所以没有保留。
 - `shell_key`（Alt+←/→）仍是投递消息。它测的是消息循环里的分支，不是焦点；改用真实按键记为待办。
 
-## 6. 已知陷阱：焦点提示状态的更新时机
+## 6. 已知陷阱
+
+### 6.1 文档里的路径被转义成控制字符
+
+- **现象**：提交 `535cdec1` 写入 §3.3 的日志原文 `D:\a\EXReader\...\build\...` 时，`\a` 和 `\b` 被 Python 字符串字面量解释成 BEL（0x07）和退格（0x08），并已推送。
+- **处置**：在 `870f85de` 里用补丁提交修正，没有强推。
+- **规则**：写含路径或日志片段的文档时，一律用原始字符串（`r'...'` / `rb'...'`）或直接写文件，不经转义。
+- **CI 卫生项（建议，待交给 P）**：仓库内的文本文件不得含 0x00–0x08、0x0B、0x0C、0x0E–0x1F，`\n`、`\t` 除外。`\r` 是否允许按仓库换行约定另定。
+
+### 6.2 焦点提示状态的更新时机
 
 - **现象**：正文改为“只在键盘导航时显示焦点框”后，截图里仍残留焦点框。
 - **原因**：正文在收到 `WM_UPDATEUISTATE` 时立即重画缓冲。这时 `DefWindowProc` 还没更新窗口自己的焦点提示状态，`WM_QUERYUISTATE` 读到的是旧值。
