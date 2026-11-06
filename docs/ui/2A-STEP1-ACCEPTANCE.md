@@ -230,7 +230,9 @@ assert a.size == b.size
 assert ImageChops.difference(a, b).getbbox() is None
 ```
 
-比对脚本放在 `examples/windows/acceptance/compare_shots.py`，随第 1 步一起提交。
+> **更正（第 2 步）：上面这段判法是错的，见 §6。** RGBA 图上 `getbbox()` 只看 alpha 通道，RGB 不同也返回 `None`。
+
+比对脚本随第 1 步提交在 `examples/windows/acceptance/compare_shots.py`，第 2 步移到 `docs/ui/acceptance/compare_shots.py`，原因见 HOST-AUDIT §G5 第 3 条。
 
 ### 4.3 怎么算过
 
@@ -245,7 +247,7 @@ assert ImageChops.difference(a, b).getbbox() is None
 
 ### 4.4 当前基线
 
-本地构建（`26dac733`）跑两轮的对照组结果，差异像素全部为 0：
+本地构建（`26dac733`）跑两轮的对照组结果，差异像素全部为 0（**此表由错误判法得出，作废，见 §6**）：
 
 | 图 | 尺寸 | 差异像素 |
 | --- | --- | --- |
@@ -273,13 +275,35 @@ assert ImageChops.difference(a, b).getbbox() is None
 | C-3 `--no-undefined` 链接 | 退出码 0，输出 0 字节 |
 | C-4 `nm -u` 中 `exr_` / `host_` / `g` | 0 处；只有 `D2D1CreateFactory` 和 C++ 运行时符号 |
 | C-5 `grep` | 无匹配（退出码 1） |
-| C-6 MSVC `/W4 /WX` | 本机没有 `cl`；由 core 里的 Windows 构建验证（`exreader-shell-d2d` 在每个 Windows 构建中都会编译） |
+| C-6 MSVC `/W4 /WX` | **通过，证据类型：间接**（CMake 配置 + 编译成功 + 0 警告）。PR #47 core，run 42125758351，作业 127589404663 `desktop (windows-latest)`：MSVC 编出 `exreader-shell-d2d.lib`，该文件 0 条警告。MSBuild 日志不打印编译命令，`/W4 /WX` 来自 `examples/CMakeLists.txt` 对该目标的定义，日志里看不到这两个参数 |
 | C-7 依赖 | 开宏后只新增 `d2d1.dll`（系统 DLL）；不开宏的交付包构建不变 |
 | 自检，不开宏 / 开宏 | 退出码 0，`checks` 26 / 退出码 0，`checks` 26 |
 | phase，不开宏（2 轮）/ 开宏 | 均为 A 120 步只第 115 步失败，B 29 步只第 5 步失败，C 9/9：失败 2，未新增 |
-| 对照组 `off1` / `off2` | 8 张，差异像素均为 0 |
-| `off1` / `on` | 8 张，差异像素均为 0 |
+| 对照组 `off1` / `off2` | ~~8 张，差异像素均为 0~~ 作废，见 §6 |
+| `off1` / `on` | ~~8 张，差异像素均为 0~~ 作废，见 §6 |
 
 - 二进制 SHA-256：不开宏 `b675d3ef…`，开宏 `4532861d…`。
 - 本机 MinGW 链接 `examples/` 的 reader 时，开宏和不开宏都缺 `UiaRaiseAutomationEvent` 等符号。原因是 `windows_accessibility.inc` 用 MSVC 专用的 `#pragma comment(lib)` 声明库，这是原有问题，与本步无关。本机验证时在命令行补了 `-luiautomationcore -loleacc -loleaut32 -lusp10 -lole32 -luuid`，仓库没有改。
 - MinGW 开宏构建加了 `-static`，否则会额外依赖 `libstdc++-6.dll` 和 `libwinpthread-1.dll`。MSVC 用 `/MT`，不受影响。
+
+## 6. 更正：像素比对的判法错误（2026-11-05，第 2 步发现）
+
+**§4.4 和 §5 里“差异像素均为 0”是比对脚本的错误，不是实测结论。**
+
+- **原因**：`compare_shots.py` 和本地比对脚本先用 `ImageChops.difference(...).getbbox()` 判断“有无差异”，为 `None` 就记 0。截图是 RGBA，Pillow 12.3 的 `getbbox()` 对 RGBA 只看 alpha 通道。截图 alpha 全是 255，差值恒为 0，所以不论 RGB 是否相同都报 0。
+- **修正**：`docs/ui/acceptance/compare_shots.py` 改为逐像素数 RGBA 差，不再走捷径。
+
+用修正后的脚本重测，结果：
+
+| 比对（同一数据目录、同一样本路径） | 整窗差异 | 客户区差异（第 38 行起） |
+| --- | --- | --- |
+| 第 1 步对照组 `off1` / `off2`（`b675d3ef`） | 8/8 张不为 0 | 8 张均为 0 |
+| 第 1 步 `off1` / `on`（`4532861d`），原始一轮 | 8/8 张不为 0 | 7 张为 0；`A/04-stale-final` 269 px |
+| 第 1 步开宏二进制 `4532861d` 重跑两轮，对第 2 步 `off1` | 8/8 张不为 0 | 两轮均 8 张为 0 |
+
+- **整窗差异全部在第 0–37 行**，即窗口标题栏。标题栏由 DWM 绘制，背景色调随窗口后方内容和激活状态变化。同一个二进制跑两轮（对照组）就已经不同，所以“整窗 0 差异”在这台机器上做不到，与代码无关。
+- **`A/04` 的 269 px** 是书架列表里的虚线焦点框（第 152–167 行，x 19–273）。同一个二进制重跑两轮都没有再出现，判为焦点状态的偶发差异，不是第 1 步的回归。
+- **结论**：第 1 步在客户区（阅读器自己画的部分）零回归，这个结论有效；“整窗零差异”的原判据无法成立。
+- **owner 决策（2026-11-05）**：判据改为客户区（第 38 行起）零差异，比对脚本须带负例。本节作为“原判定有误”的记录保留，上文 §4.4、§5 的原数字只划掉、不删除。
+- **负例**：`compare_shots.py --self-test` 用合成图验证——客户区 1 个像素只改 RGB（alpha 不变）必须报 1，只改标题栏必须报 0；另在真实截图 `A/01-epub-page1.png` 的客户区改 1 个像素的 R 值 1 级，脚本报 `client_diffpx 1`、退出码 1。
+- 跨数据目录的比对无效：导入路径框显示样本路径，路径不同就会在第 52–64 行产生差异。
