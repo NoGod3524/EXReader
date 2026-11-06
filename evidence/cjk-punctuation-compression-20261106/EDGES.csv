@@ -1,0 +1,13 @@
+book,phase,page,part,edge,reason,codepoint,column,along,source_start
+hongloumeng-24264,before,635,13,tail,,8220,708.0,610.0,18739
+hongloumeng-24264,before,638,13,tail,,8220,624.0,626.0,23032
+hongloumeng-24264,before,1033,20,head,forced_break,65292,582.0,50.0,32144
+hongloumeng-24264,after,108,2,tail,,8220,582.0,609.0,66084
+hongloumeng-24264,after,151,3,tail,,8220,624.0,624.0,42315
+hongloumeng-24264,after,218,4,tail,,8220,288.0,624.0,67221
+hongloumeng-24264,after,396,9,tail,,8220,456.0,626.0,17086
+hongloumeng-24264,after,452,10,tail,,8220,960.0,609.0,16208
+hongloumeng-24264,after,632,13,tail,,8220,582.0,625.5,23268
+hongloumeng-24264,after,1021,20,head,forced_break,65292,414.0,50.0,32144
+hongloumeng-24264,after,1056,20,tail,,8220,876.0,610.0,82713
+hongloumeng-24264,after,1437,27,head,soft_wrap,8221,204.0,50.0,3170

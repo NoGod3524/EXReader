@@ -67,8 +67,16 @@ if __name__ == '__main__':
                      0x7532: 'V', 0x4e59: 'beta', 0x1f600: 'beta'},
                     900, 1200, 400, -300)
     marks = font('EXR Test Marks', {0x301: 'acute', 0x3b2: 'beta'}, 700, 1000, 300, 0)
+    punctuation = font('EXR Test CJK Punctuation',
+                       {32: 'space', 65: 'A', 0x7532: 'A', 0x3002: 'V',
+                        0x300c: 'a', 0x300d: 'beta', 0xff1a: 'V',
+                        0x201c: 'a', 0x201d: 'beta', 44: 'V', 46: 'V'},
+                       1000, 800, 200, 0)
+    latin_punctuation = font('EXR Test Latin Punctuation',
+                             {32: 'space', 0x2014: 'V', 0x201c: 'a', 0x201d: 'beta'},
+                             1000, 800, 200, 0)
     oversize = font('EXR Test Oversize', {65: 'A'}, 32000, 32000, 0, 0)
-    for filename, data in [('primary.ttf', primary), ('fallback.ttf', fallback), ('marks.ttf', marks), ('oversize.ttf', oversize)]:
+    for filename, data in [('primary.ttf', primary), ('fallback.ttf', fallback), ('marks.ttf', marks), ('oversize.ttf', oversize), ('cjk-punctuation.ttf', punctuation), ('latin-punctuation.ttf', latin_punctuation)]:
         data.save(directory / filename)
     glyph_only = font('EXR Test Primary', {}, 500, 800, 200, -100)
     del glyph_only['cmap']
@@ -77,4 +85,4 @@ if __name__ == '__main__':
     collection = TTCollection()
     collection.fonts = [primary, fallback]
     collection.save(directory / 'collection.ttc')
-    print('Generated five original test fonts and a two-face collection.')
+    print('Generated seven original test fonts and a two-face collection.')
