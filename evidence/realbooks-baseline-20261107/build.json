@@ -1,0 +1,77 @@
+{
+  "source_revision": "c665d1cb1c0b681d4365f732acf775167bfa6d33",
+  "source_matches_origin_main": true,
+  "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+  "cmake": "cmake version 4.4.2",
+  "generator": "Ninja",
+  "target": "exreader",
+  "configuration": {
+    "CMAKE_BUILD_TYPE:STRING": "Release",
+    "CMAKE_C_COMPILER:FILEPATH": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
+    "EXR_BUILD_FUZZ:BOOL": "OFF",
+    "EXR_BUILD_JNI:BOOL": "OFF",
+    "EXR_BUILD_SHARED_COMPAT:BOOL": "ON",
+    "EXR_BUILD_TESTS:BOOL": "OFF",
+    "EXR_BUILD_TEXT_INDEX:BOOL": "ON",
+    "EXR_BUILD_TOOLS:BOOL": "OFF",
+    "EXR_ENABLE_AAC:BOOL": "OFF",
+    "EXR_ENABLE_AUDIO:BOOL": "ON",
+    "EXR_ENABLE_ICC:BOOL": "OFF",
+    "EXR_ENABLE_IMAGE_AVIF:BOOL": "OFF",
+    "EXR_ENABLE_IMAGE_TIFF:BOOL": "OFF",
+    "EXR_ENABLE_IMAGE_WEBP:BOOL": "OFF",
+    "EXR_ENABLE_LIBRARY:BOOL": "ON",
+    "EXR_ENABLE_MP3:BOOL": "OFF",
+    "EXR_ENABLE_PDF:BOOL": "ON",
+    "EXR_ENABLE_PDF_CRYPTO:BOOL": "OFF",
+    "EXR_ENABLE_PDF_EDIT:BOOL": "ON",
+    "EXR_ENABLE_PDF_JPX:BOOL": "ON",
+    "EXR_ENABLE_TEXT_INDEX:BOOL": "ON",
+    "EXR_SANITIZE:BOOL": "OFF",
+    "FETCHCONTENT_SOURCE_DIR_EXPAT:PATH": "C:/Users/Oscar/exr-deps/expat",
+    "FETCHCONTENT_SOURCE_DIR_FREETYPE:PATH": "C:/Users/Oscar/exr-deps/freetype-VER-2-15-0",
+    "FETCHCONTENT_SOURCE_DIR_MINIZ:PATH": "C:/Users/Oscar/exr-deps/miniz",
+    "FETCHCONTENT_SOURCE_DIR_OPENJPEG:PATH": "C:/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4",
+    "FETCHCONTENT_SOURCE_DIR_SQLITE:PATH": "C:/Users/Oscar/exr-deps/sqlite",
+    "FETCHCONTENT_SOURCE_DIR_STB:PATH": "C:/Users/Oscar/exr-deps/stb"
+  },
+  "dll_filename": "libexreader.dll",
+  "dll_sha256": "57d17c88f2bca6a1b859a456fb5362ac548c830a905e6e83cf76ee5149285bd2",
+  "python": "3.14.7",
+  "ctypes_struct_sizes_match_native": true,
+  "native_struct_sizes": {
+    "exr_error": 260,
+    "exr_bitmap": 32,
+    "exr_layout_config": 96,
+    "exr_fixed_open_options": 64,
+    "exr_page_geometry": 48,
+    "exr_fixed_page": 64
+  },
+  "ci_run": false,
+  "dependency_source_fingerprints": {
+    "expat": {
+      "source_files": 108,
+      "sha256": "9091197559592b9dfb16cb2944258bbf2a10fae4d88bf7052830eb79084eaa3b"
+    },
+    "freetype": {
+      "source_files": 503,
+      "sha256": "cbcbc369874fa55c09f48b1669c7917d1c4fec0ffa9513847ebf126c68a19d15"
+    },
+    "miniz": {
+      "source_files": 28,
+      "sha256": "4498f9e793dd45023d2aec00aa574da17fbdd5470ff569437d95a546a3b777e5"
+    },
+    "openjpeg": {
+      "source_files": 334,
+      "sha256": "90bac4e5f687bd488202e940fc761b4ca206c9bbc04fe77544144069f4619e0e"
+    },
+    "sqlite": {
+      "source_files": 4,
+      "sha256": "f0633ee830c7010abc6c776312bcb83e73351ad100ea475d77ad07afea8a05ad"
+    },
+    "stb": {
+      "source_files": 86,
+      "sha256": "f225e991f6e224625ccea62e9f0b2dd26bf347d5ded51787e5d705e4124a799f"
+    }
+  }
+}
