@@ -40,6 +40,7 @@ exr_status exr_decode(const void *data, size_t size, exr_buffer *buf, exr_error 
 int exr_uri_path(exr_buffer *buffer, const char *path);
 int exr_uri_decode(const char *text, size_t size, char out[2048]);
 int exr_resolve_path(const char *base, const char *href, char out[2048]);
+int exr_link_case_equal(const char *a,const char *b);
 
 exr_status exr_file_source_limit(const char *path,uint64_t maximum,exr_source *source,exr_error *error);
 exr_status exr_file_source(const char *path,exr_source *source,exr_error *error);

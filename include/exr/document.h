@@ -115,6 +115,27 @@ typedef struct {
   size_t parent, part;
   const char *label, *href, *base, *role;
 } exr_navigation;
+
+typedef enum { EXR_TOC_HOST, EXR_TOC_NAV, EXR_TOC_NCX, EXR_TOC_RECOVERED } exr_toc_source;
+/* fragment is decoded UTF-8 (no leading #). offset is SIZE_MAX for URI targets,
+   or a part-local normalized UTF-8 byte offset for recovered headings. */
+typedef struct { size_t part; const char *fragment; size_t offset; } exr_target;
+typedef struct {
+  const char *title;
+  size_t level;             /* One-based nesting depth. */
+  exr_target target;
+  exr_toc_source source;
+  size_t play_order;        /* NCX playOrder, SIZE_MAX if absent/invalid. */
+} exr_toc_entry;
+typedef enum {
+  EXR_LINK_FOUND, EXR_LINK_ANCHOR_MISSING, EXR_LINK_PART_MISSING
+} exr_link_state;
+typedef struct { size_t part, offset; exr_link_state state; } exr_location;
+/* Resolves a decoded id/xml:id or legacy a@name in a single-part snapshot.
+   Exact matches win, then unique Unicode uppercase-equivalent matches. Missing anchors
+   return EXR_OK, offset 0 and ANCHOR_MISSING; empty fragment means part start. */
+EXR_API exr_status exr_document_locate(const exr_document *document,const char *fragment,
+                                      exr_location *location,exr_error *error);
 typedef struct exr_fixed_document exr_fixed_document;
 typedef struct exr_fixed_text exr_fixed_text;
 enum { EXR_REGION_VERTICAL=1,EXR_REGION_INVISIBLE=2 };
