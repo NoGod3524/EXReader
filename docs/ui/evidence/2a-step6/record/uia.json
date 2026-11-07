@@ -1,0 +1,22 @@
+{
+  "closed_operable": [
+    {
+      "type": "DocumentControl",
+      "name": "阅读区域"
+    },
+    {
+      "type": "ButtonControl",
+      "name": "目录"
+    },
+    {
+      "type": "ButtonControl",
+      "name": "设置"
+    }
+  ],
+  "open_list": {
+    "count": 1169,
+    "first": "The Complete Works of William Shakespeare",
+    "last": "THE FULL PROJECT GUTENBERG™ LICENSE",
+    "one_tab_stop": true
+  }
+}

@@ -1,0 +1,357 @@
+{
+  "1_colors": {
+    "light": {
+      "bg": "#f5f5f2",
+      "surface": "#ffffff",
+      "contrast": 15.717975520886373
+    },
+    "dark": {
+      "bg": "#141416",
+      "surface": "#1e1e21",
+      "contrast": 16.455894916645214
+    }
+  },
+  "2_states": {
+    "passed": 30,
+    "rows": [
+      {
+        "theme": "light",
+        "control": "stepper",
+        "state": "normal",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "stepper",
+        "state": "hover",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "stepper",
+        "state": "pressed",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "stepper",
+        "state": "focus",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "stepper",
+        "state": "disabled",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "ghost",
+        "state": "normal",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "ghost",
+        "state": "hover",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "ghost",
+        "state": "pressed",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "ghost",
+        "state": "focus",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "ghost",
+        "state": "disabled",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "primary",
+        "state": "normal",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "primary",
+        "state": "hover",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "primary",
+        "state": "pressed",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "primary",
+        "state": "focus",
+        "rgb_error": 0
+      },
+      {
+        "theme": "light",
+        "control": "primary",
+        "state": "disabled",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "stepper",
+        "state": "normal",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "stepper",
+        "state": "hover",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "stepper",
+        "state": "pressed",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "stepper",
+        "state": "focus",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "stepper",
+        "state": "disabled",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "ghost",
+        "state": "normal",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "ghost",
+        "state": "hover",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "ghost",
+        "state": "pressed",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "ghost",
+        "state": "focus",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "ghost",
+        "state": "disabled",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "primary",
+        "state": "normal",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "primary",
+        "state": "hover",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "primary",
+        "state": "pressed",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "primary",
+        "state": "focus",
+        "rgb_error": 0
+      },
+      {
+        "theme": "dark",
+        "control": "primary",
+        "state": "disabled",
+        "rgb_error": 0
+      }
+    ]
+  },
+  "3_reduced_motion_ms": [
+    0.0,
+    0.0
+  ],
+  "4_contrast": {
+    "light": 15.717975520886373,
+    "dark": 16.455894916645214
+  },
+  "5_frames": {
+    "blank": 0,
+    "presented": 93
+  },
+  "6_restart": {
+    "font": 28,
+    "theme": 1
+  },
+  "7_selftest": {
+    "schema": 1,
+    "passed": true,
+    "platform": "Windows",
+    "checks": 26,
+    "engine_version": "3.42.0",
+    "real_text_source": "https://www.gutenberg.org/ebooks/24264.txt.utf-8",
+    "text_sha256": "ff1526996bf4b81807651921a85e5c1c0f1d1d123c9fa4553057ba6a3ec72011",
+    "fixed_book": "The Autobiography of Malcolm X. (Malcolm X, Alex Haley) (z-library.sk, 1lib.sk, z-lib.sk).pdf"
+  },
+  "8_legacy_pixels": {
+    "images": 8,
+    "changed_pixels": 0,
+    "negative_exit": 0
+  },
+  "font_anchors": {
+    "passed": 12,
+    "rows": [
+      {
+        "page": 5,
+        "font": 18,
+        "head": 7977,
+        "pass": true
+      },
+      {
+        "page": 5,
+        "font": 20,
+        "head": 7977,
+        "pass": true
+      },
+      {
+        "page": 5,
+        "font": 22,
+        "head": 7977,
+        "pass": true
+      },
+      {
+        "page": 5,
+        "font": 24,
+        "head": 7977,
+        "pass": true
+      },
+      {
+        "page": 5,
+        "font": 28,
+        "head": 7977,
+        "pass": true
+      },
+      {
+        "page": 5,
+        "font": 32,
+        "head": 7977,
+        "pass": true
+      },
+      {
+        "page": 20,
+        "font": 18,
+        "head": 38339,
+        "pass": true
+      },
+      {
+        "page": 20,
+        "font": 20,
+        "head": 38339,
+        "pass": true
+      },
+      {
+        "page": 20,
+        "font": 22,
+        "head": 38339,
+        "pass": true
+      },
+      {
+        "page": 20,
+        "font": 24,
+        "head": 38339,
+        "pass": true
+      },
+      {
+        "page": 20,
+        "font": 28,
+        "head": 38339,
+        "pass": true
+      },
+      {
+        "page": 20,
+        "font": 32,
+        "head": 38339,
+        "pass": true
+      }
+    ]
+  },
+  "cover_focus": {
+    "passed": 4,
+    "rows": [
+      {
+        "theme": "light",
+        "focus": false,
+        "pixel_difference": 0,
+        "image": [
+          417,
+          96,
+          863,
+          736
+        ]
+      },
+      {
+        "theme": "light",
+        "focus": true,
+        "pixel_difference": 0,
+        "image": [
+          417,
+          96,
+          863,
+          736
+        ]
+      },
+      {
+        "theme": "dark",
+        "focus": false,
+        "pixel_difference": 0,
+        "image": [
+          417,
+          96,
+          863,
+          736
+        ]
+      },
+      {
+        "theme": "dark",
+        "focus": true,
+        "pixel_difference": 0,
+        "image": [
+          417,
+          96,
+          863,
+          736
+        ]
+      }
+    ]
+  },
+  "pass": true
+}
