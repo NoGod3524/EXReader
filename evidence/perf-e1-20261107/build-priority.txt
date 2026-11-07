@@ -1,0 +1,4 @@
+[0/2] Re-checking globbed directories...
+[1/4] Updating version info if necessary.
+[2/4] Building C object CMakeFiles/e1-probe.dir/e1_probe.c.obj
+[3/4] Linking C executable e1-probe.exe

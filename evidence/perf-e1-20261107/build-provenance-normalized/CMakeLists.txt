@@ -1,0 +1,33 @@
+cmake_minimum_required(VERSION 3.24)
+project(EXReaderE1 LANGUAGES C)
+# Keep SDK feature defaults. Only omit unrelated executables and tests.
+set(EXR_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(EXR_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(EXR_BUILD_JNI OFF CACHE BOOL "" FORCE)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../.." sdk)
+
+# Reuse the actual R3 operation plan, hashes and oversized-page fallback.
+# Adapt only the OS counters, process affinity and selectable viewport.
+file(READ "${CMAKE_CURRENT_LIST_DIR}/../reading_real_benchmark.c" probe)
+set(old "config.page.width=800;config.page.height=1000;config.page.margin=32;config.page.font_size=24;")
+string(FIND "${probe}" "${old}" matched)
+if(matched LESS 0)
+  message(FATAL_ERROR "R3 viewport adapter no longer matches; review the probe")
+endif()
+string(REPLACE "${old}" "config.page.width=e1_dimension(\"E1_WIDTH\",800);config.page.height=e1_dimension(\"E1_HEIGHT\",1000);config.page.margin=e1_dimension(\"E1_MARGIN\",32);config.page.font_size=24;" probe "${probe}")
+string(REPLACE "#include <sys/resource.h>" "#include \"e1_platform.h\"" probe "${probe}")
+string(REPLACE "int main(int argc,char **argv) {" "int main(int argc,char **argv) {\n  if(!e1_pin()) return 3;" probe "${probe}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/e1_probe.c" "${probe}")
+add_executable(e1-probe "${CMAKE_CURRENT_BINARY_DIR}/e1_probe.c")
+target_include_directories(e1-probe PRIVATE "${CMAKE_CURRENT_LIST_DIR}")
+target_link_libraries(e1-probe PRIVATE exreader)
+if(WIN32)
+  target_link_libraries(e1-probe PRIVATE psapi)
+  if(EXR_BUILD_SHARED_COMPAT)
+    add_custom_command(TARGET e1-probe POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "$<TARGET_FILE:exreader>" "$<TARGET_FILE_DIR:e1-probe>")
+  endif()
+else()
+  target_link_libraries(e1-probe PRIVATE m)
+endif()

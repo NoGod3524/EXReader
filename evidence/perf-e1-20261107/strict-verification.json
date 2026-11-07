@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "advisory": true,
+  "accepted": false,
+  "verified_at": "2026-11-07T09:58:17.692585+00:00",
+  "scope": "strict local numeric, provenance, deterministic signature and stability audit; not E3 restoration",
+  "baseline_samples_sha256": "1a368ecc7475de294ed917a4dd7320f681ae2f0ef8b96d7d156a27d3d4937afa",
+  "candidate_samples_sha256": "016720a11265ab4b7591c6b4ee7bd42d642397bb2bfa86d4cfe8d2731756ed38",
+  "frozen_budget_sha256": "4c03a094bc7486b973b02f49535870394a8be8b6c52710db598be0951bddb811",
+  "verifier_sha256": "fe1114a3af60909955ed555059057fa560cddf221ddaa0563662c02197455d60",
+  "independent_processes_checked": 15,
+  "problems": [
+    "baseline proposal is ineligible: dispersion or measurement failure",
+    "candidate final batch dispersion >=10%: default-release"
+  ],
+  "numeric_violations": [],
+  "numeric_within_limits": true,
+  "strict_local_pass": false,
+  "e3_restoration_granted": false
+}
