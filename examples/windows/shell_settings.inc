@@ -179,7 +179,8 @@ static int shell_draw_settings(const DRAWITEMSTRUCT *item) {
   if(shell_hover==item->hwndItem) state|=1;
   if(item->itemState&ODS_SELECTED) state|=2;
   if((item->itemState&ODS_FOCUS) && !(item->itemState&ODS_NOFOCUSRECT)) state|=4;
-  if(host_offscreen && g.drive_mode && shell_render_focus==item->hwndItem) state|=4;
+  if(host_offscreen && g.drive_mode && shell_render_focus==item->hwndItem &&
+     !(SendMessageW(item->hwndItem,WM_QUERYUISTATE,0,0)&UISF_HIDEFOCUS)) state|=4;
   if(item->itemState&ODS_DISABLED) state|=8;
   int id=GetDlgCtrlID(item->hwndItem),variant=0;
   wchar_t text[32];GetWindowTextW(item->hwndItem,text,32);

@@ -59,7 +59,7 @@ def main():
             script+='shell_enable|toc|1\nshell_press|toc|0\nshell_hover|none\nshell_render_focus|none\nui_cues|hide\n'
             if state in ('hover','pressed'):script+='shell_hover|toc\n'
             if state=='pressed':script+='shell_press|toc|1\n'
-            if state=='focus':script+='shell_render_focus|toc\n'
+            if state=='focus':script+='ui_cues|show\nshell_render_focus|toc\n'
             if state=='disabled':script+='shell_enable|toc|0\n'
             script+=f'snapshot|{theme}-icon-{state}\n'
         script+='shell_enable|toc|1\nshell_press|toc|0\nshell_hover|none\nshell_render_focus|none\n'
@@ -199,13 +199,14 @@ def main():
             else:
                 # SDK line.height is the used inline extent, so paragraph tails
                 # and compressed punctuation may be shorter than the capacity.
-                assert abs(max(l[7] for l in m['lines'])-556)<.001,m['lines']
+                inline_limit=m['page'][1]-2*m['font']
+                assert abs(max(l[7] for l in m['lines'])-inline_limit)<.001,m['lines']
                 assert all(abs(l[5]-27)<.001 for l in m['lines']),m['lines']
                 assert abs(glyph(m,m['lines'][0])[4]-m['lines'][0][5]-36)<.001
             im=client(target,name,m);im.save(out.parent/(name+'.png'))
             result[name]={'client':m['client'],'page':m['page'],'paragraphs':len(m['text'].split('\n')),
                           'line_or_column_sizes':sorted(set(round(l[6 if mode=='vertical' else 7],5) for l in m['lines']))}
-            if mode=='vertical':result[name].update(inline_limit=556,inline_origin=27)
+            if mode=='vertical':result[name].update(inline_limit=inline_limit,inline_origin=27)
     dump(out/'result.json',result)
     print(json.dumps(result,ensure_ascii=False,indent=2))
 
