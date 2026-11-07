@@ -1,0 +1,48 @@
+{
+  "baseline_ctest": 169,
+  "candidate_ctest": 173,
+  "new_test_groups": 4,
+  "new_assertion_checks": 234,
+  "toc_books": {
+    "hongloumeng-24264": {
+      "toc_count": 108,
+      "max_depth": 1,
+      "sources": [
+        "正文恢复"
+      ],
+      "jumps_passed": 10,
+      "missing_unique_targets": 0
+    },
+    "xingshihengyan-24239": {
+      "toc_count": 40,
+      "max_depth": 1,
+      "sources": [
+        "正文恢复"
+      ],
+      "jumps_passed": 10,
+      "missing_unique_targets": 0
+    },
+    "pachinko": {
+      "toc_count": 70,
+      "max_depth": 2,
+      "sources": [
+        "ncx"
+      ],
+      "jumps_passed": 10,
+      "missing_unique_targets": 0
+    }
+  },
+  "jumps_passed": 30,
+  "reverse_matches": 30,
+  "max_line_delta": 0,
+  "audited_epubs": 17,
+  "fragment_requests": 1774,
+  "missing_unique_targets": 1,
+  "regression_books": 19,
+  "pages_before": 11061,
+  "pages_after": 11061,
+  "page_count_changed_books": 0,
+  "hash_changed_pages": 0,
+  "content_fingerprint": "5e1e09169287f5767ee5a7d71fc37ef472bd1c0327c802cf4226573751e8c78c",
+  "source_revision": "worktree-sha256:f7bccbf4c1a345a789328cb525d3c656c18712920cf61f60995c963ae15f8930"
+}

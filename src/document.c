@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "memory_internal.h"
 #include "document_internal.h"
+#include "case_internal.h"
 #include <expat.h>
 
 static const char *local_name(const char *name) {
@@ -701,4 +702,71 @@ exr_status exr_document_package_tree(const exr_document *d,const exr_control *co
   *out=NULL;
   if(!d || !d->load_package) return exr_fail(e,EXR_FORMAT,"Full CFI requires an original EPUB package");
   return d->load_package(d,control,out,e);
+}
+
+exr_status exr_document_locate(const exr_document *d,const char *fragment,
+  exr_location *out,exr_error *e) {
+  size_t i, found=SIZE_MAX, length=0,at=0; uint32_t cp;
+  unsigned pass;
+  if (out) *out=(exr_location){SIZE_MAX,SIZE_MAX,EXR_LINK_PART_MISSING};
+  if (!d || !out || d->chapter_count!=1 || d->view)
+    return exr_fail(e,EXR_ARGUMENT,"Link location requires a single-part snapshot");
+  if (fragment) {
+    while (length<=2046 && fragment[length]) length++;
+    if (length>2046) return exr_fail(e,EXR_LIMIT,"Fragment exceeds 2046 bytes");
+    while (at<length) if (!exr_next(fragment,length,&at,&cp))
+      return exr_fail(e,EXR_ENCODING,"Fragment is not UTF-8");
+  }
+  *out=(exr_location){0,0,EXR_LINK_FOUND};
+  if (!fragment || !*fragment) return exr_fail(e,EXR_OK,"");
+  for (pass=0;pass<2;pass++) {
+    size_t matches=0;
+    for (i=0;i<d->node_count;i++) {
+      const exr_node *v=&d->nodes[i];
+      const char *ids[3]; size_t k;
+      if (v->chapter!=0) continue;
+      ids[0]=exr_node_attribute(v,"id");
+      ids[1]=exr_node_attribute(v,"http://www.w3.org/XML/1998/namespace|id");
+      ids[2]=!strcmp(exr_html_tag(d,v),"a") ? exr_node_attribute(v,"name") : NULL;
+      for (k=0;k<3;k++) if (ids[k] &&
+        (pass ? exr_link_case_equal(ids[k],fragment) : !strcmp(ids[k],fragment))) {
+        found=i; matches++; break;
+      }
+      /* Malformed books repeat an exact id (often body + empty div). Match
+         browser/document order; only the case-insensitive fallback is unique. */
+      if (!pass && matches) break;
+    }
+    if (matches==1) {
+      out->offset=d->nodes[found].start;
+      if (out->offset==SIZE_MAX) {
+        out->offset=d->size;
+        for (i=found+1;i<d->node_count;i++)
+          if (d->nodes[i].chapter==0 && d->nodes[i].start!=SIZE_MAX) {
+            out->offset=d->nodes[i].start; break;
+          }
+      }
+      while (out->offset<d->size && whitespace((unsigned char)d->text[out->offset])) out->offset++;
+      return exr_fail(e,EXR_OK,"");
+    }
+    if (matches>1) break;
+  }
+  out->state=EXR_LINK_ANCHOR_MISSING;
+  return exr_fail(e,EXR_OK,"");
+}
+
+int exr_link_case_equal(const char *a,const char *b) {
+  size_t ai=0,bi=0,an=strlen(a),bn=strlen(b);
+  uint32_t ac[3],bc[3],cp; unsigned ax=0,bx=0,az=0,bz=0;
+  while (ai<an || bi<bn || ax<az || bx<bz) {
+    if (ax==az) {
+      if (!exr_next(a,an,&ai,&cp)) return 0;
+      az=exr_case_map(&cp,1,0,EXR_CASE_UPPER,NULL,ac); ax=0;
+    }
+    if (bx==bz) {
+      if (!exr_next(b,bn,&bi,&cp)) return 0;
+      bz=exr_case_map(&cp,1,0,EXR_CASE_UPPER,NULL,bc); bx=0;
+    }
+    if (ac[ax++]!=bc[bx++]) return 0;
+  }
+  return 1;
 }

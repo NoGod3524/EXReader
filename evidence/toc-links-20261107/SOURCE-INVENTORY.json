@@ -1,0 +1,49 @@
+[
+  {
+    "id": "pachinko",
+    "sha256": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+    "nav_resources": [],
+    "ncx": [
+      {
+        "path": "toc.ncx",
+        "navpoint_count": 70,
+        "first_labels": [
+          "Folha de rosto",
+          "Créditos",
+          "Mídias sociais"
+        ],
+        "play_order_count": 70
+      }
+    ]
+  },
+  {
+    "id": "hongloumeng-24264",
+    "sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "nav_resources": [],
+    "ncx": [
+      {
+        "path": "OEBPS/toc.ncx",
+        "navpoint_count": 1,
+        "first_labels": [
+          "THE FULL PROJECT GUTENBERG™ LICENSE"
+        ],
+        "play_order_count": 1
+      }
+    ]
+  },
+  {
+    "id": "xingshihengyan-24239",
+    "sha256": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+    "nav_resources": [],
+    "ncx": [
+      {
+        "path": "OEBPS/toc.ncx",
+        "navpoint_count": 1,
+        "first_labels": [
+          "THE FULL PROJECT GUTENBERG™ LICENSE"
+        ],
+        "play_order_count": 1
+      }
+    ]
+  }
+]
