@@ -1,0 +1,1 @@
+PASS: replay with D:/different-checkout/tools/perf/e1_capture.py retains exact historical budget; strict result unchanged
