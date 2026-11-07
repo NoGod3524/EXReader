@@ -1,0 +1,8 @@
+HOST	phase=1	engine=3.42.0	pid=15524
+SHOT	1	10	PASS	file=10;nonzero=1
+STEP	1	snapshot	PASS	screenshot written
+STEP	2	probe_key	PASS	page=3;status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+SHOT	3	11	PASS	file=11;nonzero=1
+STEP	3	snapshot	PASS	screenshot written
+STEP	4	quit	PASS	closing
+DONE	4	eof	PASS	script finished

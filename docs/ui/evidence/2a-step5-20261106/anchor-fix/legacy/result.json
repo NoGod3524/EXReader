@@ -1,0 +1,33 @@
+{
+  "baseline": {
+    "A": [
+      "STEP\t115\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=第 4 页。"
+    ],
+    "B": [
+      "STEP\t5\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。"
+    ],
+    "C": []
+  },
+  "control": {
+    "A": [
+      "STEP\t115\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=第 4 页。"
+    ],
+    "B": [
+      "STEP\t5\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。"
+    ],
+    "C": [],
+    "images": 8,
+    "nonzero": 0
+  },
+  "changed": {
+    "A": [
+      "STEP\t115\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=第 4 页。"
+    ],
+    "B": [
+      "STEP\t5\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。"
+    ],
+    "C": [],
+    "images": 8,
+    "nonzero": 0
+  }
+}
