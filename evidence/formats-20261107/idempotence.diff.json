@@ -1,0 +1,184 @@
+{
+  "comparable": true,
+  "incompatible_conditions": [],
+  "added_books": [],
+  "removed_books": [],
+  "books": [
+    {
+      "id": "between-the-world-and-me",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "cc-shared-culture",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "comic-fixture",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "drm-accessible-epub-3",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "drm-the-waste-land",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "haruko-html-jpeg",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "haruko-html-jpeg-cbz",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "moby-dick-mo",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "page-blanche",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "page-blanche-cbz",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pdf-encrypted-r4",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pdf-encrypted-r6",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pdf-scan-malcolm",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pdf-scan-upstream",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pdf-text-malcolm",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pdf-text-statistics",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pdf-text-syllabus-math",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pdf-text-syllabus-stat",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg24239-gbk",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg24239-utf16-bom",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg24239-utf8",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg24239-utf8-bom",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg52323-gbk",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg52323-utf16-bom",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg52323-utf8",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg52323-utf8-bom",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "sample",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "sample-text",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "changed_fields": [],
+      "observed_changes": [],
+      "hash_changed_pages": []
+    }
+  ],
+  "hash_changed_pages": 0,
+  "needs_review": false
+}
