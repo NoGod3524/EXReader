@@ -91,7 +91,7 @@ static void shell_pump_layout(void) {
 
 static void shell_adjust_client(RECT *rect, HWND window, unsigned dpi) {
   typedef BOOL (WINAPI *adjust_fn)(LPRECT, DWORD, BOOL, DWORD, UINT);
-  adjust_fn adjust = (adjust_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"), "AdjustWindowRectExForDpi");
+  adjust_fn adjust = (adjust_fn)(void (*)(void))GetProcAddress(GetModuleHandleW(L"user32.dll"), "AdjustWindowRectExForDpi");
   DWORD style = (DWORD)GetWindowLongPtrW(window, GWL_STYLE), ex = (DWORD)GetWindowLongPtrW(window, GWL_EXSTYLE);
   if (adjust) adjust(rect, style, FALSE, ex, dpi);
   else AdjustWindowRectEx(rect, style, FALSE, ex);
@@ -102,9 +102,9 @@ static void shell_update_dpi(HWND window) {
   typedef HANDLE (WINAPI *get_context_fn)(HWND);
   typedef BOOL (WINAPI *equal_context_fn)(HANDLE, HANDLE);
   HMODULE user = GetModuleHandleW(L"user32.dll");
-  get_dpi_fn dpi = (get_dpi_fn)GetProcAddress(user, "GetDpiForWindow");
-  get_context_fn context = (get_context_fn)GetProcAddress(user, "GetWindowDpiAwarenessContext");
-  equal_context_fn equal = (equal_context_fn)GetProcAddress(user, "AreDpiAwarenessContextsEqual");
+  get_dpi_fn dpi = (get_dpi_fn)(void (*)(void))GetProcAddress(user, "GetDpiForWindow");
+  get_context_fn context = (get_context_fn)(void (*)(void))GetProcAddress(user, "GetWindowDpiAwarenessContext");
+  equal_context_fn equal = (equal_context_fn)(void (*)(void))GetProcAddress(user, "AreDpiAwarenessContextsEqual");
   shell_dpi = dpi ? dpi(window) : 96;
   if (!shell_dpi) shell_dpi = 96;
   shell_pmv2 = context && equal && equal(context(window), (HANDLE)(INT_PTR)-4);
@@ -319,10 +319,9 @@ static int shell_draw_item(const DRAWITEMSTRUCT *item) {
 static int shell_page_focus(HWND page, HDC dc, const RECT *area) {
   if (shell_active && g.frame.valid) {
     wchar_t text[96]; RECT number = *area;
-    number.bottom = area->bottom - shell_px(SHELL_BODY_BOTTOM, shell_dpi);
     number.top = number.bottom - shell_px(SHELL_PAGE_NUMBER_H, shell_dpi);
     swprintf(text, 96, L"%llu · %llu", (unsigned long long)(g.frame.part + 1), (unsigned long long)(g.frame.page + 1));
-    shell_d2d_dc_text(host_shell, dc, &number, text, shell_colors->text_secondary);
+    shell_d2d_dc_text(host_shell, dc, &number, text, shell_colors->text_secondary, shell_colors->text_disabled);
   }
   HBRUSH brush;
   RECT edge;

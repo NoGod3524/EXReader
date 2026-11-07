@@ -10,11 +10,23 @@ static int shell_measure(const char *name) {
   GetClientRect(g.window, &client); GetWindowRect(g.window, &outer); ClientToScreen(g.window, &origin);
   compute_view();
   {
+    float metrics[12]={0};shell_d2d_page_metrics(host_shell,metrics);
+    RECT image=g.frame.shell_image;
+    if(!IsRectEmpty(&image)) OffsetRect(&image,g.view.dx,g.view.dy+shell_px(SHELL_TOPBAR_H,shell_dpi));
+    fprintf(out,"{\"image\":[%ld,%ld,%ld,%ld],\"body\":[%ld,%d,%ld,%ld],\"page_number\":{\"box\":[0,%ld,%ld,%ld],\"font\":%.3f,\"weight\":%.0f,\"digits\":[",
+      image.left,image.top,image.right,image.bottom,
+      (client.right-g.frame.shell_geometry.width)/2,shell_px(SHELL_TOPBAR_H+SHELL_BODY_TOP,shell_dpi),
+      (client.right+g.frame.shell_geometry.width)/2,client.bottom-shell_px(SHELL_PAGE_NUMBER_H+SHELL_BODY_GAP,shell_dpi),
+      client.bottom-shell_px(SHELL_PAGE_NUMBER_H,shell_dpi),client.right,client.bottom,(double)metrics[0],(double)metrics[1]);
+    for(int i=2;i<12;i++) fprintf(out,"%s%.6f",i==2?"":",",(double)metrics[i]);
+    fprintf(out,"]},");
+  }
+  {
     float targets[4];
     typedef UINT (WINAPI *dpi_fn)(HWND);
-    dpi_fn dpi = (dpi_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"), "GetDpiForWindow");
+    dpi_fn dpi = (dpi_fn)(void (*)(void))GetProcAddress(GetModuleHandleW(L"user32.dll"), "GetDpiForWindow");
     shell_d2d_target_dpi(host_shell, targets);
-    fprintf(out, "{\"actual_window_dpi\":%u,\"display\":[%d,%d],\"target_dpi\":[%.1f,%.1f,%.1f,%.1f],",
+    fprintf(out, "\"actual_window_dpi\":%u,\"display\":[%d,%d],\"target_dpi\":[%.1f,%.1f,%.1f,%.1f],",
       dpi ? dpi(g.window) : 0, g.frame.display_width, g.frame.display_height,
       (double)targets[0],(double)targets[1],(double)targets[2],(double)targets[3]);
   }

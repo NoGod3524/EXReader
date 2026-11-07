@@ -172,7 +172,8 @@ extern "C" int shell_epub_source(exr_source *source) {
     std::vector<unsigned char> input((size_t)source->size);
     for(size_t at=0;at<input.size();) {
       size_t n=source->read_at(source->context,at,input.data()+at,input.size()-at);
-      if(!n || n>input.size()-at) return 0;at+=n;
+      if(!n || n>input.size()-at) return 0;
+      at+=n;
     }
     size_t end=input.size()-22;
     while(end && (u32(input.data()+end)!=0x06054b50 || end+22+u16(input.data()+end+20)!=input.size())) end--;
