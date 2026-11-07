@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "layout_internal.h"
 #include "hyphen_internal.h"
+#include <ctype.h>
 
 struct exr_publication {
   char *title;
@@ -440,4 +441,254 @@ exr_status exr_session_get(exr_session *s, size_t part, const exr_document **doc
   *document = entry.document;
   *layout = entry.layout;
   return exr_fail(e, EXR_OK, "");
+}
+
+/* Content ranges deliberately use the same normalized projection as layout. */
+static int position_before(exr_text_position a,exr_text_position b) {
+  return a.part<b.part || (a.part==b.part && a.offset<b.offset);
+}
+static void range_clear(exr_text_range *r) {
+  r->start.part=r->start.offset=r->end.part=r->end.offset=SIZE_MAX;
+}
+static int content_boundary(const exr_document *d,size_t at) {
+  return at<=d->size && (at==d->size || (exr_doc_byte(d,at)&0xc0)!=0x80);
+}
+static exr_status content_revision(const exr_document *d,const exr_control *control,uint64_t *out,exr_error *e) {
+  size_t at=0;uint64_t hash=UINT64_C(14695981039346656037);
+  /* ponytail: one linear part scan per endpoint; cache revisions in a future
+     immutable snapshot API if annotation throughput requires it. */
+  while(at<d->size) {
+    size_t n,i;const char *s=exr_doc_span(d,at,&n);
+    exr_status status=exr_control_cancel(control,e);if(status!=EXR_OK) return status;
+    if(!s || !n) return exr_fail(e,EXR_FORMAT,"Unavailable content projection");
+    if(n>d->size-at) n=d->size-at;
+    if(n>4096) n=4096;
+    for(i=0;i<n;i++) { hash^=(unsigned char)s[i];hash*=UINT64_C(1099511628211); }
+    at+=n;
+  }
+  *out=hash;return EXR_OK;
+}
+void exr_content_anchor_free(exr_content_anchor *a) {
+  if(a) {
+    free(a->start.part_id);free(a->start.part_path);exr_anchor_free(&a->start.selector);
+    free(a->end.part_id);free(a->end.part_path);exr_anchor_free(&a->end.selector);
+    memset(a,0,sizeof(*a));
+  }
+}
+static exr_anchor_state content_part(const exr_publication *p,const exr_content_endpoint *a,size_t *part) {
+  size_t i,count=0,path_count=0,by_id=SIZE_MAX,by_path=SIZE_MAX;
+  for(i=0;i<p->count;i++) {
+    if(a->part_id && *a->part_id && !strcmp(a->part_id,p->parts[i].id)) {
+      count++;by_id=i;
+      if(a->part_path && !strcmp(a->part_path,p->parts[i].path)) { path_count++;by_path=i; }
+    }
+  }
+  if(count==1) { *part=by_id;return EXR_ANCHOR_FOUND; }
+  if(count>1) {
+    if(path_count==1) { *part=by_path;return EXR_ANCHOR_FOUND; }
+    return EXR_ANCHOR_AMBIGUOUS;
+  }
+  /* A nonempty stable ID disappearing denotes a removed part, not permission
+     to bind its old path to a different resource. */
+  if(a->part_id && *a->part_id) return EXR_ANCHOR_MISSING;
+  for(i=0;i<p->count;i++) if(a->part_path && *a->part_path && !strcmp(a->part_path,p->parts[i].path)) {
+    path_count++;by_path=i;
+  }
+  if(path_count==1) { *part=by_path;return EXR_ANCHOR_FOUND; }
+  return path_count ? EXR_ANCHOR_AMBIGUOUS : EXR_ANCHOR_MISSING;
+}
+static exr_status capture_endpoint(exr_publication *p,exr_text_position at,const exr_control *control,
+                                    exr_content_endpoint *a,exr_error *e) {
+  exr_document *d=NULL;exr_status status;size_t routed=SIZE_MAX;
+  if(at.part>=p->count) return exr_fail(e,EXR_ARGUMENT,"Range part is outside publication");
+  a->part_id=exr_copy(p->parts[at.part].id,strlen(p->parts[at.part].id));
+  a->part_path=exr_copy(p->parts[at.part].path,strlen(p->parts[at.part].path));
+  if(!a->part_id || !a->part_path) return exr_fail(e,EXR_MEMORY,"Content identity allocation failed");
+  if(content_part(p,a,&routed)!=EXR_ANCHOR_FOUND || routed!=at.part)
+    return exr_fail(e,EXR_ARGUMENT,"Content part needs a unique stable ID or path");
+  status=exr_publication_load(p,at.part,&d,e);
+  if(status==EXR_OK) status=exr_anchor_create(d,at.offset,at.offset,&a->selector,e);
+  if(status==EXR_OK) {
+    /* Part identity supplies the scope; chapter paths may change between editions. */
+    free(a->selector.chapter);a->selector.chapter=NULL;a->text_size=d->size;
+    status=content_revision(d,control,&a->text_revision,e);
+  }
+  exr_document_free(d);return status;
+}
+exr_status exr_anchor_from_range(exr_publication *p,const exr_text_range *r,const exr_control *control,
+                                  exr_content_anchor *out,exr_error *e) {
+  exr_content_anchor a={0};exr_status status;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing content anchor output");
+  memset(out,0,sizeof(*out));
+  if(!p || !r || position_before(r->end,r->start)) return exr_fail(e,EXR_ARGUMENT,"Invalid content range");
+  status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=capture_endpoint(p,r->start,control,&a.start,e);
+  if(status==EXR_OK) status=capture_endpoint(p,r->end,control,&a.end,e);
+  if(status!=EXR_OK) { exr_content_anchor_free(&a);return status; }
+  *out=a;return exr_fail(e,EXR_OK,"");
+}
+static exr_status resolve_endpoint(exr_publication *p,const exr_content_endpoint *a,const exr_control *control,
+                                    exr_text_position *at,exr_anchor_state *state,exr_error *e) {
+  exr_document *d=NULL;exr_status status;exr_anchor_match match;uint64_t revision;
+  size_t part=SIZE_MAX;
+  if(!a->selector.exact || a->selector.exact[0] || a->selector.start!=a->selector.end ||
+     a->selector.chapter || (!a->part_id && !a->part_path))
+    return exr_fail(e,EXR_ARGUMENT,"Invalid content endpoint");
+  if((status=exr_anchor_validate(&a->selector,e))!=EXR_OK) return status;
+  *state=content_part(p,a,&part);
+  if(*state!=EXR_ANCHOR_FOUND) return EXR_OK;
+  status=exr_publication_load(p,part,&d,e);
+  if(status==EXR_OK) status=content_revision(d,control,&revision,e);
+  if(status==EXR_OK && a->text_size==d->size && a->text_revision==revision &&
+     a->selector.start!=SIZE_MAX && content_boundary(d,a->selector.start)) {
+    exr_anchor check={0};
+    status=exr_anchor_create(d,a->selector.start,a->selector.start,&check,e);
+    if(status==EXR_OK && a->selector.prefix && a->selector.suffix &&
+       !strcmp(check.prefix,a->selector.prefix) && !strcmp(check.suffix,a->selector.suffix)) {
+      at->part=part;at->offset=a->selector.start;
+      exr_anchor_free(&check);exr_document_free(d);return EXR_OK;
+    }
+    exr_anchor_free(&check);
+  }
+  if(status==EXR_OK) {
+    status=exr_anchor_resolve_ex(d,&a->selector,control,&match,e);
+    if(status==EXR_OK) {
+      *state=match.state;
+      if(match.state==EXR_ANCHOR_FOUND) { at->part=part;at->offset=match.start; }
+    }
+  }
+  exr_document_free(d);return status;
+}
+exr_status exr_range_from_anchor(exr_publication *p,const exr_content_anchor *a,const exr_control *control,
+                                  exr_text_range_match *out,exr_error *e) {
+  exr_text_range r;exr_anchor_state start=EXR_ANCHOR_MISSING,end=EXR_ANCHOR_MISSING;exr_status status;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing content range output");
+  out->state=EXR_ANCHOR_MISSING;range_clear(&out->range);range_clear(&r);
+  if(!p || !a) return exr_fail(e,EXR_ARGUMENT,"Missing publication or content anchor");
+  status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=resolve_endpoint(p,&a->start,control,&r.start,&start,e);
+  if(status==EXR_OK) status=resolve_endpoint(p,&a->end,control,&r.end,&end,e);
+  if(status!=EXR_OK) return status;
+  if(start==EXR_ANCHOR_AMBIGUOUS || end==EXR_ANCHOR_AMBIGUOUS) out->state=EXR_ANCHOR_AMBIGUOUS;
+  else if(start==EXR_ANCHOR_FOUND && end==EXR_ANCHOR_FOUND && !position_before(r.end,r.start)) {
+    out->state=EXR_ANCHOR_FOUND;out->range=r;
+  }
+  return exr_fail(e,EXR_OK,"");
+}
+
+static size_t content_previous(const exr_document *d,size_t at) {
+  if(at) { at--;while(at && (exr_doc_byte(d,at)&0xc0)==0x80) at--; }
+  return at;
+}
+static uint32_t content_cp(const exr_document *d,size_t at) {
+  uint32_t cp=0;exr_doc_next(d,d->size,&at,&cp);return cp;
+}
+static int content_punctuation(uint32_t cp) {
+  return (cp<128 && ispunct((unsigned char)cp)) || (cp>=0x2000 && cp<=0x206f) ||
+         (cp>=0x3000 && cp<=0x303f) || (cp>=0xff01 && cp<=0xff0f) ||
+         (cp>=0xff1a && cp<=0xff20) || (cp>=0xff3b && cp<=0xff40) || (cp>=0xff5b && cp<=0xff65);
+}
+static int content_word_class(uint32_t cp) {
+  if(exr_projection_space(cp)) return 0;
+  if(content_punctuation(cp) || exr_projection_cjk(cp)) return 1;
+  return 2;
+}
+static int content_sentence_end(uint32_t cp) {
+  return cp=='.' || cp=='!' || cp=='?' || cp==0x3002 || cp==0xff01 || cp==0xff1f ||
+         cp=='\n' || cp==0x2029;
+}
+static exr_status content_unit(const exr_document *d,size_t at,exr_range_unit unit,const exr_control *control,
+                                size_t *lo,size_t *hi,exr_error *e) {
+  unsigned char *map=NULL;exr_status status;const char *text;size_t i,left,right;int kind;
+  if(!content_boundary(d,at)) return exr_fail(e,EXR_ARGUMENT,"Range endpoint is not a UTF-8 boundary");
+  *lo=*hi=at;
+  if(at==d->size) return EXR_OK;
+  if(unit==EXR_RANGE_PARAGRAPH) {
+    for(i=0;i<d->count;i++) if(at>=d->blocks[i].start && at<d->blocks[i].end) {
+      *lo=d->blocks[i].start;*hi=d->blocks[i].end;return EXR_OK;
+    }
+    /* Projection separators between blocks are single character units. */
+    unit=EXR_RANGE_CHAR;
+  }
+  text=exr_document_text(d,NULL);
+  if(!text) return exr_fail(e,EXR_FORMAT,"Missing content text");
+  status=exr_text_analyze(text,d->size,&map,e);if(status!=EXR_OK) return status;
+  left=at;while(left && !(map[left]&EXR_BOUNDARY_GRAPHEME)) left--;
+  right=left+1;while(right<d->size && !(map[right]&EXR_BOUNDARY_GRAPHEME)) right++;
+  if(unit==EXR_RANGE_WORD) {
+    kind=content_word_class(content_cp(d,left));
+    if(kind!=1) {
+      while(left) {
+        size_t prev=left-1;while(prev && !(map[prev]&EXR_BOUNDARY_GRAPHEME)) prev--;
+        if(content_word_class(content_cp(d,prev))!=kind) break;
+        left=prev;
+      }
+      while(right<d->size && content_word_class(content_cp(d,right))==kind) {
+        right++;while(right<d->size && !(map[right]&EXR_BOUNDARY_GRAPHEME)) right++;
+      }
+    }
+  } else if(unit==EXR_RANGE_SENTENCE) {
+    while(left) {
+      size_t prev=content_previous(d,left);
+      if(content_sentence_end(content_cp(d,prev))) break;
+      left=prev;
+    }
+    while(right<d->size && !content_sentence_end(content_cp(d,content_previous(d,right)))) {
+      uint32_t cp;if(!exr_doc_next(d,d->size,&right,&cp)) break;
+    }
+  }
+  free(map);*lo=left;*hi=right;return exr_control_cancel(control,e);
+}
+exr_status exr_range_expand(exr_publication *p,const exr_text_range *r,exr_range_unit unit,
+                             const exr_control *control,exr_text_range *out,exr_error *e) {
+  exr_text_range result,original;exr_document *d=NULL;exr_status status;size_t ignored,at;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing expanded range output");
+  /* Permit in-place expansion. */
+  if(r) original=result=*r;
+  range_clear(out);
+  if(!p || !r || unit<EXR_RANGE_CHAR || unit>EXR_RANGE_PARAGRAPH ||
+     position_before(result.end,result.start)) return exr_fail(e,EXR_ARGUMENT,"Invalid range expansion");
+  status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=exr_publication_load(p,result.start.part,&d,e);
+  if(status==EXR_OK) status=content_unit(d,result.start.offset,unit,control,&result.start.offset,&ignored,e);
+  exr_document_free(d);d=NULL;
+  if(status==EXR_OK) status=exr_publication_load(p,result.end.part,&d,e);
+  if(status==EXR_OK) {
+    at=result.end.offset;
+    if(!content_boundary(d,at)) status=exr_fail(e,EXR_ARGUMENT,"Invalid range end");
+    else if(!at && position_before(original.start,original.end)) result.end.offset=0;
+    else {
+      if(position_before(original.start,original.end) && at) at=content_previous(d,at);
+      status=content_unit(d,at,unit,control,&ignored,&result.end.offset,e);
+    }
+  }
+  exr_document_free(d);
+  if(status==EXR_OK) *out=result;
+  return status==EXR_OK ? exr_fail(e,EXR_OK,"") : status;
+}
+
+exr_status exr_hit_test(const exr_layout *l,size_t part,size_t page,float x,float y,
+                         exr_text_position *out,exr_error *e) {
+  const exr_page *p;size_t i;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing hit output");
+  out->part=out->offset=SIZE_MAX;
+  if(!l || part==SIZE_MAX || page>=l->page_count || !isfinite(x) || !isfinite(y))
+    return exr_fail(e,EXR_ARGUMENT,"Invalid content hit coordinates or page");
+  p=&l->pages[page];
+  for(i=p->box_start;i<p->box_start+p->box_count;i++) {
+    const exr_box *b=&l->boxes[i];
+    if(b->kind==EXR_BOX_IMAGE && x>=b->x && x<=b->x+b->width && y>=b->y && y<=b->y+b->height)
+      return exr_fail(e,EXR_OK,"");
+  }
+  for(i=p->line_start;i<p->line_start+p->line_count;i++) {
+    const exr_line *line=&l->lines[i];size_t j;
+    if(x<line->x || x>line->x+line->width || y<line->y || y>line->y+line->height) continue;
+    for(j=line->glyph_start;j<line->glyph_start+line->glyph_count;j++)
+      if(!(l->glyphs[j].flags&(EXR_GLYPH_HIDDEN|EXR_GLYPH_GENERATED))) {
+        out->offset=exr_layout_hit_test(l,page,x,y);
+        if(out->offset!=SIZE_MAX) out->part=part;
+        return exr_fail(e,EXR_OK,"");
+      }
+  }
+  return exr_fail(e,EXR_OK,"");
 }
