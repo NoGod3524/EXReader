@@ -1,0 +1,38 @@
+{
+  "parent_commit": "124dd186df9d07342df466ed637fd115f03b2115",
+  "branch": "codex/ui-single-image-fix-20261107",
+  "toolchain": "MSVC 19.44.35229 Release x64; shell_d2d.cpp /W4 /WX",
+  "binary_and_input_sha256": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\.build-step6\\Release\\EXReader.exe": "bab8c07e27b86287fd6e17e48f50f8f0332c8e44bca7dfafe7891ee59987eda0",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\.build-step6\\Release\\exreader.dll": "57e74866783dfc10b07688020082f868dcf4f48fb85d2c1c017b86e55eef1c74",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\.run-step6-before\\EXReader.exe": "68306aaacf1d03403a2d77160fe45d8c308d178d1b61eb6d35d2fc0cf64606eb",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo-main\\EXReader-main.exe": "f7cc9b30d0c6a206e85d2c337d98e77e7830781cf4ae44cf5d65f49ff78cdc80",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo-main\\libexreader.dll": "79d5093857385c84c03ea3e7f9000fd44411e712d47c32ab6d63f682efacba66",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo-main\\main-1280.png": "c0ae511d9d6bfaf4518d5cd8ae3816d8fa8bf39ac022ea40bcb9342a77eee448",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7"
+  },
+  "source_lf_sha256": {
+    "docs/ui/acceptance/check_art_p0.py": "31469c07451ad23c1cecdc4afe2ad32c98485cff96a649aaad55d37409827158",
+    "docs/ui/acceptance/check_step5.py": "a0889644774dbac700a2c70ea509202eff9f9efed53020d27d43ec89c7b3d054",
+    "examples/reader.c": "d09af9a86b43ae7d65c36682a9280b3fb33f1bae6a3a2d5e52260357c322c896",
+    "examples/windows/check_shell_geometry.c": "38298dd6577658939dcdc69b67ff929d625b363187e24681a57bbbcd19b5b9b1",
+    "examples/windows/shell_d2d.cpp": "1518385cf890ec3e96e7a8e4335849ae5679344db7c53d82ee0edbc457a1e2a4",
+    "examples/windows/shell_d2d.h": "737d2447dba8291b0707bab881cb7722cc397a8d4bc64e5fbb0a81bdf7a1f868",
+    "examples/windows/shell_geometry.h": "d3a5f8b131605e99b02e7cadfa938516c5f57eabb3ed515d27b301ec7399dfba",
+    "examples/windows/shell_measure.inc": "ec32320e321c01fa67d093bdf331b604fa040af7598c22a4e03622593ad5182a",
+    "examples/windows/shell_screen.inc": "48a9e793086238732d1b782799425610c7176393a1745348975837e72a85769b",
+    "examples/windows/shell_settings.inc": "033fdd7152ecc3f8aa203d9ccdc6165dc2b2baeb8b98d4d3fa2f693dc6621bf2",
+    "docs/ui/acceptance/check_step6.py": "15a435a4891d4343e2cd40c8d8f26b3270f28d84e8e9e35afacb1f07fe8839a3",
+    "docs/ui/2A-STEP6-FIX.md": "d0799a23e826d252801af45113e3b8f0ff7cc776499f52805f8e984e9c05e1e7"
+  },
+  "gui_processes": 44,
+  "foreground_observations": 0,
+  "position": [
+    -32000,
+    -32000
+  ],
+  "capture": "PrintWindow",
+  "historical_image": "Existing local input; not captured in this task",
+  "focus_method": "Offscreen owner-draw focus injection, keyboard cues shown/hidden; no physical foreground keyboard input"
+}

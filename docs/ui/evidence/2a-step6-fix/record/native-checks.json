@@ -1,0 +1,17 @@
+{
+  "geometry": {
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "anchor": {
+    "exit": 0,
+    "stdout": "document,18,10184,10184,10\r\ndocument,20,10184,10184,11\r\ndocument,22,10184,10184,13\r\ndocument,24,10184,10184,14\r\ndocument,28,10184,10184,16\r\ndocument,32,10184,10184,18\r\ndocument,17,10184,10184,10\r\nTXT,18,10184,10184,10\r\nTXT,20,10184,10184,11\r\nTXT,22,10184,10184,13\r\nTXT,24,10184,10184,14\r\nTXT,28,10184,10184,16\r\nTXT,32,10184,10184,18\r\nTXT,17,10184,10184,10\r\ndocument-vertical,18,13597,13597,10\r\ndocument-vertical,20,13597,13597,10\r\ndocument-vertical,22,13597,13597,11\r\ndocument-vertical,24,13597,13597,12\r\ndocument-vertical,28,13597,13597,14\r\ndocument-vertical,32,13597,13597,17\r\ndocument-vertical,17,13597,13597,10\r\n",
+    "stderr": ""
+  },
+  "epub": {
+    "exit": 0,
+    "stdout": "open=0 \r\nresident CJK: text/nodes retained, leading=32, authored-prefix class retained\r\npart=0 create=0 \r\npart=0 get=0 \r\npart=1 create=0 \r\npart=1 get=0 \r\npart=2 create=0 \r\npart=2 get=0 \r\n",
+    "stderr": ""
+  }
+}

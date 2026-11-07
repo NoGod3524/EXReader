@@ -149,7 +149,7 @@ def main():
                 script+=f'shell_enable|{control}|1\nshell_press|{control}|0\nshell_hover|none\nshell_render_focus|none\nui_cues|hide\n'
                 if state in ('hover','pressed'): script+=f'shell_hover|{control}\n'
                 if state=='pressed': script+=f'shell_press|{control}|1\n'
-                if state=='focus': script+=f'shell_render_focus|{control}\n'
+                if state=='focus': script+=f'ui_cues|show\nshell_render_focus|{control}\n'
                 if state=='disabled': script+=f'shell_enable|{control}|0\n'
                 script+=f'snapshot|{name}\nshell_enable|{control}|1\nshell_press|{control}|0\n'
     script+='shell_hover|none\nui_cues|hide\nshell_click|settings\nwait_idle\nshell_measure|font-before\n'

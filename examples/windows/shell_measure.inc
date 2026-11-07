@@ -12,8 +12,10 @@ static int shell_measure(const char *name) {
   {
     float metrics[12]={0};shell_d2d_page_metrics(host_shell,metrics);
     RECT image=g.frame.shell_image;
-    if(!IsRectEmpty(&image)) OffsetRect(&image,g.view.dx,g.view.dy+shell_px(SHELL_TOPBAR_H,shell_dpi));
-    fprintf(out,"{\"image\":[%ld,%ld,%ld,%ld],\"body\":[%ld,%d,%ld,%ld],\"page_number\":{\"box\":[0,%ld,%ld,%ld],\"font\":%.3f,\"weight\":%.0f,\"digits\":[",
+    if(!IsRectEmpty(&image)) image=(RECT){g.view.dx,g.view.dy+shell_px(SHELL_TOPBAR_H,shell_dpi),
+      g.view.dx+g.view.bw,g.view.dy+g.view.bh+shell_px(SHELL_TOPBAR_H,shell_dpi)};
+    fprintf(out,"{\"image_source\":[%ld,%ld],",g.frame.shell_image.right,g.frame.shell_image.bottom);
+    fprintf(out,"\"image\":[%ld,%ld,%ld,%ld],\"body\":[%ld,%d,%ld,%ld],\"page_number\":{\"box\":[0,%ld,%ld,%ld],\"font\":%.3f,\"weight\":%.0f,\"digits\":[",
       image.left,image.top,image.right,image.bottom,
       (client.right-g.frame.shell_geometry.width)/2,shell_px(SHELL_TOPBAR_H+SHELL_BODY_TOP,shell_dpi),
       (client.right+g.frame.shell_geometry.width)/2,client.bottom-shell_px(SHELL_PAGE_NUMBER_H+SHELL_BODY_GAP,shell_dpi),
