@@ -68,8 +68,8 @@ static void snapshots(void) {
     "<html xmlns:epub='http://www.idpf.org/2007/ops'><body><aside epub:type='other footnote'>one</aside><section role='doc-endnote other'><p>two</p></section><p role='doc-footnote'>three</p></body></html>",
     "<html><body><h1>Heading</h1><ul><li>one</li><li>two<br/>three<img src='x.png'/></li></ul><table><tr><td>A</td><td/></tr></table><hr/><p/></body></html>",
     "<html><body><div>before<span> </span><div>nested</div> after <b>bold</b></div><pre> x \n y </pre></body></html>",
-    "<html><body><p>\u4f60 \n<span> \u597d</span> \uff0c \uff08 \U00020000 \uff09</p>"
-      "<p>GPU \u52a0\u901f \u7b2c 1 \u7ae0</p><p>\u4f60 <b> </b>\u597d</p></body></html>"
+  ("<html><body><p>\u4f60 \n<span> \u597d</span> \uff0c \uff08 \U00020000 \uff09</p>"
+   "<p>GPU \u52a0\u901f \u7b2c 1 \u7ae0</p><p>\u4f60 <b> </b>\u597d</p></body></html>"),
   };
   static const size_t chunks[] = {1, 2, 3, 7, 31, 32768};
   size_t i, j;
@@ -179,3 +179,4 @@ int main(void) {
   printf("%zu chapter index checks passed\n", checks);
   return 0;
 }
+
