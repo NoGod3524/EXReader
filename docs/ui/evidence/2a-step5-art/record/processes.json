@@ -1,0 +1,418 @@
+[
+  {
+    "path": "release/head/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 3.9756782000004023,
+    "stderr": ""
+  },
+  {
+    "path": "release/old-ini/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.3514913000017259,
+    "stderr": ""
+  },
+  {
+    "path": "release/restart/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9389807999996265,
+    "stderr": ""
+  },
+  {
+    "path": "release/settings/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 30.807932800000344,
+    "stderr": ""
+  },
+  {
+    "path": "release/system/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.0688583999999537,
+    "stderr": ""
+  },
+  {
+    "path": "release/system-restart/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.8821929000005184,
+    "stderr": ""
+  },
+  {
+    "path": "release/regression/control/A/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.8524366000001464,
+    "stderr": ""
+  },
+  {
+    "path": "release/regression/control/B/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.39045099999930244,
+    "stderr": ""
+  },
+  {
+    "path": "release/regression/control/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.24827689999983704,
+    "stderr": ""
+  },
+  {
+    "path": "release/regression/changed/A/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.1078225000001112,
+    "stderr": ""
+  },
+  {
+    "path": "release/regression/changed/B/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5962514000002557,
+    "stderr": ""
+  },
+  {
+    "path": "release/regression/changed/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.4726253999997425,
+    "stderr": ""
+  },
+  {
+    "path": "release/regression/baseline/A/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.8037868999999773,
+    "stderr": ""
+  },
+  {
+    "path": "release/regression/baseline/B/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.4051503999999113,
+    "stderr": ""
+  },
+  {
+    "path": "release/regression/baseline/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.3124841999997443,
+    "stderr": ""
+  },
+  {
+    "path": "release/font-anchors/100/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 24.931223400000817,
+    "stderr": ""
+  },
+  {
+    "path": "release/font-anchors/800/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 169.5055123000002,
+    "stderr": ""
+  },
+  {
+    "path": "release-p0/controls/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 4.598838899999464,
+    "stderr": ""
+  },
+  {
+    "path": "release-p0/horizontal/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.119191400001,
+    "stderr": ""
+  },
+  {
+    "path": "release-p0/vertical/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.3896151999997528,
+    "stderr": ""
+  },
+  {
+    "path": "release-p0/vertical/import/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5452219999988301,
+    "stderr": ""
+  },
+  {
+    "path": "release-p0/horizontal/import/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5744825999991008,
+    "stderr": ""
+  },
+  {
+    "path": "release-legacy/control/A/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 9.897808300000179,
+    "stderr": ""
+  },
+  {
+    "path": "release-legacy/control/B/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.7660541000004741,
+    "stderr": ""
+  },
+  {
+    "path": "release-legacy/control/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.32984679999935906,
+    "stderr": ""
+  },
+  {
+    "path": "release-legacy/changed/A/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 10.268567700000858,
+    "stderr": ""
+  },
+  {
+    "path": "release-legacy/changed/B/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.8311412999992172,
+    "stderr": ""
+  },
+  {
+    "path": "release-legacy/changed/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.3775070000010601,
+    "stderr": ""
+  },
+  {
+    "path": "release-legacy/baseline/A/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 9.184694399998989,
+    "stderr": ""
+  },
+  {
+    "path": "release-legacy/baseline/B/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.8210250000011001,
+    "stderr": ""
+  },
+  {
+    "path": "release-legacy/baseline/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.332487100000435,
+    "stderr": ""
+  },
+  {
+    "path": "column-before/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.5223721000002115,
+    "stderr": ""
+  }
+]

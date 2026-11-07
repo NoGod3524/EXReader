@@ -1,0 +1,43 @@
+{
+  "baseline_commit": "3096ca7f90a083c6d97dd9f78531a9a64a1f9852",
+  "legacy_sdk_baseline": "7b20c5a0044a449aef462b2df4db0dac38577f2e",
+  "sdk": "3.42.0",
+  "toolchain": "MinGW GCC/G++ 16.2.0 Release",
+  "gui_processes": 36,
+  "foreground_observations": 0,
+  "anchors": {
+    "100": {
+      "part": 0,
+      "path": "OPS/c0.xhtml",
+      "position": 154739,
+      "prefix": "001300: Reading a portable book ",
+      "suffix": "keeps its content point while le",
+      "chapter": "OPS/c0.xhtml"
+    },
+    "800": {
+      "part": 0,
+      "path": "OPS/c0.xhtml",
+      "position": 1248825,
+      "prefix": "010494: Reading a portable book ",
+      "suffix": "keeps its content point while le",
+      "chapter": "OPS/c0.xhtml"
+    }
+  },
+  "sha256": {
+    "docs/ui/acceptance/.build-anchor-current/EXReader.exe": "22449f06f4f93015e32de7252a316fbb971ff1f8c8891ca829ad6e532189aba6",
+    "docs/ui/acceptance/.build-anchor-current/exreader.dll": "57e74866783dfc10b07688020082f868dcf4f48fb85d2c1c017b86e55eef1c74",
+    "docs/ui/acceptance/.build-anchor-before/EXReader.exe": "71eaea9649f1a8690520b1f7dda1fd8983c1633e51d6d91374cdb89a4c4cf4c5",
+    "docs/ui/acceptance/.build-baseline/EXReader.exe": "0a903c3f1fd78f0bbf2d0d3d2deaaa106f446b5c16f599f1891cd4c1d27e46bd",
+    "C:/Users/Oscar/Documents/Codex/exr-demo/Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "docs/ui/evidence/2a-step5-20261106/record/Long-acceptance.epub": "ac39d490439757e14b70f0b177f11a1e7a686c23f7e1c98d5f2d8d4bac0285da",
+    "docs\\ui\\evidence\\2a-step5-20261106\\anchor-fix\\Anchor-long.epub": "ed774d825bd2a5c5b1f7713e4c94b29ec285af071c85662ece7f476c94b30146",
+    "examples/reader.c": "c9a27b712377f0b13b2eb26d27875459316c557a387576a4e4b7d02d03c43f5d",
+    "examples/windows/shell_screen.inc": "eff4f1fde0d2f9cd5c538e61baedcc98dfac2d6742304d4ff6d885661e70f285",
+    "examples/windows/shell_anchor.inc": "73dbecff9b8148505c028d1422fecfbef4fe605ce42ef1525f63e70904c927cf",
+    "examples/windows/check_shell_anchor.c": "15f9adcf821edaf0e54655ee23fe9be57dc894d937cb805e1bb39c2161573db6",
+    "docs/ui/acceptance/check_step5.py": "4f891124af400ded52684acd90ced924c31846f15b491f95a65203423222d8ec",
+    "docs/ui/acceptance/check_font_anchors.py": "6d283fc1db8ddf292bd513093a4d1f94b4deb9a60ffa812b358f5e720037e14d",
+    "docs/ui/acceptance/check_font_pixels.py": "7264e5615304c073ae384fc60a5871a30fc45a97288e918912d5461faf5a1518"
+  },
+  "source_hash_encoding": "UTF-8 with LF, matching staged Git blobs; binary and input hashes are raw bytes"
+}

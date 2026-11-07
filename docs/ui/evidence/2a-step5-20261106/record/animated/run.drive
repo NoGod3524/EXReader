@@ -1,0 +1,15 @@
+import|C:\Users\Oscar\Documents\Codex\EXReader-ui-step4-20261106\build\step4-final\Long-acceptance.epub
+open|EXReader benchmark
+wait_idle
+shell|on
+shell_dpi|96
+shell_client|1280|800
+wait_idle
+shell_click|settings
+wait_idle
+settings_measure|expanded
+snapshot|expanded
+shell_click|settings
+wait_idle
+settings_measure|collapsed
+quit

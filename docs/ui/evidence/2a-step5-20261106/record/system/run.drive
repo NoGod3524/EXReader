@@ -1,0 +1,7 @@
+open|EXReader benchmark
+wait_idle
+shell|on
+shell_click|system
+settings_measure|system
+snapshot|system
+quit

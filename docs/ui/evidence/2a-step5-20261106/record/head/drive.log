@@ -1,0 +1,32 @@
+HOST	phase=1	engine=3.42.0	pid=4056
+STEP	1	import	PASS	page=0;status=已导入《EXReader benchmark》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+STEP	3	wait_idle	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+STEP	4	shell	PASS	reading screen
+STEP	5	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	6	shell_client	PASS	page=1;status=第 1 页。
+STEP	7	wait_idle	PASS	page=1;status=第 1 页。
+STEP	8	probe_key	PASS	page=2;status=第 2 页。
+STEP	9	probe_key	PASS	page=3;status=第 3 页。
+STEP	10	probe_key	PASS	page=4;status=第 4 页。
+STEP	11	shell_measure	PASS	physical layout captured
+STEP	12	shell_click	PASS	button invoked
+STEP	13	wait_idle	PASS	page=3;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	14	shell_measure	PASS	physical layout captured
+STEP	15	shell_click	PASS	button invoked
+STEP	16	wait_idle	PASS	page=4;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	17	shell_measure	PASS	physical layout captured
+STEP	18	shell_click	PASS	button invoked
+STEP	19	wait_idle	PASS	page=4;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	20	shell_measure	PASS	physical layout captured
+STEP	21	shell_click	PASS	button invoked
+STEP	22	wait_idle	PASS	page=4;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	23	shell_measure	PASS	physical layout captured
+STEP	24	shell_click	PASS	button invoked
+STEP	25	wait_idle	PASS	page=5;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	26	shell_measure	PASS	physical layout captured
+STEP	27	shell_click	PASS	button invoked
+STEP	28	wait_idle	PASS	page=6;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	29	shell_measure	PASS	physical layout captured
+STEP	30	quit	PASS	closing
+DONE	30	eof	PASS	script finished
