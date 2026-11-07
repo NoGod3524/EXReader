@@ -2,16 +2,29 @@
 #include <stdlib.h>
 static DWORD host_probe_ui_thread;
 static double host_probe_pager_ms,host_probe_raster_ms;
+static LONG host_probe_layout_calls,host_probe_render_calls;
+static int host_probe_counting;
+static unsigned long host_probe_presented,host_probe_blank,host_probe_stale,host_probe_present_failed;
+static unsigned long host_probe_bitblt,host_probe_deferred;
+static LONG host_probe_stretch;
+static void host_probe_reset(void) {
+  host_probe_presented=host_probe_blank=host_probe_stale=host_probe_present_failed=0;
+  host_probe_bitblt=host_probe_stretch=host_probe_deferred=0;
+  host_probe_counting=1;
+}
 static void host_probe_require_ui(void) {
   if(host_probe_ui_thread && GetCurrentThreadId()!=host_probe_ui_thread)abort();
 }
 /* Opt-in host-only measurement; no SDK behavior changes. */
 static double host_probe_ms(void) { LARGE_INTEGER t,f; QueryPerformanceCounter(&t); QueryPerformanceFrequency(&f); return 1000.0*t.QuadPart/f.QuadPart; }
 static void host_probe_log(const char *event,double value) {
-  wchar_t path[4096]; static SRWLOCK lock=SRWLOCK_INIT;
+  wchar_t path[4096]; static SRWLOCK lock=SRWLOCK_INIT;static FILE *trace;
   if(!GetEnvironmentVariableW(L"EXR_PAINT_TRACE",path,4096))return;
   AcquireSRWLockExclusive(&lock);
-  FILE *f=_wfopen(path,L"ab"); if(f){fprintf(f,"%s,%.6f,%.6f\n",event,host_probe_ms(),value);fclose(f);}
+  /* Keep the opt-in trace open; reopening every event adds filesystem work to
+     each frame. Flush preserves the existing live trace readers. */
+  if(!trace)trace=_wfopen(path,L"ab");
+  if(trace){fprintf(trace,"%s,%.6f,%.6f\n",event,host_probe_ms(),value);fflush(trace);}
   ReleaseSRWLockExclusive(&lock);
 }
 static exr_status host_probe_render(const exr_layout *layout, const exr_control *control, exr_bitmap *out, exr_error *error, uint32_t background) {
@@ -20,6 +33,7 @@ static exr_status host_probe_render(const exr_layout *layout, const exr_control 
   if(GetEnvironmentVariableW(L"EXR_PAINT_REPEAT",NULL,0) && InterlockedCompareExchange(&measured,1,0)==0)count=20;
   for(int i=0;i<count;i++) {
     double start=host_probe_ms();
+    InterlockedIncrement(&host_probe_render_calls);
     status=exr_render_page_background(layout,exr_layout_font(layout),0,4,background,control,out,error);
     host_probe_raster_ms+=host_probe_ms()-start;
     host_probe_log(count==20?"repeat_render_ms":"render_ms",host_probe_ms()-start);
@@ -28,8 +42,18 @@ static exr_status host_probe_render(const exr_layout *layout, const exr_control 
   }
   return status;
 }
+/* The other host render entry points (TXT and fixed pages) share the counters. */
+#define HOST_PROBE_RASTER(name,params,args) \
+static exr_status host_probe_##name params { \
+  host_probe_require_ui();double start=host_probe_ms();InterlockedIncrement(&host_probe_render_calls); \
+  exr_status status=name args;double elapsed=host_probe_ms()-start; \
+  host_probe_raster_ms+=elapsed;host_probe_log("render_ms",elapsed);return status; }
+HOST_PROBE_RASTER(exr_render_page_ex,(const exr_layout *layout,exr_font *font,size_t page,unsigned channels,const exr_control *control,exr_bitmap *out,exr_error *error),(layout,font,page,channels,control,out,error))
+HOST_PROBE_RASTER(exr_fixed_render,(exr_fixed_document *doc,size_t page,double scale,const exr_fixed_render_options *options,exr_bitmap *out,exr_error *error),(doc,page,scale,options,out,error))
+#undef HOST_PROBE_RASTER
+#define exr_render_page_ex host_probe_exr_render_page_ex
+#define exr_fixed_render host_probe_exr_fixed_render
 
-static LONG host_probe_layout_calls;
 static int host_probe_burst_left;
 #define HOST_PROBE_BURST_TIMER 0x7e91
 static exr_status host_probe_pager_get(exr_pager *pager,size_t page,const exr_layout **layout,exr_error *error) {
@@ -40,6 +64,15 @@ static exr_status host_probe_pager_get(exr_pager *pager,size_t page,const exr_la
   double elapsed=host_probe_ms()-start;host_probe_pager_ms+=elapsed;host_probe_log("pager_api_ms",elapsed);return status;
 }
 #define exr_pager_get host_probe_pager_get
+static exr_status host_probe_positioned(const exr_document *doc,exr_font *font,
+    const exr_positioned_input *input,const exr_layout_config *config,exr_layout **out,exr_error *error) {
+  host_probe_require_ui();
+  double start=host_probe_ms();InterlockedIncrement(&host_probe_layout_calls);
+  exr_status status=exr_layout_create_positioned(doc,font,input,config,out,error);
+  double elapsed=host_probe_ms()-start;host_probe_pager_ms+=elapsed;host_probe_log("pager_api_ms",elapsed);
+  return status;
+}
+#define exr_layout_create_positioned host_probe_positioned
 
 /* Host boundary timing. Pager get includes the SDK's internal layout work;
    it cannot be split further without changing the protected SDK. */
@@ -64,6 +97,22 @@ static void host_probe_present(double generation) {
     double start=host_probe_ms();GdiFlush();
     host_probe_log("submit_ms",host_probe_ms()-start);host_probe_log("present_gen",generation);
   }
+}
+
+/* Count actual buffer submissions, not WM_PAINT entries or the frame currently
+   being produced. Empty-library paints are outside an explicit probe interval. */
+static void host_probe_submission(int success,int has_page,int stale,double generation) {
+  if(host_probe_counting) {
+    if(success) {
+      host_probe_presented++;
+      if(!has_page)host_probe_blank++;
+      if(stale)host_probe_stale++;
+      host_probe_log("presented",1);
+      host_probe_log("blank",!has_page);
+      host_probe_log("stale_size",stale);
+    } else host_probe_present_failed++;
+  }
+  host_probe_present(generation);
 }
 
 /* Opt-in visual stamp: synchronization byte, generation, and its complement.
