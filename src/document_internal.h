@@ -87,6 +87,7 @@ typedef exr_status (*exr_xml_position_fn)(void *context, size_t offset, size_t n
 typedef struct exr_xml_tree_parser exr_xml_tree_parser;
 exr_node_kind exr_xml_element_kind(const char *name);
 int exr_projection_boundary(exr_node_kind kind, const char *tag);
+int exr_projection_cjk(uint32_t cp);
 exr_status exr_xml_tree_begin(exr_document *doc,size_t resource,int in_spine,int linear,
   const char *root_name,exr_xml_position_fn position,void *context,
   exr_xml_tree_parser **out,exr_error *error);
