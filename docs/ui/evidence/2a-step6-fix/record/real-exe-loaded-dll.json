@@ -1,0 +1,12 @@
+[
+  {
+    "Pid": 13620,
+    "Exe": "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo-fix\\EXReader-fix.exe",
+    "Dll": "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo-fix\\libexreader.dll"
+  },
+  {
+    "Pid": 21224,
+    "Exe": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\.build-real-exe\\EXReader-fix.exe",
+    "Dll": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\.build-real-exe\\libexreader.dll"
+  }
+]

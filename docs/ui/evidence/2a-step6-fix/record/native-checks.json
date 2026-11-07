@@ -1,0 +1,14 @@
+[
+  {
+    "name": "check_shell_geometry",
+    "exit": 0
+  },
+  {
+    "name": "check_shell_anchor",
+    "exit": 0
+  },
+  {
+    "name": "check_shell_epub",
+    "exit": 0
+  }
+]

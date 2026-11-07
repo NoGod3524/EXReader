@@ -153,6 +153,10 @@ typedef struct {
   size_t shell_line_count;
   int shell_anchored;
   RECT shell_image; /* The sole decoded image's source pixels; empty on text/mixed pages. */
+  uint32_t *shell_image_pixels; /* Owned full image, independent of page clipping/CSS. */
+  size_t shell_image_count;
+  unsigned shell_image_flags;
+  int shell_visible_text, shell_image_available;
 #endif
   exr_bitmap bitmap;
   uint32_t *dib;
@@ -601,6 +605,7 @@ static void frame_clear(host_frame *frame) {
   if(frame->display_bitmap)DeleteObject(frame->display_bitmap);
 #ifdef EXR_READER_WINDOWS_SHELL
   free(frame->shell_lines);
+  free(frame->shell_image_pixels);
 #endif
   exr_layout_free(frame->hit_layout);
   exr_fixed_text_free(frame->fixed_text);
@@ -1583,8 +1588,10 @@ static void session_configure(host_session *session, host_job *job) {
   session->config.page.height = 1040;
 #ifdef EXR_READER_WINDOWS_SHELL
   session->shell_geometry = job ? job->shell_geometry : (shell_geometry){0};
+  host_probe_log("open_shell_geometry_height",session->shell_geometry.height);
   if (session->shell_geometry.enabled) {
     shell_apply_config(&session->config, session->shell_geometry);
+    host_probe_log("open_page_height",session->config.page.height);
     if(session->txt) session->config.user_css=NULL;
     return;
   }
@@ -1649,6 +1656,7 @@ static int shell_capture_layout(host_frame *frame, const host_session *session, 
   const exr_line *lines; const exr_glyph *glyphs;
   frame->writing_mode = (int)exr_layout_writing_mode(layout);
   frame->shell_geometry = session->shell_geometry;
+  host_probe_log("image_shell_geometry_height",session->shell_geometry.height);
   if (!session->shell_geometry.enabled) return 1;
   lines = exr_layout_lines(layout, &frame->shell_line_count);
   if (frame->shell_line_count) {
@@ -1675,13 +1683,35 @@ static int shell_capture_layout(host_frame *frame, const host_session *session, 
   for(size_t i=0;i<box_count;i++) {
     if(boxes[i].kind==EXR_BOX_IMAGE) {image=boxes+i;image_count++;}
   }
-  if(!visible_text && image_count==1 && !image->flags &&
-     exr_layout_image(layout,image->resource) && image->width>0 && image->height>0) {
-    frame->shell_image=(RECT){(LONG)floorf(image->x),(LONG)floorf(image->y),
-      (LONG)ceilf(image->x+image->width),(LONG)ceilf(image->y+image->height)};
-    if(frame->shell_image.left<0 || frame->shell_image.top<0 ||
-       frame->shell_image.right>(LONG)frame->bitmap.width || frame->shell_image.bottom>(LONG)frame->bitmap.height)
-      frame->shell_image=(RECT){0};
+  frame->shell_image_count=image_count;
+  frame->shell_visible_text=visible_text;
+  frame->shell_image_flags=image ? image->flags : 0;
+  host_probe_log("image_count",(double)image_count);
+  host_probe_log("image_visible_text",visible_text);
+  if(image) {
+    host_probe_log("image_flags",image->flags);
+    host_probe_log("image_box_y",image->y);
+    host_probe_log("image_box_height",image->height);
+  }
+  /* Image flags are not CSS alignment/margins: 0x1 means a missing-image
+     placeholder. Unknown image bits also keep the SDK's normal page paint. */
+  if(!visible_text && image_count==1 && !image->flags && image->width>0 && image->height>0) {
+    const exr_bitmap *source=exr_layout_image(layout,image->resource);
+    frame->shell_image_available=source!=NULL;
+    host_probe_log("image_source_available",source!=NULL);
+    if(source && source->channels==4 && source->width && source->height) {
+      size_t count=(size_t)source->width*source->height;
+      if(count>SIZE_MAX/sizeof(uint32_t)) return 0;
+      frame->shell_image_pixels=malloc(count*sizeof(uint32_t));
+      if(!frame->shell_image_pixels) return 0;
+      for(size_t i=0;i<count;i++) {
+        const unsigned char *p=source->pixels+(i/source->width)*source->stride+(i%source->width)*4;
+        unsigned a=p[3],r=(p[0]*a+255*(255-a)+127)/255;
+        unsigned green=(p[1]*a+255*(255-a)+127)/255,b=(p[2]*a+255*(255-a)+127)/255;
+        frame->shell_image_pixels[i]=(r<<16)|(green<<8)|b;
+      }
+      frame->shell_image=(RECT){0,0,(LONG)source->width,(LONG)source->height};
+    }
   }
   return 1;
 }
@@ -3722,9 +3752,19 @@ static int compute_view_impl(void) {
     g.view.dx = (area.right - g.view.bw) / 2;
     g.view.dy = body_top;
     if(!IsRectEmpty(&g.frame.shell_image)) {
+      RECT client={0};GetClientRect(g.window,&client);
+      host_probe_log("image_client_height",client.bottom);
+      host_probe_log("image_page_client_height",area.bottom);
+      host_probe_log("image_frame_geometry_height",g.frame.shell_geometry.height);
       const RECT *image=&g.frame.shell_image;
-      g.view.dx=(area.right-(image->right-image->left))/2-image->left;
-      g.view.dy+=(body_height-(image->bottom-image->top))/2-image->top;
+      shell_image_view fit=shell_fit_image(area.right,area.bottom,shell_dpi,shell_font,
+        image->right-image->left,image->bottom-image->top);
+      host_probe_log("image_fit_body_height",body_height);
+      host_probe_log("image_fit_height",fit.height);
+      if(fit.width<=0 || fit.height<=0) return 0;
+      g.view.bw=fit.width;g.view.bh=fit.height;
+      g.view.dx=fit.left;g.view.dy=fit.top;
+      g.view.scale=(double)fit.width/(image->right-image->left);
     } else if(g.frame.fixed) {
       g.view.dy+=(body_height-g.view.bh)/2;
     } else if(g.frame.glyph_count && g.frame.dib) {
@@ -3891,11 +3931,12 @@ static void compose_page_view(HWND window) {
     SetBrushOrgEx(dc, 0, 0, NULL);
 #ifdef EXR_READER_WINDOWS_SHELL
     if(shell_active && !IsRectEmpty(&g.frame.shell_image)) {
-      RECT source=g.frame.shell_image, image=source;
-      OffsetRect(&image,g.view.dx,g.view.dy);
-      shell_d2d_page_image(host_shell,dc,&area,&image,
-        g.frame.dib+(size_t)source.top*g.frame.bitmap.width+source.left,
-        g.frame.bitmap.width*4,shell_colors->layer_page);
+      RECT source=g.frame.shell_image;
+      RECT image={g.view.dx,g.view.dy,g.view.dx+g.view.bw,g.view.dy+g.view.bh};
+      const uint32_t *pixels=g.frame.shell_image_pixels ? g.frame.shell_image_pixels : g.frame.dib;
+      unsigned pitch=g.frame.shell_image_pixels ? (unsigned)source.right*4 : g.frame.bitmap.width*4;
+      page_buffer_has_page=SUCCEEDED(shell_d2d_page_image(host_shell,dc,&area,&image,
+        (unsigned)source.right,(unsigned)source.bottom,pixels,pitch,shell_colors->layer_page));
     } else
 #endif
     if(frame_prepare_display(&g.frame)) {
@@ -3932,7 +3973,7 @@ static void compose_page_view(HWND window) {
     DrawTextW(dc, hint, -1, &text, DT_CENTER | DT_VCENTER | DT_WORDBREAK);
   }
 #ifdef EXR_READER_WINDOWS_SHELL
-  if (shell_page_focus(window, dc, &area)) {
+  if (shell_page_footer(dc, &area)) {
   } else
 #endif
   if (GetFocus() == window) {

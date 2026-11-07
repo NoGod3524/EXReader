@@ -28,4 +28,23 @@ static inline int shell_geometry_equal(shell_geometry a, shell_geometry b) {
   return a.enabled == b.enabled && (!a.enabled || (a.width == b.width && a.height == b.height &&
     a.font == b.font && a.dpi == b.dpi && a.vertical == b.vertical));
 }
+/* Page-child coordinates, fitted to today's body rather than the source frame. */
+typedef struct { int left,top,width,height; } shell_image_view;
+static inline shell_image_view shell_fit_image(int w,int h,unsigned dpi,float font,int iw,int ih) {
+  shell_image_view out={0};
+  shell_geometry body=shell_geometry_for(w,h+shell_px(SHELL_TOPBAR_H,dpi),dpi,font,0);
+  int margin=shell_px(SHELL_SPACE_2,dpi),top=shell_px(SHELL_BODY_TOP,dpi);
+  int width=(int)fminf((float)body.width,(float)(w-2*margin));
+  int height=(int)fminf((float)body.height,(float)(h-2*margin));
+  if(width<=0 || height<=0 || iw<=0 || ih<=0) return out;
+  double scale=fmin(1.0,fmin((double)width/iw,(double)height/ih));
+  /* Round the shorter side down, then derive the longer side from its ratio. */
+  if(iw>=ih) {
+    out.height=(int)floor(ih*scale);out.width=(int)floor((double)out.height*iw/ih+.5);
+  } else {
+    out.width=(int)floor(iw*scale);out.height=(int)floor((double)out.width*ih/iw+.5);
+  }
+  out.left=(w-out.width)/2;out.top=top+(body.height-out.height)/2;
+  return out;
+}
 #endif

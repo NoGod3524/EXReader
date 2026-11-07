@@ -424,6 +424,7 @@ static ID2D1Bitmap *shadow_bitmap(shell_d2d *s, unsigned w, unsigned h, int kind
 }
 
 extern "C" HRESULT shell_d2d_page_image(shell_d2d *s,HDC dc,const RECT *area,const RECT *image,
+                                        unsigned source_width,unsigned source_height,
                                         const uint32_t *pixels,unsigned pitch,uint32_t background) {
   HRESULT hr=bind_dc(s,dc,area);if(FAILED(hr)) return hr;
   unsigned w=(unsigned)(image->right-image->left),h=(unsigned)(image->bottom-image->top);
@@ -431,7 +432,7 @@ extern "C" HRESULT shell_d2d_page_image(shell_d2d *s,HDC dc,const RECT *area,con
   auto shadow=shadow_bitmap(s,w+2*(unsigned)pad,h+2*(unsigned)pad,3);
   auto props=D2D1::BitmapProperties(D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_IGNORE));
   ID2D1Bitmap *bitmap=nullptr;
-  hr=s->dc_target->CreateBitmap(D2D1::SizeU(w,h),pixels,pitch,props,&bitmap);
+  hr=s->dc_target->CreateBitmap(D2D1::SizeU(source_width,source_height),pixels,pitch,props,&bitmap);
   if(FAILED(hr)) return hr;
   auto rect=D2D1::RectF((float)image->left,(float)image->top,(float)image->right,(float)image->bottom);
   s->dc_target->BeginDraw();s->dc_target->Clear(D2D1::ColorF(background));

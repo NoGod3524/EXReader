@@ -1,0 +1,727 @@
+{
+  "inputs": [
+    {
+      "label": "hongloumeng",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub",
+      "sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+      "cover_path": "OEBPS/wrap0000.html",
+      "image_path": "OEBPS/1558089893555248363_24264-cover.png"
+    },
+    {
+      "label": "pachinko",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+      "sha256": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+      "cover_path": "titlepage.xhtml",
+      "image_path": "cover.jpeg"
+    },
+    {
+      "label": "xingshihengyan",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\xingshihengyan-24239.epub",
+      "sha256": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+      "cover_path": "OEBPS/wrap0000.html",
+      "image_path": "OEBPS/8448895921229109957_24239-cover.png"
+    },
+    {
+      "label": "kusamakura",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\real-books-pass-a-20261105\\supplemental-samples\\kusamakura-japanese-vertical-writing.epub",
+      "sha256": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7",
+      "cover_path": "OPS/xhtml/表紙.xhtml",
+      "image_path": null
+    }
+  ],
+  "images": [
+    {
+      "book": "hongloumeng",
+      "dpi": 96,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        427,
+        96,
+        815,
+        678
+      ],
+      "body": [
+        332,
+        96,
+        910,
+        678
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false,
+      "source_mean_rgb_error": 0.6428021043681581,
+      "source_edge_mean_rgb_error": 0.15578465063001146,
+      "exterior": {
+        "count": 10032,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "hongloumeng",
+      "dpi": 96,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        427,
+        96,
+        853,
+        735
+      ],
+      "body": [
+        351,
+        96,
+        929,
+        736
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.5,
+      "aspect_error": 0.0,
+      "clipped": false,
+      "source_mean_rgb_error": 0.5509660291780242,
+      "source_edge_mean_rgb_error": 0.12623891497130935,
+      "exterior": {
+        "count": 10532,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "hongloumeng",
+      "dpi": 96,
+      "client": [
+        900,
+        600
+      ],
+      "image": [
+        303,
+        96,
+        596,
+        536
+      ],
+      "body": [
+        161,
+        96,
+        739,
+        536
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0007575757575757347,
+      "clipped": false,
+      "source_mean_rgb_error": 0.9221119040231668,
+      "source_edge_mean_rgb_error": 0.24469696969696972,
+      "exterior": {
+        "count": 7812,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "hongloumeng",
+      "dpi": 120,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        440,
+        120,
+        801,
+        662
+      ],
+      "body": [
+        259,
+        120,
+        982,
+        662
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0006150061500614923,
+      "clipped": false,
+      "source_mean_rgb_error": 0.6241665048229429,
+      "source_edge_mean_rgb_error": 0.16051660516605168,
+      "exterior": {
+        "count": 10186,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "hongloumeng",
+      "dpi": 120,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        440,
+        120,
+        840,
+        720
+      ],
+      "body": [
+        278,
+        120,
+        1001,
+        720
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false,
+      "source_mean_rgb_error": 0.5562569444444444,
+      "source_edge_mean_rgb_error": 0.12888888888888891,
+      "exterior": {
+        "count": 10686,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "pachinko",
+      "dpi": 96,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        418,
+        96,
+        823,
+        677
+      ],
+      "body": [
+        332,
+        96,
+        910,
+        678
+      ],
+      "source": [
+        1255,
+        1800
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.5,
+      "aspect_error": 0.00014821189519986788,
+      "clipped": false,
+      "source_mean_rgb_error": 1.8030655248861407,
+      "source_edge_mean_rgb_error": 0.4748971193415638,
+      "exterior": {
+        "count": 10032,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "pachinko",
+      "dpi": 96,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        417,
+        96,
+        863,
+        736
+      ],
+      "body": [
+        351,
+        96,
+        929,
+        736
+      ],
+      "source": [
+        1255,
+        1800
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0003472222222221655,
+      "clipped": false,
+      "source_mean_rgb_error": 1.6126693292227205,
+      "source_edge_mean_rgb_error": 0.4439461883408072,
+      "exterior": {
+        "count": 10532,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "pachinko",
+      "dpi": 96,
+      "client": [
+        900,
+        600
+      ],
+      "image": [
+        297,
+        96,
+        603,
+        535
+      ],
+      "body": [
+        161,
+        96,
+        739,
+        536
+      ],
+      "source": [
+        1255,
+        1800
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.5,
+      "aspect_error": 0.00018349784864590823,
+      "clipped": false,
+      "source_mean_rgb_error": 2.3913826730388434,
+      "source_edge_mean_rgb_error": 0.5228758169934641,
+      "exterior": {
+        "count": 7812,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "pachinko",
+      "dpi": 120,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        432,
+        120,
+        809,
+        661
+      ],
+      "body": [
+        259,
+        120,
+        982,
+        662
+      ],
+      "source": [
+        1255,
+        1800
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.5,
+      "aspect_error": 0.0003645512425548558,
+      "clipped": false,
+      "source_mean_rgb_error": 1.9645415455218502,
+      "source_edge_mean_rgb_error": 0.4588859416445623,
+      "exterior": {
+        "count": 10186,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "pachinko",
+      "dpi": 120,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        431,
+        120,
+        849,
+        720
+      ],
+      "body": [
+        278,
+        120,
+        1001,
+        720
+      ],
+      "source": [
+        1255,
+        1800
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0005555555555555314,
+      "clipped": false,
+      "source_mean_rgb_error": 1.9423418394471028,
+      "source_edge_mean_rgb_error": 0.39314194577352474,
+      "exterior": {
+        "count": 10686,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "xingshihengyan",
+      "dpi": 96,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        427,
+        96,
+        815,
+        678
+      ],
+      "body": [
+        332,
+        96,
+        910,
+        678
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false,
+      "source_mean_rgb_error": 1.1092364284786433,
+      "source_edge_mean_rgb_error": 0.41151202749140897,
+      "exterior": {
+        "count": 10032,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "xingshihengyan",
+      "dpi": 96,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        427,
+        96,
+        853,
+        735
+      ],
+      "body": [
+        351,
+        96,
+        929,
+        736
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.5,
+      "aspect_error": 0.0,
+      "clipped": false,
+      "source_mean_rgb_error": 0.9321820332532492,
+      "source_edge_mean_rgb_error": 0.3247261345852895,
+      "exterior": {
+        "count": 10532,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "xingshihengyan",
+      "dpi": 96,
+      "client": [
+        900,
+        600
+      ],
+      "image": [
+        303,
+        96,
+        596,
+        536
+      ],
+      "body": [
+        161,
+        96,
+        739,
+        536
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0007575757575757347,
+      "clipped": false,
+      "source_mean_rgb_error": 1.4520012410797394,
+      "source_edge_mean_rgb_error": 0.481060606060606,
+      "exterior": {
+        "count": 7812,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "xingshihengyan",
+      "dpi": 120,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        440,
+        120,
+        801,
+        662
+      ],
+      "body": [
+        259,
+        120,
+        982,
+        662
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0006150061500614923,
+      "clipped": false,
+      "source_mean_rgb_error": 1.1573904658714176,
+      "source_edge_mean_rgb_error": 0.3545706371191136,
+      "exterior": {
+        "count": 10186,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "xingshihengyan",
+      "dpi": 120,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        440,
+        120,
+        840,
+        720
+      ],
+      "body": [
+        278,
+        120,
+        1001,
+        720
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "probe": {
+        "image_count": 1,
+        "visible_text": 0,
+        "flags": 0,
+        "source_available": 1,
+        "fitted": 1
+      },
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false,
+      "source_mean_rgb_error": 0.9479027777777778,
+      "source_edge_mean_rgb_error": 0.33,
+      "exterior": {
+        "count": 10686,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    }
+  ],
+  "bodies": [
+    {
+      "book": "hongloumeng",
+      "part": 15,
+      "glyphs": 578,
+      "changed_pixels": 0,
+      "exterior": {
+        "count": 10032,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "pachinko",
+      "part": 10,
+      "glyphs": 970,
+      "changed_pixels": 0,
+      "exterior": {
+        "count": 10032,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "xingshihengyan",
+      "part": 4,
+      "glyphs": 593,
+      "changed_pixels": 0,
+      "exterior": {
+        "count": 10032,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    },
+    {
+      "book": "kusamakura",
+      "part": 2,
+      "glyphs": 110,
+      "changed_pixels": 0,
+      "exterior": {
+        "count": 10032,
+        "expected": "#141416",
+        "max_rgb_error": 0
+      }
+    }
+  ],
+  "focus": [
+    {
+      "control": "toc",
+      "width_px": 2,
+      "offset_px": 2,
+      "mouse_ring": false
+    },
+    {
+      "control": "settings",
+      "width_px": 2,
+      "offset_px": 2,
+      "mouse_ring": false
+    }
+  ],
+  "pass": true,
+  "acceptance_ready": false,
+  "acceptance_blocker": "Owner-reported clipping has not been reproduced. The 179a429a rendering and current diagnostic build produce identical real-book pixels. No rendering behavior was changed."
+}
