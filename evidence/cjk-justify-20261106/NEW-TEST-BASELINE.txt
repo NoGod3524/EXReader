@@ -1,0 +1,1 @@
+CJK spacing cap, final line, center, heading and vertical projection line 467: near(mode ? lines[0].height:lines[0].width,83) (0: )

@@ -94,6 +94,8 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
       if (!exr_doc_next(f->doc, n->end, &at, &cp))
         return exr_fail(f->error, EXR_ENCODING, "Invalid inline UTF-8");
       complex |= exr_bidi_complex(cp);
+      b->cjk |= (cp>=0x3400 && cp<=0x9fff) || (cp>=0xf900 && cp<=0xfaff) ||
+                (cp>=0x20000 && cp<=0x3347f);
       if (++count > EXR_MAX_ITEMS)
         return exr_fail(f->error, EXR_LIMIT, "Inline scalar limit exceeded");
       if (!(count & 1023) && exr_control_cancel(&f->config->control, f->error) != EXR_OK)
@@ -463,7 +465,7 @@ static float line_kern(flow *f, const exr_glyph *left, const exr_glyph *right) {
       ((right->flags & EXR_GLYPH_VERTICAL) && !(right->flags & EXR_GLYPH_SIDEWAYS))) return 0;
   return exr_kern(&f->font->faces[right->font_index], left->glyph, right->glyph);
 }
-static int cjk_punctuation(uint32_t cp) {
+int exr_inline_punctuation(uint32_t cp) {
   switch(cp) {
     case 0x2014: case 0x2015: case 0x2018: case 0x2019:
     case 0x201c: case 0x201d: case 0x2025: case 0x2026:
@@ -479,6 +481,15 @@ static int cjk_punctuation(uint32_t cp) {
     default: return 0;
   }
 }
+/* Remaining punctuation space, after any adjacent compression, has the same
+   half-em floor. Latin faces and proportional punctuation never participate. */
+static float punctuation_room(flow *f,const exr_glyph *g) {
+  if((g->flags&(EXR_GLYPH_HIDDEN|EXR_GLYPH_RUBY_ITEM)) ||
+     !exr_inline_punctuation(g->codepoint) || g->size<=0 ||
+     g->advance>g->size+.01f || g->advance<.5f*g->size-.01f ||
+     (g->codepoint<0x3000 && !exr_font_has_glyph(f->font,g->font_index,0x3002))) return 0;
+  return fmaxf(0,g->advance-.5f*g->size);
+}
 /* Charge each join to its left glyph once. Provisional runs stay untouched;
    only a freshly shaped final line receives the reduced advances. Requiring
    em-wide metrics keeps proportional punctuation unchanged. Ambiguous Unicode
@@ -486,12 +497,81 @@ static int cjk_punctuation(uint32_t cp) {
 static float punctuation_compression(flow *f,const exr_glyph *left,const exr_glyph *right) {
   if(!left || ((left->flags|right->flags)&(EXR_GLYPH_HIDDEN|EXR_GLYPH_RUBY_ITEM)) ||
      (right->boundaries&EXR_BOUNDARY_MANDATORY) || left->bidi_level!=right->bidi_level ||
-     exr_inline_same(left,right) || !cjk_punctuation(left->codepoint) || !cjk_punctuation(right->codepoint) ||
+     exr_inline_same(left,right) || !exr_inline_punctuation(left->codepoint) || !exr_inline_punctuation(right->codepoint) ||
      left->size<=0 || right->size<=0 ||
      fabsf(left->advance-left->size)>.01f || fabsf(right->advance-right->size)>.01f) return 0;
   if((left->codepoint<0x3000 && !exr_font_has_glyph(f->font,left->font_index,0x3002)) ||
      (right->codepoint<0x3000 && !exr_font_has_glyph(f->font,right->font_index,0x3002))) return 0;
-  return fminf(.5f*left->size,fmaxf(0,left->advance-.5f*left->size));
+  return punctuation_room(f,left);
+}
+static int opening_punctuation(uint32_t cp) {
+  switch(cp) {
+    case 0x2018: case 0x201c: case 0x3008: case 0x300a: case 0x300c:
+    case 0x300e: case 0x3010: case 0x3014: case 0x3016: case 0x3018:
+    case 0x301a: case 0xff08: case 0xff3b: case 0xff5b: case 0xff5f: return 1;
+    default: return 0;
+  }
+}
+int exr_inline_cjk_gap(const exr_glyph *a,const exr_glyph *b) {
+  return !((a->flags|b->flags)&(EXR_GLYPH_HIDDEN|EXR_GLYPH_RUBY_ITEM)) &&
+    a->codepoint!=0x3000 && b->codepoint!=0x3000 &&
+    !exr_inline_same(a,b) && a->bidi_level==b->bidi_level &&
+    exr_projection_cjk(a->codepoint) && exr_projection_cjk(b->codepoint) &&
+    !(exr_inline_punctuation(a->codepoint) && exr_inline_punctuation(b->codepoint));
+}
+/* Compute edge treatment on a copy while scanning, or commit it on the final
+   shaped line. A terminal punctuation run owns exactly one em in total. */
+static float punctuation_width(flow *f,exr_glyph *glyphs,size_t count,int commit,float available) {
+  size_t i,first=0,end=count,tail; float width=0,room=0,tail_em=0;
+  while(first<end && (glyphs[first].flags&EXR_GLYPH_HIDDEN)) first++;
+  while(end>first && (glyphs[end-1].flags&EXR_GLYPH_HIDDEN)) end--;
+  tail=end;
+  while(tail>first) {
+    const exr_glyph *g=glyphs+tail-1;
+    if(!exr_inline_punctuation(g->codepoint) ||
+       fabsf(g->advance-g->size)>.01f || !punctuation_room(f,g)) break;
+    if(tail<end && (exr_inline_same(g,g+1) || g->bidi_level!=(g+1)->bidi_level || g->size!=tail_em)) break;
+    tail_em=g->size;tail--;
+  }
+  for(i=0;i<count;i++) {
+    exr_glyph g=glyphs[i];
+    float adjacent=i+1<count ? punctuation_compression(f,&g,glyphs+i+1):0;
+    g.advance-=adjacent;
+    if(i==first && opening_punctuation(g.codepoint)) {
+      float take=punctuation_room(f,&g);g.advance-=take;
+      if(commit) {
+        if((g.flags&EXR_GLYPH_VERTICAL) && !(g.flags&EXR_GLYPH_SIDEWAYS)) glyphs[i].offset_y+=take;
+        else glyphs[i].offset_x-=take;
+      }
+    }
+    if(i>=tail && end-tail>1) {
+      g.advance=tail_em/(float)(end-tail);
+    }
+    width+=g.advance+line_kern(f,i ? glyphs+i-1:NULL,&g);
+    if(i>first && i<tail) room+=punctuation_room(f,&g);
+    if(commit) glyphs[i].advance=g.advance;
+  }
+  /* Only ordinary CJK paragraphs use the discretionary compression budget. */
+  if(f->bidi && f->bidi->cjk && !f->intrinsic && width>available) {
+    float shrink=fminf(room,width-available);width-=shrink;
+    if(commit) for(i=first+1;i<tail && shrink>0;i++) {
+      float take=fminf(shrink,punctuation_room(f,glyphs+i));
+      glyphs[i].advance-=take;shrink-=take;
+    }
+  }
+  return width;
+}
+static int punctuation_fits(flow *f,exr_glyph *glyphs,size_t count,float available) {
+  size_t i,gaps=0; float cap=INFINITY,width=punctuation_width(f,glyphs,count,0,INFINITY);
+  if(width<=available+.001f) return 1;
+  if(count<2 || !f->bidi || !f->bidi->cjk) return 0;
+  for(i=1;i+1<count;i++) if(exr_inline_cjk_gap(glyphs+i-1,glyphs+i)) {
+    cap=fminf(cap,.08f*fminf(glyphs[i-1].size,glyphs[i].size));gaps++;
+  }
+  /* Prefer the existing line if its gaps already fit within the spacing cap. */
+  width=punctuation_width(f,glyphs,count-1,0,INFINITY);
+  if(gaps && available-width<=cap*(float)gaps+.001f) return 0;
+  return punctuation_width(f,glyphs,count,0,available)<=available+.001f;
 }
 static exr_status copy_glyphs(flow *f, exr_line_buffer *b, exr_layout *to,
                                const exr_glyph *from, size_t count) {
@@ -1075,8 +1155,7 @@ static exr_status line_geometry(flow *f,exr_line_buffer *b,float *width) {
   size_t i; float ascent=0,descent=0,leading=0,minimum=0,old_y=f->y;
   float indent=f->first_line ? f->paragraph->indent : 0; exr_status status;
   *width=0;
-  for(i=1;i<b->line.glyph_count;i++)
-    b->line.glyphs[i-1].advance-=punctuation_compression(f,b->line.glyphs+i-1,b->line.glyphs+i);
+  punctuation_width(f,b->line.glyphs,b->line.glyph_count,1,fmaxf(1,f->width-indent));
   for(i=0;i<b->line.glyph_count;i++) {
     exr_glyph *g=&b->line.glyphs[i];
     if(f->floats->count && !f->intrinsic) {
@@ -1459,19 +1538,34 @@ static exr_status measure_unwrapped(flow *f,exr_line_buffer *b) {
     exr_glyph *g=&b->run.glyphs[i]; float advance;
     if(!(i&255) && exr_control_cancel(&f->config->control,f->error)!=EXR_OK) return EXR_CANCELLED;
     if(g->boundaries&EXR_BOUNDARY_MANDATORY) {
-      f->intrinsic_extent=fmax(f->intrinsic_extent,f->x+b->measure_width-b->measure_trailing+f->inline_end_inset);
+      double edge=b->measure_punctuation_count>1 ? b->measure_punctuation_width-b->measure_punctuation_em : 0;
+      f->intrinsic_extent=fmax(f->intrinsic_extent,f->x+b->measure_width-b->measure_trailing-edge+f->inline_end_inset);
       b->measure_width=b->measure_trailing=0; b->measure_has_last=0;
+      b->measure_punctuation_count=0;b->measure_punctuation_width=0;
     }
     if(exr_font_size(&f->font->faces[g->font_index],g->size)) return exr_fail(f->error,EXR_FONT,"Cannot size intrinsic line font");
     if(f->first_line) { b->measure_width+=fmaxf(0,f->paragraph->indent); f->first_line=0; }
     advance=g->advance+line_kern(f,b->measure_has_last ? &b->measure_last : NULL,g)
       -punctuation_compression(f,b->measure_has_last ? &b->measure_last : NULL,g);
+    if(!b->measure_has_last && opening_punctuation(g->codepoint)) advance-=punctuation_room(f,g);
+    if(punctuation_room(f,g)>0) {
+      float adjacent=b->measure_has_last ? punctuation_compression(f,&b->measure_last,g):0;
+      if(!adjacent) { b->measure_punctuation_count=0;b->measure_punctuation_width=0; }
+      b->measure_punctuation_count++;
+      b->measure_punctuation_width+=advance;
+      b->measure_punctuation_em=g->size;
+    } else if(!(g->flags&EXR_GLYPH_HIDDEN) && g->codepoint!=' ' && g->codepoint!='\t') {
+      b->measure_punctuation_count=0;b->measure_punctuation_width=0;
+    }
     b->measure_width+=advance;
     if(g->codepoint==' ' || g->codepoint=='\t') b->measure_trailing+=advance;
     else if(!(g->flags&EXR_GLYPH_HIDDEN)) b->measure_trailing=0;
     b->measure_last=*g; b->measure_has_last=1;
   }
-  if(b->finishing) f->intrinsic_extent=fmax(f->intrinsic_extent,f->x+b->measure_width-b->measure_trailing+f->inline_end_inset);
+  if(b->finishing) {
+    double edge=b->measure_punctuation_count>1 ? b->measure_punctuation_width-b->measure_punctuation_em : 0;
+    f->intrinsic_extent=fmax(f->intrinsic_extent,f->x+b->measure_width-b->measure_trailing-edge+f->inline_end_inset);
+  }
   if(count) memmove(b->run.glyphs,b->run.glyphs+count,(b->run.glyph_count-count)*sizeof(*b->run.glyphs));
   b->run.glyph_count-=count; b->cluster_start-=count; b->ready=0; b->raw.glyph_count=0;
   return EXR_OK;
@@ -1508,6 +1602,7 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
         advance = g->advance + line_kern(f, i ? g - 1 : NULL, g)
           -punctuation_compression(f,i ? g-1 : NULL,g);
         if (!f->intrinsic && i && b->scan_width + advance > available &&
+            !punctuation_fits(f,b->run.glyphs,i+1,available) &&
             (b->soft != SIZE_MAX || b->emergency != SIZE_MAX)) {
           b->line_end = b->soft != SIZE_MAX ? b->soft : b->emergency;
           b->forced = b->final = 0; break;
@@ -1623,8 +1718,8 @@ exr_status exr_inline_pending(flow *f,exr_line_buffer *b,float *width) {
   for(i=0;i<b->ready;i++) {
     exr_glyph *g=&b->run.glyphs[i];
     if(exr_font_size(&f->font->faces[g->font_index],g->size)) return EXR_FONT;
-    *width+=g->advance+line_kern(f,i ? g-1 : NULL,g)-punctuation_compression(f,i ? g-1 : NULL,g);
   }
+  *width=punctuation_width(f,b->run.glyphs,b->ready,0,INFINITY);
   return EXR_OK;
 }
 exr_status exr_inline_break(flow *f,exr_line_buffer *b) {
@@ -1818,6 +1913,7 @@ exr_status exr_inline_finish(flow *f, exr_line_buffer *b) {
   b->display_origin_id=b->display_feed_id=b->display_line_id=0;b->track_display=b->display_changed=0;
   b->raw.glyph_count = 0; b->before = b->after = 0; b->finishing = 0;
   b->measure_width=b->measure_trailing=0; b->measure_has_last=0;
+  b->measure_punctuation_count=0;b->measure_punctuation_width=0;
   b->edit_count=b->blocked_until=0;
   b->in_word=0; b->previous_scalar=0; b->previous_node=0; if(b->word) b->word->until=0;
   reset_line_scan(b);

@@ -273,8 +273,8 @@ static void cjk_space_punctuation(void) {
   }
   exr_hyphenator_free(h);
   {
-    /* A different NS scalar keeps its default SP opportunity. */
-    exr_document *doc=document("\xe7\x94\xb2 \xe3\x80\x85\xe4\xb9\x99","width:300px;margin:0",0);
+    /* A Latin left neighbor retains SP and its default NS opportunity. */
+    exr_document *doc=document("A \xe3\x80\x85\xe4\xb9\x99","width:300px;margin:0",0);
     exr_layout *l=layout(doc,&c);size_t n,i;const exr_glyph *g=exr_layout_glyphs(l,&n);
     for(i=0;i<n;i++)if(g[i].codepoint==0x3005)CHECK((g[i].boundaries&EXR_BOUNDARY_LINE) && !(g[i].boundaries&EXR_BOUNDARY_GLUE));
     exr_layout_free(l);exr_document_free(doc);
@@ -322,6 +322,7 @@ static void kinsoku_layout(const char *left,const char *right,uint32_t protected
       exr_document_input input={"Kinsoku spaces",nodes,6,&chapter,1,NULL,0};
       OK(exr_document_create(&input,&doc,&error));
     }
+    CHECK(strchr(exr_document_text(doc,NULL),' ')!=NULL);
     OK(exr_layout_create_hyphenated(doc,font,&c,mode==3 ? h:NULL,&l,&error));
     g=exr_layout_glyphs(l,&n);lines=exr_layout_lines(l,&nl);
     for(i=0;i<n;i++)if(g[i].codepoint==protected_cp) {
@@ -351,7 +352,8 @@ static void cjk_space_kinsoku_set(void) {
   size_t i;scenario="SP plus every Chinese kinsoku scalar stays on one line";
   for(i=0;i<sizeof(punctuation)/sizeof(*punctuation);i++) {
     char right[32];snprintf(right,sizeof(right),"%s\xe4\xb9\x99",punctuation[i].utf8);
-    kinsoku_layout("\xe7\x94\xb2\xe7\x94\xb2 ",right,punctuation[i].cp);
+    /* Latin A keeps the SP in the projection so this still tests tailoring. */
+    kinsoku_layout("\xe7\x94\xb2" "A ",right,punctuation[i].cp);
   }
 }
 static void cjk_opening_space_text(void) {
@@ -359,7 +361,7 @@ static void cjk_opening_space_text(void) {
   size_t i;scenario="opening punctuation plus SP plus text cannot leave an opening at the tail";
   for(i=0;i<sizeof(opening)/sizeof(*opening);i++) {
     char left[32];snprintf(left,sizeof(left),"\xe7\x94\xb2%s ",opening[i]);
-    kinsoku_layout(left,"\xe4\xb9\x99",0x4e59);
+    kinsoku_layout(left,"A",0x41);
   }
 }
 static void latin_quote_spaces(void) {
@@ -377,33 +379,33 @@ static void latin_quote_spaces(void) {
 }
 static void cjk_punctuation_pair(void) {
   exr_layout_config c=config();
-  exr_document *doc=document("\xe3\x80\x82\xe3\x80\x8c","width:30px;margin:0",0);
+  exr_document *doc=document("\xe3\x80\x82\xe3\x80\x8c\xe7\x94\xb2","width:50px;margin:0",0);
   exr_layout *l=layout(doc,&c);size_t n;
   const exr_glyph *g=exr_layout_glyphs(l,&n);
   const exr_line *lines;
   scenario="two fullwidth punctuation fit in 1.5em";
-  CHECK(n==2);lines=exr_layout_lines(l,&n);CHECK(n==1);
+  CHECK(n==3);lines=exr_layout_lines(l,&n);CHECK(n==1);
   CHECK(near(g[0].advance,10) && near(g[1].advance,20));
-  CHECK(near(g[1].x-g[0].x,10) && near(lines[0].width,30));
+  CHECK(near(g[1].x-g[0].x,10) && near(lines[0].width,50));
   CHECK(near(g[0].size,20) && near(g[1].size,20));
   CHECK(near(g[0].offset_x,0) && near(g[1].offset_x,0));
   exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
 }
 static void cjk_punctuation_three(void) {
   exr_layout_config c=config();
-  exr_document *doc=document("\xe3\x80\x82\xe3\x80\x8d\xe3\x80\x8c","width:40px;margin:0",0);
+  exr_document *doc=document("\xe3\x80\x82\xe3\x80\x8d\xe3\x80\x8c\xe7\x94\xb2","width:60px;margin:0",0);
   exr_layout *l=layout(doc,&c);size_t n;
   const exr_glyph *g=exr_layout_glyphs(l,&n);const exr_line *lines;
   scenario="three punctuation save 1em without reducing below 0.5em";
-  CHECK(n==3);lines=exr_layout_lines(l,&n);CHECK(n==1);
+  CHECK(n==4);lines=exr_layout_lines(l,&n);CHECK(n==1);
   CHECK(near(g[0].advance,10) && near(g[1].advance,10) && near(g[2].advance,20));
   CHECK(near(g[1].x-g[0].x,10) && near(g[2].x-g[1].x,10));
-  CHECK(near(g[2].x+g[2].advance-g[0].x,40) && near(lines[0].width,40));
+  CHECK(near(g[2].x+g[2].advance-g[0].x,40) && near(lines[0].width,60));
   exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
 }
 static void cjk_punctuation_wrap(void) {
   exr_layout_config c=config();size_t hard;
-  scenario="punctuation across soft and hard line breaks stays fullwidth";
+  scenario="terminal pair fits one em; hard break opening uses half an em";
   for(hard=0;hard<2;hard++) {
     exr_document *doc;
     exr_layout *l;size_t n,i,found=0;
@@ -419,17 +421,18 @@ static void cjk_punctuation_wrap(void) {
     l=layout(doc,&c);
     const exr_glyph *g=exr_layout_glyphs(l,&n);const exr_line *lines;
     for(i=0;i<n;i++)if(g[i].codepoint==0x3002 || g[i].codepoint==0x300c) {
-      CHECK(near(g[i].advance,20));found++;
+      CHECK(near(g[i].advance,hard && g[i].codepoint==0x3002 ? 20:10));found++;
     }
-    CHECK(found==2);lines=exr_layout_lines(l,&n);CHECK(n==2);
-    CHECK(near(lines[0].width,20) && near(lines[1].width,20));
+    CHECK(found==2);lines=exr_layout_lines(l,&n);CHECK(n==(hard ? 2:1));
+    CHECK(near(lines[0].width,20));
+    if(hard) CHECK(near(lines[1].width,10));
     exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
   }
 }
 static void cjk_punctuation_exclusions(void) {
-  const char *texts[]={",.","\xe3\x80\x82 \xe3\x80\x8c","\xe3\x80\x82" "A\xe3\x80\x8c"};
+  const char *texts[]={",.","\xe3\x80\x82\xc2\xa0\xe3\x80\x8c","\xe3\x80\x82" "A\xe3\x80\x8c"};
   exr_layout_config c=config();size_t k;
-  scenario="ASCII punctuation and intervening spaces/text stay unchanged";
+  scenario="ASCII punctuation and intervening NBSP/text stay unchanged";
   for(k=0;k<3;k++) {
     exr_document *doc=document(texts[k],"width:100px;margin:0",0);
     exr_layout *l=layout(doc,&c);size_t n,i;const exr_glyph *g=exr_layout_glyphs(l,&n);
@@ -437,6 +440,64 @@ static void cjk_punctuation_exclusions(void) {
     exr_layout_free(l);exr_document_free(doc);
   }
 }
+
+static void cjk_justification(void) {
+  const char *text="\u7532\u7532\u7532\u7532\u7532\u7532";
+  exr_layout_config c=config();size_t mode;
+  c.page.height=120;
+  scenario="CJK spacing cap, final line, center, heading and vertical projection";
+  for(mode=0;mode<5;mode++) {
+    exr_document *doc=document(text,mode==1 ? "height:83px;margin:0;writing-mode:vertical-rl":
+      mode==2 ? "width:83px;margin:0;text-align:center":"width:83px;margin:0",0);
+    if(mode==3) { /* Heading through the public constructor. */
+      exr_document_free(doc);
+      exr_attribute attr={"style","width:83px;margin:0"};
+      exr_node_input nodes[]={{EXR_NODE_DOCUMENT,SIZE_MAX,NULL,NULL,NULL,0},
+        {EXR_NODE_CHAPTER,0,NULL,NULL,NULL,0},{EXR_NODE_HEADING,1,"h1",NULL,&attr,1},
+        {EXR_NODE_TEXT,2,NULL,text,NULL,0}};
+      exr_chapter_input ch={"heading","heading.unit",1,1};
+      exr_document_input in={"Heading",nodes,4,&ch,1,NULL,0};
+      OK(exr_document_create(&in,&doc,&error));
+    }
+    if(mode==4) { exr_document_free(doc);doc=document("\u7532\u7532","width:83px;margin:0",0); }
+    exr_layout *l=layout(doc,&c);size_t n,i;
+    const exr_line *lines=exr_layout_lines(l,&n);const exr_glyph *g=exr_layout_glyphs(l,NULL);
+    if(mode<2) {
+      CHECK(n==2);
+      CHECK(near(mode ? lines[0].height:lines[0].width,83));
+      CHECK(near(mode ? lines[1].height:lines[1].width,40));
+      for(i=0;i<3;i++) {
+        float delta=(mode ? g[i+1].baseline-g[i].baseline:g[i+1].x-g[i].x)-g[i].advance;
+        CHECK(delta>=0 && delta<=.08f*g[i].size && near(delta,1));
+      }
+      CHECK(near(mode ? g[5].baseline-g[4].baseline:g[5].x-g[4].x,20));
+    } else {
+      for(i=1;i<lines[0].glyph_count;i++) CHECK(near(g[i].x-g[i-1].x,g[i-1].advance));
+    }
+    exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+  }
+  scenario="spacing over cap tries half-em punctuation compression first";
+  exr_document *doc=document("\u7532\u3002\u7532\u7532\u7532","width:70px;margin:0",0);
+  exr_layout *l=layout(doc,&c);size_t n;const exr_line *lines=exr_layout_lines(l,&n);
+  const exr_glyph *g=exr_layout_glyphs(l,NULL);
+  CHECK(n==2 && lines[0].glyph_count==4 && near(lines[0].width,70));
+  CHECK(near(g[1].advance,10) && near(g[0].advance,20) && near(g[2].advance,20));
+  exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+  scenario="punctuation stays fullwidth when the spacing cap already suffices";
+  doc=document("\u7532\u3002\u7532\u7532\u7532","width:83px;margin:0",0);
+  l=layout(doc,&c);g=exr_layout_glyphs(l,NULL);lines=exr_layout_lines(l,&n);
+  CHECK(n==2 && lines[0].glyph_count==4 && near(g[1].advance,20));
+  CHECK(near(g[1].x-g[0].x-g[0].advance,1));
+  exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+  scenario="terminal punctuation pair owns one em and opening owns half an em";
+  doc=document("\u300c\u7532\u3002\u300d","width:100px;margin:0",0);
+  l=layout(doc,&c);g=exr_layout_glyphs(l,&n);CHECK(n==4);
+  CHECK(near(g[0].advance,10) && near(g[2].advance+g[3].advance,20));
+  CHECK(near(g[0].offset_x,-10));
+  CHECK(near(g[1].x-g[0].x,10) && near(g[3].x+g[3].advance-g[2].x,20));
+  exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+}
+
 int main(int argc, char **argv) {
   scenario = "setup"; CHECK(argc == 3);
   font = open_font(argv[1], "line-boundary.ttf");
@@ -445,7 +506,7 @@ int main(int argc, char **argv) {
   exr_font_free(font);
   font = open_font(argv[2], "cjk-punctuation.ttf");
   cjk_space_kinsoku_set();cjk_opening_space_text();
-  cjk_punctuation_pair();cjk_punctuation_three();cjk_punctuation_wrap();cjk_punctuation_exclusions();
+  cjk_justification();cjk_punctuation_pair();cjk_punctuation_three();cjk_punctuation_wrap();cjk_punctuation_exclusions();
   exr_font_free(font);
   font = open_font(argv[2], "latin-punctuation.ttf");
   latin_quote_spaces();

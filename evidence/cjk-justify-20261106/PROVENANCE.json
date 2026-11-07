@@ -1,0 +1,30 @@
+{
+  "base": "2c3aed0645a414139a1fd112ee7d9a10b377bd11",
+  "sources": {
+    "src/inline.c": "aa465ede524a39181a673b550ce05cae056effc2fbb9939bb032a3dde740c382",
+    "src/flow.c": "67537e64fb6dc7bd1fc670da61e01d53fcec6a914153ec9db3aa01c2aa042092",
+    "src/document.c": "fbe8343f903138b723582091ecb8c63138aa8cf4c04f6b1202240f9a0b070e0a",
+    "src/flow_internal.h": "2691fe7cbfc6ae49fcd569e052421ba8e09fdb73cf183b150404e41454e197fd",
+    "evidence/cjk-justify-20261106/justify_probe.c": "2e3491cb1c8f7ebb94efc3c788db2b83e462edbe024e09029edfa8087eaf5a63"
+  },
+  "artifacts": {
+    "before/libexreader.dll": "a6dc0201d888063323e268f3ae43af5e8c7fe4d9c1673c91e1e5f26663bda429",
+    "after/libexreader.dll": "cd2c37025e6f6910d5cfaf847765c8c64c4a9785390e15bd7af593c2f6e2c95f",
+    "build/libexreader.dll": "cd2c37025e6f6910d5cfaf847765c8c64c4a9785390e15bd7af593c2f6e2c95f",
+    "before-geometry.log": "4c2e1b7f37981ee5027627e91c6840fbeddf480e1d1a219debaa0ac95e79b6a4",
+    "after-geometry.log": "28de1e94668d2ae0abe336d3b556387770e58d9458b8c3f97c8b8f67d2a5250f",
+    "latin-geometry.log": "8d89496e7ded15d69a9abf03c496fa46e34fbd89c142bd600dc922188d778c69",
+    "CTEST.log": "42f260e60fc40e7806aef03ebad5d6f117d7635d1691852f1c8d4d4acf2274e8",
+    "after/justify_probe.exe": "6c3ff362afbb921f777198bf7b40e9f1d48e3b76ed18cc3d12db2cf225e3fc43",
+    "new-test-after.log": "213c3e9a149fa5fba5b67196141ff1e5c5ee45f3a6857d34b81de13d40abb4b3"
+  },
+  "inputs": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Sample.epub": "a8eca70ae5221739a2a40332f98c5d107368987425513dd47b27bd0e50118f2f",
+    "C:\\Windows\\Fonts\\arial.ttf": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033"
+  },
+  "raw_directory": "C:\\Users\\Oscar\\Documents\\Codex\\cjk-justify-20261106",
+  "process_creation": "CREATE_NO_WINDOW; offscreen window (-32000,-32000), PrintWindow; foreground observations 0"
+}
