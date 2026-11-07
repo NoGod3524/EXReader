@@ -1,0 +1,118 @@
+HOST	phase=0	engine=3.42.0	pid=7760
+STEP	1	import	PASS	page=0;status=已导入《EXReader benchmark》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+STEP	3	wait_idle	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+STEP	4	probe_wait	PASS	waited without blocking UI
+STEP	5	probe_begin	PASS	paint counters reset
+STEP	6	probe_mark	PASS	marked
+STEP	7	probe_key	PASS	page=2;status=第 2 页。
+STEP	8	probe_wait	PASS	waited without blocking UI
+STEP	9	wait_idle	PASS	page=2;status=第 2 页。
+STEP	10	probe_key	PASS	page=3;status=第 3 页。
+STEP	11	probe_wait	PASS	waited without blocking UI
+STEP	12	wait_idle	PASS	page=3;status=第 3 页。
+STEP	13	probe_key	PASS	page=4;status=第 4 页。
+STEP	14	probe_wait	PASS	waited without blocking UI
+STEP	15	wait_idle	PASS	page=4;status=第 4 页。
+STEP	16	probe_key	PASS	page=5;status=第 5 页。
+STEP	17	probe_wait	PASS	waited without blocking UI
+STEP	18	wait_idle	PASS	page=5;status=第 5 页。
+STEP	19	probe_key	PASS	page=6;status=第 6 页。
+STEP	20	probe_wait	PASS	waited without blocking UI
+STEP	21	wait_idle	PASS	page=6;status=第 6 页。
+STEP	22	probe_key	PASS	page=7;status=第 7 页。
+STEP	23	probe_wait	PASS	waited without blocking UI
+STEP	24	wait_idle	PASS	page=7;status=第 7 页。
+STEP	25	probe_key	PASS	page=8;status=第 8 页。
+STEP	26	probe_wait	PASS	waited without blocking UI
+STEP	27	wait_idle	PASS	page=8;status=第 8 页。
+STEP	28	probe_key	PASS	page=9;status=第 9 页。
+STEP	29	probe_wait	PASS	waited without blocking UI
+STEP	30	wait_idle	PASS	page=9;status=第 9 页。
+STEP	31	probe_key	PASS	page=10;status=第 10 页。
+STEP	32	probe_wait	PASS	waited without blocking UI
+STEP	33	wait_idle	PASS	page=10;status=第 10 页。
+STEP	34	probe_key	PASS	page=11;status=第 11 页。
+STEP	35	probe_wait	PASS	waited without blocking UI
+STEP	36	wait_idle	PASS	page=11;status=第 11 页。
+STEP	37	probe_key	PASS	page=12;status=第 12 页。
+STEP	38	probe_wait	PASS	waited without blocking UI
+STEP	39	wait_idle	PASS	page=12;status=第 12 页。
+STEP	40	probe_key	PASS	page=13;status=第 13 页。
+STEP	41	probe_wait	PASS	waited without blocking UI
+STEP	42	wait_idle	PASS	page=13;status=第 13 页。
+STEP	43	probe_key	PASS	page=14;status=第 14 页。
+STEP	44	probe_wait	PASS	waited without blocking UI
+STEP	45	wait_idle	PASS	page=14;status=第 14 页。
+STEP	46	probe_key	PASS	page=15;status=第 15 页。
+STEP	47	probe_wait	PASS	waited without blocking UI
+STEP	48	wait_idle	PASS	page=15;status=第 15 页。
+STEP	49	probe_key	PASS	page=16;status=第 16 页。
+STEP	50	probe_wait	PASS	waited without blocking UI
+STEP	51	wait_idle	PASS	page=16;status=第 16 页。
+STEP	52	probe_key	PASS	page=17;status=第 17 页。
+STEP	53	probe_wait	PASS	waited without blocking UI
+STEP	54	wait_idle	PASS	page=17;status=第 17 页。
+STEP	55	probe_key	PASS	page=18;status=第 18 页。
+STEP	56	probe_wait	PASS	waited without blocking UI
+STEP	57	wait_idle	PASS	page=18;status=第 18 页。
+STEP	58	probe_key	PASS	page=19;status=第 19 页。
+STEP	59	probe_wait	PASS	waited without blocking UI
+STEP	60	wait_idle	PASS	page=19;status=第 19 页。
+STEP	61	probe_key	PASS	page=20;status=第 20 页。
+STEP	62	probe_wait	PASS	waited without blocking UI
+STEP	63	wait_idle	PASS	page=20;status=第 20 页。
+STEP	64	probe_key	PASS	page=21;status=第 21 页。
+STEP	65	probe_wait	PASS	waited without blocking UI
+STEP	66	wait_idle	PASS	page=21;status=第 21 页。
+STEP	67	probe_mark	PASS	marked
+STEP	68	probe_mark	PASS	marked
+STEP	69	probe_move	PASS	page=20;status=第 20 页。
+STEP	70	wait_idle	PASS	page=20;status=第 20 页。
+STEP	71	probe_move	PASS	page=21;status=第 21 页。
+STEP	72	wait_idle	PASS	page=21;status=第 21 页。
+STEP	73	probe_move	PASS	page=20;status=第 20 页。
+STEP	74	wait_idle	PASS	page=20;status=第 20 页。
+STEP	75	probe_move	PASS	page=21;status=第 21 页。
+STEP	76	wait_idle	PASS	page=21;status=第 21 页。
+STEP	77	probe_move	PASS	page=20;status=第 20 页。
+STEP	78	wait_idle	PASS	page=20;status=第 20 页。
+STEP	79	probe_move	PASS	page=21;status=第 21 页。
+STEP	80	wait_idle	PASS	page=21;status=第 21 页。
+STEP	81	probe_move	PASS	page=20;status=第 20 页。
+STEP	82	wait_idle	PASS	page=20;status=第 20 页。
+STEP	83	probe_move	PASS	page=21;status=第 21 页。
+STEP	84	wait_idle	PASS	page=21;status=第 21 页。
+STEP	85	probe_move	PASS	page=20;status=第 20 页。
+STEP	86	wait_idle	PASS	page=20;status=第 20 页。
+STEP	87	probe_move	PASS	page=21;status=第 21 页。
+STEP	88	wait_idle	PASS	page=21;status=第 21 页。
+STEP	89	probe_move	PASS	page=20;status=第 20 页。
+STEP	90	wait_idle	PASS	page=20;status=第 20 页。
+STEP	91	probe_move	PASS	page=21;status=第 21 页。
+STEP	92	wait_idle	PASS	page=21;status=第 21 页。
+STEP	93	probe_move	PASS	page=20;status=第 20 页。
+STEP	94	wait_idle	PASS	page=20;status=第 20 页。
+STEP	95	probe_move	PASS	page=21;status=第 21 页。
+STEP	96	wait_idle	PASS	page=21;status=第 21 页。
+STEP	97	probe_move	PASS	page=20;status=第 20 页。
+STEP	98	wait_idle	PASS	page=20;status=第 20 页。
+STEP	99	probe_move	PASS	page=21;status=第 21 页。
+STEP	100	wait_idle	PASS	page=21;status=第 21 页。
+STEP	101	probe_move	PASS	page=20;status=第 20 页。
+STEP	102	wait_idle	PASS	page=20;status=第 20 页。
+STEP	103	probe_move	PASS	page=21;status=第 21 页。
+STEP	104	wait_idle	PASS	page=21;status=第 21 页。
+STEP	105	probe_move	PASS	page=20;status=第 20 页。
+STEP	106	wait_idle	PASS	page=20;status=第 20 页。
+STEP	107	probe_move	PASS	page=21;status=第 21 页。
+STEP	108	wait_idle	PASS	page=21;status=第 21 页。
+STEP	109	probe_mark	PASS	marked
+STEP	110	probe_mark	PASS	marked
+STEP	111	probe_wheel_burst	PASS	page=121;status=第 121 页。
+STEP	112	wait_idle	PASS	page=121;status=第 121 页。
+STEP	113	probe_wait	PASS	waited without blocking UI
+STEP	114	probe_mark	PASS	marked
+STEP	115	probe_end	PASS	paint counters recorded
+STEP	116	quit	PASS	closing
+DONE	116	eof	PASS	script finished

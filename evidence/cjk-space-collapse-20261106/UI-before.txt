@@ -1,0 +1,15 @@
+HOST	phase=1	engine=3.42.0	pid=7008
+STEP	1	open	PASS	page=1;status=已打开《紅樓夢》 · 进度锚点未匹配，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	2	wait_idle	PASS	page=1;status=已打开《紅樓夢》 · 进度锚点未匹配，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	3	shell	PASS	reading screen
+STEP	4	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	5	shell_font	PASS	page=1;status=第 1 页。
+STEP	6	shell_client	PASS	page=1;status=第 1 页。
+STEP	7	wait_idle	PASS	page=1;status=第 1 页。
+STEP	8	shell_click	PASS	button invoked
+STEP	9	ui_cues	PASS	focus cues set
+STEP	10	shell_measure	PASS	physical layout captured
+SHOT	11	clear-text-before-1280	PASS	file=clear-text-before-1280;nonzero=1
+STEP	11	snapshot	PASS	screenshot written
+STEP	12	quit	PASS	closing
+DONE	12	eof	PASS	script finished

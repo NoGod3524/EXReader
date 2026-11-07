@@ -41,6 +41,7 @@ typedef struct {
   exr_bidi *analysis;
   size_t *offsets, count;
   size_t first_node;
+  int cjk; /* Paragraph contains ideographs; shared by streaming line emission. */
   int plan_risky,prepared,window_safe; /* -1 unknown; safety cache belongs to this cursor. */
   size_t *refs;
 } exr_inline_bidi;
@@ -108,6 +109,9 @@ typedef struct {
   double measure_width, measure_trailing;
   exr_glyph measure_last;
   int measure_has_last;
+  size_t measure_punctuation_count;
+  double measure_punctuation_width;
+  float measure_punctuation_em;
   exr_hyphen_word *word;
   size_t word_node,word_start,previous_node;
   uint32_t previous_scalar;
@@ -121,6 +125,8 @@ exr_status exr_inline_auto_stable(flow *f,exr_line_buffer *buffer,size_t node,si
 size_t exr_inline_paragraph_end(flow *f,size_t node,size_t offset);
 unsigned exr_inline_level(const exr_inline_bidi *bidi, size_t offset);
 unsigned exr_inline_base(const exr_inline_bidi *bidi, size_t offset);
+int exr_inline_punctuation(uint32_t cp);
+int exr_inline_cjk_gap(const exr_glyph *a,const exr_glyph *b);
 exr_status exr_inline_reorder(flow *f, exr_glyph *glyphs, size_t count);
 exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t after);
 exr_status exr_inline_feed(flow *f, exr_line_buffer *buffer, exr_glyph glyph);

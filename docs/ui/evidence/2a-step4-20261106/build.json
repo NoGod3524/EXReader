@@ -1,0 +1,32 @@
+{
+  "baseline": "7b20c5a0",
+  "sdk_source": "e3dc60998a72b7987462d43536755d8fde188623",
+  "sdk_src_include_diff_from_baseline": [],
+  "sdk_cache": [
+    "CMAKE_C_FLAGS_RELEASE:STRING=-O3 -DNDEBUG",
+    "EXR_BUILD_SHARED_COMPAT:BOOL=ON",
+    "EXR_ENABLE_AAC:BOOL=OFF",
+    "EXR_ENABLE_AUDIO:BOOL=ON",
+    "EXR_ENABLE_ICC:BOOL=OFF",
+    "EXR_ENABLE_IMAGE_AVIF:BOOL=OFF",
+    "EXR_ENABLE_IMAGE_TIFF:BOOL=OFF",
+    "EXR_ENABLE_IMAGE_WEBP:BOOL=OFF",
+    "EXR_ENABLE_LIBRARY:BOOL=ON",
+    "EXR_ENABLE_MP3:BOOL=OFF",
+    "EXR_ENABLE_PDF:BOOL=ON",
+    "EXR_ENABLE_PDF_CRYPTO:BOOL=OFF",
+    "EXR_ENABLE_PDF_EDIT:BOOL=ON",
+    "EXR_ENABLE_PDF_JPX:BOOL=ON",
+    "EXR_ENABLE_TEXT_INDEX:BOOL=ON"
+  ],
+  "host_generator": "MinGW Makefiles",
+  "host_options": {
+    "CMAKE_BUILD_TYPE": "Release",
+    "EXR_READER_WINDOWS_SHELL": "ON",
+    "CMAKE_C_STANDARD_LIBRARIES": "-luiautomationcore -lole32 -loleaut32 -luuid -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -ladvapi32 -lcomdlg32",
+    "CMAKE_CXX_STANDARD_LIBRARIES": "-luiautomationcore -lole32 -loleaut32 -luuid -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -ladvapi32 -lcomdlg32"
+  },
+  "host_launch_creationflags": "CREATE_NO_WINDOW",
+  "priority": "inherited normal",
+  "affinity": "not changed"
+}

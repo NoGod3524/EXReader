@@ -1,0 +1,32 @@
+{
+  "base": "c665d1cb1c0b681d4365f732acf775167bfa6d33",
+  "raw_directory": "C:\\Users\\Oscar\\Documents\\Codex\\cjk-space-collapse-20261106",
+  "sha256": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\src\\document.c": "88b0cc6df27c1a8d8b07b22db1205d1f0a1f57392b4e9bafb270b6601bf38d3a",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\src\\chapter_index.c": "ce6fba9149558b66dfe47da1334842625cb75d135e91faa51ac0c0b7c2e47621",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\src\\document_internal.h": "3f16fecd562c19a6f54c43f215b63848e0af68001ad326e35415524cf073524d",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\tests\\test_construct.c": "2a3651e15b041b70aa35b40848fa2b5d46e2eb6c9bedb29715a60f865480673c",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\tests\\test_chapter_index.c": "24b1dae6b618a4cbf3664def7fca2dda642cb19d6e0d97d84717043e203fedaf",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\tests\\test_chapter_window.c": "5f4286bac2d3b8b49f2b17f4d3a8d8b769df9170fc8f09b208b7e7d0a567d33d",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\tests\\test_line_boundary.c": "b46e6634980ba3107de6e7a27a6b3dbd7af632f0c93d22384f276f6e95be465a",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\tools\\probes\\cjk_measure.c": "00648fc19288af3c8b873964eefab22400e9ab66b2e3baae216e485cfdae4496",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Sample.epub": "a8eca70ae5221739a2a40332f98c5d107368987425513dd47b27bd0e50118f2f",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "C:\\Windows\\Fonts\\arial.ttf": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-space-collapse-20261106\\before\\libexreader.dll": "482d532fbb6cda461fd5ce1611b464c4ab263174f15dd25da677c5cb5871bc46",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-space-collapse-20261106\\before\\sample_probe.exe": "f0323e2f80cc8577e3bb3356f1696a4148ec8dc2048a933067b666cfea20f111",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-space-collapse-20261106\\before\\cjk_measure.exe": "7aebcbec7b8a42e30c831b947175d0028889d934f1d611b809981abd726bc941",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-space-collapse-20261106\\before\\space_probe.exe": "b9fa950965b52ed8f76733df900ed61714b3645754641c3cdd0f03a432be735f",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-space-collapse-20261106\\after\\libexreader.dll": "dd1c619296cf8e7c08dad5f7d830925de9d73ce666269f34dfe7c5442e330587",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-space-collapse-20261106\\after\\sample_probe.exe": "f0323e2f80cc8577e3bb3356f1696a4148ec8dc2048a933067b666cfea20f111",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-space-collapse-20261106\\after\\cjk_measure.exe": "7aebcbec7b8a42e30c831b947175d0028889d934f1d611b809981abd726bc941",
+    "C:\\Users\\Oscar\\Documents\\Codex\\cjk-space-collapse-20261106\\after\\space_probe.exe": "b9fa950965b52ed8f76733df900ed61714b3645754641c3cdd0f03a432be735f",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\docs\\ui\\evidence\\2a-step5-art\\clear-text-after-1280.json": "8330246287c0b76b4c9965f2fee96989bc2ea6e09df4d2ab87ddf181b49d20e3",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\docs\\ui\\evidence\\2a-step5-art\\clear-text-after-1280.png": "ebdb98877787b0d53640778311446cd1b78b697ff9a4b45dc9c07c399893eb65",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\docs\\ui\\evidence\\2a-step5-art\\clear-text-before-1280.json": "a3f5a0fb7e68140fba201dbc3f22c995e7177ce051dcd3490dc5f2ba7c4eca16",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-cjk-hostfix-20261106\\docs\\ui\\evidence\\2a-step5-art\\clear-text-before-1280.png": "9f4dcafe03971e3704427f8923215df771426c0516901b84a8ec9d3f33602270"
+  },
+  "manual_ci_runs": 0,
+  "workflow_runs_cancelled": 0
+}
