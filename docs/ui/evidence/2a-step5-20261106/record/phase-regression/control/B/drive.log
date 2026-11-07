@@ -1,0 +1,48 @@
+HOST	phase=1	engine=3.42.0	pid=6172
+STEP	1	wait_idle	PASS	page=4;status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STATE	2	restored	PASS	book_id=1;page=3;page_count=0;font=150;zoom=100;offset=1296;page_text_len=429;range_len=429;notes=1;selected_id=1;selection_active=0;page_text_fnv=9743986358984313965;page_hash_len=429;bounded=1;part=0;generation=1;progress_record_preserved=1;part_path=OPS/c0.xhtml;book_bytes=3361;index_bytes=145233;parse_workspace_bytes=402013;peak_parse_workspace_bytes=810751;projection_bytes=163840;page_cache_bytes=145920;checkpoint_bytes=0;explicit_snapshot_bytes=0;windows_loaded=1;windows_evicted=0;owned_frame_text_geometry_bytes=56202;bitmap_bytes=2995200;dib_bytes=2995200;state=restored;title=EXReader benchmark;kind=reflow;page_text=with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeata;offset_text=with a small open C engine. Each chapter has repeatable words an;status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+SHELF	2	restored	PASS	title=Pages;author=;id=2;format=8
+SHELF	2	restored	PASS	title=EXReader benchmark;author=;id=1;format=4
+NOTE	2	restored	PASS	id=1;kind=reflow;storage=epub_notes;path=OPS/c0.xhtml;part=0;page=0;quote=Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable ;comment=Updated automated note
+STEP	2	state	PASS	state captured
+STEP	3	check	PASS	count=2;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	4	check	PASS	title=EXReader benchmark;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	5	check	FAIL	page=4;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	6	check	PASS	count=1;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	7	check	PASS	needle=恢复;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+SHOT	8	10-restored	PASS	file=10-restored;nonzero=1
+STEP	8	snapshot	PASS	screenshot written
+STEP	9	note_select	PASS	note selected
+STEP	10	jump_note	PASS	page=1;status=已跳转到标注位置（第 1 页），并高亮原文。
+STEP	11	check	PASS	active=1;window_status=已跳转到标注位置（第 1 页），并高亮原文。
+STEP	12	check	PASS	needle=标注;window_status=已跳转到标注位置（第 1 页），并高亮原文。
+STEP	13	next	PASS	page=2;status=第 2 页。
+STEP	14	next	PASS	page=3;status=第 3 页。
+STEP	15	check	PASS	page=3;page_count=0;kind=reflow;window_status=第 3 页。
+STATE	16	note_jump_restored	PASS	book_id=1;page=2;page_count=0;font=150;zoom=100;offset=864;page_text_len=432;range_len=432;notes=1;selected_id=1;selection_active=0;page_text_fnv=13491862939499587412;page_hash_len=432;bounded=1;part=0;generation=4;progress_record_preserved=0;part_path=OPS/c0.xhtml;book_bytes=3361;index_bytes=145233;parse_workspace_bytes=402013;peak_parse_workspace_bytes=810751;projection_bytes=163840;page_cache_bytes=145920;checkpoint_bytes=0;explicit_snapshot_bytes=0;windows_loaded=1;windows_evicted=0;owned_frame_text_geometry_bytes=56595;bitmap_bytes=2995200;dib_bytes=2995200;state=note_jump_restored;title=EXReader benchmark;kind=reflow;page_text=Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pag;offset_text=Each chapter has repeatable words and measurable pages. Reading ;status=第 3 页。
+SHELF	16	note_jump_restored	PASS	title=Pages;author=;id=2;format=8
+SHELF	16	note_jump_restored	PASS	title=EXReader benchmark;author=;id=1;format=4
+NOTE	16	note_jump_restored	PASS	id=1;kind=reflow;storage=epub_notes;path=OPS/c0.xhtml;part=0;page=0;quote=Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable ;comment=Updated automated note
+STEP	16	state	PASS	state captured
+STEP	17	open	PASS	page=4;status=已打开《Pages》。
+STEP	18	check	PASS	title=Pages;window_status=已打开《Pages》。
+STEP	19	check	PASS	page=4;page_count=4;kind=fixed;window_status=已打开《Pages》。
+STEP	20	check	PASS	count=0;window_status=已打开《Pages》。
+STATE	21	pdf_restored	PASS	book_id=2;page=3;page_count=4;font=150;zoom=100;offset=0;page_text_len=108;range_len=108;notes=0;selected_id=2;selection_active=0;page_text_fnv=3342448571919096357;page_hash_len=108;bounded=0;part=0;generation=5;progress_record_preserved=0;state=pdf_restored;title=Pages;kind=fixed;page_text=Page 4: Windows host acceptance text on a renderable PDF page.Second line for selection and notes on page 4.;offset_text=Page 4: Windows host acceptance text on a renderable PDF page.Se;status=已打开《Pages》。
+SHELF	21	pdf_restored	PASS	title=Pages;author=;id=2;format=8
+SHELF	21	pdf_restored	PASS	title=EXReader benchmark;author=;id=1;format=4
+STEP	21	state	PASS	state captured
+STEP	22	open	PASS	page=3;status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	23	check	PASS	page=3;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	24	check	PASS	count=1;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	25	font_inc	PASS	page=3;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	26	check	PASS	font=160;window_status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STATE	27	before_restart_font	PASS	book_id=1;page=2;page_count=0;font=160;zoom=100;offset=805;page_text_len=404;range_len=404;notes=1;selected_id=1;selection_active=0;page_text_fnv=148852820158303709;page_hash_len=404;bounded=1;part=0;generation=7;progress_record_preserved=1;part_path=OPS/c0.xhtml;book_bytes=3361;index_bytes=145233;parse_workspace_bytes=402013;peak_parse_workspace_bytes=810751;projection_bytes=163840;page_cache_bytes=145920;checkpoint_bytes=0;explicit_snapshot_bytes=0;windows_loaded=1;windows_evicted=0;owned_frame_text_geometry_bytes=52927;bitmap_bytes=2995200;dib_bytes=2995200;state=before_restart_font;title=EXReader benchmark;kind=reflow;page_text=Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C e;offset_text=Reading a portable book starts with a small open C engine. Each ;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+SHELF	27	before_restart_font	PASS	title=Pages;author=;id=2;format=8
+SHELF	27	before_restart_font	PASS	title=EXReader benchmark;author=;id=1;format=4
+NOTE	27	before_restart_font	PASS	id=1;kind=reflow;storage=epub_notes;path=OPS/c0.xhtml;part=0;page=0;quote=Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable ;comment=Updated automated note
+STEP	27	state	PASS	state captured
+SHOT	28	11-font-changed	PASS	file=11-font-changed;nonzero=1
+STEP	28	snapshot	PASS	screenshot written
+STEP	29	quit	PASS	closing
+DONE	29	eof	FAIL	script finished

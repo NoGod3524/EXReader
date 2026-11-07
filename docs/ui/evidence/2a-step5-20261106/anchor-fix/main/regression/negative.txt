@@ -1,0 +1,10 @@
+  A/00.png 120x90 diffpx 0 client_diffpx 0
+  A/01.png 120x90 diffpx 1 client_diffpx 1
+  A/02.png 120x90 diffpx 1 client_diffpx 0
+  A/03.png 120x90 diffpx 0 client_diffpx 0
+  A/04.png 120x90 diffpx 0 client_diffpx 0
+  B/10.png 120x90 diffpx 0 client_diffpx 0
+  B/11.png 120x90 diffpx 0 client_diffpx 0
+  C/20.png 120x90 diffpx 0 client_diffpx 0
+  images=8 nonzero=1 (client area, rows >= 38)
+self-test: client RGB change (1 px, alpha same) reported, title-bar change ignored: PASS

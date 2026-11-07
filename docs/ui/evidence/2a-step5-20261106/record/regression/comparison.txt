@@ -1,0 +1,18 @@
+control A/01.png 1180x900 diffpx 0 client_diffpx 0
+control A/02.png 1180x900 diffpx 0 client_diffpx 0
+control A/03.png 1180x900 diffpx 0 client_diffpx 0
+control A/04.png 1180x900 diffpx 0 client_diffpx 0
+control A/05.png 1180x900 diffpx 0 client_diffpx 0
+control B/10.png 1180x900 diffpx 0 client_diffpx 0
+control B/11.png 1180x900 diffpx 0 client_diffpx 0
+control C/20.png 1180x900 diffpx 0 client_diffpx 0
+control images=8 nonzero=0 (client area, rows >= 38)
+changed A/01.png 1180x900 diffpx 0 client_diffpx 0
+changed A/02.png 1180x900 diffpx 0 client_diffpx 0
+changed A/03.png 1180x900 diffpx 0 client_diffpx 0
+changed A/04.png 1180x900 diffpx 0 client_diffpx 0
+changed A/05.png 1180x900 diffpx 0 client_diffpx 0
+changed B/10.png 1180x900 diffpx 0 client_diffpx 0
+changed B/11.png 1180x900 diffpx 0 client_diffpx 0
+changed C/20.png 1180x900 diffpx 0 client_diffpx 0
+changed images=8 nonzero=0 (client area, rows >= 38)

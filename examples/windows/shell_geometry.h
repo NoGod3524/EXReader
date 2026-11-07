@@ -13,14 +13,13 @@ static inline int shell_px(float dip, unsigned dpi) { return (int)floorf(dip * d
 static inline shell_geometry shell_geometry_for(int w, int h, unsigned dpi, float font, int vertical) {
   shell_geometry out = {0};
   int top = shell_px(SHELL_TOPBAR_H + SHELL_BODY_TOP, dpi);
-  int bottom = h - shell_px(SHELL_BODY_BOTTOM + SHELL_PAGE_NUMBER_H + SHELL_BODY_GAP, dpi);
+  int bottom = h - shell_px(SHELL_PAGE_NUMBER_H + SHELL_BODY_GAP, dpi);
   int available = w - 2 * shell_px(SHELL_SPACE_5, dpi);
   out.enabled = w > 0 && bottom > top && available > 0;
   out.dpi = dpi; out.font = font; out.vertical = vertical;
   out.width = (int)fminf((float)available, (float)shell_px(SHELL_BODY_MAX_EM * font, dpi));
   out.height = bottom - top;
-  if (vertical) out.height = (int)fminf((float)(h - shell_px(SHELL_TOPBAR_H + 2 * SHELL_SPACE_5 + SHELL_PAGE_NUMBER_H + SHELL_BODY_BOTTOM, dpi)),
-                                      (float)shell_px(SHELL_BODY_MAX_EM * font, dpi));
+  if (vertical) out.height = (int)fminf((float)out.height, (float)shell_px(SHELL_BODY_MAX_EM * font, dpi));
   if (out.height <= 0) out.enabled = 0;
   return out;
 }
