@@ -377,8 +377,9 @@ int exr_projection_cjk(uint32_t cp) {
          (cp >= 0xf900 && cp <= 0xfaff) || (cp >= 0x20000 && cp <= 0x2ee5f) ||
          (cp >= 0x2f800 && cp <= 0x2fa1f) || (cp >= 0x30000 && cp <= 0x3347f) ||
          (cp >= 0x3000 && cp <= 0x303f) || (cp >= 0xfe10 && cp <= 0xfe1f) ||
-         (cp >= 0xfe30 && cp <= 0xfe4f) || (cp >= 0xff01 && cp <= 0xff60) ||
-         (cp >= 0xffe0 && cp <= 0xffe6);
+         (cp >= 0xfe30 && cp <= 0xfe4f) || (cp >= 0xff00 && cp <= 0xffef) ||
+         (cp >= 0x2018 && cp <= 0x201d) || cp == 0x2026 ||
+         cp == 0x2014 || cp == 0x2015 || cp == 0x00b7;
 }
 static void end_block(projection *p) {
   p->block = SIZE_MAX;
