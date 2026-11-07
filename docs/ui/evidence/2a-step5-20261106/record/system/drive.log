@@ -1,0 +1,10 @@
+HOST	phase=1	engine=3.42.0	pid=25888
+STEP	1	open	PASS	page=250;status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	2	wait_idle	PASS	page=250;status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	3	shell	PASS	reading screen
+STEP	4	shell_click	PASS	button invoked
+STEP	5	settings_measure	PASS	settings captured
+SHOT	6	system	PASS	file=system;nonzero=1
+STEP	6	snapshot	PASS	screenshot written
+STEP	7	quit	PASS	closing
+DONE	7	eof	PASS	script finished
