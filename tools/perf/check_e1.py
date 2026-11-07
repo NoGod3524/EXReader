@@ -42,12 +42,12 @@ def check():
         report = json.loads((directory / 'samples.json').read_text(encoding='utf-8'))
         budgets = json.loads((directory / 'proposed-budgets.json').read_text(encoding='utf-8'))
         manifest = json.loads((directory / 'manifest.json').read_text(encoding='utf-8'))
-        assert all(sha(directory / name) == digest for name, digest in manifest.items()), 'Custody hash mismatch'
+        assert all(sha(directory / name.replace('\\', '/')) == digest for name, digest in manifest.items()), 'Custody hash mismatch'
         for name, group in report['groups'].items():
             for batch in group['batches']:
                 for trial in batch['trials']:
                     if 'metrics' in trial:
-                        observed = json.loads((directory / trial['stdout']).read_text(encoding='utf-8'))
+                        observed = json.loads((directory / trial['stdout'].replace('\\', '/')).read_text(encoding='utf-8'))
                         assert metrics(observed) == trial['metrics']
                 assert summarize(batch['trials']) == batch['summary']
             assert group['final'] == group['batches'][-1]['summary']

@@ -244,9 +244,10 @@ def derive_budget(env, report, sample_hash):
     groups = report['groups']
     return {'schema': 1, 'advisory': True, 'accepted': False, 'status': 'proposal_only',
             'comparison_key': env['comparison_key'], 'source_sha': env['source_sha'],
-            'binary_sha256': env['identities'][str(Path(report['binary']).resolve())],
+            'binary_sha256': env['identities'][report['binary']],
             'font_sha256': report['font_sha256'], 'input_sha256': report['input_sha256'],
-            'samples_sha256': sample_hash, 'exporter_sha256': env['identities'][str(Path(__file__).resolve())],
+            'samples_sha256': sample_hash, 'exporter_sha256': next(digest for path, digest in env['identities'].items()
+                if path.replace('\\', '/').endswith('/tools/perf/e1_capture.py')),
             'method': 'nearest-rank p95 across final predeclared complete batch; latency ceil(p95*1.25*1000)/1000 ms; RSS ceil(p95*1.05)+1048576 bytes',
             'eligible': report['measurement_valid'] and all(g['final']['stable'] for g in groups.values()),
             'limits': {name: {key: math.ceil(s['p95'] * 1.05) + 1048576 if key.endswith('_bytes')
