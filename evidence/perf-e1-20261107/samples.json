@@ -1,0 +1,196 @@
+{
+  "schema": 1,
+  "kind": "campaign_index",
+  "advisory": true,
+  "accepted": false,
+  "primary": "normalized/samples.json",
+  "selected_three_per_configuration": [
+    {
+      "configuration": "default-release",
+      "run": 1,
+      "metrics": {
+        "open_ms": 14.222,
+        "first_visible_ms": 34.9613,
+        "peak_rss_bytes": 38645760,
+        "first_render_ms": 3.5001,
+        "turn_p50_ms": 5.52,
+        "turn_p95_ms": 8.1701,
+        "turn_max_ms": 8.5905,
+        "random_p95_ms": 70.6437
+      },
+      "raw": "normalized/raw\\default-release-b3-r1.json",
+      "sha256": "952637b1cd2af6a7bb59425efdede6d0c1a285be550f1affc6b9ed55e65d34be"
+    },
+    {
+      "configuration": "default-release",
+      "run": 2,
+      "metrics": {
+        "open_ms": 14.575,
+        "first_visible_ms": 39.9614,
+        "peak_rss_bytes": 38641664,
+        "first_render_ms": 3.6794,
+        "turn_p50_ms": 5.7611,
+        "turn_p95_ms": 8.4507,
+        "turn_max_ms": 8.9181,
+        "random_p95_ms": 75.7394
+      },
+      "raw": "normalized/raw\\default-release-b3-r2.json",
+      "sha256": "e803c5bebeff9c100dd08865aa47499231500558b7c9a681a92fda50e50addbd"
+    },
+    {
+      "configuration": "default-release",
+      "run": 3,
+      "metrics": {
+        "open_ms": 14.9116,
+        "first_visible_ms": 40.2203,
+        "peak_rss_bytes": 38666240,
+        "first_render_ms": 3.4872,
+        "turn_p50_ms": 5.6054,
+        "turn_p95_ms": 8.466,
+        "turn_max_ms": 9.4708,
+        "random_p95_ms": 72.3923
+      },
+      "raw": "normalized/raw\\default-release-b3-r3.json",
+      "sha256": "6cfd873376b7c6e3d65aba2efa1567a9605760b761bde36a0fca4ec0cba72ac8"
+    },
+    {
+      "configuration": "1280x800",
+      "run": 1,
+      "metrics": {
+        "open_ms": 14.9068,
+        "first_visible_ms": 37.5314,
+        "peak_rss_bytes": 38662144,
+        "first_render_ms": 4.6289,
+        "turn_p50_ms": 7.215,
+        "turn_p95_ms": 10.1745,
+        "turn_max_ms": 10.2982,
+        "random_p95_ms": 84.1649
+      },
+      "raw": "normalized/raw\\1280x800-b1-r1.json",
+      "sha256": "3f84b7978598442aa99b0ca1a2f28654b1104e7a4fb63c716bb92e5b7c80fd08"
+    },
+    {
+      "configuration": "1280x800",
+      "run": 2,
+      "metrics": {
+        "open_ms": 14.8649,
+        "first_visible_ms": 38.3585,
+        "peak_rss_bytes": 38637568,
+        "first_render_ms": 4.8845,
+        "turn_p50_ms": 7.374,
+        "turn_p95_ms": 10.4923,
+        "turn_max_ms": 10.6639,
+        "random_p95_ms": 81.7316
+      },
+      "raw": "normalized/raw\\1280x800-b1-r2.json",
+      "sha256": "6661c0dcc9942434eabd8f019a012a2b4e7c51a9b1420aa61fc4de8467e3aab6"
+    },
+    {
+      "configuration": "1280x800",
+      "run": 3,
+      "metrics": {
+        "open_ms": 13.981,
+        "first_visible_ms": 35.5653,
+        "peak_rss_bytes": 38662144,
+        "first_render_ms": 4.7222,
+        "turn_p50_ms": 6.824,
+        "turn_p95_ms": 9.8969,
+        "turn_max_ms": 9.9188,
+        "random_p95_ms": 79.0599
+      },
+      "raw": "normalized/raw\\1280x800-b1-r3.json",
+      "sha256": "4b115dc57dc32b7024ecf2f690f307c3de19fd7a96fcf7650e66adeab5555083"
+    },
+    {
+      "configuration": "2560x1440",
+      "run": 1,
+      "metrics": {
+        "open_ms": 14.0467,
+        "first_visible_ms": 55.3857,
+        "peak_rss_bytes": 41705472,
+        "first_render_ms": 15.0584,
+        "turn_p50_ms": 24.2234,
+        "turn_p95_ms": 27.3604,
+        "turn_max_ms": 27.6277,
+        "random_p95_ms": 255.4861
+      },
+      "raw": "normalized/raw\\2560x1440-b3-r1.json",
+      "sha256": "358a27c6ef17664ffdf6a3c1be5b395d52b587f67a5ad73d75cbd93cdfc43e0b"
+    },
+    {
+      "configuration": "2560x1440",
+      "run": 2,
+      "metrics": {
+        "open_ms": 13.9469,
+        "first_visible_ms": 57.5631,
+        "peak_rss_bytes": 41660416,
+        "first_render_ms": 15.001,
+        "turn_p50_ms": 25.5332,
+        "turn_p95_ms": 28.5413,
+        "turn_max_ms": 28.7639,
+        "random_p95_ms": 253.8908
+      },
+      "raw": "normalized/raw\\2560x1440-b3-r2.json",
+      "sha256": "8f873d7872eff83a93af1906c41f27268153060661e34daabd90985cfa491afc"
+    },
+    {
+      "configuration": "2560x1440",
+      "run": 3,
+      "metrics": {
+        "open_ms": 13.7592,
+        "first_visible_ms": 53.4654,
+        "peak_rss_bytes": 41742336,
+        "first_render_ms": 14.8649,
+        "turn_p50_ms": 25.0657,
+        "turn_p95_ms": 28.4295,
+        "turn_max_ms": 28.628,
+        "random_p95_ms": 255.1553
+      },
+      "raw": "normalized/raw\\2560x1440-b3-r3.json",
+      "sha256": "390ec4183c334ae0bac87baa497b4657fa4082e2abdb0b93a050861baddfed59"
+    }
+  ],
+  "captures": {
+    "baseline": {
+      "samples": "baseline/samples.json",
+      "sha256": "cc01971142bd634c3c6c5f32045cecf6cf116a87f50b9561fed0f7a03302f6c3",
+      "processes": 27
+    },
+    "normalized": {
+      "samples": "normalized/samples.json",
+      "sha256": "1a368ecc7475de294ed917a4dd7320f681ae2f0ef8b96d7d156a27d3d4937afa",
+      "processes": 21
+    },
+    "candidate": {
+      "samples": "candidate/samples.json",
+      "sha256": "016720a11265ab4b7591c6b4ee7bd42d642397bb2bfa86d4cfe8d2731756ed38",
+      "processes": 15
+    }
+  },
+  "strict_verification": {
+    "schema": 1,
+    "advisory": true,
+    "accepted": false,
+    "verified_at": "2026-11-07T09:58:17.692585+00:00",
+    "scope": "strict local numeric, provenance, deterministic signature and stability audit; not E3 restoration",
+    "baseline_samples_sha256": "1a368ecc7475de294ed917a4dd7320f681ae2f0ef8b96d7d156a27d3d4937afa",
+    "candidate_samples_sha256": "016720a11265ab4b7591c6b4ee7bd42d642397bb2bfa86d4cfe8d2731756ed38",
+    "frozen_budget_sha256": "4c03a094bc7486b973b02f49535870394a8be8b6c52710db598be0951bddb811",
+    "verifier_sha256": "fe1114a3af60909955ed555059057fa560cddf221ddaa0563662c02197455d60",
+    "independent_processes_checked": 15,
+    "problems": [
+      "baseline proposal is ineligible: dispersion or measurement failure",
+      "candidate final batch dispersion >=10%: default-release"
+    ],
+    "numeric_violations": [],
+    "numeric_within_limits": true,
+    "strict_local_pass": false,
+    "e3_restoration_granted": false
+  },
+  "proposed_budget_sha256": "4c03a094bc7486b973b02f49535870394a8be8b6c52710db598be0951bddb811",
+  "advisory_capture": {
+    "samples": "advisory-check/samples.json",
+    "sha256": "c2794f7b23ec95d3000f19805b5f8adb74063e2e308f08972836df57ba66b45b",
+    "processes": 40
+  }
+}
