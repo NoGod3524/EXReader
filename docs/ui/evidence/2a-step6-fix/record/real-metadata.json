@@ -1,0 +1,72 @@
+{
+  "parent_commit": "179a429a5c1715789f24f8917bd785adbe3c7600",
+  "branch": "codex/ui-single-image-fix-20261107",
+  "rendering_behavior_changed": false,
+  "acceptance_ready": false,
+  "probe": {
+    "image_count": 1,
+    "visible_text": 0,
+    "flags": 0,
+    "source_available": 1,
+    "fitted": 1
+  },
+  "toolchain": "MSVC 19.44.35229 Release x64; shell_d2d.cpp /W4 /WX",
+  "baseline": "179a429a plus temporary trace calls only; same SDK; three full-client cover captures are pixel-identical",
+  "inputs": [
+    {
+      "label": "hongloumeng",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub",
+      "sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+      "cover_path": "OEBPS/wrap0000.html",
+      "image_path": "OEBPS/1558089893555248363_24264-cover.png"
+    },
+    {
+      "label": "pachinko",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+      "sha256": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+      "cover_path": "titlepage.xhtml",
+      "image_path": "cover.jpeg"
+    },
+    {
+      "label": "xingshihengyan",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\xingshihengyan-24239.epub",
+      "sha256": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+      "cover_path": "OEBPS/wrap0000.html",
+      "image_path": "OEBPS/8448895921229109957_24239-cover.png"
+    },
+    {
+      "label": "kusamakura",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\real-books-pass-a-20261105\\supplemental-samples\\kusamakura-japanese-vertical-writing.epub",
+      "sha256": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7",
+      "cover_path": "OPS/xhtml/表紙.xhtml",
+      "image_path": null
+    }
+  ],
+  "hashes": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\.build-step6\\Release\\EXReader.exe": "cd94aa3a1a954a6983d458a79ccf51a89489e2166be09e5d2c6d3cb92f923b6d",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\.build-step6\\Release\\exreader.dll": "57e74866783dfc10b07688020082f868dcf4f48fb85d2c1c017b86e55eef1c74",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\.run-step6-real-baseline\\EXReader.exe": "4751b8b13e7fbe33404a73743f8f8e3fa99132430fbf69071e933e30a0e0ce01",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\.run-step6-real-baseline\\exreader.dll": "57e74866783dfc10b07688020082f868dcf4f48fb85d2c1c017b86e55eef1c74",
+    "examples\\reader.c": "a1f4632c127e477a57bd044b973391cf004a3bdd59297a14fea66da9ab224c26",
+    "examples\\windows\\shell_measure.inc": "cd3b50272daa8a70ea0463cc5b5ea615ac99becbb65714d1bbb8fa4b2a3e9558",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\check_step6_real.py": "07085d8d5ae7f50438e1f59eb75d075f01998faba8f1517595cf3f0feb45c433"
+  },
+  "gui_processes": 43,
+  "foreground_observations": 0,
+  "capture": "PrintWindow",
+  "position": [
+    -32000,
+    -32000
+  ],
+  "legacy_regression": {
+    "pass_": true,
+    "states": 30,
+    "dark_presented": 152,
+    "presented": 185,
+    "blank": 0,
+    "selftest": 26,
+    "legacy_images": 8,
+    "changed_pixels": 0,
+    "font_anchors": 12
+  }
+}

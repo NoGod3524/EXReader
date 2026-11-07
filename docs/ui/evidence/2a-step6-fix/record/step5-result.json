@@ -8,7 +8,7 @@
         -32000
       ]
     ],
-    "elapsed_seconds": 25.514849300001515,
+    "elapsed_seconds": 27.051835000005667,
     "stderr": ""
   },
   "colours": {
@@ -429,8 +429,8 @@
     0.0,
     0.0
   ],
-  "dark_presented": 154,
-  "presented": 187,
+  "dark_presented": 152,
+  "presented": 185,
   "blank": 0,
   "nonzero_head_offsets": {
     "head-0": 4529,
@@ -443,8 +443,8 @@
   },
   "nonzero_head_preserved": true,
   "old_ini": {
-    "before_sha256": "2265fddb2aac0706938efe07ee3e8ba28571f08bd076430b6f671ccee44f4612",
-    "after_sha256": "2265fddb2aac0706938efe07ee3e8ba28571f08bd076430b6f671ccee44f4612",
+    "before_sha256": "eddba5ea219a356095193e31cccb20341b2204850e1bf3bddfde278f2046db30",
+    "after_sha256": "eddba5ea219a356095193e31cccb20341b2204850e1bf3bddfde278f2046db30",
     "logical_shelf_equal": true,
     "defaults": {
       "font": 17,
