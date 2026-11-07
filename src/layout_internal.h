@@ -18,6 +18,8 @@ struct exr_layout {
   size_t glyph_count, glyph_cap;
   exr_line *lines;
   size_t line_count, line_cap;
+  exr_layout_block *blocks;
+  size_t block_count, block_cap;
   exr_page *pages;
   size_t page_count, page_cap;
   exr_box *boxes;

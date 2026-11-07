@@ -2,9 +2,11 @@
 #include "flow_internal.h"
 #include "opentype_internal.h"
 #include "ruby_internal.h"
+#include "source_structure.h"
 
 typedef struct {
   size_t node, child, position;
+  source_structure source;
   int phase, entered, sized_inline;
   int old_intrinsic;
   int float_long;
@@ -764,7 +766,7 @@ static exr_status floating(exr_pager *p,frame *v) {
       v->first_y=margins[0]+v->fragment->flow_block+(v->context->finished ? margins[2] : 0);
     }
     exr_flow_area(f,y,v->first_y,&x,&room,&next);
-    if(pending>0 && y==f->y && pending+(f->first_line ? f->paragraph->indent : 0)>room-v->outer_width+.001f) {
+    if(pending>0 && y==f->y && pending+(f->first_line ? exr_flow_indent(f) : 0)>room-v->outer_width+.001f) {
       status=exr_inline_break(f,&p->line); if(status!=EXR_OK) return status;
       if(s->float_side && (box.width.value<0 || v->float_long)) clear_frame(v);
       continue;
@@ -930,6 +932,9 @@ static exr_status advance(exr_pager *p) {
         p->position = f->doc->size;
         return EXR_OK;
       }
+      status=finish_run(p);if(status!=EXR_OK) return status;
+      f->chapter_index++;f->chapter_pending=1;
+      if(f->layout->line_count || f->layout->box_count) f->force_break=1;
       status = push(p, f->doc->chapters[p->chapter++].root,
                        p->config.page.margin, p->config.page.width - 2 * p->config.page.margin);
       if (status != EXR_OK)
@@ -975,6 +980,9 @@ static exr_status advance(exr_pager *p) {
         v->position=0; v->phase=40;
       } else if (n->kind == EXR_NODE_TEXT) {
         v->position = n->start;
+        v->source.projected=n->start;
+        v->source.pending=1;
+        if(s->block_kind!=EXR_BLOCK_TITLE) source_next(f->doc,n,&v->source);
         v->phase = 10;
       } else if (n->kind == EXR_NODE_BREAK)
         v->phase = 11;
@@ -988,6 +996,13 @@ static exr_status advance(exr_pager *p) {
       status = finish_run(p);
       if (status != EXR_OK)
         return status;
+      if(s->block_kind==EXR_BLOCK_TITLE &&
+         (n->parent==SIZE_MAX || exr_doc_style(f->doc,p->styles,n->parent)->block_kind!=EXR_BLOCK_TITLE)) {
+        if(!f->chapter_pending) f->chapter_index++;
+        f->chapter_pending=1;
+        if(f->layout->line_count || f->layout->box_count) f->force_break=1;
+      }
+      f->source_kind=EXR_BLOCK_BODY;f->source_indented=0;
       if(s->clear_side && !(p->local && v->node==p->local_root && s->float_side)) {
         status=wait_floats(p,(unsigned)s->clear_side); if(status!=EXR_OK) return status;
         exr_flow_clear(f,(unsigned)s->clear_side);
@@ -1166,9 +1181,25 @@ static exr_status advance(exr_pager *p) {
       p->depth--;
       break;
     case 10:
-      if (v->position == n->end)
+      if(v->source.ready && v->position==v->source.start) {
+        status=finish_run(p);if(status!=EXR_OK) return status;
+        f->first_line=1;
+        f->source_kind=v->source.kind;
+        f->source_node=v->node;f->source_start=v->source.start;f->source_end=v->source.end;
+        f->source_indented=v->source.indented ? (v->position==n->start ? 1 : 2) : 0;
+        if(f->source_kind==EXR_BLOCK_TITLE) {
+          f->chapter_index++;f->chapter_pending=1;
+          if(f->layout->line_count || f->layout->box_count) f->force_break=1;
+        }
+        source_next(f->doc,n,&v->source);
+      }
+      if (v->position == n->end) {
+        /* Finish synthetic title/decorative lines before returning to the
+           containing HTML paragraph; a page pause retries this same phase. */
+        if(f->source_kind) { status=finish_run(p);if(status!=EXR_OK) return status; }
+        f->source_kind=EXR_BLOCK_BODY;f->source_indented=0;
         p->depth--;
-      else {
+      } else {
         status = scalar(p, v);
         if (status != EXR_OK)
           return status;
@@ -1858,6 +1889,7 @@ static exr_status append_page(exr_layout *all, exr_layout *page, exr_error *e) {
   if (!exr_grow((void **)&all->glyphs, &all->glyph_cap, ng + page->glyph_count, sizeof(*all->glyphs)) ||
       !exr_grow((void **)&all->lines, &all->line_cap, nl + page->line_count, sizeof(*all->lines)) ||
       !exr_grow((void **)&all->boxes, &all->box_cap, nb + page->box_count, sizeof(*all->boxes)) ||
+      !exr_grow((void **)&all->blocks, &all->block_cap, all->block_count+page->block_count, sizeof(*all->blocks)) ||
       !exr_grow((void **)&all->pages, &all->page_cap, np + 1, sizeof(*all->pages)))
     return exr_fail(e, EXR_MEMORY, "Whole-document layout allocation failed");
   for (i = 0; i < page->glyph_count; i++) {
@@ -1875,6 +1907,10 @@ static exr_status append_page(exr_layout *all, exr_layout *page, exr_error *e) {
     exr_box b = page->boxes[i];
     b.page = np;
     all->boxes[all->box_count++] = b;
+  }
+  for(i=0;i<page->block_count;i++) {
+    exr_layout_block b=page->blocks[i];b.page=np;b.line_start+=nl;
+    all->blocks[all->block_count++]=b;
   }
   all->pages[np] = page->pages[0];
   if(np && all->pages[np].start<all->pages[np-1].end) all->source_overlaps=1;

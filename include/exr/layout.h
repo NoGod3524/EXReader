@@ -25,6 +25,26 @@ typedef struct {
   size_t start, end, line_start, line_count;
   size_t box_start, box_count;
 } exr_page;
+/* Additive semantic output; exr_page/exr_line keep their original ABI.
+   Chapter indices are one-based in this document/pager (0 when unknown).
+   Source ranges are normalized UTF-8 offsets; line ranges index layout_lines().
+   A block split across pages has one record per page. Ornaments remain text;
+   a host may omit their line ranges when painting. Image-only chapter starts
+   have a BODY record with line_count=0. Positioned input has no semantic records. */
+typedef enum { EXR_BLOCK_BODY = 0, EXR_BLOCK_TITLE, EXR_BLOCK_ORNAMENT } exr_block_kind;
+typedef struct {
+  exr_block_kind kind;
+  size_t node, start, end, page, line_start, line_count, chapter_index;
+  int starts_chapter;
+} exr_layout_block;
+typedef struct {
+  int starts_chapter, contains_title;
+  size_t chapter_index, title_block_count;
+} exr_page_structure;
+EXR_API const exr_layout_block *exr_layout_blocks(const exr_layout *layout, size_t *count);
+/* Invalid pages return a zero record. Borrowed blocks live until layout_free. */
+EXR_API exr_page_structure exr_layout_page_structure(const exr_layout *layout, size_t page);
+
 typedef enum { EXR_BOX_BLOCK = 1, EXR_BOX_IMAGE, EXR_BOX_CELL } exr_box_kind;
 /* Solid table-border rectangles, including collapsed grids and split cells.
    A contiguous run with one node is

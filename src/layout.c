@@ -57,6 +57,7 @@ void exr_layout_free(exr_layout *l) {
     free(l->glyphs);
     free(l->lines);
     size_t i;
+    free(l->blocks);
     free(l->pages);
     free(l->boxes);
     free(l->paints);
@@ -324,6 +325,7 @@ size_t exr_layout_memory_size(const exr_layout *l) {
     return 0;
   total = sizeof(*l);
   total = exr_memory_array(total, l->glyphs, l->glyph_cap, sizeof(*l->glyphs));
+  total = exr_memory_array(total, l->blocks, l->block_cap, sizeof(*l->blocks));
   total = exr_memory_array(total, l->lines, l->line_cap, sizeof(*l->lines));
   total = exr_memory_array(total, l->pages, l->page_cap, sizeof(*l->pages));
   total = exr_memory_array(total, l->boxes, l->box_cap, sizeof(*l->boxes));
@@ -337,4 +339,21 @@ size_t exr_layout_memory_size(const exr_layout *l) {
      referencing page, even when another page shares the same immutable pixels. */
   total = exr_memory_array(total, l->images, l->image_count, sizeof(size_t));
   return exr_memory_add(total, l->image_bytes);
+}
+
+const exr_layout_block *exr_layout_blocks(const exr_layout *l,size_t *count) {
+  if(count) *count=l ? l->block_count : 0;
+  return l ? l->blocks : NULL;
+}
+exr_page_structure exr_layout_page_structure(const exr_layout *l,size_t page) {
+  exr_page_structure result={0}; size_t i;
+  if(!l || page>=l->page_count) return result;
+  for(i=0;i<l->block_count;i++) {
+    const exr_layout_block *b=&l->blocks[i];
+    if(b->page!=page) continue;
+    if(!result.chapter_index) result.chapter_index=b->chapter_index;
+    if(b->starts_chapter) result.starts_chapter=1;
+    if(b->kind==EXR_BLOCK_TITLE) { result.contains_title=1;result.title_block_count++; }
+  }
+  return result;
 }
