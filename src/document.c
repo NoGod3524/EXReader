@@ -372,11 +372,14 @@ typedef struct {
   int pending_space;
   uint32_t previous;
 } projection;
+int exr_projection_space(uint32_t cp) {
+  return (cp < 0x80 && whitespace((unsigned char)cp)) || cp == 0x3000 || cp == 0x00a0;
+}
 int exr_projection_cjk(uint32_t cp) {
   return (cp >= 0x3400 && cp <= 0x4dbf) || (cp >= 0x4e00 && cp <= 0x9fff) ||
          (cp >= 0xf900 && cp <= 0xfaff) || (cp >= 0x20000 && cp <= 0x2ee5f) ||
          (cp >= 0x2f800 && cp <= 0x2fa1f) || (cp >= 0x30000 && cp <= 0x3347f) ||
-         (cp >= 0x3000 && cp <= 0x303f) || (cp >= 0xfe10 && cp <= 0xfe1f) ||
+         (cp >= 0x3001 && cp <= 0x303f) || (cp >= 0xfe10 && cp <= 0xfe1f) ||
          (cp >= 0xfe30 && cp <= 0xfe4f) || (cp >= 0xff00 && cp <= 0xffef) ||
          (cp >= 0x2018 && cp <= 0x201d) || cp == 0x2026 ||
          cp == 0x2014 || cp == 0x2015 || cp == 0x00b7;
@@ -394,7 +397,7 @@ static int project_text(projection *p, exr_node *node, unsigned heading) {
     uint32_t cp;
     if (!exr_next(s, length, &i, &cp))
       return 0;
-    if (cp < 0x80 && whitespace((unsigned char)cp)) {
+    if (exr_projection_space(cp)) {
       if (p->block != SIZE_MAX)
         p->pending_space = 1;
       continue;
