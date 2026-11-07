@@ -294,5 +294,6 @@
     "src\\publication.c": "b124af744908f48f9c662e68f31d1a06ccd6b26fe0bea5d60bc15c9f135a45a1",
     "include\\exr\\layout.h": "43b8d946c2b9d7df7fe9d0062d2591414c45042d44d7d67d4724df93737848d1",
     "tests\\test_content_ranges.c": "03be85f39c8e0b5a45414534ab1390739ecd2befbce9fbca93bc83047fef419a"
-  }
+  },
+  "implementation_sha256_encoding": "UTF-8 with LF line endings (Git blob bytes)"
 }
