@@ -1,0 +1,189 @@
+{
+  "totals": {
+    "presented": 183,
+    "blank": 0,
+    "stale_size": 0,
+    "present_failed": 0,
+    "bitblt": 173,
+    "stretch": 0,
+    "deferred": 8
+  },
+  "page_down": 20,
+  "wheel_detents": 100,
+  "keys_presented": 20,
+  "wheel_presented": 66,
+  "cache_hits": 20,
+  "cache_layout_deltas": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "cache_render_deltas": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "layout_calls_start_end": [
+    8.0,
+    304.0
+  ],
+  "render_calls_start_end": [
+    5.0,
+    162.0
+  ],
+  "miss_samples_ms": [
+    21.0715,
+    20.1162,
+    20.824599999999997,
+    20.087,
+    23.4606,
+    20.348,
+    20.4133,
+    24.4431,
+    23.2997,
+    25.686500000000002,
+    22.026200000000003,
+    20.637900000000002,
+    21.6617,
+    20.1605,
+    18.261499999999998,
+    19.223100000000002,
+    20.4157,
+    20.0349,
+    21.414900000000003,
+    25.098499999999998,
+    25.142699999999998,
+    21.9262,
+    19.7728,
+    19.6576,
+    20.2391,
+    21.1274,
+    19.4815,
+    20.3807,
+    19.686799999999998,
+    20.9854,
+    20.4354,
+    22.0139,
+    23.2808,
+    21.7043,
+    19.7988,
+    26.4268,
+    22.0716,
+    19.6865,
+    20.1007,
+    20.791400000000003,
+    22.0295,
+    20.3596,
+    21.2099,
+    22.5146,
+    21.5355,
+    22.5398,
+    20.8022,
+    22.0838,
+    16.6627,
+    19.039,
+    19.2513,
+    22.386,
+    20.4401,
+    19.4475,
+    23.844,
+    24.2134,
+    19.779,
+    21.9526,
+    19.136
+  ],
+  "miss_p95_ms": 25.142699999999998,
+  "rejected_negative_evidence": [
+    "total_presented",
+    "total_blank",
+    "cache_layout_delta",
+    "present_buffer_w"
+  ],
+  "process": {
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 58.82419429999982
+  },
+  "resize": {
+    "first_line_before": "has repeatable words and measurable pages. Reading a portable book ",
+    "first_line_restored": "has repeatable words and measurable pages. Reading a portable book ",
+    "first_line_busy_restored": "has repeatable words and measurable pages. Reading a portable book ",
+    "page_pixel_differences": {
+      "restored": 0,
+      "busy-restored": 0
+    },
+    "pages": {
+      "before": [
+        612,
+        624
+      ],
+      "small": [
+        612,
+        384
+      ],
+      "large": [
+        612,
+        1264
+      ],
+      "restored": [
+        612,
+        624
+      ],
+      "busy-restored": [
+        612,
+        624
+      ]
+    },
+    "range_before_restored": [
+      [
+        95637,
+        97084
+      ],
+      [
+        95637,
+        97084
+      ]
+    ]
+  },
+  "pass": false
+}
