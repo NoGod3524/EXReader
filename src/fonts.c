@@ -291,6 +291,7 @@ size_t exr_font_order(const exr_font *f, const char *list, unsigned flags,
         size_t index = i - 1 < f->base_count ? f->base_count - i : i - 1;
         const exr_face *face = &f->faces[index];
         if ((seen & (UINT32_C(1) << index)) ||
+            (f->manager_order && index < f->base_count) ||
             (face->scope != SIZE_MAX && face->scope != chapter) ||
             !exr_family_equal(family, face->family) || ((flags ^ face->style_flags) & 3) != score)
           continue;

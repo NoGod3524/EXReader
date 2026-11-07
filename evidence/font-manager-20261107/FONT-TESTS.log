@@ -1,0 +1,50 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 169
+    Start 169: native-font-manager-discovery
+
+169: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-fontmgr-20261107/tests/check_font_manager.py" "C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build/exreader-font-manager-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-fontmgr-20261107/tests/fixtures/font_manager" "discovery"
+169: Working Directory: C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build
+169: Test timeout computed to be: 10000000
+169: font-manager discovery: 54 checks passed
+1/4 Test #169: native-font-manager-discovery .....   Passed    0.31 sec
+test 170
+    Start 170: native-font-manager-selection
+
+170: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-fontmgr-20261107/tests/check_font_manager.py" "C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build/exreader-font-manager-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-fontmgr-20261107/tests/fixtures/font_manager" "selection"
+170: Working Directory: C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build
+170: Test timeout computed to be: 10000000
+170: font-manager selection: 89 checks passed
+2/4 Test #170: native-font-manager-selection .....   Passed    0.30 sec
+test 171
+    Start 171: native-font-manager-cache
+
+171: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-fontmgr-20261107/tests/check_font_manager.py" "C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build/exreader-font-manager-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-fontmgr-20261107/tests/fixtures/font_manager" "cache"
+171: Working Directory: C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build
+171: Test timeout computed to be: 10000000
+171: font-manager cache: 142 checks passed
+3/4 Test #171: native-font-manager-cache .........   Passed    0.36 sec
+test 172
+    Start 172: native-font-manager-integration
+
+172: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-fontmgr-20261107/tests/check_font_manager.py" "C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build/exreader-font-manager-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-fontmgr-20261107/tests/fixtures/font_manager" "integration"
+172: Working Directory: C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build
+172: Test timeout computed to be: 10000000
+172: font-manager integration: 96 checks passed
+4/4 Test #172: native-font-manager-integration ...   Passed    0.34 sec
+
+The following tests passed:
+	native-font-manager-discovery
+	native-font-manager-selection
+	native-font-manager-cache
+	native-font-manager-integration
+
+100% tests passed out of 4
+
+Total Test time (real) =   1.32 sec
