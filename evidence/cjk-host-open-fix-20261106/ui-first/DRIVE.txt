@@ -1,0 +1,22 @@
+HOST	phase=0	engine=3.42.0	pid=2988
+STEP	1	wait_idle	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	2	shell	PASS	legacy panel
+STEP	3	shell_dpi	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	4	shell_client	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	5	shell_font	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	6	wait_idle	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	7	import	PASS	page=0;status=已导入《紅樓夢》并写入书架。
+STEP	8	open	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	9	wait_idle	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	10	check	PASS	bounded=1;window_status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	11	check	PASS	part=0;window_status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	12	check	PASS	page=1;page_count=0;kind=reflow;window_status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	13	check	PASS	active=1;visible_children=3;page_top=56;page_edge=0;client_origin=9,38;client=1042x705;window_status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	14	shell_measure	PASS	physical layout captured
+STATE	15	first-cover	PASS	book_id=1;page=0;page_count=0;font=100;zoom=100;offset=0;page_text_len=0;range_len=0;notes=0;selected_id=1;selection_active=0;page_text_fnv=1469598103934665603;page_hash_len=0;bounded=1;part=0;generation=1;progress_record_preserved=0;part_path=OEBPS/wrap0000.html;book_bytes=1151585;index_bytes=150268;parse_workspace_bytes=52229;peak_parse_workspace_bytes=219948;projection_bytes=0;page_cache_bytes=15372040;checkpoint_bytes=0;explicit_snapshot_bytes=0;windows_loaded=1;windows_evicted=0;owned_frame_text_geometry_bytes=3;bitmap_bytes=1223048;dib_bytes=1223048;state=first-cover;title=紅樓夢;kind=reflow;page_text=;offset_text=;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+SHELF	15	first-cover	PASS	title=紅樓夢;author=;id=1;format=4
+STEP	15	state	PASS	state captured
+SHOT	16	first-cover	PASS	file=first-cover;nonzero=1
+STEP	16	snapshot	PASS	screenshot written
+STEP	17	quit	PASS	closing
+DONE	17	eof	PASS	script finished
