@@ -1,0 +1,223 @@
+[
+  {
+    "path": "head\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 3.2398440999968443,
+    "stderr": ""
+  },
+  {
+    "path": "old-ini\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.29992140000103973,
+    "stderr": ""
+  },
+  {
+    "path": "restart\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.8720183000114048,
+    "stderr": ""
+  },
+  {
+    "path": "settings\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 27.075886799997534,
+    "stderr": ""
+  },
+  {
+    "path": "system\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.0948288999934448,
+    "stderr": ""
+  },
+  {
+    "path": "system-restart\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.8767650999943726,
+    "stderr": ""
+  },
+  {
+    "path": "regression\\control\\A\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9090314000059152,
+    "stderr": ""
+  },
+  {
+    "path": "regression\\control\\B\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5470936000056099,
+    "stderr": ""
+  },
+  {
+    "path": "regression\\control\\C\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.42088210000656545,
+    "stderr": ""
+  },
+  {
+    "path": "regression\\changed\\A\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9984019999974407,
+    "stderr": ""
+  },
+  {
+    "path": "regression\\changed\\B\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5514327999990201,
+    "stderr": ""
+  },
+  {
+    "path": "regression\\changed\\C\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.3983794000087073,
+    "stderr": ""
+  },
+  {
+    "path": "regression\\baseline\\A\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.981059700003243,
+    "stderr": ""
+  },
+  {
+    "path": "regression\\baseline\\B\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5843391000089468,
+    "stderr": ""
+  },
+  {
+    "path": "regression\\baseline\\C\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.4014677999948617,
+    "stderr": ""
+  },
+  {
+    "path": "font-anchors\\100\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 16.422187500007567,
+    "stderr": ""
+  },
+  {
+    "path": "font-anchors\\800\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 158.66970919999585,
+    "stderr": ""
+  }
+]
