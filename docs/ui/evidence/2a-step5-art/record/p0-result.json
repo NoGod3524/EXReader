@@ -1,0 +1,240 @@
+{
+  "cjk": {
+    "font18_leading": 32,
+    "font17_leading": 30,
+    "indent": 36,
+    "paragraph_gaps": [
+      9.0,
+      9.0,
+      8.999999999999972,
+      8.999999999999943
+    ],
+    "following_paragraph_cases": 3,
+    "mixed_script_indent": 36,
+    "authored_prefix_indent": 36
+  },
+  "latin": {
+    "leading": 28.800001,
+    "indent": 0.0,
+    "paragraph_gaps": [
+      14.399980999999975
+    ]
+  },
+  "icons": [
+    {
+      "theme": "light",
+      "state": "normal",
+      "fill": "#ffffff",
+      "glyph": "#5c5c65",
+      "focus": null
+    },
+    {
+      "theme": "light",
+      "state": "hover",
+      "fill": "#efeeea",
+      "glyph": "#1b1b1f",
+      "focus": null
+    },
+    {
+      "theme": "light",
+      "state": "pressed",
+      "fill": "#e7e6e1",
+      "glyph": "#1b1b1f",
+      "focus": null
+    },
+    {
+      "theme": "light",
+      "state": "focus",
+      "fill": "#ffffff",
+      "glyph": "#5c5c65",
+      "focus": "#4553e0"
+    },
+    {
+      "theme": "light",
+      "state": "disabled",
+      "fill": "#ffffff",
+      "glyph": "#bebec1",
+      "focus": null
+    },
+    {
+      "theme": "dark",
+      "state": "normal",
+      "fill": "#1e1e21",
+      "glyph": "#b3b3bc",
+      "focus": null
+    },
+    {
+      "theme": "dark",
+      "state": "hover",
+      "fill": "#28282c",
+      "glyph": "#f2f2f4",
+      "focus": null
+    },
+    {
+      "theme": "dark",
+      "state": "pressed",
+      "fill": "#313136",
+      "glyph": "#f2f2f4",
+      "focus": null
+    },
+    {
+      "theme": "dark",
+      "state": "focus",
+      "fill": "#1e1e21",
+      "glyph": "#b3b3bc",
+      "focus": "#7c88ff"
+    },
+    {
+      "theme": "dark",
+      "state": "disabled",
+      "fill": "#1e1e21",
+      "glyph": "#5a5a5f",
+      "focus": null
+    }
+  ],
+  "panels": {
+    "light": {
+      "border": "#ededee",
+      "border_width": 1,
+      "shadow": "--shadow-lg",
+      "radius": 14,
+      "padding_top": 20,
+      "padding_bottom": 20,
+      "padding_left": 20,
+      "padding_right": 20,
+      "track": "#efeeea",
+      "track_border": "#dfdedb",
+      "selected": "#ffffff",
+      "selected_text": "#1b1b1f",
+      "stepper": [
+        34,
+        34
+      ],
+      "label_control_gap": 8,
+      "section_gap": 16,
+      "size": [
+        360,
+        172
+      ]
+    },
+    "dark": {
+      "border": "#2f2f32",
+      "border_width": 1,
+      "shadow": "--shadow-lg",
+      "radius": 14,
+      "padding_top": 20,
+      "padding_bottom": 20,
+      "padding_left": 20,
+      "padding_right": 20,
+      "track": "#28282c",
+      "track_border": "#38383c",
+      "selected": "#1e1e21",
+      "selected_text": "#f2f2f4",
+      "stepper": [
+        34,
+        34
+      ],
+      "label_control_gap": 8,
+      "section_gap": 16,
+      "size": [
+        360,
+        172
+      ]
+    }
+  },
+  "light-geometry": {
+    "button": [
+      32,
+      32
+    ],
+    "radius": 9,
+    "gap": 6,
+    "right": 12,
+    "glyph_width": 18,
+    "stroke": 1.5030674846625767,
+    "title_font": 15,
+    "title_weight": 650,
+    "title_left": 20,
+    "title_spacing_em": -0.01,
+    "bar": "#ffffff",
+    "body": "#f5f5f2",
+    "hairline": "#ededee"
+  },
+  "dark-geometry": {
+    "button": [
+      32,
+      32
+    ],
+    "radius": 9,
+    "gap": 6,
+    "right": 12,
+    "glyph_width": 18,
+    "stroke": 1.4966442953020134,
+    "title_font": 15,
+    "title_weight": 650,
+    "title_left": 20,
+    "title_spacing_em": -0.01,
+    "bar": "#1e1e21",
+    "body": "#141416",
+    "hairline": "#2f2f32"
+  },
+  "original": {
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub",
+    "sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "part": 15,
+    "chapter": "OEBPS/2878037014660817796_24264-0-16.txt.html",
+    "punctuation_counts": {
+      "。": 7041,
+      "，": 52580,
+      "「": 0,
+      "」": 0,
+      "“": 9648,
+      "”": 6923
+    },
+    "vertical_change": "writing-mode CSS only; chapter text equal"
+  },
+  "horizontal-1280": {
+    "client": [
+      1280,
+      800
+    ],
+    "page": [
+      612,
+      624
+    ],
+    "paragraphs": 2,
+    "line_or_column_sizes": [
+      32.0
+    ]
+  },
+  "horizontal-2560": {
+    "client": [
+      2560,
+      1440
+    ],
+    "page": [
+      612,
+      1264
+    ],
+    "paragraphs": 5,
+    "line_or_column_sizes": [
+      32.0
+    ]
+  },
+  "vertical-1280": {
+    "client": [
+      1280,
+      800
+    ],
+    "page": [
+      612,
+      592
+    ],
+    "paragraphs": 2,
+    "line_or_column_sizes": [
+      32.0
+    ],
+    "inline_limit": 556,
+    "inline_origin": 27
+  }
+}

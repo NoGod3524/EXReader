@@ -1,0 +1,5 @@
+HOST	phase=1	engine=3.42.0	pid=25240
+SHOT	1	20	PASS	file=20;nonzero=1
+STEP	1	snapshot	PASS	screenshot written
+STEP	2	quit	PASS	closing
+DONE	2	eof	PASS	script finished

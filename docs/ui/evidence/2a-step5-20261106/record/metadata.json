@@ -1,0 +1,15 @@
+{
+  "baseline": "7b20c5a0",
+  "sdk_version": "3.42.0",
+  "sdk": "C:/Users/Oscar/Documents/Codex/exr-paint-sdk",
+  "compiler": "g++ (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+  "collected_utc": "2026-11-06T20:51:14.917575+00:00",
+  "sha256": {
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\deepseekHarness\\projects\\exreader-handoff\\DECKMARK-TOKENS.md": "9fbc9c76233c0a0f108cfc2f8d213cc24446a64b1d38929da67ea38531b120d9",
+    "docs\\ui\\acceptance\\.build-step5\\EXReader.exe": "132721e1bf951c8a0664158200b477ef76d0e9fab9166512a4d91edd3aab4289",
+    "docs\\ui\\acceptance\\.build-baseline\\EXReader.exe": "0a903c3f1fd78f0bbf2d0d3d2deaaa106f446b5c16f599f1891cd4c1d27e46bd",
+    "docs\\ui\\acceptance\\.build-step5\\exreader.dll": "57e74866783dfc10b07688020082f868dcf4f48fb85d2c1c017b86e55eef1c74",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-ui-step4-20261106\\build\\step4-final\\Long-acceptance.epub": "ac39d490439757e14b70f0b177f11a1e7a686c23f7e1c98d5f2d8d4bac0285da"
+  }
+}
