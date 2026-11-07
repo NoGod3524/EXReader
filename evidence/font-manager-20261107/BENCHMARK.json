@@ -19,7 +19,7 @@
         "cached": 0,
         "cache": 1,
         "written": 1,
-        "ms": 923.073
+        "ms": 1137.157
       },
       "hot": {
         "kind": "index",
@@ -31,7 +31,7 @@
         "cached": 500,
         "cache": 3,
         "written": 0,
-        "ms": 14.436
+        "ms": 13.015
       }
     },
     {
@@ -45,7 +45,7 @@
         "cached": 0,
         "cache": 1,
         "written": 1,
-        "ms": 720.636
+        "ms": 1085.152
       },
       "hot": {
         "kind": "index",
@@ -57,7 +57,7 @@
         "cached": 500,
         "cache": 3,
         "written": 0,
-        "ms": 11.269
+        "ms": 15.022
       }
     },
     {
@@ -71,7 +71,7 @@
         "cached": 0,
         "cache": 1,
         "written": 1,
-        "ms": 696.342
+        "ms": 1198.712
       },
       "hot": {
         "kind": "index",
@@ -83,7 +83,7 @@
         "cached": 500,
         "cache": 3,
         "written": 0,
-        "ms": 11.604
+        "ms": 15.076
       }
     },
     {
@@ -97,7 +97,7 @@
         "cached": 0,
         "cache": 1,
         "written": 1,
-        "ms": 681.918
+        "ms": 1167.579
       },
       "hot": {
         "kind": "index",
@@ -109,7 +109,7 @@
         "cached": 500,
         "cache": 3,
         "written": 0,
-        "ms": 11.238
+        "ms": 13.479
       }
     },
     {
@@ -123,7 +123,7 @@
         "cached": 0,
         "cache": 1,
         "written": 1,
-        "ms": 715.401
+        "ms": 1180.8
       },
       "hot": {
         "kind": "index",
@@ -135,16 +135,16 @@
         "cached": 500,
         "cache": 3,
         "written": 0,
-        "ms": 11.368
+        "ms": 13.55
       }
     }
   ],
   "median_ms": {
-    "cold": 715.401,
-    "hot": 11.368
+    "cold": 1167.579,
+    "hot": 13.55
   },
   "max_ms": {
-    "cold": 923.073,
-    "hot": 14.436
+    "cold": 1198.712,
+    "hot": 15.076
   }
 }

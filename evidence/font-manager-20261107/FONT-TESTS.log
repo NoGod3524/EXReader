@@ -13,7 +13,7 @@ test 169
 169: Working Directory: C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build
 169: Test timeout computed to be: 10000000
 169: font-manager discovery: 54 checks passed
-1/4 Test #169: native-font-manager-discovery .....   Passed    0.31 sec
+1/4 Test #169: native-font-manager-discovery .....   Passed    0.60 sec
 test 170
     Start 170: native-font-manager-selection
 
@@ -21,7 +21,7 @@ test 170
 170: Working Directory: C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build
 170: Test timeout computed to be: 10000000
 170: font-manager selection: 89 checks passed
-2/4 Test #170: native-font-manager-selection .....   Passed    0.30 sec
+2/4 Test #170: native-font-manager-selection .....   Passed    1.61 sec
 test 171
     Start 171: native-font-manager-cache
 
@@ -29,7 +29,7 @@ test 171
 171: Working Directory: C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build
 171: Test timeout computed to be: 10000000
 171: font-manager cache: 142 checks passed
-3/4 Test #171: native-font-manager-cache .........   Passed    0.36 sec
+3/4 Test #171: native-font-manager-cache .........   Passed    1.22 sec
 test 172
     Start 172: native-font-manager-integration
 
@@ -37,7 +37,7 @@ test 172
 172: Working Directory: C:/Users/Oscar/Documents/Codex/fontmgr-20261107/build
 172: Test timeout computed to be: 10000000
 172: font-manager integration: 96 checks passed
-4/4 Test #172: native-font-manager-integration ...   Passed    0.34 sec
+4/4 Test #172: native-font-manager-integration ...   Passed    0.67 sec
 
 The following tests passed:
 	native-font-manager-discovery
@@ -47,4 +47,4 @@ The following tests passed:
 
 100% tests passed out of 4
 
-Total Test time (real) =   1.32 sec
+Total Test time (real) =   4.13 sec

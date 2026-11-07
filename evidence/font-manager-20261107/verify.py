@@ -25,22 +25,25 @@ def records(name):
     return [json.loads(s) for s in (here / name).read_text(encoding="utf-8-sig").splitlines()]
 
 
-before, after = records("BASELINE-book.jsonl"), records("SERIF-book.jsonl")
+before, after = records("BASELINE-book.jsonl"), records("NOTOSERIF-book.jsonl")
 a = {r["part"]: r for r in before if r["kind"] == "first_line"}
 b = {r["part"]: r for r in after if r["kind"] == "first_line"}
 keys = ("start", "end", "codepoints")
 same = lambda part: all(a[part][k] == b[part][k] for k in keys)
 assert same(15)
+assert all(a[i] == b[i] for i in a)
 assert before[-1]["kind"] == after[-1]["kind"] == "book"
 assert before[-1]["missing"] == after[-1]["missing"] == 0
 assert before[-1]["parts"] == after[-1]["parts"] == 31
 save("BOOK-COMPARISON.json", {
+    "primary_family": "Noto Serif SC",
     "reference_part": 15, "reference_page": 0, "first_line_text_and_range_identical": same(15),
+    "first_line_box_identical": a[15]["box"] == b[15]["box"],
     "before_first_line": a[15], "after_first_line": b[15],
     "before_book": before[-1], "after_book": after[-1],
     "chapter_first_lines_identical": [i for i in a if same(i)],
     "chapter_first_lines_different": [i for i in a if not same(i)],
-    "note": "Font metrics differ: unchanged layout settings do not imply identical pagination or line height."
+    "note": "All recorded chapter first lines match in text, range and box; full-book pagination changes with font metrics."
 })
 benchmark = json.loads((here / "BENCHMARK.json").read_text(encoding="utf-8"))
 assert benchmark["files"] == 500

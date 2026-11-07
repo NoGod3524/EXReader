@@ -215,6 +215,7 @@ void exr_fm_entries_free(exr_fm_entry *entries, size_t count) {
   free(entries);
 }
 
+#if !defined(__ANDROID__) || defined(_WIN32)
 static char *env_copy(const char *name) {
 #ifdef _WIN32
   wchar_t wname[64], *value;
@@ -228,6 +229,7 @@ static char *env_copy(const char *name) {
   return value && *value ? exr_copy(value, strlen(value)) : NULL;
 #endif
 }
+#endif
 static size_t add_dir(char *out[8], size_t n, const char *base, const char *suffix) {
   if (n < 8 && base) out[n] = suffix ? exr_fm_join(base, suffix) : exr_copy(base, strlen(base));
   return n < 8 && base && out[n] ? n + 1 : n;

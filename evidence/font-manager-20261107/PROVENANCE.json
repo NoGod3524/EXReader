@@ -1,5 +1,5 @@
 {
-  "base": "000caeef67f52498b05c437384efcd3bfdb1b5d1",
+  "base": "a53535bb71d66de600fa7c2f64332ac08a058025",
   "os": "Windows-11-10.0.26200-SP0",
   "cpu": "Intel64 Family 6 Model 189 Stepping 1, GenuineIntel",
   "logical_cpus": 8,
@@ -49,6 +49,11 @@
       "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
     },
     {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\build\\font-manager-acceptance\\sources\\NotoSerifSC-VF.ttf",
+      "bytes": 25129160,
+      "sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280"
+    },
+    {
       "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\build\\font-manager-acceptance\\sources\\Reader.otf",
       "bytes": 16437364,
       "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
@@ -60,13 +65,13 @@
     },
     {
       "path": "C:\\Users\\Oscar\\Documents\\Codex\\fontmgr-20261107\\build\\libexreader.dll",
-      "bytes": 5996438,
-      "sha256": "42cc6f99a11b6d903543e26eb992ffd761d5df5d5993a8ee9c8957686929e0dd"
+      "bytes": 5996495,
+      "sha256": "659a26f3ec985ecad18d0b0dfce9d8bbd5cd6dca41e2d14176e0230c02bbac93"
     },
     {
       "path": "C:\\Users\\Oscar\\Documents\\Codex\\fontmgr-20261107\\build\\exreader-font-manager-probe.exe",
       "bytes": 69886,
-      "sha256": "a0c199829ea105e9b731d04d826d4037d25d9ca7a991fd386fbe92d1acad7e0b"
+      "sha256": "fbf7caa48b0dfc3a3a28aa496f0853de1c31d0c54da1e36cc9243a47e48da473"
     },
     {
       "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\src\\font_manager.c",
@@ -75,8 +80,8 @@
     },
     {
       "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\src\\font_scan.c",
-      "bytes": 19712,
-      "sha256": "b7aac4fe3a819ff99c918c0bcf16e745333f3fb8fff7b1a2e325f6268d0288b3"
+      "bytes": 19764,
+      "sha256": "63998ba25d539098cc8a85145ce48a2f3122af4bbcf1cd0853edc2ac2fb47e15"
     },
     {
       "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\src\\font_cache.c",

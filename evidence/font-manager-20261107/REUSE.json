@@ -9,7 +9,7 @@
     {
       "file": "src\\font_scan.c",
       "original": 465,
-      "final": 483,
+      "final": 485,
       "unchanged": 453
     },
     {
@@ -31,5 +31,5 @@
       "unchanged": 203
     }
   ],
-  "reused_fraction_of_final": 0.9436619718309859
+  "reused_fraction_of_final": 0.942397856664434
 }
