@@ -1,0 +1,53 @@
+{
+  "before": {
+    "projection": {
+      "parts": 31,
+      "han_ws_han": 370,
+      "han_ws_punct": 0,
+      "punct_ws_han": 1719,
+      "u3000": 4660,
+      "nbsp": 128,
+      "ascii_space": 4223
+    },
+    "layout": {
+      "pages": 1077,
+      "colon_quote_spaces": 0,
+      "fullstop_quote_spaces": 0,
+      "status": 0
+    }
+  },
+  "after": {
+    "projection": {
+      "parts": 31,
+      "han_ws_han": 0,
+      "han_ws_punct": 0,
+      "punct_ws_han": 0,
+      "u3000": 0,
+      "nbsp": 0,
+      "ascii_space": 4240
+    },
+    "layout": {
+      "pages": 1073,
+      "colon_quote_spaces": 0,
+      "fullstop_quote_spaces": 0,
+      "status": 0
+    }
+  },
+  "source": {
+    "parts": 31,
+    "u3000": 4684,
+    "nbsp": 128,
+    "han_ascii_han": 5
+  },
+  "sample": {
+    "before_pages": 42,
+    "after_pages": 42,
+    "differing_page_hashes": 0
+  },
+  "ctest": {
+    "total": 169,
+    "passed": 169,
+    "failed": 0,
+    "seconds": 37.13
+  }
+}
