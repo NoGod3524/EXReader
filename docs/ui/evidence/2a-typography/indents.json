@@ -1,0 +1,24 @@
+[
+  {
+    "run": "after",
+    "font_physical_px": 22.5,
+    "layout_dpi": 120,
+    "actual_window_dpi": 120,
+    "paragraph_x": 56.25,
+    "continuation_x": 11.25,
+    "indent_physical_px": 45.0,
+    "indent_at_96_dpi": 36.0,
+    "body_line_height": 39.0
+  },
+  {
+    "run": "dpi96",
+    "font_physical_px": 18.0,
+    "layout_dpi": 96,
+    "actual_window_dpi": 120,
+    "paragraph_x": 45.0,
+    "continuation_x": 9.0,
+    "indent_physical_px": 36.0,
+    "indent_at_96_dpi": 36.0,
+    "body_line_height": 32.0
+  }
+]
