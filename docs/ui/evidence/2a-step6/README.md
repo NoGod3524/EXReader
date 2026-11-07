@@ -15,4 +15,4 @@
 | [cover-light.png](cover-light.png) | main #67 封面修复回归 |
 | [cover-dark-focus.png](cover-dark-focus.png) | 深色封面与真实控件焦点环 |
 
-全部来自 DPI 感知的离屏 PrintWindow。整窗 1298×838，客户区 [9,38,1280,800]。19 个 GUI 进程前台观察数 0；完整原始 JSON、PNG、QPC CSV、drive 和日志保存在 [measurements.zip](record/measurements.zip)。[metadata.json](record/metadata.json) 记录二进制、SDK DLL、原始书及规格的 SHA-256。书本原件不随证据包提交。
+全部由 getter 修复后的新 EXE 重出，来自 DPI 感知的离屏 PrintWindow。整窗 1298×838，客户区 [9,38,1280,800]。成功套件 19 个 GUI 进程，含首次动画断言失败尝试共 20 个，前台观察数均为 0；完整原始 JSON、PNG、QPC CSV、drive 和日志保存在 [measurements.zip](record/measurements.zip)，首次失败保存在包内 `motion-first-attempt/`。[metadata.json](record/metadata.json) 记录源码、二进制、SDK DLL、原始书及规格的 SHA-256；[build.json](record/build.json) 记录 MinGW 与 MSVC 构建结果，[previous/](record/previous/) 保留上轮报告供对照。书本原件不随证据包提交。
