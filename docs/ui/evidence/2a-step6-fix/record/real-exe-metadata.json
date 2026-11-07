@@ -1,0 +1,17 @@
+{
+  "parent_commit": "f3b4db19ddf7f0cf710c3c730c6a57e1c32c680a",
+  "toolchain": "GCC / MinGW-W64 16.2.0, -O2; shell_d2d.cpp -Wall -Wextra -Werror",
+  "macro": "EXR_READER_WINDOWS_SHELL=1",
+  "reader_drawing_behavior_changed": false,
+  "acceptance_ready": true,
+  "regression_gui_processes": 17,
+  "foreground_observations": 0,
+  "source_sha256": {
+    "examples/reader.c": "7aa8e5cac7808b7c6cce83594b1f8458eb9d321d0294bb01ec99173400441b2e",
+    "examples/windows/shell_d2d.cpp": "1518385cf890ec3e96e7a8e4335849ae5679344db7c53d82ee0edbc457a1e2a4",
+    "examples/windows/shell_epub.cpp": "8990fd39f40fd31d757b28e161397a154f310d087a79200984a0b3f1937616d5",
+    "docs/ui/acceptance/build_real_exe.ps1": "8227ffd87e662e4dbf663e027f92aa2349423cf9616ce9610fa0c284665bd929",
+    "docs/ui/acceptance/capture_window.py": "7b2b711c6c239818aa0d5d2aab646fbc5d3d50b3e3e6d3c5e5393c75a2623f26",
+    "docs/ui/acceptance/check_real_exe.py": "8b8275fc694387f9eab925a90893a8d67358fe6464825f88d1dd3539a8fd760e"
+  }
+}

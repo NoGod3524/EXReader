@@ -51,6 +51,7 @@ HRESULT shell_d2d_set_dpi(shell_d2d *shell, unsigned dpi);
 HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text, uint32_t current, uint32_t rest);
 /* Cropped SDK image, centred by the caller; BGRA pixels retain their colours. */
 HRESULT shell_d2d_page_image(shell_d2d *, HDC, const RECT *area, const RECT *image,
+                             unsigned source_width, unsigned source_height,
                              const uint32_t *pixels, unsigned pitch, uint32_t background);
 HRESULT shell_d2d_resize(shell_d2d *shell, UINT width, UINT height);
 HRESULT shell_d2d_begin(shell_d2d *shell, uint32_t background);

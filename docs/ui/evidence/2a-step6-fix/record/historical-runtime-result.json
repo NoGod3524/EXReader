@@ -1,0 +1,856 @@
+{
+  "images": [
+    {
+      "book": "real-cover",
+      "dpi": 96,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        427,
+        96,
+        815,
+        678
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "body": [
+        332,
+        96,
+        910,
+        678
+      ],
+      "pixel_bounds": [
+        427,
+        96,
+        815,
+        678
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "real-cover",
+      "dpi": 96,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        427,
+        96,
+        853,
+        735
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "body": [
+        351,
+        96,
+        929,
+        736
+      ],
+      "pixel_bounds": [
+        427,
+        96,
+        853,
+        735
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.5,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "real-cover",
+      "dpi": 96,
+      "client": [
+        900,
+        600
+      ],
+      "image": [
+        303,
+        96,
+        596,
+        536
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "body": [
+        161,
+        96,
+        739,
+        536
+      ],
+      "pixel_bounds": [
+        303,
+        96,
+        596,
+        536
+      ],
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0007575757575757347,
+      "clipped": false
+    },
+    {
+      "book": "real-cover",
+      "dpi": 96,
+      "client": [
+        720,
+        560
+      ],
+      "image": [
+        227,
+        96,
+        493,
+        495
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "body": [
+        71,
+        96,
+        649,
+        496
+      ],
+      "pixel_bounds": [
+        227,
+        96,
+        493,
+        495
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.5,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "real-cover",
+      "dpi": 120,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        440,
+        120,
+        801,
+        662
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "body": [
+        259,
+        120,
+        982,
+        662
+      ],
+      "pixel_bounds": [
+        440,
+        120,
+        801,
+        662
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0006150061500614923,
+      "clipped": false
+    },
+    {
+      "book": "real-cover",
+      "dpi": 120,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        440,
+        120,
+        840,
+        720
+      ],
+      "source": [
+        1600,
+        2400
+      ],
+      "body": [
+        278,
+        120,
+        1001,
+        720
+      ],
+      "pixel_bounds": [
+        440,
+        120,
+        840,
+        720
+      ],
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "portrait",
+      "dpi": 96,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        427,
+        96,
+        814,
+        677
+      ],
+      "source": [
+        600,
+        900
+      ],
+      "body": [
+        332,
+        96,
+        910,
+        678
+      ],
+      "pixel_bounds": [
+        427,
+        96,
+        814,
+        677
+      ],
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.5,
+      "aspect_error": 0.0005737234652897216,
+      "clipped": false
+    },
+    {
+      "book": "portrait",
+      "dpi": 96,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        427,
+        96,
+        853,
+        735
+      ],
+      "source": [
+        600,
+        900
+      ],
+      "body": [
+        351,
+        96,
+        929,
+        736
+      ],
+      "pixel_bounds": [
+        427,
+        96,
+        853,
+        735
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.5,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "portrait",
+      "dpi": 96,
+      "client": [
+        900,
+        600
+      ],
+      "image": [
+        303,
+        96,
+        596,
+        536
+      ],
+      "source": [
+        600,
+        900
+      ],
+      "body": [
+        161,
+        96,
+        739,
+        536
+      ],
+      "pixel_bounds": [
+        303,
+        96,
+        596,
+        536
+      ],
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0007575757575757347,
+      "clipped": false
+    },
+    {
+      "book": "portrait",
+      "dpi": 96,
+      "client": [
+        720,
+        560
+      ],
+      "image": [
+        227,
+        96,
+        493,
+        495
+      ],
+      "source": [
+        600,
+        900
+      ],
+      "body": [
+        71,
+        96,
+        649,
+        496
+      ],
+      "pixel_bounds": [
+        227,
+        96,
+        493,
+        495
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.5,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "portrait",
+      "dpi": 120,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        440,
+        120,
+        801,
+        662
+      ],
+      "source": [
+        600,
+        900
+      ],
+      "body": [
+        259,
+        120,
+        982,
+        662
+      ],
+      "pixel_bounds": [
+        440,
+        120,
+        801,
+        662
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0006150061500614923,
+      "clipped": false
+    },
+    {
+      "book": "portrait",
+      "dpi": 120,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        440,
+        120,
+        840,
+        720
+      ],
+      "source": [
+        600,
+        900
+      ],
+      "body": [
+        278,
+        120,
+        1001,
+        720
+      ],
+      "pixel_bounds": [
+        440,
+        120,
+        840,
+        720
+      ],
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "landscape",
+      "dpi": 96,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        333,
+        315,
+        909,
+        459
+      ],
+      "source": [
+        2400,
+        600
+      ],
+      "body": [
+        332,
+        96,
+        910,
+        678
+      ],
+      "pixel_bounds": [
+        333,
+        315,
+        909,
+        459
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "landscape",
+      "dpi": 96,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        352,
+        344,
+        928,
+        488
+      ],
+      "source": [
+        2400,
+        600
+      ],
+      "body": [
+        351,
+        96,
+        929,
+        736
+      ],
+      "pixel_bounds": [
+        352,
+        344,
+        928,
+        488
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "landscape",
+      "dpi": 96,
+      "client": [
+        900,
+        600
+      ],
+      "image": [
+        162,
+        244,
+        738,
+        388
+      ],
+      "source": [
+        2400,
+        600
+      ],
+      "body": [
+        161,
+        96,
+        739,
+        536
+      ],
+      "pixel_bounds": [
+        162,
+        244,
+        738,
+        388
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "landscape",
+      "dpi": 96,
+      "client": [
+        720,
+        560
+      ],
+      "image": [
+        72,
+        224,
+        648,
+        368
+      ],
+      "source": [
+        2400,
+        600
+      ],
+      "body": [
+        71,
+        96,
+        649,
+        496
+      ],
+      "pixel_bounds": [
+        72,
+        224,
+        648,
+        368
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "landscape",
+      "dpi": 120,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        261,
+        301,
+        981,
+        481
+      ],
+      "source": [
+        2400,
+        600
+      ],
+      "body": [
+        259,
+        120,
+        982,
+        662
+      ],
+      "pixel_bounds": [
+        261,
+        301,
+        981,
+        481
+      ],
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "landscape",
+      "dpi": 120,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        280,
+        330,
+        1000,
+        510
+      ],
+      "source": [
+        2400,
+        600
+      ],
+      "body": [
+        278,
+        120,
+        1001,
+        720
+      ],
+      "pixel_bounds": [
+        280,
+        330,
+        1000,
+        510
+      ],
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "square",
+      "dpi": 96,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        332,
+        98,
+        910,
+        676
+      ],
+      "source": [
+        1200,
+        1200
+      ],
+      "body": [
+        332,
+        96,
+        910,
+        678
+      ],
+      "pixel_bounds": [
+        332,
+        98,
+        910,
+        676
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "square",
+      "dpi": 96,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        351,
+        127,
+        929,
+        705
+      ],
+      "source": [
+        1200,
+        1200
+      ],
+      "body": [
+        351,
+        96,
+        929,
+        736
+      ],
+      "pixel_bounds": [
+        351,
+        127,
+        929,
+        705
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "square",
+      "dpi": 96,
+      "client": [
+        900,
+        600
+      ],
+      "image": [
+        230,
+        96,
+        669,
+        535
+      ],
+      "source": [
+        1200,
+        1200
+      ],
+      "body": [
+        161,
+        96,
+        739,
+        536
+      ],
+      "pixel_bounds": [
+        230,
+        96,
+        669,
+        535
+      ],
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.5,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "square",
+      "dpi": 96,
+      "client": [
+        720,
+        560
+      ],
+      "image": [
+        160,
+        96,
+        560,
+        496
+      ],
+      "source": [
+        1200,
+        1200
+      ],
+      "body": [
+        71,
+        96,
+        649,
+        496
+      ],
+      "pixel_bounds": [
+        160,
+        96,
+        560,
+        496
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "square",
+      "dpi": 120,
+      "client": [
+        1242,
+        742
+      ],
+      "image": [
+        350,
+        120,
+        892,
+        662
+      ],
+      "source": [
+        1200,
+        1200
+      ],
+      "body": [
+        259,
+        120,
+        982,
+        662
+      ],
+      "pixel_bounds": [
+        350,
+        120,
+        892,
+        662
+      ],
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    },
+    {
+      "book": "square",
+      "dpi": 120,
+      "client": [
+        1280,
+        800
+      ],
+      "image": [
+        340,
+        120,
+        940,
+        720
+      ],
+      "source": [
+        1200,
+        1200
+      ],
+      "body": [
+        278,
+        120,
+        1001,
+        720
+      ],
+      "pixel_bounds": [
+        340,
+        120,
+        940,
+        720
+      ],
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "aspect_error": 0.0,
+      "clipped": false
+    }
+  ],
+  "focus": [
+    {
+      "control": "toc",
+      "ring": "#7c88ff",
+      "width_px": 2,
+      "offset_px": 2,
+      "method": "offscreen owner-draw focus state with keyboard cues shown"
+    },
+    {
+      "control": "settings",
+      "ring": "#7c88ff",
+      "width_px": 2,
+      "offset_px": 2,
+      "method": "offscreen owner-draw focus state with keyboard cues shown"
+    }
+  ],
+  "edge_samples": {
+    "count": 10032,
+    "expected": "#141416",
+    "max_rgb_error": 0,
+    "indigo_pixels": 0
+  },
+  "main_reproducer": {
+    "image": [
+      332,
+      314,
+      910,
+      459
+    ],
+    "source": [
+      2400,
+      600
+    ],
+    "aspect_error": 0.01379310344827589
+  },
+  "pass": true
+}

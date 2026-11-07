@@ -1,0 +1,574 @@
+[
+  {
+    "run": "step6/before-main/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.0922094999987166,
+    "stderr": ""
+  },
+  {
+    "run": "step6/body/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.420382399999653,
+    "stderr": ""
+  },
+  {
+    "run": "step6/landscape-120/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.584060799999861,
+    "stderr": ""
+  },
+  {
+    "run": "step6/landscape-96/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.5344981999951415,
+    "stderr": ""
+  },
+  {
+    "run": "step6/portrait-120/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.612015499995323,
+    "stderr": ""
+  },
+  {
+    "run": "step6/portrait-96/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.4979284000000916,
+    "stderr": ""
+  },
+  {
+    "run": "step6/real-cover-120/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.9168885000108276,
+    "stderr": ""
+  },
+  {
+    "run": "step6/real-cover-96/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.9041353999928106,
+    "stderr": ""
+  },
+  {
+    "run": "step6/square-120/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.6616685000044527,
+    "stderr": ""
+  },
+  {
+    "run": "step6/square-96/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.474505699996371,
+    "stderr": ""
+  },
+  {
+    "run": "step6/body/import/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.515820700005861,
+    "stderr": ""
+  },
+  {
+    "run": "step5/head/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 3.600609200002509,
+    "stderr": ""
+  },
+  {
+    "run": "step5/old-ini/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.2950104000046849,
+    "stderr": ""
+  },
+  {
+    "run": "step5/restart/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9697604999964824,
+    "stderr": ""
+  },
+  {
+    "run": "step5/settings/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 25.514849300001515,
+    "stderr": ""
+  },
+  {
+    "run": "step5/system/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.2323426000075415,
+    "stderr": ""
+  },
+  {
+    "run": "step5/system-restart/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9936645999987377,
+    "stderr": ""
+  },
+  {
+    "run": "step5/regression/control/A/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9542720000026748,
+    "stderr": ""
+  },
+  {
+    "run": "step5/regression/control/B/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5316969000123208,
+    "stderr": ""
+  },
+  {
+    "run": "step5/regression/control/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5713933999941219,
+    "stderr": ""
+  },
+  {
+    "run": "step5/regression/changed/A/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.0039641999901505,
+    "stderr": ""
+  },
+  {
+    "run": "step5/regression/changed/B/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.6667684999993071,
+    "stderr": ""
+  },
+  {
+    "run": "step5/regression/changed/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.40992049999476876,
+    "stderr": ""
+  },
+  {
+    "run": "step5/regression/baseline/A/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9404715999990003,
+    "stderr": ""
+  },
+  {
+    "run": "step5/regression/baseline/B/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.7255725000140956,
+    "stderr": ""
+  },
+  {
+    "run": "step5/regression/baseline/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.38566780000110157,
+    "stderr": ""
+  },
+  {
+    "run": "step5/font-anchors/100/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 24.043117300010636,
+    "stderr": ""
+  },
+  {
+    "run": "step5/font-anchors/800/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 176.03393849999702,
+    "stderr": ""
+  },
+  {
+    "run": "art/controls/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 4.133759300006204,
+    "stderr": ""
+  },
+  {
+    "run": "art/horizontal/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.937973400010378,
+    "stderr": ""
+  },
+  {
+    "run": "art/vertical/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.2436042000044836,
+    "stderr": ""
+  },
+  {
+    "run": "art/vertical/import/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.43070899999293033,
+    "stderr": ""
+  },
+  {
+    "run": "art/horizontal/import/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.4101900999958161,
+    "stderr": ""
+  },
+  {
+    "run": "historical-runtime/before-main/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.2035043999931077,
+    "stderr": ""
+  },
+  {
+    "run": "historical-runtime/body/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.540608200011775,
+    "stderr": ""
+  },
+  {
+    "run": "historical-runtime/landscape-120/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.6883943999855546,
+    "stderr": ""
+  },
+  {
+    "run": "historical-runtime/landscape-96/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.502157199996873,
+    "stderr": ""
+  },
+  {
+    "run": "historical-runtime/portrait-120/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.7282896999968216,
+    "stderr": ""
+  },
+  {
+    "run": "historical-runtime/portrait-96/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.6249193999974523,
+    "stderr": ""
+  },
+  {
+    "run": "historical-runtime/real-cover-120/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.7515864000015426,
+    "stderr": ""
+  },
+  {
+    "run": "historical-runtime/real-cover-96/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.9882769999967422,
+    "stderr": ""
+  },
+  {
+    "run": "historical-runtime/square-120/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.7610002999863354,
+    "stderr": ""
+  },
+  {
+    "run": "historical-runtime/square-96/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.578430200010189,
+    "stderr": ""
+  },
+  {
+    "run": "historical-runtime/body/import/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.3670420999987982,
+    "stderr": ""
+  }
+]

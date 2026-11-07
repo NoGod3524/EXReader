@@ -298,8 +298,9 @@ static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   pressed = !disabled && (item->itemState & ODS_SELECTED) != 0;
   hover = !disabled && shell_hover == item->hwndItem;
   /* The outline follows the keyboard: hidden while the window hides focus cues. */
-  focus = ((item->itemState & ODS_FOCUS) && !(item->itemState & ODS_NOFOCUSRECT)) ||
-          (host_offscreen && g.drive_mode && shell_render_focus==item->hwndItem);
+  focus = !disabled && (((item->itemState & ODS_FOCUS) && !(item->itemState & ODS_NOFOCUSRECT)) ||
+          (host_offscreen && g.drive_mode && shell_render_focus==item->hwndItem &&
+           !(SendMessageW(item->hwndItem,WM_QUERYUISTATE,0,0)&UISF_HIDEFOCUS)));
   memset(&look, 0, sizeof(look));
   look.background = shell_colors->layer_side;
   look.has_fill = pressed || hover;
@@ -314,28 +315,15 @@ static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   return 1;
 }
 
-/* In the reading screen the page shows keyboard focus as a 2 px accent
-   outline inside its edge, only while focus cues are shown. */
-static int shell_page_focus(HWND page, HDC dc, const RECT *area) {
+/* The page accepts reading keys, but only interactive controls get a ring. */
+static int shell_page_footer(HDC dc, const RECT *area) {
   if (shell_active && g.frame.valid) {
     wchar_t text[96]; RECT number = *area;
     number.top = number.bottom - shell_px(SHELL_PAGE_NUMBER_H, shell_dpi);
     swprintf(text, 96, L"%llu · %llu", (unsigned long long)(g.frame.part + 1), (unsigned long long)(g.frame.page + 1));
     shell_d2d_dc_text(host_shell, dc, &number, text, shell_colors->text_secondary, shell_colors->text_disabled);
   }
-  HBRUSH brush;
-  RECT edge;
-  int i;
-  if (!shell_active) return 0;
-  if (GetFocus() != page || (SendMessageW(page, WM_QUERYUISTATE, 0, 0) & UISF_HIDEFOCUS)) return 1;
-  brush = CreateSolidBrush(RGB((shell_colors->accent >> 16) & 0xFF, (shell_colors->accent >> 8) & 0xFF,
-                               shell_colors->accent & 0xFF));
-  for (i = 0, edge = *area; i < shell_px(SHELL_FOCUS_STROKE, shell_dpi); i++) {
-    FrameRect(dc, &edge, brush);
-    InflateRect(&edge, -1, -1);
-  }
-  DeleteObject(brush);
-  return 1;
+  return shell_active;
 }
 
 static int shell_translate(const MSG *message) {
