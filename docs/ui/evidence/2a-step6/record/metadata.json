@@ -1,0 +1,35 @@
+{
+  "utc": "2026-11-07T17:09:43.939665+00:00",
+  "base": "8ee4bd6bef8533b38f5a0b3011343a4311e8efc3",
+  "merged_pr": 67,
+  "branch": "codex/ui-2a-step6-20261107",
+  "toolchain": "MSVC 19.44.35229, Release x64, shell_d2d.cpp /W4 /WX",
+  "sdk": "3.42.0",
+  "sha256": {
+    "EXReader.exe": "03c58074fd8452a09059d15e05d68a710db652b0d9ae7c5662b7be02c689bdfb",
+    "baseline.exe": "f52f4870d8fdcc35328cbcfc80e61ac657c77c2e52221848ea5b13b53a2c20dd",
+    "exreader.dll": "57e74866783dfc10b07688020082f868dcf4f48fb85d2c1c017b86e55eef1c74",
+    "spec": "21d83de8047f2293f2d0f86abad14fce6b66830341b8512a1d726758039c9cbd"
+  },
+  "gui_processes": 19,
+  "foreground_observations": 0,
+  "capture": "PMv2-aware; HWND PrintWindow only; client_box [9,38,1280,800] at injected 96 DPI",
+  "books": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-step6-20261107\\examples\\windows\\.local-books\\shakespeare-100.epub": "72397ff2459a5948eda764bae9b036c0037ccbf3fd93c8aba610208815784e88"
+  },
+  "downloaded_long_book": "https://www.gutenberg.org/ebooks/100.epub3.images",
+  "files": {
+    "panel-open-light.png": "16e433d644a11bd3d93a5ef39f8031bfb30f5fdb39d5515acff3bc8cbb70c4ee",
+    "panel-open-dark.png": "43606024d6c0ea9bf4164624566f51c811bbd121d6eff47cc3baa1e9e9476d07",
+    "selected.png": "770b3e9546a271735639fd1291404d1eed07ff7bdf72cb906786d202070f8de7",
+    "empty.png": "baf7f4cee143dc921d02890f4a0be6e39ff85d42f4b9c748b0bfca4070a64b6c",
+    "long-1169.png": "576bc855927bb9ba6c2551093f2c163084facca38d0f32f7a08232ad5c0b492e",
+    "scrollbar-hover.png": "40aefdfdf94c5699e1ce924295050cfe0465b9679ce23ab65b36ebac6e615795",
+    "keyboard-focus.png": "07d209415946bd0bd5ff77a62ec06c1c79c6c6ce00815795e2d29a35383e25d8",
+    "negative-one-pixel.png": "5f1d042da192976193766519df6f430ba38353beb3cb635437004e47f6cb66c2",
+    "cover-light.png": "c50f67d85e0b46722a2cad7b1fe16d15b65c5b1f4ec34099b726c6209cd19baa",
+    "cover-dark-focus.png": "3e8e8cf59d6f844cbe78f14efdfcc6c3f5ab86c35e3382cf8cf36b1618a0dd49"
+  }
+}

@@ -11,8 +11,11 @@
 #include <dwrite_1.h>
 #include <cwchar>
 #include <new>
+#include <map>
+#include <string>
 
 struct shadow_cache { unsigned width,height,dpi; int kind; ID2D1Bitmap *bitmap; };
+struct toc_row_cache {HBITMAP bitmap;unsigned used;};
 struct shell_d2d {
   HWND window;
   ID2D1Factory *factory;
@@ -27,6 +30,14 @@ struct shell_d2d {
   unsigned recreated;
   unsigned dpi;
   float title_x,title_spacing;
+  std::map<unsigned,std::wstring> toc_labels;
+  HFONT toc_fonts[2];
+  int toc_width;
+  float toc_metrics[4];
+  std::map<unsigned,toc_row_cache> toc_rows;
+  HDC toc_row_dc;
+  unsigned toc_tick;
+
 };
 
 /* 96 dpi: one unit is one physical pixel, the host's own coordinate space. */
@@ -113,6 +124,8 @@ extern "C" HRESULT shell_d2d_create(HWND window, shell_d2d **out) {
 
 extern "C" void shell_d2d_destroy(shell_d2d *shell) {
   if (!shell) return;
+  shell_d2d_toc_clear(shell);
+  if(shell->toc_row_dc) DeleteDC(shell->toc_row_dc);
   drop_target(shell);
   drop_dc_target(shell);
   for (int style = 0; style < SHELL_TEXT_STYLES; style++)
@@ -132,6 +145,7 @@ extern "C" HRESULT shell_d2d_set_dpi(shell_d2d *shell, unsigned dpi) {
   if (!shell || !dpi) return E_INVALIDARG;
   if (shell->dpi == dpi) return S_OK;
   shell->dpi = dpi;
+  shell_d2d_toc_clear(shell);
   for (int style = 0; style < SHELL_TEXT_STYLES; style++) {
     HRESULT hr = make_format(shell, style);
     if (FAILED(hr)) return hr;
@@ -514,3 +528,102 @@ extern "C" HRESULT shell_d2d_control(shell_d2d *s,HDC dc,const RECT *box,const w
   }
   hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s);return hr;
 }
+
+
+extern "C" void shell_d2d_toc_clear(shell_d2d *s) {
+  s->toc_labels.clear();s->toc_width=0;
+  for(auto &entry:s->toc_rows) DeleteObject(entry.second.bitmap);
+  s->toc_rows.clear();
+  for(auto &font:s->toc_fonts) {if(font) DeleteObject(font);font=nullptr;}
+}
+static COLORREF toc_rgb(uint32_t c) {return RGB((c>>16)&255,(c>>8)&255,c&255);}
+
+extern "C" HRESULT shell_d2d_toc_row(shell_d2d *s,HDC dc,const RECT *box,const wchar_t *text,
+    int dark,unsigned state,int row,float size,unsigned weight,int align) {
+  const auto &c=dark ? shell_theme_dark:shell_theme_light;
+  float k=s->dpi/96.f;int w=box->right-box->left,h=box->bottom-box->top;
+  bool selected=(state&8)!=0;
+  if(row>=0) {
+    if(s->toc_width!=w) {shell_d2d_toc_clear(s);s->toc_width=w;}
+    if(!s->toc_row_dc) s->toc_row_dc=CreateCompatibleDC(dc);
+    if(!s->toc_row_dc) return E_OUTOFMEMORY;
+    HDC output=dc;RECT destination=*box,local={0,0,w,h};
+    unsigned bitmap_key=(unsigned)row*32+(state&15)+(dark ? 16:0);
+    auto cached=s->toc_rows.find(bitmap_key);
+    if(cached!=s->toc_rows.end()) {
+      cached->second.used=++s->toc_tick;HGDIOBJ previous=SelectObject(s->toc_row_dc,cached->second.bitmap);
+      BitBlt(output,destination.left,destination.top,w,h,s->toc_row_dc,0,0,SRCCOPY);
+      SelectObject(s->toc_row_dc,previous);return S_OK;
+    }
+    /* Bound the raster cache to 64 rows (about 2.2 MiB at 96 DPI).
+       Labels keep their one-time ellipsis result; new rows use the native font. */
+    if(s->toc_rows.size()>=64) {
+      auto oldest=std::min_element(s->toc_rows.begin(),s->toc_rows.end(),[](const auto &a,const auto &b){return a.second.used<b.second.used;});
+      DeleteObject(oldest->second.bitmap);s->toc_rows.erase(oldest);
+    }
+    BITMAPINFO info={};void *bits=nullptr;info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
+    info.bmiHeader.biWidth=w;info.bmiHeader.biHeight=-h;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;
+    HBITMAP bitmap=CreateDIBSection(dc,&info,DIB_RGB_COLORS,&bits,nullptr,0);if(!bitmap) return E_OUTOFMEMORY;
+    HGDIOBJ previous=SelectObject(s->toc_row_dc,bitmap);dc=s->toc_row_dc;box=&local;
+    HBRUSH background=CreateSolidBrush(toc_rgb(c.layer_side));FillRect(dc,&local,background);DeleteObject(background);
+    int variant=selected ? 1:0;
+    if(!s->toc_fonts[variant]) s->toc_fonts[variant]=CreateFontW(-(int)std::round(14*k),0,0,0,selected ? 600:400,
+      FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,DEFAULT_PITCH,s->family[SHELL_TEXT_UI]);
+    if(!s->toc_fonts[variant]) return E_OUTOFMEMORY;
+    int saved=SaveDC(dc);IntersectClipRect(dc,box->left,box->top,box->right,box->bottom);
+    SetViewportOrgEx(dc,box->left,box->top,nullptr);
+    HGDIOBJ old=SelectObject(dc,s->toc_fonts[variant]);SetBkMode(dc,TRANSPARENT);SetTextColor(dc,toc_rgb(c.text));
+    int pad=(int)(std::round(20*k)-std::round(10*k));
+    unsigned key=(unsigned)row*2+(selected ? 1u:0u);
+    auto it=s->toc_labels.find(key);
+    if(it==s->toc_labels.end()) {
+      std::wstring label=text;SIZE extent={};GetTextExtentPoint32W(dc,label.data(),(int)label.size(),&extent);
+      int available=w-(int)std::round(20*k);
+      if(extent.cx>available) {
+        SIZE ellipsis={};GetTextExtentPoint32W(dc,L"…",1,&ellipsis);
+        int fit=0;GetTextExtentExPointW(dc,label.data(),(int)label.size(),std::max(0,available-(int)ellipsis.cx),&fit,nullptr,&extent);
+        if(fit>0 && label[(size_t)fit-1]>=0xd800 && label[(size_t)fit-1]<=0xdbff) fit--;
+        label.resize((size_t)fit);label+=L"…";
+      }
+      it=s->toc_labels.emplace(key,std::move(label)).first;
+    }
+    uint32_t fill=selected ? (dark ? ((state&2) ? 0x2d2f45:0x262835):((state&2) ? 0xeceefc:0xf4f5fd)):
+      (state&2) ? c.surface3:(state&1) ? c.surface2:c.layer_side;
+    int radius=(int)std::round(9*k);HRGN rounded=CreateRoundRectRgn(0,0,w+1,h+1,2*radius,2*radius);
+    HBRUSH brush=CreateSolidBrush(toc_rgb(fill));FillRgn(dc,rounded,brush);DeleteObject(brush);
+    if(selected || (state&4)) {
+      brush=CreateSolidBrush(toc_rgb(c.accent));
+      if(selected) {int clip=SaveDC(dc);ExtSelectClipRgn(dc,rounded,RGN_AND);RECT stripe={0,0,(LONG)std::round(2*k),h};FillRect(dc,&stripe,brush);RestoreDC(dc,clip);}
+      if(state&4) FrameRgn(dc,rounded,brush,(int)std::round(2*k),(int)std::round(2*k));
+      DeleteObject(brush);
+    }
+    RECT labelbox={pad,0,w-(int)std::round(10*k),h};
+    DrawTextW(dc,it->second.data(),(int)it->second.size(),&labelbox,DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX);
+    if(selected) {LOGFONTW actual={};GetObjectW(s->toc_fonts[variant],sizeof(actual),&actual);s->toc_metrics[2]=(float)-actual.lfHeight;s->toc_metrics[3]=(float)actual.lfWeight;}
+    DeleteObject(rounded);SelectObject(dc,old);RestoreDC(dc,saved);
+    BitBlt(output,destination.left,destination.top,w,h,dc,0,0,SRCCOPY);SelectObject(dc,previous);
+    s->toc_rows.emplace(bitmap_key,toc_row_cache{bitmap,++s->toc_tick});return S_OK;
+  }
+  HRESULT hr=bind_dc(s,dc,box);if(FAILED(hr)) return hr;
+  IDWriteTextFormat *format=nullptr;IDWriteTextLayout *layout=nullptr;
+  hr=s->write->CreateTextFormat(s->family[SHELL_TEXT_UI],nullptr,(DWRITE_FONT_WEIGHT)weight,DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,size*k,L"zh-cn",&format);if(FAILED(hr)) return hr;
+  format->SetWordWrapping(row==-4 ? DWRITE_WORD_WRAPPING_WRAP:DWRITE_WORD_WRAPPING_NO_WRAP);
+  format->SetTextAlignment((DWRITE_TEXT_ALIGNMENT)align);
+  format->SetParagraphAlignment(row==-4 ? DWRITE_PARAGRAPH_ALIGNMENT_NEAR:DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+  if(row==-4) format->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM,22.4f*k,15.4f*k);
+  hr=s->write->CreateTextLayout(text,(UINT32)wcslen(text),format,(float)w,(float)h,&layout);format->Release();if(FAILED(hr)) return hr;
+  IDWriteTypography *numbers=nullptr;
+  if(SUCCEEDED(s->write->CreateTypography(&numbers))) {numbers->AddFontFeature({DWRITE_FONT_FEATURE_TAG_TABULAR_FIGURES,1});layout->SetTypography(numbers,{0,(UINT32)wcslen(text)});numbers->Release();}
+  if(row==-3) {s->toc_metrics[0]=layout->GetFontSize();s->toc_metrics[1]=(float)layout->GetFontWeight();}
+  s->dc_target->BeginDraw();s->dc_target->Clear(D2D1::ColorF(c.layer_side));
+  s->dc_brush->SetColor(D2D1::ColorF(row==-1 || row==-4 ? c.text_secondary:row==-2 ? c.text_disabled:c.text));
+  s->dc_target->DrawTextLayout(D2D1::Point2F(0,0),layout,s->dc_brush,D2D1_DRAW_TEXT_OPTIONS_CLIP);layout->Release();
+  hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s);return hr;
+}
+extern "C" HRESULT shell_d2d_toc_begin(shell_d2d *,HDC dc,const RECT *box,int dark) {
+  HBRUSH brush=CreateSolidBrush(toc_rgb(dark ? shell_theme_dark.layer_side:shell_theme_light.layer_side));
+  FillRect(dc,box,brush);DeleteObject(brush);return S_OK;
+}
+extern "C" HRESULT shell_d2d_toc_end(shell_d2d *) {return S_OK;}
+extern "C" void shell_d2d_toc_metrics(shell_d2d *s,float values[4]) {for(int i=0;i<4;i++) values[i]=s->toc_metrics[i];}

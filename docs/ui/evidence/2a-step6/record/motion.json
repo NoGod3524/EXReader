@@ -1,0 +1,144 @@
+{
+  "animation": {
+    "configured_ms": 180,
+    "durations": [
+      {
+        "expected": 180.0,
+        "measured": 181.8209,
+        "frame_ms": 38.22599999606609
+      },
+      {
+        "expected": 180.0,
+        "measured": 184.4395,
+        "frame_ms": 22.73540000617504
+      },
+      {
+        "expected": 177.999802,
+        "measured": 193.3539,
+        "frame_ms": 22.121899992227554
+      },
+      {
+        "expected": 180.0,
+        "measured": 185.9964,
+        "frame_ms": 54.180999994277954
+      },
+      {
+        "expected": 180.0,
+        "measured": 193.0939,
+        "frame_ms": 18.543700009584427
+      },
+      {
+        "expected": 180.0,
+        "measured": 194.1875,
+        "frame_ms": 40.32819999754429
+      },
+      {
+        "expected": 180.0,
+        "measured": 184.5392,
+        "frame_ms": 16.667
+      },
+      {
+        "expected": 180.0,
+        "measured": 187.1356,
+        "frame_ms": 57.30500000715256
+      },
+      {
+        "expected": 180.0,
+        "measured": 192.4579,
+        "frame_ms": 16.667
+      },
+      {
+        "expected": 180.0,
+        "measured": 184.8496,
+        "frame_ms": 57.246899992227554
+      },
+      {
+        "expected": 180.0,
+        "measured": 182.6497,
+        "frame_ms": 16.667
+      },
+      {
+        "expected": 180.0,
+        "measured": 185.6339,
+        "frame_ms": 52.03530000150204
+      }
+    ],
+    "curve_samples": 135,
+    "max_curve_error_px": 0.08058145407193962,
+    "reversal": true,
+    "blank": 0
+  },
+  "third_book_jumps": [
+    {
+      "row": 10,
+      "part": 6,
+      "offset": 10499,
+      "label": "SCENE II. Paris. A room in the King’s palace.",
+      "pass": true
+    },
+    {
+      "row": 250,
+      "part": 49,
+      "offset": 6,
+      "label": "SCENE I. London. A Room in the Palace.",
+      "pass": true
+    },
+    {
+      "row": 550,
+      "part": 115,
+      "offset": 14636,
+      "label": "SCENE VI. The country near Dover",
+      "pass": true
+    },
+    {
+      "row": 900,
+      "part": 193,
+      "offset": 6393,
+      "label": "SCENE II. A bedchamber in the Lord’s house.",
+      "pass": true
+    },
+    {
+      "row": 1100,
+      "part": 240,
+      "offset": 10925,
+      "label": "SCENE IV. Another part of the forest",
+      "pass": true
+    }
+  ],
+  "reduced_motion": {
+    "duration_ms": 0,
+    "intermediate_frames": 0
+  },
+  "dpi": [
+    {
+      "dpi": 96,
+      "width": 280,
+      "row_height": 34,
+      "pagination_build_delta": 0
+    },
+    {
+      "dpi": 120,
+      "width": 350,
+      "row_height": 43,
+      "pagination_build_delta": 0
+    },
+    {
+      "dpi": 144,
+      "width": 420,
+      "row_height": 51,
+      "pagination_build_delta": 0
+    },
+    {
+      "dpi": 192,
+      "width": 560,
+      "row_height": 68,
+      "pagination_build_delta": 0
+    }
+  ],
+  "narrow": {
+    "requested_width": 320,
+    "actual_client_width": 1448,
+    "dpi": 192,
+    "panel_width": 560
+  }
+}

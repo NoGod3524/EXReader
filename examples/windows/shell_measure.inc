@@ -94,3 +94,21 @@ static int shell_settings_measure(const char *name) {
     panel.left,panel.top,panel.right,panel.bottom,(double)metrics[0],(double)metrics[1],(double)metrics[2],(double)metrics[3],(double)metrics[4],(double)metrics[5],(double)metrics[6],(double)metrics[7]);
   return fclose(out)==0;
 }
+/* Offscreen-only evidence for the real TOC event paths. */
+static int shell_toc_measure(const char *name) {
+  wchar_t filename[256],path[HOST_PATH];wchar_t *wide=host_wide(name,strlen(name));
+  swprintf(filename,256,L"%ls.json",wide);free(wide);path_join(path,HOST_PATH,g.evidence_dir,filename);
+  FILE *out=_wfopen(path,L"wb");if(!out) return 0;
+  fprintf(out,"{\"open\":%d,\"count\":%llu,\"current\":%d,\"focus\":%lld,\"top\":%d,\"row_height\":%d,\"width\":%d,\"text_x\":%d,\"empty_font\":16,\"empty_weight\":650,\"animation_ms\":%.4f,\"value\":%.4f,\"part\":%llu,\"range\":[%llu,%llu],\"children\":%d,\"focus_target\":\"%s\",\"rows\":[",
+    shell_toc_open,(unsigned long long)shell_toc_count,shell_toc_current,(long long)SendMessageW(shell_toc_list,LB_GETCURSEL,0,0),shell_toc_top(),shell_toc_row_h(),shell_toc_width(),shell_px(20,shell_dpi),shell_toc_elapsed,(double)shell_toc_value,(unsigned long long)g.frame.part,(unsigned long long)g.frame.range_start,(unsigned long long)g.frame.range_end,shell_visible_children(),
+    shell_toc_test_focus==g.page ? "page":shell_toc_test_focus==shell_toc ? "toc":shell_toc_test_focus==shell_settings ? "settings":shell_toc_test_focus==shell_toc_list ? "list":"none");
+  for(size_t i=0;i<shell_toc_count;i++) {
+    const exr_navigation *e=&shell_toc_nav[shell_toc_rows[i]];
+    fprintf(out,"%s{\"part\":%llu,\"offset\":%llu,\"label\":\"",i ? ",":"",(unsigned long long)e->part,(unsigned long long)shell_toc_offsets[i]);
+    for(const unsigned char *s=(const unsigned char *)e->label;*s;s++) {if(*s=='"' || *s=='\\') fputc('\\',out);if(*s>=32) fputc(*s,out);}
+    fputs("\"}",out);
+  }
+  float metrics[4]={0};shell_d2d_toc_metrics(host_shell,metrics);
+  fprintf(out,"],\"typography\":[%.3f,%.0f,%.3f,%.0f],\"scroll_y\":%d}",(double)metrics[0],(double)metrics[1],(double)metrics[2],(double)metrics[3],shell_toc_scroll_y);
+  fclose(out);return 1;
+}
