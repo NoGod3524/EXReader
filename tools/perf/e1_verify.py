@@ -35,7 +35,7 @@ def verify(baseline_dir, candidate_dir):
     for key in ('font_sha256', 'input_sha256'):
         if candidate[key] != frozen[key]:
             problems.append('workload mismatch: ' + key)
-    if cand_env['identities'][str(Path(candidate['binary']).resolve())] != frozen['binary_sha256']:
+    if cand_env['identities'][candidate['binary']] != frozen['binary_sha256']:
         problems.append('binary mismatch')
     if not baseline['measurement_valid'] or not candidate['measurement_valid']:
         problems.append('capture reported a measurement/identity failure')
@@ -44,7 +44,7 @@ def verify(baseline_dir, candidate_dir):
     checked = 0
     for name, group in candidate['groups'].items():
         baseline_trial = baseline['groups'][name]['batches'][0]['trials'][0]
-        base_raw = baseline_dir / baseline_trial['stdout']
+        base_raw = baseline_dir / baseline_trial['stdout'].replace('\\', '/')
         if sha(base_raw) != baseline_trial['stdout_sha256']:
             problems.append('baseline raw signature source changed: ' + name)
         expected = signatures(read(base_raw))
@@ -59,9 +59,9 @@ def verify(baseline_dir, candidate_dir):
                     problems.append('failed native trial: ' + trial['stdout'])
                     continue
                 for field in ('stdout', 'stderr'):
-                    if sha(candidate_dir / trial[field]) != trial[field + '_sha256']:
+                    if sha(candidate_dir / trial[field].replace('\\', '/')) != trial[field + '_sha256']:
                         problems.append('raw hash mismatch: ' + trial[field])
-                raw = read(candidate_dir / trial['stdout'])
+                raw = read(candidate_dir / trial['stdout'].replace('\\', '/'))
                 if signatures(raw) != expected:
                     problems.append('RGBA/text/position signature mismatch: ' + trial['stdout'])
                 observed = metrics(raw)
