@@ -1,0 +1,66 @@
+{
+  "before": {
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.905849599999783,
+    "stderr": "",
+    "part": 15,
+    "index": 0,
+    "client": [
+      1280,
+      800
+    ],
+    "page": [
+      612,
+      624
+    ],
+    "font": 18.0,
+    "margin": 0.0,
+    "line_height": 1.6,
+    "paragraph": 14.400001,
+    "mode": 0,
+    "range": [
+      0,
+      1691
+    ],
+    "exe_sha256": "0e0d31592720ec6dc1fe8835cf8fb83b9422e7524f507c8e939d986c1070d0e0"
+  },
+  "after": {
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.4111534999992728,
+    "stderr": "",
+    "part": 15,
+    "index": 0,
+    "client": [
+      1280,
+      800
+    ],
+    "page": [
+      612,
+      624
+    ],
+    "font": 18.0,
+    "margin": 0.0,
+    "line_height": 1.6,
+    "paragraph": 14.400001,
+    "mode": 0,
+    "range": [
+      0,
+      1774
+    ],
+    "exe_sha256": "0e0d31592720ec6dc1fe8835cf8fb83b9422e7524f507c8e939d986c1070d0e0"
+  }
+}

@@ -221,10 +221,11 @@ static exr_status ordinary_fragment(flow *f, exr_glyph *glyphs, size_t count, fl
 }
 exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forced, int final) {
   exr_layout *l=f->layout;
-  size_t i,j,spaces=0,logical_start=glyphs[0].start,logical_end=glyphs[count-1].end;
+  size_t i,j,spaces=0,gaps=0,logical_start=glyphs[0].start,logical_end=glyphs[count-1].end;
   float indent=f->first_line ? f->paragraph->indent : 0;
   float available=fmaxf(1,f->width-indent),width=0,ascent=0,descent=0,height=0,x,extra=0,baseline;
   int align=f->intrinsic ? 0 : f->paragraph->align;
+  int cjk=!f->intrinsic && f->bidi && f->bidi->cjk && align!=1 && align!=2;
   unsigned base=exr_inline_base(f->bidi,logical_start);
   if(f->display_bidi) { unsigned projected=exr_bidi_base_level(f->display_bidi->bidi,f->display_first);if(projected!=UINT_MAX) base=projected; }
   exr_status status;
@@ -238,6 +239,15 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
   }
   if(align==4) align=base&1 ? 2 : 0;
   if(align==5) align=base&1 ? 0 : 2;
+  if(align==1 || align==2) cjk=0;
+  if(cjk) {
+    size_t node=glyphs[0].node;
+    while(node!=SIZE_MAX) {
+      exr_node n=exr_doc_node(f->doc,node);
+      if(n.kind==EXR_NODE_HEADING) { cjk=0;break; }
+      node=n.parent;
+    }
+  }
   for(i=0;i<count;i++) {
     exr_glyph *g=&glyphs[i]; exr_face *face=&f->font->faces[g->font_index];
     if(g->flags&EXR_GLYPH_RUBY_ITEM) {
@@ -273,7 +283,13 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
   x=f->x+(base&1 ? 0 : indent);
   if(align==1) x+=fmaxf(0,available-width)/2;
   if(align==2) x+=fmaxf(0,available-width);
-  if(align==3 && !final && !forced && spaces) extra=fmaxf(0,available-width)/(float)spaces;
+  if(cjk && !final && !forced) {
+    for(i=1;i<count;i++) gaps+=exr_inline_cjk_gap(glyphs+i-1,glyphs+i);
+    /* The breaker has already tried the next character with up to half an em
+       of punctuation compression. Only an unfillable line may exceed .08em. */
+    if(gaps) extra=fmaxf(0,available-width)/(float)gaps;
+  } else if(align==3 && !final && !forced && spaces)
+    extra=fmaxf(0,available-width)/(float)spaces;
   for(i=0;i<count;) {
     exr_glyph *g=&glyphs[i];
     if(g->flags&EXR_GLYPH_RUBY_ITEM) {
@@ -287,14 +303,15 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
       size_t first=i;
       for(;i<count && !(glyphs[i].flags&EXR_GLYPH_RUBY_ITEM);i++) {
         g=&glyphs[i]; x+=glyph_kern(f,i ? &glyphs[i-1] : NULL,g); g->x=x; x+=g->advance;
-        if(g->codepoint==' ' && (i+1==count || !exr_inline_same(glyphs+i+1,g))) x+=extra;
+        if(gaps ? i+1<count && exr_inline_cjk_gap(g,glyphs+i+1) :
+           g->codepoint==' ' && (i+1==count || !exr_inline_same(glyphs+i+1,g))) x+=extra;
       }
       status=ordinary_fragment(f,glyphs+first,i-first,baseline); if(status!=EXR_OK) return status;
       /* Keep the original justified line rectangle, including the last space. */
       if(first==0 && i==count && l->line_count) {
         exr_line *line=&l->lines[l->line_count-1];
-        if(f->writing_mode==EXR_WRITING_HORIZONTAL_TB) line->width=width+extra*(float)spaces;
-        else line->height=width+extra*(float)spaces;
+        if(f->writing_mode==EXR_WRITING_HORIZONTAL_TB) line->width=width+extra*(float)(gaps ? gaps:spaces);
+        else line->height=width+extra*(float)(gaps ? gaps:spaces);
       }
     }
   }
