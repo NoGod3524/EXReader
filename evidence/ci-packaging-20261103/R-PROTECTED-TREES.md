@@ -24,3 +24,5 @@ R 必须取包含本次 `src/style.c` 修复及此前 V/P/provider 变更的后�
 2026-11-06 — `codex/cjk-kinsoku-20261106` 触及受保护树 **src/**：仅 `src/inline.c`，为 SP + U+FF1A/U+FF1B 共用软断行过滤并设置 GLUE（feed/display_scan 两入口）；不改变默认 Unicode 分析或硬换行。R 后续候选须包含此修复；本轮仅本地验收、未跑 CI，数字与逐页像素证据见 [REPORT.md](../cjk-kinsoku-20261106/REPORT.md)。
 
 2026-11-06 — `codex/cjk-punctuation-compression-20261106` 触及受保护树 **src/**（仅 `src/inline.c`）与 **tests/fixtures/**（新增 `fonts/cjk-punctuation.ttf`、`fonts/latin-punctuation.ttf` 两个原创矩形字体）。相邻全角中文标点每处通过 advance 减少 0.5em；预断行、最终行、intrinsic/pending 测宽共用判定，跨行不压缩。R 后续候选须包含本轮源代码及夹具；数字、逐页哈希和本地全量测试见 [REPORT.md](../cjk-punctuation-compression-20261106/REPORT.md)。未手动触发 CI。
+
+2026-11-06 — `codex/cjk-host-open-fix-20261106` 触及受保护树 **src/**，仅 `src/flow.c`：当前分页页尚无正文行或图片时，图片适配高度取整页可用高度与 `exr_flow_bottom(f) - f->y` 的较小值，避免 CSS 前置 margin 产生空白封面页；已有正文／图片后的换页行为保持原逻辑。宿主 `examples/reader.c` 的分页缓存增至 32 MiB，失败时始终显示实际状态及错误原文。`tests/test_page_cache.c` 新增三种布局回归，不触及夹具树。R 后续候选须包含此修复；本地验收数字与逐页像素证据见 [REPORT.md](../cjk-host-open-fix-20261106/REPORT.md)。未手动运行 CI，未取消 workflow run。

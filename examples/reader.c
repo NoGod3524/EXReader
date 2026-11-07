@@ -1583,7 +1583,7 @@ static exr_status bounded_pager(host_session *session, size_t part, exr_pager **
 #else
   status = exr_publication_pager_create(session->publication, part, g.font, &session->config, &options, out, error);
 #endif
-  if (status == EXR_OK) status = exr_pager_set_cache(*out, 2, 8 * 1024 * 1024, error);
+  if (status == EXR_OK) status = exr_pager_set_cache(*out, 2, 32 * 1024 * 1024, error);
   if (status == EXR_OK) status = exr_pager_set_checkpoints(*out, 8, 4 * 1024 * 1024, 8, error);
   if (status != EXR_OK) { exr_pager_free(*out); *out = NULL; }
   return status;
@@ -5246,15 +5246,11 @@ static void handle_job_complete(host_job *job) {
     set_status(L"已到最后一页；当前页未改变。");
   } else {
     wchar_t message[768];
-    if (job->message[0]) {
-      set_status(job->message);
-    } else {
-      describe_error(message, 768,
-                     job->kind == JOB_IMPORT ? L"导入失败" :
-                     job->kind == JOB_OPEN ? L"打开书籍失败" : L"翻页或重排失败",
-                     job->status, &job->error);
-      set_status(message);
-    }
+    describe_error(message, 768,
+                   job->kind == JOB_IMPORT ? L"导入失败" :
+                   job->kind == JOB_OPEN ? L"打开书籍失败" : L"翻页或重排失败",
+                   job->status, &job->error);
+    set_status(message);
   }
 }
 
