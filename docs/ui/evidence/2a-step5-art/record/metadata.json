@@ -1,0 +1,61 @@
+{
+  "parent_commit": "4473c254c6930128e6ae8ca3a9c2184fb2e5f92f",
+  "branch": "codex/ui-2a-step5-20261106",
+  "sdk": "3.42.0",
+  "toolchain": "MSVC 19.44.35229 Release x64; shell_d2d.cpp /W4 /WX",
+  "gui_processes": 32,
+  "foreground_observations": 0,
+  "source_changes": [
+    "docs/ui/acceptance/check_step5.py",
+    "examples/reader.c",
+    "examples/windows/CMakeLists.txt",
+    "examples/windows/check_shell_anchor.c",
+    "examples/windows/shell_d2d.cpp",
+    "examples/windows/shell_d2d.h",
+    "examples/windows/shell_measure.inc",
+    "examples/windows/shell_screen.inc",
+    "examples/windows/shell_settings.inc",
+    "examples/windows/shell_tokens.h",
+    "examples/windows/shell_epub.cpp",
+    "examples/windows/check_shell_epub.cpp",
+    "docs/ui/acceptance/check_art_p0.py"
+  ],
+  "source_sha256_lf": {
+    "docs/ui/acceptance/check_step5.py": "4d21b43dbdb859a4a2f07f799fd28848228f2a5aab178e277312c923a1821710",
+    "examples/reader.c": "d149262d1692782586c456a9d1294183dbf96d4ace9b10827f87f449f42495b8",
+    "examples/windows/CMakeLists.txt": "9c6d7770e0dbddbef7066e6043460c5031aae58c1651c90a1f68493456392d76",
+    "examples/windows/check_shell_anchor.c": "a509e48d6ee8abec97695aeb1e444aa667f7e819c6dd91734a849a42c6e9dcd8",
+    "examples/windows/shell_d2d.cpp": "a46763e0b2ac9a651aa2e4f1b8e79fb1f10af9e2c72302fb4e158b0f0ae9af8d",
+    "examples/windows/shell_d2d.h": "53c33ebafae42fc9263ea1b7872f251f52590344c502b1225e680adcc65b24c7",
+    "examples/windows/shell_measure.inc": "b67d206b1bf4e2102917b8b3f3f53fcb5428389b7c5f14ec3bd9fd3830e56a79",
+    "examples/windows/shell_screen.inc": "13fa40723b7b2bf89902a763cefac4090f205aa9255c92d602373b2c49ae98e6",
+    "examples/windows/shell_settings.inc": "445fe1235f0f76d63ba4024d114f9967385d58bfb4e80fec70ab02095fdf9ddc",
+    "examples/windows/shell_tokens.h": "1918f494fbfdc67dca170b168401976c92bd91730b94c026a31e4093f434cc9a",
+    "examples/windows/shell_epub.cpp": "7e71c9fb9856bb678d785e0e35004567ad5a35abd30f4998b377293fbf868596",
+    "examples/windows/check_shell_epub.cpp": "e64582e780837893e468560e0d28ae87920cbfc3c10b85c1464372485657baa8",
+    "docs/ui/acceptance/check_art_p0.py": "eac843ba705b28bfbc30d0490704f00ee764ec5f479ab793bd2c24fb059f48e4"
+  },
+  "binary_sha256": {
+    "docs/ui/acceptance/.build-art-release/Release/EXReader.exe": "0e0d31592720ec6dc1fe8835cf8fb83b9422e7524f507c8e939d986c1070d0e0",
+    "docs/ui/acceptance/.build-art-release/Release/exreader.dll": "57e74866783dfc10b07688020082f868dcf4f48fb85d2c1c017b86e55eef1c74",
+    "docs/ui/acceptance/.build-baseline/EXReader.exe": "0a903c3f1fd78f0bbf2d0d3d2deaaa106f446b5c16f599f1891cd4c1d27e46bd",
+    "docs/ui/acceptance/.build-anchor-before/EXReader.exe": "71eaea9649f1a8690520b1f7dda1fd8983c1633e51d6d91374cdb89a4c4cf4c5"
+  },
+  "input_sha256": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "C:/Users/Oscar/Documents/Codex/exr-demo/Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+  },
+  "source_identity": {
+    "entries": 38,
+    "class_annotated_entries": 30,
+    "zip_crc_errors": 0,
+    "text_changes": 0,
+    "node_or_attribute_changes_except_classes": 0
+  },
+  "vertical_inline_limit": {
+    "before": 556,
+    "after": 556,
+    "page_height_before": 592,
+    "page_height_after": 592
+  }
+}

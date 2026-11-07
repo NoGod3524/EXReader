@@ -1,0 +1,4 @@
+HOST	phase=1	engine=3.42.0	pid=22552
+STEP	1	settings_measure	PASS	settings captured
+STEP	2	quit	PASS	closing
+DONE	2	eof	PASS	script finished
