@@ -34,7 +34,11 @@ int main(int argc,char **argv) {
         for(size_t j=b[i].line_start;j<b[i].line_start+b[i].line_count;j++) {
           const exr_line *line=lines+j;
           for(size_t k=line->glyph_start;k+1<line->glyph_start+line->glyph_count;k++) {
-            float dx=g[k+1].x-g[k].x;deviation=fmaxf(deviation,fabsf(dx-g[k].advance));min=fminf(min,dx);max=fmaxf(max,dx);gaps++;
+            float dx=g[k+1].x-g[k].x,difference=fabsf(dx-g[k].advance);
+            if(difference>deviation) deviation=difference;
+            if(dx<min) min=dx;
+            if(dx>max) max=dx;
+            gaps++;
           }
         }
         size_t bytes=b[i].end-b[i].start;if(bytes>160) bytes=160;
