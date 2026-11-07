@@ -83,6 +83,7 @@ def main():
                 rows.append({'row':row,'label':entry['label'],'part':body['part'],'offset':entry['offset'],'first_line':body['lines'][0][0] if body['lines'] else None,'image':image,'pass':True})
         result['jumps'][slug]=rows
         for theme in ('light','dark'):
+            assert read(dest,theme)['typography'][2:]==[14,600],read(dest,theme)['typography']
             m=read(dest,'body-'+theme);im=client(dest,theme,m)
             surface,line,accent,selected,hover,pressed=('#ffffff','#ededee','#4553e0','#f4f5fd','#efeeea','#e7e6e1') if theme=='light' else ('#1e1e21','#2f2f32','#7c88ff','#262835','#28282c','#313136')
             assert all(im.getpixel((279,y))==rgb(line) for y in range(56,800))

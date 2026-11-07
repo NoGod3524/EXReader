@@ -4,7 +4,7 @@
     "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
     "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-step6-20261107\\examples\\windows\\.local-books\\shakespeare-100.epub": "72397ff2459a5948eda764bae9b036c0037ccbf3fd93c8aba610208815784e88"
   },
-  "binary_sha256": "03c58074fd8452a09059d15e05d68a710db652b0d9ae7c5662b7be02c689bdfb",
+  "binary_sha256": "6ed28acccddb5b04209cd953d1f4396e8a96c8df891b3202c57da2d6bc42d603",
   "jumps": {
     "hongloumeng": [
       {
@@ -161,7 +161,7 @@
       "toc"
     ],
     "blank": 0,
-    "presented": 328,
+    "presented": 331,
     "closed_children": 3,
     "geometry": {
       "width": 280,
@@ -184,7 +184,7 @@
       "toc"
     ],
     "blank": 0,
-    "presented": 333,
+    "presented": 330,
     "closed_children": 3,
     "geometry": {
       "width": 280,
@@ -200,7 +200,7 @@
   "long": {
     "count": 1169,
     "frames": 90,
-    "scroll_p95_ms": 2.2448,
+    "scroll_p95_ms": 2.7404,
     "thumb_columns": [
       271,
       272,

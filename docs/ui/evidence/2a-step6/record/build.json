@@ -1,0 +1,41 @@
+[
+  {
+    "command": [
+      "g++",
+      "--version"
+    ],
+    "exit": 0,
+    "stdout": "g++ (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "examples/windows/shell_d2d.cpp",
+      "-o",
+      "examples/windows/.build-msvc/shell_d2d-mingw.o"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "cmake",
+      "--build",
+      "examples/windows/.build-msvc",
+      "--config",
+      "Release",
+      "--parallel",
+      "4"
+    ],
+    "exit": 0,
+    "stdout": "MSBuild version 17.14.60+43b635718 for .NET Framework\n\n  1>Checking Build System\n  Building Custom Rule C:/Users/Oscar/Documents/Codex/EXReader-step6-20261107/examples/windows/CMakeLists.txt\n  EXReader.vcxproj -> C:\\Users\\Oscar\\Documents\\Codex\\EXReader-step6-20261107\\examples\\windows\\.build-msvc\\Release\\EXReader.exe\n  Building Custom Rule C:/Users/Oscar/Documents/Codex/EXReader-step6-20261107/examples/windows/CMakeLists.txt\n",
+    "stderr": ""
+  }
+]

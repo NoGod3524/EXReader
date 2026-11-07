@@ -612,10 +612,11 @@ extern "C" HRESULT shell_d2d_toc_row(shell_d2d *s,HDC dc,const RECT *box,const w
   format->SetTextAlignment((DWRITE_TEXT_ALIGNMENT)align);
   format->SetParagraphAlignment(row==-4 ? DWRITE_PARAGRAPH_ALIGNMENT_NEAR:DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
   if(row==-4) format->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM,22.4f*k,15.4f*k);
-  hr=s->write->CreateTextLayout(text,(UINT32)wcslen(text),format,(float)w,(float)h,&layout);format->Release();if(FAILED(hr)) return hr;
+  hr=s->write->CreateTextLayout(text,(UINT32)wcslen(text),format,(float)w,(float)h,&layout);
+  if(SUCCEEDED(hr) && row==-3) {s->toc_metrics[0]=format->GetFontSize();s->toc_metrics[1]=(float)format->GetFontWeight();}
+  format->Release();if(FAILED(hr)) return hr;
   IDWriteTypography *numbers=nullptr;
   if(SUCCEEDED(s->write->CreateTypography(&numbers))) {numbers->AddFontFeature({DWRITE_FONT_FEATURE_TAG_TABULAR_FIGURES,1});layout->SetTypography(numbers,{0,(UINT32)wcslen(text)});numbers->Release();}
-  if(row==-3) {s->toc_metrics[0]=layout->GetFontSize();s->toc_metrics[1]=(float)layout->GetFontWeight();}
   s->dc_target->BeginDraw();s->dc_target->Clear(D2D1::ColorF(c.layer_side));
   s->dc_brush->SetColor(D2D1::ColorF(row==-1 || row==-4 ? c.text_secondary:row==-2 ? c.text_disabled:c.text));
   s->dc_target->DrawTextLayout(D2D1::Point2F(0,0),layout,s->dc_brush,D2D1_DRAW_TEXT_OPTIONS_CLIP);layout->Release();
