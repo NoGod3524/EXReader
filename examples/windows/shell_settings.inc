@@ -108,6 +108,7 @@ static void shell_animate(void) {
 }
 
 static void shell_toggle_settings(void) {
+  if(!shell_panel_open && shell_toc_open) shell_toc_set(0,0);
   BOOL animations=FALSE;
   SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&animations,0);
   shell_panel_open=!shell_panel_open;

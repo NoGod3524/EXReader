@@ -1,0 +1,268 @@
+[
+  {
+    "suite": "primary",
+    "path": "empty\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.8165698999946471,
+    "stderr": ""
+  },
+  {
+    "suite": "primary",
+    "path": "hongloumeng\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 14.800666099996306,
+    "stderr": ""
+  },
+  {
+    "suite": "primary",
+    "path": "long\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 6.198669000004884,
+    "stderr": ""
+  },
+  {
+    "suite": "primary",
+    "path": "pachinko\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 13.318637099990156,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "restart\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5162029000057373,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "settings\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 8.907831299991813,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "legacy\\changed\\A\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.0568241000000853,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "legacy\\changed\\B\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.49682149999716785,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "legacy\\changed\\C\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.40837180000380613,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "legacy\\baseline\\A\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.0713283000077354,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "legacy\\baseline\\B\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5403480999957537,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "legacy\\baseline\\C\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.38970400000107475,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "cover\\baseline\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.7822576999897137,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "cover\\changed\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.8702023999940138,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "anchors\\20\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 5.949010000011185,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "anchors\\5\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 5.506807099998696,
+    "stderr": ""
+  },
+  {
+    "suite": "motion",
+    "path": "motion\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 6.881343900007778,
+    "stderr": ""
+  },
+  {
+    "suite": "motion",
+    "path": "reduced\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 4.786598999999114,
+    "stderr": ""
+  },
+  {
+    "suite": "uia",
+    "path": "process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 17.099567400000524,
+    "stderr": ""
+  }
+]

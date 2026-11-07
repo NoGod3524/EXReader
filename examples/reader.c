@@ -1124,6 +1124,7 @@ struct host_job {
 #ifdef EXR_READER_WINDOWS_SHELL
   shell_geometry shell_geometry;
   unsigned long shell_epoch;
+  int shell_toc_jump;
 #endif
   volatile LONG cancel;
   int kind;
@@ -2789,6 +2790,9 @@ static exr_status job_bounded_batch(host_job *job) {
   } else job->error=error;
   exr_pager_free(owned);return status;
 }
+#ifdef EXR_READER_WINDOWS_SHELL
+static exr_status shell_align_anchor(host_session *,size_t,host_frame *,const exr_control *,exr_error *);
+#endif
 static exr_status job_bounded_go(host_job *job) {
   if(!job->use_offset && (job->batch_delta>1 || job->batch_delta<-1))return job_bounded_batch(job);
   host_session candidate = g.session; exr_pager *pager = NULL;
@@ -2828,6 +2832,9 @@ static exr_status job_bounded_go(host_job *job) {
   }
   if (status == EXR_OK && page == SIZE_MAX) status = chapter_last_page(candidate.pager, &page, &error);
   if (status == EXR_OK) status = render_reflow(&candidate, page, &job->frame, &control, &error);
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(status==EXR_OK && job->shell_toc_jump) status=shell_align_anchor(&candidate,job->note_start,&job->frame,&control,&error);
+#endif
   if (!switching && !job->use_offset && job->direction > 0 && pager_eof(status, &error)) {
     size_t at = part + 1;
     while (at < count && !parts[at].in_reading_order) at++;
@@ -2940,6 +2947,9 @@ static exr_status job_go(host_job *job) {
       status = EXR_OK;
     }
     if (status == EXR_OK) status = render_reflow(&g.session, page, &job->frame, &control, &error);
+#ifdef EXR_READER_WINDOWS_SHELL
+    if(status==EXR_OK && job->shell_toc_jump) status=shell_align_anchor(&g.session,job->target_offset,&job->frame,&control,&error);
+#endif
   }
   if (status == EXR_OK) {
     job->have_frame = 1;
@@ -4144,6 +4154,9 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       }
 #endif
     case WM_LBUTTONDOWN:
+#ifdef EXR_READER_WINDOWS_SHELL
+      if(shell_toc_open) {shell_toc_set(0,0);SetFocus(window);return 0;}
+#endif
       if (g.job || g.pending || !g.frame.valid) return 0;
       SetFocus(window);
 #ifdef EXR_READER_WINDOWS_PREFERENCES
@@ -5320,6 +5333,9 @@ static void handle_job_complete(host_job *job) {
           snprintf(g.active_txt_key,sizeof(g.active_txt_key),"%s",g.session.txt ? g.session.txt_key : "");
 #endif
           frame_move(&g.frame, &job->frame);
+#ifdef EXR_READER_WINDOWS_SHELL
+          shell_toc_load();
+#endif
           memset(&g.selection, 0, sizeof(g.selection));
           g.pending_selection = 0;
           g.session.page = g.frame.page;
@@ -5369,6 +5385,14 @@ static void handle_job_complete(host_job *job) {
         g.session.hold_progress = g.frame.hold_progress;
         memset(&g.selection, 0, sizeof(g.selection));
         g.session.page = g.frame.page;
+#ifdef EXR_READER_WINDOWS_SHELL
+        shell_toc_update_current();
+        if(job->shell_toc_jump) {
+          page_dirty(g.page,1);UpdateWindow(g.page);
+          host_probe_log("toc_landed_gen",(double)g.frame.generation);
+          shell_toc_close_pending=1;
+        }
+#endif
         if (job->kind == JOB_LAYOUT && job->font_percent > 0
 #ifdef EXR_READER_WINDOWS_SHELL
             && !job->shell_geometry.enabled
@@ -5874,12 +5898,13 @@ static int snapshot_png(const char *name) {
 #ifdef EXR_READER_WINDOWS_SHELL
   /* PrintWindow's recursive child pass does not preserve an overlapping
      D2D/GDI sibling's z-order. Capture the actual overlay HWND last. */
-  if(ok && shell_active && IsWindowVisible(shell_panel)) {
-    RECT panel;GetWindowRect(shell_panel,&panel);
+  HWND capture_panel=shell_toc_open || shell_toc_animating ? shell_toc_panel:shell_panel;
+  if(ok && shell_active && IsWindowVisible(capture_panel)) {
+    RECT panel;GetWindowRect(capture_panel,&panel);
     HDC overlay=CreateCompatibleDC(memory);
     HBITMAP image=CreateCompatibleBitmap(memory,panel.right-panel.left,panel.bottom-panel.top);
     HGDIOBJ old=SelectObject(overlay,image);
-    if(PrintWindow(shell_panel,overlay,0))
+    if(PrintWindow(capture_panel,overlay,0))
       BitBlt(memory,panel.left-area.left,panel.top-area.top,panel.right-panel.left,panel.bottom-panel.top,overlay,0,0,SRCCOPY);
     else ok=0;
     SelectObject(overlay,old);DeleteObject(image);DeleteDC(overlay);
@@ -6107,6 +6132,59 @@ static int drive_execute(void) {
     return 0;
   }
 #ifdef EXR_READER_WINDOWS_SHELL
+  if(!strncmp(action,"toc_",4) && !host_offscreen) {drive_step_finish(0,"TOC evidence requires --offscreen");return 0;}
+  if(!strcmp(action,"toc_outside")) {
+    PostMessageW(g.page,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(600,300));
+    PostMessageW(g.page,WM_LBUTTONUP,0,MAKELPARAM(600,300));drive_step_finish(1,"outside click posted");return 0;
+  }
+  if(!strcmp(action,"toc_scroll_hover")) {
+    RECT thumb=shell_toc_thumb();SendMessageW(shell_toc_panel,WM_MOUSEMOVE,0,MAKELPARAM(shell_toc_width()-7,(thumb.top+thumb.bottom)/2));
+    drive_step_finish(1,"scroll hover delivered");return 0;
+  }
+  if (!strcmp(action,"toc_measure")) {
+    drive_step_finish(shell_toc_measure(drive_args[1]),"TOC measured");return 0;
+  }
+  if (!strcmp(action,"toc_scroll")) {
+    shell_toc_scroll(atoi(drive_args[1]));drive_step_finish(1,"row index scrolled");return 0;
+  }
+  if(!strcmp(action,"toc_busy")) {
+    page_step(1);shell_toc_jump(atoi(drive_args[1]));drive_expect_idle=1;return 1;
+  }
+  if(!strcmp(action,"toc_wheel") || !strcmp(action,"toc_wheel_outside")) {
+    RECT r;GetWindowRect(!strcmp(action,"toc_wheel") ? shell_toc_panel:g.page,&r);
+    POINT p={r.right-20,r.top+200};
+    SendMessageW(shell_toc_list,WM_MOUSEWHEEL,MAKEWPARAM(0,atoi(drive_args[1])*WHEEL_DELTA),MAKELPARAM(p.x,p.y));
+    drive_step_finish(1,"list wheel delivered");return 0;
+  }
+  if (!strcmp(action,"toc_click")) {
+    int row=atoi(drive_args[1]);shell_toc_scroll(row);
+    int y=shell_px(8,shell_dpi)+row*shell_toc_row_h()-shell_toc_scroll_y+shell_toc_row_h()/2;
+    SendMessageW(shell_toc_list,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(60,y));
+    SendMessageW(shell_toc_list,WM_LBUTTONUP,0,MAKELPARAM(60,y));
+    drive_expect_idle=1;return 1;
+  }
+  if (!strcmp(action,"toc_key")) {
+    WPARAM key=!strcmp(drive_args[1],"up") ? VK_UP:!strcmp(drive_args[1],"down") ? VK_DOWN:
+      !strcmp(drive_args[1],"enter") ? VK_RETURN:!strcmp(drive_args[1],"escape") ? VK_ESCAPE:
+      !strcmp(drive_args[1],"home") ? VK_HOME:!strcmp(drive_args[1],"end") ? VK_END:
+      !strcmp(drive_args[1],"pageup") ? VK_PRIOR:!strcmp(drive_args[1],"pagedown") ? VK_NEXT:VK_TAB;
+    HWND focus=shell_toc_test_focus ? shell_toc_test_focus:shell_toc_list;
+    shell_toc_test_shift=atoi(drive_args[2]);
+    PostMessageW(focus,WM_KEYDOWN,key,1);PostMessageW(focus,WM_KEYUP,key,(LPARAM)(1u|(1u<<30)|(1u<<31)));
+    drive_expect_idle=1;return 1;
+  }
+  if (!strcmp(action,"toc_focus")) {
+    shell_toc_test_focus=!strcmp(drive_args[1],"toc") ? shell_toc:!strcmp(drive_args[1],"settings") ? shell_settings:
+      !strcmp(drive_args[1],"page") ? g.page:shell_toc_list;
+    shell_toc_keyboard=1;InvalidateRect(shell_toc_list,NULL,FALSE);drive_step_finish(host_offscreen,"offscreen focus injected");return 0;
+  }
+  if (!strcmp(action,"toc_state")) {
+    int row=atoi(drive_args[2]);int y=shell_px(8,shell_dpi)+row*shell_toc_row_h()-shell_toc_scroll_y+shell_toc_row_h()/2;
+    if(!strcmp(drive_args[1],"hover")) SendMessageW(shell_toc_list,WM_MOUSEMOVE,0,MAKELPARAM(40,y));
+    else if(!strcmp(drive_args[1],"pressed")) SendMessageW(shell_toc_list,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(40,y));
+    else {shell_toc_hot=shell_toc_pressed=-1;shell_toc_keyboard=0;InvalidateRect(shell_toc_list,NULL,FALSE);}
+    drive_step_finish(host_offscreen,"row event delivered");return 0;
+  }
   if (!strcmp(action, "shell_page")) {
     long target = strtol(drive_args[1], NULL, 10)-1;
     if (!host_offscreen || target < 0 || target >= 1000000 || !g.frame.valid) {
@@ -7015,7 +7093,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #ifdef EXR_READER_WINDOWS_SHELL
       if (id == IDC_SHELL_SETTINGS) { shell_toggle_settings(); return 0; }
       if (shell_settings_command(id)) return 0;
-      if (id == IDC_SHELL_TOC) return 0;
+      if (id == IDC_SHELL_TOC) { shell_toc_set(!shell_toc_open,shell_toc_keyboard); return 0; }
 #endif
 #ifdef EXR_READER_WINDOWS_COMPACT
       if (code == 0 && compact_command(id)) return 0;
@@ -7135,12 +7213,17 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_TIMER:
 #ifdef EXR_READER_WINDOWS_SHELL
       if (wparam == 0x5753) { shell_animate(); return 0; }
+      if (wparam == 0x5754) { shell_toc_animate(); return 0; }
+      if (wparam == 0x5755) { shell_toc_pump(); return 0; }
       if (wparam == 0x5752) {
         KillTimer(window, 0x5752); shell_layout_waiting = 0; shell_pump_layout(); return 0;
       }
 #endif
       if(wparam==PAGE_PREFETCH_TIMER) {
         KillTimer(window,PAGE_PREFETCH_TIMER);
+#ifdef EXR_READER_WINDOWS_SHELL
+        if(shell_toc_animating) {SetTimer(window,PAGE_PREFETCH_TIMER,20,NULL);return 0;}
+#endif
         if(g.closing || !g.session.active || !g.frame.valid || g.session.txt)return 0;
 #ifdef EXR_READER_WINDOWS_SHELL
         if (shell_layout_waiting || !shell_geometry_equal(g.session.shell_geometry, shell_target)) return 0;

@@ -1,0 +1,144 @@
+{
+  "animation": {
+    "configured_ms": 180,
+    "durations": [
+      {
+        "expected": 180.0,
+        "measured": 196.5403,
+        "frame_ms": 34.927000001072884
+      },
+      {
+        "expected": 180.0,
+        "measured": 181.8328,
+        "frame_ms": 20.19869999587536
+      },
+      {
+        "expected": 178.423187,
+        "measured": 181.427,
+        "frame_ms": 21.32599999010563
+      },
+      {
+        "expected": 180.0,
+        "measured": 187.4914,
+        "frame_ms": 39.501400008797646
+      },
+      {
+        "expected": 180.0,
+        "measured": 187.416,
+        "frame_ms": 16.753799989819527
+      },
+      {
+        "expected": 180.0,
+        "measured": 188.541,
+        "frame_ms": 38.2141999900341
+      },
+      {
+        "expected": 180.0,
+        "measured": 184.2955,
+        "frame_ms": 24.082000002264977
+      },
+      {
+        "expected": 180.0,
+        "measured": 184.0158,
+        "frame_ms": 62.20960000157356
+      },
+      {
+        "expected": 180.0,
+        "measured": 195.3667,
+        "frame_ms": 20.53719998896122
+      },
+      {
+        "expected": 180.0,
+        "measured": 186.7835,
+        "frame_ms": 68.01229999959469
+      },
+      {
+        "expected": 180.0,
+        "measured": 184.7048,
+        "frame_ms": 16.70820000767708
+      },
+      {
+        "expected": 180.0,
+        "measured": 189.8684,
+        "frame_ms": 38.79959999024868
+      }
+    ],
+    "curve_samples": 134,
+    "max_curve_error_px": 0.056348824304564005,
+    "reversal": true,
+    "blank": 0
+  },
+  "third_book_jumps": [
+    {
+      "row": 10,
+      "part": 6,
+      "offset": 10499,
+      "label": "SCENE II. Paris. A room in the King’s palace.",
+      "pass": true
+    },
+    {
+      "row": 250,
+      "part": 49,
+      "offset": 6,
+      "label": "SCENE I. London. A Room in the Palace.",
+      "pass": true
+    },
+    {
+      "row": 550,
+      "part": 115,
+      "offset": 14636,
+      "label": "SCENE VI. The country near Dover",
+      "pass": true
+    },
+    {
+      "row": 900,
+      "part": 193,
+      "offset": 6393,
+      "label": "SCENE II. A bedchamber in the Lord’s house.",
+      "pass": true
+    },
+    {
+      "row": 1100,
+      "part": 240,
+      "offset": 10925,
+      "label": "SCENE IV. Another part of the forest",
+      "pass": true
+    }
+  ],
+  "reduced_motion": {
+    "duration_ms": 0,
+    "intermediate_frames": 0
+  },
+  "dpi": [
+    {
+      "dpi": 96,
+      "width": 280,
+      "row_height": 34,
+      "pagination_build_delta": 0
+    },
+    {
+      "dpi": 120,
+      "width": 350,
+      "row_height": 43,
+      "pagination_build_delta": 0
+    },
+    {
+      "dpi": 144,
+      "width": 420,
+      "row_height": 51,
+      "pagination_build_delta": 0
+    },
+    {
+      "dpi": 192,
+      "width": 560,
+      "row_height": 68,
+      "pagination_build_delta": 0
+    }
+  ],
+  "narrow": {
+    "requested_width": 320,
+    "actual_client_width": 1448,
+    "dpi": 192,
+    "panel_width": 560
+  }
+}
