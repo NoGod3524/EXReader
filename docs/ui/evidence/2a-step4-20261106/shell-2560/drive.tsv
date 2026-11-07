@@ -1,0 +1,214 @@
+HOST	phase=0	engine=3.42.0	pid=7828
+STEP	1	import	PASS	page=0;status=已导入《EXReader benchmark》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+STEP	3	wait_idle	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+STEP	4	shell	PASS	reading screen
+STEP	5	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	6	shell_font	PASS	page=1;status=第 1 页。
+STEP	7	shell_client	PASS	page=1;status=第 1 页。
+STEP	8	wait_idle	PASS	page=1;status=第 1 页。
+STEP	9	probe_wait	PASS	waited without blocking UI
+STEP	10	probe_begin	PASS	paint counters reset
+STEP	11	probe_mark	PASS	marked
+STEP	12	probe_key	PASS	page=2;status=第 2 页。
+STEP	13	probe_key	PASS	page=3;status=第 3 页。
+STEP	14	probe_key	PASS	page=4;status=第 4 页。
+STEP	15	probe_key	PASS	page=5;status=第 5 页。
+STEP	16	probe_key	PASS	page=6;status=第 6 页。
+STEP	17	probe_key	PASS	page=7;status=第 7 页。
+STEP	18	probe_key	PASS	page=8;status=第 8 页。
+STEP	19	probe_key	PASS	page=9;status=第 9 页。
+STEP	20	probe_key	PASS	page=10;status=第 10 页。
+STEP	21	probe_key	PASS	page=11;status=第 11 页。
+STEP	22	probe_key	PASS	page=12;status=第 12 页。
+STEP	23	probe_key	PASS	page=13;status=第 13 页。
+STEP	24	probe_key	PASS	page=14;status=第 14 页。
+STEP	25	probe_key	PASS	page=15;status=第 15 页。
+STEP	26	probe_key	PASS	page=16;status=第 16 页。
+STEP	27	probe_key	PASS	page=17;status=第 17 页。
+STEP	28	probe_key	PASS	page=18;status=第 18 页。
+STEP	29	probe_key	PASS	page=19;status=第 19 页。
+STEP	30	probe_key	PASS	page=20;status=第 20 页。
+STEP	31	probe_key	PASS	page=21;status=第 21 页。
+STEP	32	probe_key	PASS	page=22;status=第 22 页。
+STEP	33	probe_key	PASS	page=23;status=第 23 页。
+STEP	34	probe_key	PASS	page=24;status=第 24 页。
+STEP	35	probe_key	PASS	page=25;status=第 25 页。
+STEP	36	probe_key	PASS	page=26;status=第 26 页。
+STEP	37	probe_key	PASS	page=27;status=第 27 页。
+STEP	38	probe_key	PASS	page=28;status=第 28 页。
+STEP	39	probe_key	PASS	page=29;status=第 29 页。
+STEP	40	probe_key	PASS	page=30;status=第 30 页。
+STEP	41	probe_key	PASS	page=31;status=第 31 页。
+STEP	42	probe_key	PASS	page=32;status=第 32 页。
+STEP	43	probe_key	PASS	page=33;status=第 33 页。
+STEP	44	probe_key	PASS	page=34;status=第 34 页。
+STEP	45	probe_key	PASS	page=35;status=第 35 页。
+STEP	46	probe_key	PASS	page=36;status=第 36 页。
+STEP	47	probe_key	PASS	page=37;status=第 37 页。
+STEP	48	probe_key	PASS	page=38;status=第 38 页。
+STEP	49	probe_key	PASS	page=39;status=第 39 页。
+STEP	50	probe_key	PASS	page=40;status=第 40 页。
+STEP	51	probe_key	PASS	page=41;status=第 41 页。
+STEP	52	probe_key	PASS	page=42;status=第 42 页。
+STEP	53	probe_key	PASS	page=43;status=第 43 页。
+STEP	54	probe_key	PASS	page=44;status=第 44 页。
+STEP	55	probe_key	PASS	page=45;status=第 45 页。
+STEP	56	probe_key	PASS	page=46;status=第 46 页。
+STEP	57	probe_key	PASS	page=47;status=第 47 页。
+STEP	58	probe_key	PASS	page=48;status=第 48 页。
+STEP	59	probe_key	PASS	page=49;status=第 49 页。
+STEP	60	probe_key	PASS	page=50;status=第 50 页。
+STEP	61	probe_key	PASS	page=51;status=第 51 页。
+STEP	62	probe_key	PASS	page=52;status=第 52 页。
+STEP	63	probe_key	PASS	page=53;status=第 53 页。
+STEP	64	probe_key	PASS	page=54;status=第 54 页。
+STEP	65	probe_key	PASS	page=55;status=第 55 页。
+STEP	66	probe_key	PASS	page=56;status=第 56 页。
+STEP	67	probe_key	PASS	page=1;status=第 1 页。
+STEP	68	probe_key	PASS	page=2;status=第 2 页。
+STEP	69	probe_key	PASS	page=3;status=第 3 页。
+STEP	70	probe_key	PASS	page=4;status=第 4 页。
+STEP	71	probe_key	PASS	page=5;status=第 5 页。
+STEP	72	probe_mark	PASS	marked
+STEP	73	probe_mark	PASS	marked
+STEP	74	probe_key	PASS	page=6;status=第 6 页。
+STEP	75	probe_wait	PASS	waited without blocking UI
+STEP	76	wait_idle	PASS	page=6;status=第 6 页。
+STEP	77	probe_key	PASS	page=7;status=第 7 页。
+STEP	78	probe_wait	PASS	waited without blocking UI
+STEP	79	wait_idle	PASS	page=7;status=第 7 页。
+STEP	80	probe_key	PASS	page=8;status=第 8 页。
+STEP	81	probe_wait	PASS	waited without blocking UI
+STEP	82	wait_idle	PASS	page=8;status=第 8 页。
+STEP	83	probe_key	PASS	page=9;status=第 9 页。
+STEP	84	probe_wait	PASS	waited without blocking UI
+STEP	85	wait_idle	PASS	page=9;status=第 9 页。
+STEP	86	probe_key	PASS	page=10;status=第 10 页。
+STEP	87	probe_wait	PASS	waited without blocking UI
+STEP	88	wait_idle	PASS	page=10;status=第 10 页。
+STEP	89	probe_key	PASS	page=11;status=第 11 页。
+STEP	90	probe_wait	PASS	waited without blocking UI
+STEP	91	wait_idle	PASS	page=11;status=第 11 页。
+STEP	92	probe_key	PASS	page=12;status=第 12 页。
+STEP	93	probe_wait	PASS	waited without blocking UI
+STEP	94	wait_idle	PASS	page=12;status=第 12 页。
+STEP	95	probe_key	PASS	page=13;status=第 13 页。
+STEP	96	probe_wait	PASS	waited without blocking UI
+STEP	97	wait_idle	PASS	page=13;status=第 13 页。
+STEP	98	probe_key	PASS	page=14;status=第 14 页。
+STEP	99	probe_wait	PASS	waited without blocking UI
+STEP	100	wait_idle	PASS	page=14;status=第 14 页。
+STEP	101	probe_key	PASS	page=15;status=第 15 页。
+STEP	102	probe_wait	PASS	waited without blocking UI
+STEP	103	wait_idle	PASS	page=15;status=第 15 页。
+STEP	104	probe_key	PASS	page=16;status=第 16 页。
+STEP	105	probe_wait	PASS	waited without blocking UI
+STEP	106	wait_idle	PASS	page=16;status=第 16 页。
+STEP	107	probe_key	PASS	page=17;status=第 17 页。
+STEP	108	probe_wait	PASS	waited without blocking UI
+STEP	109	wait_idle	PASS	page=17;status=第 17 页。
+STEP	110	probe_key	PASS	page=18;status=第 18 页。
+STEP	111	probe_wait	PASS	waited without blocking UI
+STEP	112	wait_idle	PASS	page=18;status=第 18 页。
+STEP	113	probe_key	PASS	page=19;status=第 19 页。
+STEP	114	probe_wait	PASS	waited without blocking UI
+STEP	115	wait_idle	PASS	page=19;status=第 19 页。
+STEP	116	probe_key	PASS	page=20;status=第 20 页。
+STEP	117	probe_wait	PASS	waited without blocking UI
+STEP	118	wait_idle	PASS	page=20;status=第 20 页。
+STEP	119	probe_key	PASS	page=21;status=第 21 页。
+STEP	120	probe_wait	PASS	waited without blocking UI
+STEP	121	wait_idle	PASS	page=21;status=第 21 页。
+STEP	122	probe_key	PASS	page=22;status=第 22 页。
+STEP	123	probe_wait	PASS	waited without blocking UI
+STEP	124	wait_idle	PASS	page=22;status=第 22 页。
+STEP	125	probe_key	PASS	page=23;status=第 23 页。
+STEP	126	probe_wait	PASS	waited without blocking UI
+STEP	127	wait_idle	PASS	page=23;status=第 23 页。
+STEP	128	probe_key	PASS	page=24;status=第 24 页。
+STEP	129	probe_wait	PASS	waited without blocking UI
+STEP	130	wait_idle	PASS	page=24;status=第 24 页。
+STEP	131	probe_key	PASS	page=25;status=第 25 页。
+STEP	132	probe_wait	PASS	waited without blocking UI
+STEP	133	wait_idle	PASS	page=25;status=第 25 页。
+STEP	134	probe_mark	PASS	marked
+STEP	135	probe_mark	PASS	marked
+STEP	136	probe_move	PASS	page=24;status=第 24 页。
+STEP	137	wait_idle	PASS	page=24;status=第 24 页。
+STEP	138	probe_move	PASS	page=25;status=第 25 页。
+STEP	139	wait_idle	PASS	page=25;status=第 25 页。
+STEP	140	probe_move	PASS	page=24;status=第 24 页。
+STEP	141	wait_idle	PASS	page=24;status=第 24 页。
+STEP	142	probe_move	PASS	page=25;status=第 25 页。
+STEP	143	wait_idle	PASS	page=25;status=第 25 页。
+STEP	144	probe_move	PASS	page=24;status=第 24 页。
+STEP	145	wait_idle	PASS	page=24;status=第 24 页。
+STEP	146	probe_move	PASS	page=25;status=第 25 页。
+STEP	147	wait_idle	PASS	page=25;status=第 25 页。
+STEP	148	probe_move	PASS	page=24;status=第 24 页。
+STEP	149	wait_idle	PASS	page=24;status=第 24 页。
+STEP	150	probe_move	PASS	page=25;status=第 25 页。
+STEP	151	wait_idle	PASS	page=25;status=第 25 页。
+STEP	152	probe_move	PASS	page=24;status=第 24 页。
+STEP	153	wait_idle	PASS	page=24;status=第 24 页。
+STEP	154	probe_move	PASS	page=25;status=第 25 页。
+STEP	155	wait_idle	PASS	page=25;status=第 25 页。
+STEP	156	probe_move	PASS	page=24;status=第 24 页。
+STEP	157	wait_idle	PASS	page=24;status=第 24 页。
+STEP	158	probe_move	PASS	page=25;status=第 25 页。
+STEP	159	wait_idle	PASS	page=25;status=第 25 页。
+STEP	160	probe_move	PASS	page=24;status=第 24 页。
+STEP	161	wait_idle	PASS	page=24;status=第 24 页。
+STEP	162	probe_move	PASS	page=25;status=第 25 页。
+STEP	163	wait_idle	PASS	page=25;status=第 25 页。
+STEP	164	probe_move	PASS	page=24;status=第 24 页。
+STEP	165	wait_idle	PASS	page=24;status=第 24 页。
+STEP	166	probe_move	PASS	page=25;status=第 25 页。
+STEP	167	wait_idle	PASS	page=25;status=第 25 页。
+STEP	168	probe_move	PASS	page=24;status=第 24 页。
+STEP	169	wait_idle	PASS	page=24;status=第 24 页。
+STEP	170	probe_move	PASS	page=25;status=第 25 页。
+STEP	171	wait_idle	PASS	page=25;status=第 25 页。
+STEP	172	probe_move	PASS	page=24;status=第 24 页。
+STEP	173	wait_idle	PASS	page=24;status=第 24 页。
+STEP	174	probe_move	PASS	page=25;status=第 25 页。
+STEP	175	wait_idle	PASS	page=25;status=第 25 页。
+STEP	176	probe_mark	PASS	marked
+STEP	177	probe_mark	PASS	marked
+STEP	178	probe_wheel_burst	PASS	page=56;status=第 56 页。
+STEP	179	wait_idle	PASS	page=56;status=第 56 页。
+STEP	180	probe_wait	PASS	waited without blocking UI
+STEP	181	probe_mark	PASS	marked
+STEP	182	shell_measure	PASS	physical layout captured
+SHOT	183	before	PASS	file=before;nonzero=1
+STEP	183	snapshot	PASS	screenshot written
+STEP	184	probe_mark	PASS	marked
+STEP	185	shell_client	PASS	page=182;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	186	shell_measure	PASS	physical layout captured
+SHOT	187	small	PASS	file=small;nonzero=1
+STEP	187	snapshot	PASS	screenshot written
+STEP	188	shell_client	PASS	page=56;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	189	shell_measure	PASS	physical layout captured
+SHOT	190	large	PASS	file=large;nonzero=1
+STEP	190	snapshot	PASS	screenshot written
+STEP	191	shell_client	PASS	page=56;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	192	shell_measure	PASS	physical layout captured
+SHOT	193	restored	PASS	file=restored;nonzero=1
+STEP	193	snapshot	PASS	screenshot written
+STEP	194	delay	PASS	delay_ms set
+STEP	195	resize	PASS	window resized
+STEP	196	probe_wait	PASS	waited without blocking UI
+STEP	197	resize	PASS	window resized
+STEP	198	probe_wait	PASS	waited without blocking UI
+STEP	199	resize	PASS	window resized
+STEP	200	wait_idle	PASS	page=91;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	201	delay	PASS	delay_ms set
+STEP	202	shell_client	PASS	page=56;status=字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。
+STEP	203	shell_measure	PASS	physical layout captured
+SHOT	204	busy-restored	PASS	file=busy-restored;nonzero=1
+STEP	204	snapshot	PASS	screenshot written
+STEP	205	probe_mark	PASS	marked
+STEP	206	probe_end	PASS	paint counters recorded
+STEP	207	quit	PASS	closing
+DONE	207	eof	PASS	script finished

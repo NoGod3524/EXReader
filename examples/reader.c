@@ -613,8 +613,8 @@ static void frame_clear(host_frame *frame) {
   memset(frame, 0, sizeof(*frame));
 }
 
-/* GDI display bitmap is owned by the frame and prepared on the SDK worker.
-   It is never selected into a UI DC until that worker has been joined. */
+/* The frame owns its display bitmap. The pixel worker prepares it before the
+   UI joins; cached frames retain it and need no conversion on a cache hit. */
 static int frame_prepare_display(host_frame *frame) {
   RECT area;if(!frame->valid || !frame->dib || !g.page)return 0;
   if(!GetClientRect(g.page,&area))return 0;
@@ -643,6 +643,7 @@ static int frame_prepare_display(host_frame *frame) {
   }
 #endif
   SetStretchBltMode(dc,HALFTONE);SetBrushOrgEx(dc,0,0,NULL);
+  if(host_probe_counting)InterlockedIncrement(&host_probe_stretch);
   int copied=StretchDIBits(dc,0,0,w,h,0,0,frame->bitmap.width,frame->bitmap.height,frame->dib,&source,DIB_RGB_COLORS,SRCCOPY);
   SelectObject(dc,old);DeleteDC(dc);
   if(!copied || copied==(int)GDI_ERROR){DeleteObject(bitmap);return 0;}
@@ -1630,7 +1631,7 @@ static exr_status bounded_pager(host_session *session, size_t part, exr_pager **
 #else
   status = exr_publication_pager_create(session->publication, part, g.font, &session->config, &options, out, error);
 #endif
-  if (status == EXR_OK) status = exr_pager_set_cache(*out, 2, 8 * 1024 * 1024, error);
+  if (status == EXR_OK) status = exr_pager_set_cache(*out, 2, 32 * 1024 * 1024, error);
   if (status == EXR_OK) status = exr_pager_set_checkpoints(*out, 8, 4 * 1024 * 1024, 8, error);
   if (status != EXR_OK) { exr_pager_free(*out); *out = NULL; }
   return status;
@@ -2821,6 +2822,7 @@ static exr_status job_bounded_go(host_job *job) {
 
 static exr_status job_go(host_job *job) {
   LONG layout_before=host_probe_layout_calls;
+  LONG render_before=host_probe_render_calls;
   exr_error error = {0};
   exr_status status;
   if (!g.session.active) return EXR_ARGUMENT;
@@ -2866,6 +2868,7 @@ static exr_status job_go(host_job *job) {
       job->have_frame=1;job->applied_page=job->frame.page;job->page_count=g.session.page_count;
       host_probe_log("cache_hit",(double)job->frame.page);
       host_probe_log("cache_layout_delta",(double)(host_probe_layout_calls-layout_before));
+      host_probe_log("cache_render_delta",(double)(host_probe_render_calls-render_before));
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       return prefs_commit(job,EXR_OK);
 #else
@@ -3823,14 +3826,30 @@ static HDC page_buffer_dc;
 static HBITMAP page_buffer_bitmap;
 static HGDIOBJ page_buffer_old;
 static int page_buffer_width, page_buffer_height;
+static int page_buffer_has_page;
+static unsigned long page_buffer_generation;
+#ifdef EXR_READER_WINDOWS_SHELL
+static shell_geometry page_buffer_geometry;
+/* A resize is debounced. Until its frame is ready, do not submit an old-size
+   buffer. Completion invalidates the page and resumes presentation. Compare
+   the live snapshot, since child WM_SIZE precedes the parent's layout request. */
+static int page_frame_current(void) {
+  return !shell_active || (g.frame.valid &&
+    shell_geometry_equal(g.frame.shell_geometry,shell_snapshot()));
+}
+#endif
 static void page_buffer_release(void) {
   if(page_buffer_dc && page_buffer_old)SelectObject(page_buffer_dc,page_buffer_old);
   if(page_buffer_bitmap)DeleteObject(page_buffer_bitmap);
   if(page_buffer_dc)DeleteDC(page_buffer_dc);
   page_buffer_old=NULL;
   page_buffer_dc=NULL;page_buffer_bitmap=NULL;page_buffer_width=page_buffer_height=0;
+  page_buffer_has_page=0;page_buffer_generation=0;
 }
 static void compose_page_view(HWND window) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(!page_frame_current())return;
+#endif
   double paint_start=host_probe_ms();
   host_probe_log("compose_begin_gen",(double)g.frame.generation);
   HDC screen = GetDC(window), dc;
@@ -3847,12 +3866,15 @@ static void compose_page_view(HWND window) {
     host_probe_log("buffer_alloc",1);
   }
   dc=page_buffer_dc;
+  page_buffer_has_page=0;page_buffer_generation=g.frame.generation;
 #ifdef EXR_READER_WINDOWS_SHELL
+  page_buffer_geometry=g.frame.shell_geometry;
   if(shell_active) {
     HBRUSH bg=CreateSolidBrush(shell_colorref(shell_colors->layer_page));
     FillRect(dc,&area,bg);DeleteObject(bg);
     shell_color_display(&g.frame);
   } else
+#endif
 #endif
   FillRect(dc, &area, (HBRUSH)GetStockObject(WHITE_BRUSH));
   if (g.frame.valid && compute_view()) {
@@ -3881,20 +3903,24 @@ static void compose_page_view(HWND window) {
       HDC source=CreateCompatibleDC(dc);
       if(source) {
         HGDIOBJ old=SelectObject(source,g.frame.display_bitmap);
-        BitBlt(dc,g.view.dx,g.view.dy,g.frame.display_width,g.frame.display_height,source,0,0,SRCCOPY);
+        page_buffer_has_page=BitBlt(dc,g.view.dx,g.view.dy,g.frame.display_width,g.frame.display_height,source,0,0,SRCCOPY)!=0;
+        if(host_probe_counting)host_probe_bitblt++;
         SelectObject(source,old);DeleteDC(source);
       }
     }
 #ifdef EXR_READER_WINDOWS_SHELL
-    else if (g.frame.shell_geometry.enabled) SetDIBitsToDevice(dc, g.view.dx, g.view.dy,
-      g.frame.bitmap.width, g.frame.bitmap.height, 0, 0, 0, g.frame.bitmap.height,
-      g.frame.dib, &info, DIB_RGB_COLORS);
+    /* Shell display allocation failure stays observable as a blank submission;
+       never fall through to a scaling or direct-DIB presentation path. */
+    else if (g.frame.shell_geometry.enabled) host_probe_log("display_prepare_failed",1);
 #endif
-    else StretchDIBits(dc, g.view.dx, g.view.dy,
+    else {
+      if(host_probe_counting)InterlockedIncrement(&host_probe_stretch);
+      page_buffer_has_page=StretchDIBits(dc, g.view.dx, g.view.dy,
                   (int)(g.frame.bitmap.width * g.view.scale),
                   (int)(g.frame.bitmap.height * g.view.scale),
                   0, 0, (int)g.frame.bitmap.width, (int)g.frame.bitmap.height,
-                  g.frame.dib, &info, DIB_RGB_COLORS, SRCCOPY);
+                  g.frame.dib, &info, DIB_RGB_COLORS, SRCCOPY)>0;
+    }
     paint_selection(dc);
   } else {
     const wchar_t *hint = L"打开一本书开始阅读\n\n导入 EPUB/PDF/CBZ 后从左侧书架打开";
@@ -3922,10 +3948,23 @@ static void compose_page_view(HWND window) {
 static void paint_page_view(HWND window) {
   PAINTSTRUCT paint;double start=host_probe_ms();
   host_probe_log("paint",0);
-  if(!page_buffer_dc)compose_page_view(window);
+  RECT area;GetClientRect(window,&area);
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(!page_frame_current()) {
+    BeginPaint(window,&paint);EndPaint(window,&paint);
+    if(host_probe_counting)host_probe_deferred++;
+    return;
+  }
+#endif
+  if(!page_buffer_dc || page_buffer_width!=area.right || page_buffer_height!=area.bottom)
+    compose_page_view(window);
   HDC screen=BeginPaint(window,&paint);
   double blit_start=host_probe_ms();
-  if(page_buffer_dc)BitBlt(screen,paint.rcPaint.left,paint.rcPaint.top,
+  int submitted=0,stale=0;
+#ifdef EXR_READER_WINDOWS_SHELL
+  stale=shell_active && !shell_geometry_equal(page_buffer_geometry,shell_snapshot());
+#endif
+  if(page_buffer_dc && !stale)submitted=BitBlt(screen,paint.rcPaint.left,paint.rcPaint.top,
     paint.rcPaint.right-paint.rcPaint.left,paint.rcPaint.bottom-paint.rcPaint.top,
     page_buffer_dc,paint.rcPaint.left,paint.rcPaint.top,SRCCOPY);
   host_probe_log("blit_ms",host_probe_ms()-blit_start);
@@ -3938,6 +3977,16 @@ static void paint_page_view(HWND window) {
     if(!page_buffer_dc || !g.frame.valid) host_probe_log("blank",1);
   }
 #endif
+  if(host_probe_counting && submitted) {
+    host_probe_log("present_client_w",area.right);host_probe_log("present_client_h",area.bottom);
+    host_probe_log("present_buffer_w",page_buffer_width);host_probe_log("present_buffer_h",page_buffer_height);
+#ifdef EXR_READER_WINDOWS_SHELL
+    shell_geometry expected=shell_snapshot();
+    host_probe_log("present_page_w",page_buffer_geometry.width);host_probe_log("present_page_h",page_buffer_geometry.height);
+    host_probe_log("present_expected_w",expected.width);host_probe_log("present_expected_h",expected.height);
+#endif
+  }
+  host_probe_submission(submitted,page_buffer_has_page,stale,(double)page_buffer_generation);
 }
 
 static size_t point_offset(int x, int y, int at_end) {
@@ -5383,15 +5432,11 @@ static void handle_job_complete(host_job *job) {
     set_status(L"已到最后一页；当前页未改变。");
   } else {
     wchar_t message[768];
-    if (job->message[0]) {
-      set_status(job->message);
-    } else {
-      describe_error(message, 768,
-                     job->kind == JOB_IMPORT ? L"导入失败" :
-                     job->kind == JOB_OPEN ? L"打开书籍失败" : L"翻页或重排失败",
-                     job->status, &job->error);
-      set_status(message);
-    }
+    describe_error(message, 768,
+                   job->kind == JOB_IMPORT ? L"导入失败" :
+                   job->kind == JOB_OPEN ? L"打开书籍失败" : L"翻页或重排失败",
+                   job->status, &job->error);
+    set_status(message);
   }
 }
 
@@ -5957,6 +6002,22 @@ static int drive_execute(void) {
     drive_step_finish(1,"test window sized");return 0;
   }
   if(!strcmp(action,"probe_mark")) { host_probe_log(drive_args[1],0);drive_step_finish(1,"marked");return 0; }
+  if(!strcmp(action,"probe_begin")) {
+    host_probe_reset();host_probe_log("probe_begin",0);
+    host_probe_log("layout_calls",host_probe_layout_calls);host_probe_log("render_calls",host_probe_render_calls);
+    page_dirty(g.page,1);UpdateWindow(g.page);
+    drive_step_finish(1,"paint counters reset");return 0;
+  }
+  if(!strcmp(action,"probe_end")) {
+    page_dirty(g.page,1);UpdateWindow(g.page);
+    host_probe_log("total_presented",host_probe_presented);host_probe_log("total_blank",host_probe_blank);
+    host_probe_log("total_stale_size",host_probe_stale);host_probe_log("total_present_failed",host_probe_present_failed);
+    host_probe_log("total_bitblt",host_probe_bitblt);host_probe_log("total_stretch",host_probe_stretch);
+    host_probe_log("total_deferred",host_probe_deferred);
+    host_probe_log("layout_calls",host_probe_layout_calls);host_probe_log("render_calls",host_probe_render_calls);
+    host_probe_log("probe_end",0);host_probe_counting=0;
+    drive_step_finish(1,"paint counters recorded");return 0;
+  }
   if(!strcmp(action,"probe_title")) {
     wchar_t *title=host_wide(drive_args[1],strlen(drive_args[1]));SetWindowTextW(g.window,title);free(title);
     RECT area;POINT pt={0,0};GetClientRect(g.window,&area);
