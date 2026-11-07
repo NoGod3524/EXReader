@@ -1,0 +1,438 @@
+{
+  "horizontal": {
+    "before": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        624
+      ],
+      "font": 18.0,
+      "range": [
+        14994,
+        17136
+      ],
+      "epoch": 5,
+      "frame_epoch": 5,
+      "builds": 3
+    },
+    "busy-roundtrip": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        624
+      ],
+      "font": 18.0,
+      "range": [
+        14994,
+        17136
+      ],
+      "epoch": 11,
+      "frame_epoch": 11,
+      "builds": 8
+    },
+    "busy": {
+      "client": [
+        1262,
+        803
+      ],
+      "page": [
+        612,
+        627
+      ],
+      "font": 18.0,
+      "range": [
+        14994,
+        17136
+      ],
+      "epoch": 10,
+      "frame_epoch": 10,
+      "builds": 7
+    },
+    "cap": {
+      "client": [
+        1000,
+        800
+      ],
+      "page": [
+        612,
+        624
+      ],
+      "font": 18.0,
+      "range": [
+        14994,
+        17136
+      ],
+      "epoch": 5,
+      "frame_epoch": 5,
+      "builds": 3
+    },
+    "dpi-roundtrip": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        624
+      ],
+      "font": 18.0,
+      "range": [
+        14994,
+        17136
+      ],
+      "epoch": 15,
+      "frame_epoch": 15,
+      "builds": 12
+    },
+    "dpi120": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        765,
+        580
+      ],
+      "font": 22.5,
+      "range": [
+        14994,
+        16533
+      ],
+      "epoch": 12,
+      "frame_epoch": 12,
+      "builds": 9
+    },
+    "dpi144": {
+      "client": [
+        1280,
+        849
+      ],
+      "page": [
+        918,
+        585
+      ],
+      "font": 27.0,
+      "range": [
+        14994,
+        16320
+      ],
+      "epoch": 13,
+      "frame_epoch": 13,
+      "builds": 10
+    },
+    "legacy": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        720,
+        1040
+      ],
+      "font": 42.0,
+      "range": [
+        14850,
+        15525
+      ],
+      "epoch": 16,
+      "frame_epoch": 16,
+      "builds": 13
+    },
+    "roundtrip": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        624
+      ],
+      "font": 18.0,
+      "range": [
+        14994,
+        17136
+      ],
+      "epoch": 7,
+      "frame_epoch": 7,
+      "builds": 5
+    },
+    "same": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        624
+      ],
+      "font": 18.0,
+      "range": [
+        14994,
+        17136
+      ],
+      "epoch": 7,
+      "frame_epoch": 7,
+      "builds": 5
+    },
+    "shell-again": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        624
+      ],
+      "font": 18.0,
+      "range": [
+        14994,
+        17136
+      ],
+      "epoch": 17,
+      "frame_epoch": 17,
+      "builds": 14
+    },
+    "small": {
+      "client": [
+        720,
+        560
+      ],
+      "page": [
+        612,
+        384
+      ],
+      "font": 18.0,
+      "range": [
+        14994,
+        16320
+      ],
+      "epoch": 6,
+      "frame_epoch": 6,
+      "builds": 4
+    }
+  },
+  "vertical": {
+    "before": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        592
+      ],
+      "font": 18.0,
+      "range": [
+        14112,
+        16128
+      ],
+      "epoch": 5,
+      "frame_epoch": 5,
+      "builds": 3
+    },
+    "busy-roundtrip": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        592
+      ],
+      "font": 18.0,
+      "range": [
+        14112,
+        16128
+      ],
+      "epoch": 11,
+      "frame_epoch": 11,
+      "builds": 8
+    },
+    "busy": {
+      "client": [
+        1262,
+        803
+      ],
+      "page": [
+        612,
+        595
+      ],
+      "font": 18.0,
+      "range": [
+        14112,
+        16137
+      ],
+      "epoch": 10,
+      "frame_epoch": 10,
+      "builds": 7
+    },
+    "cap": {
+      "client": [
+        1000,
+        800
+      ],
+      "page": [
+        612,
+        592
+      ],
+      "font": 18.0,
+      "range": [
+        14112,
+        16128
+      ],
+      "epoch": 5,
+      "frame_epoch": 5,
+      "builds": 3
+    },
+    "dpi-roundtrip": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        592
+      ],
+      "font": 18.0,
+      "range": [
+        14112,
+        16128
+      ],
+      "epoch": 15,
+      "frame_epoch": 15,
+      "builds": 12
+    },
+    "dpi120": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        765,
+        540
+      ],
+      "font": 22.5,
+      "range": [
+        14112,
+        15525
+      ],
+      "epoch": 12,
+      "frame_epoch": 12,
+      "builds": 9
+    },
+    "dpi144": {
+      "client": [
+        1280,
+        849
+      ],
+      "page": [
+        918,
+        537
+      ],
+      "font": 27.0,
+      "range": [
+        14112,
+        15276
+      ],
+      "epoch": 13,
+      "frame_epoch": 13,
+      "builds": 10
+    },
+    "legacy": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        720,
+        1040
+      ],
+      "font": 42.0,
+      "range": [
+        13800,
+        14490
+      ],
+      "epoch": 16,
+      "frame_epoch": 16,
+      "builds": 13
+    },
+    "roundtrip": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        592
+      ],
+      "font": 18.0,
+      "range": [
+        14112,
+        16128
+      ],
+      "epoch": 7,
+      "frame_epoch": 7,
+      "builds": 5
+    },
+    "same": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        592
+      ],
+      "font": 18.0,
+      "range": [
+        14112,
+        16128
+      ],
+      "epoch": 7,
+      "frame_epoch": 7,
+      "builds": 5
+    },
+    "shell-again": {
+      "client": [
+        1280,
+        800
+      ],
+      "page": [
+        612,
+        592
+      ],
+      "font": 18.0,
+      "range": [
+        14112,
+        16128
+      ],
+      "epoch": 17,
+      "frame_epoch": 17,
+      "builds": 14
+    },
+    "small": {
+      "client": [
+        720,
+        560
+      ],
+      "page": [
+        612,
+        352
+      ],
+      "font": 18.0,
+      "range": [
+        14112,
+        15276
+      ],
+      "epoch": 6,
+      "frame_epoch": 6,
+      "builds": 4
+    }
+  }
+}

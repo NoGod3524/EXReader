@@ -1,0 +1,18 @@
+HOST	phase=1	engine=3.42.0	pid=24652
+STEP	1	import	PASS	page=0;status=已导入《EXReader benchmark》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+STEP	3	wait_idle	PASS	page=1;status=已打开《EXReader benchmark》 · 从首个阅读章节开始。
+STEP	4	shell	PASS	reading screen
+STEP	5	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	6	shell_client	PASS	page=1;status=第 1 页。
+STEP	7	wait_idle	PASS	page=1;status=第 1 页。
+STEP	8	shell_click	PASS	button invoked
+STEP	9	wait_idle	PASS	page=1;status=第 1 页。
+STEP	10	settings_measure	PASS	settings captured
+SHOT	11	expanded	PASS	file=expanded;nonzero=1
+STEP	11	snapshot	PASS	screenshot written
+STEP	12	shell_click	PASS	button invoked
+STEP	13	wait_idle	PASS	page=1;status=第 1 页。
+STEP	14	settings_measure	PASS	settings captured
+STEP	15	quit	PASS	closing
+DONE	15	eof	PASS	script finished

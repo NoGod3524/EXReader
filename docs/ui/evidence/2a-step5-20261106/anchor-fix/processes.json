@@ -1,0 +1,456 @@
+[
+  {
+    "path": "anchor-current/font-anchors/100/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 52.00898069999948,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/font-anchors/800/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 430.1021824999998,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/head/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 4.848431399999754,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/old-ini/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.41609109999990324,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/regression/baseline/A/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.1998171999994156,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/regression/baseline/B/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.45191240000076505,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/regression/baseline/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.3537351999993916,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/regression/changed/A/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.2964037000001554,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/regression/changed/B/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.6229654999997365,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/regression/changed/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.48918589999993856,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/regression/control/A/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.0720116000002236,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/regression/control/B/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.41377009999996517,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/regression/control/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.3353311999999278,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/restart/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.357603200000085,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/settings/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 41.138938599999165,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/system/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.74898100000064,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-current/system-restart/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.368393699999615,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-pixels-current/17-dark/after/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.373439299999518,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-pixels-current/17-dark/before/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.526108099999874,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-pixels-current/17-light/after/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.4997514999995474,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-pixels-current/17-light/before/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.6051357000005737,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-pixels-current/24-dark/after/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.8799871000001076,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-pixels-current/24-dark/before/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.9248649999999543,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-pixels-current/24-light/after/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.9281025000000227,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-pixels-current/24-light/before/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.854674000000159,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-legacy/baseline/A/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 11.676134199999979,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-legacy/baseline/B/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.2300482999999076,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-legacy/baseline/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5277356999995391,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-legacy/changed/A/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 11.651196899999377,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-legacy/changed/B/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.15625639999962,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-legacy/changed/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5330298999997467,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-legacy/control/A/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 11.884917200000018,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-legacy/control/B/process.json",
+    "exit": 1,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.1590723999997863,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-legacy/control/C/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.4972853999997824,
+    "stderr": ""
+  },
+  {
+    "path": "anchor-resize/horizontal/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "elapsed": 12.99909260000004
+  },
+  {
+    "path": "anchor-resize/vertical/process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "elapsed": 14.057274000000689
+  }
+]
