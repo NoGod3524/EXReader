@@ -1,0 +1,50 @@
+{
+  "actual_window_dpi": 120,
+  "display": [
+    612,
+    624
+  ],
+  "target_dpi": [
+    96.0,
+    96.0,
+    96.0,
+    96.0
+  ],
+  "client": [
+    1280,
+    800
+  ],
+  "client_box": [
+    9,
+    38,
+    1280,
+    800
+  ],
+  "dpi": 96,
+  "pmv2": 1,
+  "dpi_request": 1,
+  "dpi_error": 0,
+  "page": [
+    612,
+    624
+  ],
+  "font": 18.0,
+  "margin": 0.0,
+  "line_height": 1.6,
+  "paragraph": 14.400001,
+  "scale": 1.0,
+  "origin": [
+    334,
+    88
+  ],
+  "epoch": 3,
+  "frame_epoch": 3,
+  "builds": 1,
+  "mode": 0,
+  "part": 15,
+  "index": 0,
+  "range": [
+    0,
+    1769
+  ]
+}

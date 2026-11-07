@@ -70,6 +70,9 @@ static void snapshots(void) {
     "<html><body><div>before<span> </span><div>nested</div> after <b>bold</b></div><pre> x \n y </pre></body></html>",
   ("<html><body><p>\u4f60 \n<span> \u597d</span> \uff0c \uff08 \U00020000 \uff09</p>"
    "<p>GPU \u52a0\u901f \u7b2c 1 \u7ae0</p><p>\u4f60 <b> </b>\u597d</p></body></html>"),
+    "<html><body><p>\u3000&#160;<span>\u3000</span>\u4f60 \u3000<span>&#160; \u597d</span>\u3000\uff0c&#160;\u597d</p>"
+    "<p>GPU\u3000<span>&#160;\u52a0\u901f</span>\u00a0 1</p><p>\u3000&#160;</p>"
+    "<p>\u7b2c\u4e00\u56de\u3000\u7504\u58eb\u96b1</p></body></html>",
   };
   static const size_t chunks[] = {1, 2, 3, 7, 31, 32768};
   size_t i, j;
