@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "advisory": true,
+  "accepted": false,
+  "status": "proposal_only",
+  "comparison_key": "d4ff747fd93ce55fe7800683cf0cd46f5d2eb29d01428d29cfac17f2ad0ab5ad",
+  "source_sha": "c665d1cb1c0b681d4365f732acf775167bfa6d33",
+  "binary_sha256": "7acaf1349d47b789cda587f9f5738f14bf4f8730f0ffb8669bebc4d46bf92c57",
+  "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "input_sha256": "175e0e6d4b63d01157b266d9b1e72209f7f0c537a9d400ce5b670949d430e4cd",
+  "samples_sha256": "016720a11265ab4b7591c6b4ee7bd42d642397bb2bfa86d4cfe8d2731756ed38",
+  "exporter_sha256": "c94a5ce2a8fc1771085ff2db8c676ccbd85f7d1567aa49a7e579d3fead45c2ba",
+  "method": "nearest-rank p95 across final predeclared complete batch; latency ceil(p95*1.25*1000)/1000 ms; RSS ceil(p95*1.05)+1048576 bytes",
+  "eligible": false,
+  "limits": {
+    "default-release": {
+      "open_ms": 18.279,
+      "first_visible_ms": 56.332,
+      "first_render_ms": 5.338,
+      "turn_p50_ms": 7.179,
+      "turn_p95_ms": 10.425,
+      "turn_max_ms": 11.134,
+      "random_p95_ms": 85.422,
+      "peak_rss_bytes": 41626624
+    },
+    "1280x800": {
+      "open_ms": 17.315,
+      "first_visible_ms": 44.76,
+      "first_render_ms": 5.84,
+      "turn_p50_ms": 8.661,
+      "turn_p95_ms": 12.49,
+      "turn_max_ms": 13.405,
+      "random_p95_ms": 102.511,
+      "peak_rss_bytes": 41652429
+    },
+    "2560x1440": {
+      "open_ms": 18.573,
+      "first_visible_ms": 69.307,
+      "first_render_ms": 18.956,
+      "turn_p50_ms": 32.519,
+      "turn_p95_ms": 34.959,
+      "turn_max_ms": 37.26,
+      "random_p95_ms": 326.489,
+      "peak_rss_bytes": 44817818
+    }
+  }
+}

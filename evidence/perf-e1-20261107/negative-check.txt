@@ -1,0 +1,1 @@
+PASS: changed raw hash and changed RGBA signature both rejected; strict_local_pass=false
