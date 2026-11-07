@@ -1588,8 +1588,10 @@ static void session_configure(host_session *session, host_job *job) {
   session->config.page.height = 1040;
 #ifdef EXR_READER_WINDOWS_SHELL
   session->shell_geometry = job ? job->shell_geometry : (shell_geometry){0};
+  host_probe_log("open_shell_geometry_height",session->shell_geometry.height);
   if (session->shell_geometry.enabled) {
     shell_apply_config(&session->config, session->shell_geometry);
+    host_probe_log("open_page_height",session->config.page.height);
     if(session->txt) session->config.user_css=NULL;
     return;
   }
@@ -1654,6 +1656,7 @@ static int shell_capture_layout(host_frame *frame, const host_session *session, 
   const exr_line *lines; const exr_glyph *glyphs;
   frame->writing_mode = (int)exr_layout_writing_mode(layout);
   frame->shell_geometry = session->shell_geometry;
+  host_probe_log("image_shell_geometry_height",session->shell_geometry.height);
   if (!session->shell_geometry.enabled) return 1;
   lines = exr_layout_lines(layout, &frame->shell_line_count);
   if (frame->shell_line_count) {
@@ -3749,9 +3752,15 @@ static int compute_view_impl(void) {
     g.view.dx = (area.right - g.view.bw) / 2;
     g.view.dy = body_top;
     if(!IsRectEmpty(&g.frame.shell_image)) {
+      RECT client={0};GetClientRect(g.window,&client);
+      host_probe_log("image_client_height",client.bottom);
+      host_probe_log("image_page_client_height",area.bottom);
+      host_probe_log("image_frame_geometry_height",g.frame.shell_geometry.height);
       const RECT *image=&g.frame.shell_image;
       shell_image_view fit=shell_fit_image(area.right,area.bottom,shell_dpi,shell_font,
         image->right-image->left,image->bottom-image->top);
+      host_probe_log("image_fit_body_height",body_height);
+      host_probe_log("image_fit_height",fit.height);
       if(fit.width<=0 || fit.height<=0) return 0;
       g.view.bw=fit.width;g.view.bh=fit.height;
       g.view.dx=fit.left;g.view.dy=fit.top;

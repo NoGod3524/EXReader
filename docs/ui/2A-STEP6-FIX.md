@@ -1,72 +1,91 @@
-# Step 6 真书复核与诊断（2026-11-07）
+# Step 6：真实 EXE 与 DPI 抓图裁切（2026-11-07）
 
-PR #67 暂不可验收：本轮未复现 owner 报告的封面裁切。`179a429a` 加临时日志的对照构建与当前诊断构建，在指定《紅樓夢》三个尺寸上的完整客户区截图均为 0px 差异。本次提交增加探针和真书验收，没有改变图片绘制行为。
+已用 owner 的 `exr-demo-fix/EXReader-fix.exe` 和《紅樓夢》原件复现，PNG SHA-256 精确等于 `ff3f4377c652f2a94cba58d3328784bcded9115f926aa7ed25bf298a631e7478`。裁切发生在抓图端：125% 缩放下，未声明 DPI 感知的 Python 进程读到 1242×742，而窗口实际为 1552×928。它分配的 1242×742 位图只容纳 PrintWindow 物理像素输出的左上角。
 
-## 原件与探针
+同一原始 EXE、同一窗口，不改绘制代码，仅声明 PMv2 后抓图，封面四边、右上控件和页码均完整。自动检查证明错误 PNG 与完整 PNG 的左上角逐像素相等。此前用完整客户区做的验收未覆盖这个抓图错误。
 
-指定原件：`C:/Users/Oscar/Documents/Codex/exr-cjk-corpus/hongloumeng-24264.epub`。
-SHA-256：`325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7`。
-书库现有条目的 source BLOB 与此原件逐字节同哈希。新导入、现有书库的只读副本、普通启动（不加 `--drive`）、历史 MinGW 运行库均实测：
+本轮已完成真实程序验收；PR #67 可按下面的真实尺寸和抓图方式验收。GitHub 状态仍保留 draft。
 
-```json
-{"image_count":1,"visible_text":0,"flags":0}
-```
+## 三个高度值
 
-当前诊断构建还在已接受帧的 `shell_measure` 中报告 `source_available=1`、`fitted=1`，完整解码源为 1600×2400。《紅樓夢》《Pachinko》《醒世恆言》共 15 组封面都是 `1 / 0 / 0`。
+全部来自重编真实程序的 `EXR_PAINT_TRACE`，120 DPI。打开时物理整窗 1552×928，客户端 1534×881。后续对同一窗口改变尺寸。
 
-## flags 判断
+| 阶段 / 目标 | 打开时 shell geometry.height | 当前 GetClientRect 高 | 单图 fit 使用的版心高 |
+| --- | ---: | ---: | ---: |
+| 原始复现窗口 | 681 | 881 | 681 |
+| 物理整窗 1242×742 | 681 | 695 | 495 |
+| 物理整窗 900×600 | 681 | 553 | 353 |
+| 物理整窗 1280×800 | 681 | 753 | 553 |
+| 精确客户端 1242×711 | 681 | 711 | 511 |
 
-依据 `include/exr/layout.h:44`、`src/flow.c` 的 `exr_flow_image()`：
+单图高度没有固定常量：`shell_fit_image()` 从当前 page 子窗口客户区重新计算版心；本机 120 DPI 时等于主窗口客户端高减 200。表中第一列固定指首次打开的值，重排后的帧会另有自己的 geometry。日志还分别输出当前帧 geometry、page 子窗口高和最终图片高。
 
-| 图片 flags | 语义 | 处理 |
-| --- | --- | --- |
-| 0 | 正常解码图片 | 保留现有单图条件和等比缩放 |
-| 0x1 | 缺少解码图像的占位图 | 保留 SDK 页面绘制 |
-| 其余位或其组合 | 未定义的图片标记 | 保留 SDK 页面绘制 |
+## 真实窗口截图和像素结果
 
-当前 SDK 没有可加入白名单的非零图片 flags。CSS 居中、边距不写入图片 flags。浮动使用独立的 `exr_style.float_side`（`src/style_internal.h`、`src/pager.c`），不能用图片 flags 判断浮动。本轮保留 `!image->flags`，没有放宽 eligibility；也未声称该条件能区分所有浮动图片。
+三张新图均包含原生标题栏，PNG 像素尺寸就是物理整窗尺寸。120 DPI 下原生非客户区共占横向 18px、纵向 47px，所以“整窗 1242×742 / 客户端 1242×711”不是这台机器当前的同一组物理尺寸；两种要求分别实测。
 
-## 真书实测
+| 物理整窗 | 实际客户端 | 图片矩形（客户端坐标） | 水平 / 垂直误差 | 裁切 |
+| --- | --- | --- | --- | --- |
+| 1242×742 | 1224×695 | [447,120,777,615] | 0 / 0px | 0 |
+| 900×600 | 882×553 | [323,120,558,473] | 0.5 / 0px | 0 |
+| 1280×800 | 1262×753 | [447,120,815,672] | 0 / 0.5px | 0 |
+| 1260×758 | **1242×711** | [451,120,791,630] | 0 / 0.5px | 0 |
 
-96 DPI、深色；全部尺寸核对实际客户区。图片矩形为客户区坐标，居中误差相对实际版心。
+原始 owner EXE 与重编 EXE 的四组完整客户区图均为 **0 像素差异**。图片来自 EPUB 原件的 1600×2400 解码源；整图与四条源边均作独立像素比较，结果见 [real-exe-result.json](evidence/2a-step6-fix/real-exe-result.json)。
 
-| 客户区 | 图片矩形 | 水平偏差 | 垂直偏差 | 比例误差 | 裁切 |
-| --- | --- | --- | --- | --- | --- |
-| 1242×742 | [427, 96, 815, 678] | 0px | 0px | 0.000000000 | 0 |
-| 1280×800 | [427, 96, 853, 735] | 0px | 0.5px | 0.000000000 | 0 |
-| 900×600 | [303, 96, 596, 536] | 0.5px | 0px | 0.000757576 | 0 |
+125% 缩放下交互式最小客户端为 900×700。测试用 SetWindowPos 的 SWP_NOSENDCHANGING 绕过交互最小尺寸限制，令三个指定物理整窗尺寸精确生效；实际 WM_SIZE、重排与绘制仍由真实 EXE 执行。窗口始终在 (-32000,-32000)，使用 NOACTIVATE，前台观察 0。
 
-另测 120 DPI 的 1242×742、1280×800；三本真书共 15/15 组通过，最大水平/垂直偏差各 0.5px、最大比例误差 0.000757576。120 DPI 下原生最小客户区限制使 900×600 不适用，三个指定尺寸均在 96 DPI 下完成。
+四张主证据：
 
-`check_step6_real.py` 固定四本原件 SHA-256，核对导入后 source BLOB，并从原始 ZIP 直接解码图片，与 PrintWindow 图中完整目标矩形比较，包括四条源图边缘。15 组整图 RGB 平均误差最大 2.391383/255，四条边平均误差最大 0.522876/255；可区分夹具替代、错误图片和源图裁切。脚本不生成或重写 EPUB。
+- [原脚本错误抓图，精确复现 ff3f4377…](evidence/2a-step6-fix/real-exe-before-1242x742.png)
+- [修正抓图：物理整窗 1242×742](evidence/2a-step6-fix/real-exe-1242x742.png)
+- [修正抓图：物理整窗 900×600](evidence/2a-step6-fix/real-exe-900x600.png)
+- [修正抓图：物理整窗 1280×800](evidence/2a-step6-fix/real-exe-1280x800.png)
 
-| 用户本轮六项 | 本机数字 |
-| --- | --- |
-| 1. 紅樓夢 1242×742 | image=[427,96,815,678]；水平/垂直偏差 0/0px；比例误差 0；裁切 0 |
-| 2. 紅樓夢三尺寸 | 3/3；加 120 DPI 后 5/5 |
-| 3. 两本不同真书整页图片 | Pachinko、醒世恆言各 5/5；三本合计 15/15 |
-| 4. 蓝框及正文 | 四本正文 4/4，与对照完整截图差异 0px；每本版心外 4px 与页面 HWND 外圈 10,032 点，全为 #141416，RGB 误差 0，accent 像素 0；控件焦点 2/2 |
-| 5. 既有验收 | 8/8；字号锚点 12/12；额外直接跳字号 10/10；三个无窗口检查 exit=0；P0 复跑通过 |
-| 6. 出图 | 紅樓夢封面、Pachinko 正文各 1 张，另有两张控件焦点图，均位于 evidence/2a-step6-fix/ |
+初始完整图、精确客户端 1242×711 图、对照图和原始高度日志位于 [real-exe-measurements.tar.gz](evidence/2a-step6-fix/record/real-exe-measurements.tar.gz)。
 
-既有八项：浅/深 bg、surface 误差 0；五态 30/30；动画 0ms；正文对比度 15.717976/16.455895；深色空白帧 0/152、全程 0/185；字号/主题重启 28→28、1→1，系统模式 2→2；self-test 26/26；旧 UI 8 图 client 差异 0px、负例自检通过。
+## 构建、修改与复跑
 
-正文分别取《紅樓夢》part 15、《Pachinko》part 10、《醒世恆言》part 4、《草枕》part 2。封面和正文的新验收只使用原件。既有八项和锚点沿用原有回归输入，其结果不计入真书封面 15 组。
+真实程序由 MinGW GCC 16.2.0 编译 `examples/reader.c`、`examples/windows/shell_d2d.cpp`、`examples/windows/shell_epub.cpp`，宏 `EXR_READER_WINDOWS_SHELL=1`，动态链接指定 `cjk-justify-20261106/build/libexreader.dll`；不是 harness。DLL 与 owner exe 相邻 DLL 哈希相同：`79d5093857385c84c03ea3e7f9000fd44411e712d47c32ab6d63f682efacba66`。实际进程加载路径见 [real-exe-loaded-dll.json](evidence/2a-step6-fix/record/real-exe-loaded-dll.json)。
 
-## 改动与复跑
+- `examples/reader.c:1591`、`:1594`：输出打开时 shell 几何高与实际配置页高。
+- `examples/reader.c:1659`：输出单图判定前的几何高。
+- `examples/reader.c:3755` 起：输出当前主 / 子客户区高、帧几何高、适配使用的版心高和图片高。仅增加可选 trace。
+- `docs/ui/acceptance/capture_window.py:17`：获取任何窗口几何前声明 PMv2；按物理整窗尺寸分配位图，并正确使用 64 位 GDI 句柄、释放资源。
+- `build_real_exe.ps1`：保留指定 DLL 的三源文件构建命令。
+- `check_real_exe.py`：普通书籍命令行启动，不使用 `--drive`；原脚本哈希复现、错误图与完整图左上裁切相等、三种整窗及精确客户端尺寸、原 EXE 对照、源图四边与居中检查。
 
-- `examples/reader.c:157`、`:1683` 起：帧内记录 image_count/visible_text/flags/source_available，并经已有可选 EXR_PAINT_TRACE 输出；为原条件补充 flags 语义注释。
-- `examples/windows/shell_measure.inc:12`：把已接受帧的判定值及 fitted 写入 JSON，避免仅根据截图猜测走了哪条路径。
-- `docs/ui/acceptance/check_step6_real.py`：原件哈希、三尺寸、完整源图像素、两本不同真书、正文及焦点检查。
+工作区根目录的用户抓图脚本保持原件。请改用已提交的 PID 抓图脚本：
 
 ```powershell
-cmake --build docs/ui/acceptance/.build-step6 --config Release --target EXReader check_shell_geometry check_shell_anchor check_shell_epub
-python -X utf8 docs/ui/acceptance/check_step6_real.py <EXE> <同SDK的179a429a对照EXE> <FONT> <紅樓夢原件> <Pachinko原件> <醒世恆言原件> <草枕原件> <OUT>
-python -X utf8 docs/ui/acceptance/check_step5.py <EXE> <同SDK的main-124dd186-EXE> <FONT> <Long-acceptance.epub> <OUT>
+python -X utf8 docs/ui/acceptance/capture_window.py <pid> <输出png>
 ```
 
-本轮纳入进程记录的 GUI 测试共 43 个，全部位于 (-32000,-32000)，前台观察 0；截图使用 PrintWindow。没有手动触发 CI，没有取消 workflow run。
+完整复跑：
 
-## 尚待定位
+```powershell
+./docs/ui/acceptance/build_real_exe.ps1
+python -X utf8 docs/ui/acceptance/check_real_exe.py docs/ui/acceptance/.build-real-exe/EXReader-fix.exe C:/Users/Oscar/Documents/Codex/exr-demo-fix/EXReader-fix.exe C:/Users/Oscar/Documents/Codex/exr-cjk-corpus/hongloumeng-24264.epub C:/Users/Oscar/Documents/Codex/exr-demo-fix/Reader.otf tools_capture_window.py docs/ui/acceptance/.run-real-exe-native
+python -X utf8 docs/ui/acceptance/check_step5.py docs/ui/acceptance/.build-real-exe/EXReader-fix.exe C:/Users/Oscar/Documents/Codex/exr-demo-main/EXReader-main.exe C:/Users/Oscar/Documents/Codex/exr-demo-fix/Reader.otf docs/ui/evidence/2a-step4-20261106/Long-acceptance.epub docs/ui/acceptance/.run-real-exe-regression
+```
 
-需要 owner 实测裁切的 exe 完整路径和相邻 DLL/SDK 路径，核对其二进制哈希、加载的运行库与同一探针输出。当前证据只能确认上述本机构建的真书验收通过，不能确认 owner 所报路径已修复。PR 保持 draft。
+## 既有回归
+
+同一真实构建、指定 DLL 运行 `check_step5.py`，退出码 0，既有八项全部通过：
+
+| 既有项 | 本轮结果 |
+| --- | --- |
+| 浅 / 深 bg、surface | RGB 误差 0 |
+| 五态 | 30/30 |
+| 关闭系统动画 | 动画 0ms |
+| 正文对比度 | 15.717976 / 16.455895 |
+| 深色 / 全程空白帧 | 0/154；全程 0/187 |
+| 字号与主题重启 | 28→28、1→1；系统模式 2→2 |
+| self-test | 26/26 |
+| 旧 UI | 8 张客户区差异 0px，负例自检通过 |
+
+第 100 / 800 页六档字号递增锚点 **12/12**，另有直接跳字号 **10/10**；双向翻页及窗口缩小后恢复均保留页首。非零首行位置 4529 在六次递增中保持不变。
+
+[完整回归 JSON](evidence/2a-step6-fix/record/real-exe-regression.json)、[进程记录](evidence/2a-step6-fix/record/real-exe-processes.json)、[原始回归测量](evidence/2a-step6-fix/record/real-exe-regression-measurements.tar.gz)。
+
+只修改 examples/ 与 docs/ui/。未手动触发 CI，未取消任何 workflow run。

@@ -1,0 +1,248 @@
+{
+  "inputs": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\.build-real-exe\\EXReader-fix.exe": "ff24697185b08a5b48c4bf5a71afd321acf39483a46cfcc9bece9e01a9b454c6",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo-fix\\EXReader-fix.exe": "7f58fbc5311868a0782bdec6648805dc2c3e35422bacd815b9b161b7773fb723",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo-fix\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-uifix-20261107\\docs\\ui\\acceptance\\.build-real-exe\\libexreader.dll": "79d5093857385c84c03ea3e7f9000fd44411e712d47c32ab6d63f682efacba66"
+  },
+  "foreground_observations": 0,
+  "images": [
+    {
+      "window": [
+        1242,
+        742
+      ],
+      "client": [
+        1224,
+        695
+      ],
+      "client_box": [
+        9,
+        38,
+        1224,
+        695
+      ],
+      "position": [
+        -32000,
+        -32000
+      ],
+      "dpi": 120,
+      "kind": "outer",
+      "image": [
+        447,
+        120,
+        777,
+        615
+      ],
+      "body": [
+        0,
+        120,
+        1224,
+        615
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.0,
+      "source_mean_rgb_error": 0.6130109172533414,
+      "source_edge_mean_rgb_error": 0.09629629629629628,
+      "clipped": false,
+      "owner_pixel_difference": 0,
+      "heights": {
+        "open_geometry": 681.0,
+        "current_client": 695.0,
+        "fit_body": 495.0
+      }
+    },
+    {
+      "window": [
+        900,
+        600
+      ],
+      "client": [
+        882,
+        553
+      ],
+      "client_box": [
+        9,
+        38,
+        882,
+        553
+      ],
+      "position": [
+        -32000,
+        -32000
+      ],
+      "dpi": 120,
+      "kind": "outer",
+      "image": [
+        323,
+        120,
+        558,
+        473
+      ],
+      "body": [
+        0,
+        120,
+        882,
+        473
+      ],
+      "horizontal_error_px": 0.5,
+      "vertical_error_px": 0.0,
+      "source_mean_rgb_error": 1.0671528740481788,
+      "source_edge_mean_rgb_error": 0.2776203966005666,
+      "clipped": false,
+      "owner_pixel_difference": 0,
+      "heights": {
+        "open_geometry": 681.0,
+        "current_client": 553.0,
+        "fit_body": 353.0
+      }
+    },
+    {
+      "window": [
+        1280,
+        800
+      ],
+      "client": [
+        1262,
+        753
+      ],
+      "client_box": [
+        9,
+        38,
+        1262,
+        753
+      ],
+      "position": [
+        -32000,
+        -32000
+      ],
+      "dpi": 120,
+      "kind": "outer",
+      "image": [
+        447,
+        120,
+        815,
+        672
+      ],
+      "body": [
+        0,
+        120,
+        1262,
+        673
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.5,
+      "source_mean_rgb_error": 0.6731352394454947,
+      "source_edge_mean_rgb_error": 0.15458937198067632,
+      "clipped": false,
+      "owner_pixel_difference": 0,
+      "heights": {
+        "open_geometry": 681.0,
+        "current_client": 753.0,
+        "fit_body": 553.0
+      }
+    },
+    {
+      "window": [
+        1260,
+        758
+      ],
+      "client": [
+        1242,
+        711
+      ],
+      "client_box": [
+        9,
+        38,
+        1242,
+        711
+      ],
+      "position": [
+        -32000,
+        -32000
+      ],
+      "dpi": 120,
+      "kind": "client",
+      "image": [
+        451,
+        120,
+        791,
+        630
+      ],
+      "body": [
+        0,
+        120,
+        1242,
+        631
+      ],
+      "horizontal_error_px": 0.0,
+      "vertical_error_px": 0.5,
+      "source_mean_rgb_error": 0.71378892733564,
+      "source_edge_mean_rgb_error": 0.15163398692810456,
+      "clipped": false,
+      "owner_pixel_difference": 0,
+      "heights": {
+        "open_geometry": 681.0,
+        "current_client": 711.0,
+        "fit_body": 511.0
+      }
+    }
+  ],
+  "rendering_behavior_changed": false,
+  "owner_initial": {
+    "window": [
+      1552,
+      928
+    ],
+    "client": [
+      1534,
+      881
+    ],
+    "client_box": [
+      9,
+      38,
+      1534,
+      881
+    ],
+    "position": [
+      -32000,
+      -32000
+    ],
+    "dpi": 120
+  },
+  "capture_reproducer": {
+    "sha256": "ff3f4377c652f2a94cba58d3328784bcded9115f926aa7ed25bf298a631e7478",
+    "unaware": [
+      1242,
+      742
+    ],
+    "physical": [
+      1552,
+      928
+    ],
+    "identical_to_top_left_crop": true
+  },
+  "rebuilt_initial": {
+    "window": [
+      1552,
+      928
+    ],
+    "client": [
+      1534,
+      881
+    ],
+    "client_box": [
+      9,
+      38,
+      1534,
+      881
+    ],
+    "position": [
+      -32000,
+      -32000
+    ],
+    "dpi": 120
+  },
+  "pass": true
+}
