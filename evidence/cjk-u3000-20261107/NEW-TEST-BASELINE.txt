@@ -1,0 +1,1 @@
+line 457: !strcmp(exr_document_text(doc, &size), expected) (0: )
