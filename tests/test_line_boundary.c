@@ -430,9 +430,9 @@ static void cjk_punctuation_wrap(void) {
   }
 }
 static void cjk_punctuation_exclusions(void) {
-  const char *texts[]={",.","\xe3\x80\x82\xc2\xa0\xe3\x80\x8c","\xe3\x80\x82" "A\xe3\x80\x8c"};
+  const char *texts[]={",.","\xe3\x80\x82\xe2\x80\xaf\xe3\x80\x8c","\xe3\x80\x82" "A\xe3\x80\x8c"};
   exr_layout_config c=config();size_t k;
-  scenario="ASCII punctuation and intervening NBSP/text stay unchanged";
+  scenario="ASCII punctuation and intervening narrow NBSP/text stay unchanged";
   for(k=0;k<3;k++) {
     exr_document *doc=document(texts[k],"width:100px;margin:0",0);
     exr_layout *l=layout(doc,&c);size_t n,i;const exr_glyph *g=exr_layout_glyphs(l,&n);

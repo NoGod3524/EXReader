@@ -1,0 +1,38 @@
+{
+  "base": "8ee4bd6bef8533b38f5a0b3011343a4311e8efc3",
+  "sources": {
+    "src/document.c": "22cdcb7cce6923f6fe03e4402f2976f4e20f9ec2ed3af6cbdc2cad60a57a7286",
+    "src/document_internal.h": "6c2bc6d3b6cbfc3dda159ab57b40c9db81e91d6c9a3fc52788eac08340584e6f",
+    "src/chapter_index.c": "2cdc8ac52cd2a8cd1f1ab1098e92224eca381811a254ff6b6c66843ae64af5c9",
+    "tests/test_construct.c": "924f996b6640b403dffbc77aeb933a5ea1d360813d9f145ddd5c373a70ceb982",
+    "tests/test_chapter_index.c": "0597ad499bcf4645eed9561c5164788c0cfb1cdbf200d26fd336409b97404236",
+    "tests/test_chapter_window.c": "b87ee1f2bc83e2231e6a59eb516dcc7403ca2967c0ac966cc7540d2c96233f63",
+    "tests/test_line_boundary.c": "546cf8d3eb0fbf3125ab92d0472c3c7662679bc126294f4dd8e795b1b4e755d6",
+    "tests/test_text.c": "f4f6f7d86b87a22d872dc01d1efa1913de0a8bf33377be291f726c62c839f53b",
+    "ops/capture_window.py": "7b2b711c6c239818aa0d5d2aab646fbc5d3d50b3e3e6d3c5e5393c75a2623f26",
+    "evidence/cjk-u3000-20261107/count_whitespace.py": "7edaa3aafbe4f97401d5d6fea0f6aa368f957ca3574cead789afb45044f8029e",
+    "evidence/cjk-u3000-20261107/sample_pixels.c": "48e3b7b24f9a8a42f9193b488ab1198f3105e469e14143143d2c4442061744ee"
+  },
+  "inputs": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Sample.epub": "a8eca70ae5221739a2a40332f98c5d107368987425513dd47b27bd0e50118f2f",
+    "C:\\Windows\\Fonts\\arial.ttf": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+  },
+  "artifacts": {
+    "before/libexreader.dll": "fbb9e71acd285b7ff9d2cfaca3b204947127fc023d02d2728a6f5c062b130417",
+    "after/libexreader.dll": "8fdd203e25ed5ef0f84609e958a29822c262bed9e1e1e5311c61e8825996e6c7",
+    "build/libexreader.dll": "8fdd203e25ed5ef0f84609e958a29822c262bed9e1e1e5311c61e8825996e6c7",
+    "before/space_probe.exe": "78a9d84c991e0f28ec70581d9fdd8c4eedbb33e096dd407c0053e790658ced59",
+    "after/space_probe.exe": "22945f3faf3546f261483b39acb54b02dad9f24e1ca8ae120e7be5a448324843",
+    "before/sample_pixels.exe": "525da3c86f977d87106a2d40cb3d141a5ed509a8931061ac9f7dbbcf141f9147",
+    "after/sample_pixels.exe": "e831dfe3b856b225ac2510437bd453c921f2d2fbaefc9dfc09a0eb8ec372fd1f",
+    "before-pixels.log": "1c499a44397ee16243d7c6137c898e8da49ef752edd4a93ab29109dc820ae35f",
+    "after-pixels.log": "1c499a44397ee16243d7c6137c898e8da49ef752edd4a93ab29109dc820ae35f",
+    "before-geometry.log": "28de1e94668d2ae0abe336d3b556387770e58d9458b8c3f97c8b8f67d2a5250f",
+    "after-geometry.log": "c95f339f58578a73996287ac5b3b39ca1c8a74875efd080914c57d3e287ffc3e",
+    "CTEST.log": "3dd11fddb59f86ac5929c9d8c2c4d83966cf9e3d4465f4d6f9483f86be9fdffd"
+  },
+  "screenshot": "33edf3b9d9be9874e5325871a4781bc11becb9be4397677eef80de168e089292",
+  "raw_directory": "C:\\Users\\Oscar\\Documents\\Codex\\cjk-u3000-20261107"
+}
