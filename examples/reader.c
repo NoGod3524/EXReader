@@ -3875,7 +3875,6 @@ static void compose_page_view(HWND window) {
     shell_color_display(&g.frame);
   } else
 #endif
-#endif
   FillRect(dc, &area, (HBRUSH)GetStockObject(WHITE_BRUSH));
   if (g.frame.valid && compute_view()) {
     last_page_rect=(RECT){g.view.dx,g.view.dy,g.view.dx+(LONG)(g.frame.bitmap.width*g.view.scale)+2,g.view.dy+(LONG)(g.frame.bitmap.height*g.view.scale)+2};
