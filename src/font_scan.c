@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 /* Font manager discovery: platform directories, file enumeration and
    per-file FreeType parsing into index records. */
-#ifndef _WIN32
+#if defined(__APPLE__)
+/* Darwin exposes st_mtimespec only with its extended stat declarations. */
+#define _DARWIN_C_SOURCE
+#elif !defined(_WIN32)
 #define _POSIX_C_SOURCE 200809L
 #endif
 #include "font_manager_internal.h"
