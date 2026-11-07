@@ -471,7 +471,7 @@ static void cjk_spaces(void) {
 
 static void cjk_punctuation_spaces(void) {
   const char *marks[]={"\u2018","\u2019","\u201a","\u201b","\u201c","\u201d",
-    "\u2026","\u2014","\u2015","\u00b7","\u3000","\u303f",
+    "\u2026","\u2014","\u2015","\u00b7","\u3001","\u303f",
     "\uff00","\uffef","\ufe10","\ufe1f","\ufe30","\ufe4f"};
   size_t i;
   for(i=0;i<sizeof(marks)/sizeof(*marks);i++) {
@@ -493,6 +493,33 @@ static void mixed_spaces(void) {
   projected_space("  one \n two\t", " three  ", "one two three");
   projected_space("\u4f60 ! ", "\u597d", "\u4f60 ! \u597d");
   projected_space("\u4f60 \u03b1 ", "\u597d", "\u4f60 \u03b1 \u597d");
+}
+
+static void unicode_spaces(void) {
+  const char *spaces[] = {"\u3000", "\u00a0", " \u3000\u00a0\t "};
+  size_t i;
+  for (i = 0; i < sizeof(spaces)/sizeof(*spaces); i++) {
+    char left[128];
+    snprintf(left,sizeof(left),"\u4f60%s",spaces[i]);
+    projected_space(left,"\u597d","\u4f60\u597d");
+    projected_space(left,"\uff0c","\u4f60\uff0c");
+    snprintf(left,sizeof(left),"\u3002%s",spaces[i]);
+    projected_space(left,"\u597d","\u3002\u597d");
+    snprintf(left,sizeof(left),"GPU%s",spaces[i]);
+    projected_space(left,"\u52a0\u901f","GPU \u52a0\u901f");
+    snprintf(left,sizeof(left),"\u7b2c%s",spaces[i]);
+    projected_space(left,"1","\u7b2c 1");
+    snprintf(left,sizeof(left),"\u52a0\u901f%s",spaces[i]);
+    projected_space(left,"GPU","\u52a0\u901f GPU");
+    projected_space(spaces[i],"\u597d","\u597d");
+    projected_space("\u597d",spaces[i],"\u597d");
+  }
+  projected_space("\u7b2c\u4e00\u56de\u3000","\u7504\u58eb\u96b1",
+                  "\u7b2c\u4e00\u56de\u7504\u58eb\u96b1");
+  /* Mixed runs span inline nodes, including a whitespace-only first node. */
+  projected_space("\u4f60 \u3000","\u00a0 \u597d","\u4f60\u597d");
+  projected_space("GPU \u3000","\u00a0 \u52a0\u901f","GPU \u52a0\u901f");
+  projected_space("\u3000\u00a0"," \u3000\u597d","\u597d");
 }
 
 int main(int argc, char **argv) {
@@ -521,6 +548,7 @@ int main(int argc, char **argv) {
   cjk_spaces();
   cjk_punctuation_spaces();
   mixed_spaces();
+  unicode_spaces();
   exr_font_free(font);
   printf("%u document construction checks passed\n", checks);
   return 0;
