@@ -1,0 +1,19 @@
+{
+  "exit": 0,
+  "foreground_observations": 0,
+  "elapsed_seconds": 9.653959899995243,
+  "screenshots": [
+    "chapter-27"
+  ],
+  "stderr": "",
+  "command": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\EXReader.exe",
+    "--offscreen",
+    "--drive",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\docs\\ui\\evidence\\2a-typography\\resume\\dpi96\\run.drive",
+    "--data",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\docs\\ui\\evidence\\2a-typography\\resume\\dpi96\\profile",
+    "--evidence",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\docs\\ui\\evidence\\2a-typography\\resume\\dpi96"
+  ]
+}

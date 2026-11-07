@@ -1,0 +1,22 @@
+{
+  "exit": 0,
+  "foreground_observations": 0,
+  "elapsed_seconds": 18.375075399992056,
+  "screenshots": [
+    "opening-0",
+    "opening-2",
+    "opening-40",
+    "opening-8"
+  ],
+  "stderr": "",
+  "command": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\EXReader.exe",
+    "--offscreen",
+    "--drive",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\docs\\ui\\evidence\\2a-typography\\resume\\cross-spine\\run.drive",
+    "--data",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\docs\\ui\\evidence\\2a-typography\\resume\\cross-spine\\profile",
+    "--evidence",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\docs\\ui\\evidence\\2a-typography\\resume\\cross-spine"
+  ]
+}

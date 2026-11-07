@@ -1,0 +1,3 @@
+# Disposable book databases and older self-test inputs are local caches.
+**/profile/
+/selftest/

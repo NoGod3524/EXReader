@@ -1,0 +1,32 @@
+[
+  {
+    "case": "bundled",
+    "exit": 0,
+    "output": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\resume-font-cases\\bundled\\\\ReaderSerif.ttf\r\nfallback=0;weight=400;faces=2\r\n",
+    "log": "正文字体：C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\resume-font-cases\\bundled\\\\ReaderSerif.ttf\nbody_font=serif\n"
+  },
+  {
+    "case": "system-noto",
+    "exit": 0,
+    "output": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\resume-font-cases\\system-noto\\windows\\Fonts\\NotoSerifSC-VF.ttf\r\nfallback=0;weight=400;faces=2\r\n",
+    "log": "正文字体：C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\resume-font-cases\\system-noto\\windows\\Fonts\\NotoSerifSC-VF.ttf\nbody_font=serif\n"
+  },
+  {
+    "case": "user-noto",
+    "exit": 0,
+    "output": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\resume-font-cases\\user-noto\\user\\Microsoft\\Windows\\Fonts\\NotoSerifSC-VF.ttf\r\nfallback=0;weight=400;faces=2\r\n",
+    "log": "正文字体：C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\resume-font-cases\\user-noto\\user\\Microsoft\\Windows\\Fonts\\NotoSerifSC-VF.ttf\nbody_font=serif\n"
+  },
+  {
+    "case": "simsun",
+    "exit": 0,
+    "output": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\resume-font-cases\\simsun\\windows\\Fonts\\simsun.ttc\r\nfallback=0;weight=0;faces=2\r\n",
+    "log": "正文字体：C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\resume-font-cases\\simsun\\windows\\Fonts\\simsun.ttc\nbody_font=serif\n"
+  },
+  {
+    "case": "sans",
+    "exit": 0,
+    "output": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\resume-font-cases\\sans\\\\Reader.otf\r\nfallback=1;weight=0;faces=1\r\n",
+    "log": "字体已回退：未找到衬线中文字体，正文使用无衬线 C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\resume-font-cases\\sans\\\\Reader.otf\nbody_font=fallback-sans\n"
+  }
+]

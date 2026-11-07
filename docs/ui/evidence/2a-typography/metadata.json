@@ -1,0 +1,30 @@
+{
+  "baseline_commit": "000caeef",
+  "capture": "C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/capture_window.py",
+  "DPI": "native 120; supplemental injected 96; capture script is per-monitor DPI aware",
+  "sha256": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\EXReader.exe": "c9f45b2651262c2e8ff96fb7f3ad1b28d21fd7a99ee0d02dc6a614ff058d5ab6",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\before\\EXReader.exe": "ce1643318608ffce148181bbc5d13e1ff9fae6e73e256bc68fd43c8137f91dc2",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\libexreader.dll": "892ea1acb0a519748d9b51c2f5f946d762b7f78d1015d42f811db3ba8fd18865",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "C:\\Windows\\Fonts\\NotoSerifSC-VF.ttf": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Sample.epub": "a8eca70ae5221739a2a40332f98c5d107368987425513dd47b27bd0e50118f2f"
+  },
+  "source_sha256": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\examples\\reader.c": "b47c251342e410cf938d70f64af1db9f1cc7815b6f44eca8c8289bece83b9fc9",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\examples\\windows\\shell_epub.cpp": "5ead6d24e6437b60fb83216dfa5ce74df1b5fe86782286c1f99a5858e3388260",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\examples\\windows\\shell_toc.inc": "465a3e2ede8a9a38432e9658ddf2485dcd855bfc1f420d329ac77b85ad1576df"
+  },
+  "ctest": {
+    "passed": 166,
+    "total": 169,
+    "failed": [
+      "native-construct",
+      "native-text",
+      "native-line-boundary"
+    ]
+  },
+  "font": "C:/Windows/Fonts/NotoSerifSC-VF.ttf",
+  "weight": 400
+}
