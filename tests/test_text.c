@@ -601,7 +601,7 @@ static void single_cluster_hit(void) {
 }
 
 static void protected_groups(void) {
-  const char *groups[] = {"A\xc2\xa0" "B", "A\xe2\x80\xaf" "B",
+  const char *groups[] = {"A\xe2\x80\xaf" "B",
                           "A\xe2\x81\xa0" "B", "A\xef\xbb\xbf" "B", "A\xe2\x80\x8d" "B"};
   size_t i, n;
   for (i = 0; i < sizeof(groups) / sizeof(*groups); i++) {
@@ -614,10 +614,23 @@ static void protected_groups(void) {
     CHECK(n == 1); /* Overwide nonbreaking groups clip rather than split. */
     g = exr_layout_glyphs(lay, &n);
     for (j = 0; j < n; j++)
-      if (g[j].codepoint == 0xa0 || g[j].codepoint == 0x202f)
+      if (g[j].codepoint == 0x202f)
         CHECK(g[j].advance > 0);
     exr_layout_free(lay);
     exr_document_free(doc);
+  }
+  {
+    const char *spaces[] = {"A B", "A\u00a0B", "A\u3000B"};
+    for (i = 0; i < sizeof(spaces)/sizeof(*spaces); i++) {
+      exr_document *doc = document(&spaces[i], 1);
+      exr_layout *lay = layout(doc, 1, 64);
+      CHECK(!strcmp(exr_document_text(doc, NULL), "A B"));
+      exr_layout_lines(lay, &n);
+      CHECK(n == 2); /* Projected NBSP/fullwidth spaces wrap like U+0020. */
+      valid_clusters(doc, lay);
+      exr_layout_free(lay);
+      exr_document_free(doc);
+    }
   }
   {
     const char *parts[] = {"AB"};

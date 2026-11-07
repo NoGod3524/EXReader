@@ -1,0 +1,12 @@
+open|紅樓夢
+wait_idle
+shell|on
+shell_dpi|96
+shell_font|18
+shell_client|1280|800
+wait_idle
+shell_click|light
+ui_cues|hide
+shell_measure|wsfix-body
+probe_wait|15000
+quit

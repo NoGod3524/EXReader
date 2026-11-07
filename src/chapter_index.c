@@ -208,7 +208,7 @@ static void XMLCALL text_data(void *context, const char *text, int size) {
     if (!exr_next(text, (size_t)size, &i, &cp)) {
       stop(p, EXR_FORMAT, "Invalid chapter projection UTF-8"); return;
     }
-    if (cp < 0x80 && white((unsigned char)cp)) { if (p->block) p->pending_space = 1; continue; }
+    if (exr_projection_space(cp)) { if (p->block) p->pending_space = 1; continue; }
     if (!p->block) {
       if (p->text_size) p->text_size++;
       p->block = 1;
