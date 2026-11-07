@@ -641,7 +641,7 @@ static exr_status content_unit(const exr_document *d,size_t at,exr_range_unit un
 }
 exr_status exr_range_expand(exr_publication *p,const exr_text_range *r,exr_range_unit unit,
                              const exr_control *control,exr_text_range *out,exr_error *e) {
-  exr_text_range result,original;exr_document *d=NULL;exr_status status;size_t ignored,at;
+  exr_text_range result={0},original={0};exr_document *d=NULL;exr_status status;size_t ignored,at;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing expanded range output");
   /* Permit in-place expansion. */
   if(r) original=result=*r;
