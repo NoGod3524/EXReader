@@ -1,0 +1,604 @@
+[
+  {
+    "suite": "real-books",
+    "path": "record\\hongloumeng-120\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.6756256000080612,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\hongloumeng-96\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.030410799998208,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\pachinko-120\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.7343204999924637,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\pachinko-96\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 2.055070100002922,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\xingshihengyan-120\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.5213990000047488,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\xingshihengyan-96\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.9480885999946622,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\xingshihengyan-body\\baseline\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9611740999971516,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\xingshihengyan-body\\changed\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9489713999937521,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\xingshihengyan-body\\import\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.3879272000049241,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\pachinko-body\\baseline\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.2737723000027472,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\pachinko-body\\changed\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.3004724999918835,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\pachinko-body\\import\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.40443510000477545,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\kusamakura-body\\baseline\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.1154814000037732,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\kusamakura-body\\changed\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.0621574999968288,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\kusamakura-body\\import\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.38214739999966696,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\hongloumeng-body\\baseline\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9758835999964504,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\hongloumeng-body\\changed\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.983683700003894,
+    "stderr": ""
+  },
+  {
+    "suite": "real-books",
+    "path": "record\\hongloumeng-body\\import\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.334046899995883,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "head\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 3.5973747999960324,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "old-ini\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.2594849000015529,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "restart\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.917732400004752,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "settings\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 27.051835000005667,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "system\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.1671711999952095,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "system-restart\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9275768000079552,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "regression\\control\\A\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9000439000083134,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "regression\\control\\B\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.52832959999796,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "regression\\control\\C\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.34247139999934006,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "regression\\changed\\A\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.8054511999944225,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "regression\\changed\\B\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5099762000027113,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "regression\\changed\\C\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.3668852999981027,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "regression\\baseline\\A\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.9471500999934506,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "regression\\baseline\\B\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.5043280000099912,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "regression\\baseline\\C\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.3653852999996161,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "font-anchors\\100\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 18.785713300007046,
+    "stderr": ""
+  },
+  {
+    "suite": "regression",
+    "path": "font-anchors\\800\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 185.77224359998945,
+    "stderr": ""
+  },
+  {
+    "suite": "p0",
+    "path": "controls\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 4.467835799994646,
+    "stderr": ""
+  },
+  {
+    "suite": "p0",
+    "path": "horizontal\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.8915811000042595,
+    "stderr": ""
+  },
+  {
+    "suite": "p0",
+    "path": "vertical\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.2868706000008387,
+    "stderr": ""
+  },
+  {
+    "suite": "p0",
+    "path": "vertical\\import\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.3670616000017617,
+    "stderr": ""
+  },
+  {
+    "suite": "p0",
+    "path": "horizontal\\import\\process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 0.36874220000754576,
+    "stderr": ""
+  },
+  {
+    "suite": "179a429a-cover",
+    "path": "process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.980572900007246,
+    "stderr": ""
+  },
+  {
+    "suite": "existing-library",
+    "path": "process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.0483290999982273,
+    "stderr": ""
+  },
+  {
+    "suite": "historical-runtime",
+    "path": "process.json",
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 1.4218547000054969,
+    "stderr": ""
+  }
+]

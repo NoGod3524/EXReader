@@ -1,0 +1,53 @@
+[
+  {
+    "client": [
+      1242,
+      742
+    ],
+    "image": [
+      427,
+      96,
+      815,
+      678
+    ],
+    "image_source": [
+      1600,
+      2400
+    ],
+    "changed_pixels": 0
+  },
+  {
+    "client": [
+      1280,
+      800
+    ],
+    "image": [
+      427,
+      96,
+      853,
+      735
+    ],
+    "image_source": [
+      1600,
+      2400
+    ],
+    "changed_pixels": 0
+  },
+  {
+    "client": [
+      900,
+      600
+    ],
+    "image": [
+      303,
+      96,
+      596,
+      536
+    ],
+    "image_source": [
+      1600,
+      2400
+    ],
+    "changed_pixels": 0
+  }
+]

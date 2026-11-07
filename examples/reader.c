@@ -154,6 +154,9 @@ typedef struct {
   int shell_anchored;
   RECT shell_image; /* The sole decoded image's source pixels; empty on text/mixed pages. */
   uint32_t *shell_image_pixels; /* Owned full image, independent of page clipping/CSS. */
+  size_t shell_image_count;
+  unsigned shell_image_flags;
+  int shell_visible_text, shell_image_available;
 #endif
   exr_bitmap bitmap;
   uint32_t *dib;
@@ -1677,8 +1680,22 @@ static int shell_capture_layout(host_frame *frame, const host_session *session, 
   for(size_t i=0;i<box_count;i++) {
     if(boxes[i].kind==EXR_BOX_IMAGE) {image=boxes+i;image_count++;}
   }
+  frame->shell_image_count=image_count;
+  frame->shell_visible_text=visible_text;
+  frame->shell_image_flags=image ? image->flags : 0;
+  host_probe_log("image_count",(double)image_count);
+  host_probe_log("image_visible_text",visible_text);
+  if(image) {
+    host_probe_log("image_flags",image->flags);
+    host_probe_log("image_box_y",image->y);
+    host_probe_log("image_box_height",image->height);
+  }
+  /* Image flags are not CSS alignment/margins: 0x1 means a missing-image
+     placeholder. Unknown image bits also keep the SDK's normal page paint. */
   if(!visible_text && image_count==1 && !image->flags && image->width>0 && image->height>0) {
     const exr_bitmap *source=exr_layout_image(layout,image->resource);
+    frame->shell_image_available=source!=NULL;
+    host_probe_log("image_source_available",source!=NULL);
     if(source && source->channels==4 && source->width && source->height) {
       size_t count=(size_t)source->width*source->height;
       if(count>SIZE_MAX/sizeof(uint32_t)) return 0;
