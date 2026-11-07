@@ -1,0 +1,3 @@
+PASS: nearest-rank, invalid samples, complete plan and 10% dispersion rejection
+PASS: evidence\perf-e1-20261107\normalized: raw hashes, all metrics, dispersion and budget derivation
+PASS: evidence\perf-e1-20261107\candidate: raw hashes, all metrics, dispersion and budget derivation

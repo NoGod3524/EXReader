@@ -1,0 +1,3 @@
+# Preserve original stdout/stderr and hash-bound evidence byte for byte.
+# Captured console output contains CRLF and trailing blanks.
+* -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
