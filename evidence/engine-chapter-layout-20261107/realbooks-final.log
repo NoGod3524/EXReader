@@ -1,0 +1,20 @@
+ok: between-the-world-and-me: 228 pages, 29.972s
+ok: a-raisin-in-the-sun: 356 pages, 42.718s
+ok: born-a-crime: 502 pages, 50.872s
+ok: crying-in-h-mart: 524 pages, 39.267s
+ok: black-boy: 1016 pages, 77.016s
+ok: how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america: 493 pages, 38.135s
+ok: the-absolutely-true-diary-of-a-part-time-indian: 560 pages, 22.986s
+ok: i-know-why-the-caged-bird-sings: 625 pages, 49.952s
+ok: the-fire-next-time: 189 pages, 14.239s
+ok: pachinko: 1248 pages, 63.291s
+ok: the-fire-this-time-a-new-generation-speaks-about-race: 333 pages, 20.472s
+ok: the-distance-between-us-a-memoir: 702 pages, 37.129s
+ok: the-house-on-mango-street: 182 pages, 5.484s
+ok: the-autobiography-of-malcolm-x.: 279 pages, 75.563s
+ok: tangshi300-52323: 83 pages, 5.555s
+ok: zami-a-new-spelling-of-my-name---a-biomythography: 624 pages, 27.855s
+ok: kusamakura-japanese-vertical-writing: 464 pages, 23.807s
+ok: xingshihengyan-24239: 1202 pages, 82.442s
+ok: hongloumeng-24264: 1686 pages, 98.148s
+{"requested_books": 19, "successful_books": 19, "failed_books": [], "total_pages": 11296, "total_glyphs": 8648640, "wall_seconds": 236.51363, "sum_book_seconds": 804.904457, "fastest_book": "the-house-on-mango-street", "slowest_book": "hongloumeng-24264"}

@@ -1,0 +1,40 @@
+{
+  "base": "c9dfc6c14a0c3d2372da4e8a6f02dc348309610f",
+  "original_base": "000caeef67f52498b05c437384efcd3bfdb1b5d1",
+  "sources": {
+    "src/flow.c": "feb0778f0fe2cb50d2c96149d17cb5f2a1229047e457608062da6fe6a1d9fb7c",
+    "src/flow_internal.h": "3a9491afd534ec276d3f77662556b1de7751cecf3d0172e95bbfda0218ee3806",
+    "src/inline.c": "d9f7292a2e1352a23311a085960648abffe7216fdc870201e37d025571e1d321",
+    "src/layout.c": "d3dde918b4a82943a5f3c103dc1c6a561787017cb12be5cbdf67c32967d7f9aa",
+    "src/layout_internal.h": "4cfd860a42e712f177e9fd8469a4c9d4fc4cee59c431eda3942067d39f48e790",
+    "src/pager.c": "5fbdacdc0353a3a010e9d9cfaaf70642e21b1a1643b575c591955d13adad6655",
+    "src/source_structure.h": "609d15f4636f52bec8e76e7a884619d01a75726b9f85a54fd905de27c59e025c",
+    "src/style.c": "b2d80450912c17d5004003f62f78855825f61a229e97f788c3bcbf3690e217de",
+    "src/style_internal.h": "cf5429c938c6b7b5bd750c74b6570a25501b4e5603120eb815308bd19933df50",
+    "include/exr/layout.h": "6be89c4fd558ab7b95d0d1dc8e8576fbc159867f6dc93a6c4b66959795b1f282",
+    "CMakeLists.txt": "98e5881cd0210e921a2486e25903d374d397c5ca1bd5ee06094f33b6e8360fd3",
+    "tests/test_chapter_layout.c": "a3a950ba224db699556e5900c65356eb6ac849d408bf222bc0341d77022f69c8",
+    "tests/probe_chapter_layout.c": "6d719931e08dca7d230cb695c22eaa74b2ac0a62837bb94c029c3b36c8a7f603",
+    "tests/probe_chapter_titles.py": "e19d7fa1f5790cd680766e1e126e5259d03fc1db12d7ef4efd6170d5030d6269",
+    "tests/test_font.c": "7edffd41d7eb7e1e92672a3d69308f6576a2635d817897a315d59f6de25dcad3",
+    "tests/test_line_boundary.c": "9d9f2fbe02a53f3759f5f638e2caa0c3651d60e8aee1785197d80296c15b57d3",
+    "tests/fixtures/pager-golden.txt": "d943d79cbbd56267e1a59d0a178112992f1cb59365e2b715268a34f4bb0c414c"
+  },
+  "artifacts": {
+    "build/libexreader.dll": "38026ecdc936bcd4332af608c69712cbad0715c004094bf847ded5988b06e9ce",
+    "evidence/engine-chapter-layout-20261107/ACCEPTANCE.json": "b0257c53d67d67dc3d2262b7d03a39eb907e21a65b018b5f33b5e8a5c6bfc1d8",
+    "evidence/engine-chapter-layout-20261107/after-final.diff.json": "98933a546a1c6e3eb9f98a6c759de86bedf1e48f52c33035b40521cad2ba5f62",
+    "evidence/engine-chapter-layout-20261107/after-final.json": "96a0850d40334b5867447b14764fb83347ae71ca39dc376f143f0c4ca9f9e81f",
+    "evidence/engine-chapter-layout-20261107/before-main.json": "45cb62345f9b5dc4c543c4eacad6526c2e2f6e2c1e447b68593020edc294f74a",
+    "evidence/engine-chapter-layout-20261107/chapter-groups.txt": "6a82dd08b341b2f01394e0fc69043d77224dc48d45c300aac7e8c6fbe1e6e204",
+    "evidence/engine-chapter-layout-20261107/ctest-merged-main.log": "9784518f0ab7c96d18cd4bb908a3b203b036b92d421483351057a404ca92015b",
+    "evidence/engine-chapter-layout-20261107/latin-title-moves-final.json": "ce5d185936fb6c661cc1c1d94c93aa3db34eeb01665c7f92b21de5bc2bbb229e",
+    "evidence/engine-chapter-layout-20261107/probe-bounded-final.jsonl": "29ee6e20ef3cd0a0ebb2f6ef3b9ac2b0354b716a0122523282b91c9468a0b174",
+    "evidence/engine-chapter-layout-20261107/probe-final.jsonl": "29ee6e20ef3cd0a0ebb2f6ef3b9ac2b0354b716a0122523282b91c9468a0b174"
+  },
+  "baseline_dll": "C:/Users/Oscar/Documents/Codex/cjk-u3000-20261107/after/libexreader.dll",
+  "baseline_dll_sha256": "8fdd203e25ed5ef0f84609e958a29822c262bed9e1e1e5311c61e8825996e6c7",
+  "font": "C:/Users/Oscar/Documents/Codex/EXReader-Windows-delivery-20261104/payload/Reader.otf",
+  "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "source_hash_contract": "SHA-256 of UTF-8 source with LF line endings"
+}

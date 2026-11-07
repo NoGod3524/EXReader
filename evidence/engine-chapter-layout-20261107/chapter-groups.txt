@@ -1,0 +1,41 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/build/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/build
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 77
+    Start 77: native-chapter-layout-chapter
+
+77: Test command: C:\Users\Oscar\Documents\Codex\EXReader-chapter-layout-20261107\build\exreader-chapter-layout-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/tests/fixtures" "chapter"
+77: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/build
+77: Test timeout computed to be: 10000000
+77: 54 chapter layout checks passed
+1/3 Test #77: native-chapter-layout-chapter ....   Passed    0.12 sec
+test 78
+    Start 78: native-chapter-layout-title
+
+78: Test command: C:\Users\Oscar\Documents\Codex\EXReader-chapter-layout-20261107\build\exreader-chapter-layout-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/tests/fixtures" "title"
+78: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/build
+78: Test timeout computed to be: 10000000
+78: 308 chapter layout checks passed
+2/3 Test #78: native-chapter-layout-title ......   Passed    0.02 sec
+test 79
+    Start 79: native-chapter-layout-indent
+
+79: Test command: C:\Users\Oscar\Documents\Codex\EXReader-chapter-layout-20261107\build\exreader-chapter-layout-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/tests/fixtures" "indent"
+79: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/build
+79: Test timeout computed to be: 10000000
+79: 41 chapter layout checks passed
+3/3 Test #79: native-chapter-layout-indent .....   Passed    0.02 sec
+
+The following tests passed:
+	native-chapter-layout-chapter
+	native-chapter-layout-title
+	native-chapter-layout-indent
+
+100% tests passed out of 3
+
+Total Test time (real) =   0.20 sec

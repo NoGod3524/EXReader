@@ -820,8 +820,10 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->ruby_position = parent->ruby_position;
     else if (prop == RUBY_ALIGN)
       s->ruby_align = parent->ruby_align;
-    else if (prop == INDENT)
+    else if (prop == INDENT) {
       s->indent = parent->indent;
+      s->indent_declared = parent->indent_declared;
+    }
     else if (prop == TABLE_LAYOUT)
       s->table_fixed = parent->table_fixed;
     else if (prop == VERTICAL_ALIGN)
@@ -1081,6 +1083,23 @@ static void compete(winner *w, const declaration *a, size_t count, uint64_t base
     }
   }
 }
+static int class_token(const char *s,const char *word) {
+  size_t n=strlen(word);
+  while(s && *s) {
+    const char *a;
+    while(*s && isspace((unsigned char)*s)) s++;
+    a=s;while(*s && !isspace((unsigned char)*s)) s++;
+    if((size_t)(s-a)==n && !memcmp(a,word,n)) return 1;
+  }
+  return 0;
+}
+static int title_node(const exr_node *n) {
+  const char *classes=exr_node_attribute(n,"class");
+  return n->kind==EXR_NODE_HEADING || class_token(exr_node_attribute(n,"role"),"heading") ||
+    class_token(classes,"chapter-title") || class_token(classes,"chapter_title") ||
+    class_token(classes,"chaptertitle") || class_token(classes,"title");
+}
+
 static exr_status compute_styles(const exr_document *d, const exr_layout_config *config,
                               exr_style **out, exr_font_rule **fonts, size_t *font_count,
                               exr_error *e) {
@@ -1177,6 +1196,7 @@ static exr_status compute_styles(const exr_document *d, const exr_layout_config 
     s->ruby_position = parent->ruby_position;
     s->ruby_align = parent->ruby_align;
     s->indent = parent->indent;
+    s->indent_declared = parent->indent_declared;
     s->border_collapse = parent->border_collapse;
     memcpy(s->border_spacing,parent->border_spacing,sizeof(s->border_spacing));
     s->hyphens = parent->hyphens;
@@ -1273,9 +1293,12 @@ static exr_status compute_styles(const exr_document *d, const exr_layout_config 
       compete(w, inline_declarations, inline_count, UINT64_C(1) << 56, s, parent, o->font_size);
     }
     for (p = 0; p < PROPERTIES; p++)
-      if (w[p].value)
-        apply(s, parent, p, w[p].value, o->font_size);
+      if (w[p].value && apply(s, parent, p, w[p].value, o->font_size) && p==INDENT)
+        s->indent_declared=1;
     s->writing_declared = w[WRITING_MODE].value != NULL;
+    s->paragraph=n->kind==EXR_NODE_PARAGRAPH;
+    s->block_kind=title_node(n) || parent->block_kind==EXR_BLOCK_TITLE ? EXR_BLOCK_TITLE : EXR_BLOCK_BODY;
+    if(title_node(n) && s->display!=EXR_CSS_NONE) s->display=EXR_CSS_BLOCK;
     if(s->float_side && s->display!=EXR_CSS_NONE && s->display!=EXR_CSS_TABLE) s->display=EXR_CSS_BLOCK;
     if (s->writing_mode != EXR_WRITING_HORIZONTAL_TB) {
       if ((n->kind == EXR_NODE_PARAGRAPH || n->kind == EXR_NODE_HEADING) && !w[MB].value) {
