@@ -1,0 +1,223 @@
+{
+  "books": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-step6-20261107\\examples\\windows\\.local-books\\shakespeare-100.epub": "72397ff2459a5948eda764bae9b036c0037ccbf3fd93c8aba610208815784e88"
+  },
+  "binary_sha256": "6ed28acccddb5b04209cd953d1f4396e8a96c8df891b3202c57da2d6bc42d603",
+  "jumps": {
+    "hongloumeng": [
+      {
+        "row": 0,
+        "label": "第一回　甄士隱夢幻識通靈　賈雨村風塵怀閨秀",
+        "part": 1,
+        "offset": 762,
+        "first_line": 762,
+        "image": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "pass": true
+      },
+      {
+        "row": 2,
+        "label": "第三回",
+        "part": 1,
+        "offset": 42749,
+        "first_line": 42749,
+        "image": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "pass": true
+      },
+      {
+        "row": 8,
+        "label": "第九回",
+        "part": 2,
+        "offset": 86298,
+        "first_line": 86298,
+        "image": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "pass": true
+      },
+      {
+        "row": 20,
+        "label": "第二十七回　 滴翠亭楊妃戲彩蝶　埋香冢飛燕泣殘紅",
+        "part": 6,
+        "offset": 27746,
+        "first_line": 27746,
+        "image": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "pass": true
+      },
+      {
+        "row": 1,
+        "label": "第二回　　賈夫人仙逝揚州城　冷子興演說榮國府",
+        "part": 1,
+        "offset": 24608,
+        "first_line": 24608,
+        "image": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "pass": true
+      }
+    ],
+    "pachinko": [
+      {
+        "row": 6,
+        "label": "Capítulo 1: Yeongdo, Busan, Coreia",
+        "part": 9,
+        "offset": 0,
+        "first_line": null,
+        "image": [
+          351,
+          279,
+          928,
+          553
+        ],
+        "pass": true
+      },
+      {
+        "row": 17,
+        "label": "Capítulo 12: Osaka, abril de 1933",
+        "part": 31,
+        "offset": 0,
+        "first_line": null,
+        "image": [
+          351,
+          279,
+          928,
+          553
+        ],
+        "pass": true
+      },
+      {
+        "row": 28,
+        "label": "Capítulo 5",
+        "part": 53,
+        "offset": 0,
+        "first_line": null,
+        "image": [
+          351,
+          279,
+          928,
+          553
+        ],
+        "pass": true
+      },
+      {
+        "row": 42,
+        "label": "Capítulo 19",
+        "part": 81,
+        "offset": 0,
+        "first_line": null,
+        "image": [
+          351,
+          279,
+          928,
+          553
+        ],
+        "pass": true
+      },
+      {
+        "row": 7,
+        "label": "Capítulo 2: Novembro de 1932",
+        "part": 11,
+        "offset": 0,
+        "first_line": null,
+        "image": [
+          351,
+          279,
+          928,
+          553
+        ],
+        "pass": true
+      }
+    ]
+  },
+  "hongloumeng": {
+    "toc_count": 108,
+    "keyboard_passes": 4,
+    "tab_order": [
+      "settings",
+      "list",
+      "page",
+      "toc"
+    ],
+    "blank": 0,
+    "presented": 331,
+    "closed_children": 3,
+    "geometry": {
+      "width": 280,
+      "row_height": 34,
+      "text_x": 20,
+      "border_width": 1,
+      "themes_rgb_error": 0,
+      "selection_bar_width": 2,
+      "selected_weight": 600,
+      "body_pixel_difference": 0
+    }
+  },
+  "pachinko": {
+    "toc_count": 70,
+    "keyboard_passes": 4,
+    "tab_order": [
+      "settings",
+      "list",
+      "page",
+      "toc"
+    ],
+    "blank": 0,
+    "presented": 330,
+    "closed_children": 3,
+    "geometry": {
+      "width": 280,
+      "row_height": 34,
+      "text_x": 20,
+      "border_width": 1,
+      "themes_rgb_error": 0,
+      "selection_bar_width": 2,
+      "selected_weight": 600,
+      "body_pixel_difference": 0
+    }
+  },
+  "long": {
+    "count": 1169,
+    "frames": 90,
+    "scroll_p95_ms": 2.7404,
+    "thumb_columns": [
+      271,
+      272,
+      273,
+      274,
+      275
+    ],
+    "width": 5,
+    "hover_width": 5,
+    "hover_color": "#8b8b94",
+    "transparent_track": true
+  },
+  "empty": {
+    "text": "这本书没有目录",
+    "font": 16,
+    "weight": 650,
+    "count": 0,
+    "fixture": "tests\\fixtures\\complex-text.epub"
+  }
+}

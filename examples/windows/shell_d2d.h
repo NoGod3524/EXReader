@@ -43,6 +43,14 @@ typedef struct shell_d2d_button {
 HRESULT shell_d2d_control(shell_d2d *, HDC, const RECT *, const wchar_t *,
                           int dark, int variant, unsigned state);
 HRESULT shell_d2d_panel(shell_d2d *, HDC, const RECT *, int dark, const wchar_t *font, const uint32_t *background);
+/* TOC state: hover 1, pressed 2, keyboard focus 4, current chapter 8.
+   Negative row IDs are uncached header/empty-state text, at the given size. */
+HRESULT shell_d2d_toc_row(shell_d2d *, HDC, const RECT *, const wchar_t *, int dark,
+                          unsigned state, int row, float size, unsigned weight, int align);
+void shell_d2d_toc_clear(shell_d2d *);
+HRESULT shell_d2d_toc_begin(shell_d2d *,HDC,const RECT *,int dark);
+HRESULT shell_d2d_toc_end(shell_d2d *);
+void shell_d2d_toc_metrics(shell_d2d *,float values[4]);
 
 HRESULT shell_d2d_create(HWND window, shell_d2d **out);
 void shell_d2d_destroy(shell_d2d *shell);
