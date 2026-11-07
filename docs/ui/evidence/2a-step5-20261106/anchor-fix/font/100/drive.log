@@ -1,0 +1,69 @@
+HOST	phase=1	engine=3.42.0	pid=12192
+STEP	1	import	PASS	page=0;status=已导入《Anchor long》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《Anchor long》 · 从首个阅读章节开始。
+STEP	3	wait_idle	PASS	page=1;status=已打开《Anchor long》 · 从首个阅读章节开始。
+STEP	4	shell	PASS	reading screen
+STEP	5	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	6	shell_font	PASS	page=1;status=第 1 页。
+STEP	7	shell_client	PASS	page=1;status=第 1 页。
+STEP	8	wait_idle	PASS	page=1;status=第 1 页。
+STEP	9	shell_page	PASS	page=100;status=第 100 页。
+STEP	10	wait_idle	PASS	page=100;status=第 100 页。
+STEP	11	shell_measure	PASS	physical layout captured
+STEP	12	shell_click	PASS	button invoked
+STEP	13	wait_idle	PASS	page=104;status=第 104 页。
+STEP	14	shell_measure	PASS	physical layout captured
+STEP	15	shell_click	PASS	button invoked
+STEP	16	wait_idle	PASS	page=115;status=第 115 页。
+STEP	17	shell_measure	PASS	physical layout captured
+STEP	18	shell_click	PASS	button invoked
+STEP	19	wait_idle	PASS	page=129;status=第 129 页。
+STEP	20	shell_measure	PASS	physical layout captured
+STEP	21	shell_click	PASS	button invoked
+STEP	22	wait_idle	PASS	page=139;status=第 139 页。
+STEP	23	shell_measure	PASS	physical layout captured
+STEP	24	shell_click	PASS	button invoked
+STEP	25	wait_idle	PASS	page=176;status=第 176 页。
+STEP	26	shell_measure	PASS	physical layout captured
+STEP	27	shell_click	PASS	button invoked
+STEP	28	wait_idle	PASS	page=185;status=第 185 页。
+STEP	29	shell_measure	PASS	physical layout captured
+STEP	30	next	PASS	page=186;status=第 186 页。
+STEP	31	wait_idle	PASS	page=186;status=第 186 页。
+STEP	32	shell_measure	PASS	physical layout captured
+STEP	33	prev	PASS	page=185;status=第 185 页。
+STEP	34	wait_idle	PASS	page=185;status=第 185 页。
+STEP	35	shell_measure	PASS	physical layout captured
+STEP	36	shell_font	PASS	page=100;status=第 100 页。
+STEP	37	wait_idle	PASS	page=100;status=第 100 页。
+STEP	38	shell_measure	PASS	physical layout captured
+SHOT	39	jump-0	PASS	file=jump-0;nonzero=1
+STEP	39	snapshot	PASS	screenshot written
+STEP	40	shell_font	PASS	page=104;status=第 104 页。
+STEP	41	wait_idle	PASS	page=104;status=第 104 页。
+STEP	42	shell_measure	PASS	physical layout captured
+SHOT	43	jump-1	PASS	file=jump-1;nonzero=1
+STEP	43	snapshot	PASS	screenshot written
+STEP	44	shell_font	PASS	page=139;status=第 139 页。
+STEP	45	wait_idle	PASS	page=139;status=第 139 页。
+STEP	46	shell_measure	PASS	physical layout captured
+SHOT	47	jump-2	PASS	file=jump-2;nonzero=1
+STEP	47	snapshot	PASS	screenshot written
+STEP	48	shell_font	PASS	page=185;status=第 185 页。
+STEP	49	wait_idle	PASS	page=185;status=第 185 页。
+STEP	50	shell_measure	PASS	physical layout captured
+SHOT	51	jump-3	PASS	file=jump-3;nonzero=1
+STEP	51	snapshot	PASS	screenshot written
+STEP	52	shell_font	PASS	page=100;status=第 100 页。
+STEP	53	wait_idle	PASS	page=100;status=第 100 页。
+STEP	54	shell_measure	PASS	physical layout captured
+SHOT	55	jump-4	PASS	file=jump-4;nonzero=1
+STEP	55	snapshot	PASS	screenshot written
+STEP	56	shell_client	PASS	page=158;status=第 158 页。
+STEP	57	wait_idle	PASS	page=158;status=第 158 页。
+STEP	58	shell_measure	PASS	physical layout captured
+STEP	59	shell_client	PASS	page=100;status=第 100 页。
+STEP	60	wait_idle	PASS	page=100;status=第 100 页。
+STEP	61	shell_measure	PASS	physical layout captured
+STEP	62	quit	PASS	closing
+DONE	62	eof	PASS	script finished

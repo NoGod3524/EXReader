@@ -1,0 +1,579 @@
+{
+  "process": {
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 35.607380499999636,
+    "stderr": ""
+  },
+  "colours": {
+    "light": {
+      "bg": "#f5f5f2",
+      "surface": "#ffffff",
+      "body_text": "#1b1b1f",
+      "contrast": 15.717975520886373
+    },
+    "dark": {
+      "bg": "#141416",
+      "surface": "#1e1e21",
+      "body_text": "#f2f2f4",
+      "contrast": 16.455894916645214
+    }
+  },
+  "states": [
+    {
+      "theme": "light",
+      "control": "stepper",
+      "state": "normal",
+      "fill": "#ffffff",
+      "expected_fill": "#ffffff",
+      "text": "#1b1b1f",
+      "expected_text": "#1b1b1f",
+      "border": "#e0e0e2",
+      "expected_border": "#e0e0e2"
+    },
+    {
+      "theme": "light",
+      "control": "stepper",
+      "state": "hover",
+      "fill": "#efeeea",
+      "expected_fill": "#efeeea",
+      "text": "#1b1b1f",
+      "expected_text": "#1b1b1f",
+      "border": "#d3d2d0",
+      "expected_border": "#d3d2d0"
+    },
+    {
+      "theme": "light",
+      "control": "stepper",
+      "state": "pressed",
+      "fill": "#efeeea",
+      "expected_fill": "#efeeea",
+      "text": "#1b1b1f",
+      "expected_text": "#1b1b1f",
+      "border": "#d3d2d0",
+      "expected_border": "#d3d2d0"
+    },
+    {
+      "theme": "light",
+      "control": "stepper",
+      "state": "focus",
+      "fill": "#ffffff",
+      "expected_fill": "#ffffff",
+      "text": "#1b1b1f",
+      "expected_text": "#1b1b1f",
+      "ring": "#4553e0",
+      "border": "#e0e0e2",
+      "expected_border": "#e0e0e2"
+    },
+    {
+      "theme": "light",
+      "control": "stepper",
+      "state": "disabled",
+      "fill": "#ffffff",
+      "expected_fill": "#ffffff",
+      "text": "#a4a4a5",
+      "expected_text": "#a4a4a5",
+      "border": "#f3f3f3",
+      "expected_border": "#f3f3f3"
+    },
+    {
+      "theme": "light",
+      "control": "ghost",
+      "state": "normal",
+      "fill": "#ffffff",
+      "expected_fill": "#ffffff",
+      "text": "#5c5c65",
+      "expected_text": "#5c5c65"
+    },
+    {
+      "theme": "light",
+      "control": "ghost",
+      "state": "hover",
+      "fill": "#efeeea",
+      "expected_fill": "#efeeea",
+      "text": "#5c5c65",
+      "expected_text": "#5c5c65"
+    },
+    {
+      "theme": "light",
+      "control": "ghost",
+      "state": "pressed",
+      "fill": "#efeeea",
+      "expected_fill": "#efeeea",
+      "text": "#5c5c65",
+      "expected_text": "#5c5c65"
+    },
+    {
+      "theme": "light",
+      "control": "ghost",
+      "state": "focus",
+      "fill": "#ffffff",
+      "expected_fill": "#ffffff",
+      "text": "#5c5c65",
+      "expected_text": "#5c5c65",
+      "ring": "#4553e0"
+    },
+    {
+      "theme": "light",
+      "control": "ghost",
+      "state": "disabled",
+      "fill": "#ffffff",
+      "expected_fill": "#ffffff",
+      "text": "#bebec1",
+      "expected_text": "#bebec1"
+    },
+    {
+      "theme": "light",
+      "control": "primary",
+      "state": "normal",
+      "fill": "#4553e0",
+      "expected_fill": "#4553e0",
+      "text": "#ffffff",
+      "expected_text": "#ffffff"
+    },
+    {
+      "theme": "light",
+      "control": "primary",
+      "state": "hover",
+      "fill": "#3946cc",
+      "expected_fill": "#3946cc",
+      "text": "#ffffff",
+      "expected_text": "#ffffff"
+    },
+    {
+      "theme": "light",
+      "control": "primary",
+      "state": "pressed",
+      "fill": "#3946cc",
+      "expected_fill": "#3946cc",
+      "text": "#ffffff",
+      "expected_text": "#ffffff"
+    },
+    {
+      "theme": "light",
+      "control": "primary",
+      "state": "focus",
+      "fill": "#4553e0",
+      "expected_fill": "#4553e0",
+      "text": "#ffffff",
+      "expected_text": "#ffffff",
+      "ring": "#4553e0"
+    },
+    {
+      "theme": "light",
+      "control": "primary",
+      "state": "disabled",
+      "fill": "#b5baf3",
+      "expected_fill": "#b5baf3",
+      "text": "#ffffff",
+      "expected_text": "#ffffff"
+    },
+    {
+      "theme": "dark",
+      "control": "stepper",
+      "state": "normal",
+      "fill": "#1e1e21",
+      "expected_fill": "#1e1e21",
+      "text": "#f2f2f4",
+      "expected_text": "#f2f2f4",
+      "border": "#3b3b3e",
+      "expected_border": "#3b3b3e"
+    },
+    {
+      "theme": "dark",
+      "control": "stepper",
+      "state": "hover",
+      "fill": "#28282c",
+      "expected_fill": "#28282c",
+      "text": "#f2f2f4",
+      "expected_text": "#f2f2f4",
+      "border": "#444447",
+      "expected_border": "#444447"
+    },
+    {
+      "theme": "dark",
+      "control": "stepper",
+      "state": "pressed",
+      "fill": "#28282c",
+      "expected_fill": "#28282c",
+      "text": "#f2f2f4",
+      "expected_text": "#f2f2f4",
+      "border": "#444447",
+      "expected_border": "#444447"
+    },
+    {
+      "theme": "dark",
+      "control": "stepper",
+      "state": "focus",
+      "fill": "#1e1e21",
+      "expected_fill": "#1e1e21",
+      "text": "#f2f2f4",
+      "expected_text": "#f2f2f4",
+      "ring": "#7c88ff",
+      "border": "#3b3b3e",
+      "expected_border": "#3b3b3e"
+    },
+    {
+      "theme": "dark",
+      "control": "stepper",
+      "state": "disabled",
+      "fill": "#1e1e21",
+      "expected_fill": "#1e1e21",
+      "text": "#737375",
+      "expected_text": "#737375",
+      "border": "#2a2a2d",
+      "expected_border": "#2a2a2d"
+    },
+    {
+      "theme": "dark",
+      "control": "ghost",
+      "state": "normal",
+      "fill": "#1e1e21",
+      "expected_fill": "#1e1e21",
+      "text": "#b3b3bc",
+      "expected_text": "#b3b3bc"
+    },
+    {
+      "theme": "dark",
+      "control": "ghost",
+      "state": "hover",
+      "fill": "#28282c",
+      "expected_fill": "#28282c",
+      "text": "#b3b3bc",
+      "expected_text": "#b3b3bc"
+    },
+    {
+      "theme": "dark",
+      "control": "ghost",
+      "state": "pressed",
+      "fill": "#28282c",
+      "expected_fill": "#28282c",
+      "text": "#b3b3bc",
+      "expected_text": "#b3b3bc"
+    },
+    {
+      "theme": "dark",
+      "control": "ghost",
+      "state": "focus",
+      "fill": "#1e1e21",
+      "expected_fill": "#1e1e21",
+      "text": "#b3b3bc",
+      "expected_text": "#b3b3bc",
+      "ring": "#7c88ff"
+    },
+    {
+      "theme": "dark",
+      "control": "ghost",
+      "state": "disabled",
+      "fill": "#1e1e21",
+      "expected_fill": "#1e1e21",
+      "text": "#5a5a5f",
+      "expected_text": "#5a5a5f"
+    },
+    {
+      "theme": "dark",
+      "control": "primary",
+      "state": "normal",
+      "fill": "#7c88ff",
+      "expected_fill": "#7c88ff",
+      "text": "#ffffff",
+      "expected_text": "#ffffff"
+    },
+    {
+      "theme": "dark",
+      "control": "primary",
+      "state": "hover",
+      "fill": "#929cff",
+      "expected_fill": "#929cff",
+      "text": "#ffffff",
+      "expected_text": "#ffffff"
+    },
+    {
+      "theme": "dark",
+      "control": "primary",
+      "state": "pressed",
+      "fill": "#929cff",
+      "expected_fill": "#929cff",
+      "text": "#ffffff",
+      "expected_text": "#ffffff"
+    },
+    {
+      "theme": "dark",
+      "control": "primary",
+      "state": "focus",
+      "fill": "#7c88ff",
+      "expected_fill": "#7c88ff",
+      "text": "#ffffff",
+      "expected_text": "#ffffff",
+      "ring": "#7c88ff"
+    },
+    {
+      "theme": "dark",
+      "control": "primary",
+      "state": "disabled",
+      "fill": "#44487a",
+      "expected_fill": "#44487a",
+      "text": "#78787a",
+      "expected_text": "#78787a"
+    }
+  ],
+  "font_steps": [
+    14.0,
+    15.0,
+    16.0,
+    17.0,
+    18.0,
+    20.0,
+    22.0,
+    24.0,
+    28.0,
+    32.0
+  ],
+  "first_line_start_offsets": [
+    0
+  ],
+  "first_line_prefix_preserved": true,
+  "saved": {
+    "font": 28,
+    "theme": 1,
+    "dark": 1,
+    "open": 0,
+    "animating": 0,
+    "animation_ms": 0.0,
+    "class_bg": 1446932,
+    "foreground": 0,
+    "window": [
+      -32000,
+      -32000
+    ],
+    "client_box": [
+      9,
+      38,
+      1280,
+      800
+    ],
+    "controls": {
+      "minus": [
+        924,
+        124,
+        980,
+        166
+      ],
+      "plus": [
+        1188,
+        124,
+        1244,
+        166
+      ],
+      "light": [
+        924,
+        204,
+        1028,
+        246
+      ],
+      "dark": [
+        1028,
+        204,
+        1132,
+        246
+      ],
+      "system": [
+        1132,
+        204,
+        1236,
+        246
+      ]
+    }
+  },
+  "restart": {
+    "font": 28,
+    "theme": 1
+  },
+  "animation_ms": [
+    0.0,
+    0.0
+  ],
+  "dark_presented": 144,
+  "presented": 177,
+  "blank": 0,
+  "nonzero_head_offsets": {
+    "head-0": 2899,
+    "head-1": 3934,
+    "head-2": 3522,
+    "head-3": 3313,
+    "head-4": 3589,
+    "head-5": 4140,
+    "head-before": 4331
+  },
+  "nonzero_head_preserved": false,
+  "old_ini": {
+    "before_sha256": "eaf6a3fb1657743aa0adc6908a40d520a09fa236468d03fc230a8e96160642f6",
+    "after_sha256": "eaf6a3fb1657743aa0adc6908a40d520a09fa236468d03fc230a8e96160642f6",
+    "logical_shelf_equal": true,
+    "defaults": {
+      "font": 17,
+      "theme": 2,
+      "dark": 1,
+      "open": 0,
+      "animating": 0,
+      "animation_ms": 0.0,
+      "class_bg": 16777215,
+      "foreground": 0,
+      "window": [
+        -32000,
+        -32000
+      ],
+      "client_box": [
+        9,
+        38,
+        1162,
+        853
+      ],
+      "controls": {
+        "minus": [
+          0,
+          0,
+          44,
+          44
+        ],
+        "plus": [
+          0,
+          0,
+          44,
+          44
+        ],
+        "light": [
+          0,
+          0,
+          44,
+          44
+        ],
+        "dark": [
+          0,
+          0,
+          44,
+          44
+        ],
+        "system": [
+          0,
+          0,
+          44,
+          44
+        ]
+      }
+    }
+  },
+  "system": {
+    "font": 17,
+    "theme": 2,
+    "dark": 1,
+    "open": 0,
+    "animating": 0,
+    "animation_ms": 0.0,
+    "class_bg": 1446932,
+    "foreground": 0,
+    "window": [
+      -32000,
+      -32000
+    ],
+    "client_box": [
+      9,
+      38,
+      1162,
+      853
+    ],
+    "controls": {
+      "minus": [
+        717,
+        155,
+        787,
+        208
+      ],
+      "plus": [
+        1047,
+        155,
+        1117,
+        208
+      ],
+      "light": [
+        717,
+        255,
+        847,
+        308
+      ],
+      "dark": [
+        847,
+        255,
+        977,
+        308
+      ],
+      "system": [
+        977,
+        255,
+        1107,
+        308
+      ]
+    }
+  },
+  "selftest": {
+    "exit": 0,
+    "schema": 1,
+    "passed": true,
+    "platform": "Windows",
+    "checks": 26,
+    "engine_version": "3.42.0"
+  },
+  "regression": {
+    "control": {
+      "images": 8,
+      "nonzero": 0
+    },
+    "changed": {
+      "images": 8,
+      "nonzero": 0
+    },
+    "negative_selftest_exit": 0
+  },
+  "pass": false,
+  "phase_regression": {
+    "baseline": {
+      "A": [
+        "STEP\t115\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=第 4 页。"
+      ],
+      "B": [
+        "STEP\t5\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。"
+      ],
+      "C": []
+    },
+    "control": {
+      "A": [
+        "STEP\t115\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=第 4 页。"
+      ],
+      "B": [
+        "STEP\t5\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。"
+      ],
+      "C": [],
+      "images": 8,
+      "nonzero": 0
+    },
+    "changed": {
+      "A": [
+        "STEP\t115\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=第 4 页。"
+      ],
+      "B": [
+        "STEP\t5\tcheck\tFAIL\tpage=4;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。"
+      ],
+      "C": [],
+      "images": 8,
+      "nonzero": 0
+    }
+  },
+  "observed_processes": 25,
+  "foreground_observations": 0
+}

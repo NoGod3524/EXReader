@@ -17,28 +17,41 @@ extern "C" {
 
 typedef struct shell_d2d shell_d2d;
 
-/* Text styles from UI-SPEC sections 3 and 9. */
-enum { SHELL_TEXT_TITLE = 0, /* 17, weight 600, left, one line with ellipsis */
-       SHELL_TEXT_ICON = 1,  /* icon font 20, centred */
-       SHELL_TEXT_PAGE_NUMBER = 2,
-       SHELL_TEXT_STYLES = 3 };
 
-/* One owner-drawn round icon button. Colours are 0xRRGGBB. */
+/* Text styles from UI-SPEC sections 3 and 9. */
+enum { SHELL_TEXT_TITLE = 0, /* 15, weight 650, left, one line with ellipsis */
+       SHELL_TEXT_ICON = 1,  /* vector glyph 18, centred */
+       SHELL_TEXT_PAGE_NUMBER = 2,
+       SHELL_TEXT_UI = 3,
+       SHELL_TEXT_LABEL = 4,
+       SHELL_TEXT_STYLES = 5 };
+
+/* One owner-drawn rounded icon button. Colours are 0xRRGGBB. */
 typedef struct shell_d2d_button {
   uint32_t background; /* the layer the button sits on */
   uint32_t fill;       /* hover / pressed overlay, used when has_fill */
   uint32_t icon;
   uint32_t ring;       /* focus outline, used when has_ring */
   int has_fill, has_ring;
-  float diameter;      /* the circle; the outline sits outside it */
+  float diameter;      /* the 32px visual; the outline sits outside it */
   float ring_width;    /* drawn just outside the circle */
+  float offset_y;
 } shell_d2d_button;
+
+/* variant: 0 standard, 1 primary, 2 ghost. State bits: hover=1,
+   pressed=2, focus=4, disabled=8. Retains each BUTTON's native UIA proxy. */
+HRESULT shell_d2d_control(shell_d2d *, HDC, const RECT *, const wchar_t *,
+                          int dark, int variant, unsigned state);
+HRESULT shell_d2d_panel(shell_d2d *, HDC, const RECT *, int dark, const wchar_t *font, const uint32_t *background);
 
 HRESULT shell_d2d_create(HWND window, shell_d2d **out);
 void shell_d2d_destroy(shell_d2d *shell);
 void shell_d2d_target_dpi(const shell_d2d *shell, float values[4]);
 HRESULT shell_d2d_set_dpi(shell_d2d *shell, unsigned dpi);
-HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text, uint32_t color);
+HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text, uint32_t current, uint32_t rest);
+/* Cropped SDK image, centred by the caller; BGRA pixels retain their colours. */
+HRESULT shell_d2d_page_image(shell_d2d *, HDC, const RECT *area, const RECT *image,
+                             const uint32_t *pixels, unsigned pitch, uint32_t background);
 HRESULT shell_d2d_resize(shell_d2d *shell, UINT width, UINT height);
 HRESULT shell_d2d_begin(shell_d2d *shell, uint32_t background);
 void shell_d2d_fill(shell_d2d *shell, float x, float y, float width, float height, uint32_t color);
@@ -48,7 +61,7 @@ HRESULT shell_d2d_text(shell_d2d *shell, int style, const wchar_t *text, float x
 HRESULT shell_d2d_end(shell_d2d *shell);
 unsigned shell_d2d_recreated(const shell_d2d *shell);
 
-/* Paints a round icon button into box on dc, centred in the box. */
+/* Paints a rounded icon button into box on dc, centred in the box. */
 HRESULT shell_d2d_icon_button(shell_d2d *shell, HDC dc, const RECT *box, wchar_t glyph,
                               const shell_d2d_button *look);
 
@@ -58,6 +71,8 @@ HRESULT shell_d2d_icon_button(shell_d2d *shell, HDC dc, const RECT *box, wchar_t
 HRESULT shell_d2d_title_faces(shell_d2d *shell, unsigned *latin, unsigned *cjk);
 /* Family name actually used for a text style. */
 const wchar_t *shell_d2d_family(const shell_d2d *shell, int style);
+void shell_d2d_metrics(const shell_d2d *shell, float values[8]);
+void shell_d2d_page_metrics(shell_d2d *shell, float values[12]);
 
 #ifdef __cplusplus
 }

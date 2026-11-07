@@ -1,0 +1,16 @@
+HOST	phase=1	engine=3.42.0	pid=7720
+STEP	1	wait_idle	PASS	page=3;status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STATE	2	after_restart	PASS	book_id=1;page=2;page_count=0;font=160;zoom=100;offset=805;page_text_len=404;range_len=404;notes=1;selected_id=1;selection_active=0;page_text_fnv=148852820158303709;page_hash_len=404;bounded=1;part=0;generation=1;progress_record_preserved=1;part_path=OPS/c0.xhtml;book_bytes=3361;index_bytes=145233;parse_workspace_bytes=402013;peak_parse_workspace_bytes=810751;projection_bytes=163840;page_cache_bytes=145920;checkpoint_bytes=0;explicit_snapshot_bytes=0;windows_loaded=1;windows_evicted=0;owned_frame_text_geometry_bytes=52927;bitmap_bytes=2995200;dib_bytes=2995200;state=after_restart;title=EXReader benchmark;kind=reflow;page_text=Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C e;offset_text=Reading a portable book starts with a small open C engine. Each ;status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+SHELF	2	after_restart	PASS	title=Pages;author=;id=2;format=8
+SHELF	2	after_restart	PASS	title=EXReader benchmark;author=;id=1;format=4
+NOTE	2	after_restart	PASS	id=1;kind=reflow;storage=epub_notes;path=OPS/c0.xhtml;part=0;page=0;quote=Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable words and measurable pages. Reading a portable book starts with a small open C engine. Each chapter has repeatable ;comment=Updated automated note
+STEP	2	state	PASS	state captured
+STEP	3	check	PASS	count=2;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	4	check	PASS	title=EXReader benchmark;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	5	check	PASS	font=160;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	6	check	PASS	count=1;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+STEP	7	check	PASS	needle=恢复;window_status=已打开《EXReader benchmark》 · 进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。
+SHOT	8	20-restored-after-font	PASS	file=20-restored-after-font;nonzero=1
+STEP	8	snapshot	PASS	screenshot written
+STEP	9	quit	PASS	closing
+DONE	9	eof	PASS	script finished
