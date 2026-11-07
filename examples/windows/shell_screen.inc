@@ -32,6 +32,20 @@ static void shell_apply_theme(void);
 static void shell_toggle_settings(void);
 static int shell_settings_command(int id);
 static int shell_draw_settings(const DRAWITEMSTRUCT *item);
+static void shell_toc_create(HWND parent);
+static void shell_toc_layout(void);
+static void shell_toc_load(void);
+static void shell_toc_update_current(void);
+static void shell_toc_set(int open,int keyboard);
+static void shell_toc_hide(void);
+static int shell_toc_keyboard;
+static int shell_toc_key(HWND focus,WPARAM key,int shift);
+static int shell_toc_draw(const DRAWITEMSTRUCT *item);
+static int shell_toc_open;
+static int shell_toc_close_pending;
+static HWND shell_toc_test_focus;
+static int shell_toc_test_shift;
+static HWND shell_toc_panel,shell_toc_list;
 static HWND shell_hidden[SHELL_HIDDEN_MAX];
 static size_t shell_hidden_count;
 static const shell_theme *shell_colors = &shell_theme_light;
@@ -113,6 +127,8 @@ static void shell_update_dpi(HWND window) {
 
 static LRESULT CALLBACK shell_button_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
   switch (message) {
+    case WM_LBUTTONDOWN: if(window==shell_toc) shell_toc_keyboard=0;break;
+    case WM_KEYDOWN: if(window==shell_toc) shell_toc_keyboard=1;break;
     case WM_MOUSEMOVE:
       if (shell_hover != window) {
         TRACKMOUSEEVENT track;
@@ -152,6 +168,7 @@ static void shell_create(HWND parent) {
   shell_toc = shell_make_button(parent, IDC_SHELL_TOC, L"目录");
   shell_settings = shell_make_button(parent, IDC_SHELL_SETTINGS, L"设置");
   shell_create_panel(parent);
+  shell_toc_create(parent);
 }
 
 /* P0 visual bounds: 32px, 6px gap, 12px right inset. */
@@ -177,6 +194,7 @@ static int shell_layout(void) {
   MoveWindow(g.page, 0, shell_px(SHELL_TOPBAR_H, shell_dpi), area.right, area.bottom > shell_px(SHELL_TOPBAR_H, shell_dpi) ? area.bottom - shell_px(SHELL_TOPBAR_H, shell_dpi) : 0,
              TRUE);
   shell_panel_layout();
+  shell_toc_layout();
   return 1;
 }
 
@@ -214,6 +232,7 @@ static void shell_enter(void) {
 
 static void shell_leave(void) {
   size_t i;
+  shell_toc_hide();
   shell_panel_open=0; shell_animating=0; shell_animation_value=0;
   KillTimer(g.window,0x5753); ShowWindow(shell_panel,SW_HIDE);
   shell_active = 0;
@@ -246,6 +265,10 @@ static void shell_leave(void) {
 }
 
 static void shell_sync(void) {
+  if(shell_toc_close_pending && !g.job && !g.pending) {
+    shell_toc_close_pending=0;shell_toc_set(0,0);SetFocus(g.page);
+    if(host_offscreen) shell_toc_test_focus=g.page;
+  }
   if (shell_anchor_valid && (shell_anchor_book != g.frame.book_id || shell_anchor_part != g.frame.part ||
       shell_anchor_offset < g.frame.range_start || shell_anchor_offset >= g.frame.range_end)) {
     exr_anchor_free(&shell_anchor); shell_anchor_valid = 0;
@@ -292,6 +315,7 @@ static void shell_paint(HWND window) {
 static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   shell_d2d_button look;
   int disabled, pressed, hover, focus;
+  if (shell_toc_draw(item)) return 1;
   if (shell_draw_settings(item)) return 1;
   if (!host_shell || (item->hwndItem != shell_toc && item->hwndItem != shell_settings)) return 0;
   disabled = (item->itemState & ODS_DISABLED) != 0;
@@ -307,6 +331,7 @@ static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   look.fill = pressed ? shell_colors->surface3 : shell_colors->surface2;
   look.offset_y = 0;
   look.icon = disabled ? shell_blend(shell_colors->layer_side,shell_colors->text_secondary,SHELL_DISABLED_ALPHA) : (hover || pressed) ? shell_colors->text : shell_colors->text_secondary;
+  if(item->hwndItem==shell_toc && shell_toc_open) look.icon=shell_colors->accent;
   look.has_ring = focus;
   look.ring = shell_colors->accent;
   look.diameter = (float)shell_px(SHELL_ICON_SIZE, shell_dpi);
@@ -327,6 +352,16 @@ static int shell_page_footer(HDC dc, const RECT *area) {
 }
 
 static int shell_translate(const MSG *message) {
+  if(shell_toc_open && message->message==WM_MOUSEWHEEL) {
+    RECT panel;GetWindowRect(shell_toc_panel,&panel);POINT p={(short)LOWORD(message->lParam),(short)HIWORD(message->lParam)};
+    SendMessageW(PtInRect(&panel,p) ? shell_toc_list:g.page,WM_MOUSEWHEEL,message->wParam,message->lParam);return 1;
+  }
+  if(message->message==WM_KEYDOWN) {
+    int shift=GetKeyState(VK_SHIFT)<0 || (host_offscreen && g.drive_mode && shell_toc_test_shift);
+    shell_toc_test_shift=0;
+    if(shell_toc_key(message->hwnd,message->wParam,shift)) return 1;
+  }
+  if(shell_toc_open && message->message==WM_LBUTTONDOWN && message->hwnd==g.page) {shell_toc_set(0,0);return 1;}
   if(shell_panel_open && message->message==WM_KEYDOWN && message->wParam==VK_ESCAPE) {
     shell_toggle_settings(); return 1;
   }
@@ -382,3 +417,4 @@ static HWND shell_button_named(const char *name) {
 }
 
 #include "shell_settings.inc"
+#include "shell_toc.inc"
