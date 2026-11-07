@@ -69,7 +69,7 @@ static void selection(void) {
     "<html xmlns='http://www.w3.org/1999/xhtml' xmlns:e='http://www.idpf.org/2007/ops'>"
     "<head><style>p{color:red}</style><link rel='stylesheet' href='book.css'/></head>"
     "<body xml:lang='zh' class='outer'><p id='before'>not retained</p>"
-    "<section class='inner'><p id='selected'>\xe4\xb8\xad<!--join-->\xe6\x96\x87 <em> A &amp; B </em> tail</p>"
+    "<section class='inner'><p id='selected'>\xe4\xb8\xad \n<!--join--> \xe6\x96\x87 <em> A &amp; B </em> tail</p>"
     "<p id='next' e:type='footnote'>second<br/>line</p></section>"
     "<p id='after'>not retained either</p><style>body .inner p{font-size:20px}</style></body></html>";
   static const size_t chunks[] = {1, 3, 17, 32768};
