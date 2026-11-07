@@ -48,7 +48,10 @@ HRESULT shell_d2d_create(HWND window, shell_d2d **out);
 void shell_d2d_destroy(shell_d2d *shell);
 void shell_d2d_target_dpi(const shell_d2d *shell, float values[4]);
 HRESULT shell_d2d_set_dpi(shell_d2d *shell, unsigned dpi);
-HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text, uint32_t color);
+HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text, uint32_t current, uint32_t rest);
+/* Cropped SDK image, centred by the caller; BGRA pixels retain their colours. */
+HRESULT shell_d2d_page_image(shell_d2d *, HDC, const RECT *area, const RECT *image,
+                             const uint32_t *pixels, unsigned pitch, uint32_t background);
 HRESULT shell_d2d_resize(shell_d2d *shell, UINT width, UINT height);
 HRESULT shell_d2d_begin(shell_d2d *shell, uint32_t background);
 void shell_d2d_fill(shell_d2d *shell, float x, float y, float width, float height, uint32_t color);
@@ -69,6 +72,7 @@ HRESULT shell_d2d_title_faces(shell_d2d *shell, unsigned *latin, unsigned *cjk);
 /* Family name actually used for a text style. */
 const wchar_t *shell_d2d_family(const shell_d2d *shell, int style);
 void shell_d2d_metrics(const shell_d2d *shell, float values[8]);
+void shell_d2d_page_metrics(shell_d2d *shell, float values[12]);
 
 #ifdef __cplusplus
 }

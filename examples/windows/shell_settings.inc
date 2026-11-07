@@ -23,7 +23,7 @@ static void shell_apply_theme(void) {
    maps black/white to text/bg; colour illustrations retain their RGB. */
 static void shell_color_display(host_frame *frame) {
   int theme=shell_is_dark()+1;
-  if(!frame->valid || frame->fixed || !frame->shell_geometry.enabled) return;
+  if(!frame->valid || frame->fixed || !frame->shell_geometry.enabled || !IsRectEmpty(&frame->shell_image)) return;
   if(!frame_prepare_display(frame) || frame->display_shell_theme==theme) return;
   DIBSECTION section={0};
   if(!GetObject(frame->display_bitmap,sizeof(section),&section) || !section.dsBm.bmBits) return;
@@ -149,7 +149,8 @@ static LRESULT CALLBACK shell_panel_procedure(HWND window,UINT message,WPARAM wp
           GdiFlush();shell_d2d_panel(host_shell,dc,&box,shell_is_dark(),font,bits);
           SelectObject(underlay,old);
         } else shell_d2d_panel(host_shell,dc,&box,shell_is_dark(),font,NULL);
-        if(bitmap) DeleteObject(bitmap);if(underlay) DeleteDC(underlay);
+        if(bitmap) DeleteObject(bitmap);
+        if(underlay) DeleteDC(underlay);
       }
       if(message==WM_PAINT) EndPaint(window,&paint);
       return 0;

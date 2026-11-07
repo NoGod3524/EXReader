@@ -74,7 +74,7 @@ static HRESULT make_format(shell_d2d *shell, int style) {
   if (family) family->Release();
   IDWriteTextFormat *format = nullptr;
   HRESULT hr = shell->write->CreateTextFormat(name, nullptr,
-                                              (DWRITE_FONT_WEIGHT)(is_title ? SHELL_TITLE_WEIGHT : (style == SHELL_TEXT_UI || style == SHELL_TEXT_LABEL) ? SHELL_CONTROL_WEIGHT : (int)DWRITE_FONT_WEIGHT_NORMAL),
+                                              (DWRITE_FONT_WEIGHT)(is_title ? SHELL_TITLE_WEIGHT : style == SHELL_TEXT_PAGE_NUMBER ? SHELL_PAGE_WEIGHT : (style == SHELL_TEXT_UI || style == SHELL_TEXT_LABEL) ? SHELL_CONTROL_WEIGHT : (int)DWRITE_FONT_WEIGHT_NORMAL),
                                               DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
                                               (float)(is_title ? SHELL_TITLE_FONT : is_icon ? SHELL_ICON_FONT : style == SHELL_TEXT_UI ? SHELL_VALUE_FONT : style == SHELL_TEXT_LABEL ? SHELL_LABEL_FONT : SHELL_PAGE_FONT) * shell->dpi / 96.0f, L"zh-cn", &format);
   if (FAILED(hr)) return hr;
@@ -256,21 +256,77 @@ extern "C" HRESULT shell_d2d_icon_button(shell_d2d *shell, HDC dc, const RECT *b
   return hr;
 }
 
-extern "C" HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text, uint32_t color) {
+static HRESULT page_layout(shell_d2d *shell,const wchar_t *text,float width,float height,IDWriteTextLayout **layout) {
+  UINT32 length=(UINT32)wcslen(text);
+  HRESULT hr=shell->write->CreateTextLayout(text,length,shell->format[SHELL_TEXT_PAGE_NUMBER],width,height,layout);
+  if(FAILED(hr)) return hr;
+  IDWriteTypography *typography=nullptr;
+  hr=shell->write->CreateTypography(&typography);
+  if(SUCCEEDED(hr)) hr=typography->AddFontFeature({DWRITE_FONT_FEATURE_TAG_TABULAR_FIGURES,1});
+  if(SUCCEEDED(hr)) hr=(*layout)->SetTypography(typography,{0,length});
+  /* Segoe UI Semibold's tnum leaves 7 narrower. Normalize digit advances even
+     when a selected face implements only part of the OpenType feature. */
+  IDWriteTextLayout *digits=nullptr;IDWriteTextLayout1 *spacing=nullptr;
+  if(SUCCEEDED(hr)) hr=shell->write->CreateTextLayout(L"0123456789",10,shell->format[SHELL_TEXT_PAGE_NUMBER],1000,100,&digits);
+  if(SUCCEEDED(hr)) hr=digits->SetTypography(typography,{0,10});
+  DWRITE_CLUSTER_METRICS clusters[10]={};UINT32 count=0;
+  if(SUCCEEDED(hr)) hr=digits->GetClusterMetrics(clusters,10,&count);
+  if(SUCCEEDED(hr) && count!=10) hr=E_FAIL;
+  if(SUCCEEDED(hr)) hr=(*layout)->QueryInterface(__uuidof(IDWriteTextLayout1),(void **)&spacing);
+  if(SUCCEEDED(hr)) {
+    float advance=0;for(const auto &q:clusters) advance=std::max(advance,q.width);
+    for(UINT32 i=0;i<length && SUCCEEDED(hr);i++) if(text[i]>=L'0' && text[i]<=L'9') {
+      float extra=(advance-clusters[text[i]-L'0'].width)/2;
+      hr=spacing->SetCharacterSpacing(extra,extra,0,{i,1});
+    }
+  }
+  if(spacing) spacing->Release();
+  if(digits) digits->Release();
+  if(typography) typography->Release();
+  if(FAILED(hr)) {(*layout)->Release();*layout=nullptr;}
+  return hr;
+}
+
+extern "C" void shell_d2d_page_metrics(shell_d2d *s,float values[12]) {
+  values[0]=s->format[SHELL_TEXT_PAGE_NUMBER]->GetFontSize();
+  values[1]=(float)s->format[SHELL_TEXT_PAGE_NUMBER]->GetFontWeight();
+  IDWriteTextLayout *layout=nullptr;
+  for(int i=2;i<12;i++) values[i]=0;
+  if(SUCCEEDED(page_layout(s,L"0123456789",1000,100,&layout))) {
+    DWRITE_CLUSTER_METRICS clusters[10]={};UINT32 count=0;
+    if(SUCCEEDED(layout->GetClusterMetrics(clusters,10,&count)) && count==10)
+      for(int i=0;i<10;i++) values[2+i]=clusters[i].width;
+    layout->Release();
+  }
+}
+
+extern "C" HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text, uint32_t current, uint32_t rest) {
   if (!shell->dc_target) {
     const D2D1_RENDER_TARGET_PROPERTIES properties =
       pixel_properties(D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE));
     HRESULT hr = shell->factory->CreateDCRenderTarget(&properties, &shell->dc_target);
-    if (SUCCEEDED(hr)) hr = shell->dc_target->CreateSolidColorBrush(D2D1::ColorF(color), &shell->dc_brush);
+    if (SUCCEEDED(hr)) hr = shell->dc_target->CreateSolidColorBrush(D2D1::ColorF(current), &shell->dc_brush);
     if (FAILED(hr)) { drop_dc_target(shell); return hr; }
     shell->dc_target->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
   }
   HRESULT hr = shell->dc_target->BindDC(dc, box);
   if (FAILED(hr)) return hr;
+  IDWriteTextLayout *layout=nullptr;
+  UINT32 length=(UINT32)wcslen(text);
+  hr=page_layout(shell,text,(float)(box->right-box->left),(float)(box->bottom-box->top),&layout);
+  if(FAILED(hr)) return hr;
+  const wchar_t *separator=wcschr(text,L' ');
+  ID2D1SolidColorBrush *muted=nullptr;
+  if(SUCCEEDED(hr)) hr=shell->dc_target->CreateSolidColorBrush(D2D1::ColorF(rest),&muted);
+  if(SUCCEEDED(hr) && separator) hr=layout->SetDrawingEffect(muted,{(UINT32)(separator-text),length-(UINT32)(separator-text)});
+  if(FAILED(hr)) { if(muted) muted->Release();layout->Release();return hr; }
+  DWRITE_OVERHANG_METRICS ink={};
+  hr=layout->GetOverhangMetrics(&ink);
+  if(FAILED(hr)) {muted->Release();layout->Release();return hr;}
   shell->dc_target->BeginDraw();
-  shell->dc_brush->SetColor(D2D1::ColorF(color));
-  shell->dc_target->DrawText(text, (UINT32)wcslen(text), shell->format[SHELL_TEXT_PAGE_NUMBER],
-    D2D1::RectF(0, 0, (float)(box->right - box->left), (float)(box->bottom - box->top)), shell->dc_brush);
+  shell->dc_brush->SetColor(D2D1::ColorF(current));
+  shell->dc_target->DrawTextLayout(D2D1::Point2F(0,(ink.top-ink.bottom)/2),layout,shell->dc_brush);
+  muted->Release();layout->Release();
   hr = shell->dc_target->EndDraw();
   if (hr == D2DERR_RECREATE_TARGET) { drop_dc_target(shell); shell->recreated++; return S_FALSE; }
   return hr;
@@ -327,8 +383,8 @@ static ID2D1Bitmap *shadow_bitmap(shell_d2d *s, unsigned w, unsigned h, int kind
   for (const auto &e : s->shadows)
     if (e.width==w && e.height==h && e.dpi==s->dpi && e.kind==kind) return e.bitmap;
   const float scale=s->dpi/96.f, pad=(float)SHELL_SHADOW_PAD*scale;
-  const float radius=(float)(kind==1 ? SHELL_RADIUS : kind==2 ? 6 : SHELL_RADIUS_SM)*scale;
-  const auto *layers=kind==1 ? SHELL_SHADOW_LG : SHELL_SHADOW_SM;
+  const float radius=(float)(kind==3 ? 0 : kind==1 ? SHELL_RADIUS : kind==2 ? 6 : SHELL_RADIUS_SM)*scale;
+  const auto *layers=kind==3 ? SHELL_PAGE_SHADOW : kind==1 ? SHELL_SHADOW_LG : SHELL_SHADOW_SM;
   std::vector<float> alpha(w*h), mask(w*h), temp(w*h), blurred(w*h);
   for (int layer=0;layer<2;layer++) {
     const auto &q=layers[layer];
@@ -343,7 +399,7 @@ static ID2D1Bitmap *shadow_bitmap(shell_d2d *s, unsigned w, unsigned h, int kind
     float sigma=q.blur*scale/2;
     int reach=(int)std::ceil(3*sigma);
     std::vector<float> kernel(2*reach+1); float sum=0;
-    for(int i=-reach;i<=reach;i++) { float v=std::exp(-i*i/(2*sigma*sigma));kernel[i+reach]=v;sum+=v; }
+    for(int i=-reach;i<=reach;i++) { float v=reach ? std::exp(-i*i/(2*sigma*sigma)) : 1.f;kernel[i+reach]=v;sum+=v; }
     for(auto &v:kernel) v/=sum;
     for(unsigned y=0;y<h;y++) for(unsigned x=0;x<w;x++) {
       float v=0; for(int i=-reach;i<=reach;i++) if((int)x+i>=0 && (int)x+i<(int)w) v+=mask[y*w+x+i]*kernel[i+reach];
@@ -365,6 +421,23 @@ static ID2D1Bitmap *shadow_bitmap(shell_d2d *s, unsigned w, unsigned h, int kind
   if(FAILED(s->dc_target->CreateBitmap(D2D1::SizeU(w,h),pixels.data(),w*4,props,&bitmap))) return nullptr;
   s->shadows.push_back({w,h,s->dpi,kind,bitmap});
   return bitmap;
+}
+
+extern "C" HRESULT shell_d2d_page_image(shell_d2d *s,HDC dc,const RECT *area,const RECT *image,
+                                        const uint32_t *pixels,unsigned pitch,uint32_t background) {
+  HRESULT hr=bind_dc(s,dc,area);if(FAILED(hr)) return hr;
+  unsigned w=(unsigned)(image->right-image->left),h=(unsigned)(image->bottom-image->top);
+  float pad=(float)SHELL_SHADOW_PAD*s->dpi/96.f;
+  auto shadow=shadow_bitmap(s,w+2*(unsigned)pad,h+2*(unsigned)pad,3);
+  auto props=D2D1::BitmapProperties(D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_IGNORE));
+  ID2D1Bitmap *bitmap=nullptr;
+  hr=s->dc_target->CreateBitmap(D2D1::SizeU(w,h),pixels,pitch,props,&bitmap);
+  if(FAILED(hr)) return hr;
+  auto rect=D2D1::RectF((float)image->left,(float)image->top,(float)image->right,(float)image->bottom);
+  s->dc_target->BeginDraw();s->dc_target->Clear(D2D1::ColorF(background));
+  if(shadow) s->dc_target->DrawBitmap(shadow,D2D1::RectF(rect.left-pad,rect.top-pad,rect.right+pad,rect.bottom+pad));
+  s->dc_target->DrawBitmap(bitmap,rect);bitmap->Release();
+  hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s);return hr;
 }
 
 extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,const wchar_t *font,const uint32_t *background) {

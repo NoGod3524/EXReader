@@ -152,6 +152,7 @@ typedef struct {
   exr_line *shell_lines;
   size_t shell_line_count;
   int shell_anchored;
+  RECT shell_image; /* The sole decoded image's source pixels; empty on text/mixed pages. */
 #endif
   exr_bitmap bitmap;
   uint32_t *dib;
@@ -406,7 +407,7 @@ typedef exr_status (*host_progress_fn)(void *context, unsigned percent);
    These entry points are used by code that is compiled before that file. */
 static void host_a11y_status_changed(void);
 static void host_a11y_prepare_note(void);
-static void host_a11y_owner_enabled(int enabled);
+static inline void host_a11y_owner_enabled(int enabled);
 
 static void set_status(const wchar_t *text) {
   if (!text) text = L"";
@@ -644,7 +645,7 @@ static int frame_prepare_display(host_frame *frame) {
   SetStretchBltMode(dc,HALFTONE);SetBrushOrgEx(dc,0,0,NULL);
   int copied=StretchDIBits(dc,0,0,w,h,0,0,frame->bitmap.width,frame->bitmap.height,frame->dib,&source,DIB_RGB_COLORS,SRCCOPY);
   SelectObject(dc,old);DeleteDC(dc);
-  if(!copied || copied==GDI_ERROR){DeleteObject(bitmap);return 0;}
+  if(!copied || copied==(int)GDI_ERROR){DeleteObject(bitmap);return 0;}
   if(frame->display_bitmap)DeleteObject(frame->display_bitmap);
 #ifdef EXR_READER_WINDOWS_SHELL
   frame->display_shell_theme=0;
@@ -1663,6 +1664,24 @@ static int shell_capture_layout(host_frame *frame, const host_session *session, 
       memcpy(frame->glyphs, glyphs, frame->glyph_count * sizeof(*glyphs));
     }
   }
+  size_t box_count=0, image_count=0;
+  const exr_box *boxes=exr_layout_boxes(layout,&box_count), *image=NULL;
+  int visible_text=0;
+  for(size_t i=0;i<frame->glyph_count;i++) {
+    unsigned c=frame->glyphs[i].codepoint;
+    if(c>32 && c!=0x3000 && c!=0xfffc) visible_text=1;
+  }
+  for(size_t i=0;i<box_count;i++) {
+    if(boxes[i].kind==EXR_BOX_IMAGE) {image=boxes+i;image_count++;}
+  }
+  if(!visible_text && image_count==1 && !image->flags &&
+     exr_layout_image(layout,image->resource) && image->width>0 && image->height>0) {
+    frame->shell_image=(RECT){(LONG)floorf(image->x),(LONG)floorf(image->y),
+      (LONG)ceilf(image->x+image->width),(LONG)ceilf(image->y+image->height)};
+    if(frame->shell_image.left<0 || frame->shell_image.top<0 ||
+       frame->shell_image.right>(LONG)frame->bitmap.width || frame->shell_image.bottom>(LONG)frame->bitmap.height)
+      frame->shell_image=(RECT){0};
+  }
   return 1;
 }
 #endif
@@ -1846,6 +1865,11 @@ static exr_status render_fixed(host_session *session, size_t page, int zoom_perc
     return EXR_MEMORY;
   }
   out->text_bytes = size;
+#ifdef EXR_READER_WINDOWS_SHELL
+  out->shell_geometry=session->shell_geometry;
+  if(session->shell_geometry.enabled && !size)
+    out->shell_image=(RECT){0,0,(LONG)out->bitmap.width,(LONG)out->bitmap.height};
+#endif
   out->page = page;
   out->range_start = 0;
   out->range_end = size;
@@ -2071,14 +2095,14 @@ static exr_status bounded_restore(host_session *session, const exr_control *cont
 /* The verified handle is the source: no path reopen between verification and read.
    The pager owns this context after successful creation. The worker serializes
    catalog operations and session disposal; Windows sharing prevents mutation. */
-static size_t txt_read(void *context,uint64_t offset,void *buffer,size_t size) {
+static inline size_t txt_read(void *context,uint64_t offset,void *buffer,size_t size) {
   HANDLE h=(HANDLE)context; LARGE_INTEGER at; DWORD got=0;
   if(offset>INT64_MAX || size>UINT32_MAX) return 0;
   at.QuadPart=(LONGLONG)offset;
   if(!SetFilePointerEx(h,at,NULL,FILE_BEGIN) || !ReadFile(h,buffer,(DWORD)size,&got,NULL)) return 0;
   return (size_t)got;
 }
-static void txt_release(void *context) { CloseHandle((HANDLE)context); }
+static inline void txt_release(void *context) { CloseHandle((HANDLE)context); }
 static exr_status txt_frame(host_session *session, const exr_source *source, const exr_layout *layout,
                             size_t page, host_frame *frame, exr_error *error) {
   exr_txt_cursor *cursor=NULL; const exr_page *info; size_t count=0;
@@ -3669,7 +3693,15 @@ static void layout_controls(void) {
 #endif
 }
 static int compute_view(void);
+#ifdef __GNUC__
+/* The shared accessibility owner contains MSVC linker pragmas. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#endif
 #include "../apps/reader/desktop/windows_accessibility.inc"
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 static int compute_view_impl(void) {
   RECT area;
@@ -3680,10 +3712,26 @@ static int compute_view_impl(void) {
   if (area.right < 16 || area.bottom < 16) return 0;
 #ifdef EXR_READER_WINDOWS_SHELL
   if (shell_active && g.frame.shell_geometry.enabled) {
+    int body_top=shell_px(SHELL_TOPBAR_H+SHELL_BODY_TOP,shell_dpi)-shell_px(SHELL_TOPBAR_H,shell_dpi);
+    int body_height=area.bottom-shell_px(SHELL_BODY_GAP+SHELL_PAGE_NUMBER_H,shell_dpi)-body_top;
     g.view.scale = 1.0;
     g.view.bw = (int)g.frame.bitmap.width; g.view.bh = (int)g.frame.bitmap.height;
     g.view.dx = (area.right - g.view.bw) / 2;
-    g.view.dy = shell_px(shell_vertical ? SHELL_SPACE_5 : SHELL_BODY_TOP, shell_dpi);
+    g.view.dy = body_top;
+    if(!IsRectEmpty(&g.frame.shell_image)) {
+      const RECT *image=&g.frame.shell_image;
+      g.view.dx=(area.right-(image->right-image->left))/2-image->left;
+      g.view.dy+=(body_height-(image->bottom-image->top))/2-image->top;
+    } else if(g.frame.fixed) {
+      g.view.dy+=(body_height-g.view.bh)/2;
+    } else if(g.frame.glyph_count && g.frame.dib) {
+      /* Align the first ink, rather than the font's ascent/line-box padding. */
+      for(int y=0;y<g.view.bh;y++) {
+        int ink=0;
+        for(int x=0;x<g.view.bw;x++) if((g.frame.dib[(size_t)y*g.view.bw+x]&0xffffff)!=0xffffff) {ink=1;break;}
+        if(ink) {g.view.dy-=y;break;}
+      }
+    }
     g.view.valid = 1;
     return 1;
   }
@@ -3820,6 +3868,15 @@ static void compose_page_view(HWND window) {
     info.bmiHeader.biCompression = BI_RGB;
     SetStretchBltMode(dc, HALFTONE);
     SetBrushOrgEx(dc, 0, 0, NULL);
+#ifdef EXR_READER_WINDOWS_SHELL
+    if(shell_active && !IsRectEmpty(&g.frame.shell_image)) {
+      RECT source=g.frame.shell_image, image=source;
+      OffsetRect(&image,g.view.dx,g.view.dy);
+      shell_d2d_page_image(host_shell,dc,&area,&image,
+        g.frame.dib+(size_t)source.top*g.frame.bitmap.width+source.left,
+        g.frame.bitmap.width*4,shell_colors->layer_page);
+    } else
+#endif
     if(frame_prepare_display(&g.frame)) {
       HDC source=CreateCompatibleDC(dc);
       if(source) {
@@ -4485,8 +4542,7 @@ static size_t selection_bytes(char **text) {
     return end - start;
   } else {
     const char *bytes;
-    size_t size = 0;
-    bytes = g.frame.utf8; size = g.frame.text_bytes;
+    bytes = g.frame.utf8;
     if (!bytes || start < g.frame.range_start || end > g.frame.range_end) return 0;
     start -= g.frame.range_start; end -= g.frame.range_start;
     *text = malloc(end - start + 1);
@@ -4577,7 +4633,8 @@ static void copy_quote(void) {
     } else {
       const char *quote = g.session.bounded ? g.epub_notes[index].location.selector.exact : g.reflow_notes[index].anchor.exact;
       const char *comment = g.session.bounded ? g.epub_notes[index].text : g.reflow_notes[index].text;
-      if (!quote) quote = ""; if (!comment) comment = "";
+      if (!quote) quote = "";
+      if (!comment) comment = "";
       size = strlen(quote) + strlen(comment) + 5;
       text = malloc(size + 1);
       if (text) {
@@ -5909,7 +5966,7 @@ static int drive_execute(void) {
     RECT logical,physical,client;POINT client_origin={0,0};
     GetWindowRect(g.window,&logical);GetClientRect(g.window,&client);ClientToScreen(g.window,&client_origin);
     typedef HANDLE (WINAPI *probe_dpi_fn)(HANDLE);
-    probe_dpi_fn fn=(probe_dpi_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetThreadDpiAwarenessContext");
+    probe_dpi_fn fn=(probe_dpi_fn)(void (*)(void))GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetThreadDpiAwarenessContext");
     HANDLE old=fn?fn((HANDLE)(INT_PTR)-4):NULL;GetWindowRect(g.window,&physical);if(fn && old)fn(old);
     double ratio=(double)(physical.right-physical.left)/(logical.right-logical.left);
     host_probe_log("cap_x",physical.left+(client_origin.x-logical.left)*ratio);
@@ -5976,7 +6033,7 @@ static int drive_execute(void) {
     RECT client = {0, 0, atoi(drive_args[1]), atoi(drive_args[2])};
     /* The actual window DPI controls its nonclient frame, even for injected DPI tests. */
     typedef UINT (WINAPI *dpi_fn)(HWND);
-    dpi_fn dpi = (dpi_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"), "GetDpiForWindow");
+    dpi_fn dpi = (dpi_fn)(void (*)(void))GetProcAddress(GetModuleHandleW(L"user32.dll"), "GetDpiForWindow");
     shell_adjust_client(&client, g.window, dpi ? dpi(g.window) : 96);
     SetWindowPos(g.window, NULL, 0, 0, client.right-client.left, client.bottom-client.top,
                  SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
@@ -6424,7 +6481,7 @@ static int drive_read_step(void) {
   }
   drive_argc = argc;
   memset(drive_action, 0, sizeof(drive_action));
-  strncpy(drive_action, drive_args[0], sizeof(drive_action) - 1);
+  memcpy(drive_action, drive_args[0], strnlen(drive_args[0], sizeof(drive_action) - 1));
   g.drive_index++;
   drive_step_active = 1;
   drive_step_start = GetTickCount();
@@ -7217,7 +7274,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   (void)command;
   {
     typedef BOOL (WINAPI *dpi_context_fn)(HANDLE);
-    dpi_context_fn dpi=(dpi_context_fn)GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetProcessDpiAwarenessContext");
+    dpi_context_fn dpi=(dpi_context_fn)(void (*)(void))GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetProcessDpiAwarenessContext");
 #ifdef EXR_READER_WINDOWS_SHELL
     SetLastError(0);
     shell_dpi_requested = dpi ? dpi((HANDLE)(INT_PTR)-4) : SetProcessDPIAware();
