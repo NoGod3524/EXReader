@@ -1,0 +1,43 @@
+{
+  "self_checks": "passed",
+  "covered_books": 19,
+  "idempotence": {
+    "passed": true,
+    "compared_pages": 11128,
+    "hash_changed_pages": 0,
+    "content_fingerprint": "a92cd1a358726ead98d594d50ae59c7f2943969eef104410bf342cb184c21a0d",
+    "repeat_wall_seconds": 92.073813,
+    "repeat_sum_book_seconds": 291.351171
+  },
+  "negative_control": {
+    "passed": true,
+    "method": "insert paragraph into one real EPUB body",
+    "cli_exit_code": 1,
+    "other_books": "reuse unchanged baseline results",
+    "book": "the-house-on-mango-street",
+    "original_sha256": "5a3b11c8f3ee4dd1c41d264aaf27dd83bb82faa1ebf3c7370a7072a0711cb3df",
+    "modified_sha256": "56819e6563607938f3150434591ceb7978cbaec4adc1f129908425b5e2ea521b",
+    "elapsed_seconds": 2.219388,
+    "difference": {
+      "id": "the-house-on-mango-street",
+      "old_status": "ok",
+      "new_status": "ok",
+      "source_changed": true,
+      "old_page_count": 181,
+      "new_page_count": 181,
+      "page_count_changed": false,
+      "glyph_count_changed": true,
+      "added_pages": [],
+      "removed_pages": [],
+      "hash_changed_pages": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ]
+    }
+  }
+}
