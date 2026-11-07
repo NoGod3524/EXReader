@@ -1,0 +1,489 @@
+{
+  "scenarios": {
+    "shell-1280": {
+      "totals": {
+        "presented": 183,
+        "blank": 0,
+        "stale_size": 0,
+        "present_failed": 0,
+        "bitblt": 173,
+        "stretch": 0,
+        "deferred": 8
+      },
+      "page_down": 20,
+      "wheel_detents": 100,
+      "keys_presented": 20,
+      "wheel_presented": 66,
+      "cache_hits": 20,
+      "cache_layout_deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cache_render_deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "layout_calls_start_end": [
+        8.0,
+        304.0
+      ],
+      "render_calls_start_end": [
+        5.0,
+        162.0
+      ],
+      "miss_samples_ms": [
+        21.0715,
+        20.1162,
+        20.824599999999997,
+        20.087,
+        23.4606,
+        20.348,
+        20.4133,
+        24.4431,
+        23.2997,
+        25.686500000000002,
+        22.026200000000003,
+        20.637900000000002,
+        21.6617,
+        20.1605,
+        18.261499999999998,
+        19.223100000000002,
+        20.4157,
+        20.0349,
+        21.414900000000003,
+        25.098499999999998,
+        25.142699999999998,
+        21.9262,
+        19.7728,
+        19.6576,
+        20.2391,
+        21.1274,
+        19.4815,
+        20.3807,
+        19.686799999999998,
+        20.9854,
+        20.4354,
+        22.0139,
+        23.2808,
+        21.7043,
+        19.7988,
+        26.4268,
+        22.0716,
+        19.6865,
+        20.1007,
+        20.791400000000003,
+        22.0295,
+        20.3596,
+        21.2099,
+        22.5146,
+        21.5355,
+        22.5398,
+        20.8022,
+        22.0838,
+        16.6627,
+        19.039,
+        19.2513,
+        22.386,
+        20.4401,
+        19.4475,
+        23.844,
+        24.2134,
+        19.779,
+        21.9526,
+        19.136
+      ],
+      "miss_p95_ms": 25.142699999999998,
+      "rejected_negative_evidence": [
+        "total_presented",
+        "total_blank",
+        "cache_layout_delta",
+        "present_buffer_w"
+      ],
+      "process": {
+        "exit": 0,
+        "foreground_observations": 0,
+        "positions": [
+          [
+            -32000,
+            -32000
+          ]
+        ],
+        "elapsed_seconds": 58.82419429999982
+      },
+      "resize": {
+        "first_line_before": "has repeatable words and measurable pages. Reading a portable book ",
+        "first_line_restored": "has repeatable words and measurable pages. Reading a portable book ",
+        "first_line_busy_restored": "has repeatable words and measurable pages. Reading a portable book ",
+        "page_pixel_differences": {
+          "restored": 0,
+          "busy-restored": 0
+        },
+        "pages": {
+          "before": [
+            612,
+            624
+          ],
+          "small": [
+            612,
+            384
+          ],
+          "large": [
+            612,
+            1264
+          ],
+          "restored": [
+            612,
+            624
+          ],
+          "busy-restored": [
+            612,
+            624
+          ]
+        },
+        "range_before_restored": [
+          [
+            95637,
+            97084
+          ],
+          [
+            95637,
+            97084
+          ]
+        ]
+      },
+      "pass": false
+    },
+    "shell-2560": {
+      "totals": {
+        "presented": 182,
+        "blank": 0,
+        "stale_size": 0,
+        "present_failed": 0,
+        "bitblt": 172,
+        "stretch": 0,
+        "deferred": 7
+      },
+      "page_down": 20,
+      "wheel_detents": 100,
+      "keys_presented": 20,
+      "wheel_presented": 66,
+      "cache_hits": 20,
+      "cache_layout_deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cache_render_deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "layout_calls_start_end": [
+        8.0,
+        343.0
+      ],
+      "render_calls_start_end": [
+        5.0,
+        155.0
+      ],
+      "miss_samples_ms": [
+        41.4169,
+        31.0682,
+        34.3459,
+        34.8378,
+        31.855800000000002,
+        45.8869,
+        39.7017,
+        152.1632,
+        38.5157,
+        34.5244,
+        37.3795,
+        38.2645,
+        31.9525,
+        39.019000000000005,
+        36.591499999999996,
+        43.7217,
+        41.1769,
+        38.0745,
+        38.1029,
+        41.0029,
+        35.830799999999996,
+        40.650400000000005,
+        40.1062,
+        40.431200000000004,
+        37.6598,
+        38.3059,
+        37.3677,
+        43.157799999999995,
+        40.5857,
+        41.2046,
+        38.6781,
+        38.849500000000006,
+        36.8695,
+        38.0835,
+        40.358,
+        36.8318,
+        39.9283,
+        51.416799999999995,
+        37.013400000000004,
+        36.8677,
+        40.057900000000004,
+        38.337199999999996,
+        37.9678,
+        36.8263,
+        41.628,
+        41.5788,
+        46.6646,
+        47.9864,
+        35.8963,
+        41.5182,
+        31.6782,
+        30.3554,
+        38.2553,
+        8.6306,
+        40.0954,
+        34.5251,
+        26.8993,
+        38.516400000000004,
+        41.212
+      ],
+      "miss_p95_ms": 47.9864,
+      "rejected_negative_evidence": [
+        "total_presented",
+        "total_blank",
+        "cache_layout_delta",
+        "present_buffer_w"
+      ],
+      "process": {
+        "exit": 0,
+        "foreground_observations": 0,
+        "positions": [
+          [
+            -32000,
+            -32000
+          ]
+        ],
+        "elapsed_seconds": 64.6822618000001
+      },
+      "resize": {
+        "first_line_before": "Reading a portable book starts with a small open C engine. Each chapter ",
+        "first_line_restored": "Reading a portable book starts with a small open C engine. Each chapter ",
+        "first_line_busy_restored": "Reading a portable book starts with a small open C engine. Each chapter ",
+        "page_pixel_differences": {
+          "restored": 0,
+          "busy-restored": 0
+        },
+        "pages": {
+          "before": [
+            612,
+            1264
+          ],
+          "small": [
+            612,
+            384
+          ],
+          "large": [
+            612,
+            1264
+          ],
+          "restored": [
+            612,
+            1264
+          ],
+          "busy-restored": [
+            612,
+            1264
+          ]
+        },
+        "range_before_restored": [
+          [
+            163185,
+            163840
+          ],
+          [
+            163185,
+            163840
+          ]
+        ]
+      },
+      "pass": false
+    },
+    "legacy": {
+      "totals": {
+        "presented": 74,
+        "blank": 0,
+        "stale_size": 0,
+        "present_failed": 0,
+        "bitblt": 74,
+        "stretch": 53,
+        "deferred": 0
+      },
+      "page_down": 20,
+      "wheel_detents": 100,
+      "keys_presented": 20,
+      "wheel_presented": 32,
+      "cache_hits": 20,
+      "cache_layout_deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cache_render_deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "layout_calls_start_end": [
+        2.0,
+        87.0
+      ],
+      "render_calls_start_end": [
+        2.0,
+        55.0
+      ],
+      "rejected_negative_evidence": [
+        "total_presented",
+        "total_blank",
+        "cache_layout_delta",
+        "present_buffer_w"
+      ],
+      "process": {
+        "exit": 0,
+        "foreground_observations": 0,
+        "positions": [
+          [
+            -32000,
+            -32000
+          ]
+        ],
+        "elapsed_seconds": 18.3392816999999
+      }
+    }
+  },
+  "selftest": {
+    "process": {
+      "exit": 0,
+      "foreground_observations": 0,
+      "positions": [],
+      "elapsed_seconds": 0.16028800000003685
+    },
+    "report": {
+      "schema": 1,
+      "passed": true,
+      "platform": "Windows",
+      "checks": 26,
+      "engine_version": "3.42.0"
+    }
+  },
+  "sha256": {
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-ui-step4-20261106\\build\\step4-host-main\\EXReader.exe": "56aee463803dbbdf3b0818f62b45eb53858f41f21edd74b78366f2c7dc69b628",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-ui-step4-20261106\\build\\step4-host-main\\libexreader.dll": "ab3409c3033442a94c114891e551f1b0423b89261a712fa0503ae7184c058a09",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-ui-step4-20261106\\build\\step4-final\\Long-acceptance.epub": "ac39d490439757e14b70f0b177f11a1e7a686c23f7e1c98d5f2d8d4bac0285da"
+  },
+  "pass": false
+}

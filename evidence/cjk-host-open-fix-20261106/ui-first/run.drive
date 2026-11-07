@@ -1,0 +1,17 @@
+wait_idle
+shell|on
+shell_dpi|96
+shell_client|1000|705
+shell_font|17
+wait_idle
+import|C:\Users\Oscar\Documents\Codex\exr-cjk-corpus\hongloumeng-24264.epub
+open|紅樓夢
+wait_idle
+check|bounded|1
+check|part|0
+check|page|1
+check|shell|1
+shell_measure|first-cover
+state|first-cover
+snapshot|first-cover
+quit

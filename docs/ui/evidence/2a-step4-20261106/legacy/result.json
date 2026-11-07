@@ -1,0 +1,85 @@
+{
+  "totals": {
+    "presented": 74,
+    "blank": 0,
+    "stale_size": 0,
+    "present_failed": 0,
+    "bitblt": 74,
+    "stretch": 53,
+    "deferred": 0
+  },
+  "page_down": 20,
+  "wheel_detents": 100,
+  "keys_presented": 20,
+  "wheel_presented": 32,
+  "cache_hits": 20,
+  "cache_layout_deltas": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "cache_render_deltas": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "layout_calls_start_end": [
+    2.0,
+    87.0
+  ],
+  "render_calls_start_end": [
+    2.0,
+    55.0
+  ],
+  "rejected_negative_evidence": [
+    "total_presented",
+    "total_blank",
+    "cache_layout_delta",
+    "present_buffer_w"
+  ],
+  "process": {
+    "exit": 0,
+    "foreground_observations": 0,
+    "positions": [
+      [
+        -32000,
+        -32000
+      ]
+    ],
+    "elapsed_seconds": 18.3392816999999
+  }
+}
