@@ -1,0 +1,22 @@
+{
+  "command": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\TypographyBench.exe",
+    "--offscreen",
+    "--data",
+    "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\profiles\\sans-lh1.90-1242x711-r2",
+    "--font",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo-2a\\Reader.otf",
+    "--drive",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\evidence\\typography-bench-20261107\\raw\\sans-lh1.90-1242x711-r2\\steps.drive",
+    "--evidence",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\evidence\\typography-bench-20261107\\raw\\sans-lh1.90-1242x711-r2"
+  ],
+  "exit_code": 0,
+  "capture": false,
+  "foreground_before": 1116350,
+  "foreground_after": 30674928,
+  "foreground_unchanged": false,
+  "started_utc": "2026-11-07T22:32:36.999747+00:00",
+  "ended_utc": "2026-11-07T22:33:00.714622+00:00",
+  "system_cpu_busy_pct": 44.099481182574316
+}

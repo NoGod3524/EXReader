@@ -1,0 +1,87 @@
+{
+  "measured_utc": "2026-11-07T22:19:31.0299482Z",
+  "cpu": {
+    "Name": "Intel(R) Core(TM) Ultra 7 256V",
+    "NumberOfCores": 8,
+    "NumberOfLogicalProcessors": 8
+  },
+  "os": {
+    "Caption": "Microsoft Windows 11 Home",
+    "Version": "10.0.26200",
+    "BuildNumber": "26200",
+    "TotalVisibleMemorySize": 16302648
+  },
+  "power": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+  "other_measurement_processes": [
+    {
+      "Name": "python.exe",
+      "ProcessId": 14092,
+      "CommandLine": "\"C:\\Python314\\python.exe\" tools/regress/run_realbooks.py --manifest tools/regress/corpus.json --dll build/after/libexreader.dll --font C:/Users/Oscar/Documents/Codex/EXReader-Windows-delivery-20261104/payload/Reader.otf --layout tools/regress/layout.json --source-revision worktree-sha256:29162416c433a589ee2d75175d5c906b72f42972327c0336968ba7ac265bbbf6 --output build/toc-candidate.json --baseline build/toc-baseline.json --workers 4"
+    },
+    {
+      "Name": "python.exe",
+      "ProcessId": 31796,
+      "CommandLine": "\"C:\\Python314\\python.exe\" \"-c\" \"from multiprocessing.spawn import spawn_main; spawn_main(parent_pid=14092, pipe_handle=812)\" \"--multiprocessing-fork\""
+    },
+    {
+      "Name": "python.exe",
+      "ProcessId": 13160,
+      "CommandLine": "\"C:\\Python314\\python.exe\" \"-c\" \"from multiprocessing.spawn import spawn_main; spawn_main(parent_pid=14092, pipe_handle=904)\" \"--multiprocessing-fork\""
+    },
+    {
+      "Name": "python.exe",
+      "ProcessId": 26924,
+      "CommandLine": "\"C:\\Python314\\python.exe\" \"-c\" \"from multiprocessing.spawn import spawn_main; spawn_main(parent_pid=14092, pipe_handle=908)\" \"--multiprocessing-fork\""
+    },
+    {
+      "Name": "python.exe",
+      "ProcessId": 4260,
+      "CommandLine": "\"C:\\Python314\\python.exe\" \"-c\" \"from multiprocessing.spawn import spawn_main; spawn_main(parent_pid=14092, pipe_handle=828)\" \"--multiprocessing-fork\""
+    },
+    {
+      "Name": "clang-cl.exe",
+      "ProcessId": 27192,
+      "CommandLine": "C:\\Users\\Oscar\\Documents\\Codex\\sanitize-toolchain-20261107\\llvm\\bin\\clang-cl.exe  /nologo -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\engine\\generated\\include -IC:\\Users\\Oscar\\exr-deps\\miniz -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\miniz-build -fsanitize=address,undefined -fno-omit-frame-pointer -fprofile-instr-generate -fcoverage-mapping -Wno-everything /W3 /Zi /permissive- /Zi /O2 /Ob1 /DNDEBUG -MT /utf-8 -clang:-MD -clang:-MT_deps\\miniz-build\\CMakeFiles\\miniz.dir\\miniz_zip.c.obj -clang:-MF_deps\\miniz-build\\CMakeFiles\\miniz.dir\\miniz_zip.c.obj.d /Fo_deps\\miniz-build\\CMakeFiles\\miniz.dir\\miniz_zip.c.obj /Fd_deps\\miniz-build\\CMakeFiles\\miniz.dir\\miniz.pdb -c -- C:\\Users\\Oscar\\exr-deps\\miniz\\miniz_zip.c"
+    },
+    {
+      "Name": "clang-cl.exe",
+      "ProcessId": 8788,
+      "CommandLine": "C:\\Users\\Oscar\\Documents\\Codex\\sanitize-toolchain-20261107\\llvm\\bin\\clang-cl.exe  /nologo -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\engine\\generated\\include -IC:\\Users\\Oscar\\exr-deps\\miniz -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\miniz-build -fsanitize=address,undefined -fno-omit-frame-pointer -fprofile-instr-generate -fcoverage-mapping -Wno-everything /W3 /Zi /permissive- /Zi /O2 /Ob1 /DNDEBUG -MT /utf-8 -clang:-MD -clang:-MT_deps\\miniz-build\\CMakeFiles\\miniz.dir\\miniz_tdef.c.obj -clang:-MF_deps\\miniz-build\\CMakeFiles\\miniz.dir\\miniz_tdef.c.obj.d /Fo_deps\\miniz-build\\CMakeFiles\\miniz.dir\\miniz_tdef.c.obj /Fd_deps\\miniz-build\\CMakeFiles\\miniz.dir\\miniz.pdb -c -- C:\\Users\\Oscar\\exr-deps\\miniz\\miniz_tdef.c"
+    },
+    {
+      "Name": "clang-cl.exe",
+      "ProcessId": 24776,
+      "CommandLine": "C:\\Users\\Oscar\\Documents\\Codex\\sanitize-toolchain-20261107\\llvm\\bin\\clang-cl.exe  /nologo -DEXR_STATIC -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES -DMINIZ_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\engine\\generated\\include -IC:\\Users\\Oscar\\Documents\\Codex\\EXReader-sanitize-20261107\\include -IC:\\Users\\Oscar\\exr-deps\\miniz -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\miniz-build -imsvcC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\engine\\exr-stb -fsanitize=address,undefined -fno-omit-frame-pointer -fprofile-instr-generate -fcoverage-mapping -Wno-everything /Zi /O2 /Ob1 /DNDEBUG /std:c11 -MT /utf-8 /W4 -clang:-MD -clang:-MTengine\\CMakeFiles\\exr_graphics_objects.dir\\src\\images.c.obj -clang:-MFengine\\CMakeFiles\\exr_graphics_objects.dir\\src\\images.c.obj.d /Foengine\\CMakeFiles\\exr_graphics_objects.dir\\src\\images.c.obj /Fdengine\\CMakeFiles\\exr_graphics_objects.dir\\ -c -- C:\\Users\\Oscar\\Documents\\Codex\\EXReader-sanitize-20261107\\src\\images.c"
+    },
+    {
+      "Name": "python.exe",
+      "ProcessId": 6292,
+      "CommandLine": "\"C:\\Python314\\python.exe\" tools/sanitize/build.py C:/Users/Oscar/Documents/Codex/sanitize-measured-build-20261107"
+    },
+    {
+      "Name": "clang-cl.exe",
+      "ProcessId": 30396,
+      "CommandLine": "C:\\Users\\Oscar\\Documents\\Codex\\sanitize-toolchain-20261107\\llvm\\bin\\clang-cl.exe  /nologo -DFT2_BUILD_LIBRARY -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\engine\\generated\\include -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\freetype-build\\include -IC:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0\\include -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\freetype-build\\include\\freetype\\config -fsanitize=address,undefined -fno-omit-frame-pointer -fprofile-instr-generate -fcoverage-mapping -Wno-everything /Zi /O2 /Ob1 /DNDEBUG /std:c11 -MT /utf-8 -clang:-MD -clang:-MT_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\autofit\\autofit.c.obj -clang:-MF_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\autofit\\autofit.c.obj.d /Fo_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\autofit\\autofit.c.obj /Fd_deps\\freetype-build\\CMakeFiles\\freetype.dir\\freetype.pdb -c -- C:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0\\src\\autofit\\autofit.c"
+    },
+    {
+      "Name": "clang-cl.exe",
+      "ProcessId": 29612,
+      "CommandLine": "C:\\Users\\Oscar\\Documents\\Codex\\sanitize-toolchain-20261107\\llvm\\bin\\clang-cl.exe  /nologo -DFT2_BUILD_LIBRARY -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\engine\\generated\\include -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\freetype-build\\include -IC:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0\\include -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\freetype-build\\include\\freetype\\config -fsanitize=address,undefined -fno-omit-frame-pointer -fprofile-instr-generate -fcoverage-mapping -Wno-everything /Zi /O2 /Ob1 /DNDEBUG /std:c11 -MT /utf-8 -clang:-MD -clang:-MT_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\base\\ftbase.c.obj -clang:-MF_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\base\\ftbase.c.obj.d /Fo_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\base\\ftbase.c.obj /Fd_deps\\freetype-build\\CMakeFiles\\freetype.dir\\freetype.pdb -c -- C:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0\\src\\base\\ftbase.c"
+    },
+    {
+      "Name": "clang-cl.exe",
+      "ProcessId": 23148,
+      "CommandLine": "C:\\Users\\Oscar\\Documents\\Codex\\sanitize-toolchain-20261107\\llvm\\bin\\clang-cl.exe  /nologo -DFT2_BUILD_LIBRARY -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\engine\\generated\\include -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\freetype-build\\include -IC:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0\\include -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\freetype-build\\include\\freetype\\config -fsanitize=address,undefined -fno-omit-frame-pointer -fprofile-instr-generate -fcoverage-mapping -Wno-everything /Zi /O2 /Ob1 /DNDEBUG /std:c11 -MT /utf-8 -clang:-MD -clang:-MT_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\bdf\\bdf.c.obj -clang:-MF_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\bdf\\bdf.c.obj.d /Fo_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\bdf\\bdf.c.obj /Fd_deps\\freetype-build\\CMakeFiles\\freetype.dir\\freetype.pdb -c -- C:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0\\src\\bdf\\bdf.c"
+    },
+    {
+      "Name": "clang-cl.exe",
+      "ProcessId": 26792,
+      "CommandLine": "C:\\Users\\Oscar\\Documents\\Codex\\sanitize-toolchain-20261107\\llvm\\bin\\clang-cl.exe  /nologo -DFT2_BUILD_LIBRARY -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\engine\\generated\\include -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\freetype-build\\include -IC:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0\\include -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\freetype-build\\include\\freetype\\config -fsanitize=address,undefined -fno-omit-frame-pointer -fprofile-instr-generate -fcoverage-mapping -Wno-everything /Zi /O2 /Ob1 /DNDEBUG /std:c11 -MT /utf-8 -clang:-MD -clang:-MT_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\cache\\ftcache.c.obj -clang:-MF_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\cache\\ftcache.c.obj.d /Fo_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\cache\\ftcache.c.obj /Fd_deps\\freetype-build\\CMakeFiles\\freetype.dir\\freetype.pdb -c -- C:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0\\src\\cache\\ftcache.c"
+    },
+    {
+      "Name": "clang-cl.exe",
+      "ProcessId": 30036,
+      "CommandLine": "C:\\Users\\Oscar\\Documents\\Codex\\sanitize-toolchain-20261107\\llvm\\bin\\clang-cl.exe  /nologo -DFT2_BUILD_LIBRARY -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\engine\\generated\\include -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\freetype-build\\include -IC:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0\\include -IC:\\Users\\Oscar\\Documents\\Codex\\sanitize-final-build-20261107\\_deps\\freetype-build\\include\\freetype\\config -fsanitize=address,undefined -fno-omit-frame-pointer -fprofile-instr-generate -fcoverage-mapping -Wno-everything /Zi /O2 /Ob1 /DNDEBUG /std:c11 -MT /utf-8 -clang:-MD -clang:-MT_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\cff\\cff.c.obj -clang:-MF_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\cff\\cff.c.obj.d /Fo_deps\\freetype-build\\CMakeFiles\\freetype.dir\\src\\cff\\cff.c.obj /Fd_deps\\freetype-build\\CMakeFiles\\freetype.dir\\freetype.pdb -c -- C:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0\\src\\cff\\cff.c"
+    }
+  ]
+}

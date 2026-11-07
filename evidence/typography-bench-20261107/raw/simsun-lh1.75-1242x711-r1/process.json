@@ -1,0 +1,22 @@
+{
+  "command": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\TypographyBench.exe",
+    "--offscreen",
+    "--data",
+    "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\profiles\\simsun-lh1.75-1242x711-r1",
+    "--font",
+    "C:\\Windows\\Fonts\\simsun.ttc",
+    "--drive",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\evidence\\typography-bench-20261107\\raw\\simsun-lh1.75-1242x711-r1\\steps.drive",
+    "--evidence",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\evidence\\typography-bench-20261107\\raw\\simsun-lh1.75-1242x711-r1"
+  ],
+  "exit_code": 0,
+  "capture": true,
+  "foreground_before": 30674928,
+  "foreground_after": 1116350,
+  "foreground_unchanged": false,
+  "started_utc": "2026-11-07T22:30:34.716251+00:00",
+  "ended_utc": "2026-11-07T22:31:02.443570+00:00",
+  "system_cpu_busy_pct": 41.96774420733854
+}
