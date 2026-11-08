@@ -1,0 +1,5 @@
+FAIL C:\Users\Oscar\Documents\Codex\tmp\platform-delivery-20261108\delivery\android\arm64-v8a\libexreader.so [0xb7] exports=2800 ABI=389/389 missing=0 extra=2411
+FAIL C:\Users\Oscar\Documents\Codex\tmp\platform-delivery-20261108\delivery\macos\arm64\libexreader.dylib [0x100000c] exports=2799 ABI=389/389 missing=0 extra=2410
+FAIL C:\Users\Oscar\Documents\Codex\tmp\platform-delivery-20261108\delivery\ios\arm64-device\libexreader.dylib [0x100000c] exports=2799 ABI=389/389 missing=0 extra=2410
+FAIL C:\Users\Oscar\Documents\Codex\tmp\platform-delivery-20261108\delivery\ios\arm64-simulator\libexreader.dylib [0x100000c] exports=2799 ABI=389/389 missing=0 extra=2410
+FAIL C:\Users\Oscar\Documents\Codex\tmp\platform-delivery-20261108\delivery\linux\x86_64\libexreader.so [0x3e] exports=2799 ABI=389/389 missing=0 extra=2410

@@ -1,0 +1,9 @@
+{
+  "sha256": "fd25507dff5fa52aabf60b924aa1c1bae7cc10c0c9fd7726cc8c92913001549e",
+  "size_bytes": 12155275,
+  "repeated_build_identical": true,
+  "java_class_count": 32,
+  "jni_methods": 38,
+  "java_jni_symbols_match": true,
+  "runtime_verified": false
+}
