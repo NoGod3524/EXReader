@@ -4,3 +4,5 @@
 步骤 4 完成：全量ctest203/203（起点本机配置198，新增5组），EPUB前后19/19、11296页、8648640字形，0本页数变化/0页像素哈希变化。110对象/1249符号引用的层检查无逆向依赖。另重测#73的8个真实PDF：Malcolm文字279页和扫描20页可用；上游扫描渲染UNSUPPORTED(11)、旧R4渲染FORMAT(5)、旧R6及三份讲义打开FORMAT(5)如实保留。补充搜索逐词/坐标逐点输出、ligature/Form/竖排/非BMP断言；定向5组43/85/64/26/17 checks通过。
 步骤 5 完成：最终全量ctest203/203（35.79秒），五组逐项日志、逐页矩阵、真实样本错误、EPUB前后完整元数据、源码/驱动/二进制哈希和配置已整理。报告已写明无分隔符的搜索偏移、原生坐标、ligature、密码/权限和兼容旧空快照入口；FORMAT-COVERAGE添加后续报告链接，受保护树登记完成。准备提交、push和draft PR。
 提交前复核完成：证据脚本初次用Windows默认编码读取中文报告失败，改为显式UTF-8后通过全部断言：8样本/29页、19本EPUB零变化、ctest203项、3个Windows导出符号，源码哈希一致。
+步骤 6 进度：实现、五组测试、报告和全部元数据已提交 a19ae228。暂存清单无PDF/预览二进制、examples或.github改动；git diff --cached --check通过。开始推送指定分支并创建draft PR。
+步骤 6 完成：a19ae228已push至codex/pdf-deepening-20261107；gh pr create --draft --base main成功创建draft PR #80：https://github.com/NoGod3524/EXReader/pull/80 。本条及提交/推送过程记录另提交推送，完成后核对远端draft与工作树。
