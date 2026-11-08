@@ -1,0 +1,19 @@
+Artifact root: C:\Users\Oscar\Documents\Codex\tmp\platform-delivery-20261108\delivery
+| Platform/arch | Artifact | Exists | Bytes | SHA-256 (observed) | Exports | ABI | Delivery status |
+|---|---|---|---:|---|---:|---|---|
+| Windows/x86_64 | windows/x86_64/exreader.dll | yes | 6102526 | 49344b73f2a875b0f5d05cf9c1ca589a46295410290235600a7566cc3d65950f | 389 | strict PASS | 已产出 |
+| Windows/x86_64 | windows/x86_64/EXReader.exe | yes | 1272371 | 9e3fa3baa07245897334d0d3db2dc9709e58085fa08f14086ccb46aa144999b8 | 0 | n/a | 已产出 |
+| Windows/x86_64 | windows/x86_64/libexreader.dll | yes | 6102526 | 49344b73f2a875b0f5d05cf9c1ca589a46295410290235600a7566cc3d65950f | 389 | strict PASS | 已产出 |
+| Android/arm64-v8a | android/arm64-v8a/libexreader.so | yes | 35581040 | 4853cbbd81d3c51b63de3e5aa6c83f4cece58dd6f79bd39acb1aa9c3032adafa | 2800 | complete+extra | 已产出 |
+| Android/arm64-v8a | android/arm64-v8a/libexreader_jni.so | yes | 182248 | 7c48f1f2fc790962dea15d81d95bce20b80dae44a9710875888dd63295a21dbc | 38 | n/a (JNI) | 已产出 |
+| Android/arm64-v8a | android/arm64-v8a/exreader-arm64-v8a.aar | yes | 12155275 | fd25507dff5fa52aabf60b924aa1c1bae7cc10c0c9fd7726cc8c92913001549e | container/core:2800 | complete | 已产出 |
+| Android/x86_64 | android/x86_64/libexreader.so | no | — | — | — | pending | 仅 CI 可产 |
+| Android/x86_64 | android/x86_64/exreader-x86_64.aar | no | — | — | — | pending | 仅 CI 可产 |
+| macOS/arm64 | macos/arm64/libexreader.dylib | yes | 8149888 | 5597c718986b20640f2144eb11cad7ce3104a6de188eb65cee0a72c850f9685d | 2799 | complete+extra | 已产出 |
+| macOS/x86_64 | macos/x86_64/libexreader.dylib | no | — | — | — | pending | 仅 CI 可产 |
+| iOS/arm64-device | ios/arm64-device/libexreader.a | no | — | — | — | pending | 仅 CI 可产 |
+| iOS/arm64-device | ios/arm64-device/libexreader.dylib | yes | 8053800 | 882a23f3a05cc9893062568e6d7df3d3cf03fc567bb4c772c0e4e9574f6b7719 | 2799 | complete+extra | 已产出（替代动态库） |
+| iOS/arm64-simulator | ios/arm64-simulator/libexreader.a | no | — | — | — | pending | 仅 CI 可产 |
+| iOS/arm64-simulator | ios/arm64-simulator/libexreader.dylib | yes | 8136288 | 320f6810c1caee0d8f34891b06b3f99e4b67a238e3e4a73c69982289c72bd151 | 2799 | complete+extra | 已产出（替代动态库） |
+| Linux/x86_64 | linux/x86_64/libexreader.so | yes | 10121688 | be2e9d6b675d92e3719f8149dfc5cac4552333385a0a3c1394f926765afa1d13 | 2799 | complete+extra | 已产出 |
+| WASM/wasm32 | none | no | — | — | — | unsupported | 当前无法产 |
