@@ -4,3 +4,6 @@
 步骤 4：三本真书5词×3=15/15，独立Python有限折叠+重叠find与逐条上下文复核一致；20个真书命中均定位/锚点/字形20/20（竖排6个）。19/19回归，11,296页/8,648,640字形，页数不变、0页哈希变化；紅樓夢此配置1,686页。最终全量ctest203/203（191常规基线+7既有fuzz+5新增），115.22秒。宿主中文/英文/竖排/PDF/MOBI/整书导入6/6通过；PDF覆盖空白页及连续空白映射。截图均由ops/capture_window.py按PID、DPI感知抓取，已目视核验。
 步骤 5：审阅发现原书读取可直接复用exr_library_blob的单SQL快照，已收敛自写分块复制，避免保存进度并发导致source失效。重编最终宿主并重跑六组窗口验收；引擎与布局源码未变化。整理可复现测试、逐页哈希压缩报告、计时、截图与报告。
 步骤 6：最终快照版宿主六组6/6通过，中文13989/英文10/竖排11/PDF612/MOBI9/整书中文13989，命中均落在实际文字。十字总701.432ms（含输入间隔/200ms防抖/投递），实际搜索1次2.870ms，输入处理最长4.8961ms。最终引擎冷搜三轮中位：的88.6829ms、賈寶玉92.8251ms，全部样本<200ms；缓存中位4.4362/19.6073ms。tests/search-acceptance-20261108已保存压缩逐页报告、203项日志、六组窗口日志、三截图、计时及构建/源码哈希。
+步骤 7：实现与全部证据提交 d852f410（feat: add publication search and Windows reader search bar）；git diff --cached --check通过。准备推送codex/search-20261108并创建base main的draft PR。
+步骤 8：d852f410已推送至origin/codex/search-20261108并设置tracking。
+步骤 9：已按gh pr create --draft --base main创建draft PR #83：https://github.com/NoGod3524/EXReader/pull/83 。最终证据复核通过：实现源码Git LF哈希、15项计数、20项定位、6组宿主、19本11,296页及0页像素变化。未手动启动或取消workflow；提交信息无CI跳过标记。
