@@ -279,6 +279,48 @@ typedef struct {
   size_t windows_loaded, windows_evicted;
 } exr_chapter_stats;
 EXR_API exr_chapter_options exr_chapter_options_defaults(void);
+/* Synthetic front-matter pages. A table-of-contents layout is a separate
+   exr_layout (never part of a publication part), so publication text search,
+   anchors and export cannot reach it; hosts that mix it into one page list must
+   consult exr_layout_page_kind() and skip EXR_PAGE_TOC pages when searching or
+   copying. Ordinary layouts report EXR_PAGE_BODY for every page. */
+typedef enum { EXR_PAGE_BODY = 0, EXR_PAGE_TOC = 1 } exr_page_kind;
+EXR_API exr_page_kind exr_layout_page_kind(const exr_layout *layout, size_t page);
+/* Reading-order part before which the TOC pages belong: right after a leading
+   cover part (id/path containing "cover", or an image-only first part), else
+   before the first reading-order part. SIZE_MAX when there is no reading part. */
+EXR_API exr_status exr_publication_toc_insert_before(exr_publication *publication,
+  size_t *part, exr_error *error);
+typedef struct {
+  size_t struct_size;          /* sizeof(exr_toc_page_options); zero-initialize the rest. */
+  const char *const *labels;   /* One right-hand label per exr_publication_toc entry; NULL/"" omits it. */
+  size_t label_count;          /* Must equal the TOC entry count when labels is set. */
+  const char *title;           /* NULL: "目录" for CJK titles, else "Contents". */
+  const char *continued_title; /* NULL: "目录（续）" / "Contents (continued)". */
+} exr_toc_page_options;
+/* Lays the publication's TOC (exr_publication_toc) out through the ordinary
+   layout stack: same font, viewport and user CSS as config, single line spacing,
+   no first-line indent, one em of indent per level beyond the first, and the
+   label right-aligned after a continuous run of leader dots. Entries overflow to
+   further pages, each repeating the continued title. *out is NULL with EXR_OK
+   when the book has no TOC. Pages are not part of the body page numbering; each
+   has a roman-numeral label. Pages are always horizontal; leaders and labels
+   assume left-to-right rows. */
+EXR_API exr_status exr_toc_pages_create(exr_publication *publication, exr_font *font,
+  const exr_layout_config *config, const exr_toc_page_options *options,
+  exr_layout **out, exr_error *error);
+EXR_API const char *exr_toc_pages_label(const exr_layout *layout, size_t page);
+/* Entries are laid out in order: page holds entries [first, first+count). */
+EXR_API exr_status exr_toc_pages_entries(const exr_layout *layout, size_t page,
+  size_t *first, size_t *count);
+/* Row hit test in page-local coordinates (any x on the row counts). *entry is
+   SIZE_MAX on the heading or empty space. The index addresses exr_publication_toc
+   and the target goes to exr_publication_locate / exr_document_locate. */
+EXR_API exr_status exr_toc_pages_entry_at(const exr_layout *layout, size_t page,
+  float x, float y, size_t *entry);
+/* Maps a normalized text offset returned by exr_layout_hit_test (or the
+   position of exr_hit_test) on a TOC layout to its entry; SIZE_MAX if none. */
+EXR_API size_t exr_toc_pages_entry_for_offset(const exr_layout *layout, size_t offset);
 EXR_API exr_status exr_publication_pager_create(exr_publication *publication,size_t part,
   exr_font *font,const exr_layout_config *config,const exr_chapter_options *options,
   exr_pager **out,exr_error *error);
