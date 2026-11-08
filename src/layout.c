@@ -297,6 +297,7 @@ exr_status exr_book_fonts(const exr_document *d, exr_font *fallback,
     status = exr_font_create(inputs, used, out, e);
     if (status != EXR_OK) goto done;
     (*out)->base_count = fallback->count;
+    (*out)->manager_order = fallback->manager_order;
     (*out)->fallback = fallback;
     exr_font_ref(fallback);
     for (i = 0; i < used; i++) {

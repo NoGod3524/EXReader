@@ -1,0 +1,211 @@
+{
+  "schema": 1,
+  "created_utc": "2026-11-07T21:19:47.971444+00:00",
+  "source_revision": "000caeef67f52498b05c437384efcd3bfdb1b5d1",
+  "engine_version": "3.42.0",
+  "abi_version": 1,
+  "dll_sha256": "49010282d4c9c665e1715ede3cbb4143bea8b4699810b4e34538bb7f84871885",
+  "driver_sha256": "ed3246f66a6264b5a6b7400038b2c442112e5c47d97357dead8edcf6b6a3aca3",
+  "shared_driver_sha256": "2fd0a1fa0d28804a7e6583367d91d9f7e48f43e662deb957f01b59f6471c8c8b",
+  "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "layout": {
+    "width": 720,
+    "height": 1040,
+    "margin": 36,
+    "font_size": 28,
+    "line_height": 1.5,
+    "paragraph_spacing": 10,
+    "document_css": 1,
+    "embedded_fonts": 1,
+    "direction": 0,
+    "fixed_max_dimension": 720
+  },
+  "alternate_layout": {
+    "width": 480,
+    "height": 800,
+    "margin": 36,
+    "font_size": 36,
+    "line_height": 1.5,
+    "paragraph_spacing": 10,
+    "document_css": 1,
+    "embedded_fonts": 1,
+    "direction": 0,
+    "fixed_max_dimension": 720
+  },
+  "pixel_contract": "sha256/visible-row-major-RGBA8/white/v1",
+  "environment": {
+    "system": "Windows",
+    "machine": "AMD64"
+  },
+  "pdf_crypto_available": true,
+  "books": [
+    {
+      "id": "sample-text",
+      "filename": "Sample-Text.pdf",
+      "category": "PDF-stress",
+      "sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc",
+      "source": "existing Windows delivery payload",
+      "regression": "count",
+      "status": "error",
+      "pages": [
+        {
+          "page": 0,
+          "part": 0,
+          "part_page": 0,
+          "width": 720,
+          "height": 720,
+          "channels": 4,
+          "glyph_count": 8
+        }
+      ],
+      "page_count": 4,
+      "glyph_count": 8,
+      "image_boxes": 0,
+      "text_bytes": 14,
+      "selection": {
+        "page": 0,
+        "search": {
+          "code": 0,
+          "name": "EXR_OK"
+        },
+        "select": {
+          "code": 0,
+          "name": "EXR_OK"
+        },
+        "regions": 1
+      },
+      "first_screen": {
+        "width": 720,
+        "height": 720,
+        "nonwhite_components": 1566,
+        "code": 0
+      },
+      "open": {
+        "code": 0,
+        "name": "EXR_OK"
+      },
+      "source_page_count": 4,
+      "native_page_size": [
+        1000.0,
+        1000.0
+      ],
+      "error": {
+        "stage": "fixed_render",
+        "code": 5,
+        "kind": "RuntimeError",
+        "page": 1
+      },
+      "rendered_page_count": 1,
+      "elapsed_seconds": 0.074543,
+      "alternate": {
+        "status": "error",
+        "page_count": 4,
+        "glyph_count": 8,
+        "first_screen": {
+          "width": 720,
+          "height": 720,
+          "nonwhite_components": 1566,
+          "code": 0
+        },
+        "error": {
+          "stage": "fixed_render",
+          "code": 5,
+          "kind": "RuntimeError",
+          "page": 1
+        }
+      }
+    },
+    {
+      "id": "sample",
+      "filename": "Sample.pdf",
+      "category": "PDF-stress",
+      "sha256": "4f6fdc7b4dc13363aae532953ccf863c6be853c3c8b63de4718bc45dafbeb49d",
+      "source": "existing Windows delivery payload",
+      "regression": "count",
+      "status": "error",
+      "pages": [
+        {
+          "page": 0,
+          "part": 0,
+          "part_page": 0,
+          "width": 12,
+          "height": 12,
+          "channels": 4,
+          "glyph_count": 1
+        },
+        {
+          "page": 1,
+          "part": 0,
+          "part_page": 1,
+          "width": 12,
+          "height": 16,
+          "channels": 4,
+          "glyph_count": 1
+        }
+      ],
+      "page_count": 5,
+      "glyph_count": 2,
+      "image_boxes": 0,
+      "text_bytes": 2,
+      "selection": {
+        "page": 0,
+        "search": {
+          "code": 0,
+          "name": "EXR_OK"
+        },
+        "select": {
+          "code": 0,
+          "name": "EXR_OK"
+        },
+        "regions": 1
+      },
+      "first_screen": {
+        "width": 12,
+        "height": 12,
+        "nonwhite_components": 48,
+        "code": 0
+      },
+      "open": {
+        "code": 0,
+        "name": "EXR_OK"
+      },
+      "source_page_count": 5,
+      "native_page_size": [
+        12.0,
+        12.0
+      ],
+      "error": {
+        "stage": "fixed_render",
+        "code": 5,
+        "kind": "RuntimeError",
+        "page": 2
+      },
+      "rendered_page_count": 2,
+      "elapsed_seconds": 0.034357,
+      "alternate": {
+        "status": "error",
+        "page_count": 5,
+        "glyph_count": 2,
+        "first_screen": {
+          "width": 12,
+          "height": 12,
+          "nonwhite_components": 48,
+          "code": 0
+        },
+        "error": {
+          "stage": "fixed_render",
+          "code": 5,
+          "kind": "RuntimeError",
+          "page": 2
+        }
+      }
+    }
+  ],
+  "summary": {
+    "samples": 2,
+    "rendered": 0,
+    "hash_samples": 0,
+    "count_only_samples": 2,
+    "total_pages": 9
+  }
+}
