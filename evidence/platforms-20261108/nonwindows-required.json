@@ -1,0 +1,90 @@
+{
+  "strict": false,
+  "results": [
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\android\\arm64-v8a\\libexreader.so",
+      "size_bytes": 35581040,
+      "sha256": "4853cbbd81d3c51b63de3e5aa6c83f4cece58dd6f79bd39acb1aa9c3032adafa",
+      "slices": [
+        {
+          "format": "ELF",
+          "machine": "0xb7",
+          "symbol_count": 2800,
+          "contract_count": 389,
+          "missing": [],
+          "extra_count": 2411,
+          "symbols_file": "symbols/android_arm64-v8a_libexreader.so.0xb7.txt"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\macos\\arm64\\libexreader.dylib",
+      "size_bytes": 8149888,
+      "sha256": "5597c718986b20640f2144eb11cad7ce3104a6de188eb65cee0a72c850f9685d",
+      "slices": [
+        {
+          "format": "Mach-O",
+          "machine": "0x100000c",
+          "symbol_count": 2799,
+          "contract_count": 389,
+          "missing": [],
+          "extra_count": 2410,
+          "symbols_file": "symbols/macos_arm64_libexreader.dylib.0x100000c.txt"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\ios\\arm64-device\\libexreader.dylib",
+      "size_bytes": 8053800,
+      "sha256": "882a23f3a05cc9893062568e6d7df3d3cf03fc567bb4c772c0e4e9574f6b7719",
+      "slices": [
+        {
+          "format": "Mach-O",
+          "machine": "0x100000c",
+          "symbol_count": 2799,
+          "contract_count": 389,
+          "missing": [],
+          "extra_count": 2410,
+          "symbols_file": "symbols/ios_arm64-device_libexreader.dylib.0x100000c.txt"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\ios\\arm64-simulator\\libexreader.dylib",
+      "size_bytes": 8136288,
+      "sha256": "320f6810c1caee0d8f34891b06b3f99e4b67a238e3e4a73c69982289c72bd151",
+      "slices": [
+        {
+          "format": "Mach-O",
+          "machine": "0x100000c",
+          "symbol_count": 2799,
+          "contract_count": 389,
+          "missing": [],
+          "extra_count": 2410,
+          "symbols_file": "symbols/ios_arm64-simulator_libexreader.dylib.0x100000c.txt"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\linux\\x86_64\\libexreader.so",
+      "size_bytes": 10121688,
+      "sha256": "be2e9d6b675d92e3719f8149dfc5cac4552333385a0a3c1394f926765afa1d13",
+      "slices": [
+        {
+          "format": "ELF",
+          "machine": "0x3e",
+          "symbol_count": 2799,
+          "contract_count": 389,
+          "missing": [],
+          "extra_count": 2410,
+          "symbols_file": "symbols/linux_x86_64_libexreader.so.0x3e.txt"
+        }
+      ],
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+PASS exports: extern/undefined/private, ar, per-slice fat, missing/extra, malformed, absent status

@@ -1,0 +1,10 @@
+步骤 1：确认工作树干净、分支 codex/platform-delivery-20261108、基线 93f9d8bb；仅在允许的四个路径新增文件。开始盘点本地产物和 CI 归档。
+步骤 3：复跑现有同源 Windows Release 测试构建完成，ctest exit=0；原始日志 ctest.txt 和 ctest.xml。
+步骤 4：19 本真书逐页回归完成，exit=1；日志 realbooks.txt，逐页差异待归档。
+步骤 2：下载成功 run 42474080320 的 Android ARM64 / macOS ARM64 / iOS device+simulator / Linux SDK；本地 Windows DLL 389 个导出与 389 个头文件声明对应。产物放仓库外 tmp/platform-delivery-20261108/delivery；ARM64 AAR 已包装。
+步骤 4 补充：首轮字体参数与基线 SHA 不一致，比较器正确拒绝；改为基线 Reader.otf 后重新逐页渲染，exit=0。
+步骤 5：已生成 ABI.md（389 个签名）、contract.json、逐平台符号清单和大小/SHA/命令矩阵。Windows 389 个入口实际加载成功，Linux 2799 个导出与 GNU nm 独立读数一致；其他动态库公共契约齐全但额外导出导致严格模式失败。
+步骤 6：共用 C 验收探针 Windows 实跑 5/5：20 页渲染、单词搜索、18→24 字号、高亮 JSON 落盘重读与锚点恢复；389 符号严格通过。非 Windows 严格模式 exit=1（预期因多余导出失败，缺失均为 0）。
+步骤 7：六份 ACCEPTANCE.md 各含五项具体判定，覆盖 SDK 探针/装载/设备签名路径，WASM 五项明确 N/A。AAR 最终版本重复构建逐字节相同、Java 与 JNI 38 个 native 入口匹配；待装机项保留未勾选。
+步骤 8：最终命令检查发现 Windows 重定向 stdout 默认 cp1252；已为 CLI 显式 UTF-8 输出。原样 python tools/abi/platform_status.py 无额外参数运行成功，16 行矩阵、JSON、符号工具自检、六份文档链接与条目数检查均通过。
+步骤 9：最终审计通过：389 契约声明、211/211 ctest XML、19/19 书 11484 页零差异、6×5 清单、16 行实测 SHA；默认固定字体准备可复现，错误 Android ABI 被拒绝。仅四个允许路径有新增，准备 commit/push/draft PR。
