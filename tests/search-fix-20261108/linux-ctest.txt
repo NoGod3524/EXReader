@@ -1,0 +1,476 @@
+2026-11-08T08:34:16.1427699Z         Start   1: native-render-audit
+2026-11-08T08:34:16.6521832Z   1/201 Test   #1: native-render-audit ................   Passed    0.50 sec
+2026-11-08T08:34:16.6523274Z         Start   2: native-table-dashed
+2026-11-08T08:34:16.6554216Z   2/201 Test   #2: native-table-dashed ................   Passed    0.00 sec
+2026-11-08T08:34:16.6555277Z         Start   3: native-pdf-shading-mesh
+2026-11-08T08:34:16.6845479Z   3/201 Test   #3: native-pdf-shading-mesh ............   Passed    0.03 sec
+2026-11-08T08:34:16.6846065Z         Start   4: native-pdf-shading-mesh7
+2026-11-08T08:34:17.4437174Z   4/201 Test   #4: native-pdf-shading-mesh7 ...........   Passed    0.76 sec
+2026-11-08T08:34:17.4438128Z         Start   5: native-pdf-ccitt
+2026-11-08T08:34:17.4459420Z   5/201 Test   #5: native-pdf-ccitt ...................   Passed    0.00 sec
+2026-11-08T08:34:17.4460152Z         Start   6: native-normalize
+2026-11-08T08:34:17.5604097Z   6/201 Test   #6: native-normalize ...................   Passed    0.11 sec
+2026-11-08T08:34:17.5605026Z         Start   7: native-hyphen
+2026-11-08T08:34:17.8968625Z   7/201 Test   #7: native-hyphen ......................   Passed    0.34 sec
+2026-11-08T08:34:17.8970148Z         Start   8: native-hyphen-replacements
+2026-11-08T08:34:17.9045909Z   8/201 Test   #8: native-hyphen-replacements .........   Passed    0.01 sec
+2026-11-08T08:34:17.9046486Z         Start   9: native-case
+2026-11-08T08:34:17.9065688Z   9/201 Test   #9: native-case ........................   Passed    0.00 sec
+2026-11-08T08:34:17.9066278Z         Start  10: native-hyphen-layout
+2026-11-08T08:34:40.5250811Z  10/201 Test  #10: native-hyphen-layout ...............   Passed   22.62 sec
+2026-11-08T08:34:40.5251786Z         Start  11: native-float
+2026-11-08T08:34:47.6680838Z  11/201 Test  #11: native-float .......................   Passed    7.14 sec
+2026-11-08T08:34:47.6681908Z         Start  12: native-table-fragments
+2026-11-08T08:34:48.5206942Z  12/201 Test  #12: native-table-fragments .............   Passed    0.85 sec
+2026-11-08T08:34:48.5207836Z         Start  13: native-table-border
+2026-11-08T08:34:48.6930900Z  13/201 Test  #13: native-table-border ................   Passed    0.17 sec
+2026-11-08T08:34:48.6931486Z         Start  14: native-border-edges
+2026-11-08T08:34:48.6985848Z  14/201 Test  #14: native-border-edges ................   Passed    0.01 sec
+2026-11-08T08:34:48.6986496Z         Start  15: native-table-header
+2026-11-08T08:34:48.7019845Z  15/201 Test  #15: native-table-header ................   Passed    0.00 sec
+2026-11-08T08:34:48.7020595Z         Start  16: native-table-alignment
+2026-11-08T08:34:48.7236343Z  16/201 Test  #16: native-table-alignment .............   Passed    0.02 sec
+2026-11-08T08:34:48.7236945Z         Start  17: native-table-intrinsic
+2026-11-08T08:34:48.9249208Z  17/201 Test  #17: native-table-intrinsic .............   Passed    0.20 sec
+2026-11-08T08:34:48.9249770Z         Start  18: native-table-columns
+2026-11-08T08:34:48.9483040Z  18/201 Test  #18: native-table-columns ...............   Passed    0.02 sec
+2026-11-08T08:34:48.9484009Z         Start  19: native-table-spacing
+2026-11-08T08:34:49.0425015Z  19/201 Test  #19: native-table-spacing ...............   Passed    0.09 sec
+2026-11-08T08:34:49.0425936Z         Start  20: native-pdf-crypto
+2026-11-08T08:34:49.1864749Z  20/201 Test  #20: native-pdf-crypto ..................   Passed    0.14 sec
+2026-11-08T08:34:49.1865366Z         Start  21: native-chapter-index
+2026-11-08T08:34:50.2175851Z  21/201 Test  #21: native-chapter-index ...............   Passed    1.03 sec
+2026-11-08T08:34:50.2177090Z         Start  22: native-chapter-window
+2026-11-08T08:34:52.2735855Z  22/201 Test  #22: native-chapter-window ..............   Passed    2.06 sec
+2026-11-08T08:34:52.2737210Z         Start  23: native-style-budget
+2026-11-08T08:34:52.2862569Z  23/201 Test  #23: native-style-budget ................   Passed    0.01 sec
+2026-11-08T08:34:52.2863805Z         Start  24: native-chapter-source
+2026-11-08T08:34:52.2962630Z  24/201 Test  #24: native-chapter-source ..............   Passed    0.01 sec
+2026-11-08T08:34:52.2963424Z         Start  25: native-cbz
+2026-11-08T08:34:52.3305287Z  25/201 Test  #25: native-cbz .........................   Passed    0.03 sec
+2026-11-08T08:34:52.3306051Z         Start  26: native-image-formats
+2026-11-08T08:34:52.3462471Z  26/201 Test  #26: native-image-formats ...............   Passed    0.02 sec
+2026-11-08T08:34:52.3463624Z         Start  27: native-cbz-formats
+2026-11-08T08:34:52.3495838Z  27/201 Test  #27: native-cbz-formats .................   Passed    0.00 sec
+2026-11-08T08:34:52.3496763Z         Start  28: native-library-stream
+2026-11-08T08:34:55.4585448Z  28/201 Test  #28: native-library-stream ..............   Passed    3.11 sec
+2026-11-08T08:34:55.4586505Z         Start  29: native-m4b-metadata
+2026-11-08T08:34:55.4611453Z  29/201 Test  #29: native-m4b-metadata ................   Passed    0.00 sec
+2026-11-08T08:34:55.4612074Z         Start  30: native-indic
+2026-11-08T08:34:55.4703537Z  30/201 Test  #30: native-indic .......................   Passed    0.01 sec
+2026-11-08T08:34:55.4704127Z         Start  31: native-wp7
+2026-11-08T08:34:55.6283567Z  31/201 Test  #31: native-wp7 .........................   Passed    0.16 sec
+2026-11-08T08:34:55.6284123Z         Start  32: native-ruby
+2026-11-08T08:34:55.6882540Z  32/201 Test  #32: native-ruby ........................   Passed    0.06 sec
+2026-11-08T08:34:55.6883485Z         Start  33: native-pdf-color
+2026-11-08T08:34:55.8665357Z  33/201 Test  #33: native-pdf-color ...................   Passed    0.18 sec
+2026-11-08T08:34:55.8665947Z         Start  34: native-pdf-intent
+2026-11-08T08:34:55.8865976Z  34/201 Test  #34: native-pdf-intent ..................   Passed    0.02 sec
+2026-11-08T08:34:55.8866766Z         Start  35: native-pdf-matte
+2026-11-08T08:34:55.9031158Z  35/201 Test  #35: native-pdf-matte ...................   Passed    0.02 sec
+2026-11-08T08:34:55.9032061Z         Start  36: native-pdf-groupcs
+2026-11-08T08:34:56.3601776Z  36/201 Test  #36: native-pdf-groupcs .................   Passed    0.46 sec
+2026-11-08T08:34:56.3602432Z         Start  37: native-inks
+2026-11-08T08:35:13.2749441Z  37/201 Test  #37: native-inks ........................   Passed   16.91 sec
+2026-11-08T08:35:13.2750638Z         Start  38: native-nested-groups
+2026-11-08T08:35:17.6132871Z  38/201 Test  #38: native-nested-groups ...............   Passed    4.34 sec
+2026-11-08T08:35:17.6133990Z         Start  39: native-paint-source
+2026-11-08T08:35:18.2509193Z  39/201 Test  #39: native-paint-source ................   Passed    0.64 sec
+2026-11-08T08:35:18.2510245Z         Start  40: native-zero-opacity
+2026-11-08T08:35:18.9841754Z  40/201 Test  #40: native-zero-opacity ................   Passed    0.73 sec
+2026-11-08T08:35:18.9842361Z         Start  41: native-alpha-source
+2026-11-08T08:35:19.0517666Z  41/201 Test  #41: native-alpha-source ................   Passed    0.07 sec
+2026-11-08T08:35:19.0518682Z         Start  42: native-mask-functions
+2026-11-08T08:35:19.0683430Z  42/201 Test  #42: native-mask-functions ..............   Passed    0.02 sec
+2026-11-08T08:35:19.0684003Z         Start  43: native-mask-scope
+2026-11-08T08:35:19.5956438Z  43/201 Test  #43: native-mask-scope ..................   Passed    0.53 sec
+2026-11-08T08:35:19.5957065Z         Start  44: native-pdf-shading
+2026-11-08T08:35:21.5815060Z  44/201 Test  #44: native-pdf-shading .................   Passed    1.99 sec
+2026-11-08T08:35:21.5815651Z         Start  45: native-pdf-calculator
+2026-11-08T08:35:21.5865735Z  45/201 Test  #45: native-pdf-calculator ..............   Passed    0.00 sec
+2026-11-08T08:35:21.5866329Z         Start  46: native-font-color
+2026-11-08T08:35:21.9906145Z  46/201 Test  #46: native-font-color ..................   Passed    0.40 sec
+2026-11-08T08:35:21.9907035Z         Start  47: native-font-color-v1
+2026-11-08T08:35:22.0355564Z  47/201 Test  #47: native-font-color-v1 ...............   Passed    0.04 sec
+2026-11-08T08:35:22.0356254Z         Start  48: native-font-svg
+2026-11-08T08:35:22.0644271Z  48/201 Test  #48: native-font-svg ....................   Passed    0.03 sec
+2026-11-08T08:35:22.0644958Z         Start  49: native-ot-variation
+2026-11-08T08:35:22.0668318Z  49/201 Test  #49: native-ot-variation ................   Passed    0.00 sec
+2026-11-08T08:35:22.0668889Z         Start  50: native-orthogonal
+2026-11-08T08:35:22.1348862Z  50/201 Test  #50: native-orthogonal ..................   Passed    0.07 sec
+2026-11-08T08:35:22.1350237Z         Start  51: native-variable
+2026-11-08T08:35:22.1372687Z  51/201 Test  #51: native-variable ....................   Passed    0.00 sec
+2026-11-08T08:35:22.1373346Z         Start  52: native-pdf-inline
+2026-11-08T08:35:22.5574508Z  52/201 Test  #52: native-pdf-inline ..................   Passed    0.42 sec
+2026-11-08T08:35:22.5575080Z         Start  53: native-stretch
+2026-11-08T08:35:22.9473195Z  53/201 Test  #53: native-stretch .....................   Passed    0.39 sec
+2026-11-08T08:35:22.9474053Z         Start  54: native-m4b
+2026-11-08T08:35:22.9489575Z  54/201 Test  #54: native-m4b .........................   Passed    0.00 sec
+2026-11-08T08:35:22.9490863Z         Start  55: native-epub-metadata-write
+2026-11-08T08:35:22.9546444Z  55/201 Test  #55: native-epub-metadata-write .........   Passed    0.01 sec
+2026-11-08T08:35:22.9547040Z         Start  56: native-vertical
+2026-11-08T08:35:22.9597619Z  56/201 Test  #56: native-vertical ....................   Passed    0.00 sec
+2026-11-08T08:35:22.9598239Z         Start  57: native-combine-upright-geometry
+2026-11-08T08:35:22.9614735Z  57/201 Test  #57: native-combine-upright-geometry ....   Passed    0.00 sec
+2026-11-08T08:35:22.9615380Z         Start  58: native-combine-upright-modes
+2026-11-08T08:35:22.9633302Z  58/201 Test  #58: native-combine-upright-modes .......   Passed    0.00 sec
+2026-11-08T08:35:22.9633917Z         Start  59: native-combine-upright-wrap
+2026-11-08T08:35:22.9650345Z  59/201 Test  #59: native-combine-upright-wrap ........   Passed    0.00 sec
+2026-11-08T08:35:22.9651211Z         Start  60: native-pdf-type3
+2026-11-08T08:35:22.9811959Z  60/201 Test  #60: native-pdf-type3 ...................   Passed    0.02 sec
+2026-11-08T08:35:22.9814182Z         Start  61: native-aac
+2026-11-08T08:35:22.9824901Z  61/201 Test  #61: native-aac .........................   Passed    0.00 sec
+2026-11-08T08:35:22.9825473Z         Start  62: native-pdf-markup
+2026-11-08T08:35:23.0324569Z  62/201 Test  #62: native-pdf-markup ..................   Passed    0.05 sec
+2026-11-08T08:35:23.0325136Z         Start  63: native-flac
+2026-11-08T08:35:23.0344819Z  63/201 Test  #63: native-flac ........................   Passed    0.00 sec
+2026-11-08T08:35:23.0345400Z         Start  64: native-pcm
+2026-11-08T08:35:23.0357596Z  64/201 Test  #64: native-pcm .........................   Passed    0.00 sec
+2026-11-08T08:35:23.0358172Z         Start  65: native-audio-output
+2026-11-08T08:35:23.0369345Z  65/201 Test  #65: native-audio-output ................   Passed    0.00 sec
+2026-11-08T08:35:23.0370129Z         Start  66: native-mp3
+2026-11-08T08:35:23.1931992Z  66/201 Test  #66: native-mp3 .........................   Passed    0.16 sec
+2026-11-08T08:35:23.1932917Z         Start  67: native-pdf-metadata-write
+2026-11-08T08:35:23.1977403Z  67/201 Test  #67: native-pdf-metadata-write ..........   Passed    0.00 sec
+2026-11-08T08:35:23.1978003Z         Start  68: native-pdf-write
+2026-11-08T08:35:23.2061679Z  68/201 Test  #68: native-pdf-write ...................   Passed    0.01 sec
+2026-11-08T08:35:23.2062509Z         Start  69: native-pdf-form
+2026-11-08T08:35:23.2688216Z  69/201 Test  #69: native-pdf-form ....................   Passed    0.06 sec
+2026-11-08T08:35:23.2689298Z         Start  70: native-pdf-appearance
+2026-11-08T08:35:23.2762424Z  70/201 Test  #70: native-pdf-appearance ..............   Passed    0.01 sec
+2026-11-08T08:35:23.2763266Z         Start  71: native-page-annotations
+2026-11-08T08:35:23.3778199Z  71/201 Test  #71: native-page-annotations ............   Passed    0.10 sec
+2026-11-08T08:35:23.3779478Z         Start  72: native-metadata
+2026-11-08T08:35:23.4323172Z  72/201 Test  #72: native-metadata ....................   Passed    0.05 sec
+2026-11-08T08:35:23.4323763Z         Start  73: native-annotation
+2026-11-08T08:35:23.4480143Z  73/201 Test  #73: native-annotation ..................   Passed    0.02 sec
+2026-11-08T08:35:23.4481123Z         Start  74: native-reanchor-library
+2026-11-08T08:35:23.5324244Z  74/201 Test  #74: native-reanchor-library ............   Passed    0.08 sec
+2026-11-08T08:35:23.5324818Z         Start  75: native-progress-library
+2026-11-08T08:35:23.5968802Z  75/201 Test  #75: native-progress-library ............   Passed    0.06 sec
+2026-11-08T08:35:23.5969406Z         Start  76: native-text-source
+2026-11-08T08:35:23.6196721Z  76/201 Test  #76: native-text-source .................   Passed    0.02 sec
+2026-11-08T08:35:23.6197391Z         Start  77: native-text-index
+2026-11-08T08:35:23.6588286Z  77/201 Test  #77: native-text-index ..................   Passed    0.04 sec
+2026-11-08T08:35:23.6588857Z         Start  78: native-abi
+2026-11-08T08:35:23.6603399Z  78/201 Test  #78: native-abi .........................   Passed    0.00 sec
+2026-11-08T08:35:23.6603968Z         Start  79: native-core
+2026-11-08T08:35:23.9342529Z  79/201 Test  #79: native-core ........................   Passed    0.27 sec
+2026-11-08T08:35:23.9343330Z         Start  80: native-chapter-layout-chapter
+2026-11-08T08:35:23.9365717Z  80/201 Test  #80: native-chapter-layout-chapter ......   Passed    0.00 sec
+2026-11-08T08:35:23.9366452Z         Start  81: native-chapter-layout-title
+2026-11-08T08:35:23.9389626Z  81/201 Test  #81: native-chapter-layout-title ........   Passed    0.00 sec
+2026-11-08T08:35:23.9391040Z         Start  82: native-chapter-layout-indent
+2026-11-08T08:35:23.9414334Z  82/201 Test  #82: native-chapter-layout-indent .......   Passed    0.00 sec
+2026-11-08T08:35:23.9414955Z         Start  83: native-flow
+2026-11-08T08:35:24.0090079Z  83/201 Test  #83: native-flow ........................   Passed    0.07 sec
+2026-11-08T08:35:24.0090858Z         Start  84: native-construct
+2026-11-08T08:35:24.0150545Z  84/201 Test  #84: native-construct ...................   Passed    0.01 sec
+2026-11-08T08:35:24.0151439Z         Start  85: native-cfi-text
+2026-11-08T08:35:24.0174928Z  85/201 Test  #85: native-cfi-text ....................   Passed    0.00 sec
+2026-11-08T08:35:24.0175830Z         Start  86: native-cfi
+2026-11-08T08:35:24.0231533Z  86/201 Test  #86: native-cfi .........................   Passed    0.01 sec
+2026-11-08T08:35:24.0232444Z         Start  87: native-anchor
+2026-11-08T08:35:24.0263811Z  87/201 Test  #87: native-anchor ......................   Passed    0.00 sec
+2026-11-08T08:35:24.0264523Z         Start  88: native-document-search-basic
+2026-11-08T08:35:24.0276051Z  88/201 Test  #88: native-document-search-basic .......   Passed    0.00 sec
+2026-11-08T08:35:24.0276671Z         Start  89: native-document-search-unicode
+2026-11-08T08:35:24.0287857Z  89/201 Test  #89: native-document-search-unicode .....   Passed    0.00 sec
+2026-11-08T08:35:24.0288448Z         Start  90: native-document-search-flags
+2026-11-08T08:35:24.0302013Z  90/201 Test  #90: native-document-search-flags .......   Passed    0.00 sec
+2026-11-08T08:35:24.0303186Z         Start  91: native-document-search-errors
+2026-11-08T08:35:24.0314934Z  91/201 Test  #91: native-document-search-errors ......   Passed    0.00 sec
+2026-11-08T08:35:24.0315561Z         Start  92: native-document-search-mapping
+2026-11-08T08:35:24.0341545Z  92/201 Test  #92: native-document-search-mapping .....   Passed    0.00 sec
+2026-11-08T08:35:24.0341981Z         Start  93: native-content-mapping
+2026-11-08T08:35:24.2153463Z  93/201 Test  #93: native-content-mapping .............   Passed    0.18 sec
+2026-11-08T08:35:24.2154134Z         Start  94: native-content-relocation
+2026-11-08T08:35:24.2169739Z  94/201 Test  #94: native-content-relocation ..........   Passed    0.00 sec
+2026-11-08T08:35:24.2170757Z         Start  95: native-content-expansion
+2026-11-08T08:35:24.2183271Z  95/201 Test  #95: native-content-expansion ...........   Passed    0.00 sec
+2026-11-08T08:35:24.2184125Z         Start  96: native-content-hits
+2026-11-08T08:35:24.2197342Z  96/201 Test  #96: native-content-hits ................   Passed    0.00 sec
+2026-11-08T08:35:24.2198111Z         Start  97: native-content-reflow
+2026-11-08T08:35:24.7009543Z  97/201 Test  #97: native-content-reflow ..............   Passed    0.48 sec
+2026-11-08T08:35:24.7010307Z         Start  98: native-anchor-library
+2026-11-08T08:35:24.8196377Z  98/201 Test  #98: native-anchor-library ..............   Passed    0.12 sec
+2026-11-08T08:35:24.8197122Z         Start  99: native-note-limit
+2026-11-08T08:35:26.8712435Z  99/201 Test  #99: native-note-limit ..................   Passed    2.05 sec
+2026-11-08T08:35:26.8713199Z         Start 100: native-export-xml
+2026-11-08T08:35:26.8804422Z 100/201 Test #100: native-export-xml ..................   Passed    0.01 sec
+2026-11-08T08:35:26.8805062Z         Start 101: native-rtf-fallback
+2026-11-08T08:35:26.8821675Z 101/201 Test #101: native-rtf-fallback ................   Passed    0.00 sec
+2026-11-08T08:35:26.8822176Z         Start 102: native-html-raw
+2026-11-08T08:35:26.8834164Z 102/201 Test #102: native-html-raw ....................   Passed    0.00 sec
+2026-11-08T08:35:26.8834670Z         Start 103: native-lazy
+2026-11-08T08:35:27.0933717Z 103/201 Test #103: native-lazy ........................   Passed    0.21 sec
+2026-11-08T08:35:27.0934264Z         Start 104: native-source
+2026-11-08T08:35:27.1246120Z 104/201 Test #104: native-source ......................   Passed    0.03 sec
+2026-11-08T08:35:27.1246706Z         Start 105: native-pdf-objects
+2026-11-08T08:35:27.2631924Z 105/201 Test #105: native-pdf-objects .................   Passed    0.14 sec
+2026-11-08T08:35:27.2632501Z         Start 106: native-pdf-pages
+2026-11-08T08:35:27.2651279Z 106/201 Test #106: native-pdf-pages ...................   Passed    0.00 sec
+2026-11-08T08:35:27.2652223Z         Start 107: native-pdf-cmap
+2026-11-08T08:35:27.2664753Z 107/201 Test #107: native-pdf-cmap ....................   Passed    0.00 sec
+2026-11-08T08:35:27.2665591Z         Start 108: native-pdf-font
+2026-11-08T08:35:27.2686004Z 108/201 Test #108: native-pdf-font ....................   Passed    0.00 sec
+2026-11-08T08:35:27.2687055Z         Start 109: native-pdf-text
+2026-11-08T08:35:27.2725703Z 109/201 Test #109: native-pdf-text ....................   Passed    0.00 sec
+2026-11-08T08:35:27.2726293Z         Start 110: native-vector
+2026-11-08T08:35:27.2744008Z 110/201 Test #110: native-vector ......................   Passed    0.00 sec
+2026-11-08T08:35:27.2744698Z         Start 111: native-pdf-graphics
+2026-11-08T08:35:27.2758968Z 111/201 Test #111: native-pdf-graphics ................   Passed    0.00 sec
+2026-11-08T08:35:27.2759661Z         Start 112: native-pdf-outline
+2026-11-08T08:35:27.2776088Z 112/201 Test #112: native-pdf-outline .................   Passed    0.00 sec
+2026-11-08T08:35:27.2776691Z         Start 113: native-pdf-raster
+2026-11-08T08:35:27.6308292Z 113/201 Test #113: native-pdf-raster ..................   Passed    0.35 sec
+2026-11-08T08:35:27.6308858Z         Start 114: native-pdf-image
+2026-11-08T08:35:27.9707670Z 114/201 Test #114: native-pdf-image ...................   Passed    0.34 sec
+2026-11-08T08:35:27.9708224Z         Start 115: native-audio-library
+2026-11-08T08:35:28.0297708Z 115/201 Test #115: native-audio-library ...............   Passed    0.06 sec
+2026-11-08T08:35:28.0298314Z         Start 116: native-wave-example
+2026-11-08T08:35:28.0313320Z 116/201 Test #116: native-wave-example ................   Passed    0.00 sec
+2026-11-08T08:35:28.0313927Z         Start 117: native-pcm-example
+2026-11-08T08:35:28.0327737Z 117/201 Test #117: native-pcm-example .................   Passed    0.00 sec
+2026-11-08T08:35:28.0328412Z         Start 118: native-wave
+2026-11-08T08:35:28.0343508Z 118/201 Test #118: native-wave ........................   Passed    0.00 sec
+2026-11-08T08:35:28.0344071Z         Start 119: native-audio-player
+2026-11-08T08:35:28.0356459Z 119/201 Test #119: native-audio-player ................   Passed    0.00 sec
+2026-11-08T08:35:28.0356977Z         Start 120: native-audio
+2026-11-08T08:35:28.0368441Z 120/201 Test #120: native-audio .......................   Passed    0.00 sec
+2026-11-08T08:35:28.0369244Z         Start 121: native-fixed-library
+2026-11-08T08:35:28.1150250Z 121/201 Test #121: native-fixed-library ...............   Passed    0.08 sec
+2026-11-08T08:35:28.1151598Z         Start 122: native-fixed-text
+2026-11-08T08:35:28.1263915Z 122/201 Test #122: native-fixed-text ..................   Passed    0.01 sec
+2026-11-08T08:35:28.1264628Z         Start 123: native-fixed-pdf
+2026-11-08T08:35:28.1443349Z 123/201 Test #123: native-fixed-pdf ...................   Passed    0.02 sec
+2026-11-08T08:35:28.1444050Z         Start 124: native-fixed-example
+2026-11-08T08:35:28.1463462Z 124/201 Test #124: native-fixed-example ...............   Passed    0.00 sec
+2026-11-08T08:35:28.1464474Z         Start 125: native-fixed
+2026-11-08T08:35:28.1477897Z 125/201 Test #125: native-fixed .......................   Passed    0.00 sec
+2026-11-08T08:35:28.1478494Z         Start 126: native-font-path
+2026-11-08T08:35:28.1495791Z 126/201 Test #126: native-font-path ...................   Passed    0.00 sec
+2026-11-08T08:35:28.1496852Z         Start 127: native-blend
+2026-11-08T08:35:28.4914148Z 127/201 Test #127: native-blend .......................   Passed    0.34 sec
+2026-11-08T08:35:28.4914725Z         Start 128: native-canvas
+2026-11-08T08:35:28.6558452Z 128/201 Test #128: native-canvas ......................   Passed    0.16 sec
+2026-11-08T08:35:28.6559405Z         Start 129: native-canvas-cmyk
+2026-11-08T08:35:29.9520132Z 129/201 Test #129: native-canvas-cmyk .................   Passed    1.30 sec
+2026-11-08T08:35:29.9520816Z         Start 130: native-viewport
+2026-11-08T08:35:29.9535553Z 130/201 Test #130: native-viewport ....................   Passed    0.00 sec
+2026-11-08T08:35:29.9536480Z         Start 131: native-positioned
+2026-11-08T08:35:29.9559810Z 131/201 Test #131: native-positioned ..................   Passed    0.00 sec
+2026-11-08T08:35:29.9560562Z         Start 132: native-library-unique
+2026-11-08T08:35:29.9994276Z 132/201 Test #132: native-library-unique ..............   Passed    0.04 sec
+2026-11-08T08:35:29.9994915Z         Start 133: native-cover-import
+2026-11-08T08:35:30.1084602Z 133/201 Test #133: native-cover-import ................   Passed    0.11 sec
+2026-11-08T08:35:30.1085224Z         Start 134: native-kf8
+2026-11-08T08:35:30.1790269Z 134/201 Test #134: native-kf8 .........................   Passed    0.07 sec
+2026-11-08T08:35:30.1790731Z         Start 135: native-mobi
+2026-11-08T08:35:30.2070938Z 135/201 Test #135: native-mobi ........................   Passed    0.03 sec
+2026-11-08T08:35:30.2072053Z         Start 136: native-decoration
+2026-11-08T08:35:30.2192865Z 136/201 Test #136: native-decoration ..................   Passed    0.01 sec
+2026-11-08T08:35:30.2193475Z         Start 137: native-rtf-number
+2026-11-08T08:35:30.2239393Z 137/201 Test #137: native-rtf-number ..................   Passed    0.00 sec
+2026-11-08T08:35:30.2240203Z         Start 138: native-rtf-list
+2026-11-08T08:35:30.2278665Z 138/201 Test #138: native-rtf-list ....................   Passed    0.00 sec
+2026-11-08T08:35:30.2279243Z         Start 139: native-rtf-note
+2026-11-08T08:35:30.3025662Z 139/201 Test #139: native-rtf-note ....................   Passed    0.07 sec
+2026-11-08T08:35:30.3026275Z         Start 140: native-rtf-table
+2026-11-08T08:35:30.3112068Z 140/201 Test #140: native-rtf-table ...................   Passed    0.01 sec
+2026-11-08T08:35:30.3112630Z         Start 141: native-rtf
+2026-11-08T08:35:30.3171565Z 141/201 Test #141: native-rtf .........................   Passed    0.01 sec
+2026-11-08T08:35:30.3172312Z         Start 142: native-docx
+2026-11-08T08:35:30.3236678Z 142/201 Test #142: native-docx ........................   Passed    0.01 sec
+2026-11-08T08:35:30.3237261Z         Start 143: native-fb2
+2026-11-08T08:35:30.3269149Z 143/201 Test #143: native-fb2 .........................   Passed    0.00 sec
+2026-11-08T08:35:30.3269844Z         Start 144: native-export-html
+2026-11-08T08:35:30.3329151Z 144/201 Test #144: native-export-html .................   Passed    0.01 sec
+2026-11-08T08:35:30.3329749Z         Start 145: native-export-epub
+2026-11-08T08:35:30.3451252Z 145/201 Test #145: native-export-epub .................   Passed    0.01 sec
+2026-11-08T08:35:30.3451823Z         Start 146: native-navigation
+2026-11-08T08:35:30.3471066Z 146/201 Test #146: native-navigation ..................   Passed    0.00 sec
+2026-11-08T08:35:30.3471662Z         Start 147: native-toc-nav
+2026-11-08T08:35:30.3488942Z 147/201 Test #147: native-toc-nav .....................   Passed    0.00 sec
+2026-11-08T08:35:30.3489508Z         Start 148: native-toc-ncx
+2026-11-08T08:35:30.3512472Z 148/201 Test #148: native-toc-ncx .....................   Passed    0.00 sec
+2026-11-08T08:35:30.3513547Z         Start 149: native-toc-recovery
+2026-11-08T08:35:30.3537832Z 149/201 Test #149: native-toc-recovery ................   Passed    0.00 sec
+2026-11-08T08:35:30.3538916Z         Start 150: native-toc-fragment
+2026-11-08T08:35:30.3562062Z 150/201 Test #150: native-toc-fragment ................   Passed    0.00 sec
+2026-11-08T08:35:30.3562802Z         Start 151: native-text
+2026-11-08T08:35:30.3996420Z 151/201 Test #151: native-text ........................   Passed    0.04 sec
+2026-11-08T08:35:30.3997032Z         Start 152: native-bidi
+2026-11-08T08:35:31.0971439Z 152/201 Test #152: native-bidi ........................   Passed    0.70 sec
+2026-11-08T08:35:31.0972169Z         Start 153: native-shaping
+2026-11-08T08:35:31.1184605Z 153/201 Test #153: native-shaping .....................   Passed    0.02 sec
+2026-11-08T08:35:31.1185191Z         Start 154: native-complex-layout
+2026-11-08T08:35:31.1651635Z 154/201 Test #154: native-complex-layout ..............   Passed    0.05 sec
+2026-11-08T08:35:31.1655077Z         Start 155: native-line-boundary
+2026-11-08T08:35:45.4620312Z 155/201 Test #155: native-line-boundary ...............   Passed   14.30 sec
+2026-11-08T08:35:45.4620916Z         Start 156: native-font
+2026-11-08T08:35:45.4674463Z 156/201 Test #156: native-font ........................   Passed    0.01 sec
+2026-11-08T08:35:45.4675043Z         Start 157: native-book-font
+2026-11-08T08:35:45.4712975Z 157/201 Test #157: native-book-font ...................   Passed    0.00 sec
+2026-11-08T08:35:45.4713559Z         Start 158: native-budget
+2026-11-08T08:35:45.5041733Z 158/201 Test #158: native-budget ......................   Passed    0.03 sec
+2026-11-08T08:35:45.5043060Z         Start 159: native-chapter-bounds
+2026-11-08T08:35:45.8136311Z 159/201 Test #159: native-chapter-bounds ..............   Passed    0.31 sec
+2026-11-08T08:35:45.8136890Z         Start 160: native-chapter-reader
+2026-11-08T08:35:53.8284192Z 160/201 Test #160: native-chapter-reader ..............   Passed    8.01 sec
+2026-11-08T08:35:53.8285016Z         Start 161: native-chapter-oversized-unit
+2026-11-08T08:35:53.8959086Z 161/201 Test #161: native-chapter-oversized-unit ......   Passed    0.07 sec
+2026-11-08T08:35:53.8959668Z         Start 162: native-pager
+2026-11-08T08:35:54.1577108Z 162/201 Test #162: native-pager .......................   Passed    0.26 sec
+2026-11-08T08:35:54.1578170Z         Start 163: native-page-cache
+2026-11-08T08:35:54.5531957Z 163/201 Test #163: native-page-cache ..................   Passed    0.40 sec
+2026-11-08T08:35:54.5532926Z         Start 164: native-checkpoints
+2026-11-08T08:35:54.6325488Z 164/201 Test #164: native-checkpoints .................   Passed    0.08 sec
+2026-11-08T08:35:54.6326052Z         Start 165: native-control
+2026-11-08T08:35:54.7420267Z 165/201 Test #165: native-control .....................   Passed    0.11 sec
+2026-11-08T08:35:54.7420862Z         Start 166: native-convert-corpus
+2026-11-08T08:35:54.8289493Z 166/201 Test #166: native-convert-corpus ..............   Passed    0.09 sec
+2026-11-08T08:35:54.8290232Z         Start 167: native-convert
+2026-11-08T08:35:54.9173553Z 167/201 Test #167: native-convert .....................   Passed    0.09 sec
+2026-11-08T08:35:54.9174630Z         Start 168: native-convert-cli
+2026-11-08T08:35:55.3586615Z 168/201 Test #168: native-convert-cli .................   Passed    0.44 sec
+2026-11-08T08:35:55.3587464Z         Start 169: native-convert-benchmark
+2026-11-08T08:36:04.4651085Z 169/201 Test #169: native-convert-benchmark ...........   Passed    9.11 sec
+2026-11-08T08:36:04.4651756Z         Start 170: native-pdf-group-reference
+2026-11-08T08:36:04.5043904Z 170/201 Test #170: native-pdf-group-reference .........   Passed    0.04 sec
+2026-11-08T08:36:04.5044490Z         Start 171: native-case-reference
+2026-11-08T08:36:08.6300289Z 171/201 Test #171: native-case-reference ..............   Passed    4.13 sec
+2026-11-08T08:36:08.6300935Z         Start 172: native-hyphen-compound-oracle
+2026-11-08T08:36:11.0801056Z 172/201 Test #172: native-hyphen-compound-oracle ......   Passed    2.45 sec
+2026-11-08T08:36:11.0801681Z         Start 173: native-hyphen-replacement-oracle
+2026-11-08T08:36:11.5732962Z 173/201 Test #173: native-hyphen-replacement-oracle ...   Passed    0.49 sec
+2026-11-08T08:36:11.5733598Z         Start 174: native-hyphen-conditional-oracle
+2026-11-08T08:36:13.0342036Z 174/201 Test #174: native-hyphen-conditional-oracle ...   Passed    1.46 sec
+2026-11-08T08:36:13.0342615Z         Start 175: native-benchmark
+2026-11-08T08:36:13.8762749Z 175/201 Test #175: native-benchmark ...................   Passed    0.84 sec
+2026-11-08T08:36:13.8763345Z         Start 176: native-document-probe
+2026-11-08T08:36:18.5643484Z 176/201 Test #176: native-document-probe ..............   Passed    4.69 sec
+2026-11-08T08:36:18.5644741Z         Start 177: native-corpus-triage
+2026-11-08T08:36:19.5684735Z 177/201 Test #177: native-corpus-triage ...............   Passed    1.00 sec
+2026-11-08T08:36:19.5685799Z         Start 178: native-png
+2026-11-08T08:36:19.6158928Z 178/201 Test #178: native-png .........................   Passed    0.05 sec
+2026-11-08T08:36:19.6159576Z         Start 179: native-color-png
+2026-11-08T08:36:19.9668137Z 179/201 Test #179: native-color-png ...................   Passed    0.35 sec
+2026-11-08T08:36:19.9669201Z         Start 180: native-pdf-jpx
+2026-11-08T08:36:19.9818521Z 180/201 Test #180: native-pdf-jpx .....................   Passed    0.01 sec
+2026-11-08T08:36:19.9819584Z         Start 181: native-core-component
+2026-11-08T08:36:19.9850065Z 181/201 Test #181: native-core-component ..............   Passed    0.00 sec
+2026-11-08T08:36:19.9850629Z         Start 182: native-anchor-boundary
+2026-11-08T08:36:19.9860915Z 182/201 Test #182: native-anchor-boundary .............   Passed    0.00 sec
+2026-11-08T08:36:19.9861735Z         Start 183: native-library-source
+2026-11-08T08:36:20.1147689Z 183/201 Test #183: native-library-source ..............   Passed    0.13 sec
+2026-11-08T08:36:20.1148365Z         Start 184: native-library-epub-storage
+2026-11-08T08:36:20.2554284Z 184/201 Test #184: native-library-epub-storage ........   Passed    0.14 sec
+2026-11-08T08:36:20.2554861Z         Start 185: native-audio-component
+2026-11-08T08:36:20.2565974Z 185/201 Test #185: native-audio-component .............   Passed    0.00 sec
+2026-11-08T08:36:20.2566573Z         Start 186: native-library-component
+2026-11-08T08:36:20.2622464Z 186/201 Test #186: native-library-component ...........   Passed    0.01 sec
+2026-11-08T08:36:20.2623092Z         Start 187: native-pdf_edit-component
+2026-11-08T08:36:20.2701229Z 187/201 Test #187: native-pdf_edit-component ..........   Passed    0.01 sec
+2026-11-08T08:36:20.2702136Z         Start 188: native-textindex-component
+2026-11-08T08:36:20.2721617Z 188/201 Test #188: native-textindex-component .........   Passed    0.00 sec
+2026-11-08T08:36:20.2722244Z         Start 189: native-font-manager-discovery
+2026-11-08T08:36:20.3041054Z 189/201 Test #189: native-font-manager-discovery ......   Passed    0.03 sec
+2026-11-08T08:36:20.3041661Z         Start 190: native-font-manager-selection
+2026-11-08T08:36:20.3381522Z 190/201 Test #190: native-font-manager-selection ......   Passed    0.03 sec
+2026-11-08T08:36:20.3382575Z         Start 191: native-font-manager-cache
+2026-11-08T08:36:20.3729004Z 191/201 Test #191: native-font-manager-cache ..........   Passed    0.03 sec
+2026-11-08T08:36:20.3729698Z         Start 192: native-font-manager-integration
+2026-11-08T08:36:20.4096126Z 192/201 Test #192: native-font-manager-integration ....   Passed    0.04 sec
+2026-11-08T08:36:20.4096726Z         Start 193: native-xml-input
+2026-11-08T08:36:20.4570103Z 193/201 Test #193: native-xml-input ...................   Passed    0.05 sec
+2026-11-08T08:36:20.4571017Z         Start 194: native-epub-strict-mimetype
+2026-11-08T08:36:20.4587256Z 194/201 Test #194: native-epub-strict-mimetype ........   Passed    0.00 sec
+2026-11-08T08:36:20.4587886Z         Start 195: native-epub-strict-directory
+2026-11-08T08:36:20.4601824Z 195/201 Test #195: native-epub-strict-directory .......   Passed    0.00 sec
+2026-11-08T08:36:20.4603030Z         Start 196: native-epub-strict-container
+2026-11-08T08:36:20.4613796Z 196/201 Test #196: native-epub-strict-container .......   Passed    0.00 sec
+2026-11-08T08:36:20.4614775Z         Start 197: native-pdf-deepening-search
+2026-11-08T08:36:20.5014909Z 197/201 Test #197: native-pdf-deepening-search ........   Passed    0.04 sec
+2026-11-08T08:36:20.5015681Z         Start 198: native-pdf-deepening-coordinates
+2026-11-08T08:36:20.5402266Z 198/201 Test #198: native-pdf-deepening-coordinates ...   Passed    0.04 sec
+2026-11-08T08:36:20.5403053Z         Start 199: native-pdf-deepening-scan
+2026-11-08T08:36:20.5973028Z 199/201 Test #199: native-pdf-deepening-scan ..........   Passed    0.06 sec
+2026-11-08T08:36:20.5973717Z         Start 200: native-pdf-deepening-contracts
+2026-11-08T08:36:20.6367673Z 200/201 Test #200: native-pdf-deepening-contracts .....   Passed    0.04 sec
+2026-11-08T08:36:20.6368506Z         Start 201: native-pdf-deepening-encryption
+2026-11-08T08:36:20.7001309Z 201/201 Test #201: native-pdf-deepening-encryption ....   Passed    0.06 sec
+2026-11-08T08:36:20.7009746Z 100% tests passed, 0 tests failed out of 201
+2026-11-08T08:36:20.7010271Z Total Test time (real) = 124.60 sec
+2026-11-08T08:36:51.8492476Z     Start 1: installed-core
+2026-11-08T08:36:51.8523722Z 1/6 Test #1: installed-core ...................   Passed    0.00 sec
+2026-11-08T08:36:51.8524987Z     Start 2: installed-chapter
+2026-11-08T08:36:51.8576102Z 2/6 Test #2: installed-chapter ................   Passed    0.00 sec
+2026-11-08T08:36:51.8576991Z     Start 3: installed-convert
+2026-11-08T08:36:51.8606636Z 3/6 Test #3: installed-convert ................   Passed    0.00 sec
+2026-11-08T08:36:51.8607569Z     Start 4: installed-audio
+2026-11-08T08:36:51.8617663Z 4/6 Test #4: installed-audio ..................   Passed    0.00 sec
+2026-11-08T08:36:51.8618472Z     Start 5: installed-library
+2026-11-08T08:36:51.8729852Z 5/6 Test #5: installed-library ................   Passed    0.01 sec
+2026-11-08T08:36:51.8731174Z     Start 6: installed-textindex
+2026-11-08T08:36:51.8750258Z 6/6 Test #6: installed-textindex ..............   Passed    0.00 sec
+2026-11-08T08:36:51.8752587Z 100% tests passed, 0 tests failed out of 6
+2026-11-08T08:36:51.8753036Z Total Test time (real) =   0.03 sec
+2026-11-08T08:37:56.1565914Z       Start  1: native-core-component
+2026-11-08T08:37:56.1594889Z  1/10 Test  #1: native-core-component .............   Passed    0.00 sec
+2026-11-08T08:37:56.1596904Z       Start  2: native-anchor-boundary
+2026-11-08T08:37:56.1605349Z  2/10 Test  #2: native-anchor-boundary ............   Passed    0.00 sec
+2026-11-08T08:37:56.1606815Z       Start  3: native-font-manager-discovery
+2026-11-08T08:37:56.1919367Z  3/10 Test  #3: native-font-manager-discovery .....   Passed    0.03 sec
+2026-11-08T08:37:56.1920453Z       Start  4: native-font-manager-selection
+2026-11-08T08:37:56.2256481Z  4/10 Test  #4: native-font-manager-selection .....   Passed    0.03 sec
+2026-11-08T08:37:56.2257168Z       Start  5: native-font-manager-cache
+2026-11-08T08:37:56.2594118Z  5/10 Test  #5: native-font-manager-cache .........   Passed    0.03 sec
+2026-11-08T08:37:56.2594993Z       Start  6: native-font-manager-integration
+2026-11-08T08:37:56.2952786Z  6/10 Test  #6: native-font-manager-integration ...   Passed    0.04 sec
+2026-11-08T08:37:56.2953646Z       Start  7: native-xml-input
+2026-11-08T08:37:56.3423646Z  7/10 Test  #7: native-xml-input ..................   Passed    0.05 sec
+2026-11-08T08:37:56.3425073Z       Start  8: native-epub-strict-mimetype
+2026-11-08T08:37:56.3440342Z  8/10 Test  #8: native-epub-strict-mimetype .......   Passed    0.00 sec
+2026-11-08T08:37:56.3441437Z       Start  9: native-epub-strict-directory
+2026-11-08T08:37:56.3454760Z  9/10 Test  #9: native-epub-strict-directory ......   Passed    0.00 sec
+2026-11-08T08:37:56.3455663Z       Start 10: native-epub-strict-container
+2026-11-08T08:37:56.3464703Z 10/10 Test #10: native-epub-strict-container ......   Passed    0.00 sec
+2026-11-08T08:37:56.3467327Z 100% tests passed, 0 tests failed out of 10
+2026-11-08T08:37:56.3467734Z Total Test time (real) =   0.19 sec
+2026-11-08T08:37:57.0440890Z     Start 1: installed-core
+2026-11-08T08:37:57.0469526Z 1/3 Test #1: installed-core ...................   Passed    0.00 sec
+2026-11-08T08:37:57.0471097Z     Start 2: installed-chapter
+2026-11-08T08:37:57.0518168Z 2/3 Test #2: installed-chapter ................   Passed    0.00 sec
+2026-11-08T08:37:57.0519040Z     Start 3: installed-convert
+2026-11-08T08:37:57.0542699Z 3/3 Test #3: installed-convert ................   Passed    0.00 sec
+2026-11-08T08:37:57.0544367Z 100% tests passed, 0 tests failed out of 3
+2026-11-08T08:37:57.0544781Z Total Test time (real) =   0.01 sec
+2026-11-08T08:38:32.8616402Z       Start  1: native-core-component
+2026-11-08T08:38:32.8644867Z  1/13 Test  #1: native-core-component .............   Passed    0.00 sec
+2026-11-08T08:38:32.8646885Z       Start  2: native-anchor-boundary
+2026-11-08T08:38:32.8655617Z  2/13 Test  #2: native-anchor-boundary ............   Passed    0.00 sec
+2026-11-08T08:38:32.8656914Z       Start  3: native-library-source
+2026-11-08T08:38:32.9741390Z  3/13 Test  #3: native-library-source .............   Passed    0.11 sec
+2026-11-08T08:38:32.9742562Z       Start  4: native-library-epub-storage
+2026-11-08T08:38:33.1104579Z  4/13 Test  #4: native-library-epub-storage .......   Passed    0.14 sec
+2026-11-08T08:38:33.1105163Z       Start  5: native-library-component
+2026-11-08T08:38:33.1155763Z  5/13 Test  #5: native-library-component ..........   Passed    0.00 sec
+2026-11-08T08:38:33.1156383Z       Start  6: native-font-manager-discovery
+2026-11-08T08:38:33.1465242Z  6/13 Test  #6: native-font-manager-discovery .....   Passed    0.03 sec
+2026-11-08T08:38:33.1465990Z       Start  7: native-font-manager-selection
+2026-11-08T08:38:33.1804817Z  7/13 Test  #7: native-font-manager-selection .....   Passed    0.03 sec
+2026-11-08T08:38:33.1805990Z       Start  8: native-font-manager-cache
+2026-11-08T08:38:33.2150554Z  8/13 Test  #8: native-font-manager-cache .........   Passed    0.03 sec
+2026-11-08T08:38:33.2151688Z       Start  9: native-font-manager-integration
+2026-11-08T08:38:33.2558020Z  9/13 Test  #9: native-font-manager-integration ...   Passed    0.04 sec
+2026-11-08T08:38:33.2558778Z       Start 10: native-xml-input
+2026-11-08T08:38:33.3027525Z 10/13 Test #10: native-xml-input ..................   Passed    0.05 sec
+2026-11-08T08:38:33.3028801Z       Start 11: native-epub-strict-mimetype
+2026-11-08T08:38:33.3044168Z 11/13 Test #11: native-epub-strict-mimetype .......   Passed    0.00 sec
+2026-11-08T08:38:33.3045036Z       Start 12: native-epub-strict-directory
+2026-11-08T08:38:33.3058510Z 12/13 Test #12: native-epub-strict-directory ......   Passed    0.00 sec
+2026-11-08T08:38:33.3059415Z       Start 13: native-epub-strict-container
+2026-11-08T08:38:33.3068573Z 13/13 Test #13: native-epub-strict-container ......   Passed    0.00 sec
+2026-11-08T08:38:33.3075107Z 100% tests passed, 0 tests failed out of 13
+2026-11-08T08:38:33.3075550Z Total Test time (real) =   0.45 sec
