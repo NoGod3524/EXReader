@@ -1,0 +1,98 @@
+{
+  "startup": [
+    {
+      "run": 1,
+      "state": "cold",
+      "requested_family": "serif",
+      "family": "Noto Serif SC",
+      "file": "C:\\Windows/Fonts/NotoSerifSC-VF.ttf",
+      "body_font": "serif",
+      "manager_ms": "138.500",
+      "cache": "1",
+      "parsed_files": "350",
+      "cached_files": "0",
+      "faces": "11"
+    },
+    {
+      "run": 1,
+      "state": "hot",
+      "requested_family": "serif",
+      "family": "Noto Serif SC",
+      "file": "C:\\Windows/Fonts/NotoSerifSC-VF.ttf",
+      "body_font": "serif",
+      "manager_ms": "3.112",
+      "cache": "3",
+      "parsed_files": "0",
+      "cached_files": "350",
+      "faces": "11"
+    },
+    {
+      "run": 2,
+      "state": "cold",
+      "requested_family": "serif",
+      "family": "Noto Serif SC",
+      "file": "C:\\Windows/Fonts/NotoSerifSC-VF.ttf",
+      "body_font": "serif",
+      "manager_ms": "111.618",
+      "cache": "1",
+      "parsed_files": "350",
+      "cached_files": "0",
+      "faces": "11"
+    },
+    {
+      "run": 2,
+      "state": "hot",
+      "requested_family": "serif",
+      "family": "Noto Serif SC",
+      "file": "C:\\Windows/Fonts/NotoSerifSC-VF.ttf",
+      "body_font": "serif",
+      "manager_ms": "3.407",
+      "cache": "3",
+      "parsed_files": "0",
+      "cached_files": "350",
+      "faces": "11"
+    },
+    {
+      "run": 3,
+      "state": "cold",
+      "requested_family": "serif",
+      "family": "Noto Serif SC",
+      "file": "C:\\Windows/Fonts/NotoSerifSC-VF.ttf",
+      "body_font": "serif",
+      "manager_ms": "119.561",
+      "cache": "1",
+      "parsed_files": "350",
+      "cached_files": "0",
+      "faces": "11"
+    },
+    {
+      "run": 3,
+      "state": "hot",
+      "requested_family": "serif",
+      "family": "Noto Serif SC",
+      "file": "C:\\Windows/Fonts/NotoSerifSC-VF.ttf",
+      "body_font": "serif",
+      "manager_ms": "2.878",
+      "cache": "3",
+      "parsed_files": "0",
+      "cached_files": "350",
+      "faces": "11"
+    }
+  ],
+  "sans_only": "pass",
+  "configured_sans_fallback": "pass",
+  "explicit": {
+    "requested_family": "Noto Sans CJK SC",
+    "family": "Noto Sans CJK SC",
+    "file": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fonthost-20261107\\out\\current\\Reader.otf",
+    "body_font": "explicit",
+    "manager_ms": "3.415",
+    "cache": "1",
+    "parsed_files": "1",
+    "cached_files": "0",
+    "faces": "1"
+  },
+  "missing": {
+    "exit": 2
+  }
+}

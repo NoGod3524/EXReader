@@ -1,0 +1,30 @@
+HOST	phase=0	engine=3.42.0	pid=17416
+STEP	1	import	PASS	page=0;status=已导入《紅樓夢》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	3	wait_idle	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	4	shell	PASS	reading screen
+STEP	5	shell_client	PASS	page=1;status=第 1 页。
+STEP	6	shell_font	PASS	page=1;status=第 1 页。
+STEP	7	shell_click	PASS	button invoked
+STEP	8	shell_click	PASS	button invoked
+STEP	9	probe_wait	PASS	waited without blocking UI
+STEP	10	toc_click	PASS	page=20;status=第 20 页。
+STEP	11	wait_idle	PASS	page=20;status=第 20 页。
+STEP	12	probe_wait	PASS	waited without blocking UI
+STEP	13	wait_idle	PASS	page=20;status=第 20 页。
+STEP	14	shell_measure	PASS	physical layout captured
+STEP	15	probe_wait	PASS	waited without blocking UI
+STEP	16	prev	PASS	page=19;status=第 19 页。
+STEP	17	wait_idle	PASS	page=19;status=第 19 页。
+STEP	18	shell_measure	PASS	physical layout captured
+STEP	19	probe_wait	PASS	waited without blocking UI
+STEP	20	next	PASS	page=20;status=第 20 页。
+STEP	21	wait_idle	PASS	page=20;status=第 20 页。
+STEP	22	shell_measure	PASS	physical layout captured
+STEP	23	probe_wait	PASS	waited without blocking UI
+STEP	24	next	PASS	page=21;status=第 21 页。
+STEP	25	wait_idle	PASS	page=21;status=第 21 页。
+STEP	26	shell_measure	PASS	physical layout captured
+STEP	27	probe_wait	PASS	waited without blocking UI
+STEP	28	quit	PASS	closing
+DONE	28	eof	PASS	script finished

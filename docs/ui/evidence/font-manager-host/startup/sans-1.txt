@@ -1,0 +1,10 @@
+正文：Noto Sans CJK SC（已回退：无衬线）
+requested_family=serif
+family=Noto Sans CJK SC
+file=C:/Users/Oscar/Documents/Codex/EXReader-fonthost-20261107/out/current/Reader.otf
+body_font=fallback-sans
+manager_ms=1.991
+cache=0
+parsed_files=1
+cached_files=0
+faces=1
