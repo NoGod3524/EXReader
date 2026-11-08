@@ -1,0 +1,14 @@
+{
+  "width": 1552,
+  "height": 928,
+  "changed_pixels": 0,
+  "layout_equal": {
+    "part": true,
+    "index": true,
+    "range": true,
+    "lines": true,
+    "glyphs": true,
+    "text": true
+  },
+  "rgba_sha256": "7f48a78d1096bc51d51410f7427cfd65c2f0db9ba0df2a31c2267415d896b5c6"
+}

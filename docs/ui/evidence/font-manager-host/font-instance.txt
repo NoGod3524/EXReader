@@ -1,0 +1,2 @@
+C:\Windows/Fonts/NotoSerifSC-VF.ttf
+fallback=0;weight=400;faces=11

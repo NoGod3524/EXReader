@@ -1,0 +1,12 @@
+**/profile/
+*.cache
+# Superseded exploratory runs against the earlier SDK.
+/before/
+/after/
+/sans-only/
+/after-final/
+/sans-final/
+/startup-final/
+/startup-*.txt
+/startup.json
+/ctest.txt

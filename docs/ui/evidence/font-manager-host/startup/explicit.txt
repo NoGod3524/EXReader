@@ -1,0 +1,10 @@
+正文：Noto Sans CJK SC
+requested_family=Noto Sans CJK SC
+family=Noto Sans CJK SC
+file=C:\Users\Oscar\Documents\Codex\EXReader-fonthost-20261107\out\current\Reader.otf
+body_font=explicit
+manager_ms=3.415
+cache=1
+parsed_files=1
+cached_files=0
+faces=1

@@ -455,7 +455,7 @@ extern "C" HRESULT shell_d2d_page_image(shell_d2d *s,HDC dc,const RECT *area,con
   hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s);return hr;
 }
 
-extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,const wchar_t *font,const uint32_t *background) {
+extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,const wchar_t *font,const wchar_t *family,const wchar_t *path,const uint32_t *background) {
   HRESULT hr=bind_dc(s,dc,box); if(FAILED(hr)) return hr;
   const auto &c=dark ? shell_theme_dark : shell_theme_light;
   float k=s->dpi/96.f,pad=(float)SHELL_SHADOW_PAD*k,top=(float)SHELL_SHADOW_TOP*k,w=(float)(box->right-box->left),h=(float)(box->bottom-box->top);
@@ -490,6 +490,20 @@ extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,
       value->SetTypography(typography,{0,(UINT32)wcslen(font)});typography->Release();
     }
     s->dc_target->DrawTextLayout(D2D1::Point2F(pad+153*k,top+44*k),value,s->dc_brush);value->Release();
+  }
+  IDWriteTextLayout *description=nullptr;
+  if(SUCCEEDED(s->write->CreateTextLayout(family,(UINT32)wcslen(family),s->format[SHELL_TEXT_LABEL],
+      w-2*pad-40*k,34*k,&description))) {
+    description->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
+    s->dc_target->DrawTextLayout(D2D1::Point2F(pad+20*k,top+174*k),description,s->dc_brush,D2D1_DRAW_TEXT_OPTIONS_CLIP);
+    description->Release();
+  }
+  s->dc_brush->SetColor(D2D1::ColorF(c.text_secondary));
+  if(SUCCEEDED(s->write->CreateTextLayout(path,(UINT32)wcslen(path),s->format[SHELL_TEXT_LABEL],
+      w-2*pad-40*k,h-pad-top-224*k,&description))) {
+    description->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
+    s->dc_target->DrawTextLayout(D2D1::Point2F(pad+20*k,top+212*k),description,s->dc_brush,D2D1_DRAW_TEXT_OPTIONS_CLIP);
+    description->Release();
   }
   hr=s->dc_target->EndDraw(); if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s); return hr;
 }

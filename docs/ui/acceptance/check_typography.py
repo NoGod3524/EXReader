@@ -29,12 +29,13 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def run(exe, script, out, capture, shots=(), font=None, timeout=240):
+def run(exe, script, out, capture, shots=(), font=None, timeout=240, font_config=None):
     out = Path(out).resolve(); out.mkdir(parents=True, exist_ok=True)
     profile = out/'profile'; profile.mkdir(exist_ok=True)
     drive = out/'run.drive'; drive.write_text(script, encoding='utf-8')
     cmd = [str(exe), '--offscreen', '--drive', str(drive), '--data', str(profile), '--evidence', str(out)]
     if font: cmd += ['--font', str(font)]
+    if font_config: cmd += ['--font-config', str(font_config)]
     process = subprocess.Popen(cmd, creationflags=HIDDEN, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     captured = set(); foreground = 0; start = time.monotonic()
     try:
