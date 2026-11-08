@@ -260,6 +260,14 @@ EXR_API exr_status exr_hyphenator_create_patterns_ex(const exr_hyphen_pattern_in
   exr_hyphenator **out,exr_error *error);
 EXR_API exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs,
   size_t count,size_t byte_budget,const exr_control *control,exr_hyphenator **out,exr_error *error);
+/* Built-in Liang rules (hyph-en-us, keys "en" and "en-us"; no other language is
+   ever hyphenated). left_min/right_min=0 selects 3/3 graphemes. With auto_default
+   nonzero, elements whose hyphens value was never declared behave as hyphens:auto
+   when their text and its block container both carry a language with rules; an
+   explicit manual/none, or any other block language (e.g. zh), is never overridden.
+   Without auto_default only an explicit hyphens:auto breaks words. */
+EXR_API exr_status exr_hyphenator_create_builtin(unsigned left_min,unsigned right_min,int auto_default,
+  const exr_control *control,exr_hyphenator **out,exr_error *error);
 /* breaks has size+1 bytes: 1 permits a break before that UTF-8 byte; all other
    bytes are 0, including 0/size and grapheme interiors. Size <=1024 bytes / 256
    scalars. Errors on valid-sized requests clear breaks. Provider output is

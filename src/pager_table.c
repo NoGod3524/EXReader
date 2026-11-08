@@ -257,7 +257,7 @@ static exr_status plain_widths(flow *f,const exr_table_cursor *t,const table_cel
   if(text->kind!=EXR_NODE_TEXT || text->next_sibling!=SIZE_MAX || text->start==SIZE_MAX ||
      text->end<=text->start || style->display!=EXR_CSS_INLINE || style->float_side ||
      style->direction==EXR_DIRECTION_RTL || style->writing_mode!=EXR_WRITING_HORIZONTAL_TB ||
-     (f->hyphenator && style->hyphens==EXR_HYPHENS_AUTO)) return EXR_OK;
+     (f->hyphenator && (style->hyphens==EXR_HYPHENS_AUTO || (style->hyphens==EXR_HYPHENS_INITIAL && exr_hyphenator_auto_default(f->hyphenator))))) return EXR_OK;
   for(i=0;i<f->font->count;i++) if(exr_ot_present(&f->font->faces[i]) || f->font->faces[i].bitmap_only) return EXR_OK;
   for(at=text->start;at<text->end;at++) {
     unsigned char c=exr_doc_byte(f->doc,at);

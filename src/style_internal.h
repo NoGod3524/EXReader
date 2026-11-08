@@ -11,7 +11,8 @@ typedef struct {
 } exr_length; /* value < 0 means auto */
 enum { EXR_CSS_NONE, EXR_CSS_INLINE, EXR_CSS_BLOCK, EXR_CSS_TABLE, EXR_CSS_ROW, EXR_CSS_CELL };
 enum { EXR_CELL_BASELINE,EXR_CELL_TOP,EXR_CELL_MIDDLE,EXR_CELL_BOTTOM };
-enum { EXR_HYPHENS_MANUAL,EXR_HYPHENS_AUTO,EXR_HYPHENS_NONE };
+/* INITIAL = never declared (acts as manual unless a built-in hyphenator opts into auto-by-default). */
+enum { EXR_HYPHENS_INITIAL,EXR_HYPHENS_AUTO,EXR_HYPHENS_NONE,EXR_HYPHENS_MANUAL };
 typedef struct {
   char family[128], source[2048], base[2048];
   size_t chapter;
