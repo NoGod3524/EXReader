@@ -165,6 +165,28 @@ typedef enum { EXR_RANGE_CHAR, EXR_RANGE_WORD, EXR_RANGE_SENTENCE, EXR_RANGE_PAR
    are loaded; the returned range represents all intervening parts as well. */
 EXR_API exr_status exr_range_expand(exr_publication *publication,const exr_text_range *range,
   exr_range_unit unit,const exr_control *control,exr_text_range *out,exr_error *error);
+/* Lazy borrowed TOC, valid until publication_free. Priority: nav toc, NCX
+   navMap, then body recovery when no linked TOC exists or all linked TOC labels
+   are license notices. Recovery scans linear parts for h1..h6 and standalone
+   Chinese chapter-title lines (第 + numeral + 回/章/卷/节/節). */
+EXR_API exr_status exr_publication_toc(exr_publication *publication,
+  const exr_toc_entry **entries,size_t *count,exr_error *error);
+/* Resolve a relative internal href against a content/resource path. The caller
+   supplies fragment[2048]; target.fragment borrows it. Missing/ambiguous parts
+   have target.part=SIZE_MAX. External/invalid URIs return EXR_ARGUMENT. */
+EXR_API exr_status exr_publication_resolve_href(const exr_publication *publication,
+  const char *base,const char *href,char fragment[2048],exr_target *target,exr_error *error);
+/* Part-local normalized UTF-8 offset. Missing anchors fall back to part start
+   with a distinct state and are retained in missing_targets (deduplicated). */
+EXR_API exr_status exr_publication_locate(exr_publication *publication,
+  const exr_target *target,exr_location *location,exr_error *error);
+/* Borrowed until the next locate/target_at request or publication_free. */
+EXR_API const exr_target *exr_publication_missing_targets(const exr_publication *publication,size_t *count);
+/* Last TOC target at/before (part,offset) in reading order; deeper entries win
+   ties. SIZE_MAX means before the first resolved target. Invalid offsets fail.
+   Resolved TOC positions are cached; returned index addresses publication_toc. */
+EXR_API exr_status exr_publication_target_at(exr_publication *publication,
+  size_t part,size_t offset,size_t *entry,exr_error *error);
 /* Full point CFI for the built-in indexed EPUB provider. Create accepts a
    single-chapter snapshot from this publication, with snapshot-local node IDs.
    Resolve parses only the addressed chapter and returns an independent owned

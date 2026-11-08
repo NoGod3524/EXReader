@@ -13,6 +13,12 @@ struct exr_publication {
   exr_navigation *navigation;
   size_t navigation_count, metadata_bytes;
   int navigation_ready, busy;
+  exr_toc_entry *toc;
+  exr_location *toc_locations;
+  size_t toc_count;
+  int toc_ready, locations_ready;
+  exr_target *missing;
+  size_t missing_count, missing_capacity;
 };
 typedef struct {
   size_t part, bytes;
@@ -63,6 +69,11 @@ void exr_publication_free(exr_publication *p) {
   }
   free(p->parts);
   exr_navigation_free(p->navigation, p->navigation_count);
+  for (i=0;i<p->toc_count;i++) {
+    free((void *)p->toc[i].title); free((void *)p->toc[i].target.fragment);
+  }
+  for (i=0;i<p->missing_count;i++) free((void *)p->missing[i].fragment);
+  free(p->missing); free(p->toc); free(p->toc_locations);
   free(p->title);
   free(p);
 }
@@ -263,6 +274,316 @@ exr_status exr_publication_load(exr_publication *p, size_t part, exr_document **
   p->busy = 0;
   *out = doc;
   return exr_fail(e, EXR_OK, "");
+}
+
+exr_status exr_publication_resolve_href(const exr_publication *p,const char *base,
+  const char *href,char fragment[2048],exr_target *target,exr_error *e) {
+  char path[2048]; const char *hash; size_t i, match=SIZE_MAX, matches;
+  unsigned pass;
+  if (target) *target=(exr_target){SIZE_MAX,NULL,SIZE_MAX};
+  if (fragment) fragment[0]=0;
+  if (!p || !base || !href || !fragment || !target || p->busy)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid internal link request");
+  hash=strchr(href,'#');
+  if (!exr_resolve_path(base,href,path) ||
+      (hash && !exr_uri_decode(hash+1,strlen(hash+1),fragment)))
+    return exr_fail(e,EXR_ARGUMENT,"URI is external or invalid");
+  target->fragment=fragment;
+  for (pass=0;pass<2;pass++) {
+    matches=0;
+    for (i=0;i<p->count;i++) if (pass ? exr_link_case_equal(path,p->parts[i].path) :
+        !strcmp(path,p->parts[i].path)) { match=i; matches++; }
+    if (matches) { if (matches==1) target->part=match; break; }
+  }
+  return exr_fail(e,EXR_OK,"");
+}
+static exr_status remember_missing(exr_publication *p,const exr_target *target,exr_error *e) {
+  size_t i,total=p->metadata_bytes; const char *fragment=target->fragment ? target->fragment : "";
+  const char *copy;
+  exr_status status;
+  for (i=0;i<p->missing_count;i++)
+    if (p->missing[i].part==target->part && !strcmp(p->missing[i].fragment,fragment)) return EXR_OK;
+  if (p->missing_count>=10000) return exr_fail(e,EXR_LIMIT,"Missing-anchor log exceeds 10000 targets");
+  for (i=0;i<p->missing_count;i++) total+=strlen(p->missing[i].fragment)+1;
+  if (!exr_grow((void **)&p->missing,&p->missing_capacity,p->missing_count+1,sizeof(*p->missing)))
+    return exr_fail(e,EXR_MEMORY,"Missing-anchor log allocation failed");
+  status=copy_string(fragment,2046,&total,&copy,e);
+  if (status!=EXR_OK) return status;
+  p->missing[p->missing_count++]=(exr_target){target->part,copy,SIZE_MAX};
+  return EXR_OK;
+}
+const exr_target *exr_publication_missing_targets(const exr_publication *p,size_t *count) {
+  if (count) *count=p ? p->missing_count : 0;
+  return p ? p->missing : NULL;
+}
+exr_status exr_publication_locate(exr_publication *p,const exr_target *target,
+  exr_location *out,exr_error *e) {
+  exr_document *d=NULL; exr_status status; exr_location result;
+  if (out) *out=(exr_location){SIZE_MAX,SIZE_MAX,EXR_LINK_PART_MISSING};
+  if (!p || !target || !out || p->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid link target");
+  if (target->part==SIZE_MAX) return exr_fail(e,EXR_OK,"");
+  if (target->part>=p->count) return exr_fail(e,EXR_ARGUMENT,"Target part is outside publication");
+  status=exr_publication_load(p,target->part,&d,e);
+  if (status!=EXR_OK) return status;
+  if (target->offset!=SIZE_MAX && (!target->fragment || !*target->fragment)) {
+    size_t at=target->offset;
+    if (at>d->size || (at<d->size && ((unsigned char)d->text[at]&0xc0)==0x80))
+      status=exr_fail(e,EXR_ARGUMENT,"Target offset is outside UTF-8 text");
+    result=(exr_location){target->part,at,EXR_LINK_FOUND};
+  } else {
+    status=exr_document_locate(d,target->fragment,&result,e);
+    result.part=target->part;
+  }
+  exr_document_free(d);
+  if (status==EXR_OK && result.state==EXR_LINK_ANCHOR_MISSING) status=remember_missing(p,target,e);
+  if (status==EXR_OK) *out=result;
+  return status;
+}
+
+typedef struct {
+  exr_toc_entry *items; size_t count,capacity,bytes;
+} toc_builder;
+static void toc_clear(toc_builder *b) {
+  size_t i;
+  for (i=0;i<b->count;i++) { free((void *)b->items[i].title); free((void *)b->items[i].target.fragment); }
+  free(b->items); memset(b,0,sizeof(*b));
+}
+static exr_status toc_push(toc_builder *b,const char *title,size_t level,
+  exr_target target,exr_toc_source source,size_t order,exr_error *e) {
+  exr_toc_entry *v; exr_status status;
+  if (b->count>=10000) return exr_fail(e,EXR_LIMIT,"TOC exceeds 10000 entries");
+  if (!exr_grow((void **)&b->items,&b->capacity,b->count+1,sizeof(*b->items)))
+    return exr_fail(e,EXR_MEMORY,"TOC allocation failed");
+  v=&b->items[b->count++]; memset(v,0,sizeof(*v));
+  v->level=level; v->source=source; v->play_order=order; v->target=target;
+  v->target.fragment=NULL;
+  status=copy_string(title,65536,&b->bytes,&v->title,e);
+  if (status==EXR_OK) status=copy_string(target.fragment,2046,&b->bytes,&v->target.fragment,e);
+  return status;
+}
+static int toc_role(const char *s) {
+  while (s && *s) {
+    const char *start;
+    while (*s==' ' || *s=='\t' || *s=='\n' || *s=='\r') s++;
+    start=s; while (*s && *s!=' ' && *s!='\t' && *s!='\n' && *s!='\r') s++;
+    if (s-start==3 && !memcmp(start,"toc",3)) return 1;
+  }
+  return 0;
+}
+static int license_label(const char *s) {
+  return strstr(s,"LICENSE") || strstr(s,"License") || strstr(s,"license") ||
+    strstr(s,"\xe8\xae\xb8\xe5\x8f\xaf\xe8\xaf\x81");
+}
+static int chapter_number(uint32_t cp) {
+  return (cp>='0' && cp<='9') || (cp>=0xff10 && cp<=0xff19) ||
+    cp==0x96f6 || cp==0x3007 || cp==0x4e00 || cp==0x4e8c || cp==0x4e09 ||
+    cp==0x56db || cp==0x4e94 || cp==0x516d || cp==0x4e03 || cp==0x516b ||
+    cp==0x4e5d || cp==0x5341 || cp==0x767e || cp==0x5343 || cp==0x5169 || cp==0x4e24;
+}
+/* A title must start a source line; a prose sentence such as ç¬¬å››å›žä¸­... fails
+   the whitespace boundary. Keep the source line, never synthesize page text. */
+static size_t chapter_marker(const char *s,size_t size,size_t *start) {
+  size_t at=0,before; uint32_t cp; unsigned digits=0;
+  do { before=at; if (!exr_next(s,size,&at,&cp)) return 0; } while (exr_projection_space(cp));
+  *start=before;
+  if (cp!=0x7b2c) return 0;
+  while (exr_next(s,size,&at,&cp)) {
+    if (chapter_number(cp)) { if (++digits>16) return 0; continue; }
+    if (!digits || (cp!=0x56de && cp!=0x7ae0 && cp!=0x5377 && cp!=0x8282 && cp!=0x7bc0)) return 0;
+    before=at;
+    if (at<size && (!exr_next(s,size,&at,&cp) || !exr_projection_space(cp))) return 0;
+    return before-*start;
+  }
+  return 0;
+}
+/* Compare source context, ignoring projection whitespace, so an earlier prose
+   mention of the same chapter number cannot steal the heading's byte offset. */
+static int heading_context(const char *raw,const exr_document *d,size_t offset,size_t end) {
+  size_t at=0,length=strlen(raw); unsigned matched=0; uint32_t a,b;
+  while (at<length && matched<64) {
+    if (!exr_next(raw,length,&at,&a)) return 0;
+    if (exr_projection_space(a)) continue;
+    do { if (!exr_next(d->text,end,&offset,&b)) return 0; } while (exr_projection_space(b));
+    if (a!=b) return 0;
+    matched++;
+  }
+  return matched>0;
+}
+static exr_status recover_part(toc_builder *b,const exr_document *d,size_t part,int chinese,exr_error *e) {
+  size_t i;
+  for (i=0;i<d->node_count;i++) {
+    const exr_node *v=&d->nodes[i];
+    if (v->start==SIZE_MAX || v->end<=v->start) continue;
+    if (!chinese) {
+      if (v->kind==EXR_NODE_HEADING && v->end-v->start<=512) {
+        char title[513]; const char *tag=exr_html_tag(d,v); size_t level=1;
+        memcpy(title,d->text+v->start,v->end-v->start); title[v->end-v->start]=0;
+        if (license_label(title) || strstr(title,"Project Gutenberg")) continue;
+        if (tag && tag[0]=='h' && tag[1]>='1' && tag[1]<='6') level=(size_t)(tag[1]-'0');
+        { exr_status status=toc_push(b,title,level,(exr_target){part,"",v->start},EXR_TOC_RECOVERED,SIZE_MAX,e);
+          if (status!=EXR_OK) return status; }
+      }
+    } else if (v->kind==EXR_NODE_TEXT && v->text) {
+      const char *line=v->text; size_t cursor=v->start;
+      /* Exclude navigation/link labels, hidden text, head and metadata. */
+      size_t parent=v->parent; int body=0,skip=0;
+      while (parent!=SIZE_MAX) {
+        const exr_node *a=&d->nodes[parent]; const char *tag=exr_html_tag(d,a);
+        if (tag && !strcmp(tag,"body")) body=1;
+        if (a->kind==EXR_NODE_LINK || exr_node_attribute(a,"hidden") ||
+            (tag && (!strcmp(tag,"nav") || !strcmp(tag,"head") || !strcmp(tag,"footer")))) skip=1;
+        parent=a->parent;
+      }
+      if (!body || skip) continue;
+      while (*line) {
+        const char *end=strchr(line,'\n'); size_t length=end ? (size_t)(end-line) : strlen(line),start=0;
+        size_t marker=chapter_marker(line,length,&start);
+        if (marker && length-start<=512) {
+          char title[513],key[80]; const char *hit; size_t j,offset;
+          if (marker>=sizeof(key)) return exr_fail(e,EXR_LIMIT,"Chapter marker exceeds limit");
+          memcpy(key,line+start,marker); key[marker]=0;
+          hit=strstr(d->text+cursor,key);
+          while (hit && (size_t)(hit-d->text)+marker<=v->end &&
+              !heading_context(line+start,d,(size_t)(hit-d->text),v->end)) hit=strstr(hit+marker,key);
+          if (hit && (size_t)(hit-d->text)+marker<=v->end) {
+            size_t used=0,at=start; uint32_t cp; int space=0;
+            offset=(size_t)(hit-d->text); cursor=offset+marker;
+            while (at<length) {
+              size_t before=at;
+              if (!exr_next(line,length,&at,&cp)) break;
+              if (exr_projection_space(cp)) { if (used) space=1; continue; }
+              if (space) title[used++]=' ';
+              memcpy(title+used,line+before,at-before); used+=at-before; space=0;
+            }
+            title[used]=0;
+            /* Split EPUBs can repeat the last heading at the next part start.
+               Use the later occurrence, where the chapter body continues. */
+            j=b->count;
+            if (j && b->items[j-1].target.part+1==part && !strcmp(b->items[j-1].title,title)) j--;
+            if (j<b->count) b->items[j].target=(exr_target){part,b->items[j].target.fragment,offset};
+            else {
+              exr_status status=toc_push(b,title,1,(exr_target){part,"",offset},EXR_TOC_RECOVERED,SIZE_MAX,e);
+              if (status!=EXR_OK) return status;
+            }
+          }
+        }
+        if (!end) break;
+        line=end+1;
+      }
+    }
+  }
+  return EXR_OK;
+}
+static exr_status recover_toc(exr_publication *p,toc_builder *b,exr_error *e) {
+  unsigned pass; size_t i;
+  for (pass=0;pass<2;pass++) {
+    for (i=0;i<p->count;i++) if (p->parts[i].in_reading_order) {
+      exr_document *d=NULL; exr_status status=exr_publication_load(p,i,&d,e);
+      if (status==EXR_OK) status=recover_part(b,d,i,pass==0,e);
+      exr_document_free(d);
+      if (status!=EXR_OK) return status;
+    }
+    if (b->count) break;
+  }
+  return EXR_OK;
+}
+/* Some split EPUBs link chapter entries to an image-only separator, repeating
+   that anchor in the next part containing the title. Canonicalize only this
+   verified continuation; ordinary href resolution keeps the original resource. */
+static exr_status toc_continuations(exr_publication *p,toc_builder *b,exr_error *e) {
+  size_t i;
+  for (i=0;i<b->count;i++) {
+    exr_target *target=&b->items[i].target; exr_document *d=NULL,*next=NULL;
+    exr_location here,there; exr_status status;
+    size_t j,part=target->part;
+    if (part==SIZE_MAX || part+1>=p->count || target->offset!=SIZE_MAX ||
+        !target->fragment || !*target->fragment || !p->parts[part].in_reading_order ||
+        !p->parts[part+1].in_reading_order) continue;
+    status=exr_publication_load(p,part,&d,e);
+    if (status==EXR_OK && !d->size) {
+      status=exr_document_locate(d,target->fragment,&here,e);
+      if (status==EXR_OK && here.state==EXR_LINK_FOUND) {
+        status=exr_publication_load(p,part+1,&next,e);
+        if (status==EXR_OK && next->size) {
+          status=exr_document_locate(next,target->fragment,&there,e);
+          if (status==EXR_OK && there.state==EXR_LINK_FOUND)
+            for (j=0;j<next->count;j++) if (next->blocks[j].heading &&
+                next->blocks[j].start>=there.offset) { target->part=part+1; break; }
+        }
+      }
+    }
+    exr_document_free(d); exr_document_free(next);
+    if (status!=EXR_OK) return status;
+  }
+  return EXR_OK;
+}
+exr_status exr_publication_toc(exr_publication *p,const exr_toc_entry **out,size_t *count,exr_error *e) {
+  toc_builder b={0}; exr_navigation *owned=NULL; const exr_navigation *nav;
+  size_t n=0,i,*orders=NULL; exr_toc_source source=EXR_TOC_HOST;
+  exr_status status=EXR_OK; int linked=0,only_license=1;
+  if (out) *out=NULL;
+  if (count) *count=0;
+  if (!p || !out || !count || p->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid TOC request");
+  if (p->toc_ready) { *out=p->toc; *count=p->toc_count; return exr_fail(e,EXR_OK,""); }
+  b.bytes=p->metadata_bytes;
+  if (p->load==epub_load) {
+    p->busy=1;
+    status=exr_epub_navigation_details(p->context,p->metadata_bytes,&owned,&n,&orders,&source,e);
+    p->busy=0; nav=owned;
+  } else { nav=p->navigation; n=p->navigation_count; }
+  for (i=0;status==EXR_OK && i<n;i++) if (toc_role(nav[i].role)) {
+    char fragment[2048]; exr_target target; size_t parent=nav[i].parent,level=1;
+    while (parent!=SIZE_MAX) { if (toc_role(nav[parent].role)) level++; parent=nav[parent].parent; }
+    if (*nav[i].href) {
+      linked++; if (!license_label(nav[i].label)) only_license=0;
+      status=exr_publication_resolve_href(p,nav[i].base,nav[i].href,fragment,&target,e);
+      /* External navigation is retained as an unresolved target. */
+      if (status==EXR_ARGUMENT) { target=(exr_target){SIZE_MAX,"",SIZE_MAX}; status=EXR_OK; }
+    } else target=(exr_target){nav[i].part,"",SIZE_MAX};
+    if (status==EXR_OK) status=toc_push(&b,nav[i].label,level,target,source,orders ? orders[i] : SIZE_MAX,e);
+  }
+  exr_navigation_free(owned,owned ? n : 0); free(orders);
+  if (status==EXR_OK && p->load==epub_load && (!linked || only_license)) {
+    toc_builder recovered={0}; recovered.bytes=p->metadata_bytes;
+    status=recover_toc(p,&recovered,e);
+    if (status==EXR_OK && recovered.count) { toc_clear(&b); b=recovered; }
+    else toc_clear(&recovered);
+  }
+  if (status==EXR_OK && p->load==epub_load) status=toc_continuations(p,&b,e);
+  if (status!=EXR_OK) { toc_clear(&b); return status; }
+  p->toc=b.items; p->toc_count=b.count; p->toc_ready=1;
+  *out=p->toc; *count=p->toc_count;
+  return exr_fail(e,EXR_OK,"");
+}
+exr_status exr_publication_target_at(exr_publication *p,size_t part,size_t offset,size_t *entry,exr_error *e) {
+  const exr_toc_entry *toc; size_t count,i,best=SIZE_MAX; exr_document *d=NULL;
+  exr_status status;
+  if (entry) *entry=SIZE_MAX;
+  if (!p || !entry || part>=p->count || p->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid reverse target request");
+  status=exr_publication_load(p,part,&d,e);
+  if (status!=EXR_OK) return status;
+  if (offset>d->size || (offset<d->size && ((unsigned char)d->text[offset]&0xc0)==0x80))
+    status=exr_fail(e,EXR_ARGUMENT,"Offset is outside UTF-8 text");
+  exr_document_free(d);
+  if (status!=EXR_OK) return status;
+  status=exr_publication_toc(p,&toc,&count,e); if (status!=EXR_OK) return status;
+  if (!p->locations_ready) {
+    exr_location *positions=count ? calloc(count,sizeof(*positions)) : NULL;
+    if (count && !positions) return exr_fail(e,EXR_MEMORY,"TOC positions allocation failed");
+    for (i=0;i<count;i++) {
+      status=exr_publication_locate(p,&toc[i].target,&positions[i],e);
+      if (status!=EXR_OK) { free(positions); return status; }
+    }
+    p->toc_locations=positions; p->locations_ready=1;
+  }
+  for (i=0;i<count;i++) {
+    exr_location a=p->toc_locations[i];
+    if (a.state!=EXR_LINK_FOUND || a.part>part || (a.part==part && a.offset>offset)) continue;
+    if (best==SIZE_MAX || a.part>p->toc_locations[best].part ||
+        (a.part==p->toc_locations[best].part && (a.offset>p->toc_locations[best].offset ||
+         (a.offset==p->toc_locations[best].offset && toc[i].level>=toc[best].level)))) best=i;
+  }
+  *entry=best; return exr_fail(e,EXR_OK,"");
 }
 
 static exr_status publication_cfi_create(exr_publication *p,size_t part,const exr_document *d,
