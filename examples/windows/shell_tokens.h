@@ -15,6 +15,11 @@ static const shell_theme shell_theme_light = {
 static const shell_theme shell_theme_dark = {
   0x141416, 0x1e1e21, 0x1e1e21, 0x28282c, 0x313136, 0x0e0e10,
   0xf2f2f4, 0xb3b3bc, 0x7d7d87, 0x7c88ff, 0x929cff, 0xffffff, 0xffffff};
+/* Annotation categories need distinguishable hues. Yellow/green are new semantic
+   tokens; blue shares accent's hue. Soft coverage preserves the reading ink. */
+static const uint32_t SHELL_ANNOT_RGB[3]={0xd7a900,0x249b62,0x4553e0};
+static const uint32_t SHELL_ANNOT_DARK_RGB[3]={0xf1cc54,0x66c795,0x7c88ff};
+static const float SHELL_ANNOT_ALPHA=.26f, SHELL_ANNOT_DARK_ALPHA=.28f;
 static const float SHELL_LINE_ALPHA=.075f, SHELL_LINE_STRONG_ALPHA=.13f;
 /* Dark overrides inherit the root accent-soft/softer values verbatim. */
 static const uint32_t SHELL_ACCENT_SOFT_RGB=0x4553e0;

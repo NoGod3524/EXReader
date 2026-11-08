@@ -1,0 +1,76 @@
+open|紅樓夢
+wait_idle
+shell|on
+shell_dpi|96
+shell_client|1280|800
+shell_font|18
+wait_idle
+shell_click|light
+shell_click|toc
+probe_wait|230
+toc_click|1
+wait_idle
+annotgoto|1|10959
+wait_idle
+annot_close
+select_key|escape
+select_pointer|down|10962|0
+select_pointer|move|10989|1
+select_pointer|up|10989|1
+annot_command|3
+annot_close
+select_key|escape
+select_pointer|down|11058|0
+select_pointer|move|11085|1
+select_pointer|up|11085|1
+annot_command|4
+annot_close
+select_key|escape
+select_pointer|down|11157|0
+select_pointer|move|11184|1
+select_pointer|up|11184|1
+annot_command|5
+annot_close
+select_key|escape
+select_pointer|down|11256|0
+select_pointer|move|11283|1
+select_pointer|up|11283|1
+annot_command|3
+annot_close
+select_key|escape
+select_pointer|down|11355|0
+select_pointer|move|11382|1
+select_pointer|up|11382|1
+annot_command|4
+annot_close
+select_key|escape
+select_pointer|down|11445|0
+select_pointer|move|11470|1
+select_pointer|up|11470|1
+annot_command|6
+annot_edit|笔记 1：原文与锚点|2|preview
+shell_measure|note-input
+probe_wait|1200
+annot_edit|笔记 1：原文与锚点|2
+annot_close
+select_key|escape
+select_pointer|down|11542|0
+select_pointer|move|11569|1
+select_pointer|up|11569|1
+annot_command|6
+annot_edit|笔记 2：原文与锚点|0|preview
+annot_edit|笔记 2：原文与锚点|0
+annot_close
+select_key|escape
+select_pointer|down|11638|0
+select_pointer|move|11665|1
+select_pointer|up|11665|1
+annot_command|6
+annot_edit|笔记 3：原文与锚点|1|preview
+annot_edit|笔记 3：原文与锚点|1
+annot_close
+select_key|escape
+annot_dump|created
+shell_measure|three-colors
+probe_wait|1200
+quit

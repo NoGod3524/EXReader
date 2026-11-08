@@ -279,6 +279,7 @@ static void shell_leave(void) {
 }
 
 static void shell_sync(void) {
+  annot_sync();
   shell_search_reset_book();
   if(shell_toc_close_pending && !g.job && !g.pending) {
     shell_toc_close_pending=0;shell_toc_set(0,0);SetFocus(g.page);
@@ -368,6 +369,7 @@ static int shell_page_footer(HDC dc, const RECT *area) {
 }
 
 static int shell_translate(const MSG *message) {
+  if(annot_translate(message)) return 1;
   if(shell_search_key(message)) return 1;
   if(shell_toc_open && message->message==WM_MOUSEWHEEL) {
     RECT panel;GetWindowRect(shell_toc_panel,&panel);POINT p={(short)LOWORD(message->lParam),(short)HIWORD(message->lParam)};

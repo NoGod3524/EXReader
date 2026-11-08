@@ -117,7 +117,7 @@ static void test_keyboard(void) {
     select_drive_key('C', 0, 1); assert(clipboard_contains("Alpha"));
     select_drive_key(VK_ESCAPE, 0, 0); assert(!g.selection.active);
   }
-  HMENU menu = select_context_menu(); assert(GetMenuItemCount(menu) == 3);
+  HMENU menu = select_context_menu(); assert(GetMenuItemCount(menu) == 7);
   assert(GetMenuState(menu, 1, MF_BYCOMMAND)&MF_GRAYED);
   assert(!(GetMenuState(menu, 2, MF_BYCOMMAND)&MF_GRAYED));
   assert(GetMenuState(menu, 3, MF_BYCOMMAND)&MF_GRAYED); DestroyMenu(menu);
@@ -185,6 +185,7 @@ static void test_generated(void) {
   assert(combined == 2); select_all_part(); expect_text("12");
   puts("COMBINE glyphs=2 copied-bytes=2 extra-bytes=0");
 }
+#include "check_shell_annotations.inc"
 int main(int argc, char **argv) {
   setvbuf(stdout, NULL, _IONBF, 0);
   assert(argc == 3); SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX);
@@ -198,7 +199,8 @@ int main(int argc, char **argv) {
   ok(exr_publication_create(&input, &g.session.publication, NULL), NULL);
   g.session.active = g.session.bounded = g.frame.valid = 1;
   g.frame.book_id = g.session.book_id = 1;
-  if (!strcmp(argv[1], "boundaries")) test_boundaries();
+  if (!strcmp(argv[1], "annotations")) test_annotations();
+  else if (!strcmp(argv[1], "boundaries")) test_boundaries();
   else if (!strcmp(argv[1], "copy")) test_copy();
   else if (!strcmp(argv[1], "keyboard")) test_keyboard();
   else if (!strcmp(argv[1], "raster")) test_raster();

@@ -1,0 +1,14 @@
+open|草枕
+wait_idle
+shell|on
+shell_dpi|96
+shell_client|1280|800
+shell_font|18
+wait_idle
+shell_click|light
+annotgoto|2|944
+wait_idle
+annot_dump|vertical-restored
+shell_measure|vertical-restored
+probe_wait|1200
+quit
