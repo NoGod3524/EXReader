@@ -1,0 +1,17 @@
+HOST	phase=1	engine=3.42.0	pid=12968
+STEP	1	import	PASS	page=0;status=已导入《紅樓夢》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	3	wait_idle	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	4	shell	PASS	reading screen
+STEP	5	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	6	shell_client	PASS	page=1;status=第 1 页。
+STEP	7	shell_font	PASS	page=1;status=第 1 页。
+STEP	8	wait_idle	PASS	page=1;status=第 1 页。
+STEP	9	shell_click	PASS	button invoked
+STEP	10	shell_click	PASS	button invoked
+STEP	11	probe_wait	PASS	waited without blocking UI
+STEP	12	toc_click	PASS	page=19;status=第 19 页。
+STEP	13	wait_idle	PASS	page=19;status=第 19 页。
+STEP	14	annot_dump	PASS	annotation action dispatched
+STEP	15	quit	PASS	closing
+DONE	15	eof	PASS	script finished

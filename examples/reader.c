@@ -146,6 +146,13 @@ static void shell_pump_layout(void);
 static int select_valid, select_drag, select_turn;
 static void shell_selection_reset(void);
 static void shell_selection_landed(void);
+static void annot_sync(void);
+static int annot_translate(const MSG *message);
+static int annot_command(int command);
+static int annot_click(int x,int y);
+static void annot_pixels(uint32_t *pixels,int width,int height);
+static void annot_marks(HDC dc);
+static int annot_count,annot_selected=-1;
 static void shell_selection_paint(HDC dc);
 static size_t shell_selection_bytes(char **out);
 #endif
@@ -4166,6 +4173,7 @@ static void selection_report(void) {
 
 #ifdef EXR_READER_WINDOWS_SHELL
 #include "windows/shell_selection.inc"
+#include "windows/shell_annotations.inc"
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -6106,6 +6114,7 @@ static int check_selection(int minimum, const char *needle) {
 #ifdef EXR_READER_WINDOWS_SHELL
 #include "windows/shell_measure.inc"
 #include "windows/shell_selection_drive.inc"
+#include "windows/shell_annotations_drive.inc"
 #endif
 
 static int drive_execute(void) {
@@ -6114,6 +6123,10 @@ static int drive_execute(void) {
   int launches = 0;
   memset(detail, 0, sizeof(detail));
 #ifdef EXR_READER_WINDOWS_SHELL
+  if (!strncmp(action,"annot_",6)) {
+    drive_step_finish(annot_drive(action),"annotation action dispatched");return 0;
+  }
+#include "windows/shell_annotations_navigation.inc"
   if (!strcmp(action, "select_pointer")) {
     int ok = select_drive_pointer(drive_args[1], (size_t)strtoull(drive_args[2], NULL, 10), atoi(drive_args[3]));
     drive_step_finish(ok, "selection pointer dispatched"); return 0;
@@ -7435,6 +7448,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #endif
       settings_save();
 #ifdef EXR_READER_WINDOWS_SHELL
+      shell_search_destroy();
+      annot_clear();
+      if(annot_brush){DeleteObject(annot_brush);annot_brush=NULL;}
       shell_d2d_destroy(host_shell);
       host_shell = NULL;
 #endif
