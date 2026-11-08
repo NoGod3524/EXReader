@@ -188,6 +188,12 @@ static void shell_toc_recover_chapters(void) {
     const exr_node *nodes=exr_document_nodes(doc,&node_count);
     for(size_t node=0;node<node_count;node++) {
       if(nodes[node].kind!=EXR_NODE_TEXT || !nodes[node].text || nodes[node].start==SIZE_MAX) continue;
+      int hidden=0;
+      for(size_t ancestor=nodes[node].parent;ancestor<node_count;ancestor=nodes[ancestor].parent) {
+        const char *classes=exr_node_attribute(&nodes[ancestor],"class");
+        if(classes && strstr(classes,"exr-shell-hide")) {hidden=1;break;}
+      }
+      if(hidden) continue;
       const char *text=nodes[node].text;size_t size=strlen(text);
     for(size_t at=0;at<size;) {
       const char *start=text+at,*end=memchr(start,'\n',size-at);if(!end) end=text+size;
@@ -200,7 +206,8 @@ static void shell_toc_recover_chapters(void) {
       if(end-start<9 || memcmp(start,"第",3)) continue;
       const char *hui=NULL;
       for(const char *q=start+3;q+3<=end && q-start<40;q++) if(!memcmp(q,"回",3)) {hui=q;break;}
-      if(!hui || (hui+3<end && (unsigned char)hui[3]>32 && (hui+6>end || memcmp(hui+3,"　",3)))) continue;
+      if(!hui || (hui+3<end && (unsigned char)hui[3]>32 &&
+         (hui+6>end || (memcmp(hui+3,"　",3) && memcmp(hui+3,"\xe2\x80\x83",3))))) continue;
       size_t offset=nodes[node].start,token=(size_t)(hui+3-start);
       while(offset+token<=projection_size && offset+token<=nodes[node].end && memcmp(projection+offset,start,token)) offset++;
       if(offset+token>projection_size || offset+token>nodes[node].end) continue;

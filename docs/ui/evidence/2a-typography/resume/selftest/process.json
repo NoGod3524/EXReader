@@ -1,0 +1,14 @@
+{
+  "exit": 0,
+  "command": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\out\\EXReader.exe",
+    "--self-test",
+    "C:/Windows/Fonts/NotoSerifSC-VF.ttf",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-step6-20261107\\examples\\windows\\.local-regression-final\\selftest\\hongloumeng-24264.txt",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Sample.pdf",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\docs\\ui\\evidence\\2a-typography\\resume\\selftest\\report.json",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-rescue-20261107\\docs\\ui\\evidence\\2a-typography\\resume\\selftest\\page.png"
+  ],
+  "stderr": "",
+  "note": "EPUB input has empty opening material; self-test needs nonempty text on pages 1 and 2. Existing real-book plain-text extraction used."
+}
