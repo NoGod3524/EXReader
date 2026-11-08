@@ -1,0 +1,122 @@
+{
+  "base": "a53535bb71d66de600fa7c2f64332ac08a058025",
+  "os": "Windows-11-10.0.26200-SP0",
+  "cpu": "Intel64 Family 6 Model 189 Stepping 1, GenuineIntel",
+  "logical_cpus": 8,
+  "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+  "build": "C:\\Users\\Oscar\\Documents\\Codex\\fontmgr-20261107\\build",
+  "work": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\build\\font-manager-acceptance",
+  "cmake_options": [
+    "CMAKE_BUILD_TYPE:STRING=Release",
+    "CMAKE_C_COMPILER:FILEPATH=C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
+    "EXR_BUILD_FUZZ:BOOL=OFF",
+    "EXR_BUILD_JNI:BOOL=OFF",
+    "EXR_BUILD_SHARED_COMPAT:BOOL=ON",
+    "EXR_BUILD_TESTS:BOOL=ON",
+    "EXR_BUILD_TEXT_INDEX:BOOL=ON",
+    "EXR_BUILD_TOOLS:BOOL=ON",
+    "EXR_ENABLE_AAC:BOOL=OFF",
+    "EXR_ENABLE_AUDIO:BOOL=ON",
+    "EXR_ENABLE_ICC:BOOL=OFF",
+    "EXR_ENABLE_IMAGE_AVIF:BOOL=OFF",
+    "EXR_ENABLE_IMAGE_TIFF:BOOL=OFF",
+    "EXR_ENABLE_IMAGE_WEBP:BOOL=OFF",
+    "EXR_ENABLE_LIBRARY:BOOL=ON",
+    "EXR_ENABLE_MP3:BOOL=OFF",
+    "EXR_ENABLE_PDF:BOOL=ON",
+    "EXR_ENABLE_PDF_CRYPTO:BOOL=OFF",
+    "EXR_ENABLE_PDF_EDIT:BOOL=ON",
+    "EXR_ENABLE_PDF_JPX:BOOL=ON",
+    "EXR_ENABLE_TEXT_INDEX:BOOL=ON",
+    "EXR_NODE_EXECUTABLE:FILEPATH=C:/Program Files/nodejs/node.exe",
+    "EXR_SANITIZE:BOOL=OFF",
+    "FETCHCONTENT_SOURCE_DIR_EXPAT:PATH=C:/Users/Oscar/exr-deps/expat",
+    "FETCHCONTENT_SOURCE_DIR_FREETYPE:PATH=C:/Users/Oscar/exr-deps/freetype-VER-2-15-0",
+    "FETCHCONTENT_SOURCE_DIR_MINIZ:PATH=C:/Users/Oscar/exr-deps/miniz",
+    "FETCHCONTENT_SOURCE_DIR_OPENJPEG:PATH=C:/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4",
+    "FETCHCONTENT_SOURCE_DIR_SQLITE:PATH=C:/Users/Oscar/exr-deps/sqlite",
+    "FETCHCONTENT_SOURCE_DIR_STB:PATH=C:/Users/Oscar/exr-deps/stb"
+  ],
+  "inputs": [
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub",
+      "bytes": 1151585,
+      "sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\build\\font-manager-acceptance\\sources\\arial.ttf",
+      "bytes": 1045720,
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\build\\font-manager-acceptance\\sources\\NotoSerifSC-VF.ttf",
+      "bytes": 25129160,
+      "sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\build\\font-manager-acceptance\\sources\\Reader.otf",
+      "bytes": 16437364,
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\build\\font-manager-acceptance\\sources\\simsun.ttc",
+      "bytes": 18316748,
+      "sha256": "1526ac24375f51f6eb73bc2d3f8072dbe4a80a3a65217677c9d9a84f67dab2ab"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\fontmgr-20261107\\build\\libexreader.dll",
+      "bytes": 5996495,
+      "sha256": "659a26f3ec985ecad18d0b0dfce9d8bbd5cd6dca41e2d14176e0230c02bbac93"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\fontmgr-20261107\\build\\exreader-font-manager-probe.exe",
+      "bytes": 69886,
+      "sha256": "fbf7caa48b0dfc3a3a28aa496f0853de1c31d0c54da1e36cc9243a47e48da473"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\src\\font_manager.c",
+      "bytes": 26463,
+      "sha256": "82e383b1cf242c4a5443634749caa6ec7b246294d7a014fc8f221c42ee8efe06"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\src\\font_scan.c",
+      "bytes": 19764,
+      "sha256": "63998ba25d539098cc8a85145ce48a2f3122af4bbcf1cd0853edc2ac2fb47e15"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\src\\font_cache.c",
+      "bytes": 7368,
+      "sha256": "30a0730a53964f6986981a8301e29ec9cd9895783b47ac4351a3231ed1e0eccd"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\src\\font_manager_internal.h",
+      "bytes": 2662,
+      "sha256": "31ce26d513a287c3fde26a6b0b7f19a7508ba76e270a856448edde49cb07b6ae"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\include\\exr\\font_manager.h",
+      "bytes": 12349,
+      "sha256": "bd1e7bf6f3b8a0e699265a351a5bb0f31c9e543b4be0a7433c5d194ddde62987"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\tests\\test_font_manager.c",
+      "bytes": 17271,
+      "sha256": "7682cbf4312eaa814c9846202297c5da745eab2d24f17826a902dedc87b97a87"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\tests\\check_font_manager.py",
+      "bytes": 1973,
+      "sha256": "2eeacd6a250ec7d1470bb63ccee949b022a7dea2a164b13bf61aed0f690d9882"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\tests\\font_manager_probe.c",
+      "bytes": 4261,
+      "sha256": "926d33096e68320a5c6b22ea9d0ac47a05f5a44453639fac7d7843d2b8508698"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\tests\\benchmark_font_manager.py",
+      "bytes": 2532,
+      "sha256": "d2cd12ac8bee6afebb575dbf4c38c6006ec0fc315efd4de2b1d16e35a93d7297"
+    }
+  ]
+}
