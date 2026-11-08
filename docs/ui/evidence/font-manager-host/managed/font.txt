@@ -1,0 +1,10 @@
+正文：Noto Serif SC
+requested_family=serif
+family=Noto Serif SC
+file=C:\Windows/Fonts/NotoSerifSC-VF.ttf
+body_font=serif
+manager_ms=161.588
+cache=1
+parsed_files=350
+cached_files=0
+faces=11

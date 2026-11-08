@@ -1,31 +1,43 @@
 /* SPDX-License-Identifier: MIT */
-/* Exercise the actual host lookup with a private Windows font directory.
-   Build like reader.c, linking the same shell objects; place the executable in
-   a disposable directory. No installed font is renamed or removed. */
+/* Compile as a console check or -shared bridge. Both call the production host
+   startup helper; EXR_FONTHOST_CONFIG isolates discovery without changing fonts. */
 #include <windows.h>
-static UINT WINAPI test_windows_directory(LPWSTR path, UINT capacity) {
-  return GetEnvironmentVariableW(L"EXR_TEST_WINDOWS", path, capacity);
+static const wchar_t *check_module;
+static DWORD WINAPI check_module_filename(HMODULE module, LPWSTR path, DWORD capacity) {
+  if (!check_module) return GetModuleFileNameW(module, path, capacity);
+  size_t size = wcslen(check_module);
+  if (size >= capacity) return 0;
+  memcpy(path, check_module, (size + 1) * sizeof(*path));
+  return (DWORD)size;
 }
-#define GetWindowsDirectoryW test_windows_directory
+#define GetModuleFileNameW check_module_filename
 #include "../reader.c"
-#undef GetWindowsDirectoryW
+#undef GetModuleFileNameW
+
+__declspec(dllexport) exr_status host_check_font_open(const char *path, exr_font **out, exr_error *error) {
+  const char *config = getenv("EXR_FONTHOST_CONFIG");
+  wchar_t *wide = config ? host_wide(config, strlen(config)) : NULL;
+  wchar_t *module = path ? host_wide(path, strlen(path)) : NULL;
+  check_module = module;
+  module_directory(g.data_dir, HOST_PATH);
+  exr_status status = host_open_body_font(L"", wide ? wide : L"", error);
+  free(wide); free(module); check_module = NULL;
+  *out = g.font; g.font = NULL;
+  exr_font_manager_free(g.font_manager); g.font_manager = NULL;
+  return status;
+}
 
 int main(int argc, char **argv) {
-  wchar_t chosen[HOST_PATH], sans[HOST_PATH], dir[HOST_PATH];
-  exr_error error = {0}; exr_font *font = NULL; int fallback = 0;
+  exr_error error = {0}; exr_font *font = NULL;
   if (argc != 3 && argc != 5) return 2;
-  module_directory(dir, HOST_PATH);
-  path_join(sans, HOST_PATH, dir, L"Reader.otf");
-  copy_wstring(g.data_dir, HOST_PATH, dir);
-  exr_status status = host_open_body_font(sans, &font, chosen, HOST_PATH, &fallback, &error);
+  exr_status status = host_check_font_open(NULL, &font, &error);
   if (status != EXR_OK) { fprintf(stderr, "%s\n", error.message); return 3; }
-  host_log_body_font(chosen, fallback);
-  char *utf8 = host_utf8(chosen);
+  char *utf8 = host_utf8(g.font_path);
   exr_font_axis *axes = NULL; size_t count = 0;
   exr_font_axes(font, 0, &axes, &count, NULL);
   double weight = 0;
   for (size_t i = 0; i < count; i++) if (axes[i].tag == 0x77676874u) weight = axes[i].value;
-  printf("%s\nfallback=%d;weight=%.0f;faces=%zu\n", utf8, fallback, weight, exr_font_count(font));
+  printf("%s\nfallback=%d;weight=%.0f;faces=%zu\n", utf8, g.font_fell_back, weight, exr_font_count(font));
   if (argc == 5) {
     char text[4096]; FILE *input = fopen(argv[4], "rb");
     if (!input) return 5;
@@ -38,7 +50,7 @@ int main(int argc, char **argv) {
       printf("glyph=%zu,%zu,%.6f\n", glyphs[i].start, glyphs[i].end, (double)glyphs[i].advance_x);
     exr_free(glyphs);
   }
-  int passed = strstr(utf8, argv[1]) != NULL && fallback == atoi(argv[2]);
+  int passed = strstr(utf8, argv[1]) != NULL && g.font_fell_back == atoi(argv[2]);
   free(utf8); exr_free(axes); exr_font_free(font);
   return passed ? 0 : 4;
 }

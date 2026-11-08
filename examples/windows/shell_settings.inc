@@ -147,9 +147,9 @@ static LRESULT CALLBACK shell_panel_procedure(HWND window,UINT message,WPARAM wp
           MapWindowPoints(NULL,g.page,(POINT *)&place,2);
           HBRUSH bg=CreateSolidBrush(shell_colorref(shell_colors->layer_page));FillRect(underlay,&box,bg);DeleteObject(bg);
           if(page_buffer_dc) BitBlt(underlay,0,0,box.right,box.bottom,page_buffer_dc,place.left,place.top,SRCCOPY);
-          GdiFlush();shell_d2d_panel(host_shell,dc,&box,shell_is_dark(),font,bits);
+          GdiFlush();shell_d2d_panel(host_shell,dc,&box,shell_is_dark(),font,g.font_label,g.font_path,bits);
           SelectObject(underlay,old);
-        } else shell_d2d_panel(host_shell,dc,&box,shell_is_dark(),font,NULL);
+        } else shell_d2d_panel(host_shell,dc,&box,shell_is_dark(),font,g.font_label,g.font_path,NULL);
         if(bitmap) DeleteObject(bitmap);
         if(underlay) DeleteDC(underlay);
       }
@@ -200,7 +200,7 @@ static void shell_prepare_settings(void) {
   HBITMAP bitmap=CreateCompatibleBitmap(screen,box.right,box.bottom);ReleaseDC(g.window,screen);
   if(bitmap) {
     HGDIOBJ old=SelectObject(dc,bitmap);
-    shell_d2d_panel(host_shell,dc,&box,shell_is_dark(),L"",NULL);
+    shell_d2d_panel(host_shell,dc,&box,shell_is_dark(),L"",g.font_label,g.font_path,NULL);
     box.right=shell_px(SHELL_STEPPER_W+2*SHELL_CONTROL_FRAME,shell_dpi);
     box.bottom=shell_px(SHELL_CONTROL_H+2*SHELL_CONTROL_FRAME,shell_dpi);
     shell_d2d_control(host_shell,dc,&box,L"",shell_is_dark(),0,0);

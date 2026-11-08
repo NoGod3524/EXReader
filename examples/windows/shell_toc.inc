@@ -230,7 +230,8 @@ static void shell_toc_recover_chapters(void) {
           memcpy(label+used,q,bytes);used+=bytes;q+=bytes;
         }
       }
-      while(used && label[used-1]==' ') used--;label[used]=0;
+      while(used && label[used-1]==' ') used--;
+      label[used]=0;
       exr_navigation *grown=realloc(recovered,(count+1)*sizeof(*grown));if(!grown) continue;recovered=grown;
       exr_navigation entry={SIZE_MAX,part,NULL,NULL,NULL,NULL};
       entry.label=host_strdup(label);entry.role=host_strdup("toc");entry.base=host_strdup(parts[part].path);
@@ -296,7 +297,8 @@ static void shell_toc_jump(int row) {
   size_t offset=doc ? shell_toc_offset(doc,g.session.bounded ? 0:e->part,e):SIZE_MAX;
   host_job *job=offset!=SIZE_MAX ? job_new(JOB_GO):NULL;
   if(!job || exr_anchor_create(doc,offset,offset,&job->anchor,&error)!=EXR_OK) {
-    if(job) job_release(job);exr_document_free(loaded);set_status(L"目录目标未找到，未跳转。");return;
+    if(job) job_release(job);
+    exr_document_free(loaded);set_status(L"目录目标未找到，未跳转。");return;
   }
   shell_toc_offsets[row]=offset;job->book_id=g.session.book_id;job->use_offset=1;job->target_offset=offset;
   job->target_part=e->part;job->has_anchor=1;
@@ -317,7 +319,8 @@ static int shell_toc_draw(const DRAWITEMSTRUCT *item) {
   if(!shell_toc_drawing) return 1;
   if(item->itemID==(UINT)-1 || item->itemID>=shell_toc_count) return 1;
   unsigned state=0;int row=(int)item->itemID;
-  if(row==shell_toc_hot) state|=1;if(row==shell_toc_pressed) state|=2;
+  if(row==shell_toc_hot) state|=1;
+  if(row==shell_toc_pressed) state|=2;
   if(row==shell_toc_current) state|=8;
   if(shell_toc_keyboard && (GetFocus()==shell_toc_list || shell_toc_test_focus==shell_toc_list) &&
       row==(int)SendMessageW(shell_toc_list,LB_GETCURSEL,0,0)) state|=4;
@@ -343,7 +346,8 @@ static int shell_toc_key(HWND focus,WPARAM key,int shift) {
     case VK_PRIOR:row-=shell_toc_visible()-1;break;case VK_NEXT:row+=shell_toc_visible()-1;break;
     case VK_RETURN:case VK_SPACE:shell_toc_jump(row);return 1;default:return 0;
   }
-  if(row<0) row=0;if(row>=(int)shell_toc_count) row=(int)shell_toc_count-1;
+  if(row<0) row=0;
+  if(row>=(int)shell_toc_count) row=(int)shell_toc_count-1;
   shell_toc_keyboard=1;if(row!=old) SendMessageW(shell_toc_list,LB_SETCURSEL,row,0);
   shell_toc_ensure(row,0);
   InvalidateRect(shell_toc_list,NULL,FALSE);InvalidateRect(shell_toc_panel,NULL,FALSE);return 1;
@@ -386,7 +390,8 @@ static LRESULT CALLBACK shell_toc_list_proc(HWND window,UINT message,WPARAM wp,L
       if(dc!=output) BitBlt(output,0,0,r.right,r.bottom,dc,0,0,SRCCOPY);
       host_probe_log("toc_frame_ms",host_probe_ms()-start);
       host_probe_log("toc_bind_ms",bound-start);host_probe_log("toc_layout_ms",laid-bound);host_probe_log("toc_flush_ms",flushed-laid);
-      if(message==WM_PAINT) EndPaint(window,&paint);return 0;
+      if(message==WM_PAINT) EndPaint(window,&paint);
+      return 0;
     }
     case WM_DESTROY:
       if(shell_toc_bitmap) {SelectObject(shell_toc_buffer,shell_toc_old_bitmap);DeleteObject(shell_toc_bitmap);shell_toc_bitmap=NULL;}
@@ -432,7 +437,8 @@ static LRESULT CALLBACK shell_toc_proc(HWND window,UINT message,WPARAM wp,LPARAM
       if(item->hwndItem==shell_toc_empty) {
         shell_d2d_toc_row(host_shell,item->hDC,&item->rcItem,shell_toc_error[0] ? L"目录无法读取":L"这本书没有目录",shell_is_dark(),0,-3,16,650,2);return TRUE;
       }
-      if(shell_toc_draw(item)) return TRUE;break;
+      if(shell_toc_draw(item)) return TRUE;
+      break;
     }
     case WM_CTLCOLORLISTBOX:SetBkColor((HDC)wp,shell_colorref(shell_colors->layer_side));return (LRESULT)GetStockObject(NULL_BRUSH);
     case WM_KEYDOWN:if(shell_toc_key(window,wp,GetKeyState(VK_SHIFT)<0)) return 0;break;
@@ -482,7 +488,8 @@ static LRESULT CALLBACK shell_toc_proc(HWND window,UINT message,WPARAM wp,LPARAM
         int width=thumb.right-thumb.left;RoundRect(dc,thumb.left,thumb.top,thumb.right+1,thumb.bottom+1,width,width);
         SelectObject(dc,oldb);SelectObject(dc,oldp);DeleteObject(brush);DeleteObject(pen);
       }
-      if(message==WM_PAINT) EndPaint(window,&paint);return 0;
+      if(message==WM_PAINT) EndPaint(window,&paint);
+      return 0;
     }
   }
   return DefWindowProcW(window,message,wp,lp);

@@ -19,6 +19,7 @@
 #include <shellapi.h>
 #include <process.h>
 #include <exreader.h>
+#include <exr/font_manager.h>
 #include "windows/paint_probe.h"
 #ifdef EXR_READER_WINDOWS_SHELL
 #include "windows/shell_d2d.h"
@@ -249,6 +250,9 @@ typedef struct {
   HWND shelf_label, notes_label, shelf_search_label, note_edit_label;
   exr_library *library;
   exr_font *font;
+  exr_font_manager *font_manager;
+  int font_fell_back;
+  wchar_t font_family[128], font_label[192];
   wchar_t font_path[HOST_PATH];
   wchar_t data_dir[HOST_PATH];
   wchar_t library_path[HOST_PATH];
@@ -7445,6 +7449,8 @@ static void host_cleanup(void) {
   g.library = NULL;
   exr_font_free(g.font);
   g.font = NULL;
+  exr_font_manager_free(g.font_manager);
+  g.font_manager = NULL;
   if (g.drive_log) fclose(g.drive_log);
   g.drive_log = NULL;
   if (drive_file) fclose(drive_file);
@@ -7458,107 +7464,13 @@ static void host_cleanup(void) {
 #endif
 }
 
-/* Body text is set in a serif CJK face. Lookup order, first valid face wins:
-   bundled ReaderSerif.* next to the executable, Noto Serif SC (system then
-   per-user font folder), SimSun, and finally the bundled sans Reader.otf.
-   Folders come from the OS; no absolute path is assumed. Reader.otf stays in
-   the set as a glyph fallback. The choice, including any fallback to sans, is
-   written to typography.log in the data folder and to the status text. */
-static void *host_font_bytes(const wchar_t *path, size_t *size) {
-  HANDLE file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-  LARGE_INTEGER length; void *data = NULL; DWORD got = 0;
-  if (file == INVALID_HANDLE_VALUE) return NULL;
-  if (GetFileSizeEx(file, &length) && length.QuadPart > 0 && length.QuadPart <= 64 * 1024 * 1024 &&
-      (data = malloc((size_t)length.QuadPart)) != NULL &&
-      (!ReadFile(file, data, (DWORD)length.QuadPart, &got, NULL) || got != (DWORD)length.QuadPart)) {
-    free(data); data = NULL;
-  }
-  CloseHandle(file);
-  if (data) *size = (size_t)length.QuadPart;
-  return data;
-}
-static exr_status host_open_body_font(const wchar_t *sans_path, exr_font **out, wchar_t *chosen, size_t capacity,
-                                      int *fell_back, exr_error *error) {
-  static const wchar_t *const bundled[] = {L"ReaderSerif.otf", L"ReaderSerif.ttf", L"ReaderSerif.ttc"};
-  static const wchar_t *const noto[] = {L"NotoSerifSC-VF.ttf", L"NotoSerifSC-Regular.otf", L"NotoSerifSC-Regular.ttf",
-                                        L"NotoSerifCJKsc-Regular.otf", L"SourceHanSerifSC-Regular.otf"};
-  static const wchar_t *const song[] = {L"simsun.ttc"};
-  struct { const wchar_t *const *names; size_t count; int bundled; } groups[] = {
-    {bundled, 3, 1}, {noto, 5, 0}, {song, 1, 0}};
-  wchar_t dirs[3][HOST_PATH] = {{0}}, path[HOST_PATH];
-  exr_font_input inputs[2] = {{0}};
-  void *serif = NULL, *sans = NULL;
-  size_t serif_size = 0, sans_size = 0, count = 0, g_index, d, n;
-  exr_status status;
-  module_directory(dirs[0], HOST_PATH);
-  if (GetWindowsDirectoryW(path, HOST_PATH - 16)) path_join(dirs[1], HOST_PATH, path, L"Fonts");
-  if (GetEnvironmentVariableW(L"LOCALAPPDATA", path, HOST_PATH - 32))
-    path_join(dirs[2], HOST_PATH, path, L"Microsoft\\Windows\\Fonts");
-  chosen[0] = 0; *out = NULL;
-  for (g_index = 0; !serif && g_index < 3; g_index++)
-    for (d = groups[g_index].bundled ? 0 : 1; !serif && d < (groups[g_index].bundled ? 1u : 3u); d++)
-      for (n = 0; !serif && n < groups[g_index].count; n++) {
-        if (!dirs[d][0]) continue;
-        path_join(path, HOST_PATH, dirs[d], groups[g_index].names[n]);
-        if ((serif = host_font_bytes(path, &serif_size)) != NULL) {
-          exr_font_input candidate = {serif, serif_size, 0};
-          exr_font *probe = NULL;
-          if (exr_font_create(&candidate, 1, &probe, NULL) == EXR_OK &&
-              exr_font_has_glyph(probe, 0, 0x4e2d)) copy_wstring(chosen, capacity, path);
-          else { free(serif); serif = NULL; }
-          exr_font_free(probe);
-        }
-      }
-  sans = host_font_bytes(sans_path, &sans_size);
-  if (sans) {
-    exr_font_input candidate = {sans, sans_size, 0};
-    exr_font *probe = NULL;
-    if (exr_font_create(&candidate, 1, &probe, NULL) != EXR_OK) { free(sans); sans = NULL; }
-    exr_font_free(probe);
-  }
-  if (serif) inputs[count++] = (exr_font_input){serif, serif_size, 0};
-  if (sans) inputs[count++] = (exr_font_input){sans, sans_size, 0};
-  *fell_back = !serif;
-  if (!serif) copy_wstring(chosen, capacity, sans_path);
-  if (!count) { status = EXR_IO; if (error) { error->code = status; snprintf(error->message, sizeof(error->message), "no body font"); }; goto done; }
-  status = exr_font_create(inputs, count, out, error);
-  if (status == EXR_OK && serif) {
-    /* Noto Serif SC VF defaults to wght 200 (ExtraLight); body text is set at 400. */
-    exr_font_axis *axes = NULL; size_t axis_count = 0, a;
-    if (exr_font_axes(*out, 0, &axes, &axis_count, NULL) == EXR_OK)
-      for (a = 0; a < axis_count; a++)
-        if (axes[a].tag == 0x77676874u && axes[a].initial != 400 && axes[a].minimum <= 400 && axes[a].maximum >= 400) {
-          exr_font_coordinate weight = {0, 0x77676874u, 400};
-          exr_font *regular = NULL;
-          if (exr_font_create_variable(inputs, count, &weight, 1, &regular, NULL) == EXR_OK) {
-            exr_font_free(*out); *out = regular;
-          }
-        }
-    exr_free(axes);
-  }
-done:
-  free(serif); free(sans);
-  return status;
-}
-static void host_log_body_font(const wchar_t *chosen, int fell_back) {
-  wchar_t path[HOST_PATH], line[HOST_PATH + 128];
-  FILE *log;
-  swprintf(line, HOST_PATH + 128, fell_back ? L"字体已回退：未找到衬线中文字体，正文使用无衬线 %ls" : L"正文字体：%ls",
-           chosen);
-  OutputDebugStringW(line);
-  set_status(line);
-  path_join(path, HOST_PATH, g.data_dir, L"typography.log");
-  if ((log = _wfopen(path, L"wb")) != NULL) {
-    char *utf8 = host_utf8(line);
-    if (utf8) fprintf(log, "%s\r\nbody_font=%s\r\n", utf8, fell_back ? "fallback-sans" : "serif");
-    free(utf8); fclose(log);
-  }
-}
+#include "windows/host_font.inc"
 
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int show) {
   int argc = 0;
   wchar_t **argv = CommandLineToArgvW(GetCommandLineW(), &argc);
   wchar_t font_path[HOST_PATH] = L"";
+  wchar_t font_config[HOST_PATH] = L"";
   wchar_t data_dir[HOST_PATH] = L"";
   wchar_t book_path[HOST_PATH] = L"";
   wchar_t library_override[HOST_PATH] = L"";
@@ -7595,6 +7507,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     else if (!wcscmp(argv[i], L"--evidence")) { copy_wstring(evidence, HOST_PATH, value); i++; }
     else if (!wcscmp(argv[i], L"--data")) { copy_wstring(data_dir, HOST_PATH, value); i++; }
     else if (!wcscmp(argv[i], L"--library")) { copy_wstring(library_override, HOST_PATH, value); i++; }
+    else if (!wcscmp(argv[i], L"--font-config")) { copy_wstring(font_config, HOST_PATH, value); i++; }
     else if (!wcscmp(argv[i], L"--font")) { copy_wstring(font_path, HOST_PATH, value); i++; }
     else if (!wcscmp(argv[i], L"--phase")) { copy_wstring(phase, 32, value); i++; }
     else if (argv[i][0] != L'-') copy_wstring(book_path, HOST_PATH, argv[i]);
@@ -7624,13 +7537,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     ensure_directory(g.evidence_dir);
   }
   if (script[0]) copy_wstring(g.script_path, HOST_PATH, script);
-  int font_chain = !font_path[0]; /* --font names one explicit face */
-  if (!font_path[0]) {
-    wchar_t module_dir[HOST_PATH];
-    module_directory(module_dir, HOST_PATH);
-    path_join(font_path, HOST_PATH, module_dir, L"Reader.otf");
-  }
-  copy_wstring(g.font_path, HOST_PATH, font_path);
 #ifdef EXR_READER_PRODUCT_CATALOG
   {
     wchar_t lock_path[HOST_PATH];
@@ -7673,17 +7579,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   }
   {
     exr_error error = {0};
-    exr_status status;
-    if (font_chain) {
-      wchar_t chosen[HOST_PATH];
-      int fell_back = 0;
-      status = host_open_body_font(font_path, &g.font, chosen, HOST_PATH, &fell_back, &error);
-      if (status == EXR_OK) host_log_body_font(chosen, fell_back);
-    } else {
-      char *path = host_utf8(font_path);
-      status = path ? exr_font_open(path, &g.font, &error) : EXR_MEMORY;
-      free(path);
-    }
+    exr_status status = host_open_body_font(font_path, font_config, &error);
     if (status != EXR_OK) {
       wchar_t message[512];
       describe_error(message, 512, L"无法打开正文字体", status, &error);
