@@ -206,6 +206,7 @@ static int shell_layout(void) {
   shell_search_layout();
   shell_panel_layout();
   shell_toc_layout();
+  sm_refresh();
   return 1;
 }
 
@@ -222,7 +223,7 @@ static void shell_enter(void) {
   size_t i;
   shell_hidden_count = 0;
   for (child = GetWindow(g.window, GW_CHILD); child; child = GetWindow(child, GW_HWNDNEXT)) {
-    if (child == g.page || child == shell_toc || child == shell_settings || child == shell_search_button || !IsWindowVisible(child)) continue;
+    if (child == g.page || child == shell_toc || child == shell_settings || child == shell_search_button || child == sm_view || child == sm_button || !IsWindowVisible(child)) continue;
     if (shell_hidden_count == SHELL_HIDDEN_MAX) break;
     shell_hidden[shell_hidden_count++] = child;
   }
@@ -272,6 +273,7 @@ static void shell_leave(void) {
         height < limits.ptMinTrackSize.y ? limits.ptMinTrackSize.y : height,
         SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
   }
+  sm_refresh();
   layout_controls();
   shell_request_layout();
   InvalidateRect(g.window, NULL, TRUE);
