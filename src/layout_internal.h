@@ -40,7 +40,9 @@ struct exr_layout {
   float first_baseline; /* First line's logical block-axis baseline, including ruby. */
   unsigned has_baseline;
   int source_overlaps; /* Page source envelopes overlap; consult actual glyph ranges. */
+  struct exr_toc_meta *toc; /* Synthetic TOC pages only; NULL for ordinary layouts. */
 };
+void exr_toc_meta_free(struct exr_toc_meta *meta);
 exr_status exr_layout_image_asset(const exr_document *doc, exr_layout *assets,
                                     const exr_layout_config *config, size_t resource,
                                     const exr_bitmap **bitmap, exr_error *error);
