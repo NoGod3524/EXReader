@@ -1,0 +1,22 @@
+{
+  "base": "f351f9a682a05981ffde3d5867c0ed66f4e0277d",
+  "exe_sha256": "9e3fa3baa07245897334d0d3db2dc9709e58085fa08f14086ccb46aa144999b8",
+  "dll_sha256": "49344b73f2a875b0f5d05cf9c1ca589a46295410290235600a7566cc3d65950f",
+  "serif": {
+    "family": "Noto Serif SC",
+    "path": "C:/Windows/Fonts/NotoSerifSC-VF.ttf",
+    "sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280"
+  },
+  "sans": {
+    "family": "Microsoft YaHei",
+    "path": "C:/Windows/Fonts/msyh.ttc",
+    "sha256": "d79c55e68b1131eea0cc1c47be4f572d964f28c682e143db2ad09c1e4cb07a3f"
+  },
+  "baseline_bridge_sha256": "30dc7c877aa9d6d7c20c55637dc1ce655a663f4ebc6b5432a08acfa060a5492d",
+  "after_bridge_sha256": "652b295fa078473330210ba26d0478d0cf7ea253909b09a569ce7b0ca4c62c27",
+  "capture": "ops/capture_window.py",
+  "restore_screenshot_changed_pixels": 0,
+  "font_change_screenshot_changed_pixels": 167059,
+  "ctest": "211/211",
+  "selftest": "26/26"
+}

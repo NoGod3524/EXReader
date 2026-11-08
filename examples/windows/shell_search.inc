@@ -228,7 +228,8 @@ static void shell_search_jump(void) {
   if(g.session.bounded) {if(exr_publication_load(g.session.publication,r.part,&loaded,&error)!=EXR_OK) return;doc=loaded;}
   host_job *job=job_new(JOB_GO);
   if(!job || exr_anchor_create(doc,r.offset,r.offset+r.length,&job->anchor,&error)!=EXR_OK) {
-    if(job) job_release(job);exr_document_free(loaded);set_status(L"搜索命中锚点创建失败。");return;
+    if(job) job_release(job);
+    exr_document_free(loaded);set_status(L"搜索命中锚点创建失败。");return;
   }
   job->shell_search_jump=1;job->book_id=g.session.book_id;job->use_offset=1;job->target_offset=r.offset;job->target_part=r.part;job->has_anchor=1;
   if(g.session.bounded) {
@@ -297,7 +298,8 @@ static LRESULT CALLBACK shell_search_proc(HWND window,UINT message,WPARAM wp,LPA
     }
     case WM_CTLCOLORSTATIC:case WM_CTLCOLOREDIT:case WM_CTLCOLORBTN:
       SetTextColor((HDC)wp,shell_colorref(shell_colors->text));SetBkColor((HDC)wp,shell_colorref(shell_colors->layer_side));
-      if(shell_search_brush) DeleteObject(shell_search_brush);shell_search_brush=CreateSolidBrush(shell_colorref(shell_colors->layer_side));return (LRESULT)shell_search_brush;
+      if(shell_search_brush) DeleteObject(shell_search_brush);
+      shell_search_brush=CreateSolidBrush(shell_colorref(shell_colors->layer_side));return (LRESULT)shell_search_brush;
   }
   return DefWindowProcW(window,message,wp,lp);
 }
@@ -331,7 +333,8 @@ static void shell_search_destroy(void) {
   if(shell_search_thread) {WaitForSingleObject(shell_search_thread,INFINITE);CloseHandle(shell_search_thread);shell_search_thread=NULL;}
   if(shell_search_working) {free(shell_search_working->hits);free(shell_search_working->path);free(shell_search_working->needle);free(shell_search_working);shell_search_working=NULL;}
   shell_search_cache_free();free(shell_search_hits);shell_search_hits=NULL;
-  if(shell_search_font) DeleteObject(shell_search_font);if(shell_search_brush) DeleteObject(shell_search_brush);
+  if(shell_search_font) DeleteObject(shell_search_font);
+  if(shell_search_brush) DeleteObject(shell_search_brush);
 }
 
 static void shell_search_shade(HDC dc,HRGN region,int current) {

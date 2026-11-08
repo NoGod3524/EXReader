@@ -1,0 +1,3624 @@
+Start testing: Nov 08 05:59 Eastern Standard Time
+----------------------------------------------------------
+86/211 Testing: native-flow
+86/211 Test: native-flow
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-flow-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-flow" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+EXReader flow: 5347 checks passed
+<end of output>
+Test time =   0.12 sec
+----------------------------------------------------------
+Test Passed.
+"native-flow" end time: Nov 08 05:59 Eastern Standard Time
+"native-flow" time elapsed: 00:00:00
+----------------------------------------------------------
+
+82/211 Testing: native-core
+82/211 Test: native-core
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-core" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+EXReader C 3.42.0: 70073 checks passed
+<end of output>
+Test time =   0.25 sec
+----------------------------------------------------------
+Test Passed.
+"native-core" end time: Nov 08 05:59 Eastern Standard Time
+"native-core" time elapsed: 00:00:00
+----------------------------------------------------------
+
+170/211 Testing: native-convert-corpus
+170/211 Test: native-convert-corpus
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tools/generate_conversion_corpus.py" "--out" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/convert-corpus" "--fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-convert-corpus" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+generated 101 files in C:\Users\Oscar\Documents\Codex\EXReader-annot-20261108\out\sdk\convert-corpus
+<end of output>
+Test time =   0.53 sec
+----------------------------------------------------------
+Test Passed.
+"native-convert-corpus" end time: Nov 08 05:59 Eastern Standard Time
+"native-convert-corpus" time elapsed: 00:00:00
+----------------------------------------------------------
+
+181/211 Testing: native-corpus-triage
+181/211 Test: native-corpus-triage
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/check_corpus_triage.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-check-document.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-corpus-triage" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Corpus classification checks passed; independent PDF reference checked
+<end of output>
+Test time =   7.30 sec
+----------------------------------------------------------
+Test Passed.
+"native-corpus-triage" end time: Nov 08 05:59 Eastern Standard Time
+"native-corpus-triage" time elapsed: 00:00:07
+----------------------------------------------------------
+
+164/211 Testing: native-chapter-reader
+164/211 Test: native-chapter-reader
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-chapter-reader-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-chapter-reader" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+9480 chapter reader equivalence and recovery checks passed
+<end of output>
+Test time =   7.59 sec
+----------------------------------------------------------
+Test Passed.
+"native-chapter-reader" end time: Nov 08 05:59 Eastern Standard Time
+"native-chapter-reader" time elapsed: 00:00:07
+----------------------------------------------------------
+
+180/211 Testing: native-document-probe
+180/211 Test: native-document-probe
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/check_document_probe.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-check-document.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-document-probe" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Complete-document probe and corpus evidence checks passed
+<end of output>
+Test time =  11.16 sec
+----------------------------------------------------------
+Test Passed.
+"native-document-probe" end time: Nov 08 05:59 Eastern Standard Time
+"native-document-probe" time elapsed: 00:00:11
+----------------------------------------------------------
+
+172/211 Testing: native-convert-cli
+172/211 Test: native-convert-cli
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/check_convert_cli.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-convert.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/convert-corpus" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/convert-cli-work" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/native-convert-cli.json"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-convert-cli" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+PASS capabilities
+PASS single-txt-to-epub
+PASS single-html-to-fb2
+PASS single-epub-to-docx
+PASS single-rtf-to-txt
+PASS single-docx-to-html
+PASS single-fb2-to-rtf
+PASS single-epub-to-html
+PASS default-output-name
+PASS xhtml-alias
+PASS explicit-format
+PASS arbitrary-output-extension
+PASS uppercase-extension
+PASS preserve-epub-0
+PASS preserve-epub-1
+PASS preserve-epub-html-bundle
+PASS preserve-xhtml-to-epub
+PASS preserve-xhtml-to-html
+PASS preserve-unsupported
+PASS preserve-missing-resource
+PASS batch-success
+PASS batch-mixed
+PASS batch-duplicate-output
+PASS bad-manifest
+PASS duplicate-manifest-id
+PASS source-equals-target
+PASS source-target-case-alias
+PASS source-target-hardlink
+PASS existing-target
+PASS explicit-overwrite
+PASS source-target-junction
+PASS write-failure
+PASS publish-failure
+PASS unicode-space-path
+PASS report-write-failure
+PASS input-limit
+PASS cancel-batch
+37 scenarios, 37 passed, 0 failed
+<end of output>
+Test time =   4.11 sec
+----------------------------------------------------------
+Test Passed.
+"native-convert-cli" end time: Nov 08 05:59 Eastern Standard Time
+"native-convert-cli" time elapsed: 00:00:04
+----------------------------------------------------------
+
+173/211 Testing: native-convert-benchmark
+173/211 Test: native-convert-benchmark
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/check_convert_benchmark.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-convert.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/convert-corpus" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/convert-benchmark-work" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/native-convert-benchmark.json"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-convert-benchmark" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+small=10 one_mib_peak=27623424 batch_peak=29995008 outputs_batch=5385700
+<end of output>
+Test time =  11.51 sec
+----------------------------------------------------------
+Test Passed.
+"native-convert-benchmark" end time: Nov 08 05:59 Eastern Standard Time
+"native-convert-benchmark" time elapsed: 00:00:11
+----------------------------------------------------------
+
+159/211 Testing: native-line-boundary
+159/211 Test: native-line-boundary
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-line-boundary-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/shaping" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-line-boundary" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+EXReader line boundaries: 46986 checks passed
+<end of output>
+Test time =  13.55 sec
+----------------------------------------------------------
+Test Passed.
+"native-line-boundary" end time: Nov 08 05:59 Eastern Standard Time
+"native-line-boundary" time elapsed: 00:00:13
+----------------------------------------------------------
+
+14/211 Testing: native-float
+14/211 Test: native-float
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-float-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-float" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+691110 float checks passed
+<end of output>
+Test time =   7.06 sec
+----------------------------------------------------------
+Test Passed.
+"native-float" end time: Nov 08 05:59 Eastern Standard Time
+"native-float" time elapsed: 00:00:07
+----------------------------------------------------------
+
+40/211 Testing: native-inks
+40/211 Test: native-inks
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-native-inks-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-inks" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+929 native ink checks; max reference difference 1; legacy round-trip difference 7
+<end of output>
+Test time =   3.53 sec
+----------------------------------------------------------
+Test Passed.
+"native-inks" end time: Nov 08 05:59 Eastern Standard Time
+"native-inks" time elapsed: 00:00:03
+----------------------------------------------------------
+
+179/211 Testing: native-benchmark
+179/211 Test: native-benchmark
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/check_benchmark.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-benchmark.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-benchmark" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Benchmark eager/paged JSON, bounded continuation, render samples, runner and invalid arguments verified
+<end of output>
+Test time =   4.57 sec
+----------------------------------------------------------
+Test Passed.
+"native-benchmark" end time: Nov 08 05:59 Eastern Standard Time
+"native-benchmark" time elapsed: 00:00:04
+----------------------------------------------------------
+
+31/211 Testing: native-library-stream
+31/211 Test: native-library-stream
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-library-stream-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/images/png/gradient.png" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/pdf-public.pdf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-library-stream" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+84 streaming library checks passed
+<end of output>
+Test time =   4.52 sec
+----------------------------------------------------------
+Test Passed.
+"native-library-stream" end time: Nov 08 05:59 Eastern Standard Time
+"native-library-stream" time elapsed: 00:00:04
+----------------------------------------------------------
+
+47/211 Testing: native-pdf-shading
+47/211 Test: native-pdf-shading
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-shading-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-shading" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+41933 native PDF shading checks passed
+<end of output>
+Test time =   1.95 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-shading" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-shading" time elapsed: 00:00:01
+----------------------------------------------------------
+
+176/211 Testing: native-hyphen-compound-oracle
+176/211 Test: native-hyphen-compound-oracle
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tools/check_hyphen_compound.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/libexreader.dll"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-hyphen-compound-oracle" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+{"reference": "independent literal overlay", "seed": 180327, "queries": 10075, "unchanged_real_dictionaries": [], "strict_minimum_reference_differences": 0, "library_sha256": "49344b73f2a875b0f5d05cf9c1ca589a46295410290235600a7566cc3d65950f", "reference_sha256": null, "preprocessor_sha256": null, "reference_input": "not used"}
+<end of output>
+Test time =   3.39 sec
+----------------------------------------------------------
+Test Passed.
+"native-hyphen-compound-oracle" end time: Nov 08 05:59 Eastern Standard Time
+"native-hyphen-compound-oracle" time elapsed: 00:00:03
+----------------------------------------------------------
+
+41/211 Testing: native-nested-groups
+41/211 Test: native-nested-groups
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-nested-groups-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-nested-groups" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+24 nested crop scenarios match whole buffers; minimum working allocation reduction 97%
+6194 nested group checks, maximum Decimal probe difference 1/255
+<end of output>
+Test time =   1.39 sec
+----------------------------------------------------------
+Test Passed.
+"native-nested-groups" end time: Nov 08 05:59 Eastern Standard Time
+"native-nested-groups" time elapsed: 00:00:01
+----------------------------------------------------------
+
+178/211 Testing: native-hyphen-conditional-oracle
+178/211 Test: native-hyphen-conditional-oracle
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tools/check_hyphen_conditional.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/libexreader.dll"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-hyphen-conditional-oracle" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+{"seed": 180329, "generated_queries": 4801, "unicode_queries": 1200, "opportunities": 16929, "external_queries": 0, "external_scope": "ASCII anchored conditional left stems; cut>0 and restored stem shorter than parent; documented substring preprocessing", "library_sha256": "49344b73f2a875b0f5d05cf9c1ca589a46295410290235600a7566cc3d65950f"}
+<end of output>
+Test time =   2.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-hyphen-conditional-oracle" end time: Nov 08 05:59 Eastern Standard Time
+"native-hyphen-conditional-oracle" time elapsed: 00:00:02
+----------------------------------------------------------
+
+15/211 Testing: native-table-fragments
+15/211 Test: native-table-fragments
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-table-fragments-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-table-fragments" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+fragment case 0
+fragment case 1
+fragment case 2
+fragment case 3
+fragment case 4
+fragment case 5
+fragment case 6
+fragment case 7
+fragment case 8
+fragment case 9
+fragment case 10
+fragment case 11
+fragment case 12
+fragment case 13
+fragment case 14
+fragment case 15
+fragment case 16
+fragment case 17
+fragment case 18
+fragment case 19
+fragment case 20
+fragment case 21
+fragment case 22
+fragment case 23
+large fixed first-page polls 2152
+case 0 pages 41 pixels 45549fe6a0ba6c79
+case 1 pages 41 pixels 0c7944600e504fd3
+case 2 pages 41 pixels da1bf69039de50d9
+case 3 pages 41 pixels 81c3f35d40795259
+case 4 pages 41 pixels 7a71f204c2c66f59
+case 5 pages 41 pixels 282a4300dd6ad4e9
+case 6 pages 23 pixels e906688d7989ea41
+case 7 pages 23 pixels e88846aa807428e9
+case 8 pages 41 pixels 46893a23317837d6
+case 9 pages 41 pixels 1e9e47c6862e1461
+case 10 pages 30 pixels d67f52026ab1f5b2
+case 11 pages 80 pixels 3a703d302fefe0fd
+case 12 pages 60 pixels e98b9f19bfe02afd
+case 13 pages 60 pixels c9e91b866afea495
+case 14 pages 82 pixels f2f73e296be4151d
+case 15 pages 61 pixels 0fef0b2eff2245a5
+case 16 pages 8 pixels 92dc7241ed046dde
+case 17 pages 20 pixels 33056ac92b24df85
+case 18 pages 73 pixels 3bbb5a91d592661d
+case 19 pages 60 pixels adbb7b614e6053a5
+case 20 pages 3 pixels cbd8a312c375b976
+case 21 pages 25 pixels 6fe5af93ed883cbd
+case 22 pages 42 pixels fb04dc49c7bfeec5
+case 23 pages 31 pixels e2de33d476aca0ea
+163762 table fragment checks passed
+<end of output>
+Test time =   1.42 sec
+----------------------------------------------------------
+Test Passed.
+"native-table-fragments" end time: Nov 08 05:59 Eastern Standard Time
+"native-table-fragments" time elapsed: 00:00:01
+----------------------------------------------------------
+
+102/211 Testing: native-note-limit
+102/211 Test: native-note-limit
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-note-limit-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-note-limit" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+74 annotation text limit checks passed
+<end of output>
+Test time =   1.87 sec
+----------------------------------------------------------
+Test Passed.
+"native-note-limit" end time: Nov 08 05:59 Eastern Standard Time
+"native-note-limit" time elapsed: 00:00:01
+----------------------------------------------------------
+
+156/211 Testing: native-bidi
+156/211 Test: native-bidi
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-bidi-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/bidi"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-bidi" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+861948 Unicode 17 bidi conformance cases, 24401500 checks passed
+<end of output>
+Test time =   1.17 sec
+----------------------------------------------------------
+Test Passed.
+"native-bidi" end time: Nov 08 05:59 Eastern Standard Time
+"native-bidi" time elapsed: 00:00:01
+----------------------------------------------------------
+
+25/211 Testing: native-chapter-window
+25/211 Test: native-chapter-window
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-chapter-window-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-chapter-window" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+50 MiB replayed: tail-window=1110 bytes, fixed-generator=32768 bytes
+100 MiB replayed: tail-window=1110 bytes, fixed-generator=32768 bytes
+62924 chapter window checks passed
+<end of output>
+Test time =   1.44 sec
+----------------------------------------------------------
+Test Passed.
+"native-chapter-window" end time: Nov 08 05:59 Eastern Standard Time
+"native-chapter-window" time elapsed: 00:00:01
+----------------------------------------------------------
+
+130/211 Testing: native-blend
+130/211 Test: native-blend
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-blend-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/pdf-blend"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-blend" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+flat alpha0 maximum premultiplied difference 2
+flat alpha1 maximum premultiplied difference 2
+primitives alpha0 maximum premultiplied difference 2
+primitives alpha1 maximum premultiplied difference 1
+state alpha0 maximum premultiplied difference 0
+state alpha1 maximum premultiplied difference 0
+groups alpha0 maximum premultiplied difference 2
+groups alpha1 maximum premultiplied difference 2
+compound alpha0 maximum premultiplied difference 2
+compound alpha1 maximum premultiplied difference 2
+ap-groups alpha0 maximum premultiplied difference 1
+ap-groups alpha1 maximum premultiplied difference 1
+nonisolated alpha0 maximum premultiplied difference 1
+nonisolated alpha1 maximum premultiplied difference 1
+ap-nonisolated alpha0 maximum premultiplied difference 1
+ap-nonisolated alpha1 maximum premultiplied difference 1
+knockout alpha0 maximum premultiplied difference 0
+knockout alpha1 maximum premultiplied difference 0
+knockout-nonisolated alpha0 maximum premultiplied difference 0
+knockout-nonisolated alpha1 maximum premultiplied difference 0
+knockout-shapes alpha0 maximum premultiplied difference 0
+knockout-shapes alpha1 maximum premultiplied difference 0
+knockout-elements alpha0 maximum premultiplied difference 0
+knockout-elements alpha1 maximum premultiplied difference 0
+knockout-edges alpha0 maximum premultiplied difference 0
+knockout-edges alpha1 maximum premultiplied difference 0
+softmask-alpha-grid alpha0 maximum premultiplied difference 0
+softmask-alpha-grid alpha1 maximum premultiplied difference 0
+softmask-luminosity-grid alpha0 maximum premultiplied difference 1
+softmask-luminosity-grid alpha1 maximum premultiplied difference 1
+softmask-matrix alpha0 maximum premultiplied difference 0
+softmask-matrix alpha1 maximum premultiplied difference 0
+softmask-bbox alpha0 maximum premultiplied difference 0
+softmask-bbox alpha1 maximum premultiplied difference 0
+softmask-tr alpha0 maximum premultiplied difference 0
+softmask-tr alpha1 maximum premultiplied difference 0
+softmask-qq alpha0 maximum premultiplied difference 0
+softmask-qq alpha1 maximum premultiplied difference 0
+softmask-gray alpha0 maximum premultiplied difference 1
+softmask-gray alpha1 maximum premultiplied difference 1
+softmask-nested alpha0 maximum premultiplied difference 0
+softmask-nested alpha1 maximum premultiplied difference 0
+1042841 RGB blend checks passed
+<end of output>
+Test time =   0.52 sec
+----------------------------------------------------------
+Test Passed.
+"native-blend" end time: Nov 08 05:59 Eastern Standard Time
+"native-blend" time elapsed: 00:00:00
+----------------------------------------------------------
+
+167/211 Testing: native-page-cache
+167/211 Test: native-page-cache
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-page-cache-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-page-cache" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+5187 page cache checks passed
+<end of output>
+Test time =   1.00 sec
+----------------------------------------------------------
+Test Passed.
+"native-page-cache" end time: Nov 08 05:59 Eastern Standard Time
+"native-page-cache" time elapsed: 00:00:00
+----------------------------------------------------------
+
+42/211 Testing: native-paint-source
+42/211 Test: native-paint-source
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-paint-source-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-paint-source" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+{"scenario":"full-canvas","status":6,"calls":22364160,"charged_work":268369920,"cpu_ms":1287.000000,"pixel_hash":"9f970139dd772383"}
+{"scenario":"tiny-clip-with-hole","status":0,"calls":48,"charged_work":9437776,"cpu_ms":11.000000,"pixel_hash":"861f4780274ac3cb"}
+283 procedural paint checks passed
+<end of output>
+Test time =   1.55 sec
+----------------------------------------------------------
+Test Passed.
+"native-paint-source" end time: Nov 08 05:59 Eastern Standard Time
+"native-paint-source" time elapsed: 00:00:01
+----------------------------------------------------------
+
+24/211 Testing: native-chapter-index
+24/211 Test: native-chapter-index
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-chapter-index-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-chapter-index" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+50 MiB streamed: 102404 nodes, sampled-accounted=3489737 bytes, retained=3416516 bytes, generator=32768 bytes
+100 MiB streamed: 204804 nodes, sampled-accounted=6766537 bytes, retained=6693316 bytes, generator=32768 bytes
+27366 chapter index checks passed
+<end of output>
+Test time =   0.88 sec
+----------------------------------------------------------
+Test Passed.
+"native-chapter-index" end time: Nov 08 05:59 Eastern Standard Time
+"native-chapter-index" time elapsed: 00:00:00
+----------------------------------------------------------
+
+46/211 Testing: native-mask-scope
+46/211 Test: native-mask-scope
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-mask-scope-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-mask-scope" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+317 mask scope checks; maximum analytic probe difference 1/255
+<end of output>
+Test time =   0.88 sec
+----------------------------------------------------------
+Test Passed.
+"native-mask-scope" end time: Nov 08 05:59 Eastern Standard Time
+"native-mask-scope" time elapsed: 00:00:00
+----------------------------------------------------------
+
+108/211 Testing: native-pdf-objects
+108/211 Test: native-pdf-objects
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-object-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-objects" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+23430 native PDF object checks passed
+<end of output>
+Test time =   0.30 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-objects" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-objects" time elapsed: 00:00:00
+----------------------------------------------------------
+
+55/211 Testing: native-pdf-inline
+55/211 Test: native-pdf-inline
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-inline-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-inline" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+394 native PDF inline image checks passed
+<end of output>
+Test time =   0.88 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-inline" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-inline" time elapsed: 00:00:00
+----------------------------------------------------------
+
+44/211 Testing: native-alpha-source
+44/211 Test: native-alpha-source
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-alpha-source-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-alpha-source" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+1834 alpha source checks; maximum Decimal difference 0/255
+<end of output>
+Test time =   0.48 sec
+----------------------------------------------------------
+Test Passed.
+"native-alpha-source" end time: Nov 08 05:59 Eastern Standard Time
+"native-alpha-source" time elapsed: 00:00:00
+----------------------------------------------------------
+
+137/211 Testing: native-kf8
+137/211 Test: native-kf8
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-kf8-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-kf8" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+1729 KF8 checks passed
+<end of output>
+Test time =   0.21 sec
+----------------------------------------------------------
+Test Passed.
+"native-kf8" end time: Nov 08 05:59 Eastern Standard Time
+"native-kf8" time elapsed: 00:00:00
+----------------------------------------------------------
+
+177/211 Testing: native-hyphen-replacement-oracle
+177/211 Test: native-hyphen-replacement-oracle
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tools/check_hyphen_replacements.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/libexreader.dll"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-hyphen-replacement-oracle" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+{"reference": "independent literal overlay", "seed": 180328, "generated_queries": 5000, "generated_replacement_opportunities": 8479, "library_sha256": "49344b73f2a875b0f5d05cf9c1ca589a46295410290235600a7566cc3d65950f"}
+<end of output>
+Test time =   0.89 sec
+----------------------------------------------------------
+Test Passed.
+"native-hyphen-replacement-oracle" end time: Nov 08 05:59 Eastern Standard Time
+"native-hyphen-replacement-oracle" time elapsed: 00:00:00
+----------------------------------------------------------
+
+188/211 Testing: native-library-epub-storage
+188/211 Test: native-library-epub-storage
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-library-epub-storage-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-library-epub-storage" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+2305 independent EPUB storage checks passed
+<end of output>
+Test time =   0.71 sec
+----------------------------------------------------------
+Test Passed.
+"native-library-epub-storage" end time: Nov 08 05:59 Eastern Standard Time
+"native-library-epub-storage" time elapsed: 00:00:00
+----------------------------------------------------------
+
+16/211 Testing: native-table-border
+16/211 Test: native-table-border
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-table-border-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-table-border" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+12497 table border checks passed
+<end of output>
+Test time =   0.43 sec
+----------------------------------------------------------
+Test Passed.
+"native-table-border" end time: Nov 08 05:59 Eastern Standard Time
+"native-table-border" time elapsed: 00:00:00
+----------------------------------------------------------
+
+187/211 Testing: native-library-source
+187/211 Test: native-library-source
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-library-source-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-library-source" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+23859 public library source checks passed
+<end of output>
+Test time =   0.69 sec
+----------------------------------------------------------
+Test Passed.
+"native-library-source" end time: Nov 08 05:59 Eastern Standard Time
+"native-library-source" time elapsed: 00:00:00
+----------------------------------------------------------
+
+20/211 Testing: native-table-intrinsic
+20/211 Test: native-table-intrinsic
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-table-intrinsic-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-table-intrinsic" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+12840 intrinsic table checks passed
+<end of output>
+Test time =   0.44 sec
+----------------------------------------------------------
+Test Passed.
+"native-table-intrinsic" end time: Nov 08 05:59 Eastern Standard Time
+"native-table-intrinsic" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/211 Testing: native-pdf-shading-mesh7
+4/211 Test: native-pdf-shading-mesh7
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-shading-mesh7-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-shading-mesh7" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+40 native PDF type 6/7 mesh shading checks passed
+<end of output>
+Test time =   0.47 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-shading-mesh7" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-shading-mesh7" time elapsed: 00:00:00
+----------------------------------------------------------
+
+117/211 Testing: native-pdf-image
+117/211 Test: native-pdf-image
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-image-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-image" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+3852 native PDF image checks passed
+<end of output>
+Test time =   0.25 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-image" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-image" time elapsed: 00:00:00
+----------------------------------------------------------
+
+175/211 Testing: native-case-reference
+175/211 Test: native-case-reference
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tools/check_case_reference.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-case-test.exe" "C:/Program Files/nodejs/node.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-case-reference" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+8074 contextual case comparisons passed; independent ICU 78.3, Unicode 17.0; includes all Unicode 17 default mapping scalars
+<end of output>
+Test time =   0.70 sec
+----------------------------------------------------------
+Test Passed.
+"native-case-reference" end time: Nov 08 05:59 Eastern Standard Time
+"native-case-reference" time elapsed: 00:00:00
+----------------------------------------------------------
+
+183/211 Testing: native-color-png
+183/211 Test: native-color-png
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/check_png.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/native-styled-page.png" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/native-image-page.png" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/native-image-page.bmp"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-color-png" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+PNG verified: 720 x 1040, 4 channels, CRCs and native pixels
+PNG verified: 720 x 1040, 4 channels, CRCs and native pixels
+BMP verified: 720 x 1040, BGR color pixels
+<end of output>
+Test time =   0.56 sec
+----------------------------------------------------------
+Test Passed.
+"native-color-png" end time: Nov 08 05:59 Eastern Standard Time
+"native-color-png" time elapsed: 00:00:00
+----------------------------------------------------------
+
+34/211 Testing: native-wp7
+34/211 Test: native-wp7
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-wp7-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/wp7"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-wp7" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+EXReader WP7 scripts: 18750 checks passed
+<end of output>
+Test time =   0.34 sec
+----------------------------------------------------------
+Test Passed.
+"native-wp7" end time: Nov 08 05:59 Eastern Standard Time
+"native-wp7" time elapsed: 00:00:00
+----------------------------------------------------------
+
+194/211 Testing: native-font-manager-selection
+194/211 Test: native-font-manager-selection
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/check_font_manager.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-font-manager-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/font_manager" "selection"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-font-manager-selection" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+font-manager selection: 89 checks passed
+<end of output>
+Test time =   0.31 sec
+----------------------------------------------------------
+Test Passed.
+"native-font-manager-selection" end time: Nov 08 05:59 Eastern Standard Time
+"native-font-manager-selection" time elapsed: 00:00:00
+----------------------------------------------------------
+
+100/211 Testing: native-content-reflow
+100/211 Test: native-content-reflow
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-content-ranges-test.exe" "reflow" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/fallback.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-content-reflow" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+stage 0: 1280x800 17px font1: 9 pages
+stage 1: 1280x800 18px font1: 9 pages
+stage 2: 1280x800 24px font1: 11 pages
+stage 3: 1280x800 17px font1: 9 pages
+stage 4: 1280x800 17px font2: 15 pages
+stage 5: 1280x800 17px font1: 9 pages
+stage 6: 1552x928 17px font1: 8 pages
+stage 7: 1280x800 17px font1: 9 pages
+size-17-18-24-17: 100/100 = 100.00%; page movements=97; mismatches=0
+font-roundtrip: 100/100 = 100.00%; page movements=88; mismatches=0
+window-roundtrip: 100/100 = 100.00%; page movements=50; mismatches=0
+<end of output>
+Test time =   0.54 sec
+----------------------------------------------------------
+Test Passed.
+"native-content-reflow" end time: Nov 08 05:59 Eastern Standard Time
+"native-content-reflow" time elapsed: 00:00:00
+----------------------------------------------------------
+
+171/211 Testing: native-convert
+171/211 Test: native-convert
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-convert-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/convert-corpus" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/native-convert.json"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-convert" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+convert matrix: 520 checks, 520 passed, 0 failed; 20 render checks (20 passed)
+<end of output>
+Test time =   0.45 sec
+----------------------------------------------------------
+Test Passed.
+"native-convert" end time: Nov 08 05:59 Eastern Standard Time
+"native-convert" time elapsed: 00:00:00
+----------------------------------------------------------
+
+49/211 Testing: native-font-color
+49/211 Test: native-font-color
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-font-color-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-font-color" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+80703 color-font palette, layers and raster checks passed
+<end of output>
+Test time =   0.53 sec
+----------------------------------------------------------
+Test Passed.
+"native-font-color" end time: Nov 08 05:59 Eastern Standard Time
+"native-font-color" time elapsed: 00:00:00
+----------------------------------------------------------
+
+1/211 Testing: native-render-audit
+1/211 Test: native-render-audit
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-render-audit-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-render-audit" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+368 renderer audit checks; 0 failures
+<end of output>
+Test time =   0.33 sec
+----------------------------------------------------------
+Test Passed.
+"native-render-audit" end time: Nov 08 05:59 Eastern Standard Time
+"native-render-audit" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/211 Testing: native-hyphen
+7/211 Test: native-hyphen
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-hyphen-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-hyphen" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+333040 hyphenation dictionary checks passed
+<end of output>
+Test time =   0.47 sec
+----------------------------------------------------------
+Test Passed.
+"native-hyphen" end time: Nov 08 05:59 Eastern Standard Time
+"native-hyphen" time elapsed: 00:00:00
+----------------------------------------------------------
+
+56/211 Testing: native-stretch
+56/211 Test: native-stretch
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-stretch-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-stretch" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+rate=0.50 frames=192034 pitch=440.000Hz
+rate=0.75 frames=128023 pitch=440.091Hz
+rate=1.00 frames=96017 pitch=440.000Hz
+rate=1.50 frames=64011 pitch=439.998Hz
+rate=2.00 frames=48009 pitch=440.000Hz
+rate=1.333333333 frames=72013 pitch=219.938Hz
+4949472 pitch-preserving time-stretch checks passed
+<end of output>
+Test time =   0.44 sec
+----------------------------------------------------------
+Test Passed.
+"native-stretch" end time: Nov 08 05:59 Eastern Standard Time
+"native-stretch" time elapsed: 00:00:00
+----------------------------------------------------------
+
+166/211 Testing: native-pager
+166/211 Test: native-pager
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pager-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pager" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+EXReader pager: 238772 checks passed
+<end of output>
+Test time =   0.45 sec
+----------------------------------------------------------
+Test Passed.
+"native-pager" end time: Nov 08 05:59 Eastern Standard Time
+"native-pager" time elapsed: 00:00:00
+----------------------------------------------------------
+
+77/211 Testing: native-reanchor-library
+77/211 Test: native-reanchor-library
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-reanchor-library-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-reanchor-library" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+135 library relocation checks passed
+<end of output>
+Test time =   0.34 sec
+----------------------------------------------------------
+Test Passed.
+"native-reanchor-library" end time: Nov 08 05:59 Eastern Standard Time
+"native-reanchor-library" time elapsed: 00:00:00
+----------------------------------------------------------
+
+195/211 Testing: native-font-manager-cache
+195/211 Test: native-font-manager-cache
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/check_font_manager.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-font-manager-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/font_manager" "cache"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-font-manager-cache" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+font-manager cache: 142 checks passed
+<end of output>
+Test time =   0.40 sec
+----------------------------------------------------------
+Test Passed.
+"native-font-manager-cache" end time: Nov 08 05:59 Eastern Standard Time
+"native-font-manager-cache" time elapsed: 00:00:00
+----------------------------------------------------------
+
+106/211 Testing: native-lazy
+106/211 Test: native-lazy
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-lazy-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-lazy" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+EXReader lazy loading: 39215 checks passed
+<end of output>
+Test time =   0.45 sec
+----------------------------------------------------------
+Test Passed.
+"native-lazy" end time: Nov 08 05:59 Eastern Standard Time
+"native-lazy" time elapsed: 00:00:00
+----------------------------------------------------------
+
+202/211 Testing: native-pdf-deepening-coordinates
+202/211 Test: native-pdf-deepening-coordinates
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/pdf_deepening_inputs.py" "--probe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-deepening-test.exe" "--fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "--group" "coordinates"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-deepening-coordinates" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+point 23.60,92: U+0061 [0,1)
+point 30.80,92: U+006C [1,2)
+point 38.00,92: U+0070 [2,3)
+point 45.20,92: U+0068 [3,4)
+point 52.40,92: U+0061 [4,5)
+point 59.60,92: U+0020 [5,6)
+point 66.80,92: U+0062 [6,7)
+point 74.00,92: U+0065 [7,8)
+point 81.20,92: U+0074 [8,9)
+point 88.40,92: U+0061 [9,10)
+point 95.60,92: U+0020 [10,11)
+point 102.80,92: U+0067 [11,12)
+point 110.00,92: U+0061 [12,13)
+point 117.20,92: U+006D [13,14)
+point 124.40,92: U+006D [14,15)
+point 131.60,92: U+0061 [15,16)
+point 138.80,92: U+0020 [16,17)
+point 146.00,92: U+0064 [17,18)
+point 153.20,92: U+0065 [18,19)
+point 160.40,92: U+006C [19,20)
+coordinates: 85 checks passed
+<end of output>
+Test time =   0.51 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-deepening-coordinates" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-deepening-coordinates" time elapsed: 00:00:00
+----------------------------------------------------------
+
+116/211 Testing: native-pdf-raster
+116/211 Test: native-pdf-raster
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-raster-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-raster" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+262446 native PDF raster checks passed
+<end of output>
+Test time =   0.38 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-raster" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-raster" time elapsed: 00:00:00
+----------------------------------------------------------
+
+101/211 Testing: native-anchor-library
+101/211 Test: native-anchor-library
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-anchor-library-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-anchor-library" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+EXReader stable annotation library: 282 checks passed
+<end of output>
+Test time =   0.29 sec
+----------------------------------------------------------
+Test Passed.
+"native-anchor-library" end time: Nov 08 05:59 Eastern Standard Time
+"native-anchor-library" time elapsed: 00:00:00
+----------------------------------------------------------
+
+26/211 Testing: native-style-budget
+26/211 Test: native-style-budget
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-style-budget-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-style-budget" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+153 bounded style checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-style-budget" end time: Nov 08 05:59 Eastern Standard Time
+"native-style-budget" time elapsed: 00:00:00
+----------------------------------------------------------
+
+163/211 Testing: native-chapter-bounds
+163/211 Test: native-chapter-bounds
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-chapter-bounds-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-chapter-bounds" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+27 chapter bound checks passed
+<end of output>
+Test time =   0.42 sec
+----------------------------------------------------------
+Test Passed.
+"native-chapter-bounds" end time: Nov 08 05:59 Eastern Standard Time
+"native-chapter-bounds" time elapsed: 00:00:00
+----------------------------------------------------------
+
+203/211 Testing: native-pdf-deepening-scan
+203/211 Test: native-pdf-deepening-scan
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/pdf_deepening_inputs.py" "--probe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-deepening-test.exe" "--fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "--group" "scan"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-deepening-scan" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+scan: 64 checks passed
+<end of output>
+Test time =   0.37 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-deepening-scan" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-deepening-scan" time elapsed: 00:00:00
+----------------------------------------------------------
+
+21/211 Testing: native-table-columns
+21/211 Test: native-table-columns
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-table-columns-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-table-columns" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+565 table column checks passed
+<end of output>
+Test time =   0.26 sec
+----------------------------------------------------------
+Test Passed.
+"native-table-columns" end time: Nov 08 05:59 Eastern Standard Time
+"native-table-columns" time elapsed: 00:00:00
+----------------------------------------------------------
+
+201/211 Testing: native-pdf-deepening-search
+201/211 Test: native-pdf-deepening-search
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/pdf_deepening_inputs.py" "--probe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-deepening-test.exe" "--fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "--group" "search"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-deepening-search" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+word alpha: [0,5), page 0 byte 0
+word beta: [6,10), page 0 byte 6
+word gamma: [11,16), page 0 byte 11
+word delta: [17,22), page 0 byte 17
+word epsilon: [23,30), page 0 byte 23
+word zeta: [30,34), page 1 byte 0
+word theta: [39,44), page 1 byte 9
+word iota: [45,49), page 1 byte 15
+word kappa: [50,55), page 1 byte 20
+word boundary: [55,63), page 2 byte 0
+cross-page: [23,34), (0,23)..(1,4)
+search: 43 checks passed
+<end of output>
+Test time =   0.30 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-deepening-search" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-deepening-search" time elapsed: 00:00:00
+----------------------------------------------------------
+
+196/211 Testing: native-font-manager-integration
+196/211 Test: native-font-manager-integration
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/check_font_manager.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-font-manager-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/font_manager" "integration"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-font-manager-integration" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+font-manager integration: 96 checks passed
+<end of output>
+Test time =   0.26 sec
+----------------------------------------------------------
+Test Passed.
+"native-font-manager-integration" end time: Nov 08 05:59 Eastern Standard Time
+"native-font-manager-integration" time elapsed: 00:00:00
+----------------------------------------------------------
+
+185/211 Testing: native-core-component
+185/211 Test: native-core-component
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-core-component-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-core-component" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Independent core component passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-core-component" end time: Nov 08 05:59 Eastern Standard Time
+"native-core-component" time elapsed: 00:00:00
+----------------------------------------------------------
+
+124/211 Testing: native-fixed-library
+124/211 Test: native-fixed-library
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-fixed-library-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-fixed-library" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+96 fixed library checks passed
+<end of output>
+Test time =   0.21 sec
+----------------------------------------------------------
+Test Passed.
+"native-fixed-library" end time: Nov 08 05:59 Eastern Standard Time
+"native-fixed-library" time elapsed: 00:00:00
+----------------------------------------------------------
+
+45/211 Testing: native-mask-functions
+45/211 Test: native-mask-functions
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-mask-functions-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-mask-functions" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+821 mask function checks; maximum analytic difference 0/255
+<end of output>
+Test time =   0.09 sec
+----------------------------------------------------------
+Test Passed.
+"native-mask-functions" end time: Nov 08 05:59 Eastern Standard Time
+"native-mask-functions" time elapsed: 00:00:00
+----------------------------------------------------------
+
+184/211 Testing: native-pdf-jpx
+184/211 Test: native-pdf-jpx
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-jpx-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-jpx" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+JPX packed samples: JP2/J2K 1/2/4/8/16-bit Gray/RGB; malformed, truncated, dimensions, budget, cancellation, signed and subsampling passed
+<end of output>
+Test time =   0.16 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-jpx" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-jpx" time elapsed: 00:00:00
+----------------------------------------------------------
+
+72/211 Testing: native-pdf-form
+72/211 Test: native-pdf-form
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-form-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/fallback.ttf" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/cbdt.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-form" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+AcroForm: 9394 checks; 36 fields, 39 widgets, 2 pages
+<end of output>
+Test time =   0.25 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-form" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-form" time elapsed: 00:00:00
+----------------------------------------------------------
+
+193/211 Testing: native-font-manager-discovery
+193/211 Test: native-font-manager-discovery
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/check_font_manager.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-font-manager-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/font_manager" "discovery"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-font-manager-discovery" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+font-manager discovery: 54 checks passed
+<end of output>
+Test time =   0.27 sec
+----------------------------------------------------------
+Test Passed.
+"native-font-manager-discovery" end time: Nov 08 05:59 Eastern Standard Time
+"native-font-manager-discovery" time elapsed: 00:00:00
+----------------------------------------------------------
+
+204/211 Testing: native-pdf-deepening-contracts
+204/211 Test: native-pdf-deepening-contracts
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/pdf_deepening_inputs.py" "--probe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-deepening-test.exe" "--fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "--group" "contracts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-deepening-contracts" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+contracts: 26 checks passed
+<end of output>
+Test time =   0.48 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-deepening-contracts" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-deepening-contracts" time elapsed: 00:00:00
+----------------------------------------------------------
+
+131/211 Testing: native-canvas
+131/211 Test: native-canvas
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-canvas-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-canvas" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+4484 native canvas checks passed
+<end of output>
+Test time =   0.23 sec
+----------------------------------------------------------
+Test Passed.
+"native-canvas" end time: Nov 08 05:59 Eastern Standard Time
+"native-canvas" time elapsed: 00:00:00
+----------------------------------------------------------
+
+78/211 Testing: native-progress-library
+78/211 Test: native-progress-library
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-progress-library-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-progress-library" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+131 stable progress checks passed
+<end of output>
+Test time =   0.18 sec
+----------------------------------------------------------
+Test Passed.
+"native-progress-library" end time: Nov 08 05:59 Eastern Standard Time
+"native-progress-library" time elapsed: 00:00:00
+----------------------------------------------------------
+
+39/211 Testing: native-pdf-groupcs
+39/211 Test: native-pdf-groupcs
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-groupcs-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-groupcs" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+625 native PDF group colour-space checks passed
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-groupcs" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-groupcs" time elapsed: 00:00:00
+----------------------------------------------------------
+
+118/211 Testing: native-audio-library
+118/211 Test: native-audio-library
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-audio-library-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-audio-library" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+90 audio persistence checks passed
+<end of output>
+Test time =   0.19 sec
+----------------------------------------------------------
+Test Passed.
+"native-audio-library" end time: Nov 08 05:59 Eastern Standard Time
+"native-audio-library" time elapsed: 00:00:00
+----------------------------------------------------------
+
+28/211 Testing: native-cbz
+28/211 Test: native-cbz
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-cbz-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-cbz" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+63110 native CBZ checks passed
+<end of output>
+Test time =   0.14 sec
+----------------------------------------------------------
+Test Passed.
+"native-cbz" end time: Nov 08 05:59 Eastern Standard Time
+"native-cbz" time elapsed: 00:00:00
+----------------------------------------------------------
+
+135/211 Testing: native-library-unique
+135/211 Test: native-library-unique
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-library-unique-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-library-unique" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+101 exact duplicate import checks passed
+<end of output>
+Test time =   0.14 sec
+----------------------------------------------------------
+Test Passed.
+"native-library-unique" end time: Nov 08 05:59 Eastern Standard Time
+"native-library-unique" time elapsed: 00:00:00
+----------------------------------------------------------
+
+19/211 Testing: native-table-alignment
+19/211 Test: native-table-alignment
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-table-alignment-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-table-alignment" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+311 table alignment checks passed
+<end of output>
+Test time =   0.17 sec
+----------------------------------------------------------
+Test Passed.
+"native-table-alignment" end time: Nov 08 05:59 Eastern Standard Time
+"native-table-alignment" time elapsed: 00:00:00
+----------------------------------------------------------
+
+80/211 Testing: native-text-index
+80/211 Test: native-text-index
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-text-index-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-text-index" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+295 text index checks passed
+<end of output>
+Test time =   0.19 sec
+----------------------------------------------------------
+Test Passed.
+"native-text-index" end time: Nov 08 05:59 Eastern Standard Time
+"native-text-index" time elapsed: 00:00:00
+----------------------------------------------------------
+
+29/211 Testing: native-image-formats
+29/211 Test: native-image-formats
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-image-formats-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/images"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-image-formats" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+skip webp: WebP image decoding is not enabled in this build
+skip tiff: TIFF image decoding is not enabled in this build
+skip avif: AVIF image decoding is not enabled in this build
+490 image-format checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-image-formats" end time: Nov 08 05:59 Eastern Standard Time
+"native-image-formats" time elapsed: 00:00:00
+----------------------------------------------------------
+
+43/211 Testing: native-zero-opacity
+43/211 Test: native-zero-opacity
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-zero-opacity-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-zero-opacity" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+2500 zero-opacity checks passed
+<end of output>
+Test time =   0.08 sec
+----------------------------------------------------------
+Test Passed.
+"native-zero-opacity" end time: Nov 08 05:59 Eastern Standard Time
+"native-zero-opacity" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/211 Testing: native-hyphen-replacements
+8/211 Test: native-hyphen-replacements
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-hyphen-replacements-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-hyphen-replacements" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+1851 discretionary hyphenation checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-hyphen-replacements" end time: Nov 08 05:59 Eastern Standard Time
+"native-hyphen-replacements" time elapsed: 00:00:00
+----------------------------------------------------------
+
+190/211 Testing: native-library-component
+190/211 Test: native-library-component
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-library-component-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/components/library"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-library-component" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Independent library component passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-library-component" end time: Nov 08 05:59 Eastern Standard Time
+"native-library-component" time elapsed: 00:00:00
+----------------------------------------------------------
+
+96/211 Testing: native-content-mapping
+96/211 Test: native-content-mapping
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-content-ranges-test.exe" "mapping"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-content-mapping" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+same-layout: 200/200 = 100.00% (seed 0x41ce2026; 20 cross-part)
+<end of output>
+Test time =   0.24 sec
+----------------------------------------------------------
+Test Passed.
+"native-content-mapping" end time: Nov 08 05:59 Eastern Standard Time
+"native-content-mapping" time elapsed: 00:00:00
+----------------------------------------------------------
+
+205/211 Testing: native-pdf-deepening-encryption
+205/211 Test: native-pdf-deepening-encryption
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/pdf_deepening_inputs.py" "--probe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-deepening-test.exe" "--fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "--group" "encryption"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-deepening-encryption" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+encryption: 2 checks passed
+<end of output>
+Test time =   0.31 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-deepening-encryption" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-deepening-encryption" time elapsed: 00:00:00
+----------------------------------------------------------
+
+136/211 Testing: native-cover-import
+136/211 Test: native-cover-import
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-cover-import-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-cover-import" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+97 library cover import checks passed
+<end of output>
+Test time =   0.19 sec
+----------------------------------------------------------
+Test Passed.
+"native-cover-import" end time: Nov 08 05:59 Eastern Standard Time
+"native-cover-import" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/211 Testing: native-pdf-ccitt
+5/211 Test: native-pdf-ccitt
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-ccitt-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-ccitt" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+527 native PDF CCITT checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-ccitt" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-ccitt" time elapsed: 00:00:00
+----------------------------------------------------------
+
+182/211 Testing: native-png
+182/211 Test: native-png
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/check_png.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/native-page.png"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-png" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+PNG verified: 720 x 1040, 1 channels, CRCs and native pixels
+<end of output>
+Test time =   0.15 sec
+----------------------------------------------------------
+Test Passed.
+"native-png" end time: Nov 08 05:59 Eastern Standard Time
+"native-png" time elapsed: 00:00:00
+----------------------------------------------------------
+
+169/211 Testing: native-control
+169/211 Test: native-control
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-control-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-control" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Operation control: 4097 checks passed
+<end of output>
+Test time =   0.18 sec
+----------------------------------------------------------
+Test Passed.
+"native-control" end time: Nov 08 05:59 Eastern Standard Time
+"native-control" time elapsed: 00:00:00
+----------------------------------------------------------
+
+50/211 Testing: native-font-color-v1
+50/211 Test: native-font-color-v1
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-font-color-v1-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-font-color-v1" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+259 COLR v1 paint, gradient, transform, composite, limit and identity checks passed
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"native-font-color-v1" end time: Nov 08 05:59 Eastern Standard Time
+"native-font-color-v1" time elapsed: 00:00:00
+----------------------------------------------------------
+
+38/211 Testing: native-pdf-matte
+38/211 Test: native-pdf-matte
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-matte-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-matte" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+30 native PDF image matte checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-matte" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-matte" time elapsed: 00:00:00
+----------------------------------------------------------
+
+168/211 Testing: native-checkpoints
+168/211 Test: native-checkpoints
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-checkpoints-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-checkpoints" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Checkpoints: 3922 checks passed
+<end of output>
+Test time =   0.18 sec
+----------------------------------------------------------
+Test Passed.
+"native-checkpoints" end time: Nov 08 05:59 Eastern Standard Time
+"native-checkpoints" time elapsed: 00:00:00
+----------------------------------------------------------
+
+174/211 Testing: native-pdf-group-reference
+174/211 Test: native-pdf-group-reference
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tools/pdf_group_reference.py" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/pdf-blend"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-group-reference" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+208 independent blend samples match PDFium within 2 and 160 group probes reproduce exactly
+<end of output>
+Test time =   0.14 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-group-reference" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-group-reference" time elapsed: 00:00:00
+----------------------------------------------------------
+
+22/211 Testing: native-table-spacing
+22/211 Test: native-table-spacing
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-table-spacing-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-table-spacing" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+grid:  /
+grid: border-spacing:7px /
+grid: border-spacing:7px 11px /
+grid: border-spacing:0 /
+grid: border-spacing:7px 11px;border-spacing:-1px /
+grid: border-spacing:7px 11px;border-spacing:3px 4px 5px /
+grid: border-spacing:7px 11px;border-spacing:10% /
+grid: border-spacing:7px 11px;border-spacing:auto /
+grid: border-spacing:7px 11px;border-collapse:collapse /
+grid:  / border-spacing:7px 11px
+grid: border-spacing:inherit / border-spacing:7px 11px
+grid: border-spacing:initial / border-spacing:7px 11px
+grid: border-spacing:unset / border-spacing:7px 11px
+grid: font-size:14px;border-spacing:.5em /
+pages: header=0 tall=0 vertical=0
+pages: header=1 tall=0 vertical=0
+pages: header=0 tall=1 vertical=0
+pages: header=0 tall=0 vertical=1
+3174 table spacing checks passed
+<end of output>
+Test time =   0.21 sec
+----------------------------------------------------------
+Test Passed.
+"native-table-spacing" end time: Nov 08 05:59 Eastern Standard Time
+"native-table-spacing" time elapsed: 00:00:00
+----------------------------------------------------------
+
+197/211 Testing: native-xml-input
+197/211 Test: native-xml-input
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-xml-input-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-xml-input" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+91435 XML input checks passed
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Passed.
+"native-xml-input" end time: Nov 08 05:59 Eastern Standard Time
+"native-xml-input" time elapsed: 00:00:00
+----------------------------------------------------------
+
+138/211 Testing: native-mobi
+138/211 Test: native-mobi
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-mobi-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-mobi" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+51 MOBI codec checks passed
+<end of output>
+Test time =   0.10 sec
+----------------------------------------------------------
+Test Passed.
+"native-mobi" end time: Nov 08 05:59 Eastern Standard Time
+"native-mobi" time elapsed: 00:00:00
+----------------------------------------------------------
+
+36/211 Testing: native-pdf-color
+36/211 Test: native-pdf-color
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-color-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-color" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+2262 native PDF source colour-space checks passed
+<end of output>
+Test time =   0.17 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-color" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-color" time elapsed: 00:00:00
+----------------------------------------------------------
+
+53/211 Testing: native-orthogonal
+53/211 Test: native-orthogonal
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-orthogonal-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-orthogonal" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+12475 orthogonal geometry, pagination, checkpoint and positioned checks passed
+<end of output>
+Test time =   0.15 sec
+----------------------------------------------------------
+Test Passed.
+"native-orthogonal" end time: Nov 08 05:59 Eastern Standard Time
+"native-orthogonal" time elapsed: 00:00:00
+----------------------------------------------------------
+
+37/211 Testing: native-pdf-intent
+37/211 Test: native-pdf-intent
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-intent-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-intent" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+52 native PDF rendering-intent checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-intent" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-intent" time elapsed: 00:00:00
+----------------------------------------------------------
+
+115/211 Testing: native-pdf-outline
+115/211 Test: native-pdf-outline
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-outline-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-outline" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+188 native PDF outline checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-outline" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-outline" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/211 Testing: native-table-dashed
+2/211 Test: native-table-dashed
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-table-dashed-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-table-dashed" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+27 native table border-style checks passed (solid 103, dashed 63, dotted 36)
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-table-dashed" end time: Nov 08 05:59 Eastern Standard Time
+"native-table-dashed" time elapsed: 00:00:00
+----------------------------------------------------------
+
+134/211 Testing: native-positioned
+134/211 Test: native-positioned
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-positioned-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-positioned" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+18083 positioned layout checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-positioned" end time: Nov 08 05:59 Eastern Standard Time
+"native-positioned" time elapsed: 00:00:00
+----------------------------------------------------------
+
+191/211 Testing: native-pdf_edit-component
+191/211 Test: native-pdf_edit-component
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf_edit-component-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/components/pdf_edit"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf_edit-component" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+PDF annotation writing passed (492 checks)
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf_edit-component" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf_edit-component" time elapsed: 00:00:00
+----------------------------------------------------------
+
+75/211 Testing: native-metadata
+75/211 Test: native-metadata
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-metadata-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-metadata" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+865 metadata checks passed
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"native-metadata" end time: Nov 08 05:59 Eastern Standard Time
+"native-metadata" time elapsed: 00:00:00
+----------------------------------------------------------
+
+111/211 Testing: native-pdf-font
+111/211 Test: native-pdf-font
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-font-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-font" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+324 native PDF font checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-font" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-font" time elapsed: 00:00:00
+----------------------------------------------------------
+
+79/211 Testing: native-text-source
+79/211 Test: native-text-source
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-text-source-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-text-source" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+139 streaming text source checks passed
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"native-text-source" end time: Nov 08 05:59 Eastern Standard Time
+"native-text-source" time elapsed: 00:00:00
+----------------------------------------------------------
+
+70/211 Testing: native-pdf-metadata-write
+70/211 Test: native-pdf-metadata-write
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-metadata-write-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-metadata-write" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+PDF metadata writing passed (1896 checks)
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-metadata-write" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-metadata-write" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/211 Testing: native-pdf-shading-mesh
+3/211 Test: native-pdf-shading-mesh
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-shading-mesh-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-shading-mesh" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+8 native PDF mesh shading checks passed
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-shading-mesh" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-shading-mesh" time elapsed: 00:00:00
+----------------------------------------------------------
+
+142/211 Testing: native-rtf-note
+142/211 Test: native-rtf-note
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-rtf-note-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-rtf-note" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+119 RTF note checks passed
+<end of output>
+Test time =   0.16 sec
+----------------------------------------------------------
+Test Passed.
+"native-rtf-note" end time: Nov 08 05:59 Eastern Standard Time
+"native-rtf-note" time elapsed: 00:00:00
+----------------------------------------------------------
+
+89/211 Testing: native-cfi
+89/211 Test: native-cfi
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-cfi-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-cfi" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+834 chapter CFI checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-cfi" end time: Nov 08 05:59 Eastern Standard Time
+"native-cfi" time elapsed: 00:00:00
+----------------------------------------------------------
+
+32/211 Testing: native-m4b-metadata
+32/211 Test: native-m4b-metadata
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-m4b-metadata-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-m4b-metadata" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+9559 ISO-BMFF metadata, chapters, ownership and large-source checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-m4b-metadata" end time: Nov 08 05:59 Eastern Standard Time
+"native-m4b-metadata" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/211 Testing: native-normalize
+6/211 Test: native-normalize
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-normalize-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/unicode/NormalizationTest.txt"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-normalize" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+20034 Unicode 17 NFC conformance cases passed
+1094978 unlisted Unicode scalar NFC invariants passed
+3404736 canonical normalization checks passed
+<end of output>
+Test time =   0.16 sec
+----------------------------------------------------------
+Test Passed.
+"native-normalize" end time: Nov 08 05:59 Eastern Standard Time
+"native-normalize" time elapsed: 00:00:00
+----------------------------------------------------------
+
+51/211 Testing: native-font-svg
+51/211 Test: native-font-svg
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-font-svg-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-font-svg" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+908 SVG font element, transform, rejection, limit and identity checks passed
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Passed.
+"native-font-svg" end time: Nov 08 05:59 Eastern Standard Time
+"native-font-svg" time elapsed: 00:00:00
+----------------------------------------------------------
+
+158/211 Testing: native-complex-layout
+158/211 Test: native-complex-layout
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-complex-layout-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/shaping"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-complex-layout" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+37354 complex layout integration checks passed
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"native-complex-layout" end time: Nov 08 05:59 Eastern Standard Time
+"native-complex-layout" time elapsed: 00:00:00
+----------------------------------------------------------
+
+122/211 Testing: native-audio-player
+122/211 Test: native-audio-player
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-audio-player-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-audio-player" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+116 audio backend control checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-audio-player" end time: Nov 08 05:59 Eastern Standard Time
+"native-audio-player" time elapsed: 00:00:00
+----------------------------------------------------------
+
+133/211 Testing: native-viewport
+133/211 Test: native-viewport
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-viewport-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-viewport" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+43 native viewport checks passed
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"native-viewport" end time: Nov 08 05:59 Eastern Standard Time
+"native-viewport" time elapsed: 00:00:00
+----------------------------------------------------------
+
+30/211 Testing: native-cbz-formats
+30/211 Test: native-cbz-formats
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-cbz-formats-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-cbz-formats" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+skip CBZ format matrix: WebP image decoding is not enabled in this build
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-cbz-formats" end time: Nov 08 05:59 Eastern Standard Time
+"native-cbz-formats" time elapsed: 00:00:00
+----------------------------------------------------------
+
+71/211 Testing: native-pdf-write
+71/211 Test: native-pdf-write
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-write-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-write" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+PDF annotation writing passed (492 checks)
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-write" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-write" time elapsed: 00:00:00
+----------------------------------------------------------
+
+129/211 Testing: native-font-path
+129/211 Test: native-font-path
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-font-path-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-font-path" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+161 native public font path checks passed
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"native-font-path" end time: Nov 08 05:59 Eastern Standard Time
+"native-font-path" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/211 Testing: native-hyphen-builtin-rules
+11/211 Test: native-hyphen-builtin-rules
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-hyphen-builtin-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "rules"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-hyphen-builtin-rules" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+41 built-in hyphenation checks passed
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"native-hyphen-builtin-rules" end time: Nov 08 05:59 Eastern Standard Time
+"native-hyphen-builtin-rules" time elapsed: 00:00:00
+----------------------------------------------------------
+
+87/211 Testing: native-construct
+87/211 Test: native-construct
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-construct-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-construct" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+653 document construction checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-construct" end time: Nov 08 05:59 Eastern Standard Time
+"native-construct" time elapsed: 00:00:00
+----------------------------------------------------------
+
+123/211 Testing: native-audio
+123/211 Test: native-audio
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-audio-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-audio" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+58 audio timeline checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-audio" end time: Nov 08 05:59 Eastern Standard Time
+"native-audio" time elapsed: 00:00:00
+----------------------------------------------------------
+
+35/211 Testing: native-ruby
+35/211 Test: native-ruby
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-ruby-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-ruby" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+9524 ruby layout, source, hit, pagination and checkpoint checks passed
+<end of output>
+Test time =   0.14 sec
+----------------------------------------------------------
+Test Passed.
+"native-ruby" end time: Nov 08 05:59 Eastern Standard Time
+"native-ruby" time elapsed: 00:00:00
+----------------------------------------------------------
+
+74/211 Testing: native-page-annotations
+74/211 Test: native-page-annotations
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-page-annotations-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-page-annotations" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Page annotation snapshots passed
+<end of output>
+Test time =   0.09 sec
+----------------------------------------------------------
+Test Passed.
+"native-page-annotations" end time: Nov 08 05:59 Eastern Standard Time
+"native-page-annotations" time elapsed: 00:00:00
+----------------------------------------------------------
+
+76/211 Testing: native-annotation
+76/211 Test: native-annotation
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-annotation-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-annotation" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+473 annotation exchange checks passed
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"native-annotation" end time: Nov 08 05:59 Eastern Standard Time
+"native-annotation" time elapsed: 00:00:00
+----------------------------------------------------------
+
+155/211 Testing: native-text
+155/211 Test: native-text
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-text-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/unicode"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-text" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+766 Unicode grapheme conformance cases passed
+19338 Unicode line conformance cases passed; 1388 breaks suppressed inside graphemes
+644977 text boundary and cluster layout checks passed
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Passed.
+"native-text" end time: Nov 08 05:59 Eastern Standard Time
+"native-text" time elapsed: 00:00:00
+----------------------------------------------------------
+
+65/211 Testing: native-pdf-markup
+65/211 Test: native-pdf-markup
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-markup-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-markup" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+PDF line markup passed (8819 checks)
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-markup" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-markup" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/211 Testing: native-case
+9/211 Test: native-case
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-case-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/unicode/CaseMappingTest.txt"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-case" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+33785 Unicode case checks passed (3037 default mappings)
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-case" end time: Nov 08 05:59 Eastern Standard Time
+"native-case" time elapsed: 00:00:00
+----------------------------------------------------------
+
+147/211 Testing: native-export-html
+147/211 Test: native-export-html
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-export-html-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-export-html" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+165 structured HTML checks passed
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"native-export-html" end time: Nov 08 05:59 Eastern Standard Time
+"native-export-html" time elapsed: 00:00:00
+----------------------------------------------------------
+
+121/211 Testing: native-wave
+121/211 Test: native-wave
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-wave-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-wave" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+8076 native WAVE checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-wave" end time: Nov 08 05:59 Eastern Standard Time
+"native-wave" time elapsed: 00:00:00
+----------------------------------------------------------
+
+27/211 Testing: native-chapter-source
+27/211 Test: native-chapter-source
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-chapter-source-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-chapter-source" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+180 chapter source checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-chapter-source" end time: Nov 08 05:59 Eastern Standard Time
+"native-chapter-source" time elapsed: 00:00:00
+----------------------------------------------------------
+
+125/211 Testing: native-fixed-text
+125/211 Test: native-fixed-text
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-fixed-text-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-fixed-text" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+129 generic fixed text checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-fixed-text" end time: Nov 08 05:59 Eastern Standard Time
+"native-fixed-text" time elapsed: 00:00:00
+----------------------------------------------------------
+
+145/211 Testing: native-docx
+145/211 Test: native-docx
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-docx-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-docx" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+224 rich DOCX checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-docx" end time: Nov 08 05:59 Eastern Standard Time
+"native-docx" time elapsed: 00:00:00
+----------------------------------------------------------
+
+132/211 Testing: native-canvas-cmyk
+132/211 Test: native-canvas-cmyk
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-canvas-cmyk-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-canvas-cmyk" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+2696 native canvas CMYK group checks passed
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"native-canvas-cmyk" end time: Nov 08 05:59 Eastern Standard Time
+"native-canvas-cmyk" time elapsed: 00:00:00
+----------------------------------------------------------
+
+165/211 Testing: native-chapter-oversized-unit
+165/211 Test: native-chapter-oversized-unit
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-chapter-reader-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts" "--oversized-unit"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-chapter-oversized-unit" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+90 oversized inline unit checks passed
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Passed.
+"native-chapter-oversized-unit" end time: Nov 08 05:59 Eastern Standard Time
+"native-chapter-oversized-unit" time elapsed: 00:00:00
+----------------------------------------------------------
+
+33/211 Testing: native-indic
+33/211 Test: native-indic
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-indic-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/indic"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-indic" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+1478 native Indic oracle, source, cancellation and pagination checks passed
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"native-indic" end time: Nov 08 05:59 Eastern Standard Time
+"native-indic" time elapsed: 00:00:00
+----------------------------------------------------------
+
+112/211 Testing: native-pdf-text
+112/211 Test: native-pdf-text
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-text-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-text" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+399 native PDF text geometry checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-text" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-text" time elapsed: 00:00:00
+----------------------------------------------------------
+
+63/211 Testing: native-pdf-type3
+63/211 Test: native-pdf-type3
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-type3-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-type3" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+PDF Type3 painting passed (2935 checks)
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-type3" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-type3" time elapsed: 00:00:00
+----------------------------------------------------------
+
+128/211 Testing: native-fixed
+128/211 Test: native-fixed
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-fixed-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-fixed" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+35 native generic fixed document checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-fixed" end time: Nov 08 05:59 Eastern Standard Time
+"native-fixed" time elapsed: 00:00:00
+----------------------------------------------------------
+
+157/211 Testing: native-shaping
+157/211 Test: native-shaping
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-shaping-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/shaping"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-shaping" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+EXReader shaping: 295446 checks passed
+<end of output>
+Test time =   0.08 sec
+----------------------------------------------------------
+Test Passed.
+"native-shaping" end time: Nov 08 05:59 Eastern Standard Time
+"native-shaping" time elapsed: 00:00:00
+----------------------------------------------------------
+
+104/211 Testing: native-rtf-fallback
+104/211 Test: native-rtf-fallback
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-rtf-fallback-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-rtf-fallback" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+RTF fallback: 116 checks
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-rtf-fallback" end time: Nov 08 05:59 Eastern Standard Time
+"native-rtf-fallback" time elapsed: 00:00:00
+----------------------------------------------------------
+
+18/211 Testing: native-table-header
+18/211 Test: native-table-header
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-table-header-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-table-header" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+139 repeated header checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-table-header" end time: Nov 08 05:59 Eastern Standard Time
+"native-table-header" time elapsed: 00:00:00
+----------------------------------------------------------
+
+90/211 Testing: native-anchor
+90/211 Test: native-anchor
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-anchor-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-anchor" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+295 text anchor checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-anchor" end time: Nov 08 05:59 Eastern Standard Time
+"native-anchor" time elapsed: 00:00:00
+----------------------------------------------------------
+
+114/211 Testing: native-pdf-graphics
+114/211 Test: native-pdf-graphics
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-graphics-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-graphics" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+211 native PDF graphics checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-graphics" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-graphics" time elapsed: 00:00:00
+----------------------------------------------------------
+
+127/211 Testing: native-fixed-example
+127/211 Test: native-fixed-example
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-fixed-example.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/pdf-public.pdf" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/fixed-example.png"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-fixed-example" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+text_bytes=1 regions=1
+pages=5 rendered=0 bitmap=12x12
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-fixed-example" end time: Nov 08 05:59 Eastern Standard Time
+"native-fixed-example" time elapsed: 00:00:00
+----------------------------------------------------------
+
+88/211 Testing: native-cfi-text
+88/211 Test: native-cfi-text
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-cfi-text-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-cfi-text" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+67 CFI text assertion checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-cfi-text" end time: Nov 08 05:59 Eastern Standard Time
+"native-cfi-text" time elapsed: 00:00:00
+----------------------------------------------------------
+
+109/211 Testing: native-pdf-pages
+109/211 Test: native-pdf-pages
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-pages-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-pages" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+181 native PDF page tree checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-pages" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-pages" time elapsed: 00:00:00
+----------------------------------------------------------
+
+162/211 Testing: native-budget
+162/211 Test: native-budget
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-budget-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-budget" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+121 cache byte budget checks passed
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Passed.
+"native-budget" end time: Nov 08 05:59 Eastern Standard Time
+"native-budget" time elapsed: 00:00:00
+----------------------------------------------------------
+
+192/211 Testing: native-textindex-component
+192/211 Test: native-textindex-component
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-textindex-component-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/components/textindex"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-textindex-component" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Independent text index component passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-textindex-component" end time: Nov 08 05:59 Eastern Standard Time
+"native-textindex-component" time elapsed: 00:00:00
+----------------------------------------------------------
+
+58/211 Testing: native-epub-metadata-write
+58/211 Test: native-epub-metadata-write
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-epub-metadata-write-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-epub-metadata-write" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+362 EPUB original metadata/cover writing checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-epub-metadata-write" end time: Nov 08 05:59 Eastern Standard Time
+"native-epub-metadata-write" time elapsed: 00:00:00
+----------------------------------------------------------
+
+189/211 Testing: native-audio-component
+189/211 Test: native-audio-component
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-audio-component-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/components/audio"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-audio-component" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+58 audio timeline checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-audio-component" end time: Nov 08 05:59 Eastern Standard Time
+"native-audio-component" time elapsed: 00:00:00
+----------------------------------------------------------
+
+107/211 Testing: native-source
+107/211 Test: native-source
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-source-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-source" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Seekable sources: 463 checks passed
+<end of output>
+Test time =   0.14 sec
+----------------------------------------------------------
+Test Passed.
+"native-source" end time: Nov 08 05:59 Eastern Standard Time
+"native-source" time elapsed: 00:00:00
+----------------------------------------------------------
+
+99/211 Testing: native-content-hits
+99/211 Test: native-content-hits
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-content-ranges-test.exe" "hits" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-content-hits" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+hit-test: 50/50 = 100.00%
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-content-hits" end time: Nov 08 05:59 Eastern Standard Time
+"native-content-hits" time elapsed: 00:00:00
+----------------------------------------------------------
+
+143/211 Testing: native-rtf-table
+143/211 Test: native-rtf-table
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-rtf-table-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-rtf-table" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+140 RTF table checks passed
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Passed.
+"native-rtf-table" end time: Nov 08 05:59 Eastern Standard Time
+"native-rtf-table" time elapsed: 00:00:00
+----------------------------------------------------------
+
+144/211 Testing: native-rtf
+144/211 Test: native-rtf
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-rtf-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-rtf" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+138 rich RTF checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-rtf" end time: Nov 08 05:59 Eastern Standard Time
+"native-rtf" time elapsed: 00:00:00
+----------------------------------------------------------
+
+66/211 Testing: native-flac
+66/211 Test: native-flac
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-flac-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-flac" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+5659 native FLAC checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-flac" end time: Nov 08 05:59 Eastern Standard Time
+"native-flac" time elapsed: 00:00:00
+----------------------------------------------------------
+
+17/211 Testing: native-border-edges
+17/211 Test: native-border-edges
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-border-edges-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-border-edges" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+356 independent border checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-border-edges" end time: Nov 08 05:59 Eastern Standard Time
+"native-border-edges" time elapsed: 00:00:00
+----------------------------------------------------------
+
+54/211 Testing: native-variable
+54/211 Test: native-variable
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-variable-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-variable" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+112 variable font axes, shaping, outlines and inheritance checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-variable" end time: Nov 08 05:59 Eastern Standard Time
+"native-variable" time elapsed: 00:00:00
+----------------------------------------------------------
+
+59/211 Testing: native-vertical
+59/211 Test: native-vertical
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-vertical-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-vertical" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+6 prefixed/canonical equivalence cases and 3 cascade cases passed
+1781 vertical layout, orientation, shaping and pager checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-vertical" end time: Nov 08 05:59 Eastern Standard Time
+"native-vertical" time elapsed: 00:00:00
+----------------------------------------------------------
+
+110/211 Testing: native-pdf-cmap
+110/211 Test: native-pdf-cmap
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-cmap-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-cmap" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+182 native PDF ToUnicode checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-cmap" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-cmap" time elapsed: 00:00:00
+----------------------------------------------------------
+
+150/211 Testing: native-toc-page
+150/211 Test: native-toc-page
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-toc-page-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-toc-page" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+toc pages passed (22029 checks)
+<end of output>
+Test time =   0.08 sec
+----------------------------------------------------------
+Test Passed.
+"native-toc-page" end time: Nov 08 05:59 Eastern Standard Time
+"native-toc-page" time elapsed: 00:00:00
+----------------------------------------------------------
+
+148/211 Testing: native-export-epub
+148/211 Test: native-export-epub
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-export-epub-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-export-epub" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+323 structured EPUB checks passed
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"native-export-epub" end time: Nov 08 05:59 Eastern Standard Time
+"native-export-epub" time elapsed: 00:00:00
+----------------------------------------------------------
+
+198/211 Testing: native-epub-strict-mimetype
+198/211 Test: native-epub-strict-mimetype
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-epub-strict-test.exe" "mimetype"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-epub-strict-mimetype" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+strict/tolerant EPUB checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-epub-strict-mimetype" end time: Nov 08 05:59 Eastern Standard Time
+"native-epub-strict-mimetype" time elapsed: 00:00:00
+----------------------------------------------------------
+
+60/211 Testing: native-combine-upright-geometry
+60/211 Test: native-combine-upright-geometry
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-combine-upright-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts" "geometry"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-combine-upright-geometry" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+38 text-combine-upright geometry checks passed
+<end of output>
+Test time =   0.14 sec
+----------------------------------------------------------
+Test Passed.
+"native-combine-upright-geometry" end time: Nov 08 05:59 Eastern Standard Time
+"native-combine-upright-geometry" time elapsed: 00:00:00
+----------------------------------------------------------
+
+126/211 Testing: native-fixed-pdf
+126/211 Test: native-fixed-pdf
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-fixed-pdf-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-fixed-pdf" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+111 public fixed PDF checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-fixed-pdf" end time: Nov 08 05:59 Eastern Standard Time
+"native-fixed-pdf" time elapsed: 00:00:00
+----------------------------------------------------------
+
+23/211 Testing: native-pdf-crypto
+23/211 Test: native-pdf-crypto
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-crypto-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/pdf-crypto"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-crypto" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+7 PDF authentication checks passed
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-crypto" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-crypto" time elapsed: 00:00:00
+----------------------------------------------------------
+
+103/211 Testing: native-export-xml
+103/211 Test: native-export-xml
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-export-xml-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-export-xml" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+export XML: 2004 checks
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"native-export-xml" end time: Nov 08 05:59 Eastern Standard Time
+"native-export-xml" time elapsed: 00:00:00
+----------------------------------------------------------
+
+73/211 Testing: native-pdf-appearance
+73/211 Test: native-pdf-appearance
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-appearance-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-appearance" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+1629 PDF appearance checks passed
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-appearance" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-appearance" time elapsed: 00:00:00
+----------------------------------------------------------
+
+149/211 Testing: native-navigation
+149/211 Test: native-navigation
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-navigation-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-navigation" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Navigation: 145 checks passed
+<end of output>
+Test time =   0.08 sec
+----------------------------------------------------------
+Test Passed.
+"native-navigation" end time: Nov 08 05:59 Eastern Standard Time
+"native-navigation" time elapsed: 00:00:00
+----------------------------------------------------------
+
+105/211 Testing: native-html-raw
+105/211 Test: native-html-raw
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-html-raw-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-html-raw" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+HTML raw text: 120 checks
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-html-raw" end time: Nov 08 05:59 Eastern Standard Time
+"native-html-raw" time elapsed: 00:00:00
+----------------------------------------------------------
+
+64/211 Testing: native-aac
+64/211 Test: native-aac
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-aac-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-aac" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+AAC disabled configuration passed (4 checks)
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-aac" end time: Nov 08 05:59 Eastern Standard Time
+"native-aac" time elapsed: 00:00:00
+----------------------------------------------------------
+
+52/211 Testing: native-ot-variation
+52/211 Test: native-ot-variation
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-ot-variation-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-ot-variation" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+OpenType variation checks: 196
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-ot-variation" end time: Nov 08 05:59 Eastern Standard Time
+"native-ot-variation" time elapsed: 00:00:00
+----------------------------------------------------------
+
+140/211 Testing: native-rtf-number
+140/211 Test: native-rtf-number
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-rtf-number-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-rtf-number" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+131 RTF numbering checks passed
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Passed.
+"native-rtf-number" end time: Nov 08 05:59 Eastern Standard Time
+"native-rtf-number" time elapsed: 00:00:00
+----------------------------------------------------------
+
+81/211 Testing: native-abi
+81/211 Test: native-abi
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-abi-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-abi" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+9 ABI compatibility checks passed
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"native-abi" end time: Nov 08 05:59 Eastern Standard Time
+"native-abi" time elapsed: 00:00:00
+----------------------------------------------------------
+
+146/211 Testing: native-fb2
+146/211 Test: native-fb2
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-fb2-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-fb2" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+71 rich FB2 checks passed
+<end of output>
+Test time =   0.09 sec
+----------------------------------------------------------
+Test Passed.
+"native-fb2" end time: Nov 08 05:59 Eastern Standard Time
+"native-fb2" time elapsed: 00:00:00
+----------------------------------------------------------
+
+13/211 Testing: native-hyphen-builtin-joiners
+13/211 Test: native-hyphen-builtin-joiners
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-hyphen-builtin-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "joiners"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-hyphen-builtin-joiners" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+11 built-in hyphenation checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-hyphen-builtin-joiners" end time: Nov 08 05:59 Eastern Standard Time
+"native-hyphen-builtin-joiners" time elapsed: 00:00:00
+----------------------------------------------------------
+
+95/211 Testing: native-document-search-mapping
+95/211 Test: native-document-search-mapping
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-document-search-test.exe" "mapping" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-document-search-mapping" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+jump/anchor/glyph mapping 20/20 (10 vertical)
+search mapping passed
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"native-document-search-mapping" end time: Nov 08 05:59 Eastern Standard Time
+"native-document-search-mapping" time elapsed: 00:00:00
+----------------------------------------------------------
+
+154/211 Testing: native-toc-fragment
+154/211 Test: native-toc-fragment
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-toc-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "fragment"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-toc-fragment" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+TOC fragment: 78 checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-toc-fragment" end time: Nov 08 05:59 Eastern Standard Time
+"native-toc-fragment" time elapsed: 00:00:00
+----------------------------------------------------------
+
+68/211 Testing: native-audio-output
+68/211 Test: native-audio-output
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-audio-output-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-audio-output" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Native audio output passed (17 checks; waveOut)
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-audio-output" end time: Nov 08 05:59 Eastern Standard Time
+"native-audio-output" time elapsed: 00:00:00
+----------------------------------------------------------
+
+69/211 Testing: native-mp3
+69/211 Test: native-mp3
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-mp3-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-mp3" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+MP3 disabled configuration passed (4 checks)
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-mp3" end time: Nov 08 05:59 Eastern Standard Time
+"native-mp3" time elapsed: 00:00:00
+----------------------------------------------------------
+
+160/211 Testing: native-font
+160/211 Test: native-font
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-font-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-font" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+258 font fallback checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-font" end time: Nov 08 05:59 Eastern Standard Time
+"native-font" time elapsed: 00:00:00
+----------------------------------------------------------
+
+84/211 Testing: native-chapter-layout-title
+84/211 Test: native-chapter-layout-title
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-chapter-layout-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "title"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-chapter-layout-title" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+308 chapter layout checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-chapter-layout-title" end time: Nov 08 05:59 Eastern Standard Time
+"native-chapter-layout-title" time elapsed: 00:00:00
+----------------------------------------------------------
+
+186/211 Testing: native-anchor-boundary
+186/211 Test: native-anchor-boundary
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-anchor-boundary-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-anchor-boundary" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+21 boundary anchor checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-anchor-boundary" end time: Nov 08 05:59 Eastern Standard Time
+"native-anchor-boundary" time elapsed: 00:00:00
+----------------------------------------------------------
+
+139/211 Testing: native-decoration
+139/211 Test: native-decoration
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-decoration-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-decoration" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+690 text-decoration checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-decoration" end time: Nov 08 05:59 Eastern Standard Time
+"native-decoration" time elapsed: 00:00:00
+----------------------------------------------------------
+
+141/211 Testing: native-rtf-list
+141/211 Test: native-rtf-list
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-rtf-list-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-rtf-list" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+39 RTF list checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-rtf-list" end time: Nov 08 05:59 Eastern Standard Time
+"native-rtf-list" time elapsed: 00:00:00
+----------------------------------------------------------
+
+48/211 Testing: native-pdf-calculator
+48/211 Test: native-pdf-calculator
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pdf-calculator-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pdf-calculator" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+263 PDF calculator checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-calculator" end time: Nov 08 05:59 Eastern Standard Time
+"native-pdf-calculator" time elapsed: 00:00:00
+----------------------------------------------------------
+
+67/211 Testing: native-pcm
+67/211 Test: native-pcm
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pcm-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/audio"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pcm" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+PCM providers passed (129 checks)
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"native-pcm" end time: Nov 08 05:59 Eastern Standard Time
+"native-pcm" time elapsed: 00:00:00
+----------------------------------------------------------
+
+120/211 Testing: native-pcm-example
+120/211 Test: native-pcm-example
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-pcm-example.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/audio/pcm.wav"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-pcm-example" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+rate=16000 channels=1 decoded=3200 peak=0.500000
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Pass Reason:
+Required regular expression found. Regex=[decoded=3200 peak=0.500000]
+"native-pcm-example" end time: Nov 08 05:59 Eastern Standard Time
+"native-pcm-example" time elapsed: 00:00:00
+----------------------------------------------------------
+
+161/211 Testing: native-book-font
+161/211 Test: native-book-font
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-book-font-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-book-font" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Book fonts: 136 checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-book-font" end time: Nov 08 05:59 Eastern Standard Time
+"native-book-font" time elapsed: 00:00:00
+----------------------------------------------------------
+
+119/211 Testing: native-wave-example
+119/211 Test: native-wave-example
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-wave-example.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/audio/pcm.wav"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-wave-example" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+rate=16000 channels=1 frames=3200 decoded=3200 peak=0.500000
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Pass Reason:
+Required regular expression found. Regex=[frames=3200 decoded=3200 peak=0.500000]
+"native-wave-example" end time: Nov 08 05:59 Eastern Standard Time
+"native-wave-example" time elapsed: 00:00:00
+----------------------------------------------------------
+
+153/211 Testing: native-toc-recovery
+153/211 Test: native-toc-recovery
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-toc-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "recovery"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-toc-recovery" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+TOC recovery: 81 checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-toc-recovery" end time: Nov 08 05:59 Eastern Standard Time
+"native-toc-recovery" time elapsed: 00:00:00
+----------------------------------------------------------
+
+83/211 Testing: native-chapter-layout-chapter
+83/211 Test: native-chapter-layout-chapter
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-chapter-layout-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "chapter"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-chapter-layout-chapter" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+54 chapter layout checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-chapter-layout-chapter" end time: Nov 08 05:59 Eastern Standard Time
+"native-chapter-layout-chapter" time elapsed: 00:00:00
+----------------------------------------------------------
+
+85/211 Testing: native-chapter-layout-indent
+85/211 Test: native-chapter-layout-indent
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-chapter-layout-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "indent"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-chapter-layout-indent" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+41 chapter layout checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-chapter-layout-indent" end time: Nov 08 05:59 Eastern Standard Time
+"native-chapter-layout-indent" time elapsed: 00:00:00
+----------------------------------------------------------
+
+151/211 Testing: native-toc-nav
+151/211 Test: native-toc-nav
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-toc-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "nav"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-toc-nav" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+TOC nav: 30 checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-toc-nav" end time: Nov 08 05:59 Eastern Standard Time
+"native-toc-nav" time elapsed: 00:00:00
+----------------------------------------------------------
+
+91/211 Testing: native-document-search-basic
+91/211 Test: native-document-search-basic
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-document-search-test.exe" "basic" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-document-search-basic" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+search basic passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-document-search-basic" end time: Nov 08 05:59 Eastern Standard Time
+"native-document-search-basic" time elapsed: 00:00:00
+----------------------------------------------------------
+
+57/211 Testing: native-m4b
+57/211 Test: native-m4b
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-m4b-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-m4b" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+M4B disabled configuration passed (4 checks)
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-m4b" end time: Nov 08 05:59 Eastern Standard Time
+"native-m4b" time elapsed: 00:00:00
+----------------------------------------------------------
+
+113/211 Testing: native-vector
+113/211 Test: native-vector
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-vector-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-vector" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+2431 native vector fill checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-vector" end time: Nov 08 05:59 Eastern Standard Time
+"native-vector" time elapsed: 00:00:00
+----------------------------------------------------------
+
+94/211 Testing: native-document-search-errors
+94/211 Test: native-document-search-errors
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-document-search-test.exe" "errors" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-document-search-errors" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+search errors passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-document-search-errors" end time: Nov 08 05:59 Eastern Standard Time
+"native-document-search-errors" time elapsed: 00:00:00
+----------------------------------------------------------
+
+12/211 Testing: native-hyphen-builtin-switches
+12/211 Test: native-hyphen-builtin-switches
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-hyphen-builtin-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "switches"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-hyphen-builtin-switches" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+100 built-in hyphenation checks passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"native-hyphen-builtin-switches" end time: Nov 08 05:59 Eastern Standard Time
+"native-hyphen-builtin-switches" time elapsed: 00:00:00
+----------------------------------------------------------
+
+200/211 Testing: native-epub-strict-container
+200/211 Test: native-epub-strict-container
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-epub-strict-test.exe" "container"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-epub-strict-container" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+strict/tolerant EPUB checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-epub-strict-container" end time: Nov 08 05:59 Eastern Standard Time
+"native-epub-strict-container" time elapsed: 00:00:00
+----------------------------------------------------------
+
+98/211 Testing: native-content-expansion
+98/211 Test: native-content-expansion
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-content-ranges-test.exe" "expansion"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-content-expansion" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+expansion: grapheme/emoji, word/CJK, sentence, paragraph, exclusive end and cross-part passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-content-expansion" end time: Nov 08 05:59 Eastern Standard Time
+"native-content-expansion" time elapsed: 00:00:00
+----------------------------------------------------------
+
+152/211 Testing: native-toc-ncx
+152/211 Test: native-toc-ncx
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-toc-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures" "ncx"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-toc-ncx" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+TOC ncx: 45 checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-toc-ncx" end time: Nov 08 05:59 Eastern Standard Time
+"native-toc-ncx" time elapsed: 00:00:00
+----------------------------------------------------------
+
+92/211 Testing: native-document-search-unicode
+92/211 Test: native-document-search-unicode
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-document-search-test.exe" "unicode" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-document-search-unicode" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+search unicode passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-document-search-unicode" end time: Nov 08 05:59 Eastern Standard Time
+"native-document-search-unicode" time elapsed: 00:00:00
+----------------------------------------------------------
+
+97/211 Testing: native-content-relocation
+97/211 Test: native-content-relocation
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-content-ranges-test.exe" "relocation"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-content-relocation" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+relocation: insertion, part reorder, ambiguity, deletion, cancellation, identity passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-content-relocation" end time: Nov 08 05:59 Eastern Standard Time
+"native-content-relocation" time elapsed: 00:00:00
+----------------------------------------------------------
+
+199/211 Testing: native-epub-strict-directory
+199/211 Test: native-epub-strict-directory
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-epub-strict-test.exe" "directory"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-epub-strict-directory" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+strict/tolerant EPUB checks passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-epub-strict-directory" end time: Nov 08 05:59 Eastern Standard Time
+"native-epub-strict-directory" time elapsed: 00:00:00
+----------------------------------------------------------
+
+93/211 Testing: native-document-search-flags
+93/211 Test: native-document-search-flags
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-document-search-test.exe" "flags" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-document-search-flags" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+search flags passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-document-search-flags" end time: Nov 08 05:59 Eastern Standard Time
+"native-document-search-flags" time elapsed: 00:00:00
+----------------------------------------------------------
+
+61/211 Testing: native-combine-upright-modes
+61/211 Test: native-combine-upright-modes
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-combine-upright-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts" "modes"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-combine-upright-modes" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+14 mode and rejection cases passed
+58 text-combine-upright modes checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-combine-upright-modes" end time: Nov 08 05:59 Eastern Standard Time
+"native-combine-upright-modes" time elapsed: 00:00:00
+----------------------------------------------------------
+
+62/211 Testing: native-combine-upright-wrap
+62/211 Test: native-combine-upright-wrap
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-combine-upright-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts" "wrap"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-combine-upright-wrap" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+13 text-combine-upright wrap checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-combine-upright-wrap" end time: Nov 08 05:59 Eastern Standard Time
+"native-combine-upright-wrap" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/211 Testing: native-hyphen-layout
+10/211 Test: native-hyphen-layout
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-hyphen-layout-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"native-hyphen-layout" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+2544009 automatic hyphen layout checks passed
+<end of output>
+Test time =  26.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-hyphen-layout" end time: Nov 08 05:59 Eastern Standard Time
+"native-hyphen-layout" time elapsed: 00:00:26
+----------------------------------------------------------
+
+206/211 Testing: windows-selection-boundaries
+206/211 Test: windows-selection-boundaries
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-shell-selection-test.exe" "boundaries" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"windows-selection-boundaries" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+WORD 0 3 紅
+WORD 3 6 樓
+WORD 6 9 夢
+WORD 9 12 中
+WORD 12 15 文
+WORD 19 24 Alpha
+WORD 25 30 bravo
+WORD 32 35 can
+WORD 38 40 co
+WORD 41 48 operate
+WORD 49 55 café
+WORD 57 68 👩‍💻
+WORD 30 31 ,
+WORD 35 36 '
+WORD 40 41 -
+PARAGRAPH 0 68
+PARAGRAPH 69 184
+PARAGRAPH 185 201
+PARAGRAPH 202 219
+PARAGRAPH 220 236
+PASS
+<end of output>
+Test time =   0.18 sec
+----------------------------------------------------------
+Test Passed.
+"windows-selection-boundaries" end time: Nov 08 05:59 Eastern Standard Time
+"windows-selection-boundaries" time elapsed: 00:00:00
+----------------------------------------------------------
+
+211/211 Testing: windows-selection-annotations
+211/211 Test: windows-selection-annotations
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-shell-selection-test.exe" "annotations" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"windows-selection-annotations" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+ANNOTATIONS restore 8/8; UTF-8 escaping; colors 3/3; rollback 2/2; horizontal/vertical ink unchanged; edit/delete; malformed/version reject
+PASS
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"windows-selection-annotations" end time: Nov 08 05:59 Eastern Standard Time
+"windows-selection-annotations" time elapsed: 00:00:00
+----------------------------------------------------------
+
+208/211 Testing: windows-selection-keyboard
+208/211 Test: windows-selection-keyboard
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-shell-selection-test.exe" "keyboard" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"windows-selection-keyboard" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+SHIFT inline 3/3; row 2/2; Ctrl+A/C/Esc 3/3
+PASS
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"windows-selection-keyboard" end time: Nov 08 05:59 Eastern Standard Time
+"windows-selection-keyboard" time elapsed: 00:00:00
+----------------------------------------------------------
+
+209/211 Testing: windows-selection-raster
+209/211 Test: windows-selection-raster
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-shell-selection-test.exe" "raster" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"windows-selection-raster" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+region mode=0 requested=0 box=28,0,87,21 lines=7 flags=8
+RASTER horizontal + light/dark unchanged
+region mode=0 requested=1 box=42,28,63,98 lines=3 flags=136
+RASTER vertical + light/dark unchanged
+PASS
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"windows-selection-raster" end time: Nov 08 05:59 Eastern Standard Time
+"windows-selection-raster" time elapsed: 00:00:00
+----------------------------------------------------------
+
+210/211 Testing: windows-selection-generated
+210/211 Test: windows-selection-generated
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-shell-selection-test.exe" "generated" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"windows-selection-generated" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+hyphen glyphs=29 lines=7
+HYPHENS generated=4 U+2010=0 exact=1
+COMBINE glyphs=2 copied-bytes=2 extra-bytes=0
+PASS
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"windows-selection-generated" end time: Nov 08 05:59 Eastern Standard Time
+"windows-selection-generated" time elapsed: 00:00:00
+----------------------------------------------------------
+
+207/211 Testing: windows-selection-copy
+207/211 Test: windows-selection-copy
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk/exreader-shell-selection-test.exe" "copy" "C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/tests/fixtures/fonts/primary.ttf"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk
+"windows-selection-copy" start time: Nov 08 05:59 Eastern Standard Time
+Output:
+----------------------------------------------------------
+COPY cross-part exact; clipboard roundtrip; Ctrl+A 3/3
+PASS
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"windows-selection-copy" end time: Nov 08 05:59 Eastern Standard Time
+"windows-selection-copy" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 08 05:59 Eastern Standard Time

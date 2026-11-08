@@ -1,0 +1,45 @@
+HOST	phase=1	engine=3.42.0	pid=18040
+STEP	1	open	PASS	page=22;status=已打开《紅樓夢》 · 已按章节与文本锚点恢复到上次位置。
+STEP	2	wait_idle	PASS	page=22;status=已打开《紅樓夢》 · 已按章节与文本锚点恢复到上次位置。
+STEP	3	shell	PASS	reading screen
+STEP	4	shell_dpi	PASS	page=9;status=第 9 页。
+STEP	5	shell_client	PASS	page=9;status=第 9 页。
+STEP	6	shell_font	PASS	page=9;status=第 9 页。
+STEP	7	wait_idle	PASS	page=9;status=第 9 页。
+STEP	8	shell_click	PASS	button invoked
+STEP	9	shell_click	PASS	button invoked
+STEP	10	probe_wait	PASS	waited without blocking UI
+STEP	11	toc_click	PASS	page=19;status=第 19 页。
+STEP	12	wait_idle	PASS	page=19;status=第 19 页。
+STEP	13	annotgoto	PASS	page=10;status=第 10 页。
+STEP	14	wait_idle	PASS	page=10;status=第 10 页。
+STEP	15	annot_close	PASS	annotation action dispatched
+STEP	16	select_key	PASS	selection key dispatched
+STEP	17	select_pointer	PASS	selection pointer dispatched
+STEP	18	select_pointer	PASS	selection pointer dispatched
+STEP	19	select_edge	PASS	selection edge turn dispatched
+STEP	20	wait_idle	PASS	page=11;status=第 11 页。
+STEP	21	select_pointer	PASS	selection pointer dispatched
+STEP	22	select_pointer	PASS	selection pointer dispatched
+STEP	23	annot_command	PASS	annotation action dispatched
+STEP	24	annot_close	PASS	annotation action dispatched
+STEP	25	annot_dump	PASS	annotation action dispatched
+STEP	26	shell_measure	PASS	physical layout captured
+STEP	27	probe_wait	PASS	waited without blocking UI
+STEP	28	prev	PASS	page=10;status=第 10 页。
+STEP	29	wait_idle	PASS	page=10;status=第 10 页。
+STEP	30	annot_dump	PASS	annotation action dispatched
+STEP	31	shell_measure	PASS	physical layout captured
+STEP	32	probe_wait	PASS	waited without blocking UI
+STEP	33	annot_pick	PASS	annotation action dispatched
+STEP	34	annot_command	PASS	annotation action dispatched
+STEP	35	annot_dump	PASS	annotation action dispatched
+STEP	36	shell_measure	PASS	physical layout captured
+STEP	37	probe_wait	PASS	waited without blocking UI
+STEP	38	next	PASS	page=11;status=第 11 页。
+STEP	39	wait_idle	PASS	page=11;status=第 11 页。
+STEP	40	annot_dump	PASS	annotation action dispatched
+STEP	41	shell_measure	PASS	physical layout captured
+STEP	42	probe_wait	PASS	waited without blocking UI
+STEP	43	quit	PASS	closing
+DONE	43	eof	PASS	script finished
