@@ -1,0 +1,1485 @@
+{
+  "source_revision": "93f9d8bb1ab5ed700bc8dbad47eef650eeb5bca9",
+  "protected_trees": {
+    "src": "5892afa49f3715087f7986d8382d5d6983d92c70",
+    "include": "10ce6083554e4a82e2792a4554c5e466ca8ab1c8",
+    "examples": "dd8e0bcb2ad2a7f6badff2c36f5cc2f4093e9564",
+    ".github": "3e5e1cc140ebbb554ed9fffd87cd3a51f94d0010"
+  },
+  "changed_paths_within_allowlist": true,
+  "source_books_or_binaries_staged": false,
+  "files": {
+    ".gitattributes": {
+      "bytes": 105,
+      "sha256": "bb658bfdd51fe0e6f4f11402c0a999c12f7f9ff3c30c8e275347a8f96cdc1a47"
+    },
+    "build-command.json": {
+      "bytes": 1566,
+      "sha256": "2fab00ef7f285954a427e1a7833e2c59152e27958b1895dd5877c6d8e2fd30d3"
+    },
+    "build.txt": {
+      "bytes": 52205,
+      "sha256": "f037e9592a75549dcd565837fcd107c732c3023235f5d52a821f8c5924566f4a"
+    },
+    "configure.txt": {
+      "bytes": 22197,
+      "sha256": "f51738f2e6b5cdc21c8b8c50523d007ebe25c66f66c521e523b5399c09be303b"
+    },
+    "final-build.txt": {
+      "bytes": 13745,
+      "sha256": "49e80d9d5d131323f63c801b0afbdc00e589d014dca0c1fc1ff1a07f080b8595"
+    },
+    "mobi-build.txt": {
+      "bytes": 13553,
+      "sha256": "d151beaa875124ff0ae2499f8a2b618a4e377666bee6aa5b7e0a8ed2db3375a2"
+    },
+    "mobi-signature-build.txt": {
+      "bytes": 13553,
+      "sha256": "a70d546247f0457fbb882a7221658a5aa2d14d98bf81ac619845d96e14320d8c"
+    },
+    "normal-console.txt": {
+      "bytes": 620,
+      "sha256": "d9becea225258c21ae11b07e070e0a5a02048616233d1a3cd89099c155f4ea7c"
+    },
+    "normal-priority-collector.py": {
+      "bytes": 11859,
+      "sha256": "e2569517582094b447eb63bc2c984896fd4edfa5b4ad7fc8bb63b914ef4ee9fc"
+    },
+    "PERF2-OUT.txt": {
+      "bytes": 5505,
+      "sha256": "1a8753d0e2df19687502788af300e334c09ebae0c8d6f044aa65d55bfbc61982"
+    },
+    "pinned-reference-build.txt": {
+      "bytes": 13602,
+      "sha256": "53db99f053937a2c56d9887473e4a6ebaa8d3c6c97c7bef54e910e3e1b0c627a"
+    },
+    "power-original.json": {
+      "bytes": 80,
+      "sha256": "b68793d67efede6def844a10da571dd6ff9ec44581ff7833515fb7f13c3d7808"
+    },
+    "power-restored.json": {
+      "bytes": 80,
+      "sha256": "b68793d67efede6def844a10da571dd6ff9ec44581ff7833515fb7f13c3d7808"
+    },
+    "PR-BODY.md": {
+      "bytes": 1657,
+      "sha256": "23a1112101b8fb3164dc08f781c7391fbd553ef209c058336df904ccea4c62bf"
+    },
+    "preflight.json": {
+      "bytes": 85764,
+      "sha256": "983bfaa986f326b57b61fc408850acb38ac801737d8e9629f5d8f3e30ff0866c"
+    },
+    "probe-relink-command.json": {
+      "bytes": 359,
+      "sha256": "5644f3b44bc71945087fe296ac8ef276e05e8dfbfca6d994f2cdaf6eaba73090"
+    },
+    "probe-relink.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "proposed-workflows.patch": {
+      "bytes": 2883,
+      "sha256": "7cd76d5b9f4ad925804610263ec1feac41954834a7b8ad761ceca7624a329212"
+    },
+    "README.md": {
+      "bytes": 2007,
+      "sha256": "ca2306707a83568b097569f4f7c164a5eb5fcdcdaa617bc9fb39023303851c33"
+    },
+    "realbooks-after-console.txt": {
+      "bytes": 1266,
+      "sha256": "31898b6b698b5c7d2810b97591ead6d999c345a9145114e6861d81e86d6f97f9"
+    },
+    "realbooks-after.diff.json": {
+      "bytes": 7140,
+      "sha256": "c10c33f8980c582cbb9875b7f9174e2c12e65a78781e695b207a71fd5096699b"
+    },
+    "realbooks-after.json.gz": {
+      "bytes": 648228,
+      "sha256": "ca397d2fa5e87ce7bba934aca4778f45703ba67e07309292edc2bb5fde034d7e"
+    },
+    "realbooks-before-console.txt": {
+      "bytes": 1257,
+      "sha256": "0faf180b6381298e9f2b3e0e86c8b17409aa57fb9bf4a7e34e3e67fc89bb253d"
+    },
+    "realbooks-before.diff.json": {
+      "bytes": 111,
+      "sha256": "2a38273099cdda9008a4f11aefe75f5b5431552d5577ea7092c1ba2fb3afd099"
+    },
+    "realbooks-before.json.gz": {
+      "bytes": 647929,
+      "sha256": "1863504bb29ca03d9218ddd6f0097d6ca114ef374ef84f9d1526aad8c8c0314d"
+    },
+    "realbooks-repeat-console.txt": {
+      "bytes": 1269,
+      "sha256": "be7a904c164afcf51beab8e2b364252c7a5befcbf7bc7d449dce99531ead9a77"
+    },
+    "realbooks-repeat.diff.json": {
+      "bytes": 7140,
+      "sha256": "c10c33f8980c582cbb9875b7f9174e2c12e65a78781e695b207a71fd5096699b"
+    },
+    "realbooks-repeat.json.gz": {
+      "bytes": 649227,
+      "sha256": "42b25e851af9dd97b49e851f2b7516474bd90db9860c6907beca9d0058eb162d"
+    },
+    "rebuild.txt": {
+      "bytes": 5700,
+      "sha256": "ff87a3967f4a43853ca68bf5cc90d385df526dbdcd515c4fa988befab338bb9b"
+    },
+    "reconfigure.txt": {
+      "bytes": 8111,
+      "sha256": "1a9ab0844c0a885ea9c1147ec0cb80117e53312bb7aa469b7f5d098f5e93d6b0"
+    },
+    "reference-build.txt": {
+      "bytes": 165,
+      "sha256": "471ae6b883bb71ffadf3de1a4a18b978eff21dc2796a4e1f95637653f59c6a7e"
+    },
+    "reference-disassembly.txt": {
+      "bytes": 5696,
+      "sha256": "8bab735fdcf282a013325525bed48fa7f54c8ad597824cd84c8726ccdcd3cd48"
+    },
+    "reference-rebuild-test.txt": {
+      "bytes": 337,
+      "sha256": "e8edb3a0af8e941e5bdd3bd20000319238cfabf33143b269203a3c7c07c1e339"
+    },
+    "session-console.txt": {
+      "bytes": 319,
+      "sha256": "ba83b3f22e967ea68945598fa0bbdb038da5902816ee92acf68ae15843c65c25"
+    },
+    "smoke-all-console.txt": {
+      "bytes": 638,
+      "sha256": "4cd44cbd90d22c517ef96a7d1ab7c5f5e791fcca9d4b1bdd1ad7d40910de0fba"
+    },
+    "smoke-all-v2-console.txt": {
+      "bytes": 987,
+      "sha256": "6b8061b5100cd8a2ffda31b20c61dc3826a535aa98c92771e7e98fb50fb8ee89"
+    },
+    "smoke.json": {
+      "bytes": 11513,
+      "sha256": "5cae845f6b6c519be4efb0c036e590c92212f9fba5559a527335a457d52e3df8"
+    },
+    "validation.json": {
+      "bytes": 1031,
+      "sha256": "01f290c91045586385b90bd8b2ce7d235b72ddd9d913301a4d13e0924e8cb6ac"
+    },
+    "final/check-console.txt": {
+      "bytes": 5887,
+      "sha256": "8c8513343ba7a2d7419cc5e65a2c6952d19a23dd67be542c9513b83a3821ccd8"
+    },
+    "final/check-ratio.txt": {
+      "bytes": 145,
+      "sha256": "97bf4484a10c67e80b6373585628ac82886a76caef86894f2e167e18de13a7c9"
+    },
+    "final/experiment.json": {
+      "bytes": 13871,
+      "sha256": "a0d3a457b1441bdaff92e33903205dd77f4e4701b43a03e421f621f144dbbd95"
+    },
+    "final/freeze-console.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "final/frequency25-pilot-frequency-postflight.json": {
+      "bytes": 57949,
+      "sha256": "357447a379af7836f29e5f30387d4f362f6f336aedeb8f48f83c95e324ab69f6"
+    },
+    "final/frequency25-pilot-frequency-power-original.json": {
+      "bytes": 80,
+      "sha256": "b68793d67efede6def844a10da571dd6ff9ec44581ff7833515fb7f13c3d7808"
+    },
+    "final/frequency25-pilot-frequency-power-restored.json": {
+      "bytes": 80,
+      "sha256": "b68793d67efede6def844a10da571dd6ff9ec44581ff7833515fb7f13c3d7808"
+    },
+    "final/frequency25-pilot-frequency-preflight.json": {
+      "bytes": 57856,
+      "sha256": "709684715fc17d515930c5fe688b5334d13df5e68ebdbe352cf227e63cf8d980"
+    },
+    "final/frequency25-pilot-frequency-request.json": {
+      "bytes": 89,
+      "sha256": "573c1ed5b273f5bda1802e5d3efacd726c82431e70a7a89bc91d40a532111267"
+    },
+    "final/frequency25-pilot-reference-pilot.json": {
+      "bytes": 384,
+      "sha256": "1a9e5e1ad05f80552be620285cd1f3149eb43be5d6391a730ada6561b2fdcd57"
+    },
+    "final/frequency25-pilot-session.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "final/frequency50-pilot-frequency-postflight.json": {
+      "bytes": 57982,
+      "sha256": "20c73f704c71578b200d4053001b7106116662b8c8db3308e41682f65d57ba47"
+    },
+    "final/frequency50-pilot-frequency-power-original.json": {
+      "bytes": 80,
+      "sha256": "b68793d67efede6def844a10da571dd6ff9ec44581ff7833515fb7f13c3d7808"
+    },
+    "final/frequency50-pilot-frequency-power-restored.json": {
+      "bytes": 80,
+      "sha256": "b68793d67efede6def844a10da571dd6ff9ec44581ff7833515fb7f13c3d7808"
+    },
+    "final/frequency50-pilot-frequency-preflight.json": {
+      "bytes": 57884,
+      "sha256": "6a4a5b03f38cf20e8f2453b8a497ce2dc04983add15467692073f82b4a8667b7"
+    },
+    "final/frequency50-pilot-frequency-request.json": {
+      "bytes": 89,
+      "sha256": "097a7787fdf4019d5c6b5af077422ecae98be317e44c430478cefc902f94a766"
+    },
+    "final/frequency50-pilot-reference-pilot.json": {
+      "bytes": 384,
+      "sha256": "9aa411f21ef2cb97cc42b24629509ffa2f40d447e063c5c51127ce6b0f09c8e0"
+    },
+    "final/frequency50-pilot-session.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "final/loaded-check.json": {
+      "bytes": 5653,
+      "sha256": "c26bef0e70318aaa15ff705e7f735457442ac6c5cbab6b5431d6d79e2bdfbd5d"
+    },
+    "final/loaded-console.txt": {
+      "bytes": 1246,
+      "sha256": "cdac8686a0bac501dc55b03e00bdb0bf14f73d54fad07bd8680771d7b067b352"
+    },
+    "final/measured-results.md": {
+      "bytes": 4455,
+      "sha256": "4732e2faf3e7aff2aab38d72cebf92091116132afd706376f0eaf553e188447e"
+    },
+    "final/normal-console.txt": {
+      "bytes": 1251,
+      "sha256": "0d227f5d354c9d412998fef590842a3187eced54f0bb8ea21c59628192ca49a4"
+    },
+    "final/PERF2-OUT.txt": {
+      "bytes": 465,
+      "sha256": "0fb4910dc4169e71f0445f4e80cb42e4bac9c14b64b82267b2cafffd772c5c68"
+    },
+    "final/postflight.json": {
+      "bytes": 57860,
+      "sha256": "6245cb2040357c24671f83a98b95985ff77b3b5be5ac5355a826899602ea0245"
+    },
+    "final/power-original.json": {
+      "bytes": 80,
+      "sha256": "d48a87e37607cabdc634c317525e6f9e7bef64a289a29e3f72fe9337a4d35802"
+    },
+    "final/power-restored.json": {
+      "bytes": 80,
+      "sha256": "d48a87e37607cabdc634c317525e6f9e7bef64a289a29e3f72fe9337a4d35802"
+    },
+    "final/power-status.json": {
+      "bytes": 1000,
+      "sha256": "467d4536db8d805947210342188d104992d8b4e9580794b925236ba941c7eca1"
+    },
+    "final/preflight.json": {
+      "bytes": 85571,
+      "sha256": "4e811a30d6b0bdbcd9da58945f2765ed2bd9133c641e047e9ac441832808d3a3"
+    },
+    "final/ratio-policy.json": {
+      "bytes": 100303,
+      "sha256": "710302f346a0ea952d3081c3da0d5ca6e7d15a8d395f2fde27a36398b5ff5ecf"
+    },
+    "final/report-console.txt": {
+      "bytes": 14303,
+      "sha256": "53639673f3ab814e50aee143f26df8315ced648fface7b321b82ab48ad96979b"
+    },
+    "final/session-console.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "high-priority/normal-console.txt": {
+      "bytes": 620,
+      "sha256": "4cb8cd405c309aeb696aed27e177bf6c14ad2501d4a74f56ffdef88e75e050f8"
+    },
+    "high-priority/original-normal-priority-collector.py": {
+      "bytes": 11859,
+      "sha256": "e2569517582094b447eb63bc2c984896fd4edfa5b4ad7fc8bb63b914ef4ee9fc"
+    },
+    "high-priority/PERF2-OUT.txt": {
+      "bytes": 51,
+      "sha256": "4a2059848a6e70b763ef93776683d6341f0bc8dafba3d1959111562b889a86a2"
+    },
+    "high-priority/power-original.json": {
+      "bytes": 80,
+      "sha256": "b68793d67efede6def844a10da571dd6ff9ec44581ff7833515fb7f13c3d7808"
+    },
+    "high-priority/power-restored.json": {
+      "bytes": 80,
+      "sha256": "b68793d67efede6def844a10da571dd6ff9ec44581ff7833515fb7f13c3d7808"
+    },
+    "high-priority/preflight.json": {
+      "bytes": 85736,
+      "sha256": "2a6c5c71e72d6af0c9d5a3469376d60d1e0a731b851469fae2c97aa8b3fc48be"
+    },
+    "high-priority/session-console.txt": {
+      "bytes": 319,
+      "sha256": "ba83b3f22e967ea68945598fa0bbdb038da5902816ee92acf68ae15843c65c25"
+    },
+    "normal/capture.json": {
+      "bytes": 6853,
+      "sha256": "3980ec93a385edf7d1a6d521246a4d51a21ca8473b7b16a9f66d31b9cc73e1b9"
+    },
+    "paired-v1/collector-snapshot.py": {
+      "bytes": 12438,
+      "sha256": "98401b406094d82b9ebefe1bf4e40e083b0993b1d1b2a91dd243cf35351adffc"
+    },
+    "paired-v1/normal-console.txt": {
+      "bytes": 620,
+      "sha256": "45e956171172504db85b158b302c6c5442363d646ecf975992f37677a0c3e6b9"
+    },
+    "paired-v1/PERF2-OUT.txt": {
+      "bytes": 51,
+      "sha256": "4a2059848a6e70b763ef93776683d6341f0bc8dafba3d1959111562b889a86a2"
+    },
+    "paired-v1/power-original.json": {
+      "bytes": 80,
+      "sha256": "29acef0a041f142537ce73a4d894410d5ee0148e4ff1f9fa12f2cb5f041223d6"
+    },
+    "paired-v1/power-restored.json": {
+      "bytes": 80,
+      "sha256": "29acef0a041f142537ce73a4d894410d5ee0148e4ff1f9fa12f2cb5f041223d6"
+    },
+    "paired-v1/preflight.json": {
+      "bytes": 85368,
+      "sha256": "8a4ed24b228f1385e6c7bf093333b2eecdac85b58d29b8e5f2d636d764b2e64e"
+    },
+    "paired-v1/session-console.txt": {
+      "bytes": 319,
+      "sha256": "ba83b3f22e967ea68945598fa0bbdb038da5902816ee92acf68ae15843c65c25"
+    },
+    "paired-v2/normal-console.txt": {
+      "bytes": 574,
+      "sha256": "4dbff1624c0613a01dd976db15f8d2c0d9336b986dd123604cc98f5773667f10"
+    },
+    "paired-v2/PERF2-OUT.txt": {
+      "bytes": 51,
+      "sha256": "4a2059848a6e70b763ef93776683d6341f0bc8dafba3d1959111562b889a86a2"
+    },
+    "paired-v2/power-original.json": {
+      "bytes": 80,
+      "sha256": "8c2460b7f3307523de72a513120b5847abc61ff52d51ad9a867375f3b03dfd61"
+    },
+    "paired-v2/power-restored.json": {
+      "bytes": 80,
+      "sha256": "8c2460b7f3307523de72a513120b5847abc61ff52d51ad9a867375f3b03dfd61"
+    },
+    "paired-v2/preflight.json": {
+      "bytes": 85635,
+      "sha256": "96a18eaa5738db9a36acf34115a13ef44aa11ac9bb7d2dd73d54427adb5ed053"
+    },
+    "paired-v2/session-console.txt": {
+      "bytes": 319,
+      "sha256": "ba83b3f22e967ea68945598fa0bbdb038da5902816ee92acf68ae15843c65c25"
+    },
+    "smoke-all/capture.json": {
+      "bytes": 8853,
+      "sha256": "e001404000b034aedb906c5a60611e3cfe76167a773ee3066e4b226c278dbe1f"
+    },
+    "smoke-all-v2/capture.json": {
+      "bytes": 9934,
+      "sha256": "0b3baabbfd033fcf9c7fb8738579e742ce6b8979de084d775afb960fdec070a7"
+    },
+    "smoke-all-v2/summary.json": {
+      "bytes": 87619,
+      "sha256": "c3eed7b5810adbc9491858743d2de983226e2544b5ec478be1a70b2574306a7e"
+    },
+    "smoke-all-v2/raw/1-a-raisin-in-the-sun.json": {
+      "bytes": 11507,
+      "sha256": "91ec620a73ac9b20320c9049538bcd7136313e7b35bc46e75b58868e42ecfb6c"
+    },
+    "smoke-all-v2/raw/1-between-the-world-and-me.json": {
+      "bytes": 11493,
+      "sha256": "8895dd43462014d900039fd2fe5d5282b0c330164271e2c7ccf15386388af8ad"
+    },
+    "smoke-all-v2/raw/1-black-boy.json": {
+      "bytes": 11478,
+      "sha256": "69357804c74943b5b57135bcf35f879b2349a7abd6f16235a083ba662af832c7"
+    },
+    "smoke-all-v2/raw/1-born-a-crime.json": {
+      "bytes": 11497,
+      "sha256": "88af6439d87e37d4a210daa9f8cf1b692466728a971933e51c701646b517256b"
+    },
+    "smoke-all-v2/raw/1-crying-in-h-mart.json": {
+      "bytes": 11475,
+      "sha256": "6649b20447cd7a975bd1beb8ca7325e8c3f2cf3a107e039a4402b3198b5b9e67"
+    },
+    "smoke-all-v2/raw/1-hongloumeng-24264.json": {
+      "bytes": 11534,
+      "sha256": "df180f5b34eb6e112e6a58aba0b072b15f686f9d1928cd851069c0c8caead0d6"
+    },
+    "smoke-all-v2/raw/1-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11469,
+      "sha256": "3c6bfbf5c249ae20dfebfb9ad83b7a0c72fecfb5f7c3ccc24dd4638ccdbb2d04"
+    },
+    "smoke-all-v2/raw/1-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11515,
+      "sha256": "1368607e5710117a5bd33e6196a72ca3d287881ee7fc892c1950ab622a8d0da1"
+    },
+    "smoke-all-v2/raw/1-kusamakura-japanese-vertical-writing.json": {
+      "bytes": 11493,
+      "sha256": "a7674a28d12e42dcefa1fae26e9aa34359015f6daf224835b67ba75dbd4d974c"
+    },
+    "smoke-all-v2/raw/1-pachinko.json": {
+      "bytes": 11410,
+      "sha256": "362e8bf7b1603b9a2fb7b0b930a74a0d32c9a21de69433aea711c26d4a68a18d"
+    },
+    "smoke-all-v2/raw/1-tangshi300-52323.json": {
+      "bytes": 11537,
+      "sha256": "cd3833defc8c77b235d1f22627cd9316e6d2a247f271cf3d96d73090738b1f64"
+    },
+    "smoke-all-v2/raw/1-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11487,
+      "sha256": "d447c638e7f3e9faa077579cc661abec7dad6c5d7fe0067b6d6c533395d3351d"
+    },
+    "smoke-all-v2/raw/1-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11250,
+      "sha256": "852bffb9201092cdae43a747844c5c527cfb1bd963eb5f1739db505fdc2da133"
+    },
+    "smoke-all-v2/raw/1-the-distance-between-us-a-memoir.json": {
+      "bytes": 11463,
+      "sha256": "62da48f3a934703a3f674af625151dfa0cc0a58bdb2922d0c0251badd495ca5c"
+    },
+    "smoke-all-v2/raw/1-the-fire-next-time.json": {
+      "bytes": 11483,
+      "sha256": "b480f949ca126f04dc654acd1974ad774e822a6df9274223d42e7d09c031f793"
+    },
+    "smoke-all-v2/raw/1-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11492,
+      "sha256": "1a1c8448237f4cd04ad7b6b0b5dc74cf0d75be24d39afeafd306c66a09804f0b"
+    },
+    "smoke-all-v2/raw/1-the-house-on-mango-street.json": {
+      "bytes": 11474,
+      "sha256": "eb85ee46432a901dbd818f68bd0d95ff9572c28903408138e7406f4a5785f558"
+    },
+    "smoke-all-v2/raw/1-xingshihengyan-24239.json": {
+      "bytes": 11534,
+      "sha256": "9fbe9d91f2b37982fd2523ad558e2555c2736cc790cc57759db08e7c7376229f"
+    },
+    "smoke-all-v2/raw/1-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 11276,
+      "sha256": "c8fd3c81d5e605c18443741293ab56412a441da782c83eacb06cad0a5af80025"
+    },
+    "smoke-all-v2/raw/reference-1.json": {
+      "bytes": 384,
+      "sha256": "e45ebe172cd4401dc64cd170583afb316b5b5ace03cb371eda580d3f1501d1c0"
+    },
+    "smoke-all/raw/1-a-raisin-in-the-sun.json": {
+      "bytes": 11507,
+      "sha256": "8e86567ee296ecaafe2202f26253a037ab5e8f461c434db029e132f893b55c46"
+    },
+    "smoke-all/raw/1-between-the-world-and-me.json": {
+      "bytes": 11493,
+      "sha256": "f53f4fba3f7de53cb94df01c1676cfeebf0657c2d1b4c0891a043861d962b6cd"
+    },
+    "smoke-all/raw/1-black-boy.json": {
+      "bytes": 11478,
+      "sha256": "bd260a98413c9c50eddfa9bbc69a69cd07e22c881b44195a769583d48a9e51ab"
+    },
+    "smoke-all/raw/1-born-a-crime.json": {
+      "bytes": 11497,
+      "sha256": "129ee77e255b42ba5a84d998d015e2163dc5c6a5fa004aa5673d503c9fb1e123"
+    },
+    "smoke-all/raw/1-crying-in-h-mart.json": {
+      "bytes": 11475,
+      "sha256": "1f43d62487a895b97adf8918670294fcecb671c9ddc7a9d9669e9f9a2cb3a43c"
+    },
+    "smoke-all/raw/1-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11469,
+      "sha256": "c2399a227523a7c2c064dd932846c26e4d3cf5b51687e3aa283ab145fc4f4804"
+    },
+    "smoke-all/raw/1-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11514,
+      "sha256": "985fc97bcbcc71c785a92b2c5444274f123d32ae6f63896630db5c9abe8c4c62"
+    },
+    "smoke-all/raw/1-pachinko.json": {
+      "bytes": 11408,
+      "sha256": "f0224b5e395c9cda8c3d16f0a42042ed7df27a9b4c12c622a124397316074e45"
+    },
+    "smoke-all/raw/1-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11487,
+      "sha256": "290eac97e52ad9883b5bb9c5e1e4827952d2c47d3663147e6f556b840eed408d"
+    },
+    "smoke-all/raw/1-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11250,
+      "sha256": "7f2ce7e9a10981d47f865900745bbe224becec35d5c06fe0aeb055faa9220336"
+    },
+    "smoke-all/raw/1-the-distance-between-us-a-memoir.json": {
+      "bytes": 11463,
+      "sha256": "c078909d74f0069241ad717b0643bb198c0bb6575a17cddb7af65ad488bfc762"
+    },
+    "smoke-all/raw/1-the-fire-next-time.json": {
+      "bytes": 11483,
+      "sha256": "7ab2685f878a90aa7d3f2b6b02c49bfda0b61c2dc6a64435464e0b19f89fa0f3"
+    },
+    "smoke-all/raw/1-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11492,
+      "sha256": "8dd0340c6a7fd4c49b7892f30f14761181af9700fb7a4642e2e0cf3359e10d70"
+    },
+    "smoke-all/raw/1-the-house-on-mango-street.json": {
+      "bytes": 11474,
+      "sha256": "c85827e2ada6ccb9353d1480bd13bd2b6fa6ea46ec79ce327e91107f6921cd0d"
+    },
+    "smoke-all/raw/1-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 337,
+      "sha256": "7a8d2749fa9d6c368bdecfd307a163b39834e467f7d62aadc25e98fccb348aa5"
+    },
+    "smoke-all/raw/1-zami-a-new-spelling-of-my-name---a-biomythography.stderr.txt": {
+      "bytes": 95,
+      "sha256": "e9294ddc7ad5b5155d01082b02b7b95ff4d1e2440084c1be3f9969437c31d8be"
+    },
+    "smoke-all/raw/reference-1.json": {
+      "bytes": 384,
+      "sha256": "a3ab3a3254cf5357a3d209c967ee06e7b70b8eb1af8fc706e8338e2176cdf2d6"
+    },
+    "paired-v1/normal/capture.json": {
+      "bytes": 7532,
+      "sha256": "d5948c2cdfa28e31e1648ec1eff056b9b8d58e77bb175b004b79574ea222df5d"
+    },
+    "paired-v1/normal/raw/1-a-raisin-in-the-sun.json": {
+      "bytes": 11534,
+      "sha256": "2fb37366f137f21673b2836a7f4d8c201245f619a7bde593243fbfd324ab5857"
+    },
+    "paired-v1/normal/raw/1-between-the-world-and-me.json": {
+      "bytes": 11514,
+      "sha256": "e6ffcabe9d2695542b975ccb7d111137dd02a57091565bfc96274ab17283f6dd"
+    },
+    "paired-v1/normal/raw/1-black-boy.json": {
+      "bytes": 11495,
+      "sha256": "90daf53fb801fd8311ee53f3a1e9714018078a69c3f5fce788660439be53e3bc"
+    },
+    "paired-v1/normal/raw/1-born-a-crime.json": {
+      "bytes": 11525,
+      "sha256": "4674fb8bc9cc866f4b0b4f07f39f9d54bf166f100f63f31f0ab390f824b3d9ce"
+    },
+    "paired-v1/normal/raw/1-crying-in-h-mart.json": {
+      "bytes": 11501,
+      "sha256": "a39a88e3341fe40a0899d0fa56263c6acd1354331cc02f5bba2b642fb995486c"
+    },
+    "paired-v1/normal/raw/1-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11493,
+      "sha256": "9e0512fd5632f8808a15d432fd9b7a00e8aedddd2f1a7aec564761daafebd703"
+    },
+    "paired-v1/normal/raw/1-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11544,
+      "sha256": "cd9551e087d2d55a343f6c418b032cc29fa1dc5f0cc4d38739b3b00791d0b3fa"
+    },
+    "paired-v1/normal/raw/1-pachinko.json": {
+      "bytes": 11417,
+      "sha256": "fc2926ef191f9780a6c1cb3b753f39b1a4402591dfb7561d9f8ce2d467b8f8bb"
+    },
+    "paired-v1/normal/raw/1-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11498,
+      "sha256": "fb29e877ca504518c087e05830d42d6f2cb3538071f14f85f74212d260968802"
+    },
+    "paired-v1/normal/raw/1-the-autobiography-of-malcolm-x..json": {
+      "bytes": 335,
+      "sha256": "7572da666a70da00710e0818ab82c8d0338636a7a2d2f6ca51c6b9faf3995db9"
+    },
+    "paired-v1/normal/raw/1-the-autobiography-of-malcolm-x..stderr.txt": {
+      "bytes": 64,
+      "sha256": "f630f4558f1bf4d43a989d6bf5b42604c67513c75105e7027018b1bc7b15f889"
+    },
+    "paired-v1/normal/raw/reference-1.json": {
+      "bytes": 384,
+      "sha256": "6d1663f0532f50c1f9eb7b95b0a5e5bc36e2412851bfca33b0f2b0d55c8a7e98"
+    },
+    "normal/raw/1-a-raisin-in-the-sun.json": {
+      "bytes": 11543,
+      "sha256": "2aeb087294b7038637c7317f2b3688d5c527cf275273566c882667c404921d90"
+    },
+    "normal/raw/1-between-the-world-and-me.json": {
+      "bytes": 11525,
+      "sha256": "cbd9a8f318c9f661e930d681eb6152e7c0f3353c151305215c1b57b0d68ff8d1"
+    },
+    "normal/raw/1-black-boy.json": {
+      "bytes": 11506,
+      "sha256": "d2d3fcdf5a921acf4a1bef498d67654252022a96dcd80475168d20a6ad64909a"
+    },
+    "normal/raw/1-born-a-crime.json": {
+      "bytes": 11535,
+      "sha256": "652e64191e6f5b9c2f5f5cd2fc4bcdd49172fd3c4404a01057bc7dd95349f028"
+    },
+    "normal/raw/1-crying-in-h-mart.json": {
+      "bytes": 11507,
+      "sha256": "fb85ddf7f98682e509b7682346b10192c4ea52640f97675e818fac093e5ea1ad"
+    },
+    "normal/raw/1-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11497,
+      "sha256": "ab62bf2176ffdf14a8ef31545ca99140e214350e58ee72163d88c25038ac7236"
+    },
+    "normal/raw/1-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal/raw/reference-1.json": {
+      "bytes": 385,
+      "sha256": "fdeb915bd66f80d8eca7bed59033afa5f43be0f9cca56fd50515b037b459b14e"
+    },
+    "high-priority/normal/capture.json": {
+      "bytes": 7532,
+      "sha256": "e6648f717a3e097f3b4cf2d71115b175f35cce86ae7ad02cb823967494287950"
+    },
+    "high-priority/normal/raw/1-a-raisin-in-the-sun.json": {
+      "bytes": 11533,
+      "sha256": "02a288c99bc3ae5889d95f3801618e03ec174f2fd59dc52a1378ab1751134bb5"
+    },
+    "high-priority/normal/raw/1-between-the-world-and-me.json": {
+      "bytes": 11514,
+      "sha256": "fe994e995cf970e1aafb0a3dd9f133b460ed10f34ac02cf9cbe53b480aa28dd4"
+    },
+    "high-priority/normal/raw/1-black-boy.json": {
+      "bytes": 11495,
+      "sha256": "ffaf73f86e234562acdadd537ce24f6982b4bb941704a0044471d31ee2f3f10f"
+    },
+    "high-priority/normal/raw/1-born-a-crime.json": {
+      "bytes": 11525,
+      "sha256": "30f0bfa36453bb38624e166b5e4105a39bd14a944cee7fe403b1b7e9c0e1de21"
+    },
+    "high-priority/normal/raw/1-crying-in-h-mart.json": {
+      "bytes": 11501,
+      "sha256": "5dc9b322c21002864c5b45e8a237e1b819957da77aa6dc0bc2edab7e27b749ad"
+    },
+    "high-priority/normal/raw/1-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11493,
+      "sha256": "9b58e2566e64d235f3e7967742297730f0521fba8ce0a73de6f422d51e9d9686"
+    },
+    "high-priority/normal/raw/1-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11544,
+      "sha256": "a116b0e132bb403224edc989c33ce6c7b90947b2005e98b207f87e45cbebe00d"
+    },
+    "high-priority/normal/raw/1-pachinko.json": {
+      "bytes": 11417,
+      "sha256": "f64e01f8a3d1906030ea665bee3bb8dc5b48db134090e90775ce8ca97919a785"
+    },
+    "high-priority/normal/raw/1-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11500,
+      "sha256": "48ee58af1c95d33b50960b8c81ad28ec55f85a4ed455c503ccded4b9b3d92731"
+    },
+    "high-priority/normal/raw/1-the-autobiography-of-malcolm-x..json": {
+      "bytes": 335,
+      "sha256": "ba98bd202381737275534539e209d17680b918a576af580c1aef5cd8ef3fcdf4"
+    },
+    "high-priority/normal/raw/1-the-autobiography-of-malcolm-x..stderr.txt": {
+      "bytes": 64,
+      "sha256": "f630f4558f1bf4d43a989d6bf5b42604c67513c75105e7027018b1bc7b15f889"
+    },
+    "high-priority/normal/raw/reference-1.json": {
+      "bytes": 384,
+      "sha256": "9eadd198c8c15cf0925eac507788e43c238d9237684a6597d1f29941804bfccf"
+    },
+    "final/loaded/capture.json": {
+      "bytes": 27229,
+      "sha256": "adb641192581bc03544a19d4217983c0ae6eefcabbd3dec3d61b05b695edaebb"
+    },
+    "final/loaded/summary.json": {
+      "bytes": 107238,
+      "sha256": "82960d285db787bcde58bcefe2e57a23dc6aa764ca77b0b47f54d085e080feab"
+    },
+    "final/normal/capture.json": {
+      "bytes": 27174,
+      "sha256": "96ac22ef0b0e7fea2eae314623a6c2221b485babdcf09b1609328f8c8b867006"
+    },
+    "final/normal/summary.json": {
+      "bytes": 107209,
+      "sha256": "96811c96bc0ab463b95e25aeeb4d61fafb60d2329876e9fd5f073178a1476b9f"
+    },
+    "final/normal/raw/1-a-raisin-in-the-sun.json": {
+      "bytes": 11533,
+      "sha256": "2cf3dd5b53b77f5f5ec44dcbef902879547ae6d3899fab23c369c4643c51d242"
+    },
+    "final/normal/raw/1-between-the-world-and-me.json": {
+      "bytes": 11514,
+      "sha256": "2c0503ab2a7f10363a47b4b0a325eb96c728ad4ef521c78536fd9b2c2eb0365f"
+    },
+    "final/normal/raw/1-black-boy.json": {
+      "bytes": 11495,
+      "sha256": "a3ff95d01449873b160c55b2dbf8918cda04cb959020972d9fff623012b97d43"
+    },
+    "final/normal/raw/1-born-a-crime.json": {
+      "bytes": 11525,
+      "sha256": "4fda07e97ce82b198ea1a465470e1c0e248dd513f9ba91a4d778c21e868e13a4"
+    },
+    "final/normal/raw/1-crying-in-h-mart.json": {
+      "bytes": 11503,
+      "sha256": "d648686484120ef3eb8ff202af5053386d72c03b37fd04ba51934438363bee62"
+    },
+    "final/normal/raw/1-hongloumeng-24264.json": {
+      "bytes": 11564,
+      "sha256": "0aa2a419ad300cd46bafb2c0291933c92c0a77e9688dccd61d22ceaf7751925e"
+    },
+    "final/normal/raw/1-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11493,
+      "sha256": "ca7e52cf2a4dee9fe9eb259890ce165099fc883c96efa74314c3a7313b8ee9fe"
+    },
+    "final/normal/raw/1-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11545,
+      "sha256": "e98c28aa9edf7118bf7e24e379b1f07c1620bd90d853a8c80d8ed540b5db4360"
+    },
+    "final/normal/raw/1-kusamakura-japanese-vertical-writing.json": {
+      "bytes": 11528,
+      "sha256": "9a4c239582666b9dc7a2762d9204f4a64026a297f0593338b6f92e6e971a9c34"
+    },
+    "final/normal/raw/1-pachinko.json": {
+      "bytes": 11419,
+      "sha256": "06b608e2a16df9d3f7b51d8ca7d6ea0f7ea2a3d4179462db288badb54d9b7131"
+    },
+    "final/normal/raw/1-tangshi300-52323.json": {
+      "bytes": 11568,
+      "sha256": "3d4143279b9d1e310bbbae75b91a92280f293b2f68c486c96218a1f744e767a2"
+    },
+    "final/normal/raw/1-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11500,
+      "sha256": "a2b87971f2d68a2df004753b2c6f0e9f63516568a9765e99caa3c26698421329"
+    },
+    "final/normal/raw/1-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11251,
+      "sha256": "5339dc896d9b49b5de480e2403dfc07c0eb93e40c06e4175e0c79e038839a71b"
+    },
+    "final/normal/raw/1-the-distance-between-us-a-memoir.json": {
+      "bytes": 11483,
+      "sha256": "58532f272f501d2f72a1cfa0d346444f701b2021ab34d55e489a033f34006afd"
+    },
+    "final/normal/raw/1-the-fire-next-time.json": {
+      "bytes": 11503,
+      "sha256": "6c7884a2181acaf658b1f89d52eb1be66cab65224b545e99bea7026b8cc7582b"
+    },
+    "final/normal/raw/1-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11527,
+      "sha256": "43c5a3bc17067e8c8fe30162ef042954e88b34e065f7e2402e1269490d16287d"
+    },
+    "final/normal/raw/1-the-house-on-mango-street.json": {
+      "bytes": 11494,
+      "sha256": "fceab612c7456fdb4d8765c08ecfe137c1d6a33665e509990889ef5886fb929e"
+    },
+    "final/normal/raw/1-xingshihengyan-24239.json": {
+      "bytes": 11557,
+      "sha256": "7d4a3e030e9d9db7a5d4052a2fbad8f776577f3c2f4dd3113577273cfaeaffb1"
+    },
+    "final/normal/raw/1-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 11302,
+      "sha256": "dedc162fe042ab393b0e0b9c6f4715a5fe22992a554ce456be9e5568de727b97"
+    },
+    "final/normal/raw/2-a-raisin-in-the-sun.json": {
+      "bytes": 11533,
+      "sha256": "7a81e0c8dda43453956bcd0af02565786d0d4b6489fc04bfec81197b09b20e34"
+    },
+    "final/normal/raw/2-between-the-world-and-me.json": {
+      "bytes": 11514,
+      "sha256": "c740a709ed1ac63ee0216d7eab65691fe8a4c3f97cf4bdd92165b8d2b8af6550"
+    },
+    "final/normal/raw/2-black-boy.json": {
+      "bytes": 11495,
+      "sha256": "cb9ae84ce3df045dfc8ec52ad16e39ae5a66e63ee0905edceeab5c25de170226"
+    },
+    "final/normal/raw/2-born-a-crime.json": {
+      "bytes": 11525,
+      "sha256": "8fb7c8914b7751b15975734fabff7b940ac364bcb44270bb947adeacd352262b"
+    },
+    "final/normal/raw/2-crying-in-h-mart.json": {
+      "bytes": 11501,
+      "sha256": "b4c5cf15d6859d2eda72feb72cfaada0cde005bf840ca10deaa2bc7e4ae7fbaf"
+    },
+    "final/normal/raw/2-hongloumeng-24264.json": {
+      "bytes": 11564,
+      "sha256": "b64f2c0c6866f1411e3136c040f823c6038a90dee11fc353cbd8842acf9bb57d"
+    },
+    "final/normal/raw/2-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11493,
+      "sha256": "ed0c8a6852fbe3b809e173f26eff79f4158e00a49a687b529e30f44bcb3c95a6"
+    },
+    "final/normal/raw/2-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11544,
+      "sha256": "40ce3a5d253abf50248a6bdf300f1975c0c7e6db769349eb35fbdec360d09438"
+    },
+    "final/normal/raw/2-kusamakura-japanese-vertical-writing.json": {
+      "bytes": 11528,
+      "sha256": "4982114aaa4df889eacdce480552e73a143ab302eead7dc66d2e30ceffe03f68"
+    },
+    "final/normal/raw/2-pachinko.json": {
+      "bytes": 11417,
+      "sha256": "a89bc5154a4a4c7b978eeed2321e76642857a2967db605344c64356c5a79b753"
+    },
+    "final/normal/raw/2-tangshi300-52323.json": {
+      "bytes": 11567,
+      "sha256": "f1d762b16db2c3b88a934785e5e31ed0880291c158fa147098c3e4a9bb265ea5"
+    },
+    "final/normal/raw/2-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11502,
+      "sha256": "4f88e83c918fb4351276c520cf2417bddff82d29938b9f974fa890bc446256b6"
+    },
+    "final/normal/raw/2-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11251,
+      "sha256": "11c839a2c17182465040c820579fe5bf5ddac453c9c98b5e1530428631dc6a7c"
+    },
+    "final/normal/raw/2-the-distance-between-us-a-memoir.json": {
+      "bytes": 11483,
+      "sha256": "54d73c5a91049b28ae0b36e6700c60aa8dfde4a61304f6ac827c9494a814579b"
+    },
+    "final/normal/raw/2-the-fire-next-time.json": {
+      "bytes": 11501,
+      "sha256": "c401bc830deb29c573074a21a23653bba7d7c9dd05039dfb90cf0980a6ad5354"
+    },
+    "final/normal/raw/2-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11529,
+      "sha256": "75345a6f6e24ac037cca1e39c0c8a641d68a5fe8bdbac6c10cd95d024b7a7a20"
+    },
+    "final/normal/raw/2-the-house-on-mango-street.json": {
+      "bytes": 11494,
+      "sha256": "fcf8bbec36b7fb050ecde3760e4f8fe9fe06eb2e357ad453da157d7c015dfd9a"
+    },
+    "final/normal/raw/2-xingshihengyan-24239.json": {
+      "bytes": 11556,
+      "sha256": "eee9969b4f45059d8f94bd7db804f34181fb9bf71a80fcaf70b7e52b3c452602"
+    },
+    "final/normal/raw/2-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 11302,
+      "sha256": "76ef48e47cb6beb90d932234510ae89f09e810512ba012b2b602bfb565ff05ef"
+    },
+    "final/normal/raw/3-a-raisin-in-the-sun.json": {
+      "bytes": 11533,
+      "sha256": "eaefe66d0d4f3c238ec154f7b0d8b6e90bc2f8f8a7d09c602bf160628324035c"
+    },
+    "final/normal/raw/3-between-the-world-and-me.json": {
+      "bytes": 11514,
+      "sha256": "e4ce618e9e011865c2f496c2ad31d4332bcba9ed64ec151719b1342201451dfe"
+    },
+    "final/normal/raw/3-black-boy.json": {
+      "bytes": 11495,
+      "sha256": "43355ad312f353c8652b86ddbf665962fc88119439a60e984503006b55cd939c"
+    },
+    "final/normal/raw/3-born-a-crime.json": {
+      "bytes": 11525,
+      "sha256": "ddebbb85eca3bf28f18a72037bb97584de66d1af9cbea23d2820092a69a2c862"
+    },
+    "final/normal/raw/3-crying-in-h-mart.json": {
+      "bytes": 11501,
+      "sha256": "a44384aed4f9299b12e6cb00edf6d8061052897d79e1608c9ff832359d42a0b4"
+    },
+    "final/normal/raw/3-hongloumeng-24264.json": {
+      "bytes": 11564,
+      "sha256": "74fd3a01786e4727125ab8fc33cee69892f1047b30de7eeb9dee828c6d1d5011"
+    },
+    "final/normal/raw/3-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11493,
+      "sha256": "dca1dc5833bd2f5b25da399fe8e89d998b6c8e02eadc9d413340a541c2565f85"
+    },
+    "final/normal/raw/3-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11545,
+      "sha256": "5ecbb1a8f92c151bf3267a274a26b8740d3384af155dd63df7315e4bda270889"
+    },
+    "final/normal/raw/3-kusamakura-japanese-vertical-writing.json": {
+      "bytes": 11528,
+      "sha256": "31a68f63716af44a0d5f90f60e00addc7e485281370c303bc1db91b71c565ef5"
+    },
+    "final/normal/raw/3-pachinko.json": {
+      "bytes": 11419,
+      "sha256": "4cd1d585754725fe6ec6acd413714d5ac631428ca5b22f94c4ab6852595d0afe"
+    },
+    "final/normal/raw/3-tangshi300-52323.json": {
+      "bytes": 11567,
+      "sha256": "f8d1c4d38c9b35326d533c9443641c9ab98029a1bab76a8af846e6ef29aa5e9b"
+    },
+    "final/normal/raw/3-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11506,
+      "sha256": "27cfdb9c5fcedc40946614f18fd37abe1abd7fb70cc9be407947cb0c34952250"
+    },
+    "final/normal/raw/3-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11251,
+      "sha256": "a46c0a08e30480fb43281505ff9cc72e9444d0e5e93f1e9f5e140cc4c42d3136"
+    },
+    "final/normal/raw/3-the-distance-between-us-a-memoir.json": {
+      "bytes": 11483,
+      "sha256": "62dac2ff5cb54ee19eba16703c6eacce3dab59327232efeb825f58efd6c9b353"
+    },
+    "final/normal/raw/3-the-fire-next-time.json": {
+      "bytes": 11505,
+      "sha256": "2813c5d4fe260dabd67d6b6dd6567e04ee377758f76d2aa295717e7ba410eee0"
+    },
+    "final/normal/raw/3-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11529,
+      "sha256": "36b68afb2ab88aa56fa812109c6dd98f54c70c4d648f3a78592cba2b4c2cf5d4"
+    },
+    "final/normal/raw/3-the-house-on-mango-street.json": {
+      "bytes": 11494,
+      "sha256": "b517f6259998201dcf63b5b8ea50a485db273d68e209c7570f6c6efde5229b23"
+    },
+    "final/normal/raw/3-xingshihengyan-24239.json": {
+      "bytes": 11556,
+      "sha256": "7d53dee85300f9d4245abb3f1db18b4001620bd2de2e9ca0c939b9b083a0c7b7"
+    },
+    "final/normal/raw/3-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 11302,
+      "sha256": "0a970c2fded7a9cb3f0930ae0dbed42d86cf1fd05c61dfc719d666f68f5ac614"
+    },
+    "final/normal/raw/4-a-raisin-in-the-sun.json": {
+      "bytes": 11533,
+      "sha256": "e5f61e291b5804aa54f9a8374415a40bdba3bde4c0914534e1a7bf7f5f91dd01"
+    },
+    "final/normal/raw/4-between-the-world-and-me.json": {
+      "bytes": 11514,
+      "sha256": "de19d5fd27a9bd159abdcfe21848bea29cd374a07712dc95625a3a368a0e375c"
+    },
+    "final/normal/raw/4-black-boy.json": {
+      "bytes": 11495,
+      "sha256": "7ce3e66fc1381583f101172a68b8c9ecba1e9c87af3045e0ddb97a2493dccf43"
+    },
+    "final/normal/raw/4-born-a-crime.json": {
+      "bytes": 11525,
+      "sha256": "c7266f2a359964a248ce877761066dcd6887c7cb617979f0bbd70380a32e267b"
+    },
+    "final/normal/raw/4-crying-in-h-mart.json": {
+      "bytes": 11501,
+      "sha256": "b58053122e51198441513c20e52044c4c930964d096ccf71a9c5cbb6e3aef8b3"
+    },
+    "final/normal/raw/4-hongloumeng-24264.json": {
+      "bytes": 11564,
+      "sha256": "b36acf720cd9ab837f54c9135e7a30c0cd066ba920d0008c1650080311b0b5b9"
+    },
+    "final/normal/raw/4-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11493,
+      "sha256": "ab67e41920339bd861aa03ea6f2a1d81887c0c157c87cc43ed625a6781e9a70b"
+    },
+    "final/normal/raw/4-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11544,
+      "sha256": "51a436f3d44b55feebe6be60ceefefcaa82d2f3b7bbc0194290e8244f839eabd"
+    },
+    "final/normal/raw/4-kusamakura-japanese-vertical-writing.json": {
+      "bytes": 11527,
+      "sha256": "9a370981bb3e48b356fe9be612db30fac1925b5b39d0e2a7dec5c2fb2f3cebd8"
+    },
+    "final/normal/raw/4-pachinko.json": {
+      "bytes": 11417,
+      "sha256": "29f318ab61ca18eee539e8544acff9f99db2d11ea8b88ec5660ea1ea1b1609d5"
+    },
+    "final/normal/raw/4-tangshi300-52323.json": {
+      "bytes": 11567,
+      "sha256": "b5943c4d1633d07073449f1915125f5c9c2c7c985efe1950cc6ab824056fb86f"
+    },
+    "final/normal/raw/4-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11500,
+      "sha256": "2108b1e70e6b881f313055ffdf19b320256d83399c5fab5162b068e073f76fba"
+    },
+    "final/normal/raw/4-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11251,
+      "sha256": "c4e5699bb40437fb6fba9458f890bcb9595bb8c22d67735d598cb37b36064c76"
+    },
+    "final/normal/raw/4-the-distance-between-us-a-memoir.json": {
+      "bytes": 11483,
+      "sha256": "236218090dbd0445a191cb28db009d0229321d6624820dc6c004a52b901ba906"
+    },
+    "final/normal/raw/4-the-fire-next-time.json": {
+      "bytes": 11504,
+      "sha256": "888bbfb74d0c3453842ef9bd6135a4442b898eba3c5b9414855055c89007f8a4"
+    },
+    "final/normal/raw/4-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11526,
+      "sha256": "7925c3c6806ad22001ae7eb40e0d3c964be3eb1d676ee36c364319fb6c6fdd53"
+    },
+    "final/normal/raw/4-the-house-on-mango-street.json": {
+      "bytes": 11496,
+      "sha256": "205c30c78b8b0ab1fb11202bdcd937820f0c8010fc42c848c6f9234deff00c70"
+    },
+    "final/normal/raw/4-xingshihengyan-24239.json": {
+      "bytes": 11557,
+      "sha256": "826fe011368fa180a4c2fd7b46ac24d9bc3f1c87504ff7597060c7107912e720"
+    },
+    "final/normal/raw/4-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 11298,
+      "sha256": "f8492fcfaef670e3859ac1d53386637c465968420358c24db91d559078f262ea"
+    },
+    "final/normal/raw/5-a-raisin-in-the-sun.json": {
+      "bytes": 11532,
+      "sha256": "15f05d0746d557f1a6b2e7e571560d366f3b925ca18839c285535a45594a7c44"
+    },
+    "final/normal/raw/5-between-the-world-and-me.json": {
+      "bytes": 11514,
+      "sha256": "70db3f09633e6fb8627ac094e64c5e81935d0057082db463bb92cdb7403b735c"
+    },
+    "final/normal/raw/5-black-boy.json": {
+      "bytes": 11495,
+      "sha256": "b54752f0a37ea1ca48f4b0e9bea41b6c683b95c93ec9e47775bc73ae93b57d12"
+    },
+    "final/normal/raw/5-born-a-crime.json": {
+      "bytes": 11525,
+      "sha256": "a6c5fa14bd6a1d0617bd42378ce7cb69b4f692b6240c7cd4f1fa31a034cc0a65"
+    },
+    "final/normal/raw/5-crying-in-h-mart.json": {
+      "bytes": 11501,
+      "sha256": "38f8790c0b6a4f3b273b92dbda4689fe1ad5b559514b001098ca12e376cfbc69"
+    },
+    "final/normal/raw/5-hongloumeng-24264.json": {
+      "bytes": 11564,
+      "sha256": "80587603fefffb73cb8d7430616ee94a333a9b120b0e7cdf3d1bf83e43872980"
+    },
+    "final/normal/raw/5-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11494,
+      "sha256": "59ba5cbebfb36a300a7fe9fb104b7b6b75f00be6890b147a5392d4c2c09faf54"
+    },
+    "final/normal/raw/5-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11544,
+      "sha256": "de3845035a833e0368e67473976eec273c95120a93f7da7d806022eb0ab5e31b"
+    },
+    "final/normal/raw/5-kusamakura-japanese-vertical-writing.json": {
+      "bytes": 11529,
+      "sha256": "cb32fbc42171dd49be59ad5ceee2ecd2b3d8478a277339e3c2e41ea89a1dc6f6"
+    },
+    "final/normal/raw/5-pachinko.json": {
+      "bytes": 11419,
+      "sha256": "ffde9df34bcf3b56c5cf2ae63c8acc1163224e1cab15e225ac8da57815c6c7dc"
+    },
+    "final/normal/raw/5-tangshi300-52323.json": {
+      "bytes": 11567,
+      "sha256": "a41f3e59b52d10860f6f1939fc52b874492828ce373fac1605764649bcde55fc"
+    },
+    "final/normal/raw/5-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11498,
+      "sha256": "c7d4c39d9090f0259bc415e6cb28cfe8d5bd03b73b26cc9517fc5acc9785bb64"
+    },
+    "final/normal/raw/5-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11251,
+      "sha256": "3e34e218c01c0f172c3063e4ac4097672790cb4a37302675447d44a98bd0f09e"
+    },
+    "final/normal/raw/5-the-distance-between-us-a-memoir.json": {
+      "bytes": 11483,
+      "sha256": "ec5569ad63f1c13d1f9da96db4cae1debd42bdd091f5dd7a14367b04438c7c07"
+    },
+    "final/normal/raw/5-the-fire-next-time.json": {
+      "bytes": 11504,
+      "sha256": "6173044ef213386d04dd75aa6015a4e0bae034035acbdd3e5d1dfa6f8a513480"
+    },
+    "final/normal/raw/5-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11528,
+      "sha256": "a09373c7c7072c4389191d5ac6f18e4dc173036e63d3d58cd316dae6d2704eae"
+    },
+    "final/normal/raw/5-the-house-on-mango-street.json": {
+      "bytes": 11496,
+      "sha256": "54fa001fe88b36fb3f0144d390573ce2ccef83621612fbdedc11c1d911d042a3"
+    },
+    "final/normal/raw/5-xingshihengyan-24239.json": {
+      "bytes": 11557,
+      "sha256": "588a714b75576b45e737cc68ddfff024ea91636c5638dfae590f923a49e25a8b"
+    },
+    "final/normal/raw/5-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 11300,
+      "sha256": "c8f93a2242b6977afa6c1ac697b129284c84ccdc72c713a7faf22087345933a6"
+    },
+    "final/normal/raw/reference-1.json": {
+      "bytes": 384,
+      "sha256": "4fa88043a5d9b55781c2335a2d01de169e7850caf9e154c866916890ddf0fb23"
+    },
+    "final/normal/raw/reference-2.json": {
+      "bytes": 384,
+      "sha256": "fc0b558b19f3e150352fd23317d7c249701ac2dc1071d1e3b4c741b07e241bfb"
+    },
+    "final/normal/raw/reference-3.json": {
+      "bytes": 384,
+      "sha256": "6e9a6523134da4c946cade13c61de3863701b3708242cc1d7a64093d0fe4009a"
+    },
+    "final/normal/raw/reference-4.json": {
+      "bytes": 384,
+      "sha256": "34f73b4d95a84c10135abda185b8680505819015ecb958f7f453e09bd6797708"
+    },
+    "final/normal/raw/reference-5.json": {
+      "bytes": 384,
+      "sha256": "0b65b9f914182dc86d48586629b4bc4fdf7570cedbb3b8fa44b400a46a674354"
+    },
+    "final/loaded/raw/1-a-raisin-in-the-sun.json": {
+      "bytes": 11552,
+      "sha256": "662225605b46e62ca0b6c19a5d950cec23ed9da1b58acebf220ab4e085ad78cc"
+    },
+    "final/loaded/raw/1-between-the-world-and-me.json": {
+      "bytes": 11525,
+      "sha256": "d703f0cfe2c50b417d00fcabf8934c02c2584d59df2cdf2280f990f522d4d166"
+    },
+    "final/loaded/raw/1-black-boy.json": {
+      "bytes": 11516,
+      "sha256": "fd337574a0e620f287ea83397aec8a901065254d746be99b40380b470c60d5b9"
+    },
+    "final/loaded/raw/1-born-a-crime.json": {
+      "bytes": 11534,
+      "sha256": "ef55f90c5f0b0b50023d9127e6f08c6cdc509d3cbcc3b746aff8f6ead32a45fe"
+    },
+    "final/loaded/raw/1-crying-in-h-mart.json": {
+      "bytes": 11514,
+      "sha256": "817082ff2da6455e8c56842a9f3d6b6982bf5882707a23b529d4b3ed868f7484"
+    },
+    "final/loaded/raw/1-hongloumeng-24264.json": {
+      "bytes": 11568,
+      "sha256": "6b91a62e4de7945e75c59fbff5eeba6403ce2cdca6d6bcc54bd15abf30294767"
+    },
+    "final/loaded/raw/1-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11508,
+      "sha256": "da704d62597ef87e5afa08daf2fc095dbefd4ccb66d830d52e91f205e7c30078"
+    },
+    "final/loaded/raw/1-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11564,
+      "sha256": "06e2ff649d35ec6953d6f92ff30b67a73cd60df489950a67fc0a6e910960495a"
+    },
+    "final/loaded/raw/1-kusamakura-japanese-vertical-writing.json": {
+      "bytes": 11542,
+      "sha256": "c6368cb0efd2819c9c682f19378a084fec18969f760fefdae2729738a4f03cb0"
+    },
+    "final/loaded/raw/1-pachinko.json": {
+      "bytes": 11431,
+      "sha256": "b717b7569f096fb2167f8f813b6be134bdfac7c28833b847064a223fd9725181"
+    },
+    "final/loaded/raw/1-tangshi300-52323.json": {
+      "bytes": 11573,
+      "sha256": "0a89eb4b601c543d59a4ace61b950902d39d436516f0919d9e9c6d97746e23b2"
+    },
+    "final/loaded/raw/1-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11515,
+      "sha256": "9461bbf1c9d517efe51dc52672a9c6b14d3375c7530d96e998127a650c113559"
+    },
+    "final/loaded/raw/1-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11303,
+      "sha256": "b705ed0f12f18258adddb3d8e70461dc56923c9e765e6516e9675e61cd347d21"
+    },
+    "final/loaded/raw/1-the-distance-between-us-a-memoir.json": {
+      "bytes": 11491,
+      "sha256": "b2e94321acd6ece87b0e3da7cc8011af4639cadd1e64d60aa913d6a9076578b3"
+    },
+    "final/loaded/raw/1-the-fire-next-time.json": {
+      "bytes": 11534,
+      "sha256": "895dc21278bb87c2d6f7333c8974cd6043da6909be11c846338520f50bbf828b"
+    },
+    "final/loaded/raw/1-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11539,
+      "sha256": "fd4bd71eb4bd07aa1d844ff5f862195328afe97c45f3b0579417973620daa6cb"
+    },
+    "final/loaded/raw/1-the-house-on-mango-street.json": {
+      "bytes": 11506,
+      "sha256": "508d176644933344e4363c6592b09239cf21169493f82abc0d09a77c263e5ef5"
+    },
+    "final/loaded/raw/1-xingshihengyan-24239.json": {
+      "bytes": 11565,
+      "sha256": "7541eb1619653461675b84f4b0955e08212c24dbc5a7946f66caddb16340a545"
+    },
+    "final/loaded/raw/1-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 11318,
+      "sha256": "0a7ff8589868b35b98792fd32e017b265f2c27875992438aca0a28742c5ec0c8"
+    },
+    "final/loaded/raw/2-a-raisin-in-the-sun.json": {
+      "bytes": 11555,
+      "sha256": "d99a1d83d50620cf3cf3c01279d2dfead842905dbb056961cf8a08928afe9c79"
+    },
+    "final/loaded/raw/2-between-the-world-and-me.json": {
+      "bytes": 11524,
+      "sha256": "edb897c8485404bb6c02f9c6e8bb630ffa815b6b7e6276e697ca55ac90151044"
+    },
+    "final/loaded/raw/2-black-boy.json": {
+      "bytes": 11514,
+      "sha256": "1bc9db19b34996a3ea5c82cb62459be98d953a6adc72c3ee13ff26842d60aed1"
+    },
+    "final/loaded/raw/2-born-a-crime.json": {
+      "bytes": 11544,
+      "sha256": "399a46b378ed92931f322a6bf7080ad888e64479969a03c771f665e8d9669ed1"
+    },
+    "final/loaded/raw/2-crying-in-h-mart.json": {
+      "bytes": 11515,
+      "sha256": "0beeb4ba62fe0b2bd8f1d313350eec52e723800fc85ec401b573b677c50c96fa"
+    },
+    "final/loaded/raw/2-hongloumeng-24264.json": {
+      "bytes": 11567,
+      "sha256": "6d1d50c01e6c1260fc6ff7856916d9815c0155f11315b04370b3eb06865b3e97"
+    },
+    "final/loaded/raw/2-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11513,
+      "sha256": "29100cf0893f65cb7df7515279d9b2717af3caab0608ecd928e664c84bc3bcbb"
+    },
+    "final/loaded/raw/2-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11564,
+      "sha256": "57604c1ea25a0a9345e30f3c9b6376f3d34ad54b45f7ad240fa75eba21bbd5cf"
+    },
+    "final/loaded/raw/2-kusamakura-japanese-vertical-writing.json": {
+      "bytes": 11537,
+      "sha256": "ab9ee544d187fd847dfb6f1e512b3b9d9e0f3e97ea803dbf48fe857e945c6001"
+    },
+    "final/loaded/raw/2-pachinko.json": {
+      "bytes": 11433,
+      "sha256": "ecfc72929393165c7b49b06777e7882c842bf660a1e73d246684864639d680ab"
+    },
+    "final/loaded/raw/2-tangshi300-52323.json": {
+      "bytes": 11570,
+      "sha256": "bf58bc0a423bc19f61848a0f45915bbd3c35110d7aaa4463fe383876ce4988a0"
+    },
+    "final/loaded/raw/2-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11514,
+      "sha256": "01fe089cfa24901d0a11ed1c18ab462b1b7f637f657ed6baecde9049a9a118fc"
+    },
+    "final/loaded/raw/2-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11290,
+      "sha256": "30353efcebea681724f82c3e6f0734c648450f73bc0a7a3d4f4bc59e602889dd"
+    },
+    "final/loaded/raw/2-the-distance-between-us-a-memoir.json": {
+      "bytes": 11497,
+      "sha256": "1e5e5c695adbfee04c8b354d5c76343b21a91a63ec05e5bf143e987cd48b69ad"
+    },
+    "final/loaded/raw/2-the-fire-next-time.json": {
+      "bytes": 11524,
+      "sha256": "bb36c5e41cbfc49b2bf6bf4bffbbcf352c0983d9267cdd5e7dc7f47caecbdf3b"
+    },
+    "final/loaded/raw/2-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11540,
+      "sha256": "aa674efb1a6a6831b646cbd76f3d5b4eba612ab38ea12a2ea913d4a7239d0e30"
+    },
+    "final/loaded/raw/2-the-house-on-mango-street.json": {
+      "bytes": 11504,
+      "sha256": "e5044012eafce48d6b836d0377e92b43c6d3e5971de6fe9bd0cc42761547d955"
+    },
+    "final/loaded/raw/2-xingshihengyan-24239.json": {
+      "bytes": 11565,
+      "sha256": "59055744b8819a78fc511d31660b0bd792f7dcd316bd0f1e0b0623cf23cca375"
+    },
+    "final/loaded/raw/2-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 11311,
+      "sha256": "fd5d7f6c7b95c7356882f2a201407d352d9d88a01f2aaf434aa50c98eb342f89"
+    },
+    "final/loaded/raw/3-a-raisin-in-the-sun.json": {
+      "bytes": 11557,
+      "sha256": "2d29fc38871a8f34577bad5c47c8b64c54109441c3cb9e76e7c3dfc81eaaca59"
+    },
+    "final/loaded/raw/3-between-the-world-and-me.json": {
+      "bytes": 11527,
+      "sha256": "a1dfbbbeb57760ebd7f220fd2b441c44688134df01ce7541adcf4d2328e79d6f"
+    },
+    "final/loaded/raw/3-black-boy.json": {
+      "bytes": 11505,
+      "sha256": "b2147ea5c74cfc8bacbbaafeaade420a6b22f2dc951588be73c015fa4c3c0d9d"
+    },
+    "final/loaded/raw/3-born-a-crime.json": {
+      "bytes": 11538,
+      "sha256": "35ae0d5774bc9301df7c12bdb7fbeac82474e76fc4650806138650bd2754eceb"
+    },
+    "final/loaded/raw/3-crying-in-h-mart.json": {
+      "bytes": 11519,
+      "sha256": "ce54686ffaddca51c48821563b86efb7796d0d128da5474a49ce77fc85931613"
+    },
+    "final/loaded/raw/3-hongloumeng-24264.json": {
+      "bytes": 11565,
+      "sha256": "8baf7adfd72199c68208518c481bc56b454d3c71ad3e2f3f7cebc8540575d835"
+    },
+    "final/loaded/raw/3-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11516,
+      "sha256": "7fc8a8737b0f5c5488f5dfc765f11e3f7f5d27ad642b6017f33796fdad808537"
+    },
+    "final/loaded/raw/3-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11565,
+      "sha256": "3ad9e17d28b783c7c6d691fd69b14c1493d78cff917a5db72e2c84a9de4a5631"
+    },
+    "final/loaded/raw/3-kusamakura-japanese-vertical-writing.json": {
+      "bytes": 11539,
+      "sha256": "af1c60256acc4af1f57697aa40b859ca9b41ee1d355abf18409d1bb586c7221e"
+    },
+    "final/loaded/raw/3-pachinko.json": {
+      "bytes": 11428,
+      "sha256": "5ddab94e016b1bd7714a22773c57a23e047829aabc2fbb21fb37656efc471b99"
+    },
+    "final/loaded/raw/3-tangshi300-52323.json": {
+      "bytes": 11572,
+      "sha256": "9e092301cd3df9ce2bbff24136c9e76aa4fef5f759e555b979c22ab7d7d40dcd"
+    },
+    "final/loaded/raw/3-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11514,
+      "sha256": "a05b998b45d01f360d5f94944d34824bcb6efa9e50b6bc920cc8a963cc221153"
+    },
+    "final/loaded/raw/3-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11291,
+      "sha256": "ec0452ee4c1cb0dd19acac2e5af85f960d042abc5cb1dd83d12034223c853faf"
+    },
+    "final/loaded/raw/3-the-distance-between-us-a-memoir.json": {
+      "bytes": 11500,
+      "sha256": "8cceb129c69f75899d061872d1fef4333e3b97fc9c3fcacb3c25bb98deca7798"
+    },
+    "final/loaded/raw/3-the-fire-next-time.json": {
+      "bytes": 11532,
+      "sha256": "d1a081e83804a524c9a1c88774cffba221cc38159ffe5375e4a3c416dbd6c7e8"
+    },
+    "final/loaded/raw/3-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11540,
+      "sha256": "85d7b5cbaa92c091db515b96734bf1df555fc66f41b7d99361085df84c177125"
+    },
+    "final/loaded/raw/3-the-house-on-mango-street.json": {
+      "bytes": 11504,
+      "sha256": "f4911bbac92715224e5a001529fd65a3d91269dc8ada6185e2f05eeb3a7e59cd"
+    },
+    "final/loaded/raw/3-xingshihengyan-24239.json": {
+      "bytes": 11560,
+      "sha256": "16143c20546714d31660e49a4c5bd9ba151884d12e4f385c46cd75cfd21b84d1"
+    },
+    "final/loaded/raw/3-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 11312,
+      "sha256": "3d3fbe866a45d42c7c76b7d26bf6603cb73818206a450313a54af5b8910f68c9"
+    },
+    "final/loaded/raw/4-a-raisin-in-the-sun.json": {
+      "bytes": 11562,
+      "sha256": "a9e08bb22e4591abd2d7671f7924ae43c086e17ac4a6e7200dbe9724f6af436c"
+    },
+    "final/loaded/raw/4-between-the-world-and-me.json": {
+      "bytes": 11529,
+      "sha256": "eefff3b7b41603d2283e9595a4be47aef58a69bdc2f05a5d8af4e2cf38a173fc"
+    },
+    "final/loaded/raw/4-black-boy.json": {
+      "bytes": 11516,
+      "sha256": "3e48e8e88b2d826d733f12efedb47080dfbed5422e6e062afea6600c518a22f3"
+    },
+    "final/loaded/raw/4-born-a-crime.json": {
+      "bytes": 11538,
+      "sha256": "3ab26a75d02f5660695f281f9b51110040ad41eef565b22add934e828b902f23"
+    },
+    "final/loaded/raw/4-crying-in-h-mart.json": {
+      "bytes": 11512,
+      "sha256": "d9ce00b93b6ca04c275c09e966f92ef1423b5129eb36b2dfa49923c1cb75a143"
+    },
+    "final/loaded/raw/4-hongloumeng-24264.json": {
+      "bytes": 11569,
+      "sha256": "ae00f6a0c6f1d71169fa232a229dd5ee5d38f9c83a54cbc439c05a53960f1640"
+    },
+    "final/loaded/raw/4-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11500,
+      "sha256": "b37e30329ea28b95ecb17476ef5710604b7be80186d099cc449500e5de3bb677"
+    },
+    "final/loaded/raw/4-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11558,
+      "sha256": "623931bf4cb774392f3973a5a1160be81d22c2ddee1418ff9b0da01df95dfe13"
+    },
+    "final/loaded/raw/4-kusamakura-japanese-vertical-writing.json": {
+      "bytes": 11541,
+      "sha256": "00f8cf83eada52590dafbd06be3a4dabd07167d4d9c2e7585cf9c05319121162"
+    },
+    "final/loaded/raw/4-pachinko.json": {
+      "bytes": 11428,
+      "sha256": "4f84db86543bd6ef91ee72f953343c32b203037a4eb5e6e65012954750c08933"
+    },
+    "final/loaded/raw/4-tangshi300-52323.json": {
+      "bytes": 11572,
+      "sha256": "bffcfd7c0eb6c42b6dd72fe013ead05ade33e99654e63cc51624c4b4ece6b910"
+    },
+    "final/loaded/raw/4-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11513,
+      "sha256": "d5967bf00b2bb73059d640279a3f00c6fa526aa3c04456ab32aff112850add37"
+    },
+    "final/loaded/raw/4-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11296,
+      "sha256": "acf4b9d91984954129d100fe0bd5d187f08832d4ca779f22c572af73e79b56c3"
+    },
+    "final/loaded/raw/4-the-distance-between-us-a-memoir.json": {
+      "bytes": 11499,
+      "sha256": "bec974bc46a28f1f8183321dbf0ea3e2d8c3160637d601186f743c801005ae0b"
+    },
+    "final/loaded/raw/4-the-fire-next-time.json": {
+      "bytes": 11533,
+      "sha256": "ed21a760701eba36ccfad9fccdf0c095e57f99c429452349536ae6bb35d99a48"
+    },
+    "final/loaded/raw/4-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11542,
+      "sha256": "1ca7ffe841e15c1697ee0fccfc868c8f5af7324e5f4bb070f472283803f591b5"
+    },
+    "final/loaded/raw/4-the-house-on-mango-street.json": {
+      "bytes": 11502,
+      "sha256": "4e5509afe65b427689f99fc1963708c30cf18d85d6244c4636105e6625b3c797"
+    },
+    "final/loaded/raw/4-xingshihengyan-24239.json": {
+      "bytes": 11563,
+      "sha256": "08c404427f16ee6810196e8ab68d3b7a226fac26ce74ff0dc7a02459e838ccf4"
+    },
+    "final/loaded/raw/4-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 11312,
+      "sha256": "c5afdce492a21da5aded559fa299b2b316951ef47966eace6c398a6386f576bc"
+    },
+    "final/loaded/raw/5-a-raisin-in-the-sun.json": {
+      "bytes": 11559,
+      "sha256": "4cb45ff1e1b69430a72429c087b6ee00d32a7bf5e9c278774329afd387d24fa6"
+    },
+    "final/loaded/raw/5-between-the-world-and-me.json": {
+      "bytes": 11524,
+      "sha256": "5f407c7e70ca204578ae2688c033c667067a710ffe7f990007ab54177e057055"
+    },
+    "final/loaded/raw/5-black-boy.json": {
+      "bytes": 11508,
+      "sha256": "154c186f97bb0a1111176066c99728e9b01f6fd57ed9e236b77e9853bd0026c3"
+    },
+    "final/loaded/raw/5-born-a-crime.json": {
+      "bytes": 11535,
+      "sha256": "50f96b46697b8ba18014f48af9592dcf7a2f1e39effab8c5c604f5dad675e437"
+    },
+    "final/loaded/raw/5-crying-in-h-mart.json": {
+      "bytes": 11516,
+      "sha256": "8234c1d71fdb73f2de0086048df4071199ccfdaffd5f2f3e888ce114b724746d"
+    },
+    "final/loaded/raw/5-hongloumeng-24264.json": {
+      "bytes": 11570,
+      "sha256": "640cd3d4bb119035108e39a601083dd9971aad78bf841145fed9b7c57191930e"
+    },
+    "final/loaded/raw/5-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json": {
+      "bytes": 11508,
+      "sha256": "624cefdda10fb1cdd47894c64e2034d14d15792f2a1382a1c81bd713c78e2307"
+    },
+    "final/loaded/raw/5-i-know-why-the-caged-bird-sings.json": {
+      "bytes": 11559,
+      "sha256": "c0bd504abe1306cadc860386639fe9b26023eb819fadb6b304612b4d2fb820cd"
+    },
+    "final/loaded/raw/5-kusamakura-japanese-vertical-writing.json": {
+      "bytes": 11540,
+      "sha256": "286857a2206ea638e142aceafcfd6b74323ac61e70086f4305c09584d009a305"
+    },
+    "final/loaded/raw/5-pachinko.json": {
+      "bytes": 11437,
+      "sha256": "4d303450e2fc4cdb57b92a48f6136dc93438e3230cf7b5c4ec6f77b631ec31d4"
+    },
+    "final/loaded/raw/5-tangshi300-52323.json": {
+      "bytes": 11573,
+      "sha256": "60fa1ebce77976289c7a0c6556433cf42c111c1684a0acae119108b760cb867a"
+    },
+    "final/loaded/raw/5-the-absolutely-true-diary-of-a-part-time-indian.json": {
+      "bytes": 11513,
+      "sha256": "bef135e9e778ed0554673a8b7c17719e0a311c2b9b8b9cfc9e64f331c2856896"
+    },
+    "final/loaded/raw/5-the-autobiography-of-malcolm-x..json": {
+      "bytes": 11302,
+      "sha256": "9e2b97031278ee13a15f9cb790171da172b8cbabe388b7ffebcc1d74a6094c4a"
+    },
+    "final/loaded/raw/5-the-distance-between-us-a-memoir.json": {
+      "bytes": 11500,
+      "sha256": "c5ed049d3758996273c54f3498c0cd6b3ce0876795720ac5db99f4389f18d202"
+    },
+    "final/loaded/raw/5-the-fire-next-time.json": {
+      "bytes": 11533,
+      "sha256": "715cf82f909111837dc3e2f0c5864c76234018ea12322b486a337426e71e07ce"
+    },
+    "final/loaded/raw/5-the-fire-this-time-a-new-generation-speaks-about-race.json": {
+      "bytes": 11543,
+      "sha256": "d56a352f5be7703244a4d0c2fbd9f159231edc79848f8adf2f03d26ad4054b14"
+    },
+    "final/loaded/raw/5-the-house-on-mango-street.json": {
+      "bytes": 11508,
+      "sha256": "97c7c106d1df53f0a2872a5b8216197207f7684e93759033d39e420400f6f6e6"
+    },
+    "final/loaded/raw/5-xingshihengyan-24239.json": {
+      "bytes": 11569,
+      "sha256": "baf5a4a0705f1139fab3d505a0511644c4282787833baa349fe982bd2207e660"
+    },
+    "final/loaded/raw/5-zami-a-new-spelling-of-my-name---a-biomythography.json": {
+      "bytes": 11307,
+      "sha256": "4859b952a336212a28356fc8b5076db71af62d3703fed5e19f01f8747d06a7f9"
+    },
+    "final/loaded/raw/reference-1.json": {
+      "bytes": 384,
+      "sha256": "303e984877518c362ad4f3739cdfc008c76e16f26bfbd766e6e842451101d5a9"
+    },
+    "final/loaded/raw/reference-2.json": {
+      "bytes": 384,
+      "sha256": "7b3458bbb466d188f12afa0a0a407d0c72daa922cc8d4b86785bab2966b03467"
+    },
+    "final/loaded/raw/reference-3.json": {
+      "bytes": 384,
+      "sha256": "8106e1c8a57c9cc25a4ceb037aefb3eb5bd1d94a352ab3043e1b3df462d17112"
+    },
+    "final/loaded/raw/reference-4.json": {
+      "bytes": 384,
+      "sha256": "7b5607d4787395ae1fe1979c221033d5d274c98b2b3d4940df2e3f6711f82982"
+    },
+    "final/loaded/raw/reference-5.json": {
+      "bytes": 384,
+      "sha256": "51ed288402d193d8eb6a121e9175850b8c501f23e03e215b0ff8472b4c0151bc"
+    }
+  }
+}

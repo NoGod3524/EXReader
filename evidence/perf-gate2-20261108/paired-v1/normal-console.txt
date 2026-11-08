@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-perf2-20261108\tools\perf/ratio_capture.py", line 243, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-perf2-20261108\tools\perf/ratio_capture.py", line 206, in main
+    capture(args)
+    ~~~~~~~^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-perf2-20261108\tools\perf/ratio_capture.py", line 168, in capture
+    raise RuntimeError(f"native probe failed: {book['id']} (raw retained)")
+RuntimeError: native probe failed: the-autobiography-of-malcolm-x. (raw retained)

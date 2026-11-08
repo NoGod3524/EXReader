@@ -1,0 +1,2 @@
+SDK provenance compatibility and localized +60% slowdown rejection passed
+ratio quantile, denominator, pairing and raw-integrity checks passed

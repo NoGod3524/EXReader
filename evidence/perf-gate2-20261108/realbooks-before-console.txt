@@ -1,0 +1,20 @@
+ok: between-the-world-and-me: 228 pages, 2.056s
+ok: a-raisin-in-the-sun: 356 pages, 4.037s
+ok: born-a-crime: 502 pages, 4.271s
+ok: crying-in-h-mart: 524 pages, 5.159s
+ok: black-boy: 1016 pages, 8.235s
+ok: how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america: 493 pages, 5.315s
+ok: the-absolutely-true-diary-of-a-part-time-indian: 560 pages, 4.877s
+ok: i-know-why-the-caged-bird-sings: 625 pages, 9.213s
+ok: the-fire-next-time: 189 pages, 3.074s
+ok: pachinko: 1248 pages, 13.496s
+ok: the-fire-this-time-a-new-generation-speaks-about-race: 333 pages, 5.244s
+ok: the-distance-between-us-a-memoir: 702 pages, 8.730s
+ok: the-house-on-mango-street: 182 pages, 1.495s
+ok: the-autobiography-of-malcolm-x.: 279 pages, 18.346s
+ok: zami-a-new-spelling-of-my-name---a-biomythography: 624 pages, 6.516s
+ok: tangshi300-52323: 83 pages, 1.416s
+ok: kusamakura-japanese-vertical-writing: 464 pages, 6.369s
+ok: xingshihengyan-24239: 1202 pages, 19.788s
+ok: hongloumeng-24264: 1686 pages, 25.398s
+{"requested_books": 19, "successful_books": 19, "failed_books": [], "total_pages": 11296, "total_glyphs": 8648640, "wall_seconds": 47.699379, "sum_book_seconds": 153.035729, "fastest_book": "tangshi300-52323", "slowest_book": "hongloumeng-24264"}
