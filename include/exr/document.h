@@ -233,6 +233,31 @@ EXR_API size_t exr_fixed_memory_size(const exr_fixed_document *document);
    nonconcurrent/nonreentrant provider rule as draw applies. */
 EXR_API exr_status exr_fixed_load_text(exr_fixed_document *document,size_t page,const exr_control *control,
                                         exr_fixed_text **out,exr_error *error);
+/* Strict text load: EXR_NO_TEXT_LAYER and *out=NULL for an empty page. The
+   original load_text keeps its empty-snapshot behavior for existing callers.
+   Missing text providers return EXR_UNSUPPORTED. No OCR is performed. */
+EXR_API exr_status exr_fixed_page_text(exr_fixed_document *document,size_t page,const exr_control *control,
+                                      exr_fixed_text **out,exr_error *error);
+typedef struct {
+  size_t start,end; /* Global UTF-8 byte offsets, end exclusive. */
+  size_t start_page,start_offset,end_page,end_offset; /* Zero-based page + byte. */
+} exr_search_match;
+/* Exact case-sensitive UTF-8 search from offset, inclusive, across fixed pages.
+   Text follows provider order, concatenated WITHOUT added page separators.
+   Empty pages contribute zero bytes. Miss: OK with every match field SIZE_MAX;
+   entirely textless document: EXR_NO_TEXT_LAYER. Query: NUL-terminated, 1..1 MiB.
+   An interior UTF-8 offset rounds forward. Loads at most one page at a time;
+   query preprocessing is linear and bounded. Failure clears the match. */
+EXR_API exr_status exr_document_search(exr_fixed_document *document,size_t offset,const char *needle,
+                                       const exr_control *control,exr_search_match *match,exr_error *error);
+/* Exact containment in native page coordinates (use inverse viewport matrix
+   for screen input). Invisible text is excluded. A hit copies the source quad
+   and UTF-8 range; character is its first Unicode scalar. A ligature's complete
+   mapping retains one quad/range, without invented per-letter geometry.
+   NO_TEXT_LAYER differs from NO_TEXT_AT_POINT; failure clears both outputs. */
+EXR_API exr_status exr_fixed_character_at(exr_fixed_document *document,size_t page,double x,double y,
+                                          const exr_control *control,exr_text_region *region,
+                                          uint32_t *character,exr_error *error);
 /* Streams one page in source coordinates through matrix (NULL -> identity).
    No implicit clip/state changes. The provider must skip absent callbacks.
    One document cannot be drawn concurrently or reentered from a callback. */

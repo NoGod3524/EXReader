@@ -221,3 +221,85 @@ exr_status exr_fixed_render(exr_fixed_document *d,size_t page,double scale,const
   if(status!=EXR_OK) exr_bitmap_free(out);
   exr_canvas_free(canvas); return status;
 }
+
+exr_status exr_fixed_page_text(exr_fixed_document *d,size_t page,const exr_control *control,exr_fixed_text **out,exr_error *e) {
+  exr_status status; size_t size;
+  if(out) *out=NULL;
+  if(!d || !out || page>=d->count || d->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant page text load");
+  if(!d->text) return exr_fail(e,EXR_UNSUPPORTED,"Fixed document has no text provider");
+  status=exr_fixed_load_text(d,page,control,out,e); if(status!=EXR_OK) return status;
+  exr_fixed_text_string(*out,&size);
+  if(!size) { exr_fixed_text_free(*out); *out=NULL; return exr_fail(e,EXR_NO_TEXT_LAYER,"Page has no text layer"); }
+  return EXR_OK;
+}
+exr_status exr_fixed_character_at(exr_fixed_document *d,size_t page,double x,double y,const exr_control *control,
+                                  exr_text_region *region,uint32_t *character,exr_error *e) {
+  exr_fixed_text *text=NULL; exr_status status; size_t hit,at,size; const exr_text_region *regions; const char *bytes;
+  if(region) { memset(region,0,sizeof(*region)); region->start=region->end=SIZE_MAX; }
+  if(character) *character=0;
+  if(!region || !character || !isfinite(x) || !isfinite(y) || fabs(x)>1e7 || fabs(y)>1e7)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid character hit input/output");
+  status=exr_fixed_page_text(d,page,control,&text,e); if(status!=EXR_OK) return status;
+  status=exr_fixed_text_hit(text,x,y,0,EXR_REGION_INVISIBLE,control,&hit,e);
+  if(status==EXR_OK && hit==SIZE_MAX) status=exr_fail(e,EXR_NO_TEXT_AT_POINT,"No visible text at this point");
+  if(status==EXR_OK) {
+    regions=exr_fixed_text_regions(text,NULL); bytes=exr_fixed_text_string(text,&size); at=regions[hit].start;
+    if(at==regions[hit].end || !exr_next(bytes,size,&at,character))
+      status=exr_fail(e,EXR_NO_TEXT_AT_POINT,"No character in this text region");
+    else *region=regions[hit];
+  }
+  exr_fixed_text_free(text); return status;
+}
+static void search_clear(exr_search_match *match) {
+  if(match) *match=(exr_search_match){SIZE_MAX,SIZE_MAX,SIZE_MAX,SIZE_MAX,SIZE_MAX,SIZE_MAX};
+}
+exr_status exr_document_search(exr_fixed_document *d,size_t offset,const char *needle,const exr_control *control,
+                               exr_search_match *match,exr_error *e) {
+  size_t n=0,at=0,i,j=0,page,total=0,*prefix=NULL,*bases=NULL; uint32_t cp;
+  exr_status status=EXR_OK; exr_fixed_text *text=NULL;
+  search_clear(match);
+  if(!d || !needle || !match || d->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant document search");
+  while(n<=1048576 && needle[n]) n++;
+  if(!n || n>1048576) return exr_fail(e,n ? EXR_LIMIT : EXR_ARGUMENT,"Search query must contain 1..1 MiB");
+  while(at<n) {
+    if(!(at&1023) && exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+    if(!exr_next(needle,n,&at,&cp)) return exr_fail(e,EXR_ENCODING,"Search query is not UTF-8");
+  }
+  prefix=calloc(n,sizeof(*prefix)); bases=calloc(d->count+1,sizeof(*bases));
+  if(!prefix || !bases) { status=exr_fail(e,EXR_MEMORY,"Document search allocation failed"); goto done; }
+  for(i=1;i<n;i++) {
+    if(!(i&1023) && exr_control_cancel(control,e)!=EXR_OK) { status=EXR_CANCELLED; goto done; }
+    while(j && needle[i]!=needle[j]) j=prefix[j-1];
+    if(needle[i]==needle[j]) j++;
+    prefix[i]=j;
+  }
+  j=0;
+  for(page=0;page<d->count;page++) {
+    const char *bytes; size_t size;
+    bases[page]=total;
+    status=exr_fixed_page_text(d,page,control,&text,e);
+    if(status==EXR_NO_TEXT_LAYER) { status=EXR_OK; continue; }
+    if(status!=EXR_OK) goto done;
+    bytes=exr_fixed_text_string(text,&size);
+    if(size>SIZE_MAX-total) { status=exr_fail(e,EXR_LIMIT,"Document text offsets overflow"); goto done; }
+    for(i=offset>total ? (offset-total<size ? offset-total : size) : 0;i<size;i++) {
+      if(!(i&1023) && exr_control_cancel(control,e)!=EXR_OK) { status=EXR_CANCELLED; goto done; }
+      while(j && bytes[i]!=needle[j]) j=prefix[j-1];
+      if(bytes[i]==needle[j]) j++;
+      if(j==n) {
+        size_t first=page,start=total+i+1-n;
+        while(first && bases[first]>start) first--;
+        /* Empty intervening pages share a base; choose the page holding start. */
+        while(first<page && bases[first+1]<=start) first++;
+        *match=(exr_search_match){start,total+i+1,first,start-bases[first],page,i+1};
+        goto done;
+      }
+    }
+    total+=size; exr_fixed_text_free(text); text=NULL;
+  }
+  if(!total) status=exr_fail(e,EXR_NO_TEXT_LAYER,"Document has no text layer");
+done:
+  exr_fixed_text_free(text); free(prefix); free(bases);
+  if(status!=EXR_OK) search_clear(match); else exr_fail(e,EXR_OK,"");
+  return status;
+}
