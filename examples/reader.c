@@ -912,6 +912,19 @@ static void settings_save(void) {
 /* Bookshelf and annotation snapshots                                  */
 /* ------------------------------------------------------------------ */
 
+#ifdef EXR_READER_WINDOWS_SHELL
+static void sm_refresh(void);
+static void sm_show(int mode);
+static void sm_activity(void);
+static void sm_landed(int opened);
+static HWND sm_view;
+static void sm_tick(void);
+static void sm_shelf_visibility(int show);
+static void sm_edit_open(int shelf);
+static const char *sm_title(size_t shelf);
+static const char *sm_author(size_t shelf);
+static int sm_draw_override_cover(HDC dc,RECT r,int64_t id);
+#endif
 static void shelf_clear(void) {
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(g.shelf_cursors) for(size_t i=0;i<g.shelf_count;i++) {
@@ -1021,6 +1034,9 @@ static exr_status reload_shelf(void) {
     product_shelf_snapshot_changed();
 #endif
   }
+#ifdef EXR_READER_WINDOWS_SHELL
+  sm_refresh();
+#endif
   return EXR_OK;
 }
 
@@ -4226,6 +4242,7 @@ static void selection_report(void) {
 #include "windows/shell_annotations.inc"
 #include "windows/shell_footnotes.inc"
 #include "windows/shell_shelf.inc"
+#include "windows/shell_shelfmeta.inc"
 #include "windows/shell_gestures.inc"
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
@@ -4351,6 +4368,9 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       }
       return 0;
     case WM_MOUSEWHEEL:
+#ifdef EXR_READER_WINDOWS_SHELL
+      sm_activity();
+#endif
       host_probe_log("wheel",(short)HIWORD(wparam));
       wheel_delta += (short)HIWORD(wparam);
       SetTimer(window,PAGE_WHEEL_TIMER,16,NULL);
@@ -4579,6 +4599,9 @@ static void apply_pending_selection(void) {
 }
 
 static void page_step(int direction) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  sm_activity();
+#endif
   size_t target;
   host_job *job;
   if (!g.has_current || !g.frame.valid || (g.job && g.job->kind!=JOB_PREFETCH) || g.pending) return;
@@ -5471,6 +5494,7 @@ static void handle_job_complete(host_job *job) {
           shelf_requested=0;shell_bar_hidden=0;
           if(job->shelf_restored) shelf_resume(job->target_offset);
           shelf_opened();
+          sm_landed(1);
           shell_toc_load();
 #endif
           memset(&g.selection, 0, sizeof(g.selection));
@@ -5519,6 +5543,9 @@ static void handle_job_complete(host_job *job) {
         if(job->kind==JOB_GO && g.frame.valid && g.frame.book_id==job->frame.book_id && g.frame.part==job->frame.part)page_cache_put(&g.frame);
         frame_move(&g.frame, &job->frame);
         g.session.part = g.frame.part;
+#ifdef EXR_READER_WINDOWS_SHELL
+        sm_landed(job->kind==JOB_GO ? 0:-1);
+#endif
         g.session.hold_progress = g.frame.hold_progress;
         memset(&g.selection, 0, sizeof(g.selection));
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -6182,6 +6209,7 @@ static int check_selection(int minimum, const char *needle) {
 #include "windows/shell_selection_drive.inc"
 #include "windows/shell_annotations_drive.inc"
 #include "windows/shell_style_drive.inc"
+#include "windows/shell_shelfmeta_drive.inc"
 #endif
 
 static int drive_execute(void) {
@@ -6191,6 +6219,9 @@ static int drive_execute(void) {
   memset(detail, 0, sizeof(detail));
 #ifdef EXR_READER_WINDOWS_SHELL
   if (!strncmp(action,"style_",6) || !strncmp(action,"footnote_",9)) return style_drive(action);
+  if (!strncmp(action,"sm_",3)) {
+    drive_step_finish(sm_drive(action),"shelf metadata action");return 0;
+  }
   if (!strncmp(action,"annot_",6)) {
     drive_step_finish(annot_drive(action),"annotation action dispatched");return 0;
   }
@@ -7210,6 +7241,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(message==WM_APP+31) { product_shelf_edges();return 0; }
 #endif
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(message==WM_ACTIVATE) sm_focus(LOWORD(wparam)!=WA_INACTIVE);
+#endif
   switch (message) {
     case WM_CREATE:
       g.window = window;
@@ -7220,6 +7254,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       shell_update_dpi(window);
       shell_apply_theme();
       if(host_shell) shell_prepare_settings();
+      sm_create(window);
 #endif
       return 0;
     case WM_SIZE: {
@@ -7438,6 +7473,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_TIMER:
 #ifdef EXR_READER_WINDOWS_SHELL
       if (wparam == SHELF_TIMER) {shelf_pump();return 0;}
+      if(wparam==0x5760) { sm_tick(); return 0; }
       if (wparam == 0x5756) { shell_search_start(); return 0; }
       if (wparam == 0x5757) { shell_search_poll(); return 0; }
       if (wparam == 0x5753) { shell_animate(); return 0; }
@@ -7495,6 +7531,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
       product_shelf_remember();KillTimer(window,3);KillTimer(window,4);
+#endif
+#ifdef EXR_READER_WINDOWS_SHELL
+      if(!sm_flush()) return 0;
 #endif
       g.closing = 1;
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
@@ -7882,6 +7921,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   } else {
     set_status(L"书架为空：输入文件路径后点击“导入”。");
   }
+#ifdef EXR_READER_WINDOWS_SHELL
+#endif
   host_update_controls();
   result = message_loop();
   host_cleanup();

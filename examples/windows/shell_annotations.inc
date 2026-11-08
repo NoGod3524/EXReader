@@ -39,11 +39,11 @@ static void annot_error(const wchar_t *text) {
   set_status(text);
   if(!host_offscreen) MessageBoxW(g.window,text,L"标注",MB_OK|MB_ICONERROR);
 }
-static int annot_identity(char out[65]) {
+static int shell_content_identity(int64_t book_id,char out[65]) {
   exr_source source={0};HCRYPTPROV provider=0;HCRYPTHASH hash=0;BYTE digest[32];DWORD size=32;
   int ok=0;BYTE bytes[65536];
   EnterCriticalSection(&g.library_lock);
-  if(exr_library_source(g.library,g.frame.book_id,&source,NULL)!=EXR_OK) goto done;
+  if(exr_library_source(g.library,book_id,&source,NULL)!=EXR_OK) goto done;
   if(!CryptAcquireContextW(&provider,NULL,NULL,PROV_RSA_AES,CRYPT_VERIFYCONTEXT) ||
      !CryptCreateHash(provider,CALG_SHA_256,0,0,&hash)) goto done;
   for(uint64_t at=0;at<source.size;) {
@@ -61,6 +61,7 @@ done:
   if(provider) CryptReleaseContext(provider,0);
   return ok;
 }
+static int annot_identity(char out[65]) {return shell_content_identity(g.frame.book_id,out);}
 static void annot_json_string(cv_text *j,const char *key,const char *value) {
   cv_text_json(j,key);cv_text_string(j,":");
   if(value) cv_text_json(j,value);else cv_text_string(j,"null");
