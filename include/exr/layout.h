@@ -219,6 +219,31 @@ EXR_API exr_status exr_publication_cfi_resolve(exr_publication *publication,cons
                                                size_t *part,exr_document **document,exr_cfi_point *point,exr_error *error);
 EXR_API exr_layout_options exr_layout_defaults(void);
 EXR_API exr_layout_config exr_layout_config_defaults(void);
+/* Reader preferences. Margins are physical top/right/bottom/left CSS pixels;
+   paragraph_spacing and letter_spacing are ems. The returned config describes
+   the content rectangle; paint/hit-test it at (left,top)*scale. This keeps old
+   config/layout ABI and defaults intact, including positioned TOC composition.
+   css[1024] must outlive config use; append book-specific overrides afterwards. */
+typedef struct {
+  float font_size, line_height, paragraph_spacing;
+  float top, right, bottom, left, letter_spacing;
+} exr_reader_style;
+EXR_API exr_reader_style exr_reader_style_defaults(void);
+EXR_API exr_status exr_reader_style_config(const exr_reader_style *style,
+  float width,float height,float scale,exr_layout_config *config,char css[1024],exr_error *error);
+
+typedef struct {
+  const char *id, *label;
+  size_t target_part, target_offset;
+  const char *text;
+} exr_footnote;
+typedef struct { size_t part, start, end, footnote; } exr_footnote_reference;
+/* Lazy, publication-owned metadata; stable until publication_free. Does not
+   alter reading order, source offsets, layout or navigation. References index
+   footnotes (zero-based). Missing/external targets produce no reference. */
+EXR_API exr_status exr_publication_footnotes(exr_publication *publication,
+  const exr_footnote **footnotes,size_t *count,
+  const exr_footnote_reference **references,size_t *reference_count,exr_error *error);
 /* Optional dictionaries are retained. Automatic opportunities require CSS
    hyphens:auto; the CSS default remains manual. Replacement strings are literal
    and retain protected original selection ranges. Committed after text wraps

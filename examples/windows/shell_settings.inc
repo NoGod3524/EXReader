@@ -2,6 +2,12 @@
 /* Included by shell_screen.inc: UI-thread settings and theme presentation. */
 static HDC page_buffer_dc; /* UI-owned backing store, defined after this include. */
 enum { IDC_SHELL_MINUS=162, IDC_SHELL_PLUS, IDC_SHELL_LIGHT, IDC_SHELL_DARK, IDC_SHELL_SYSTEM };
+enum {IDC_STYLE_BASE=180,IDC_STYLE_RESET=220,IDC_STYLE_SAVE,IDC_STYLE_PRESET};
+static HWND style_edits[8],style_buttons[16],style_reset,style_save,style_preset;
+static int style_refreshing;
+static const float style_min[]={12,1.2f,0,0,0,0,0,-.02f};
+static const float style_max[]={32,2.2f,1.5f,120,120,120,120,.06f};
+static const float style_step[]={1,.05f,.1f,4,4,4,4,.01f};
 static COLORREF shell_colorref(uint32_t rgb) { return RGB((rgb>>16)&255,(rgb>>8)&255,rgb&255); }
 
 static void shell_apply_theme(void) {
@@ -44,6 +50,13 @@ static void shell_color_display(host_frame *frame) {
 }
 
 static void shell_settings_refresh(void) {
+  style_refreshing=1;shell_style.font_size=shell_font;
+  for(int i=0;i<8;i++) if(style_edits[i]) {
+    wchar_t value[32];swprintf(value,32,i==0 || (i>=3 && i<=6)?L"%.0f":L"%.2f",(double)*style_value(&shell_style,i));
+    SetWindowTextW(style_edits[i],value);
+    EnableWindow(style_edits[i],!g.frame.fixed);
+  }
+  style_refreshing=0;
   EnableWindow(shell_minus,!g.frame.fixed && shell_font>SHELL_BODY_MIN_FONT);
   EnableWindow(shell_plus,!g.frame.fixed && shell_font<SHELL_BODY_MAX_FONT);
   if(shell_panel) RedrawWindow(shell_panel,NULL,NULL,RDW_INVALIDATE|RDW_ALLCHILDREN);
@@ -60,8 +73,42 @@ static void shell_step_font(int delta) {
   shell_request_layout(); settings_save(); shell_settings_refresh();
 }
 
+static void shell_style_changed(void) {
+  shell_font=shell_style.font_size;shell_footnote_close();
+  shell_request_layout();settings_save();shell_settings_refresh();
+}
+static int shell_style_set(int i,float value) {
+  exr_reader_style next=shell_style;next.font_size=shell_font;
+  if(i<0 || i>=8)return 0;
+  *style_value(&next,i)=value;if(!style_valid(next))return 0;
+  shell_style=next;shell_style_changed();return 1;
+}
+static int shell_preset_save(const wchar_t *name) {
+  char *utf8=host_utf8(name);if(!utf8 || !*utf8 || strlen(utf8)>=128){free(utf8);return 0;}
+  int i;for(i=0;i<shell_preset_count;i++)if(!strcmp(shell_presets[i].name,utf8))break;
+  if(i==16){free(utf8);return 0;}
+  shell_style.font_size=shell_font;shell_presets[i].style=shell_style;strcpy(shell_presets[i].name,utf8);free(utf8);
+  if(i==shell_preset_count) {
+    shell_preset_count++;SendMessageW(style_preset,CB_ADDSTRING,0,(LPARAM)name);
+  }
+  return shell_style_save();
+}
+static int shell_preset_use(int i) {
+  if(i<0 || i>=shell_preset_count)return 0;
+  shell_style=shell_presets[i].style;shell_style_changed();return 1;
+}
 static int shell_settings_command(int id) {
   if(id==IDC_SHELL_MINUS || id==IDC_SHELL_PLUS) { shell_step_font(id==IDC_SHELL_PLUS ? 1 : -1);return 1; }
+  if(id>=IDC_STYLE_BASE && id<IDC_STYLE_BASE+24) {
+    int i=(id-IDC_STYLE_BASE)/3,op=(id-IDC_STYLE_BASE)%3;
+    if(op<2) {
+      shell_style.font_size=shell_font;float v=*style_value(&shell_style,i)+(op ? 1:-1)*style_step[i];
+      shell_style_set(i,fmaxf(style_min[i],fminf(style_max[i],roundf(v*100)/100)));
+    }
+    return 1;
+  }
+  if(id==IDC_STYLE_RESET){shell_style=exr_reader_style_defaults();shell_style_changed();return 1;}
+  if(id==IDC_STYLE_SAVE){wchar_t name[64];GetWindowTextW(style_preset,name,64);if(!shell_preset_save(name))set_status(L"无法保存预设。");return 1;}
   if(id>=IDC_SHELL_LIGHT && id<=IDC_SHELL_SYSTEM) {
     shell_theme_mode=id-IDC_SHELL_LIGHT; settings_save(); shell_apply_theme(); return 1;
   }
@@ -78,16 +125,16 @@ static void shell_panel_layout(void) {
   /* The panel's shadow bounds are an ordinary child, above the page HWND. */
   SetWindowPos(shell_panel,HWND_TOP,area.right-shell_px(SHELL_SPACE_2,shell_dpi)-w+kpad,
     shell_px(SHELL_TOPBAR_H,shell_dpi),w,(int)(h*shell_animation_value+.5f),SWP_NOACTIVATE);
-  HWND controls[5]={shell_minus,shell_plus,shell_segments[0],shell_segments[1],shell_segments[2]};
-  int xs[5]={111,215,24,74,124};
-  int widths[5]={34,34,50,50,76};
-  for(int i=0;i<5;i++) {
-    int frame=shell_px(i<2 ? SHELL_CONTROL_FRAME : SHELL_SEGMENT_PAD,shell_dpi);
-    int y=i<2 ? 44 : 122;
-    MoveWindow(controls[i],kpad+shell_px(xs[i],shell_dpi)-(i<2 ? frame : 0),top+shell_px(y,shell_dpi)-frame,
-      shell_px(widths[i],shell_dpi)+(i<2 ? 2*frame : 0),
-      shell_px(i<2 ? SHELL_CONTROL_H : SHELL_SEGMENT_H,shell_dpi)+2*frame,TRUE);
+  for(int i=0;i<8;i++) {
+    int y=48+i*42;
+    MoveWindow(style_buttons[2*i],kpad+shell_px(166,shell_dpi),top+shell_px(y,shell_dpi),shell_px(34,shell_dpi),shell_px(32,shell_dpi),TRUE);
+    MoveWindow(style_edits[i],kpad+shell_px(208,shell_dpi),top+shell_px(y+3,shell_dpi),shell_px(66,shell_dpi),shell_px(26,shell_dpi),TRUE);
+    MoveWindow(style_buttons[2*i+1],kpad+shell_px(282,shell_dpi),top+shell_px(y,shell_dpi),shell_px(34,shell_dpi),shell_px(32,shell_dpi),TRUE);
   }
+  for(int i=0;i<3;i++)MoveWindow(shell_segments[i],kpad+shell_px(20+i*96,shell_dpi),top+shell_px(394,shell_dpi),shell_px(92,shell_dpi),shell_px(32,shell_dpi),TRUE);
+  MoveWindow(style_preset,kpad+shell_px(20,shell_dpi),top+shell_px(452,shell_dpi),shell_px(190,shell_dpi),shell_px(200,shell_dpi),TRUE);
+  MoveWindow(style_save,kpad+shell_px(220,shell_dpi),top+shell_px(448,shell_dpi),shell_px(112,shell_dpi),shell_px(34,shell_dpi),TRUE);
+  MoveWindow(style_reset,kpad+shell_px(20,shell_dpi),top+shell_px(506,shell_dpi),shell_px(312,shell_dpi),shell_px(34,shell_dpi),TRUE);
 }
 
 static float shell_ease(float x) {
@@ -135,7 +182,24 @@ static void shell_toggle_settings(void) {
 static LRESULT CALLBACK shell_panel_procedure(HWND window,UINT message,WPARAM wp,LPARAM lp) {
   switch(message) {
     case WM_ERASEBKGND:return 1;
-    case WM_COMMAND: if(shell_settings_command(LOWORD(wp))) return 0;break;
+    case WM_COMMAND:
+      if(LOWORD(wp)==IDC_STYLE_PRESET && HIWORD(wp)==CBN_SELCHANGE) {
+        shell_preset_use((int)SendMessageW(style_preset,CB_GETCURSEL,0,0));return 0;
+      }
+      if(LOWORD(wp)>=IDC_STYLE_BASE && LOWORD(wp)<IDC_STYLE_BASE+24 && (LOWORD(wp)-IDC_STYLE_BASE)%3==2) {
+        if(HIWORD(wp)==EN_KILLFOCUS && !style_refreshing) {
+          int i=(LOWORD(wp)-IDC_STYLE_BASE)/3;wchar_t text[64],*end;GetWindowTextW(style_edits[i],text,64);
+          double v=wcstod(text,&end);if(end==text || *end || !shell_style_set(i,(float)v))shell_settings_refresh();
+        }
+        return 0;
+      }
+      if(shell_settings_command(LOWORD(wp))) return 0;
+      break;
+    case WM_CTLCOLOREDIT:case WM_CTLCOLORSTATIC:case WM_CTLCOLORLISTBOX: {
+      static HBRUSH brush;static uint32_t color;
+      if(!brush || color!=shell_colors->layer_float){if(brush)DeleteObject(brush);color=shell_colors->layer_float;brush=CreateSolidBrush(shell_colorref(color));}
+      SetTextColor((HDC)wp,shell_colorref(shell_colors->text));SetBkColor((HDC)wp,shell_colorref(color));return (LRESULT)brush;
+    }
     case WM_DRAWITEM: if(shell_draw_settings((const DRAWITEMSTRUCT *)lp)) return TRUE;break;
     case WM_PAINT:
     case WM_PRINTCLIENT: {
@@ -174,12 +238,26 @@ static void shell_create_panel(HWND parent) {
   type.hCursor=LoadCursor(NULL,IDC_ARROW);RegisterClassW(&type);
   shell_panel=CreateWindowExW(WS_EX_CONTROLPARENT,type.lpszClassName,L"阅读设置",WS_CHILD|WS_CLIPCHILDREN,
     0,0,0,0,parent,NULL,type.hInstance,NULL);
-  shell_minus=shell_make_button(shell_panel,IDC_SHELL_MINUS,L"减小字号");
-  shell_plus=shell_make_button(shell_panel,IDC_SHELL_PLUS,L"增大字号");
+  HFONT font=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
+  for(int i=0;i<8;i++) {
+    style_buttons[2*i]=shell_make_button(shell_panel,IDC_STYLE_BASE+3*i,L"−");
+    style_buttons[2*i+1]=shell_make_button(shell_panel,IDC_STYLE_BASE+3*i+1,L"+");
+    style_edits[i]=CreateWindowExW(0,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_CENTER|ES_AUTOHSCROLL,
+      0,0,0,0,shell_panel,(HMENU)(INT_PTR)(IDC_STYLE_BASE+3*i+2),type.hInstance,NULL);
+    SendMessageW(style_edits[i],WM_SETFONT,(WPARAM)font,0);SendMessageW(style_edits[i],EM_SETLIMITTEXT,16,0);
+    ShowWindow(style_buttons[2*i],SW_SHOW);ShowWindow(style_buttons[2*i+1],SW_SHOW);
+  }
+  shell_minus=style_buttons[0];shell_plus=style_buttons[1];
   const wchar_t *names[3]={L"浅色",L"深色",L"跟随系统"};
-  for(int i=0;i<3;i++) shell_segments[i]=shell_make_button(shell_panel,IDC_SHELL_LIGHT+i,names[i]);
-  ShowWindow(shell_minus,SW_SHOW);ShowWindow(shell_plus,SW_SHOW);
-  for(int i=0;i<3;i++) ShowWindow(shell_segments[i],SW_SHOW);
+  for(int i=0;i<3;i++){shell_segments[i]=shell_make_button(shell_panel,IDC_SHELL_LIGHT+i,names[i]);ShowWindow(shell_segments[i],SW_SHOW);}
+  style_preset=CreateWindowExW(0,L"COMBOBOX",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|CBS_DROPDOWN|WS_VSCROLL,
+    0,0,0,0,shell_panel,(HMENU)IDC_STYLE_PRESET,type.hInstance,NULL);
+  SendMessageW(style_preset,WM_SETFONT,(WPARAM)font,0);SendMessageW(style_preset,CB_LIMITTEXT,40,0);
+  for(int i=0;i<shell_preset_count;i++){wchar_t *name=host_wide(shell_presets[i].name,strlen(shell_presets[i].name));SendMessageW(style_preset,CB_ADDSTRING,0,(LPARAM)name);free(name);}
+  SetWindowTextW(style_preset,L"预设 1");
+  style_save=shell_make_button(shell_panel,IDC_STYLE_SAVE,L"保存为预设");ShowWindow(style_save,SW_SHOW);
+  style_reset=shell_make_button(shell_panel,IDC_STYLE_RESET,L"恢复默认");ShowWindow(style_reset,SW_SHOW);
+  shell_settings_refresh();
 }
 
 static int shell_draw_settings(const DRAWITEMSTRUCT *item) {
@@ -195,7 +273,7 @@ static int shell_draw_settings(const DRAWITEMSTRUCT *item) {
   wchar_t text[32];GetWindowTextW(item->hwndItem,text,32);
   if(id==IDC_SHELL_MINUS) wcscpy(text,L"−");
   else if(id==IDC_SHELL_PLUS) wcscpy(text,L"+");
-  else variant=id-IDC_SHELL_LIGHT==shell_theme_mode ? 1 : 2;
+  else if(id>=IDC_SHELL_LIGHT && id<=IDC_SHELL_SYSTEM) variant=id-IDC_SHELL_LIGHT==shell_theme_mode ? 1 : 2;
   shell_d2d_control(host_shell,item->hDC,&item->rcItem,text,shell_is_dark(),variant,state);
   return 1;
 }
