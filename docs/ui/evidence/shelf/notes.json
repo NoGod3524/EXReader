@@ -1,0 +1,70 @@
+{
+  "note-restart/note-restart.annotations.json": {
+    "count": 1,
+    "book_sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "font": 18,
+    "part": 1,
+    "page": 30,
+    "items": [
+      {
+        "found": 1,
+        "color": 2,
+        "start": [
+          1,
+          43885
+        ],
+        "end": [
+          1,
+          43921
+        ],
+        "visible": 1,
+        "bounds": [
+          27,
+          64,
+          243,
+          96
+        ],
+        "marker": [
+          1,
+          925,
+          112
+        ],
+        "text": "退出前尚未按保存的笔记 😀"
+      }
+    ]
+  },
+  "selection/draft-saved.annotations.json": {
+    "count": 1,
+    "book_sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "font": 18,
+    "part": 1,
+    "page": 30,
+    "items": [
+      {
+        "found": 1,
+        "color": 2,
+        "start": [
+          1,
+          43885
+        ],
+        "end": [
+          1,
+          43921
+        ],
+        "visible": 1,
+        "bounds": [
+          27,
+          64,
+          243,
+          96
+        ],
+        "marker": [
+          1,
+          925,
+          112
+        ],
+        "text": "退出前尚未按保存的笔记 😀"
+      }
+    ]
+  }
+}

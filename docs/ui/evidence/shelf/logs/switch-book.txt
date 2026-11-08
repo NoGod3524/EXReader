@@ -1,0 +1,22 @@
+HOST	phase=1	engine=3.42.0	pid=6180
+STEP	1	shell	PASS	legacy panel
+STEP	2	shell_dpi	PASS	page=0;status=选择一本书并点击“打开”，或导入新书。
+STEP	3	shell_client	PASS	page=0;status=选择一本书并点击“打开”，或导入新书。
+STEP	4	shell_font	PASS	page=0;status=选择一本书并点击“打开”，或导入新书。
+STEP	5	wait_idle	PASS	page=0;status=选择一本书并点击“打开”，或导入新书。
+STEP	6	shell_click	PASS	button invoked
+STEP	7	shelf_open	PASS	shelf row clicked
+STEP	8	wait_idle	PASS	page=31;status=已打开《紅樓夢》。
+STEP	9	shelf_dump	PASS	shelf state recorded
+STEP	10	shelf_return	PASS	return requested
+STEP	11	wait_idle	PASS	page=31;status=已打开《紅樓夢》。
+STEP	12	shelf_open	PASS	shelf row clicked
+STEP	13	wait_idle	PASS	page=13;status=已打开《Between the World and Me》。
+STEP	14	shelf_dump	PASS	shelf state recorded
+STEP	15	shelf_return	PASS	return requested
+STEP	16	wait_idle	PASS	page=13;status=已打开《Between the World and Me》。
+STEP	17	shelf_open	PASS	shelf row clicked
+STEP	18	wait_idle	PASS	page=31;status=已打开《紅樓夢》。
+STEP	19	shelf_dump	PASS	shelf state recorded
+STEP	20	quit	PASS	closing
+DONE	20	eof	PASS	script finished

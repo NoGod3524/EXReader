@@ -480,3 +480,99 @@ extern "C" int shell_epub_source(exr_source *source) {
     source->read_at=read_memory;source->release=release_memory;return 1;
   } catch(...) {return 0;}
 }
+
+/* Read only EPUB package metadata and its designated cover for the shelf.
+   Uses the same Expat/miniz dependencies as presentation; never rewrites content. */
+namespace {
+struct shelf_zip_item { std::string name; uint32_t local,packed,size; unsigned method,flags; };
+static bool shelf_read(const exr_source *s,uint64_t at,void *out,size_t n) {
+  if(at>s->size || n>s->size-at)return false;
+  auto p=static_cast<unsigned char *>(out);
+  while(n) {size_t got=s->read_at(s->context,at,p,n);if(!got || got>n)return false;at+=got;p+=got;n-=got;}
+  return true;
+}
+static bool shelf_unzip(const exr_source *s,const shelf_zip_item &e,std::vector<unsigned char> &out) {
+  if(e.flags&1 || e.size>8u*1024*1024 || e.packed>8u*1024*1024)return false;
+  unsigned char head[30];if(!shelf_read(s,e.local,head,30) || u32(head)!=0x04034b50)return false;
+  uint64_t start=(uint64_t)e.local+30+u16(head+26)+u16(head+28);
+  std::vector<unsigned char> data(e.packed);if(!shelf_read(s,start,data.data(),data.size()))return false;
+  out.resize(e.size);
+  if(e.method==0 && e.packed==e.size) {out=data;return true;}
+  return e.method==8 && tinfl_decompress_mem_to_mem(out.data(),out.size(),data.data(),data.size(),0)==out.size();
+}
+static const char *shelf_local(const char *s) {const char *p=std::strrchr(s,':');return p ? p+1:s;}
+struct shelf_package {
+  std::string opf,author,cover_id,cover_href;bool creator=false;
+  std::vector<std::pair<std::string,std::string>> images;
+};
+static const char *shelf_attr(const char **a,const char *key) {
+  for(;a && *a;a+=2)if(!std::strcmp(shelf_local(*a),key))return a[1];
+  return "";
+}
+static void shelf_start(void *context,const char *name,const char **a) {
+  auto &p=*static_cast<shelf_package *>(context);name=shelf_local(name);
+  if(!std::strcmp(name,"rootfile"))p.opf=shelf_attr(a,"full-path");
+  if(!std::strcmp(name,"creator"))p.creator=true;
+  if(!std::strcmp(name,"meta") && !std::strcmp(shelf_attr(a,"name"),"cover"))p.cover_id=shelf_attr(a,"content");
+  if(!std::strcmp(name,"item")) {
+    std::string properties=shelf_attr(a,"properties");
+    if(properties.find("cover-image")!=std::string::npos)p.cover_href=shelf_attr(a,"href");
+    p.images.emplace_back(shelf_attr(a,"id"),shelf_attr(a,"href"));
+  }
+}
+static void shelf_end(void *context,const char *name) {
+  if(!std::strcmp(shelf_local(name),"creator"))static_cast<shelf_package *>(context)->creator=false;
+}
+static void shelf_chars(void *context,const char *text,int n) {
+  auto &p=*static_cast<shelf_package *>(context);if(p.creator && p.author.size()+(size_t)n<=4096)p.author.append(text,n);
+}
+static bool shelf_xml(shelf_package &p,const std::vector<unsigned char> &text) {
+  void *xml=XML_ParserCreate(nullptr);if(!xml)return false;
+  XML_SetUserData(xml,&p);XML_SetElementHandler(xml,shelf_start,shelf_end);XML_SetCharacterDataHandler(xml,shelf_chars);
+  bool ok=XML_Parse(xml,reinterpret_cast<const char *>(text.data()),(int)text.size(),1)!=0;XML_ParserFree(xml);return ok;
+}
+static std::string shelf_path(const std::string &base,const std::string &href) {
+  std::string path=base.substr(0,base.find_last_of('/')==std::string::npos ? 0:base.find_last_of('/')+1)+href;
+  std::vector<std::string> parts;size_t start=0;
+  while(start<=path.size()) {size_t end=path.find('/',start);if(end==std::string::npos)end=path.size();std::string part=path.substr(start,end-start);
+    if(part=="..") {if(parts.empty())return "";parts.pop_back();}else if(part!="." && !part.empty())parts.push_back(part);
+    if(end==path.size())break;
+    start=end+1;
+  }
+  std::string result;for(const auto &part:parts) {if(!result.empty())result+='/';result+=part;}return result;
+}
+}
+extern "C" int shell_epub_shelf(const exr_source *s,char **author,void **cover,size_t *bytes) {
+  *author=nullptr;*cover=nullptr;*bytes=0;
+  if(s->size<22 || s->size>96u*1024*1024)return 0;
+  try {
+    size_t n=(size_t)std::min<uint64_t>(s->size,65557);std::vector<unsigned char> tail(n);
+    if(!shelf_read(s,s->size-n,tail.data(),n))return 0;
+    size_t end=n-22;while(end && (u32(tail.data()+end)!=0x06054b50 || end+22+u16(tail.data()+end+20)!=n))end--;
+    if(u32(tail.data()+end)!=0x06054b50)return 0;
+    auto eocd=tail.data()+end;size_t count=u16(eocd+10),size=u32(eocd+12),offset=u32(eocd+16);
+    if(size>4u*1024*1024)return 0;
+    std::vector<unsigned char> dir(size);if(!shelf_read(s,offset,dir.data(),size))return 0;
+    std::vector<shelf_zip_item> items;
+    for(size_t i=0,at=0;i<count;i++) {
+      if(at+46>size || u32(dir.data()+at)!=0x02014b50)return 0;
+      auto c=dir.data()+at;size_t len=46u+u16(c+28)+u16(c+30)+u16(c+32);if(len>size-at)return 0;
+      items.push_back({std::string(reinterpret_cast<const char *>(c+46),u16(c+28)),u32(c+42),u32(c+20),u32(c+24),u16(c+10),u16(c+8)});at+=len;
+    }
+    auto extract=[&](const std::string &path,std::vector<unsigned char> &data) {
+      auto it=std::find_if(items.begin(),items.end(),[&](const shelf_zip_item &e){return e.name==path;});
+      return it!=items.end() && shelf_unzip(s,*it,data);
+    };
+    shelf_package p;std::vector<unsigned char> data;
+    if(!extract("META-INF/container.xml",data) || !shelf_xml(p,data) || p.opf.empty() || !extract(p.opf,data) || !shelf_xml(p,data))return 0;
+    if(p.cover_href.empty())for(const auto &item:p.images)if(item.first==p.cover_id)p.cover_href=item.second;
+    if(!p.author.empty()) {size_t first=p.author.find_first_not_of(" \r\n\t"),last=p.author.find_last_not_of(" \r\n\t");
+      p.author=first==std::string::npos ? "":p.author.substr(first,last-first+1);
+      *author=static_cast<char *>(std::malloc(p.author.size()+1));if(*author)std::memcpy(*author,p.author.c_str(),p.author.size()+1);
+    }
+    if(!p.cover_href.empty() && extract(shelf_path(p.opf,p.cover_href),data) && !data.empty()) {
+      *cover=std::malloc(data.size());if(*cover) {*bytes=data.size();std::memcpy(*cover,data.data(),data.size());}
+    }
+    return 1;
+  } catch(...) {std::free(*author);std::free(*cover);*author=nullptr;*cover=nullptr;*bytes=0;return 0;}
+}

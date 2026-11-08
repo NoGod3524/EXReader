@@ -1,0 +1,2377 @@
+{
+  "bounds/first-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 0,
+    "page": 0,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "75d14da39910024b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "bounds/first-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 0,
+    "page": 0,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "75d14da39910024b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "bounds/first-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 0,
+    "page": 0,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "75d14da39910024b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "bounds/first.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 0,
+    "page": 0,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "75d14da39910024b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "bounds/fixed-cached.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 0,
+    "page": 3,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "75d14da39910024b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "bounds/last-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 0,
+    "page": 3,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "75d14da39910024b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "bounds/last-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 0,
+    "page": 3,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "75d14da39910024b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "bounds/last-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 0,
+    "page": 3,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "75d14da39910024b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "bounds/last.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 0,
+    "page": 3,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "75d14da39910024b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "fixed-restart/fixed-restored.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 0,
+    "page": 3,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "75d14da39910024b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/before-restart.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/empty.state.json": {
+    "shelf": 1,
+    "reading": 0,
+    "bar_hidden": 0,
+    "books": 0,
+    "edge": 25,
+    "book": 0,
+    "part": 0,
+    "page": 0,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "14650fb0739d0383",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/hidden.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/in-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/in-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/in-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/initial.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/out-0.state.json": {
+    "shelf": 1,
+    "reading": 0,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/out-1.state.json": {
+    "shelf": 1,
+    "reading": 0,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/out-2.state.json": {
+    "shelf": 1,
+    "reading": 0,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/rapid-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 29,
+    "range": [
+      42011,
+      43689
+    ],
+    "raster_fnv": "38df4944ea40ce07",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/rapid-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/rapid-base.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 28,
+    "range": [
+      41315,
+      42010
+    ],
+    "raster_fnv": "a3170dad9d091c4b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/ratio-20.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/ratio-25.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/shelf.state.json": {
+    "shelf": 1,
+    "reading": 0,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/single-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 19,
+    "range": [
+      25579,
+      27217
+    ],
+    "raster_fnv": "a969b44fda1fa1ec",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/single-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 20,
+    "range": [
+      27217,
+      28906
+    ],
+    "raster_fnv": "b2122c7e601d0062",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/single-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 21,
+    "range": [
+      28906,
+      30592
+    ],
+    "raster_fnv": "391f9a85924834b3",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/single-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 22,
+    "range": [
+      30592,
+      32367
+    ],
+    "raster_fnv": "dd1ffeca6522c4c3",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/single-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 23,
+    "range": [
+      32367,
+      34172
+    ],
+    "raster_fnv": "fb6db615d94f5bb6",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/single-5.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 24,
+    "range": [
+      34172,
+      35940
+    ],
+    "raster_fnv": "2de75cb1a2d705ea",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/single-6.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 25,
+    "range": [
+      35940,
+      37683
+    ],
+    "raster_fnv": "168f25a0b6d9858b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/single-7.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 26,
+    "range": [
+      37683,
+      39492
+    ],
+    "raster_fnv": "659b34b39b3a071d",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/single-8.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 27,
+    "range": [
+      39492,
+      41315
+    ],
+    "raster_fnv": "722490104b9520c5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/single-9.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 28,
+    "range": [
+      41315,
+      42010
+    ],
+    "raster_fnv": "a3170dad9d091c4b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/single-base.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-left-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 29,
+    "range": [
+      42011,
+      43689
+    ],
+    "raster_fnv": "38df4944ea40ce07",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-left-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-left-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 31,
+    "range": [
+      45473,
+      47262
+    ],
+    "raster_fnv": "a50f71683d8ca400",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-left-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 32,
+    "range": [
+      47262,
+      48971
+    ],
+    "raster_fnv": "10d026985f0f6dbe",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-left-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 33,
+    "range": [
+      48971,
+      50777
+    ],
+    "raster_fnv": "71138211484bd281",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-left-5.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 34,
+    "range": [
+      50777,
+      52534
+    ],
+    "raster_fnv": "7496fb52409fa3c4",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-left-6.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 35,
+    "range": [
+      52534,
+      54379
+    ],
+    "raster_fnv": "f641f6b440f553f5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-left-7.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 36,
+    "range": [
+      54379,
+      55990
+    ],
+    "raster_fnv": "f60a18c7eb85e573",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-left-8.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 37,
+    "range": [
+      55990,
+      57786
+    ],
+    "raster_fnv": "762a9df4be51a92f",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-left-9.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 38,
+    "range": [
+      57787,
+      59722
+    ],
+    "raster_fnv": "25a32e0f90fa0cbe",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-right-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 37,
+    "range": [
+      55990,
+      57786
+    ],
+    "raster_fnv": "762a9df4be51a92f",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-right-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 36,
+    "range": [
+      54379,
+      55990
+    ],
+    "raster_fnv": "f60a18c7eb85e573",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-right-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 35,
+    "range": [
+      52534,
+      54379
+    ],
+    "raster_fnv": "f641f6b440f553f5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-right-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 34,
+    "range": [
+      50777,
+      52534
+    ],
+    "raster_fnv": "7496fb52409fa3c4",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-right-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 33,
+    "range": [
+      48971,
+      50777
+    ],
+    "raster_fnv": "71138211484bd281",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-right-5.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 32,
+    "range": [
+      47262,
+      48971
+    ],
+    "raster_fnv": "10d026985f0f6dbe",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-right-6.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 31,
+    "range": [
+      45473,
+      47262
+    ],
+    "raster_fnv": "a50f71683d8ca400",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-right-7.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-right-8.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 29,
+    "range": [
+      42011,
+      43689
+    ],
+    "raster_fnv": "38df4944ea40ce07",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/swipe-right-9.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 28,
+    "range": [
+      41315,
+      42010
+    ],
+    "raster_fnv": "a3170dad9d091c4b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-center-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-center-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-center-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-center-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-center-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-left-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 17,
+    "range": [
+      23991,
+      24150
+    ],
+    "raster_fnv": "4c25a5449e7df4d2",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-left-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 16,
+    "range": [
+      22187,
+      23991
+    ],
+    "raster_fnv": "ddf4f51c6f6a1e64",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-left-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 15,
+    "range": [
+      20989,
+      22187
+    ],
+    "raster_fnv": "b342a63ae5fd4db8",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-left-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 14,
+    "range": [
+      19259,
+      20989
+    ],
+    "raster_fnv": "0cc578e2d6820c8b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-left-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 13,
+    "range": [
+      17545,
+      19259
+    ],
+    "raster_fnv": "98f5aeb0a692b0f8",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-right-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 14,
+    "range": [
+      19259,
+      20989
+    ],
+    "raster_fnv": "0cc578e2d6820c8b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-right-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 15,
+    "range": [
+      20989,
+      22187
+    ],
+    "raster_fnv": "b342a63ae5fd4db8",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-right-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 16,
+    "range": [
+      22187,
+      23991
+    ],
+    "raster_fnv": "ddf4f51c6f6a1e64",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-right-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 17,
+    "range": [
+      23991,
+      24150
+    ],
+    "raster_fnv": "4c25a5449e7df4d2",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-20-right-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-center-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-center-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-center-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-center-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-center-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 1,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-left-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 17,
+    "range": [
+      23991,
+      24150
+    ],
+    "raster_fnv": "4c25a5449e7df4d2",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-left-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 16,
+    "range": [
+      22187,
+      23991
+    ],
+    "raster_fnv": "ddf4f51c6f6a1e64",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-left-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 15,
+    "range": [
+      20989,
+      22187
+    ],
+    "raster_fnv": "b342a63ae5fd4db8",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-left-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 14,
+    "range": [
+      19259,
+      20989
+    ],
+    "raster_fnv": "0cc578e2d6820c8b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-left-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 13,
+    "range": [
+      17545,
+      19259
+    ],
+    "raster_fnv": "98f5aeb0a692b0f8",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-right-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 14,
+    "range": [
+      19259,
+      20989
+    ],
+    "raster_fnv": "0cc578e2d6820c8b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-right-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 15,
+    "range": [
+      20989,
+      22187
+    ],
+    "raster_fnv": "b342a63ae5fd4db8",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-right-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 16,
+    "range": [
+      22187,
+      23991
+    ],
+    "raster_fnv": "ddf4f51c6f6a1e64",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-right-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 17,
+    "range": [
+      23991,
+      24150
+    ],
+    "raster_fnv": "4c25a5449e7df4d2",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "flow/tap-25-right-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 25,
+    "book": 1,
+    "part": 1,
+    "page": 18,
+    "range": [
+      24151,
+      25579
+    ],
+    "raster_fnv": "20cdc1c87953edb5",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "restart/restart.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 1,
+    "pending_exit": 0
+  },
+  "selection/draft-out.state.json": {
+    "shelf": 1,
+    "reading": 0,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "selection/drag-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 1,
+    "select_valid": 1,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "selection/drag-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 1,
+    "select_valid": 1,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "selection/drag-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 1,
+    "select_valid": 1,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "selection/drag-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 1,
+    "select_valid": 1,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "selection/drag-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 1,
+    "select_valid": 1,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "selection/drag-5.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 1,
+    "select_valid": 1,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "selection/drag-6.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 1,
+    "select_valid": 1,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "selection/drag-7.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 1,
+    "select_valid": 1,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "selection/drag-8.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 1,
+    "select_valid": 1,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "selection/drag-9.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 1,
+    "select_valid": 1,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "selection/drag-base.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "shelf-startup/startup.state.json": {
+    "shelf": 1,
+    "reading": 0,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 0,
+    "part": 0,
+    "page": 0,
+    "range": [
+      0,
+      0
+    ],
+    "raster_fnv": "14650fb0739d0383",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "switch-book/after.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "switch-book/before.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 1,
+    "part": 1,
+    "page": 30,
+    "range": [
+      43689,
+      45473
+    ],
+    "raster_fnv": "2a07713c01137264",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "switch-book/other.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 3,
+    "edge": 20,
+    "book": 3,
+    "part": 6,
+    "page": 12,
+    "range": [
+      16367,
+      17835
+    ],
+    "raster_fnv": "9d60f8a06f765cc1",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 0,
+    "pending_exit": 0
+  },
+  "vertical/base.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 5,
+    "range": [
+      2655,
+      3199
+    ],
+    "raster_fnv": "3ee567627236a10d",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/left-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 6,
+    "range": [
+      3199,
+      3788
+    ],
+    "raster_fnv": "0d6a8c974c821f1a",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/left-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 7,
+    "range": [
+      3788,
+      4239
+    ],
+    "raster_fnv": "e318ddcf519aefbe",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/left-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 8,
+    "range": [
+      4239,
+      4764
+    ],
+    "raster_fnv": "48b7aa060ca37e6b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/left-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 9,
+    "range": [
+      4764,
+      5266
+    ],
+    "raster_fnv": "1a4c2825e1fd56d0",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/left-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 10,
+    "range": [
+      5266,
+      5758
+    ],
+    "raster_fnv": "8bd6b7e725e43049",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/right-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 9,
+    "range": [
+      4764,
+      5266
+    ],
+    "raster_fnv": "1a4c2825e1fd56d0",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/right-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 8,
+    "range": [
+      4239,
+      4764
+    ],
+    "raster_fnv": "48b7aa060ca37e6b",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/right-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 7,
+    "range": [
+      3788,
+      4239
+    ],
+    "raster_fnv": "e318ddcf519aefbe",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/right-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 6,
+    "range": [
+      3199,
+      3788
+    ],
+    "raster_fnv": "0d6a8c974c821f1a",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/right-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 5,
+    "range": [
+      2655,
+      3199
+    ],
+    "raster_fnv": "3ee567627236a10d",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/swipe-left-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 4,
+    "range": [
+      2058,
+      2655
+    ],
+    "raster_fnv": "9660b041f16a168a",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/swipe-left-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 3,
+    "range": [
+      1482,
+      2058
+    ],
+    "raster_fnv": "7526b5e721bf99e7",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/swipe-left-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 2,
+    "range": [
+      944,
+      1482
+    ],
+    "raster_fnv": "9a59ad61063358d6",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/swipe-left-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 1,
+    "range": [
+      333,
+      944
+    ],
+    "raster_fnv": "2299c9cfbd1304a1",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/swipe-left-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 0,
+    "range": [
+      0,
+      333
+    ],
+    "raster_fnv": "394e825ae7893c73",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/swipe-right-0.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 1,
+    "range": [
+      333,
+      944
+    ],
+    "raster_fnv": "2299c9cfbd1304a1",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/swipe-right-1.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 2,
+    "range": [
+      944,
+      1482
+    ],
+    "raster_fnv": "9a59ad61063358d6",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/swipe-right-2.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 3,
+    "range": [
+      1482,
+      2058
+    ],
+    "raster_fnv": "7526b5e721bf99e7",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/swipe-right-3.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 4,
+    "range": [
+      2058,
+      2655
+    ],
+    "raster_fnv": "9660b041f16a168a",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  },
+  "vertical/swipe-right-4.state.json": {
+    "shelf": 0,
+    "reading": 1,
+    "bar_hidden": 0,
+    "books": 1,
+    "edge": 25,
+    "book": 1,
+    "part": 2,
+    "page": 5,
+    "range": [
+      2655,
+      3199
+    ],
+    "raster_fnv": "3ee567627236a10d",
+    "selection": 0,
+    "select_valid": 0,
+    "builds": 2,
+    "pending_exit": 0
+  }
+}
