@@ -109,6 +109,7 @@ typedef struct {
   float scan_ascent,scan_descent,scan_leading,line_x,line_width;
   int initialized, finishing, forced, final, line_ready;
   unsigned vertical_flags;
+  size_t combine_left; /* remaining members of the current text-combine-upright block */
   double measure_width, measure_trailing;
   exr_glyph measure_last;
   int measure_has_last;
