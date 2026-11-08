@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "advisory": true,
+  "accepted": false,
+  "required_recovery": false,
+  "pressure_cpu_targets_pass": true,
+  "normal_worst_book_dispersion_pct": 10.12541211262951,
+  "blockers": [
+    "normal black-boy dispersion 10.125412%",
+    "wall sandwich high-load drift -50.625709%",
+    "actual-runner qualification and strict E3 producer absent"
+  ],
+  "runs": {
+    "none": 5,
+    "medium": 5,
+    "high": 5
+  },
+  "measured_sequential_samples": 4560,
+  "all_signature_matches_87": true,
+  "current_measurement_source_hashes_match": true,
+  "pressure_workers_stopped": true,
+  "power_restored": {
+    "diagnostic": true,
+    "diagnostic-corrected": true,
+    "diagnosis": true,
+    "final": true
+  },
+  "policy_frozen_utc_from_original_mtime": "2026-11-08T19:46:43.399344+00:00",
+  "policy_frozen_before_pressure": true,
+  "full_page_regression": {
+    "summary": {
+      "requested_books": 19,
+      "successful_books": 19,
+      "failed_books": [],
+      "total_pages": 11296,
+      "total_glyphs": 8648640,
+      "wall_seconds": 62.84173,
+      "sum_book_seconds": 210.911226,
+      "fastest_book": "tangshi300-52323",
+      "slowest_book": "hongloumeng-24264"
+    },
+    "content_fingerprint": "12b3b76f346ea736f218d8eb5e11af33673ceb31993c9c7ced98724e4689e732",
+    "dll_sha256": "c965a690cbdc812ecfe9959e5f01edd05c49bf780abb35b513372daa74742ada",
+    "hash_changed_pages": 0,
+    "page_count_changes": 0,
+    "glyph_count_changes": 0
+  },
+  "checks": [
+    "check_load.py final passed",
+    "check_ratio.py #87 normal passed",
+    "git diff --check passed",
+    "protected paths unchanged"
+  ],
+  "scope_allowed": true
+}

@@ -1,0 +1,431 @@
+{
+  "cpu": [
+    {
+      "Name": "Intel(R) Core(TM) Ultra 7 256V",
+      "NumberOfCores": 8,
+      "NumberOfLogicalProcessors": 8,
+      "MaxClockSpeed": 2200
+    }
+  ],
+  "active_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)\r\n",
+  "processor_policy": "See session power-original/restored.json and fixed policy in load_session.ps1",
+  "thermal_error": "Access denied ",
+  "accepted": false,
+  "advisory": true,
+  "system": {
+    "model": "83JT",
+    "hypervisor_present": true,
+    "manufacturer": "LENOVO",
+    "memory_bytes": 16693911552
+  },
+  "thermal_interpretation": "PerformanceLimitFlags are supplementary counters; unavailable temperature means thermal throttling cannot be ruled out.",
+  "samples": [
+    {
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 91,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 93
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 87
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 93,
+          "PercentProcessorPerformance": 93,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 96,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 97
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 96,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 97
+        }
+      ],
+      "processes": [
+        {
+          "name": "cc1",
+          "pid": 27920,
+          "cpu_seconds": 1.09375,
+          "one_core_pct": 107.29471639124829
+        },
+        {
+          "name": "find",
+          "pid": 29652,
+          "cpu_seconds": 1.015625,
+          "one_core_pct": 99.63080807758769
+        },
+        {
+          "name": "perf-reference",
+          "pid": 8944,
+          "cpu_seconds": 0.640625,
+          "one_core_pct": 62.84404817201685
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 15480,
+          "cpu_seconds": 0.21875,
+          "one_core_pct": 21.458943278249656
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 16084,
+          "cpu_seconds": 0.171875,
+          "one_core_pct": 16.8605982900533
+        },
+        {
+          "name": "pwsh",
+          "pid": 29148,
+          "cpu_seconds": 0.125,
+          "one_core_pct": 12.262253301856946
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 9208,
+          "cpu_seconds": 0.046875,
+          "one_core_pct": 4.598344988196355
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 16824,
+          "cpu_seconds": 0.046875,
+          "one_core_pct": 4.598344988196355
+        }
+      ],
+      "utc": "2026-11-08T19:46:49.6282202Z"
+    },
+    {
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 47
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 53
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 94,
+          "PercentProcessorPerformance": 93,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 96,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 87
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 96,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 87
+        }
+      ],
+      "processes": [
+        {
+          "name": "cc1",
+          "pid": 27920,
+          "cpu_seconds": 1.015625,
+          "one_core_pct": 100.21678895787367
+        },
+        {
+          "name": "load-probe",
+          "pid": 18660,
+          "cpu_seconds": 0.734375,
+          "one_core_pct": 72.46444740030866
+        },
+        {
+          "name": "pwsh",
+          "pid": 29148,
+          "cpu_seconds": 0.703125,
+          "one_core_pct": 69.38085389391254
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 15480,
+          "cpu_seconds": 0.296875,
+          "one_core_pct": 29.294138310763074
+        },
+        {
+          "name": "perf-reference",
+          "pid": 8944,
+          "cpu_seconds": 0.296875,
+          "one_core_pct": 29.294138310763074
+        },
+        {
+          "name": "codex",
+          "pid": 13808,
+          "cpu_seconds": 0.109375,
+          "one_core_pct": 10.792577272386396
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 16084,
+          "cpu_seconds": 0.0625,
+          "one_core_pct": 6.167187012792226
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 14252,
+          "cpu_seconds": 0.03125,
+          "one_core_pct": 3.083593506396113
+        }
+      ],
+      "utc": "2026-11-08T19:46:51.0491808Z"
+    },
+    {
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 88
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 88
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 94,
+          "PercentProcessorPerformance": 94,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 96,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 97
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 96,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 97
+        }
+      ],
+      "processes": [
+        {
+          "name": "cc1",
+          "pid": 27920,
+          "cpu_seconds": 0.90625,
+          "one_core_pct": 89.63013241918676
+        },
+        {
+          "name": "load-probe",
+          "pid": 20096,
+          "cpu_seconds": 0.71875,
+          "one_core_pct": 71.08596709107916
+        },
+        {
+          "name": "pwsh",
+          "pid": 29148,
+          "cpu_seconds": 0.390625,
+          "one_core_pct": 38.63367776689084
+        },
+        {
+          "name": "perf-reference",
+          "pid": 8944,
+          "cpu_seconds": 0.328125,
+          "one_core_pct": 32.45228932418831
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 15480,
+          "cpu_seconds": 0.296875,
+          "one_core_pct": 29.361595102837043
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 16084,
+          "cpu_seconds": 0.125,
+          "one_core_pct": 12.36277688540507
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 8440,
+          "cpu_seconds": 0.046875,
+          "one_core_pct": 4.636041332026902
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 14268,
+          "cpu_seconds": 0.03125,
+          "one_core_pct": 3.0906942213512676
+        }
+      ],
+      "utc": "2026-11-08T19:46:52.4784072Z"
+    }
+  ],
+  "utc": "2026-11-08T19:46:52.4784481Z",
+  "thermal": null
+}

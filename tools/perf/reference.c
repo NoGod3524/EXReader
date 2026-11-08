@@ -10,6 +10,10 @@
 #include <time.h>
 #endif
 static volatile uint64_t reference_sink;
+#ifndef PERF_REFERENCE_STEPS
+#define PERF_REFERENCE_STEPS UINT64_C(120000000)
+#endif
+uint64_t perf_reference_steps(void) { return PERF_REFERENCE_STEPS; }
 static double reference_now(void) {
 #ifdef _WIN32
   LARGE_INTEGER counter, frequency;
@@ -25,7 +29,7 @@ static double reference_now(void) {
 double perf_reference_ms(void) {
   uint64_t hash = UINT64_C(14695981039346656037);
   double start = reference_now();
-  for (uint64_t i = 0; i < UINT64_C(120000000); ++i) {
+  for (uint64_t i = 0; i < PERF_REFERENCE_STEPS; ++i) {
     hash ^= i & 255;
     hash *= UINT64_C(1099511628211);
   }

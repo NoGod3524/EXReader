@@ -1,0 +1,5 @@
+Exception: C:\Users\Oscar\Documents\Codex\EXReader-perf3-20261108\tools\perf\load_session.ps1:35
+Line |
+  35 |  … EXITCODE) { throw "$name capture failed; all attempted raw files reta …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | medium capture failed; all attempted raw files retained

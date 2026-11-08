@@ -1,0 +1,16 @@
+run 1/1: 19 books complete
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-perf3-20261108\tools\perf/load_capture.py", line 163, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-perf3-20261108\tools\perf/load_capture.py", line 150, in main
+    capture(a)
+    ~~~~~~~^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-perf3-20261108\tools\perf\ratio_capture.py", line 220, in capture
+    report = load_summarize(args.output)
+  File "C:\Users\Oscar\Documents\Codex\EXReader-perf3-20261108\tools\perf\load_capture.py", line 79, in summarize
+    books[book['id']] = metrics(samples, sandwich)
+                        ~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-perf3-20261108\tools\perf\load_capture.py", line 38, in metrics
+    raise ValueError('TSC/wall coverage mismatch (including chapter transitions)')
+ValueError: TSC/wall coverage mismatch (including chapter transitions)

@@ -1,0 +1,1 @@
+{"empty":{"cycles":19481,"tsc":4896,"cpu_100ns":0,"switches":0,"wall_ms":0.001100},"sleep100":{"cycles":49860,"tsc":356406528,"cpu_100ns":0,"switches":1,"wall_ms":107.924100},"busy":{"wall_ms":20.135800,"work":{"cycles":66347087,"tsc":66496510,"cpu_100ns":312500,"switches":0,"wall_ms":20.135800}}}
