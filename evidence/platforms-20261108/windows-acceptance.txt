@@ -1,0 +1,6 @@
+PASS open status=0 pages=215
+PASS turn status=0 rendered=20 last=page-20.png
+PASS search status=0 found=1 part=0 offset=0 length=14
+PASS fontsize status=0 from=18 to=24 pages_before=215 pages_after=364
+PASS highlight status=0 stored=1 resolved=FOUND changed_pixels=4650
+PASS acceptance checks=5
