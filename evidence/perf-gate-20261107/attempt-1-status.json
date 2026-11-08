@@ -1,0 +1,9 @@
+{
+  "advisory": true,
+  "accepted": false,
+  "status": "partial_local_collection_stopped",
+  "reason": "persistent failure to reach predeclared <=5% idle target with 60-second waits",
+  "completed_processes": 1,
+  "used_for_budgets": false,
+  "power_restoration_confirmed_by": "attempt-2-power-original.json"
+}
