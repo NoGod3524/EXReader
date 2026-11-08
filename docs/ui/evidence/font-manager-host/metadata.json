@@ -1,0 +1,87 @@
+{
+  "base_revision": "3aa9af50838e6acda65dc35c5ff7e21d961e8e8b",
+  "engine_trees": [
+    "040000 tree 1806b204c91084aa5ed643638ad5dbcabebb8fec\tinclude",
+    "040000 tree 22a280c7fbdccdd22a45d7539d3841238057878e\tsrc",
+    "040000 tree fc0ef5dc9014eaaef695f1832d69514c903c84f9\ttests"
+  ],
+  "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+  "files": {
+    "examples/reader.c": {
+      "bytes": 327526,
+      "sha256": "2511e5fbd00ea17a105cb8d54e92083e96ef3c13338bc1a5a2ea34d55250e41e"
+    },
+    "examples/windows/host_font.inc": {
+      "bytes": 5593,
+      "sha256": "969aae944845da975878153bfcb40189ac230b9f07a35f1b215598ebdb634a1e"
+    },
+    "examples/windows/shell_d2d.cpp": {
+      "bytes": 35671,
+      "sha256": "f0f0c1988507fe0862df758719ab0d8760208e1bb7006227e4073c5ba232101f"
+    },
+    "examples/windows/shell_d2d.h": {
+      "bytes": 4581,
+      "sha256": "16ac9cd539da13946159a8e82a019505140c6b99431a6d36b23481e74bd62b4d"
+    },
+    "examples/windows/shell_settings.inc": {
+      "bytes": 11099,
+      "sha256": "9060dd9b77b3f7a601be933cf2ec55ec53c199aba277810d3ff46575419a3613"
+    },
+    "examples/windows/shell_tokens.h": {
+      "bytes": 3695,
+      "sha256": "a4c6724799eb94656b75ffc36a018b58a1b8f0d507d8fb3590b0ec116bffa53d"
+    },
+    "examples/windows/shell_toc.inc": {
+      "bytes": 30692,
+      "sha256": "cf3772ba3d3623ab438ef85cd731d7ff0b31e2d65282e3067afcb12ac4fff0fa"
+    },
+    "examples/windows/check_typography_font.c": {
+      "bytes": 2716,
+      "sha256": "790108261963bc5875403d680be4b1cd09f857579f4388e598b9cfec1b235df9"
+    },
+    "docs/ui/acceptance/build_font_manager_host.ps1": {
+      "bytes": 1776,
+      "sha256": "5d5b91ef953235f216745d742af82c60e4046aa8c62822b74bfb16678d4c59bf"
+    },
+    "docs/ui/acceptance/check_font_manager_host.py": {
+      "bytes": 3382,
+      "sha256": "594f4c426a7b65571aa5f951928dfd10ab4c69761b8f6808daeb9ddb9e8f9551"
+    },
+    "docs/ui/acceptance/check_font_manager_startup.py": {
+      "bytes": 3196,
+      "sha256": "d1364bb115463831509d739043e5858caf29850afe5a517bb5d050b579ad7c39"
+    },
+    "out/before/EXReader.exe": {
+      "bytes": 1198037,
+      "sha256": "bda3d3e0b8f3f737055e71dd5dfbc6d4961de2f69d7d2a270ad7bb97f6731032"
+    },
+    "out/current/EXReader.exe": {
+      "bytes": 1200652,
+      "sha256": "2a38b366a17e34980e13faaee9b7aee7014cf7f58583ee3f493ce3f6d11d2c61"
+    },
+    "out/before/font_bridge.dll": {
+      "bytes": 1184247,
+      "sha256": "979d766cce1cd7763acfdcdb18031409347bb8d9a90d32a483e589d44dc3db32"
+    },
+    "out/current/font_bridge.dll": {
+      "bytes": 1189924,
+      "sha256": "33210ddac528c93043bc6338d89ae101675b55e1426aefcbefe9a5e10a857ebf"
+    },
+    "out/sdk/libexreader.dll": {
+      "bytes": 6034831,
+      "sha256": "803e516114633c75be765119355440bde9cae9fc459bbfcc92b6f4cb60e848c5"
+    },
+    "out/current/Reader.otf": {
+      "bytes": 16437364,
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+    },
+    "C:/Windows/Fonts/NotoSerifSC-VF.ttf": {
+      "bytes": 25129160,
+      "sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280"
+    },
+    "C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/capture_window.py": {
+      "bytes": 1694,
+      "sha256": "98f4863ea056aec36239fc6247c5b7d8764d214fd763a0199c66d6415fd5269d"
+    }
+  }
+}

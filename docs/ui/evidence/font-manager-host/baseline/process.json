@@ -1,0 +1,19 @@
+{
+  "exit": 0,
+  "foreground_observations": 0,
+  "elapsed_seconds": 12.02924549999807,
+  "screenshots": [
+    "body"
+  ],
+  "stderr": "",
+  "command": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fonthost-20261107\\out\\before\\EXReader.exe",
+    "--offscreen",
+    "--drive",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fonthost-20261107\\docs\\ui\\evidence\\font-manager-host\\baseline\\run.drive",
+    "--data",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fonthost-20261107\\docs\\ui\\evidence\\font-manager-host\\baseline\\profile",
+    "--evidence",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fonthost-20261107\\docs\\ui\\evidence\\font-manager-host\\baseline"
+  ]
+}

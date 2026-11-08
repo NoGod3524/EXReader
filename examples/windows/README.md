@@ -43,3 +43,27 @@ chapter-local progress/notes. Existing memory-import EPUBs retain their original
 global positions and notes, including after exact deduplication. PDF/CBZ open via
 `exr_library_fixed_source`. See `docs/WP13-WINDOWS.md` for the current H8 candidate,
 budgets and cloud acceptance status.
+
+## Body font manager
+
+The host builds one immutable `exr_font_manager` before opening a book and frees
+it after all layout workers stop. The executable directory and the platform's
+user/system font directories are indexed by the SDK. `font-index.cache` in the
+profile stores the persistent index; `typography.log` records the request,
+resolved family/file, fallback status and manager creation time/cache counters.
+
+The default request is CJK serif (Noto Serif SC/CJK SC, Source Han Serif SC,
+SimSun), followed by the configured sans families. Noto Serif SC variable body
+weight stays at 400. Reading settings show the resolved family and file, with
+`已回退：无衬线` when the serif request resolves to a configured sans family.
+
+`--font FILE` restricts discovery to that required file and requests its indexed
+family, preserving an explicit variable font's own default weight.
+`--font-config FILE` loads the SDK's version-1 configuration instead; this takes
+precedence over `--font`. For an isolated fallback check, set `platform_dirs = no`,
+point `font_file` at Reader.otf, and set `serif = Noto Serif SC` and
+`sans_serif = Noto Sans CJK SC`. A missing required location fails startup.
+
+Build with an SDK exposing `exr/font_manager.h` and its 12 symbols. Measured
+startup, real-book page hashes and DPI-aware UI captures are documented in
+[`font-manager-host evidence`](../../docs/ui/evidence/font-manager-host/README.md).
