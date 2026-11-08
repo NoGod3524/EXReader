@@ -1,0 +1,22 @@
+# Actual commands executed in this round (PowerShell, repo root unless stated)
+gh run download 42474080320 -n EXReader-C-Android-arm64 -n EXReader-C-macOS -n EXReader-C-iOS-iPadOS-arm64 -n EXReader-C-Linux -D C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108
+gh api repos/NoGod3524/EXReader/actions/runs/42474080320
+gh api repos/NoGod3524/EXReader/actions/runs/42474080320/artifacts
+gh api repos/NoGod3524/EXReader/actions/runs/42474080320/jobs
+cmake --install C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk --prefix C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/windows-sdk
+cmake -S tools/abi -B C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/probe-windows -G Ninja -DEXR_SDK=C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/windows-sdk
+cmake --build C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/probe-windows --parallel 4
+Copy-Item ../EXReader-annot-20261108/out/libexreader.dll ../tmp/platform-delivery-20261108/probe-windows
+python -X utf8 tools/abi/prepare_smoke.py C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/smoke --font C:/Users/Oscar/exr-deps/reader-font/Reader.otf
+../tmp/platform-delivery-20261108/probe-windows/exreader-acceptance.exe C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/smoke/smoke.epub C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/smoke/font.otf C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/probe-output
+ctest --test-dir C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/sdk --output-on-failure -j 6 --output-junit C:/Users/Oscar/Documents/Codex/EXReader-platforms-20261108/evidence/platforms-20261108/ctest.xml
+python -X utf8 docs/ui/acceptance/check_font_manager_host.py --dll C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/libexreader.dll --bridge C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/out/annotation_bridge.dll --font C:/Users/Oscar/Documents/Codex/EXReader-Windows-delivery-20261104/payload/Reader.otf --output C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/realbooks-after.json --baseline docs/ui/evidence/annotations/books-after.json --workers 4
+python -X utf8 tools/abi/package_android.py --sdk C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/EXReader-C-Android-arm64 --abi arm64-v8a --output C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/delivery/android/arm64-v8a/exreader-arm64-v8a.aar
+python -X utf8 tools/abi/package_android.py --sdk C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/EXReader-C-Android-arm64 --abi arm64-v8a --output C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/aar-repeat-final.aar
+python -X utf8 tools/abi/test_check_exports.py
+python -X utf8 tools/abi/check_exports.py C:/Users/Oscar/Documents/Codex/tmp/platform-delivery-20261108/delivery/windows/x86_64/exreader.dll --output evidence/platforms-20261108/windows-exports.json
+# On each of Android/macOS/iOS device/iOS simulator/Linux libraries: strict exit=1 (extra exports), --allow-extra exit=0. See nonwindows-*.json/.txt.
+python tools/abi/platform_status.py
+python tools/abi/platform_status.py --json
+# Independent GNU nm: parser-integration.json captures exact count equality.
+nm -D --defined-only -P ../tmp/platform-delivery-20261108/delivery/linux/x86_64/libexreader.so
