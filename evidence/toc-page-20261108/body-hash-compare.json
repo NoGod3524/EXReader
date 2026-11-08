@@ -1,0 +1,24 @@
+{
+ "before_total_pages": 11296,
+ "after_total_pages": 11296,
+ "hash_changed_pages": 0,
+ "needs_review": false,
+ "content_fingerprint_equal": true,
+ "before_dll_sha256": "6db09f23b1e666aeea1113330e569b347b71cbad63513d8e293c4e413cc4b3aa",
+ "after_dll_sha256": "0928f274724a831b9b097946306956d7b6c0198f0eb5e17d0fafe086a99be3be",
+ "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+ "layout": {
+  "width": 720,
+  "height": 1040,
+  "margin": 36,
+  "font_size": 28,
+  "line_height": 1.5,
+  "paragraph_spacing": 10,
+  "document_css": 1,
+  "embedded_fonts": 1,
+  "direction": 0,
+  "fixed_max_dimension": 720
+ },
+ "source_revision_before": "d1395059",
+ "source_revision_after": "d1395059+tocpage-worktree"
+}
