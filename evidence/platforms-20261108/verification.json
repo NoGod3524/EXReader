@@ -1,0 +1,16 @@
+{
+  "contract_symbols": 389,
+  "ctest_passed": 211,
+  "realbooks": 19,
+  "pages": 11484,
+  "changed_pages": 0,
+  "checklists": 6,
+  "checklist_minimum_items": 5,
+  "status_rows": 16,
+  "status_sha_match": true,
+  "default_font_prepare_verified": true,
+  "smoke_fixture_reproducible": true,
+  "wrong_android_abi_rejected": true,
+  "known_pending": "Android x86_64, macOS x86_64, iOS aggregate static archives, non-Windows runtime; strict Unix export set",
+  "engine_changed": false
+}

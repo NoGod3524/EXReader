@@ -1,0 +1,5 @@
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+C:\Users\Oscar\Documents\Codex\tmp\platform-delivery-20261108\aar-repeat-final.aar: 12155275 bytes; JNI + Java; arm64-v8a; minSdk=24

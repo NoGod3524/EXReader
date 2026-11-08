@@ -1,0 +1,1954 @@
+{
+  "schema": 1,
+  "baseline_revision": "93f9d8bb",
+  "baseline_dll_sha256": "49344b73f2a875b0f5d05cf9c1ca589a46295410290235600a7566cc3d65950f",
+  "symbols": [
+    "exr_aac_available",
+    "exr_aac_format",
+    "exr_aac_free",
+    "exr_aac_open",
+    "exr_aac_open_source",
+    "exr_aac_read",
+    "exr_abi_version",
+    "exr_anchor_create",
+    "exr_anchor_free",
+    "exr_anchor_from_range",
+    "exr_anchor_resolve",
+    "exr_anchor_resolve_ex",
+    "exr_audio_bookmarks_free",
+    "exr_audio_chapters",
+    "exr_audio_checkpoint_free",
+    "exr_audio_create",
+    "exr_audio_duration",
+    "exr_audio_free",
+    "exr_audio_locate",
+    "exr_audio_memory_size",
+    "exr_audio_output_backend",
+    "exr_audio_output_flush",
+    "exr_audio_output_free",
+    "exr_audio_output_open",
+    "exr_audio_output_pause",
+    "exr_audio_output_pending",
+    "exr_audio_output_write",
+    "exr_audio_player_create",
+    "exr_audio_player_free",
+    "exr_audio_player_get",
+    "exr_audio_player_pause",
+    "exr_audio_player_play",
+    "exr_audio_player_rate",
+    "exr_audio_player_report",
+    "exr_audio_player_restore",
+    "exr_audio_player_seek",
+    "exr_audio_sync_at",
+    "exr_audio_sync_text",
+    "exr_audio_syncs",
+    "exr_audio_time",
+    "exr_audio_title",
+    "exr_audio_tracks",
+    "exr_bidi_analyze",
+    "exr_bidi_base_level",
+    "exr_bidi_free",
+    "exr_bidi_mirror",
+    "exr_bidi_reorder",
+    "exr_bidi_scalars",
+    "exr_bitmap_free",
+    "exr_bitmap_write_bmp",
+    "exr_bitmap_write_png",
+    "exr_books_free",
+    "exr_canvas_begin_group",
+    "exr_canvas_begin_layer",
+    "exr_canvas_bitmap",
+    "exr_canvas_blend",
+    "exr_canvas_clip",
+    "exr_canvas_create",
+    "exr_canvas_end_layer",
+    "exr_canvas_free",
+    "exr_canvas_get_sink",
+    "exr_canvas_get_sink_ex",
+    "exr_canvas_image",
+    "exr_canvas_image_cmyk",
+    "exr_canvas_memory_size",
+    "exr_canvas_paint",
+    "exr_canvas_path",
+    "exr_canvas_path_cmyk",
+    "exr_canvas_restore",
+    "exr_canvas_save",
+    "exr_canvas_set_layer_budget",
+    "exr_canvas_take",
+    "exr_chapter_options_defaults",
+    "exr_content_anchor_free",
+    "exr_document_blocks",
+    "exr_document_cfi_create",
+    "exr_document_cfi_create_quoted",
+    "exr_document_cfi_path_create",
+    "exr_document_cfi_path_create_quoted",
+    "exr_document_cfi_path_resolve",
+    "exr_document_cfi_range_create",
+    "exr_document_cfi_range_resolve",
+    "exr_document_cfi_resolve",
+    "exr_document_chapters",
+    "exr_document_create",
+    "exr_document_export",
+    "exr_document_export_control",
+    "exr_document_export_epub",
+    "exr_document_export_html_bundle",
+    "exr_document_find",
+    "exr_document_format",
+    "exr_document_free",
+    "exr_document_locate",
+    "exr_document_memory_size",
+    "exr_document_navigation",
+    "exr_document_nodes",
+    "exr_document_open",
+    "exr_document_open_memory",
+    "exr_document_resolve",
+    "exr_document_resource",
+    "exr_document_resources",
+    "exr_document_search",
+    "exr_document_text",
+    "exr_document_title",
+    "exr_draw_style_defaults",
+    "exr_epub_location_free",
+    "exr_epub_metadata_write",
+    "exr_epub_notes_free",
+    "exr_epub_validate",
+    "exr_epub_validate_memory",
+    "exr_fixed_anchor_create",
+    "exr_fixed_anchor_free",
+    "exr_fixed_anchor_resolve",
+    "exr_fixed_character_at",
+    "exr_fixed_create",
+    "exr_fixed_draw",
+    "exr_fixed_draw_ex",
+    "exr_fixed_free",
+    "exr_fixed_load_annotations",
+    "exr_fixed_load_metadata",
+    "exr_fixed_load_text",
+    "exr_fixed_memory_size",
+    "exr_fixed_notes_free",
+    "exr_fixed_open",
+    "exr_fixed_open_memory",
+    "exr_fixed_page_text",
+    "exr_fixed_pages",
+    "exr_fixed_render",
+    "exr_fixed_text_create",
+    "exr_fixed_text_find",
+    "exr_fixed_text_free",
+    "exr_fixed_text_hit",
+    "exr_fixed_text_memory_size",
+    "exr_fixed_text_regions",
+    "exr_fixed_text_select",
+    "exr_fixed_text_string",
+    "exr_fixed_title",
+    "exr_flac_format",
+    "exr_flac_free",
+    "exr_flac_open",
+    "exr_flac_open_source",
+    "exr_flac_read",
+    "exr_font_axes",
+    "exr_font_color_info_get",
+    "exr_font_color_layers",
+    "exr_font_color_palettes",
+    "exr_font_count",
+    "exr_font_create",
+    "exr_font_create_glyphs",
+    "exr_font_create_variable",
+    "exr_font_free",
+    "exr_font_glyph_image",
+    "exr_font_glyph_outline",
+    "exr_font_has_glyph",
+    "exr_font_manager_chain",
+    "exr_font_manager_create",
+    "exr_font_manager_create_font",
+    "exr_font_manager_face",
+    "exr_font_manager_face_count",
+    "exr_font_manager_face_covers",
+    "exr_font_manager_free",
+    "exr_font_manager_has_family",
+    "exr_font_manager_open",
+    "exr_font_manager_pick",
+    "exr_font_manager_skip",
+    "exr_font_manager_summary_get",
+    "exr_font_open",
+    "exr_font_source",
+    "exr_free",
+    "exr_glyph_matrix",
+    "exr_hit_test",
+    "exr_hyphenation_breaks",
+    "exr_hyphenation_free",
+    "exr_hyphenation_memory_size",
+    "exr_hyphenator_breaks",
+    "exr_hyphenator_create",
+    "exr_hyphenator_create_builtin",
+    "exr_hyphenator_create_discretionary",
+    "exr_hyphenator_create_patterns",
+    "exr_hyphenator_create_patterns_ex",
+    "exr_hyphenator_free",
+    "exr_hyphenator_memory_size",
+    "exr_hyphenator_query",
+    "exr_image_decode",
+    "exr_image_decode_page",
+    "exr_image_page_count",
+    "exr_image_page_dimensions",
+    "exr_layout_blocks",
+    "exr_layout_boxes",
+    "exr_layout_config_defaults",
+    "exr_layout_create",
+    "exr_layout_create_ex",
+    "exr_layout_create_hyphenated",
+    "exr_layout_create_positioned",
+    "exr_layout_defaults",
+    "exr_layout_font",
+    "exr_layout_free",
+    "exr_layout_glyphs",
+    "exr_layout_hit_test",
+    "exr_layout_image",
+    "exr_layout_lines",
+    "exr_layout_memory_size",
+    "exr_layout_page_at",
+    "exr_layout_page_kind",
+    "exr_layout_page_structure",
+    "exr_layout_pages",
+    "exr_layout_paints",
+    "exr_layout_writing_mode",
+    "exr_library_audio_bookmark",
+    "exr_library_audio_bookmarks",
+    "exr_library_audio_resume",
+    "exr_library_audio_resume_get",
+    "exr_library_backup",
+    "exr_library_blob",
+    "exr_library_books",
+    "exr_library_clear_audio",
+    "exr_library_clear_progress",
+    "exr_library_close",
+    "exr_library_cover",
+    "exr_library_delete",
+    "exr_library_document",
+    "exr_library_epub_info_get",
+    "exr_library_epub_note",
+    "exr_library_epub_notes",
+    "exr_library_epub_progress",
+    "exr_library_epub_progress_get",
+    "exr_library_fixed",
+    "exr_library_fixed_note",
+    "exr_library_fixed_notes",
+    "exr_library_fixed_source",
+    "exr_library_import",
+    "exr_library_import_file",
+    "exr_library_import_file_unique",
+    "exr_library_import_source",
+    "exr_library_import_source_unique",
+    "exr_library_import_unique",
+    "exr_library_note",
+    "exr_library_note_text",
+    "exr_library_notes",
+    "exr_library_open",
+    "exr_library_progress",
+    "exr_library_progress_get",
+    "exr_library_reanchor",
+    "exr_library_relocation_free",
+    "exr_library_remove_audio_bookmark",
+    "exr_library_remove_epub_note",
+    "exr_library_remove_fixed_note",
+    "exr_library_remove_note",
+    "exr_library_source",
+    "exr_library_update",
+    "exr_m4b_available",
+    "exr_m4b_format",
+    "exr_m4b_free",
+    "exr_m4b_inspect",
+    "exr_m4b_inspect_source",
+    "exr_m4b_inspection_chapters",
+    "exr_m4b_inspection_cover",
+    "exr_m4b_inspection_duration",
+    "exr_m4b_inspection_free",
+    "exr_m4b_inspection_metadata",
+    "exr_m4b_open",
+    "exr_m4b_open_source",
+    "exr_m4b_read",
+    "exr_metadata_free",
+    "exr_metadata_read_xmp",
+    "exr_mp3_available",
+    "exr_mp3_format",
+    "exr_mp3_free",
+    "exr_mp3_open",
+    "exr_mp3_open_source",
+    "exr_mp3_read",
+    "exr_navigation_free",
+    "exr_node_attribute",
+    "exr_notes_free",
+    "exr_page_annotations_free",
+    "exr_pager_anchor_create",
+    "exr_pager_anchor_resolve",
+    "exr_pager_cached_bytes",
+    "exr_pager_cached_count",
+    "exr_pager_cfi_create",
+    "exr_pager_cfi_resolve",
+    "exr_pager_chapter_statistics",
+    "exr_pager_create",
+    "exr_pager_free",
+    "exr_pager_get",
+    "exr_pager_next",
+    "exr_pager_position",
+    "exr_pager_read_text",
+    "exr_pager_set_cache",
+    "exr_pager_set_checkpoints",
+    "exr_pager_set_control",
+    "exr_pager_set_hyphenator",
+    "exr_pager_statistics",
+    "exr_pcm_create",
+    "exr_pcm_format",
+    "exr_pcm_free",
+    "exr_pcm_open",
+    "exr_pcm_open_source",
+    "exr_pcm_read",
+    "exr_pdf_annotation_remove",
+    "exr_pdf_annotation_write",
+    "exr_pdf_annotation_write_defaults",
+    "exr_pdf_crypto_available",
+    "exr_pdf_form_defaults",
+    "exr_pdf_form_free",
+    "exr_pdf_form_read",
+    "exr_pdf_form_write",
+    "exr_pdf_form_write_defaults",
+    "exr_pdf_metadata_write",
+    "exr_publication_cfi_create",
+    "exr_publication_cfi_create_quoted",
+    "exr_publication_cfi_resolve",
+    "exr_publication_create",
+    "exr_publication_free",
+    "exr_publication_load",
+    "exr_publication_locate",
+    "exr_publication_missing_targets",
+    "exr_publication_navigation",
+    "exr_publication_open",
+    "exr_publication_open_memory",
+    "exr_publication_open_source",
+    "exr_publication_pager_create",
+    "exr_publication_parts",
+    "exr_publication_resolve_href",
+    "exr_publication_search",
+    "exr_publication_search_all",
+    "exr_publication_target_at",
+    "exr_publication_title",
+    "exr_publication_toc",
+    "exr_publication_toc_insert_before",
+    "exr_range_expand",
+    "exr_range_from_anchor",
+    "exr_render_page",
+    "exr_render_page_background",
+    "exr_render_page_color",
+    "exr_render_page_ex",
+    "exr_session_cached",
+    "exr_session_cached_bytes",
+    "exr_session_clear",
+    "exr_session_create",
+    "exr_session_free",
+    "exr_session_get",
+    "exr_session_set_budget",
+    "exr_session_set_hyphenator",
+    "exr_shape",
+    "exr_shape_defaults",
+    "exr_shape_vertical",
+    "exr_stretch_create",
+    "exr_stretch_finish",
+    "exr_stretch_free",
+    "exr_stretch_get",
+    "exr_stretch_pull",
+    "exr_stretch_push",
+    "exr_stretch_reset",
+    "exr_text_analyze",
+    "exr_text_annotation_export",
+    "exr_text_annotation_free",
+    "exr_text_annotation_import",
+    "exr_text_index_available",
+    "exr_text_index_close",
+    "exr_text_index_open",
+    "exr_text_index_put",
+    "exr_text_index_query",
+    "exr_text_index_remove",
+    "exr_text_index_replace",
+    "exr_text_query_free",
+    "exr_text_query_next",
+    "exr_toc_pages_create",
+    "exr_toc_pages_entries",
+    "exr_toc_pages_entry_at",
+    "exr_toc_pages_entry_for_offset",
+    "exr_toc_pages_label",
+    "exr_txt_anchor_create_source",
+    "exr_txt_anchor_resolve_source",
+    "exr_txt_cursor_checkpoint",
+    "exr_txt_cursor_create",
+    "exr_txt_cursor_free",
+    "exr_txt_cursor_next",
+    "exr_txt_cursor_restore",
+    "exr_txt_find_source",
+    "exr_txt_pager_create",
+    "exr_txt_scan_source",
+    "exr_version",
+    "exr_viewport_create",
+    "exr_wave_format",
+    "exr_wave_free",
+    "exr_wave_open",
+    "exr_wave_open_source",
+    "exr_wave_read"
+  ],
+  "declarations": {
+    "exr_aac_available": {
+      "signature": "EXR_API int exr_aac_available(void);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_aac_format": {
+      "signature": "EXR_API const exr_aac_info *exr_aac_format(const exr_aac *aac);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_aac_free": {
+      "signature": "EXR_API void exr_aac_free(exr_aac *aac);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_aac_open": {
+      "signature": "EXR_API exr_status exr_aac_open(const char *path,const exr_control *control,exr_aac **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_aac_open_source": {
+      "signature": "EXR_API exr_status exr_aac_open_source(const exr_source *source,exr_aac **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_aac_read": {
+      "signature": "EXR_API exr_status exr_aac_read(exr_aac *aac,uint64_t first_frame,size_t frames,float *output,size_t *read, const exr_control *control,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_abi_version": {
+      "signature": "EXR_API uint32_t exr_abi_version(void);",
+      "header": "include/exr/base.h"
+    },
+    "exr_anchor_create": {
+      "signature": "EXR_API exr_status exr_anchor_create(const exr_document *doc, size_t start, size_t end, exr_anchor *out, exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_anchor_free": {
+      "signature": "EXR_API void exr_anchor_free(exr_anchor *anchor);",
+      "header": "include/exr/document.h"
+    },
+    "exr_anchor_from_range": {
+      "signature": "EXR_API exr_status exr_anchor_from_range(exr_publication *publication,const exr_text_range *range, const exr_control *control,exr_content_anchor *out,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_anchor_resolve": {
+      "signature": "EXR_API exr_status exr_anchor_resolve(const exr_document *doc, const exr_anchor *anchor, exr_anchor_match *match, exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_anchor_resolve_ex": {
+      "signature": "EXR_API exr_status exr_anchor_resolve_ex(const exr_document *doc,const exr_anchor *anchor,const exr_control *control, exr_anchor_match *match,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_audio_bookmarks_free": {
+      "signature": "EXR_API void exr_audio_bookmarks_free(exr_audio_bookmark *bookmarks,size_t count);",
+      "header": "include/exr/library.h"
+    },
+    "exr_audio_chapters": {
+      "signature": "EXR_API const exr_audio_chapter *exr_audio_chapters(const exr_audio *audio,size_t *count);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_checkpoint_free": {
+      "signature": "EXR_API void exr_audio_checkpoint_free(exr_audio_checkpoint *position);",
+      "header": "include/exr/library.h"
+    },
+    "exr_audio_create": {
+      "signature": "EXR_API exr_status exr_audio_create(const exr_audio_input *input,const exr_control *control,exr_audio **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_duration": {
+      "signature": "EXR_API uint64_t exr_audio_duration(const exr_audio *audio);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_free": {
+      "signature": "EXR_API void exr_audio_free(exr_audio *audio);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_locate": {
+      "signature": "EXR_API exr_status exr_audio_locate(const exr_audio *audio,uint64_t time_ms,exr_audio_position *out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_memory_size": {
+      "signature": "EXR_API size_t exr_audio_memory_size(const exr_audio *audio);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_output_backend": {
+      "signature": "EXR_API const char *exr_audio_output_backend(void);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_output_flush": {
+      "signature": "EXR_API exr_status exr_audio_output_flush(exr_audio_output *output,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_output_free": {
+      "signature": "EXR_API void exr_audio_output_free(exr_audio_output *output);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_output_open": {
+      "signature": "EXR_API exr_status exr_audio_output_open(uint32_t sample_rate,uint32_t channels,exr_audio_output **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_output_pause": {
+      "signature": "EXR_API exr_status exr_audio_output_pause(exr_audio_output *output,int paused,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_output_pending": {
+      "signature": "EXR_API exr_status exr_audio_output_pending(exr_audio_output *output,size_t *frames,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_output_write": {
+      "signature": "EXR_API exr_status exr_audio_output_write(exr_audio_output *output,const float *samples,size_t frames,size_t *written,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_player_create": {
+      "signature": "EXR_API exr_status exr_audio_player_create(exr_audio *audio,const exr_audio_backend *backend,exr_audio_player **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_player_free": {
+      "signature": "EXR_API void exr_audio_player_free(exr_audio_player *player);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_player_get": {
+      "signature": "EXR_API exr_status exr_audio_player_get(const exr_audio_player *player,exr_audio_playback *out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_player_pause": {
+      "signature": "EXR_API exr_status exr_audio_player_pause(exr_audio_player *player,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_player_play": {
+      "signature": "EXR_API exr_status exr_audio_player_play(exr_audio_player *player,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_player_rate": {
+      "signature": "EXR_API exr_status exr_audio_player_rate(exr_audio_player *player,double rate,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_player_report": {
+      "signature": "EXR_API exr_status exr_audio_player_report(exr_audio_player *player,uint64_t generation,size_t track,uint64_t offset_ms,int ended,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_player_restore": {
+      "signature": "EXR_API exr_status exr_audio_player_restore(exr_audio_player *player,const char *track_id,uint64_t offset_ms,double rate,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_player_seek": {
+      "signature": "EXR_API exr_status exr_audio_player_seek(exr_audio_player *player,uint64_t time_ms,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_sync_at": {
+      "signature": "EXR_API exr_status exr_audio_sync_at(const exr_audio *audio,uint64_t time_ms,size_t from,const exr_control *control,size_t *index,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_sync_text": {
+      "signature": "EXR_API exr_status exr_audio_sync_text(const exr_audio *audio,const char *part_id,size_t start,size_t end,size_t from, const exr_control *control,size_t *index,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_syncs": {
+      "signature": "EXR_API const exr_audio_sync *exr_audio_syncs(const exr_audio *audio,size_t *count);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_time": {
+      "signature": "EXR_API exr_status exr_audio_time(const exr_audio *audio,size_t track,uint64_t offset_ms,uint64_t *time_ms,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_title": {
+      "signature": "EXR_API const char *exr_audio_title(const exr_audio *audio);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_audio_tracks": {
+      "signature": "EXR_API const exr_audio_track *exr_audio_tracks(const exr_audio *audio,size_t *count);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_bidi_analyze": {
+      "signature": "EXR_API exr_status exr_bidi_analyze(const char *text, size_t size, exr_direction direction, exr_bidi **out, exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_bidi_base_level": {
+      "signature": "EXR_API unsigned exr_bidi_base_level(const exr_bidi *bidi, size_t scalar_index);",
+      "header": "include/exr/text.h"
+    },
+    "exr_bidi_free": {
+      "signature": "EXR_API void exr_bidi_free(exr_bidi *bidi);",
+      "header": "include/exr/text.h"
+    },
+    "exr_bidi_mirror": {
+      "signature": "EXR_API uint32_t exr_bidi_mirror(uint32_t codepoint);",
+      "header": "include/exr/text.h"
+    },
+    "exr_bidi_reorder": {
+      "signature": "EXR_API exr_status exr_bidi_reorder(const exr_bidi *bidi, size_t first, size_t count, size_t **out_order, size_t *out_count, exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_bidi_scalars": {
+      "signature": "EXR_API const exr_bidi_scalar *exr_bidi_scalars(const exr_bidi *bidi, size_t *count);",
+      "header": "include/exr/text.h"
+    },
+    "exr_bitmap_free": {
+      "signature": "EXR_API void exr_bitmap_free(exr_bitmap *bitmap);",
+      "header": "include/exr/base.h"
+    },
+    "exr_bitmap_write_bmp": {
+      "signature": "EXR_API exr_status exr_bitmap_write_bmp(const exr_bitmap *bitmap, const char *path, exr_error *error);",
+      "header": "include/exr/base.h"
+    },
+    "exr_bitmap_write_png": {
+      "signature": "EXR_API exr_status exr_bitmap_write_png(const exr_bitmap *bitmap, const char *path, exr_error *error);",
+      "header": "include/exr/base.h"
+    },
+    "exr_books_free": {
+      "signature": "EXR_API void exr_books_free(exr_book *books, size_t count);",
+      "header": "include/exr/library.h"
+    },
+    "exr_canvas_begin_group": {
+      "signature": "EXR_API exr_status exr_canvas_begin_group(exr_canvas *canvas,double opacity,exr_blend_mode mode,unsigned flags,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_begin_layer": {
+      "signature": "EXR_API exr_status exr_canvas_begin_layer(exr_canvas *canvas,double opacity,exr_blend_mode mode,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_bitmap": {
+      "signature": "EXR_API const exr_bitmap *exr_canvas_bitmap(const exr_canvas *canvas);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_blend": {
+      "signature": "EXR_API exr_status exr_canvas_blend(exr_canvas *canvas,exr_blend_mode mode,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_clip": {
+      "signature": "EXR_API exr_status exr_canvas_clip(exr_canvas *canvas,const exr_path_segment *segments,size_t count, const double matrix[6],exr_fill_rule rule,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_create": {
+      "signature": "EXR_API exr_status exr_canvas_create(const exr_canvas_config *config,exr_canvas **out,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_end_layer": {
+      "signature": "EXR_API exr_status exr_canvas_end_layer(exr_canvas *canvas,unsigned commit,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_free": {
+      "signature": "EXR_API void exr_canvas_free(exr_canvas *canvas);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_get_sink": {
+      "signature": "EXR_API exr_status exr_canvas_get_sink(exr_canvas *canvas,exr_draw_sink *out,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_get_sink_ex": {
+      "signature": "EXR_API exr_status exr_canvas_get_sink_ex(exr_canvas *canvas,exr_draw_sink_ex *out,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_image": {
+      "signature": "EXR_API exr_status exr_canvas_image(exr_canvas *canvas,const exr_image_layer *image,const double matrix[6], double alpha,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_image_cmyk": {
+      "signature": "EXR_API exr_status exr_canvas_image_cmyk(exr_canvas *canvas,const exr_image_layer *image,const exr_bitmap *inks, const double matrix[6],double alpha,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_memory_size": {
+      "signature": "EXR_API size_t exr_canvas_memory_size(const exr_canvas *canvas);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_paint": {
+      "signature": "EXR_API exr_status exr_canvas_paint(exr_canvas *canvas,const exr_paint_source *source, const double matrix[6],double alpha,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_path": {
+      "signature": "EXR_API exr_status exr_canvas_path(exr_canvas *canvas,const exr_path_segment *segments,size_t count, const double matrix[6],const exr_draw_style *style,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_path_cmyk": {
+      "signature": "EXR_API exr_status exr_canvas_path_cmyk(exr_canvas *canvas,const exr_path_segment *segments,size_t count, const double matrix[6],const exr_draw_style *style, const double fill[4],const double stroke[4],exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_restore": {
+      "signature": "EXR_API exr_status exr_canvas_restore(exr_canvas *canvas,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_save": {
+      "signature": "EXR_API exr_status exr_canvas_save(exr_canvas *canvas,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_set_layer_budget": {
+      "signature": "EXR_API exr_status exr_canvas_set_layer_budget(exr_canvas *canvas,size_t bytes,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_canvas_take": {
+      "signature": "EXR_API exr_status exr_canvas_take(exr_canvas *canvas,exr_bitmap *out,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_chapter_options_defaults": {
+      "signature": "EXR_API exr_chapter_options exr_chapter_options_defaults(void);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_content_anchor_free": {
+      "signature": "EXR_API void exr_content_anchor_free(exr_content_anchor *anchor);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_document_blocks": {
+      "signature": "EXR_API const exr_block *exr_document_blocks(const exr_document *doc, size_t *count);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_cfi_create": {
+      "signature": "EXR_API exr_status exr_document_cfi_create(const exr_document *doc,size_t chapter,const exr_cfi_point *point, const exr_control *control,char **cfi,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_cfi_create_quoted": {
+      "signature": "EXR_API exr_status exr_document_cfi_create_quoted(const exr_document *doc,size_t chapter,const exr_cfi_point *point, size_t context_scalars,const exr_control *control,char **cfi,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_cfi_path_create": {
+      "signature": "EXR_API exr_status exr_document_cfi_path_create(const exr_document *doc,size_t chapter,const exr_cfi_point *point, const exr_control *control,char **path,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_cfi_path_create_quoted": {
+      "signature": "EXR_API exr_status exr_document_cfi_path_create_quoted(const exr_document *doc,size_t chapter,const exr_cfi_point *point, size_t context_scalars,const exr_control *control,char **path,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_cfi_path_resolve": {
+      "signature": "EXR_API exr_status exr_document_cfi_path_resolve(const exr_document *doc,size_t chapter,const char *path, const exr_control *control,exr_cfi_point *point,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_cfi_range_create": {
+      "signature": "EXR_API exr_status exr_document_cfi_range_create(const exr_document *doc,const exr_cfi_range *range, const exr_control *control,char **cfi,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_cfi_range_resolve": {
+      "signature": "EXR_API exr_status exr_document_cfi_range_resolve(const exr_document *doc,const char *cfi,const exr_control *control, exr_cfi_range *range,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_cfi_resolve": {
+      "signature": "EXR_API exr_status exr_document_cfi_resolve(const exr_document *doc,const char *cfi,const exr_control *control, size_t *chapter,exr_cfi_point *point,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_chapters": {
+      "signature": "EXR_API const exr_chapter *exr_document_chapters(const exr_document *doc, size_t *count);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_create": {
+      "signature": "EXR_API exr_status exr_document_create(const exr_document_input *input, exr_document **out, exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_export": {
+      "signature": "EXR_API exr_status exr_document_export(const exr_document *doc, exr_format format, void **data, size_t *size, exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_document_export_control": {
+      "signature": "EXR_API exr_status exr_document_export_control(const exr_document *doc, exr_format format, const exr_control *control, void **data, size_t *size, exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_document_export_epub": {
+      "signature": "EXR_API exr_status exr_document_export_epub(const exr_document *doc, const exr_control *control, void **data, size_t *size, exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_document_export_html_bundle": {
+      "signature": "EXR_API exr_status exr_document_export_html_bundle(const exr_document *doc,const exr_control *control, void **data,size_t *size,char **entry_path,exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_document_find": {
+      "signature": "EXR_API exr_status exr_document_find(const exr_document *doc, const char *query, size_t from, size_t *start, size_t *end, exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_format": {
+      "signature": "EXR_API exr_format exr_document_format(const exr_document *doc);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_free": {
+      "signature": "EXR_API void exr_document_free(exr_document *doc);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_locate": {
+      "signature": "EXR_API exr_status exr_document_locate(const exr_document *document,const char *fragment, exr_location *location,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_memory_size": {
+      "signature": "EXR_API size_t exr_document_memory_size(const exr_document *doc);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_navigation": {
+      "signature": "EXR_API exr_status exr_document_navigation(const exr_document *doc, exr_navigation **entries, size_t *count, exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_document_nodes": {
+      "signature": "EXR_API const exr_node *exr_document_nodes(const exr_document *doc, size_t *count);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_open": {
+      "signature": "EXR_API exr_status exr_document_open(const char *path, exr_document **out, exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_document_open_memory": {
+      "signature": "EXR_API exr_status exr_document_open_memory(exr_format format, const void *data, size_t size, exr_document **out, exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_document_resolve": {
+      "signature": "EXR_API exr_status exr_document_resolve(const exr_document *doc, size_t chapter, const char *uri, size_t *resource, size_t *node, exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_document_resource": {
+      "signature": "EXR_API exr_status exr_document_resource(const exr_document *doc, size_t resource, void **data, size_t *size, exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_document_resources": {
+      "signature": "EXR_API const exr_resource *exr_document_resources(const exr_document *doc, size_t *count);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_search": {
+      "signature": "EXR_API exr_status exr_document_search(exr_fixed_document *document,size_t offset,const char *needle, const exr_control *control,exr_search_match *match,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_text": {
+      "signature": "EXR_API const char *exr_document_text(const exr_document *doc, size_t *size);",
+      "header": "include/exr/document.h"
+    },
+    "exr_document_title": {
+      "signature": "EXR_API const char *exr_document_title(const exr_document *doc);",
+      "header": "include/exr/document.h"
+    },
+    "exr_draw_style_defaults": {
+      "signature": "EXR_API exr_draw_style exr_draw_style_defaults(void);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_epub_location_free": {
+      "signature": "EXR_API void exr_epub_location_free(exr_epub_location *location);",
+      "header": "include/exr/library.h"
+    },
+    "exr_epub_metadata_write": {
+      "signature": "EXR_API exr_status exr_epub_metadata_write(const void *data,size_t size, const exr_metadata_entry *changes,size_t count,const exr_epub_cover *cover, const exr_control *control,void **out,size_t *out_size,exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_epub_notes_free": {
+      "signature": "EXR_API void exr_epub_notes_free(exr_epub_note *notes,size_t count);",
+      "header": "include/exr/library.h"
+    },
+    "exr_epub_validate": {
+      "signature": "EXR_API exr_status exr_epub_validate(const char *path, exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_epub_validate_memory": {
+      "signature": "EXR_API exr_status exr_epub_validate_memory(const void *data, size_t size, exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_fixed_anchor_create": {
+      "signature": "EXR_API exr_status exr_fixed_anchor_create(const char *page_id,const exr_fixed_text *text,size_t start,size_t end, exr_fixed_anchor *out,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_anchor_free": {
+      "signature": "EXR_API void exr_fixed_anchor_free(exr_fixed_anchor *anchor);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_anchor_resolve": {
+      "signature": "EXR_API exr_status exr_fixed_anchor_resolve(const char *page_id,const exr_fixed_text *text,const exr_fixed_anchor *anchor, const exr_control *control,exr_anchor_match *match,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_character_at": {
+      "signature": "EXR_API exr_status exr_fixed_character_at(exr_fixed_document *document,size_t page,double x,double y, const exr_control *control,exr_text_region *region, uint32_t *character,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_create": {
+      "signature": "EXR_API exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **out,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_draw": {
+      "signature": "EXR_API exr_status exr_fixed_draw(exr_fixed_document *document,size_t page,const double matrix[6], const exr_draw_sink *sink,const exr_control *control,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_draw_ex": {
+      "signature": "EXR_API exr_status exr_fixed_draw_ex(exr_fixed_document *document,size_t page,const double matrix[6], const exr_draw_sink_ex *sink,const exr_control *control,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_free": {
+      "signature": "EXR_API void exr_fixed_free(exr_fixed_document *document);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_load_annotations": {
+      "signature": "EXR_API exr_status exr_fixed_load_annotations(exr_fixed_document *document,size_t page,const exr_control *control, exr_page_annotation **annotations,size_t *count,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_load_metadata": {
+      "signature": "EXR_API exr_status exr_fixed_load_metadata(exr_fixed_document *document,const exr_control *control, exr_metadata_entry **entries,size_t *count,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_load_text": {
+      "signature": "EXR_API exr_status exr_fixed_load_text(exr_fixed_document *document,size_t page,const exr_control *control, exr_fixed_text **out,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_memory_size": {
+      "signature": "EXR_API size_t exr_fixed_memory_size(const exr_fixed_document *document);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_notes_free": {
+      "signature": "EXR_API void exr_fixed_notes_free(exr_fixed_note *notes,size_t count);",
+      "header": "include/exr/library.h"
+    },
+    "exr_fixed_open": {
+      "signature": "EXR_API exr_status exr_fixed_open(const char *path,const exr_fixed_open_options *options, exr_fixed_document **out,exr_error *error);",
+      "header": "include/exr/pdf.h"
+    },
+    "exr_fixed_open_memory": {
+      "signature": "EXR_API exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size, const exr_fixed_open_options *options, exr_fixed_document **out,exr_error *error);",
+      "header": "include/exr/pdf.h"
+    },
+    "exr_fixed_page_text": {
+      "signature": "EXR_API exr_status exr_fixed_page_text(exr_fixed_document *document,size_t page,const exr_control *control, exr_fixed_text **out,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_pages": {
+      "signature": "EXR_API const exr_fixed_page *exr_fixed_pages(const exr_fixed_document *document,size_t *count);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_render": {
+      "signature": "EXR_API exr_status exr_fixed_render(exr_fixed_document *document,size_t page,double scale, const exr_fixed_render_options *options,exr_bitmap *out,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_text_create": {
+      "signature": "EXR_API exr_status exr_fixed_text_create(const char *utf8,size_t size,const exr_text_region *regions,size_t count, const exr_control *control,exr_fixed_text **out,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_text_find": {
+      "signature": "EXR_API exr_status exr_fixed_text_find(const exr_fixed_text *text,const char *query,size_t query_size,size_t from, const exr_control *control,size_t *start,size_t *end,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_text_free": {
+      "signature": "EXR_API void exr_fixed_text_free(exr_fixed_text *text);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_text_hit": {
+      "signature": "EXR_API exr_status exr_fixed_text_hit(const exr_fixed_text *text,double x,double y,double max_distance,unsigned exclude_flags, const exr_control *control,size_t *region,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_text_memory_size": {
+      "signature": "EXR_API size_t exr_fixed_text_memory_size(const exr_fixed_text *text);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_text_regions": {
+      "signature": "EXR_API const exr_text_region *exr_fixed_text_regions(const exr_fixed_text *text,size_t *count);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_text_select": {
+      "signature": "EXR_API exr_status exr_fixed_text_select(const exr_fixed_text *text,size_t start,size_t end,const exr_control *control, exr_text_region **regions,size_t *count,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_text_string": {
+      "signature": "EXR_API const char *exr_fixed_text_string(const exr_fixed_text *text,size_t *size);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_title": {
+      "signature": "EXR_API const char *exr_fixed_title(const exr_fixed_document *document);",
+      "header": "include/exr/document.h"
+    },
+    "exr_flac_format": {
+      "signature": "EXR_API const exr_flac_info *exr_flac_format(const exr_flac *flac);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_flac_free": {
+      "signature": "EXR_API void exr_flac_free(exr_flac *flac);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_flac_open": {
+      "signature": "EXR_API exr_status exr_flac_open(const char *path,const exr_control *control,exr_flac **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_flac_open_source": {
+      "signature": "EXR_API exr_status exr_flac_open_source(const exr_source *source,exr_flac **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_flac_read": {
+      "signature": "EXR_API exr_status exr_flac_read(exr_flac *flac,uint64_t first_frame,size_t frames,float *output,size_t *read, const exr_control *control,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_font_axes": {
+      "signature": "EXR_API exr_status exr_font_axes(const exr_font *font,size_t font_index, exr_font_axis **out,size_t *count,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_color_info_get": {
+      "signature": "EXR_API exr_status exr_font_color_info_get(exr_font *font,size_t font_index,uint32_t glyph, exr_font_color_info *out,const exr_control *control,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_color_layers": {
+      "signature": "EXR_API exr_status exr_font_color_layers(exr_font *font,size_t font_index,uint32_t glyph, size_t palette,uint32_t foreground,exr_font_color_layer **out,size_t *count, const exr_control *control,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_color_palettes": {
+      "signature": "EXR_API exr_status exr_font_color_palettes(const exr_font *font,size_t font_index, size_t *palettes,size_t *entries,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_count": {
+      "signature": "EXR_API size_t exr_font_count(const exr_font *font);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_create": {
+      "signature": "EXR_API exr_status exr_font_create(const exr_font_input *inputs, size_t count, exr_font **out, exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_create_glyphs": {
+      "signature": "EXR_API exr_status exr_font_create_glyphs(const exr_font_input *inputs, size_t count, exr_font **out, exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_create_variable": {
+      "signature": "EXR_API exr_status exr_font_create_variable(const exr_font_input *inputs,size_t count, const exr_font_coordinate *coordinates,size_t coordinate_count,exr_font **out,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_free": {
+      "signature": "EXR_API void exr_font_free(exr_font *font);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_glyph_image": {
+      "signature": "EXR_API exr_status exr_font_glyph_image(exr_font *font,size_t font_index,uint32_t glyph,float pixels, exr_glyph_image *out,const exr_control *control,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_glyph_outline": {
+      "signature": "EXR_API exr_status exr_font_glyph_outline(exr_font *font,size_t font_index,uint32_t glyph, exr_path_segment **out,size_t *count, const exr_control *control,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_has_glyph": {
+      "signature": "EXR_API int exr_font_has_glyph(const exr_font *font, size_t font_index, uint32_t codepoint);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_manager_chain": {
+      "signature": "EXR_API exr_status exr_font_manager_chain(const exr_font_manager *manager, const char *family, unsigned style, exr_font_chain_link **out, size_t *count, exr_error *error);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_manager_create": {
+      "signature": "EXR_API exr_status exr_font_manager_create(const exr_font_manager_options *options, exr_font_manager **out, exr_error *error);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_manager_create_font": {
+      "signature": "EXR_API exr_status exr_font_manager_create_font(const exr_font_manager *manager, const char *family, unsigned style, exr_font **out, size_t **faces, size_t *count, exr_error *error);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_manager_face": {
+      "signature": "EXR_API exr_status exr_font_manager_face(const exr_font_manager *manager, size_t index, exr_font_face_info *out, exr_error *error);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_manager_face_count": {
+      "signature": "EXR_API size_t exr_font_manager_face_count(const exr_font_manager *manager);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_manager_face_covers": {
+      "signature": "EXR_API int exr_font_manager_face_covers(const exr_font_manager *manager, size_t index, uint32_t codepoint);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_manager_free": {
+      "signature": "EXR_API void exr_font_manager_free(exr_font_manager *manager);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_manager_has_family": {
+      "signature": "EXR_API int exr_font_manager_has_family(const exr_font_manager *manager, const char *family);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_manager_open": {
+      "signature": "EXR_API exr_status exr_font_manager_open(const char *config_path, exr_font_manager **out, exr_error *error);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_manager_pick": {
+      "signature": "EXR_API exr_status exr_font_manager_pick(const exr_font_manager *manager, const char *family, unsigned style, uint32_t codepoint, exr_font_pick_result *out, exr_error *error);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_manager_skip": {
+      "signature": "EXR_API int exr_font_manager_skip(const exr_font_manager *manager, size_t index, exr_font_skip *out);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_manager_summary_get": {
+      "signature": "EXR_API exr_status exr_font_manager_summary_get(const exr_font_manager *manager, exr_font_manager_summary *out, exr_error *error);",
+      "header": "include/exr/font_manager.h"
+    },
+    "exr_font_open": {
+      "signature": "EXR_API exr_status exr_font_open(const char *path, exr_font **out, exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_font_source": {
+      "signature": "EXR_API exr_status exr_font_source(const exr_font *font, size_t index, exr_font_input *source, exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_free": {
+      "signature": "EXR_API void exr_free(void *memory);",
+      "header": "include/exr/base.h"
+    },
+    "exr_glyph_matrix": {
+      "signature": "EXR_API exr_status exr_glyph_matrix(const exr_glyph *glyph, double matrix[6], exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hit_test": {
+      "signature": "EXR_API exr_status exr_hit_test(const exr_layout *layout,size_t part,size_t page,float x,float y, exr_text_position *out,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_hyphenation_breaks": {
+      "signature": "EXR_API const exr_hyphen_break *exr_hyphenation_breaks(const exr_hyphenation *result,size_t *count);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hyphenation_free": {
+      "signature": "EXR_API void exr_hyphenation_free(exr_hyphenation *result);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hyphenation_memory_size": {
+      "signature": "EXR_API size_t exr_hyphenation_memory_size(const exr_hyphenation *result);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hyphenator_breaks": {
+      "signature": "EXR_API exr_status exr_hyphenator_breaks(exr_hyphenator *hyphenator,const char *language, const char *word,size_t size,unsigned char *breaks,const exr_control *control,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hyphenator_create": {
+      "signature": "EXR_API exr_status exr_hyphenator_create(const exr_hyphen_provider *provider, exr_hyphenator **out,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hyphenator_create_builtin": {
+      "signature": "EXR_API exr_status exr_hyphenator_create_builtin(unsigned left_min,unsigned right_min,int auto_default, const exr_control *control,exr_hyphenator **out,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hyphenator_create_discretionary": {
+      "signature": "EXR_API exr_status exr_hyphenator_create_discretionary(const exr_hyphen_discretionary_provider *provider, exr_hyphenator **out,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hyphenator_create_patterns": {
+      "signature": "EXR_API exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs, size_t count,size_t byte_budget,const exr_control *control,exr_hyphenator **out,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hyphenator_create_patterns_ex": {
+      "signature": "EXR_API exr_status exr_hyphenator_create_patterns_ex(const exr_hyphen_pattern_input *inputs, size_t count,size_t byte_budget,exr_hyphen_case_policy case_policy,const exr_control *control, exr_hyphenator **out,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hyphenator_free": {
+      "signature": "EXR_API void exr_hyphenator_free(exr_hyphenator *hyphenator);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hyphenator_memory_size": {
+      "signature": "EXR_API size_t exr_hyphenator_memory_size(const exr_hyphenator *hyphenator);",
+      "header": "include/exr/text.h"
+    },
+    "exr_hyphenator_query": {
+      "signature": "EXR_API exr_status exr_hyphenator_query(exr_hyphenator *hyphenator,const char *language, const char *word,size_t size,const exr_control *control,exr_hyphenation **out,exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_image_decode": {
+      "signature": "EXR_API exr_status exr_image_decode(const void *data, size_t size, exr_bitmap *rgba, exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_image_decode_page": {
+      "signature": "EXR_API exr_status exr_image_decode_page(const void *data,size_t size,size_t page, exr_bitmap *rgba,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_image_page_count": {
+      "signature": "EXR_API exr_status exr_image_page_count(const void *data,size_t size,size_t *count, exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_image_page_dimensions": {
+      "signature": "EXR_API exr_status exr_image_page_dimensions(const void *data,size_t size,size_t page, uint32_t *width,uint32_t *height,exr_error *error);",
+      "header": "include/exr/graphics.h"
+    },
+    "exr_layout_blocks": {
+      "signature": "EXR_API const exr_layout_block *exr_layout_blocks(const exr_layout *layout, size_t *count);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_boxes": {
+      "signature": "EXR_API const exr_box *exr_layout_boxes(const exr_layout *layout, size_t *count);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_config_defaults": {
+      "signature": "EXR_API exr_layout_config exr_layout_config_defaults(void);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_create": {
+      "signature": "EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font, const exr_layout_options *options, exr_layout **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_create_ex": {
+      "signature": "EXR_API exr_status exr_layout_create_ex(const exr_document *doc, exr_font *font, const exr_layout_config *config, exr_layout **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_create_hyphenated": {
+      "signature": "EXR_API exr_status exr_layout_create_hyphenated(const exr_document *doc,exr_font *font, const exr_layout_config *config,exr_hyphenator *hyphenator,exr_layout **out,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_create_positioned": {
+      "signature": "EXR_API exr_status exr_layout_create_positioned(const exr_document *doc, exr_font *font, const exr_positioned_input *input, const exr_layout_config *config, exr_layout **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_defaults": {
+      "signature": "EXR_API exr_layout_options exr_layout_defaults(void);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_font": {
+      "signature": "EXR_API exr_font *exr_layout_font(const exr_layout *layout);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_free": {
+      "signature": "EXR_API void exr_layout_free(exr_layout *layout);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_glyphs": {
+      "signature": "EXR_API const exr_glyph *exr_layout_glyphs(const exr_layout *layout, size_t *count);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_hit_test": {
+      "signature": "EXR_API size_t exr_layout_hit_test(const exr_layout *layout, size_t page, float x, float y);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_image": {
+      "signature": "EXR_API const exr_bitmap *exr_layout_image(const exr_layout *layout, size_t resource);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_lines": {
+      "signature": "EXR_API const exr_line *exr_layout_lines(const exr_layout *layout, size_t *count);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_memory_size": {
+      "signature": "EXR_API size_t exr_layout_memory_size(const exr_layout *layout);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_page_at": {
+      "signature": "EXR_API size_t exr_layout_page_at(const exr_layout *layout, size_t utf8_offset);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_page_kind": {
+      "signature": "EXR_API exr_page_kind exr_layout_page_kind(const exr_layout *layout, size_t page);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_page_structure": {
+      "signature": "EXR_API exr_page_structure exr_layout_page_structure(const exr_layout *layout, size_t page);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_pages": {
+      "signature": "EXR_API const exr_page *exr_layout_pages(const exr_layout *layout, size_t *count);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_paints": {
+      "signature": "EXR_API const exr_paint *exr_layout_paints(const exr_layout *layout, size_t page, size_t *count);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_layout_writing_mode": {
+      "signature": "EXR_API exr_writing_mode exr_layout_writing_mode(const exr_layout *layout);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_library_audio_bookmark": {
+      "signature": "EXR_API exr_status exr_library_audio_bookmark(exr_library *library,const char *audio_id,const exr_audio_bookmark *bookmark,int64_t *id,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_audio_bookmarks": {
+      "signature": "EXR_API exr_status exr_library_audio_bookmarks(exr_library *library,const char *audio_id,exr_audio_bookmark **bookmarks,size_t *count,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_audio_resume": {
+      "signature": "EXR_API exr_status exr_library_audio_resume(exr_library *library,const char *audio_id,const exr_audio_checkpoint *position,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_audio_resume_get": {
+      "signature": "EXR_API exr_status exr_library_audio_resume_get(exr_library *library,const char *audio_id,exr_audio_checkpoint *position,int *found,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_backup": {
+      "signature": "EXR_API exr_status exr_library_backup(exr_library *library, const char *path, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_blob": {
+      "signature": "EXR_API exr_status exr_library_blob(exr_library *library, int64_t id, int cover, void **data, size_t *size, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_books": {
+      "signature": "EXR_API exr_status exr_library_books(exr_library *library, const char *query, exr_book **books, size_t *count, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_clear_audio": {
+      "signature": "EXR_API exr_status exr_library_clear_audio(exr_library *library,const char *audio_id,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_clear_progress": {
+      "signature": "EXR_API exr_status exr_library_clear_progress(exr_library *library,int64_t book_id,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_close": {
+      "signature": "EXR_API void exr_library_close(exr_library *library);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_cover": {
+      "signature": "EXR_API exr_status exr_library_cover(exr_library *library, int64_t id, const void *data, size_t size, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_delete": {
+      "signature": "EXR_API exr_status exr_library_delete(exr_library *library, int64_t id, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_document": {
+      "signature": "EXR_API exr_status exr_library_document(exr_library *library, int64_t id, exr_document **doc, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_epub_info_get": {
+      "signature": "EXR_API exr_status exr_library_epub_info_get(exr_library *library,int64_t id, exr_library_epub_info *info,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_epub_note": {
+      "signature": "EXR_API exr_status exr_library_epub_note(exr_library *library,const exr_epub_note *note, int64_t *id,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_epub_notes": {
+      "signature": "EXR_API exr_status exr_library_epub_notes(exr_library *library,int64_t book_id, exr_epub_note **notes,size_t *count,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_epub_progress": {
+      "signature": "EXR_API exr_status exr_library_epub_progress(exr_library *library,int64_t id, const exr_epub_location *location,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_epub_progress_get": {
+      "signature": "EXR_API exr_status exr_library_epub_progress_get(exr_library *library,int64_t id, exr_epub_location *location,int *present,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_fixed": {
+      "signature": "EXR_API exr_status exr_library_fixed(exr_library *library,int64_t id,const exr_fixed_open_options *options, exr_fixed_document **out,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_fixed_note": {
+      "signature": "EXR_API exr_status exr_library_fixed_note(exr_library *library,const exr_fixed_note *note,const exr_control *control, int64_t *id,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_fixed_notes": {
+      "signature": "EXR_API exr_status exr_library_fixed_notes(exr_library *library,int64_t book_id,exr_fixed_note **notes, size_t *count,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_fixed_source": {
+      "signature": "EXR_API exr_status exr_library_fixed_source(exr_library *library,int64_t id,const exr_fixed_open_options *options, exr_fixed_document **out,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_import": {
+      "signature": "EXR_API exr_status exr_library_import(exr_library *library, exr_format format, const void *data, size_t size, const char *title, int64_t *id, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_import_file": {
+      "signature": "EXR_API exr_status exr_library_import_file(exr_library *library,exr_format format,const char *path, const char *title,int64_t *id,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_import_file_unique": {
+      "signature": "EXR_API exr_status exr_library_import_file_unique(exr_library *library,exr_format format,const char *path, const char *title,int64_t *id,int *created,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_import_source": {
+      "signature": "EXR_API exr_status exr_library_import_source(exr_library *library,exr_format format,const exr_source *source, const char *title,int64_t *id,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_import_source_unique": {
+      "signature": "EXR_API exr_status exr_library_import_source_unique(exr_library *library,exr_format format,const exr_source *source, const char *title,int64_t *id,int *created,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_import_unique": {
+      "signature": "EXR_API exr_status exr_library_import_unique(exr_library *library,exr_format format,const void *data, size_t size,const char *title,int64_t *id,int *created,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_note": {
+      "signature": "EXR_API exr_status exr_library_note(exr_library *library, const exr_note *note, int64_t *id, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_note_text": {
+      "signature": "EXR_API exr_status exr_library_note_text(exr_library *library,int64_t note_id,const char *text,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_notes": {
+      "signature": "EXR_API exr_status exr_library_notes(exr_library *library, int64_t book_id, exr_note **notes, size_t *count, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_open": {
+      "signature": "EXR_API exr_status exr_library_open(const char *path, exr_library **out, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_progress": {
+      "signature": "EXR_API exr_status exr_library_progress(exr_library *library,int64_t book_id,const exr_anchor *point,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_progress_get": {
+      "signature": "EXR_API exr_status exr_library_progress_get(exr_library *library,int64_t book_id,exr_anchor *point,exr_anchor_state *state,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_reanchor": {
+      "signature": "EXR_API exr_status exr_library_reanchor(exr_library *library,int64_t book_id,size_t fallback_position, const exr_control *control,exr_library_relocation *report,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_relocation_free": {
+      "signature": "EXR_API void exr_library_relocation_free(exr_library_relocation *report);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_remove_audio_bookmark": {
+      "signature": "EXR_API exr_status exr_library_remove_audio_bookmark(exr_library *library,int64_t id,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_remove_epub_note": {
+      "signature": "EXR_API exr_status exr_library_remove_epub_note(exr_library *library,int64_t id,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_remove_fixed_note": {
+      "signature": "EXR_API exr_status exr_library_remove_fixed_note(exr_library *library,int64_t id,exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_remove_note": {
+      "signature": "EXR_API exr_status exr_library_remove_note(exr_library *library, int64_t id, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_source": {
+      "signature": "EXR_API exr_status exr_library_source(exr_library *library,int64_t id,exr_source *source, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_library_update": {
+      "signature": "EXR_API exr_status exr_library_update(exr_library *library, const exr_book *book, exr_error *error);",
+      "header": "include/exr/library.h"
+    },
+    "exr_m4b_available": {
+      "signature": "EXR_API int exr_m4b_available(void);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_format": {
+      "signature": "EXR_API const exr_m4b_info *exr_m4b_format(const exr_m4b *m4b);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_free": {
+      "signature": "EXR_API void exr_m4b_free(exr_m4b *m4b);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_inspect": {
+      "signature": "EXR_API exr_status exr_m4b_inspect(const char *path,const exr_control *control,exr_m4b_inspection **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_inspect_source": {
+      "signature": "EXR_API exr_status exr_m4b_inspect_source(const exr_source *source,exr_m4b_inspection **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_inspection_chapters": {
+      "signature": "EXR_API const exr_audio_chapter *exr_m4b_inspection_chapters(const exr_m4b_inspection *inspection,size_t *count);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_inspection_cover": {
+      "signature": "EXR_API const void *exr_m4b_inspection_cover(const exr_m4b_inspection *inspection,size_t *size,const char **media_type);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_inspection_duration": {
+      "signature": "EXR_API uint64_t exr_m4b_inspection_duration(const exr_m4b_inspection *inspection);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_inspection_free": {
+      "signature": "EXR_API void exr_m4b_inspection_free(exr_m4b_inspection *inspection);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_inspection_metadata": {
+      "signature": "EXR_API const exr_metadata_entry *exr_m4b_inspection_metadata(const exr_m4b_inspection *inspection,size_t *count);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_open": {
+      "signature": "EXR_API exr_status exr_m4b_open(const char *path,const exr_control *control,exr_m4b **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_open_source": {
+      "signature": "EXR_API exr_status exr_m4b_open_source(const exr_source *source,exr_m4b **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_m4b_read": {
+      "signature": "EXR_API exr_status exr_m4b_read(exr_m4b *m4b,uint64_t first_frame,size_t frames,float *output,size_t *read, const exr_control *control,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_metadata_free": {
+      "signature": "EXR_API void exr_metadata_free(exr_metadata_entry *entries,size_t count);",
+      "header": "include/exr/base.h"
+    },
+    "exr_metadata_read_xmp": {
+      "signature": "EXR_API exr_status exr_metadata_read_xmp(const void *data,size_t size,const exr_control *control, exr_metadata_entry **entries,size_t *count,exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_mp3_available": {
+      "signature": "EXR_API int exr_mp3_available(void);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_mp3_format": {
+      "signature": "EXR_API const exr_mp3_info *exr_mp3_format(const exr_mp3 *mp3);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_mp3_free": {
+      "signature": "EXR_API void exr_mp3_free(exr_mp3 *mp3);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_mp3_open": {
+      "signature": "EXR_API exr_status exr_mp3_open(const char *path,const exr_control *control,exr_mp3 **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_mp3_open_source": {
+      "signature": "EXR_API exr_status exr_mp3_open_source(const exr_source *source,exr_mp3 **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_mp3_read": {
+      "signature": "EXR_API exr_status exr_mp3_read(exr_mp3 *mp3,uint64_t first_frame,size_t frames,float *output,size_t *read, const exr_control *control,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_navigation_free": {
+      "signature": "EXR_API void exr_navigation_free(exr_navigation *entries, size_t count);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_node_attribute": {
+      "signature": "EXR_API const char *exr_node_attribute(const exr_node *node, const char *name);",
+      "header": "include/exr/document.h"
+    },
+    "exr_notes_free": {
+      "signature": "EXR_API void exr_notes_free(exr_note *notes, size_t count);",
+      "header": "include/exr/library.h"
+    },
+    "exr_page_annotations_free": {
+      "signature": "EXR_API void exr_page_annotations_free(exr_page_annotation *annotations,size_t count);",
+      "header": "include/exr/document.h"
+    },
+    "exr_pager_anchor_create": {
+      "signature": "EXR_API exr_status exr_pager_anchor_create(exr_pager *pager,size_t start,size_t end, const exr_control *control,exr_anchor *anchor,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_anchor_resolve": {
+      "signature": "EXR_API exr_status exr_pager_anchor_resolve(exr_pager *pager,const exr_anchor *anchor, const exr_control *control,exr_anchor_match *match,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_cached_bytes": {
+      "signature": "EXR_API size_t exr_pager_cached_bytes(const exr_pager *pager);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_cached_count": {
+      "signature": "EXR_API size_t exr_pager_cached_count(const exr_pager *pager);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_cfi_create": {
+      "signature": "EXR_API exr_status exr_pager_cfi_create(exr_pager *pager,const exr_cfi_point *point, size_t context_scalars,const exr_control *control,char **cfi,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_cfi_resolve": {
+      "signature": "EXR_API exr_status exr_pager_cfi_resolve(exr_pager *pager,const char *cfi, const exr_control *control,exr_cfi_point *point,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_chapter_statistics": {
+      "signature": "EXR_API exr_chapter_stats exr_pager_chapter_statistics(const exr_pager *pager);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_create": {
+      "signature": "EXR_API exr_status exr_pager_create(const exr_document *doc, exr_font *font, const exr_layout_config *config, exr_pager **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_free": {
+      "signature": "EXR_API void exr_pager_free(exr_pager *pager);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_get": {
+      "signature": "EXR_API exr_status exr_pager_get(exr_pager *pager, size_t page, const exr_layout **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_next": {
+      "signature": "EXR_API exr_status exr_pager_next(exr_pager *pager, exr_layout **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_position": {
+      "signature": "EXR_API size_t exr_pager_position(const exr_pager *pager);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_read_text": {
+      "signature": "EXR_API exr_status exr_pager_read_text(exr_pager *pager,size_t start,size_t end, exr_text_sink_fn sink,void *context,const exr_control *control,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_set_cache": {
+      "signature": "EXR_API exr_status exr_pager_set_cache(exr_pager *pager, size_t capacity, size_t byte_budget, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_set_checkpoints": {
+      "signature": "EXR_API exr_status exr_pager_set_checkpoints(exr_pager *pager, size_t capacity, size_t byte_budget, size_t interval, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_set_control": {
+      "signature": "EXR_API exr_status exr_pager_set_control(exr_pager *pager, const exr_control *control, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_set_hyphenator": {
+      "signature": "EXR_API exr_status exr_pager_set_hyphenator(exr_pager *pager,exr_hyphenator *hyphenator,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pager_statistics": {
+      "signature": "EXR_API exr_pager_stats exr_pager_statistics(const exr_pager *pager);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_pcm_create": {
+      "signature": "EXR_API exr_status exr_pcm_create(const exr_pcm_input *input,exr_pcm **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_pcm_format": {
+      "signature": "EXR_API const exr_pcm_info *exr_pcm_format(const exr_pcm *pcm);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_pcm_free": {
+      "signature": "EXR_API void exr_pcm_free(exr_pcm *pcm);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_pcm_open": {
+      "signature": "EXR_API exr_status exr_pcm_open(const char *path,const exr_control *control,exr_pcm **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_pcm_open_source": {
+      "signature": "EXR_API exr_status exr_pcm_open_source(const exr_source *source,exr_pcm **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_pcm_read": {
+      "signature": "EXR_API exr_status exr_pcm_read(exr_pcm *pcm,uint64_t first_frame,size_t frames,float *output,size_t *read, const exr_control *control,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_pdf_annotation_remove": {
+      "signature": "EXR_API exr_status exr_pdf_annotation_remove(const void *data,size_t size,size_t page,const char *id, const exr_control *control,void **out,size_t *out_size,exr_error *error);",
+      "header": "include/exr/pdf_edit.h"
+    },
+    "exr_pdf_annotation_write": {
+      "signature": "EXR_API exr_status exr_pdf_annotation_write(const void *data,size_t size,size_t page, const exr_page_annotation *annotation,const exr_pdf_annotation_write_options *options, void **out,size_t *out_size,exr_error *error);",
+      "header": "include/exr/pdf_edit.h"
+    },
+    "exr_pdf_annotation_write_defaults": {
+      "signature": "EXR_API exr_pdf_annotation_write_options exr_pdf_annotation_write_defaults(void);",
+      "header": "include/exr/pdf_edit.h"
+    },
+    "exr_pdf_crypto_available": {
+      "signature": "EXR_API int exr_pdf_crypto_available(void);",
+      "header": "include/exr/pdf.h"
+    },
+    "exr_pdf_form_defaults": {
+      "signature": "EXR_API exr_pdf_form_options exr_pdf_form_defaults(void);",
+      "header": "include/exr/pdf_edit.h"
+    },
+    "exr_pdf_form_free": {
+      "signature": "EXR_API void exr_pdf_form_free(exr_pdf_form_field *fields,size_t count);",
+      "header": "include/exr/pdf_edit.h"
+    },
+    "exr_pdf_form_read": {
+      "signature": "EXR_API exr_status exr_pdf_form_read(const void *data,size_t size,const exr_pdf_form_options *options, exr_pdf_form_field **out,size_t *count,exr_error *error);",
+      "header": "include/exr/pdf_edit.h"
+    },
+    "exr_pdf_form_write": {
+      "signature": "EXR_API exr_status exr_pdf_form_write(const void *data,size_t size,const exr_pdf_form_change *changes,size_t count, const exr_pdf_form_write_options *options,void **out,size_t *out_size,exr_error *error);",
+      "header": "include/exr/pdf_edit.h"
+    },
+    "exr_pdf_form_write_defaults": {
+      "signature": "EXR_API exr_pdf_form_write_options exr_pdf_form_write_defaults(void);",
+      "header": "include/exr/pdf_edit.h"
+    },
+    "exr_pdf_metadata_write": {
+      "signature": "EXR_API exr_status exr_pdf_metadata_write(const void *data,size_t size,const exr_metadata_entry *changes,size_t count, const exr_control *control,void **out,size_t *out_size,exr_error *error);",
+      "header": "include/exr/pdf_edit.h"
+    },
+    "exr_publication_cfi_create": {
+      "signature": "EXR_API exr_status exr_publication_cfi_create(exr_publication *publication,size_t part,const exr_document *document, const exr_cfi_point *point,const exr_control *control,char **cfi,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_cfi_create_quoted": {
+      "signature": "EXR_API exr_status exr_publication_cfi_create_quoted(exr_publication *publication,size_t part,const exr_document *document, const exr_cfi_point *point,size_t context_scalars,const exr_control *control,char **cfi,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_cfi_resolve": {
+      "signature": "EXR_API exr_status exr_publication_cfi_resolve(exr_publication *publication,const char *cfi,const exr_control *control, size_t *part,exr_document **document,exr_cfi_point *point,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_create": {
+      "signature": "EXR_API exr_status exr_publication_create(const exr_publication_input *input, exr_publication **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_free": {
+      "signature": "EXR_API void exr_publication_free(exr_publication *publication);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_load": {
+      "signature": "EXR_API exr_status exr_publication_load(exr_publication *publication, size_t part, exr_document **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_locate": {
+      "signature": "EXR_API exr_status exr_publication_locate(exr_publication *publication, const exr_target *target,exr_location *location,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_missing_targets": {
+      "signature": "EXR_API const exr_target *exr_publication_missing_targets(const exr_publication *publication,size_t *count);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_navigation": {
+      "signature": "EXR_API exr_status exr_publication_navigation(exr_publication *publication, const exr_navigation **entries, size_t *count, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_open": {
+      "signature": "EXR_API exr_status exr_publication_open(const char *path, exr_publication **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_open_memory": {
+      "signature": "EXR_API exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size, exr_publication **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_open_source": {
+      "signature": "EXR_API exr_status exr_publication_open_source(const exr_source *source, exr_publication **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_pager_create": {
+      "signature": "EXR_API exr_status exr_publication_pager_create(exr_publication *publication,size_t part, exr_font *font,const exr_layout_config *config,const exr_chapter_options *options, exr_pager **out,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_parts": {
+      "signature": "EXR_API const exr_part *exr_publication_parts(const exr_publication *publication, size_t *count);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_resolve_href": {
+      "signature": "EXR_API exr_status exr_publication_resolve_href(const exr_publication *publication, const char *base,const char *href,char fragment[2048],exr_target *target,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_search": {
+      "signature": "EXR_API exr_status exr_publication_search(exr_publication *publication,exr_text_position from, const char *needle,unsigned flags,const exr_control *control,exr_search_result *result,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_search_all": {
+      "signature": "EXR_API exr_status exr_publication_search_all(exr_publication *publication,const char *needle, unsigned flags,exr_search_fn callback,void *context,const exr_control *control,size_t *count,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_target_at": {
+      "signature": "EXR_API exr_status exr_publication_target_at(exr_publication *publication, size_t part,size_t offset,size_t *entry,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_title": {
+      "signature": "EXR_API const char *exr_publication_title(const exr_publication *publication);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_toc": {
+      "signature": "EXR_API exr_status exr_publication_toc(exr_publication *publication, const exr_toc_entry **entries,size_t *count,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_toc_insert_before": {
+      "signature": "EXR_API exr_status exr_publication_toc_insert_before(exr_publication *publication, size_t *part, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_range_expand": {
+      "signature": "EXR_API exr_status exr_range_expand(exr_publication *publication,const exr_text_range *range, exr_range_unit unit,const exr_control *control,exr_text_range *out,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_range_from_anchor": {
+      "signature": "EXR_API exr_status exr_range_from_anchor(exr_publication *publication,const exr_content_anchor *anchor, const exr_control *control,exr_text_range_match *out,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_render_page": {
+      "signature": "EXR_API exr_status exr_render_page(const exr_layout *layout, exr_font *font, size_t page, exr_bitmap *bitmap, exr_error *error);",
+      "header": "include/exr/render.h"
+    },
+    "exr_render_page_background": {
+      "signature": "EXR_API exr_status exr_render_page_background(const exr_layout *layout, exr_font *font, size_t page, unsigned channels, uint32_t background_rgba, const exr_control *control, exr_bitmap *out, exr_error *error);",
+      "header": "include/exr/render.h"
+    },
+    "exr_render_page_color": {
+      "signature": "EXR_API exr_status exr_render_page_color(const exr_layout *layout, exr_font *font, size_t page, exr_bitmap *bitmap, exr_error *error);",
+      "header": "include/exr/render.h"
+    },
+    "exr_render_page_ex": {
+      "signature": "EXR_API exr_status exr_render_page_ex(const exr_layout *layout, exr_font *font, size_t page, unsigned channels, const exr_control *control, exr_bitmap *out, exr_error *error);",
+      "header": "include/exr/render.h"
+    },
+    "exr_session_cached": {
+      "signature": "EXR_API size_t exr_session_cached(const exr_session *session);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_session_cached_bytes": {
+      "signature": "EXR_API size_t exr_session_cached_bytes(const exr_session *session);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_session_clear": {
+      "signature": "EXR_API void exr_session_clear(exr_session *session);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_session_create": {
+      "signature": "EXR_API exr_status exr_session_create(exr_publication *publication, exr_font *font, const exr_layout_config *config, size_t capacity, exr_session **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_session_free": {
+      "signature": "EXR_API void exr_session_free(exr_session *session);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_session_get": {
+      "signature": "EXR_API exr_status exr_session_get(exr_session *session, size_t part, const exr_document **document, const exr_layout **layout, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_session_set_budget": {
+      "signature": "EXR_API exr_status exr_session_set_budget(exr_session *session, size_t bytes, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_session_set_hyphenator": {
+      "signature": "EXR_API exr_status exr_session_set_hyphenator(exr_session *session,exr_hyphenator *hyphenator,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_shape": {
+      "signature": "EXR_API exr_status exr_shape(exr_font *font, size_t font_index, const char *utf8, size_t size, const exr_shape_options *options, exr_shaped_glyph **out, size_t *out_count, exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_shape_defaults": {
+      "signature": "EXR_API exr_shape_options exr_shape_defaults(void);",
+      "header": "include/exr/text.h"
+    },
+    "exr_shape_vertical": {
+      "signature": "EXR_API exr_status exr_shape_vertical(exr_font *font, size_t font_index, const char *utf8, size_t size, const exr_shape_options *options, exr_shaped_glyph **out, size_t *out_count, exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_stretch_create": {
+      "signature": "EXR_API exr_status exr_stretch_create(uint32_t sample_rate,uint32_t channels,double rate,exr_stretch **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_stretch_finish": {
+      "signature": "EXR_API exr_status exr_stretch_finish(exr_stretch *stretch,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_stretch_free": {
+      "signature": "EXR_API void exr_stretch_free(exr_stretch *stretch);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_stretch_get": {
+      "signature": "EXR_API exr_status exr_stretch_get(const exr_stretch *stretch,exr_stretch_state *out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_stretch_pull": {
+      "signature": "EXR_API exr_status exr_stretch_pull(exr_stretch *stretch,float *output,size_t frames,size_t *read,const exr_control *control,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_stretch_push": {
+      "signature": "EXR_API exr_status exr_stretch_push(exr_stretch *stretch,const float *input,size_t frames,size_t *accepted,const exr_control *control,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_stretch_reset": {
+      "signature": "EXR_API exr_status exr_stretch_reset(exr_stretch *stretch,double rate,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_text_analyze": {
+      "signature": "EXR_API exr_status exr_text_analyze(const char *text, size_t size, unsigned char **boundaries, exr_error *error);",
+      "header": "include/exr/text.h"
+    },
+    "exr_text_annotation_export": {
+      "signature": "EXR_API exr_status exr_text_annotation_export(const exr_text_annotation *annotation,char **json,size_t *size,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_text_annotation_free": {
+      "signature": "EXR_API void exr_text_annotation_free(exr_text_annotation *annotation);",
+      "header": "include/exr/document.h"
+    },
+    "exr_text_annotation_import": {
+      "signature": "EXR_API exr_status exr_text_annotation_import(const void *json,size_t size,exr_text_annotation *annotation,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_text_index_available": {
+      "signature": "EXR_API int exr_text_index_available(void);",
+      "header": "include/exr/textindex.h"
+    },
+    "exr_text_index_close": {
+      "signature": "EXR_API void exr_text_index_close(exr_text_index *index);",
+      "header": "include/exr/textindex.h"
+    },
+    "exr_text_index_open": {
+      "signature": "EXR_API exr_status exr_text_index_open(const char *path,exr_text_index **index,exr_error *error);",
+      "header": "include/exr/textindex.h"
+    },
+    "exr_text_index_put": {
+      "signature": "EXR_API exr_status exr_text_index_put(exr_text_index *index,const char *source,const char *part,const void *text, size_t size,const exr_control *control,exr_error *error);",
+      "header": "include/exr/textindex.h"
+    },
+    "exr_text_index_query": {
+      "signature": "EXR_API exr_status exr_text_index_query(exr_text_index *index,const char *source,const void *query,size_t size, const exr_control *control,exr_text_query **out,exr_error *error);",
+      "header": "include/exr/textindex.h"
+    },
+    "exr_text_index_remove": {
+      "signature": "EXR_API exr_status exr_text_index_remove(exr_text_index *index,const char *source,const char *part, const exr_control *control,exr_error *error);",
+      "header": "include/exr/textindex.h"
+    },
+    "exr_text_index_replace": {
+      "signature": "EXR_API exr_status exr_text_index_replace(exr_text_index *index,const char *source,exr_text_part_fn provider,void *context, const exr_control *control,exr_error *error);",
+      "header": "include/exr/textindex.h"
+    },
+    "exr_text_query_free": {
+      "signature": "EXR_API void exr_text_query_free(exr_text_query *query);",
+      "header": "include/exr/textindex.h"
+    },
+    "exr_text_query_next": {
+      "signature": "EXR_API exr_status exr_text_query_next(exr_text_query *query,exr_text_hit *hit,int *found,exr_error *error);",
+      "header": "include/exr/textindex.h"
+    },
+    "exr_toc_pages_create": {
+      "signature": "EXR_API exr_status exr_toc_pages_create(exr_publication *publication, exr_font *font, const exr_layout_config *config, const exr_toc_page_options *options, exr_layout **out, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_toc_pages_entries": {
+      "signature": "EXR_API exr_status exr_toc_pages_entries(const exr_layout *layout, size_t page, size_t *first, size_t *count);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_toc_pages_entry_at": {
+      "signature": "EXR_API exr_status exr_toc_pages_entry_at(const exr_layout *layout, size_t page, float x, float y, size_t *entry);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_toc_pages_entry_for_offset": {
+      "signature": "EXR_API size_t exr_toc_pages_entry_for_offset(const exr_layout *layout, size_t offset);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_toc_pages_label": {
+      "signature": "EXR_API const char *exr_toc_pages_label(const exr_layout *layout, size_t page);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_txt_anchor_create_source": {
+      "signature": "EXR_API exr_status exr_txt_anchor_create_source(const exr_source *source,size_t start,size_t end, exr_anchor *anchor,exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_txt_anchor_resolve_source": {
+      "signature": "EXR_API exr_status exr_txt_anchor_resolve_source(const exr_source *source,const exr_anchor *anchor, exr_anchor_match *match,exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_txt_cursor_checkpoint": {
+      "signature": "EXR_API exr_status exr_txt_cursor_checkpoint(const exr_txt_cursor *cursor,exr_txt_checkpoint *checkpoint,exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_txt_cursor_create": {
+      "signature": "EXR_API exr_status exr_txt_cursor_create(const exr_source *source,exr_txt_cursor **out,exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_txt_cursor_free": {
+      "signature": "EXR_API void exr_txt_cursor_free(exr_txt_cursor *cursor);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_txt_cursor_next": {
+      "signature": "EXR_API exr_status exr_txt_cursor_next(exr_txt_cursor *cursor,uint64_t *offset, const char **text,size_t *size,exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_txt_cursor_restore": {
+      "signature": "EXR_API exr_status exr_txt_cursor_restore(exr_txt_cursor *cursor,const exr_txt_checkpoint *checkpoint,exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_txt_find_source": {
+      "signature": "EXR_API exr_status exr_txt_find_source(const exr_source *source,const char *query,uint64_t from, uint64_t *start,uint64_t *end,exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_txt_pager_create": {
+      "signature": "EXR_API exr_status exr_txt_pager_create(const exr_source *source,exr_font *font, const exr_layout_config *config,exr_pager **out,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_txt_scan_source": {
+      "signature": "EXR_API exr_status exr_txt_scan_source(const exr_source *source,exr_txt_paragraph_fn paragraph, void *context,uint64_t *extent,exr_error *error);",
+      "header": "include/exr/formats.h"
+    },
+    "exr_version": {
+      "signature": "EXR_API const char *exr_version(void);",
+      "header": "include/exr/base.h"
+    },
+    "exr_viewport_create": {
+      "signature": "EXR_API exr_status exr_viewport_create(const exr_page_geometry *page,double scale, exr_viewport *out,exr_error *error);",
+      "header": "include/exr/base.h"
+    },
+    "exr_wave_format": {
+      "signature": "EXR_API const exr_wave_info *exr_wave_format(const exr_wave *wave);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_wave_free": {
+      "signature": "EXR_API void exr_wave_free(exr_wave *wave);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_wave_open": {
+      "signature": "EXR_API exr_status exr_wave_open(const char *path,const exr_control *control,exr_wave **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_wave_open_source": {
+      "signature": "EXR_API exr_status exr_wave_open_source(const exr_source *source,exr_wave **out,exr_error *error);",
+      "header": "include/exr/audio.h"
+    },
+    "exr_wave_read": {
+      "signature": "EXR_API exr_status exr_wave_read(exr_wave *wave,uint64_t first_frame,size_t frames,float *output,size_t *read, const exr_control *control,exr_error *error);",
+      "header": "include/exr/audio.h"
+    }
+  }
+}
