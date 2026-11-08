@@ -1158,7 +1158,10 @@ if(EXR_BUILD_TESTS AND EXR_ENABLE_PDF)
   endforeach()
 endif()
 
-if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND)
+if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND AND NOT EXR_SANITIZE)
+  # ctypes cannot load an ASan library into an unsanitized Python runtime
+  # (same constraint as the hyphen oracle tests above). The C-level probes
+  # still run under ASan.
   foreach(group codec mobi kf8 fb2 errors)
     add_test(NAME native-book-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/book_formats.py --library $<TARGET_FILE:exreader>
