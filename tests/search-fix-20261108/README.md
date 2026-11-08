@@ -18,13 +18,15 @@ EXR_API exr_status exr_publication_search_all(
 | 验收 | 结果 | 证据 |
 | --- | --- | --- |
 | Windows Release 全量构建 | 成功 | [build.txt](build.txt) |
-| Linux / Android ARM64 / ASan+UBSan 编译 | 三项成功 | [Actions run 42463330179](https://github.com/NoGod3524/EXReader/actions/runs/42463330179)、[编译步骤快照](ci-builds.json) |
+| Linux / Android ARM64 / ASan+UBSan | 三个作业全部成功；Linux ctest **201/201**，ASan+UBSan ctest **198/198** | [Actions run 42463330179](https://github.com/NoGod3524/EXReader/actions/runs/42463330179)、[最终作业快照](ci-builds.json)、[Linux 测试](linux-ctest.txt)、[sanitizer 测试](sanitizer-ctest.txt) |
 | 全量 ctest | **208/208**，79.75 秒；含 5 组流式搜索、5 组 PDF 深化 | [ctest.txt](ctest.txt) |
 | 三书各 5 词 | **15/15**；计数与原验收及独立 Python oracle 一致 | [search.json](search.json) |
 | 真书命中位置 | **20/20**，含 6 个竖排；定位、锚点、实际字形均一致 | [search.json](search.json) |
 | 19 本真书逐页渲染 | **19/19、11,296 页、8,648,640 字形**；页数、字形数、逐页像素哈希变化均 **0** | [diff](realbooks.diff.json)、[before](realbooks-before.json.gz)、[after](realbooks-after.json.gz) |
 | Windows 搜索栏 | 中文、英文、竖排、PDF、MOBI、整书导入 **6/6**；计数、前后跳转、关闭、大小写、全词、自检通过 | [ui.json](ui.json)、六份 `ui-*.txt` |
 | 连续输入 10 字 | 防抖后实际搜索 1 次，搜索 1.890ms；含输入间隔和防抖总 675.841ms | [ui-hong.txt](ui-hong.txt) |
+
+测试总数按构建配置区分：Windows 208 项包含 7 项既有 fuzz；Linux 常规套件为 201 项；sanitizer 配置按现有 CMake 规则排除 3 项性能测试，为 198 项。
 
 重新编译的宿主截图已目视核验：[中文搜索栏](expanded-current.png)、[下一命中](next-current.png)、[竖排高亮](vertical-current.png)。
 

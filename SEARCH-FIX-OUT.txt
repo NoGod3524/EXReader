@@ -8,3 +8,5 @@
 步骤 7：重编 Windows 宿主并运行原搜索栏验收，中文/英文/竖排/PDF/MOBI/整书导入六组通过；计数、跳转、快捷键、大小写/全词、防抖、高亮自检正常，截图与日志 build/search-fix-ui。
 步骤 9：已归档 tests/search-fix-20261108：API 撞名审计与签名、208 项测试日志、三书搜索、19 本前后逐页压缩报告与零变化 diff、六组宿主日志及三张截图、构建日志与源码/DLL/EXE 哈希。
 步骤 10：修复验收报告已完成。确认相对 2131258a 未修改 PDF document.h / fixed.c 或 .github/；修复提交之后无 src/include/examples 代码变化。准备提交并推送验收证据。
+步骤 11：证据提交 5b8bdb9860319a771c6a02dfc348b7afefa2f2fe 已推送，远端分支与 PR head 一致，PR mergeable=true。全部归档证据自检通过，19 本前后 content_fingerprint 相同。保留既有 SEARCH-OUT.txt 改动。
+步骤 12：Actions run 42463330179 的 Linux desktop / Android ARM64 / sanitizers 三个作业全部 success。Linux 主套件 ctest 201/201（124.60 秒）；ASan/UBSan ctest 198/198（794.35 秒）；Windows 含既有 fuzz 的全量套件 208/208。已归档最终 job 快照和 Linux / sanitizer 测试日志。
