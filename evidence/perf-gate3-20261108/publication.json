@@ -1,0 +1,15 @@
+{
+  "stage": "draft_creation_receipt",
+  "recorded_utc": "2026-11-08T20:04:53.700284+00:00",
+  "code_commit": "49fefd283b38eecfd8d1b2f34be3a815fea820c3",
+  "pull_request": {
+    "baseRefName": "main",
+    "headRefName": "codex/perf-gate-load-20261108",
+    "headRefOid": "49fefd283b38eecfd8d1b2f34be3a815fea820c3",
+    "isDraft": true,
+    "number": 97,
+    "state": "OPEN",
+    "url": "https://github.com/NoGod3524/EXReader/pull/97"
+  },
+  "required_recovery": false
+}
