@@ -1,0 +1,5 @@
+Exception: C:\Users\Oscar\Documents\Codex\EXReader-perf2-20261108\tools\perf\ratio_session.ps1:28
+Line |
+  28 |  … ($LASTEXITCODE) { throw 'Normal capture failed; raw files retained' }
+     |                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Normal capture failed; raw files retained

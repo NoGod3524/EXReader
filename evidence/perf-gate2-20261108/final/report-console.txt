@@ -1,0 +1,432 @@
+{
+  "schema": 1,
+  "advisory": true,
+  "accepted": false,
+  "candidate_kind": "loaded",
+  "dispersion_definition": "100*(max-min)/nearest-rank-p50; all runs, no trimming",
+  "normal": {
+    "calibration_ms": {
+      "n": 5,
+      "p50": 237.249,
+      "p95": 237.6645,
+      "max": 237.6645,
+      "min": 236.7248,
+      "cv_pct": 0.1447280533956703,
+      "range_over_median_pct": 0.3960817537692535
+    },
+    "target_ms": {
+      "n": 5,
+      "p50": 83.9075,
+      "p95": 84.0672,
+      "max": 84.0672,
+      "min": 82.9618,
+      "cv_pct": 0.47161711995060435,
+      "range_over_median_pct": 1.31740309269136
+    },
+    "reference_ms": {
+      "n": 5,
+      "p50": 237.8782,
+      "p95": 238.2604,
+      "max": 238.2604,
+      "min": 237.4246,
+      "cv_pct": 0.1282932326222157,
+      "range_over_median_pct": 0.3513562823327258
+    },
+    "ratio": {
+      "n": 5,
+      "p50": 0.35225240954854437,
+      "p95": 0.35407956883996017,
+      "max": 0.35407956883996017,
+      "min": 0.3488935821963838,
+      "cv_pct": 0.48558082408726166,
+      "range_over_median_pct": 1.4722359600670674
+    },
+    "paired_ratio_p95": {
+      "n": 5,
+      "p50": 0.357962111,
+      "p95": 0.359846362,
+      "max": 0.359846362,
+      "min": 0.353120581,
+      "cv_pct": 0.6401212635700896,
+      "range_over_median_pct": 1.8789086311986762
+    }
+  },
+  "loaded": {
+    "calibration_ms": {
+      "n": 5,
+      "p50": 480.7839,
+      "p95": 497.3833,
+      "max": 497.3833,
+      "min": 470.119,
+      "cv_pct": 2.2513345505859808,
+      "range_over_median_pct": 5.67080137250852
+    },
+    "target_ms": {
+      "n": 5,
+      "p50": 144.1763,
+      "p95": 161.3483,
+      "max": 161.3483,
+      "min": 135.428,
+      "cv_pct": 6.060592130582125,
+      "range_over_median_pct": 17.978197526223102
+    },
+    "reference_ms": {
+      "n": 5,
+      "p50": 492.4422,
+      "p95": 497.2109,
+      "max": 497.2109,
+      "min": 486.6298,
+      "cv_pct": 0.7253200481707671,
+      "range_over_median_pct": 2.148698872679878
+    },
+    "ratio": {
+      "n": 5,
+      "p50": 0.2923741479299468,
+      "p95": 0.32764921446618506,
+      "max": 0.32764921446618506,
+      "min": 0.2766852604032273,
+      "cv_pct": 5.775245517428915,
+      "range_over_median_pct": 17.431073993302856
+    },
+    "paired_ratio_p95": {
+      "n": 5,
+      "p50": 0.354314993,
+      "p95": 0.363316766,
+      "max": 0.363316766,
+      "min": 0.347883253,
+      "cv_pct": 1.676713255953414,
+      "range_over_median_pct": 4.355873532001512
+    }
+  },
+  "normal_eligible": true,
+  "loaded_eligible": false,
+  "signatures_equal": true,
+  "baseline_anchor_ratio": 0.35407956883996017,
+  "thresholds": {
+    "warning": 0.38948752572395623,
+    "gate": 0.4425994610499502,
+    "hard": 0.5311193532599403
+  },
+  "drift_pct": {
+    "calibration_ms": 102.64949483454093,
+    "target_ms": 71.82766737180823,
+    "reference_ms": 107.01443007387815,
+    "ratio": -16.99868049031632,
+    "paired_ratio_p95": -1.0188558755035437
+  },
+  "slowdown": {
+    "calibration_ms": 2.0264949483454093,
+    "target_ms": 1.7182766737180823,
+    "reference_ms": 2.0701443007387814,
+    "ratio": 0.8300131950968368,
+    "paired_ratio_p95": 0.9898114412449646
+  },
+  "per_book": [
+    {
+      "id": "a-raisin-in-the-sun",
+      "normal_ratio_p50": 0.3665117233525954,
+      "normal_ratio_p95": 0.3835757790927362,
+      "loaded_ratio_p50": 0.354754136397127,
+      "loaded_ratio_p95": 0.38607544690221773,
+      "ratio_drift_pct": -3.2079702247770236,
+      "thresholds": {
+        "warning": 0.42193335700200985,
+        "gate": 0.47946972386592024,
+        "hard": 0.5753636686391044
+      },
+      "normal_dispersion_pct": 5.353966857357832,
+      "loaded_dispersion_pct": 16.023409272317842
+    },
+    {
+      "id": "between-the-world-and-me",
+      "normal_ratio_p50": 0.1300577229803286,
+      "normal_ratio_p95": 0.1395381793440552,
+      "loaded_ratio_p50": 0.12307337133936833,
+      "loaded_ratio_p95": 0.12703853373619634,
+      "ratio_drift_pct": -5.370193696238001,
+      "thresholds": {
+        "warning": 0.15349199727846075,
+        "gate": 0.17442272418006902,
+        "hard": 0.20930726901608282
+      },
+      "normal_dispersion_pct": 8.81959742478194,
+      "loaded_dispersion_pct": 30.17497706524938
+    },
+    {
+      "id": "black-boy",
+      "normal_ratio_p50": 0.24586949340986672,
+      "normal_ratio_p95": 0.2551267726614976,
+      "loaded_ratio_p50": 0.1517657796948672,
+      "loaded_ratio_p95": 0.1875635236477503,
+      "ratio_drift_pct": -38.27384699496971,
+      "thresholds": {
+        "warning": 0.2806394499276474,
+        "gate": 0.318908465826872,
+        "hard": 0.38269015899224634
+      },
+      "normal_dispersion_pct": 4.19102171315557,
+      "loaded_dispersion_pct": 36.93926248657689
+    },
+    {
+      "id": "born-a-crime",
+      "normal_ratio_p50": 0.10616156265602864,
+      "normal_ratio_p95": 0.1093031165080099,
+      "loaded_ratio_p50": 0.09372052745674582,
+      "loaded_ratio_p95": 0.12366890467357185,
+      "ratio_drift_pct": -11.718963896182178,
+      "thresholds": {
+        "warning": 0.1202334281588109,
+        "gate": 0.13662889563501238,
+        "hard": 0.16395467476201486
+      },
+      "normal_dispersion_pct": 3.0809878600320353,
+      "loaded_dispersion_pct": 49.90654206769165
+    },
+    {
+      "id": "crying-in-h-mart",
+      "normal_ratio_p50": 0.1731603838462922,
+      "normal_ratio_p95": 0.1752351906912131,
+      "loaded_ratio_p50": 0.17549506221857336,
+      "loaded_ratio_p95": 0.2176445893771135,
+      "ratio_drift_pct": 1.3482751195293963,
+      "thresholds": {
+        "warning": 0.19275870976033443,
+        "gate": 0.21904398836401637,
+        "hard": 0.26285278603681966
+      },
+      "normal_dispersion_pct": 3.2009294018602614,
+      "loaded_dispersion_pct": 36.03713493726139
+    },
+    {
+      "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+      "normal_ratio_p50": 0.20983459620972353,
+      "normal_ratio_p95": 0.21227798695644,
+      "loaded_ratio_p50": 0.20522692981745275,
+      "loaded_ratio_p95": 0.239421506871592,
+      "ratio_drift_pct": -2.195856391414863,
+      "thresholds": {
+        "warning": 0.23350578565208402,
+        "gate": 0.26534748369555,
+        "hard": 0.31841698043466005
+      },
+      "normal_dispersion_pct": 1.888386651203047,
+      "loaded_dispersion_pct": 19.574220764393573
+    },
+    {
+      "id": "i-know-why-the-caged-bird-sings",
+      "normal_ratio_p50": 0.3433553426167902,
+      "normal_ratio_p95": 0.3463367046503018,
+      "loaded_ratio_p50": 0.3346623191190793,
+      "loaded_ratio_p95": 0.3528525422741593,
+      "ratio_drift_pct": -2.531786292142524,
+      "thresholds": {
+        "warning": 0.380970375115332,
+        "gate": 0.4329208808128773,
+        "hard": 0.5195050569754527
+      },
+      "normal_dispersion_pct": 2.463665816024727,
+      "loaded_dispersion_pct": 20.04770685879142
+    },
+    {
+      "id": "pachinko",
+      "normal_ratio_p50": 0.23438033859774163,
+      "normal_ratio_p95": 0.23959477952527655,
+      "loaded_ratio_p50": 0.16922160335757486,
+      "loaded_ratio_p95": 0.1812146205418498,
+      "ratio_drift_pct": -27.800427130535176,
+      "thresholds": {
+        "warning": 0.26355425747780425,
+        "gate": 0.2994934744065957,
+        "hard": 0.35939216928791484
+      },
+      "normal_dispersion_pct": 5.748273728936854,
+      "loaded_dispersion_pct": 34.12430742117389
+    },
+    {
+      "id": "the-absolutely-true-diary-of-a-part-time-indian",
+      "normal_ratio_p50": 0.06944967218424208,
+      "normal_ratio_p95": 0.0718979851983914,
+      "loaded_ratio_p50": 0.07254844920441106,
+      "loaded_ratio_p95": 0.10355875592213988,
+      "ratio_drift_pct": 4.461903019424307,
+      "thresholds": {
+        "warning": 0.07908778371823054,
+        "gate": 0.08987248149798925,
+        "hard": 0.10784697779758709
+      },
+      "normal_dispersion_pct": 3.950934101929354,
+      "loaded_dispersion_pct": 51.3041726621449
+    },
+    {
+      "id": "the-autobiography-of-malcolm-x.",
+      "normal_ratio_p50": 0.4126767563441451,
+      "normal_ratio_p95": 0.4166681742166875,
+      "loaded_ratio_p50": 0.3970205866682393,
+      "loaded_ratio_p95": 0.4041324120466494,
+      "ratio_drift_pct": -3.793809424742489,
+      "thresholds": {
+        "warning": 0.4583349916383563,
+        "gate": 0.5208352177708594,
+        "hard": 0.6250022613250312
+      },
+      "normal_dispersion_pct": 2.0721357828981297,
+      "loaded_dispersion_pct": 2.236668986306342
+    },
+    {
+      "id": "the-distance-between-us-a-memoir",
+      "normal_ratio_p50": 0.20774119245718256,
+      "normal_ratio_p95": 0.2146830623258733,
+      "loaded_ratio_p50": 0.17051176789182268,
+      "loaded_ratio_p95": 0.24330190470707622,
+      "ratio_drift_pct": -17.92106039491095,
+      "thresholds": {
+        "warning": 0.23615136855846067,
+        "gate": 0.26835382790734164,
+        "hard": 0.32202459348880996
+      },
+      "normal_dispersion_pct": 6.526979778422677,
+      "loaded_dispersion_pct": 83.70719614392057
+    },
+    {
+      "id": "the-fire-next-time",
+      "normal_ratio_p50": 0.3557813973288016,
+      "normal_ratio_p95": 0.36399368357468614,
+      "loaded_ratio_p50": 0.32784294443321904,
+      "loaded_ratio_p95": 0.33171278229666157,
+      "ratio_drift_pct": -7.852701997727762,
+      "thresholds": {
+        "warning": 0.4003930519321548,
+        "gate": 0.4549921044683577,
+        "hard": 0.5459905253620292
+      },
+      "normal_dispersion_pct": 2.5252277745571,
+      "loaded_dispersion_pct": 7.475228427215684
+    },
+    {
+      "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+      "normal_ratio_p50": 0.27102887418260385,
+      "normal_ratio_p95": 0.2750360461238211,
+      "loaded_ratio_p50": 0.20795932390510033,
+      "loaded_ratio_p95": 0.22626133161800194,
+      "ratio_drift_pct": -23.270417392875586,
+      "thresholds": {
+        "warning": 0.30253965073620326,
+        "gate": 0.34379505765477636,
+        "hard": 0.4125540691857317
+      },
+      "normal_dispersion_pct": 3.026632019659945,
+      "loaded_dispersion_pct": 14.209097428923181
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "normal_ratio_p50": 0.10693882278151429,
+      "normal_ratio_p95": 0.11017761237269627,
+      "loaded_ratio_p50": 0.12157833454381362,
+      "loaded_ratio_p95": 0.12347531290103436,
+      "ratio_drift_pct": 13.689613726353777,
+      "thresholds": {
+        "warning": 0.1211953736099659,
+        "gate": 0.13772201546587035,
+        "hard": 0.1652664185590444
+      },
+      "normal_dispersion_pct": 4.541886475618736,
+      "loaded_dispersion_pct": 51.85589149825369
+    },
+    {
+      "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+      "normal_ratio_p50": 0.0526500769376495,
+      "normal_ratio_p95": 0.05400322215730184,
+      "loaded_ratio_p50": 0.05986972490605142,
+      "loaded_ratio_p95": 0.06298908113549352,
+      "ratio_drift_pct": 13.71251171570318,
+      "thresholds": {
+        "warning": 0.05940354437303203,
+        "gate": 0.0675040276966273,
+        "hard": 0.08100483323595276
+      },
+      "normal_dispersion_pct": 3.9946595561160683,
+      "loaded_dispersion_pct": 19.34915795271061
+    },
+    {
+      "id": "hongloumeng-24264",
+      "normal_ratio_p50": 0.12254351011270813,
+      "normal_ratio_p95": 0.12318710349151063,
+      "loaded_ratio_p50": 0.12897082576403185,
+      "loaded_ratio_p95": 0.158171757987112,
+      "ratio_drift_pct": 5.244925370109166,
+      "thresholds": {
+        "warning": 0.1355058138406617,
+        "gate": 0.1539838793643883,
+        "hard": 0.18478065523726594
+      },
+      "normal_dispersion_pct": 1.9055407022950106,
+      "loaded_dispersion_pct": 29.141863279559267
+    },
+    {
+      "id": "xingshihengyan-24239",
+      "normal_ratio_p50": 0.11793173778051366,
+      "normal_ratio_p95": 0.12012268719626781,
+      "loaded_ratio_p50": 0.12139154782727078,
+      "loaded_ratio_p95": 0.1271689893186431,
+      "ratio_drift_pct": 2.933739561437032,
+      "thresholds": {
+        "warning": 0.1321349559158946,
+        "gate": 0.15015335899533477,
+        "hard": 0.1801840307944017
+      },
+      "normal_dispersion_pct": 2.384392186608523,
+      "loaded_dispersion_pct": 11.428993198304898
+    },
+    {
+      "id": "tangshi300-52323",
+      "normal_ratio_p50": 0.11978741675142923,
+      "normal_ratio_p95": 0.12641956595470286,
+      "loaded_ratio_p50": 0.14860572166406574,
+      "loaded_ratio_p95": 0.1645417797865341,
+      "ratio_drift_pct": 24.057873267638243,
+      "thresholds": {
+        "warning": 0.13906152255017315,
+        "gate": 0.15802445744337856,
+        "hard": 0.1896293489320543
+      },
+      "normal_dispersion_pct": 6.125056051907647,
+      "loaded_dispersion_pct": 24.538429044918168
+    },
+    {
+      "id": "kusamakura-japanese-vertical-writing",
+      "normal_ratio_p50": 0.20113704780058958,
+      "normal_ratio_p95": 0.20738597604055903,
+      "loaded_ratio_p50": 0.12728725393599116,
+      "loaded_ratio_p95": 0.1711230795789444,
+      "ratio_drift_pct": -36.71615680558972,
+      "thresholds": {
+        "warning": 0.22812457364461494,
+        "gate": 0.25923247005069877,
+        "hard": 0.31107896406083857
+      },
+      "normal_dispersion_pct": 4.441225864064021,
+      "loaded_dispersion_pct": 46.483604000718174
+    }
+  ],
+  "independent_null_candidate": {
+    "n": 5,
+    "tier_exceedances": {
+      "warning": 0,
+      "gate": 0,
+      "hard": 0
+    },
+    "runs_exceeding_any_book_gate": 1,
+    "gate_exceedance_fraction": 0.0,
+    "one_sided_95pct_binomial_upper_if_zero": 0.4507197283469412,
+    "qualification_failed": true
+  },
+  "acceptance": {
+    "reference_dispersion_lt3": true,
+    "ratio_dispersion_lt5": true,
+    "loaded_ratio_drift_lt10": false,
+    "approximately_2x_target": false,
+    "signatures_unchanged": true,
+    "all_book_dispersion_lt5": false,
+    "all_book_loaded_drift_lt10": false
+  }
+}
