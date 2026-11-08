@@ -1,0 +1,22 @@
+[
+  {
+    "file": "src/cbz.c",
+    "line": 231,
+    "column": 135,
+    "message": "'%s' directive output may be truncated writing up to 31 bytes into a region of size between 24 and 2072",
+    "category": "-Wformat-truncation=",
+    "classification": "suspected_false_positive",
+    "reason": "Frame count is capped at 4096; # plus its decimal index and NUL fit within the extra 24 bytes.",
+    "evidence": "build-final.txt"
+  },
+  {
+    "file": "src/flac.c",
+    "line": 128,
+    "column": 19,
+    "message": "'n' may be used uninitialized",
+    "category": "-Wmaybe-uninitialized",
+    "classification": "suspected_false_positive",
+    "reason": "Every successful coded_number return writes n; its error helper bad returns zero, which the caller checks.",
+    "evidence": "build-final.txt"
+  }
+]
