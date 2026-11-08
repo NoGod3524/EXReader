@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+"""E1 operation plan with a strict <5% complete-batch rule and fail-closed idle checks.
+
+Use the same e1_capture.py arguments, with --runs >=5 --max-batches 1.
+All raw operations and unsuccessful batches are preserved; no trimming or averaging.
+"""
+import sys
+from pathlib import Path
+import e1_capture as e1
+
+original_summary = e1.summarize
+original_environment = e1.environment
+
+
+def summarize(trials):
+    result = original_summary(trials)
+    result['stable'] = (len(trials) >= 5 and bool(result['metrics']) and
+                        all(t.get('idle_target_met') is True for t in trials) and
+                        all(s['range_over_median_pct'] is not None and
+                            s['range_over_median_pct'] < 5
+                            for s in result['metrics'].values()))
+    return result
+
+
+def environment(args):
+    if args.runs < 5 or args.max_batches != 1:
+        raise ValueError('Require >=5 fresh processes and exactly one predeclared batch')
+    result = original_environment(args)
+    for path in (Path(__file__).resolve(), Path(__file__).with_name('fixed_clock.ps1'),
+                 Path(__file__).with_name('preflight.ps1')):
+        result['identities'][str(path.resolve())] = e1.sha(path)
+    result['gate_sampling_rule'] = 'all eight metrics range/p50 <5%; >=5 processes; unmet idle invalidates entire batch'
+    return result
+
+
+def report_line(*values, **kwargs):
+    print(*(value.replace('dispersion >=10% or invalid; retaining and repeating full batch',
+                           'dispersion >=5% or unmet precondition; complete batch retained; no automatic retry')
+            if isinstance(value, str) else value for value in values), **kwargs)
+
+
+if __name__ == '__main__':
+    e1.summarize = summarize
+    e1.environment = environment
+    e1.print = report_line
+    sys.exit(e1.main())

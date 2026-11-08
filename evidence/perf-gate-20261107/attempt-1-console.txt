@@ -1,0 +1,1 @@
+default-release-b1-r1: {'open_ms': 33.7279, 'first_visible_ms': 75.1867, 'peak_rss_bytes': 39202816, 'first_render_ms': 7.5273, 'turn_p50_ms': 11.8753, 'turn_p95_ms': 17.9731, 'turn_max_ms': 18.1601, 'random_p95_ms': 151.5014}
