@@ -214,6 +214,7 @@ static void shelf_pump(void) {
   }
   if(g.progress_failed) {shelf_exit_pending=0;KillTimer(g.window,SHELF_TIMER);return;}
   shelf_exit_pending=0;shelf_requested=1;g.active_book_id=0;
+  shell_footnote_close();
   shell_selection_reset();memset(&g.selection,0,sizeof(g.selection));
   KillTimer(g.page,PAGE_WHEEL_TIMER);wheel_delta=0;
   KillTimer(g.window,SHELF_TIMER);settings_save();shell_sync();shelf_refresh();
