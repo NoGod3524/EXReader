@@ -6,3 +6,4 @@
 [步骤 6] 最终验收再增加确定性的启动旧视图→阅读视图恢复1/1及切换另一书后重进1/1，全部通过。已整理docs/ui/SHELF-FLOW-ACCEPTANCE.md与docs/ui/evidence/shelf/：125条逐步状态、5张DPI截图、笔记落盘/重启记录、212项ctest输出、26项自检、19本全页前后哈希（gzip）及构建指纹。
 [步骤 7] 接续核查完成：14 个改动源文件及 EXE/SDK/字体/DPI 截图工具与验收指纹全部一致；独立重新编译通过 -Wall -Wextra -Werror，未改动引擎和 .github/。修整验收脚本末尾空行，开始独立闭环复测及最终 ctest 核验。
 [步骤 8] 提交前独立复测全部通过：新构建 EXE 的往返3/3、两档分区各15/15、单击10/10、拖选10/10、横滑20/20、竖排点击10/10及滑动10/10、边界6/6、未保存笔记落盘和重启读回均正确；ctest212/212、自检26/26。重新逐页比对19本11484页原始结果，页数/字形数/像素SHA-256变化0；新核验记录为docs/ui/evidence/shelf/final-audit.json。
+[步骤 9] 实现与验收已提交为22697240，并推送codex/host-shelf-flow-20261108；已创建面向main的Draft PR #89：https://github.com/NoGod3524/EXReader/pull/89。提交未包含CI跳过标记，未修改.github/、未取消workflow run。
