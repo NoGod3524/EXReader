@@ -324,3 +324,8 @@ only its 22 library C sources, with upstream portable allocation and thread
 stubs; no codec CLI, JPIP, GUI or JNI is built. `EXR_ENABLE_PDF_JPX=OFF` or
 `EXR_ENABLE_PDF=OFF` omits the dependency and its installed archive/materials.
 
+## hyph-en-us hyphenation patterns
+
+`data/hyph-en-us.pat.txt` (embedded as `src/hyphen_builtin_data.h`) is Copyright (C) 1990, 2004, 2005 Gerard D.C. Kuiken,
+from the hyph-utf8 package. Copying and distribution of this file, with or without modification, are permitted in any
+medium without royalty provided the copyright notice and this notice are preserved. See `data/hyph-en-us.LICENSE.txt`.
