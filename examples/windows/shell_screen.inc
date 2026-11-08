@@ -244,6 +244,8 @@ static void shell_enter(void) {
 
 static void shell_leave(void) {
   size_t i;
+  tts_stop();
+  tts_command(104); /* close speech controls on leaving the book */
   shell_toc_hide();
   shell_search_set(0);
   shell_panel_open=0; shell_animating=0; shell_animation_value=0;
@@ -369,6 +371,7 @@ static int shell_page_footer(HDC dc, const RECT *area) {
 }
 
 static int shell_translate(const MSG *message) {
+  if(tts_translate(message)) return 1;
   if(annot_translate(message)) return 1;
   if(shell_search_key(message)) return 1;
   if(shell_toc_open && message->message==WM_MOUSEWHEEL) {

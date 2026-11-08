@@ -138,6 +138,7 @@
     "rtf.c": "formats",
     "ruby.c": "layout",
     "source.c": "base",
+    "ssml.c": "layout",
     "stretch.c": "audio",
     "stroke.c": "graphics",
     "style.c": "layout",
