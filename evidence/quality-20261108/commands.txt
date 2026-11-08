@@ -1,0 +1,43 @@
+Working directory: C:/Users/Oscar/Documents/Codex/EXReader-qual-20261108
+Source revision: db9bab668ac725a75f3f92919edec3625879c7a8
+
+Route probe (full output in route.txt):
+gcc --version
+gcc -fsanitize=undefined -fno-sanitize-recover=all -g -O1 tools/quality/overflow_probe.c -o evidence/quality-20261108/local/overflow_probe.exe
+wsl -l -v
+
+Initial configure: exact argument array in configure-command.json.
+Final configure override (after the recorded -Werror build failures):
+cmake -S . -B evidence/quality-20261108/local/coverage-build "-DCMAKE_C_FLAGS_DEBUG=-g -O1 --coverage -fprofile-update=atomic -Wno-error=format-truncation -Wno-error=maybe-uninitialized"
+cmake --build evidence/quality-20261108/local/coverage-build --parallel 6
+
+Static analysis (all actual per-unit commands in analyzer-commands.json):
+python -X utf8 tools/quality/analyze.py --build evidence/quality-20261108/local/coverage-build --output evidence/quality-20261108 --workers 3
+python -X utf8 tools/quality/analyze.py --build evidence/quality-20261108/local/coverage-build --output evidence/quality-20261108 --collect
+The --collect invocation recovered all successful C SARIF results after the collector encountered Expat's non-C .rc command. The corrected script filters .c before executing. No C source was omitted.
+
+ctest --test-dir evidence/quality-20261108/local/coverage-build --show-only=json-v1
+ctest --test-dir evidence/quality-20261108/local/coverage-build --output-on-failure -j 1 --output-junit ../../ctest.xml
+
+Fresh bridge linked against the instrumented SDK:
+gcc -shared -g -O1 -Iinclude -Levidence/quality-20261108/local/coverage-build examples/windows/check_typography_font.c -o evidence/quality-20261108/local/coverage-build/quality-font-bridge.dll -lexreader -lcomdlg32 -lgdi32 -luiautomationcore -lshell32 -luser32 -loleaut32 -luuid -lm
+Copy-Item ../EXReader-Windows-delivery-20261104/payload/Reader.otf evidence/quality-20261108/local/fonts/Reader.otf
+
+python -X utf8 tools/quality/measure.py books --build evidence/quality-20261108/local/coverage-build --output evidence/quality-20261108 --font evidence/quality-20261108/local/fonts/Reader.otf --bridge evidence/quality-20261108/local/coverage-build/quality-font-bridge.dll --baseline docs/ui/evidence/annotations/books-after.json
+python -X utf8 tools/quality/measure.py fixtures --build evidence/quality-20261108/local/coverage-build --output evidence/quality-20261108 --font tests/fixtures/fonts/primary.ttf
+python -X utf8 tools/quality/extra_fixtures.py
+
+Runtime profile separation:
+- ctest: original object directories, serial tests
+- books: GCOV_PREFIX=evidence/quality-20261108/local/runtime-coverage/books-<PID> (absolute), GCOV_PREFIX_STRIP=10
+- fixtures: .../runtime-coverage/fixtures, strip=10
+- supplementary samples: .../runtime-coverage/extra-fixtures, then repeated under .../runtime-coverage/x to avoid Windows MAX_PATH in OpenJPEG counters
+- future book runs use the shortened b<PID> tag; this run's original book profiles are retained
+- Every profile group has all 111 project-module gcda files. The original book run lost only two OpenJPEG vendor counter files per worker; source coverage excludes vendor files.
+
+Final aggregation/acceptance:
+python -X utf8 tools/quality/measure.py coverage --build evidence/quality-20261108/local/coverage-build --output evidence/quality-20261108
+python -X utf8 tools/quality/summarize.py --complete
+python -X utf8 tools/quality/check_evidence.py
+
+For a new measurement, use fresh build/profile/output directories; gcda counters accumulate. Original books and font are external inputs. This run retains the complete configuration, input hashes, all page hashes, per-file/per-function coverage and raw gcov JSON.

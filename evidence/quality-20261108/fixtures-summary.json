@@ -1,0 +1,20 @@
+{
+  "total_files": 1884,
+  "kinds": {
+    "reference_or_test_data": 152,
+    "document": 1580,
+    "font": 59,
+    "image": 93
+  },
+  "outcomes": {
+    "inventory_only_ctest_owns_protocol": 152,
+    "complete": 1189,
+    "sdk_rejected": 442,
+    "opened": 57,
+    "decoded": 44
+  },
+  "pages": 4706,
+  "document_page_limit": null,
+  "document_timeout_seconds": 60,
+  "reference_files_are_not_claimed_as_individually_executed": true
+}

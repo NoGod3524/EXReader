@@ -1,0 +1,178 @@
+Analyzer 1/164: project/common.c; exit=0; diagnostics=0; 0.338s
+Analyzer 2/164: project/case.c; exit=0; diagnostics=0; 0.412s
+Analyzer 3/164: project/memory.c; exit=0; diagnostics=0; 0.116s
+Analyzer 4/164: project/core.c; exit=0; diagnostics=0; 0.691s
+Analyzer 5/164: project/numbering.c; exit=0; diagnostics=0; 0.11s
+Analyzer 6/164: project/normalize.c; exit=0; diagnostics=0; 0.32s
+Analyzer 7/164: project/source.c; exit=0; diagnostics=0; 0.131s
+Analyzer 8/164: project/map.c; exit=0; diagnostics=0; 0.651s
+Analyzer 9/164: project/transfer.c; exit=0; diagnostics=0; 0.201s
+Analyzer 10/164: project/viewport.c; exit=0; diagnostics=0; 0.155s
+Analyzer 11/164: project/affine_image.c; exit=0; diagnostics=0; 0.956s
+Analyzer 12/164: project/canvas.c; exit=0; diagnostics=0; 0.936s
+Analyzer 13/164: project/dash.c; exit=0; diagnostics=0; 0.37s
+Analyzer 14/164: project/curves.c; exit=0; diagnostics=0; 0.483s
+Analyzer 15/164: project/icc.c; exit=0; diagnostics=0; 0.114s
+Analyzer 16/164: project/image_formats.c; exit=0; diagnostics=0; 0.302s
+Analyzer 17/164: project/stroke.c; exit=0; diagnostics=0; 0.454s
+Analyzer 18/164: project/blend.c; exit=0; diagnostics=0; 2.476s
+Analyzer 19/164: project/vector.c; exit=0; diagnostics=0; 0.432s
+Analyzer 20/164: project/bidi.c; exit=0; diagnostics=3; 1.034s
+Analyzer 21/164: project/font_cache.c; exit=0; diagnostics=0; 0.243s
+Analyzer 22/164: project/font_bitmap.c; exit=0; diagnostics=1; 1.27s
+Analyzer 23/164: project/font_color.c; exit=0; diagnostics=0; 0.19s
+Analyzer 24/164: project/font_manager.c; exit=0; diagnostics=0; 1.246s
+Analyzer 25/164: project/font_colr_v1.c; exit=0; diagnostics=0; 1.379s
+Analyzer 26/164: project/font_path.c; exit=0; diagnostics=0; 0.118s
+Analyzer 27/164: project/font_outline.c; exit=0; diagnostics=0; 0.2s
+Analyzer 28/164: project/font_scan.c; exit=0; diagnostics=0; 0.947s
+Analyzer 29/164: project/images.c; exit=0; diagnostics=0; 5.132s
+Analyzer 30/164: project/fonts.c; exit=0; diagnostics=1; 0.397s
+Analyzer 31/164: project/font_svg.c; exit=0; diagnostics=1; 3.677s
+Analyzer 32/164: project/hyphen.c; exit=0; diagnostics=0; 4.587s
+Analyzer 33/164: project/variable.c; exit=0; diagnostics=0; 0.354s
+Analyzer 34/164: project/text.c; exit=0; diagnostics=0; 3.058s
+Analyzer 35/164: project/anchor.c; exit=0; diagnostics=0; 1.212s
+Analyzer 36/164: project/annotation.c; exit=0; diagnostics=0; 0.733s
+Analyzer 37/164: project/cfi_text.c; exit=0; diagnostics=0; 0.77s
+Analyzer 38/164: project/chapter_index.c; exit=0; diagnostics=0; 0.549s
+Analyzer 39/164: project/opentype.c; exit=0; diagnostics=1; 7.812s
+Analyzer 40/164: project/cfi.c; exit=0; diagnostics=1; 2.619s
+Analyzer 41/164: project/construct.c; exit=0; diagnostics=2; 0.877s
+Analyzer 42/164: project/chapter_window.c; exit=0; diagnostics=1; 2.031s
+Analyzer 43/164: project/fixed.c; exit=0; diagnostics=0; 1.063s
+Analyzer 44/164: project/fixed_text.c; exit=0; diagnostics=0; 0.327s
+Analyzer 45/164: project/document.c; exit=0; diagnostics=0; 1.342s
+Analyzer 46/164: project/epub_write.c; exit=0; diagnostics=0; 2.395s
+Analyzer 47/164: project/export_text.c; exit=0; diagnostics=0; 0.659s
+Analyzer 48/164: project/export_epub.c; exit=0; diagnostics=0; 2.887s
+Analyzer 49/164: project/docx.c; exit=0; diagnostics=1; 4.161s
+Analyzer 50/164: project/fb2.c; exit=0; diagnostics=0; 1.325s
+Analyzer 51/164: project/huff.c; exit=0; diagnostics=0; 1.235s
+Analyzer 52/164: project/navigation.c; exit=0; diagnostics=0; 1.494s
+Analyzer 53/164: project/formats.c; exit=0; diagnostics=7; 5.755s
+Analyzer 54/164: project/xmp.c; exit=0; diagnostics=0; 0.56s
+Analyzer 55/164: project/kf8.c; exit=0; diagnostics=2; 6.146s
+Analyzer 56/164: project/display_bidi.c; exit=0; diagnostics=0; 1.444s
+Analyzer 57/164: project/chapter_reader.c; exit=0; diagnostics=6; 2.7s
+Analyzer 58/164: project/floats.c; exit=0; diagnostics=0; 0.537s
+Analyzer 59/164: project/rtf.c; exit=0; diagnostics=0; 6.837s
+Analyzer 60/164: project/flow.c; exit=0; diagnostics=0; 2.479s
+Analyzer 61/164: project/layout.c; exit=0; diagnostics=0; 1.061s
+Analyzer 62/164: project/pager_table.c; exit=0; diagnostics=0; 4.091s
+Analyzer 63/164: project/positioned.c; exit=0; diagnostics=0; 0.528s
+Analyzer 64/164: project/publication.c; exit=0; diagnostics=1; 4.286s
+Analyzer 65/164: project/pager.c; exit=0; diagnostics=0; 9.759s
+Analyzer 66/164: project/ruby.c; exit=0; diagnostics=0; 1.499s
+Analyzer 67/164: project/inline.c; exit=0; diagnostics=0; 17.024s
+Analyzer 68/164: project/style.c; exit=0; diagnostics=0; 5.5s
+Analyzer 69/164: project/raster.c; exit=0; diagnostics=0; 1.832s
+Analyzer 70/164: project/cbz.c; exit=0; diagnostics=0; 1.755s
+Analyzer 71/164: project/pdf_annotations.c; exit=0; diagnostics=2; 0.413s
+Analyzer 72/164: project/pdf_calculator.c; exit=0; diagnostics=0; 0.587s
+Analyzer 73/164: project/pdf_ccitt.c; exit=0; diagnostics=0; 0.419s
+Analyzer 74/164: project/pdf_annotation_paint.c; exit=0; diagnostics=0; 2.248s
+Analyzer 75/164: project/pdf_cmap.c; exit=0; diagnostics=0; 0.653s
+Analyzer 76/164: project/pdf_color.c; exit=0; diagnostics=0; 2.072s
+Analyzer 77/164: project/pdf_crypto.c; exit=0; diagnostics=0; 0.126s
+Analyzer 78/164: project/pdf_content.c; exit=0; diagnostics=0; 2.408s
+Analyzer 79/164: project/toc_page.c; exit=0; diagnostics=1; 11.029s
+Analyzer 80/164: project/pdf_face.c; exit=0; diagnostics=0; 0.342s
+Analyzer 81/164: project/pdf_document.c; exit=0; diagnostics=0; 0.724s
+Analyzer 82/164: project/pdf_encoding.c; exit=0; diagnostics=0; 0.788s
+Analyzer 83/164: project/pdf_font.c; exit=0; diagnostics=0; 0.848s
+Analyzer 84/164: project/pdf_function.c; exit=0; diagnostics=0; 1.121s
+Analyzer 85/164: project/pdf_jpx.c; exit=0; diagnostics=0; 0.431s
+Analyzer 86/164: project/pdf_pages.c; exit=0; diagnostics=0; 0.421s
+Analyzer 87/164: project/pdf_paint.c; exit=0; diagnostics=0; 0.837s
+Analyzer 88/164: project/pdf_image.c; exit=0; diagnostics=0; 2.244s
+Analyzer 89/164: project/pdf_raster.c; exit=0; diagnostics=0; 0.214s
+Analyzer 90/164: project/pdf_shading.c; exit=0; diagnostics=0; 1.803s
+Analyzer 91/164: project/pdf_shading_mesh.c; exit=0; diagnostics=0; 2.322s
+Analyzer 92/164: project/pdf_softmask_parse.c; exit=0; diagnostics=0; 0.359s
+Analyzer 93/164: project/pdf_softmask.c; exit=0; diagnostics=0; 1.112s
+Analyzer 94/164: project/pdf_view.c; exit=0; diagnostics=0; 0.24s
+Analyzer 95/164: project/xmp_write.c; exit=0; diagnostics=0; 0.55s
+Analyzer 96/164: project/aac.c; exit=0; diagnostics=0; 0.233s
+Analyzer 97/164: project/audio.c; exit=0; diagnostics=0; 0.952s
+Analyzer 98/164: project/audio_output.c; exit=0; diagnostics=0; 0.988s
+Analyzer 99/164: project/audio_player.c; exit=0; diagnostics=0; 0.346s
+Analyzer 100/164: project/pdf_objects.c; exit=0; diagnostics=0; 7.681s
+Analyzer 101/164: project/bmff.c; exit=0; diagnostics=3; 0.368s
+Analyzer 102/164: project/m4b.c; exit=0; diagnostics=0; 0.13s
+Analyzer 103/164: project/flac.c; exit=0; diagnostics=0; 1.504s
+Analyzer 104/164: project/mp3.c; exit=0; diagnostics=0; 0.118s
+Analyzer 105/164: project/pcm.c; exit=0; diagnostics=0; 0.247s
+Analyzer 106/164: project/stretch.c; exit=0; diagnostics=0; 0.537s
+Analyzer 107/164: project/wave.c; exit=0; diagnostics=0; 0.427s
+Analyzer 108/164: project/pdf_write.c; exit=0; diagnostics=0; 7.141s
+Analyzer 109/164: project/m4b_metadata.c; exit=0; diagnostics=0; 3.572s
+Analyzer 110/164: project/text_index.c; exit=0; diagnostics=0; 0.483s
+Analyzer 111/164: project/library.c; exit=0; diagnostics=0; 3.188s
+Analyzer 112/164: freetype/ftbbox.c; exit=0; diagnostics=0; 0.244s
+Analyzer 113/164: freetype/ftbdf.c; exit=0; diagnostics=0; 0.164s
+Analyzer 114/164: freetype/ftbitmap.c; exit=0; diagnostics=7; 0.985s
+Analyzer 115/164: freetype/ftcid.c; exit=0; diagnostics=0; 0.195s
+Analyzer 116/164: freetype/ftfstype.c; exit=0; diagnostics=0; 0.167s
+Analyzer 117/164: freetype/ftgasp.c; exit=0; diagnostics=0; 0.182s
+Analyzer 118/164: freetype/ftglyph.c; exit=0; diagnostics=0; 0.317s
+Analyzer 119/164: freetype/ftgxval.c; exit=0; diagnostics=0; 0.155s
+Analyzer 120/164: freetype/ftinit.c; exit=0; diagnostics=0; 0.202s
+Analyzer 121/164: freetype/ftmm.c; exit=0; diagnostics=0; 0.383s
+Analyzer 122/164: freetype/ftotval.c; exit=0; diagnostics=0; 0.153s
+Analyzer 123/164: freetype/ftpatent.c; exit=0; diagnostics=0; 0.15s
+Analyzer 124/164: freetype/ftpfr.c; exit=0; diagnostics=0; 0.17s
+Analyzer 125/164: freetype/autofit.c; exit=0; diagnostics=1; 7.907s
+Analyzer 126/164: freetype/ftstroke.c; exit=0; diagnostics=0; 2.647s
+Analyzer 127/164: freetype/ftsynth.c; exit=0; diagnostics=0; 0.332s
+Analyzer 128/164: freetype/ftbase.c; exit=0; diagnostics=11; 8.018s
+Analyzer 129/164: freetype/ftwinfnt.c; exit=0; diagnostics=0; 0.272s
+Analyzer 130/164: freetype/fttype1.c; exit=0; diagnostics=0; 0.328s
+Analyzer 131/164: freetype/ftbzip2.c; exit=0; diagnostics=0; 0.404s
+Analyzer 132/164: freetype/bdf.c; exit=0; diagnostics=0; 1.579s
+Analyzer 133/164: freetype/ftcache.c; exit=0; diagnostics=2; 2.0s
+Analyzer 134/164: freetype/type1cid.c; exit=0; diagnostics=1; 2.115s
+Analyzer 135/164: freetype/hvf.c; exit=0; diagnostics=0; 0.516s
+Analyzer 136/164: freetype/ftlzw.c; exit=0; diagnostics=0; 0.769s
+Analyzer 137/164: freetype/ftgzip.c; exit=0; diagnostics=0; 3.594s
+Analyzer 138/164: freetype/pcf.c; exit=0; diagnostics=1; 1.894s
+Analyzer 139/164: freetype/pfr.c; exit=0; diagnostics=0; 4.897s
+Analyzer 140/164: freetype/cff.c; exit=0; diagnostics=0; 12.271s
+Analyzer 141/164: freetype/pshinter.c; exit=0; diagnostics=1; 2.809s
+Analyzer 142/164: freetype/psnames.c; exit=0; diagnostics=1; 0.77s
+Analyzer 143/164: freetype/raster.c; exit=0; diagnostics=0; 3.019s
+Analyzer 144/164: freetype/psaux.c; exit=0; diagnostics=0; 19.978s
+Analyzer 145/164: freetype/smooth.c; exit=0; diagnostics=0; 1.46s
+Analyzer 146/164: freetype/svg.c; exit=0; diagnostics=0; 0.469s
+Analyzer 147/164: freetype/sdf.c; exit=0; diagnostics=0; 17.51s
+Analyzer 148/164: freetype/type1.c; exit=0; diagnostics=0; 4.652s
+Analyzer 149/164: freetype/sfnt.c; exit=0; diagnostics=2; 19.589s
+Analyzer 150/164: freetype/winfnt.c; exit=0; diagnostics=1; 0.977s
+Analyzer 151/164: freetype/type42.c; exit=0; diagnostics=0; 1.64s
+Analyzer 152/164: freetype/ftdebug.c; exit=0; diagnostics=0; 0.451s
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-qual-20261108\tools\quality\analyze.py", line 124, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-qual-20261108\tools\quality\analyze.py", line 110, in main
+    result = future.result()
+  File "C:\Python314\Lib\concurrent\futures\_base.py", line 447, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Python314\Lib\concurrent\futures\_base.py", line 396, in __get_result
+    raise self._exception
+  File "C:\Python314\Lib\concurrent\futures\thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "C:\Python314\Lib\concurrent\futures\thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "C:\Users\Oscar\Documents\Codex\EXReader-qual-20261108\tools\quality\analyze.py", line 100, in run
+    sarif = json.loads(result.stderr)
+  File "C:\Python314\Lib\json\__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Python314\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\json\decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)

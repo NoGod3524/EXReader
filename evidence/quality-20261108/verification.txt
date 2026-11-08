@@ -1,0 +1,1 @@
+PASS: 111 C sources; 205 tests; 1884 fixture inventory; 19 books/11484 unchanged pages; 93.79% line coverage; source boundary clean.
