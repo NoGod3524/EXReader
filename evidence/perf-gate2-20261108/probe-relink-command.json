@@ -1,0 +1,14 @@
+[
+  "gcc",
+  "-O3",
+  "-DNDEBUG",
+  "-Itools/perf",
+  "-Iinclude",
+  "-Ievidence/perf-gate2-20261108/build/sdk/generated/include",
+  "evidence/perf-gate2-20261108/build/ratio_probe.c",
+  "tools/perf/reference.c",
+  "evidence/perf-gate2-20261108/build/libexreader.dll",
+  "-lpsapi",
+  "-o",
+  "evidence/perf-gate2-20261108/build/ratio-probe.exe"
+]

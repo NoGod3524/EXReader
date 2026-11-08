@@ -1,0 +1,48 @@
+run 1/1: 19 books complete
+{
+  "calibration_ms": {
+    "n": 1,
+    "p50": 114.2241,
+    "p95": 114.2241,
+    "max": 114.2241,
+    "min": 114.2241,
+    "cv_pct": 0.0,
+    "range_over_median_pct": 0.0
+  },
+  "target_ms": {
+    "n": 1,
+    "p50": 41.9715,
+    "p95": 41.9715,
+    "max": 41.9715,
+    "min": 41.9715,
+    "cv_pct": 0.0,
+    "range_over_median_pct": 0.0
+  },
+  "reference_ms": {
+    "n": 1,
+    "p50": 127.0392,
+    "p95": 127.0392,
+    "max": 127.0392,
+    "min": 127.0392,
+    "cv_pct": 0.0,
+    "range_over_median_pct": 0.0
+  },
+  "ratio": {
+    "n": 1,
+    "p50": 0.3303822757070259,
+    "p95": 0.3303822757070259,
+    "max": 0.3303822757070259,
+    "min": 0.3303822757070259,
+    "cv_pct": 0.0,
+    "range_over_median_pct": 0.0
+  },
+  "paired_ratio_p95": {
+    "n": 1,
+    "p50": 0.377068255,
+    "p95": 0.377068255,
+    "max": 0.377068255,
+    "min": 0.377068255,
+    "cv_pct": 0.0,
+    "range_over_median_pct": 0.0
+  }
+}

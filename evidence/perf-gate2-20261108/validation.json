@@ -1,0 +1,30 @@
+{
+  "checks": {
+    "ratio_units_and_raw_tamper": true,
+    "sdk_provenance_compatibility": true,
+    "localized_60pct_slowdown_rejected": true,
+    "legacy_e1_and_gate_selfchecks": true,
+    "powershell_syntax": true,
+    "workflow_patch_dry_run": true,
+    "exact_final_dll_full_regression_zero_diff": true,
+    "all_power_sessions_restored": 7,
+    "own_busy_worker_stopped": true,
+    "protected_paths_unchanged": true
+  },
+  "statistics": {
+    "reference_normal_dispersion_pct": 0.3960817537692535,
+    "ratio_normal_dispersion_pct": 1.4722359600670674,
+    "ratio_loaded_dispersion_pct": 17.431073993302856,
+    "loaded_ratio_median_drift_pct": -16.99868049031632
+  },
+  "acceptance": {
+    "reference_dispersion_lt3": true,
+    "ratio_dispersion_lt5": true,
+    "loaded_ratio_drift_lt10": false,
+    "approximately_2x_target": false,
+    "signatures_unchanged": true,
+    "all_book_dispersion_lt5": false,
+    "all_book_loaded_drift_lt10": false
+  },
+  "required_restoration_granted": false
+}
