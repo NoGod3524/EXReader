@@ -1,0 +1,63 @@
+diff --git a/.github/workflows/performance-ratio.yml b/.github/workflows/performance-ratio.yml
+new file mode 100644
+--- /dev/null
++++ b/.github/workflows/performance-ratio.yml
+@@ -0,0 +1,58 @@
++name: Performance ratio probe
++on:
++  pull_request:
++    branches: [main]
++  workflow_dispatch:
++permissions:
++  contents: read
++concurrency:
++  group: performance-ratio-${{ github.repository }}
++  cancel-in-progress: false
++jobs:
++  ratio:
++    name: performance-ratio
++    runs-on: [self-hosted, Windows, X64, exreader-perf]
++    timeout-minutes: 45
++    env:
++      PERF_RATIO_POLICY: ${{ vars.PERF_RATIO_POLICY }}
++      PERF_FONT: ${{ vars.PERF_FONT }}
++      PERF_CORPUS: ${{ vars.PERF_CORPUS }}
++    defaults:
++      run:
++        shell: pwsh
++    steps:
++      - uses: actions/checkout@v4
++      - name: Require frozen eligible policy and local corpus
++        run: |
++          $ErrorActionPreference = 'Stop'
++          if (!$env:PERF_RATIO_POLICY -or !$env:PERF_FONT -or !$env:PERF_CORPUS) { throw 'Provision policy, pinned font, and 19-book manifest' }
++          $policy = Get-Content $env:PERF_RATIO_POLICY -Raw | ConvertFrom-Json
++          if (!$policy.eligible) { throw 'Baseline is ineligible; never refreeze from a candidate' }
++      - name: Build measurement probes and SDK
++        run: |
++          cmake -S tools/perf -B build/perf-ratio-build -G Ninja -DCMAKE_BUILD_TYPE=Release
++          if ($LASTEXITCODE) { exit $LASTEXITCODE }
++          cmake --build build/perf-ratio-build --target ratio-probe perf-reference --parallel 4
++          exit $LASTEXITCODE
++      - name: Measure five runs of the same 19 books
++        run: |
++          python -X utf8 tools/perf/ratio_capture.py capture --build build/perf-ratio-build --font $env:PERF_FONT --manifest $env:PERF_CORPUS --output build/perf-ratio/candidate --cpu 3 --runs 5
++          exit $LASTEXITCODE
++      - name: Recompute raw ratios and enforce frozen tiers
++        if: always()
++        run: |
++          python -X utf8 tools/perf/ratio_capture.py check $env:PERF_RATIO_POLICY build/perf-ratio/candidate build/perf-ratio/result.json
++          $auditExit = $LASTEXITCODE
++          if (Test-Path build/perf-ratio/result.json) {
++            $r = Get-Content build/perf-ratio/result.json -Raw | ConvertFrom-Json
++            if ($r.exceeded -contains 'warning') { Write-Output "::warning::ratio=$($r.candidate_ratio), warning=$($r.thresholds.warning)" }
++            if (!$r.local_numeric_pass) { Write-Output '::error::Ratio, calibration, qualification, compatibility, or signatures failed' }
++          }
++          exit $auditExit
++      - name: Retain all raw attempts
++        if: always()
++        uses: actions/upload-artifact@v4
++        with:
++          name: performance-ratio-${{ github.run_id }}-${{ github.run_attempt }}
++          path: build/perf-ratio/
++          if-no-files-found: error
