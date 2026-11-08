@@ -7,6 +7,8 @@ typedef struct {
   const exr_document *index;
   const exr_control *control;
   exr_navigation *entries;
+  size_t *orders, order_capacity;
+  int details;
   size_t count, capacity, bytes, visited;
   nav_path *paths;
   exr_error *error;
@@ -58,7 +60,15 @@ static size_t target_part(const navigation *n, const char *base, const char *hre
     if (strcmp(n->paths[mid].path, path) < 0) low = mid + 1;
     else high = mid;
   }
-  if (low == n->index->chapter_count || strcmp(n->paths[low].path, path)) return SIZE_MAX;
+  if (low == n->index->chapter_count || strcmp(n->paths[low].path, path)) {
+    size_t i, result = SIZE_MAX;
+    for (i = 0; i < n->index->chapter_count; i++)
+      if (exr_link_case_equal(n->paths[i].path, path)) {
+        if (result != SIZE_MAX) return SIZE_MAX;
+        result = n->paths[i].part;
+      }
+    return result;
+  }
   if (low + 1 < n->index->chapter_count && !strcmp(n->paths[low + 1].path, path)) return SIZE_MAX;
   return n->paths[low].part;
 }
@@ -68,7 +78,10 @@ static exr_status push(navigation *n, size_t parent, const char *label, const ch
   if (n->count >= 10000) return exr_fail(n->error, EXR_LIMIT, "Navigation exceeds 10000 entries");
   if (!exr_grow((void **)&n->entries, &n->capacity, n->count + 1, sizeof(*n->entries)))
     return exr_fail(n->error, EXR_MEMORY, "Navigation allocation failed");
+  if (n->details && !exr_grow((void **)&n->orders,&n->order_capacity,n->count+1,sizeof(*n->orders)))
+    return exr_fail(n->error,EXR_MEMORY,"Navigation order allocation failed");
   *entry = n->count++;
+  if (n->details) n->orders[*entry] = SIZE_MAX;
   v = &n->entries[*entry]; memset(v, 0, sizeof(*v));
   v->parent = parent; v->part = target_part(n, base, href);
   status = string(n, label, 65536, &v->label);
@@ -134,6 +147,19 @@ static exr_status item(navigation *n, const exr_document *d, size_t node, size_t
   fallback = label == SIZE_MAX ? "" : exr_node_attribute(&d->nodes[label], "aria-label");
   if (status == EXR_OK)
     status = push(n, parent, text.size ? text.data : fallback, href, base, role, entry);
+  if (status == EXR_OK && ncx && n->details) {
+    const char *order = exr_node_attribute(&d->nodes[node],"playOrder");
+    size_t value = 0;
+    if (order && *order) {
+      const char *s;
+      for (s=order; *s>='0' && *s<='9'; s++) {
+        size_t digit=(size_t)(*s-'0');
+        if (value>(SIZE_MAX-1-digit)/10) break;
+        value=value*10+digit;
+      }
+      if (!*s) n->orders[*entry]=value;
+    }
+  }
   free(text.data);
   return status;
 }
@@ -171,7 +197,7 @@ static exr_status resource(navigation *n, size_t index, int ncx) {
   size_t i;
   const char *base = n->index->resources[index].path;
   if (status != EXR_OK) return status;
-  if (ncx) status = walk(n, d, 0, SIZE_MAX, base, "toc", 1, 0);
+  if (ncx) status = walk(n, d, 0, SIZE_MAX, base, "", 1, 0);
   else for (i = 0; i < d->node_count && status == EXR_OK; i++) {
     const exr_node *v = &d->nodes[i];
     const char *role;
@@ -188,12 +214,15 @@ static exr_status resource(navigation *n, size_t index, int ncx) {
   exr_document_free(d);
   return status;
 }
-exr_status exr_epub_navigation(const exr_document *index, size_t metadata_bytes,
-                                exr_navigation **entries, size_t *count, exr_error *e) {
+exr_status exr_epub_navigation_details(const exr_document *index, size_t metadata_bytes,
+  exr_navigation **entries, size_t *count,size_t **orders,exr_toc_source *source,exr_error *e) {
   navigation n = {0}; exr_status status = EXR_OK;
   size_t i, ncx = SIZE_MAX;
   *entries = NULL; *count = 0;
+  if (orders) *orders=NULL;
+  if (source) *source=EXR_TOC_NAV;
   n.index = index; n.error = e; n.bytes = metadata_bytes;
+  n.details=orders!=NULL;
   if (index->shared_archive) n.control = &index->shared_archive->source.control;
   if (index->chapter_count) {
     n.paths = malloc(index->chapter_count*sizeof(*n.paths));
@@ -206,16 +235,37 @@ exr_status exr_epub_navigation(const exr_document *index, size_t metadata_bytes,
     if (token(index->resources[i].properties, "nav")) status = resource(&n, i, 0);
     if (ncx == SIZE_MAX && !strcmp(index->resources[i].media_type, "application/x-dtbncx+xml")) ncx = i;
   }
+  if (status == EXR_OK && n.details) {
+    int toc=0;
+    for (i=0;i<n.count;i++) {
+      const exr_navigation *v=&n.entries[i];
+      /* A license-only nav is not a chapter TOC: try NCX before body recovery. */
+      if (token(v->role,"toc") && *v->href && !strstr(v->label,"LICENSE") &&
+          !strstr(v->label,"License") && !strstr(v->label,"license") &&
+          !strstr(v->label,"\xe8\xae\xb8\xe5\x8f\xaf\xe8\xaf\x81")) toc=1;
+    }
+    if (!toc) {
+      exr_navigation_free(n.entries,n.count); n.entries=NULL; n.count=n.capacity=0;
+      free(n.orders); n.orders=NULL; n.order_capacity=0;
+      n.bytes=metadata_bytes;
+    }
+  }
   if (status == EXR_OK && !n.count) {
+    if (source) *source=EXR_TOC_NCX;
     if (index->has_ncx) ncx = index->ncx_resource;
     if (index->has_ncx && ncx == SIZE_MAX)
       status = exr_fail(e, EXR_FORMAT, "Referenced NCX resource is missing");
     else if (ncx != SIZE_MAX) status = resource(&n, ncx, 1);
   }
   free(n.paths);
-  if (status != EXR_OK) { exr_navigation_free(n.entries, n.count); return status; }
+  if (status != EXR_OK) { exr_navigation_free(n.entries, n.count); free(n.orders); return status; }
   *entries = n.entries; *count = n.count;
+  if (orders) *orders=n.orders;
   return exr_fail(e, EXR_OK, "");
+}
+exr_status exr_epub_navigation(const exr_document *index,size_t metadata_bytes,
+  exr_navigation **entries,size_t *count,exr_error *e) {
+  return exr_epub_navigation_details(index,metadata_bytes,entries,count,NULL,NULL,e);
 }
 exr_status exr_document_navigation(const exr_document *doc,exr_navigation **entries,
                                     size_t *count,exr_error *e) {
