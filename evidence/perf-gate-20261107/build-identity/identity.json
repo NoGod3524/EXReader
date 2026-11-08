@@ -1,0 +1,22 @@
+{
+  "advisory": true,
+  "accepted": false,
+  "source_sha": "2f288e15066d616972d312e638b5d9dd04d6e786",
+  "source_protected_trees": {
+    "src": "f32abb3bf08c3694be27b2496059714abd5e09fd",
+    "include": "649ba25fad17868f2fd2f5d128c56c070413dddc",
+    "cmake": "c72b22b873f4d6dc58bdbb5c6cb1a06e95fad4c8",
+    "CMakeLists.txt": "b20797a35e734e29ea22c2e8d87f4962271f03dc",
+    "tests/fixtures": "3524839ed89f78d4c20be196d6bdeb92f256313b",
+    "bindings": "54c12f70a1a63cae6574984a388b66bf6248c38e"
+  },
+  "comparison_key": "57f7fa41a364bcea394d36d93330f31c250fbac12964dc4f4b839e8ec8a87895",
+  "fresh_probe_sha256": "3e3a5850dfe32d89d7ec23740e125cc65679ddf9407d099ce4e14a99ba7e1527",
+  "fresh_sdk_sha256": "2f115dbf44132aeb80fe9c403e6595bb202df30876c2525159738ad2bea4e002",
+  "build_identity_files": {
+    "CMakeCache.txt": "54383f10a929f81670bfef836215dc85e459d2ba4578e164c84ca1fa8f894519",
+    "compile_commands.json": "1e4bc540fd1f0217a3fdff2ca0be01e3a6e238a46a1c146d55c24040555eceaf",
+    "e1_probe.c": "10e57023e19f05fc1d212e8c1d2d19a94b2aa0164875debf77357f18eb5a367d"
+  },
+  "e3_restoration_granted": false
+}

@@ -1,0 +1,166 @@
+{
+  "advisory": true,
+  "accepted": false,
+  "e3_restoration_granted": false,
+  "policy_sha256": "fc2937e1c22041ab973d47abeecddca61f8f50cdfdb053102921f3d431f82c7f",
+  "candidate_samples_sha256": "cce19ef9d3abb1af9ef26bffaff275d6a856d6f60e0c9b9e4d270a9bf84f9a0a",
+  "problems": [
+    "default-release: >=5 processes, idle target and all metrics <5% required",
+    "1280x800: >=5 processes, idle target and all metrics <5% required",
+    "2560x1440: >=5 processes, idle target and all metrics <5% required",
+    "baseline ineligible: diagnostic thresholds only"
+  ],
+  "comparisons": [
+    {
+      "configuration": "default-release",
+      "metric": "open_ms",
+      "measured_p95": 36.2745,
+      "ratio": 1.0290696684803886,
+      "exceeded": []
+    },
+    {
+      "configuration": "default-release",
+      "metric": "first_visible_ms",
+      "measured_p95": 84.8422,
+      "ratio": 1.0866909428118745,
+      "exceeded": []
+    },
+    {
+      "configuration": "default-release",
+      "metric": "first_render_ms",
+      "measured_p95": 8.2642,
+      "ratio": 1.0340202444853173,
+      "exceeded": []
+    },
+    {
+      "configuration": "default-release",
+      "metric": "turn_p50_ms",
+      "measured_p95": 13.0445,
+      "ratio": 1.051628090711942,
+      "exceeded": []
+    },
+    {
+      "configuration": "default-release",
+      "metric": "turn_p95_ms",
+      "measured_p95": 18.8689,
+      "ratio": 1.0214478663108262,
+      "exceeded": []
+    },
+    {
+      "configuration": "default-release",
+      "metric": "turn_max_ms",
+      "measured_p95": 19.692,
+      "ratio": 1.0392105124280964,
+      "exceeded": []
+    },
+    {
+      "configuration": "default-release",
+      "metric": "random_p95_ms",
+      "measured_p95": 161.72,
+      "ratio": 1.042402553538187,
+      "exceeded": []
+    },
+    {
+      "configuration": "1280x800",
+      "metric": "open_ms",
+      "measured_p95": 35.3497,
+      "ratio": 1.0118879957863882,
+      "exceeded": []
+    },
+    {
+      "configuration": "1280x800",
+      "metric": "first_visible_ms",
+      "measured_p95": 84.9704,
+      "ratio": 1.0175364644456686,
+      "exceeded": []
+    },
+    {
+      "configuration": "1280x800",
+      "metric": "first_render_ms",
+      "measured_p95": 10.5481,
+      "ratio": 0.8584554784208085,
+      "exceeded": []
+    },
+    {
+      "configuration": "1280x800",
+      "metric": "turn_p50_ms",
+      "measured_p95": 15.5794,
+      "ratio": 1.0185210609240265,
+      "exceeded": []
+    },
+    {
+      "configuration": "1280x800",
+      "metric": "turn_p95_ms",
+      "measured_p95": 21.9385,
+      "ratio": 0.9918530474214127,
+      "exceeded": []
+    },
+    {
+      "configuration": "1280x800",
+      "metric": "turn_max_ms",
+      "measured_p95": 23.3533,
+      "ratio": 1.0427349282467562,
+      "exceeded": []
+    },
+    {
+      "configuration": "1280x800",
+      "metric": "random_p95_ms",
+      "measured_p95": 188.324,
+      "ratio": 1.0396874820576012,
+      "exceeded": []
+    },
+    {
+      "configuration": "2560x1440",
+      "metric": "open_ms",
+      "measured_p95": 37.4109,
+      "ratio": 1.052778356230688,
+      "exceeded": []
+    },
+    {
+      "configuration": "2560x1440",
+      "metric": "first_visible_ms",
+      "measured_p95": 128.8714,
+      "ratio": 1.0250545849357509,
+      "exceeded": []
+    },
+    {
+      "configuration": "2560x1440",
+      "metric": "first_render_ms",
+      "measured_p95": 35.4494,
+      "ratio": 1.053201698223639,
+      "exceeded": []
+    },
+    {
+      "configuration": "2560x1440",
+      "metric": "turn_p50_ms",
+      "measured_p95": 56.0908,
+      "ratio": 1.0289586551267422,
+      "exceeded": []
+    },
+    {
+      "configuration": "2560x1440",
+      "metric": "turn_p95_ms",
+      "measured_p95": 64.324,
+      "ratio": 1.0648857868440482,
+      "exceeded": []
+    },
+    {
+      "configuration": "2560x1440",
+      "metric": "turn_max_ms",
+      "measured_p95": 74.7641,
+      "ratio": 1.2224146106178773,
+      "exceeded": [
+        "warning"
+      ]
+    },
+    {
+      "configuration": "2560x1440",
+      "metric": "random_p95_ms",
+      "measured_p95": 563.9887,
+      "ratio": 0.9913150972228911,
+      "exceeded": []
+    }
+  ],
+  "worst_latency_ratio": 1.2224146106178773,
+  "local_numeric_pass": false
+}
