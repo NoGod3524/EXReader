@@ -1,0 +1,170 @@
+HOST	phase=1	engine=3.42.0	pid=18972
+STEP	1	import	PASS	page=0;status=已导入《紅樓夢》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	3	wait_idle	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	4	shell	PASS	reading screen
+STEP	5	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	6	shell_font	PASS	page=1;status=第 1 页。
+STEP	7	shell_client	PASS	page=1;status=第 1 页。
+STEP	8	wait_idle	PASS	page=1;status=第 1 页。
+STEP	9	shell_click	PASS	button invoked
+STEP	10	ui_cues	PASS	focus cues set
+STEP	11	shell_click	PASS	button invoked
+STEP	12	probe_wait	PASS	waited without blocking UI
+STEP	13	toc_click	PASS	page=17;status=第 17 页。
+STEP	14	wait_idle	PASS	page=17;status=第 17 页。
+STEP	15	probe_wait	PASS	waited without blocking UI
+STEP	16	shell_page	PASS	page=10;status=第 10 页。
+STEP	17	wait_idle	PASS	page=10;status=第 10 页。
+STEP	18	shell_measure	PASS	physical layout captured
+STEP	19	probe_wait	PASS	waited without blocking UI
+STEP	20	select_pointer	PASS	selection pointer dispatched
+STEP	21	select_pointer	PASS	selection pointer dispatched
+STEP	22	select_pointer	PASS	selection pointer dispatched
+STEP	23	select_key	PASS	selection key dispatched
+STEP	24	select_dump	PASS	logical selection and clipboard saved
+STEP	25	shell_measure	PASS	physical layout captured
+STEP	26	probe_wait	PASS	waited without blocking UI
+STEP	27	shell_click	PASS	button invoked
+STEP	28	shell_measure	PASS	physical layout captured
+STEP	29	probe_wait	PASS	waited without blocking UI
+STEP	30	shell_click	PASS	button invoked
+STEP	31	select_key	PASS	selection key dispatched
+STEP	32	select_pointer	PASS	selection pointer dispatched
+STEP	33	select_pointer	PASS	selection pointer dispatched
+STEP	34	select_pointer	PASS	selection pointer dispatched
+STEP	35	select_key	PASS	selection key dispatched
+STEP	36	select_dump	PASS	logical selection and clipboard saved
+STEP	37	select_key	PASS	selection key dispatched
+STEP	38	select_pointer	PASS	selection pointer dispatched
+STEP	39	select_pointer	PASS	selection pointer dispatched
+STEP	40	select_pointer	PASS	selection pointer dispatched
+STEP	41	select_key	PASS	selection key dispatched
+STEP	42	select_dump	PASS	logical selection and clipboard saved
+STEP	43	select_key	PASS	selection key dispatched
+STEP	44	select_pointer	PASS	selection pointer dispatched
+STEP	45	select_pointer	PASS	selection pointer dispatched
+STEP	46	select_pointer	PASS	selection pointer dispatched
+STEP	47	select_key	PASS	selection key dispatched
+STEP	48	select_dump	PASS	logical selection and clipboard saved
+STEP	49	select_key	PASS	selection key dispatched
+STEP	50	select_pointer	PASS	selection pointer dispatched
+STEP	51	select_pointer	PASS	selection pointer dispatched
+STEP	52	select_pointer	PASS	selection pointer dispatched
+STEP	53	select_key	PASS	selection key dispatched
+STEP	54	select_dump	PASS	logical selection and clipboard saved
+STEP	55	select_key	PASS	selection key dispatched
+STEP	56	select_pointer	PASS	selection pointer dispatched
+STEP	57	select_pointer	PASS	selection pointer dispatched
+STEP	58	select_pointer	PASS	selection pointer dispatched
+STEP	59	select_key	PASS	selection key dispatched
+STEP	60	select_dump	PASS	logical selection and clipboard saved
+STEP	61	select_pointer	PASS	selection pointer dispatched
+STEP	62	select_pointer	PASS	selection pointer dispatched
+STEP	63	select_key	PASS	selection key dispatched
+STEP	64	select_dump	PASS	logical selection and clipboard saved
+STEP	65	select_pointer	PASS	selection pointer dispatched
+STEP	66	select_pointer	PASS	selection pointer dispatched
+STEP	67	select_key	PASS	selection key dispatched
+STEP	68	select_dump	PASS	logical selection and clipboard saved
+STEP	69	select_pointer	PASS	selection pointer dispatched
+STEP	70	select_pointer	PASS	selection pointer dispatched
+STEP	71	select_key	PASS	selection key dispatched
+STEP	72	select_dump	PASS	logical selection and clipboard saved
+STEP	73	select_pointer	PASS	selection pointer dispatched
+STEP	74	select_pointer	PASS	selection pointer dispatched
+STEP	75	select_key	PASS	selection key dispatched
+STEP	76	select_dump	PASS	logical selection and clipboard saved
+STEP	77	select_pointer	PASS	selection pointer dispatched
+STEP	78	select_pointer	PASS	selection pointer dispatched
+STEP	79	select_key	PASS	selection key dispatched
+STEP	80	select_dump	PASS	logical selection and clipboard saved
+STEP	81	shell_page	PASS	page=2;status=第 2 页。
+STEP	82	wait_idle	PASS	page=2;status=第 2 页。
+STEP	83	select_pointer	PASS	selection pointer dispatched
+STEP	84	select_pointer	PASS	selection pointer dispatched
+STEP	85	select_pointer	PASS	selection pointer dispatched
+STEP	86	select_pointer	PASS	selection pointer dispatched
+STEP	87	select_key	PASS	selection key dispatched
+STEP	88	select_dump	PASS	logical selection and clipboard saved
+STEP	89	shell_page	PASS	page=3;status=第 3 页。
+STEP	90	wait_idle	PASS	page=3;status=第 3 页。
+STEP	91	select_pointer	PASS	selection pointer dispatched
+STEP	92	select_pointer	PASS	selection pointer dispatched
+STEP	93	select_pointer	PASS	selection pointer dispatched
+STEP	94	select_pointer	PASS	selection pointer dispatched
+STEP	95	select_key	PASS	selection key dispatched
+STEP	96	select_dump	PASS	logical selection and clipboard saved
+STEP	97	shell_page	PASS	page=4;status=第 4 页。
+STEP	98	wait_idle	PASS	page=4;status=第 4 页。
+STEP	99	select_pointer	PASS	selection pointer dispatched
+STEP	100	select_pointer	PASS	selection pointer dispatched
+STEP	101	select_pointer	PASS	selection pointer dispatched
+STEP	102	select_pointer	PASS	selection pointer dispatched
+STEP	103	select_key	PASS	selection key dispatched
+STEP	104	select_dump	PASS	logical selection and clipboard saved
+STEP	105	shell_page	PASS	page=5;status=第 5 页。
+STEP	106	wait_idle	PASS	page=5;status=第 5 页。
+STEP	107	select_pointer	PASS	selection pointer dispatched
+STEP	108	select_pointer	PASS	selection pointer dispatched
+STEP	109	select_pointer	PASS	selection pointer dispatched
+STEP	110	select_pointer	PASS	selection pointer dispatched
+STEP	111	select_key	PASS	selection key dispatched
+STEP	112	select_dump	PASS	logical selection and clipboard saved
+STEP	113	shell_page	PASS	page=6;status=第 6 页。
+STEP	114	wait_idle	PASS	page=6;status=第 6 页。
+STEP	115	select_pointer	PASS	selection pointer dispatched
+STEP	116	select_pointer	PASS	selection pointer dispatched
+STEP	117	select_pointer	PASS	selection pointer dispatched
+STEP	118	select_pointer	PASS	selection pointer dispatched
+STEP	119	select_key	PASS	selection key dispatched
+STEP	120	select_dump	PASS	logical selection and clipboard saved
+STEP	121	select_key	PASS	selection key dispatched
+STEP	122	shell_page	PASS	page=10;status=第 10 页。
+STEP	123	wait_idle	PASS	page=10;status=第 10 页。
+STEP	124	select_pointer	PASS	selection pointer dispatched
+STEP	125	select_pointer	PASS	selection pointer dispatched
+STEP	126	select_edge	PASS	selection edge turn dispatched
+STEP	127	wait_idle	PASS	page=11;status=第 11 页。
+STEP	128	select_pointer	PASS	selection pointer dispatched
+STEP	129	select_pointer	PASS	selection pointer dispatched
+STEP	130	select_key	PASS	selection key dispatched
+STEP	131	select_dump	PASS	logical selection and clipboard saved
+STEP	132	shell_measure	PASS	physical layout captured
+STEP	133	probe_wait	PASS	waited without blocking UI
+STEP	134	prev	PASS	page=10;status=第 10 页。
+STEP	135	wait_idle	PASS	page=10;status=第 10 页。
+STEP	136	shell_measure	PASS	physical layout captured
+STEP	137	probe_wait	PASS	waited without blocking UI
+STEP	138	select_key	PASS	selection key dispatched
+STEP	139	select_pointer	PASS	selection pointer dispatched
+STEP	140	select_pointer	PASS	selection pointer dispatched
+STEP	141	select_key	PASS	selection key dispatched
+STEP	142	select_key	PASS	selection key dispatched
+STEP	143	select_dump	PASS	logical selection and clipboard saved
+STEP	144	select_key	PASS	selection key dispatched
+STEP	145	select_key	PASS	selection key dispatched
+STEP	146	select_dump	PASS	logical selection and clipboard saved
+STEP	147	select_key	PASS	selection key dispatched
+STEP	148	select_key	PASS	selection key dispatched
+STEP	149	select_dump	PASS	logical selection and clipboard saved
+STEP	150	shell_page	PASS	page=2;status=第 2 页。
+STEP	151	wait_idle	PASS	page=2;status=第 2 页。
+STEP	152	select_key	PASS	selection key dispatched
+STEP	153	select_key	PASS	selection key dispatched
+STEP	154	select_dump	PASS	logical selection and clipboard saved
+STEP	155	shell_page	PASS	page=6;status=第 6 页。
+STEP	156	wait_idle	PASS	page=6;status=第 6 页。
+STEP	157	select_key	PASS	selection key dispatched
+STEP	158	select_key	PASS	selection key dispatched
+STEP	159	select_dump	PASS	logical selection and clipboard saved
+STEP	160	shell_page	PASS	page=10;status=第 10 页。
+STEP	161	wait_idle	PASS	page=10;status=第 10 页。
+STEP	162	select_key	PASS	selection key dispatched
+STEP	163	select_key	PASS	selection key dispatched
+STEP	164	select_dump	PASS	logical selection and clipboard saved
+STEP	165	select_key	PASS	selection key dispatched
+STEP	166	shell_measure	PASS	physical layout captured
+STEP	167	probe_wait	PASS	waited without blocking UI
+STEP	168	quit	PASS	closing
+DONE	168	eof	PASS	script finished

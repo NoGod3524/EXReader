@@ -1,0 +1,88 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/out/sdk/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/out/sdk
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 192
+    Start 192: windows-selection-boundaries
+
+192: Test command: C:\Users\Oscar\Documents\Codex\EXReader-select-20261108\out\sdk\exreader-shell-selection-test.exe "boundaries" "C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/tests/fixtures/fonts/primary.ttf"
+192: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/out/sdk
+192: Test timeout computed to be: 10000000
+192: WORD 0 3 紅
+192: WORD 3 6 樓
+192: WORD 6 9 夢
+192: WORD 9 12 中
+192: WORD 12 15 文
+192: WORD 19 24 Alpha
+192: WORD 25 30 bravo
+192: WORD 32 35 can
+192: WORD 38 40 co
+192: WORD 41 48 operate
+192: WORD 49 55 café
+192: WORD 57 68 👩‍💻
+192: WORD 30 31 ,
+192: WORD 35 36 '
+192: WORD 40 41 -
+192: PARAGRAPH 0 68
+192: PARAGRAPH 69 184
+192: PARAGRAPH 185 201
+192: PARAGRAPH 202 219
+192: PARAGRAPH 220 236
+192: PASS
+1/5 Test #192: windows-selection-boundaries .....   Passed    0.08 sec
+test 193
+    Start 193: windows-selection-copy
+
+193: Test command: C:\Users\Oscar\Documents\Codex\EXReader-select-20261108\out\sdk\exreader-shell-selection-test.exe "copy" "C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/tests/fixtures/fonts/primary.ttf"
+193: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/out/sdk
+193: Test timeout computed to be: 10000000
+193: COPY cross-part exact; clipboard roundtrip; Ctrl+A 3/3
+193: PASS
+2/5 Test #193: windows-selection-copy ...........   Passed    0.05 sec
+test 194
+    Start 194: windows-selection-keyboard
+
+194: Test command: C:\Users\Oscar\Documents\Codex\EXReader-select-20261108\out\sdk\exreader-shell-selection-test.exe "keyboard" "C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/tests/fixtures/fonts/primary.ttf"
+194: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/out/sdk
+194: Test timeout computed to be: 10000000
+194: SHIFT inline 3/3; row 2/2; Ctrl+A/C/Esc 3/3
+194: PASS
+3/5 Test #194: windows-selection-keyboard .......   Passed    0.07 sec
+test 195
+    Start 195: windows-selection-raster
+
+195: Test command: C:\Users\Oscar\Documents\Codex\EXReader-select-20261108\out\sdk\exreader-shell-selection-test.exe "raster" "C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/tests/fixtures/fonts/primary.ttf"
+195: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/out/sdk
+195: Test timeout computed to be: 10000000
+195: region mode=0 requested=0 box=28,0,87,21 lines=7 flags=8
+195: RASTER horizontal + light/dark unchanged
+195: region mode=0 requested=1 box=42,28,63,98 lines=3 flags=136
+195: RASTER vertical + light/dark unchanged
+195: PASS
+4/5 Test #195: windows-selection-raster .........   Passed    0.06 sec
+test 196
+    Start 196: windows-selection-generated
+
+196: Test command: C:\Users\Oscar\Documents\Codex\EXReader-select-20261108\out\sdk\exreader-shell-selection-test.exe "generated" "C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/tests/fixtures/fonts/primary.ttf"
+196: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-select-20261108/out/sdk
+196: Test timeout computed to be: 10000000
+196: hyphen glyphs=29 lines=7
+196: HYPHENS generated=4 U+2010=0 exact=1
+196: COMBINE glyphs=2 copied-bytes=2 extra-bytes=0
+196: PASS
+5/5 Test #196: windows-selection-generated ......   Passed    0.05 sec
+
+The following tests passed:
+	windows-selection-boundaries
+	windows-selection-copy
+	windows-selection-keyboard
+	windows-selection-raster
+	windows-selection-generated
+
+100% tests passed out of 5
+
+Total Test time (real) =   0.33 sec
