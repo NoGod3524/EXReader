@@ -1,0 +1,388 @@
+{
+  "schema": 1,
+  "date": "2026-11-08",
+  "source_revision": "93f9d8bb1ab5ed700bc8dbad47eef650eeb5bca9",
+  "artifact_root_hint": "../tmp/platform-delivery-20261108/delivery (or EXREADER_PLATFORM_ARTIFACTS / --root)",
+  "abi_symbol_count": 389,
+  "artifacts": [
+    {
+      "platform": "Windows",
+      "architecture": "x86_64",
+      "path": "windows/x86_64/exreader.dll",
+      "target": "exreader.dll",
+      "kind": "library",
+      "status": "已产出",
+      "reason": "",
+      "source": "Reused local SDK; SHA matches docs/ui/evidence/annotations/metadata.json; engine source unchanged from 93f9d8bb",
+      "build_commands": [
+        "cmake -S . -B build/platform-windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_PDF_CRYPTO=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF",
+        "cmake --build build/platform-windows --parallel 6",
+        "cmake --install build/platform-windows --prefix stage/windows",
+        "pwsh -File docs/ui/acceptance/build_real_exe.ps1 -SdkBuild build/platform-windows -Out build/platform-windows-host",
+        "Copy-Item build/platform-windows-host/EXReader-fix.exe delivery/windows/x86_64/EXReader.exe",
+        "Copy-Item build/platform-windows/libexreader.dll delivery/windows/x86_64/exreader.dll",
+        "Copy-Item build/platform-windows/libexreader.dll delivery/windows/x86_64/libexreader.dll"
+      ],
+      "size_bytes": 6102526,
+      "sha256": "49344b73f2a875b0f5d05cf9c1ca589a46295410290235600a7566cc3d65950f",
+      "exports": [
+        {
+          "machine": "0x8664",
+          "symbol_count": 389,
+          "contract_count": 389,
+          "missing_count": 0,
+          "extra_count": 0
+        }
+      ]
+    },
+    {
+      "platform": "Windows",
+      "architecture": "x86_64",
+      "path": "windows/x86_64/EXReader.exe",
+      "target": "EXReader.exe",
+      "kind": "program",
+      "status": "已产出",
+      "reason": "",
+      "source": "Reused local annotations host b3d91133; same executable source as 93f9d8bb",
+      "build_commands": [
+        "cmake -S . -B build/platform-windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_PDF_CRYPTO=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF",
+        "cmake --build build/platform-windows --parallel 6",
+        "cmake --install build/platform-windows --prefix stage/windows",
+        "pwsh -File docs/ui/acceptance/build_real_exe.ps1 -SdkBuild build/platform-windows -Out build/platform-windows-host",
+        "Copy-Item build/platform-windows-host/EXReader-fix.exe delivery/windows/x86_64/EXReader.exe",
+        "Copy-Item build/platform-windows/libexreader.dll delivery/windows/x86_64/exreader.dll",
+        "Copy-Item build/platform-windows/libexreader.dll delivery/windows/x86_64/libexreader.dll"
+      ],
+      "size_bytes": 1272371,
+      "sha256": "9e3fa3baa07245897334d0d3db2dc9709e58085fa08f14086ccb46aa144999b8",
+      "exports": [
+        {
+          "machine": "0x8664",
+          "symbol_count": 0,
+          "contract_count": 0,
+          "missing_count": 389,
+          "extra_count": 0
+        }
+      ]
+    },
+    {
+      "platform": "Windows",
+      "architecture": "x86_64",
+      "path": "windows/x86_64/libexreader.dll",
+      "target": "libexreader.dll",
+      "kind": "library",
+      "status": "已产出",
+      "reason": "EXReader.exe imports this filename; exreader.dll is an FFI alias with identical bytes",
+      "source": "Same bytes as exreader.dll",
+      "build_commands": [
+        "cmake -S . -B build/platform-windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_PDF_CRYPTO=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF",
+        "cmake --build build/platform-windows --parallel 6",
+        "cmake --install build/platform-windows --prefix stage/windows",
+        "pwsh -File docs/ui/acceptance/build_real_exe.ps1 -SdkBuild build/platform-windows -Out build/platform-windows-host",
+        "Copy-Item build/platform-windows-host/EXReader-fix.exe delivery/windows/x86_64/EXReader.exe",
+        "Copy-Item build/platform-windows/libexreader.dll delivery/windows/x86_64/exreader.dll",
+        "Copy-Item build/platform-windows/libexreader.dll delivery/windows/x86_64/libexreader.dll"
+      ],
+      "size_bytes": 6102526,
+      "sha256": "49344b73f2a875b0f5d05cf9c1ca589a46295410290235600a7566cc3d65950f",
+      "exports": [
+        {
+          "machine": "0x8664",
+          "symbol_count": 389,
+          "contract_count": 389,
+          "missing_count": 0,
+          "extra_count": 0
+        }
+      ]
+    },
+    {
+      "platform": "Android",
+      "architecture": "arm64-v8a",
+      "path": "android/arm64-v8a/libexreader.so",
+      "target": "libexreader.so",
+      "kind": "library",
+      "status": "已产出",
+      "reason": "",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/android-arm64 -DCMAKE_TOOLCHAIN_FILE=\"$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake\" -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-24 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/android-arm64 --parallel 4",
+        "cmake --install build/android-arm64 --prefix stage/android-arm64",
+        "python tools/abi/package_android.py --sdk stage/android-arm64 --abi arm64-v8a --output delivery/android/arm64-v8a/exreader-arm64-v8a.aar"
+      ],
+      "size_bytes": 35581040,
+      "sha256": "4853cbbd81d3c51b63de3e5aa6c83f4cece58dd6f79bd39acb1aa9c3032adafa",
+      "exports": [
+        {
+          "machine": "0xb7",
+          "symbol_count": 2800,
+          "contract_count": 389,
+          "missing_count": 0,
+          "extra_count": 2411
+        }
+      ]
+    },
+    {
+      "platform": "Android",
+      "architecture": "arm64-v8a",
+      "path": "android/arm64-v8a/libexreader_jni.so",
+      "target": "libexreader_jni.so",
+      "kind": "jni",
+      "status": "已产出",
+      "reason": "JNI surface differs intentionally; not the core C ABI",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/android-arm64 -DCMAKE_TOOLCHAIN_FILE=\"$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake\" -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-24 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/android-arm64 --parallel 4",
+        "cmake --install build/android-arm64 --prefix stage/android-arm64",
+        "python tools/abi/package_android.py --sdk stage/android-arm64 --abi arm64-v8a --output delivery/android/arm64-v8a/exreader-arm64-v8a.aar"
+      ],
+      "size_bytes": 182248,
+      "sha256": "7c48f1f2fc790962dea15d81d95bce20b80dae44a9710875888dd63295a21dbc",
+      "exports": [
+        {
+          "machine": "0xb7",
+          "symbol_count": 38,
+          "contract_count": 0,
+          "missing_count": 389,
+          "extra_count": 38
+        }
+      ]
+    },
+    {
+      "platform": "Android",
+      "architecture": "arm64-v8a",
+      "path": "android/arm64-v8a/exreader-arm64-v8a.aar",
+      "target": "exreader-arm64-v8a.aar",
+      "kind": "container",
+      "status": "已产出",
+      "reason": "Local deterministic packaging of CI libraries + unchanged Java bindings; packaging/ABI verified, no Android runtime execution",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/android-arm64 -DCMAKE_TOOLCHAIN_FILE=\"$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake\" -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-24 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/android-arm64 --parallel 4",
+        "cmake --install build/android-arm64 --prefix stage/android-arm64",
+        "python tools/abi/package_android.py --sdk stage/android-arm64 --abi arm64-v8a --output delivery/android/arm64-v8a/exreader-arm64-v8a.aar"
+      ],
+      "size_bytes": 12155275,
+      "sha256": "fd25507dff5fa52aabf60b924aa1c1bae7cc10c0c9fd7726cc8c92913001549e",
+      "export_symbol_count": null,
+      "contained_core_export_count": 2800,
+      "contained_abi_count": 389
+    },
+    {
+      "platform": "Android",
+      "architecture": "x86_64",
+      "path": "android/x86_64/libexreader.so",
+      "target": "libexreader.so",
+      "kind": "library",
+      "status": "仅 CI 可产",
+      "reason": "No local NDK; current native workflow uploads ARM64 only; x86_64 command has not run",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/android-x86_64 -DCMAKE_TOOLCHAIN_FILE=\"$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake\" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-24 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/android-x86_64 --parallel 4",
+        "cmake --install build/android-x86_64 --prefix stage/android-x86_64",
+        "python tools/abi/package_android.py --sdk stage/android-x86_64 --abi x86_64 --output delivery/android/x86_64/exreader-x86_64.aar"
+      ],
+      "size_bytes": null,
+      "sha256": null,
+      "export_symbol_count": null
+    },
+    {
+      "platform": "Android",
+      "architecture": "x86_64",
+      "path": "android/x86_64/exreader-x86_64.aar",
+      "target": "exreader-x86_64.aar",
+      "kind": "container",
+      "status": "仅 CI 可产",
+      "reason": "No local NDK; current native workflow uploads ARM64 only; x86_64 command has not run",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/android-x86_64 -DCMAKE_TOOLCHAIN_FILE=\"$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake\" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-24 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/android-x86_64 --parallel 4",
+        "cmake --install build/android-x86_64 --prefix stage/android-x86_64",
+        "python tools/abi/package_android.py --sdk stage/android-x86_64 --abi x86_64 --output delivery/android/x86_64/exreader-x86_64.aar"
+      ],
+      "size_bytes": null,
+      "sha256": null,
+      "export_symbol_count": null
+    },
+    {
+      "platform": "macOS",
+      "architecture": "arm64",
+      "path": "macos/arm64/libexreader.dylib",
+      "target": "libexreader.dylib",
+      "kind": "library",
+      "status": "已产出",
+      "reason": "Keep libexreader.1.dylib beside runtime consumers; no local macOS execution",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/macos-arm64 -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/macos-arm64 --parallel 4",
+        "cmake --install build/macos-arm64 --prefix stage/macos-arm64"
+      ],
+      "size_bytes": 8149888,
+      "sha256": "5597c718986b20640f2144eb11cad7ce3104a6de188eb65cee0a72c850f9685d",
+      "exports": [
+        {
+          "machine": "0x100000c",
+          "symbol_count": 2799,
+          "contract_count": 389,
+          "missing_count": 0,
+          "extra_count": 2410
+        }
+      ]
+    },
+    {
+      "platform": "macOS",
+      "architecture": "x86_64",
+      "path": "macos/x86_64/libexreader.dylib",
+      "target": "libexreader.dylib",
+      "kind": "library",
+      "status": "仅 CI 可产",
+      "reason": "No local Apple SDK; macos-15 artifact inspected is arm64, not universal; Intel cross-build not archived",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/macos-x86_64 -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/macos-x86_64 --parallel 4",
+        "cmake --install build/macos-x86_64 --prefix stage/macos-x86_64"
+      ],
+      "size_bytes": null,
+      "sha256": null,
+      "export_symbol_count": null
+    },
+    {
+      "platform": "iOS",
+      "architecture": "arm64-device",
+      "path": "ios/arm64-device/libexreader.a",
+      "target": "libexreader.a",
+      "kind": "library",
+      "status": "仅 CI 可产",
+      "reason": "Current CI archives component .a files and aggregate .dylib, not libexreader.a; merge_ios.py requires macOS xcrun libtool; not yet executed",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/iphoneos -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/iphoneos --parallel 4",
+        "cmake --install build/iphoneos --prefix stage/iphoneos",
+        "python tools/abi/merge_ios.py --sdk stage/iphoneos --output delivery/ios/arm64-device/libexreader.a"
+      ],
+      "size_bytes": null,
+      "sha256": null,
+      "export_symbol_count": null
+    },
+    {
+      "platform": "iOS",
+      "architecture": "arm64-device",
+      "path": "ios/arm64-device/libexreader.dylib",
+      "target": "libexreader.dylib",
+      "kind": "library",
+      "status": "已产出（替代动态库）",
+      "reason": "This is not the requested static archive; device distribution needs application signing",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/iphoneos -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/iphoneos --parallel 4",
+        "cmake --install build/iphoneos --prefix stage/iphoneos",
+        "python tools/abi/merge_ios.py --sdk stage/iphoneos --output delivery/ios/arm64-device/libexreader.a"
+      ],
+      "size_bytes": 8053800,
+      "sha256": "882a23f3a05cc9893062568e6d7df3d3cf03fc567bb4c772c0e4e9574f6b7719",
+      "exports": [
+        {
+          "machine": "0x100000c",
+          "symbol_count": 2799,
+          "contract_count": 389,
+          "missing_count": 0,
+          "extra_count": 2410
+        }
+      ]
+    },
+    {
+      "platform": "iOS",
+      "architecture": "arm64-simulator",
+      "path": "ios/arm64-simulator/libexreader.a",
+      "target": "libexreader.a",
+      "kind": "library",
+      "status": "仅 CI 可产",
+      "reason": "Current CI archives component .a files and aggregate .dylib, not libexreader.a; merge_ios.py requires macOS xcrun libtool; not yet executed",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/iphonesimulator -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/iphonesimulator --parallel 4",
+        "cmake --install build/iphonesimulator --prefix stage/iphonesimulator",
+        "python tools/abi/merge_ios.py --sdk stage/iphonesimulator --output delivery/ios/arm64-simulator/libexreader.a"
+      ],
+      "size_bytes": null,
+      "sha256": null,
+      "export_symbol_count": null
+    },
+    {
+      "platform": "iOS",
+      "architecture": "arm64-simulator",
+      "path": "ios/arm64-simulator/libexreader.dylib",
+      "target": "libexreader.dylib",
+      "kind": "library",
+      "status": "已产出（替代动态库）",
+      "reason": "This is not the requested static archive; device distribution needs application signing",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/iphonesimulator -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/iphonesimulator --parallel 4",
+        "cmake --install build/iphonesimulator --prefix stage/iphonesimulator",
+        "python tools/abi/merge_ios.py --sdk stage/iphonesimulator --output delivery/ios/arm64-simulator/libexreader.a"
+      ],
+      "size_bytes": 8136288,
+      "sha256": "320f6810c1caee0d8f34891b06b3f99e4b67a238e3e4a73c69982289c72bd151",
+      "exports": [
+        {
+          "machine": "0x100000c",
+          "symbol_count": 2799,
+          "contract_count": 389,
+          "missing_count": 0,
+          "extra_count": 2410
+        }
+      ]
+    },
+    {
+      "platform": "Linux",
+      "architecture": "x86_64",
+      "path": "linux/x86_64/libexreader.so",
+      "target": "libexreader.so",
+      "kind": "library",
+      "status": "已产出",
+      "reason": "CI ubuntu-22.04; local WSL has no installed distro, Docker unavailable; no local ELF execution",
+      "source": "CI run 42474080320 / bd15cddb",
+      "build_commands": [
+        "cmake -S . -B build/linux -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF",
+        "cmake --build build/linux --parallel 4",
+        "cmake --install build/linux --prefix stage/linux"
+      ],
+      "size_bytes": 10121688,
+      "sha256": "be2e9d6b675d92e3719f8149dfc5cac4552333385a0a3c1394f926765afa1d13",
+      "exports": [
+        {
+          "machine": "0x3e",
+          "symbol_count": 2799,
+          "contract_count": 389,
+          "missing_count": 0,
+          "extra_count": 2410
+        }
+      ]
+    },
+    {
+      "platform": "WASM",
+      "architecture": "wasm32",
+      "path": null,
+      "target": "none",
+      "kind": "unsupported",
+      "status": "当前无法产",
+      "reason": "No Emscripten build/host/installation/tests; native audio/filesystem adapters and browser bridge are unported; this round excludes a WASM port",
+      "source": "Repository build/support inventory",
+      "build_commands": [],
+      "size_bytes": null,
+      "sha256": null,
+      "export_symbol_count": null
+    }
+  ]
+}
