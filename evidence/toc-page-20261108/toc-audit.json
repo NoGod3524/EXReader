@@ -1,0 +1,3055 @@
+{
+ "dll_sha256": "0928f274724a831b9b097946306956d7b6c0198f0eb5e17d0fafe086a99be3be",
+ "layout": {
+  "width": 720,
+  "height": 1040,
+  "margin": 36,
+  "font_size": 28,
+  "line_height": 1.5,
+  "paragraph_spacing": 10,
+  "document_css": 1,
+  "embedded_fonts": 1,
+  "direction": 0,
+  "fixed_max_dimension": 720
+ },
+ "books": [
+  {
+   "id": "a-raisin-in-the-sun",
+   "sha256": "2416cbd8d73eb7ba2a228842aa33ae303653fb75fa42dd6e921293bee2ed576d",
+   "parts": 16,
+   "insert_before_part": 1,
+   "first_reading_part": "OEBPS/Hans_9780307807441_epub_cvi_r1.htm",
+   "toc_count": 19,
+   "sources": [
+    "ncx"
+   ],
+   "max_toc_level": 2,
+   "body_pages": 356,
+   "toc_pages": 1,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i"
+   ],
+   "entries_per_page": [
+    19
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 19,
+   "rows_with_leaders": 19,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0,
+    "2": 28.0
+   },
+   "max_indent_px": 28.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 2,
+   "toc_page_sha256": [
+    "e865fe929c35858d764fbcf26ba30f2f239ae7933b34932e9994965a72f137d6"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Cover",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 0,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 2,
+     "title": "Title Page",
+     "toc_page": 1,
+     "hit_entry": 2,
+     "geometry_entry": 2,
+     "located_part": 2,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 4,
+     "title": "Dedication",
+     "toc_page": 1,
+     "hit_entry": 4,
+     "geometry_entry": 4,
+     "located_part": 4,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 6,
+     "title": "Introduction",
+     "toc_page": 1,
+     "hit_entry": 6,
+     "geometry_entry": 6,
+     "located_part": 6,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 8,
+     "title": "Contents",
+     "toc_page": 1,
+     "hit_entry": 8,
+     "geometry_entry": 8,
+     "located_part": 8,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 10,
+     "title": "Scene One: Friday morning.",
+     "toc_page": 1,
+     "hit_entry": 10,
+     "geometry_entry": 10,
+     "located_part": 11,
+     "located_offset": 6,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 12,
+     "title": "Act II",
+     "toc_page": 1,
+     "hit_entry": 12,
+     "geometry_entry": 12,
+     "located_part": 12,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 14,
+     "title": "Scene Two: Friday night, a few weeks later.",
+     "toc_page": 1,
+     "hit_entry": 14,
+     "geometry_entry": 14,
+     "located_part": 12,
+     "located_offset": 25794,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 16,
+     "title": "Act III",
+     "toc_page": 1,
+     "hit_entry": 16,
+     "geometry_entry": 16,
+     "located_part": 13,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 18,
+     "title": "About the Author",
+     "toc_page": 1,
+     "hit_entry": 18,
+     "geometry_entry": 18,
+     "located_part": 14,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "between-the-world-and-me",
+   "sha256": "3d909ac99c4388022a6576475b81c5d458490337aba08b0e7ba311bc18ab68a5",
+   "parts": 14,
+   "insert_before_part": 1,
+   "first_reading_part": "titlepage.xhtml",
+   "toc_count": 10,
+   "sources": [
+    "ncx"
+   ],
+   "max_toc_level": 1,
+   "body_pages": 228,
+   "toc_pages": 1,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i"
+   ],
+   "entries_per_page": [
+    10
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 10,
+   "rows_with_leaders": 10,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0
+   },
+   "max_indent_px": 0.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 1,
+   "toc_page_sha256": [
+    "5c176608386cdcb9f290b7d0974a31d1efa5d65d6a68461b93bb6125b1f941cb"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Title Page",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 1,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 1,
+     "title": "Copyright",
+     "toc_page": 1,
+     "hit_entry": 1,
+     "geometry_entry": 1,
+     "located_part": 2,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 2,
+     "title": "Contents",
+     "toc_page": 1,
+     "hit_entry": 2,
+     "geometry_entry": 2,
+     "located_part": 3,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 3,
+     "title": "Epigraph",
+     "toc_page": 1,
+     "hit_entry": 3,
+     "geometry_entry": 3,
+     "located_part": 4,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 4,
+     "title": "Chapter I",
+     "toc_page": 1,
+     "hit_entry": 4,
+     "geometry_entry": 4,
+     "located_part": 5,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 5,
+     "title": "Chapter II",
+     "toc_page": 1,
+     "hit_entry": 5,
+     "geometry_entry": 5,
+     "located_part": 7,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 6,
+     "title": "Chapter III",
+     "toc_page": 1,
+     "hit_entry": 6,
+     "geometry_entry": 6,
+     "located_part": 9,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 7,
+     "title": "Dedication",
+     "toc_page": 1,
+     "hit_entry": 7,
+     "geometry_entry": 7,
+     "located_part": 11,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 8,
+     "title": "Other Titles",
+     "toc_page": 1,
+     "hit_entry": 8,
+     "geometry_entry": 8,
+     "located_part": 12,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 9,
+     "title": "About the Author",
+     "toc_page": 1,
+     "hit_entry": 9,
+     "geometry_entry": 9,
+     "located_part": 13,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "black-boy",
+   "sha256": "a6d4c9a1f117e8c9c21aec186ca77e0f58cdaf9f97fce8f1f1d1660a724a7e87",
+   "parts": 43,
+   "insert_before_part": 1,
+   "first_reading_part": "OEBPS/text/9780063028593_Cover.xhtml",
+   "toc_count": 38,
+   "sources": [
+    "nav"
+   ],
+   "max_toc_level": 2,
+   "body_pages": 1014,
+   "toc_pages": 2,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i",
+    "ii"
+   ],
+   "entries_per_page": [
+    21,
+    17
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 38,
+   "rows_with_leaders": 38,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0,
+    "2": 28.0
+   },
+   "max_indent_px": 28.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 1,
+   "toc_page_sha256": [
+    "355211e0361de399553c42a2e35cdb238201a0ca5c5f52f1231c9a545505461d",
+    "51458330e2b2842739aa828b027d6ef02bba0da44c5514c7f65136115f4147f5"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Cover",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 0,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 4,
+     "title": "Foreword by John Edgar Wideman",
+     "toc_page": 1,
+     "hit_entry": 4,
+     "geometry_entry": 4,
+     "located_part": 5,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 8,
+     "title": "Chapter 3",
+     "toc_page": 1,
+     "hit_entry": 8,
+     "geometry_entry": 8,
+     "located_part": 9,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 12,
+     "title": "Chapter 7",
+     "toc_page": 1,
+     "hit_entry": 12,
+     "geometry_entry": 12,
+     "located_part": 13,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 16,
+     "title": "Chapter 11",
+     "toc_page": 1,
+     "hit_entry": 16,
+     "geometry_entry": 16,
+     "located_part": 17,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 21,
+     "title": "Chapter 15",
+     "toc_page": 2,
+     "hit_entry": 21,
+     "geometry_entry": 21,
+     "located_part": 22,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 25,
+     "title": "Chapter 19",
+     "toc_page": 2,
+     "hit_entry": 25,
+     "geometry_entry": 25,
+     "located_part": 26,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 29,
+     "title": "Note on the Text",
+     "toc_page": 2,
+     "hit_entry": 29,
+     "geometry_entry": 29,
+     "located_part": 30,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 33,
+     "title": "About the Book",
+     "toc_page": 2,
+     "hit_entry": 33,
+     "geometry_entry": 33,
+     "located_part": 34,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 37,
+     "title": "About the Publisher",
+     "toc_page": 2,
+     "hit_entry": 37,
+     "geometry_entry": 37,
+     "located_part": 40,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": true
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "born-a-crime",
+   "sha256": "c22402e02baa5e9b7c88c895a9f232f2858f7c168122aaf084493b85e37f6d58",
+   "parts": 43,
+   "insert_before_part": 1,
+   "first_reading_part": "titlepage.xhtml",
+   "toc_count": 22,
+   "sources": [
+    "nav"
+   ],
+   "max_toc_level": 2,
+   "body_pages": 500,
+   "toc_pages": 2,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i",
+    "ii"
+   ],
+   "entries_per_page": [
+    14,
+    8
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 22,
+   "rows_with_leaders": 22,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0,
+    "2": 28.0
+   },
+   "max_indent_px": 28.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 5,
+   "toc_page_sha256": [
+    "db70862375eedc34bf1dd90d629e501ce3a7bb237b2f34c7aa824ddc64f2b0cf",
+    "8da6dbfa6453fb14c598cd22d5cf497cf7473472b2af94619e0a653aa9c5ae3b"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Immorality Act, 1927",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 1,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 2,
+     "title": "Chapter 1: Run",
+     "toc_page": 1,
+     "hit_entry": 2,
+     "geometry_entry": 2,
+     "located_part": 4,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 5,
+     "title": "Chapter 4: Chameleon",
+     "toc_page": 1,
+     "hit_entry": 5,
+     "geometry_entry": 5,
+     "located_part": 10,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 7,
+     "title": "Chapter 6: Loopholes",
+     "toc_page": 1,
+     "hit_entry": 7,
+     "geometry_entry": 7,
+     "located_part": 14,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 9,
+     "title": "Chapter 8: Robert",
+     "toc_page": 1,
+     "hit_entry": 9,
+     "geometry_entry": 9,
+     "located_part": 18,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 12,
+     "title": "Chapter 10: A Young Man’s Long, Awkward, Occasionally Tragic, and Frequently Humiliating Education in Affairs of the Heart, Part I: Valentine’s Day",
+     "toc_page": 1,
+     "hit_entry": 12,
+     "geometry_entry": 12,
+     "located_part": 23,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 14,
+     "title": "Chapter 12: A Young Man’s Long, Awkward, Occasionally Tragic, and Frequently Humiliating Education in Affairs of the Heart, Part II: The Crush",
+     "toc_page": 2,
+     "hit_entry": 14,
+     "geometry_entry": 14,
+     "located_part": 27,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 16,
+     "title": "Chapter 14: A Young Man’s Long, Awkward, Occasionally Tragic, and Frequently Humiliating Education in Affairs of the Heart, Part III: The Dance",
+     "toc_page": 2,
+     "hit_entry": 16,
+     "geometry_entry": 16,
+     "located_part": 31,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 19,
+     "title": "Chapter 16: The Cheese Boys",
+     "toc_page": 2,
+     "hit_entry": 19,
+     "geometry_entry": 19,
+     "located_part": 36,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 21,
+     "title": "Chapter 18: My Mother’s Life",
+     "toc_page": 2,
+     "hit_entry": 21,
+     "geometry_entry": 21,
+     "located_part": 40,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": true
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "crying-in-h-mart",
+   "sha256": "8e6641c9c820cbc987dbd848d1b2ee88a15d620db6d9302cc17ca2ca49072a3e",
+   "parts": 29,
+   "insert_before_part": 1,
+   "first_reading_part": "OEBPS/Text/p000_cover.xhtml",
+   "toc_count": 27,
+   "sources": [
+    "nav"
+   ],
+   "max_toc_level": 2,
+   "body_pages": 522,
+   "toc_pages": 2,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i",
+    "ii"
+   ],
+   "entries_per_page": [
+    20,
+    7
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 27,
+   "rows_with_leaders": 27,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0,
+    "2": 28.0
+   },
+   "max_indent_px": 28.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 2,
+   "toc_page_sha256": [
+    "d085446576ea94ac80330bf06e8543f17507319973077a8d1379d1b70b1c43e3",
+    "7dbf645da34bb735d0d59d0dfd4869087a335b37c6c3bd3752f93c23cf6f0929"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Copertina",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 0,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 3,
+     "title": "Frontespizio",
+     "toc_page": 1,
+     "hit_entry": 3,
+     "geometry_entry": 3,
+     "located_part": 4,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 6,
+     "title": "II. Risparmia le lacrime",
+     "toc_page": 1,
+     "hit_entry": 6,
+     "geometry_entry": 6,
+     "located_part": 8,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 9,
+     "title": "V. Dov’è il vino?",
+     "toc_page": 1,
+     "hit_entry": 9,
+     "geometry_entry": 9,
+     "located_part": 11,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 12,
+     "title": "VIII. Onni",
+     "toc_page": 1,
+     "hit_entry": 12,
+     "geometry_entry": 12,
+     "located_part": 14,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 14,
+     "title": "X. Vivere e morire",
+     "toc_page": 1,
+     "hit_entry": 14,
+     "geometry_entry": 14,
+     "located_part": 16,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 17,
+     "title": "XIII. Mano pesante",
+     "toc_page": 1,
+     "hit_entry": 17,
+     "geometry_entry": 17,
+     "located_part": 19,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 20,
+     "title": "XVI. Jatjuk",
+     "toc_page": 2,
+     "hit_entry": 20,
+     "geometry_entry": 20,
+     "located_part": 22,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 23,
+     "title": "XIX. Il frigo del kimchi",
+     "toc_page": 2,
+     "hit_entry": 23,
+     "geometry_entry": 23,
+     "located_part": 25,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 26,
+     "title": "Copyright",
+     "toc_page": 2,
+     "hit_entry": 26,
+     "geometry_entry": 26,
+     "located_part": 28,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": true
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+   "sha256": "02a37f7c5f80169b09d010f27edf494116df0bcb0c8bc8023282a1d3bf43e941",
+   "parts": 29,
+   "insert_before_part": 1,
+   "first_reading_part": "OEBPS/xhtml/01_Cover.xhtml",
+   "toc_count": 19,
+   "sources": [
+    "nav"
+   ],
+   "max_toc_level": 1,
+   "body_pages": 491,
+   "toc_pages": 1,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i"
+   ],
+   "entries_per_page": [
+    19
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 19,
+   "rows_with_leaders": 19,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0
+   },
+   "max_indent_px": 0.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 2,
+   "toc_page_sha256": [
+    "36de6ebda588fe6be1521ecf8d135146a979cb5fa6a1df21f824d7bbf6904fe5"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Cover",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 0,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 2,
+     "title": "About the Author",
+     "toc_page": 1,
+     "hit_entry": 2,
+     "geometry_entry": 2,
+     "located_part": 2,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 4,
+     "title": "Copyright",
+     "toc_page": 1,
+     "hit_entry": 4,
+     "geometry_entry": 4,
+     "located_part": 4,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 6,
+     "title": "Epigraph",
+     "toc_page": 1,
+     "hit_entry": 6,
+     "geometry_entry": 6,
+     "located_part": 6,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 8,
+     "title": "Preface",
+     "toc_page": 1,
+     "hit_entry": 8,
+     "geometry_entry": 8,
+     "located_part": 8,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 10,
+     "title": "Chapter 2: Sami",
+     "toc_page": 1,
+     "hit_entry": 10,
+     "geometry_entry": 10,
+     "located_part": 11,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 12,
+     "title": "Chapter 4: Akram",
+     "toc_page": 1,
+     "hit_entry": 12,
+     "geometry_entry": 12,
+     "located_part": 15,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 14,
+     "title": "Chapter 6: Omar",
+     "toc_page": 1,
+     "hit_entry": 14,
+     "geometry_entry": 14,
+     "located_part": 19,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 16,
+     "title": "Afterword",
+     "toc_page": 1,
+     "hit_entry": 16,
+     "geometry_entry": 16,
+     "located_part": 23,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 18,
+     "title": "Notes",
+     "toc_page": 1,
+     "hit_entry": 18,
+     "geometry_entry": 18,
+     "located_part": 25,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "i-know-why-the-caged-bird-sings",
+   "sha256": "7a52e3c22743cbf9cdacd1fc6d2a8f72f9ad0f9287591f310640d0287857ec09",
+   "parts": 43,
+   "insert_before_part": 2,
+   "first_reading_part": "OEBPS/Ange_9780307477729_epub_cvi_r1.htm",
+   "toc_count": 42,
+   "sources": [
+    "ncx"
+   ],
+   "max_toc_level": 1,
+   "body_pages": 624,
+   "toc_pages": 2,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i",
+    "ii"
+   ],
+   "entries_per_page": [
+    21,
+    21
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 41,
+   "rows_with_leaders": 41,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0
+   },
+   "max_indent_px": 0.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 1,
+   "toc_page_sha256": [
+    "5c1e06815a635b5226d0267a197e44d267a36fdc684faa6857a60eceb4a5e0ed",
+    "89ba875cc11d1eab7710b40c1413cfdb39c0eda72ad81d3e00ff6824b1315dbf"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Cover",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 0,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 5,
+     "title": "Chapter 2",
+     "toc_page": 1,
+     "hit_entry": 5,
+     "geometry_entry": 5,
+     "located_part": 6,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 9,
+     "title": "Chapter 6",
+     "toc_page": 1,
+     "hit_entry": 9,
+     "geometry_entry": 9,
+     "located_part": 10,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 14,
+     "title": "Chapter 11",
+     "toc_page": 1,
+     "hit_entry": 14,
+     "geometry_entry": 14,
+     "located_part": 15,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 18,
+     "title": "Chapter 15",
+     "toc_page": 1,
+     "hit_entry": 18,
+     "geometry_entry": 18,
+     "located_part": 19,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 23,
+     "title": "Chapter 20",
+     "toc_page": 2,
+     "hit_entry": 23,
+     "geometry_entry": 23,
+     "located_part": 24,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 27,
+     "title": "Chapter 24",
+     "toc_page": 2,
+     "hit_entry": 27,
+     "geometry_entry": 27,
+     "located_part": 28,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 32,
+     "title": "Chapter 29",
+     "toc_page": 2,
+     "hit_entry": 32,
+     "geometry_entry": 32,
+     "located_part": 33,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 36,
+     "title": "Chapter 33",
+     "toc_page": 2,
+     "hit_entry": 36,
+     "geometry_entry": 36,
+     "located_part": 37,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 41,
+     "title": "Copyright",
+     "toc_page": 2,
+     "hit_entry": 41,
+     "geometry_entry": 41,
+     "located_part": 42,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": true
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "pachinko",
+   "sha256": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+   "parts": 133,
+   "insert_before_part": 1,
+   "first_reading_part": "titlepage.xhtml",
+   "toc_count": 70,
+   "sources": [
+    "ncx"
+   ],
+   "max_toc_level": 2,
+   "body_pages": 1248,
+   "toc_pages": 4,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i",
+    "ii",
+    "iii",
+    "iv"
+   ],
+   "entries_per_page": [
+    21,
+    21,
+    20,
+    8
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 70,
+   "rows_with_leaders": 70,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0,
+    "2": 28.0
+   },
+   "max_indent_px": 28.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 2,
+   "toc_page_sha256": [
+    "1a860e4296c5a09b766cb92e0483165f15edbdb0ca200547db39c7844e3f31e0",
+    "f8391e421afbe7f9fa0b7d5d6e1b174b5a8fdfdc7ebf6ecf7735ef1364b0b0ae",
+    "7f81c69a572ca44afdb2219835e92b32dd81a999db5b75fa5691f54b24b281ce",
+    "ee4b50d3e8176e797b08d4879b19340cce280fb7e202f7c7d7c59832c450572d"
+   ],
+   "clicks": [
+    {
+     "entry": 6,
+     "title": "Capítulo 1: Yeongdo, Busan, Coreia",
+     "toc_page": 1,
+     "hit_entry": 6,
+     "geometry_entry": 6,
+     "located_part": 10,
+     "located_offset": 0,
+     "hit_ok": true,
+     "expected_offset": 0,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 12,
+     "title": "Capítulo 7",
+     "toc_page": 1,
+     "hit_entry": 12,
+     "geometry_entry": 12,
+     "located_part": 22,
+     "located_offset": 0,
+     "hit_ok": true,
+     "expected_offset": 0,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 19,
+     "title": "Capítulo 14",
+     "toc_page": 1,
+     "hit_entry": 19,
+     "geometry_entry": 19,
+     "located_part": 36,
+     "located_offset": 0,
+     "hit_ok": true,
+     "expected_offset": 0,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 26,
+     "title": "Capítulo 3: Abril de 1940",
+     "toc_page": 2,
+     "hit_entry": 26,
+     "geometry_entry": 26,
+     "located_part": 50,
+     "located_offset": 0,
+     "hit_ok": true,
+     "expected_offset": 0,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 32,
+     "title": "Capítulo 9: Osaka, 1949",
+     "toc_page": 2,
+     "hit_entry": 32,
+     "geometry_entry": 32,
+     "located_part": 62,
+     "located_offset": 0,
+     "hit_ok": true,
+     "expected_offset": 0,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 39,
+     "title": "Capítulo 16: Osaka, abril de 1960",
+     "toc_page": 2,
+     "hit_entry": 39,
+     "geometry_entry": 39,
+     "located_part": 76,
+     "located_offset": 0,
+     "hit_ok": true,
+     "expected_offset": 0,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 46,
+     "title": "Capítulo 2: Osaka, abril de 1965",
+     "toc_page": 3,
+     "hit_entry": 46,
+     "geometry_entry": 46,
+     "located_part": 90,
+     "located_offset": 0,
+     "hit_ok": true,
+     "expected_offset": 0,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 52,
+     "title": "Capítulo 8: Nagano, agosto de 1978",
+     "toc_page": 3,
+     "hit_entry": 52,
+     "geometry_entry": 52,
+     "located_part": 102,
+     "located_offset": 0,
+     "hit_ok": true,
+     "expected_offset": 0,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 59,
+     "title": "Capítulo 15: Nova York, 1985",
+     "toc_page": 3,
+     "hit_entry": 59,
+     "geometry_entry": 59,
+     "located_part": 116,
+     "located_offset": 0,
+     "hit_ok": true,
+     "expected_offset": 0,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 65,
+     "title": "Capítulo 21: Tóquio, 1989",
+     "toc_page": 4,
+     "hit_entry": 65,
+     "geometry_entry": 65,
+     "located_part": 128,
+     "located_offset": 0,
+     "hit_ok": true,
+     "expected_offset": 0,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": true
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "the-absolutely-true-diary-of-a-part-time-indian",
+   "sha256": "eedadec8e91f54e53e0587127b8ed2ca12d7d97b282f8a734b709468b7c2cf67",
+   "parts": 22,
+   "insert_before_part": 1,
+   "first_reading_part": "titlepage.xhtml",
+   "toc_count": 20,
+   "sources": [
+    "ncx"
+   ],
+   "max_toc_level": 1,
+   "body_pages": 560,
+   "toc_pages": 1,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i"
+   ],
+   "entries_per_page": [
+    20
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 20,
+   "rows_with_leaders": 20,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0
+   },
+   "max_indent_px": 0.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 1,
+   "toc_page_sha256": [
+    "309ff1310648848ba22c7520d58c3b2da8264909cde400b5cfcd6a803ecd51e5"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Revenge Is My Middle Name",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 2,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 2,
+     "title": "Go Means Go",
+     "toc_page": 1,
+     "hit_entry": 2,
+     "geometry_entry": 2,
+     "located_part": 4,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 4,
+     "title": "How to Fight Monsters",
+     "toc_page": 1,
+     "hit_entry": 4,
+     "geometry_entry": 4,
+     "located_part": 6,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 6,
+     "title": "Tears of a Clown",
+     "toc_page": 1,
+     "hit_entry": 6,
+     "geometry_entry": 6,
+     "located_part": 8,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 8,
+     "title": "Slouching Toward Thanksgiving",
+     "toc_page": 1,
+     "hit_entry": 8,
+     "geometry_entry": 8,
+     "located_part": 10,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 11,
+     "title": "Reindeer Games",
+     "toc_page": 1,
+     "hit_entry": 11,
+     "geometry_entry": 11,
+     "located_part": 13,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 13,
+     "title": "Wake",
+     "toc_page": 1,
+     "hit_entry": 13,
+     "geometry_entry": 13,
+     "located_part": 15,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 15,
+     "title": "In Like a Lion",
+     "toc_page": 1,
+     "hit_entry": 15,
+     "geometry_entry": 15,
+     "located_part": 17,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 17,
+     "title": "Talking About Turtles",
+     "toc_page": 1,
+     "hit_entry": 17,
+     "geometry_entry": 17,
+     "located_part": 19,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 19,
+     "title": "Interview with Ellen Forney",
+     "toc_page": 1,
+     "hit_entry": 19,
+     "geometry_entry": 19,
+     "located_part": 21,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "the-distance-between-us-a-memoir",
+   "sha256": "19591466f9b795f978f6061ac9979d8bd420ddf29cc849a4c970190a968844e3",
+   "parts": 62,
+   "insert_before_part": 1,
+   "first_reading_part": "titlepage.xhtml",
+   "toc_count": 55,
+   "sources": [
+    "ncx"
+   ],
+   "max_toc_level": 2,
+   "body_pages": 702,
+   "toc_pages": 3,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i",
+    "ii",
+    "iii"
+   ],
+   "entries_per_page": [
+    21,
+    21,
+    13
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 55,
+   "rows_with_leaders": 55,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0,
+    "2": 28.0
+   },
+   "max_indent_px": 28.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 1,
+   "toc_page_sha256": [
+    "8551e8eda6b9bfae5654d59107d3d67c652538082e6eed7fe9381c13906cba8e",
+    "2e4f4364ce4d549e95a5cff34aadf715ea3d4ecbad7ceb0559c28b17caa58549",
+    "0dc42a4f24d9064a546bd43bfb44387a5f3dc52c3c14519f5a388f6e179f24cd"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Cover",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 1,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 6,
+     "title": "Chapter 3",
+     "toc_page": 1,
+     "hit_entry": 6,
+     "geometry_entry": 6,
+     "located_part": 11,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 12,
+     "title": "Chapter 9",
+     "toc_page": 1,
+     "hit_entry": 12,
+     "geometry_entry": 12,
+     "located_part": 17,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 18,
+     "title": "Chapter 15",
+     "toc_page": 1,
+     "hit_entry": 18,
+     "geometry_entry": 18,
+     "located_part": 23,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 24,
+     "title": "Book Two: The Man Behind The Glass",
+     "toc_page": 2,
+     "hit_entry": 24,
+     "geometry_entry": 24,
+     "located_part": 29,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 30,
+     "title": "Chapter 5",
+     "toc_page": 2,
+     "hit_entry": 30,
+     "geometry_entry": 30,
+     "located_part": 35,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 36,
+     "title": "Chapter 11",
+     "toc_page": 2,
+     "hit_entry": 36,
+     "geometry_entry": 36,
+     "located_part": 41,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 42,
+     "title": "Chapter 17",
+     "toc_page": 3,
+     "hit_entry": 42,
+     "geometry_entry": 42,
+     "located_part": 47,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 48,
+     "title": "Chapter 23",
+     "toc_page": 3,
+     "hit_entry": 48,
+     "geometry_entry": 48,
+     "located_part": 53,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 54,
+     "title": "Copyright",
+     "toc_page": 3,
+     "hit_entry": 54,
+     "geometry_entry": 54,
+     "located_part": 61,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": true
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "the-fire-next-time",
+   "sha256": "e0e361a8b3eb84cab263dac4efd69953b48c0a8d7b1972011a2f8e3deaab4570",
+   "parts": 12,
+   "insert_before_part": 1,
+   "first_reading_part": "OEBPS/Bald_9780804149723_epub_cvi_r1.htm",
+   "toc_count": 9,
+   "sources": [
+    "ncx"
+   ],
+   "max_toc_level": 1,
+   "body_pages": 189,
+   "toc_pages": 1,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i"
+   ],
+   "entries_per_page": [
+    9
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 9,
+   "rows_with_leaders": 9,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0
+   },
+   "max_indent_px": 0.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 3,
+   "toc_page_sha256": [
+    "dd4e16182df422d9a50ff232c2b5f5b266a1ed5dd47179799f6eb8dc613d82cf"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Cover",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 0,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 1,
+     "title": "Title Page",
+     "toc_page": 1,
+     "hit_entry": 1,
+     "geometry_entry": 1,
+     "located_part": 2,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 2,
+     "title": "Copyright",
+     "toc_page": 1,
+     "hit_entry": 2,
+     "geometry_entry": 2,
+     "located_part": 3,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 3,
+     "title": "Dedication",
+     "toc_page": 1,
+     "hit_entry": 3,
+     "geometry_entry": 3,
+     "located_part": 4,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 4,
+     "title": "Contents",
+     "toc_page": 1,
+     "hit_entry": 4,
+     "geometry_entry": 4,
+     "located_part": 6,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 5,
+     "title": "My Dungeon Shook: Letter to My Nephew on the One Hundredth Anniversary of the Emancipation",
+     "toc_page": 1,
+     "hit_entry": 5,
+     "geometry_entry": 5,
+     "located_part": 7,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 6,
+     "title": "Down At The Cross: Letter from a Region in My Mind",
+     "toc_page": 1,
+     "hit_entry": 6,
+     "geometry_entry": 6,
+     "located_part": 8,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 7,
+     "title": "About the Author",
+     "toc_page": 1,
+     "hit_entry": 7,
+     "geometry_entry": 7,
+     "located_part": 9,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 8,
+     "title": "Other Books by This Author",
+     "toc_page": 1,
+     "hit_entry": 8,
+     "geometry_entry": 8,
+     "located_part": 10,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 9,
+   "clicks_total": 9,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+   "sha256": "3662ed4599157e8a94e1869a43b7e231244862c520ac4fe02f3a047893d23ef0",
+   "parts": 46,
+   "insert_before_part": 1,
+   "first_reading_part": "ops/xhtml/cover.html",
+   "toc_count": 29,
+   "sources": [
+    "ncx"
+   ],
+   "max_toc_level": 2,
+   "body_pages": 333,
+   "toc_pages": 2,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i",
+    "ii"
+   ],
+   "entries_per_page": [
+    17,
+    12
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 29,
+   "rows_with_leaders": 29,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0,
+    "2": 28.0
+   },
+   "max_indent_px": 28.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 3,
+   "toc_page_sha256": [
+    "e7665c28ecdc057f07cf088b37655d6c5b66aa91dd609ce03b8b2382d6c12aae",
+    "d5a895bbd009c82cbeed427cf164290e3e9403eaedff8e0c9e55c399fe7474d6"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Cover",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 0,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 3,
+     "title": "Introduction by Jesmyn Ward",
+     "toc_page": 1,
+     "hit_entry": 3,
+     "geometry_entry": 3,
+     "located_part": 6,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 6,
+     "title": "The Weight by Rachel Kaadzi Ghansah",
+     "toc_page": 1,
+     "hit_entry": 6,
+     "geometry_entry": 6,
+     "located_part": 9,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 9,
+     "title": "“The Dear Pledges of Our Love”: A Defense of Phillis Wheatley’s Husband by Honorée Fanonne Jeffers",
+     "toc_page": 1,
+     "hit_entry": 9,
+     "geometry_entry": 9,
+     "located_part": 12,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 12,
+     "title": "Part II: Reckoning",
+     "toc_page": 1,
+     "hit_entry": 12,
+     "geometry_entry": 12,
+     "located_part": 15,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 16,
+     "title": "Black and Blue by Garnette Cadogan",
+     "toc_page": 1,
+     "hit_entry": 16,
+     "geometry_entry": 16,
+     "located_part": 19,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 19,
+     "title": "Composite Pops by Mitchell S. Jackson",
+     "toc_page": 2,
+     "hit_entry": 19,
+     "geometry_entry": 19,
+     "located_part": 34,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 22,
+     "title": "This Far: Notes on Love and Revolution by Daniel José Older",
+     "toc_page": 2,
+     "hit_entry": 22,
+     "geometry_entry": 22,
+     "located_part": 37,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 25,
+     "title": "Contributors",
+     "toc_page": 2,
+     "hit_entry": 25,
+     "geometry_entry": 25,
+     "located_part": 40,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 28,
+     "title": "Copyright",
+     "toc_page": 2,
+     "hit_entry": 28,
+     "geometry_entry": 28,
+     "located_part": 45,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": true
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "the-house-on-mango-street",
+   "sha256": "5a3b11c8f3ee4dd1c41d264aaf27dd83bb82faa1ebf3c7370a7072a0711cb3df",
+   "parts": 4,
+   "insert_before_part": 1,
+   "first_reading_part": "titlepage.xhtml",
+   "toc_count": 1,
+   "sources": [
+    "ncx"
+   ],
+   "max_toc_level": 1,
+   "body_pages": 182,
+   "toc_pages": 1,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i"
+   ],
+   "entries_per_page": [
+    1
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 1,
+   "rows_with_leaders": 1,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0
+   },
+   "max_indent_px": 0.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 1,
+   "toc_page_sha256": [
+    "9c347967a70f7e048d098395a77ff7c5ffa2052f36110db51feea083adb2a618"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Start",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 0,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 1,
+   "clicks_total": 1,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "hongloumeng-24264",
+   "sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+   "parts": 31,
+   "insert_before_part": 1,
+   "first_reading_part": "OEBPS/wrap0000.html",
+   "toc_count": 108,
+   "sources": [
+    "recovered"
+   ],
+   "max_toc_level": 1,
+   "body_pages": 1686,
+   "toc_pages": 11,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i",
+    "ii",
+    "iii",
+    "iv",
+    "v",
+    "vi",
+    "vii",
+    "viii",
+    "ix",
+    "x",
+    "xi"
+   ],
+   "entries_per_page": [
+    16,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    2
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 108,
+   "rows_with_leaders": 108,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0
+   },
+   "max_indent_px": 0.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 2,
+   "toc_page_sha256": [
+    "d785573d26631349cab554cec369321a5232fe8c3b3f63bbacd9d959887fd429",
+    "0b532d62bfcc392d2f381f1b4103eb077341c62603eee65846231607287d4c2c",
+    "85735a0af5498b15d967e38e67ba5b44d7ba681efc70729c8dcef03ea9e7b337",
+    "bb5bec40498620a2ada7db20887e0267ea1ff46099b6fce754e579ad30b099ad",
+    "4db838b30181fb1704a27cfa319facd2a3904fe60479eea29701490ba15a675f",
+    "ee9e96758a4d7b240e9965c12422de97f8c3839adb5cc1df0f1c90f87828f52b",
+    "a85874e758f5c2596f72a067d9d37fe73572733715e0e095027023489dfd2ffc",
+    "0e6a01d62cc5f0ff58675fcbd8cb51166fd2c8ff97c263d3d53df3fa2c87c77a",
+    "51a29cdc38d9144e3a53b2fca7dd8d859e76db64901fa9d256f766d991fb9134",
+    "00749c904f4a482a38932cb636fd98701eeacd1c1882271da610e67aa65dc0f5",
+    "2fbfbef86ee89dc4953815d809477c0c88e62092381805ae5685a87f6a18dfbc"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "第一回 甄士隱夢幻識通靈 賈雨村風塵怀閨秀",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 1,
+     "located_offset": 762,
+     "hit_ok": true,
+     "expected_offset": 762,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 12,
+     "title": "第十三回 秦可卿死封龍禁尉 王熙鳳協理宁國府",
+     "toc_page": 1,
+     "hit_entry": 12,
+     "geometry_entry": 12,
+     "located_part": 3,
+     "located_offset": 61997,
+     "hit_ok": true,
+     "expected_offset": 61997,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 24,
+     "title": "第三十一回 撕扇子作千金一笑 因麒麟伏白首雙星 話",
+     "toc_page": 2,
+     "hit_entry": 24,
+     "geometry_entry": 24,
+     "located_part": 7,
+     "located_offset": 42544,
+     "hit_ok": true,
+     "expected_offset": 42544,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 36,
+     "title": "第四十九回 琉璃世界白雪紅梅 脂粉香娃割腥啖膻",
+     "toc_page": 4,
+     "hit_entry": 36,
+     "geometry_entry": 36,
+     "located_part": 11,
+     "located_offset": 4551,
+     "hit_ok": true,
+     "expected_offset": 4551,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 48,
+     "title": "第六十一回 投鼠忌器寶玉瞞贓 判冤決獄平儿行權",
+     "toc_page": 5,
+     "hit_entry": 48,
+     "geometry_entry": 48,
+     "located_part": 14,
+     "located_offset": 37221,
+     "hit_ok": true,
+     "expected_offset": 37221,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 59,
+     "title": "第七十二回 王熙鳳恃強羞說病 來旺婦倚勢霸成親",
+     "toc_page": 6,
+     "hit_entry": 59,
+     "geometry_entry": 59,
+     "located_part": 17,
+     "located_offset": 79273,
+     "hit_ok": true,
+     "expected_offset": 79273,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 71,
+     "title": "第八十四回 試文字寶玉始提親 探惊風賈環重結怨",
+     "toc_page": 7,
+     "hit_entry": 71,
+     "geometry_entry": 71,
+     "located_part": 21,
+     "located_offset": 48442,
+     "hit_ok": true,
+     "expected_offset": 48442,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 83,
+     "title": "第九十六回 瞞消息鳳姐設奇謀 泄机關顰儿迷本性",
+     "toc_page": 8,
+     "hit_entry": 83,
+     "geometry_entry": 83,
+     "located_part": 24,
+     "located_offset": 18797,
+     "hit_ok": true,
+     "expected_offset": 18797,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 95,
+     "title": "第一零八回 強歡笑蘅蕪慶生辰 死纏綿瀟湘聞鬼哭",
+     "toc_page": 9,
+     "hit_entry": 95,
+     "geometry_entry": 95,
+     "located_part": 26,
+     "located_offset": 69640,
+     "hit_ok": true,
+     "expected_offset": 69640,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 107,
+     "title": "第一二零回 甄士隱詳說太虛情 賈雨村歸結紅樓夢",
+     "toc_page": 11,
+     "hit_entry": 107,
+     "geometry_entry": 107,
+     "located_part": 29,
+     "located_offset": 50341,
+     "hit_ok": true,
+     "expected_offset": 50341,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": true
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "xingshihengyan-24239",
+   "sha256": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+   "parts": 21,
+   "insert_before_part": 1,
+   "first_reading_part": "OEBPS/wrap0000.html",
+   "toc_count": 40,
+   "sources": [
+    "recovered"
+   ],
+   "max_toc_level": 1,
+   "body_pages": 1202,
+   "toc_pages": 2,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i",
+    "ii"
+   ],
+   "entries_per_page": [
+    21,
+    19
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 40,
+   "rows_with_leaders": 40,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0
+   },
+   "max_indent_px": 0.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 1,
+   "toc_page_sha256": [
+    "fb8be1d361ae31321a5c83325ccf925a30d378d4ed448b19be076160592be0be",
+    "525384221806532a40034e68d76afc12474dc931e37711407e9d41b8782a00b8"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "第一卷",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 1,
+     "located_offset": 778,
+     "hit_ok": true,
+     "expected_offset": 778,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 4,
+     "title": "第五卷",
+     "toc_page": 1,
+     "hit_entry": 4,
+     "geometry_entry": 4,
+     "located_part": 3,
+     "located_offset": 40089,
+     "hit_ok": true,
+     "expected_offset": 40089,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 9,
+     "title": "第十卷",
+     "toc_page": 1,
+     "hit_entry": 9,
+     "geometry_entry": 9,
+     "located_part": 5,
+     "located_offset": 32969,
+     "hit_ok": true,
+     "expected_offset": 32969,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 13,
+     "title": "第十四卷",
+     "toc_page": 1,
+     "hit_entry": 13,
+     "geometry_entry": 13,
+     "located_part": 6,
+     "located_offset": 56442,
+     "hit_ok": true,
+     "expected_offset": 56442,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 17,
+     "title": "第十八卷",
+     "toc_page": 1,
+     "hit_entry": 17,
+     "geometry_entry": 17,
+     "located_part": 8,
+     "located_offset": 47898,
+     "hit_ok": true,
+     "expected_offset": 47898,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 22,
+     "title": "第二十三卷",
+     "toc_page": 2,
+     "hit_entry": 22,
+     "geometry_entry": 22,
+     "located_part": 11,
+     "located_offset": 45690,
+     "hit_ok": true,
+     "expected_offset": 45690,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 26,
+     "title": "第二十七卷",
+     "toc_page": 2,
+     "hit_entry": 26,
+     "geometry_entry": 26,
+     "located_part": 13,
+     "located_offset": 83853,
+     "hit_ok": true,
+     "expected_offset": 83853,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 30,
+     "title": "第三十一卷",
+     "toc_page": 2,
+     "hit_entry": 30,
+     "geometry_entry": 30,
+     "located_part": 16,
+     "located_offset": 21988,
+     "hit_ok": true,
+     "expected_offset": 21988,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 35,
+     "title": "第三十六卷",
+     "toc_page": 2,
+     "hit_entry": 35,
+     "geometry_entry": 35,
+     "located_part": 18,
+     "located_offset": 37992,
+     "hit_ok": true,
+     "expected_offset": 37992,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    },
+    {
+     "entry": 39,
+     "title": "第四十卷",
+     "toc_page": 2,
+     "hit_entry": 39,
+     "geometry_entry": 39,
+     "located_part": 20,
+     "located_offset": 27064,
+     "hit_ok": true,
+     "expected_offset": 27064,
+     "line_delta": 0,
+     "within_one_line": true,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": true
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "tangshi300-52323",
+   "sha256": "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945",
+   "parts": 3,
+   "insert_before_part": 1,
+   "first_reading_part": "OEBPS/wrap0000.html",
+   "toc_count": 1,
+   "sources": [
+    "ncx"
+   ],
+   "max_toc_level": 1,
+   "body_pages": 83,
+   "toc_pages": 1,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i"
+   ],
+   "entries_per_page": [
+    1
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 1,
+   "rows_with_leaders": 1,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0
+   },
+   "max_indent_px": 0.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 1,
+   "toc_page_sha256": [
+    "1c9c5dfb7fec866bcc234e137f163d6e4e61fa2eddc802907a8f087b5480b0a5"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "THE FULL PROJECT GUTENBERG™ LICENSE",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 2,
+     "located_offset": 1353,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 1,
+   "clicks_total": 1,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "kusamakura-japanese-vertical-writing",
+   "sha256": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7",
+   "parts": 16,
+   "insert_before_part": 2,
+   "first_reading_part": "OPS/xhtml/表紙.xhtml",
+   "toc_count": 14,
+   "sources": [
+    "nav"
+   ],
+   "max_toc_level": 1,
+   "body_pages": 462,
+   "toc_pages": 1,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i"
+   ],
+   "entries_per_page": [
+    14
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 14,
+   "rows_with_leaders": 14,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0
+   },
+   "max_indent_px": 0.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 1,
+   "toc_page_sha256": [
+    "b7ebde3cc62da431dc51f40989c02c7f1f341014accdb7174146b59087c708b9"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "一",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 2,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 1,
+     "title": "二",
+     "toc_page": 1,
+     "hit_entry": 1,
+     "geometry_entry": 1,
+     "located_part": 3,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 3,
+     "title": "四",
+     "toc_page": 1,
+     "hit_entry": 3,
+     "geometry_entry": 3,
+     "located_part": 5,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 4,
+     "title": "五",
+     "toc_page": 1,
+     "hit_entry": 4,
+     "geometry_entry": 4,
+     "located_part": 6,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 6,
+     "title": "七",
+     "toc_page": 1,
+     "hit_entry": 6,
+     "geometry_entry": 6,
+     "located_part": 8,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 7,
+     "title": "八",
+     "toc_page": 1,
+     "hit_entry": 7,
+     "geometry_entry": 7,
+     "located_part": 9,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 9,
+     "title": "十",
+     "toc_page": 1,
+     "hit_entry": 9,
+     "geometry_entry": 9,
+     "located_part": 11,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 10,
+     "title": "十一",
+     "toc_page": 1,
+     "hit_entry": 10,
+     "geometry_entry": 10,
+     "located_part": 12,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 12,
+     "title": "十三",
+     "toc_page": 1,
+     "hit_entry": 12,
+     "geometry_entry": 12,
+     "located_part": 14,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 13,
+     "title": "この文書について",
+     "toc_page": 1,
+     "hit_entry": 13,
+     "geometry_entry": 13,
+     "located_part": 15,
+     "located_offset": 0,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "nav-fixture",
+   "sha256": "3fae25abc23271a72e38f24decab07327ea51df1b785e73598d35a8d0fec081c",
+   "parts": 3,
+   "insert_before_part": 1,
+   "first_reading_part": "OPS/Text/cover.xhtml",
+   "toc_count": 70,
+   "sources": [
+    "nav"
+   ],
+   "max_toc_level": 2,
+   "body_pages": 5,
+   "toc_pages": 4,
+   "all_pages_toc_kind": true,
+   "page_labels": [
+    "i",
+    "ii",
+    "iii",
+    "iv"
+   ],
+   "entries_per_page": [
+    17,
+    21,
+    21,
+    11
+   ],
+   "pages_cover_all_entries": true,
+   "labelled_rows": 70,
+   "rows_with_leaders": 70,
+   "leader_dots_contiguous": true,
+   "labels_right_aligned": true,
+   "indent_px_by_level": {
+    "1": 0.0,
+    "2": 28.0
+   },
+   "max_indent_px": 28.0,
+   "indent_one_em_per_level": true,
+   "max_row_lines": 3,
+   "toc_page_sha256": [
+    "7f5d14fc93e73d5df87ad9331694d7adca56b412336a8b33e44d43faef77cdc0",
+    "83b50245851527d2fc06c91e342d4eac51279a0213b221076f313f2a23e0b306",
+    "dce9f2e8c3c013136a2e194d35dea7c1704182043825f91f8e3dd5617c2f14b4",
+    "68b47aa14494c10a7b2a43fc1eae2c787d1376e4f13ba0ad42ed9383e76e36f7"
+   ],
+   "clicks": [
+    {
+     "entry": 0,
+     "title": "Zyxwv entry 00",
+     "toc_page": 1,
+     "hit_entry": 0,
+     "geometry_entry": 0,
+     "located_part": 1,
+     "located_offset": 14,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 8,
+     "title": "Zyxwv entry 08",
+     "toc_page": 1,
+     "hit_entry": 8,
+     "geometry_entry": 8,
+     "located_part": 1,
+     "located_offset": 198,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 15,
+     "title": "Zyxwv entry 15",
+     "toc_page": 1,
+     "hit_entry": 15,
+     "geometry_entry": 15,
+     "located_part": 1,
+     "located_offset": 364,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 23,
+     "title": "Zyxwv entry 23",
+     "toc_page": 2,
+     "hit_entry": 23,
+     "geometry_entry": 23,
+     "located_part": 1,
+     "located_offset": 556,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 31,
+     "title": "Zyxwv entry 31",
+     "toc_page": 2,
+     "hit_entry": 31,
+     "geometry_entry": 31,
+     "located_part": 1,
+     "located_offset": 748,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 38,
+     "title": "Zyxwv entry 38",
+     "toc_page": 3,
+     "hit_entry": 38,
+     "geometry_entry": 38,
+     "located_part": 1,
+     "located_offset": 916,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 46,
+     "title": "Zyxwv entry 46",
+     "toc_page": 3,
+     "hit_entry": 46,
+     "geometry_entry": 46,
+     "located_part": 1,
+     "located_offset": 1108,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 54,
+     "title": "Zyxwv entry 54",
+     "toc_page": 3,
+     "hit_entry": 54,
+     "geometry_entry": 54,
+     "located_part": 1,
+     "located_offset": 1300,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 61,
+     "title": "Zyxwv entry 61",
+     "toc_page": 4,
+     "hit_entry": 61,
+     "geometry_entry": 61,
+     "located_part": 1,
+     "located_offset": 1468,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    },
+    {
+     "entry": 69,
+     "title": "Zyxwv entry 69",
+     "toc_page": 4,
+     "hit_entry": 69,
+     "geometry_entry": 69,
+     "located_part": 1,
+     "located_offset": 1660,
+     "hit_ok": true,
+     "within_one_line": null,
+     "passed": true
+    }
+   ],
+   "clicks_passed": 10,
+   "clicks_total": 10,
+   "search": {
+    "Contents (continued)": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": true
+    },
+    "目录（续）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    },
+    "目錄（續）": {
+     "publication_hit_parts": 0,
+     "present_in_toc_pages": false
+    }
+   }
+  },
+  {
+   "id": "none-fixture",
+   "sha256": "bb32e9bd081f0ff4c2b72562779d16731675bff8141b85dce51d896c87269105",
+   "parts": 1,
+   "insert_before_part": 0,
+   "first_reading_part": "OPS/Text/body.xhtml",
+   "toc_count": 0,
+   "sources": [],
+   "max_toc_level": 0,
+   "toc_pages": 0,
+   "generated_empty_page": false
+  }
+ ]
+}

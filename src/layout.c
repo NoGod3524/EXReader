@@ -62,6 +62,7 @@ void exr_layout_free(exr_layout *l) {
     free(l->boxes);
     free(l->paints);
     free(l->positioned);
+    exr_toc_meta_free(l->toc);
     exr_styles_free(l->styles, l->style_count);
     exr_font_free(l->font);
     for (i = 0; i < l->image_count; i++) {

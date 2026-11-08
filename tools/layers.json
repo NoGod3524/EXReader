@@ -132,6 +132,7 @@
     "pdf_view.c": "pdf",
     "pdf_write.c": "pdf_edit",
     "positioned.c": "layout",
+    "toc_page.c": "layout",
     "publication.c": "layout",
     "raster.c": "render",
     "rtf.c": "formats",
