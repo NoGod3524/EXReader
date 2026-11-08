@@ -1,0 +1,2113 @@
+[
+  {
+    "id": "a-raisin-in-the-sun",
+    "located_titles": 13,
+    "moved_from_midpage_to_first_line": 5,
+    "moved_tags": {
+      "h2": 5
+    },
+    "moved": [
+      {
+        "before": {
+          "part": 11,
+          "node": 24,
+          "tag": "h2",
+          "page": 50,
+          "part_page": 1,
+          "line": 2,
+          "text": "SCENE ONE"
+        },
+        "after": {
+          "part": 11,
+          "node": 24,
+          "tag": "h2",
+          "page": 51,
+          "part_page": 2,
+          "line": 1,
+          "text": "SCENE ONE"
+        }
+      },
+      {
+        "before": {
+          "part": 11,
+          "node": 2816,
+          "tag": "h2",
+          "page": 121,
+          "part_page": 72,
+          "line": 6,
+          "text": "SCENE TWO"
+        },
+        "after": {
+          "part": 11,
+          "node": 2816,
+          "tag": "h2",
+          "page": 123,
+          "part_page": 74,
+          "line": 1,
+          "text": "SCENE TWO"
+        }
+      },
+      {
+        "before": {
+          "part": 12,
+          "node": 24,
+          "tag": "h2",
+          "page": 174,
+          "part_page": 1,
+          "line": 2,
+          "text": "SCENE ONE"
+        },
+        "after": {
+          "part": 12,
+          "node": 24,
+          "tag": "h2",
+          "page": 176,
+          "part_page": 2,
+          "line": 1,
+          "text": "SCENE ONE"
+        }
+      },
+      {
+        "before": {
+          "part": 12,
+          "node": 2074,
+          "tag": "h2",
+          "page": 218,
+          "part_page": 45,
+          "line": 8,
+          "text": "SCENE TWO"
+        },
+        "after": {
+          "part": 12,
+          "node": 2074,
+          "tag": "h2",
+          "page": 221,
+          "part_page": 47,
+          "line": 1,
+          "text": "SCENE TWO"
+        }
+      },
+      {
+        "before": {
+          "part": 12,
+          "node": 3445,
+          "tag": "h2",
+          "page": 250,
+          "part_page": 77,
+          "line": 11,
+          "text": "SCENE THREE"
+        },
+        "after": {
+          "part": 12,
+          "node": 3445,
+          "tag": "h2",
+          "page": 253,
+          "part_page": 79,
+          "line": 1,
+          "text": "SCENE THREE"
+        }
+      }
+    ]
+  },
+  {
+    "id": "black-boy",
+    "located_titles": 18,
+    "moved_from_midpage_to_first_line": 5,
+    "moved_tags": {
+      "h2": 3,
+      "h3": 2
+    },
+    "moved": [
+      {
+        "before": {
+          "part": 33,
+          "node": 23,
+          "tag": "h2",
+          "page": 975,
+          "part_page": 1,
+          "line": 2,
+          "text": "Meet Richard Wright"
+        },
+        "after": {
+          "part": 33,
+          "node": 23,
+          "tag": "h2",
+          "page": 976,
+          "part_page": 2,
+          "line": 1,
+          "text": "Meet Richard Wright"
+        }
+      },
+      {
+        "before": {
+          "part": 34,
+          "node": 23,
+          "tag": "h2",
+          "page": 977,
+          "part_page": 1,
+          "line": 2,
+          "text": "Chronicle of an American Classic"
+        },
+        "after": {
+          "part": 34,
+          "node": 23,
+          "tag": "h2",
+          "page": 979,
+          "part_page": 2,
+          "line": 1,
+          "text": "Chronicle of an American Classic"
+        }
+      },
+      {
+        "before": {
+          "part": 34,
+          "node": 28,
+          "tag": "h3",
+          "page": 977,
+          "part_page": 1,
+          "line": 4,
+          "text": "From the introduction by Jerry W. Ward Jr. in the 1993 Harper Perennial edition"
+        },
+        "after": {
+          "part": 34,
+          "node": 28,
+          "tag": "h3",
+          "page": 980,
+          "part_page": 3,
+          "line": 1,
+          "text": "From the introduction by Jerry W. Ward Jr. in the 1993 Harper Perennial edition"
+        }
+      },
+      {
+        "before": {
+          "part": 36,
+          "node": 23,
+          "tag": "h2",
+          "page": 990,
+          "part_page": 1,
+          "line": 2,
+          "text": "Have You Read? More from Richard Wright from Harper Perennial Modern Classics"
+        },
+        "after": {
+          "part": 36,
+          "node": 23,
+          "tag": "h2",
+          "page": 994,
+          "part_page": 2,
+          "line": 1,
+          "text": "Have You Read? More from Richard Wright from Harper Perennial Modern Classics"
+        }
+      },
+      {
+        "before": {
+          "part": 36,
+          "node": 28,
+          "tag": "h3",
+          "page": 990,
+          "part_page": 1,
+          "line": 5,
+          "text": "From the introduction by Jerry W. Ward Jr. in the 1993 Harper Perennial edition"
+        },
+        "after": {
+          "part": 36,
+          "node": 28,
+          "tag": "h3",
+          "page": 995,
+          "part_page": 3,
+          "line": 1,
+          "text": "From the introduction by Jerry W. Ward Jr. in the 1993 Harper Perennial edition"
+        }
+      }
+    ]
+  },
+  {
+    "id": "born-a-crime",
+    "located_titles": 20,
+    "moved_from_midpage_to_first_line": 1,
+    "moved_tags": {
+      "h2": 1
+    },
+    "moved": [
+      {
+        "before": {
+          "part": 1,
+          "node": 28,
+          "tag": "h2",
+          "page": 2,
+          "part_page": 1,
+          "line": 2,
+          "text": "To prohibit illicit carnal intercourse between Europeans and natives and other acts in relation ther"
+        },
+        "after": {
+          "part": 1,
+          "node": 28,
+          "tag": "h2",
+          "page": 3,
+          "part_page": 2,
+          "line": 1,
+          "text": "To prohibit illicit carnal intercourse between Europeans and natives and other acts in relation ther"
+        }
+      }
+    ]
+  },
+  {
+    "id": "crying-in-h-mart",
+    "located_titles": 26,
+    "moved_from_midpage_to_first_line": 21,
+    "moved_tags": {
+      "h1": 21
+    },
+    "moved": [
+      {
+        "before": {
+          "part": 4,
+          "node": 27,
+          "tag": "h1",
+          "page": 7,
+          "part_page": 1,
+          "line": 2,
+          "text": "Crying in H Mart"
+        },
+        "after": {
+          "part": 4,
+          "node": 27,
+          "tag": "h1",
+          "page": 8,
+          "part_page": 2,
+          "line": 1,
+          "text": "Crying in H Mart"
+        }
+      },
+      {
+        "before": {
+          "part": 7,
+          "node": 27,
+          "tag": "h1",
+          "page": 10,
+          "part_page": 1,
+          "line": 2,
+          "text": "Piangere da H Mart"
+        },
+        "after": {
+          "part": 7,
+          "node": 27,
+          "tag": "h1",
+          "page": 12,
+          "part_page": 2,
+          "line": 1,
+          "text": "Piangere da H Mart"
+        }
+      },
+      {
+        "before": {
+          "part": 8,
+          "node": 27,
+          "tag": "h1",
+          "page": 29,
+          "part_page": 1,
+          "line": 2,
+          "text": "Risparmia le lacrime"
+        },
+        "after": {
+          "part": 8,
+          "node": 27,
+          "tag": "h1",
+          "page": 32,
+          "part_page": 2,
+          "line": 1,
+          "text": "Risparmia le lacrime"
+        }
+      },
+      {
+        "before": {
+          "part": 9,
+          "node": 27,
+          "tag": "h1",
+          "page": 55,
+          "part_page": 1,
+          "line": 2,
+          "text": "Doppia palpebra"
+        },
+        "after": {
+          "part": 9,
+          "node": 27,
+          "tag": "h1",
+          "page": 59,
+          "part_page": 2,
+          "line": 1,
+          "text": "Doppia palpebra"
+        }
+      },
+      {
+        "before": {
+          "part": 10,
+          "node": 27,
+          "tag": "h1",
+          "page": 81,
+          "part_page": 1,
+          "line": 2,
+          "text": "Stile New York"
+        },
+        "after": {
+          "part": 10,
+          "node": 27,
+          "tag": "h1",
+          "page": 86,
+          "part_page": 2,
+          "line": 1,
+          "text": "Stile New York"
+        }
+      },
+      {
+        "before": {
+          "part": 11,
+          "node": 27,
+          "tag": "h1",
+          "page": 107,
+          "part_page": 1,
+          "line": 2,
+          "text": "Dov’è il vino?"
+        },
+        "after": {
+          "part": 11,
+          "node": 27,
+          "tag": "h1",
+          "page": 113,
+          "part_page": 2,
+          "line": 1,
+          "text": "Dov’è il vino?"
+        }
+      },
+      {
+        "before": {
+          "part": 12,
+          "node": 27,
+          "tag": "h1",
+          "page": 144,
+          "part_page": 1,
+          "line": 2,
+          "text": "Materia oscura"
+        },
+        "after": {
+          "part": 12,
+          "node": 27,
+          "tag": "h1",
+          "page": 151,
+          "part_page": 2,
+          "line": 1,
+          "text": "Materia oscura"
+        }
+      },
+      {
+        "before": {
+          "part": 13,
+          "node": 27,
+          "tag": "h1",
+          "page": 168,
+          "part_page": 1,
+          "line": 2,
+          "text": "Medicina"
+        },
+        "after": {
+          "part": 13,
+          "node": 27,
+          "tag": "h1",
+          "page": 175,
+          "part_page": 2,
+          "line": 1,
+          "text": "Medicina"
+        }
+      },
+      {
+        "before": {
+          "part": 14,
+          "node": 27,
+          "tag": "h1",
+          "page": 198,
+          "part_page": 1,
+          "line": 2,
+          "text": "Onni"
+        },
+        "after": {
+          "part": 14,
+          "node": 27,
+          "tag": "h1",
+          "page": 206,
+          "part_page": 2,
+          "line": 1,
+          "text": "Onni"
+        }
+      },
+      {
+        "before": {
+          "part": 15,
+          "node": 27,
+          "tag": "h1",
+          "page": 232,
+          "part_page": 1,
+          "line": 2,
+          "text": "Dove andiamo?"
+        },
+        "after": {
+          "part": 15,
+          "node": 27,
+          "tag": "h1",
+          "page": 241,
+          "part_page": 2,
+          "line": 1,
+          "text": "Dove andiamo?"
+        }
+      },
+      {
+        "before": {
+          "part": 16,
+          "node": 27,
+          "tag": "h1",
+          "page": 255,
+          "part_page": 1,
+          "line": 2,
+          "text": "Vivere e morire"
+        },
+        "after": {
+          "part": 16,
+          "node": 27,
+          "tag": "h1",
+          "page": 265,
+          "part_page": 2,
+          "line": 1,
+          "text": "Vivere e morire"
+        }
+      },
+      {
+        "before": {
+          "part": 17,
+          "node": 27,
+          "tag": "h1",
+          "page": 278,
+          "part_page": 1,
+          "line": 2,
+          "text": "Quale meraviglia procellosa non abbonda in te?"
+        },
+        "after": {
+          "part": 17,
+          "node": 27,
+          "tag": "h1",
+          "page": 289,
+          "part_page": 2,
+          "line": 1,
+          "text": "Quale meraviglia procellosa non abbonda in te?"
+        }
+      },
+      {
+        "before": {
+          "part": 18,
+          "node": 27,
+          "tag": "h1",
+          "page": 310,
+          "part_page": 1,
+          "line": 2,
+          "text": "Law and Order"
+        },
+        "after": {
+          "part": 18,
+          "node": 27,
+          "tag": "h1",
+          "page": 322,
+          "part_page": 2,
+          "line": 1,
+          "text": "Law and Order"
+        }
+      },
+      {
+        "before": {
+          "part": 19,
+          "node": 27,
+          "tag": "h1",
+          "page": 318,
+          "part_page": 1,
+          "line": 2,
+          "text": "Mano pesante"
+        },
+        "after": {
+          "part": 19,
+          "node": 27,
+          "tag": "h1",
+          "page": 330,
+          "part_page": 2,
+          "line": 1,
+          "text": "Mano pesante"
+        }
+      },
+      {
+        "before": {
+          "part": 20,
+          "node": 27,
+          "tag": "h1",
+          "page": 336,
+          "part_page": 1,
+          "line": 2,
+          "text": "Amabile"
+        },
+        "after": {
+          "part": 20,
+          "node": 27,
+          "tag": "h1",
+          "page": 349,
+          "part_page": 2,
+          "line": 1,
+          "text": "Amabile"
+        }
+      },
+      {
+        "before": {
+          "part": 21,
+          "node": 27,
+          "tag": "h1",
+          "page": 359,
+          "part_page": 1,
+          "line": 2,
+          "text": "Il mio cuore andrà avanti"
+        },
+        "after": {
+          "part": 21,
+          "node": 27,
+          "tag": "h1",
+          "page": 373,
+          "part_page": 2,
+          "line": 1,
+          "text": "Il mio cuore andrà avanti"
+        }
+      },
+      {
+        "before": {
+          "part": 22,
+          "node": 27,
+          "tag": "h1",
+          "page": 384,
+          "part_page": 1,
+          "line": 2,
+          "text": "Jatjuk"
+        },
+        "after": {
+          "part": 22,
+          "node": 27,
+          "tag": "h1",
+          "page": 399,
+          "part_page": 2,
+          "line": 1,
+          "text": "Jatjuk"
+        }
+      },
+      {
+        "before": {
+          "part": 23,
+          "node": 27,
+          "tag": "h1",
+          "page": 403,
+          "part_page": 1,
+          "line": 2,
+          "text": "La piccola ascia"
+        },
+        "after": {
+          "part": 23,
+          "node": 27,
+          "tag": "h1",
+          "page": 419,
+          "part_page": 2,
+          "line": 1,
+          "text": "La piccola ascia"
+        }
+      },
+      {
+        "before": {
+          "part": 24,
+          "node": 27,
+          "tag": "h1",
+          "page": 435,
+          "part_page": 1,
+          "line": 2,
+          "text": "Io e Maangchi"
+        },
+        "after": {
+          "part": 24,
+          "node": 27,
+          "tag": "h1",
+          "page": 452,
+          "part_page": 2,
+          "line": 1,
+          "text": "Io e Maangchi"
+        }
+      },
+      {
+        "before": {
+          "part": 25,
+          "node": 27,
+          "tag": "h1",
+          "page": 456,
+          "part_page": 1,
+          "line": 2,
+          "text": "Il frigo del kimchi"
+        },
+        "after": {
+          "part": 25,
+          "node": 27,
+          "tag": "h1",
+          "page": 474,
+          "part_page": 2,
+          "line": 1,
+          "text": "Il frigo del kimchi"
+        }
+      },
+      {
+        "before": {
+          "part": 26,
+          "node": 27,
+          "tag": "h1",
+          "page": 479,
+          "part_page": 1,
+          "line": 2,
+          "text": "Coffee Hanjan"
+        },
+        "after": {
+          "part": 26,
+          "node": 27,
+          "tag": "h1",
+          "page": 497,
+          "part_page": 2,
+          "line": 1,
+          "text": "Coffee Hanjan"
+        }
+      }
+    ]
+  },
+  {
+    "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+    "located_titles": 5,
+    "moved_from_midpage_to_first_line": 0,
+    "moved_tags": {},
+    "moved": []
+  },
+  {
+    "id": "pachinko",
+    "located_titles": 105,
+    "moved_from_midpage_to_first_line": 39,
+    "moved_tags": {
+      "h1": 3,
+      "h2": 36
+    },
+    "moved": [
+      {
+        "before": {
+          "part": 7,
+          "node": 23,
+          "tag": "h1",
+          "page": 13,
+          "part_page": 1,
+          "line": 2,
+          "text": "Gohyang/Cidade Natal"
+        },
+        "after": {
+          "part": 7,
+          "node": 23,
+          "tag": "h1",
+          "page": 14,
+          "part_page": 2,
+          "line": 1,
+          "text": "Gohyang/Cidade Natal"
+        }
+      },
+      {
+        "before": {
+          "part": 10,
+          "node": 23,
+          "tag": "h2",
+          "page": 16,
+          "part_page": 1,
+          "line": 2,
+          "text": "Yeongdo, Busan, Coreia"
+        },
+        "after": {
+          "part": 10,
+          "node": 23,
+          "tag": "h2",
+          "page": 18,
+          "part_page": 2,
+          "line": 1,
+          "text": "Yeongdo, Busan, Coreia"
+        }
+      },
+      {
+        "before": {
+          "part": 12,
+          "node": 23,
+          "tag": "h2",
+          "page": 35,
+          "part_page": 1,
+          "line": 2,
+          "text": "Novembro de 1932"
+        },
+        "after": {
+          "part": 12,
+          "node": 23,
+          "tag": "h2",
+          "page": 37,
+          "part_page": 2,
+          "line": 1,
+          "text": "Novembro de 1932"
+        }
+      },
+      {
+        "before": {
+          "part": 16,
+          "node": 23,
+          "tag": "h2",
+          "page": 74,
+          "part_page": 1,
+          "line": 2,
+          "text": "Junho de 1932"
+        },
+        "after": {
+          "part": 16,
+          "node": 23,
+          "tag": "h2",
+          "page": 77,
+          "part_page": 2,
+          "line": 1,
+          "text": "Junho de 1932"
+        }
+      },
+      {
+        "before": {
+          "part": 32,
+          "node": 23,
+          "tag": "h2",
+          "page": 248,
+          "part_page": 1,
+          "line": 2,
+          "text": "Osaka, abril de 1933"
+        },
+        "after": {
+          "part": 32,
+          "node": 23,
+          "tag": "h2",
+          "page": 251,
+          "part_page": 2,
+          "line": 1,
+          "text": "Osaka, abril de 1933"
+        }
+      },
+      {
+        "before": {
+          "part": 43,
+          "node": 23,
+          "tag": "h1",
+          "page": 375,
+          "part_page": 1,
+          "line": 2,
+          "text": "Pátria-mãe"
+        },
+        "after": {
+          "part": 43,
+          "node": 23,
+          "tag": "h1",
+          "page": 379,
+          "part_page": 2,
+          "line": 1,
+          "text": "Pátria-mãe"
+        }
+      },
+      {
+        "before": {
+          "part": 46,
+          "node": 23,
+          "tag": "h2",
+          "page": 378,
+          "part_page": 1,
+          "line": 2,
+          "text": "Osaka, 1939"
+        },
+        "after": {
+          "part": 46,
+          "node": 23,
+          "tag": "h2",
+          "page": 383,
+          "part_page": 2,
+          "line": 1,
+          "text": "Osaka, 1939"
+        }
+      },
+      {
+        "before": {
+          "part": 50,
+          "node": 23,
+          "tag": "h2",
+          "page": 423,
+          "part_page": 1,
+          "line": 2,
+          "text": "Abril de 1940"
+        },
+        "after": {
+          "part": 50,
+          "node": 23,
+          "tag": "h2",
+          "page": 429,
+          "part_page": 2,
+          "line": 1,
+          "text": "Abril de 1940"
+        }
+      },
+      {
+        "before": {
+          "part": 52,
+          "node": 23,
+          "tag": "h2",
+          "page": 443,
+          "part_page": 1,
+          "line": 2,
+          "text": "Maio de 1942"
+        },
+        "after": {
+          "part": 52,
+          "node": 23,
+          "tag": "h2",
+          "page": 450,
+          "part_page": 2,
+          "line": 1,
+          "text": "Maio de 1942"
+        }
+      },
+      {
+        "before": {
+          "part": 56,
+          "node": 23,
+          "tag": "h2",
+          "page": 491,
+          "part_page": 1,
+          "line": 2,
+          "text": "Dezembro de 1944"
+        },
+        "after": {
+          "part": 56,
+          "node": 23,
+          "tag": "h2",
+          "page": 499,
+          "part_page": 2,
+          "line": 1,
+          "text": "Dezembro de 1944"
+        }
+      },
+      {
+        "before": {
+          "part": 58,
+          "node": 23,
+          "tag": "h2",
+          "page": 511,
+          "part_page": 1,
+          "line": 2,
+          "text": "1945"
+        },
+        "after": {
+          "part": 58,
+          "node": 23,
+          "tag": "h2",
+          "page": 520,
+          "part_page": 2,
+          "line": 1,
+          "text": "1945"
+        }
+      },
+      {
+        "before": {
+          "part": 62,
+          "node": 23,
+          "tag": "h2",
+          "page": 572,
+          "part_page": 1,
+          "line": 2,
+          "text": "Osaka, 1949"
+        },
+        "after": {
+          "part": 62,
+          "node": 23,
+          "tag": "h2",
+          "page": 581,
+          "part_page": 2,
+          "line": 1,
+          "text": "Osaka, 1949"
+        }
+      },
+      {
+        "before": {
+          "part": 64,
+          "node": 23,
+          "tag": "h2",
+          "page": 598,
+          "part_page": 1,
+          "line": 2,
+          "text": "Osaka, janeiro de 1953"
+        },
+        "after": {
+          "part": 64,
+          "node": 23,
+          "tag": "h2",
+          "page": 608,
+          "part_page": 2,
+          "line": 1,
+          "text": "Osaka, janeiro de 1953"
+        }
+      },
+      {
+        "before": {
+          "part": 66,
+          "node": 23,
+          "tag": "h2",
+          "page": 622,
+          "part_page": 1,
+          "line": 2,
+          "text": "Outubro de 1955"
+        },
+        "after": {
+          "part": 66,
+          "node": 23,
+          "tag": "h2",
+          "page": 633,
+          "part_page": 2,
+          "line": 1,
+          "text": "Outubro de 1955"
+        }
+      },
+      {
+        "before": {
+          "part": 68,
+          "node": 23,
+          "tag": "h2",
+          "page": 640,
+          "part_page": 1,
+          "line": 2,
+          "text": "Março de 1956"
+        },
+        "after": {
+          "part": 68,
+          "node": 23,
+          "tag": "h2",
+          "page": 652,
+          "part_page": 2,
+          "line": 1,
+          "text": "Março de 1956"
+        }
+      },
+      {
+        "before": {
+          "part": 70,
+          "node": 23,
+          "tag": "h2",
+          "page": 659,
+          "part_page": 1,
+          "line": 2,
+          "text": "1957"
+        },
+        "after": {
+          "part": 70,
+          "node": 23,
+          "tag": "h2",
+          "page": 672,
+          "part_page": 2,
+          "line": 1,
+          "text": "1957"
+        }
+      },
+      {
+        "before": {
+          "part": 72,
+          "node": 23,
+          "tag": "h2",
+          "page": 680,
+          "part_page": 1,
+          "line": 2,
+          "text": "Dezembro de 1959"
+        },
+        "after": {
+          "part": 72,
+          "node": 23,
+          "tag": "h2",
+          "page": 694,
+          "part_page": 2,
+          "line": 1,
+          "text": "Dezembro de 1959"
+        }
+      },
+      {
+        "before": {
+          "part": 74,
+          "node": 23,
+          "tag": "h2",
+          "page": 696,
+          "part_page": 1,
+          "line": 2,
+          "text": "Tóquio, 1960"
+        },
+        "after": {
+          "part": 74,
+          "node": 23,
+          "tag": "h2",
+          "page": 711,
+          "part_page": 2,
+          "line": 1,
+          "text": "Tóquio, 1960"
+        }
+      },
+      {
+        "before": {
+          "part": 76,
+          "node": 23,
+          "tag": "h2",
+          "page": 711,
+          "part_page": 1,
+          "line": 2,
+          "text": "Osaka, abril de 1960"
+        },
+        "after": {
+          "part": 76,
+          "node": 23,
+          "tag": "h2",
+          "page": 727,
+          "part_page": 2,
+          "line": 1,
+          "text": "Osaka, abril de 1960"
+        }
+      },
+      {
+        "before": {
+          "part": 78,
+          "node": 23,
+          "tag": "h2",
+          "page": 732,
+          "part_page": 1,
+          "line": 2,
+          "text": "Outubro de 1961"
+        },
+        "after": {
+          "part": 78,
+          "node": 23,
+          "tag": "h2",
+          "page": 749,
+          "part_page": 2,
+          "line": 1,
+          "text": "Outubro de 1961"
+        }
+      },
+      {
+        "before": {
+          "part": 80,
+          "node": 23,
+          "tag": "h2",
+          "page": 755,
+          "part_page": 1,
+          "line": 2,
+          "text": "Tóquio, março de 1962"
+        },
+        "after": {
+          "part": 80,
+          "node": 23,
+          "tag": "h2",
+          "page": 773,
+          "part_page": 2,
+          "line": 1,
+          "text": "Tóquio, março de 1962"
+        }
+      },
+      {
+        "before": {
+          "part": 84,
+          "node": 23,
+          "tag": "h2",
+          "page": 790,
+          "part_page": 1,
+          "line": 2,
+          "text": "Osaka, abril de 1962"
+        },
+        "after": {
+          "part": 84,
+          "node": 23,
+          "tag": "h2",
+          "page": 809,
+          "part_page": 2,
+          "line": 1,
+          "text": "Osaka, abril de 1962"
+        }
+      },
+      {
+        "before": {
+          "part": 85,
+          "node": 23,
+          "tag": "h1",
+          "page": 811,
+          "part_page": 1,
+          "line": 2,
+          "text": "Pachinko"
+        },
+        "after": {
+          "part": 85,
+          "node": 23,
+          "tag": "h1",
+          "page": 830,
+          "part_page": 2,
+          "line": 1,
+          "text": "Pachinko"
+        }
+      },
+      {
+        "before": {
+          "part": 88,
+          "node": 23,
+          "tag": "h2",
+          "page": 815,
+          "part_page": 1,
+          "line": 2,
+          "text": "Nagano, abril de 1962"
+        },
+        "after": {
+          "part": 88,
+          "node": 23,
+          "tag": "h2",
+          "page": 835,
+          "part_page": 2,
+          "line": 1,
+          "text": "Nagano, abril de 1962"
+        }
+      },
+      {
+        "before": {
+          "part": 90,
+          "node": 23,
+          "tag": "h2",
+          "page": 836,
+          "part_page": 1,
+          "line": 2,
+          "text": "Osaka, abril de 1965"
+        },
+        "after": {
+          "part": 90,
+          "node": 23,
+          "tag": "h2",
+          "page": 857,
+          "part_page": 2,
+          "line": 1,
+          "text": "Osaka, abril de 1965"
+        }
+      },
+      {
+        "before": {
+          "part": 92,
+          "node": 23,
+          "tag": "h2",
+          "page": 854,
+          "part_page": 1,
+          "line": 2,
+          "text": "Yokohama, novembro de 1968"
+        },
+        "after": {
+          "part": 92,
+          "node": 23,
+          "tag": "h2",
+          "page": 876,
+          "part_page": 2,
+          "line": 1,
+          "text": "Yokohama, novembro de 1968"
+        }
+      },
+      {
+        "before": {
+          "part": 96,
+          "node": 23,
+          "tag": "h2",
+          "page": 894,
+          "part_page": 1,
+          "line": 2,
+          "text": "Nagano, janeiro de 1969"
+        },
+        "after": {
+          "part": 96,
+          "node": 23,
+          "tag": "h2",
+          "page": 917,
+          "part_page": 2,
+          "line": 1,
+          "text": "Nagano, janeiro de 1969"
+        }
+      },
+      {
+        "before": {
+          "part": 98,
+          "node": 23,
+          "tag": "h2",
+          "page": 911,
+          "part_page": 1,
+          "line": 2,
+          "text": "Yokohama, julho de 1974"
+        },
+        "after": {
+          "part": 98,
+          "node": 23,
+          "tag": "h2",
+          "page": 935,
+          "part_page": 2,
+          "line": 1,
+          "text": "Yokohama, julho de 1974"
+        }
+      },
+      {
+        "before": {
+          "part": 100,
+          "node": 23,
+          "tag": "h2",
+          "page": 932,
+          "part_page": 1,
+          "line": 2,
+          "text": "Yokohama, março de 1976"
+        },
+        "after": {
+          "part": 100,
+          "node": 23,
+          "tag": "h2",
+          "page": 957,
+          "part_page": 2,
+          "line": 1,
+          "text": "Yokohama, março de 1976"
+        }
+      },
+      {
+        "before": {
+          "part": 102,
+          "node": 23,
+          "tag": "h2",
+          "page": 951,
+          "part_page": 1,
+          "line": 2,
+          "text": "Nagano, agosto de 1978"
+        },
+        "after": {
+          "part": 102,
+          "node": 23,
+          "tag": "h2",
+          "page": 977,
+          "part_page": 2,
+          "line": 1,
+          "text": "Nagano, agosto de 1978"
+        }
+      },
+      {
+        "before": {
+          "part": 104,
+          "node": 23,
+          "tag": "h2",
+          "page": 967,
+          "part_page": 1,
+          "line": 2,
+          "text": "Yokohama, 1979"
+        },
+        "after": {
+          "part": 104,
+          "node": 23,
+          "tag": "h2",
+          "page": 994,
+          "part_page": 2,
+          "line": 1,
+          "text": "Yokohama, 1979"
+        }
+      },
+      {
+        "before": {
+          "part": 110,
+          "node": 23,
+          "tag": "h2",
+          "page": 1025,
+          "part_page": 1,
+          "line": 2,
+          "text": "Osaka, 1979"
+        },
+        "after": {
+          "part": 110,
+          "node": 23,
+          "tag": "h2",
+          "page": 1053,
+          "part_page": 2,
+          "line": 1,
+          "text": "Osaka, 1979"
+        }
+      },
+      {
+        "before": {
+          "part": 114,
+          "node": 23,
+          "tag": "h2",
+          "page": 1057,
+          "part_page": 1,
+          "line": 2,
+          "text": "Yokohama, 1980"
+        },
+        "after": {
+          "part": 114,
+          "node": 23,
+          "tag": "h2",
+          "page": 1086,
+          "part_page": 2,
+          "line": 1,
+          "text": "Yokohama, 1980"
+        }
+      },
+      {
+        "before": {
+          "part": 116,
+          "node": 23,
+          "tag": "h2",
+          "page": 1069,
+          "part_page": 1,
+          "line": 2,
+          "text": "Nova York, 1985"
+        },
+        "after": {
+          "part": 116,
+          "node": 23,
+          "tag": "h2",
+          "page": 1099,
+          "part_page": 2,
+          "line": 1,
+          "text": "Nova York, 1985"
+        }
+      },
+      {
+        "before": {
+          "part": 118,
+          "node": 23,
+          "tag": "h2",
+          "page": 1084,
+          "part_page": 1,
+          "line": 2,
+          "text": "Tóquio, 1989"
+        },
+        "after": {
+          "part": 118,
+          "node": 23,
+          "tag": "h2",
+          "page": 1115,
+          "part_page": 2,
+          "line": 1,
+          "text": "Tóquio, 1989"
+        }
+      },
+      {
+        "before": {
+          "part": 122,
+          "node": 23,
+          "tag": "h2",
+          "page": 1116,
+          "part_page": 1,
+          "line": 2,
+          "text": "Yokohama, 1989"
+        },
+        "after": {
+          "part": 122,
+          "node": 23,
+          "tag": "h2",
+          "page": 1147,
+          "part_page": 2,
+          "line": 1,
+          "text": "Yokohama, 1989"
+        }
+      },
+      {
+        "before": {
+          "part": 124,
+          "node": 23,
+          "tag": "h2",
+          "page": 1135,
+          "part_page": 1,
+          "line": 2,
+          "text": "Tóquio, 1989"
+        },
+        "after": {
+          "part": 124,
+          "node": 23,
+          "tag": "h2",
+          "page": 1167,
+          "part_page": 2,
+          "line": 1,
+          "text": "Tóquio, 1989"
+        }
+      },
+      {
+        "before": {
+          "part": 126,
+          "node": 23,
+          "tag": "h2",
+          "page": 1152,
+          "part_page": 1,
+          "line": 2,
+          "text": "Yokohama, 1989"
+        },
+        "after": {
+          "part": 126,
+          "node": 23,
+          "tag": "h2",
+          "page": 1185,
+          "part_page": 2,
+          "line": 1,
+          "text": "Yokohama, 1989"
+        }
+      },
+      {
+        "before": {
+          "part": 128,
+          "node": 23,
+          "tag": "h2",
+          "page": 1170,
+          "part_page": 1,
+          "line": 2,
+          "text": "Tóquio, 1989"
+        },
+        "after": {
+          "part": 128,
+          "node": 23,
+          "tag": "h2",
+          "page": 1204,
+          "part_page": 2,
+          "line": 1,
+          "text": "Tóquio, 1989"
+        }
+      }
+    ]
+  },
+  {
+    "id": "the-fire-next-time",
+    "located_titles": 7,
+    "moved_from_midpage_to_first_line": 2,
+    "moved_tags": {
+      "h1": 2
+    },
+    "moved": [
+      {
+        "before": {
+          "part": 7,
+          "node": 21,
+          "tag": "h1",
+          "page": 11,
+          "part_page": 1,
+          "line": 3,
+          "text": "Letter to My Nephew on the One Hundredth Anniversary of the Emancipation"
+        },
+        "after": {
+          "part": 7,
+          "node": 21,
+          "tag": "h1",
+          "page": 12,
+          "part_page": 2,
+          "line": 1,
+          "text": "Letter to My Nephew on the One Hundredth Anniversary of the Emancipation"
+        }
+      },
+      {
+        "before": {
+          "part": 8,
+          "node": 22,
+          "tag": "h1",
+          "page": 24,
+          "part_page": 1,
+          "line": 3,
+          "text": "Letter from a Region in My Mind"
+        },
+        "after": {
+          "part": 8,
+          "node": 22,
+          "tag": "h1",
+          "page": 26,
+          "part_page": 2,
+          "line": 1,
+          "text": "Letter from a Region in My Mind"
+        }
+      }
+    ]
+  },
+  {
+    "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+    "located_titles": 54,
+    "moved_from_midpage_to_first_line": 27,
+    "moved_tags": {
+      "h2": 19,
+      "h1": 3,
+      "h3": 5
+    },
+    "moved": [
+      {
+        "before": {
+          "part": 5,
+          "node": 20,
+          "tag": "h2",
+          "page": 7,
+          "part_page": 1,
+          "line": 2,
+          "text": "JERICHO BROWN"
+        },
+        "after": {
+          "part": 5,
+          "node": 20,
+          "tag": "h2",
+          "page": 8,
+          "part_page": 2,
+          "line": 1,
+          "text": "JERICHO BROWN"
+        }
+      },
+      {
+        "before": {
+          "part": 6,
+          "node": 20,
+          "tag": "h2",
+          "page": 9,
+          "part_page": 1,
+          "line": 2,
+          "text": "JESMYN WARD"
+        },
+        "after": {
+          "part": 6,
+          "node": 20,
+          "tag": "h2",
+          "page": 10,
+          "part_page": 2,
+          "line": 1,
+          "text": "JESMYN WARD"
+        }
+      },
+      {
+        "before": {
+          "part": 7,
+          "node": 20,
+          "tag": "h1",
+          "page": 22,
+          "part_page": 1,
+          "line": 2,
+          "text": "LEGACY"
+        },
+        "after": {
+          "part": 7,
+          "node": 20,
+          "tag": "h1",
+          "page": 24,
+          "part_page": 2,
+          "line": 1,
+          "text": "LEGACY"
+        }
+      },
+      {
+        "before": {
+          "part": 8,
+          "node": 20,
+          "tag": "h2",
+          "page": 23,
+          "part_page": 1,
+          "line": 2,
+          "text": "KIMA JONES"
+        },
+        "after": {
+          "part": 8,
+          "node": 20,
+          "tag": "h2",
+          "page": 26,
+          "part_page": 2,
+          "line": 1,
+          "text": "KIMA JONES"
+        }
+      },
+      {
+        "before": {
+          "part": 9,
+          "node": 20,
+          "tag": "h2",
+          "page": 27,
+          "part_page": 1,
+          "line": 2,
+          "text": "RACHEL KAADZI GHANSAH"
+        },
+        "after": {
+          "part": 9,
+          "node": 20,
+          "tag": "h2",
+          "page": 31,
+          "part_page": 2,
+          "line": 1,
+          "text": "RACHEL KAADZI GHANSAH"
+        }
+      },
+      {
+        "before": {
+          "part": 10,
+          "node": 20,
+          "tag": "h2",
+          "page": 47,
+          "part_page": 1,
+          "line": 2,
+          "text": "WENDY S. WALTERS"
+        },
+        "after": {
+          "part": 10,
+          "node": 20,
+          "tag": "h2",
+          "page": 51,
+          "part_page": 2,
+          "line": 1,
+          "text": "WENDY S. WALTERS"
+        }
+      },
+      {
+        "before": {
+          "part": 11,
+          "node": 20,
+          "tag": "h2",
+          "page": 85,
+          "part_page": 1,
+          "line": 2,
+          "text": "ISABEL WILKERSON"
+        },
+        "after": {
+          "part": 11,
+          "node": 20,
+          "tag": "h2",
+          "page": 89,
+          "part_page": 2,
+          "line": 1,
+          "text": "ISABEL WILKERSON"
+        }
+      },
+      {
+        "before": {
+          "part": 12,
+          "node": 24,
+          "tag": "h2",
+          "page": 89,
+          "part_page": 1,
+          "line": 4,
+          "text": "HONORÉE FANONNE JEFFERS"
+        },
+        "after": {
+          "part": 12,
+          "node": 24,
+          "tag": "h2",
+          "page": 94,
+          "part_page": 2,
+          "line": 1,
+          "text": "HONORÉE FANONNE JEFFERS"
+        }
+      },
+      {
+        "before": {
+          "part": 13,
+          "node": 20,
+          "tag": "h2",
+          "page": 118,
+          "part_page": 1,
+          "line": 2,
+          "text": "CAROL ANDERSON"
+        },
+        "after": {
+          "part": 13,
+          "node": 20,
+          "tag": "h2",
+          "page": 124,
+          "part_page": 2,
+          "line": 1,
+          "text": "CAROL ANDERSON"
+        }
+      },
+      {
+        "before": {
+          "part": 14,
+          "node": 20,
+          "tag": "h2",
+          "page": 126,
+          "part_page": 1,
+          "line": 2,
+          "text": "JESMYN WARD"
+        },
+        "after": {
+          "part": 14,
+          "node": 20,
+          "tag": "h2",
+          "page": 133,
+          "part_page": 2,
+          "line": 1,
+          "text": "JESMYN WARD"
+        }
+      },
+      {
+        "before": {
+          "part": 15,
+          "node": 20,
+          "tag": "h1",
+          "page": 136,
+          "part_page": 1,
+          "line": 2,
+          "text": "RECKONING"
+        },
+        "after": {
+          "part": 15,
+          "node": 20,
+          "tag": "h1",
+          "page": 144,
+          "part_page": 2,
+          "line": 1,
+          "text": "RECKONING"
+        }
+      },
+      {
+        "before": {
+          "part": 16,
+          "node": 20,
+          "tag": "h2",
+          "page": 137,
+          "part_page": 1,
+          "line": 2,
+          "text": "CLINT SMITH"
+        },
+        "after": {
+          "part": 16,
+          "node": 20,
+          "tag": "h2",
+          "page": 146,
+          "part_page": 2,
+          "line": 1,
+          "text": "CLINT SMITH"
+        }
+      },
+      {
+        "before": {
+          "part": 17,
+          "node": 20,
+          "tag": "h2",
+          "page": 139,
+          "part_page": 1,
+          "line": 2,
+          "text": "KEVIN YOUNG"
+        },
+        "after": {
+          "part": 17,
+          "node": 20,
+          "tag": "h2",
+          "page": 149,
+          "part_page": 2,
+          "line": 1,
+          "text": "KEVIN YOUNG"
+        }
+      },
+      {
+        "before": {
+          "part": 18,
+          "node": 20,
+          "tag": "h2",
+          "page": 162,
+          "part_page": 1,
+          "line": 2,
+          "text": "KIESE LAYMON"
+        },
+        "after": {
+          "part": 18,
+          "node": 20,
+          "tag": "h2",
+          "page": 173,
+          "part_page": 2,
+          "line": 1,
+          "text": "KIESE LAYMON"
+        }
+      },
+      {
+        "before": {
+          "part": 19,
+          "node": 20,
+          "tag": "h2",
+          "page": 178,
+          "part_page": 1,
+          "line": 2,
+          "text": "GARNETTE CADOGAN"
+        },
+        "after": {
+          "part": 19,
+          "node": 20,
+          "tag": "h2",
+          "page": 189,
+          "part_page": 2,
+          "line": 1,
+          "text": "GARNETTE CADOGAN"
+        }
+      },
+      {
+        "before": {
+          "part": 20,
+          "node": 20,
+          "tag": "h2",
+          "page": 201,
+          "part_page": 1,
+          "line": 3,
+          "text": "CLAUDIA RANKINE"
+        },
+        "after": {
+          "part": 20,
+          "node": 20,
+          "tag": "h2",
+          "page": 213,
+          "part_page": 2,
+          "line": 1,
+          "text": "CLAUDIA RANKINE"
+        }
+      },
+      {
+        "before": {
+          "part": 21,
+          "node": 20,
+          "tag": "h2",
+          "page": 217,
+          "part_page": 1,
+          "line": 2,
+          "text": "EMILY RABOTEAU"
+        },
+        "after": {
+          "part": 21,
+          "node": 20,
+          "tag": "h2",
+          "page": 230,
+          "part_page": 2,
+          "line": 1,
+          "text": "EMILY RABOTEAU"
+        }
+      },
+      {
+        "before": {
+          "part": 34,
+          "node": 20,
+          "tag": "h2",
+          "page": 249,
+          "part_page": 1,
+          "line": 2,
+          "text": "MITCHELL S. JACKSON"
+        },
+        "after": {
+          "part": 34,
+          "node": 20,
+          "tag": "h2",
+          "page": 263,
+          "part_page": 2,
+          "line": 1,
+          "text": "MITCHELL S. JACKSON"
+        }
+      },
+      {
+        "before": {
+          "part": 34,
+          "node": 86,
+          "tag": "h3",
+          "page": 251,
+          "part_page": 3,
+          "line": 20,
+          "text": "BIG CHRIS"
+        },
+        "after": {
+          "part": 34,
+          "node": 86,
+          "tag": "h3",
+          "page": 266,
+          "part_page": 5,
+          "line": 1,
+          "text": "BIG CHRIS"
+        }
+      },
+      {
+        "before": {
+          "part": 34,
+          "node": 98,
+          "tag": "h3",
+          "page": 253,
+          "part_page": 5,
+          "line": 18,
+          "text": "SAM"
+        },
+        "after": {
+          "part": 34,
+          "node": 98,
+          "tag": "h3",
+          "page": 268,
+          "part_page": 7,
+          "line": 1,
+          "text": "SAM"
+        }
+      },
+      {
+        "before": {
+          "part": 34,
+          "node": 116,
+          "tag": "h3",
+          "page": 255,
+          "part_page": 7,
+          "line": 6,
+          "text": "ANTHONY (ANT)"
+        },
+        "after": {
+          "part": 34,
+          "node": 116,
+          "tag": "h3",
+          "page": 270,
+          "part_page": 9,
+          "line": 1,
+          "text": "ANTHONY (ANT)"
+        }
+      },
+      {
+        "before": {
+          "part": 34,
+          "node": 127,
+          "tag": "h3",
+          "page": 257,
+          "part_page": 9,
+          "line": 2,
+          "text": "HENRY"
+        },
+        "after": {
+          "part": 34,
+          "node": 127,
+          "tag": "h3",
+          "page": 272,
+          "part_page": 11,
+          "line": 1,
+          "text": "HENRY"
+        }
+      },
+      {
+        "before": {
+          "part": 34,
+          "node": 137,
+          "tag": "h3",
+          "page": 259,
+          "part_page": 11,
+          "line": 4,
+          "text": "WESLEY"
+        },
+        "after": {
+          "part": 34,
+          "node": 137,
+          "tag": "h3",
+          "page": 275,
+          "part_page": 14,
+          "line": 1,
+          "text": "WESLEY"
+        }
+      },
+      {
+        "before": {
+          "part": 35,
+          "node": 20,
+          "tag": "h1",
+          "page": 267,
+          "part_page": 1,
+          "line": 2,
+          "text": "JUBILEE"
+        },
+        "after": {
+          "part": 35,
+          "node": 20,
+          "tag": "h1",
+          "page": 283,
+          "part_page": 2,
+          "line": 1,
+          "text": "JUBILEE"
+        }
+      },
+      {
+        "before": {
+          "part": 36,
+          "node": 20,
+          "tag": "h2",
+          "page": 268,
+          "part_page": 1,
+          "line": 2,
+          "text": "NATASHA TRETHEWEY"
+        },
+        "after": {
+          "part": 36,
+          "node": 20,
+          "tag": "h2",
+          "page": 285,
+          "part_page": 2,
+          "line": 1,
+          "text": "NATASHA TRETHEWEY"
+        }
+      },
+      {
+        "before": {
+          "part": 37,
+          "node": 20,
+          "tag": "h2",
+          "page": 270,
+          "part_page": 1,
+          "line": 3,
+          "text": "DANIEL JOSÉ OLDER"
+        },
+        "after": {
+          "part": 37,
+          "node": 20,
+          "tag": "h2",
+          "page": 288,
+          "part_page": 2,
+          "line": 1,
+          "text": "DANIEL JOSÉ OLDER"
+        }
+      },
+      {
+        "before": {
+          "part": 38,
+          "node": 20,
+          "tag": "h2",
+          "page": 281,
+          "part_page": 1,
+          "line": 2,
+          "text": "EDWIDGE DANTICAT"
+        },
+        "after": {
+          "part": 38,
+          "node": 20,
+          "tag": "h2",
+          "page": 300,
+          "part_page": 2,
+          "line": 1,
+          "text": "EDWIDGE DANTICAT"
+        }
+      }
+    ]
+  },
+  {
+    "id": "the-house-on-mango-street",
+    "located_titles": 3,
+    "moved_from_midpage_to_first_line": 1,
+    "moved_tags": {
+      "h3": 1
+    },
+    "moved": [
+      {
+        "before": {
+          "part": 2,
+          "node": 28,
+          "tag": "h3",
+          "page": 3,
+          "part_page": 1,
+          "line": 2,
+          "text": "The House on Mango Street"
+        },
+        "after": {
+          "part": 2,
+          "node": 28,
+          "tag": "h3",
+          "page": 4,
+          "part_page": 2,
+          "line": 1,
+          "text": "The House on Mango Street"
+        }
+      }
+    ]
+  }
+]

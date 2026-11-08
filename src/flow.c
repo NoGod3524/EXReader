@@ -222,9 +222,12 @@ static exr_status ordinary_fragment(flow *f, exr_glyph *glyphs, size_t count, fl
 exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forced, int final) {
   exr_layout *l=f->layout;
   size_t i,j,spaces=0,gaps=0,logical_start=glyphs[0].start,logical_end=glyphs[count-1].end;
-  float indent=f->first_line ? f->paragraph->indent : 0;
+  float indent=f->first_line ? exr_flow_indent(f) : 0;
   float available=fmaxf(1,f->width-indent),width=0,ascent=0,descent=0,height=0,x,extra=0,baseline;
+  size_t first_line=l->line_count;
+  int semantic=f->source_kind || f->paragraph->block_kind==EXR_BLOCK_TITLE;
   int align=f->intrinsic ? 0 : f->paragraph->align;
+  if(semantic && align==3) align=0;
   int cjk=!f->intrinsic && f->bidi && f->bidi->cjk && align!=1 && align!=2;
   unsigned base=exr_inline_base(f->bidi,logical_start);
   if(f->display_bidi) { unsigned projected=exr_bidi_base_level(f->display_bidi->bidi,f->display_first);if(projected!=UINT_MAX) base=projected; }
@@ -240,6 +243,7 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
   if(align==4) align=base&1 ? 2 : 0;
   if(align==5) align=base&1 ? 0 : 2;
   if(align==1 || align==2) cjk=0;
+  if(semantic) cjk=0;
   if(cjk) {
     size_t node=glyphs[0].node;
     while(node!=SIZE_MAX) {
@@ -315,10 +319,11 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
       }
     }
   }
+  status=exr_flow_semantics(f,first_line,glyphs[0].node);if(status!=EXR_OK) return status;
   if(logical_start<l->pages[l->page_count-1].start) l->pages[l->page_count-1].start=logical_start;
   if(logical_end>l->pages[l->page_count-1].end) l->pages[l->page_count-1].end=logical_end;
   if(f->measure_height) {
-    l->glyph_count=l->line_count=l->pages[l->page_count-1].line_count=0;
+    l->block_count=l->glyph_count=l->line_count=l->pages[l->page_count-1].line_count=0;
   }
   f->y+=height; f->first_line=0; return EXR_OK;
 }
@@ -622,6 +627,10 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
     b->border_color = 0x888888ff;
   }
   f->y += h;
+  if(f->chapter_pending) {
+    status=exr_flow_semantics(f,f->layout->line_count,node);
+    if(status!=EXR_OK) return status;
+  }
   if(exr_doc_node(f->doc,node).end>f->layout->pages[f->layout->page_count - 1].end)
     f->layout->pages[f->layout->page_count - 1].end = exr_doc_node(f->doc,node).end;
   return EXR_OK;
@@ -670,6 +679,13 @@ static exr_status copy_cell(flow *f, const cell *c, float x, float y, float heig
     v.page = p;
     l->glyphs[l->glyph_count++] = v;
   }
+  if(!exr_grow((void **)&l->blocks,&l->block_cap,l->block_count+from->block_count,sizeof(*l->blocks))) return EXR_MEMORY;
+  for(i=0;i<from->block_count;i++) {
+    exr_layout_block b=from->blocks[i];b.page=p;b.line_start+=l->line_count;
+    l->blocks[l->block_count++]=b;
+    if(b.starts_chapter) f->chapter_pending=0;
+    if(b.chapter_index>f->chapter_index) f->chapter_index=b.chapter_index;
+  }
   for (i = 0; i < from->line_count; i++) {
     exr_line v = from->lines[i];
     v.x += dx;
@@ -695,7 +711,7 @@ static exr_status copy_cell(flow *f, const cell *c, float x, float y, float heig
     }
     l->boxes[l->box_count++] = v;
   }
-  if(f->measure_height) l->glyph_count=l->line_count=l->pages[p].line_count=0;
+  if(f->measure_height) l->block_count=l->glyph_count=l->line_count=l->pages[p].line_count=0;
   f->pending = l->glyph_count;
   if (from->page_count && from->pages[from->page_count-1].end > l->pages[p].end)
     l->pages[p].end = from->pages[from->page_count-1].end;
@@ -722,4 +738,34 @@ exr_status exr_flow_copy(flow *f, const exr_layout *from, size_t index,
   c.layout = (exr_layout *)from;
   c.inset=inset;
   return copy_cell(f, &c, x, y, height);
+}
+
+exr_status exr_flow_semantics(flow *f,size_t first_line,size_t node) {
+  exr_layout *l=f->layout;
+  exr_layout_block b={0},*last=NULL;
+  size_t current=node;
+  b.kind=f->source_kind;b.node=f->source_node;b.start=f->source_start;b.end=f->source_end;
+  if(!b.kind) {
+    while(current!=SIZE_MAX) {
+      exr_node n=exr_doc_node(f->doc,current);
+      const exr_style *s=exr_doc_style(f->doc,f->styles,current);
+      if(s->block_kind==EXR_BLOCK_TITLE) { b.kind=EXR_BLOCK_TITLE;b.node=current;b.start=n.start;b.end=n.end; }
+      current=n.parent;
+    }
+  }
+  if(!b.kind) {
+    b.node=node;
+    if(first_line<l->line_count) { b.start=l->lines[first_line].start;b.end=l->lines[l->line_count-1].end; }
+    else { exr_node n=exr_doc_node(f->doc,node);b.start=n.start;b.end=n.end; }
+  }
+  b.chapter_index=f->chapter_index;b.starts_chapter=f->chapter_pending;f->chapter_pending=0;
+  b.page=l->page_count-1;b.line_start=first_line;b.line_count=l->line_count-first_line;
+  if(l->block_count) last=&l->blocks[l->block_count-1];
+  if(last && !b.starts_chapter && last->kind==b.kind && last->node==b.node && last->page==b.page &&
+     last->chapter_index==b.chapter_index && last->line_start+last->line_count==b.line_start &&
+     (b.kind==EXR_BLOCK_BODY || (last->start==b.start && last->end==b.end))) {
+    last->line_count+=b.line_count;if(b.kind==EXR_BLOCK_BODY) last->end=b.end;return EXR_OK;
+  }
+  if(!exr_grow((void **)&l->blocks,&l->block_cap,l->block_count+1,sizeof(*l->blocks))) return EXR_MEMORY;
+  l->blocks[l->block_count++]=b;return EXR_OK;
 }

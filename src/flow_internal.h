@@ -60,6 +60,9 @@ typedef struct {
   float x, width, y, bottom_inset, origin_x, used_inline, inline_end_inset;
   size_t pending;
   int first_line, paginate, force_break, unit_depth, page_limit, context_depth;
+  exr_block_kind source_kind;
+  size_t source_node, source_start, source_end, chapter_index;
+  int chapter_pending, source_indented;
   int intrinsic; /* 1: every legal line break, 2: unwrapped streaming measure. */
   int measure_height; /* Exact wrapped geometry; discard emitted glyph/line snapshots. */
   double intrinsic_extent;
@@ -118,6 +121,19 @@ typedef struct {
   int in_word;
   exr_hyphen_edit *edits;size_t edit_count,edit_capacity,rewrite,blocked_until;
 } exr_line_buffer;
+/* Restore source indentation removed by projection. CSS text-indent applies
+   only to the first line of its HTML paragraph, not later raw paragraphs.
+   Without source indentation, author/user CSS (including inherited 0) wins
+   over the lowest-priority CJK paragraph default. */
+static inline float exr_flow_indent(const flow *f) {
+  if(f->source_kind || f->paragraph->block_kind==EXR_BLOCK_TITLE) return 0;
+  if(f->source_indented) return 2*f->paragraph->font_size +
+    (f->source_indented==1 && f->paragraph->indent_declared ? f->paragraph->indent : 0);
+  if(f->paragraph->indent_declared) return f->paragraph->indent;
+  return f->paragraph->paragraph && f->bidi && f->bidi->cjk ?
+    2*f->paragraph->font_size : f->paragraph->indent;
+}
+exr_status exr_flow_semantics(flow *f,size_t first_line,size_t node);
 void exr_inline_clear(exr_inline_bidi *bidi);
 unsigned exr_vertical_flags(uint32_t codepoint, exr_text_orientation orientation);
 exr_status exr_inline_prepare(flow *f, size_t first_node, exr_inline_bidi *bidi);
