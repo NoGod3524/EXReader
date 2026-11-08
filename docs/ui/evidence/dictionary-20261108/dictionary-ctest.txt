@@ -1,0 +1,13 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-dict-20261108/build/dict
+    Start 193: native-dictionary-stardict
+1/4 Test #193: native-dictionary-stardict .......   Passed    3.63 sec
+    Start 194: native-dictionary-dictzip
+2/4 Test #194: native-dictionary-dictzip ........   Passed    2.36 sec
+    Start 195: native-dictionary-contracts
+3/4 Test #195: native-dictionary-contracts ......   Passed   21.77 sec
+    Start 196: native-dictionary-dictd
+4/4 Test #196: native-dictionary-dictd ..........   Passed    2.36 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =  30.17 sec

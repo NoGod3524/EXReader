@@ -155,6 +155,12 @@ static void annot_marks(HDC dc);
 static int annot_count,annot_selected=-1;
 static void shell_selection_paint(HDC dc);
 static size_t shell_selection_bytes(char **out);
+static void dict_lookup(void);
+static void dict_auto_lookup(void);
+static void dict_hide(void);
+static void dict_manager_open(void);
+static int dict_translate(const MSG *message);
+static void dict_shutdown(void);
 #endif
 
 typedef struct {
@@ -4174,6 +4180,7 @@ static void selection_report(void) {
 #ifdef EXR_READER_WINDOWS_SHELL
 #include "windows/shell_selection.inc"
 #include "windows/shell_annotations.inc"
+#include "windows/shell_dictionary.inc"
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -6115,6 +6122,7 @@ static int check_selection(int minimum, const char *needle) {
 #include "windows/shell_measure.inc"
 #include "windows/shell_selection_drive.inc"
 #include "windows/shell_annotations_drive.inc"
+#include "windows/shell_dictionary_drive.inc"
 #endif
 
 static int drive_execute(void) {
@@ -6125,6 +6133,9 @@ static int drive_execute(void) {
 #ifdef EXR_READER_WINDOWS_SHELL
   if (!strncmp(action,"annot_",6)) {
     drive_step_finish(annot_drive(action),"annotation action dispatched");return 0;
+  }
+  if (!strncmp(action,"dict_",5)) {
+    drive_step_finish(dict_drive(action),"dictionary action dispatched");return 0;
   }
 #include "windows/shell_annotations_navigation.inc"
   if (!strcmp(action, "select_pointer")) {
@@ -7560,6 +7571,7 @@ static void host_cleanup(void) {
 #ifdef EXR_READER_WINDOWS_SHELL
   exr_anchor_free(&shell_anchor); shell_anchor_valid = 0;
   shell_selection_reset();
+  dict_shutdown();
 #endif
   session_clear(&g.session);
   frame_clear(&g.frame);

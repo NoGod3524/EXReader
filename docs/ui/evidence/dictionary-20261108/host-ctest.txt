@@ -1,0 +1,19 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-dict-20261108/build/dict
+    Start 210: windows-selection-boundaries
+1/7 Test #210: windows-selection-boundaries ...........   Passed    0.70 sec
+    Start 211: windows-selection-copy
+2/7 Test #211: windows-selection-copy .................   Passed    0.38 sec
+    Start 212: windows-selection-keyboard
+3/7 Test #212: windows-selection-keyboard .............   Passed    0.50 sec
+    Start 213: windows-selection-raster
+4/7 Test #213: windows-selection-raster ...............   Passed    0.50 sec
+    Start 214: windows-selection-generated
+5/7 Test #214: windows-selection-generated ............   Passed    0.42 sec
+    Start 215: windows-selection-annotations
+6/7 Test #215: windows-selection-annotations ..........   Passed    0.64 sec
+    Start 216: windows-selection-dictionary-storage
+7/7 Test #216: windows-selection-dictionary-storage ...   Passed    0.38 sec
+
+100% tests passed out of 7
+
+Total Test time (real) =   3.57 sec
