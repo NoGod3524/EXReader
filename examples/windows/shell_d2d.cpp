@@ -77,7 +77,7 @@ static IDWriteFontFamily *find_family(shell_d2d *shell, const wchar_t *const *na
 
 static HRESULT make_format(shell_d2d *shell, int style) {
 
-  const bool is_title = style == SHELL_TEXT_TITLE;
+  const bool is_title = style == SHELL_TEXT_TITLE || style == SHELL_TEXT_CENTER;
   const bool is_icon = style == SHELL_TEXT_ICON;
   const wchar_t *name = SHELL_UI_FONTS[2];
   IDWriteFontFamily *family = find_family(shell, is_icon ? SHELL_ICON_FONTS : SHELL_UI_FONTS,
@@ -91,7 +91,7 @@ static HRESULT make_format(shell_d2d *shell, int style) {
   if (FAILED(hr)) return hr;
   format->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
   format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-  format->SetTextAlignment(is_title ? DWRITE_TEXT_ALIGNMENT_LEADING : DWRITE_TEXT_ALIGNMENT_CENTER);
+  format->SetTextAlignment(is_title && style != SHELL_TEXT_CENTER ? DWRITE_TEXT_ALIGNMENT_LEADING : DWRITE_TEXT_ALIGNMENT_CENTER);
   if (is_title) {
     IDWriteInlineObject *ellipsis = nullptr;
     DWRITE_TRIMMING trimming = {DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
@@ -529,11 +529,12 @@ extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,
   }
   s->dc_brush->SetColor(D2D1::ColorF(c.text_secondary));
   if(SUCCEEDED(s->write->CreateTextLayout(path,(UINT32)wcslen(path),s->format[SHELL_TEXT_LABEL],
-      w-2*pad-40*k,h-pad-top-224*k,&description))) {
+      w-2*pad-40*k,52*k,&description))) {
     description->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
     s->dc_target->DrawTextLayout(D2D1::Point2F(pad+20*k,top+212*k),description,s->dc_brush,D2D1_DRAW_TEXT_OPTIONS_CLIP);
     description->Release();
   }
+  s->dc_target->DrawText(L"点击分区 · 左 / 中 / 右",16,s->format[SHELL_TEXT_LABEL],D2D1::RectF(pad+20*k,top+278*k,w-pad-20*k,top+298*k),s->dc_brush);
   hr=s->dc_target->EndDraw(); if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s); return hr;
 }
 

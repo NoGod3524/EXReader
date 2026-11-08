@@ -1,0 +1,105 @@
+{
+  "books": 19,
+  "pages": 11484,
+  "hash_changed_pages": 0,
+  "fingerprint": "dcceb19c8ea43ba4db5ac57a7ea2b3bbbc127a105f3451490f2ffe2eff7f44fa",
+  "before_seconds": 185.12207760001183,
+  "after_seconds": 156.84100369999942,
+  "counts": [
+    {
+      "id": "a-raisin-in-the-sun",
+      "pages": 356,
+      "glyphs": 201166
+    },
+    {
+      "id": "between-the-world-and-me",
+      "pages": 236,
+      "glyphs": 206259
+    },
+    {
+      "id": "black-boy",
+      "pages": 1050,
+      "glyphs": 827291
+    },
+    {
+      "id": "born-a-crime",
+      "pages": 519,
+      "glyphs": 463582
+    },
+    {
+      "id": "crying-in-h-mart",
+      "pages": 542,
+      "glyphs": 454828
+    },
+    {
+      "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+      "pages": 515,
+      "glyphs": 591513
+    },
+    {
+      "id": "i-know-why-the-caged-bird-sings",
+      "pages": 625,
+      "glyphs": 445273
+    },
+    {
+      "id": "pachinko",
+      "pages": 1277,
+      "glyphs": 932465
+    },
+    {
+      "id": "the-absolutely-true-diary-of-a-part-time-indian",
+      "pages": 570,
+      "glyphs": 248895
+    },
+    {
+      "id": "the-autobiography-of-malcolm-x.",
+      "pages": 279,
+      "glyphs": 1084554
+    },
+    {
+      "id": "the-distance-between-us-a-memoir",
+      "pages": 725,
+      "glyphs": 575175
+    },
+    {
+      "id": "the-fire-next-time",
+      "pages": 189,
+      "glyphs": 138691
+    },
+    {
+      "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+      "pages": 333,
+      "glyphs": 297363
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "pages": 186,
+      "glyphs": 105411
+    },
+    {
+      "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+      "pages": 646,
+      "glyphs": 580338
+    },
+    {
+      "id": "hongloumeng-24264",
+      "pages": 1684,
+      "glyphs": 787657
+    },
+    {
+      "id": "xingshihengyan-24239",
+      "pages": 1203,
+      "glyphs": 553944
+    },
+    {
+      "id": "tangshi300-52323",
+      "pages": 84,
+      "glyphs": 46635
+    },
+    {
+      "id": "kusamakura-japanese-vertical-writing",
+      "pages": 465,
+      "glyphs": 107600
+    }
+  ]
+}

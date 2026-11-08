@@ -1,0 +1,71 @@
+HOST	phase=1	engine=3.42.0	pid=12572
+STEP	1	shell	PASS	legacy panel
+STEP	2	shell_dpi	PASS	page=31;status=已打开《紅樓夢》。
+STEP	3	shell_client	PASS	page=31;status=已打开《紅樓夢》。
+STEP	4	shell_font	PASS	page=31;status=已打开《紅樓夢》。
+STEP	5	wait_idle	PASS	page=31;status=已打开《紅樓夢》。
+STEP	6	shell_click	PASS	button invoked
+STEP	7	shelf_dump	PASS	shelf state recorded
+STEP	8	select_pointer	PASS	selection pointer dispatched
+STEP	9	select_pointer	PASS	selection pointer dispatched
+STEP	10	select_pointer	PASS	selection pointer dispatched
+STEP	11	shelf_dump	PASS	shelf state recorded
+STEP	12	select_key	PASS	selection key dispatched
+STEP	13	select_pointer	PASS	selection pointer dispatched
+STEP	14	select_pointer	PASS	selection pointer dispatched
+STEP	15	select_pointer	PASS	selection pointer dispatched
+STEP	16	shelf_dump	PASS	shelf state recorded
+STEP	17	select_key	PASS	selection key dispatched
+STEP	18	select_pointer	PASS	selection pointer dispatched
+STEP	19	select_pointer	PASS	selection pointer dispatched
+STEP	20	select_pointer	PASS	selection pointer dispatched
+STEP	21	shelf_dump	PASS	shelf state recorded
+STEP	22	select_key	PASS	selection key dispatched
+STEP	23	select_pointer	PASS	selection pointer dispatched
+STEP	24	select_pointer	PASS	selection pointer dispatched
+STEP	25	select_pointer	PASS	selection pointer dispatched
+STEP	26	shelf_dump	PASS	shelf state recorded
+STEP	27	select_key	PASS	selection key dispatched
+STEP	28	select_pointer	PASS	selection pointer dispatched
+STEP	29	select_pointer	PASS	selection pointer dispatched
+STEP	30	select_pointer	PASS	selection pointer dispatched
+STEP	31	shelf_dump	PASS	shelf state recorded
+STEP	32	select_key	PASS	selection key dispatched
+STEP	33	select_pointer	PASS	selection pointer dispatched
+STEP	34	select_pointer	PASS	selection pointer dispatched
+STEP	35	select_pointer	PASS	selection pointer dispatched
+STEP	36	shelf_dump	PASS	shelf state recorded
+STEP	37	select_key	PASS	selection key dispatched
+STEP	38	select_pointer	PASS	selection pointer dispatched
+STEP	39	select_pointer	PASS	selection pointer dispatched
+STEP	40	select_pointer	PASS	selection pointer dispatched
+STEP	41	shelf_dump	PASS	shelf state recorded
+STEP	42	select_key	PASS	selection key dispatched
+STEP	43	select_pointer	PASS	selection pointer dispatched
+STEP	44	select_pointer	PASS	selection pointer dispatched
+STEP	45	select_pointer	PASS	selection pointer dispatched
+STEP	46	shelf_dump	PASS	shelf state recorded
+STEP	47	select_key	PASS	selection key dispatched
+STEP	48	select_pointer	PASS	selection pointer dispatched
+STEP	49	select_pointer	PASS	selection pointer dispatched
+STEP	50	select_pointer	PASS	selection pointer dispatched
+STEP	51	shelf_dump	PASS	shelf state recorded
+STEP	52	select_key	PASS	selection key dispatched
+STEP	53	select_pointer	PASS	selection pointer dispatched
+STEP	54	select_pointer	PASS	selection pointer dispatched
+STEP	55	select_pointer	PASS	selection pointer dispatched
+STEP	56	shelf_dump	PASS	shelf state recorded
+STEP	57	select_key	PASS	selection key dispatched
+STEP	58	select_pointer	PASS	selection pointer dispatched
+STEP	59	select_pointer	PASS	selection pointer dispatched
+STEP	60	select_pointer	PASS	selection pointer dispatched
+STEP	61	annot_command	PASS	annotation action dispatched
+STEP	62	annot_edit	PASS	annotation action dispatched
+STEP	63	shelf_return	PASS	return requested
+STEP	64	wait_idle	PASS	page=31;status=已选择 36 字节文字 · 可复制引用或添加标注。
+STEP	65	shelf_dump	PASS	shelf state recorded
+STEP	66	shelf_open	PASS	shelf row clicked
+STEP	67	wait_idle	PASS	page=31;status=已选择 36 字节文字 · 可复制引用或添加标注。
+STEP	68	annot_dump	PASS	annotation action dispatched
+STEP	69	quit	PASS	closing
+DONE	69	eof	PASS	script finished
