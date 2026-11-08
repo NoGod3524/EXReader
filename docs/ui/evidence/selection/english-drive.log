@@ -1,0 +1,43 @@
+HOST	phase=1	engine=3.42.0	pid=21240
+STEP	1	import	PASS	page=0;status=已导入《Selection Original》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《Selection Original》 · 从首个阅读章节开始。
+STEP	3	wait_idle	PASS	page=1;status=已打开《Selection Original》 · 从首个阅读章节开始。
+STEP	4	shell	PASS	reading screen
+STEP	5	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	6	shell_font	PASS	page=1;status=第 1 页。
+STEP	7	shell_client	PASS	page=1;status=第 1 页。
+STEP	8	wait_idle	PASS	page=1;status=第 1 页。
+STEP	9	shell_click	PASS	button invoked
+STEP	10	ui_cues	PASS	focus cues set
+STEP	11	select_key	PASS	selection key dispatched
+STEP	12	select_pointer	PASS	selection pointer dispatched
+STEP	13	select_pointer	PASS	selection pointer dispatched
+STEP	14	select_pointer	PASS	selection pointer dispatched
+STEP	15	select_key	PASS	selection key dispatched
+STEP	16	select_dump	PASS	logical selection and clipboard saved
+STEP	17	select_key	PASS	selection key dispatched
+STEP	18	select_pointer	PASS	selection pointer dispatched
+STEP	19	select_pointer	PASS	selection pointer dispatched
+STEP	20	select_pointer	PASS	selection pointer dispatched
+STEP	21	select_key	PASS	selection key dispatched
+STEP	22	select_dump	PASS	logical selection and clipboard saved
+STEP	23	select_key	PASS	selection key dispatched
+STEP	24	select_pointer	PASS	selection pointer dispatched
+STEP	25	select_pointer	PASS	selection pointer dispatched
+STEP	26	select_pointer	PASS	selection pointer dispatched
+STEP	27	select_key	PASS	selection key dispatched
+STEP	28	select_dump	PASS	logical selection and clipboard saved
+STEP	29	select_key	PASS	selection key dispatched
+STEP	30	select_pointer	PASS	selection pointer dispatched
+STEP	31	select_pointer	PASS	selection pointer dispatched
+STEP	32	select_pointer	PASS	selection pointer dispatched
+STEP	33	select_key	PASS	selection key dispatched
+STEP	34	select_dump	PASS	logical selection and clipboard saved
+STEP	35	select_key	PASS	selection key dispatched
+STEP	36	select_pointer	PASS	selection pointer dispatched
+STEP	37	select_pointer	PASS	selection pointer dispatched
+STEP	38	select_pointer	PASS	selection pointer dispatched
+STEP	39	select_key	PASS	selection key dispatched
+STEP	40	select_dump	PASS	logical selection and clipboard saved
+STEP	41	quit	PASS	closing
+DONE	41	eof	PASS	script finished

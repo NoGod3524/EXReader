@@ -1,0 +1,71 @@
+{
+  "base_revision": "2f288e15066d616972d312e638b5d9dd04d6e786",
+  "engine_trees": [
+    "040000 tree 649ba25fad17868f2fd2f5d128c56c070413dddc\tinclude",
+    "040000 tree f32abb3bf08c3694be27b2496059714abd5e09fd\tsrc",
+    "040000 tree 6abaa05af7b9a83d6cc6edbe0de3eb2f3286d57e\ttests"
+  ],
+  "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+  "sdk_features": "ICC, AVIF, TIFF, WEBP, MP3, PDF_CRYPTO disabled; full core/library/audio/PDF/OpenJPEG tests enabled",
+  "host_flags": "gcc -O2 -Wall -Wextra -Werror -DEXR_READER_WINDOWS_SHELL=1; g++ -O2 -std=c++17 -Wall -Wextra -Werror",
+  "dll_sha256": "35effbaf0a0ac6f83fe1f3fd857a0343003f10968322c665d64966a3f305a1f0",
+  "corpus_fingerprint": "dcceb19c8ea43ba4db5ac57a7ea2b3bbbc127a105f3451490f2ffe2eff7f44fa",
+  "files": {
+    "examples/reader.c": {
+      "bytes": 322667,
+      "sha256": "73273537ef022276f99675084f145ab65e0146abb8e0c953a501d184652ffb4f"
+    },
+    "examples/windows/shell_selection.inc": {
+      "bytes": 18074,
+      "sha256": "e419f16e74e1f58805797b87dd0580df672e54d1185b4ce0850b8f88967f6f42"
+    },
+    "examples/windows/shell_selection_drive.inc": {
+      "bytes": 3888,
+      "sha256": "18814dbbda4511ef1dc7be81c1fdbdbd01815cc82cadd63890c25a52716b85a6"
+    },
+    "examples/windows/check_shell_selection.c": {
+      "bytes": 13136,
+      "sha256": "a7484b82fa1d465709851888db6f3c5102fe2fa6ea4ec8dc42b1df98480930a9"
+    },
+    "examples/windows/selection_tests.cmake": {
+      "bytes": 1735,
+      "sha256": "dc5d76c32bb4071915fc4ef67e7e02245b298ac75b42faabe4606b66c395f603"
+    },
+    "examples/windows/shell_settings.inc": {
+      "bytes": 11337,
+      "sha256": "ff09302d6c65365d4ac2644f744bfc777e9b8589bdcbeb6b67ee68da2cacc679"
+    },
+    "docs/ui/acceptance/check_selection.py": {
+      "bytes": 13202,
+      "sha256": "505c5a223829d4b2254bec7502dd13a06d2bff9904507c5197e13d473b44f7e7"
+    },
+    "ops/capture_window.py": {
+      "bytes": 3459,
+      "sha256": "7b2b711c6c239818aa0d5d2aab646fbc5d3d50b3e3e6d3c5e5393c75a2623f26"
+    },
+    "out/EXReader.exe": {
+      "bytes": 1215568,
+      "sha256": "4f4d6b56e777304eef00fc173cc82df7da3bdcf0b35d01560b6ba85c91273169"
+    },
+    "out/libexreader.dll": {
+      "bytes": 6037391,
+      "sha256": "35effbaf0a0ac6f83fe1f3fd857a0343003f10968322c665d64966a3f305a1f0"
+    },
+    "out/baseline.exe": {
+      "bytes": 1200652,
+      "sha256": "e51ae381a7e17461f03c661709db192805f01f2604426546baba114a1984db33"
+    },
+    "out/baseline_bridge.dll": {
+      "bytes": 1189900,
+      "sha256": "30dc7c877aa9d6d7c20c55637dc1ce655a663f4ebc6b5432a08acfa060a5492d"
+    },
+    "out/selection_bridge.dll": {
+      "bytes": 1204840,
+      "sha256": "688bdc0e26a852e8f739f35e4df4f77d69f50b309f1f8d872dae7d663cada1cd"
+    },
+    "out/Reader.otf": {
+      "bytes": 16437364,
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+    }
+  }
+}
