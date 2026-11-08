@@ -111,6 +111,40 @@ EXR_API exr_status exr_publication_navigation(exr_publication *publication,
 /* Own the returned document with document_free(); offsets/indices are part-local. */
 EXR_API exr_status exr_publication_load(exr_publication *publication, size_t part,
                                         exr_document **out, exr_error *error);
+/* Half-open ranges in normalized UTF-8 bytes, independent of pages. Parts are
+   ordered by the publication directory; endpoints may name different parts. */
+typedef struct { size_t part, offset; } exr_text_position;
+typedef struct { exr_text_position start, end; } exr_text_range;
+/* Owned strings; zero-initialize outputs and release with content_anchor_free.
+   Stable ID (path when ID is empty) routes each endpoint after part reordering.
+   The FNV-1a text revision plus size permits exact offsets in unchanged text,
+   including repeated passages. Edited text uses the existing quote resolver;
+   ambiguous/missing context never falls back to an old offset. Each selector is
+   a point with 32 Unicode scalars of context on either side. Host stores these
+   fields itself; this API defines no storage or drawing format. */
+typedef struct {
+  char *part_id, *part_path;
+  uint64_t text_revision;
+  size_t text_size;
+  exr_anchor selector;
+} exr_content_endpoint;
+typedef struct { exr_content_endpoint start, end; } exr_content_anchor;
+typedef struct { exr_anchor_state state; exr_text_range range; } exr_text_range_match;
+EXR_API exr_status exr_anchor_from_range(exr_publication *publication,const exr_text_range *range,
+  const exr_control *control,exr_content_anchor *out,exr_error *error);
+EXR_API exr_status exr_range_from_anchor(exr_publication *publication,const exr_content_anchor *anchor,
+  const exr_control *control,exr_text_range_match *out,exr_error *error);
+EXR_API void exr_content_anchor_free(exr_content_anchor *anchor);
+typedef enum { EXR_RANGE_CHAR, EXR_RANGE_WORD, EXR_RANGE_SENTENCE, EXR_RANGE_PARAGRAPH } exr_range_unit;
+/* CHAR is a Unicode grapheme. WORD groups non-space, non-punctuation graphemes;
+   CJK ideographs/kana and punctuation are individual units (no dictionary).
+   SENTENCE ends at . ! ? or their CJK equivalents, or a paragraph break;
+   this deterministic rule does not infer abbreviations. PARAGRAPH uses blocks.
+   A collapsed range selects the unit to its right; EOF stays collapsed.
+   Nonempty ranges expand outward, with an exclusive end. Only endpoint parts
+   are loaded; the returned range represents all intervening parts as well. */
+EXR_API exr_status exr_range_expand(exr_publication *publication,const exr_text_range *range,
+  exr_range_unit unit,const exr_control *control,exr_text_range *out,exr_error *error);
 /* Full point CFI for the built-in indexed EPUB provider. Create accepts a
    single-chapter snapshot from this publication, with snapshot-local node IDs.
    Resolve parses only the addressed chapter and returns an independent owned
@@ -267,6 +301,12 @@ EXR_API const exr_paint *exr_layout_paints(const exr_layout *layout, size_t page
 EXR_API const exr_bitmap *exr_layout_image(const exr_layout *layout, size_t resource);
 EXR_API size_t exr_layout_page_at(const exr_layout *layout, size_t utf8_offset);
 EXR_API size_t exr_layout_hit_test(const exr_layout *layout, size_t page, float x, float y);
+/* Page-local layout coordinates, origin top left. Caret at the nearest cluster
+   edge (bidi/vertical-aware); ligature interiors are not subdivided. Unlike the
+   legacy nearest-line API, images and points outside text lines miss, returning
+   {SIZE_MAX,SIZE_MAX}. part is the caller's publication directory index. */
+EXR_API exr_status exr_hit_test(const exr_layout *layout,size_t part,size_t page,float x,float y,
+  exr_text_position *out,exr_error *error);
 #ifdef __cplusplus
 }
 #endif
