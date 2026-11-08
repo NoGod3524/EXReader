@@ -1,0 +1,50 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/build/w/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/build/w
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 131
+    Start 131: native-toc-nav
+
+131: Test command: C:\Users\Oscar\Documents\Codex\EXReader-toc-links-20261107\build\w\exreader-toc-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/tests/fixtures" "nav"
+131: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/build/w
+131: Test timeout computed to be: 10000000
+131: TOC nav: 30 checks passed
+1/4 Test #131: native-toc-nav ...................   Passed    0.17 sec
+test 132
+    Start 132: native-toc-ncx
+
+132: Test command: C:\Users\Oscar\Documents\Codex\EXReader-toc-links-20261107\build\w\exreader-toc-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/tests/fixtures" "ncx"
+132: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/build/w
+132: Test timeout computed to be: 10000000
+132: TOC ncx: 45 checks passed
+2/4 Test #132: native-toc-ncx ...................   Passed    0.21 sec
+test 133
+    Start 133: native-toc-recovery
+
+133: Test command: C:\Users\Oscar\Documents\Codex\EXReader-toc-links-20261107\build\w\exreader-toc-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/tests/fixtures" "recovery"
+133: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/build/w
+133: Test timeout computed to be: 10000000
+133: TOC recovery: 81 checks passed
+3/4 Test #133: native-toc-recovery ..............   Passed    0.54 sec
+test 134
+    Start 134: native-toc-fragment
+
+134: Test command: C:\Users\Oscar\Documents\Codex\EXReader-toc-links-20261107\build\w\exreader-toc-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/tests/fixtures" "fragment"
+134: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/build/w
+134: Test timeout computed to be: 10000000
+134: TOC fragment: 78 checks passed
+4/4 Test #134: native-toc-fragment ..............   Passed    0.08 sec
+
+The following tests passed:
+	native-toc-nav
+	native-toc-ncx
+	native-toc-recovery
+	native-toc-fragment
+
+100% tests passed out of 4
+
+Total Test time (real) =   1.03 sec
