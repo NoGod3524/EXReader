@@ -8,4 +8,6 @@ unsigned exr_hyphen_word_kind(uint32_t cp); /* L=1, M/join-control=2, N=3, other
 int exr_hyphen_language(const char *language,char out[256]);
 unsigned exr_hyphenator_bidi_risk(exr_hyphenator *hyphenator,const char *language);
 int exr_hyphenator_replacements(const exr_hyphenator *hyphenator);
+int exr_hyphenator_auto_default(const exr_hyphenator *hyphenator);
+int exr_hyphenator_has_language(exr_hyphenator *hyphenator,const char *language);
 #endif

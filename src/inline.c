@@ -69,6 +69,16 @@ static int following_inline_scalar(void *context, uint32_t *cp) {
   return 0;
 }
 static const char *node_language(const flow *f,size_t node);
+/* hyphens:auto, or an undeclared value under a built-in auto-by-default hyphenator
+   whose rules cover both this text and its block container (zh paragraphs stay manual). */
+static int auto_hyphens(const flow *f,size_t node) {
+  int value=(*exr_doc_style(f->doc,f->styles,node)).hyphens;size_t block;
+  if(value==EXR_HYPHENS_AUTO) return 1;
+  if(value!=EXR_HYPHENS_INITIAL || !exr_hyphenator_auto_default(f->hyphenator)) return 0;
+  for(block=node;block!=SIZE_MAX && exr_doc_style(f->doc,f->styles,block)->display==EXR_CSS_INLINE;block=exr_doc_node(f->doc,block).parent) {}
+  return exr_hyphenator_has_language(f->hyphenator,node_language(f,node)) &&
+         (block==SIZE_MAX || exr_hyphenator_has_language(f->hyphenator,node_language(f,block)));
+}
 size_t exr_inline_paragraph_end(flow *f,size_t node,size_t offset) {
   inline_text_cursor cursor={f,node,offset,0};uint32_t cp;
   while(following_inline_scalar(&cursor,&cp)) if(exr_bidi_paragraph_end(cp)) return cursor.at;
@@ -87,7 +97,7 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
   b->first_node = first;b->prepared=1;b->window_safe=-1;
   for (node = first; node != SIZE_MAX; node = next_text(f, following(f, node))) {
     const exr_node *n = (const exr_node[]){exr_doc_node(f->doc,node)};
-    if((*exr_doc_style(f->doc,f->styles,node)).hyphens==EXR_HYPHENS_AUTO) risks|=exr_hyphenator_bidi_risk(f->hyphenator,node_language(f,node));
+    if(auto_hyphens(f,node)) risks|=exr_hyphenator_bidi_risk(f->hyphenator,node_language(f,node));
     if (exr_ruby_node(f->doc,node)) { bytes += 3; count++; continue; }
     bytes += n->end - n->start;
     for (at = n->start; at < n->end;) {
@@ -1411,7 +1421,7 @@ static exr_status rematch_token(flow *f,exr_line_buffer *b,const char *text,size
   char previous[256]={0};int have_previous=0;size_t k;exr_status status;
   for(k=0;k<count;k++) {
     const exr_glyph *g=&b->raw.glyphs[indices[k]];char key[256];exr_hyphenation *result=NULL;const exr_hyphen_break *items;size_t n,j;
-    if((exr_inline_id(g) ? exr_inline_id(g)<=b->display_origin_id : g->start<=origin) || (*exr_doc_style(f->doc,f->styles,g->node)).hyphens!=EXR_HYPHENS_AUTO || !(g->boundaries&EXR_BOUNDARY_GRAPHEME) ||
+    if((exr_inline_id(g) ? exr_inline_id(g)<=b->display_origin_id : g->start<=origin) || !auto_hyphens(f,g->node) || !(g->boundaries&EXR_BOUNDARY_GRAPHEME) ||
        (g->boundaries&EXR_BOUNDARY_GLUE) || !exr_hyphen_language(node_language(f,g->node),key)) continue;
     if(have_previous && !strcmp(previous,key)) continue;
     memcpy(previous,key,strlen(key)+1);have_previous=1;
@@ -1423,7 +1433,7 @@ static exr_status rematch_token(flow *f,exr_line_buffer *b,const char *text,size
       if(point==SIZE_MAX || point>=count) { status=exr_fail(f->error,EXR_FORMAT,"Unmapped display hyphenation point");break; }
       candidate=&b->raw.glyphs[indices[point]];
       if((exr_inline_id(candidate) ? exr_inline_id(candidate)<=b->display_origin_id : candidate->start<=origin) || !(candidate->boundaries&EXR_BOUNDARY_GRAPHEME) || (candidate->boundaries&EXR_BOUNDARY_GLUE) ||
-         (*exr_doc_style(f->doc,f->styles,candidate->node)).hyphens!=EXR_HYPHENS_AUTO ||
+         !auto_hyphens(f,candidate->node) ||
          !exr_hyphen_language(node_language(f,candidate->node),language) || strcmp(language,key)) continue;
       if(item->start!=item->point || item->end!=item->point || item->before_size || item->after_size) {
         size_t first=word_index(offsets,count,item->start),last=word_index(offsets,count,item->end);exr_hyphen_edit edit={0};
@@ -1787,7 +1797,7 @@ static size_t word_index(const size_t *offsets,size_t count,size_t byte) {
   return lo<=count && offsets[lo]==byte ? lo : SIZE_MAX;
 }
 static exr_status word_points(flow *f,exr_line_buffer *b,const char key[256]) {
-  char text[1024];unsigned char points[1025];size_t bytes=0,count=0,offsets[257],sources[257];
+  char text[1024];unsigned char points[1025];size_t bytes=0,count=0,offsets[257],sources[257];unsigned char joiner[257]={0};
   inline_text_cursor cursor={f,b->word_node,b->word_start,0};uint32_t cp;int numeric=0,previous=0;
   exr_hyphen_word *w=b->word;exr_status status;
   w->start=b->word_start;w->until=b->word_start;w->count=w->edit_count=0;memcpy(w->language,key,strlen(key)+1);
@@ -1795,7 +1805,7 @@ static exr_status word_points(flow *f,exr_line_buffer *b,const char key[256]) {
     unsigned kind=exr_hyphen_word_kind(cp);size_t size=cursor.at-cursor.start;
     if(!kind && !(word_joiner(cp) && previous && word_after(cursor))) break;
     if(count==256 || size>sizeof(text)-bytes) { w->until=SIZE_MAX;return EXR_OK; }
-    offsets[count]=bytes;sources[count++]=cursor.start;
+    joiner[count]=!kind && cp!=0xb7; /* Catalan l·l keeps its point after the middle dot. */offsets[count]=bytes;sources[count++]=cursor.start;
     if(!exr_doc_copy(f->doc,cursor.start,size,text+bytes)) return exr_fail(f->error,EXR_ENCODING,"Unavailable hyphenation source range");
     bytes+=size;w->until=cursor.at;
     numeric|=kind==3 || (count==1 && kind!=1);previous=!!kind;
@@ -1804,7 +1814,7 @@ static exr_status word_points(flow *f,exr_line_buffer *b,const char key[256]) {
   if(!exr_hyphenator_replacements(f->hyphenator)) {
     status=exr_hyphenator_breaks(f->hyphenator,key,text,bytes,points,&f->config->control,f->error);
     if(status!=EXR_OK) return status;
-    for(bytes=0;bytes<count;bytes++) if(points[offsets[bytes]]) w->points[w->count++]=sources[bytes];
+    for(bytes=0;bytes<count;bytes++) if(points[offsets[bytes]] && !joiner[bytes] && !(bytes && joiner[bytes-1])) w->points[w->count++]=sources[bytes];
   } else {
     exr_hyphenation *result=NULL;const exr_hyphen_break *items;size_t n,i;
     offsets[count]=bytes;sources[count]=w->until;
@@ -1814,6 +1824,7 @@ static exr_status word_points(flow *f,exr_line_buffer *b,const char key[256]) {
       const exr_hyphen_break *item=&items[i];size_t at=word_index(offsets,count,item->point);
       if(at==SIZE_MAX) continue;
       status=line_work(f,24);if(status!=EXR_OK) break;
+      if(joiner[at] || (at && joiner[at-1])) continue;
       w->points[w->count++]=sources[at];
       if(item->start!=item->point || item->end!=item->point || item->before_size || item->after_size) {
         size_t first=word_index(offsets,count,item->start),last=word_index(offsets,count,item->end);exr_hyphen_edit *edit;
@@ -1836,7 +1847,7 @@ static exr_status hyphenate_scalar(flow *f,exr_line_buffer *b,exr_glyph *g) {
     b->in_word=0; if(b->word) b->word->until=0; return EXR_OK;
   }
   if(!b->in_word) { b->word_node=g->node; b->word_start=g->start; b->in_word=1; }
-  if(g->start<b->blocked_until || (*exr_doc_style(f->doc,f->styles,g->node)).hyphens!=EXR_HYPHENS_AUTO || !(g->boundaries&EXR_BOUNDARY_GRAPHEME) ||
+  if(g->start<b->blocked_until || !auto_hyphens(f,g->node) || !(g->boundaries&EXR_BOUNDARY_GRAPHEME) ||
       (g->boundaries&EXR_BOUNDARY_GLUE) || !exr_hyphen_language(node_language(f,g->node),key)) return EXR_OK;
   if(!b->word) {
     if(sizeof(*b->word)>16*1024*1024-line_payload(b)) return exr_fail(f->error,EXR_LIMIT,"Hyphenation word exceeds line budget");
