@@ -28,9 +28,17 @@ static void shell_color_display(host_frame *frame) {
   DIBSECTION section={0};
   if(!GetObject(frame->display_bitmap,sizeof(section),&section) || !section.dsBm.bmBits) return;
   uint32_t *dst=section.dsBm.bmBits, *src=frame->dib;
+  size_t pixels=(size_t)frame->display_width*frame->display_height, colored=0;
+  for(size_t i=0;i<pixels;i++) {
+    uint32_t q=src[i];unsigned b=q&255,gc=(q>>8)&255,r=(q>>16)&255;
+    colored+=r!=gc || gc!=b;
+  }
+  /* Opaque book-painted paper carries its own ink contrast. Recolouring just
+     its grayscale ink produces white interiors with dark edges in dark mode. */
+  frame->display_shell_paper=colored>pixels/2;
   for(size_t i=0;i<(size_t)frame->display_width*frame->display_height;i++) {
     uint32_t q=src[i];unsigned b=q&255,gc=(q>>8)&255,r=(q>>16)&255;
-    dst[i]=(r==gc && gc==b) ? shell_blend(shell_colors->text,shell_colors->layer_page,r/255.f) : q;
+    dst[i]=(!frame->display_shell_paper && r==gc && gc==b) ? shell_blend(shell_colors->text,shell_colors->layer_page,r/255.f) : q;
   }
   frame->display_shell_theme=theme;
 }

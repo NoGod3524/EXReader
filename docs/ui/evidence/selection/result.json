@@ -1,0 +1,550 @@
+{
+  "exe_sha256": "4f4d6b56e777304eef00fc173cc82df7da3bdcf0b35d01560b6ba85c91273169",
+  "capture_script": "ops/capture_window.py",
+  "sources": {
+    "hongloumeng-24264.epub": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "kusamakura-japanese-vertical-writing.epub": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7"
+  },
+  "1_sentence": {
+    "bytes": 72,
+    "sha256": "181733f479cb675c3312f52caba6d5391e7f40fc4e4c545c4fa6940dccd930b6",
+    "start": [
+      1,
+      13852
+    ],
+    "end": [
+      1,
+      13924
+    ],
+    "byte_equal": true,
+    "clipboard_equal": true,
+    "anchor_roundtrip": true,
+    "text": "三劫后，我在北邙山等你，會齊了同往太虛幻境銷號。"
+  },
+  "2_cross_page": {
+    "bytes": 90,
+    "sha256": "bc43458239aaa3c9f38bdcfa1f1882247114a4b0a91793a33c991036149e35ea",
+    "start": [
+      1,
+      15711
+    ],
+    "end": [
+      1,
+      15801
+    ],
+    "byte_equal": true,
+    "clipboard_equal": true,
+    "anchor_roundtrip": true,
+    "text": "主人常說的什么賈雨村了，每有意幫助周濟，只是沒甚机會．我家并",
+    "boundary": 15756
+  },
+  "3_cjk": [
+    {
+      "bytes": 3,
+      "sha256": "a4c3313deb180960469d0e79a770b9deee47fdeed74fe0f74d0bf51006fcc4f0",
+      "start": [
+        1,
+        13852
+      ],
+      "end": [
+        1,
+        13855
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "三"
+    },
+    {
+      "bytes": 3,
+      "sha256": "6240423cbf9b63703ed63fc823dbb821e3677fb64b9eee1e3656790ab8158392",
+      "start": [
+        1,
+        13855
+      ],
+      "end": [
+        1,
+        13858
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "劫"
+    },
+    {
+      "bytes": 3,
+      "sha256": "60be66d61586b95cdc62727089607e757b44edb8fe0ab4b07ae45be7d447da7b",
+      "start": [
+        1,
+        13858
+      ],
+      "end": [
+        1,
+        13861
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "后"
+    },
+    {
+      "bytes": 3,
+      "sha256": "b70bb4acc0484cf040de4c07c60f9db722283da2c4a672c39291de621e92c33f",
+      "start": [
+        1,
+        13864
+      ],
+      "end": [
+        1,
+        13867
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "我"
+    },
+    {
+      "bytes": 3,
+      "sha256": "12404a0b638172406b8776fd1e1a36bfcd4d3fe200807afca710cf7468db6903",
+      "start": [
+        1,
+        13867
+      ],
+      "end": [
+        1,
+        13870
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "在"
+    }
+  ],
+  "4_double": [
+    {
+      "bytes": 3,
+      "sha256": "a4c3313deb180960469d0e79a770b9deee47fdeed74fe0f74d0bf51006fcc4f0",
+      "start": [
+        1,
+        13852
+      ],
+      "end": [
+        1,
+        13855
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "三"
+    },
+    {
+      "bytes": 3,
+      "sha256": "6240423cbf9b63703ed63fc823dbb821e3677fb64b9eee1e3656790ab8158392",
+      "start": [
+        1,
+        13855
+      ],
+      "end": [
+        1,
+        13858
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "劫"
+    },
+    {
+      "bytes": 3,
+      "sha256": "60be66d61586b95cdc62727089607e757b44edb8fe0ab4b07ae45be7d447da7b",
+      "start": [
+        1,
+        13858
+      ],
+      "end": [
+        1,
+        13861
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "后"
+    },
+    {
+      "bytes": 3,
+      "sha256": "b70bb4acc0484cf040de4c07c60f9db722283da2c4a672c39291de621e92c33f",
+      "start": [
+        1,
+        13864
+      ],
+      "end": [
+        1,
+        13867
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "我"
+    },
+    {
+      "bytes": 3,
+      "sha256": "12404a0b638172406b8776fd1e1a36bfcd4d3fe200807afca710cf7468db6903",
+      "start": [
+        1,
+        13867
+      ],
+      "end": [
+        1,
+        13870
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "在"
+    }
+  ],
+  "4_triple": [
+    {
+      "bytes": 40,
+      "sha256": "bf322a1e4c19271cc4309a1433f688dbb10b7a3a65ed8f48897000046a57f59c",
+      "start": [
+        1,
+        0
+      ],
+      "end": [
+        1,
+        40
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "The Project Gutenberg eBook of 紅樓夢"
+    },
+    {
+      "bytes": 63,
+      "sha256": "13fb8d49615c4151989e2cd2cfdb395b657fe70abd84f42941f0e781325deeb8",
+      "start": [
+        1,
+        762
+      ],
+      "end": [
+        1,
+        825
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "第一回 甄士隱夢幻識通靈 賈雨村風塵怀閨秀"
+    },
+    {
+      "bytes": 381,
+      "sha256": "fa08dffc13be52cf03789c6e358838dd0e5b525371a6e226216873153d91b4b2",
+      "start": [
+        1,
+        2264
+      ],
+      "end": [
+        1,
+        2645
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "原來女媧氏煉石補天之時，于大荒山無稽崖練成高經十二丈，方經二十四丈頑石三万六千五百零一塊．媧皇氏只用了三万六千五百塊，只單單剩了一塊未用，便棄在此山青埂峰下．誰知此石自經段煉之后，靈性已通，因見眾石俱得補天，獨自己無材不堪入選，遂自怨自歎，日夜悲號慚愧．"
+    },
+    {
+      "bytes": 2263,
+      "sha256": "2d764a8ca32c20bf6c3bff13a45df68f42ba647d2d046688c07a8721ce630ecb",
+      "start": [
+        1,
+        2646
+      ],
+      "end": [
+        1,
+        4909
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": null
+    },
+    {
+      "bytes": 2253,
+      "sha256": "0603569111c41d683434abbcb7cf5de54bd09955534e932306bddc3bb2b361a2",
+      "start": [
+        1,
+        5594
+      ],
+      "end": [
+        1,
+        7847
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": null
+    }
+  ],
+  "7_shift": [
+    {
+      "bytes": 3,
+      "sha256": "a4c3313deb180960469d0e79a770b9deee47fdeed74fe0f74d0bf51006fcc4f0",
+      "start": [
+        1,
+        13852
+      ],
+      "end": [
+        1,
+        13855
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "三"
+    },
+    {
+      "bytes": 6,
+      "sha256": "6d86639cd24e2053dbb1dd15dd8945425975e2f93428ecb08c068051b6eda6eb",
+      "start": [
+        1,
+        13852
+      ],
+      "end": [
+        1,
+        13858
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "三劫"
+    },
+    {
+      "bytes": 3,
+      "sha256": "a4c3313deb180960469d0e79a770b9deee47fdeed74fe0f74d0bf51006fcc4f0",
+      "start": [
+        1,
+        13852
+      ],
+      "end": [
+        1,
+        13855
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "三"
+    }
+  ],
+  "7_all": [
+    {
+      "bytes": 85273,
+      "sha256": "939309a8c4049ae0c9f9a0031cbfcb4bedbdbd998446fad26689b4cb31b7da33",
+      "start": [
+        1,
+        0
+      ],
+      "end": [
+        1,
+        85273
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": null
+    },
+    {
+      "bytes": 85273,
+      "sha256": "939309a8c4049ae0c9f9a0031cbfcb4bedbdbd998446fad26689b4cb31b7da33",
+      "start": [
+        1,
+        0
+      ],
+      "end": [
+        1,
+        85273
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": null
+    },
+    {
+      "bytes": 85273,
+      "sha256": "939309a8c4049ae0c9f9a0031cbfcb4bedbdbd998446fad26689b4cb31b7da33",
+      "start": [
+        1,
+        0
+      ],
+      "end": [
+        1,
+        85273
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": null
+    }
+  ],
+  "3_english": [
+    {
+      "bytes": 5,
+      "sha256": "b1a96dd646bccaa24cef7a3db22a6f995f05658f4f1c3272913e258c03e6fb24",
+      "start": [
+        0,
+        0
+      ],
+      "end": [
+        0,
+        5
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "Alpha"
+    },
+    {
+      "bytes": 5,
+      "sha256": "f144a6907dc4284d1f9fe6a7d9b9ff53c02c1d07ba68f24d413d7ff7f757a782",
+      "start": [
+        0,
+        6
+      ],
+      "end": [
+        0,
+        11
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "bravo"
+    },
+    {
+      "bytes": 6,
+      "sha256": "3d0941964aa3ebdcb00ccef58b1bb399f9f898465e9886d5aec7f31090a0fb30",
+      "start": [
+        0,
+        12
+      ],
+      "end": [
+        0,
+        18
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "reader"
+    },
+    {
+      "bytes": 9,
+      "sha256": "65045134064dd4d905665eceaf4153fea4f9d69d2ae22255a0b7cef4701f4886",
+      "start": [
+        0,
+        19
+      ],
+      "end": [
+        0,
+        28
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "selection"
+    },
+    {
+      "bytes": 7,
+      "sha256": "ba118bf7fc9c1aedc1edb28a0aa86e0b43b681f222af6616e13c43be87815b06",
+      "start": [
+        0,
+        29
+      ],
+      "end": [
+        0,
+        36
+      ],
+      "byte_equal": true,
+      "clipboard_equal": true,
+      "anchor_roundtrip": true,
+      "text": "English"
+    }
+  ],
+  "5_vertical": {
+    "bytes": 165,
+    "sha256": "9aa10a3d25317723960b6386be1fd5f470e3b0c8cd9d6d0b81f4973f39b1f4b6",
+    "start": [
+      2,
+      947
+    ],
+    "end": [
+      2,
+      1112
+    ],
+    "byte_equal": true,
+    "clipboard_equal": true,
+    "anchor_roundtrip": true,
+    "text": "でも住みよくせねばならぬ。ここに詩人という天職が出来て、ここに画家という使命が降くだる。あらゆる芸術の士は人の",
+    "writing_mode": 1,
+    "highlight_changed_pixels": 30302,
+    "highlight_box": [
+      754,
+      153,
+      938,
+      453
+    ]
+  },
+  "background_pixels_changed": 11785,
+  "opaque_ink_changed": 0,
+  "pass": true,
+  "accent_soft": {
+    "light": {
+      "rgba": [
+        69,
+        83,
+        224,
+        0.1
+      ],
+      "paper_rgb": [
+        245,
+        245,
+        242
+      ],
+      "selected_rgb": [
+        227,
+        229,
+        240
+      ]
+    },
+    "dark": {
+      "rgba": [
+        124,
+        136,
+        255,
+        0.16
+      ],
+      "paper_rgb": [
+        20,
+        20,
+        22
+      ],
+      "selected_rgb": [
+        37,
+        39,
+        59
+      ]
+    }
+  },
+  "6_generated": {
+    "epub": "tests/fixtures/hyphen-long.epub",
+    "visible_generated_glyphs": 4,
+    "copied_u2010": 0,
+    "logical_bytes_equal": true,
+    "combined_glyphs": 2,
+    "combined_copied_bytes": 2,
+    "combined_extra_bytes": 0
+  },
+  "9_ctest": {
+    "baseline": 191,
+    "new_host_groups": 5,
+    "passed": 196,
+    "failed": 0,
+    "seconds": 54.88
+  }
+}
