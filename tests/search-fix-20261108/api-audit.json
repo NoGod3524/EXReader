@@ -1,0 +1,21 @@
+{
+  "code_revision": "90bfd3cc899e89b8e6af51204fcb6a330f8803a8",
+  "collision_list": [
+    "exr_document_search (fixed PDF vs reflow publication; resolved)"
+  ],
+  "other_collisions": [],
+  "layout_document_prefix_lines": [
+    "   position. Offsets/lengths address exr_document_text and existing anchors;"
+  ],
+  "pdf_document_header_identical_to_main": true,
+  "new_signatures": [
+    "EXR_API exr_status exr_publication_search(exr_publication *publication,exr_text_position from,\n  const char *needle,unsigned flags,const exr_control *control,exr_search_result *result,exr_error *error);",
+    "EXR_API exr_status exr_publication_search_all(exr_publication *publication,const char *needle,\n  unsigned flags,exr_search_fn callback,void *context,const exr_control *control,size_t *count,exr_error *error);"
+  ],
+  "exported_symbols_checked": [
+    "exr_document_search",
+    "exr_publication_search",
+    "exr_publication_search_all"
+  ],
+  "dll_sha256": "3c89dc777bddfceff1e02ca3f257c13a2dc1d54ce574b119b6657daa5e13fd46"
+}
