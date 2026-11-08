@@ -20,8 +20,8 @@ static int shell_measure(const char *name) {
     fprintf(out,"\"image_source\":[%ld,%ld],",g.frame.shell_image.right,g.frame.shell_image.bottom);
     fprintf(out,"\"image\":[%ld,%ld,%ld,%ld],\"body\":[%ld,%d,%ld,%ld],\"page_number\":{\"box\":[0,%ld,%ld,%ld],\"font\":%.3f,\"weight\":%.0f,\"digits\":[",
       image.left,image.top,image.right,image.bottom,
-      (client.right-g.frame.shell_geometry.width)/2,shell_px(SHELL_TOPBAR_H+SHELL_BODY_TOP,shell_dpi),
-      (client.right+g.frame.shell_geometry.width)/2,client.bottom-shell_px(SHELL_PAGE_NUMBER_H+SHELL_BODY_GAP,shell_dpi),
+      (long)shell_px(g.frame.shell_geometry.style.left,shell_dpi),shell_px(SHELL_TOPBAR_H+g.frame.shell_geometry.style.top,shell_dpi),
+      client.right-shell_px(g.frame.shell_geometry.style.right,shell_dpi),client.bottom-shell_px(SHELL_PAGE_NUMBER_H+g.frame.shell_geometry.style.bottom,shell_dpi),
       client.bottom-shell_px(SHELL_PAGE_NUMBER_H,shell_dpi),client.right,client.bottom,(double)metrics[0],(double)metrics[1]);
     for(int i=2;i<12;i++) fprintf(out,"%s%.6f",i==2?"":",",(double)metrics[i]);
     fprintf(out,"]},");

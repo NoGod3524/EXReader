@@ -22,6 +22,11 @@ struct exr_publication {
   size_t missing_count, missing_capacity;
   search_part *search;
   int searching;
+  exr_footnote *footnotes;
+  size_t footnote_count, footnote_capacity;
+  exr_footnote_reference *references;
+  size_t reference_count, reference_capacity;
+  int footnotes_ready;
 };
 typedef struct {
   size_t part, bytes;
@@ -81,6 +86,10 @@ void exr_publication_free(exr_publication *p) {
   }
   for (i=0;i<p->missing_count;i++) free((void *)p->missing[i].fragment);
   free(p->missing); free(p->toc); free(p->toc_locations);
+  for(i=0;i<p->footnote_count;i++) {
+    free((void *)p->footnotes[i].id);free((void *)p->footnotes[i].label);free((void *)p->footnotes[i].text);
+  }
+  free(p->footnotes);free(p->references);
   free(p->title);
   free(p);
 }
@@ -281,6 +290,122 @@ exr_status exr_publication_load(exr_publication *p, size_t part, exr_document **
   p->busy = 0;
   *out = doc;
   return exr_fail(e, EXR_OK, "");
+}
+
+static int note_token(const char *s,const char *word) {
+  size_t n=strlen(word);
+  while(s && *s) {
+    while(isspace((unsigned char)*s)) s++;
+    if(!strncmp(s,word,n) && (!s[n] || isspace((unsigned char)s[n]))) return 1;
+    while(*s && !isspace((unsigned char)*s)) s++;
+  }
+  return 0;
+}
+static int note_semantic(const exr_node *n) {
+  const char *type=exr_node_attribute(n,"http://www.idpf.org/2007/ops|type");
+  if(!type) type=exr_node_attribute(n,"epub:type");
+  return note_token(type,"footnote") || note_token(type,"endnote") || note_token(type,"rearnote") ||
+    note_token(exr_node_attribute(n,"role"),"doc-footnote") || note_token(exr_node_attribute(n,"role"),"doc-endnote");
+}
+static const char *note_id(const exr_node *n) {
+  const char *id=exr_node_attribute(n,"id");
+  return id ? id : exr_node_attribute(n,"http://www.w3.org/XML/1998/namespace|id");
+}
+static size_t note_find(const exr_publication *p,size_t part,const char *id) {
+  size_t i;
+  for(i=0;i<p->footnote_count;i++)
+    if(p->footnotes[i].target_part==part && !strcmp(p->footnotes[i].id,id)) return i;
+  return SIZE_MAX;
+}
+static exr_status note_add(exr_publication *p,const exr_document *d,size_t part,const exr_node *n,
+  const char *id,size_t *index,exr_error *e) {
+  exr_footnote v={0};size_t total=0;
+  *index=note_find(p,part,id);
+  if(*index!=SIZE_MAX) return EXR_OK;
+  if(n->start==SIZE_MAX || n->end<n->start || n->end>d->size || p->footnote_count>=65536)
+    return exr_fail(e,EXR_LIMIT,"Invalid or excessive footnote range");
+  if(copy_string(id,2047,&total,&v.id,e)!=EXR_OK) return e ? e->code : EXR_MEMORY;
+  v.label=exr_copy(id,strlen(id));v.text=exr_copy(d->text+n->start,n->end-n->start);
+  v.target_part=part;v.target_offset=n->start;
+  if(!v.label || !v.text || !exr_grow((void **)&p->footnotes,&p->footnote_capacity,p->footnote_count+1,sizeof(v))) {
+    free((void *)v.id);free((void *)v.label);free((void *)v.text);
+    return exr_fail(e,EXR_MEMORY,"Footnote allocation failed");
+  }
+  *index=p->footnote_count;p->footnotes[p->footnote_count++]=v;return EXR_OK;
+}
+exr_status exr_publication_footnotes(exr_publication *p,const exr_footnote **notes,size_t *count,
+  const exr_footnote_reference **refs,size_t *ref_count,exr_error *e) {
+  exr_status status=EXR_OK;size_t part,i,index;exr_document *doc=NULL,*target_doc=NULL;
+  if(notes) *notes=NULL;
+  if(count) *count=0;
+  if(refs) *refs=NULL;
+  if(ref_count) *ref_count=0;
+  if(!p || !notes || !count || !refs || !ref_count || p->busy || p->searching)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant footnote request");
+  if(!p->footnotes_ready) {
+    /* Scan only on explicit request. Old opens and page hashes are unaffected. */
+    for(part=0;part<p->count;part++) {
+      status=exr_publication_load(p,part,&doc,e);if(status!=EXR_OK) goto failed;
+      for(i=0;i<doc->node_count;i++) {
+        const exr_node *n=&doc->nodes[i];const char *id=note_id(n);
+        if(id && note_semantic(n)) {
+          status=note_add(p,doc,part,n,id,&index,e);if(status!=EXR_OK) goto failed;
+        }
+      }
+      exr_document_free(doc);doc=NULL;
+    }
+    for(part=0;part<p->count;part++) {
+      status=exr_publication_load(p,part,&doc,e);if(status!=EXR_OK) goto failed;
+      for(i=0;i<doc->node_count;i++) {
+        const exr_node *n=&doc->nodes[i];const char *href=exr_node_attribute(n,"href");
+        char fragment[2048];exr_target target;size_t j;
+        if(!href || n->start==SIZE_MAX || n->end<=n->start || n->end>doc->size) continue;
+        if(exr_publication_resolve_href(p,p->parts[part].path,href,fragment,&target,NULL)!=EXR_OK ||
+           target.part==SIZE_MAX || !fragment[0]) continue;
+        index=note_find(p,target.part,fragment);
+        if(index==SIZE_MAX && !strncmp(fragment,"fn",2)) {
+          const exr_document *d=doc;
+          if(target.part!=part) {
+            status=exr_publication_load(p,target.part,&target_doc,e);if(status!=EXR_OK) goto failed;d=target_doc;
+          }
+          for(j=0;j<d->node_count;j++) {
+            const char *id=note_id(&d->nodes[j]);
+            if(id && !strcmp(id,fragment)) {
+              status=note_add(p,d,target.part,&d->nodes[j],id,&index,e);break;
+            }
+          }
+          exr_document_free(target_doc);target_doc=NULL;if(status!=EXR_OK) goto failed;
+        }
+        if(index!=SIZE_MAX) {
+          size_t start=n->start,end=n->end;char *label;
+          while(start<end && isspace((unsigned char)doc->text[start])) start++;
+          while(end>start && isspace((unsigned char)doc->text[end-1])) end--;
+          if(start==end) {start=n->start;end=n->end;}
+          label=exr_copy(doc->text+start,end-start);
+          if(!label || p->reference_count>=262144 || !exr_grow((void **)&p->references,&p->reference_capacity,
+              p->reference_count+1,sizeof(*p->references))) {
+            free(label);status=exr_fail(e,EXR_MEMORY,"Footnote reference allocation failed");goto failed;
+          }
+          if(!strcmp(p->footnotes[index].label,p->footnotes[index].id)) {
+            free((void *)p->footnotes[index].label);p->footnotes[index].label=label;
+          } else free(label);
+          p->references[p->reference_count++]=(exr_footnote_reference){part,start,end,index};
+        }
+      }
+      exr_document_free(doc);doc=NULL;
+    }
+    p->footnotes_ready=1;
+  }
+  *notes=p->footnotes;*count=p->footnote_count;*refs=p->references;*ref_count=p->reference_count;
+  return exr_fail(e,EXR_OK,"");
+failed:
+  exr_document_free(doc);exr_document_free(target_doc);
+  for(i=0;i<p->footnote_count;i++) {
+    free((void *)p->footnotes[i].id);free((void *)p->footnotes[i].label);free((void *)p->footnotes[i].text);
+  }
+  free(p->footnotes);p->footnotes=NULL;p->footnote_count=p->footnote_capacity=0;
+  free(p->references);p->references=NULL;p->reference_count=p->reference_capacity=0;
+  return status;
 }
 
 exr_status exr_publication_resolve_href(const exr_publication *p,const char *base,

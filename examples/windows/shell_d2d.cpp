@@ -460,7 +460,7 @@ extern "C" HRESULT shell_d2d_page_image(shell_d2d *s,HDC dc,const RECT *area,con
   hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s);return hr;
 }
 
-extern "C" HRESULT shell_d2d_note(shell_d2d *s,HDC dc,const RECT *box,int dark,const uint32_t *background) {
+extern "C" HRESULT shell_d2d_popup(shell_d2d *s,HDC dc,const RECT *box,int dark,const uint32_t *background,const wchar_t *title) {
   HRESULT hr=bind_dc(s,dc,box); if(FAILED(hr)) return hr;
   const auto &c=dark ? shell_theme_dark : shell_theme_light;
   float k=s->dpi/96.f,pad=(float)SHELL_SHADOW_PAD*k,top=(float)SHELL_SHADOW_TOP*k,w=(float)(box->right-box->left),h=(float)(box->bottom-box->top);
@@ -480,8 +480,12 @@ extern "C" HRESULT shell_d2d_note(shell_d2d *s,HDC dc,const RECT *box,int dark,c
   s->dc_target->DrawRoundedRectangle(border,s->dc_brush,k);
   s->dc_brush->SetColor(D2D1::ColorF(c.text));
   s->format[SHELL_TEXT_TITLE]->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-  s->dc_target->DrawText(L"笔记",2,s->format[SHELL_TEXT_TITLE],D2D1::RectF(pad+16*k,top+10*k,w-pad-16*k,top+36*k),s->dc_brush);
+  s->dc_target->DrawText(title,(UINT32)wcslen(title),s->format[SHELL_TEXT_TITLE],D2D1::RectF(pad+16*k,top+10*k,w-pad-16*k,top+36*k),s->dc_brush);
   hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET)drop_dc_target(s);return hr;
+}
+
+extern "C" HRESULT shell_d2d_note(shell_d2d *s,HDC dc,const RECT *box,int dark,const uint32_t *background) {
+  return shell_d2d_popup(s,dc,box,dark,background,L"笔记");
 }
 
 extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,const wchar_t *font,const wchar_t *family,const wchar_t *path,const uint32_t *background) {
@@ -502,37 +506,16 @@ extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,
   auto border=D2D1::RoundedRect(D2D1::RectF(pad+k/2,top+k/2,w-pad-k/2,h-pad-k/2),14*k,14*k);
   s->dc_brush->SetColor(D2D1::ColorF(shell_blend(c.layer_float,c.line_rgb,SHELL_LINE_ALPHA)));
   s->dc_target->DrawRoundedRectangle(border,s->dc_brush,k);
-  auto track=D2D1::RoundedRect(D2D1::RectF(pad+20*k,top+118*k,pad+204*k,top+152*k),9*k,9*k);
-  s->dc_brush->SetColor(D2D1::ColorF(c.surface2));s->dc_target->FillRoundedRectangle(track,s->dc_brush);
-  s->dc_brush->SetColor(D2D1::ColorF(shell_blend(c.surface2,c.line_rgb,SHELL_LINE_ALPHA)));
-  track.rect.left+=k/2;track.rect.top+=k/2;track.rect.right-=k/2;track.rect.bottom-=k/2;
-  s->dc_target->DrawRoundedRectangle(track,s->dc_brush,k);
+  (void)font;(void)family;(void)path;
+  s->dc_brush->SetColor(D2D1::ColorF(c.text));
+  s->dc_target->DrawText(L"阅读排版",4,s->format[SHELL_TEXT_TITLE],D2D1::RectF(pad+20*k,top+12*k,w-pad-20*k,top+40*k),s->dc_brush);
+  const wchar_t *labels[]={L"字号 px",L"行距 ×",L"段距 em",L"上边距 px",L"右边距 px",L"下边距 px",L"左边距 px",L"字距 em",L"主题",L"输入预设名称 / 选择预设"};
   s->dc_brush->SetColor(D2D1::ColorF(c.text_secondary));
   s->format[SHELL_TEXT_LABEL]->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-  s->dc_target->DrawText(L"字号",2,s->format[SHELL_TEXT_LABEL],D2D1::RectF(pad+20*k,top+20*k,w-pad-20*k,top+36*k),s->dc_brush);
-  s->dc_target->DrawText(L"主题",2,s->format[SHELL_TEXT_LABEL],D2D1::RectF(pad+20*k,top+94*k,w-pad-20*k,top+110*k),s->dc_brush);
-  s->dc_brush->SetColor(D2D1::ColorF(c.text));
-  IDWriteTextLayout *value=nullptr; IDWriteTypography *typography=nullptr;
-  if(SUCCEEDED(s->write->CreateTextLayout(font,(UINT32)wcslen(font),s->format[SHELL_TEXT_UI],54*k,34*k,&value))) {
-    if(SUCCEEDED(s->write->CreateTypography(&typography))) {
-      typography->AddFontFeature({DWRITE_FONT_FEATURE_TAG_TABULAR_FIGURES,1});
-      value->SetTypography(typography,{0,(UINT32)wcslen(font)});typography->Release();
-    }
-    s->dc_target->DrawTextLayout(D2D1::Point2F(pad+153*k,top+44*k),value,s->dc_brush);value->Release();
-  }
-  IDWriteTextLayout *description=nullptr;
-  if(SUCCEEDED(s->write->CreateTextLayout(family,(UINT32)wcslen(family),s->format[SHELL_TEXT_LABEL],
-      w-2*pad-40*k,34*k,&description))) {
-    description->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
-    s->dc_target->DrawTextLayout(D2D1::Point2F(pad+20*k,top+174*k),description,s->dc_brush,D2D1_DRAW_TEXT_OPTIONS_CLIP);
-    description->Release();
-  }
-  s->dc_brush->SetColor(D2D1::ColorF(c.text_secondary));
-  if(SUCCEEDED(s->write->CreateTextLayout(path,(UINT32)wcslen(path),s->format[SHELL_TEXT_LABEL],
-      w-2*pad-40*k,h-pad-top-224*k,&description))) {
-    description->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
-    s->dc_target->DrawTextLayout(D2D1::Point2F(pad+20*k,top+212*k),description,s->dc_brush,D2D1_DRAW_TEXT_OPTIONS_CLIP);
-    description->Release();
+  for(int i=0;i<10;i++) {
+    float y=i<8 ? 52.f+i*42 : i==8 ? 372.f:430.f;
+    s->dc_target->DrawText(labels[i],(UINT32)wcslen(labels[i]),s->format[SHELL_TEXT_LABEL],
+      D2D1::RectF(pad+20*k,top+y*k,w-pad-20*k,top+(y+24)*k),s->dc_brush);
   }
   hr=s->dc_target->EndDraw(); if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s); return hr;
 }

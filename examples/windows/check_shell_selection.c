@@ -96,7 +96,7 @@ static void prepare_layout(int vertical) {
   g.session.config = exr_layout_config_defaults();
   g.session.config.page = (exr_layout_options){260, 160, 0, 14, 1.5f, 0};
   g.session.config.user_css = vertical ? "p{writing-mode:vertical-rl;margin:0;padding:0}" : "p{margin:0;padding:0;hyphens:auto}";
-  g.session.shell_geometry = (shell_geometry){1, 260, 160, vertical, 96, 14};
+  g.session.shell_geometry = (shell_geometry){1, 260, 160, vertical, 96, 14, {14, 1.5f, 0, 0, 0, 0, 0, 0}};
   exr_pager_free(g.session.pager); g.session.pager = NULL;
   exr_document_free(g.session.document); g.session.document = NULL; g.session.bounded = 0;
   ok(fixture_load(NULL, 0, &g.session.document, NULL), NULL);
@@ -186,6 +186,7 @@ static void test_generated(void) {
   puts("COMBINE glyphs=2 copied-bytes=2 extra-bytes=0");
 }
 #include "check_shell_annotations.inc"
+#include "check_shell_style.inc"
 int main(int argc, char **argv) {
   setvbuf(stdout, NULL, _IONBF, 0);
   assert(argc == 3); SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX);
@@ -200,6 +201,7 @@ int main(int argc, char **argv) {
   g.session.active = g.session.bounded = g.frame.valid = 1;
   g.frame.book_id = g.session.book_id = 1;
   if (!strcmp(argv[1], "annotations")) test_annotations();
+  else if (!strcmp(argv[1], "style")) test_style();
   else if (!strcmp(argv[1], "boundaries")) test_boundaries();
   else if (!strcmp(argv[1], "copy")) test_copy();
   else if (!strcmp(argv[1], "keyboard")) test_keyboard();

@@ -284,6 +284,7 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
     if (shell_toc_open) return 0;
     exr_text_position position;
     int x = (short)LOWORD(lparam), y = (short)HIWORD(lparam);
+    if (message == WM_LBUTTONDOWN && shell_footnote_click(x,y)) return 1;
     if (message == WM_LBUTTONDOWN && annot_click(x,y)) return 1;
     if (!select_hit(x, y, &position)) return 1;
     DWORD now = GetMessageTime();

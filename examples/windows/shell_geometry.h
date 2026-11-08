@@ -2,11 +2,13 @@
 #ifndef EXR_SHELL_GEOMETRY_H
 #define EXR_SHELL_GEOMETRY_H
 #include "shell_tokens.h"
+#include <exr/layout.h>
 #include <math.h>
 typedef struct {
   int enabled, width, height, vertical;
   unsigned dpi;
   float font;
+  exr_reader_style style;
 } shell_geometry;
 static inline int shell_px(float dip, unsigned dpi) { return (int)floorf(dip * dpi / 96.0f + 0.5f); }
 /* Positions are derived from rounded boundaries, never a sum of rounded gaps. */
@@ -26,7 +28,10 @@ static inline shell_geometry shell_geometry_for(int w, int h, unsigned dpi, floa
 /* Origin changes at the 34em cap do not require a new pager. DPI and mode do. */
 static inline int shell_geometry_equal(shell_geometry a, shell_geometry b) {
   return a.enabled == b.enabled && (!a.enabled || (a.width == b.width && a.height == b.height &&
-    a.font == b.font && a.dpi == b.dpi && a.vertical == b.vertical));
+    a.font == b.font && a.dpi == b.dpi && a.vertical == b.vertical &&
+    a.style.font_size==b.style.font_size && a.style.line_height==b.style.line_height &&
+    a.style.paragraph_spacing==b.style.paragraph_spacing && a.style.letter_spacing==b.style.letter_spacing &&
+    a.style.top==b.style.top && a.style.right==b.style.right && a.style.bottom==b.style.bottom && a.style.left==b.style.left));
 }
 /* Page-child coordinates, fitted to today's body rather than the source frame. */
 typedef struct { int left,top,width,height; } shell_image_view;
