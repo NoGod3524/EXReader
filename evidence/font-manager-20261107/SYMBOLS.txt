@@ -1,0 +1,12 @@
+00000002e6dff870 T exr_font_manager_chain
+00000002e6dfd620 T exr_font_manager_create
+00000002e6dffad0 T exr_font_manager_create_font
+00000002e6dff6b0 T exr_font_manager_face
+00000002e6dff6a0 T exr_font_manager_face_count
+00000002e6dff740 T exr_font_manager_face_covers
+00000002e6dfd600 T exr_font_manager_free
+00000002e6dff7e0 T exr_font_manager_has_family
+00000002e6dfeb20 T exr_font_manager_open
+00000002e6dff960 T exr_font_manager_pick
+00000002e6dff650 T exr_font_manager_skip
+00000002e6dff5d0 T exr_font_manager_summary_get

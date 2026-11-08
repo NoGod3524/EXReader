@@ -271,6 +271,8 @@ static void session_and_pages(void) {
     exr_layout *pages = NULL;
     exr_layout_config config = exr_layout_config_defaults();
     config.page = (exr_layout_options){48, 48, 4, 20, 1, 0};
+    /* Keep the two-glyph corridor explicit while testing fallback metrics. */
+    config.user_css="* {text-indent:0}";
     OK(exr_layout_create_ex(book, font, &config, &pages, &error));
     exr_layout_pages(pages, &n);
     CHECK(n == 2); /* Two 18px glyphs fit; fallback needs 32px per line/page. */

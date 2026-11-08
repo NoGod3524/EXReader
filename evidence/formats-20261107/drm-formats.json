@@ -1,0 +1,146 @@
+{
+  "schema": 1,
+  "created_utc": "2026-11-07T21:28:40.131896+00:00",
+  "source_revision": "000caeef67f52498b05c437384efcd3bfdb1b5d1",
+  "engine_version": "3.42.0",
+  "abi_version": 1,
+  "dll_sha256": "49010282d4c9c665e1715ede3cbb4143bea8b4699810b4e34538bb7f84871885",
+  "driver_sha256": "ed3246f66a6264b5a6b7400038b2c442112e5c47d97357dead8edcf6b6a3aca3",
+  "shared_driver_sha256": "2fd0a1fa0d28804a7e6583367d91d9f7e48f43e662deb957f01b59f6471c8c8b",
+  "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "layout": {
+    "width": 720,
+    "height": 1040,
+    "margin": 36,
+    "font_size": 28,
+    "line_height": 1.5,
+    "paragraph_spacing": 10,
+    "document_css": 1,
+    "embedded_fonts": 1,
+    "direction": 0,
+    "fixed_max_dimension": 720
+  },
+  "alternate_layout": {
+    "width": 480,
+    "height": 800,
+    "margin": 36,
+    "font_size": 36,
+    "line_height": 1.5,
+    "paragraph_spacing": 10,
+    "document_css": 1,
+    "embedded_fonts": 1,
+    "direction": 0,
+    "fixed_max_dimension": 720
+  },
+  "pixel_contract": "sha256/visible-row-major-RGBA8/white/v1",
+  "environment": {
+    "system": "Windows",
+    "machine": "AMD64"
+  },
+  "pdf_crypto_available": true,
+  "books": [
+    {
+      "id": "drm-the-waste-land",
+      "filename": "edrlab-the-waste-land-licensed.epub",
+      "category": "EPUB-DRM",
+      "sha256": "76767036789c37e9b0aa17aa7ec8b5969e0dd328711a34e23e708a5be41887d9",
+      "source": "https://www.edrlab.org/readium-lcp/testing-readium-lcp-compliant-devices/",
+      "publication_url": "https://front-prod.edrlab.org/storage/dc4ec76a-6df3-4bf8-9969-6a0cf4b2ea7d",
+      "license_url": "https://www.edrlab.org/public/feed/the-waste-land/the-waste-land.lcpl",
+      "regression": "count",
+      "derived_from_sha256": "b5183da1095e48c6dd9865b6ce022a3a0345b9c0a6200e6404fc166ddd1d908a",
+      "license_sha256": "a62696efa337c0c61ad6fd88a144f2ea01c5c131d90ec9dae0ee9c2fc17bb2be",
+      "transform": "append official public test license as META-INF/license.lcpl; encrypted resources unchanged",
+      "status": "error",
+      "pages": [],
+      "page_count": 0,
+      "glyph_count": 0,
+      "image_boxes": 0,
+      "text_bytes": 0,
+      "selection": null,
+      "first_screen": null,
+      "open": {
+        "code": 0,
+        "name": "EXR_OK"
+      },
+      "fixed_entry": {
+        "code": 5,
+        "name": "EXR_FORMAT"
+      },
+      "part_count": 2,
+      "error": {
+        "stage": "publication_load",
+        "code": 5,
+        "kind": "RuntimeError"
+      },
+      "rendered_page_count": 0,
+      "elapsed_seconds": 0.027206,
+      "alternate": {
+        "status": "error",
+        "page_count": 0,
+        "glyph_count": 0,
+        "first_screen": null,
+        "error": {
+          "stage": "publication_load",
+          "code": 5,
+          "kind": "RuntimeError"
+        }
+      }
+    },
+    {
+      "id": "drm-accessible-epub-3",
+      "filename": "edrlab-accessible-epub-3-licensed.epub",
+      "category": "EPUB-DRM",
+      "sha256": "77a093e77dd33fbe07eddbc84d48b1307fae40664f20c5467db87c1578d68e09",
+      "source": "https://www.edrlab.org/readium-lcp/testing-readium-lcp-compliant-devices/",
+      "publication_url": "https://front-prod.edrlab.org/storage/f32c554d-1974-4f20-a4cb-8f7fbe4456b8",
+      "license_url": "https://www.edrlab.org/public/feed/accessible-epub-3/accessible-epub-3.lcpl",
+      "regression": "count",
+      "derived_from_sha256": "48deaff7dae1df648bdf4d7f6ab1f2d1a3f9f160e8fec15d4763ad39912316a3",
+      "license_sha256": "698af2fac86ceaa4facaf0156674e8d0a87f96965d005a3306ee03a8e55638c9",
+      "transform": "append official public test license as META-INF/license.lcpl; encrypted resources unchanged",
+      "status": "error",
+      "pages": [],
+      "page_count": 0,
+      "glyph_count": 0,
+      "image_boxes": 0,
+      "text_bytes": 0,
+      "selection": null,
+      "first_screen": null,
+      "open": {
+        "code": 0,
+        "name": "EXR_OK"
+      },
+      "fixed_entry": {
+        "code": 5,
+        "name": "EXR_FORMAT"
+      },
+      "part_count": 22,
+      "error": {
+        "stage": "publication_load",
+        "code": 5,
+        "kind": "RuntimeError"
+      },
+      "rendered_page_count": 0,
+      "elapsed_seconds": 0.034074,
+      "alternate": {
+        "status": "error",
+        "page_count": 0,
+        "glyph_count": 0,
+        "first_screen": null,
+        "error": {
+          "stage": "publication_load",
+          "code": 5,
+          "kind": "RuntimeError"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "samples": 2,
+    "rendered": 0,
+    "hash_samples": 0,
+    "count_only_samples": 2,
+    "total_pages": 0
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "matrix_rows": 29,
+  "format_samples": 29,
+  "hash_samples": 13,
+  "hash_pages": 1051,
+  "count_only_samples": 16,
+  "format_hash_changed_pages": 0,
+  "historical_epub_samples": 19,
+  "historical_epub_pages": 11128,
+  "historical_epub_hash_changed_pages": 0,
+  "current_epub_pages": 11083,
+  "current_epub_before_after_hash_changed_pages": 0,
+  "current_vs_historical_hash_changed_pages": 5446,
+  "ctest_passed": 176,
+  "ctest_total": 176,
+  "original_baseline_sha256": "6e2f744faf69bd04e73607df21cc14db8e7b3ef515bf24372f9994f0669503c1",
+  "ci_run": false,
+  "original_baseline_git_blob": "ff49e40730b7a7095ebc64fa40b0edc2d188c9a9",
+  "original_baseline_unchanged": true,
+  "format_observation_changes": 0
+}

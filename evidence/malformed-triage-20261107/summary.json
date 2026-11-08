@@ -1,0 +1,77 @@
+{
+  "total": 1024,
+  "workers": 8,
+  "timeout_seconds": 3,
+  "strict_expected": 1024,
+  "strict_hits": 1024,
+  "pending_resolved": 184,
+  "tolerant_original_passes": 840,
+  "tolerant_accepted": 184,
+  "tolerant_unchanged": 1024,
+  "categories": {
+    "case": {
+      "total": 128,
+      "strict_hits": 128,
+      "tolerant_rejected": 128
+    },
+    "container": {
+      "total": 128,
+      "strict_hits": 128,
+      "tolerant_rejected": 128
+    },
+    "directory": {
+      "total": 128,
+      "strict_hits": 128,
+      "tolerant_rejected": 72
+    },
+    "duplicate": {
+      "total": 128,
+      "strict_hits": 128,
+      "tolerant_rejected": 128
+    },
+    "middle": {
+      "total": 128,
+      "strict_hits": 128,
+      "tolerant_rejected": 128
+    },
+    "mimetype": {
+      "total": 128,
+      "strict_hits": 128,
+      "tolerant_rejected": 0
+    },
+    "missing": {
+      "total": 128,
+      "strict_hits": 128,
+      "tolerant_rejected": 128
+    },
+    "tail": {
+      "total": 128,
+      "strict_hits": 128,
+      "tolerant_rejected": 128
+    }
+  },
+  "controls": {
+    "tolerant": {
+      "exit_code": 0,
+      "status": 0,
+      "stage": "paginate",
+      "complete": true,
+      "stderr": ""
+    },
+    "strict": {
+      "exit_code": 0,
+      "status": 0,
+      "stage": "paginate",
+      "complete": true,
+      "stderr": ""
+    }
+  },
+  "engine_sha256": "26a9f2ec67b7807092e33633d716357b511bc78b903ece32c46a9df518400f1b",
+  "runtime_libraries": {
+    "libexreader.dll": "13a0830bd08fae882228dfba755a2642a437cffd6309bbf60b222b94ca659fc0"
+  },
+  "font_sha256": "ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed",
+  "baseline_sha256": "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945",
+  "harness_sha256": "87e5b9dcf54b3ec313e0f0cd41f8c61497a75195f89c1c94ab5f25b25e91bae1",
+  "failures": []
+}
