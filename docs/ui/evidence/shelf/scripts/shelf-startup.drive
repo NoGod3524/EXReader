@@ -1,0 +1,8 @@
+shell|on
+shell_dpi|96
+shell_client|1280|800
+shell_font|18
+wait_idle
+shell_click|light
+shelf_dump|startup
+quit

@@ -19,7 +19,7 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
       target_compile_options(exreader-shell-selection-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
       target_link_libraries(exreader-shell-selection-test PRIVATE m)
     endif()
-    foreach(group boundaries copy keyboard raster generated annotations)
+    foreach(group boundaries copy keyboard raster generated annotations shelf)
       add_test(NAME windows-selection-${group} COMMAND exreader-shell-selection-test ${group}
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf")
       set_tests_properties(windows-selection-${group} PROPERTIES RUN_SERIAL TRUE)

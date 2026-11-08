@@ -1,0 +1,11 @@
+HOST	phase=1	engine=3.42.0	pid=7504
+STEP	1	wait_idle	PASS	page=81;status=已打开《紅樓夢》。
+STEP	2	shell	PASS	reading screen
+STEP	3	shell_dpi	PASS	page=31;status=第 31 页。
+STEP	4	shell_client	PASS	page=31;status=第 31 页。
+STEP	5	shell_font	PASS	page=31;status=第 31 页。
+STEP	6	wait_idle	PASS	page=31;status=第 31 页。
+STEP	7	shell_click	PASS	button invoked
+STEP	8	shelf_dump	PASS	shelf state recorded
+STEP	9	quit	PASS	closing
+DONE	9	eof	PASS	script finished

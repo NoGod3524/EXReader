@@ -284,7 +284,7 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
     if (shell_toc_open) return 0;
     exr_text_position position;
     int x = (short)LOWORD(lparam), y = (short)HIWORD(lparam);
-    if (message == WM_LBUTTONDOWN && annot_click(x,y)) return 1;
+    if (message == WM_LBUTTONDOWN && !shell_drag_begin && annot_click(x,y)) return 1;
     if (!select_hit(x, y, &position)) return 1;
     DWORD now = GetMessageTime();
     int nearby = abs(x-select_last_x) <= GetSystemMetrics(SM_CXDOUBLECLK) && abs(y-select_last_y) <= GetSystemMetrics(SM_CYDOUBLECLK);
@@ -293,7 +293,8 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
     select_last_time = now; select_last_x = x; select_last_y = y;
     SetFocus(window); select_origin = select_focus = position;
     select_valid = 0; select_drag = 1; select_x = x; select_y = y;
-    SetCapture(window); SetTimer(window, SHELL_SELECT_TIMER, 350, NULL);
+    if(GetCapture()!=window)SetCapture(window);
+    SetTimer(window, SHELL_SELECT_TIMER, 350, NULL);
     select_set(position, position, select_clicks == 1 ? -1 : select_clicks == 2 ? EXR_RANGE_WORD : EXR_RANGE_PARAGRAPH, 0);
     return 1;
   }

@@ -1,0 +1,9 @@
+[
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-shelf-20261108\\out\\EXReader.exe",
+  "--self-test",
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-shelf-20261108\\out\\Reader.otf",
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-shelf-20261108\\out\\selftest-final\\Sample.epub",
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-shelf-20261108\\tests\\fixtures\\pdf-public.pdf",
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-shelf-20261108\\out\\selftest-final\\report.json",
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-shelf-20261108\\out\\selftest-final\\page.png"
+]

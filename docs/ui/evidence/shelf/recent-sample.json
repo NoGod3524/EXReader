@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "books": [
+    {
+      "id": 1,
+      "last_opened_ms": 1794164226210,
+      "progress": 0.048785,
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub",
+      "title": "紅樓夢",
+      "author": "Xueqin Cao",
+      "book_sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+      "cover_hash": "8838eb2b997ff534e26c1ad3dc1927962a5b7f4cfdce293461a77197d83581af",
+      "fixed_page_id": null,
+      "anchor": {
+        "start": {
+          "part_id": "pg-header",
+          "part_path": "OEBPS/2878037014660817796_24264-0-0.txt.html",
+          "text_revision": "9ebbe1d40adc30cb",
+          "text_size": 85273,
+          "selector": {
+            "start": 43689,
+            "end": 43689,
+            "exact": "",
+            "prefix": "輕薄仕宦之流，故弟方致書煩托．否則不但有污尊兄之清操，即弟亦不屑",
+            "suffix": "為矣。”雨村听了，心下方信了昨日子興之言，于是又謝了林如海．如海",
+            "chapter": null
+          }
+        },
+        "end": {
+          "part_id": "pg-header",
+          "part_path": "OEBPS/2878037014660817796_24264-0-0.txt.html",
+          "text_revision": "9ebbe1d40adc30cb",
+          "text_size": 85273,
+          "selector": {
+            "start": 43689,
+            "end": 43689,
+            "exact": "",
+            "prefix": "輕薄仕宦之流，故弟方致書煩托．否則不但有污尊兄之清操，即弟亦不屑",
+            "suffix": "為矣。”雨村听了，心下方信了昨日子興之言，于是又謝了林如海．如海",
+            "chapter": null
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "last_opened_ms": 1794164184043,
+      "progress": 0.4406,
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Between The World and Me (Ta-Nehisi Coates) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+      "title": "Between the World and Me",
+      "author": "Ta-Nehisi Coates",
+      "book_sha256": "3d909ac99c4388022a6576475b81c5d458490337aba08b0e7ba311bc18ab68a5",
+      "cover_hash": "29b288b2ff391ee872efc79ee34a20effdf40a52442d45c566e667c4c13bbea7",
+      "fixed_page_id": null,
+      "anchor": {
+        "start": {
+          "part_id": "id181",
+          "part_path": "text/part0004_split_001.html",
+          "text_revision": "4e123292893dcfb9",
+          "text_size": 97190,
+          "selector": {
+            "start": 16367,
+            "end": 16367,
+            "exact": "",
+            "prefix": "the violence rose from the fear ",
+            "suffix": "like smoke from a fire, and I ca",
+            "chapter": null
+          }
+        },
+        "end": {
+          "part_id": "id181",
+          "part_path": "text/part0004_split_001.html",
+          "text_revision": "4e123292893dcfb9",
+          "text_size": 97190,
+          "selector": {
+            "start": 16367,
+            "end": 16367,
+            "exact": "",
+            "prefix": "the violence rose from the fear ",
+            "suffix": "like smoke from a fire, and I ca",
+            "chapter": null
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "last_opened_ms": 1794164182210,
+      "progress": 0.416241,
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\A Raisin in the Sun (Lorraine Hansberry) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+      "title": "A Raisin in the Sun",
+      "author": "Lorraine Hansberry",
+      "book_sha256": "2416cbd8d73eb7ba2a228842aa33ae303653fb75fa42dd6e921293bee2ed576d",
+      "cover_hash": "dcd2c78aa0b41d6e781d97dcff80629c76d2ae8e3f52e4a9e41efccbe2dec4fb",
+      "fixed_page_id": null,
+      "anchor": {
+        "start": {
+          "part_id": "itr",
+          "part_path": "OEBPS/Hans_9780307807441_epub_itr_r1.htm",
+          "text_revision": "6c6413ead18bebce",
+          "text_size": 19645,
+          "selector": {
+            "start": 12963,
+            "end": 12963,
+            "exact": "",
+            "prefix": "hat the full last scene between ",
+            "suffix": "Beneatha and Asagai (drastically",
+            "chapter": null
+          }
+        },
+        "end": {
+          "part_id": "itr",
+          "part_path": "OEBPS/Hans_9780307807441_epub_itr_r1.htm",
+          "text_revision": "6c6413ead18bebce",
+          "text_size": 19645,
+          "selector": {
+            "start": 12963,
+            "end": 12963,
+            "exact": "",
+            "prefix": "hat the full last scene between ",
+            "suffix": "Beneatha and Asagai (drastically",
+            "chapter": null
+          }
+        }
+      }
+    }
+  ]
+}
