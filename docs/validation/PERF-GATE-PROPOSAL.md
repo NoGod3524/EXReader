@@ -98,7 +98,7 @@ nearest-rank，5 个进程的 p95 就是最大值；这是本轮有限样本上�
 
 以下完整 unified patch 与 [proposed-workflows.patch](../../evidence/perf-gate-20261107/proposed-workflows.patch) 一致，已用 `git apply --check` 检查。**本 PR 未应用。** 新文件 `.github/workflows/performance-gate.yml` 从第 1 行插入；`.github/workflows/reading-required.yml` 替换文件开头的注释与 push/pull_request 分支行。其余现有流程和五组 core 门禁保留。
 
-新增 `performance-tier` 是专用 Windows runner 的补充数值检查，包含三档注解、稳定性、散列和签名审计；不是八份 real-v1 参考图/来源严格复验的替代品。runner 必须有 `exreader-perf` 标签、Python/CMake/Ninja/GCC，并事先在相同构建目录/依赖/编译器上取得合格基线，将 `PERF_BASELINE_DIR` 指向该已提交证据目录（含 `three-tier-policy.json`）。不能将本轮 ineligible 文件设为批准基线。新 runner 先手动观察，合格后再注册为必需检查。
+新增 `performance-tier` 是专用 Windows runner 的补充数值检查，包含三档注解、稳定性、散列和签名审计；不是八份 real-v1 参考图/来源严格复验的替代品。runner 必须有 `exreader-perf` 标签、Python/CMake/Ninja/GCC，并事先在相同构建目录/依赖/编译器上取得合格基线，将 `PERF_BASELINE_DIR` 指向该已提交证据目录（含 `three-tier-policy.json`）。不能将本轮 ineligible 文件设为批准基线。新 runner 先手动观察；完成下述环境键与 strict 模式实现、取得合格基线并经严格复验后，再注册为必需检查。
 
 ```diff
 --- /dev/null
@@ -191,7 +191,7 @@ nearest-rank，5 个进程的 p95 就是最大值；这是本轮有限样本上�
 
 1. 取得专用/安静且热状态可验证的 runner，完整 ≥5 次/配置、所有八项离散度 <5%；从原始样本导出并冻结三档预算，登记环境/源码/导出器/字体/输入/二进制/样本散列。再做一次独立同环境严格复验，不按候选结果扩预算。
 2. 在 P/F07 provider 之后的实际候选上，完成既有 real-v1 八原件、Poppler 参考图、RGBA/文本/位置签名、来源/run/attempt 和冻结预算的完整严格复验。合成 EPUB 与 19 本像素回归各自提供不同证据，不能替代此步骤。
-3. 补充并审阅性能报告生产者的显式 strict 模式：目前 `tools/measure_reading_real.py` 末尾调用 `perf_policy.advisory()`，它强制 `accepted=false`；旧 `tools/reading_required.py` 又要求 `accepted=true`。**仅改 workflow 或规则集无法恢复严格验收。** 该生产者改动和 Linux refreeze 不在本 PR 允许范围内，另提实现与拒绝性测试。
+3. 将本地原型推进到可验产品变更的实现：当前继承的 E1 comparison_key 包含被测 SDK DLL 散列，工具刻意只做同二进制重复采样审计；恢复前要把被测 SDK 身份保留在溯源记录、从环境兼容键中剥离，继续严格核对第三方运行库，并验证跨源码候选的签名/数值拒绝行为。同时补充并审阅性能报告生产者的显式 strict 模式：目前 `tools/measure_reading_real.py` 末尾调用 `perf_policy.advisory()`，它强制 `accepted=false`；旧 `tools/reading_required.py` 又要求 `accepted=true`。**仅改 workflow 或规则集无法恢复严格验收。** 该生产者改动和 Linux refreeze 不在本 PR 允许范围内，另提实现与拒绝性测试。
 4. Owner 在 #32 记录以上证据与恢复决定；批准硬上限处置、冻结预算和 strict 模式后才应用 workflow patch。先 workflow_dispatch，确认同源同 attempt 严格汇总和失败样本确实拒绝，再用真实 PR 验证检查注册。
 5. 保存规则集 JSON，在现有 `reading-required-core` 之外增加已验证的 `performance-tier` 和严格 `reading-required` 检查，绑定实际 GitHub Actions app；保留其余保护字段，不凭猜测填写上下文名。待真实 PR 活体验证后宣告 advisory → required。
 6. 回滚时依据已保存规则集只移除新加的性能必需上下文，保留 core；撤回本 patch、恢复报告 advisory 身份，保留失败/run/原始样本，不取消 workflow run。Owner 将理由与下一次复验计划记入 #32。
