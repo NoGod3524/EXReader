@@ -1,0 +1,140 @@
+{
+  "hong": {
+    "exit": 0,
+    "checks": [
+      "STEP\t9\tsearch_check\tPASS\thits=13989 current=1 open=1 calls=1 search_ms=164.186 total_ms=647.316 landed=1",
+      "STEP\t13\tsearch_check\tPASS\thits=13989 current=2 open=1 calls=1 search_ms=164.186 total_ms=647.316 landed=1",
+      "STEP\t17\tsearch_check\tPASS\thits=13989 current=1 open=1 calls=1 search_ms=164.186 total_ms=647.316 landed=1",
+      "STEP\t20\tsearch_check\tPASS\thits=13989 current=1 open=0 calls=1 search_ms=164.186 total_ms=647.316 landed=1",
+      "STEP\t44\tsearch_check\tPASS\thits=0 current=0 open=1 calls=2 search_ms=1.890 total_ms=675.841 landed=1"
+    ],
+    "captures": {
+      "expanded-current": {
+        "window": [
+          1298,
+          847
+        ],
+        "client": [
+          1280,
+          800
+        ],
+        "client_box": [
+          9,
+          38,
+          1280,
+          800
+        ],
+        "position": [
+          -32000,
+          -32000
+        ],
+        "dpi": 120
+      },
+      "next-current": {
+        "window": [
+          1298,
+          847
+        ],
+        "client": [
+          1280,
+          800
+        ],
+        "client_box": [
+          9,
+          38,
+          1280,
+          800
+        ],
+        "position": [
+          -32000,
+          -32000
+        ],
+        "dpi": 120
+      }
+    },
+    "elapsed_seconds": 25.3953941999971,
+    "typing": {
+      "characters": 10,
+      "interval_requested_ms": 30,
+      "actual_searches": 1,
+      "native_edit_ms": [
+        4.6484,
+        3.0156,
+        3.5254,
+        3.3892,
+        3.0463,
+        3.3613,
+        3.1578,
+        3.7989,
+        3.2747,
+        3.7734
+      ],
+      "max_edit_ms": 4.6484,
+      "edit_sum_ms": 34.991,
+      "total_ms": 675.841,
+      "search_ms": 1.89
+    }
+  },
+  "english": {
+    "exit": 0,
+    "checks": [
+      "STEP\t9\tsearch_check\tPASS\thits=10 current=1 open=1 calls=1 search_ms=13.651 total_ms=367.590 landed=1"
+    ],
+    "captures": {},
+    "elapsed_seconds": 1.8838379999979225
+  },
+  "vertical": {
+    "exit": 0,
+    "checks": [
+      "STEP\t9\tsearch_check\tPASS\thits=11 current=1 open=1 calls=1 search_ms=62.748 total_ms=439.336 landed=1"
+    ],
+    "captures": {
+      "vertical-current": {
+        "window": [
+          1298,
+          847
+        ],
+        "client": [
+          1280,
+          800
+        ],
+        "client_box": [
+          9,
+          38,
+          1280,
+          800
+        ],
+        "position": [
+          -32000,
+          -32000
+        ],
+        "dpi": 120
+      }
+    },
+    "elapsed_seconds": 11.68992839999919
+  },
+  "pdf": {
+    "exit": 0,
+    "checks": [
+      "STEP\t9\tsearch_check\tPASS\thits=612 current=1 open=1 calls=1 search_ms=413.188 total_ms=715.064 landed=1"
+    ],
+    "captures": {},
+    "elapsed_seconds": 1.8676076000010653
+  },
+  "mobi": {
+    "exit": 0,
+    "checks": [
+      "STEP\t9\tsearch_check\tPASS\thits=9 current=1 open=1 calls=1 search_ms=15.845 total_ms=268.026 landed=1"
+    ],
+    "captures": {},
+    "elapsed_seconds": 1.3291982999980974
+  },
+  "whole-document": {
+    "exit": 0,
+    "checks": [
+      "STEP\t8\tsearch_check\tPASS\thits=13989 current=1 open=1 calls=1 search_ms=57.457 total_ms=352.993 landed=1"
+    ],
+    "captures": {},
+    "elapsed_seconds": 1.3324468999999226
+  }
+}

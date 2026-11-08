@@ -243,6 +243,11 @@ extern "C" HRESULT shell_d2d_icon_button(shell_d2d *shell, HDC dc, const RECT *b
       float y=centre.y+(row*6+.5f)*k;
       shell->dc_target->DrawLine(D2D1::Point2F(centre.x-9*k,y),D2D1::Point2F(centre.x+9*k,y),shell->dc_brush,stroke);
     }
+  } else if(glyph==0xE721) {
+    auto lens=D2D1::Point2F(centre.x-2*k,centre.y-2*k);
+    shell->dc_target->DrawEllipse(D2D1::Ellipse(lens,6*k,6*k),shell->dc_brush,stroke);
+    shell->dc_target->DrawLine(D2D1::Point2F(centre.x+2.5f*k,centre.y+2.5f*k),
+      D2D1::Point2F(centre.x+8*k,centre.y+8*k),shell->dc_brush,stroke);
   } else {
     ID2D1PathGeometry *path=nullptr; ID2D1GeometrySink *sink=nullptr;
     if(SUCCEEDED(shell->factory->CreatePathGeometry(&path)) && SUCCEEDED(path->Open(&sink))) {

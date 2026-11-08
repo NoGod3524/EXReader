@@ -1,0 +1,13 @@
+HOST	phase=0	engine=3.42.0	pid=20552
+STEP	1	import	PASS	page=0;status=已导入《Zami: A New Spelling of my Name》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《Zami: A New Spelling of my Name》 · 从第一页开始。
+STEP	3	shell	PASS	reading screen
+STEP	4	shell_client	PASS	page=1;status=第 1 页。
+STEP	5	shell_click	PASS	button invoked
+STEP	6	shell_click	PASS	button invoked
+STEP	7	shell_click	PASS	button invoked
+STEP	8	search_query	PASS	page=1;status=第 1 页。
+STEP	9	search_check	PASS	hits=9 current=1 open=1 calls=1 search_ms=17.101 total_ms=295.326 landed=1
+STEP	10	probe_wait	PASS	waited without blocking UI
+STEP	11	quit	PASS	closing
+DONE	11	eof	PASS	script finished

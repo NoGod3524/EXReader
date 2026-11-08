@@ -135,6 +135,26 @@ EXR_API exr_status exr_publication_load(exr_publication *publication, size_t par
    ordered by the publication directory; endpoints may name different parts. */
 typedef struct { size_t part, offset; } exr_text_position;
 typedef struct { exr_text_position start, end; } exr_text_range;
+enum { EXR_SEARCH_CASE_SENSITIVE=1, EXR_SEARCH_WHOLE_WORD=2 };
+typedef struct { int found; size_t part, offset, length; } exr_search_result;
+/* Return nonzero to continue, zero to stop (the delivered hit is counted).
+   Callbacks must not reenter or destroy the publication. */
+typedef int (*exr_search_fn)(void *context,const exr_search_result *result);
+/* Search linear parts in directory order, from an inclusive part-local UTF-8
+   position. Offsets/lengths address exr_document_text and existing anchors;
+   use target={part,NULL,offset} with publication_locate. A match never bridges
+   files. from.offset rounds forward to a codepoint boundary. No wraparound.
+   Default folds A-Z and U+00C0..D6/D8..DE only (one-to-one, byte-length stable).
+   No normalization, dictionary segmentation or visual-order transformation.
+   Whole words use space/punctuation boundaries; CJK codepoints are units.
+   Empty/invalid UTF-8 needles and unknown flags fail. Needle limit: 1 MiB.
+   Text snapshots are cached lazily until publication_free; reopen a mutable
+   provider to search a new revision. Cancellation/failure clears result/count. */
+EXR_API exr_status exr_publication_search(exr_publication *publication,exr_text_position from,
+  const char *needle,unsigned flags,const exr_control *control,exr_search_result *result,exr_error *error);
+/* Enumerates overlapping matches. NULL callback counts without collecting. */
+EXR_API exr_status exr_publication_search_all(exr_publication *publication,const char *needle,
+  unsigned flags,exr_search_fn callback,void *context,const exr_control *control,size_t *count,exr_error *error);
 /* Owned strings; zero-initialize outputs and release with content_anchor_free.
    Stable ID (path when ID is empty) routes each endpoint after part reordering.
    The FNV-1a text revision plus size permits exact offsets in unchanged text,
