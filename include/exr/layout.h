@@ -175,6 +175,21 @@ EXR_API exr_status exr_anchor_from_range(exr_publication *publication,const exr_
 EXR_API exr_status exr_range_from_anchor(exr_publication *publication,const exr_content_anchor *anchor,
   const exr_control *control,exr_text_range_match *out,exr_error *error);
 EXR_API void exr_content_anchor_free(exr_content_anchor *anchor);
+/* EPUB content anchors / part-local text ranges <-> standard CFI. Requires
+   the built-in EPUB provider. Both endpoints, including cross-part ranges,
+   are mapped through the original package and raw XML DOM. A point CFI
+   imports as a collapsed range. Missing/ambiguous anchors fail EXR_FORMAT.
+   Round trips in an unchanged publication preserve range boundaries and all
+   fields of anchors captured by anchor_from_range. Outputs are owned
+   (exr_free/content_anchor_free). */
+EXR_API exr_status exr_range_to_cfi(exr_publication *publication,const exr_text_range *range,
+  const exr_control *control,char **out,exr_error *error);
+EXR_API exr_status exr_range_from_cfi(exr_publication *publication,const char *cfi,
+  const exr_control *control,exr_text_range *out,exr_error *error);
+EXR_API exr_status exr_anchor_to_cfi(exr_publication *publication,const exr_content_anchor *anchor,
+  const exr_control *control,char **out,exr_error *error);
+EXR_API exr_status exr_anchor_from_cfi(exr_publication *publication,const char *cfi,
+  const exr_control *control,exr_content_anchor *out,exr_error *error);
 typedef enum { EXR_RANGE_CHAR, EXR_RANGE_WORD, EXR_RANGE_SENTENCE, EXR_RANGE_PARAGRAPH } exr_range_unit;
 /* CHAR is a Unicode grapheme. WORD groups non-space, non-punctuation graphemes;
    CJK ideographs/kana and punctuation are individual units (no dictionary).

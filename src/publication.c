@@ -904,6 +904,63 @@ exr_status exr_range_from_anchor(exr_publication *p,const exr_content_anchor *a,
   return exr_fail(e,EXR_OK,"");
 }
 
+exr_status exr_range_to_cfi(exr_publication *p,const exr_text_range *r,const exr_control *control,
+                             char **out,exr_error *e) {
+  exr_document *d=NULL;exr_cfi_point point;exr_status status;char *a=NULL,*b=NULL;unsigned k;
+  if(out) *out=NULL;
+  if(!p || !out || !r || position_before(r->end,r->start) || r->end.part>=p->count || p->busy)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid content range for CFI export");
+  if(p->load!=epub_load) return exr_fail(e,EXR_FORMAT,"Publication has no built-in EPUB CFI provider");
+  status=exr_control_cancel(control,e);
+  for(k=0;k<2 && status==EXR_OK;k++) {
+    exr_text_position at=k ? r->end : r->start;
+    status=exr_publication_load(p,at.part,&d,e);
+    if(status==EXR_OK) status=exr_document_cfi_point_at(d,0,at.offset,control,&point,e);
+    if(status==EXR_OK) status=exr_publication_cfi_create(p,at.part,d,&point,control,k ? &b : &a,e);
+    exr_document_free(d);d=NULL;
+  }
+  if(status==EXR_OK) status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=exr_cfi_range_join(a,b,out,e);
+  free(a);free(b);return status;
+}
+exr_status exr_range_from_cfi(exr_publication *p,const char *cfi,const exr_control *control,
+                               exr_text_range *out,exr_error *e) {
+  exr_cfi *parsed=NULL;char *a=NULL,*b=NULL;exr_document *d=NULL;
+  exr_cfi_point point;exr_text_range r;exr_status status;unsigned k;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing CFI content range output");
+  range_clear(out);range_clear(&r);
+  if(!p || !cfi || p->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid CFI content range input");
+  status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=exr_cfi_parse(cfi,&parsed,NULL,e);
+  if(status==EXR_OK) status=exr_cfi_endpoints(parsed,&a,&b,e);
+  for(k=0;k<2 && status==EXR_OK;k++) {
+    exr_text_position *at=k ? &r.end : &r.start;
+    status=exr_publication_cfi_resolve(p,k ? b : a,control,&at->part,&d,&point,e);
+    if(status==EXR_OK) status=exr_document_cfi_point_offset(d,0,&point,control,&at->offset,e);
+    exr_document_free(d);d=NULL;
+  }
+  if(status==EXR_OK && position_before(r.end,r.start)) status=exr_fail(e,EXR_FORMAT,"Reversed CFI content range");
+  if(status==EXR_OK) { *out=r;status=exr_fail(e,EXR_OK,""); }
+  exr_cfi_free(parsed);free(a);free(b);return status;
+}
+exr_status exr_anchor_to_cfi(exr_publication *p,const exr_content_anchor *anchor,const exr_control *control,
+                              char **out,exr_error *e) {
+  exr_text_range_match match;exr_status status;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing anchor CFI output");
+  *out=NULL;
+  status=exr_range_from_anchor(p,anchor,control,&match,e);
+  if(status==EXR_OK && match.state!=EXR_ANCHOR_FOUND) return exr_fail(e,EXR_FORMAT,"CFI anchor is missing or ambiguous");
+  return status==EXR_OK ? exr_range_to_cfi(p,&match.range,control,out,e) : status;
+}
+exr_status exr_anchor_from_cfi(exr_publication *p,const char *cfi,const exr_control *control,
+                                exr_content_anchor *out,exr_error *e) {
+  exr_text_range range;exr_status status;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing CFI anchor output");
+  memset(out,0,sizeof(*out));
+  status=exr_range_from_cfi(p,cfi,control,&range,e);
+  return status==EXR_OK ? exr_anchor_from_range(p,&range,control,out,e) : status;
+}
+
 static size_t content_previous(const exr_document *d,size_t at) {
   if(at) { at--;while(at && (exr_doc_byte(d,at)&0xc0)==0x80) at--; }
   return at;
