@@ -1,0 +1,299 @@
+{
+  "schema": 1,
+  "baseline_revision": "c9dfc6c14a0c3d2372da4e8a6f02dc348309610f",
+  "baseline_dll_sha256": "faa3fa2886b7f8f73711ede64940edebb37795f7d366ef5a14bbe2934b70de07",
+  "rendered_candidate_dll_sha256": "5dbfc4c14fc613ca234e551b20f12c6b8ffa10d94010bfe1d87c2f0c6a136aa6",
+  "measurement_book": "hongloumeng-24264",
+  "endpoint_parts": [
+    1,
+    2
+  ],
+  "definition": "FOUND and exact equality of both (part index, normalized UTF-8 byte offset) endpoints; failures count against denominator",
+  "prng_seed": "0x41ce2026",
+  "reflow_book_css": false,
+  "reflow_embedded_fonts": false,
+  "acceptance": {
+    "same_layout": {
+      "passed": 200,
+      "total": 200,
+      "percent": 100.0,
+      "cross_part": 20
+    },
+    "font_size_roundtrip": {
+      "stages": [
+        17,
+        18,
+        24,
+        17
+      ],
+      "passed": 100,
+      "total": 100,
+      "percent": 100.0,
+      "page_movements": 164,
+      "mismatches": []
+    },
+    "font_roundtrip": {
+      "passed": 100,
+      "total": 100,
+      "percent": 100.0,
+      "page_movements": 1,
+      "mismatches": [],
+      "fonts": [
+        "NotoSerifSC-VF.ttf",
+        "Reader.otf",
+        "NotoSerifSC-VF.ttf"
+      ]
+    },
+    "window_roundtrip": {
+      "stages": [
+        [
+          1280,
+          800
+        ],
+        [
+          1552,
+          928
+        ],
+        [
+          1280,
+          800
+        ]
+      ],
+      "passed": 100,
+      "total": 100,
+      "percent": 100.0,
+      "page_movements": 91,
+      "mismatches": []
+    },
+    "hit_test": {
+      "passed": 50,
+      "total": 50,
+      "percent": 100.0,
+      "categories": {
+        "body": 10,
+        "line_start": 10,
+        "line_end": 10,
+        "punctuation": 10,
+        "image": 10
+      }
+    },
+    "ctest": {
+      "passed": 181,
+      "total": 181,
+      "new_suites": 5,
+      "preexisting_registrations": 176,
+      "tools_enabled": true,
+      "fuzz_enabled": true,
+      "elapsed_seconds": 524.15,
+      "log_sha256": "5ca2a951b719cb5d4a47b3a78dfa807c251e08d0720e791a14f3728f695455b9"
+    }
+  },
+  "measurement_stdout": [
+    "real book endpoint parts: 1, 2",
+    "same-layout: 200/200 = 100.00% (seed 0x41ce2026; 20 cross-part)",
+    "stage 0: 1280x800 17px font1: 18 pages",
+    "stage 1: 1280x800 18px font1: 20 pages",
+    "stage 2: 1280x800 24px font1: 34 pages",
+    "stage 3: 1280x800 17px font1: 18 pages",
+    "stage 4: 1280x800 17px font2: 18 pages",
+    "stage 5: 1280x800 17px font1: 18 pages",
+    "stage 6: 1552x928 17px font1: 12 pages",
+    "stage 7: 1280x800 17px font1: 18 pages",
+    "size-17-18-24-17: 100/100 = 100.00%; page movements=164; mismatches=0",
+    "font-roundtrip: 100/100 = 100.00%; page movements=1; mismatches=0",
+    "window-roundtrip: 100/100 = 100.00%; page movements=91; mismatches=0"
+  ],
+  "render_layout": {
+    "width": 720,
+    "height": 1040,
+    "margin": 36,
+    "font_size": 28,
+    "line_height": 1.5,
+    "paragraph_spacing": 10,
+    "document_css": 1,
+    "embedded_fonts": 1,
+    "direction": 0,
+    "fixed_max_dimension": 720
+  },
+  "render_font_sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280",
+  "render_driver_sha256": "2fd0a1fa0d28804a7e6583367d91d9f7e48f43e662deb957f01b59f6471c8c8b",
+  "regression": {
+    "books": 19,
+    "pages": 11168,
+    "glyphs": 8648640,
+    "changed_page_counts": 0,
+    "changed_page_hashes": 0,
+    "content_fingerprint": "3868051cbd1710b71eb8f266d1700dd1e6712d2f207205a98740629c04b22bde",
+    "page_hash_fingerprint": "SHA-256 of newline-joined page SHA-256 values plus final newline"
+  },
+  "books": [
+    {
+      "id": "a-raisin-in-the-sun",
+      "source_sha256": "2416cbd8d73eb7ba2a228842aa33ae303653fb75fa42dd6e921293bee2ed576d",
+      "pages": 354,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "1b2f2097b5fddf7733e626fe10a396be814972c387dcc7cef7a9d53c92a85779",
+      "after_page_hashes_sha256": "1b2f2097b5fddf7733e626fe10a396be814972c387dcc7cef7a9d53c92a85779"
+    },
+    {
+      "id": "between-the-world-and-me",
+      "source_sha256": "3d909ac99c4388022a6576475b81c5d458490337aba08b0e7ba311bc18ab68a5",
+      "pages": 232,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "85eafd5a063d5a30f0a38d143ab5ade32cbb081060a8ac41995d2cefe45452d4",
+      "after_page_hashes_sha256": "85eafd5a063d5a30f0a38d143ab5ade32cbb081060a8ac41995d2cefe45452d4"
+    },
+    {
+      "id": "black-boy",
+      "source_sha256": "a6d4c9a1f117e8c9c21aec186ca77e0f58cdaf9f97fce8f1f1d1660a724a7e87",
+      "pages": 1034,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "33a7a4a2fb384949ada5fcbed454fcb15f633d749947d28c627a74e034c661a5",
+      "after_page_hashes_sha256": "33a7a4a2fb384949ada5fcbed454fcb15f633d749947d28c627a74e034c661a5"
+    },
+    {
+      "id": "born-a-crime",
+      "source_sha256": "c22402e02baa5e9b7c88c895a9f232f2858f7c168122aaf084493b85e37f6d58",
+      "pages": 511,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "41e3a044bb61d1325ced5b51d33fbf2a78ff2041eb4db393eb2b74c290e4823e",
+      "after_page_hashes_sha256": "41e3a044bb61d1325ced5b51d33fbf2a78ff2041eb4db393eb2b74c290e4823e"
+    },
+    {
+      "id": "crying-in-h-mart",
+      "source_sha256": "8e6641c9c820cbc987dbd848d1b2ee88a15d620db6d9302cc17ca2ca49072a3e",
+      "pages": 516,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "fd7edc4d9a048cc2916154a6479c1c42ab6f8e473812a664ffe907f8018a2697",
+      "after_page_hashes_sha256": "fd7edc4d9a048cc2916154a6479c1c42ab6f8e473812a664ffe907f8018a2697"
+    },
+    {
+      "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+      "source_sha256": "02a37f7c5f80169b09d010f27edf494116df0bcb0c8bc8023282a1d3bf43e941",
+      "pages": 502,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "0a99933f79a8ed53edd7eb329f5a790dc1a64f9ddc5726d769ce68897cada186",
+      "after_page_hashes_sha256": "0a99933f79a8ed53edd7eb329f5a790dc1a64f9ddc5726d769ce68897cada186"
+    },
+    {
+      "id": "i-know-why-the-caged-bird-sings",
+      "source_sha256": "7a52e3c22743cbf9cdacd1fc6d2a8f72f9ad0f9287591f310640d0287857ec09",
+      "pages": 625,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "e8f32f3fc76cae3ef1cf809a2d66e539a9819cd7500854a6d3952adf3dd895dc",
+      "after_page_hashes_sha256": "e8f32f3fc76cae3ef1cf809a2d66e539a9819cd7500854a6d3952adf3dd895dc"
+    },
+    {
+      "id": "pachinko",
+      "source_sha256": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+      "pages": 1231,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "f09f676f9637809289f64b2b4fe0d0b6849691b5a9d726da1a6f6577006a696a",
+      "after_page_hashes_sha256": "f09f676f9637809289f64b2b4fe0d0b6849691b5a9d726da1a6f6577006a696a"
+    },
+    {
+      "id": "the-absolutely-true-diary-of-a-part-time-indian",
+      "source_sha256": "eedadec8e91f54e53e0587127b8ed2ca12d7d97b282f8a734b709468b7c2cf67",
+      "pages": 566,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "60ce81d84869ad74f93c917bf992a9d887678b809698412bfdc3ed1f594890b5",
+      "after_page_hashes_sha256": "60ce81d84869ad74f93c917bf992a9d887678b809698412bfdc3ed1f594890b5"
+    },
+    {
+      "id": "the-autobiography-of-malcolm-x.",
+      "source_sha256": "c9373b7dbda128fea031616b444ca490a3cd59dccb3f02cb2512fd9957a0fdb7",
+      "pages": 279,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "4a4878c273dd783526d720ccf71a07bf18468d4f4cd9da5432072c1520a2b4fa",
+      "after_page_hashes_sha256": "4a4878c273dd783526d720ccf71a07bf18468d4f4cd9da5432072c1520a2b4fa"
+    },
+    {
+      "id": "the-distance-between-us-a-memoir",
+      "source_sha256": "19591466f9b795f978f6061ac9979d8bd420ddf29cc849a4c970190a968844e3",
+      "pages": 714,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "cdb86b6b6316b2b3d656a01fbeaa1168201aedb8ab791a9d0090f41d3faaca5b",
+      "after_page_hashes_sha256": "cdb86b6b6316b2b3d656a01fbeaa1168201aedb8ab791a9d0090f41d3faaca5b"
+    },
+    {
+      "id": "the-fire-next-time",
+      "source_sha256": "e0e361a8b3eb84cab263dac4efd69953b48c0a8d7b1972011a2f8e3deaab4570",
+      "pages": 187,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "7b52ae14dfa4d44f23e124877149ec4e9b69382afdc16bcb573586d2ec2c724c",
+      "after_page_hashes_sha256": "7b52ae14dfa4d44f23e124877149ec4e9b69382afdc16bcb573586d2ec2c724c"
+    },
+    {
+      "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+      "source_sha256": "3662ed4599157e8a94e1869a43b7e231244862c520ac4fe02f3a047893d23ef0",
+      "pages": 314,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "d77ec9ef811c8d37d4e7d8d19633b19ed13de6dda640a835096517522ce1d1b3",
+      "after_page_hashes_sha256": "d77ec9ef811c8d37d4e7d8d19633b19ed13de6dda640a835096517522ce1d1b3"
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "source_sha256": "5a3b11c8f3ee4dd1c41d264aaf27dd83bb82faa1ebf3c7370a7072a0711cb3df",
+      "pages": 184,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "cc94b4a2ca418b1bb66127e8741f43e78a4004ebf409d1de0bbed630dd204d6a",
+      "after_page_hashes_sha256": "cc94b4a2ca418b1bb66127e8741f43e78a4004ebf409d1de0bbed630dd204d6a"
+    },
+    {
+      "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+      "source_sha256": "6a107f978b9689221865539da63156996e1a0b67fa622629deac6503e16a7284",
+      "pages": 636,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "104ee54d8070a9f8ce330d002f689a0b9d0b48f74b023f082d45228d6a9f0227",
+      "after_page_hashes_sha256": "104ee54d8070a9f8ce330d002f689a0b9d0b48f74b023f082d45228d6a9f0227"
+    },
+    {
+      "id": "hongloumeng-24264",
+      "source_sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+      "pages": 1584,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "9c446960ccd9c0b04a92ad36c24ba6f28ab4319f54fd7333b49736da797d62bd",
+      "after_page_hashes_sha256": "9c446960ccd9c0b04a92ad36c24ba6f28ab4319f54fd7333b49736da797d62bd"
+    },
+    {
+      "id": "xingshihengyan-24239",
+      "source_sha256": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+      "pages": 1153,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "9a9fecdc689a2279cd3fc349672d9207dda480b02aa3a1a10fef0ac78b1fd1b5",
+      "after_page_hashes_sha256": "9a9fecdc689a2279cd3fc349672d9207dda480b02aa3a1a10fef0ac78b1fd1b5"
+    },
+    {
+      "id": "tangshi300-52323",
+      "source_sha256": "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945",
+      "pages": 84,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "0874358e9d69e6885ed347c350cbe6e233f27d4b5baa01d897a765101649016e",
+      "after_page_hashes_sha256": "0874358e9d69e6885ed347c350cbe6e233f27d4b5baa01d897a765101649016e"
+    },
+    {
+      "id": "kusamakura-japanese-vertical-writing",
+      "source_sha256": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7",
+      "pages": 462,
+      "changed_page_hashes": 0,
+      "before_page_hashes_sha256": "db4726ca8674c38ad8cd7fcfe4408739dcbac05e83b2b8c6c4963c67e3e5ca22",
+      "after_page_hashes_sha256": "db4726ca8674c38ad8cd7fcfe4408739dcbac05e83b2b8c6c4963c67e3e5ca22"
+    }
+  ],
+  "measurement_fonts": [
+    {
+      "name": "NotoSerifSC-VF.ttf",
+      "sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280"
+    },
+    {
+      "name": "Reader.otf",
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+    }
+  ],
+  "implementation_sha256": {
+    "src\\publication.c": "b124af744908f48f9c662e68f31d1a06ccd6b26fe0bea5d60bc15c9f135a45a1",
+    "include\\exr\\layout.h": "43b8d946c2b9d7df7fe9d0062d2591414c45042d44d7d67d4724df93737848d1",
+    "tests\\test_content_ranges.c": "03be85f39c8e0b5a45414534ab1390739ecd2befbce9fbca93bc83047fef419a"
+  },
+  "implementation_sha256_encoding": "UTF-8 with LF line endings (Git blob bytes)"
+}

@@ -1,0 +1,150 @@
+{
+  "files": 500,
+  "bytes": 5962134580,
+  "hardlinks": true,
+  "sources": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\build\\font-manager-acceptance\\sources\\arial.ttf",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\build\\font-manager-acceptance\\sources\\simsun.ttc",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fontmgr-20261107\\build\\font-manager-acceptance\\sources\\Reader.otf"
+  ],
+  "runs": [
+    {
+      "cold": {
+        "kind": "index",
+        "families": 4,
+        "files": 500,
+        "faces": 667,
+        "skipped": 0,
+        "parsed": 500,
+        "cached": 0,
+        "cache": 1,
+        "written": 1,
+        "ms": 1137.157
+      },
+      "hot": {
+        "kind": "index",
+        "families": 4,
+        "files": 500,
+        "faces": 667,
+        "skipped": 0,
+        "parsed": 0,
+        "cached": 500,
+        "cache": 3,
+        "written": 0,
+        "ms": 13.015
+      }
+    },
+    {
+      "cold": {
+        "kind": "index",
+        "families": 4,
+        "files": 500,
+        "faces": 667,
+        "skipped": 0,
+        "parsed": 500,
+        "cached": 0,
+        "cache": 1,
+        "written": 1,
+        "ms": 1085.152
+      },
+      "hot": {
+        "kind": "index",
+        "families": 4,
+        "files": 500,
+        "faces": 667,
+        "skipped": 0,
+        "parsed": 0,
+        "cached": 500,
+        "cache": 3,
+        "written": 0,
+        "ms": 15.022
+      }
+    },
+    {
+      "cold": {
+        "kind": "index",
+        "families": 4,
+        "files": 500,
+        "faces": 667,
+        "skipped": 0,
+        "parsed": 500,
+        "cached": 0,
+        "cache": 1,
+        "written": 1,
+        "ms": 1198.712
+      },
+      "hot": {
+        "kind": "index",
+        "families": 4,
+        "files": 500,
+        "faces": 667,
+        "skipped": 0,
+        "parsed": 0,
+        "cached": 500,
+        "cache": 3,
+        "written": 0,
+        "ms": 15.076
+      }
+    },
+    {
+      "cold": {
+        "kind": "index",
+        "families": 4,
+        "files": 500,
+        "faces": 667,
+        "skipped": 0,
+        "parsed": 500,
+        "cached": 0,
+        "cache": 1,
+        "written": 1,
+        "ms": 1167.579
+      },
+      "hot": {
+        "kind": "index",
+        "families": 4,
+        "files": 500,
+        "faces": 667,
+        "skipped": 0,
+        "parsed": 0,
+        "cached": 500,
+        "cache": 3,
+        "written": 0,
+        "ms": 13.479
+      }
+    },
+    {
+      "cold": {
+        "kind": "index",
+        "families": 4,
+        "files": 500,
+        "faces": 667,
+        "skipped": 0,
+        "parsed": 500,
+        "cached": 0,
+        "cache": 1,
+        "written": 1,
+        "ms": 1180.8
+      },
+      "hot": {
+        "kind": "index",
+        "families": 4,
+        "files": 500,
+        "faces": 667,
+        "skipped": 0,
+        "parsed": 0,
+        "cached": 500,
+        "cache": 3,
+        "written": 0,
+        "ms": 13.55
+      }
+    }
+  ],
+  "median_ms": {
+    "cold": 1167.579,
+    "hot": 13.55
+  },
+  "max_ms": {
+    "cold": 1198.712,
+    "hot": 15.076
+  }
+}

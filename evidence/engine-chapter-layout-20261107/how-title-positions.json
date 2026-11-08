@@ -1,0 +1,102 @@
+[
+  {
+    "before": {
+      "part": 28,
+      "node": 14,
+      "tag": "h2",
+      "page": 491,
+      "part_page": 1,
+      "line": 1,
+      "text": "Contents"
+    },
+    "after": {
+      "part": 28,
+      "node": 14,
+      "tag": "h2",
+      "page": 492,
+      "part_page": 1,
+      "line": 1,
+      "text": "Contents"
+    }
+  },
+  {
+    "before": {
+      "part": 25,
+      "node": 18,
+      "tag": "h1",
+      "page": 458,
+      "part_page": 1,
+      "line": 1,
+      "text": "NOTES"
+    },
+    "after": {
+      "part": 25,
+      "node": 18,
+      "tag": "h1",
+      "page": 458,
+      "part_page": 1,
+      "line": 1,
+      "text": "NOTES"
+    }
+  },
+  {
+    "before": {
+      "part": 24,
+      "node": 18,
+      "tag": "h1",
+      "page": 455,
+      "part_page": 1,
+      "line": 1,
+      "text": "ACKNOWLEDGMENTS"
+    },
+    "after": {
+      "part": 24,
+      "node": 18,
+      "tag": "h1",
+      "page": 455,
+      "part_page": 1,
+      "line": 1,
+      "text": "ACKNOWLEDGMENTS"
+    }
+  },
+  {
+    "before": {
+      "part": 27,
+      "node": 33,
+      "tag": "h1",
+      "page": 490,
+      "part_page": 1,
+      "line": 1,
+      "text": "What’s next on\nyour reading list?"
+    },
+    "after": {
+      "part": 27,
+      "node": 33,
+      "tag": "h1",
+      "page": 491,
+      "part_page": 2,
+      "line": 1,
+      "text": "What’s next on\nyour reading list?"
+    }
+  },
+  {
+    "before": {
+      "part": 23,
+      "node": 18,
+      "tag": "h1",
+      "page": 435,
+      "part_page": 1,
+      "line": 1,
+      "text": "AFTERWORD"
+    },
+    "after": {
+      "part": 23,
+      "node": 18,
+      "tag": "h1",
+      "page": 435,
+      "part_page": 1,
+      "line": 1,
+      "text": "AFTERWORD"
+    }
+  }
+]

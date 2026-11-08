@@ -24,6 +24,8 @@ static exr_font *open_font(const char *directory, const char *name) {
 static exr_layout_config config(void) {
   exr_layout_config c = exr_layout_config_defaults();
   c.page = (exr_layout_options){120, 80, 8, 20, 1.2f, 0};
+  /* These width oracles exercise break opportunities without paragraph indent. */
+  c.user_css="* {text-indent:0}";
   return c;
 }
 static exr_document *document(const char *text, const char *style, int table) {

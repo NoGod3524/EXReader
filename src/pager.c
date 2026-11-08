@@ -2,9 +2,67 @@
 #include "flow_internal.h"
 #include "opentype_internal.h"
 #include "ruby_internal.h"
+/* Recover plain-text chapter/paragraph lines embedded in XHTML text nodes.
+   Iterate raw lines once, mapping to the existing normalized projection. No
+   document nodes or source offsets are rewritten, including bounded readers. */
+typedef struct {
+  size_t raw, projected, start, end;
+  int pending, previous_special, ready, indented;
+  exr_block_kind kind;
+} source_structure;
+static int source_white(unsigned char c) { return c==' ' || c=='\t' || c=='\r' || c=='\n'; }
+static exr_block_kind source_line(const char *text,size_t a,size_t b,int *indented) {
+  size_t i=a,n=0; uint32_t cp; int digits=0,rule=1;
+  *indented=b-a>=6 && !memcmp(text+a,"\xe3\x80\x80\xe3\x80\x80",6);
+  while(i<b) {
+    if(!exr_next(text,b,&i,&cp)) return EXR_BLOCK_BODY;
+    if(cp!='_' && cp!='-' && cp!=0x2014 && cp!=0x2015 && cp!=' ' && cp!='\t') rule=0;
+    if(cp!=' ' && cp!='\t') n++;
+  }
+  if(rule && n>=3) return EXR_BLOCK_ORNAMENT;
+  i=a;
+  if(!exr_next(text,b,&i,&cp) || cp!=0x7b2c || n>120) return EXR_BLOCK_BODY;
+  while(i<b && exr_next(text,b,&i,&cp)) {
+    if((cp>='0' && cp<='9') || cp==0x3007 || cp==0x96f6 || cp==0x4e00 || cp==0x4e8c ||
+       cp==0x4e09 || cp==0x56db || cp==0x4e94 || cp==0x516d || cp==0x4e03 || cp==0x516b ||
+       cp==0x4e5d || cp==0x5341 || cp==0x767e || cp==0x5343) { digits++;continue; }
+    return digits && (cp==0x56de || cp==0x7ae0 || cp==0x8282) ? EXR_BLOCK_TITLE : EXR_BLOCK_BODY;
+  }
+  return EXR_BLOCK_BODY;
+}
+static void source_next(const exr_document *doc,const exr_node *node,source_structure *s) {
+  const char *raw=node->text; size_t length=raw ? strlen(raw) : 0;
+  s->ready=0;
+  while(s->raw<length) {
+    size_t a=s->raw,b=a,i,begin=SIZE_MAX; int indented,emit;
+    exr_block_kind kind;
+    while(b<length && raw[b]!='\n') b++;
+    while(a<b && source_white((unsigned char)raw[a])) a++;
+    kind=source_line(raw,a,b,&indented);
+    emit=kind!=EXR_BLOCK_BODY || indented || s->previous_special;
+    i=s->raw;
+    while(i<b) {
+      size_t at=i;uint32_t cp;
+      if(!exr_next(raw,b,&i,&cp)) break;
+      if(exr_projection_space(cp)) { s->pending=1;continue; }
+      /* Pending projected whitespace can straddle inline nodes. Read its actual
+         projected byte rather than guessing the preceding node's last scalar. */
+      if(s->pending && s->projected<node->end && exr_doc_byte(doc,s->projected)==' ') s->projected++;
+      s->pending=0;
+      if(begin==SIZE_MAX) begin=s->projected;
+      s->projected+=i-at;
+    }
+    s->raw=b<length ? b+1 : b;s->pending=1;
+    if(begin!=SIZE_MAX) s->previous_special=kind!=EXR_BLOCK_BODY;
+    if(emit && begin!=SIZE_MAX) {
+      s->start=begin;s->end=s->projected;s->kind=kind;s->indented=indented;s->ready=1;return;
+    }
+  }
+}
 
 typedef struct {
   size_t node, child, position;
+  source_structure source;
   int phase, entered, sized_inline;
   int old_intrinsic;
   int float_long;
@@ -764,7 +822,7 @@ static exr_status floating(exr_pager *p,frame *v) {
       v->first_y=margins[0]+v->fragment->flow_block+(v->context->finished ? margins[2] : 0);
     }
     exr_flow_area(f,y,v->first_y,&x,&room,&next);
-    if(pending>0 && y==f->y && pending+(f->first_line ? f->paragraph->indent : 0)>room-v->outer_width+.001f) {
+    if(pending>0 && y==f->y && pending+(f->first_line ? exr_flow_indent(f) : 0)>room-v->outer_width+.001f) {
       status=exr_inline_break(f,&p->line); if(status!=EXR_OK) return status;
       if(s->float_side && (box.width.value<0 || v->float_long)) clear_frame(v);
       continue;
@@ -930,6 +988,9 @@ static exr_status advance(exr_pager *p) {
         p->position = f->doc->size;
         return EXR_OK;
       }
+      status=finish_run(p);if(status!=EXR_OK) return status;
+      f->chapter_index++;f->chapter_pending=1;
+      if(f->layout->line_count || f->layout->box_count) f->force_break=1;
       status = push(p, f->doc->chapters[p->chapter++].root,
                        p->config.page.margin, p->config.page.width - 2 * p->config.page.margin);
       if (status != EXR_OK)
@@ -975,6 +1036,9 @@ static exr_status advance(exr_pager *p) {
         v->position=0; v->phase=40;
       } else if (n->kind == EXR_NODE_TEXT) {
         v->position = n->start;
+        v->source.projected=n->start;
+        v->source.pending=1;
+        if(s->block_kind!=EXR_BLOCK_TITLE) source_next(f->doc,n,&v->source);
         v->phase = 10;
       } else if (n->kind == EXR_NODE_BREAK)
         v->phase = 11;
@@ -988,6 +1052,13 @@ static exr_status advance(exr_pager *p) {
       status = finish_run(p);
       if (status != EXR_OK)
         return status;
+      if(s->block_kind==EXR_BLOCK_TITLE &&
+         (n->parent==SIZE_MAX || exr_doc_style(f->doc,p->styles,n->parent)->block_kind!=EXR_BLOCK_TITLE)) {
+        if(!f->chapter_pending) f->chapter_index++;
+        f->chapter_pending=1;
+        if(f->layout->line_count || f->layout->box_count) f->force_break=1;
+      }
+      f->source_kind=EXR_BLOCK_BODY;f->source_indented=0;
       if(s->clear_side && !(p->local && v->node==p->local_root && s->float_side)) {
         status=wait_floats(p,(unsigned)s->clear_side); if(status!=EXR_OK) return status;
         exr_flow_clear(f,(unsigned)s->clear_side);
@@ -1166,9 +1237,25 @@ static exr_status advance(exr_pager *p) {
       p->depth--;
       break;
     case 10:
-      if (v->position == n->end)
+      if(v->source.ready && v->position==v->source.start) {
+        status=finish_run(p);if(status!=EXR_OK) return status;
+        f->first_line=1;
+        f->source_kind=v->source.kind;
+        f->source_node=v->node;f->source_start=v->source.start;f->source_end=v->source.end;
+        f->source_indented=v->source.indented ? (v->position==n->start ? 1 : 2) : 0;
+        if(f->source_kind==EXR_BLOCK_TITLE) {
+          f->chapter_index++;f->chapter_pending=1;
+          if(f->layout->line_count || f->layout->box_count) f->force_break=1;
+        }
+        source_next(f->doc,n,&v->source);
+      }
+      if (v->position == n->end) {
+        /* Finish synthetic title/decorative lines before returning to the
+           containing HTML paragraph; a page pause retries this same phase. */
+        if(f->source_kind) { status=finish_run(p);if(status!=EXR_OK) return status; }
+        f->source_kind=EXR_BLOCK_BODY;f->source_indented=0;
         p->depth--;
-      else {
+      } else {
         status = scalar(p, v);
         if (status != EXR_OK)
           return status;
@@ -1858,6 +1945,7 @@ static exr_status append_page(exr_layout *all, exr_layout *page, exr_error *e) {
   if (!exr_grow((void **)&all->glyphs, &all->glyph_cap, ng + page->glyph_count, sizeof(*all->glyphs)) ||
       !exr_grow((void **)&all->lines, &all->line_cap, nl + page->line_count, sizeof(*all->lines)) ||
       !exr_grow((void **)&all->boxes, &all->box_cap, nb + page->box_count, sizeof(*all->boxes)) ||
+      !exr_grow((void **)&all->blocks, &all->block_cap, all->block_count+page->block_count, sizeof(*all->blocks)) ||
       !exr_grow((void **)&all->pages, &all->page_cap, np + 1, sizeof(*all->pages)))
     return exr_fail(e, EXR_MEMORY, "Whole-document layout allocation failed");
   for (i = 0; i < page->glyph_count; i++) {
@@ -1875,6 +1963,10 @@ static exr_status append_page(exr_layout *all, exr_layout *page, exr_error *e) {
     exr_box b = page->boxes[i];
     b.page = np;
     all->boxes[all->box_count++] = b;
+  }
+  for(i=0;i<page->block_count;i++) {
+    exr_layout_block b=page->blocks[i];b.page=np;b.line_start+=nl;
+    all->blocks[all->block_count++]=b;
   }
   all->pages[np] = page->pages[0];
   if(np && all->pages[np].start<all->pages[np-1].end) all->source_overlaps=1;

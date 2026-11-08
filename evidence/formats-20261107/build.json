@@ -1,0 +1,42 @@
+{
+  "source_revision": "000caeef67f52498b05c437384efcd3bfdb1b5d1",
+  "configuration": {
+    "CMAKE_BUILD_TYPE:STRING": "Release",
+    "CMAKE_C_COMPILER:STRING": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
+    "EXR_BUILD_FUZZ:BOOL": "ON",
+    "EXR_BUILD_JNI:BOOL": "OFF",
+    "EXR_BUILD_SHARED_COMPAT:BOOL": "ON",
+    "EXR_BUILD_TESTS:BOOL": "ON",
+    "EXR_BUILD_TEXT_INDEX:BOOL": "ON",
+    "EXR_BUILD_TOOLS:BOOL": "ON",
+    "EXR_ENABLE_AAC:BOOL": "OFF",
+    "EXR_ENABLE_AUDIO:BOOL": "ON",
+    "EXR_ENABLE_ICC:BOOL": "OFF",
+    "EXR_ENABLE_IMAGE_AVIF:BOOL": "OFF",
+    "EXR_ENABLE_IMAGE_TIFF:BOOL": "OFF",
+    "EXR_ENABLE_IMAGE_WEBP:BOOL": "OFF",
+    "EXR_ENABLE_LIBRARY:BOOL": "ON",
+    "EXR_ENABLE_MP3:BOOL": "OFF",
+    "EXR_ENABLE_PDF:BOOL": "ON",
+    "EXR_ENABLE_PDF_CRYPTO:BOOL": "ON",
+    "EXR_ENABLE_PDF_EDIT:BOOL": "ON",
+    "EXR_ENABLE_PDF_JPX:BOOL": "ON",
+    "EXR_ENABLE_TEXT_INDEX:BOOL": "ON",
+    "EXR_NODE_EXECUTABLE:FILEPATH": "C:/Program Files/nodejs/node.exe",
+    "EXR_SANITIZE:BOOL": "OFF",
+    "FETCHCONTENT_SOURCE_DIR_EXPAT:PATH": "C:/Users/Oscar/exr-deps/expat",
+    "FETCHCONTENT_SOURCE_DIR_FREETYPE:PATH": "C:/Users/Oscar/exr-deps/freetype-VER-2-15-0",
+    "FETCHCONTENT_SOURCE_DIR_MBEDTLS:PATH": "C:/Users/Oscar/exr-deps/mbedtls",
+    "FETCHCONTENT_SOURCE_DIR_MINIZ:PATH": "C:/Users/Oscar/exr-deps/miniz",
+    "FETCHCONTENT_SOURCE_DIR_OPENJPEG:PATH": "C:/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4",
+    "FETCHCONTENT_SOURCE_DIR_SQLITE:PATH": "C:/Users/Oscar/exr-deps/sqlite",
+    "FETCHCONTENT_SOURCE_DIR_STB:PATH": "C:/Users/Oscar/exr-deps/stb",
+    "CMAKE_HOME_DIRECTORY:INTERNAL": "C:/Users/Oscar/Documents/Codex/EXReader-formats-20261107"
+  },
+  "dll_hashes": {
+    "C:/Users/Oscar/Documents/Codex/formats-build-20261107/libexreader.dll": "49010282d4c9c665e1715ede3cbb4143bea8b4699810b4e34538bb7f84871885",
+    "C:/Users/Oscar/Documents/Codex/fmt-build-20261107/libexreader.dll": "d710033e7c02319331e11329da98ac0aeb45723dc5172c60982f47a11454f2a3",
+    "C:/Users/Oscar/Documents/Codex/w2-realbooks-build-20261107/libexreader.dll": "57d17c88f2bca6a1b859a456fb5362ac548c830a905e6e83cf76ee5149285bd2"
+  },
+  "ci_run": false
+}

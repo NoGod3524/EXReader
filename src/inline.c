@@ -1153,7 +1153,7 @@ static exr_status shape_line_segment(flow *f, exr_line_buffer *b, uint32_t after
 }
 static exr_status line_geometry(flow *f,exr_line_buffer *b,float *width) {
   size_t i; float ascent=0,descent=0,leading=0,minimum=0,old_y=f->y;
-  float indent=f->first_line ? f->paragraph->indent : 0; exr_status status;
+  float indent=f->first_line ? exr_flow_indent(f) : 0; exr_status status;
   *width=0;
   punctuation_width(f,b->line.glyphs,b->line.glyph_count,1,fmaxf(1,f->width-indent));
   for(i=0;i<b->line.glyph_count;i++) {
@@ -1180,7 +1180,7 @@ static size_t word_index(const size_t *offsets,size_t count,size_t byte);
    selected prefix, including the inserted character, then rebuild its carry. */
 static exr_status fit_dictionary(flow *f,exr_line_buffer *b,int *found) {
   size_t i,limit=0; int any=0; exr_status status;
-  float indent=f->first_line ? f->paragraph->indent : 0;
+  float indent=f->first_line ? exr_flow_indent(f) : 0;
   *found=0; if(!f->hyphenator || !b->ready) return EXR_OK;
   { size_t end=b->scan<b->ready ? b->scan+1 : b->ready;
     while(end<b->ready && exr_inline_same(b->run.glyphs+end,b->run.glyphs+end-1)) end++;
@@ -1239,7 +1239,7 @@ static exr_status fit_dictionary(flow *f,exr_line_buffer *b,int *found) {
 /* A provisional ligature is one protected cluster. Final fitting can retreat
    across its start, never through it or a GLUE boundary. */
 static exr_status fit_line(flow *f, exr_line_buffer *b) {
-  float indent = f->first_line ? f->paragraph->indent : 0;
+  float indent = f->first_line ? exr_flow_indent(f) : 0;
   float available;
   size_t tries = 0;
   { int found; exr_status status=fit_dictionary(f,b,&found); if(status!=EXR_OK || found) return status; }
@@ -1544,7 +1544,7 @@ static exr_status measure_unwrapped(flow *f,exr_line_buffer *b) {
       b->measure_punctuation_count=0;b->measure_punctuation_width=0;
     }
     if(exr_font_size(&f->font->faces[g->font_index],g->size)) return exr_fail(f->error,EXR_FONT,"Cannot size intrinsic line font");
-    if(f->first_line) { b->measure_width+=fmaxf(0,f->paragraph->indent); f->first_line=0; }
+    if(f->first_line) { b->measure_width+=fmaxf(0,exr_flow_indent(f)); f->first_line=0; }
     advance=g->advance+line_kern(f,b->measure_has_last ? &b->measure_last : NULL,g)
       -punctuation_compression(f,b->measure_has_last ? &b->measure_last : NULL,g);
     if(!b->measure_has_last && opening_punctuation(g->codepoint)) advance-=punctuation_room(f,g);
@@ -1578,7 +1578,7 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
       exr_status status=f->plan_resolve(f->plan_cursor);if(status!=EXR_OK) return status;
     }
     if (!b->line_end) {
-      float indent = f->first_line ? f->paragraph->indent : 0;
+      float indent = f->first_line ? exr_flow_indent(f) : 0;
       while (b->scan < b->ready) {
         size_t i = b->scan;
         exr_glyph *g = &b->run.glyphs[i];

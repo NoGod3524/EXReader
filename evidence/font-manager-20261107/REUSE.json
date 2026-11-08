@@ -1,0 +1,35 @@
+{
+  "files": [
+    {
+      "file": "src\\font_manager.c",
+      "original": 537,
+      "final": 559,
+      "unchanged": 522
+    },
+    {
+      "file": "src\\font_scan.c",
+      "original": 465,
+      "final": 485,
+      "unchanged": 453
+    },
+    {
+      "file": "src\\font_cache.c",
+      "original": 166,
+      "final": 169,
+      "unchanged": 162
+    },
+    {
+      "file": "src\\font_manager_internal.h",
+      "original": 67,
+      "final": 67,
+      "unchanged": 67
+    },
+    {
+      "file": "include\\exr\\font_manager.h",
+      "original": 208,
+      "final": 213,
+      "unchanged": 203
+    }
+  ],
+  "reused_fraction_of_final": 0.942397856664434
+}

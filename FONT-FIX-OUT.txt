@@ -1,0 +1,46 @@
+
+[2026-11-07T17:02:47.0599454-05:00] 开始 PR #71 平台失败修复；当前分支 codex/font-manager-20261107；保留已有 FONT-OUT3.txt / FONT-OUT.txt 用户改动。边界：仅修改 src/include/tests 代码及本记录；不改 examples/.github，不取消 workflow。
+
+[步骤 1 完成] 已拉取 PR #71 head d22ec5fdb03add40ef5b99f5fa1871694990210e 的 macOS/apple-mobile 六个实际失败作业日志。
+作业 apple-mobile https://github.com/NoGod3524/EXReader/actions/runs/42415231136/job/128531753973
+2026-11-07T21:30:49.5768360Z /Users/runner/work/EXReader/EXReader/src/font_scan.c:94:34: error: no member named 'st_mtimespec' in 'struct stat'
+2026-11-07T21:30:49.5870280Z    94 |   if (mtime) *mtime = (int64_t)s.st_mtimespec.tv_sec * 1000000000 + s.st_mtimespec.tv_nsec;
+2026-11-07T21:30:49.5972610Z       |                                ~ ^
+2026-11-07T21:30:49.5973210Z [ 65%] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_dirwrite.c.o
+作业 desktop (macos-15) https://github.com/NoGod3524/EXReader/actions/runs/42415231136/job/128531754166
+2026-11-07T21:32:37.6522200Z /Users/runner/work/EXReader/EXReader/src/font_scan.c:94:34: error: no member named 'st_mtimespec' in 'struct stat'
+2026-11-07T21:32:37.6624150Z    94 |   if (mtime) *mtime = (int64_t)s.st_mtimespec.tv_sec * 1000000000 + s.st_mtimespec.tv_nsec;
+2026-11-07T21:32:37.6725660Z       |                                ~ ^
+2026-11-07T21:32:37.6726590Z [ 56%] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_window.c.o
+作业 platforms / reading macos-15 (reading-core) https://github.com/NoGod3524/EXReader/actions/runs/42415231045/job/128531754020
+2026-11-07T21:27:04.4909530Z /Users/runner/work/EXReader/EXReader/src/font_scan.c:94:34: error: no member named 'st_mtimespec' in 'struct stat'
+2026-11-07T21:27:04.5013770Z    94 |   if (mtime) *mtime = (int64_t)s.st_mtimespec.tv_sec * 1000000000 + s.st_mtimespec.tv_nsec;
+2026-11-07T21:27:04.5116870Z       |                                ~ ^
+2026-11-07T21:27:04.5117540Z /Users/runner/work/EXReader/EXReader/src/font_scan.c:94:71: error: no member named 'st_mtimespec' in 'struct stat'
+作业 platforms / reading macos-15 (reading-library) https://github.com/NoGod3524/EXReader/actions/runs/42415231045/job/128531754102
+2026-11-07T21:35:12.3718240Z /Users/runner/work/EXReader/EXReader/src/font_scan.c:94:34: error: no member named 'st_mtimespec' in 'struct stat'
+2026-11-07T21:35:12.3779310Z    94 |   if (mtime) *mtime = (int64_t)s.st_mtimespec.tv_sec * 1000000000 + s.st_mtimespec.tv_nsec;
+2026-11-07T21:35:12.3780050Z       |                                ~ ^
+2026-11-07T21:35:12.3780760Z /Users/runner/work/EXReader/EXReader/src/font_scan.c:94:71: error: no member named 'st_mtimespec' in 'struct stat'
+作业 native / apple-mobile https://github.com/NoGod3524/EXReader/actions/runs/42415231045/job/128531754113
+2026-11-07T21:36:22.6531500Z /Users/runner/work/EXReader/EXReader/src/font_scan.c:94:34: error: no member named 'st_mtimespec' in 'struct stat'
+2026-11-07T21:36:22.6632990Z    94 |   if (mtime) *mtime = (int64_t)s.st_mtimespec.tv_sec * 1000000000 + s.st_mtimespec.tv_nsec;
+2026-11-07T21:36:22.6734270Z       |                                ~ ^
+2026-11-07T21:36:22.6734830Z [ 64%] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_dumpmode.c.o
+作业 native / desktop (macos-15) https://github.com/NoGod3524/EXReader/actions/runs/42415231045/job/128531754168
+2026-11-07T21:35:49.8259310Z /Users/runner/work/EXReader/EXReader/src/font_scan.c:94:34: error: no member named 'st_mtimespec' in 'struct stat'
+2026-11-07T21:35:49.8361170Z    94 |   if (mtime) *mtime = (int64_t)s.st_mtimespec.tv_sec * 1000000000 + s.st_mtimespec.tv_nsec;
+2026-11-07T21:35:49.8462470Z       |                                ~ ^
+2026-11-07T21:35:49.8462870Z [ 56%] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_dirwrite.c.o
+reading-required-core 是上游失败后的汇总门禁。全部六个构建失败的首个 error 都是 src/font_scan.c:94 的 st_mtimespec；无测试断言失败，ld duplicate library 仅为 warning。
+[步骤 2 完成] 根因：font_scan.c 在所有非 Windows 平台定义 _POSIX_C_SOURCE=200809L，却在 Apple 分支访问 Darwin 扩展字段 st_mtimespec。Apple sys/stat.h 在 _POSIX_C_SOURCE && !_DARWIN_C_SOURCE 时暴露 st_mtime/st_mtimensec，隐藏 st_mtimespec；也不能直接换成 Linux 的 st_mtim。
+Apple 官方头文件核对：https://github.com/apple-oss-distributions/xnu/blob/main/bsd/sys/stat.h （__DARWIN_STRUCT_STAT64_TIMES 条件）。全部调用已查：font_manager.c 的目录/单文件发现与缓存失效，以及 font_scan.c 的递归扫描。应在 Apple 平台包含任何头文件前启用 _DARWIN_C_SOURCE，保留纳秒精度及现有 stat 路径。平台条件用于选择正确的头文件特性命名空间，不屏蔽编译或测试。
+
+[步骤 3 完成] src/font_scan.c:4-9：Apple 在系统头文件前定义 _DARWIN_C_SOURCE；其他非 Windows 继续 _POSIX_C_SOURCE=200809L。未修改时间戳计算、缓存格式或断言；未改 examples/、.github/。接下来强制重编 MinGW 并运行现有四组字体管理器与全量测试。
+[2026-11-07T17:06:53.3471659-05:00] MinGW build exit=0；完整日志 build/font-fix-build.log。
+[2026-11-07T17:07:04.2982664-05:00] 四组 font-manager 回归 exit=0；日志 build/font-fix-font-tests.log。
+[2026-11-07T17:07:30.6030131-05:00] 静态组件字体构建/测试 exit=0；日志 build/font-fix-static-build.log、build/font-fix-static-tests.log。
+
+[步骤 4 进展] MinGW Release 实际重编 font_scan.c（-std=c11 -Wall -Wextra -Wpedantic -Werror）并重新链接，exit 0、无 warning/error。共享字体四组 4/4（54/89/142/96 checks）；静态字体构建及四组 4/4。全量 173 项正在执行。WSL 未安装，Linux/Apple 编译由远端 CI 验证。
+
+[步骤 4 完成：必要本地验证] MinGW 严格警告构建通过；共享/静态字体回归各 4/4，全量 ctest 持续运行（长耗时用例尚未全部结束）。开始步骤 5：只暂存 src/font_scan.c 与 FONT-FIX-OUT.txt，提交并推送原分支，以并行获取 Apple CI 验证。已 fetch 验证远端 head 与本地 d22ec5fd 一致。汇总作业日志也已核实：native/platforms failure，protocol/profiles/corpus success。

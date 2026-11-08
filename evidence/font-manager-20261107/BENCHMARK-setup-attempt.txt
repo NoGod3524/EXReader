@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-fontmgr-20261107\tests\benchmark_font_manager.py", line 31, in <module>
+    target.hardlink_to(source.resolve())
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\pathlib\__init__.py", line 1230, in hardlink_to
+    os.link(target, self)
+    ~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 5] Access is denied: 'C:\\Windows\\Fonts\\arial.ttf' -> 'build\\font-manager-acceptance\\benchmark-real\\fonts\\font-000.ttf'
