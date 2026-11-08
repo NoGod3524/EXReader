@@ -1,0 +1,87 @@
+{
+  "reviewed_first_screens": 19,
+  "observations": [
+    "EPUB and CBZ covers visibly rendered; fixed EPUB uses reflow viewport margins",
+    "Text and scan PDF covers visibly rendered",
+    "Three encoding variants of each TXT source show matching text; Tangshi retains Gutenberg front matter",
+    "Sample-Text first screen is sparse and Sample is 12x12; source fixtures are stress controls, not book-quality examples"
+  ],
+  "previews": [
+    {
+      "id": "between-the-world-and-me",
+      "png_sha256": "35fea1225526adee3bca9820f94b46c5e77e40b28b3a080f5504fe36d3892d3a"
+    },
+    {
+      "id": "cc-shared-culture",
+      "png_sha256": "42c92f477cd9e7667bcfc1cf0c38f72ad51448724d774beaa2c93a60065df380"
+    },
+    {
+      "id": "comic-fixture",
+      "png_sha256": "749fc8a6f6e16f125fb976199d21233a23075473f258b55dca229d573c1510f1"
+    },
+    {
+      "id": "haruko-html-jpeg-cbz",
+      "png_sha256": "3e5cccaa5836c53cede337b98513fe1f8a3a607bb8425b1a9498aaab303d16c9"
+    },
+    {
+      "id": "haruko-html-jpeg",
+      "png_sha256": "6c3b9402d4b59ff965748eb7fa09532fafb2a10687a5418c95a700c0208226c6"
+    },
+    {
+      "id": "moby-dick-mo",
+      "png_sha256": "583dfae695f453202817f2064655eeff6e7024215654f8193d9b190959c80070"
+    },
+    {
+      "id": "page-blanche-cbz",
+      "png_sha256": "aa3fc46c72074a4c3ad03563a94e12f9de1e4b1122fd2deb41d6d752f6ff0c6f"
+    },
+    {
+      "id": "page-blanche",
+      "png_sha256": "64199888fa5c0d417cfb9c3f875596225e1e27f310d7ac3a89bcbeea64884190"
+    },
+    {
+      "id": "pdf-scan-malcolm",
+      "png_sha256": "86141cd73bdcf7f5297e281ad7a0c0aa97bfabbc310a90cd3379e75f62d23635"
+    },
+    {
+      "id": "pdf-text-malcolm",
+      "png_sha256": "36fd5c63ea0863d8b5c9ea0bc43444deea089cc844989c186a905ce867894795"
+    },
+    {
+      "id": "pg24239-utf16-bom",
+      "png_sha256": "7453be25484ab5a7f5dffe7f5f3364dc9b4ff5a5d8d1efb2e2ebd6833fc34ae1"
+    },
+    {
+      "id": "pg24239-utf8-bom",
+      "png_sha256": "7453be25484ab5a7f5dffe7f5f3364dc9b4ff5a5d8d1efb2e2ebd6833fc34ae1"
+    },
+    {
+      "id": "pg24239-utf8",
+      "png_sha256": "7453be25484ab5a7f5dffe7f5f3364dc9b4ff5a5d8d1efb2e2ebd6833fc34ae1"
+    },
+    {
+      "id": "pg52323-utf16-bom",
+      "png_sha256": "db234bbc4f6d66bc3f918977d820ba4e6f80560e568c0b891b31499aaeaea467"
+    },
+    {
+      "id": "pg52323-utf8-bom",
+      "png_sha256": "db234bbc4f6d66bc3f918977d820ba4e6f80560e568c0b891b31499aaeaea467"
+    },
+    {
+      "id": "pg52323-utf8",
+      "png_sha256": "db234bbc4f6d66bc3f918977d820ba4e6f80560e568c0b891b31499aaeaea467"
+    },
+    {
+      "id": "sample-text",
+      "png_sha256": "6d9fb3e119de1898afcd2cf5bda2becf6182459b7334d0f876b6713323d00bbb"
+    },
+    {
+      "id": "sample",
+      "png_sha256": "4bee4e006e78407e57334538c4d01e8d822a5657df84f06a940bbf4944a4742d"
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "png_sha256": "b5d3861261dfb8d487c79f1fa57ef3d9ab5eb44cf01ad8221278d2f60ca1ae52"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # R candidate protected-tree changes
 
+2026-11-07 — `codex/engine-malformed-triage-20261107` 触及受保护树 **src/**、**include/**、**tests/** 及 **CMakeLists.txt**：`src/formats.c` / `include/exr/formats.h` 增加显式严格 EPUB 结构校验 API；`tools/check_document.c` 通过 `--strict` 调用；默认阅读入口保持宽容。新增 mimetype、目录与本地头不符、容器缺失三组本地回归，并复核内容重定向、空文件 CRC、CLI 与原始 1,024 项配方。R 后续候选须包含本轮修改；定性、逐项结论和本地验收见 [REPORT.md](../malformed-triage-20261107/REPORT.md)。
+
 | 工作包 | 受保护项 |
 |---|---|
 | V (#29) | include、cmake、CMakeLists.txt |

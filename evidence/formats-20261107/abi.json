@@ -1,0 +1,30 @@
+{
+  "fields": [
+    "glyph",
+    "box",
+    "bitmap",
+    "layout_config",
+    "fixed_options",
+    "glyph.font_index.offset",
+    "glyph.bidi_level.offset"
+  ],
+  "native": [
+    128,
+    80,
+    32,
+    96,
+    64,
+    104,
+    120
+  ],
+  "ctypes": [
+    128,
+    80,
+    32,
+    96,
+    64,
+    104,
+    120
+  ],
+  "matched": true
+}

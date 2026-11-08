@@ -82,6 +82,16 @@ EXR_API exr_status exr_epub_metadata_write(const void *data,size_t size,
 EXR_API exr_status exr_document_open(const char *path, exr_document **out, exr_error *error);
 EXR_API exr_status exr_document_open_memory(exr_format format, const void *data, size_t size,
                                             exr_document **out, exr_error *error);
+/* Strict EPUB/OCF structure check for validation tools; default open paths stay
+   tolerant and are unchanged. Requires: first stored "mimetype" member holding exactly
+   "application/epub+zip" and no local-header extra field; unique member names;
+   every central-directory entry matching its local header and CRC-32; a readable
+   container, OPF and spine; every manifest item present under its exact path.
+   Structural errors return EXR_FORMAT with a message naming the member, the
+   expected value and what was found. Other argument, I/O and limit errors keep
+   their usual status codes. */
+EXR_API exr_status exr_epub_validate(const char *path, exr_error *error);
+EXR_API exr_status exr_epub_validate_memory(const void *data, size_t size, exr_error *error);
 /* Owned navigation snapshot; valid after document_free. Release with navigation_free.
    Returns authored nav/NCX resources, or an empty array when none are present. */
 EXR_API exr_status exr_document_navigation(const exr_document *doc, exr_navigation **entries,

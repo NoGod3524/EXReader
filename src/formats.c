@@ -653,12 +653,14 @@ exr_status exr_xml_resource(const exr_document *index, size_t resource, const ch
 }
 /* Build the reading order without extracting XHTML. Missing or damaged chapter
    members are reported only when that chapter is requested. */
-static exr_status epub_metadata(exr_document *d, archive *z, exr_error *e) {
+static exr_status strict_fail(exr_error *e, const char *member, const char *expected, const char *found);
+static exr_status epub_metadata(exr_document *d, archive *z, int strict, exr_error *e) {
   package p = {0};
   void *bytes = NULL;
   size_t size = 0, i, j;
   exr_status result = EXR_FORMAT;
   char path[2048];
+  const char *active_member = "META-INF/container.xml";
   bytes = member(z, "META-INF/container.xml", &size, e);
   if (!bytes)
     goto done;
@@ -678,6 +680,7 @@ static exr_status epub_metadata(exr_document *d, archive *z, exr_error *e) {
     result = exr_fail(e, EXR_MEMORY, "Package path allocation failed");
     goto done;
   }
+  active_member = p.root;
   bytes = member(z, p.root, &size, e);
   if (!bytes)
     goto done;
@@ -755,6 +758,10 @@ done:
     mz_free(bytes);
   if (z->status != EXR_OK)
     result = z->status;
+  if (strict && result == EXR_FORMAT) {
+    exr_error inner = e ? *e : (exr_error){0};
+    strict_fail(e, active_member, "a readable container, OPF and unambiguous spine/manifest", inner.message);
+  }
   package_free(&p);
   return result;
 }
@@ -825,7 +832,7 @@ exr_status exr_epub_index(const void *data, size_t n, exr_document **out, exr_er
     return exr_fail(e, EXR_MEMORY, "Index allocation failed");
   }
   d->format = EXR_EPUB;
-  result = epub_metadata(d, &z, e);
+  result = epub_metadata(d, &z, 0, e);
   if (result == EXR_OK)
     result = archive_copy(d, data, n, e);
   mz_zip_reader_end(&z.archive);
@@ -856,12 +863,200 @@ exr_status exr_epub_index_source(const exr_source *source, exr_document **out, e
   d->archive_size = (size_t)source->size;
   status = archive_backing(&z, d, e);
   if (status == EXR_OK) {
-    status = epub_metadata(d, &z, e);
+    status = epub_metadata(d, &z, 0, e);
     mz_zip_reader_end(&z.archive);
   }
   if (status != EXR_OK) { exr_document_free(d); return status; }
   *out = d;
   return exr_fail(e, EXR_OK, "");
+}
+/* Opt-in strict OCF check. Default open paths stay tolerant (they never read
+   "mimetype" and only verify members that are actually extracted); this walks the
+   whole package and names the offending member, the expectation and the finding. */
+static void strict_text(const unsigned char *p, size_t n, char *out, size_t cap) {
+  size_t i, at = 0;
+  for (i = 0; i < n && i < 24 && at + 5 < cap; i++) {
+    if (p[i] >= 32 && p[i] < 127 && p[i] != '\\') out[at++] = (char)p[i];
+    else at += (size_t)snprintf(out + at, cap - at, "\\x%02x", p[i]);
+  }
+  if (i < n && at + 4 < cap) { memcpy(out + at, "...", 3); at += 3; }
+  out[at] = 0;
+}
+static exr_status strict_fail(exr_error *e, const char *member, const char *expected, const char *found) {
+  return exr_fail(e, EXR_FORMAT, "Strict EPUB: member '%.64s': expected %.76s, found %.72s", member, expected, found);
+}
+static exr_status strict_zip_error(archive *z, exr_error *e, const char *member, const char *expected) {
+  return strict_fail(e, member, expected, mz_zip_get_error_string(mz_zip_get_last_error(&z->archive)));
+}
+static unsigned long strict_le(const unsigned char *p, unsigned n) {
+  unsigned long value = 0;
+  unsigned i;
+  for (i = 0; i < n; i++) value |= (unsigned long)p[i] << (8 * i);
+  return value;
+}
+/* miniz skips empty members during validation. Check their headers too, and
+   report the concrete directory/local values before its full CRC validation. */
+static exr_status strict_header(archive *z, const mz_zip_archive_file_stat *st, exr_error *e) {
+  unsigned char h[30];
+  char expected[112], found[112];
+  unsigned long name_size, extra_size;
+  unsigned i;
+  const unsigned fields[] = {8, 6, 18, 22, 14};
+  const unsigned widths[] = {2, 2, 4, 4, 4};
+  const char *labels[] = {"compression method", "flags", "compressed size", "uncompressed size", "CRC-32"};
+  mz_uint64 values[] = {st->m_method, st->m_bit_flag, st->m_comp_size, st->m_uncomp_size, st->m_crc32};
+  if (mz_zip_read_archive_data(&z->archive, st->m_local_header_ofs, h, sizeof(h)) != sizeof(h) ||
+      memcmp(h, "PK\3\4", 4)) {
+    snprintf(found, sizeof(found), "no local header at directory offset %llu", (unsigned long long)st->m_local_header_ofs);
+    return strict_fail(e, st->m_filename, "a ZIP local header at the declared offset", found);
+  }
+  name_size = strict_le(h + 26, 2);
+  extra_size = strict_le(h + 28, 2);
+  if (st->m_local_header_ofs > z->archive.m_archive_size ||
+      30 + name_size + extra_size > z->archive.m_archive_size - st->m_local_header_ofs ||
+      st->m_comp_size > z->archive.m_archive_size - st->m_local_header_ofs - 30 - name_size - extra_size)
+    return strict_fail(e, st->m_filename, "local header and payload within the ZIP", "member extends beyond the archive");
+  if (!strcmp(st->m_filename, "mimetype") && extra_size) {
+    snprintf(found, sizeof(found), "%lu bytes of local-header extra data", extra_size);
+    return strict_fail(e, "mimetype", "no local-header extra field", found);
+  }
+  for (i = 0; i < sizeof(fields) / sizeof(*fields); i++) {
+    unsigned long actual = strict_le(h + fields[i], widths[i]);
+    /* ZIP64 sizes and data descriptors are checked by miniz. */
+    if (i >= 2 && ((st->m_bit_flag & 8) || actual == 0xffffffffUL)) continue;
+    if (actual != values[i]) {
+      snprintf(expected, sizeof(expected), "%s %llu (central directory)", labels[i], (unsigned long long)values[i]);
+      snprintf(found, sizeof(found), "%s %lu (local header)", labels[i], actual);
+      return strict_fail(e, st->m_filename, expected, found);
+    }
+  }
+  if (name_size != strlen(st->m_filename)) {
+    snprintf(expected, sizeof(expected), "local filename length %zu", strlen(st->m_filename));
+    snprintf(found, sizeof(found), "local filename length %lu", name_size);
+    return strict_fail(e, st->m_filename, expected, found);
+  }
+  { unsigned char name[sizeof(st->m_filename)];
+    if (name_size >= sizeof(name) || mz_zip_read_archive_data(&z->archive, st->m_local_header_ofs + 30, name, name_size) != name_size)
+      return strict_fail(e, st->m_filename, "a readable complete local filename", "truncated or oversized filename");
+    if (memcmp(name, st->m_filename, name_size)) {
+      strict_text(name, name_size, found, sizeof(found));
+      return strict_fail(e, st->m_filename, "the same filename in the local header", found);
+    }
+  }
+  return EXR_OK;
+}
+static exr_status strict_mimetype(archive *z, exr_error *e) {
+  static const char want[] = "application/epub+zip";
+  mz_zip_archive_file_stat st;
+  char found[160], shown[112];
+  unsigned char *body;
+  size_t size = 0;
+  exr_status status;
+  int index = mz_zip_reader_locate_file(&z->archive, "mimetype", NULL, MZ_ZIP_FLAG_CASE_SENSITIVE);
+  if (index < 0 || !mz_zip_reader_file_stat(&z->archive, (mz_uint)index, &st))
+    return strict_fail(e, "mimetype", "a member named exactly 'mimetype'", "no such member");
+  if (st.m_local_header_ofs != 0) {
+    snprintf(found, sizeof(found), "central directory places it at offset %llu", (unsigned long long)st.m_local_header_ofs);
+    return strict_fail(e, "mimetype", "to be the first ZIP member (local header offset 0)", found);
+  }
+  if (st.m_method != 0) {
+    snprintf(found, sizeof(found), "compression method %u", (unsigned)st.m_method);
+    return strict_fail(e, "mimetype", "stored without compression (method 0)", found);
+  }
+  status = strict_header(z, &st, e);
+  if (status != EXR_OK) return status;
+  if (!mz_zip_validate_file(&z->archive, (mz_uint)index, 0))
+    return strict_zip_error(z, e, "mimetype", "a central directory entry matching its local header and CRC-32");
+  if (st.m_uncomp_size != sizeof(want) - 1) {
+    snprintf(found, sizeof(found), "%llu bytes", (unsigned long long)st.m_uncomp_size);
+    return strict_fail(e, "mimetype", "20 bytes 'application/epub+zip'", found);
+  }
+  body = mz_zip_reader_extract_to_heap(&z->archive, (mz_uint)index, &size, 0);
+  if (!body) return strict_zip_error(z, e, "mimetype", "extractable content");
+  if (size != sizeof(want) - 1 || memcmp(body, want, size)) {
+    strict_text(body, size, shown, sizeof(shown));
+    snprintf(found, sizeof(found), "'%s'", shown);
+    mz_free(body);
+    return strict_fail(e, "mimetype", "content 'application/epub+zip'", found);
+  }
+  mz_free(body);
+  return EXR_OK;
+}
+static exr_status strict_members(archive *z, exr_error *e) {
+  mz_uint total = mz_zip_reader_get_num_files(&z->archive), i;
+  unsigned long long expanded = 0;
+  for (i = 0; i < total; i++) {
+    mz_zip_archive_file_stat st;
+    exr_status status;
+    char found[96];
+    if (!mz_zip_reader_file_stat(&z->archive, i, &st))
+      return strict_zip_error(z, e, "(central directory)", "a readable directory entry");
+    if (mz_zip_reader_locate_file(&z->archive, st.m_filename, NULL, MZ_ZIP_FLAG_CASE_SENSITIVE) != (int)i)
+      return strict_fail(e, st.m_filename, "a unique member name", "the same name listed more than once");
+    if (!st.m_is_supported)
+      return strict_fail(e, st.m_filename, "an unencrypted stored or deflate member", "encrypted or unsupported ZIP method/flags");
+    if (!st.m_uncomp_size && st.m_crc32) {
+      snprintf(found, sizeof(found), "CRC-32 %lu", (unsigned long)st.m_crc32);
+      return strict_fail(e, st.m_filename, "CRC-32 0 for an empty member", found);
+    }
+    if (st.m_uncomp_size > EXR_MAX_INPUT || expanded + st.m_uncomp_size > EXR_MAX_INPUT) {
+      snprintf(found, sizeof(found), "%llu bytes declared (total limit 128 MiB)", (unsigned long long)st.m_uncomp_size);
+      return strict_fail(e, st.m_filename, "uncompressed size within the extraction limit", found);
+    }
+    expanded += st.m_uncomp_size;
+    status = strict_header(z, &st, e);
+    if (status != EXR_OK) return status;
+    if (!mz_zip_validate_file(&z->archive, i, 0))
+      return strict_zip_error(z, e, st.m_filename, "a central directory entry matching its local header and CRC-32");
+  }
+  return EXR_OK;
+}
+static exr_status strict_package(archive *z, exr_error *e) {
+  exr_document *d = calloc(1, sizeof(*d));
+  exr_status status;
+  size_t i;
+  if (!d) return exr_fail(e, EXR_MEMORY, "Strict EPUB: package allocation failed");
+  d->format = EXR_EPUB;
+  status = epub_metadata(d, z, 1, e);
+  if (status != EXR_OK) {
+    exr_document_free(d);
+    return status;
+  }
+  for (i = 0; i < d->resource_count; i++)
+    if (mz_zip_reader_locate_file(&z->archive, d->resources[i].path, NULL, MZ_ZIP_FLAG_CASE_SENSITIVE) < 0) {
+      char expected[200];
+      snprintf(expected, sizeof(expected), "manifest item '%.60s' to exist in the ZIP", d->resources[i].id);
+      status = strict_fail(e, d->resources[i].path, expected, "no member with that exact (case-sensitive) path");
+      break;
+    }
+  exr_document_free(d);
+  return status;
+}
+exr_status exr_epub_validate_memory(const void *data, size_t n, exr_error *e) {
+  archive z = {0};
+  exr_status status;
+  if (e) memset(e, 0, sizeof(*e));
+  if (!data || !n || n > EXR_MAX_INPUT)
+    return exr_fail(e, n > EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT, "Invalid EPUB bytes");
+  if (!mz_zip_reader_init_mem(&z.archive, data, n, 0))
+    return strict_zip_error(&z, e, "(archive)", "a ZIP end-of-central-directory record and a consistent central directory");
+  status = mz_zip_reader_get_num_files(&z.archive) > 10000 ?
+    strict_fail(e, "(archive)", "at most 10000 ZIP members", "too many members") : strict_mimetype(&z, e);
+  if (status == EXR_OK) status = strict_members(&z, e);
+  if (status == EXR_OK) status = strict_package(&z, e);
+  mz_zip_reader_end(&z.archive);
+  return status == EXR_OK ? exr_fail(e, EXR_OK, "") : status;
+}
+exr_status exr_epub_validate(const char *path, exr_error *e) {
+  unsigned char *data = NULL;
+  size_t n = 0;
+  exr_status status;
+  if (!path) return exr_fail(e, EXR_ARGUMENT, "Missing EPUB path");
+  status = exr_read(path, &data, &n, e);
+  if (status != EXR_OK) return status;
+  status = exr_epub_validate_memory(data, n, e);
+  free(data);
+  return status;
 }
 exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **out, exr_error *e) {
   archive z = {0};
@@ -1017,7 +1212,7 @@ static exr_status zip_document(exr_document *d, const void *data, size_t n, exr_
     result = exr_docx(d, docx_member, &z, e);
     goto done;
   }
-  result = epub_metadata(d, &z, e);
+  result = epub_metadata(d, &z, 0, e);
   if (result != EXR_OK)
     goto done;
   result = archive_copy(d, data, n, e);
