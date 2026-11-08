@@ -118,8 +118,11 @@ static int decode_entry(const unsigned char *s,size_t size,const tag *tags,size_
       }
       continue;
     }
-    if(kind==2) {
-      if(tags[i].tag==6) {
+    if(kind==2 || kind==4) {
+      if(kind==4 && tags[i].tag==1) {
+        if(n!=1) return 0;
+        nav->fid=values[0]; nav->present|=32;
+      } else if(tags[i].tag==6) {
         if(n!=2) return 0;
         nav->fid=values[0]; nav->offset=values[1]; nav->present|=32;
       } else {
@@ -148,6 +151,7 @@ static int decode_entry(const unsigned char *s,size_t size,const tag *tags,size_
   while(at<size) if(s[at++]) return 0;
   if(kind==3) return (guide->present&3)==3;
   if(kind==2) return (nav->present&35)==35;
+  if(kind==4) return (nav->present&33)==33;
   return (out->present&(kind==1 ? 14u : 9u))==(kind==1 ? 14u : 9u);
 }
 static exr_status index_read(const exr_mobi_record *records,size_t nr,size_t first,
@@ -189,7 +193,7 @@ static exr_status index_read(const exr_mobi_record *records,size_t nr,size_t fir
       size_t start=u16(s+table+4+j*2),end=j+1<n ? u16(s+table+6+j*2) : table;
       index_entry v; unsigned char decoded[256]; const unsigned char *label; size_t k;
       memset(&v,0,sizeof(v));
-      if(kind==2) v.nav.parent=v.nav.first=v.nav.last=UINT32_MAX;
+      if(kind==2 || kind==4) v.nav.parent=v.nav.first=v.nav.last=UINT32_MAX;
       if(start<previous || start>=end || end>table || (size_t)s[start]+1>end-start) goto bad;
       label=s+start+1;
       if(mapping.count) {
@@ -238,6 +242,9 @@ typedef struct {
   const exr_mobi_record *shared;
   size_t count,first,flows,bytes,*mapped,shared_count;
   size_t queue[10000],queued,head;
+  exr_mobi_read_fn read;
+  void *read_context;
+  const size_t *flow_start,*flow_size;
   exr_error *error;
   exr_status status;
 } assets;
@@ -373,6 +380,16 @@ static int asset_uri(assets *a,const char *s,size_t size,char path[2048]) {
       char *copy=exr_model_copy(a->doc,type,strlen(type));
       if(!copy) return asset_error(a,EXR_LIMIT,"KF8 resource metadata limit exceeded");
       free((void *)r->media_type); r->media_type=copy;
+      if(a->read) {
+        exr_buffer flow_bytes={0};
+        if(a->flow_size[number]>EXR_MAX_INPUT-a->bytes)
+          return asset_error(a,EXR_LIMIT,"KF8 flow resource byte budget exceeded");
+        a->status=a->read(a->read_context,a->flow_start[number],a->flow_size[number],&flow_bytes,a->error);
+        if(a->status!=EXR_OK) { free(flow_bytes.data); return 0; }
+        free(a->doc->resource_data[index].bytes);
+        a->doc->resource_data[index]=(exr_resource_data){(unsigned char *)flow_bytes.data,flow_bytes.size};
+        a->bytes+=flow_bytes.size;
+      }
       a->queue[a->queued++]=index;
     } else if(strcmp(r->media_type,type)) goto bad;
   } else if(!embed(a,number,&index)) return 0;
@@ -461,12 +478,70 @@ limit:
 failed:
   free(css.data); return 0;
 }
+/* Kindle cover flows often wrap one bitmap in SVG. The shared image renderer
+   cannot resolve a nested SVG's book-relative bitmap, so unwrap that exact
+   full-viewBox case into an ordinary image resource reference. */
+static int svg_cover(assets *a,const exr_document *xml,size_t root,size_t resource_index) {
+  size_t i,image=SIZE_MAX,replaced=0; int external=0; double x,y,w,h,iw,ih; char tail;
+  const char *box=exr_node_attribute(&xml->nodes[root],"viewBox"),*href,*value;
+  for(i=0;i<xml->node_count;i++) {
+    const char *tag=xml->nodes[i].name,*name=tag ? strrchr(tag,'|') : NULL;
+    name=name ? name+1 : tag;
+    if(!name || strcmp(name,"image")) continue;
+    value=exr_node_attribute(&xml->nodes[i],"http://www.w3.org/1999/xlink|href");
+    if(!value) value=exr_node_attribute(&xml->nodes[i],"href");
+    if(value && !strncmp(value,"embed",5)) external=1;
+  }
+  if(!external) return 1;
+  if(!box || sscanf(box,"%lf %lf %lf %lf %c",&x,&y,&w,&h,&tail)!=4 || x!=0 || y!=0 || w<=0 || h<=0) goto unsupported;
+  for(i=0;i<xml->nodes[root].attribute_count;i++) {
+    const char *key=xml->nodes[root].attributes[i].name;
+    if(strcmp(key,"viewBox") && strcmp(key,"width") && strcmp(key,"height") &&
+       strcmp(key,"preserveAspectRatio") && strcmp(key,"version") && strcmp(key,"class") && strcmp(key,"id")) goto unsupported;
+  }
+  value=exr_node_attribute(&xml->nodes[root],"preserveAspectRatio");
+  if(value && strcmp(value,"xMidYMid meet")) goto unsupported;
+  for(i=xml->nodes[root].first_child;i!=SIZE_MAX;i=xml->nodes[i].next_sibling) {
+    const exr_node *v=&xml->nodes[i]; const char *tag;
+    if(v->kind==EXR_NODE_TEXT) { const char *s=v->text; while(*s && isspace((unsigned char)*s)) s++; if(*s) goto unsupported; continue; }
+    tag=v->name ? strrchr(v->name,'|') : NULL; tag=tag ? tag+1 : v->name;
+    if(image!=SIZE_MAX || !tag || strcmp(tag,"image")) goto unsupported;
+    image=i;
+  }
+  if(image==SIZE_MAX) goto unsupported;
+  for(i=0;i<xml->nodes[image].attribute_count;i++) {
+    const char *key=xml->nodes[image].attributes[i].name,*local=strrchr(key,'|'); local=local ? local+1 : key;
+    if(strcmp(local,"href") && strcmp(local,"x") && strcmp(local,"y") && strcmp(local,"width") && strcmp(local,"height")) goto unsupported;
+  }
+  value=exr_node_attribute(&xml->nodes[image],"x"); if(value && strcmp(value,"0")) goto unsupported;
+  value=exr_node_attribute(&xml->nodes[image],"y"); if(value && strcmp(value,"0")) goto unsupported;
+  value=exr_node_attribute(&xml->nodes[image],"width"); if(!value || sscanf(value,"%lf%c",&iw,&tail)!=1 || iw!=w) goto unsupported;
+  value=exr_node_attribute(&xml->nodes[image],"height"); if(!value || sscanf(value,"%lf%c",&ih,&tail)!=1 || ih!=h) goto unsupported;
+  href=exr_node_attribute(&xml->nodes[image],"http://www.w3.org/1999/xlink|href");
+  if(!href) href=exr_node_attribute(&xml->nodes[image],"href");
+  if(!href || strncmp(href,"embed",5)) goto unsupported;
+  for(i=0;i<a->doc->node_count;i++) {
+    const char *src=exr_node_attribute(&a->doc->nodes[i],"src");
+    if(src && !strcmp(src,a->doc->resources[resource_index].path)) {
+      if(!exr_model_attribute(a->doc,i,"src",href)) return asset_error(a,EXR_LIMIT,"KF8 cover reference allocation failed");
+      replaced++;
+    }
+  }
+  if(replaced) return 1;
+unsupported:
+  /* The legacy eager document/export API retains arbitrary SVG resources.
+     Publications promise a readable section and reject unsupported bitmaps. */
+  return a->read ? asset_error(a,EXR_UNSUPPORTED,
+    "KF8_SVG_BITMAP: composed, transformed or background SVG bitmaps are unsupported") : 1;
+}
 static exr_status connect_assets(exr_document *d,const exr_mobi_record *records,size_t count,
-                                   const exr_mobi_record *shared,size_t shared_count,size_t flows,exr_error *e) {
+  const exr_mobi_record *shared,size_t shared_count,size_t flows,
+  exr_mobi_read_fn read,void *context,const size_t *starts,const size_t *sizes,exr_error *e) {
   assets a={0}; size_t i; exr_buffer css={0};
   a.doc=d; a.records=records; a.count=count; a.first=u32(records[0].data+108);
   a.shared=shared; a.shared_count=shared_count;
   a.flows=flows; a.error=e; a.status=EXR_OK;
+  a.read=read; a.read_context=context; a.flow_start=starts; a.flow_size=sizes;
   a.mapped=malloc((count+shared_count)*sizeof(*a.mapped)); if(!a.mapped) return exr_fail(e,EXR_MEMORY,"KF8 asset map allocation failed");
   for(i=0;i<count+shared_count;i++) a.mapped[i]=SIZE_MAX;
   for(i=0;i<d->resource_count;i++) a.bytes+=d->resource_data[i].size;
@@ -488,6 +563,7 @@ static exr_status connect_assets(exr_document *d,const exr_mobi_record *records,
         exr_document_free(xml); asset_error(&a,EXR_FORMAT,"KF8 SVG root has an invalid namespace"); goto done;
       }
       if(!rewrite_nodes(&a,xml)) { exr_document_free(xml); goto done; }
+      if(!svg_cover(&a,xml,root,index)) { exr_document_free(xml); goto done; }
       a.status=exr_xml_serialize(xml,xml->chapters[0].root,&css,e); exr_document_free(xml);
       if(a.status!=EXR_OK) goto done;
     }
@@ -752,6 +828,40 @@ done:
   index_free(&table); free(strings); free(parents); free(first_child); free(last_child); free(ends); free(xml.data);
   return status;
 }
+exr_status exr_mobi_navigation(exr_document *d,const exr_mobi_record *records,size_t nr,
+  const size_t *positions,const size_t *nodes,size_t marks,exr_error *e) {
+  const unsigned char *h=records[0].data; index_table nav={0}; cncx_string *strings=NULL;
+  size_t i,string_count=0,index,depth=0; exr_buffer xml={0}; exr_status status=EXR_OK;
+  if(u32(h+20)<232 || u32(h+244)==UINT32_MAX) return EXR_OK;
+  status=index_read(records,nr,u32(h+244),4,&nav,e); if(status!=EXR_OK) goto done;
+  status=cncx_read(records,nr,u32(h+244),&strings,&string_count,e); if(status!=EXR_OK) goto done;
+#define MPUT(s) do { if(!exr_append(&xml,s,strlen(s))) { status=EXR_LIMIT; goto done; } } while(0)
+  MPUT("<ncx xmlns='http://www.daisy.org/z3986/2005/ncx/'><navMap>");
+  for(i=0;i<nav.count;i++) {
+    const nav_entry *v=&nav.items[i].nav; const cncx_string *label=cncx_find(strings,string_count,v->title);
+    size_t lo=0,hi=marks,target; char id[64],point[64]; const char *anchor;
+    if(!label || !marks || v->level>250 || v->level>depth || v->fid>=u32(h+4)) { status=exr_fail(e,EXR_FORMAT,"MOBI_INDEX: invalid CNCX label, hierarchy or byte target"); goto done; }
+    while(depth>v->level) { MPUT("</navPoint>"); depth--; }
+    while(lo<hi) { size_t mid=lo+(hi-lo)/2; if(positions[mid]<=v->fid) lo=mid+1; else hi=mid; }
+    target=nodes[lo ? lo-1 : 0]; anchor=exr_node_attribute(&d->nodes[target],"id");
+    if(!anchor) {
+      snprintf(id,sizeof(id),"filepos-%zu",positions[lo ? lo-1 : 0]);
+      if(!exr_model_attribute(d,target,"id",id)) { status=EXR_LIMIT; goto done; }
+      anchor=exr_node_attribute(&d->nodes[target],"id");
+    }
+    snprintf(point,sizeof(point),"<navPoint id='n%zu'><navLabel><text>",i); MPUT(point);
+    if(!xml_escape(&xml,label->text,label->size)) { status=EXR_LIMIT; goto done; }
+    MPUT("</text></navLabel><content src='"); MPUT(d->chapters[d->nodes[target].chapter].path); MPUT("#");
+    if(!xml_escape(&xml,anchor,strlen(anchor))) { status=EXR_LIMIT; goto done; }
+    MPUT("'/>"); depth++;
+  }
+  while(depth) { MPUT("</navPoint>"); depth--; }
+  MPUT("</navMap></ncx>");
+  status=resource(d,"mobi-navigation.ncx","application/x-dtbncx+xml",xml.data,xml.size,&index,e);
+  if(status==EXR_OK) { d->has_ncx=1; d->ncx_resource=index; }
+#undef MPUT
+done: index_free(&nav); free(strings); free(xml.data); return status;
+}
 exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
                     const exr_mobi_record *shared,size_t shared_count,const char *text,size_t size,exr_error *e) {
   const unsigned char *h=records[0].data; size_t flow_size=size,flows,fdst,i,frag=0,work=0;
@@ -822,10 +932,230 @@ exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
   if(frag!=fragments.count) goto bad;
   status=connect_positions(&map,&fragments,e); if(status!=EXR_OK) goto done;
   status=build_navigation(&map,&fragments,records,nr,u32(h+244),u32(h+260),e); if(status!=EXR_OK) goto done;
-  status=connect_assets(d,records,nr,shared,shared_count,flows,e); goto done;
+  status=connect_assets(d,records,nr,shared,shared_count,flows,NULL,NULL,NULL,NULL,e); goto done;
 bad:
   if(status==EXR_OK) status=EXR_FORMAT;
   exr_fail(e,status,"Invalid or unsupported KF8 reconstruction data");
 done:
   free(map.marks); free(map.parts); free(part.data); index_free(&skeletons); index_free(&fragments); return status;
+}
+
+typedef struct {
+  const exr_mobi_record *records,*shared;
+  size_t count,shared_count,flow_count,*flow_start,*flow_size,*first_fragment;
+  index_table skeletons,fragments;
+  exr_mobi_read_fn read;
+  void *context;
+  void (*release)(void *);
+  const exr_document *index;
+} kf8_book;
+static void kf8_book_free(void *context) {
+  kf8_book *b=context;
+  if(b->release) b->release(b->context);
+  index_free(&b->skeletons); index_free(&b->fragments);
+  free(b->flow_start); free(b->flow_size); free(b->first_fragment); free(b);
+}
+static exr_status lazy_target(const kf8_book *b,uint32_t fid,uint32_t offset,char path[128],size_t *part,exr_error *e) {
+  const entry *f,*s;
+  if(fid>=b->fragments.count) goto bad;
+  f=&b->fragments.items[fid].book;
+  if(f->file>=b->skeletons.count || offset>=f->length) goto bad;
+  s=&b->skeletons.items[f->file].book;
+  if(f->label<s->start) goto bad;
+  *part=f->file;
+  snprintf(path,128,"part%04u.xhtml#kf8-offset-%zu",f->file,(size_t)f->label-s->start+offset);
+  return EXR_OK;
+bad: return exr_fail(e,EXR_FORMAT,"KF8_POSITION: invalid fragment or offset");
+}
+static exr_status lazy_position(void *context,size_t offset,size_t node) {
+  exr_document *d=context; char value[32];
+  snprintf(value,sizeof(value),"%zu",offset);
+  return exr_model_attribute(d,node,"data-exr-kf8-offset",value) ? EXR_OK : EXR_LIMIT;
+}
+static exr_status kf8_book_load(void *context,size_t which,exr_document **out,exr_error *e) {
+  kf8_book *b=context; exr_document *d=calloc(1,sizeof(*d));
+  exr_buffer raw={0},part={0}; exr_status status=EXR_MEMORY;
+  size_t i,j,index,base,total,work=0; entry v;
+  *out=NULL; if(!d) goto done;
+  if(which>=b->skeletons.count) { status=EXR_ARGUMENT; goto done; }
+  d->format=EXR_MOBI;
+  d->title=exr_model_copy(d,exr_document_title(b->index),strlen(exr_document_title(b->index)));
+  if(!d->title) goto done;
+  /* Reserve paths; expand only CSS/SVG flows actually referenced by this part. */
+  for(i=1;i<b->flow_count;i++) {
+    char path[64];
+    snprintf(path,sizeof(path),"flow%04zu.bin",i);
+    status=resource(d,path,"application/octet-stream",NULL,0,&index,e); if(status!=EXR_OK) goto done;
+  }
+  v=b->skeletons.items[which].book; total=v.length;
+  for(j=0;j<v.fragments;j++) total+=b->fragments.items[b->first_fragment[which]+j].book.length;
+  status=b->read(b->context,v.start,total,&raw,e); if(status!=EXR_OK) goto done;
+  if(!exr_append(&part,raw.data,v.length)) goto limit;
+  base=v.length;
+  for(j=0;j<v.fragments;j++) {
+    entry f=b->fragments.items[b->first_fragment[which]+j].book; size_t insert=f.label-v.start;
+    if(insert>part.size || f.length>raw.size-base) { status=EXR_FORMAT; goto bad; }
+    if(part.size-insert>EXR_MAX_INPUT*2-work) goto limit;
+    work+=part.size-insert;
+    if(!exr_append(&part,raw.data+base,f.length)) goto limit;
+    memmove(part.data+insert+f.length,part.data+insert,part.size-f.length-insert);
+    memcpy(part.data+insert,raw.data+base,f.length); base+=f.length;
+  }
+  status=resource(d,b->index->chapters[which].path,"application/xhtml+xml",part.data,part.size,&index,e);
+  if(status!=EXR_OK) goto done;
+  status=exr_xhtml_positions(d,part.data,part.size,index,lazy_position,d,e); if(status!=EXR_OK) goto done;
+  for(i=0;i<d->node_count;i++) {
+    const char *href=exr_node_attribute(&d->nodes[i],"href"); char path[128]; size_t at=15,target; uint32_t fid,offset;
+    if(!href || strncmp(href,"kindle:pos:",11)) continue;
+    if(strncmp(href,"kindle:pos:fid:",15) || !base32(href,strlen(href),&at,&fid) ||
+        strlen(href)-at<5 || memcmp(href+at,":off:",5)) { status=EXR_FORMAT; goto bad; }
+    at+=5;
+    if(!base32(href,strlen(href),&at,&offset) || href[at]) { status=EXR_FORMAT; goto bad; }
+    status=lazy_target(b,fid,offset,path,&target,e); if(status!=EXR_OK) goto done;
+    if(!exr_model_attribute(d,i,"href",path)) goto limit;
+  }
+  status=connect_assets(d,b->records,b->count,b->shared,b->shared_count,b->flow_count,
+    b->read,b->context,b->flow_start,b->flow_size,e);
+  if(status==EXR_OK) status=exr_model_finish(d,e);
+  if(status==EXR_OK && !d->size) {
+    int image=0;
+    for(i=0;i<d->node_count;i++) if(d->nodes[i].kind==EXR_NODE_IMAGE) image=1;
+    if(!image) status=exr_fail(e,EXR_FORMAT,"KF8_EMPTY_SECTION: reconstructed section has no text or images");
+  }
+  goto done;
+limit: status=EXR_LIMIT;
+bad: exr_fail(e,status,"KF8_RECONSTRUCTION: invalid fragment insertion or position URI");
+done:
+  free(raw.data); free(part.data);
+  if(status!=EXR_OK) { exr_document_free(d); return status; }
+  *out=d; return EXR_OK;
+}
+exr_status exr_kf8_book(const exr_mobi_record *records,size_t nr,const exr_mobi_record *shared,size_t shared_count,
+  exr_mobi_read_fn read,void *context,void (*release)(void *),exr_format_book *book,exr_error *e) {
+  kf8_book *b=calloc(1,sizeof(*b)); const unsigned char *h=records[0].data;
+  size_t i,j,frag=0,previous=0,flow_size=u32(h+4),fdst,skel,frags;
+  index_table nav={0}; cncx_string *strings=NULL; size_t string_count=0,stack[252],depth=0;
+  exr_status status=EXR_FORMAT; exr_document *d=book->index;
+  if(!b) return exr_fail(e,EXR_MEMORY,"KF8 index allocation failed");
+  b->records=records; b->count=nr; b->shared=shared; b->shared_count=shared_count;
+  b->read=read; b->context=context; b->index=d;
+  if(u32(h+20)<248) goto bad;
+  b->flow_count=u32(h+196); if(!b->flow_count) b->flow_count=1;
+  if(b->flow_count>10000) { status=EXR_LIMIT; goto bad; }
+  b->flow_start=calloc(b->flow_count,sizeof(size_t)); b->flow_size=calloc(b->flow_count,sizeof(size_t));
+  if(!b->flow_start || !b->flow_size) { status=EXR_MEMORY; goto bad; }
+  b->flow_size[0]=flow_size; fdst=u32(h+192);
+  if(b->flow_count>1) {
+    const exr_mobi_record *r;
+    if(fdst>=nr) goto bad;
+    r=&records[fdst];
+    if(r->size<12 || memcmp(r->data,"FDST",4) || u32(r->data+4)!=12 || u32(r->data+8)!=b->flow_count || b->flow_count>(r->size-12)/8) goto bad;
+    flow_size=u32(r->data+8+b->flow_count*8);
+    if(flow_size>EXR_MAX_TEXT || (u32(h+4)!=flow_size && u32(h+4)!=u32(r->data+16))) goto bad;
+    for(i=0;i<b->flow_count;i++) {
+      size_t start=u32(r->data+12+i*8),end=u32(r->data+16+i*8);
+      if(start!=previous || start>end || end>flow_size) goto bad;
+      b->flow_start[i]=start; b->flow_size[i]=end-start; previous=end;
+    }
+    if(previous!=flow_size) goto bad;
+  }
+  flow_size=b->flow_size[0]; skel=u32(h+252); frags=u32(h+248);
+  if(skel==UINT32_MAX) {
+    if(frags!=UINT32_MAX || flow_size>256*1024) {
+      status=exr_fail(e,EXR_UNSUPPORTED,"KF8_NO_SKELETON: large or fragmented flow lacks a section index"); goto done;
+    }
+    b->skeletons.items=calloc(1,sizeof(index_entry)); if(!b->skeletons.items) { status=EXR_MEMORY; goto bad; }
+    b->skeletons.count=1; b->skeletons.items[0].book.length=(uint32_t)flow_size;
+  } else {
+    status=index_read(records,nr,skel,0,&b->skeletons,e); if(status!=EXR_OK) goto done;
+    if(frags!=UINT32_MAX) { status=index_read(records,nr,frags,1,&b->fragments,e); if(status!=EXR_OK) goto done; }
+  }
+  status=EXR_FORMAT; previous=0;
+  if(!b->skeletons.count || b->skeletons.count>10000) goto bad;
+  b->first_fragment=calloc(b->skeletons.count,sizeof(size_t));
+  d->chapters=calloc(b->skeletons.count,sizeof(*d->chapters));
+  if(!b->first_fragment || !d->chapters) { status=EXR_MEMORY; goto bad; }
+  d->chapter_capacity=b->skeletons.count;
+  for(i=0;i<b->skeletons.count;i++) {
+    const entry *v=&b->skeletons.items[i].book; size_t total=v->length,index; char path[64];
+    if(v->start<previous || v->start>flow_size || total>flow_size-v->start || v->fragments>b->fragments.count-frag) goto bad;
+    b->first_fragment[i]=frag;
+    for(j=0;j<v->fragments;j++,frag++) {
+      const entry *f=&b->fragments.items[frag].book;
+      if(f->file!=i || f->label<v->start || f->label-v->start>total || f->length>flow_size-v->start-total) goto bad;
+      total+=f->length;
+    }
+    previous=v->start+total; snprintf(path,sizeof(path),"part%04zu.xhtml",i);
+    status=resource(d,path,"application/xhtml+xml",NULL,0,&index,e); if(status!=EXR_OK) goto done;
+    d->chapters[d->chapter_count++]=(exr_chapter){d->resources[index].id,d->resources[index].path,SIZE_MAX,index,1,1};
+    status=EXR_FORMAT;
+  }
+  if(frag!=b->fragments.count) goto bad;
+  if(u32(h+244)!=UINT32_MAX) {
+    status=index_read(records,nr,u32(h+244),2,&nav,e); if(status!=EXR_OK) goto done;
+    status=cncx_read(records,nr,u32(h+244),&strings,&string_count,e); if(status!=EXR_OK) goto done;
+    book->navigation=calloc(nav.count,sizeof(*book->navigation));
+    if(nav.count && !book->navigation) { status=EXR_MEMORY; goto bad; }
+    for(i=0;i<nav.count;i++) {
+      const nav_entry *v=&nav.items[i].nav; const cncx_string *label=cncx_find(strings,string_count,v->title);
+      exr_navigation *n=&book->navigation[book->navigation_count++]; char path[128]; size_t target=0;
+      if(!label || v->level>250 || (!(v->present&4) && v->level>depth)) { status=EXR_FORMAT; goto bad; }
+      while(depth>v->level) depth--;
+      n->parent=(v->present&4) ? (v->parent==UINT32_MAX ? SIZE_MAX : v->parent) : depth ? stack[depth-1] : SIZE_MAX;
+      /* Some writers append child rows after all top-level rows. The explicit
+         parent, when present, is authoritative rather than the previous row. */
+      if(n->parent!=SIZE_MAX && (n->parent>=i || nav.items[n->parent].nav.level+1!=v->level)) {
+        status=exr_fail(e,EXR_FORMAT,"KF8_NAV_PARENT: parent is forward, cyclic or has an inconsistent level"); goto done;
+      }
+      if(n->parent==SIZE_MAX && v->level) { status=EXR_FORMAT; goto bad; }
+      stack[depth++]=i;
+      status=lazy_target(b,v->fid,v->offset,path,&target,e); if(status!=EXR_OK) goto done;
+      n->part=target; n->label=exr_copy(label->text,label->size); n->href=exr_copy(path,strlen(path));
+      n->base=exr_copy("",0); n->role=exr_copy("toc",3);
+      if(!n->label || !n->href || !n->base || !n->role) { status=EXR_MEMORY; goto bad; }
+    }
+    for(i=0;i<nav.count;i++) {
+      const nav_entry *v=&nav.items[i].nav; size_t parent;
+      if(!(v->present&24)) continue;
+      if((v->present&24)!=24) { status=EXR_FORMAT; goto bad; }
+      if(v->first==UINT32_MAX && v->last==UINT32_MAX) {
+        for(j=i+1;j<nav.count;j++) if(book->navigation[j].parent==i) { status=EXR_FORMAT; goto bad; }
+        continue;
+      }
+      if(v->first<=i || v->first>=nav.count || v->last<v->first || v->last>=nav.count ||
+          book->navigation[v->first].parent!=i) { status=EXR_FORMAT; goto bad; }
+      parent=book->navigation[v->last].parent;
+      while(parent!=SIZE_MAX && parent!=i) parent=book->navigation[parent].parent;
+      if(parent!=i) { status=EXR_FORMAT; goto bad; }
+    }
+  }
+  index_free(&nav); free(strings); strings=NULL; string_count=0;
+  if(u32(h+260)!=UINT32_MAX) {
+    status=index_read(records,nr,u32(h+260),3,&nav,e); if(status!=EXR_OK) goto done;
+    status=cncx_read(records,nr,u32(h+260),&strings,&string_count,e); if(status!=EXR_OK) goto done;
+    if(nav.count>10000-book->navigation_count) { status=EXR_LIMIT; goto bad; }
+    if(nav.count) {
+      exr_navigation *grown=realloc(book->navigation,(book->navigation_count+nav.count)*sizeof(*grown));
+      if(!grown) { status=EXR_MEMORY; goto bad; }
+      book->navigation=grown;
+    }
+    for(i=0;i<nav.count;i++) {
+      const guide_entry *v=&nav.items[i].guide; const cncx_string *label=cncx_find(strings,string_count,v->title);
+      exr_navigation *n; char path[128]; size_t target=0;
+      if(!label || !v->size) { status=EXR_FORMAT; goto bad; }
+      status=exr_xml_text(v->kind,v->size,"KF8 guide type",e); if(status!=EXR_OK) goto done;
+      if(v->size==18 && !memcmp(v->kind,"thumbimagestandard",18)) continue;
+      status=lazy_target(b,v->fid,v->offset,path,&target,e); if(status!=EXR_OK) goto done;
+      n=&book->navigation[book->navigation_count++]; memset(n,0,sizeof(*n));
+      n->parent=SIZE_MAX; n->part=target; n->label=exr_copy(label->text,label->size);
+      n->href=exr_copy(path,strlen(path)); n->base=exr_copy("",0); n->role=exr_copy("landmarks",9);
+      if(!n->label || !n->href || !n->base || !n->role) { status=EXR_MEMORY; goto bad; }
+    }
+  }
+  b->release=release; book->context=b; book->load=kf8_book_load; book->release=kf8_book_free;
+  book->memory+=sizeof(*b)+(b->skeletons.capacity+b->fragments.capacity)*sizeof(index_entry)+
+    (b->flow_count*2+b->skeletons.count)*sizeof(size_t);
+  free(strings); index_free(&nav); return EXR_OK;
+bad: exr_fail(e,status,"KF8_INDEX: invalid skeleton, fragment, FDST or navigation index");
+done: free(strings); index_free(&nav); kf8_book_free(b); return status;
 }

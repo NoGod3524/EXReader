@@ -195,14 +195,33 @@ static exr_status publication_index(exr_document *index, exr_publication **out, 
     exr_document_free(index);
   return status;
 }
+static exr_status publication_book(exr_format format,const void *data,size_t size,exr_publication **out,exr_error *e) {
+  exr_format_book *book=NULL; exr_part *parts=NULL; exr_publication_input input={0}; size_t i;
+  exr_status status=exr_book_open(format,data,size,&book,e);
+  if(status!=EXR_OK) return status;
+  parts=calloc(book->index->chapter_count,sizeof(*parts));
+  if(!parts) { exr_book_free(book); return exr_fail(e,EXR_MEMORY,"Book part directory allocation failed"); }
+  for(i=0;i<book->index->chapter_count;i++) {
+    parts[i].id=book->index->chapters[i].id; parts[i].path=book->index->chapters[i].path;
+    parts[i].in_reading_order=1;
+  }
+  input.title=exr_document_title(book->index); input.parts=parts; input.part_count=book->index->chapter_count;
+  input.load=exr_book_load; input.context=book; input.release=exr_book_free;
+  input.navigation=book->navigation; input.navigation_count=book->navigation_count;
+  status=exr_publication_create(&input,out,e); free(parts);
+  if(status!=EXR_OK) exr_book_free(book);
+  return status;
+}
 exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size,
                                        exr_publication **out, exr_error *e) {
   exr_document *index = NULL;
   exr_status status;
   if (!out) return exr_fail(e, EXR_ARGUMENT, "Missing publication output");
   *out = NULL;
+  if(e) memset(e,0,sizeof(*e));
+  if(format==EXR_MOBI || format==EXR_FB2) return publication_book(format,data,size,out,e);
   if (format != EXR_EPUB)
-    return exr_fail(e, EXR_FORMAT, "Built-in indexed loading currently accepts EPUB");
+    return exr_fail(e, EXR_FORMAT, "Indexed loading accepts EPUB, MOBI/KF8 and FB2");
   status = exr_epub_index(data, size, &index, e);
   return status == EXR_OK ? publication_index(index, out, e) : status;
 }
@@ -226,6 +245,18 @@ exr_status exr_publication_open(const char *path, exr_publication **out, exr_err
   *out = NULL;
   if (!path)
     return exr_fail(e, EXR_ARGUMENT, "Missing publication path");
+  {
+    const char *ext=strrchr(path,'.'); exr_format format=0;
+    if(ext && (exr_link_case_equal(ext,".mobi") || exr_link_case_equal(ext,".azw3") ||
+      exr_link_case_equal(ext,".azw") || exr_link_case_equal(ext,".prc") || exr_link_case_equal(ext,".kf8"))) format=EXR_MOBI;
+    if(ext && (exr_link_case_equal(ext,".fb2") || exr_link_case_equal(ext,".fbz") || exr_link_case_equal(ext,".zip"))) format=EXR_FB2;
+    if(format) {
+      unsigned char *data=NULL; size_t size=0;
+      status=exr_read(path,&data,&size,e);
+      if(status==EXR_OK) status=exr_publication_open_memory(format,data,size,out,e);
+      free(data); return status;
+    }
+  }
   status = exr_file_source(path, &source, e);
   if (status != EXR_OK) return status;
   status = exr_publication_open_source(&source, out, e);
@@ -235,7 +266,8 @@ exr_status exr_publication_open(const char *path, exr_publication **out, exr_err
 const char *exr_publication_title(const exr_publication *p) { return p ? p->title : ""; }
 size_t exr_publication_index_memory(const exr_publication *p) {
   return p ? sizeof(*p)+p->metadata_bytes+p->count*sizeof(*p->parts)+
-    p->navigation_count*sizeof(*p->navigation)+exr_document_memory_size(p->context)+sizeof(exr_archive_store) : 0;
+    p->navigation_count*sizeof(*p->navigation)+(p->load==exr_book_load ? ((exr_format_book *)p->context)->memory :
+      p->load==epub_load ? exr_document_memory_size(p->context)+sizeof(exr_archive_store) : 0) : 0;
 }
 const exr_part *exr_publication_parts(const exr_publication *p, size_t *count) {
   if (count)
