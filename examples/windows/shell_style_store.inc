@@ -45,8 +45,12 @@ static void style_json_copy(cv_text *out,const cv_json *v) {
       cv_text_string(out,v->type==CV_JSON_ARRAY?"]":"}");break;
   }
 }
+static void shell_shelf_path(wchar_t path[HOST_PATH]) {
+  DWORD n=GetEnvironmentVariableW(L"EXREADER_SHELF_PATH",path,HOST_PATH);
+  if(!n || n>=HOST_PATH)path_join(path,HOST_PATH,g.data_dir,L"shelf.json");
+}
 static cv_json *style_shelf_read(int *ok) {
-  wchar_t path[HOST_PATH];path_join(path,HOST_PATH,g.data_dir,L"shelf.json");
+  wchar_t path[HOST_PATH];shell_shelf_path(path);
   FILE *f=_wfopen(path,L"rb");*ok=0;
   if(!f) {*ok=GetFileAttributesW(path)==INVALID_FILE_ATTRIBUTES;return NULL;}
   if(fseek(f,0,SEEK_END)!=0){fclose(f);return NULL;}
@@ -97,8 +101,8 @@ static int shell_style_save(void) {
     cv_text_string(&out,",\"style\":");style_json(&out,shell_presets[i].style);cv_text_string(&out,"}");
   }
   cv_text_string(&out,"]}}\n");cv_json_free(root);
-  wchar_t path[HOST_PATH],temp[HOST_PATH];path_join(path,HOST_PATH,g.data_dir,L"shelf.json");
-  path_join(temp,HOST_PATH,g.data_dir,L"shelf.json.tmp");FILE *f=out.failed?NULL:_wfopen(temp,L"wb");ok=0;
+  wchar_t path[HOST_PATH],temp[HOST_PATH];shell_shelf_path(path);
+  swprintf(temp,HOST_PATH,L"%ls.tmp",path);FILE *f=out.failed?NULL:_wfopen(temp,L"wb");ok=0;
   if(f){ok=fwrite(out.data,1,out.size,f)==out.size;if(fclose(f)!=0)ok=0;}
   if(ok)ok=MoveFileExW(temp,path,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH)!=0;
   cv_text_free(&out);return ok;

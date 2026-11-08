@@ -214,6 +214,7 @@ static int shell_layout(void) {
   shell_search_layout();
   shell_panel_layout();
   shell_toc_layout();
+  sm_refresh();
   return 1;
 }
 
@@ -282,6 +283,7 @@ static void shell_leave(void) {
         height < limits.ptMinTrackSize.y ? limits.ptMinTrackSize.y : height,
         SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
   }
+  sm_refresh();
   layout_controls();
   shell_request_layout();
   InvalidateRect(g.window, NULL, TRUE);
@@ -327,7 +329,11 @@ static void shell_paint(HWND window) {
   if (SUCCEEDED(shell_d2d_begin(host_shell, shell_bar_hidden ? shell_colors->layer_page:shell_colors->layer_side))) {
     if(!shell_bar_hidden) {
     shell_d2d_fill(host_shell, 0, (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1), (float)area.right, 1, shell_blend(shell_colors->layer_side,shell_colors->line_rgb,SHELL_LINE_ALPHA));
-    if (g.has_current && g.current.title) title = host_wide(g.current.title, strlen(g.current.title));
+    if(g.has_current) {
+      int row=shelf_index(g.current.id);
+      const char *name=row>=0 ? sm_title((size_t)row):g.current.title;
+      if(name)title=host_wide(name,strlen(name));
+    }
     /* P0 title inset; retain the existing ellipsis limit before the controls. */
     shell_button_circle(shell_search_button, area.right, &circle);
     int inset=max(shell_px(112,shell_dpi),area.right-circle.left);

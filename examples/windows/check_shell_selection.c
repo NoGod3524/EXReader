@@ -188,6 +188,7 @@ static void test_generated(void) {
 #include "check_shell_annotations.inc"
 #include "check_shell_shelf.inc"
 #include "check_shell_style.inc"
+#include "check_shell_shelfmeta.inc"
 int main(int argc, char **argv) {
   setvbuf(stdout, NULL, _IONBF, 0);
   assert(argc == 3); SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX);
@@ -204,6 +205,7 @@ int main(int argc, char **argv) {
   if (!strcmp(argv[1], "shelf")) test_shelf();
   else if (!strcmp(argv[1], "annotations")) test_annotations();
   else if (!strcmp(argv[1], "style")) test_style();
+  else if (!strcmp(argv[1], "shelfmeta")) test_shelfmeta();
   else if (!strcmp(argv[1], "boundaries")) test_boundaries();
   else if (!strcmp(argv[1], "copy")) test_copy();
   else if (!strcmp(argv[1], "keyboard")) test_keyboard();
