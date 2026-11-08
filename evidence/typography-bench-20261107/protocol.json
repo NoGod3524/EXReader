@@ -1,0 +1,159 @@
+{
+  "created_utc": "2026-11-07T22:19:45.717116+00:00",
+  "build": {
+    "source_revision": "000caeef67f52498b05c437384efcd3bfdb1b5d1",
+    "commands": [
+      [
+        "gcc",
+        "-O2",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\include",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\examples",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\examples\\windows",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\tools\\perf",
+        "-DEXR_READER_WINDOWS_SHELL=1",
+        "-c",
+        "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\reader-measured.c",
+        "-o",
+        "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\reader.o"
+      ],
+      [
+        "g++",
+        "-O2",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\include",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\examples",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\examples\\windows",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\tools\\perf",
+        "-std=c++17",
+        "-c",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\examples\\windows\\shell_d2d.cpp",
+        "-o",
+        "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\d2d.o"
+      ],
+      [
+        "g++",
+        "-O2",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\include",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\examples",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\examples\\windows",
+        "-I",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\tools\\perf",
+        "-std=c++17",
+        "-c",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\examples\\windows\\shell_epub.cpp",
+        "-o",
+        "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\epub.o"
+      ],
+      [
+        "g++",
+        "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\reader.o",
+        "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\d2d.o",
+        "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\epub.o",
+        "-o",
+        "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\TypographyBench.exe",
+        "-LC:\\Users\\Oscar\\Documents\\Codex\\cjk-justify-20261106\\build",
+        "-lexreader",
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-justify-20261106\\build\\_deps\\expat-build\\libexpat.a",
+        "C:\\Users\\Oscar\\Documents\\Codex\\cjk-justify-20261106\\build\\_deps\\miniz-build\\libminiz.a",
+        "-ld2d1",
+        "-ldwrite",
+        "-lgdi32",
+        "-lcomdlg32",
+        "-lshell32",
+        "-lole32",
+        "-loleaut32",
+        "-luuid",
+        "-luiautomationcore",
+        "-lpsapi",
+        "-lm"
+      ]
+    ],
+    "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+    "input_files": {
+      "examples/reader.c": "8193233357ed6e9ac09ef5048e2e938ad0f6747dfca205fc897971db7db669d5",
+      "examples/windows/shell_d2d.cpp": "953c699697a4396d21e568e0277198bb60936b03582fe9a1145cf111594356aa",
+      "examples/windows/shell_epub.cpp": "8990fd39f40fd31d757b28e161397a154f310d087a79200984a0b3f1937616d5",
+      "tools/perf/typography_probe.inc": "eb1ce7947668b61f9c5edcff99a1c704c37fd72c6412e2c8cec59b080afe7f56"
+    },
+    "generated_host": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\reader-measured.c",
+      "bytes": 326884,
+      "sha256": "2c709fb494a3a9367bab80c62533c4db3d52e9be6e6dd7610c83f63e53c205c7"
+    },
+    "exe": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\TypographyBench.exe",
+      "bytes": 1155518,
+      "sha256": "51c868f7555a9a9109864163433aaf08a6dc32bc1b847a1137b07e05f24f64f2"
+    },
+    "dll": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\libexreader.dll",
+      "bytes": 5958824,
+      "sha256": "892ea1acb0a519748d9b51c2f5f946d762b7f78d1015d42f811db3ba8fd18865"
+    },
+    "sdk_build": "C:\\Users\\Oscar\\Documents\\Codex\\cjk-justify-20261106\\build",
+    "instrumentation_replacements": {
+      "static int shell_drive_on, shell_legacy, shell_active;": "static int shell_drive_on, shell_legacy, shell_active;\nstatic float typography_line_height = 1.75f;",
+      "config->page.line_height = SHELL_BODY_LINE_HEIGHT;": "config->page.line_height = typography_line_height;",
+      "geometry.font*1.75f": "geometry.font*typography_line_height",
+      "static int drive_execute(void) {": "#include \"typography_probe.inc\"\nstatic int drive_execute(void) {",
+      "  const char *action = drive_args[0];": "  const char *action = drive_args[0];\n  if (!strcmp(action,\"typography_count\")) { drive_step_finish(typography_count(),\"whole-book pagination counted\"); return 0; }",
+      "  host_probe_ui_thread=GetCurrentThreadId();": "  host_probe_log(\"host_start\",0);\n  const char *leading = getenv(\"EXR_TYPOGRAPHY_LINE_HEIGHT\");\n  if (leading) typography_line_height = (float)atof(leading);\n  if (typography_line_height < 1.59f || typography_line_height > 1.91f) return 2;\n  host_probe_ui_thread=GetCurrentThreadId();",
+      "    exr_status status = path ? exr_font_open(path, &g.font, &error) : EXR_MEMORY;": "    double font_started = host_probe_ms();\n    exr_status status = path ? exr_font_open(path, &g.font, &error) : EXR_MEMORY;\n    host_probe_log(\"font_load_ms\",host_probe_ms()-font_started);"
+    }
+  },
+  "fonts": {
+    "serif": {
+      "path": "C:\\Windows\\Fonts\\NotoSerifSC-VF.ttf",
+      "bytes": 25129160,
+      "sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280"
+    },
+    "sans": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo-2a\\Reader.otf",
+      "bytes": 16437364,
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+    },
+    "simsun": {
+      "path": "C:\\Windows\\Fonts\\simsun.ttc",
+      "bytes": 18316748,
+      "sha256": "1526ac24375f51f6eb73bc2d3f8072dbe4a80a3a65217677c9d9a84f67dab2ab"
+    }
+  },
+  "book": {
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub",
+    "bytes": 1151585,
+    "sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7"
+  },
+  "capture": {
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-20261106\\ops\\capture_window.py",
+    "bytes": 3459,
+    "sha256": "7b2b711c6c239818aa0d5d2aab646fbc5d3d50b3e3e6d3c5e5393c75a2623f26"
+  },
+  "collector": {
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\tools\\perf\\typography_bench.py",
+    "bytes": 17394,
+    "sha256": "27e0ed7530dcb524dd91e1a7b11e990ec6083779752e4ef757708d936c1ce542"
+  },
+  "font_px": 18,
+  "typography_dpi": 96,
+  "repeats": 3,
+  "turns_per_repeat": 20,
+  "percentiles": "nearest rank: sorted[ceil(q*n)-1]",
+  "dispersion": "100*(max-min)/median, per metric",
+  "unacceptable_p95_ms": 100,
+  "severe_p95_ms": 200,
+  "seed": 20261107,
+  "cache": "new process and clean copied seed library each run; OS file cache is warm/uncontrolled",
+  "memory": "Windows process peak working set / peak commit through end of 20 turns, before page counting",
+  "open": "font_load_ms + book_open_begin to first nonzero present_gen; library import excluded",
+  "first_screen": "first render_ms after book_open_begin; startup and full book open also retained"
+}
