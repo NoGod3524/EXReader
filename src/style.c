@@ -174,6 +174,7 @@ enum {
   BORDER_BOTTOM_STYLE,
   BORDER_LEFT_STYLE,
   BORDER_SPACING,
+  COMBINE,
   PROPERTIES
 };
 typedef struct {
@@ -379,7 +380,8 @@ static int property(const char *s, size_t n) {
       "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align", "border-collapse", "float", "clear", "hyphens",
       "border-top-width", "border-right-width", "border-bottom-width", "border-left-width",
       "border-top-color", "border-right-color", "border-bottom-color", "border-left-color",
-      "border-top-style", "border-right-style", "border-bottom-style", "border-left-style", "border-spacing"};
+      "border-top-style", "border-right-style", "border-bottom-style", "border-left-style", "border-spacing",
+      "text-combine-upright"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -816,6 +818,8 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->writing_mode = parent->writing_mode;
     else if (prop == ORIENTATION)
       s->orientation = parent->orientation;
+    else if (prop == COMBINE)
+      s->combine = parent->combine;
     else if (prop == RUBY_POSITION)
       s->ruby_position = parent->ruby_position;
     else if (prop == RUBY_ALIGN)
@@ -864,6 +868,13 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     if (!strcmp(v, "mixed")) s->orientation = EXR_ORIENTATION_MIXED;
     else if (!strcmp(v, "upright")) s->orientation = EXR_ORIENTATION_UPRIGHT;
     else if (!strcmp(v, "sideways")) s->orientation = EXR_ORIENTATION_SIDEWAYS;
+    else return 0;
+  } else if (prop == COMBINE) {
+    /* CSS Writing Modes 3; "horizontal" is the legacy -epub-text-combine value. */
+    if (!strcmp(v, "none")) s->combine = 0;
+    else if (!strcmp(v, "all") || !strcmp(v, "horizontal")) s->combine = EXR_COMBINE_ALL;
+    else if (!strcmp(v, "digits")) s->combine = 2;
+    else if (!strncmp(v, "digits ", 7) && v[7] >= '2' && v[7] <= '4' && !v[8]) s->combine = v[7] - '0';
     else return 0;
   } else if (prop == RUBY_POSITION) {
     if (!strcmp(v,"over")) s->ruby_position=0;
@@ -1193,6 +1204,7 @@ static exr_status compute_styles(const exr_document *d, const exr_layout_config 
     s->direction = parent->direction;
     s->writing_mode = parent->writing_mode;
     s->orientation = parent->orientation;
+    s->combine = parent->combine;
     s->ruby_position = parent->ruby_position;
     s->ruby_align = parent->ruby_align;
     s->indent = parent->indent;

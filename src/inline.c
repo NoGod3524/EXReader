@@ -254,6 +254,44 @@ static int inline_grow(exr_layout *l, size_t count) {
   return 1;
 }
 static exr_status line_work(flow *f, size_t count);
+/* text-combine-upright: each block of shaped glyphs is laid out horizontally,
+   scaled to fit one em, and centred on the em box. Only the first glyph carries
+   the em advance (the last one, so every member's pen is the cell start), so breaking, justification and kerning see one unit. Ink is
+   centred vertically on the em box from the real glyph extents. */
+static exr_status combine_groups(flow *f, exr_glyph *g, size_t count) {
+  size_t i = 0, j, k;
+  while (i < count) {
+    float width = 0, size, scale, pen = 0, top = -INFINITY, bottom = INFINITY, centre;
+    exr_face *face;
+    if (!(g[i].flags & EXR_GLYPH_COMBINED)) { i++; continue; }
+    for (j = i; j < count && (g[j].flags & EXR_GLYPH_COMBINED) &&
+                (j == i || !(g[j].boundaries & EXR_BOUNDARY_GRAPHEME)); j++) width += g[j].advance;
+    size = g[i].size;
+    scale = width > size && width > 0 ? size / width : 1;
+    face = &f->font->faces[g[i].font_index];
+    for (k = i; k < j; k++) {
+      float t = .8f * size * scale, b = 0;
+      if (!face->bitmap_only && !exr_font_size(face, size * scale) &&
+          !FT_Load_Glyph(face->face, g[k].glyph, FT_LOAD_NO_HINTING | FT_LOAD_NO_BITMAP)) {
+        t = (float)face->face->glyph->metrics.horiBearingY / 64;
+        b = t - (float)face->face->glyph->metrics.height / 64;
+      }
+      if (!(g[k].flags & EXR_GLYPH_HIDDEN)) { top = fmaxf(top, t); bottom = fminf(bottom, b); }
+    }
+    if (top < bottom) { top = .8f * size * scale; bottom = 0; }
+    centre = -(size / 2 + (top + bottom) / 2);
+    for (k = i; k < j; k++) {
+      float advance = g[k].advance;
+      g[k].offset_x = scale * (pen + g[k].offset_x) - scale * width / 2;
+      g[k].offset_y = centre + scale * g[k].offset_y;
+      g[k].advance = k + 1 == j ? size : 0; /* pens of all members then sit at the cell start */
+      g[k].size = size * scale;
+      pen += advance;
+    }
+    i = j;
+  }
+  return EXR_OK;
+}
 exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t after) {
   exr_layout *l = f->layout;
   exr_layout result = {0};
@@ -267,8 +305,8 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     exr_buffer text = {0};
     uint32_t tag = exr_ot_script(g->codepoint);
     unsigned generated = 0;
-    unsigned orientation = g->flags & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL);
-    int vertical = (orientation & EXR_GLYPH_VERTICAL) &&
+    unsigned orientation = g->flags & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL | EXR_GLYPH_COMBINED);
+    int vertical = (orientation & EXR_GLYPH_VERTICAL) && !(orientation & EXR_GLYPH_COMBINED) &&
                    (!(orientation & EXR_GLYPH_SIDEWAYS) || (orientation & EXR_GLYPH_TRY_VERTICAL));
     size_t n = 0, finish = 0;
     end = i + 1;
@@ -284,7 +322,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
       /* Hidden selectors share their base's shaping run across inline styles;
          X9 controls also remain available to the surrounding shaping context. */
       if ((v->flags & EXR_GLYPH_RUBY_ITEM) || (!context_only && (v->font_index != g->font_index || v->size != g->size ||
-          (v->flags & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL)) != orientation ||
+          (v->flags & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL | EXR_GLYPH_COMBINED)) != orientation ||
           ((orientation & EXR_GLYPH_TRY_VERTICAL) && !exr_inline_same(v,g)) ||
           (((v->flags & (3|EXR_DECORATIONS)) != (g->flags & (3|EXR_DECORATIONS)) || v->color != g->color) &&
            !exr_inline_same(v,g)) ||
@@ -373,7 +411,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
       v.offset_x = shaped[j].offset_x;
       v.offset_y = shaped[j].offset_y;
       v.flags = shaped[j].flags | EXR_GLYPH_SHAPED | (v.flags & EXR_DECORATIONS) |
-                (orientation & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS));
+                (orientation & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS | EXR_GLYPH_COMBINED));
       v.flags |= generated | (l->glyphs[i+k].flags&EXR_GLYPH_DISPLAY_BIDI);
       if (v.bidi_level == UINT_MAX) v.flags |= EXR_GLYPH_HIDDEN;
       if (result.glyph_count &&
@@ -383,6 +421,8 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     }
     free(shaped); free(positions); positions = NULL;
   }
+  status = combine_groups(f, result.glyphs, result.glyph_count);
+  if (status != EXR_OK) goto done;
   if (result.glyph_count > EXR_MAX_ITEMS - start ||
       !inline_grow(l, start + result.glyph_count)) {
     status = EXR_LIMIT; goto done;
@@ -484,7 +524,7 @@ int exr_inline_punctuation(uint32_t cp) {
 /* Remaining punctuation space, after any adjacent compression, has the same
    half-em floor. Latin faces and proportional punctuation never participate. */
 static float punctuation_room(flow *f,const exr_glyph *g) {
-  if((g->flags&(EXR_GLYPH_HIDDEN|EXR_GLYPH_RUBY_ITEM)) ||
+  if((g->flags&(EXR_GLYPH_HIDDEN|EXR_GLYPH_RUBY_ITEM|EXR_GLYPH_COMBINED)) ||
      !exr_inline_punctuation(g->codepoint) || g->size<=0 ||
      g->advance>g->size+.01f || g->advance<.5f*g->size-.01f ||
      (g->codepoint<0x3000 && !exr_font_has_glyph(f->font,g->font_index,0x3002))) return 0;
@@ -495,7 +535,7 @@ static float punctuation_room(flow *f,const exr_glyph *g) {
    em-wide metrics keeps proportional punctuation unchanged. Ambiguous Unicode
    quotes/dashes additionally require a CJK face, not a Latin em dash. */
 static float punctuation_compression(flow *f,const exr_glyph *left,const exr_glyph *right) {
-  if(!left || ((left->flags|right->flags)&(EXR_GLYPH_HIDDEN|EXR_GLYPH_RUBY_ITEM)) ||
+  if(!left || ((left->flags|right->flags)&(EXR_GLYPH_HIDDEN|EXR_GLYPH_RUBY_ITEM|EXR_GLYPH_COMBINED)) ||
      (right->boundaries&EXR_BOUNDARY_MANDATORY) || left->bidi_level!=right->bidi_level ||
      exr_inline_same(left,right) || !exr_inline_punctuation(left->codepoint) || !exr_inline_punctuation(right->codepoint) ||
      left->size<=0 || right->size<=0 ||
@@ -513,7 +553,7 @@ static int opening_punctuation(uint32_t cp) {
   }
 }
 int exr_inline_cjk_gap(const exr_glyph *a,const exr_glyph *b) {
-  return !((a->flags|b->flags)&(EXR_GLYPH_HIDDEN|EXR_GLYPH_RUBY_ITEM)) &&
+  return !((a->flags|b->flags)&(EXR_GLYPH_HIDDEN|EXR_GLYPH_RUBY_ITEM|EXR_GLYPH_COMBINED)) &&
     a->codepoint!=0x3000 && b->codepoint!=0x3000 &&
     !exr_inline_same(a,b) && a->bidi_level==b->bidi_level &&
     exr_projection_cjk(a->codepoint) && exr_projection_cjk(b->codepoint) &&
@@ -614,7 +654,7 @@ static exr_status display_group(flow *f,exr_layout *l,size_t first,size_t end) {
     if(g->cluster_start<source_first) source_first=g->cluster_start;
     if(g->cluster_end>source_last) source_last=g->cluster_end;
     if(g->flags&EXR_GLYPH_RUBY_ITEM) continue;
-    keep=g->flags&(EXR_GLYPH_GENERATED|EXR_GLYPH_DELETED|EXR_GLYPH_DISPLAY_BIDI|EXR_GLYPH_VERTICAL|EXR_GLYPH_SIDEWAYS|EXR_GLYPH_TRY_VERTICAL);
+    keep=g->flags&(EXR_GLYPH_GENERATED|EXR_GLYPH_DELETED|EXR_GLYPH_DISPLAY_BIDI|EXR_GLYPH_VERTICAL|EXR_GLYPH_SIDEWAYS|EXR_GLYPH_TRY_VERTICAL|EXR_GLYPH_COMBINED);
     g->flags=(*exr_doc_style(f->doc,f->styles,g->node)).flags|keep|
       ((exr_text_hidden(g->codepoint) || g->bidi_level==UINT_MAX) ? EXR_GLYPH_HIDDEN : 0);
     g->advance=g->offset_x=g->offset_y=0;
@@ -691,6 +731,7 @@ static exr_status display_scan(flow *f,exr_layout *l,int project,
       if(f->writing_mode!=EXR_WRITING_HORIZONTAL_TB) {
         if(!i || (flags&EXR_BOUNDARY_GRAPHEME)) vertical=exr_vertical_flags(g->codepoint,(*exr_doc_style(f->doc,f->styles,g->node)).orientation);
         g->flags=(g->flags&~(EXR_GLYPH_VERTICAL|EXR_GLYPH_SIDEWAYS|EXR_GLYPH_TRY_VERTICAL))|vertical;
+        if(g->flags&EXR_GLYPH_COMBINED) g->flags=(g->flags&~EXR_GLYPH_SIDEWAYS)|EXR_GLYPH_VERTICAL;
       }
     }
   }
@@ -1830,6 +1871,43 @@ exr_status exr_inline_auto_stable(flow *f,exr_line_buffer *b,size_t node,size_t 
   for(i=0;i<b->word->edit_count;i++) if(b->word->edits[i].start<=start) return EXR_OK;
   *stable=1;return EXR_OK;
 }
+/* text-combine-upright: decide at the first scalar of a block how many scalars
+   join it (2-4), then fold the rest into the first one's grapheme and line
+   segment so no break, hyphen or emergency split can fall inside the block. */
+static void combine_mark(flow *f, exr_line_buffer *b, exr_glyph *g) {
+  const exr_style *style;
+  exr_node n;
+  size_t at, run = 0;
+  uint32_t cp;
+  int digits, stopped = 0;
+  if (g->flags & (EXR_GLYPH_RUBY_ITEM | EXR_GLYPH_GENERATED)) return;
+  if (b->combine_left) {
+    b->combine_left--;
+    g->boundaries &= ~(unsigned)(EXR_BOUNDARY_GRAPHEME | EXR_BOUNDARY_LINE | EXR_BOUNDARY_AUTO_HYPHEN);
+    g->flags = (g->flags & ~(EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL)) | EXR_GLYPH_VERTICAL | EXR_GLYPH_COMBINED;
+    return;
+  }
+  style = exr_doc_style(f->doc, f->styles, g->node);
+  if (!style->combine) return;
+  n = exr_doc_node(f->doc, g->node);
+  digits = style->combine != EXR_COMBINE_ALL;
+  if (digits) {
+    /* Only the start of a digit run decides; later digits of a rejected run are skipped. */
+    if (b->previous_node == g->node && b->previous_scalar >= '0' && b->previous_scalar <= '9' && g->start > n.start) return;
+    at = g->start;
+  } else {
+    if (g->start != n.start) return;
+    at = n.start;
+  }
+  while (run < 6 && exr_doc_next(f->doc, n.end, &at, &cp)) {
+    int digit = cp >= '0' && cp <= '9';
+    if (digits ? !digit : (cp <= 0x20 || cp == 0x7f || cp == 0x3000 || cp == 0xa0)) { stopped = 1; break; }
+    run++;
+  }
+  if (digits ? (run < 2 || run > (size_t)style->combine) : (run < 1 || run > 4 || stopped)) return;
+  b->combine_left = run - 1;
+  g->flags = (g->flags & ~(EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL)) | EXR_GLYPH_VERTICAL | EXR_GLYPH_COMBINED;
+}
 exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
   exr_status status;
   if (!b->initialized) reset_line_scan(b);
@@ -1869,6 +1947,7 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
     if (g.boundaries & EXR_BOUNDARY_GRAPHEME)
       b->vertical_flags = exr_vertical_flags(g.codepoint, (*exr_doc_style(f->doc,f->styles,g.node)).orientation);
     g.flags |= b->vertical_flags;
+    combine_mark(f, b, &g);
   }
   if ((g.boundaries & EXR_BOUNDARY_GRAPHEME) && b->cluster_start < b->run.glyph_count) {
     status = measure_line_cluster(f, b);
@@ -1914,7 +1993,7 @@ exr_status exr_inline_finish(flow *f, exr_line_buffer *b) {
   b->raw.glyph_count = 0; b->before = b->after = 0; b->finishing = 0;
   b->measure_width=b->measure_trailing=0; b->measure_has_last=0;
   b->measure_punctuation_count=0;b->measure_punctuation_width=0;
-  b->edit_count=b->blocked_until=0;
+  b->edit_count=b->blocked_until=0;b->combine_left=0;
   b->in_word=0; b->previous_scalar=0; b->previous_node=0; if(b->word) b->word->until=0;
   reset_line_scan(b);
   return EXR_OK;

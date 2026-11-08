@@ -81,3 +81,9 @@ variant whose base is absent from the ordinary cmap. Different advances make
 selection measurable. It has no GSUB/GPOS, to exercise ordinary-layout dispatch.
 Generator: `tools/generate_uvs_test_font.py`; MIT. SHA-256:
 `db3c307cd65ed16181c47e05b8db0667a2660b62d48a2be175f6d8088edfd05b`.
+
+`combine.ttf` is an original rectangle font for `tests/test_combine_upright.c`
+(`tools/generate_combine_test_font.py`, MIT): digits are 600 units wide with ink
+50..550 x 0..700, the period is 300 wide, and U+7532/U+3002 are em-wide with native
+vertical metrics, so tate-chu-yoko scale and centring are exactly computable.
+SHA-256: `3f8a979c0ad85ed80dbaa61618795d6bd1dc7509b7cdb4dbd72a3e375096b99b`.

@@ -46,6 +46,8 @@ enum {
   EXR_GLYPH_UNDERLINE = 32, EXR_GLYPH_STRIKE = 64,
   EXR_GLYPH_VERTICAL = 128, /* advance and clipping follow the physical y axis. */
   EXR_GLYPH_SIDEWAYS = 256, /* Clockwise 90-degree outline in vertical text. */
+  EXR_GLYPH_COMBINED = 16384, /* tate-chu-yoko: part of a block drawn upright and horizontally in one em;
+                                 only the first glyph advances, the rest carry advance 0 and offset_x/offset_y. */
   EXR_GLYPH_GENERATED = 2048 /* Contains generated text, e.g. an automatic hyphen.
                                Source range may be empty or cover replaced original text.
                                Copy/selection use original source, not generated spelling. */
