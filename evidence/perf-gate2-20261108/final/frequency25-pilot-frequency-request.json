@@ -1,0 +1,6 @@
+{
+  "requested_min_pct": 25,
+  "cpu": 3,
+  "requested_max_pct": 25,
+  "boost": 0
+}

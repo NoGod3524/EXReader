@@ -1,0 +1,234 @@
+{
+  "advisory": true,
+  "accepted": false,
+  "local_numeric_pass": false,
+  "compatible": true,
+  "signatures_match": true,
+  "candidate_ratio": 0.32764921446618506,
+  "thresholds": {
+    "warning": 0.38948752572395623,
+    "gate": 0.4425994610499502,
+    "hard": 0.5311193532599403
+  },
+  "exceeded": [],
+  "book_comparisons": [
+    {
+      "id": "a-raisin-in-the-sun",
+      "ratio": 0.38607544690221773,
+      "thresholds": {
+        "warning": 0.42193335700200985,
+        "gate": 0.47946972386592024,
+        "hard": 0.5753636686391044
+      },
+      "exceeded": []
+    },
+    {
+      "id": "between-the-world-and-me",
+      "ratio": 0.12703853373619634,
+      "thresholds": {
+        "warning": 0.15349199727846075,
+        "gate": 0.17442272418006902,
+        "hard": 0.20930726901608282
+      },
+      "exceeded": []
+    },
+    {
+      "id": "black-boy",
+      "ratio": 0.1875635236477503,
+      "thresholds": {
+        "warning": 0.2806394499276474,
+        "gate": 0.318908465826872,
+        "hard": 0.38269015899224634
+      },
+      "exceeded": []
+    },
+    {
+      "id": "born-a-crime",
+      "ratio": 0.12366890467357185,
+      "thresholds": {
+        "warning": 0.1202334281588109,
+        "gate": 0.13662889563501238,
+        "hard": 0.16395467476201486
+      },
+      "exceeded": [
+        "warning"
+      ]
+    },
+    {
+      "id": "crying-in-h-mart",
+      "ratio": 0.2176445893771135,
+      "thresholds": {
+        "warning": 0.19275870976033443,
+        "gate": 0.21904398836401637,
+        "hard": 0.26285278603681966
+      },
+      "exceeded": [
+        "warning"
+      ]
+    },
+    {
+      "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+      "ratio": 0.239421506871592,
+      "thresholds": {
+        "warning": 0.23350578565208402,
+        "gate": 0.26534748369555,
+        "hard": 0.31841698043466005
+      },
+      "exceeded": [
+        "warning"
+      ]
+    },
+    {
+      "id": "i-know-why-the-caged-bird-sings",
+      "ratio": 0.3528525422741593,
+      "thresholds": {
+        "warning": 0.380970375115332,
+        "gate": 0.4329208808128773,
+        "hard": 0.5195050569754527
+      },
+      "exceeded": []
+    },
+    {
+      "id": "pachinko",
+      "ratio": 0.1812146205418498,
+      "thresholds": {
+        "warning": 0.26355425747780425,
+        "gate": 0.2994934744065957,
+        "hard": 0.35939216928791484
+      },
+      "exceeded": []
+    },
+    {
+      "id": "the-absolutely-true-diary-of-a-part-time-indian",
+      "ratio": 0.10355875592213988,
+      "thresholds": {
+        "warning": 0.07908778371823054,
+        "gate": 0.08987248149798925,
+        "hard": 0.10784697779758709
+      },
+      "exceeded": [
+        "warning",
+        "gate"
+      ]
+    },
+    {
+      "id": "the-autobiography-of-malcolm-x.",
+      "ratio": 0.4041324120466494,
+      "thresholds": {
+        "warning": 0.4583349916383563,
+        "gate": 0.5208352177708594,
+        "hard": 0.6250022613250312
+      },
+      "exceeded": []
+    },
+    {
+      "id": "the-distance-between-us-a-memoir",
+      "ratio": 0.24330190470707622,
+      "thresholds": {
+        "warning": 0.23615136855846067,
+        "gate": 0.26835382790734164,
+        "hard": 0.32202459348880996
+      },
+      "exceeded": [
+        "warning"
+      ]
+    },
+    {
+      "id": "the-fire-next-time",
+      "ratio": 0.33171278229666157,
+      "thresholds": {
+        "warning": 0.4003930519321548,
+        "gate": 0.4549921044683577,
+        "hard": 0.5459905253620292
+      },
+      "exceeded": []
+    },
+    {
+      "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+      "ratio": 0.22626133161800194,
+      "thresholds": {
+        "warning": 0.30253965073620326,
+        "gate": 0.34379505765477636,
+        "hard": 0.4125540691857317
+      },
+      "exceeded": []
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "ratio": 0.12347531290103436,
+      "thresholds": {
+        "warning": 0.1211953736099659,
+        "gate": 0.13772201546587035,
+        "hard": 0.1652664185590444
+      },
+      "exceeded": [
+        "warning"
+      ]
+    },
+    {
+      "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+      "ratio": 0.06298908113549352,
+      "thresholds": {
+        "warning": 0.05940354437303203,
+        "gate": 0.0675040276966273,
+        "hard": 0.08100483323595276
+      },
+      "exceeded": [
+        "warning"
+      ]
+    },
+    {
+      "id": "hongloumeng-24264",
+      "ratio": 0.158171757987112,
+      "thresholds": {
+        "warning": 0.1355058138406617,
+        "gate": 0.1539838793643883,
+        "hard": 0.18478065523726594
+      },
+      "exceeded": [
+        "warning",
+        "gate"
+      ]
+    },
+    {
+      "id": "xingshihengyan-24239",
+      "ratio": 0.1271689893186431,
+      "thresholds": {
+        "warning": 0.1321349559158946,
+        "gate": 0.15015335899533477,
+        "hard": 0.1801840307944017
+      },
+      "exceeded": []
+    },
+    {
+      "id": "tangshi300-52323",
+      "ratio": 0.1645417797865341,
+      "thresholds": {
+        "warning": 0.13906152255017315,
+        "gate": 0.15802445744337856,
+        "hard": 0.1896293489320543
+      },
+      "exceeded": [
+        "warning",
+        "gate"
+      ]
+    },
+    {
+      "id": "kusamakura-japanese-vertical-writing",
+      "ratio": 0.1711230795789444,
+      "thresholds": {
+        "warning": 0.22812457364461494,
+        "gate": 0.25923247005069877,
+        "hard": 0.31107896406083857
+      },
+      "exceeded": []
+    }
+  ],
+  "failed_books": [
+    "the-absolutely-true-diary-of-a-part-time-indian",
+    "hongloumeng-24264",
+    "tangshi300-52323"
+  ],
+  "baseline_eligible": true,
+  "candidate_eligible": false
+}

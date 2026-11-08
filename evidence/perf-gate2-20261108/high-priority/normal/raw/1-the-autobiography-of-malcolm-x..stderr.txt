@@ -1,0 +1,1 @@
+Native measurement failed at open status=5: Invalid ZIP source
