@@ -7,8 +7,8 @@
    56 high, DeckMark surface with a line-token hairline on its last row, the title on the left
    (15, weight 650) and two 32x32 rounded icon buttons on the right (目录, 设置).
    Below it the page fills the window with no 3D edge. Every legacy control is
-   hidden. Alt+Left returns to the legacy panel, Alt+Right comes back, and
-   opening a book comes back too. --drive keeps the legacy layout unless the
+   hidden. The back button, Esc without selection, Ctrl+W and Alt+Left return
+   to the recent-books shelf. --drive keeps the legacy layout unless the
    script says shell|on, so phase-a/b/c run exactly as before. Included after
    create_controls, so create_controls calls shell_create through a forward
    declaration.
@@ -19,6 +19,8 @@
 #include "shell_tokens.h"
 
 enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, SHELL_HIDDEN_MAX = 128 };
+enum { IDC_SHELL_BACK=180, IDC_SHELL_TAP20, IDC_SHELL_TAP25 };
+static HWND shell_back;
 /* The 32px visual has 4px per side for the offset keyboard outline. */
 enum { SHELL_BUTTON_BOX = SHELL_ICON_SIZE + 2 * SHELL_CONTROL_FRAME };
 
@@ -171,6 +173,8 @@ static HWND shell_make_button(HWND parent, int id, const wchar_t *name) {
 
 static void shell_create_panel(HWND parent);
 static void shell_create(HWND parent) {
+  shelf_create(parent);
+  shell_back=shell_make_button(parent,IDC_SHELL_BACK,L"← 书架");
   shell_toc = shell_make_button(parent, IDC_SHELL_TOC, L"目录");
   shell_settings = shell_make_button(parent, IDC_SHELL_SETTINGS, L"设置");
   shell_create_panel(parent);
@@ -191,8 +195,12 @@ static void shell_button_circle(HWND button, int client_width, RECT *circle) {
 
 static int shell_layout(void) {
   RECT area, circle;
+  if(shelf_layout()) return 1;
   if (!shell_active) return 0;
   GetClientRect(g.window, &area);
+  MoveWindow(shell_back,shell_px(12,shell_dpi),shell_px(8,shell_dpi),shell_px(88,shell_dpi),shell_px(40,shell_dpi),TRUE);
+  HWND bar_buttons[4]={shell_back,shell_toc,shell_settings,shell_search_button};
+  for(int i=0;i<4;i++) ShowWindow(bar_buttons[i],shell_bar_hidden ? SW_HIDE:SW_SHOWNA);
   shell_button_circle(shell_toc, area.right, &circle);
   MoveWindow(shell_toc, circle.left - shell_px(SHELL_CONTROL_FRAME, shell_dpi), circle.top - shell_px(SHELL_CONTROL_FRAME, shell_dpi), shell_px(SHELL_BUTTON_BOX, shell_dpi),
              shell_px(SHELL_BUTTON_BOX, shell_dpi), TRUE);
@@ -222,7 +230,7 @@ static void shell_enter(void) {
   size_t i;
   shell_hidden_count = 0;
   for (child = GetWindow(g.window, GW_CHILD); child; child = GetWindow(child, GW_HWNDNEXT)) {
-    if (child == g.page || child == shell_toc || child == shell_settings || child == shell_search_button || !IsWindowVisible(child)) continue;
+    if (child == g.page || child == shell_back || child == shell_toc || child == shell_settings || child == shell_search_button || !IsWindowVisible(child)) continue;
     if (shell_hidden_count == SHELL_HIDDEN_MAX) break;
     shell_hidden[shell_hidden_count++] = child;
   }
@@ -238,6 +246,7 @@ static void shell_enter(void) {
   ShowWindow(shell_toc, SW_SHOW);
   ShowWindow(shell_settings, SW_SHOW);
   ShowWindow(shell_search_button, SW_SHOW);
+  ShowWindow(shell_back, SW_SHOW);
   InvalidateRect(g.window, NULL, FALSE);
   SetFocus(g.page);
 }
@@ -255,6 +264,7 @@ static void shell_leave(void) {
   ShowWindow(shell_toc, SW_HIDE);
   ShowWindow(shell_settings, SW_HIDE);
   ShowWindow(shell_search_button, SW_HIDE);
+  ShowWindow(shell_back, SW_HIDE);
   SetWindowLongPtrW(g.window, GWL_STYLE, GetWindowLongPtrW(g.window, GWL_STYLE) & ~(LONG_PTR)WS_CLIPCHILDREN);
   shell_page_edge(1);
   SetWindowLongPtrW(g.page,GWL_STYLE,GetWindowLongPtrW(g.page,GWL_STYLE)&~(LONG_PTR)WS_CLIPSIBLINGS);
@@ -294,7 +304,8 @@ static void shell_sync(void) {
     shell_request_layout();
   }
   int want = host_shell && g.window && (g.drive_mode ? shell_drive_on : 1) && !shell_legacy &&
-             g.has_current && g.frame.valid;
+             g.has_current && g.frame.valid && !shelf_requested;
+  if(want || shell_legacy || (g.drive_mode && !shell_drive_on)) shelf_show(0);
   if (want && !shell_active) shell_enter();
   else if (!want && shell_active) shell_leave();
   else if (shell_active) {
@@ -304,6 +315,7 @@ static void shell_sync(void) {
     InvalidateRect(g.window, &bar, FALSE); /* the title may have changed */
     if(shell_panel_open) InvalidateRect(shell_panel,NULL,FALSE);
   }
+  if(!want && host_shell && !shell_legacy && (!g.drive_mode || shell_drive_on)) shelf_show(1);
 }
 
 static void shell_paint(HWND window) {
@@ -312,15 +324,17 @@ static void shell_paint(HWND window) {
   wchar_t *title = NULL;
   BeginPaint(window, &paint);
   GetClientRect(window, &area);
-  if (SUCCEEDED(shell_d2d_begin(host_shell, shell_colors->layer_side))) {
+  if (SUCCEEDED(shell_d2d_begin(host_shell, shell_bar_hidden ? shell_colors->layer_page:shell_colors->layer_side))) {
+    if(!shell_bar_hidden) {
     shell_d2d_fill(host_shell, 0, (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1), (float)area.right, 1, shell_blend(shell_colors->layer_side,shell_colors->line_rgb,SHELL_LINE_ALPHA));
     if (g.has_current && g.current.title) title = host_wide(g.current.title, strlen(g.current.title));
     /* P0 title inset; retain the existing ellipsis limit before the controls. */
     shell_button_circle(shell_search_button, area.right, &circle);
-    if (title && circle.left - shell_px(SHELL_SPACE_2, shell_dpi) > shell_px(SHELL_TITLE_LEFT, shell_dpi))
-      shell_d2d_text(host_shell, SHELL_TEXT_TITLE, title, (float)shell_px(SHELL_TITLE_LEFT, shell_dpi), 0,
-                     (float)(circle.left - shell_px(SHELL_SPACE_2, shell_dpi) - shell_px(SHELL_TITLE_LEFT, shell_dpi)), (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1),
-                     shell_colors->text);
+    int inset=max(shell_px(112,shell_dpi),area.right-circle.left);
+    if(title && area.right>2*inset)
+      shell_d2d_text(host_shell,SHELL_TEXT_CENTER,title,(float)inset,0,(float)(area.right-2*inset),
+        (float)shell_px(SHELL_TOPBAR_H-1,shell_dpi),shell_colors->text);
+    }
     if (shell_d2d_end(host_shell) == S_FALSE) InvalidateRect(window, NULL, FALSE);
   }
   free(title);
@@ -331,6 +345,10 @@ static void shell_paint(HWND window) {
 static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   shell_d2d_button look;
   int disabled, pressed, hover, focus;
+  if(item->hwndItem==shell_back) {
+    shell_d2d_control(host_shell,item->hDC,&item->rcItem,L"← 书架",shell_is_dark(),2,
+      (item->itemState&ODS_SELECTED ? 2:0)|(item->itemState&ODS_FOCUS ? 4:0));return 1;
+  }
   if (shell_toc_draw(item)) return 1;
   if (shell_draw_settings(item)) return 1;
   if (!host_shell || (item->hwndItem != shell_toc && item->hwndItem != shell_settings && item->hwndItem != shell_search_button)) return 0;
@@ -369,6 +387,11 @@ static int shell_page_footer(HDC dc, const RECT *area) {
 }
 
 static int shell_translate(const MSG *message) {
+  if(message->message==WM_KEYDOWN && (shell_active || shelf_visible)) {
+    if(message->wParam=='W' && (GetKeyState(VK_CONTROL)&0x8000)) {shelf_return();return 1;}
+    if(message->wParam=='O' && (GetKeyState(VK_CONTROL)&0x8000)) {g.auto_open_imported=1;import_path(NULL,1);return 1;}
+    if(message->wParam==VK_ESCAPE && shell_active && !shell_toc_open && !shell_panel_open && !shell_search_open && !select_valid && !g.selection.active && annot_selected<0) {shelf_return();return 1;}
+  }
   if(annot_translate(message)) return 1;
   if(shell_search_key(message)) return 1;
   if(shell_toc_open && message->message==WM_MOUSEWHEEL) {
@@ -390,7 +413,7 @@ static int shell_translate(const MSG *message) {
   if (message->message != WM_SYSKEYDOWN || !host_shell || !g.window ||
       (message->hwnd != g.window && !IsChild(g.window, message->hwnd)))
     return 0;
-  if (message->wParam == VK_LEFT && shell_active) { shell_legacy = 1; shell_sync(); return 1; }
+  if (message->wParam == VK_LEFT && shell_active) { shelf_return(); return 1; }
   if (message->wParam == VK_RIGHT && shell_legacy) { shell_legacy = 0; shell_sync(); return 1; }
   return 0;
 }
@@ -418,8 +441,7 @@ static int shell_legacy_reachable(char *missing, size_t capacity) {
   return count;
 }
 
-/* Visible direct children of the main window: on the reading screen exactly
-   the page and the two buttons. */
+/* Visible direct children of the main window, for legacy driver telemetry. */
 static int shell_visible_children(void) {
   int count = 0;
   HWND child;
@@ -430,6 +452,7 @@ static int shell_visible_children(void) {
 
 static HWND shell_button_named(const char *name) {
   return !strcmp(name,"minus") ? shell_minus : !strcmp(name,"plus") ? shell_plus :
+    !strcmp(name,"shelf") ? shell_back :
     !strcmp(name,"light") ? shell_segments[0] : !strcmp(name,"dark") ? shell_segments[1] :
     !strcmp(name,"system") ? shell_segments[2] :
     !strcmp(name, "search") ? shell_search_button : !strcmp(name, "toc") ? shell_toc : !strcmp(name, "settings") ? shell_settings : NULL;
