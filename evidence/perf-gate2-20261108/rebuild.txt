@@ -1,0 +1,62 @@
+[0/2] Re-checking globbed directories...
+[1/62] Updating version info if necessary.
+[2/62] Linking C static library sdk\libexr_audio.a
+[3/62] Linking C static library sdk\libexr_sqlite.a
+[4/62] Building C object _deps/libaom-build/CMakeFiles/aom_version.dir/gen_src/aom_version_no_op.c.obj
+[5/62] Linking C static library sdk\libexr_textindex.a
+[6/62] Linking C static library _deps\libaom-build\libaom_version.a
+[7/62] Building C object _deps/libaom-build/CMakeFiles/aom_rtcd.dir/aom_scale/aom_scale_rtcd.c.obj
+[8/62] Building C object _deps/libaom-build/CMakeFiles/aom_rtcd.dir/aom_dsp/aom_dsp_rtcd.c.obj
+[9/62] Building C object _deps/libaom-build/CMakeFiles/aom_rtcd.dir/av1/common/av1_rtcd.c.obj
+[10/62] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/blend_a64_hmask.c.obj
+[11/62] Building C object CMakeFiles/perf-reference.dir/reference_main.c.obj
+[12/62] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/aom_convolve.c.obj
+[13/62] Building C object CMakeFiles/perf-reference.dir/reference.c.obj
+[14/62] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/blend_a64_vmask.c.obj
+[15/62] Building C object _deps/libaom-build/CMakeFiles/aom_dsp.dir/gen_src/aom_av1_no_op.c.obj
+[16/62] Building C object _deps/libaom-build/CMakeFiles/aom_dsp.dir/gen_src/aom_dsp_no_op.c.obj
+[17/62] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/blend_a64_mask.c.obj
+[18/62] Building C object _deps/libaom-build/CMakeFiles/aom_scale.dir/aom_scale/generic/yv12extend.c.obj
+[19/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/alloccommon.c.obj
+[20/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/av1_inv_txfm2d.c.obj
+[21/62] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/loopfilter.c.obj
+[22/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/av1_txfm.c.obj
+[23/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/blockd.c.obj
+[24/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/av1_loopfilter.c.obj
+[25/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/cdef_block.c.obj
+[26/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/cdef.c.obj
+[27/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/debugmodes.c.obj
+[28/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/entropy.c.obj
+[29/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/entropymode.c.obj
+[30/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/entropymv.c.obj
+[31/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/idct.c.obj
+[32/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/convolve.c.obj
+[33/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/pred_common.c.obj
+[34/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/quant_common.c.obj
+[35/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/mvref_common.c.obj
+[36/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/cfl.c.obj
+[37/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/reconinter.c.obj
+[38/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/reconintra.c.obj
+[39/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/scale.c.obj
+[40/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/scan.c.obj
+[41/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/resize.c.obj
+[42/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/restoration.c.obj
+[43/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/txb_common.c.obj
+[44/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/thread_common.c.obj
+[45/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/tile_common.c.obj
+[46/62] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/intrapred.c.obj
+[47/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/warped_motion.c.obj
+[48/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/av1_dx_iface.c.obj
+[49/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodetxb.c.obj
+[50/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decoder.c.obj
+[51/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/detokenize.c.obj
+[52/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/obu.c.obj
+[53/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodemv.c.obj
+[54/62] Linking C executable perf-reference.exe
+[55/62] Building C object CMakeFiles/ratio-probe.dir/reference.c.obj
+[56/62] Building C object CMakeFiles/ratio-probe.dir/ratio_probe.c.obj
+[57/62] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodeframe.c.obj
+[58/62] Linking C static library _deps\libaom-build\libaom.a
+[59/62] Linking C static library sdk\libexr_library.a
+[60/62] Linking C shared library sdk\libexreader.dll
+[61/62] Linking C executable ratio-probe.exe

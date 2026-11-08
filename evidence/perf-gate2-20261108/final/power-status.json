@@ -1,0 +1,58 @@
+{
+  "utc": "2026-11-08T15:20:00.163062+00:00",
+  "sample_seconds": 0.5,
+  "ac_line_status": 1,
+  "battery_percent": 100,
+  "battery_saver": 0,
+  "reported_frequency_mhz": [
+    {
+      "cpu": 0,
+      "current": 2200,
+      "max": 2200,
+      "limit": 2200
+    },
+    {
+      "cpu": 1,
+      "current": 2200,
+      "max": 2200,
+      "limit": 2200
+    },
+    {
+      "cpu": 2,
+      "current": 2200,
+      "max": 2200,
+      "limit": 2200
+    },
+    {
+      "cpu": 3,
+      "current": 2200,
+      "max": 2200,
+      "limit": 2200
+    },
+    {
+      "cpu": 4,
+      "current": 2200,
+      "max": 2200,
+      "limit": 2200
+    },
+    {
+      "cpu": 5,
+      "current": 2000,
+      "max": 2200,
+      "limit": 2200
+    },
+    {
+      "cpu": 6,
+      "current": 2200,
+      "max": 2200,
+      "limit": 2200
+    },
+    {
+      "cpu": 7,
+      "current": 2200,
+      "max": 2200,
+      "limit": 2200
+    }
+  ],
+  "cpu_busy_pct": 15.476190476190476
+}

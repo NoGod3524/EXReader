@@ -90,3 +90,68 @@ p95 against all three registered Linux budgets. It omits the final reference PPM
 phase and Poppler review, so its RSS covers the timed plan and signature work.
 Its cross-environment numeric comparisons grant no acceptance. No workflow is
 dispatched by any command above.
+# Same-process ratio experiment (2026-11-08)
+
+`reference.c` freezes 120,000,000 dependent unsigned FNV-style mixing steps.
+It has no SDK, I/O, allocation, or runtime workload calibration. Both executables
+compile that same source with the same Release flags. Keep the reference source,
+compiler/flags, and reference executable pinned when comparing candidates.
+
+`ratio-probe` is a generated measurement-only copy of R3: warm up the reference,
+then run it immediately before each layout+RGBA target operation. Hashing and
+file open are outside the target timer. Every record includes `reference_ms`,
+`target_ms`, and `ratio`. It samples the first page plus 16 sequential pages;
+first page and EOF probes are excluded from the gate. E1 remains unchanged.
+The mixed corpus uses the fixed-document path for PDF and a public document
+pager/text-range adapter for MOBI, alongside indexed EPUB pagination.
+
+Each run pools exactly 19 books x 16 turns with equal book weight. The gate is
+`nearest_rank_p95(target_ms) / nearest_rank_p95(reference_ms)`, **not** the p95 of
+paired ratios; the latter is retained as a diagnostic. Per-book p95 ratios are
+also retained. This performance plan samples early pages; the separate existing
+`tools/regress/run_realbooks.py` checks every page's count and hash.
+
+```powershell
+cmake -S tools/perf -B build/perf-ratio -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build/perf-ratio --target ratio-probe perf-reference --parallel 4
+# NEW evidence directory; local corpus from tools/regress/corpus.json must exist.
+New-Item -ItemType Directory evidence/perf-gate2-20261108/NEW
+pwsh -NoProfile -File tools/perf/ratio_session.ps1 -Output evidence/perf-gate2-20261108/NEW -Build build/perf-ratio -Font C:/path/Reader.otf -Cpu 3
+python tools/perf/ratio_report.py evidence/perf-gate2-20261108/NEW
+python tools/perf/check_ratio.py evidence/perf-gate2-20261108/NEW/normal
+```
+
+The session runs five complete normal processes per book and then five loaded
+runs. It freezes tiers **before** the loaded candidate; no automatic retries or
+candidate-dependent widening. One reference-only process per run retains one
+warmup and 31 observations. Its p95 dispersion must be <3%; run ratio dispersion
+must be <5%, using `100*(max-min)/nearest_rank_p50` throughout. The loaded
+experiment uses one equal HIGH-priority worker pinned to the same logical CPU;
+both compete for that core. Only this worker is terminated, in `finally`.
+Temporary AC min/max=100 and boost=0 are restored and read back in `finally`.
+
+The sampler verifies original and staged corpus hashes. SHA-named local copies
+under the ignored build directory avoid Windows CRT Unicode argv loss. It
+retains every raw result and records its SHA-256; summaries recompute from raw
+and reject missing books/pages, changed pixel/text/position signatures, invalid
+denominators, incorrect paired ratios, and raw digest mismatches.
+
+For independent checks, run `ratio_capture.py capture`, then
+`ratio_capture.py check FROZEN_POLICY CANDIDATE_DIR RESULT.json`. Warning/gate/hard
+tiers are frozen baseline run-ratio p95 times 1.10/1.25/1.50, both for the pooled
+plan and individually per book. Warning alone does
+not fail; gate/hard, incompatible configuration/signatures, or ineligible
+baseline/candidate return nonzero. SDK revision/DLL hash remain provenance and
+are excluded from the compatibility key so actual code changes can be measured.
+Compiler/flags, font, reference, adapter, sampler, operation plan, and input
+hashes remain pinned. Output is always E3 `advisory=true, accepted=false`.
+
+See [the proposal](../../docs/validation/PERF-GATE-PROPOSAL.md) for measured
+qualification and the **unapplied** workflow patch. This experiment does not
+change GitHub required checks or the existing E3 strict producer.
+
+`ratio_frequency.ps1 -Output NEW_PREFIX -Build BUILD -CpuMax 50` is a
+reference-only frequency-request diagnostic. It verifies/restores the AC policy;
+the observed reference time, rather than the requested percentage, determines
+whether the machine actually slowed. On this host both 50% and 25% requests left
+reference p95 essentially unchanged and were not used as slow-machine evidence.

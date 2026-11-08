@@ -1,0 +1,5 @@
+Step B: completed five normal runs, 19 books x 16 turns per run; all raw measurements retained.
+Step C: froze ratio tiers before loaded candidate; eligibility exit code 0. No thresholds adjusted to candidate.
+Step C: completed five loaded runs with one equal-priority busy worker on the same logical CPU; worker stopped by finally.
+Step C: independent loaded candidate audit exit code 1 (E3 remains advisory).
+Power policy restored and read back successfully.
