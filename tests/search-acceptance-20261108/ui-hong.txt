@@ -1,0 +1,47 @@
+HOST	phase=0	engine=3.42.0	pid=6796
+STEP	1	import	PASS	page=0;status=已导入《紅樓夢》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	3	shell	PASS	reading screen
+STEP	4	shell_client	PASS	page=1;status=第 1 页。
+STEP	5	shell_click	PASS	button invoked
+STEP	6	shell_click	PASS	button invoked
+STEP	7	shell_click	PASS	button invoked
+STEP	8	search_query	PASS	page=6;status=第 6 页。
+STEP	9	search_check	PASS	hits=13989 current=1 open=1 calls=1 search_ms=116.602 total_ms=518.020 landed=1
+STEP	10	probe_wait	PASS	waited without blocking UI
+STEP	11	search_key	PASS	search keyboard routed
+STEP	12	wait_idle	PASS	page=6;status=第 6 页。
+STEP	13	search_check	PASS	hits=13989 current=2 open=1 calls=1 search_ms=116.602 total_ms=518.020 landed=1
+STEP	14	probe_wait	PASS	waited without blocking UI
+STEP	15	search_key	PASS	search keyboard routed
+STEP	16	wait_idle	PASS	page=6;status=第 6 页。
+STEP	17	search_check	PASS	hits=13989 current=1 open=1 calls=1 search_ms=116.602 total_ms=518.020 landed=1
+STEP	18	search_key	PASS	search keyboard routed
+STEP	19	wait_idle	PASS	page=5;status=第 5 页。
+STEP	20	search_check	PASS	hits=13989 current=1 open=0 calls=1 search_ms=116.602 total_ms=518.020 landed=1
+STEP	21	search_query	PASS	page=6;status=第 6 页。
+STEP	22	probe_wait	PASS	waited without blocking UI
+STEP	23	search_append	PASS	native_edit_ms=4.896100
+STEP	24	probe_wait	PASS	waited without blocking UI
+STEP	25	search_append	PASS	native_edit_ms=4.483000
+STEP	26	probe_wait	PASS	waited without blocking UI
+STEP	27	search_append	PASS	native_edit_ms=4.019600
+STEP	28	probe_wait	PASS	waited without blocking UI
+STEP	29	search_append	PASS	native_edit_ms=4.281600
+STEP	30	probe_wait	PASS	waited without blocking UI
+STEP	31	search_append	PASS	native_edit_ms=4.141400
+STEP	32	probe_wait	PASS	waited without blocking UI
+STEP	33	search_append	PASS	native_edit_ms=4.273100
+STEP	34	probe_wait	PASS	waited without blocking UI
+STEP	35	search_append	PASS	native_edit_ms=3.721400
+STEP	36	probe_wait	PASS	waited without blocking UI
+STEP	37	search_append	PASS	native_edit_ms=4.328900
+STEP	38	probe_wait	PASS	waited without blocking UI
+STEP	39	search_append	PASS	native_edit_ms=3.764500
+STEP	40	probe_wait	PASS	waited without blocking UI
+STEP	41	search_append	PASS	native_edit_ms=3.478900
+STEP	42	probe_wait	PASS	waited without blocking UI
+STEP	43	wait_idle	PASS	page=6;status=第 6 页。
+STEP	44	search_check	PASS	hits=0 current=0 open=1 calls=2 search_ms=2.870 total_ms=701.432 landed=1
+STEP	45	quit	PASS	closing
+DONE	45	eof	PASS	script finished

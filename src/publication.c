@@ -3,6 +3,7 @@
 #include "hyphen_internal.h"
 #include <ctype.h>
 
+typedef struct { char *text; size_t size; } search_part;
 struct exr_publication {
   char *title;
   exr_part *parts;
@@ -19,6 +20,8 @@ struct exr_publication {
   int toc_ready, locations_ready;
   exr_target *missing;
   size_t missing_count, missing_capacity;
+  search_part *search;
+  int searching;
 };
 typedef struct {
   size_t part, bytes;
@@ -68,6 +71,10 @@ void exr_publication_free(exr_publication *p) {
     free((void *)p->parts[i].title);
   }
   free(p->parts);
+  if(p->search) {
+    for(i=0;i<p->count;i++) free(p->search[i].text);
+    free(p->search);
+  }
   exr_navigation_free(p->navigation, p->navigation_count);
   for (i=0;i<p->toc_count;i++) {
     free((void *)p->toc[i].title); free((void *)p->toc[i].target.fragment);
@@ -1012,4 +1019,106 @@ exr_status exr_hit_test(const exr_layout *l,size_t part,size_t page,float x,floa
       }
   }
   return exr_fail(e,EXR_OK,"");
+}
+
+/* Publication search reads the same normalized projection as anchors/pagers. */
+static uint32_t search_fold(uint32_t cp,unsigned flags) {
+  if(!(flags&EXR_SEARCH_CASE_SENSITIVE) &&
+     ((cp>='A' && cp<='Z') || (cp>=0xc0 && cp<=0xd6) || (cp>=0xd8 && cp<=0xde))) cp+=32;
+  return cp;
+}
+static int search_word(uint32_t cp) {
+  if(cp=='_') return 1;
+  return cp && !exr_projection_space(cp) && !content_punctuation(cp) && !exr_projection_cjk(cp) &&
+    !(cp>=0xa0 && cp<=0xbf) && cp!=0xd7 && cp!=0xf7;
+}
+static int search_whole(const char *s,size_t n,size_t start,size_t end) {
+  size_t at=start;uint32_t before=0,after=0,first=0,last=0;
+  if(start) {at=start-1;while(at && ((unsigned char)s[at]&0xc0)==0x80) at--;exr_next(s,n,&at,&before);}
+  at=start;exr_next(s,n,&at,&first);
+  at=end-1;while(at>start && ((unsigned char)s[at]&0xc0)==0x80) at--;exr_next(s,n,&at,&last);
+  at=end;if(at<n) exr_next(s,n,&at,&after);
+  return !(search_word(before) && search_word(first)) && !(search_word(last) && search_word(after));
+}
+static exr_status search_run(exr_publication *p,exr_text_position from,const char *needle,unsigned flags,
+  exr_search_fn callback,void *context,const exr_control *control,size_t *count,exr_search_result *first,exr_error *e) {
+  uint32_t *pattern=NULL,*prefix=NULL,cp;size_t bytes=0,m=0,at=0,i,j,part,hits=0;exr_status status=EXR_OK;
+  if(count) *count=0;
+  if(first) *first=(exr_search_result){0,SIZE_MAX,SIZE_MAX,0};
+  if(!p || p->busy || p->searching || !needle || (!count && !first) ||
+     from.part>=p->count || (flags&~(EXR_SEARCH_CASE_SENSITIVE|EXR_SEARCH_WHOLE_WORD)))
+    return exr_fail(e,EXR_ARGUMENT,"Invalid publication search arguments");
+  while(bytes<=1024*1024 && needle[bytes]) bytes++;
+  if(!bytes) return exr_fail(e,EXR_ARGUMENT,"Empty search needle");
+  if(bytes>1024*1024) return exr_fail(e,EXR_LIMIT,"Search needle exceeds 1 MiB");
+  pattern=malloc(bytes*sizeof(*pattern));prefix=malloc(bytes*sizeof(*prefix));
+  if(!pattern || !prefix) {status=exr_fail(e,EXR_MEMORY,"Search pattern allocation failed");goto done;}
+  while(at<bytes) {
+    if(!exr_next(needle,bytes,&at,&cp)) {status=exr_fail(e,EXR_ENCODING,"Search needle is not UTF-8");goto done;}
+    pattern[m++]=search_fold(cp,flags);
+  }
+  prefix[0]=0;
+  for(i=1,j=0;i<m;i++) {
+    while(j && pattern[i]!=pattern[j]) j=prefix[j-1];
+    if(pattern[i]==pattern[j]) j++;
+    prefix[i]=(uint32_t)j;
+  }
+  if(!p->search) {
+    p->search=calloc(p->count,sizeof(*p->search));
+    if(!p->search) {status=exr_fail(e,EXR_MEMORY,"Search snapshot allocation failed");goto done;}
+  }
+  p->searching=1;
+  for(part=from.part;part<p->count;part++) {
+    search_part *sp=&p->search[part];size_t next_poll=0;
+    status=exr_control_cancel(control,e);if(status!=EXR_OK) break;
+    if(!p->parts[part].in_reading_order) continue;
+    if(!sp->text) {
+      exr_document *doc=NULL;
+      status=exr_publication_load(p,part,&doc,e);if(status!=EXR_OK) break;
+      const char *text=exr_document_text(doc,&sp->size);
+      sp->text=exr_copy(text,sp->size);
+      exr_document_free(doc);
+      if(!sp->text) {status=exr_fail(e,EXR_MEMORY,"Search text snapshot allocation failed");break;}
+    }
+    at=part==from.part ? from.offset:0;j=0;
+    if(at>sp->size) {status=exr_fail(e,EXR_ARGUMENT,"Search offset exceeds part text");break;}
+    while(at<sp->size && ((unsigned char)sp->text[at]&0xc0)==0x80) at++;
+    while(at<sp->size) {
+      if(at>=next_poll) {status=exr_control_cancel(control,e);if(status!=EXR_OK) break;next_poll=at+4096;}
+      if(!exr_next(sp->text,sp->size,&at,&cp)) {status=exr_fail(e,EXR_ENCODING,"Search snapshot is not UTF-8");break;}
+      cp=search_fold(cp,flags);
+      while(j && cp!=pattern[j]) j=prefix[j-1];
+      if(cp==pattern[j]) j++;
+      if(j==m) {
+        size_t start=at-bytes;
+        if(!(flags&EXR_SEARCH_WHOLE_WORD) || search_whole(sp->text,sp->size,start,at)) {
+          exr_search_result result={1,part,start,bytes};hits++;
+          if(first) {*first=result;goto finished;}
+          if(callback) {
+            int more;p->busy=1;more=callback(context,&result);p->busy=0;
+            if(!more) goto finished;
+          }
+        }
+        j=prefix[j-1];
+      }
+    }
+    if(status!=EXR_OK) break;
+  }
+finished:
+  p->searching=0;
+done:
+  free(pattern);free(prefix);
+  if(status==EXR_OK) {if(count) *count=hits;return exr_fail(e,EXR_OK,"");}
+  if(first) *first=(exr_search_result){0,SIZE_MAX,SIZE_MAX,0};
+  return status;
+}
+exr_status exr_document_search(exr_publication *p,exr_text_position from,const char *needle,unsigned flags,
+  const exr_control *control,exr_search_result *result,exr_error *e) {
+  if(!result) return exr_fail(e,EXR_ARGUMENT,"Missing search result");
+  return search_run(p,from,needle,flags,NULL,NULL,control,NULL,result,e);
+}
+exr_status exr_document_search_all(exr_publication *p,const char *needle,unsigned flags,
+  exr_search_fn callback,void *context,const exr_control *control,size_t *count,exr_error *e) {
+  if(!count) return exr_fail(e,EXR_ARGUMENT,"Missing search count");
+  return search_run(p,(exr_text_position){0,0},needle,flags,callback,context,control,count,NULL,e);
 }

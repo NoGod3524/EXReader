@@ -128,6 +128,7 @@ static unsigned shell_dpi = 96;
 static BOOL shell_dpi_requested;
 static DWORD shell_dpi_error;
 static int shell_pmv2, shell_dpi_changing, shell_layout_waiting, shell_vertical;
+static int shell_search_open;
 static float shell_font = SHELL_BODY_DEFAULT_FONT;
 static int shell_theme_mode=2; /* light, dark, system */
 static int shell_system_dark(void) {
@@ -362,7 +363,7 @@ static shell_geometry shell_snapshot(void) {
   RECT client = {0}; shell_geometry out = {0};
   if (shell_wants_reading() && !IsIconic(g.window)) {
     GetClientRect(g.window, &client);
-    out = shell_geometry_for(client.right, client.bottom, shell_dpi, shell_font, shell_vertical);
+    out = shell_geometry_for(client.right, client.bottom-(shell_search_open ? shell_px(48,shell_dpi):0), shell_dpi, shell_font, shell_vertical);
   }
   return out;
 }
@@ -1146,7 +1147,7 @@ struct host_job {
 #ifdef EXR_READER_WINDOWS_SHELL
   shell_geometry shell_geometry;
   unsigned long shell_epoch;
-  int shell_toc_jump;
+  int shell_toc_jump, shell_search_jump;
 #endif
   volatile LONG cancel;
   int kind;
@@ -3993,6 +3994,9 @@ static void compose_page_view(HWND window) {
                   0, 0, (int)g.frame.bitmap.width, (int)g.frame.bitmap.height,
                   g.frame.dib, &info, DIB_RGB_COLORS, SRCCOPY)>0;
     }
+#ifdef EXR_READER_WINDOWS_SHELL
+    if(shell_active) shell_search_paint(dc);
+#endif
     paint_selection(dc);
   } else {
     const wchar_t *hint = L"打开一本书开始阅读\n\n导入 EPUB/PDF/CBZ 后从左侧书架打开";
@@ -5433,6 +5437,9 @@ static void handle_job_complete(host_job *job) {
         if (!save_progress()) { g.pending_selection = 0; return; }
         if (job->message[0]) set_status(job->message);
         else set_statusf(L"第 %llu 页。", (unsigned long long)(g.frame.page + 1));
+#ifdef EXR_READER_WINDOWS_SHELL
+        if(job->shell_search_jump) {job->resolved_selection=0;memset(&g.selection,0,sizeof(g.selection));g.pending_selection=0;}
+#endif
         if (job->resolved_selection) {
           g.pending_book = g.current.id; g.pending_part = g.frame.part;
           g.pending_start = job->note_start; g.pending_end = job->note_end;
@@ -6230,6 +6237,47 @@ static int drive_execute(void) {
   if (!strcmp(action,"settings_measure")) {
     drive_step_finish(shell_settings_measure(drive_args[1]),"settings captured");return 0;
   }
+  if(!strcmp(action,"search_query")) {
+    if(!shell_search_open) shell_search_set(1);
+    wchar_t *query=host_wide(drive_args[1],strlen(drive_args[1]));
+    SetWindowTextW(shell_search_edit,query ? query:L"");free(query);drive_expect_idle=1;return 1;
+  }
+  if(!strcmp(action,"search_append")) {
+    double start=host_probe_ms();
+    wchar_t *query=host_wide(drive_args[1],strlen(drive_args[1]));
+    SendMessageW(shell_search_edit,EM_SETSEL,(WPARAM)-1,(LPARAM)-1);
+    SendMessageW(shell_search_edit,EM_REPLACESEL,TRUE,(LPARAM)(query ? query:L""));free(query);
+    char detail[96];snprintf(detail,sizeof(detail),"native_edit_ms=%.6f",host_probe_ms()-start);
+    drive_step_finish(1,detail);return 0;
+  }
+  if(!strcmp(action,"search_key")) {
+    MSG message={0};message.hwnd=shell_search_edit;message.message=WM_KEYDOWN;
+    message.wParam=!strcmp(drive_args[1],"esc") ? VK_ESCAPE:VK_RETURN;
+    shell_search_test_shift=!strcmp(drive_args[1],"shift_enter");
+    int handled=shell_translate(&message);shell_search_test_shift=0;
+    drive_step_finish(handled,"search keyboard routed");return 0;
+  }
+  if(!strcmp(action,"search_check")) {
+    char detail[512];snprintf(detail,sizeof(detail),"hits=%llu current=%llu open=%d calls=%u search_ms=%.3f total_ms=%.3f",
+      (unsigned long long)shell_search_count_value,(unsigned long long)(shell_search_count_value ? shell_search_current+1:0),
+      shell_search_open,shell_search_calls,shell_search_last_ms,shell_search_last_total_ms);
+    int landed=1;
+    if(shell_search_open && shell_search_count_value) {
+      exr_search_result r=shell_search_hits[shell_search_current];
+      landed=r.part==(g.frame.fixed ? g.frame.page:g.frame.part) && r.offset>=g.frame.range_start && r.offset<g.frame.range_end;
+      if(!g.frame.fixed) {
+        size_t n=g.frame.glyph_count;const exr_glyph *glyphs=g.frame.glyphs;
+        if(!glyphs && g.frame.hit_layout) glyphs=exr_layout_glyphs(g.frame.hit_layout,&n);
+        int glyph=0;for(size_t i=0;i<n;i++) if(glyphs[i].cluster_start<=r.offset && glyphs[i].cluster_end>r.offset) glyph=1;
+        landed=landed && glyph;
+      }
+    }
+    size_t used=strlen(detail);snprintf(detail+used,sizeof(detail)-used," landed=%d",landed);
+    int pass=landed && (!strcmp(drive_args[1],"positive") ? shell_search_count_value>0:shell_search_count_value==(size_t)strtoull(drive_args[1],NULL,10)) &&
+      (!drive_args[2][0] || shell_search_current+1==(size_t)strtoull(drive_args[2],NULL,10)) &&
+      (!drive_args[3][0] || shell_search_open==atoi(drive_args[3]));
+    drive_step_finish(pass,detail);return 0;
+  }
   if (!strcmp(action, "shell_client")) {
     RECT client = {0, 0, atoi(drive_args[1]), atoi(drive_args[2])};
     /* The actual window DPI controls its nonclient frame, even for injected DPI tests. */
@@ -6706,7 +6754,7 @@ static void drive_tick(void) {
     if (drive_expect_idle) {
       if (
 #ifdef EXR_READER_WINDOWS_SHELL
-          shell_layout_waiting || shell_animating ||
+          shell_layout_waiting || shell_animating || shell_search_pending || shell_search_thread || shell_search_jump_pending ||
 #endif
           g.job || g.pending || host_probe_burst_left || wheel_delta<=-WHEEL_DELTA || wheel_delta>=WHEEL_DELTA) {
         if (GetTickCount() - drive_step_start > 120000) {
@@ -7113,6 +7161,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       int id = LOWORD(wparam);
       int code = HIWORD(wparam);
 #ifdef EXR_READER_WINDOWS_SHELL
+      if (id == IDC_SHELL_SEARCH) { shell_search_set(!shell_search_open); return 0; }
       if (id == IDC_SHELL_SETTINGS) { shell_toggle_settings(); return 0; }
       if (shell_settings_command(id)) return 0;
       if (id == IDC_SHELL_TOC) { shell_toc_set(!shell_toc_open,shell_toc_keyboard); return 0; }
@@ -7234,6 +7283,8 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     }
     case WM_TIMER:
 #ifdef EXR_READER_WINDOWS_SHELL
+      if (wparam == 0x5756) { shell_search_start(); return 0; }
+      if (wparam == 0x5757) { shell_search_poll(); return 0; }
       if (wparam == 0x5753) { shell_animate(); return 0; }
       if (wparam == 0x5754) { shell_toc_animate(); return 0; }
       if (wparam == 0x5755) { shell_toc_pump(); return 0; }
