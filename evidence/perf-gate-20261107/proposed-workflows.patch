@@ -1,0 +1,84 @@
+--- /dev/null
++++ b/.github/workflows/performance-gate.yml
+@@ -0,0 +1,64 @@
++name: Performance tier probe
++on:
++  pull_request:
++    branches: [main]
++  workflow_dispatch:
++permissions:
++  contents: read
++concurrency:
++  group: performance-tier-${{ github.repository }}
++  cancel-in-progress: false
++jobs:
++  tier-probe:
++    name: performance-tier
++    runs-on: [self-hosted, Windows, X64, exreader-perf]
++    timeout-minutes: 45
++    env:
++      PERF_BASELINE_DIR: ${{ vars.PERF_BASELINE_DIR }}
++      PERF_RUNNER_LABEL: exreader-perf
++    defaults:
++      run:
++        shell: pwsh
++    steps:
++      - uses: actions/checkout@v4
++      - name: Require an approved baseline before building
++        run: |
++          $ErrorActionPreference = 'Stop'
++          if (!$env:PERF_BASELINE_DIR) { throw 'PERF_BASELINE_DIR must identify the committed baseline for this exact runner' }
++          $policy = Get-Content "$env:PERF_BASELINE_DIR/three-tier-policy.json" -Raw | ConvertFrom-Json
++          if (!$policy.eligible) { throw 'Baseline is ineligible' }
++          New-Item -ItemType Directory -Force build/perf-gate | Out-Null
++      - name: Build the unchanged SDK and pinned E1 probe
++        run: |
++          $ErrorActionPreference = 'Stop'
++          cmake -S tools/perf -B build/perf-gate-build -G Ninja -DCMAKE_BUILD_TYPE=Release
++          if ($LASTEXITCODE) { exit $LASTEXITCODE }
++          cmake --build build/perf-gate-build --target e1-probe --parallel 4
++          if ($LASTEXITCODE) { exit $LASTEXITCODE }
++          python -c "import sys; sys.path.insert(0, 'tools'); from host_font import fetch; fetch('build/perf-gate-font')"
++          if ($LASTEXITCODE) { exit $LASTEXITCODE }
++      - name: Measure five fresh processes per viewport
++        run: |
++          pwsh -NoProfile -File tools/perf/fixed_clock.ps1 -Build build/perf-gate-build -Font build/perf-gate-font/Reader.otf -Output build/perf-gate/candidate -Cpu 3 -Runs 5 -IdleCpuMax 5 -IdleTimeout 15
++          exit $LASTEXITCODE
++      - name: Audit raw samples and enforce the frozen tiers
++        if: always()
++        run: |
++          python tools/perf/gate_policy.py check "$env:PERF_BASELINE_DIR/three-tier-policy.json" build/perf-gate/candidate build/perf-gate/tier-result.json
++          $auditExit = $LASTEXITCODE
++          if (Test-Path build/perf-gate/tier-result.json) {
++            $report = Get-Content build/perf-gate/tier-result.json -Raw | ConvertFrom-Json
++            foreach ($row in $report.comparisons) {
++              if ($row.exceeded -contains 'warning') { Write-Output "::warning::$($row.configuration)/$($row.metric) ratio=$($row.ratio)" }
++              if ($row.exceeded -contains 'gate') { Write-Output "::error::$($row.configuration)/$($row.metric) gate exceeded" }
++              if ($row.exceeded -contains 'hard') { Write-Output "::error::$($row.configuration)/$($row.metric) hard cap exceeded; owner review required" }
++            }
++          }
++          exit $auditExit
++      - name: Preserve all attempts and policy restoration evidence
++        if: always()
++        uses: actions/upload-artifact@v4
++        with:
++          name: performance-tier-${{ github.run_id }}-${{ github.run_attempt }}
++          path: build/perf-gate/
++          if-no-files-found: error
+--- a/.github/workflows/reading-required.yml
++++ b/.github/workflows/reading-required.yml
+@@ -1,11 +1,10 @@
+-# E3: no longer the required check; retained performance evidence is advisory.
+-# Required non-performance context: reading-required-core. Do not cite advisory results as acceptance.
++# Activation only after issue #32 owner restoration record and strict candidate verification.
+ name: Required native reading SDK
+ on:
+   pull_request:
+-    branches: [codex/framework]
++    branches: [codex/framework, main]
+   push:
+-    branches: [codex/framework]
++    branches: [codex/framework, main]
+   workflow_dispatch:
+ permissions:
+   contents: read

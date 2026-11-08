@@ -1,0 +1,3751 @@
+{
+  "schema": 1,
+  "advisory": true,
+  "accepted": false,
+  "started_at": "2026-11-08T06:23:06.189234+00:00",
+  "binary": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+  "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "input_sha256": "175e0e6d4b63d01157b266d9b1e72209f7f0c537a9d400ce5b670949d430e4cd",
+  "workload": {
+    "configurations": {
+      "default-release": [
+        720,
+        1040,
+        48
+      ],
+      "1280x800": [
+        1280,
+        800,
+        48
+      ],
+      "2560x1440": [
+        2560,
+        1440,
+        48
+      ]
+    },
+    "sequential": 32,
+    "random": 16,
+    "seed": 20261023,
+    "runs_per_batch": 5,
+    "max_batches": 1,
+    "idle_cpu_max": 25.0,
+    "idle_timeout_seconds": 3.0,
+    "interval_seconds": 1.0,
+    "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+    "disk_cache": "input/font primed; OS cache not flushed",
+    "warmup_runs": 0
+  },
+  "measurement_valid": true,
+  "groups": {
+    "default-release": {
+      "batches": [
+        {
+          "trials": [
+            {
+              "started_at": "2026-11-08T06:23:07.238472+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:23:10.742836+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 39.21568627450981
+              },
+              "idle_wait_samples": [
+                {
+                  "utc": "2026-11-08T06:23:07.739644+00:00",
+                  "sample_seconds": 0.5,
+                  "ac_line_status": 1,
+                  "battery_percent": 100,
+                  "battery_saver": 0,
+                  "reported_frequency_mhz": [
+                    {
+                      "cpu": 0,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 1,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 2,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 3,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 4,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 5,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 6,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 7,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    }
+                  ],
+                  "cpu_busy_pct": 41.17647058823529
+                },
+                {
+                  "utc": "2026-11-08T06:23:09.241073+00:00",
+                  "sample_seconds": 0.5,
+                  "ac_line_status": 1,
+                  "battery_percent": 100,
+                  "battery_saver": 0,
+                  "reported_frequency_mhz": [
+                    {
+                      "cpu": 0,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 1,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 2,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 3,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 4,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 5,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 6,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 7,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    }
+                  ],
+                  "cpu_busy_pct": 43.57976653696498
+                }
+              ],
+              "idle_target_met": false,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 35.2498,
+                "first_visible_ms": 78.0739,
+                "peak_rss_bytes": 38658048,
+                "first_render_ms": 7.8612,
+                "turn_p50_ms": 12.0714,
+                "turn_p95_ms": 17.9853,
+                "turn_max_ms": 18.2328,
+                "random_p95_ms": 154.3532
+              },
+              "stdout": "raw\\default-release-b1-r1.json",
+              "stdout_sha256": "d2de197a0ef1d9a6e304fc1544f7725d8b8884fef5a27a7bfb8ed880ebbe67f6",
+              "stderr": "raw\\default-release-b1-r1.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:23:12.428241+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:23:12.929407+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 38.372093023255815
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:23:13.942111+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:23:17.446823+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 36.2934362934363
+              },
+              "idle_wait_samples": [
+                {
+                  "utc": "2026-11-08T06:23:14.443428+00:00",
+                  "sample_seconds": 0.5,
+                  "ac_line_status": 1,
+                  "battery_percent": 100,
+                  "battery_saver": 0,
+                  "reported_frequency_mhz": [
+                    {
+                      "cpu": 0,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 1,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 2,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 3,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 4,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 5,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 6,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 7,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    }
+                  ],
+                  "cpu_busy_pct": 38.996138996138995
+                },
+                {
+                  "utc": "2026-11-08T06:23:15.945131+00:00",
+                  "sample_seconds": 0.5,
+                  "ac_line_status": 1,
+                  "battery_percent": 100,
+                  "battery_saver": 0,
+                  "reported_frequency_mhz": [
+                    {
+                      "cpu": 0,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 1,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 2,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 3,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 4,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 5,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 6,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 7,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    }
+                  ],
+                  "cpu_busy_pct": 33.59073359073359
+                }
+              ],
+              "idle_target_met": false,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 34.6595,
+                "first_visible_ms": 77.085,
+                "peak_rss_bytes": 38641664,
+                "first_render_ms": 7.9342,
+                "turn_p50_ms": 12.1829,
+                "turn_p95_ms": 18.298,
+                "turn_max_ms": 18.5035,
+                "random_p95_ms": 150.6378
+              },
+              "stdout": "raw\\default-release-b1-r2.json",
+              "stdout_sha256": "d57308e3c8e781fe1baa584aac766c38368ad6e4026c33acca23240319fa425c",
+              "stderr": "raw\\default-release-b1-r2.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:23:19.105161+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:23:19.606303+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 36.92307692307693
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:23:20.619225+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:23:24.123182+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 33.59375
+              },
+              "idle_wait_samples": [
+                {
+                  "utc": "2026-11-08T06:23:21.119993+00:00",
+                  "sample_seconds": 0.5,
+                  "ac_line_status": 1,
+                  "battery_percent": 100,
+                  "battery_saver": 0,
+                  "reported_frequency_mhz": [
+                    {
+                      "cpu": 0,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 1,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 2,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 3,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 4,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 5,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 6,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 7,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    }
+                  ],
+                  "cpu_busy_pct": 35.573122529644266
+                },
+                {
+                  "utc": "2026-11-08T06:23:22.621189+00:00",
+                  "sample_seconds": 0.5,
+                  "ac_line_status": 1,
+                  "battery_percent": 100,
+                  "battery_saver": 0,
+                  "reported_frequency_mhz": [
+                    {
+                      "cpu": 0,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 1,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 2,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 3,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 4,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 5,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 6,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 7,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    }
+                  ],
+                  "cpu_busy_pct": 36.328125
+                }
+              ],
+              "idle_target_met": false,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 35.0762,
+                "first_visible_ms": 77.3777,
+                "peak_rss_bytes": 38641664,
+                "first_render_ms": 7.9923,
+                "turn_p50_ms": 12.4041,
+                "turn_p95_ms": 18.4552,
+                "turn_max_ms": 18.949,
+                "random_p95_ms": 153.9065
+              },
+              "stdout": "raw\\default-release-b1-r3.json",
+              "stdout_sha256": "8b38e329d99585bef34005d572333a569ca7855f80bd026de1c545f6be9f2dc4",
+              "stderr": "raw\\default-release-b1-r3.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:23:25.790296+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:23:26.291614+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 36.71875
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:23:27.304572+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:23:30.808846+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 33.463035019455255
+              },
+              "idle_wait_samples": [
+                {
+                  "utc": "2026-11-08T06:23:27.805553+00:00",
+                  "sample_seconds": 0.5,
+                  "ac_line_status": 1,
+                  "battery_percent": 100,
+                  "battery_saver": 0,
+                  "reported_frequency_mhz": [
+                    {
+                      "cpu": 0,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 1,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 2,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 3,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 4,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 5,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 6,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 7,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    }
+                  ],
+                  "cpu_busy_pct": 33.59375
+                },
+                {
+                  "utc": "2026-11-08T06:23:29.307352+00:00",
+                  "sample_seconds": 0.5,
+                  "ac_line_status": 1,
+                  "battery_percent": 100,
+                  "battery_saver": 0,
+                  "reported_frequency_mhz": [
+                    {
+                      "cpu": 0,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 1,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 2,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 3,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 4,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 5,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 6,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 7,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    }
+                  ],
+                  "cpu_busy_pct": 38.13229571984436
+                }
+              ],
+              "idle_target_met": false,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 34.5991,
+                "first_visible_ms": 77.2637,
+                "peak_rss_bytes": 38641664,
+                "first_render_ms": 7.9657,
+                "turn_p50_ms": 12.2649,
+                "turn_p95_ms": 18.2316,
+                "turn_max_ms": 18.2788,
+                "random_p95_ms": 154.4816
+              },
+              "stdout": "raw\\default-release-b1-r4.json",
+              "stdout_sha256": "a29691a762b4d9d03404ca181343df0e00e8437334478f028e6539f76968ecbf",
+              "stderr": "raw\\default-release-b1-r4.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:23:32.488490+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:23:32.989361+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 22.745098039215684
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:23:34.002226+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:23:34.503619+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 21.153846153846157
+              },
+              "idle_wait_samples": [],
+              "idle_target_met": true,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 34.4093,
+                "first_visible_ms": 75.7993,
+                "peak_rss_bytes": 38625280,
+                "first_render_ms": 7.6811,
+                "turn_p50_ms": 12.1663,
+                "turn_p95_ms": 18.4727,
+                "turn_max_ms": 18.5469,
+                "random_p95_ms": 155.1416
+              },
+              "stdout": "raw\\default-release-b1-r5.json",
+              "stdout_sha256": "9eb1c78e6aebf3c7a8d2be599707bdbbd27aad9aa9d4271c5cfac4ff38b4dfe9",
+              "stderr": "raw\\default-release-b1-r5.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:23:36.188841+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:23:36.689701+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 18.503937007874015
+              }
+            }
+          ],
+          "summary": {
+            "stable": false,
+            "metrics": {
+              "open_ms": {
+                "n": 5,
+                "p50": 34.6595,
+                "p95": 35.2498,
+                "max": 35.2498,
+                "min": 34.4093,
+                "cv_pct": 0.900834378343509,
+                "range_over_median_pct": 2.425020557134404
+              },
+              "first_visible_ms": {
+                "n": 5,
+                "p50": 77.2637,
+                "p95": 78.0739,
+                "max": 78.0739,
+                "min": 75.7993,
+                "cv_pct": 0.9603253476967886,
+                "range_over_median_pct": 2.943943921919339
+              },
+              "first_render_ms": {
+                "n": 5,
+                "p50": 7.9342,
+                "p95": 7.9923,
+                "max": 7.9923,
+                "min": 7.6811,
+                "cv_pct": 1.418377425045711,
+                "range_over_median_pct": 3.9222605933805594
+              },
+              "turn_p50_ms": {
+                "n": 5,
+                "p50": 12.1829,
+                "p95": 12.4041,
+                "max": 12.4041,
+                "min": 12.0714,
+                "cv_pct": 0.9130929657807566,
+                "range_over_median_pct": 2.730876884813953
+              },
+              "turn_p95_ms": {
+                "n": 5,
+                "p50": 18.298,
+                "p95": 18.4727,
+                "max": 18.4727,
+                "min": 17.9853,
+                "cv_pct": 0.968842010323083,
+                "range_over_median_pct": 2.663679090611001
+              },
+              "turn_max_ms": {
+                "n": 5,
+                "p50": 18.5035,
+                "p95": 18.949,
+                "max": 18.949,
+                "min": 18.2328,
+                "cv_pct": 1.3760698573789099,
+                "range_over_median_pct": 3.8706190720674503
+              },
+              "random_p95_ms": {
+                "n": 5,
+                "p50": 154.3532,
+                "p95": 155.1416,
+                "max": 155.1416,
+                "min": 150.6378,
+                "cv_pct": 1.0301456030334646,
+                "range_over_median_pct": 2.917853338965446
+              },
+              "peak_rss_bytes": {
+                "n": 5,
+                "p50": 38641664,
+                "p95": 38658048,
+                "max": 38658048,
+                "min": 38625280,
+                "cv_pct": 0.02681600729419868,
+                "range_over_median_pct": 0.0847996608013568
+              }
+            }
+          }
+        }
+      ],
+      "final": {
+        "stable": false,
+        "metrics": {
+          "open_ms": {
+            "n": 5,
+            "p50": 34.6595,
+            "p95": 35.2498,
+            "max": 35.2498,
+            "min": 34.4093,
+            "cv_pct": 0.900834378343509,
+            "range_over_median_pct": 2.425020557134404
+          },
+          "first_visible_ms": {
+            "n": 5,
+            "p50": 77.2637,
+            "p95": 78.0739,
+            "max": 78.0739,
+            "min": 75.7993,
+            "cv_pct": 0.9603253476967886,
+            "range_over_median_pct": 2.943943921919339
+          },
+          "first_render_ms": {
+            "n": 5,
+            "p50": 7.9342,
+            "p95": 7.9923,
+            "max": 7.9923,
+            "min": 7.6811,
+            "cv_pct": 1.418377425045711,
+            "range_over_median_pct": 3.9222605933805594
+          },
+          "turn_p50_ms": {
+            "n": 5,
+            "p50": 12.1829,
+            "p95": 12.4041,
+            "max": 12.4041,
+            "min": 12.0714,
+            "cv_pct": 0.9130929657807566,
+            "range_over_median_pct": 2.730876884813953
+          },
+          "turn_p95_ms": {
+            "n": 5,
+            "p50": 18.298,
+            "p95": 18.4727,
+            "max": 18.4727,
+            "min": 17.9853,
+            "cv_pct": 0.968842010323083,
+            "range_over_median_pct": 2.663679090611001
+          },
+          "turn_max_ms": {
+            "n": 5,
+            "p50": 18.5035,
+            "p95": 18.949,
+            "max": 18.949,
+            "min": 18.2328,
+            "cv_pct": 1.3760698573789099,
+            "range_over_median_pct": 3.8706190720674503
+          },
+          "random_p95_ms": {
+            "n": 5,
+            "p50": 154.3532,
+            "p95": 155.1416,
+            "max": 155.1416,
+            "min": 150.6378,
+            "cv_pct": 1.0301456030334646,
+            "range_over_median_pct": 2.917853338965446
+          },
+          "peak_rss_bytes": {
+            "n": 5,
+            "p50": 38641664,
+            "p95": 38658048,
+            "max": 38658048,
+            "min": 38625280,
+            "cv_pct": 0.02681600729419868,
+            "range_over_median_pct": 0.0847996608013568
+          }
+        }
+      },
+      "all_retained": {
+        "stable": false,
+        "metrics": {
+          "open_ms": {
+            "n": 5,
+            "p50": 34.6595,
+            "p95": 35.2498,
+            "max": 35.2498,
+            "min": 34.4093,
+            "cv_pct": 0.900834378343509,
+            "range_over_median_pct": 2.425020557134404
+          },
+          "first_visible_ms": {
+            "n": 5,
+            "p50": 77.2637,
+            "p95": 78.0739,
+            "max": 78.0739,
+            "min": 75.7993,
+            "cv_pct": 0.9603253476967886,
+            "range_over_median_pct": 2.943943921919339
+          },
+          "first_render_ms": {
+            "n": 5,
+            "p50": 7.9342,
+            "p95": 7.9923,
+            "max": 7.9923,
+            "min": 7.6811,
+            "cv_pct": 1.418377425045711,
+            "range_over_median_pct": 3.9222605933805594
+          },
+          "turn_p50_ms": {
+            "n": 5,
+            "p50": 12.1829,
+            "p95": 12.4041,
+            "max": 12.4041,
+            "min": 12.0714,
+            "cv_pct": 0.9130929657807566,
+            "range_over_median_pct": 2.730876884813953
+          },
+          "turn_p95_ms": {
+            "n": 5,
+            "p50": 18.298,
+            "p95": 18.4727,
+            "max": 18.4727,
+            "min": 17.9853,
+            "cv_pct": 0.968842010323083,
+            "range_over_median_pct": 2.663679090611001
+          },
+          "turn_max_ms": {
+            "n": 5,
+            "p50": 18.5035,
+            "p95": 18.949,
+            "max": 18.949,
+            "min": 18.2328,
+            "cv_pct": 1.3760698573789099,
+            "range_over_median_pct": 3.8706190720674503
+          },
+          "random_p95_ms": {
+            "n": 5,
+            "p50": 154.3532,
+            "p95": 155.1416,
+            "max": 155.1416,
+            "min": 150.6378,
+            "cv_pct": 1.0301456030334646,
+            "range_over_median_pct": 2.917853338965446
+          },
+          "peak_rss_bytes": {
+            "n": 5,
+            "p50": 38641664,
+            "p95": 38658048,
+            "max": 38658048,
+            "min": 38625280,
+            "cv_pct": 0.02681600729419868,
+            "range_over_median_pct": 0.0847996608013568
+          }
+        }
+      }
+    },
+    "1280x800": {
+      "batches": [
+        {
+          "trials": [
+            {
+              "started_at": "2026-11-08T06:23:37.708321+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:23:38.216814+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 19.92337164750958
+              },
+              "idle_wait_samples": [],
+              "idle_target_met": true,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 34.6989,
+                "first_visible_ms": 80.2161,
+                "peak_rss_bytes": 38600704,
+                "first_render_ms": 10.1842,
+                "turn_p50_ms": 15.2006,
+                "turn_p95_ms": 21.8683,
+                "turn_max_ms": 22.0599,
+                "random_p95_ms": 181.1352
+              },
+              "stdout": "raw\\1280x800-b1-r1.json",
+              "stdout_sha256": "68a50a3e919e3e443d47f836f616a6149bf176f546fb5bd32542e23c443ad31f",
+              "stderr": "raw\\1280x800-b1-r1.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:23:40.339174+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:23:40.839876+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 21.09375
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:23:41.853158+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:23:43.855561+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 23.84615384615385
+              },
+              "idle_wait_samples": [
+                {
+                  "utc": "2026-11-08T06:23:42.354364+00:00",
+                  "sample_seconds": 0.5,
+                  "ac_line_status": 1,
+                  "battery_percent": 100,
+                  "battery_saver": 0,
+                  "reported_frequency_mhz": [
+                    {
+                      "cpu": 0,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 1,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 2,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 3,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 4,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 5,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 6,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 7,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    }
+                  ],
+                  "cpu_busy_pct": 29.961089494163428
+                }
+              ],
+              "idle_target_met": true,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 34.9344,
+                "first_visible_ms": 83.506,
+                "peak_rss_bytes": 38649856,
+                "first_render_ms": 12.2873,
+                "turn_p50_ms": 15.2961,
+                "turn_p95_ms": 21.567,
+                "turn_max_ms": 22.224,
+                "random_p95_ms": 178.2725
+              },
+              "stdout": "raw\\1280x800-b1-r2.json",
+              "stdout_sha256": "4925a6d799b2622ecc1ff98fa3b5ec409324fc65ea34fb9bbdee3f58ffe7c7b6",
+              "stderr": "raw\\1280x800-b1-r2.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:23:45.955130+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:23:46.456233+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 21.0727969348659
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:23:47.469172+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:23:47.970087+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 20.306513409961692
+              },
+              "idle_wait_samples": [],
+              "idle_target_met": true,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 34.499,
+                "first_visible_ms": 81.5951,
+                "peak_rss_bytes": 38637568,
+                "first_render_ms": 10.9869,
+                "turn_p50_ms": 15.267,
+                "turn_p95_ms": 21.716,
+                "turn_max_ms": 21.7669,
+                "random_p95_ms": 177.7448
+              },
+              "stdout": "raw\\1280x800-b1-r3.json",
+              "stdout_sha256": "b481c27ed6a63809955014fa97c17668561ffb5c48ada70ce723677453628aec",
+              "stderr": "raw\\1280x800-b1-r3.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:23:50.066069+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:23:50.566807+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 21.09375
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:23:51.579757+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:23:52.080564+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 21.09375
+              },
+              "idle_wait_samples": [],
+              "idle_target_met": true,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 34.625,
+                "first_visible_ms": 80.1276,
+                "peak_rss_bytes": 38645760,
+                "first_render_ms": 10.177,
+                "turn_p50_ms": 15.2621,
+                "turn_p95_ms": 22.1187,
+                "turn_max_ms": 22.3026,
+                "random_p95_ms": 176.4321
+              },
+              "stdout": "raw\\1280x800-b1-r4.json",
+              "stdout_sha256": "67efcdc89b8975f37113f0daba994f27ef19a8b0b3602920db07e1b32d99d66d",
+              "stderr": "raw\\1280x800-b1-r4.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:23:54.190007+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:23:54.690672+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 20.703125
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:23:55.703896+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:23:56.205078+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 23.754789272030653
+              },
+              "idle_wait_samples": [],
+              "idle_target_met": true,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 34.6563,
+                "first_visible_ms": 80.3807,
+                "peak_rss_bytes": 38625280,
+                "first_render_ms": 10.2475,
+                "turn_p50_ms": 15.2369,
+                "turn_p95_ms": 21.8444,
+                "turn_max_ms": 22.3962,
+                "random_p95_ms": 180.4989
+              },
+              "stdout": "raw\\1280x800-b1-r5.json",
+              "stdout_sha256": "2d3b75ca4cd82e9728ef6f867b916761b0e9d51c2c4683ed497e2587cd99e62d",
+              "stderr": "raw\\1280x800-b1-r5.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:23:58.298745+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:23:58.799837+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 39.768339768339764
+              }
+            }
+          ],
+          "summary": {
+            "stable": false,
+            "metrics": {
+              "open_ms": {
+                "n": 5,
+                "p50": 34.6563,
+                "p95": 34.9344,
+                "max": 34.9344,
+                "min": 34.499,
+                "cv_pct": 0.41057599909475795,
+                "range_over_median_pct": 1.2563372316144372
+              },
+              "first_visible_ms": {
+                "n": 5,
+                "p50": 80.3807,
+                "p95": 83.506,
+                "max": 83.506,
+                "min": 80.1276,
+                "cv_pct": 1.5832769967817115,
+                "range_over_median_pct": 4.202998978610536
+              },
+              "first_render_ms": {
+                "n": 5,
+                "p50": 10.2475,
+                "p95": 12.2873,
+                "max": 12.2873,
+                "min": 10.177,
+                "cv_pct": 7.557821824164403,
+                "range_over_median_pct": 20.59331544279093
+              },
+              "turn_p50_ms": {
+                "n": 5,
+                "p50": 15.2621,
+                "p95": 15.2961,
+                "max": 15.2961,
+                "min": 15.2006,
+                "cv_pct": 0.21021727887022448,
+                "range_over_median_pct": 0.6257330249441392
+              },
+              "turn_p95_ms": {
+                "n": 5,
+                "p50": 21.8444,
+                "p95": 22.1187,
+                "max": 22.1187,
+                "min": 21.567,
+                "cv_pct": 0.8372875647379964,
+                "range_over_median_pct": 2.5255900825840962
+              },
+              "turn_max_ms": {
+                "n": 5,
+                "p50": 22.224,
+                "p95": 22.3962,
+                "max": 22.3962,
+                "min": 21.7669,
+                "cv_pct": 0.9978602270228499,
+                "range_over_median_pct": 2.831623470122393
+              },
+              "random_p95_ms": {
+                "n": 5,
+                "p50": 178.2725,
+                "p95": 181.1352,
+                "max": 181.1352,
+                "min": 176.4321,
+                "cv_pct": 0.9794281746056742,
+                "range_over_median_pct": 2.638152266894785
+              },
+              "peak_rss_bytes": {
+                "n": 5,
+                "p50": 38637568,
+                "p95": 38649856,
+                "max": 38649856,
+                "min": 38600704,
+                "cv_pct": 0.04577597257076828,
+                "range_over_median_pct": 0.1272129757235238
+              }
+            }
+          }
+        }
+      ],
+      "final": {
+        "stable": false,
+        "metrics": {
+          "open_ms": {
+            "n": 5,
+            "p50": 34.6563,
+            "p95": 34.9344,
+            "max": 34.9344,
+            "min": 34.499,
+            "cv_pct": 0.41057599909475795,
+            "range_over_median_pct": 1.2563372316144372
+          },
+          "first_visible_ms": {
+            "n": 5,
+            "p50": 80.3807,
+            "p95": 83.506,
+            "max": 83.506,
+            "min": 80.1276,
+            "cv_pct": 1.5832769967817115,
+            "range_over_median_pct": 4.202998978610536
+          },
+          "first_render_ms": {
+            "n": 5,
+            "p50": 10.2475,
+            "p95": 12.2873,
+            "max": 12.2873,
+            "min": 10.177,
+            "cv_pct": 7.557821824164403,
+            "range_over_median_pct": 20.59331544279093
+          },
+          "turn_p50_ms": {
+            "n": 5,
+            "p50": 15.2621,
+            "p95": 15.2961,
+            "max": 15.2961,
+            "min": 15.2006,
+            "cv_pct": 0.21021727887022448,
+            "range_over_median_pct": 0.6257330249441392
+          },
+          "turn_p95_ms": {
+            "n": 5,
+            "p50": 21.8444,
+            "p95": 22.1187,
+            "max": 22.1187,
+            "min": 21.567,
+            "cv_pct": 0.8372875647379964,
+            "range_over_median_pct": 2.5255900825840962
+          },
+          "turn_max_ms": {
+            "n": 5,
+            "p50": 22.224,
+            "p95": 22.3962,
+            "max": 22.3962,
+            "min": 21.7669,
+            "cv_pct": 0.9978602270228499,
+            "range_over_median_pct": 2.831623470122393
+          },
+          "random_p95_ms": {
+            "n": 5,
+            "p50": 178.2725,
+            "p95": 181.1352,
+            "max": 181.1352,
+            "min": 176.4321,
+            "cv_pct": 0.9794281746056742,
+            "range_over_median_pct": 2.638152266894785
+          },
+          "peak_rss_bytes": {
+            "n": 5,
+            "p50": 38637568,
+            "p95": 38649856,
+            "max": 38649856,
+            "min": 38600704,
+            "cv_pct": 0.04577597257076828,
+            "range_over_median_pct": 0.1272129757235238
+          }
+        }
+      },
+      "all_retained": {
+        "stable": false,
+        "metrics": {
+          "open_ms": {
+            "n": 5,
+            "p50": 34.6563,
+            "p95": 34.9344,
+            "max": 34.9344,
+            "min": 34.499,
+            "cv_pct": 0.41057599909475795,
+            "range_over_median_pct": 1.2563372316144372
+          },
+          "first_visible_ms": {
+            "n": 5,
+            "p50": 80.3807,
+            "p95": 83.506,
+            "max": 83.506,
+            "min": 80.1276,
+            "cv_pct": 1.5832769967817115,
+            "range_over_median_pct": 4.202998978610536
+          },
+          "first_render_ms": {
+            "n": 5,
+            "p50": 10.2475,
+            "p95": 12.2873,
+            "max": 12.2873,
+            "min": 10.177,
+            "cv_pct": 7.557821824164403,
+            "range_over_median_pct": 20.59331544279093
+          },
+          "turn_p50_ms": {
+            "n": 5,
+            "p50": 15.2621,
+            "p95": 15.2961,
+            "max": 15.2961,
+            "min": 15.2006,
+            "cv_pct": 0.21021727887022448,
+            "range_over_median_pct": 0.6257330249441392
+          },
+          "turn_p95_ms": {
+            "n": 5,
+            "p50": 21.8444,
+            "p95": 22.1187,
+            "max": 22.1187,
+            "min": 21.567,
+            "cv_pct": 0.8372875647379964,
+            "range_over_median_pct": 2.5255900825840962
+          },
+          "turn_max_ms": {
+            "n": 5,
+            "p50": 22.224,
+            "p95": 22.3962,
+            "max": 22.3962,
+            "min": 21.7669,
+            "cv_pct": 0.9978602270228499,
+            "range_over_median_pct": 2.831623470122393
+          },
+          "random_p95_ms": {
+            "n": 5,
+            "p50": 178.2725,
+            "p95": 181.1352,
+            "max": 181.1352,
+            "min": 176.4321,
+            "cv_pct": 0.9794281746056742,
+            "range_over_median_pct": 2.638152266894785
+          },
+          "peak_rss_bytes": {
+            "n": 5,
+            "p50": 38637568,
+            "p95": 38649856,
+            "max": 38649856,
+            "min": 38600704,
+            "cv_pct": 0.04577597257076828,
+            "range_over_median_pct": 0.1272129757235238
+          }
+        }
+      }
+    },
+    "2560x1440": {
+      "batches": [
+        {
+          "trials": [
+            {
+              "started_at": "2026-11-08T06:23:59.811333+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:24:00.312736+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 21.568627450980394
+              },
+              "idle_wait_samples": [],
+              "idle_target_met": true,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 35.4824,
+                "first_visible_ms": 121.3621,
+                "peak_rss_bytes": 41680896,
+                "first_render_ms": 33.07,
+                "turn_p50_ms": 54.2185,
+                "turn_p95_ms": 60.4046,
+                "turn_max_ms": 60.4064,
+                "random_p95_ms": 567.9974
+              },
+              "stdout": "raw\\2560x1440-b1-r1.json",
+              "stdout_sha256": "fc41a36234f2f85022df734b053bc6708631063e14a885e69e859bee27dbc2bb",
+              "stderr": "raw\\2560x1440-b1-r1.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:24:07.442524+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:24:07.943374+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 20.63492063492064
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:24:08.957010+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:24:09.458740+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 15.175097276264593
+              },
+              "idle_wait_samples": [],
+              "idle_target_met": true,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 35.5354,
+                "first_visible_ms": 125.7215,
+                "peak_rss_bytes": 41734144,
+                "first_render_ms": 33.1481,
+                "turn_p50_ms": 53.7969,
+                "turn_p95_ms": 60.1485,
+                "turn_max_ms": 60.9565,
+                "random_p95_ms": 567.1042
+              },
+              "stdout": "raw\\2560x1440-b1-r2.json",
+              "stdout_sha256": "66e7232d657518e1c8b2de2bed5e7064784e674f70184201eb92504d43dbb9f7",
+              "stderr": "raw\\2560x1440-b1-r2.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:24:16.620958+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:24:17.122301+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 23.166023166023166
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:24:18.134235+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:24:20.136137+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 18.846153846153847
+              },
+              "idle_wait_samples": [
+                {
+                  "utc": "2026-11-08T06:24:18.635044+00:00",
+                  "sample_seconds": 0.5,
+                  "ac_line_status": 1,
+                  "battery_percent": 100,
+                  "battery_saver": 0,
+                  "reported_frequency_mhz": [
+                    {
+                      "cpu": 0,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 1,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 2,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 3,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 4,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 5,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 6,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 7,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    }
+                  ],
+                  "cpu_busy_pct": 35.019455252918284
+                }
+              ],
+              "idle_target_met": true,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 34.1755,
+                "first_visible_ms": 118.174,
+                "peak_rss_bytes": 41721856,
+                "first_render_ms": 32.7611,
+                "turn_p50_ms": 53.7758,
+                "turn_p95_ms": 60.3966,
+                "turn_max_ms": 60.7685,
+                "random_p95_ms": 568.9298
+              },
+              "stdout": "raw\\2560x1440-b1-r3.json",
+              "stdout_sha256": "69b95a55f2750a06c995b9476d31e8b50da735104386cba6dc579f2cc8da4d2a",
+              "stderr": "raw\\2560x1440-b1-r3.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:24:27.274044+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:24:27.777178+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 57.19844357976653
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:24:28.789993+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:24:30.792505+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 20.3125
+              },
+              "idle_wait_samples": [
+                {
+                  "utc": "2026-11-08T06:24:29.291081+00:00",
+                  "sample_seconds": 0.5,
+                  "ac_line_status": 1,
+                  "battery_percent": 100,
+                  "battery_saver": 0,
+                  "reported_frequency_mhz": [
+                    {
+                      "cpu": 0,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 1,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 2,
+                      "current": 2024,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 3,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 4,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 5,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 6,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    },
+                    {
+                      "cpu": 7,
+                      "current": 2200,
+                      "max": 2200,
+                      "limit": 2200
+                    }
+                  ],
+                  "cpu_busy_pct": 25.78125
+                }
+              ],
+              "idle_target_met": true,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 35.2716,
+                "first_visible_ms": 120.4905,
+                "peak_rss_bytes": 41771008,
+                "first_render_ms": 32.8897,
+                "turn_p50_ms": 53.9529,
+                "turn_p95_ms": 60.2677,
+                "turn_max_ms": 60.6962,
+                "random_p95_ms": 565.8995
+              },
+              "stdout": "raw\\2560x1440-b1-r4.json",
+              "stdout_sha256": "95fe51efed084c487ec4c9e46d34def280401cb5db0e3268addf4571a9dd3795",
+              "stderr": "raw\\2560x1440-b1-r4.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:24:37.933636+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:24:38.434667+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 20.68965517241379
+              }
+            },
+            {
+              "started_at": "2026-11-08T06:24:39.445205+00:00",
+              "load_before": {
+                "utc": "2026-11-08T06:24:39.948694+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 8.235294117647063
+              },
+              "idle_wait_samples": [],
+              "idle_target_met": true,
+              "command": [
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\build\\e1-probe.exe",
+                "epub",
+                "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-perfgate-20261107\\evidence\\perf-gate-20261107\\attempt-3\\fixed.epub",
+                "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+                "-",
+                "-"
+              ],
+              "exit_code": 0,
+              "metrics": {
+                "open_ms": 34.266,
+                "first_visible_ms": 120.6906,
+                "peak_rss_bytes": 41652224,
+                "first_render_ms": 33.6587,
+                "turn_p50_ms": 54.5122,
+                "turn_p95_ms": 60.0687,
+                "turn_max_ms": 61.161,
+                "random_p95_ms": 559.3178
+              },
+              "stdout": "raw\\2560x1440-b1-r5.json",
+              "stdout_sha256": "8c79e0370f797f5ae6d8a7dafcc746bcde914cef62d7ae21565d600ca4720e63",
+              "stderr": "raw\\2560x1440-b1-r5.stderr.txt",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "finished_at": "2026-11-08T06:24:47.052831+00:00",
+              "load_after": {
+                "utc": "2026-11-08T06:24:47.554023+00:00",
+                "sample_seconds": 0.5,
+                "ac_line_status": 1,
+                "battery_percent": 100,
+                "battery_saver": 0,
+                "reported_frequency_mhz": [
+                  {
+                    "cpu": 0,
+                    "current": 2024,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 1,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 2,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 3,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 4,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 5,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 6,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  },
+                  {
+                    "cpu": 7,
+                    "current": 2200,
+                    "max": 2200,
+                    "limit": 2200
+                  }
+                ],
+                "cpu_busy_pct": 18.823529411764707
+              }
+            }
+          ],
+          "summary": {
+            "stable": false,
+            "metrics": {
+              "open_ms": {
+                "n": 5,
+                "p50": 35.2716,
+                "p95": 35.5354,
+                "max": 35.5354,
+                "min": 34.1755,
+                "cv_pct": 1.7155912703561662,
+                "range_over_median_pct": 3.8555098152621468
+              },
+              "first_visible_ms": {
+                "n": 5,
+                "p50": 120.6906,
+                "p95": 125.7215,
+                "max": 125.7215,
+                "min": 118.174,
+                "cv_pct": 2.0313593394158955,
+                "range_over_median_pct": 6.2535939004363215
+              },
+              "first_render_ms": {
+                "n": 5,
+                "p50": 33.07,
+                "p95": 33.6587,
+                "max": 33.6587,
+                "min": 32.7611,
+                "cv_pct": 0.9303253395913708,
+                "range_over_median_pct": 2.7142425158754286
+              },
+              "turn_p50_ms": {
+                "n": 5,
+                "p50": 53.9529,
+                "p95": 54.5122,
+                "max": 54.5122,
+                "min": 53.7758,
+                "cv_pct": 0.517158361981037,
+                "range_over_median_pct": 1.364894194751354
+              },
+              "turn_p95_ms": {
+                "n": 5,
+                "p50": 60.2677,
+                "p95": 60.4046,
+                "max": 60.4046,
+                "min": 60.0687,
+                "cv_pct": 0.22093533662705012,
+                "range_over_median_pct": 0.5573466384149425
+              },
+              "turn_max_ms": {
+                "n": 5,
+                "p50": 60.7685,
+                "p95": 61.161,
+                "max": 61.161,
+                "min": 60.4064,
+                "cv_pct": 0.41706259897607395,
+                "range_over_median_pct": 1.2417617680212667
+              },
+              "random_p95_ms": {
+                "n": 5,
+                "p50": 567.1042,
+                "p95": 568.9298,
+                "max": 568.9298,
+                "min": 559.3178,
+                "cv_pct": 0.6036747929423576,
+                "range_over_median_pct": 1.6949266113705324
+              },
+              "peak_rss_bytes": {
+                "n": 5,
+                "p50": 41721856,
+                "p95": 41771008,
+                "max": 41771008,
+                "min": 41652224,
+                "cv_pct": 0.09948485912183462,
+                "range_over_median_pct": 0.28470449636756334
+              }
+            }
+          }
+        }
+      ],
+      "final": {
+        "stable": false,
+        "metrics": {
+          "open_ms": {
+            "n": 5,
+            "p50": 35.2716,
+            "p95": 35.5354,
+            "max": 35.5354,
+            "min": 34.1755,
+            "cv_pct": 1.7155912703561662,
+            "range_over_median_pct": 3.8555098152621468
+          },
+          "first_visible_ms": {
+            "n": 5,
+            "p50": 120.6906,
+            "p95": 125.7215,
+            "max": 125.7215,
+            "min": 118.174,
+            "cv_pct": 2.0313593394158955,
+            "range_over_median_pct": 6.2535939004363215
+          },
+          "first_render_ms": {
+            "n": 5,
+            "p50": 33.07,
+            "p95": 33.6587,
+            "max": 33.6587,
+            "min": 32.7611,
+            "cv_pct": 0.9303253395913708,
+            "range_over_median_pct": 2.7142425158754286
+          },
+          "turn_p50_ms": {
+            "n": 5,
+            "p50": 53.9529,
+            "p95": 54.5122,
+            "max": 54.5122,
+            "min": 53.7758,
+            "cv_pct": 0.517158361981037,
+            "range_over_median_pct": 1.364894194751354
+          },
+          "turn_p95_ms": {
+            "n": 5,
+            "p50": 60.2677,
+            "p95": 60.4046,
+            "max": 60.4046,
+            "min": 60.0687,
+            "cv_pct": 0.22093533662705012,
+            "range_over_median_pct": 0.5573466384149425
+          },
+          "turn_max_ms": {
+            "n": 5,
+            "p50": 60.7685,
+            "p95": 61.161,
+            "max": 61.161,
+            "min": 60.4064,
+            "cv_pct": 0.41706259897607395,
+            "range_over_median_pct": 1.2417617680212667
+          },
+          "random_p95_ms": {
+            "n": 5,
+            "p50": 567.1042,
+            "p95": 568.9298,
+            "max": 568.9298,
+            "min": 559.3178,
+            "cv_pct": 0.6036747929423576,
+            "range_over_median_pct": 1.6949266113705324
+          },
+          "peak_rss_bytes": {
+            "n": 5,
+            "p50": 41721856,
+            "p95": 41771008,
+            "max": 41771008,
+            "min": 41652224,
+            "cv_pct": 0.09948485912183462,
+            "range_over_median_pct": 0.28470449636756334
+          }
+        }
+      },
+      "all_retained": {
+        "stable": false,
+        "metrics": {
+          "open_ms": {
+            "n": 5,
+            "p50": 35.2716,
+            "p95": 35.5354,
+            "max": 35.5354,
+            "min": 34.1755,
+            "cv_pct": 1.7155912703561662,
+            "range_over_median_pct": 3.8555098152621468
+          },
+          "first_visible_ms": {
+            "n": 5,
+            "p50": 120.6906,
+            "p95": 125.7215,
+            "max": 125.7215,
+            "min": 118.174,
+            "cv_pct": 2.0313593394158955,
+            "range_over_median_pct": 6.2535939004363215
+          },
+          "first_render_ms": {
+            "n": 5,
+            "p50": 33.07,
+            "p95": 33.6587,
+            "max": 33.6587,
+            "min": 32.7611,
+            "cv_pct": 0.9303253395913708,
+            "range_over_median_pct": 2.7142425158754286
+          },
+          "turn_p50_ms": {
+            "n": 5,
+            "p50": 53.9529,
+            "p95": 54.5122,
+            "max": 54.5122,
+            "min": 53.7758,
+            "cv_pct": 0.517158361981037,
+            "range_over_median_pct": 1.364894194751354
+          },
+          "turn_p95_ms": {
+            "n": 5,
+            "p50": 60.2677,
+            "p95": 60.4046,
+            "max": 60.4046,
+            "min": 60.0687,
+            "cv_pct": 0.22093533662705012,
+            "range_over_median_pct": 0.5573466384149425
+          },
+          "turn_max_ms": {
+            "n": 5,
+            "p50": 60.7685,
+            "p95": 61.161,
+            "max": 61.161,
+            "min": 60.4064,
+            "cv_pct": 0.41706259897607395,
+            "range_over_median_pct": 1.2417617680212667
+          },
+          "random_p95_ms": {
+            "n": 5,
+            "p50": 567.1042,
+            "p95": 568.9298,
+            "max": 568.9298,
+            "min": 559.3178,
+            "cv_pct": 0.6036747929423576,
+            "range_over_median_pct": 1.6949266113705324
+          },
+          "peak_rss_bytes": {
+            "n": 5,
+            "p50": 41721856,
+            "p95": 41771008,
+            "max": 41771008,
+            "min": 41652224,
+            "cv_pct": 0.09948485912183462,
+            "range_over_median_pct": 0.28470449636756334
+          }
+        }
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "a": "default-release",
+      "b": "1280x800",
+      "metric": "open_ms",
+      "difference_pct": 0.009232677909374478,
+      "exceeds_both_ranges": false
+    },
+    {
+      "a": "default-release",
+      "b": "1280x800",
+      "metric": "first_visible_ms",
+      "difference_pct": 4.034235999570308,
+      "exceeds_both_ranges": false
+    },
+    {
+      "a": "default-release",
+      "b": "1280x800",
+      "metric": "first_render_ms",
+      "difference_pct": 29.15605858183561,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "default-release",
+      "b": "1280x800",
+      "metric": "turn_p50_ms",
+      "difference_pct": 25.2747703748697,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "default-release",
+      "b": "1280x800",
+      "metric": "turn_p95_ms",
+      "difference_pct": 19.381353153350105,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "default-release",
+      "b": "1280x800",
+      "metric": "turn_max_ms",
+      "difference_pct": 20.107006782500616,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "default-release",
+      "b": "1280x800",
+      "metric": "random_p95_ms",
+      "difference_pct": 15.496471728477298,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "default-release",
+      "b": "1280x800",
+      "metric": "peak_rss_bytes",
+      "difference_pct": 0.0105999576001696,
+      "exceeds_both_ranges": false
+    },
+    {
+      "a": "default-release",
+      "b": "2560x1440",
+      "metric": "open_ms",
+      "difference_pct": 1.766038171352726,
+      "exceeds_both_ranges": false
+    },
+    {
+      "a": "default-release",
+      "b": "2560x1440",
+      "metric": "first_visible_ms",
+      "difference_pct": 56.20608384014745,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "default-release",
+      "b": "2560x1440",
+      "metric": "first_render_ms",
+      "difference_pct": 316.8032063724131,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "default-release",
+      "b": "2560x1440",
+      "metric": "turn_p50_ms",
+      "difference_pct": 342.8576118986448,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "default-release",
+      "b": "2560x1440",
+      "metric": "turn_p95_ms",
+      "difference_pct": 229.3676904579736,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "default-release",
+      "b": "2560x1440",
+      "metric": "turn_max_ms",
+      "difference_pct": 228.4162455751615,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "default-release",
+      "b": "2560x1440",
+      "metric": "random_p95_ms",
+      "difference_pct": 267.4068305678146,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "default-release",
+      "b": "2560x1440",
+      "metric": "peak_rss_bytes",
+      "difference_pct": 7.971168115327538,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "1280x800",
+      "b": "2560x1440",
+      "metric": "open_ms",
+      "difference_pct": 1.7754347694358537,
+      "exceeds_both_ranges": false
+    },
+    {
+      "a": "1280x800",
+      "b": "2560x1440",
+      "metric": "first_visible_ms",
+      "difference_pct": 50.148729732386,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "1280x800",
+      "b": "2560x1440",
+      "metric": "first_render_ms",
+      "difference_pct": 222.71285679434004,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "1280x800",
+      "b": "2560x1440",
+      "metric": "turn_p50_ms",
+      "difference_pct": 253.50901907339093,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "1280x800",
+      "b": "2560x1440",
+      "metric": "turn_p95_ms",
+      "difference_pct": 175.89542399882808,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "1280x800",
+      "b": "2560x1440",
+      "metric": "turn_max_ms",
+      "difference_pct": 173.4363750899928,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "1280x800",
+      "b": "2560x1440",
+      "metric": "random_p95_ms",
+      "difference_pct": 218.11086959570315,
+      "exceeds_both_ranges": true
+    },
+    {
+      "a": "1280x800",
+      "b": "2560x1440",
+      "metric": "peak_rss_bytes",
+      "difference_pct": 7.982614226651119,
+      "exceeds_both_ranges": true
+    }
+  ],
+  "identity_changes": [],
+  "finished_at": "2026-11-08T06:24:47.678515+00:00"
+}
