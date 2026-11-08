@@ -1,0 +1,22 @@
+[
+  "C:\\Python314\\python.exe",
+  "-X",
+  "utf8",
+  "tools/regress/run_realbooks.py",
+  "--manifest",
+  "tools/regress/corpus.json",
+  "--dll",
+  "C:\\Users\\Oscar\\Documents\\Codex\\w2-realbooks-build-20261107\\libexreader.dll",
+  "--font",
+  "C:/Users/Oscar/Documents/Codex/exr-demo-2a/Reader.otf",
+  "--layout",
+  "tools/regress/layout.json",
+  "--source-revision",
+  "c665d1cb1c0b681d4365f732acf775167bfa6d33",
+  "--output",
+  "evidence\\typography-bench-20261107\\baseline-regression.json",
+  "--baseline",
+  "evidence/realbooks-baseline-20261107/baseline.json",
+  "--workers",
+  "4"
+]

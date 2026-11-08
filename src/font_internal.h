@@ -29,6 +29,7 @@ struct exr_font {
   exr_face *faces;
   size_t count, base_count, refs;
   struct exr_font *fallback;
+  unsigned manager_order; /* Preserve the manager's explicit base-face chain. */
 };
 void exr_font_ref(exr_font *font);
 FT_Error exr_font_face_open(FT_Library library,const void *data,size_t size,unsigned face_index,FT_Face *out);

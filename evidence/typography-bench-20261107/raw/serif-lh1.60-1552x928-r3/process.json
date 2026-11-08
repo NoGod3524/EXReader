@@ -1,0 +1,22 @@
+{
+  "command": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\TypographyBench.exe",
+    "--offscreen",
+    "--data",
+    "C:\\Users\\Oscar\\Documents\\Codex\\typo-bench-work-20261107\\profiles\\serif-lh1.60-1552x928-r3",
+    "--font",
+    "C:\\Windows\\Fonts\\NotoSerifSC-VF.ttf",
+    "--drive",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\evidence\\typography-bench-20261107\\raw\\serif-lh1.60-1552x928-r3\\steps.drive",
+    "--evidence",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-typo-bench-20261107\\evidence\\typography-bench-20261107\\raw\\serif-lh1.60-1552x928-r3"
+  ],
+  "exit_code": 0,
+  "capture": false,
+  "foreground_before": 30674928,
+  "foreground_after": 30674928,
+  "foreground_unchanged": true,
+  "started_utc": "2026-11-07T22:38:24.421303+00:00",
+  "ended_utc": "2026-11-07T22:38:43.329812+00:00",
+  "system_cpu_busy_pct": 45.97974369574204
+}

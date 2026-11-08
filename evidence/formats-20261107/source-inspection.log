@@ -1,0 +1,5 @@
+MuPDF error: syntax error: unknown keyword: 'Unknown'
+
+MuPDF error: syntax error: Failed to read JPX header
+
+MuPDF error: library error: FT_New_Memory_Face(Bad): unknown file format

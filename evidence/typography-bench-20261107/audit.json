@@ -1,0 +1,21 @@
+{
+  "runs": 54,
+  "configs": 18,
+  "turns": 1080,
+  "captures": 18,
+  "hashes_verified": true,
+  "raw_metrics_recomputed": true,
+  "product_sources_unchanged": true,
+  "p95_dispersion_over_10pct_groups": 16,
+  "unacceptable_groups": 18,
+  "severe_groups": 5,
+  "regression_successful_books": 19,
+  "regression_changed_pages": 5872,
+  "same_dll_repeat_successful_books": 19,
+  "same_dll_repeat_changed_pages": 0,
+  "same_dll_repeat_passed": true,
+  "baseline_regression_successful_books": 19,
+  "baseline_regression_changed_pages": 0,
+  "baseline_regression_passed": true,
+  "report": "docs\\validation\\TYPOGRAPHY-BENCH.md"
+}

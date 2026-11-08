@@ -1,0 +1,2 @@
+drm-the-waste-land error 0 {'stage': 'publication_load', 'code': 5, 'kind': 'RuntimeError'}
+drm-accessible-epub-3 error 0 {'stage': 'publication_load', 'code': 5, 'kind': 'RuntimeError'}
