@@ -1,0 +1,632 @@
+{
+  "dll_sha256": "5c414f2de6395a0787ce6a65902354a48d71e61b2db63c69aae719aa513a5070",
+  "books": [
+    {
+      "id": "a-raisin-in-the-sun",
+      "sha256": "2416cbd8d73eb7ba2a228842aa33ae303653fb75fa42dd6e921293bee2ed576d",
+      "toc_count": 19,
+      "max_depth": 2,
+      "sources": [
+        "ncx"
+      ],
+      "fragment_requests": 6,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "between-the-world-and-me",
+      "sha256": "3d909ac99c4388022a6576475b81c5d458490337aba08b0e7ba311bc18ab68a5",
+      "toc_count": 10,
+      "max_depth": 1,
+      "sources": [
+        "ncx"
+      ],
+      "fragment_requests": 21,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "black-boy",
+      "sha256": "a6d4c9a1f117e8c9c21aec186ca77e0f58cdaf9f97fce8f1f1d1660a724a7e87",
+      "toc_count": 38,
+      "max_depth": 2,
+      "sources": [
+        "nav"
+      ],
+      "fragment_requests": 670,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "born-a-crime",
+      "sha256": "c22402e02baa5e9b7c88c895a9f232f2858f7c168122aaf084493b85e37f6d58",
+      "toc_count": 22,
+      "max_depth": 2,
+      "sources": [
+        "nav"
+      ],
+      "fragment_requests": 0,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "crying-in-h-mart",
+      "sha256": "8e6641c9c820cbc987dbd848d1b2ee88a15d620db6d9302cc17ca2ca49072a3e",
+      "toc_count": 27,
+      "max_depth": 2,
+      "sources": [
+        "nav"
+      ],
+      "fragment_requests": 7,
+      "missing_link_occurrences": 1,
+      "missing_examples": [
+        {
+          "base": "OEBPS/toc.ncx",
+          "href": "Text/p000_cover.xhtml#cover",
+          "part": 0,
+          "offset": 0
+        }
+      ],
+      "missing_unique_targets": 1
+    },
+    {
+      "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+      "sha256": "02a37f7c5f80169b09d010f27edf494116df0bcb0c8bc8023282a1d3bf43e941",
+      "toc_count": 19,
+      "max_depth": 1,
+      "sources": [
+        "nav"
+      ],
+      "fragment_requests": 760,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "i-know-why-the-caged-bird-sings",
+      "sha256": "7a52e3c22743cbf9cdacd1fc6d2a8f72f9ad0f9287591f310640d0287857ec09",
+      "toc_count": 42,
+      "max_depth": 1,
+      "sources": [
+        "ncx"
+      ],
+      "fragment_requests": 0,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "pachinko",
+      "sha256": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+      "toc_count": 70,
+      "max_depth": 2,
+      "sources": [
+        "ncx"
+      ],
+      "fragment_requests": 178,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0,
+      "jump_samples": [
+        {
+          "index": 6,
+          "title": "Capítulo 1: Yeongdo, Busan, Coreia",
+          "part": 10,
+          "offset": 0,
+          "expected_offset": 0,
+          "line": 0,
+          "expected_line": 0,
+          "line_delta": 0,
+          "part_page": 0,
+          "reverse_index": 6,
+          "passed": true
+        },
+        {
+          "index": 12,
+          "title": "Capítulo 7",
+          "part": 22,
+          "offset": 0,
+          "expected_offset": 0,
+          "line": 0,
+          "expected_line": 0,
+          "line_delta": 0,
+          "part_page": 0,
+          "reverse_index": 12,
+          "passed": true
+        },
+        {
+          "index": 19,
+          "title": "Capítulo 14",
+          "part": 36,
+          "offset": 0,
+          "expected_offset": 0,
+          "line": 0,
+          "expected_line": 0,
+          "line_delta": 0,
+          "part_page": 0,
+          "reverse_index": 19,
+          "passed": true
+        },
+        {
+          "index": 26,
+          "title": "Capítulo 3: Abril de 1940",
+          "part": 50,
+          "offset": 0,
+          "expected_offset": 0,
+          "line": 0,
+          "expected_line": 0,
+          "line_delta": 0,
+          "part_page": 0,
+          "reverse_index": 26,
+          "passed": true
+        },
+        {
+          "index": 32,
+          "title": "Capítulo 9: Osaka, 1949",
+          "part": 62,
+          "offset": 0,
+          "expected_offset": 0,
+          "line": 0,
+          "expected_line": 0,
+          "line_delta": 0,
+          "part_page": 0,
+          "reverse_index": 32,
+          "passed": true
+        },
+        {
+          "index": 39,
+          "title": "Capítulo 16: Osaka, abril de 1960",
+          "part": 76,
+          "offset": 0,
+          "expected_offset": 0,
+          "line": 0,
+          "expected_line": 0,
+          "line_delta": 0,
+          "part_page": 0,
+          "reverse_index": 39,
+          "passed": true
+        },
+        {
+          "index": 46,
+          "title": "Capítulo 2: Osaka, abril de 1965",
+          "part": 90,
+          "offset": 0,
+          "expected_offset": 0,
+          "line": 0,
+          "expected_line": 0,
+          "line_delta": 0,
+          "part_page": 0,
+          "reverse_index": 46,
+          "passed": true
+        },
+        {
+          "index": 52,
+          "title": "Capítulo 8: Nagano, agosto de 1978",
+          "part": 102,
+          "offset": 0,
+          "expected_offset": 0,
+          "line": 0,
+          "expected_line": 0,
+          "line_delta": 0,
+          "part_page": 0,
+          "reverse_index": 52,
+          "passed": true
+        },
+        {
+          "index": 59,
+          "title": "Capítulo 15: Nova York, 1985",
+          "part": 116,
+          "offset": 0,
+          "expected_offset": 0,
+          "line": 0,
+          "expected_line": 0,
+          "line_delta": 0,
+          "part_page": 0,
+          "reverse_index": 59,
+          "passed": true
+        },
+        {
+          "index": 65,
+          "title": "Capítulo 21: Tóquio, 1989",
+          "part": 128,
+          "offset": 0,
+          "expected_offset": 0,
+          "line": 0,
+          "expected_line": 0,
+          "line_delta": 0,
+          "part_page": 0,
+          "reverse_index": 65,
+          "passed": true
+        }
+      ],
+      "jumps_passed": 10
+    },
+    {
+      "id": "the-absolutely-true-diary-of-a-part-time-indian",
+      "sha256": "eedadec8e91f54e53e0587127b8ed2ca12d7d97b282f8a734b709468b7c2cf67",
+      "toc_count": 20,
+      "max_depth": 1,
+      "sources": [
+        "ncx"
+      ],
+      "fragment_requests": 0,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "the-distance-between-us-a-memoir",
+      "sha256": "19591466f9b795f978f6061ac9979d8bd420ddf29cc849a4c970190a968844e3",
+      "toc_count": 55,
+      "max_depth": 2,
+      "sources": [
+        "ncx"
+      ],
+      "fragment_requests": 115,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "the-fire-next-time",
+      "sha256": "e0e361a8b3eb84cab263dac4efd69953b48c0a8d7b1972011a2f8e3deaab4570",
+      "toc_count": 9,
+      "max_depth": 1,
+      "sources": [
+        "ncx"
+      ],
+      "fragment_requests": 0,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+      "sha256": "3662ed4599157e8a94e1869a43b7e231244862c520ac4fe02f3a047893d23ef0",
+      "toc_count": 29,
+      "max_depth": 2,
+      "sources": [
+        "ncx"
+      ],
+      "fragment_requests": 13,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "sha256": "5a3b11c8f3ee4dd1c41d264aaf27dd83bb82faa1ebf3c7370a7072a0711cb3df",
+      "toc_count": 1,
+      "max_depth": 1,
+      "sources": [
+        "ncx"
+      ],
+      "fragment_requests": 0,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "hongloumeng-24264",
+      "sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+      "toc_count": 108,
+      "max_depth": 1,
+      "sources": [
+        "正文恢复"
+      ],
+      "fragment_requests": 1,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0,
+      "jump_samples": [
+        {
+          "index": 0,
+          "title": "第一回 甄士隱夢幻識通靈 賈雨村風塵怀閨秀",
+          "part": 1,
+          "offset": 762,
+          "expected_offset": 762,
+          "line": 23,
+          "expected_line": 23,
+          "line_delta": 0,
+          "part_page": 3,
+          "reverse_index": 0,
+          "passed": true
+        },
+        {
+          "index": 12,
+          "title": "第十三回 秦可卿死封龍禁尉 王熙鳳協理宁國府",
+          "part": 3,
+          "offset": 61997,
+          "expected_offset": 61997,
+          "line": 945,
+          "expected_line": 945,
+          "line_delta": 0,
+          "part_page": 41,
+          "reverse_index": 12,
+          "passed": true
+        },
+        {
+          "index": 24,
+          "title": "第三十一回 撕扇子作千金一笑 因麒麟伏白首雙星 話",
+          "part": 7,
+          "offset": 42544,
+          "expected_offset": 42544,
+          "line": 649,
+          "expected_line": 649,
+          "line_delta": 0,
+          "part_page": 28,
+          "reverse_index": 24,
+          "passed": true
+        },
+        {
+          "index": 36,
+          "title": "第四十九回 琉璃世界白雪紅梅 脂粉香娃割腥啖膻",
+          "part": 11,
+          "offset": 4551,
+          "expected_offset": 4551,
+          "line": 70,
+          "expected_line": 70,
+          "line_delta": 0,
+          "part_page": 3,
+          "reverse_index": 36,
+          "passed": true
+        },
+        {
+          "index": 48,
+          "title": "第六十一回 投鼠忌器寶玉瞞贓 判冤決獄平儿行權",
+          "part": 14,
+          "offset": 37221,
+          "expected_offset": 37221,
+          "line": 566,
+          "expected_line": 566,
+          "line_delta": 0,
+          "part_page": 25,
+          "reverse_index": 48,
+          "passed": true
+        },
+        {
+          "index": 59,
+          "title": "第七十二回 王熙鳳恃強羞說病 來旺婦倚勢霸成親",
+          "part": 17,
+          "offset": 79273,
+          "expected_offset": 79273,
+          "line": 1214,
+          "expected_line": 1214,
+          "line_delta": 0,
+          "part_page": 54,
+          "reverse_index": 59,
+          "passed": true
+        },
+        {
+          "index": 71,
+          "title": "第八十四回 試文字寶玉始提親 探惊風賈環重結怨",
+          "part": 21,
+          "offset": 48442,
+          "expected_offset": 48442,
+          "line": 735,
+          "expected_line": 735,
+          "line_delta": 0,
+          "part_page": 32,
+          "reverse_index": 71,
+          "passed": true
+        },
+        {
+          "index": 83,
+          "title": "第九十六回 瞞消息鳳姐設奇謀 泄机關顰儿迷本性",
+          "part": 24,
+          "offset": 18797,
+          "expected_offset": 18797,
+          "line": 286,
+          "expected_line": 286,
+          "line_delta": 0,
+          "part_page": 12,
+          "reverse_index": 83,
+          "passed": true
+        },
+        {
+          "index": 95,
+          "title": "第一零八回 強歡笑蘅蕪慶生辰 死纏綿瀟湘聞鬼哭",
+          "part": 26,
+          "offset": 69640,
+          "expected_offset": 69640,
+          "line": 1059,
+          "expected_line": 1059,
+          "line_delta": 0,
+          "part_page": 46,
+          "reverse_index": 95,
+          "passed": true
+        },
+        {
+          "index": 107,
+          "title": "第一二零回 甄士隱詳說太虛情 賈雨村歸結紅樓夢",
+          "part": 29,
+          "offset": 50341,
+          "expected_offset": 50341,
+          "line": 765,
+          "expected_line": 765,
+          "line_delta": 0,
+          "part_page": 33,
+          "reverse_index": 107,
+          "passed": true
+        }
+      ],
+      "jumps_passed": 10
+    },
+    {
+      "id": "xingshihengyan-24239",
+      "sha256": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+      "toc_count": 40,
+      "max_depth": 1,
+      "sources": [
+        "正文恢复"
+      ],
+      "fragment_requests": 1,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0,
+      "jump_samples": [
+        {
+          "index": 0,
+          "title": "第一卷",
+          "part": 1,
+          "offset": 778,
+          "expected_offset": 778,
+          "line": 23,
+          "expected_line": 23,
+          "line_delta": 0,
+          "part_page": 3,
+          "reverse_index": 0,
+          "passed": true
+        },
+        {
+          "index": 4,
+          "title": "第五卷",
+          "part": 3,
+          "offset": 40089,
+          "expected_offset": 40089,
+          "line": 637,
+          "expected_line": 637,
+          "line_delta": 0,
+          "part_page": 27,
+          "reverse_index": 4,
+          "passed": true
+        },
+        {
+          "index": 9,
+          "title": "第十卷",
+          "part": 5,
+          "offset": 32969,
+          "expected_offset": 32969,
+          "line": 514,
+          "expected_line": 514,
+          "line_delta": 0,
+          "part_page": 22,
+          "reverse_index": 9,
+          "passed": true
+        },
+        {
+          "index": 13,
+          "title": "第十四卷",
+          "part": 6,
+          "offset": 56442,
+          "expected_offset": 56442,
+          "line": 929,
+          "expected_line": 929,
+          "line_delta": 0,
+          "part_page": 40,
+          "reverse_index": 13,
+          "passed": true
+        },
+        {
+          "index": 17,
+          "title": "第十八卷",
+          "part": 8,
+          "offset": 47898,
+          "expected_offset": 47898,
+          "line": 762,
+          "expected_line": 762,
+          "line_delta": 0,
+          "part_page": 33,
+          "reverse_index": 17,
+          "passed": true
+        },
+        {
+          "index": 22,
+          "title": "第二十三卷",
+          "part": 11,
+          "offset": 45690,
+          "expected_offset": 45690,
+          "line": 728,
+          "expected_line": 728,
+          "line_delta": 0,
+          "part_page": 31,
+          "reverse_index": 22,
+          "passed": true
+        },
+        {
+          "index": 26,
+          "title": "第二十七卷",
+          "part": 13,
+          "offset": 83853,
+          "expected_offset": 83853,
+          "line": 1337,
+          "expected_line": 1337,
+          "line_delta": 0,
+          "part_page": 58,
+          "reverse_index": 26,
+          "passed": true
+        },
+        {
+          "index": 30,
+          "title": "第三十一卷",
+          "part": 16,
+          "offset": 21988,
+          "expected_offset": 21988,
+          "line": 352,
+          "expected_line": 352,
+          "line_delta": 0,
+          "part_page": 15,
+          "reverse_index": 30,
+          "passed": true
+        },
+        {
+          "index": 35,
+          "title": "第三十六卷",
+          "part": 18,
+          "offset": 37992,
+          "expected_offset": 37992,
+          "line": 603,
+          "expected_line": 603,
+          "line_delta": 0,
+          "part_page": 26,
+          "reverse_index": 35,
+          "passed": true
+        },
+        {
+          "index": 39,
+          "title": "第四十卷",
+          "part": 20,
+          "offset": 27064,
+          "expected_offset": 27064,
+          "line": 441,
+          "expected_line": 441,
+          "line_delta": 0,
+          "part_page": 19,
+          "reverse_index": 39,
+          "passed": true
+        }
+      ],
+      "jumps_passed": 10
+    },
+    {
+      "id": "tangshi300-52323",
+      "sha256": "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945",
+      "toc_count": 1,
+      "max_depth": 1,
+      "sources": [
+        "ncx"
+      ],
+      "fragment_requests": 1,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    },
+    {
+      "id": "kusamakura-japanese-vertical-writing",
+      "sha256": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7",
+      "toc_count": 14,
+      "max_depth": 1,
+      "sources": [
+        "nav"
+      ],
+      "fragment_requests": 1,
+      "missing_link_occurrences": 0,
+      "missing_examples": [],
+      "missing_unique_targets": 0
+    }
+  ]
+}
