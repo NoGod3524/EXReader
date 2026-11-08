@@ -1,0 +1,27 @@
+{
+  "enable_status": 0,
+  "read_status": 0,
+  "counter_count": 0,
+  "counter_values": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "dispatch_cycles": 51883304242,
+  "context_switches": 47,
+  "instructions_available": false,
+  "interpretation": "PMCs unconfigured if all zero; dispatch cycles and context switches usable. No Linux perf/WSL; no configured PMU driver."
+}

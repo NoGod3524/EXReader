@@ -1,4 +1,4 @@
-param([Parameter(Mandatory)][string]$Output, [int]$Seconds = 10)
+param([Parameter(Mandatory)][string]$Output, [int]$Seconds = 10, [switch]$SkipPowerDump)
 $ErrorActionPreference = 'Stop'
 if (Test-Path -LiteralPath $Output) { throw 'Refusing to overwrite preflight evidence' }
 $computer = Get-CimInstance Win32_ComputerSystem
@@ -27,7 +27,7 @@ for ($i = 0; $i -lt $Seconds; $i++) {
     cpu=@(Get-CimInstance Win32_Processor | Select-Object Name,NumberOfCores,NumberOfLogicalProcessors,MaxClockSpeed)
     system=@{manufacturer=$computer.Manufacturer; model=$computer.Model; hypervisor_present=$computer.HypervisorPresent; memory_bytes=$computer.TotalPhysicalMemory}
     active_scheme=(powercfg /getactivescheme | Out-String)
-    processor_policy=(powercfg /qh SCHEME_CURRENT SUB_PROCESSOR | Out-String)
+    processor_policy=$(if ($SkipPowerDump) { 'See session power-original/restored.json and fixed policy in load_session.ps1' } else { powercfg /qh SCHEME_CURRENT SUB_PROCESSOR | Out-String })
     thermal=$thermal; thermal_error=$thermalError
     thermal_interpretation='PerformanceLimitFlags are supplementary counters; unavailable temperature means thermal throttling cannot be ruled out.'
     samples=$samples

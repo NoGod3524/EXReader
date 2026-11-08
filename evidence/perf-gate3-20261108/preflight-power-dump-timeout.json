@@ -1,0 +1,7 @@
+{
+  "ProcessId": 9164,
+  "ParentProcessId": 24676,
+  "Name": "powercfg.exe",
+  "CommandLine": "\"C:\\Windows\\system32\\powercfg.exe\" /qh SCHEME_CURRENT SUB_PROCESSOR",
+  "CreationDate": "2026-11-08T14:12:54.528518-05:00"
+}
