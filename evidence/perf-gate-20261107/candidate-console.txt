@@ -1,0 +1,18 @@
+default-release-b1-r1: {'open_ms': 34.4354, 'first_visible_ms': 84.8422, 'peak_rss_bytes': 38621184, 'first_render_ms': 7.9225, 'turn_p50_ms': 12.0614, 'turn_p95_ms': 18.0125, 'turn_max_ms': 18.6895, 'random_p95_ms': 154.3814}
+default-release-b1-r2: {'open_ms': 35.3668, 'first_visible_ms': 77.5494, 'peak_rss_bytes': 38653952, 'first_render_ms': 8.2642, 'turn_p50_ms': 12.3082, 'turn_p95_ms': 18.8689, 'turn_max_ms': 19.5444, 'random_p95_ms': 155.3838}
+default-release-b1-r3: {'open_ms': 36.2745, 'first_visible_ms': 80.2513, 'peak_rss_bytes': 38641664, 'first_render_ms': 7.596, 'turn_p50_ms': 13.0445, 'turn_p95_ms': 18.6073, 'turn_max_ms': 19.692, 'random_p95_ms': 161.6562}
+default-release-b1-r4: {'open_ms': 35.0394, 'first_visible_ms': 77.4376, 'peak_rss_bytes': 38645760, 'first_render_ms': 8.0069, 'turn_p50_ms': 12.1561, 'turn_p95_ms': 18.4507, 'turn_max_ms': 18.9054, 'random_p95_ms': 157.0122}
+default-release-b1-r5: {'open_ms': 34.9873, 'first_visible_ms': 78.1816, 'peak_rss_bytes': 38645760, 'first_render_ms': 8.167, 'turn_p50_ms': 12.6842, 'turn_p95_ms': 18.4657, 'turn_max_ms': 18.8791, 'random_p95_ms': 161.72}
+default-release batch 1: dispersion >=5% or unmet precondition; complete batch retained; no automatic retry
+1280x800-b1-r1: {'open_ms': 35.3497, 'first_visible_ms': 81.5617, 'peak_rss_bytes': 38649856, 'first_render_ms': 10.5481, 'turn_p50_ms': 15.4434, 'turn_p95_ms': 21.9385, 'turn_max_ms': 22.4229, 'random_p95_ms': 188.324}
+1280x800-b1-r2: {'open_ms': 33.9926, 'first_visible_ms': 81.655, 'peak_rss_bytes': 38653952, 'first_render_ms': 10.1555, 'turn_p50_ms': 15.2499, 'turn_p95_ms': 21.4355, 'turn_max_ms': 21.998, 'random_p95_ms': 186.1201}
+1280x800-b1-r3: {'open_ms': 34.0001, 'first_visible_ms': 83.9625, 'peak_rss_bytes': 38625280, 'first_render_ms': 10.3192, 'turn_p50_ms': 15.0566, 'turn_p95_ms': 21.4334, 'turn_max_ms': 21.9044, 'random_p95_ms': 178.9068}
+1280x800-b1-r4: {'open_ms': 33.9564, 'first_visible_ms': 84.9704, 'peak_rss_bytes': 38645760, 'first_render_ms': 10.4584, 'turn_p50_ms': 15.5794, 'turn_p95_ms': 21.5798, 'turn_max_ms': 23.3533, 'random_p95_ms': 187.3725}
+1280x800-b1-r5: {'open_ms': 34.7464, 'first_visible_ms': 81.7994, 'peak_rss_bytes': 38645760, 'first_render_ms': 10.3742, 'turn_p50_ms': 15.3191, 'turn_p95_ms': 21.7285, 'turn_max_ms': 22.2363, 'random_p95_ms': 179.0136}
+1280x800 batch 1: dispersion >=5% or unmet precondition; complete batch retained; no automatic retry
+2560x1440-b1-r1: {'open_ms': 34.0, 'first_visible_ms': 123.9983, 'peak_rss_bytes': 41709568, 'first_render_ms': 33.1096, 'turn_p50_ms': 56.0908, 'turn_p95_ms': 59.8911, 'turn_max_ms': 60.0646, 'random_p95_ms': 557.4951}
+2560x1440-b1-r2: {'open_ms': 37.4109, 'first_visible_ms': 128.8714, 'peak_rss_bytes': 41713664, 'first_render_ms': 34.5966, 'turn_p50_ms': 54.5017, 'turn_p95_ms': 63.2472, 'turn_max_ms': 66.7568, 'random_p95_ms': 563.0463}
+2560x1440-b1-r3: {'open_ms': 34.1036, 'first_visible_ms': 124.2459, 'peak_rss_bytes': 41701376, 'first_render_ms': 35.4494, 'turn_p50_ms': 55.709, 'turn_p95_ms': 64.324, 'turn_max_ms': 65.5309, 'random_p95_ms': 556.2841}
+2560x1440-b1-r4: {'open_ms': 34.8588, 'first_visible_ms': 122.2535, 'peak_rss_bytes': 41693184, 'first_render_ms': 32.7711, 'turn_p50_ms': 55.6826, 'turn_p95_ms': 62.3323, 'turn_max_ms': 66.5745, 'random_p95_ms': 563.9887}
+2560x1440-b1-r5: {'open_ms': 34.4589, 'first_visible_ms': 124.243, 'peak_rss_bytes': 41676800, 'first_render_ms': 33.5002, 'turn_p50_ms': 54.7994, 'turn_p95_ms': 61.7105, 'turn_max_ms': 74.7641, 'random_p95_ms': 554.965}
+2560x1440 batch 1: dispersion >=5% or unmet precondition; complete batch retained; no automatic retry
