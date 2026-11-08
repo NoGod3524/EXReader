@@ -134,7 +134,7 @@ exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
     g->flags &= ~selected->style_flags;
     g->glyph = FT_Get_Char_Index(selected->face, cp);
     if (exr_font_size(selected, g->size) ||
-        ((g->flags & EXR_GLYPH_VERTICAL) && !(g->flags & EXR_GLYPH_SIDEWAYS) ?
+        ((g->flags & EXR_GLYPH_VERTICAL) && !(g->flags & (EXR_GLYPH_SIDEWAYS|EXR_GLYPH_COMBINED)) ?
          exr_measure_vertical(selected, g->glyph, g->flags, &g->advance) :
          exr_measure(selected, g->glyph, g->flags, &g->advance)))
       return fail(f, EXR_FONT, "Cannot measure selected font");
@@ -155,7 +155,10 @@ static exr_status project_line(flow *f, exr_line *line) {
     if (g->flags & EXR_GLYPH_SIDEWAYS)
       g->x = f->writing_mode == EXR_WRITING_VERTICAL_RL ? f->origin_x - baseline :
                                                        2 * start + height - baseline;
-    else {
+    else if (g->flags & EXR_GLYPH_COMBINED) {
+      /* Horizontal block: offsets were fixed at shaping time, only the column centre is projected. */
+      g->x = f->writing_mode == EXR_WRITING_VERTICAL_RL ? f->origin_x - start - height / 2 : start + height / 2;
+    } else {
       exr_face *face = &f->font->faces[g->font_index];
       FT_Glyph_Metrics metrics;
       if(face->bitmap_only) {
