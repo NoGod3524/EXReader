@@ -1,0 +1,42 @@
+HOST	phase=1	engine=3.42.0	pid=25584
+STEP	1	import	PASS	page=0;status=已导入《SDK Comic》并写入书架。
+STEP	2	wait_idle	PASS	page=0;status=已导入《SDK Comic》并写入书架。
+STEP	3	open	PASS	page=1;status=已打开《SDK Comic》。
+STEP	4	wait_idle	PASS	page=1;status=已打开《SDK Comic》。
+STEP	5	shell	PASS	reading screen
+STEP	6	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	7	shell_client	PASS	page=1;status=第 1 页。
+STEP	8	shell_font	PASS	page=1;status=第 1 页。
+STEP	9	wait_idle	PASS	page=1;status=第 1 页。
+STEP	10	shell_click	PASS	button invoked
+STEP	11	shell_page	PASS	already at page
+STEP	12	wait_idle	PASS	page=1;status=第 1 页。
+STEP	13	shelf_dump	PASS	shelf state recorded
+STEP	14	gesture_swipe	PASS	gesture dispatched
+STEP	15	wait_idle	PASS	page=1;status=已经是第一页。
+STEP	16	shelf_dump	PASS	shelf state recorded
+STEP	17	gesture_swipe	PASS	gesture dispatched
+STEP	18	wait_idle	PASS	page=1;status=已经是第一页。
+STEP	19	shelf_dump	PASS	shelf state recorded
+STEP	20	gesture_swipe	PASS	gesture dispatched
+STEP	21	wait_idle	PASS	page=1;status=已经是第一页。
+STEP	22	shelf_dump	PASS	shelf state recorded
+STEP	23	shell_page	PASS	page=4;status=第 4 页。
+STEP	24	wait_idle	PASS	page=4;status=第 4 页。
+STEP	25	shelf_dump	PASS	shelf state recorded
+STEP	26	gesture_swipe	PASS	gesture dispatched
+STEP	27	wait_idle	PASS	page=4;status=已到最后一页；当前页未改变。
+STEP	28	shelf_dump	PASS	shelf state recorded
+STEP	29	gesture_swipe	PASS	gesture dispatched
+STEP	30	wait_idle	PASS	page=4;status=已到最后一页；当前页未改变。
+STEP	31	shelf_dump	PASS	shelf state recorded
+STEP	32	gesture_swipe	PASS	gesture dispatched
+STEP	33	wait_idle	PASS	page=4;status=已到最后一页；当前页未改变。
+STEP	34	shelf_dump	PASS	shelf state recorded
+STEP	35	shelf_return	PASS	return requested
+STEP	36	wait_idle	PASS	page=4;status=已到最后一页；当前页未改变。
+STEP	37	shelf_open	PASS	shelf row clicked
+STEP	38	wait_idle	PASS	page=4;status=已到最后一页；当前页未改变。
+STEP	39	shelf_dump	PASS	shelf state recorded
+STEP	40	quit	PASS	closing
+DONE	40	eof	PASS	script finished

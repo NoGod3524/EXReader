@@ -1,0 +1,79 @@
+HOST	phase=1	engine=3.42.0	pid=2784
+STEP	1	import	PASS	page=0;status=已导入《草枕》并写入书架。
+STEP	2	wait_idle	PASS	page=0;status=已导入《草枕》并写入书架。
+STEP	3	open	PASS	page=1;status=已打开《草枕》 · 从首个阅读章节开始。
+STEP	4	wait_idle	PASS	page=1;status=已打开《草枕》 · 从首个阅读章节开始。
+STEP	5	shell	PASS	reading screen
+STEP	6	shell_dpi	PASS	page=2;status=第 2 页。
+STEP	7	shell_client	PASS	page=2;status=第 2 页。
+STEP	8	shell_font	PASS	page=2;status=第 2 页。
+STEP	9	wait_idle	PASS	page=2;status=第 2 页。
+STEP	10	shell_click	PASS	button invoked
+STEP	11	shell_page	PASS	page=6;status=第 6 页。
+STEP	12	wait_idle	PASS	page=6;status=第 6 页。
+STEP	13	shell_measure	PASS	physical layout captured
+STEP	14	shelf_dump	PASS	shelf state recorded
+STEP	15	gesture_tap	PASS	gesture dispatched
+STEP	16	wait_idle	PASS	page=7;status=第 7 页。
+STEP	17	shelf_dump	PASS	shelf state recorded
+STEP	18	gesture_tap	PASS	gesture dispatched
+STEP	19	wait_idle	PASS	page=8;status=第 8 页。
+STEP	20	shelf_dump	PASS	shelf state recorded
+STEP	21	gesture_tap	PASS	gesture dispatched
+STEP	22	wait_idle	PASS	page=9;status=第 9 页。
+STEP	23	shelf_dump	PASS	shelf state recorded
+STEP	24	gesture_tap	PASS	gesture dispatched
+STEP	25	wait_idle	PASS	page=10;status=第 10 页。
+STEP	26	shelf_dump	PASS	shelf state recorded
+STEP	27	gesture_tap	PASS	gesture dispatched
+STEP	28	wait_idle	PASS	page=11;status=第 11 页。
+STEP	29	shelf_dump	PASS	shelf state recorded
+STEP	30	gesture_tap	PASS	gesture dispatched
+STEP	31	wait_idle	PASS	page=10;status=第 10 页。
+STEP	32	shelf_dump	PASS	shelf state recorded
+STEP	33	gesture_tap	PASS	gesture dispatched
+STEP	34	wait_idle	PASS	page=9;status=第 9 页。
+STEP	35	shelf_dump	PASS	shelf state recorded
+STEP	36	gesture_tap	PASS	gesture dispatched
+STEP	37	wait_idle	PASS	page=8;status=第 8 页。
+STEP	38	shelf_dump	PASS	shelf state recorded
+STEP	39	gesture_tap	PASS	gesture dispatched
+STEP	40	wait_idle	PASS	page=7;status=第 7 页。
+STEP	41	shelf_dump	PASS	shelf state recorded
+STEP	42	gesture_tap	PASS	gesture dispatched
+STEP	43	wait_idle	PASS	page=6;status=第 6 页。
+STEP	44	shelf_dump	PASS	shelf state recorded
+STEP	45	gesture_swipe	PASS	gesture dispatched
+STEP	46	wait_idle	PASS	page=5;status=第 5 页。
+STEP	47	shelf_dump	PASS	shelf state recorded
+STEP	48	gesture_swipe	PASS	gesture dispatched
+STEP	49	wait_idle	PASS	page=4;status=第 4 页。
+STEP	50	shelf_dump	PASS	shelf state recorded
+STEP	51	gesture_swipe	PASS	gesture dispatched
+STEP	52	wait_idle	PASS	page=3;status=第 3 页。
+STEP	53	shelf_dump	PASS	shelf state recorded
+STEP	54	gesture_swipe	PASS	gesture dispatched
+STEP	55	wait_idle	PASS	page=2;status=第 2 页。
+STEP	56	shelf_dump	PASS	shelf state recorded
+STEP	57	gesture_swipe	PASS	gesture dispatched
+STEP	58	wait_idle	PASS	page=1;status=第 1 页。
+STEP	59	shelf_dump	PASS	shelf state recorded
+STEP	60	gesture_swipe	PASS	gesture dispatched
+STEP	61	wait_idle	PASS	page=2;status=第 2 页。
+STEP	62	shelf_dump	PASS	shelf state recorded
+STEP	63	gesture_swipe	PASS	gesture dispatched
+STEP	64	wait_idle	PASS	page=3;status=第 3 页。
+STEP	65	shelf_dump	PASS	shelf state recorded
+STEP	66	gesture_swipe	PASS	gesture dispatched
+STEP	67	wait_idle	PASS	page=4;status=第 4 页。
+STEP	68	shelf_dump	PASS	shelf state recorded
+STEP	69	gesture_swipe	PASS	gesture dispatched
+STEP	70	wait_idle	PASS	page=5;status=第 5 页。
+STEP	71	shelf_dump	PASS	shelf state recorded
+STEP	72	gesture_swipe	PASS	gesture dispatched
+STEP	73	wait_idle	PASS	page=6;status=第 6 页。
+STEP	74	shelf_dump	PASS	shelf state recorded
+STEP	75	shell_measure	PASS	physical layout captured
+STEP	76	probe_wait	PASS	waited without blocking UI
+STEP	77	quit	PASS	closing
+DONE	77	eof	PASS	script finished

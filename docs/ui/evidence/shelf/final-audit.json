@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-08",
+  "source_hashes_verified": 14,
+  "recorded_binaries_verified": [
+    "EXE",
+    "SDK",
+    "font",
+    "DPI capture script"
+  ],
+  "independent_build": "User-provided GCC/G++ commands plus -Wall -Wextra -Werror; same SDK and font",
+  "interaction": {
+    "roundtrips": "3/3; same content range, page and raster; no pager rebuild",
+    "tap_zones": {
+      "25": "15/15",
+      "20": "15/15"
+    },
+    "single_clicks": "10/10",
+    "drag_selection": "10/10; long text drags never flip",
+    "swipes": "20/20",
+    "vertical_taps": "10/10",
+    "vertical_swipes": "10/10 extra",
+    "unsaved_note": "saved on Ctrl+W; verified after process restart",
+    "restart": "1/1 identical content range/page/raster; open settles before shell activation",
+    "startup_shelf": "1/1",
+    "uncached_reopen": "1/1 after reading another title",
+    "shelf_books": 3,
+    "screenshots": [
+      "flow/shelf.png",
+      "flow/reading.png",
+      "flow/hidden.png",
+      "flow/regions.png",
+      "vertical/vertical.png"
+    ],
+    "boundaries": "6/6 ignored; fixed stable page-id restore 2/2",
+    "rapid_taps": "2/2 DBLCLK gutter messages turn pages",
+    "capture": "ops/capture_window.py",
+    "exe_sha256": "b14fefa750d8cd9c4b24d9a83a14cb8acbfdf6ddf4d4aed2beb713b8c26eb422"
+  },
+  "selftest": {
+    "schema": 1,
+    "passed": true,
+    "platform": "Windows",
+    "checks": 26,
+    "engine_version": "3.42.0"
+  },
+  "ctest": {
+    "passed": 212,
+    "total": 212,
+    "seconds": 289.69
+  },
+  "raw_regression_recheck": {
+    "books": 19,
+    "pages": 11484,
+    "page_count_changes": 0,
+    "glyph_count_changes": 0,
+    "pixel_hash_changes": 0
+  },
+  "acceptance_script_sha256": "40da23cad6cfa4a52ac83e25ead60b0213f30a5badd9e5970ad514da88c05c19"
+}

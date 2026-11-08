@@ -1,0 +1,29 @@
+{
+  "base": "b7bad7f05cd017de87523ad221d2516ad638259f",
+  "exe_sha256": "e01e36b870ec806243c78fb9db7b7d8b4f24351adad7c9679f3bb2357b4a1f91",
+  "sdk_sha256": "087feff3c3a03f8b2bcf048ed2a3b5574b38256911607a28419051a26c64be88",
+  "font_sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280",
+  "baseline_bridge_sha256": "345a685fa6aabe83fd5e0a15b1cee0476a34bbfae35a25865e2b0901597f2773",
+  "candidate_bridge_sha256": "7473adb41ebe44d8afa9799758d345330c65b69f2d857a01a6b994a7ca4451e1",
+  "capture": "ops/capture_window.py",
+  "capture_sha256": "7b2b711c6c239818aa0d5d2aab646fbc5d3d50b3e3e6d3c5e5393c75a2623f26",
+  "sources": {
+    "examples/reader.c": "d32a885fdbb441c82f67099c28fd8831675222140dfc41f01790011318743265",
+    "examples/windows/shell_shelf.inc": "02191db10a71315bf6bfa41cabb96db2d6f0bb1aa1136f166ba715d4e5c2779b",
+    "examples/windows/shell_gestures.inc": "f295d02bee58ac55a658f8894d4ebf0f5dfb0db8d27966bfcc138bafd285533f",
+    "examples/windows/shell_shelf_drive.inc": "3d2e89f893f5e090f0f6f41e1e65adf076347b148e349adfa34ee881864732cf",
+    "examples/windows/shell_screen.inc": "8649db3bf0977a3ba7f3c27ea2f8536f6a6b7de02730c32aebedcf7bc6780097",
+    "examples/windows/shell_selection.inc": "3c23b8f66e58a67b071cffa49fc08fe0e3fa1cfd53ffcb8d093b74802571b8d0",
+    "examples/windows/shell_settings.inc": "9451a1bfe1420e0e43427896e5e8964bcd5d8c0d302ceb48e9c3ad920c2bf91a",
+    "examples/windows/shell_tokens.h": "d30f98baecebc4774b5629f61d7cbfc5df2b451cd05c8db7b2c2ee794272565b",
+    "examples/windows/shell_d2d.cpp": "47f8d64dde8f7bf00f27ab8dc7b885597d405385ead351d42101e4d1694b361e",
+    "examples/windows/shell_d2d.h": "1aba94ae2d860680364e224afb8da2a1eb79d46eb6c4822056f5e81df05b98ce",
+    "examples/windows/shell_epub.cpp": "09d68c0de3a0436305617f7e915b79e00013ee4393f59e3cc6b90045259eda8a",
+    "examples/windows/check_shell_shelf.inc": "89f4c28781fbc92901a759620c991a10ea6306f5d70cf73d6f2c9af3315a3c8b",
+    "examples/windows/check_shell_selection.c": "c305f4b2dbba9558448543e9dd67fd2afe1be0a60c8fa5ba9615725c37e26447",
+    "examples/windows/selection_tests.cmake": "5d29be099cfa236c01eaabd2571980d9bd4b325e0aa726ca6f553960966d1fb4"
+  },
+  "engine_diff": "",
+  "ctest": "212/212",
+  "selftest": "26/26"
+}

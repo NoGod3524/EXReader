@@ -14,6 +14,9 @@
 #define WIN32_LEAN_AND_MEAN
 #define UNICODE
 #define _UNICODE
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0602
+#endif
 #include <windows.h>
 #include <commdlg.h>
 #include <shellapi.h>
@@ -124,6 +127,21 @@ static HWND host_focus(HWND window) { return host_offscreen ? GetFocus() : SetFo
 #define SetFocus host_focus
 #ifdef EXR_READER_WINDOWS_SHELL
 static int shell_drive_on, shell_legacy, shell_active;
+static int shelf_requested, shelf_visible, shelf_exit_pending, shell_bar_hidden, shell_tap_edge=25;
+static void shelf_create(HWND parent);
+static void shelf_show(int show);
+static int shelf_layout(void);
+static void shelf_refresh(void);
+static void shelf_return(void);
+static void shelf_pump(void);
+static int shelf_capture(void);
+static int shelf_before_exit(void);
+static void shelf_imported(int64_t id,const wchar_t *path);
+static void shelf_opened(void);
+static void shelf_resume(size_t offset);
+static void shelf_load(void);
+static void shelf_destroy(void);
+static void gesture_overlay(HDC dc,const RECT *area);
 static unsigned shell_dpi = 96;
 static BOOL shell_dpi_requested;
 static DWORD shell_dpi_error;
@@ -144,6 +162,7 @@ static shell_geometry shell_target;
 static void shell_request_layout(void);
 static void shell_pump_layout(void);
 static int select_valid, select_drag, select_turn;
+static int shell_drag_begin;
 static void shell_selection_reset(void);
 static void shell_selection_landed(void);
 static void annot_sync(void);
@@ -367,6 +386,11 @@ typedef struct {
 } host_state;
 
 static host_state g;
+#ifdef EXR_READER_WINDOWS_SHELL
+static exr_status shelf_restore(host_session *session,const exr_control *control,size_t *page,size_t *offset,int *found,exr_error *error);
+static exr_status shell_align_anchor(host_session *,size_t,host_frame *,const exr_control *,exr_error *);
+static void shelf_fixed_page(int64_t id,const exr_fixed_page *pages,size_t count,size_t *target);
+#endif
 static int dragging;
 #ifdef EXR_READER_WINDOWS_SHELL
 static int shell_wants_reading(void) {
@@ -796,6 +820,7 @@ static void prefs_initialize(void);
 /* Settings: host preferences only. Books, progress and annotations live in SQLite. */
 static void settings_load(void) {
 #ifdef EXR_READER_WINDOWS_SHELL
+  shell_tap_edge=GetPrivateProfileIntW(L"Host",L"TapEdge",25,g.settings_path)==20 ? 20:25;
   shell_theme_mode=(int)GetPrivateProfileIntW(L"Host",L"ShellTheme",2,g.settings_path);
   if(shell_theme_mode<0 || shell_theme_mode>2) shell_theme_mode=2;
   int font=(int)GetPrivateProfileIntW(L"Host",L"ShellFont",SHELL_BODY_DEFAULT_FONT,g.settings_path);
@@ -835,6 +860,8 @@ static void settings_save(void) {
   wchar_t number[64];
   if (!g.settings_path[0]) return;
 #ifdef EXR_READER_WINDOWS_SHELL
+  swprintf(number,64,L"%d",shell_tap_edge);
+  WritePrivateProfileStringW(L"Host",L"TapEdge",number,g.settings_path);
   swprintf(number,64,L"%d",shell_theme_mode);
   WritePrivateProfileStringW(L"Host",L"ShellTheme",number,g.settings_path);
   swprintf(number,64,L"%.0f",(double)shell_font);
@@ -1163,7 +1190,7 @@ struct host_job {
 #ifdef EXR_READER_WINDOWS_SHELL
   shell_geometry shell_geometry;
   unsigned long shell_epoch;
-  int shell_toc_jump, shell_search_jump;
+  int shell_toc_jump, shell_search_jump, shelf_restored;
 #endif
   volatile LONG cancel;
   int kind;
@@ -2693,6 +2720,9 @@ static exr_status job_open(host_job *job) {
     }
     session.page_count = count;
     target = book.position;
+#ifdef EXR_READER_WINDOWS_SHELL
+    shelf_fixed_page(book.id,pages,count,&target);
+#endif
     if (target >= count) {
       target = count - 1;
       copy_wstring(job->message, 512, L"保存的页码超出范围，已回到最后一页。");
@@ -2737,9 +2767,22 @@ static exr_status job_open(host_job *job) {
     if (status == EXR_OK) {
       size_t page = 0;
       exr_control control = {job_cancel_check, NULL, job};
+      size_t shelf_offset=0;int shelf_found=0;
+#ifdef EXR_READER_WINDOWS_SHELL
+      status=shelf_restore(&session,&control,&page,&shelf_offset,&shelf_found,&error);
+      if(status==EXR_OK && !shelf_found)
+#endif
       status = session.bounded ? bounded_restore(&session, &control, &page, job->message, 512, &error)
                                : reflow_restore(&session, &control, &page, job->message, 512);
       if (status == EXR_OK) status = render_reflow(&session, page, &job->frame, &control, &error);
+#ifdef EXR_READER_WINDOWS_SHELL
+      if(status==EXR_OK && shelf_found) {
+        status=shell_align_anchor(&session,shelf_offset,&job->frame,&control,&error);
+        job->shelf_restored=1;job->target_offset=shelf_offset;
+      }
+#else
+      (void)shelf_offset;(void)shelf_found;
+#endif
     }
   }
 #if defined(EXR_READER_WINDOWS_SEARCH) || defined(EXR_READER_WINDOWS_NAVIGATION) || defined(EXR_READER_WINDOWS_RECORDS)
@@ -4037,6 +4080,7 @@ static void compose_page_view(HWND window) {
     DrawTextW(dc, hint, -1, &text, DT_CENTER | DT_VCENTER | DT_WORDBREAK);
   }
 #ifdef EXR_READER_WINDOWS_SHELL
+  gesture_overlay(dc,&area);
   if (shell_page_footer(dc, &area)) {
   } else
 #endif
@@ -4174,9 +4218,12 @@ static void selection_report(void) {
 #ifdef EXR_READER_WINDOWS_SHELL
 #include "windows/shell_selection.inc"
 #include "windows/shell_annotations.inc"
+#include "windows/shell_shelf.inc"
+#include "windows/shell_gestures.inc"
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
 #ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_gesture_message(window, message, wparam, lparam)) return 0;
   if (shell_selection_message(window, message, wparam, lparam)) return 0;
 #endif
   switch (message) {
@@ -4984,6 +5031,9 @@ static void open_selected_book(void) {
   host_job *job;
 #ifdef EXR_READER_WINDOWS_SHELL
   shell_legacy = 0; /* opening a book returns to the reading screen */
+  if(!shelf_before_exit()) return;
+  if(!shelf_capture()) return;
+  shelf_requested=0;shell_bar_hidden=0;
 #endif
   if (!g.books) return;
   index = SendMessageW(g.books, LB_GETCURSEL, 0, 0);
@@ -5092,6 +5142,9 @@ static void import_path(const wchar_t *path, int dialog_fallback) {
 #endif
   job = job_new(JOB_IMPORT);
   if (!job) { set_status(L"内存不足，无法导入。"); return; }
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(!shelf_before_exit() || !shelf_capture()) {job_release(job);return;}
+#endif
   copy_wstring(job->path, HOST_PATH, chosen);
   set_statusf(L"正在导入：%ls", chosen);
   job_submit(job);
@@ -5408,6 +5461,9 @@ static void handle_job_complete(host_job *job) {
 #endif
           frame_move(&g.frame, &job->frame);
 #ifdef EXR_READER_WINDOWS_SHELL
+          shelf_requested=0;shell_bar_hidden=0;
+          if(job->shelf_restored) shelf_resume(job->target_offset);
+          shelf_opened();
           shell_toc_load();
 #endif
           memset(&g.selection, 0, sizeof(g.selection));
@@ -5521,6 +5577,9 @@ static void handle_job_complete(host_job *job) {
 #endif
       if (reload_shelf() != EXR_OK) return;
       if (job->created && !import_title_fallback(job->path, job->imported_id)) return;
+#ifdef EXR_READER_WINDOWS_SHELL
+      shelf_imported(job->imported_id,job->path);
+#endif
       {
         int index = shelf_index(job->imported_id);
         if (index >= 0 && g.books) SendMessageW(g.books, LB_SETCURSEL, (WPARAM)index, 0);
@@ -6127,6 +6186,7 @@ static int drive_execute(void) {
     drive_step_finish(annot_drive(action),"annotation action dispatched");return 0;
   }
 #include "windows/shell_annotations_navigation.inc"
+#include "windows/shell_shelf_drive.inc"
   if (!strcmp(action, "select_pointer")) {
     int ok = select_drive_pointer(drive_args[1], (size_t)strtoull(drive_args[2], NULL, 10), atoi(drive_args[3]));
     drive_step_finish(ok, "selection pointer dispatched"); return 0;
@@ -7094,6 +7154,9 @@ done:
 
 static void finish_close(HWND window) {
   if (g.job || g.pending) return;
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(!shelf_before_exit() || !shelf_capture()) {g.closing=0;return;}
+#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   prefs_close();
 #endif
@@ -7241,6 +7304,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       int id = LOWORD(wparam);
       int code = HIWORD(wparam);
 #ifdef EXR_READER_WINDOWS_SHELL
+      if (id == IDC_SHELL_BACK) { shelf_return(); return 0; }
       if (id == IDC_SHELL_SEARCH) { shell_search_set(!shell_search_open); return 0; }
       if (id == IDC_SHELL_SETTINGS) { shell_toggle_settings(); return 0; }
       if (shell_settings_command(id)) return 0;
@@ -7356,6 +7420,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       winnav_controls();
 #endif
 #ifdef EXR_READER_WINDOWS_SHELL
+      shelf_pump();
       shell_pump_layout();
 #endif
       if (g.closing) finish_close(window);
@@ -7363,6 +7428,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     }
     case WM_TIMER:
 #ifdef EXR_READER_WINDOWS_SHELL
+      if (wparam == SHELF_TIMER) {shelf_pump();return 0;}
       if (wparam == 0x5756) { shell_search_start(); return 0; }
       if (wparam == 0x5757) { shell_search_poll(); return 0; }
       if (wparam == 0x5753) { shell_animate(); return 0; }
@@ -7449,6 +7515,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       settings_save();
 #ifdef EXR_READER_WINDOWS_SHELL
       shell_search_destroy();
+      shelf_destroy();
       annot_clear();
       if(annot_brush){DeleteObject(annot_brush);annot_brush=NULL;}
       shell_d2d_destroy(host_shell);
@@ -7751,6 +7818,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   w3_startup();
 #endif
   reload_shelf();
+#ifdef EXR_READER_WINDOWS_SHELL
+  shelf_load();
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   {
     host_job *repair=job_new(JOB_PRODUCT_REPAIR);

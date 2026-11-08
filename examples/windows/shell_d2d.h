@@ -24,7 +24,8 @@ enum { SHELL_TEXT_TITLE = 0, /* 15, weight 650, left, one line with ellipsis */
        SHELL_TEXT_PAGE_NUMBER = 2,
        SHELL_TEXT_UI = 3,
        SHELL_TEXT_LABEL = 4,
-       SHELL_TEXT_STYLES = 5 };
+       SHELL_TEXT_CENTER = 5,
+       SHELL_TEXT_STYLES = 6 };
 
 /* One owner-drawn rounded icon button. Colours are 0xRRGGBB. */
 typedef struct shell_d2d_button {

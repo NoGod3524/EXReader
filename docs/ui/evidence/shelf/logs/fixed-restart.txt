@@ -1,0 +1,10 @@
+HOST	phase=1	engine=3.42.0	pid=21528
+STEP	1	shell	PASS	reading screen
+STEP	2	shell_dpi	PASS	page=4;status=第 4 页。
+STEP	3	shell_client	PASS	page=4;status=第 4 页。
+STEP	4	shell_font	PASS	page=4;status=第 4 页。
+STEP	5	wait_idle	PASS	page=4;status=第 4 页。
+STEP	6	shell_click	PASS	button invoked
+STEP	7	shelf_dump	PASS	shelf state recorded
+STEP	8	quit	PASS	closing
+DONE	8	eof	PASS	script finished
