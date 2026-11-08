@@ -369,6 +369,7 @@ static int shell_page_footer(HDC dc, const RECT *area) {
 }
 
 static int shell_translate(const MSG *message) {
+  if(dict_translate(message)) return 1;
   if(annot_translate(message)) return 1;
   if(shell_search_key(message)) return 1;
   if(shell_toc_open && message->message==WM_MOUSEWHEEL) {

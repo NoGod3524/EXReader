@@ -1,0 +1,153 @@
+{
+  "created_utc": "2026-11-08T19:51:00.199805+00:00",
+  "base_revision": "db9bab668ac725a75f3f92919edec3625879c7a8",
+  "branch": "codex/dictionary-20261108",
+  "source_state": "uncommitted implementation; exact per-file hashes below",
+  "source_sha256_raw": {
+    "CMakeLists.txt": "28d7da99f075ecd1095d0f6cf2d3934d8560de28ef22af75c0c6ee8878864ea4",
+    "cmake/modules.cmake": "285c987cb3331fc77c38ac5e96a97b69f3d8f22c8f184cb4a10e9cfe0c7189e8",
+    "examples/reader.c": "248512300531e26f0199167fbfa0d61d2a8fc210a9bb3c5e6866dfddbe497f83",
+    "examples/windows/check_shell_dictionary.inc": "0bb01037180d747d73f66e331596646da1e47cb0fc2a0c8920503f0aef407855",
+    "examples/windows/check_shell_dictionary.py": "7bca2f7cd8eb712e0b51aede84879c3f650360e9d9ff3ea8910ca56041fbfdf7",
+    "examples/windows/check_shell_selection.c": "c3066d5c374eeb64c0f1c1fc3502c95312d33db93dfc1e4398ed5a2b2b712ec3",
+    "examples/windows/selection_tests.cmake": "e10ac3d189987ad7b6d6f9adaf9ed4535c77d3e5b4151f8c74da88bf9a2a7a53",
+    "examples/windows/shell_d2d.cpp": "510725ef00dafaa398228929e383fe923740dfd9bf8989d0c6d3c491b8135064",
+    "examples/windows/shell_d2d.h": "69ef4e2b06160ef095f368f762fe1b70c6c0c8243e06654be9066fca21e61dcb",
+    "examples/windows/shell_dictionary.inc": "769abba186d5d48633443c0b71c2f4d3ff95c039a16b71838550667e19429726",
+    "examples/windows/shell_dictionary_drive.inc": "0b59503e2f12aa5be6904ab158eb064025d4eb66aa8b9e911d1f05362a05e5f4",
+    "examples/windows/shell_screen.inc": "d74150199180c45f2457205c7ac9b7e3b87fe0119981b8b909c5df7922d42a2f",
+    "examples/windows/shell_selection.inc": "15f4a9c4697a86ebd316bac531b79faeaaea080370d5528f4f33f83dde102f5d",
+    "examples/windows/shell_settings.inc": "896e604fb538126f29e069f0b8d3c99119f185af7cc3e3fc02ee1191df81c2e4",
+    "examples/windows/shell_tokens.h": "7d7b4a34b78b27aab714d1f7cf4205e1517cecac2c831a8923820423077f7d41",
+    "include/exr/dictionary.h": "582e027509fc37264029b767554d99df21ceaca38a27d855e4db3fa86d005111",
+    "src/dictionary.c": "611383f9cbcbe341e945a01d71646b953cd0e270bd683a4c2a5ef4a14906e369",
+    "tests/check_dictionary.py": "410b7ed3d5a987e3c747a8f66ea1ad843362535e0a313d10264701bde7e58a50",
+    "tests/check_dictionary_public.py": "5f0d58f40e682ca61be641933ae35ac458a8fde2ae8f4557d5ccc69ac89d3715",
+    "tests/dictionary_probe.c": "ccf670d55791a609b3b36fe649f5ce047d9a1b3b6154162f7df1f8f412f908e4",
+    "tools/layers.json": "6103e2bf11c7b6d90e3e30e3495186fdcf479b7382a5deb88e67a0fb9e6156b5"
+  },
+  "source_sha256_lf": {
+    "CMakeLists.txt": "28d7da99f075ecd1095d0f6cf2d3934d8560de28ef22af75c0c6ee8878864ea4",
+    "cmake/modules.cmake": "285c987cb3331fc77c38ac5e96a97b69f3d8f22c8f184cb4a10e9cfe0c7189e8",
+    "examples/reader.c": "248512300531e26f0199167fbfa0d61d2a8fc210a9bb3c5e6866dfddbe497f83",
+    "examples/windows/check_shell_dictionary.inc": "0bb01037180d747d73f66e331596646da1e47cb0fc2a0c8920503f0aef407855",
+    "examples/windows/check_shell_dictionary.py": "7bca2f7cd8eb712e0b51aede84879c3f650360e9d9ff3ea8910ca56041fbfdf7",
+    "examples/windows/check_shell_selection.c": "c3066d5c374eeb64c0f1c1fc3502c95312d33db93dfc1e4398ed5a2b2b712ec3",
+    "examples/windows/selection_tests.cmake": "e10ac3d189987ad7b6d6f9adaf9ed4535c77d3e5b4151f8c74da88bf9a2a7a53",
+    "examples/windows/shell_d2d.cpp": "510725ef00dafaa398228929e383fe923740dfd9bf8989d0c6d3c491b8135064",
+    "examples/windows/shell_d2d.h": "69ef4e2b06160ef095f368f762fe1b70c6c0c8243e06654be9066fca21e61dcb",
+    "examples/windows/shell_dictionary.inc": "38418ace91eb61c9c8ad1ef084c16fcb3aaa7ab2337ad6ac8bccab60ffd660ca",
+    "examples/windows/shell_dictionary_drive.inc": "0b59503e2f12aa5be6904ab158eb064025d4eb66aa8b9e911d1f05362a05e5f4",
+    "examples/windows/shell_screen.inc": "d74150199180c45f2457205c7ac9b7e3b87fe0119981b8b909c5df7922d42a2f",
+    "examples/windows/shell_selection.inc": "15f4a9c4697a86ebd316bac531b79faeaaea080370d5528f4f33f83dde102f5d",
+    "examples/windows/shell_settings.inc": "896e604fb538126f29e069f0b8d3c99119f185af7cc3e3fc02ee1191df81c2e4",
+    "examples/windows/shell_tokens.h": "7d7b4a34b78b27aab714d1f7cf4205e1517cecac2c831a8923820423077f7d41",
+    "include/exr/dictionary.h": "582e027509fc37264029b767554d99df21ceaca38a27d855e4db3fa86d005111",
+    "src/dictionary.c": "611383f9cbcbe341e945a01d71646b953cd0e270bd683a4c2a5ef4a14906e369",
+    "tests/check_dictionary.py": "410b7ed3d5a987e3c747a8f66ea1ad843362535e0a313d10264701bde7e58a50",
+    "tests/check_dictionary_public.py": "5f0d58f40e682ca61be641933ae35ac458a8fde2ae8f4557d5ccc69ac89d3715",
+    "tests/dictionary_probe.c": "ccf670d55791a609b3b36fe649f5ce047d9a1b3b6154162f7df1f8f412f908e4",
+    "tools/layers.json": "6103e2bf11c7b6d90e3e30e3495186fdcf479b7382a5deb88e67a0fb9e6156b5"
+  },
+  "artifacts": {
+    "build/baseline/libexreader.dll": "ea2b77820624cf6fc866d1959005905d8a3191d0a2fc7f0c2d669ec7899e0187",
+    "build/dict/libexreader.dll": "71a70665879b50654c30af237431cf9944c9ed319303277bf7112194da55484b",
+    "build/dict/exreader-dictionary-probe.exe": "e0d338dbc08dcf13cfbbab97a6bd6faeb1a6127982c233e78b2fd8c6e87f1ea3",
+    "build/dict/exreader-shell-selection-test.exe": "562cc4e359f11224e664cf16ee1031eed8d098ae6246fe5f3a6c8bc0845528a9",
+    "build/host/EXReader.exe": "c57e7f067304822ff4f8e92b53bf0bde7076d4858830b822da850d0738301db5"
+  },
+  "validation": {
+    "ctest": {
+      "passed": 216,
+      "total": 216,
+      "seconds": 203.77,
+      "new_groups": 5
+    },
+    "final_host_ctest": {
+      "passed": 7,
+      "total": 7
+    },
+    "final_dictionary_ctest": {
+      "passed": 4,
+      "total": 4
+    },
+    "public_query_count_rechecked": true,
+    "public": {
+      "exact": "30/30",
+      "prefix": "10/10",
+      "casefold": "5/5",
+      "synonyms": "10/10",
+      "random_access": "10/10",
+      "multi_dictionary": "2/2"
+    },
+    "host": {
+      "passed": 10,
+      "total": 10,
+      "manual_shortcut": 5,
+      "on_selection": 5
+    },
+    "vocabulary": {
+      "saved": 5,
+      "csv_sentence_correct": 5,
+      "anchor_roundtrips_after_restart": 5,
+      "book_filter_counts": [
+        4,
+        1
+      ]
+    },
+    "books": {
+      "passed": 19,
+      "total": 19,
+      "pages": 11223,
+      "glyphs": 8662455,
+      "changed_page_counts": 0,
+      "changed_glyph_counts": 0,
+      "changed_pixel_hashes": 0
+    }
+  },
+  "regression_contract": {
+    "driver_sha256": "2fd0a1fa0d28804a7e6583367d91d9f7e48f43e662deb957f01b59f6471c8c8b",
+    "font_sha256": "d79c55e68b1131eea0cc1c47be4f572d964f28c682e143db2ad09c1e4cb07a3f",
+    "layout": {
+      "width": 720,
+      "height": 1040,
+      "margin": 36,
+      "font_size": 28,
+      "line_height": 1.5,
+      "paragraph_spacing": 10,
+      "document_css": 1,
+      "embedded_fonts": 1,
+      "direction": 0,
+      "fixed_max_dimension": 720
+    },
+    "pixel_contract": "sha256/visible-row-major-RGBA8/white/v1",
+    "environment": {
+      "system": "Windows",
+      "machine": "AMD64"
+    },
+    "python": "3.14.7",
+    "workers": 4
+  },
+  "evidence_sha256": {
+    "books-after.json.gz": "b6b2bddedf21c47b96856ab81d41358fdefc981528f8cc8439646b823b1e0733",
+    "books-before.json.gz": "ba8c141927b9e8c5f9d7117d98f267917ea783d5b73bbc00d59e475203f9d2b8",
+    "books.diff.json": "787a0489bd23e39d727cec06e7601d0f01a0ab251242386f131711bc3eb99c53",
+    "build-config.txt": "2d7b1f47bd3b73388fd58f85081ecc771066dcd7f2b41aa0f0ba250295da49b7",
+    "ctest.txt": "f95e2026f4e93115b15df6bc03c8e9356a0da86098b63ca9ccedd52982b84991",
+    "dictionary-ctest.txt": "363a2831551935eb4ac4aec97c2bc3fbfea8ab2e05f490d585c3528f81c80ff4",
+    "dictionary-dark.png": "45e8d558c7a66f0cb8f307614724b6331752d3de40bc82ba5283c81d4f3b5ee2",
+    "dictionary-light.png": "1bbab5854e79b60b25a7b7120cc815f8b0266eddbfe8b2719972f26c14ba6b00",
+    "dictionary-missing.png": "19e944ac6db5e623a2d3ed8321b3abfd1553bfbd44342b0b1434fbc2b585fb2c",
+    "dictionary-settings.png": "99d56342e7f8c9573c9fb551d776500f54df98160474df9b1d9cd5b9c324dbd5",
+    "host-checks.json": "7e226911f879fcee90e5727cda7b04a1fa4e73a7b9adc3b054046596aeb6d637",
+    "host-ctest.txt": "6ee15b83b225ea35001e726be0a6a7d2d2f6bd444bf9845608c300bbfa005598",
+    "host-drive.txt": "a522e4d87ef5b00100350daac875bb65be371f5d7caf560c997c60d2ae445b96",
+    "host-restart.drive": "5620682f352093ef7fcd747ff4ff436327ffc9d375ac68a2f8a229a7a1450a2a",
+    "host-restart.txt": "dbd7e729142e4709380baf61d5f6a1fc9159630bbe2ee52fb191076fb4c31b9b",
+    "host-run.drive": "e3b55e6a08061a2ce8acbc7d5c38ba59aadd381d7ad90c1eda9e8d3db89229d8",
+    "host-test-build.txt": "ea77d658ad97457f971465038f21de4ef846913aa8305f107b5101efcd6f1b54",
+    "host.json": "9506fe39cc56603c9ccd971af7e448b4b083400e0e2309a4daddd0efd3fc6a96",
+    "public.json": "46d8c58f08024bfe0ac08877a769da9dd6083d0dfc4e8932df222a801f08efc9",
+    "vocabulary.png": "d821173106aa6f09d3325097f4e9c940c24a2a221bfcd05490d9d667e479612f"
+  }
+}

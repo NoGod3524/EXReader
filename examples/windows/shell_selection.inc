@@ -14,6 +14,7 @@ static int select_before(exr_text_position a, exr_text_position b) {
   return a.part < b.part || (a.part == b.part && a.offset < b.offset);
 }
 static void shell_selection_reset(void) {
+  dict_hide();
   select_valid = select_drag = select_turn = 0;
   exr_content_anchor_free(&select_anchor);
   exr_publication_free(select_single); select_single = NULL;
@@ -246,6 +247,7 @@ static HMENU select_context_menu(void) {
   int annot_active=active || annot_selected>=0;
   AppendMenuW(menu, MF_STRING | (active ? 0 : MF_GRAYED), 1, L"复制\tCtrl+C");
   AppendMenuW(menu, MF_STRING, 2, L"全选当前章节\tCtrl+A");
+  AppendMenuW(menu, MF_STRING | (active ? 0 : MF_GRAYED), 8, L"查词\tCtrl+D");
   AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 3, L"高亮 · 黄\tCtrl+H");
   AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 4, L"高亮 · 绿");
   AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 5, L"高亮 · 蓝");
@@ -255,6 +257,7 @@ static HMENU select_context_menu(void) {
 }
 static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
   if (!shell_active || g.frame.fixed || (!g.session.publication && !g.session.document)) return 0;
+  if (message==WM_KEYUP && wparam>=VK_LEFT && wparam<=VK_DOWN) {dict_auto_lookup();return 0;}
   if (message == WM_KEYDOWN && wparam == VK_ESCAPE) {
     annot_selected=-1; selection_clear(); return 1;
   }
@@ -307,9 +310,10 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
     if (select_clicks == 1 && abs(x-select_last_x)+abs(y-select_last_y) <= 2 && !g.selection.active)
       select_set(select_origin, select_focus, -1, 1);
     else select_update(x, y, 1);
-    select_drag = 0; KillTimer(window, SHELL_SELECT_TIMER); ReleaseCapture(); selection_report(); return 1;
+    select_drag = 0; KillTimer(window, SHELL_SELECT_TIMER); ReleaseCapture(); selection_report(); dict_auto_lookup(); return 1;
   }
   if (message == WM_KEYDOWN) {
+    if ((GetKeyState(VK_CONTROL)&0x8000) && wparam == 'D') { dict_lookup(); return 1; }
     if ((GetKeyState(VK_SHIFT)&0x8000) && wparam >= VK_LEFT && wparam <= VK_DOWN) { select_move((UINT)wparam); return 1; }
     if ((GetKeyState(VK_CONTROL)&0x8000) && wparam == 'A') { select_all_part(); return 1; }
     if (wparam==VK_DELETE && annot_command(7)) return 1;
@@ -324,7 +328,8 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
     DestroyMenu(menu);
     if (command == 1) copy_quote();
     if (command == 2) select_all_part();
-    if (command >= 3) annot_command((int)command);
+    if (command == 8) dict_lookup();
+    if (command >= 3 && command <= 7) annot_command((int)command);
     return 1;
   }
   return 0;

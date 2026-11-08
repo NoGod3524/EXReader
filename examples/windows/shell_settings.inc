@@ -61,6 +61,7 @@ static void shell_step_font(int delta) {
 }
 
 static int shell_settings_command(int id) {
+  if(id==180) {shell_toggle_settings();dict_manager_open();return 1;}
   if(id==IDC_SHELL_MINUS || id==IDC_SHELL_PLUS) { shell_step_font(id==IDC_SHELL_PLUS ? 1 : -1);return 1; }
   if(id>=IDC_SHELL_LIGHT && id<=IDC_SHELL_SYSTEM) {
     shell_theme_mode=id-IDC_SHELL_LIGHT; settings_save(); shell_apply_theme(); return 1;
@@ -88,6 +89,7 @@ static void shell_panel_layout(void) {
       shell_px(widths[i],shell_dpi)+(i<2 ? 2*frame : 0),
       shell_px(i<2 ? SHELL_CONTROL_H : SHELL_SEGMENT_H,shell_dpi)+2*frame,TRUE);
   }
+  MoveWindow(GetDlgItem(shell_panel,180),kpad+shell_px(20,shell_dpi),top+shell_px(300,shell_dpi),shell_px(320,shell_dpi),shell_px(34,shell_dpi),TRUE);
 }
 
 static float shell_ease(float x) {
@@ -180,6 +182,7 @@ static void shell_create_panel(HWND parent) {
   for(int i=0;i<3;i++) shell_segments[i]=shell_make_button(shell_panel,IDC_SHELL_LIGHT+i,names[i]);
   ShowWindow(shell_minus,SW_SHOW);ShowWindow(shell_plus,SW_SHOW);
   for(int i=0;i<3;i++) ShowWindow(shell_segments[i],SW_SHOW);
+  HWND dictionary=shell_make_button(shell_panel,180,L"词典与生词本");ShowWindow(dictionary,SW_SHOW);
 }
 
 static int shell_draw_settings(const DRAWITEMSTRUCT *item) {
@@ -195,7 +198,7 @@ static int shell_draw_settings(const DRAWITEMSTRUCT *item) {
   wchar_t text[32];GetWindowTextW(item->hwndItem,text,32);
   if(id==IDC_SHELL_MINUS) wcscpy(text,L"−");
   else if(id==IDC_SHELL_PLUS) wcscpy(text,L"+");
-  else variant=id-IDC_SHELL_LIGHT==shell_theme_mode ? 1 : 2;
+  else variant=id!=180 && id-IDC_SHELL_LIGHT==shell_theme_mode ? 1 : 2;
   shell_d2d_control(host_shell,item->hDC,&item->rcItem,text,shell_is_dark(),variant,state);
   return 1;
 }

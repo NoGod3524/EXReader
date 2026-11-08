@@ -460,7 +460,7 @@ extern "C" HRESULT shell_d2d_page_image(shell_d2d *s,HDC dc,const RECT *area,con
   hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s);return hr;
 }
 
-extern "C" HRESULT shell_d2d_note(shell_d2d *s,HDC dc,const RECT *box,int dark,const uint32_t *background) {
+extern "C" HRESULT shell_d2d_card(shell_d2d *s,HDC dc,const RECT *box,int dark,const uint32_t *background,const wchar_t *title) {
   HRESULT hr=bind_dc(s,dc,box); if(FAILED(hr)) return hr;
   const auto &c=dark ? shell_theme_dark : shell_theme_light;
   float k=s->dpi/96.f,pad=(float)SHELL_SHADOW_PAD*k,top=(float)SHELL_SHADOW_TOP*k,w=(float)(box->right-box->left),h=(float)(box->bottom-box->top);
@@ -480,8 +480,12 @@ extern "C" HRESULT shell_d2d_note(shell_d2d *s,HDC dc,const RECT *box,int dark,c
   s->dc_target->DrawRoundedRectangle(border,s->dc_brush,k);
   s->dc_brush->SetColor(D2D1::ColorF(c.text));
   s->format[SHELL_TEXT_TITLE]->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-  s->dc_target->DrawText(L"笔记",2,s->format[SHELL_TEXT_TITLE],D2D1::RectF(pad+16*k,top+10*k,w-pad-16*k,top+36*k),s->dc_brush);
+  s->dc_target->DrawText(title,(UINT32)wcslen(title),s->format[SHELL_TEXT_TITLE],D2D1::RectF(pad+16*k,top+10*k,w-pad-16*k,top+36*k),s->dc_brush);
   hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET)drop_dc_target(s);return hr;
+}
+
+extern "C" HRESULT shell_d2d_note(shell_d2d *s,HDC dc,const RECT *box,int dark,const uint32_t *background) {
+  return shell_d2d_card(s,dc,box,dark,background,L"笔记");
 }
 
 extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,const wchar_t *font,const wchar_t *family,const wchar_t *path,const uint32_t *background) {
