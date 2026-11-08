@@ -1,0 +1,86 @@
+{
+  "base_revision": "7dc3ca0c3d0277f50949cffc95c0e9f9fa1de408",
+  "environment": "Windows AMD64 / MinGW GCC 16.2.0 / Release",
+  "configuration": {
+    "CMAKE_BUILD_TYPE:STRING": "Release",
+    "CMAKE_C_COMPILER:STRING": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
+    "CMAKE_MAKE_PROGRAM:FILEPATH": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/ninja.exe",
+    "EXR_BUILD_FUZZ:BOOL": "ON",
+    "EXR_BUILD_JNI:BOOL": "OFF",
+    "EXR_BUILD_SHARED_COMPAT:BOOL": "ON",
+    "EXR_BUILD_TESTS:BOOL": "ON",
+    "EXR_BUILD_TEXT_INDEX:BOOL": "ON",
+    "EXR_BUILD_TOOLS:BOOL": "ON",
+    "EXR_ENABLE_AAC:BOOL": "OFF",
+    "EXR_ENABLE_AUDIO:BOOL": "ON",
+    "EXR_ENABLE_ICC:BOOL": "OFF",
+    "EXR_ENABLE_IMAGE_AVIF:BOOL": "OFF",
+    "EXR_ENABLE_IMAGE_TIFF:BOOL": "OFF",
+    "EXR_ENABLE_IMAGE_WEBP:BOOL": "OFF",
+    "EXR_ENABLE_LIBRARY:BOOL": "ON",
+    "EXR_ENABLE_MP3:BOOL": "OFF",
+    "EXR_ENABLE_PDF:BOOL": "ON",
+    "EXR_ENABLE_PDF_CRYPTO:BOOL": "ON",
+    "EXR_ENABLE_PDF_EDIT:BOOL": "ON",
+    "EXR_ENABLE_PDF_JPX:BOOL": "ON",
+    "EXR_ENABLE_TEXT_INDEX:BOOL": "ON",
+    "EXR_NODE_EXECUTABLE:FILEPATH": "C:/Program Files/nodejs/node.exe",
+    "EXR_SANITIZE:BOOL": "OFF",
+    "FETCHCONTENT_SOURCE_DIR_EXPAT:PATH": "C:/Users/Oscar/exr-deps/expat",
+    "FETCHCONTENT_SOURCE_DIR_FREETYPE:PATH": "C:/Users/Oscar/exr-deps/freetype-VER-2-15-0",
+    "FETCHCONTENT_SOURCE_DIR_MBEDTLS:PATH": "C:/Users/Oscar/exr-deps/mbedtls",
+    "FETCHCONTENT_SOURCE_DIR_MINIZ:PATH": "C:/Users/Oscar/exr-deps/miniz",
+    "FETCHCONTENT_SOURCE_DIR_OPENJPEG:PATH": "C:/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4",
+    "FETCHCONTENT_SOURCE_DIR_SQLITE:PATH": "C:/Users/Oscar/exr-deps/sqlite",
+    "FETCHCONTENT_SOURCE_DIR_STB:PATH": "C:/Users/Oscar/exr-deps/stb"
+  },
+  "strict_compile_flags": [
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "-Werror"
+  ],
+  "baseline_ctest_count": 198,
+  "new_ctest_groups": 5,
+  "final_ctest_count": 203,
+  "abi_epoch": 1,
+  "api_exports": [
+    "exr_fixed_page_text",
+    "exr_document_search",
+    "exr_fixed_character_at"
+  ],
+  "source_sha256": {
+    "src/fixed.c": "48bb58f7d76a6000d609b0527cf2a8c6170966fa7f7991330231d210f3db2ea6",
+    "include/exr/base.h": "a78678021c9281e2102b00e54281012cf09c6645d354068f8b6dc14ad0ea6c6e",
+    "include/exr/document.h": "eb82f0a7335e3db216291377142ce68879a0c0087d656cac6d7f0dddea74e3e5",
+    "CMakeLists.txt": "2e70d5801553e498c2037595be97516d99e9b78fa4568eada07cbdb42186f4e8",
+    "tests/test_pdf_deepening.c": "8e02635103465b34c50cabef1fd331194117964f050a9b328df3f68210534a7c",
+    "tests/pdf_deepening_inputs.py": "824532bb4f3608c03308ec3c4d4b52651dbfce94fa3df58a813bfb9dfb9b9f27",
+    "tests/measure_pdf_deepening.py": "cd92c7e19ff470064f99b9d492ceb3959901642539eaaf555cc7b3278d6b838d",
+    "tests/measure_existing_pdfs.py": "0451ffd32a23b7a7afac08eb87c51327485fbf246408891cefe57c1593720b74"
+  },
+  "binaries_sha256": {
+    "build/before/libexreader.dll": "1013f4541da7ab60c963ed4e38e92c810e1925bef82b2e6f60a14560060f594a",
+    "build/pdf/libexreader.dll": "0dca81621e81e3d7f6f6a6511e3070296392f4473e326b82ad2ae69922009ead",
+    "build/pdf/exreader-pdf-deepening-test.exe": "26f0b497337d8a588f1d8e13ff5a7921ea479429e2e2aec72d3757f99f5d044e"
+  },
+  "evidence_sha256": {
+    "ctest.txt": "81c70c1a14105eeecb9f78260640ad4fd7c6f11b002a68c4b72cd10c69a1e07b",
+    "epub-after.diff.json": "c10c33f8980c582cbb9875b7f9174e2c12e65a78781e695b207a71fd5096699b",
+    "epub-after.json": "0475efd27728152b598c1d5672cd2a4df2e5558004c1956396e89e3584d687b6",
+    "epub-before.diff.json": "2a38273099cdda9008a4f11aefe75f5b5431552d5577ea7092c1ba2fb3afd099",
+    "epub-before.json": "903dbb2a8461c39b2ea458b394c90dc45e77390f461f3ccbe76dca61453303e7",
+    "existing-pdfs.json": "f1ad69dbdc144f7312fb84809514a10caa9d6b7db6646f0c83aa2464bbd37f4a",
+    "layers.txt": "509a6f1efa5e248ea10d2672de368e33a8979eae480c30d79735b693cced9e73",
+    "matrix.json": "710e09bf9567fa36121db245520d105abc2d5cf6291c89293dedbfe09cad8f70",
+    "targeted-tests.txt": "10ae7681939745dd6120fbb2d2a7c58734189992ccc15ea2b1236da7c7a2b58a"
+  },
+  "commands": [
+    "cmake -S . -B build/pdf -G Ninja (configuration below)",
+    "cmake --build build/pdf -j 6",
+    "ctest --test-dir build/pdf -R pdf-deepening -V",
+    "ctest --test-dir build/pdf --output-on-failure --parallel 3",
+    "python tools/check_layers.py build/pdf"
+  ],
+  "ci_cancelled": false
+}
