@@ -1,0 +1,94 @@
+{
+  "restore": "8/8",
+  "font_sizes": "8/8 at 18→24→18",
+  "font_families": "8/8 at serif→Microsoft YaHei→serif",
+  "cross_page": "2/2 views; delete 2/2",
+  "vertical": "2/2",
+  "notes": "3/3 markers; marker open/edit 1/1",
+  "moved": "8/8 same SHA-256 in separate library",
+  "ranges": [
+    [
+      [
+        1,
+        10962
+      ],
+      [
+        1,
+        10992
+      ]
+    ],
+    [
+      [
+        1,
+        11058
+      ],
+      [
+        1,
+        11088
+      ]
+    ],
+    [
+      [
+        1,
+        11157
+      ],
+      [
+        1,
+        11187
+      ]
+    ],
+    [
+      [
+        1,
+        11256
+      ],
+      [
+        1,
+        11286
+      ]
+    ],
+    [
+      [
+        1,
+        11355
+      ],
+      [
+        1,
+        11385
+      ]
+    ],
+    [
+      [
+        1,
+        11445
+      ],
+      [
+        1,
+        11473
+      ]
+    ],
+    [
+      [
+        1,
+        11542
+      ],
+      [
+        1,
+        11572
+      ]
+    ],
+    [
+      [
+        1,
+        11638
+      ],
+      [
+        1,
+        11668
+      ]
+    ]
+  ],
+  "book_sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+  "restore_changed_pixels": 0,
+  "font_change_changed_pixels": 167059
+}

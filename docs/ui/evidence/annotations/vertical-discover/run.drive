@@ -1,0 +1,13 @@
+import|C:\Users\Oscar\Documents\Codex\real-books-pass-a-20261105\supplemental-samples\kusamakura-japanese-vertical-writing.epub
+open|草枕
+wait_idle
+shell|on
+shell_dpi|96
+shell_client|1280|800
+shell_font|18
+wait_idle
+shell_click|light
+shell_page|5
+wait_idle
+shell_measure|base
+quit

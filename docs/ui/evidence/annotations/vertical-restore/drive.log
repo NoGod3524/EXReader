@@ -1,0 +1,16 @@
+HOST	phase=1	engine=3.42.0	pid=17656
+STEP	1	open	PASS	page=2;status=已打开《草枕》 · 已按章节与文本锚点恢复到上次位置。
+STEP	2	wait_idle	PASS	page=2;status=已打开《草枕》 · 已按章节与文本锚点恢复到上次位置。
+STEP	3	shell	PASS	reading screen
+STEP	4	shell_dpi	PASS	page=2;status=第 2 页。
+STEP	5	shell_client	PASS	page=2;status=第 2 页。
+STEP	6	shell_font	PASS	page=2;status=第 2 页。
+STEP	7	wait_idle	PASS	page=2;status=第 2 页。
+STEP	8	shell_click	PASS	button invoked
+STEP	9	annotgoto	PASS	page=3;status=第 3 页。
+STEP	10	wait_idle	PASS	page=3;status=第 3 页。
+STEP	11	annot_dump	PASS	annotation action dispatched
+STEP	12	shell_measure	PASS	physical layout captured
+STEP	13	probe_wait	PASS	waited without blocking UI
+STEP	14	quit	PASS	closing
+DONE	14	eof	PASS	script finished

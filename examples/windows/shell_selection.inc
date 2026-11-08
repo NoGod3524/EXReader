@@ -64,6 +64,7 @@ static int select_set(exr_text_position a, exr_text_position b, int unit, int fi
       select_focus = reverse ? range.start : range.end;
     }
   }
+  annot_selected=-1;
   select_range = range; select_book = g.frame.book_id; select_valid = 1;
   select_sync(); page_dirty(g.page, 0); host_a11y_page_changed(1);
   return 1;
@@ -124,15 +125,15 @@ static void select_all_part(void) {
 
 /* Clip each selected cluster to its line band. In vertical text advance is y.
    Union first: overlapping glyphs/ligatures must receive alpha exactly once. */
-static HRGN select_region(void) {
+static HRGN select_region_for(size_t start,size_t end) {
   HRGN region = CreateRectRgn(0, 0, 0, 0);
-  if (!g.selection.active) return region;
+  if (start>=end) return region;
   for (size_t i = 0; i < g.frame.shell_line_count; i++) {
     const exr_line *line = &g.frame.shell_lines[i];
     for (size_t j = line->glyph_start; j < line->glyph_start+line->glyph_count; j++) {
       const exr_glyph *glyph = &g.frame.glyphs[j];
-      if (glyph->flags & EXR_GLYPH_HIDDEN || glyph->cluster_end <= g.selection.start ||
-          glyph->cluster_start >= g.selection.end) continue;
+      if (glyph->flags & EXR_GLYPH_HIDDEN || glyph->cluster_end <= start ||
+          glyph->cluster_start >= end) continue;
       float x = glyph->x, y = line->y, w = glyph->advance, h = line->height;
       if (glyph->flags & EXR_GLYPH_VERTICAL) {
         x = line->x; y = glyph->baseline; w = line->width; h = glyph->advance;
@@ -145,10 +146,11 @@ static HRGN select_region(void) {
   }
   return region;
 }
+static HRGN select_region(void) { return select_region_for(g.selection.active ? g.selection.start : 0,g.selection.active ? g.selection.end : 0); }
 static void shell_selection_paint(HDC dc) {
-  if (!select_valid || select_book != g.frame.book_id || !g.selection.active || !g.frame.display_bitmap) return;
+  if ((!annot_count && (!select_valid || select_book != g.frame.book_id || !g.selection.active)) || !g.frame.display_bitmap) return;
   HRGN region = select_region(); RECT bounds;
-  if (GetRgnBox(region, &bounds) == NULLREGION) { DeleteObject(region); return; }
+  GetRgnBox(region, &bounds);
   DIBSECTION section = {0};
   GetObject(g.frame.display_bitmap, sizeof(section), &section);
   /* A temporary DIB keeps the cached SDK raster and its themed display intact.
@@ -160,6 +162,7 @@ static void shell_selection_paint(HDC dc) {
   HBITMAP bitmap = CreateDIBSection(dc, &info, DIB_RGB_COLORS, &pixels, NULL, 0);
   if (!bitmap || !section.dsBm.bmBits) { if (bitmap) DeleteObject(bitmap); DeleteObject(region); return; }
   memcpy(pixels, section.dsBm.bmBits, (size_t)width*height*4);
+  annot_pixels(pixels,width,height);
   uint32_t background = shell_blend(shell_colors->layer_page, shell_is_dark() ? 0x7c88ff : 0x4553e0,
     shell_is_dark() ? .16f : .10f);
   for (int y = max(0, bounds.top); y < min(height, bounds.bottom); y++) {
@@ -180,6 +183,7 @@ static void shell_selection_paint(HDC dc) {
   HDC source = CreateCompatibleDC(dc); HGDIOBJ old = SelectObject(source, bitmap);
   BitBlt(dc, g.view.dx, g.view.dy, width, height, source, 0, 0, SRCCOPY);
   SelectObject(source, old); DeleteDC(source); DeleteObject(bitmap); DeleteObject(region);
+  annot_marks(dc);
 }
 static void select_update(int x, int y, int finalize) {
   exr_text_position position;
@@ -239,15 +243,20 @@ static void select_move(UINT key) {
 static HMENU select_context_menu(void) {
   HMENU menu = CreatePopupMenu();
   int active = select_valid && select_before(select_range.start, select_range.end);
+  int annot_active=active || annot_selected>=0;
   AppendMenuW(menu, MF_STRING | (active ? 0 : MF_GRAYED), 1, L"复制\tCtrl+C");
   AppendMenuW(menu, MF_STRING, 2, L"全选当前章节\tCtrl+A");
-  AppendMenuW(menu, MF_STRING | MF_GRAYED, 3, L"标注");
+  AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 3, L"高亮 · 黄\tCtrl+H");
+  AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 4, L"高亮 · 绿");
+  AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 5, L"高亮 · 蓝");
+  AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 6, L"笔记…\tCtrl+N");
+  AppendMenuW(menu, MF_STRING | (annot_selected>=0 ? 0:MF_GRAYED), 7, L"删除选中的标注\tDelete");
   return menu;
 }
 static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
   if (!shell_active || g.frame.fixed || (!g.session.publication && !g.session.document)) return 0;
   if (message == WM_KEYDOWN && wparam == VK_ESCAPE) {
-    selection_clear(); return 1;
+    annot_selected=-1; selection_clear(); return 1;
   }
   if (message == WM_CAPTURECHANGED || message == WM_CANCELMODE) {
     if (select_drag) { select_drag = 0; KillTimer(window, SHELL_SELECT_TIMER); }
@@ -275,6 +284,7 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
     if (shell_toc_open) return 0;
     exr_text_position position;
     int x = (short)LOWORD(lparam), y = (short)HIWORD(lparam);
+    if (message == WM_LBUTTONDOWN && annot_click(x,y)) return 1;
     if (!select_hit(x, y, &position)) return 1;
     DWORD now = GetMessageTime();
     int nearby = abs(x-select_last_x) <= GetSystemMetrics(SM_CXDOUBLECLK) && abs(y-select_last_y) <= GetSystemMetrics(SM_CYDOUBLECLK);
@@ -302,6 +312,8 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
   if (message == WM_KEYDOWN) {
     if ((GetKeyState(VK_SHIFT)&0x8000) && wparam >= VK_LEFT && wparam <= VK_DOWN) { select_move((UINT)wparam); return 1; }
     if ((GetKeyState(VK_CONTROL)&0x8000) && wparam == 'A') { select_all_part(); return 1; }
+    if (wparam==VK_DELETE && annot_command(7)) return 1;
+    if ((GetKeyState(VK_CONTROL)&0x8000) && (wparam=='H' || wparam=='N')) { annot_command(wparam=='H' ? 3:6); return 1; }
     if ((GetKeyState(VK_CONTROL)&0x8000) && wparam == 'C') { copy_quote(); return 1; }
   }
   if (message == WM_CONTEXTMENU) {
@@ -312,6 +324,7 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
     DestroyMenu(menu);
     if (command == 1) copy_quote();
     if (command == 2) select_all_part();
+    if (command >= 3) annot_command((int)command);
     return 1;
   }
   return 0;

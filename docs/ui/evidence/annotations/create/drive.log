@@ -1,0 +1,78 @@
+HOST	phase=1	engine=3.42.0	pid=8864
+STEP	1	open	PASS	page=25;status=已打开《紅樓夢》 · 已按章节与文本锚点恢复到上次位置。
+STEP	2	wait_idle	PASS	page=25;status=已打开《紅樓夢》 · 已按章节与文本锚点恢复到上次位置。
+STEP	3	shell	PASS	reading screen
+STEP	4	shell_dpi	PASS	page=10;status=第 10 页。
+STEP	5	shell_client	PASS	page=10;status=第 10 页。
+STEP	6	shell_font	PASS	page=10;status=第 10 页。
+STEP	7	wait_idle	PASS	page=10;status=第 10 页。
+STEP	8	shell_click	PASS	button invoked
+STEP	9	shell_click	PASS	button invoked
+STEP	10	probe_wait	PASS	waited without blocking UI
+STEP	11	toc_click	PASS	page=19;status=第 19 页。
+STEP	12	wait_idle	PASS	page=19;status=第 19 页。
+STEP	13	annotgoto	PASS	page=10;status=第 10 页。
+STEP	14	wait_idle	PASS	page=10;status=第 10 页。
+STEP	15	annot_close	PASS	annotation action dispatched
+STEP	16	select_key	PASS	selection key dispatched
+STEP	17	select_pointer	PASS	selection pointer dispatched
+STEP	18	select_pointer	PASS	selection pointer dispatched
+STEP	19	select_pointer	PASS	selection pointer dispatched
+STEP	20	annot_command	PASS	annotation action dispatched
+STEP	21	annot_close	PASS	annotation action dispatched
+STEP	22	select_key	PASS	selection key dispatched
+STEP	23	select_pointer	PASS	selection pointer dispatched
+STEP	24	select_pointer	PASS	selection pointer dispatched
+STEP	25	select_pointer	PASS	selection pointer dispatched
+STEP	26	annot_command	PASS	annotation action dispatched
+STEP	27	annot_close	PASS	annotation action dispatched
+STEP	28	select_key	PASS	selection key dispatched
+STEP	29	select_pointer	PASS	selection pointer dispatched
+STEP	30	select_pointer	PASS	selection pointer dispatched
+STEP	31	select_pointer	PASS	selection pointer dispatched
+STEP	32	annot_command	PASS	annotation action dispatched
+STEP	33	annot_close	PASS	annotation action dispatched
+STEP	34	select_key	PASS	selection key dispatched
+STEP	35	select_pointer	PASS	selection pointer dispatched
+STEP	36	select_pointer	PASS	selection pointer dispatched
+STEP	37	select_pointer	PASS	selection pointer dispatched
+STEP	38	annot_command	PASS	annotation action dispatched
+STEP	39	annot_close	PASS	annotation action dispatched
+STEP	40	select_key	PASS	selection key dispatched
+STEP	41	select_pointer	PASS	selection pointer dispatched
+STEP	42	select_pointer	PASS	selection pointer dispatched
+STEP	43	select_pointer	PASS	selection pointer dispatched
+STEP	44	annot_command	PASS	annotation action dispatched
+STEP	45	annot_close	PASS	annotation action dispatched
+STEP	46	select_key	PASS	selection key dispatched
+STEP	47	select_pointer	PASS	selection pointer dispatched
+STEP	48	select_pointer	PASS	selection pointer dispatched
+STEP	49	select_pointer	PASS	selection pointer dispatched
+STEP	50	annot_command	PASS	annotation action dispatched
+STEP	51	annot_edit	PASS	annotation action dispatched
+STEP	52	shell_measure	PASS	physical layout captured
+STEP	53	probe_wait	PASS	waited without blocking UI
+STEP	54	annot_edit	PASS	annotation action dispatched
+STEP	55	annot_close	PASS	annotation action dispatched
+STEP	56	select_key	PASS	selection key dispatched
+STEP	57	select_pointer	PASS	selection pointer dispatched
+STEP	58	select_pointer	PASS	selection pointer dispatched
+STEP	59	select_pointer	PASS	selection pointer dispatched
+STEP	60	annot_command	PASS	annotation action dispatched
+STEP	61	annot_edit	PASS	annotation action dispatched
+STEP	62	annot_edit	PASS	annotation action dispatched
+STEP	63	annot_close	PASS	annotation action dispatched
+STEP	64	select_key	PASS	selection key dispatched
+STEP	65	select_pointer	PASS	selection pointer dispatched
+STEP	66	select_pointer	PASS	selection pointer dispatched
+STEP	67	select_pointer	PASS	selection pointer dispatched
+STEP	68	annot_command	PASS	annotation action dispatched
+STEP	69	annot_edit	PASS	annotation action dispatched
+STEP	70	annot_edit	PASS	annotation action dispatched
+STEP	71	annot_close	PASS	annotation action dispatched
+STEP	72	select_key	PASS	selection key dispatched
+STEP	73	annot_dump	PASS	annotation action dispatched
+STEP	74	shell_measure	PASS	physical layout captured
+STEP	75	probe_wait	PASS	waited without blocking UI
+STEP	76	quit	PASS	closing
+DONE	76	eof	PASS	script finished
