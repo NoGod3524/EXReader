@@ -1,0 +1,2 @@
+sample-text error 4 {'stage': 'fixed_render', 'code': 5, 'kind': 'RuntimeError', 'page': 1}
+sample error 5 {'stage': 'fixed_render', 'code': 5, 'kind': 'RuntimeError', 'page': 2}

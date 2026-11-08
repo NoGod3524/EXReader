@@ -1,0 +1,27 @@
+page-blanche ok 11
+haruko-html-jpeg ok 14
+moby-dick-mo ok 1026
+cc-shared-culture ok 22
+between-the-world-and-me ok 228
+the-house-on-mango-street ok 181
+pdf-text-malcolm ok 279
+pdf-text-statistics error 0 {'stage': 'fixed_open', 'code': 5, 'kind': 'RuntimeError'}
+pdf-scan-malcolm ok 20
+pdf-scan-upstream error 1 {'stage': 'fixed_render', 'code': 11, 'kind': 'RuntimeError', 'page': 0}
+sample-text ok 4
+sample ok 5
+pdf-encrypted-r4 error 1 {'stage': 'fixed_render', 'code': 5, 'kind': 'RuntimeError', 'page': 0}
+pdf-encrypted-r6 error 0 {'stage': 'fixed_open', 'code': 5, 'kind': 'RuntimeError'}
+page-blanche-cbz ok 9
+haruko-html-jpeg-cbz ok 12
+comic-fixture ok 4
+pg52323-utf8 ok 81
+pg52323-gbk error 0 {'stage': 'document_open', 'code': 4, 'kind': 'RuntimeError'}
+pg52323-utf8-bom ok 81
+pg52323-utf16-bom ok 81
+pg24239-utf8 ok 25
+pg24239-gbk error 0 {'stage': 'document_open', 'code': 4, 'kind': 'RuntimeError'}
+pg24239-utf8-bom ok 25
+pg24239-utf16-bom ok 25
+pdf-text-syllabus-math error 0 {'stage': 'fixed_open', 'code': 5, 'kind': 'RuntimeError'}
+pdf-text-syllabus-stat error 0 {'stage': 'fixed_open', 'code': 5, 'kind': 'RuntimeError'}
