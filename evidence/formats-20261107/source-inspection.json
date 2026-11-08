@@ -1,0 +1,321 @@
+{
+  "books": [
+    {
+      "id": "page-blanche",
+      "sha256": "d2efb562f17d43cef50578d4d67dd7fd991f8f254b6f5a7c28bde7461ea783eb",
+      "image_members": 9,
+      "spine_item_count": 10,
+      "rendition_metadata": [
+        {
+          "property": "rendition:layout",
+          "value": "pre-paginated"
+        },
+        {
+          "property": "rendition:orientation",
+          "value": "auto"
+        },
+        {
+          "property": "rendition:spread",
+          "value": "auto"
+        }
+      ],
+      "media_members": []
+    },
+    {
+      "id": "haruko-html-jpeg",
+      "sha256": "87b5eaff288e238864d817ea54b4600dc8c6f96789d0efb946b8545d7ad2f0c0",
+      "image_members": 12,
+      "spine_item_count": 13,
+      "rendition_metadata": [
+        {
+          "property": "rendition:layout",
+          "value": "pre-paginated"
+        },
+        {
+          "property": "rendition:orientation",
+          "value": "portrait"
+        },
+        {
+          "property": "rendition:spread",
+          "value": "landscape"
+        }
+      ],
+      "media_members": []
+    },
+    {
+      "id": "moby-dick-mo",
+      "sha256": "749a9de094c26bc79351722a2bf320845dc5f6af2d5bf41a96d720d723b29a4c",
+      "image_members": 2,
+      "spine_item_count": 144,
+      "rendition_metadata": [],
+      "media_members": [
+        {
+          "name": "OPS/audio/mobydick_001_002_melville.mp4",
+          "bytes": 9131982
+        },
+        {
+          "name": "OPS/chapter_001_overlay.smil",
+          "bytes": 6318
+        },
+        {
+          "name": "OPS/chapter_002_overlay.smil",
+          "bytes": 3172
+        }
+      ]
+    },
+    {
+      "id": "cc-shared-culture",
+      "sha256": "7bec3acf5ca153fd8a3b8bba50549c5cde3cb617ddd74c1d3b26fbc5eb9eebdf",
+      "image_members": 2,
+      "spine_item_count": 8,
+      "rendition_metadata": [],
+      "media_members": [
+        {
+          "name": "EPUB/audio/asharedculture_soundtrack.mp3",
+          "bytes": 3265152
+        },
+        {
+          "name": "EPUB/video/shared-culture.mp4",
+          "bytes": 21784780
+        }
+      ]
+    },
+    {
+      "id": "between-the-world-and-me",
+      "sha256": "3d909ac99c4388022a6576475b81c5d458490337aba08b0e7ba311bc18ab68a5",
+      "image_members": 9,
+      "spine_item_count": 14,
+      "rendition_metadata": [],
+      "media_members": []
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "sha256": "5a3b11c8f3ee4dd1c41d264aaf27dd83bb82faa1ebf3c7370a7072a0711cb3df",
+      "image_members": 1,
+      "spine_item_count": 4,
+      "rendition_metadata": [],
+      "media_members": []
+    },
+    {
+      "id": "pdf-text-malcolm",
+      "sha256": "c9373b7dbda128fea031616b444ca490a3cd59dccb3f02cb2512fd9957a0fdb7",
+      "encrypted": false,
+      "page_count": 279,
+      "text_bytes": 1100114,
+      "image_pages": 1,
+      "reference": "PyMuPDF 1.28.2"
+    },
+    {
+      "id": "pdf-text-statistics",
+      "sha256": "9607434cbaf8ac31219db8706ddaf5fb35bb2497b52980ec6cd7952596f3fc25",
+      "encrypted": false,
+      "page_count": 1,
+      "text_bytes": 448,
+      "image_pages": 0,
+      "reference": "PyMuPDF 1.28.2"
+    },
+    {
+      "id": "pdf-scan-malcolm",
+      "sha256": "b3fd154b431e9338b3a562d2fa1259723cd51bfc7ca9497ce067cbd4dd979b37",
+      "encrypted": false,
+      "page_count": 20,
+      "text_bytes": 0,
+      "image_pages": 20,
+      "reference": "PyMuPDF 1.28.2"
+    },
+    {
+      "id": "pdf-scan-upstream",
+      "sha256": "2466bf4bbeb96cc70847f7888661f3279a8e90363e70afd9ca033834f65a94db",
+      "encrypted": false,
+      "page_count": 1,
+      "text_bytes": 0,
+      "image_pages": 1,
+      "reference": "PyMuPDF 1.28.2"
+    },
+    {
+      "id": "sample-text",
+      "sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc",
+      "encrypted": false,
+      "page_count": 4,
+      "text_bytes": 22,
+      "image_pages": 4,
+      "reference": "PyMuPDF 1.28.2"
+    },
+    {
+      "id": "sample",
+      "sha256": "4f6fdc7b4dc13363aae532953ccf863c6be853c3c8b63de4718bc45dafbeb49d",
+      "encrypted": false,
+      "page_count": 5,
+      "text_bytes": 6,
+      "image_pages": 5,
+      "reference": "PyMuPDF 1.28.2"
+    },
+    {
+      "id": "pdf-encrypted-r4",
+      "sha256": "289441cf2643f612dd374a265e8f061ad92328488193801a6cc6b81ba824fdd9",
+      "encrypted": true,
+      "page_count": 1,
+      "text_bytes": 448,
+      "image_pages": 0,
+      "reference": "PyMuPDF 1.28.2"
+    },
+    {
+      "id": "pdf-encrypted-r6",
+      "sha256": "90564a47ceff2ef29895d2f6575148711e2f5605023c513378c8cd626804e421",
+      "encrypted": true,
+      "page_count": 279,
+      "text_bytes": 1100114,
+      "image_pages": 1,
+      "reference": "PyMuPDF 1.28.2"
+    },
+    {
+      "id": "page-blanche-cbz",
+      "sha256": "f805a0d8088a9adf5f22a8bfad6772a2d2bb22b17ba95342b1cc627f03d2cae6",
+      "image_members": 9
+    },
+    {
+      "id": "haruko-html-jpeg-cbz",
+      "sha256": "2067bd79d3f757f04a83d83ac2b3f62c9b66054c8f4c03804b78122507617310",
+      "image_members": 12
+    },
+    {
+      "id": "comic-fixture",
+      "sha256": "08df7ceb8771ab82610651c2299072b8fc299d3f8fba3996ee6e12054ea6701f",
+      "image_members": 4
+    },
+    {
+      "id": "pg52323-utf8",
+      "sha256": "2ce4b3b550dcb99da79def1842fa8581f84a0ee8ba66c5a4de9b9038044ea342",
+      "encoding": "utf-8",
+      "unicode_characters": 12000,
+      "contains_cjk": true
+    },
+    {
+      "id": "pg52323-gbk",
+      "sha256": "c7520f66c00a81d4021c01e0ef5bb51830af0c65f5a43e60d164bd61c23dbadb",
+      "encoding": "gbk",
+      "unicode_characters": 12000,
+      "contains_cjk": true
+    },
+    {
+      "id": "pg52323-utf8-bom",
+      "sha256": "cdac1868d479aeb62ec8b5f0feac5d63bfd246a586285303d0b3d26e0538cd99",
+      "encoding": "utf-8-sig",
+      "unicode_characters": 12000,
+      "contains_cjk": true
+    },
+    {
+      "id": "pg52323-utf16-bom",
+      "sha256": "896273dc800a345e6cab275f6f0f66b0d0fb497e8ce5bf5397edc08b97d20483",
+      "encoding": "utf-16",
+      "unicode_characters": 12000,
+      "contains_cjk": true
+    },
+    {
+      "id": "pg24239-utf8",
+      "sha256": "6b14a7f658b210e7b2e2f92ed93859ee12ffa2ec8a92470d3dcc91cb9302969f",
+      "encoding": "utf-8",
+      "unicode_characters": 12000,
+      "contains_cjk": true
+    },
+    {
+      "id": "pg24239-gbk",
+      "sha256": "ed16bc15161564baeb081ad392aedd8cddfe5934d0a91b9a2aa8048371dbc4a8",
+      "encoding": "gbk",
+      "unicode_characters": 12000,
+      "contains_cjk": true
+    },
+    {
+      "id": "pg24239-utf8-bom",
+      "sha256": "41ae3ea686684e957ebdc6996b284885ebb0a87797b41da6397d86a140f2b557",
+      "encoding": "utf-8-sig",
+      "unicode_characters": 12000,
+      "contains_cjk": true
+    },
+    {
+      "id": "pg24239-utf16-bom",
+      "sha256": "c9c72fa0896439332d8a7ed2ebda4af90b945c29398e5ddeeff93178c64750c2",
+      "encoding": "utf-16",
+      "unicode_characters": 12000,
+      "contains_cjk": true
+    },
+    {
+      "id": "pdf-text-syllabus-math",
+      "sha256": "9dfbb33d2995d20950baa3e2be1679e8e37d707265563bec2234da3526ca7e71",
+      "encrypted": false,
+      "page_count": 7,
+      "text_bytes": 16960,
+      "image_pages": 1,
+      "reference": "PyMuPDF 1.28.2"
+    },
+    {
+      "id": "pdf-text-syllabus-stat",
+      "sha256": "29b5bc76c470ed2f13c22000185b14d074f964d8939dbf41a2c96713344e5b10",
+      "encrypted": false,
+      "page_count": 7,
+      "text_bytes": 16646,
+      "image_pages": 0,
+      "reference": "PyMuPDF 1.28.2"
+    },
+    {
+      "id": "drm-the-waste-land",
+      "sha256": "76767036789c37e9b0aa17aa7ec8b5969e0dd328711a34e23e708a5be41887d9",
+      "image_members": 1,
+      "encryption_algorithms": [
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc"
+      ],
+      "encrypted_resource_count": 3,
+      "embedded_lcp_license": true,
+      "spine_item_count": 1,
+      "rendition_metadata": [],
+      "media_members": []
+    },
+    {
+      "id": "drm-accessible-epub-3",
+      "sha256": "77a093e77dd33fbe07eddbc84d48b1307fae40664f20c5467db87c1578d68e09",
+      "image_members": 3,
+      "encryption_algorithms": [
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+        "http://www.w3.org/2001/04/xmlenc#aes256-cbc"
+      ],
+      "encrypted_resource_count": 33,
+      "embedded_lcp_license": true,
+      "spine_item_count": 22,
+      "rendition_metadata": [],
+      "media_members": []
+    }
+  ]
+}

@@ -1,0 +1,320 @@
+{
+  "schema": 1,
+  "books": [
+    {
+      "id": "page-blanche",
+      "filename": "page-blanche.epub",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\page-blanche.epub",
+      "category": "EPUB-fixed",
+      "sha256": "d2efb562f17d43cef50578d4d67dd7fd991f8f254b6f5a7c28bde7461ea783eb",
+      "source": "https://github.com/IDPF/epub3-samples/releases/download/20230704/page-blanche.epub",
+      "regression": "count"
+    },
+    {
+      "id": "haruko-html-jpeg",
+      "filename": "haruko-html-jpeg.epub",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\haruko-html-jpeg.epub",
+      "category": "EPUB-fixed",
+      "sha256": "87b5eaff288e238864d817ea54b4600dc8c6f96789d0efb946b8545d7ad2f0c0",
+      "source": "https://github.com/IDPF/epub3-samples/releases/download/20230704/haruko-html-jpeg.epub",
+      "regression": "count"
+    },
+    {
+      "id": "moby-dick-mo",
+      "filename": "moby-dick-mo.epub",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\moby-dick-mo.epub",
+      "category": "EPUB-audio",
+      "sha256": "749a9de094c26bc79351722a2bf320845dc5f6af2d5bf41a96d720d723b29a4c",
+      "source": "https://github.com/IDPF/epub3-samples/releases/download/20230704/moby-dick-mo.epub",
+      "regression": "count"
+    },
+    {
+      "id": "cc-shared-culture",
+      "filename": "cc-shared-culture.epub",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\cc-shared-culture.epub",
+      "category": "EPUB-audio-video",
+      "sha256": "7bec3acf5ca153fd8a3b8bba50549c5cde3cb617ddd74c1d3b26fbc5eb9eebdf",
+      "source": "https://github.com/IDPF/epub3-samples/releases/download/20230704/cc-shared-culture.epub",
+      "regression": "count"
+    },
+    {
+      "id": "between-the-world-and-me",
+      "filename": "Between The World and Me (Ta-Nehisi Coates) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Between The World and Me (Ta-Nehisi Coates) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+      "category": "EPUB-reflow",
+      "sha256": "3d909ac99c4388022a6576475b81c5d458490337aba08b0e7ba311bc18ab68a5",
+      "source": "existing 19-book corpus",
+      "regression": "hash"
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "filename": "The House on Mango Street (Sandra Cisneros) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The House on Mango Street (Sandra Cisneros) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+      "category": "EPUB-reflow",
+      "sha256": "5a3b11c8f3ee4dd1c41d264aaf27dd83bb82faa1ebf3c7370a7072a0711cb3df",
+      "source": "existing 19-book corpus",
+      "regression": "hash"
+    },
+    {
+      "id": "pdf-text-malcolm",
+      "filename": "The Autobiography of Malcolm X. (Malcolm X, Alex Haley) (z-library.sk, 1lib.sk, z-lib.sk).pdf",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Autobiography of Malcolm X. (Malcolm X, Alex Haley) (z-library.sk, 1lib.sk, z-lib.sk).pdf",
+      "category": "PDF-text",
+      "sha256": "c9373b7dbda128fea031616b444ca490a3cd59dccb3f02cb2512fd9957a0fdb7",
+      "source": "existing local real-document corpus",
+      "regression": "hash"
+    },
+    {
+      "id": "pdf-text-statistics",
+      "filename": "Binomial Distribution B(n,p).pdf",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\STAT 1000Q\\courseMaterial\\Binomial Distribution B(n,p).pdf",
+      "category": "PDF-text",
+      "sha256": "9607434cbaf8ac31219db8706ddaf5fb35bb2497b52980ec6cd7952596f3fc25",
+      "source": "existing local real-document corpus",
+      "regression": "count"
+    },
+    {
+      "id": "pdf-scan-malcolm",
+      "filename": "malcolm-x-first-20-pages-image-only-200dpi.pdf",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\real-books-pass-a-20261105\\supplemental-samples\\malcolm-x-first-20-pages-image-only-200dpi.pdf",
+      "category": "PDF-scan",
+      "sha256": "b3fd154b431e9338b3a562d2fa1259723cd51bfc7ca9497ce067cbd4dd979b37",
+      "source": "existing local real-document corpus",
+      "regression": "hash"
+    },
+    {
+      "id": "pdf-scan-upstream",
+      "filename": "bug1703683_page2_reduced.pdf",
+      "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\tests\\corpus\\pdfjs\\bug1703683_page2_reduced.pdf",
+      "category": "PDF-scan",
+      "sha256": "2466bf4bbeb96cc70847f7888661f3279a8e90363e70afd9ca033834f65a94db",
+      "source": "existing local real-document corpus",
+      "regression": "count"
+    },
+    {
+      "id": "sample-text",
+      "filename": "Sample-Text.pdf",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Sample-Text.pdf",
+      "category": "PDF-stress",
+      "sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc",
+      "source": "existing Windows delivery payload",
+      "regression": "count",
+      "max_render_pages": 1
+    },
+    {
+      "id": "sample",
+      "filename": "Sample.pdf",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-Windows-delivery-20261104\\payload\\Sample.pdf",
+      "category": "PDF-stress",
+      "sha256": "4f6fdc7b4dc13363aae532953ccf863c6be853c3c8b63de4718bc45dafbeb49d",
+      "source": "existing Windows delivery payload",
+      "regression": "count",
+      "max_render_pages": 1
+    },
+    {
+      "id": "pdf-encrypted-r4",
+      "filename": "pdf-encrypted-r4.pdf",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pdf-encrypted-r4.pdf",
+      "category": "PDF-encrypted",
+      "sha256": "289441cf2643f612dd374a265e8f061ad92328488193801a6cc6b81ba824fdd9",
+      "source": "local encryption derivative",
+      "regression": "count",
+      "password_env": "EXR_FORMAT_PDF_PASSWORD",
+      "derived_from_sha256": "9607434cbaf8ac31219db8706ddaf5fb35bb2497b52980ec6cd7952596f3fc25",
+      "transform": "PyMuPDF 1.28.2; AES; no content edits"
+    },
+    {
+      "id": "pdf-encrypted-r6",
+      "filename": "pdf-encrypted-r6.pdf",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pdf-encrypted-r6.pdf",
+      "category": "PDF-encrypted",
+      "sha256": "90564a47ceff2ef29895d2f6575148711e2f5605023c513378c8cd626804e421",
+      "source": "local encryption derivative",
+      "regression": "count",
+      "password_env": "EXR_FORMAT_PDF_PASSWORD",
+      "derived_from_sha256": "c9373b7dbda128fea031616b444ca490a3cd59dccb3f02cb2512fd9957a0fdb7",
+      "transform": "PyMuPDF 1.28.2; AES; no content edits"
+    },
+    {
+      "id": "page-blanche-cbz",
+      "filename": "page-blanche.cbz",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\page-blanche.cbz",
+      "category": "CBZ",
+      "sha256": "f805a0d8088a9adf5f22a8bfad6772a2d2bb22b17ba95342b1cc627f03d2cae6",
+      "source": "real illustrated publication, image-only repack",
+      "regression": "hash",
+      "derived_from_sha256": "d2efb562f17d43cef50578d4d67dd7fd991f8f254b6f5a7c28bde7461ea783eb",
+      "transform": "ZIP all PNG/JPEG members sorted by original path; unchanged image bytes"
+    },
+    {
+      "id": "haruko-html-jpeg-cbz",
+      "filename": "haruko-html-jpeg.cbz",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\haruko-html-jpeg.cbz",
+      "category": "CBZ",
+      "sha256": "2067bd79d3f757f04a83d83ac2b3f62c9b66054c8f4c03804b78122507617310",
+      "source": "real illustrated publication, image-only repack",
+      "regression": "hash",
+      "derived_from_sha256": "87b5eaff288e238864d817ea54b4600dc8c6f96789d0efb946b8545d7ad2f0c0",
+      "transform": "ZIP all PNG/JPEG members sorted by original path; unchanged image bytes"
+    },
+    {
+      "id": "comic-fixture",
+      "filename": "comic.cbz",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-formats-20261107\\tests\\fixtures\\comic.cbz",
+      "category": "CBZ-fixture",
+      "sha256": "08df7ceb8771ab82610651c2299072b8fc299d3f8fba3996ee6e12054ea6701f",
+      "source": "existing synthetic fixture (additional control)",
+      "regression": "hash"
+    },
+    {
+      "id": "pg52323-utf8",
+      "filename": "pg52323-utf8.txt",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pg52323-utf8.txt",
+      "category": "TXT-utf8",
+      "sha256": "2ce4b3b550dcb99da79def1842fa8581f84a0ee8ba66c5a4de9b9038044ea342",
+      "source": "https://www.gutenberg.org/ebooks/52323.txt.utf-8",
+      "regression": "hash",
+      "expected_text_sha256": "3d3095e1f382758b0051746cf4494c2192bf52c507ffaf13ff1172a1d2e54b52",
+      "encoding": "utf-8",
+      "derived_from_sha256": "cd30fdc57ec8ba55949b69badf56bcd66472c10efb4729cbf4230ba3e3025c85",
+      "transform": "contiguous Unicode excerpt [0:12000]; strict encoding; no replacement"
+    },
+    {
+      "id": "pg52323-gbk",
+      "filename": "pg52323-gbk.txt",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pg52323-gbk.txt",
+      "category": "TXT-gbk",
+      "sha256": "c7520f66c00a81d4021c01e0ef5bb51830af0c65f5a43e60d164bd61c23dbadb",
+      "source": "https://www.gutenberg.org/ebooks/52323.txt.utf-8",
+      "regression": "count",
+      "expected_text_sha256": "3d3095e1f382758b0051746cf4494c2192bf52c507ffaf13ff1172a1d2e54b52",
+      "encoding": "gbk",
+      "derived_from_sha256": "cd30fdc57ec8ba55949b69badf56bcd66472c10efb4729cbf4230ba3e3025c85",
+      "transform": "contiguous Unicode excerpt [0:12000]; strict encoding; no replacement"
+    },
+    {
+      "id": "pg52323-utf8-bom",
+      "filename": "pg52323-utf8-bom.txt",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pg52323-utf8-bom.txt",
+      "category": "TXT-utf8-bom",
+      "sha256": "cdac1868d479aeb62ec8b5f0feac5d63bfd246a586285303d0b3d26e0538cd99",
+      "source": "https://www.gutenberg.org/ebooks/52323.txt.utf-8",
+      "regression": "hash",
+      "expected_text_sha256": "3d3095e1f382758b0051746cf4494c2192bf52c507ffaf13ff1172a1d2e54b52",
+      "encoding": "utf-8-sig",
+      "derived_from_sha256": "cd30fdc57ec8ba55949b69badf56bcd66472c10efb4729cbf4230ba3e3025c85",
+      "transform": "contiguous Unicode excerpt [0:12000]; strict encoding; no replacement"
+    },
+    {
+      "id": "pg52323-utf16-bom",
+      "filename": "pg52323-utf16-bom.txt",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pg52323-utf16-bom.txt",
+      "category": "TXT-utf16-bom",
+      "sha256": "896273dc800a345e6cab275f6f0f66b0d0fb497e8ce5bf5397edc08b97d20483",
+      "source": "https://www.gutenberg.org/ebooks/52323.txt.utf-8",
+      "regression": "hash",
+      "expected_text_sha256": "3d3095e1f382758b0051746cf4494c2192bf52c507ffaf13ff1172a1d2e54b52",
+      "encoding": "utf-16",
+      "derived_from_sha256": "cd30fdc57ec8ba55949b69badf56bcd66472c10efb4729cbf4230ba3e3025c85",
+      "transform": "contiguous Unicode excerpt [0:12000]; strict encoding; no replacement"
+    },
+    {
+      "id": "pg24239-utf8",
+      "filename": "pg24239-utf8.txt",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pg24239-utf8.txt",
+      "category": "TXT-utf8",
+      "sha256": "6b14a7f658b210e7b2e2f92ed93859ee12ffa2ec8a92470d3dcc91cb9302969f",
+      "source": "https://www.gutenberg.org/ebooks/24239.txt.utf-8",
+      "regression": "hash",
+      "expected_text_sha256": "234a8033e73933fce21f9036b6e4f0f351733c5d61bf99494c63e390b0349dc8",
+      "encoding": "utf-8",
+      "derived_from_sha256": "cde00906b006ad785d6632d3da88bc09fadecdb13c15e45298d9fb493127af6e",
+      "transform": "contiguous Unicode excerpt [235718:247718]; strict encoding; no replacement"
+    },
+    {
+      "id": "pg24239-gbk",
+      "filename": "pg24239-gbk.txt",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pg24239-gbk.txt",
+      "category": "TXT-gbk",
+      "sha256": "ed16bc15161564baeb081ad392aedd8cddfe5934d0a91b9a2aa8048371dbc4a8",
+      "source": "https://www.gutenberg.org/ebooks/24239.txt.utf-8",
+      "regression": "count",
+      "expected_text_sha256": "234a8033e73933fce21f9036b6e4f0f351733c5d61bf99494c63e390b0349dc8",
+      "encoding": "gbk",
+      "derived_from_sha256": "cde00906b006ad785d6632d3da88bc09fadecdb13c15e45298d9fb493127af6e",
+      "transform": "contiguous Unicode excerpt [235718:247718]; strict encoding; no replacement"
+    },
+    {
+      "id": "pg24239-utf8-bom",
+      "filename": "pg24239-utf8-bom.txt",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pg24239-utf8-bom.txt",
+      "category": "TXT-utf8-bom",
+      "sha256": "41ae3ea686684e957ebdc6996b284885ebb0a87797b41da6397d86a140f2b557",
+      "source": "https://www.gutenberg.org/ebooks/24239.txt.utf-8",
+      "regression": "hash",
+      "expected_text_sha256": "234a8033e73933fce21f9036b6e4f0f351733c5d61bf99494c63e390b0349dc8",
+      "encoding": "utf-8-sig",
+      "derived_from_sha256": "cde00906b006ad785d6632d3da88bc09fadecdb13c15e45298d9fb493127af6e",
+      "transform": "contiguous Unicode excerpt [235718:247718]; strict encoding; no replacement"
+    },
+    {
+      "id": "pg24239-utf16-bom",
+      "filename": "pg24239-utf16-bom.txt",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pg24239-utf16-bom.txt",
+      "category": "TXT-utf16-bom",
+      "sha256": "c9c72fa0896439332d8a7ed2ebda4af90b945c29398e5ddeeff93178c64750c2",
+      "source": "https://www.gutenberg.org/ebooks/24239.txt.utf-8",
+      "regression": "hash",
+      "expected_text_sha256": "234a8033e73933fce21f9036b6e4f0f351733c5d61bf99494c63e390b0349dc8",
+      "encoding": "utf-16",
+      "derived_from_sha256": "cde00906b006ad785d6632d3da88bc09fadecdb13c15e45298d9fb493127af6e",
+      "transform": "contiguous Unicode excerpt [235718:247718]; strict encoding; no replacement"
+    },
+    {
+      "id": "pdf-text-syllabus-math",
+      "filename": "MATH 1070Q Syllabus Massarelli Fall 2026.pdf",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\MATH 1070Q Online\\MATH 1070Q Syllabus Massarelli Fall 2026.pdf",
+      "category": "PDF-text",
+      "sha256": "9dfbb33d2995d20950baa3e2be1679e8e37d707265563bec2234da3526ca7e71",
+      "source": "existing local course syllabus",
+      "regression": "count"
+    },
+    {
+      "id": "pdf-text-syllabus-stat",
+      "filename": "syllabus1000_015_Fall_2026(1).pdf",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\STAT 1000Q\\syllabus1000_015_Fall_2026(1).pdf",
+      "category": "PDF-text",
+      "sha256": "29b5bc76c470ed2f13c22000185b14d074f964d8939dbf41a2c96713344e5b10",
+      "source": "existing local course syllabus",
+      "regression": "count"
+    },
+    {
+      "id": "drm-the-waste-land",
+      "filename": "edrlab-the-waste-land-licensed.epub",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\edrlab-the-waste-land-licensed.epub",
+      "category": "EPUB-DRM",
+      "sha256": "76767036789c37e9b0aa17aa7ec8b5969e0dd328711a34e23e708a5be41887d9",
+      "source": "https://www.edrlab.org/readium-lcp/testing-readium-lcp-compliant-devices/",
+      "publication_url": "https://front-prod.edrlab.org/storage/dc4ec76a-6df3-4bf8-9969-6a0cf4b2ea7d",
+      "license_url": "https://www.edrlab.org/public/feed/the-waste-land/the-waste-land.lcpl",
+      "regression": "count",
+      "derived_from_sha256": "b5183da1095e48c6dd9865b6ce022a3a0345b9c0a6200e6404fc166ddd1d908a",
+      "license_sha256": "a62696efa337c0c61ad6fd88a144f2ea01c5c131d90ec9dae0ee9c2fc17bb2be",
+      "transform": "append official public test license as META-INF/license.lcpl; encrypted resources unchanged"
+    },
+    {
+      "id": "drm-accessible-epub-3",
+      "filename": "edrlab-accessible-epub-3-licensed.epub",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\edrlab-accessible-epub-3-licensed.epub",
+      "category": "EPUB-DRM",
+      "sha256": "77a093e77dd33fbe07eddbc84d48b1307fae40664f20c5467db87c1578d68e09",
+      "source": "https://www.edrlab.org/readium-lcp/testing-readium-lcp-compliant-devices/",
+      "publication_url": "https://front-prod.edrlab.org/storage/f32c554d-1974-4f20-a4cb-8f7fbe4456b8",
+      "license_url": "https://www.edrlab.org/public/feed/accessible-epub-3/accessible-epub-3.lcpl",
+      "regression": "count",
+      "derived_from_sha256": "48deaff7dae1df648bdf4d7f6ab1f2d1a3f9f160e8fec15d4763ad39912316a3",
+      "license_sha256": "698af2fac86ceaa4facaf0156674e8d0a87f96965d005a3306ee03a8e55638c9",
+      "transform": "append official public test license as META-INF/license.lcpl; encrypted resources unchanged"
+    }
+  ]
+}

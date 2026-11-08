@@ -1,0 +1,18 @@
+{
+  "status": "complete",
+  "runner_pid": 6292,
+  "session_id": 73359,
+  "started_utc": "2026-11-07T22:19:31Z",
+  "work_directory": "C:/Users/Oscar/Documents/Codex/typo-bench-work-20261107",
+  "output": "evidence/typography-bench-20261107",
+  "expected_runs": 54,
+  "regression_queued_after_matrix": false,
+  "collector_frozen_for_running_campaign": true,
+  "completed_runs": 54,
+  "baseline_regression_running": false,
+  "completed_turns": 1080,
+  "baseline_regression_changed_pages": 0,
+  "designated_dll_cross_baseline_changed_pages": 5872,
+  "same_dll_repeat_changed_pages": 0,
+  "same_dll_repeat_successful_books": 19
+}

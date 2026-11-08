@@ -13,7 +13,12 @@ static int inspect_main(int argc,char **argv) {
   exr_fixed_text *text=NULL;exr_bitmap bitmap={0};exr_error error={0};
   exr_fixed_open_options options={0};exr_layout_config config=exr_layout_config_defaults();
   exr_status status=EXR_ARGUMENT;const char *stage="arguments";size_t parts=0,pages=0,bytes=0;
-  size_t completed_parts=0,max_pages=0;int complete=0,valid_bitmap=1;
+  size_t completed_parts=0,max_pages=0;int complete=0,valid_bitmap=1,strict=0;
+  /* --strict (anywhere after the program name): EPUB-only OCF validation before reading. */
+  for(int i=1;i<argc;) {
+    if(!strcmp(argv[i],"--strict")) { strict=1;memmove(argv+i,argv+i+1,(size_t)(argc-i)*sizeof(*argv));argc--; }
+    else i++;
+  }
   if(argc<3 || argc>4) return 2;
   if(argc==4) {
     char *end;unsigned long long n;
@@ -55,6 +60,7 @@ static int inspect_main(int argc,char **argv) {
     } else {
       stage="open";
       if(!strcmp(ext,".epub")) {
+        if(strict) { stage="validate";status=exr_epub_validate(argv[1],&error);if(status!=EXR_OK) goto done;stage="open"; }
         status=exr_publication_open(argv[1],&publication,&error);if(status!=EXR_OK) goto done;
         (void)exr_publication_parts(publication,&parts);
       } else {
