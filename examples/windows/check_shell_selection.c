@@ -117,7 +117,11 @@ static void test_keyboard(void) {
     select_drive_key('C', 0, 1); assert(clipboard_contains("Alpha"));
     select_drive_key(VK_ESCAPE, 0, 0); assert(!g.selection.active);
   }
-  HMENU menu = select_context_menu(); assert(GetMenuItemCount(menu) == 7);
+  HMENU menu = select_context_menu(); assert(GetMenuItemCount(menu) == 12);
+  assert(GetMenuState(menu, 100, MF_BYCOMMAND) != (UINT)-1);
+  assert(!(GetMenuState(menu, 101, MF_BYCOMMAND)&MF_GRAYED));
+  assert(GetMenuState(menu, 102, MF_BYCOMMAND)&MF_GRAYED);
+  assert(GetMenuState(menu, 103, MF_BYCOMMAND)&MF_GRAYED);
   assert(GetMenuState(menu, 1, MF_BYCOMMAND)&MF_GRAYED);
   assert(!(GetMenuState(menu, 2, MF_BYCOMMAND)&MF_GRAYED));
   assert(GetMenuState(menu, 3, MF_BYCOMMAND)&MF_GRAYED); DestroyMenu(menu);
