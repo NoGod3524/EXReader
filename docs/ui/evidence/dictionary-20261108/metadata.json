@@ -2,7 +2,8 @@
   "created_utc": "2026-11-08T19:51:00.199805+00:00",
   "base_revision": "db9bab668ac725a75f3f92919edec3625879c7a8",
   "branch": "codex/dictionary-20261108",
-  "source_state": "uncommitted implementation; exact per-file hashes below",
+  "source_state": "implementation committed; exact per-file hashes below",
+  "implementation_revision": "394463050f85cb215ff791da6b427f372de48b01",
   "source_sha256_raw": {
     "CMakeLists.txt": "28d7da99f075ecd1095d0f6cf2d3934d8560de28ef22af75c0c6ee8878864ea4",
     "cmake/modules.cmake": "285c987cb3331fc77c38ac5e96a97b69f3d8f22c8f184cb4a10e9cfe0c7189e8",
