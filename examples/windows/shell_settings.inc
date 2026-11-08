@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Included by shell_screen.inc: UI-thread settings and theme presentation. */
 static HDC page_buffer_dc; /* UI-owned backing store, defined after this include. */
+static HWND shell_tap_buttons[2];
 enum { IDC_SHELL_MINUS=162, IDC_SHELL_PLUS, IDC_SHELL_LIGHT, IDC_SHELL_DARK, IDC_SHELL_SYSTEM };
 static COLORREF shell_colorref(uint32_t rgb) { return RGB((rgb>>16)&255,(rgb>>8)&255,rgb&255); }
 
@@ -61,6 +62,9 @@ static void shell_step_font(int delta) {
 }
 
 static int shell_settings_command(int id) {
+  if(id==IDC_SHELL_TAP20 || id==IDC_SHELL_TAP25) {
+    shell_tap_edge=id==IDC_SHELL_TAP20 ? 20:25;settings_save();shell_settings_refresh();return 1;
+  }
   if(id==IDC_SHELL_MINUS || id==IDC_SHELL_PLUS) { shell_step_font(id==IDC_SHELL_PLUS ? 1 : -1);return 1; }
   if(id>=IDC_SHELL_LIGHT && id<=IDC_SHELL_SYSTEM) {
     shell_theme_mode=id-IDC_SHELL_LIGHT; settings_save(); shell_apply_theme(); return 1;
@@ -88,6 +92,7 @@ static void shell_panel_layout(void) {
       shell_px(widths[i],shell_dpi)+(i<2 ? 2*frame : 0),
       shell_px(i<2 ? SHELL_CONTROL_H : SHELL_SEGMENT_H,shell_dpi)+2*frame,TRUE);
   }
+  for(int i=0;i<2;i++)MoveWindow(shell_tap_buttons[i],kpad+shell_px(20+156*i,shell_dpi),top+shell_px(306,shell_dpi),shell_px(148,shell_dpi),shell_px(32,shell_dpi),TRUE);
 }
 
 static float shell_ease(float x) {
@@ -180,6 +185,9 @@ static void shell_create_panel(HWND parent) {
   for(int i=0;i<3;i++) shell_segments[i]=shell_make_button(shell_panel,IDC_SHELL_LIGHT+i,names[i]);
   ShowWindow(shell_minus,SW_SHOW);ShowWindow(shell_plus,SW_SHOW);
   for(int i=0;i<3;i++) ShowWindow(shell_segments[i],SW_SHOW);
+  shell_tap_buttons[0]=shell_make_button(shell_panel,IDC_SHELL_TAP20,L"20 / 60 / 20");
+  shell_tap_buttons[1]=shell_make_button(shell_panel,IDC_SHELL_TAP25,L"25 / 50 / 25");
+  for(int i=0;i<2;i++)ShowWindow(shell_tap_buttons[i],SW_SHOW);
 }
 
 static int shell_draw_settings(const DRAWITEMSTRUCT *item) {
@@ -195,6 +203,7 @@ static int shell_draw_settings(const DRAWITEMSTRUCT *item) {
   wchar_t text[32];GetWindowTextW(item->hwndItem,text,32);
   if(id==IDC_SHELL_MINUS) wcscpy(text,L"−");
   else if(id==IDC_SHELL_PLUS) wcscpy(text,L"+");
+  else if(id==IDC_SHELL_TAP20 || id==IDC_SHELL_TAP25) variant=(id==IDC_SHELL_TAP20 ? shell_tap_edge==20:shell_tap_edge==25) ? 1:2;
   else variant=id-IDC_SHELL_LIGHT==shell_theme_mode ? 1 : 2;
   shell_d2d_control(host_shell,item->hDC,&item->rcItem,text,shell_is_dark(),variant,state);
   return 1;
