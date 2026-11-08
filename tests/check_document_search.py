@@ -44,8 +44,8 @@ class SearchSDK(SDK):
         super().__init__(path)
         ptr,size,err=c.c_void_p,c.c_size_t,c.POINTER(Error)
         signatures={
-          'document_search_all':(c.c_int,[ptr,c.c_char_p,c.c_uint,ptr,ptr,ptr,c.POINTER(size),err]),
-          'document_search':(c.c_int,[ptr,Position,c.c_char_p,c.c_uint,ptr,c.POINTER(Hit),err]),
+          'publication_search_all':(c.c_int,[ptr,c.c_char_p,c.c_uint,ptr,ptr,ptr,c.POINTER(size),err]),
+          'publication_search':(c.c_int,[ptr,Position,c.c_char_p,c.c_uint,ptr,c.POINTER(Hit),err]),
           'document_text':(ptr,[ptr,c.POINTER(size)]),
           'publication_locate':(c.c_int,[ptr,c.POINTER(Target),c.POINTER(Location),err]),
           'anchor_create':(c.c_int,[ptr,size,size,c.POINTER(Anchor),err]),
@@ -65,7 +65,7 @@ class SearchSDK(SDK):
         def receive(_,r):
             h=r.contents;hits.append((h.part,h.offset,h.length));return 1
         count=c.c_size_t();start=time.perf_counter_ns()
-        self.check('document_search_all',p,q.encode(),0,receive if collect else None,None,None,c.byref(count))
+        self.check('publication_search_all',p,q.encode(),0,receive if collect else None,None,None,c.byref(count))
         elapsed=(time.perf_counter_ns()-start)/1e6
         return count.value,hits,elapsed
     def texts(self,p):

@@ -1,0 +1,2 @@
+步骤 1：已同步远端 #83 head 2131258a（已合入 #80）。确认流式 exr_document_search 与固定 PDF API 撞名；既有 SEARCH-OUT.txt 本地改动保留。
+步骤 2：流式声明、实现、Windows 宿主、C 测试、ctypes 动态符号及验收说明统一改为 exr_publication_search / exr_publication_search_all。layout.h 与 origin/main document.h 全部函数名交集为空；layout.h 无 exr_document_ 函数声明，无其他撞名。固定 PDF document.h 与 main 逐字节一致。
