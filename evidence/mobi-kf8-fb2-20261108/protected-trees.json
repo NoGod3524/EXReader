@@ -1,0 +1,97 @@
+{
+  "base_revision": "b7bad7f05cd017de87523ad221d2516ad638259f",
+  "implementation_tree": "a4703b7c540e6dbaa4a929a1dcf627885cf88f7c",
+  "protected_trees": {
+    "src": {
+      "before": "5892afa49f3715087f7986d8382d5d6983d92c70",
+      "candidate": "72a5660ad7ceab7838e548925e3514fb07866a9d",
+      "changed": true
+    },
+    "include": {
+      "before": "10ce6083554e4a82e2792a4554c5e466ca8ab1c8",
+      "candidate": "5063d3967e5f727b00ec06107d5a327912321460",
+      "changed": true
+    },
+    "tests": {
+      "before": "aed57570ad0f29def1a813f7d3379838c4a0b351",
+      "candidate": "88b4b181d854c1ae30baeb45c4d639ad7c850fa7",
+      "changed": true
+    },
+    "tests/fixtures": {
+      "before": "32082f1e1f9712c27b0ca4ab8ffd178ae888e518",
+      "candidate": "32082f1e1f9712c27b0ca4ab8ffd178ae888e518",
+      "changed": false
+    },
+    "CMakeLists.txt": {
+      "before": "18ca98e1236c955530942032b8570a45902a8f5d",
+      "candidate": "acf9ef3a3241c820edc720b28907ac70a9797287",
+      "changed": true
+    },
+    "cmake": {
+      "before": "c72b22b873f4d6dc58bdbb5c6cb1a06e95fad4c8",
+      "candidate": "c72b22b873f4d6dc58bdbb5c6cb1a06e95fad4c8",
+      "changed": false
+    },
+    "tools/layers.json": {
+      "before": "b247ee69a410036933c5a6172c514d4edfe0c136",
+      "candidate": "64b7651920ab7faa2b1a1d8fb576c8384179ac8e",
+      "changed": true
+    },
+    "examples": {
+      "before": "dd8e0bcb2ad2a7f6badff2c36f5cc2f4093e9564",
+      "candidate": "dd8e0bcb2ad2a7f6badff2c36f5cc2f4093e9564",
+      "changed": false
+    },
+    ".github": {
+      "before": "3e5e1cc140ebbb554ed9fffd87cd3a51f94d0010",
+      "candidate": "3e5e1cc140ebbb554ed9fffd87cd3a51f94d0010",
+      "changed": false
+    },
+    "bindings": {
+      "before": "54c12f70a1a63cae6574984a388b66bf6248c38e",
+      "candidate": "54c12f70a1a63cae6574984a388b66bf6248c38e",
+      "changed": false
+    }
+  },
+  "changed_paths": [
+    "CMakeLists.txt",
+    "include/exr/layout.h",
+    "src/book.c",
+    "src/document.c",
+    "src/fb2.c",
+    "src/formats.c",
+    "src/formats_internal.h",
+    "src/huff.c",
+    "src/kf8.c",
+    "src/publication.c",
+    "tests/book_acceptance.py",
+    "tests/book_codec_probe.c",
+    "tests/book_formats.py",
+    "tests/book_reference.mjs",
+    "tools/layers.json"
+  ],
+  "source_sha256": {
+    "CMakeLists.txt": "f41f083c875cff9d34063adb5fe8cd9225f73a8e3f825d0ea5d4e264a1bff134",
+    "include/exr/layout.h": "ce0987124826d4b96c66e26ed23b8c9d1eb8946f4e36d8223c2807523394708a",
+    "src/book.c": "74e38b236ab4936220e7a70fa9d6025e6260567f887f04fd8e7944820e8c47f1",
+    "src/document.c": "25f98f9f4b338695c6a4c56695d5bb03ed79d0b9add65da1276ea7bc9e42096e",
+    "src/fb2.c": "0fb4cdd4b41b540342310105be9794483999f61a8c8858b10d84ab9991eb2609",
+    "src/formats.c": "dad9668cde5b536e7c84ac055e4e6f8c21f41f955f36ccf4fd38d93bcaed5945",
+    "src/formats_internal.h": "d022db09668c0dd6a466f94a09596b9b464e8fd71be8894defd2a04611b50192",
+    "src/huff.c": "d13025eaf69f29a8bd53acdc43aa5f231c85c4a5ed0054b4aa10217c344dec41",
+    "src/kf8.c": "c0ff705f271bb13893d89aa4bd2c8e979427b31a8a7de4316c789313a87c4a74",
+    "src/publication.c": "7a820e40c4f7d413253a5350b6a900b0db7ee5736f2fdbb6e5e1dbe3800cbbd8",
+    "tests/book_acceptance.py": "faeeb9a77e6de456bc9474b4441f8d128973633039857d8de2da5ac8e880e305",
+    "tests/book_codec_probe.c": "bcd243966595be69afaec153ff8eff19745b93066961a925f6f919160fc03bc4",
+    "tests/book_formats.py": "abef12d9e91cefa076014c26db3166a87be7af840465747abace28f20eef4633",
+    "tests/book_reference.mjs": "fcf1a663d80b4c8c525953e76cf2cd2b9a2b267d086fb7400aa724c21217b45c",
+    "tools/layers.json": "b48d3cd40f0c660e663482d8de7750862998f06701407c6fc257b139b96aeac2"
+  },
+  "library_sha256": "b08ddb2895e09c96902653ca69ac630b6b5de9a6963e22cb2e3a0ba0ead0fc46",
+  "new_source_headers": [],
+  "new_source_files_registered": [
+    "src/book.c"
+  ],
+  "samples_in_repository": false,
+  "registration_note": "CMakeLists.txt registers the codec probe and five test groups; tools/layers.json registers book.c."
+}

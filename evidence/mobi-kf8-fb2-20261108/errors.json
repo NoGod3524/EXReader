@@ -1,0 +1,81 @@
+[
+  {
+    "sample": "mobi-huff-cycle.mobi",
+    "stage": "open",
+    "code": 5,
+    "reason": "Cyclic CDIC phrase"
+  },
+  {
+    "sample": "mobi-huff-bad-offset.mobi",
+    "stage": "open",
+    "code": 5,
+    "reason": "Invalid HUFF/CDIC tables"
+  },
+  {
+    "sample": "mobi-palmdoc-truncated.mobi",
+    "stage": "open",
+    "code": 5,
+    "reason": "Truncated PalmDOC literal"
+  },
+  {
+    "sample": "kf8-bad-pointer.azw3",
+    "stage": "open",
+    "code": 5,
+    "reason": "Invalid or unsupported KF8 INDX/TAGX table"
+  },
+  {
+    "sample": "kf8-bad-fdst.azw3",
+    "stage": "open",
+    "code": 5,
+    "reason": "MOBI_HEADER: invalid directory, header, encoding or compression"
+  },
+  {
+    "sample": "kf8-bad-nav-target.azw3",
+    "stage": "open",
+    "code": 5,
+    "reason": "KF8_POSITION: invalid fragment or offset"
+  },
+  {
+    "sample": "kf8-bad-nav-child.azw3",
+    "stage": "open",
+    "code": 5,
+    "reason": "KF8_INDEX: invalid skeleton, fragment, FDST or navigation index"
+  },
+  {
+    "sample": "kf8-bad-nav-last.azw3",
+    "stage": "open",
+    "code": 5,
+    "reason": "KF8_INDEX: invalid skeleton, fragment, FDST or navigation index"
+  },
+  {
+    "sample": "kf8-bad-guide-target.azw3",
+    "stage": "open",
+    "code": 5,
+    "reason": "KF8_POSITION: invalid fragment or offset"
+  },
+  {
+    "sample": "kf8-bad-xml.azw3",
+    "stage": "load section 0",
+    "code": 5,
+    "reason": "XML tree rejected: no element found"
+  },
+  {
+    "sample": "kf8-zero-fragments.azw3",
+    "stage": "load section 0",
+    "code": 5,
+    "reason": "KF8_EMPTY_SECTION: reconstructed section has no text or images"
+  },
+  {
+    "sample": "generated truncated later HUFF record",
+    "stage": "load section 1",
+    "first_section_ok": true,
+    "code": 5,
+    "reason": "KF8_RECORD_LENGTH: decoded total 241 differs from FDST/text extent 243"
+  },
+  {
+    "sample": "kf8-svg.azw3 (composed bitmap SVG)",
+    "stage": "load section 0",
+    "code": 11,
+    "reason": "KF8_SVG_BITMAP: composed, transformed or background SVG bitmaps are unsupported"
+  }
+]

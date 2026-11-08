@@ -85,6 +85,7 @@
     "font_scan.c": "text",
     "fonts.c": "text",
     "formats.c": "formats",
+    "book.c": "formats",
     "huff.c": "formats",
     "hyphen.c": "text",
     "icc.c": "graphics",
