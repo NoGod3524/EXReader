@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import zipfile
 
 ROOT = Path(__file__).absolute().parents[1]
 sys.path.insert(0, str(ROOT/'tools'))
@@ -32,6 +33,22 @@ def main():
         code, full = probe(book)
         assert code == 0 and full['complete'] and full['completed_parts'] == full['parts'] == 3
         assert full['pages'] > 3 and full['text_bytes'] >= 3*16384
+        for command in ([str(binary), '--strict', str(book), str(font)],
+                        [str(binary), str(book), str(font), '--strict']):
+            checked = subprocess.run(command, capture_output=True, timeout=30)
+            assert checked.returncode == 0 and json.loads(checked.stdout) == full
+        wrong_mime = root/'错误类型.epub'
+        with zipfile.ZipFile(book) as source, zipfile.ZipFile(wrong_mime, 'w') as target:
+            for entry in source.infolist():
+                target.writestr(entry, b'application/not-epub' if entry.filename == 'mimetype'
+                                else source.read(entry))
+        code, tolerant = probe(wrong_mime)
+        assert code == 0 and tolerant == full
+        checked = subprocess.run([str(binary), str(wrong_mime), str(font), '--strict'],
+                                 capture_output=True, timeout=30)
+        strict = json.loads(checked.stdout)
+        assert checked.returncode == 1 and strict['stage'] == 'validate' and strict['status']
+        assert all(word in checked.stderr for word in (b'mimetype', b'expected', b'found'))
         code, limited = probe(book, 1)
         assert code == 1 and limited['status'] == 0 and not limited['complete'] and limited['pages'] == 1
         code, exact = probe(book, full['pages'])
