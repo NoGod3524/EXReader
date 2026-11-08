@@ -1,0 +1,8 @@
+步骤 1 完成：起点 7dc3ca0c，工作树干净，已在 codex/pdf-deepening-20261107。核对现有固定页文本/quad/find/select/hit、PDF解析和密码选项；沿用现有实现，新增跨页搜索与明确的无文字层/坐标命中接口。PDF样本仅在库外生成，不入库。
+步骤 2 完成：新增 exr_document_search（KMP跨页，UTF-8全局偏移与起止页内位置）、exr_fixed_page_text（EXR_NO_TEXT_LAYER=12）、exr_fixed_character_at（EXR_NO_TEXT_AT_POINT=13）。既有空快照API保持兼容。五组定向ctest 5/5通过；10词10/10、预置坐标20/20、扫描10页10/10、R4/R6密码与仅权限样本均通过。初次新测试编译发现路径截断警告，扩大测试路径缓冲后严格警告构建通过。
+步骤 3 完成：4类x2原创建件共8个PDF在库外生成并逐页测量，29页全渲染成功。逐页文字与PyMuPDF一致；独立RGB参考平均绝对误差均<2/255。八行的打开/页数/字符/搜索/选择/渲染/错误码及输入哈希已入matrix.json。改动前EPUB19/19、11296页、8648640字形完成，开始改动后与全量回归。
+步骤 4 完成：全量ctest203/203（起点本机配置198，新增5组），EPUB前后19/19、11296页、8648640字形，0本页数变化/0页像素哈希变化。110对象/1249符号引用的层检查无逆向依赖。另重测#73的8个真实PDF：Malcolm文字279页和扫描20页可用；上游扫描渲染UNSUPPORTED(11)、旧R4渲染FORMAT(5)、旧R6及三份讲义打开FORMAT(5)如实保留。补充搜索逐词/坐标逐点输出、ligature/Form/竖排/非BMP断言；定向5组43/85/64/26/17 checks通过。
+步骤 5 完成：最终全量ctest203/203（35.79秒），五组逐项日志、逐页矩阵、真实样本错误、EPUB前后完整元数据、源码/驱动/二进制哈希和配置已整理。报告已写明无分隔符的搜索偏移、原生坐标、ligature、密码/权限和兼容旧空快照入口；FORMAT-COVERAGE添加后续报告链接，受保护树登记完成。准备提交、push和draft PR。
+提交前复核完成：证据脚本初次用Windows默认编码读取中文报告失败，改为显式UTF-8后通过全部断言：8样本/29页、19本EPUB零变化、ctest203项、3个Windows导出符号，源码哈希一致。
+步骤 6 进度：实现、五组测试、报告和全部元数据已提交 a19ae228。暂存清单无PDF/预览二进制、examples或.github改动；git diff --cached --check通过。开始推送指定分支并创建draft PR。
+步骤 6 完成：a19ae228已push至codex/pdf-deepening-20261107；gh pr create --draft --base main成功创建draft PR #80：https://github.com/NoGod3524/EXReader/pull/80 。本条及提交/推送过程记录另提交推送，完成后核对远端draft与工作树。
