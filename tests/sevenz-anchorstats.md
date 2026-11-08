@@ -100,7 +100,7 @@ Validation commands (from the repository root):
 ctest --test-dir build/native --output-on-failure -j 4
 python tools/check_layers.py build/native
 python tests/measure_locate_report.py --dll build/native/libexreader.dll --manifest tools/regress/corpus.json --output build/sevenz/anchor-stats.json
-python tools/regress/run_realbooks.py --manifest tools/regress/corpus.json --dll build/native/libexreader.dll --font <Reader.otf> --layout tools/regress/layout.json --output build/sevenz/realbooks-after.json --baseline build/sevenz/realbooks-before.json --workers 3
+python tools/regress/run_realbooks.py --manifest tools/regress/corpus.json --dll build/native/libexreader.dll --font <Reader.otf> --layout tools/regress/layout.json --output build/sevenz/realbooks-after.json --baseline build/sevenz/realbooks-before.json --source-revision <candidate-commit> --workers 3
 ```
 
 Additional decoder validation: 48 Python liblzma encoder round trips (property
