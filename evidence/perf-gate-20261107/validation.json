@@ -1,0 +1,52 @@
+[
+  {
+    "command": [
+      "python",
+      "tools/perf/check_gate_policy.py",
+      "evidence/perf-gate-20261107/attempt-3"
+    ],
+    "exit_code": 0,
+    "stdout": "strict boundary, derivation and raw-tampering checks passed\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "python",
+      "tools/perf/check_gate_policy.py",
+      "evidence/perf-gate-20261107/candidate"
+    ],
+    "exit_code": 0,
+    "stdout": "strict boundary, derivation and raw-tampering checks passed\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "python",
+      "tests/check_perf_policy.py"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS: advisory never grants acceptance; every non-performance group remains blocking\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "apply",
+      "--check",
+      "evidence/perf-gate-20261107/proposed-workflows.patch"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]
