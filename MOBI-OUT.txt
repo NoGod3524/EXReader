@@ -2,3 +2,4 @@
 步骤 2 完成：接续并复核现有未提交实现；publication 接入 MOBI/KF8/FB2，MOBI 按 pagebreak 分片，KF8 通过 SKEL/FRAG 定位并按 record 范围解压，FB2 增加 ZIP/1251、section 分片、嵌套标题目录与封面。真实 Gutenberg 三本 AZW3 逐章加载成功。新增五组自动化验收测试，开始验证。
 步骤 3 完成：五组新增测试通过；修正真实 KindleGen HUFF 非定长 records 与 FDST 正文/辅助流长度语义，记录目录按需计长，字典仅缓存短语长度；只展开目标 section 及引用的 CSS/SVG。PalmDOC 三本和 HUFF 两本与 Foliate 逐字节一致。SVG 位图封面转换为共享图片资源引用，首屏目视通过。15 个库外样本测量完成，开始最终 19 本 EPUB 与全量 ctest。
 步骤 4 完成：最终 DLL 全量 ctest 210/210（新增 5 组）与分层检查全绿。15/15 实书样本打开且首屏正常，3 张代表截图入库；3 PalmDOC + 2 HUFF 全字节对比一致；13 个损坏/不支持案例报错明确。纠正旧混合清单，17 本原 EPUB 加 2 本 Gutenberg EPUB 用原始 DLL 重建基线；19/19、11116 页、页数和像素哈希变化均为 0。完整 SHA-256/逐本数据/受保护树登记已写入 evidence/mobi-kf8-fb2-20261108。
+步骤 5 完成：实现提交 84d59833620b57bb31e3e7739e3cfb8996b2d5ef 已推送 codex/engine-mobi-kf8-fb2-20261108；执行 gh pr create --draft --base main，创建 https://github.com/NoGod3524/EXReader/pull/96。核对已提交受保护树与实测源文件哈希一致；本次仅追加交付日志与 PR 元数据。

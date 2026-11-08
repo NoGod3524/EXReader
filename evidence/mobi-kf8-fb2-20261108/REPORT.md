@@ -69,3 +69,5 @@ python tools/regress/run_realbooks.py --manifest <epub-path-manifest> --dll buil
 截图：[MOBI](mobi-first.png) · [AZW3](azw3-first.png) · [FB2](fb2-first.png)。
 
 受保护树及源文件身份记录见 protected-trees.json。examples/ 和 .github/ 未改；src/book.c 已登记 tools/layers.json；没有新增 src/*.h。
+
+实现提交：`84d59833620b57bb31e3e7739e3cfb8996b2d5ef`。Draft PR：[NoGod3524/EXReader#96](https://github.com/NoGod3524/EXReader/pull/96)。

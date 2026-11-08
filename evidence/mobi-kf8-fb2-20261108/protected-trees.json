@@ -93,5 +93,8 @@
     "src/book.c"
   ],
   "samples_in_repository": false,
-  "registration_note": "CMakeLists.txt registers the codec probe and five test groups; tools/layers.json registers book.c."
+  "registration_note": "CMakeLists.txt registers the codec probe and five test groups; tools/layers.json registers book.c.",
+  "implementation_commit": "84d59833620b57bb31e3e7739e3cfb8996b2d5ef",
+  "branch": "codex/engine-mobi-kf8-fb2-20261108",
+  "draft_pr": "https://github.com/NoGod3524/EXReader/pull/96"
 }
