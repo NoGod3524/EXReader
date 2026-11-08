@@ -1,0 +1,1265 @@
+{
+  "dll_sha256": "0dca81621e81e3d7f6f6a6511e3070296392f4473e326b82ad2ae69922009ead",
+  "font_sha256": "e4a66a0259718d0c8f4b6e14319b4803ced45afbddf3abba8b8c3e2006856206",
+  "driver_sha256": "cd92c7e19ff470064f99b9d492ceb3959901642539eaaf555cc7b3278d6b838d",
+  "pymupdf_version": "1.28.2",
+  "region_size": 88,
+  "match_size": 48,
+  "offset_contract": "UTF-8; zero-based pages; concatenated provider-order text; no page separators",
+  "samples": [
+    {
+      "id": "text-a",
+      "kind": "text",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\pdf-deepening-samples-20261107\\text-a.pdf",
+      "origin": "original controlled fixture",
+      "expected_pages": 3,
+      "sha256": "76c80964bc2db7c30c7b53173920f2dbaa361f937e79f93252dcf9f79325bf17",
+      "open_without_password": 0,
+      "open_status": 0,
+      "open_error": "",
+      "security": {
+        "encrypted": 0,
+        "revision": 0,
+        "key_bits": 0,
+        "owner_authenticated": 0,
+        "permissions": 4294967295,
+        "metadata_encrypted": 0
+      },
+      "reference_pages": 3,
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 30,
+          "utf8_bytes": 30,
+          "reference_characters": 30,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "4c15dcb569520df1177c97c612649aaa4c8b39325e6d45d13a9cc8be505ff74a",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "52283dbb590f128e3e281f42ac4ffd5f53ad65caee265e930974547a16945906",
+          "reference_rgb_mean_absolute_error": 0.503,
+          "ink_pixels": 453,
+          "ink_bbox": [
+            21,
+            22,
+            234,
+            32
+          ],
+          "reference_ink_pixels": 459,
+          "reference_ink_bbox": [
+            21,
+            22,
+            234,
+            31
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 1,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 25,
+          "utf8_bytes": 25,
+          "reference_characters": 25,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "759a467f749d38ccb20913cf1e61dd864266820793180aa3063f5319e79f7110",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "72c52ea43fbc559a0037e2e68f9fc2a645db5728cb17cc917ec75b7f1a2b5d89",
+          "reference_rgb_mean_absolute_error": 0.41894,
+          "ink_pixels": 340,
+          "ink_bbox": [
+            21,
+            22,
+            198,
+            32
+          ],
+          "reference_ink_pixels": 361,
+          "reference_ink_bbox": [
+            21,
+            22,
+            198,
+            31
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 2,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 8,
+          "utf8_bytes": 8,
+          "reference_characters": 8,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "931534c0c145d0a99631a32025f23f88c67fc6b34a608a73d0410bc04cf7bdce",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "c0e3212632b41b4d24fc85cb6403433601e071a9801cf20ce15252747dd506a9",
+          "reference_rgb_mean_absolute_error": 0.13886,
+          "ink_pixels": 134,
+          "ink_bbox": [
+            20,
+            23,
+            76,
+            32
+          ],
+          "reference_ink_pixels": 145,
+          "reference_ink_bbox": [
+            20,
+            23,
+            76,
+            31
+          ],
+          "render_correct": true
+        }
+      ],
+      "page_count": 3,
+      "search_status": 0,
+      "search_query": "alpha",
+      "search_match": {
+        "start": 0,
+        "end": 5,
+        "start_page": 0,
+        "start_offset": 0,
+        "end_page": 0,
+        "end_offset": 5
+      },
+      "search_hits": 1,
+      "characters": 63,
+      "selection_usable_pages": 3,
+      "render_correct_pages": 3
+    },
+    {
+      "id": "text-b",
+      "kind": "text",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\pdf-deepening-samples-20261107\\text-b.pdf",
+      "origin": "original controlled fixture",
+      "expected_pages": 2,
+      "sha256": "b5241fc3ad07c313b4c77ce487985d3cf1dc65d506bbf6ac0a04f3cfed0f84e0",
+      "open_without_password": 0,
+      "open_status": 0,
+      "open_error": "",
+      "security": {
+        "encrypted": 0,
+        "revision": 0,
+        "key_bits": 0,
+        "owner_authenticated": 0,
+        "permissions": 4294967295,
+        "metadata_encrypted": 0
+      },
+      "reference_pages": 2,
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 17,
+          "utf8_bytes": 21,
+          "reference_characters": 17,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "46b141253557c500c5f438e6fe9bd901ebded55773b57676c310016b6fb8c490",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "ad54af9a3a5fc8f34c0c2abad8a18a7673477537de570b0935c4122b9163d7b6",
+          "reference_rgb_mean_absolute_error": 0.29214,
+          "ink_pixels": 245,
+          "ink_bbox": [
+            21,
+            22,
+            140,
+            30
+          ],
+          "reference_ink_pixels": 251,
+          "reference_ink_bbox": [
+            21,
+            22,
+            141,
+            29
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 1,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 17,
+          "utf8_bytes": 17,
+          "reference_characters": 17,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "e75ec0757730adf89a320df92a16ce0390818049e3d0499b74aab106baa9ad3b",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "29118ea2caad25acea39afd34a9184fe46e74cac10c542266d2f802875dc7c34",
+          "reference_rgb_mean_absolute_error": 0.29089,
+          "ink_pixels": 262,
+          "ink_bbox": [
+            21,
+            22,
+            141,
+            32
+          ],
+          "reference_ink_pixels": 269,
+          "reference_ink_bbox": [
+            21,
+            23,
+            141,
+            31
+          ],
+          "render_correct": true
+        }
+      ],
+      "page_count": 2,
+      "search_status": 0,
+      "search_query": "café",
+      "search_match": {
+        "start": 0,
+        "end": 5,
+        "start_page": 0,
+        "start_offset": 0,
+        "end_page": 0,
+        "end_offset": 5
+      },
+      "search_hits": 1,
+      "characters": 34,
+      "selection_usable_pages": 2,
+      "render_correct_pages": 2
+    },
+    {
+      "id": "scan-a",
+      "kind": "scan",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\pdf-deepening-samples-20261107\\scan-a.pdf",
+      "origin": "original controlled fixture",
+      "expected_pages": 10,
+      "sha256": "fa2cde11e2c138fb74694ea430e72ecc2e7b47d97b9d932ff3d07f27fb9e4dfd",
+      "open_without_password": 0,
+      "open_status": 0,
+      "open_error": "",
+      "security": {
+        "encrypted": 0,
+        "revision": 0,
+        "key_bits": 0,
+        "owner_authenticated": 0,
+        "permissions": 4294967295,
+        "metadata_encrypted": 0
+      },
+      "reference_pages": 10,
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 1,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 2,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 3,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 4,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 5,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 6,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 7,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 8,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 9,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        }
+      ],
+      "page_count": 10,
+      "search_status": 12,
+      "search_query": "café",
+      "search_match": {
+        "start": 18446744073709551615,
+        "end": 18446744073709551615,
+        "start_page": 18446744073709551615,
+        "start_offset": 18446744073709551615,
+        "end_page": 18446744073709551615,
+        "end_offset": 18446744073709551615
+      },
+      "search_hits": 0,
+      "characters": 0,
+      "selection_usable_pages": 0,
+      "render_correct_pages": 10
+    },
+    {
+      "id": "scan-b",
+      "kind": "scan",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\pdf-deepening-samples-20261107\\scan-b.pdf",
+      "origin": "original controlled fixture",
+      "expected_pages": 2,
+      "sha256": "f34b1b17d452822da06f4dd24039a97e918a2a8fdfd08acdea044a348a31705f",
+      "open_without_password": 0,
+      "open_status": 0,
+      "open_error": "",
+      "security": {
+        "encrypted": 0,
+        "revision": 0,
+        "key_bits": 0,
+        "owner_authenticated": 0,
+        "permissions": 4294967295,
+        "metadata_encrypted": 0
+      },
+      "reference_pages": 2,
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 1,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        }
+      ],
+      "page_count": 2,
+      "search_status": 12,
+      "search_query": "café",
+      "search_match": {
+        "start": 18446744073709551615,
+        "end": 18446744073709551615,
+        "start_page": 18446744073709551615,
+        "start_offset": 18446744073709551615,
+        "end_page": 18446744073709551615,
+        "end_offset": 18446744073709551615
+      },
+      "search_hits": 0,
+      "characters": 0,
+      "selection_usable_pages": 0,
+      "render_correct_pages": 2
+    },
+    {
+      "id": "mixed-a",
+      "kind": "mixed",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\pdf-deepening-samples-20261107\\mixed-a.pdf",
+      "origin": "original controlled fixture",
+      "expected_pages": 4,
+      "sha256": "fc805ba239dcbe86e4d1edc2339b50bac9665f165caf2aa950190e062b2a8a38",
+      "open_without_password": 0,
+      "open_status": 0,
+      "open_error": "",
+      "security": {
+        "encrypted": 0,
+        "revision": 0,
+        "key_bits": 0,
+        "owner_authenticated": 0,
+        "permissions": 4294967295,
+        "metadata_encrypted": 0
+      },
+      "reference_pages": 4,
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 5,
+          "utf8_bytes": 5,
+          "reference_characters": 5,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "f165680a4ca3d51682f35d46598ccf785b7242f681d0f59cfa023a1458c973d1",
+          "reference_rgb_mean_absolute_error": 0.09478,
+          "ink_pixels": 90,
+          "ink_bbox": [
+            21,
+            22,
+            54,
+            32
+          ],
+          "reference_ink_pixels": 94,
+          "reference_ink_bbox": [
+            21,
+            23,
+            54,
+            31
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 1,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 2,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 4,
+          "utf8_bytes": 4,
+          "reference_characters": 4,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "189d2c95d8419bb2e679eb8deb2ebd5db5beb217883c7c7ce321181d8de556a1",
+          "reference_rgb_mean_absolute_error": 0.07294,
+          "ink_pixels": 67,
+          "ink_bbox": [
+            20,
+            23,
+            47,
+            29
+          ],
+          "reference_ink_pixels": 71,
+          "reference_ink_bbox": [
+            20,
+            23,
+            47,
+            29
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 3,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        }
+      ],
+      "page_count": 4,
+      "search_status": 0,
+      "search_query": "alpha",
+      "search_match": {
+        "start": 0,
+        "end": 5,
+        "start_page": 0,
+        "start_offset": 0,
+        "end_page": 0,
+        "end_offset": 5
+      },
+      "search_hits": 1,
+      "characters": 9,
+      "selection_usable_pages": 2,
+      "render_correct_pages": 4
+    },
+    {
+      "id": "mixed-b",
+      "kind": "mixed",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\pdf-deepening-samples-20261107\\mixed-b.pdf",
+      "origin": "original controlled fixture",
+      "expected_pages": 3,
+      "sha256": "e058ffff93f1d2c18df8e02b5e7ed711b3ac3f15688b1de82fc57cd5fd6d1d10",
+      "open_without_password": 0,
+      "open_status": 0,
+      "open_error": "",
+      "security": {
+        "encrypted": 0,
+        "revision": 0,
+        "key_bits": 0,
+        "owner_authenticated": 0,
+        "permissions": 4294967295,
+        "metadata_encrypted": 0
+      },
+      "reference_pages": 3,
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 1,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 5,
+          "utf8_bytes": 5,
+          "reference_characters": 5,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "be9d587defa1f0c09ef49eb17e206983a5f8f8289e4281860bd0ee5a19592c67",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "e1b60cbf556b8cbe48a5d726f8f41346b66776f57a8c885c38bc8b419bc589dd",
+          "reference_rgb_mean_absolute_error": 0.10086,
+          "ink_pixels": 97,
+          "ink_bbox": [
+            21,
+            24,
+            54,
+            32
+          ],
+          "reference_ink_pixels": 100,
+          "reference_ink_bbox": [
+            21,
+            25,
+            54,
+            31
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 2,
+          "text_status": 12,
+          "text_error": "Page has no text layer",
+          "characters": 0,
+          "utf8_bytes": 0,
+          "reference_characters": 0,
+          "selection_status": null,
+          "selected_regions": 0,
+          "coordinate_status": 12,
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "36658260060ca82a25733459cc47a3fa00a0055c5c0bbaa94284800ab23c645d",
+          "reference_rgb_mean_absolute_error": 0.0,
+          "ink_pixels": 3200,
+          "ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "reference_ink_pixels": 3200,
+          "reference_ink_bbox": [
+            20,
+            20,
+            99,
+            99
+          ],
+          "render_correct": true
+        }
+      ],
+      "page_count": 3,
+      "search_status": 0,
+      "search_query": "gamma",
+      "search_match": {
+        "start": 0,
+        "end": 5,
+        "start_page": 1,
+        "start_offset": 0,
+        "end_page": 1,
+        "end_offset": 5
+      },
+      "search_hits": 1,
+      "characters": 5,
+      "selection_usable_pages": 1,
+      "render_correct_pages": 3
+    },
+    {
+      "id": "encrypted-password",
+      "kind": "encrypted",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\pdf-deepening-samples-20261107\\encrypted-password.pdf",
+      "origin": "text-a; pypdf AES-128",
+      "expected_pages": 3,
+      "sha256": "4eed906e608b2d812363adf71baae48b00c8ca0e593dbca5d5cb01f3dae22bb0",
+      "open_without_password": 10,
+      "open_wrong_password": 10,
+      "open_status": 0,
+      "open_error": "",
+      "security": {
+        "encrypted": 1,
+        "revision": 4,
+        "key_bits": 128,
+        "owner_authenticated": 0,
+        "permissions": 4,
+        "metadata_encrypted": 1
+      },
+      "reference_pages": 3,
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 30,
+          "utf8_bytes": 30,
+          "reference_characters": 30,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "4c15dcb569520df1177c97c612649aaa4c8b39325e6d45d13a9cc8be505ff74a",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "52283dbb590f128e3e281f42ac4ffd5f53ad65caee265e930974547a16945906",
+          "reference_rgb_mean_absolute_error": 0.503,
+          "ink_pixels": 453,
+          "ink_bbox": [
+            21,
+            22,
+            234,
+            32
+          ],
+          "reference_ink_pixels": 459,
+          "reference_ink_bbox": [
+            21,
+            22,
+            234,
+            31
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 1,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 25,
+          "utf8_bytes": 25,
+          "reference_characters": 25,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "759a467f749d38ccb20913cf1e61dd864266820793180aa3063f5319e79f7110",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "72c52ea43fbc559a0037e2e68f9fc2a645db5728cb17cc917ec75b7f1a2b5d89",
+          "reference_rgb_mean_absolute_error": 0.41894,
+          "ink_pixels": 340,
+          "ink_bbox": [
+            21,
+            22,
+            198,
+            32
+          ],
+          "reference_ink_pixels": 361,
+          "reference_ink_bbox": [
+            21,
+            22,
+            198,
+            31
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 2,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 8,
+          "utf8_bytes": 8,
+          "reference_characters": 8,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "931534c0c145d0a99631a32025f23f88c67fc6b34a608a73d0410bc04cf7bdce",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "c0e3212632b41b4d24fc85cb6403433601e071a9801cf20ce15252747dd506a9",
+          "reference_rgb_mean_absolute_error": 0.13886,
+          "ink_pixels": 134,
+          "ink_bbox": [
+            20,
+            23,
+            76,
+            32
+          ],
+          "reference_ink_pixels": 145,
+          "reference_ink_bbox": [
+            20,
+            23,
+            76,
+            31
+          ],
+          "render_correct": true
+        }
+      ],
+      "page_count": 3,
+      "search_status": 0,
+      "search_query": "alpha",
+      "search_match": {
+        "start": 0,
+        "end": 5,
+        "start_page": 0,
+        "start_offset": 0,
+        "end_page": 0,
+        "end_offset": 5
+      },
+      "search_hits": 1,
+      "characters": 63,
+      "selection_usable_pages": 3,
+      "render_correct_pages": 3
+    },
+    {
+      "id": "encrypted-permissions",
+      "kind": "encrypted",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\pdf-deepening-samples-20261107\\encrypted-permissions.pdf",
+      "origin": "text-b; pypdf AES-256",
+      "expected_pages": 2,
+      "sha256": "da13ed853ac6efd395187f2ca32a12dbc0ef657f04941a658390a385d73ef824",
+      "open_without_password": 0,
+      "open_status": 0,
+      "open_error": "",
+      "security": {
+        "encrypted": 1,
+        "revision": 6,
+        "key_bits": 256,
+        "owner_authenticated": 0,
+        "permissions": 4,
+        "metadata_encrypted": 1
+      },
+      "reference_pages": 2,
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 17,
+          "utf8_bytes": 21,
+          "reference_characters": 17,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "46b141253557c500c5f438e6fe9bd901ebded55773b57676c310016b6fb8c490",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "ad54af9a3a5fc8f34c0c2abad8a18a7673477537de570b0935c4122b9163d7b6",
+          "reference_rgb_mean_absolute_error": 0.29214,
+          "ink_pixels": 245,
+          "ink_bbox": [
+            21,
+            22,
+            140,
+            30
+          ],
+          "reference_ink_pixels": 251,
+          "reference_ink_bbox": [
+            21,
+            22,
+            141,
+            29
+          ],
+          "render_correct": true
+        },
+        {
+          "page": 1,
+          "text_status": 0,
+          "text_error": "",
+          "characters": 17,
+          "utf8_bytes": 17,
+          "reference_characters": 17,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "text_sha256": "e75ec0757730adf89a320df92a16ce0390818049e3d0499b74aab106baa9ad3b",
+          "render_status": 0,
+          "size": [
+            300,
+            120
+          ],
+          "pixel_sha256": "29118ea2caad25acea39afd34a9184fe46e74cac10c542266d2f802875dc7c34",
+          "reference_rgb_mean_absolute_error": 0.29089,
+          "ink_pixels": 262,
+          "ink_bbox": [
+            21,
+            22,
+            141,
+            32
+          ],
+          "reference_ink_pixels": 269,
+          "reference_ink_bbox": [
+            21,
+            23,
+            141,
+            31
+          ],
+          "render_correct": true
+        }
+      ],
+      "page_count": 2,
+      "search_status": 0,
+      "search_query": "café",
+      "search_match": {
+        "start": 0,
+        "end": 5,
+        "start_page": 0,
+        "start_offset": 0,
+        "end_page": 0,
+        "end_offset": 5
+      },
+      "search_hits": 1,
+      "characters": 34,
+      "selection_usable_pages": 2,
+      "render_correct_pages": 2
+    }
+  ]
+}

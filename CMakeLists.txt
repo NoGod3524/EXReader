@@ -1121,3 +1121,17 @@ if(EXR_BUILD_TESTS)
     add_test(NAME native-epub-strict-${group} COMMAND exreader-epub-strict-test ${group})
   endforeach()
 endif()
+
+if(EXR_BUILD_TESTS AND EXR_ENABLE_PDF)
+  add_executable(exreader-pdf-deepening-test tests/test_pdf_deepening.c)
+  target_link_libraries(exreader-pdf-deepening-test PRIVATE exreader)
+  if(NOT MSVC)
+    target_compile_options(exreader-pdf-deepening-test PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  endif()
+  foreach(group search coordinates scan contracts encryption)
+    add_test(NAME native-pdf-deepening-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/pdf_deepening_inputs.py
+      --probe $<TARGET_FILE:exreader-pdf-deepening-test>
+      --fixtures ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures --group ${group})
+  endforeach()
+endif()

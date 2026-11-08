@@ -32,7 +32,9 @@ typedef enum {
   EXR_FONT,
   EXR_CANCELLED,
   EXR_PASSWORD, /* Missing or incorrect PDF password; caller may retry opening. */
-  EXR_UNSUPPORTED /* Recognized feature requires an unavailable/unsupported component. */
+  EXR_UNSUPPORTED, /* Recognized feature requires an unavailable/unsupported component. */
+  EXR_NO_TEXT_LAYER, /* Requested page/document contains no semantic text. */
+  EXR_NO_TEXT_AT_POINT /* Page has text, but no visible text quad contains the point. */
 } exr_status;
 typedef enum {
   EXR_CUSTOM = 0, /* Constructed through exr_document_create(), without a file decoder. */

@@ -1,0 +1,4265 @@
+{
+  "dll_sha256": "0dca81621e81e3d7f6f6a6511e3070296392f4473e326b82ad2ae69922009ead",
+  "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "driver_sha256": "0451ffd32a23b7a7afac08eb87c51327485fbf246408891cefe57c1593720b74",
+  "samples": [
+    {
+      "id": "pdf-text-malcolm",
+      "sha256": "c9373b7dbda128fea031616b444ca490a3cd59dccb3f02cb2512fd9957a0fdb7",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Autobiography of Malcolm X. (Malcolm X, Alex Haley) (z-library.sk, 1lib.sk, z-lib.sk).pdf",
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "cc5f5074e6506c38e4e4a28ef09692beca9ca44d1c9b652e1468c64ca0e5f210",
+          "size": [
+            285,
+            480
+          ]
+        },
+        {
+          "page": 1,
+          "text_status": 0,
+          "characters": 2765,
+          "utf8_bytes": 2765,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "f450891288a897317e3a2993380c79c4b0a80a76310b467d048bf42141a64328",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 2,
+          "text_status": 0,
+          "characters": 3891,
+          "utf8_bytes": 3891,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "d18e0789d65d43b6ee799a126c0bc46c1c68d992df7d0d5fdf148de0e9fe178d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 3,
+          "text_status": 0,
+          "characters": 4177,
+          "utf8_bytes": 4177,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "d016f8b3a5295e6c9b070a1295700440866074c24f52551c8845aa6c891770d1",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 4,
+          "text_status": 0,
+          "characters": 4292,
+          "utf8_bytes": 4292,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "d12d00c9f5c9b36a52c291ea7e2e0cd685b22d25e97afa1a6f31c2ba633d3a87",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 5,
+          "text_status": 0,
+          "characters": 3952,
+          "utf8_bytes": 3952,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "5707bf2c64d98b84e277c0d96ac83931d642eaa85a9a911d3b4a9d8c7466508d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 6,
+          "text_status": 0,
+          "characters": 3578,
+          "utf8_bytes": 3578,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "3f0f1bacb1f565f91cac40132df4492103373235f340cdd6653b9f6a58161521",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 7,
+          "text_status": 0,
+          "characters": 3867,
+          "utf8_bytes": 3867,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "92fd4b9b721cd3aa92c199eaaecafcfb3386a79d83fe0fd206a1a82f852ae248",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 8,
+          "text_status": 0,
+          "characters": 3754,
+          "utf8_bytes": 3754,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "15db591922c7ea925394f1127aa5e516530f95a2db5fad06be5ec4f70350ce30",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 9,
+          "text_status": 0,
+          "characters": 3079,
+          "utf8_bytes": 3079,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c55fab06b679420bf33585e6982262b4345c1a2d8a8ccddc29f788e6b344862d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 10,
+          "text_status": 0,
+          "characters": 3619,
+          "utf8_bytes": 3619,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "d67bf80f8dc9044591b00271cd4b47fd08daa62d94fb064992f217157980f709",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 11,
+          "text_status": 0,
+          "characters": 4216,
+          "utf8_bytes": 4216,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "5f8c6f1d856d16fcded74cdd0cf75631b4f7956bd0c80765d29d903867de3d8d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 12,
+          "text_status": 0,
+          "characters": 4249,
+          "utf8_bytes": 4249,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "e44bbedcecd8c218b78ab227f91859183c954f0277ecd320a7707cc10bea38c3",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 13,
+          "text_status": 0,
+          "characters": 3810,
+          "utf8_bytes": 3810,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "babcf07befadd2e5afc259e4a0e239aaed2665c8c182ae5e83ab1898ec7f2397",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 14,
+          "text_status": 0,
+          "characters": 3601,
+          "utf8_bytes": 3601,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1207aa69cff1fecfcd98660c89a34879fd9d10c724150ad2f2150b0d9c5edb58",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 15,
+          "text_status": 0,
+          "characters": 4130,
+          "utf8_bytes": 4130,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "d9dd9f74249a8cb93f7bb77be12a5c4775a21c4eca72ff6eff27fe3d9ad52823",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 16,
+          "text_status": 0,
+          "characters": 4585,
+          "utf8_bytes": 4585,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "6a296d0df12ef0ca949cea2e1b9358f6461f633dbc3ff57e6a2b225abdd95da3",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 17,
+          "text_status": 0,
+          "characters": 3883,
+          "utf8_bytes": 3883,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4096f1ad9b42118a829405a41df95dc69c55313fcdb9f8f4fe5268c81976a47f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 18,
+          "text_status": 0,
+          "characters": 4226,
+          "utf8_bytes": 4226,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "47b603db9ec3a0c1e344b6b4e7213a0533ddb6edf4e6f965febee12c25f56948",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 19,
+          "text_status": 0,
+          "characters": 4043,
+          "utf8_bytes": 4043,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "5a401f20ad8f4ddf955a3d4763b71007bf509fa9d81c24191bf404bbaea1f3bb",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 20,
+          "text_status": 0,
+          "characters": 3657,
+          "utf8_bytes": 3657,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "3c334327ee2683d3cee68661b3c930fe158eac8e3d55f7a23ae02ec9d5d4aee8",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 21,
+          "text_status": 0,
+          "characters": 4086,
+          "utf8_bytes": 4086,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1efb66476f6696c16c01ad34b1de21d6d1cade013ab57514c02b5ffe11a07efe",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 22,
+          "text_status": 0,
+          "characters": 4526,
+          "utf8_bytes": 4526,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "f0227931af56c4ac14eb03bbdbe6e17fae5188b50647504eeb87946038f89f0a",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 23,
+          "text_status": 0,
+          "characters": 3601,
+          "utf8_bytes": 3601,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1f1ba52db697b049f018707bec890df95a496c5acf787831ae6ca05b850aaa48",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 24,
+          "text_status": 0,
+          "characters": 3854,
+          "utf8_bytes": 3854,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "8812a93a50d6431d47850be0bd7fb94618b61340c0ccf2ba2cb988eceb3be7c8",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 25,
+          "text_status": 0,
+          "characters": 3713,
+          "utf8_bytes": 3713,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "16a74b009e1626f46d1f4d550770030a4c8161da5036a279c1c24c4b7661b0d3",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 26,
+          "text_status": 0,
+          "characters": 3291,
+          "utf8_bytes": 3291,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "7635eefa6bb466a884959a7637e1c7d20b7667199ae697bc7f54c17074e5605b",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 27,
+          "text_status": 0,
+          "characters": 3794,
+          "utf8_bytes": 3794,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "bb1af0c012f8e43b4bc6ccd360046b9823dba155ea65fabcfb1af73c417197cf",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 28,
+          "text_status": 0,
+          "characters": 4101,
+          "utf8_bytes": 4101,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "21989f39b78df4f54c9c619c75e24a49977026c9c517f888584f9c4c0b87e371",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 29,
+          "text_status": 0,
+          "characters": 4527,
+          "utf8_bytes": 4527,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "72da0e167e59c16347c3ae5bc5b349ce564ec097020b1d026cb04b861e1935fe",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 30,
+          "text_status": 0,
+          "characters": 4242,
+          "utf8_bytes": 4242,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "9e34b54a5d0c5679817a0b3f23c4f24199d83e31ebe3696db7ad04370a46f754",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 31,
+          "text_status": 0,
+          "characters": 4255,
+          "utf8_bytes": 4255,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1c8510e108965460f06636c90c58664d2baa1a11e0e267f328b84dc097d3a387",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 32,
+          "text_status": 0,
+          "characters": 4228,
+          "utf8_bytes": 4228,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "27067e0b263736cde992bd64e0cbca76c701e02c82e323c6f8d92491e11e0bab",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 33,
+          "text_status": 0,
+          "characters": 3662,
+          "utf8_bytes": 3662,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1f68e9eb163c0152a4739a76ae3b1c5faf3d8f86702d86e611695a50096289a1",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 34,
+          "text_status": 0,
+          "characters": 3649,
+          "utf8_bytes": 3649,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "288be51aa1f572edf9891d9bc4fb20733e7d77849aa4bf34638861102388671a",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 35,
+          "text_status": 0,
+          "characters": 3199,
+          "utf8_bytes": 3199,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "621814162fc401a2a070c3d36d195edac4b167aa764052f05ba95ef292552d28",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 36,
+          "text_status": 0,
+          "characters": 3949,
+          "utf8_bytes": 3949,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "884d17306160b57b82037200da3a2e5bc0b6429fd690da31753d476aa426f448",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 37,
+          "text_status": 0,
+          "characters": 4062,
+          "utf8_bytes": 4062,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "15afbf603948f6541d9ad7f2dc4601c2141e68094d90215e10ddfa191e77995c",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 38,
+          "text_status": 0,
+          "characters": 4192,
+          "utf8_bytes": 4192,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0bc2cd89c445c7f6b8fe78bd3082c6e2df1753f2b2545811964e4cc002d3f81d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 39,
+          "text_status": 0,
+          "characters": 3901,
+          "utf8_bytes": 3901,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "856b1b51d82474174d3111a063ffd64df519f33b7c1444f215f5507a83c64b0f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 40,
+          "text_status": 0,
+          "characters": 3768,
+          "utf8_bytes": 3768,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1e9d7eac738a58b4d67d16f033cb7889f4d94e306c0e3745e02689b9bfd2f4a6",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 41,
+          "text_status": 0,
+          "characters": 3997,
+          "utf8_bytes": 3997,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "79a4fdb40deef216eb2741ea8e4fdc127e9f77940b7332ac9ca1465e23ae1fb9",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 42,
+          "text_status": 0,
+          "characters": 3853,
+          "utf8_bytes": 3853,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "bd7204591a0606ac0e6c7a0acef0e85b33f977ba632a73cf985e1e0c02183128",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 43,
+          "text_status": 0,
+          "characters": 4266,
+          "utf8_bytes": 4266,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "b54d10bab4386e9e3bc97188d89145f2d3c8400776041d4ed111f7fd0d23f73e",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 44,
+          "text_status": 0,
+          "characters": 3055,
+          "utf8_bytes": 3055,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c319516b9a80475a0df54b4c74fd870dd1ce7195fdf956ad2a10d824dfd2864b",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 45,
+          "text_status": 0,
+          "characters": 3736,
+          "utf8_bytes": 3736,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "6c528a723a6b997471ffcdce243a4579fb0ee172ec40a5daa6372877efa560f9",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 46,
+          "text_status": 0,
+          "characters": 3831,
+          "utf8_bytes": 3831,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0231f0582de4ee3adfc3858fe9ab4083c1cefeef81fe873bcaa7739443bbdddd",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 47,
+          "text_status": 0,
+          "characters": 3769,
+          "utf8_bytes": 3769,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "214ac46404f918e91e45eb045a8b734945b97eeab0635c0ab2ee8f9fd7f1aed1",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 48,
+          "text_status": 0,
+          "characters": 4256,
+          "utf8_bytes": 4256,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "8967a03abadfd66339f90479c640489fe26be8a76cc87c80ae3b26507122a2ad",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 49,
+          "text_status": 0,
+          "characters": 3663,
+          "utf8_bytes": 3663,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ef000dc95fa4a215d4c35028d8542c1180c9b21d36fe54ab133c5b95055f3d24",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 50,
+          "text_status": 0,
+          "characters": 4094,
+          "utf8_bytes": 4094,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1b8bbde1699090a0778030cabd57bf72e8c04dd0520d53eb24d2740f0cfade1a",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 51,
+          "text_status": 0,
+          "characters": 3669,
+          "utf8_bytes": 3669,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "697d5ae353e7a931190fabe00ab66992adf58355e67737513d4f7cb2fc56a117",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 52,
+          "text_status": 0,
+          "characters": 3318,
+          "utf8_bytes": 3318,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "253a9c00c9d27f5200f1ed0dcad930619c80a337e650804548ef4b583abdcc04",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 53,
+          "text_status": 0,
+          "characters": 3513,
+          "utf8_bytes": 3513,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "abddfb66f3b2bb089455c890468359d86bd131cbec27a844beebbf64fed37a30",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 54,
+          "text_status": 0,
+          "characters": 3958,
+          "utf8_bytes": 3958,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "045005253c1acca1b2357c7a5eda91eeab9a5d81a06eeea42c8209e53eb5deb9",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 55,
+          "text_status": 0,
+          "characters": 4020,
+          "utf8_bytes": 4020,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "a394dcc332f54953e9bfc8dcd852c71e9b9d50b6d78bab6a40554f0ac7d4d86d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 56,
+          "text_status": 0,
+          "characters": 4458,
+          "utf8_bytes": 4458,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "3c3e44686a21ce29521530f74fdf4d1f897d605366b96665c1dc0801686d249b",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 57,
+          "text_status": 0,
+          "characters": 4478,
+          "utf8_bytes": 4478,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ca5545260c35708d4cd2ce6a8665c15b68934cbc2e32ea512631bd6d3c0b8d36",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 58,
+          "text_status": 0,
+          "characters": 4365,
+          "utf8_bytes": 4365,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ae724cf274f500423bc508ed1b0082575a222100b8186ea8af12949903d22175",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 59,
+          "text_status": 0,
+          "characters": 4047,
+          "utf8_bytes": 4047,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "a0297f2b7fc758a934d1c47e5a3b2fd49f9e660deda136703d4a0e75c0b4b7fc",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 60,
+          "text_status": 0,
+          "characters": 3887,
+          "utf8_bytes": 3887,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "26bcff5b7959c48a4fb744ac59ce4fe38bcbd741f1eab0da53492fccc6915439",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 61,
+          "text_status": 0,
+          "characters": 3559,
+          "utf8_bytes": 3559,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "3303baa54d383d45a44cac84e2cecddd557ed3dbf64e8902db97ab9876e3fbce",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 62,
+          "text_status": 0,
+          "characters": 4187,
+          "utf8_bytes": 4187,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "75f43bdeca7278dda7e37f3eb1c59d08daebefa02e26ecf4c3eaa4f293dfb1da",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 63,
+          "text_status": 0,
+          "characters": 3820,
+          "utf8_bytes": 3820,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0933abd4518a956bc5cbe38130cf8f80b64b20e17497cab8b4ba645ee1377cc1",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 64,
+          "text_status": 0,
+          "characters": 4485,
+          "utf8_bytes": 4485,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "fbb2683e9a3bf5a978b97fc26325aa70ccd27a634a65cd55d844363fc8b8c1f9",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 65,
+          "text_status": 0,
+          "characters": 4086,
+          "utf8_bytes": 4086,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "63f64f5197a99ad6f61445dad5d0a6f742feaa83c60323257d67d6d16b04cbe6",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 66,
+          "text_status": 0,
+          "characters": 4099,
+          "utf8_bytes": 4099,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "92cd92bde15445877bda06498f55b46d214a410853a4382f1597e28e006961ff",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 67,
+          "text_status": 0,
+          "characters": 4317,
+          "utf8_bytes": 4317,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "24fa8906fd94ecc3fb8a6be5d87a976cbcd7bc12e5c0bb6da1fdd4d724bf137c",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 68,
+          "text_status": 0,
+          "characters": 3815,
+          "utf8_bytes": 3815,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "99a0df4adb45808dced54c0d4799c38e92f242e53d309d98c5a10ca5a6450c27",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 69,
+          "text_status": 0,
+          "characters": 3888,
+          "utf8_bytes": 3888,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "f8ae7bec6a7aefa342383238c9181e7fbdc60111f3728b12b609fd96c0f0c81c",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 70,
+          "text_status": 0,
+          "characters": 4299,
+          "utf8_bytes": 4299,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "fb5b019c29d1ab8e210e82593773d3dc875e42389702fdcfd8dbb1215c8b0fc1",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 71,
+          "text_status": 0,
+          "characters": 3866,
+          "utf8_bytes": 3866,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ce7bffec4a5284047327f829036a1b5919ec6f66d5c3e27c8c8b1e561d3fe2a1",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 72,
+          "text_status": 0,
+          "characters": 3728,
+          "utf8_bytes": 3728,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4a7236c620f315da90408636951abadd6df84d982728d209063bc05e3477c018",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 73,
+          "text_status": 0,
+          "characters": 3416,
+          "utf8_bytes": 3416,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "a74358493255cbb66149e46fddcce1d8ae4c2ce591b037f44435cbe09347784e",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 74,
+          "text_status": 0,
+          "characters": 3551,
+          "utf8_bytes": 3551,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "a1aef9917cd5dc966fa8e697d1f2dc5879550f39f4d63a392363e75f74c881f7",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 75,
+          "text_status": 0,
+          "characters": 3627,
+          "utf8_bytes": 3627,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0f26565fcaa98fdd10bac70b38848897a7e700356a182ee83f313b7b9cba5072",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 76,
+          "text_status": 0,
+          "characters": 4248,
+          "utf8_bytes": 4248,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "2e72659198a2aa34bf87d17340c3edf44b58cdc79ae9455aa7b0bdc37d16e464",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 77,
+          "text_status": 0,
+          "characters": 3965,
+          "utf8_bytes": 3965,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c01c1e36fc09a5f0236cf41636ef1ca47e6fe4b3aa3c725d1db45e0547d0da22",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 78,
+          "text_status": 0,
+          "characters": 4197,
+          "utf8_bytes": 4197,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "bbdff57357557e8c8b45626159a90c9721c1dbd28e5f38630f43f0c8015eec02",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 79,
+          "text_status": 0,
+          "characters": 3919,
+          "utf8_bytes": 3919,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "7350fa9250d41ede23305202125fbb9c3eb5213c16679044145452230955d885",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 80,
+          "text_status": 0,
+          "characters": 3632,
+          "utf8_bytes": 3632,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c25856c07538725545f69e9126299966f330edb5a6de338b75ce72520ab64ba9",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 81,
+          "text_status": 0,
+          "characters": 4017,
+          "utf8_bytes": 4017,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "95b7396d3afa13ac83a9fe326a6b1757e6f9fca62009b7c94c41a021eec3038f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 82,
+          "text_status": 0,
+          "characters": 4028,
+          "utf8_bytes": 4030,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "5c7fc4e3c85b555ede9cb822ddb78c59e4b3e352b099f36102a0e2f6ef246f25",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 83,
+          "text_status": 0,
+          "characters": 3767,
+          "utf8_bytes": 3767,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "2a790fe208e486b0fe011da7d37d97f6f729ba09d26ee2caf77a5a7244c0f580",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 84,
+          "text_status": 0,
+          "characters": 4124,
+          "utf8_bytes": 4124,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "8bb0a9d363c05930909019225d4c6b584f369700b1fd405a6b25056243800c31",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 85,
+          "text_status": 0,
+          "characters": 2697,
+          "utf8_bytes": 2697,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "b7ae5999aa3f20579c4f44f59abfef978aaa297bb09d60931f75a0a57ce13374",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 86,
+          "text_status": 0,
+          "characters": 3507,
+          "utf8_bytes": 3507,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "366999f70d89d0701dd95384ec08ef189a155f3b74821bfa498e0d28b235eed8",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 87,
+          "text_status": 0,
+          "characters": 3737,
+          "utf8_bytes": 3737,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "a7fa238f152d8e8071b80bc57c7d515ad27db01d8d62c988e592d33fb1d40107",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 88,
+          "text_status": 0,
+          "characters": 2980,
+          "utf8_bytes": 2980,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "92e2a471ecd72ecce1c674329a7f8357d6020a4d6d30b9e59c108dcd38cc875b",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 89,
+          "text_status": 0,
+          "characters": 2302,
+          "utf8_bytes": 2302,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "3156c10a20868a576c599ed1a2b66b0beee402cd90014c42d55d9aff32b9eb0b",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 90,
+          "text_status": 0,
+          "characters": 3431,
+          "utf8_bytes": 3431,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "97941b9685924841985d04410bef48022d79910470fc522bbab43d48c84a2faa",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 91,
+          "text_status": 0,
+          "characters": 3622,
+          "utf8_bytes": 3622,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1bb397ee4e6f2c2fe4c81c04566a8cb450ce0196f6b65ca9b8c79d0ef91d7bcb",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 92,
+          "text_status": 0,
+          "characters": 3707,
+          "utf8_bytes": 3707,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "bbc098cccdade7304be5b94d3eccffe9316fac824b4b40d4a30ff92a6c6d2ca2",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 93,
+          "text_status": 0,
+          "characters": 3986,
+          "utf8_bytes": 3986,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "89b62e801fa819c52b7ec1e4f64dd48b2caf8d349b59a346099cbe60361f159d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 94,
+          "text_status": 0,
+          "characters": 3771,
+          "utf8_bytes": 3771,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "b326664bb3750083eb05d4604ad0e3f4ac8dba1ec3589085738cb43f6b19f200",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 95,
+          "text_status": 0,
+          "characters": 3689,
+          "utf8_bytes": 3689,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "08fa2f7b7ebb951ae88258f8f9d68be7bb55e054bf8ca3f648c55ebd71351202",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 96,
+          "text_status": 0,
+          "characters": 4141,
+          "utf8_bytes": 4141,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "135f24117ffb08a4c6be596bc6acbd0fc74627fc28bad49f78bf9a4f2c46e219",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 97,
+          "text_status": 0,
+          "characters": 3278,
+          "utf8_bytes": 3278,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4b028bafc54612f33f25ace84b6806df6e1bdfe6265c1d9ef49b3f6c2ccdf80a",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 98,
+          "text_status": 0,
+          "characters": 3306,
+          "utf8_bytes": 3306,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "d9e065eb8b51939b2c75d62bdfef0f148913f8d86f686c0608edb8423d06c292",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 99,
+          "text_status": 0,
+          "characters": 3034,
+          "utf8_bytes": 3034,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "dc819b8ae73d9048e8510ec910ea8a7101b32a6a41e3d278977ab82924cecca2",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 100,
+          "text_status": 0,
+          "characters": 2846,
+          "utf8_bytes": 2846,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "2cde442b9912c1b0c8bbb8f11e1afa17c08136d1b4e5abd9d3fcc4bf045160f9",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 101,
+          "text_status": 0,
+          "characters": 3628,
+          "utf8_bytes": 3628,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "f295e42de4546bb97a0cc3f48b16ad84b364d6c5792053b5f38680a87c592abc",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 102,
+          "text_status": 0,
+          "characters": 3935,
+          "utf8_bytes": 3935,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "38c0af0fb1e638b8b6dcb631abb828ec2bd96abefc13a3aa55cec27c697ef5e8",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 103,
+          "text_status": 0,
+          "characters": 3573,
+          "utf8_bytes": 3573,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c55738feeb91e9dfadcd38fbd73e33ebd6e234a76fb76fb7ee1217c608fb6e46",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 104,
+          "text_status": 0,
+          "characters": 3984,
+          "utf8_bytes": 3984,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "7bcef455a3f1ec7baf0471d4e79c9c03e637f035c45f55a0fa7b0a699158c20d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 105,
+          "text_status": 0,
+          "characters": 2393,
+          "utf8_bytes": 2393,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "5719d7d2e97d0bf54a3be8cbc805c3c6eed223074e2f11d0338142c8269b6d9d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 106,
+          "text_status": 0,
+          "characters": 3158,
+          "utf8_bytes": 3158,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "66cc2e7816bc85c5f4ee1228f63bc50b8de11869a9e8e4fe8e4419f3ebd23fb7",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 107,
+          "text_status": 0,
+          "characters": 4032,
+          "utf8_bytes": 4032,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "536bb8996f494f41ede1723d087986aa6bb10d21a78fe1a44af7aeccddf377ea",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 108,
+          "text_status": 0,
+          "characters": 3931,
+          "utf8_bytes": 3931,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "88825e5baac0259ca0d56138fdda4d5c3df79232d8157bd6b8befd149bee7ed4",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 109,
+          "text_status": 0,
+          "characters": 3744,
+          "utf8_bytes": 3744,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1684a7c9d5b6f5dcb3828260674406205a692d9a8310c3b8b81451030f2ef3c9",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 110,
+          "text_status": 0,
+          "characters": 3035,
+          "utf8_bytes": 3035,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "8953b51779a0495c48925ee62beda70337832f46062e9ec2f2a997a712f180f2",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 111,
+          "text_status": 0,
+          "characters": 2940,
+          "utf8_bytes": 2940,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "770a308256c95120bad48058170415351693c6adca935e071eab3487880b7b45",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 112,
+          "text_status": 0,
+          "characters": 3670,
+          "utf8_bytes": 3670,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "f040fdd5ed3b16f7b8ec1e61666553ab1386431acbbc7e94afef87dbe660bf2d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 113,
+          "text_status": 0,
+          "characters": 4094,
+          "utf8_bytes": 4094,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "dd214440490e4def5fe87e9f94a90a34e54369cfa94a2e4e3c009c01126ae169",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 114,
+          "text_status": 0,
+          "characters": 3870,
+          "utf8_bytes": 3870,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4be908f8f40eba003440fb3cd8f03634e4dd5690ae50cdc1d9fec36ef97aecb7",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 115,
+          "text_status": 0,
+          "characters": 4395,
+          "utf8_bytes": 4395,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0f3f854ef2ea823bc45ecdab756e31f5bc58d4de646e3f0d40a62e4d88b9eac9",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 116,
+          "text_status": 0,
+          "characters": 4263,
+          "utf8_bytes": 4263,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "f72d30e8b3120c2b9577ce2edcdcc6e37bf6124412d580404e417f7906e2033d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 117,
+          "text_status": 0,
+          "characters": 4292,
+          "utf8_bytes": 4292,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "347013a3ed7517d9c20001fe59575ea3df8db6fef73020531285a56a9447bc4d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 118,
+          "text_status": 0,
+          "characters": 4114,
+          "utf8_bytes": 4114,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ba10d62e25d3af045787abe267c634c2bc35e3ab5729f96b07a753d65f276682",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 119,
+          "text_status": 0,
+          "characters": 4079,
+          "utf8_bytes": 4079,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "a22df1551350712864c5e55b59930880c5910c63987ab1d794f1b2775db60aa5",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 120,
+          "text_status": 0,
+          "characters": 4289,
+          "utf8_bytes": 4289,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "789e40d01403b993e0cfcdb7ce2cf2025c4063bf65a07863b0ea40961a5e0569",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 121,
+          "text_status": 0,
+          "characters": 3705,
+          "utf8_bytes": 3705,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "74aa73b70a7f55cb5b3ad32532cde3424b49ff546f15f54f85a418f38006ac5a",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 122,
+          "text_status": 0,
+          "characters": 3702,
+          "utf8_bytes": 3702,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "5b21f2dbf00d695a5c80db8a67cac269107afa87e27f9b767d481b59f5a3bf70",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 123,
+          "text_status": 0,
+          "characters": 3240,
+          "utf8_bytes": 3240,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "2728aa19af87fa90d41c26a6ce396273f85903bb6af7ecd3d92d72c95ced6263",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 124,
+          "text_status": 0,
+          "characters": 3538,
+          "utf8_bytes": 3538,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "8027b2dc3a0941bbbe54c023c44f6ba790696a2567e3b378fe53c2767c9f38b3",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 125,
+          "text_status": 0,
+          "characters": 4022,
+          "utf8_bytes": 4022,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "15d475f752bb3b7974e0fcb0834dda4a93a6d8d64f3c9b12013b7e42135219de",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 126,
+          "text_status": 0,
+          "characters": 4107,
+          "utf8_bytes": 4107,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "63640089486538819f6dd6f56b0f9540e43e98f0c2c27991695d51539771c627",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 127,
+          "text_status": 0,
+          "characters": 3600,
+          "utf8_bytes": 3600,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1b64b664b356fe34dc40b0d26a2119d04199ce92b2d2ada0948173e7bd5d1b35",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 128,
+          "text_status": 0,
+          "characters": 3450,
+          "utf8_bytes": 3450,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "fbc4de71b123e8e4a152c6c26b4e27ec9a55fe1e2d360b9223f3e94b562e1284",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 129,
+          "text_status": 0,
+          "characters": 3478,
+          "utf8_bytes": 3478,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "9a4056134edc019a94b3440daa06cac1e5ea4fe6f5295ae9ec931c96ba372a3d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 130,
+          "text_status": 0,
+          "characters": 4168,
+          "utf8_bytes": 4168,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "15061797f4f39e6a7fd1d6b7d28641a3d6554cb4a17340cbde8c8f366b38870c",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 131,
+          "text_status": 0,
+          "characters": 3401,
+          "utf8_bytes": 3401,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "6c63196bb1dabe3a04079b2695d3fd67cdc0b0edcac2ff8b8ef81c1339016226",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 132,
+          "text_status": 0,
+          "characters": 3804,
+          "utf8_bytes": 3804,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "226e6ba5bddc166430d5eb947435797a07319c19d83e7017d514eda823e1d528",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 133,
+          "text_status": 0,
+          "characters": 3675,
+          "utf8_bytes": 3675,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "e5d1d7b5e7575637ab0a0a2963efb1ba5b8f9a57c2d603ddfe40645c40f063af",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 134,
+          "text_status": 0,
+          "characters": 3396,
+          "utf8_bytes": 3396,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "92f74e5b9e2221db7be812febaa9d2e631fc8531af7b760271e9c88d1690436a",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 135,
+          "text_status": 0,
+          "characters": 3850,
+          "utf8_bytes": 3850,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "8f7761109ffa69691357704f7fb2cd93d7209dd9acf6c2541ac1057e4e1e5b2d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 136,
+          "text_status": 0,
+          "characters": 3210,
+          "utf8_bytes": 3210,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4cfb4b988a9499edadc91ead07b8fe66fee1a11044020e4f14a2aa6dc1be2c6f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 137,
+          "text_status": 0,
+          "characters": 4017,
+          "utf8_bytes": 4017,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "b1fdd20f3bb5dba20381228308e96083ff06bd3aff02ae64846340526a0701bb",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 138,
+          "text_status": 0,
+          "characters": 3581,
+          "utf8_bytes": 3581,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "af690ecc1b326fd44b300e59a9c948cc4072d9be3e4271ec6080ab72add7e86c",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 139,
+          "text_status": 0,
+          "characters": 4054,
+          "utf8_bytes": 4054,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4e58e77ce5489b665cb4634cbadaa36240b79da3b3f7cdb59c72575a825446b6",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 140,
+          "text_status": 0,
+          "characters": 3988,
+          "utf8_bytes": 3988,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "785f2d236730f93d9cd3d3b6020c0fe87bb00c72d780c1af2ed55e29669edfb3",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 141,
+          "text_status": 0,
+          "characters": 4244,
+          "utf8_bytes": 4244,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0669ac6faf91913291c18bad8162c393026a7415fca43e91b7905ef538e18f79",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 142,
+          "text_status": 0,
+          "characters": 4124,
+          "utf8_bytes": 4124,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "a6f155f9559bd819553d30f0520b9f6cd922f2fba6579b7274aadcea19b03306",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 143,
+          "text_status": 0,
+          "characters": 3951,
+          "utf8_bytes": 3951,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "972e09da8b52376d18df3218f9a79017f4ef104494bf6fb2ec018a9dbc159451",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 144,
+          "text_status": 0,
+          "characters": 4222,
+          "utf8_bytes": 4222,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "b3aca98fa377c350043b40874b96f464ae245824002659ee64b1b4503695172e",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 145,
+          "text_status": 0,
+          "characters": 3867,
+          "utf8_bytes": 3867,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "875df905a583503bded7975920b1d406e80b5aca32f333168b741422d80dbd11",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 146,
+          "text_status": 0,
+          "characters": 3807,
+          "utf8_bytes": 3807,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "e08c9d22bf5ad08340ea3c20623759802afc2dcd782d2ee15196abc72cb03ea1",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 147,
+          "text_status": 0,
+          "characters": 3512,
+          "utf8_bytes": 3512,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ec8d3b6842d38fa2f1023420cd4f99ad6eb20e3c80dd2a14be822b50a3257ff3",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 148,
+          "text_status": 0,
+          "characters": 3428,
+          "utf8_bytes": 3428,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "045b94ded2ba7c86cf3c7acd4e947f67ee80c7b1d2fd82f0c2a0bc1277a02a1a",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 149,
+          "text_status": 0,
+          "characters": 3915,
+          "utf8_bytes": 3915,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "f43149d07b0e96d54b754530100b46d38c99fa85c60ba391fc2e8b3fb3fc7955",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 150,
+          "text_status": 0,
+          "characters": 3651,
+          "utf8_bytes": 3651,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "16a6604f1aead313a723cf610d634ced7b4454c25c8112e81b6cce8c5161be59",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 151,
+          "text_status": 0,
+          "characters": 3905,
+          "utf8_bytes": 3905,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "55011ea2fcb94274ea54143fa2d2f2302c4eab996b00a7cbd849fe8b4596d84f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 152,
+          "text_status": 0,
+          "characters": 3670,
+          "utf8_bytes": 3670,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "6645187389b9a8c3859c1a387b929c1dd14fcba5128257790df758a5f4ebe201",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 153,
+          "text_status": 0,
+          "characters": 3690,
+          "utf8_bytes": 3690,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ab949902a6a5bad36eb2c211857d9b1287afc7b69b849e7b46b5ebf73b845aea",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 154,
+          "text_status": 0,
+          "characters": 3909,
+          "utf8_bytes": 3909,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "92e4b13d1026b0cdc15e9db5e6b3d64d7590554f21a33aea01a7c9219c56371d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 155,
+          "text_status": 0,
+          "characters": 3937,
+          "utf8_bytes": 3937,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "5befe7aab48980d90d1701d34ba3ae2ca4c8f9af35b42232bf4718185ff75df9",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 156,
+          "text_status": 0,
+          "characters": 4075,
+          "utf8_bytes": 4075,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ca513b032cc3ccd11190f2e3f1a7b42af9a52175d525a5d9850786e3bab58efa",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 157,
+          "text_status": 0,
+          "characters": 4107,
+          "utf8_bytes": 4107,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "8480d83addcaceec502582ae719ceb38d2c7c99fbe5bfaa5c367f239ca0b8b4b",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 158,
+          "text_status": 0,
+          "characters": 4177,
+          "utf8_bytes": 4177,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "6b2af0c1f3c539788e5190d0ea4397c7d77f14684276b0d29e3997baf93e4c29",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 159,
+          "text_status": 0,
+          "characters": 3440,
+          "utf8_bytes": 3440,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "e2b75a43b4f4b413abe3dd2df765f7a6825a1e954ced2da32adccd93392a00b8",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 160,
+          "text_status": 0,
+          "characters": 3915,
+          "utf8_bytes": 3915,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "2a1bbd26b34deaca94d3966a703a58b840d16897635f51c59f745c9cca4e513e",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 161,
+          "text_status": 0,
+          "characters": 3411,
+          "utf8_bytes": 3411,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "cfd1d2b39a0c37461891d6a4dc09bc6a3ee50b6ddf8e337ec74da7ae40bbe0ea",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 162,
+          "text_status": 0,
+          "characters": 3631,
+          "utf8_bytes": 3631,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "5158e620eeb3e1d194716ec92966ba4199389227ce7ba0e482b72834534ec612",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 163,
+          "text_status": 0,
+          "characters": 3609,
+          "utf8_bytes": 3609,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "497c85e15c24afadc7b7b076c056c8a0593cf563f0083c5bf5f082a1fa2da8f2",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 164,
+          "text_status": 0,
+          "characters": 4243,
+          "utf8_bytes": 4243,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4c24fa50a9de9afcde450a35e7973b3ac4634d41f8d4532130e6a2a35e3c3c44",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 165,
+          "text_status": 0,
+          "characters": 3817,
+          "utf8_bytes": 3817,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "3c2ba64b7968f603acf6b53b9d52c03cdacc3f984e91c991f9ad5082c82e0032",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 166,
+          "text_status": 0,
+          "characters": 3993,
+          "utf8_bytes": 3993,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "7fb7ca3544d3e2c0c6c1c99a2375575911777692f4c11b188a5966667088d02c",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 167,
+          "text_status": 0,
+          "characters": 4039,
+          "utf8_bytes": 4039,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "b1970f6479293335656c23745205d0daa705fab65f7e2b95073b294753104c3d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 168,
+          "text_status": 0,
+          "characters": 3180,
+          "utf8_bytes": 3180,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "fa071bcabe80331fa6da5a14651256bc1870cfdb551b41407a3ad7a643c96acd",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 169,
+          "text_status": 0,
+          "characters": 3892,
+          "utf8_bytes": 3892,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4cc03b54d79f922bb4f3d4a41d6441685ccc10e4ca6b088c92df8a6ac78ef257",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 170,
+          "text_status": 0,
+          "characters": 3447,
+          "utf8_bytes": 3447,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "312d47b595236a59d13944f1e2f47ce51828a37952954eac2b9d0cffa14da296",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 171,
+          "text_status": 0,
+          "characters": 4353,
+          "utf8_bytes": 4353,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "9de57883bc9c7c2c7327eef5622177d9c2e52d593c200ddc1b80b26e6679fdea",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 172,
+          "text_status": 0,
+          "characters": 4060,
+          "utf8_bytes": 4060,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "aae69d15f06f8096e1d561b89eb66ed8bfd5cff4ddb3f9441f69af1bc2823b8c",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 173,
+          "text_status": 0,
+          "characters": 3934,
+          "utf8_bytes": 3936,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4211e9c01059f7d1cd5774868216720729c1d1786d50ad7684f77c02f5d8c8fc",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 174,
+          "text_status": 0,
+          "characters": 3797,
+          "utf8_bytes": 3797,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "9dd04386c0c277005310c72b32a6c050f4355869d9b83dc2b406598d060109c6",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 175,
+          "text_status": 0,
+          "characters": 4007,
+          "utf8_bytes": 4007,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "e15f074a1e264464fdab0367ea6b1afca729a449234a0ec1133eddf4bb2c196d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 176,
+          "text_status": 0,
+          "characters": 3356,
+          "utf8_bytes": 3356,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "842e5002d411d11e744793368a6461ac17798116f455363ddaf0845bd77f5958",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 177,
+          "text_status": 0,
+          "characters": 3575,
+          "utf8_bytes": 3575,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c5c7379119508f919dc6bd48d0f62e269d3a3d949114911833fd554211c2b650",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 178,
+          "text_status": 0,
+          "characters": 3590,
+          "utf8_bytes": 3590,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "9ffd4fc6563b9afdc11fb4192721b153abec3bebd9a7af01ec5392cff77c9628",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 179,
+          "text_status": 0,
+          "characters": 4321,
+          "utf8_bytes": 4321,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "d54956113684d06d1b01bf4d5d90855a6b530026109831621ade74352b601105",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 180,
+          "text_status": 0,
+          "characters": 3961,
+          "utf8_bytes": 3961,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0dd076c12c16ffef6bfc2cd254e7894e5bcf35ecbbfc0bce3a8204deb86d4d5c",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 181,
+          "text_status": 0,
+          "characters": 3276,
+          "utf8_bytes": 3276,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "df999339b5ff2bbe24ad4f48b959a47f1d5bf65333f213b12f686ad2f9efa111",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 182,
+          "text_status": 0,
+          "characters": 3504,
+          "utf8_bytes": 3504,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0321e955c895ec7be90ccb977ec0c88c44e8627b7f5a7b7e3dd2c97ad08795ad",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 183,
+          "text_status": 0,
+          "characters": 4288,
+          "utf8_bytes": 4288,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "d28b6124c779130560d80645cbc9336c34d2f0363d22db6ca98cc0ea698a029b",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 184,
+          "text_status": 0,
+          "characters": 4026,
+          "utf8_bytes": 4026,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "3971f5e1ad3739ec4ab01af8f28792077d10c85b5bf1bef084e7897875933137",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 185,
+          "text_status": 0,
+          "characters": 3609,
+          "utf8_bytes": 3609,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "452043e31d522f7ce8a85a8c6f0f824f429c533aec795b5fb23840416400472e",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 186,
+          "text_status": 0,
+          "characters": 3838,
+          "utf8_bytes": 3838,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "a88d1fc7de25a33d2de1cfb1196b9e3baf6bfec3777a5c9bf05c7f2d1dd57b97",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 187,
+          "text_status": 0,
+          "characters": 3567,
+          "utf8_bytes": 3567,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "e224b808608265fb8dccff2f31cce8d39a2f37c194a1c1e950d046f8bdd275e1",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 188,
+          "text_status": 0,
+          "characters": 3529,
+          "utf8_bytes": 3529,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "303b57ba910d2a0d72489c113909dc7a2e4da4011bc163e67140e98e694a01cc",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 189,
+          "text_status": 0,
+          "characters": 3540,
+          "utf8_bytes": 3540,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "99007641f82ee668d0e914b38ec5ca8f0b121733f35fbf7e7be7d451cf7cf9d9",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 190,
+          "text_status": 0,
+          "characters": 3275,
+          "utf8_bytes": 3275,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "99183e01f39f27d4e530f6f99bde2f6f798ec1b7214c84adadf4131695c67323",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 191,
+          "text_status": 0,
+          "characters": 3057,
+          "utf8_bytes": 3057,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "25985fec305ad2f337486745bb6b425a231058dc2716132424687fe13d0be822",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 192,
+          "text_status": 0,
+          "characters": 4096,
+          "utf8_bytes": 4096,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c6d6e26442473f6c185d62bcb437c2a047f297d4745bbcc83f0e907ba436d60f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 193,
+          "text_status": 0,
+          "characters": 3716,
+          "utf8_bytes": 3716,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "14bc3a026562f826ef24607db496da72966d8561a61e058b4306fd7220ee7d3f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 194,
+          "text_status": 0,
+          "characters": 3982,
+          "utf8_bytes": 3982,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "3429027128f74aae5dbef989e9fef67de04cdde4996a593afcf053e9f27596d7",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 195,
+          "text_status": 0,
+          "characters": 4209,
+          "utf8_bytes": 4209,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c7f0d6550a933d23bad3de6004e471e009b6f3f58a7e5c9e0a3642fbf80cb55d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 196,
+          "text_status": 0,
+          "characters": 4321,
+          "utf8_bytes": 4321,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "5101d1431a7f4c07411d65ae225c7f9dbe4eb2c5e6b6aecb992a9e32c07e7cff",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 197,
+          "text_status": 0,
+          "characters": 4267,
+          "utf8_bytes": 4267,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0008f874a16eb360fe5152280222967f1b967fbca67ea52dabde923a91b969a7",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 198,
+          "text_status": 0,
+          "characters": 3756,
+          "utf8_bytes": 3756,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ff9be95b7be5d388a110701a08836786cecb0a3d6239efaa7655fc8dc59f62c1",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 199,
+          "text_status": 0,
+          "characters": 3342,
+          "utf8_bytes": 3342,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "39bc492c78186de302d6aa19cfa309f4980a2d3b7500ea6684d874345f6377be",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 200,
+          "text_status": 0,
+          "characters": 3242,
+          "utf8_bytes": 3242,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "e4269739f9d051755008e1fd2fec92daa50ea326ad6a719c546e992e3b395058",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 201,
+          "text_status": 0,
+          "characters": 4110,
+          "utf8_bytes": 4110,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "a9be66f84f1ffa580474c28fb7c72b992cccd04284a526e01766b6658e6170c0",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 202,
+          "text_status": 0,
+          "characters": 4364,
+          "utf8_bytes": 4364,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "66f1e1ed350c7ccfce1a542de166849c839d83fbca3a9e9f16bb05721a280905",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 203,
+          "text_status": 0,
+          "characters": 3950,
+          "utf8_bytes": 3950,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "e015061c1f3b2a18405d02fbdb663c9af30e84661102bc52bb9cb81c339f3ee0",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 204,
+          "text_status": 0,
+          "characters": 4141,
+          "utf8_bytes": 4141,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "e7044c2d50f7ea413b4fbe529aa26e42cf2eedf71f2a47f818bf8d5189f68e8c",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 205,
+          "text_status": 0,
+          "characters": 4502,
+          "utf8_bytes": 4502,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "b6e00cba4ed33b00baf4e04f44198ac2d801fa2af4fa86084d5efe0172d0623f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 206,
+          "text_status": 0,
+          "characters": 3852,
+          "utf8_bytes": 3852,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c8428d3682a31031817afe51fea98fe86c4412ec7be12fad44d13cfcd44378a8",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 207,
+          "text_status": 0,
+          "characters": 4474,
+          "utf8_bytes": 4474,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1eb079d29c06b3b1d175273b7f13cbe225a659305f049ed9eaab5cade90049c3",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 208,
+          "text_status": 0,
+          "characters": 3693,
+          "utf8_bytes": 3693,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "319a83e7fb1b6d24bc378aed09971e33b6b213f1abbb8610f9771125345520e7",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 209,
+          "text_status": 0,
+          "characters": 4451,
+          "utf8_bytes": 4451,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "16251fff70d1893efc35f4bd068acca36ba66a65658b4f627900d013423cfabc",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 210,
+          "text_status": 0,
+          "characters": 3810,
+          "utf8_bytes": 3810,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "90a30f709e6de56c1055f1652f828f716cefe132581e1840ecc2b60a2e1b8f51",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 211,
+          "text_status": 0,
+          "characters": 3864,
+          "utf8_bytes": 3864,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "bf000c270d4edbbba650afcfe593686815f813f75f835bec3668c94b3d220b72",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 212,
+          "text_status": 0,
+          "characters": 3450,
+          "utf8_bytes": 3450,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "964b8a607612bd07f7c2e0ad508792b8b60b9bf48caf99367bcc8911bc9428cf",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 213,
+          "text_status": 0,
+          "characters": 4189,
+          "utf8_bytes": 4189,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "74b32103b8b9acd1a42af6cbe575293ccd9bb37cedb5fadbdb04ef60da5fdb04",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 214,
+          "text_status": 0,
+          "characters": 3435,
+          "utf8_bytes": 3435,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ac0a9b6f719030d264243b7f78c3dd73d97de99edb0b0c1ba2922beb5d5ded28",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 215,
+          "text_status": 0,
+          "characters": 4272,
+          "utf8_bytes": 4272,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "2f5cdefb830fea7354ed816521921c63ef7938b8148914928013609889264b5e",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 216,
+          "text_status": 0,
+          "characters": 4355,
+          "utf8_bytes": 4355,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "491f80d36a1b316b1968dcf8bc66a2befe0d86e906284be925a64f59050df902",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 217,
+          "text_status": 0,
+          "characters": 4026,
+          "utf8_bytes": 4026,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "d9b69d948f9dab820566eda5df6dc668e4418458b6eb5205de10d2a83ea90178",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 218,
+          "text_status": 0,
+          "characters": 4206,
+          "utf8_bytes": 4206,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4cb1ccb2098c0463450c8d1a9a4392adb54d28a4fe57e41f34e69d6c9a2b82d4",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 219,
+          "text_status": 0,
+          "characters": 3616,
+          "utf8_bytes": 3616,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "3d28bb8d951f83d25c8316f1349859124e7b7faf315aa7464cc4777d48f1ef13",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 220,
+          "text_status": 0,
+          "characters": 4134,
+          "utf8_bytes": 4134,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "855a5a0879f2e26ee6484c13cd4cf3e7e6e8952d8d895bdea70c9972dbc274ca",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 221,
+          "text_status": 0,
+          "characters": 4342,
+          "utf8_bytes": 4342,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1f28f41cd3a6d711fdb788fa76f7e8daf78e97dc47c80a5af9b0610c9e55e696",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 222,
+          "text_status": 0,
+          "characters": 4124,
+          "utf8_bytes": 4124,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "33f4c0639bc108069f054b0be3a9392e8dce6fab5f857746005710ca5ab2d7fa",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 223,
+          "text_status": 0,
+          "characters": 4065,
+          "utf8_bytes": 4065,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "f921640eab75c547e9a97a6b93f6745a2addf897d454711e5a84c566bb346a9f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 224,
+          "text_status": 0,
+          "characters": 3572,
+          "utf8_bytes": 3572,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "2109d41d04393c38b9f39f55e70876b6be1049b768fbf06d8ebbefa7a56546d8",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 225,
+          "text_status": 0,
+          "characters": 4046,
+          "utf8_bytes": 4046,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "b2455f98ec35f79a806b69a077fc2fbc9e3d5172ea304366ab6f41cb584071cb",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 226,
+          "text_status": 0,
+          "characters": 3855,
+          "utf8_bytes": 3855,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "069d3e17802602a644d4c63a6ea24ce333601145d673eaf9330c93f80cb64803",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 227,
+          "text_status": 0,
+          "characters": 4074,
+          "utf8_bytes": 4074,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "520b77b4be56ca0d89bec10882b208558ccc56d36d9a841b5ea863ab4214896d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 228,
+          "text_status": 0,
+          "characters": 4273,
+          "utf8_bytes": 4273,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "af943fcb93cb68ca8242191a06686eb6139568e08c7a636380f36361d5f8f19b",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 229,
+          "text_status": 0,
+          "characters": 3899,
+          "utf8_bytes": 3899,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "77708c497b6d7bc1294f9ae2f0a29e740d3b89c6d9cd2196100757ed4018030f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 230,
+          "text_status": 0,
+          "characters": 3569,
+          "utf8_bytes": 3569,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1b9207e208772a263fee5baa05987134447eef6a72455d80562faf7a423c4225",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 231,
+          "text_status": 0,
+          "characters": 4293,
+          "utf8_bytes": 4293,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "11cd530807dde05ec2e8cbf92edd65ac15ed97e99757ad081200b57c6d12d71d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 232,
+          "text_status": 0,
+          "characters": 4373,
+          "utf8_bytes": 4373,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "92dead2da87fa20614a4b9e4edf7bf3e15f561aa0a877659d3400aab7a9ff32f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 233,
+          "text_status": 0,
+          "characters": 4127,
+          "utf8_bytes": 4127,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "da4b9d8666595d1628b416175426aefbc680555c9f7b4b03100ccfa821867be8",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 234,
+          "text_status": 0,
+          "characters": 3998,
+          "utf8_bytes": 3998,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0cf83c01ac0941f07105cad3309b6d649215cba4068bc71a540e2d3fb8e6d47d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 235,
+          "text_status": 0,
+          "characters": 4056,
+          "utf8_bytes": 4056,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "7d00e4303ed48b5c411ff98b62dc7ac4233ed9fe69d2b2ce2f5f5d8fb40a2f39",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 236,
+          "text_status": 0,
+          "characters": 4091,
+          "utf8_bytes": 4091,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "3ae313433be5924df95de8bfaee391ea0442a37a1d7f098479a34b5cbc8cc751",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 237,
+          "text_status": 0,
+          "characters": 4164,
+          "utf8_bytes": 4166,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c16722738670c1cc3846b02374c7c99fa71854c6a2dd9e5513a728ed998c8749",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 238,
+          "text_status": 0,
+          "characters": 4254,
+          "utf8_bytes": 4254,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "534b91a6caae36e87c3ebc3561ffb82aca3e914abd73509ee7b89a6559196f2f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 239,
+          "text_status": 0,
+          "characters": 4285,
+          "utf8_bytes": 4285,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "dd331a35f415ef6c56492e918c56b709cef6155c19b84f51f5dc67b3b595f5bd",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 240,
+          "text_status": 0,
+          "characters": 3675,
+          "utf8_bytes": 3675,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "66d76cfd5764c4c0f534be03bba817e8668d83a66793d31f49b14aae8c48ed7e",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 241,
+          "text_status": 0,
+          "characters": 4261,
+          "utf8_bytes": 4261,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "8125b6daf1f9ff896a3528ffee26b13a92e333948f1e28ce27d01d0398b76228",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 242,
+          "text_status": 0,
+          "characters": 4073,
+          "utf8_bytes": 4073,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "3e492d5c94c3adaab84aef20f098478ba433683c32a4e5484b9b5f54a2957107",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 243,
+          "text_status": 0,
+          "characters": 3882,
+          "utf8_bytes": 3882,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "7f6a27c67edbffe403847c0c5bc16266f614a5286d8b8cf5b05b6ddd892df398",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 244,
+          "text_status": 0,
+          "characters": 4415,
+          "utf8_bytes": 4415,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "bbc3a6e94b0130016233714ce108355e8d3759528f29d958f50bc8b19bd92922",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 245,
+          "text_status": 0,
+          "characters": 4500,
+          "utf8_bytes": 4500,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ff37f698f63dc37dd2c31684d3de55bdd7eb716379d3f7b987df84a3ccef85ea",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 246,
+          "text_status": 0,
+          "characters": 4483,
+          "utf8_bytes": 4483,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "5dd819e5ff7cd2ac59c03d03ce2daa8032fa4883cc35f67343e2c8cb04f9697a",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 247,
+          "text_status": 0,
+          "characters": 4354,
+          "utf8_bytes": 4354,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c179ff4033e57940d4f7ae30c2664b67c077c5014cc1a508850c7953a492d399",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 248,
+          "text_status": 0,
+          "characters": 4170,
+          "utf8_bytes": 4170,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "48237f149b96e27587b59fe39cee04cdae4fe36dbf6c26162bc836c608bc6565",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 249,
+          "text_status": 0,
+          "characters": 4315,
+          "utf8_bytes": 4315,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "b53aadfb426fa2fb077b8d7cd41690bdc585ea3655d5e74bb29e5360e1bf34b7",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 250,
+          "text_status": 0,
+          "characters": 4260,
+          "utf8_bytes": 4260,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1f731a5cca03cfad54763be110b85e2bb8ba9d2d17b6573733cbe12b731c6867",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 251,
+          "text_status": 0,
+          "characters": 4349,
+          "utf8_bytes": 4349,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "a8a3989ba3a5a238a387059f89f792253044fc41009aab91afd11a2cd9246930",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 252,
+          "text_status": 0,
+          "characters": 4213,
+          "utf8_bytes": 4213,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "25f8b42a7ffcb49aa04cc26b9c452490bfd2b2237a43478836c0f9691a6ba70b",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 253,
+          "text_status": 0,
+          "characters": 4032,
+          "utf8_bytes": 4032,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "e47bd34a70aa727709f5c35d46407f4b496f2ea29aecedfa9e04f0a2050ccffa",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 254,
+          "text_status": 0,
+          "characters": 4595,
+          "utf8_bytes": 4595,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "995a4826d680e1df7270494b7c2a8cfd12addbd0bda6ebeb2a20a145b2c0e4d8",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 255,
+          "text_status": 0,
+          "characters": 4574,
+          "utf8_bytes": 4574,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "ae23b199fb74c0b18a863eda2e933c8b71fbc6e1057af6e5bda1c7540a925717",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 256,
+          "text_status": 0,
+          "characters": 4375,
+          "utf8_bytes": 4375,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4f0bc2c7ccc9fb027bd41967fe4ac150d3eba13cfca76fb7e48c9ea5a7c54869",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 257,
+          "text_status": 0,
+          "characters": 4448,
+          "utf8_bytes": 4448,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "6960e57aeb00b10233c35e62c0f7a79f1120a01a3df9f1619235f21e7b2ffc3a",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 258,
+          "text_status": 0,
+          "characters": 4593,
+          "utf8_bytes": 4593,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "c77edea68a44865c37a73b31dbaec91b71283dd388b954ac8e29d0965589f750",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 259,
+          "text_status": 0,
+          "characters": 3959,
+          "utf8_bytes": 3959,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "8a38a54792a3b046047acdcef088d7a3e03c0bb658fb590f1496e9613c3fa46a",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 260,
+          "text_status": 0,
+          "characters": 4426,
+          "utf8_bytes": 4426,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "1734f7a39894efbfae5fae35911fa30bd9795c5af9f42667995a1d872a7eb19f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 261,
+          "text_status": 0,
+          "characters": 4436,
+          "utf8_bytes": 4436,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0b71d50503412987c34b462eb17adaa612638575e6e333e9bc9fcd40d482216f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 262,
+          "text_status": 0,
+          "characters": 4378,
+          "utf8_bytes": 4378,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "2f44e6858dc9b9c767de632eda8d85edce50eafba2efaf264260b72ef501a834",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 263,
+          "text_status": 0,
+          "characters": 3976,
+          "utf8_bytes": 3976,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "4b9a8433e2bf799feded8da142ed95fe1441484705ace1e07d02719f9d2b0085",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 264,
+          "text_status": 0,
+          "characters": 4776,
+          "utf8_bytes": 4776,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "99e45c9e6c4a1bb01d78067cb854b110354f9d3003c176a2a623583a091b92c0",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 265,
+          "text_status": 0,
+          "characters": 3647,
+          "utf8_bytes": 3647,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "dc385e637b20ef0b68789407a19a53b07a1fc2d390c504e5fbc88a6d2b10efd8",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 266,
+          "text_status": 0,
+          "characters": 4166,
+          "utf8_bytes": 4166,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "451e4003efe9909ef1bd72005c7b4e1f8f713c0e1c43735aa8c39689ce8b7f02",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 267,
+          "text_status": 0,
+          "characters": 4489,
+          "utf8_bytes": 4489,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "27fa19ddb7be11816a4e18a65675e3eae0c76e14f03fa343fbb0a47024a75bfd",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 268,
+          "text_status": 0,
+          "characters": 4152,
+          "utf8_bytes": 4152,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "db90da18fcf17cd234fede43de6273818c11d9fb3f38e6de86a9b010c80a4db7",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 269,
+          "text_status": 0,
+          "characters": 4292,
+          "utf8_bytes": 4292,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "479dcb4e7278650413a1e2779dca207c3dfea3e4bf80c61d3ac0a5dc70f84d6e",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 270,
+          "text_status": 0,
+          "characters": 4433,
+          "utf8_bytes": 4433,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "eddd8097629aa39251ed25d8b42926b559d527ef173ab53b11d98b33c2e84f6e",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 271,
+          "text_status": 0,
+          "characters": 4284,
+          "utf8_bytes": 4284,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "8f0036d3e0f1abc7d106c52421e34b67d7f140b1c6df35c0ff3a0de622931d49",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 272,
+          "text_status": 0,
+          "characters": 4654,
+          "utf8_bytes": 4654,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "0c9828785c053029b94538c6e4ed95d3658a80fbb2a9c8c6f04996864978f65e",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 273,
+          "text_status": 0,
+          "characters": 4610,
+          "utf8_bytes": 4610,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "311a59d1e43e1621fdde77cb204097da8def30c62ce3472cc24c1a6ece313f78",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 274,
+          "text_status": 0,
+          "characters": 4384,
+          "utf8_bytes": 4384,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "bd7f4372912998b0dadab3788da57f7f9519c47da32d8fc0c5954e5a64cab0e1",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 275,
+          "text_status": 0,
+          "characters": 4510,
+          "utf8_bytes": 4510,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "2b672317d369c6e2b14bb9aafca8354a4c86bb84a3b04071ebe522799c9e299b",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 276,
+          "text_status": 0,
+          "characters": 3903,
+          "utf8_bytes": 3903,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "180d17321016f3bd068af6b90ba909d8f9d457867b6fb3b2695554bcbf231845",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 277,
+          "text_status": 0,
+          "characters": 3527,
+          "utf8_bytes": 3527,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "341811984a958c8926f5e2d1ac29b94f5fb37a56a01547c06e09a7383667578f",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 278,
+          "text_status": 0,
+          "characters": 3143,
+          "utf8_bytes": 3143,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 0,
+          "pixel_sha256": "9b9df09b2081de1b4763931f3274353c66a4a6272f42b6e14d6c50dc6e9dc13d",
+          "size": [
+            371,
+            480
+          ]
+        }
+      ],
+      "without_password": 0,
+      "open": 0,
+      "open_error": "",
+      "page_count": 279,
+      "search_status": 0,
+      "search_hits": 1,
+      "search_match": {
+        "start": 657,
+        "end": 660,
+        "start_page": 1,
+        "start_offset": 657,
+        "end_page": 1,
+        "end_offset": 660
+      }
+    },
+    {
+      "id": "pdf-text-statistics",
+      "sha256": "9607434cbaf8ac31219db8706ddaf5fb35bb2497b52980ec6cd7952596f3fc25",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\STAT 1000Q\\courseMaterial\\Binomial Distribution B(n,p).pdf",
+      "pages": [],
+      "without_password": 5,
+      "open": 5,
+      "open_error": "Invalid PDF cross-reference stream"
+    },
+    {
+      "id": "pdf-scan-malcolm",
+      "sha256": "b3fd154b431e9338b3a562d2fa1259723cd51bfc7ca9497ce067cbd4dd979b37",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\real-books-pass-a-20261105\\supplemental-samples\\malcolm-x-first-20-pages-image-only-200dpi.pdf",
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "0a475964f6d22aa2cf44daca097d536a31afa1d7ebcd71a1f04e3960fd69ac54",
+          "size": [
+            285,
+            480
+          ]
+        },
+        {
+          "page": 1,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "34e45342bb623f72844f2d9983fcb880ad14c649f936927132c0ad690e6c6609",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 2,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "8b2784de33464d37fe6ad3f62f3d36bf6504ff7bb394a9c1bf02b897da948732",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 3,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "a93470281e5ddddb91f1d66b7ad4d99c9cf18b71eded8e91b3065da6d2b68140",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 4,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "a16da26bb765d8cd27b1cd1b46d42c45638b45bd3d9e952b7c3a5bde9a9a2e48",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 5,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "06e0cc00b2bf8b6adc2725d540305f47e0c3edb0db4baf6f48c3ee8c90121f16",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 6,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "d6e4932850bfa703a4165c802aa359110ff6768627db4ea77c29fed5504b823a",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 7,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "55699ceb03e7c4c3360d204aaa1ca8760773fd0ef9cc2e7604d305b104c1fa15",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 8,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "557dfc675350ec5ada626eaf567afee4ad755e0a391618ec31580418b3f3f602",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 9,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "f2d7d4d3ba23ea73dff9c8e33b538bc1d7825a0d9121d5837277cd3342823973",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 10,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "589c0870dd9f01046cbaffea4376092da0e818254ef3a7cb983db4c21fe6e1d2",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 11,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "197859a8b43be70a1c74fc83fa5fdd0e3d7f4b14f87ac88f303e6c7c72e17efd",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 12,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "1fe2d13544ea4b6ef788b0bd2fda930bb6f1c47c672e52c801d1b0301d904307",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 13,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "cc5b532de646e215b76f759c337b23851a2c7277fde7ee715eaeeb28ef782f28",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 14,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "ef2671a751603d7da4a70547747d6004ca1cd744fb4b953d96fccdb07444245c",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 15,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "eec5a4a3423a81ea9f41c5cc00705f033f204fc69892bd1c03e39135d5f31c85",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 16,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "3fc8f46080fbe5fef34d0da0bbd4dea4e5aa4c7970e501693aa517ecdb86448d",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 17,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "779b1de61e68c227f20ad571975e193ade2a3e8685b023f8e25b2d60bff21844",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 18,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "6ace352d3087a14464a67b7f7190d373376daddb71e7ddf9a88c8cc8ddfa57f8",
+          "size": [
+            371,
+            480
+          ]
+        },
+        {
+          "page": 19,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 0,
+          "pixel_sha256": "92a2c8977d5acdc2a0682d02d77e7c2456aed0ff6d5cab40ac62ce4554740f74",
+          "size": [
+            371,
+            480
+          ]
+        }
+      ],
+      "without_password": 0,
+      "open": 0,
+      "open_error": "",
+      "page_count": 20,
+      "search_status": 12,
+      "search_hits": 0,
+      "search_match": {
+        "start": 18446744073709551615,
+        "end": 18446744073709551615,
+        "start_page": 18446744073709551615,
+        "start_offset": 18446744073709551615,
+        "end_page": 18446744073709551615,
+        "end_offset": 18446744073709551615
+      }
+    },
+    {
+      "id": "pdf-scan-upstream",
+      "sha256": "2466bf4bbeb96cc70847f7888661f3279a8e90363e70afd9ca033834f65a94db",
+      "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\tests\\corpus\\pdfjs\\bug1703683_page2_reduced.pdf",
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 12,
+          "characters": 0,
+          "render_status": 11
+        }
+      ],
+      "without_password": 0,
+      "open": 0,
+      "open_error": "",
+      "page_count": 1,
+      "search_status": 12,
+      "search_hits": 0,
+      "search_match": {
+        "start": 18446744073709551615,
+        "end": 18446744073709551615,
+        "start_page": 18446744073709551615,
+        "start_offset": 18446744073709551615,
+        "end_page": 18446744073709551615,
+        "end_offset": 18446744073709551615
+      }
+    },
+    {
+      "id": "pdf-encrypted-r4",
+      "sha256": "289441cf2643f612dd374a265e8f061ad92328488193801a6cc6b81ba824fdd9",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pdf-encrypted-r4.pdf",
+      "pages": [
+        {
+          "page": 0,
+          "text_status": 0,
+          "characters": 229,
+          "utf8_bytes": 418,
+          "selection_status": 0,
+          "selected_regions": 1,
+          "render_status": 5
+        }
+      ],
+      "without_password": 10,
+      "open": 0,
+      "open_error": "",
+      "page_count": 1,
+      "search_status": 0,
+      "search_hits": 0,
+      "search_match": {
+        "start": 18446744073709551615,
+        "end": 18446744073709551615,
+        "start_page": 18446744073709551615,
+        "start_offset": 18446744073709551615,
+        "end_page": 18446744073709551615,
+        "end_offset": 18446744073709551615
+      }
+    },
+    {
+      "id": "pdf-encrypted-r6",
+      "sha256": "90564a47ceff2ef29895d2f6575148711e2f5605023c513378c8cd626804e421",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\pdf-encrypted-r6.pdf",
+      "pages": [],
+      "without_password": 5,
+      "open": 5,
+      "open_error": "Invalid PDF cross-reference table or trailer"
+    },
+    {
+      "id": "pdf-text-syllabus-math",
+      "sha256": "9dfbb33d2995d20950baa3e2be1679e8e37d707265563bec2234da3526ca7e71",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\MATH 1070Q Online\\MATH 1070Q Syllabus Massarelli Fall 2026.pdf",
+      "pages": [],
+      "without_password": 5,
+      "open": 5,
+      "open_error": "Invalid PDF cross-reference stream"
+    },
+    {
+      "id": "pdf-text-syllabus-stat",
+      "sha256": "29b5bc76c470ed2f13c22000185b14d074f964d8939dbf41a2c96713344e5b10",
+      "path": "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\STAT 1000Q\\syllabus1000_015_Fall_2026(1).pdf",
+      "pages": [],
+      "without_password": 5,
+      "open": 5,
+      "open_error": "Invalid PDF cross-reference stream"
+    }
+  ]
+}
