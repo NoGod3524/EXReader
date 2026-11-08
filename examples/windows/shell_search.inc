@@ -161,7 +161,7 @@ static unsigned __stdcall shell_search_worker(void *ctx) {
   }
   if(status==EXR_OK) {
     exr_control control={shell_search_cancelled,NULL,w};size_t total;
-    status=exr_document_search_all(shell_search_publication,w->needle,w->flags,shell_search_collect,w,&control,&total,&w->error);
+    status=exr_publication_search_all(shell_search_publication,w->needle,w->flags,shell_search_collect,w,&control,&total,&w->error);
     if(w->memory_failed) status=EXR_MEMORY;
     if(shell_search_cancelled(w)) status=EXR_CANCELLED;
   }

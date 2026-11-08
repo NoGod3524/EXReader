@@ -1,6 +1,6 @@
 全文搜索验收 · 2026-11-08
 
-A）引擎在 `include/exr/layout.h` / `src/publication.c` 新增 `exr_document_search` 和 `exr_document_search_all`，沿用 SDK 的 status / output / error / control 调用约定。起点是 `{part, offset}`；结果为 `{found, part, offset, length}`，后两项均是 part 内标准化 UTF-8 字节范围。按目录顺序搜索 linear parts，跳过辅助文件，枚举重叠命中；单个匹配不拼接两个文件。未命中 found=0、part/offset=SIZE_MAX。空词、非法 UTF-8、未知 flags 明确报错，失败/取消清空计数。回调可提前停止。
+A）引擎在 `include/exr/layout.h` / `src/publication.c` 新增 `exr_publication_search` 和 `exr_publication_search_all`，沿用 SDK 的 status / output / error / control 调用约定。起点是 `{part, offset}`；结果为 `{found, part, offset, length}`，后两项均是 part 内标准化 UTF-8 字节范围。按目录顺序搜索 linear parts，跳过辅助文件，枚举重叠命中；单个匹配不拼接两个文件。未命中 found=0、part/offset=SIZE_MAX。空词、非法 UTF-8、未知 flags 明确报错，失败/取消清空计数。回调可提前停止。
 
 结果可以直接建立 `exr_anchor_create(doc, offset, offset+length, ...)`；定位使用 `exr_target {part,NULL,offset}` → `exr_publication_locate`。现有 `exr_document_locate` 的实参是 fragment 字符串，保持其 ABI，通过 publication 的数字 target 路径接入同一偏移体系。
 

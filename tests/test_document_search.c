@@ -17,7 +17,7 @@ static exr_publication *open_source(source *s) {
   OK(exr_publication_create(&in,&p,&error));return p;
 }
 static size_t count(exr_publication *p,const char *q,unsigned flags) {
-  size_t n=999;OK(exr_document_search_all(p,q,flags,NULL,NULL,NULL,&n,&error));return n;
+  size_t n=999;OK(exr_publication_search_all(p,q,flags,NULL,NULL,NULL,&n,&error));return n;
 }
 typedef struct {exr_search_result hits[64];size_t n;} results;
 static int collect(void *ctx,const exr_search_result *r) {results *a=ctx;CHECK(a->n<64);a->hits[a->n++]=*r;return 1;}
@@ -27,10 +27,10 @@ static void basic(void) {
   source s={{"aba ababa 2026 tail","aba ignored","head aba 2026"},0,0};exr_publication *p=open_source(&s);exr_search_result r;
   CHECK(count(p,"aba",0)==4);CHECK(s.loads==2);CHECK(count(p,"2026",0)==2);CHECK(s.loads==2);
   CHECK(count(p,"tailhead",0)==0);CHECK(count(p,"missing",0)==0);
-  OK(exr_document_search(p,(exr_text_position){0,1},"aba",0,NULL,&r,&error));CHECK(r.found && r.part==0 && r.offset==4 && r.length==3);
-  OK(exr_document_search(p,(exr_text_position){0,14},"aba",0,NULL,&r,&error));CHECK(r.found && r.part==2);
-  OK(exr_document_search(p,(exr_text_position){2,8},"aba",0,NULL,&r,&error));CHECK(!r.found && r.offset==SIZE_MAX);
-  size_t n;OK(exr_document_search_all(p,"aba",0,stop,NULL,NULL,&n,&error));CHECK(n==1);
+  OK(exr_publication_search(p,(exr_text_position){0,1},"aba",0,NULL,&r,&error));CHECK(r.found && r.part==0 && r.offset==4 && r.length==3);
+  OK(exr_publication_search(p,(exr_text_position){0,14},"aba",0,NULL,&r,&error));CHECK(r.found && r.part==2);
+  OK(exr_publication_search(p,(exr_text_position){2,8},"aba",0,NULL,&r,&error));CHECK(!r.found && r.offset==SIZE_MAX);
+  size_t n;OK(exr_publication_search_all(p,"aba",0,stop,NULL,NULL,&n,&error));CHECK(n==1);
   exr_publication_free(p);
 }
 static void unicode(void) {
@@ -38,7 +38,7 @@ static void unicode(void) {
   CHECK(count(p,"寶玉",0)==3);CHECK(count(p,"𠮷😀",0)==1);CHECK(count(p,"中文",0)==1);
   CHECK(count(p,"café",0)==2);CHECK(count(p,"å",0)==2);CHECK(count(p,"ð",0)==2);
   CHECK(count(p,"μ",0)==1);CHECK(count(p,"ı",0)==1);CHECK(count(p,"strasse",0)==1);
-  OK(exr_document_search(p,(exr_text_position){0,1},"中文",0,NULL,&r,&error));CHECK(!r.found);
+  OK(exr_publication_search(p,(exr_text_position){0,1},"中文",0,NULL,&r,&error));CHECK(!r.found);
   CHECK(count(p,"寶",EXR_SEARCH_WHOLE_WORD)==3);
   exr_publication_free(p);
 }
@@ -55,19 +55,19 @@ static void flags(void) {
 }
 static void errors(void) {
   source s={{"text","","text"},0,0};exr_publication *p=open_source(&s);size_t n=999;exr_search_result r;exr_control c={cancel,NULL,NULL};
-  CHECK(exr_document_search_all(p,"",0,NULL,NULL,NULL,&n,&error)==EXR_ARGUMENT && n==0);
-  CHECK(exr_document_search_all(p,"\xc0\xaf",0,NULL,NULL,NULL,&n,&error)==EXR_ENCODING);
-  CHECK(exr_document_search_all(p,"t",4,NULL,NULL,NULL,&n,&error)==EXR_ARGUMENT);
-  CHECK(exr_document_search(p,(exr_text_position){9,0},"t",0,NULL,&r,&error)==EXR_ARGUMENT && !r.found);
-  CHECK(exr_document_search(p,(exr_text_position){0,999},"t",0,NULL,&r,&error)==EXR_ARGUMENT);
-  CHECK(exr_document_search_all(p,"t",0,NULL,NULL,&c,&n,&error)==EXR_CANCELLED && n==0);
+  CHECK(exr_publication_search_all(p,"",0,NULL,NULL,NULL,&n,&error)==EXR_ARGUMENT && n==0);
+  CHECK(exr_publication_search_all(p,"\xc0\xaf",0,NULL,NULL,NULL,&n,&error)==EXR_ENCODING);
+  CHECK(exr_publication_search_all(p,"t",4,NULL,NULL,NULL,&n,&error)==EXR_ARGUMENT);
+  CHECK(exr_publication_search(p,(exr_text_position){9,0},"t",0,NULL,&r,&error)==EXR_ARGUMENT && !r.found);
+  CHECK(exr_publication_search(p,(exr_text_position){0,999},"t",0,NULL,&r,&error)==EXR_ARGUMENT);
+  CHECK(exr_publication_search_all(p,"t",0,NULL,NULL,&c,&n,&error)==EXR_CANCELLED && n==0);
   CHECK(count(p,"t",0)==4);exr_publication_free(p);
-  s.fail=1;p=open_source(&s);CHECK(exr_document_search_all(p,"t",0,NULL,NULL,NULL,&n,&error)==EXR_IO && n==0);exr_publication_free(p);
+  s.fail=1;p=open_source(&s);CHECK(exr_publication_search_all(p,"t",0,NULL,NULL,NULL,&n,&error)==EXR_IO && n==0);exr_publication_free(p);
 }
 static void mapping(const char *font_path) {
   source s={{"alpha hit 中文 2026 hit hit hit hit hit hit hit hit hit hit","","beta hit hit hit hit hit hit hit hit hit hit"},0,0};
   exr_publication *p=open_source(&s);exr_font *font=NULL;results a={0};size_t n=0;
-  OK(exr_font_open(font_path,&font,&error));OK(exr_document_search_all(p,"hit",0,collect,&a,NULL,&n,&error));CHECK(n>=20);
+  OK(exr_font_open(font_path,&font,&error));OK(exr_publication_search_all(p,"hit",0,collect,&a,NULL,&n,&error));CHECK(n>=20);
   for(size_t i=0;i<20;i++) {
     exr_search_result r=a.hits[i];exr_document *doc=NULL;exr_layout *layout=NULL;exr_anchor anchor={0};exr_anchor_match match;
     exr_target target={r.part,NULL,r.offset};exr_location location;size_t size,ng;

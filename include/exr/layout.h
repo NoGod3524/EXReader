@@ -150,10 +150,10 @@ typedef int (*exr_search_fn)(void *context,const exr_search_result *result);
    Empty/invalid UTF-8 needles and unknown flags fail. Needle limit: 1 MiB.
    Text snapshots are cached lazily until publication_free; reopen a mutable
    provider to search a new revision. Cancellation/failure clears result/count. */
-EXR_API exr_status exr_document_search(exr_publication *publication,exr_text_position from,
+EXR_API exr_status exr_publication_search(exr_publication *publication,exr_text_position from,
   const char *needle,unsigned flags,const exr_control *control,exr_search_result *result,exr_error *error);
 /* Enumerates overlapping matches. NULL callback counts without collecting. */
-EXR_API exr_status exr_document_search_all(exr_publication *publication,const char *needle,
+EXR_API exr_status exr_publication_search_all(exr_publication *publication,const char *needle,
   unsigned flags,exr_search_fn callback,void *context,const exr_control *control,size_t *count,exr_error *error);
 /* Owned strings; zero-initialize outputs and release with content_anchor_free.
    Stable ID (path when ID is empty) routes each endpoint after part reordering.

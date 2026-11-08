@@ -1112,12 +1112,12 @@ done:
   if(first) *first=(exr_search_result){0,SIZE_MAX,SIZE_MAX,0};
   return status;
 }
-exr_status exr_document_search(exr_publication *p,exr_text_position from,const char *needle,unsigned flags,
+exr_status exr_publication_search(exr_publication *p,exr_text_position from,const char *needle,unsigned flags,
   const exr_control *control,exr_search_result *result,exr_error *e) {
   if(!result) return exr_fail(e,EXR_ARGUMENT,"Missing search result");
   return search_run(p,from,needle,flags,NULL,NULL,control,NULL,result,e);
 }
-exr_status exr_document_search_all(exr_publication *p,const char *needle,unsigned flags,
+exr_status exr_publication_search_all(exr_publication *p,const char *needle,unsigned flags,
   exr_search_fn callback,void *context,const exr_control *control,size_t *count,exr_error *e) {
   if(!count) return exr_fail(e,EXR_ARGUMENT,"Missing search count");
   return search_run(p,(exr_text_position){0,0},needle,flags,callback,context,control,count,NULL,e);
