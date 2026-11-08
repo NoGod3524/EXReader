@@ -535,6 +535,16 @@ if(EXR_FULL_TESTS)
   add_executable(exreader-anchor-test tests/test_anchor.c)
   target_link_libraries(exreader-anchor-test PRIVATE exreader)
   add_test(NAME native-anchor COMMAND exreader-anchor-test ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
+  add_executable(exreader-content-ranges-test tests/test_content_ranges.c)
+  target_link_libraries(exreader-content-ranges-test PRIVATE exreader)
+  foreach(group mapping relocation expansion)
+    add_test(NAME native-content-${group} COMMAND exreader-content-ranges-test ${group})
+  endforeach()
+  add_test(NAME native-content-hits COMMAND exreader-content-ranges-test hits
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf)
+  add_test(NAME native-content-reflow COMMAND exreader-content-ranges-test reflow
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/fallback.ttf)
   add_executable(exreader-anchor-library-test tests/test_anchor_library.c)
   target_link_libraries(exreader-anchor-library-test PRIVATE exreader exr_sqlite)
   add_test(NAME native-anchor-library COMMAND exreader-anchor-library-test ${CMAKE_CURRENT_BINARY_DIR})
