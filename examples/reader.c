@@ -142,6 +142,11 @@ static unsigned long shell_epoch = 1, shell_pager_builds, shell_failed_epoch;
 static shell_geometry shell_target;
 static void shell_request_layout(void);
 static void shell_pump_layout(void);
+static int select_valid, select_drag, select_turn;
+static void shell_selection_reset(void);
+static void shell_selection_landed(void);
+static void shell_selection_paint(HDC dc);
+static size_t shell_selection_bytes(char **out);
 #endif
 
 typedef struct {
@@ -150,6 +155,7 @@ typedef struct {
   unsigned long shell_epoch;
   int writing_mode;
   int display_shell_theme;
+  int display_shell_paper;
   exr_line *shell_lines;
   size_t shell_line_count;
   int shell_anchored;
@@ -767,8 +773,11 @@ static void session_clear(host_session *session) {
 }
 
 static void selection_clear(void) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  shell_selection_reset();
+#endif
   memset(&g.selection, 0, sizeof(g.selection));
-  if (g.page && !g.frame.valid) page_dirty(g.page,1);
+  if (g.page) page_dirty(g.page,1);
 }
 
 #ifdef EXR_READER_WINDOWS_PREFERENCES
@@ -1523,10 +1532,19 @@ static void job_start(host_job *job) {
       && !account_job_kind(job->kind)
 #endif
   ) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_active && select_valid && (job->kind == JOB_GO || job->kind == JOB_LAYOUT)) {
+    /* Content selection survives page turns and geometry-only reflow. */
+  } else {
+    shell_selection_reset();
+#endif
   dragging = 0;
   g.hit_pending = 0; g.gesture++;
   if (GetCapture() == g.page) ReleaseCapture();
   memset(&g.selection, 0, sizeof(g.selection));
+#ifdef EXR_READER_WINDOWS_SHELL
+  }
+#endif
   /* Keep the accepted page visible until the new frame is ready. */
   }
   if (!PostMessageW(g.window, WM_HOST_SDK_JOB, 0, (LPARAM)job)) job_start_failed(job);
@@ -3836,6 +3854,9 @@ static void selection_bounds(size_t *start, size_t *end) {
 }
 
 static void paint_selection(HDC dc) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_active && !g.frame.fixed) { shell_selection_paint(dc); return; }
+#endif
   size_t start, end;
   if (g.job || g.pending || !g.selection.active || !g.frame.valid) return;
   if (g.session.book_id != g.frame.book_id) return;
@@ -4139,7 +4160,13 @@ static void selection_report(void) {
   else set_statusf(L"已选择 %llu 字节文字 · 可复制引用或添加标注。", (unsigned long long)(end - start));
 }
 
+#ifdef EXR_READER_WINDOWS_SHELL
+#include "windows/shell_selection.inc"
+#endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_selection_message(window, message, wparam, lparam)) return 0;
+#endif
   switch (message) {
     case WM_ERASEBKGND: return 1;
     case WM_PAINT:
@@ -4647,6 +4674,9 @@ static void change_zoom(int delta) {
 }
 
 static size_t selection_bytes(char **text) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_active && select_valid) return shell_selection_bytes(text);
+#endif
   size_t start, end;
   *text = NULL;
   if (!g.selection.active || !g.frame.valid) return 0;
@@ -4704,6 +4734,9 @@ static int clipboard_set(const char *utf8, size_t size) {
 }
 
 static void select_all_page(void) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_active && !g.frame.fixed && select_publication()) { select_all_part(); return; }
+#endif
   if (!g.frame.valid) { set_status(L"请先打开一本书。"); return; }
   memset(&g.selection, 0, sizeof(g.selection));
   if (g.frame.fixed) {
@@ -4729,13 +4762,20 @@ static void select_all_page(void) {
 static void copy_quote(void) {
   char *text = NULL;
   size_t size = 0;
-  if (g.selection.active) size = selection_bytes(&text);
+  if (g.selection.active
+#ifdef EXR_READER_WINDOWS_SHELL
+      || (shell_active && select_valid)
+#endif
+  ) size = selection_bytes(&text);
   if (size && text) {
     if (clipboard_set(text, size)) set_statusf(L"已复制引用（%llu 字节）到剪贴板。", (unsigned long long)size);
     else set_status(L"无法访问剪贴板。");
     free(text);
     return;
   }
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (shell_active && !g.frame.fixed) { set_status(L"请先选择要复制的文字。"); return; }
+#endif
   {
     int index = g.session.txt ? -1 : notes_selected();
     if (index < 0) {
@@ -5406,6 +5446,9 @@ static void handle_job_complete(host_job *job) {
         g.session.part = g.frame.part;
         g.session.hold_progress = g.frame.hold_progress;
         memset(&g.selection, 0, sizeof(g.selection));
+#ifdef EXR_READER_WINDOWS_SHELL
+        shell_selection_landed();
+#endif
         g.session.page = g.frame.page;
 #ifdef EXR_READER_WINDOWS_SHELL
         shell_toc_update_current();
@@ -6055,6 +6098,7 @@ static int check_selection(int minimum, const char *needle) {
 
 #ifdef EXR_READER_WINDOWS_SHELL
 #include "windows/shell_measure.inc"
+#include "windows/shell_selection_drive.inc"
 #endif
 
 static int drive_execute(void) {
@@ -6062,6 +6106,29 @@ static int drive_execute(void) {
   char detail[1024];
   int launches = 0;
   memset(detail, 0, sizeof(detail));
+#ifdef EXR_READER_WINDOWS_SHELL
+  if (!strcmp(action, "select_pointer")) {
+    int ok = select_drive_pointer(drive_args[1], (size_t)strtoull(drive_args[2], NULL, 10), atoi(drive_args[3]));
+    drive_step_finish(ok, "selection pointer dispatched"); return 0;
+  }
+  if (!strcmp(action, "select_key")) {
+    UINT key = !strcmp(drive_args[1], "left") ? VK_LEFT : !strcmp(drive_args[1], "right") ? VK_RIGHT :
+      !strcmp(drive_args[1], "up") ? VK_UP : !strcmp(drive_args[1], "down") ? VK_DOWN :
+      !strcmp(drive_args[1], "escape") ? VK_ESCAPE : (UINT)drive_args[1][0];
+    select_drive_key(key, atoi(drive_args[2]), atoi(drive_args[3]));
+    drive_step_finish(1, "selection key dispatched"); return 0;
+  }
+  if (!strcmp(action, "select_dump")) {
+    drive_step_finish(select_drive_dump(drive_args[1]), "logical selection and clipboard saved"); return 0;
+  }
+  if (!strcmp(action, "select_edge")) {
+    compute_view(); select_x = g.view.dx-8; select_y = g.view.dy+g.view.bh+8;
+    if (g.frame.writing_mode != EXR_WRITING_HORIZONTAL_TB) select_y = g.view.dy+20;
+    SendMessageW(g.page, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(select_x, select_y));
+    SendMessageW(g.page, WM_TIMER, SHELL_SELECT_TIMER, 0);
+    drive_step_finish(1, "selection edge turn dispatched"); return 0;
+  }
+#endif
   if (host_offscreen && (!strcmp(action, "activate") || !strcmp(action, "key_tab") || !strcmp(action, "probe_resize"))) {
     drive_step_finish(0, "action requires foreground; forbidden by --offscreen"); return 0;
   }
@@ -7342,6 +7409,7 @@ static int register_host_classes(HINSTANCE instance) {
   if (!RegisterClassW(&type)) return 0;
   memset(&type, 0, sizeof(type));
   type.style = CS_HREDRAW | CS_VREDRAW;
+  type.style |= CS_DBLCLKS;
   type.lpfnWndProc = page_procedure;
   type.hInstance = instance;
   type.hCursor = LoadCursor(NULL, IDC_IBEAM);
@@ -7424,6 +7492,7 @@ static void host_cleanup(void) {
   page_cache_clear();
 #ifdef EXR_READER_WINDOWS_SHELL
   exr_anchor_free(&shell_anchor); shell_anchor_valid = 0;
+  shell_selection_reset();
 #endif
   session_clear(&g.session);
   frame_clear(&g.frame);

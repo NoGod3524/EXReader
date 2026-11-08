@@ -1,0 +1,27 @@
+HOST	phase=1	engine=3.42.0	pid=16448
+STEP	1	import	PASS	page=0;status=已导入《草枕》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《草枕》 · 从首个阅读章节开始。
+STEP	3	wait_idle	PASS	page=1;status=已打开《草枕》 · 从首个阅读章节开始。
+STEP	4	shell	PASS	reading screen
+STEP	5	shell_dpi	PASS	page=2;status=第 2 页。
+STEP	6	shell_font	PASS	page=2;status=第 2 页。
+STEP	7	shell_client	PASS	page=2;status=第 2 页。
+STEP	8	wait_idle	PASS	page=2;status=第 2 页。
+STEP	9	shell_click	PASS	button invoked
+STEP	10	ui_cues	PASS	focus cues set
+STEP	11	shell_page	PASS	page=3;status=第 3 页。
+STEP	12	wait_idle	PASS	page=3;status=第 3 页。
+STEP	13	shell_measure	PASS	physical layout captured
+STEP	14	probe_wait	PASS	waited without blocking UI
+STEP	15	select_pointer	PASS	selection pointer dispatched
+STEP	16	select_pointer	PASS	selection pointer dispatched
+STEP	17	select_pointer	PASS	selection pointer dispatched
+STEP	18	select_key	PASS	selection key dispatched
+STEP	19	select_dump	PASS	logical selection and clipboard saved
+STEP	20	shell_measure	PASS	physical layout captured
+STEP	21	probe_wait	PASS	waited without blocking UI
+STEP	22	shell_click	PASS	button invoked
+STEP	23	shell_measure	PASS	physical layout captured
+STEP	24	probe_wait	PASS	waited without blocking UI
+STEP	25	quit	PASS	closing
+DONE	25	eof	PASS	script finished
