@@ -8,3 +8,5 @@
 步骤 7：六份 ACCEPTANCE.md 各含五项具体判定，覆盖 SDK 探针/装载/设备签名路径，WASM 五项明确 N/A。AAR 最终版本重复构建逐字节相同、Java 与 JNI 38 个 native 入口匹配；待装机项保留未勾选。
 步骤 8：最终命令检查发现 Windows 重定向 stdout 默认 cp1252；已为 CLI 显式 UTF-8 输出。原样 python tools/abi/platform_status.py 无额外参数运行成功，16 行矩阵、JSON、符号工具自检、六份文档链接与条目数检查均通过。
 步骤 9：最终审计通过：389 契约声明、211/211 ctest XML、19/19 书 11484 页零差异、6×5 清单、16 行实测 SHA；默认固定字体准备可复现，错误 Android ABI 被拒绝。仅四个允许路径有新增，准备 commit/push/draft PR。
+步骤 10：提交 d76d74ce 已推送 origin/codex/platform-delivery-20261108；59 个新增文件均在允许路径，未提交产物二进制。开始创建 base=main 的 draft PR。
+步骤 11：已创建 Draft PR #88（base main，head codex/platform-delivery-20261108）：https://github.com/NoGod3524/EXReader/pull/88 。提交/推送完成，无 workflow 被取消；补充该交付记录并同步远端。
