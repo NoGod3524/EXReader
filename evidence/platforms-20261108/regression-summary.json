@@ -1,0 +1,13 @@
+{
+  "books": 19,
+  "pages": 11484,
+  "glyphs": 8648640,
+  "content_fingerprint": "dcceb19c8ea43ba4db5ac57a7ea2b3bbbc127a105f3451490f2ffe2eff7f44fa",
+  "dll_sha256": "49344b73f2a875b0f5d05cf9c1ca589a46295410290235600a7566cc3d65950f",
+  "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "bridge_sha256": "652b295fa078473330210ba26d0478d0cf7ea253909b09a569ce7b0ca4c62c27",
+  "comparable": true,
+  "needs_review": false,
+  "hash_changed_pages": 0,
+  "baseline": "docs/ui/evidence/annotations/books-after.json"
+}
