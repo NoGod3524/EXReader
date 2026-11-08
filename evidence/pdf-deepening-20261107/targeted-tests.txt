@@ -1,0 +1,90 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 199
+    Start 199: native-pdf-deepening-search
+
+199: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/tests/pdf_deepening_inputs.py" "--probe" "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf/exreader-pdf-deepening-test.exe" "--fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/tests/fixtures" "--group" "search"
+199: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf
+199: Test timeout computed to be: 10000000
+199: word alpha: [0,5), page 0 byte 0
+199: word beta: [6,10), page 0 byte 6
+199: word gamma: [11,16), page 0 byte 11
+199: word delta: [17,22), page 0 byte 17
+199: word epsilon: [23,30), page 0 byte 23
+199: word zeta: [30,34), page 1 byte 0
+199: word theta: [39,44), page 1 byte 9
+199: word iota: [45,49), page 1 byte 15
+199: word kappa: [50,55), page 1 byte 20
+199: word boundary: [55,63), page 2 byte 0
+199: cross-page: [23,34), (0,23)..(1,4)
+199: search: 43 checks passed
+1/5 Test #199: native-pdf-deepening-search ........   Passed    0.18 sec
+test 200
+    Start 200: native-pdf-deepening-coordinates
+
+200: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/tests/pdf_deepening_inputs.py" "--probe" "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf/exreader-pdf-deepening-test.exe" "--fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/tests/fixtures" "--group" "coordinates"
+200: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf
+200: Test timeout computed to be: 10000000
+200: point 23.60,92: U+0061 [0,1)
+200: point 30.80,92: U+006C [1,2)
+200: point 38.00,92: U+0070 [2,3)
+200: point 45.20,92: U+0068 [3,4)
+200: point 52.40,92: U+0061 [4,5)
+200: point 59.60,92: U+0020 [5,6)
+200: point 66.80,92: U+0062 [6,7)
+200: point 74.00,92: U+0065 [7,8)
+200: point 81.20,92: U+0074 [8,9)
+200: point 88.40,92: U+0061 [9,10)
+200: point 95.60,92: U+0020 [10,11)
+200: point 102.80,92: U+0067 [11,12)
+200: point 110.00,92: U+0061 [12,13)
+200: point 117.20,92: U+006D [13,14)
+200: point 124.40,92: U+006D [14,15)
+200: point 131.60,92: U+0061 [15,16)
+200: point 138.80,92: U+0020 [16,17)
+200: point 146.00,92: U+0064 [17,18)
+200: point 153.20,92: U+0065 [18,19)
+200: point 160.40,92: U+006C [19,20)
+200: coordinates: 85 checks passed
+2/5 Test #200: native-pdf-deepening-coordinates ...   Passed    0.13 sec
+test 201
+    Start 201: native-pdf-deepening-scan
+
+201: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/tests/pdf_deepening_inputs.py" "--probe" "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf/exreader-pdf-deepening-test.exe" "--fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/tests/fixtures" "--group" "scan"
+201: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf
+201: Test timeout computed to be: 10000000
+201: scan: 64 checks passed
+3/5 Test #201: native-pdf-deepening-scan ..........   Passed    0.13 sec
+test 202
+    Start 202: native-pdf-deepening-contracts
+
+202: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/tests/pdf_deepening_inputs.py" "--probe" "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf/exreader-pdf-deepening-test.exe" "--fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/tests/fixtures" "--group" "contracts"
+202: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf
+202: Test timeout computed to be: 10000000
+202: contracts: 26 checks passed
+4/5 Test #202: native-pdf-deepening-contracts .....   Passed    0.13 sec
+test 203
+    Start 203: native-pdf-deepening-encryption
+
+203: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/tests/pdf_deepening_inputs.py" "--probe" "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf/exreader-pdf-deepening-test.exe" "--fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/tests/fixtures" "--group" "encryption"
+203: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pdf-20261107/build/pdf
+203: Test timeout computed to be: 10000000
+203: encryption: 17 checks passed
+5/5 Test #203: native-pdf-deepening-encryption ....   Passed    0.14 sec
+
+The following tests passed:
+	native-pdf-deepening-search
+	native-pdf-deepening-coordinates
+	native-pdf-deepening-scan
+	native-pdf-deepening-contracts
+	native-pdf-deepening-encryption
+
+100% tests passed out of 5
+
+Total Test time (real) =   0.72 sec
