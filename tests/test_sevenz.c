@@ -76,7 +76,8 @@ static void safety(const char *dir) {
     CHECK(status==(i==7 ? EXR_LIMIT : (i==9 ? EXR_ENCODING : (i==10 ? EXR_UNSUPPORTED : EXR_FORMAT))));
     CHECK(!z && !m.released); free(m.data);
   }
-  options.max_unpack_size=64;
+  /* Packed input and requested file fit; the solid block's decoded size does not. */
+  options.max_unpack_size=1024;
   z=open_book(dir,"lzma2-solid",&options); n=9;
   CHECK(exr_sevenz_extract(z,1,&data,&n,&error)==EXR_LIMIT); CHECK(data==NULL && n==0); exr_sevenz_free(z);
   options.max_header_size=8;
