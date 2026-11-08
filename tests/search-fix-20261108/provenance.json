@@ -1,0 +1,30 @@
+{
+  "code_revision": "90bfd3cc899e89b8e6af51204fcb6a330f8803a8",
+  "source_lf_sha256": {
+    "include/exr/document.h": "eb82f0a7335e3db216291377142ce68879a0c0087d656cac6d7f0dddea74e3e5",
+    "include/exr/layout.h": "92651fbf5ad2f88c45fe8e8d46c2f68c78feb148ed1b3df3df8c4acbb58b58b9",
+    "src/fixed.c": "38bc81f3a24ce47444de45bc095f383f92b0addb5995f463a48755f394269fe8",
+    "src/publication.c": "8f9a49d04d83b1652a56cc1cdc2943711d04c249c03bdf1cb90bbf0993bab205",
+    "examples/windows/shell_search.inc": "c7d93644550e441967ec84ed211bec68ffd4bf23ab1ec7d9d9377f980285c955",
+    "tests/test_document_search.c": "3a0ee454779848b8b77ee229d6c62152094ee79f4a48980466e24bf64b146af7",
+    "tests/check_document_search.py": "019048498d004fae18e6563f842235316e0f7cffdf88cad10e5bf62ee61b345f"
+  },
+  "dll_sha256": "3c89dc777bddfceff1e02ca3f257c13a2dc1d54ce574b119b6657daa5e13fd46",
+  "host_exe_sha256": "ff21c4c0fbeb590b940bfe7c65a0fd22c5f58b529c2ae6fbf3f54971461469e0",
+  "ctest": {
+    "passed": 208,
+    "total": 208,
+    "seconds": 79.75
+  },
+  "realbooks": {
+    "requested_books": 19,
+    "successful_books": 19,
+    "failed_books": [],
+    "total_pages": 11296,
+    "total_glyphs": 8648640,
+    "wall_seconds": 83.581463,
+    "sum_book_seconds": 271.484016,
+    "fastest_book": "tangshi300-52323",
+    "slowest_book": "hongloumeng-24264"
+  }
+}

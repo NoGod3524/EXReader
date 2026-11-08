@@ -1,0 +1,405 @@
+{
+  "dll_sha256": "3c89dc777bddfceff1e02ca3f257c13a2dc1d54ce574b119b6657daa5e13fd46",
+  "counts": [
+    {
+      "reviewed": 18,
+      "book": "hongloumeng-24264",
+      "query": "賈寶玉",
+      "engine": 18,
+      "oracle": 18,
+      "equal": true
+    },
+    {
+      "reviewed": 1,
+      "book": "hongloumeng-24264",
+      "query": "女媧氏",
+      "engine": 1,
+      "oracle": 1,
+      "equal": true
+    },
+    {
+      "reviewed": 98,
+      "book": "hongloumeng-24264",
+      "query": "Gutenberg",
+      "engine": 98,
+      "oracle": 98,
+      "equal": true
+    },
+    {
+      "reviewed": 2,
+      "book": "hongloumeng-24264",
+      "query": "24264",
+      "engine": 2,
+      "oracle": 2,
+      "equal": true
+    },
+    {
+      "reviewed": 1,
+      "book": "hongloumeng-24264",
+      "query": "2021",
+      "engine": 1,
+      "oracle": 1,
+      "equal": true
+    },
+    {
+      "reviewed": 4,
+      "book": "a-raisin-in-the-sun",
+      "query": "Brustein",
+      "engine": 4,
+      "oracle": 4,
+      "equal": true
+    },
+    {
+      "reviewed": 10,
+      "book": "a-raisin-in-the-sun",
+      "query": "Nemiroff",
+      "engine": 10,
+      "oracle": 10,
+      "equal": true
+    },
+    {
+      "reviewed": 5,
+      "book": "a-raisin-in-the-sun",
+      "query": "Les Blancs",
+      "engine": 5,
+      "oracle": 5,
+      "equal": true
+    },
+    {
+      "reviewed": 2,
+      "book": "a-raisin-in-the-sun",
+      "query": "1994",
+      "engine": 2,
+      "oracle": 2,
+      "equal": true
+    },
+    {
+      "reviewed": 1,
+      "book": "a-raisin-in-the-sun",
+      "query": "80744",
+      "engine": 1,
+      "oracle": 1,
+      "equal": true
+    },
+    {
+      "reviewed": 5,
+      "book": "kusamakura-japanese-vertical-writing",
+      "query": "夏目漱石",
+      "engine": 5,
+      "oracle": 5,
+      "equal": true
+    },
+    {
+      "reviewed": 1,
+      "book": "kusamakura-japanese-vertical-writing",
+      "query": "Natsume",
+      "engine": 1,
+      "oracle": 1,
+      "equal": true
+    },
+    {
+      "reviewed": 1,
+      "book": "kusamakura-japanese-vertical-writing",
+      "query": "Sadder",
+      "engine": 1,
+      "oracle": 1,
+      "equal": true
+    },
+    {
+      "reviewed": 1,
+      "book": "kusamakura-japanese-vertical-writing",
+      "query": "75891",
+      "engine": 1,
+      "oracle": 1,
+      "equal": true
+    },
+    {
+      "reviewed": 1,
+      "book": "kusamakura-japanese-vertical-writing",
+      "query": "0213",
+      "engine": 1,
+      "oracle": 1,
+      "equal": true
+    }
+  ],
+  "jumps": [
+    {
+      "book": "hongloumeng-24264",
+      "part": 2,
+      "offset": 21906,
+      "length": 9,
+      "page": 19,
+      "glyph_codepoint": 36040,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "hongloumeng-24264",
+      "part": 21,
+      "offset": 74574,
+      "length": 9,
+      "page": 52,
+      "glyph_codepoint": 36040,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "hongloumeng-24264",
+      "part": 28,
+      "offset": 42176,
+      "length": 9,
+      "page": 29,
+      "glyph_codepoint": 36040,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "hongloumeng-24264",
+      "part": 28,
+      "offset": 43298,
+      "length": 9,
+      "page": 29,
+      "glyph_codepoint": 36040,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "hongloumeng-24264",
+      "part": 28,
+      "offset": 45030,
+      "length": 9,
+      "page": 30,
+      "glyph_codepoint": 36040,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "hongloumeng-24264",
+      "part": 28,
+      "offset": 45213,
+      "length": 9,
+      "page": 31,
+      "glyph_codepoint": 36040,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "hongloumeng-24264",
+      "part": 29,
+      "offset": 43390,
+      "length": 9,
+      "page": 30,
+      "glyph_codepoint": 36040,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "hongloumeng-24264",
+      "part": 29,
+      "offset": 43720,
+      "length": 9,
+      "page": 30,
+      "glyph_codepoint": 36040,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "a-raisin-in-the-sun",
+      "part": 3,
+      "offset": 76,
+      "length": 8,
+      "page": 0,
+      "glyph_codepoint": 78,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "a-raisin-in-the-sun",
+      "part": 3,
+      "offset": 217,
+      "length": 8,
+      "page": 0,
+      "glyph_codepoint": 78,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "a-raisin-in-the-sun",
+      "part": 3,
+      "offset": 1818,
+      "length": 8,
+      "page": 2,
+      "glyph_codepoint": 78,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "a-raisin-in-the-sun",
+      "part": 6,
+      "offset": 23,
+      "length": 8,
+      "page": 0,
+      "glyph_codepoint": 78,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "a-raisin-in-the-sun",
+      "part": 9,
+      "offset": 129,
+      "length": 8,
+      "page": 0,
+      "glyph_codepoint": 78,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "a-raisin-in-the-sun",
+      "part": 9,
+      "offset": 1116,
+      "length": 8,
+      "page": 2,
+      "glyph_codepoint": 78,
+      "vertical": false,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "kusamakura-japanese-vertical-writing",
+      "part": 2,
+      "offset": 224,
+      "length": 6,
+      "page": 0,
+      "glyph_codepoint": 20303,
+      "vertical": true,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "kusamakura-japanese-vertical-writing",
+      "part": 2,
+      "offset": 342,
+      "length": 6,
+      "page": 0,
+      "glyph_codepoint": 20303,
+      "vertical": true,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "kusamakura-japanese-vertical-writing",
+      "part": 2,
+      "offset": 769,
+      "length": 6,
+      "page": 1,
+      "glyph_codepoint": 20303,
+      "vertical": true,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "kusamakura-japanese-vertical-writing",
+      "part": 2,
+      "offset": 845,
+      "length": 6,
+      "page": 1,
+      "glyph_codepoint": 20303,
+      "vertical": true,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "kusamakura-japanese-vertical-writing",
+      "part": 2,
+      "offset": 1203,
+      "length": 6,
+      "page": 1,
+      "glyph_codepoint": 20303,
+      "vertical": true,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    },
+    {
+      "book": "kusamakura-japanese-vertical-writing",
+      "part": 9,
+      "offset": 20993,
+      "length": 6,
+      "page": 30,
+      "glyph_codepoint": 20303,
+      "vertical": true,
+      "located": true,
+      "anchor": true,
+      "glyph": true
+    }
+  ],
+  "performance": {
+    "的": {
+      "hits": 13989,
+      "cold_ms": [
+        48.3864,
+        49.2773,
+        51.197
+      ],
+      "cold_median_ms": 49.2773,
+      "warm_ms": [
+        3.4292,
+        4.9675,
+        3.9776
+      ],
+      "warm_median_ms": 3.9776,
+      "passes_200ms": true
+    },
+    "賈寶玉": {
+      "hits": 18,
+      "cold_ms": [
+        48.2519,
+        53.3998,
+        63.3279
+      ],
+      "cold_median_ms": 53.3998,
+      "warm_ms": [
+        4.3645,
+        4.306,
+        6.8018
+      ],
+      "warm_median_ms": 4.3645,
+      "passes_200ms": true
+    }
+  },
+  "oracle": "independent Python limited-fold bytes.find, overlapping; context review printed to console",
+  "count_checks": 15,
+  "jump_checks": 20,
+  "vertical_jumps": 6
+}
