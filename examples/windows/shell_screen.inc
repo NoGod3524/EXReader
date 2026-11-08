@@ -23,6 +23,12 @@ enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, SHELL_HIDDEN_MAX = 128 };
 enum { SHELL_BUTTON_BOX = SHELL_ICON_SIZE + 2 * SHELL_CONTROL_FRAME };
 
 static HWND shell_toc, shell_settings;
+static HWND shell_search_button;
+static void shell_search_create(HWND parent);
+static void shell_search_layout(void);
+static void shell_search_set(int open);
+static void shell_search_reset_book(void);
+static int shell_search_key(const MSG *message);
 static HWND shell_panel, shell_minus, shell_plus, shell_segments[3];
 static int shell_panel_open, shell_animating;
 static double shell_animation_start, shell_animation_elapsed;
@@ -169,12 +175,14 @@ static void shell_create(HWND parent) {
   shell_settings = shell_make_button(parent, IDC_SHELL_SETTINGS, L"设置");
   shell_create_panel(parent);
   shell_toc_create(parent);
+  shell_search_create(parent);
 }
 
 /* P0 visual bounds: 32px, 6px gap, 12px right inset. */
 static void shell_button_circle(HWND button, int client_width, RECT *circle) {
   int right = client_width - shell_px(SHELL_BAR_RIGHT, shell_dpi);
   if (button == shell_toc) right -= shell_px(SHELL_ICON_SIZE + SHELL_ICON_GAP, shell_dpi);
+  if (button == shell_search_button) right -= shell_px(2*(SHELL_ICON_SIZE + SHELL_ICON_GAP), shell_dpi);
   circle->left = right - shell_px(SHELL_ICON_SIZE, shell_dpi);
   circle->right = right;
   circle->top = shell_px((SHELL_TOPBAR_H-SHELL_ICON_SIZE)/2, shell_dpi);
@@ -191,8 +199,11 @@ static int shell_layout(void) {
   shell_button_circle(shell_settings, area.right, &circle);
   MoveWindow(shell_settings, circle.left - shell_px(SHELL_CONTROL_FRAME, shell_dpi), circle.top - shell_px(SHELL_CONTROL_FRAME, shell_dpi), shell_px(SHELL_BUTTON_BOX, shell_dpi),
              shell_px(SHELL_BUTTON_BOX, shell_dpi), TRUE);
-  MoveWindow(g.page, 0, shell_px(SHELL_TOPBAR_H, shell_dpi), area.right, area.bottom > shell_px(SHELL_TOPBAR_H, shell_dpi) ? area.bottom - shell_px(SHELL_TOPBAR_H, shell_dpi) : 0,
-             TRUE);
+  shell_button_circle(shell_search_button, area.right, &circle);
+  MoveWindow(shell_search_button,circle.left-shell_px(SHELL_CONTROL_FRAME,shell_dpi),circle.top-shell_px(SHELL_CONTROL_FRAME,shell_dpi),shell_px(SHELL_BUTTON_BOX,shell_dpi),shell_px(SHELL_BUTTON_BOX,shell_dpi),TRUE);
+  int page_top=shell_px(SHELL_TOPBAR_H+(shell_search_open ? 48:0),shell_dpi);
+  MoveWindow(g.page,0,page_top,area.right,area.bottom>page_top ? area.bottom-page_top:0,TRUE);
+  shell_search_layout();
   shell_panel_layout();
   shell_toc_layout();
   return 1;
@@ -211,7 +222,7 @@ static void shell_enter(void) {
   size_t i;
   shell_hidden_count = 0;
   for (child = GetWindow(g.window, GW_CHILD); child; child = GetWindow(child, GW_HWNDNEXT)) {
-    if (child == g.page || child == shell_toc || child == shell_settings || !IsWindowVisible(child)) continue;
+    if (child == g.page || child == shell_toc || child == shell_settings || child == shell_search_button || !IsWindowVisible(child)) continue;
     if (shell_hidden_count == SHELL_HIDDEN_MAX) break;
     shell_hidden[shell_hidden_count++] = child;
   }
@@ -226,6 +237,7 @@ static void shell_enter(void) {
   shell_request_layout();
   ShowWindow(shell_toc, SW_SHOW);
   ShowWindow(shell_settings, SW_SHOW);
+  ShowWindow(shell_search_button, SW_SHOW);
   InvalidateRect(g.window, NULL, FALSE);
   SetFocus(g.page);
 }
@@ -233,6 +245,7 @@ static void shell_enter(void) {
 static void shell_leave(void) {
   size_t i;
   shell_toc_hide();
+  shell_search_set(0);
   shell_panel_open=0; shell_animating=0; shell_animation_value=0;
   KillTimer(g.window,0x5753); ShowWindow(shell_panel,SW_HIDE);
   shell_active = 0;
@@ -241,6 +254,7 @@ static void shell_leave(void) {
   shell_hover_pinned = 0;
   ShowWindow(shell_toc, SW_HIDE);
   ShowWindow(shell_settings, SW_HIDE);
+  ShowWindow(shell_search_button, SW_HIDE);
   SetWindowLongPtrW(g.window, GWL_STYLE, GetWindowLongPtrW(g.window, GWL_STYLE) & ~(LONG_PTR)WS_CLIPCHILDREN);
   shell_page_edge(1);
   SetWindowLongPtrW(g.page,GWL_STYLE,GetWindowLongPtrW(g.page,GWL_STYLE)&~(LONG_PTR)WS_CLIPSIBLINGS);
@@ -265,6 +279,7 @@ static void shell_leave(void) {
 }
 
 static void shell_sync(void) {
+  shell_search_reset_book();
   if(shell_toc_close_pending && !g.job && !g.pending) {
     shell_toc_close_pending=0;shell_toc_set(0,0);SetFocus(g.page);
     if(host_offscreen) shell_toc_test_focus=g.page;
@@ -300,7 +315,7 @@ static void shell_paint(HWND window) {
     shell_d2d_fill(host_shell, 0, (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1), (float)area.right, 1, shell_blend(shell_colors->layer_side,shell_colors->line_rgb,SHELL_LINE_ALPHA));
     if (g.has_current && g.current.title) title = host_wide(g.current.title, strlen(g.current.title));
     /* P0 title inset; retain the existing ellipsis limit before the controls. */
-    shell_button_circle(shell_toc, area.right, &circle);
+    shell_button_circle(shell_search_button, area.right, &circle);
     if (title && circle.left - shell_px(SHELL_SPACE_2, shell_dpi) > shell_px(SHELL_TITLE_LEFT, shell_dpi))
       shell_d2d_text(host_shell, SHELL_TEXT_TITLE, title, (float)shell_px(SHELL_TITLE_LEFT, shell_dpi), 0,
                      (float)(circle.left - shell_px(SHELL_SPACE_2, shell_dpi) - shell_px(SHELL_TITLE_LEFT, shell_dpi)), (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1),
@@ -317,7 +332,7 @@ static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   int disabled, pressed, hover, focus;
   if (shell_toc_draw(item)) return 1;
   if (shell_draw_settings(item)) return 1;
-  if (!host_shell || (item->hwndItem != shell_toc && item->hwndItem != shell_settings)) return 0;
+  if (!host_shell || (item->hwndItem != shell_toc && item->hwndItem != shell_settings && item->hwndItem != shell_search_button)) return 0;
   disabled = (item->itemState & ODS_DISABLED) != 0;
   pressed = !disabled && (item->itemState & ODS_SELECTED) != 0;
   hover = !disabled && shell_hover == item->hwndItem;
@@ -331,12 +346,13 @@ static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   look.fill = pressed ? shell_colors->surface3 : shell_colors->surface2;
   look.offset_y = 0;
   look.icon = disabled ? shell_blend(shell_colors->layer_side,shell_colors->text_secondary,SHELL_DISABLED_ALPHA) : (hover || pressed) ? shell_colors->text : shell_colors->text_secondary;
+  if(item->hwndItem==shell_search_button && shell_search_open) look.icon=shell_colors->accent;
   if(item->hwndItem==shell_toc && shell_toc_open) look.icon=shell_colors->accent;
   look.has_ring = focus;
   look.ring = shell_colors->accent;
   look.diameter = (float)shell_px(SHELL_ICON_SIZE, shell_dpi);
   look.ring_width = (float)shell_px(SHELL_FOCUS_STROKE, shell_dpi);
-  shell_d2d_icon_button(host_shell, item->hDC, &item->rcItem, item->hwndItem == shell_toc ? 0xE8FD : 0xE713, &look);
+  shell_d2d_icon_button(host_shell, item->hDC, &item->rcItem, item->hwndItem == shell_toc ? 0xE8FD : item->hwndItem == shell_search_button ? 0xE721 : 0xE713, &look);
   return 1;
 }
 
@@ -352,6 +368,7 @@ static int shell_page_footer(HDC dc, const RECT *area) {
 }
 
 static int shell_translate(const MSG *message) {
+  if(shell_search_key(message)) return 1;
   if(shell_toc_open && message->message==WM_MOUSEWHEEL) {
     RECT panel;GetWindowRect(shell_toc_panel,&panel);POINT p={(short)LOWORD(message->lParam),(short)HIWORD(message->lParam)};
     SendMessageW(PtInRect(&panel,p) ? shell_toc_list:g.page,WM_MOUSEWHEEL,message->wParam,message->lParam);return 1;
@@ -413,8 +430,10 @@ static HWND shell_button_named(const char *name) {
   return !strcmp(name,"minus") ? shell_minus : !strcmp(name,"plus") ? shell_plus :
     !strcmp(name,"light") ? shell_segments[0] : !strcmp(name,"dark") ? shell_segments[1] :
     !strcmp(name,"system") ? shell_segments[2] :
-    !strcmp(name, "toc") ? shell_toc : !strcmp(name, "settings") ? shell_settings : NULL;
+    !strcmp(name, "search") ? shell_search_button : !strcmp(name, "toc") ? shell_toc : !strcmp(name, "settings") ? shell_settings : NULL;
 }
 
 #include "shell_settings.inc"
 #include "shell_toc.inc"
+
+#include "shell_search.inc"

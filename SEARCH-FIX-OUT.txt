@@ -1,0 +1,12 @@
+步骤 1：已同步远端 #83 head 2131258a（已合入 #80）。确认流式 exr_document_search 与固定 PDF API 撞名；既有 SEARCH-OUT.txt 本地改动保留。
+步骤 2：流式声明、实现、Windows 宿主、C 测试、ctypes 动态符号及验收说明统一改为 exr_publication_search / exr_publication_search_all。layout.h 与 origin/main document.h 全部函数名交集为空；layout.h 无 exr_document_ 函数声明，无其他撞名。固定 PDF document.h 与 main 逐字节一致。
+步骤 3：改名修复提交 90bfd3cc899e89b8e6af51204fcb6a330f8803a8 已推送 #83，等待现有 pull_request workflow；未修改 .github/，未取消 workflow。
+步骤 5：三本真书各 5 词 15/15 命中数与原验收及独立 oracle 一致；20/20 真书命中通过定位/锚点/实际字形，含 6 个竖排。原始结果 tests/search-fix-20261108/search.json。
+步骤 4：Windows Release 全量构建通过；ctest 全量通过，原始日志 tests/search-fix-20261108/ctest.txt（含 PDF 深化与流式搜索）。
+步骤 6：19 本真书重新逐页渲染，页数与逐页像素哈希均不变；完整结果 build/search-fix-realbooks.json，diff 将归档至 tests/search-fix-20261108。
+步骤 8：GitHub Actions run 42463330179 的 Linux desktop、Android ARM64、ASan/UBSan 三项编译步骤均已 success；Linux 与 sanitizer ctest 继续运行。Windows 全量 ctest 确认 208/208，79.75 秒。
+步骤 7：重编 Windows 宿主并运行原搜索栏验收，中文/英文/竖排/PDF/MOBI/整书导入六组通过；计数、跳转、快捷键、大小写/全词、防抖、高亮自检正常，截图与日志 build/search-fix-ui。
+步骤 9：已归档 tests/search-fix-20261108：API 撞名审计与签名、208 项测试日志、三书搜索、19 本前后逐页压缩报告与零变化 diff、六组宿主日志及三张截图、构建日志与源码/DLL/EXE 哈希。
+步骤 10：修复验收报告已完成。确认相对 2131258a 未修改 PDF document.h / fixed.c 或 .github/；修复提交之后无 src/include/examples 代码变化。准备提交并推送验收证据。
+步骤 11：证据提交 5b8bdb9860319a771c6a02dfc348b7afefa2f2fe 已推送，远端分支与 PR head 一致，PR mergeable=true。全部归档证据自检通过，19 本前后 content_fingerprint 相同。保留既有 SEARCH-OUT.txt 改动。
+步骤 12：Actions run 42463330179 的 Linux desktop / Android ARM64 / sanitizers 三个作业全部 success。Linux 主套件 ctest 201/201（124.60 秒）；ASan/UBSan ctest 198/198（794.35 秒）；Windows 含既有 fuzz 的全量套件 208/208。已归档最终 job 快照和 Linux / sanitizer 测试日志。

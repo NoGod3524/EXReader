@@ -1,0 +1,13 @@
+HOST	phase=0	engine=3.42.0	pid=9156
+STEP	1	import	PASS	page=0;status=已导入《草枕》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《草枕》 · 从首个阅读章节开始。
+STEP	3	shell	PASS	reading screen
+STEP	4	shell_client	PASS	page=2;status=第 2 页。
+STEP	5	shell_click	PASS	button invoked
+STEP	6	shell_click	PASS	button invoked
+STEP	7	shell_click	PASS	button invoked
+STEP	8	search_query	PASS	page=1;status=第 1 页。
+STEP	9	search_check	PASS	hits=11 current=1 open=1 calls=1 search_ms=62.748 total_ms=439.336 landed=1
+STEP	10	probe_wait	PASS	waited without blocking UI
+STEP	11	quit	PASS	closing
+DONE	11	eof	PASS	script finished

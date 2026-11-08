@@ -1,0 +1,11 @@
+HOST	phase=0	engine=3.42.0	pid=16668
+STEP	1	open	PASS	page=3;status=已打开《紅樓夢 memory》 · 从第一页开始。
+STEP	2	shell	PASS	reading screen
+STEP	3	shell_client	PASS	page=3;status=第 3 页。
+STEP	4	shell_click	PASS	button invoked
+STEP	5	shell_click	PASS	button invoked
+STEP	6	shell_click	PASS	button invoked
+STEP	7	search_query	PASS	page=7;status=第 7 页。
+STEP	8	search_check	PASS	hits=13989 current=1 open=1 calls=1 search_ms=57.457 total_ms=352.993 landed=1
+STEP	9	quit	PASS	closing
+DONE	9	eof	PASS	script finished
