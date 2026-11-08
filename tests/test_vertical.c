@@ -294,8 +294,8 @@ static void property_aliases(const char *directory) {
       CHECK(ga[k].glyph==gb[k].glyph && ga[k].flags==gb[k].flags && near(ga[k].size,gb[k].size));
       CHECK(near(ga[k].x,gb[k].x) && near(ga[k].baseline,gb[k].baseline) && near(ga[k].advance,gb[k].advance));
     }
-    /* text-combine-upright has no layout implementation yet; aliases preserve
-       the canonical property's existing ignored behavior. */
+    /* text-combine-upright is exercised in tests/test_combine_upright.c; here the
+       legacy aliases only need to match the canonical property. */
     exr_layout_free(alias);exr_layout_free(reference);
   }
   {

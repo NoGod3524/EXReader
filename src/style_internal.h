@@ -3,6 +3,7 @@
 #define EXR_STYLE_INTERNAL_H
 #include "document_internal.h"
 #include "exr/layout.h"
+#define EXR_COMBINE_ALL 1
 #define EXR_DECORATIONS (EXR_GLYPH_UNDERLINE | EXR_GLYPH_STRIKE)
 typedef struct {
   float value;
@@ -35,6 +36,7 @@ typedef struct {
   exr_direction direction;
   exr_writing_mode writing_mode;
   exr_text_orientation orientation;
+  int combine; /* text-combine-upright: 0 none, EXR_COMBINE_ALL, or 2-4 = digits N. */
   uint32_t color, background, border_color[4];
   exr_length width, height, max_width, max_height, margin[4], padding[4];
 } exr_style;
