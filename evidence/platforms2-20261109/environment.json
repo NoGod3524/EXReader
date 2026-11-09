@@ -1,0 +1,42 @@
+{
+  "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+  "origin_main": "ed252fb6e483192ec0553a936e341f49c144b824",
+  "host": "Windows-11-10.0.26200-SP0",
+  "python": "3.14.7",
+  "downloads": [
+    {
+      "name": "7zip.msi",
+      "bytes": 2003456,
+      "sha256": "6dc822569e777d9a3ecd5ffcbc22b55600af87e6c5d9810a64e8566cf5a4af9f"
+    },
+    {
+      "name": "alpine-virt-3.22.8-x86_64.iso",
+      "bytes": 68157440,
+      "sha256": "93ccf2243ee4fc19c78063774f92ff3d328390bae76bda5bfeaf42db46ce5059"
+    },
+    {
+      "name": "alpine-virt-3.22.8-x86_64.iso.sha256",
+      "bytes": 96,
+      "sha256": "e9f3ff2c582ab0281ec467f5560e1bdc11bc60ba0cf0011f5cfc1dc9fbfca12b"
+    },
+    {
+      "name": "commandlinetools-win-15859902_latest.zip",
+      "bytes": 155655386,
+      "sha256": "90ae805d20434428bffcb699c290860f19bb5f66a67e6b330067e3de801fb04a"
+    },
+    {
+      "name": "qemu-w64-setup-20260811.exe",
+      "bytes": 206615928,
+      "sha256": "f98a8aeb5f7faea9765b6dee28316c266cd179d80354a2fed8e50176f9a2e59f"
+    },
+    {
+      "name": "qemu-w64-setup-20260811.sha512",
+      "bytes": 158,
+      "sha256": "a160b60c5a6a782e6405651968ac932c60b8c4576503979ec259fb35fb7e9b46"
+    }
+  ],
+  "wsl": "Windows Subsystem for Linux is not installed",
+  "docker": "not installed/on PATH",
+  "qemu": "11.1.0 v11.1.0-12130-ge470268ff4; WHPX",
+  "android": "37.2.13.0; AOSP API30 x86_64; NDK27.2.12479018; Build Tools35.0.0"
+}
