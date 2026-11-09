@@ -96,6 +96,11 @@ def make_pages(name, cover=True, count=70, toc=True):
 
 
 if __name__ == '__main__':
+    missing_nav = '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><body><nav epub:type="toc"><ol>'
+    for i, fragment in enumerate(['Start', 'Case', 'Legacy', 'absent-one', 'absent-two']):
+        missing_nav += f'<li><a href="../Text/A%20B.xhtml#{fragment}">Entry {i+1}</a></li>'
+    missing_nav += '</ol></nav></body></html>'
+    make('toc-missing-anchors.epub', nav=missing_nav, ncx=None)
     make_pages('toc-pages.epub')
     make_pages('toc-pages-none.epub', cover=False, count=3, toc=False)
     make('toc-nav.epub', nav=NAV)

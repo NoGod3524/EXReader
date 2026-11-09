@@ -22,6 +22,7 @@ struct exr_publication {
   size_t missing_count, missing_capacity;
   search_part *search;
   int searching;
+  exr_locate_report locate_report;
 };
 typedef struct {
   size_t part, bytes;
@@ -323,7 +324,7 @@ const exr_target *exr_publication_missing_targets(const exr_publication *p,size_
   if (count) *count=p ? p->missing_count : 0;
   return p ? p->missing : NULL;
 }
-exr_status exr_publication_locate(exr_publication *p,const exr_target *target,
+static exr_status publication_locate(exr_publication *p,const exr_target *target,
   exr_location *out,exr_error *e) {
   exr_document *d=NULL; exr_status status; exr_location result;
   if (out) *out=(exr_location){SIZE_MAX,SIZE_MAX,EXR_LINK_PART_MISSING};
@@ -344,6 +345,26 @@ exr_status exr_publication_locate(exr_publication *p,const exr_target *target,
   exr_document_free(d);
   if (status==EXR_OK && result.state==EXR_LINK_ANCHOR_MISSING) status=remember_missing(p,target,e);
   if (status==EXR_OK) *out=result;
+  return status;
+}
+
+exr_locate_report exr_publication_locate_report(const exr_publication *p) {
+  return p ? p->locate_report : (exr_locate_report){0};
+}
+void exr_publication_locate_report_reset(exr_publication *p) {
+  if(p) memset(&p->locate_report,0,sizeof(p->locate_report));
+}
+exr_status exr_publication_locate(exr_publication *p,const exr_target *target,
+  exr_location *out,exr_error *e) {
+  exr_status status;
+  if(p) p->locate_report.total_entries++;
+  status=publication_locate(p,target,out,e);
+  if(p && status==EXR_OK) {
+    if(out->state==EXR_LINK_ANCHOR_MISSING) {
+      p->locate_report.missing_anchor++; p->locate_report.resolved_part_start++;
+    } else if(out->state==EXR_LINK_PART_MISSING) p->locate_report.missing_part++;
+    else p->locate_report.resolved_exact++;
+  }
   return status;
 }
 
