@@ -1,0 +1,22 @@
+WARNING: The SDK Manager CLI tool (sdkmanager) is deprecated. Use Android CLI instead.
+The 'android' binary can also be found in the cmdline-tools directory, and 'android sdk' is the replacement for 'sdkmanager'.
+To learn more about the Android CLI and how to use it, see the documentation (https://d.android.com/tools/agents/android-cli)
+
+Error: The proxy server URL extracted from HTTP_PROXY or HTTPS_PROXY environment variable could not be parsed. Either specify the correct URL or unset the environment variable.
+java.net.MalformedURLException: no protocol:
+	at java.base/java.net.URL.<init>(URL.java:772)
+	at java.base/java.net.URL.<init>(URL.java:654)
+	at java.base/java.net.URL.<init>(URL.java:590)
+	at com.android.sdklib.tool.sdkmanager.SdkManagerCliSettings.<init>(SdkManagerCliSettings.java:472)
+	at com.android.sdklib.tool.sdkmanager.SdkManagerCliSettings.createSettings(SdkManagerCliSettings.java:153)
+	at com.android.sdklib.tool.sdkmanager.SdkManagerCliSettings.createSettings(SdkManagerCliSettings.java:135)
+	at com.android.sdklib.tool.sdkmanager.SdkManagerCli.main(SdkManagerCli.java:60)
+	at com.android.sdklib.tool.sdkmanager.SdkManagerCli.main(SdkManagerCli.java:48)
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import subprocess; subprocess.run(['P:/android-sdk/cmdline-tools/bin/sdkmanager.bat','--sdk_root=P:/android-sdk','--list'],check=True)
+                       ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['P:/android-sdk/cmdline-tools/bin/sdkmanager.bat', '--sdk_root=P:/android-sdk', '--list']' returned non-zero exit status 1.

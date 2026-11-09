@@ -1,0 +1,19 @@
+UTC: 2026-11-09T08:30:38.553101+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/platforms/inventory.py", "evidence/platforms2-20261109/artifact-inputs.json", "--out", "evidence/platforms2-20261109/artifacts.json"]
+Android arm64-v8a libexreader.so 4853cbbd81d3c51b63de3e5aa6c83f4cece58dd6f79bd39acb1aa9c3032adafa 2800
+Android arm64-v8a libexreader_jni.so 7c48f1f2fc790962dea15d81d95bce20b80dae44a9710875888dd63295a21dbc 38
+Android arm64-v8a exreader-arm64-v8a.aar fd25507dff5fa52aabf60b924aa1c1bae7cc10c0c9fd7726cc8c92913001549e None
+macOS arm64 libexreader.dylib 5597c718986b20640f2144eb11cad7ce3104a6de188eb65cee0a72c850f9685d 2799
+iOS arm64-device libexreader.dylib 882a23f3a05cc9893062568e6d7df3d3cf03fc567bb4c772c0e4e9574f6b7719 2799
+iOS arm64-simulator libexreader.dylib 320f6810c1caee0d8f34891b06b3f99e4b67a238e3e4a73c69982289c72bd151 2799
+Linux x86_64 libexreader.so be2e9d6b675d92e3719f8149dfc5cac4552333385a0a3c1394f926765afa1d13 2799
+Windows x86_64 libexreader.dll a47e097f013e21a93221bb0abf7cfc6a345e322fe2b29913bd3a1c85186c6b18 419
+Android x86_64 libexreader.so 59cfb88ea8bf6bfa4f4952115107976a6ae47b003ec3f279efbd535de3365e29 1435
+Android x86_64 libexreader_jni.so d226215852b638de52cbb3a43311cc3044925ec36efa94871b2f7cc96fbc056a 38
+Android x86_64 exreader-x86_64.aar de50ad7803e43bc6b519a1e0445a878675590d8d720bd7ef143eb695440d36ae None
+Android x86_64 libplatform_probe.so 54b668ecfb797ff4b12166dac362dd5696e7db6b8aa0b4ad53a1d35a08a112e9 2
+Android x86_64 platform-probe.apk e97f6dcee004ac6e3088f1bae8d7d547882d5b7231c9338ec05361f8e4ac5921 None
+Linux x86_64-current libexreader.so 13e2d00dfbddb9e5de708dd88dabb9ce4328a53b1051050c2c58d708c4dffac2 2843
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:30:40.121911+00:00

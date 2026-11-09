@@ -1,0 +1,82 @@
+{
+  "checked_utc": "2026-11-09T08:31:17.045Z",
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/42474080320",
+  "artifacts": [
+    {
+      "id": 13615073113,
+      "name": "EXReader-C-iOS-iPadOS-arm64",
+      "size_in_bytes": 43698046,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13615073113",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13615073113/zip",
+      "expired": false,
+      "created_at": "2026-11-08T11:21:51Z",
+      "expires_at": "2027-02-06T11:03:59Z",
+      "updated_at": "2026-11-08T11:21:51Z",
+      "digest": "sha256:b50ae3d8c803e70fee0345efb682d533a279d16c81487f0e4b15ba6eba5e6ad4",
+      "workflow_run": {
+        "id": 42474080320,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/annotations-ui-20261108",
+        "head_sha": "bd15cddb4d0928abde07c90e34b52f567a169d2d"
+      }
+    },
+    {
+      "id": 13615043046,
+      "name": "EXReader-C-macOS",
+      "size_in_bytes": 22067644,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13615043046",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13615043046/zip",
+      "expired": false,
+      "created_at": "2026-11-08T11:20:01Z",
+      "expires_at": "2027-02-06T11:03:59Z",
+      "updated_at": "2026-11-08T11:20:01Z",
+      "digest": "sha256:b78f1dad11e26ca36ed396d12f5e5de07114f6ac9aa10ca87b0f28dbb2a57bc2",
+      "workflow_run": {
+        "id": 42474080320,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/annotations-ui-20261108",
+        "head_sha": "bd15cddb4d0928abde07c90e34b52f567a169d2d"
+      }
+    },
+    {
+      "id": 13614304038,
+      "name": "EXReader-C-Android-arm64",
+      "size_in_bytes": 36739833,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13614304038",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13614304038/zip",
+      "expired": false,
+      "created_at": "2026-11-08T11:05:22Z",
+      "expires_at": "2027-02-06T11:03:59Z",
+      "updated_at": "2026-11-08T11:05:22Z",
+      "digest": "sha256:7f6956de5fdfb915f36041bcab8b8c991365e8c2cc86b09ef3626c3c4c08d291",
+      "workflow_run": {
+        "id": 42474080320,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/annotations-ui-20261108",
+        "head_sha": "bd15cddb4d0928abde07c90e34b52f567a169d2d"
+      }
+    },
+    {
+      "id": 13614153354,
+      "name": "EXReader-C-Linux",
+      "size_in_bytes": 23589490,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13614153354",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13614153354/zip",
+      "expired": false,
+      "created_at": "2026-11-08T11:09:32Z",
+      "expires_at": "2027-02-06T11:03:59Z",
+      "updated_at": "2026-11-08T11:09:32Z",
+      "digest": "sha256:12e728d2f8f5a326ab87765a8cdbfa1f0ddfa333a074f0272184bed46e4a5a9c",
+      "workflow_run": {
+        "id": 42474080320,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/annotations-ui-20261108",
+        "head_sha": "bd15cddb4d0928abde07c90e34b52f567a169d2d"
+      }
+    }
+  ]
+}

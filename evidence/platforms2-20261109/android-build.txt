@@ -1,0 +1,221 @@
+UTC: 2026-11-09T08:09:48.451958+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["cmake", "--build", "P:/android-build", "--parallel", "4"]
+[0/2] Re-checking globbed directories...
+[1/216] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz.c.o
+[2/216] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz_tinfl.c.o
+[3/216] Building C object CMakeFiles/exr_base_objects.dir/src/case.c.o
+[4/216] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz_tdef.c.o
+[5/216] Building C object CMakeFiles/exr_base_objects.dir/src/common.c.o
+[6/216] Building C object CMakeFiles/exr_base_objects.dir/src/core.c.o
+[7/216] Building C object CMakeFiles/exr_base_objects.dir/src/map.c.o
+[8/216] Building C object CMakeFiles/exr_base_objects.dir/src/memory.c.o
+[9/216] Building C object CMakeFiles/exr_base_objects.dir/src/numbering.c.o
+[10/216] Building C object CMakeFiles/exr_base_objects.dir/src/source.c.o
+[11/216] Building C object CMakeFiles/exr_base_objects.dir/src/normalize.c.o
+[12/216] Building C object CMakeFiles/exr_base_objects.dir/src/transfer.c.o
+[13/216] Building C object CMakeFiles/exr_base_objects.dir/src/viewport.c.o
+[14/216] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz_zip.c.o
+[15/216] Building C object CMakeFiles/exr_graphics_objects.dir/src/affine_image.c.o
+[16/216] Linking C static library _deps\miniz-build\libminiz.a
+[17/216] Building C object CMakeFiles/exr_graphics_objects.dir/src/curves.c.o
+[18/216] Linking C static library libexr_base.a
+[19/216] Building C object CMakeFiles/exr_graphics_objects.dir/src/dash.c.o
+[20/216] Building C object CMakeFiles/exr_graphics_objects.dir/src/icc.c.o
+[21/216] Building C object CMakeFiles/exr_graphics_objects.dir/src/blend.c.o
+[22/216] Building C object CMakeFiles/exr_graphics_objects.dir/src/image_formats.c.o
+[23/216] Building C object CMakeFiles/exr_graphics_objects.dir/src/canvas.c.o
+[24/216] Building C object CMakeFiles/exr_graphics_objects.dir/src/stroke.c.o
+[25/216] Building C object CMakeFiles/exr_graphics_objects.dir/src/vector.c.o
+[26/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbbox.c.o
+[27/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbdf.c.o
+[28/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbitmap.c.o
+[29/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftcid.c.o
+[30/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftfstype.c.o
+[31/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftgasp.c.o
+[32/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftglyph.c.o
+[33/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftgxval.c.o
+[34/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftinit.c.o
+[35/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftmm.c.o
+[36/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftotval.c.o
+[37/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftpatent.c.o
+[38/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftpfr.c.o
+[39/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbase.c.o
+[40/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/autofit/autofit.c.o
+[41/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftsynth.c.o
+[42/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/fttype1.c.o
+[43/216] Building C object CMakeFiles/exr_graphics_objects.dir/src/images.c.o
+[44/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftwinfnt.c.o
+[45/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/bzip2/ftbzip2.c.o
+[46/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftstroke.c.o
+[47/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/bdf/bdf.c.o
+[48/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cid/type1cid.c.o
+[49/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cache/ftcache.c.o
+[50/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/hvf/hvf.c.o
+[51/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/lzw/ftlzw.c.o
+[52/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cff/cff.c.o
+[53/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pcf/pcf.c.o
+[54/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/gzip/ftgzip.c.o
+[55/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/psnames/psnames.c.o
+[56/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pfr/pfr.c.o
+[57/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/raster/raster.c.o
+[58/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pshinter/pshinter.c.o
+[59/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/sdf/sdf.c.o
+[60/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/smooth/smooth.c.o
+[61/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/svg/svg.c.o
+[62/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/type1/type1.c.o
+[63/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/psaux/psaux.c.o
+[64/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/type42/type42.c.o
+[65/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/winfonts/winfnt.c.o
+[66/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftdebug.c.o
+[67/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/builds/unix/ftsystem.c.o
+[68/216] Linking C static library libexr_graphics.a
+[69/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/sfnt/sfnt.c.o
+[70/216] Building C object CMakeFiles/exr_text_objects.dir/src/bidi.c.o
+[71/216] Building C object CMakeFiles/exr_text_objects.dir/src/dictionary.c.o
+[72/216] Building C object CMakeFiles/exr_text_objects.dir/src/font_cache.c.o
+[73/216] Building C object CMakeFiles/exr_text_objects.dir/src/font_color.c.o
+[74/216] Building C object CMakeFiles/exr_text_objects.dir/src/font_bitmap.c.o
+[75/216] Building C object CMakeFiles/exr_text_objects.dir/src/font_outline.c.o
+[76/216] Building C object CMakeFiles/exr_text_objects.dir/src/font_path.c.o
+[77/216] Building C object CMakeFiles/exr_text_objects.dir/src/font_colr_v1.c.o
+[78/216] Building C object CMakeFiles/exr_text_objects.dir/src/font_manager.c.o
+[79/216] Building C object CMakeFiles/exr_text_objects.dir/src/font_scan.c.o
+[80/216] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/truetype/truetype.c.o
+[81/216] Building C object CMakeFiles/exr_text_objects.dir/src/fonts.c.o
+[82/216] Building C object CMakeFiles/exr_text_objects.dir/src/text.c.o
+[83/216] Building C object CMakeFiles/exr_text_objects.dir/src/font_svg.c.o
+[84/216] Building C object CMakeFiles/exr_text_objects.dir/src/variable.c.o
+[85/216] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xcs.c.o
+[86/216] Building C object CMakeFiles/exr_text_objects.dir/src/hyphen.c.o
+[87/216] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmlrole.c.o
+[88/216] Linking C static library _deps\freetype-build\libfreetype.a
+[89/216] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_arc4random.c.o
+[90/216] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_arc4random_buf.c.o
+[91/216] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_getrandom.c.o
+[92/216] Building C object CMakeFiles/exr_text_objects.dir/src/opentype.c.o
+[93/216] Building C object CMakeFiles/exr_doc_objects.dir/src/anchor.c.o
+[94/216] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmlparse.c.o
+[95/216] Building C object CMakeFiles/exr_doc_objects.dir/src/annotation.c.o
+[96/216] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmltok.c.o
+[97/216] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_offset.c.o
+[98/216] Linking C static library libexr_text.a
+[99/216] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi.c.o
+[100/216] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_syntax.c.o
+[101/216] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_text.c.o
+[102/216] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_index.c.o
+[103/216] Building C object CMakeFiles/exr_doc_objects.dir/src/construct.c.o
+[104/216] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_window.c.o
+[105/216] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed_text.c.o
+[106/216] Building C object CMakeFiles/exr_doc_objects.dir/src/document.c.o
+[107/216] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed.c.o
+[108/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/thread.c.o
+[109/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/bio.c.o
+[110/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/event.c.o
+[111/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/cio.c.o
+[112/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/image.c.o
+[113/216] Linking C static library _deps\expat-build\libexpat.a
+[114/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/invert.c.o
+[115/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/ht_dec.c.o
+[116/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/jp2.c.o
+[117/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/mct.c.o
+[118/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/mqc.c.o
+[119/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/openjpeg.c.o
+[120/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/opj_clock.c.o
+[121/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/dwt.c.o
+[122/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/pi.c.o
+[123/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/t2.c.o
+[124/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/tgt.c.o
+[125/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/function_list.c.o
+[126/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/j2k.c.o
+[127/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/opj_malloc.c.o
+[128/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/sparse_array.c.o
+[129/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/tcd.c.o
+[130/216] Linking C static library libexr_doc.a
+[131/216] Building C object CMakeFiles/exr_formats_objects.dir/src/book.c.o
+[132/216] Building C object CMakeFiles/exr_formats_objects.dir/src/epub_write.c.o
+[133/216] Building C object CMakeFiles/exr_formats_objects.dir/src/export_epub.c.o
+[134/216] Building C object CMakeFiles/exr_formats_objects.dir/src/export_text.c.o
+[135/216] Building C object CMakeFiles/exr_formats_objects.dir/src/docx.c.o
+[136/216] Building C object CMakeFiles/exr_formats_objects.dir/src/fb2.c.o
+[137/216] Building C object CMakeFiles/exr_formats_objects.dir/src/huff.c.o
+[138/216] Building C object CMakeFiles/exr_formats_objects.dir/src/lzma.c.o
+[139/216] Building C object CMakeFiles/exr_formats_objects.dir/src/navigation.c.o
+[140/216] Building C object CMakeFiles/exr_formats_objects.dir/src/formats.c.o
+[141/216] Building C object CMakeFiles/exr_formats_objects.dir/src/kf8.c.o
+[142/216] Building C object CMakeFiles/exr_formats_objects.dir/src/xmp.c.o
+[143/216] Building C object CMakeFiles/exr_formats_objects.dir/src/sevenz.c.o
+[144/216] Building C object CMakeFiles/exr_formats_objects.dir/src/rtf.c.o
+[145/216] Building C object CMakeFiles/exr_layout_objects.dir/src/chapter_reader.c.o
+[146/216] Linking C static library libexr_formats.a
+[147/216] Building C object CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/t1.c.o
+[148/216] Building C object CMakeFiles/exr_layout_objects.dir/src/display_bidi.c.o
+[149/216] Building C object CMakeFiles/exr_layout_objects.dir/src/floats.c.o
+[150/216] Linking C static library libexr_jpx.a
+[151/216] Building C object CMakeFiles/exr_layout_objects.dir/src/flow.c.o
+[152/216] Building C object CMakeFiles/exr_layout_objects.dir/src/layout.c.o
+[153/216] Building C object CMakeFiles/exr_layout_objects.dir/src/pager.c.o
+[154/216] Building C object CMakeFiles/exr_layout_objects.dir/src/pager_table.c.o
+[155/216] Building C object CMakeFiles/exr_layout_objects.dir/src/inline.c.o
+[156/216] Building C object CMakeFiles/exr_layout_objects.dir/src/positioned.c.o
+[157/216] Building C object CMakeFiles/exr_layout_objects.dir/src/ssml.c.o
+[158/216] Building C object CMakeFiles/exr_layout_objects.dir/src/ruby.c.o
+[159/216] Building C object CMakeFiles/exr_layout_objects.dir/src/publication.c.o
+[160/216] Building C object CMakeFiles/exr_layout_objects.dir/src/toc_page.c.o
+[161/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_annotation_paint.c.o
+[162/216] Building C object CMakeFiles/exr_layout_objects.dir/src/style.c.o
+[163/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/cbz.c.o
+[164/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_annotations.c.o
+[165/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_calculator.c.o
+[166/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_ccitt.c.o
+[167/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_cmap.c.o
+[168/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_crypto.c.o
+[169/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_color.c.o
+[170/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_document.c.o
+[171/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_content.c.o
+[172/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_encoding.c.o
+[173/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_face.c.o
+[174/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_font.c.o
+[175/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_function.c.o
+[176/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_image.c.o
+[177/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_jpx.c.o
+[178/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_pages.c.o
+[179/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_raster.c.o
+[180/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_paint.c.o
+[181/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_shading.c.o
+[182/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_shading_mesh.c.o
+[183/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_softmask_parse.c.o
+[184/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_softmask.c.o
+[185/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_objects.c.o
+[186/216] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_view.c.o
+[187/216] Linking C static library libexr_layout.a
+[188/216] Building C object CMakeFiles/exr_render_objects.dir/src/raster.c.o
+[189/216] Linking C static library libexr_pdf.a
+[190/216] Building C object CMakeFiles/exr_pdf_edit_objects.dir/src/xmp_write.c.o
+[191/216] Building C object CMakeFiles/exr_audio_objects.dir/src/aac.c.o
+[192/216] Building C object CMakeFiles/exr_audio_objects.dir/src/audio.c.o
+[193/216] Building C object CMakeFiles/exr_audio_objects.dir/src/audio_output.c.o
+[194/216] Building C object CMakeFiles/exr_audio_objects.dir/src/bmff.c.o
+[195/216] Building C object CMakeFiles/exr_audio_objects.dir/src/audio_player.c.o
+[196/216] Building C object CMakeFiles/exr_audio_objects.dir/src/m4b.c.o
+[197/216] Building C object CMakeFiles/exr_pdf_edit_objects.dir/src/pdf_write.c.o
+[198/216] Building C object CMakeFiles/exr_audio_objects.dir/src/mp3.c.o
+[199/216] Building C object CMakeFiles/exr_audio_objects.dir/src/flac.c.o
+[200/216] Building C object CMakeFiles/exr_audio_objects.dir/src/m4b_metadata.c.o
+[201/216] Building C object CMakeFiles/exr_audio_objects.dir/src/pcm.c.o
+[202/216] Building C object CMakeFiles/exr_audio_objects.dir/src/wave.c.o
+[203/216] Building C object CMakeFiles/exr_audio_objects.dir/src/stretch.c.o
+[204/216] Linking C static library libexr_render.a
+[205/216] Building C object CMakeFiles/exr_textindex_objects.dir/src/text_index.c.o
+[206/216] Linking C static library libexr_pdf_edit.a
+[207/216] Linking C static library libexr_audio.a
+[208/216] Building C object CMakeFiles/exr_library_objects.dir/src/library.c.o
+[209/216] Building C object CMakeFiles/exreader-jni.dir/bindings/jni/exreader_jni.c.o
+[210/216] Building C object CMakeFiles/exr_sqlite.dir/C_/Users/Oscar/exr-deps/sqlite/sqlite3.c.o
+[211/216] Linking C static library libexr_sqlite.a
+[212/216] Linking C static library libexr_textindex.a
+[213/216] Linking C static library libexr_library.a
+[214/216] Linking C shared library libexreader.so
+[215/216] Linking C shared library libexreader_jni.so
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:11:40.191816+00:00

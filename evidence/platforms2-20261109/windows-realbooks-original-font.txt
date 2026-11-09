@@ -1,0 +1,25 @@
+UTC: 2026-11-09T08:07:08.550474+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/regress/run_realbooks.py", "--manifest", "tools/regress/corpus.json", "--dll", "P:/windows-main/libexreader.dll", "--font", "C:/Windows/Fonts/NotoSerifSC-VF.ttf", "--layout", "tools/regress/layout.json", "--output", "evidence/platforms2-20261109/books-original-font.raw.json", "--baseline", "P:/baseline.json", "--source-revision", "ed252fb6e483192ec0553a936e341f49c144b824", "--workers", "4"]
+ok: between-the-world-and-me: 232 pages, 2.537s
+ok: a-raisin-in-the-sun: 356 pages, 4.392s
+ok: born-a-crime: 512 pages, 5.404s
+ok: crying-in-h-mart: 535 pages, 6.260s
+ok: black-boy: 1037 pages, 10.554s
+ok: how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america: 503 pages, 6.876s
+ok: i-know-why-the-caged-bird-sings: 625 pages, 11.394s
+ok: the-absolutely-true-diary-of-a-part-time-indian: 566 pages, 7.120s
+ok: the-fire-next-time: 189 pages, 3.288s
+ok: pachinko: 1266 pages, 17.409s
+ok: the-fire-this-time-a-new-generation-speaks-about-race: 333 pages, 5.757s
+ok: the-distance-between-us-a-memoir: 714 pages, 10.468s
+ok: the-house-on-mango-street: 185 pages, 1.814s
+ok: the-autobiography-of-malcolm-x.: 279 pages, 20.294s
+ok: tangshi300-52323: 84 pages, 1.799s
+ok: zami-a-new-spelling-of-my-name---a-biomythography: 659 pages, 8.401s
+ok: kusamakura-japanese-vertical-writing: 464 pages, 11.088s
+ok: xingshihengyan-24239: 1203 pages, 30.725s
+ok: hongloumeng-24264: 1684 pages, 40.459s
+{"requested_books": 19, "successful_books": 19, "failed_books": [], "total_pages": 11426, "total_glyphs": 8648571, "wall_seconds": 68.356589, "sum_book_seconds": 206.037867, "fastest_book": "tangshi300-52323", "slowest_book": "hongloumeng-24264"}
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:08:17.147645+00:00

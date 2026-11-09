@@ -1,0 +1,114 @@
+[
+  {
+    "platform": "Android",
+    "arch": "arm64-v8a",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\android\\arm64-v8a\\libexreader.so",
+    "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+    "kind": "engine",
+    "provenance": "CI run 42474080320 / bd15cddb"
+  },
+  {
+    "platform": "Android",
+    "arch": "arm64-v8a",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\android\\arm64-v8a\\libexreader_jni.so",
+    "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+    "kind": "jni",
+    "provenance": "CI run 42474080320 / bd15cddb"
+  },
+  {
+    "platform": "Android",
+    "arch": "arm64-v8a",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\android\\arm64-v8a\\exreader-arm64-v8a.aar",
+    "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+    "kind": "container",
+    "provenance": "CI run 42474080320 / bd15cddb"
+  },
+  {
+    "platform": "macOS",
+    "arch": "arm64",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\macos\\arm64\\libexreader.dylib",
+    "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+    "kind": "engine",
+    "provenance": "CI run 42474080320 / bd15cddb"
+  },
+  {
+    "platform": "iOS",
+    "arch": "arm64-device",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\ios\\arm64-device\\libexreader.dylib",
+    "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+    "kind": "engine",
+    "provenance": "CI run 42474080320 / bd15cddb"
+  },
+  {
+    "platform": "iOS",
+    "arch": "arm64-simulator",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\ios\\arm64-simulator\\libexreader.dylib",
+    "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+    "kind": "engine",
+    "provenance": "CI run 42474080320 / bd15cddb"
+  },
+  {
+    "platform": "Linux",
+    "arch": "x86_64",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\linux\\x86_64\\libexreader.so",
+    "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+    "kind": "engine",
+    "provenance": "CI run 42474080320 / bd15cddb"
+  },
+  {
+    "platform": "Windows",
+    "arch": "x86_64",
+    "path": "P:/windows-main/libexreader.dll",
+    "kind": "engine",
+    "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+    "provenance": "local build; evidence/platforms2-20261109"
+  },
+  {
+    "platform": "Android",
+    "arch": "x86_64",
+    "path": "P:/android-build/libexreader.so",
+    "kind": "engine",
+    "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+    "provenance": "local build; evidence/platforms2-20261109"
+  },
+  {
+    "platform": "Android",
+    "arch": "x86_64",
+    "path": "P:/android-build/libexreader_jni.so",
+    "kind": "jni",
+    "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+    "provenance": "local build; evidence/platforms2-20261109"
+  },
+  {
+    "platform": "Android",
+    "arch": "x86_64",
+    "path": "P:/android-stage/exreader-x86_64.aar",
+    "kind": "container",
+    "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+    "provenance": "local build; evidence/platforms2-20261109"
+  },
+  {
+    "platform": "Android",
+    "arch": "x86_64",
+    "path": "P:/apk/libplatform_probe.so",
+    "kind": "probe",
+    "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+    "provenance": "local build; evidence/platforms2-20261109"
+  },
+  {
+    "platform": "Android",
+    "arch": "x86_64",
+    "path": "P:/apk/platform-probe.apk",
+    "kind": "container",
+    "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+    "provenance": "local build; evidence/platforms2-20261109"
+  },
+  {
+    "platform": "Linux",
+    "arch": "x86_64-current",
+    "path": "P:/linux-current/libexreader.so",
+    "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+    "kind": "engine",
+    "provenance": "Debian12 GCC12.2 default feature build under QEMU Linux; linux-debian-build.txt"
+  }
+]

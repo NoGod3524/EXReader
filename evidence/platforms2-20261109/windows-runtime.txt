@@ -1,0 +1,18 @@
+UTC: 2026-11-09T08:03:52.849231+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "-c", "import subprocess,ctypes,pathlib; p=pathlib.Path('P:/windows-main/libexreader.dll'); l=ctypes.CDLL(str(p)); l.exr_version.restype=ctypes.c_char_p; print('LoadLibrary version:',l.exr_version().decode(),flush=True); a=['P:/windows-probe/platform-probe.exe','P:/smoke/smoke.epub','P:/smoke/font.otf','evidence/platforms2-20261109/windows']; [subprocess.run(a+[mode],check=True) for mode in ['create','reopen']]; print(pathlib.Path(a[3]+'/create.log').read_text()+pathlib.Path(a[3]+'/reopen.log').read_text())"]
+LoadLibrary version: 3.42.0
+PASS load version=3.42.0 abi=1 mode=create
+PASS open pages=215
+PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+PASS search hits_at_least=1 part=0 offset=0 length=14
+STORED highlight; awaiting independent process reopen
+PASS load version=3.42.0 abi=1 mode=reopen
+PASS open pages=215
+PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+PASS search hits_at_least=1 part=0 offset=0 length=14
+PASS annotation independent_process=1 part=0 start=0 end=14 page=0 x=24 baseline=45 changed_pixels=2553
+PASS platform checks=5/5
+
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:03:53.559217+00:00

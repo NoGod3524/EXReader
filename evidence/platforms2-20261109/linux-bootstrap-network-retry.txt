@@ -1,0 +1,37 @@
+UTC: 2026-11-09T08:06:21.135189+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/platforms/console.py", "--login", "ip link set eth0 up; udhcpc -n -i eth0; printf \"http://dl-cdn.alpinelinux.org/alpine/v3.22/main\\nhttp://dl-cdn.alpinelinux.org/alpine/v3.22/community\\n\" > /etc/apk/repositories; apk add openssh build-base cmake ninja python3 nodejs e2fsprogs"]
+ ip link set eth0 up; udhcpc -n -i eth0; printf "http://dl-cdn.alpin
+
+
+elinux.org/alpine/v3.22/main\nhttp://dl-cdn.alpinelinux.org/alpine/v3.22/communi
+
+
+ty\n" > /etc/apk/repositories; apk add openssh build-base cmake ninja python3 no
+
+
+dejs e2fsprogs; rc=$?; printf '\n__PLAT%s=%s\n' DONE "$rc"
+
+udhcpc: started, v1.37.0
+
+udhcpc: broadcasting discover
+
+udhcpc: broadcasting select for 10.0.2.15, server 10.0.2.2
+
+udhcpc: lease of 10.0.2.15 obtained from 10.0.2.2, lease time 86400
+
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.22/main/x86_64/APKINDEX.tar.gz
+
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.22/community/x86_64/APKINDEX.tar.gz
+
+(1/68) Installing libgcc (14.2.0-r6)
+
+7  0%                                             8[0K(2/68) Installing jansson (2.14.1-r0)
+
+7  0%                                             8[0K(3/68) Installing libstdc++ (14.2.0-r6)
+
+7  0%                                             8[0K(4/68) Installing zstd-libs (1.5.7-r0)
+
+7  0%                                             8[0K(5/68) Installing binutils (2.44-r3)
+
+7  0%                                             8[0K7  1%                                             8[0K7  2%                                             8[0K7  2% ���                                           8[0K7  3% ���                                           8[0K(6/68) Installing libmagic (5.46-r2)

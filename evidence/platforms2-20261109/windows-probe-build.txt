@@ -1,0 +1,7 @@
+UTC: 2026-11-09T08:02:57.591178+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["cmake", "--build", "evidence/platforms2-20261109/work/windows-probe"]
+[1/2] Building C object CMakeFiles/platform-probe.dir/probe.c.obj
+[2/2] Linking C executable platform-probe.exe
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:02:58.266833+00:00

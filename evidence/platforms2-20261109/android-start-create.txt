@@ -1,0 +1,12 @@
+UTC: 2026-11-09T08:15:14.836369+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["P:/android-sdk/platform-tools/adb.exe", "-s", "emulator-5554", "shell", "am", "start", "-W", "-n", "org.exreader.platformprobe/.MainActivity"]
+Starting: Intent { cmp=org.exreader.platformprobe/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: org.exreader.platformprobe/.MainActivity
+TotalTime: 747
+WaitTime: 750
+Complete
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:15:15.625366+00:00

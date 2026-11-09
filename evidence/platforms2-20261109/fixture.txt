@@ -1,0 +1,6 @@
+UTC: 2026-11-09T08:02:58.432523+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/abi/prepare_smoke.py", "evidence/platforms2-20261109/work/smoke", "--font", "C:/Users/Oscar/exr-deps/reader-font/Reader.otf"]
+C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109\evidence\platforms2-20261109\work\smoke
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:02:58.648733+00:00

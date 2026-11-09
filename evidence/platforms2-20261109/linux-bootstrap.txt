@@ -1,0 +1,118 @@
+UTC: 2026-11-09T08:03:43.193094+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/platforms/console.py", "--login", "uname -a; udhcpc -i eth0; printf \"http://dl-cdn.alpinelinux.org/alpine/v3.22/main\\nhttp://dl-cdn.alpinelinux.org/alpine/v3.22/community\\n\" > /etc/apk/repositories; apk add openssh build-base cmake ninja python3 nodejs e2fsprogs"]
+root
+
+Welcome to Alpine!
+
+
+
+The Alpine Wiki contains a large amount of how-to guides and general
+
+information about administrating Alpine systems.
+
+See <https://wiki.alpinelinux.org/>.
+
+
+
+You can setup the system with the command: setup-alpine
+
+
+
+You may change this message by editing /etc/motd.
+
+
+
+localhost:~# [6nuname -a; udhcpc -i eth0; printf "http://dl-cdn.alpinelinux.org/alp
+
+
+ine/v3.22/main\nhttp://dl-cdn.alpinelinux.org/alpine/v3.22/community\n" > /etc/a
+
+
+pk/repositories; apk add openssh build-base cmake ninja python3 nodejs e2fsprogs
+
+
+; rc=$?; printf '\n__PLAT%s=%s\n' DONE "$rc"
+
+Linux localhost 6.12.115-0-virt #1-Alpine SMP PREEMPT_DYNAMIC 2026-11-01 10:34:06 x86_64 Linux
+
+udhcpc: started, v1.37.0
+
+udhcpc: broadcasting discover
+
+udhcpc: sendto: Network is down
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+udhcpc: read error: Network is down, reopening socket
+
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109\tools\platforms\console.py", line 25, in <module>
+    chunk = connection.recv(65536)
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+EXIT_CODE: 1
+END_UTC: 2026-11-09T08:05:25.261070+00:00
