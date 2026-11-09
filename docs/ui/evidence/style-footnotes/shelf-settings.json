@@ -1,0 +1,40 @@
+{
+  "reader_style": {
+    "font_size": 14,
+    "line_height": 1.39999998,
+    "paragraph_spacing": 0.200000003,
+    "top": 110,
+    "right": 8,
+    "bottom": 16,
+    "left": 24,
+    "letter_spacing": -0.00999999978
+  },
+  "style_presets": [
+    {
+      "name": "护眼大字",
+      "style": {
+        "font_size": 22,
+        "line_height": 2,
+        "paragraph_spacing": 1,
+        "top": 20,
+        "right": 60,
+        "bottom": 80,
+        "left": 100,
+        "letter_spacing": 0.0299999993
+      }
+    },
+    {
+      "name": "紧凑",
+      "style": {
+        "font_size": 14,
+        "line_height": 1.39999998,
+        "paragraph_spacing": 0.200000003,
+        "top": 110,
+        "right": 8,
+        "bottom": 16,
+        "left": 24,
+        "letter_spacing": -0.00999999978
+      }
+    }
+  ]
+}

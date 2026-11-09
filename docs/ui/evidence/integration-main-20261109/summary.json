@@ -1,0 +1,75 @@
+{
+  "original_head": "f8d76fa760c1101f192b5ca510d32206de4d9e92",
+  "main": "d9ffdbf09da654340bc35c043ad6d4b49cc344d1",
+  "merge_commit": "6c415ccec50bdb2fc58eff14382fdbed8b21610c",
+  "warning_commit": "d62f778c5ed48d75cc32a168dfb1b0f5a2275fc9",
+  "conflicts": [
+    {
+      "path": "src/publication.c",
+      "resolution": "Retain footnote/reference fields and the locate_report field."
+    }
+  ],
+  "automatic_merges": [
+    "CMakeLists.txt",
+    "include/exr/layout.h",
+    "tools/layers.json"
+  ],
+  "ctest": {
+    "passed": 244,
+    "total": 244,
+    "previous_integration": 228,
+    "current_main": 228
+  },
+  "host_selftest": {
+    "schema": 1,
+    "passed": true,
+    "platform": "Windows",
+    "checks": 26,
+    "engine_version": "3.42.0"
+  },
+  "c4701": {
+    "classification": "消误报，非修 bug",
+    "declarations": [
+      "src/library.c:1067",
+      "src/library.c:1364"
+    ],
+    "change": "Initialize both note snapshots with ={0}.",
+    "reason": "Non-null input is fully copied before use; null input returns via the !input short-circuit before any note member read. Preserve the copy before clearing the potentially aliased output ID."
+  },
+  "realbooks": {
+    "baseline_revision": "d9ffdbf09da654340bc35c043ad6d4b49cc344d1",
+    "candidate_revision": "d62f778c5ed48d75cc32a168dfb1b0f5a2275fc9",
+    "summary": {
+      "requested_books": 19,
+      "successful_books": 19,
+      "failed_books": [],
+      "total_pages": 11426,
+      "total_glyphs": 8648571,
+      "wall_seconds": 88.325194,
+      "sum_book_seconds": 273.124553,
+      "fastest_book": "tangshi300-52323",
+      "slowest_book": "hongloumeng-24264"
+    },
+    "hash_changed_pages": 0,
+    "page_count_changes": 0,
+    "glyph_count_changes": 0,
+    "content_fingerprint": "f133272deccc097ee10bbdcf18cdb60c95bf3035ddde529e8dbea24a1d5ce488",
+    "font_sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280",
+    "main_dll_sha256": "71e3a301976aaca1618a544748cb3b00df46d51d21f23ba7d334c131aeebf0ba",
+    "candidate_dll_sha256": "c72d233b9a7cb1e8c93dd4fbd9aa7b494b73318326e3d58f62be7352f6569d3a",
+    "old_main_comparison": "The original e324059c mixed corpus changes only for Zami.mobi after main PR #96: 636 -> 659 pages, 636 corresponding page hashes differ. Both d9ffdbf0 and the merged branch produce the same 659 pages."
+  },
+  "input_sha256": {
+    "tools\\regress\\corpus.json": "640593fe8a5e242fc2c91dcf7da86b12c9aa946debae3bb3ec4950a535ff1cb1",
+    "tools\\regress\\layout.json": "60c86653c7f295a6e5ee404058381168a797798a3bf4f578a429a226b2dd1787",
+    "tools\\regress\\run_realbooks.py": "2fd0a1fa0d28804a7e6583367d91d9f7e48f43e662deb957f01b59f6471c8c8b"
+  },
+  "commands": [
+    "cmake -S . -B build",
+    "cmake --build build --parallel 8",
+    "ctest --test-dir build --output-on-failure --parallel 6",
+    "python tools/check_layers.py build",
+    "python tools/regress/run_realbooks.py --manifest tools/regress/corpus.json --dll build/libexreader.dll --font build/Reader.otf --layout tools/regress/layout.json --output build/integration-main99/books.json --workers 4 --source-revision d62f778c5ed48d75cc32a168dfb1b0f5a2275fc9",
+    "python tools/regress/run_realbooks.py --baseline build/integration-main99/main-books.json --candidate build/integration-main99/books.json --output build/integration-main99/current-main.diff.json"
+  ]
+}

@@ -1,0 +1,27 @@
+-- The C compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (1.9s)
+-- Generating done (0.0s)
+-- Build files have been written to: C:/Users/Oscar/Documents/Codex/EXReader-integ-20261108/build/installed-host
+[1/12] Building C object CMakeFiles/check_shell_geometry.dir/check_shell_geometry.c.obj
+[2/12] Linking C executable check_shell_geometry.exe
+[3/12] Building CXX object CMakeFiles/EXReader.dir/shell_d2d.cpp.obj
+[4/12] Building CXX object CMakeFiles/check_shell_anchor.dir/shell_d2d.cpp.obj
+[5/12] Building CXX object CMakeFiles/EXReader.dir/shell_epub.cpp.obj
+[6/12] Building CXX object CMakeFiles/check_shell_anchor.dir/shell_epub.cpp.obj
+[7/12] Building CXX object CMakeFiles/check_shell_epub.dir/check_shell_epub.cpp.obj
+[8/12] Linking CXX executable check_shell_epub.exe
+[9/12] Building C object CMakeFiles/check_shell_anchor.dir/check_shell_anchor.c.obj
+[10/12] Building C object CMakeFiles/EXReader.dir/C_/Users/Oscar/Documents/Codex/EXReader-integ-20261108/examples/reader.c.obj
+[11/12] Linking CXX executable check_shell_anchor.exe
+[12/12] Linking CXX executable EXReader.exe

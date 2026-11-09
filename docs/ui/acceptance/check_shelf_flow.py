@@ -64,17 +64,24 @@ def main():
     previous=state(f,'single-base')
     for i in range(10):
         current=state(f,f'single-{i}');assert current['page']==previous['page']+1 and not current['selection'];previous=current
-    for direction,delta in [('left',1),('right',-1)]:
-        for i in range(10):
-            current=state(f,f'swipe-{direction}-{i}');assert current['page']==previous['page']+delta and current['part']==previous['part'];previous=current
+    swipe_path=[previous]
+    for i in range(10):
+        current=state(f,f'swipe-left-{i}')
+        assert ((current['part']==previous['part'] and current['page']==previous['page']+1) or
+                (current['part']==previous['part']+1 and current['page']==0)),(previous,current)
+        swipe_path.append(current);previous=current
+    for i in range(10):
+        current=state(f,f'swipe-right-{i}');assert same(current,swipe_path[-2-i]),(current,swipe_path[-2-i])
     previous=state(f,'rapid-base')
     for i in range(2):
         current=state(f,f'rapid-{i}');assert current['page']==previous['page']+1 and not current['selection'];previous=current
     # Fresh process: do not use a goto/page index before checking the restored anchor.
     r=launch('wait_idle\n'+setup+'shelf_dump|restart\nquit\n','restart');assert same(state(f,'before-restart'),state(r,'restart')),(state(f,'before-restart'),state(r,'restart'))
     assert state(r,'restart')['edge']==20
-    meta=read(f/'select-base.json');line=meta['lines'][2];glyphs=[g for g in meta['glyphs'][line[2]:line[2]+line[3]] if not g[7]&(4|2048)]
-    start,end=glyphs[1][8],glyphs[min(12,len(glyphs)-2)][8]
+    meta=read(f/'select-base.json')
+    glyphs=next(gs for line in meta['lines']
+                if len(gs:=[g for g in meta['glyphs'][line[2]:line[2]+line[3]] if not g[7]&(4|2048)])>=14)
+    start,end=glyphs[1][8],glyphs[12][8]
     s=setup+'shelf_dump|drag-base\n'
     for i in range(10):
         s+=ptr('down',start)+ptr('move',end,1)+ptr('up',end,1)+f'shelf_dump|drag-{i}\nselect_key|escape\n'

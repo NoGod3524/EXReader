@@ -78,6 +78,7 @@ static int shell_gesture_message(HWND window,UINT message,WPARAM wp,LPARAM lp) {
     if(message==WM_LBUTTONUP) {
       int state=gesture_state;gesture_reset(window);
       if(state==1 && gesture_max<=shell_px(4,shell_dpi)) {
+        if(!g.frame.fixed && shell_footnote_click(x,y))return 1;
         if(!g.frame.fixed && annot_click(x,y))return 1;
         RECT r;GetClientRect(window,&r);int turn=gesture_tap(gesture_x,r.right);
         selection_clear();
