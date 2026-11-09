@@ -1,0 +1,146 @@
+{
+  "selection_lookups": {
+    "passed": 10,
+    "total": 10,
+    "manual_shortcut": 5,
+    "on_selection": 5
+  },
+  "missing": 1,
+  "collapse": 2,
+  "vocabulary": {
+    "saved": 5,
+    "csv_sentence_correct": 5,
+    "anchor_roundtrips_after_restart": 5,
+    "book_filter_counts": [
+      4,
+      1
+    ]
+  },
+  "shelf_preserved": true,
+  "dictionary_count": 2,
+  "dictionary_paths": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\eng-zho\\eng-zho\\eng-zho.ifo",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\eng-fra\\eng-fra\\eng-fra.ifo"
+  ],
+  "exe_sha256": "aeeddb75ef9f3cc344b88b5bfacf981025362b6b8c162a6f2fcd8ce8741b10ce",
+  "runs": [
+    {
+      "exit": 0,
+      "checks": [],
+      "captures": {
+        "dictionary-light": {
+          "window": [
+            1298,
+            847
+          ],
+          "client": [
+            1280,
+            800
+          ],
+          "client_box": [
+            9,
+            38,
+            1280,
+            800
+          ],
+          "position": [
+            -32000,
+            -32000
+          ],
+          "dpi": 120
+        },
+        "dictionary-dark": {
+          "window": [
+            1298,
+            847
+          ],
+          "client": [
+            1280,
+            800
+          ],
+          "client_box": [
+            9,
+            38,
+            1280,
+            800
+          ],
+          "position": [
+            -32000,
+            -32000
+          ],
+          "dpi": 120
+        },
+        "dictionary-missing": {
+          "window": [
+            1298,
+            847
+          ],
+          "client": [
+            1280,
+            800
+          ],
+          "client_box": [
+            9,
+            38,
+            1280,
+            800
+          ],
+          "position": [
+            -32000,
+            -32000
+          ],
+          "dpi": 120
+        },
+        "vocabulary": {
+          "window": [
+            1298,
+            847
+          ],
+          "client": [
+            1280,
+            800
+          ],
+          "client_box": [
+            9,
+            38,
+            1280,
+            800
+          ],
+          "position": [
+            -32000,
+            -32000
+          ],
+          "dpi": 120
+        },
+        "dictionary-settings": {
+          "window": [
+            1298,
+            847
+          ],
+          "client": [
+            1280,
+            800
+          ],
+          "client_box": [
+            9,
+            38,
+            1280,
+            800
+          ],
+          "position": [
+            -32000,
+            -32000
+          ],
+          "dpi": 120
+        }
+      },
+      "elapsed_seconds": 25.145034700006363
+    },
+    {
+      "exit": 0,
+      "checks": [],
+      "captures": {},
+      "elapsed_seconds": 1.366992700000992
+    }
+  ]
+}

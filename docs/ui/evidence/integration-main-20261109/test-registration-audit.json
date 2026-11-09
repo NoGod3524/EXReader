@@ -1,0 +1,23 @@
+{
+  "previous_count": 228,
+  "merged_count": 244,
+  "missing": [],
+  "added": [
+    "native-book-codec",
+    "native-book-errors",
+    "native-book-fb2",
+    "native-book-kf8",
+    "native-book-mobi",
+    "native-cfi-compat-contracts",
+    "native-cfi-compat-cross",
+    "native-cfi-compat-invalid",
+    "native-cfi-compat-mapping",
+    "native-cfi-compat-parse",
+    "native-cfi-compat-roundtrip",
+    "native-locate-report-entries",
+    "native-locate-report-reset",
+    "native-sevenz-codecs",
+    "native-sevenz-safety",
+    "native-sevenz-source"
+  ]
+}

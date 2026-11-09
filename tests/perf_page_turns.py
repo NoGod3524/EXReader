@@ -165,26 +165,31 @@ def sdk(args):
                 index = 0
                 while len(samples) < 21:
                     perf_reset()
+                    cpu_begin = time.thread_time()
                     begin = time.perf_counter()
                     status = library.pager_next(pager, c.byref(page), c.byref(error)) if not fixed else 0
                     layout_ms = (time.perf_counter() - begin) * 1000
+                    layout_cpu_ms = (time.thread_time() - cpu_begin) * 1000
                     if status:
                         raise RuntimeError((status,error.message.decode('utf-8',errors='replace')))
                     if not fixed and not page:
                         break
                     before = Perf()
                     perf_read(c.byref(before))
+                    cpu_begin = time.thread_time()
                     begin = time.perf_counter()
                     if fixed:
                         library.check('fixed_render', fixed, index, 1.0, None, c.byref(bitmap))
                     else:
                         library.check('render_page_color', page, library.layout_font(page), 0, c.byref(bitmap))
                     raster_ms = (time.perf_counter() - begin) * 1000
+                    raster_cpu_ms = (time.thread_time() - cpu_begin) * 1000
                     after = Perf()
                     perf_read(c.byref(after))
                     samples.append(dict(part=part, page=index, layout_ms=layout_ms-before.inline_ms,
                         shape_ms=before.inline_ms, ot_ms=before.shape_ms, raster_ms=raster_ms,
-                        total_ms=layout_ms+raster_ms, load_ms=after.load_ms, ft_raster_ms=after.ft_raster_ms,
+                        total_ms=layout_ms+raster_ms, total_cpu_ms=layout_cpu_ms+raster_cpu_ms,
+                        load_ms=after.load_ms, ft_raster_ms=after.ft_raster_ms,
                         shapes=after.shapes, loads=after.loads, rasters=after.rasters,
                         shape_hits=after.shape_hits, glyph_hits=after.glyph_hits,
                         metric_hits=before.metric_hits, metric_misses=before.metric_misses,
@@ -199,7 +204,7 @@ def sdk(args):
                     break
             assert len(samples) == 21, book['id']
             result = dict(id=book['id'], samples=samples[1:], summary={k: stats([s[k] for s in samples[1:]])
-                for k in ('layout_ms', 'shape_ms', 'raster_ms', 'total_ms', 'load_ms', 'ft_raster_ms')})
+                for k in ('layout_ms', 'shape_ms', 'raster_ms', 'total_ms', 'total_cpu_ms', 'load_ms', 'ft_raster_ms')})
             all_results.append(result)
             print(book['id'], round(result['summary']['total_ms']['p95'], 3), flush=True)
         finally:
@@ -214,7 +219,15 @@ def host(args):
     work.mkdir(parents=True, exist_ok=True)
     if (work/'paint.csv').exists() or (work/'d2d.csv').exists():
         raise FileExistsError('Use a fresh output directory for each host run')
+    probe_dir=work/'windows'
+    probe_dir.mkdir(exist_ok=True)
+    probe=(ROOT/'examples/windows/paint_probe.h').read_text(encoding='utf-8')
+    (probe_dir/'paint_probe.h').write_text(probe.replace('fflush(trace);',''),encoding='utf-8')
     source = (ROOT / 'examples/reader.c').read_text(encoding='utf-8')
+    source=source.replace('shell_color_display(&g.frame);',
+        'double theme_start=host_probe_ms();shell_color_display(&g.frame);host_probe_log("theme_ms",host_probe_ms()-theme_start);')
+    source=source.replace('if (shell_page_footer(dc, &area)) {',
+        'double footer_start=host_probe_ms();int footer=shell_page_footer(dc,&area);host_probe_log("footer_ms",host_probe_ms()-footer_start);if(footer) {')
     source = source.replace('#include "windows/paint_probe.h"', '''#include "windows/paint_probe.h"
 typedef struct { double shape_ms, inline_ms, load_ms, ft_raster_ms; unsigned long long shapes, loads, rasters, metric_hits, metric_misses, shape_hits, glyph_hits; } perf_data;
 static void perf_host(int reset) {
@@ -243,7 +256,10 @@ static int drive_execute(void) {''')
     flags = ['-O2', '-I'+str(ROOT/'include'), '-I'+str(ROOT/'examples'), '-I'+str(ROOT/'examples/windows')]
     compile_run = run if not args.host_binary else lambda *a, **kw: None
     compile_run(['gcc', *flags, '-DEXR_READER_WINDOWS_SHELL=1', '-c', generated, '-o', work/'reader.o'])
-    for name in ['d2d', 'epub']:
+    components = ['d2d', 'epub']
+    if (ROOT/'examples/windows/shell_speech.cpp').exists():
+        components.append('speech')
+    for name in components:
         cpp = ROOT/f'examples/windows/shell_{name}.cpp'
         if name == 'd2d':
             text = cpp.read_text(encoding='utf-8')
@@ -264,7 +280,7 @@ static HRESULT perf_end(ID2D1RenderTarget *target) {
             cpp = work/'d2d.cpp'
             cpp.write_text(text, encoding='utf-8')
         compile_run(['g++', *flags, '-std=c++17', '-c', cpp, '-o', work/f'{name}.o'])
-    compile_run(['g++', work/'reader.o', work/'d2d.o', work/'epub.o', '-o', work/'host.exe',
+    compile_run(['g++', work/'reader.o', *[work/f'{name}.o' for name in components], '-o', work/'host.exe',
         '-L'+str(args.build.resolve()), '-lexreader', args.build/'_deps/expat-build/libexpat.a',
         args.build/'_deps/miniz-build/libminiz.a', '-ld2d1', '-ldwrite', '-lgdi32', '-lcomdlg32',
         '-lshell32', '-lole32', '-loleaut32', '-luuid', '-luiautomationcore', '-lpsapi', '-lm', '-ladvapi32'])
@@ -299,7 +315,7 @@ static HRESULT perf_end(ID2D1RenderTarget *target) {
         present = next(r for r in rows if r[0]=='present_gen' and inp[1]<r[1]<until and r[2]!=inp[2])
         events = [r for r in rows if inp[1]<r[1]<=present[1]]
         sums = {k: sum(r[2] for r in events if r[0]==k) for k in
-            ('stage_anchor_pager_ms', 'stage_raster_ms', 'compose_ms', 'paint_ms', 'submit_ms', 'pixel_copy_ms', 'shape_ms', 'ft_load_ms', 'ft_raster_ms', 'd2d_end_ms', 'host_update_controls_ms', 'settings_save_ms')}
+            ('stage_anchor_pager_ms', 'stage_raster_ms', 'compose_ms', 'paint_ms', 'submit_ms', 'pixel_copy_ms', 'shape_ms', 'ft_load_ms', 'ft_raster_ms', 'd2d_end_ms', 'host_update_controls_ms', 'settings_save_ms', 'theme_ms', 'footer_ms')}
         samples.append(dict(total_ms=present[1]-inp[1], **sums))
     layout = json.loads((work/'layout.json').read_text(encoding='utf-8'))
     assert layout['client']==[1552,928] and layout['font']==18
@@ -307,6 +323,7 @@ static HRESULT perf_end(ID2D1RenderTarget *target) {
         blank_frames=sum(r[2] for r in rows if r[0]=='blank' and begin<r[1]<end),
         peak_rss=next(r[2] for r in rows if r[0]=='peak_rss'),
         peak_commit=next(r[2] for r in rows if r[0]=='peak_commit'),
+        trace_flush='per-event in reused binary' if args.host_binary else 'buffered until normal exit',
         geometry={k:layout[k] for k in ('client','page','font','line_height')})
     write(work/'result.json', result)
     print(json.dumps({k:v for k,v in result.items() if k!='samples'}), flush=True)

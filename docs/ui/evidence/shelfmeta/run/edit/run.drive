@@ -1,0 +1,93 @@
+import|C:\Users\Oscar\OneDrive\Desktop\26 Fall\SOCI 1501\Final Paper Assignment\FinalBooks\The Fire Next Time (James Baldwin) (z-library.sk, 1lib.sk, z-lib.sk).epub
+import|C:\Users\Oscar\OneDrive\Desktop\26 Fall\SOCI 1501\Final Paper Assignment\FinalBooks\The Fire This Time A New Generation Speaks about Race (Jesmyn Ward) (z-library.sk, 1lib.sk, z-lib.sk).epub
+import|C:\Users\Oscar\OneDrive\Desktop\26 Fall\SOCI 1501\Final Paper Assignment\FinalBooks\Between The World and Me (Ta-Nehisi Coates) (z-library.sk, 1lib.sk, z-lib.sk).epub
+import|C:\Users\Oscar\OneDrive\Desktop\26 Fall\SOCI 1501\Final Paper Assignment\FinalBooks\Born a Crime (Trevor Noah) (z-library.sk, 1lib.sk, z-lib.sk).epub
+import|C:\Users\Oscar\OneDrive\Desktop\26 Fall\SOCI 1501\Final Paper Assignment\FinalBooks\Crying in H Mart (Michelle Zauner) (z-library.sk, 1lib.sk, z-lib.sk).epub
+import|C:\Users\Oscar\OneDrive\Desktop\26 Fall\SOCI 1501\Final Paper Assignment\FinalBooks\Black Boy (Richard Wright) (z-library.sk, 1lib.sk, z-lib.sk).epub
+import|C:\Users\Oscar\OneDrive\Desktop\26 Fall\SOCI 1501\Final Paper Assignment\FinalBooks\Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub
+import|C:\Users\Oscar\OneDrive\Desktop\26 Fall\SOCI 1501\Final Paper Assignment\FinalBooks\The House on Mango Street (Sandra Cisneros) (z-library.sk, 1lib.sk, z-lib.sk).epub
+import|C:\Users\Oscar\OneDrive\Desktop\26 Fall\SOCI 1501\Final Paper Assignment\FinalBooks\A Raisin in the Sun (Lorraine Hansberry) (z-library.sk, 1lib.sk, z-lib.sk).epub
+shell|on
+shell_dpi|96
+shell_client|1280|800
+wait_idle
+shell_click|light
+sm_show|0
+sm_dump|imported
+sm_context|PACHINKO|edit
+sm_field|0|柏青哥
+sm_field|1|李珉锦
+sm_field|2|
+sm_field|3|
+sm_field|4|小说,经典
+sm_cover|C:\Users\Oscar\Documents\Codex\EXReader-shelfmeta-20261108\docs\ui\evidence\shelfmeta\run\cover-1.png
+shell_measure|edit-dialog
+probe_wait|900
+sm_save
+sm_context|The House on Mango Street|edit
+sm_field|0|芒果街上的小屋
+sm_field|1|桑德拉·希斯内罗丝
+sm_field|2|
+sm_field|3|
+sm_field|4|小说
+sm_cover|C:\Users\Oscar\Documents\Codex\EXReader-shelfmeta-20261108\docs\ui\evidence\shelfmeta\run\cover-2.png
+sm_save
+sm_context|A Raisin in the Sun|edit
+sm_field|0|阳光下的葡萄干
+sm_field|1|洛林·汉斯伯里
+sm_field|2|
+sm_field|3|
+sm_field|4|
+sm_cover|C:\Users\Oscar\Documents\Codex\EXReader-shelfmeta-20261108\docs\ui\evidence\shelfmeta\run\cover-3.png
+sm_save
+sm_context|The Fire Next Time|edit
+sm_field|0|
+sm_field|1|
+sm_field|2|火的系列
+sm_field|3|2
+sm_field|4|经典,种族
+sm_save
+sm_context|The Fire This Time|edit
+sm_field|0|
+sm_field|1|
+sm_field|2|火的系列
+sm_field|3|3
+sm_field|4|种族
+sm_save
+sm_context|Between the World and Me|edit
+sm_field|0|
+sm_field|1|
+sm_field|2|火的系列
+sm_field|3|1
+sm_field|4|种族,回忆录
+sm_save
+sm_context|Born a Crime|edit
+sm_field|0|
+sm_field|1|
+sm_field|2|成长三部曲
+sm_field|3|3
+sm_field|4|回忆录
+sm_save
+sm_context|Crying in H Mart|edit
+sm_field|0|
+sm_field|1|
+sm_field|2|成长三部曲
+sm_field|3|1
+sm_field|4|回忆录
+sm_save
+sm_context|Black Boy|edit
+sm_field|0|
+sm_field|1|
+sm_field|2|成长三部曲
+sm_field|3|2
+sm_field|4|经典,回忆录
+sm_save
+sm_click|grid
+sm_dump|edited
+shell_measure|grid
+probe_wait|900
+sm_click|list
+shell_measure|list
+probe_wait|900
+sm_click|grid
+quit

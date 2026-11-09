@@ -1,0 +1,5 @@
+[1/5] Building CXX object CMakeFiles/EXReader.dir/shell_speech.cpp.obj
+[2/5] Building CXX object CMakeFiles/EXReader.dir/shell_d2d.cpp.obj
+[3/5] Building CXX object CMakeFiles/EXReader.dir/shell_epub.cpp.obj
+[4/5] Building C object CMakeFiles/EXReader.dir/C_/Users/Oscar/Documents/Codex/EXReader-tts-20261108/examples/reader.c.obj
+[5/5] Linking CXX executable EXReader.exe

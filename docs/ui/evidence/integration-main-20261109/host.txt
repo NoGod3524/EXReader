@@ -1,0 +1,43 @@
+g++ -O2 -std=c++17 -Wall -Wextra -Werror -Iinclude -Iexamples/windows -c examples\windows\shell_d2d.cpp -o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\d2d.o
+g++ -O2 -std=c++17 -Wall -Wextra -Werror -Iinclude -Iexamples/windows -c examples\windows\shell_epub.cpp -o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\epub.o
+g++ -O2 -std=c++17 -Wall -Wextra -Werror -Iinclude -Iexamples/windows -c examples\windows\shell_speech.cpp -o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\speech.o
+gcc -O2 -Wall -Wextra -Werror -DEXR_READER_WINDOWS_SHELL=1 -Iinclude -Iexamples/windows -c examples/reader.c -o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\EXReader.o
+g++ C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\EXReader.o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\d2d.o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\epub.o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\speech.o -o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\EXReader.exe -Lbuild -lexreader build/_deps/expat-build/libexpat.a build/_deps/miniz-build/libminiz.a -ld2d1 -ldwrite -lgdi32 -lcomdlg32 -lshell32 -lole32 -loleaut32 -luuid -luiautomationcore -ladvapi32 -lm
+gcc -O2 -Wall -Wextra -Werror -DEXR_READER_WINDOWS_SHELL=1 -Iinclude -Iexamples/windows -c examples/windows/check_shell_anchor.c -o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\check_shell_anchor.o
+g++ C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\check_shell_anchor.o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\d2d.o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\epub.o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\speech.o -o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\check_shell_anchor.exe -Lbuild -lexreader build/_deps/expat-build/libexpat.a build/_deps/miniz-build/libminiz.a -ld2d1 -ldwrite -lgdi32 -lcomdlg32 -lshell32 -lole32 -loleaut32 -luuid -luiautomationcore -ladvapi32 -lm
+gcc -Iinclude -Iexamples/windows -O2 -UNDEBUG examples/windows/check_shell_geometry.c -o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\check_shell_geometry.exe -Lbuild -lexreader -lm
+g++ -O2 -std=c++17 -Wall -Wextra -Werror -Iinclude -Iexamples/windows examples/windows/check_shell_epub.cpp -o C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\check_shell_epub.exe -Lbuild -lexreader build/_deps/expat-build/libexpat.a build/_deps/miniz-build/libminiz.a -ld2d1 -ldwrite -lgdi32 -lcomdlg32 -lshell32 -lole32 -loleaut32 -luuid -luiautomationcore -ladvapi32 -lm
+C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\check_shell_geometry.exe
+C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\check_shell_anchor.exe C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\Reader.otf C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\integration-main99\anchor.txt
+document,18,9639,9639,10
+document,20,9639,9639,11
+document,22,9639,9639,12
+document,24,9639,9639,13
+document,28,9639,9639,15
+document,32,9639,9639,17
+document,17,9639,9639,10
+TXT,18,9639,9639,10
+TXT,20,9639,9639,11
+TXT,22,9639,9639,12
+TXT,24,9639,9639,13
+TXT,28,9639,9639,15
+TXT,32,9639,9639,17
+TXT,17,9639,9639,10
+document-vertical,18,11964,11964,10
+document-vertical,20,11964,11964,10
+document-vertical,22,11964,11964,11
+document-vertical,24,11964,11964,12
+document-vertical,28,11964,11964,14
+document-vertical,32,11964,11964,17
+document-vertical,17,11964,11964,10
+C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\check_shell_epub.exe C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\Reader.otf C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\Sample.epub C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\integration-main99\styled.epub
+open=0
+resident CJK: text/nodes retained, leading=32, authored-prefix class retained
+part=0 create=0
+part=0 get=0
+part=1 create=0
+part=1 get=0
+part=2 create=0
+part=2 get=0
+C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\host\EXReader.exe --self-test C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\Reader.otf C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\Sample.epub C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\tests\fixtures\pdf-public.pdf C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\integration-main99\selftest.json C:\Users\Oscar\Documents\Codex\EXReader-integ-20261108\build\integration-main99\page.png
+{"schema": 1, "passed": true, "platform": "Windows", "checks": 26, "engine_version": "3.42.0"}

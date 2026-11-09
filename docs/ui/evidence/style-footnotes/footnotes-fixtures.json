@@ -1,0 +1,41 @@
+[
+  {
+    "book": "style-chapter.epub",
+    "status": 0,
+    "footnotes": 10,
+    "references": 10,
+    "first": {
+      "id": "note-one",
+      "label": "[1]",
+      "text": "Footnote 1 correct content. This long note remains horizontal and scrolls inside its own popup. This long note remains h"
+    }
+  },
+  {
+    "book": "style-end.epub",
+    "status": 0,
+    "footnotes": 10,
+    "references": 10,
+    "first": {
+      "id": "note-one",
+      "label": "[1]",
+      "text": "Footnote 1 correct content. This long note remains horizontal and scrolls inside its own popup. This long note remains h"
+    }
+  },
+  {
+    "book": "style-none.epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "style-vertical.epub",
+    "status": 0,
+    "footnotes": 10,
+    "references": 10,
+    "first": {
+      "id": "note-one",
+      "label": "[1]",
+      "text": "Footnote 1 correct content. 注释1保持横排显示。"
+    }
+  }
+]
