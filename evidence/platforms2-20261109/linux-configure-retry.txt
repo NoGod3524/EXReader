@@ -1,0 +1,353 @@
+UTC: 2026-11-09T08:11:01.319285+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["ssh", "-i", "P:/vm-key", "-p", "22222", "-o", "UserKnownHostsFile=P:/known_hosts", "root@127.0.0.1", "set -e; apk add --no-progress perl pkgconf; cd /w; cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF"]
+(1/5) Installing perl (5.40.4-r0)
+(2/5) Installing perl-error (0.17030-r0)
+(3/5) Installing perl-git (2.49.1-r0)
+(4/5) Installing git-perl (2.49.1-r0)
+(5/5) Installing pkgconf (2.4.3-r0)
+Executing busybox-1.37.0-r20.trigger
+OK: 456 MiB in 109 packages
+-- Found PkgConfig: /usr/bin/pkg-config (found version "2.4.3")
+-- ===========================================================================
+--
+-- CMake version in use ......... 3.31.7
+--
+-- Configuration
+--   Generator .................. Ninja
+--   Build type ................. Release
+--   Prefix ..................... /usr/local
+--   Shared libraries ........... OFF
+--   Character type ............. char (UTF-8)
+--   Library name postfix .......
+--
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... ON
+--   Install files .............. OFF
+--
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+--
+--   Entropy sources
+--     arc4random ...............
+--     arc4random_buf ...........
+--     getentropy ............... 1
+--     getrandom ................ 1
+--     syscall SYS_getrandom .... 1
+--     /dev/urandom ............. OFF
+--
+-- ===========================================================================
+CMake Deprecation Warning at out/_deps/miniz-src/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+CMake Deprecation Warning at out/_deps/libwebp-src/CMakeLists.txt:12 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Could NOT find OpenGL (missing: OPENGL_opengl_LIBRARY OPENGL_glx_LIBRARY OPENGL_INCLUDE_DIR)
+-- Performing Test WEBP_HAVE_FLAG_SSE41
+-- Performing Test WEBP_HAVE_FLAG_SSE41 - Failed
+-- Performing Test WEBP_HAVE_FLAG_SSE41
+-- Performing Test WEBP_HAVE_FLAG_SSE41 - Success
+-- Performing Test WEBP_HAVE_FLAG_SSE2
+-- Performing Test WEBP_HAVE_FLAG_SSE2 - Success
+-- Performing Test WEBP_HAVE_FLAG_MIPS32
+-- Performing Test WEBP_HAVE_FLAG_MIPS32 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS32
+-- Performing Test WEBP_HAVE_FLAG_MIPS32 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2 - Failed
+-- Performing Test HAS_COMPILE_FLAG
+-- Performing Test HAS_COMPILE_FLAG - Failed
+-- Performing Test WEBP_HAVE_FLAG_NEON
+-- Performing Test WEBP_HAVE_FLAG_NEON - Failed
+-- Performing Test WEBP_HAVE_FLAG_NEON
+-- Performing Test WEBP_HAVE_FLAG_NEON - Failed
+-- Performing Test WEBP_HAVE_FLAG_MSA
+-- Performing Test WEBP_HAVE_FLAG_MSA - Failed
+-- Performing Test WEBP_HAVE_FLAG_MSA
+-- Performing Test WEBP_HAVE_FLAG_MSA - Failed
+-- Performing Test HAS_COMPILE_FLAG
+-- Performing Test HAS_COMPILE_FLAG - Failed
+CMake Deprecation Warning at out/_deps/libtiff-src/CMakeLists.txt:27 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Building tiff version 4.7.0
+CMake Deprecation Warning at out/_deps/libtiff-src/CMakeLists.txt:30 (cmake_policy):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Could NOT find Deflate (missing: Deflate_LIBRARY Deflate_INCLUDE_DIR)
+-- Could NOT find JPEG (missing: JPEG_LIBRARY JPEG_INCLUDE_DIR)
+-- Could NOT find JBIG (missing: JBIG_LIBRARY JBIG_INCLUDE_DIR)
+-- Could NOT find LERC (missing: LERC_LIBRARY LERC_INCLUDE_DIR)
+-- Could NOT find liblzma (missing: LIBLZMA_LIBRARY LIBLZMA_INCLUDE_DIR LIBLZMA_HAS_AUTO_DECODER LIBLZMA_HAS_EASY_ENCODER LIBLZMA_HAS_LZMA_PRESET)
+-- Could NOT find ZSTD (missing: ZSTD_LIBRARY ZSTD_INCLUDE_DIR)
+-- Could NOT find WebP (missing: WebP_LIBRARY WebP_INCLUDE_DIR)
+-- Could NOT find OpenGL (missing: OPENGL_opengl_LIBRARY OPENGL_INCLUDE_DIR OpenGL)
+-- Could NOT find GLUT (missing: GLUT_glut_LIBRARY GLUT_INCLUDE_DIR)
+--
+-- Libtiff is now configured for Linux-6.12.115-0-virt
+--
+--   Libtiff build version:       4.7.0
+--   Libtiff library version:     6.1.0
+--   Libtiff release date:        20240911
+--
+--   Installation directory:             /usr/local
+--   Documentation directory:            share/doc/tiff
+--   C compiler:                         /usr/bin/cc
+--   C++ compiler:                       /usr/bin/c++
+--   Build shared libraries:             OFF
+--   Build tools:                        OFF
+--   Build tests:                        OFF
+--   Build contrib:                      OFF
+--   Build docs:                         OFF
+--   Build deprecated features:          OFF
+--   Enable linker symbol versioning:    TRUE
+--   Support Microsoft Document Imaging: ON
+--   Use win32 IO:                       OFF
+--
+--  Support for internal codecs:
+--   CCITT Group 3 & 4 algorithms:       ON
+--   Macintosh PackBits algorithm:       ON
+--   LZW algorithm:                      ON
+--   ThunderScan 4-bit RLE algorithm:    ON
+--   NeXT 2-bit RLE algorithm:           ON
+--   LogLuv high dynamic range encoding: ON
+--
+--  Support for external codecs:
+--   ZLIB support:                       Requested:ON Availability:TRUE Support:TRUE
+--   libdeflate support:                 Requested:OFF Availability:FALSE Support:FALSE
+--   Pixar log-format algorithm:         Requested:ON Availability:TRUE Support:TRUE
+--   JPEG support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   Old JPEG support:                   Requested:OFF Availability:FALSE Support:FALSE (Depends on JPEG Support)
+--   JPEG 8/12 bit dual mode:            Requested:OFF Availability:FALSE Support:FALSE
+--   ISO JBIG support:                   Requested:OFF Availability:FALSE Support:FALSE
+--   LERC support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   LZMA2 support:                      Requested:OFF Availability:FALSE Support:FALSE
+--   ZSTD support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   WEBP support:                       Requested:OFF Availability:FALSE Support:FALSE
+--
+--   C++ support:                        ON (requested) TRUE (availability)
+--
+--   OpenGL support:                     Requested:OFF Availability:FALSE Support:FALSE
+--
+--- aom_configure: Detected CPU: generic-- Performing Test C_TEST_COMPILED
+
+Running C compiler test: pie_check
+-- Performing Test C_TEST_COMPILED - Success
+CONFIG_PIC enabled for position independent executable (PIE) build-- Performing Test C_TEST_COMPILED
+
+Running C compiler test: unistd_check
+-- Performing Test C_TEST_COMPILED - Success
+Running CXX compiler test: unistd_check
+-- Performing Test CXX_TEST_COMPILED
+-- Performing Test CXX_TEST_COMPILED - Success
+-- Looking for pthread_setname_np
+-- Looking for pthread_setname_np - found
+Running C compiler test: fenv_check
+-- Performing Test C_TEST_COMPILED
+-- Performing Test C_TEST_COMPILED - Failed
+C Compiler test fenv_check failed.
+-- Performing Test HAVE_C_FLAG
+Checking C compiler flag support for: -std=c11
+-- Performing Test HAVE_C_FLAG - Success
+Checking C++ compiler flag support for: -std=c++17-- Performing Test HAVE_CXX_FLAG
+
+-- Performing Test HAVE_CXX_FLAG - Success
+Checking C compiler flag support for: -Wall
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+Checking C++ compiler flag support for: -Wall
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+Checking C compiler flag support for: -Wdisabled-optimization-- Performing Test C_FLAG_SUPPORTED
+
+-- Performing Test C_FLAG_SUPPORTED - Success
+Checking C++ compiler flag support for: -Wdisabled-optimization-- Performing Test CXX_FLAG_SUPPORTED
+
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wextra
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wextra
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+Checking C compiler flag support for: -Wextra-semi
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Failed
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wextra-semi
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wextra-semi-stmt
+-- Performing Test C_FLAG_SUPPORTED - Failed
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wextra-semi-stmt
+-- Performing Test CXX_FLAG_SUPPORTED - Failed
+Checking C compiler flag support for: -Wfloat-conversion
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wfloat-conversion
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wformat=2
+-- Performing Test C_FLAG_SUPPORTED - Success
+Checking C++ compiler flag support for: -Wformat=2
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+Checking C compiler flag support for: -Wimplicit-function-declaration
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+Checking C compiler flag support for: -Wlogical-op
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wlogical-op
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+Checking C compiler flag support for: -Wmissing-declarations
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+Checking C++ compiler flag support for: -Wmissing-declarations-- Performing Test CXX_FLAG_SUPPORTED
+
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+Checking C compiler flag support for: -Wmissing-prototypes-- Performing Test C_FLAG_SUPPORTED
+
+-- Performing Test C_FLAG_SUPPORTED - Success
+Checking C compiler flag support for: -Wpointer-arith
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+Checking C++ compiler flag support for: -Wpointer-arith
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+Checking C compiler flag support for: -Wshadow
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+Checking C++ compiler flag support for: -Wshadow
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+Checking C compiler flag support for: -Wshorten-64-to-32
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Failed
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wshorten-64-to-32
+-- Performing Test CXX_FLAG_SUPPORTED - Failed
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wsign-compare
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wsign-compare
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wstring-conversion
+-- Performing Test C_FLAG_SUPPORTED - Failed
+Checking C++ compiler flag support for: -Wstring-conversion
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Failed
+Checking C compiler flag support for: -Wtype-limits
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wtype-limits
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wundef
+-- Performing Test C_FLAG_SUPPORTED - Success
+Checking C++ compiler flag support for: -Wundef
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wuninitialized
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wuninitialized
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wunreachable-code-aggressive
+-- Performing Test C_FLAG_SUPPORTED - Failed
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wunreachable-code-aggressive
+-- Performing Test CXX_FLAG_SUPPORTED - Failed
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wunused
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wunused
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wvla
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wvla
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wc23-extensions
+-- Performing Test C_FLAG_SUPPORTED - Failed
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wc++20-extensions
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wc++23-extensions
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -Wstack-usage=100000
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -Wstack-usage=240000
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -D_LARGEFILE_SOURCE
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+Checking C++ compiler flag support for: -D_LARGEFILE_SOURCE
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+Checking C compiler flag support for: -D_FILE_OFFSET_BITS=64
+-- Performing Test C_FLAG_SUPPORTED - Success
+Checking C++ compiler flag support for: -D_FILE_OFFSET_BITS=64
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Found Git: /usr/bin/git (found version "2.49.1")
+-- Found Perl: /usr/bin/perl (found version "5.40.4")
+-- libavif: Enabling warnings for GCC
+-- libavif: Codec enabled: aom (decode only)
+-- Found Python3: /usr/bin/python3.12 (found version "3.12.16") found components: Interpreter
+-- Configuring done (38.7s)
+-- Generating done (0.7s)
+-- Build files have been written to: /w/out
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:11:44.078576+00:00

@@ -1,0 +1,48 @@
+UTC: 2026-11-09T08:16:30.534021+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/platforms/run_android.py", "--adb", "P:/android-sdk/platform-tools/adb.exe", "--serial", "emulator-5554", "--apk", "P:/apk/platform-probe.apk", "--out", "evidence/platforms2-20261109/android"]
+Performing Incremental Install
+
+Performing Streamed Install
+
+Success
+Starting: Intent { cmp=org.exreader.platformprobe/.MainActivity (has extras) }
+
+Status: ok
+
+LaunchState: COLD
+
+Activity: org.exreader.platformprobe/.MainActivity
+
+TotalTime: 2298
+
+WaitTime: 2314
+
+Complete
+PASS load version=3.42.0 abi=1 mode=create
+PASS open pages=215
+PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+PASS search hits_at_least=1 part=0 offset=0 length=14
+STORED highlight; awaiting independent process reopen
+Starting: Intent { cmp=org.exreader.platformprobe/.MainActivity (has extras) }
+
+Status: ok
+
+LaunchState: COLD
+
+Activity: org.exreader.platformprobe/.MainActivity
+
+TotalTime: 1717
+
+WaitTime: 1720
+
+Complete
+PASS load version=3.42.0 abi=1 mode=reopen
+PASS open pages=215
+PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+PASS search hits_at_least=1 part=0 offset=0 length=14
+PASS annotation independent_process=1 part=0 start=0 end=14 page=0 x=24 baseline=45 changed_pixels=2553
+PASS platform checks=5/5
+PASS Android 5/5; independent PIDs=2429,2477
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:16:38.600293+00:00

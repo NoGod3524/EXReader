@@ -1,0 +1,46 @@
+UTC: 2026-11-09T08:07:07.660660+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/platforms/console.py", "mkdir -p /root/.ssh; printf 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO/qA2MYhP74v5nqEqWezij9k53RaFcYNepDcaapzrq0 oscar@lap25002' > /root/.ssh/authorized_keys; chmod 700 /root/.ssh; chmod 600 /root/.ssh/authorized_keys; ssh-keygen -A; /usr/sbin/sshd -o PermitRootLogin=prohibit-password; (blkid /dev/vda || mkfs.ext4 -q /dev/vda) && mkdir -p /w && mount /dev/vda /w; uname -a; gcc --version; cmake --version"]
+mkdir -p /root/.ssh; printf 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO
+
+
+/qA2MYhP74v5nqEqWezij9k53RaFcYNepDcaapzrq0 oscar@lap25002' > /root/.ssh/authoriz
+
+
+ed_keys; chmod 700 /root/.ssh; chmod 600 /root/.ssh/authorized_keys; ssh-keygen
+
+
+-A; /usr/sbin/sshd -o PermitRootLogin=prohibit-password; (blkid /dev/vda || mkfs
+
+
+.ext4 -q /dev/vda) && mkdir -p /w && mount /dev/vda /w; uname -a; gcc --version;
+
+
+ cmake --version; rc=$?; printf '\n__PLAT%s=%s\n' DONE "$rc"
+
+ssh-keygen: generating new host keys: RSA ECDSA ED25519
+
+mount: mounting /dev/vda on /w failed: Invalid argument
+
+Linux localhost 6.12.115-0-virt #1-Alpine SMP PREEMPT_DYNAMIC 2026-11-01 10:34:06 x86_64 Linux
+
+gcc (Alpine 14.2.0) 14.2.0
+
+Copyright (C) 2024 Free Software Foundation, Inc.
+
+This is free software; see the source for copying conditions.  There is NO
+
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+cmake version 3.31.7
+
+
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+
+
+
+__PLATDONE=0EXIT_CODE: 0
+END_UTC: 2026-11-09T08:07:07.925445+00:00

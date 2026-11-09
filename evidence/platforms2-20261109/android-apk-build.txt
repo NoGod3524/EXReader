@@ -1,0 +1,26 @@
+UTC: 2026-11-09T08:10:46.126805+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/platforms/build_apk.py", "--sdk", "P:/android-sdk", "--ndk", "P:/android-sdk/ndk/27.2.12479018", "--build", "P:/android-build", "--smoke", "P:/smoke", "--out", "P:/apk"]
+ARGV: ['C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\android-sdk\\ndk\\27.2.12479018\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe', '--target=x86_64-linux-android24', '-shared', '-fPIC', '-O2', '-Wall', '-Wextra', '-Werror', '-DPLATFORM_PROBE_EMBEDDED', '-IC:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\include', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\tools\\platforms\\probe.c', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\tools\\platforms\\android\\jni.c', '-LC:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\android-build', '-lexreader', '-Wl,-z,max-page-size=16384', '-o', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\apk\\libplatform_probe.so']
+ld.lld: error: unable to find library -lexreader
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109\tools\platforms\build_apk.py", line 60, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109\tools\platforms\build_apk.py", line 37, in main
+    run(clang, '--target=x86_64-linux-android24', '-shared', '-fPIC', '-O2', '-Wall', '-Wextra', '-Werror',
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        '-DPLATFORM_PROBE_EMBEDDED', '-I' + str(ROOT / 'include'), source / 'probe.c', source / 'android/jni.c',
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        '-L' + str(build), '-lexreader', '-Wl,-z,max-page-size=16384', '-o', out / 'libplatform_probe.so')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109\tools\platforms\build_apk.py", line 31, in run
+    subprocess.run([str(x) for x in command], check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\android-sdk\\ndk\\27.2.12479018\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe', '--target=x86_64-linux-android24', '-shared', '-fPIC', '-O2', '-Wall', '-Wextra', '-Werror', '-DPLATFORM_PROBE_EMBEDDED', '-IC:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\include', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\tools\\platforms\\probe.c', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\tools\\platforms\\android\\jni.c', '-LC:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\android-build', '-lexreader', '-Wl,-z,max-page-size=16384', '-o', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\apk\\libplatform_probe.so']' returned non-zero exit status 1.
+EXIT_CODE: 1
+END_UTC: 2026-11-09T08:10:47.667627+00:00

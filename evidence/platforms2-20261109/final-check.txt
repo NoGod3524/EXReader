@@ -1,0 +1,37 @@
+UTC: 2026-11-09T08:35:00.851188+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/platforms/check_evidence.py"]
+{
+  "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+  "runtime_platforms": 3,
+  "new_runtime_platforms": [
+    "Linux",
+    "Android"
+  ],
+  "checks": {
+    "Windows": "5/5",
+    "Linux": "5/5",
+    "Android": "5/5"
+  },
+  "ctest": {
+    "Windows": "234/234",
+    "Linux": "234/234"
+  },
+  "books": {
+    "requested_books": 19,
+    "successful_books": 19,
+    "failed_books": [],
+    "total_pages": 11426,
+    "total_glyphs": 8648571,
+    "wall_seconds": 68.356589,
+    "sum_book_seconds": 206.037867,
+    "fastest_book": "tangshi300-52323",
+    "slowest_book": "hongloumeng-24264"
+  },
+  "regression_needs_review": false,
+  "artifact_count": 14,
+  "pixel_and_annotation_bytes_identical": true,
+  "out_of_scope_changes": []
+}
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:35:01.288260+00:00

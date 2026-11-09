@@ -1,0 +1,8 @@
+UTC: 2026-11-09T08:15:14.306936+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["P:/android-sdk/platform-tools/adb.exe", "-s", "emulator-5554", "install", "-r", "P:/apk/platform-probe.apk"]
+Performing Incremental Install
+Performing Streamed Install
+Success
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:15:14.701695+00:00
