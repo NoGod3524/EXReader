@@ -34,7 +34,7 @@ static const char *node_identifier(const exr_document *d,size_t node,const exr_c
 }
 static int escaped(exr_buffer *b,const char *s) {
   if(!s) return 1;
-  for(;*s;s++) if((strchr("^[](),;",*s) && !put(b,"^")) || !exr_append(b,s,1) || b->size>CFI_LIMIT) return 0;
+  for(;*s;s++) if((strchr("^[](),;=",*s) && !put(b,"^")) || !exr_append(b,s,1) || b->size>CFI_LIMIT) return 0;
   return 1;
 }
 static int step(exr_buffer *b,size_t index,const char *id,unsigned side) {
@@ -108,20 +108,36 @@ static int integer(const char **at,size_t *out) {
   *at=p; *out=n; return 1;
 }
 static int assertion(const char **at,exr_buffer *id,unsigned *side,exr_buffer *after) {
-  const char *p=*at; exr_buffer *value=id; *side=0;
+  const char *p=*at; exr_buffer *value=id; int parameter=0; *side=0;
   if(*p!='[') return 1;
   p++;
   while(*p && *p!=']' && *p!=';') {
-    if(*p=='^') { p++; if(!*p || !strchr("^[](),;",*p)) return 0; }
+    if(*p=='^') { p++; if(!*p || !strchr("^[](),;=",*p)) return 0; }
     else if(*p==',') { if(!after || value==after) return 0; value=after; p++; continue; }
-    else if(strchr("[()",*p)) return 0;
+    else if(strchr("[()=",*p)) return 0;
     if(value->size==4096 || !exr_append(value,p++,1)) return 0;
   }
-  if(*p==';') {
-    if(strncmp(p,";s=",3) || (p[3]!='a' && p[3]!='b') || p[4]!=']') return 0;
-    *side=p[3]=='b' ? 1u : 2u; p+=4;
+  while(*p==';') {
+    const char *key=++p,*end,*begin;parameter=1;
+    while(*p && *p!='=') {
+      if(strchr("[](),; ",*p)) return 0;
+      if(*p=='^') { p++; if(!*p || !strchr("^[](),;=",*p)) return 0; }
+      p++;
+    }
+    end=p; if(end==key || *p!='=') return 0;
+    begin=++p;
+    while(*p && *p!=']' && *p!=';') {
+      if(*p=='^') { p++; if(!*p || !strchr("^[](),;=",*p)) return 0; }
+      else if(strchr("[()=",*p)) return 0;
+      p++;
+    }
+    if(p==begin) return 0;
+    if(end-key==1 && *key=='s') {
+      if(*side || p-begin!=1 || (*begin!='a' && *begin!='b')) return 0;
+      *side=*begin=='b' ? 1u : 2u;
+    }
   }
-  if(*p!=']' || (!id->size && (!after || !after->size) && !*side)) return 0;
+  if(*p!=']' || (!id->size && (!after || !after->size) && !parameter)) return 0;
   *at=p+1; return 1;
 }
 /* Map a virtual text chunk (which may span adjacent model text nodes) back to
@@ -154,6 +170,10 @@ exr_status exr_document_cfi_path_resolve(const exr_document *d,size_t chapter,co
   while(n<=CFI_LIMIT && path[n]) n++;
   if(n>CFI_LIMIT) return exr_fail(e,EXR_LIMIT,"CFI path exceeds size limit");
   while(at<n) if(!exr_next(path,n,&at,&cp)) return exr_fail(e,EXR_ENCODING,"CFI path is not UTF-8");
+  if(n) {
+    exr_cfi *parsed=NULL;status=exr_cfi_parse(path,&parsed,NULL,e);exr_cfi_free(parsed);
+    if(status!=EXR_OK) return status;
+  }
   result.node=node;
   status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
   while(*p) {
@@ -252,6 +272,7 @@ exr_status exr_cfi_route(const exr_document *d,const char *cfi,const exr_control
   if(chapter) *chapter=SIZE_MAX;
   if(local) *local=NULL;
   if(!d || !cfi || !chapter || !local) return exr_fail(e,EXR_ARGUMENT,"Invalid full CFI route arguments");
+  { exr_cfi *parsed=NULL;status=exr_cfi_parse(cfi,&parsed,NULL,e);exr_cfi_free(parsed);if(status!=EXR_OK) return status; }
   while(n<=CFI_LIMIT && cfi[n]) n++;
   if(n>CFI_LIMIT) return exr_fail(e,EXR_LIMIT,"Full CFI exceeds size limit");
   if(n<10 || strncmp(cfi,"epubcfi(",8) || cfi[n-1]!=')') return invalid(e);
@@ -329,13 +350,19 @@ static const char *step_end(const char *p) {
 }
 exr_status exr_document_cfi_range_create(const exr_document *d,const exr_cfi_range *range,
                                            const exr_control *control,char **out,exr_error *e) {
-  char *a=NULL,*b=NULL; const char *pa,*pb,*end_a,*end_b; size_t shared=0,na,nb; exr_buffer result={0}; exr_status status;
+  char *a=NULL,*b=NULL; exr_status status;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing CFI range output");
   *out=NULL;
   if(!range || range->start.side || range->end.side) return exr_fail(e,EXR_ARGUMENT,"CFI ranges cannot carry endpoint side bias");
   status=exr_document_cfi_create(d,range->start_chapter,&range->start,control,&a,e);
   if(status==EXR_OK) status=exr_document_cfi_create(d,range->end_chapter,&range->end,control,&b,e);
-  if(status!=EXR_OK) goto done;
+  if(status==EXR_OK) status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=exr_cfi_range_join(a,b,out,e);
+  free(a);free(b);return status;
+}
+exr_status exr_cfi_range_join(const char *a,const char *b,char **out,exr_error *e) {
+  const char *pa,*pb,*end_a,*end_b;size_t shared=0,na,nb;exr_buffer result={0};exr_status status=EXR_OK;
+  *out=NULL;
   if(point_order(a,b)>0) { status=exr_fail(e,EXR_ARGUMENT,"CFI range endpoints are reversed"); goto done; }
   pa=a+8; pb=b+8; na=strlen(pa)-1; nb=strlen(pb)-1;
   while((*pa=='/' || *pa=='!') && (*pb=='/' || *pb=='!')) {
@@ -343,37 +370,24 @@ exr_status exr_document_cfi_range_create(const exr_document *d,const exr_cfi_ran
     if(end_a-pa!=end_b-pb || memcmp(pa,pb,(size_t)(end_a-pa))) break;
     shared+=(size_t)(end_a-pa); pa=end_a; pb=end_b;
   }
+  if(shared && a[8+shared-1]=='!') shared--;
   if(!shared) { status=invalid(e); goto done; }
   if(!put(&result,"epubcfi(") || !exr_append(&result,a+8,shared) || !put(&result,",") ||
      !exr_append(&result,a+8+shared,na-shared) || !put(&result,",") || !exr_append(&result,b+8+shared,nb-shared) ||
      !put(&result,")") || result.size>CFI_LIMIT) { status=exr_fail(e,EXR_LIMIT,"CFI range exceeds allocation or size limit"); goto done; }
-  status=exr_control_cancel(control,e); if(status==EXR_OK) { *out=result.data; result.data=NULL; status=exr_fail(e,EXR_OK,""); }
+  *out=result.data;result.data=NULL;status=exr_fail(e,EXR_OK,"");
 done:
-  free(a); free(b); free(result.data); return status;
+  free(result.data); return status;
 }
 /* Split P,S,E without treating escaped/ID-assertion commas as separators. */
 static exr_status range_paths(const char *cfi,char **a,char **b,exr_error *e) {
-  size_t n=0,i,commas[2],count=0; int bracket=0; exr_buffer x={0},y={0}; exr_status status;
+  exr_cfi *parsed=NULL;exr_status status;
   *a=*b=NULL;
   if(!cfi) return exr_fail(e,EXR_ARGUMENT,"Missing CFI range");
-  while(n<=CFI_LIMIT && cfi[n]) n++;
-  if(n>CFI_LIMIT) return exr_fail(e,EXR_LIMIT,"CFI range exceeds size limit");
-  if(n<11 || strncmp(cfi,"epubcfi(",8) || cfi[n-1]!=')') return invalid(e);
-  for(i=8;i<n-1;i++) {
-    if(cfi[i]=='^') { if(++i==n-1) return invalid(e); continue; }
-    if(cfi[i]=='[') { if(bracket) return invalid(e); bracket=1; }
-    else if(cfi[i]==']') { if(!bracket) return invalid(e); bracket=0; }
-    else if(!bracket && cfi[i]==',') { if(count==2) return invalid(e); commas[count++]=i; }
-    else if(!bracket && !count && (cfi[i]==':' || cfi[i]=='~' || cfi[i]=='@')) return invalid(e);
-  }
-  if(bracket || count!=2 || commas[0]==8) return invalid(e);
-  if(!put(&x,"epubcfi(") || !exr_append(&x,cfi+8,commas[0]-8) ||
-     !put(&y,"epubcfi(") || !exr_append(&y,cfi+8,commas[0]-8) ||
-     !exr_append(&x,cfi+commas[0]+1,commas[1]-commas[0]-1) || !put(&x,")") ||
-     !exr_append(&y,cfi+commas[1]+1,n-commas[1]-2) || !put(&y,")")) { status=exr_fail(e,EXR_LIMIT,"CFI range path allocation failed"); goto done; }
-  *a=x.data; *b=y.data; x.data=y.data=NULL; status=EXR_OK;
-done:
-  free(x.data); free(y.data); return status;
+  status=exr_cfi_parse(cfi,&parsed,NULL,e);
+  if(status==EXR_OK && (!exr_cfi_is_range(parsed) || strncmp(cfi,"epubcfi(",8))) status=invalid(e);
+  if(status==EXR_OK) status=exr_cfi_endpoints(parsed,a,b,e);
+  exr_cfi_free(parsed);return status;
 }
 exr_status exr_document_cfi_range_resolve(const exr_document *d,const char *cfi,const exr_control *control,
                                             exr_cfi_range *out,exr_error *e) {
@@ -406,7 +420,7 @@ exr_status exr_document_cfi_path_create_quoted(const exr_document *d,size_t chap
   if(!put(&b,path)) goto limit;
   if(*before || *after || point->side) {
     if(!put(&b,"[")) goto limit;
-    if((*before || *after) && (!escaped(&b,before) || !put(&b,",") || !escaped(&b,after))) goto limit;
+    if((*before || *after) && (!escaped(&b,before) || (*after && (!put(&b,",") || !escaped(&b,after))))) goto limit;
     if((point->side && !put(&b,point->side==1 ? ";s=b" : ";s=a")) || !put(&b,"]")) goto limit;
   }
   if(b.size>CFI_LIMIT) goto limit;

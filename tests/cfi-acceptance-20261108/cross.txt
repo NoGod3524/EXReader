@@ -1,0 +1,12 @@
+sample 0: 0:71 -> 1:29 epubcfi(/6,/2[ref^=a]!/4[body^=a]/12/1:6,/4!/4/2/1:24)
+sample 1: 0:32 -> 1:12 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:4,/4!/4/2/1:12)
+sample 2: 0:3 -> 1:8 epubcfi(/6,/2[ref^=a]!/4[body^=a]/2[p]/1:5,/4!/4/2/1:8)
+sample 3: 0:58 -> 1:6 epubcfi(/6,/2[ref^=a]!/4[body^=a]/8/1:16,/4!/4/2/1:6)
+sample 4: 0:38 -> 1:37 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:8,/4!/4/4/1:7)
+sample 5: 0:38 -> 1:2 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:8,/4!/4/2/1:2)
+sample 6: 0:9 -> 1:25 epubcfi(/6,/2[ref^=a]!/4[body^=a]/2[p]/1:12,/4!/4/2/1:20)
+sample 7: 0:50 -> 1:4 epubcfi(/6,/2[ref^=a]!/4[body^=a]/8/1:8,/4!/4/2/1:4)
+sample 8: 0:44 -> 1:12 epubcfi(/6,/2[ref^=a]!/4[body^=a]/8/1:2,/4!/4/2/1:12)
+sample 9: 0:32 -> 1:8 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:4,/4!/4/2/1:8)
+cross-part ranges: 10/10 = 100%; anchor fields and both endpoints equal; 4 boundary cases
+281 checks passed
