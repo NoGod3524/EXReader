@@ -194,13 +194,22 @@ static exr_status border_layer(exr_bitmap *out,const exr_layout *l,const exr_pai
 }
 static exr_status draw_single_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,int outline_only,size_t *work,const exr_control *control,exr_error *error) {
   exr_face *selected; FT_Face face; FT_GlyphSlot slot; unsigned by,bx; int left,top; size_t charged=0,actual;
+  FT_GlyphSlotRec cached_slot={0}; exr_cached_glyph *cached;
+  unsigned cache_flags=(g->flags&(EXR_GLYPH_BOLD|EXR_GLYPH_ITALIC))|(outline_only ? 4u : 0u);
   if((g->flags&EXR_GLYPH_HIDDEN) || g->size<1.0f/64) return EXR_OK;
   if(g->font_index>=font->count) return EXR_FONT;
   selected=&font->faces[g->font_index]; face=selected->face;
   if(selected->bitmap_only) return EXR_OK;
   if(exr_control_cancel(control,error)!=EXR_OK) return EXR_CANCELLED;
   if(!exr_vector_work(work,1)) return EXR_LIMIT;
-  if(exr_font_size(selected,g->size) || FT_Load_Glyph(face,g->glyph,outline_only ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT)) return EXR_FONT;
+  if(exr_font_size(selected,g->size)) return EXR_FONT;
+  cached=exr_glyph_cache_find(font,g->font_index,g->glyph,selected->metric_size,cache_flags);
+  if(cached) {
+    if(!exr_vector_work(work,cached->work)) return EXR_LIMIT;
+    cached_slot.bitmap=cached->bitmap;cached_slot.bitmap_left=cached->left;cached_slot.bitmap_top=cached->top;
+    slot=&cached_slot;
+  } else {
+  if(FT_Load_Glyph(face,g->glyph,outline_only ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT)) return EXR_FONT;
   if(g->flags&1) FT_GlyphSlot_Embolden(face->glyph);
   if(g->flags&2) FT_GlyphSlot_Oblique(face->glyph);
   if(face->glyph->format==FT_GLYPH_FORMAT_OUTLINE) {
@@ -220,11 +229,42 @@ static exr_status draw_single_glyph(exr_bitmap *out,exr_font *font,const exr_gly
   if(slot->bitmap.width>8192 || slot->bitmap.rows>8192 || (uint64_t)slot->bitmap.width*slot->bitmap.rows>16*1024*1024) return EXR_LIMIT;
   actual=(size_t)slot->bitmap.width*slot->bitmap.rows;
   if(actual>charged && !exr_vector_work(work,actual-charged)) return EXR_LIMIT;
+  exr_glyph_cache_store(font,g->font_index,g->glyph,selected->metric_size,cache_flags,slot,actual>charged ? actual : charged);
+  }
   left=(int)lroundf(g->x+g->offset_x)+slot->bitmap_left;
   top=(int)lroundf(g->baseline-g->offset_y)-slot->bitmap_top;
   if(g->flags&EXR_GLYPH_SIDEWAYS) {
     left=(int)lroundf(g->x+g->offset_y)+slot->bitmap_top-1;
     top=(int)lroundf(g->baseline+g->offset_x)+slot->bitmap_left;
+  }
+  if(!(g->flags&(EXR_GLYPH_SIDEWAYS|EXR_GLYPH_VERTICAL)) && slot->bitmap.pixel_mode==FT_PIXEL_MODE_GRAY) {
+    if(left>=(int)out->width || top>=(int)out->height ||
+       left<=-(int)slot->bitmap.width || top<=-(int)slot->bitmap.rows) return EXR_OK;
+    int x0=left>0 ? left : 0,y0=top>0 ? top : 0;
+    int x1=left+(int)slot->bitmap.width,y1=top+(int)slot->bitmap.rows,x,y;
+    unsigned r=g->color>>24,green=(g->color>>16)&255,b=(g->color>>8)&255;
+    if(x1>(int)out->width) x1=(int)out->width;
+    if(y1>(int)out->height) y1=(int)out->height;
+    if(g->clip_left>=(float)x1 || g->clip_right<=(float)x0) return EXR_OK;
+    if(g->clip_left>(float)x0) x0=(int)ceilf(g->clip_left);
+    if(g->clip_right<(float)x1) x1=(int)ceilf(g->clip_right);
+    for(y=y0;y<y1;y++) {
+      const unsigned char *row=slot->bitmap.buffer+(ptrdiff_t)(y-top)*slot->bitmap.pitch;
+      if(!((y-top)&63) && exr_control_cancel(control,error)!=EXR_OK) return EXR_CANCELLED;
+      if(out->channels==4 && (g->color&255)==255) {
+        unsigned char *p=out->pixels+(size_t)y*out->stride+(size_t)x0*4;
+        for(x=x0;x<x1;x++,p+=4) {
+          unsigned a=row[x-left];
+          if(!a) continue;
+          if(p[3]==255) {
+            p[0]=(unsigned char)((p[0]*(255-a)+r*a+127)/255);
+            p[1]=(unsigned char)((p[1]*(255-a)+green*a+127)/255);
+            p[2]=(unsigned char)((p[2]*(255-a)+b*a+127)/255);
+          } else exr_pixel(out,x,y,g->color,a);
+        }
+      } else for(x=x0;x<x1;x++) exr_pixel(out,x,y,g->color,row[x-left]);
+    }
+    return EXR_OK;
   }
   for(by=0;by<slot->bitmap.rows;by++) {
     if(!(by&63) && exr_control_cancel(control,error)!=EXR_OK) return EXR_CANCELLED;
