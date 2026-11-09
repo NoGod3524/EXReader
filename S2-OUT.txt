@@ -253,3 +253,61 @@ Commit 3f9f06d2: Add portable SDK release packages and minimal C example.
 [S2 push completed]
 Pushed codex/sdk-packaging-20261109 to origin with upstream tracking (5d72dcc5).
 Registered PGM artifacts as binary so Git preserves rendered pixel bytes.
+[S2 draft PR created]
+Command: gh pr create --draft --base main --head codex/sdk-packaging-20261109 --title 'Package the SDK with verified minimal C quickstarts' --body-file build/s2-pr-body.md
+Result: https://github.com/NoGod3524/EXReader/pull/111
+Head: ad851342. Awaiting PR-triggered native Windows/Linux/macOS runs; no workflow_dispatch, cancellation, or .github changes performed.
+[S2 PR-triggered CI observed]
+Native C engine workflow run: https://github.com/NoGod3524/EXReader/actions/runs/42651755703
+Event: pull_request; source head ad851342bc44138541ac07e503d45328f3de7721.
+Other PR-triggered checks queued: SDK version consistency, Required native reading SDK core, Native reading profiles, Reading license materials, Bounded library source.
+[PR CI SDK version] PR #111 head ad851342bc44138541ac07e503d45328f3de7721; PR merge checkout 471d7dda91dcc84384ca89d79449ecf4e31e5b16.
+https://github.com/NoGod3524/EXReader/actions/runs/42651755772 completed success: identity job 129279651960 and reject-version-drift job 129279651427 both success.
+Actual identity output: PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions
+Actual regression output: PASS: valid manifest and 7 refusal cases; all source bytes restored
+Version-policy CI accepted the committed S2 evidence files. No PR workflow failure observed at this check; other native/library/license workflows still running or queued.
+[PR CI companion checks] Reading license materials run 42651756936 completed success (reading-core and reading-library). Native reading profiles run 42651755718 completed success. Observed through GitHub read-only tools for PR #111 head ad851342bc44138541ac07e503d45328f3de7721.
+[PR CI companion checks] Bounded library source run 42651755775 completed success. Required-core native Windows job 129279652845 passed its native CTest step and advanced to the platform-font table test; full workflow remained in progress at observation.
+[S2 PR Windows native tests passed]
+Native workflow 42651755703, job 129279655546 (desktop windows-latest) successfully completed Configure, Build and Native parsing/pagination/rendering/bookshelf CTest step (includes sdk-release).
+Job is continuing installed/static/core-only consumer checks. Same-head required workflow 42651755941 Windows job 129279652845 also passed native CTests.
+
+[S2 Linux PR-CI native CTest success] 2026-11-09T11:21:39.5782610-05:00
+Observed GitHub required workflow run 42651755941, job 129279653109 (native / desktop ubuntu-22.04), head ad851342bc44138541ac07e503d45328f3de7721: native CTests completed successfully, including sdk-release; portable SDK install completed successfully. Exact README commands/output and package archive will be recorded from EXReader-C-Linux artifact after upload. Job URL: https://github.com/NoGod3524/EXReader/actions/runs/42651755941/job/129279653109
+
+[S2 Linux PR-CI native job completed] 2026-11-09T11:23:00.8763770-05:00
+PASS: required workflow run 42651755941, Linux job 129279653109 completed successfully. EXReader-C-Linux artifact 13691715997 uploaded (38,255,963 bytes), source head ad851342bc44138541ac07e503d45328f3de7721. Retrieving release-validation evidence and package.
+
+[PR CI required-core native] Workflow 42651755941 desktop Windows job 129279652845 and Linux job 129279653109 completed success, including the SDK release CTest plus installed-consumer/core-only checks. Remaining required-core jobs were still queued/running at observation; no failures observed.
+
+[S2 Linux exact README execution and package retrieval] 2026-11-09T16:24:26.554571+00:00
+PASS: PR-triggered required workflow 42651755941, Linux job 129279653109, source head ad851342bc44138541ac07e503d45328f3de7721
+Artifact 13691715997 downloaded and SHA256 verified: 3dd0a9cb84643f391167e087189c32860d7f8ff332e2f61bf907516594508a54
+COMMAND: cc -std=c11 -Wall -Wextra -Iinclude examples/minimal/main.c -Llib -lexreader -Wl,-rpath,'$ORIGIN/lib' -o minimal
+EXIT: 0
+OUTPUT:
+(no output)
+COMMAND: ./minimal examples/minimal/sample.epub examples/minimal/font.ttf page-1.pgm
+EXIT: 0
+OUTPUT:
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+Output: page-1.pgm (720 x 1040, PGM)
+COMMAND: ./bin/exr-info examples/minimal/sample.epub examples/minimal/font.ttf
+EXIT: 0
+OUTPUT:
+Version: 3.42.0
+Format: EPUB
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+PGM: {"width": 720, "height": 1040, "bytes": 748816, "nonwhite_pixels": 129549}
+PACKAGE: dist\exreader-3.42.0-linux-x64.tar.gz
+PACKAGE BYTES: 14262286
+PACKAGE SHA256: 38af223308e00bd3a01fc3d19c1f850a00b40c380fe08b051751b5a0c395727d
+Saved Linux smoke log/report/check report/PGM and source-bound CI metadata under evidence/sdk-packaging-20261109/linux-*
+
+[S2 Linux downloaded archive independent validation] 2026-11-09T11:24:38.0742975-05:00
+PASS: python tools/release/check_release.py dist/exreader-3.42.0-linux-x64.tar.gz --json evidence/sdk-packaging-20261109/linux-downloaded-package-check.json. All 10 checks passed; 55 ordinary files / 31,282,097 unpacked bytes, 54 SHA256 entries, 15 API headers plus version.h, 64-line sample, 868 exr_* exports, ELF linux-x64, version 3.42.0 consistent in source/header/package/cmake. Exact check details saved to JSON.
+
