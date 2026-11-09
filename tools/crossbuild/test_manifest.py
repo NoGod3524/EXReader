@@ -27,7 +27,7 @@ def main():
             'CMAKE_C_FLAGS_RELEASE': '-O3 -DNDEBUG', 'CMAKE_POSITION_INDEPENDENT_CODE': 'ON',
         }
         fixtures = {
-            'expat': ('expat/lib/expat.h', '#define XML_MAJOR_VERSION 2\n#define XML_MINOR_VERSION 9\n#define XML_MICRO_VERSION 0\n', '2.9.0'),
+            'expat': ('expat/lib/expat.h', '#  define XML_MAJOR_VERSION 2\n#  define XML_MINOR_VERSION 9\n#  define XML_MICRO_VERSION 0\n', '2.9.0'),
             'freetype': ('include/freetype/freetype.h', '#define FREETYPE_MAJOR 2\n#define FREETYPE_MINOR 15\n#define FREETYPE_PATCH 0\n', '2.15.0'),
             'miniz': ('CMakeLists.txt', 'project(miniz C)\nset(MINIZ_API_VERSION 3)\nset(MINIZ_MINOR_VERSION 1)\nset(MINIZ_PATCH_VERSION 2)\n', '3.1.2'),
             'zlib': ('zlib.h', '#define ZLIB_VERSION "1.3.1"\n', '1.3.1'),

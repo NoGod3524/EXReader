@@ -52,12 +52,12 @@ def dependencies(settings, source):
             if name == 'expat':
                 header = root / 'expat/lib/expat.h'
                 content = header.read_text(encoding='utf-8')
-                version = '.'.join(re.search(r'#define XML_' + part + r'_VERSION\s+(\d+)', content)[1]
+                version = '.'.join(re.search(r'#\s*define\s+XML_' + part + r'_VERSION\s+(\d+)', content)[1]
                                    for part in ('MAJOR', 'MINOR', 'MICRO'))
             elif name == 'freetype':
                 header = root / 'include/freetype/freetype.h'
                 content = header.read_text(encoding='utf-8')
-                version = '.'.join(re.search(r'#define\s+FREETYPE_' + part + r'\s+(\d+)', content)[1]
+                version = '.'.join(re.search(r'#\s*define\s+FREETYPE_' + part + r'\s+(\d+)', content)[1]
                                    for part in ('MAJOR', 'MINOR', 'PATCH'))
             elif name == 'miniz':
                 header = root / 'CMakeLists.txt'
@@ -67,7 +67,7 @@ def dependencies(settings, source):
             else:
                 header = root / 'zlib.h'
                 content = header.read_text(encoding='utf-8')
-                version = re.search(r'#define ZLIB_VERSION\s+"([^"]+)"', content)[1]
+                version = re.search(r'#\s*define\s+ZLIB_VERSION\s+"([^"]+)"', content)[1]
             item.update(version=version, version_evidence=str(header), version_file_sha256=sha(header.read_bytes()))
             # A source override need not be the declared tarball. Record its actual bytes.
             files = {p.relative_to(root).as_posix(): sha(p.read_bytes())
