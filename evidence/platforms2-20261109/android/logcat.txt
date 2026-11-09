@@ -1,0 +1,65 @@
+--------- beginning of kernel
+
+--------- beginning of main
+
+--------- beginning of system
+
+11-09 03:15:15.073  2276  2276 I EXRPlatform: PASS shipped_jni version=3.42.0 pid=2276
+
+11-09 03:15:15.360  2276  2276 I EXRPlatform: PASS load version=3.42.0 abi=1 mode=create
+
+11-09 03:15:15.360  2276  2276 I EXRPlatform: PASS open pages=215
+
+11-09 03:15:15.360  2276  2276 I EXRPlatform: PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+
+11-09 03:15:15.360  2276  2276 I EXRPlatform: PASS search hits_at_least=1 part=0 offset=0 length=14
+
+11-09 03:15:15.360  2276  2276 I EXRPlatform: STORED highlight; awaiting independent process reopen
+
+11-09 03:15:15.360  2276  2276 I EXRPlatform: EXIT_CODE=0 reopen=false
+
+11-09 03:15:32.474  2319  2319 I EXRPlatform: PASS shipped_jni version=3.42.0 pid=2319
+
+11-09 03:15:32.776  2319  2319 I EXRPlatform: PASS load version=3.42.0 abi=1 mode=reopen
+
+11-09 03:15:32.776  2319  2319 I EXRPlatform: PASS open pages=215
+
+11-09 03:15:32.776  2319  2319 I EXRPlatform: PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+
+11-09 03:15:32.776  2319  2319 I EXRPlatform: PASS search hits_at_least=1 part=0 offset=0 length=14
+
+11-09 03:15:32.776  2319  2319 I EXRPlatform: PASS annotation independent_process=1 part=0 start=0 end=14 page=0 x=24 baseline=45 changed_pixels=2553
+
+11-09 03:15:32.776  2319  2319 I EXRPlatform: PASS platform checks=5/5
+
+11-09 03:15:32.777  2319  2319 I EXRPlatform: EXIT_CODE=0 reopen=true
+
+11-09 03:16:33.666  2429  2429 I EXRPlatform: PASS shipped_jni version=3.42.0 pid=2429
+
+11-09 03:16:34.283  2429  2429 I EXRPlatform: PASS load version=3.42.0 abi=1 mode=create
+
+11-09 03:16:34.284  2429  2429 I EXRPlatform: PASS open pages=215
+
+11-09 03:16:34.284  2429  2429 I EXRPlatform: PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+
+11-09 03:16:34.284  2429  2429 I EXRPlatform: PASS search hits_at_least=1 part=0 offset=0 length=14
+
+11-09 03:16:34.284  2429  2429 I EXRPlatform: STORED highlight; awaiting independent process reopen
+
+11-09 03:16:34.284  2429  2429 I EXRPlatform: EXIT_CODE=0 reopen=false
+
+11-09 03:16:35.933  2477  2477 I EXRPlatform: PASS shipped_jni version=3.42.0 pid=2477
+
+11-09 03:16:36.601  2477  2477 I EXRPlatform: PASS load version=3.42.0 abi=1 mode=reopen
+
+11-09 03:16:36.601  2477  2477 I EXRPlatform: PASS open pages=215
+
+11-09 03:16:36.601  2477  2477 I EXRPlatform: PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+
+11-09 03:16:36.601  2477  2477 I EXRPlatform: PASS search hits_at_least=1 part=0 offset=0 length=14
+
+11-09 03:16:36.601  2477  2477 I EXRPlatform: PASS annotation independent_process=1 part=0 start=0 end=14 page=0 x=24 baseline=45 changed_pixels=2553
+
+11-09 03:16:36.601  2477  2477 I EXRPlatform: PASS platform checks=5/5
+
+11-09 03:16:36.601  2477  2477 I EXRPlatform: EXIT_CODE=0 reopen=true
