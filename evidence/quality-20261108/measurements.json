@@ -1,0 +1,55 @@
+{
+  "route": "C",
+  "runtime_sanitizer_executed": false,
+  "runtime_sanitizer_diagnostic_count": null,
+  "ordinary_test_output_runtime_error_lines": [],
+  "ctest": {
+    "tests": 205,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "realbooks": {
+    "books": 19,
+    "pages": 11484,
+    "glyphs": 8648640,
+    "content_fingerprint": "dcceb19c8ea43ba4db5ac57a7ea2b3bbbc127a105f3451490f2ffe2eff7f44fa",
+    "elapsed_seconds": 373.222660200001
+  },
+  "fixtures": {
+    "total_files": 1884,
+    "executed_inputs": 1742,
+    "kinds": {
+      "audio_metadata": 1,
+      "audio": 1,
+      "reference_or_test_data": 142,
+      "document": 1583,
+      "font": 61,
+      "font_configuration": 1,
+      "library": 2,
+      "image": 93
+    },
+    "outcomes": {
+      "processed": 3,
+      "inventory_only_ctest_owns_protocol": 142,
+      "complete": 1191,
+      "sdk_rejected": 445,
+      "opened": 59,
+      "decoded": 44
+    },
+    "rendered_pages": 4720
+  },
+  "coverage": {
+    "scope": "src/*.c; union of executed lines/functions across all object instances",
+    "compiler_optimization": "-O1",
+    "sanitizer": false,
+    "object_files": 1728,
+    "source_files": 111,
+    "executed_source_files": 111,
+    "lines": 33840,
+    "covered_lines": 31737,
+    "line_percent": 93.79,
+    "functions": 2354,
+    "covered_functions": 2281
+  }
+}

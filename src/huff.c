@@ -5,7 +5,7 @@
 typedef struct {
   const unsigned char *encoded,*decoded;
   size_t encoded_size,size;
-  unsigned state,literal;
+  unsigned state,literal,length_state;
 } phrase;
 struct exr_mobi_huff {
   unsigned lengths[256],terminal[256];
@@ -99,18 +99,27 @@ static exr_status append(exr_mobi_huff *h,exr_buffer *out,const unsigned char *d
   memcpy(out->data+out->size,data,size); out->size+=size; out->data[out->size]=0; h->work+=size;
   return EXR_OK;
 }
-static exr_status decode(exr_mobi_huff *h,const unsigned char *data,size_t size,exr_buffer *out,unsigned depth,exr_error *e);
+static exr_status decode(exr_mobi_huff *h,const unsigned char *data,size_t size,exr_buffer *out,int materialize,unsigned depth,exr_error *e);
 static exr_status expand(exr_mobi_huff *h,size_t index,unsigned depth,exr_error *e) {
   phrase *p=&h->phrases[index]; exr_buffer buffer={0}; exr_status status;
   if(p->state==2) return EXR_OK;
   if(p->state==1) return exr_fail(e,EXR_FORMAT,"Cyclic CDIC phrase");
   if(depth>=64) return exr_fail(e,EXR_LIMIT,"CDIC phrase nesting exceeds 64");
-  p->state=1; status=decode(h,p->encoded,p->encoded_size,&buffer,depth+1,e);
+  p->state=1; status=decode(h,p->encoded,p->encoded_size,&buffer,1,depth+1,e);
   if(status!=EXR_OK) { h->memory-=buffer.capacity; free(buffer.data); p->state=0; return status; }
   p->decoded=(const unsigned char *)buffer.data; p->size=buffer.size; p->state=2;
   return EXR_OK;
 }
-static exr_status decode(exr_mobi_huff *h,const unsigned char *data,size_t size,exr_buffer *out,unsigned depth,exr_error *e) {
+static exr_status measure(exr_mobi_huff *h,size_t index,unsigned depth,exr_error *e) {
+  phrase *p=&h->phrases[index]; exr_buffer count={0}; exr_status status;
+  if(p->state==2 || p->length_state==2) return EXR_OK;
+  if(p->length_state==1) return exr_fail(e,EXR_FORMAT,"Cyclic CDIC phrase");
+  if(depth>=64) return exr_fail(e,EXR_LIMIT,"CDIC phrase nesting exceeds 64");
+  p->length_state=1; status=decode(h,p->encoded,p->encoded_size,&count,0,depth+1,e);
+  if(status!=EXR_OK) { p->length_state=0; return status; }
+  p->size=count.size; p->length_state=2; return EXR_OK;
+}
+static exr_status decode(exr_mobi_huff *h,const unsigned char *data,size_t size,exr_buffer *out,int materialize,unsigned depth,exr_error *e) {
   size_t position=0; uint64_t window=0; unsigned available=0;
   while(position<size || available) {
     uint32_t code; uint64_t maximum,index; unsigned length,slot; exr_status status;
@@ -133,11 +142,28 @@ static exr_status decode(exr_mobi_huff *h,const unsigned char *data,size_t size,
     if(index>=h->count) return exr_fail(e,EXR_FORMAT,"HUFF code exceeds phrase dictionary");
     if(++h->symbols>EXR_MAX_INPUT) return exr_fail(e,EXR_LIMIT,"HUFF symbol work exceeds limit");
     available-=length; window&=available ? (UINT64_C(1)<<available)-1 : 0;
-    status=expand(h,(size_t)index,depth,e); if(status!=EXR_OK) return status;
-    status=append(h,out,h->phrases[index].decoded,h->phrases[index].size,e); if(status!=EXR_OK) return status;
+    if(materialize) {
+      status=expand(h,(size_t)index,depth,e); if(status!=EXR_OK) return status;
+      status=append(h,out,h->phrases[index].decoded,h->phrases[index].size,e); if(status!=EXR_OK) return status;
+    } else {
+      status=measure(h,(size_t)index,depth,e); if(status!=EXR_OK) return status;
+      if(h->phrases[index].size>EXR_MAX_TEXT-out->size)
+        return exr_fail(e,EXR_LIMIT,"HUFF measured text exceeds limit");
+      out->size+=h->phrases[index].size;
+    }
   }
   return EXR_OK;
 }
 exr_status exr_mobi_huff_decode(exr_mobi_huff *h,const void *data,size_t size,exr_buffer *out,exr_error *e) {
-  return decode(h,data,size,out,0,e);
+  size_t before=out->capacity; exr_status status;
+  h->work=h->symbols=0;
+  status=decode(h,data,size,out,1,0,e);
+  /* Only expanded dictionary phrases belong to the persistent decoder. The
+     caller owns (and may discard/reuse) each independently decoded record. */
+  h->memory-=out->capacity-before;
+  return status;
+}
+exr_status exr_mobi_huff_size(exr_mobi_huff *h,const void *data,size_t size,size_t *out,exr_error *e) {
+  exr_buffer count={0}; exr_status status;
+  h->symbols=0; status=decode(h,data,size,&count,0,0,e); *out=count.size; return status;
 }

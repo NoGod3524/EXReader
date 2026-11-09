@@ -301,6 +301,35 @@ EXR_API exr_status exr_anchor_resolve(const exr_document *doc, const exr_anchor 
    Element offset=SIZE_MAX denotes the element; other offsets are child-node
    boundaries. side: 0 unspecified, 1 before, 2 after. No normalized text offsets. */
 typedef struct { size_t node,offset; unsigned side; } exr_cfi_point;
+/* Document-independent CFI grammar (W3C EPUB CFI 1.1). Accepts epubcfi(...)
+   or its bare scheme data. Serialization adds the wrapper and otherwise
+   preserves every assertion, escape and parameter in its original order.
+   No URI/percent decoding. diagnostics.byte is an input UTF-8 byte index.
+   Syntax failures return EXR_FORMAT plus the specific diagnostic code;
+   encoding/size failures return EXR_ENCODING/EXR_LIMIT. Owned outputs use
+   exr_free; parsed values use exr_cfi_free. Failure clears owned outputs. */
+typedef struct exr_cfi exr_cfi;
+typedef enum {
+  EXR_CFI_VALID=0, EXR_CFI_SYNTAX, EXR_CFI_NUMBER, EXR_CFI_ESCAPE,
+  EXR_CFI_ASSERTION, EXR_CFI_RANGE, EXR_CFI_ENCODING, EXR_CFI_LIMIT
+} exr_cfi_error_code;
+typedef struct { exr_cfi_error_code code; size_t byte; } exr_cfi_diagnostic;
+EXR_API exr_status exr_cfi_parse(const char *text,exr_cfi **out,
+  exr_cfi_diagnostic *diagnostic,exr_error *error);
+EXR_API exr_status exr_cfi_serialize(const exr_cfi *cfi,char **out,exr_error *error);
+EXR_API int exr_cfi_is_range(const exr_cfi *cfi);
+/* Expand P,S,E into full wrapped PS and PE. A point produces two equal paths. */
+EXR_API exr_status exr_cfi_endpoints(const exr_cfi *cfi,char **start,char **end,exr_error *error);
+EXR_API void exr_cfi_free(exr_cfi *cfi);
+/* Exact mapping between normalized UTF-8 byte boundaries and raw XML UTF-16
+   text points, using the retained DOM projection. Synthetic paragraph breaks
+   map to the text boundaries on their respective sides. Collapsed whitespace
+   and element points import at the corresponding normalized boundary.
+   Hidden/unprojected nodes and surrogate/UTF-8 interiors are rejected. */
+EXR_API exr_status exr_document_cfi_point_at(const exr_document *doc,size_t chapter,size_t offset,
+  const exr_control *control,exr_cfi_point *out,exr_error *error);
+EXR_API exr_status exr_document_cfi_point_offset(const exr_document *doc,size_t chapter,const exr_cfi_point *point,
+  const exr_control *control,size_t *offset,exr_error *error);
 /* These APIs produce/consume the content-document component, e.g. /4/2[id]/1:3,
    not the package spine prefix or epubcfi(...) wrapper. chapter must have one
    XML document element. Owned path uses exr_free; failure clears output. */

@@ -1,0 +1,109 @@
+[
+  {
+    "file": "tests/fixtures/sample.txt",
+    "sha256": "fe0e65a92ff83503015b42253a17ac643e4894058a062bb532ba61aaf5bf583b",
+    "kind": "document",
+    "exit_code": 0,
+    "probe": {
+      "schema": 1,
+      "engine_version": "3.42.0",
+      "status": 0,
+      "stage": "paginate",
+      "parts": 1,
+      "completed_parts": 1,
+      "pages": 13,
+      "text_bytes": 10633,
+      "complete": true
+    },
+    "stderr": "",
+    "outcome": "complete"
+  },
+  {
+    "file": "tests/fixtures/utf16.txt",
+    "sha256": "bd179c3192f81633f66fab6c28f81042a276d2bd960a7420268dfc832b427994",
+    "kind": "document",
+    "exit_code": 0,
+    "probe": {
+      "schema": 1,
+      "engine_version": "3.42.0",
+      "status": 0,
+      "stage": "paginate",
+      "parts": 1,
+      "completed_parts": 1,
+      "pages": 1,
+      "text_bytes": 34,
+      "complete": true
+    },
+    "stderr": "",
+    "outcome": "complete"
+  },
+  {
+    "file": "tests/fixtures/font-cff-regression.bin",
+    "sha256": "4e5d2e3d59d1aaef53c59a46abaad0200e59baf75b0ced79af14491fa9e47f2e",
+    "kind": "font",
+    "status": 0,
+    "outcome": "opened"
+  },
+  {
+    "file": "tests/fixtures/font-image-regression.bin",
+    "sha256": "c6f688b58a5bb22a255b8f4c8f2455ae9a583d3ab5ee86291a49d4902bc5dc16",
+    "kind": "font",
+    "status": 0,
+    "outcome": "opened"
+  },
+  {
+    "file": "tests/fixtures/fuzz-cbz-truncated.bin",
+    "sha256": "449011aa8cdd09984120b894e94309570113d7d6f7ccbbced27792824f9f48a7",
+    "kind": "document",
+    "exit_code": 1,
+    "probe": {
+      "schema": 1,
+      "engine_version": "3.42.0",
+      "status": 5,
+      "stage": "open",
+      "parts": 0,
+      "completed_parts": 0,
+      "pages": 0,
+      "text_bytes": 0,
+      "complete": false
+    },
+    "stderr": "Invalid CBZ member CRC\n",
+    "outcome": "sdk_rejected"
+  },
+  {
+    "file": "tests/fixtures/foreign.sqlite",
+    "sha256": "e9b2c488bc88ede11bad34a58e995514fb03c54075cf852548b51ff59e45a662",
+    "kind": "library",
+    "status": 7,
+    "outcome": "sdk_rejected"
+  },
+  {
+    "file": "tests/fixtures/future.sqlite",
+    "sha256": "471f8fecfbb54632ae923227c182b7c1dc1cac9d0618eb2bd87f964814bc9f0e",
+    "kind": "library",
+    "status": 7,
+    "outcome": "sdk_rejected"
+  },
+  {
+    "file": "tests/fixtures/audio/pcm.wav",
+    "sha256": "996b782980d914c1f5e4faf64f51911563a19a319ce9ce5210d54adcc2481384",
+    "decoded_frames": 3200,
+    "kind": "audio",
+    "status": 0,
+    "outcome": "processed"
+  },
+  {
+    "file": "tests/fixtures/audio/metadata.m4b",
+    "sha256": "c92c42c2c195deb2b5c46ec743656ff19938730a9612846b40cf91cb121a3ffe",
+    "kind": "audio_metadata",
+    "status": 0,
+    "outcome": "processed"
+  },
+  {
+    "file": "tests/fixtures/font_manager/fonts.conf",
+    "sha256": "507400da366d839fd0bb7cc3c4efdba900465263643e09bcdeff62923551fdb6",
+    "kind": "font_configuration",
+    "status": 0,
+    "outcome": "processed"
+  }
+]

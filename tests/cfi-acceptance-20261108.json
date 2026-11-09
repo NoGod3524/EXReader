@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "baseline_revision": "b7bad7f0",
+  "baseline_dll_sha256": "23d52b19b510048646695444e2ba74e531401afe3bb30d3cd1624bd240395276",
+  "candidate_dll_sha256": "87b6b6f9c9b2cdc5c3ea297bc369583e0cb1015931aa436f42fe2474b8bd5a34",
+  "test_executable_sha256": "475c13c93c69f286b42a72ffd31702c1aeb49d2ab31ed20598716ffc47268722",
+  "grammar_source": "https://w3c.github.io/epub-specs/epub33/epubcfi/",
+  "vector_origin": "13 W3C examples; additional original positive/negative cases",
+  "definition": "Exact equality of both (part, normalized UTF-8 byte offset) endpoints and every field of anchors captured by anchor_from_range; any failure counts against denominator",
+  "prng_seed": "0x41ce2026",
+  "acceptance": {
+    "parse": {
+      "passed": 63,
+      "valid": 25,
+      "invalid": 38,
+      "failed": 0
+    },
+    "serialization": {
+      "passed": 25,
+      "failed": 0,
+      "equivalence": "Exact scheme data, including assertion/parameter order; bare input gains epubcfi(...)"
+    },
+    "same_part_ranges": {
+      "passed": 100,
+      "total": 100,
+      "percent": 100.0
+    },
+    "cross_part_ranges": {
+      "passed": 10,
+      "total": 10,
+      "percent": 100.0
+    },
+    "real_positions": {
+      "book": "hongloumeng-24264",
+      "book_sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+      "passed": 20,
+      "total": 20,
+      "percent": 100.0
+    },
+    "regression": {
+      "passed_books": 19,
+      "total_books": 19,
+      "pages": 11296,
+      "glyphs": 8648640,
+      "page_count_changes": 0,
+      "hash_changed_pages": 0
+    },
+    "ctest": {
+      "passed": 218,
+      "total": 218,
+      "baseline_total": 212,
+      "new_groups": 6
+    }
+  },
+  "layout": {
+    "width": 720,
+    "height": 1040,
+    "margin": 36,
+    "font_size": 28,
+    "line_height": 1.5,
+    "paragraph_spacing": 10,
+    "document_css": 1,
+    "embedded_fonts": 1,
+    "direction": 0,
+    "fixed_max_dimension": 720
+  },
+  "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "content_fingerprint_before": "12b3b76f346ea736f218d8eb5e11af33673ceb31993c9c7ced98724e4689e732",
+  "content_fingerprint_after": "12b3b76f346ea736f218d8eb5e11af33673ceb31993c9c7ced98724e4689e732",
+  "implementation_git_lf_sha256": {
+    "include/exr/document.h": "1a6f4026db6b3d46e920c2e50f0c2712ce821c931bdd7901da14e6617ce36f60",
+    "include/exr/layout.h": "b62f1f5c0cc2b35ade759924684695cb8bb500da3a0ca271f8d8496ae118ced0",
+    "src/cfi.c": "bea3894888c5ccd7a2f89575e2d4093ab6d289af56a17d39e395510cefe4c998",
+    "src/cfi_syntax.c": "b1f6268070d7f1b59cdba94a02ce33b98ccb49196a950d99edfda28acfc4442b",
+    "src/cfi_offset.c": "6b9db3084b774549834cea9d9a66c1d3be64d0db607e391e1f1f0854eb6f2cde",
+    "src/document_internal.h": "1216ebea127620ffcde3fdb373f2e62f4d40b56c03739ede4039f044060a2119",
+    "src/publication.c": "c937c10b57186d10ac46541093b52d650f181d296f7198a66536271492e9fdcb",
+    "tools/layers.json": "1e4a2d42f4b5c3a70cb5426f33db3c32eb6c191c30e572924def6e8fe571f5e5",
+    "CMakeLists.txt": "0aa765d119e3c9d5cd12e7cd7968302ed851eed637922be9d360638aa4481f4d",
+    "tests/test_cfi_compat.c": "b41b1e6914e6433797eb23d7a29e6313f0310affdf0e6e32354dd6201dbbdaa5",
+    "tests/cfi-vectors.tsv": "53d587301197e054341c93bea5dbb09c2255fd5a6e60470f7f2b5cf2bb821506",
+    "tests/collect_cfi_acceptance.py": "62611dd6b20f07bec7481a12c87134f3c9b17c647c40faff3edd0eba3814dce7"
+  },
+  "artifacts_sha256": {
+    "CMakeCache.txt.gz": "9ffc0aa5b83ad6a1a5be1b266b8efebcba70551a1fd453b92a0a7c9c0eeec61e",
+    "contracts.txt": "df750e6dc57b25f92bb234c0518f5fb31b29d14b2c70ae6fb5a4145850ec211a",
+    "cross.txt": "c33e79337f21079048a1afc2af9c2678cc3f44d7c70ee75e3d584522761e98fc",
+    "ctest-final.log.gz": "09b1a9f627bd52f05c02deb8ab2b635d7bac9af8fea86e6ac476668f30cf89cd",
+    "invalid.txt": "326be9b0af599ded6926e346da51079cde767b746a970ccc9df449e07036cd4b",
+    "layers.txt": "a0b6c291af6afa9a325efd6f227e5f33f811511e2c02f4919a04cf87973133ef",
+    "mapping.txt": "2f882220b9bdaf19f7a1126ba4efe0597d6f01d10906ad612b37f3c296e00b81",
+    "parse.txt": "d915cd1fe41acdbf4bef9463b6fca4656519c71d0204c91bc464106f99cc7bf5",
+    "real.txt": "d5d1872602294c8fc64ad1c2500c1737593a87bd627342662196dbd09f644235",
+    "realbooks-before.json.gz": "153494ae33fed4d4bd670aa6a307fc6d43ba6b7241a207a4ee762e7ec21eaf19",
+    "realbooks-final.diff.json.gz": "2af5715f8adbab3ca8438d4b3f2f230cb10a3f3d5a8eb6b4bd349bf4e473f260",
+    "realbooks-final.json.gz": "2318f589b49861661f1da28653536c1fd97a531d2915bdc2971e987b534605a2",
+    "roundtrip.txt": "6ac25df6ee37da51dc4df1d3095f9332ffc4c6c1b5c7029e012fa06e0396108c"
+  }
+}

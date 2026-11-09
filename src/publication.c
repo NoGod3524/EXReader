@@ -27,6 +27,7 @@ struct exr_publication {
   exr_footnote_reference *references;
   size_t reference_count, reference_capacity;
   int footnotes_ready;
+  exr_locate_report locate_report;
 };
 typedef struct {
   size_t part, bytes;
@@ -204,14 +205,33 @@ static exr_status publication_index(exr_document *index, exr_publication **out, 
     exr_document_free(index);
   return status;
 }
+static exr_status publication_book(exr_format format,const void *data,size_t size,exr_publication **out,exr_error *e) {
+  exr_format_book *book=NULL; exr_part *parts=NULL; exr_publication_input input={0}; size_t i;
+  exr_status status=exr_book_open(format,data,size,&book,e);
+  if(status!=EXR_OK) return status;
+  parts=calloc(book->index->chapter_count,sizeof(*parts));
+  if(!parts) { exr_book_free(book); return exr_fail(e,EXR_MEMORY,"Book part directory allocation failed"); }
+  for(i=0;i<book->index->chapter_count;i++) {
+    parts[i].id=book->index->chapters[i].id; parts[i].path=book->index->chapters[i].path;
+    parts[i].in_reading_order=1;
+  }
+  input.title=exr_document_title(book->index); input.parts=parts; input.part_count=book->index->chapter_count;
+  input.load=exr_book_load; input.context=book; input.release=exr_book_free;
+  input.navigation=book->navigation; input.navigation_count=book->navigation_count;
+  status=exr_publication_create(&input,out,e); free(parts);
+  if(status!=EXR_OK) exr_book_free(book);
+  return status;
+}
 exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size,
                                        exr_publication **out, exr_error *e) {
   exr_document *index = NULL;
   exr_status status;
   if (!out) return exr_fail(e, EXR_ARGUMENT, "Missing publication output");
   *out = NULL;
+  if(e) memset(e,0,sizeof(*e));
+  if(format==EXR_MOBI || format==EXR_FB2) return publication_book(format,data,size,out,e);
   if (format != EXR_EPUB)
-    return exr_fail(e, EXR_FORMAT, "Built-in indexed loading currently accepts EPUB");
+    return exr_fail(e, EXR_FORMAT, "Indexed loading accepts EPUB, MOBI/KF8 and FB2");
   status = exr_epub_index(data, size, &index, e);
   return status == EXR_OK ? publication_index(index, out, e) : status;
 }
@@ -235,6 +255,18 @@ exr_status exr_publication_open(const char *path, exr_publication **out, exr_err
   *out = NULL;
   if (!path)
     return exr_fail(e, EXR_ARGUMENT, "Missing publication path");
+  {
+    const char *ext=strrchr(path,'.'); exr_format format=0;
+    if(ext && (exr_link_case_equal(ext,".mobi") || exr_link_case_equal(ext,".azw3") ||
+      exr_link_case_equal(ext,".azw") || exr_link_case_equal(ext,".prc") || exr_link_case_equal(ext,".kf8"))) format=EXR_MOBI;
+    if(ext && (exr_link_case_equal(ext,".fb2") || exr_link_case_equal(ext,".fbz") || exr_link_case_equal(ext,".zip"))) format=EXR_FB2;
+    if(format) {
+      unsigned char *data=NULL; size_t size=0;
+      status=exr_read(path,&data,&size,e);
+      if(status==EXR_OK) status=exr_publication_open_memory(format,data,size,out,e);
+      free(data); return status;
+    }
+  }
   status = exr_file_source(path, &source, e);
   if (status != EXR_OK) return status;
   status = exr_publication_open_source(&source, out, e);
@@ -244,7 +276,8 @@ exr_status exr_publication_open(const char *path, exr_publication **out, exr_err
 const char *exr_publication_title(const exr_publication *p) { return p ? p->title : ""; }
 size_t exr_publication_index_memory(const exr_publication *p) {
   return p ? sizeof(*p)+p->metadata_bytes+p->count*sizeof(*p->parts)+
-    p->navigation_count*sizeof(*p->navigation)+exr_document_memory_size(p->context)+sizeof(exr_archive_store) : 0;
+    p->navigation_count*sizeof(*p->navigation)+(p->load==exr_book_load ? ((exr_format_book *)p->context)->memory :
+      p->load==epub_load ? exr_document_memory_size(p->context)+sizeof(exr_archive_store) : 0) : 0;
 }
 const exr_part *exr_publication_parts(const exr_publication *p, size_t *count) {
   if (count)
@@ -448,7 +481,7 @@ const exr_target *exr_publication_missing_targets(const exr_publication *p,size_
   if (count) *count=p ? p->missing_count : 0;
   return p ? p->missing : NULL;
 }
-exr_status exr_publication_locate(exr_publication *p,const exr_target *target,
+static exr_status publication_locate(exr_publication *p,const exr_target *target,
   exr_location *out,exr_error *e) {
   exr_document *d=NULL; exr_status status; exr_location result;
   if (out) *out=(exr_location){SIZE_MAX,SIZE_MAX,EXR_LINK_PART_MISSING};
@@ -469,6 +502,26 @@ exr_status exr_publication_locate(exr_publication *p,const exr_target *target,
   exr_document_free(d);
   if (status==EXR_OK && result.state==EXR_LINK_ANCHOR_MISSING) status=remember_missing(p,target,e);
   if (status==EXR_OK) *out=result;
+  return status;
+}
+
+exr_locate_report exr_publication_locate_report(const exr_publication *p) {
+  return p ? p->locate_report : (exr_locate_report){0};
+}
+void exr_publication_locate_report_reset(exr_publication *p) {
+  if(p) memset(&p->locate_report,0,sizeof(p->locate_report));
+}
+exr_status exr_publication_locate(exr_publication *p,const exr_target *target,
+  exr_location *out,exr_error *e) {
+  exr_status status;
+  if(p) p->locate_report.total_entries++;
+  status=publication_locate(p,target,out,e);
+  if(p && status==EXR_OK) {
+    if(out->state==EXR_LINK_ANCHOR_MISSING) {
+      p->locate_report.missing_anchor++; p->locate_report.resolved_part_start++;
+    } else if(out->state==EXR_LINK_PART_MISSING) p->locate_report.missing_part++;
+    else p->locate_report.resolved_exact++;
+  }
   return status;
 }
 
@@ -1027,6 +1080,63 @@ exr_status exr_range_from_anchor(exr_publication *p,const exr_content_anchor *a,
     out->state=EXR_ANCHOR_FOUND;out->range=r;
   }
   return exr_fail(e,EXR_OK,"");
+}
+
+exr_status exr_range_to_cfi(exr_publication *p,const exr_text_range *r,const exr_control *control,
+                             char **out,exr_error *e) {
+  exr_document *d=NULL;exr_cfi_point point;exr_status status;char *a=NULL,*b=NULL;unsigned k;
+  if(out) *out=NULL;
+  if(!p || !out || !r || position_before(r->end,r->start) || r->end.part>=p->count || p->busy)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid content range for CFI export");
+  if(p->load!=epub_load) return exr_fail(e,EXR_FORMAT,"Publication has no built-in EPUB CFI provider");
+  status=exr_control_cancel(control,e);
+  for(k=0;k<2 && status==EXR_OK;k++) {
+    exr_text_position at=k ? r->end : r->start;
+    status=exr_publication_load(p,at.part,&d,e);
+    if(status==EXR_OK) status=exr_document_cfi_point_at(d,0,at.offset,control,&point,e);
+    if(status==EXR_OK) status=exr_publication_cfi_create(p,at.part,d,&point,control,k ? &b : &a,e);
+    exr_document_free(d);d=NULL;
+  }
+  if(status==EXR_OK) status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=exr_cfi_range_join(a,b,out,e);
+  free(a);free(b);return status;
+}
+exr_status exr_range_from_cfi(exr_publication *p,const char *cfi,const exr_control *control,
+                               exr_text_range *out,exr_error *e) {
+  exr_cfi *parsed=NULL;char *a=NULL,*b=NULL;exr_document *d=NULL;
+  exr_cfi_point point;exr_text_range r;exr_status status;unsigned k;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing CFI content range output");
+  range_clear(out);range_clear(&r);
+  if(!p || !cfi || p->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid CFI content range input");
+  status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=exr_cfi_parse(cfi,&parsed,NULL,e);
+  if(status==EXR_OK) status=exr_cfi_endpoints(parsed,&a,&b,e);
+  for(k=0;k<2 && status==EXR_OK;k++) {
+    exr_text_position *at=k ? &r.end : &r.start;
+    status=exr_publication_cfi_resolve(p,k ? b : a,control,&at->part,&d,&point,e);
+    if(status==EXR_OK) status=exr_document_cfi_point_offset(d,0,&point,control,&at->offset,e);
+    exr_document_free(d);d=NULL;
+  }
+  if(status==EXR_OK && position_before(r.end,r.start)) status=exr_fail(e,EXR_FORMAT,"Reversed CFI content range");
+  if(status==EXR_OK) { *out=r;status=exr_fail(e,EXR_OK,""); }
+  exr_cfi_free(parsed);free(a);free(b);return status;
+}
+exr_status exr_anchor_to_cfi(exr_publication *p,const exr_content_anchor *anchor,const exr_control *control,
+                              char **out,exr_error *e) {
+  exr_text_range_match match;exr_status status;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing anchor CFI output");
+  *out=NULL;
+  status=exr_range_from_anchor(p,anchor,control,&match,e);
+  if(status==EXR_OK && match.state!=EXR_ANCHOR_FOUND) return exr_fail(e,EXR_FORMAT,"CFI anchor is missing or ambiguous");
+  return status==EXR_OK ? exr_range_to_cfi(p,&match.range,control,out,e) : status;
+}
+exr_status exr_anchor_from_cfi(exr_publication *p,const char *cfi,const exr_control *control,
+                                exr_content_anchor *out,exr_error *e) {
+  exr_text_range range;exr_status status;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing CFI anchor output");
+  memset(out,0,sizeof(*out));
+  status=exr_range_from_cfi(p,cfi,control,&range,e);
+  return status==EXR_OK ? exr_anchor_from_range(p,&range,control,out,e) : status;
 }
 
 static size_t content_previous(const exr_document *d,size_t at) {

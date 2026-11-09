@@ -1,0 +1,315 @@
+{
+  "baseline_revision": "db9bab668ac725a75f3f92919edec3625879c7a8",
+  "configuration": {
+    "generator": "Ninja",
+    "compiler": "MinGW GCC",
+    "build_type": "Release",
+    "optional_off": [
+      "ICC",
+      "IMAGE_AVIF",
+      "IMAGE_TIFF",
+      "IMAGE_WEBP",
+      "PDF_CRYPTO",
+      "BUILD_FUZZ",
+      "BUILD_JNI"
+    ]
+  },
+  "ctest": {
+    "before": 205,
+    "after": 210,
+    "passed": 210,
+    "new_groups": 5,
+    "seconds": 139.81
+  },
+  "regression": {
+    "books": 19,
+    "pages_before": 11296,
+    "pages_after": 11296,
+    "changed_page_hashes": 0,
+    "content_fingerprint_before": "12b3b76f346ea736f218d8eb5e11af33673ceb31993c9c7ced98724e4689e732",
+    "content_fingerprint_after": "12b3b76f346ea736f218d8eb5e11af33673ceb31993c9c7ced98724e4689e732",
+    "baseline_dll_sha256": "455a424f8c9cfde51405389c1c687a8172bd620bbf65c8e1b4a0595817e1e721",
+    "candidate_dll_sha256": "e1fe264681a8fd089a9447daf4e018852c2afdd4a6d601f8891534e7f3d274f5",
+    "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "layout": {
+      "width": 720,
+      "height": 1040,
+      "margin": 36,
+      "font_size": 28,
+      "line_height": 1.5,
+      "paragraph_spacing": 10,
+      "document_css": 1,
+      "embedded_fonts": 1,
+      "direction": 0,
+      "fixed_max_dimension": 720
+    },
+    "page_fingerprint_method": "SHA-256 of concatenated ASCII pixel_sha256 strings in page order",
+    "per_book": [
+      {
+        "id": "a-raisin-in-the-sun",
+        "input_sha256": "2416cbd8d73eb7ba2a228842aa33ae303653fb75fa42dd6e921293bee2ed576d",
+        "pages_before": 356,
+        "pages_after": 356,
+        "page_fingerprint_before": "5a292bf4c6cc8145f0aeb6b13f70f5e1d653781021efde1e32155ff00a90926b",
+        "page_fingerprint_after": "5a292bf4c6cc8145f0aeb6b13f70f5e1d653781021efde1e32155ff00a90926b"
+      },
+      {
+        "id": "between-the-world-and-me",
+        "input_sha256": "3d909ac99c4388022a6576475b81c5d458490337aba08b0e7ba311bc18ab68a5",
+        "pages_before": 228,
+        "pages_after": 228,
+        "page_fingerprint_before": "12cb7d59f2c164033be0e70dccbe1434443df8ecce8f9c83c215b81e8338c69c",
+        "page_fingerprint_after": "12cb7d59f2c164033be0e70dccbe1434443df8ecce8f9c83c215b81e8338c69c"
+      },
+      {
+        "id": "black-boy",
+        "input_sha256": "a6d4c9a1f117e8c9c21aec186ca77e0f58cdaf9f97fce8f1f1d1660a724a7e87",
+        "pages_before": 1016,
+        "pages_after": 1016,
+        "page_fingerprint_before": "f705efce5a0337f9d661dfd6fc60d3da468897fe33378b13bf1ac76d4e8b4eff",
+        "page_fingerprint_after": "f705efce5a0337f9d661dfd6fc60d3da468897fe33378b13bf1ac76d4e8b4eff"
+      },
+      {
+        "id": "born-a-crime",
+        "input_sha256": "c22402e02baa5e9b7c88c895a9f232f2858f7c168122aaf084493b85e37f6d58",
+        "pages_before": 502,
+        "pages_after": 502,
+        "page_fingerprint_before": "025047d8a21cd8797730edad88da36b69bff9c371605a0406b207012340beba7",
+        "page_fingerprint_after": "025047d8a21cd8797730edad88da36b69bff9c371605a0406b207012340beba7"
+      },
+      {
+        "id": "crying-in-h-mart",
+        "input_sha256": "8e6641c9c820cbc987dbd848d1b2ee88a15d620db6d9302cc17ca2ca49072a3e",
+        "pages_before": 524,
+        "pages_after": 524,
+        "page_fingerprint_before": "0c0ad9222aea050a198d4b0f27b4d61badbe522156b5323792ed699b62a46c6a",
+        "page_fingerprint_after": "0c0ad9222aea050a198d4b0f27b4d61badbe522156b5323792ed699b62a46c6a"
+      },
+      {
+        "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+        "input_sha256": "02a37f7c5f80169b09d010f27edf494116df0bcb0c8bc8023282a1d3bf43e941",
+        "pages_before": 493,
+        "pages_after": 493,
+        "page_fingerprint_before": "838cfe6695e95a7554065bb72c3f5c7291a8b1dbbb042fdfba8d1154214c23f3",
+        "page_fingerprint_after": "838cfe6695e95a7554065bb72c3f5c7291a8b1dbbb042fdfba8d1154214c23f3"
+      },
+      {
+        "id": "i-know-why-the-caged-bird-sings",
+        "input_sha256": "7a52e3c22743cbf9cdacd1fc6d2a8f72f9ad0f9287591f310640d0287857ec09",
+        "pages_before": 625,
+        "pages_after": 625,
+        "page_fingerprint_before": "bed015ee3a5466ee13cc893954b2a1c71672e3d1329cdfb0b20fbfb8a08bd3bb",
+        "page_fingerprint_after": "bed015ee3a5466ee13cc893954b2a1c71672e3d1329cdfb0b20fbfb8a08bd3bb"
+      },
+      {
+        "id": "pachinko",
+        "input_sha256": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+        "pages_before": 1248,
+        "pages_after": 1248,
+        "page_fingerprint_before": "596e793b13dbe6377f64d7a1947f4291d684cbcaeeb5b3d1b48d633bf2009ba9",
+        "page_fingerprint_after": "596e793b13dbe6377f64d7a1947f4291d684cbcaeeb5b3d1b48d633bf2009ba9"
+      },
+      {
+        "id": "the-absolutely-true-diary-of-a-part-time-indian",
+        "input_sha256": "eedadec8e91f54e53e0587127b8ed2ca12d7d97b282f8a734b709468b7c2cf67",
+        "pages_before": 560,
+        "pages_after": 560,
+        "page_fingerprint_before": "accf7d38615d99885bfb13bab868f787fa3bd748d4320c474d898dbff9278155",
+        "page_fingerprint_after": "accf7d38615d99885bfb13bab868f787fa3bd748d4320c474d898dbff9278155"
+      },
+      {
+        "id": "the-autobiography-of-malcolm-x.",
+        "input_sha256": "c9373b7dbda128fea031616b444ca490a3cd59dccb3f02cb2512fd9957a0fdb7",
+        "pages_before": 279,
+        "pages_after": 279,
+        "page_fingerprint_before": "dfea52d49d9a5aaa0ac0a083e5c4ea0ddddeb71f9fce4da28c29b653f21dc78a",
+        "page_fingerprint_after": "dfea52d49d9a5aaa0ac0a083e5c4ea0ddddeb71f9fce4da28c29b653f21dc78a"
+      },
+      {
+        "id": "the-distance-between-us-a-memoir",
+        "input_sha256": "19591466f9b795f978f6061ac9979d8bd420ddf29cc849a4c970190a968844e3",
+        "pages_before": 702,
+        "pages_after": 702,
+        "page_fingerprint_before": "d11b99e32b515ef6a0f8a218636f64184eee2ad1710413c92184936b0ddc8a72",
+        "page_fingerprint_after": "d11b99e32b515ef6a0f8a218636f64184eee2ad1710413c92184936b0ddc8a72"
+      },
+      {
+        "id": "the-fire-next-time",
+        "input_sha256": "e0e361a8b3eb84cab263dac4efd69953b48c0a8d7b1972011a2f8e3deaab4570",
+        "pages_before": 189,
+        "pages_after": 189,
+        "page_fingerprint_before": "afe0e7259087f11d7f287055c86a5423184a4ad5e07d8922e63d639a2ac091a5",
+        "page_fingerprint_after": "afe0e7259087f11d7f287055c86a5423184a4ad5e07d8922e63d639a2ac091a5"
+      },
+      {
+        "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+        "input_sha256": "3662ed4599157e8a94e1869a43b7e231244862c520ac4fe02f3a047893d23ef0",
+        "pages_before": 333,
+        "pages_after": 333,
+        "page_fingerprint_before": "987eac8f2780e098ba941516bcad2359a2c0e4a36a59e61a1d827615af35591f",
+        "page_fingerprint_after": "987eac8f2780e098ba941516bcad2359a2c0e4a36a59e61a1d827615af35591f"
+      },
+      {
+        "id": "the-house-on-mango-street",
+        "input_sha256": "5a3b11c8f3ee4dd1c41d264aaf27dd83bb82faa1ebf3c7370a7072a0711cb3df",
+        "pages_before": 182,
+        "pages_after": 182,
+        "page_fingerprint_before": "033d64feff15563d5999d6603cc233f647344366d43cdf6ddf66e7c8eeb46e0a",
+        "page_fingerprint_after": "033d64feff15563d5999d6603cc233f647344366d43cdf6ddf66e7c8eeb46e0a"
+      },
+      {
+        "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+        "input_sha256": "6a107f978b9689221865539da63156996e1a0b67fa622629deac6503e16a7284",
+        "pages_before": 624,
+        "pages_after": 624,
+        "page_fingerprint_before": "ecce7e1573468a48e0cd8dd610fb5a28097164026654c7d9b4f16a47901249c2",
+        "page_fingerprint_after": "ecce7e1573468a48e0cd8dd610fb5a28097164026654c7d9b4f16a47901249c2"
+      },
+      {
+        "id": "hongloumeng-24264",
+        "input_sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+        "pages_before": 1686,
+        "pages_after": 1686,
+        "page_fingerprint_before": "34764016098c7dd4c614e2497627ba1c5bddca1f0c4c02170240fadc21002fdf",
+        "page_fingerprint_after": "34764016098c7dd4c614e2497627ba1c5bddca1f0c4c02170240fadc21002fdf"
+      },
+      {
+        "id": "xingshihengyan-24239",
+        "input_sha256": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+        "pages_before": 1202,
+        "pages_after": 1202,
+        "page_fingerprint_before": "80e84b5ea1002931a7bcf6b3bebcc8abf85497cd24b2b505354a1951deaf4e0d",
+        "page_fingerprint_after": "80e84b5ea1002931a7bcf6b3bebcc8abf85497cd24b2b505354a1951deaf4e0d"
+      },
+      {
+        "id": "tangshi300-52323",
+        "input_sha256": "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945",
+        "pages_before": 83,
+        "pages_after": 83,
+        "page_fingerprint_before": "2d8211a47b32e80af27ed1d42f6c48356cf59199a9516ca3d561731a592d72dc",
+        "page_fingerprint_after": "2d8211a47b32e80af27ed1d42f6c48356cf59199a9516ca3d561731a592d72dc"
+      },
+      {
+        "id": "kusamakura-japanese-vertical-writing",
+        "input_sha256": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7",
+        "pages_before": 464,
+        "pages_after": 464,
+        "page_fingerprint_before": "10473b35a4364f83cce77e379f849a84c651a6e239355b62ae9b0ea8569196f2",
+        "page_fingerprint_after": "10473b35a4364f83cce77e379f849a84c651a6e239355b62ae9b0ea8569196f2"
+      }
+    ]
+  },
+  "anchors": {
+    "dll_sha256": "e1fe264681a8fd089a9447daf4e018852c2afdd4a6d601f8891534e7f3d274f5",
+    "books": [
+      {
+        "id": "hongloumeng-24264",
+        "sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+        "total_entries": 108,
+        "resolved_exact": 108,
+        "resolved_part_start": 0,
+        "missing_part": 0,
+        "missing_anchor": 0,
+        "missing_anchor_by_part": {}
+      },
+      {
+        "id": "xingshihengyan-24239",
+        "sha256": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+        "total_entries": 40,
+        "resolved_exact": 40,
+        "resolved_part_start": 0,
+        "missing_part": 0,
+        "missing_anchor": 0,
+        "missing_anchor_by_part": {}
+      },
+      {
+        "id": "pachinko",
+        "sha256": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+        "total_entries": 70,
+        "resolved_exact": 70,
+        "resolved_part_start": 0,
+        "missing_part": 0,
+        "missing_anchor": 0,
+        "missing_anchor_by_part": {}
+      }
+    ]
+  },
+  "synthetic_anchor_report": {
+    "total_entries": 5,
+    "resolved_exact": 3,
+    "resolved_part_start": 2,
+    "missing_part": 0,
+    "missing_anchor": 2
+  },
+  "sevenz": {
+    "third_party_dependencies_added": [],
+    "codec_round_trips": 48,
+    "truncated_raw_streams_rejected": 176,
+    "object_text_bytes": 27256,
+    "aggregate_dll_growth_bytes": 28980,
+    "samples": [
+      {
+        "file": "tests/fixtures/sevenz/lzma2-solid.7z",
+        "sha256": "e01281317db8d0fc54675ccacde81d3443ede1ebcc6836a9bd8af53c68740d8d",
+        "entries": 2,
+        "requested": "second.txt",
+        "extracted_bytes": 23,
+        "result": "EXR_OK",
+        "codec": "LZMA2, LZMA-encoded header"
+      },
+      {
+        "file": "tests/fixtures/sevenz/traversal.7z",
+        "sha256": "c28712939dc085b320e307f2c1793e5fed7ff99507be30f1771fe7b798933085",
+        "result": "EXR_FORMAT at open",
+        "unsafe_path": "../escape.txt"
+      },
+      {
+        "file": "tests/fixtures/sevenz/nested.7z",
+        "sha256": "98367c18cf5b40ea0343fa895707d51c7c63079bdcbcfd750f2ec41769ce0fe4",
+        "entries": 5,
+        "directories": 3,
+        "requested": "漫画/卷一/page.txt",
+        "extracted_bytes": 21,
+        "empty_file_bytes": 0,
+        "result": "EXR_OK",
+        "codec": "LZMA + Delta, LZMA-encoded header"
+      }
+    ],
+    "sanitizers": {
+      "checks": [
+        "codecs",
+        "safety",
+        "source"
+      ],
+      "address": true,
+      "undefined_behavior": true,
+      "leak_detection": false,
+      "libfuzzer_runs": 100000,
+      "seed": 2569871251,
+      "seconds": 57,
+      "findings": 0,
+      "coverage_counters": 1337,
+      "max_rss_mib": 320
+    },
+    "reference_tool": {
+      "name": "7zr",
+      "version": "26.04",
+      "sha256": "256feca8e274e5da655e2a284fabafd9f554365eb164862089dacd4e8276d282"
+    }
+  },
+  "logs": {
+    "ctest.txt": "d5b69d9e0d5b98a3e0132e863e17d97fdd66892b7c4694465a76370f5496826d",
+    "fuzz.txt": "4f818ddee3a273186b273188ced392f04438766b83aac3adf8e2af9fa4c400fb",
+    "realbooks-before.json": "b5162394b9deb1f6688977244e8451ac086c5b6f58cded552c152b22f5a4378e",
+    "realbooks-after.json": "61463db8e1b491d40160fa6d7e5f4429910a32b80427736a7cf496ab48824362",
+    "anchor-stats.json": "9f523162a4053d33038ca9482ec1eb4a9b7ba52729c12f8bbae09694bf6425b4"
+  },
+  "implementation_sha256_lf": {
+    "src/sevenz.c": "bae50bb673412287a9316e4f870560e1b70dda68bdd1ecb76700cbadb935c884",
+    "src/lzma.c": "3cbcc95f02d588b49fba4bc5ab8fc5766e169b10518a145fb89a341b9a132236",
+    "src/lzma_internal.h": "5ee403203a06aac7c640a3db34f9cd82adeddaffc564d71f9913492110c402c5",
+    "src/publication.c": "104c8e8ff065ba2205ef4f00398222f4a227d1680ae353e4331ab2cb9214d181",
+    "include/exr/formats.h": "2db22b658c3c826d727facb96ca219821913e738aa36dc6f0661c76b1a45bafc",
+    "include/exr/layout.h": "cada532ef6b87189d848157c8234baf4712dc0324c8499e29cdafbf46fe055c1"
+  }
+}

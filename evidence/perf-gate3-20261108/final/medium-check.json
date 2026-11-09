@@ -1,0 +1,11 @@
+{
+  "advisory": true,
+  "accepted": false,
+  "compatible": true,
+  "signatures_match": true,
+  "failed_books": [],
+  "exceeded": [],
+  "baseline_eligible": true,
+  "candidate_eligible": true,
+  "local_numeric_pass": true
+}
