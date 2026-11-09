@@ -856,40 +856,48 @@ static void settings_load(void) {
 #endif
 }
 
+static void settings_write(const wchar_t *section,const wchar_t *key,const wchar_t *value,const wchar_t *path) {
+  wchar_t previous[512];
+  DWORD length=GetPrivateProfileStringW(section,key,L"",previous,512,path);
+  /* Page turns usually change no setting. Preserve missing/empty keys and long
+     values; only skip writes when the complete existing value is identical. */
+  if(length && length<511 && !wcscmp(previous,value)) return;
+  WritePrivateProfileStringW(section,key,value,path);
+}
 static void settings_save(void) {
   wchar_t number[64];
   if (!g.settings_path[0]) return;
 #ifdef EXR_READER_WINDOWS_SHELL
   swprintf(number,64,L"%d",shell_tap_edge);
-  WritePrivateProfileStringW(L"Host",L"TapEdge",number,g.settings_path);
+  settings_write(L"Host",L"TapEdge",number,g.settings_path);
   swprintf(number,64,L"%d",shell_theme_mode);
-  WritePrivateProfileStringW(L"Host",L"ShellTheme",number,g.settings_path);
+  settings_write(L"Host",L"ShellTheme",number,g.settings_path);
   swprintf(number,64,L"%.0f",(double)shell_font);
-  WritePrivateProfileStringW(L"Host",L"ShellFont",number,g.settings_path);
+  settings_write(L"Host",L"ShellFont",number,g.settings_path);
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   product_shelf_remember();
   wchar_t *query=host_wide(g.shelf_query ? g.shelf_query:"",g.shelf_query ? strlen(g.shelf_query):0);
-  WritePrivateProfileStringW(L"Shelf",L"Query",query ? query:L"",g.settings_path);free(query);
+  settings_write(L"Shelf",L"Query",query ? query:L"",g.settings_path);free(query);
   wchar_t *key=host_wide(g.shelf_top_key,strlen(g.shelf_top_key));
-  WritePrivateProfileStringW(L"Shelf",L"TopKey",key ? key:L"",g.settings_path);free(key);
+  settings_write(L"Shelf",L"TopKey",key ? key:L"",g.settings_path);free(key);
   key=host_wide(g.shelf_selected_key,strlen(g.shelf_selected_key));
-  WritePrivateProfileStringW(L"Shelf",L"SelectedKey",key ? key:L"",g.settings_path);free(key);
+  settings_write(L"Shelf",L"SelectedKey",key ? key:L"",g.settings_path);free(key);
 #endif
   swprintf(number, 64, L"%d", g.font_percent);
-  WritePrivateProfileStringW(L"Host", L"FontPercent", number, g.settings_path);
+  settings_write(L"Host", L"FontPercent", number, g.settings_path);
   swprintf(number, 64, L"%d", g.zoom_percent);
-  WritePrivateProfileStringW(L"Host", L"ZoomPercent", number, g.settings_path);
+  settings_write(L"Host", L"ZoomPercent", number, g.settings_path);
   swprintf(number, 64, L"%d", g.window_width);
-  WritePrivateProfileStringW(L"Host", L"WindowWidth", number, g.settings_path);
+  settings_write(L"Host", L"WindowWidth", number, g.settings_path);
   swprintf(number, 64, L"%d", g.window_height);
-  WritePrivateProfileStringW(L"Host", L"WindowHeight", number, g.settings_path);
+  settings_write(L"Host", L"WindowHeight", number, g.settings_path);
   swprintf(number, 64, L"%lld", (long long)g.active_book_id);
-  WritePrivateProfileStringW(L"Host", L"ActiveBook", number, g.settings_path);
+  settings_write(L"Host", L"ActiveBook", number, g.settings_path);
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   {
     wchar_t *key=host_wide(g.active_txt_key,strlen(g.active_txt_key));
-    WritePrivateProfileStringW(L"Host",L"ActiveTxtKey",key ? key:L"",g.settings_path);
+    settings_write(L"Host",L"ActiveTxtKey",key ? key:L"",g.settings_path);
     free(key);
   }
 #endif
@@ -1587,6 +1595,19 @@ static void job_start(host_job *job) {
 }
 
 static void job_launch_pixels(host_job *job) {
+#if defined(EXR_READER_WINDOWS_SHELL) && !defined(EXR_HOST_WORKER_REVIEW)
+  /* A prefetched native-size DIB is already prepared. Keep the same UI accept
+     queue, without starting and joining a worker that would immediately return. */
+  if(!g.delay_ms && job->kind==JOB_GO && job->status==EXR_OK && job->frame.valid &&
+     job->frame.shell_geometry.enabled && job->frame.display_bitmap &&
+     job->frame.display_width==(int)job->frame.bitmap.width &&
+     job->frame.display_height==(int)job->frame.bitmap.height) {
+    host_probe_log("pixel_reused",1);
+    host_probe_log("frame_ready_gen",(double)job->frame.generation);
+    PostMessageW(g.window,WM_HOST_COMPLETE,0,(LPARAM)job);
+    return;
+  }
+#endif
   unsigned thread_id=0;
   uintptr_t handle=_beginthreadex(NULL,0,job_thread,job,0,&thread_id);
   if(!handle) {
@@ -7397,7 +7418,12 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #endif
       job_release(job);
       host_probe_log("ui_accepted_gen",(double)g.frame.generation);
-      if(repaint)page_dirty(g.page,0);
+      if(repaint) {
+        page_dirty(g.page,0);
+        /* Submit the accepted buffer before queued progress/storage jobs can
+           delay the low-priority WM_PAINT message. */
+        if(g.frame.valid) UpdateWindow(g.page);
+      }
       if(schedule_prefetch)SetTimer(window,PAGE_PREFETCH_TIMER,150,NULL);
       if (!g.job && g.pending) {
         host_job *next = g.pending;
@@ -7625,6 +7651,7 @@ static void host_cleanup(void) {
   }
   page_cache_clear();
 #ifdef EXR_READER_WINDOWS_SHELL
+  free(shell_synced_title); shell_synced_title = NULL;
   exr_anchor_free(&shell_anchor); shell_anchor_valid = 0;
   shell_selection_reset();
 #endif
