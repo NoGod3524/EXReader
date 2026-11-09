@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-C4-20261109\tests\check_release_artifacts.py", line 130, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-C4-20261109\tests\check_release_artifacts.py", line 80, in main
+    assert '--detach-sign' in rendered[0] and str(root / 'SHA256SUMS') == rendered[0][-1]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

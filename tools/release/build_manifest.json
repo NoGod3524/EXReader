@@ -1359,8 +1359,8 @@
       "revision": "VER-2-15-0",
       "source_dir": "C:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0",
       "source_tree": {
-        "files": 647,
-        "sha256": "a18da793ed72d67b10de33a78ac810ef6845c6fb7c87bb5a6600a2aea520f3c6"
+        "files": 775,
+        "sha256": "926fde495d5c13d85c55a5e5c1e0632de9f312ef33082490589b36b630a01093"
       },
       "url": "https://codeload.github.com/freetype/freetype/tar.gz/refs/tags/VER-2-15-0"
     },
@@ -1422,7 +1422,7 @@
     "LIBPATH": null,
     "LINK": null,
     "MACOSX_DEPLOYMENT_TARGET": null,
-    "PATH": "C:\\Program Files\\PowerShell\\7;C:\\Users\\Oscar\\.codex\\tmp\\arg0-windows\\codex-arg0ykv76i;C:\\Program Files\\PowerShell\\7;C:\\Python314\\Scripts\\;C:\\Python314\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Windows\\system32;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\ProgramData\\chocolatey\\bin;C:\\Program Files\\Bandizip\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Tailscale\\;C:\\Program Files\\Calibre2\\;C:\\Program Files\\PowerShell\\7\\;C:\\Users\\Oscar\\.dsh\\tools\\jdk\\jdk-21.0.13+9\\bin;C:\\Users\\Oscar\\.cargo\\bin;C:\\Python314\\Scripts\\;C:\\Python314\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Windows\\system32;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\ProgramData\\chocolatey\\bin;C:\\Program Files\\PowerShell\\7\\;C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\Oscar\\AppData\\Roaming\\npm;C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0-full_build\\bin;C:\\Users\\Oscar\\AppData\\Roaming\\npm;C:\\Users\\Oscar\\AppData\\Roaming\\Python\\Python314\\Scripts;C:\\Users\\Oscar\\.dsh\\tools\\bin;C:\\Users\\Oscar\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin;C:\\Users\\Oscar\\.dotnet\\tools;C:\\Users\\Oscar\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\copilot-shim;C:\\Users\\Oscar\\.codex\\plugins\\.plugin-appserver;",
+    "PATH": "C:\\Program Files\\PowerShell\\7;C:\\Users\\Oscar\\.codex\\tmp\\arg0-windows\\codex-arg0tOinL2;C:\\Program Files\\PowerShell\\7;C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.6.9.0_x64__8wekyb3d8bbwe;C:\\Program Files\\PowerShell\\7;C:\\Python314\\Scripts\\;C:\\Python314\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Windows\\system32;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\ProgramData\\chocolatey\\bin;C:\\Program Files\\Bandizip\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Tailscale\\;C:\\Program Files\\Calibre2\\;C:\\Program Files\\PowerShell\\7\\;C:\\Users\\Oscar\\.dsh\\tools\\jdk\\jdk-21.0.13+9\\bin;C:\\Users\\Oscar\\.cargo\\bin;C:\\Python314\\Scripts\\;C:\\Python314\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Windows\\system32;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\ProgramData\\chocolatey\\bin;C:\\Program Files\\PowerShell\\7\\;C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\Oscar\\AppData\\Roaming\\npm;C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0-full_build\\bin;C:\\Users\\Oscar\\AppData\\Roaming\\npm;C:\\Users\\Oscar\\AppData\\Roaming\\Python\\Python314\\Scripts;C:\\Users\\Oscar\\.dsh\\tools\\bin;C:\\Users\\Oscar\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin;C:\\Users\\Oscar\\.dotnet\\tools;C:\\Users\\Oscar\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\copilot-shim;C:\\Users\\Oscar\\.codex\\plugins\\.plugin-appserver;",
     "SDKROOT": null,
     "SOURCE_DATE_EPOCH": null,
     "VCToolsInstallDir": null,
@@ -1442,7 +1442,7 @@
     "format": "tar.gz",
     "gzip_filename": "",
     "signing": "after unsigned reproducibility comparison",
-    "source_date_epoch": 1794206292,
+    "source_date_epoch": 1794242236,
     "tar_gid": 0,
     "tar_uid": 0
   },
@@ -1461,27 +1461,19 @@
       "archive/",
       ".github/",
       "tools/release/build_manifest.json",
-      "root *-OUT.txt progress logs"
+      "root OUT.txt and *-OUT.txt progress logs"
     ],
-    "git_tree": "36cdb8c2bd10d0d13f97e7b780ed1279e0545c20",
+    "git_tree": "23243da434ce9d86bf09d0c55a9cc46385f11571",
     "overrides": {
-      ".gitignore": "a11b09991947b4b6f77fa0c320cea403c0da64832a9d9f31a35078d2eff3c696",
-      "CMakeLists.txt": "fb4d1cba3d3539ff94105de967e84297ac9048495ecdbf5cfd2d39c531604a2f",
       "tests/check_reading_release.py": "1775c2630dc567b9ba8a212bea9dfd6f474f5bb43d6dd26aa9be249cb7090bb0",
-      "tests/check_release_artifacts.py": "c98323398bf1c7b85dead006144616f8baae27ed67d4273feeb30e9c65af75dd",
-      "tools/prepare_reading_release.py": "965936d70ac0efe5661c39c46dfe0224242ca352a70a3f9c4372897d3974c9c8",
-      "tools/reading_release.py": "6b1182c93714aff1136edb721d38e0b0efdb9d747d56a3639c512e86fb0f83b7",
-      "tools/release/README.md": "7afaf22f1b62617561405da7cc60ff83a7c75c6bd3fd654fa6d10197c24069dd",
-      "tools/release/build_manifest.py": "b37480f395c8fe4c8cab383d8b14a96cf8b0302497a1dc4de3d7876ce8b0a5ad",
-      "tools/release/reproduce.py": "b70e8edbd0d86efdeff63d8c4bcd0d885c8b847f443c91159efe8b664c10f47c",
-      "tools/release/sign_artifacts.py": "af92c08b41760027dfa61f816a5713c2c6f075a601ac44566d5a11e904226818",
-      "tools/release/verify_artifacts.py": "c103ab8e43f9e62c4337a7c885b81942b1b4d9585373a8ad30d729c660a52f55",
-      "tools/release/workflow-snippet.yml": "4ce5cfbe8fb8fe941603204ff6e45090724dedf4bcee1d844eb56ccfe164d798"
+      "tests/check_release_artifacts.py": "38ccefb3631a957c7117f22a40f01e080229410b2b83e464e98f09ace933300f",
+      "tools/release/README.md": "fa310890cdccf253f0eb88486e0f9225ef5b657d6ff71395f5e1884ed27cf23e",
+      "tools/release/build_manifest.py": "c1c028d670e938b72b5024afe07083b2a8991a10ecc22b825f3a100eeadaf0f5"
     },
-    "revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+    "revision": "12fb48a2332d01be1e55aa68bcb4fa37b7e8763d",
     "tree": {
       "files": 5950,
-      "sha256": "7b5e26b7d6e61376a4cbd8d10e56077b99dcf8ce615e05b5db1e8a4ffcfa6711"
+      "sha256": "f0f7ff128ba8b00b4c726b26ea9d0fc293b921c598b1713071ba33b9dfae61ef"
     }
   },
   "toolchain": {

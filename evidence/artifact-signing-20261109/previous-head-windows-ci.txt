@@ -1,0 +1,14 @@
+Automatic PR CI for prior head 12fb48a2; failure fixed by canonicalizing the test fixture root.
+https://github.com/NoGod3524/EXReader/actions/runs/42656701379/job/129296971812
+
+2026-11-09T16:46:23.5144294Z         Start 226: release-artifacts
+2026-11-09T16:46:24.8463971Z 226/248 Test #226: release-artifacts ......................***Failed    1.33 sec
+2026-11-09T16:46:24.8464776Z Traceback (most recent call last):
+2026-11-09T16:46:24.8465730Z   File "D:\a\EXReader\EXReader\tests\check_release_artifacts.py", line 124, in <module>
+2026-11-09T16:46:24.8466371Z     main()
+2026-11-09T16:46:24.8466662Z     ~~~~^^
+2026-11-09T16:46:24.8467429Z   File "D:\a\EXReader\EXReader\tests\check_release_artifacts.py", line 80, in main
+2026-11-09T16:46:24.8468503Z     assert '--detach-sign' in rendered[0] and str(root / 'SHA256SUMS') == rendered[0][-1]
+2026-11-09T16:46:24.8469237Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-11-09T16:46:24.8469770Z AssertionError
+2026-11-09T16:46:24.8470174Z 

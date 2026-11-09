@@ -112,9 +112,11 @@ the recorded `EXR_*` cache values for the measured configuration.
 
 Tree fingerprints sort relative paths and hash `8-byte big-endian UTF-8 path
 length + path + raw file SHA256` for every file. Dependency/generated trees omit
-`.git`, `__pycache__` and directories starting with `build`. Source inputs use
+only `.git` and `__pycache__`; FreeType's `builds/` contains compiler inputs and
+is included. Keep dependency build outputs outside their source trees. Source inputs use
 Git's tracked and unignored files; the manifest records exclusions for output
-evidence, archives, workflows, itself and root progress logs. Source revision
+evidence, archives, workflows, itself and root progress logs (`OUT.txt` and
+`*-OUT.txt`). Source revision
 and override hashes identify the input snapshot; the content fingerprint remains
 valid when the same bytes are committed. Absolute paths are deliberate: this is
 a same-machine, same-path test, not a relocatable or hermetic toolchain image.

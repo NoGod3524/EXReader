@@ -21,7 +21,7 @@ from sign_artifacts import commands
 def main():
     checks = []
     with tempfile.TemporaryDirectory() as temporary:
-        root = Path(temporary)
+        root = Path(temporary).resolve()
         (root / 'bin').mkdir()
         binary = root / 'bin/example file.dll'
         binary.write_bytes(b'fixture\x00')
@@ -106,7 +106,7 @@ def main():
              {'RUNNER_OS': 'Windows', 'RUNNER_ARCH': 'X64'}, 1000, 'Windows', 'X64')
         assert verify(candidate) == 3
         checks.append('candidate-automatically-includes-checksums')
-        from build_manifest import tree
+        from build_manifest import fingerprint, source_inputs, tree
         from reproduce import package
         snapshot = tree(stage)
         first, second = root / 'first.tar.gz', root / 'second.tar.gz'
@@ -117,6 +117,19 @@ def main():
         (stage / 'fixture.dll').write_bytes(b'changed')
         assert tree(stage) != snapshot
         checks.append('package-ignores-mtime-input-fingerprint-detects-content')
+        (stage / 'builds').mkdir()
+        compiler_input = stage / 'builds/input.c'
+        compiler_input.write_bytes(b'before')
+        snapshot = tree(stage)
+        compiler_input.write_bytes(b'after')
+        assert tree(stage) != snapshot
+        checks.append('dependency-builds-source-directory-is-fingerprinted')
+        # Progress written during a build must not change the input snapshot.
+        for name in ('OUT.txt', 'SIGN-OUT.txt', 'bin/OUT.txt', 'OUT.txt.c'):
+            (root / name).write_bytes(b'progress or source')
+        with patch('build_manifest.output', return_value='OUT.txt\0SIGN-OUT.txt\0bin/OUT.txt\0OUT.txt.c\0'):
+            assert source_inputs(root) == fingerprint(root, ['bin/OUT.txt', 'OUT.txt.c'])
+        checks.append('only-root-progress-logs-excluded-from-build-inputs')
     print(json.dumps({'passed': len(checks), 'checks': checks}))
 
 
