@@ -1,0 +1,28 @@
+{
+  "command": [
+    "<workspace>\\build\\lifetime-crt\\exreader-lifetime-leaks-test.exe",
+    "<workspace>\\tests\\fixtures\\fonts\\primary.ttf",
+    "--crt",
+    "<corpus>\\A Raisin in the Sun (Lorraine Hansberry) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\Between The World and Me (Ta-Nehisi Coates) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\Black Boy (Richard Wright) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\Born a Crime (Trevor Noah) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\Crying in H Mart (Michelle Zauner) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\How Does It Feel to Be a Problem Being Young and Arab in America (Moustafa Bayoumi) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\I Know Why the Caged Bird Sings (Maya Angelou) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\The Absolutely True Diary of a Part-Time Indian (Sherman Alexie) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\The Autobiography of Malcolm X. (Malcolm X, Alex Haley) (z-library.sk, 1lib.sk, z-lib.sk).pdf",
+    "<corpus>\\The Distance Between Us A Memoir (Grande Reyna) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\The Fire Next Time (James Baldwin) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\The Fire This Time A New Generation Speaks about Race (Jesmyn Ward) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\The House on Mango Street (Sandra Cisneros) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "<corpus>\\Zami A New Spelling of My Name - A Biomythography (Audre Lorde) (z-library.sk, 1lib.sk, z-lib.sk).mobi",
+    "<workspaces>\\exr-cjk-corpus\\hongloumeng-24264.epub",
+    "<workspaces>\\exr-cjk-corpus\\xingshihengyan-24239.epub",
+    "<workspaces>\\exr-cjk-corpus\\tangshi300-52323.epub",
+    "<workspaces>\\real-books-pass-a-20261105\\supplemental-samples\\kusamakura-japanese-vertical-writing.epub"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 2.227
+}

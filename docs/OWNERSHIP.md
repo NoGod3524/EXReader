@@ -42,6 +42,9 @@
 | audio backend → `exr_audio_player_get` | 允许读观测快照；回调时可能看到上一提交状态；play/pause/seek/report 等重入拒绝 | track_id 仍借 player |
 | release 回调 | 只释放 context；不得访问/销毁正在终结的 owner | 成功接管后最终调用一次 |
 | SDK 返回的 callback closure | canvas sink 的函数/context 借 canvas；library_source 的 read_at/release 操作拥有的源 context。Debug 调用先验证并保持活动 scope，旧 sink、源释放后 read、源重复 release 均断言 | canvas 由 canvas_free；source 由其 release |
+| image decoder → document resource/resolve | 允许读取所属 document 的资源/链接；返回的资源副本独立。共享 source/context 仍由宿主同步 | 资源副本用 `exr_free` |
+| library unique import 系列 | SQLite 连接锁覆盖事务，允许不同线程使用同一 library；Debug 区分跨线程调用与同线程回调重入，后者返回 `EXR_ARGUMENT` | close 与全部调用互斥 |
+| layout → font getter | 释放 caller font 引用后，可重新用 `exr_layout_font` 取得 layout 保留的 font 借用；不得 free 此借用 | 借用至该 layout_free；重新从其他 live layout 取得视图可以继续使用 |
 
 ## Debug 验证与计数
 
@@ -54,6 +57,7 @@
 | `exr_debug_cleanup()` | 所有 SDK 调用返回、所有拥有资源释放后终结诊断 epoch；有 live 对象则断言。释放隔离区和借用登记，保留累计计数；此后不能再使用任何旧指针。 |
 | Release / `NDEBUG` | 不执行 Debug 契约断言；validate 不检查并返回 1，counts 返回 0，cleanup 无操作。调用者仍须遵守本契约。 |
 | 裸 C 指针访问 | `p[i]`、`strlen(p)`、宿主 `memcpy` 不经过 SDK，不能被 SDK 转成契约断言。访问前用 SDK 入口或 `exr_validate` 校验已登记视图，并保持 owner 存活；ASan 检测绕过入口的越界访问。 |
+| 同地址别名 | C 指针不携带所有权标签；同一地址的原句柄、复制值和重新取得的 font 借用无法逐个区分。Debug 检查对象和最近登记的借用 owner；释放责任仍以取得该值的 API 契约为准。 |
 
 ## 全部公开类型
 

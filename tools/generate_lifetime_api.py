@@ -27,7 +27,10 @@ READ_ONLY_STATUS = {
     "exr_document_cfi_point_at", "exr_document_cfi_point_offset",
     "exr_document_cfi_path_create", "exr_document_cfi_path_create_quoted",
     "exr_document_cfi_path_resolve",
+    "exr_document_resource", "exr_document_resource_bounded", "exr_document_resolve",
 }
+SERIALIZED_STATUS = {"exr_library_import_unique", "exr_library_import_source_unique",
+                     "exr_library_import_file_unique"}
 BORROWED_STRINGS = {
     "exr_node": ("name", "text"), "exr_chapter": ("id", "path"),
     "exr_resource": ("id", "path", "media_type", "properties"),
@@ -209,6 +212,8 @@ def emit(function: Function, opaque: set[str]) -> str:
         lines.append(f'  exr_lifetime_expect({checked[0].name}, "buffer");')
     if function.result == "void":
         mode = 2
+    elif function.name in SERIALIZED_STATUS:
+        mode = 3
     elif function.result != "exr_status" or function.name in READ_ONLY_STATUS or any(
             p.type == "const exr_font_manager *" for p in function.parameters):
         mode = 1
@@ -218,6 +223,11 @@ def emit(function: Function, opaque: set[str]) -> str:
     if function.result == "exr_status":
         if function.name == "exr_hyphenator_breaks":
             lines.append("    if (breaks && size <= 1024) memset(breaks, 0, size + 1);")
+        if function.name == "exr_stretch_get":
+            lines.append("    if (out) memset(out, 0, sizeof(*out));")
+        if function.name in SERIALIZED_STATUS:
+            lines.append("    if (id) *id = 0;")
+            lines.append("    if (created) *created = 0;")
         for p in function.parameters:
             if p.pointer_output:
                 lines.append(f"    if ({p.name}) *{p.name} = NULL;")
@@ -309,6 +319,8 @@ def emit(function: Function, opaque: set[str]) -> str:
         lines.append("  if (exr_result__ && out) {")
         lines.extend(borrow_fields("exr_font_skip", "out", "manager", "    "))
         lines.append("  }")
+    if function.name == "exr_layout_font":
+        lines.append("  exr_lifetime_view(layout, exr_result__);")
     lines.append("  exr_lifetime_end(&exr_scope__);")
     if function.result != "void":
         lines.append("  return exr_result__;")

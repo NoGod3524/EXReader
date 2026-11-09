@@ -1,0 +1,17 @@
+{
+  "command": [
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\cl.EXE",
+    "/nologo",
+    "/MTd",
+    "/fsanitize=address",
+    "/Z7",
+    "/Od",
+    "<workspace>\\tools\\quality\\address_probe.c",
+    "/FoC:<workspace>\\build\\lifetime-asan\\asan-control.obj",
+    "/FeC:<workspace>\\build\\lifetime-asan\\asan-control.exe",
+    "/link",
+    "/INCREMENTAL:NO"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.452
+}

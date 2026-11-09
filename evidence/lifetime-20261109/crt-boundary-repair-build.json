@@ -1,0 +1,16 @@
+{
+  "command": [
+    "cmake",
+    "--build",
+    "build/lifetime-crt",
+    "--parallel",
+    "2",
+    "--target",
+    "exreader-stretch-test",
+    "exreader-library-unique-test",
+    "exreader-kf8-test",
+    "exreader-lifetime-test"
+  ],
+  "exit_code": 4294967295,
+  "elapsed_seconds": 17.759
+}

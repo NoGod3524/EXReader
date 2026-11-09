@@ -441,7 +441,9 @@ exr_status exr_library_import_file_unique(exr_library *library, exr_format forma
   const void *exr_arguments__[] = {library, path, title};
   exr_status exr_result__;
   exr_lifetime_expect(library, "exr_library");
-  if (!exr_lifetime_begin(&exr_scope__, exr_arguments__, 3, 0)) {
+  if (!exr_lifetime_begin(&exr_scope__, exr_arguments__, 3, 3)) {
+    if (id) *id = 0;
+    if (created) *created = 0;
     return exr_fail(error, EXR_ARGUMENT, "Reentrant SDK operation");
   }
   exr_result__ = exr_impl_library_import_file_unique(library, format, path, title, id, created, error);
@@ -469,7 +471,9 @@ exr_status exr_library_import_source_unique(exr_library *library, exr_format for
   const void *exr_arguments__[] = {library, source, title};
   exr_status exr_result__;
   exr_lifetime_expect(library, "exr_library");
-  if (!exr_lifetime_begin(&exr_scope__, exr_arguments__, 3, 0)) {
+  if (!exr_lifetime_begin(&exr_scope__, exr_arguments__, 3, 3)) {
+    if (id) *id = 0;
+    if (created) *created = 0;
     return exr_fail(error, EXR_ARGUMENT, "Reentrant SDK operation");
   }
   exr_result__ = exr_impl_library_import_source_unique(library, format, source, title, id, created, error);
@@ -483,7 +487,9 @@ exr_status exr_library_import_unique(exr_library *library, exr_format format, co
   const void *exr_arguments__[] = {library, data, title};
   exr_status exr_result__;
   exr_lifetime_expect(library, "exr_library");
-  if (!exr_lifetime_begin(&exr_scope__, exr_arguments__, 3, 0)) {
+  if (!exr_lifetime_begin(&exr_scope__, exr_arguments__, 3, 3)) {
+    if (id) *id = 0;
+    if (created) *created = 0;
     return exr_fail(error, EXR_ARGUMENT, "Reentrant SDK operation");
   }
   exr_result__ = exr_impl_library_import_unique(library, format, data, size, title, id, created, error);

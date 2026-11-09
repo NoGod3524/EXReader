@@ -1,12 +1,12 @@
 {
   "command": [
     "C:\\Python314\\python.exe",
-    "<workspace>\\tests\\run_lifetime.py",
-    "<workspace>\\build\\lifetime-asan\\exreader-lifetime-test.exe",
-    "<workspace>\\tests\\fixtures",
+    "tests/run_lifetime.py",
+    "build/lifetime-asan/exreader-lifetime-test.exe",
+    "tests/fixtures",
     "--output",
-    "<workspace>\\evidence\\lifetime-20261109\\asan-contract"
+    "evidence\\lifetime-20261109\\asan-contract"
   ],
   "exit_code": 0,
-  "elapsed_seconds": 2.425
+  "elapsed_seconds": 6.182
 }

@@ -1,4 +1,4 @@
-"""Record the 19-book ASan run and independent static MSVC debug-heap baseline."""
+"""Record the 19-book Windows ASan/CRT or Linux ASan+LSan baseline."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -15,7 +15,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def source_hashes():
     files = {path for pattern in ('src/*.c', 'src/*.h', 'include/exr/*.h', 'include/exreader.h',
-                                  'tests/test_lifetime_leaks.c', 'CMakeLists.txt', 'cmake/*.cmake',
+                                  'tests/test_lifetime_leaks.c', 'tests/test_lifetime.c', 'tests/run_lifetime.py',
+                                  'CMakeLists.txt', 'cmake/*.cmake',
                                   'tools/layers.json', 'tools/*lifetime*.py') for path in ROOT.glob(pattern)}
     return {str(path.relative_to(ROOT)).replace('\\', '/'): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in sorted(files)}
@@ -74,40 +75,49 @@ def run(command, name, output, environment):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['asan', 'crt'])
+    parser.add_argument('mode', choices=['asan', 'crt', 'lsan'])
     parser.add_argument('action', choices=['build', 'run'])
     parser.add_argument('--output', type=Path, default=ROOT / 'evidence/lifetime-20261109')
     parser.add_argument('--corpus', type=Path, default=ROOT / 'tools/regress/corpus.json')
     parser.add_argument('--font', type=Path, default=ROOT / 'tests/fixtures/fonts/primary.ttf')
+    parser.add_argument('--source-revision', help='Git revision for an exported source snapshot')
     parser.add_argument('--dependency-options', type=Path,
-                        default=ROOT / 'evidence/quality-20261108/configure-command.json',
                         help='Existing configure-command JSON; reuse only FETCHCONTENT source paths.')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     build = ROOT / 'build' / ('lifetime-' + args.mode)
-    env = msvc_environment()
-    env['ASAN_OPTIONS'] = 'alloc_dealloc_mismatch=1:halt_on_error=1'
+    if (args.mode == 'lsan') != (os.name != 'nt'):
+        parser.error('Use asan/crt on Windows, or lsan on Linux')
+    env = os.environ.copy() if args.mode == 'lsan' else msvc_environment()
+    env['ASAN_OPTIONS'] = ('detect_leaks=1:' if args.mode == 'lsan' else '') + 'alloc_dealloc_mismatch=1:halt_on_error=1'
+    if args.mode == 'lsan':
+        env['LSAN_OPTIONS'] = 'exitcode=23'
+    env['UBSAN_OPTIONS'] = 'halt_on_error=1:print_stacktrace=1'
     cmake = shutil.which('cmake')
     if args.action == 'build':
         sources = source_hashes()
-        previous = json.loads(args.dependency_options.read_text())['arguments']
+        dependency_options = args.dependency_options
+        if dependency_options is None and os.name == 'nt':
+            dependency_options = ROOT / 'evidence/quality-20261108/configure-command.json'
+        previous = json.loads(dependency_options.read_text())['arguments'] if dependency_options else []
         options = [option for option in previous if option.startswith('-DFETCHCONTENT_')]
         options += ['-DCMAKE_BUILD_TYPE=Debug', '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
                     '-DEXR_BUILD_TESTS=ON', '-DEXR_BUILD_TOOLS=ON', '-DEXR_BUILD_FUZZ=ON',
-                    '-DEXR_BUILD_JNI=OFF', '-DEXR_SANITIZE=' + ('ON' if args.mode == 'asan' else 'OFF'),
+                    '-DEXR_BUILD_JNI=OFF', '-DEXR_SANITIZE=' + ('OFF' if args.mode == 'crt' else 'ON'),
                     '-DEXR_BUILD_SHARED_COMPAT=ON', '-DEXR_ENABLE_LCP=OFF',
                     '-DEXR_ENABLE_IMAGE_WEBP=OFF', '-DEXR_ENABLE_IMAGE_TIFF=OFF',
                     '-DEXR_ENABLE_IMAGE_AVIF=OFF', '-DEXR_ENABLE_ICC=OFF',
                     '-DEXR_ENABLE_PDF_CRYPTO=OFF', '-DEXR_ENABLE_MP3=OFF',
-                    '-DEXR_ENABLE_PDF_JPX=ON', '-DCMAKE_MAKE_PROGRAM=' + shutil.which('ninja'),
-                    '-DCMAKE_C_COMPILER=' + shutil.which('cl', path=env['PATH']),
+                    '-DEXR_ENABLE_PDF_JPX=ON', '-DCMAKE_MAKE_PROGRAM=' + shutil.which('ninja')]
+        if os.name == 'nt':
+            options += ['-DCMAKE_C_COMPILER=' + shutil.which('cl', path=env['PATH']),
                     '-DCMAKE_C_FLAGS=' + ('/fsanitize=address' if args.mode == 'asan' else ''),
                     '-DCMAKE_C_FLAGS_DEBUG=/Z7 /Od',
                     '-DCMAKE_EXE_LINKER_FLAGS=/INCREMENTAL:NO /DEBUG',
                     '-DCMAKE_EXE_LINKER_FLAGS_DEBUG=/DEBUG /INCREMENTAL:NO']
         run([cmake, '-S', str(ROOT), '-B', str(build), '-G', 'Ninja'] + options,
             args.mode + '-configure', args.output, env)
-        run([cmake, '--build', str(build), '--parallel', '6', '--target', 'exreader-lifetime-leaks-test'],
+        run([cmake, '--build', str(build), '--parallel', '2', '--target', 'exreader-lifetime-leaks-test'],
             args.mode + '-build', args.output, env)
         if source_hashes() != sources:
             raise ValueError('Source changed during compilation; repeat the build before measuring')
@@ -138,7 +148,19 @@ def main():
         actual = hashlib.sha256(Path(book['path']).read_bytes()).hexdigest()
         if actual != book['sha256']:
             raise ValueError(f'Corpus SHA256 mismatch: {book["id"]}')
-    command = [str(build / 'exreader-lifetime-leaks-test.exe'), str(args.font)]
+    executable = build / ('exreader-lifetime-leaks-test.exe' if os.name == 'nt' else 'exreader-lifetime-leaks-test')
+    if args.mode == 'lsan':
+        control = subprocess.run([str(executable), '--lsan-control'], env=env, capture_output=True)
+        diagnostic = (control.stdout + control.stderr).decode('utf-8', errors='replace')
+        (args.output / 'lsan-control.txt').write_text(diagnostic, encoding='utf-8')
+        if (control.returncode != 23 or 'ERROR: LeakSanitizer: detected memory leaks' not in diagnostic
+                or 'exr_lifetime_new' not in diagnostic):
+            raise ValueError('LSan failed to detect the deliberately unreleased SDK document')
+        (args.output / 'lsan-control.json').write_text(json.dumps({
+            'exit_code': control.returncode, 'expected': 'LeakSanitizer: SDK document leak',
+            'detected': True}, indent=2) + '\n', encoding='utf-8')
+        progress('LSan positive control detected the deliberately unreleased SDK document (exit 23).')
+    command = [str(executable), str(args.font)]
     if args.mode == 'crt':
         command += ['--crt']
     command += [book['path'] for book in books]
@@ -163,19 +185,25 @@ def main():
         raise ValueError('Sanitizer diagnostic in corpus run')
     record = {'mode': args.mode, 'books_passed': 19, 'books_total': 19,
               'workload': 'open, enumerate, load first part/page, render one page, free all objects',
-              'source_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+              'source_revision': args.source_revision or subprocess.check_output(
+                  ['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
               'source_sha256': sources,
               'font_sha256': hashlib.sha256(args.font.read_bytes()).hexdigest(),
               'books': [{key: book[key] for key in ('id', 'sha256')} for book in books],
               'counts': counts, 'sanitizer_diagnostics': 0,
-              'leak_detector': 'MSVC debug CRT with positive control' if args.mode == 'crt' else
-                               'Object counters; MSVC ASan detects address errors, not leaks'}
+              'leak_detector': {'crt': 'MSVC debug CRT with positive control',
+                                'asan': 'Object counters; MSVC ASan detects address errors, not leaks',
+                                'lsan': 'Linux ASan+LSan with SDK document leak positive control'}[args.mode]}
     if args.mode == 'crt':
         record.update(leaked_blocks=0, leaked_bytes=0, control_leaked_blocks=1, control_leaked_bytes=17)
+    elif args.mode == 'lsan':
+        record.update(leaked_blocks=0, leaked_bytes=0, control_exit_code=23,
+                      sanitizer_environment={key: env[key] for key in ('ASAN_OPTIONS', 'LSAN_OPTIONS', 'UBSAN_OPTIONS')})
     (args.output / f'{args.mode}-19-books-summary.json').write_text(
         json.dumps(record, indent=2) + '\n', encoding='utf-8')
     progress(f'{args.mode} 19/19 books PASS; {len(counts)} object kinds balanced; ' +
              ('CRT heap leak delta=0 blocks/0 bytes, positive control=1 block/17 bytes.' if args.mode == 'crt'
+              else 'AddressSanitizer/LeakSanitizer diagnostics=0; object live counts=0.' if args.mode == 'lsan'
               else 'AddressSanitizer diagnostics=0; object live counts=0.'))
 
 

@@ -107,6 +107,15 @@ int main(int argc, char **argv) {
 #ifdef HAVE_CRT_HEAP
   _CrtMemState before, after, delta;
 #endif
+  /* The runner requires LSan to detect this lost handle. This also verifies
+     that the diagnostic registry drops its roots instead of hiding leaks. */
+  if (argc == 2 && !strcmp(argv[1], "--lsan-control")) {
+    exr_document *lost = NULL;
+    OK(exr_document_open_memory(EXR_TXT, "intentional SDK leak", 19, &lost, &error));
+    CHECK(lost != NULL);
+    puts("LSAN_CONTROL deliberately unreleased SDK document");
+    return 0;
+  }
   if (argc < 3) {
     fprintf(stderr, "usage: %s FONT [--crt] BOOK...\n", argv[0]);
     return 2;

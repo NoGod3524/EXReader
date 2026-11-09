@@ -1,7 +1,7 @@
 {
-  "total": 50,
-  "passed": 50,
-  "intentional_aborts": 34,
+  "total": 53,
+  "passed": 53,
+  "intentional_aborts": 35,
   "results": [
     {
       "case": "valid_document",
@@ -89,6 +89,22 @@
       "exit_code": 3,
       "passed": true,
       "stdout": "BEGIN validate_broken_parent_chain\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "layout_font_reborrow",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN layout_font_reborrow\r\nPASS layout_font_reborrow (15 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "borrowed_font_after_layout_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN borrowed_font_after_layout_free\r\n",
       "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
     },
     {
@@ -345,6 +361,14 @@
       "exit_code": 0,
       "passed": true,
       "stdout": "BEGIN library_source_survives_close\r\nPASS library_source_survives_close (9 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "library_unique_callback_reentry_rejected",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN library_unique_callback_reentry_rejected\r\nPASS library_unique_callback_reentry_rejected (13 checks)\r\n",
       "stderr": ""
     },
     {

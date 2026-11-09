@@ -43,6 +43,6 @@ CMake Warning (deprecated) at <home>/exr-deps/miniz/CMakeLists.txt:1 (cmake_mini
 This warning is for project developers.  Use -Wno-author or -Wno-deprecated
 to suppress it.
 
--- Configuring done (2.2s)
--- Generating done (0.7s)
+-- Configuring done (5.6s)
+-- Generating done (1.2s)
 -- Build files have been written to: <workspace>/build/lifetime-crt

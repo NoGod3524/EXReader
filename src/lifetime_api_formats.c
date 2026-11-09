@@ -135,7 +135,7 @@ exr_status exr_document_resolve(const exr_document *doc, size_t chapter, const c
   const void *exr_arguments__[] = {doc, uri};
   exr_status exr_result__;
   exr_lifetime_expect(doc, "exr_document");
-  if (!exr_lifetime_begin(&exr_scope__, exr_arguments__, 2, 0)) {
+  if (!exr_lifetime_begin(&exr_scope__, exr_arguments__, 2, 1)) {
     return exr_fail(error, EXR_ARGUMENT, "Reentrant SDK operation");
   }
   exr_result__ = exr_impl_document_resolve(doc, chapter, uri, resource, node, error);
@@ -149,7 +149,7 @@ exr_status exr_document_resource(const exr_document *doc, size_t resource, void 
   const void *exr_arguments__[] = {doc};
   exr_status exr_result__;
   exr_lifetime_expect(doc, "exr_document");
-  if (!exr_lifetime_begin(&exr_scope__, exr_arguments__, 1, 0)) {
+  if (!exr_lifetime_begin(&exr_scope__, exr_arguments__, 1, 1)) {
     if (data) *data = NULL;
     if (size) *size = 0;
     return exr_fail(error, EXR_ARGUMENT, "Reentrant SDK operation");

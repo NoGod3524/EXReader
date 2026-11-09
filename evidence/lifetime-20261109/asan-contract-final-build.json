@@ -1,0 +1,16 @@
+{
+  "command": [
+    "cmake",
+    "--build",
+    "build/lifetime-asan",
+    "--parallel",
+    "2",
+    "--target",
+    "exreader-lifetime-test",
+    "exreader-stretch-test",
+    "exreader-library-unique-test",
+    "exreader-kf8-test"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 16.813
+}

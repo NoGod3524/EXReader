@@ -114,6 +114,22 @@ static void pager_retains_font(void) {
   CHECK(page); OK(exr_render_page(page,NULL,0,&image,&error)); CHECK(image.pixels);
   exr_bitmap_free(&image); exr_layout_free(page); exr_pager_free(p); exr_document_free(d);
 }
+static void layout_font_reborrow(void) {
+  exr_document *d=document(); exr_font *f=font(), *view;
+  exr_layout *a=layout(d,f), *b=layout(d,f); exr_bitmap image={0};
+  exr_font_free(f); view=exr_layout_font(a);
+  CHECK(exr_validate(view) && exr_font_count(view)>0);
+  OK(exr_render_page(a,view,0,&image,&error)); exr_bitmap_free(&image);
+  exr_layout_free(a); view=exr_layout_font(b);
+  CHECK(exr_validate(view) && exr_font_count(view)>0);
+  exr_layout_free(b); exr_document_free(d);
+}
+static void borrowed_font_after_layout_free(void) {
+  exr_document *d=document(); exr_font *f=font(), *view;
+  exr_layout *a=layout(d,f), *b=layout(d,f);
+  (void)b; exr_font_free(f); view=exr_layout_font(a); exr_layout_free(a);
+  (void)exr_font_count(view);
+}
 static void validate_broken_parent_chain(void) {
   exr_document *d=document(); exr_font *f=font(); exr_pager *p=pager(d,f);
   exr_document_free(d); (void)exr_validate(p);
@@ -293,6 +309,32 @@ static void library_source_survives_close(void) {
   CHECK(source.read_at(source.context,0,buffer,sizeof(buffer))==sizeof(buffer));
   CHECK(!memcmp(buffer,"source",6)); source.release(source.context);
 }
+typedef struct { exr_library *library; unsigned char *data; size_t size; unsigned calls; } unique_reentry_state;
+static size_t unique_reentry_read(void *context,uint64_t offset,void *buffer,size_t size) {
+  unique_reentry_state *state=context;
+  if(!state->calls++) {
+    exr_error local={0}; int64_t id=42; int created=1;
+    CHECK(exr_library_import_unique(state->library,EXR_TXT,"nested",6,NULL,&id,&created,&local)==EXR_ARGUMENT);
+    CHECK(id==0 && created==0);
+  }
+  if(offset>=state->size) return 0;
+  if(size>state->size-(size_t)offset) size=state->size-(size_t)offset;
+  memcpy(buffer,state->data+(size_t)offset,size); return size;
+}
+static void library_unique_callback_reentry_rejected(void) {
+  unique_reentry_state state={0}; exr_source source={0};
+  char path[4096]; FILE *file; long size; int64_t id=0; int created=0;
+  CHECK(snprintf(path,sizeof(path),"%s/sample.epub",fixtures)>0);
+  file=fopen(path,"rb"); CHECK(file && !fseek(file,0,SEEK_END));
+  size=ftell(file); CHECK(size>0); rewind(file);
+  state.size=(size_t)size; state.data=malloc(state.size); CHECK(state.data);
+  CHECK(fread(state.data,1,state.size,file)==state.size); fclose(file);
+  OK(exr_library_open(":memory:",&state.library,&error));
+  source.size=state.size; source.read_at=unique_reentry_read; source.context=&state;
+  OK(exr_library_import_source_unique(state.library,EXR_EPUB,&source,NULL,&id,&created,&error));
+  CHECK(state.calls>0 && id>0 && created==1);
+  exr_library_close(state.library); free(state.data);
+}
 typedef struct { exr_audio_player *player; unsigned closes,releases; } audio_observer;
 static exr_status observe_audio(void *context,const exr_audio_command *command,exr_error *e) {
   audio_observer *observer=context; exr_audio_playback state={0}; exr_error observed={0};
@@ -387,6 +429,7 @@ static const test_case cases[]={
   DEATH(validate_after_free), DEATH(stale_address_after_create), DEATH(font_double_free),
   DEATH(font_after_free), DEATH(pager_double_free), DEATH(pager_after_document_free),
   NORMAL(pager_retains_font), DEATH(validate_broken_parent_chain),
+  NORMAL(layout_font_reborrow), DEATH(borrowed_font_after_layout_free),
   NORMAL(child_cleanup_after_document_free), DEATH(layout_double_free),
   DEATH(layout_after_free), DEATH(borrowed_nodes_after_document_free),
   DEATH(borrowed_text_after_document_free), DEATH(borrowed_page_after_pager_free),
@@ -403,6 +446,7 @@ static const test_case cases[]={
   DEATH(canvas_sink_after_free), DEATH(canvas_sink_destroy_active),
   DEATH(library_source_double_release), DEATH(library_source_after_release),
   NORMAL(library_source_survives_close),
+  NORMAL(library_unique_callback_reentry_rejected),
   NORMAL(query_retains_index), DEATH(cfi_double_free), NORMAL(fixed_text_survives_input),
   NORMAL(callback_reentry_rejected), NORMAL(callback_independent_allowed),
   DEATH(callback_destroy_active), NORMAL(null_free)
