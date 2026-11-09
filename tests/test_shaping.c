@@ -352,10 +352,85 @@ static void damaged_tables(void) {
     rejected("a\xcc\x87\xcc\x81",5,&o,EXR_FONT);exr_font_free(font);font=original;
   }
 }
+static int cache_cancel(void *context) { (void)context;return 1; }
+static void cached_contexts(void) {
+  const uint32_t context[]={0,'A',0x4e00,0x628,0x627,0x200c,0x200d,0x301};
+  const char *text[]={"AV","ffi","\xd8\xa8","a\xcc\x81"};
+  exr_shape_feature kern={TAG('k','e','r','n'),1};
+  size_t t,a,b,repeat;
+  for(t=0;t<4;t++) for(a=0;a<8;a++) for(b=0;b<8;b++) {
+    exr_shape_options o=options();exr_shaped_glyph *expected=NULL,*actual=NULL;size_t n=0,m=0;
+    o.context_before=context[a];o.context_after=context[b];o.font_size=16+(float)(a%3);
+    o.style_flags=(unsigned)(b%2);o.direction=t==2 ? EXR_DIRECTION_RTL : EXR_DIRECTION_LTR;
+    o.script=t==2 ? TAG('a','r','a','b') : TAG('l','a','t','n');
+    /* Explicit default kern keeps the reference on the uncached feature path. */
+    o.features=&kern;o.feature_count=1;
+    OK(exr_shape(font,0,text[t],strlen(text[t]),&o,&expected,&n,&error));
+    o.features=NULL;o.feature_count=0;
+    for(repeat=0;repeat<2;repeat++) {
+      OK(exr_shape(font,0,text[t],strlen(text[t]),&o,&actual,&m,&error));
+      CHECK(m==n && (!m || !memcmp(actual,expected,m*sizeof(*actual))));
+      if(m) actual[0].glyph=UINT32_MAX; /* Caller ownership cannot corrupt a later hit. */
+      exr_free(actual);actual=NULL;
+    }
+    o.control.cancelled=cache_cancel;
+    CHECK(exr_shape(font,0,text[t],strlen(text[t]),&o,&actual,&m,&error)==EXR_CANCELLED && !actual && !m);
+    exr_free(expected);
+  }
+}
+static void cache_statistics(void) {
+  exr_font *f=open_font("shaping.ttf");
+  exr_shape_options o=exr_shape_defaults();
+  exr_shaped_glyph *g=NULL;size_t count=0;
+  exr_shape_feature kern={TAG('k','e','r','n'),1};
+  exr_font_cache_stats stats={0};
+  CHECK(exr_font_cache_stats_get(f,&stats,&error)==EXR_ARGUMENT);
+  stats.struct_size=sizeof(stats);
+  CHECK(exr_font_cache_stats_get(NULL,&stats,&error)==EXR_ARGUMENT);
+  CHECK(exr_font_cache_stats_get(f,NULL,&error)==EXR_ARGUMENT);
+  OK(exr_font_cache_stats_get(f,&stats,&error));
+  CHECK(!stats.shaping_requests && !stats.glyph_requests);
+  OK(exr_shape(f,0,"AV",2,&o,&g,&count,&error));exr_free(g);
+  OK(exr_shape(f,0,"AV",2,&o,&g,&count,&error));exr_free(g);
+  o.features=&kern;o.feature_count=1;
+  OK(exr_shape(f,0,"AV",2,&o,&g,&count,&error));exr_free(g);
+  OK(exr_font_cache_stats_get(f,&stats,&error));
+  CHECK(stats.shaping_requests==2 && stats.shaping_hits==1 && stats.shaping_misses==1);
+  CHECK(stats.shaping_bypasses==1 && !stats.shaping_evictions);
+  CHECK(!stats.glyph_requests && !stats.glyph_hits && !stats.glyph_misses);
+  exr_font_free(f);
+}
+static void cache_collisions(void) {
+  /* These short runs collide in the former direct-mapped cache on little-endian
+     targets. A small working set must stay resident and return exact results. */
+  const char *text[]={"Afbf","Aa c","VVxi","Vdyx","fAAy"};
+  const unsigned sequence[]={0,1,2,3,0,1,2,3,0,4,0,1};
+  exr_font *f=open_font("shaping.ttf");
+  exr_shape_options o=exr_shape_defaults();
+  exr_shape_feature kern={TAG('k','e','r','n'),1};
+  exr_shaped_glyph *expected[5]={0};size_t counts[5]={0},i;
+  exr_font_cache_stats stats={0};stats.struct_size=sizeof(stats);
+  o.features=&kern;o.feature_count=1;
+  for(i=0;i<5;i++) OK(exr_shape(f,0,text[i],4,&o,&expected[i],&counts[i],&error));
+  o.features=NULL;o.feature_count=0;
+  for(i=0;i<sizeof(sequence)/sizeof(*sequence);i++) {
+    unsigned which=sequence[i];exr_shaped_glyph *actual=NULL;size_t count=0;
+    OK(exr_shape(f,0,text[which],4,&o,&actual,&count,&error));
+    CHECK(count==counts[which] && (!count || !memcmp(actual,expected[which],count*sizeof(*actual))));
+    exr_free(actual);
+    if(i==7 || i==10) {
+      OK(exr_font_cache_stats_get(f,&stats,&error));
+      CHECK(stats.shaping_requests==i+1 && stats.shaping_hits==(i==7 ? 4 : 6));
+      CHECK(stats.shaping_misses==(i==7 ? 4 : 5));
+    }
+  }
+  for(i=0;i<5;i++) exr_free(expected[i]);
+  exr_font_free(f);
+}
 int main(int argc, char **argv) {
   CHECK(argc == 2); directory = argv[1]; font = open_font("shaping.ttf");
   validation(); latin(); marks(); lookup_flags(); long_marks(); optional_lookups(); context_formats();
-  arabic(); controls_and_missing(); damaged_tables();
+  arabic(); controls_and_missing(); damaged_tables(); cached_contexts(); cache_statistics(); cache_collisions();
   exr_font_free(font);
   printf("EXReader shaping: %u checks passed\n", checks);
   return 0;

@@ -6,6 +6,69 @@
 #include "opentype_internal.h"
 #include FT_SYNTHESIS_H
 #include FT_PARAMETER_TAGS_H
+/* Font instances own their immutable face/variation identities. The LRU shares
+   a 2 MiB ceiling across all faces, including metadata, and is optional on OOM. */
+#define GLYPH_CACHE_LIMIT (2u * 1024u * 1024u)
+struct exr_glyph_cache {
+  exr_cached_glyph *buckets[256], *first, *last;
+  size_t bytes;
+};
+static unsigned glyph_bucket(size_t face,uint32_t glyph,FT_F26Dot6 size,unsigned flags) {
+  return (unsigned)(glyph*2654435761u+(uint32_t)size*2246822519u+face*31u+flags*17u)&255u;
+}
+static void glyph_unlink(struct exr_glyph_cache *cache,exr_cached_glyph *entry) {
+  if(entry->previous) entry->previous->next=entry->next; else cache->first=entry->next;
+  if(entry->next) entry->next->previous=entry->previous; else cache->last=entry->previous;
+}
+static void glyph_front(struct exr_glyph_cache *cache,exr_cached_glyph *entry) {
+  entry->previous=NULL;entry->next=cache->first;
+  if(cache->first) cache->first->previous=entry; else cache->last=entry;
+  cache->first=entry;
+}
+exr_cached_glyph *exr_glyph_cache_find(exr_font *font,size_t face,uint32_t glyph,FT_F26Dot6 size,unsigned flags) {
+  struct exr_glyph_cache *cache=font->raster_cache;
+  exr_cached_glyph *entry;
+  font->cache_stats.glyph_requests++;
+  if(!cache) { font->cache_stats.glyph_misses++;return NULL; }
+  for(entry=cache->buckets[glyph_bucket(face,glyph,size,flags)];entry;entry=entry->hash_next)
+    if(entry->face==face && entry->glyph==glyph && entry->size==size && entry->flags==flags) {
+      font->cache_stats.glyph_hits++;
+      glyph_unlink(cache,entry);glyph_front(cache,entry);return entry;
+    }
+  font->cache_stats.glyph_misses++;
+  return NULL;
+}
+void exr_glyph_cache_store(exr_font *font,size_t face,uint32_t glyph,FT_F26Dot6 size,unsigned flags,
+                           FT_GlyphSlot slot,size_t work) {
+  struct exr_glyph_cache *cache=font->raster_cache;
+  exr_cached_glyph *entry;
+  size_t pitch,bytes; unsigned row,bucket=glyph_bucket(face,glyph,size,flags);
+  if(slot->bitmap.pixel_mode!=FT_PIXEL_MODE_GRAY && slot->bitmap.pixel_mode!=FT_PIXEL_MODE_MONO) return;
+  if(slot->bitmap.pitch==INT_MIN) return;
+  pitch=(size_t)abs(slot->bitmap.pitch);
+  if(pitch>GLYPH_CACHE_LIMIT || slot->bitmap.rows>GLYPH_CACHE_LIMIT/(pitch ? pitch : 1)) return;
+  bytes=sizeof(*entry)+pitch*slot->bitmap.rows;
+  if(bytes>GLYPH_CACHE_LIMIT-sizeof(*cache)) return;
+  if(!cache) {
+    cache=calloc(1,sizeof(*cache));if(!cache) return;
+    cache->bytes=sizeof(*cache);font->raster_cache=cache;
+  }
+  entry=malloc(bytes);if(!entry) return;
+  while(cache->last && cache->bytes>GLYPH_CACHE_LIMIT-bytes) {
+    exr_cached_glyph *old=cache->last,**link=&cache->buckets[old->bucket];
+    while(*link!=old) link=&(*link)->hash_next;
+    *link=old->hash_next;glyph_unlink(cache,old);cache->bytes-=old->bytes;free(old);
+    font->cache_stats.glyph_evictions++;
+  }
+  memset(entry,0,sizeof(*entry));
+  entry->face=face;entry->glyph=glyph;entry->size=size;entry->flags=flags;entry->bucket=bucket;
+  entry->bytes=bytes;entry->work=work;entry->left=slot->bitmap_left;entry->top=slot->bitmap_top;
+  entry->bitmap=slot->bitmap;entry->bitmap.buffer=(unsigned char *)(entry+1);entry->bitmap.pitch=(int)pitch;
+  for(row=0;row<slot->bitmap.rows;row++)
+    if(pitch) memcpy(entry->bitmap.buffer+row*pitch,slot->bitmap.buffer+(ptrdiff_t)row*slot->bitmap.pitch,pitch);
+  entry->hash_next=cache->buckets[bucket];cache->buckets[bucket]=entry;
+  glyph_front(cache,entry);cache->bytes+=bytes;
+}
 #include FT_TRUETYPE_TABLES_H
 
 FT_Error exr_font_face_open(FT_Library library,const void *data,size_t size,unsigned face_index,FT_Face *out) {
@@ -140,6 +203,12 @@ exr_status exr_font_open(const char *path, exr_font **out, exr_error *e) {
   return status;
 }
 size_t exr_font_count(const exr_font *font) { return font ? font->count : 0; }
+exr_status exr_font_cache_stats_get(const exr_font *font,exr_font_cache_stats *out,exr_error *e) {
+  if(!font || !out || out->struct_size<sizeof(*out))
+    return exr_fail(e,EXR_ARGUMENT,"Invalid font cache statistics output");
+  *out=font->cache_stats;out->struct_size=sizeof(*out);
+  return exr_fail(e,EXR_OK,"");
+}
 int exr_font_has_glyph(const exr_font *font, size_t index, uint32_t cp) {
   return font && index < font->count && cp <= 0x10ffff && !(cp >= 0xd800 && cp <= 0xdfff) &&
          FT_Get_Char_Index(font->faces[index].face, cp) != 0;
@@ -148,6 +217,11 @@ void exr_font_free(exr_font *f) {
   size_t i;
   if (f && --f->refs) return;
   if (f) {
+    if(f->raster_cache) {
+      exr_cached_glyph *entry=f->raster_cache->first;
+      while(entry) { exr_cached_glyph *next=entry->next;free(entry);entry=next; }
+      free(f->raster_cache);
+    }
     for (i = 0; i < f->count; i++) {
       exr_face *face = &f->faces[i];
       exr_ot_free(face);

@@ -1,0 +1,11 @@
+{
+  "ac": {
+    "PROCTHROTTLEMAX": 100,
+    "PROCTHROTTLEMIN": 5,
+    "PERFBOOSTMODE": 2
+  },
+  "active_scheme": "381b4222-f694-41f0-9685-ff5bb260df2e",
+  "scheme": "381b4222-f694-41f0-9685-ff5bb260df2e",
+  "errors": [],
+  "verified": true
+}

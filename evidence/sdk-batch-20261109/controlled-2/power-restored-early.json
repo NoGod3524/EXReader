@@ -1,0 +1,11 @@
+{
+  "utc": "2026-11-09T16:22:04.9882159Z",
+  "ac": {
+    "PROCTHROTTLEMIN": 5,
+    "PROCTHROTTLEMAX": 100,
+    "PERFBOOSTMODE": 2
+  },
+  "verified": true,
+  "scheme": "381b4222-f694-41f0-9685-ff5bb260df2e",
+  "reason": "Benchmark batches finished; postflight CIM collection is slow. Restored immediately before final regression; wrapper finally will verify again."
+}
