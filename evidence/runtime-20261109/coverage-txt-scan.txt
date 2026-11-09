@@ -1,0 +1,2 @@
+["<workspace>\\evidence\\runtime-20261109\\local\\g\\txt-scan.exe"]
+bounded TXT projection checks passed

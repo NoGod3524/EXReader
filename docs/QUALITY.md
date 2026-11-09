@@ -1,4 +1,54 @@
-## 编译器诊断与覆盖测量 · 2026-11-08
+## 运行时检查与逐条核定 · 2026-11-09
+
+**本机 MSVC ASan 已跑通。30 条项目告警已全部核定：确认缺陷 0、确认误报 30、无法判定 0。** [逐条结论及证明](../evidence/runtime-20261109/TRIAGE.md)、[机器可读记录](../evidence/runtime-20261109/triage.json)保留原 SARIF 编号、原始完整路径、当前行号和两版源码 SHA-256。源码证明逐项检查返回码、循环不变量与释放责任；未初始化值及泄漏告警不以 ASan 无输出作为误报依据。
+
+| 本机路线 | 实测结论 | 原始输出 |
+|---|---|---|
+| MSVC 19.44 / VS Build Tools 2022 | `/fsanitize=address` 编译成功；故意越界探针退出 1，报告 `heap-buffer-overflow`、4 字节越界写及源码调用栈 | [编译](../evidence/runtime-20261109/route-msvc-build.txt)、[实际诊断](../evidence/runtime-20261109/route-msvc-execute.txt) |
+| MinGW GCC 16.2 UBSan | 链接退出 1：`cannot find -lubsan` | [输出](../evidence/runtime-20261109/route-mingw-undefined.txt) |
+| MinGW GCC 16.2 ASan | 链接退出 1：`cannot find -lasan` | [输出](../evidence/runtime-20261109/route-mingw-address.txt) |
+| WSL | `wsl -l -v` 退出 1：`The Windows Subsystem for Linux is not installed` | [输出](../evidence/runtime-20261109/route-wsl.txt) |
+| Docker | `docker --version` 创建进程失败：`WinError 2`，无该可执行文件 | [输出](../evidence/runtime-20261109/route-docker.txt) |
+
+MSVC 安装完整，缺的是普通终端的开发者环境；脚本通过 `vswhere` 定位并载入 `vcvars64.bat`。构建参数显式加入 `/fsanitize=address`，使用 `/Z7 /Od` 并关闭增量链接，避开 `/RTC`；这些兼容条件见 [Microsoft 官方文档](https://learn.microsoft.com/en-us/cpp/sanitizers/asan)。故意越界探针用于验证检测器，不计为项目缺陷。此路线运行的是 ASan；UBSan 的本机链接失败证据另列。
+
+复跑入口：[路线探针](../tools/quality/runtime_routes.py)、[构建及完整 ctest](../tools/quality/runtime_native.py)、[逐页真书与样本变体](../tools/quality/runtime_workloads.py)、[证据验收](../tools/quality/verify_runtime.py)。每个阶段追加到 [SAN-FINAL-OUT.txt](../SAN-FINAL-OUT.txt)。
+
+**实际运行。** 被测产品源码为 `d9ffdbf0`，本轮未改 `src/`。全部 **116/116 个项目 C 编译单元**带 `/fsanitize=address`，同次构建的第三方依赖也插桩；[构建身份与产物哈希](../evidence/runtime-20261109/build-manifest.json)、[编译命令](../evidence/runtime-20261109/asan-final-compile-commands.json.gz)、[DLL 的 ASan 导入](../evidence/runtime-20261109/asan-imports.txt)可复核。
+
+| 工作负载 | 实测规模 | 结果与证据 |
+|---|---|---|
+| 全部 ctest | **228 个不同用例**；230 次执行含基准重试 | 最终 **228 通过、0 失败、0 跳过**；[首轮 221 项](../evidence/runtime-20261109/asan-ctest.xml)、[补齐 7 项 fuzz](../evidence/runtime-20261109/asan-fuzz.xml)、[基准重试](../evidence/runtime-20261109/asan-benchmark.xml) |
+| 真书逐页分页与渲染 | **原清单 19 本、11,504 页** | ASan、独立无 ASan 的 MSVC、GCC 三组结果逐页一致；[ASan 结果](../evidence/runtime-20261109/asan-realbooks.json.gz)、[MSVC 对照](../evidence/runtime-20261109/control-realbooks.json.gz)、[差异为 0](../evidence/runtime-20261109/asan-vs-control-realbooks.diff.json) |
+| 全部样本及容错变体 | **1,903 个文件登记；1,761 个 SDK 输入 × 4 = 7,044 次** | 原件、空输入、前半截、前 16 字节 XOR；完整完成 1,777、SDK 拒绝 5,267，崩溃/超时均 0；渲染 8,644 页；[逐项记录](../evidence/runtime-20261109/asan-fixtures.jsonl)、[汇总](../evidence/runtime-20261109/asan-fixtures-summary.json) |
+| TXT 补充路径 | 复用既有 `bounded_txt_scan/check.c`、`view.c`、`txt_anchor_resolve/check.c` | ASan 与 gcov 各 3/3 通过；覆盖旧报告遗漏的有界 TXT 游标、分页和锚点路径；[分页输出](../evidence/runtime-20261109/asan-txt-view.txt) |
+
+**ASan 实际诊断 0 条：项目 0、第三方 0、误报 0。** 单独的故意越界探针产生 1 条预期诊断。30 条静态告警的核定结果为确认误报 30、确认缺陷 0、无法判定 0；没有确认的产品缺陷，因此没有产品修复或待复现缺陷。样本原件全部通过 SHA-256 回查；142 个 Unicode 数据、像素 oracle、说明及参考文件登记身份，由相应用例使用，不计作可独立打开的 SDK 输入。原件结果为完整完成 1,305、SDK 拒绝 456，拒绝不等于成功解析。
+
+**首次失败及修复前后。** 原 CMake 的 sanitizer 基准分支排除了 MSVC，ASan 首轮转换基准因此套用了普通进程的 32 MiB RSS 增量门槛：实测增量 385,531,904 字节，失败。质量运行脚本现在为生成目录中的测试注册加入仓库已有的 `--instrumented` 参数，重跑通过；功能检查继续执行，RSS 仍记录，ASan quarantine 使用默认值。独立 GCC 运行仍执行原内存门槛，增量 **1,810,432 字节，低于 33,554,432 字节**。[修复前](../evidence/runtime-20261109/asan-benchmark-before.json)、[修复后](../evidence/runtime-20261109/asan-benchmark-after.json)、[生成测试的修改](../evidence/runtime-20261109/msvc-ctest-adapter.json)、[普通构建门槛](../evidence/runtime-20261109/coverage-convert-benchmark.json)。隔离区保留已释放块的行为见 [MSVC ASan 选项](https://learn.microsoft.com/en-us/cpp/sanitizers/asan-flags?view=msvc-170)。
+
+初始配置沿用了旧轮的 fuzz=OFF，首轮注册 221 项；启用 fuzz 后，7 项全部补跑通过。中途重链接因 DLL 仍被真书进程占用而失败 `LNK1104`，待进程结束后构建成功；[失败尝试](../evidence/runtime-20261109/asan-build-attempt2.txt)保留。首轮使用的 DLL 与补跑时重链接后的 DLL 各自记录 SHA-256，产品源码及对象未改。[首轮产物](../evidence/runtime-20261109/asan-initial-artifacts.json)。
+
+**真书基线差异已定位。** 相对本轮起点 `d9ffdbf0` 的独立无 ASan 对照，19 本页数、字形数及逐页哈希变化均为 **0**。相对 11 月 8 日旧质量报告的混合语料基线，实际仍有一项历史变化：`Zami` **646 → 666 页**，原 646 页哈希均变化，新增 20 页，其余 18 本不变；[原始差异](../evidence/runtime-20261109/asan-realbooks.diff.json)保留。
+
+该变化来自已合入的 [PR #96](https://github.com/NoGod3524/EXReader/pull/96)：MOBI 改用 `exr_mobi_html`，识别 pagebreak 并分章。用 SHA-256 验证过的原始合入前/后 DLL 重放同一本书，分别得到 **1 章 / 646 页**与 **43 章 / 666 页**；前者与旧基线逐页一致，后者与本轮三组构建逐页一致。[重放证据](../evidence/runtime-20261109/history-zami.json)、[旧基线匹配](../evidence/runtime-20261109/history-zami-before-match.json)、[当前结果匹配](../evidence/runtime-20261109/history-zami-after-match.json)。没有改原清单、替换 MOBI 或重写旧基线；“旧基线变化 0”这一绝对表述不成立。
+
+**覆盖率不退化。** 新建 GCC `-O1 --coverage -fprofile-update=atomic` 构建，228/228 ctest、19 本逐页渲染、1,761 个原始输入及 3 个 TXT 补充检查全部完成。合并 4,427 份 gcov 对象/进程记录的源码行执行并集后，**33,579 / 35,402 = 94.85%**，比原 **93.79% 提高 1.06 个百分点**；**116/116 源文件执行、2,412/2,450 函数执行**。新增的 5 个源码文件纳入分母，没有沿用旧 111 文件口径。[覆盖明细](../evidence/runtime-20261109/coverage.json)、[原始 gcov](../evidence/runtime-20261109/gcov-raw.jsonl.gz)、[采集命令](../evidence/runtime-20261109/gcov-commands.json)。
+
+| 对比项 | 上轮 | 本轮 |
+|---|---:|---:|
+| 项目行覆盖率 | 93.79% | **94.85%** |
+| 源文件数 | 111 | **116** |
+| `chapter_reader.c` | 323/517，62.48%；30/45 函数 | **470/517，90.91%；44/45 函数** |
+| `formats.c` | 1,092/1,476，73.98% | **1,415/1,556，90.94%** |
+
+22 个实际写计数的隔离进程组中，每组 **116 份项目 gcda 均齐全**。[计数文件清单](../evidence/runtime-20261109/coverage-counter-inventory.json)。一个 fixture 进程组的 OpenJPEG `function_list.c.gcda` 因 Windows 路径过长写入失败，原 stderr 保留；该第三方文件不属于项目覆盖分母。功能配置与旧轮一致，另启用 fuzz；被关闭的可选功能及全部编译参数见 [ASan 配置](../evidence/runtime-20261109/asan-build-config.txt)和 [gcov 配置](../evidence/runtime-20261109/coverage-build-config.txt)。
+
+[最终自检](../evidence/runtime-20261109/verification.json)核对全部用例名称、输入哈希、30 条原始 SARIF ID、当前源码哈希、三组真书结果、历史差异归因和变更边界。[完整复跑命令](../evidence/runtime-20261109/commands.txt)。本轮修复的是 MSVC 检查入口及基准测试接线；没有改产品源码、原样本或 `.github/`。
+
+## 编译器诊断与覆盖测量 · 2026-11-08（历史记录）
+
+本节原列出的 30 条项目待核查项已在 2026-11-09 全部核定为误报，逐条依据见上方链接。下表保留历史分析器的原始计数，第三方静态告警另计。
 
 本轮采用 **路线 C**，被测源码为 `db9bab668ac725a75f3f92919edec3625879c7a8`。**这是静态分析结果，不等同于运行时检查的结论。** 产品源码未修改。
 
@@ -21,7 +71,7 @@ wsl_exit=1
 
 统计口径为最终 SARIF 发出的告警记录，同一位置的不同分析路径分别计数：**79 条、63 个源位置**。其中项目来源原始 34 条，4 条移入疑似误报；第三方 45 条中 FreeType 28、Expat 10、miniz 7。
 
-| 类别 | 项目代码（待核查） | 第三方库（待核查） | 疑似误报 | 合计 | 样例（文件:行号） |
+| 类别 | 项目代码（现已逐条核定为误报） | 第三方库（待核查） | 原列疑似误报 | 合计 | 样例（文件:行号） |
 |---|---:|---:|---:|---:|---|
 | 未初始化值 `-Wanalyzer-use-of-uninitialized-value` | 20 | 15 | 1 | 36 | `src/bidi.c:341`；Expat `siphash.h:220` |
 | 空指针解引用 `-Wanalyzer-null-dereference` | 6 | 28 | 2 | 36 | `src/font_svg.c:1043`；FreeType `ftstream.c:787` |
@@ -43,7 +93,7 @@ wsl_exit=1
 | `-Wformat-truncation` | 1 | `src/cbz.c:231` | 疑似误报：帧数上限为 4096，`#` 加帧号及结尾零小于额外分配的 24 字节。 |
 | `-Wmaybe-uninitialized` | 1 | `src/flac.c:128` | 疑似误报：`coded_number` 返回成功的分支都写入 `n`，失败即返回；`bad` 返回 0。 |
 
-初次构建因项目 `-Werror` 失败。仅在本轮构建参数加 `-Wno-error=format-truncation -Wno-error=maybe-uninitialized`，保留警告后完成构建；失败尝试与重试均保留。连同普通构建警告，总记录为 **81 条：项目待核查 30、第三方待核查 45、疑似误报 6**。
+初次构建因项目 `-Werror` 失败。仅在本轮构建参数加 `-Wno-error=format-truncation -Wno-error=maybe-uninitialized`，保留警告后完成构建；失败尝试与重试均保留。连同普通构建警告，总记录为 **81 条：原项目待核查 30（现已全部核定为误报）、第三方待核查 45、原列疑似误报 6**。
 
 **执行规模。** 以下均为本轮新构建的实际执行结果，合并统计见 [measurements.json](../evidence/quality-20261108/measurements.json)。
 

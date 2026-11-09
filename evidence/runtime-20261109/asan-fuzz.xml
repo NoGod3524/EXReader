@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="7"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="33"
+	timestamp="2026-11-09T01:55:32"
+	>
+	<testcase name="native-fuzz-driver" classname="native-fuzz-driver" time="0.795477" status="run">
+		<properties/>
+		<system-out>31 fuzz driver checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fuzz-font" classname="native-fuzz-font" time="0.918881" status="run">
+		<properties/>
+		<system-out>fuzz: 300 iterations over 4 seeds, 59 completed the selected pipeline, no crash
+process_cpu_seconds=0.187500000 requested_cpu_seconds=0
+format=font attempts=300 parsed=59
+</system-out>
+	</testcase>
+	<testcase name="native-fuzz-layout" classname="native-fuzz-layout" time="0.713719" status="run">
+		<properties/>
+		<system-out>fuzz: 100 iterations over 2 seeds, 11 completed the selected pipeline, no crash
+process_cpu_seconds=0.140625000 requested_cpu_seconds=0
+format=layout:txt attempts=51 parsed=10
+format=layout:epub attempts=49 parsed=1
+bounded_chapter_attempts=24 bounded_chapter_completed=1
+</system-out>
+	</testcase>
+	<testcase name="native-fuzz-render" classname="native-fuzz-render" time="0.332834" status="run">
+		<properties/>
+		<system-out>fuzz: 100 iterations over 3 seeds, 2 completed the selected pipeline, no crash
+process_cpu_seconds=0.046875000 requested_cpu_seconds=0
+format=render:epub attempts=40 parsed=1
+format=render:pdf attempts=25 parsed=0
+format=render:cbz attempts=35 parsed=1
+bounded_chapter_attempts=20 bounded_chapter_completed=1
+</system-out>
+	</testcase>
+	<testcase name="native-fuzz-pipeline-contract" classname="native-fuzz-pipeline-contract" time="8.67385" status="run">
+		<properties/>
+		<system-out>83 pipeline checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fuzz-accounting" classname="native-fuzz-accounting" time="31.865" status="run">
+		<properties/>
+		<system-out>164 synthetic accounting checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fuzz-smoke" classname="native-fuzz-smoke" time="0.350371" status="run">
+		<properties/>
+		<system-out>fuzz: 500 iterations over 4 seeds, 46 reached a parsed document, no crash
+process_cpu_seconds=0.093750000 requested_cpu_seconds=0
+format=txt attempts=108 parsed=23
+format=epub attempts=144 parsed=9
+format=pdf attempts=119 parsed=10
+format=cbz attempts=129 parsed=4
+</system-out>
+	</testcase>
+</testsuite>
