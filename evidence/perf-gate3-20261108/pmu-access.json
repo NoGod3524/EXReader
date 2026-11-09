@@ -1,0 +1,8 @@
+{
+  "EnableThreadProfiling_status": 0,
+  "error": "The operation completed successfully.",
+  "hardware_counters_requested": 1,
+  "admin": false,
+  "perf_available": false,
+  "rdtsc_is_instructions": false
+}

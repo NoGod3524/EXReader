@@ -719,6 +719,27 @@ exr_status exr_document_locate(const exr_document *d,const char *fragment,
   }
   *out=(exr_location){0,0,EXR_LINK_FOUND};
   if (!fragment || !*fragment) return exr_fail(e,EXR_OK,"");
+  /* KF8's INDX positions address reconstructed markup bytes. The format
+     loader records element positions; resolve to the preceding visible node
+     without loading any other section or changing the text projection. */
+  if(d->format==EXR_MOBI && !strncmp(fragment,"kf8-offset-",11)) {
+    size_t wanted=0,best=0; const char *s=fragment+11;
+    if(!*s) return exr_fail(e,EXR_FORMAT,"KF8_POSITION: empty source offset");
+    for(;*s;s++) {
+      if(*s<'0' || *s>'9' || wanted>(SIZE_MAX-(*s-'0'))/10)
+        return exr_fail(e,EXR_FORMAT,"KF8_POSITION: invalid source offset");
+      wanted=wanted*10+(*s-'0');
+    }
+    for(i=0;i<d->node_count;i++) {
+      const char *value=exr_node_attribute(&d->nodes[i],"data-exr-kf8-offset"); size_t offset;
+      if(!value || d->nodes[i].start==SIZE_MAX) continue;
+      offset=(size_t)strtoull(value,NULL,10);
+      if(offset<=wanted && (found==SIZE_MAX || offset>=best)) { found=i; best=offset; }
+    }
+    if(found!=SIZE_MAX) { out->offset=d->nodes[found].start; return exr_fail(e,EXR_OK,""); }
+    out->state=EXR_LINK_ANCHOR_MISSING; out->offset=SIZE_MAX;
+    return exr_fail(e,EXR_OK,"");
+  }
   for (pass=0;pass<2;pass++) {
     size_t matches=0;
     for (i=0;i<d->node_count;i++) {

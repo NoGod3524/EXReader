@@ -113,7 +113,11 @@ EXR_API exr_font *exr_layout_font(const exr_layout *layout);
    Callbacks must not destroy/reenter the active publication or session. */
 EXR_API exr_status exr_publication_create(const exr_publication_input *input,
                                           exr_publication **out, exr_error *error);
-/* Built-in indexed loading currently accepts EPUB. No XHTML is parsed at open. */
+/* Built-in publications accept EPUB, MOBI/KF8 (including .azw3), and FB2/FB2 ZIP.
+   EPUB and KF8 defer body parsing until load. KF8 decodes the records intersecting
+   that section and its auxiliary flows; malformed records fail at load with a
+   diagnostic. Legacy MOBI is split on pagebreaks; FB2 on section boundaries.
+   open_source remains the ZIP/EPUB source API; use open_memory for typed bytes. */
 EXR_API exr_status exr_publication_open(const char *path, exr_publication **out,
                                         exr_error *error);
 EXR_API exr_status exr_publication_open_source(const exr_source *source,
@@ -207,6 +211,21 @@ EXR_API exr_status exr_anchor_from_range(exr_publication *publication,const exr_
 EXR_API exr_status exr_range_from_anchor(exr_publication *publication,const exr_content_anchor *anchor,
   const exr_control *control,exr_text_range_match *out,exr_error *error);
 EXR_API void exr_content_anchor_free(exr_content_anchor *anchor);
+/* EPUB content anchors / part-local text ranges <-> standard CFI. Requires
+   the built-in EPUB provider. Both endpoints, including cross-part ranges,
+   are mapped through the original package and raw XML DOM. A point CFI
+   imports as a collapsed range. Missing/ambiguous anchors fail EXR_FORMAT.
+   Round trips in an unchanged publication preserve range boundaries and all
+   fields of anchors captured by anchor_from_range. Outputs are owned
+   (exr_free/content_anchor_free). */
+EXR_API exr_status exr_range_to_cfi(exr_publication *publication,const exr_text_range *range,
+  const exr_control *control,char **out,exr_error *error);
+EXR_API exr_status exr_range_from_cfi(exr_publication *publication,const char *cfi,
+  const exr_control *control,exr_text_range *out,exr_error *error);
+EXR_API exr_status exr_anchor_to_cfi(exr_publication *publication,const exr_content_anchor *anchor,
+  const exr_control *control,char **out,exr_error *error);
+EXR_API exr_status exr_anchor_from_cfi(exr_publication *publication,const char *cfi,
+  const exr_control *control,exr_content_anchor *out,exr_error *error);
 typedef enum { EXR_RANGE_CHAR, EXR_RANGE_WORD, EXR_RANGE_SENTENCE, EXR_RANGE_PARAGRAPH } exr_range_unit;
 /* CHAR is a Unicode grapheme. WORD groups non-space, non-punctuation graphemes;
    CJK ideographs/kana and punctuation are individual units (no dictionary).
@@ -232,6 +251,18 @@ EXR_API exr_status exr_publication_resolve_href(const exr_publication *publicati
    with a distinct state and are retained in missing_targets (deduplicated). */
 EXR_API exr_status exr_publication_locate(exr_publication *publication,
   const exr_target *target,exr_location *location,exr_error *error);
+typedef struct {
+  uint64_t total_entries,resolved_exact,resolved_part_start,missing_part,missing_anchor;
+} exr_locate_report;
+/* Per-publication call counters, including internal calls from target_at.
+   total_entries counts every locate call with a non-NULL publication, including
+   errors. Outcome counters count successful calls only. Exact includes an
+   explicitly requested part start; missing anchors increment both missing_anchor
+   and resolved_part_start. Missing parts increment missing_part only. Repeated
+   calls count again. NULL reports zero; reset does not clear missing_targets or
+   invalidate cached TOC locations. Like locate, not safe for concurrent access. */
+EXR_API exr_locate_report exr_publication_locate_report(const exr_publication *publication);
+EXR_API void exr_publication_locate_report_reset(exr_publication *publication);
 /* Borrowed until the next locate/target_at request or publication_free. */
 EXR_API const exr_target *exr_publication_missing_targets(const exr_publication *publication,size_t *count);
 /* Last TOC target at/before (part,offset) in reading order; deeper entries win

@@ -1,0 +1,28 @@
+Step 0 complete: audited #87 and scope. Branch codex/perf-gate-load-20261108 starts at db9bab66. New hypothesis: same-core scheduling and duration mismatch (237 ms reference versus shorter pages). No product/workflow edits. WSL/perf absent; WPR lists PMCs; testing access and collecting thread cycles + TSC.
+Build preparation: stopped own redundant fresh-SDK configure; unchanged src/include tree identities allow reuse of #87 SDK DLL. No workflow run affected. PMU hardware count=0; retain actual thread cycles, TSC and dispatch counts, no fabricated IPC.
+Step regression-before complete: full-corpus renderer exit=0; output retained in build/realbooks-before.json until compressed.
+Preflight diagnostic: full powercfg /qh dump stalled >3 minutes; stopped only own dump child. Three individual settings were captured; future preflight skips the redundant full dump. No measurements discarded.
+Diagnostic pilot invalidated before acceptance: instrumentation omitted chapter-transition work already included in R3 wall total. Example first sequential a-raisin wall=73.5811 ms, measured TSC only ~5.65 ms. Stopped only own native pilot so capture/session finally can restore. Retained all raw; correcting measurement boundary before new diagnostic batch.
+Step diagnostic session: power policy restored and read back.
+Step diagnostic/none complete: 1 runs x 19 books x 16 sequential pages; workers=0, raw retained.
+Step diagnostic session: power policy restored and read back.
+Second pilot complete/failed validation: none=19 books, medium=19 books; TSC/wall guard caught two ~15.9 ms preemptions between different clock boundaries. Kept raw and restored policy. Fixed coherent QPC/TSC/cycle snapshots and derive all phase wall durations from the SAME stamps; no target retries, no widening the guard. New diagnostic batch follows.
+Step diagnostic/none complete: 1 runs x 19 books x 16 sequential pages; workers=0, raw retained.
+Step diagnostic/medium complete: 1 runs x 19 books x 16 sequential pages; workers=1, raw retained.
+Existing v1 check_ratio.py passed on #87 normal evidence, including SDK identity compatibility, raw tamper rejection and localized +60% slowdown rejection. git diff --check passed.
+Step diagnostic/high complete: 1 runs x 19 books x 16 sequential pages; workers=3, raw retained.
+Step diagnostic session: power policy restored and read back.
+Step A complete: diagnosis three levels x 1 full 19-book run; all signatures equal, all raw/coverage checks pass. Medium/high reference wall +102.4166/+309.8321%, reference charged cycles +0.0573/+0.0980%; target charged cycles +4.4637/+1.4907%. Dominant confounder is descheduling plus separate-p95 aggregation, not frequency. Original hypothesis 1 residual possible; 3 not established (no PMU). Root report: diagnosis/experiment.json.
+Step B complete: fixed 12,000,000-step reference and before/target/after CPU-cycle geometry; coherent counter boundaries cover EOF and chapter creation. Unit denominator/accounting/coverage checks passed. No fitted coefficients. Final three levels x five consecutive runs starts now; no outlier removal.
+Step sandwich/none complete: 5 runs x 19 books x 16 sequential pages; workers=0, raw retained.
+Froze thresholds BEFORE pressure candidates; eligibility exit=0.
+Step sandwich/medium complete: 5 runs x 19 books x 16 sequential pages; workers=1, raw retained.
+Independent medium gate check exit=0 (advisory).
+Step sandwich/high complete: 5 runs x 19 books x 16 sequential pages; workers=3, raw retained.
+Independent high gate check exit=0 (advisory).
+Step sandwich session: power policy restored and read back.
+Step C complete: 15 full runs, 4560 measured page operations. Medium/high aggregate drift +0.161461/-2.703262%, dispersion 2.195308/3.796614%; all loaded book drift and dispersion <10%, no failed book gates, signatures equal. Normal black-boy dispersion 10.125412% remains. Final checker exit=0.
+Step regression-after complete: same DLL before/after and #87 comparison, 19/19 books, 11296 pages, 8648640 glyphs; zero page/glyph/pixel changes. Final native signatures also match #87. All pressure workers stopped; all four sessions restored original power policy.
+Step D complete: PERF-GATE-PROPOSAL.md updated with root data, cycle-sandwich formula, all 15 run values, 19-book thresholds/dispersion, wall ablations and explicit cannot restore required. Pressure CPU criteria pass; normal black-boy dispersion=10.125412% and high wall-sandwich drift=-50.625709% remain. Need isolated runner wall checks, per-book stable baseline and strict E3 producer.
+Final packaging verification complete: evidence-local attributes preserve native CRLF and log whitespace; 547 staged evidence/source blobs matched working bytes. git diff --cached --check passed, measurement source hashes match capture, protected paths unchanged. Preparing commit/push/draft PR.
+Publication complete: code/evidence commit 49fefd283b38eecfd8d1b2f34be3a815fea820c3 pushed to origin/codex/perf-gate-load-20261108. Created and verified draft PR #97, base main: https://github.com/NoGod3524/EXReader/pull/97. No workflow runs cancelled; no CI-skip markers in commit messages. Recording publication receipt in a follow-up audit commit.

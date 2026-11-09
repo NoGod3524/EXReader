@@ -1262,30 +1262,39 @@ static exr_status mobi_trailer(exr_mobi_record *record,unsigned flags,exr_error 
   }
   return EXR_OK;
 }
-static exr_status mobi_palmdoc(const exr_mobi_record *record,exr_buffer *out,exr_error *e) {
+static exr_status palmdoc(const exr_mobi_record *record,exr_buffer *out,int materialize,exr_error *e) {
   size_t i=0,base=out->size;
   while(i<record->size) {
     unsigned byte=record->data[i++];
     if(byte>=1 && byte<=8) {
       if(byte>record->size-i) return exr_fail(e,EXR_FORMAT,"Truncated PalmDOC literal");
-      if(!exr_append(out,record->data+i,byte)) goto limit;
+      if(materialize) { if(!exr_append(out,record->data+i,byte)) goto limit; }
+      else out->size+=byte;
       i+=byte;
     } else if(byte<=127) {
-      unsigned char c=(unsigned char)byte; if(!exr_append(out,&c,1)) goto limit;
+      unsigned char c=(unsigned char)byte;
+      if(materialize) { if(!exr_append(out,&c,1)) goto limit; }
+      else out->size++;
     } else if(byte>=192) {
       unsigned char pair[2]={' ',(unsigned char)(byte^128)};
-      if(!exr_append(out,pair,2)) goto limit;
+      if(materialize) { if(!exr_append(out,pair,2)) goto limit; }
+      else out->size+=2;
     } else {
       size_t distance,length,k;
       if(i==record->size) return exr_fail(e,EXR_FORMAT,"Truncated PalmDOC back reference");
       byte=(byte<<8)|record->data[i++]; distance=(byte&16383)>>3; length=(byte&7)+3;
       if(!distance || distance>out->size-base) return exr_fail(e,EXR_FORMAT,"PalmDOC reference leaves its record");
-      for(k=0;k<length;k++) { char c=out->data[out->size-distance]; if(!exr_append(out,&c,1)) goto limit; }
+      if(materialize) for(k=0;k<length;k++) { char c=out->data[out->size-distance]; if(!exr_append(out,&c,1)) goto limit; }
+      else out->size+=length;
     }
+    if(out->size>EXR_MAX_TEXT) goto limit;
   }
   return EXR_OK;
 limit:
   return exr_fail(e,EXR_LIMIT,"PalmDOC text exceeds allocation or size limit");
+}
+exr_status exr_mobi_palmdoc(const exr_mobi_record *record,exr_buffer *out,exr_error *e) {
+  return palmdoc(record,out,1,e);
 }
 static int mobi_header(const exr_mobi_record *record,size_t *size) {
   const unsigned char *h=record->data;
@@ -1351,12 +1360,27 @@ done:
   if(status!=EXR_OK && (!e || !e->message[0])) exr_fail(e,status,"MOBI title decoding failed");
   return status;
 }
-static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e) {
+typedef struct {
+  unsigned char *owned;
+  exr_mobi_record *records;
+  const exr_mobi_record *view,*shared;
+  size_t count,shared_count,text_count,text_size,record_size;
+  unsigned compression,encoding,flags,version;
+  uint32_t cover;
+  exr_mobi_huff *huff;
+  exr_buffer cache;
+  size_t cached,decoded_records,*offsets,indexed;
+} mobi_stream;
+static void mobi_stream_clear(mobi_stream *m) {
+  exr_mobi_huff_free(m->huff); free(m->records); free(m->owned); free(m->cache.data); free(m->offsets);
+}
+static void mobi_stream_free(void *context) { mobi_stream *m=context; mobi_stream_clear(m); free(m); }
+static exr_status mobi_stream_open(exr_document *d, const void *data, size_t n, mobi_stream *m, exr_error *e) {
   const unsigned char *s=data,*h; exr_mobi_record *records=NULL;
   const exr_mobi_record *view=NULL,*shared=NULL;
-  size_t count,start,stop,i,text_count,header_size,shared_count=0; unsigned compression,encoding,flags=0,title_encoding;
+  size_t count,start,stop,i,text_count,header_size,shared_count=0,extent; unsigned compression,encoding,flags=0,title_encoding;
   mobi_meta metadata,prefix;
-  exr_mobi_huff *huff=NULL; exr_buffer text={0},utf8={0}; exr_status status=EXR_FORMAT;
+  exr_mobi_huff *huff=NULL; exr_status status=EXR_FORMAT;
   if(n<94 || memcmp(s+60,"BOOKMOBI",8)) return exr_fail(e,EXR_FORMAT,"Not a MOBI container");
   count=be16(s+76);
   if(count<2 || count>(n-78)/8) return exr_fail(e,EXR_FORMAT,"Invalid MOBI record directory");
@@ -1367,6 +1391,7 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
     records[i]=(exr_mobi_record){s+start,stop-start};
   }
   view=records; h=view[0].data;
+  if(view[0].size>=16 && be16(h+12)) { status=exr_fail(e,EXR_UNSUPPORTED,"MOBI_DRM: encrypted text records are unsupported"); goto done; }
   if(!mobi_header(&view[0],&header_size)) goto done;
   status=mobi_metadata(&view[0],header_size,&metadata,e); if(status!=EXR_OK) goto done;
   title_encoding=be32(h+28);
@@ -1397,34 +1422,114 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
   if(be32(h+4)>EXR_MAX_TEXT) { status=EXR_LIMIT; goto done; }
   status=mobi_title(d,&metadata,title_encoding,e); if(status!=EXR_OK) goto done;
   status=EXR_FORMAT;
+  extent=be32(h+4);
+  if(be32(h+36)==8 && header_size>=248 && be32(h+196)>1) {
+    size_t fdst=be32(h+192),flows=be32(h+196); const unsigned char *f;
+    if(fdst>=count || flows>10000 || view[fdst].size<12 || flows>(view[fdst].size-12)/8) goto done;
+    f=view[fdst].data;
+    if(memcmp(f,"FDST",4) || be32(f+8)!=flows) goto done;
+    extent=be32(f+8+flows*8);
+    if((be32(h+4)!=extent && be32(h+4)!=be32(f+16)) || extent>EXR_MAX_TEXT) goto done;
+  }
   if(header_size>=228 && be32(h+104)>=5) flags=be16(h+242);
   if(compression==0x4448) {
     size_t first=be32(h+112),number=be32(h+116);
     if(first<=text_count || first>=count || number<2 || number>count-first) goto done;
     status=exr_mobi_huff_open(view+first,number,&huff,e); if(status!=EXR_OK) goto done;
   } else if(compression!=1 && compression!=2) goto done;
-  for(i=1;i<=text_count;i++) {
-    exr_mobi_record record=view[i]; status=mobi_trailer(&record,flags,e); if(status!=EXR_OK) goto done;
-    if(compression==0x4448) status=exr_mobi_huff_decode(huff,record.data,record.size,&text,e);
-    else if(compression==2) status=mobi_palmdoc(&record,&text,e);
-    else if(!exr_append(&text,record.data,record.size)) status=exr_fail(e,EXR_LIMIT,"MOBI text exceeds allocation or size limit");
-    if(status!=EXR_OK) goto done;
-  }
-  if(be32(h+4)>text.size) { status=EXR_FORMAT; goto done; }
-  exr_mobi_huff_free(huff); huff=NULL;
-  text.size=be32(h+4); text.data[text.size]=0;
-  if(be32(h+36)==8) {
-    if(encoding!=65001) { status=exr_fail(e,EXR_FORMAT,"KF8 requires UTF-8 encoding"); goto done; }
-    status=exr_kf8(d,view,count,shared,shared_count,text.data,text.size,e);
-  } else if(encoding==1252) {
-    for(i=0;i<text.size;i++) if(!exr_codepoint(&utf8,exr_windows1252((unsigned char)text.data[i]))) { status=EXR_LIMIT; goto done; }
-    status=html(d,utf8.data,utf8.size,e);
-  } else status=html(d,text.data,text.size,e);
-  if(status==EXR_OK && metadata.cover!=UINT32_MAX)
-    status=exr_mobi_cover(d,view,count,shared,shared_count,metadata.cover,e);
+  m->records=records; m->view=view; m->count=count; m->shared=shared; m->shared_count=shared_count;
+  m->text_count=text_count; m->text_size=extent; m->record_size=be16(h+10);
+  m->compression=compression; m->encoding=encoding; m->flags=flags;
+  m->huff=huff; m->cover=metadata.cover; m->version=be32(h+36);
+  return EXR_OK;
 done:
-  exr_mobi_huff_free(huff); free(records); free(text.data); free(utf8.data);
-  if(status!=EXR_OK && (!e || !e->message[0])) exr_fail(e,status,"Invalid or unsupported MOBI stream");
+  free(records); exr_mobi_huff_free(huff);
+  if(status!=EXR_OK && (!e || !e->message[0])) exr_fail(e,status,"MOBI_HEADER: invalid directory, header, encoding or compression");
+  return status;
+}
+static exr_status mobi_decode_record(mobi_stream *m,size_t index,exr_buffer *out,exr_error *e) {
+  exr_mobi_record record=m->view[index]; exr_status status=mobi_trailer(&record,m->flags,e);
+  if(status!=EXR_OK) return status;
+  m->decoded_records++;
+  if(m->compression==0x4448) return exr_mobi_huff_decode(m->huff,record.data,record.size,out,e);
+  if(m->compression==2) return exr_mobi_palmdoc(&record,out,e);
+  return exr_append(out,record.data,record.size) ? EXR_OK : exr_fail(e,EXR_LIMIT,"MOBI text allocation limit");
+}
+static exr_status mobi_read_range(void *context,size_t start,size_t size,exr_buffer *out,exr_error *e) {
+  mobi_stream *m=context; exr_status status;
+  if(start>m->text_size || size>m->text_size-start) return exr_fail(e,EXR_FORMAT,"KF8_RANGE: text range is outside PalmDOC length");
+  while(size) {
+    size_t record,offset,expected,chunk,lo=0,hi;
+    while(m->indexed<m->text_count && m->offsets[m->indexed]<=start) {
+      exr_mobi_record r=m->view[m->indexed+1]; exr_buffer count={0}; size_t length;
+      status=mobi_trailer(&r,m->flags,e); if(status!=EXR_OK) return status;
+      length=r.size;
+      if(m->compression==0x4448) status=exr_mobi_huff_size(m->huff,r.data,r.size,&length,e);
+      else if(m->compression==2) { status=palmdoc(&r,&count,0,e); length=count.size; }
+      if(status!=EXR_OK) return status;
+      if(!length || length>m->record_size || length>EXR_MAX_TEXT-m->offsets[m->indexed])
+        return exr_fail(e,EXR_FORMAT,"KF8_RECORD_LENGTH: invalid decoded record length %zu",length);
+      m->offsets[m->indexed+1]=m->offsets[m->indexed]+length; m->indexed++;
+      if(m->indexed==m->text_count && m->offsets[m->indexed]!=m->text_size)
+        return exr_fail(e,EXR_FORMAT,"KF8_RECORD_LENGTH: decoded total %zu differs from FDST/text extent %zu",m->offsets[m->indexed],m->text_size);
+    }
+    hi=m->indexed;
+    while(lo<hi) { size_t mid=lo+(hi-lo)/2; if(m->offsets[mid+1]<=start) lo=mid+1; else hi=mid; }
+    record=lo+1;
+    if(record>m->indexed) return exr_fail(e,EXR_FORMAT,"KF8_RECORD: text record is missing");
+    offset=start-m->offsets[record-1]; expected=m->offsets[record]-m->offsets[record-1];
+    if(m->cached!=record) {
+      m->cache.size=0; m->cached=0;
+      status=mobi_decode_record(m,record,&m->cache,e); if(status!=EXR_OK) return status;
+      if(m->cache.size!=expected)
+        return exr_fail(e,EXR_FORMAT,"KF8_RECORD_LENGTH: decoded record %zu has %zu bytes, expected %zu",record,m->cache.size,expected);
+      m->cached=record;
+    }
+    chunk=expected-offset; if(chunk>size) chunk=size;
+    if(!exr_append(out,m->cache.data+offset,chunk)) return exr_fail(e,EXR_LIMIT,"KF8 section exceeds text limit");
+    start+=chunk; size-=chunk;
+  }
+  return EXR_OK;
+}
+static exr_status mobi(exr_document *d,const void *data,size_t n,exr_error *e) {
+  mobi_stream m={0}; exr_buffer text={0}; size_t i; exr_status status=mobi_stream_open(d,data,n,&m,e);
+  if(status!=EXR_OK) return status;
+  for(i=1;i<=m.text_count;i++) {
+    status=mobi_decode_record(&m,i,&text,e); if(status!=EXR_OK) goto done;
+  }
+  if(m.text_size>text.size) { status=exr_fail(e,EXR_FORMAT,"MOBI_TEXT_LENGTH: decoded bytes shorter than PalmDOC length"); goto done; }
+  text.size=m.text_size; text.data[text.size]=0;
+  if(m.version==8) {
+    if(m.encoding!=65001) { status=exr_fail(e,EXR_ENCODING,"KF8_ENCODING: KF8 requires UTF-8"); goto done; }
+    status=exr_kf8(d,m.view,m.count,m.shared,m.shared_count,text.data,text.size,e);
+  } else status=exr_mobi_html(d,m.view,m.count,text.data,text.size,m.encoding,e);
+  if(status==EXR_OK && m.cover!=UINT32_MAX) status=exr_mobi_cover(d,m.view,m.count,m.shared,m.shared_count,m.cover,e);
+done:
+  mobi_stream_clear(&m); free(text.data); return status;
+}
+exr_status exr_mobi_book(const void *data,size_t size,exr_format_book *book,exr_error *e) {
+  mobi_stream *m=calloc(1,sizeof(*m)); exr_status status;
+  if(!m) return exr_fail(e,EXR_MEMORY,"MOBI index allocation failed");
+  m->owned=malloc(size); if(!m->owned) { free(m); return EXR_MEMORY; }
+  memcpy(m->owned,data,size);
+  book->index=calloc(1,sizeof(*book->index)); if(!book->index) { mobi_stream_free(m); return EXR_MEMORY; }
+  book->index->format=EXR_MOBI;
+  status=mobi_stream_open(book->index,m->owned,size,m,e);
+  if(status!=EXR_OK) { mobi_stream_free(m); return status; }
+  if(m->version!=8) {
+    exr_document_free(book->index); book->index=NULL;
+    status=exr_document_open_memory(EXR_MOBI,m->owned,size,&book->index,e);
+    mobi_stream_free(m); book->context=book->index; book->load=exr_book_slice;
+    return status;
+  }
+  if(m->encoding!=65001 || !m->record_size || m->text_size>m->text_count*m->record_size) {
+    mobi_stream_free(m); return exr_fail(e,EXR_FORMAT,"KF8_RECORD_LAYOUT: invalid UTF-8 encoding or record directory");
+  }
+  m->offsets=calloc(m->text_count+1,sizeof(*m->offsets));
+  if(!m->offsets) { mobi_stream_free(m); return exr_fail(e,EXR_MEMORY,"KF8 record index allocation failed"); }
+  book->memory=size+sizeof(*m)+m->count*sizeof(*m->records)+(m->text_count+1)*sizeof(*m->offsets);
+  status=exr_kf8_book(m->view,m->count,m->shared,m->shared_count,mobi_read_range,m,mobi_stream_free,book,e);
+  if(status!=EXR_OK) mobi_stream_free(m);
   return status;
 }
 exr_status exr_parse(exr_document *d, const void *data, size_t n, exr_error *e) {
@@ -1505,7 +1610,7 @@ exr_status exr_document_open(const char *path, exr_document **out, exr_error *e)
     f = EXR_HTML;
   else if (!strcmp(lower, "epub"))
     f = EXR_EPUB;
-  else if (!strcmp(lower, "fb2"))
+  else if (!strcmp(lower, "fb2") || !strcmp(lower,"fbz") || !strcmp(lower,"zip"))
     f = EXR_FB2;
   else if (!strcmp(lower, "docx"))
     f = EXR_DOCX;

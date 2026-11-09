@@ -42,6 +42,27 @@ typedef exr_status (*exr_member_read_fn)(void *context, const char *path, int op
                                           void **data, size_t *size, exr_error *error);
 exr_status exr_docx(exr_document *doc, exr_member_read_fn read, void *context, exr_error *error);
 typedef struct { const unsigned char *data; size_t size; } exr_mobi_record;
+exr_status exr_mobi_palmdoc(const exr_mobi_record *record,exr_buffer *out,exr_error *error);
+typedef struct {
+  exr_document *index;
+  exr_navigation *navigation;
+  size_t navigation_count, memory;
+  void *context;
+  exr_status (*load)(void *,size_t,exr_document **,exr_error *);
+  void (*release)(void *);
+} exr_format_book;
+exr_status exr_book_open(exr_format format,const void *data,size_t size,exr_format_book **out,exr_error *error);
+void exr_book_free(void *book);
+exr_status exr_book_load(void *book,size_t part,exr_document **out,exr_error *error);
+exr_status exr_book_slice(void *document,size_t part,exr_document **out,exr_error *error);
+exr_status exr_book_resource(exr_document *doc,const char *path,const char *type,const void *data,size_t size,size_t *index,exr_error *error);
+exr_status exr_book_chapter(exr_document *doc,size_t *body,exr_error *error);
+exr_status exr_mobi_navigation(exr_document *doc,const exr_mobi_record *records,size_t count,const size_t *positions,const size_t *nodes,size_t marks,exr_error *error);
+exr_status exr_mobi_html(exr_document *doc,const exr_mobi_record *records,size_t count,const char *text,size_t size,unsigned encoding,exr_error *error);
+exr_status exr_mobi_book(const void *data,size_t size,exr_format_book *book,exr_error *error);
+typedef exr_status (*exr_mobi_read_fn)(void *,size_t,size_t,exr_buffer *,exr_error *);
+exr_status exr_kf8_book(const exr_mobi_record *records,size_t count,const exr_mobi_record *shared,size_t shared_count,
+  exr_mobi_read_fn read,void *context,void (*release)(void *),exr_format_book *book,exr_error *error);
 exr_status exr_kf8(exr_document *doc, const exr_mobi_record *records, size_t count,
                     const exr_mobi_record *shared, size_t shared_count,
                     const char *text, size_t size, exr_error *error);
@@ -51,9 +72,11 @@ exr_status exr_mobi_cover(exr_document *doc, const exr_mobi_record *records, siz
 typedef struct exr_mobi_huff exr_mobi_huff;
 exr_status exr_mobi_huff_open(const exr_mobi_record *records, size_t count,
                                exr_mobi_huff **out, exr_error *error);
-/* Append to one initially empty output buffer across text records. */
+/* Records are independent; the output may be appended, reused or discarded. */
 exr_status exr_mobi_huff_decode(exr_mobi_huff *huff, const void *data, size_t size,
                                  exr_buffer *out, exr_error *error);
+/* Scan codes and memoize phrase lengths without allocating expanded text. */
+exr_status exr_mobi_huff_size(exr_mobi_huff *huff,const void *data,size_t size,size_t *out,exr_error *error);
 void exr_mobi_huff_free(exr_mobi_huff *huff);
 uint32_t exr_windows1252(unsigned char byte);
 exr_status exr_rtf(exr_document *doc, const void *data, size_t size, exr_error *error);

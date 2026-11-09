@@ -1,182 +1,175 @@
-# 性能门禁自归一化提案 · 2026-11-08
+# 性能门禁受压修正 · 2026-11-08
 
-**现在不能恢复 required。** 本次实现、原始数据、冻结阈值和恢复条件如下。E3 仍为 `advisory=true, accepted=false`；本 PR 不应用 workflow 或规则集变更。
+**现在不能恢复 required。** 新方案使用完整翻页的线程周期和前后参照，原始墙钟耗时继续保留。它度量 CPU 工作成本；恢复用户可见延迟门禁还需要独占 runner 的墙钟检查、实际 runner 冻结基线和 E3 strict 生产者。本 PR 不改 `.github/`，所有报告仍为 `advisory=true, accepted=false`。
 
-## 为什么改掉绝对毫秒门禁
+## 根因判定
 
-旧提案独立候选的八项最大离散度为 **9.471% / 6.516% / 22.080%**，原始数据保留在 [perf-gate-20261107](../../evidence/perf-gate-20261107/)。当机器频率或可用 CPU 时间变化时，绝对毫秒会把机器变慢算成产品回退。给每台机器单独冻结绝对基线也不能消除同一机器的运行时漂移。
+主因是**同一逻辑核上的调度等待，加上分别取 p95 后相除的统计偏差**。三档长参照诊断使用与 #87 字节相同的 SDK、19 本真书、CPU 3、HIGH priority、AC min=max=100/boost=0；各一轮完整 304 个顺序翻页，独立于正式五轮定线。
 
-新方案在**同一原生进程、同一逻辑核**上，每次先做固定参照，再做一次目标翻页：
+| 外加忙循环数 | 参照 p95 ms | 翻页 p95 ms | 参照线程周期 p95 / M | 翻页线程周期 p95 / M | 墙钟 ratio 漂移 | 线程周期 ratio 漂移 |
+|---|---:|---:|---:|---:|---:|---:|
+| 无：0 | 237.1690 | 83.1915 | 761.267520 | 269.306823 | 基准 | 基准 |
+| 中：1 | 480.0695 | 158.0021 | 761.703391 | 281.327757 | −6.1709% | +4.4039% |
+| 高：3 | 971.9947 | 329.5281 | 762.013778 | 273.321397 | −3.3487% | +1.3913% |
+
+中/高压使参照墙钟增加 **102%/310%**，但参照线程周期只增加 **0.06%/0.10%**。目标的线程周期/TSC 汇总比从 **0.987 → 0.526 → 0.254**，参照为 **0.987 → 0.525 → 0.251**。两者平均 CPU 份额相近，但不同长度窗口的尾部并不等比例变化；独立 p95 的比值不能消除这个差异。本次未重现旧实验精确的 −17%；旧结果保留在 [#87 证据](../../evidence/perf-gate2-20261108/final/experiment.json)。
+
+三条原假设的判定：
+
+1. **组成不同在结构上成立，不能解释主导偏移。** 参照每轮六条整数/分支指令，没有循环内内存访问，120M 轮约 720M 条循环指令（反汇编静态估算）。目标周期约 48% 用于排版与跨章节准备，其余用于渲染；受压执行成本差异只留下约 +4.40%/+1.39% 的 ratio 残差。没有目标的 retired-instructions 测量，不能把残差分摊为 IPC、分支和内存等待。
+2. **降频不是本次主要原因。** 在载 CPU 3 遥测均报 2200 MHz，性能百分比为 93–94%，限制标志为 0；固定参照执行周期几乎不变，不支持用降频解释 2–4 倍墙钟变化。
+3. **L3 污染未证实为主因。** 注入的忙循环只使用寄存器，没有大数组或带宽负载。没有 LLC/分支 PMU 数据，不能将目标残余执行成本归为某一种缓存效应。
+
+完整判定、周期构成、遥测和两个保留的仪表试跑见 [ROOT-CAUSE.md](../../evidence/perf-gate3-20261108/ROOT-CAUSE.md)。本机没有 Linux perf；Windows PMU 接口返回 `HwCountersCount=0`。实际使用 `QueryThreadCycleTime`、elapsed TSC、QPC 和上下文切换计数。线程周期不转换为毫秒或 unhalted-core IPC；TSC 不代表实际核心频率。[Microsoft 计数器文档](https://learn.microsoft.com/en-us/windows/win32/api/realtimeapiset/nf-realtimeapiset-querythreadcycletime)
+
+## 二次修正后的公式
+
+令 `C_T,i` 为一次完整翻页的线程周期，`C_B,i`、`C_A,i` 为前后固定参照的线程周期：
 
 ```text
-page_ratio = target_ms / reference_ms
-run_ratio = nearest_rank_p95(target_ms) / nearest_rank_p95(reference_ms)
+C_R,i = sqrt(C_B,i × C_A,i)
+page_ratio_i = C_T,i / C_R,i
+run_ratio = nearest_rank_p95(C_T,i) / nearest_rank_p95(C_R,i)
+R0 = nearest_rank_p95(五轮无压 run_ratio) = 五轮最大值
+漂移 = 100 × (受压五轮 ratio 中位数 / 无压五轮 ratio 中位数 − 1)
+离散度 = 100 × (max − min) / nearest_rank_p50
 ```
 
-门禁采用第二个公式；逐页比值及其 p95 另存。两个 p95 的比值通常不等于逐页比值的 p95，报告不混用。比值只有在两种操作受到相近程度的放慢时才能抵消噪声，受压实验直接验证这一点。
+沿用 p95 之比，未替换成逐页 ratio 的 p95。关键修正是去掉线程未执行的时间；几何均值用于减小采样前后执行状态变化。报告同时保留单侧周期归一、单侧墙钟归一和墙钟三明治，供比较各部分的作用。
 
-## 参照与操作计划
-
-[reference.c](../../tools/perf/reference.c) 固定执行 **120,000,000 次**有数据依赖的无符号 FNV 风格混合步骤。只有整数运算和计时，无文件、SDK 调用、分配或机器相关的工作量标定。无符号回绕有定义，结果写入 volatile sink；[反汇编](../../evidence/perf-gate2-20261108/reference-disassembly.txt) 验证固定循环仍在，循环上限为 0x7270e00。同一源文件分别编进校准程序和目标探针，使用相同 Release 选项。
-
-工作量不随产品优化或本机速度改变，实测离散度仍须通过下表。MinGW 链接参照时关闭 PE 墙钟时间戳；两次重建 SHA-256 同为 `7174d85e82a39ba878d90271642f73ebe8ffcb804874d814b7f383fda5383b0b`，避免候选重建仅因时间戳而被拒绝。
+参照固定为 **12,000,000 次**原整数混合步骤；缩短到原来的十分之一以降低测量开销，不按机器或候选速度标定。循环、编译 flags、参照二进制、字体、操作适配器、计数器后端、CPU 型号/逻辑核及工作量进入兼容检查。SDK 身份仅用于溯源，允许比较产品候选。
 
 | 项目 | 固定口径 |
 |---|---|
-| 源码 | `93f9d8bb1ab5ed700bc8dbad47eef650eeb5bca9`；产品树未改 |
-| 构建 | GCC 16.2.0，Release `-O3 -DNDEBUG`，SDK 默认功能；构建/重链接命令与日志保留 |
-| 环境 | Lenovo / Core Ultra 7 256V，Windows 11 build 26200；机器信息和逐核遥测见 preflight |
-| 亲和性 | CPU 3，探针与参照均 HIGH priority；串行采集 |
-| 电源 | AC min=max=100、boost=0；每个 session 的 finally 恢复并读回核对 |
-| 校准 | 每轮一个独立原生进程，1 次声明的 warmup + 31 次全部保留的参照测量；取 nearest-rank p95 |
-| 目标 | 清单的 **17 EPUB + 1 PDF + 1 MOBI**；每本首屏 + 16 次顺序翻页，首屏不计入门禁 |
-| 视口 | 重排 720×1040、margin 48、字号 24；PDF 沿用 R3 原生 1.0 render scale |
-| 目标计时 | layout + RGBA render；打开、签名和释放在目标计时之外；暖 OS 文件缓存 |
-| 每轮汇总 | 每本权重相同，共 **304** 个顺序配对样本；另留每本书自己的 p95 比值 |
-| 重复 | 正常 5 轮，然后冻结预算，再受压 5 轮；没有删除异常点或选择五次 |
-| 离散度 | 统一为 `100×(max-min)/nearest-rank p50`；不以 CV 替代 |
+| SDK | #87 固定 DLL；当前基点 db9bab66 的 src/include/R3 与其源版本相同，见 sdk-reuse.json |
+| 构建 | Windows x64、GCC 16.2.0、Release `-O3 -DNDEBUG` |
+| 计时窗口 | EOF 探测 + 跨章节建 pager + 排版 + RGBA 渲染；签名、释放在窗口外 |
+| 计数器 | 同一组 QPC/TSC/线程周期快照；读取中切换仅重读快照，目标操作不重跑 |
+| 参照顺序 | 前参照 → 完整目标 → 后参照；跨章节不另换前参照 |
+| 书籍 | 17 EPUB + 1 PDF + 1 MOBI；每本首屏留存，16 个顺序页计入 |
+| 视口 | 重排 720×1040、margin 48、字号 24；PDF R3 原生 1.0 scale |
+| 压力 | CPU 3 上额外 0/1/3 个相同 HIGH priority 原忙循环；其他应用保留 |
+| 采样 | 三档各连续 5 轮；无压 5 轮后冻结，再运行中/高压；不删异常点 |
+| 校准 | 每轮独立进程，1 次 warmup + 31 次全部保留的参照 |
+| 回读 | raw SHA、完整 19×16 计划、相位周期和、墙钟/TSC 覆盖、跨轮输出签名 |
 
-`ratio-probe` 生成测量副本，复用 R3 的分页、RGBA/文本/位置签名；MOBI 使用公开文档分页 API 和文档文本范围。输入先核对原清单 SHA-256，再复制到 ignored build 目录下的 ASCII 哈希文件名，避免 Windows 原生 argv 丢失中文路径；副本再次验散列。每个原始记录输出 `reference_ms`、`target_ms`、`ratio`。
+`raw.samples[].ratio` 为兼容旧验证器保留的墙钟比值；schema 2 的 `summary.ratio` 使用上面的周期公式。所有汇总从 raw 重算。
 
-## 五轮与慢机实测
+## 三档各五轮与逐书结果
 
-<!-- MEASURED-RESULTS -->
-| 状态 / 轮次 | 独立参照 p95 ms | 配对参照 p95 ms | 翻页 p95 ms | ratio |
-|---|---:|---:|---:|---:|
-| 正常 1 | 237.249000 | 238.211500 | 83.803000 | 0.351800816 |
-| 正常 2 | 237.626900 | 238.260400 | 83.927800 | 0.352252410 |
-| 正常 3 | 237.664500 | 237.424600 | 84.067200 | 0.354079569 |
-| 正常 4 | 236.724800 | 237.785400 | 82.961800 | 0.348893582 |
-| 正常 5 | 237.168100 | 237.878200 | 83.907500 | 0.352733037 |
-| 受压 1 | 494.157900 | 492.442200 | 161.348300 | 0.327649214 |
-| 受压 2 | 470.119000 | 489.465900 | 135.428000 | 0.276685260 |
-| 受压 3 | 480.783900 | 486.629800 | 139.855700 | 0.287396497 |
-| 受压 4 | 497.383300 | 493.122600 | 144.176300 | 0.292374148 |
-| 受压 5 | 473.530500 | 497.210900 | 147.326100 | 0.296305049 |
+<!-- LOAD-RESULTS -->
+**CPU 周期方案的受压目标通过。** 中压/高压整体漂移 **+0.161461% / −2.703262%**，离散度 **2.195308% / 3.796614%**。受压逐书最大绝对漂移 **4.569852% / 5.804235%**，最大离散度 **8.566037% / 5.008535%**，均 <10%；两档本地数值检查通过，19 本均未超过各自 gate。
 
-| 五轮离散度 | 正常 | 受压 | 验收 |
-|---|---:|---:|---|
-| 独立参照 p95 | 0.396082% | 5.670801% | 通过（正常要求 <3%） |
-| 翻页 p95 / 参照 p95 | 1.472236% | 17.431074% | 通过（正常要求 <5%） |
-| 绝对翻页 p95 | 1.317403% | 17.978198% | 仅诊断 |
+**仍做不到恢复 required。** 无压 `black-boy` 的逐书离散度为 **10.125412%**，比 10% 上限高 **0.125412 个百分点**，没有删掉该轮或重定预算。无压整体离散度 1.434026%、参照校准周期离散度 0.745101% 均通过原要求。
 
-正常→受压：翻页 p95 中位数 **83.907500→144.176300 ms**，**1.7183× / +71.8277%**；配对参照 **2.0701× / +107.0144%**；ratio 中位数 **0.352252410→0.292374148**，漂移 **-16.9987%**，<10% 验收 **失败**。
+只做墙钟三明治仍失败：中压/高压漂移 **−13.858672% / −50.625709%**。所以这里的通过是新 CPU 工作成本指标的通过，不能宣称共享 runner 上的墙钟延迟已经稳定。
 
-| 整体冻结参照 R0 | 受压候选 p95 ratio | 警告 | 门禁 | 硬上限 |
-|---:|---:|---:|---:|---:|
-| 0.354079569 | 0.327649214 | 0.389487526 | 0.442599461 | 0.531119353 |
+| 负载 / 轮次 | 参照前 p95 ms | 目标 p95 ms | 参照周期 p95 / M | 目标周期 p95 / M | 校正 ratio | 原墙钟 ratio |
+|---|---:|---:|---:|---:|---:|---:|
+| 无 1 | 23.3910 | 82.7161 | 76.6209 | 272.4190 | 3.555413314 | 3.536236159 |
+| 无 2 | 23.1451 | 82.5867 | 76.3474 | 272.1614 | 3.564776718 | 3.568215303 |
+| 无 3 | 23.0699 | 82.8982 | 75.8972 | 273.1695 | 3.599203661 | 3.593348909 |
+| 无 4 | 23.1014 | 83.1316 | 76.0419 | 269.8031 | 3.548083827 | 3.598552469 |
+| 无 5 | 23.6325 | 82.5861 | 75.9995 | 271.5367 | 3.572874783 | 3.494598540 |
+| 中 1 | 41.8674 | 119.1745 | 76.9841 | 271.2471 | 3.523417372 | 2.846474823 |
+| 中 2 | 40.5342 | 123.7339 | 76.0038 | 273.7507 | 3.601801540 | 3.052580290 |
+| 中 3 | 40.8013 | 127.8155 | 75.9625 | 271.2266 | 3.570532444 | 3.132633029 |
+| 中 4 | 40.5383 | 126.2475 | 76.2081 | 272.7142 | 3.578546069 | 3.114277116 |
+| 中 5 | 40.6481 | 122.6207 | 76.1498 | 270.5276 | 3.552572527 | 3.016640384 |
+| 高 1 | 72.5794 | 121.0624 | 76.3487 | 271.3894 | 3.554603087 | 1.667999460 |
+| 高 2 | 72.0638 | 124.8968 | 76.3571 | 261.3642 | 3.422920880 | 1.733142021 |
+| 高 3 | 74.0509 | 116.4618 | 76.1060 | 263.9668 | 3.468411452 | 1.572726327 |
+| 高 4 | 120.4333 | 213.9031 | 76.2730 | 263.7334 | 3.457756114 | 1.776112587 |
+| 高 5 | 77.5755 | 138.0975 | 76.5360 | 265.7152 | 3.471768002 | 1.780168997 |
 
-19 本各自的冻结阈值与受压候选（每列 p95 均对五轮取 nearest-rank）：
+| 负载 | ratio 中位数 | 漂移 | ratio 离散度 | 参照校准周期离散度 | 原墙钟漂移 | 墙钟三明治漂移 |
+|---|---:|---:|---:|---:|---:|---:|
+| 无 | 3.564776718 | +0.0000% | 1.4340% | 0.7451% | +0.0000% | +0.0000% |
+| 中 | 3.570532444 | +0.1615% | 2.1953% | 2.3855% | -14.4508% | -13.8587% |
+| 高 | 3.468411452 | -2.7033% | 3.7966% | 0.1247% | -51.4283% | -50.6257% |
 
-| 书籍 ID | 正常 p95 ratio | 受压 p95 ratio | 警告 | 门禁 | 硬上限 | 受压结果 |
-|---|---:|---:|---:|---:|---:|---|
-| a-raisin-in-the-sun | 0.383575779 | 0.386075447 | 0.421933357 | 0.479469724 | 0.575363669 | 三线以下 |
-| between-the-world-and-me | 0.139538179 | 0.127038534 | 0.153491997 | 0.174422724 | 0.209307269 | 三线以下 |
-| black-boy | 0.255126773 | 0.187563524 | 0.280639450 | 0.318908466 | 0.382690159 | 三线以下 |
-| born-a-crime | 0.109303117 | 0.123668905 | 0.120233428 | 0.136628896 | 0.163954675 | warning |
-| crying-in-h-mart | 0.175235191 | 0.217644589 | 0.192758710 | 0.219043988 | 0.262852786 | warning |
-| how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america | 0.212277987 | 0.239421507 | 0.233505786 | 0.265347484 | 0.318416980 | warning |
-| i-know-why-the-caged-bird-sings | 0.346336705 | 0.352852542 | 0.380970375 | 0.432920881 | 0.519505057 | 三线以下 |
-| pachinko | 0.239594780 | 0.181214621 | 0.263554257 | 0.299493474 | 0.359392169 | 三线以下 |
-| the-absolutely-true-diary-of-a-part-time-indian | 0.071897985 | 0.103558756 | 0.079087784 | 0.089872481 | 0.107846978 | warning/gate |
-| the-autobiography-of-malcolm-x. | 0.416668174 | 0.404132412 | 0.458334992 | 0.520835218 | 0.625002261 | 三线以下 |
-| the-distance-between-us-a-memoir | 0.214683062 | 0.243301905 | 0.236151369 | 0.268353828 | 0.322024593 | warning |
-| the-fire-next-time | 0.363993684 | 0.331712782 | 0.400393052 | 0.454992104 | 0.545990525 | 三线以下 |
-| the-fire-this-time-a-new-generation-speaks-about-race | 0.275036046 | 0.226261332 | 0.302539651 | 0.343795058 | 0.412554069 | 三线以下 |
-| the-house-on-mango-street | 0.110177612 | 0.123475313 | 0.121195374 | 0.137722015 | 0.165266419 | warning |
-| zami-a-new-spelling-of-my-name---a-biomythography | 0.054003222 | 0.062989081 | 0.059403544 | 0.067504028 | 0.081004833 | warning |
-| hongloumeng-24264 | 0.123187103 | 0.158171758 | 0.135505814 | 0.153983879 | 0.184780655 | warning/gate |
-| xingshihengyan-24239 | 0.120122687 | 0.127168989 | 0.132134956 | 0.150153359 | 0.180184031 | 三线以下 |
-| tangshi300-52323 | 0.126419566 | 0.164541780 | 0.139061523 | 0.158024457 | 0.189629349 | warning/gate |
-| kusamakura-japanese-vertical-writing | 0.207385976 | 0.171123080 | 0.228124574 | 0.259232470 | 0.311078964 | 三线以下 |
+| 负载 | 目标计入周期 / TSC | 参照计入周期 / TSC | 目标切换次数 / 304 页 | 参照前切换次数 / 304 次 | 排版占目标周期 |
+|---|---:|---:|---:|---:|---:|
+| 无 | 0.9964 | 0.9964 | 203 | 465 | 48.0152% |
+| 中 | 0.6567 | 0.6525 | 339 | 395 | 48.0685% |
+| 高 | 0.5719 | 0.5665 | 542 | 511 | 47.8529% |
 
-单书正常 ratio 离散度最差为 **8.8196%**（between-the-world-and-me）；受压单书 ratio 中位数漂移最差为 **-38.2738%**（black-boy）。整体统计达标不能代替逐书稳定性。
+| 书籍 | 无 ratio p95 / 离散度 | 中漂移 / 离散度 | 高漂移 / 离散度 | warning / gate / hard |
+|---|---:|---:|---:|---|
+| a-raisin-in-the-sun | 3.867390641 / 2.407% | +0.082% / 4.045% | -4.244% / 3.224% | 4.254129705 / 4.834238301 / 5.801085961 |
+| between-the-world-and-me | 1.322563212 / 1.611% | -0.100% / 2.480% | -1.587% / 0.941% | 1.454819534 / 1.653204015 / 1.983844819 |
+| black-boy | 2.625747850 / 10.125% | +1.272% / 5.682% | -3.736% / 0.926% | 2.888322635 / 3.282184812 / 3.938621775 |
+| born-a-crime | 1.069993310 / 3.099% | -0.543% / 3.727% | -0.217% / 2.200% | 1.176992641 / 1.337491638 / 1.604989965 |
+| crying-in-h-mart | 1.782664035 / 1.444% | -1.778% / 3.414% | -1.721% / 2.740% | 1.960930439 / 2.228330044 / 2.673996053 |
+| how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america | 2.163734659 / 1.274% | -0.776% / 4.964% | -2.168% / 1.533% | 2.380108125 / 2.704668324 / 3.245601989 |
+| i-know-why-the-caged-bird-sings | 3.631996639 / 3.174% | -1.567% / 5.659% | -5.804% / 3.991% | 3.995196303 / 4.539995798 / 5.447994958 |
+| pachinko | 2.504287025 / 2.407% | -4.570% / 8.044% | -4.658% / 1.781% | 2.754715727 / 3.130358781 / 3.756430537 |
+| the-absolutely-true-diary-of-a-part-time-indian | 0.724533171 / 3.607% | -1.110% / 2.315% | -1.642% / 2.987% | 0.796986488 / 0.905666463 / 1.086799756 |
+| the-autobiography-of-malcolm-x. | 4.131091417 / 4.947% | +0.571% / 0.987% | -1.812% / 2.122% | 4.544200559 / 5.163864272 / 6.196637126 |
+| the-distance-between-us-a-memoir | 2.106282753 / 2.836% | -0.595% / 3.574% | -1.758% / 2.947% | 2.316911029 / 2.632853442 / 3.159424130 |
+| the-fire-next-time | 3.771765241 / 4.453% | -1.186% / 8.566% | -3.554% / 3.407% | 4.148941766 / 4.714706552 / 5.657647862 |
+| the-fire-this-time-a-new-generation-speaks-about-race | 2.872367730 / 6.582% | +0.270% / 6.531% | -5.448% / 4.943% | 3.159604503 / 3.590459662 / 4.308551595 |
+| the-house-on-mango-street | 1.079886840 / 4.606% | +1.158% / 2.373% | -0.397% / 2.247% | 1.187875524 / 1.349858550 / 1.619830259 |
+| zami-a-new-spelling-of-my-name---a-biomythography | 0.521313190 / 1.855% | +0.029% / 2.969% | +0.206% / 3.892% | 0.573444509 / 0.651641487 / 0.781969785 |
+| hongloumeng-24264 | 1.239748583 / 2.497% | -1.097% / 1.465% | -0.761% / 2.690% | 1.363723441 / 1.549685729 / 1.859622875 |
+| xingshihengyan-24239 | 1.167513374 / 2.327% | +1.169% / 1.525% | +2.155% / 2.762% | 1.284264712 / 1.459391718 / 1.751270062 |
+| tangshi300-52323 | 1.193172903 / 2.377% | -0.193% / 2.526% | -0.004% / 3.171% | 1.312490194 / 1.491466129 / 1.789759355 |
+| kusamakura-japanese-vertical-writing | 2.114039274 / 4.558% | -1.826% / 6.394% | -5.316% / 5.009% | 2.325443202 / 2.642549093 / 3.171058911 |
+<!-- /LOAD-RESULTS -->
 
-独立未变更候选：整体三档超限次数（共 5 轮）为 **{'warning': 0, 'gate': 0, 'hard': 0}**；任一单书超过门禁的轮次 **1/5**；基线 eligible=True，候选 eligible=False。
+完整机器可读结果：[final/experiment.json](../../evidence/perf-gate3-20261108/final/experiment.json)。逐书表列出全部 19 本的漂移、离散度和各自预算；整体通过不能代替逐书通过。
 
-逐页 RGBA/文本/位置签名在所有正常与受压轮之间一致：**True**。
+## 三档阈值及拒绝规则
 
-<!-- /MEASURED-RESULTS -->
+三档政策系数保持 **warning=1.10×R0、gate=1.25×R0、hard=1.50×R0**。本次 R0 为 **3.599203661**，冻结阈值如下：
 
-机器可读结果见 [experiment.json](../../evidence/perf-gate2-20261108/final/experiment.json)，逐次与逐书指标见 [normal/summary.json](../../evidence/perf-gate2-20261108/final/normal/summary.json) 和 [loaded/summary.json](../../evidence/perf-gate2-20261108/final/loaded/summary.json)。capture.json 记录每份 stdout 的散列；报告从 raw 重算，不信任缓存汇总。
+| 警告 | 门禁 | 硬上限 |
+|---:|---:|---:|
+| 3.959124027 | 4.499004576 | 5.398805491 |
 
-慢机模拟启动 **1 个相同 HIGH priority 的忙循环**，与探针固定在 CPU 3 上竞争，其他设置不变；原始 PID 和 finally 停止记录见 loaded/capture.json。用正常与受压各五轮的 p50 比较实际放慢倍数及 ratio 漂移。该实验模拟 CPU 时间份额降低，没有等比例改变不同 CPU 的指令吞吐、内存带宽或磁盘性能；跨 CPU 型号仍需独立验证。
+每本书以自己的五轮 p95 单独定线，数值见上表和 [policy.json](../../evidence/perf-gate3-20261108/final/policy.json)。预算在任何受压候选启动前写入，之后没有改写。系数是政策余量，不是统计置信区间。
 
-本轮正常绝对翻页 p95 的离散度也只有 **1.3174%**，ratio 为 **1.4722%**；不能把新工作负载的稳定性直接归功于归一化。受压时分子只放慢 1.7183×、分母放慢 2.0701×，证明二者未等比例变化，当前公式不足以消除这种争用。逐页 ratio 的 p95 中位数漂移为 **−1.0189%**，但它是另一种统计量，本轮没有用它替换指定的 p95 之比来改变验收结果。
+冻结/本地门禁资格继续要求：至少五轮、参照校准周期离散度 <3%、整体 ratio 离散度 <5%。本任务另外检查受压漂移绝对值 <10%、受压离散度 <10%，并分别报告逐书结果。低于 10% 不会绕过原有 5% 的本地资格要求。
 
-限频诊断另试 AC min=max **50% / 25%**（boost=0）。31 次参照观测的 p95 分别为 **235.6523 / 235.2888 ms**，与正常 **237.249 ms** 接近，没有制造实际减速，因此不计作慢机通过证据，也未启动无效的五轮目标采集。两次设置均在 finally 恢复并读回一致；AC 接通状态已记录于 [power-status.json](../../evidence/perf-gate2-20261108/final/power-status.json)。
-
-## 冻结阈值与拒绝规则
-
-设 `R0` 为正常五轮 run_ratio 的 nearest-rank p95，即五轮最大值。三档为 **1.10×R0 / 1.25×R0 / 1.50×R0**，实际无量纲数字见实测段。每本书同样以该书五轮比值 p95 单独冻结三档，避免整体统计掩盖单本退化；实测段列出全部 19 本的当前值和阈值。
-
-10% 警告余量是 <5% 离散度目标的两倍；25% 门禁延续既有延迟余量；50% 硬上限要求停止推进并复核。这些是政策余量，不是置信区间。警告只提示，任一整体或单书超过门禁/硬上限均非零退出。
-
-除数值线之外，还拒绝：基线或候选不足五轮、参照校准离散度 ≥3%、整体 ratio 离散度 ≥5%、缺书/缺页、原始散列不符、RGBA/文本/位置签名变化、非正数/非有限参照、逐页比值算错，以及参照/编译器/flags/字体/采样工具/操作计划/输入散列不兼容。SDK 源码与 DLL 身份保留在溯源记录中，**不放进兼容键**，因此可比较产品代码候选。RSS 继续属于原有 E1 独立内存检查，不做速度归一化。
-
-预算在受压候选开始前写入 [ratio-policy.json](../../evidence/perf-gate2-20261108/final/ratio-policy.json)，不因候选结果改写；`eligible=false` 时只能审议，不能用作 required 的批准基线。
-
-## 误报评估
-
-正常五轮参与定线，不能拿它们自己的过线率估计误报率。受压五轮在预算冻结后采集，使用同一 SDK，可作为独立的“产品未回退”候选。实测段分别列出整体三档超限数、任一单书门禁超限数和资格拒绝，不能只报数值通过而省略资格失败。
-
-若五轮均未越整体门禁，观察值为 0/5，但单侧 95% 二项上界仍为 `1-0.05^(1/5)=45.1%`。连续五轮可能相关，因此这也不是生产误报率保证。恢复前需在实际 runner 上积累独立未变更对照和已知回退候选，检验整批资格与全部单书门禁的误报/漏报。19 本联合门禁的误报率应单独评估。
+缺页、缺书、原始 SHA 不符、非法计数、相位漏计、计时覆盖不一致、签名变化或不兼容均拒绝；整体或任一单书超过 gate/hard 均失败。warning 只提示。RSS 仍由原 E1 独立检查，不除以速度参照。
 
 ## 19 本全页回归
 
 <!-- REGRESSION-RESULTS -->
-同一源码 HEAD 的采集前/后全页回归均为 **19/19、11,296 页、8,648,640 glyph，像素哈希变化 0**。期间 CMake 重链接导致 SDK DLL 散列变化，因此另用最终 **同一 DLL** 重复全页比较，同样 **0 页变化**，比较退出 0。最终 DLL SHA-256 为 c965a690cbdc812ecfe9959e5f01edd05c49bf780abb35b513372daa74742ada；三次内容指纹均为 12b3b76f346ea736f218d8eb5e11af33673ceb31993c9c7ced98724e4689e732。
+采集前/后均为 **19/19 本、11,296 页、8,648,640 glyph**；页数、glyph 与像素哈希变化均为 **0**。前后使用同一 DLL，与 #87 的同 DLL 全页结果也完全一致。
 
-完整逐页数据：[before.json.gz](../../evidence/perf-gate2-20261108/realbooks-before.json.gz)、[after.json.gz](../../evidence/perf-gate2-20261108/realbooks-after.json.gz)、[repeat.json.gz](../../evidence/perf-gate2-20261108/realbooks-repeat.json.gz)；[同一 DLL 比较](../../evidence/perf-gate2-20261108/realbooks-repeat.diff.json)。
+DLL SHA-256：`c965a690cbdc812ecfe9959e5f01edd05c49bf780abb35b513372daa74742ada`；内容指纹：`12b3b76f346ea736f218d8eb5e11af33673ceb31993c9c7ced98724e4689e732`。
+
+完整证据：[before.json.gz](../../evidence/perf-gate3-20261108/realbooks-before.json.gz)、[after.json.gz](../../evidence/perf-gate3-20261108/realbooks-after.json.gz)、[前后比较](../../evidence/perf-gate3-20261108/realbooks-after.diff.json)、[与 #87 比较](../../evidence/perf-gate3-20261108/regression-versus-87.json)。正式 15 轮的逐页 RGBA/文本/位置签名亦与 #87 相等。
 <!-- /REGRESSION-RESULTS -->
 
-全页回归使用既有 `tools/regress/run_realbooks.py` 与 `tools/regress/layout.json`，与性能探针的早期页采样分别保留口径。证据只存页数、glyph 数和像素散列，不提交书籍内容。性能采集前后运行，避免四进程全页渲染干扰计时。
+全页回归与性能采集串行运行。书籍与二进制留在 ignored build 目录，提交的证据只包含计数、散列、计时和环境记录。
 
-## workflow patch（仅提案，未应用）
+## 能否恢复 required
 
-完整 unified diff 见 [proposed-workflows.patch](../../evidence/perf-gate2-20261108/proposed-workflows.patch)，提交前执行 `git apply --check`。它新增 `performance-ratio` 检查，不修改既有 `.github/` 文件，不取消 run。关键片段：
+<!-- REQUIRED-CONCLUSION -->
+**不能恢复 required；在当前共享机器上，完整逐书稳定性与墙钟延迟门禁仍做不到。** 本次三档五轮的 CPU 周期受压验收已经通过，且 0 本书触发 gate；但无压单书残余离散度仍为 10.125412%，墙钟三明治在高压下仍漂移 −50.625709%。
 
-```diff
-+      - name: Measure five runs of the same 19 books
-+        run: |
-+          python -X utf8 tools/perf/ratio_capture.py capture --build build/perf-ratio-build --font $env:PERF_FONT --manifest $env:PERF_CORPUS --output build/perf-ratio/candidate --cpu 3 --runs 5
-+          exit $LASTEXITCODE
-+      - name: Recompute raw ratios and enforce frozen tiers
-+        if: always()
-+        run: |
-+          python -X utf8 tools/perf/ratio_capture.py check $env:PERF_RATIO_POLICY build/perf-ratio/candidate build/perf-ratio/result.json
-+          exit $LASTEXITCODE
-+      - name: Retain all raw attempts
-+        if: always()
-+        uses: actions/upload-artifact@v4
-+        with:
-+          path: build/perf-ratio/
-+          if-no-files-found: error
-```
+下一步必须在独占 runner 上重新取得五轮逐书稳定基线与独立候选，同时保留墙钟延迟检查，并完成下面的 strict 接线。独占 runner 是需要验证的运行条件，不能用当前共享机器的整体通过替代。现有结果不授予 required 恢复资格。
+<!-- /REQUIRED-CONCLUSION -->
 
-应用前需在 runner 上提供清单原件、固定字体、同编译器/flags/参照及已批准的合格冻结 policy，配置 `PERF_CORPUS`、`PERF_FONT`、`PERF_RATIO_POLICY`。本机依赖路径在 build-command.json；workflow 不能直接使用这些本机路径。runner 电源配置应与批准基线一致，并复验该 runner 的压力漂移。
+现有 `tools/measure_reading_real.py` 强制 advisory，`tools/reading_required.py` 要求 strict 的 `accepted=true`；这两个实现不在允许修改范围内。本次测量器同样没有授予 E3 acceptance。需要实际 runner 的独立未变更对照、逐书稳定性与已知回退验证，随后另一个 PR 完成 strict 生产者、同 run/attempt 验证与 workflow 接线，再决定注册 required context。
 
-## 能否恢复 required，以及还差什么
+恢复仍需 owner 在 [#32](https://github.com/NoGod3524/EXReader/issues/32) 记录冻结预算和恢复决定；E3 截止 **2026-12-15 00:00 America/New_York**。
 
-**不能恢复。** 整体 ratio 与单书结果必须分别判断：同一 SDK 在同核竞争下已经出现单书门禁误报，不能据整体统计达标推进 required。还缺实际 runner 的冻结基线和独立复验、已知产品回退的拒绝性验证，以及 E3 strict 报告生产者。
+线程周期不包含被调度出去或主动阻塞的等待。CPU 工作量门禁即使通过，也不能独自发现新增阻塞导致的墙钟延迟回退；需要独占 runner 的墙钟检查配合。五轮定线数据不能作为生产误报率估计。
 
-现有 `tools/measure_reading_real.py` 仍调用 `perf_policy.advisory()`，强制 `accepted=false`；`tools/reading_required.py` 则要求 `accepted=true`。本次允许范围内不能修改这两个实现，套 workflow patch 也不能使其进入严格验收。新 `ratio_capture.py check` 给出本地数值结果，仍输出 E3 advisory 身份。
-
-恢复顺序：先解决受压单书误报，逐书复验离散度与慢机漂移，并在实际 runner 取得独立数据；再以另一个 PR 实现 strict 生产者并验证正反候选、完成 real-v1 来源与同 run/attempt 严格复验；owner 在 [#32](https://github.com/NoGod3524/EXReader/issues/32) 记录冻结预算和恢复决定后应用 workflow，手动运行和真实 PR 活验，最后注册 required context。既有 core 保护继续保留。E3 截止 **2026-12-15 00:00 America/New_York** 不变。
-
-## 复现、失败记录与核验
+## 复现与范围
 
 ```powershell
-# 本机完整配置参数在 evidence/perf-gate2-20261108/build-command.json。
-cmake -S tools/perf -B build/perf-ratio -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build/perf-ratio --target ratio-probe perf-reference --parallel 4
-New-Item -ItemType Directory evidence/perf-gate2-20261108/NEW
-pwsh -NoProfile -File tools/perf/ratio_session.ps1 -Output evidence/perf-gate2-20261108/NEW -Build build/perf-ratio -Font C:/path/Reader.otf -Cpu 3
-python tools/perf/ratio_report.py evidence/perf-gate2-20261108/NEW
-python tools/perf/check_ratio.py evidence/perf-gate2-20261108/NEW/normal
-git apply --check evidence/perf-gate2-20261108/proposed-workflows.patch
+# 本机固定 SDK、源树身份与完整路径：evidence/perf-gate3-20261108/sdk-reuse.json
+cmake -S tools/perf -B evidence/perf-gate3-20261108/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_PERF_REFERENCE_STEPS=12000000
+cmake --build evidence/perf-gate3-20261108/build --target load-probe load-reference perf-reference --parallel 2
+pwsh -NoProfile -File tools/perf/load_session.ps1 -Output evidence/perf-gate3-20261108/NEW -Build evidence/perf-gate3-20261108/build -Font C:/path/Reader.otf -Mode sandwich -Runs 5
+python tools/perf/load_report.py evidence/perf-gate3-20261108/NEW
+python tools/perf/check_load.py evidence/perf-gate3-20261108/NEW
 ```
 
-普通优先级探索中，参照单进程 p95=502.316 ms，范围 248.906–2064.147 ms；发现严重调度干扰后停止自己的探针，保留未完成批次。后续高优先级接入真书时，先后暴露 PDF 格式选择、MOBI 分页/文本签名适配缺口，均保留失败 stdout/日志，修复后先通过全部 19 本冒烟才开始 final 批次。未完成批次不用于凑五次或定阈值。各 session 电源恢复值和原因均保留。
+固定 SDK 复用的完整 CMake 参数见 [README](../../evidence/perf-gate3-20261108/README.md)；省略复用参数则构建当前源码 SDK。诊断用的长参照须显式设置 `EXR_PERF_REFERENCE_STEPS=120000000`，不能和正式 policy 混用。
 
-详细进度见 [PERF2-OUT.txt](../../evidence/perf-gate2-20261108/PERF2-OUT.txt)。新增/修改都限于 `tools/perf/`、`docs/validation/`、`evidence/perf-gate2-20261108/`；产品目录与 `.github/` 未改。
+改动仅在 `tools/perf/`、`docs/validation/`、`evidence/perf-gate3-20261108/`。进度、失败试跑和恢复记录见 [PERF3-OUT.txt](../../evidence/perf-gate3-20261108/PERF3-OUT.txt)。没有修改产品目录或 `.github/`，没有取消 workflow run。

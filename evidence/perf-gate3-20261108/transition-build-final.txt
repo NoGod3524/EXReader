@@ -1,0 +1,4 @@
+[1/4] Building C object CMakeFiles/load-reference.dir/load_reference.c.obj
+[2/4] Linking C executable load-reference.exe
+[3/4] Building C object CMakeFiles/load-probe.dir/load_probe.c.obj
+[4/4] Linking C executable load-probe.exe

@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-perf3-20261108\tools\perf/load_capture.py", line 156, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-perf3-20261108\tools\perf/load_capture.py", line 143, in main
+    capture(a)
+    ~~~~~~~^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-perf3-20261108\tools\perf\ratio_capture.py", line 197, in capture
+    raise RuntimeError(f"native probe failed: {book['id']} (raw retained)")
+RuntimeError: native probe failed: hongloumeng-24264 (raw retained)

@@ -1,0 +1,431 @@
+{
+  "thermal_interpretation": "PerformanceLimitFlags are supplementary counters; unavailable temperature means thermal throttling cannot be ruled out.",
+  "thermal_error": "Access denied ",
+  "advisory": true,
+  "utc": "2026-11-08T19:27:37.2625480Z",
+  "thermal": null,
+  "processor_policy": "See session power-original/restored.json and fixed policy in load_session.ps1",
+  "cpu": [
+    {
+      "Name": "Intel(R) Core(TM) Ultra 7 256V",
+      "NumberOfCores": 8,
+      "NumberOfLogicalProcessors": 8,
+      "MaxClockSpeed": 2200
+    }
+  ],
+  "accepted": false,
+  "active_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)\r\n",
+  "samples": [
+    {
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2024,
+          "PercentofMaximumFrequency": 89,
+          "PercentProcessorPerformance": 88,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 40
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 90,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 70
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 88,
+          "PercentProcessorPerformance": 88,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 52
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 90,
+          "PercentProcessorPerformance": 89,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 52
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 94
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 99,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 4
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 99,
+          "PercentProcessorPerformance": 98,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 4
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 0
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2178,
+          "PercentofMaximumFrequency": 94,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 39
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2178,
+          "PercentofMaximumFrequency": 94,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 39
+        }
+      ],
+      "processes": [
+        {
+          "name": "pwsh",
+          "pid": 25812,
+          "cpu_seconds": 0.78125,
+          "one_core_pct": 77.3457263379994
+        },
+        {
+          "name": "EXReader",
+          "pid": 23952,
+          "cpu_seconds": 0.234375,
+          "one_core_pct": 23.203717901399816
+        },
+        {
+          "name": "ChatGPT",
+          "pid": 24420,
+          "cpu_seconds": 0.078125,
+          "one_core_pct": 7.73457263379994
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 15480,
+          "cpu_seconds": 0.0625,
+          "one_core_pct": 6.187658107039951
+        },
+        {
+          "name": "EXReader",
+          "pid": 6704,
+          "cpu_seconds": 0.0625,
+          "one_core_pct": 6.187658107039951
+        },
+        {
+          "name": "ChatGPT",
+          "pid": 16396,
+          "cpu_seconds": 0.046875,
+          "one_core_pct": 4.640743580279963
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 23568,
+          "cpu_seconds": 0.03125,
+          "one_core_pct": 3.0938290535199755
+        },
+        {
+          "name": "WeChatAppEx",
+          "pid": 26188,
+          "cpu_seconds": 0.03125,
+          "one_core_pct": 3.0938290535199755
+        }
+      ],
+      "utc": "2026-11-08T19:27:34.4521424Z"
+    },
+    {
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 91,
+          "PercentProcessorPerformance": 90,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 58
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 93,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 82
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 90,
+          "PercentProcessorPerformance": 90,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 34
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 70
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 0,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 4
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 99,
+          "PercentProcessorPerformance": 0,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 4
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 99,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 0
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 95,
+          "PercentProcessorPerformance": 93,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 44
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 95,
+          "PercentProcessorPerformance": 93,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 44
+        }
+      ],
+      "processes": [
+        {
+          "name": "pwsh",
+          "pid": 25812,
+          "cpu_seconds": 0.671875,
+          "one_core_pct": 66.23562779298699
+        },
+        {
+          "name": "EXReader",
+          "pid": 23952,
+          "cpu_seconds": 0.203125,
+          "one_core_pct": 20.024724681600716
+        },
+        {
+          "name": "ChatGPT",
+          "pid": 16396,
+          "cpu_seconds": 0.140625,
+          "one_core_pct": 13.863270933415881
+        },
+        {
+          "name": "EXReader",
+          "pid": 6704,
+          "cpu_seconds": 0.125,
+          "one_core_pct": 12.322907496369673
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 15480,
+          "cpu_seconds": 0.109375,
+          "one_core_pct": 10.782544059323463
+        },
+        {
+          "name": "msedge",
+          "pid": 3132,
+          "cpu_seconds": 0.03125,
+          "one_core_pct": 3.0807268740924183
+        },
+        {
+          "name": "Weixin",
+          "pid": 13148,
+          "cpu_seconds": 0.03125,
+          "one_core_pct": 3.0807268740924183
+        },
+        {
+          "name": "WeChatAppEx",
+          "pid": 26188,
+          "cpu_seconds": 0.03125,
+          "one_core_pct": 3.0807268740924183
+        }
+      ],
+      "utc": "2026-11-08T19:27:35.8765577Z"
+    },
+    {
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 91,
+          "PercentProcessorPerformance": 89,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 75
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 91,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 87
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 91,
+          "PercentProcessorPerformance": 90,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 63
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 93,
+          "PercentProcessorPerformance": 90,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 87
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 63
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 98,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 1
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 98,
+          "PercentProcessorPerformance": 97,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 1
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 99,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 0
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 95,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 46
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 95,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 46
+        }
+      ],
+      "processes": [
+        {
+          "name": "EXReader",
+          "pid": 29376,
+          "cpu_seconds": 0.671875,
+          "one_core_pct": 66.42571002966677
+        },
+        {
+          "name": "pwsh",
+          "pid": 25812,
+          "cpu_seconds": 0.1875,
+          "one_core_pct": 18.537407450139565
+        },
+        {
+          "name": "EXReader",
+          "pid": 23952,
+          "cpu_seconds": 0.1875,
+          "one_core_pct": 18.537407450139565
+        },
+        {
+          "name": "ChatGPT",
+          "pid": 16396,
+          "cpu_seconds": 0.109375,
+          "one_core_pct": 10.813487679248079
+        },
+        {
+          "name": "ChatGPT",
+          "pid": 24420,
+          "cpu_seconds": 0.078125,
+          "one_core_pct": 7.723919770891485
+        },
+        {
+          "name": "codex",
+          "pid": 1728,
+          "cpu_seconds": 0.078125,
+          "one_core_pct": 7.723919770891485
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 15480,
+          "cpu_seconds": 0.0625,
+          "one_core_pct": 6.179135816713188
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 8440,
+          "cpu_seconds": 0.046875,
+          "one_core_pct": 4.634351862534891
+        }
+      ],
+      "utc": "2026-11-08T19:27:37.2624935Z"
+    }
+  ],
+  "system": {
+    "hypervisor_present": true,
+    "memory_bytes": 16693911552,
+    "model": "83JT",
+    "manufacturer": "LENOVO"
+  }
+}

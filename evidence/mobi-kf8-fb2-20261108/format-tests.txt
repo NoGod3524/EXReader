@@ -1,0 +1,23 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-mobi-20261108/build
+    Start 137: native-kf8
+1/9 Test #137: native-kf8 .......................   Passed    0.24 sec
+    Start 138: native-mobi
+2/9 Test #138: native-mobi ......................   Passed    0.31 sec
+    Start 146: native-fb2
+3/9 Test #146: native-fb2 .......................   Passed    0.12 sec
+    Start 161: native-book-font
+4/9 Test #161: native-book-font .................   Passed    0.07 sec
+    Start 206: native-book-codec
+5/9 Test #206: native-book-codec ................   Passed    0.44 sec
+    Start 207: native-book-mobi
+6/9 Test #207: native-book-mobi .................   Passed    0.17 sec
+    Start 208: native-book-kf8
+7/9 Test #208: native-book-kf8 ..................   Passed    0.23 sec
+    Start 209: native-book-fb2
+8/9 Test #209: native-book-fb2 ..................   Passed    0.21 sec
+    Start 210: native-book-errors
+9/9 Test #210: native-book-errors ...............   Passed    0.22 sec
+
+100% tests passed out of 9
+
+Total Test time (real) =   2.03 sec

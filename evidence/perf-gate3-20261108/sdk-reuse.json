@@ -1,0 +1,36 @@
+{
+  "checkout_head": "db9bab668ac725a75f3f92919edec3625879c7a8",
+  "sdk_source_revision": "93f9d8bb1ab5ed700bc8dbad47eef650eeb5bca9",
+  "sdk_sha256": "c965a690cbdc812ecfe9959e5f01edd05c49bf780abb35b513372daa74742ada",
+  "source_objects": {
+    "src": {
+      "93f9d8bb1ab5ed700bc8dbad47eef650eeb5bca9": "5892afa49f3715087f7986d8382d5d6983d92c70",
+      "db9bab668ac725a75f3f92919edec3625879c7a8": "5892afa49f3715087f7986d8382d5d6983d92c70"
+    },
+    "include": {
+      "93f9d8bb1ab5ed700bc8dbad47eef650eeb5bca9": "10ce6083554e4a82e2792a4554c5e466ca8ab1c8",
+      "db9bab668ac725a75f3f92919edec3625879c7a8": "10ce6083554e4a82e2792a4554c5e466ca8ab1c8"
+    },
+    "tools/reading_real_benchmark.c": {
+      "93f9d8bb1ab5ed700bc8dbad47eef650eeb5bca9": "786723068a4eb5ad51aaa47173a3311b0f17eff1",
+      "db9bab668ac725a75f3f92919edec3625879c7a8": "786723068a4eb5ad51aaa47173a3311b0f17eff1"
+    },
+    "tools/regress": {
+      "93f9d8bb1ab5ed700bc8dbad47eef650eeb5bca9": "64a60b4d620a51fe4d3dc212b3fd0d2d81c3d866",
+      "db9bab668ac725a75f3f92919edec3625879c7a8": "64a60b4d620a51fe4d3dc212b3fd0d2d81c3d866"
+    }
+  },
+  "sdk_origin": "../EXReader-perf2-20261108/evidence/perf-gate2-20261108/build/libexreader.dll",
+  "configure": [
+    "cmake",
+    "-S",
+    "tools/perf",
+    "-B",
+    "evidence\\perf-gate3-20261108\\build",
+    "-G",
+    "Ninja",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DEXR_PERF_SDK_DLL=C:/Users/Oscar/Documents/Codex/EXReader-perf2-20261108/evidence/perf-gate2-20261108/build/libexreader.dll",
+    "-DEXR_PERF_SDK_INCLUDE=C:/Users/Oscar/Documents/Codex/EXReader-perf2-20261108/evidence/perf-gate2-20261108/build/sdk/generated/include"
+  ]
+}

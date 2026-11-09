@@ -1,0 +1,28 @@
+Real book 1/19: between-the-world-and-me: ok, 236 pages
+Real book 2/19: a-raisin-in-the-sun: ok, 356 pages
+Real book 3/19: born-a-crime: ok, 519 pages
+Real book 4/19: crying-in-h-mart: ok, 542 pages
+Real book 5/19: black-boy: ok, 1050 pages
+Real book 6/19: how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america: ok, 515 pages
+Real book 7/19: the-absolutely-true-diary-of-a-part-time-indian: ok, 570 pages
+Real book 8/19: i-know-why-the-caged-bird-sings: ok, 625 pages
+Real book 9/19: the-fire-next-time: ok, 189 pages
+Real book 10/19: the-autobiography-of-malcolm-x.: ok, 279 pages
+Real book 11/19: the-house-on-mango-street: ok, 186 pages
+Real book 12/19: the-distance-between-us-a-memoir: ok, 725 pages
+Real book 13/19: pachinko: ok, 1277 pages
+Real book 14/19: the-fire-this-time-a-new-generation-speaks-about-race: ok, 333 pages
+Real book 15/19: tangshi300-52323: ok, 84 pages
+Real book 16/19: zami-a-new-spelling-of-my-name---a-biomythography: ok, 646 pages
+Real book 17/19: kusamakura-japanese-vertical-writing: ok, 465 pages
+Real book 18/19: xingshihengyan-24239: ok, 1203 pages
+Real book 19/19: hongloumeng-24264: ok, 1684 pages
+profiling:C:\Users\Oscar\Documents\Codex\EXReader-qual-20261108\evidence\quality-20261108\local\runtime-coverage\books-23092\CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/function_list.c.gcda:Cannot open
+profiling:C:\Users\Oscar\Documents\Codex\EXReader-qual-20261108\evidence\quality-20261108\local\runtime-coverage\books-21036\CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-202611profiling:C:\Users\06/deps/openjpeg-2.5.4/src/lib/openjp2/function_list.c.gcda:Cannot open
+Oscar\Documents\Codexprofiling:C:\Users\Oscar\Dprofil\ing:C:\Useros\Oscar\Docucumenmets\Cnts\Codex\EXReader-quodex\EXReadaler-qu-202al-2601108\evidence\quality-20261108\local\runtim261108\eEXvidee-cnovcerage\books-28328\CMakeFiles/exRr_jpx.dir/C_/Ueeasers\dquality-20/Oscar/Documents/Codex261108\local\runtime-coverage\books-23092\CMakeFiles/exr_jpx.dir/C_/Users/Oscarer//cDocjk-punctuation-compression-2026umen1106/deps/openjpts/Codeg-ex/2.5cjk-.4/srcpunctuation-compression/lib/-2o0penjp2/261106functio/d-n_lepsist/op.c.genjcdapeg-2.5.4/src/lib/openjp2/sparse_array.c.gcda:Cannot open
+:Cannot open
+qual-20261108\evidence\quality-20261108\local\runtime-coverprofiling:C:\Users\Oscar\Documents\Codex\EXReader-qual-20261108\evidence\quality-20261108\local\runtime-coverage\books-21036\CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/sparse_array.c.gcda:Cannot open
+age\books-2108profiling:C:\Users\Oscar\Documents\Codex\EXReader-qual-20261108\evidence\quality-20261108\local\runtime-coverage\books-28328\CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/sparse_array.c.gcda:Cannot open
+4\CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/function_list.c.gcda:Cannot open
+profiling:C:\Users\Oscar\Documents\Codex\EXReader-qual-20261108\evidence\quality-20261108\local\runtime-coverage\books-21084\CMakeFiles/exr_jpx.dir/C_/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4/src/lib/openjp2/sparse_array.c.gcda:Cannot open
+Real books complete: 19 books, 11484 pages, 0 changed hashes; needs_review=False

@@ -1,0 +1,118 @@
+{
+  "counter_backend": "Windows QueryThreadCycleTime; values are not retired instructions or unhalted core cycles",
+  "reference_loop_instructions_estimate": 720000000,
+  "reference_memory_accesses_in_loop": 0,
+  "frequency_samples": {
+    "none": [
+      {
+        "ProcessorFrequency": 2200,
+        "PercentProcessorPerformance": 94,
+        "PerformanceLimitFlags": 0
+      },
+      {
+        "ProcessorFrequency": 2200,
+        "PercentProcessorPerformance": 94,
+        "PerformanceLimitFlags": 0
+      },
+      {
+        "ProcessorFrequency": 2200,
+        "PercentProcessorPerformance": 94,
+        "PerformanceLimitFlags": 0
+      }
+    ],
+    "medium": [
+      {
+        "ProcessorFrequency": 2200,
+        "PercentProcessorPerformance": 94,
+        "PerformanceLimitFlags": 0
+      },
+      {
+        "ProcessorFrequency": 2200,
+        "PercentProcessorPerformance": 93,
+        "PerformanceLimitFlags": 0
+      },
+      {
+        "ProcessorFrequency": 2200,
+        "PercentProcessorPerformance": 93,
+        "PerformanceLimitFlags": 0
+      }
+    ],
+    "high": [
+      {
+        "ProcessorFrequency": 2200,
+        "PercentProcessorPerformance": 94,
+        "PerformanceLimitFlags": 0
+      },
+      {
+        "ProcessorFrequency": 2200,
+        "PercentProcessorPerformance": 94,
+        "PerformanceLimitFlags": 0
+      },
+      {
+        "ProcessorFrequency": 2200,
+        "PercentProcessorPerformance": 94,
+        "PerformanceLimitFlags": 0
+      }
+    ]
+  },
+  "ratio_drift_pct": {
+    "none": {
+      "calibration_cycles": 0.0,
+      "calibration_ms": 0.0,
+      "target_cycles": 0.0,
+      "reference_cycles": 0.0,
+      "before_cycles": 0.0,
+      "after_cycles": 0.0,
+      "ratio": 0.0,
+      "one_sided_cycle_ratio": 0.0,
+      "wall_ratio": 0.0,
+      "wall_sandwich_ratio": 0.0,
+      "target_ms": 0.0,
+      "reference_ms": 0.0,
+      "target_switches": 0.0,
+      "reference_switches": 0.0,
+      "layout_cycle_fraction": 0.0,
+      "target_charged_fraction": 0.0,
+      "reference_charged_fraction": 0.0
+    },
+    "medium": {
+      "calibration_cycles": -0.2659426533534237,
+      "calibration_ms": 102.92837043274248,
+      "target_cycles": 4.463657424676537,
+      "reference_cycles": 0.05725595648689019,
+      "before_cycles": 0.05725595648689019,
+      "after_cycles": 0.05725595648689019,
+      "ratio": 4.403879984581938,
+      "one_sided_cycle_ratio": 4.403879984581938,
+      "wall_ratio": -6.170865229353762,
+      "wall_sandwich_ratio": -6.170865229353762,
+      "target_ms": 89.92577366678087,
+      "reference_ms": 102.41663117861104,
+      "target_switches": 105.66037735849059,
+      "reference_switches": 74.14651002073256,
+      "layout_cycle_fraction": 0.5273135667151152,
+      "target_charged_fraction": -46.75533409835071,
+      "reference_charged_fraction": -46.77378628113209
+    },
+    "high": {
+      "calibration_cycles": 0.18085087260819588,
+      "calibration_ms": 322.0114411893825,
+      "target_cycles": 1.4907063828828448,
+      "reference_cycles": 0.0980283514525837,
+      "before_cycles": 0.0980283514525837,
+      "after_cycles": 0.0980283514525837,
+      "ratio": 1.3913141491063596,
+      "one_sided_cycle_ratio": 1.3913141491063596,
+      "wall_ratio": -3.348738937920004,
+      "wall_sandwich_ratio": -3.348738937920004,
+      "target_ms": 296.1078956383765,
+      "reference_ms": 309.8321028464934,
+      "target_switches": 136.75143560295325,
+      "reference_switches": 77.58811333794056,
+      "layout_cycle_fraction": 0.5768447698173196,
+      "target_charged_fraction": -74.2252662865549,
+      "reference_charged_fraction": -74.5355052416923
+    }
+  },
+  "instruction_counters_available": false
+}

@@ -1,0 +1,431 @@
+{
+  "utc": "2026-11-08T19:55:14.5056963Z",
+  "active_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)\r\n",
+  "thermal_interpretation": "PerformanceLimitFlags are supplementary counters; unavailable temperature means thermal throttling cannot be ruled out.",
+  "system": {
+    "model": "83JT",
+    "hypervisor_present": true,
+    "manufacturer": "LENOVO",
+    "memory_bytes": 16693911552
+  },
+  "thermal": null,
+  "accepted": false,
+  "processor_policy": "See session power-original/restored.json and fixed policy in load_session.ps1",
+  "advisory": true,
+  "thermal_error": "Access denied ",
+  "cpu": [
+    {
+      "Name": "Intel(R) Core(TM) Ultra 7 256V",
+      "NumberOfCores": 8,
+      "NumberOfLogicalProcessors": 8,
+      "MaxClockSpeed": 2200
+    }
+  ],
+  "samples": [
+    {
+      "processes": [
+        {
+          "name": "pwsh",
+          "pid": 25844,
+          "cpu_seconds": 0.28125,
+          "one_core_pct": 28.048329890245018
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 15480,
+          "cpu_seconds": 0.265625,
+          "one_core_pct": 26.49008934078696
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 16084,
+          "cpu_seconds": 0.078125,
+          "one_core_pct": 7.791202747290282
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 14268,
+          "cpu_seconds": 0.03125,
+          "one_core_pct": 3.116481098916113
+        },
+        {
+          "name": "ChatGPT",
+          "pid": 24420,
+          "cpu_seconds": 0.03125,
+          "one_core_pct": 3.116481098916113
+        },
+        {
+          "name": "codex",
+          "pid": 25880,
+          "cpu_seconds": 0.015625,
+          "one_core_pct": 1.5582405494580565
+        },
+        {
+          "name": "ChatGPT",
+          "pid": 8292,
+          "cpu_seconds": 0.015625,
+          "one_core_pct": 1.5582405494580565
+        },
+        {
+          "name": "codex",
+          "pid": 24188,
+          "cpu_seconds": 0.015625,
+          "one_core_pct": 1.5582405494580565
+        }
+      ],
+      "utc": "2026-11-08T19:55:11.7866675Z",
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2024,
+          "PercentofMaximumFrequency": 88,
+          "PercentProcessorPerformance": 88,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 46
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 89,
+          "PercentProcessorPerformance": 89,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 52
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2024,
+          "PercentofMaximumFrequency": 89,
+          "PercentProcessorPerformance": 88,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 40
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2024,
+          "PercentofMaximumFrequency": 90,
+          "PercentProcessorPerformance": 88,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 64
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 46
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 96,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 16
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 96,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 16
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 10
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2134,
+          "PercentofMaximumFrequency": 93,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 36
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2134,
+          "PercentofMaximumFrequency": 93,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 36
+        }
+      ]
+    },
+    {
+      "processes": [
+        {
+          "name": "pwsh",
+          "pid": 25844,
+          "cpu_seconds": 0.265625,
+          "one_core_pct": 26.447045423204997
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 15480,
+          "cpu_seconds": 0.25,
+          "one_core_pct": 24.891336868898822
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 16084,
+          "cpu_seconds": 0.09375,
+          "one_core_pct": 9.334251325837059
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 8440,
+          "cpu_seconds": 0.078125,
+          "one_core_pct": 7.778542771530882
+        },
+        {
+          "name": "codex",
+          "pid": 25880,
+          "cpu_seconds": 0.03125,
+          "one_core_pct": 3.1114171086123528
+        },
+        {
+          "name": "pwsh",
+          "pid": 9856,
+          "cpu_seconds": 0.015625,
+          "one_core_pct": 1.5557085543061764
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 22348,
+          "cpu_seconds": 0.015625,
+          "one_core_pct": 1.5557085543061764
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 22596,
+          "cpu_seconds": 0.015625,
+          "one_core_pct": 1.5557085543061764
+        }
+      ],
+      "utc": "2026-11-08T19:55:13.1399096Z",
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 90,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 64
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 88
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 88
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 91,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 94
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 16
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 46
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 95,
+          "PercentProcessorPerformance": 0,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 0
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 99,
+          "PercentProcessorPerformance": 99,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 0
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 95,
+          "PercentProcessorPerformance": 93,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 49
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 95,
+          "PercentProcessorPerformance": 93,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 49
+        }
+      ]
+    },
+    {
+      "processes": [
+        {
+          "name": "pwsh",
+          "pid": 21616,
+          "cpu_seconds": 0.875,
+          "one_core_pct": 86.33841164358833
+        },
+        {
+          "name": "pwsh",
+          "pid": 9856,
+          "cpu_seconds": 0.375,
+          "one_core_pct": 37.00217641868071
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 15480,
+          "cpu_seconds": 0.28125,
+          "one_core_pct": 27.751632314010532
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 16084,
+          "cpu_seconds": 0.171875,
+          "one_core_pct": 16.95933085856199
+        },
+        {
+          "name": "pwsh",
+          "pid": 25844,
+          "cpu_seconds": 0.078125,
+          "one_core_pct": 7.708786753891815
+        },
+        {
+          "name": "codex",
+          "pid": 25880,
+          "cpu_seconds": 0.0625,
+          "one_core_pct": 6.167029403113451
+        },
+        {
+          "name": "codex",
+          "pid": 13808,
+          "cpu_seconds": 0.0625,
+          "one_core_pct": 6.167029403113451
+        },
+        {
+          "name": "codex",
+          "pid": 24188,
+          "cpu_seconds": 0.03125,
+          "one_core_pct": 3.0835147015567257
+        }
+      ],
+      "utc": "2026-11-08T19:55:14.5056503Z",
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 86,
+          "PercentProcessorPerformance": 89,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 39
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 81
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 89,
+          "PercentProcessorPerformance": 90,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 57
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 91,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 87
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 0
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 0
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 94,
+          "PercentProcessorPerformance": 94,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 55
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 94,
+          "PercentProcessorPerformance": 94,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 55
+        }
+      ]
+    }
+  ]
+}

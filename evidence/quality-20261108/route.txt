@@ -1,0 +1,19 @@
+gcc --version
+gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0
+Copyright (C) 2026 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+gcc -fsanitize=undefined -fno-sanitize-recover=all -g -O1 tools/quality/overflow_probe.c -o evidence/quality-20261108/local/overflow_probe.exe
+C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.2.0/../../../../x86_64-w64-mingw32/bin/ld.exe: cannot find -lubsan: No such file or directory
+collect2.exe: error: ld returned 1 exit status
+compile_exit=1
+wsl -l -v
+The Windows Subsystem for Linux is not installed. You can install by running 'wsl.exe --install'.
+
+
+For more information please visit https://aka.ms/wslinstall
+
+
+
+wsl_exit=1
