@@ -23,6 +23,11 @@ ENVIRONMENT = ('PATH', 'CC', 'CXX', 'CFLAGS', 'CXXFLAGS', 'CPPFLAGS', 'LDFLAGS',
 EXCLUDED = ('evidence/', 'docs/ui/evidence/', 'archive/', '.github/', 'tools/release/build_manifest.json')
 
 
+def is_source_input(name):
+    return (bool(name) and not name.startswith(EXCLUDED)
+            and not ('/' not in name and (name == 'OUT.txt' or name.endswith('-OUT.txt'))))
+
+
 def output(command, cwd=None):
     return subprocess.check_output(command, cwd=cwd, text=True, encoding='utf-8').strip()
 
@@ -50,14 +55,14 @@ def tree(root):
     root = Path(root)
     names = []
     for directory, folders, files in os.walk(root):
-        folders[:] = sorted(d for d in folders if d != '.git' and d != '__pycache__' and not d.startswith('build'))
+        folders[:] = sorted(d for d in folders if d not in ('.git', '__pycache__'))
         names.extend((Path(directory) / f).relative_to(root).as_posix() for f in files)
     return fingerprint(root, names)
 
 
 def source_inputs(source):
     names = output(['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'], source).split('\0')
-    names = [n for n in names if n and not n.startswith(EXCLUDED) and not ('/' not in n and n.endswith('-OUT.txt'))]
+    names = [n for n in names if is_source_input(n)]
     return fingerprint(source, names)
 
 
@@ -112,7 +117,7 @@ def capture(source, build, configure_args):
                  if value(name) and Path(value(name)).is_file()}
     changed = output(['git', 'diff', '--name-only', 'HEAD'], source).splitlines()
     changed += output(['git', 'ls-files', '--others', '--exclude-standard'], source).splitlines()
-    changed = sorted(set(n for n in changed if not n.startswith(EXCLUDED) and not n.endswith('-OUT.txt')))
+    changed = sorted(set(n for n in changed if is_source_input(n)))
     epoch = os.environ.get('SOURCE_DATE_EPOCH') or output(['git', 'show', '-s', '--format=%ct', 'HEAD'], source)
     return {
         'schema': 1,
@@ -121,7 +126,7 @@ def capture(source, build, configure_args):
                    'git_tree': output(['git', 'rev-parse', 'HEAD^{tree}'], source),
                    'tree': source_inputs(source),
                    'overrides': {n: digest(source / n) if (source / n).is_file() else None for n in changed},
-                   'excluded': list(EXCLUDED) + ['root *-OUT.txt progress logs']},
+                   'excluded': list(EXCLUDED) + ['root OUT.txt and *-OUT.txt progress logs']},
         'host': {'system': platform.system(), 'release': platform.release(), 'version': platform.version(),
                  'machine': platform.machine()},
         'compiler': compilers, 'cmake': dict(tool(cmake), version=output([cmake, '--version']).splitlines()[0]),
