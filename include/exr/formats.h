@@ -5,6 +5,40 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+typedef struct exr_sevenz exr_sevenz;
+typedef struct {
+  size_t struct_size;
+  size_t max_unpack_size; /* Default 128 MiB: packed input AND each decoded stage. */
+  size_t max_header_size; /* Default 16 MiB: packed and decoded header. */
+} exr_sevenz_options;
+typedef struct {
+  const char *path; /* UTF-8, separators normalized to '/', borrowed. */
+  uint64_t size;
+  int is_directory;
+} exr_sevenz_entry;
+/* Read-only 7Z container, independent of document format detection. Supports
+   Copy, LZMA, LZMA2 and Delta chains, compressed headers and solid blocks.
+   Paths with '..' or '.' components, absolute paths, drive names and ADS are
+   rejected at open. At most 10000 entries and four coders per block. Encryption,
+   multi-input coders, external names/folder tables and anti-items return EXR_UNSUPPORTED.
+   A solid block is decoded in full for each extraction; max_unpack_size bounds
+   the whole block, not just the requested file. Oversized body blocks may be
+   listed but cannot be extracted. Peak decode buffers <= 2*the applicable limit,
+   plus metadata and at most 6 MiB of LZMA probability tables. No disk writes.
+   Source ownership transfers only on success. Reads retry short callbacks and
+   honor source.control cancellation. Calls on an object must be serialized. */
+EXR_API exr_sevenz_options exr_sevenz_options_defaults(void);
+EXR_API exr_status exr_sevenz_open(const char *path,const exr_sevenz_options *options,
+  exr_sevenz **out,exr_error *error);
+EXR_API exr_status exr_sevenz_open_source(const exr_source *source,const exr_sevenz_options *options,
+  exr_sevenz **out,exr_error *error);
+EXR_API const exr_sevenz_entry *exr_sevenz_entries(const exr_sevenz *archive,size_t *count);
+/* Index addresses entries(). Directory indexes return EXR_ARGUMENT. On failure
+   data=NULL,size=0. Release the returned buffer with exr_free(). */
+EXR_API exr_status exr_sevenz_extract(exr_sevenz *archive,size_t index,
+  void **data,size_t *size,exr_error *error);
+EXR_API void exr_sevenz_free(exr_sevenz *archive);
+
 /* Scan an immutable source without retaining it. Callbacks receive nonempty,
    trimmed paragraphs and their whole-document normalized UTF-8 byte offset;
    consecutive paragraphs are separated by one LF. Views last only for the call.

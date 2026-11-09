@@ -215,6 +215,18 @@ EXR_API exr_status exr_publication_resolve_href(const exr_publication *publicati
    with a distinct state and are retained in missing_targets (deduplicated). */
 EXR_API exr_status exr_publication_locate(exr_publication *publication,
   const exr_target *target,exr_location *location,exr_error *error);
+typedef struct {
+  uint64_t total_entries,resolved_exact,resolved_part_start,missing_part,missing_anchor;
+} exr_locate_report;
+/* Per-publication call counters, including internal calls from target_at.
+   total_entries counts every locate call with a non-NULL publication, including
+   errors. Outcome counters count successful calls only. Exact includes an
+   explicitly requested part start; missing anchors increment both missing_anchor
+   and resolved_part_start. Missing parts increment missing_part only. Repeated
+   calls count again. NULL reports zero; reset does not clear missing_targets or
+   invalidate cached TOC locations. Like locate, not safe for concurrent access. */
+EXR_API exr_locate_report exr_publication_locate_report(const exr_publication *publication);
+EXR_API void exr_publication_locate_report_reset(exr_publication *publication);
 /* Borrowed until the next locate/target_at request or publication_free. */
 EXR_API const exr_target *exr_publication_missing_targets(const exr_publication *publication,size_t *count);
 /* Last TOC target at/before (part,offset) in reading order; deeper entries win
