@@ -1,0 +1,819 @@
+{
+  "exe_sha256": "6e2da273134b8dee0dd39bf7e6d0184f319e079c62b127440df7392c19217c51",
+  "voices": [
+    "Microsoft David Desktop - English (United States)",
+    "Microsoft Zira Desktop - English (United States)"
+  ],
+  "set_rate": [
+    -2,
+    0,
+    2,
+    4
+  ],
+  "controls": {
+    "start": 3,
+    "pause": 3,
+    "resume": 3,
+    "stop": 3
+  },
+  "rounds": [
+    {
+      "start": {
+        "state": 1,
+        "native_state": 2,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 0,
+        "events": 3,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          0
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70759390,
+        "native_offset": 105,
+        "message": "正在朗读",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 0,
+          "end": 12,
+          "visible": 1
+        }
+      },
+      "pause": {
+        "state": 2,
+        "native_state": 0,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 0,
+        "events": 3,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          0
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70761421,
+        "native_offset": 169,
+        "message": "已暂停",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 0,
+          "end": 12,
+          "visible": 1
+        }
+      },
+      "still-paused": {
+        "state": 2,
+        "native_state": 0,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 0,
+        "events": 3,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          0
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70762421,
+        "native_offset": 169,
+        "message": "已暂停",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 0,
+          "end": 12,
+          "visible": 1
+        }
+      },
+      "resume": {
+        "state": 1,
+        "native_state": 2,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 0,
+        "events": 7,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          23
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70763828,
+        "native_offset": 179,
+        "message": "正在朗读",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 13,
+          "end": 32,
+          "visible": 1
+        }
+      },
+      "stop": {
+        "state": 0,
+        "native_state": 1,
+        "stream": 0,
+        "native_stream": 0,
+        "rate": 0,
+        "voice": 0,
+        "events": 7,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          23
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70764265,
+        "native_offset": 0,
+        "message": "已停止",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": null
+      }
+    },
+    {
+      "start": {
+        "state": 1,
+        "native_state": 2,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 1,
+        "events": 3,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          0
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70766078,
+        "native_offset": 105,
+        "message": "正在朗读",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 0,
+          "end": 12,
+          "visible": 1
+        }
+      },
+      "pause": {
+        "state": 2,
+        "native_state": 0,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 1,
+        "events": 3,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          0
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70768078,
+        "native_offset": 105,
+        "message": "已暂停",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 0,
+          "end": 12,
+          "visible": 1
+        }
+      },
+      "still-paused": {
+        "state": 2,
+        "native_state": 0,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 1,
+        "events": 3,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          0
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70769109,
+        "native_offset": 105,
+        "message": "已暂停",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 0,
+          "end": 12,
+          "visible": 1
+        }
+      },
+      "resume": {
+        "state": 1,
+        "native_state": 2,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 1,
+        "events": 8,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          23
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70770546,
+        "native_offset": 179,
+        "message": "正在朗读",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 13,
+          "end": 32,
+          "visible": 1
+        }
+      },
+      "stop": {
+        "state": 0,
+        "native_state": 1,
+        "stream": 0,
+        "native_stream": 0,
+        "rate": 0,
+        "voice": 1,
+        "events": 8,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          23
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70771046,
+        "native_offset": 0,
+        "message": "已停止",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": null
+      }
+    },
+    {
+      "start": {
+        "state": 1,
+        "native_state": 2,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 0,
+        "events": 3,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          0
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70772796,
+        "native_offset": 105,
+        "message": "正在朗读",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 0,
+          "end": 12,
+          "visible": 1
+        }
+      },
+      "pause": {
+        "state": 2,
+        "native_state": 0,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 0,
+        "events": 3,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          0
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70774796,
+        "native_offset": 169,
+        "message": "已暂停",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 0,
+          "end": 12,
+          "visible": 1
+        }
+      },
+      "still-paused": {
+        "state": 2,
+        "native_state": 0,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 0,
+        "events": 3,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          0
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70775796,
+        "native_offset": 169,
+        "message": "已暂停",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 0,
+          "end": 12,
+          "visible": 1
+        }
+      },
+      "resume": {
+        "state": 1,
+        "native_state": 2,
+        "stream": 1,
+        "native_stream": 1,
+        "rate": 0,
+        "voice": 0,
+        "events": 8,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          31
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70777250,
+        "native_offset": 187,
+        "message": "正在朗读",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": {
+          "start": 13,
+          "end": 32,
+          "visible": 1
+        }
+      },
+      "stop": {
+        "state": 0,
+        "native_state": 1,
+        "stream": 0,
+        "native_stream": 0,
+        "rate": 0,
+        "voice": 0,
+        "events": 8,
+        "jumps": 0,
+        "chunks": 1,
+        "minimized": 0,
+        "position": [
+          6,
+          31
+        ],
+        "page": 0,
+        "frame": [
+          6,
+          0,
+          204
+        ],
+        "uptime_ms": 70777796,
+        "native_offset": 0,
+        "message": "已停止",
+        "voices": [
+          "Microsoft David Desktop - English (United States)",
+          "Microsoft Zira Desktop - English (United States)"
+        ],
+        "sentence": null
+      }
+    }
+  ],
+  "follow_seconds": 30.328,
+  "follow": {
+    "follow-start": {
+      "state": 1,
+      "native_state": 0,
+      "stream": 1,
+      "native_stream": 0,
+      "rate": 0,
+      "voice": 0,
+      "events": 0,
+      "jumps": 0,
+      "chunks": 1,
+      "minimized": 0,
+      "position": [
+        0,
+        0
+      ],
+      "page": 0,
+      "frame": [
+        6,
+        0,
+        204
+      ],
+      "uptime_ms": 70783968,
+      "native_offset": 0,
+      "message": "正在朗读",
+      "voices": [
+        "Microsoft David Desktop - English (United States)",
+        "Microsoft Zira Desktop - English (United States)"
+      ],
+      "sentence": null
+    },
+    "follow-after": {
+      "state": 2,
+      "native_state": 2,
+      "stream": 1,
+      "native_stream": 1,
+      "rate": 0,
+      "voice": 0,
+      "events": 77,
+      "jumps": 1,
+      "chunks": 1,
+      "minimized": 0,
+      "position": [
+        6,
+        443
+      ],
+      "page": 1,
+      "frame": [
+        6,
+        204,
+        677
+      ],
+      "uptime_ms": 70814296,
+      "native_offset": 672,
+      "message": "已暂停",
+      "voices": [
+        "Microsoft David Desktop - English (United States)",
+        "Microsoft Zira Desktop - English (United States)"
+      ],
+      "sentence": {
+        "start": 105,
+        "end": 449,
+        "visible": 1
+      }
+    },
+    "continued-chunks": {
+      "state": 1,
+      "native_state": 2,
+      "stream": 1,
+      "native_stream": 1,
+      "rate": 4,
+      "voice": 0,
+      "events": 199,
+      "jumps": 2,
+      "chunks": 2,
+      "minimized": 0,
+      "position": [
+        6,
+        1348
+      ],
+      "page": 3,
+      "frame": [
+        6,
+        1176,
+        1617
+      ],
+      "uptime_ms": 70861812,
+      "native_offset": 475,
+      "message": "正在朗读",
+      "voices": [
+        "Microsoft David Desktop - English (United States)",
+        "Microsoft Zira Desktop - English (United States)"
+      ],
+      "sentence": {
+        "start": 1189,
+        "end": 1477,
+        "visible": 1
+      }
+    },
+    "minimize-before": {
+      "state": 1,
+      "native_state": 2,
+      "stream": 1,
+      "native_stream": 1,
+      "rate": 0,
+      "voice": 0,
+      "events": 4,
+      "jumps": 0,
+      "chunks": 1,
+      "minimized": 0,
+      "position": [
+        6,
+        1180
+      ],
+      "page": 3,
+      "frame": [
+        6,
+        1176,
+        1617
+      ],
+      "uptime_ms": 70862984,
+      "native_offset": 109,
+      "message": "正在朗读",
+      "voices": [
+        "Microsoft David Desktop - English (United States)",
+        "Microsoft Zira Desktop - English (United States)"
+      ],
+      "sentence": {
+        "start": 1176,
+        "end": 1188,
+        "visible": 1
+      }
+    },
+    "minimized": {
+      "state": 1,
+      "native_state": 2,
+      "stream": 1,
+      "native_stream": 1,
+      "rate": 0,
+      "voice": 0,
+      "events": 10,
+      "jumps": 0,
+      "chunks": 1,
+      "minimized": 1,
+      "position": [
+        6,
+        1198
+      ],
+      "page": 3,
+      "frame": [
+        6,
+        1176,
+        1617
+      ],
+      "uptime_ms": 70866000,
+      "native_offset": 178,
+      "message": "正在朗读",
+      "voices": [
+        "Microsoft David Desktop - English (United States)",
+        "Microsoft Zira Desktop - English (United States)"
+      ],
+      "sentence": {
+        "start": 1189,
+        "end": 1477,
+        "visible": 1
+      }
+    },
+    "restored": {
+      "state": 1,
+      "native_state": 2,
+      "stream": 1,
+      "native_stream": 1,
+      "rate": 0,
+      "voice": 0,
+      "events": 12,
+      "jumps": 0,
+      "chunks": 1,
+      "minimized": 0,
+      "position": [
+        6,
+        1211
+      ],
+      "page": 3,
+      "frame": [
+        6,
+        1176,
+        1617
+      ],
+      "uptime_ms": 70866750,
+      "native_offset": 191,
+      "message": "正在朗读",
+      "voices": [
+        "Microsoft David Desktop - English (United States)",
+        "Microsoft Zira Desktop - English (United States)"
+      ],
+      "sentence": {
+        "start": 1189,
+        "end": 1477,
+        "visible": 1
+      }
+    },
+    "left-book": {
+      "state": 0,
+      "native_state": 1,
+      "stream": 0,
+      "native_stream": 0,
+      "rate": 0,
+      "voice": 0,
+      "events": 4,
+      "jumps": 0,
+      "chunks": 1,
+      "minimized": 0,
+      "position": [
+        6,
+        1180
+      ],
+      "page": 3,
+      "frame": [
+        6,
+        1176,
+        1617
+      ],
+      "uptime_ms": 70868484,
+      "native_offset": 0,
+      "message": "已停止",
+      "voices": [
+        "Microsoft David Desktop - English (United States)",
+        "Microsoft Zira Desktop - English (United States)"
+      ],
+      "sentence": null
+    },
+    "switched-book": {
+      "state": 0,
+      "native_state": 1,
+      "stream": 0,
+      "native_stream": 0,
+      "rate": 0,
+      "voice": 0,
+      "events": 4,
+      "jumps": 0,
+      "chunks": 1,
+      "minimized": 0,
+      "position": [
+        6,
+        1180
+      ],
+      "page": 0,
+      "frame": [
+        0,
+        0,
+        0
+      ],
+      "uptime_ms": 70870671,
+      "native_offset": 0,
+      "message": "已停止",
+      "voices": [
+        "Microsoft David Desktop - English (United States)",
+        "Microsoft Zira Desktop - English (United States)"
+      ],
+      "sentence": null
+    }
+  },
+  "highlight_changed_pixels": 135416,
+  "no_voices": {
+    "state": 0,
+    "native_state": 1,
+    "stream": 0,
+    "native_stream": 0,
+    "rate": 0,
+    "voice": 0,
+    "events": 0,
+    "jumps": 0,
+    "chunks": 0,
+    "minimized": 0,
+    "position": [
+      0,
+      0
+    ],
+    "page": 0,
+    "frame": [
+      6,
+      0,
+      204
+    ],
+    "uptime_ms": 70873546,
+    "native_offset": 0,
+    "message": "没有可用的系统语音。请在 Windows 设置中安装中文或英文语音包。",
+    "voices": [
+      "Microsoft David Desktop - English (United States)",
+      "Microsoft Zira Desktop - English (United States)"
+    ],
+    "sentence": null
+  }
+}

@@ -1,0 +1,114 @@
+HOST	phase=0	engine=3.42.0	pid=28712
+STEP	1	import	PASS	page=0;status=已导入《Dictionary Acceptance》并写入书架。
+STEP	2	import	PASS	page=0;status=已导入《Second Book》并写入书架。
+STEP	3	open	PASS	page=1;status=已打开《Dictionary Acceptance》 · 从首个阅读章节开始。
+STEP	4	shell	PASS	reading screen
+STEP	5	shell_client	PASS	page=1;status=第 1 页。
+STEP	6	shell_click	PASS	button invoked
+STEP	7	shell_click	PASS	button invoked
+STEP	8	shell_click	PASS	button invoked
+STEP	9	dict_add	PASS	dictionary action dispatched
+STEP	10	dict_add	PASS	dictionary action dispatched
+STEP	11	dict_settings	PASS	dictionary action dispatched
+STEP	12	dict_close	PASS	dictionary action dispatched
+STEP	13	dict_auto	PASS	dictionary action dispatched
+STEP	14	annotgoto	PASS	page=1;status=第 1 页。
+STEP	15	select_pointer	PASS	selection pointer dispatched
+STEP	16	select_pointer	PASS	selection pointer dispatched
+STEP	17	select_key	PASS	selection key dispatched
+STEP	18	dict_check	PASS	dictionary action dispatched
+STEP	19	dict_collapse	PASS	dictionary action dispatched
+STEP	20	dict_collapse	PASS	dictionary action dispatched
+STEP	21	probe_wait	PASS	waited without blocking UI
+STEP	22	shell_click	PASS	button invoked
+STEP	23	shell_click	PASS	button invoked
+STEP	24	shell_click	PASS	button invoked
+STEP	25	dict_check	PASS	dictionary action dispatched
+STEP	26	probe_wait	PASS	waited without blocking UI
+STEP	27	shell_click	PASS	button invoked
+STEP	28	shell_click	PASS	button invoked
+STEP	29	shell_click	PASS	button invoked
+STEP	30	dict_save	PASS	dictionary action dispatched
+STEP	31	dict_close	PASS	dictionary action dispatched
+STEP	32	annotgoto	PASS	page=1;status=第 1 页。
+STEP	33	select_pointer	PASS	selection pointer dispatched
+STEP	34	select_pointer	PASS	selection pointer dispatched
+STEP	35	select_key	PASS	selection key dispatched
+STEP	36	dict_check	PASS	dictionary action dispatched
+STEP	37	dict_save	PASS	dictionary action dispatched
+STEP	38	dict_close	PASS	dictionary action dispatched
+STEP	39	annotgoto	PASS	page=1;status=第 1 页。
+STEP	40	select_pointer	PASS	selection pointer dispatched
+STEP	41	select_pointer	PASS	selection pointer dispatched
+STEP	42	select_key	PASS	selection key dispatched
+STEP	43	dict_check	PASS	dictionary action dispatched
+STEP	44	dict_save	PASS	dictionary action dispatched
+STEP	45	dict_close	PASS	dictionary action dispatched
+STEP	46	annotgoto	PASS	page=1;status=第 1 页。
+STEP	47	select_pointer	PASS	selection pointer dispatched
+STEP	48	select_pointer	PASS	selection pointer dispatched
+STEP	49	select_key	PASS	selection key dispatched
+STEP	50	dict_check	PASS	dictionary action dispatched
+STEP	51	dict_save	PASS	dictionary action dispatched
+STEP	52	dict_close	PASS	dictionary action dispatched
+STEP	53	annotgoto	PASS	page=1;status=第 1 页。
+STEP	54	select_pointer	PASS	selection pointer dispatched
+STEP	55	select_pointer	PASS	selection pointer dispatched
+STEP	56	select_key	PASS	selection key dispatched
+STEP	57	dict_check	PASS	dictionary action dispatched
+STEP	58	dict_close	PASS	dictionary action dispatched
+STEP	59	dict_auto	PASS	dictionary action dispatched
+STEP	60	annotgoto	PASS	page=1;status=第 1 页。
+STEP	61	select_pointer	PASS	selection pointer dispatched
+STEP	62	select_pointer	PASS	selection pointer dispatched
+STEP	63	dict_check	PASS	dictionary action dispatched
+STEP	64	dict_close	PASS	dictionary action dispatched
+STEP	65	annotgoto	PASS	page=1;status=第 1 页。
+STEP	66	select_pointer	PASS	selection pointer dispatched
+STEP	67	select_pointer	PASS	selection pointer dispatched
+STEP	68	dict_check	PASS	dictionary action dispatched
+STEP	69	dict_close	PASS	dictionary action dispatched
+STEP	70	annotgoto	PASS	page=1;status=第 1 页。
+STEP	71	select_pointer	PASS	selection pointer dispatched
+STEP	72	select_pointer	PASS	selection pointer dispatched
+STEP	73	dict_check	PASS	dictionary action dispatched
+STEP	74	dict_close	PASS	dictionary action dispatched
+STEP	75	annotgoto	PASS	page=1;status=第 1 页。
+STEP	76	select_pointer	PASS	selection pointer dispatched
+STEP	77	select_pointer	PASS	selection pointer dispatched
+STEP	78	dict_check	PASS	dictionary action dispatched
+STEP	79	dict_close	PASS	dictionary action dispatched
+STEP	80	annotgoto	PASS	page=1;status=第 1 页。
+STEP	81	select_pointer	PASS	selection pointer dispatched
+STEP	82	select_pointer	PASS	selection pointer dispatched
+STEP	83	dict_check	PASS	dictionary action dispatched
+STEP	84	dict_close	PASS	dictionary action dispatched
+STEP	85	select_pointer	PASS	selection pointer dispatched
+STEP	86	select_pointer	PASS	selection pointer dispatched
+STEP	87	dict_check	PASS	dictionary action dispatched
+STEP	88	dict_copy	PASS	dictionary action dispatched
+STEP	89	probe_wait	PASS	waited without blocking UI
+STEP	90	dict_close	PASS	dictionary action dispatched
+STEP	91	open	PASS	page=1;status=已打开《Second Book》 · 从首个阅读章节开始。
+STEP	92	wait_idle	PASS	page=1;status=已打开《Second Book》 · 从首个阅读章节开始。
+STEP	93	select_pointer	PASS	selection pointer dispatched
+STEP	94	select_pointer	PASS	selection pointer dispatched
+STEP	95	dict_check	PASS	dictionary action dispatched
+STEP	96	dict_save	PASS	dictionary action dispatched
+STEP	97	dict_vocab	PASS	dictionary action dispatched
+STEP	98	dict_filter	PASS	dictionary action dispatched
+STEP	99	dict_export	PASS	dictionary action dispatched
+STEP	100	dict_filter	PASS	dictionary action dispatched
+STEP	101	dict_export	PASS	dictionary action dispatched
+STEP	102	dict_filter	PASS	dictionary action dispatched
+STEP	103	dict_export	PASS	dictionary action dispatched
+STEP	104	dict_roundtrip	PASS	dictionary action dispatched
+STEP	105	dict_pick_vocab	PASS	dictionary action dispatched
+STEP	106	probe_wait	PASS	waited without blocking UI
+STEP	107	dict_close	PASS	dictionary action dispatched
+STEP	108	dict_remove	PASS	dictionary action dispatched
+STEP	109	dict_add	PASS	dictionary action dispatched
+STEP	110	dict_settings	PASS	dictionary action dispatched
+STEP	111	probe_wait	PASS	waited without blocking UI
+STEP	112	quit	PASS	closing
+DONE	112	eof	PASS	script finished

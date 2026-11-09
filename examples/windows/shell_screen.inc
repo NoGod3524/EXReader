@@ -19,7 +19,7 @@
 #include "shell_tokens.h"
 
 enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, SHELL_HIDDEN_MAX = 128 };
-enum { IDC_SHELL_BACK=180, IDC_SHELL_TAP20, IDC_SHELL_TAP25 };
+enum { IDC_SHELL_BACK=180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY };
 static HWND shell_back;
 /* The 32px visual has 4px per side for the offset keyboard outline. */
 enum { SHELL_BUTTON_BOX = SHELL_ICON_SIZE + 2 * SHELL_CONTROL_FRAME };
@@ -214,6 +214,7 @@ static int shell_layout(void) {
   shell_search_layout();
   shell_panel_layout();
   shell_toc_layout();
+  sm_refresh();
   return 1;
 }
 
@@ -253,6 +254,9 @@ static void shell_enter(void) {
 
 static void shell_leave(void) {
   size_t i;
+  dict_close_all();
+  tts_stop();
+  tts_command(104); /* close speech controls on leaving the book */
   shell_toc_hide();
   shell_search_set(0);
   shell_panel_open=0; shell_animating=0; shell_animation_value=0;
@@ -282,6 +286,7 @@ static void shell_leave(void) {
         height < limits.ptMinTrackSize.y ? limits.ptMinTrackSize.y : height,
         SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
   }
+  sm_refresh();
   layout_controls();
   shell_request_layout();
   InvalidateRect(g.window, NULL, TRUE);
@@ -327,7 +332,11 @@ static void shell_paint(HWND window) {
   if (SUCCEEDED(shell_d2d_begin(host_shell, shell_bar_hidden ? shell_colors->layer_page:shell_colors->layer_side))) {
     if(!shell_bar_hidden) {
     shell_d2d_fill(host_shell, 0, (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1), (float)area.right, 1, shell_blend(shell_colors->layer_side,shell_colors->line_rgb,SHELL_LINE_ALPHA));
-    if (g.has_current && g.current.title) title = host_wide(g.current.title, strlen(g.current.title));
+    if(g.has_current) {
+      int row=shelf_index(g.current.id);
+      const char *name=row>=0 ? sm_title((size_t)row):g.current.title;
+      if(name)title=host_wide(name,strlen(name));
+    }
     /* P0 title inset; retain the existing ellipsis limit before the controls. */
     shell_button_circle(shell_search_button, area.right, &circle);
     int inset=max(shell_px(112,shell_dpi),area.right-circle.left);
@@ -387,6 +396,8 @@ static int shell_page_footer(HDC dc, const RECT *area) {
 }
 
 static int shell_translate(const MSG *message) {
+  if(dict_translate(message)) return 1;
+  if(tts_translate(message)) return 1;
   if(message->message==WM_KEYDOWN && (shell_active || shelf_visible)) {
     if(message->wParam=='W' && (GetKeyState(VK_CONTROL)&0x8000)) {shelf_return();return 1;}
     if(message->wParam=='O' && (GetKeyState(VK_CONTROL)&0x8000)) {g.auto_open_imported=1;import_path(NULL,1);return 1;}

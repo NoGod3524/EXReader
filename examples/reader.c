@@ -27,6 +27,8 @@
 #ifdef EXR_READER_WINDOWS_SHELL
 #include "windows/shell_d2d.h"
 #include "windows/shell_geometry.h"
+#include "../tools/convert_json.h"
+#include "windows/shell_speech.h"
 int shell_epub_source(exr_source *source);
 int shell_style_document(exr_document **document);
 /* Created with the main window; draws the reading screen (windows/shell_screen.inc). */
@@ -148,6 +150,12 @@ static DWORD shell_dpi_error;
 static int shell_pmv2, shell_dpi_changing, shell_layout_waiting, shell_vertical;
 static int shell_search_open;
 static float shell_font = SHELL_BODY_DEFAULT_FONT;
+static exr_reader_style shell_style={18,1.75f,.5f,40,48,40,48,0};
+static void shell_style_load(void);
+static int shell_style_save(void);
+static int shell_footnote_click(int x,int y);
+static int shell_footnote_translate(const MSG *message);
+static void shell_footnote_close(void);
 static int shell_theme_mode=2; /* light, dark, system */
 static int shell_system_dark(void) {
   DWORD value=1,bytes=sizeof(value);
@@ -172,8 +180,24 @@ static int annot_click(int x,int y);
 static void annot_pixels(uint32_t *pixels,int width,int height);
 static void annot_marks(HDC dc);
 static int annot_count,annot_selected=-1;
+static int tts_state; /* 0 stopped, 1 speaking, 2 paused */
+static void tts_stop(void);
+static void tts_destroy(void);
+static void tts_poll(void);
+static void tts_pixels(uint32_t *pixels,int width,int height);
+static void tts_menu(HMENU menu);
+static int tts_command(int command);
+static void tts_layout(void);
+static int tts_translate(const MSG *message);
 static void shell_selection_paint(HDC dc);
 static size_t shell_selection_bytes(char **out);
+static void dict_lookup(void);
+static void dict_auto_lookup(void);
+static void dict_hide(void);
+static void dict_close_all(void);
+static void dict_manager_open(void);
+static int dict_translate(const MSG *message);
+static void dict_shutdown(void);
 #endif
 
 typedef struct {
@@ -401,6 +425,11 @@ static shell_geometry shell_snapshot(void) {
   if (shell_wants_reading() && !IsIconic(g.window)) {
     GetClientRect(g.window, &client);
     out = shell_geometry_for(client.right, client.bottom-(shell_search_open ? shell_px(48,shell_dpi):0), shell_dpi, shell_font, shell_vertical);
+    out.style=shell_style;out.style.font_size=shell_font;
+    out.width=client.right-shell_px(shell_style.left+shell_style.right,shell_dpi);
+    out.height=client.bottom-shell_px(SHELL_TOPBAR_H+SHELL_PAGE_NUMBER_H+shell_style.top+shell_style.bottom,shell_dpi)
+      -(shell_search_open ? shell_px(48,shell_dpi):0);
+    out.enabled=out.width>=64 && out.height>=80;
   }
   return out;
 }
@@ -408,20 +437,15 @@ static void shell_apply_config(exr_layout_config *config, shell_geometry geometr
   /* Pager creation copies CSS. Host jobs are serialized, including reflow. */
   static char css[4096];
   if (!geometry.enabled) return;
-  config->page.width = (float)geometry.width;
-  config->page.height = (float)geometry.height;
-  config->page.margin = 0;
-  config->page.font_size = geometry.font * geometry.dpi / 96.0f;
-  config->page.line_height = SHELL_BODY_LINE_HEIGHT;
-  config->page.paragraph_spacing = SHELL_BODY_PARAGRAPH_EM * config->page.font_size;
-  float leading=(float)shell_px(geometry.font*1.75f,geometry.dpi);
-  snprintf(css,sizeof(css),
-    ".exr-shell-cjk{line-height:%.6fpx}"
-    ".exr-shell-latin{line-height:1.6}"
-    ".exr-shell-cjk.exr-shell-paragraph{text-indent:2em;%s}"
-    ".exr-shell-latin.exr-shell-paragraph{text-indent:0;%s}",
-    (double)leading,geometry.vertical ? "margin-right:0;margin-left:0.5em" : "margin-top:0;margin-bottom:0.5em",
-    geometry.vertical ? "margin-right:0;margin-left:0.8em" : "margin-top:0;margin-bottom:0.8em");
+  char style_css[1024];float scale=geometry.dpi/96.f;
+  exr_reader_style style=geometry.style;style.font_size=geometry.font;
+  if(exr_reader_style_config(&style,geometry.width+(style.left+style.right)*scale,
+      geometry.height+(style.top+style.bottom)*scale,scale,config,style_css,NULL)!=EXR_OK) return;
+  snprintf(css,sizeof(css),"%s.exr-shell-cjk.exr-shell-paragraph{text-indent:2em}"
+    ".exr-shell-latin.exr-shell-paragraph{text-indent:0}"
+    ".exr-shell-paragraph{%s:0!important;%s:%.7gem!important}",style_css,
+    geometry.vertical ? "margin-right":"margin-top",geometry.vertical ? "margin-left":"margin-bottom",
+    (double)style.paragraph_spacing);
   for(int i=1;i<=16;i++) {
     size_t used=strlen(css);
     snprintf(css+used,sizeof(css)-used,".exr-shell-cjk.exr-shell-indent-%d{text-indent:%dem}",i,2-i);
@@ -817,6 +841,10 @@ static void selection_clear(void) {
 static void prefs_initialize(void);
 #endif
 
+#ifdef EXR_READER_WINDOWS_SHELL
+#include "windows/shell_style_store.inc"
+#endif
+
 /* Settings: host preferences only. Books, progress and annotations live in SQLite. */
 static void settings_load(void) {
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -826,6 +854,7 @@ static void settings_load(void) {
   int font=(int)GetPrivateProfileIntW(L"Host",L"ShellFont",SHELL_BODY_DEFAULT_FONT,g.settings_path);
   for(size_t i=0;i<sizeof(SHELL_FONT_STEPS)/sizeof(*SHELL_FONT_STEPS);i++)
     if(font==SHELL_FONT_STEPS[i]) shell_font=(float)font;
+  shell_style_load();
 #endif
   g.font_percent = (int)GetPrivateProfileIntW(L"Host", L"FontPercent", 150, g.settings_path);
   g.zoom_percent = (int)GetPrivateProfileIntW(L"Host", L"ZoomPercent", 100, g.settings_path);
@@ -866,6 +895,7 @@ static void settings_save(void) {
   WritePrivateProfileStringW(L"Host",L"ShellTheme",number,g.settings_path);
   swprintf(number,64,L"%.0f",(double)shell_font);
   WritePrivateProfileStringW(L"Host",L"ShellFont",number,g.settings_path);
+  if(!shell_style_save()) set_status(L"阅读样式保存失败，原 shelf.json 已保留。");
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   product_shelf_remember();
@@ -899,6 +929,19 @@ static void settings_save(void) {
 /* Bookshelf and annotation snapshots                                  */
 /* ------------------------------------------------------------------ */
 
+#ifdef EXR_READER_WINDOWS_SHELL
+static void sm_refresh(void);
+static void sm_show(int mode);
+static void sm_activity(void);
+static void sm_landed(int opened);
+static HWND sm_view;
+static void sm_tick(void);
+static void sm_shelf_visibility(int show);
+static void sm_edit_open(int shelf);
+static const char *sm_title(size_t shelf);
+static const char *sm_author(size_t shelf);
+static int sm_draw_override_cover(HDC dc,RECT r,int64_t id);
+#endif
 static void shelf_clear(void) {
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(g.shelf_cursors) for(size_t i=0;i<g.shelf_count;i++) {
@@ -1008,6 +1051,9 @@ static exr_status reload_shelf(void) {
     product_shelf_snapshot_changed();
 #endif
   }
+#ifdef EXR_READER_WINDOWS_SHELL
+  sm_refresh();
+#endif
   return EXR_OK;
 }
 
@@ -1542,6 +1588,9 @@ static void job_start_failed(host_job *job) {
 
 static void job_start(host_job *job) {
   host_probe_require_ui();
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(job->kind==JOB_OPEN) {tts_stop();dict_close_all();}
+#endif
   if(job->kind==JOB_OPEN || job->kind==JOB_LAYOUT || job->kind==JOB_IMPORT || job->kind==JOB_PREFERENCES || job->kind==JOB_PRODUCT_DELETE || (job->zoom_percent>0 && job->zoom_percent!=g.zoom_percent))page_cache_clear();
   g.job = job;
   if (job->kind != JOB_HIT && job->kind != JOB_SAVE && job->kind != JOB_PREFETCH && job->kind != JOB_IMPORT_ORGANIZE
@@ -3846,11 +3895,11 @@ static int compute_view_impl(void) {
   if (area.right < 16 || area.bottom < 16) return 0;
 #ifdef EXR_READER_WINDOWS_SHELL
   if (shell_active && g.frame.shell_geometry.enabled) {
-    int body_top=shell_px(SHELL_TOPBAR_H+SHELL_BODY_TOP,shell_dpi)-shell_px(SHELL_TOPBAR_H,shell_dpi);
-    int body_height=area.bottom-shell_px(SHELL_BODY_GAP+SHELL_PAGE_NUMBER_H,shell_dpi)-body_top;
+    int body_top=shell_px(g.frame.shell_geometry.style.top,shell_dpi);
+    int body_height=area.bottom-shell_px(g.frame.shell_geometry.style.bottom+SHELL_PAGE_NUMBER_H,shell_dpi)-body_top;
     g.view.scale = 1.0;
     g.view.bw = (int)g.frame.bitmap.width; g.view.bh = (int)g.frame.bitmap.height;
-    g.view.dx = (area.right - g.view.bw) / 2;
+    g.view.dx = shell_px(g.frame.shell_geometry.style.left,shell_dpi);
     g.view.dy = body_top;
     if(!IsRectEmpty(&g.frame.shell_image)) {
       RECT client={0};GetClientRect(g.window,&client);
@@ -3868,13 +3917,6 @@ static int compute_view_impl(void) {
       g.view.scale=(double)fit.width/(image->right-image->left);
     } else if(g.frame.fixed) {
       g.view.dy+=(body_height-g.view.bh)/2;
-    } else if(g.frame.glyph_count && g.frame.dib) {
-      /* Align the first ink, rather than the font's ascent/line-box padding. */
-      for(int y=0;y<g.view.bh;y++) {
-        int ink=0;
-        for(int x=0;x<g.view.bw;x++) if((g.frame.dib[(size_t)y*g.view.bw+x]&0xffffff)!=0xffffff) {ink=1;break;}
-        if(ink) {g.view.dy-=y;break;}
-      }
     }
     g.view.valid = 1;
     return 1;
@@ -4218,8 +4260,12 @@ static void selection_report(void) {
 #ifdef EXR_READER_WINDOWS_SHELL
 #include "windows/shell_selection.inc"
 #include "windows/shell_annotations.inc"
+#include "windows/shell_footnotes.inc"
 #include "windows/shell_shelf.inc"
+#include "windows/shell_shelfmeta.inc"
 #include "windows/shell_gestures.inc"
+#include "windows/shell_tts.inc"
+#include "windows/shell_dictionary.inc"
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -4344,6 +4390,9 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       }
       return 0;
     case WM_MOUSEWHEEL:
+#ifdef EXR_READER_WINDOWS_SHELL
+      sm_activity();
+#endif
       host_probe_log("wheel",(short)HIWORD(wparam));
       wheel_delta += (short)HIWORD(wparam);
       SetTimer(window,PAGE_WHEEL_TIMER,16,NULL);
@@ -4572,6 +4621,9 @@ static void apply_pending_selection(void) {
 }
 
 static void page_step(int direction) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  sm_activity();
+#endif
   size_t target;
   host_job *job;
   if (!g.has_current || !g.frame.valid || (g.job && g.job->kind!=JOB_PREFETCH) || g.pending) return;
@@ -5464,6 +5516,7 @@ static void handle_job_complete(host_job *job) {
           shelf_requested=0;shell_bar_hidden=0;
           if(job->shelf_restored) shelf_resume(job->target_offset);
           shelf_opened();
+          sm_landed(1);
           shell_toc_load();
 #endif
           memset(&g.selection, 0, sizeof(g.selection));
@@ -5512,6 +5565,9 @@ static void handle_job_complete(host_job *job) {
         if(job->kind==JOB_GO && g.frame.valid && g.frame.book_id==job->frame.book_id && g.frame.part==job->frame.part)page_cache_put(&g.frame);
         frame_move(&g.frame, &job->frame);
         g.session.part = g.frame.part;
+#ifdef EXR_READER_WINDOWS_SHELL
+        sm_landed(job->kind==JOB_GO ? 0:-1);
+#endif
         g.session.hold_progress = g.frame.hold_progress;
         memset(&g.selection, 0, sizeof(g.selection));
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -6174,6 +6230,10 @@ static int check_selection(int minimum, const char *needle) {
 #include "windows/shell_measure.inc"
 #include "windows/shell_selection_drive.inc"
 #include "windows/shell_annotations_drive.inc"
+#include "windows/shell_style_drive.inc"
+#include "windows/shell_shelfmeta_drive.inc"
+#include "windows/shell_tts_drive.inc"
+#include "windows/shell_dictionary_drive.inc"
 #endif
 
 static int drive_execute(void) {
@@ -6182,8 +6242,18 @@ static int drive_execute(void) {
   int launches = 0;
   memset(detail, 0, sizeof(detail));
 #ifdef EXR_READER_WINDOWS_SHELL
+  if (!strncmp(action,"style_",6) || !strncmp(action,"footnote_",9)) return style_drive(action);
+  if (!strncmp(action,"sm_",3)) {
+    drive_step_finish(sm_drive(action),"shelf metadata action");return 0;
+  }
+  if (!strncmp(action,"tts_",4)) {
+    drive_step_finish(tts_drive(action),"speech action dispatched");return 0;
+  }
   if (!strncmp(action,"annot_",6)) {
     drive_step_finish(annot_drive(action),"annotation action dispatched");return 0;
+  }
+  if (!strncmp(action,"dict_",5)) {
+    drive_step_finish(dict_drive(action),"dictionary action dispatched");return 0;
   }
 #include "windows/shell_annotations_navigation.inc"
 #include "windows/shell_shelf_drive.inc"
@@ -7201,6 +7271,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(message==WM_APP+31) { product_shelf_edges();return 0; }
 #endif
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(message==WM_ACTIVATE) sm_focus(LOWORD(wparam)!=WA_INACTIVE);
+#endif
   switch (message) {
     case WM_CREATE:
       g.window = window;
@@ -7211,6 +7284,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       shell_update_dpi(window);
       shell_apply_theme();
       if(host_shell) shell_prepare_settings();
+      sm_create(window);
 #endif
       return 0;
     case WM_SIZE: {
@@ -7222,6 +7296,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if (shell_dpi_changing) return 0;
       if (host_shell) shell_d2d_resize(host_shell, LOWORD(lparam), HIWORD(lparam));
       if (wparam != SIZE_MINIMIZED) shell_request_layout();
+      if (wparam != SIZE_MINIMIZED) tts_layout();
 #endif
       layout_controls();
       page_dirty(g.page,1);
@@ -7429,6 +7504,8 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_TIMER:
 #ifdef EXR_READER_WINDOWS_SHELL
       if (wparam == SHELF_TIMER) {shelf_pump();return 0;}
+      if(wparam==0x5760) { sm_tick(); return 0; }
+      if(wparam==0x5453) {tts_poll();return 0;}
       if (wparam == 0x5756) { shell_search_start(); return 0; }
       if (wparam == 0x5757) { shell_search_poll(); return 0; }
       if (wparam == 0x5753) { shell_animate(); return 0; }
@@ -7465,6 +7542,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if (wparam == 1 && g.drive_mode) drive_tick();
       return 0;
     case WM_CLOSE:
+#ifdef EXR_READER_WINDOWS_SHELL
+      tts_stop();
+#endif
       if (g.closing) return 0;
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       prefs_close();
@@ -7486,6 +7566,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
       product_shelf_remember();KillTimer(window,3);KillTimer(window,4);
+#endif
+#ifdef EXR_READER_WINDOWS_SHELL
+      if(!sm_flush()) return 0;
 #endif
       g.closing = 1;
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
@@ -7516,6 +7599,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #ifdef EXR_READER_WINDOWS_SHELL
       shell_search_destroy();
       shelf_destroy();
+      tts_destroy();
       annot_clear();
       if(annot_brush){DeleteObject(annot_brush);annot_brush=NULL;}
       shell_d2d_destroy(host_shell);
@@ -7596,6 +7680,7 @@ static int message_loop(void) {
     if (compact_translate(&message)) continue;
 #endif
 #ifdef EXR_READER_WINDOWS_SHELL
+    if (shell_footnote_translate(&message)) continue;
     if (shell_translate(&message)) continue;
 #endif
     if (g.window && IsDialogMessageW(g.window, &message)) continue;
@@ -7627,6 +7712,7 @@ static void host_cleanup(void) {
 #ifdef EXR_READER_WINDOWS_SHELL
   exr_anchor_free(&shell_anchor); shell_anchor_valid = 0;
   shell_selection_reset();
+  dict_shutdown();
 #endif
   session_clear(&g.session);
   frame_clear(&g.frame);
@@ -7872,6 +7958,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   } else {
     set_status(L"书架为空：输入文件路径后点击“导入”。");
   }
+#ifdef EXR_READER_WINDOWS_SHELL
+#endif
   host_update_controls();
   result = message_loop();
   host_cleanup();

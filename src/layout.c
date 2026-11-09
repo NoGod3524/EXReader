@@ -39,6 +39,32 @@ exr_layout_config exr_layout_config_defaults(void) {
   config.embedded_fonts = 1;
   return config;
 }
+exr_reader_style exr_reader_style_defaults(void) {
+  exr_reader_style s={18,1.75f,.5f,40,48,40,48,0};return s;
+}
+exr_status exr_reader_style_config(const exr_reader_style *s,float width,float height,float scale,
+  exr_layout_config *config,char css[1024],exr_error *e) {
+  exr_layout_config next;
+  if(!s || !config || !css || !isfinite(scale) || scale<=0 || scale>8 ||
+     !isfinite(width) || !isfinite(height) || !isfinite(s->font_size) ||
+     s->font_size<12 || s->font_size>32 || !isfinite(s->line_height) ||
+     s->line_height<1.2f || s->line_height>2.2f || !isfinite(s->paragraph_spacing) ||
+     s->paragraph_spacing<0 || s->paragraph_spacing>1.5f ||
+     !isfinite(s->letter_spacing) || s->letter_spacing<-.02f || s->letter_spacing>.06f ||
+     !isfinite(s->top) || !isfinite(s->right) || !isfinite(s->bottom) || !isfinite(s->left) ||
+     s->top<0 || s->top>120 || s->right<0 || s->right>120 ||
+     s->bottom<0 || s->bottom>120 || s->left<0 || s->left>120)
+    return exr_fail(e,EXR_ARGUMENT,"Reader style outside supported range");
+  next=*config;
+  next.page=(exr_layout_options){width-(s->left+s->right)*scale,
+    height-(s->top+s->bottom)*scale,0,s->font_size*scale,s->line_height,
+    s->paragraph_spacing*s->font_size*scale};
+  if(exr_layout_validate(&next,e)!=EXR_OK) return EXR_ARGUMENT;
+  snprintf(css,1024,"*{line-height:%.7g!important;letter-spacing:%.7gem!important}"
+    "p{margin-top:0!important;margin-bottom:%.7gem!important}",
+    (double)s->line_height,(double)s->letter_spacing,(double)s->paragraph_spacing);
+  next.user_css=css;*config=next;return exr_fail(e,EXR_OK,"");
+}
 exr_status exr_layout_create_ex(const exr_document *d, exr_font *f, const exr_layout_config *config,
                                 exr_layout **out, exr_error *e) {
   exr_layout_config defaults = exr_layout_config_defaults();
