@@ -1,0 +1,68 @@
+{
+  "observed_at": "2026-11-09T02:28:12.172318-05:00",
+  "pr": {
+    "number": 101,
+    "url": "https://github.com/NoGod3524/EXReader/pull/101",
+    "isDraft": true,
+    "baseRefName": "main",
+    "headRefName": "codex/search-index-20261109",
+    "headRefOid": "0ba5853aeb769d497a58b3869b8494ab2bc32a09",
+    "mergeable": "MERGEABLE"
+  },
+  "automatic_runs": [
+    {
+      "conclusion": "",
+      "databaseId": 42579246708,
+      "event": "pull_request",
+      "headSha": "0ba5853aeb769d497a58b3869b8494ab2bc32a09",
+      "name": "Native reading profiles",
+      "status": "in_progress",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/42579246708"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 42579246649,
+      "event": "pull_request",
+      "headSha": "0ba5853aeb769d497a58b3869b8494ab2bc32a09",
+      "name": "Bounded library source",
+      "status": "in_progress",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/42579246649"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 42579246690,
+      "event": "pull_request",
+      "headSha": "0ba5853aeb769d497a58b3869b8494ab2bc32a09",
+      "name": "Reading license materials",
+      "status": "in_progress",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/42579246690"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 42579246633,
+      "event": "pull_request",
+      "headSha": "0ba5853aeb769d497a58b3869b8494ab2bc32a09",
+      "name": "Native C engine",
+      "status": "queued",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/42579246633"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 42579246685,
+      "event": "pull_request",
+      "headSha": "0ba5853aeb769d497a58b3869b8494ab2bc32a09",
+      "name": "Required native reading SDK core",
+      "status": "queued",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/42579246685"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42579246864,
+      "event": "pull_request",
+      "headSha": "0ba5853aeb769d497a58b3869b8494ab2bc32a09",
+      "name": "SDK version consistency",
+      "status": "completed",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/42579246864"
+    }
+  ]
+}

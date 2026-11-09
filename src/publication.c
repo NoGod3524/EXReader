@@ -4,6 +4,8 @@
 #include <ctype.h>
 
 typedef struct { char *text; size_t size; } search_part;
+typedef struct publication_search_index publication_search_index;
+static void publication_index_free(publication_search_index *index);
 struct exr_publication {
   char *title;
   exr_part *parts;
@@ -22,6 +24,7 @@ struct exr_publication {
   size_t missing_count, missing_capacity;
   search_part *search;
   int searching;
+  publication_search_index *index;
   exr_footnote *footnotes;
   size_t footnote_count, footnote_capacity;
   exr_footnote_reference *references;
@@ -77,6 +80,7 @@ void exr_publication_free(exr_publication *p) {
     free((void *)p->parts[i].title);
   }
   free(p->parts);
+  publication_index_free(p->index);
   if(p->search) {
     for(i=0;i<p->count;i++) free(p->search[i].text);
     free(p->search);
@@ -1357,3 +1361,5 @@ exr_status exr_publication_search_all(exr_publication *p,const char *needle,unsi
   if(!count) return exr_fail(e,EXR_ARGUMENT,"Missing search count");
   return search_run(p,(exr_text_position){0,0},needle,flags,callback,context,control,count,NULL,e);
 }
+
+#include "publication_index.h"
