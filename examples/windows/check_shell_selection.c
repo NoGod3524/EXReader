@@ -96,7 +96,7 @@ static void prepare_layout(int vertical) {
   g.session.config = exr_layout_config_defaults();
   g.session.config.page = (exr_layout_options){260, 160, 0, 14, 1.5f, 0};
   g.session.config.user_css = vertical ? "p{writing-mode:vertical-rl;margin:0;padding:0}" : "p{margin:0;padding:0;hyphens:auto}";
-  g.session.shell_geometry = (shell_geometry){1, 260, 160, vertical, 96, 14};
+  g.session.shell_geometry = (shell_geometry){1, 260, 160, vertical, 96, 14, {14, 1.5f, 0, 0, 0, 0, 0, 0}};
   exr_pager_free(g.session.pager); g.session.pager = NULL;
   exr_document_free(g.session.document); g.session.document = NULL; g.session.bounded = 0;
   ok(fixture_load(NULL, 0, &g.session.document, NULL), NULL);
@@ -117,11 +117,17 @@ static void test_keyboard(void) {
     select_drive_key('C', 0, 1); assert(clipboard_contains("Alpha"));
     select_drive_key(VK_ESCAPE, 0, 0); assert(!g.selection.active);
   }
-  HMENU menu = select_context_menu(); assert(GetMenuItemCount(menu) == 7);
+  HMENU menu = select_context_menu(); assert(GetMenuItemCount(menu) == 13);
+  assert(GetMenuState(menu, 100, MF_BYCOMMAND) != (UINT)-1);
+  assert(!(GetMenuState(menu, 101, MF_BYCOMMAND)&MF_GRAYED));
+  assert(GetMenuState(menu, 102, MF_BYCOMMAND)&MF_GRAYED);
+  assert(GetMenuState(menu, 103, MF_BYCOMMAND)&MF_GRAYED);
+  assert(GetMenuState(menu, 8, MF_BYCOMMAND)&MF_GRAYED);
   assert(GetMenuState(menu, 1, MF_BYCOMMAND)&MF_GRAYED);
   assert(!(GetMenuState(menu, 2, MF_BYCOMMAND)&MF_GRAYED));
   assert(GetMenuState(menu, 3, MF_BYCOMMAND)&MF_GRAYED); DestroyMenu(menu);
   select_drive_key('A', 0, 1); menu = select_context_menu();
+  assert(!(GetMenuState(menu, 8, MF_BYCOMMAND)&MF_GRAYED));
   assert(!(GetMenuState(menu, 1, MF_BYCOMMAND)&MF_GRAYED)); DestroyMenu(menu);
   puts("SHIFT inline 3/3; row 2/2; Ctrl+A/C/Esc 3/3");
 }
@@ -187,6 +193,9 @@ static void test_generated(void) {
 }
 #include "check_shell_annotations.inc"
 #include "check_shell_shelf.inc"
+#include "check_shell_style.inc"
+#include "check_shell_shelfmeta.inc"
+#include "check_shell_dictionary.inc"
 int main(int argc, char **argv) {
   setvbuf(stdout, NULL, _IONBF, 0);
   assert(argc == 3); SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX);
@@ -202,6 +211,9 @@ int main(int argc, char **argv) {
   g.frame.book_id = g.session.book_id = 1;
   if (!strcmp(argv[1], "shelf")) test_shelf();
   else if (!strcmp(argv[1], "annotations")) test_annotations();
+  else if (!strcmp(argv[1], "style")) test_style();
+  else if (!strcmp(argv[1], "shelfmeta")) test_shelfmeta();
+  else if (!strcmp(argv[1], "dictionary-storage")) test_dictionary_storage();
   else if (!strcmp(argv[1], "boundaries")) test_boundaries();
   else if (!strcmp(argv[1], "copy")) test_copy();
   else if (!strcmp(argv[1], "keyboard")) test_keyboard();

@@ -39,6 +39,7 @@
     ]
   },
   "files": {
+    "dictionary.c": "text",
     "chapter_index.c": "doc",
     "chapter_reader.c": "layout",
     "chapter_window.c": "doc",
@@ -143,6 +144,7 @@
     "ruby.c": "layout",
     "sevenz.c": "formats",
     "source.c": "base",
+    "ssml.c": "layout",
     "stretch.c": "audio",
     "stroke.c": "graphics",
     "style.c": "layout",
@@ -209,6 +211,7 @@
     "src/vector_internal.h": "graphics",
     "src/vertical_data.h": "text",
     "include/exr/base.h": "base",
+    "include/exr/dictionary.h": "text",
     "include/exr/graphics.h": "graphics",
     "include/exr/text.h": "text",
     "include/exr/font_manager.h": "text",

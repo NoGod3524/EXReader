@@ -1,0 +1,51 @@
+{
+  "exe_sha256": "c7dcbb7214fb542f08391395a93a406c2229cec7c7e57d698763e46ff4d13cd2",
+  "voices": [
+    "Microsoft David Desktop - English (United States)",
+    "Microsoft Zira Desktop - English (United States)"
+  ],
+  "set_rate": [
+    -2,
+    0,
+    2,
+    4
+  ],
+  "controls": {
+    "start": 3,
+    "pause": 3,
+    "resume": 3,
+    "stop": 3
+  },
+  "follow_seconds": 30.313,
+  "highlight_changed_pixels": 174917,
+  "no_voices": {
+    "state": 0,
+    "native_state": 1,
+    "stream": 0,
+    "native_stream": 0,
+    "rate": 0,
+    "voice": 0,
+    "events": 0,
+    "jumps": 0,
+    "chunks": 0,
+    "minimized": 0,
+    "position": [
+      0,
+      0
+    ],
+    "page": 0,
+    "frame": [
+      6,
+      0,
+      145
+    ],
+    "uptime_ms": 86605671,
+    "native_offset": 0,
+    "message": "没有可用的系统语音。请在 Windows 设置中安装中文或英文语音包。",
+    "voices": [
+      "Microsoft David Desktop - English (United States)",
+      "Microsoft Zira Desktop - English (United States)"
+    ],
+    "sentence": null
+  }
+}

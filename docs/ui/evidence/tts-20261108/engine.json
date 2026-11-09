@@ -1,0 +1,213 @@
+{
+  "book": "hongloumeng-24264",
+  "book_sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+  "part": 1,
+  "samples": [
+    {
+      "characters": 7805,
+      "sentences": 83,
+      "next": [
+        1,
+        24103,
+        80
+      ],
+      "xml_bytes": 25393,
+      "xml_valid": true,
+      "start": 820,
+      "end": 24103,
+      "paragraph_characters": 7805,
+      "expected_characters": 7805,
+      "error_percent": 0.0
+    },
+    {
+      "characters": 5941,
+      "sentences": 56,
+      "next": [
+        1,
+        41946,
+        92
+      ],
+      "xml_bytes": 19141,
+      "xml_valid": true,
+      "start": 24267,
+      "end": 41946,
+      "paragraph_characters": 5941,
+      "expected_characters": 5941,
+      "error_percent": 0.0
+    },
+    {
+      "characters": 8476,
+      "sentences": 90,
+      "next": [
+        1,
+        67381,
+        104
+      ],
+      "xml_bytes": 27542,
+      "xml_valid": true,
+      "start": 42117,
+      "end": 67381,
+      "paragraph_characters": 8476,
+      "expected_characters": 8476,
+      "error_percent": 0.0
+    },
+    {
+      "characters": 31,
+      "sentences": 1,
+      "next": [
+        1,
+        67622,
+        113
+      ],
+      "xml_bytes": 235,
+      "xml_valid": true,
+      "start": 67529,
+      "end": 67622,
+      "paragraph_characters": 31,
+      "expected_characters": 31,
+      "error_percent": 0.0
+    },
+    {
+      "characters": 5883,
+      "sentences": 51,
+      "next": [
+        1,
+        85150,
+        116
+      ],
+      "xml_bytes": 18869,
+      "xml_valid": true,
+      "start": 67623,
+      "end": 85150,
+      "paragraph_characters": 5883,
+      "expected_characters": 5883,
+      "error_percent": 0.0
+    }
+  ],
+  "chunks": {
+    "chapter": "第一回",
+    "start": 762,
+    "end": 24104,
+    "calls": 10,
+    "max_chars": 800,
+    "total_characters": 7824,
+    "source_characters": 7824,
+    "source_sha256": "12ed73220b3c864c2a04d5e3ef28a1eb126cbdb323765b47de8bf8c73885d344",
+    "spoken_sha256": "12ed73220b3c864c2a04d5e3ef28a1eb126cbdb323765b47de8bf8c73885d344",
+    "equal": true,
+    "repeated_characters": 0,
+    "missing_characters": 0,
+    "records": [
+      {
+        "characters": 800,
+        "sentences": 7,
+        "next": [
+          1,
+          3143,
+          79
+        ],
+        "xml_bytes": 2673,
+        "xml_valid": true
+      },
+      {
+        "characters": 800,
+        "sentences": 13,
+        "next": [
+          1,
+          5535,
+          79
+        ],
+        "xml_bytes": 2801,
+        "xml_valid": true
+      },
+      {
+        "characters": 800,
+        "sentences": 8,
+        "next": [
+          1,
+          7935,
+          79
+        ],
+        "xml_bytes": 2689,
+        "xml_valid": true
+      },
+      {
+        "characters": 800,
+        "sentences": 7,
+        "next": [
+          1,
+          10331,
+          79
+        ],
+        "xml_bytes": 2661,
+        "xml_valid": true
+      },
+      {
+        "characters": 800,
+        "sentences": 12,
+        "next": [
+          1,
+          12707,
+          79
+        ],
+        "xml_bytes": 2761,
+        "xml_valid": true
+      },
+      {
+        "characters": 800,
+        "sentences": 9,
+        "next": [
+          1,
+          15097,
+          79
+        ],
+        "xml_bytes": 2703,
+        "xml_valid": true
+      },
+      {
+        "characters": 800,
+        "sentences": 9,
+        "next": [
+          1,
+          17483,
+          79
+        ],
+        "xml_bytes": 2699,
+        "xml_valid": true
+      },
+      {
+        "characters": 800,
+        "sentences": 7,
+        "next": [
+          1,
+          19867,
+          79
+        ],
+        "xml_bytes": 2649,
+        "xml_valid": true
+      },
+      {
+        "characters": 800,
+        "sentences": 9,
+        "next": [
+          1,
+          22239,
+          79
+        ],
+        "xml_bytes": 2685,
+        "xml_valid": true
+      },
+      {
+        "characters": 624,
+        "sentences": 12,
+        "next": [
+          1,
+          24103,
+          80
+        ],
+        "xml_bytes": 2270,
+        "xml_valid": true
+      }
+    ]
+  }
+}

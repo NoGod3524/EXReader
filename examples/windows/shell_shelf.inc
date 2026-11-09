@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Host-owned recent books. SQLite retains original bytes; JSON owns content points. */
-enum { SHELF_LIMIT=64, SHELF_LIST=190, SHELF_IMPORT, SHELF_TIMER=0x5348 };
+enum { SHELF_LIMIT=64, SHELF_LIST=190, SHELF_IMPORT, SHELF_ORGANIZE, SHELF_STATS, SHELF_TIMER=0x5348 };
 typedef struct {
   int64_t id;
   char *path,*title,*author;
@@ -14,7 +14,7 @@ typedef struct {
 } shelf_book;
 static shelf_book shelf_recent[SHELF_LIMIT];
 static int shelf_count,shelf_loaded,shelf_writable=1;
-static HWND shelf_panel,shelf_list,shelf_add,shelf_children[128];
+static HWND shelf_panel,shelf_list,shelf_add,shelf_organize,shelf_stats,shelf_children[128];
 static int shelf_child_count;
 static wchar_t shelf_json_path[HOST_PATH];
 static WNDPROC shelf_list_base;
@@ -102,7 +102,9 @@ static void shelf_refresh(void) {
   if(!shelf_list)return;
   SendMessageW(shelf_list,WM_SETREDRAW,FALSE,0);SendMessageW(shelf_list,LB_RESETCONTENT,0,0);
   for(int i=0;i<shelf_count;i++) {
-    shelf_book *b=&shelf_recent[i];wchar_t *title=host_wide(b->title ? b->title:"",b->title ? strlen(b->title):0);
+    shelf_book *b=&shelf_recent[i];int row=shelf_index(b->id);
+    const char *label=row>=0 ? sm_title((size_t)row):(b->title ? b->title:"");
+    wchar_t *title=host_wide(label,strlen(label));
     shelf_cover(b);SendMessageW(shelf_list,LB_ADDSTRING,0,(LPARAM)(title ? title:L"Untitled"));free(title);
   }
   SendMessageW(shelf_list,LB_SETITEMHEIGHT,0,shell_px(148,shell_dpi));
@@ -202,7 +204,7 @@ static int shelf_before_exit(void) {
 static void shelf_return(void) {
   if(!shell_active || shelf_requested)return;
   if(!shelf_before_exit())return;
-  shelf_exit_pending=1;shelf_pump();
+  sm_tick();shelf_exit_pending=1;shelf_pump();
   if(shelf_exit_pending)SetTimer(g.window,SHELF_TIMER,30,NULL);
 }
 static void shelf_pump(void) {
@@ -214,6 +216,7 @@ static void shelf_pump(void) {
   }
   if(g.progress_failed) {shelf_exit_pending=0;KillTimer(g.window,SHELF_TIMER);return;}
   shelf_exit_pending=0;shelf_requested=1;g.active_book_id=0;
+  shell_footnote_close();
   shell_selection_reset();memset(&g.selection,0,sizeof(g.selection));
   KillTimer(g.page,PAGE_WHEEL_TIMER);wheel_delta=0;
   KillTimer(g.window,SHELF_TIMER);settings_save();shell_sync();shelf_refresh();
@@ -224,6 +227,7 @@ static void shelf_open_index(int index) {
   if(!shelf_before_exit() || !shelf_capture())return;
   if(g.has_current && b->id==g.current.id && g.frame.valid) {
     shelf_requested=0;shell_bar_hidden=0;g.active_book_id=b->id;shelf_opened();shell_sync();
+    sm_landed(1);
     shell_request_layout();SetFocus(g.page);return;
   }
   SendMessageW(g.books,LB_SETCURSEL,(WPARAM)row,0);open_selected_book();
@@ -233,28 +237,35 @@ static void shelf_text(HDC dc,const wchar_t *text,RECT r,int size,int weight,uin
   HGDIOBJ old=SelectObject(dc,f);SetTextColor(dc,shell_colorref(color));SetBkMode(dc,TRANSPARENT);
   DrawTextW(dc,text,-1,&r,flags|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS|DT_NOPREFIX);SelectObject(dc,old);DeleteObject(f);
 }
+static int shelf_draw_book_cover(HDC dc,RECT r,int64_t id) {
+  shelf_book *b=shelf_find(id);if(!b)return 0;
+  shelf_cover(b);if(!b->cover)return 0;
+  BITMAPINFO info={0};info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);info.bmiHeader.biWidth=b->cover_w;
+  info.bmiHeader.biHeight=-b->cover_h;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;
+  double scale=fmin((double)(r.right-r.left)/b->cover_w,(double)(r.bottom-r.top)/b->cover_h);
+  int w=(int)(b->cover_w*scale),h=(int)(b->cover_h*scale);SetStretchBltMode(dc,HALFTONE);
+  StretchDIBits(dc,r.left+(r.right-r.left-w)/2,r.top+(r.bottom-r.top-h)/2,w,h,0,0,b->cover_w,b->cover_h,b->cover,&info,DIB_RGB_COLORS,SRCCOPY);
+  return 1;
+}
 static void shelf_draw(const DRAWITEMSTRUCT *d) {
   RECT r=d->rcItem;HDC dc=d->hDC;
   uint32_t bg=d->itemState&ODS_SELECTED ? shell_colors->surface2:shell_colors->layer_page;
   HBRUSH brush=CreateSolidBrush(shell_colorref(bg));FillRect(dc,&r,brush);DeleteObject(brush);
   if(d->itemID>=(UINT)shelf_count)return;
   shelf_book *b=&shelf_recent[d->itemID];int x=r.left+shell_px(24,shell_dpi),y=r.top+shell_px(16,shell_dpi);
+  int row=shelf_index(b->id);
+  const char *book_title=row>=0 ? sm_title((size_t)row):(b->title ? b->title:"Untitled");
+  const char *book_author=row>=0 ? sm_author((size_t)row):(b->author ? b->author:"");
   int cw=shell_px(84,shell_dpi),ch=shell_px(112,shell_dpi);RECT cover={x,y,x+cw,y+ch};
-  if(b->cover) {
-    BITMAPINFO info={0};info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);info.bmiHeader.biWidth=b->cover_w;
-    info.bmiHeader.biHeight=-b->cover_h;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;
-    double scale=fmin((double)cw/b->cover_w,(double)ch/b->cover_h);
-    int w=(int)(b->cover_w*scale),h=(int)(b->cover_h*scale);SetStretchBltMode(dc,HALFTONE);
-    StretchDIBits(dc,x+(cw-w)/2,y+(ch-h)/2,w,h,0,0,b->cover_w,b->cover_h,b->cover,&info,DIB_RGB_COLORS,SRCCOPY);
-  } else {
+  if(!sm_draw_override_cover(dc,cover,b->id) && !shelf_draw_book_cover(dc,cover,b->id)) {
     brush=CreateSolidBrush(shell_colorref(shell_colors->surface3));FillRect(dc,&cover,brush);DeleteObject(brush);
-    wchar_t *title=host_wide(b->title,strlen(b->title));shelf_text(dc,title ? title:L"书",cover,13,600,shell_colors->text,DT_CENTER);free(title);
+    wchar_t *title=host_wide(book_title,strlen(book_title));shelf_text(dc,title ? title:L"书",cover,13,600,shell_colors->text,DT_CENTER);free(title);
   }
   x+=cw+shell_px(28,shell_dpi);r.left=x;r.right-=shell_px(32,shell_dpi);r.top=y;r.bottom=y+shell_px(32,shell_dpi);
-  wchar_t *title=host_wide(b->title ? b->title:"Untitled",strlen(b->title ? b->title:"Untitled"));
+  wchar_t *title=host_wide(book_title,strlen(book_title));
   shelf_text(dc,title ? title:L"Untitled",r,18,600,shell_colors->text,DT_LEFT);free(title);
   r.top+=shell_px(34,shell_dpi);r.bottom+=shell_px(34,shell_dpi);
-  wchar_t *author=host_wide(b->author ? b->author:"",strlen(b->author ? b->author:""));
+  wchar_t *author=host_wide(book_author,strlen(book_author));
   shelf_text(dc,author && *author ? author:L"作者未提供",r,13,400,shell_colors->text_secondary,DT_LEFT);free(author);
   r.top+=shell_px(34,shell_dpi);r.bottom+=shell_px(34,shell_dpi);wchar_t label[80];
   swprintf(label,80,L"已读 %.0f%%",b->progress*100);shelf_text(dc,label,r,12,400,shell_colors->text_secondary,DT_LEFT);
@@ -265,6 +276,17 @@ static void shelf_draw(const DRAWITEMSTRUCT *d) {
   if((d->itemState&ODS_FOCUS) && !(d->itemState&ODS_NOFOCUSRECT))DrawFocusRect(dc,&d->rcItem);
 }
 static LRESULT CALLBACK shelf_list_proc(HWND w,UINT m,WPARAM wp,LPARAM lp) {
+  if(m==WM_CONTEXTMENU) {
+    POINT p={(short)LOWORD(lp),(short)HIWORD(lp)};int index;
+    if(p.x==-1 && p.y==-1) {index=(int)SendMessageW(w,LB_GETCURSEL,0,0);p=(POINT){24,24};ClientToScreen(w,&p);}
+    else {POINT at=p;ScreenToClient(w,&at);DWORD hit=(DWORD)SendMessageW(w,LB_ITEMFROMPOINT,0,MAKELPARAM(at.x,at.y));index=HIWORD(hit) ? -1:LOWORD(hit);}
+    if(index>=0 && index<shelf_count) {
+      HMENU menu=CreatePopupMenu();AppendMenuW(menu,MF_STRING,1,L"编辑信息…");
+      int command=TrackPopupMenu(menu,TPM_RETURNCMD|TPM_RIGHTBUTTON,p.x,p.y,0,w,NULL);DestroyMenu(menu);
+      if(command==1)sm_edit_open(shelf_index(shelf_recent[index].id));
+    }
+    return 0;
+  }
   if(m==WM_ERASEBKGND) {RECT r;GetClientRect(w,&r);HBRUSH b=CreateSolidBrush(shell_colorref(shell_colors->layer_page));FillRect((HDC)wp,&r,b);DeleteObject(b);return 1;}
   if(m==WM_LBUTTONUP) {LRESULT result=CallWindowProcW(shelf_list_base,w,m,wp,lp);DWORD item=(DWORD)SendMessageW(w,LB_ITEMFROMPOINT,0,lp);if(!HIWORD(item))shelf_open_index(LOWORD(item));return result;}
   if(m==WM_KEYDOWN && wp==VK_RETURN) {shelf_open_index((int)SendMessageW(w,LB_GETCURSEL,0,0));return 0;}
@@ -274,11 +296,17 @@ static LRESULT CALLBACK shelf_proc(HWND w,UINT m,WPARAM wp,LPARAM lp) {
   switch(m) {
     case WM_ERASEBKGND:return 1;
     case WM_SIZE:shelf_layout();return 0;
-    case WM_COMMAND:if(LOWORD(wp)==SHELF_IMPORT) {g.auto_open_imported=1;import_path(NULL,1);return 0;}break;
+    case WM_COMMAND:
+      if(LOWORD(wp)==SHELF_IMPORT) {g.auto_open_imported=1;import_path(NULL,1);return 0;}
+      if(LOWORD(wp)==SHELF_ORGANIZE || LOWORD(wp)==SHELF_STATS) {sm_show(LOWORD(wp)==SHELF_STATS);return 0;}
+      break;
     case WM_DRAWITEM: {
       const DRAWITEMSTRUCT *d=(const DRAWITEMSTRUCT *)lp;
       if(d->hwndItem==shelf_list)shelf_draw(d);
-      else shell_d2d_control(host_shell,d->hDC,&d->rcItem,L"＋ 打开书籍",shell_is_dark(),1,(d->itemState&ODS_SELECTED ? 2:0)|(d->itemState&ODS_FOCUS ? 4:0));
+      else {
+        wchar_t label[32];GetWindowTextW(d->hwndItem,label,32);
+        shell_d2d_control(host_shell,d->hDC,&d->rcItem,label,shell_is_dark(),1,(d->itemState&ODS_SELECTED ? 2:0)|(d->itemState&ODS_FOCUS ? 4:0));
+      }
       return TRUE;
     }
     case WM_CTLCOLORLISTBOX:SetBkColor((HDC)wp,shell_colorref(shell_colors->layer_page));return (LRESULT)GetStockObject(NULL_BRUSH);
@@ -302,10 +330,14 @@ static int shelf_layout(void) {
   int pad=shell_px(24,shell_dpi),top=shell_px(124,shell_dpi);
   MoveWindow(shelf_list,pad,top,max(0,r.right-2*pad),max(0,r.bottom-top-pad),TRUE);
   MoveWindow(shelf_add,r.right-shell_px(188,shell_dpi),shell_px(35,shell_dpi),shell_px(140,shell_dpi),shell_px(40,shell_dpi),TRUE);
+  MoveWindow(shelf_organize,r.right-shell_px(440,shell_dpi),shell_px(35,shell_dpi),shell_px(120,shell_dpi),shell_px(40,shell_dpi),TRUE);
+  MoveWindow(shelf_stats,r.right-shell_px(312,shell_dpi),shell_px(35,shell_dpi),shell_px(116,shell_dpi),shell_px(40,shell_dpi),TRUE);
+  sm_refresh();
   return 1;
 }
 static void shelf_show(int show) {
   if(!shelf_panel || shelf_visible==show)return;
+  sm_tick();
   shelf_visible=show;
   if(show) {
     shelf_child_count=0;
@@ -317,6 +349,7 @@ static void shelf_show(int show) {
     for(int i=0;i<shelf_child_count;i++)ShowWindow(shelf_children[i],SW_SHOWNA);
     shelf_child_count=0;
   }
+  sm_shelf_visibility(show);
 }
 static void shelf_create(HWND parent) {
   WNDCLASSW c={0};c.lpfnWndProc=shelf_proc;c.hInstance=GetModuleHandleW(NULL);c.lpszClassName=L"EXReaderShelf";c.hCursor=LoadCursor(NULL,IDC_ARROW);RegisterClassW(&c);
@@ -324,7 +357,9 @@ static void shelf_create(HWND parent) {
   shelf_list=CreateWindowExW(0,L"LISTBOX",L"最近阅读",WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|LBS_OWNERDRAWFIXED|LBS_HASSTRINGS|LBS_NOINTEGRALHEIGHT|LBS_NOTIFY,
     0,0,0,0,shelf_panel,(HMENU)SHELF_LIST,NULL,NULL);
   shelf_list_base=(WNDPROC)SetWindowLongPtrW(shelf_list,GWLP_WNDPROC,(LONG_PTR)shelf_list_proc);
-  shelf_add=CreateWindowExW(0,L"BUTTON",L"打开书籍",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_IMPORT,NULL,NULL);
+  shelf_add=CreateWindowExW(0,L"BUTTON",L"＋ 打开书籍",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_IMPORT,NULL,NULL);
+  shelf_organize=CreateWindowExW(0,L"BUTTON",L"系列 / 标签",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_ORGANIZE,NULL,NULL);
+  shelf_stats=CreateWindowExW(0,L"BUTTON",L"阅读统计",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_STATS,NULL,NULL);
 }
 static void shelf_load(void) {
   path_join(shelf_json_path,HOST_PATH,g.data_dir,L"recent-books.json");shelf_loaded=1;
