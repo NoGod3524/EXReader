@@ -1,3 +1,19 @@
+# Frozen CPU gate (2026-11-09)
+
+`gate-probe` / `sample.py` retain 19 books x 3 fresh processes x 16 turns.
+`refresh_baseline.py` reruns and freezes a new environment-specific baseline;
+`gate.py BASELINE CAPTURE --output RESULT` returns 0 (pass), 1 (regression),
+or 2 (invalid evidence). CPU tiers are 10/20/35%; the wall watchdog is 3x.
+`qualify.py` performs five repetitions and a real +25% `black-boy` CPU fault.
+`--local` cannot authorize CI. Linux requires a readable hardware PMU; there is
+no TSC or CPU-time fallback.
+
+**Not ready for required:** final local repetitions passed 2/5, with unchanged
+code reaching +47.9538% cycles; the +25% fault correctly failed. No Ubuntu CI
+baseline was collected. The committed CI JSON explicitly rejects use. Full
+numbers, raw evidence, commands, unapplied workflow patch, deployment conditions
+and rollback are in [PERF-GATE-FINAL](../../docs/validation/PERF-GATE-FINAL.md).
+
 # Local E1 capture (Windows)
 
 This collector runs headlessly. It builds the current SDK with its default
