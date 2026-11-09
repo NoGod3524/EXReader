@@ -1,0 +1,42 @@
+{
+  "source_commit": "2325b63cbf4068fba7ae2761ad10678b0274bab6",
+  "probe_source_sha256": "f3723cd1ae30f085fd6fbe4ddebf1c092b26875f8cd17e00dd6063f2f8ff8d25",
+  "probe_binary_sha256": "6b7b34b5c7473bdea949f35ed207988da93c44eda5ac7bc11c91264e97ac331c",
+  "library_sha256": "cac0119bb5aed6249d5c6b28f46c23eddad0b2b8e89fde1109a6dba511478bc5",
+  "execution_mode": "Same native C consumer executed by adb shell on Android 11 API 30 x86_64 emulator",
+  "commands": [
+    [
+      "P:/android-sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe",
+      "--target=x86_64-linux-android24",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-IS:/source/include",
+      "S:/source/tools/platforms/probe.c",
+      "-LS:/android-stage/lib",
+      "-lexreader",
+      "-o",
+      "S:/platform-probe-android-final"
+    ],
+    [
+      "P:/android-sdk/platform-tools/adb.exe",
+      "-s",
+      "emulator-5554",
+      "push",
+      "S:/platform-probe-android-final",
+      "S:/android-stage/lib/libexreader.so",
+      "S:/smoke/font.otf",
+      "S:/smoke/smoke.epub",
+      "/data/local/tmp/exr-s5-2325b63c/"
+    ],
+    [
+      "P:/android-sdk/platform-tools/adb.exe",
+      "-s",
+      "emulator-5554",
+      "shell",
+      "cd /data/local/tmp/exr-s5-2325b63c && chmod 755 platform-probe-android-final && sha256sum libexreader.so smoke.epub font.otf && LD_LIBRARY_PATH=. ./platform-probe-android-final smoke.epub font.otf . create && LD_LIBRARY_PATH=. ./platform-probe-android-final smoke.epub font.otf . reopen && cat create.log reopen.log"
+    ]
+  ]
+}
