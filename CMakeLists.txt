@@ -91,6 +91,14 @@ if(EXR_BUILD_JNI)
   install(TARGETS exreader-jni RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()
 if(EXR_BUILD_TOOLS)
+  add_executable(exr-info tools/exr_info.c)
+  target_link_libraries(exr-info PRIVATE exreader)
+  if(APPLE)
+    set_target_properties(exr-info PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE INSTALL_RPATH "@loader_path/../lib")
+  elseif(UNIX)
+    set_target_properties(exr-info PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE INSTALL_RPATH "$ORIGIN/../lib")
+  endif()
+  install(TARGETS exr-info RUNTIME DESTINATION bin)
   add_executable(exreader-render tools/render.c)
   target_link_libraries(exreader-render PRIVATE exreader)
   if(APPLE)
@@ -173,6 +181,20 @@ if(EXR_BUILD_TOOLS)
 endif()
 if(EXR_FULL_TESTS)
   enable_testing()
+  if(EXR_BUILD_TOOLS AND EXR_BUILD_SHARED_COMPAT AND NOT EXR_SANITIZE AND NOT ANDROID AND NOT CMAKE_CROSSCOMPILING)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    add_test(NAME sdk-release COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tools/release/smoke_release.py
+      --build-dir ${CMAKE_CURRENT_BINARY_DIR} --config $<CONFIG>
+      --compiler ${CMAKE_C_COMPILER})
+    set_tests_properties(sdk-release PROPERTIES TIMEOUT 180 LABELS "release")
+    add_test(NAME sdk-release-checker COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tools/release/test_check_release.py)
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/release-smoke/
+      DESTINATION share/exreader/release-validation OPTIONAL
+      FILES_MATCHING PATTERN "*.json" PATTERN "*.log" PATTERN "*.pgm"
+      PATTERN "*.zip" PATTERN "*.tar.gz")
+  endif()
   if(EXR_ENABLE_LCP)
     add_executable(exreader-lcp-test tests/test_lcp.c)
     target_include_directories(exreader-lcp-test PRIVATE src)
