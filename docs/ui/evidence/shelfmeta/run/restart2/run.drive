@@ -1,0 +1,10 @@
+shell|on
+shell_dpi|96
+shell_client|1280|800
+wait_idle
+shell_click|light
+sm_show|0
+sm_dump|removed-restarted
+shell_measure|removed-restarted
+probe_wait|900
+quit

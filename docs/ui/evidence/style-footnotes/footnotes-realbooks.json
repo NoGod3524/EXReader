@@ -1,0 +1,132 @@
+[
+  {
+    "book": "A Raisin in the Sun (Lorraine Hansberry) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "Between The World and Me (Ta-Nehisi Coates) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "Black Boy (Richard Wright) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 45,
+    "references": 45,
+    "first": {
+      "id": "fnote1",
+      "label": "*",
+      "text": "*For an autobiographical account of this period, please go to: narrative.org/post/poetic-justice"
+    }
+  },
+  {
+    "book": "Born a Crime (Trevor Noah) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "Crying in H Mart (Michelle Zauner) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 3,
+    "references": 3,
+    "first": {
+      "id": "fn1",
+      "label": "1",
+      "text": "1. La lingua coreana ha un alfabeto proprio, detto hangeul: . Michelle Zauner usa due sistemi diversi di traslitterazion"
+    }
+  },
+  {
+    "book": "How Does It Feel to Be a Problem Being Young and Arab in America (Moustafa Bayoumi) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "I Know Why the Caged Bird Sings (Maya Angelou) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 2,
+    "references": 2,
+    "first": {
+      "id": "fn",
+      "label": "*",
+      "text": "* “Lift Ev’ry Voice and Sing”—words by James Weldon Johnson and music by J. Rosamond Johnson. Copyright by Edward B. Mar"
+    }
+  },
+  {
+    "book": "Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 16,
+    "references": 16,
+    "first": {
+      "id": "nota1",
+      "label": "1",
+      "text": "1 União dos Coreanos Residentes no Japão, fundada em 1946. (N. da T.)"
+    }
+  },
+  {
+    "book": "The Absolutely True Diary of a Part-Time Indian (Sherman Alexie) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "The Autobiography of Malcolm X. (Malcolm X, Alex Haley) (z-library.sk, 1lib.sk, z-lib.sk).pdf",
+    "error": "Invalid ZIP source"
+  },
+  {
+    "book": "The Distance Between Us A Memoir (Grande Reyna) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "The Fire Next Time (James Baldwin) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "The Fire This Time A New Generation Speaks about Race (Jesmyn Ward) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "The House on Mango Street (Sandra Cisneros) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "Zami A New Spelling of My Name - A Biomythography (Audre Lorde) (z-library.sk, 1lib.sk, z-lib.sk).mobi",
+    "error": "Invalid ZIP source"
+  },
+  {
+    "book": "hongloumeng-24264.epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "xingshihengyan-24239.epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "tangshi300-52323.epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  },
+  {
+    "book": "kusamakura-japanese-vertical-writing.epub",
+    "status": 0,
+    "footnotes": 0,
+    "references": 0
+  }
+]

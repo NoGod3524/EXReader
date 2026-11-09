@@ -1,0 +1,461 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-integ-20261108/build
+        Start 170: native-convert-corpus
+        Start  82: native-core
+        Start  86: native-flow
+        Start  10: native-hyphen-layout
+        Start 159: native-line-boundary
+        Start 180: native-document-probe
+        Start 181: native-corpus-triage
+        Start 164: native-chapter-reader
+  1/228 Test  #86: native-flow ............................   Passed    0.19 sec
+        Start  14: native-float
+  2/228 Test  #82: native-core ............................   Passed    0.27 sec
+        Start 179: native-benchmark
+  3/228 Test #170: native-convert-corpus ..................   Passed    0.60 sec
+        Start 173: native-convert-benchmark
+  4/228 Test #179: native-benchmark .......................   Passed    5.29 sec
+        Start 172: native-convert-cli
+  5/228 Test #181: native-corpus-triage ...................   Passed   11.11 sec
+        Start  31: native-library-stream
+  6/228 Test #172: native-convert-cli .....................   Passed    5.99 sec
+        Start  40: native-inks
+  7/228 Test  #40: native-inks ............................   Passed    2.10 sec
+        Start 178: native-hyphen-conditional-oracle
+  8/228 Test #178: native-hyphen-conditional-oracle .......   Passed    1.37 sec
+        Start 176: native-hyphen-compound-oracle
+  9/228 Test  #31: native-library-stream ..................   Passed    5.26 sec
+        Start  47: native-pdf-shading
+ 10/228 Test #176: native-hyphen-compound-oracle ..........   Passed    1.73 sec
+        Start 102: native-note-limit
+ 11/228 Test  #47: native-pdf-shading .....................   Passed    1.37 sec
+        Start 175: native-case-reference
+ 12/228 Test #102: native-note-limit ......................   Passed    1.27 sec
+        Start  41: native-nested-groups
+ 13/228 Test  #14: native-float ...........................   Passed   18.08 sec
+        Start  25: native-chapter-window
+ 14/228 Test #175: native-case-reference ..................   Passed    0.85 sec
+        Start 177: native-hyphen-replacement-oracle
+ 15/228 Test  #41: native-nested-groups ...................   Passed    0.91 sec
+        Start  15: native-table-fragments
+ 16/228 Test #180: native-document-probe ..................   Passed   19.00 sec
+        Start  44: native-alpha-source
+ 17/228 Test #177: native-hyphen-replacement-oracle .......   Passed    0.48 sec
+        Start  42: native-paint-source
+ 18/228 Test  #25: native-chapter-window ..................   Passed    0.85 sec
+        Start 167: native-page-cache
+ 19/228 Test  #44: native-alpha-source ....................   Passed    0.43 sec
+        Start 130: native-blend
+ 20/228 Test #130: native-blend ...........................   Passed    0.39 sec
+        Start 156: native-bidi
+ 21/228 Test #167: native-page-cache ......................   Passed    0.78 sec
+        Start  46: native-mask-scope
+ 22/228 Test  #15: native-table-fragments .................   Passed    1.10 sec
+        Start  24: native-chapter-index
+ 23/228 Test  #42: native-paint-source ....................   Passed    1.11 sec
+        Start 204: native-dictionary-contracts
+ 24/228 Test  #46: native-mask-scope ......................   Passed    0.63 sec
+        Start 137: native-kf8
+ 25/228 Test #137: native-kf8 .............................   Passed    0.17 sec
+        Start  55: native-pdf-inline
+ 26/228 Test  #24: native-chapter-index ...................   Passed    0.69 sec
+        Start 108: native-pdf-objects
+ 27/228 Test #156: native-bidi ............................   Passed    0.97 sec
+        Start  45: native-mask-functions
+ 28/228 Test #204: native-dictionary-contracts ............   Passed    0.64 sec
+        Start 171: native-convert
+ 29/228 Test  #45: native-mask-functions ..................   Passed    0.13 sec
+        Start 117: native-pdf-image
+ 30/228 Test #108: native-pdf-objects .....................   Passed    0.22 sec
+        Start 188: native-library-epub-storage
+ 31/228 Test #171: native-convert .........................   Passed    0.30 sec
+        Start 202: native-dictionary-stardict
+ 32/228 Test #117: native-pdf-image .......................   Passed    0.25 sec
+        Start 207: native-font-manager-selection
+ 33/228 Test #188: native-library-epub-storage ............   Passed    0.47 sec
+        Start 187: native-library-source
+ 34/228 Test  #55: native-pdf-inline ......................   Passed    0.77 sec
+        Start  20: native-table-intrinsic
+ 35/228 Test #207: native-font-manager-selection ..........   Passed    0.30 sec
+        Start 101: native-anchor-library
+ 36/228 Test #202: native-dictionary-stardict .............   Passed    0.36 sec
+        Start  49: native-font-color
+ 37/228 Test #101: native-anchor-library ..................   Passed    0.26 sec
+        Start  56: native-stretch
+ 38/228 Test  #20: native-table-intrinsic .................   Passed    0.43 sec
+        Start 183: native-color-png
+ 39/228 Test  #49: native-font-color ......................   Passed    0.43 sec
+        Start 100: native-content-reflow
+ 40/228 Test #187: native-library-source ..................   Passed    0.54 sec
+        Start  16: native-table-border
+ 41/228 Test  #56: native-stretch .........................   Passed    0.49 sec
+        Start 208: native-font-manager-cache
+ 42/228 Test  #16: native-table-border ....................   Passed    0.30 sec
+        Start   1: native-render-audit
+ 43/228 Test #100: native-content-reflow ..................   Passed    0.38 sec
+        Start 209: native-font-manager-integration
+ 44/228 Test #183: native-color-png .......................   Passed    0.48 sec
+        Start 216: native-pdf-deepening-scan
+ 45/228 Test #208: native-font-manager-cache ..............   Passed    0.30 sec
+        Start  43: native-zero-opacity
+ 46/228 Test   #1: native-render-audit ....................   Passed    0.30 sec
+        Start 116: native-pdf-raster
+ 47/228 Test  #43: native-zero-opacity ....................   Passed    0.10 sec
+        Start   4: native-pdf-shading-mesh7
+ 48/228 Test #209: native-font-manager-integration ........   Passed    0.32 sec
+        Start   7: native-hyphen
+ 49/228 Test #216: native-pdf-deepening-scan ..............   Passed    0.28 sec
+        Start 215: native-pdf-deepening-coordinates
+ 50/228 Test #116: native-pdf-raster ......................   Passed    0.29 sec
+        Start 166: native-pager
+ 51/228 Test #215: native-pdf-deepening-coordinates .......   Passed    0.22 sec
+        Start 109: native-pdf-pages
+ 52/228 Test #109: native-pdf-pages .......................   Passed    0.04 sec
+        Start 203: native-dictionary-dictzip
+ 53/228 Test #164: native-chapter-reader ..................   Passed   23.03 sec
+        Start 163: native-chapter-bounds
+ 54/228 Test   #4: native-pdf-shading-mesh7 ...............   Passed    0.47 sec
+        Start 217: native-pdf-deepening-contracts
+ 55/228 Test   #7: native-hyphen ..........................   Passed    0.47 sec
+        Start 106: native-lazy
+ 56/228 Test #166: native-pager ...........................   Passed    0.37 sec
+        Start 184: native-pdf-jpx
+ 57/228 Test #203: native-dictionary-dictzip ..............   Passed    0.33 sec
+        Start 135: native-library-unique
+ 58/228 Test #217: native-pdf-deepening-contracts .........   Passed    0.26 sec
+        Start  19: native-table-alignment
+ 59/228 Test #163: native-chapter-bounds ..................   Passed    0.37 sec
+        Start 218: native-pdf-deepening-encryption
+ 60/228 Test #135: native-library-unique ..................   Passed    0.16 sec
+        Start  77: native-reanchor-library
+ 61/228 Test #184: native-pdf-jpx .........................   Passed    0.25 sec
+        Start 206: native-font-manager-discovery
+ 62/228 Test #106: native-lazy ............................   Passed    0.39 sec
+        Start  37: native-pdf-intent
+ 63/228 Test  #19: native-table-alignment .................   Passed    0.15 sec
+        Start  34: native-wp7
+ 64/228 Test  #37: native-pdf-intent ......................   Passed    0.04 sec
+        Start 214: native-pdf-deepening-search
+ 65/228 Test  #77: native-reanchor-library ................   Passed    0.22 sec
+        Start  30: native-cbz-formats
+ 66/228 Test #218: native-pdf-deepening-encryption ........   Passed    0.30 sec
+ 67/228 Test  #30: native-cbz-formats .....................   Passed    0.04 sec
+        Start  39: native-pdf-groupcs
+        Start  50: native-font-color-v1
+ 68/228 Test  #39: native-pdf-groupcs .....................   Passed    0.06 sec
+        Start 136: native-cover-import
+ 69/228 Test #214: native-pdf-deepening-search ............   Passed    0.24 sec
+        Start  53: native-orthogonal
+ 70/228 Test #206: native-font-manager-discovery ..........   Passed    0.33 sec
+        Start 124: native-fixed-library
+ 71/228 Test  #34: native-wp7 .............................   Passed    0.33 sec
+        Start  22: native-table-spacing
+ 72/228 Test  #50: native-font-color-v1 ...................   Passed    0.14 sec
+        Start  35: native-ruby
+ 73/228 Test  #53: native-orthogonal ......................   Passed    0.15 sec
+        Start  80: native-text-index
+ 74/228 Test #136: native-cover-import ....................   Passed    0.20 sec
+        Start  21: native-table-columns
+ 75/228 Test #124: native-fixed-library ...................   Passed    0.17 sec
+        Start 115: native-pdf-outline
+ 76/228 Test  #35: native-ruby ............................   Passed    0.17 sec
+        Start 118: native-audio-library
+ 77/228 Test  #22: native-table-spacing ...................   Passed    0.20 sec
+        Start  96: native-content-mapping
+ 78/228 Test  #21: native-table-columns ...................   Passed    0.10 sec
+        Start  72: native-pdf-form
+ 79/228 Test #115: native-pdf-outline .....................   Passed    0.09 sec
+        Start 111: native-pdf-font
+ 80/228 Test #111: native-pdf-font ........................   Passed    0.04 sec
+        Start 205: native-dictionary-dictd
+ 81/228 Test #118: native-audio-library ...................   Passed    0.14 sec
+        Start  59: native-vertical
+ 82/228 Test  #59: native-vertical ........................   Passed    0.05 sec
+ 83/228 Test  #96: native-content-mapping .................   Passed    0.19 sec
+        Start  29: native-image-formats
+        Start 127: native-fixed-example
+ 84/228 Test  #72: native-pdf-form ........................   Passed    0.25 sec
+        Start  36: native-pdf-color
+ 85/228 Test  #29: native-image-formats ...................   Passed    0.11 sec
+        Start 157: native-shaping
+ 86/228 Test #127: native-fixed-example ...................   Passed    0.07 sec
+        Start 169: native-control
+ 87/228 Test #157: native-shaping .........................   Passed    0.11 sec
+        Start  78: native-progress-library
+ 88/228 Test #205: native-dictionary-dictd ................   Passed    0.43 sec
+        Start 142: native-rtf-note
+ 89/228 Test  #36: native-pdf-color .......................   Passed    0.25 sec
+        Start 138: native-mobi
+ 90/228 Test #169: native-control .........................   Passed    0.33 sec
+ 91/228 Test  #80: native-text-index ......................   Passed    0.75 sec
+        Start  75: native-metadata
+        Start 168: native-checkpoints
+ 92/228 Test #142: native-rtf-note ........................   Passed    0.16 sec
+        Start 147: native-export-html
+ 93/228 Test  #78: native-progress-library ................   Passed    0.26 sec
+        Start  28: native-cbz
+ 94/228 Test #147: native-export-html .....................   Passed    0.03 sec
+        Start 105: native-html-raw
+ 95/228 Test  #75: native-metadata ........................   Passed    0.09 sec
+        Start 131: native-canvas
+ 96/228 Test #105: native-html-raw ........................   Passed    0.05 sec
+ 97/228 Test #138: native-mobi ............................   Passed    0.23 sec
+        Start 193: native-style-footnotes-styles
+        Start  26: native-style-budget
+ 98/228 Test #168: native-checkpoints .....................   Passed    0.19 sec
+        Start 150: native-toc-page
+ 99/228 Test  #28: native-cbz .............................   Passed    0.18 sec
+        Start  87: native-construct
+100/228 Test  #26: native-style-budget ....................   Passed    0.06 sec
+        Start  79: native-text-source
+101/228 Test  #87: native-construct .......................   Passed    0.06 sec
+102/228 Test #131: native-canvas ..........................   Passed    0.19 sec
+        Start 129: native-font-path
+        Start  70: native-pdf-metadata-write
+103/228 Test #150: native-toc-page ........................   Passed    0.10 sec
+        Start  51: native-font-svg
+104/228 Test #129: native-font-path .......................   Passed    0.04 sec
+        Start 153: native-toc-recovery
+105/228 Test  #70: native-pdf-metadata-write ..............   Passed    0.08 sec
+        Start 174: native-pdf-group-reference
+106/228 Test #193: native-style-footnotes-styles ..........   Passed    0.28 sec
+107/228 Test  #79: native-text-source .....................   Passed    0.13 sec
+        Start 128: native-fixed
+        Start 126: native-fixed-pdf
+108/228 Test #153: native-toc-recovery ....................   Passed    0.10 sec
+        Start 119: native-wave-example
+109/228 Test  #51: native-font-svg ........................   Passed    0.12 sec
+        Start 123: native-audio
+110/228 Test #126: native-fixed-pdf .......................   Passed    0.06 sec
+        Start   2: native-table-dashed
+111/228 Test #119: native-wave-example ....................   Passed    0.06 sec
+112/228 Test #128: native-fixed ...........................   Passed    0.08 sec
+113/228 Test #123: native-audio ...........................   Passed    0.05 sec
+        Start  69: native-mp3
+        Start  71: native-pdf-write
+        Start  89: native-cfi
+114/228 Test #174: native-pdf-group-reference .............   Passed    0.14 sec
+        Start 121: native-wave
+115/228 Test   #2: native-table-dashed ....................   Passed    0.07 sec
+        Start 158: native-complex-layout
+116/228 Test  #69: native-mp3 .............................   Passed    0.07 sec
+        Start 148: native-export-epub
+117/228 Test #121: native-wave ............................   Passed    0.05 sec
+        Start 155: native-text
+118/228 Test  #71: native-pdf-write .......................   Passed    0.07 sec
+        Start 134: native-positioned
+119/228 Test  #89: native-cfi .............................   Passed    0.07 sec
+        Start 165: native-chapter-oversized-unit
+120/228 Test #148: native-export-epub .....................   Passed    0.09 sec
+        Start 140: native-rtf-number
+121/228 Test #155: native-text ............................   Passed    0.21 sec
+        Start 144: native-rtf
+122/228 Test #158: native-complex-layout ..................   Passed    0.24 sec
+123/228 Test #134: native-positioned ......................   Passed    0.20 sec
+        Start  18: native-table-header
+        Start 182: native-png
+124/228 Test #140: native-rtf-number ......................   Passed    0.17 sec
+125/228 Test #144: native-rtf .............................   Passed    0.05 sec
+        Start   3: native-pdf-shading-mesh
+        Start  91: native-document-search-basic
+126/228 Test #165: native-chapter-oversized-unit ..........   Passed    0.33 sec
+127/228 Test  #18: native-table-header ....................   Passed    0.14 sec
+        Start 160: native-font
+        Start 120: native-pcm-example
+128/228 Test #182: native-png .............................   Passed    0.52 sec
+129/228 Test  #91: native-document-search-basic ...........   Passed    0.47 sec
+130/228 Test   #3: native-pdf-shading-mesh ................   Passed    0.48 sec
+        Start  67: native-pcm
+        Start   6: native-normalize
+        Start  65: native-pdf-markup
+131/228 Test #120: native-pcm-example .....................   Passed    0.04 sec
+132/228 Test #160: native-font ............................   Passed    0.41 sec
+        Start  74: native-page-annotations
+        Start 210: native-xml-input
+133/228 Test  #67: native-pcm .............................   Passed    0.14 sec
+134/228 Test #210: native-xml-input .......................   Passed    0.10 sec
+135/228 Test  #74: native-page-annotations ................   Passed    0.10 sec
+        Start 190: native-library-component
+        Start  88: native-cfi-text
+        Start  68: native-audio-output
+136/228 Test   #6: native-normalize .......................   Passed    0.39 sec
+        Start  11: native-hyphen-builtin-rules
+137/228 Test  #65: native-pdf-markup ......................   Passed    0.39 sec
+        Start  73: native-pdf-appearance
+138/228 Test  #11: native-hyphen-builtin-rules ............   Passed    0.04 sec
+139/228 Test #190: native-library-component ...............   Passed    0.25 sec
+140/228 Test  #73: native-pdf-appearance ..................   Passed    0.03 sec
+141/228 Test  #88: native-cfi-text ........................   Passed    0.05 sec
+        Start  76: native-annotation
+        Start  38: native-pdf-matte
+        Start 141: native-rtf-list
+        Start  83: native-chapter-layout-chapter
+142/228 Test  #68: native-audio-output ....................   Passed    0.09 sec
+        Start 185: native-core-component
+143/228 Test  #76: native-annotation ......................   Passed    0.09 sec
+        Start  27: native-chapter-source
+144/228 Test #141: native-rtf-list ........................   Passed    0.09 sec
+145/228 Test #185: native-core-component ..................   Passed    0.06 sec
+146/228 Test  #38: native-pdf-matte .......................   Passed    0.10 sec
+147/228 Test  #83: native-chapter-layout-chapter ..........   Passed    0.09 sec
+        Start 125: native-fixed-text
+        Start  90: native-anchor
+        Start 104: native-rtf-fallback
+        Start  23: native-pdf-crypto
+148/228 Test #125: native-fixed-text ......................   Passed    0.05 sec
+        Start 149: native-navigation
+149/228 Test  #27: native-chapter-source ..................   Passed    0.08 sec
+        Start 103: native-export-xml
+150/228 Test  #23: native-pdf-crypto ......................   Passed    0.03 sec
+151/228 Test  #90: native-anchor ..........................   Passed    0.05 sec
+        Start   5: native-pdf-ccitt
+        Start 114: native-pdf-graphics
+152/228 Test #103: native-export-xml ......................   Passed    0.04 sec
+        Start 162: native-budget
+153/228 Test #149: native-navigation ......................   Passed    0.06 sec
+        Start 191: native-pdf_edit-component
+154/228 Test #104: native-rtf-fallback ....................   Passed    0.10 sec
+        Start 107: native-source
+155/228 Test #162: native-budget ..........................   Passed    0.06 sec
+156/228 Test #114: native-pdf-graphics ....................   Passed    0.09 sec
+        Start 112: native-pdf-text
+        Start  32: native-m4b-metadata
+157/228 Test #107: native-source ..........................   Passed    0.06 sec
+158/228 Test   #5: native-pdf-ccitt .......................   Passed    0.12 sec
+        Start  66: native-flac
+        Start 152: native-toc-ncx
+159/228 Test  #32: native-m4b-metadata ....................   Passed    0.09 sec
+        Start 143: native-rtf-table
+160/228 Test #191: native-pdf_edit-component ..............   Passed    0.19 sec
+161/228 Test  #66: native-flac ............................   Passed    0.11 sec
+162/228 Test #112: native-pdf-text ........................   Passed    0.13 sec
+        Start  17: native-border-edges
+        Start  33: native-indic
+        Start 132: native-canvas-cmyk
+163/228 Test #152: native-toc-ncx .........................   Passed    0.12 sec
+        Start 189: native-audio-component
+164/228 Test  #17: native-border-edges ....................   Passed    0.04 sec
+        Start  64: native-aac
+165/228 Test #143: native-rtf-table .......................   Passed    0.08 sec
+        Start 139: native-decoration
+166/228 Test #189: native-audio-component .................   Passed    0.04 sec
+        Start   9: native-case
+167/228 Test  #33: native-indic ...........................   Passed    0.05 sec
+        Start  54: native-variable
+168/228 Test  #64: native-aac .............................   Passed    0.03 sec
+        Start 145: native-docx
+169/228 Test #139: native-decoration ......................   Passed    0.03 sec
+        Start 161: native-book-font
+170/228 Test #132: native-canvas-cmyk .....................   Passed    0.10 sec
+        Start 122: native-audio-player
+171/228 Test   #9: native-case ............................   Passed    0.09 sec
+172/228 Test #145: native-docx ............................   Passed    0.08 sec
+173/228 Test  #54: native-variable ........................   Passed    0.09 sec
+        Start  58: native-epub-metadata-write
+        Start  48: native-pdf-calculator
+        Start 113: native-vector
+174/228 Test #161: native-book-font .......................   Passed    0.11 sec
+        Start 186: native-anchor-boundary
+175/228 Test  #48: native-pdf-calculator ..................   Passed    0.04 sec
+176/228 Test #122: native-audio-player ....................   Passed    0.09 sec
+        Start 110: native-pdf-cmap
+        Start 146: native-fb2
+177/228 Test #113: native-vector ..........................   Passed    0.05 sec
+        Start  60: native-combine-upright-geometry
+178/228 Test #186: native-anchor-boundary .................   Passed    0.05 sec
+        Start 133: native-viewport
+179/228 Test  #58: native-epub-metadata-write .............   Passed    0.11 sec
+180/228 Test #110: native-pdf-cmap ........................   Passed    0.04 sec
+        Start  57: native-m4b
+        Start  63: native-pdf-type3
+181/228 Test #133: native-viewport ........................   Passed    0.03 sec
+        Start  99: native-content-hits
+182/228 Test #146: native-fb2 .............................   Passed    0.06 sec
+        Start 197: native-ssml-structure
+183/228 Test  #57: native-m4b .............................   Passed    0.04 sec
+        Start 192: native-textindex-component
+184/228 Test  #63: native-pdf-type3 .......................   Passed    0.05 sec
+        Start  52: native-ot-variation
+185/228 Test  #60: native-combine-upright-geometry ........   Passed    0.09 sec
+        Start 154: native-toc-fragment
+186/228 Test  #52: native-ot-variation ....................   Passed    0.02 sec
+        Start   8: native-hyphen-replacements
+187/228 Test #154: native-toc-fragment ....................   Passed    0.02 sec
+188/228 Test  #99: native-content-hits ....................   Passed    0.07 sec
+        Start  81: native-abi
+        Start  98: native-content-expansion
+189/228 Test #197: native-ssml-structure ..................   Passed    0.08 sec
+        Start  85: native-chapter-layout-indent
+190/228 Test   #8: native-hyphen-replacements .............   Passed    0.03 sec
+        Start  97: native-content-relocation
+191/228 Test  #98: native-content-expansion ...............   Passed    0.04 sec
+        Start 211: native-epub-strict-mimetype
+192/228 Test #192: native-textindex-component .............   Passed    0.10 sec
+        Start 198: native-ssml-chunks
+193/228 Test #198: native-ssml-chunks .....................   Passed    0.05 sec
+        Start  12: native-hyphen-builtin-switches
+194/228 Test  #85: native-chapter-layout-indent ...........   Passed    0.11 sec
+195/228 Test #211: native-epub-strict-mimetype ............   Passed    0.08 sec
+196/228 Test  #97: native-content-relocation ..............   Passed    0.10 sec
+197/228 Test  #81: native-abi .............................   Passed    0.13 sec
+        Start 194: native-style-footnotes-footnotes
+        Start  84: native-chapter-layout-title
+        Start  13: native-hyphen-builtin-joiners
+        Start 151: native-toc-nav
+198/228 Test  #12: native-hyphen-builtin-switches .........   Passed    0.05 sec
+        Start 201: native-ssml-parts
+199/228 Test  #13: native-hyphen-builtin-joiners ..........   Passed    0.04 sec
+        Start 195: native-style-footnotes-anchors
+200/228 Test  #84: native-chapter-layout-title ............   Passed    0.05 sec
+        Start  95: native-document-search-mapping
+201/228 Test #201: native-ssml-parts ......................   Passed    0.03 sec
+        Start  94: native-document-search-errors
+202/228 Test #151: native-toc-nav .........................   Passed    0.05 sec
+        Start 200: native-ssml-contracts
+203/228 Test #195: native-style-footnotes-anchors .........   Passed    0.05 sec
+204/228 Test  #94: native-document-search-errors ..........   Passed    0.04 sec
+205/228 Test #200: native-ssml-contracts ..................   Passed    0.03 sec
+        Start 196: native-style-footnotes-toc
+        Start 213: native-epub-strict-container
+        Start  62: native-combine-upright-wrap
+206/228 Test #194: native-style-footnotes-footnotes .......   Passed    0.12 sec
+        Start  61: native-combine-upright-modes
+207/228 Test  #95: native-document-search-mapping .........   Passed    0.07 sec
+        Start  93: native-document-search-flags
+208/228 Test  #62: native-combine-upright-wrap ............   Passed    0.02 sec
+        Start  92: native-document-search-unicode
+209/228 Test #213: native-epub-strict-container ...........   Passed    0.04 sec
+210/228 Test #196: native-style-footnotes-toc .............   Passed    0.04 sec
+        Start 199: native-ssml-omissions
+        Start 212: native-epub-strict-directory
+211/228 Test  #93: native-document-search-flags ...........   Passed    0.03 sec
+212/228 Test  #61: native-combine-upright-modes ...........   Passed    0.03 sec
+213/228 Test  #92: native-document-search-unicode .........   Passed    0.03 sec
+214/228 Test #199: native-ssml-omissions ..................   Passed    0.03 sec
+215/228 Test #212: native-epub-strict-directory ...........   Passed    0.11 sec
+216/228 Test #173: native-convert-benchmark ...............   Passed   31.38 sec
+217/228 Test #159: native-line-boundary ...................   Passed   40.94 sec
+218/228 Test  #10: native-hyphen-layout ...................   Passed   48.36 sec
+        Start 227: windows-selection-shelfmeta
+219/228 Test #227: windows-selection-shelfmeta ............   Passed    0.35 sec
+        Start 228: windows-selection-dictionary-storage
+220/228 Test #228: windows-selection-dictionary-storage ...   Passed    0.10 sec
+        Start 219: windows-selection-boundaries
+221/228 Test #219: windows-selection-boundaries ...........   Passed    0.07 sec
+        Start 224: windows-selection-annotations
+222/228 Test #224: windows-selection-annotations ..........   Passed    0.08 sec
+        Start 226: windows-selection-style
+223/228 Test #226: windows-selection-style ................   Passed    0.09 sec
+        Start 222: windows-selection-raster
+224/228 Test #222: windows-selection-raster ...............   Passed    0.04 sec
+        Start 221: windows-selection-keyboard
+225/228 Test #221: windows-selection-keyboard .............   Passed    0.11 sec
+        Start 225: windows-selection-shelf
+226/228 Test #225: windows-selection-shelf ................   Passed    0.07 sec
+        Start 223: windows-selection-generated
+227/228 Test #223: windows-selection-generated ............   Passed    0.08 sec
+        Start 220: windows-selection-copy
+228/228 Test #220: windows-selection-copy .................   Passed    0.07 sec
+
+100% tests passed out of 228
+
+Total Test time (real) =  49.47 sec

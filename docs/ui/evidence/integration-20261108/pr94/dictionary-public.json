@@ -1,0 +1,852 @@
+{
+  "metadata": [
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\eng-zho\\eng-zho\\eng-zho.ifo",
+      "ifo": {
+        "version": "3.0.0",
+        "bookname": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+        "wordcount": "26660",
+        "idxfilesize": "464739",
+        "sametypesequence": "h",
+        "date": "2025-11-23",
+        "description": "Publisher: Karl Bartel<br>Licensed under the <a href=\"https://creativecommons.org/licenses/by-sa/3.0/legalcode\">Creative Commons Attribution-ShareAlike 3.0 Unported</a> license<br>Automatic creation of this bilingual dictionary by <a href=\"http://www.wikdict.com/\">WikDict</a>.<br>Base data from <a href=\"https://www.wiktionary.org/\">Wiktionary.org</a> via <a href=\"http://kaiko.getalp.org/about-dbnary/\">DBnary</a>.<br>This dictionary comes to you through nice people<br>making it available for free and for good. It is part of<br>the FreeDict project, http://www.freedict.org/. This<br>project aims to make available many translating<br>dictionaries for free. Your contributions are welcome!"
+      },
+      "parsed_entries": 26660,
+      "parsed_synonyms": 0,
+      "files": {
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\eng-zho\\eng-zho\\eng-zho.dict": {
+          "bytes": 8124281,
+          "sha256": "eaf731179b6b1a4dd25b66efa91889c1f02e262da5e0b6e558a9e5232e06dc77"
+        },
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\eng-zho\\eng-zho\\eng-zho.idx.gz": {
+          "bytes": 250058,
+          "sha256": "fbefc5575f0d380a44cec0024ba153a882b132959bef3cc111b0174e4c67ff72"
+        },
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\eng-zho\\eng-zho\\eng-zho.ifo": {
+          "bytes": 880,
+          "sha256": "bb298935cd2feb37bb29a2e68ac47ed4f5035814b123598c035765f913bdcde6"
+        }
+      },
+      "engine": {
+        "bookname": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+        "version": "3.0.0",
+        "sametypesequence": "h",
+        "wordcount": 26660,
+        "synwordcount": 0,
+        "idxfilesize": 464739,
+        "data_size": 8124281,
+        "idxoffsetbits": 32,
+        "chunk_length": 0,
+        "chunk_count": 0
+      }
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\eng-fra\\eng-fra\\eng-fra.ifo",
+      "ifo": {
+        "version": "3.0.0",
+        "bookname": "English-French FreeDict Dictionary (en-fr)",
+        "wordcount": "8799",
+        "idxfilesize": "147368",
+        "sametypesequence": "h",
+        "website": "http://freedict.org/",
+        "description": "Publisher: FreeDict<br>Copyright (C) 1999-2017 by various authors listed below.<br>Available under the terms of the <a href=\"https://www.gnu.org/licenses/gpl-2.0.html\">GNU General Public License ver. 2.0 and any later version</a>.<br>This Database was originally generated from ergane, <a href=\"http://www.travlang.com\">http://www.travlang.com</a>.<br>This dictionary comes to you through nice people making it available for free and for<br>good. It is part of the FreeDict project, <a href=\"http://freedict.org/\">http://freedict.org/</a>. This project aims to make translating<br>dictionaries available for free. Your contributions are welcome!"
+      },
+      "parsed_entries": 8799,
+      "parsed_synonyms": 0,
+      "files": {
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\eng-fra\\eng-fra\\eng-fra.dict.dz": {
+          "bytes": 132620,
+          "sha256": "8621c3c3ef27630603a960950c797c49faea77726f5c55e18950f92194cf5a18"
+        },
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\eng-fra\\eng-fra\\eng-fra.idx.gz": {
+          "bytes": 75442,
+          "sha256": "8fac8a951032fb81a0bf7614a3417585fc07aa50b1c61e312290e3a482a6286e"
+        },
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\eng-fra\\eng-fra\\eng-fra.ifo": {
+          "bytes": 831,
+          "sha256": "dcd99d03a21e4dce07d8199fdff714ccd1248de2a91b0d800adcf4d886c54ed5"
+        }
+      },
+      "engine": {
+        "bookname": "English-French FreeDict Dictionary (en-fr)",
+        "version": "3.0.0",
+        "sametypesequence": "h",
+        "wordcount": 8799,
+        "synwordcount": 0,
+        "idxfilesize": 147368,
+        "data_size": 904096,
+        "idxoffsetbits": 32,
+        "chunk_length": 58315,
+        "chunk_count": 16
+      }
+    },
+    {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\en-it\\en-it.ifo",
+      "ifo": {
+        "version": "3.0.0",
+        "bookname": "Wikizionario Inglese-Italiano",
+        "wordcount": "26448",
+        "synwordcount": "10698",
+        "idxfilesize": "448836",
+        "idxoffsetbits": "32",
+        "author": "xxyzz",
+        "website": "https://xxyzz.github.io/wiktionary_stardict/",
+        "description": "Snapshot 2026-10-01, Wiktionary license CC BY-SA 4.0",
+        "date": "2026-10-29",
+        "sametypesequence": "h"
+      },
+      "parsed_entries": 26448,
+      "parsed_synonyms": 10698,
+      "files": {
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\en-it\\en-it.css": {
+          "bytes": 808,
+          "sha256": "211ca4cc45b90b46b76deecce71bbb613f72bd6350ac21af985411e3825bbacd"
+        },
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\en-it\\en-it.dict.dz": {
+          "bytes": 2041722,
+          "sha256": "69af05768ed5fb094337b6b758ef48e5a586f893016bdf406748a6c116de66fa"
+        },
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\en-it\\en-it.idx": {
+          "bytes": 448836,
+          "sha256": "a1db476cc946a2d7cfb7797fa99f1421979561daae16bb5ac2f6a4572f36ba34"
+        },
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\en-it\\en-it.ifo": {
+          "bytes": 315,
+          "sha256": "78c810a865e741eee17217153707dcd50b981ae78d18f35448f0d6e4deb9f13e"
+        },
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-integ-20261108\\build\\public-dictionaries\\en-it\\en-it.syn": {
+          "bytes": 156518,
+          "sha256": "bc53e8f81d52d5f190e6221bb71663844a8116fdc46035882b2358e769a18785"
+        }
+      },
+      "engine": {
+        "bookname": "Wikizionario Inglese-Italiano",
+        "version": "3.0.0",
+        "sametypesequence": "h",
+        "wordcount": 26448,
+        "synwordcount": 10698,
+        "idxfilesize": 448836,
+        "data_size": 18188477,
+        "idxoffsetbits": 32,
+        "chunk_length": 58315,
+        "chunk_count": 312
+      }
+    }
+  ],
+  "exact": [
+    {
+      "query": "apple",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "83e6f0485e058a15d8e516f537e945525d35a956a67726181794c491580bc5b2"
+      ]
+    },
+    {
+      "query": "book",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "ca63469d3978d276a61bbc47f5df67743b86ef0f60c2243bc320145a468333a6"
+      ]
+    },
+    {
+      "query": "cat",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "e0ce7d0c1bd4f9cf0c81c3744130f81eaad5189202acd8edc6e03df042c3cd63"
+      ]
+    },
+    {
+      "query": "dog",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "bf4369e4e20264342d4cfac51f1950f6bcc8187c95177922333a821755437f3e"
+      ]
+    },
+    {
+      "query": "elephant",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "6df514e1a14637a3567caa5a1a3ad22af72ee6a675eb0a4a0bf0158d5edf6149"
+      ]
+    },
+    {
+      "query": "fish",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "8e475b57e8bb31758b04f352fca737ff61d1a23b7e39f4a5f062f5391a140da1"
+      ]
+    },
+    {
+      "query": "garden",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "25e9cdc1f37a338ebd45fa2c1f412dff33cd01a8354320583ef2430c82c24dec"
+      ]
+    },
+    {
+      "query": "house",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "6626f86bc9c80af70690a506114753a33682d0ab217a4b03112e031a69cb3c70"
+      ]
+    },
+    {
+      "query": "island",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "3d76ad35b28c591a8f0092b937d659b9d649babc8769470be68e44072067ab31"
+      ]
+    },
+    {
+      "query": "journey",
+      "matches": 2,
+      "correct": true,
+      "definition_sha256": [
+        "33c04ddb43dc3c30c815f985aee509319f403a86a186eaeb3739fd57cbdb6ad2",
+        "788173598afc4cc3dea67e0cd651712ff76dcdff1ba2a23964c7374952e84e98"
+      ]
+    },
+    {
+      "query": "king",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "3507c69d91ae51720b6cd55c70b1ee389d6a9221ea3c28a7b6dbab33d14f590e"
+      ]
+    },
+    {
+      "query": "love",
+      "matches": 2,
+      "correct": true,
+      "definition_sha256": [
+        "452f10dc7fb394b384c9cdfe2e190f92423782861a567cc060bc60154048a0f9",
+        "735ec0a4b398b970e6464c2babe95ede32ae56012bc8c8f399af4325bb8b9fd3"
+      ]
+    },
+    {
+      "query": "mountain",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "7a63a2b7556bb61c339b8eb7a0d4bfda30f6a45e9b3c0822457542ea687e81d9"
+      ]
+    },
+    {
+      "query": "night",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "570faffea05a57434dab09b8fe55050832bf116ad6369337fd154f0f727f7ca9"
+      ]
+    },
+    {
+      "query": "ocean",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "11137349e65cde11414c7f63203777cb70664c4f7c541a58fb89a04b9ef55817"
+      ]
+    },
+    {
+      "query": "paper",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "119b59888ab4c6e241b8d447d9a8e37b654db7cfcb68fc62280a9dabd5f6de29"
+      ]
+    },
+    {
+      "query": "queen",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "536bfba52afe4d17702e8b4d3e9d709555bf7a3adf64c53549d69985173bb468"
+      ]
+    },
+    {
+      "query": "river",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "84bb22003e774369765c08941f71ce76506c156c2878cf956ef36aa0fa1814a5"
+      ]
+    },
+    {
+      "query": "school",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "59be549a9492851b7638390f29a60bb72a33cf39c0502094cca386a05f32b739"
+      ]
+    },
+    {
+      "query": "table",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "fd34f0b90ceb24b17336ff47074f6c642b40c6c857280858d774461f3e460e5b"
+      ]
+    },
+    {
+      "query": "university",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "3942d74301471901f8321bb3a65766cd68cab56d0583745ed74a31e13583635e"
+      ]
+    },
+    {
+      "query": "village",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "e463bfb6dea400c546564975c54f4cedcb9e71dd0bc42e6e061d8de58fdac700"
+      ]
+    },
+    {
+      "query": "water",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "90ee4d5e06e659957aeedabbdea45e4cbfd58e3ba00244a1847b93db59118a65"
+      ]
+    },
+    {
+      "query": "window",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "a6703b6d7a68d6cff957d002ac89d10ca16b5c1ca9ebc91e2a95e4aa2d55ae7e"
+      ]
+    },
+    {
+      "query": "year",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "558a92b5c620b72f55089cea3f92f57aadf90de14550e9d360d64257600a4522"
+      ]
+    },
+    {
+      "query": "zebra",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "0078e255d9df992b99207934998d2486a729b26907b3e3c4e2af1b31c35f09ac"
+      ]
+    },
+    {
+      "query": "bread",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "7f9e8cd6dd094a36118dc9284506b627d9c314dbe9950579a5be61a1da9d24d6"
+      ]
+    },
+    {
+      "query": "cloud",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "fd93bc9d5d7ecf79c9fc36bc171855dfa67751c365c5a8bcbec5d8714fdb80c4"
+      ]
+    },
+    {
+      "query": "dream",
+      "matches": 2,
+      "correct": true,
+      "definition_sha256": [
+        "f432d020daa8ae14ea05a7bc38a5ab6731d28aa69e46788b40efa6db9efa0987",
+        "77e27d151601bb239020182aaaacc91346f87707c98f6569feb9cd881fe2301c"
+      ]
+    },
+    {
+      "query": "flower",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "df93306a32be975e97c7a8e35b24efcb98d56e625f1eedbfdf8a04930d950e0f"
+      ]
+    }
+  ],
+  "prefix": [
+    {
+      "query": "appl",
+      "matches": 16,
+      "correct": true,
+      "definition_sha256": [
+        "62fa001c8d4ca0611991eb7222b93cb87ad04ec248f863e32dd95c0e8b4879ae",
+        "2b4f83710a2b32d0b7dc12194cfe5fc593474033864e226187558d3f1b2e8587",
+        "83e6f0485e058a15d8e516f537e945525d35a956a67726181794c491580bc5b2",
+        "78d248cd35df38be37ca84a0cb7b50fc74979337d4379fa7e5b3f8915c4a87d9",
+        "b37ed61bf737a03e73846afca929728d22335d03366ea873846f96c99b0fc2b6",
+        "03ccb2155faf3d4324f894e0bb46a100684cd109ccdf0353c5d1c99d7d834c85",
+        "51fdfcb7ea5c636dfc409b95d73ea33eb7c6c18f26a8ff9c6c572f6e5cf1dffd",
+        "ed6fe65ec9908a7e6f74e3f91d22e3ad346151ded00309468930e8712f82b3cf",
+        "7ca7ab10117dd7f7efe0e613c0111d01f2210be0b185c3302fc04045b052c812",
+        "d7284a4c7c8731209b6b30944db9daa47dd1f71634e035abc2612f2a0af11a99",
+        "8ff17852da1f34a47b354bddb12101d268d382946aeeae9927caf4e05582cd8b",
+        "10e43ddc8d38b569be0f42b303369194f0457d2a3789cae6d0a451e5894e0196",
+        "932247ff205b0192e4caef1a66d94c62a9e4ff5a98b75001d937ed2036153027",
+        "ee0612adfa440bdd3a88c2c60d673430d359f8994ae5083fd8fdb86172a79719",
+        "43886abca553253f7b3dbdca80e06e264378b351d7d0a534bdfadd4cdf8706c5",
+        "9fbad6b4144b88b5526009da09e1e44c6f2ae2372c85f4b42cf1865e48de781d"
+      ]
+    },
+    {
+      "query": "boo",
+      "matches": 32,
+      "correct": true,
+      "definition_sha256": [
+        "28940675641f928c138b526fb903fed3e1749e44f28eaf836ccb8cd1c39e4257",
+        "8f08ef545bf00d7ae724adda21216b8ef93f40803626f2442833d7b5d128d5be",
+        "062e2d84c8f9dd92d69fd9872186e67d95531b5350821aa0b91c89ed64c315e7",
+        "42790215a837474860b175a8a072b1f5b677a71a9b367083791c6c8f42034a70",
+        "ca63469d3978d276a61bbc47f5df67743b86ef0f60c2243bc320145a468333a6",
+        "2e7106a6db99990332949639af71ca1a4165d24ed3080675f015f924071d5c48",
+        "236cfd4205c712b121be42cb700b5b042604da205f71b928af24c5ce65ff0bd3",
+        "d387b00cec16ad23579c4a13cb1028d21219d393a8dab7e138ef768037070743",
+        "8e4172110d58dde9df887f09a9aa7684f7964bfb90695a80f264603484bb5290",
+        "e0c1b3f448493ac2ba43877d3229ffc94c0ca3a7ac50d2fe886474037055038e",
+        "12a6d82782287ba1a6b9069bbd167b1da07b6972312060df30ba3cc1e18136e3",
+        "090c7dd2734bef95ef04df4cb05dee94e0724e766a4fb4029d45599e5079cf93",
+        "d9c20dc056a20134d6bac4556e29f19fa51e2d28bf6db1ebf5b1f5ca2e4a7b99",
+        "34b7076c857ba733e4b3e52a73f4a88ff9ce093cb55b174ce10e0373dd07ec27",
+        "1d2abb1158601051093e6dc46a376ed5947cb24c1ad6ccc4c8cfb08edec3484e",
+        "cdebb518f167c5e43621f2dbbb439f3cf21bb4fcf11f0a289f99603fa61a6ed9",
+        "de53e3c75bd42689437438617e7504bac22d20cf0d228fa73d87e31eb143e50b",
+        "8e3154105a1539f8baee5a2f4297cc848158367ec53e6f9ee1e4929325355971",
+        "d4f6e63e13afd437708ddf465e42947ce87c16a161645261757ee7c7ea45674c",
+        "5190783c051c016c070d3e34f792595d35c361ea76ed18239176778638dc3596",
+        "c4902633b4769c520416aa481a74a2b570a1480de372a7d13a4ad4d8775b3c3e",
+        "49327a0bee9da755f3d1d42f42e5c9d6dc5f0200cb6e1c31a5ad43b2ca0b6ea0",
+        "c2c4cbbd2d6d4f462e9a66d79630fb68738cff23647268483b0d62fe16d2d126",
+        "254c0419aa60774e4ec765377a605500cc4b1c08be147bb1deb7c3b0adf99a8e",
+        "e74c42e72047d5f1cb8b55a0d479e950b99f8542609eda1362c8f18acb07c391",
+        "1abae3cfa66a700fb099d82795be9e7bbbd97a7d19ca0348205abedc346652b5",
+        "dc7289ca9644b4c8c4717683159686c275872c92d415014b8b9ea13928a16bf0",
+        "677e6f810d4a1dac1389568ca4ba79216c4149a8ad62fce7e6c6e5e434889a2d",
+        "02f497b377c98856542a0c1a58da47e078b0bcb29c128c6c60e466453b1ac087",
+        "280a8a8b2c01aae19903b2edfa9992787999264254a31239ebf57d4b99069a36",
+        "9a4bcf721f44b1d58c68e914e716f7d4195221a2b4c5c57060bda50c54c28732",
+        "86c03dfab559bc56b607368bcdebfa2ef872b3226e2df589c3f04305475b4668"
+      ]
+    },
+    {
+      "query": "ca",
+      "matches": 32,
+      "correct": true,
+      "definition_sha256": [
+        "dfddb30a00e2a20b03294e26b596c3bcc95b936972a8c950c150e8d81fa9d2b7",
+        "1fc73a1da268f769cbca90e3fc553acd39982952868ed9fad14bb581d4e64c3b",
+        "aeab50a666b8ab823d32a07af626e0b99edbd86888fd85c076ffd0b8fb1617ac",
+        "9618e9289b50a2a7d7f036f97c3df054c7357e045801e0cc6fffe9609cdbbf6f",
+        "58dbefb01437ab3e658c5f0f75fd8b274dc52501f36efb0863fd092b619b0ff6",
+        "899bdb00b5e83c9e0258d231e3b2d2a21de87c94d1950820986c34c28a1fdad9",
+        "3982e0038f31ca04722132c25adca57f85b4a04e6a2bc4fa5c1b628d8ee6dd7c",
+        "d306093e5b5efd530e8c37892a0480a14a222cab0483ddd933222a17025c8450",
+        "b68f332da38b99e0b4e8c3761a3c1797fbf04eddf1700386c6d908e0443cdae5",
+        "11a8fe923df1590bc9feae9a93fa6096f5e5bacbdc2d1be6bac22325e228afe6",
+        "b434555cfe692e5455400c9c55a002bf39ab3c71563d6aed818b34767909b0db",
+        "76585cf25e8a68adafb281a979f41b3b9d2031e290a49182d2c0a76e51df8def",
+        "84252550c2c871224c96f5d30e621447deaef30c5ceea8a56033b4b43e266872",
+        "025e61cfc4b856d976ba1a69f7897edd29a7a4a21fc6723aeffb6258870b8a2f",
+        "6148cad5e89d1b85a8d8fe6b0a6c35ba3185299713c13f76f9d6386c49fa54ef",
+        "bf87a354eec7c8504dca4f77f6d040d2c461b5b4d1824932483c10f1a3ca2fc9",
+        "bb0e22af6a311a0f7eaea3fabd6fca7e9124cd82cebada831ffd832309507b43",
+        "677f817127e8e74339f8140f4177f8825e61d43f5feb1c9674ea79c128c0f9b0",
+        "6fc2c9b74faa8b39da611aecef9fc5a04717e0a467a21bbb8ed2c1943006d88a",
+        "13734cce393b362cdc16bd130f593c65648cccfac3972cee97a786388a51074b",
+        "81d17a5ac2db2c7188ae3ae803f3c9ff443648f80ee234bbba97ab11688f1ad1",
+        "5488040d0017edbbc6eaa81d9fb8e163206fe6a6439e8a683b48f395fdb01139",
+        "fb9a26d017aca0cab08b3dfe180477c7f1a4d8fea7aae6443cd09bf4ef0e58ef",
+        "3b06d1a3e6c98812a8e93c150ffc82e0c2b2322192219ce3f6ef5acef6c92bd8",
+        "e48a822d9154992364f5a2e500a7f4ee6b46bac46ec7a1c249040930e3cbb7e0",
+        "f256a882fdd8d902413ef1e905f10795bb717124c0559cdd567a6a9d85f0378f",
+        "6ccef12f5808396a02a0644f0ab72e6637b9849d9227d919629c1cfd43fa8a51",
+        "fb06fee5eeb9a764d78e471fd295148586ec99af8048df9e919eac93dc019b76",
+        "644461f407c090761ee869068daa7013a8e7b358b8675f5c72ef290e5d1d2932",
+        "8bbedce92cbe100012905069255a6cbee4163288f079e9a9db333b109666b4fb",
+        "58abb47ea2153fc95102d6e2a739bda7b841956c9f4feeb6386373e8f82c45f4",
+        "c921b816c919a1132783f511143007ad2f7a7017827e4427d35b3e0082ddd9bf"
+      ]
+    },
+    {
+      "query": "elephan",
+      "matches": 2,
+      "correct": true,
+      "definition_sha256": [
+        "6df514e1a14637a3567caa5a1a3ad22af72ee6a675eb0a4a0bf0158d5edf6149",
+        "460c1336a39b74a90bc790d133cb0134c7698e948ad77b3d1539255f42fa66bd"
+      ]
+    },
+    {
+      "query": "fis",
+      "matches": 19,
+      "correct": true,
+      "definition_sha256": [
+        "22f04ff4f7d1de2c40f27709af19300b102850e795ba30333f23d3b7a5175dfb",
+        "8e475b57e8bb31758b04f352fca737ff61d1a23b7e39f4a5f062f5391a140da1",
+        "dd279966e12835f6dc4fc1570a648eb0a4b963a75d5cd3ced644478fdaae529c",
+        "7d49ebd6a2592807494cbfb0a0e5682f48f5ba7aeecd668d2630f12b8e05781f",
+        "d649192495d62a6d4c9086fa0523673c7f835b02f715e67cf4e01ff4666f2f83",
+        "489e40a6aa2e4193a16be0379fc634a80622928debe5b76813c4fad9b42586f3",
+        "6572a0e1f8655d96debd309ee546d059342d3157fff480e6ee6be7f60f31499c",
+        "6fc18f36c31a8c4cad87b86af3306ca5e3ed5c5bc38005589d5317c2f2e4156d",
+        "12d43a0788041c9fdbf7e747fea41ed64033ad6cb0e643b3d622b091feb9f53b",
+        "9f92c922ae36645b7961cb81530f0f2972dbf56190fa93286ea4fe8dfc1c5161",
+        "e6c43d301e4a12b416ee935ba7ccd1b76b620fb536557cda8fdb7843c60ff5d8",
+        "1a6ab7ca56381b5e5aa2d830cba2d990adbd98eab30dd7aeaba1bc14bd9112e3",
+        "1f20c08dfce7fd5fcb0fbc585dcddf6e1f20e8a08917f20a529a9963a617f545",
+        "69db02a0eaba875a634026a0bff6a1e583dfa66b10cb22415595ef3f5aad51eb",
+        "2ab41402291eb12a3de9b5bfa9c152a80f82e29d8e0bb250f92fbb9cf6f71946",
+        "7b7f1f41a832c4245ebebea75a0695c22a9f5f556536510663861fb262575da1",
+        "c9c8f62490b5d97c1eaf7e7e884e194cf3127c893cb5693f1395882ac797c1e2",
+        "abd6349eadac1d37d943b36ff9664fa3f31540d45bd5a14ca94b6f8b8d59e1d8",
+        "a42b2f4b2ea03b2683662e94c591d7a9924d4d1b6f09a1eb67a6ad791953c375"
+      ]
+    },
+    {
+      "query": "garde",
+      "matches": 5,
+      "correct": true,
+      "definition_sha256": [
+        "25e9cdc1f37a338ebd45fa2c1f412dff33cd01a8354320583ef2430c82c24dec",
+        "2a4f2a288ed52e01b5648a255ddbb7fce3ca8012d1babb550c7ac27e5161a293",
+        "28fc85c4d045620f507fdcce7a688022c85007b2e6f1c7b04ae6f7d4b316d1e3",
+        "cad24152c043858807de050117419f84a74ca0242d8d081d85fa14a49fb35ed6",
+        "bd3fa814cf034eadff249351ab9cb6d9328827e31c26e180c8bcf2be71794bb8"
+      ]
+    },
+    {
+      "query": "hous",
+      "matches": 14,
+      "correct": true,
+      "definition_sha256": [
+        "6626f86bc9c80af70690a506114753a33682d0ab217a4b03112e031a69cb3c70",
+        "53a62a094a5db2e428c8c83a93ef9571310fe6bfd690746de5752c3d419d75a1",
+        "96cd362f3ee1c0fdba2e3cecdb2d61e2529f18796eff74327699551908fd0257",
+        "15b371177e46f5f23abb4e8c92c1c3f07097cb8c5e0b190200b71565b6e7efb9",
+        "32897c39e7a0087f75e5e06085d9c2ecd164a0bc89e3f0625ef37e14361a28dd",
+        "6988fb99855604c767e1064bb87d11f5b196d0e92170b5f70699e334b1229ad7",
+        "e5d42e7c4550023d8b6ea01049bc258172799d155bb864653cc27a87ea2fbf66",
+        "eb0eec21bb00e081931b9de9faba3cab07ec8dae0a59898a1090c67cd6f70e6a",
+        "ac2204b760c78180bdd2bd2c0bf3b8c04dc773609748a43cd1ebd8db352de3a6",
+        "466078e4c1f1f73b2aa7b337f39345cb5b59d87d42271ffd743c98d08013c5cb",
+        "9e5e3cadcee38e632f5fa32872e5d16149a33e5547122c5950216610ada24f95",
+        "4339f91715865949a6bd8324137436097fc3fbc63355f51315de1e1ba13b05bd",
+        "2770257404303302b2340eedd541b7fb5fcad0e540be99a04cc3a1585a46a7d7",
+        "094cbc8c211a48f25d16c8921b42f1c3f027241d057d5d0b6119022389bee4ca"
+      ]
+    },
+    {
+      "query": "islan",
+      "matches": 2,
+      "correct": true,
+      "definition_sha256": [
+        "3d76ad35b28c591a8f0092b937d659b9d649babc8769470be68e44072067ab31",
+        "df16ceac2cb8b4fb369ce7574c93e7fffd1fb5b8f31e8820cd9f2113bd6e9323"
+      ]
+    },
+    {
+      "query": "journe",
+      "matches": 3,
+      "correct": true,
+      "definition_sha256": [
+        "33c04ddb43dc3c30c815f985aee509319f403a86a186eaeb3739fd57cbdb6ad2",
+        "788173598afc4cc3dea67e0cd651712ff76dcdff1ba2a23964c7374952e84e98",
+        "df5b12b9546ebbf65745c6913efb73afbf99d3ea44c1b08af03687c296489cd8"
+      ]
+    },
+    {
+      "query": "ki",
+      "matches": 32,
+      "correct": true,
+      "definition_sha256": [
+        "8f45e37d1e2fb91eec8c497165d5e8246e2c30e5d40c380e97563b9d8c6ef41d",
+        "6721ed1e5790f45e388d9309491f443cea1ae1a7f410b08dfd83a79afe90972d",
+        "ee1ffb7977e9339173ba73ad5afd8a1757da53738da4b683e6f57e54c001fc01",
+        "918a084449a909a7170a314d9b89ed90b685fe21ac8ad9b494b8e3cdf64195f8",
+        "96044cc91ea85bae39700158aaad58a8891aecb14035def717095716ac89e5e8",
+        "73936196737cfe5193f163a2f5c1857b2535ba24872774537175f6146283217f",
+        "e64cc2842fd23d79e8c53782fea3d5dfbd4bc36b41b1334d49305d7510392324",
+        "2b2981b46cf236431c7a8d13efcf4fc045984edc06a32a2409857772c8da3e86",
+        "2e92308fc50c971cda379a159d8dcca41e7f3bf504d856bf9bc90af4ca245a5d",
+        "c2b01553fa9b120282475db770823442bd894c9703017bd76f5299e681c26765",
+        "baba9a1a9a2b103192da40373a00973bb664e37228724461e4a1c39c0797e892",
+        "9d94f284aebe35204c0ade11334a6bba767d8e9a8326b76a0a04007151a504ce",
+        "b59cf7bebdb3edf8b4ce290f8d15390c426f026a0084c5969180d538d1ae2a7b",
+        "818bd69da466df89b322cecaea47405c1892051ceea0d119b2b02eeea42218ae",
+        "5e25c9688fca2c07674b1c0c40a87f58229277c798dea71825fad48510c08bd2",
+        "e1a7237db922c5a2c2f03dc20912657f258d8f09f557fe735fba58b9101b726b",
+        "7ee4aaab873f968afc0b649eb4a7d9e7104c7cce82f456f044bd4ec15f3ab56b",
+        "c46f88d03b851cc3919b8eced9e09125cd75afd1e2da8850369290bc865886ba",
+        "4d664d477c36d872369f54e0d3bbe561f0d790545b2db8df642bb6a20b0a56c1",
+        "34e393b8dfa2c8fce79262cf5800431e69871347998a35295ca72809a545d4fa",
+        "0b60ed83ba6edbac9a7f77787cd7eec51306002dd76f9003ba227459199afd5d",
+        "3b850ff65039afea5411ab2f7bafe91fc2f2957831e17e2ff0dc92b6fe1ab606",
+        "35bdac5ccd5cf6331bff741a1de042b5f21729995c92c3606419d8c50fc6204e",
+        "36db190f95140e2f20b8702a99e788e838510dd50b7484834fa94b96b28fe867",
+        "272dd697b7a2611c0eebd92103fbbd3d3f4bd0f55c701c30b1630ff72eac5123",
+        "16e89e165ab9cd6edc898e752de2201a52f88d048e8b6aa663c64ed9ce1779c2",
+        "82693ad6471ff478910d6e3850eb4189c5a6544bd6b5178db09625f110f6e59d",
+        "5016df008e7498a30217bf839567b666ea82899ed9b467357670b2305fad988a",
+        "467ad5897b4b38ad1645eaab758324cd2b3c2ff01eda3ccb271f83ea80d59914",
+        "4196e98fd4a841b246e71b01eba5953b2861e0729956a9aed95dae68f761b858",
+        "309d5abba0584dfc4e3083359ef584fcdade66880ffe4d57ed457a5f9b45282f",
+        "35dc779c3df2b0f5544bcb70c8646ea1a3cdf4ca8195484a7db9827464a58377"
+      ]
+    }
+  ],
+  "casefold": [
+    {
+      "query": "APPLE",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "83e6f0485e058a15d8e516f537e945525d35a956a67726181794c491580bc5b2"
+      ]
+    },
+    {
+      "query": "BOOK",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "ca63469d3978d276a61bbc47f5df67743b86ef0f60c2243bc320145a468333a6"
+      ]
+    },
+    {
+      "query": "CAT",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "e0ce7d0c1bd4f9cf0c81c3744130f81eaad5189202acd8edc6e03df042c3cd63"
+      ]
+    },
+    {
+      "query": "DOG",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "bf4369e4e20264342d4cfac51f1950f6bcc8187c95177922333a821755437f3e"
+      ]
+    },
+    {
+      "query": "ELEPHANT",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "6df514e1a14637a3567caa5a1a3ad22af72ee6a675eb0a4a0bf0158d5edf6149"
+      ]
+    }
+  ],
+  "synonyms": [
+    {
+      "query": "!",
+      "matches": 7,
+      "correct": true,
+      "definition_sha256": [
+        "c55950dc393bcf65a68198c3bd1ed0935a5f41e06c4f4bb996f2688040525e0a",
+        "5699df5013dfd2a18a4e27d6b6e7c81f39253585b4c32bafb6b357c01fe9f40e",
+        "12ecb1aefcfa2bb5ef9f57bb46933fd1c8fbceebff0846da879bcc1af42f7a75",
+        "3dc2c9ab2ea3c8de33e27f7e9a61ddc908dcdfb7b4b688f5120ae68163101bfe",
+        "0305dadefe81d9e723f5e0096e088e36d3f76bdc522e8f1742b2fe77562c217c",
+        "df9c78f9dbefb78fe24f2c7054e39ca95c96f3a147c62bcebd83883332a8b920",
+        "ac1e1323b29c03ec5af815ebb78794a3a191e53c8b207c7157ff7c7e1b0ceed5"
+      ]
+    },
+    {
+      "query": "'d",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "d4086446801e2f6776d8c638bfaf7eba21b2d95da870eac5bb08db46290c3f19"
+      ]
+    },
+    {
+      "query": "'ll",
+      "matches": 3,
+      "correct": true,
+      "definition_sha256": [
+        "4a8c6efba50379e25cd03bc3da42136af6c5332cf7ec787ec6bf147e644925ea",
+        "a5fd7f229951e2c5987cde7a4c3cc11aaf25b442d6752762f6e070750a33a1f5",
+        "0da244fced8144cea24da8204e7330a35cb26bc67c03c24cc5b15644b538acf9"
+      ]
+    },
+    {
+      "query": "'n",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "e573c1878cd99d208ff14d9a1cc99583864734f622a9b634081caeb6a7ef47cf"
+      ]
+    },
+    {
+      "query": "'n'",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "e573c1878cd99d208ff14d9a1cc99583864734f622a9b634081caeb6a7ef47cf"
+      ]
+    },
+    {
+      "query": "(JRR Tolkien, The Lord of the Rings)",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "cae0daf2274dc9e85b917dcdd708c771bca9a8b2120a57ca4c0c5e8f8e517bf9"
+      ]
+    },
+    {
+      "query": "(William Shakespeare, Henry V)",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "10ef3bf9adac1ba6335c256333c5a4cd4fc9dc939d8b87c3e775f9332f0ad294"
+      ]
+    },
+    {
+      "query": "-filled",
+      "matches": 3,
+      "correct": true,
+      "definition_sha256": [
+        "c276ef98d653bea0672722eb104023b349370010648c7a75172a89b56f09c954",
+        "1b7220462e5428b1c791d1876a4ea7f929bf54dcfa70e0d45470b4b7a6818577",
+        "96ae716af2685a9f01789299657a8fec031a3480e632fbb70c62ce35cad164a0"
+      ]
+    },
+    {
+      "query": "-in'",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "3a30583be588bc936e647cc317e07f35cc59722bff6e6120f511113db3006756"
+      ]
+    },
+    {
+      "query": "0",
+      "matches": 1,
+      "correct": true,
+      "definition_sha256": [
+        "3625e4943fd0bf5b9d7f7eaab6d37dbf8cd5295e11726d6ebe80b4f65f3a1c40"
+      ]
+    }
+  ],
+  "random_access": [
+    {
+      "word": "apple",
+      "offset": 93725,
+      "cold_ms": 0.1407,
+      "blocks": 1,
+      "compressed_bytes": 8560,
+      "inflated_bytes": 58315,
+      "warm_median_ms": 0.12010000000000001
+    },
+    {
+      "word": "book",
+      "offset": 164788,
+      "cold_ms": 0.1362,
+      "blocks": 1,
+      "compressed_bytes": 8562,
+      "inflated_bytes": 58315,
+      "warm_median_ms": 0.1251
+    },
+    {
+      "word": "cat",
+      "offset": 195925,
+      "cold_ms": 0.1266,
+      "blocks": 1,
+      "compressed_bytes": 8690,
+      "inflated_bytes": 58315,
+      "warm_median_ms": 0.1183
+    },
+    {
+      "word": "dog",
+      "offset": 295132,
+      "cold_ms": 0.1459,
+      "blocks": 1,
+      "compressed_bytes": 8891,
+      "inflated_bytes": 58315,
+      "warm_median_ms": 0.1177
+    },
+    {
+      "word": "elephant",
+      "offset": 312935,
+      "cold_ms": 0.1498,
+      "blocks": 1,
+      "compressed_bytes": 8891,
+      "inflated_bytes": 58315,
+      "warm_median_ms": 0.11560000000000001
+    },
+    {
+      "word": "fish",
+      "offset": 352435,
+      "cold_ms": 0.1448,
+      "blocks": 1,
+      "compressed_bytes": 8564,
+      "inflated_bytes": 58315,
+      "warm_median_ms": 0.11524999999999999
+    },
+    {
+      "word": "house",
+      "offset": 431574,
+      "cold_ms": 0.1419,
+      "blocks": 1,
+      "compressed_bytes": 8556,
+      "inflated_bytes": 58315,
+      "warm_median_ms": 0.11549999999999999
+    },
+    {
+      "word": "love",
+      "offset": 502315,
+      "cold_ms": 0.1558,
+      "blocks": 1,
+      "compressed_bytes": 8780,
+      "inflated_bytes": 58315,
+      "warm_median_ms": 0.11935000000000001
+    },
+    {
+      "word": "night",
+      "offset": 562018,
+      "cold_ms": 0.1472,
+      "blocks": 1,
+      "compressed_bytes": 8728,
+      "inflated_bytes": 58315,
+      "warm_median_ms": 0.11704999999999999
+    },
+    {
+      "word": "zebra",
+      "offset": 902706,
+      "cold_ms": 0.1673,
+      "blocks": 1,
+      "compressed_bytes": 4342,
+      "inflated_bytes": 29371,
+      "warm_median_ms": 0.07139999999999999
+    }
+  ],
+  "multi_dictionary": {
+    "correct": true,
+    "groups": [
+      "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+      "English-French FreeDict Dictionary (en-fr)"
+    ]
+  },
+  "counts": {
+    "exact": "30/30",
+    "prefix": "10/10",
+    "casefold": "5/5",
+    "synonyms": "10/10",
+    "random_access": "10/10",
+    "multi_dictionary": "2/2"
+  },
+  "oracle": "Independent Python big-endian index/syn parser + gzip + HTMLParser; no dictionary payload retained in report."
+}

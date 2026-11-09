@@ -1,19 +1,19 @@
 {
-  "base_revision": "d9ffdbf09da654340bc35c043ad6d4b49cc344d1",
+  "base_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
   "source_state": "base revision plus the source files identified below; later commit records these exact contents",
   "source_hash_normalization": "UTF-8 file bytes with CRLF normalized to LF",
   "sources_sha256": {
-    "CMakeLists.txt": "a1192f4ae169533781ea43440aaa9b1ac456223fa414878a627fd30e2196c8b4",
-    "include/exr/layout.h": "d450bb6fbffc229eff7f27c822d1542db2b608c062785608e86de24277367d6f",
-    "src/publication.c": "5f93a0db89ac6d0250f0500ef6a51402931eb6db7da2e5c6e436e40cc10a382e",
+    "CMakeLists.txt": "c160bf24dd6a706b93aa824a95475517f5adae794b216aee4b27bfd9563854b8",
+    "include/exr/layout.h": "76fee9bda4e6ce0f3f062bdb97ad0e4993aa1012a80065ecd6752b1c6a1006b7",
+    "src/publication.c": "5a6530c7787c521a5b4946d3dc8d8666dcb599410d862cc1c70e092eb3415433",
     "src/publication_index.h": "3918fdfa110e8173dc0a04c5ec9bdcf3b41ce68ab95fa0697468a310c0551c2b",
-    "tools/layers.json": "8d75dd5f55d2e0dd666fe3e24f56eb73e4bc1ca56fc1eaedc6bfa631d6a8f057",
+    "tools/layers.json": "894e8683470349aadbecf6e69cc9e402631a5c99c597b40961f1af8b2e6c4475",
     "tools/abi/contract.json": "3f031940d400c05a791ea3a1860aa94fc8dd31d2e577b271bd81c99a43b18aae",
     "tests/test_publication_index.c": "f6724e77aa84a17d5c390099b1c5c8d63f87a7e96dd353a429eccc77ff2eff3f",
     "tools/search_index_bench.py": "3efe47c1d773908fe6d744067a449f24b729617d25b4ada14f9e90ee205a0687"
   },
-  "baseline_dll_sha256": "718cd0511eac9f2ceee4292807ff19b4069a125d1c2373e2a5a112c0a1bc6b21",
-  "candidate_dll_sha256": "314a17ea69e359739dc03b047947014d78e78a1cb78b8d95e74e7d8e3607cd1b",
+  "baseline_dll_sha256": "da9c89aaf36fce65054dade46cc4c698432562cbc8e39cd26267c5a1109b9ed1",
+  "candidate_dll_sha256": "543cffe00c0a6c9db949439c16e7026a52c16d7fbfff07ba99e742f06c908067",
   "configuration": {
     "CMAKE_BUILD_TYPE:STRING": "Release",
     "CMAKE_C_COMPILER:STRING": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
@@ -47,8 +47,8 @@
   "platform": "Windows-11-10.0.26200-SP0",
   "processor": "Intel64 Family 6 Model 189 Stepping 1, GenuineIntel",
   "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
-  "ctest_count": 235,
-  "existing_tests": 228,
+  "ctest_count": 248,
+  "existing_tests": 241,
   "new_groups": 7,
   "ci_policy": "Only PR/push automatic workflows. No workflow_dispatch, cancellations or .github changes."
 }

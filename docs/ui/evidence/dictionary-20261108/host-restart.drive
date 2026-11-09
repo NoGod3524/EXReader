@@ -1,0 +1,13 @@
+open|Dictionary Acceptance
+shell|on
+shell_client|1280|800
+shell_click|settings
+shell_click|light
+shell_click|settings
+dict_vocab|5
+dict_close
+dict_roundtrip|4
+open|Second Book
+wait_idle
+dict_roundtrip|1
+quit
