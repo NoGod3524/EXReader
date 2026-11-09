@@ -231,6 +231,8 @@ EPUB 在首次请求目录时读取并缓存 EPUB 3 manifest 中的 nav XHTML，
 
 S015 的 `exr_publication_open_source()` 接收通用随机读取源 `{size,read_at,release,context}`。描述符被复制，打开时只读取 ZIP 目录和 EPUB 元数据；读取某章、CSS、图片或字体时才请求对应字节，不把整个压缩源复制进内存。`exr_publication_open(path)` 使用持有文件句柄的同一路径；`open_memory()` 仍复制调用者的输入。
 
+LCP Basic Profile 可用对应的 `open_ex`、`open_source_ex`、`open_memory_ex` 传入 UTF-8 口令，按资源在内存解密。无口令、口令错、过期及不支持各有独立 DRM 错误码；生产 profile、证书/签名校验和 ADEPT 未支持。API、内存上限及复现见 [DRM.md](DRM.md)。
+
 `read_at(context,offset,buffer,size)` 返回实际字节数，允许短读并会继续补足，尚未读完便返回 0 或返回超过请求的数量会得到 `EXR_IO`。引擎检查所有区间；源大小与每次 ZIP 操作的累计读取量仍限制为 128 MiB，成员解压和 XML 限制不变。源字节必须保持不变，回调及同源对象的访问需串行，回调不能销毁或重入正在访问它的对象。引擎本身不联网，宿主可自行在回调后实现其他存储。
 
 仅在 open 成功时接管 context；打开失败不调用 release。若 release 非 NULL，在 publication、session 和所有已加载章节文档都不再引用源后调用一次；即使先关闭 publication，章节仍可读取资源。release 为 NULL 时由宿主维持 context 的整个有效期。文件源使用同样的共享寿命，因此不再把完整压缩 EPUB 作为常驻字节保存；单章正文仍完整解析。
@@ -1243,7 +1245,7 @@ exr_status status = exr_fixed_open(path, &options, &document, &error);
 
 会话仅在内存保留派生文件密钥，用于错误/取消后重新建立延迟解析器；文档释放和临时密钥退出时清零。原书入库逻辑不存储密码或派生密钥。解密流计入现有 128 MiB 缓存/临时载荷与 256 MiB 工作预算，AES/RC4 按 64 KiB、R6 哈希按轮检查取消。
 
-`EXR_ENABLE_PDF_CRYPTO` 默认 ON，使用固定 Mbed TLS 3.6.7 的最小 C 算法子集；OFF 不下载该组件，保留公开符号，`exr_pdf_crypto_available()` 返回 0，加密打开返回 `EXR_UNSUPPORTED`。非 Standard（含证书 PubSec）、EFOpen 专用附件认证及其他 Crypt 方法也返回 `EXR_UNSUPPORTED`。当前编辑接口继续拒绝加密输入，避免在加密 trailer 下写入未加密新对象；没有加密写回或证书认证能力。
+`EXR_ENABLE_PDF_CRYPTO` 默认 ON，使用固定 Mbed TLS 3.6.7 的最小 C 算法子集；OFF 保留公开符号，`exr_pdf_crypto_available()` 返回 0，加密打开返回 `EXR_UNSUPPORTED`。同时关闭 `EXR_ENABLE_LCP` 时不下载密码学组件。非 Standard（含证书 PubSec）、EFOpen 专用附件认证及其他 Crypt 方法也返回 `EXR_UNSUPPORTED`。当前编辑接口继续拒绝加密输入，避免在加密 trailer 下写入未加密新对象；没有加密写回或证书认证能力。
 
 Swift 的 `EXReaderFixedDocument(..., password: Data?)` 和 Java 的 password-byte 构造器提供同样的重试错误码与 `pdfSecurity` 快照。旧 C options 前缀、原 Swift 默认调用及 Java 原构造器保持可用，ABI epoch 仍为 1。
 

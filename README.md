@@ -32,6 +32,8 @@ Android 宿主已在共同源码 S 完成 API34 x86_64 模拟器联合验收。�
 
 ## 组件选择
 
+EPUB 可通过 `exr_publication_open_ex` 传入口令，按需在内存中解码 LCP Basic Profile 资源。生产 LCP profile 和 Adobe ADEPT 尚未支持；错误码、信任边界及样本复现见 [DRM 说明](docs/DRM.md)。
+
 核心接入使用 `#include <exr/core.h>` 和 `EXReader::exr_core`，包含文档模型、文字分析、排版分页、坐标/命中与绘制接口。需要单独模型或文字分析时，也可直接链接 `exr_doc`、`exr_text`。`exreader.h` 和默认总库继续兼容原入口。
 
 | 可选组件 | CMake 目标 | 构建开关 |

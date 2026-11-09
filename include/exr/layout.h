@@ -124,6 +124,21 @@ EXR_API exr_status exr_publication_open_source(const exr_source *source,
                                                exr_publication **out, exr_error *error);
 EXR_API exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size,
                                                exr_publication **out, exr_error *error);
+/* LCP Basic Profile read-only resource decoding; the host must validate license
+   trust (this codec does not verify signatures or certificates).
+   passphrase is borrowed UTF-8
+   for this call only: NULL means missing; an empty string is a supplied value.
+   No passphrase or decrypted EPUB is written to disk. Resources are decrypted
+   on demand in memory (32 MiB each), with the key retained until the last
+   publication/document/session reference closes. The original open functions
+   are equivalent to these with NULL. See docs/DRM.md for profile/trust limits.
+   Source ownership transfers only on success, as with open_source. */
+EXR_API exr_status exr_publication_open_ex(const char *path, const char *passphrase,
+                                           exr_publication **out, exr_error *error);
+EXR_API exr_status exr_publication_open_source_ex(const exr_source *source, const char *passphrase,
+                                                  exr_publication **out, exr_error *error);
+EXR_API exr_status exr_publication_open_memory_ex(exr_format format, const void *data, size_t size,
+                                                  const char *passphrase, exr_publication **out, exr_error *error);
 EXR_API void exr_publication_free(exr_publication *publication);
 EXR_API const char *exr_publication_title(const exr_publication *publication);
 EXR_API const exr_part *exr_publication_parts(const exr_publication *publication, size_t *count);
