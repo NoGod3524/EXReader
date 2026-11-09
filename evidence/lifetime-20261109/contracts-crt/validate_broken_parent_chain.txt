@@ -1,0 +1,5 @@
+case=validate_broken_parent_chain
+expected=abort
+exit=3
+BEGIN validate_broken_parent_chain
+EXR_LIFETIME_ASSERT: 对象已释放

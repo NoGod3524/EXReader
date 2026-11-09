@@ -1,0 +1,5 @@
+case=owned_buffer_double_free
+expected=abort
+exit=3
+BEGIN owned_buffer_double_free
+EXR_LIFETIME_ASSERT: 对象已释放

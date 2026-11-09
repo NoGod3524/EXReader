@@ -1,0 +1,5 @@
+case=stale_address_after_create
+expected=abort
+exit=3
+BEGIN stale_address_after_create
+EXR_LIFETIME_ASSERT: 对象已释放

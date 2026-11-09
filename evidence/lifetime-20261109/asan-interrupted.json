@@ -1,0 +1,31 @@
+{
+  "time": "2026-11-09T11:32:41.0697918-05:00",
+  "reason": "Superseded 42-case SDK snapshot; sustained memory pressure. Latest frozen SDK has 50 cases. Preserve partial old results and resume final evidence serially.",
+  "ctest": "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ctest.EXE --test-dir C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan --output-on-failure -j 2 --output-junit C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\evidence\\lifetime-20261109\\asan-ctest.xml",
+  "children": [
+    {
+      "ProcessId": 31140,
+      "ExecutablePath": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan\\exreader-hyphen-layout-test.exe",
+      "CommandLine": "C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-asan/exreader-hyphen-layout-test.exe C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/tests/fixtures"
+    },
+    {
+      "ProcessId": 19936,
+      "ExecutablePath": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan\\exreader-float-test.exe",
+      "CommandLine": "C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-asan/exreader-float-test.exe C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/tests/fixtures"
+    }
+  ],
+  "measurements": [
+    {
+      "Id": 19936,
+      "CPU": 111.984375,
+      "PrivateMemorySize64": 2819637248,
+      "PeakWorkingSet64": 1754456064
+    },
+    {
+      "Id": 31140,
+      "CPU": 113.15625,
+      "PrivateMemorySize64": 5013291008,
+      "PeakWorkingSet64": 3026202624
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "command": [
+    "cmake",
+    "--build",
+    "build/lifetime-crt",
+    "--parallel",
+    "6"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 46.484
+}

@@ -1,0 +1,87 @@
+["C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\cmake.EXE", "--build", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-crt", "--parallel", "6", "--target", "freetype", "expat", "miniz", "exr_jpx", "exr_sqlite"]
+[0/2] Re-checking globbed directories...
+[1/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\thread.c.obj
+[2/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\bio.c.obj
+[3/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\event.c.obj
+[4/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\ht_dec.c.obj
+[5/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\cio.c.obj
+[6/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\dwt.c.obj
+[7/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\jp2.c.obj
+[8/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\mct.c.obj
+[9/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\invert.c.obj
+[10/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\mqc.c.obj
+[11/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\image.c.obj
+[12/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\j2k.c.obj
+[13/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\pi.c.obj
+[14/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\tcd.c.obj
+[15/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\t2.c.obj
+[16/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\t1.c.obj
+[17/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\openjpeg.c.obj
+[18/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\opj_clock.c.obj
+[19/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\function_list.c.obj
+[20/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\opj_malloc.c.obj
+[21/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\tgt.c.obj
+[22/82] Building C object CMakeFiles\exr_jpx.dir\C_\Users\Oscar\Documents\Codex\cjk-punctuation-compression-20261106\deps\openjpeg-2.5.4\src\lib\openjp2\sparse_array.c.obj
+[23/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftbbox.c.obj
+[24/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftbdf.c.obj
+[25/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftbase.c.obj
+[26/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftbitmap.c.obj
+[27/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\autofit\autofit.c.obj
+[28/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftgasp.c.obj
+[29/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftcid.c.obj
+[30/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftfstype.c.obj
+[31/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftglyph.c.obj
+[32/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftgxval.c.obj
+[33/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftotval.c.obj
+[34/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftmm.c.obj
+[35/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftinit.c.obj
+[36/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftpatent.c.obj
+[37/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftpfr.c.obj
+[38/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftstroke.c.obj
+[39/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftsynth.c.obj
+[40/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\fttype1.c.obj
+[41/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftwinfnt.c.obj
+[42/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\bdf\bdf.c.obj
+[43/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\bzip2\ftbzip2.c.obj
+[44/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\cache\ftcache.c.obj
+[45/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\cff\cff.c.obj
+[46/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\cid\type1cid.c.obj
+[47/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\gzip\ftgzip.c.obj
+[48/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\hvf\hvf.c.obj
+[49/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\lzw\ftlzw.c.obj
+[50/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\pcf\pcf.c.obj
+[51/82] Building C object CMakeFiles\exr_sqlite.dir\C_\Users\Oscar\exr-deps\sqlite\sqlite3.c.obj
+[52/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\pshinter\pshinter.c.obj
+[53/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\pfr\pfr.c.obj
+[54/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\psnames\psnames.c.obj
+[55/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\psaux\psaux.c.obj
+[56/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\svg\svg.c.obj
+[57/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\raster\raster.c.obj
+[58/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\truetype\truetype.c.obj
+[59/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\smooth\smooth.c.obj
+[60/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\sdf\sdf.c.obj
+[61/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\sfnt\sfnt.c.obj
+[62/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\type42\type42.c.obj
+[63/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\winfonts\winfnt.c.obj
+[64/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\src\type1\type1.c.obj
+[65/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\builds\windows\ftdebug.c.obj
+[66/82] Building C object _deps\freetype-build\CMakeFiles\freetype.dir\builds\windows\ftsystem.c.obj
+[67/82] Building C object _deps\expat-build\CMakeFiles\expat.dir\lib\xcs.c.obj
+[68/82] Building RC object _deps\freetype-build\CMakeFiles\freetype.dir\src\base\ftver.rc.res
+[69/82] Building C object _deps\expat-build\CMakeFiles\expat.dir\lib\xmlrole.c.obj
+[70/82] Building C object _deps\expat-build\CMakeFiles\expat.dir\lib\xmltok.c.obj
+[71/82] Building C object _deps\expat-build\CMakeFiles\expat.dir\lib\xmlparse.c.obj
+[72/82] Building C object _deps\expat-build\CMakeFiles\expat.dir\lib\random_rand_s.c.obj
+[73/82] Building C object _deps\miniz-build\CMakeFiles\miniz.dir\miniz.c.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[74/82] Building C object _deps\miniz-build\CMakeFiles\miniz.dir\miniz_zip.c.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[75/82] Building C object _deps\miniz-build\CMakeFiles\miniz.dir\miniz_tinfl.c.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[76/82] Building C object _deps\miniz-build\CMakeFiles\miniz.dir\miniz_tdef.c.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[77/82] Linking C static library exr_jpx.lib
+[78/82] Linking C static library exr_sqlite.lib
+[79/82] Linking C static library _deps\miniz-build\miniz.lib
+[80/82] Linking C static library _deps\expat-build\libexpatdMT.lib
+[81/82] Linking C static library _deps\freetype-build\freetyped.lib

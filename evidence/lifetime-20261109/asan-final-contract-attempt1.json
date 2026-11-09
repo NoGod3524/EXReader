@@ -1,0 +1,10 @@
+{
+  "command": [
+    "C:\\Python314\\python.exe",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\tests\\run_lifetime.py",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan\\exreader-lifetime-test.exe",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\tests\\fixtures"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 2.513
+}

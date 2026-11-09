@@ -1,0 +1,5 @@
+case=render_callback_free_cache_owner
+expected=abort
+exit=3
+BEGIN render_callback_free_cache_owner
+EXR_LIFETIME_ASSERT: 重入：不能释放活动对象

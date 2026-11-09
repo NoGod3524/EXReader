@@ -1,0 +1,8 @@
+["C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\cmake.EXE", "--build", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan", "--parallel", "4", "--target", "exreader-lifetime-test", "exreader-hyphen-test", "exreader-audio-player-test", "exreader-canvas-test", "exreader-control-test", "exreader-library-source-test"]
+[0/2] Re-checking globbed directories...
+[1/11] Building C object CMakeFiles\exr_library_objects.dir\src\library.c.obj
+[2/11] Linking C static library exr_library.lib
+[3/11] Building C object CMakeFiles\exreader-lifetime-test.dir\tests\test_lifetime.c.obj
+[4/11] Linking C executable exreader-library-source-test.exe
+[5/11] Linking C shared library exreader.dll
+[6/7] Linking C executable exreader-lifetime-test.exe

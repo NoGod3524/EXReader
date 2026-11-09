@@ -973,7 +973,7 @@ static exr_status lazy_position(void *context,size_t offset,size_t node) {
   return exr_model_attribute(d,node,"data-exr-kf8-offset",value) ? EXR_OK : EXR_LIMIT;
 }
 static exr_status kf8_book_load(void *context,size_t which,exr_document **out,exr_error *e) {
-  kf8_book *b=context; exr_document *d=calloc(1,sizeof(*d));
+  kf8_book *b=context; exr_document *d=EXR_NEW(exr_document);
   exr_buffer raw={0},part={0}; exr_status status=EXR_MEMORY;
   size_t i,j,index,base,total,work=0; entry v;
   *out=NULL; if(!d) goto done;

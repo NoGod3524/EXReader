@@ -118,6 +118,20 @@ EXR_API const char *exr_version(void);
 /* Binary layout/calling-contract epoch, independent from release/schema versions. */
 EXR_API uint32_t exr_abi_version(void);
 EXR_API void exr_free(void *memory);
+/* Debug diagnostics (NDEBUG builds return 0 counts and perform no checks).
+   validate accepts an SDK handle or a registered borrowed view; NULL/unknown
+   addresses return 0. Dead objects/dependencies assert before dereferencing.
+   It does not intercept raw C pointer dereferences. See docs/OWNERSHIP.md. */
+typedef struct {
+  const char *type;
+  size_t created, freed, live;
+} exr_lifetime_count;
+EXR_API int exr_validate(const void *object);
+EXR_API size_t exr_debug_counts(exr_lifetime_count *out, size_t capacity);
+/* End a diagnostic epoch after all objects are released and all SDK calls have
+   returned. Releases dead-handle quarantine; old pointers must never be reused.
+   Counts remain cumulative. Live objects cause an assertion, not auto-cleanup. */
+EXR_API void exr_debug_cleanup(void);
 EXR_API exr_status exr_bitmap_write_png(const exr_bitmap *bitmap, const char *path,
                                         exr_error *error);
 EXR_API void exr_bitmap_free(exr_bitmap *bitmap);

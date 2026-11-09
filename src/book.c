@@ -56,7 +56,7 @@ static int clone_node(exr_document *d,const exr_document *source,size_t at,size_
   return 1;
 }
 exr_status exr_book_slice(void *context,size_t part,exr_document **out,exr_error *e) {
-  const exr_document *source=context; exr_document *d=calloc(1,sizeof(*d));
+  const exr_document *source=context; exr_document *d=EXR_NEW(exr_document);
   size_t i,index=0; exr_status status=EXR_MEMORY;
   *out=NULL;
   if(!d) goto done;
@@ -299,7 +299,7 @@ static exr_status split_walk(fb2_split *f,size_t at,size_t owner,unsigned depth)
 limit: return exr_fail(f->error,EXR_LIMIT,"FB2 section model limit");
 }
 static exr_status split_fb2(exr_document **document,exr_error *e) {
-  exr_document *old=*document,*d=calloc(1,sizeof(*d)); size_t i,index,body=SIZE_MAX;
+  exr_document *old=*document,*d=EXR_NEW(exr_document); size_t i,index,body=SIZE_MAX;
   fb2_split f={d,old,0,SIZE_MAX,SIZE_MAX,e}; exr_status status=EXR_MEMORY;
   if(!d) return exr_fail(e,EXR_MEMORY,"FB2 section allocation failed");
   d->format=EXR_FB2; d->title=exr_model_copy(d,exr_document_title(old),strlen(exr_document_title(old)));

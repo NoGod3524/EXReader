@@ -1,0 +1,5 @@
+case=index_double_close
+expected=abort
+exit=3
+BEGIN index_double_close
+EXR_LIFETIME_ASSERT: 对象已释放

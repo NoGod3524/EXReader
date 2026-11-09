@@ -446,6 +446,7 @@ exr_status exr_publication_pager_create(exr_publication *publication,size_t part
   status=exr_pager_create(&r->document,font,config,out,e);
   if(status!=EXR_OK) { reader_free(r);return status; }
   exr_pager_adopt_chapter(*out,r,reader_free,statistics);
+  EXR_DEPEND(*out,3,publication);
   r->pager=*out;peak(r);
   return EXR_OK;
 }

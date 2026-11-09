@@ -1,0 +1,1 @@
+PASS build\lifetime-crt\exreader.dll [0x8664] exports=430 ABI=430/430 missing=0 extra=0

@@ -1,0 +1,28 @@
+{
+  "command": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-crt\\exreader-lifetime-leaks-test.exe",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\tests\\fixtures\\fonts\\primary.ttf",
+    "--crt",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\A Raisin in the Sun (Lorraine Hansberry) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Between The World and Me (Ta-Nehisi Coates) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Black Boy (Richard Wright) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Born a Crime (Trevor Noah) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Crying in H Mart (Michelle Zauner) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\How Does It Feel to Be a Problem Being Young and Arab in America (Moustafa Bayoumi) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\I Know Why the Caged Bird Sings (Maya Angelou) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Absolutely True Diary of a Part-Time Indian (Sherman Alexie) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Autobiography of Malcolm X. (Malcolm X, Alex Haley) (z-library.sk, 1lib.sk, z-lib.sk).pdf",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Distance Between Us A Memoir (Grande Reyna) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Fire Next Time (James Baldwin) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Fire This Time A New Generation Speaks about Race (Jesmyn Ward) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The House on Mango Street (Sandra Cisneros) (z-library.sk, 1lib.sk, z-lib.sk).epub",
+    "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Zami A New Spelling of My Name - A Biomythography (Audre Lorde) (z-library.sk, 1lib.sk, z-lib.sk).mobi",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\xingshihengyan-24239.epub",
+    "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\tangshi300-52323.epub",
+    "C:\\Users\\Oscar\\Documents\\Codex\\real-books-pass-a-20261105\\supplemental-samples\\kusamakura-japanese-vertical-writing.epub"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 2.227
+}

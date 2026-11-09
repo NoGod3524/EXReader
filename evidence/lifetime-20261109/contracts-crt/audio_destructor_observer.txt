@@ -1,0 +1,5 @@
+case=audio_destructor_observer
+expected=pass
+exit=0
+BEGIN audio_destructor_observer
+PASS audio_destructor_observer (13 checks)

@@ -258,7 +258,7 @@ exr_status exr_m4b_open_source(const exr_source *source,exr_m4b **out,exr_error 
   exr_m4b *m; exr_bmff_reader io; exr_status status;
   if(out) *out=NULL;
   if(!source || !out || !source->read_at || source->size<8) return exr_fail(e,EXR_ARGUMENT,"Invalid ISO-BMFF source");
-  m=calloc(1,sizeof(*m)); if(!m) return exr_fail(e,EXR_MEMORY,"ISO-BMFF reader allocation failed");
+  m=EXR_NEW(exr_m4b); if(!m) return exr_fail(e,EXR_MEMORY,"ISO-BMFF reader allocation failed");
   io=(exr_bmff_reader){source,&source->control,e,0,UINT64_C(67108864),0};
   status=m4b_top(&io,m); if(status!=EXR_OK) goto fail;
   status=m4b_restart(&io,m); if(status!=EXR_OK) goto fail;

@@ -1,0 +1,15 @@
+{
+  "types": {
+    "covered": 233,
+    "total": 233,
+    "missing": [],
+    "stale": []
+  },
+  "functions": {
+    "covered": 430,
+    "total": 430,
+    "missing": [],
+    "stale": []
+  },
+  "passed": true
+}

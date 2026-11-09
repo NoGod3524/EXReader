@@ -1,0 +1,5 @@
+case=library_source_after_release
+expected=abort
+exit=3
+BEGIN library_source_after_release
+EXR_LIFETIME_ASSERT: 对象已释放

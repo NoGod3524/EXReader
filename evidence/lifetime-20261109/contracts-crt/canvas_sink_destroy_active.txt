@@ -1,0 +1,5 @@
+case=canvas_sink_destroy_active
+expected=abort
+exit=3
+BEGIN canvas_sink_destroy_active
+EXR_LIFETIME_ASSERT: 重入：不能释放活动对象

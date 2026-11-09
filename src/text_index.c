@@ -39,7 +39,7 @@ exr_status exr_text_index_open(const char *path,exr_text_index **out,exr_error *
   if(out) *out=NULL;
   if(!out || !path) return exr_fail(e,EXR_ARGUMENT,"Invalid text index open arguments");
   if(!exr_text_index_available()) return exr_fail(e,EXR_FORMAT,"Text index was disabled in this SDK build");
-  i=calloc(1,sizeof(*i)); if(!i) return exr_fail(e,EXR_MEMORY,"Text index allocation failed"); i->refs=1;
+  i=EXR_NEW(exr_text_index); if(!i) return exr_fail(e,EXR_MEMORY,"Text index allocation failed"); i->refs=1;
   code=sqlite3_open_v2(path,&i->db,SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_FULLMUTEX,NULL);
   if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; }
   sqlite3_busy_timeout(i->db,3000); sqlite3_db_config(i->db,SQLITE_DBCONFIG_DEFENSIVE,1,NULL);
@@ -153,7 +153,7 @@ exr_status exr_text_index_query(exr_text_index *i,const char *source,const void 
   i->busy=1; status=exr_control_cancel(control,e); if(status!=EXR_OK) goto done;
   while(at<size) { if(!exr_next(query,size,&at,&cp)) { status=exr_fail(e,EXR_ENCODING,"Text query is not UTF-8"); goto done; } count++; }
   trigram=count>=3 && !memchr(query,0,size);
-  q=calloc(1,sizeof(*q)); if(!q) { status=exr_fail(e,EXR_MEMORY,"Text query allocation failed"); goto done; }
+  q=EXR_NEW(exr_text_query); if(!q) { status=exr_fail(e,EXR_MEMORY,"Text query allocation failed"); goto done; }
   q->pattern=exr_copy(query,size); q->size=size; if(control) q->control=*control;
   if(!q->pattern) { status=exr_fail(e,EXR_MEMORY,"Text query pattern allocation failed"); goto done; }
   status=exr_kmp_prefix(q->pattern,size,control,&q->prefix,e); if(status!=EXR_OK) goto done;
@@ -167,7 +167,7 @@ exr_status exr_text_index_query(exr_text_index *i,const char *source,const void 
   if(code==SQLITE_OK) code=trigram ? sqlite3_bind_text(q->statement,1,phrase.data,(int)phrase.size,SQLITE_TRANSIENT) : sqlite3_bind_blob(q->statement,1,query,(int)size,SQLITE_TRANSIENT);
   if(code==SQLITE_OK) code=source ? sqlite3_bind_text(q->statement,2,source,-1,SQLITE_TRANSIENT) : sqlite3_bind_null(q->statement,2);
   if(code!=SQLITE_OK) { status=db_error(i,code,e); goto done; }
-  q->index=i; i->refs++; i->query=1; *out=q; q=NULL; status=exr_fail(e,EXR_OK,""); goto done;
+  q->index=i; EXR_DEPEND(q,0,i); i->refs++; i->query=1; *out=q; q=NULL; status=exr_fail(e,EXR_OK,""); goto done;
 limit:
   status=exr_fail(e,EXR_LIMIT,"Text query phrase allocation failed");
 done:

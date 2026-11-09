@@ -1,0 +1,5 @@
+case=publication_document_survives_parent
+expected=pass
+exit=0
+BEGIN publication_document_survives_parent
+PASS publication_document_survives_parent (10 checks)

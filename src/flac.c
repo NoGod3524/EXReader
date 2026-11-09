@@ -266,7 +266,7 @@ exr_status exr_flac_open_source(const exr_source *source,exr_flac **out,exr_erro
   if(!source || !out || !source->read_at || source->size<42) return exr_fail(e,EXR_ARGUMENT,"Invalid FLAC source");
   status=exact(source,0,h,4,&source->control,e); if(status!=EXR_OK) return status;
   if(memcmp(h,"fLaC",4)) return exr_fail(e,EXR_FORMAT,"Source is not native FLAC");
-  f=calloc(1,sizeof(*f)); if(!f) return exr_fail(e,EXR_MEMORY,"FLAC reader allocation failed"); f->strategy=-1;
+  f=EXR_NEW(exr_flac); if(!f) return exr_fail(e,EXR_MEMORY,"FLAC reader allocation failed"); f->strategy=-1;
   while(!last) {
     unsigned type,n;
     if(++blocks>65536) { status=exr_fail(e,EXR_LIMIT,"FLAC metadata block count exceeds budget"); goto fail; }

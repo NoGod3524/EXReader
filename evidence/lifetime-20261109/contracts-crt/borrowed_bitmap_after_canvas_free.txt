@@ -1,0 +1,5 @@
+case=borrowed_bitmap_after_canvas_free
+expected=abort
+exit=3
+BEGIN borrowed_bitmap_after_canvas_free
+EXR_LIFETIME_ASSERT: 对象已释放

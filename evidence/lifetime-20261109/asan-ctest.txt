@@ -1,0 +1,46 @@
+["C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ctest.EXE", "--test-dir", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan", "--output-on-failure", "-j", "2", "--output-junit", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\evidence\\lifetime-20261109\\asan-ctest.xml"]
+Test project C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-asan
+        Start  87: native-core
+        Start  91: native-flow
+  1/245 Test  #91: native-flow ............................   Passed    3.29 sec
+        Start 193: native-convert-corpus
+  2/245 Test #193: native-convert-corpus ..................   Passed    1.88 sec
+        Start   1: native-lifetime
+  3/245 Test   #1: native-lifetime ........................   Passed   11.69 sec
+        Start   2: native-lifetime-leaks
+  4/245 Test   #2: native-lifetime-leaks ..................   Passed    0.86 sec
+        Start   3: native-ownership-coverage
+  5/245 Test   #3: native-ownership-coverage ..............   Passed    0.80 sec
+        Start   4: native-lifetime-instrumentation
+  6/245 Test   #4: native-lifetime-instrumentation ........   Passed    1.56 sec
+        Start   5: native-lifetime-wrappers
+  7/245 Test   #5: native-lifetime-wrappers ...............   Passed    1.99 sec
+        Start   6: native-render-audit
+  8/245 Test   #6: native-render-audit ....................   Passed    4.05 sec
+        Start   7: native-table-dashed
+  9/245 Test   #7: native-table-dashed ....................   Passed    1.34 sec
+        Start   8: native-pdf-shading-mesh
+ 10/245 Test   #8: native-pdf-shading-mesh ................   Passed    1.36 sec
+        Start   9: native-pdf-shading-mesh7
+ 11/245 Test   #9: native-pdf-shading-mesh7 ...............   Passed   18.85 sec
+        Start  10: native-pdf-ccitt
+ 12/245 Test  #10: native-pdf-ccitt .......................   Passed    1.20 sec
+        Start  11: native-normalize
+ 13/245 Test  #11: native-normalize .......................   Passed   12.92 sec
+        Start  12: native-hyphen
+ 14/245 Test  #12: native-hyphen ..........................***Failed    1.49 sec
+line 129: !inner[0] && !inner[1] && !inner[2] && !inner[3] (1: Reentrant SDK operation)
+
+        Start  13: native-hyphen-replacements
+ 15/245 Test  #13: native-hyphen-replacements .............   Passed    2.72 sec
+        Start  14: native-case
+ 16/245 Test  #14: native-case ............................   Passed    0.74 sec
+        Start  15: native-hyphen-layout
+ 17/245 Test  #87: native-core ............................   Passed   80.81 sec
+        Start  16: native-hyphen-builtin-rules
+ 18/245 Test  #16: native-hyphen-builtin-rules ............   Passed    2.48 sec
+        Start  17: native-hyphen-builtin-switches
+ 19/245 Test  #17: native-hyphen-builtin-switches .........   Passed    0.71 sec
+        Start  18: native-hyphen-builtin-joiners
+ 20/245 Test  #18: native-hyphen-builtin-joiners ..........   Passed    0.92 sec
+        Start  19: native-float

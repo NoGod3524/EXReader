@@ -1,0 +1,69 @@
+["C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\cmake.EXE", "--build", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-crt", "--parallel", "2", "--target", "exreader-lifetime-test"]
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- -- Using static CRT ON
+-- ===========================================================================
+-- 
+-- CMake version in use ......... 4.4.2
+-- 
+-- Configuration
+--   Generator .................. Ninja
+--   Build type ................. Debug
+--   Prefix ..................... C:/Program Files (x86)/EXReader
+--   Shared libraries ........... OFF
+--   Static CRT ................. ON
+--   Character type ............. char (UTF-8)
+--   Library name postfix ....... dMT
+-- 
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... OFF
+--   Install files .............. OFF
+-- 
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+-- 
+--   Entropy sources
+--     rand_s ................... ON
+-- 
+-- ===========================================================================
+CMake Warning (deprecated) at C:/Users/Oscar/exr-deps/miniz/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+-- Configuring done (11.0s)
+-- Generating done (15.5s)
+-- Build files have been written to: C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt
+[0/4] Re-checking globbed directories...
+[1/21] Building C object CMakeFiles\exr_base_objects.dir\src\lifetime_api_base.c.obj
+[2/21] Building C object CMakeFiles\exr_graphics_objects.dir\src\canvas.c.obj
+[3/21] Building C object CMakeFiles\exr_base_objects.dir\src\lifetime.c.obj
+[4/21] Building C object CMakeFiles\exr_graphics_objects.dir\src\lifetime_api_graphics.c.obj
+[5/21] Linking C static library exr_base.lib
+[6/21] Building C object CMakeFiles\exr_text_objects.dir\src\lifetime_api_text.c.obj
+[7/21] Linking C static library exr_graphics.lib
+[8/21] Building C object CMakeFiles\exr_pdf_objects.dir\src\lifetime_api_pdf.c.obj
+[9/21] Building C object CMakeFiles\exr_pdf_edit_objects.dir\src\lifetime_api_pdf_edit.c.obj
+[10/21] Linking C static library exr_text.lib
+[11/21] Building C object CMakeFiles\exr_library_objects.dir\src\library.c.obj
+[12/21] Linking C static library exr_pdf.lib
+[13/21] Building C object CMakeFiles\exr_library_objects.dir\src\lifetime_api_library.c.obj
+[14/21] Linking C static library exr_pdf_edit.lib
+[15/21] Linking C static library exr_library.lib
+[16/21] Building C object CMakeFiles\exreader-lifetime-test.dir\tests\test_lifetime.c.obj
+[17/21] Linking C shared library exreader.dll
+[18/21] Linking C executable exreader-lifetime-test.exe

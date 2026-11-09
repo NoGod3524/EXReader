@@ -1,0 +1,5 @@
+case=borrowed_page_after_pager_free
+expected=abort
+exit=3
+BEGIN borrowed_page_after_pager_free
+EXR_LIFETIME_ASSERT: 对象已释放

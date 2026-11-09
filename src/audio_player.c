@@ -46,9 +46,9 @@ exr_status exr_audio_player_create(exr_audio *audio,const exr_audio_backend *inp
   if(out) *out=NULL;
   if(!audio || !input || !out || input->struct_size<sizeof(*input) || input->struct_size>4096 || !input->command) return exr_fail(e,EXR_ARGUMENT,"Invalid audio player backend");
   for(i=sizeof(*input);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Unsupported audio backend extension");
-  p=calloc(1,sizeof(*p)); if(!p) return exr_fail(e,EXR_MEMORY,"Audio player allocation failed");
+  p=EXR_NEW(exr_audio_player); if(!p) return exr_fail(e,EXR_MEMORY,"Audio player allocation failed");
   status=exr_audio_ref(audio,e); if(status!=EXR_OK) { free(p); return status; }
-  p->audio=audio; p->backend=*input; p->tracks=exr_audio_tracks(audio,&p->count); p->rate=1; *out=p; return exr_fail(e,EXR_OK,"");
+  p->audio=audio; EXR_DEPEND(p,0,audio); p->backend=*input; p->tracks=exr_audio_tracks(audio,&p->count); p->rate=1; *out=p; return exr_fail(e,EXR_OK,"");
 }
 void exr_audio_player_free(exr_audio_player *p) {
   if(!p) return;

@@ -12,7 +12,7 @@ exr_status exr_pcm_create(const exr_pcm_input *input,exr_pcm **out,exr_error *e)
   if(!out || !input || input->struct_size<sizeof(*input) || input->struct_size>4096 || !input->read || !valid(&input->info))
     return exr_fail(e,EXR_ARGUMENT,"Invalid PCM provider input");
   for(i=sizeof(*input);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Unsupported PCM provider extension");
-  pcm=calloc(1,sizeof(*pcm)); if(!pcm) return exr_fail(e,EXR_MEMORY,"PCM provider allocation failed");
+  pcm=EXR_NEW(exr_pcm); if(!pcm) return exr_fail(e,EXR_MEMORY,"PCM provider allocation failed");
   pcm->info=input->info; pcm->read=input->read; pcm->release=input->release; pcm->context=input->context; *out=pcm; return exr_fail(e,EXR_OK,"");
 }
 static exr_status wave_read(void *context,uint64_t first,size_t frames,float *output,size_t *read,const exr_control *control,exr_error *e) {
@@ -50,7 +50,7 @@ exr_status exr_pcm_open_source(const exr_source *source,exr_pcm **out,exr_error 
     !memcmp(signature+4,"skip",4) || !memcmp(signature+4,"wide",4) || !memcmp(signature+4,"mdat",4) || !memcmp(signature+4,"moov",4));
   if(!bmff && memcmp(signature,"RIFF",4) && memcmp(signature,"fLaC",4) && memcmp(signature,"ID3",3) &&
      !(signature[0]==255 && (signature[1]&0xe0)==0xe0)) return exr_fail(e,EXR_FORMAT,"Unknown PCM source codec");
-  pcm=calloc(1,sizeof(*pcm)); if(!pcm) return exr_fail(e,EXR_MEMORY,"PCM decoder allocation failed");
+  pcm=EXR_NEW(exr_pcm); if(!pcm) return exr_fail(e,EXR_MEMORY,"PCM decoder allocation failed");
   if(!memcmp(signature,"RIFF",4)) {
     exr_wave *wave=NULL; const exr_wave_info *info;
     status=exr_wave_open_source(source,&wave,e);
@@ -90,6 +90,7 @@ exr_status exr_pcm_open_source(const exr_source *source,exr_pcm **out,exr_error 
     }
   }
   if(status!=EXR_OK) { free(pcm); return status; }
+  EXR_DEPEND(pcm,0,pcm->context);
   *out=pcm; return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_pcm_open(const char *path,const exr_control *control,exr_pcm **out,exr_error *e) {

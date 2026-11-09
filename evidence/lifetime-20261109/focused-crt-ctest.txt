@@ -1,0 +1,83 @@
+Start testing: Nov 09 11:30 Eastern Standard Time
+----------------------------------------------------------
+12/241 Testing: native-hyphen
+12/241 Test: native-hyphen
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt/exreader-hyphen-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt
+"native-hyphen" start time: Nov 09 11:30 Eastern Standard Time
+Output:
+----------------------------------------------------------
+333040 hyphenation dictionary checks passed
+<end of output>
+Test time =   0.80 sec
+----------------------------------------------------------
+Test Passed.
+"native-hyphen" end time: Nov 09 11:30 Eastern Standard Time
+"native-hyphen" time elapsed: 00:00:00
+----------------------------------------------------------
+
+140/241 Testing: native-audio-player
+140/241 Test: native-audio-player
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt/exreader-audio-player-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt
+"native-audio-player" start time: Nov 09 11:30 Eastern Standard Time
+Output:
+----------------------------------------------------------
+116 audio backend control checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"native-audio-player" end time: Nov 09 11:30 Eastern Standard Time
+"native-audio-player" time elapsed: 00:00:00
+----------------------------------------------------------
+
+149/241 Testing: native-canvas
+149/241 Test: native-canvas
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt/exreader-canvas-test.exe"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt
+"native-canvas" start time: Nov 09 11:30 Eastern Standard Time
+Output:
+----------------------------------------------------------
+4484 native canvas checks passed
+<end of output>
+Test time =   0.47 sec
+----------------------------------------------------------
+Test Passed.
+"native-canvas" end time: Nov 09 11:30 Eastern Standard Time
+"native-canvas" time elapsed: 00:00:00
+----------------------------------------------------------
+
+192/241 Testing: native-control
+192/241 Test: native-control
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt/exreader-control-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt
+"native-control" start time: Nov 09 11:30 Eastern Standard Time
+Output:
+----------------------------------------------------------
+Operation control: 4097 checks passed
+<end of output>
+Test time =   2.56 sec
+----------------------------------------------------------
+Test Passed.
+"native-control" end time: Nov 09 11:31 Eastern Standard Time
+"native-control" time elapsed: 00:00:02
+----------------------------------------------------------
+
+205/241 Testing: native-library-source
+205/241 Test: native-library-source
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt/exreader-library-source-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/tests/fixtures" "C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt
+"native-library-source" start time: Nov 09 11:31 Eastern Standard Time
+Output:
+----------------------------------------------------------
+23859 public library source checks passed
+<end of output>
+Test time =   1.25 sec
+----------------------------------------------------------
+Test Passed.
+"native-library-source" end time: Nov 09 11:31 Eastern Standard Time
+"native-library-source" time elapsed: 00:00:01
+----------------------------------------------------------
+
+End testing: Nov 09 11:31 Eastern Standard Time

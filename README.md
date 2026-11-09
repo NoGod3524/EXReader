@@ -268,7 +268,7 @@ exreader-lazy-example font.ttf epub-part.png book.epub 0
 
 `exreader-page-example book.epub font.ttf output.png [page] [part]` 演示按章节索引加载、页级续排、三页 / 8 MiB 载荷预算以及独立绘制；页和章节索引从 0 开始。
 
-[公开头文件](include/exreader.h) · [接口与内存约定](docs/NATIVE_API.md) · [第三方许可](THIRD_PARTY_NOTICES.md)
+[公开头文件](include/exreader.h) · [接口文档](docs/NATIVE_API.md) · [所有权与生命周期契约](docs/OWNERSHIP.md) · [第三方许可](THIRD_PARTY_NOTICES.md)
 
 ## 版本保留
 

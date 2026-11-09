@@ -40,7 +40,7 @@ exr_status exr_wave_open_source(const exr_source *source,exr_wave **out,exr_erro
   if(memcmp(header,"RIFF",4) || memcmp(header+8,"WAVE",4)) return exr_fail(e,EXR_FORMAT,"Source is not little-endian RIFF/WAVE");
   end=(uint64_t)le32(header+4)+8;
   if(end<12 || end>source->size) return exr_fail(e,EXR_FORMAT,"Invalid WAVE RIFF length");
-  w=calloc(1,sizeof(*w)); if(!w) return exr_fail(e,EXR_MEMORY,"WAVE reader allocation failed");
+  w=EXR_NEW(exr_wave); if(!w) return exr_fail(e,EXR_MEMORY,"WAVE reader allocation failed");
   while(at<end) {
     uint32_t n; uint64_t next;
     if(++chunks>1000000) { status=exr_fail(e,EXR_LIMIT,"WAVE chunk count exceeds budget"); goto finish; }

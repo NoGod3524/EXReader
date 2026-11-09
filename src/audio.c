@@ -44,7 +44,7 @@ exr_status exr_audio_create(const exr_audio_input *input,const exr_control *cont
   bytes=sizeof(*a)+in.track_count*(sizeof(*a->tracks)+sizeof(*a->starts))+in.chapter_count*sizeof(*a->chapters)+in.sync_count*sizeof(*a->sync);
   if(bytes>(size_t)128*1024*1024) return exr_fail(e,EXR_LIMIT,"Audio table payload exceeds budget");
   status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
-  a=calloc(1,sizeof(*a)); if(!a) return exr_fail(e,EXR_MEMORY,"Audio allocation failed");
+  a=EXR_NEW(exr_audio); if(!a) return exr_fail(e,EXR_MEMORY,"Audio allocation failed");
   a->references=1;
   a->tracks=calloc(in.track_count,sizeof(*a->tracks)); a->starts=calloc(in.track_count,sizeof(*a->starts));
   if(in.chapter_count) a->chapters=calloc(in.chapter_count,sizeof(*a->chapters));

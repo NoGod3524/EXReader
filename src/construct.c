@@ -120,7 +120,7 @@ exr_status exr_document_create(const exr_document_input *input, exr_document **o
   if (input->node_count < 2 || !input->nodes || !input->chapter_count || !input->chapters ||
       (input->resource_count && !input->resources))
     return exr_fail(e, EXR_ARGUMENT, "Construction requires a document tree and chapters");
-  d = calloc(1, sizeof(*d));
+  d = EXR_NEW(exr_document);
   if (!d)
     goto bad;
   d->format = EXR_CUSTOM;

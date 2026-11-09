@@ -646,7 +646,7 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
     }
     if (status != EXR_OK) return status;
     if(!c->layout) {
-      c->layout=calloc(1,sizeof(*c->layout));if(!c->layout) return exr_fail(f->error,EXR_MEMORY,"Empty table cell allocation failed");
+      c->layout=EXR_NEW(exr_layout);if(!c->layout) return exr_fail(f->error,EXR_MEMORY,"Empty table cell allocation failed");
       c->layout->writing_mode=f->writing_mode;
     }
     {

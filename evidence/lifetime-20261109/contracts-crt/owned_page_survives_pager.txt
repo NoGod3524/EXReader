@@ -1,0 +1,5 @@
+case=owned_page_survives_pager
+expected=pass
+exit=0
+BEGIN owned_page_survives_pager
+PASS owned_page_survives_pager (16 checks)

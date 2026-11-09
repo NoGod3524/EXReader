@@ -56,7 +56,7 @@ static exr_status create_font(const exr_font_input *inputs,size_t count,int unic
       return exr_fail(e, EXR_LIMIT, "Font bytes exceed %u MiB", (unsigned)(limit / (1024 * 1024)));
     total += inputs[i].size;
   }
-  font = calloc(1, sizeof(*font));
+  font = EXR_NEW(exr_font);
   if (!font)
     return exr_fail(e, EXR_MEMORY, "Font allocation failed");
   font->refs = 1;

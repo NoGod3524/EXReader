@@ -57,7 +57,7 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
   }
   if(!input->draw || !input->pages || !input->page_count) return exr_fail(e,EXR_ARGUMENT,"Missing fixed page directory/provider");
   if(input->page_count>10000) return exr_fail(e,EXR_LIMIT,"Fixed document exceeds 10000 pages");
-  d=calloc(1,sizeof(*d)); if(!d) return exr_fail(e,EXR_MEMORY,"Fixed document allocation failed");
+  d=EXR_NEW(exr_fixed_document); if(!d) return exr_fail(e,EXR_MEMORY,"Fixed document allocation failed");
   d->pages=calloc(input->page_count,sizeof(*d->pages)); ids=calloc(input->page_count,sizeof(*ids));
   if(!d->pages || !ids) { status=exr_fail(e,EXR_MEMORY,"Fixed page directory allocation failed"); goto done; }
   d->count=input->page_count; status=copy_string(input->title,&strings,&title,e); d->title=(char *)title;

@@ -116,7 +116,7 @@ exr_status exr_publication_create(const exr_publication_input *input,
     return exr_fail(e, EXR_LIMIT, "Navigation exceeds 10000 entries");
   if (input->part_count > 10000)
     return exr_fail(e, EXR_LIMIT, "Publication exceeds 10000 parts");
-  p = calloc(1, sizeof(*p));
+  p = EXR_NEW(exr_publication);
   if (!p)
     return exr_fail(e, EXR_MEMORY, "Publication allocation failed");
   p->refs = 1;
@@ -861,7 +861,7 @@ exr_status exr_session_set_hyphenator(exr_session *s,exr_hyphenator *h,exr_error
   if(!s || s->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant session access");
   if(h==s->hyphenator) return exr_fail(e,EXR_OK,"");
   if(h) { status=exr_hyphenator_ref(h,e); if(status!=EXR_OK) return status; }
-  exr_session_clear(s); exr_hyphenator_free(s->hyphenator); s->hyphenator=h;
+  exr_session_clear(s); exr_hyphenator_free(s->hyphenator); s->hyphenator=h; EXR_DEPEND(s,2,h);
   return exr_fail(e,EXR_OK,"");
 }
 
@@ -884,7 +884,7 @@ exr_status exr_session_create(exr_publication *p, exr_font *font,
     return status;
   if (p->refs == SIZE_MAX)
     return exr_fail(e, EXR_LIMIT, "Too many publication references");
-  s = calloc(1, sizeof(*s));
+  s = EXR_NEW(exr_session);
   if (!s)
     return exr_fail(e, EXR_MEMORY, "Session allocation failed");
   s->config = *config;
@@ -904,6 +904,8 @@ exr_status exr_session_create(exr_publication *p, exr_font *font,
   s->capacity = capacity;
   s->font = font;
   s->publication = p;
+  EXR_DEPEND(s, 0, p);
+  EXR_DEPEND(s, 1, font);
   p->refs++;
   *out = s;
   return exr_fail(e, EXR_OK, "");

@@ -652,7 +652,7 @@ exr_status exr_xml_resource(const exr_document *index, size_t resource, const ch
   if (resource >= index->resource_count) return exr_fail(e, EXR_ARGUMENT, "Invalid XML resource");
   status = exr_document_resource(index, resource, &bytes, &size, e);
   if (status != EXR_OK) return status;
-  doc = calloc(1, sizeof(*doc));
+  doc = EXR_NEW(exr_document);
   if (!doc) { exr_free(bytes); return exr_fail(e, EXR_MEMORY, "XML tree allocation failed"); }
   doc->format = EXR_EPUB;
   status = resource_copy(doc, &index->resources[resource], e);
@@ -860,7 +860,7 @@ exr_status exr_epub_index_ex(const void *data, size_t n, const char *passphrase,
   result = archive_open(&z, data, n, e);
   if (result != EXR_OK)
     return result;
-  d = calloc(1, sizeof(*d));
+  d = EXR_NEW(exr_document);
   if (!d) {
     mz_zip_reader_end(&z.archive);
     return exr_fail(e, EXR_MEMORY, "Index allocation failed");
@@ -888,7 +888,7 @@ exr_status exr_epub_index_source_ex(const exr_source *source, const char *passph
   if (!source || !source->read_at || !source->size || source->size > EXR_MAX_INPUT)
     return exr_fail(e, source && source->size > EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT,
                     "Invalid publication source or size exceeds 128 MiB");
-  d = calloc(1, sizeof(*d));
+  d = EXR_NEW(exr_document);
   if (!d) return exr_fail(e, EXR_MEMORY, "Index allocation failed");
   d->shared_archive = calloc(1, sizeof(*d->shared_archive));
   if (!d->shared_archive) { free(d); return exr_fail(e, EXR_MEMORY, "Source allocation failed"); }
@@ -1049,7 +1049,7 @@ static exr_status strict_members(archive *z, exr_error *e) {
   return EXR_OK;
 }
 static exr_status strict_package(archive *z, exr_error *e) {
-  exr_document *d = calloc(1, sizeof(*d));
+  exr_document *d = EXR_NEW(exr_document);
   exr_status status;
   size_t i;
   if (!d) return exr_fail(e, EXR_MEMORY, "Strict EPUB: package allocation failed");
@@ -1113,7 +1113,7 @@ exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **
   result = archive_backing(&z, index, e);
   if (result != EXR_OK)
     return result;
-  d = calloc(1, sizeof(*d));
+  d = EXR_NEW(exr_document);
   if (!d) {
     mz_zip_reader_end(&z.archive);
     return exr_fail(e, EXR_MEMORY, "Chapter allocation failed");
@@ -1561,7 +1561,7 @@ exr_status exr_mobi_book(const void *data,size_t size,exr_format_book *book,exr_
   if(!m) return exr_fail(e,EXR_MEMORY,"MOBI index allocation failed");
   m->owned=malloc(size); if(!m->owned) { free(m); return EXR_MEMORY; }
   memcpy(m->owned,data,size);
-  book->index=calloc(1,sizeof(*book->index)); if(!book->index) { mobi_stream_free(m); return EXR_MEMORY; }
+  book->index=EXR_NEW(exr_document); if(!book->index) { mobi_stream_free(m); return EXR_MEMORY; }
   book->index->format=EXR_MOBI;
   status=mobi_stream_open(book->index,m->owned,size,m,e);
   if(status!=EXR_OK) { mobi_stream_free(m); return status; }
@@ -1612,7 +1612,7 @@ exr_status exr_document_open_memory(exr_format f, const void *data, size_t n, ex
     memset(e, 0, sizeof(*e));
   if (!data || !n || n > EXR_MAX_INPUT)
     return exr_fail(e, n > EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT, "Invalid document bytes");
-  d = calloc(1, sizeof(*d));
+  d = EXR_NEW(exr_document);
   if (!d)
     return exr_fail(e, EXR_MEMORY, "Allocation failed");
   d->format = f;
@@ -1799,7 +1799,7 @@ exr_status exr_txt_cursor_create(const exr_source *source,exr_txt_cursor **out,e
   exr_txt_cursor *c;unsigned char prefix[3];size_t count=0;int has;exr_status s;
   if(out) *out=NULL;
   if(!out || !source || !source->read_at) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT cursor arguments");
-  c=calloc(1,sizeof(*c));if(!c) return exr_fail(e,EXR_MEMORY,"TXT cursor allocation failed");
+  c=EXR_NEW(exr_txt_cursor);if(!c) return exr_fail(e,EXR_MEMORY,"TXT cursor allocation failed");
   c->source=*source;c->reader.source=&c->source;
   while(count<3 && count<source->size) {
     s=txt_byte(&c->reader,&prefix[count],&has,e);if(s!=EXR_OK) { free(c);return s; } count++;

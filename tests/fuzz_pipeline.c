@@ -14,6 +14,10 @@ static exr_format record_format(const char *);
 #define EXR_FUZZ_RECORD_NAME record_name
 #define EXR_FUZZ_RECORD_PARSE record_format
 #define EXR_FUZZ_RESULT_LABEL "completed the selected pipeline"
+#if EXR_FUZZ_PIPELINE != 1
+/* Layout/render campaigns keep their host font alive across input iterations. */
+#define EXR_FUZZ_CLEANUP() ((void)0)
+#endif
 #define main pipeline_runner
 #include "fuzz_parse.c"
 #undef main
@@ -202,5 +206,5 @@ done:
   if(EXR_FUZZ_PIPELINE!=1)
     printf("bounded_chapter_attempts=%" PRIu64 " bounded_chapter_completed=%" PRIu64 "\n",
       bounded_chapter_attempts,bounded_chapter_completed);
-  exr_font_free(host_font);return result;
+  exr_font_free(host_font);exr_debug_cleanup();return result;
 }

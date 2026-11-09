@@ -115,7 +115,7 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
   if (!path || !out)
     return exr_fail(e, EXR_ARGUMENT, "Invalid library arguments");
   *out = NULL;
-  l = calloc(1, sizeof(*l));
+  l = EXR_NEW(exr_library);
   if (!l)
     return exr_fail(e, EXR_MEMORY, "Library allocation failed");
   l->references = 1;
@@ -256,6 +256,24 @@ static void library_source_release(void *context) {
   if(*at) *at=source->next;
   sqlite3_mutex_leave(mutex);free(source);exr_library_close(owner);
 }
+/* These closures also escape through exr_source, including after the caller
+   closes its library reference. Track the source context itself: the retained
+   database is valid even when its public library handle has been released. */
+#if !defined(NDEBUG) && defined(EXR_LIFETIME_IMPLEMENTATION)
+static size_t checked_library_source_read(void *context,uint64_t offset,void *buffer,size_t size) {
+  exr_lifetime_scope scope; const void *objects[]={context}; size_t result;
+  /* Library operations also read their own sources while their public scope
+     is active. SQLite serializes the read; the scope still prevents release. */
+  if(!exr_lifetime_begin(&scope,objects,1,1)) return 0;
+  result=library_source_read(context,offset,buffer,size);
+  exr_lifetime_end(&scope);return result;
+}
+static void checked_library_source_release(void *context) {
+  exr_lifetime_scope scope; const void *objects[]={context};
+  if(!exr_lifetime_begin(&scope,objects,1,2)) return;
+  library_source_release(context);exr_lifetime_end(&scope);
+}
+#endif
 exr_status exr_library_source(exr_library *l,int64_t id,exr_source *out,exr_error *e) {
   sqlite3_stmt *statement=NULL;library_source *source=NULL;sqlite3_mutex *mutex;
   exr_status status=EXR_OK;int step,version;sqlite3_int64 size;
@@ -287,7 +305,12 @@ exr_status exr_library_source(exr_library *l,int64_t id,exr_source *out,exr_erro
   if(!source) { status=exr_fail(e,EXR_MEMORY,"Stored source allocation failed");goto finish; }
   source->owner=l;source->id=id;source->size=(uint64_t)size;source->version=version;source->valid=1;
   source->next=l->sources;l->sources=source;l->references++;
+  EXR_DEPEND(source,0,l);
   out->size=source->size;out->context=source;out->read_at=library_source_read;out->release=library_source_release;
+#if !defined(NDEBUG) && defined(EXR_LIFETIME_IMPLEMENTATION)
+  exr_lifetime_own(source,sizeof(*source));
+  out->read_at=checked_library_source_read;out->release=checked_library_source_release;
+#endif
 finish:
   sqlite3_finalize(statement);sqlite3_mutex_leave(mutex);
   return status==EXR_OK ? exr_fail(e,EXR_OK,"") : status;

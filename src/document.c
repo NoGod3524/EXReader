@@ -596,7 +596,7 @@ int exr_model_attribute(exr_document *d, size_t index, const char *key, const ch
 }
 exr_status exr_xml_memory_tree(const void *data, size_t size, const char *root,
                                 exr_document **out, exr_error *e) {
-  exr_document *d = calloc(1,sizeof(*d)); exr_resource *r; exr_status status;
+  exr_document *d = EXR_NEW(exr_document); exr_resource *r; exr_status status;
   *out=NULL;
   if (!d) return exr_fail(e,EXR_MEMORY,"XML tree allocation failed");
   d->resources=calloc(1,sizeof(*d->resources));

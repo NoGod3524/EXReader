@@ -1,0 +1,5 @@
+{
+  "exit_code": 1,
+  "expected": "AddressSanitizer: heap-buffer-overflow",
+  "detected": true
+}

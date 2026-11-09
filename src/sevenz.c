@@ -350,7 +350,7 @@ exr_status exr_sevenz_open_source(const exr_source *source,const exr_sevenz_opti
      (options && (options->struct_size<sizeof(*options) || !options->max_unpack_size || !options->max_header_size)))
     return exr_fail(e,EXR_ARGUMENT,"Invalid 7Z open request");
   if(source->size<32) return exr_fail(e,EXR_FORMAT,"Truncated 7Z signature");
-  z=calloc(1,sizeof(*z));
+  z=EXR_NEW(exr_sevenz);
   if(!z) return exr_fail(e,EXR_MEMORY,"7Z container allocation failed");
   z->source=*source; z->source.release=NULL;
   z->options=options ? *options : exr_sevenz_options_defaults();

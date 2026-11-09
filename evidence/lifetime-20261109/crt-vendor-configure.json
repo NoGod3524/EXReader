@@ -1,0 +1,12 @@
+{
+  "command": [
+    "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\cmake.EXE",
+    "-S",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109",
+    "-B",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-crt",
+    "-DEXR_BUILD_SHARED_COMPAT=ON"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 20.483
+}
