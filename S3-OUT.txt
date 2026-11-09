@@ -27,3 +27,7 @@ collect2.exe: error: ld returned 1 exit status
 [2026-11-09T11:00:13.1095110-05:00] Binary import audit complete: objdump evidence in consumer-imports.json; static/runtime do not import exreader; shared imports libexreader.dll. Rendered page visually checked and saved as evidence/sdk-consumer-20261109/render.png.
 [2026-11-09T11:01:15.3882488-05:00] Installed-consumer-contract CTest integration exit=0; logs evidence/sdk-consumer-20261109/ctest.txt; uses a second fresh external tree and default MIT fixture font.
 [2026-11-09T11:02:01.4616526-05:00] Final local acceptance PASS: primary external run 3/3 (216 pages, identical PNG SHA256), ABI 389/427 missing0 added38, both destructive cases (version in all3 modes), CTest installed-consumer-contract 1/1 in second fresh external tree. No existing test assertions changed; no src headers added; .github unchanged. Preparing commit/push/draft PR.
+[2026-11-09T11:02:24.2294911-05:00] COMMIT complete: c67b6080 test(sdk): verify standalone consumer contract against installed package.
+[2026-11-09T11:02:27.3783204-05:00] PUSH complete: origin/codex/sdk-consumer-20261109 at c67b6080.
+[2026-11-09T11:02:48.2606689-05:00] DRAFT PR created and verified: #110 https://github.com/NoGod3524/EXReader/pull/110; base=main; head=codex/sdk-consumer-20261109; isDraft=True.
+[2026-11-09T11:03:26.0969415-05:00] PR-triggered CI verified: 4 pull_request workflow runs for c67b6080; exact run IDs/status/URLs saved in pr-ci.json. No workflow_dispatch or cancellation invoked.
