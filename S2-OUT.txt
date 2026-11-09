@@ -250,3 +250,6 @@ Next: commit, push requested branch, create draft PR; PR-triggered native CI wil
 
 [S2 commit completed]
 Commit 3f9f06d2: Add portable SDK release packages and minimal C example.
+[S2 push completed]
+Pushed codex/sdk-packaging-20261109 to origin with upstream tracking (5d72dcc5).
+Registered PGM artifacts as binary so Git preserves rendered pixel bytes.
