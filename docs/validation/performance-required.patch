@@ -1,0 +1,80 @@
+diff --git a/.github/workflows/performance.yml b/.github/workflows/performance.yml
+new file mode 100644
+--- /dev/null
++++ b/.github/workflows/performance.yml
+@@ -0,0 +1,75 @@
++name: Frozen CPU cost gate
++on:
++  pull_request:
++    branches: [main]
++  push:
++    branches: [main]
++  merge_group:
++  workflow_dispatch:
++    inputs:
++      mode:
++        type: choice
++        options: [check, freeze, qualify]
++        default: check
++        description: Check frozen baseline, collect a replacement, or qualify it
++permissions:
++  contents: read
++jobs:
++  performance:
++    # A successful baseline export must never satisfy the performance context.
++    name: ${{ github.event_name == 'workflow_dispatch' && inputs.mode != 'check' && 'performance-qualification' || 'performance' }}
++    runs-on: ubuntu-latest
++    timeout-minutes: 45
++    env:
++      PERF_RUNNER_LABEL: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          fetch-depth: 0
++      - name: Recover the reviewed baseline from the PR base
++        if: inputs.mode != 'freeze'
++        env:
++          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
++        run: |
++          mkdir -p build/perf-input
++          git show "$BASE_SHA:docs/validation/perf-baseline-ci.json" > build/perf-input/baseline.json
++          python3 - <<'PY'
++          import json
++          b = json.load(open('build/perf-input/baseline.json'))
++          assert b['status'] == 'frozen' and b['scope'] == 'github-ubuntu-latest', 'No qualified CI baseline'
++          PY
++      - name: Provision owner-authorized exact 19-book corpus
++        env:
++          PERF_CORPUS_URL: ${{ secrets.PERF_CORPUS_URL }}
++        run: python3 tools/perf/provision_corpus.py build/perf-input/books
++      - name: Fetch pinned host font and permit user-space PMU access
++        run: |
++          python3 -c "import sys; sys.path.insert(0, 'tools'); from host_font import fetch; fetch('build/perf-input/font')"
++          sudo sysctl -w kernel.perf_event_paranoid=2
++      - name: Build Release SDK and cycle probe
++        run: |
++          cmake -S tools/perf -B build/perf -G Ninja -DCMAKE_BUILD_TYPE=Release
++          cmake --build build/perf --target gate-probe --parallel 4
++      - name: Check, export, or qualify (no automatic rebaseline)
++        env:
++          MODE: ${{ inputs.mode || 'check' }}
++        run: |
++          set -euo pipefail
++          args=(--build build/perf --font build/perf-input/font/Reader.otf --manifest build/perf-input/books/manifest.json --cpu 0)
++          mkdir -p evidence/perf-gate-ci
++          if test "$MODE" = freeze; then
++            python3 tools/perf/refresh_baseline.py "${args[@]}" --output evidence/perf-gate-ci/baseline-raw --baseline evidence/perf-gate-ci/perf-baseline-ci.json
++          elif test "$MODE" = qualify; then
++            python3 tools/perf/qualify.py "${args[@]}" --baseline build/perf-input/baseline.json --output evidence/perf-gate-ci/qualification
++          else
++            python3 tools/perf/sample.py "${args[@]}" --output evidence/perf-gate-ci/candidate
++            python3 tools/perf/gate.py build/perf-input/baseline.json evidence/perf-gate-ci/candidate --output evidence/perf-gate-ci/gate.json
++          fi
++      - name: Preserve raw counters and results (no corpus or SDK archive)
++        if: always()
++        uses: actions/upload-artifact@v4
++        with:
++          name: perf-gate-${{ github.run_id }}-${{ github.run_attempt }}
++          path: evidence/perf-gate-ci/
++          if-no-files-found: warn
++          retention-days: 30

@@ -1,0 +1,23 @@
+{
+  "checked_utc": "2026-11-09T07:43:57.817868+00:00",
+  "git_apply_check_exit": 0,
+  "actionlint_version": "1.7.12",
+  "actionlint_archive_sha256": "6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9",
+  "actionlint_exit": 0,
+  "patch_sha256": "47a7e72291060e8a3e16d38bdc7c20f052237a37662bd5142274b4560fea2d7b",
+  "gate_integrity_checks_exit": 0,
+  "ci_baseline_refusal_exit": 2,
+  "final_false_positive_passes": 2,
+  "final_false_positive_total": 5,
+  "true_positive_exit": 1,
+  "true_positive_books": [
+    "black-boy"
+  ],
+  "regression_books": 19,
+  "regression_pages": 11426,
+  "regression_hash_changes": 0,
+  "regression_page_count_changes": 0,
+  "linux_backend_executed": false,
+  "github_ubuntu_capture_executed": false,
+  "required_ready": false
+}
