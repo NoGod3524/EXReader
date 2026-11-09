@@ -247,3 +247,6 @@ Archive was copied unchanged from the tested CTest package and revalidated succe
 All 10 package checks pass; MSVC dumpbin independently confirms 427 exr_* exports; minimal is 64 lines.
 Preserved Windows command transcripts, package tree, all SHA256SUMS entries, PGM, and native export dump under evidence/sdk-packaging-20261109/.
 Next: commit, push requested branch, create draft PR; PR-triggered native CI will execute Linux/macOS README commands.
+
+[S2 commit completed]
+Commit 3f9f06d2: Add portable SDK release packages and minimal C example.
