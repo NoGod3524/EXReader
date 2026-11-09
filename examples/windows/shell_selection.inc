@@ -148,7 +148,7 @@ static HRGN select_region_for(size_t start,size_t end) {
 }
 static HRGN select_region(void) { return select_region_for(g.selection.active ? g.selection.start : 0,g.selection.active ? g.selection.end : 0); }
 static void shell_selection_paint(HDC dc) {
-  if ((!annot_count && (!select_valid || select_book != g.frame.book_id || !g.selection.active)) || !g.frame.display_bitmap) return;
+  if ((!tts_state && !annot_count && (!select_valid || select_book != g.frame.book_id || !g.selection.active)) || !g.frame.display_bitmap) return;
   HRGN region = select_region(); RECT bounds;
   GetRgnBox(region, &bounds);
   DIBSECTION section = {0};
@@ -163,6 +163,7 @@ static void shell_selection_paint(HDC dc) {
   if (!bitmap || !section.dsBm.bmBits) { if (bitmap) DeleteObject(bitmap); DeleteObject(region); return; }
   memcpy(pixels, section.dsBm.bmBits, (size_t)width*height*4);
   annot_pixels(pixels,width,height);
+  tts_pixels(pixels,width,height);
   uint32_t background = shell_blend(shell_colors->layer_page, shell_is_dark() ? 0x7c88ff : 0x4553e0,
     shell_is_dark() ? .16f : .10f);
   for (int y = max(0, bounds.top); y < min(height, bounds.bottom); y++) {
@@ -251,6 +252,7 @@ static HMENU select_context_menu(void) {
   AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 5, L"高亮 · 蓝");
   AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 6, L"笔记…\tCtrl+N");
   AppendMenuW(menu, MF_STRING | (annot_selected>=0 ? 0:MF_GRAYED), 7, L"删除选中的标注\tDelete");
+  tts_menu(menu);
   return menu;
 }
 static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
@@ -326,7 +328,8 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
     DestroyMenu(menu);
     if (command == 1) copy_quote();
     if (command == 2) select_all_part();
-    if (command >= 3) annot_command((int)command);
+    if (command >= 100) tts_command((int)command);
+    else if (command >= 3) annot_command((int)command);
     return 1;
   }
   return 0;
