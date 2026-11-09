@@ -770,6 +770,9 @@ if(EXR_FULL_TESTS)
   add_executable(exreader-mobi-test tests/test_mobi.c)
   target_link_libraries(exreader-mobi-test PRIVATE exreader)
   add_test(NAME native-mobi COMMAND exreader-mobi-test ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
+  add_executable(exreader-book-codec-probe tests/book_codec_probe.c)
+  target_include_directories(exreader-book-codec-probe PRIVATE src)
+  target_link_libraries(exreader-book-codec-probe PRIVATE exr_core)
   add_executable(exreader-decoration-test tests/test_decoration.c)
   target_link_libraries(exreader-decoration-test PRIVATE exreader)
   add_test(NAME native-decoration COMMAND exreader-decoration-test ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
@@ -1174,5 +1177,16 @@ if(EXR_BUILD_TESTS AND EXR_ENABLE_PDF)
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/pdf_deepening_inputs.py
       --probe $<TARGET_FILE:exreader-pdf-deepening-test>
       --fixtures ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures --group ${group})
+  endforeach()
+endif()
+
+if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND AND NOT EXR_SANITIZE)
+  # ctypes cannot load an ASan library into an unsanitized Python runtime
+  # (same constraint as the hyphen oracle tests above). The C-level probes
+  # still run under ASan.
+  foreach(group codec mobi kf8 fb2 errors)
+    add_test(NAME native-book-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/book_formats.py --library $<TARGET_FILE:exreader>
+      --probe $<TARGET_FILE:exreader-book-codec-probe> --group ${group})
   endforeach()
 endif()
