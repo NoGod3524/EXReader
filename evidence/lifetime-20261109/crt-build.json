@@ -4,10 +4,10 @@
     "--build",
     "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-crt",
     "--parallel",
-    "6",
+    "2",
     "--target",
     "exreader-lifetime-leaks-test"
   ],
   "exit_code": 0,
-  "elapsed_seconds": 1.689
+  "elapsed_seconds": 1.06
 }

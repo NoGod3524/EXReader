@@ -1,0 +1,14 @@
+["ctest", "--test-dir", "build/lifetime-asan", "-R", "^native-(stretch|library-unique|kf8|lifetime)$", "--output-on-failure", "--timeout", "180"]
+Test project C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-asan
+    Start   1: native-lifetime
+1/4 Test   #1: native-lifetime ..................   Passed    3.85 sec
+    Start  61: native-stretch
+2/4 Test  #61: native-stretch ...................   Passed    5.02 sec
+    Start 153: native-library-unique
+3/4 Test #153: native-library-unique ............   Passed    0.82 sec
+    Start 155: native-kf8
+4/4 Test #155: native-kf8 .......................   Passed    4.13 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =  13.98 sec

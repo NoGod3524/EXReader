@@ -23,7 +23,7 @@ struct object_record {
   void *object;
   size_t size, kind, active;
   int released, releasing, loaned;
-  object_record *parents[4], *next, *hash_next;
+  object_record *parents[4], *view_owner, *next, *hash_next;
 };
 typedef struct buffer_record buffer_record;
 typedef struct borrowed_record {
@@ -55,6 +55,11 @@ static exr_lifetime_count counts[] = {
 #undef COUNT
 static object_record *objects, *buckets[4096];
 static borrowed_record *borrows;
+#ifdef _MSC_VER
+static __declspec(thread) exr_lifetime_scope *active_scope;
+#else
+static _Thread_local exr_lifetime_scope *active_scope;
+#endif
 static int registered_exit;
 static size_t bucket(const void *p) { return ((uintptr_t)p >> 4) % 4096; }
 static uint64_t magic(size_t kind) { return UINT64_C(0x4558524c49564500) + kind; }
@@ -302,6 +307,19 @@ void exr_lifetime_loan(const void *owner, const void *p) {
   }
   unlock_registry();
 }
+/* A getter can lend an internally retained font after its caller reference
+   was released. Record the new view without making a font/layout graph cycle.
+   Identical C pointer aliases share this view; free still rejects the already
+   released caller reference. */
+void exr_lifetime_view(const void *owner, const void *p) {
+  object_record *r, *parent;
+  if (!owner || !p) return;
+  lock_registry(); r = exact(p); parent = lookup(owner);
+  if (r && parent && r != parent) {
+    check_record(r); check_record(parent); r->view_owner = parent;
+  }
+  unlock_registry();
+}
 void exr_lifetime_borrow(const void *owner, const void *data, size_t size) {
   object_record *r; borrowed_record *b;
   buffer_record *buffer;
@@ -337,6 +355,24 @@ static void collect(exr_lifetime_scope *scope, object_record *r, int dependencie
   path[depth++] = r;
   for (i = 0; i < 4; i++) collect(scope, r->parents[i], 1, path, depth);
 }
+static int used_on_this_thread(const void *record, int buffer) {
+  exr_lifetime_scope *scope;
+  size_t i;
+  for (scope = active_scope; scope; scope = scope->previous) {
+    size_t count = buffer ? scope->buffer_count : scope->count;
+    void **records = buffer ? scope->buffers : scope->records;
+    for (i = 0; i < count; i++) if (records[i] == record) return 1;
+  }
+  return 0;
+}
+static void collect_view(exr_lifetime_scope *scope, object_record *r, int mode,
+                         object_record **path) {
+  if (r && r->released) {
+    if (mode == 2 || !r->view_owner) violation("对象已释放");
+    collect(scope, r->view_owner, 1, path, 0);
+  }
+  collect(scope, r, mode != 2, path, 0);
+}
 int exr_lifetime_begin(exr_lifetime_scope *scope, const void *const *p, size_t count, int mode) {
   size_t i, j; object_record *path[64];
   scope->count = scope->buffer_count = 0; lock_registry();
@@ -344,9 +380,8 @@ int exr_lifetime_begin(exr_lifetime_scope *scope, const void *const *p, size_t c
     buffer_record *b = buffer_at(p[i]);
     object_record *owner;
     check_buffer(p[i]); owner = lookup(p[i]);
-    if (owner && owner->released) violation("对象已释放");
     if (mode == 2 && owner && !exact(p[i])) violation("借用指针不能释放");
-    collect(scope, owner, mode != 2, path, 0);
+    collect_view(scope, owner, mode, path);
     if (b) {
       b->exposed = 1;
       if (mode != 2)
@@ -360,37 +395,41 @@ int exr_lifetime_begin(exr_lifetime_scope *scope, const void *const *p, size_t c
   }
   for (i = 0; i < scope->count; i++) {
     object_record *r = scope->records[i];
-    if (r->active && mode != 1) {
+    /* Mode 3 is reserved for operations which serialize themselves (SQLite
+       unique import). A second thread is supported; callback reentry is not. */
+    if (r->active && mode != 1 && (mode != 3 || used_on_this_thread(r, 0))) {
       if (mode == 2) violation("重入：不能释放活动对象");
       scope->count = 0; unlock_registry(); return 0;
     }
   }
   for (i = 0; i < scope->buffer_count; i++) {
     buffer_record *b = scope->buffers[i];
-    if (b->active && mode != 1) {
+    if (b->active && mode != 1 && (mode != 3 || used_on_this_thread(b, 1))) {
       if (mode == 2) violation("重入：不能释放活动缓冲区");
       scope->count = scope->buffer_count = 0; unlock_registry(); return 0;
     }
   }
   for (i = 0; i < scope->count; i++) ((object_record *)scope->records[i])->active++;
   for (i = 0; i < scope->buffer_count; i++) ((buffer_record *)scope->buffers[i])->active++;
+  scope->previous = active_scope; active_scope = scope;
   unlock_registry(); return 1;
 }
 void exr_lifetime_end(exr_lifetime_scope *scope) {
   size_t i; lock_registry();
+  if (active_scope != scope) violation("调用作用域链损坏");
   for (i = 0; i < scope->count; i++) {
     object_record *r = scope->records[i];
     if (!--r->active && r->releasing) { r->released = 1; r->releasing = 0; }
   }
   for (i = 0; i < scope->buffer_count; i++) ((buffer_record *)scope->buffers[i])->active--;
+  active_scope = scope->previous;
   unlock_registry();
 }
 int exr_validate(const void *p) {
   exr_lifetime_scope scope = {0}; object_record *path[64], *r;
   int found;
   lock_registry(); check_buffer(p); r = lookup(p);
-  if (r && r->released) violation("对象已释放");
-  collect(&scope, r, 1, path, 0);
+  collect_view(&scope, r, 1, path);
   if (!r) {
     buffer_record *b = buffer_at(p);
     size_t i;

@@ -4,10 +4,10 @@
     "--build",
     "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan",
     "--parallel",
-    "6",
+    "2",
     "--target",
     "exreader-lifetime-leaks-test"
   ],
   "exit_code": 0,
-  "elapsed_seconds": 1.418
+  "elapsed_seconds": 0.622
 }

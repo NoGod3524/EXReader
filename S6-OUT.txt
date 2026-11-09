@@ -58,3 +58,33 @@
 [2026-11-09T16:35:21.793044+00:00] asan-final-contract: exit=0; 2.425s; C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\evidence\lifetime-20261109\asan-final-contract.txt
 [2026-11-09T16:35:21.793579+00:00] Final ASan validation complete: frozen SDK contracts 50/50 (34 assertion aborts, 16 valid cases), raw per-case logs preserved; focused regressions 6/6, including fixture leaks. README includes all 32 balanced allocation rows and separates incomplete old regression evidence.
 [2026-11-09] Pre-publication verification complete: ownership 233/233 types + 430/430 functions; allocations 31/31 types and 55/55 constructor sites; Debug exports 430/430 with no extras; layer audit 132 objects, 0 inverse symbol/include edges. Final MSVC ASan contracts 50/50 (34 expected aborts) and focused regressions 6/6; CRT contracts 50/50 and focused originals 5/5. 19-book ASan/CRT hashes independently rechecked against current source.
+[2026-11-09T16:39:33.7297358Z] Resumed from committed S6 work; verified working tree initially clean, branch codex/sdk-lifetime-20261109. Re-auditing contract/runtime and rerunning acceptance; Windows evidence exists, Linux LSan 19-book evidence and draft PR publication remain.
+[2026-11-09T16:42:27.5012217Z] Revalidation: ownership 233/233 types, 430/430 functions; opaque allocation coverage 31/31, 55 constructor sites, 32 count rows; generated wrappers --check PASS. Added portable Linux lsan mode and deliberately leaked SDK-document positive control; acceptance pending execution.
+[2026-11-09T16:43:20.2036192Z] Resumed MSVC ASan contract rerun: 50/50 PASS, 34 intentional assertion aborts (exit 3), 16 valid lifecycle paths; per-case logs refreshed. Ownership/generator audits and diff whitespace checks PASS.
+[2026-11-09T16:43:46.818692+00:00] asan-configure: exit=0; 6.553s; C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\evidence\lifetime-20261109\asan-configure.txt
+[2026-11-09T16:43:48.389522+00:00] asan-build: exit=0; 1.57s; C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\evidence\lifetime-20261109\asan-build.txt
+[2026-11-09T16:43:48.882690+00:00] asan-control-build: exit=0; 0.452s; C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\evidence\lifetime-20261109\asan-control-build.txt
+[2026-11-09T16:44:42.590258+00:00] asan-configure: exit=0; 6.003s; C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\evidence\lifetime-20261109\asan-configure.txt
+[2026-11-09T16:44:43.213864+00:00] asan-build: exit=0; 0.622s; C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\evidence\lifetime-20261109\asan-build.txt
+[2026-11-09T16:44:43.933885+00:00] asan-control-build: exit=0; 0.652s; C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\evidence\lifetime-20261109\asan-control-build.txt
+[2026-11-09T16:44:45.664306+00:00] ASan positive control rejected the intentional heap-buffer-overflow.
+[2026-11-09T16:44:54.162090+00:00] asan-19-books: exit=0; 6.115s; C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\evidence\lifetime-20261109\asan-19-books.txt
+[2026-11-09T16:44:54.864547+00:00] asan 19/19 books PASS; 32 object kinds balanced; AddressSanitizer diagnostics=0; object live counts=0.
+[2026-11-09T16:46:21.767687+00:00] crt-configure: exit=0; 7.075s; C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\evidence\lifetime-20261109\crt-configure.txt
+[2026-11-09T16:46:22.829106+00:00] crt-build: exit=0; 1.06s; C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\evidence\lifetime-20261109\crt-build.txt
+[2026-11-09T16:46:25.800427+00:00] crt-19-books: exit=0; 2.525s; C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\evidence\lifetime-20261109\crt-19-books.txt
+[2026-11-09T16:46:26.003614+00:00] crt 19/19 books PASS; 32 object kinds balanced; CRT heap leak delta=0 blocks/0 bytes, positive control=1 block/17 bytes.
+[2026-11-09T16:51:17.977682+00:00] crt-complete-build: exit=0; 19.967s; evidence\lifetime-20261109\crt-complete-build.txt
+[2026-11-09T16:54:26.8379068Z] Latest Windows ASan 19-book rerun PASS, zero address errors/live objects and all 32 counter rows balanced. QEMU and Ubuntu images verified against publisher SHA512/SHA256; local-only Linux VM launched for ASan+LSan corpus/control verification.
+[2026-11-09T16:58:02.1142327Z] Linux VM ready: Ubuntu 22.04 x86_64 kernel 5.15.0-1112-kvm, hardware-accelerated local WHPX, private 19-book corpus copied only into local VM. Exported current source plus six existing dependency source trees; no books uploaded to GitHub.
+[2026-11-09T17:00:37.014265+00:00] release-configure: exit=0; 34.774s; evidence\lifetime-20261109\release-configure.txt
+[2026-11-09T17:01:56.493771+00:00] release-build: exit=0; 79.478s; evidence\lifetime-20261109\release-build.txt
+[2026-11-09T17:02:35.707083+00:00] release-focused: exit=0; 39.212s; evidence\lifetime-20261109\release-focused.txt
+[2026-11-09T17:03:48.7079833Z] Linux ASan+LSan initial acceptance: 19/19 books PASS, no sanitizer diagnostics, all 32 rows balanced. Deliberately unreleased SDK document detected by LSan (exit 23), proving registry roots do not conceal real leaks. Full CRT regression exposed stretch output clearing and shared read-input/reentry false positives (library-unique/KF8); fixing runtime boundaries without changing existing assertions.
+[2026-11-09T17:06:21.819496+00:00] crt-boundary-repair-build: exit=4294967295; 17.759s; evidence\lifetime-20261109\crt-boundary-repair-build.txt
+[2026-11-09T17:07:38.894170+00:00] asan-boundary-repair-build: exit=0; 13.221s; evidence\lifetime-20261109\asan-boundary-repair-build.txt
+[2026-11-09T17:07:52.971973+00:00] asan-boundary-repair: exit=0; 14.077s; evidence\lifetime-20261109\asan-boundary-repair.txt
+[2026-11-09T17:11:00.1926509Z] Boundary regressions repaired and MSVC ASan verified 4/4: original stretch/library-unique/KF8 tests plus 50-case lifetime suite. Added thread-local scope chain for internally serialized unique imports, allowed resource/link reads from image decoders, preserved stretch snapshot clearing. Added three contract cases for font reborrow/expired view and source-callback unique-import rejection (53 cases now). No existing test assertions changed.
+[2026-11-09T17:11:02.138436+00:00] asan-contract-final-build: exit=0; 16.813s; evidence\lifetime-20261109\asan-contract-final-build.txt
+[2026-11-09T17:11:08.332176+00:00] asan-final-contract: exit=0; 6.182s; evidence\lifetime-20261109\asan-final-contract.txt
+[2026-11-09T17:11:36.814413+00:00] asan-final-focused: exit=0; 28.479s; evidence\lifetime-20261109\asan-final-focused.txt

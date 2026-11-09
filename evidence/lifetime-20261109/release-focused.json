@@ -1,0 +1,14 @@
+{
+  "command": [
+    "ctest",
+    "--test-dir",
+    "build/lifetime-release",
+    "-R",
+    "^native-(float|hyphen-layout)$",
+    "--output-on-failure",
+    "--timeout",
+    "180"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 39.212
+}

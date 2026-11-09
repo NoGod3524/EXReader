@@ -210,6 +210,7 @@ exr_font * exr_layout_font(const exr_layout *layout) {
     abort();
   }
   exr_result__ = exr_impl_layout_font(layout);
+  exr_lifetime_view(layout, exr_result__);
   exr_lifetime_end(&exr_scope__);
   return exr_result__;
 }

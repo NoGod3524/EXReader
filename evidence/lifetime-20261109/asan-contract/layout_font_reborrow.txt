@@ -1,0 +1,5 @@
+case=layout_font_reborrow
+expected=pass
+exit=0
+BEGIN layout_font_reborrow
+PASS layout_font_reborrow (15 checks)

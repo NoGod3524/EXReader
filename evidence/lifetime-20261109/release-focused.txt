@@ -1,0 +1,10 @@
+["ctest", "--test-dir", "build/lifetime-release", "-R", "^native-(float|hyphen-layout)$", "--output-on-failure", "--timeout", "180"]
+Test project C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-release
+    Start 13: native-hyphen-layout
+1/2 Test #13: native-hyphen-layout .............   Passed   31.24 sec
+    Start 17: native-float
+2/2 Test #17: native-float .....................   Passed    7.72 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =  39.09 sec

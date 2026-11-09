@@ -1,0 +1,2 @@
+["C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\cl.EXE", "/nologo", "/MTd", "/fsanitize=address", "/Z7", "/Od", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\tools\\quality\\address_probe.c", "/FoC:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan\\asan-control.obj", "/FeC:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan\\asan-control.exe", "/link", "/INCREMENTAL:NO"]
+address_probe.c

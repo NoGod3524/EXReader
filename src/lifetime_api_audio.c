@@ -906,6 +906,7 @@ exr_status exr_stretch_get(const exr_stretch *stretch, exr_stretch_state *out, e
   exr_status exr_result__;
   exr_lifetime_expect(stretch, "exr_stretch");
   if (!exr_lifetime_begin(&exr_scope__, exr_arguments__, 2, 0)) {
+    if (out) memset(out, 0, sizeof(*out));
     return exr_fail(error, EXR_ARGUMENT, "Reentrant SDK operation");
   }
   exr_result__ = exr_impl_stretch_get(stretch, out, error);

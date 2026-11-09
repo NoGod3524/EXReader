@@ -1,0 +1,32 @@
+{
+  "command": [
+    "cmake",
+    "-S",
+    ".",
+    "-B",
+    "build/lifetime-release",
+    "-G",
+    "Ninja",
+    "-DFETCHCONTENT_SOURCE_DIR_EXPAT:PATH=C:/Users/Oscar/exr-deps/expat",
+    "-DFETCHCONTENT_SOURCE_DIR_FREETYPE:PATH=C:/Users/Oscar/exr-deps/freetype-VER-2-15-0",
+    "-DFETCHCONTENT_SOURCE_DIR_MINIZ:PATH=C:/Users/Oscar/exr-deps/miniz",
+    "-DFETCHCONTENT_SOURCE_DIR_OPENJPEG:PATH=C:/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4",
+    "-DFETCHCONTENT_SOURCE_DIR_SQLITE:PATH=C:/Users/Oscar/exr-deps/sqlite",
+    "-DFETCHCONTENT_SOURCE_DIR_STB:PATH=C:/Users/Oscar/exr-deps/stb",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DEXR_BUILD_TESTS=ON",
+    "-DEXR_BUILD_TOOLS=OFF",
+    "-DEXR_BUILD_FUZZ=OFF",
+    "-DEXR_BUILD_JNI=OFF",
+    "-DEXR_ENABLE_LCP=OFF",
+    "-DEXR_ENABLE_IMAGE_WEBP=OFF",
+    "-DEXR_ENABLE_IMAGE_TIFF=OFF",
+    "-DEXR_ENABLE_IMAGE_AVIF=OFF",
+    "-DEXR_ENABLE_ICC=OFF",
+    "-DEXR_ENABLE_PDF_CRYPTO=OFF",
+    "-DEXR_ENABLE_MP3=OFF",
+    "-DCMAKE_C_COMPILER=cl"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 34.774
+}

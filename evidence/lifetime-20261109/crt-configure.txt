@@ -43,6 +43,6 @@ CMake Warning (deprecated) at C:/Users/Oscar/exr-deps/miniz/CMakeLists.txt:1 (cm
 This warning is for project developers.  Use -Wno-author or -Wno-deprecated
 to suppress it.
 
--- Configuring done (2.2s)
--- Generating done (0.7s)
+-- Configuring done (5.6s)
+-- Generating done (1.2s)
 -- Build files have been written to: C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-crt

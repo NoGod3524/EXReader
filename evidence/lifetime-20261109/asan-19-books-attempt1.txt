@@ -1,0 +1,54 @@
+["C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan\\exreader-lifetime-leaks-test.exe", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\tests\\fixtures\\fonts\\primary.ttf", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\A Raisin in the Sun (Lorraine Hansberry) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Between The World and Me (Ta-Nehisi Coates) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Black Boy (Richard Wright) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Born a Crime (Trevor Noah) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Crying in H Mart (Michelle Zauner) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\How Does It Feel to Be a Problem Being Young and Arab in America (Moustafa Bayoumi) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\I Know Why the Caged Bird Sings (Maya Angelou) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Pachinko (Min Jin Lee) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Absolutely True Diary of a Part-Time Indian (Sherman Alexie) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Autobiography of Malcolm X. (Malcolm X, Alex Haley) (z-library.sk, 1lib.sk, z-lib.sk).pdf", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Distance Between Us A Memoir (Grande Reyna) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Fire Next Time (James Baldwin) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The Fire This Time A New Generation Speaks about Race (Jesmyn Ward) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\The House on Mango Street (Sandra Cisneros) (z-library.sk, 1lib.sk, z-lib.sk).epub", "C:\\Users\\Oscar\\OneDrive\\Desktop\\26 Fall\\SOCI 1501\\Final Paper Assignment\\FinalBooks\\Zami A New Spelling of My Name - A Biomythography (Audre Lorde) (z-library.sk, 1lib.sk, z-lib.sk).mobi", "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub", "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\xingshihengyan-24239.epub", "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\tangshi300-52323.epub", "C:\\Users\\Oscar\\Documents\\Codex\\real-books-pass-a-20261105\\supplemental-samples\\kusamakura-japanese-vertical-writing.epub"]
+LIFETIME_LEAKS start
+BOOK 1 PASS live=0
+BOOK 2 PASS live=0
+BOOK 3 PASS live=0
+BOOK 4 PASS live=0
+BOOK 5 PASS live=0
+BOOK 6 PASS live=0
+BOOK 7 PASS live=0
+BOOK 8 PASS live=0
+BOOK 9 PASS live=0
+BOOK 10 PASS live=0
+BOOK 11 PASS live=0
+BOOK 12 PASS live=0
+BOOK 13 PASS live=0
+BOOK 14 PASS live=0
+BOOK 15 PASS live=0
+BOOK 16 PASS live=0
+BOOK 17 PASS live=0
+BOOK 18 PASS live=0
+BOOK 19 PASS live=0
+COUNT exr_aac 0 0 0
+COUNT exr_audio 0 0 0
+COUNT exr_audio_output 0 0 0
+COUNT exr_audio_player 0 0 0
+COUNT exr_bidi 0 0 0
+COUNT exr_canvas 1 1 0
+COUNT exr_cfi 0 0 0
+COUNT exr_dictionary 0 0 0
+COUNT exr_document 38 38 0
+COUNT exr_fixed_document 1 1 0
+COUNT exr_fixed_text 1 1 0
+COUNT exr_flac 0 0 0
+COUNT exr_font 23 23 0
+COUNT exr_font_manager 0 0 0
+COUNT exr_hyphenation 0 0 0
+COUNT exr_hyphenator 0 0 0
+COUNT exr_layout 36 36 0
+COUNT exr_library 0 0 0
+COUNT exr_m4b 0 0 0
+COUNT exr_m4b_inspection 0 0 0
+COUNT exr_mp3 0 0 0
+COUNT exr_pager 18 18 0
+COUNT exr_pcm 0 0 0
+COUNT exr_publication 18 18 0
+COUNT exr_session 0 0 0
+COUNT exr_sevenz 0 0 0
+COUNT exr_stretch 0 0 0
+COUNT exr_text_index 0 0 0
+COUNT exr_text_query 0 0 0
+COUNT exr_txt_cursor 0 0 0
+COUNT exr_wave 0 0 0
+COUNT sdk_buffer 47933 47933 0
+SUMMARY books=19 live=0

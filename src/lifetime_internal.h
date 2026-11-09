@@ -12,6 +12,7 @@ void *exr_lifetime_realloc(void *data, size_t size);
 void exr_lifetime_own(void *data, size_t size);
 void exr_lifetime_release_public(const void *object);
 void exr_lifetime_loan(const void *owner, const void *object);
+void exr_lifetime_view(const void *owner, const void *object);
 void exr_lifetime_expect(const void *object, const char *type);
 void exr_lifetime_delete(void *object);
 void exr_lifetime_depend(const void *object, unsigned slot, const void *parent);
@@ -21,6 +22,7 @@ void exr_lifetime_borrow(const void *owner, const void *data, size_t size);
 typedef struct {
   void *records[64], *buffers[64];
   size_t count, buffer_count;
+  void *previous;
 } exr_lifetime_scope;
 int exr_lifetime_begin(exr_lifetime_scope *scope, const void *const *objects,
                        size_t count, int mode);

@@ -1,0 +1,16 @@
+{
+  "command": [
+    "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ctest.EXE",
+    "--test-dir",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan",
+    "--output-on-failure",
+    "-j",
+    "1",
+    "-R",
+    "^native-(lifetime-leaks|hyphen|audio-player|canvas|control|library-source)$",
+    "--output-junit",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\evidence\\lifetime-20261109\\asan-final-focused.xml"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 6.407
+}

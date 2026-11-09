@@ -1,3 +1,4 @@
-["C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\cmake.EXE", "--build", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-crt", "--parallel", "6", "--target", "exreader-lifetime-leaks-test"]
+["C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\cmake.EXE", "--build", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-crt", "--parallel", "2", "--target", "exreader-lifetime-leaks-test"]
 [0/2] Re-checking globbed directories...
-[1/2] Linking C executable exreader-lifetime-leaks-test.exe
+[1/3] Building C object CMakeFiles\exreader-lifetime-leaks-test.dir\tests\test_lifetime_leaks.c.obj
+[2/3] Linking C executable exreader-lifetime-leaks-test.exe

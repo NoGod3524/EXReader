@@ -1,4 +1,4 @@
-["C:\\Python314\\python.exe", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\tests\\run_lifetime.py", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan\\exreader-lifetime-test.exe", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\tests\\fixtures", "--output", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\evidence\\lifetime-20261109\\asan-contract"]
+["C:\\Python314\\python.exe", "tests/run_lifetime.py", "build/lifetime-asan/exreader-lifetime-test.exe", "tests/fixtures", "--output", "evidence\\lifetime-20261109\\asan-contract"]
 PASS valid_document: pass, exit=0
 PASS document_double_free: abort, exit=3
 PASS document_after_free: abort, exit=3
@@ -10,6 +10,8 @@ PASS pager_double_free: abort, exit=3
 PASS pager_after_document_free: abort, exit=3
 PASS pager_retains_font: pass, exit=0
 PASS validate_broken_parent_chain: abort, exit=3
+PASS layout_font_reborrow: pass, exit=0
+PASS borrowed_font_after_layout_free: abort, exit=3
 PASS child_cleanup_after_document_free: pass, exit=0
 PASS layout_double_free: abort, exit=3
 PASS layout_after_free: abort, exit=3
@@ -42,6 +44,7 @@ PASS canvas_sink_destroy_active: abort, exit=3
 PASS library_source_double_release: abort, exit=3
 PASS library_source_after_release: abort, exit=3
 PASS library_source_survives_close: pass, exit=0
+PASS library_unique_callback_reentry_rejected: pass, exit=0
 PASS query_retains_index: pass, exit=0
 PASS cfi_double_free: abort, exit=3
 PASS fixed_text_survives_input: pass, exit=0
@@ -49,4 +52,4 @@ PASS callback_reentry_rejected: pass, exit=0
 PASS callback_independent_allowed: pass, exit=0
 PASS callback_destroy_active: abort, exit=3
 PASS null_free: pass, exit=0
-Lifetime contracts: 50/50 passed; 34 intentional assertion aborts
+Lifetime contracts: 53/53 passed; 35 intentional assertion aborts

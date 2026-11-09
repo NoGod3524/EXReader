@@ -1,0 +1,18 @@
+["C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ctest.EXE", "--test-dir", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\build\\lifetime-asan", "--output-on-failure", "-j", "1", "-R", "^native-(lifetime-leaks|hyphen|audio-player|canvas|control|library-source)$", "--output-junit", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S6-20261109\\evidence\\lifetime-20261109\\asan-final-focused.xml"]
+Test project C:/Users/Oscar/Documents/Codex/EXReader-S6-20261109/build/lifetime-asan
+    Start   2: native-lifetime-leaks
+1/6 Test   #2: native-lifetime-leaks ............   Passed    0.10 sec
+    Start  12: native-hyphen
+2/6 Test  #12: native-hyphen ....................   Passed    1.54 sec
+    Start 140: native-audio-player
+3/6 Test #140: native-audio-player ..............   Passed    0.13 sec
+    Start 149: native-canvas
+4/6 Test #149: native-canvas ....................   Passed    0.60 sec
+    Start 192: native-control
+5/6 Test #192: native-control ...................   Passed    2.78 sec
+    Start 214: native-library-source
+6/6 Test #214: native-library-source ............   Passed    0.89 sec
+
+100% tests passed out of 6
+
+Total Test time (real) =   6.30 sec

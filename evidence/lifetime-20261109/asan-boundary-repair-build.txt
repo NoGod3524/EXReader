@@ -1,0 +1,189 @@
+["cmake", "--build", "build/lifetime-asan", "--parallel", "2", "--target", "exreader-stretch-test", "exreader-library-unique-test", "exreader-kf8-test", "exreader-lifetime-test"]
+[0/2] Re-checking globbed directories...
+[1/149] Building C object CMakeFiles\exr_base_objects.dir\src\common.c.obj
+[2/149] Building C object CMakeFiles\exr_base_objects.dir\src\core.c.obj
+[3/149] Building C object CMakeFiles\exr_base_objects.dir\src\lifetime_api_base.c.obj
+[4/149] Building C object CMakeFiles\exr_base_objects.dir\src\lifetime.c.obj
+[5/149] Building C object CMakeFiles\exr_base_objects.dir\src\memory.c.obj
+[6/149] Building C object CMakeFiles\exr_base_objects.dir\src\normalize.c.obj
+[7/149] Building C object CMakeFiles\exr_base_objects.dir\src\numbering.c.obj
+[8/149] Building C object CMakeFiles\exr_base_objects.dir\src\map.c.obj
+[9/149] Building C object CMakeFiles\exr_base_objects.dir\src\source.c.obj
+[10/149] Building C object CMakeFiles\exr_base_objects.dir\src\transfer.c.obj
+[11/149] Building C object CMakeFiles\exr_base_objects.dir\src\viewport.c.obj
+[12/149] Building C object CMakeFiles\exr_graphics_objects.dir\src\affine_image.c.obj
+[13/149] Linking C static library exr_base.lib
+[14/149] Building C object CMakeFiles\exr_graphics_objects.dir\src\blend.c.obj
+[15/149] Building C object CMakeFiles\exr_graphics_objects.dir\src\canvas.c.obj
+[16/149] Building C object CMakeFiles\exr_graphics_objects.dir\src\curves.c.obj
+[17/149] Building C object CMakeFiles\exr_graphics_objects.dir\src\dash.c.obj
+[18/149] Building C object CMakeFiles\exr_graphics_objects.dir\src\icc.c.obj
+[19/149] Building C object CMakeFiles\exr_graphics_objects.dir\src\image_formats.c.obj
+[20/149] Building C object CMakeFiles\exr_graphics_objects.dir\src\lifetime_api_graphics.c.obj
+[21/149] Building C object CMakeFiles\exr_graphics_objects.dir\src\images.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\images.c(7): warning C4324: '<unnamed-tag>': structure was padded due to alignment specifier
+[22/149] Building C object CMakeFiles\exr_graphics_objects.dir\src\stroke.c.obj
+[23/149] Building C object CMakeFiles\exr_graphics_objects.dir\src\vector.c.obj
+[24/149] Linking C static library exr_graphics.lib
+[25/149] Building C object CMakeFiles\exr_text_objects.dir\src\bidi.c.obj
+[26/149] Building C object CMakeFiles\exr_text_objects.dir\src\dictionary.c.obj
+[27/149] Building C object CMakeFiles\exr_text_objects.dir\src\font_bitmap.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\font_bitmap.c(10): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\font_bitmap.c(114): warning C4200: nonstandard extension used: zero-sized array in struct/union
+[28/149] Building C object CMakeFiles\exr_text_objects.dir\src\font_cache.c.obj
+[29/149] Building C object CMakeFiles\exr_text_objects.dir\src\font_color.c.obj
+[30/149] Building C object CMakeFiles\exr_text_objects.dir\src\font_manager.c.obj
+[31/149] Building C object CMakeFiles\exr_text_objects.dir\src\font_colr_v1.c.obj
+[32/149] Building C object CMakeFiles\exr_text_objects.dir\src\font_path.c.obj
+[33/149] Building C object CMakeFiles\exr_text_objects.dir\src\font_outline.c.obj
+[34/149] Building C object CMakeFiles\exr_text_objects.dir\src\font_svg.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\font_svg.c(32): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\font_svg.c(913): warning C4456: declaration of 'value' hides previous local declaration
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\font_svg.c(883): note: see declaration of 'value'
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\font_svg.c(935): warning C4456: declaration of 'value' hides previous local declaration
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\font_svg.c(883): note: see declaration of 'value'
+[35/149] Building C object CMakeFiles\exr_text_objects.dir\src\fonts.c.obj
+[36/149] Building C object CMakeFiles\exr_text_objects.dir\src\font_scan.c.obj
+[37/149] Building C object CMakeFiles\exr_text_objects.dir\src\hyphen.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\hyphen.c(719): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\hyphen.c(1019) : warning C4701: potentially uninitialized local variable 'emit' used
+[38/149] Building C object CMakeFiles\exr_text_objects.dir\src\lifetime_api_text.c.obj
+[39/149] Building C object CMakeFiles\exr_text_objects.dir\src\opentype.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\opentype.c(1658): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\opentype.c(1789): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+[40/149] Building C object CMakeFiles\exr_text_objects.dir\src\text.c.obj
+[41/149] Building C object CMakeFiles\exr_doc_objects.dir\src\anchor.c.obj
+[42/149] Building C object CMakeFiles\exr_text_objects.dir\src\variable.c.obj
+[43/149] Building C object CMakeFiles\exr_doc_objects.dir\src\annotation.c.obj
+[44/149] Linking C static library exr_text.lib
+[45/149] Building C object CMakeFiles\exr_doc_objects.dir\src\cfi.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\cfi.c(314) : warning C4701: potentially uninitialized local variable 'result' used
+[46/149] Building C object CMakeFiles\exr_doc_objects.dir\src\cfi_offset.c.obj
+[47/149] Building C object CMakeFiles\exr_doc_objects.dir\src\cfi_syntax.c.obj
+[48/149] Building C object CMakeFiles\exr_doc_objects.dir\src\cfi_text.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\cfi_text.c(120): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\cfi_text.c(144): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+[49/149] Building C object CMakeFiles\exr_doc_objects.dir\src\chapter_index.c.obj
+[50/149] Building C object CMakeFiles\exr_doc_objects.dir\src\chapter_window.c.obj
+[51/149] Building C object CMakeFiles\exr_doc_objects.dir\src\construct.c.obj
+[52/149] Building C object CMakeFiles\exr_doc_objects.dir\src\document.c.obj
+[53/149] Building C object CMakeFiles\exr_doc_objects.dir\src\fixed.c.obj
+[54/149] Building C object CMakeFiles\exr_doc_objects.dir\src\fixed_text.c.obj
+[55/149] Building C object CMakeFiles\exr_doc_objects.dir\src\lifetime_api_doc.c.obj
+[56/149] Building C object CMakeFiles\exr_formats_objects.dir\src\book.c.obj
+[57/149] Linking C static library exr_doc.lib
+[58/149] Building C object CMakeFiles\exr_formats_objects.dir\src\docx.c.obj
+[59/149] Building C object CMakeFiles\exr_formats_objects.dir\src\epub_write.c.obj
+[60/149] Building C object CMakeFiles\exr_formats_objects.dir\src\export_epub.c.obj
+[61/149] Building C object CMakeFiles\exr_formats_objects.dir\src\export_text.c.obj
+[62/149] Building C object CMakeFiles\exr_formats_objects.dir\src\fb2.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\fb2.c(116): warning C4457: declaration of 'parent' hides function parameter
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\fb2.c(86): note: see declaration of 'parent'
+[63/149] Building C object CMakeFiles\exr_formats_objects.dir\src\formats.c.obj
+[64/149] Building C object CMakeFiles\exr_formats_objects.dir\src\huff.c.obj
+[65/149] Building C object CMakeFiles\exr_formats_objects.dir\src\lcp.c.obj
+[66/149] Building C object CMakeFiles\exr_formats_objects.dir\src\kf8.c.obj
+[67/149] Building C object CMakeFiles\exr_formats_objects.dir\src\lifetime_api_formats.c.obj
+[68/149] Building C object CMakeFiles\exr_formats_objects.dir\src\lzma.c.obj
+[69/149] Building C object CMakeFiles\exr_formats_objects.dir\src\navigation.c.obj
+[70/149] Building C object CMakeFiles\exr_formats_objects.dir\src\rtf.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\rtf.c(907): warning C4456: declaration of 'k' hides previous local declaration
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\rtf.c(777): note: see declaration of 'k'
+[71/149] Building C object CMakeFiles\exr_formats_objects.dir\src\sevenz.c.obj
+[72/149] Building C object CMakeFiles\exr_formats_objects.dir\src\xmp.c.obj
+[73/149] Linking C static library exr_formats.lib
+[74/149] Building C object CMakeFiles\exr_layout_objects.dir\src\chapter_reader.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\chapter_reader.c(532) : warning C4701: potentially uninitialized local variable 'size' used
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\chapter_reader.c(530) : warning C4701: potentially uninitialized local variable 'line' used
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\chapter_reader.c(530) : warning C4703: potentially uninitialized local pointer variable 'line' used
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\chapter_reader.c(530) : warning C4701: potentially uninitialized local variable 'offset' used
+[75/149] Building C object CMakeFiles\exr_layout_objects.dir\src\display_bidi.c.obj
+[76/149] Building C object CMakeFiles\exr_layout_objects.dir\src\floats.c.obj
+[77/149] Building C object CMakeFiles\exr_layout_objects.dir\src\flow.c.obj
+[78/149] Building C object CMakeFiles\exr_layout_objects.dir\src\inline.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\inline.c(1442): warning C4456: declaration of 'k' hides previous local declaration
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\inline.c(1421): note: see declaration of 'k'
+[79/149] Building C object CMakeFiles\exr_layout_objects.dir\src\layout.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\layout.c(198): warning C4389: '!=': signed/unsigned mismatch
+[80/149] Building C object CMakeFiles\exr_layout_objects.dir\src\lifetime_api_layout.c.obj
+[81/149] Building C object CMakeFiles\exr_layout_objects.dir\src\pager_table.c.obj
+[82/149] Building C object CMakeFiles\exr_layout_objects.dir\src\pager.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pager.c(495): warning C4389: '==': signed/unsigned mismatch
+[83/149] Building C object CMakeFiles\exr_layout_objects.dir\src\positioned.c.obj
+[84/149] Building C object CMakeFiles\exr_layout_objects.dir\src\publication.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\publication.c(817) : warning C4701: potentially uninitialized local variable 'result' used
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\publication.c(1065) : warning C4701: potentially uninitialized local variable 'revision' used
+[85/149] Building C object CMakeFiles\exr_layout_objects.dir\src\ruby.c.obj
+[86/149] Building C object CMakeFiles\exr_layout_objects.dir\src\ssml.c.obj
+[87/149] Building C object CMakeFiles\exr_layout_objects.dir\src\style.c.obj
+[88/149] Building C object CMakeFiles\exr_layout_objects.dir\src\toc_page.c.obj
+[89/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\lifetime_api_pdf.c.obj
+[90/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\cbz.c.obj
+[91/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_annotation_paint.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_annotation_paint.c(236) : warning C4701: potentially uninitialized local variable 'present' used
+[92/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_annotations.c.obj
+[93/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_calculator.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_calculator.c(22): warning C4200: nonstandard extension used: zero-sized array in struct/union
+[94/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_ccitt.c.obj
+[95/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_cmap.c.obj
+[96/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_color.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_color.c(144): warning C4456: declaration of 'status' hides previous local declaration
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_color.c(133): note: see declaration of 'status'
+[97/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_crypto.c.obj
+[98/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_content.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_content.c(10): warning C4200: nonstandard extension used: zero-sized array in struct/union
+[99/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_document.c.obj
+[100/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_encoding.c.obj
+[101/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_face.c.obj
+[102/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_font.c.obj
+[103/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_function.c.obj
+[104/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_image.c.obj
+[105/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_jpx.c.obj
+[106/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_objects.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_objects.c(1072): warning C4456: declaration of 'count' hides previous local declaration
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_objects.c(967): note: see declaration of 'count'
+[107/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_pages.c.obj
+[108/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_paint.c.obj
+[109/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_raster.c.obj
+[110/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_shading.c.obj
+[111/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_shading_mesh.c.obj
+[112/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_softmask.c.obj
+[113/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_softmask_parse.c.obj
+[114/149] Building C object CMakeFiles\exr_pdf_objects.dir\src\pdf_view.c.obj
+[115/149] Building C object CMakeFiles\exr_render_objects.dir\src\lifetime_api_render.c.obj
+[116/149] Linking C static library exr_layout.lib
+[117/149] Building C object CMakeFiles\exr_render_objects.dir\src\raster.c.obj
+[118/149] Linking C static library exr_pdf.lib
+[119/149] Building C object CMakeFiles\exr_pdf_edit_objects.dir\src\lifetime_api_pdf_edit.c.obj
+[120/149] Building C object CMakeFiles\exr_pdf_edit_objects.dir\src\pdf_write.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_write.c(886) : warning C4701: potentially uninitialized local variable 'rotation' used
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_write.c(1010) : warning C4701: potentially uninitialized local variable 'generation' used
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_write.c(740) : warning C4701: potentially uninitialized local variable 'maxlen' used
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_write.c(1010) : warning C4701: potentially uninitialized local variable 'object' used
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_write.c(1014) : warning C4701: potentially uninitialized local variable 'ap' used
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\pdf_write.c(670) : warning C4701: potentially uninitialized local variable 'normal' used
+[121/149] Building C object CMakeFiles\exr_pdf_edit_objects.dir\src\xmp_write.c.obj
+[122/149] Building C object CMakeFiles\exr_audio_objects.dir\src\aac.c.obj
+[123/149] Building C object CMakeFiles\exr_audio_objects.dir\src\audio.c.obj
+[124/149] Building C object CMakeFiles\exr_audio_objects.dir\src\audio_player.c.obj
+[125/149] Building C object CMakeFiles\exr_audio_objects.dir\src\audio_output.c.obj
+[126/149] Building C object CMakeFiles\exr_audio_objects.dir\src\bmff.c.obj
+[127/149] Building C object CMakeFiles\exr_audio_objects.dir\src\flac.c.obj
+[128/149] Building C object CMakeFiles\exr_audio_objects.dir\src\lifetime_api_audio.c.obj
+[129/149] Building C object CMakeFiles\exr_audio_objects.dir\src\m4b.c.obj
+[130/149] Building C object CMakeFiles\exr_audio_objects.dir\src\m4b_metadata.c.obj
+C:\Users\Oscar\Documents\Codex\EXReader-S6-20261109\src\m4b_metadata.c(274): warning C4018: '>': signed/unsigned mismatch
+[131/149] Building C object CMakeFiles\exr_audio_objects.dir\src\mp3.c.obj
+[132/149] Building C object CMakeFiles\exr_audio_objects.dir\src\pcm.c.obj
+[133/149] Building C object CMakeFiles\exr_audio_objects.dir\src\stretch.c.obj
+[134/149] Building C object CMakeFiles\exr_audio_objects.dir\src\wave.c.obj
+[135/149] Building C object CMakeFiles\exr_library_objects.dir\src\library.c.obj
+[136/149] Building C object CMakeFiles\exr_library_objects.dir\src\lifetime_api_library.c.obj
+[137/149] Building C object CMakeFiles\exr_textindex_objects.dir\src\lifetime_api_textindex.c.obj
+[138/149] Building C object CMakeFiles\exr_textindex_objects.dir\src\text_index.c.obj
+[139/149] Linking C static library exr_render.lib
+[140/149] Linking C static library exr_pdf_edit.lib
+[141/149] Linking C static library exr_audio.lib
+[142/149] Linking C static library exr_library.lib
+[143/149] Linking C static library exr_textindex.lib
+[144/149] Linking C shared library exreader.dll

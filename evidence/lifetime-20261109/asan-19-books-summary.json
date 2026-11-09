@@ -3,7 +3,7 @@
   "books_passed": 19,
   "books_total": 19,
   "workload": "open, enumerate, load first part/page, render one page, free all objects",
-  "source_revision": "b0af2a5537fdf83158750e42d0fce412c4359429",
+  "source_revision": "3819180d8cd2e76b9d408986ff479def10101fce",
   "source_sha256": {
     "cmake/component_tests.cmake": "b34487cccc324e7b84758342de486976061f5aea4a781532556baf79e135ef1a",
     "cmake/deps.cmake": "d45d72206cecce6f10c8b76be3da60e91ba44f0a78f42b0a49c551ce32739758",
@@ -215,11 +215,11 @@
     "src/wave.c": "f822717b0f2e214a9ccbf1525e44cc444675c2fca63d73f39fc3f1bb66711414",
     "src/xmp.c": "1de30ee3e4bcb92e980231da2cbaaf1d715a3808f272305a740ee8912e9f8128",
     "src/xmp_write.c": "db37f86923b9edfe90603267b96d5335c17ce8e05b045ede4e63434947bb640c",
-    "tests/test_lifetime_leaks.c": "09d005bb02422f1d863d3aa7d23bb34a8c3ca1b04de895d674c87e297c22c664",
+    "tests/test_lifetime_leaks.c": "00153baae94c4a50621a6f8308ee3ae55c64b329f443f242baa353091e7c82be",
     "tools/check_lifetime_coverage.py": "bd4b6f3532563195e536fe6092b239eb3beccb43ab3f3d56b6d7ae1fda51a8d3",
     "tools/generate_lifetime_api.py": "2d3bdaca9ada0851e949569d4f13347267728fc8041e07dbb8df98fd0e923689",
     "tools/layers.json": "185334f2db2fccf8b4f1d5f1d3f9ce4c7dbbdd2cdd08593b33283b0a21c5d70b",
-    "tools/lifetime_leaks.py": "b9c53c343d2e32b9a6fced96ca8dc47b13a6b0c3349bb38d469beddd2308e3b7"
+    "tools/lifetime_leaks.py": "d0c42472ccc195c79e54bd338ac7ef2cd74209b33c642d4a0d2c8dc8e8553481"
   },
   "font_sha256": "ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed",
   "books": [

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cmake",
+    "--build",
+    "build/lifetime-release",
+    "--parallel",
+    "2",
+    "--target",
+    "exreader",
+    "exreader-float-test",
+    "exreader-hyphen-layout-test"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 79.478
+}
