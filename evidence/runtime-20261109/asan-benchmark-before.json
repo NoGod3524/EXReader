@@ -1,0 +1,284 @@
+{
+  "schema": 1,
+  "kind": "conversion-benchmark",
+  "tool": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\exreader-convert.exe",
+  "tool_sha256": "6b04813636ec9c3a4020d2791f912641f0aeca2c8d610dd1728c09faf4a892f1",
+  "engine_version": "3.42.0",
+  "instrumented": false,
+  "memory_budget_evaluated": true,
+  "memory_budget_bytes": 33554432,
+  "memory_budget_passed": false,
+  "memory_scope": "uninstrumented process peak RSS",
+  "runtime": {
+    "exreader.dll": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\exreader.dll",
+      "sha256": "5b20ada03563e098b0bed43fbfdddbe85a2047e6614a23a0f33f2e4c14a4624c"
+    }
+  },
+  "small": [
+    {
+      "theme": "ascii",
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\convert-corpus\\text\\txt\\ascii.txt",
+      "input_sha256": "64ad119fcba8f5124b0af0d3f6759333b41015e45fc8112a93d1a9e64a780219",
+      "input_bytes": 137,
+      "samples": [
+        {
+          "elapsed_seconds": 0.520781,
+          "peak_rss_bytes": 23097344,
+          "output_bytes": 1504
+        },
+        {
+          "elapsed_seconds": 0.464529,
+          "peak_rss_bytes": 23076864,
+          "output_bytes": 1504
+        },
+        {
+          "elapsed_seconds": 0.665552,
+          "peak_rss_bytes": 23093248,
+          "output_bytes": 1504
+        }
+      ]
+    },
+    {
+      "theme": "chinese",
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\convert-corpus\\text\\txt\\chinese.txt",
+      "input_sha256": "01486e21380f0fe3cf29ca226708434e665bb966af3a40678fbc1c21c8386edd",
+      "input_bytes": 157,
+      "samples": [
+        {
+          "elapsed_seconds": 0.56349,
+          "peak_rss_bytes": 23093248,
+          "output_bytes": 1569
+        },
+        {
+          "elapsed_seconds": 0.449321,
+          "peak_rss_bytes": 23109632,
+          "output_bytes": 1569
+        },
+        {
+          "elapsed_seconds": 0.412735,
+          "peak_rss_bytes": 23142400,
+          "output_bytes": 1569
+        }
+      ]
+    },
+    {
+      "theme": "rtl",
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\convert-corpus\\text\\txt\\rtl.txt",
+      "input_sha256": "c0bea052fcb1485c169616c1093f819d61423ab64d54338dc73226f64d2d4371",
+      "input_bytes": 197,
+      "samples": [
+        {
+          "elapsed_seconds": 0.19057,
+          "peak_rss_bytes": 23113728,
+          "output_bytes": 1559
+        },
+        {
+          "elapsed_seconds": 0.345159,
+          "peak_rss_bytes": 23080960,
+          "output_bytes": 1559
+        },
+        {
+          "elapsed_seconds": 0.380374,
+          "peak_rss_bytes": 23105536,
+          "output_bytes": 1559
+        }
+      ]
+    },
+    {
+      "theme": "supplementary",
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\convert-corpus\\text\\txt\\supplementary.txt",
+      "input_sha256": "143e6b9dd0f39701973f11e10e30213c8949ae70f4dc35cd63b9fdd71e05d781",
+      "input_bytes": 167,
+      "samples": [
+        {
+          "elapsed_seconds": 0.389471,
+          "peak_rss_bytes": 23121920,
+          "output_bytes": 1569
+        },
+        {
+          "elapsed_seconds": 0.355271,
+          "peak_rss_bytes": 23109632,
+          "output_bytes": 1569
+        },
+        {
+          "elapsed_seconds": 0.310504,
+          "peak_rss_bytes": 23097344,
+          "output_bytes": 1569
+        }
+      ]
+    },
+    {
+      "theme": "special",
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\convert-corpus\\text\\txt\\special.txt",
+      "input_sha256": "9872dab83c31d96c8f5dc483a68340351344857b14ec9febc584b8c50547b39b",
+      "input_bytes": 163,
+      "samples": [
+        {
+          "elapsed_seconds": 0.314356,
+          "peak_rss_bytes": 57712640,
+          "output_bytes": 1546
+        },
+        {
+          "elapsed_seconds": 0.221384,
+          "peak_rss_bytes": 23113728,
+          "output_bytes": 1547
+        },
+        {
+          "elapsed_seconds": 0.133061,
+          "peak_rss_bytes": 23097344,
+          "output_bytes": 1547
+        }
+      ]
+    },
+    {
+      "theme": "whitespace",
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\convert-corpus\\text\\txt\\whitespace.txt",
+      "input_sha256": "b1dcb3e85eb1ee92a11b207b832ffc4b6893fbece1ab9e7895cf9c7acba768f8",
+      "input_bytes": 182,
+      "samples": [
+        {
+          "elapsed_seconds": 0.324359,
+          "peak_rss_bytes": 23105536,
+          "output_bytes": 1526
+        },
+        {
+          "elapsed_seconds": 0.417322,
+          "peak_rss_bytes": 23093248,
+          "output_bytes": 1526
+        },
+        {
+          "elapsed_seconds": 0.299114,
+          "peak_rss_bytes": 23089152,
+          "output_bytes": 1525
+        }
+      ]
+    },
+    {
+      "theme": "structure",
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\convert-corpus\\text\\txt\\structure.txt",
+      "input_sha256": "42c1cbb8e4f2e5fc35c0ea4b3c59ef817bf9b9c43c46373a935c327ebaa6e189",
+      "input_bytes": 131,
+      "samples": [
+        {
+          "elapsed_seconds": 0.337213,
+          "peak_rss_bytes": 57729024,
+          "output_bytes": 1494
+        },
+        {
+          "elapsed_seconds": 0.350264,
+          "peak_rss_bytes": 23097344,
+          "output_bytes": 1494
+        },
+        {
+          "elapsed_seconds": 0.600022,
+          "peak_rss_bytes": 23109632,
+          "output_bytes": 1494
+        }
+      ]
+    },
+    {
+      "theme": "multichapter",
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\convert-corpus\\text\\txt\\multichapter.txt",
+      "input_sha256": "7b6b1fd9baaeeced21252d6a3d081cc5426d1e15f0deb76e10651c2fe97ec571",
+      "input_bytes": 113,
+      "samples": [
+        {
+          "elapsed_seconds": 0.509809,
+          "peak_rss_bytes": 23085056,
+          "output_bytes": 1469
+        },
+        {
+          "elapsed_seconds": 0.719909,
+          "peak_rss_bytes": 23146496,
+          "output_bytes": 1469
+        },
+        {
+          "elapsed_seconds": 0.359583,
+          "peak_rss_bytes": 23097344,
+          "output_bytes": 1469
+        }
+      ]
+    },
+    {
+      "theme": "long",
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\convert-corpus\\text\\txt\\long.txt",
+      "input_sha256": "c1735552b23e67b3e7c71db6fcf366d7fd8751e6ff193cb64a75091f77fed83d",
+      "input_bytes": 231,
+      "samples": [
+        {
+          "elapsed_seconds": 0.619972,
+          "peak_rss_bytes": 23117824,
+          "output_bytes": 1608
+        },
+        {
+          "elapsed_seconds": 0.336967,
+          "peak_rss_bytes": 23093248,
+          "output_bytes": 1608
+        },
+        {
+          "elapsed_seconds": 0.30212,
+          "peak_rss_bytes": 23105536,
+          "output_bytes": 1608
+        }
+      ]
+    },
+    {
+      "theme": "metadata",
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\convert-corpus\\text\\txt\\metadata.txt",
+      "input_sha256": "ecef45366eabcf13297542b8d82356cf7fd3670b2a8e18cb43202203d8b007b5",
+      "input_bytes": 167,
+      "samples": [
+        {
+          "elapsed_seconds": 0.3171,
+          "peak_rss_bytes": 23121920,
+          "output_bytes": 1541
+        },
+        {
+          "elapsed_seconds": 0.410472,
+          "peak_rss_bytes": 23117824,
+          "output_bytes": 1541
+        },
+        {
+          "elapsed_seconds": 0.237128,
+          "peak_rss_bytes": 23121920,
+          "output_bytes": 1541
+        }
+      ]
+    }
+  ],
+  "one_mib": {
+    "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\convert-corpus\\long\\one-mib.txt",
+    "input_sha256": "dc7eb6f0d742bf8e7e87dfd54b0bc5bfe7ded61109ac74395b4ff57a89e7f8c5",
+    "input_bytes": 1048576,
+    "samples": [
+      {
+        "elapsed_seconds": 2.412167,
+        "peak_rss_bytes": 94818304,
+        "output_bytes": 53856
+      },
+      {
+        "elapsed_seconds": 2.394243,
+        "peak_rss_bytes": 94806016,
+        "output_bytes": 53857
+      },
+      {
+        "elapsed_seconds": 2.205501,
+        "peak_rss_bytes": 94855168,
+        "output_bytes": 53857
+      }
+    ]
+  },
+  "batch_100": {
+    "items": 100,
+    "elapsed_seconds": 242.259379,
+    "peak_rss_bytes": 480387072,
+    "output_bytes": 5385747,
+    "single_peak_rss_bytes": 94855168,
+    "peak_delta_bytes": 385531904,
+    "queue_note": "manifest is loaded once; items are converted and released one at a time; no 100-document queue",
+    "unfinished": 0,
+    "failed": 0
+  },
+  "temporary_files_remaining": 0
+}

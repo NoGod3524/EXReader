@@ -1,0 +1,20 @@
+["C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ctest.EXE", "--test-dir", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a", "--output-on-failure", "-j", "2", "--output-junit", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\asan-fuzz.xml", "-R", "^native-fuzz-"]
+Test project C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a
+    Start 195: native-fuzz-driver
+    Start 196: native-fuzz-font
+1/7 Test #195: native-fuzz-driver ...............   Passed    0.80 sec
+    Start 197: native-fuzz-layout
+2/7 Test #196: native-fuzz-font .................   Passed    0.92 sec
+    Start 198: native-fuzz-render
+3/7 Test #198: native-fuzz-render ...............   Passed    0.33 sec
+    Start 199: native-fuzz-pipeline-contract
+4/7 Test #197: native-fuzz-layout ...............   Passed    0.71 sec
+    Start 200: native-fuzz-accounting
+5/7 Test #199: native-fuzz-pipeline-contract ....   Passed    8.67 sec
+    Start 201: native-fuzz-smoke
+6/7 Test #201: native-fuzz-smoke ................   Passed    0.35 sec
+7/7 Test #200: native-fuzz-accounting ...........   Passed   31.86 sec
+
+100% tests passed out of 7
+
+Total Test time (real) =  33.39 sec

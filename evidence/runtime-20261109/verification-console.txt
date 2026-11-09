@@ -1,0 +1,1 @@
+Evidence cross-check complete: 228 ASan tests, 19 books, all inputs + three variants, 30/30 adjudications; coverage 94.85%; runtime diagnostics=0. Current-source book changes=0; historical Zami change from PR #96 is retained, not called zero.

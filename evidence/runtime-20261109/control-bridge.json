@@ -1,0 +1,31 @@
+{
+  "command": [
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\cl.EXE",
+    "/nologo",
+    "/LD",
+    "/MTd",
+    "/Z7",
+    "/Od",
+    "/std:c11",
+    "/utf-8",
+    "/D_CRT_SECURE_NO_WARNINGS",
+    "/IC:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\include",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\examples\\windows\\check_typography_font.c",
+    "/FoC:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\m\\bridge.obj",
+    "/FeC:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\m\\quality-font-bridge.dll",
+    "/link",
+    "/INCREMENTAL:NO",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\m\\exreader.lib",
+    "comdlg32.lib",
+    "gdi32.lib",
+    "uiautomationcore.lib",
+    "shell32.lib",
+    "user32.lib",
+    "oleaut32.lib",
+    "uuid.lib"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 2.592355899992981,
+  "asan_options": "alloc_dealloc_mismatch=1:halt_on_error=1",
+  "gcov_prefix": null
+}

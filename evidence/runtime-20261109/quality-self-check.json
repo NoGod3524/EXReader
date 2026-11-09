@@ -1,0 +1,14 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check",
+    "--",
+    "tools/quality",
+    "docs/QUALITY.md",
+    "SAN-FINAL-OUT.txt"
+  ],
+  "exit_code": 0,
+  "raw_evidence_whitespace": "Preserved original CTest JSON/console formatting; full staged whitespace check reports native-output trailing spaces, confined to evidence/."
+}

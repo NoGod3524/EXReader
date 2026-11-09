@@ -1,0 +1,15 @@
+{
+  "name": "mingw-address",
+  "command": [
+    "gcc",
+    "-fsanitize=address",
+    "-g",
+    "-O1",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\tools\\quality\\address_probe.c",
+    "-o",
+    "gcc-address.exe"
+  ],
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.2.0/../../../../x86_64-w64-mingw32/bin/ld.exe: cannot find -lasan: No such file or directory\r\ncollect2.exe: error: ld returned 1 exit status\n"
+}

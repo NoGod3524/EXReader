@@ -1,0 +1,18 @@
+{
+  "command": [
+    "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ctest.EXE",
+    "--test-dir",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a",
+    "--output-on-failure",
+    "-j",
+    "2",
+    "--output-junit",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\asan-benchmark.xml",
+    "-R",
+    "^native-convert-benchmark$"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 230.1193784999923,
+  "asan_options": "alloc_dealloc_mismatch=1:halt_on_error=1",
+  "gcov_prefix": null
+}
