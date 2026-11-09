@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MIT
 """Small positive/rejection checks; synthetic validator fixtures, never SDK evidence."""
 import copy
-from contextlib import closing
 import json
 from pathlib import Path
 import sqlite3
@@ -44,7 +43,7 @@ def fixture(root, profile):
     write(runtime, {'sdk_version': '3.40.0', 'abi': 1, 'library_header_version': '3.34.0' if library else None})
     db = root / 'library.sqlite' if library else None
     if db:
-        with closing(sqlite3.connect(db)) as connection, connection:
+        with sqlite3.connect(db) as connection:
             connection.execute('PRAGMA application_id=1163416131')
             connection.execute('PRAGMA user_version=7')
     return stage, reports, runtime, db
