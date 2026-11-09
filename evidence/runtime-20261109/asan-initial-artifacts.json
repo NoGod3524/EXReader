@@ -1,0 +1,10 @@
+{
+  "phase": "Initial MSVC ASan workload build, before adding fuzz targets",
+  "files": {
+    "exreader.dll": "5b20ada03563e098b0bed43fbfdddbe85a2047e6614a23a0f33f2e4c14a4624c",
+    "exreader.lib": "8b564f7590b1ecd8a35d6a6aa4b25e0afac7b75ad9ced61ee22e34fedce1b511",
+    "quality-font-bridge.dll": "0e4ea730728f5f297a7ff476a3342b7d1006b7e0aae31206326cb53bda43ea20",
+    "exreader-check-document.exe": "ec3d6016dbaf6f86cae9c312c9c6311a7a753cc4f333a9904c2f7f13166f4648",
+    "typed-probe.exe": "1d821fcf3854a0af08fe44688046a5d87a52ec5c911607a822162022d88bd30b"
+  }
+}

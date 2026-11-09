@@ -1,0 +1,6 @@
+["C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\g\\txt-view.exe"]
+compared 1 pages from 33 source bytes
+compared 1 pages from 12 source bytes
+compared 172 pages from 139290 source bytes
+compared 145 pages from 134396 source bytes
+compared 100 pages from 140826 source bytes

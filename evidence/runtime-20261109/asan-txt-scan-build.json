@@ -1,0 +1,21 @@
+{
+  "command": [
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\cl.EXE",
+    "/nologo",
+    "/MTd",
+    "/Z7",
+    "/Od",
+    "/fsanitize=address",
+    "/std:c11",
+    "/utf-8",
+    "/IC:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\include",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\tests\\bounded_txt_scan\\check.c",
+    "/FoC:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\txt-scan.obj",
+    "/FeC:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\txt-scan.exe",
+    "/link",
+    "/INCREMENTAL:NO",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a\\exreader.lib"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 1.978734299991629
+}

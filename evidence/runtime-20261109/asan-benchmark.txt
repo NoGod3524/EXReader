@@ -1,0 +1,10 @@
+["C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ctest.EXE", "--test-dir", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a", "--output-on-failure", "-j", "2", "--output-junit", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\asan-benchmark.xml", "-R", "^native-convert-benchmark$"]
+Test project C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a
+    Start 181: native-convert-corpus
+1/2 Test #181: native-convert-corpus ............   Passed    7.61 sec
+    Start 184: native-convert-benchmark
+2/2 Test #184: native-convert-benchmark .........   Passed  221.87 sec
+
+100% tests passed out of 2
+
+Total Test time (real) = 229.54 sec

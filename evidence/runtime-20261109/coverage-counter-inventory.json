@@ -1,0 +1,144 @@
+{
+  "expected_project_files": 116,
+  "groups": [
+    {
+      "group": "b0",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b1",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b10",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b11",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b12",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b13",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b14",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b15",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b16",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b17",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b18",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b2",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b3",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b4",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b5",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b6",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b7",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b8",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "b9",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "f10716",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "f7428",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "t",
+      "project_counters": 116,
+      "missing": [],
+      "used": true
+    },
+    {
+      "group": "w",
+      "project_counters": 0,
+      "missing": [],
+      "used": false,
+      "note": "Created default prefix; every worker overrides it with an isolated group before loading the DLL."
+    }
+  ]
+}

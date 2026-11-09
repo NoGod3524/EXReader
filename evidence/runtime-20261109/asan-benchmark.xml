@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="2"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="229"
+	timestamp="2026-11-09T01:36:41"
+	>
+	<testcase name="native-convert-corpus" classname="native-convert-corpus" time="7.60604" status="run">
+		<properties/>
+		<system-out>generated 101 files in C:\Users\Oscar\Documents\Codex\EXReader-runtime-20261109\evidence\runtime-20261109\local\a\convert-corpus
+</system-out>
+	</testcase>
+	<testcase name="native-convert-benchmark" classname="native-convert-benchmark" time="221.872" status="run">
+		<properties/>
+		<system-out>small=10 one_mib_peak=94806016 batch_peak=445546496 outputs_batch=5385784
+</system-out>
+	</testcase>
+</testsuite>
