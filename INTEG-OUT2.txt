@@ -7,3 +7,4 @@
 [2026-11-09 00:59:04 -05:00] layers 登记核对通过：两边 files/headers 映射均完整保留，src/*.h 与 src/*.c 未登记数均为 0；证据 build/integration-main99/registration-audit.json。
 [2026-11-09 00:59:08 -05:00] MinGW 引擎与全测试目标构建完成，退出码 0；日志 build/integration-main99/build.txt。
 [2026-11-09 00:59:58 -05:00] 测试登记核对完成：228 个既有测试全部保留，main 新增 16 个，合并后总计 244。同文件局部变量复查：library_note 的 snapshot 仅在赋值后经 note 指针使用；fixed_note 的 note 和 audio_bookmark 的 b 均有空输入清零分支；source、format/bounded、text_size、position/extent、validation 的使用均有赋值或成功返回检查，未发现其它同类漏初始化；仅报告，未修改。
+[2026-11-09 00:59:59 -05:00] merge commit 完成：6c415ccec50bdb2fc58eff14382fdbed8b21610c，第二父提交为 d9ffdbf0；四个集成 merge 历史保留。
