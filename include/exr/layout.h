@@ -135,6 +135,38 @@ EXR_API exr_status exr_publication_load(exr_publication *publication, size_t par
    ordered by the publication directory; endpoints may name different parts. */
 typedef struct { size_t part, offset; } exr_text_position;
 typedef struct { exr_text_position start, end; } exr_text_range;
+
+/* Speech cursor: offset uses the same normalized UTF-8 bytes as anchors. Set
+   node=0 to seek; pass next unchanged to continue (node disambiguates images
+   with zero text width). A cursor is valid only for the same document revision. */
+typedef struct { size_t part, offset, node; } exr_ssml_position;
+enum { EXR_SSML_HINT_NOTES=1, EXR_SSML_HINT_IMAGES=2, EXR_SSML_HINT_TABLES=4 };
+typedef struct {
+  exr_text_range range;
+  size_t ssml_start, ssml_end; /* UTF-8 byte interval of sentence text in ssml. */
+} exr_ssml_sentence;
+typedef struct {
+  char *ssml; /* Owned, NUL-terminated W3C SSML 1.0; no presentation styles. */
+  size_t size, characters;
+  exr_ssml_sentence *sentences;
+  size_t sentence_count;
+  exr_ssml_position next;
+  int end; /* next.part == publication part_count */
+} exr_ssml_chunk;
+/* Emits at most max_chars Unicode scalars of spoken text, excluding markup and
+   structural paragraph separators. 0 means 800; maximum 65536. With hints the
+   minimum is 8. Flags default to 0: omit note references/bodies, images, tables.
+   Hints replace each omitted subtree once with a short localized label.
+   At most one linear part is emitted per call; empty/auxiliary parts advance.
+   Sentences split after 。！？；.!? and at paragraph/language/omission boundaries;
+   long sentences are split at the character budget. Element lang/xml:lang
+   overrides publication language; untagged text defaults to zh-CN. zh/en map
+   to zh-CN/en-US. Paragraphs are separated by a 300ms break, including across
+   chunks. No layout or audio device is touched. Failure clears the output.
+   Free each result before reuse. EOF returns an empty, valid speak document. */
+EXR_API exr_status exr_document_ssml(exr_publication *publication,exr_ssml_position from_position,
+  size_t max_chars,exr_ssml_chunk *out,unsigned flags,const exr_control *control,exr_error *error);
+EXR_API void exr_ssml_chunk_free(exr_ssml_chunk *chunk);
 enum { EXR_SEARCH_CASE_SENSITIVE=1, EXR_SEARCH_WHOLE_WORD=2 };
 typedef struct { int found; size_t part, offset, length; } exr_search_result;
 /* Return nonzero to continue, zero to stop (the delivered hit is counted).

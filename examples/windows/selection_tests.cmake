@@ -7,6 +7,7 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
     add_executable(exreader-shell-selection-test
       "${CMAKE_CURRENT_SOURCE_DIR}/examples/windows/check_shell_selection.c"
       "${CMAKE_CURRENT_SOURCE_DIR}/examples/windows/shell_d2d.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/examples/windows/shell_speech.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/examples/windows/shell_epub.cpp")
     target_compile_definitions(exreader-shell-selection-test PRIVATE EXR_READER_WINDOWS_SHELL=1)
     target_compile_features(exreader-shell-selection-test PRIVATE cxx_std_17)

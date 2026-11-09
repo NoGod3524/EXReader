@@ -28,6 +28,7 @@
 #include "windows/shell_d2d.h"
 #include "windows/shell_geometry.h"
 #include "../tools/convert_json.h"
+#include "windows/shell_speech.h"
 int shell_epub_source(exr_source *source);
 int shell_style_document(exr_document **document);
 /* Created with the main window; draws the reading screen (windows/shell_screen.inc). */
@@ -179,6 +180,15 @@ static int annot_click(int x,int y);
 static void annot_pixels(uint32_t *pixels,int width,int height);
 static void annot_marks(HDC dc);
 static int annot_count,annot_selected=-1;
+static int tts_state; /* 0 stopped, 1 speaking, 2 paused */
+static void tts_stop(void);
+static void tts_destroy(void);
+static void tts_poll(void);
+static void tts_pixels(uint32_t *pixels,int width,int height);
+static void tts_menu(HMENU menu);
+static int tts_command(int command);
+static void tts_layout(void);
+static int tts_translate(const MSG *message);
 static void shell_selection_paint(HDC dc);
 static size_t shell_selection_bytes(char **out);
 #endif
@@ -1571,6 +1581,9 @@ static void job_start_failed(host_job *job) {
 
 static void job_start(host_job *job) {
   host_probe_require_ui();
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(job->kind==JOB_OPEN) tts_stop();
+#endif
   if(job->kind==JOB_OPEN || job->kind==JOB_LAYOUT || job->kind==JOB_IMPORT || job->kind==JOB_PREFERENCES || job->kind==JOB_PRODUCT_DELETE || (job->zoom_percent>0 && job->zoom_percent!=g.zoom_percent))page_cache_clear();
   g.job = job;
   if (job->kind != JOB_HIT && job->kind != JOB_SAVE && job->kind != JOB_PREFETCH && job->kind != JOB_IMPORT_ORGANIZE
@@ -4244,6 +4257,7 @@ static void selection_report(void) {
 #include "windows/shell_shelf.inc"
 #include "windows/shell_shelfmeta.inc"
 #include "windows/shell_gestures.inc"
+#include "windows/shell_tts.inc"
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -6210,6 +6224,7 @@ static int check_selection(int minimum, const char *needle) {
 #include "windows/shell_annotations_drive.inc"
 #include "windows/shell_style_drive.inc"
 #include "windows/shell_shelfmeta_drive.inc"
+#include "windows/shell_tts_drive.inc"
 #endif
 
 static int drive_execute(void) {
@@ -6221,6 +6236,9 @@ static int drive_execute(void) {
   if (!strncmp(action,"style_",6) || !strncmp(action,"footnote_",9)) return style_drive(action);
   if (!strncmp(action,"sm_",3)) {
     drive_step_finish(sm_drive(action),"shelf metadata action");return 0;
+  }
+  if (!strncmp(action,"tts_",4)) {
+    drive_step_finish(tts_drive(action),"speech action dispatched");return 0;
   }
   if (!strncmp(action,"annot_",6)) {
     drive_step_finish(annot_drive(action),"annotation action dispatched");return 0;
@@ -7266,6 +7284,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if (shell_dpi_changing) return 0;
       if (host_shell) shell_d2d_resize(host_shell, LOWORD(lparam), HIWORD(lparam));
       if (wparam != SIZE_MINIMIZED) shell_request_layout();
+      if (wparam != SIZE_MINIMIZED) tts_layout();
 #endif
       layout_controls();
       page_dirty(g.page,1);
@@ -7474,6 +7493,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #ifdef EXR_READER_WINDOWS_SHELL
       if (wparam == SHELF_TIMER) {shelf_pump();return 0;}
       if(wparam==0x5760) { sm_tick(); return 0; }
+      if(wparam==0x5453) {tts_poll();return 0;}
       if (wparam == 0x5756) { shell_search_start(); return 0; }
       if (wparam == 0x5757) { shell_search_poll(); return 0; }
       if (wparam == 0x5753) { shell_animate(); return 0; }
@@ -7510,6 +7530,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if (wparam == 1 && g.drive_mode) drive_tick();
       return 0;
     case WM_CLOSE:
+#ifdef EXR_READER_WINDOWS_SHELL
+      tts_stop();
+#endif
       if (g.closing) return 0;
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       prefs_close();
@@ -7564,6 +7587,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #ifdef EXR_READER_WINDOWS_SHELL
       shell_search_destroy();
       shelf_destroy();
+      tts_destroy();
       annot_clear();
       if(annot_brush){DeleteObject(annot_brush);annot_brush=NULL;}
       shell_d2d_destroy(host_shell);

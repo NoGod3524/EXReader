@@ -1,0 +1,62 @@
+HOST	phase=1	engine=3.42.0	pid=25476
+STEP	1	open	PASS	page=1;status=已打开《A Raisin in the Sun》 · 已按章节与文本锚点恢复到上次位置。
+STEP	2	wait_idle	PASS	page=1;status=已打开《A Raisin in the Sun》 · 已按章节与文本锚点恢复到上次位置。
+STEP	3	shell	PASS	reading screen
+STEP	4	shell_dpi	PASS	page=1;status=第 1 页。
+STEP	5	shell_client	PASS	page=1;status=第 1 页。
+STEP	6	shell_font	PASS	page=1;status=第 1 页。
+STEP	7	wait_idle	PASS	page=1;status=第 1 页。
+STEP	8	shell_click	PASS	button invoked
+STEP	9	shell_click	PASS	button invoked
+STEP	10	probe_wait	PASS	waited without blocking UI
+STEP	11	toc_click	PASS	page=1;status=第 1 页。
+STEP	12	wait_idle	PASS	page=1;status=第 1 页。
+STEP	13	probe_wait	PASS	waited without blocking UI
+STEP	14	tts_voice	PASS	speech action dispatched
+STEP	15	tts_rate	PASS	speech action dispatched
+STEP	16	tts_close	PASS	speech action dispatched
+STEP	17	shell_measure	PASS	physical layout captured
+STEP	18	probe_wait	PASS	waited without blocking UI
+STEP	19	tts_start	PASS	speech action dispatched
+STEP	20	tts_dump	PASS	speech action dispatched
+STEP	21	probe_wait	PASS	waited without blocking UI
+STEP	22	tts_pause	PASS	speech action dispatched
+STEP	23	probe_wait	PASS	waited without blocking UI
+STEP	24	wait_idle	PASS	page=2;status=第 2 页。
+STEP	25	tts_dump	PASS	speech action dispatched
+STEP	26	shell_measure	PASS	physical layout captured
+STEP	27	probe_wait	PASS	waited without blocking UI
+STEP	28	tts_stop	PASS	speech action dispatched
+STEP	29	shell_measure	PASS	physical layout captured
+STEP	30	probe_wait	PASS	waited without blocking UI
+STEP	31	tts_rate	PASS	speech action dispatched
+STEP	32	tts_start	PASS	speech action dispatched
+STEP	33	probe_wait	PASS	waited without blocking UI
+STEP	34	tts_dump	PASS	speech action dispatched
+STEP	35	tts_stop	PASS	speech action dispatched
+STEP	36	tts_rate	PASS	speech action dispatched
+STEP	37	tts_start	PASS	speech action dispatched
+STEP	38	probe_wait	PASS	waited without blocking UI
+STEP	39	tts_dump	PASS	speech action dispatched
+STEP	40	tts_minimize	PASS	speech action dispatched
+STEP	41	probe_wait	PASS	waited without blocking UI
+STEP	42	tts_dump	PASS	speech action dispatched
+STEP	43	tts_restore	PASS	speech action dispatched
+STEP	44	wait_idle	PASS	page=4;status=第 4 页。
+STEP	45	probe_wait	PASS	waited without blocking UI
+STEP	46	tts_dump	PASS	speech action dispatched
+STEP	47	tts_stop	PASS	speech action dispatched
+STEP	48	tts_start	PASS	speech action dispatched
+STEP	49	probe_wait	PASS	waited without blocking UI
+STEP	50	shell	PASS	legacy panel
+STEP	51	probe_wait	PASS	waited without blocking UI
+STEP	52	tts_dump	PASS	speech action dispatched
+STEP	53	shell	PASS	reading screen
+STEP	54	wait_idle	PASS	page=3;status=第 3 页。
+STEP	55	tts_start	PASS	speech action dispatched
+STEP	56	probe_wait	PASS	waited without blocking UI
+STEP	57	open	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	58	wait_idle	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	59	tts_dump	PASS	speech action dispatched
+STEP	60	quit	PASS	closing
+DONE	60	eof	PASS	script finished

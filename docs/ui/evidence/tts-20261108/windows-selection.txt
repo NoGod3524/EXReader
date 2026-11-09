@@ -1,0 +1,17 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-tts-20261108/build/tts
+    Start 218: windows-selection-boundaries
+1/6 Test #218: windows-selection-boundaries .....   Passed    0.28 sec
+    Start 219: windows-selection-copy
+2/6 Test #219: windows-selection-copy ...........   Passed    0.06 sec
+    Start 220: windows-selection-keyboard
+3/6 Test #220: windows-selection-keyboard .......   Passed    0.07 sec
+    Start 221: windows-selection-raster
+4/6 Test #221: windows-selection-raster .........   Passed    0.07 sec
+    Start 222: windows-selection-generated
+5/6 Test #222: windows-selection-generated ......   Passed    0.06 sec
+    Start 223: windows-selection-annotations
+6/6 Test #223: windows-selection-annotations ....   Passed    0.10 sec
+
+100% tests passed out of 6
+
+Total Test time (real) =   0.74 sec

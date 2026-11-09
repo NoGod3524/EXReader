@@ -49,3 +49,19 @@ The #89 recent-books page remains the default shelf. It gains **series/tags** an
 Styles and metadata share the profile's `shelf.json` (or the explicit `EXREADER_SHELF_PATH` override). Each writer reads the current file and preserves keys it does not own; metadata accepts an existing settings-only file. The metadata check now exercises both write orders, preserved unknown keys, and stopped reading time during shelf/exit states. Reflow updates progress without incrementing page turns or resetting the idle timer.
 
 Validation: **218/218 ctests**, MinGW host build, all shell checks and **26/26 self-tests**; six search scenarios pass. **19/19 books, 11,403 pages, zero page/glyph/hash changes**. Full metadata UI acceptance passes (edits, covers, series, tags, statistics, restart, rollback and idle accounting). Full shelf UI acceptance passes (30 region taps, 20 swipes, 10 drag selections, vertical navigation, restart/book-switch anchor restoration and saving an unsaved note on exit). The swipe test now permits a next-spine transition to page zero and checks that backward swipes exactly reverse the complete content/raster path.
+
+## #93 — SSML, SAPI and sentence highlighting
+
+Source: `codex/tts-20261108`, `efe177c4791c57ad5bd54a9599a3a266b482e277`.
+
+| Conflicted file | Resolution |
+| --- | --- |
+| `CMakeLists.txt` | Keep the four style/footnote tests and five SSML tests as separate complete loops. |
+| `examples/reader.c` | Retain JSON and speech headers, all feature includes/drivers, shelf/statistics/speech timers and both cleanup paths. |
+| `examples/windows/shell_screen.inc` | Keep shelf shortcuts and speech dialog navigation; Esc inside the speech panel closes that panel first. |
+
+The reading context menu retains all speech controls and voice/rate selection; the required top bar is unchanged. Sentence highlighting composes with annotations and selection. Speech follow does not submit page jumps while a shelf exit/save is pending. The native SAPI acceptance now leaves through the actual shelf flow and verifies speech stops, its highlight clears, and the shelf appears before reopening.
+
+A close-time search crash was reproduced under GDB: speech teardown repainted after search results were freed. `tts_stop` now avoids painting during `g.closing`, while the normal stop before closing still clears the sentence highlight. The search acceptance includes process exit, so it also covers this teardown interaction.
+
+Validation: **223/223 ctests**, MinGW host build, all shell checks, **26/26 self-tests** and six search scenarios including clean exit. **19/19 real books, 11,403 pages, zero page/glyph/hash changes**. Real SAPI acceptance passes four rates, three start/pause/resume/stop cycles, 30-second page following, multi-chunk playback, visible sentence highlighting, minimized playback, shelf return/book switch stops and missing-voice diagnostics. Independent SSML XML/source checks pass five real-book paragraphs and ten chunks with zero character-count error.
