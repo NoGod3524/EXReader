@@ -1,0 +1,431 @@
+{
+  "cpu": [
+    {
+      "Name": "Intel(R) Core(TM) Ultra 7 256V",
+      "NumberOfCores": 8,
+      "NumberOfLogicalProcessors": 8,
+      "MaxClockSpeed": 2200
+    }
+  ],
+  "thermal_error": "Access denied ",
+  "accepted": false,
+  "thermal": null,
+  "utc": "2026-11-08T19:18:55.7980191Z",
+  "processor_policy": "See session power-original/restored.json and fixed policy in load_session.ps1",
+  "active_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)\r\n",
+  "advisory": true,
+  "system": {
+    "model": "83JT",
+    "hypervisor_present": true,
+    "memory_bytes": 16693911552,
+    "manufacturer": "LENOVO"
+  },
+  "samples": [
+    {
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 93,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 96,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 96,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        }
+      ],
+      "processes": [
+        {
+          "name": "exreader-line-boundary-test",
+          "pid": 11908,
+          "cpu_seconds": 1.03125,
+          "one_core_pct": 100.89582776062237
+        },
+        {
+          "name": "clang-cl",
+          "pid": 19980,
+          "cpu_seconds": 1.0,
+          "one_core_pct": 97.8383784345429
+        },
+        {
+          "name": "exreader-hyphen-layout-test",
+          "pid": 26160,
+          "cpu_seconds": 0.9375,
+          "one_core_pct": 91.72347978238398
+        },
+        {
+          "name": "clang-cl",
+          "pid": 21468,
+          "cpu_seconds": 0.875,
+          "one_core_pct": 85.60858113022503
+        },
+        {
+          "name": "pwsh",
+          "pid": 27932,
+          "cpu_seconds": 0.65625,
+          "one_core_pct": 64.20643584766879
+        },
+        {
+          "name": "ChatGPT",
+          "pid": 9252,
+          "cpu_seconds": 0.59375,
+          "one_core_pct": 58.09153719550985
+        },
+        {
+          "name": "python",
+          "pid": 20944,
+          "cpu_seconds": 0.390625,
+          "one_core_pct": 38.21811657599332
+        },
+        {
+          "name": "ChatGPT",
+          "pid": 16396,
+          "cpu_seconds": 0.28125,
+          "one_core_pct": 27.51704393471519
+        }
+      ],
+      "utc": "2026-11-08T19:18:52.6036556Z"
+    },
+    {
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 90,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 95,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 95,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        }
+      ],
+      "processes": [
+        {
+          "name": "clang-cl",
+          "pid": 21468,
+          "cpu_seconds": 0.796875,
+          "one_core_pct": 78.50169268120408
+        },
+        {
+          "name": "clang-cl",
+          "pid": 19980,
+          "cpu_seconds": 0.796875,
+          "one_core_pct": 78.50169268120408
+        },
+        {
+          "name": "exreader-line-boundary-test",
+          "pid": 11908,
+          "cpu_seconds": 0.78125,
+          "one_core_pct": 76.96244380510203
+        },
+        {
+          "name": "exreader-hyphen-layout-test",
+          "pid": 26160,
+          "cpu_seconds": 0.71875,
+          "one_core_pct": 70.80544830069387
+        },
+        {
+          "name": "pwsh",
+          "pid": 27932,
+          "cpu_seconds": 0.59375,
+          "one_core_pct": 58.491457291877545
+        },
+        {
+          "name": "powershell",
+          "pid": 23196,
+          "cpu_seconds": 0.421875,
+          "one_core_pct": 41.5597196547551
+        },
+        {
+          "name": "codex",
+          "pid": 20008,
+          "cpu_seconds": 0.21875,
+          "one_core_pct": 21.549484265428568
+        },
+        {
+          "name": "python",
+          "pid": 20944,
+          "cpu_seconds": 0.203125,
+          "one_core_pct": 20.010235389326528
+        }
+      ],
+      "utc": "2026-11-08T19:18:54.2513930Z"
+    },
+    {
+      "counters": [
+        {
+          "Name": "0,0",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 91,
+          "PercentProcessorPerformance": 91,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 93
+        },
+        {
+          "Name": "0,1",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 91,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,2",
+          "ProcessorFrequency": 2024,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,3",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 92,
+          "PercentProcessorPerformance": 92,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,4",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,5",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,6",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,7",
+          "ProcessorFrequency": 2200,
+          "PercentofMaximumFrequency": 100,
+          "PercentProcessorPerformance": 100,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 100
+        },
+        {
+          "Name": "0,_Total",
+          "ProcessorFrequency": 2178,
+          "PercentofMaximumFrequency": 95,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 99
+        },
+        {
+          "Name": "_Total",
+          "ProcessorFrequency": 2178,
+          "PercentofMaximumFrequency": 95,
+          "PercentProcessorPerformance": 96,
+          "PerformanceLimitFlags": 0,
+          "PercentProcessorTime": 99
+        }
+      ],
+      "processes": [
+        {
+          "name": "exreader-line-boundary-test",
+          "pid": 11908,
+          "cpu_seconds": 0.9375,
+          "one_core_pct": 92.14931117529837
+        },
+        {
+          "name": "clang-cl",
+          "pid": 19980,
+          "cpu_seconds": 0.921875,
+          "one_core_pct": 90.61348932237672
+        },
+        {
+          "name": "exreader-hyphen-layout-test",
+          "pid": 26160,
+          "cpu_seconds": 0.921875,
+          "one_core_pct": 90.61348932237672
+        },
+        {
+          "name": "clang-cl",
+          "pid": 21468,
+          "cpu_seconds": 0.890625,
+          "one_core_pct": 87.54184561653344
+        },
+        {
+          "name": "pwsh",
+          "pid": 27932,
+          "cpu_seconds": 0.84375,
+          "one_core_pct": 82.93438005776852
+        },
+        {
+          "name": "python",
+          "pid": 20944,
+          "cpu_seconds": 0.234375,
+          "one_core_pct": 23.03732779382459
+        },
+        {
+          "name": "DeepSeek Harness",
+          "pid": 15480,
+          "cpu_seconds": 0.1875,
+          "one_core_pct": 18.429862235059673
+        },
+        {
+          "name": "eznotes",
+          "pid": 3136,
+          "cpu_seconds": 0.078125,
+          "one_core_pct": 7.679109264608197
+        }
+      ],
+      "utc": "2026-11-08T19:18:55.7979723Z"
+    }
+  ],
+  "thermal_interpretation": "PerformanceLimitFlags are supplementary counters; unavailable temperature means thermal throttling cannot be ruled out."
+}

@@ -99,8 +99,13 @@ def capture(args):
     (args.output / 'raw').mkdir()
     env = dict(os.environ, E1_CPU=str(args.cpu), E1_PRIORITY='high',
                E1_WIDTH='720', E1_HEIGHT='1040', E1_MARGIN='48')
+    load_mode = getattr(args, 'load_mode', None)
+    if load_mode:
+        env['LOAD_SANDWICH'] = '1' if load_mode == 'sandwich' else '0'
     suffix = '.exe' if os.name == 'nt' else ''
-    probe, reference = [args.build / (name + suffix) for name in ('ratio-probe', 'perf-reference')]
+    names = ('load-probe', 'load-reference') if load_mode else ('ratio-probe', 'perf-reference')
+    probe, reference = [args.build / (name + suffix) for name in names]
+    worker = args.build / ('perf-reference' + suffix)
     books = read(args.manifest)['books']
     if len(books) != 19 or len({b['id'] for b in books}) != 19:
         raise ValueError('exactly 19 distinct input books required')
@@ -121,6 +126,12 @@ def capture(args):
         'operation_source_sha256': sha(ROOT/'tools/reading_real_benchmark.c'),
         'document_adapter_sha256': sha(ROOT/'tools/perf/ratio_document.inc'),
         'probe_adapter_sha256': sha(ROOT/'tools/perf/CMakeLists.txt')}
+    if load_mode:
+        compatibility['load_sources'] = {name: sha(ROOT/'tools/perf'/name) for name in
+            ('load_counters.h', 'load_reference.c', 'load_probe.cmake', 'load_capture.py')}
+        compatibility['load_platform'] = {'system': platform.platform(),
+            'processor': platform.processor(), 'logical_cpu': args.cpu,
+            'counter': 'Windows QueryThreadCycleTime; coherent QPC/TSC; schema 2'}
     data = {'schema': 1, 'created_utc': datetime.now(timezone.utc).isoformat(),
             'source_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
             'system': platform.platform(), 'cpu': args.cpu, 'stress': args.stress,
@@ -131,6 +142,11 @@ def capture(args):
             'identities': {str(p): sha(p) for p in (probe, reference, args.font,
                 args.manifest, ROOT/'tools/perf/reference.c', ROOT/'tools/reading_real_benchmark.c')},
             'input_sha256': {b['id']: sha(b['path']) for b in books}, 'runs': []}
+    if load_mode:
+        data['plan']['load_mode'] = load_mode
+        data['plan']['reference_steps'] = json.loads(execute([reference, '--identity'], env).stdout)['reference_steps']
+        data['stress_workers'] = args.stress_workers
+        data['worker_sha256'] = sha(worker)
     if any(data['input_sha256'][b['id']] != b['sha256'] for b in books):
         raise ValueError('corpus SHA mismatch')
     # Windows CRT argv is not UTF-8. Stage byte-identical books under ASCII names;
@@ -148,13 +164,21 @@ def capture(args):
         if sha(staged) != book['sha256']:
             raise ValueError('staged corpus SHA mismatch')
         book['native_path'] = str(staged)
-    busy = None
+    busy = []
+    telemetry = None
     try:
-        if args.stress:
+        for _ in range(getattr(args, 'stress_workers', int(args.stress))):
             # One equal-priority worker on the *same* logical CPU, about half CPU entitlement.
-            busy = subprocess.Popen([str(reference), '--busy'], env=env,
-                                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
-            data['stress_pid'] = busy.pid
+            busy.append(subprocess.Popen([str(worker), '--busy'], env=env,
+                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0))
+        if busy:
+            data['stress_pid'] = busy[0].pid
+            data['stress_pids'] = [p.pid for p in busy]
+        if load_mode:
+            telemetry = subprocess.Popen(['pwsh', '-NoProfile', '-File', str(ROOT/'tools/perf/preflight.ps1'),
+                '-Output', str(args.output/'during-load.json'), '-Seconds', '3', '-SkipPowerDump'],
+                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                creationflags=subprocess.CREATE_NO_WINDOW)
         for index in range(args.runs):
             row = {'index': index + 1, 'reference_file': f'raw/reference-{index+1}.json', 'books': []}
             p = execute([reference], env)
@@ -177,15 +201,28 @@ def capture(args):
                 row['books'].append({'id': book['id'], 'file': path, 'sha256': sha(args.output/path)})
                 write(args.output / 'capture.json', data)
             print(f"run {index+1}/{args.runs}: 19 books complete", flush=True)
-        if busy and busy.poll() is not None:
+        if any(p.poll() is not None for p in busy):
             raise RuntimeError('stress worker exited before capture completed')
+        if telemetry:
+            _, stderr = telemetry.communicate(timeout=180)
+            if telemetry.returncode:
+                (args.output/'telemetry-error.txt').write_bytes(stderr)
+                raise RuntimeError('telemetry failed')
     finally:
+        if telemetry and telemetry.poll() is None:
+            telemetry.terminate()
+            telemetry.wait(timeout=10)
+        for p in busy:
+            p.terminate()
+            p.wait(timeout=10)
         if busy:
-            busy.terminate()
-            busy.wait(timeout=10)
             data['stress_worker_stopped'] = True
         write(args.output / 'capture.json', data)
-    report = summarize(args.output)
+    if load_mode:
+        from load_capture import summarize as load_summarize
+        report = load_summarize(args.output)
+    else:
+        report = summarize(args.output)
     write(args.output / 'summary.json', report)
     print(json.dumps(report['statistics'], indent=2), flush=True)
 

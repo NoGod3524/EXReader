@@ -1,0 +1,146 @@
+
+evidence/perf-gate3-20261108/build/load-reference.exe:     file format pei-x86-64
+
+
+Disassembly of section .text:
+
+0000000140001860 <perf_reference_ms>:
+   140001860:	56                   	push   %rsi
+   140001861:	53                   	push   %rbx
+   140001862:	48 83 ec 48          	sub    $0x48,%rsp
+   140001866:	0f 29 74 24 30       	movaps %xmm6,0x30(%rsp)
+   14000186b:	48 8b 35 2e 8b 00 00 	mov    0x8b2e(%rip),%rsi        # 14000a3a0 <__imp_QueryPerformanceFrequency>
+   140001872:	66 0f ef f6          	pxor   %xmm6,%xmm6
+   140001876:	48 8d 4c 24 28       	lea    0x28(%rsp),%rcx
+   14000187b:	ff d6                	call   *%rsi
+   14000187d:	48 8b 1d 14 8b 00 00 	mov    0x8b14(%rip),%rbx        # 14000a398 <__imp_QueryPerformanceCounter>
+   140001884:	48 8d 4c 24 20       	lea    0x20(%rsp),%rcx
+   140001889:	ff d3                	call   *%rbx
+   14000188b:	f2 48 0f 2a 74 24 20 	cvtsi2sdq 0x20(%rsp),%xmm6
+   140001892:	66 0f ef c0          	pxor   %xmm0,%xmm0
+   140001896:	31 d2                	xor    %edx,%edx
+   140001898:	f2 0f 59 35 c0 38 00 	mulsd  0x38c0(%rip),%xmm6        # 140005160 <.rdata>
+   14000189f:	00 
+   1400018a0:	f2 48 0f 2a 44 24 28 	cvtsi2sdq 0x28(%rsp),%xmm0
+   1400018a7:	48 b8 25 23 22 84 e4 	movabs $0xcbf29ce484222325,%rax
+   1400018ae:	9c f2 cb 
+   1400018b1:	49 b8 b3 01 00 00 00 	movabs $0x100000001b3,%r8
+   1400018b8:	01 00 00 
+   1400018bb:	f2 0f 5e f0          	divsd  %xmm0,%xmm6
+   1400018bf:	90                   	nop
+   1400018c0:	0f b6 ca             	movzbl %dl,%ecx
+   1400018c3:	48 83 c2 01          	add    $0x1,%rdx
+   1400018c7:	48 31 c8             	xor    %rcx,%rax
+   1400018ca:	49 0f af c0          	imul   %r8,%rax
+   1400018ce:	48 81 fa 00 0e 27 07 	cmp    $0x7270e00,%rdx
+   1400018d5:	75 e9                	jne    1400018c0 <perf_reference_ms+0x60>
+   1400018d7:	48 8d 4c 24 28       	lea    0x28(%rsp),%rcx
+   1400018dc:	48 89 05 ad 77 00 00 	mov    %rax,0x77ad(%rip)        # 140009090 <reference_sink>
+   1400018e3:	ff d6                	call   *%rsi
+   1400018e5:	48 8d 4c 24 20       	lea    0x20(%rsp),%rcx
+   1400018ea:	ff d3                	call   *%rbx
+   1400018ec:	66 0f ef c0          	pxor   %xmm0,%xmm0
+   1400018f0:	f2 48 0f 2a 44 24 20 	cvtsi2sdq 0x20(%rsp),%xmm0
+   1400018f7:	66 0f ef c9          	pxor   %xmm1,%xmm1
+   1400018fb:	f2 0f 59 05 5d 38 00 	mulsd  0x385d(%rip),%xmm0        # 140005160 <.rdata>
+   140001902:	00 
+   140001903:	f2 48 0f 2a 4c 24 28 	cvtsi2sdq 0x28(%rsp),%xmm1
+   14000190a:	f2 0f 5e c1          	divsd  %xmm1,%xmm0
+   14000190e:	f2 0f 5c c6          	subsd  %xmm6,%xmm0
+   140001912:	0f 28 74 24 30       	movaps 0x30(%rsp),%xmm6
+   140001917:	48 83 c4 48          	add    $0x48,%rsp
+   14000191b:	5b                   	pop    %rbx
+   14000191c:	5e                   	pop    %rsi
+   14000191d:	c3                   	ret
+   14000191e:	90                   	nop
+   14000191f:	90                   	nop
+
+0000000140001920 <__C_specific_handler>:
+   140001920:	ff 25 ca 8a 00 00    	jmp    *0x8aca(%rip)        # 14000a3f0 <__imp___C_specific_handler>
+   140001926:	90                   	nop
+   140001927:	90                   	nop
+
+0000000140001928 <Sleep>:
+   140001928:	ff 25 a2 8a 00 00    	jmp    *0x8aa2(%rip)        # 14000a3d0 <__imp_Sleep>
+   14000192e:	90                   	nop
+   14000192f:	90                   	nop
+
+0000000140001930 <SetUnhandledExceptionFilter>:
+   140001930:	ff 25 92 8a 00 00    	jmp    *0x8a92(%rip)        # 14000a3c8 <__imp_SetUnhandledExceptionFilter>
+   140001936:	90                   	nop
+   140001937:	90                   	nop
+
+0000000140001938 <SetProcessAffinityMask>:
+   140001938:	ff 25 82 8a 00 00    	jmp    *0x8a82(%rip)        # 14000a3c0 <__imp_SetProcessAffinityMask>
+   14000193e:	90                   	nop
+   14000193f:	90                   	nop
+
+0000000140001940 <SetPriorityClass>:
+   140001940:	ff 25 72 8a 00 00    	jmp    *0x8a72(%rip)        # 14000a3b8 <__imp_SetPriorityClass>
+   140001946:	90                   	nop
+   140001947:	90                   	nop
+
+0000000140001948 <ReadThreadProfilingData>:
+   140001948:	ff 25 62 8a 00 00    	jmp    *0x8a62(%rip)        # 14000a3b0 <__imp_ReadThreadProfilingData>
+   14000194e:	90                   	nop
+   14000194f:	90                   	nop
+
+0000000140001950 <QueryThreadCycleTime>:
+   140001950:	ff 25 52 8a 00 00    	jmp    *0x8a52(%rip)        # 14000a3a8 <__imp_QueryThreadCycleTime>
+   140001956:	90                   	nop
+   140001957:	90                   	nop
+
+0000000140001958 <QueryPerformanceFrequency>:
+   140001958:	ff 25 42 8a 00 00    	jmp    *0x8a42(%rip)        # 14000a3a0 <__imp_QueryPerformanceFrequency>
+   14000195e:	90                   	nop
+   14000195f:	90                   	nop
+
+0000000140001960 <QueryPerformanceCounter>:
+   140001960:	ff 25 32 8a 00 00    	jmp    *0x8a32(%rip)        # 14000a398 <__imp_QueryPerformanceCounter>
+   140001966:	90                   	nop
+   140001967:	90                   	nop
+
+0000000140001968 <LoadLibraryA>:
+   140001968:	ff 25 22 8a 00 00    	jmp    *0x8a22(%rip)        # 14000a390 <__imp_LoadLibraryA>
+   14000196e:	90                   	nop
+   14000196f:	90                   	nop
+
+0000000140001970 <GetThreadTimes>:
+   140001970:	ff 25 02 8a 00 00    	jmp    *0x8a02(%rip)        # 14000a378 <__imp_GetThreadTimes>
+   140001976:	90                   	nop
+   140001977:	90                   	nop
+
+0000000140001978 <GetProcAddress>:
+   140001978:	ff 25 f2 89 00 00    	jmp    *0x89f2(%rip)        # 14000a370 <__imp_GetProcAddress>
+   14000197e:	90                   	nop
+   14000197f:	90                   	nop
+
+0000000140001980 <GetModuleHandleA>:
+   140001980:	ff 25 e2 89 00 00    	jmp    *0x89e2(%rip)        # 14000a368 <__imp_GetModuleHandleA>
+   140001986:	90                   	nop
+   140001987:	90                   	nop
+
+0000000140001988 <GetCurrentThread>:
+   140001988:	ff 25 ca 89 00 00    	jmp    *0x89ca(%rip)        # 14000a358 <__imp_GetCurrentThread>
+   14000198e:	90                   	nop
+   14000198f:	90                   	nop
+
+0000000140001990 <GetCurrentProcess>:
+   140001990:	ff 25 ba 89 00 00    	jmp    *0x89ba(%rip)        # 14000a350 <__imp_GetCurrentProcess>
+   140001996:	90                   	nop
+   140001997:	90                   	nop
+
+0000000140001998 <FreeLibrary>:
+   140001998:	ff 25 aa 89 00 00    	jmp    *0x89aa(%rip)        # 14000a348 <__imp_FreeLibrary>
+   14000199e:	90                   	nop
+   14000199f:	90                   	nop
+
+00000001400019a0 <EnableThreadProfiling>:
+   1400019a0:	ff 25 92 89 00 00    	jmp    *0x8992(%rip)        # 14000a338 <__imp_EnableThreadProfiling>
+   1400019a6:	90                   	nop
+   1400019a7:	90                   	nop
+
+00000001400019a8 <DisableThreadProfiling>:
+   1400019a8:	ff 25 82 89 00 00    	jmp    *0x8982(%rip)        # 14000a330 <__imp_DisableThreadProfiling>
+   1400019ae:	90                   	nop
+   1400019af:	90                   	nop

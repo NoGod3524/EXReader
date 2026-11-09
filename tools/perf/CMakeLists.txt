@@ -5,7 +5,15 @@ set(EXR_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(EXR_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(EXR_BUILD_JNI OFF CACHE BOOL "" FORCE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../.." sdk)
+if(EXR_PERF_SDK_DLL)
+  # Reuse a byte-identical SDK for measurement-only experiments.
+  add_library(exreader UNKNOWN IMPORTED)
+  set_target_properties(exreader PROPERTIES IMPORTED_LOCATION "${EXR_PERF_SDK_DLL}"
+    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../include;${EXR_PERF_SDK_INCLUDE}")
+  set(EXR_BUILD_SHARED_COMPAT ON)
+else()
+  add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../.." sdk)
+endif()
 
 # Reuse the actual R3 operation plan, hashes and oversized-page fallback.
 # Adapt only the OS counters, process affinity and selectable viewport.
@@ -56,6 +64,7 @@ if(WIN32)
 else()
   target_link_libraries(ratio-probe PRIVATE m)
 endif()
+include("${CMAKE_CURRENT_LIST_DIR}/load_probe.cmake")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/e1_probe.c" "${probe}")
 add_executable(e1-probe "${CMAKE_CURRENT_BINARY_DIR}/e1_probe.c")
 target_include_directories(e1-probe PRIVATE "${CMAKE_CURRENT_LIST_DIR}")
