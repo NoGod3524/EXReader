@@ -1,0 +1,116 @@
+{
+  "a-raisin-in-the-sun": {
+    "thread_cycles_p95": 154781912,
+    "wall_ms_p95": 61.8334,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "between-the-world-and-me": {
+    "thread_cycles_p95": 49336500,
+    "wall_ms_p95": 15.2057,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "black-boy": {
+    "thread_cycles_p95": 90945339,
+    "wall_ms_p95": 42.3153,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "born-a-crime": {
+    "thread_cycles_p95": 43257850,
+    "wall_ms_p95": 43.0651,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "crying-in-h-mart": {
+    "thread_cycles_p95": 60827136,
+    "wall_ms_p95": 27.1901,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america": {
+    "thread_cycles_p95": 73701630,
+    "wall_ms_p95": 28.0212,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "i-know-why-the-caged-bird-sings": {
+    "thread_cycles_p95": 166927331,
+    "wall_ms_p95": 78.7919,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "pachinko": {
+    "thread_cycles_p95": 85799164,
+    "wall_ms_p95": 33.7385,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "the-absolutely-true-diary-of-a-part-time-indian": {
+    "thread_cycles_p95": 31204560,
+    "wall_ms_p95": 11.1195,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "the-autobiography-of-malcolm-x.": {
+    "thread_cycles_p95": 164996649,
+    "wall_ms_p95": 82.515,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "the-distance-between-us-a-memoir": {
+    "thread_cycles_p95": 77643558,
+    "wall_ms_p95": 25.1402,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "the-fire-next-time": {
+    "thread_cycles_p95": 132630774,
+    "wall_ms_p95": 53.9094,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "the-fire-this-time-a-new-generation-speaks-about-race": {
+    "thread_cycles_p95": 95276240,
+    "wall_ms_p95": 30.2689,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "the-house-on-mango-street": {
+    "thread_cycles_p95": 41541800,
+    "wall_ms_p95": 22.9779,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "zami-a-new-spelling-of-my-name---a-biomythography": {
+    "thread_cycles_p95": 32879002,
+    "wall_ms_p95": 10.1105,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "hongloumeng-24264": {
+    "thread_cycles_p95": 56247589,
+    "wall_ms_p95": 34.0041,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "xingshihengyan-24239": {
+    "thread_cycles_p95": 56529580,
+    "wall_ms_p95": 32.3547,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "tangshi300-52323": {
+    "thread_cycles_p95": 65365733,
+    "wall_ms_p95": 34.5383,
+    "samples": 48,
+    "injected_fraction": 0.0
+  },
+  "kusamakura-japanese-vertical-writing": {
+    "thread_cycles_p95": 92322267,
+    "wall_ms_p95": 33.6306,
+    "samples": 48,
+    "injected_fraction": 0.0
+  }
+}
