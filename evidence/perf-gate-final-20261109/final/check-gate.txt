@@ -1,0 +1,1 @@
+PASS: tier boundaries, wall watchdog, invalid inputs, missing/tampered raw, CI provenance and injected-baseline refusals
