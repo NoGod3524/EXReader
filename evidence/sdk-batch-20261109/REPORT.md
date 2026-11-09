@@ -146,3 +146,5 @@ pwsh -File tools/perf/batch_session.ps1 `
 [构建与文件身份](provenance.json)记录编译器、配置、源码LF归一SHA-256、书籍、字体及新旧DLL的SHA-256。gzip文件解压后即为原始JSON，未删除逐页记录。阶段记录见 [S1-OUT.txt](../../S1-OUT.txt)。
 
 已提交产品与完整证据 `64eabeb7`，推送 `codex/sdk-batch-perf-20261109`，创建 **Draft PR [#112](https://github.com/NoGod3524/EXReader/pull/112)**，base为main。PR事件已触发Native C engine、Required native reading SDK core等CI，实时结果见 [PR checks](https://github.com/NoGod3524/EXReader/pull/112/checks)。未手动dispatch/cancel工作流，未修改`.github/`。
+
+2026-11-09 16:41 UTC续核：全部1500个原始翻页样本的阶段求和、缓存计数、p50/p95和离散度计算通过；当前源码、DLL、基准程序、书籍及字体身份与已接受测量一致。重新计算19本书全部11,318页的内容指纹，仍为零哈希变化。独立安装SDK的GCC消费者重新编译并通过自检及fixture运行，相关CTest重跑3/3通过，分层检查通过。完整复核结果见 [resume-audit.json](resume-audit.json)；本次复核沿用原始性能和全书运行记录，没有生成替代性能样本。
