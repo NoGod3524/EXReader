@@ -1,0 +1,4 @@
+["gh", "pr", "create", "--draft", "--base", "main", "--head", "codex/runtime-verification-20261109", "--title", "Verify MSVC ASan runtime and adjudicate 30 analyzer findings", "--body-file", "evidence\\runtime-20261109\\pr-body.md"]
+https://github.com/NoGod3524/EXReader/pull/102
+
+exit_code=0

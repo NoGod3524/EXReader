@@ -1,0 +1,31 @@
+{
+  "source_revision": "d9ffdbf09da654340bc35c043ad6d4b49cc344d1",
+  "source_diff": "",
+  "builds": {
+    "asan": {
+      "binaries": {
+        "exreader.dll": "7ce3d9cf2102a82945ff4d37823f3695a1408a4471a55ca115efbdf892891b06",
+        "quality-font-bridge.dll": "0e4ea730728f5f297a7ff476a3342b7d1006b7e0aae31206326cb53bda43ea20",
+        "clang_rt.asan_dynamic-x86_64.dll": "3aa742521e8cbd23252f0545aa51d5a15624a3e4430fbe2f81567afaeb3fc59b"
+      },
+      "project_translation_units": 116,
+      "asan_project_translation_units": 116
+    },
+    "coverage": {
+      "binaries": {
+        "libexreader.dll": "271e52aaf6369f0ec913f32e7b57c175373ffa775ee663b7aa2c82ffae269e31",
+        "quality-font-bridge.dll": "0057ac13ee3eebaf890cdadb71aaa1b3ec1c1669eacce42d5fe88defc14c6729"
+      },
+      "project_translation_units": 116,
+      "asan_project_translation_units": 0
+    },
+    "control": {
+      "binaries": {
+        "exreader.dll": "b044fe8cc02b157d2068308787af87d01c0ea14f26175a52b49bf5ca4652c862",
+        "quality-font-bridge.dll": "4ef3c15ab68f42d7e92381cb9effdaa2e432a99ff253ecf4fa4d137cd6b779a4"
+      },
+      "project_translation_units": 116,
+      "asan_project_translation_units": 0
+    }
+  }
+}

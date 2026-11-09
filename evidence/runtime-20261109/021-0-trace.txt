@@ -1,0 +1,48 @@
+021:0 src/font_bitmap.c:11 use of uninitialized value '*p'
+1 font_bitmap.c:303 entry to 'exr_font_glyph_image'
+2 font_bitmap.c:306 following 'false' branch...
+3 font_bitmap.c:307 ...to here
+4 font_bitmap.c:307 following 'false' branch...
+5 font_bitmap.c:308 ...to here
+6 font_bitmap.c:308 calling 'exr_font_image' from 'exr_font_glyph_image'
+7 font_bitmap.c:274 entry to 'exr_font_image'
+8 font_bitmap.c:275 calling 'sbix_image' from 'exr_font_image'
+9 font_bitmap.c:63 entry to 'sbix_image'
+10 font_bitmap.c:67 calling 'directory' from 'sbix_image'
+11 font_bitmap.c:27 entry to 'directory'
+12 font_bitmap.c:30 following 'false' branch...
+13 font_bitmap.c:31 ...to here
+14 font_bitmap.c:32 following 'false' branch...
+15 font_bitmap.c:33 ...to here
+16 font_bitmap.c:33 following 'false' branch (when 'code == 0')...
+17 font_bitmap.c:34 ...to here
+18 font_bitmap.c:34 calling 'field' from 'directory'
+19 font_bitmap.c:14 entry to 'field'
+20 font_bitmap.c:16 following 'false' branch (when 'offset <= size')...
+21 font_bitmap.c:16 ...to here
+22 font_bitmap.c:34 returning to 'directory' from 'field'
+23 font_bitmap.c:34 following 'false' branch (when 'status == 0')...
+24 font_bitmap.c:35 ...to here
+25 font_bitmap.c:35 following 'false' branch...
+26 font_bitmap.c:36 ...to here
+27 font_bitmap.c:36 following 'false' branch (when 'count <= 256')...
+28 font_bitmap.c:37 ...to here
+29 font_bitmap.c:37 following 'false' branch (when 'status == 0')...
+30 font_bitmap.c:38 ...to here
+31 font_bitmap.c:38 following 'false' branch (when 'table' is non-NULL)...
+32 font_bitmap.c:39 ...to here
+33 font_bitmap.c:67 returning to 'sbix_image' from 'directory'
+34 font_bitmap.c:67 following 'false' branch...
+35 font_bitmap.c:68 ...to here
+36 font_bitmap.c:68 following 'true' branch...
+37 font_bitmap.c:69 ...to here
+38 font_bitmap.c:70 calling 'span' from 'sbix_image'
+39 font_bitmap.c:55 entry to 'span'
+40 font_bitmap.c:56 region created on stack here
+41 font_bitmap.c:58 following 'false' branch (when 'status == 0')...
+42 font_bitmap.c:59 ...to here
+43 font_bitmap.c:59 calling 'be32' from 'span'
+44 font_bitmap.c:12 entry to 'be32'
+45 font_bitmap.c:12 calling 'be16' from 'be32'
+46 font_bitmap.c:11 entry to 'be16'
+47 font_bitmap.c:11 use of uninitialized value '*p' here
