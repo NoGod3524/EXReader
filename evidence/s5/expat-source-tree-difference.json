@@ -1,0 +1,15 @@
+{
+  "dependency": "expat",
+  "version": "2.9.0",
+  "android_x86_64_source_tree_sha256": "3eab21b9eca21bb60871f8ec4175fd3839b46302084ff993459744385428f5eb",
+  "ci_source_tree_sha256": "c4ac9d56fa969ae5f04b690b606208df79fb1a8179e0faa469adf7b127192ca3",
+  "archive_regular_files": 231,
+  "archive_symlink": {
+    "path": "README.md",
+    "target": "expat/README.md"
+  },
+  "local_regular_files_match_archive": true,
+  "tree_sha256_after_dereferencing_symlink": "c4ac9d56fa969ae5f04b690b606208df79fb1a8179e0faa469adf7b127192ca3",
+  "matches_ci": true,
+  "reason": "Local Windows extraction lacks the noncompiled README.md symlink; CI trees include the dereferenced README. All 231 regular source files match the pinned archive byte for byte."
+}
