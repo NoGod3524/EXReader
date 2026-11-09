@@ -28,12 +28,18 @@ int main(int argc,char **argv) {
   const exr_chapter_input chapter={"c","c.xhtml",1,1};
   const exr_document_input input={"Resident CJK",nodes,4,&chapter,1,nullptr,0};
   exr_document *resident=nullptr;
-  if(exr_document_create(&input,&resident,&e)!=EXR_OK || !shell_style_document(&resident)) return 7;
+  if(exr_document_create(&input,&resident,&e)!=EXR_OK) return 7;
+  size_t original_length=0;
+  const char *original_text=exr_document_text(resident,&original_length);
+  const std::string original(original_text,original_length);
+  if(!shell_style_document(&resident)) return 7;
   size_t length=0;const char *text=exr_document_text(resident,&length);
-  if(std::strcmp(text,"　　正文文字。")) return 8;
+  if(length!=original.size() || std::memcmp(text,original.data(),length)) return 8;
   size_t nc=0;const auto *ns=exr_document_nodes(resident,&nc);
   const char *classes=exr_node_attribute(ns+2,"class");
-  if(nc!=4 || !classes || !std::strstr(classes,"exr-shell-cjk") || !std::strstr(classes,"exr-shell-indent-2")) return 9;
+  const bool retained_prefix=original.rfind("　　",0)==0;
+  if(nc!=4 || !classes || !std::strstr(classes,"exr-shell-cjk") ||
+     (std::strstr(classes,"exr-shell-indent-2")!=nullptr)!=retained_prefix) return 9;
   auto resident_config=exr_layout_config_defaults();resident_config.page.font_size=18;
   resident_config.user_css=".exr-shell-cjk{line-height:32px;text-indent:0;margin-top:0;margin-bottom:9px}";
   exr_layout *resident_layout=nullptr;

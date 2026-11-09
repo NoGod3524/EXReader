@@ -1,0 +1,23 @@
+{
+  "main_count": 228,
+  "integrated_count": 244,
+  "missing_main_tests": [],
+  "integration_tests": [
+    "native-dictionary-contracts",
+    "native-dictionary-dictd",
+    "native-dictionary-dictzip",
+    "native-dictionary-stardict",
+    "native-ssml-chunks",
+    "native-ssml-contracts",
+    "native-ssml-omissions",
+    "native-ssml-parts",
+    "native-ssml-structure",
+    "native-style-footnotes-anchors",
+    "native-style-footnotes-footnotes",
+    "native-style-footnotes-styles",
+    "native-style-footnotes-toc",
+    "windows-selection-dictionary-storage",
+    "windows-selection-shelfmeta",
+    "windows-selection-style"
+  ]
+}
