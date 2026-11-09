@@ -113,7 +113,11 @@ EXR_API exr_font *exr_layout_font(const exr_layout *layout);
    Callbacks must not destroy/reenter the active publication or session. */
 EXR_API exr_status exr_publication_create(const exr_publication_input *input,
                                           exr_publication **out, exr_error *error);
-/* Built-in indexed loading currently accepts EPUB. No XHTML is parsed at open. */
+/* Built-in publications accept EPUB, MOBI/KF8 (including .azw3), and FB2/FB2 ZIP.
+   EPUB and KF8 defer body parsing until load. KF8 decodes the records intersecting
+   that section and its auxiliary flows; malformed records fail at load with a
+   diagnostic. Legacy MOBI is split on pagebreaks; FB2 on section boundaries.
+   open_source remains the ZIP/EPUB source API; use open_memory for typed bytes. */
 EXR_API exr_status exr_publication_open(const char *path, exr_publication **out,
                                         exr_error *error);
 EXR_API exr_status exr_publication_open_source(const exr_source *source,

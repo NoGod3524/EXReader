@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "formats_internal.h"
 #include "graphics_internal.h"
+#include <miniz.h>
+#include <ctype.h>
 
 typedef struct { const char *id; size_t resource; } binary;
 typedef struct {
@@ -108,6 +110,15 @@ static int copy(fb2 *f,size_t parent,size_t source,int heading,int notes,unsigne
   if(at==SIZE_MAX) return 0;
   for(i=0;i<v->attribute_count;i++)
     if(!attribute(f,at,v->attributes[i].name,v->attributes[i].value)) return 0;
+  if(vocabulary(v) && !strcmp(tag,"section") && !attribute(f,at,"data-fb2-section","1")) return 0;
+  if(vocabulary(v) && !strcmp(tag,"title") && v->parent!=SIZE_MAX &&
+      !strcmp(local(&f->xml->nodes[v->parent]),"section")) {
+    size_t parent=v->parent,level=0; char value[24];
+    for(;parent!=SIZE_MAX;parent=f->xml->nodes[parent].parent)
+      if(!strcmp(local(&f->xml->nodes[parent]),"section")) level++;
+    snprintf(value,sizeof(value),"%zu",level);
+    if(!attribute(f,at,"data-fb2-title",value)) return 0;
+  }
   if(notes && kind==EXR_NODE_NOTE && !attribute(f,at,"role","doc-footnote")) return 0;
   href=exr_node_attribute(v,"http://www.w3.org/1999/xlink|href");
   if(!href) href=exr_node_attribute(v,"href");
@@ -128,7 +139,7 @@ static int copy(fb2 *f,size_t parent,size_t source,int heading,int notes,unsigne
     if(!copy(f,at,i,heading,notes,depth+1)) return 0;
   return 1;
 }
-exr_status exr_fb2(exr_document *d,const void *data,size_t size,exr_error *e) {
+static exr_status fb2_xml(exr_document *d,const void *data,size_t size,exr_error *e) {
   exr_document source={0}; exr_resource source_resource={"source","book.fb2","application/fb2+xml",""};
   fb2 f={d,&source,NULL,0,EXR_OK,e}; exr_buffer title={0};
   size_t root,description,info,cover,title_node,i,j,html,head,body,chapter;
@@ -219,4 +230,78 @@ done:
   free(title.data); free(f.binaries);
   source.resources=NULL; source.resource_count=0; exr_model_free(&source);
   return f.status;
+}
+
+/* Expat already handles UTF-8/UTF-16. Decode the FB2-specific legacy code page
+   here so EPUB XML encoding behavior is untouched. */
+static exr_status fb2_encoded(exr_document *d,const void *data,size_t size,exr_error *e) {
+  static const uint16_t cp1251[128]={
+    0x402,0x403,0x201a,0x453,0x201e,0x2026,0x2020,0x2021,0x20ac,0x2030,0x409,0x2039,0x40a,0x40c,0x40b,0x40f,
+    0x452,0x2018,0x2019,0x201c,0x201d,0x2022,0x2013,0x2014,0x0,0x2122,0x459,0x203a,0x45a,0x45c,0x45b,0x45f,
+    0xa0,0x40e,0x45e,0x408,0xa4,0x490,0xa6,0xa7,0x401,0xa9,0x404,0xab,0xac,0xad,0xae,0x407,
+    0xb0,0xb1,0x406,0x456,0x491,0xb5,0xb6,0xb7,0x451,0x2116,0x454,0xbb,0x458,0x405,0x455,0x457,
+    0x410,0x411,0x412,0x413,0x414,0x415,0x416,0x417,0x418,0x419,0x41a,0x41b,0x41c,0x41d,0x41e,0x41f,
+    0x420,0x421,0x422,0x423,0x424,0x425,0x426,0x427,0x428,0x429,0x42a,0x42b,0x42c,0x42d,0x42e,0x42f,
+    0x430,0x431,0x432,0x433,0x434,0x435,0x436,0x437,0x438,0x439,0x43a,0x43b,0x43c,0x43d,0x43e,0x43f,
+    0x440,0x441,0x442,0x443,0x444,0x445,0x446,0x447,0x448,0x449,0x44a,0x44b,0x44c,0x44d,0x44e,0x44f,
+  };
+  const unsigned char *s=data; size_t i,end=0; char declaration[512]; exr_buffer utf8={0}; exr_status status;
+  if(size>=5 && !memcmp(s,"<?xml",5)) {
+    for(end=5;end+1<size && end+1<sizeof(declaration);end++) if(s[end]=='?' && s[end+1]=='>') { end+=2; break; }
+    if(end>=sizeof(declaration)) return exr_fail(e,EXR_FORMAT,"FB2_ENCODING: oversized XML declaration");
+    for(i=0;i<end;i++) declaration[i]=(char)tolower(s[i]);
+    declaration[end]=0;
+    {
+      char *enc=strstr(declaration,"encoding"),quote=0; size_t begin=0,finish=0;
+      if(enc) {
+        enc+=8; while(isspace((unsigned char)*enc)) enc++;
+        if(*enc=='=') { enc++; while(isspace((unsigned char)*enc)) enc++; quote=*enc++; }
+        if(quote=='\'' || quote=='"') {
+          char *stop=strchr(enc,quote);
+          if(stop && (((size_t)(stop-enc)==12 && !memcmp(enc,"windows-1251",12)) ||
+                      ((size_t)(stop-enc)==6 && !memcmp(enc,"cp1251",6)))) {
+            begin=(size_t)(enc-declaration); finish=(size_t)(stop-declaration);
+          }
+        }
+      }
+      if(!finish) return fb2_xml(d,data,size,e);
+      for(i=0;i<size;i++) {
+        uint32_t cp=s[i]<128 ? s[i] : cp1251[s[i]-128];
+        if(i==begin) {
+          if(!exr_append(&utf8,"UTF-8",5)) { free(utf8.data); return exr_fail(e,EXR_LIMIT,"FB2 decoded XML exceeds text limit"); }
+          i=finish-1; continue;
+        }
+        if(!cp) { free(utf8.data); return exr_fail(e,EXR_ENCODING,"FB2_ENCODING: undefined windows-1251 byte"); }
+        if(!exr_codepoint(&utf8,cp)) { free(utf8.data); return exr_fail(e,EXR_LIMIT,"FB2 decoded XML exceeds text limit"); }
+      }
+      status=fb2_xml(d,utf8.data,utf8.size,e); free(utf8.data); return status;
+    }
+  }
+  return fb2_xml(d,data,size,e);
+}
+exr_status exr_fb2(exr_document *d,const void *data,size_t size,exr_error *e) {
+  mz_zip_archive zip={0}; mz_zip_archive_file_stat stat;
+  size_t i,count,member=SIZE_MAX,n=0; void *xml=NULL; exr_status status=EXR_FORMAT;
+  if(size<4 || memcmp(data,"PK\003\004",4)) return fb2_encoded(d,data,size,e);
+  if(!mz_zip_reader_init_mem(&zip,data,size,0)) return exr_fail(e,EXR_FORMAT,"FB2_ZIP: invalid ZIP directory");
+  count=mz_zip_reader_get_num_files(&zip);
+  if(count>10000) { status=EXR_LIMIT; goto bad; }
+  for(i=0;i<count;i++) {
+    size_t len;
+    if(!mz_zip_reader_file_stat(&zip,(mz_uint)i,&stat)) goto bad;
+    if(stat.m_is_directory) continue;
+    len=strlen(stat.m_filename);
+    if(len<4 || stat.m_filename[len-4]!='.' || tolower((unsigned char)stat.m_filename[len-3])!='f' ||
+       tolower((unsigned char)stat.m_filename[len-2])!='b' || stat.m_filename[len-1]!='2') continue;
+    if(member!=SIZE_MAX) goto bad;
+    if(stat.m_is_encrypted) { status=EXR_UNSUPPORTED; goto bad; }
+    if(stat.m_uncomp_size>EXR_MAX_INPUT) { status=EXR_LIMIT; goto bad; }
+    member=i;
+  }
+  if(member==SIZE_MAX) goto bad;
+  xml=mz_zip_reader_extract_to_heap(&zip,(mz_uint)member,&n,0);
+  if(!xml) goto bad;
+  status=fb2_encoded(d,xml,n,e); goto done;
+bad: exr_fail(e,status,"FB2_ZIP: requires one readable .fb2 member within the input limit");
+done: mz_free(xml); mz_zip_reader_end(&zip); return status;
 }
