@@ -1,0 +1,37 @@
+{
+  "added_exports": [
+    "exr_publication_index_build",
+    "exr_publication_index_info",
+    "exr_publication_index_load",
+    "exr_publication_index_save",
+    "exr_publication_index_search"
+  ],
+  "removed_exports": [],
+  "baseline_extra_exports": [
+    "exr_anchor_from_cfi",
+    "exr_anchor_to_cfi",
+    "exr_cfi_endpoints",
+    "exr_cfi_free",
+    "exr_cfi_is_range",
+    "exr_cfi_parse",
+    "exr_cfi_serialize",
+    "exr_document_cfi_point_at",
+    "exr_document_cfi_point_offset",
+    "exr_publication_locate_report",
+    "exr_publication_locate_report_reset",
+    "exr_range_from_cfi",
+    "exr_range_to_cfi",
+    "exr_sevenz_entries",
+    "exr_sevenz_extract",
+    "exr_sevenz_free",
+    "exr_sevenz_open",
+    "exr_sevenz_open_source",
+    "exr_sevenz_options_defaults"
+  ],
+  "unchanged_legacy_search_implementation": true,
+  "unchanged_pdf_document_header": true,
+  "baseline_exports": 408,
+  "candidate_exports": 413,
+  "baseline_dll_sha256": "718cd0511eac9f2ceee4292807ff19b4069a125d1c2373e2a5a112c0a1bc6b21",
+  "candidate_dll_sha256": "314a17ea69e359739dc03b047947014d78e78a1cb78b8d95e74e7d8e3607cd1b"
+}
