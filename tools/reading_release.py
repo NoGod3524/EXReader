@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: MIT
 """Seal installed reading SDK candidates in CI; never publish a tag or release."""
 from sdk_version import header_text
+from release.verify_artifacts import write_sums
 import argparse
+from contextlib import closing
 import gzip
 import hashlib
 import io
@@ -90,7 +92,7 @@ def check_profile(profile, source, stage, evidence, runtime, database=None, plat
     schema = None
     if profile == 'reading-library':
         require(database is not None and Path(database).is_file(), 'SDK-created library database missing')
-        with sqlite3.connect(Path(database).resolve().as_uri() + '?mode=ro', uri=True) as connection:
+        with closing(sqlite3.connect(Path(database).resolve().as_uri() + '?mode=ro', uri=True)) as connection:
             schema = connection.execute('PRAGMA user_version').fetchone()[0]
             app_id = connection.execute('PRAGMA application_id').fetchone()[0]
         require(schema == 7 and app_id == 1163416131, 'loaded library schema/application identity mismatch')
@@ -127,7 +129,7 @@ def seal(stage, output, profile, source, identity, ci, epoch, host, arch):
     (output / 'release-manifest.json').write_bytes(raw)
     prefix = f"EXReader-{profile}-{identity['sdk_version']}-{host}-{arch}"
     archive = output / (prefix + '.tar.gz')
-    with archive.open('xb') as destination, gzip.GzipFile(fileobj=destination, filename='', mtime=epoch) as compressed:
+    with archive.open('xb') as destination, gzip.GzipFile(fileobj=destination, mode='wb', filename='', mtime=epoch) as compressed:
         with tarfile.open(fileobj=compressed, mode='w') as tar:
             for entry in files + [{'path': 'release-manifest.json', 'bytes': len(raw), 'executable': False}]:
                 payload = raw if entry['path'] == 'release-manifest.json' else (stage / entry['path']).read_bytes()
@@ -142,6 +144,7 @@ def seal(stage, output, profile, source, identity, ci, epoch, host, arch):
               'sha256': digest(archive), 'manifest_sha256': hashlib.sha256(raw).hexdigest(),
               'file_count': len(files), 'published': False, 'quality_accepted': False}
     (output / 'candidate.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+    write_sums(output)
     return record
 
 

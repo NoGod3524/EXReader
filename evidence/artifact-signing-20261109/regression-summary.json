@@ -1,0 +1,29 @@
+{
+  "baseline_revision": "ed252fb6",
+  "before": {
+    "requested_books": 19,
+    "successful_books": 19,
+    "failed_books": [],
+    "total_pages": 11318,
+    "total_glyphs": 8648571,
+    "wall_seconds": 79.83854,
+    "sum_book_seconds": 267.00066,
+    "fastest_book": "tangshi300-52323",
+    "slowest_book": "the-autobiography-of-malcolm-x."
+  },
+  "after": {
+    "requested_books": 19,
+    "successful_books": 19,
+    "failed_books": [],
+    "total_pages": 11318,
+    "total_glyphs": 8648571,
+    "wall_seconds": 70.016287,
+    "sum_book_seconds": 231.213661,
+    "fastest_book": "the-house-on-mango-street",
+    "slowest_book": "hongloumeng-24264"
+  },
+  "compared_books": 19,
+  "compared_pages": 11318,
+  "hash_changed_pages": 0,
+  "page_count_changed_books": []
+}

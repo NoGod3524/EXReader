@@ -1,0 +1,1405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="234"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="77"
+	timestamp="2026-11-09T03:13:29"
+	>
+	<testcase name="native-render-audit" classname="native-render-audit" time="0.743758" status="run">
+		<properties/>
+		<system-out>368 renderer audit checks; 0 failures
+</system-out>
+	</testcase>
+	<testcase name="native-table-dashed" classname="native-table-dashed" time="0.173573" status="run">
+		<properties/>
+		<system-out>27 native table border-style checks passed (solid 103, dashed 63, dotted 36)
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-shading-mesh" classname="native-pdf-shading-mesh" time="0.227288" status="run">
+		<properties/>
+		<system-out>8 native PDF mesh shading checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-shading-mesh7" classname="native-pdf-shading-mesh7" time="0.653613" status="run">
+		<properties/>
+		<system-out>40 native PDF type 6/7 mesh shading checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-ccitt" classname="native-pdf-ccitt" time="0.162359" status="run">
+		<properties/>
+		<system-out>527 native PDF CCITT checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-normalize" classname="native-normalize" time="0.427089" status="run">
+		<properties/>
+		<system-out>20034 Unicode 17 NFC conformance cases passed
+1094978 unlisted Unicode scalar NFC invariants passed
+3404736 canonical normalization checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen" classname="native-hyphen" time="0.814876" status="run">
+		<properties/>
+		<system-out>333040 hyphenation dictionary checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-replacements" classname="native-hyphen-replacements" time="0.129583" status="run">
+		<properties/>
+		<system-out>1851 discretionary hyphenation checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-case" classname="native-case" time="0.184467" status="run">
+		<properties/>
+		<system-out>33785 Unicode case checks passed (3037 default mappings)
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-layout" classname="native-hyphen-layout" time="35.4354" status="run">
+		<properties/>
+		<system-out>2544009 automatic hyphen layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-builtin-rules" classname="native-hyphen-builtin-rules" time="0.10516" status="run">
+		<properties/>
+		<system-out>41 built-in hyphenation checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-builtin-switches" classname="native-hyphen-builtin-switches" time="0.145675" status="run">
+		<properties/>
+		<system-out>100 built-in hyphenation checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-builtin-joiners" classname="native-hyphen-builtin-joiners" time="0.0953976" status="run">
+		<properties/>
+		<system-out>11 built-in hyphenation checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-float" classname="native-float" time="10.2531" status="run">
+		<properties/>
+		<system-out>691110 float checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-fragments" classname="native-table-fragments" time="2.59398" status="run">
+		<properties/>
+		<system-out>fragment case 0
+fragment case 1
+fragment case 2
+fragment case 3
+fragment case 4
+fragment case 5
+fragment case 6
+fragment case 7
+fragment case 8
+fragment case 9
+fragment case 10
+fragment case 11
+fragment case 12
+fragment case 13
+fragment case 14
+fragment case 15
+fragment case 16
+fragment case 17
+fragment case 18
+fragment case 19
+fragment case 20
+fragment case 21
+fragment case 22
+fragment case 23
+large fixed first-page polls 2152
+case 0 pages 41 pixels 45549fe6a0ba6c79
+case 1 pages 41 pixels 0c7944600e504fd3
+case 2 pages 41 pixels da1bf69039de50d9
+case 3 pages 41 pixels 81c3f35d40795259
+case 4 pages 41 pixels 7a71f204c2c66f59
+case 5 pages 41 pixels 282a4300dd6ad4e9
+case 6 pages 23 pixels e906688d7989ea41
+case 7 pages 23 pixels e88846aa807428e9
+case 8 pages 41 pixels 46893a23317837d6
+case 9 pages 41 pixels 1e9e47c6862e1461
+case 10 pages 30 pixels d67f52026ab1f5b2
+case 11 pages 80 pixels 3a703d302fefe0fd
+case 12 pages 60 pixels e98b9f19bfe02afd
+case 13 pages 60 pixels c9e91b866afea495
+case 14 pages 82 pixels f2f7...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native-table-border" classname="native-table-border" time="1.00426" status="run">
+		<properties/>
+		<system-out>12497 table border checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-border-edges" classname="native-border-edges" time="0.146257" status="run">
+		<properties/>
+		<system-out>356 independent border checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-header" classname="native-table-header" time="0.148098" status="run">
+		<properties/>
+		<system-out>139 repeated header checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-alignment" classname="native-table-alignment" time="0.525305" status="run">
+		<properties/>
+		<system-out>311 table alignment checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-intrinsic" classname="native-table-intrinsic" time="1.22522" status="run">
+		<properties/>
+		<system-out>12840 intrinsic table checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-columns" classname="native-table-columns" time="0.44249" status="run">
+		<properties/>
+		<system-out>565 table column checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-spacing" classname="native-table-spacing" time="0.234353" status="run">
+		<properties/>
+		<system-out>grid:  /
+grid: border-spacing:7px /
+grid: border-spacing:7px 11px /
+grid: border-spacing:0 /
+grid: border-spacing:7px 11px;border-spacing:-1px /
+grid: border-spacing:7px 11px;border-spacing:3px 4px 5px /
+grid: border-spacing:7px 11px;border-spacing:10% /
+grid: border-spacing:7px 11px;border-spacing:auto /
+grid: border-spacing:7px 11px;border-collapse:collapse /
+grid:  / border-spacing:7px 11px
+grid: border-spacing:inherit / border-spacing:7px 11px
+grid: border-spacing:initial / border-spacing:7px 11px
+grid: border-spacing:unset / border-spacing:7px 11px
+grid: font-size:14px;border-spacing:.5em /
+pages: header=0 tall=0 vertical=0
+pages: header=1 tall=0 vertical=0
+pages: header=0 tall=1 vertical=0
+pages: header=0 tall=0 vertical=1
+3174 table spacing checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-crypto" classname="native-pdf-crypto" time="0.256225" status="run">
+		<properties/>
+		<system-out>7 PDF authentication checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-index" classname="native-chapter-index" time="1.12739" status="run">
+		<properties/>
+		<system-out>50 MiB streamed: 102404 nodes, sampled-accounted=3489737 bytes, retained=3416516 bytes, generator=32768 bytes
+100 MiB streamed: 204804 nodes, sampled-accounted=6766537 bytes, retained=6693316 bytes, generator=32768 bytes
+27366 chapter index checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-window" classname="native-chapter-window" time="2.29273" status="run">
+		<properties/>
+		<system-out>50 MiB replayed: tail-window=1110 bytes, fixed-generator=32768 bytes
+100 MiB replayed: tail-window=1110 bytes, fixed-generator=32768 bytes
+62924 chapter window checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-style-budget" classname="native-style-budget" time="1.32898" status="run">
+		<properties/>
+		<system-out>153 bounded style checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-source" classname="native-chapter-source" time="0.170955" status="run">
+		<properties/>
+		<system-out>180 chapter source checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cbz" classname="native-cbz" time="0.25622" status="run">
+		<properties/>
+		<system-out>63110 native CBZ checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-image-formats" classname="native-image-formats" time="1.03615" status="run">
+		<properties/>
+		<system-out>skip webp: WebP image decoding is not enabled in this build
+skip tiff: TIFF image decoding is not enabled in this build
+skip avif: AVIF image decoding is not enabled in this build
+490 image-format checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cbz-formats" classname="native-cbz-formats" time="0.286595" status="run">
+		<properties/>
+		<system-out>skip CBZ format matrix: WebP image decoding is not enabled in this build
+</system-out>
+	</testcase>
+	<testcase name="native-library-stream" classname="native-library-stream" time="5.53981" status="run">
+		<properties/>
+		<system-out>84 streaming library checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-m4b-metadata" classname="native-m4b-metadata" time="0.127293" status="run">
+		<properties/>
+		<system-out>9559 ISO-BMFF metadata, chapters, ownership and large-source checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-indic" classname="native-indic" time="0.106051" status="run">
+		<properties/>
+		<system-out>1478 native Indic oracle, source, cancellation and pagination checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-wp7" classname="native-wp7" time="0.552208" status="run">
+		<properties/>
+		<system-out>EXReader WP7 scripts: 18750 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ruby" classname="native-ruby" time="0.243513" status="run">
+		<properties/>
+		<system-out>9524 ruby layout, source, hit, pagination and checkpoint checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-color" classname="native-pdf-color" time="0.29606" status="run">
+		<properties/>
+		<system-out>2262 native PDF source colour-space checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-intent" classname="native-pdf-intent" time="0.26954" status="run">
+		<properties/>
+		<system-out>52 native PDF rendering-intent checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-matte" classname="native-pdf-matte" time="0.114048" status="run">
+		<properties/>
+		<system-out>30 native PDF image matte checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-groupcs" classname="native-pdf-groupcs" time="0.29515" status="run">
+		<properties/>
+		<system-out>625 native PDF group colour-space checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-inks" classname="native-inks" time="5.79838" status="run">
+		<properties/>
+		<system-out>929 native ink checks; max reference difference 1; legacy round-trip difference 7
+</system-out>
+	</testcase>
+	<testcase name="native-nested-groups" classname="native-nested-groups" time="4.90094" status="run">
+		<properties/>
+		<system-out>24 nested crop scenarios match whole buffers; minimum working allocation reduction 97%
+6194 nested group checks, maximum Decimal probe difference 1/255
+</system-out>
+	</testcase>
+	<testcase name="native-paint-source" classname="native-paint-source" time="1.47882" status="run">
+		<properties/>
+		<system-out>{"scenario":"full-canvas","status":6,"calls":22364160,"charged_work":268369920,"cpu_ms":1114.000000,"pixel_hash":"9f970139dd772383"}
+{"scenario":"tiny-clip-with-hole","status":0,"calls":48,"charged_work":9437776,"cpu_ms":10.000000,"pixel_hash":"861f4780274ac3cb"}
+283 procedural paint checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-zero-opacity" classname="native-zero-opacity" time="1.44256" status="run">
+		<properties/>
+		<system-out>2500 zero-opacity checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-alpha-source" classname="native-alpha-source" time="3.92795" status="run">
+		<properties/>
+		<system-out>1834 alpha source checks; maximum Decimal difference 0/255
+</system-out>
+	</testcase>
+	<testcase name="native-mask-functions" classname="native-mask-functions" time="2.32352" status="run">
+		<properties/>
+		<system-out>821 mask function checks; maximum analytic difference 0/255
+</system-out>
+	</testcase>
+	<testcase name="native-mask-scope" classname="native-mask-scope" time="1.59538" status="run">
+		<properties/>
+		<system-out>317 mask scope checks; maximum analytic probe difference 1/255
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-shading" classname="native-pdf-shading" time="5.6003" status="run">
+		<properties/>
+		<system-out>41933 native PDF shading checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-calculator" classname="native-pdf-calculator" time="0.11409" status="run">
+		<properties/>
+		<system-out>263 PDF calculator checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-color" classname="native-font-color" time="0.782346" status="run">
+		<properties/>
+		<system-out>80703 color-font palette, layers and raster checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-color-v1" classname="native-font-color-v1" time="0.337112" status="run">
+		<properties/>
+		<system-out>259 COLR v1 paint, gradient, transform, composite, limit and identity checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-svg" classname="native-font-svg" time="0.377696" status="run">
+		<properties/>
+		<system-out>908 SVG font element, transform, rejection, limit and identity checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ot-variation" classname="native-ot-variation" time="0.146171" status="run">
+		<properties/>
+		<system-out>OpenType variation checks: 196
+</system-out>
+	</testcase>
+	<testcase name="native-orthogonal" classname="native-orthogonal" time="0.225705" status="run">
+		<properties/>
+		<system-out>12475 orthogonal geometry, pagination, checkpoint and positioned checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-variable" classname="native-variable" time="0.0805421" status="run">
+		<properties/>
+		<system-out>112 variable font axes, shaping, outlines and inheritance checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-inline" classname="native-pdf-inline" time="1.07503" status="run">
+		<properties/>
+		<system-out>394 native PDF inline image checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-stretch" classname="native-stretch" time="0.568885" status="run">
+		<properties/>
+		<system-out>rate=0.50 frames=192034 pitch=440.000Hz
+rate=0.75 frames=128023 pitch=440.091Hz
+rate=1.00 frames=96017 pitch=440.000Hz
+rate=1.50 frames=64011 pitch=439.998Hz
+rate=2.00 frames=48009 pitch=440.000Hz
+rate=1.333333333 frames=72013 pitch=219.938Hz
+4949472 pitch-preserving time-stretch checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-m4b" classname="native-m4b" time="0.16381" status="run">
+		<properties/>
+		<system-out>M4B disabled configuration passed (4 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-epub-metadata-write" classname="native-epub-metadata-write" time="0.373192" status="run">
+		<properties/>
+		<system-out>362 EPUB original metadata/cover writing checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-vertical" classname="native-vertical" time="0.218676" status="run">
+		<properties/>
+		<system-out>6 prefixed/canonical equivalence cases and 3 cascade cases passed
+1781 vertical layout, orientation, shaping and pager checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-combine-upright-geometry" classname="native-combine-upright-geometry" time="0.143579" status="run">
+		<properties/>
+		<system-out>38 text-combine-upright geometry checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-combine-upright-modes" classname="native-combine-upright-modes" time="0.0750332" status="run">
+		<properties/>
+		<system-out>14 mode and rejection cases passed
+58 text-combine-upright modes checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-combine-upright-wrap" classname="native-combine-upright-wrap" time="0.0875466" status="run">
+		<properties/>
+		<system-out>13 text-combine-upright wrap checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-type3" classname="native-pdf-type3" time="0.163291" status="run">
+		<properties/>
+		<system-out>PDF Type3 painting passed (2935 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-aac" classname="native-aac" time="0.167345" status="run">
+		<properties/>
+		<system-out>AAC disabled configuration passed (4 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-markup" classname="native-pdf-markup" time="0.176518" status="run">
+		<properties/>
+		<system-out>PDF line markup passed (8819 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-flac" classname="native-flac" time="0.210501" status="run">
+		<properties/>
+		<system-out>5659 native FLAC checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pcm" classname="native-pcm" time="0.163018" status="run">
+		<properties/>
+		<system-out>PCM providers passed (129 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-audio-output" classname="native-audio-output" time="0.1332" status="run">
+		<properties/>
+		<system-out>Native audio output passed (17 checks; waveOut)
+</system-out>
+	</testcase>
+	<testcase name="native-mp3" classname="native-mp3" time="0.147621" status="run">
+		<properties/>
+		<system-out>MP3 disabled configuration passed (4 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-metadata-write" classname="native-pdf-metadata-write" time="0.353932" status="run">
+		<properties/>
+		<system-out>PDF metadata writing passed (1896 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-write" classname="native-pdf-write" time="0.463173" status="run">
+		<properties/>
+		<system-out>PDF annotation writing passed (492 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-form" classname="native-pdf-form" time="0.412191" status="run">
+		<properties/>
+		<system-out>AcroForm: 9394 checks; 36 fields, 39 widgets, 2 pages
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-appearance" classname="native-pdf-appearance" time="0.0934445" status="run">
+		<properties/>
+		<system-out>1629 PDF appearance checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-page-annotations" classname="native-page-annotations" time="0.213356" status="run">
+		<properties/>
+		<system-out>Page annotation snapshots passed
+</system-out>
+	</testcase>
+	<testcase name="native-metadata" classname="native-metadata" time="0.197904" status="run">
+		<properties/>
+		<system-out>865 metadata checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-annotation" classname="native-annotation" time="0.277839" status="run">
+		<properties/>
+		<system-out>473 annotation exchange checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-reanchor-library" classname="native-reanchor-library" time="0.432967" status="run">
+		<properties/>
+		<system-out>135 library relocation checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-progress-library" classname="native-progress-library" time="0.568264" status="run">
+		<properties/>
+		<system-out>131 stable progress checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-text-source" classname="native-text-source" time="0.360684" status="run">
+		<properties/>
+		<system-out>139 streaming text source checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-text-index" classname="native-text-index" time="0.485816" status="run">
+		<properties/>
+		<system-out>295 text index checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-abi" classname="native-abi" time="0.131702" status="run">
+		<properties/>
+		<system-out>9 ABI compatibility checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-core" classname="native-core" time="0.965319" status="run">
+		<properties/>
+		<system-out>EXReader C 3.42.0: 70073 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-layout-chapter" classname="native-chapter-layout-chapter" time="0.147173" status="run">
+		<properties/>
+		<system-out>54 chapter layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-layout-title" classname="native-chapter-layout-title" time="0.13362" status="run">
+		<properties/>
+		<system-out>308 chapter layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-layout-indent" classname="native-chapter-layout-indent" time="0.141154" status="run">
+		<properties/>
+		<system-out>41 chapter layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-flow" classname="native-flow" time="0.500818" status="run">
+		<properties/>
+		<system-out>EXReader flow: 5347 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-construct" classname="native-construct" time="0.19135" status="run">
+		<properties/>
+		<system-out>653 document construction checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-text" classname="native-cfi-text" time="0.190888" status="run">
+		<properties/>
+		<system-out>67 CFI text assertion checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi" classname="native-cfi" time="0.212004" status="run">
+		<properties/>
+		<system-out>834 chapter CFI checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-parse" classname="native-cfi-compat-parse" time="0.115518" status="run">
+		<properties/>
+		<system-out>valid vectors: 25/25
+1363 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-invalid" classname="native-cfi-compat-invalid" time="0.0533441" status="run">
+		<properties/>
+		<system-out>invalid vectors: 38/38
+106 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-mapping" classname="native-cfi-compat-mapping" time="0.0654841" status="run">
+		<properties/>
+		<system-out>projection boundaries: 58/58 (raw UTF-16/normalized UTF-8)
+349 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-roundtrip" classname="native-cfi-compat-roundtrip" time="0.225619" status="run">
+		<properties/>
+		<system-out>sample 0: 0:23 -&gt; 0:71 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/3:2,/12/1:6)
+sample 1: 0:32 -&gt; 0:65 epubcfi(/6/2[ref^=a]!/4[body^=a],/4/3:4,/12/1:2)
+sample 2: 0:3 -&gt; 0:63 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/1:5,/12/1:0)
+sample 3: 0:58 -&gt; 0:65 epubcfi(/6/2[ref^=a]!/4[body^=a],/8/1:16,/12/1:2)
+sample 4: 0:38 -&gt; 0:43 epubcfi(/6/2[ref^=a]!/4[body^=a],/4/3:8,/8/1:1)
+sample 5: 0:38 -&gt; 0:43 epubcfi(/6/2[ref^=a]!/4[body^=a],/4/3:8,/8/1:1)
+sample 6: 0:9 -&gt; 0:53 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/1:12,/8/1:11)
+sample 7: 0:25 -&gt; 0:50 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/3:4,/8/1:8)
+sample 8: 0:43 -&gt; 0:44 epubcfi(/6/2[ref^=a]!/4[body^=a]/8/1,:1,:2)
+sample 9: 0:32 -&gt; 0:61 epubcfi(/6/2[ref^=a]!/4[body^=a],/4/3:4,/8/1:19)
+sample 10: 0:57 -&gt; 0:64 epubcfi(/6/2[ref^=a]!/4[body^=a],/8/1:15,/12/1:1)
+sample 11: 0:0 -&gt; 0:34 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/1:2,/4/3:6)
+sample 12: 0:29 -&gt; 0:60 epubcfi(/6/2[ref^=a]!/4[body^=a],/4/3:0,/8/1:18)
+sample 13: 0:21 -&gt; 0:60 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/2/1:4,/8/1:18)
+s...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-cross" classname="native-cfi-compat-cross" time="0.0874245" status="run">
+		<properties/>
+		<system-out>sample 0: 0:71 -&gt; 1:29 epubcfi(/6,/2[ref^=a]!/4[body^=a]/12/1:6,/4!/4/2/1:24)
+sample 1: 0:32 -&gt; 1:12 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:4,/4!/4/2/1:12)
+sample 2: 0:3 -&gt; 1:8 epubcfi(/6,/2[ref^=a]!/4[body^=a]/2[p]/1:5,/4!/4/2/1:8)
+sample 3: 0:58 -&gt; 1:6 epubcfi(/6,/2[ref^=a]!/4[body^=a]/8/1:16,/4!/4/2/1:6)
+sample 4: 0:38 -&gt; 1:37 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:8,/4!/4/4/1:7)
+sample 5: 0:38 -&gt; 1:2 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:8,/4!/4/2/1:2)
+sample 6: 0:9 -&gt; 1:25 epubcfi(/6,/2[ref^=a]!/4[body^=a]/2[p]/1:12,/4!/4/2/1:20)
+sample 7: 0:50 -&gt; 1:4 epubcfi(/6,/2[ref^=a]!/4[body^=a]/8/1:8,/4!/4/2/1:4)
+sample 8: 0:44 -&gt; 1:12 epubcfi(/6,/2[ref^=a]!/4[body^=a]/8/1:2,/4!/4/2/1:12)
+sample 9: 0:32 -&gt; 1:8 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:4,/4!/4/2/1:8)
+cross-part ranges: 10/10 = 100%; anchor fields and both endpoints equal; 4 boundary cases
+281 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-contracts" classname="native-cfi-compat-contracts" time="0.104123" status="run">
+		<properties/>
+		<system-out>32 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-anchor" classname="native-anchor" time="0.137186" status="run">
+		<properties/>
+		<system-out>295 text anchor checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-document-search-basic" classname="native-document-search-basic" time="0.093139" status="run">
+		<properties/>
+		<system-out>search basic passed
+</system-out>
+	</testcase>
+	<testcase name="native-document-search-unicode" classname="native-document-search-unicode" time="0.0347505" status="run">
+		<properties/>
+		<system-out>search unicode passed
+</system-out>
+	</testcase>
+	<testcase name="native-document-search-flags" classname="native-document-search-flags" time="0.0219073" status="run">
+		<properties/>
+		<system-out>search flags passed
+</system-out>
+	</testcase>
+	<testcase name="native-document-search-errors" classname="native-document-search-errors" time="0.0691801" status="run">
+		<properties/>
+		<system-out>search errors passed
+</system-out>
+	</testcase>
+	<testcase name="native-document-search-mapping" classname="native-document-search-mapping" time="0.0624649" status="run">
+		<properties/>
+		<system-out>jump/anchor/glyph mapping 20/20 (10 vertical)
+search mapping passed
+</system-out>
+	</testcase>
+	<testcase name="native-content-mapping" classname="native-content-mapping" time="0.285925" status="run">
+		<properties/>
+		<system-out>same-layout: 200/200 = 100.00% (seed 0x41ce2026; 20 cross-part)
+</system-out>
+	</testcase>
+	<testcase name="native-content-relocation" classname="native-content-relocation" time="0.0176171" status="run">
+		<properties/>
+		<system-out>relocation: insertion, part reorder, ambiguity, deletion, cancellation, identity passed
+</system-out>
+	</testcase>
+	<testcase name="native-content-expansion" classname="native-content-expansion" time="0.0233478" status="run">
+		<properties/>
+		<system-out>expansion: grapheme/emoji, word/CJK, sentence, paragraph, exclusive end and cross-part passed
+</system-out>
+	</testcase>
+	<testcase name="native-content-hits" classname="native-content-hits" time="0.0265519" status="run">
+		<properties/>
+		<system-out>hit-test: 50/50 = 100.00%
+</system-out>
+	</testcase>
+	<testcase name="native-content-reflow" classname="native-content-reflow" time="0.547252" status="run">
+		<properties/>
+		<system-out>stage 0: 1280x800 17px font1: 9 pages
+stage 1: 1280x800 18px font1: 9 pages
+stage 2: 1280x800 24px font1: 11 pages
+stage 3: 1280x800 17px font1: 9 pages
+stage 4: 1280x800 17px font2: 15 pages
+stage 5: 1280x800 17px font1: 9 pages
+stage 6: 1552x928 17px font1: 8 pages
+stage 7: 1280x800 17px font1: 9 pages
+size-17-18-24-17: 100/100 = 100.00%; page movements=97; mismatches=0
+font-roundtrip: 100/100 = 100.00%; page movements=88; mismatches=0
+window-roundtrip: 100/100 = 100.00%; page movements=50; mismatches=0
+</system-out>
+	</testcase>
+	<testcase name="native-anchor-library" classname="native-anchor-library" time="0.475754" status="run">
+		<properties/>
+		<system-out>EXReader stable annotation library: 282 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-note-limit" classname="native-note-limit" time="2.41169" status="run">
+		<properties/>
+		<system-out>74 annotation text limit checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-export-xml" classname="native-export-xml" time="0.140698" status="run">
+		<properties/>
+		<system-out>export XML: 2004 checks
+</system-out>
+	</testcase>
+	<testcase name="native-rtf-fallback" classname="native-rtf-fallback" time="0.166813" status="run">
+		<properties/>
+		<system-out>RTF fallback: 116 checks
+</system-out>
+	</testcase>
+	<testcase name="native-html-raw" classname="native-html-raw" time="0.17019" status="run">
+		<properties/>
+		<system-out>HTML raw text: 120 checks
+</system-out>
+	</testcase>
+	<testcase name="native-lazy" classname="native-lazy" time="0.459326" status="run">
+		<properties/>
+		<system-out>EXReader lazy loading: 39215 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-source" classname="native-source" time="0.112678" status="run">
+		<properties/>
+		<system-out>Seekable sources: 463 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-objects" classname="native-pdf-objects" time="2.09808" status="run">
+		<properties/>
+		<system-out>23430 native PDF object checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-pages" classname="native-pdf-pages" time="0.322472" status="run">
+		<properties/>
+		<system-out>181 native PDF page tree checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-cmap" classname="native-pdf-cmap" time="0.273837" status="run">
+		<properties/>
+		<system-out>182 native PDF ToUnicode checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-font" classname="native-pdf-font" time="0.441402" status="run">
+		<properties/>
+		<system-out>324 native PDF font checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-text" classname="native-pdf-text" time="0.474887" status="run">
+		<properties/>
+		<system-out>399 native PDF text geometry checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-vector" classname="native-vector" time="0.270147" status="run">
+		<properties/>
+		<system-out>2431 native vector fill checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-graphics" classname="native-pdf-graphics" time="0.455871" status="run">
+		<properties/>
+		<system-out>211 native PDF graphics checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-outline" classname="native-pdf-outline" time="0.392185" status="run">
+		<properties/>
+		<system-out>188 native PDF outline checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-raster" classname="native-pdf-raster" time="0.500177" status="run">
+		<properties/>
+		<system-out>262446 native PDF raster checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-image" classname="native-pdf-image" time="0.694996" status="run">
+		<properties/>
+		<system-out>3852 native PDF image checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-audio-library" classname="native-audio-library" time="0.328299" status="run">
+		<properties/>
+		<system-out>90 audio persistence checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-wave-example" classname="native-wave-example" time="0.162372" status="run">
+		<properties/>
+		<system-out>rate=16000 channels=1 frames=3200 decoded=3200 peak=0.500000
+</system-out>
+	</testcase>
+	<testcase name="native-pcm-example" classname="native-pcm-example" time="0.173018" status="run">
+		<properties/>
+		<system-out>rate=16000 channels=1 decoded=3200 peak=0.500000
+</system-out>
+	</testcase>
+	<testcase name="native-wave" classname="native-wave" time="0.164942" status="run">
+		<properties/>
+		<system-out>8076 native WAVE checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-audio-player" classname="native-audio-player" time="0.336887" status="run">
+		<properties/>
+		<system-out>116 audio backend control checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-audio" classname="native-audio" time="0.330958" status="run">
+		<properties/>
+		<system-out>58 audio timeline checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-library" classname="native-fixed-library" time="0.368142" status="run">
+		<properties/>
+		<system-out>96 fixed library checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-text" classname="native-fixed-text" time="0.113397" status="run">
+		<properties/>
+		<system-out>129 generic fixed text checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-pdf" classname="native-fixed-pdf" time="0.117336" status="run">
+		<properties/>
+		<system-out>111 public fixed PDF checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-example" classname="native-fixed-example" time="0.159834" status="run">
+		<properties/>
+		<system-out>text_bytes=1 regions=1
+pages=5 rendered=0 bitmap=12x12
+</system-out>
+	</testcase>
+	<testcase name="native-fixed" classname="native-fixed" time="0.147902" status="run">
+		<properties/>
+		<system-out>35 native generic fixed document checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-path" classname="native-font-path" time="0.164873" status="run">
+		<properties/>
+		<system-out>161 native public font path checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-blend" classname="native-blend" time="3.15652" status="run">
+		<properties/>
+		<system-out>flat alpha0 maximum premultiplied difference 2
+flat alpha1 maximum premultiplied difference 2
+primitives alpha0 maximum premultiplied difference 2
+primitives alpha1 maximum premultiplied difference 1
+state alpha0 maximum premultiplied difference 0
+state alpha1 maximum premultiplied difference 0
+groups alpha0 maximum premultiplied difference 2
+groups alpha1 maximum premultiplied difference 2
+compound alpha0 maximum premultiplied difference 2
+compound alpha1 maximum premultiplied difference 2
+ap-groups alpha0 maximum premultiplied difference 1
+ap-groups alpha1 maximum premultiplied difference 1
+nonisolated alpha0 maximum premultiplied difference 1
+nonisolated alpha1 maximum premultiplied difference 1
+ap-nonisolated alpha0 maximum premultiplied difference 1
+ap-nonisolated alpha1 maximum premultiplied difference 1
+knockout alpha0 maximum premultiplied difference 0
+knockout alpha1 maximum premultiplied difference 0
+knockout-nonisolated alpha0 maximum premultiplied difference 0
+knockout-nonisolated alpha1 maximum p...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native-canvas" classname="native-canvas" time="0.279124" status="run">
+		<properties/>
+		<system-out>4484 native canvas checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-canvas-cmyk" classname="native-canvas-cmyk" time="0.108743" status="run">
+		<properties/>
+		<system-out>2696 native canvas CMYK group checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-viewport" classname="native-viewport" time="0.165616" status="run">
+		<properties/>
+		<system-out>43 native viewport checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-positioned" classname="native-positioned" time="0.214131" status="run">
+		<properties/>
+		<system-out>18083 positioned layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-library-unique" classname="native-library-unique" time="0.301481" status="run">
+		<properties/>
+		<system-out>101 exact duplicate import checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cover-import" classname="native-cover-import" time="0.355843" status="run">
+		<properties/>
+		<system-out>97 library cover import checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-kf8" classname="native-kf8" time="2.85343" status="run">
+		<properties/>
+		<system-out>1729 KF8 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-mobi" classname="native-mobi" time="0.413612" status="run">
+		<properties/>
+		<system-out>51 MOBI codec checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-decoration" classname="native-decoration" time="0.129353" status="run">
+		<properties/>
+		<system-out>690 text-decoration checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtf-number" classname="native-rtf-number" time="0.0996874" status="run">
+		<properties/>
+		<system-out>131 RTF numbering checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtf-list" classname="native-rtf-list" time="0.0874786" status="run">
+		<properties/>
+		<system-out>39 RTF list checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtf-note" classname="native-rtf-note" time="0.261442" status="run">
+		<properties/>
+		<system-out>119 RTF note checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtf-table" classname="native-rtf-table" time="0.170151" status="run">
+		<properties/>
+		<system-out>140 RTF table checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtf" classname="native-rtf" time="0.133293" status="run">
+		<properties/>
+		<system-out>138 rich RTF checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx" classname="native-docx" time="0.229435" status="run">
+		<properties/>
+		<system-out>224 rich DOCX checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fb2" classname="native-fb2" time="0.111672" status="run">
+		<properties/>
+		<system-out>71 rich FB2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-export-html" classname="native-export-html" time="0.123495" status="run">
+		<properties/>
+		<system-out>165 structured HTML checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-export-epub" classname="native-export-epub" time="0.156801" status="run">
+		<properties/>
+		<system-out>323 structured EPUB checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-sevenz-codecs" classname="native-sevenz-codecs" time="0.180216" status="run">
+		<properties/>
+		<system-out>7Z codecs: 158305 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-sevenz-safety" classname="native-sevenz-safety" time="0.302278" status="run">
+		<properties/>
+		<system-out>7Z safety: 630 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-sevenz-source" classname="native-sevenz-source" time="0.0731835" status="run">
+		<properties/>
+		<system-out>7Z source: 14403 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-locate-report-entries" classname="native-locate-report-entries" time="0.241175" status="run">
+		<properties/>
+		<system-out>locate report entries: 38 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-locate-report-reset" classname="native-locate-report-reset" time="0.0946576" status="run">
+		<properties/>
+		<system-out>locate report reset: 18 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-navigation" classname="native-navigation" time="0.236363" status="run">
+		<properties/>
+		<system-out>Navigation: 145 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-toc-page" classname="native-toc-page" time="0.325693" status="run">
+		<properties/>
+		<system-out>toc pages passed (22029 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-toc-nav" classname="native-toc-nav" time="0.215341" status="run">
+		<properties/>
+		<system-out>TOC nav: 30 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-toc-ncx" classname="native-toc-ncx" time="0.116875" status="run">
+		<properties/>
+		<system-out>TOC ncx: 45 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-toc-recovery" classname="native-toc-recovery" time="0.238175" status="run">
+		<properties/>
+		<system-out>TOC recovery: 81 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-toc-fragment" classname="native-toc-fragment" time="0.0668532" status="run">
+		<properties/>
+		<system-out>TOC fragment: 78 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-text" classname="native-text" time="0.275051" status="run">
+		<properties/>
+		<system-out>766 Unicode grapheme conformance cases passed
+19338 Unicode line conformance cases passed; 1388 breaks suppressed inside graphemes
+644977 text boundary and cluster layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-bidi" classname="native-bidi" time="1.98951" status="run">
+		<properties/>
+		<system-out>861948 Unicode 17 bidi conformance cases, 24401500 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-shaping" classname="native-shaping" time="0.462187" status="run">
+		<properties/>
+		<system-out>EXReader shaping: 295446 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-complex-layout" classname="native-complex-layout" time="0.233881" status="run">
+		<properties/>
+		<system-out>37354 complex layout integration checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-line-boundary" classname="native-line-boundary" time="20.7232" status="run">
+		<properties/>
+		<system-out>EXReader line boundaries: 46986 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font" classname="native-font" time="0.241061" status="run">
+		<properties/>
+		<system-out>258 font fallback checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-font" classname="native-book-font" time="0.225304" status="run">
+		<properties/>
+		<system-out>Book fonts: 136 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-budget" classname="native-budget" time="0.204497" status="run">
+		<properties/>
+		<system-out>121 cache byte budget checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-bounds" classname="native-chapter-bounds" time="0.587626" status="run">
+		<properties/>
+		<system-out>27 chapter bound checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-reader" classname="native-chapter-reader" time="12.4224" status="run">
+		<properties/>
+		<system-out>9480 chapter reader equivalence and recovery checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-oversized-unit" classname="native-chapter-oversized-unit" time="0.136103" status="run">
+		<properties/>
+		<system-out>90 oversized inline unit checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pager" classname="native-pager" time="0.66044" status="run">
+		<properties/>
+		<system-out>EXReader pager: 238772 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-page-cache" classname="native-page-cache" time="1.50161" status="run">
+		<properties/>
+		<system-out>5187 page cache checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-checkpoints" classname="native-checkpoints" time="0.512644" status="run">
+		<properties/>
+		<system-out>Checkpoints: 3922 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-control" classname="native-control" time="0.401191" status="run">
+		<properties/>
+		<system-out>Operation control: 4097 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-convert-corpus" classname="native-convert-corpus" time="2.2399" status="run">
+		<properties/>
+		<system-out>generated 101 files in C:\Users\Oscar\Documents\Codex\EXReader-C4-20261109\build\c4-baseline\convert-corpus
+</system-out>
+	</testcase>
+	<testcase name="native-convert" classname="native-convert" time="0.955718" status="run">
+		<properties/>
+		<system-out>convert matrix: 520 checks, 520 passed, 0 failed; 20 render checks (20 passed)
+</system-out>
+	</testcase>
+	<testcase name="native-convert-cli" classname="native-convert-cli" time="8.08392" status="run">
+		<properties/>
+		<system-out>PASS capabilities
+PASS single-txt-to-epub
+PASS single-html-to-fb2
+PASS single-epub-to-docx
+PASS single-rtf-to-txt
+PASS single-docx-to-html
+PASS single-fb2-to-rtf
+PASS single-epub-to-html
+PASS default-output-name
+PASS xhtml-alias
+PASS explicit-format
+PASS arbitrary-output-extension
+PASS uppercase-extension
+PASS preserve-epub-0
+PASS preserve-epub-1
+PASS preserve-epub-html-bundle
+PASS preserve-xhtml-to-epub
+PASS preserve-xhtml-to-html
+PASS preserve-unsupported
+PASS preserve-missing-resource
+PASS batch-success
+PASS batch-mixed
+PASS batch-duplicate-output
+PASS bad-manifest
+PASS duplicate-manifest-id
+PASS source-equals-target
+PASS source-target-case-alias
+PASS source-target-hardlink
+PASS existing-target
+PASS explicit-overwrite
+PASS source-target-junction
+PASS write-failure
+PASS publish-failure
+PASS unicode-space-path
+PASS report-write-failure
+PASS input-limit
+PASS cancel-batch
+37 scenarios, 37 passed, 0 failed
+</system-out>
+	</testcase>
+	<testcase name="native-convert-benchmark" classname="native-convert-benchmark" time="19.2765" status="run">
+		<properties/>
+		<system-out>small=10 one_mib_peak=27631616 batch_peak=29876224 outputs_batch=5385721
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-group-reference" classname="native-pdf-group-reference" time="0.462956" status="run">
+		<properties/>
+		<system-out>208 independent blend samples match PDFium within 2 and 160 group probes reproduce exactly
+</system-out>
+	</testcase>
+	<testcase name="native-case-reference" classname="native-case-reference" time="1.21377" status="run">
+		<properties/>
+		<system-out>8074 contextual case comparisons passed; independent ICU 78.3, Unicode 17.0; includes all Unicode 17 default mapping scalars
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-compound-oracle" classname="native-hyphen-compound-oracle" time="3.91727" status="run">
+		<properties/>
+		<system-out>{"reference": "independent literal overlay", "seed": 180327, "queries": 10075, "unchanged_real_dictionaries": [], "strict_minimum_reference_differences": 0, "library_sha256": "de732f980a76430cfcda5a2385be4af2fcc17c4a2ae8cb5d715b4dfe8df81485", "reference_sha256": null, "preprocessor_sha256": null, "reference_input": "not used"}
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-replacement-oracle" classname="native-hyphen-replacement-oracle" time="1.25599" status="run">
+		<properties/>
+		<system-out>{"reference": "independent literal overlay", "seed": 180328, "generated_queries": 5000, "generated_replacement_opportunities": 8479, "library_sha256": "de732f980a76430cfcda5a2385be4af2fcc17c4a2ae8cb5d715b4dfe8df81485"}
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-conditional-oracle" classname="native-hyphen-conditional-oracle" time="2.92235" status="run">
+		<properties/>
+		<system-out>{"seed": 180329, "generated_queries": 4801, "unicode_queries": 1200, "opportunities": 16929, "external_queries": 0, "external_scope": "ASCII anchored conditional left stems; cut&gt;0 and restored stem shorter than parent; documented substring preprocessing", "library_sha256": "de732f980a76430cfcda5a2385be4af2fcc17c4a2ae8cb5d715b4dfe8df81485"}
+</system-out>
+	</testcase>
+	<testcase name="native-benchmark" classname="native-benchmark" time="6.68068" status="run">
+		<properties/>
+		<system-out>Benchmark eager/paged JSON, bounded continuation, render samples, runner and invalid arguments verified
+</system-out>
+	</testcase>
+	<testcase name="native-document-probe" classname="native-document-probe" time="24.7409" status="run">
+		<properties/>
+		<system-out>Complete-document probe and corpus evidence checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-corpus-triage" classname="native-corpus-triage" time="15.6706" status="run">
+		<properties/>
+		<system-out>Corpus classification checks passed; independent PDF reference checked
+</system-out>
+	</testcase>
+	<testcase name="native-png" classname="native-png" time="0.30214" status="run">
+		<properties/>
+		<system-out>PNG verified: 720 x 1040, 1 channels, CRCs and native pixels
+</system-out>
+	</testcase>
+	<testcase name="native-color-png" classname="native-color-png" time="1.23706" status="run">
+		<properties/>
+		<system-out>PNG verified: 720 x 1040, 4 channels, CRCs and native pixels
+PNG verified: 720 x 1040, 4 channels, CRCs and native pixels
+BMP verified: 720 x 1040, BGR color pixels
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-jpx" classname="native-pdf-jpx" time="0.312788" status="run">
+		<properties/>
+		<system-out>JPX packed samples: JP2/J2K 1/2/4/8/16-bit Gray/RGB; malformed, truncated, dimensions, budget, cancellation, signed and subsampling passed
+</system-out>
+	</testcase>
+	<testcase name="native-core-component" classname="native-core-component" time="1.00765" status="run">
+		<properties/>
+		<system-out>Independent core component passed
+</system-out>
+	</testcase>
+	<testcase name="native-anchor-boundary" classname="native-anchor-boundary" time="0.413717" status="run">
+		<properties/>
+		<system-out>21 boundary anchor checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-library-source" classname="native-library-source" time="1.00892" status="run">
+		<properties/>
+		<system-out>23859 public library source checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-library-epub-storage" classname="native-library-epub-storage" time="1.20311" status="run">
+		<properties/>
+		<system-out>2305 independent EPUB storage checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-audio-component" classname="native-audio-component" time="0.209827" status="run">
+		<properties/>
+		<system-out>58 audio timeline checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-library-component" classname="native-library-component" time="0.477198" status="run">
+		<properties/>
+		<system-out>Independent library component passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf_edit-component" classname="native-pdf_edit-component" time="0.397292" status="run">
+		<properties/>
+		<system-out>PDF annotation writing passed (492 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-textindex-component" classname="native-textindex-component" time="0.271843" status="run">
+		<properties/>
+		<system-out>Independent text index component passed
+</system-out>
+	</testcase>
+	<testcase name="native-style-footnotes-styles" classname="native-style-footnotes-styles" time="0.248701" status="run">
+		<properties/>
+		<system-out>runtime style layouts=18/18; independent physical edges=4/4
+checks=66
+</system-out>
+	</testcase>
+	<testcase name="native-style-footnotes-footnotes" classname="native-style-footnotes-footnotes" time="0.169018" status="run">
+		<properties/>
+		<system-out>chapter notes=10 references=10
+end notes=10 references=10
+none notes=0 references=0
+vertical notes=10 references=10
+checks=236
+</system-out>
+	</testcase>
+	<testcase name="native-style-footnotes-anchors" classname="native-style-footnotes-anchors" time="0.0738385" status="run">
+		<properties/>
+		<system-out>#74 content anchors 18-&gt;24-&gt;18=9/9
+checks=40
+</system-out>
+	</testcase>
+	<testcase name="native-style-footnotes-toc" classname="native-style-footnotes-toc" time="0.0472026" status="run">
+		<properties/>
+		<system-out>default content=1184x720 toc_pages=4 entries=70 body_pages=4 glyphs_inside=yes
+font12 content=1184x720 toc_pages=3 entries=70 body_pages=3 glyphs_inside=yes
+font32 content=1184x720 toc_pages=7 entries=70 body_pages=8 glyphs_inside=yes
+margins0 content=1280x800 toc_pages=4 entries=70 body_pages=4 glyphs_inside=yes
+margins120 content=1040x560 toc_pages=5 entries=70 body_pages=6 glyphs_inside=yes
+left120 content=1160x720 toc_pages=4 entries=70 body_pages=4 glyphs_inside=yes
+font32-margins120-line2.2-letter.06 content=1040x560 toc_pages=13 entries=70 body_pages=15 glyphs_inside=yes
+checks=40109
+</system-out>
+	</testcase>
+	<testcase name="native-ssml-structure" classname="native-ssml-structure" time="0.301855" status="run">
+		<properties/>
+		<system-out>SSML structure: 47 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ssml-chunks" classname="native-ssml-chunks" time="0.0684035" status="run">
+		<properties/>
+		<system-out>SSML chunks: 185 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ssml-omissions" classname="native-ssml-omissions" time="0.0864134" status="run">
+		<properties/>
+		<system-out>SSML omissions: 62 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ssml-contracts" classname="native-ssml-contracts" time="0.0458332" status="run">
+		<properties/>
+		<system-out>SSML contracts: 24 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ssml-parts" classname="native-ssml-parts" time="0.0630841" status="run">
+		<properties/>
+		<system-out>SSML parts: 30 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-dictionary-stardict" classname="native-dictionary-stardict" time="1.07627" status="run">
+		<properties/>
+		<system-out>stardict: PASS
+</system-out>
+	</testcase>
+	<testcase name="native-dictionary-dictzip" classname="native-dictionary-dictzip" time="0.970404" status="run">
+		<properties/>
+		<system-out>dictzip: PASS
+</system-out>
+	</testcase>
+	<testcase name="native-dictionary-contracts" classname="native-dictionary-contracts" time="1.71281" status="run">
+		<properties/>
+		<system-out>contracts: PASS
+</system-out>
+	</testcase>
+	<testcase name="native-dictionary-dictd" classname="native-dictionary-dictd" time="0.54507" status="run">
+		<properties/>
+		<system-out>dictd: PASS
+</system-out>
+	</testcase>
+	<testcase name="native-font-manager-discovery" classname="native-font-manager-discovery" time="0.560854" status="run">
+		<properties/>
+		<system-out>font-manager discovery: 54 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-manager-selection" classname="native-font-manager-selection" time="0.875221" status="run">
+		<properties/>
+		<system-out>font-manager selection: 89 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-manager-cache" classname="native-font-manager-cache" time="0.742629" status="run">
+		<properties/>
+		<system-out>font-manager cache: 142 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-manager-integration" classname="native-font-manager-integration" time="2.98648" status="run">
+		<properties/>
+		<system-out>font-manager integration: 96 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-xml-input" classname="native-xml-input" time="2.69232" status="run">
+		<properties/>
+		<system-out>91435 XML input checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-epub-strict-mimetype" classname="native-epub-strict-mimetype" time="0.166384" status="run">
+		<properties/>
+		<system-out>strict/tolerant EPUB checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-epub-strict-directory" classname="native-epub-strict-directory" time="0.0353852" status="run">
+		<properties/>
+		<system-out>strict/tolerant EPUB checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-epub-strict-container" classname="native-epub-strict-container" time="0.0831873" status="run">
+		<properties/>
+		<system-out>strict/tolerant EPUB checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-deepening-search" classname="native-pdf-deepening-search" time="1.20116" status="run">
+		<properties/>
+		<system-out>word alpha: [0,5), page 0 byte 0
+word beta: [6,10), page 0 byte 6
+word gamma: [11,16), page 0 byte 11
+word delta: [17,22), page 0 byte 17
+word epsilon: [23,30), page 0 byte 23
+word zeta: [30,34), page 1 byte 0
+word theta: [39,44), page 1 byte 9
+word iota: [45,49), page 1 byte 15
+word kappa: [50,55), page 1 byte 20
+word boundary: [55,63), page 2 byte 0
+cross-page: [23,34), (0,23)..(1,4)
+search: 43 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-deepening-coordinates" classname="native-pdf-deepening-coordinates" time="1.20609" status="run">
+		<properties/>
+		<system-out>point 23.60,92: U+0061 [0,1)
+point 30.80,92: U+006C [1,2)
+point 38.00,92: U+0070 [2,3)
+point 45.20,92: U+0068 [3,4)
+point 52.40,92: U+0061 [4,5)
+point 59.60,92: U+0020 [5,6)
+point 66.80,92: U+0062 [6,7)
+point 74.00,92: U+0065 [7,8)
+point 81.20,92: U+0074 [8,9)
+point 88.40,92: U+0061 [9,10)
+point 95.60,92: U+0020 [10,11)
+point 102.80,92: U+0067 [11,12)
+point 110.00,92: U+0061 [12,13)
+point 117.20,92: U+006D [13,14)
+point 124.40,92: U+006D [14,15)
+point 131.60,92: U+0061 [15,16)
+point 138.80,92: U+0020 [16,17)
+point 146.00,92: U+0064 [17,18)
+point 153.20,92: U+0065 [18,19)
+point 160.40,92: U+006C [19,20)
+coordinates: 85 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-deepening-scan" classname="native-pdf-deepening-scan" time="0.533187" status="run">
+		<properties/>
+		<system-out>scan: 64 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-deepening-contracts" classname="native-pdf-deepening-contracts" time="0.580055" status="run">
+		<properties/>
+		<system-out>contracts: 26 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-deepening-encryption" classname="native-pdf-deepening-encryption" time="0.620689" status="run">
+		<properties/>
+		<system-out>encryption: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-codec" classname="native-book-codec" time="1.37002" status="run">
+		<properties/>
+		<system-out>codec: passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-mobi" classname="native-book-mobi" time="0.955751" status="run">
+		<properties/>
+		<system-out>mobi: passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-kf8" classname="native-book-kf8" time="0.800959" status="run">
+		<properties/>
+		<system-out>kf8: passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-fb2" classname="native-book-fb2" time="0.62935" status="run">
+		<properties/>
+		<system-out>fb2: passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-errors" classname="native-book-errors" time="0.661992" status="run">
+		<properties/>
+		<system-out>errors: passed
+</system-out>
+	</testcase>
+</testsuite>

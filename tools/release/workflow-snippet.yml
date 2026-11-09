@@ -1,0 +1,31 @@
+# Fragment only: no .github files are changed by C4.
+# Existing job prerequisites:
+# - Configure Release with EXR_REPRODUCIBLE=ON and record the exact CMake argument
+#   array in build/configure-args.json; build/test/install/seal as usual.
+# - Set BUILD_DIR and CANDIDATE_DIR to that job's build and sealed output paths.
+# - Provision the release GPG key in an isolated GNUPGHOME before signing.
+# - For Authenticode, sign staged binaries BEFORE sealing/checksumming.
+# Merge these steps after sealing and before the existing artifact upload.
+steps:
+  - name: Record build inputs and verify every release artifact
+    shell: bash
+    run: |
+      python tools/release/build_manifest.py --build-dir "$BUILD_DIR" --configure-args build/configure-args.json --output "$CANDIDATE_DIR/build_manifest.json"
+      python tools/release/verify_artifacts.py "$CANDIDATE_DIR" --write
+      python tools/release/verify_artifacts.py "$CANDIDATE_DIR"
+  - name: Sign the checksum list
+    shell: bash
+    env:
+      RELEASE_GPG_FINGERPRINT: ${{ vars.RELEASE_GPG_FINGERPRINT }}
+    run: |
+      python tools/release/sign_artifacts.py "$CANDIDATE_DIR" --backend gpg --key "$RELEASE_GPG_FINGERPRINT"
+      gpg --batch --verify "$CANDIDATE_DIR/SHA256SUMS.asc" "$CANDIDATE_DIR/SHA256SUMS"
+  - uses: actions/upload-artifact@v4
+    with:
+      name: signed-release-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+      path: ${{ env.CANDIDATE_DIR }}/
+      if-no-files-found: error
+# Without a release key, replace signing with the explicit unsigned fallback:
+# python tools/release/sign_artifacts.py "$CANDIDATE_DIR" --backend sha256
+# Include SHA256SUMS (and signature/public key when available) in Release uploads,
+# and paste the checksum text into the release page. Do not publish private keys.
