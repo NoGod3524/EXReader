@@ -573,6 +573,12 @@ if(EXR_FULL_TESTS)
   target_link_libraries(exreader-anchor-test PRIVATE exreader)
   add_test(NAME native-anchor COMMAND exreader-anchor-test ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
   add_executable(exreader-document-search-test tests/test_document_search.c)
+  add_executable(exreader-publication-index-test tests/test_publication_index.c)
+  target_link_libraries(exreader-publication-index-test PRIVATE exreader)
+  foreach(group equivalence boundaries accents incremental persistence errors anchors)
+    add_test(NAME native-publication-index-${group} COMMAND exreader-publication-index-test ${group}
+      ${CMAKE_CURRENT_BINARY_DIR}/publication-index-${group}.idx)
+  endforeach()
   target_link_libraries(exreader-document-search-test PRIVATE exreader)
   foreach(group basic unicode flags errors mapping)
     add_test(NAME native-document-search-${group} COMMAND exreader-document-search-test ${group}
