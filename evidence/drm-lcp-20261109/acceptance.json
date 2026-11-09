@@ -1,0 +1,54 @@
+{
+  "sample": {
+    "pages": 48,
+    "resources_equal": 10,
+    "resource_bytes_equal": 1612682
+  },
+  "samples": [
+    {
+      "filename": "wasteland.epub",
+      "url": "https://raw.githubusercontent.com/edrlab/r2-shared-js/develop/misc/epubs/wasteland-otf-obf_LCP_dan.lcpl.epub",
+      "sha256": "490bdc43b358dae88227865bb8ae9b2c4188c59d7d418a86219ef082aba6e093",
+      "size": 748665
+    },
+    {
+      "filename": "wasteland-clear.epub",
+      "url": "https://raw.githubusercontent.com/edrlab/r2-shared-js/develop/misc/epubs/wasteland-otf-obf.epub",
+      "sha256": "6805fe8c45134a141dbc0dc5b0357774112adb977095b19427baa4c260372cbd",
+      "size": 745213
+    }
+  ],
+  "passphrase": "dan (public test credential)",
+  "errors": [
+    {
+      "scenario": "missing_passphrase",
+      "status": 14,
+      "reason": "LCP passphrase required. Your nickname?"
+    },
+    {
+      "scenario": "wrong_passphrase",
+      "status": 15,
+      "reason": "Incorrect LCP passphrase (license key_check mismatch)"
+    },
+    {
+      "scenario": "expired",
+      "status": 16,
+      "reason": "LCP license expired at 2001-02-03T04:05:06Z"
+    },
+    {
+      "scenario": "unsupported_profile",
+      "status": 17,
+      "reason": "Unsupported LCP profile or algorithm: http://readium.org/lcp/profile-2.5"
+    },
+    {
+      "scenario": "adobe_adept_marker",
+      "status": 17,
+      "reason": "Adobe ADEPT is not supported; an authorized EPUB, license and user key are required"
+    }
+  ],
+  "original_archives_unchanged": true,
+  "library_sha256": "19716b8cce54661662d5d9080c3d0f50c85c57ccb44718cf898af5f787c50869",
+  "probe_sha256": "fba1212df6b53b7407f6e09c680d9f2e4b4d5fbe1f0c12c2599bb2929e6df272",
+  "font_sha256": "ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed",
+  "scope": "LCP Basic Profile resource decoder; no production profiles or signature/PKI validation"
+}
