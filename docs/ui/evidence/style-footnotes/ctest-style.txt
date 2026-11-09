@@ -1,0 +1,23 @@
+26: 153 bounded style checks passed
+1/6 Test  #26: native-style-budget ................   Passed    0.04 sec
+193: runtime style layouts=18/18; independent physical edges=4/4
+2/6 Test #193: native-style-footnotes-styles ......   Passed    0.11 sec
+194: chapter notes=10 references=10
+194: end notes=10 references=10
+194: none notes=0 references=0
+194: vertical notes=10 references=10
+3/6 Test #194: native-style-footnotes-footnotes ...   Passed    0.02 sec
+195: #74 content anchors 18->24->18=9/9
+4/6 Test #195: native-style-footnotes-anchors .....   Passed    0.04 sec
+196: default content=1184x720 toc_pages=4 entries=70 body_pages=4 glyphs_inside=yes
+196: font12 content=1184x720 toc_pages=3 entries=70 body_pages=3 glyphs_inside=yes
+196: font32 content=1184x720 toc_pages=7 entries=70 body_pages=8 glyphs_inside=yes
+196: margins0 content=1280x800 toc_pages=4 entries=70 body_pages=4 glyphs_inside=yes
+196: margins120 content=1040x560 toc_pages=5 entries=70 body_pages=6 glyphs_inside=yes
+196: left120 content=1160x720 toc_pages=4 entries=70 body_pages=4 glyphs_inside=yes
+196: font32-margins120-line2.2-letter.06 content=1040x560 toc_pages=13 entries=70 body_pages=15 glyphs_inside=yes
+5/6 Test #196: native-style-footnotes-toc .........   Passed    0.03 sec
+216: STYLE presets 2/2 round-trip; unrelated shelf keys kept; invalid style rejected; corrupt shelf preserved; left edge only 1/1
+6/6 Test #216: windows-selection-style ............   Passed    0.25 sec
+The following tests passed:
+100% tests passed out of 6

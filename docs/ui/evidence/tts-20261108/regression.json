@@ -1,0 +1,207 @@
+{
+  "engine_version": "3.42.0",
+  "abi_version": 1,
+  "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "driver_sha256": "2fd0a1fa0d28804a7e6583367d91d9f7e48f43e662deb957f01b59f6471c8c8b",
+  "layout": {
+    "width": 720,
+    "height": 1040,
+    "margin": 36,
+    "font_size": 28,
+    "line_height": 1.5,
+    "paragraph_spacing": 10,
+    "document_css": 1,
+    "embedded_fonts": 1,
+    "direction": 0,
+    "fixed_max_dimension": 720
+  },
+  "content_fingerprint": "12b3b76f346ea736f218d8eb5e11af33673ceb31993c9c7ced98724e4689e732",
+  "baseline_revision": "b7bad7f05cd017de87523ad221d2516ad638259f",
+  "baseline_dll_sha256": "8e352b02478b387412696107b475dec527be17da6183ce3e25e28f1fd3924d6a",
+  "candidate_dll_sha256": "da17d9ff69a83623a97c0e5d350db8624538364d62718eba09f7948b97a6d9f2",
+  "baseline_fingerprint": "12b3b76f346ea736f218d8eb5e11af33673ceb31993c9c7ced98724e4689e732",
+  "summary": {
+    "requested_books": 19,
+    "successful_books": 19,
+    "failed_books": [],
+    "total_pages": 11296,
+    "total_glyphs": 8648640,
+    "wall_seconds": 235.31473,
+    "sum_book_seconds": 727.784326,
+    "fastest_book": "the-house-on-mango-street",
+    "slowest_book": "hongloumeng-24264"
+  },
+  "books": [
+    {
+      "id": "a-raisin-in-the-sun",
+      "source_sha256": "2416cbd8d73eb7ba2a228842aa33ae303653fb75fa42dd6e921293bee2ed576d",
+      "baseline_pages": 356,
+      "candidate_pages": 356,
+      "baseline_pixels_sha256": "9dbb16b4c0eb0ea5c52ce5a3b76d8e89070da0666b5c1be78001498981feaaa7",
+      "candidate_pixels_sha256": "9dbb16b4c0eb0ea5c52ce5a3b76d8e89070da0666b5c1be78001498981feaaa7",
+      "changed_pages": 0
+    },
+    {
+      "id": "between-the-world-and-me",
+      "source_sha256": "3d909ac99c4388022a6576475b81c5d458490337aba08b0e7ba311bc18ab68a5",
+      "baseline_pages": 228,
+      "candidate_pages": 228,
+      "baseline_pixels_sha256": "c171fd06408a3fd144baddfe57dabf91e654ec7753ea837632547ce18e908f76",
+      "candidate_pixels_sha256": "c171fd06408a3fd144baddfe57dabf91e654ec7753ea837632547ce18e908f76",
+      "changed_pages": 0
+    },
+    {
+      "id": "black-boy",
+      "source_sha256": "a6d4c9a1f117e8c9c21aec186ca77e0f58cdaf9f97fce8f1f1d1660a724a7e87",
+      "baseline_pages": 1016,
+      "candidate_pages": 1016,
+      "baseline_pixels_sha256": "9bb235849a68e521abe46ea386109c3929e39d09383d4aaddd678dd3c8cc2a2a",
+      "candidate_pixels_sha256": "9bb235849a68e521abe46ea386109c3929e39d09383d4aaddd678dd3c8cc2a2a",
+      "changed_pages": 0
+    },
+    {
+      "id": "born-a-crime",
+      "source_sha256": "c22402e02baa5e9b7c88c895a9f232f2858f7c168122aaf084493b85e37f6d58",
+      "baseline_pages": 502,
+      "candidate_pages": 502,
+      "baseline_pixels_sha256": "b6cef61187dbb06561a08bdcc8dc0d2a25179612033442cd46ae3fc35419b7ae",
+      "candidate_pixels_sha256": "b6cef61187dbb06561a08bdcc8dc0d2a25179612033442cd46ae3fc35419b7ae",
+      "changed_pages": 0
+    },
+    {
+      "id": "crying-in-h-mart",
+      "source_sha256": "8e6641c9c820cbc987dbd848d1b2ee88a15d620db6d9302cc17ca2ca49072a3e",
+      "baseline_pages": 524,
+      "candidate_pages": 524,
+      "baseline_pixels_sha256": "f31baa9d167f240d06a065b482000c8cb6f68245d49a6926ae0be4faa3b757f0",
+      "candidate_pixels_sha256": "f31baa9d167f240d06a065b482000c8cb6f68245d49a6926ae0be4faa3b757f0",
+      "changed_pages": 0
+    },
+    {
+      "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+      "source_sha256": "02a37f7c5f80169b09d010f27edf494116df0bcb0c8bc8023282a1d3bf43e941",
+      "baseline_pages": 493,
+      "candidate_pages": 493,
+      "baseline_pixels_sha256": "36f77c6dd4f09246c7b2aead257221d6d0cf6f925bdf5dd245345431e7820a17",
+      "candidate_pixels_sha256": "36f77c6dd4f09246c7b2aead257221d6d0cf6f925bdf5dd245345431e7820a17",
+      "changed_pages": 0
+    },
+    {
+      "id": "i-know-why-the-caged-bird-sings",
+      "source_sha256": "7a52e3c22743cbf9cdacd1fc6d2a8f72f9ad0f9287591f310640d0287857ec09",
+      "baseline_pages": 625,
+      "candidate_pages": 625,
+      "baseline_pixels_sha256": "dcc680b884b8cce4eda5ea0f6fb3ff19bff4507cbd882fc5b4c5e3eb73a0d221",
+      "candidate_pixels_sha256": "dcc680b884b8cce4eda5ea0f6fb3ff19bff4507cbd882fc5b4c5e3eb73a0d221",
+      "changed_pages": 0
+    },
+    {
+      "id": "pachinko",
+      "source_sha256": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+      "baseline_pages": 1248,
+      "candidate_pages": 1248,
+      "baseline_pixels_sha256": "24507454f5a6401a1b236d90ce36b72aad22691c4775bdda4ded4d6b5c6b0563",
+      "candidate_pixels_sha256": "24507454f5a6401a1b236d90ce36b72aad22691c4775bdda4ded4d6b5c6b0563",
+      "changed_pages": 0
+    },
+    {
+      "id": "the-absolutely-true-diary-of-a-part-time-indian",
+      "source_sha256": "eedadec8e91f54e53e0587127b8ed2ca12d7d97b282f8a734b709468b7c2cf67",
+      "baseline_pages": 560,
+      "candidate_pages": 560,
+      "baseline_pixels_sha256": "c8a1910b57b7a07b64eb94de9b4299b6109ae8c360841ac27808379bb7296d2e",
+      "candidate_pixels_sha256": "c8a1910b57b7a07b64eb94de9b4299b6109ae8c360841ac27808379bb7296d2e",
+      "changed_pages": 0
+    },
+    {
+      "id": "the-autobiography-of-malcolm-x.",
+      "source_sha256": "c9373b7dbda128fea031616b444ca490a3cd59dccb3f02cb2512fd9957a0fdb7",
+      "baseline_pages": 279,
+      "candidate_pages": 279,
+      "baseline_pixels_sha256": "d258a146596068174d543a6317f6ead40be6ff17b3a1bb05297216086b8563cc",
+      "candidate_pixels_sha256": "d258a146596068174d543a6317f6ead40be6ff17b3a1bb05297216086b8563cc",
+      "changed_pages": 0
+    },
+    {
+      "id": "the-distance-between-us-a-memoir",
+      "source_sha256": "19591466f9b795f978f6061ac9979d8bd420ddf29cc849a4c970190a968844e3",
+      "baseline_pages": 702,
+      "candidate_pages": 702,
+      "baseline_pixels_sha256": "b13b37df0935daf25859335e14663375ce09f66ad248ec38b8c711d67ebd1f53",
+      "candidate_pixels_sha256": "b13b37df0935daf25859335e14663375ce09f66ad248ec38b8c711d67ebd1f53",
+      "changed_pages": 0
+    },
+    {
+      "id": "the-fire-next-time",
+      "source_sha256": "e0e361a8b3eb84cab263dac4efd69953b48c0a8d7b1972011a2f8e3deaab4570",
+      "baseline_pages": 189,
+      "candidate_pages": 189,
+      "baseline_pixels_sha256": "9ac8105095eed603c53d0aa5aa73c94d04b0b9e6ad46c68801bd561362592087",
+      "candidate_pixels_sha256": "9ac8105095eed603c53d0aa5aa73c94d04b0b9e6ad46c68801bd561362592087",
+      "changed_pages": 0
+    },
+    {
+      "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+      "source_sha256": "3662ed4599157e8a94e1869a43b7e231244862c520ac4fe02f3a047893d23ef0",
+      "baseline_pages": 333,
+      "candidate_pages": 333,
+      "baseline_pixels_sha256": "8ff51c31fd73d898fd382a4cd8e362c05486b9cb55b0102ad132de4b6755563c",
+      "candidate_pixels_sha256": "8ff51c31fd73d898fd382a4cd8e362c05486b9cb55b0102ad132de4b6755563c",
+      "changed_pages": 0
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "source_sha256": "5a3b11c8f3ee4dd1c41d264aaf27dd83bb82faa1ebf3c7370a7072a0711cb3df",
+      "baseline_pages": 182,
+      "candidate_pages": 182,
+      "baseline_pixels_sha256": "168b9bd426e7cb249a22e7caf6bb0b7964cef90104fad755b7711384222884cb",
+      "candidate_pixels_sha256": "168b9bd426e7cb249a22e7caf6bb0b7964cef90104fad755b7711384222884cb",
+      "changed_pages": 0
+    },
+    {
+      "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+      "source_sha256": "6a107f978b9689221865539da63156996e1a0b67fa622629deac6503e16a7284",
+      "baseline_pages": 624,
+      "candidate_pages": 624,
+      "baseline_pixels_sha256": "d7b222534c903cbec1d7840beb2a627c54ca78e42c58d964cd60b95551da5d26",
+      "candidate_pixels_sha256": "d7b222534c903cbec1d7840beb2a627c54ca78e42c58d964cd60b95551da5d26",
+      "changed_pages": 0
+    },
+    {
+      "id": "hongloumeng-24264",
+      "source_sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+      "baseline_pages": 1686,
+      "candidate_pages": 1686,
+      "baseline_pixels_sha256": "dc04e230b8937d08dedf5cd7d0f1fc95996e9ab1ee887272747e31f6bbc9a28a",
+      "candidate_pixels_sha256": "dc04e230b8937d08dedf5cd7d0f1fc95996e9ab1ee887272747e31f6bbc9a28a",
+      "changed_pages": 0
+    },
+    {
+      "id": "xingshihengyan-24239",
+      "source_sha256": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+      "baseline_pages": 1202,
+      "candidate_pages": 1202,
+      "baseline_pixels_sha256": "fb8e7e42cda70ea881011f8cc69a0ce0acee0277f309f6dd2a3698bd0bf08ba4",
+      "candidate_pixels_sha256": "fb8e7e42cda70ea881011f8cc69a0ce0acee0277f309f6dd2a3698bd0bf08ba4",
+      "changed_pages": 0
+    },
+    {
+      "id": "tangshi300-52323",
+      "source_sha256": "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945",
+      "baseline_pages": 83,
+      "candidate_pages": 83,
+      "baseline_pixels_sha256": "707933e2b8309e3a9d1b7a945a4eef3325c12b1de004b064e0e94c2440a5d004",
+      "candidate_pixels_sha256": "707933e2b8309e3a9d1b7a945a4eef3325c12b1de004b064e0e94c2440a5d004",
+      "changed_pages": 0
+    },
+    {
+      "id": "kusamakura-japanese-vertical-writing",
+      "source_sha256": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7",
+      "baseline_pages": 464,
+      "candidate_pages": 464,
+      "baseline_pixels_sha256": "7097e97718e121474d74f510e1a9d62e98f715b92d32db0be67a3f616cfce357",
+      "candidate_pixels_sha256": "7097e97718e121474d74f510e1a9d62e98f715b92d32db0be67a3f616cfce357",
+      "changed_pages": 0
+    }
+  ]
+}

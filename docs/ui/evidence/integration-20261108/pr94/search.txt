@@ -1,0 +1,6 @@
+hong {"characters": 10, "interval_requested_ms": 30, "actual_searches": 1, "native_edit_ms": [34.0273, 4.2197, 3.972, 4.1715, 4.0667, 3.2293, 3.1237, 3.7348, 5.7527, 4.7574], "max_edit_ms": 34.0273, "edit_sum_ms": 71.0551, "total_ms": 710.287, "search_ms": 4.431}
+english {"checks": 1}
+vertical {"checks": 1}
+pdf {"checks": 1}
+mobi {"checks": 1}
+whole-document {"checks": 1}
