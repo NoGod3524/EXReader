@@ -7,7 +7,7 @@
 #define EXR_FM_MAX_FILES ((size_t)200000)
 #define EXR_FM_MAX_DEPTH 8
 typedef struct {
-  unsigned face_index, style, weight, scripts;
+  unsigned face_index, style, weight, scripts, color;
   char *family, *style_name;
   char *aliases; /* '\n'-separated localized family names, may be empty. */
   uint32_t *ranges; /* Inclusive [start,end] pairs, ascending. */

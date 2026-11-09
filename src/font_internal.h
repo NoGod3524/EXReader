@@ -30,8 +30,14 @@ struct exr_font {
   size_t count, base_count, refs;
   struct exr_font *fallback;
   unsigned manager_order; /* Preserve the manager's explicit base-face chain. */
+  size_t manager_required; /* Prefix before automatically discovered faces. */
 };
 void exr_font_ref(exr_font *font);
+/* Managed multilingual chains need room for several full CJK collections.
+   The public raw-input constructor retains its 128 MiB limit. */
+#define EXR_FONT_MANAGER_MAX_BYTES (2 * EXR_MAX_INPUT)
+exr_status exr_font_create_managed(const exr_font_input *inputs, size_t count,
+                                   exr_font **out, exr_error *error);
 FT_Error exr_font_face_open(FT_Library library,const void *data,size_t size,unsigned face_index,FT_Face *out);
 int exr_font_face_supported(FT_Face face);
 size_t exr_font_order(const exr_font *font, const char *family, unsigned flags,

@@ -1,0 +1,1827 @@
+{
+  "epub_sha256": "da3ce098c0098de162e636abfb3668817e2cf8cff81b80874016bcfcd1a002a0",
+  "dll_sha256": "acfda47c4b12d3b6a5b1e54d9361177394ff15d6a976963b4af5c7ffd6d1598f",
+  "loaded_faces": [
+    {
+      "family": "Times New Roman",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/times.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 3678
+    },
+    {
+      "family": "Times New Roman",
+      "style_name": "Bold",
+      "path": "C:\\Windows/Fonts/timesbd.ttf",
+      "face_index": 0,
+      "style": 1,
+      "weight": 700,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 3678
+    },
+    {
+      "family": "Times New Roman",
+      "style_name": "Italic",
+      "path": "C:\\Windows/Fonts/timesi.ttf",
+      "face_index": 0,
+      "style": 2,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 2983
+    },
+    {
+      "family": "Times New Roman",
+      "style_name": "Bold Italic",
+      "path": "C:\\Windows/Fonts/timesbi.ttf",
+      "face_index": 0,
+      "style": 3,
+      "weight": 700,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 2983
+    },
+    {
+      "family": "Noto Serif SC",
+      "style_name": "ExtraLight",
+      "path": "C:\\Windows/Fonts/NotoSerifSC-VF.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 200,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 30928
+    },
+    {
+      "family": "SimSun",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/simsun.ttc",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 28849
+    },
+    {
+      "family": "Georgia",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/georgia.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 619
+    },
+    {
+      "family": "Georgia",
+      "style_name": "Bold",
+      "path": "C:\\Windows/Fonts/georgiab.ttf",
+      "face_index": 0,
+      "style": 1,
+      "weight": 700,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 620
+    },
+    {
+      "family": "Georgia",
+      "style_name": "Italic",
+      "path": "C:\\Windows/Fonts/georgiai.ttf",
+      "face_index": 0,
+      "style": 2,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 619
+    },
+    {
+      "family": "Georgia",
+      "style_name": "Bold Italic",
+      "path": "C:\\Windows/Fonts/georgiaz.ttf",
+      "face_index": 0,
+      "style": 3,
+      "weight": 700,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 620
+    },
+    {
+      "family": "Segoe UI",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/segoeui.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 3998
+    },
+    {
+      "family": "Segoe UI",
+      "style_name": "Semibold",
+      "path": "C:\\Windows/Fonts/seguisb.ttf",
+      "face_index": 0,
+      "style": 1,
+      "weight": 600,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 3994
+    },
+    {
+      "family": "Segoe UI",
+      "style_name": "Italic",
+      "path": "C:\\Windows/Fonts/segoeuii.ttf",
+      "face_index": 0,
+      "style": 2,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 2919
+    },
+    {
+      "family": "Segoe UI",
+      "style_name": "Semibold Italic",
+      "path": "C:\\Windows/Fonts/seguisbi.ttf",
+      "face_index": 0,
+      "style": 3,
+      "weight": 600,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 2919
+    },
+    {
+      "family": "Arial",
+      "style_name": "Narrow",
+      "path": "C:\\Windows/Fonts/ARIALN.TTF",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 656
+    },
+    {
+      "family": "Arial",
+      "style_name": "Narrow Bold",
+      "path": "C:\\Windows/Fonts/ARIALNB.TTF",
+      "face_index": 0,
+      "style": 1,
+      "weight": 700,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 656
+    },
+    {
+      "family": "Arial",
+      "style_name": "Narrow Italic",
+      "path": "C:\\Windows/Fonts/ARIALNI.TTF",
+      "face_index": 0,
+      "style": 2,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 656
+    },
+    {
+      "family": "Arial",
+      "style_name": "Narrow Bold Italic",
+      "path": "C:\\Windows/Fonts/ARIALNBI.TTF",
+      "face_index": 0,
+      "style": 3,
+      "weight": 700,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 656
+    },
+    {
+      "family": "Noto Sans SC",
+      "style_name": "Thin",
+      "path": "C:\\Windows/Fonts/NotoSansSC-VF.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 100,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 30890
+    },
+    {
+      "family": "Microsoft YaHei",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/msyh.ttc",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 29905
+    },
+    {
+      "family": "Microsoft YaHei",
+      "style_name": "Bold",
+      "path": "C:\\Windows/Fonts/msyhbd.ttc",
+      "face_index": 0,
+      "style": 1,
+      "weight": 700,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 29888
+    },
+    {
+      "family": "SimHei",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/simhei.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 28522
+    }
+  ],
+  "scenes": [
+    {
+      "name": "chinese_emoji",
+      "language": "zh",
+      "pages": [
+        {
+          "screenshot": "chinese_emoji-0.png",
+          "sha256": "e771876fd84369a2da98697f6b4dbc2d08c246eb49fa8a896e5e9fd5351a7842",
+          "width": 720,
+          "height": 720,
+          "nonblank_ratio": 0.10646412037037037,
+          "visible_glyphs": 324,
+          "ft_zero": 52,
+          "notdef": 52,
+          "missing": [
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F600",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F600",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F600",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F600",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F600",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F3F3",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F469",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F469",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F469",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F469",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F469",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F469",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F469",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F469",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+1F468",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            }
+          ],
+          "rtl_glyphs": 0,
+          "font_usage": {
+            "Noto Serif SC": 260,
+            "Times New Roman": 64
+          }
+        }
+      ]
+    },
+    {
+      "name": "japanese",
+      "language": "ja",
+      "pages": [
+        {
+          "screenshot": "japanese-0.png",
+          "sha256": "f7f4823872ac7bfc8b8fa3debc459e92c17b7178f9db44450d74612f5de8f5e1",
+          "width": 720,
+          "height": 720,
+          "nonblank_ratio": 0.10583333333333333,
+          "visible_glyphs": 380,
+          "ft_zero": 0,
+          "notdef": 0,
+          "missing": [],
+          "rtl_glyphs": 0,
+          "font_usage": {
+            "Noto Serif SC": 380
+          }
+        }
+      ]
+    },
+    {
+      "name": "arabic_rtl",
+      "language": "ar",
+      "pages": [
+        {
+          "screenshot": "arabic_rtl-0.png",
+          "sha256": "33aa65bbf604fd0c88838494b0b35109479a5985f8cdacf1c681ff173da0ce5c",
+          "width": 720,
+          "height": 720,
+          "nonblank_ratio": 0.1197608024691358,
+          "visible_glyphs": 1229,
+          "ft_zero": 0,
+          "notdef": 0,
+          "missing": [],
+          "rtl_glyphs": 1229,
+          "font_usage": {
+            "Times New Roman": 1229
+          }
+        }
+      ]
+    },
+    {
+      "name": "math_symbols",
+      "language": "en",
+      "pages": [
+        {
+          "screenshot": "math_symbols-0.png",
+          "sha256": "9eed944dae4dfd8a00d614dc3723647f67c2132afa0900e73f77dc9bb028982d",
+          "width": 720,
+          "height": 720,
+          "nonblank_ratio": 0.07556712962962962,
+          "visible_glyphs": 683,
+          "ft_zero": 18,
+          "notdef": 18,
+          "missing": [
+            {
+              "cp": "U+2217",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+2218",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+22C5",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+2217",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+2218",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+22C5",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+2217",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+2218",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+22C5",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+2217",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+2218",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+22C5",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+2217",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+2218",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+22C5",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+2217",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+2218",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            },
+            {
+              "cp": "U+22C5",
+              "glyph": 0,
+              "face": {
+                "family": "Times New Roman",
+                "style_name": "Regular",
+                "path": "C:\\Windows/Fonts/times.ttf",
+                "face_index": 0,
+                "style": 0,
+                "weight": 400,
+                "scripts": 5,
+                "location": 1,
+                "codepoints": 3678
+              }
+            }
+          ],
+          "rtl_glyphs": 0,
+          "font_usage": {
+            "Times New Roman": 551,
+            "Noto Serif SC": 132
+          }
+        }
+      ]
+    }
+  ],
+  "zwj_reference": {
+    "engine": "HarfBuzz",
+    "version": "14.6.0",
+    "font_sha256": "451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c"
+  },
+  "zwj_sequences": [
+    {
+      "sequence": "👨‍👩‍👧",
+      "scalars": [
+        "U+1F468",
+        "U+200D",
+        "U+1F469",
+        "U+200D",
+        "U+1F467"
+      ],
+      "visible_glyphs": 3,
+      "glyphs": [
+        0,
+        0,
+        0
+      ],
+      "reference_glyphs": [
+        1283,
+        1464,
+        1271
+      ],
+      "positions": [
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          1405,
+          425,
+          0
+        ],
+        [
+          1161,
+          0,
+          0
+        ],
+        [
+          0,
+          -1666,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": false,
+      "families": [
+        "Times New Roman",
+        "Times New Roman",
+        "Times New Roman"
+      ],
+      "ft_zero": 3,
+      "notdef": 3
+    },
+    {
+      "sequence": "🏳️‍🌈",
+      "scalars": [
+        "U+1F3F3",
+        "U+FE0F",
+        "U+200D",
+        "U+1F308"
+      ],
+      "visible_glyphs": 2,
+      "glyphs": [
+        0,
+        0
+      ],
+      "reference_glyphs": [
+        1071
+      ],
+      "positions": [
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": false,
+      "families": [
+        "Times New Roman",
+        "Times New Roman"
+      ],
+      "ft_zero": 2,
+      "notdef": 2
+    },
+    {
+      "sequence": "👩‍💻",
+      "scalars": [
+        "U+1F469",
+        "U+200D",
+        "U+1F4BB"
+      ],
+      "visible_glyphs": 2,
+      "glyphs": [
+        0,
+        0
+      ],
+      "reference_glyphs": [
+        1623
+      ],
+      "positions": [
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": false,
+      "families": [
+        "Times New Roman",
+        "Times New Roman"
+      ],
+      "ft_zero": 2,
+      "notdef": 2
+    },
+    {
+      "sequence": "👨‍🚀",
+      "scalars": [
+        "U+1F468",
+        "U+200D",
+        "U+1F680"
+      ],
+      "visible_glyphs": 2,
+      "glyphs": [
+        0,
+        0
+      ],
+      "reference_glyphs": [
+        1447
+      ],
+      "positions": [
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": false,
+      "families": [
+        "Times New Roman",
+        "Times New Roman"
+      ],
+      "ft_zero": 2,
+      "notdef": 2
+    },
+    {
+      "sequence": "👩‍❤️‍👨",
+      "scalars": [
+        "U+1F469",
+        "U+200D",
+        "U+2764",
+        "U+FE0F",
+        "U+200D",
+        "U+1F468"
+      ],
+      "visible_glyphs": 3,
+      "glyphs": [
+        0,
+        0,
+        0
+      ],
+      "reference_glyphs": [
+        2013,
+        4132,
+        1997
+      ],
+      "positions": [
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": false,
+      "families": [
+        "Times New Roman",
+        "Times New Roman",
+        "Times New Roman"
+      ],
+      "ft_zero": 3,
+      "notdef": 3
+    },
+    {
+      "sequence": "👨‍👩‍👧‍👦",
+      "scalars": [
+        "U+1F468",
+        "U+200D",
+        "U+1F469",
+        "U+200D",
+        "U+1F467",
+        "U+200D",
+        "U+1F466"
+      ],
+      "visible_glyphs": 4,
+      "glyphs": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "reference_glyphs": [
+        1283,
+        1464,
+        1271,
+        1259
+      ],
+      "positions": [
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          1405,
+          425,
+          0
+        ],
+        [
+          1161,
+          0,
+          0
+        ],
+        [
+          0,
+          -2170,
+          0
+        ],
+        [
+          0,
+          -1161,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": false,
+      "families": [
+        "Times New Roman",
+        "Times New Roman",
+        "Times New Roman",
+        "Times New Roman"
+      ],
+      "ft_zero": 4,
+      "notdef": 4
+    },
+    {
+      "sequence": "👩🏻‍💻",
+      "scalars": [
+        "U+1F469",
+        "U+1F3FB",
+        "U+200D",
+        "U+1F4BB"
+      ],
+      "visible_glyphs": 3,
+      "glyphs": [
+        0,
+        0,
+        0
+      ],
+      "reference_glyphs": [
+        1476
+      ],
+      "positions": [
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": false,
+      "families": [
+        "Times New Roman",
+        "Times New Roman",
+        "Times New Roman"
+      ],
+      "ft_zero": 3,
+      "notdef": 3
+    },
+    {
+      "sequence": "👨🏿‍🚀",
+      "scalars": [
+        "U+1F468",
+        "U+1F3FF",
+        "U+200D",
+        "U+1F680"
+      ],
+      "visible_glyphs": 3,
+      "glyphs": [
+        0,
+        0,
+        0
+      ],
+      "reference_glyphs": [
+        1420
+      ],
+      "positions": [
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          1609.142857142857,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": false,
+      "families": [
+        "Times New Roman",
+        "Times New Roman",
+        "Times New Roman"
+      ],
+      "ft_zero": 3,
+      "notdef": 3
+    }
+  ]
+}

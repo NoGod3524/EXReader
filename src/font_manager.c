@@ -414,7 +414,38 @@ int exr_font_manager_has_family(const exr_font_manager *m, const char *family) {
 }
 
 /* Fallback chain: the single ordering used by pick() and create_font(). */
-typedef struct { exr_font_chain_link links[EXR_FONT_CHAIN_MAX]; size_t count; } chain;
+typedef struct {
+  exr_font_chain_link links[EXR_FONT_CHAIN_MAX];
+  size_t count, bytes;
+  uint32_t covered[0x110000 / 32];
+} chain;
+/* Count/merge actual indexed scalars, not just script flags. Removing a face
+   that contributes nothing preserves every scalar's first matching face and
+   leaves the bounded engine chain room for other writing systems. */
+static size_t contribution(const exr_fm_face *f, chain *c, int merge) {
+  size_t r, count = 0;
+  for (r = 0; r < f->range_count; r++) {
+    uint32_t start = f->ranges[2 * r], end = f->ranges[2 * r + 1], word;
+    for (word = start / 32; word <= end / 32; word++) {
+      uint32_t mask = UINT32_MAX, bits;
+      if (word == start / 32) mask &= UINT32_MAX << (start % 32);
+      if (word == end / 32) mask &= UINT32_MAX >> (31 - end % 32);
+      bits = mask & ~c->covered[word];
+      /* Portable population count (also used by MSVC builds). */
+      bits -= (bits >> 1) & UINT32_C(0x55555555);
+      bits = (bits & UINT32_C(0x33333333)) + ((bits >> 2) & UINT32_C(0x33333333));
+      bits = (bits + (bits >> 4)) & UINT32_C(0x0f0f0f0f);
+      count += (bits * UINT32_C(0x01010101)) >> 24;
+      if (merge) c->covered[word] |= mask;
+    }
+  }
+  return count;
+}
+static void append(const exr_font_manager *m, size_t face, unsigned step, chain *c) {
+  c->links[c->count++] = (exr_font_chain_link){face, step};
+  c->bytes += (size_t)m->files.items[m->faces[face].file].size;
+  contribution(face_at(m, face), c, 1);
+}
 static unsigned long distance(const exr_fm_face *f, unsigned style) {
   unsigned target = (style & EXR_FONT_STYLE_BOLD) ? 700u : 400u;
   return (((f->style ^ style) & EXR_FONT_STYLE_ITALIC) ? 1000000ul : 0ul) +
@@ -446,7 +477,7 @@ static void add_family(const exr_font_manager *m, const char *family, unsigned s
       if (best == SIZE_MAX || d < best_distance) { best = i; best_distance = d; }
     }
     if (best == SIZE_MAX) return;
-    c->links[c->count++] = (exr_font_chain_link){best, step};
+    if (!c->count || contribution(face_at(m, best), c, 0)) append(m, best, step, c);
     styles_seen |= 1u << face_at(m, best)->style;
     if (!all_styles) return;
     if (step == EXR_FONT_STEP_REQUESTED) step = EXR_FONT_STEP_FAMILY_STYLE;
@@ -464,7 +495,7 @@ static void add_list(const exr_font_manager *m, const char *list, unsigned style
 }
 static void build(const exr_font_manager *m, const char *family, unsigned style, chain *c) {
   size_t i;
-  c->count = 0;
+  memset(c, 0, sizeof(*c));
   style &= EXR_FONT_STYLE_BOLD_ITALIC;
   if (family && *family) {
     char name[128];
@@ -478,6 +509,30 @@ static void build(const exr_font_manager *m, const char *family, unsigned style,
   for (i = 0; i < m->fallback_count; i++) add_family(m, m->fallback[i], style, EXR_FONT_STEP_FALLBACK, 1, c);
   add_list(m, m->serif, style, EXR_FONT_STEP_SERIF, 1, c);
   add_list(m, m->sans, style, EXR_FONT_STEP_SANS_SERIF, 1, c);
+  /* Keep the five configured stages' priority. Fill remaining slots from the
+     entire discovered inventory, maximizing new coverage per face. Explicitly
+     empty system lists opt out, for callers requesting a closed font set. */
+  while ((*m->serif || *m->sans) && c->count < EXR_FONT_CHAIN_MAX && c->bytes < EXR_FONT_MANAGER_MAX_BYTES) {
+    size_t best = SIZE_MAX, most = 0;
+    unsigned long nearest = ULONG_MAX;
+    unsigned color = 0;
+    for (i = 0; i < m->face_count; i++) {
+      size_t added;
+      unsigned long d;
+      const exr_fm_face *f = face_at(m, i);
+      if (listed(c, i) || m->files.items[m->faces[i].file].size > EXR_FONT_MANAGER_MAX_BYTES - c->bytes) continue;
+      added = contribution(f, c, 0);
+      d = distance(f, style);
+      /* A monochrome symbol face can map every emoji scalar but lack its ZWJ
+         ligatures. Prefer color-capable faces in the automatic tail. */
+      if (added && (best == SIZE_MAX || f->color > color ||
+          (f->color == color && (added > most || (added == most && d < nearest))))) {
+        best = i; most = added; nearest = d; color = f->color;
+      }
+    }
+    if (best == SIZE_MAX) break;
+    append(m, best, EXR_FONT_STEP_DISCOVERED, c);
+  }
 }
 exr_status exr_font_manager_chain(const exr_font_manager *m, const char *family, unsigned style,
                                   exr_font_chain_link **out, size_t *count, exr_error *e) {
@@ -513,7 +568,7 @@ exr_status exr_font_manager_create_font(const exr_font_manager *m, const char *f
   chain c;
   exr_font_input inputs[EXR_FONT_CHAIN_MAX];
   unsigned char *loaded[EXR_FONT_CHAIN_MAX] = {0};
-  size_t files[EXR_FONT_CHAIN_MAX], map[EXR_FONT_CHAIN_MAX], n = 0, total = 0, i, j;
+  size_t files[EXR_FONT_CHAIN_MAX], map[EXR_FONT_CHAIN_MAX], n = 0, required = 0, total = 0, i, j;
   exr_status status;
   if (out) *out = NULL;
   if (faces) *faces = NULL;
@@ -527,13 +582,13 @@ exr_status exr_font_manager_create_font(const exr_font_manager *m, const char *f
     size_t size = 0;
     for (j = 0; j < n; j++) if (files[j] == file_index) { bytes = (unsigned char *)inputs[j].data; size = inputs[j].size; break; }
     if (bytes) {
-      if (size > EXR_MAX_INPUT - total) continue; /* exr_font_create copies each input. */
+      if (size > EXR_FONT_MANAGER_MAX_BYTES - total) continue;
       total += size;
     } else {
       uint64_t now_size = 0;
       int64_t now_mtime = 0;
       if (exr_fm_stat(file->path, &now_size, &now_mtime) != 2 || now_size != file->size ||
-          now_mtime != file->mtime || now_size > EXR_MAX_INPUT - total) continue;
+          now_mtime != file->mtime || now_size > EXR_FONT_MANAGER_MAX_BYTES - total) continue;
       if (exr_read(file->path, &bytes, &size, NULL) != EXR_OK || size != now_size) { free(bytes); continue; }
       loaded[n] = bytes;
       total += size;
@@ -541,12 +596,14 @@ exr_status exr_font_manager_create_font(const exr_font_manager *m, const char *f
     inputs[n] = (exr_font_input){bytes, size, face_at(m, face)->face_index};
     files[n] = file_index;
     map[n++] = face;
+    if (c.links[i].step != EXR_FONT_STEP_DISCOVERED) required++;
   }
   if (!n) status = exr_fail(e, EXR_FONT, "No font in the fallback chain could be loaded");
-  else status = exr_font_create(inputs, n, out, e);
+  else status = exr_font_create_managed(inputs, n, out, e);
   for (i = 0; i < n; i++) free(loaded[i]);
   if (status != EXR_OK) return status;
   (*out)->manager_order = 1;
+  (*out)->manager_required = required;
   if (faces) {
     if (!(*faces = malloc(n * sizeof(**faces)))) {
       exr_font_free(*out); *out = NULL;
