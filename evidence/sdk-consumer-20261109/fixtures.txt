@@ -1,0 +1,2 @@
+{"name": "fixtures", "cwd": "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411", "argv": ["C:\\Python314\\python.exe", "-B", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S3-20261109\\tools\\abi\\prepare_smoke.py", "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411\\assets", "--font", "C:\\Windows\\Fonts\\arial.ttf"], "exit_code": 0}
+C:\Users\Oscar\AppData\Local\Temp\exreader-consumer-n4hry411\assets
