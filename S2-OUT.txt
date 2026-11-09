@@ -311,3 +311,57 @@ Saved Linux smoke log/report/check report/PGM and source-bound CI metadata under
 [S2 Linux downloaded archive independent validation] 2026-11-09T11:24:38.0742975-05:00
 PASS: python tools/release/check_release.py dist/exreader-3.42.0-linux-x64.tar.gz --json evidence/sdk-packaging-20261109/linux-downloaded-package-check.json. All 10 checks passed; 55 ordinary files / 31,282,097 unpacked bytes, 54 SHA256 entries, 15 API headers plus version.h, 64-line sample, 868 exr_* exports, ELF linux-x64, version 3.42.0 consistent in source/header/package/cmake. Exact check details saved to JSON.
 
+[S2 continuation / repository audit]
+Current branch codex/sdk-packaging-20261109 at 85f938ce; worktree initially clean. Existing draft PR #111 targets main and remains open.
+Reviewed existing collectors, minimal example, README quickstarts and native smoke integration. Windows and Linux native evidence already exists; continuing with independent local package validation and macOS CI evidence retrieval.
+
+[S2 delivered Windows archive revalidation]
+Command: python tools/release/check_release.py dist/exreader-3.42.0-win-x64.zip
+Exit: 0
+PASS package files and safe paths: 55 ordinary files; 16166807 bytes
+PASS package name and archive format: exreader-3.42.0-win-x64
+PASS required SDK files: LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/exreader.dll
+PASS version identity: package name = VERSION = version.h = source VERSION = cmake: 3.42.0
+PASS public headers: 15 API headers + version.h = 16 files
+PASS minimal example line limit: 64 lines <= 80
+PASS SHA256SUMS coverage and content: 54 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS library and CLI architecture: library and CLI: PE win-x64
+PASS public export count: lib/exreader.dll: exr_* exports [427]; minimum 389
+PASS CLI runtime layout and import library: import library lib/exreader.lib; bin DLL matches lib DLL
+PASS release: dist\exreader-3.42.0-win-x64.zip
+
+[S2 fresh native Windows revalidation]
+Command: python tools/release/smoke_release.py --build-dir build/sdk-release --config Release --output-dir build/s2-revalidation
+Exit: 0
+Full actual console transcript: build/s2-revalidation-console.log; independent repack/extract/README compile/runtime outputs: build/s2-revalidation/.
+
+[S2 fresh Windows README results]
+COMMAND: $env:PATH = "$PWD\lib;$env:PATH"
+EXIT: 0
+OUTPUT:
+COMMAND: cl /nologo /W4 /Iinclude examples\minimal\main.c lib\exreader.lib /Feminimal.exe
+EXIT: 0
+OUTPUT:
+main.c
+COMMAND: .\minimal.exe examples\minimal\sample.epub examples\minimal\font.ttf page-1.pgm
+EXIT: 0
+OUTPUT:
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+Output: page-1.pgm (720 x 1040, PGM)
+PGM: {"width":720,"height":1040,"bytes":748816,"nonwhite_pixels":129549}
+Fresh test archive SHA256: 80c37a267e2a758462400a9dfa65e8393218315de331e1ac0ca59facf299ff90. Delivered dist archive is unchanged; all payload bytes and packaged checksums remain validated.
+
+
+[S2 independent packaged DLL export verification]
+Command: dumpbin /exports dist/exreader-3.42.0-win-x64/lib/exreader.dll
+Actual exr_* export rows: 427; minimum 389. Exit: 0
+
+[S2 checker regression and canonical version revalidation]
+PASS: python tools/release/test_check_release.py (directory/ZIP/tar.gz, CRLF; rejects tampering, missing header/assets, version drift, 81 lines, 388 exports, wrong CPU, traversal).
+PASS: python tools/check_version_consistency.py -> SDK 3.42.0; ABI 1; 587 live exact literal exceptions.
+
+[S2 CI source binding]
+PASS: git diff --exit-code ad851342 HEAD -- CMakeLists.txt cmake include src tools examples/minimal VERSION (exit 0). The recorded Linux and queued macOS PR jobs build the same SDK/release source as the current branch; intervening commits add evidence only.
+
