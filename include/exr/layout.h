@@ -124,6 +124,21 @@ EXR_API exr_status exr_publication_open_source(const exr_source *source,
                                                exr_publication **out, exr_error *error);
 EXR_API exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size,
                                                exr_publication **out, exr_error *error);
+/* LCP Basic Profile read-only resource decoding; the host must validate license
+   trust (this codec does not verify signatures or certificates).
+   passphrase is borrowed UTF-8
+   for this call only: NULL means missing; an empty string is a supplied value.
+   No passphrase or decrypted EPUB is written to disk. Resources are decrypted
+   on demand in memory (32 MiB each), with the key retained until the last
+   publication/document/session reference closes. The original open functions
+   are equivalent to these with NULL. See docs/DRM.md for profile/trust limits.
+   Source ownership transfers only on success, as with open_source. */
+EXR_API exr_status exr_publication_open_ex(const char *path, const char *passphrase,
+                                           exr_publication **out, exr_error *error);
+EXR_API exr_status exr_publication_open_source_ex(const exr_source *source, const char *passphrase,
+                                                  exr_publication **out, exr_error *error);
+EXR_API exr_status exr_publication_open_memory_ex(exr_format format, const void *data, size_t size,
+                                                  const char *passphrase, exr_publication **out, exr_error *error);
 EXR_API void exr_publication_free(exr_publication *publication);
 EXR_API const char *exr_publication_title(const exr_publication *publication);
 EXR_API const exr_part *exr_publication_parts(const exr_publication *publication, size_t *count);
@@ -191,6 +206,43 @@ EXR_API exr_status exr_publication_search(exr_publication *publication,exr_text_
 /* Enumerates overlapping matches. NULL callback counts without collecting. */
 EXR_API exr_status exr_publication_search_all(exr_publication *publication,const char *needle,
   unsigned flags,exr_search_fn callback,void *context,const exr_control *control,size_t *count,exr_error *error);
+/* Disk-backed positional index. Run build/search/load/save on a host worker,
+   with exclusive access to this publication (use a separate one from the UI).
+   No internal threads are created. A zero cursor starts a query; keep the same
+   needle/flags when resuming. max_results=0 streams all hits; callbacks can stop
+   earlier. next advances past the delivered start, preserving overlapping hits.
+   Cancellation/errors leave the input cursor unchanged and clear count.
+   The legacy search APIs and their flags are unchanged. */
+enum { EXR_INDEX_IGNORE_DIACRITICS=4 }; /* Latin-1 accents and U+0300..036F. */
+typedef struct { exr_text_position next; int done; } exr_index_cursor;
+typedef struct {
+  size_t text_bytes, memory_bytes, peak_memory_bytes, disk_bytes;
+  size_t indexed_parts, total_parts;
+  int complete;
+} exr_index_stats;
+/* max_parts=0 finishes; otherwise yields after that many directory entries.
+   memory_limit=0 uses 30% of indexed UTF-8 bytes, with a 512-byte handle floor.
+   The budget includes the index handle and its single build/query buffer.
+   Provider document parsing, stdio handles, caller needles/results are separate.
+   Payloads spill to a temporary file; no hits are omitted to meet the budget.
+   Explicit budgets below 512 fail EXR_LIMIT. NULL stats is allowed. */
+EXR_API exr_status exr_publication_index_build(exr_publication *publication,size_t memory_limit,
+  size_t max_parts,const exr_control *control,exr_index_stats *stats,exr_error *error);
+EXR_API exr_status exr_publication_index_search(exr_publication *publication,const char *needle,
+  unsigned flags,exr_index_cursor *cursor,size_t max_results,exr_search_fn callback,void *context,
+  const exr_control *control,size_t *count,exr_error *error);
+EXR_API exr_status exr_publication_index_info(exr_publication *publication,exr_index_stats *stats,
+  exr_error *error);
+/* Save completed or partial indexes; load resumes without parsing saved parts.
+   revision must be a nonempty immutable content identity, e.g. source SHA-256.
+   The host must change it whenever source bytes/projection options change.
+   Version, directory identity, checksum and record bounds are also checked.
+   Save writes the requested file; use a fresh path then rename for atomic host
+   replacement. Failed load leaves the previous index usable. */
+EXR_API exr_status exr_publication_index_save(exr_publication *publication,const char *path,
+  const char *revision,const exr_control *control,exr_error *error);
+EXR_API exr_status exr_publication_index_load(exr_publication *publication,const char *path,
+  const char *revision,size_t memory_limit,const exr_control *control,exr_index_stats *stats,exr_error *error);
 /* Owned strings; zero-initialize outputs and release with content_anchor_free.
    Stable ID (path when ID is empty) routes each endpoint after part reordering.
    The FNV-1a text revision plus size permits exact offsets in unchanged text,

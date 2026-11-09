@@ -1,0 +1,963 @@
+UTC: 2026-11-09T08:16:19.150789+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["ssh", "-i", "P:/vm-key", "-p", "22222", "-o", "UserKnownHostsFile=P:/known_hosts", "root@127.0.0.1", "set -e; cd /w; cmake -S . -B out -DCMAKE_C_FLAGS=-D_POSIX_C_SOURCE=200809L; cmake --build out --parallel 4"]
+-- ===========================================================================
+--
+-- CMake version in use ......... 3.31.7
+--
+-- Configuration
+--   Generator .................. Ninja
+--   Build type ................. Release
+--   Prefix ..................... /usr/local
+--   Shared libraries ........... OFF
+--   Character type ............. char (UTF-8)
+--   Library name postfix .......
+--
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... ON
+--   Install files .............. OFF
+--
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+--
+--   Entropy sources
+--     arc4random ...............
+--     arc4random_buf ...........
+--     getentropy ............... 1
+--     getrandom ................ 1
+--     syscall SYS_getrandom .... 1
+--     /dev/urandom ............. OFF
+--
+-- ===========================================================================
+CMake Deprecation Warning at out/_deps/miniz-src/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+CMake Deprecation Warning at out/_deps/libwebp-src/CMakeLists.txt:12 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Could NOT find OpenGL (missing: OPENGL_opengl_LIBRARY OPENGL_glx_LIBRARY OPENGL_INCLUDE_DIR)
+-- Performing Test WEBP_HAVE_FLAG_SSE41
+-- Performing Test WEBP_HAVE_FLAG_SSE41 - Failed
+-- Performing Test WEBP_HAVE_FLAG_SSE41
+-- Performing Test WEBP_HAVE_FLAG_SSE41 - Success
+-- Performing Test WEBP_HAVE_FLAG_SSE2
+-- Performing Test WEBP_HAVE_FLAG_SSE2 - Success
+-- Performing Test WEBP_HAVE_FLAG_MIPS32
+-- Performing Test WEBP_HAVE_FLAG_MIPS32 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS32
+-- Performing Test WEBP_HAVE_FLAG_MIPS32 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2 - Failed
+-- Performing Test HAS_COMPILE_FLAG
+-- Performing Test HAS_COMPILE_FLAG - Failed
+-- Performing Test WEBP_HAVE_FLAG_NEON
+-- Performing Test WEBP_HAVE_FLAG_NEON - Failed
+-- Performing Test WEBP_HAVE_FLAG_NEON
+-- Performing Test WEBP_HAVE_FLAG_NEON - Failed
+-- Performing Test WEBP_HAVE_FLAG_MSA
+-- Performing Test WEBP_HAVE_FLAG_MSA - Failed
+-- Performing Test WEBP_HAVE_FLAG_MSA
+-- Performing Test WEBP_HAVE_FLAG_MSA - Failed
+-- Performing Test HAS_COMPILE_FLAG
+-- Performing Test HAS_COMPILE_FLAG - Failed
+CMake Deprecation Warning at out/_deps/libtiff-src/CMakeLists.txt:27 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Building tiff version 4.7.0
+CMake Deprecation Warning at out/_deps/libtiff-src/CMakeLists.txt:30 (cmake_policy):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Could NOT find Deflate (missing: Deflate_LIBRARY Deflate_INCLUDE_DIR)
+-- Could NOT find JPEG (missing: JPEG_LIBRARY JPEG_INCLUDE_DIR)
+-- Could NOT find JBIG (missing: JBIG_LIBRARY JBIG_INCLUDE_DIR)
+-- Could NOT find LERC (missing: LERC_LIBRARY LERC_INCLUDE_DIR)
+-- Could NOT find liblzma (missing: LIBLZMA_LIBRARY LIBLZMA_INCLUDE_DIR LIBLZMA_HAS_AUTO_DECODER LIBLZMA_HAS_EASY_ENCODER LIBLZMA_HAS_LZMA_PRESET)
+-- Could NOT find ZSTD (missing: ZSTD_LIBRARY ZSTD_INCLUDE_DIR)
+-- Could NOT find WebP (missing: WebP_LIBRARY WebP_INCLUDE_DIR)
+-- Could NOT find OpenGL (missing: OPENGL_opengl_LIBRARY OPENGL_INCLUDE_DIR OpenGL)
+-- Could NOT find GLUT (missing: GLUT_glut_LIBRARY GLUT_INCLUDE_DIR)
+--
+-- Libtiff is now configured for Linux-6.12.115-0-virt
+--
+--   Libtiff build version:       4.7.0
+--   Libtiff library version:     6.1.0
+--   Libtiff release date:        20240911
+--
+--   Installation directory:             /usr/local
+--   Documentation directory:            share/doc/tiff
+--   C compiler:                         /usr/bin/cc
+--   C++ compiler:                       /usr/bin/c++
+--   Build shared libraries:             OFF
+--   Build tools:                        OFF
+--   Build tests:                        OFF
+--   Build contrib:                      OFF
+--   Build docs:                         OFF
+--   Build deprecated features:          OFF
+--   Enable linker symbol versioning:    TRUE
+--   Support Microsoft Document Imaging: ON
+--   Use win32 IO:                       OFF
+--
+--  Support for internal codecs:
+--   CCITT Group 3 & 4 algorithms:       ON
+--   Macintosh PackBits algorithm:       ON
+--   LZW algorithm:                      ON
+--   ThunderScan 4-bit RLE algorithm:    ON
+--   NeXT 2-bit RLE algorithm:           ON
+--   LogLuv high dynamic range encoding: ON
+--
+--  Support for external codecs:
+--   ZLIB support:                       Requested:ON Availability:TRUE Support:TRUE
+--   libdeflate support:                 Requested:OFF Availability:FALSE Support:FALSE
+--   Pixar log-format algorithm:         Requested:ON Availability:TRUE Support:TRUE
+--   JPEG support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   Old JPEG support:                   Requested:OFF Availability:FALSE Support:FALSE (Depends on JPEG Support)
+--   JPEG 8/12 bit dual mode:            Requested:OFF Availability:FALSE Support:FALSE
+--   ISO JBIG support:                   Requested:OFF Availability:FALSE Support:FALSE
+--   LERC support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   LZMA2 support:                      Requested:OFF Availability:FALSE Support:FALSE
+--   ZSTD support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   WEBP support:                       Requested:OFF Availability:FALSE Support:FALSE
+--
+--   C++ support:                        ON (requested) TRUE (availability)
+--
+--   OpenGL support:                     Requested:OFF Availability:FALSE Support:FALSE
+--
+--- aom_configure: Detected CPU: generic
+CONFIG_PIC enabled for position independent executable (PIE) build
+-- libavif: Enabling warnings for GCC
+-- libavif: Codec enabled: aom (decode only)
+-- Configuring done (3.4s)
+-- Generating done (0.4s)
+-- Build files have been written to: /w/out
+[1/2] Re-checking globbed directories...
+[1/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff_mkg3states.dir/mkg3states.c.o
+[2/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/zutil.c.o
+[3/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/uncompr.c.o
+[4/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/trees.c.o
+[5/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/inffast.c.o
+[6/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/inftrees.c.o
+[7/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/infback.c.o
+[8/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/inflate.c.o
+[9/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/gzwrite.c.o
+[10/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/gzread.c.o
+[11/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/gzlib.c.o
+[12/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/gzclose.c.o
+[13/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/deflate.c.o
+[14/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/crc32.c.o
+[15/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/compress.c.o
+[16/1160] Building C object _deps/zlib-build/CMakeFiles/zlib.dir/adler32.c.o
+[17/1160] Building C object _deps/libwebp-build/CMakeFiles/libwebpmux.dir/src/mux/muxread.c.o
+[18/1160] Building C object _deps/libwebp-build/CMakeFiles/libwebpmux.dir/src/mux/muxinternal.c.o
+[19/1160] Building C object _deps/libwebp-build/CMakeFiles/libwebpmux.dir/src/mux/muxedit.c.o
+[20/1160] Building C object _deps/libwebp-build/CMakeFiles/libwebpmux.dir/src/mux/anim_encode.c.o
+[21/1160] Building C object _deps/libwebp-build/CMakeFiles/webputilsdecode.dir/src/utils/utils.c.o
+[22/1160] Building C object _deps/libwebp-build/CMakeFiles/webputilsdecode.dir/src/utils/thread_utils.c.o
+[23/1160] Linking C shared library _deps/zlib-build/libz.so.1.3.1
+[24/1160] Building C object _deps/libwebp-build/CMakeFiles/webputilsdecode.dir/src/utils/random_utils.c.o
+[25/1160] Creating library symlink _deps/zlib-build/libz.so.1 _deps/zlib-build/libz.so
+[26/1160] Building C object _deps/libwebp-build/CMakeFiles/webputilsdecode.dir/src/utils/rescaler_utils.c.o
+[27/1160] Building C object _deps/libwebp-build/CMakeFiles/webputilsdecode.dir/src/utils/quant_levels_dec_utils.c.o
+[28/1160] Building C object _deps/libwebp-build/CMakeFiles/webputilsdecode.dir/src/utils/palette.c.o
+[29/1160] Building C object _deps/libwebp-build/CMakeFiles/webputilsdecode.dir/src/utils/huffman_utils.c.o
+[30/1160] Building C object _deps/libwebp-build/CMakeFiles/webputilsdecode.dir/src/utils/filters_utils.c.o
+[31/1160] Building C object _deps/libwebp-build/CMakeFiles/webputilsdecode.dir/src/utils/color_cache_utils.c.o
+[32/1160] Building C object _deps/libwebp-build/CMakeFiles/webputilsdecode.dir/src/utils/bit_reader_utils.c.o
+[33/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/yuv_mips_dsp_r2.c.o
+[34/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/upsampling_mips_dsp_r2.c.o
+[35/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/rescaler_mips_dsp_r2.c.o
+[36/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/lossless_mips_dsp_r2.c.o
+[37/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/filters_mips_dsp_r2.c.o
+[38/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/dec_mips_dsp_r2.c.o
+[39/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/alpha_processing_mips_dsp_r2.c.o
+[40/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/yuv_mips32.c.o
+[41/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/rescaler_mips32.c.o
+[42/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/dec_mips32.c.o
+[43/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/upsampling_msa.c.o
+[44/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/rescaler_msa.c.o
+[45/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/lossless_msa.c.o
+[46/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/filters_msa.c.o
+[47/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/dec_msa.c.o
+[48/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/yuv_neon.c.o
+[49/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/upsampling_neon.c.o
+[50/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/rescaler_neon.c.o
+[51/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/lossless_neon.c.o
+[52/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/filters_neon.c.o
+[53/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/dec_neon.c.o
+[54/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/alpha_processing_neon.c.o
+[55/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/yuv_sse2.c.o
+[56/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/upsampling_sse2.c.o
+[57/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/rescaler_sse2.c.o
+[58/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/lossless_sse2.c.o
+[59/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/filters_sse2.c.o
+[60/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/dec_sse2.c.o
+[61/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/alpha_processing_sse2.c.o
+[62/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/yuv_sse41.c.o
+[63/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/upsampling_sse41.c.o
+[64/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/lossless_sse41.c.o
+[65/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/dec_sse41.c.o
+[66/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/alpha_processing_sse41.c.o
+[67/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/yuv.c.o
+[68/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/upsampling.c.o
+[69/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/rescaler.c.o
+[70/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/lossless.c.o
+[71/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/filters.c.o
+[72/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/dec_clip_tables.c.o
+[73/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/dec.c.o
+[74/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/cpu.c.o
+[75/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdspdecode.dir/src/dsp/alpha_processing.c.o
+[76/1160] Building C object CMakeFiles/exreader-textindex-component-test.dir/tests/test_textindex_component.c.o
+[77/1160] Building C object CMakeFiles/exreader-audio-component-test.dir/tests/test_audio.c.o
+[78/1160] Building C object CMakeFiles/exr_header_version.dir/generated/header_version.c.o
+[79/1160] Building C object CMakeFiles/exr_header_textindex.dir/generated/header_textindex.c.o
+[80/1160] Building C object CMakeFiles/exr_header_text.dir/generated/header_text.c.o
+[81/1160] Building C object CMakeFiles/exr_header_render.dir/generated/header_render.c.o
+[82/1160] Building C object CMakeFiles/exr_header_pdf_edit.dir/generated/header_pdf_edit.c.o
+[83/1160] Building C object CMakeFiles/exr_header_pdf.dir/generated/header_pdf.c.o
+[84/1160] Building C object CMakeFiles/exr_header_library.dir/generated/header_library.c.o
+[85/1160] Building C object CMakeFiles/exr_header_layout.dir/generated/header_layout.c.o
+[86/1160] Building C object CMakeFiles/exr_header_graphics.dir/generated/header_graphics.c.o
+[87/1160] Building C object CMakeFiles/exr_header_formats.dir/generated/header_formats.c.o
+[88/1160] Building C object CMakeFiles/exr_header_font_manager.dir/generated/header_font_manager.c.o
+[89/1160] Building C object CMakeFiles/exr_header_document.dir/generated/header_document.c.o
+[90/1160] Building C object CMakeFiles/exr_header_dictionary.dir/generated/header_dictionary.c.o
+[91/1160] Building C object CMakeFiles/exr_header_core.dir/generated/header_core.c.o
+[92/1160] Building C object CMakeFiles/exr_header_base.dir/generated/header_base.c.o
+[93/1160] Building C object CMakeFiles/exr_header_audio.dir/generated/header_audio.c.o
+[94/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/icc.c.o
+[95/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_crypto.c.o
+[96/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_jpx.c.o
+[97/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_softmask.c.o
+[98/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_softmask_parse.c.o
+[99/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/common.c.o
+[100/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/dash.c.o
+[101/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/stroke.c.o
+[102/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/curves.c.o
+[103/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/affine_image.c.o
+[104/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/vector.c.o
+[105/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/blend.c.o
+[106/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_ccitt.c.o
+[107/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_objects.c.o
+[108/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_cmap.c.o
+[109/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_encoding.c.o
+[110/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_font.c.o
+[111/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_shading_mesh.c.o
+[112/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_shading.c.o
+[113/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_content.c.o
+[114/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/font_outline.c.o
+[115/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_face.c.o
+[116/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/image_formats.c.o
+[117/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/images.c.o
+[118/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_image.c.o
+[119/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/viewport.c.o
+[120/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_view.c.o
+[121/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/canvas.c.o
+[122/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_paint.c.o
+[123/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_raster.c.o
+[124/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_pages.c.o
+[125/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_color.c.o
+[126/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_calculator.c.o
+[127/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/src/pdf_function.c.o
+[128/1160] Building C object CMakeFiles/exreader-pdf-image-test.dir/tests/test_pdf_image.c.o
+[129/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/icc.c.o
+[130/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_crypto.c.o
+[131/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_jpx.c.o
+[132/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_softmask.c.o
+[133/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_softmask_parse.c.o
+[134/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/common.c.o
+[135/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/dash.c.o
+[136/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/stroke.c.o
+[137/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/curves.c.o
+[138/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/affine_image.c.o
+[139/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/vector.c.o
+[140/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/blend.c.o
+[141/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_ccitt.c.o
+[142/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_objects.c.o
+[143/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_cmap.c.o
+[144/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_encoding.c.o
+[145/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_font.c.o
+[146/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_shading_mesh.c.o
+[147/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_shading.c.o
+[148/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_content.c.o
+[149/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/font_outline.c.o
+[150/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_face.c.o
+[151/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/image_formats.c.o
+[152/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/images.c.o
+[153/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_image.c.o
+[154/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/viewport.c.o
+[155/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_view.c.o
+[156/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/canvas.c.o
+[157/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_paint.c.o
+[158/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_raster.c.o
+[159/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_pages.c.o
+[160/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_color.c.o
+[161/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_calculator.c.o
+[162/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/src/pdf_function.c.o
+[163/1160] Building C object CMakeFiles/exreader-pdf-raster-test.dir/tests/test_pdf_raster.c.o
+[164/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/icc.c.o
+[165/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_crypto.c.o
+[166/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_softmask_parse.c.o
+[167/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/common.c.o
+[168/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/curves.c.o
+[169/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/affine_image.c.o
+[170/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/vector.c.o
+[171/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/blend.c.o
+[172/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_ccitt.c.o
+[173/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_objects.c.o
+[174/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_cmap.c.o
+[175/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_encoding.c.o
+[176/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_font.c.o
+[177/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_shading_mesh.c.o
+[178/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_shading.c.o
+[179/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_content.c.o
+[180/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/font_outline.c.o
+[181/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_face.c.o
+[182/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_color.c.o
+[183/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_calculator.c.o
+[184/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/src/pdf_function.c.o
+[185/1160] Building C object CMakeFiles/exreader-pdf-outline-test.dir/tests/test_pdf_outline.c.o
+[186/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/icc.c.o
+[187/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_crypto.c.o
+[188/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_softmask_parse.c.o
+[189/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/common.c.o
+[190/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/dash.c.o
+[191/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/stroke.c.o
+[192/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/curves.c.o
+[193/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/affine_image.c.o
+[194/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/vector.c.o
+[195/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/blend.c.o
+[196/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_ccitt.c.o
+[197/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_objects.c.o
+[198/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_cmap.c.o
+[199/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_encoding.c.o
+[200/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_font.c.o
+[201/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_pages.c.o
+[202/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_shading_mesh.c.o
+[203/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_shading.c.o
+[204/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_content.c.o
+[205/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_color.c.o
+[206/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_calculator.c.o
+[207/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/src/pdf_function.c.o
+[208/1160] Building C object CMakeFiles/exreader-pdf-graphics-test.dir/tests/test_pdf_graphics.c.o
+[209/1160] Building C object CMakeFiles/exreader-vector-test.dir/src/icc.c.o
+[210/1160] Building C object CMakeFiles/exreader-vector-test.dir/src/common.c.o
+[211/1160] Building C object CMakeFiles/exreader-vector-test.dir/src/dash.c.o
+[212/1160] Building C object CMakeFiles/exreader-vector-test.dir/src/stroke.c.o
+[213/1160] Building C object CMakeFiles/exreader-vector-test.dir/src/curves.c.o
+[214/1160] Building C object CMakeFiles/exreader-vector-test.dir/src/affine_image.c.o
+[215/1160] Building C object CMakeFiles/exreader-vector-test.dir/src/vector.c.o
+[216/1160] Building C object CMakeFiles/exreader-vector-test.dir/src/blend.c.o
+[217/1160] Building C object CMakeFiles/exreader-vector-test.dir/tests/test_vector.c.o
+[218/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/icc.c.o
+[219/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_crypto.c.o
+[220/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_softmask_parse.c.o
+[221/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/common.c.o
+[222/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_ccitt.c.o
+[223/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_objects.c.o
+[224/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_cmap.c.o
+[225/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_encoding.c.o
+[226/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_font.c.o
+[227/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_shading_mesh.c.o
+[228/1160] Linking C executable exreader-vector-test
+[229/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_shading.c.o
+[230/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_content.c.o
+[231/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_color.c.o
+[232/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_calculator.c.o
+[233/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/src/pdf_function.c.o
+[234/1160] Building C object CMakeFiles/exreader-pdf-text-test.dir/tests/test_pdf_text.c.o
+[235/1160] Building C object CMakeFiles/exreader-pdf-font-test.dir/src/pdf_crypto.c.o
+[236/1160] Building C object CMakeFiles/exreader-pdf-font-test.dir/src/common.c.o
+[237/1160] Building C object CMakeFiles/exreader-pdf-font-test.dir/src/pdf_ccitt.c.o
+[238/1160] Building C object CMakeFiles/exreader-pdf-font-test.dir/src/pdf_objects.c.o
+[239/1160] Building C object CMakeFiles/exreader-pdf-font-test.dir/src/pdf_cmap.c.o
+[240/1160] Building C object CMakeFiles/exreader-pdf-font-test.dir/src/pdf_encoding.c.o
+[241/1160] Building C object CMakeFiles/exreader-pdf-font-test.dir/src/pdf_font.c.o
+[242/1160] Building C object CMakeFiles/exreader-pdf-font-test.dir/tests/test_pdf_font.c.o
+[243/1160] Building C object CMakeFiles/exreader-pdf-cmap-test.dir/src/pdf_crypto.c.o
+[244/1160] Building C object CMakeFiles/exreader-pdf-cmap-test.dir/src/common.c.o
+[245/1160] Building C object CMakeFiles/exreader-pdf-cmap-test.dir/src/pdf_ccitt.c.o
+[246/1160] Building C object CMakeFiles/exreader-pdf-cmap-test.dir/src/pdf_objects.c.o
+[247/1160] Building C object CMakeFiles/exreader-pdf-cmap-test.dir/src/pdf_cmap.c.o
+[248/1160] Building C object CMakeFiles/exreader-pdf-cmap-test.dir/tests/test_pdf_cmap.c.o
+[249/1160] Building C object CMakeFiles/exreader-pdf-pages-test.dir/src/pdf_crypto.c.o
+[250/1160] Building C object CMakeFiles/exreader-pdf-pages-test.dir/src/common.c.o
+[251/1160] Building C object CMakeFiles/exreader-pdf-pages-test.dir/src/pdf_ccitt.c.o
+[252/1160] Building C object CMakeFiles/exreader-pdf-pages-test.dir/src/pdf_objects.c.o
+[253/1160] Building C object CMakeFiles/exreader-pdf-pages-test.dir/src/pdf_pages.c.o
+[254/1160] Building C object CMakeFiles/exreader-pdf-pages-test.dir/tests/test_pdf_pages.c.o
+[255/1160] Building C object CMakeFiles/exreader-pdf-object-test.dir/src/pdf_crypto.c.o
+[256/1160] Building C object CMakeFiles/exreader-pdf-object-test.dir/src/common.c.o
+[257/1160] Building C object CMakeFiles/exreader-pdf-object-test.dir/src/pdf_ccitt.c.o
+[258/1160] Building C object CMakeFiles/exreader-pdf-object-test.dir/src/pdf_objects.c.o
+[259/1160] Building C object CMakeFiles/exreader-pdf-object-test.dir/tests/test_pdf_objects.c.o
+[260/1160] Building C object CMakeFiles/exreader-pdf-calculator-test.dir/src/common.c.o
+[261/1160] Building C object CMakeFiles/exreader-pdf-calculator-test.dir/src/pdf_calculator.c.o
+[262/1160] Building C object CMakeFiles/exreader-pdf-calculator-test.dir/tests/test_pdf_calculator.c.o
+[263/1160] Building C object CMakeFiles/exreader-case-test.dir/src/case.c.o
+[264/1160] Linking C executable exreader-pdf-calculator-test
+[265/1160] Building C object CMakeFiles/exreader-case-test.dir/tests/test_case.c.o
+[266/1160] Building C object CMakeFiles/exreader-normalize-test.dir/src/common.c.o
+[267/1160] Building C object CMakeFiles/exreader-normalize-test.dir/src/normalize.c.o
+[268/1160] Linking C executable exreader-case-test
+[269/1160] Building C object CMakeFiles/exreader-normalize-test.dir/tests/test_normalize.c.o
+[270/1160] Building C object CMakeFiles/exr_textindex_objects.dir/src/text_index.c.o
+[271/1160] Building C object CMakeFiles/exr_library_objects.dir/src/library.c.o
+[272/1160] Linking C executable exreader-normalize-test
+[273/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/wave.c.o
+[274/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/stretch.c.o
+[275/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/pcm.c.o
+[276/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/mp3.c.o
+[277/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/m4b_metadata.c.o
+[278/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/m4b.c.o
+[279/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/flac.c.o
+[280/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/bmff.c.o
+[281/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/audio_player.c.o
+[282/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/audio_output.c.o
+[283/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/audio.c.o
+[284/1160] Building C object CMakeFiles/exr_audio_objects.dir/src/aac.c.o
+[285/1160] Building C object CMakeFiles/exr_pdf_edit_objects.dir/src/xmp_write.c.o
+[286/1160] Building C object CMakeFiles/exr_pdf_edit_objects.dir/src/pdf_write.c.o
+[287/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_view.c.o
+[288/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_softmask_parse.c.o
+[289/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_softmask.c.o
+[290/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_shading_mesh.c.o
+[291/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_shading.c.o
+[292/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_raster.c.o
+[293/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_paint.c.o
+[294/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_pages.c.o
+[295/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_objects.c.o
+[296/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_jpx.c.o
+[297/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_image.c.o
+[298/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_function.c.o
+[299/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_font.c.o
+[300/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_face.c.o
+[301/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_encoding.c.o
+[302/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_document.c.o
+[303/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_crypto.c.o
+[304/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_content.c.o
+[305/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_color.c.o
+[306/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_cmap.c.o
+[307/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_ccitt.c.o
+[308/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_calculator.c.o
+[309/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_annotations.c.o
+[310/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_annotation_paint.c.o
+[311/1160] Building C object CMakeFiles/exr_pdf_objects.dir/src/cbz.c.o
+[312/1160] Building C object CMakeFiles/exr_render_objects.dir/src/raster.c.o
+[313/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/toc_page.c.o
+[314/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/style.c.o
+[315/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/ssml.c.o
+[316/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/ruby.c.o
+[317/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/publication.c.o
+[318/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/positioned.c.o
+[319/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/pager_table.c.o
+[320/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/pager.c.o
+[321/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/layout.c.o
+[322/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/inline.c.o
+[323/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/flow.c.o
+[324/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/floats.c.o
+[325/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/display_bidi.c.o
+[326/1160] Building C object CMakeFiles/exr_layout_objects.dir/src/chapter_reader.c.o
+[327/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/xmp.c.o
+[328/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/sevenz.c.o
+[329/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/rtf.c.o
+[330/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/navigation.c.o
+[331/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/lzma.c.o
+[332/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/kf8.c.o
+[333/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/huff.c.o
+[334/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/formats.c.o
+[335/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/fb2.c.o
+[336/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/export_text.c.o
+[337/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/export_epub.c.o
+[338/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/epub_write.c.o
+[339/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/docx.c.o
+[340/1160] Building C object CMakeFiles/exr_formats_objects.dir/src/book.c.o
+[341/1160] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_getrandom.c.o
+[342/1160] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_getentropy.c.o
+[343/1160] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmltok.c.o
+[344/1160] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmlrole.c.o
+[345/1160] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmlparse.c.o
+[346/1160] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xcs.c.o
+[347/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed_text.c.o
+[348/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed.c.o
+[349/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/document.c.o
+[350/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/construct.c.o
+[351/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_window.c.o
+[352/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_index.c.o
+[353/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_text.c.o
+[354/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_syntax.c.o
+[355/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_offset.c.o
+[356/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi.c.o
+[357/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/annotation.c.o
+[358/1160] Building C object CMakeFiles/exr_doc_objects.dir/src/anchor.c.o
+[359/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftdebug.c.o
+[360/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/builds/unix/ftsystem.c.o
+[361/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/winfonts/winfnt.c.o
+[362/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/type42/type42.c.o
+[363/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/type1/type1.c.o
+[364/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/truetype/truetype.c.o
+[365/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/svg/svg.c.o
+[366/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/smooth/smooth.c.o
+[367/1160] Linking C static library _deps/expat-build/libexpat.a
+[368/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/sfnt/sfnt.c.o
+[369/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/sdf/sdf.c.o
+[370/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/raster/raster.c.o
+[371/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/psnames/psnames.c.o
+[372/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pshinter/pshinter.c.o
+[373/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/psaux/psaux.c.o
+[374/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pfr/pfr.c.o
+[375/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pcf/pcf.c.o
+[376/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/lzw/ftlzw.c.o
+[377/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/hvf/hvf.c.o
+[378/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/gzip/ftgzip.c.o
+[379/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cid/type1cid.c.o
+[380/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cff/cff.c.o
+[381/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cache/ftcache.c.o
+[382/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/bzip2/ftbzip2.c.o
+[383/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/bdf/bdf.c.o
+[384/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftwinfnt.c.o
+[385/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/fttype1.c.o
+[386/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftsynth.c.o
+[387/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftstroke.c.o
+[388/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftpfr.c.o
+[389/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftpatent.c.o
+[390/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftotval.c.o
+[391/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftmm.c.o
+[392/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftinit.c.o
+[393/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftgxval.c.o
+[394/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftglyph.c.o
+[395/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftgasp.c.o
+[396/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftfstype.c.o
+[397/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftcid.c.o
+[398/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbitmap.c.o
+[399/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbdf.c.o
+[400/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbbox.c.o
+[401/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbase.c.o
+[402/1160] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/autofit/autofit.c.o
+[403/1160] Building C object CMakeFiles/exr_text_objects.dir/src/variable.c.o
+[404/1160] Building C object CMakeFiles/exr_text_objects.dir/src/text.c.o
+[405/1160] Building C object CMakeFiles/exr_text_objects.dir/src/opentype.c.o
+[406/1160] Building C object CMakeFiles/exr_text_objects.dir/src/hyphen.c.o
+[407/1160] Building C object CMakeFiles/exr_text_objects.dir/src/fonts.c.o
+[408/1160] Building C object CMakeFiles/exr_text_objects.dir/src/font_svg.c.o
+[409/1160] Linking C static library _deps/freetype-build/libfreetype.a
+[410/1160] Building C object CMakeFiles/exr_text_objects.dir/src/font_scan.c.o
+[411/1160] Building C object CMakeFiles/exr_text_objects.dir/src/font_path.c.o
+[412/1160] Building C object CMakeFiles/exr_text_objects.dir/src/font_outline.c.o
+[413/1160] Building C object CMakeFiles/exr_text_objects.dir/src/font_manager.c.o
+[414/1160] Building C object CMakeFiles/exr_text_objects.dir/src/font_colr_v1.c.o
+[415/1160] Building C object CMakeFiles/exr_text_objects.dir/src/font_color.c.o
+[416/1160] Building C object CMakeFiles/exr_text_objects.dir/src/font_cache.c.o
+[417/1160] Building C object CMakeFiles/exr_text_objects.dir/src/font_bitmap.c.o
+[418/1160] Building C object CMakeFiles/exr_text_objects.dir/src/dictionary.c.o
+[419/1160] Building C object CMakeFiles/exr_text_objects.dir/src/bidi.c.o
+[420/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdemux.dir/src/demux/demux.c.o
+[421/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdemux.dir/src/demux/anim_decode.c.o
+[422/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/quant_levels_utils.c.o
+[423/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/huffman_encode_utils.c.o
+[424/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/bit_writer_utils.c.o
+[425/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/utils.c.o
+[426/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/thread_utils.c.o
+[427/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/random_utils.c.o
+[428/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/rescaler_utils.c.o
+[429/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/quant_levels_dec_utils.c.o
+[430/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/palette.c.o
+[431/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/huffman_utils.c.o
+[432/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/filters_utils.c.o
+[433/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/color_cache_utils.c.o
+[434/1160] Building C object _deps/libwebp-build/CMakeFiles/webputils.dir/src/utils/bit_reader_utils.c.o
+[435/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/webp_enc.c.o
+[436/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/vp8l_enc.c.o
+[437/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/tree_enc.c.o
+[438/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/token_enc.c.o
+[439/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/syntax_enc.c.o
+[440/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/quant_enc.c.o
+[441/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/predictor_enc.c.o
+[442/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/picture_tools_enc.c.o
+[443/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/picture_rescale_enc.c.o
+[444/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/picture_psnr_enc.c.o
+[445/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/picture_csp_enc.c.o
+[446/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/picture_enc.c.o
+[447/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/near_lossless_enc.c.o
+[448/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/iterator_enc.c.o
+[449/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/histogram_enc.c.o
+[450/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/frame_enc.c.o
+[451/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/filter_enc.c.o
+[452/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/cost_enc.c.o
+[453/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/config_enc.c.o
+[454/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/backward_references_enc.c.o
+[455/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/backward_references_cost_enc.c.o
+[456/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/analysis_enc.c.o
+[457/1160] Building C object _deps/libwebp-build/CMakeFiles/webpencode.dir/src/enc/alpha_enc.c.o
+[458/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_enc_mips_dsp_r2.c.o
+[459/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/enc_mips_dsp_r2.c.o
+[460/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/cost_mips_dsp_r2.c.o
+[461/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_enc_mips32.c.o
+[462/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/enc_mips32.c.o
+[463/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/cost_mips32.c.o
+[464/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_enc_msa.c.o
+[465/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/enc_msa.c.o
+[466/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_enc_neon.c.o
+[467/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/enc_neon.c.o
+[468/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/cost_neon.c.o
+[469/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_enc_sse41.c.o
+[470/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/enc_sse41.c.o
+[471/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/ssim_sse2.c.o
+[472/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_enc_sse2.c.o
+[473/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/enc_sse2.c.o
+[474/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/cost_sse2.c.o
+[475/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/ssim.c.o
+[476/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_enc.c.o
+[477/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/enc.c.o
+[478/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/cost.c.o
+[479/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/yuv_mips_dsp_r2.c.o
+[480/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/upsampling_mips_dsp_r2.c.o
+[481/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/rescaler_mips_dsp_r2.c.o
+[482/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_mips_dsp_r2.c.o
+[483/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/filters_mips_dsp_r2.c.o
+[484/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/dec_mips_dsp_r2.c.o
+[485/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/alpha_processing_mips_dsp_r2.c.o
+[486/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/yuv_mips32.c.o
+[487/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/rescaler_mips32.c.o
+[488/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/dec_mips32.c.o
+[489/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/upsampling_msa.c.o
+[490/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/rescaler_msa.c.o
+[491/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_msa.c.o
+[492/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/filters_msa.c.o
+[493/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/dec_msa.c.o
+[494/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/yuv_neon.c.o
+[495/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/upsampling_neon.c.o
+[496/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/rescaler_neon.c.o
+[497/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_neon.c.o
+[498/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/filters_neon.c.o
+[499/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/dec_neon.c.o
+[500/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/alpha_processing_neon.c.o
+[501/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/yuv_sse2.c.o
+[502/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/upsampling_sse2.c.o
+[503/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/rescaler_sse2.c.o
+[504/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_sse2.c.o
+[505/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/filters_sse2.c.o
+[506/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/dec_sse2.c.o
+[507/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/alpha_processing_sse2.c.o
+[508/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/yuv_sse41.c.o
+[509/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/upsampling_sse41.c.o
+[510/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless_sse41.c.o
+[511/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/dec_sse41.c.o
+[512/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/alpha_processing_sse41.c.o
+[513/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/yuv.c.o
+[514/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/upsampling.c.o
+[515/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/rescaler.c.o
+[516/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/lossless.c.o
+[517/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/filters.c.o
+[518/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/dec_clip_tables.c.o
+[519/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/dec.c.o
+[520/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/cpu.c.o
+[521/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdsp.dir/src/dsp/alpha_processing.c.o
+[522/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdecode.dir/src/dec/webp_dec.c.o
+[523/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdecode.dir/src/dec/vp8l_dec.c.o
+[524/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdecode.dir/src/dec/vp8_dec.c.o
+[525/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdecode.dir/src/dec/tree_dec.c.o
+[526/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdecode.dir/src/dec/quant_dec.c.o
+[527/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdecode.dir/src/dec/io_dec.c.o
+[528/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdecode.dir/src/dec/idec_dec.c.o
+[529/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdecode.dir/src/dec/frame_dec.c.o
+[530/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdecode.dir/src/dec/buffer_dec.c.o
+[531/1160] Building C object _deps/libwebp-build/CMakeFiles/webpdecode.dir/src/dec/alpha_dec.c.o
+[532/1160] Building C object _deps/libwebp-build/CMakeFiles/sharpyuv.dir/sharpyuv/sharpyuv.c.o
+[533/1160] Building C object _deps/libwebp-build/CMakeFiles/sharpyuv.dir/sharpyuv/sharpyuv_gamma.c.o
+[534/1160] Building C object _deps/libwebp-build/CMakeFiles/sharpyuv.dir/sharpyuv/sharpyuv_dsp.c.o
+[535/1160] Building C object _deps/libwebp-build/CMakeFiles/sharpyuv.dir/sharpyuv/sharpyuv_csp.c.o
+[536/1160] Building C object _deps/libwebp-build/CMakeFiles/sharpyuv.dir/sharpyuv/sharpyuv_cpu.c.o
+[537/1160] Building C object _deps/libwebp-build/CMakeFiles/sharpyuv.dir/sharpyuv/sharpyuv_neon.c.o
+[538/1160] Building C object _deps/libwebp-build/CMakeFiles/sharpyuv.dir/sharpyuv/sharpyuv_sse2.c.o
+[539/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/zutil.c.o
+[540/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/uncompr.c.o
+[541/1160] Linking C static library _deps/libwebp-build/libwebpdecoder.a
+[542/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/trees.c.o
+[543/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/inffast.c.o
+[544/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/inftrees.c.o
+[545/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/infback.c.o
+[546/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/inflate.c.o
+[547/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/gzwrite.c.o
+[548/1160] Linking C static library _deps/libwebp-build/libsharpyuv.a
+[549/1160] Linking C static library _deps/libwebp-build/libwebp.a
+[550/1160] Linking C static library _deps/libwebp-build/libwebpmux.a
+[551/1160] Linking C static library _deps/libwebp-build/libwebpdemux.a
+[552/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/gzread.c.o
+[553/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/gzlib.c.o
+[554/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/gzclose.c.o
+[555/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/deflate.c.o
+[556/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/crc32.c.o
+[557/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/compress.c.o
+[558/1160] Building C object _deps/zlib-build/CMakeFiles/zlibstatic.dir/adler32.c.o
+[559/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_unix.c.o
+[560/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_zstd.c.o
+[561/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_zip.c.o
+[562/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_write.c.o
+[563/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_webp.c.o
+[564/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_warning.c.o
+[565/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_version.c.o
+[566/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_tile.c.o
+[567/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_thunder.c.o
+[568/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_swab.c.o
+[569/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_strip.c.o
+[570/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_read.c.o
+[571/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_print.c.o
+[572/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_predict.c.o
+[573/1160] Linking C static library _deps/zlib-build/libz.a
+[574/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_pixarlog.c.o
+[575/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_packbits.c.o
+[576/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_open.c.o
+[577/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_ojpeg.c.o
+[578/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_next.c.o
+[579/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_lzw.c.o
+[580/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_lzma.c.o
+[581/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_luv.c.o
+[582/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_lerc.c.o
+[583/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_jpeg_12.c.o
+[584/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_jpeg.c.o
+[585/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_jbig.c.o
+[586/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_hash_set.c.o
+[587/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_getimage.c.o
+[588/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_flush.c.o
+[589/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_fax3sm.c.o
+[590/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_fax3.c.o
+[591/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_extension.c.o
+[592/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_error.c.o
+[593/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_dumpmode.c.o
+[594/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_dirwrite.c.o
+[595/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_dirread.c.o
+[596/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_dirinfo.c.o
+[597/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_dir.c.o
+[598/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_compress.c.o
+[599/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_color.c.o
+[600/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_codec.c.o
+[601/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_close.c.o
+[602/1160] Building C object _deps/libtiff-build/libtiff/CMakeFiles/tiff.dir/tif_aux.c.o
+[603/1160] Updating version info if necessary.
+[604/1160] Building C object _deps/libaom-build/CMakeFiles/aom_version.dir/gen_src/aom_version_no_op.c.o
+[605/1160] Linking C static library _deps/libaom-build/libaom_version.a
+[606/1160] Building C object _deps/libaom-build/CMakeFiles/aom_pc.dir/gen_src/aom_pc_no_op.c.o
+[607/1160] Linking C static library _deps/libaom-build/libaom_pc.a
+[608/1160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/obu.c.o
+[609/1160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/detokenize.c.o
+[610/1160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodetxb.c.o
+[611/1160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decoder.c.o
+[612/1160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodemv.c.o
+[613/1160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodeframe.c.o
+[614/1160] Linking C static library _deps/libtiff-build/libtiff/libtiff.a
+[615/1160] Linking C executable _deps/libtiff-build/libtiff/tiff_mkg3states
+[616/1160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/av1_dx_iface.c.o
+[617/1160] Building C object _deps/libaom-build/CMakeFiles/aom_rtcd.dir/av1/common/av1_rtcd.c.o
+[618/1160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/grain_synthesis.c.o
+[619/1160] Building C object CMakeFiles/exreader-epub-strict-test.dir/tests/test_epub_strict.c.o
+[620/1160] Building C object CMakeFiles/exreader-xml-input-test.dir/tests/test_xml_input.c.o
+[621/1160] Building C object CMakeFiles/exreader-pdf_edit-component-test.dir/tests/test_pdf_write.c.o
+[622/1160] Building C object CMakeFiles/exreader-library-component-test.dir/tests/test_library_component.c.o
+[623/1160] Building C object CMakeFiles/exreader-library-epub-storage-test.dir/tests/test_library_epub_storage.c.o
+[624/1160] Building C object CMakeFiles/exreader-library-source-test.dir/tests/test_library_source.c.o
+[625/1160] Building C object CMakeFiles/exreader-anchor-boundary-test.dir/tests/test_anchor_boundary.c.o
+[626/1160] Building C object CMakeFiles/exreader-core-component-test.dir/tests/test_core_component.c.o
+[627/1160] Building C object CMakeFiles/exreader-pdf-jpx-test.dir/tests/pdf_jpx/regress.c.o
+[628/1160] Building C object CMakeFiles/exreader-book-codec-probe.dir/tests/book_codec_probe.c.o
+[629/1160] Building C object CMakeFiles/exreader-pdf-form-corpus-test.dir/tests/test_pdf_form_corpus.c.o
+[630/1160] Building C object CMakeFiles/exreader-pdf-form-test.dir/tests/test_pdf_form.c.o
+[631/1160] Building C object CMakeFiles/exreader-chapter-source-test.dir/tests/test_chapter_source.c.o
+[632/1160] Building C object CMakeFiles/exreader-style-budget-test.dir/tests/test_style_budget.c.o
+[633/1160] Building C object CMakeFiles/exreader-chapter-window-test.dir/tests/test_chapter_window.c.o
+[634/1160] Building C object CMakeFiles/exreader-chapter-index-test.dir/tests/test_chapter_index.c.o
+[635/1160] Building C object CMakeFiles/exreader-pdf-deepening-test.dir/tests/test_pdf_deepening.c.o
+[636/1160] Building C object CMakeFiles/exreader-font-manager-probe.dir/tests/font_manager_probe.c.o
+[637/1160] Building C object CMakeFiles/exreader-font-manager-test.dir/tests/test_font_manager.c.o
+[638/1160] Building C object CMakeFiles/exreader-dictionary-probe.dir/tests/dictionary_probe.c.o
+[639/1160] Building C object CMakeFiles/exreader-ssml-test.dir/tests/test_ssml.c.o
+[640/1160] Building C object CMakeFiles/exreader-style-footnotes-test.dir/tests/test_style_footnotes.c.o
+[641/1160] Building C object CMakeFiles/exreader-control-test.dir/tests/test_control.c.o
+[642/1160] Building C object CMakeFiles/exreader-checkpoints-test.dir/tests/test_checkpoints.c.o
+[643/1160] Building C object CMakeFiles/exreader-page-cache-test.dir/tests/test_page_cache.c.o
+[644/1160] Building C object CMakeFiles/exreader-pager-test.dir/tests/test_pager.c.o
+[645/1160] Building C object CMakeFiles/exreader-chapter-reader-test.dir/tests/test_chapter_reader.c.o
+[646/1160] Building C object CMakeFiles/exreader-chapter-bounds-test.dir/tests/test_chapter_bounds.c.o
+[647/1160] Building C object CMakeFiles/exreader-budget-test.dir/tests/test_budget.c.o
+[648/1160] Building C object CMakeFiles/exreader-book-font-test.dir/tests/test_book_fonts.c.o
+[649/1160] Building C object CMakeFiles/exreader-font-test.dir/tests/test_font.c.o
+[650/1160] Building C object CMakeFiles/exreader-line-boundary-test.dir/tests/test_line_boundary.c.o
+[651/1160] Building C object CMakeFiles/exreader-complex-layout-test.dir/tests/test_complex_layout.c.o
+[652/1160] Building C object CMakeFiles/exreader-shaping-test.dir/tests/test_shaping.c.o
+[653/1160] Building C object CMakeFiles/exreader-bidi-test.dir/tests/test_bidi.c.o
+[654/1160] Building C object CMakeFiles/exreader-text-test.dir/tests/test_text.c.o
+[655/1160] Building C object CMakeFiles/exreader-toc-test.dir/tests/test_toc.c.o
+[656/1160] Building C object CMakeFiles/exreader-toc-page-test.dir/tests/test_toc_page.c.o
+[657/1160] Building C object CMakeFiles/exreader-navigation-test.dir/tests/test_navigation.c.o
+[658/1160] Building C object CMakeFiles/exreader-locate-report-test.dir/tests/test_locate_report.c.o
+[659/1160] Building C object CMakeFiles/exreader-sevenz-test.dir/tests/test_sevenz.c.o
+[660/1160] Building C object CMakeFiles/exreader-convert-test.dir/tests/test_convert.c.o
+[661/1160] Building C object CMakeFiles/exreader-export-epub-test.dir/tests/test_export_epub.c.o
+[662/1160] Building C object CMakeFiles/exreader-export-html-test.dir/tests/test_export_html.c.o
+[663/1160] Building C object CMakeFiles/exreader-fb2-test.dir/tests/test_fb2.c.o
+[664/1160] Building C object CMakeFiles/exreader-docx-test.dir/tests/test_docx.c.o
+[665/1160] Building C object CMakeFiles/exreader-rtf-test.dir/tests/test_rtf.c.o
+[666/1160] Building C object CMakeFiles/exreader-rtf-table-test.dir/tests/test_rtf_table.c.o
+[667/1160] Building C object CMakeFiles/exreader-rtf-note-test.dir/tests/test_rtf_note.c.o
+[668/1160] Building C object CMakeFiles/exreader-rtf-list-test.dir/tests/test_rtf_list.c.o
+[669/1160] Building C object CMakeFiles/exreader-rtf-number-test.dir/tests/test_rtf_number.c.o
+[670/1160] Building C object CMakeFiles/exreader-decoration-test.dir/tests/test_decoration.c.o
+[671/1160] Building C object CMakeFiles/exreader-mobi-test.dir/tests/test_mobi.c.o
+[672/1160] Building C object CMakeFiles/exreader-kf8-test.dir/tests/test_kf8.c.o
+[673/1160] Building C object CMakeFiles/exreader-cover-import-test.dir/tests/test_cover_import.c.o
+[674/1160] Building C object CMakeFiles/exreader-library-unique-test.dir/tests/test_library_unique.c.o
+[675/1160] Building C object CMakeFiles/exreader-positioned-test.dir/tests/test_positioned.c.o
+[676/1160] Building C object CMakeFiles/exreader-viewport-test.dir/tests/test_viewport.c.o
+[677/1160] Building C object CMakeFiles/exreader-canvas-cmyk-test.dir/tests/test_canvas_cmyk.c.o
+[678/1160] Building C object CMakeFiles/exreader-canvas-test.dir/tests/test_canvas.c.o
+[679/1160] Building C object CMakeFiles/exreader-blend-test.dir/tests/test_blend.c.o
+[680/1160] Building C object CMakeFiles/exreader-font-path-test.dir/tests/test_font_path.c.o
+[681/1160] Building C object CMakeFiles/exreader-fixed-test.dir/tests/test_fixed.c.o
+[682/1160] Building C object CMakeFiles/exreader-fixed-example.dir/examples/fixed.c.o
+[683/1160] Building C object CMakeFiles/exreader-fixed-pdf-test.dir/tests/test_fixed_pdf.c.o
+[684/1160] Building C object CMakeFiles/exreader-fixed-text-test.dir/tests/test_fixed_text.c.o
+[685/1160] Building C object CMakeFiles/exreader-fixed-library-test.dir/tests/test_fixed_library.c.o
+[686/1160] Building C object CMakeFiles/exreader-audio-test.dir/tests/test_audio.c.o
+[687/1160] Building C object CMakeFiles/exreader-audio-player-test.dir/tests/test_audio_player.c.o
+[688/1160] Building C object CMakeFiles/exreader-wave-test.dir/tests/test_wave.c.o
+[689/1160] Building C object CMakeFiles/exreader-pcm-example.dir/examples/pcm.c.o
+[690/1160] Building C object CMakeFiles/exreader-wave-example.dir/examples/wave.c.o
+[691/1160] Building C object CMakeFiles/exreader-audio-library-test.dir/tests/test_audio_library.c.o
+[692/1160] Building C object CMakeFiles/exreader-source-test.dir/tests/test_source.c.o
+[693/1160] Building C object CMakeFiles/exreader-lazy-test.dir/tests/test_lazy.c.o
+[694/1160] Building C object CMakeFiles/exreader-html-raw-test.dir/tests/test_html_raw.c.o
+[695/1160] Building C object CMakeFiles/exreader-rtf-fallback-test.dir/tests/test_rtf_fallback.c.o
+[696/1160] Building C object CMakeFiles/exreader-export-xml-test.dir/tests/test_export_xml.c.o
+[697/1160] Building C object CMakeFiles/exreader-note-limit-test.dir/tests/test_note_limit.c.o
+[698/1160] Building C object CMakeFiles/exreader-anchor-library-test.dir/tests/test_anchor_library.c.o
+[699/1160] Building C object CMakeFiles/exreader-content-ranges-test.dir/tests/test_content_ranges.c.o
+[700/1160] Building C object CMakeFiles/exreader-document-search-test.dir/tests/test_document_search.c.o
+[701/1160] Building C object CMakeFiles/exreader-anchor-test.dir/tests/test_anchor.c.o
+[702/1160] Building C object CMakeFiles/exreader-cfi-compat-test.dir/tests/test_cfi_compat.c.o
+[703/1160] Building C object CMakeFiles/exreader-cfi-test.dir/tests/test_cfi.c.o
+[704/1160] Building C object CMakeFiles/exreader-cfi-text-test.dir/tests/test_cfi_text.c.o
+[705/1160] Building C object CMakeFiles/exreader-construct-test.dir/tests/test_construct.c.o
+[706/1160] Building C object CMakeFiles/exreader-flow-test.dir/tests/test_flow.c.o
+[707/1160] Building C object CMakeFiles/exreader-chapter-layout-probe.dir/tests/probe_chapter_layout.c.o
+[708/1160] Building C object CMakeFiles/exreader-chapter-layout-test.dir/tests/test_chapter_layout.c.o
+[709/1160] Building C object CMakeFiles/exreader-test.dir/tests/test_core.c.o
+[710/1160] Building C object CMakeFiles/exreader-abi-test.dir/tests/test_abi.c.o
+[711/1160] Building C object CMakeFiles/exreader-text-index-test.dir/tests/test_text_index.c.o
+[712/1160] Building C object CMakeFiles/exreader-text-source-test.dir/tests/test_text_source.c.o
+[713/1160] Building C object CMakeFiles/exreader-progress-library-test.dir/tests/test_progress_library.c.o
+[714/1160] Building C object CMakeFiles/exreader-reanchor-library-test.dir/tests/test_reanchor_library.c.o
+[715/1160] Building C object CMakeFiles/exreader-annotation-test.dir/tests/test_annotation.c.o
+[716/1160] Building C object CMakeFiles/exreader-metadata-test.dir/tests/test_metadata.c.o
+[717/1160] Building C object CMakeFiles/exreader-page-annotations-test.dir/tests/test_page_annotations.c.o
+[718/1160] Building C object CMakeFiles/exreader-pdf-appearance-test.dir/tests/test_pdf_appearance.c.o
+[719/1160] Building C object CMakeFiles/exreader-pdf-write-test.dir/tests/test_pdf_write.c.o
+[720/1160] Building C object CMakeFiles/exreader-pdf-metadata-write-test.dir/tests/test_pdf_metadata_write.c.o
+[721/1160] Building C object CMakeFiles/exreader-mp3-test.dir/tests/test_mp3.c.o
+[722/1160] Building C object CMakeFiles/exreader-audio-output-test.dir/tests/test_audio_output.c.o
+[723/1160] Building C object CMakeFiles/exreader-pcm-test.dir/tests/test_pcm.c.o
+[724/1160] Building C object CMakeFiles/exreader-flac-test.dir/tests/test_flac.c.o
+[725/1160] Building C object CMakeFiles/exreader-pdf-markup-test.dir/tests/test_pdf_markup.c.o
+[726/1160] Building C object CMakeFiles/exreader-aac-test.dir/tests/test_aac.c.o
+[727/1160] Building C object CMakeFiles/exreader-pdf-type3-test.dir/tests/test_pdf_type3.c.o
+[728/1160] Building C object CMakeFiles/exreader-combine-upright-test.dir/tests/test_combine_upright.c.o
+[729/1160] Building C object CMakeFiles/exreader-vertical-test.dir/tests/test_vertical.c.o
+[730/1160] Building C object CMakeFiles/exreader-epub-metadata-write-test.dir/tests/test_epub_metadata_write.c.o
+[731/1160] Building C object CMakeFiles/exreader-m4b-test.dir/tests/test_m4b.c.o
+[732/1160] Building C object CMakeFiles/exreader-stretch-test.dir/tests/test_stretch.c.o
+[733/1160] Building C object CMakeFiles/exreader-pdf-inline-test.dir/tests/test_pdf_inline.c.o
+[734/1160] Building C object CMakeFiles/exreader-variable-test.dir/tests/test_variable.c.o
+[735/1160] Building C object CMakeFiles/exreader-orthogonal-test.dir/tests/test_orthogonal.c.o
+[736/1160] Building C object CMakeFiles/exreader-ot-variation-test.dir/tests/test_ot_variation.c.o
+[737/1160] Building C object CMakeFiles/exreader-font-svg-test.dir/tests/test_font_svg.c.o
+[738/1160] Building C object CMakeFiles/exreader-font-color-v1-test.dir/tests/test_font_color_v1.c.o
+[739/1160] Building C object CMakeFiles/exreader-font-color-test.dir/tests/test_font_color.c.o
+[740/1160] Building C object CMakeFiles/exreader-pdf-shading-test.dir/tests/test_pdf_shading.c.o
+[741/1160] Building C object CMakeFiles/exreader-paint-source-test.dir/tests/test_paint_source.c.o
+[742/1160] Building C object CMakeFiles/exreader-zero-opacity-test.dir/tests/test_zero_opacity.c.o
+[743/1160] Building C object CMakeFiles/exreader-alpha-source-test.dir/tests/test_alpha_source.c.o
+[744/1160] Building C object CMakeFiles/exreader-mask-functions-test.dir/tests/test_mask_functions.c.o
+[745/1160] Building C object CMakeFiles/exreader-mask-scope-test.dir/tests/test_mask_scope.c.o
+[746/1160] Building C object CMakeFiles/exreader-nested-groups-test.dir/tests/test_nested_groups.c.o
+[747/1160] Building C object CMakeFiles/exreader-native-inks-test.dir/tests/test_native_inks.c.o
+[748/1160] Building C object CMakeFiles/exreader-pdf-groupcs-test.dir/tests/test_pdf_groupcs.c.o
+[749/1160] Building C object CMakeFiles/exreader-pdf-matte-test.dir/tests/test_pdf_matte.c.o
+[750/1160] Building C object CMakeFiles/exreader-pdf-intent-test.dir/tests/test_pdf_intent.c.o
+[751/1160] Building C object CMakeFiles/exreader-pdf-color-test.dir/tests/test_pdf_color.c.o
+[752/1160] Building C object CMakeFiles/exreader-ruby-test.dir/tests/test_ruby.c.o
+[753/1160] Building C object CMakeFiles/exreader-wp7-test.dir/tests/test_wp7_scripts.c.o
+[754/1160] Building C object CMakeFiles/exreader-indic-test.dir/tests/test_indic.c.o
+[755/1160] Building C object CMakeFiles/exreader-m4b-metadata-test.dir/tests/test_m4b_metadata.c.o
+[756/1160] Building C object CMakeFiles/exreader-library-stream-test.dir/tests/test_library_stream.c.o
+[757/1160] Building C object CMakeFiles/exreader-cbz-formats-test.dir/tests/test_cbz_formats.c.o
+[758/1160] Building C object CMakeFiles/exreader-image-formats-test.dir/tests/test_image_formats.c.o
+[759/1160] Building C object CMakeFiles/exreader-cbz-test.dir/tests/test_cbz.c.o
+[760/1160] Building C object CMakeFiles/exreader-pdf-crypto-test.dir/tests/test_pdf_crypto.c.o
+[761/1160] Building C object CMakeFiles/exreader-table-spacing-test.dir/tests/test_table_spacing.c.o
+[762/1160] Building C object CMakeFiles/exreader-table-columns-test.dir/tests/test_table_columns.c.o
+[763/1160] Building C object CMakeFiles/exreader-table-intrinsic-test.dir/tests/test_table_intrinsic.c.o
+[764/1160] Building C object CMakeFiles/exreader-table-alignment-test.dir/tests/test_table_alignment.c.o
+[765/1160] Building C object CMakeFiles/exreader-table-header-test.dir/tests/test_table_header.c.o
+[766/1160] Building C object CMakeFiles/exreader-border-edges-test.dir/tests/test_border_edges.c.o
+[767/1160] Building C object CMakeFiles/exreader-table-border-test.dir/tests/test_table_border.c.o
+[768/1160] Building C object CMakeFiles/exreader-table-fragments-test.dir/tests/test_table_fragments.c.o
+[769/1160] Building C object CMakeFiles/exreader-float-test.dir/tests/test_float.c.o
+[770/1160] Building C object CMakeFiles/exreader-hyphen-builtin-test.dir/tests/test_hyphen_builtin.c.o
+[771/1160] Building C object CMakeFiles/exreader-hyphen-layout-test.dir/tests/test_hyphen_layout.c.o
+[772/1160] Building C object CMakeFiles/exreader-hyphen-replacements-test.dir/tests/test_hyphen_replacements.c.o
+[773/1160] Building C object CMakeFiles/exreader-hyphen-test.dir/tests/test_hyphen.c.o
+[774/1160] Building C object CMakeFiles/exreader-pdf-ccitt-test.dir/tests/test_pdf_ccitt.c.o
+[775/1160] Building C object CMakeFiles/exreader-pdf-shading-mesh7-test.dir/tests/test_pdf_shading_mesh7.c.o
+[776/1160] Building C object CMakeFiles/exreader-pdf-shading-mesh-test.dir/tests/test_pdf_shading_mesh.c.o
+[777/1160] Building C object CMakeFiles/exreader-table-dashed-test.dir/tests/test_table_dashed.c.o
+[778/1160] Building C object CMakeFiles/exreader-render-audit-test.dir/tests/test_render_audit.c.o
+[779/1160] Building C object CMakeFiles/exreader-convert.dir/tools/convert_report.c.o
+[780/1160] Building C object CMakeFiles/exreader-convert.dir/tools/convert_json.c.o
+[781/1160] Building C object CMakeFiles/exreader-convert.dir/tools/convert_io.c.o
+[782/1160] Building C object CMakeFiles/exreader-convert.dir/tools/convert.c.o
+/w/tools/convert.c: In function 'run_job':
+/w/tools/convert.c:1038:43: error: passing argument 2 of 'cv_file_size' from incompatible pointer type [-Wincompatible-pointer-types]
+ 1038 |     if (!cv_file_size(job->result.output, &job->result.output_bytes, &error)) {
+      |                                           ^~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                           |
+      |                                           long long unsigned int *
+In file included from /w/tools/convert.c:8:
+/w/tools/convert_io.h:21:46: note: expected 'uint64_t *' {aka 'long unsigned int *'} but argument is of type 'long long unsigned int *'
+   21 | int cv_file_size(const char *path, uint64_t *size, char **error);
+      |                                    ~~~~~~~~~~^~~~
+ninja: job failed: /usr/bin/cc -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES -DMINIZ_STATIC_DEFINE -I/w/out/generated/include -I/w/include -I/w/out/_deps/miniz-src -I/w/out/_deps/miniz-build -D_POSIX_C_SOURCE=200809L -O3 -DNDEBUG -std=c11 -fPIE -MD -MT CMakeFiles/exreader-convert.dir/tools/convert.c.o -MF CMakeFiles/exreader-convert.dir/tools/convert.c.o.d -o CMakeFiles/exreader-convert.dir/tools/convert.c.o -c /w/tools/convert.c
+ninja: subcommand failed
+EXIT_CODE: 1
+END_UTC: 2026-11-09T08:18:26.036490+00:00

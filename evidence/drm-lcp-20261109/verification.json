@@ -1,0 +1,82 @@
+{
+  "baseline_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+  "ctest": {
+    "before": 234,
+    "after": 240,
+    "added_groups": 6,
+    "passed": 240
+  },
+  "regression": {
+    "books": 19,
+    "pages": 11116,
+    "glyphs": 7580223,
+    "changed_page_hashes": 0,
+    "fingerprint": "400f5f4cbe730fd7b78dbab4ef9425b51ce06b667a5534d5e4ac4c2290acf30e"
+  },
+  "sample": {
+    "pages": 48,
+    "resources_equal": 10,
+    "resource_bytes_equal": 1612682
+  },
+  "errors": {
+    "missing_passphrase": 14,
+    "wrong_passphrase": 15,
+    "expired": 16,
+    "unsupported_profile": 17,
+    "adobe_adept_marker": 17
+  },
+  "layer_check": "119 objects, 1361 symbol references, 0 remaining inverse references, 0 new\n1045 source/header dependencies, 0 inverse includes",
+  "lcp_disabled_runtime": "LCP disabled: 17 LCP support is disabled in this build (EXR_ENABLE_LCP=OFF)\nLCP disabled: clear EPUB opens",
+  "configuration": [
+    "CMAKE_BUILD_TYPE:STRING=Release",
+    "CMAKE_C_COMPILER:FILEPATH=C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
+    "EXR_BUILD_FUZZ:BOOL=OFF",
+    "EXR_BUILD_JNI:BOOL=OFF",
+    "EXR_BUILD_SHARED_COMPAT:BOOL=ON",
+    "EXR_BUILD_TESTS:BOOL=ON",
+    "EXR_BUILD_TEXT_INDEX:BOOL=ON",
+    "EXR_BUILD_TOOLS:BOOL=ON",
+    "EXR_ENABLE_AAC:BOOL=OFF",
+    "EXR_ENABLE_AUDIO:BOOL=ON",
+    "EXR_ENABLE_ICC:BOOL=OFF",
+    "EXR_ENABLE_IMAGE_AVIF:BOOL=OFF",
+    "EXR_ENABLE_IMAGE_TIFF:BOOL=OFF",
+    "EXR_ENABLE_IMAGE_WEBP:BOOL=OFF",
+    "EXR_ENABLE_LCP:BOOL=ON",
+    "EXR_ENABLE_LIBRARY:BOOL=ON",
+    "EXR_ENABLE_MP3:BOOL=ON",
+    "EXR_ENABLE_PDF:BOOL=ON",
+    "EXR_ENABLE_PDF_CRYPTO:BOOL=ON",
+    "EXR_ENABLE_PDF_EDIT:BOOL=ON",
+    "EXR_ENABLE_PDF_JPX:BOOL=ON",
+    "EXR_ENABLE_TEXT_INDEX:BOOL=ON",
+    "FETCHCONTENT_SOURCE_DIR_EXPAT:PATH=C:/Users/Oscar/exr-deps/expat",
+    "FETCHCONTENT_SOURCE_DIR_FREETYPE:PATH=C:/Users/Oscar/exr-deps/freetype-VER-2-15-0",
+    "FETCHCONTENT_SOURCE_DIR_MBEDTLS:PATH=C:/Users/Oscar/exr-deps/mbedtls",
+    "FETCHCONTENT_SOURCE_DIR_MINIMP3:PATH=C:/Users/Oscar/exr-deps/minimp3",
+    "FETCHCONTENT_SOURCE_DIR_MINIZ:PATH=C:/Users/Oscar/exr-deps/miniz",
+    "FETCHCONTENT_SOURCE_DIR_OPENJPEG:PATH=C:/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4",
+    "FETCHCONTENT_SOURCE_DIR_SQLITE:PATH=C:/Users/Oscar/exr-deps/sqlite",
+    "FETCHCONTENT_SOURCE_DIR_STB:PATH=C:/Users/Oscar/exr-deps/stb"
+  ],
+  "source_sha256": {
+    "src/lcp.c": "d068b4a47e7940b145037894da71ec90c846da5e55e836db95f6e2c2d780e8ba",
+    "src/lcp_internal.h": "9391e9bc449f61e70dc751a90c611264a54555e57520f2f34433a4a5604a8a47",
+    "src/formats.c": "8e5782986cafbc168135d11278c77782c3a9ee6e789f52455682d671e5263805",
+    "src/publication.c": "629fa1d53a0b78f65cd70c2ad66155b0e290e15762936934b9cd8cac55e5fadd",
+    "src/document.c": "d0e73cc8196eaeda4ec9a4a908ce2fba5ed8c93f3888876d7b42e2bc71cb80be",
+    "src/document_internal.h": "fc7bd63161c9a2de4a4699ff76fe7d56a07a0c39d2edf359834ba7db70378529",
+    "include/exr/base.h": "1e60b148a247c1ef0d2caf386682815f503300e38537e518dd0a32d70e0e1b61",
+    "include/exr/layout.h": "d76cf747ce0a8fe88fc1c702b8010830d049061d37c98e3204ab75a7a55519f9",
+    "cmake/deps.cmake": "d45d72206cecce6f10c8b76be3da60e91ba44f0a78f42b0a49c551ce32739758",
+    "cmake/modules.cmake": "1a2dc33424a063631c1799ec349c1d58848b395d7ad9ae248dce607568d8952d",
+    "cmake/exr_crypto_config.h": "e1afc1247000b45ddfabb72625255340292461789e65f94a5eb0c0c6116bcdc9",
+    "CMakeLists.txt": "d36a425e03fd7c89bd368c60ca305d02738389799444f9f85561b18991de36d0",
+    "tools/layers.json": "5b838a3effe4b92e3dbbd48e8baa48fffe328836eda829ebb79e0a2724e073e4",
+    "tests/test_lcp.c": "1720ab356147063c43c3082d060d0f7849a63119cda621fc16b22bf95ded14c2",
+    "tests/lcp_acceptance.py": "1148aeaef7e4699d7f528075adb2120da3a03b9d67f3d1f354fbd00e3671f9a1",
+    "tools/generate_lcp_fixtures.py": "76533dff3eb9447950549dce4912db645c56373e9089305450d9917c67b642a2"
+  },
+  "github_files_changed": false,
+  "manual_workflow_actions": false
+}

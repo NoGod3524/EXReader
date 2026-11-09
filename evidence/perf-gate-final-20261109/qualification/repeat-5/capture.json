@@ -1,0 +1,509 @@
+{
+  "schema": 1,
+  "created_utc": "2026-11-09T07:28:23.194158+00:00",
+  "complete": true,
+  "environment": {
+    "host": {
+      "logical_cores": 8,
+      "cpu": "Intel(R) Core(TM) Ultra 7 256V",
+      "ram_bytes": 16693911552,
+      "system": "Windows",
+      "machine": "AMD64",
+      "os": "Windows-11-10.0.26200-SP0",
+      "runner_label": "local",
+      "image_os": null,
+      "image_version": null,
+      "cpu_index": 3
+    },
+    "compiler": {
+      "path": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
+      "version": "gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+      "sha256": "52370b1776e129d6562753af441a5f2b2b3edc0a3181cb05a78550dab8d70e85",
+      "flags": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "EXR_BUILD_JNI": "OFF",
+        "EXR_BUILD_TESTS": "OFF",
+        "EXR_BUILD_TOOLS": "OFF",
+        "CMAKE_C_FLAGS-ADVANCED": "1",
+        "CMAKE_C_FLAGS_DEBUG-ADVANCED": "1",
+        "CMAKE_C_FLAGS_MINSIZEREL-ADVANCED": "1",
+        "CMAKE_C_FLAGS_RELEASE-ADVANCED": "1",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED": "1"
+      },
+      "sdk_flags": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "EXR_BUILD_FUZZ": "OFF",
+        "EXR_BUILD_JNI": "OFF",
+        "EXR_BUILD_SHARED_COMPAT": "ON",
+        "EXR_BUILD_TESTS": "ON",
+        "EXR_BUILD_TEXT_INDEX": "ON",
+        "EXR_BUILD_TOOLS": "ON",
+        "EXR_ENABLE_AAC": "OFF",
+        "EXR_ENABLE_AUDIO": "ON",
+        "EXR_ENABLE_ICC": "OFF",
+        "EXR_ENABLE_IMAGE_AVIF": "OFF",
+        "EXR_ENABLE_IMAGE_TIFF": "OFF",
+        "EXR_ENABLE_IMAGE_WEBP": "OFF",
+        "EXR_ENABLE_LIBRARY": "ON",
+        "EXR_ENABLE_MP3": "OFF",
+        "EXR_ENABLE_PDF": "ON",
+        "EXR_ENABLE_PDF_CRYPTO": "OFF",
+        "EXR_ENABLE_PDF_EDIT": "ON",
+        "EXR_ENABLE_PDF_JPX": "ON",
+        "EXR_ENABLE_TEXT_INDEX": "ON",
+        "CMAKE_C_FLAGS-ADVANCED": "1",
+        "CMAKE_C_FLAGS_DEBUG-ADVANCED": "1",
+        "CMAKE_C_FLAGS_MINSIZEREL-ADVANCED": "1",
+        "CMAKE_C_FLAGS_RELEASE-ADVANCED": "1",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED": "1"
+      }
+    },
+    "counter": "Windows/QueryThreadCycleTime"
+  },
+  "compatibility": {
+    "host": {
+      "logical_cores": 8,
+      "cpu": "Intel(R) Core(TM) Ultra 7 256V",
+      "system": "Windows",
+      "machine": "AMD64",
+      "os": "Windows-11-10.0.26200-SP0",
+      "runner_label": "local",
+      "image_os": null,
+      "image_version": null,
+      "cpu_index": 3
+    },
+    "compiler": {
+      "version": "gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+      "sha256": "52370b1776e129d6562753af441a5f2b2b3edc0a3181cb05a78550dab8d70e85",
+      "flags": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "EXR_BUILD_JNI": "OFF",
+        "EXR_BUILD_TESTS": "OFF",
+        "EXR_BUILD_TOOLS": "OFF",
+        "CMAKE_C_FLAGS-ADVANCED": "1",
+        "CMAKE_C_FLAGS_DEBUG-ADVANCED": "1",
+        "CMAKE_C_FLAGS_MINSIZEREL-ADVANCED": "1",
+        "CMAKE_C_FLAGS_RELEASE-ADVANCED": "1",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED": "1"
+      },
+      "sdk_flags": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "EXR_BUILD_FUZZ": "OFF",
+        "EXR_BUILD_JNI": "OFF",
+        "EXR_BUILD_SHARED_COMPAT": "ON",
+        "EXR_BUILD_TESTS": "ON",
+        "EXR_BUILD_TEXT_INDEX": "ON",
+        "EXR_BUILD_TOOLS": "ON",
+        "EXR_ENABLE_AAC": "OFF",
+        "EXR_ENABLE_AUDIO": "ON",
+        "EXR_ENABLE_ICC": "OFF",
+        "EXR_ENABLE_IMAGE_AVIF": "OFF",
+        "EXR_ENABLE_IMAGE_TIFF": "OFF",
+        "EXR_ENABLE_IMAGE_WEBP": "OFF",
+        "EXR_ENABLE_LIBRARY": "ON",
+        "EXR_ENABLE_MP3": "OFF",
+        "EXR_ENABLE_PDF": "ON",
+        "EXR_ENABLE_PDF_CRYPTO": "OFF",
+        "EXR_ENABLE_PDF_EDIT": "ON",
+        "EXR_ENABLE_PDF_JPX": "ON",
+        "EXR_ENABLE_TEXT_INDEX": "ON",
+        "CMAKE_C_FLAGS-ADVANCED": "1",
+        "CMAKE_C_FLAGS_DEBUG-ADVANCED": "1",
+        "CMAKE_C_FLAGS_MINSIZEREL-ADVANCED": "1",
+        "CMAKE_C_FLAGS_RELEASE-ADVANCED": "1",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED": "1"
+      }
+    },
+    "counter": "Windows/QueryThreadCycleTime",
+    "harness": {
+      "sample.py": "065b8b43c8703aa21296bb4b80561eee94484b16ca4f257e698a643d3d65d376",
+      "gate_probe.cmake": "3d9d304cfe345cc1ed1cb331f4fb8cd859e3a18cb5772bcfa7cec9c7f3a17b65",
+      "gate_counters.h": "a4c5fb93fd4947cbcc5ff41b10220cdea69450fe6bb0cd8ab5f195a6f37d01de",
+      "CMakeLists.txt": "a4c2ae6ff7dfe89d30ecf767b5f08dbfa7d687e981b1ae2bd1cab2c8d7d909aa",
+      "e1_platform.h": "fd6a12e5739e3b71cdb9b55f048760ce88f5d449527819b541bc7c355ed8d556",
+      "ratio_document.inc": "19e64d18db9efb816d9a280a272134647be1d8cc75a4431a07a79eebd86f1358",
+      "R3": "35303e12a2f112197e25bac3210244857b0a097b76afff627e8abf4e667f337c"
+    },
+    "font_sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280",
+    "plan": {
+      "processes": 3,
+      "turns": 16,
+      "width": 720,
+      "height": 1040,
+      "margin": 48,
+      "font_size": 24,
+      "first_excluded": true,
+      "statistic": "nearest-rank p95 of 48 turns per book"
+    }
+  },
+  "plan": {
+    "processes": 3,
+    "turns": 16,
+    "width": 720,
+    "height": 1040,
+    "margin": 48,
+    "font_size": 24,
+    "first_excluded": true,
+    "statistic": "nearest-rank p95 of 48 turns per book"
+  },
+  "input_sha256": {
+    "a-raisin-in-the-sun": "2416cbd8d73eb7ba2a228842aa33ae303653fb75fa42dd6e921293bee2ed576d",
+    "between-the-world-and-me": "3d909ac99c4388022a6576475b81c5d458490337aba08b0e7ba311bc18ab68a5",
+    "black-boy": "a6d4c9a1f117e8c9c21aec186ca77e0f58cdaf9f97fce8f1f1d1660a724a7e87",
+    "born-a-crime": "c22402e02baa5e9b7c88c895a9f232f2858f7c168122aaf084493b85e37f6d58",
+    "crying-in-h-mart": "8e6641c9c820cbc987dbd848d1b2ee88a15d620db6d9302cc17ca2ca49072a3e",
+    "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america": "02a37f7c5f80169b09d010f27edf494116df0bcb0c8bc8023282a1d3bf43e941",
+    "i-know-why-the-caged-bird-sings": "7a52e3c22743cbf9cdacd1fc6d2a8f72f9ad0f9287591f310640d0287857ec09",
+    "pachinko": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+    "the-absolutely-true-diary-of-a-part-time-indian": "eedadec8e91f54e53e0587127b8ed2ca12d7d97b282f8a734b709468b7c2cf67",
+    "the-autobiography-of-malcolm-x.": "c9373b7dbda128fea031616b444ca490a3cd59dccb3f02cb2512fd9957a0fdb7",
+    "the-distance-between-us-a-memoir": "19591466f9b795f978f6061ac9979d8bd420ddf29cc849a4c970190a968844e3",
+    "the-fire-next-time": "e0e361a8b3eb84cab263dac4efd69953b48c0a8d7b1972011a2f8e3deaab4570",
+    "the-fire-this-time-a-new-generation-speaks-about-race": "3662ed4599157e8a94e1869a43b7e231244862c520ac4fe02f3a047893d23ef0",
+    "the-house-on-mango-street": "5a3b11c8f3ee4dd1c41d264aaf27dd83bb82faa1ebf3c7370a7072a0711cb3df",
+    "zami-a-new-spelling-of-my-name---a-biomythography": "6a107f978b9689221865539da63156996e1a0b67fa622629deac6503e16a7284",
+    "hongloumeng-24264": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+    "xingshihengyan-24239": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+    "tangshi300-52323": "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945",
+    "kusamakura-japanese-vertical-writing": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7"
+  },
+  "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+  "source_trees": {
+    "src": "2f95d09f10ae807559b4742ffa567d60a4495b9b",
+    "include": "b7d48451e5b773a95b1363315c64c005b5ac1903",
+    "cmake": "805c2ab2258f1d38308df839f0075271bdf8b8cb",
+    "CMakeLists.txt": "f8a9eb92e4762c038821a0da12ba89c3c1c72677"
+  },
+  "probe_sha256": "804fda0e1a17e42f148263ae3abd6cf88ab205535e3e69025ce0a5bdb1613ae4",
+  "sdk_sha256": "c72d233b9a7cb1e8c93dd4fbd9aa7b494b73318326e3d58f62be7352f6569d3a",
+  "fault_book": null,
+  "github": {
+    "GITHUB_ACTIONS": null,
+    "GITHUB_RUN_ID": null,
+    "GITHUB_RUN_ATTEMPT": null,
+    "GITHUB_SHA": null,
+    "GITHUB_REPOSITORY": null
+  },
+  "runs": [
+    {
+      "index": 1,
+      "books": [
+        {
+          "id": "a-raisin-in-the-sun",
+          "file": "raw/1-a-raisin-in-the-sun.json",
+          "sha256": "996145a60433edad658f9e1944e481ef12d5e4dcdf7874daef2729c2d15312a2"
+        },
+        {
+          "id": "between-the-world-and-me",
+          "file": "raw/1-between-the-world-and-me.json",
+          "sha256": "15ede93f4f1c01aa39ef93094b3c28b80116c7604fda4f3f32aa7148fac43fa1"
+        },
+        {
+          "id": "black-boy",
+          "file": "raw/1-black-boy.json",
+          "sha256": "bf1010471eaedf6a86c2b5dde476ebc1bea3dcedf65cf4f1ef1d6faf94628ccb"
+        },
+        {
+          "id": "born-a-crime",
+          "file": "raw/1-born-a-crime.json",
+          "sha256": "5cadf5c37b18c2994e03f7afb8d9791150717839fc5ae8ec340eb68ddb75e802"
+        },
+        {
+          "id": "crying-in-h-mart",
+          "file": "raw/1-crying-in-h-mart.json",
+          "sha256": "3dfb5dded770183bded1a129a366c2c3896b973b5c6e30c140296f804894d5eb"
+        },
+        {
+          "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+          "file": "raw/1-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json",
+          "sha256": "b456d9025c1593ff90f03ea640ce38510221faab118755db1920ccf25c7675ac"
+        },
+        {
+          "id": "i-know-why-the-caged-bird-sings",
+          "file": "raw/1-i-know-why-the-caged-bird-sings.json",
+          "sha256": "85ab32eaaa2ff5c0d29549223c9c2797a39845ce6f603541110aedabddb9b5c3"
+        },
+        {
+          "id": "pachinko",
+          "file": "raw/1-pachinko.json",
+          "sha256": "bde440824999a57b524627bfe860705164b7655306a94596fa2730ca04f59eac"
+        },
+        {
+          "id": "the-absolutely-true-diary-of-a-part-time-indian",
+          "file": "raw/1-the-absolutely-true-diary-of-a-part-time-indian.json",
+          "sha256": "c4ad7d55fc55e7b65de01eb6c49ba2b8ee04bd7163d4aaa1653769f2b6c3ad59"
+        },
+        {
+          "id": "the-autobiography-of-malcolm-x.",
+          "file": "raw/1-the-autobiography-of-malcolm-x..json",
+          "sha256": "aded0723d137781f36280c42779726830981e2416aa8286a632ee8f23139e12c"
+        },
+        {
+          "id": "the-distance-between-us-a-memoir",
+          "file": "raw/1-the-distance-between-us-a-memoir.json",
+          "sha256": "2af5c093bc24a3e6c11995acffa269f475873b0a30f060215dc0b0f7d6193619"
+        },
+        {
+          "id": "the-fire-next-time",
+          "file": "raw/1-the-fire-next-time.json",
+          "sha256": "d6621e9fd964dab9d2cd382aa479f6bf88e36ed48dd06f05cb6ffc499d35928e"
+        },
+        {
+          "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+          "file": "raw/1-the-fire-this-time-a-new-generation-speaks-about-race.json",
+          "sha256": "81b94b89397c0faf81a11f5e233c346810f2682a7da2a13a9a66df8c56ac8b4f"
+        },
+        {
+          "id": "the-house-on-mango-street",
+          "file": "raw/1-the-house-on-mango-street.json",
+          "sha256": "274fa0f2f2968da8b62b53a290a78fdd8fa857d4bf62e97629c265a2631bd7b2"
+        },
+        {
+          "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+          "file": "raw/1-zami-a-new-spelling-of-my-name---a-biomythography.json",
+          "sha256": "e123c9274dcc01f9ce422571d80fe104bfb98028cd7a33f2c7e6d1d50b56ac9b"
+        },
+        {
+          "id": "hongloumeng-24264",
+          "file": "raw/1-hongloumeng-24264.json",
+          "sha256": "27ad372622974f118ddbb889604e2920f14d8fc18ff07b4b0022aed9750bbc6b"
+        },
+        {
+          "id": "xingshihengyan-24239",
+          "file": "raw/1-xingshihengyan-24239.json",
+          "sha256": "6da2ec29de45248e569deb3eab962c80b4d3638a1e0dc1f477e4f2738d08f6d4"
+        },
+        {
+          "id": "tangshi300-52323",
+          "file": "raw/1-tangshi300-52323.json",
+          "sha256": "c2523554a5c6e0e0d39f7605e97261eab90602709243b7045bf2ea91b7728b2b"
+        },
+        {
+          "id": "kusamakura-japanese-vertical-writing",
+          "file": "raw/1-kusamakura-japanese-vertical-writing.json",
+          "sha256": "c73e59db3d7d9cfe701e4eba2ba74216420e7ae413f2e1a3a324989d828dea0e"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "books": [
+        {
+          "id": "a-raisin-in-the-sun",
+          "file": "raw/2-a-raisin-in-the-sun.json",
+          "sha256": "059fb2f46a51fddd1c227e643b65c86cf909afb1e22b82a1d2dc9359d2c7e20e"
+        },
+        {
+          "id": "between-the-world-and-me",
+          "file": "raw/2-between-the-world-and-me.json",
+          "sha256": "8f3089d6ce5b289094446f7b3817a34f329f424cf2ae1ea91a70afece52b4a98"
+        },
+        {
+          "id": "black-boy",
+          "file": "raw/2-black-boy.json",
+          "sha256": "2531a8d21aebb2b530810479ad319fb54e862ac136c4b4f82d07e75edffbe7e3"
+        },
+        {
+          "id": "born-a-crime",
+          "file": "raw/2-born-a-crime.json",
+          "sha256": "979340035499fff8535ed62642d55ed02d9e9cebb6697020da82938a1d1470f1"
+        },
+        {
+          "id": "crying-in-h-mart",
+          "file": "raw/2-crying-in-h-mart.json",
+          "sha256": "535bdb6b48a34e35b66b0219abe5719ddf480ef43a18601d5d9e01e5ea959475"
+        },
+        {
+          "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+          "file": "raw/2-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json",
+          "sha256": "01c448c910f74452f3a8af326b363ae96a70aeeb82b3cd3e5e110c00fa748c20"
+        },
+        {
+          "id": "i-know-why-the-caged-bird-sings",
+          "file": "raw/2-i-know-why-the-caged-bird-sings.json",
+          "sha256": "b3d78a8e86aec7e00073411cf13938a5a7b2493f5c281bece7d5cdbad9a18a27"
+        },
+        {
+          "id": "pachinko",
+          "file": "raw/2-pachinko.json",
+          "sha256": "a7998280d24dfb6a2997013e7464478a60348f7ac940a73c403967e831777ed7"
+        },
+        {
+          "id": "the-absolutely-true-diary-of-a-part-time-indian",
+          "file": "raw/2-the-absolutely-true-diary-of-a-part-time-indian.json",
+          "sha256": "c79c4070f91fd6c9bdbc46154cac073876dc30abf7985bd279e0b132b136cb13"
+        },
+        {
+          "id": "the-autobiography-of-malcolm-x.",
+          "file": "raw/2-the-autobiography-of-malcolm-x..json",
+          "sha256": "be25bd73560cb85f4f8bdee9b6d4b1e8c019d8a5312da6c615dfa87ffdf5f403"
+        },
+        {
+          "id": "the-distance-between-us-a-memoir",
+          "file": "raw/2-the-distance-between-us-a-memoir.json",
+          "sha256": "af457f86d9756b45c972379834d503884560b10d6265100fc9202f0a16e17528"
+        },
+        {
+          "id": "the-fire-next-time",
+          "file": "raw/2-the-fire-next-time.json",
+          "sha256": "112be5eedbcaa2a715bc5433fd3e8a60f4e5a575dbe11b47a998f635ba0b2c1e"
+        },
+        {
+          "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+          "file": "raw/2-the-fire-this-time-a-new-generation-speaks-about-race.json",
+          "sha256": "7322261c91e26adf97166c7f07b869d53d918399ea58fac61f219bb9b946dc51"
+        },
+        {
+          "id": "the-house-on-mango-street",
+          "file": "raw/2-the-house-on-mango-street.json",
+          "sha256": "e6aa563d8328ea0c787ddd0ed2ec119944bc2d4c463cb42e9fc990ad294535b8"
+        },
+        {
+          "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+          "file": "raw/2-zami-a-new-spelling-of-my-name---a-biomythography.json",
+          "sha256": "1b6d19d4ae37f2dae1007561aa60201eda665fba6c9d7054e81c3df4e7dd9e94"
+        },
+        {
+          "id": "hongloumeng-24264",
+          "file": "raw/2-hongloumeng-24264.json",
+          "sha256": "ae211835db84b10333a6284182954e19afd6ca1b7ed8d56732ab634a9b9803c8"
+        },
+        {
+          "id": "xingshihengyan-24239",
+          "file": "raw/2-xingshihengyan-24239.json",
+          "sha256": "4147bda97db74e9adfb211758d9ac6dbfc522cc615f7bc3d1182169cf6c8d75d"
+        },
+        {
+          "id": "tangshi300-52323",
+          "file": "raw/2-tangshi300-52323.json",
+          "sha256": "ac705b5939023b770601df7638fc9c8642448651da2987afca8e3c874699b0d3"
+        },
+        {
+          "id": "kusamakura-japanese-vertical-writing",
+          "file": "raw/2-kusamakura-japanese-vertical-writing.json",
+          "sha256": "226c1473d862df0bd768ecd49a45c74e8ab4077c663fd0c4b95cab6129941152"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "books": [
+        {
+          "id": "a-raisin-in-the-sun",
+          "file": "raw/3-a-raisin-in-the-sun.json",
+          "sha256": "7763001b2b9a588ebb2169b034bb791301e792ec6a71955c632e045c36a906b1"
+        },
+        {
+          "id": "between-the-world-and-me",
+          "file": "raw/3-between-the-world-and-me.json",
+          "sha256": "05379d068ac54215ce3ade01afb4e6c93a447112913c5d176f3148750c70341d"
+        },
+        {
+          "id": "black-boy",
+          "file": "raw/3-black-boy.json",
+          "sha256": "27a24a3d879bf43ad159f3ead3dfd6670b8b68db33740940c7aecdcd639f5691"
+        },
+        {
+          "id": "born-a-crime",
+          "file": "raw/3-born-a-crime.json",
+          "sha256": "eed5f574b27991a5ec2ab8c1dd55852c6810ffbd630ff48d268e178882dd06c9"
+        },
+        {
+          "id": "crying-in-h-mart",
+          "file": "raw/3-crying-in-h-mart.json",
+          "sha256": "4468fd1f754a2e3df1fda1b4f471c9f55a893b64398e94bfc4313dd6e484b206"
+        },
+        {
+          "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+          "file": "raw/3-how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america.json",
+          "sha256": "d428fa8fb3ed781e41fbdf74e54a6f4c085a84f34056c0b1d5e4fb69cb9db8d6"
+        },
+        {
+          "id": "i-know-why-the-caged-bird-sings",
+          "file": "raw/3-i-know-why-the-caged-bird-sings.json",
+          "sha256": "4be4f6b4cf7b365233445f7fa4c30e0be288f1e35ee107252a76864717c5fdab"
+        },
+        {
+          "id": "pachinko",
+          "file": "raw/3-pachinko.json",
+          "sha256": "bdb561ee8cd8bed07a819509cbc2be864df3651ba80c1cdac07c9a2b42f83a62"
+        },
+        {
+          "id": "the-absolutely-true-diary-of-a-part-time-indian",
+          "file": "raw/3-the-absolutely-true-diary-of-a-part-time-indian.json",
+          "sha256": "4f7b37a29849cf5a5c5626824fac750400cf5b527658199800c04407d9a5c355"
+        },
+        {
+          "id": "the-autobiography-of-malcolm-x.",
+          "file": "raw/3-the-autobiography-of-malcolm-x..json",
+          "sha256": "9aaee94a586d3573a72198ea26cb67cfc33b21760ca4a2a3db81dbf0dce51556"
+        },
+        {
+          "id": "the-distance-between-us-a-memoir",
+          "file": "raw/3-the-distance-between-us-a-memoir.json",
+          "sha256": "9fe64fc5ce54134425fb2ae55da3676d4f054746600e7ea4ee65fa9f76b093a2"
+        },
+        {
+          "id": "the-fire-next-time",
+          "file": "raw/3-the-fire-next-time.json",
+          "sha256": "1bfecb80c658c817df63c8f7f791d5402d134e3d9ac0861af29bec3bb7766e2d"
+        },
+        {
+          "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+          "file": "raw/3-the-fire-this-time-a-new-generation-speaks-about-race.json",
+          "sha256": "6714ca2e5cb92b16fc82eb14f6c3b530a42628ea17c7dc680ba2596be1ed5a68"
+        },
+        {
+          "id": "the-house-on-mango-street",
+          "file": "raw/3-the-house-on-mango-street.json",
+          "sha256": "fc6cde4f1e68431daff7b21dfc5d2700c20d74f9d380fb48c16f739ecbd9b3f8"
+        },
+        {
+          "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+          "file": "raw/3-zami-a-new-spelling-of-my-name---a-biomythography.json",
+          "sha256": "c51cdfe07d3bd2a8b73489835fd24e05f665229df8cf3f09411987a7582316cc"
+        },
+        {
+          "id": "hongloumeng-24264",
+          "file": "raw/3-hongloumeng-24264.json",
+          "sha256": "4f8bfe18e17bf5603f413286fec8cac62c59a7605d7027d1aa86ee45cffdaad7"
+        },
+        {
+          "id": "xingshihengyan-24239",
+          "file": "raw/3-xingshihengyan-24239.json",
+          "sha256": "be54cd97ecc6a397f1a2e82df09c47659ed30f616c08d03448704ee11780a7e3"
+        },
+        {
+          "id": "tangshi300-52323",
+          "file": "raw/3-tangshi300-52323.json",
+          "sha256": "67153dd248006c72da38f1aff0b0c13a45410c49ea15b2b78840a86e779bbb51"
+        },
+        {
+          "id": "kusamakura-japanese-vertical-writing",
+          "file": "raw/3-kusamakura-japanese-vertical-writing.json",
+          "sha256": "a0702bb32024a7736567679250ec909a463a05273a9551a4b44c7a5e0d7f7dcf"
+        }
+      ]
+    }
+  ]
+}

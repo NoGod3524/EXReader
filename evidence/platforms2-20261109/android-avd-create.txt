@@ -1,0 +1,13 @@
+Warning: Observed package id 'build-tools;34.0.0' in inconsistent location 'P:\android-sdk\build-tools\34.0.0' (Expected 'P:\build-tools\34.0.0')
+Warning: Observed package id 'emulator' in inconsistent location 'P:\android-sdk\emulator' (Expected 'P:\emulator')
+Warning: Observed package id 'ndk;27.2.12479018' in inconsistent location 'P:\android-sdk\ndk\27.2.12479018' (Expected 'P:\ndk\27.2.12479018')
+Warning: Observed package id 'platform-tools' in inconsistent location 'P:\android-sdk\platform-tools' (Expected 'P:\platform-tools')
+Warning: Observed package id 'platforms;android-30' in inconsistent location 'P:\android-sdk\platforms\android-30' (Expected 'P:\platforms\android-30')
+Warning: Observed package id 'system-images;android-30;default;x86_64' in inconsistent location 'P:\android-sdk\system-images\android-30\default\x86_64' (Expected 'P:\system-images\android-30\default\x86_64')
+Auto-selecting single ABI x86_64
+Do you wish to create a custom hardware profile? [no] accel:
+0
+WHPX(10.0.26200) is installed and usable.
+accel
+
+EXIT_CODE: 0

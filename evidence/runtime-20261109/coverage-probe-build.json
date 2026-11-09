@@ -1,0 +1,15 @@
+{
+  "command": [
+    "gcc",
+    "-g",
+    "-O1",
+    "-IC:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\include",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\tools\\quality\\typed_probe.c",
+    "-o",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\g\\typed-probe.exe",
+    "-LC:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\g",
+    "-lexreader"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 1.757908600004157
+}

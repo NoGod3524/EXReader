@@ -1,0 +1,3 @@
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: C:/Users/Oscar/Documents/Codex/EXReader-perffinal-20261109/evidence/perf-gate-final-20261109/build

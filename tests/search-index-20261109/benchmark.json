@@ -1,0 +1,506 @@
+{
+  "dll_sha256": "543cffe00c0a6c9db949439c16e7026a52c16d7fbfff07ba99e742f06c908067",
+  "book_sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+  "clock": "perf_counter; API wall time; first batch = 64 hits; all hits retained and compared",
+  "queries": {
+    "宝玉": [
+      {
+        "cold_build_search": {
+          "total_ms": 114.65809999208432,
+          "first_64_ms": 114.65809999208432,
+          "count": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "reuse_search": {
+          "total_ms": 2.3207000049296767,
+          "first_64_ms": 2.3207000049296767,
+          "count": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      },
+      {
+        "cold_build_search": {
+          "total_ms": 117.64250000123866,
+          "first_64_ms": 117.64250000123866,
+          "count": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "reuse_search": {
+          "total_ms": 2.3726999934297055,
+          "first_64_ms": 2.3726999934297055,
+          "count": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      },
+      {
+        "cold_build_search": {
+          "total_ms": 116.16920000233222,
+          "first_64_ms": 116.16920000233222,
+          "count": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "reuse_search": {
+          "total_ms": 2.6540999970166013,
+          "first_64_ms": 2.6540999970166013,
+          "count": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      }
+    ],
+    "寶玉": [
+      {
+        "cold_build_search": {
+          "total_ms": 123.92840000393335,
+          "first_64_ms": 8.77339999715332,
+          "count": 3232,
+          "sha256": "aa7d41a5afb72934cd4673577cafcbaef03f0f93c6c706f8b57d7a7a28e4615a"
+        },
+        "reuse_search": {
+          "total_ms": 5.468500006827526,
+          "first_64_ms": 0.18110001110471785,
+          "count": 3232,
+          "sha256": "aa7d41a5afb72934cd4673577cafcbaef03f0f93c6c706f8b57d7a7a28e4615a"
+        }
+      },
+      {
+        "cold_build_search": {
+          "total_ms": 115.21709999942686,
+          "first_64_ms": 8.128899993607774,
+          "count": 3232,
+          "sha256": "aa7d41a5afb72934cd4673577cafcbaef03f0f93c6c706f8b57d7a7a28e4615a"
+        },
+        "reuse_search": {
+          "total_ms": 4.498299997067079,
+          "first_64_ms": 0.3065999917453155,
+          "count": 3232,
+          "sha256": "aa7d41a5afb72934cd4673577cafcbaef03f0f93c6c706f8b57d7a7a28e4615a"
+        }
+      },
+      {
+        "cold_build_search": {
+          "total_ms": 122.18099999881815,
+          "first_64_ms": 9.368900005938485,
+          "count": 3232,
+          "sha256": "aa7d41a5afb72934cd4673577cafcbaef03f0f93c6c706f8b57d7a7a28e4615a"
+        },
+        "reuse_search": {
+          "total_ms": 4.683200008003041,
+          "first_64_ms": 0.41760000749491155,
+          "count": 3232,
+          "sha256": "aa7d41a5afb72934cd4673577cafcbaef03f0f93c6c706f8b57d7a7a28e4615a"
+        }
+      }
+    ],
+    "的": [
+      {
+        "cold_build_search": {
+          "total_ms": 124.92370000109076,
+          "first_64_ms": 5.325399994035251,
+          "count": 13989,
+          "sha256": "682551c4b90ab8b5e64e6e066c0ed7a2d90efc0be2f0f6f10adefcd5abd92476"
+        },
+        "reuse_search": {
+          "total_ms": 10.06529999722261,
+          "first_64_ms": 0.13610000314656645,
+          "count": 13989,
+          "sha256": "682551c4b90ab8b5e64e6e066c0ed7a2d90efc0be2f0f6f10adefcd5abd92476"
+        }
+      },
+      {
+        "cold_build_search": {
+          "total_ms": 121.78950000088662,
+          "first_64_ms": 5.651700004818849,
+          "count": 13989,
+          "sha256": "682551c4b90ab8b5e64e6e066c0ed7a2d90efc0be2f0f6f10adefcd5abd92476"
+        },
+        "reuse_search": {
+          "total_ms": 7.6539000001503155,
+          "first_64_ms": 0.14019999071024358,
+          "count": 13989,
+          "sha256": "682551c4b90ab8b5e64e6e066c0ed7a2d90efc0be2f0f6f10adefcd5abd92476"
+        }
+      },
+      {
+        "cold_build_search": {
+          "total_ms": 121.52470000728499,
+          "first_64_ms": 5.6216000084532425,
+          "count": 13989,
+          "sha256": "682551c4b90ab8b5e64e6e066c0ed7a2d90efc0be2f0f6f10adefcd5abd92476"
+        },
+        "reuse_search": {
+          "total_ms": 8.605000009993091,
+          "first_64_ms": 0.12090000382158905,
+          "count": 13989,
+          "sha256": "682551c4b90ab8b5e64e6e066c0ed7a2d90efc0be2f0f6f10adefcd5abd92476"
+        }
+      }
+    ]
+  },
+  "build_load": [
+    {
+      "build_ms": 111.6522999946028,
+      "load_ms": 33.750999995390885,
+      "loaded_search": {
+        "total_ms": 8.744000006117858,
+        "first_64_ms": 0.21019999985583127,
+        "count": 13989,
+        "sha256": "682551c4b90ab8b5e64e6e066c0ed7a2d90efc0be2f0f6f10adefcd5abd92476"
+      }
+    },
+    {
+      "build_ms": 113.62930000177585,
+      "load_ms": 31.09000000404194,
+      "loaded_search": {
+        "total_ms": 7.559399993624538,
+        "first_64_ms": 0.11329998960718513,
+        "count": 13989,
+        "sha256": "682551c4b90ab8b5e64e6e066c0ed7a2d90efc0be2f0f6f10adefcd5abd92476"
+      }
+    },
+    {
+      "build_ms": 109.18099999253172,
+      "load_ms": 32.353800008422695,
+      "loaded_search": {
+        "total_ms": 8.194199996069074,
+        "first_64_ms": 0.1188000023830682,
+        "count": 13989,
+        "sha256": "682551c4b90ab8b5e64e6e066c0ed7a2d90efc0be2f0f6f10adefcd5abd92476"
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "query": "的",
+      "equal": true,
+      "linear": {
+        "total_ms": 32.20050000527408,
+        "first_64_ms": 1.1406999983591959,
+        "count": 13989,
+        "sha256": "682551c4b90ab8b5e64e6e066c0ed7a2d90efc0be2f0f6f10adefcd5abd92476"
+      },
+      "indexed": {
+        "total_ms": 9.366600002977066,
+        "first_64_ms": 0.16290000348817557,
+        "count": 13989,
+        "sha256": "682551c4b90ab8b5e64e6e066c0ed7a2d90efc0be2f0f6f10adefcd5abd92476"
+      }
+    },
+    {
+      "query": "寶玉",
+      "equal": true,
+      "linear": {
+        "total_ms": 3.3543000026838854,
+        "first_64_ms": 0.12840000272262841,
+        "count": 3232,
+        "sha256": "aa7d41a5afb72934cd4673577cafcbaef03f0f93c6c706f8b57d7a7a28e4615a"
+      },
+      "indexed": {
+        "total_ms": 4.02619999658782,
+        "first_64_ms": 0.19419999443925917,
+        "count": 3232,
+        "sha256": "aa7d41a5afb72934cd4673577cafcbaef03f0f93c6c706f8b57d7a7a28e4615a"
+      }
+    },
+    {
+      "query": "宝玉",
+      "equal": true,
+      "linear": {
+        "total_ms": 1.8683999951463193,
+        "first_64_ms": 1.8683999951463193,
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "indexed": {
+        "total_ms": 3.440600004978478,
+        "first_64_ms": 3.440600004978478,
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    {
+      "query": "賈寶玉",
+      "equal": true,
+      "linear": {
+        "total_ms": 2.2955000022193417,
+        "first_64_ms": 2.2955000022193417,
+        "count": 18,
+        "sha256": "b26ecf62bdb7397cd747473b9f837df90a9bcfc29da1b43d802edd51f01dc649"
+      },
+      "indexed": {
+        "total_ms": 2.751199994236231,
+        "first_64_ms": 2.751199994236231,
+        "count": 18,
+        "sha256": "b26ecf62bdb7397cd747473b9f837df90a9bcfc29da1b43d802edd51f01dc649"
+      }
+    },
+    {
+      "query": "黛玉",
+      "equal": true,
+      "linear": {
+        "total_ms": 2.1852999925613403,
+        "first_64_ms": 0.08030000026337802,
+        "count": 1125,
+        "sha256": "6a91e65244c6e4f4771382ebca2929f6db77ea4a4e2a4389fed89b613cf1e2dc"
+      },
+      "indexed": {
+        "total_ms": 2.7565000054892153,
+        "first_64_ms": 0.12290000449866056,
+        "count": 1125,
+        "sha256": "6a91e65244c6e4f4771382ebca2929f6db77ea4a4e2a4389fed89b613cf1e2dc"
+      }
+    },
+    {
+      "query": "寶釵",
+      "equal": true,
+      "linear": {
+        "total_ms": 2.3339000035775825,
+        "first_64_ms": 0.32560000545345247,
+        "count": 879,
+        "sha256": "5af999d2d81f5e345f31f8699d6bc053edc85bcca00f04b09079d0b4406641f2"
+      },
+      "indexed": {
+        "total_ms": 3.702100002556108,
+        "first_64_ms": 0.5450000026030466,
+        "count": 879,
+        "sha256": "5af999d2d81f5e345f31f8699d6bc053edc85bcca00f04b09079d0b4406641f2"
+      }
+    },
+    {
+      "query": "賈母",
+      "equal": true,
+      "linear": {
+        "total_ms": 2.653300005476922,
+        "first_64_ms": 0.17749999824445695,
+        "count": 1538,
+        "sha256": "5e2362af5626794851c1947e423cc49a3c8e1725e0353a8352c18c82216a80f4"
+      },
+      "indexed": {
+        "total_ms": 3.4238999942317605,
+        "first_64_ms": 0.3234000032534823,
+        "count": 1538,
+        "sha256": "5e2362af5626794851c1947e423cc49a3c8e1725e0353a8352c18c82216a80f4"
+      }
+    },
+    {
+      "query": "鳳姐",
+      "equal": true,
+      "linear": {
+        "total_ms": 2.398900003754534,
+        "first_64_ms": 0.1807000080589205,
+        "count": 1588,
+        "sha256": "f50092f865bb7cdb863eb0fde4e43ab770e42a039ca1d511cc7827a6f325166a"
+      },
+      "indexed": {
+        "total_ms": 3.42100000125356,
+        "first_64_ms": 0.24280000070575625,
+        "count": 1588,
+        "sha256": "f50092f865bb7cdb863eb0fde4e43ab770e42a039ca1d511cc7827a6f325166a"
+      }
+    },
+    {
+      "query": "王夫人",
+      "equal": true,
+      "linear": {
+        "total_ms": 2.559000000474043,
+        "first_64_ms": 0.20710000535473228,
+        "count": 928,
+        "sha256": "ad082df88762dd5e27956239a8966eb81fe4306a5ab36ffc7658da065160ca10"
+      },
+      "indexed": {
+        "total_ms": 3.1706999870948493,
+        "first_64_ms": 0.3264999977545813,
+        "count": 928,
+        "sha256": "ad082df88762dd5e27956239a8966eb81fe4306a5ab36ffc7658da065160ca10"
+      }
+    },
+    {
+      "query": "丫頭",
+      "equal": true,
+      "linear": {
+        "total_ms": 2.121500001521781,
+        "first_64_ms": 0.3127999952994287,
+        "count": 877,
+        "sha256": "0b4f9e43eab6f5da89eeed148074c425c4a87868accf516ab04957c9f61cf46c"
+      },
+      "indexed": {
+        "total_ms": 2.7285999967716634,
+        "first_64_ms": 0.4391999973449856,
+        "count": 877,
+        "sha256": "0b4f9e43eab6f5da89eeed148074c425c4a87868accf516ab04957c9f61cf46c"
+      }
+    },
+    {
+      "query": "姑娘",
+      "equal": true,
+      "linear": {
+        "total_ms": 2.1791999897686765,
+        "first_64_ms": 0.3778999962378293,
+        "count": 1040,
+        "sha256": "1cc094c17276b383837bfb78c30b2d8b52e0c2f3ef9861557b61db125fababd4"
+      },
+      "indexed": {
+        "total_ms": 2.816400010487996,
+        "first_64_ms": 0.45930000487715006,
+        "count": 1040,
+        "sha256": "1cc094c17276b383837bfb78c30b2d8b52e0c2f3ef9861557b61db125fababd4"
+      }
+    },
+    {
+      "query": "知道",
+      "equal": true,
+      "linear": {
+        "total_ms": 2.7425000007497147,
+        "first_64_ms": 0.3282999969087541,
+        "count": 877,
+        "sha256": "762904e7978d7ce61f867673485855c8ff31bc941753926d097388769fb30982"
+      },
+      "indexed": {
+        "total_ms": 3.0439999973168597,
+        "first_64_ms": 0.5164000031072646,
+        "count": 877,
+        "sha256": "762904e7978d7ce61f867673485855c8ff31bc941753926d097388769fb30982"
+      }
+    },
+    {
+      "query": "說道",
+      "equal": true,
+      "linear": {
+        "total_ms": 2.1610999974654987,
+        "first_64_ms": 0.19869999960064888,
+        "count": 848,
+        "sha256": "b5624653c41c597e5ce22dc9cb4b00f4b0fa35b6506d3b5b66fc46dac90e2891"
+      },
+      "indexed": {
+        "total_ms": 3.336399997351691,
+        "first_64_ms": 0.32079999800771475,
+        "count": 848,
+        "sha256": "b5624653c41c597e5ce22dc9cb4b00f4b0fa35b6506d3b5b66fc46dac90e2891"
+      }
+    },
+    {
+      "query": "什麼",
+      "equal": true,
+      "linear": {
+        "total_ms": 1.7832000012276694,
+        "first_64_ms": 1.7832000012276694,
+        "count": 1,
+        "sha256": "c930e5903bd2a4fdd3456ee980f4f279e42e9da08afaae1b835d4f036d1f1832"
+      },
+      "indexed": {
+        "total_ms": 2.375600000959821,
+        "first_64_ms": 2.375600000959821,
+        "count": 1,
+        "sha256": "c930e5903bd2a4fdd3456ee980f4f279e42e9da08afaae1b835d4f036d1f1832"
+      }
+    },
+    {
+      "query": "一個",
+      "equal": true,
+      "linear": {
+        "total_ms": 3.1066000083228573,
+        "first_64_ms": 0.13490000856108963,
+        "count": 1374,
+        "sha256": "e1b7dae3170562ab5621dcdefea39940e1fdd2dd92997fec78feb3d41defa3aa"
+      },
+      "indexed": {
+        "total_ms": 3.8349000096786767,
+        "first_64_ms": 0.258400003076531,
+        "count": 1374,
+        "sha256": "e1b7dae3170562ab5621dcdefea39940e1fdd2dd92997fec78feb3d41defa3aa"
+      }
+    },
+    {
+      "query": "不知",
+      "equal": true,
+      "linear": {
+        "total_ms": 2.3840999929234385,
+        "first_64_ms": 0.16939999477472156,
+        "count": 955,
+        "sha256": "3d88ed1b3eed6066131f0111387fb1d18c302dfa3df8ce312e04adc987c6ab69"
+      },
+      "indexed": {
+        "total_ms": 3.6011999909533188,
+        "first_64_ms": 0.27779999072663486,
+        "count": 955,
+        "sha256": "3d88ed1b3eed6066131f0111387fb1d18c302dfa3df8ce312e04adc987c6ab69"
+      }
+    },
+    {
+      "query": "Gutenberg",
+      "equal": true,
+      "linear": {
+        "total_ms": 1.954100007424131,
+        "first_64_ms": 1.920599999721162,
+        "count": 98,
+        "sha256": "b5920034ac9703063269ae3043901f3bc465aa9224f92298722c93896cb663cb"
+      },
+      "indexed": {
+        "total_ms": 5.391600003349595,
+        "first_64_ms": 4.654800010030158,
+        "count": 98,
+        "sha256": "b5920034ac9703063269ae3043901f3bc465aa9224f92298722c93896cb663cb"
+      }
+    },
+    {
+      "query": "24264",
+      "equal": true,
+      "linear": {
+        "total_ms": 1.8808000022545457,
+        "first_64_ms": 1.8808000022545457,
+        "count": 2,
+        "sha256": "58178359520cff2b413ec6ad6eba960c05bb24a28077aa975d09fefafaa4df11"
+      },
+      "indexed": {
+        "total_ms": 2.650599999469705,
+        "first_64_ms": 2.650599999469705,
+        "count": 2,
+        "sha256": "58178359520cff2b413ec6ad6eba960c05bb24a28077aa975d09fefafaa4df11"
+      }
+    },
+    {
+      "query": "2021",
+      "equal": true,
+      "linear": {
+        "total_ms": 1.9664999999804422,
+        "first_64_ms": 1.9664999999804422,
+        "count": 1,
+        "sha256": "4a2fba5cc049b65f772e8f514bded611d659042f6120642ac327b256eb9b7f60"
+      },
+      "indexed": {
+        "total_ms": 2.5045999936992303,
+        "first_64_ms": 2.5045999936992303,
+        "count": 1,
+        "sha256": "4a2fba5cc049b65f772e8f514bded611d659042f6120642ac327b256eb9b7f60"
+      }
+    },
+    {
+      "query": "紅樓夢",
+      "equal": true,
+      "linear": {
+        "total_ms": 1.9521999929565936,
+        "first_64_ms": 1.9521999929565936,
+        "count": 10,
+        "sha256": "589b9d8836550020996c42c97f50155bc212fc3529fad658f0fef21001333e2f"
+      },
+      "indexed": {
+        "total_ms": 2.3848999990150332,
+        "first_64_ms": 2.3848999990150332,
+        "count": 10,
+        "sha256": "589b9d8836550020996c42c97f50155bc212fc3529fad658f0fef21001333e2f"
+      }
+    }
+  ],
+  "memory": {
+    "text_bytes": 2319691,
+    "memory_bytes": 65608,
+    "peak_memory_bytes": 65608,
+    "disk_bytes": 15039403,
+    "indexed_parts": 31,
+    "total_parts": 31,
+    "complete": 1,
+    "ratio": 0.028283077358148133,
+    "peak_ratio": 0.028283077358148133
+  },
+  "resumed_64_hit_batches_equal": true,
+  "passed": true
+}

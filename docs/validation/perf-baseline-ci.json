@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "status": "blocked",
+  "scope": "github-ubuntu-latest",
+  "required_ready": false,
+  "reason": "No authorized Ubuntu execution entrypoint or CI corpus provision. This is a refusal record, NOT a measured baseline.",
+  "environment": null,
+  "github": null,
+  "ci_measured_books": 0,
+  "books": {
+    "a-raisin-in-the-sun": {
+      "input_sha256": "2416cbd8d73eb7ba2a228842aa33ae303653fb75fa42dd6e921293bee2ed576d",
+      "thread_cycles_p95": null
+    },
+    "between-the-world-and-me": {
+      "input_sha256": "3d909ac99c4388022a6576475b81c5d458490337aba08b0e7ba311bc18ab68a5",
+      "thread_cycles_p95": null
+    },
+    "black-boy": {
+      "input_sha256": "a6d4c9a1f117e8c9c21aec186ca77e0f58cdaf9f97fce8f1f1d1660a724a7e87",
+      "thread_cycles_p95": null
+    },
+    "born-a-crime": {
+      "input_sha256": "c22402e02baa5e9b7c88c895a9f232f2858f7c168122aaf084493b85e37f6d58",
+      "thread_cycles_p95": null
+    },
+    "crying-in-h-mart": {
+      "input_sha256": "8e6641c9c820cbc987dbd848d1b2ee88a15d620db6d9302cc17ca2ca49072a3e",
+      "thread_cycles_p95": null
+    },
+    "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america": {
+      "input_sha256": "02a37f7c5f80169b09d010f27edf494116df0bcb0c8bc8023282a1d3bf43e941",
+      "thread_cycles_p95": null
+    },
+    "i-know-why-the-caged-bird-sings": {
+      "input_sha256": "7a52e3c22743cbf9cdacd1fc6d2a8f72f9ad0f9287591f310640d0287857ec09",
+      "thread_cycles_p95": null
+    },
+    "pachinko": {
+      "input_sha256": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+      "thread_cycles_p95": null
+    },
+    "the-absolutely-true-diary-of-a-part-time-indian": {
+      "input_sha256": "eedadec8e91f54e53e0587127b8ed2ca12d7d97b282f8a734b709468b7c2cf67",
+      "thread_cycles_p95": null
+    },
+    "the-autobiography-of-malcolm-x.": {
+      "input_sha256": "c9373b7dbda128fea031616b444ca490a3cd59dccb3f02cb2512fd9957a0fdb7",
+      "thread_cycles_p95": null
+    },
+    "the-distance-between-us-a-memoir": {
+      "input_sha256": "19591466f9b795f978f6061ac9979d8bd420ddf29cc849a4c970190a968844e3",
+      "thread_cycles_p95": null
+    },
+    "the-fire-next-time": {
+      "input_sha256": "e0e361a8b3eb84cab263dac4efd69953b48c0a8d7b1972011a2f8e3deaab4570",
+      "thread_cycles_p95": null
+    },
+    "the-fire-this-time-a-new-generation-speaks-about-race": {
+      "input_sha256": "3662ed4599157e8a94e1869a43b7e231244862c520ac4fe02f3a047893d23ef0",
+      "thread_cycles_p95": null
+    },
+    "the-house-on-mango-street": {
+      "input_sha256": "5a3b11c8f3ee4dd1c41d264aaf27dd83bb82faa1ebf3c7370a7072a0711cb3df",
+      "thread_cycles_p95": null
+    },
+    "zami-a-new-spelling-of-my-name---a-biomythography": {
+      "input_sha256": "6a107f978b9689221865539da63156996e1a0b67fa622629deac6503e16a7284",
+      "thread_cycles_p95": null
+    },
+    "hongloumeng-24264": {
+      "input_sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+      "thread_cycles_p95": null
+    },
+    "xingshihengyan-24239": {
+      "input_sha256": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+      "thread_cycles_p95": null
+    },
+    "tangshi300-52323": {
+      "input_sha256": "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945",
+      "thread_cycles_p95": null
+    },
+    "kusamakura-japanese-vertical-writing": {
+      "input_sha256": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7",
+      "thread_cycles_p95": null
+    }
+  },
+  "evidence": "evidence/perf-gate-final-20261109/ci-readiness.json",
+  "local_measurements": "evidence/perf-gate-final-20261109/final/perf-baseline-local.json",
+  "local_qualification": {
+    "pass_count": 2,
+    "total": 5,
+    "false_positive_runs": [
+      1,
+      2,
+      5
+    ],
+    "worst_cycle_ratio": 1.4795376762290373,
+    "evidence": "evidence/perf-gate-final-20261109/final/qualification/results.json"
+  }
+}

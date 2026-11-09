@@ -1,0 +1,373 @@
+{
+  "baseline_abi_symbols": 389,
+  "artifacts": [
+    {
+      "platform": "Android",
+      "arch": "arm64-v8a",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\android\\arm64-v8a\\libexreader.so",
+      "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+      "kind": "engine",
+      "provenance": "CI run 42474080320 / bd15cddb",
+      "size_bytes": 35581040,
+      "sha256": "4853cbbd81d3c51b63de3e5aa6c83f4cece58dd6f79bd39acb1aa9c3032adafa",
+      "slices": [
+        {
+          "format": "ELF",
+          "machine": "0xb7",
+          "exports": 2800,
+          "exr_exports": 809,
+          "baseline_contract_found": 389,
+          "missing": []
+        }
+      ],
+      "export_symbol_count": 2800
+    },
+    {
+      "platform": "Android",
+      "arch": "arm64-v8a",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\android\\arm64-v8a\\libexreader_jni.so",
+      "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+      "kind": "jni",
+      "provenance": "CI run 42474080320 / bd15cddb",
+      "size_bytes": 182248,
+      "sha256": "7c48f1f2fc790962dea15d81d95bce20b80dae44a9710875888dd63295a21dbc",
+      "slices": [
+        {
+          "format": "ELF",
+          "machine": "0xb7",
+          "exports": 38,
+          "exr_exports": 0,
+          "baseline_contract_found": 0,
+          "missing": []
+        }
+      ],
+      "export_symbol_count": 38
+    },
+    {
+      "platform": "Android",
+      "arch": "arm64-v8a",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\android\\arm64-v8a\\exreader-arm64-v8a.aar",
+      "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+      "kind": "container",
+      "provenance": "CI run 42474080320 / bd15cddb",
+      "size_bytes": 12155275,
+      "sha256": "fd25507dff5fa52aabf60b924aa1c1bae7cc10c0c9fd7726cc8c92913001549e",
+      "export_symbol_count": null,
+      "embedded_libraries": [
+        {
+          "path": "jni/arm64-v8a/libexreader.so",
+          "sha256": "4853cbbd81d3c51b63de3e5aa6c83f4cece58dd6f79bd39acb1aa9c3032adafa",
+          "slices": [
+            {
+              "format": "ELF",
+              "machine": "0xb7",
+              "exports": 2800,
+              "exr_exports": 809,
+              "baseline_contract_found": 389,
+              "missing": []
+            }
+          ]
+        },
+        {
+          "path": "jni/arm64-v8a/libexreader_jni.so",
+          "sha256": "7c48f1f2fc790962dea15d81d95bce20b80dae44a9710875888dd63295a21dbc",
+          "slices": [
+            {
+              "format": "ELF",
+              "machine": "0xb7",
+              "exports": 38,
+              "exr_exports": 0,
+              "baseline_contract_found": 0,
+              "missing": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "platform": "macOS",
+      "arch": "arm64",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\macos\\arm64\\libexreader.dylib",
+      "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+      "kind": "engine",
+      "provenance": "CI run 42474080320 / bd15cddb",
+      "size_bytes": 8149888,
+      "sha256": "5597c718986b20640f2144eb11cad7ce3104a6de188eb65cee0a72c850f9685d",
+      "slices": [
+        {
+          "format": "Mach-O",
+          "machine": "0x100000c",
+          "exports": 2799,
+          "exr_exports": 809,
+          "baseline_contract_found": 389,
+          "missing": []
+        }
+      ],
+      "export_symbol_count": 2799
+    },
+    {
+      "platform": "iOS",
+      "arch": "arm64-device",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\ios\\arm64-device\\libexreader.dylib",
+      "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+      "kind": "engine",
+      "provenance": "CI run 42474080320 / bd15cddb",
+      "size_bytes": 8053800,
+      "sha256": "882a23f3a05cc9893062568e6d7df3d3cf03fc567bb4c772c0e4e9574f6b7719",
+      "slices": [
+        {
+          "format": "Mach-O",
+          "machine": "0x100000c",
+          "exports": 2799,
+          "exr_exports": 809,
+          "baseline_contract_found": 389,
+          "missing": []
+        }
+      ],
+      "export_symbol_count": 2799
+    },
+    {
+      "platform": "iOS",
+      "arch": "arm64-simulator",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\ios\\arm64-simulator\\libexreader.dylib",
+      "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+      "kind": "engine",
+      "provenance": "CI run 42474080320 / bd15cddb",
+      "size_bytes": 8136288,
+      "sha256": "320f6810c1caee0d8f34891b06b3f99e4b67a238e3e4a73c69982289c72bd151",
+      "slices": [
+        {
+          "format": "Mach-O",
+          "machine": "0x100000c",
+          "exports": 2799,
+          "exr_exports": 809,
+          "baseline_contract_found": 389,
+          "missing": []
+        }
+      ],
+      "export_symbol_count": 2799
+    },
+    {
+      "platform": "Linux",
+      "arch": "x86_64",
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\linux\\x86_64\\libexreader.so",
+      "source_revision": "bd15cddb4d0928abde07c90e34b52f567a169d2d",
+      "kind": "engine",
+      "provenance": "CI run 42474080320 / bd15cddb",
+      "size_bytes": 10121688,
+      "sha256": "be2e9d6b675d92e3719f8149dfc5cac4552333385a0a3c1394f926765afa1d13",
+      "slices": [
+        {
+          "format": "ELF",
+          "machine": "0x3e",
+          "exports": 2799,
+          "exr_exports": 809,
+          "baseline_contract_found": 389,
+          "missing": []
+        }
+      ],
+      "export_symbol_count": 2799
+    },
+    {
+      "platform": "Windows",
+      "arch": "x86_64",
+      "path": "P:/windows-main/libexreader.dll",
+      "kind": "engine",
+      "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+      "provenance": "local build; evidence/platforms2-20261109",
+      "size_bytes": 6247672,
+      "sha256": "a47e097f013e21a93221bb0abf7cfc6a345e322fe2b29913bd3a1c85186c6b18",
+      "slices": [
+        {
+          "format": "PE",
+          "machine": "0x8664",
+          "exports": 419,
+          "exr_exports": 419,
+          "baseline_contract_found": 389,
+          "missing": []
+        }
+      ],
+      "export_symbol_count": 419
+    },
+    {
+      "platform": "Android",
+      "arch": "x86_64",
+      "path": "P:/android-build/libexreader.so",
+      "kind": "engine",
+      "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+      "provenance": "local build; evidence/platforms2-20261109",
+      "size_bytes": 23114472,
+      "sha256": "59cfb88ea8bf6bfa4f4952115107976a6ae47b003ec3f279efbd535de3365e29",
+      "slices": [
+        {
+          "format": "ELF",
+          "machine": "0x3e",
+          "exports": 1435,
+          "exr_exports": 853,
+          "baseline_contract_found": 389,
+          "missing": []
+        }
+      ],
+      "export_symbol_count": 1435
+    },
+    {
+      "platform": "Android",
+      "arch": "x86_64",
+      "path": "P:/android-build/libexreader_jni.so",
+      "kind": "jni",
+      "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+      "provenance": "local build; evidence/platforms2-20261109",
+      "size_bytes": 176648,
+      "sha256": "d226215852b638de52cbb3a43311cc3044925ec36efa94871b2f7cc96fbc056a",
+      "slices": [
+        {
+          "format": "ELF",
+          "machine": "0x3e",
+          "exports": 38,
+          "exr_exports": 0,
+          "baseline_contract_found": 0,
+          "missing": []
+        }
+      ],
+      "export_symbol_count": 38
+    },
+    {
+      "platform": "Android",
+      "arch": "x86_64",
+      "path": "P:/android-stage/exreader-x86_64.aar",
+      "kind": "container",
+      "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+      "provenance": "local build; evidence/platforms2-20261109",
+      "size_bytes": 8383090,
+      "sha256": "de50ad7803e43bc6b519a1e0445a878675590d8d720bd7ef143eb695440d36ae",
+      "export_symbol_count": null,
+      "embedded_libraries": [
+        {
+          "path": "jni/x86_64/libexreader.so",
+          "sha256": "59cfb88ea8bf6bfa4f4952115107976a6ae47b003ec3f279efbd535de3365e29",
+          "slices": [
+            {
+              "format": "ELF",
+              "machine": "0x3e",
+              "exports": 1435,
+              "exr_exports": 853,
+              "baseline_contract_found": 389,
+              "missing": []
+            }
+          ]
+        },
+        {
+          "path": "jni/x86_64/libexreader_jni.so",
+          "sha256": "d226215852b638de52cbb3a43311cc3044925ec36efa94871b2f7cc96fbc056a",
+          "slices": [
+            {
+              "format": "ELF",
+              "machine": "0x3e",
+              "exports": 38,
+              "exr_exports": 0,
+              "baseline_contract_found": 0,
+              "missing": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "platform": "Android",
+      "arch": "x86_64",
+      "path": "P:/apk/libplatform_probe.so",
+      "kind": "probe",
+      "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+      "provenance": "local build; evidence/platforms2-20261109",
+      "size_bytes": 15496,
+      "sha256": "54b668ecfb797ff4b12166dac362dd5696e7db6b8aa0b4ad53a1d35a08a112e9",
+      "slices": [
+        {
+          "format": "ELF",
+          "machine": "0x3e",
+          "exports": 2,
+          "exr_exports": 0,
+          "baseline_contract_found": 0,
+          "missing": []
+        }
+      ],
+      "export_symbol_count": 2
+    },
+    {
+      "platform": "Android",
+      "arch": "x86_64",
+      "path": "P:/apk/platform-probe.apk",
+      "kind": "container",
+      "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+      "provenance": "local build; evidence/platforms2-20261109",
+      "size_bytes": 21947058,
+      "sha256": "e97f6dcee004ac6e3088f1bae8d7d547882d5b7231c9338ec05361f8e4ac5921",
+      "export_symbol_count": null,
+      "embedded_libraries": [
+        {
+          "path": "lib/x86_64/libexreader.so",
+          "sha256": "59cfb88ea8bf6bfa4f4952115107976a6ae47b003ec3f279efbd535de3365e29",
+          "slices": [
+            {
+              "format": "ELF",
+              "machine": "0x3e",
+              "exports": 1435,
+              "exr_exports": 853,
+              "baseline_contract_found": 389,
+              "missing": []
+            }
+          ]
+        },
+        {
+          "path": "lib/x86_64/libexreader_jni.so",
+          "sha256": "d226215852b638de52cbb3a43311cc3044925ec36efa94871b2f7cc96fbc056a",
+          "slices": [
+            {
+              "format": "ELF",
+              "machine": "0x3e",
+              "exports": 38,
+              "exr_exports": 0,
+              "baseline_contract_found": 0,
+              "missing": []
+            }
+          ]
+        },
+        {
+          "path": "lib/x86_64/libplatform_probe.so",
+          "sha256": "54b668ecfb797ff4b12166dac362dd5696e7db6b8aa0b4ad53a1d35a08a112e9",
+          "slices": [
+            {
+              "format": "ELF",
+              "machine": "0x3e",
+              "exports": 2,
+              "exr_exports": 0,
+              "baseline_contract_found": 0,
+              "missing": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "platform": "Linux",
+      "arch": "x86_64-current",
+      "path": "P:/linux-current/libexreader.so",
+      "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+      "kind": "engine",
+      "provenance": "Debian12 GCC12.2 default feature build under QEMU Linux; linux-debian-build.txt",
+      "size_bytes": 10250040,
+      "sha256": "13e2d00dfbddb9e5de708dd88dabb9ce4328a53b1051050c2c58d708c4dffac2",
+      "slices": [
+        {
+          "format": "ELF",
+          "machine": "0x3e",
+          "exports": 2843,
+          "exr_exports": 853,
+          "baseline_contract_found": 389,
+          "missing": []
+        }
+      ],
+      "export_symbol_count": 2843
+    }
+  ]
+}

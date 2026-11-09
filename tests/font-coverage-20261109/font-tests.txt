@@ -1,0 +1,13 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-fontcov-20261109/build
+    Start 211: native-font-manager-discovery
+1/4 Test #211: native-font-manager-discovery .....   Passed    1.51 sec
+    Start 212: native-font-manager-selection
+2/4 Test #212: native-font-manager-selection .....   Passed    2.06 sec
+    Start 213: native-font-manager-cache
+3/4 Test #213: native-font-manager-cache .........   Passed    1.61 sec
+    Start 214: native-font-manager-integration
+4/4 Test #214: native-font-manager-integration ...   Passed    1.50 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =   6.76 sec

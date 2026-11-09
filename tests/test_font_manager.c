@@ -149,6 +149,33 @@ static void selection(void) {
     OK(exr_font_manager_chain(m,"EXR FM Latin Serif",0,&chain,&n,&error)); CHECK(n==5); exr_free(chain);
   }
   exr_font_manager_free(m);
+  /* Real coverage, not one face per family/style: a later same-style install
+     contributes supplementary Han, compatibility Han, Hangul, emoji and math. */
+  {
+    static const uint32_t scalars[]={0x20001,0xfa17,0xac00,0x1f600,0x0f40,0x2211};
+    char supplement[4096]; exr_font *font=NULL; size_t *map=NULL,n=0,i,j;
+    path(supplement,"extra");
+    locations[3]=(exr_font_location){supplement,EXR_FONT_LOCATION_DIRECTORY,0};
+    o.fallback_count=0; o.serif_families="EXR FM Latin Serif"; o.sans_serif_families="missing";
+    o.cache_path=cache;
+    OK(exr_font_manager_create(&o,&m,&error));
+    OK(exr_font_manager_create_font(m,"EXR FM Latin Serif",0,&font,&map,&n,&error));
+    CHECK(n && n<=EXR_FONT_CHAIN_MAX);
+    for(i=0;i<sizeof(scalars)/sizeof(*scalars);i++) {
+      p=pick(m,"EXR FM Latin Serif",0,scalars[i]);
+      CHECK(p.face!=SIZE_MAX && p.step==EXR_FONT_STEP_DISCOVERED);
+      for(j=0;j<n && map[j]!=p.face;j++) {}
+      CHECK(j<n && exr_font_has_glyph(font,j,scalars[i]));
+    }
+    /* Ordinary requested-face priority is unchanged. */
+    picked(m,"EXR FM Latin Serif",0,'A',"EXR FM Latin Serif",EXR_FONT_STEP_REQUESTED);
+    picked(m,"EXR FM Latin Serif",0,0x1f600,"EXR FM Emoji",EXR_FONT_STEP_DISCOVERED);
+    exr_font_free(font); exr_free(map); exr_font_manager_free(m);
+    OK(exr_font_manager_create(&o,&m,&error));
+    CHECK(summary(m).parsed_files==0);
+    picked(m,"EXR FM Latin Serif",0,0x1f600,"EXR FM Emoji",EXR_FONT_STEP_DISCOVERED);
+    exr_font_manager_free(m);
+  }
 }
 static void compare(exr_font_manager *a,exr_font_manager *b) {
   size_t i; CHECK(exr_font_manager_face_count(a)==exr_font_manager_face_count(b));
@@ -281,6 +308,25 @@ static void integration(void) {
     exr_layout_free(layout); layout=NULL;
   }
   exr_document_free(doc); exr_font_free(font); exr_free(map); exr_font_manager_free(m);
+  /* A full automatic tail must leave room for a requested embedded face. */
+  {
+    char latin[4096], many[4096], book[4096]; exr_font_location locations[2];
+    exr_font_manager_options o={0}; const exr_glyph *g; size_t glyph_count;
+    path(latin,"fonts/latin-serif.ttf"); path(many,"extra/many-scripts.ttc");
+    locations[0]=(exr_font_location){latin,EXR_FONT_LOCATION_FILE,0};
+    locations[1]=(exr_font_location){many,EXR_FONT_LOCATION_FILE,0};
+    o.struct_size=sizeof(o); o.locations=locations; o.location_count=2;
+    o.serif_families="EXR FM Latin Serif"; o.sans_serif_families="missing";
+    OK(exr_font_manager_create(&o,&m,&error));
+    OK(exr_font_manager_create_font(m,"serif",0,&font,&map,&n,&error)); CHECK(n==32);
+    path(book,"embedded.epub"); OK(exr_document_open(book,&doc,&error));
+    OK(exr_layout_create_ex(doc,font,&config,&layout,&error));
+    CHECK(exr_font_count(exr_layout_font(layout))==32);
+    g=exr_layout_glyphs(layout,&glyph_count); CHECK(glyph_count==2);
+    CHECK(g[0].codepoint==0x9f8d && g[0].font_index==31 && g[0].glyph && !(g[0].flags&EXR_GLYPH_MISSING));
+    exr_layout_free(layout); layout=NULL; exr_document_free(doc); doc=NULL;
+    exr_font_free(font); exr_free(map); exr_font_manager_free(m);
+  }
   {
     exr_font_location loc; exr_font_manager_options o=options(&loc);
     exr_font_chain_link *empty=NULL;

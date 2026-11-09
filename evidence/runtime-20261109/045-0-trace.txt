@@ -1,0 +1,22 @@
+045:0 src/docx.c:197 dereference of NULL 'r'
+1 docx.c:778 entry to 'exr_docx'
+2 docx.c:779 'package_rels' is NULL
+3 docx.c:782 calling 'relations' from 'exr_docx'
+4 docx.c:181 entry to 'relations'
+5 docx.c:182 calling 'xml_read' from 'relations'
+6 docx.c:175 entry to 'xml_read'
+7 docx.c:178 following 'true' branch...
+8 docx.c:178 ...to here
+9 docx.c:182 returning to 'relations' from 'xml_read'
+10 docx.c:184 following 'false' branch...
+11 docx.c:186 ...to here
+12 docx.c:187 following 'false' branch...
+13 docx.c:190 ...to here
+14 docx.c:191 following 'false' branch...
+15 docx.c:192 ...to here
+16 docx.c:192 following 'false' branch...
+17 docx.c:193 ...to here
+18 docx.c:194 following 'true' branch...
+19 docx.c:195 ...to here
+20 docx.c:197 'package_rels' is NULL
+21 docx.c:197 dereference of NULL 'r'

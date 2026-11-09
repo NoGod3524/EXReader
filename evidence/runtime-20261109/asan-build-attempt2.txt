@@ -1,0 +1,28 @@
+["C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\cmake.EXE", "--build", "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a", "--parallel", "6"]
+[0/2] Re-checking globbed directories...
+[1/176] Building C object CMakeFiles\exreader-fuzz-test.dir\tests\test_fuzz_driver.c.obj
+[2/176] Building C object CMakeFiles\exreader-fuzz-layout.dir\tests\fuzz_pipeline.c.obj
+[3/176] Building C object CMakeFiles\exreader-fuzz.dir\tests\fuzz_parse.c.obj
+[4/176] Building C object CMakeFiles\exreader-fuzz-font.dir\tests\fuzz_pipeline.c.obj
+[5/176] Building C object CMakeFiles\exreader-fuzz-render.dir\tests\fuzz_pipeline.c.obj
+[6/176] Building C object CMakeFiles\exr_header_document.dir\generated\header_document.c.obj
+[7/176] Building C object CMakeFiles\exr_header_audio.dir\generated\header_audio.c.obj
+[8/176] Building C object CMakeFiles\exr_header_base.dir\generated\header_base.c.obj
+[9/176] Building C object CMakeFiles\exr_header_core.dir\generated\header_core.c.obj
+[10/176] Building C object CMakeFiles\exr_header_font_manager.dir\generated\header_font_manager.c.obj
+[11/176] Building C object CMakeFiles\exr_header_formats.dir\generated\header_formats.c.obj
+[12/176] Building C object CMakeFiles\exr_header_graphics.dir\generated\header_graphics.c.obj
+[13/176] Building C object CMakeFiles\exr_header_layout.dir\generated\header_layout.c.obj
+[14/176] Building C object CMakeFiles\exr_header_library.dir\generated\header_library.c.obj
+[15/176] Building C object CMakeFiles\exr_header_pdf.dir\generated\header_pdf.c.obj
+[16/176] Building C object CMakeFiles\exr_header_pdf_edit.dir\generated\header_pdf_edit.c.obj
+[17/176] Building C object CMakeFiles\exr_header_text.dir\generated\header_text.c.obj
+[18/176] Building C object CMakeFiles\exr_header_render.dir\generated\header_render.c.obj
+[19/176] Building C object CMakeFiles\exr_header_version.dir\generated\header_version.c.obj
+[20/176] Building C object CMakeFiles\exr_header_textindex.dir\generated\header_textindex.c.obj
+[21/176] Linking C shared library exreader.dll
+FAILED: [code=4294967295] exreader.dll exreader.lib 
+C:\Windows\system32\cmd.exe /C "cd . && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -E vs_link_dll --msvc-ver=1944 --intdir=CMakeFiles\exreader.dir --rc="C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\rc.exe" --mt="C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\mt.exe" --manifests  -- "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\link.exe" /nologo @CMakeFiles\exreader.rsp  /out:exreader.dll /implib:exreader.lib /pdb:exreader.pdb /dll /version:3.42 /INCREMENTAL:NO /DEBUG /debug /INCREMENTAL /DEF:exreader.def && cd ."
+LINK Pass 1: command "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\link.exe /nologo @CMakeFiles\exreader.rsp /out:exreader.dll /implib:exreader.lib /pdb:exreader.pdb /dll /version:3.42 /INCREMENTAL:NO /DEBUG /debug /INCREMENTAL /DEF:exreader.def /MANIFEST /MANIFESTFILE:CMakeFiles\exreader.dir/intermediate.manifest CMakeFiles\exreader.dir/manifest.res" failed (exit code 1104) with the following output:
+LINK : fatal error LNK1104: cannot open file 'exreader.dll'
+ninja: build stopped: subcommand failed.

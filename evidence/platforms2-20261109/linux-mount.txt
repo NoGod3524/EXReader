@@ -1,0 +1,31 @@
+UTC: 2026-11-09T08:07:53.897126+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["ssh", "-i", "P:/vm-key", "-p", "22222", "-o", "StrictHostKeyChecking=accept-new", "-o", "UserKnownHostsFile=P:/known_hosts", "root@127.0.0.1", "set -e; test -b /dev/vda; mkfs.ext4 -F /dev/vda; mount -t ext4 /dev/vda /w; df -h /w; apk add --no-progress ca-certificates nasm git"]
+Warning: Permanently added '[127.0.0.1]:22222' (ED25519) to the list of known hosts.
+mke2fs 1.47.2 (1-Jan-2025)
+Discarding device blocks:       0/4194304               done
+Creating filesystem with 4194304 4k blocks and 1048576 inodes
+Filesystem UUID: 6d33c9f9-6d7b-4d57-ada4-4c7b736c3518
+Superblock backups stored on blocks:
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208,
+	4096000
+
+Allocating group tables:   0/128       done
+Writing inode tables:   0/128       done
+Creating journal (32768 blocks): done
+Writing superblocks and filesystem accounting information:   0/128       done
+
+Filesystem                Size      Used Available Use% Mounted on
+/dev/vda                 15.6G      2.0M     14.8G   0% /w
+(1/8) Installing libunistring (1.3-r0)
+(2/8) Installing libidn2 (2.3.7-r0)
+(3/8) Installing libpsl (0.21.5-r3)
+(4/8) Installing libcurl (8.14.1-r4)
+(5/8) Installing pcre2 (10.46-r1)
+(6/8) Installing git (2.49.1-r0)
+(7/8) Installing git-init-template (2.49.1-r0)
+(8/8) Installing nasm (2.16.03-r0)
+Executing busybox-1.37.0-r20.trigger
+OK: 419 MiB in 104 packages
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:07:56.234820+00:00

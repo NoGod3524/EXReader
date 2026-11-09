@@ -1,0 +1,15 @@
+{
+  "command": [
+    "gcc",
+    "-g",
+    "-O1",
+    "-IC:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\include",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\tests\\bounded_txt_scan\\view.c",
+    "-o",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\g\\txt-view.exe",
+    "-LC:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\g",
+    "-lexreader"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 2.423383699991973
+}

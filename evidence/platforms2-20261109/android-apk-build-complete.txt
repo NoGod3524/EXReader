@@ -1,0 +1,94 @@
+UTC: 2026-11-09T08:12:03.974898+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/platforms/build_apk.py", "--sdk", "P:/android-sdk", "--ndk", "P:/android-sdk/ndk/27.2.12479018", "--build", "P:/android-build", "--smoke", "P:/smoke", "--out", "P:/apk"]
+ARGV: ['C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\android-sdk\\ndk\\27.2.12479018\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe', '--target=x86_64-linux-android24', '-shared', '-fPIC', '-O2', '-Wall', '-Wextra', '-Werror', '-DPLATFORM_PROBE_EMBEDDED', '-IC:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\include', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\tools\\platforms\\probe.c', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\tools\\platforms\\android\\jni.c', '-LC:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\android-build', '-lexreader', '-Wl,-z,max-page-size=16384', '-o', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\apk\\libplatform_probe.so']
+ARGV: ['javac', '--release', '8', '-classpath', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\android-sdk\\platforms\\android-30\\android.jar', '-d', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\apk\\classes', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\tools\\platforms\\android\\MainActivity.java', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\bindings\\jni\\EXReader.java', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\bindings\\jni\\EXReaderException.java']
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+ARGV: ['jar', 'cf', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\apk\\classes.jar', '-C', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\apk\\classes', '.']
+ARGV: ['C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\android-sdk\\build-tools\\34.0.0\\d8.bat', '--lib', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\android-sdk\\platforms\\android-30\\android.jar', '--min-api', '24', '--output', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\apk\\dex', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\apk\\classes.jar']
+Error in C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109\evidence\platforms2-20261109\work\apk\classes.jar:org/exreader/EXReader$FixedFormat.class:
+java.lang.NullPointerException: Cannot invoke "String.length()" because "<parameter1>" is null
+Compilation failed with an internal error.
+Exception in thread "main" java.lang.RuntimeException: com.android.tools.r8.CompilationFailedException: Compilation failed to complete, origin: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109\evidence\platforms2-20261109\work\apk\classes.jar:org/exreader/EXReader$FixedFormat.class
+	at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:126)
+	at com.android.tools.r8.D8.main(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:5)
+Caused by: com.android.tools.r8.CompilationFailedException: Compilation failed to complete, origin: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109\evidence\platforms2-20261109\work\apk\classes.jar:org/exreader/EXReader$FixedFormat.class
+	at Version.fakeStackEntry(Version_8.2.2-dev.java:0)
+	at com.android.tools.r8.M.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:5)
+	at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:81)
+	at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:32)
+	at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:31)
+	at com.android.tools.r8.utils.R0.b(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:2)
+	at com.android.tools.r8.D8.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:26)
+	at com.android.tools.r8.D8.b(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:13)
+	at com.android.tools.r8.D8.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:24)
+	at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:113)
+	... 1 more
+Caused by: java.lang.NullPointerException: Cannot invoke "String.length()" because "<parameter1>" is null
+	at com.android.tools.r8.graph.u2.<init>(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:5)
+	at com.android.tools.r8.graph.p1.c(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:3)
+	at com.android.tools.r8.graph.Q3.b(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:10)
+	at com.android.tools.r8.internal.Ga.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:873)
+	at com.android.tools.r8.graph.T3.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:44)
+	at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:129)
+	at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:130)
+	at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:128)
+	at com.android.tools.r8.graph.T3.b(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:2)
+	at com.android.tools.r8.dex.a.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:27)
+	at java.base/java.util.concurrent.ForkJoinTask$AdaptedCallable.exec(ForkJoinTask.java:1456)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312)
+	at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188)
+	Suppressed: java.lang.RuntimeException: java.util.concurrent.ExecutionException: com.android.tools.r8.utils.T0: java.lang.NullPointerException: Cannot invoke "String.length()" because "<parameter1>" is null
+		at com.android.tools.r8.dex.c.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:60)
+		at com.android.tools.r8.dex.c.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:9)
+		at com.android.tools.r8.dex.c.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:8)
+		at com.android.tools.r8.D8.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:29)
+		at com.android.tools.r8.D8.d(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:17)
+		at com.android.tools.r8.D8.c(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:1)
+		at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:28)
+		at com.android.tools.r8.utils.R0.b(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:2)
+		at com.android.tools.r8.D8.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:26)
+		at com.android.tools.r8.D8.b(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:13)
+		at com.android.tools.r8.D8.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:24)
+		at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:113)
+		at com.android.tools.r8.D8.main(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:5)
+	Caused by: java.util.concurrent.ExecutionException: com.android.tools.r8.utils.T0: java.lang.NullPointerException: Cannot invoke "String.length()" because "<parameter1>" is null
+		at java.base/java.util.concurrent.ForkJoinTask.reportExecutionException(ForkJoinTask.java:581)
+		at java.base/java.util.concurrent.ForkJoinTask.get(ForkJoinTask.java:993)
+		at com.android.tools.r8.utils.d3.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:64)
+		at com.android.tools.r8.dex.c.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:41)
+		... 12 more
+	Caused by: com.android.tools.r8.utils.T0: java.lang.NullPointerException: Cannot invoke "String.length()" because "<parameter1>" is null
+		at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:149)
+		at com.android.tools.r8.utils.R0.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:128)
+		at com.android.tools.r8.graph.T3.b(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:2)
+		at com.android.tools.r8.dex.a.a(R8_8.2.2-dev_53a55043254cc5be8ef500331bba25d1b4ca4bc2cd66c555d4358bf672a1f10a:27)
+		at java.base/java.util.concurrent.ForkJoinTask$AdaptedCallable.exec(ForkJoinTask.java:1456)
+		at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387)
+		at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312)
+		at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843)
+		at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808)
+		at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188)
+	Caused by: [CIRCULAR REFERENCE: java.lang.NullPointerException: Cannot invoke "String.length()" because "<parameter1>" is null]
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109\tools\platforms\build_apk.py", line 60, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109\tools\platforms\build_apk.py", line 43, in main
+    run(bt / ('d8' + suffix), '--lib', platform, '--min-api', '24', '--output', out / 'dex', out / 'classes.jar')
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109\tools\platforms\build_apk.py", line 31, in run
+    subprocess.run([str(x) for x in command], check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\android-sdk\\build-tools\\34.0.0\\d8.bat', '--lib', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\android-sdk\\platforms\\android-30\\android.jar', '--min-api', '24', '--output', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\apk\\dex', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-plat2-20261109\\evidence\\platforms2-20261109\\work\\apk\\classes.jar']' returned non-zero exit status 1.
+EXIT_CODE: 1
+END_UTC: 2026-11-09T08:12:16.065352+00:00

@@ -1,0 +1,31 @@
+UTC: 2026-11-09T08:30:09.009223+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["ssh", "-i", "P:/vm-key", "-p", "22222", "-o", "UserKnownHostsFile=P:/known_hosts", "root@127.0.0.1", "set -e; chroot /w/debian sh -c \"sha256sum /repo/out/libexreader.so; readelf -h /repo/out/libexreader.so; ldd /repo/out/libexreader.so; nm -D --defined-only /repo/out/libexreader.so | wc -l\""]
+13e2d00dfbddb9e5de708dd88dabb9ce4328a53b1051050c2c58d708c4dffac2  /repo/out/libexreader.so
+ELF Header:
+  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00
+  Class:                             ELF64
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              DYN (Shared object file)
+  Machine:                           Advanced Micro Devices X86-64
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          64 (bytes into file)
+  Start of section headers:          10248120 (bytes into file)
+  Flags:                             0x0
+  Size of this header:               64 (bytes)
+  Size of program headers:           56 (bytes)
+  Number of program headers:         10
+  Size of section headers:           64 (bytes)
+  Number of section headers:         30
+  Section header string table index: 29
+	linux-vdso.so.1 (0x00007fc702093000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fc701faa000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fc70141e000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007fc702095000)
+2843
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:30:09.120752+00:00
