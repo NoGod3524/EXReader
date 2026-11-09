@@ -31,8 +31,8 @@ static LRESULT CALLBACK footnote_procedure(HWND window,UINT message,WPARAM wp,LP
         HGDIOBJ old=SelectObject(underlay,bitmap);RECT place;GetWindowRect(window,&place);MapWindowPoints(NULL,g.page,(POINT *)&place,2);
         HBRUSH bg=CreateSolidBrush(shell_colorref(shell_colors->layer_page));FillRect(underlay,&box,bg);DeleteObject(bg);
         if(page_buffer_dc)BitBlt(underlay,0,0,box.right,box.bottom,page_buffer_dc,place.left,place.top,SRCCOPY);
-        GdiFlush();shell_d2d_popup(host_shell,dc,&box,shell_is_dark(),bits,footnote_title);SelectObject(underlay,old);
-      } else shell_d2d_popup(host_shell,dc,&box,shell_is_dark(),NULL,footnote_title);
+        GdiFlush();shell_d2d_card(host_shell,dc,&box,shell_is_dark(),bits,footnote_title);SelectObject(underlay,old);
+      } else shell_d2d_card(host_shell,dc,&box,shell_is_dark(),NULL,footnote_title);
       if(bitmap)DeleteObject(bitmap);
       if(underlay)DeleteDC(underlay);
       if(message==WM_PAINT)EndPaint(window,&paint);

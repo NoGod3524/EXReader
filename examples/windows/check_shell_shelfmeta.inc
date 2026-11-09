@@ -16,6 +16,7 @@ static void test_shelfmeta(void) {
   }
   assert(reload_shelf()==EXR_OK && g.shelf_count==6);
   sm_load();assert(sm_writable);
+  dict_init();assert(dict_writable && !wcscmp(dict_path,path));
   /* two series of three, inserted out of order, plus tags */
   const wchar_t *series[6]={L"甲",L"乙",L"甲",L"乙",L"甲",L"乙"},*index[6]={L"3",L"2",L"1",L"3",L"2",L"1"};
   const wchar_t *tags[6]={L"小说, 经典",L"小说",L"经典",L"",L"科幻",L"科幻,小说"};
@@ -23,11 +24,13 @@ static void test_shelfmeta(void) {
     wchar_t title[32];swprintf(title,32,L"标题 %d \"q\" \\ 😀",i);
     assert(sm_apply(i,title,L"作者",series[i],index[i],tags[i],NULL,0));
   }
-  /* Both owners read the current file before writing their own keys. */
-  shell_font=24;assert(shell_style_save());assert(sm_save());shell_style_load();
+  /* A dictionary loaded before metadata edits must preserve their latest values. */
+  shell_font=24;assert(shell_style_save());dict_auto=1;assert(dict_config_save());
+  assert(sm_save());shell_style_load();
   assert(shell_font==24);
   int valid;cv_json *shared=style_shelf_read(&valid);assert(valid && shared);
   assert(cv_json_get(shared,"books")->count==6);
+  assert(cv_json_get(shared,"dictionary_auto_lookup")->boolean);
   assert(cv_json_get(cv_json_get(shared,"future"),"keep")->boolean);
   assert(!strcmp(cv_json_get(cv_json_get(shared,"settings"),"theme")->string,"dark"));
   cv_json_free(shared);

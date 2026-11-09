@@ -43,8 +43,8 @@ typedef struct shell_d2d_button {
    pressed=2, focus=4, disabled=8. Retains each BUTTON's native UIA proxy. */
 HRESULT shell_d2d_control(shell_d2d *, HDC, const RECT *, const wchar_t *,
                           int dark, int variant, unsigned state);
-HRESULT shell_d2d_popup(shell_d2d *, HDC, const RECT *, int dark, const uint32_t *background, const wchar_t *title);
 HRESULT shell_d2d_note(shell_d2d *, HDC, const RECT *, int dark, const uint32_t *background);
+HRESULT shell_d2d_card(shell_d2d *, HDC, const RECT *, int dark, const uint32_t *background, const wchar_t *title);
 HRESULT shell_d2d_panel(shell_d2d *, HDC, const RECT *, int dark, const wchar_t *font, const wchar_t *family, const wchar_t *path, const uint32_t *background);
 /* TOC state: hover 1, pressed 2, keyboard focus 4, current chapter 8.
    Negative row IDs are uncached header/empty-state text, at the given size. */

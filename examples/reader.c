@@ -191,6 +191,13 @@ static void tts_layout(void);
 static int tts_translate(const MSG *message);
 static void shell_selection_paint(HDC dc);
 static size_t shell_selection_bytes(char **out);
+static void dict_lookup(void);
+static void dict_auto_lookup(void);
+static void dict_hide(void);
+static void dict_close_all(void);
+static void dict_manager_open(void);
+static int dict_translate(const MSG *message);
+static void dict_shutdown(void);
 #endif
 
 typedef struct {
@@ -1582,7 +1589,7 @@ static void job_start_failed(host_job *job) {
 static void job_start(host_job *job) {
   host_probe_require_ui();
 #ifdef EXR_READER_WINDOWS_SHELL
-  if(job->kind==JOB_OPEN) tts_stop();
+  if(job->kind==JOB_OPEN) {tts_stop();dict_close_all();}
 #endif
   if(job->kind==JOB_OPEN || job->kind==JOB_LAYOUT || job->kind==JOB_IMPORT || job->kind==JOB_PREFERENCES || job->kind==JOB_PRODUCT_DELETE || (job->zoom_percent>0 && job->zoom_percent!=g.zoom_percent))page_cache_clear();
   g.job = job;
@@ -4258,6 +4265,7 @@ static void selection_report(void) {
 #include "windows/shell_shelfmeta.inc"
 #include "windows/shell_gestures.inc"
 #include "windows/shell_tts.inc"
+#include "windows/shell_dictionary.inc"
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -6225,6 +6233,7 @@ static int check_selection(int minimum, const char *needle) {
 #include "windows/shell_style_drive.inc"
 #include "windows/shell_shelfmeta_drive.inc"
 #include "windows/shell_tts_drive.inc"
+#include "windows/shell_dictionary_drive.inc"
 #endif
 
 static int drive_execute(void) {
@@ -6242,6 +6251,9 @@ static int drive_execute(void) {
   }
   if (!strncmp(action,"annot_",6)) {
     drive_step_finish(annot_drive(action),"annotation action dispatched");return 0;
+  }
+  if (!strncmp(action,"dict_",5)) {
+    drive_step_finish(dict_drive(action),"dictionary action dispatched");return 0;
   }
 #include "windows/shell_annotations_navigation.inc"
 #include "windows/shell_shelf_drive.inc"
@@ -7700,6 +7712,7 @@ static void host_cleanup(void) {
 #ifdef EXR_READER_WINDOWS_SHELL
   exr_anchor_free(&shell_anchor); shell_anchor_valid = 0;
   shell_selection_reset();
+  dict_shutdown();
 #endif
   session_clear(&g.session);
   frame_clear(&g.frame);

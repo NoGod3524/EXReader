@@ -19,7 +19,7 @@
 #include "shell_tokens.h"
 
 enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, SHELL_HIDDEN_MAX = 128 };
-enum { IDC_SHELL_BACK=180, IDC_SHELL_TAP20, IDC_SHELL_TAP25 };
+enum { IDC_SHELL_BACK=180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY };
 static HWND shell_back;
 /* The 32px visual has 4px per side for the offset keyboard outline. */
 enum { SHELL_BUTTON_BOX = SHELL_ICON_SIZE + 2 * SHELL_CONTROL_FRAME };
@@ -254,6 +254,7 @@ static void shell_enter(void) {
 
 static void shell_leave(void) {
   size_t i;
+  dict_close_all();
   tts_stop();
   tts_command(104); /* close speech controls on leaving the book */
   shell_toc_hide();
@@ -395,6 +396,7 @@ static int shell_page_footer(HDC dc, const RECT *area) {
 }
 
 static int shell_translate(const MSG *message) {
+  if(dict_translate(message)) return 1;
   if(tts_translate(message)) return 1;
   if(message->message==WM_KEYDOWN && (shell_active || shelf_visible)) {
     if(message->wParam=='W' && (GetKeyState(VK_CONTROL)&0x8000)) {shelf_return();return 1;}

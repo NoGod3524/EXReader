@@ -1,0 +1,479 @@
+{
+  "lookups": [
+    {
+      "case": "lookup-0",
+      "word": "apple",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "apple",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "83e6f0485e058a15d8e516f537e945525d35a956a67726181794c491580bc5b2",
+          "definition_utf8_bytes": 234
+        },
+        {
+          "word": "apple",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "3a895fc10be93519c96573731d439c5c37f3c7336870842c85b27adfc12d1a3b",
+          "definition_utf8_bytes": 13
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "The apple is here, beside the \"window\"."
+    },
+    {
+      "case": "lookup-1",
+      "word": "book",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "book",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "ca63469d3978d276a61bbc47f5df67743b86ef0f60c2243bc320145a468333a6",
+          "definition_utf8_bytes": 413
+        },
+        {
+          "word": "book",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "6885594405532aa0596a4b1fd802a249ec438a9cff226c7582f2478fc3443910",
+          "definition_utf8_bytes": 64
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "The book is here, beside the \"window\"."
+    },
+    {
+      "case": "lookup-2",
+      "word": "cat",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "cat",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "e0ce7d0c1bd4f9cf0c81c3744130f81eaad5189202acd8edc6e03df042c3cd63",
+          "definition_utf8_bytes": 591
+        },
+        {
+          "word": "cat",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "572fb0a75b62f893282326c1dbb71291eaeb3293da1124c9493d06f61b7769d7",
+          "definition_utf8_bytes": 66
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "The cat is here, beside the \"window\"."
+    },
+    {
+      "case": "lookup-3",
+      "word": "dog",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "dog",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "bf4369e4e20264342d4cfac51f1950f6bcc8187c95177922333a821755437f3e",
+          "definition_utf8_bytes": 96
+        },
+        {
+          "word": "dog",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "e164d3c9639d78f95d1e27a3c09ae6a48c290cad45d48913c3c02c3b2800873b",
+          "definition_utf8_bytes": 32
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "The dog is here, beside the \"window\"."
+    },
+    {
+      "case": "lookup-4",
+      "word": "elephant",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "elephant",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "6df514e1a14637a3567caa5a1a3ad22af72ee6a675eb0a4a0bf0158d5edf6149",
+          "definition_utf8_bytes": 224
+        },
+        {
+          "word": "elephant",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "55d8db775c5f1bb0df2042c64439450c13f56557494a8a67bcb36de5aff50f6d",
+          "definition_utf8_bytes": 24
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "The elephant is here, beside the \"window\"."
+    },
+    {
+      "case": "lookup-5",
+      "word": "fish",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "fish",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "8e475b57e8bb31758b04f352fca737ff61d1a23b7e39f4a5f062f5391a140da1",
+          "definition_utf8_bytes": 269
+        },
+        {
+          "word": "fish",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "7cd1e782a48382e46c0a4b13bd1517c383562996ec0848d89b3e32ab42d97d4d",
+          "definition_utf8_bytes": 33
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "The fish is here, beside the \"window\"."
+    },
+    {
+      "case": "lookup-6",
+      "word": "house",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "house",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "6626f86bc9c80af70690a506114753a33682d0ab217a4b03112e031a69cb3c70",
+          "definition_utf8_bytes": 481
+        },
+        {
+          "word": "house",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "4e1b3bd1e31e4c4c260f18ad824c95db67f31fcee5f53cdec2d592388e4735b0",
+          "definition_utf8_bytes": 14
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "The house is here, beside the \"window\"."
+    },
+    {
+      "case": "lookup-7",
+      "word": "love",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "love",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "452f10dc7fb394b384c9cdfe2e190f92423782861a567cc060bc60154048a0f9",
+          "definition_utf8_bytes": 232
+        },
+        {
+          "word": "love",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "735ec0a4b398b970e6464c2babe95ede32ae56012bc8c8f399af4325bb8b9fd3",
+          "definition_utf8_bytes": 530
+        },
+        {
+          "word": "love",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "410e1f83abad9ba7a12b44a4c5ef2d72085b556e5d3bff19478743c5261a9d34",
+          "definition_utf8_bytes": 68
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "The love is here, beside the \"window\"."
+    },
+    {
+      "case": "lookup-8",
+      "word": "night",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "night",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "570faffea05a57434dab09b8fe55050832bf116ad6369337fd154f0f727f7ca9",
+          "definition_utf8_bytes": 271
+        },
+        {
+          "word": "night",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "26d1443b52bf70cdb918f9321b2edd6b322c9d8da7338c6bbe173b578b123fac",
+          "definition_utf8_bytes": 12
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "The night is here, beside the \"window\"."
+    },
+    {
+      "case": "lookup-9",
+      "word": "zebra",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "zebra",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "0078e255d9df992b99207934998d2486a729b26907b3e3c4e2af1b31c35f09ac",
+          "definition_utf8_bytes": 263
+        },
+        {
+          "word": "zebra",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "9e325a6ffbc4a225b0b5b3ce3f1c402c988596e5d571724f2a8407906cb47c34",
+          "definition_utf8_bytes": 16
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "The zebra is here, beside the \"window\"."
+    },
+    {
+      "case": "missing",
+      "word": "qzxvmissing",
+      "surface_width_dip": 360,
+      "results": [],
+      "groups": 0,
+      "native_content_matches": true,
+      "sentence": "The qzxvmissing is absent."
+    },
+    {
+      "case": "second",
+      "word": "apple",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "apple",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "83e6f0485e058a15d8e516f537e945525d35a956a67726181794c491580bc5b2",
+          "definition_utf8_bytes": 234
+        },
+        {
+          "word": "apple",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "3a895fc10be93519c96573731d439c5c37f3c7336870842c85b27adfc12d1a3b",
+          "definition_utf8_bytes": 13
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "An apple appears in this second book."
+    },
+    {
+      "case": "dark",
+      "word": "apple",
+      "surface_width_dip": 360,
+      "results": [
+        {
+          "word": "apple",
+          "source": "English-中文 (Zhōngwén) FreeDict+WikDict dictionary",
+          "definition_sha256": "83e6f0485e058a15d8e516f537e945525d35a956a67726181794c491580bc5b2",
+          "definition_utf8_bytes": 234
+        },
+        {
+          "word": "apple",
+          "source": "English-French FreeDict Dictionary (en-fr)",
+          "definition_sha256": "3a895fc10be93519c96573731d439c5c37f3c7336870842c85b27adfc12d1a3b",
+          "definition_utf8_bytes": 13
+        }
+      ],
+      "groups": 2,
+      "native_content_matches": true,
+      "sentence": "The apple is here, beside the \"window\"."
+    }
+  ],
+  "vocabulary": [
+    {
+      "word": "apple",
+      "book": "Dictionary Acceptance",
+      "sentence": "The apple is here, beside the \"window\".",
+      "anchor": {
+        "start": {
+          "part_id": "c",
+          "part_path": "OEBPS/chapter.xhtml",
+          "text_revision": "e253d9e8a1927260",
+          "text_size": 422,
+          "selector": {
+            "start": 4,
+            "end": 4,
+            "exact": "",
+            "prefix": "The ",
+            "suffix": "apple is here, beside the \"windo",
+            "chapter": null
+          }
+        },
+        "end": {
+          "part_id": "c",
+          "part_path": "OEBPS/chapter.xhtml",
+          "text_revision": "e253d9e8a1927260",
+          "text_size": 422,
+          "selector": {
+            "start": 9,
+            "end": 9,
+            "exact": "",
+            "prefix": "The apple",
+            "suffix": " is here, beside the \"window\".\nT",
+            "chapter": null
+          }
+        }
+      },
+      "time_ms": 1794166700579,
+      "summary_sha256": "8ce40556b667aaf7d5f5964d2bd3acd20224b89c4096a61c95588ba8784de385",
+      "csv_all_fields_equal": true
+    },
+    {
+      "word": "book",
+      "book": "Dictionary Acceptance",
+      "sentence": "The book is here, beside the \"window\".",
+      "anchor": {
+        "start": {
+          "part_id": "c",
+          "part_path": "OEBPS/chapter.xhtml",
+          "text_revision": "e253d9e8a1927260",
+          "text_size": 422,
+          "selector": {
+            "start": 44,
+            "end": 44,
+            "exact": "",
+            "prefix": " here, beside the \"window\".\nThe ",
+            "suffix": "book is here, beside the \"window",
+            "chapter": null
+          }
+        },
+        "end": {
+          "part_id": "c",
+          "part_path": "OEBPS/chapter.xhtml",
+          "text_revision": "e253d9e8a1927260",
+          "text_size": 422,
+          "selector": {
+            "start": 48,
+            "end": 48,
+            "exact": "",
+            "prefix": "e, beside the \"window\".\nThe book",
+            "suffix": " is here, beside the \"window\".\nT",
+            "chapter": null
+          }
+        }
+      },
+      "time_ms": 1794166701001,
+      "summary_sha256": "0bae0fce453bac18608ead3ce1a0bc52d3d66801cfd03263b300488c92af9bf6",
+      "csv_all_fields_equal": true
+    },
+    {
+      "word": "cat",
+      "book": "Dictionary Acceptance",
+      "sentence": "The cat is here, beside the \"window\".",
+      "anchor": {
+        "start": {
+          "part_id": "c",
+          "part_path": "OEBPS/chapter.xhtml",
+          "text_revision": "e253d9e8a1927260",
+          "text_size": 422,
+          "selector": {
+            "start": 83,
+            "end": 83,
+            "exact": "",
+            "prefix": " here, beside the \"window\".\nThe ",
+            "suffix": "cat is here, beside the \"window\"",
+            "chapter": null
+          }
+        },
+        "end": {
+          "part_id": "c",
+          "part_path": "OEBPS/chapter.xhtml",
+          "text_revision": "e253d9e8a1927260",
+          "text_size": 422,
+          "selector": {
+            "start": 86,
+            "end": 86,
+            "exact": "",
+            "prefix": "re, beside the \"window\".\nThe cat",
+            "suffix": " is here, beside the \"window\".\nT",
+            "chapter": null
+          }
+        }
+      },
+      "time_ms": 1794166701639,
+      "summary_sha256": "f7b54b3c6ca0d89ca5afa511b0d0489493c93e11fb515da676b2338b4b36111a",
+      "csv_all_fields_equal": true
+    },
+    {
+      "word": "dog",
+      "book": "Dictionary Acceptance",
+      "sentence": "The dog is here, beside the \"window\".",
+      "anchor": {
+        "start": {
+          "part_id": "c",
+          "part_path": "OEBPS/chapter.xhtml",
+          "text_revision": "e253d9e8a1927260",
+          "text_size": 422,
+          "selector": {
+            "start": 121,
+            "end": 121,
+            "exact": "",
+            "prefix": " here, beside the \"window\".\nThe ",
+            "suffix": "dog is here, beside the \"window\"",
+            "chapter": null
+          }
+        },
+        "end": {
+          "part_id": "c",
+          "part_path": "OEBPS/chapter.xhtml",
+          "text_revision": "e253d9e8a1927260",
+          "text_size": 422,
+          "selector": {
+            "start": 124,
+            "end": 124,
+            "exact": "",
+            "prefix": "re, beside the \"window\".\nThe dog",
+            "suffix": " is here, beside the \"window\".\nT",
+            "chapter": null
+          }
+        }
+      },
+      "time_ms": 1794166701936,
+      "summary_sha256": "871957991ed02eb60c0b94131ff05815c22998ca359877c63098634b897fa16e",
+      "csv_all_fields_equal": true
+    },
+    {
+      "word": "apple",
+      "book": "Second Book",
+      "sentence": "An apple appears in this second book.",
+      "anchor": {
+        "start": {
+          "part_id": "c",
+          "part_path": "OEBPS/chapter.xhtml",
+          "text_revision": "ba5e838dcd00882a",
+          "text_size": 37,
+          "selector": {
+            "start": 3,
+            "end": 3,
+            "exact": "",
+            "prefix": "An ",
+            "suffix": "apple appears in this second boo",
+            "chapter": null
+          }
+        },
+        "end": {
+          "part_id": "c",
+          "part_path": "OEBPS/chapter.xhtml",
+          "text_revision": "ba5e838dcd00882a",
+          "text_size": 37,
+          "selector": {
+            "start": 8,
+            "end": 8,
+            "exact": "",
+            "prefix": "An apple",
+            "suffix": " appears in this second book.",
+            "chapter": null
+          }
+        }
+      },
+      "time_ms": 1794166710733,
+      "summary_sha256": "8ce40556b667aaf7d5f5964d2bd3acd20224b89c4096a61c95588ba8784de385",
+      "csv_all_fields_equal": true
+    }
+  ],
+  "csv_sha256": "1b459009c25b5bc053c32988e6ec27bd170ca17510f8de4a543dc010400c1c46",
+  "native_missing_copy": true,
+  "definition_payloads": "Only hashes retained; original local report files are ignored under build/.",
+  "sentences": "Synthetic acceptance EPUB text; sentence ranges resolved by production anchor API."
+}
