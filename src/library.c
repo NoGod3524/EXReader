@@ -1064,7 +1064,7 @@ finish:
   sqlite3_finalize(s);exr_epub_location_free(&location);sqlite3_mutex_leave(mutex);return status;
 }
 exr_status exr_library_epub_note(exr_library *l,const exr_epub_note *input,int64_t *id,exr_error *e) {
-  exr_epub_note note;sqlite3_stmt *s=NULL;sqlite3_mutex *mutex;exr_status status;
+  exr_epub_note note={0};sqlite3_stmt *s=NULL;sqlite3_mutex *mutex;exr_status status;
   int format=0,bounded=0,transaction=0,comment_only;int64_t saved=0;
   if(input) note=*input;
   if(id) *id=0;
@@ -1361,7 +1361,7 @@ database:
   return result;
 }
 exr_status exr_library_note(exr_library *l,const exr_note *input,int64_t *id,exr_error *e) {
-  exr_note note;sqlite3_mutex *mutex;exr_status status;int transaction=0;
+  exr_note note={0};sqlite3_mutex *mutex;exr_status status;int transaction=0;
   if(input) note=*input;
   if(id) *id=0;
   if(!l || !input || !id || !note.text || note.id<0 || note.book_id<=0 ||

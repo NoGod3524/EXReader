@@ -14,6 +14,7 @@ static int select_before(exr_text_position a, exr_text_position b) {
   return a.part < b.part || (a.part == b.part && a.offset < b.offset);
 }
 static void shell_selection_reset(void) {
+  dict_hide();
   select_valid = select_drag = select_turn = 0;
   exr_content_anchor_free(&select_anchor);
   exr_publication_free(select_single); select_single = NULL;
@@ -148,7 +149,7 @@ static HRGN select_region_for(size_t start,size_t end) {
 }
 static HRGN select_region(void) { return select_region_for(g.selection.active ? g.selection.start : 0,g.selection.active ? g.selection.end : 0); }
 static void shell_selection_paint(HDC dc) {
-  if ((!annot_count && (!select_valid || select_book != g.frame.book_id || !g.selection.active)) || !g.frame.display_bitmap) return;
+  if ((!tts_state && !annot_count && (!select_valid || select_book != g.frame.book_id || !g.selection.active)) || !g.frame.display_bitmap) return;
   HRGN region = select_region(); RECT bounds;
   GetRgnBox(region, &bounds);
   DIBSECTION section = {0};
@@ -163,6 +164,7 @@ static void shell_selection_paint(HDC dc) {
   if (!bitmap || !section.dsBm.bmBits) { if (bitmap) DeleteObject(bitmap); DeleteObject(region); return; }
   memcpy(pixels, section.dsBm.bmBits, (size_t)width*height*4);
   annot_pixels(pixels,width,height);
+  tts_pixels(pixels,width,height);
   uint32_t background = shell_blend(shell_colors->layer_page, shell_is_dark() ? 0x7c88ff : 0x4553e0,
     shell_is_dark() ? .16f : .10f);
   for (int y = max(0, bounds.top); y < min(height, bounds.bottom); y++) {
@@ -246,15 +248,18 @@ static HMENU select_context_menu(void) {
   int annot_active=active || annot_selected>=0;
   AppendMenuW(menu, MF_STRING | (active ? 0 : MF_GRAYED), 1, L"复制\tCtrl+C");
   AppendMenuW(menu, MF_STRING, 2, L"全选当前章节\tCtrl+A");
+  AppendMenuW(menu, MF_STRING | (active ? 0 : MF_GRAYED), 8, L"查词\tCtrl+D");
   AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 3, L"高亮 · 黄\tCtrl+H");
   AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 4, L"高亮 · 绿");
   AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 5, L"高亮 · 蓝");
   AppendMenuW(menu, MF_STRING | (annot_active ? 0 : MF_GRAYED), 6, L"笔记…\tCtrl+N");
   AppendMenuW(menu, MF_STRING | (annot_selected>=0 ? 0:MF_GRAYED), 7, L"删除选中的标注\tDelete");
+  tts_menu(menu);
   return menu;
 }
 static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
   if (!shell_active || g.frame.fixed || (!g.session.publication && !g.session.document)) return 0;
+  if (message==WM_KEYUP && wparam>=VK_LEFT && wparam<=VK_DOWN) {dict_auto_lookup();return 0;}
   if (message == WM_KEYDOWN && wparam == VK_ESCAPE) {
     annot_selected=-1; selection_clear(); return 1;
   }
@@ -284,6 +289,7 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
     if (shell_toc_open) return 0;
     exr_text_position position;
     int x = (short)LOWORD(lparam), y = (short)HIWORD(lparam);
+    if (message == WM_LBUTTONDOWN && !shell_drag_begin && shell_footnote_click(x,y)) return 1;
     if (message == WM_LBUTTONDOWN && !shell_drag_begin && annot_click(x,y)) return 1;
     if (!select_hit(x, y, &position)) return 1;
     DWORD now = GetMessageTime();
@@ -308,9 +314,10 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
     if (select_clicks == 1 && abs(x-select_last_x)+abs(y-select_last_y) <= 2 && !g.selection.active)
       select_set(select_origin, select_focus, -1, 1);
     else select_update(x, y, 1);
-    select_drag = 0; KillTimer(window, SHELL_SELECT_TIMER); ReleaseCapture(); selection_report(); return 1;
+    select_drag = 0; KillTimer(window, SHELL_SELECT_TIMER); ReleaseCapture(); selection_report(); dict_auto_lookup(); return 1;
   }
   if (message == WM_KEYDOWN) {
+    if ((GetKeyState(VK_CONTROL)&0x8000) && wparam == 'D') { dict_lookup(); return 1; }
     if ((GetKeyState(VK_SHIFT)&0x8000) && wparam >= VK_LEFT && wparam <= VK_DOWN) { select_move((UINT)wparam); return 1; }
     if ((GetKeyState(VK_CONTROL)&0x8000) && wparam == 'A') { select_all_part(); return 1; }
     if (wparam==VK_DELETE && annot_command(7)) return 1;
@@ -325,7 +332,9 @@ static int shell_selection_message(HWND window, UINT message, WPARAM wparam, LPA
     DestroyMenu(menu);
     if (command == 1) copy_quote();
     if (command == 2) select_all_part();
-    if (command >= 3) annot_command((int)command);
+    if (command >= 100) tts_command((int)command);
+    if (command == 8) dict_lookup();
+    if (command >= 3 && command <= 7) annot_command((int)command);
     return 1;
   }
   return 0;

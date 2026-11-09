@@ -21,6 +21,22 @@ int main(void) {
   assert(GetPrivateProfileStringW(L"Host",L"Empty",L"missing",value,32,path)==0);
   assert(DeleteFileW(path));
 
+  assert(SetEnvironmentVariableW(L"EXREADER_SHELF_PATH",path));
+  FILE *shelf=_wfopen(path,L"wb");assert(shelf);
+  fputs("{\"sentinel\":\"keep\"}",shelf);assert(!fclose(shelf));
+  shell_style=exr_reader_style_defaults();shell_font=shell_style.font_size;
+  assert(shell_style_save());
+  file=CreateFileW(path,GENERIC_READ|FILE_WRITE_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,0,NULL);
+  assert(file!=INVALID_HANDLE_VALUE && SetFileTime(file,NULL,NULL,&stamp));
+  assert(shell_style_save());
+  assert(GetFileTime(file,NULL,NULL,&actual) && !CompareFileTime(&actual,&stamp));
+  CloseHandle(file);
+  shell_font+=1;assert(shell_style_save());
+  int ok;exr_reader_style restored;cv_json *root=style_shelf_read(&ok);
+  assert(ok && style_read(cv_json_get(cv_json_get(root,"settings"),"reader_style"),&restored));
+  assert(restored.font_size==shell_font && !strcmp(cv_json_get(root,"sentinel")->string,"keep"));
+  cv_json_free(root);assert(DeleteFileW(path));assert(SetEnvironmentVariableW(L"EXREADER_SHELF_PATH",NULL));
+
   g.window=CreateWindowExW(0,L"STATIC",L"",0,0,0,0,0,HWND_MESSAGE,NULL,GetModuleHandleW(NULL),NULL);
   assert(g.window);
   job.kind=JOB_GO;job.status=EXR_OK;job.frame.valid=1;job.frame.shell_geometry.enabled=1;
@@ -31,6 +47,24 @@ int main(void) {
   assert(!job.thread && PeekMessageW(&message,g.window,WM_HOST_COMPLETE,WM_HOST_COMPLETE,PM_REMOVE));
   assert((host_job *)message.lParam==&job);
   DeleteObject(job.frame.display_bitmap);DestroyWindow(g.window);g.window=NULL;
-  puts("Host perf regressions: unchanged INI, changed INI, empty key, prepared DIB passed");
+
+  host_frame frame={0};BITMAPINFO info={0};uint32_t source[257],*pixels=NULL;
+  info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);info.bmiHeader.biWidth=257;info.bmiHeader.biHeight=-1;
+  info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;info.bmiHeader.biCompression=BI_RGB;
+  frame.display_bitmap=CreateDIBSection(NULL,&info,DIB_RGB_COLORS,(void **)&pixels,NULL,0);assert(frame.display_bitmap && pixels);
+  frame.valid=1;frame.shell_geometry.enabled=1;frame.bitmap.width=frame.display_width=257;
+  frame.bitmap.height=frame.display_height=1;frame.dib=source;
+  g.page=CreateWindowExW(0,L"STATIC",L"",0,0,0,257,1,HWND_MESSAGE,NULL,GetModuleHandleW(NULL),NULL);assert(g.page);
+  for(int dark=0;dark<2;dark++) for(int paper=0;paper<2;paper++) {
+    shell_theme_mode=dark;shell_colors=dark ? &shell_theme_dark : &shell_theme_light;
+    for(unsigned i=0;i<256;i++) source[i]=paper ? 0xff876543 : 0xff000000|i|(i<<8)|(i<<16);
+    source[256]=0xff123456;frame.display_shell_theme=0;
+    shell_color_display(&frame);
+    assert(frame.display_shell_paper==paper && pixels[256]==source[256]);
+    for(unsigned i=0;i<256;i++) assert(pixels[i]==(paper ? source[i] : shell_blend(shell_colors->text,shell_colors->layer_page,i/255.f)));
+  }
+  DeleteObject(frame.display_bitmap);
+  DestroyWindow(g.page);g.page=NULL;
+  puts("Host perf regressions: INI/shelf persistence, unrelated keys, prepared DIB, all 256 shades/light/dark/colored paper passed");
   return 0;
 }

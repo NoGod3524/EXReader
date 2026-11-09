@@ -1,0 +1,26 @@
+shell|on
+shell_dpi|96
+shell_client|1280|800
+wait_idle
+shell_click|light
+sm_clock|freeze|1794157200000
+sm_foreground|1
+sm_context|Black Boy|open
+wait_idle
+next
+wait_idle
+sm_dump|idle-0
+sm_clock|advance|300000
+sm_dump|idle-5min
+sm_clock|advance|300000
+sm_dump|idle-10min
+next
+wait_idle
+sm_clock|advance|10000
+sm_dump|idle-resume
+sm_foreground|0
+next
+wait_idle
+sm_clock|advance|60000
+sm_dump|idle-unfocused
+quit
