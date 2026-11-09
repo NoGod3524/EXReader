@@ -120,7 +120,7 @@ exr_status exr_aac_open_source(const exr_source *source,exr_aac **out,exr_error 
   exr_aac *a; exr_status status;
   if(out) *out=NULL;
   if(!source || !out || !source->read_at || source->size<7) return exr_fail(e,EXR_ARGUMENT,"Invalid ADTS AAC source");
-  a=calloc(1,sizeof(*a)); if(!a) return exr_fail(e,EXR_MEMORY,"AAC reader allocation failed"); a->info.frames=UINT64_MAX;
+  a=EXR_NEW(exr_aac); if(!a) return exr_fail(e,EXR_MEMORY,"AAC reader allocation failed"); a->info.frames=UINT64_MAX;
   status=aac_range(source,&a->begin,&a->end,&source->control,e); if(status!=EXR_OK) goto fail;
   status=aac_first(source,&a->begin,a->end,&a->initial,&source->control,e); if(status!=EXR_OK) goto fail;
   status=aac_restart(a,source,&source->control,e); if(status!=EXR_OK) goto fail;

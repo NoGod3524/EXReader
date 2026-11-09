@@ -244,7 +244,7 @@ exr_status exr_dictionary_open(const char *path,exr_dictionary **out,exr_error *
   if(!path || !out)return exr_fail(e,EXR_ARGUMENT,"Missing dictionary path/output");
   size_t len=strlen(path);const char *ext=strrchr(path,'.');
   if(len>32700 || !ext || (strcmp(ext,".ifo") && strcmp(ext,".index")))return exr_fail(e,EXR_ARGUMENT,"Expected .ifo or .index");
-  exr_dictionary *d=calloc(1,sizeof(*d));char *name=malloc(len+16);exr_status status=EXR_MEMORY;
+  exr_dictionary *d=EXR_NEW(exr_dictionary);char *name=malloc(len+16);exr_status status=EXR_MEMORY;
   if(!d || !name)goto fail;
   size_t base=(size_t)(ext-path),size=0;memcpy(name,path,base);d->dictd=!strcmp(ext,".index");
   if(d->dictd) {

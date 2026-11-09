@@ -156,7 +156,7 @@ exr_status exr_font_manager_create(const exr_font_manager_options *o, exr_font_m
       return exr_fail(e, EXR_ARGUMENT, "Invalid fallback family %u", (unsigned)i);
   if (!(o->flags & EXR_FONT_MANAGER_PLATFORM_DIRECTORIES) && !o->location_count)
     return exr_fail(e, EXR_ARGUMENT, "Font manager needs at least one location");
-  if (!(m = calloc(1, sizeof(*m)))) return exr_fail(e, EXR_MEMORY, "Font manager allocation failed");
+  if (!(m = EXR_NEW(exr_font_manager))) return exr_fail(e, EXR_MEMORY, "Font manager allocation failed");
   m->summary.struct_size = sizeof(m->summary);
   m->serif = copy(o->serif_families ? o->serif_families : exr_fm_default_serif());
   m->sans = copy(o->sans_serif_families ? o->sans_serif_families : exr_fm_default_sans());

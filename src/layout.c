@@ -341,6 +341,7 @@ exr_status exr_book_fonts(const exr_document *d, exr_font *fallback,
     (*out)->manager_order = fallback->manager_order;
     (*out)->manager_required = fallback->manager_required;
     (*out)->fallback = fallback;
+    EXR_DEPEND(*out, 0, fallback);
     exr_font_ref(fallback);
     for (i = 0; i < used; i++) {
       exr_face *face = &(*out)->faces[i];

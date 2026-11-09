@@ -1,0 +1,5 @@
+case=valid_document
+expected=pass
+exit=0
+BEGIN valid_document
+PASS valid_document (8 checks)

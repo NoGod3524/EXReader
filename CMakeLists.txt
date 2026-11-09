@@ -173,6 +173,31 @@ if(EXR_BUILD_TOOLS)
 endif()
 if(EXR_FULL_TESTS)
   enable_testing()
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  add_executable(exreader-lifetime-test tests/test_lifetime.c)
+  target_link_libraries(exreader-lifetime-test PRIVATE exreader)
+  add_executable(exreader-lifetime-leaks-test tests/test_lifetime_leaks.c)
+  # Static SDK and vendor archives share the executable's CRT heap, allowing
+  # the Windows leak test to inspect allocations across every SDK component.
+  target_link_libraries(exreader-lifetime-leaks-test PRIVATE exr_core exr_pdf)
+  if(NOT CMAKE_BUILD_TYPE MATCHES "^(Release|RelWithDebInfo|MinSizeRel)$")
+    add_test(NAME native-lifetime COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/run_lifetime.py
+      $<TARGET_FILE:exreader-lifetime-test> ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
+    add_test(NAME native-lifetime-leaks COMMAND exreader-lifetime-leaks-test
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/sample.epub
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pdf-public.pdf)
+    if(CMAKE_CONFIGURATION_TYPES)
+      set_tests_properties(native-lifetime native-lifetime-leaks PROPERTIES CONFIGURATIONS Debug)
+    endif()
+  endif()
+  add_test(NAME native-ownership-coverage COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_ownership.py)
+  add_test(NAME native-lifetime-instrumentation COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_lifetime_coverage.py)
+  add_test(NAME native-lifetime-wrappers COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_lifetime_api.py --check)
   if(EXR_ENABLE_LCP)
     add_executable(exreader-lcp-test tests/test_lcp.c)
     target_include_directories(exreader-lcp-test PRIVATE src)
@@ -944,7 +969,7 @@ if(EXR_FULL_TESTS)
         ${CMAKE_CURRENT_BINARY_DIR}/native-convert-cli.json)
       set_tests_properties(native-convert-cli PROPERTIES FIXTURES_REQUIRED convert-corpus)
       set(exr_convert_benchmark_options)
-      if(EXR_SANITIZE AND NOT MSVC)
+      if(EXR_SANITIZE)
         list(APPEND exr_convert_benchmark_options --instrumented)
       endif()
       add_test(NAME native-convert-benchmark COMMAND ${Python3_EXECUTABLE}
@@ -1109,7 +1134,7 @@ install(FILES tests/fixtures/unicode/LICENSE.txt DESTINATION share/exreader/lice
 install(FILES licenses/adobe-glyph-list.txt licenses/pdfjs.txt DESTINATION share/exreader/licenses/pdf-font-data)
 
 install(FILES README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md DESTINATION .)
-install(FILES docs/VERSIONING.md docs/SDK_COMPATIBILITY.md docs/SUPPORT_MATRIX.md docs/WP7-SCRIPTS.md docs/WP8_COLR_V1.md docs/WP8_SVG_FONTS.md docs/WP12A-FORMATS.md docs/WP12A-STREAMING.md docs/CONVERSION.md docs/WP6-BOUNDED-READER.md docs/NATIVE_API.md docs/NATIVE_VALIDATION.md docs/PERFORMANCE.md docs/native-page.png docs/styled-page.png docs/complex-text.png DESTINATION docs)
+install(FILES docs/OWNERSHIP.md docs/VERSIONING.md docs/SDK_COMPATIBILITY.md docs/SUPPORT_MATRIX.md docs/WP7-SCRIPTS.md docs/WP8_COLR_V1.md docs/WP8_SVG_FONTS.md docs/WP12A-FORMATS.md docs/WP12A-STREAMING.md docs/CONVERSION.md docs/WP6-BOUNDED-READER.md docs/NATIVE_API.md docs/NATIVE_VALIDATION.md docs/PERFORMANCE.md docs/native-page.png docs/styled-page.png docs/complex-text.png DESTINATION docs)
 install(FILES licenses/noto-sans-test-fonts.txt DESTINATION share/exreader/licenses/wp7-fonts)
 install(DIRECTORY examples DESTINATION .)
 install(FILES apps/reader/desktop/windows_accessibility.inc DESTINATION apps/reader/desktop)

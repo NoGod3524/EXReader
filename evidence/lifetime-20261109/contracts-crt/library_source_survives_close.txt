@@ -1,0 +1,5 @@
+case=library_source_survives_close
+expected=pass
+exit=0
+BEGIN library_source_survives_close
+PASS library_source_survives_close (9 checks)

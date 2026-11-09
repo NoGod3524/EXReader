@@ -1,0 +1,14 @@
+{
+  "command": [
+    "<app-data>\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\cmake.EXE",
+    "-S",
+    "<workspaces>\\EXReader-S6-20261109",
+    "-B",
+    "<workspace>\\build\\lifetime-asan",
+    "-DEXR_BUILD_TOOLS=ON",
+    "-DEXR_BUILD_FUZZ=ON",
+    "-DEXR_SANITIZE=ON"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 15.456
+}

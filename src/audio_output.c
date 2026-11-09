@@ -124,7 +124,7 @@ exr_status exr_audio_output_open(uint32_t rate,uint32_t channels,exr_audio_outpu
   if(!out || rate<8000 || rate>192000 || (channels!=1 && channels!=2))
     return exr_fail(e,EXR_ARGUMENT,"Native audio requires 8000-192000 Hz and one or two channels");
   if(!exr_audio_output_backend()) return exr_fail(e,EXR_FORMAT,"No native audio output backend for this target");
-  a=calloc(1,sizeof(*a)); if(!a) return exr_fail(e,EXR_MEMORY,"Native audio output allocation failed");
+  a=EXR_NEW(exr_audio_output); if(!a) return exr_fail(e,EXR_MEMORY,"Native audio output allocation failed");
   a->rate=rate; a->channels=channels;
 #if defined(_WIN32)
   {

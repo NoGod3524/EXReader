@@ -120,7 +120,7 @@ exr_status exr_stretch_create(uint32_t sample_rate,uint32_t channels,double rate
   if(out) *out=NULL;
   if(!out || sample_rate<7350 || sample_rate>192000 || !channels || channels>8) return exr_fail(e,EXR_ARGUMENT,"Time-stretch requires 7350-192000 Hz and one to eight channels");
   status=stretch_rate(rate,&fixed,e); if(status!=EXR_OK) return status;
-  s=calloc(1,sizeof(*s)); if(!s) return exr_fail(e,EXR_MEMORY,"Time-stretch allocation failed");
+  s=EXR_NEW(exr_stretch); if(!s) return exr_fail(e,EXR_MEMORY,"Time-stretch allocation failed");
   s->sample_rate=sample_rate; s->channels=channels; s->rate=fixed; s->hop=(sample_rate+50)/100; s->search=(sample_rate+100)/200; s->capacity=s->hop*8+s->search*4;
   samples=(s->capacity+s->hop*2)*channels+s->hop; s->storage=calloc(samples,sizeof(*s->storage));
   if(!s->storage) { free(s); return exr_fail(e,EXR_MEMORY,"Time-stretch buffer allocation failed"); }

@@ -1,0 +1,5 @@
+case=pager_retains_font
+expected=pass
+exit=0
+BEGIN pager_retains_font
+PASS pager_retains_font (15 checks)

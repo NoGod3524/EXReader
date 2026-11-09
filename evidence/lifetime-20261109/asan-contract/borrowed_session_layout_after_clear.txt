@@ -1,0 +1,5 @@
+case=borrowed_session_layout_after_clear
+expected=abort
+exit=3
+BEGIN borrowed_session_layout_after_clear
+EXR_LIFETIME_ASSERT: 对象已释放

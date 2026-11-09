@@ -903,7 +903,7 @@ exr_status exr_hyphenator_create(const exr_hyphen_provider *provider,exr_hyphena
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing hyphenator output");
   *out=NULL;
   if(!provider || provider->struct_size!=sizeof(*provider) || !provider->hyphenate) return exr_fail(e,EXR_ARGUMENT,"Invalid hyphenation provider");
-  h=calloc(1,sizeof(*h)); if(!h) return exr_fail(e,EXR_MEMORY,"Hyphenator allocation failed");
+  h=EXR_NEW(exr_hyphenator); if(!h) return exr_fail(e,EXR_MEMORY,"Hyphenator allocation failed");
   h->provider=*provider; h->refs=1; h->bytes=sizeof(*h); *out=h; return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_hyphenator_create_discretionary(const exr_hyphen_discretionary_provider *provider,exr_hyphenator **out,exr_error *e) {
@@ -911,7 +911,7 @@ exr_status exr_hyphenator_create_discretionary(const exr_hyphen_discretionary_pr
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing hyphenator output");
   *out=NULL;
   if(!provider || provider->struct_size!=sizeof(*provider) || !provider->hyphenate) return exr_fail(e,EXR_ARGUMENT,"Invalid discretionary provider");
-  h=calloc(1,sizeof(*h));if(!h) return exr_fail(e,EXR_MEMORY,"Hyphenator allocation failed");
+  h=EXR_NEW(exr_hyphenator);if(!h) return exr_fail(e,EXR_MEMORY,"Hyphenator allocation failed");
   h->discretionary=*provider;h->refs=1;h->bytes=sizeof(*h);*out=h;return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_hyphenator_create_patterns_ex(const exr_hyphen_pattern_input *inputs,size_t count,size_t budget,
@@ -927,7 +927,7 @@ exr_status exr_hyphenator_create_patterns_ex(const exr_hyphen_pattern_input *inp
       return exr_fail(e,EXR_LIMIT,"Hyphenation dictionary input limit exceeded");
     total+=inputs[i].size;
   }
-  h=calloc(1,sizeof(*h)); if(!h) return exr_fail(e,EXR_MEMORY,"Hyphenator allocation failed");
+  h=EXR_NEW(exr_hyphenator); if(!h) return exr_fail(e,EXR_MEMORY,"Hyphenator allocation failed");
   h->refs=1; h->bytes=sizeof(*h); h->budget=budget ? budget : 32*1024*1024;
   if(h->bytes>h->budget || count*sizeof(*h->dictionaries)>h->budget-h->bytes) { status=exr_fail(e,EXR_LIMIT,"Hyphenation registry byte budget exceeded"); goto failed; }
   h->dictionaries=calloc(count,sizeof(*h->dictionaries));
@@ -1051,7 +1051,7 @@ exr_status exr_hyphenator_query(exr_hyphenator *h,const char *language,const cha
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing discretionary query output");
   *out=NULL;
   if(size>1024) return exr_fail(e,EXR_LIMIT,"Hyphenation word exceeds 1024 UTF-8 bytes");
-  result=calloc(1,sizeof(*result));if(!result) return exr_fail(e,EXR_MEMORY,"Discretionary result allocation failed");
+  result=EXR_NEW(exr_hyphenation);if(!result) return exr_fail(e,EXR_MEMORY,"Discretionary result allocation failed");
   result->bytes=sizeof(*result);
   status=query(h,language,text,size,bitmap,result,control,e);
   if(status!=EXR_OK) { exr_hyphenation_free(result);return status; }

@@ -1,0 +1,343 @@
+{
+  "total": 42,
+  "passed": 36,
+  "intentional_aborts": 25,
+  "results": [
+    {
+      "case": "valid_document",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN valid_document\r\nPASS valid_document (8 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "document_double_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN document_double_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "document_after_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN document_after_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "validate_after_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN validate_after_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "stale_address_after_create",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN stale_address_after_create\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "font_double_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN font_double_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "font_after_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN font_after_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "pager_double_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN pager_double_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "pager_after_document_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN pager_after_document_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "pager_retains_font",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN pager_retains_font\r\nPASS pager_retains_font (15 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "validate_broken_parent_chain",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN validate_broken_parent_chain\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "child_cleanup_after_document_free",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN child_cleanup_after_document_free\r\nPASS child_cleanup_after_document_free (10 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "layout_double_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN layout_double_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "layout_after_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN layout_after_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "borrowed_nodes_after_document_free",
+      "expected": "abort",
+      "exit_code": 1,
+      "passed": false,
+      "stdout": "BEGIN borrowed_nodes_after_document_free\r\n",
+      "stderr": "TEST_CHECK_FAILED line 139: i<n (0: )\r\n"
+    },
+    {
+      "case": "borrowed_text_after_document_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN borrowed_text_after_document_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "borrowed_page_after_pager_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN borrowed_page_after_pager_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "owned_page_survives_pager",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN owned_page_survives_pager\r\nPASS owned_page_survives_pager (16 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "publication_document_survives_parent",
+      "expected": "pass",
+      "exit_code": 1,
+      "passed": false,
+      "stdout": "BEGIN publication_document_survives_parent\r\n",
+      "stderr": "TEST_CHECK_FAILED line 48: (exr_publication_open_memory(EXR_TXT,text,sizeof(text)-1,&out,&error))==EXR_OK (5: Indexed loading accepts EPUB, MOBI/KF8 and FB2)\r\n"
+    },
+    {
+      "case": "session_retains_publication",
+      "expected": "pass",
+      "exit_code": 1,
+      "passed": false,
+      "stdout": "BEGIN session_retains_publication\r\n",
+      "stderr": "TEST_CHECK_FAILED line 48: (exr_publication_open_memory(EXR_TXT,text,sizeof(text)-1,&out,&error))==EXR_OK (5: Indexed loading accepts EPUB, MOBI/KF8 and FB2)\r\n"
+    },
+    {
+      "case": "borrowed_session_layout_after_clear",
+      "expected": "abort",
+      "exit_code": 1,
+      "passed": false,
+      "stdout": "BEGIN borrowed_session_layout_after_clear\r\n",
+      "stderr": "TEST_CHECK_FAILED line 48: (exr_publication_open_memory(EXR_TXT,text,sizeof(text)-1,&out,&error))==EXR_OK (5: Indexed loading accepts EPUB, MOBI/KF8 and FB2)\r\n"
+    },
+    {
+      "case": "retained_publication_double_free",
+      "expected": "abort",
+      "exit_code": 1,
+      "passed": false,
+      "stdout": "BEGIN retained_publication_double_free\r\n",
+      "stderr": "TEST_CHECK_FAILED line 48: (exr_publication_open_memory(EXR_TXT,text,sizeof(text)-1,&out,&error))==EXR_OK (5: Indexed loading accepts EPUB, MOBI/KF8 and FB2)\r\n"
+    },
+    {
+      "case": "retained_publication_after_free",
+      "expected": "abort",
+      "exit_code": 1,
+      "passed": false,
+      "stdout": "BEGIN retained_publication_after_free\r\n",
+      "stderr": "TEST_CHECK_FAILED line 48: (exr_publication_open_memory(EXR_TXT,text,sizeof(text)-1,&out,&error))==EXR_OK (5: Indexed loading accepts EPUB, MOBI/KF8 and FB2)\r\n"
+    },
+    {
+      "case": "borrowed_page_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN borrowed_page_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 借用对象不能释放\r\n"
+    },
+    {
+      "case": "render_callback_free_cache_owner",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN render_callback_free_cache_owner\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 重入：不能释放活动对象\r\n"
+    },
+    {
+      "case": "bidi_double_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN bidi_double_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "canvas_double_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN canvas_double_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "borrowed_bitmap_after_canvas_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN borrowed_bitmap_after_canvas_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "canvas_take_survives_parent",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN canvas_take_survives_parent\r\nPASS canvas_take_survives_parent (8 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "index_double_close",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN index_double_close\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "query_double_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN query_double_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "borrowed_pixels_after_canvas_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN borrowed_pixels_after_canvas_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "owned_buffer_double_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN owned_buffer_double_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "owned_export_survives_document",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN owned_export_survives_document\r\nPASS owned_export_survives_document (9 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "copied_bitmap_double_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN copied_bitmap_double_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "query_retains_index",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN query_retains_index\r\nPASS query_retains_index (14 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "cfi_double_free",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN cfi_double_free\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 对象已释放\r\n"
+    },
+    {
+      "case": "fixed_text_survives_input",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN fixed_text_survives_input\r\nPASS fixed_text_survives_input (6 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "callback_reentry_rejected",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN callback_reentry_rejected\r\nPASS callback_reentry_rejected (26 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "callback_independent_allowed",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN callback_independent_allowed\r\nPASS callback_independent_allowed (52 checks)\r\n",
+      "stderr": ""
+    },
+    {
+      "case": "callback_destroy_active",
+      "expected": "abort",
+      "exit_code": 3,
+      "passed": true,
+      "stdout": "BEGIN callback_destroy_active\r\n",
+      "stderr": "EXR_LIFETIME_ASSERT: 重入：不能释放活动对象\r\n"
+    },
+    {
+      "case": "null_free",
+      "expected": "pass",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "BEGIN null_free\r\nPASS null_free (3 checks)\r\n",
+      "stderr": ""
+    }
+  ]
+}

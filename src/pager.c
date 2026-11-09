@@ -242,7 +242,7 @@ static exr_pager *context_clone(const exr_pager *source) {
   state.streams=source->streams; state.stream_count=source->stream_count;
   saved = checkpoint_clone(&state);
   if (!saved) return NULL;
-  copy = calloc(1, sizeof(*copy));
+  copy = EXR_NEW(exr_pager);
   if (!copy) { checkpoint_free(saved); return NULL; }
   copy->f = saved->f; copy->line = saved->line; memset(&saved->line, 0, sizeof(saved->line));
   copy->floats=saved->floats; copy->f.floats=&copy->floats;
@@ -402,9 +402,9 @@ static exr_status finish_run(exr_pager *p) {
   return status;
 }
 static exr_status probe_current_page(exr_pager *trial,const exr_pager *parent) {
-  exr_layout *page=calloc(1,sizeof(*page));exr_status status;
+  exr_layout *page=EXR_NEW(exr_layout);exr_status status;
   if(!page) return exr_fail(parent->f.error,EXR_MEMORY,"Paragraph trial page allocation failed");
-  page->options=parent->f.layout->options;page->font=parent->f.font;exr_font_ref(page->font);
+  page->options=parent->f.layout->options;page->font=parent->f.font;exr_font_ref(page->font);EXR_DEPEND(page,0,page->font);
   if(parent->f.layout->page_count) {
     page->pages=calloc(1,sizeof(*page->pages));
     if(!page->pages) { exr_layout_free(page);return exr_fail(parent->f.error,EXR_MEMORY,"Paragraph trial page record allocation failed"); }
@@ -562,7 +562,7 @@ static exr_status context_create(flow *parent, size_t node, float width, float h
     return exr_fail(parent->error, EXR_LIMIT, "Writing-mode context nesting limit exceeded");
   if (!isfinite(width) || !isfinite(height) || width < 1 || height < 1)
     return exr_fail(parent->error, EXR_LIMIT, "Invalid flow context extent %.3f x %.3f",(double)width,(double)height);
-  p = calloc(1, sizeof(*p));
+  p = EXR_NEW(exr_pager);
   if (!p) return exr_fail(parent->error, EXR_MEMORY, "Writing-mode context allocation failed");
   p->config = *parent->config; p->config.user_css = NULL;
   p->config.page.width = width; p->config.page.height = height; p->config.page.margin = 0;
@@ -1504,13 +1504,14 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   status = exr_layout_validate(config, e);
   if (status != EXR_OK)
     return status;
-  p = calloc(1, sizeof(*p));
+  p = EXR_NEW(exr_pager);
   if (!p)
     return exr_fail(e, EXR_MEMORY, "Pager allocation failed");
   p->config = *config;
   p->f.floats=&p->floats;
   p->physical_page = config->page;
   p->f.doc = doc;
+  EXR_DEPEND(p, 0, doc);
   p->style_count = doc->node_count;
   p->config.user_css = NULL;
   if (config->user_css) {
@@ -1534,7 +1535,7 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   }
   status = writing_mode(p, e);
   if (status != EXR_OK) { if(!doc->view) free(font_rules); exr_pager_free(p); return status; }
-  p->assets = calloc(1, sizeof(*p->assets));
+  p->assets = EXR_NEW(exr_layout);
   if (!p->assets) {
     if(!doc->view) free(font_rules);
     exr_pager_free(p);
@@ -1546,7 +1547,10 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   if(!doc->view) free(font_rules);
   if (status != EXR_OK) { exr_pager_free(p); return status; }
   p->f.assets = p->assets;
+  EXR_DEPEND(p, 1, p->assets);
+  EXR_DEPEND(p->assets, 0, p->assets->font);
   p->f.doc = doc;
+  EXR_DEPEND(p, 0, doc);
   p->f.font = p->assets->font;
   p->f.config = &p->config;
   p->f.styles = p->styles;
@@ -1581,12 +1585,13 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
   /* Bounded readers budget one public page operation. Local speculative,
      float and table cursors share that budget and never reset it. */
   if(p->owned_chapter || p->owned_view) p->assets->work_glyphs=p->assets->shape_work=0;
-  l = calloc(1, sizeof(*l));
+  l = EXR_NEW(exr_layout);
   if (!l)
     return exr_fail(e, EXR_MEMORY, "Page allocation failed");
   l->options = p->config.page;
   l->font = p->assets->font;
   exr_font_ref(l->font);
+  EXR_DEPEND(l, 0, l->font);
   if (e)
     memset(e, 0, sizeof(*e));
   p->f.layout = l;
@@ -1643,7 +1648,7 @@ exr_status exr_flow_unit(flow *parent, size_t node, float width,
   if (status == EXR_OK) {
     *height = p->f.y;
     if (!*out) {
-      *out = calloc(1, sizeof(**out));
+      *out = EXR_NEW(exr_layout);
       if (!*out) status = exr_fail(parent->error, EXR_MEMORY, "Empty flow unit allocation failed");
       else (*out)->writing_mode = parent->writing_mode;
     }
@@ -1686,9 +1691,12 @@ static void reset_cursor(exr_pager *p) {
   p->f.writing_mode = p->writing_mode;
   p->f.origin_x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width : 0;
   p->f.doc = doc;
+  EXR_DEPEND(p, 0, doc);
   p->f.font = font;
   p->f.hyphenator = p->hyphenator;
   p->f.assets = p->assets;
+  EXR_DEPEND(p, 1, p->assets);
+  EXR_DEPEND(p->assets, 0, p->assets->font);
   p->f.config = &p->config;
   p->f.styles = p->styles;
   p->f.bidi = &p->bidi;p->f.plan_cursor=p;p->f.plan_resolve=resolve_plan;
@@ -1802,7 +1810,7 @@ exr_status exr_pager_set_hyphenator(exr_pager *p,exr_hyphenator *h,exr_error *e)
   if(!p || p->busy || p->mode || p->local) return exr_fail(e,EXR_ARGUMENT,"Set hyphenation before requesting pages");
   if(h==p->hyphenator) return exr_fail(e,EXR_OK,"");
   if(h) { status=exr_hyphenator_ref(h,e); if(status!=EXR_OK) return status; }
-  exr_hyphenator_free(p->hyphenator); p->hyphenator=h; p->f.hyphenator=h;
+  exr_hyphenator_free(p->hyphenator); p->hyphenator=h; p->f.hyphenator=h; EXR_DEPEND(p,2,h);
   return exr_fail(e,EXR_OK,"");
 }
 exr_pager_stats exr_pager_statistics(const exr_pager *p) {
@@ -2003,7 +2011,7 @@ exr_status exr_layout_create_hyphenated(const exr_document *doc, exr_font *font,
     status=exr_pager_set_hyphenator(pager,hyphenator,e);
     if(status!=EXR_OK) { exr_pager_free(pager); return status; }
   }
-  all = calloc(1, sizeof(*all));
+  all = EXR_NEW(exr_layout);
   if (!all) {
     exr_pager_free(pager);
     return exr_fail(e, EXR_MEMORY, "Whole-document layout allocation failed");
@@ -2012,6 +2020,7 @@ exr_status exr_layout_create_hyphenated(const exr_document *doc, exr_font *font,
   all->writing_mode = pager->writing_mode;
   all->font = pager->assets->font;
   exr_font_ref(all->font);
+  EXR_DEPEND(all, 0, all->font);
   while ((status = exr_pager_next(pager, &page, e)) == EXR_OK && page) {
     status = append_page(all, page, e);
     exr_layout_free(page);

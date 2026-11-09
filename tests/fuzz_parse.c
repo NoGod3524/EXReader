@@ -22,6 +22,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#ifndef EXR_FUZZ_CLEANUP
+/* Each parser iteration releases every SDK object. End its diagnostic epoch
+   before the next input so Debug quarantine cannot accumulate over a campaign. */
+#define EXR_FUZZ_CLEANUP() exr_debug_cleanup()
+#endif
 #if defined(_WIN32)
 #include <io.h>
 #include <windows.h>
@@ -228,6 +233,7 @@ int main(int argc, char **argv) {
       } else if(errno!=ENOENT) { fprintf(stderr,"fuzz: cannot read replay format record\n");goto done; }
     }
     format=forced ? forced : input_format(replay,buf,size);status=EXR_FUZZ_PROCESS(format,buf,size);
+    EXR_FUZZ_CLEANUP();
     printf("replay: format=%s bytes=%zu status=%d\n",EXR_FUZZ_RECORD_NAME(format),size,(int)status);
     result=0;goto done;
   }
@@ -258,6 +264,7 @@ int main(int argc, char **argv) {
     }
     attempts[base->format]++;
     if(EXR_FUZZ_PROCESS(base->format,buf,size)==EXR_OK) { parsed_count++;success[base->format]++; }
+    EXR_FUZZ_CLEANUP();
     if ((iteration+1)%10000==0) fprintf(stderr,"fuzz: %" PRIu64 " iterations, %" PRIu64 " parsed\n",iteration+1,parsed_count);
   }
   cpu_end=cpu_nanoseconds();if(cpu_end==UINT64_MAX || cpu_end<cpu_start) { fprintf(stderr,"fuzz: invalid process CPU clock\n");goto done; }

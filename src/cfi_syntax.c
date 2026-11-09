@@ -145,7 +145,7 @@ exr_status exr_cfi_parse(const char *s,exr_cfi **out,exr_cfi_diagnostic *diagnos
   }
   if(l.at!=l.end) { reject(&l,EXR_CFI_SYNTAX);goto bad; }
   if(l.end-begin>CFI_MAX-9) { reject(&l,EXR_CFI_LIMIT);goto bad; }
-  result=calloc(1,sizeof(*result));
+  result=EXR_NEW(exr_cfi);
   if(!result) return exr_fail(e,EXR_MEMORY,"CFI allocation failed");
   result->size=l.end-begin; result->data=exr_copy(s+begin,result->size);
   if(!result->data) { free(result);return exr_fail(e,EXR_MEMORY,"CFI allocation failed"); }

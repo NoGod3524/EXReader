@@ -3,6 +3,23 @@
 #include "icc_internal.h"
 #include "pixels_internal.h"
 #include <stdio.h>
+/* Returned sink callbacks cross the same host boundary as public functions.
+   Keep the original implementations for internal calls; these trampolines hold
+   a scope while user progress/paint callbacks run. */
+#if !defined(NDEBUG) && defined(EXR_LIFETIME_IMPLEMENTATION)
+#define EXR_CALLBACK_NAME(name) checked_##name
+#define EXR_CANVAS_CALLBACK(name, parameters, arguments, mode) \
+  static exr_status checked_##name parameters { \
+    exr_lifetime_scope scope; const void *objects[]={context}; exr_status result; \
+    exr_lifetime_expect(context,"exr_canvas"); \
+    if(!exr_lifetime_begin(&scope,objects,1,mode)) \
+      return exr_fail(e,EXR_ARGUMENT,"Reentrant canvas callback"); \
+    result=name arguments; exr_lifetime_end(&scope); return result; \
+  }
+#else
+#define EXR_CALLBACK_NAME(name) name
+#define EXR_CANVAS_CALLBACK(name, parameters, arguments, mode)
+#endif
 static exr_status finish(exr_canvas *c,exr_status status,exr_error *e) {
   if(c && status==EXR_OK) status=exr_icc_deferred_status(c->cmyk_profile,e);
   if(c && status!=EXR_OK && c->failure.code==EXR_OK) {
@@ -117,7 +134,7 @@ exr_status exr_canvas_create(const exr_canvas_config *config,exr_canvas **out,ex
   channels=config->channels ? config->channels : 4;
   if(config->width>(size_t)64*1024*1024/channels/config->height) return exr_fail(e,EXR_LIMIT,"Canvas bitmap exceeds 64 MiB");
   if(exr_control_cancel(&config->control,e)!=EXR_OK) return EXR_CANCELLED;
-  c=calloc(1,sizeof(*c)); if(!c) return exr_fail(e,EXR_MEMORY,"Canvas allocation failed");
+  c=EXR_NEW(exr_canvas); if(!c) return exr_fail(e,EXR_MEMORY,"Canvas allocation failed");
   c->layer_budget=64*1024*1024;
   c->control=config->control; c->mask_budget=config->mask_budget ? config->mask_budget : (size_t)64*1024*1024;
   c->bitmap.width=config->width; c->bitmap.height=config->height;
@@ -380,29 +397,50 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
 static exr_status sink_paint(void *context,const exr_paint_source *source,const double matrix[6],double alpha,exr_error *e) {
   return exr_canvas_paint(context,source,matrix,alpha,e);
 }
+EXR_CANVAS_CALLBACK(sink_paint,(void *context,const exr_paint_source *source,const double matrix[6],double alpha,exr_error *e),(context,source,matrix,alpha,e),0)
+
 static exr_status sink_image_cmyk(void *context,const exr_image_layer *image,const exr_bitmap *inks,const double matrix[6],double alpha,exr_error *e) {
   return exr_canvas_image_cmyk(context,image,inks,matrix,alpha,e);
 }
+EXR_CANVAS_CALLBACK(sink_image_cmyk,(void *context,const exr_image_layer *image,const exr_bitmap *inks,const double matrix[6],double alpha,exr_error *e),(context,image,inks,matrix,alpha,e),0)
+
 static unsigned sink_image_space(void *context) {
   const exr_canvas *c=context;return c && c->cmyk_groups ? EXR_GROUP_CMYK : EXR_GROUP_RGB;
 }
+#if !defined(NDEBUG) && defined(EXR_LIFETIME_IMPLEMENTATION)
+static unsigned checked_sink_image_space(void *context) {
+  exr_lifetime_scope scope; const void *objects[]={context}; unsigned result;
+  exr_lifetime_expect(context,"exr_canvas");
+  if(!exr_lifetime_begin(&scope,objects,1,1)) abort();
+  result=sink_image_space(context); exr_lifetime_end(&scope); return result;
+}
+#endif
+
 
 static exr_status sink_path(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
   return exr_canvas_path(context,segments,count,matrix,style,e);
 }
+EXR_CANVAS_CALLBACK(sink_path,(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e),(context,segments,count,matrix,style,e),0)
+
 static exr_status sink_path_cmyk(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],
   const exr_draw_style *style,const double fill[4],const double stroke[4],exr_error *e) {
   exr_canvas *c=context;
   if(!c || !c->cmyk_groups) return exr_canvas_path(c,segments,count,matrix,style,e);
   return exr_canvas_path_cmyk(c,segments,count,matrix,style,fill,stroke,e);
 }
+EXR_CANVAS_CALLBACK(sink_path_cmyk,(void *context,const exr_path_segment *segments,size_t count,const double matrix[6], const exr_draw_style *style,const double fill[4],const double stroke[4],exr_error *e),(context,segments,count,matrix,style,fill,stroke,e),0)
+
 static exr_status sink_image(void *context,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
   return exr_canvas_image(context,image,matrix,alpha,e);
 }
+EXR_CANVAS_CALLBACK(sink_image,(void *context,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e),(context,image,matrix,alpha,e),0)
+
 static exr_status sink_clip(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,unsigned accumulate,exr_error *e) {
   if(accumulate>1) return finish(context,exr_fail(e,EXR_ARGUMENT,"Invalid clip union operation"),e);
   return clip_path(context,segments,count,matrix,rule,accumulate!=0,e);
 }
+EXR_CANVAS_CALLBACK(sink_clip,(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,unsigned accumulate,exr_error *e),(context,segments,count,matrix,rule,accumulate,e),0)
+
 static exr_status sink_state(void *context,exr_draw_state state,exr_error *e) {
   exr_canvas *c=context; exr_status status;
   if(state==EXR_DRAW_SAVE) return exr_canvas_save(c,e);
@@ -419,12 +457,14 @@ static exr_status sink_state(void *context,exr_draw_state state,exr_error *e) {
   else exr_canvas_union_abort(c);
   c->group_depth++; return exr_fail(e,EXR_OK,"");
 }
+EXR_CANVAS_CALLBACK(sink_state,(void *context,exr_draw_state state,exr_error *e),(context,state,e),0)
+
 exr_status exr_canvas_get_sink(exr_canvas *c,exr_draw_sink *out,exr_error *e) {
   exr_status status;
   if(out) memset(out,0,sizeof(*out));
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing canvas draw sink output");
   status=ready(c,e); if(status!=EXR_OK) return status;
-  out->path=sink_path; out->image=sink_image; out->clip=sink_clip; out->state=sink_state; out->context=c; return exr_fail(e,EXR_OK,"");
+  out->path=EXR_CALLBACK_NAME(sink_path); out->image=EXR_CALLBACK_NAME(sink_image); out->clip=EXR_CALLBACK_NAME(sink_clip); out->state=EXR_CALLBACK_NAME(sink_state); out->context=c; return exr_fail(e,EXR_OK,"");
 }
 
 exr_status exr_canvas_blend(exr_canvas *c,exr_blend_mode mode,exr_error *e) {
@@ -433,6 +473,8 @@ exr_status exr_canvas_blend(exr_canvas *c,exr_blend_mode mode,exr_error *e) {
   c->blend=mode;return exr_fail(e,EXR_OK,"");
 }
 static exr_status sink_blend(void *context,exr_blend_mode mode,exr_error *e) { return exr_canvas_blend(context,mode,e); }
+EXR_CANVAS_CALLBACK(sink_blend,(void *context,exr_blend_mode mode,exr_error *e),(context,mode,e),0)
+
 exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex *out,exr_error *e) {
   size_t i,j,size,offsets[]={offsetof(exr_draw_sink_ex,blend),offsetof(exr_draw_sink_ex,begin_layer),offsetof(exr_draw_sink_ex,end_layer),offsetof(exr_draw_sink_ex,begin_group),offsetof(exr_draw_sink_ex,soft_mask),offsetof(exr_draw_sink_ex,extent),offsetof(exr_draw_sink_ex,shading),offsetof(exr_draw_sink_ex,path_cmyk),offsetof(exr_draw_sink_ex,image_cmyk),offsetof(exr_draw_sink_ex,image_space),offsetof(exr_draw_sink_ex,alpha_source),offsetof(exr_draw_sink_ex,paint)};
   size_t sizes[]={sizeof(out->blend),sizeof(out->begin_layer),sizeof(out->end_layer),sizeof(out->begin_group),sizeof(out->soft_mask),sizeof(out->extent),sizeof(out->shading),sizeof(out->path_cmyk),sizeof(out->image_cmyk),sizeof(out->image_space),sizeof(out->alpha_source),sizeof(out->paint)};
@@ -448,6 +490,8 @@ exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex
   out->struct_size=sizeof(*out);return EXR_OK;
 }
 static exr_status sink_begin_layer(void *context,double opacity,exr_blend_mode mode,exr_error *e) { return exr_canvas_begin_layer(context,opacity,mode,e); }
+EXR_CANVAS_CALLBACK(sink_begin_layer,(void *context,double opacity,exr_blend_mode mode,exr_error *e),(context,opacity,mode,e),0)
+
 exr_status exr_sink_begin_group(const exr_draw_sink_ex *sink,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
   exr_status status;
   if(sink->begin_group) status=sink->begin_group(sink->base.context,opacity,mode,flags,e);
@@ -457,11 +501,15 @@ exr_status exr_sink_begin_group(const exr_draw_sink_ex *sink,double opacity,exr_
   return status==EXR_OK && e && e->code!=EXR_OK ? e->code : status;
 }
 static exr_status sink_begin_group(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) { return exr_canvas_begin_group(context,opacity,mode,flags,e); }
+EXR_CANVAS_CALLBACK(sink_begin_group,(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e),(context,opacity,mode,flags,e),0)
+
 exr_status exr_sink_soft_mask(const exr_draw_sink_ex *sink,const unsigned char *mask,size_t width,size_t height,exr_error *e) {
   if(!sink->soft_mask) return mask ? exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks soft-mask support") : EXR_OK;
   return sink->soft_mask(sink->base.context,mask,width,height,e);
 }
 static exr_status sink_soft_mask(void *context,const unsigned char *mask,size_t width,size_t height,exr_error *e) { return exr_canvas_soft_mask(context,mask,width,height,e); }
+EXR_CANVAS_CALLBACK(sink_soft_mask,(void *context,const unsigned char *mask,size_t width,size_t height,exr_error *e),(context,mask,width,height,e),0)
+
 exr_status exr_sink_extent(const exr_draw_sink_ex *sink,unsigned *width,unsigned *height,exr_error *e) {
   if(!sink->extent) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks a device extent");
   return sink->extent(sink->base.context,width,height,e);
@@ -472,6 +520,8 @@ static exr_status sink_shading(void *context,const exr_bitmap *bitmap,const doub
   layer.bitmap=*bitmap;layer.interpolate=1;
   return exr_canvas_image(context,&layer,matrix,1.0,e);
 }
+EXR_CANVAS_CALLBACK(sink_shading,(void *context,const exr_bitmap *bitmap,const double matrix[6],exr_error *e),(context,bitmap,matrix,e),0)
+
 static exr_status sink_extent(void *context,unsigned *width,unsigned *height,exr_error *e) {
   const exr_canvas *c=context;
   if(!c || !c->bitmap.pixels) return exr_fail(e,EXR_ARGUMENT,"Canvas has no bitmap");
@@ -479,6 +529,8 @@ static exr_status sink_extent(void *context,unsigned *width,unsigned *height,exr
      region-sized working buffer that happens to be active. */
   *width=(unsigned)c->canvas_width;*height=(unsigned)c->canvas_height;return EXR_OK;
 }
+EXR_CANVAS_CALLBACK(sink_extent,(void *context,unsigned *width,unsigned *height,exr_error *e),(context,width,height,e),1)
+
 exr_status exr_sink_alpha_source(const exr_draw_sink_ex *sink,unsigned flags,exr_error *e) {
   if(sink->alpha_source) {
     exr_status status=sink->alpha_source(sink->base.context,flags,e);
@@ -491,7 +543,11 @@ static exr_status sink_alpha_source(void *context,unsigned flags,exr_error *e) {
   if(flags&~(EXR_ALPHA_CONSTANT_SHAPE|EXR_ALPHA_IMAGE_SHAPE)) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid alpha source flags"),e);
   c->alpha_flags=flags;return EXR_OK;
 }
+EXR_CANVAS_CALLBACK(sink_alpha_source,(void *context,unsigned flags,exr_error *e),(context,flags,e),0)
+
 static exr_status sink_end_layer(void *context,unsigned commit,exr_error *e) { return exr_canvas_end_layer(context,commit,e); }
+EXR_CANVAS_CALLBACK(sink_end_layer,(void *context,unsigned commit,exr_error *e),(context,commit,e),0)
+
 exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error *e) {
   exr_draw_sink_ex sink={0};size_t size;exr_status status;
   if(!out || out->struct_size<offsetof(exr_draw_sink_ex,blend) || out->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid extended sink output size");
@@ -508,8 +564,8 @@ exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error 
   if(size>offsetof(exr_draw_sink_ex,begin_layer) && size<offsetof(exr_draw_sink_ex,end_layer)+sizeof(sink.end_layer)) size=offsetof(exr_draw_sink_ex,begin_layer);
   if(size>offsetof(exr_draw_sink_ex,blend) && size<offsetof(exr_draw_sink_ex,begin_layer)) size=offsetof(exr_draw_sink_ex,blend);
   status=exr_canvas_get_sink(c,&sink.base,e);if(status!=EXR_OK) return status;
-  sink.struct_size=size;sink.blend=sink_blend;sink.begin_layer=sink_begin_layer;sink.end_layer=sink_end_layer;sink.begin_group=sink_begin_group;sink.soft_mask=sink_soft_mask;sink.extent=sink_extent;sink.shading=sink_shading;sink.path_cmyk=sink_path_cmyk;
-  sink.image_cmyk=sink_image_cmyk;sink.image_space=sink_image_space;sink.alpha_source=sink_alpha_source;sink.paint=sink_paint;
+  sink.struct_size=size;sink.blend=EXR_CALLBACK_NAME(sink_blend);sink.begin_layer=EXR_CALLBACK_NAME(sink_begin_layer);sink.end_layer=EXR_CALLBACK_NAME(sink_end_layer);sink.begin_group=EXR_CALLBACK_NAME(sink_begin_group);sink.soft_mask=EXR_CALLBACK_NAME(sink_soft_mask);sink.extent=EXR_CALLBACK_NAME(sink_extent);sink.shading=EXR_CALLBACK_NAME(sink_shading);sink.path_cmyk=EXR_CALLBACK_NAME(sink_path_cmyk);
+  sink.image_cmyk=EXR_CALLBACK_NAME(sink_image_cmyk);sink.image_space=EXR_CALLBACK_NAME(sink_image_space);sink.alpha_source=EXR_CALLBACK_NAME(sink_alpha_source);sink.paint=EXR_CALLBACK_NAME(sink_paint);
   memset(out,0,out->struct_size);memcpy(out,&sink,size);return EXR_OK;
 }
 exr_status exr_canvas_set_layer_budget(exr_canvas *c,size_t bytes,exr_error *e) {
@@ -629,3 +685,6 @@ exr_status exr_canvas_end_layer(exr_canvas *c,unsigned commit,exr_error *e) {
   composite_free(source_state);free(source.pixels);for(i=c->depth;i<160;i++) c->saved_blend[i]=EXR_BLEND_NORMAL;
   return finish(c,status,e);
 }
+
+#undef EXR_CANVAS_CALLBACK
+#undef EXR_CALLBACK_NAME

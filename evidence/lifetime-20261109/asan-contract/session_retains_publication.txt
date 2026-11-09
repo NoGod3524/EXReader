@@ -1,0 +1,5 @@
+case=session_retains_publication
+expected=pass
+exit=0
+BEGIN session_retains_publication
+PASS session_retains_publication (13 checks)

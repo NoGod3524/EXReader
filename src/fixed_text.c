@@ -27,7 +27,7 @@ exr_status exr_fixed_text_create(const char *utf8,size_t size,const exr_text_reg
        (r->end<size && ((unsigned char)utf8[r->end]&0xc0)==0x80)) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed text region range/flags");
     for(k=0;k<8;k++) if(!isfinite(r->quad[k]) || fabs(r->quad[k])>1e7) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed text region quad");
   }
-  text=calloc(1,sizeof(*text)); if(!text) return exr_fail(e,EXR_MEMORY,"Fixed text snapshot allocation failed");
+  text=EXR_NEW(exr_fixed_text); if(!text) return exr_fail(e,EXR_MEMORY,"Fixed text snapshot allocation failed");
   text->text=exr_copy(utf8,size); if(count) text->regions=malloc(count*sizeof(*regions));
   if(!text->text || (count && !text->regions)) { exr_fixed_text_free(text); return exr_fail(e,EXR_MEMORY,"Fixed text payload allocation failed"); }
   if(count) memcpy(text->regions,regions,count*sizeof(*regions));

@@ -1,0 +1,5 @@
+case=copied_bitmap_after_free_write
+expected=abort
+exit=3
+BEGIN copied_bitmap_after_free_write
+EXR_LIFETIME_ASSERT: 对象已释放

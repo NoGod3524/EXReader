@@ -1,0 +1,5 @@
+case=validate_after_free
+expected=abort
+exit=3
+BEGIN validate_after_free
+EXR_LIFETIME_ASSERT: 对象已释放

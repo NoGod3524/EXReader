@@ -53,8 +53,8 @@ exr_status exr_layout_create_positioned(const exr_document *d,exr_font *font,
      !budget(&bytes,input->glyph_count,sizeof(exr_glyph)) || !budget(&bytes,input->line_count,sizeof(exr_line)) ||
      !budget(&bytes,input->box_count,sizeof(exr_box)) || !budget(&bytes,input->paint_count,sizeof(exr_paint)))
     return exr_fail(e,EXR_LIMIT,"Positioned arrays exceed item or 128 MiB byte budget");
-  l=calloc(1,sizeof(*l)); if(!l) goto memory;
-  l->options=config->page; l->font=font; exr_font_ref(font);
+  l=EXR_NEW(exr_layout); if(!l) goto memory;
+  l->options=config->page; l->font=font; exr_font_ref(font); EXR_DEPEND(l,0,font);
   l->page_count=l->page_cap=input->page_count; l->pages=calloc(l->page_count,sizeof(*l->pages));
   l->positioned=copy_array(input->pages,input->page_count,sizeof(*input->pages));
   l->glyph_count=l->glyph_cap=input->glyph_count; l->glyphs=copy_array(input->glyphs,input->glyph_count,sizeof(*input->glyphs));

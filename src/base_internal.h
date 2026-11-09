@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "lifetime_internal.h"
 #define EXR_MAX_INPUT ((size_t)128 * 1024 * 1024)
 #define EXR_MAX_TEXT ((size_t)64 * 1024 * 1024)
 #define EXR_MAX_ITEMS ((size_t)4 * 1024 * 1024)

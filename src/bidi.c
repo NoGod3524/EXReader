@@ -469,7 +469,7 @@ static exr_status analyze_mapped(const char *text,size_t size,exr_direction requ
     if (++count > EXR_MAX_ITEMS)
       return exr_fail(e, EXR_LIMIT, "Bidi input exceeds scalar limit");
   }
-  bidi = calloc(1, sizeof(*bidi));
+  bidi = EXR_NEW(exr_bidi);
   if (!bidi)
     return exr_fail(e, EXR_MEMORY, "Bidi result allocation failed");
   bidi->count = count;

@@ -261,6 +261,7 @@ static exr_status open_data(unsigned char *data,size_t size,const char *title,co
   input.struct_size=sizeof(input); input.title=title; input.pages=pages; input.page_count=d->count; input.draw=draw;input.draw_ex=draw_ex; input.context=d; input.release=release; input.text=text; input.metadata=metadata; input.annotations=annotations;
   status=exr_control_poll(&options->control,EXR_STAGE_READ,d->count,d->count,e);
   if(status==EXR_OK) status=exr_fixed_create(&input,out,e);
+  if(status==EXR_OK) EXR_DEPEND(*out,0,d->font);
   if(status==EXR_OK && options->pdf_security) {
     exr_pdf_security_info info={0}; info.struct_size=options->pdf_security->struct_size; info.encrypted=!!d->crypt.revision;
     info.revision=d->crypt.revision; info.key_bits=d->crypt.length*8; info.owner_authenticated=d->crypt.owner;

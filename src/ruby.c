@@ -111,7 +111,7 @@ static float kern(flow *f,const exr_glyph *left,const exr_glyph *g) {
   return exr_kern(&f->font->faces[g->font_index],left->glyph,g->glyph);
 }
 static exr_status shape(flow *f,size_t first,size_t stop,int base,ruby_text *out) {
-  exr_layout *l=calloc(1,sizeof(*l)); exr_inline_bidi bidi={0}; flow child=*f;
+  exr_layout *l=EXR_NEW(exr_layout); exr_inline_bidi bidi={0}; flow child=*f;
   child.display_bidi=NULL;child.auto_bases=NULL;child.auto_probe=NULL;child.plan_probe=NULL;child.plan_resolve=NULL;child.plan_cursor=NULL;
   exr_buffer text={0}; unsigned char *boundaries=NULL; size_t *bytes=NULL,node,i,j,at=0;
   exr_status status=EXR_OK; unsigned orientation=0; exr_line *line;
@@ -196,7 +196,7 @@ static exr_status place(flow *f,exr_layout *out,ruby_text *text,float x,float y,
 }
 static exr_status prepare(flow *f,size_t root,uint32_t selected,ruby_model *m,exr_layout **out,float *baseline) {
   ruby_text *texts=calloc(m->base_count+m->annotation_count,sizeof(*texts));
-  exr_layout *result=calloc(1,sizeof(*result));
+  exr_layout *result=EXR_NEW(exr_layout);
   float columns[RUBY_PARTS]={0},row_height[RUBY_ROWS]={0},row_ascent[RUBY_ROWS]={0},row_descent[RUBY_ROWS]={0};
   float row_y[RUBY_ROWS]={0},base_ascent=0,base_descent=0,base_height=0,before=0,after=0,gap=fmaxf(1,(*exr_doc_style(f->doc,f->styles,root)).font_size*.1f);
   size_t i,j,scalars=0,first=selected==UINT32_MAX ? 0 : selected,last=selected==UINT32_MAX ? m->base_count : selected+1;

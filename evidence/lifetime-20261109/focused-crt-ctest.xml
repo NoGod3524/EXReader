@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="5"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="5"
+	timestamp="2026-11-09T11:30:58"
+	>
+	<testcase name="native-hyphen" classname="native-hyphen" time="0.800725" status="run">
+		<properties/>
+		<system-out>333040 hyphenation dictionary checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-audio-player" classname="native-audio-player" time="0.0189046" status="run">
+		<properties/>
+		<system-out>116 audio backend control checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-canvas" classname="native-canvas" time="0.47429" status="run">
+		<properties/>
+		<system-out>4484 native canvas checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-control" classname="native-control" time="2.55962" status="run">
+		<properties/>
+		<system-out>Operation control: 4097 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-library-source" classname="native-library-source" time="1.25109" status="run">
+		<properties/>
+		<system-out>23859 public library source checks passed
+</system-out>
+	</testcase>
+</testsuite>

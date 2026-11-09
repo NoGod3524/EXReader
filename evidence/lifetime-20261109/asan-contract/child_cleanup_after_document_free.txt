@@ -1,0 +1,5 @@
+case=child_cleanup_after_document_free
+expected=pass
+exit=0
+BEGIN child_cleanup_after_document_free
+PASS child_cleanup_after_document_free (10 checks)

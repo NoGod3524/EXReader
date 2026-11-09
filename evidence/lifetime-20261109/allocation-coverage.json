@@ -1,0 +1,225 @@
+{
+  "opaque_types": 31,
+  "covered_types": 31,
+  "constructor_sites": 55,
+  "runtime_counter_rows": 32,
+  "sdk_buffer_counter": true,
+  "missing_constructors": [],
+  "unrecognized_constructors": [],
+  "missing_counters": [],
+  "unrecognized_counters": [],
+  "raw_handle_allocations": [],
+  "types": {
+    "exr_aac": {
+      "constructors": 1,
+      "sites": [
+        "src/aac.c:123"
+      ]
+    },
+    "exr_audio": {
+      "constructors": 1,
+      "sites": [
+        "src/audio.c:47"
+      ]
+    },
+    "exr_audio_output": {
+      "constructors": 1,
+      "sites": [
+        "src/audio_output.c:127"
+      ]
+    },
+    "exr_audio_player": {
+      "constructors": 1,
+      "sites": [
+        "src/audio_player.c:49"
+      ]
+    },
+    "exr_bidi": {
+      "constructors": 1,
+      "sites": [
+        "src/bidi.c:472"
+      ]
+    },
+    "exr_canvas": {
+      "constructors": 1,
+      "sites": [
+        "src/canvas.c:137"
+      ]
+    },
+    "exr_cfi": {
+      "constructors": 1,
+      "sites": [
+        "src/cfi_syntax.c:148"
+      ]
+    },
+    "exr_dictionary": {
+      "constructors": 1,
+      "sites": [
+        "src/dictionary.c:247"
+      ]
+    },
+    "exr_document": {
+      "constructors": 12,
+      "sites": [
+        "src/book.c:59",
+        "src/book.c:302",
+        "src/construct.c:123",
+        "src/document.c:599",
+        "src/formats.c:655",
+        "src/formats.c:863",
+        "src/formats.c:891",
+        "src/formats.c:1052",
+        "src/formats.c:1116",
+        "src/formats.c:1564",
+        "src/formats.c:1615",
+        "src/kf8.c:976"
+      ]
+    },
+    "exr_fixed_document": {
+      "constructors": 1,
+      "sites": [
+        "src/fixed.c:60"
+      ]
+    },
+    "exr_fixed_text": {
+      "constructors": 1,
+      "sites": [
+        "src/fixed_text.c:30"
+      ]
+    },
+    "exr_flac": {
+      "constructors": 1,
+      "sites": [
+        "src/flac.c:269"
+      ]
+    },
+    "exr_font": {
+      "constructors": 1,
+      "sites": [
+        "src/fonts.c:59"
+      ]
+    },
+    "exr_font_manager": {
+      "constructors": 1,
+      "sites": [
+        "src/font_manager.c:159"
+      ]
+    },
+    "exr_hyphenation": {
+      "constructors": 1,
+      "sites": [
+        "src/hyphen.c:1054"
+      ]
+    },
+    "exr_hyphenator": {
+      "constructors": 3,
+      "sites": [
+        "src/hyphen.c:906",
+        "src/hyphen.c:914",
+        "src/hyphen.c:930"
+      ]
+    },
+    "exr_layout": {
+      "constructors": 9,
+      "sites": [
+        "src/pager.c:405",
+        "src/pager.c:1538",
+        "src/pager.c:1588",
+        "src/pager.c:1651",
+        "src/pager.c:2014",
+        "src/pager_table.c:649",
+        "src/positioned.c:56",
+        "src/ruby.c:114",
+        "src/ruby.c:199"
+      ]
+    },
+    "exr_library": {
+      "constructors": 1,
+      "sites": [
+        "src/library.c:118"
+      ]
+    },
+    "exr_m4b": {
+      "constructors": 1,
+      "sites": [
+        "src/m4b.c:261"
+      ]
+    },
+    "exr_m4b_inspection": {
+      "constructors": 1,
+      "sites": [
+        "src/m4b_metadata.c:424"
+      ]
+    },
+    "exr_mp3": {
+      "constructors": 1,
+      "sites": [
+        "src/mp3.c:161"
+      ]
+    },
+    "exr_pager": {
+      "constructors": 3,
+      "sites": [
+        "src/pager.c:245",
+        "src/pager.c:565",
+        "src/pager.c:1507"
+      ]
+    },
+    "exr_pcm": {
+      "constructors": 2,
+      "sites": [
+        "src/pcm.c:15",
+        "src/pcm.c:53"
+      ]
+    },
+    "exr_publication": {
+      "constructors": 1,
+      "sites": [
+        "src/publication.c:119"
+      ]
+    },
+    "exr_session": {
+      "constructors": 1,
+      "sites": [
+        "src/publication.c:887"
+      ]
+    },
+    "exr_sevenz": {
+      "constructors": 1,
+      "sites": [
+        "src/sevenz.c:353"
+      ]
+    },
+    "exr_stretch": {
+      "constructors": 1,
+      "sites": [
+        "src/stretch.c:123"
+      ]
+    },
+    "exr_text_index": {
+      "constructors": 1,
+      "sites": [
+        "src/text_index.c:42"
+      ]
+    },
+    "exr_text_query": {
+      "constructors": 1,
+      "sites": [
+        "src/text_index.c:156"
+      ]
+    },
+    "exr_txt_cursor": {
+      "constructors": 1,
+      "sites": [
+        "src/formats.c:1802"
+      ]
+    },
+    "exr_wave": {
+      "constructors": 1,
+      "sites": [
+        "src/wave.c:43"
+      ]
+    }
+  },
+  "passed": true
+}

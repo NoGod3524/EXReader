@@ -1,0 +1,5 @@
+case=bidi_double_free
+expected=abort
+exit=3
+BEGIN bidi_double_free
+EXR_LIFETIME_ASSERT: 对象已释放

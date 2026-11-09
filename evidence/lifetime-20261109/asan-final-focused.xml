@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="6"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="6"
+	timestamp="2026-11-09T11:34:38"
+	>
+	<testcase name="native-lifetime-leaks" classname="native-lifetime-leaks" time="0.103495" status="run">
+		<properties/>
+		<system-out>LIFETIME_LEAKS start
+BOOK 1 PASS live=0
+BOOK 2 PASS live=0
+COUNT exr_aac 0 0 0
+COUNT exr_audio 0 0 0
+COUNT exr_audio_output 0 0 0
+COUNT exr_audio_player 0 0 0
+COUNT exr_bidi 0 0 0
+COUNT exr_canvas 1 1 0
+COUNT exr_cfi 0 0 0
+COUNT exr_dictionary 0 0 0
+COUNT exr_document 2 2 0
+COUNT exr_fixed_document 1 1 0
+COUNT exr_fixed_text 1 1 0
+COUNT exr_flac 0 0 0
+COUNT exr_font 2 2 0
+COUNT exr_font_manager 0 0 0
+COUNT exr_hyphenation 0 0 0
+COUNT exr_hyphenator 0 0 0
+COUNT exr_layout 2 2 0
+COUNT exr_library 0 0 0
+COUNT exr_m4b 0 0 0
+COUNT exr_m4b_inspection 0 0 0
+COUNT exr_mp3 0 0 0
+COUNT exr_pager 1 1 0
+COUNT exr_pcm 0 0 0
+COUNT exr_publication 1 1 0
+COUNT exr_session 0 0 0
+COUNT exr_sevenz 0 0 0
+COUNT exr_stretch 0 0 0
+COUNT exr_text_index 0 0 0
+COUNT exr_text_query 0 0 0
+COUNT exr_txt_cursor 0 0 0
+COUNT exr_wave 0 0 0
+COUNT sdk_buffer 301 301 0
+SUMMARY books=2 live=0
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen" classname="native-hyphen" time="1.54137" status="run">
+		<properties/>
+		<system-out>333040 hyphenation dictionary checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-audio-player" classname="native-audio-player" time="0.128519" status="run">
+		<properties/>
+		<system-out>116 audio backend control checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-canvas" classname="native-canvas" time="0.598824" status="run">
+		<properties/>
+		<system-out>4484 native canvas checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-control" classname="native-control" time="2.77911" status="run">
+		<properties/>
+		<system-out>Operation control: 4097 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-library-source" classname="native-library-source" time="0.893514" status="run">
+		<properties/>
+		<system-out>23859 public library source checks passed
+</system-out>
+	</testcase>
+</testsuite>

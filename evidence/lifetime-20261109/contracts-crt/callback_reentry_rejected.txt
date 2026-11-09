@@ -1,0 +1,5 @@
+case=callback_reentry_rejected
+expected=pass
+exit=0
+BEGIN callback_reentry_rejected
+PASS callback_reentry_rejected (26 checks)

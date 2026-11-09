@@ -158,7 +158,7 @@ exr_status exr_mp3_open_source(const exr_source *source,exr_mp3 **out,exr_error 
   exr_mp3 *m; unsigned char frame[1441],next[4]; mp3_header h={0},n={0}; exr_status status; int skip;
   if(out) *out=NULL;
   if(!source || !out || !source->read_at || source->size<4) return exr_fail(e,EXR_ARGUMENT,"Invalid MP3 source");
-  m=calloc(1,sizeof(*m)); if(!m) return exr_fail(e,EXR_MEMORY,"MP3 reader allocation failed");
+  m=EXR_NEW(exr_mp3); if(!m) return exr_fail(e,EXR_MEMORY,"MP3 reader allocation failed");
   m->info.frames=UINT64_MAX; m->stride=32;
   status=mp3_tags(source,&m->begin,&m->end,e); if(status!=EXR_OK) goto fail;
   status=mp3_first(source,&m->begin,m->end,&h,e); if(status!=EXR_OK) goto fail;

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "ctest",
+    "--test-dir",
+    "build/lifetime-crt",
+    "--output-on-failure",
+    "--parallel",
+    "6"
+  ],
+  "exit_code": 4294967295,
+  "elapsed_seconds": 487.226
+}

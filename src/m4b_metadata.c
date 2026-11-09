@@ -421,7 +421,7 @@ exr_status exr_m4b_inspect_source(const exr_source *source,exr_m4b_inspection **
   if(!error) error=&local;
   memset(error,0,sizeof(*error));
   io=(exr_bmff_reader){source,&source->control,error,0,UINT64_C(33554432),0};
-  m=calloc(1,sizeof(*m)); if(!m) return exr_fail(error,EXR_MEMORY,"ISO-BMFF inspection allocation failed"); m->duration=UINT64_MAX;
+  m=EXR_NEW(exr_m4b_inspection); if(!m) return exr_fail(error,EXR_MEMORY,"ISO-BMFF inspection allocation failed"); m->duration=UINT64_MAX;
   while(at<source->size) {
     status=exr_bmff_at(&io,at,source->size,&box); if(status!=EXR_OK) goto done;
     if(box.type==BOX('f','t','y','p')) { if(ftyp++ || box.end-box.data<8) { status=exr_bmff_fail(&io,"Invalid ISO-BMFF file type"); goto done; } }

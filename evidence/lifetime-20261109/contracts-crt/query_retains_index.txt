@@ -1,0 +1,5 @@
+case=query_retains_index
+expected=pass
+exit=0
+BEGIN query_retains_index
+PASS query_retains_index (14 checks)

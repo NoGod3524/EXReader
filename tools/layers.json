@@ -157,7 +157,20 @@
     "viewport.c": "base",
     "wave.c": "audio",
     "xmp.c": "formats",
-    "xmp_write.c": "pdf_edit"
+    "xmp_write.c": "pdf_edit",
+    "lifetime.c": "base",
+    "lifetime_api_audio.c": "audio",
+    "lifetime_api_base.c": "base",
+    "lifetime_api_doc.c": "doc",
+    "lifetime_api_formats.c": "formats",
+    "lifetime_api_graphics.c": "graphics",
+    "lifetime_api_layout.c": "layout",
+    "lifetime_api_library.c": "library",
+    "lifetime_api_pdf.c": "pdf",
+    "lifetime_api_pdf_edit.c": "pdf_edit",
+    "lifetime_api_render.c": "render",
+    "lifetime_api_text.c": "text",
+    "lifetime_api_textindex.c": "textindex"
   },
   "exceptions": [],
   "headers": {
@@ -181,7 +194,7 @@
     "src/graphics_internal.h": "graphics",
     "src/hyphen_internal.h": "text",
     "src/hyphen_unicode_data.h": "text",
-  "src/hyphen_builtin_data.h": "text",
+    "src/hyphen_builtin_data.h": "text",
     "src/icc_internal.h": "graphics",
     "src/indic_data.h": "text",
     "src/layout_internal.h": "layout",
@@ -227,7 +240,8 @@
     "include/exr/audio.h": "audio",
     "include/exr/library.h": "library",
     "include/exr/textindex.h": "textindex",
-    "src/chapter_internal.h": "doc"
+    "src/chapter_internal.h": "doc",
+    "src/lifetime_internal.h": "base",
+    "src/lifetime_rename.h": "base"
   }
 }
-
