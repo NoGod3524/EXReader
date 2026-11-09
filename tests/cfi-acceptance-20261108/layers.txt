@@ -1,0 +1,2 @@
+113 objects, 1279 symbol references, 0 remaining inverse references, 0 new
+1006 source/header dependencies, 0 inverse includes
