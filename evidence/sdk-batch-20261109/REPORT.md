@@ -145,4 +145,4 @@ pwsh -File tools/perf/batch_session.ps1 `
 
 [构建与文件身份](provenance.json)记录编译器、配置、源码LF归一SHA-256、书籍、字体及新旧DLL的SHA-256。gzip文件解压后即为原始JSON，未删除逐页记录。阶段记录见 [S1-OUT.txt](../../S1-OUT.txt)。
 
-PR与CI状态在发布后追加。
+已提交产品与完整证据 `64eabeb7`，推送 `codex/sdk-batch-perf-20261109`，创建 **Draft PR [#112](https://github.com/NoGod3524/EXReader/pull/112)**，base为main。PR事件已触发Native C engine、Required native reading SDK core等CI，实时结果见 [PR checks](https://github.com/NoGod3524/EXReader/pull/112/checks)。未手动dispatch/cancel工作流，未修改`.github/`。
