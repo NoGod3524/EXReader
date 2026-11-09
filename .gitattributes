@@ -1,6 +1,7 @@
 * text=auto eol=lf
 *.png binary
 *.bmp binary
+*.pgm binary
 *.epub binary
 *.docx binary
 *.mobi binary
