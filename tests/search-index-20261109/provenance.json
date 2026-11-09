@@ -50,5 +50,7 @@
   "ctest_count": 248,
   "existing_tests": 241,
   "new_groups": 7,
-  "ci_policy": "Only PR/push automatic workflows. No workflow_dispatch, cancellations or .github changes."
+  "ci_policy": "Only PR/push automatic workflows. No workflow_dispatch, cancellations or .github changes.",
+  "validated_code_commit": "0ba5853aeb769d497a58b3869b8494ab2bc32a09",
+  "pull_request": 101
 }
