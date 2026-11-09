@@ -1,0 +1,12 @@
+[1/12] Building C object CMakeFiles/ratio-probe.dir/reference.c.obj
+[2/12] Building C object CMakeFiles/perf-reference.dir/reference_main.c.obj
+[3/12] Building C object CMakeFiles/perf-reference.dir/reference.c.obj
+[4/12] Building C object CMakeFiles/ratio-probe.dir/ratio_probe.c.obj
+[5/12] Building C object CMakeFiles/load-probe.dir/reference.c.obj
+[6/12] Building C object CMakeFiles/load-reference.dir/load_reference.c.obj
+[7/12] Building C object CMakeFiles/load-reference.dir/reference.c.obj
+[8/12] Building C object CMakeFiles/load-probe.dir/load_probe.c.obj
+[9/12] Linking C executable perf-reference.exe
+[10/12] Linking C executable load-reference.exe
+[11/12] Linking C executable ratio-probe.exe
+[12/12] Linking C executable load-probe.exe

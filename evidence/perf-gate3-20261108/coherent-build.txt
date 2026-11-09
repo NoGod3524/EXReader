@@ -1,0 +1,8 @@
+[0/1] Re-running CMake...
+-- Configuring done (0.3s)
+-- Generating done (0.1s)
+-- Build files have been written to: C:/Users/Oscar/Documents/Codex/EXReader-perf3-20261108/evidence/perf-gate3-20261108/build
+[1/5] Building C object CMakeFiles/load-reference.dir/load_reference.c.obj
+[2/5] Linking C executable load-reference.exe
+[3/5] Building C object CMakeFiles/load-probe.dir/load_probe.c.obj
+[4/5] Linking C executable load-probe.exe

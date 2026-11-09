@@ -1,0 +1,4 @@
+# Capture digests bind native stdout bytes, including Windows CRLF.
+* -text whitespace=cr-at-eol
+# Compiler/disassembler output is retained verbatim, including trailing spaces.
+*.txt -whitespace

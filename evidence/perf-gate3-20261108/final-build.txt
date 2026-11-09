@@ -1,0 +1,6 @@
+[1/6] Building C object CMakeFiles/load-probe.dir/reference.c.obj
+[2/6] Building C object CMakeFiles/load-probe.dir/load_probe.c.obj
+[3/6] Building C object CMakeFiles/load-reference.dir/load_reference.c.obj
+[4/6] Building C object CMakeFiles/load-reference.dir/reference.c.obj
+[5/6] Linking C executable load-reference.exe
+[6/6] Linking C executable load-probe.exe

@@ -1,0 +1,1 @@
+cycle geometric denominator, native accounting and invalid observations checks passed
