@@ -8,3 +8,18 @@
 [2026-11-09 00:59:08 -05:00] MinGW 引擎与全测试目标构建完成，退出码 0；日志 build/integration-main99/build.txt。
 [2026-11-09 00:59:58 -05:00] 测试登记核对完成：228 个既有测试全部保留，main 新增 16 个，合并后总计 244。同文件局部变量复查：library_note 的 snapshot 仅在赋值后经 note 指针使用；fixed_note 的 note 和 audio_bookmark 的 b 均有空输入清零分支；source、format/bounded、text_size、position/extent、validation 的使用均有赋值或成功返回检查，未发现其它同类漏初始化；仅报告，未修改。
 [2026-11-09 00:59:59 -05:00] merge commit 完成：6c415ccec50bdb2fc58eff14382fdbed8b21610c，第二父提交为 d9ffdbf0；四个集成 merge 历史保留。
+[2026-11-09 00:59:59 -05:00] C4701 独立提交完成：d62f778c5ed48d75cc32a168dfb1b0f5a2275fc9，提交信息已写明消误报，非修 bug。
+[2026-11-09 01:00:25 -05:00] 实际编译对象层次与头文件依赖检查完成，退出码 2；日志 build/integration-main99/layers.txt。
+[2026-11-09 01:01:06 -05:00] 更正层次检查命令为 python tools/check_layers.py build（build 为位置参数）；检查退出码 0。
+[2026-11-09 01:01:33 -05:00] 全量 ctest 完成，退出码 0；100% tests passed out of 244；日志 build/integration-main99/ctest.txt。
+[2026-11-09T01:01:34.423360-05:00] MinGW Windows 宿主编译与链接通过：-O2 -Wall -Wextra -Werror。
+[2026-11-09 01:01:54 -05:00] 19 本逐页回归完成，退出码 1；结果 build/integration-main99/books.json、books.diff.json，比较基线 build/integration-evidence/main-books.json（此前四次集成均与此基线零差异）。
+[2026-11-09T01:01:58.202122-05:00] geometry/anchor/epub 宿主检查及 --self-test 全部完成；日志 build/integration-main99/host.txt；selftest.json。
+[2026-11-09 01:02:19 -05:00] 历史与边界检查通过：d9ffdbf0 及四个集成 merge 均为 HEAD 祖先；.github/ 零变化；本次 tests/ 变动逐文件与 main 对应 blob 相同，无自行修改测试断言。
+[2026-11-09 01:02:53 -05:00] 真书差异定位：18 本完全一致，仅 Zami 由 636 页变为 659 页、636 个对应页哈希变化；总计 11,426 页/8,648,571 字形。尚未满足回归验收，继续核对 main 基线及解析变更来源。
+[2026-11-09 01:03:35 -05:00] 差异来源确认：清单第 19 本 Zami 是 .mobi；#96 重写 MOBI 解析，其原报告仅验证 19 本 EPUB，另保留旧混合清单。此前使用的是 e324059c 旧 main 基线，现需独立构建 d9ffdbf0 当前 main，用同一混合清单、字体、布局对比合并结果；保留旧基线差异证据。
+[2026-11-09 01:06:25 -05:00] 当前 main 独立配置登记 228 项测试，合并分支 244 项；main 228 项全部保留。差额 16 项为样式/脚注、SSML、词典和三个 Windows 集成测试组。
+[2026-11-09 01:07:14 -05:00] 当前 main d9ffdbf0 独立源码归档/同参数 MinGW 引擎构建完成，退出码 0；全部新文件位于本工作树 build/integration-main99。
+[2026-11-09 01:11:05 -05:00] 当前 main d9ffdbf0 的原 19 本独立渲染及直接比较完成，比较退出码 0；结果 main-books.json 和 current-main.diff.json。
+[2026-11-09T01:12:17.227299-05:00] 本地验收完成：MinGW 宿主通过、ctest 244/244、宿主自检 26/26；原 19 本与当前 main d9ffdbf0 相比，11,426 页/8,648,571 字形，页数/字形/逐页哈希变化全为 0。全部证据已保存 docs/ui/evidence/integration-main-20261109/，含旧 main 的 MOBI 差异记录。
+[2026-11-09 01:13:01 -05:00] 证据整理完成；入库文本日志去除行尾空格，build/ 中保留原始日志。再次 fetch 的 current main 为 d9ffdbf09da654340bc35c043ad6d4b49cc344d1。
