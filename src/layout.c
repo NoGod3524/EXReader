@@ -294,6 +294,8 @@ exr_status exr_book_fonts(const exr_document *d, exr_font *fallback,
   void *loaded[32] = {0};
   const exr_font_rule *selected[32] = {0};
   size_t i, used = fallback->count, total = 0, reads = 0;
+  size_t base = fallback->count;
+  size_t limit = fallback->manager_order ? EXR_FONT_MANAGER_MAX_BYTES : EXR_MAX_INPUT;
   exr_status status = EXR_OK;
   *out = NULL;
   status = exr_control_cancel(control, e);
@@ -310,21 +312,34 @@ exr_status exr_book_fonts(const exr_document *d, exr_font *fallback,
     status = load_font(d, fallback, &rules[i], control, &bytes, &size, &reads, e);
     if (status != EXR_OK) goto done;
     if (!bytes) continue;
-    if (used == 32 || size > EXR_MAX_INPUT - total) {
+    /* Embedded CSS fonts retain priority over the optional discovery tail.
+       Only evict its last base face; previously loaded embedded faces survive. */
+    while (fallback->manager_order && base > fallback->manager_required &&
+           (used == 32 || total > limit || size > limit - total)) {
+      size_t move = used - base;
+      total -= inputs[--base].size;
+      memmove(inputs + base, inputs + base + 1, move * sizeof(*inputs));
+      memmove(loaded + base, loaded + base + 1, move * sizeof(*loaded));
+      memmove(selected + base, selected + base + 1, move * sizeof(*selected));
+      loaded[--used] = NULL; selected[used] = NULL;
+    }
+    if (used == 32 || total > limit || size > limit - total) {
       exr_free(bytes);
-      status = exr_fail(e, EXR_LIMIT, "Combined font set exceeds 32 faces or 128 MiB");
+      status = exr_fail(e, EXR_LIMIT, "Combined font set exceeds 32 faces or %u MiB", (unsigned)(limit / (1024 * 1024)));
       goto done;
     }
     total += size;
     selected[used] = &rules[i]; loaded[used] = bytes;
     inputs[used++] = (exr_font_input){bytes, size, 0};
   }
-  if (used == fallback->count) { exr_font_ref(fallback); *out = fallback; }
+  if (used == base) { exr_font_ref(fallback); *out = fallback; }
   else {
-    status = exr_font_create(inputs, used, out, e);
+    status = fallback->manager_order ? exr_font_create_managed(inputs, used, out, e) :
+                                      exr_font_create(inputs, used, out, e);
     if (status != EXR_OK) goto done;
-    (*out)->base_count = fallback->count;
+    (*out)->base_count = base;
     (*out)->manager_order = fallback->manager_order;
+    (*out)->manager_required = fallback->manager_required;
     (*out)->fallback = fallback;
     exr_font_ref(fallback);
     for (i = 0; i < used; i++) {

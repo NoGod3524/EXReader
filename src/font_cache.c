@@ -3,7 +3,7 @@
      "EXRFIDX\0", u32 format, u32 FreeType version, u32 file count,
      u64 FNV-1a of the payload, payload.
    Payload per file: str path, u64 size, i64 mtime, u32 skip, str detail,
-   u32 faces; per face: u32 index/style/weight/scripts, str family/style/aliases,
+   u32 faces; per face: u32 index/style/weight/scripts/color, str family/style/aliases,
    u64 codepoints, u32 ranges, ranges*2 u32. str = u32 length + bytes.
    Any mismatch (format, FreeType version, checksum, bounds) discards the whole
    cache; individual entries are revalidated by path + size + mtime. */
@@ -16,7 +16,7 @@
 #include <unistd.h>
 #define exr_getpid getpid
 #endif
-#define FORMAT 1u
+#define FORMAT 2u
 static const unsigned char magic[8] = {'E', 'X', 'R', 'F', 'I', 'D', 'X', 0};
 static uint32_t ft_version(void) {
   return ((uint32_t)FREETYPE_MAJOR << 16) | ((uint32_t)FREETYPE_MINOR << 8) | (uint32_t)FREETYPE_PATCH;
@@ -78,7 +78,7 @@ exr_status exr_fm_cache_read(const char *path, exr_fm_files *out) {
     file->skip = (unsigned)take(&r, 4);
     file->detail = take_text(&r);
     faces = take(&r, 4);
-    if (r.bad || faces > 4096 || faces > EXR_FM_MAX_FACES - face_total || faces > (r.size - r.at) / 48 ||
+    if (r.bad || faces > 4096 || faces > EXR_FM_MAX_FACES - face_total || faces > (r.size - r.at) / 52 ||
         (file->skip && faces) || (!file->skip && !faces)) { r.bad = 1; break; }
     if (faces && !(file->faces = calloc((size_t)faces, sizeof(*file->faces)))) { r.bad = 1; break; }
     face_total += (size_t)faces;
@@ -90,6 +90,7 @@ exr_status exr_fm_cache_read(const char *path, exr_fm_files *out) {
       face->style = (unsigned)take(&r, 4) & 3u;
       face->weight = (unsigned)take(&r, 4);
       face->scripts = (unsigned)take(&r, 4) & 7u;
+      face->color = (unsigned)take(&r, 4) & 1u;
       face->family = take_text(&r);
       face->style_name = take_text(&r);
       face->aliases = take_text(&r);
@@ -139,7 +140,7 @@ exr_status exr_fm_cache_write(const char *path, const exr_fm_files *files, exr_e
     for (j = 0; ok && j < file->face_count; j++) {
       const exr_fm_face *face = &file->faces[j];
       ok = put(&b, face->face_index, 4) && put(&b, face->style, 4) && put(&b, face->weight, 4) &&
-           put(&b, face->scripts, 4) && put_text(&b, face->family) && put_text(&b, face->style_name) &&
+           put(&b, face->scripts, 4) && put(&b, face->color, 4) && put_text(&b, face->family) && put_text(&b, face->style_name) &&
            put_text(&b, face->aliases) && put(&b, face->codepoints, 8) && put(&b, face->range_count, 4);
       for (k = 0; ok && k < 2 * face->range_count; k++) ok = put(&b, face->ranges[k], 4);
     }

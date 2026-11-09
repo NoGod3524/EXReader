@@ -1,0 +1,10 @@
+line 166: p.face!=SIZE_MAX && p.step==EXR_FONT_STEP_DISCOVERED (0: )
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-fontcov-20261109\tests\check_font_manager.py", line 34, in <module>
+    subprocess.run([exe, group, directory], check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['build/baseline/exreader-font-manager-test.exe', 'selection', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exr-font-manager-qi6ywufq']' returned non-zero exit status 1.
+Expected failure exit=1
