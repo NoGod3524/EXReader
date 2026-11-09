@@ -1,0 +1,10 @@
+--------- beginning of kernel
+--------- beginning of main
+--------- beginning of system
+11-09 03:15:15.073  2276  2276 I EXRPlatform: PASS shipped_jni version=3.42.0 pid=2276
+11-09 03:15:15.360  2276  2276 I EXRPlatform: PASS load version=3.42.0 abi=1 mode=create
+11-09 03:15:15.360  2276  2276 I EXRPlatform: PASS open pages=215
+11-09 03:15:15.360  2276  2276 I EXRPlatform: PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+11-09 03:15:15.360  2276  2276 I EXRPlatform: PASS search hits_at_least=1 part=0 offset=0 length=14
+11-09 03:15:15.360  2276  2276 I EXRPlatform: STORED highlight; awaiting independent process reopen
+11-09 03:15:15.360  2276  2276 I EXRPlatform: EXIT_CODE=0 reopen=false

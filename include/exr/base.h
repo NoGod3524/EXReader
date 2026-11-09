@@ -34,7 +34,12 @@ typedef enum {
   EXR_PASSWORD, /* Missing or incorrect PDF password; caller may retry opening. */
   EXR_UNSUPPORTED, /* Recognized feature requires an unavailable/unsupported component. */
   EXR_NO_TEXT_LAYER, /* Requested page/document contains no semantic text. */
-  EXR_NO_TEXT_AT_POINT /* Page has text, but no visible text quad contains the point. */
+  EXR_NO_TEXT_AT_POINT, /* Page has text, but no visible text quad contains the point. */
+  EXR_DRM_PASSPHRASE_REQUIRED, /* Host must supply an LCP passphrase. */
+  EXR_DRM_PASSPHRASE_INCORRECT, /* Supplied passphrase failed LCP key_check. */
+  EXR_DRM_LICENSE_EXPIRED, /* License rights.end reached; message includes date. */
+  EXR_DRM_UNSUPPORTED, /* Unsupported DRM scheme, profile, algorithm or build. */
+  EXR_DRM_LICENSE_INVALID /* Malformed license/ciphertext or not yet valid. */
 } exr_status;
 typedef enum {
   EXR_CUSTOM = 0, /* Constructed through exr_document_create(), without a file decoder. */

@@ -11,6 +11,8 @@ typedef struct {
   unsigned char *bytes;
   size_t size, refs;
   exr_source source;
+  void *protection;
+  void (*protection_free)(void *context);
 } exr_archive_store;
 /* Private reading view. Full public documents keep their contiguous arrays;
    a chapter reader supplies indexed nodes and resident projection spans. */

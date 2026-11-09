@@ -1,0 +1,1 @@
+['P:/android-sdk/emulator/emulator.exe', '-avd', 'exreader30', '-no-window', '-no-audio', '-no-boot-anim', '-no-snapshot', '-gpu', 'swiftshader_indirect', '-memory', '2048', '-cores', '2', '-port', '5554'] 20808

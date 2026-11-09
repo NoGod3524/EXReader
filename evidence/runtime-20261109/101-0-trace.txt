@@ -1,0 +1,23 @@
+101:0 src/bmff.c:3 use of uninitialized value '*p'
+1 bmff.c:105 entry to 'exr_bmff_chunk_offset'
+2 bmff.c:106 region created on stack here
+3 bmff.c:107 following 'false' branch...
+4 bmff.c:108 ...to here
+5 bmff.c:108 calling 'exr_bmff_read' from 'exr_bmff_chunk_offset'
+6 bmff.c:7 entry to 'exr_bmff_read'
+7 bmff.c:9 following 'false' branch...
+8 bmff.c:10 ...to here
+9 bmff.c:10 following 'false' branch...
+10 bmff.c:11 ...to here
+11 bmff.c:12 following 'false' branch (when 'done >= size')...
+12 bmff.c:18 ...to here
+13 bmff.c:108 returning to 'exr_bmff_chunk_offset' from 'exr_bmff_read'
+14 bmff.c:108 following 'false' branch (when 'status == 0')...
+15 bmff.c:109 ...to here
+16 bmff.c:109 following 'false' branch...
+17 bmff.c:109 ...to here
+18 bmff.c:109 calling 'exr_bmff_be32' from 'exr_bmff_chunk_offset'
+19 bmff.c:4 entry to 'exr_bmff_be32'
+20 bmff.c:4 calling 'exr_bmff_be16' from 'exr_bmff_be32'
+21 bmff.c:3 entry to 'exr_bmff_be16'
+22 bmff.c:3 use of uninitialized value '*p' here

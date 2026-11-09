@@ -1,0 +1,10 @@
+{
+  "name": "mingw-version",
+  "command": [
+    "gcc",
+    "--version"
+  ],
+  "exit_code": 0,
+  "stdout": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0\r\nCopyright (C) 2026 Free Software Foundation, Inc.\r\nThis is free software; see the source for copying conditions.  There is NO\r\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\r\n\r\n",
+  "stderr": ""
+}

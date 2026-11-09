@@ -96,7 +96,7 @@ static int bitmap_metrics(exr_face *face) {
   }
   return 1;
 }
-static exr_status create_font(const exr_font_input *inputs,size_t count,int unicode,exr_font **out,exr_error *e) {
+static exr_status create_font(const exr_font_input *inputs,size_t count,int unicode,size_t limit,exr_font **out,exr_error *e) {
   exr_font *font;
   size_t i, total = 0;
   exr_status status = EXR_FONT;
@@ -111,8 +111,8 @@ static exr_status create_font(const exr_font_input *inputs,size_t count,int unic
   for (i = 0; i < count; i++) {
     if (!inputs[i].data || !inputs[i].size || inputs[i].face_index > INT_MAX)
       return exr_fail(e, EXR_ARGUMENT, "Invalid font input");
-    if (inputs[i].size > EXR_MAX_INPUT - total)
-      return exr_fail(e, EXR_LIMIT, "Font bytes exceed 128 MiB");
+    if (inputs[i].size > limit - total)
+      return exr_fail(e, EXR_LIMIT, "Font bytes exceed %u MiB", (unsigned)(limit / (1024 * 1024)));
     total += inputs[i].size;
   }
   font = calloc(1, sizeof(*font));
@@ -173,10 +173,13 @@ bad:
   return exr_fail(e, status, "%s", message);
 }
 exr_status exr_font_create(const exr_font_input *inputs,size_t count,exr_font **out,exr_error *e) {
-  return create_font(inputs,count,1,out,e);
+  return create_font(inputs,count,1,EXR_MAX_INPUT,out,e);
 }
 exr_status exr_font_create_glyphs(const exr_font_input *inputs,size_t count,exr_font **out,exr_error *e) {
-  return create_font(inputs,count,0,out,e);
+  return create_font(inputs,count,0,EXR_MAX_INPUT,out,e);
+}
+exr_status exr_font_create_managed(const exr_font_input *inputs,size_t count,exr_font **out,exr_error *e) {
+  return create_font(inputs,count,1,EXR_FONT_MANAGER_MAX_BYTES,out,e);
 }
 exr_status exr_font_open(const char *path, exr_font **out, exr_error *e) {
   unsigned char *bytes = NULL;

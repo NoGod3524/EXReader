@@ -26,7 +26,7 @@ PostScript is a registered trademark of Adobe Systems Incorporated.
 | libavif | 1.2.0, AOMediaCodec/libavif | BSD-2-Clause | AVIF container parsing and YUV-to-RGBA conversion; EXR_ENABLE_IMAGE_AVIF |
 | Argyll fallback CMYK profile | Graeme Gill; full 961,644-byte ICC, zlib embedded | Public domain; original notice in licenses/default-cmyk-profile.txt | Default DeviceCMYK and inverse conversion when EXR_ENABLE_ICC is enabled |
 | LittleCMS | lcms2.19.1, mm2/Little-CMS | MIT | Optional ICCBased profile-to-sRGB conversion; EXR_ENABLE_ICC |
-| Mbed TLS crypto subset | mbedtls-3.6.7, Mbed-TLS/mbedtls | Apache-2.0 OR GPL-2.0-or-later; Apache-2.0 selected | Optional PDF MD5/SHA-256/384/512 and AES-CBC/ECB; EXR_ENABLE_PDF_CRYPTO |
+| Mbed TLS crypto subset | mbedtls-3.6.7, Mbed-TLS/mbedtls | Apache-2.0 OR GPL-2.0-or-later; Apache-2.0 selected | Optional PDF MD5/SHA-256/384/512 and AES-CBC/ECB; LCP Basic Profile AES-CBC/SHA-256/Base64; EXR_ENABLE_PDF_CRYPTO / EXR_ENABLE_LCP |
 
 CMake verifies every source archive using the SHA-256 values in cmake/deps.cmake.
 The build creates a private copy of the pinned stb_image header with a local

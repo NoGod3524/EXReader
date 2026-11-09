@@ -4,6 +4,8 @@
 #include <ctype.h>
 
 typedef struct { char *text; size_t size; } search_part;
+typedef struct publication_search_index publication_search_index;
+static void publication_index_free(publication_search_index *index);
 struct exr_publication {
   char *title;
   exr_part *parts;
@@ -22,6 +24,7 @@ struct exr_publication {
   size_t missing_count, missing_capacity;
   search_part *search;
   int searching;
+  publication_search_index *index;
   exr_footnote *footnotes;
   size_t footnote_count, footnote_capacity;
   exr_footnote_reference *references;
@@ -77,6 +80,7 @@ void exr_publication_free(exr_publication *p) {
     free((void *)p->parts[i].title);
   }
   free(p->parts);
+  publication_index_free(p->index);
   if(p->search) {
     for(i=0;i<p->count;i++) free(p->search[i].text);
     free(p->search);
@@ -224,6 +228,10 @@ static exr_status publication_book(exr_format format,const void *data,size_t siz
 }
 exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size,
                                        exr_publication **out, exr_error *e) {
+  return exr_publication_open_memory_ex(format, data, size, NULL, out, e);
+}
+exr_status exr_publication_open_memory_ex(exr_format format, const void *data, size_t size,
+                                          const char *passphrase, exr_publication **out, exr_error *e) {
   exr_document *index = NULL;
   exr_status status;
   if (!out) return exr_fail(e, EXR_ARGUMENT, "Missing publication output");
@@ -232,15 +240,18 @@ exr_status exr_publication_open_memory(exr_format format, const void *data, size
   if(format==EXR_MOBI || format==EXR_FB2) return publication_book(format,data,size,out,e);
   if (format != EXR_EPUB)
     return exr_fail(e, EXR_FORMAT, "Indexed loading accepts EPUB, MOBI/KF8 and FB2");
-  status = exr_epub_index(data, size, &index, e);
+  status = exr_epub_index_ex(data, size, passphrase, &index, e);
   return status == EXR_OK ? publication_index(index, out, e) : status;
 }
 exr_status exr_publication_open_source(const exr_source *source, exr_publication **out, exr_error *e) {
+  return exr_publication_open_source_ex(source, NULL, out, e);
+}
+exr_status exr_publication_open_source_ex(const exr_source *source, const char *passphrase, exr_publication **out, exr_error *e) {
   exr_document *index = NULL;
   exr_status status;
   if (!out) return exr_fail(e, EXR_ARGUMENT, "Missing publication output");
   *out = NULL;
-  status = exr_epub_index_source(source, &index, e);
+  status = exr_epub_index_source_ex(source, passphrase, &index, e);
   if (status != EXR_OK) return status;
   status = publication_index(index, out, e);
   if (status == EXR_OK) index->shared_archive->source.release = source->release;
@@ -248,6 +259,9 @@ exr_status exr_publication_open_source(const exr_source *source, exr_publication
 }
 
 exr_status exr_publication_open(const char *path, exr_publication **out, exr_error *e) {
+  return exr_publication_open_ex(path, NULL, out, e);
+}
+exr_status exr_publication_open_ex(const char *path, const char *passphrase, exr_publication **out, exr_error *e) {
   exr_source source = {0};
   exr_status status;
   if (!out)
@@ -269,7 +283,7 @@ exr_status exr_publication_open(const char *path, exr_publication **out, exr_err
   }
   status = exr_file_source(path, &source, e);
   if (status != EXR_OK) return status;
-  status = exr_publication_open_source(&source, out, e);
+  status = exr_publication_open_source_ex(&source, passphrase, out, e);
   if (status != EXR_OK) source.release(source.context);
   return status;
 }
@@ -1357,3 +1371,5 @@ exr_status exr_publication_search_all(exr_publication *p,const char *needle,unsi
   if(!count) return exr_fail(e,EXR_ARGUMENT,"Missing search count");
   return search_run(p,(exr_text_position){0,0},needle,flags,callback,context,control,count,NULL,e);
 }
+
+#include "publication_index.h"

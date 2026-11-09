@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.exreader.platformprobe">
+  <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="30" />
+  <application android:label="EXReader runtime probe" android:debuggable="true" android:extractNativeLibs="true">
+    <activity android:name=".MainActivity" android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

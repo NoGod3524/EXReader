@@ -1,0 +1,26 @@
+{
+  "windows-gated": {
+    "page.png": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+    "reopen.png": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+    "highlight.png": "2428bb1a1799f9c6b43cb0f1f37516636f51ac5fafe2a38435b94a675d984bae",
+    "highlight.json": "4e130d82c0214ccff252ddc3512c878540239efd2af27be0d7c6e970066d7a00"
+  },
+  "linux-ci": {
+    "page.png": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+    "reopen.png": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+    "highlight.png": "2428bb1a1799f9c6b43cb0f1f37516636f51ac5fafe2a38435b94a675d984bae",
+    "highlight.json": "4e130d82c0214ccff252ddc3512c878540239efd2af27be0d7c6e970066d7a00"
+  },
+  "linux": {
+    "page.png": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+    "reopen.png": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+    "highlight.png": "2428bb1a1799f9c6b43cb0f1f37516636f51ac5fafe2a38435b94a675d984bae",
+    "highlight.json": "4e130d82c0214ccff252ddc3512c878540239efd2af27be0d7c6e970066d7a00"
+  },
+  "android": {
+    "page.png": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+    "reopen.png": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+    "highlight.png": "2428bb1a1799f9c6b43cb0f1f37516636f51ac5fafe2a38435b94a675d984bae",
+    "highlight.json": "4e130d82c0214ccff252ddc3512c878540239efd2af27be0d7c6e970066d7a00"
+  }
+}

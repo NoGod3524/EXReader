@@ -1,0 +1,2 @@
+[1/2] Building C object CMakeFiles/gate-probe.dir/gate_probe.c.obj
+[2/2] Linking C executable gate-probe.exe

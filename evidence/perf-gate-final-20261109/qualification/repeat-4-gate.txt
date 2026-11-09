@@ -1,0 +1,1 @@
+{"status": "pass", "exit_code": 0, "scope": "local", "failed_books": [], "candidate_capture_sha256": "b268068059a6bcb60d872bb59cc50ee1344a7b63b6775f0930df3e1857ef4d6d", "worst_cycle_ratio": 1.0718500524296382, "worst_wall_ratio": 1.0090363888291478, "exceeded": [], "baseline_sha256": "b0e57d42bb7571f27b6fe1c94c2b988d417271fd9578af330b4426045e825a9f"}
