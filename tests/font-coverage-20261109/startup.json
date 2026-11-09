@@ -1,0 +1,50 @@
+[
+  {
+    "kind": "index",
+    "families": 190,
+    "files": 339,
+    "faces": 362,
+    "skipped": 205,
+    "parsed": 349,
+    "cached": 0,
+    "cache": 1,
+    "written": 1,
+    "ms": 1866.283
+  },
+  {
+    "kind": "index",
+    "families": 190,
+    "files": 339,
+    "faces": 362,
+    "skipped": 205,
+    "parsed": 0,
+    "cached": 349,
+    "cache": 3,
+    "written": 0,
+    "ms": 16.31
+  },
+  {
+    "kind": "index",
+    "families": 190,
+    "files": 339,
+    "faces": 362,
+    "skipped": 205,
+    "parsed": 0,
+    "cached": 349,
+    "cache": 3,
+    "written": 0,
+    "ms": 7.4
+  },
+  {
+    "kind": "index",
+    "families": 190,
+    "files": 339,
+    "faces": 362,
+    "skipped": 205,
+    "parsed": 0,
+    "cached": 349,
+    "cache": 3,
+    "written": 0,
+    "ms": 4.344
+  }
+]

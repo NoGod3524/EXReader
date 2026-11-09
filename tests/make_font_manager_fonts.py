@@ -9,6 +9,7 @@ from pathlib import Path
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib import TTCollection
+from fontTools.colorLib.builder import buildCOLR, buildCPAL
 
 
 def font(family, style, weight, cmap, localized=None):
@@ -68,3 +69,14 @@ if __name__ == '__main__':
     collection.fonts = [font('EXR FM Latin Serif', 'Regular', 400, latin),
                         font('EXR FM CJK Serif', 'Regular', 400, [32, 0x4e2d])]
     collection.save(out / 'collection.ttc')
+    # Same family/style as the earlier Latin file, but additional script coverage.
+    # It must survive both style de-duplication and the configured-family filter.
+    font('EXR FM Latin Serif', 'Regular', 400,
+         [32, 0x20001, 0xfa17, 0xac00, 0x1f600, 0x0f40, 0x2211]).save(out / 'supplement.ttf')
+    emoji = font('EXR FM Emoji', 'Regular', 400, [32, 0x1f600])
+    emoji['COLR'] = buildCOLR({'box': [('box', 0)]})
+    emoji['CPAL'] = buildCPAL([[(1, 0, 0, 1)]])
+    emoji.save(out / 'emoji.ttf')
+    collection.fonts = [font(f'EXR FM Script {i:02}', 'Regular', 400, [32, 0xe000 + i])
+                        for i in range(33)]
+    collection.save(out / 'many-scripts.ttc')

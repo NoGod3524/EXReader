@@ -22,14 +22,21 @@ extern "C" {
      3. options.fallback_families, in order (nearest style, then other styles)
      4. system serif families (options.serif_families or platform defaults)
      5. system sans-serif families (options.sans_serif_families or defaults)
-   Each family contributes its nearest-weight face per style category (four at
-   most), so duplicate installations cannot crowd out later families. Faces
-   already listed are not repeated; the chain holds at most
+     6. remaining discovered faces, color-capable faces first (emoji sequences),
+        then greatest additional scalar coverage;
+        nearest style breaks ties, then discovery order
+   In stages 1-5, each family contributes its nearest-weight face per style
+   category (four at most), so duplicates cannot crowd out later families. Faces
+   already listed or adding no scalar coverage are omitted; the first face is
+   always retained. Setting both system family lists to "" disables stage 6.
+   This coverage compaction preserves the first matching face for each scalar.
+   The discovered tail respects the manager's 256 MiB font input budget. The chain holds at most
    EXR_FONT_CHAIN_MAX faces. pick() returns the first chain face whose Unicode
    cmap covers the code point. create_font() loads the same chain in the same
    order into an exr_font whose base-face order is preserved by layout/shaping
    (exr_glyph.font_index, EXR_GLYPH_MISSING). Embedded @font-face rules retain
-   their existing CSS priority; disable embedded_fonts to enforce only this
+   their existing CSS priority: the automatic tail is shortened when necessary
+   to fit embedded faces within the 32-face/256-MiB limits. Disable embedded_fonts to enforce only this
    chain. Returned exr_font objects have the usual exr_font concurrency rules
    (one per layout worker), unlike the immutable, shareable manager. */
 
@@ -170,7 +177,8 @@ enum {
   EXR_FONT_STEP_FAMILY_STYLE = 2, /* Requested family, another style. */
   EXR_FONT_STEP_FALLBACK = 3,   /* Configured fallback family. */
   EXR_FONT_STEP_SERIF = 4,      /* System serif. */
-  EXR_FONT_STEP_SANS_SERIF = 5  /* System sans-serif. */
+  EXR_FONT_STEP_SANS_SERIF = 5, /* System sans-serif. */
+  EXR_FONT_STEP_DISCOVERED = 6 /* Additional coverage from the discovered inventory. */
 };
 typedef struct { size_t face; unsigned step; } exr_font_chain_link;
 
@@ -198,8 +206,9 @@ EXR_API exr_status exr_font_manager_pick(const exr_font_manager *manager, const 
 
 /* Loads the chain into a new exr_font (free with exr_font_free) for
    layout/shaping. Faces are read from disk now; a face whose file changed or
-   vanished since indexing, or which would exceed exr_font_create()'s 128 MiB
-   total, is left out. *faces (optional, owned, exr_free) maps every
+   vanished since indexing, or which would exceed the managed 256 MiB
+   total, is left out. exr_font_create() retains its 128 MiB limit.
+   *faces (optional, owned, exr_free) maps every
    exr_font face index -> manager face index, so exr_glyph.font_index identifies
    the manager face, and EXR_GLYPH_MISSING means no chain face covered it.
    EXR_FONT when no chain face could be loaded. Failure leaves outputs NULL/0. */
