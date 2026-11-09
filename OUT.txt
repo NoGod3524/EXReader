@@ -1,0 +1,14 @@
+已提交并推送，Draft PR：[#107](https://github.com/NoGod3524/EXReader/pull/107)。自动 CI 已触发，目前排队中。
+
+- **校验**：两轮均 `PASS: 3 files verified`；355 个安装文件哈希一致。
+- **签名**：GPG 测试密钥实签、验签及篡改拒绝通过；minisign、Authenticode dry-run 通过，EV/OV 证书命令模板已提供。
+- **Manifest**：包含 GCC 16.2.0、CMake 4.4.2、expat/freetype/miniz 版本与源码哈希，以及配置、环境等输入。
+- **回归**：ctest 从 234/234 到 235/235；19 本、11,318 页，页数及逐页哈希零变化。
+- `.github/` 未改；workflow 仅提供片段；`SIGN-OUT.txt` 已追加并提交。
+
+| 产物 | 第一次 SHA256 | 第二次 SHA256 |
+|---|---|---|
+| DLL | `b7ab2bc2668e806bf03c957d767d8247dcc708c6d2ea59b74464a6cfc7aea632` | `b7ab2bc2668e806bf03c957d767d8247dcc708c6d2ea59b74464a6cfc7aea632` |
+| SDK 包 | `07c0e315df9b4c47f532842af4b76b9fd0edfbc9102db6f2e54bbda665c65c19` | `07c0e315df9b4c47f532842af4b76b9fd0edfbc9102db6f2e54bbda665c65c19` |
+
+[完整验收记录与命令](/C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/evidence/artifact-signing-20261109/README.md)
