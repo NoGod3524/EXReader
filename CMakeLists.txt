@@ -1232,3 +1232,7 @@ if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND AND NOT EXR_SANITIZE)
       --probe $<TARGET_FILE:exreader-book-codec-probe> --group ${group})
   endforeach()
 endif()
+
+if(EXR_FULL_TESTS)
+  add_subdirectory(docs/examples)
+endif()
