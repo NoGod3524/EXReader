@@ -1,0 +1,15 @@
+HOST	phase=0	engine=3.42.0	pid=28608
+STEP	1	open	PASS	page=1;status=已打开《Dictionary Acceptance》 · 已按章节与文本锚点恢复到上次位置。
+STEP	2	shell	PASS	reading screen
+STEP	3	shell_client	PASS	page=1;status=第 1 页。
+STEP	4	shell_click	PASS	button invoked
+STEP	5	shell_click	PASS	button invoked
+STEP	6	shell_click	PASS	button invoked
+STEP	7	dict_vocab	PASS	dictionary action dispatched
+STEP	8	dict_close	PASS	dictionary action dispatched
+STEP	9	dict_roundtrip	PASS	dictionary action dispatched
+STEP	10	open	PASS	page=1;status=已打开《Second Book》 · 已按章节与文本锚点恢复到上次位置。
+STEP	11	wait_idle	PASS	page=1;status=已打开《Second Book》 · 已按章节与文本锚点恢复到上次位置。
+STEP	12	dict_roundtrip	PASS	dictionary action dispatched
+STEP	13	quit	PASS	closing
+DONE	13	eof	PASS	script finished

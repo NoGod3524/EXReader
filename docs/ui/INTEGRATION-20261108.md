@@ -65,3 +65,34 @@ The reading context menu retains all speech controls and voice/rate selection; t
 A close-time search crash was reproduced under GDB: speech teardown repainted after search results were freed. `tts_stop` now avoids painting during `g.closing`, while the normal stop before closing still clears the sentence highlight. The search acceptance includes process exit, so it also covers this teardown interaction.
 
 Validation: **223/223 ctests**, MinGW host build, all shell checks, **26/26 self-tests** and six search scenarios including clean exit. **19/19 real books, 11,403 pages, zero page/glyph/hash changes**. Real SAPI acceptance passes four rates, three start/pause/resume/stop cycles, 30-second page following, multi-chunk playback, visible sentence highlighting, minimized playback, shelf return/book switch stops and missing-voice diagnostics. Independent SSML XML/source checks pass five real-book paragraphs and ten chunks with zero character-count error.
+
+## #94 — dictionary, selection lookup and vocabulary
+
+Source: `codex/dictionary-20261108`, `8bd9f5ece70f29ae36cb654343df4cf0c841bd43`.
+
+| Conflicted file | Resolution |
+| --- | --- |
+| `examples/reader.c` | Keep every feature and acceptance-driver include; preserve dictionary lifecycle alongside speech and shelf lifecycle. |
+| `examples/windows/check_shell_selection.c` | Keep all groups and assert the combined 13-entry context menu, including dictionary and speech enable states. |
+| `examples/windows/selection_tests.cmake` | Append `dictionary-storage` to the existing nine host groups; retain the four engine dictionary tests. |
+| `examples/windows/shell_d2d.cpp` | Use the shared renderer name `shell_d2d_card` for footnotes, notes and dictionary cards; update footnote callers and keep all rendering behavior. |
+| `examples/windows/shell_screen.inc` | Dictionary dialog keys run before speech/reading shortcuts; add the named dictionary settings command 183 after shelf/back/tap IDs 180–182. |
+| `examples/windows/shell_selection.inc` | Route dictionary command 8, annotations 3–7 and speech 100–104 separately; keep footnote/gesture handling and automatic lookup. |
+| `examples/windows/shell_settings.inc` | Keep eight fields, theme, presets/reset and tap controls; place dictionary beside reset. Replace incoming hard-coded 180 with `IDC_SHELL_DICTIONARY` (183), avoiding the back button. |
+| `examples/windows/shell_tokens.h` | Keep all tokens and resolve the shared panel height to 636 DIP; dictionary fits in the existing reset row, so no fields are removed or overlapped. |
+
+Dictionary writes now read the latest shared `shelf.json`, including the same explicit path override used by styles and metadata. The shelf metadata check loads the dictionary before edits, then interleaves all three writers and verifies all owners' data and unknown fields survive. Vocabulary book names use metadata title overrides. Leaving reading or opening another book closes dictionary/vocabulary panels; a page click dismissing a dictionary card is consumed before the gesture handler can turn a page. Native dictionary acceptance opens settings through the actual settings button command.
+
+Validation: **228/228 ctests**, MinGW and installed-SDK host builds, all shell checks and **26/26 self-tests**; six search scenarios pass. **19/19 real books, 11,403 pages, 8,648,640 glyphs, zero page/glyph/hash changes**. Three public dictionaries pass the independent metadata/index/definition/synonym and random-access checks. Native dictionary acceptance passes 10/10 lookups, two source groups, missing-word/copy, collapse/expand, 5/5 vocabulary/CSV examples, two book filters and 5/5 anchor resolutions after restart. Final style/footnote acceptance passes all 24 parameter changes, persisted presets, 30 popups, annotation reflow and front-contents/margin checks.
+
+## Final validation totals
+
+| Stage | ctest | Host self-test | Real books | Changed pages / hashes |
+| --- | ---: | ---: | ---: | ---: |
+| main e324059c | 212/212 | 26/26 | 19, 11,403 pages | baseline |
+| after #91 | 217/217 | 26/26 | 19, 11,403 pages | 0 / 0 |
+| after #92 | 218/218 | 26/26 | 19, 11,403 pages | 0 / 0 |
+| after #93 | 223/223 | 26/26 | 19, 11,403 pages | 0 / 0 |
+| after #94 | 228/228 | 26/26 | 19, 11,403 pages | 0 / 0 |
+
+Every stage retains the preceding stage's registered tests. The reading toolbar is **shelf (←) · title · search · contents · settings**. The final diff leaves `.github/` unchanged.
