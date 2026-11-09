@@ -23,7 +23,7 @@ int platform_probe(const char *book, const char *font_path, const char *out, int
   exr_anchor_match match = {0};
   exr_search_result hit = {0};
   exr_layout_options options = {360, 480, 24, 18, 1.5f, 8};
-  size_t pages = 0, count = 0, json_size = 0, ink = 0;
+  size_t pages = 0, count = 0, json_size = 0, ink = 0, hits = 0;
   uint64_t checksum = UINT64_C(14695981039346656037);
   int result = 1;
   if (snprintf(path, sizeof(path), "%s/%s.log", out, reopen ? "reopen" : "create") >= (int)sizeof(path)) return 2;
@@ -52,10 +52,19 @@ int platform_probe(const char *book, const char *font_path, const char *out, int
   REQUIRE(ink > 0 && ink < (size_t)bitmap.width*bitmap.height);
   REQUIRE(snprintf(path, sizeof(path), "%s/%s.png", out, reopen ? "reopen" : "page") < (int)sizeof(path));
   OK(exr_bitmap_write_png(&bitmap, path, &error));
+  REQUIRE(snprintf(path, sizeof(path), "%s/%s.rgba", out, reopen ? "reopen" : "page") < (int)sizeof(path));
+  file = fopen(path, "wb");
+  REQUIRE(file);
+  for (uint32_t y = 0; y < bitmap.height; ++y)
+    REQUIRE(fwrite(bitmap.pixels + (size_t)y*bitmap.stride, 4, bitmap.width, file) == bitmap.width);
+  { int closed = fclose(file); file = NULL; REQUIRE(!closed); }
   fprintf(log, "PASS render width=%u height=%u ink_pixels=%zu pixel_fnv1a64=%016" PRIx64 "\n", bitmap.width, bitmap.height, ink, checksum);
   OK(exr_publication_search(publication, (exr_text_position){0, 0}, "deliveryneedle", EXR_SEARCH_CASE_SENSITIVE, NULL, &hit, &error));
   REQUIRE(hit.found && hit.part == 0 && hit.length == strlen("deliveryneedle"));
   fprintf(log, "PASS search hits_at_least=1 part=%zu offset=%zu length=%zu\n", hit.part, hit.offset, hit.length);
+  OK(exr_publication_search_all(publication, "deliveryneedle", EXR_SEARCH_CASE_SENSITIVE, NULL, NULL, NULL, &hits, &error));
+  REQUIRE(hits == 1000);
+  fprintf(log, "PASS search_all needle=deliveryneedle hits=%zu\n", hits);
   const exr_glyph *glyphs = exr_layout_glyphs(layout, &count), *first = NULL;
   for (size_t i = 0; i < count; ++i)
     if (glyphs[i].end > hit.offset && glyphs[i].start < hit.offset+hit.length && !(glyphs[i].flags & EXR_GLYPH_HIDDEN)) { first = &glyphs[i]; break; }
