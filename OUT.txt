@@ -152,5 +152,6 @@ Get-FileHash tests/check_reading_release.py -Algorithm SHA256：
 2. SDK 验证依赖本次显式生成的 MSVC 导入库；没有修改通用 MinGW 打包流程。干净 MinGW 构建仍需重复上述准备，或由打包任务统一处理 MSVC 导入库。导出变化后应重新生成，不能复用旧库。
 3. 两项首轮无输出失败已复测成功，根因未隔离，日志未隐藏；没有把首轮说成一次 260/260。
 4. 本实现提供识别、可见占位与 SMIL 数据映射，尚无宿主播放控件、页内媒体框输出、媒体成员流式读取或 chapter_window 媒体占位支持。具体接口缺口和上限已沿用 docs/MEDIA-EPUB.md；本次未扩展方案。
+5. Draft PR 与当前 main（fe3d46e1）的只读合并检查只发现 OUT.txt 文本冲突。工作树未执行合并；集成时需保留各任务报告，由主控处理。记录见 evidence/d2-media-20261110/main-integration-check.txt。
 
-推送与 draft PR：完成后追加记录。
+已推送 origin/codex/media-epub-2-20261110，draft PR：https://github.com/NoGod3524/EXReader/pull/128 。

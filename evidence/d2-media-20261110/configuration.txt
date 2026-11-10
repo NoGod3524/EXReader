@@ -14,5 +14,3 @@ Alternate header C:/Users/Oscar/exr-deps/minimp3/minimp3.h: True
 > C:/Users/Oscar/Documents/Codex/EXReader-d2-media-20261110/src/mp3.c:15:10: fatal error: minimp3.h: No such file or directory
      15 | #include <minimp3.h>
         |          ^~~~~~~~~~~
-
-
