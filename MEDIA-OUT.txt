@@ -1,2 +1,9 @@
 步骤 1 开始：基线 HEAD 3076d3dd（分支 codex/media-epub-20261109，工作树干净）。扫描 19 本真书：17 本 EPUB 均无 <audio>/<video>/<embed>/<object>/<source>；kusamakura（日文竖排）含 2 个 SMIL + 3 处 media-overlay 引用，可作真书 SMIL 解析样本；另 2 本为 PDF/MOBI。基线源码导出到仓库外 EXReader-D2-work/base-src，开始构建基线 DLL。
 步骤 2 完成：基线 DLL（HEAD 3076d3dd，Release，gcc 16.2，同 perfopt 全量构建选项去掉测试）构建成功；19 本基线逐页渲染：{"requested_books": 19, "successful_books": 19, "failed_books": [], "total_pages": 11426, "total_glyphs": 8648571, "wall_seconds": 27.139249, "sum_book_seconds": 96.657679, "fastest_book": "the-house-on-mango-street", "slowest_book": "the-autobiography-of-malcolm-x."}。字体 C:/Windows/Fonts/NotoSerifSC-VF.ttf，布局 tools/regress/layout.json。ffmpeg 9.0 可用于生成真实 mp3/mp4/wav 语料。设计：引擎只识别+给数据——新增 exr_document_media（每个 audio/video/object/embed 一条：种类、状态、路径、类型、时长、标志、占位文字节点）与 exr_publication_media_overlay（SMIL par → 文本区间 ↔ 音频片段）；占位文本节点在 XHTML 解析时为媒体元素创建、EPUB 部件加载时填写；导出 EPUB 时跳过占位。
+D2 media: step1 explored src (document.c projection skips object; no audio/video/smil handling)
+步骤 1：发现旧尝试 EXReader-D2-20261109（WIP 58eee2ad，仅头文件声明+占位节点预留，无实现）；沿用其设计。当前基线 HEAD 6000a89d（分支 codex/media-epub-2-20261110，推送目标 codex/media-epub-20261109）。基线源码导出 /c/Users/Oscar/Documents/Codex/d2m-base/src，后台构建基线 DLL。
+步骤 2：实现 src/media.c（元素识别+占位文字+WAV/MP3/MP4 时长）、src/media_overlay.c（SMIL 解析）、document.c 投影钩子、formats.c exr_epub_load 钩子；两个新 .c 已登记 tools/layers.json（无新增 .h）。
+步骤 3：新增 tests/test_media_epub.c（4 组 ctest：elements/overlay/degrade/plain，已在 CMakeLists 注册）与 tests/media_corpus/build_corpus.py（ffmpeg 生成 4 本语料）。
+步骤 4：基线 DLL（HEAD 6000a89d）与候选构建（../d2m-build）在后台编译；新增 tests/media_corpus/media_report.py（识别数/SMIL/截图）。语料已生成到 ../d2m-corpus（4 本）。待编译完成后跑 4 组 ctest、报告、19 本回归。
+步骤 5：构建（MP3/AAC 关闭，因缺 minimp3.h；基线同配置）成功；4 组新 ctest 全过（elements/overlay/degrade/plain）。
+步骤 6：4 本语料识别/SMIL/降级截图已生成（../d2m-report）；19 本真书基线-候选渲染在后台运行；完整 ctest 在后台运行（../d2m-ctest.log）。
