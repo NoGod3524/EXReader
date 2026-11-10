@@ -31,7 +31,7 @@ def main():
     parser.add_argument('--build', type=Path, required=True)
     args = parser.parse_args()
     build = args.build.resolve()
-    evidence = ROOT / 'tests/cfi-acceptance-20261108'
+    evidence = ROOT / 'evidence/cfi-acceptance-20261108'
     evidence.mkdir(exist_ok=True)
     exe = build / 'exreader-cfi-compat-test.exe'
     dll = build / 'libexreader.dll'
@@ -118,3 +118,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
