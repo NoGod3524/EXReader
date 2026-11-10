@@ -8,6 +8,7 @@ typedef struct publication_search_index publication_search_index;
 static void publication_index_free(publication_search_index *index);
 struct exr_publication {
   char *title;
+  exr_direction page_progression;
   exr_part *parts;
   size_t count, refs;
   exr_part_load_fn load;
@@ -203,7 +204,10 @@ static exr_status publication_index(exr_document *index, exr_publication **out, 
   input.context = index;
   input.release = epub_release;
   status = exr_publication_create(&input, out, e);
-  if (status == EXR_OK) (*out)->navigation_ready = 0;
+  if (status == EXR_OK) {
+    (*out)->navigation_ready = 0;
+    (*out)->page_progression=exr_document_page_progression(index);
+  }
   free(parts);
   if (status != EXR_OK)
     exr_document_free(index);
@@ -288,6 +292,9 @@ exr_status exr_publication_open_ex(const char *path, const char *passphrase, exr
   return status;
 }
 const char *exr_publication_title(const exr_publication *p) { return p ? p->title : ""; }
+exr_direction exr_publication_page_progression(const exr_publication *p) {
+  return p && p->page_progression==EXR_DIRECTION_RTL ? EXR_DIRECTION_RTL : EXR_DIRECTION_LTR;
+}
 size_t exr_publication_index_memory(const exr_publication *p) {
   return p ? sizeof(*p)+p->metadata_bytes+p->count*sizeof(*p->parts)+
     p->navigation_count*sizeof(*p->navigation)+(p->load==exr_book_load ? ((exr_format_book *)p->context)->memory :

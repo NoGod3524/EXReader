@@ -321,6 +321,7 @@ typedef struct {
   spine_item *spine;
   size_t spine_count, spine_cap;
   exr_buffer title,language;
+  exr_direction page_progression;
   int in_title,in_language,have_language,failed,depth;
 } package;
 static void XMLCALL package_start(void *user, const char *full, const char **attrs) {
@@ -372,6 +373,9 @@ static void XMLCALL package_start(void *user, const char *full, const char **att
   if (!strcmp(tag, "spine") && !p->toc_id) {
     a = attribute(attrs, "toc");
     if (a && !(p->toc_id = exr_copy(a, strlen(a)))) p->failed = 1;
+    a = attribute(attrs, "page-progression-direction");
+    if(a && !strcmp(a,"rtl")) p->page_progression=EXR_DIRECTION_RTL;
+    else if(a && !strcmp(a,"ltr")) p->page_progression=EXR_DIRECTION_LTR;
   }
   if (!strcmp(tag, "title"))
     p->in_title = 1;
@@ -725,6 +729,7 @@ static exr_status epub_metadata(exr_document *d, archive *z, int strict, const c
     d->language=exr_copy(p.language.data,p.language.size);
     if(!d->language) { result=exr_fail(e,EXR_MEMORY,"Publication language allocation failed"); goto done; }
   }
+  d->page_progression=p.page_progression;
   for (i = 0; i < p.count; i++) {
     exr_resource r;
     if (!exr_resolve_path(p.root, p.items[i].href, path) || !p.items[i].id[0]) {
@@ -1120,6 +1125,7 @@ exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **
   }
   d->format = EXR_EPUB;
   d->load_package = index->load_package;
+  d->page_progression = index->page_progression;
   d->shared_archive = index->shared_archive;
   d->archive = index->archive;
   d->archive_size = index->archive_size;

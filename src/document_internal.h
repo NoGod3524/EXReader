@@ -31,6 +31,7 @@ struct exr_document {
   const exr_document_view *view;
   exr_status (*load_package)(const exr_document *,const exr_control *,exr_document **,exr_error *);
   char *text, *title,*language; /* Optional publication-level fallback; element lang wins. */
+  exr_direction page_progression; /* OPF spine; independent of paragraph direction. */
   size_t size, text_capacity;
   exr_block *blocks;
   size_t count, capacity;
