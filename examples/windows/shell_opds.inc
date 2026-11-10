@@ -117,7 +117,10 @@ static void opds_progress_cb(void *context,uint64_t done,uint64_t total) {
 }
 static int opds_load_feed(const char *url,int use_cache,onet_options *o,opds_job *j) {
   onet_buffer body;exr_error error={0};char secure[2048];
-  onet_secure(url,secure,sizeof(secure));
+  /* A typed source must pass the transport's HTTPS check unchanged. Catalog
+     links may use legacy http URLs, which we request over HTTPS. */
+  if(j->nav==2)snprintf(secure,sizeof(secure),"%s",url);
+  else onet_secure(url,secure,sizeof(secure));
   if(!onet_fetch(secure,o,use_cache,&body,&j->result))return 0;
   snprintf(j->feed_url,sizeof(j->feed_url),"%s",j->result.from_cache ? secure:j->result.final_url);
   if(exr_opds_parse(body.data,body.size,j->feed_url,&j->feed,&error)!=EXR_OK) {

@@ -74,7 +74,7 @@ static int opds_drive(const char *action) {
     SendMessageW(opds_view,WM_COMMAND,MAKEWPARAM(OPDS_ID_LIST,LBN_SELCHANGE),0);
     SendMessageW(opds_view,WM_COMMAND,MAKEWPARAM(OPDS_ID_ACTION,BN_CLICKED),0);
     if(!opds_busy)return 0;
-    if(!strcmp(drive_args[2],"nowait"))return 1;
+    if(drive_argc>2 && !strcmp(drive_args[2],"nowait"))return 1;
     drive_expect_idle=1;return 1;
   }
   if(!strcmp(a,"cancel")) {
