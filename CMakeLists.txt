@@ -188,6 +188,12 @@ if(EXR_FULL_TESTS)
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_io.py
       --library $<TARGET_FILE:exreader> ${group})
   endforeach()
+  foreach(group table-roundtrip table-properties table-preserve table-rows table-new
+      history image-small image-large image-delete image-shared image-cell table-delete errors image-package)
+    add_test(NAME native-docx-edit-x6-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_table_image.py
+      --library $<TARGET_FILE:exreader> ${group})
+  endforeach()
   add_executable(exreader-docx-edit-test tests/test_docx_edit.c)
   target_link_libraries(exreader-docx-edit-test PRIVATE exreader)
   if(WIN32)

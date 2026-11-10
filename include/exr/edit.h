@@ -70,12 +70,13 @@ typedef struct {
   const exr_edit_block *blocks; size_t block_count; /* Paragraphs reuse the block/run model. */
   unsigned unsupported; /* Protected cells are retained as original XML. */
   const void *opaque_xml; size_t opaque_size;
-  unsigned changed; /* Cell content was replaced. */
+  unsigned changed; /* Writer bookkeeping: replacement=1, vertical merge=2/4, patch=8. */
 } exr_edit_cell;
 typedef struct {
   exr_edit_id id;
   const exr_edit_cell *cells; size_t cell_count;
   const void *opaque_xml; size_t opaque_size;
+  size_t source_index; /* Writer bookkeeping; 0 for newly seeded rows. */
 } exr_edit_row;
 struct exr_edit_table {
   const exr_edit_row *rows; size_t row_count,column_count;

@@ -1,0 +1,966 @@
+{
+  "date": "2026-11-10",
+  "task": "X6 tables and images",
+  "base_commit": "a0a0c7662092b5ac32e52974e743bc7542a3cb25",
+  "dependency_commit": "ee47eacc",
+  "source_sha256": {
+    "include/exr/edit.h": "dcb41a9a2c78144a492cb4cd18e6582fce1c545e7599f5f4b9de2269af26940d",
+    "src/docx_edit.c": "7c55031c028ce7b8d7632d5a7aa897ee836f26ddd005c08a01f6ecd773fc06a3",
+    "src/docx_edit_io.c": "5729974a6772bb97944abffe02e35417e9f80baa7dedeb47d8892713345931bd",
+    "src/docx_edit_table.c": "891265b435916188923788c3c7407a086ec6b74c4f701217c6524c8966935304",
+    "src/docx_edit_image.c": "b07da35afaa11ba6e8e85684302100db91c3b9f0ac167c1fd1578614c5278670",
+    "src/docx_edit_internal.h": "1e269ad06be9b946fc6429d2ca93d38b4e8376e574b80689aaa743a9b0d57a32",
+    "src/edit_internal.h": "642e5a3b7586f9a034690cde2771d1847ea3c65538775b7be71680c9d932386e",
+    "tools/layers.json": "1847fbd63b25d73997b2b57538f7cb9e61b7250ae7225c0fa894851794c6f73b",
+    "CMakeLists.txt": "9132a137164ce2f27bbcaf709f723dafdc7ff92a932a85cb258cb7d2713e6c73",
+    "tests/test_docx_edit_table_image.py": "736ac55f5773fe220594b99ae2d1d6a674081d357e4d132ce94da08554d0ca45",
+    "tests/docx/check_table_image.py": "babd1cb50a90d6d00aa20484997a10ecea245e08a68db69154f6269b280aa4a9",
+    "tests/test_docx_edit_alloc.c": "3a0a057bf5f16668bcb7b609d160efb65fbae293fb3e970d4a9ac230fd593917",
+    "tools/docx/roundtrip.py": "b9a24334d376b2cd1fa00f2c743d7def2866d4a67f24712b78c3db9ce8e9cd01",
+    "tools/docx/verify_docx.py": "38761420779fa0af827031f430692ebffe5c8963fe64113e9a17ec25beaf7701"
+  },
+  "library_sha256": "8610b2b74b1328cb20c4176b0250b9fd7a218a6bceb7fee65dd2b16f2a085d53",
+  "export_text_unchanged_from_dependency": true,
+  "ctest": {
+    "passed": 293,
+    "total": 293,
+    "failed": 0,
+    "new_groups": 14,
+    "log": "build/native/x6-ctest-final.log",
+    "seconds": 81.61
+  },
+  "allocation": {
+    "injected_failures": 79,
+    "atomic": true,
+    "live_allocations_after_free": 0
+  },
+  "layers": {
+    "objects": 123,
+    "symbol_references": 1428,
+    "inverse_references": 0,
+    "inverse_includes": 0
+  },
+  "fixtures_and_commands": [
+    {
+      "group": "table-roundtrip",
+      "status": "PASS",
+      "fixtures": [
+        {
+          "id": "table",
+          "before": {
+            "paragraphs": 8,
+            "characters": 38,
+            "tables": 1,
+            "images": 0,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "f28b00ff48d6db150417ac9ece842fef95e9735065834188db917e0d3b75377b",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "after": {
+            "paragraphs": 8,
+            "characters": 38,
+            "tables": 1,
+            "images": 0,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "1a94125a7325a585f43d633a3395becdb765fa4957c789721d46f74075435d72",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "row_counts": [
+            3,
+            4,
+            3
+          ],
+          "columns": 2,
+          "shape": [
+            [
+              2,
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "id": "images",
+          "before": {
+            "paragraphs": 9,
+            "characters": 53,
+            "tables": 1,
+            "images": 1,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "b630c671c79154d9bd3e37d9e5f0046cd91942ee0692a0b74b52ce6f83aa58ac",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "after": {
+            "paragraphs": 9,
+            "characters": 53,
+            "tables": 1,
+            "images": 1,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "bf1c52dc566ec5ef91b225351bfccb2d272539e86d63085cc7b9cda5ba874fe9",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "row_counts": [
+            3,
+            4,
+            3
+          ],
+          "columns": 2,
+          "shape": [
+            [
+              2,
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "id": "notes",
+          "before": {
+            "paragraphs": 9,
+            "characters": 43,
+            "tables": 1,
+            "images": 0,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "0ae817ab842dc6ae4aa01fe87bb3cec454a456b8438222dfbe9960b0148cc39f",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "after": {
+            "paragraphs": 9,
+            "characters": 43,
+            "tables": 1,
+            "images": 0,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "00ac811cb5342f2d95e023352b557a720cc76a2887f9ad40624a816032995886",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "row_counts": [
+            3,
+            4,
+            3
+          ],
+          "columns": 2,
+          "shape": [
+            [
+              2,
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "id": "sections",
+          "before": {
+            "paragraphs": 10,
+            "characters": 65,
+            "tables": 1,
+            "images": 1,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "ec04cf731a885cdc1a99b5f242b156eaf50575f22b3b884987d088e0aa5385ff",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "after": {
+            "paragraphs": 10,
+            "characters": 65,
+            "tables": 1,
+            "images": 1,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "4f91500af74a2550ca9011ae2e5458b02f154f0a4577233711116b2ec5f34faa",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "row_counts": [
+            3,
+            4,
+            3
+          ],
+          "columns": 2,
+          "shape": [
+            [
+              2,
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "id": "merged",
+          "before": {
+            "paragraphs": 7,
+            "characters": 40,
+            "tables": 1,
+            "images": 0,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "446760aef539719509257125a8636ed39ade52d93c04ae3d7305c9502043733a",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "after": {
+            "paragraphs": 7,
+            "characters": 40,
+            "tables": 1,
+            "images": 0,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "a3f976849137efa2069735cb5ff563111b3ab8bc95715006eb8eeba56474a508",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "row_counts": [
+            3,
+            4,
+            3
+          ],
+          "columns": 2,
+          "shape": [
+            [
+              1,
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "id": "nested",
+          "before": {
+            "paragraphs": 10,
+            "characters": 54,
+            "tables": 2,
+            "images": 0,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "90f0a5a6f2417d25c33d2381a7ace4d10bbbd686e58b39d50ca1fd58a5dfe62e",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "after": {
+            "paragraphs": 10,
+            "characters": 54,
+            "tables": 2,
+            "images": 0,
+            "footnotes": 1,
+            "section_margins": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "text_sha256": "4905e258871ba9847b45c98c45fd43c35330ac466f257ad9deec7ecd2e58316c",
+            "image_sha256": [
+              "3dbee94cd72d0551ab60413cd916058a647560a8a0d16642f61c46eecf881b28"
+            ]
+          },
+          "row_counts": [
+            3,
+            4,
+            3
+          ],
+          "columns": 2,
+          "shape": [
+            [
+              2,
+              2,
+              2
+            ],
+            [
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "group": "table-properties",
+      "status": "PASS"
+    },
+    {
+      "group": "table-preserve",
+      "status": "PASS",
+      "protected_xml": [
+        "<w:tr><w:tc><w:tcPr><w:gridSpan w:val=\"2\"/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz w:val=\"24\"/></w:rPr><w:t>merged</w:t></w:r></w:p></w:tc></w:tr>",
+        "<w:tr><w:tc><w:tcPr><w:shd w:fill=\"AABBCC\"/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz w:val=\"24\"/></w:rPr><w:t>shaded</w:t></w:r></w:p><w:tbl><w:tr><w:tc><w:p><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz w:val=\"24\"/></w:rPr><w:t>inner</w:t></w:r></w:p></w:tc></w:tr></w:tbl><w:p><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz w:val=\"24\"/></w:rPr><w:t>tail</w:t></w:r></w:p></w:tc><w:tc><w:p><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz w:val=\"24\"/></w:rPr><w:t>side</w:t></w:r></w:p></w:tc></w:tr>",
+        "<w:tr><w:tc><w:tcPr><w:vMerge w:val=\"restart\"/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz w:val=\"24\"/></w:rPr><w:t>start</w:t></w:r></w:p></w:tc><w:tc><w:p><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz w:val=\"24\"/></w:rPr><w:t>side0</w:t></w:r></w:p></w:tc></w:tr><w:tr><w:tc><w:tcPr><w:vMerge/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz w:val=\"24\"/></w:rPr><w:t></w:t></w:r></w:p></w:tc><w:tc><w:p><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz w:val=\"24\"/></w:rPr><w:t>side1</w:t></w:r></w:p></w:tc></w:tr>",
+        "<w:tr><w:tc><w:tcPr><w:hMerge w:val=\"restart\"/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz w:val=\"24\"/></w:rPr><w:t>h</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:hMerge/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz w:val=\"24\"/></w:rPr><w:t></w:t></w:r></w:p></w:tc></w:tr>"
+      ]
+    },
+    {
+      "group": "table-rows",
+      "status": "PASS"
+    },
+    {
+      "group": "table-new",
+      "status": "PASS"
+    },
+    {
+      "group": "history",
+      "status": "PASS"
+    },
+    {
+      "group": "image-small",
+      "status": "PASS",
+      "pixel_dimensions": [
+        1,
+        1
+      ],
+      "point_dimensions": [
+        0.75,
+        0.75
+      ],
+      "emu": [
+        9525,
+        9525
+      ]
+    },
+    {
+      "group": "image-large",
+      "status": "PASS",
+      "pixel_dimensions": [
+        800,
+        600
+      ],
+      "point_dimensions": [
+        600.25,
+        450.5
+      ],
+      "emu": [
+        7623175,
+        5721350
+      ]
+    },
+    {
+      "group": "image-delete",
+      "status": "PASS",
+      "media_before": 1,
+      "media_after": 0,
+      "image_relationships_before": 1,
+      "image_relationships_after": 0
+    },
+    {
+      "group": "image-shared",
+      "status": "PASS"
+    },
+    {
+      "group": "image-cell",
+      "status": "PASS"
+    },
+    {
+      "group": "table-delete",
+      "status": "PASS"
+    },
+    {
+      "group": "errors",
+      "status": "PASS"
+    },
+    {
+      "group": "image-package",
+      "status": "PASS"
+    }
+  ],
+  "real_inputs": {
+    "library_sha256": "8610b2b74b1328cb20c4176b0250b9fd7a218a6bceb7fee65dd2b16f2a085d53",
+    "documents": [
+      {
+        "id": "minitab-ch10",
+        "source_sha256": "e73c211e12cbd07e467d6c2f5b731a71d9b831d871f055a46e3de087f5b55d4d",
+        "edited_sha256": "0dcbfa3036878046359ab618872d6724dad292fa190995f6f1d94158a3caddaa",
+        "status": "PASS",
+        "selected_table": 0,
+        "selected_cell": [
+          3,
+          0
+        ],
+        "row_counts": [
+          3,
+          4,
+          3
+        ],
+        "columns": 5,
+        "unchanged_metrics": [
+          {
+            "metric": "paragraphs",
+            "before": 336,
+            "after": 336,
+            "status": "PASS"
+          },
+          {
+            "metric": "characters",
+            "before": 13865,
+            "after": 13865,
+            "status": "PASS"
+          },
+          {
+            "metric": "tables",
+            "before": 10,
+            "after": 10,
+            "status": "PASS"
+          },
+          {
+            "metric": "images",
+            "before": 17,
+            "after": 17,
+            "status": "PASS"
+          },
+          {
+            "metric": "footnotes",
+            "before": 0,
+            "after": 0,
+            "status": "PASS"
+          },
+          {
+            "metric": "section_margins",
+            "before": [
+              {
+                "top": "1440",
+                "right": "2160",
+                "bottom": "1440",
+                "left": "3240"
+              }
+            ],
+            "after": [
+              {
+                "top": "1440",
+                "right": "2160",
+                "bottom": "1440",
+                "left": "3240"
+              }
+            ],
+            "status": "PASS"
+          }
+        ],
+        "edited_metrics": [
+          {
+            "metric": "paragraphs",
+            "before": 336,
+            "after": 336,
+            "status": "PASS"
+          },
+          {
+            "metric": "characters",
+            "before": 13865,
+            "after": 13865,
+            "status": "PASS"
+          },
+          {
+            "metric": "tables",
+            "before": 10,
+            "after": 10,
+            "status": "PASS"
+          },
+          {
+            "metric": "images",
+            "before": 17,
+            "after": 17,
+            "status": "PASS"
+          },
+          {
+            "metric": "footnotes",
+            "before": 0,
+            "after": 0,
+            "status": "PASS"
+          },
+          {
+            "metric": "section_margins",
+            "before": [
+              {
+                "top": "1440",
+                "right": "2160",
+                "bottom": "1440",
+                "left": "3240"
+              }
+            ],
+            "after": [
+              {
+                "top": "1440",
+                "right": "2160",
+                "bottom": "1440",
+                "left": "3240"
+              }
+            ],
+            "status": "PASS"
+          }
+        ],
+        "media_bytes_unchanged": true,
+        "non_main_parts_unchanged": 38,
+        "persistent_edit": "table width; temporary row cell edited before deletion",
+        "original_cells_protected_or_empty": true,
+        "text_change_verified": false,
+        "reopen_and_undo_redo": true
+      },
+      {
+        "id": "soci-syllabus",
+        "source_sha256": "dbc1fe7c9f99521074ed300e224f3d4ec906aedfc60d917220d2ffcc882913d9",
+        "edited_sha256": "8d79da5ec54b1f03db29c0cafe81094c60cd0e0baaea02f9a6ffb01e1c7b7870",
+        "status": "PASS",
+        "selected_table": 0,
+        "selected_cell": [
+          1,
+          0
+        ],
+        "row_counts": [
+          4,
+          5,
+          4
+        ],
+        "columns": 2,
+        "unchanged_metrics": [
+          {
+            "metric": "paragraphs",
+            "before": 117,
+            "after": 117,
+            "status": "PASS"
+          },
+          {
+            "metric": "characters",
+            "before": 5555,
+            "after": 5555,
+            "status": "PASS"
+          },
+          {
+            "metric": "tables",
+            "before": 2,
+            "after": 2,
+            "status": "PASS"
+          },
+          {
+            "metric": "images",
+            "before": 0,
+            "after": 0,
+            "status": "PASS"
+          },
+          {
+            "metric": "footnotes",
+            "before": 0,
+            "after": 0,
+            "status": "PASS"
+          },
+          {
+            "metric": "section_margins",
+            "before": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "after": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "status": "PASS"
+          }
+        ],
+        "edited_metrics": [
+          {
+            "metric": "paragraphs",
+            "before": 117,
+            "after": 117,
+            "status": "PASS"
+          },
+          {
+            "metric": "characters",
+            "before": 5555,
+            "after": 5555,
+            "status": "PASS"
+          },
+          {
+            "metric": "tables",
+            "before": 2,
+            "after": 2,
+            "status": "PASS"
+          },
+          {
+            "metric": "images",
+            "before": 0,
+            "after": 0,
+            "status": "PASS"
+          },
+          {
+            "metric": "footnotes",
+            "before": 0,
+            "after": 0,
+            "status": "PASS"
+          },
+          {
+            "metric": "section_margins",
+            "before": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "after": [
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              },
+              {
+                "top": "1440",
+                "right": "1440",
+                "bottom": "1440",
+                "left": "1440"
+              }
+            ],
+            "status": "PASS"
+          }
+        ],
+        "media_bytes_unchanged": true,
+        "non_main_parts_unchanged": 25,
+        "persistent_edit": "cell text",
+        "original_cells_protected_or_empty": false,
+        "text_change_verified": true,
+        "reopen_and_undo_redo": true
+      },
+      {
+        "id": "ohchr-40-69",
+        "source_sha256": "ca0701fe199aae7f35de67bfff4c66c70d7db3c65029a74ac96b8587fd42e214",
+        "edited_sha256": "c34fe8e98d8d36bb3db8f1d49a1dc08a6c643ac02f901bc008a404df384c1185",
+        "status": "PASS",
+        "selected_table": 0,
+        "selected_cell": [
+          2,
+          0
+        ],
+        "row_counts": [
+          2,
+          3,
+          2
+        ],
+        "columns": 4,
+        "unchanged_metrics": [
+          {
+            "metric": "paragraphs",
+            "before": 209,
+            "after": 209,
+            "status": "PASS"
+          },
+          {
+            "metric": "characters",
+            "before": 71205,
+            "after": 71205,
+            "status": "PASS"
+          },
+          {
+            "metric": "tables",
+            "before": 2,
+            "after": 2,
+            "status": "PASS"
+          },
+          {
+            "metric": "images",
+            "before": 0,
+            "after": 0,
+            "status": "PASS"
+          },
+          {
+            "metric": "footnotes",
+            "before": 5,
+            "after": 5,
+            "status": "PASS"
+          },
+          {
+            "metric": "section_margins",
+            "before": [
+              {
+                "top": "1417",
+                "right": "1134",
+                "bottom": "1134",
+                "left": "1134"
+              }
+            ],
+            "after": [
+              {
+                "top": "1417",
+                "right": "1134",
+                "bottom": "1134",
+                "left": "1134"
+              }
+            ],
+            "status": "PASS"
+          }
+        ],
+        "edited_metrics": [
+          {
+            "metric": "paragraphs",
+            "before": 209,
+            "after": 209,
+            "status": "PASS"
+          },
+          {
+            "metric": "characters",
+            "before": 71205,
+            "after": 71205,
+            "status": "PASS"
+          },
+          {
+            "metric": "tables",
+            "before": 2,
+            "after": 2,
+            "status": "PASS"
+          },
+          {
+            "metric": "images",
+            "before": 0,
+            "after": 0,
+            "status": "PASS"
+          },
+          {
+            "metric": "footnotes",
+            "before": 5,
+            "after": 5,
+            "status": "PASS"
+          },
+          {
+            "metric": "section_margins",
+            "before": [
+              {
+                "top": "1417",
+                "right": "1134",
+                "bottom": "1134",
+                "left": "1134"
+              }
+            ],
+            "after": [
+              {
+                "top": "1417",
+                "right": "1134",
+                "bottom": "1134",
+                "left": "1134"
+              }
+            ],
+            "status": "PASS"
+          }
+        ],
+        "media_bytes_unchanged": true,
+        "non_main_parts_unchanged": 31,
+        "persistent_edit": "table width; temporary row cell edited before deletion",
+        "original_cells_protected_or_empty": true,
+        "text_change_verified": false,
+        "reopen_and_undo_redo": true
+      }
+    ],
+    "baseline_passed": 18,
+    "edited_passed": 18,
+    "metric_total": 18
+  },
+  "artifacts": {
+    "fixtures": "build/x6-evidence",
+    "real_inputs": "build/x6-real",
+    "report": "docs/DOCX-X6.md"
+  }
+}
