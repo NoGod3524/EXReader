@@ -1,0 +1,61 @@
+{
+  "books": {
+    "arabic-journey": {
+      "kind": "original test book",
+      "source": "tests/rtl_verify.py:generate",
+      "sha256": "a3f9898476c8bcd1991d603f696c9799ff0aff5fc47fb51ec47b7095a774ee0b",
+      "pages": 4,
+      "excluded_nonreading_parts": [
+        2
+      ]
+    },
+    "arabic-library": {
+      "kind": "original test book",
+      "source": "tests/rtl_verify.py:generate",
+      "sha256": "3bf5bf6d487be8fbd030ade9845e24f80e7e11838c3fffb757108cfb684cc31c",
+      "pages": 4,
+      "excluded_nonreading_parts": [
+        2
+      ]
+    },
+    "hebrew-journey": {
+      "kind": "original test book",
+      "source": "tests/rtl_verify.py:generate",
+      "sha256": "31a5db678b45fa52c8c64f0d10168d7e3d530550a49cd22b3792ed63671c3971",
+      "pages": 4,
+      "excluded_nonreading_parts": [
+        2
+      ]
+    },
+    "hunger": {
+      "kind": "real unmodified EPUB",
+      "source": "https://www.gutenberg.org/ebooks/18291",
+      "download": "https://www.gutenberg.org/ebooks/18291.epub3.images",
+      "sha256": "b08b74c540efea958af64fb7e24838f7a3fee882f8158645a60b1e4f05e5f909",
+      "pages": 210,
+      "excluded_nonreading_parts": [
+        4
+      ]
+    },
+    "hunger-probed": {
+      "kind": "derived real book + clearly labelled original test appendix",
+      "source": "hunger + tests/fixtures/rtl/hebrew-journey.epub",
+      "modification": "Only OPF changed; original content members byte-identical. One XHTML test appendix added.",
+      "sha256": "91943533e6be9e356d81a195b4743f6f2cc6f9b167df07377d5e3c7fa7ea05d7",
+      "pages": 213,
+      "excluded_nonreading_parts": [
+        5
+      ]
+    }
+  },
+  "failed_downloads": [
+    {
+      "url": "https://downloads.hindawi.org/books/29061736.epub",
+      "result": "Cloudflare JavaScript/cookie challenge; no EPUB obtained"
+    },
+    {
+      "url": "https://downloads.hindawi.org/books/62042949.epub",
+      "result": "Cloudflare JavaScript/cookie challenge; no EPUB obtained"
+    }
+  ]
+}

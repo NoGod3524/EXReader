@@ -676,6 +676,19 @@ const char *exr_document_text(const exr_document *d, size_t *n) {
   return d ? d->text : NULL;
 }
 const char *exr_document_title(const exr_document *d) { return d && d->title ? d->title : ""; }
+exr_direction exr_document_page_progression(const exr_document *d) {
+  static const char *const rtl[]={"ar","he","iw","fa","ur","yi","ps","sd","dv"};
+  size_t i;
+  if(d && d->page_progression!=EXR_DIRECTION_AUTO) return d->page_progression;
+  /* EPUB default is reading-system defined. Use the primary language subtag;
+     explicit spine ltr/rtl always wins, and text direction is never changed. */
+  if(d && d->language) for(i=0;i<sizeof(rtl)/sizeof(*rtl);i++) {
+    const char *s=d->language;
+    if((s[0]|32)==rtl[i][0] && s[1] && (s[1]|32)==rtl[i][1] && (!s[2] || s[2]=='-'))
+      return EXR_DIRECTION_RTL;
+  }
+  return EXR_DIRECTION_LTR;
+}
 const exr_block *exr_document_blocks(const exr_document *d, size_t *n) {
   if (n)
     *n = d ? d->count : 0;

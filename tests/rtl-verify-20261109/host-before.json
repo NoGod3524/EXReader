@@ -1,0 +1,26 @@
+[
+  {
+    "book": "arabic-journey",
+    "next_key": "left",
+    "return_code": 1,
+    "passed": false
+  },
+  {
+    "book": "arabic-library",
+    "next_key": "left",
+    "return_code": 1,
+    "passed": false
+  },
+  {
+    "book": "hebrew-journey",
+    "next_key": "left",
+    "return_code": 1,
+    "passed": false
+  },
+  {
+    "book": "progression-ltr",
+    "next_key": "right",
+    "return_code": 0,
+    "passed": true
+  }
+]

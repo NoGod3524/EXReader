@@ -157,6 +157,10 @@ EXR_API exr_status exr_publication_open_memory_ex(exr_format format, const void 
                                                   const char *passphrase, exr_publication **out, exr_error *error);
 EXR_API void exr_publication_free(exr_publication *publication);
 EXR_API const char *exr_publication_title(const exr_publication *publication);
+/* Same policy as document_page_progression; custom publications default LTR.
+   Host left/right keys and spread placement should use this, never reverse the
+   logical spine directory or pager_next order. NULL returns LTR. */
+EXR_API exr_direction exr_publication_page_progression(const exr_publication *publication);
 EXR_API const exr_part *exr_publication_parts(const exr_publication *publication, size_t *count);
 /* EPUB 3 Fixed Layout (rendition: vocabulary). An itemref
    rendition:layout-pre-paginated/-reflowable overrides the package default, so
@@ -543,6 +547,8 @@ EXR_API exr_status exr_pager_get(exr_pager *pager, size_t page, const exr_layout
                                  exr_error *error);
 EXR_API size_t exr_pager_cached_count(const exr_pager *pager);
 EXR_API size_t exr_pager_cached_bytes(const exr_pager *pager);
+typedef struct { size_t hits,misses; } exr_pager_cache_stats;
+EXR_API exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *pager);
 /* Bounded in-memory replay checkpoints, separate from the page payload cache.
    Defaults: 4 entries / 2 MiB / every 16 pages in get() mode. Capacity zero disables.
    Capacity <=64, nonzero budget/interval required when enabled; not serialized. */
