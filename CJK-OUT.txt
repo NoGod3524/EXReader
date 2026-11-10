@@ -1,0 +1,39 @@
+三本都测完了。只有 RESULTS.csv 和 REPORT.md 两个文件写进了仓库，未提交、未跑 CI、未开窗口。原始输出放在仓库外的 `%TEMP%\cjk-Ft0T\`。
+
+**先更正参数：** 第三个参数不是 `max_pages`，是竖排开关（源码 `cjk_measure.c` 里写的是 `vertical=atoi(argv[3])`）。`0` 会强制按横排排版并按行测量；`1` 不加干预，按列测量。你给的唐詩样例（`vertical:true, columns:119, wrong_mode_pages:86`）是用 `1` 跑出来的，我重跑后逐字段一致。但那组数据是测量假象，作废。下面全部用 `0` 的结果。
+
+- **RESULTS.csv：** `evidence/cjk-corpus-20261105/RESULTS.csv`（前 3 行有效；后 3 行是参数 `1` 的对照，不能用）
+- **REPORT.md：** `evidence/cjk-corpus-20261105/REPORT.md`
+
+**三本 CJK_SUMMARY（参数 0）**
+```
+紅樓夢   {"vertical":false,"parts":31,"pages":1652,"columns":37154,"head_violations":4,"tail_violations":0,"punctuation_pairs":54,"glyphs":821108,"excluded_ruby_glyphs":0,"wrong_mode_pages":0,"status":0}
+醒世恆言 {"vertical":false,"parts":21,"pages":1170,"columns":26510,"head_violations":0,"tail_violations":0,"punctuation_pairs":11352,"glyphs":562814,"excluded_ruby_glyphs":0,"wrong_mode_pages":0,"status":0}
+唐詩     {"vertical":false,"parts":3,"pages":86,"columns":1786,"head_violations":0,"tail_violations":0,"punctuation_pairs":0,"glyphs":50095,"excluded_ruby_glyphs":0,"wrong_mode_pages":0,"status":0}
+```
+
+**四问**
+- **a) 行首/行尾违规：** 行尾三本都是 0。行首只有紅樓夢有 4 处：第 83 页（第 2 部分）U+FF1A「：」、第 203 页（第 4 部分）U+FF1A、第 1033 页（第 20 部分）U+FF0C「，」、第 1148 页（第 22 部分）U+FF1A。工具只查一部分标点，`》〉】”’` 不在行首检查里，`《〈【“‘` 不在行尾检查里，所以 0 只代表这部分标点没有违规。
+- **b) 标点挤压：** 全部没有挤压。醒世恆言 11352 对、紅樓夢 54 对相邻标点，每个标点都占满一个全角，两个合起来就是两个全角宽（`：「`、`。」` 最多）。另外，破折号 U+2014 宽 47 px，约 1.68 个汉字宽，不是标准的一个全角。唐詩为 0 对，无法测量。
+- **c) wrong_mode_pages：** 它统计的是"工具假设的方向和实际排版方向不一致"的页数。依据：
+  - 三本 epub 解包后全文搜索，没有任何 `writing-mode`；书目文件里也没有 `page-progression-direction`。书本身没有声明竖排。
+  - 参数 `1` 时实际排出来不是竖排，所以 86 页全部计入；强制横排后计数变为 0，说明确实排成了横排。
+  - 列数只有 119：工具按竖排的方式分列，但横排时所有行起点相同，一整页被当成了一列。
+
+  所以不是"应横排却排成竖排"。在你给的两个选项里属于"声明与布局不一致"，但声明方是测量工具的参数，不是书。
+- **d) 每行/每列汉字数：** 工具不提供，无法测量。
+
+**5 项判定**
+
+| # | 项目 | 判定 | 依据 |
+|---|---|---|---|
+| 1 | 行首禁则 | 未达标 | 紅樓夢 4 处 |
+| 2 | 行尾禁则 | 达标 | 三本均为 0（仅限工具检查的那部分标点） |
+| 3 | 相邻标点挤压 | 未达标 | 11406 对中 0 对挤压 |
+| 4 | 破折号/省略号按全角占位 | 未达标 | 省略号 `…` 是一个全角，合格；破折号 U+2014 是 1.68 个全角 |
+| 5 | 每行汉字数 | 无法测量 | 工具没有逐行计数 |
+
+REPORT 里还写了繁体与简体的差异：引号用 `「」` 还是 `“”`；句读居中还是靠左下（无法测量）；繁体字形覆盖和缺字情况（无法测量）；竖排习惯（本语料书本身都是横排，竖排没有测到）。
+
+`CJK-OUT.txt` 在开始前就已经是未跟踪文件，我没动。
+
