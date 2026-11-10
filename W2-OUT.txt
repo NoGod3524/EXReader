@@ -13,3 +13,4 @@
 [2026-11-10T03:09:00.8255849-05:00] 最终单次全量 ctest 251/251 全绿（205.68s），其中 sdk-release 18.53s；未调整超时或断言。最终 19 本/9995 页/8662386 字形，页数/逐页哈希变化 0，独立 python-docx 15/15。完整日志与逐页前后结果已入 evidence/w2-docx-write。读取器、模型及 .github/ 均无改动。
 [2026-11-10T03:10:46.4303022-05:00] 最终 verified.docx 的字体、段落、边距、纸张截图已全部重拍；DATE/PAGE 域代码与引用第2页截图齐全。REPORT.txt 附真实 OOXML、python-docx 15项比较表、复现命令及本地 MSVC 导入库准备方法。准备提交与推送。
 [2026-11-10T03:11:40.0091896-05:00] 实现及验收证据已提交 f607f024 并推送 origin/codex/dx-write-20261110。提交后发现 Word 生成的临时锁文件混入，已从版本控制移除；证据文本日志清理行尾空格，build 中保留原始日志。接着创建 draft PR。
+[2026-11-10T03:12:10.2756299-05:00] draft PR #118 已创建：https://github.com/NoGod3524/EXReader/pull/118；base main，head codex/dx-write-20261110。已按要求由 PR 触发 CI，未手动 dispatch 或取消运行。
