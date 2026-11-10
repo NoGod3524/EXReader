@@ -230,6 +230,7 @@ static void test_sync(void) {
     puts("ERROR-TIMEOUT reported: 连接超时");
     mock_force_status=403;mock_force_count=1000;
     c=sy_sync_now(&s);printf("  403: %s\n",s.text);assert(c==SY_AUTH && strstr(s.text,"403"));
+    puts("ERROR-403 permission denied reported");
     mock_force_count=0;
     /* transient 500s are retried transparently */
     mock_force_status=500;mock_force_count=2;

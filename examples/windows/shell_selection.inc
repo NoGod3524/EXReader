@@ -165,20 +165,22 @@ static void shell_selection_paint(HDC dc) {
   memcpy(pixels, section.dsBm.bmBits, (size_t)width*height*4);
   annot_pixels(pixels,width,height);
   tts_pixels(pixels,width,height);
-  uint32_t background = shell_blend(shell_colors->layer_page, shell_is_dark() ? 0x7c88ff : 0x4553e0,
-    shell_is_dark() ? .16f : .10f);
+  /* High contrast selects with the system highlight pair, fully opaque. */
+  uint32_t background = shell_contrast ? shell_colors->accent_hover :
+    shell_blend(shell_colors->layer_page, shell_is_dark() ? 0x7c88ff : 0x4553e0, shell_is_dark() ? .16f : .10f);
+  uint32_t ink = shell_contrast ? shell_colors->on_accent : shell_colors->text;
   for (int y = max(0, bounds.top); y < min(height, bounds.bottom); y++) {
     for (int x = max(0, bounds.left); x < min(width, bounds.right); x++) if (PtInRegion(region, x, y)) {
       size_t index = (size_t)y*width+x; uint32_t q = g.frame.dib[index];
       unsigned r = (q>>16)&255, green = (q>>8)&255, b = q&255;
       if (!g.frame.display_shell_paper && r == green && green == b)
-        ((uint32_t *)pixels)[index] = shell_blend(shell_colors->text, background, r/255.f);
+        ((uint32_t *)pixels)[index] = shell_blend(ink, background, r/255.f);
       else {
         /* Book-painted paper (e.g. Grass Pillow's cream) is already opaque.
            Its lightness is the remaining paper coverage; black ink stays ink. */
         float coverage = (float)max(r, max(green, b))/255.f;
-        ((uint32_t *)pixels)[index] = shell_blend(q, shell_is_dark() ? 0x7c88ff : 0x4553e0,
-          coverage*(shell_is_dark() ? .16f : .10f));
+        ((uint32_t *)pixels)[index] = shell_blend(q, shell_contrast ? background : shell_is_dark() ? 0x7c88ff : 0x4553e0,
+          coverage*(shell_contrast ? 1.f : shell_is_dark() ? .16f : .10f));
       }
     }
   }
