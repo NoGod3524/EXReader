@@ -1,0 +1,16 @@
+已提交 `a9d17f1c`，推送指定分支，并创建 **[Draft PR #58](https://github.com/NoGod3524/EXReader/pull/58)**，base 为 main。提交信息无 CI 跳过标记。
+
+| 语料 | 压缩对数／总对数 | 压缩后 extent 分布 | 页数变化 |
+|---|---:|---|---:|
+| 紅樓夢 | **15,363／15,378** | ≈42px×15,355；≈28px×8 | 1652→1632 |
+| 醒世恆言 | **11,472／11,472** | ≈42px×11,456；≈28px×16 | 1170→1167 |
+| 唐詩 | 0／0 | 无可测对 | 86→86 |
+
+28px 项来自三连重叠对；三连总宽为 2em，字形最低 0.5em。紅樓夢剩余 **15 对保持 75px 不变**；软／硬跨行测试均保持全宽。
+
+- Pachinko：**1194→1194 页，逐页像素哈希差异 0/1194**。
+- ctest：**169/169 通过**；未改既有断言。
+- 核心改动：[inline.c:466](C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/src/inline.c:466)；新增测试：[test_line_boundary.c:301](C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/tests/test_line_boundary.c:301)。
+- 全部文件行号、字体夹具、保护树登记及数字证据见[报告](C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/evidence/cjk-punctuation-compression-20261106/REPORT.md)。
+
+重排后紅樓夢行首软换行异常 **0→1**、行尾左引号 **2→7**，均涉及源码空格处的原有断点，已写入报告和 PR；因此目前不能宣布全部中文禁则达标。未开窗口，未手动触发 CI。

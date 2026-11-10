@@ -1,0 +1,27 @@
+The evidence is committed and pushed, and a draft PR is open: **#55** — https://github.com/NoGod3524/EXReader/pull/55 (base `main`, which matched 06c07015 when I fetched).
+
+**Files copied** (source size → size in the repo; the repo forces LF line endings, so files that came in with CRLF shrank):
+
+| File | Source | In repo |
+|---|---:|---:|
+| evidence/real-books-20261105/CJK-LINEBREAK.md | 5307 | 5248 |
+| evidence/real-books-20261105/CJK-PUNCTUATION.csv | 16192 | 16043 |
+| evidence/real-books-20261105/PAGES-SUMMARY.md | 2896 | 2865 |
+| evidence/real-books-20261105/RESULTS-PAGES.csv | 8488 | 8412 |
+| evidence/cjk-corpus-20261105/REPORT.md | 6897 | 6897 |
+| evidence/cjk-corpus-20261105/RESULTS.csv | 376 | 376 |
+| real-books README.md (merged by hand) | 11215 on main | 12011 |
+| real-books SDK-GAPS.md (merged by hand) | 2266 on main | 2954 |
+| evidence/INDEX.md | 9044 | 10436 |
+
+- **Hand merge:** compared with main, both files only had new sections added at the end, nothing removed. I appended "五位置抽样与CJK坐标验收" to the README and the SDK-CJK-003 entry to SDK-GAPS. Afterwards both files match source A exactly, apart from line endings.
+- **Not copied:** source B's `CJK-OUT.txt` (outside the directory you named), and source A's own uncommitted INDEX.md draft. No book, PNG or font files went in. Every changed path is under `evidence/`.
+
+**INDEX:** the main dated list went from **17 → 20** entries. I added the 3 new ones after its last item, just before the "已知在 main 上失败" section. Nothing was reordered or deleted. Counting the entries in the two sections further down, the file has 23 list items in total. The numbers in the entries match the files: 148 coordinate rows in CJK-PUNCTUATION.csv and 75 successful renders in RESULTS-PAGES.csv.
+
+**Nothing in the new files contradicts main directly, but four things need your attention:**
+1. **Japanese vs Chinese results differ.** 草枕 (Japanese) has 0 line-break violations, but 紅樓夢 (Chinese) has **4 at the start of a line** (p83/203/1148 `：`, p1033 `，`). Main's `CJK-READABILITY-CHECKLIST.md` and `SDK-GAPS.md` still say Chinese "still needs books, to be verified separately". That isn't wrong, but they don't mention the new Chinese results yet. I didn't change them because that wasn't in scope; it's worth a follow-up.
+2. **Half of the Chinese RESULTS.csv is invalid.** Its last 3 rows (`vertical=true`) are a measurement artifact, which REPORT.md says explicitly. My INDEX entry marks them as void, but anyone reading the CSV on its own could be misled.
+3. **The em-dash (U+2014) is 1.68em wide**, not full-width — a new finding. It isn't in SDK-GAPS yet.
+4. **REPORT.md points to files that aren't in the repo.** It references a measurement tool and its source (`css-alias-20261105/after/exreader-cjk-measure.exe`, `cjk_measure.c`) outside the repo, so an outside auditor can't rerun it. CJK-LINEBREAK.md has the same problem: it gives only the measuring program's SHA-256, not the program itself.
+

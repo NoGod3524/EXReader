@@ -1,0 +1,102 @@
+**根因已复现：封面图片超过宿主的页缓存预算；shell 的零页边距又使封面前多出一张空页。保存该空页位置后重开，恢复逻辑触发缓存错误，而宿主用恢复提示覆盖了错误信息。不是中文字体或版心尺寸无效。**
+
+全程未修改代码、数据库或构建产物，未启动 GUI。
+
+1. **布局参数与空白页来源**
+
+配置来自 [reader.c:1529](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/examples/reader.c:1529)，shell 覆盖发生于 [reader.c:347](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/examples/reader.c:347)。
+
+| 参数 | 旧面板，当前 FontPercent=150 | shell 默认，96 DPI |
+|---|---:|---:|
+| page.width | 720 | `min(客户区宽−96, 578)` |
+| page.height | 1040 | `客户区高−176`，横排 |
+| margin | 36 | **0** |
+| font_size | 42 | **17** |
+| line_height | 1.5 | 1.6 |
+| paragraph_spacing | 10 | 13.6 |
+| user_css | NULL | NULL |
+| document_css | 1 | 1 |
+
+其他 DPI 按 `dpi/96` 缩放并取整；几何计算见 [shell_geometry.h:13](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/examples/windows/shell_geometry.h:13)。无效高度会禁用 shell 几何，随后使用旧配置。没有发现 CJK 专属的零值或负值参数。
+
+本书首个阅读章节是 **`OEBPS/wrap0000.html`，只有封面图片，没有文字**。其 CSS 设置 `body { margin:0.5em }`。
+
+CLI 使用 shell 配置 `578×529 / margin=0 / font=17` 时：
+
+- body 顶部偏移为 **8.5**；
+- [flow.c:564](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/src/flow.c:564) 按整页可用高度把图片缩到 **529**；
+- `8.5 + 529 > 529`，在 [flow.c:43](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/src/flow.c:43) 触发换页；
+- 先产出一张纯白页：**0 字形、0 图片框、缓存计费 8448 字节**。
+
+另外，**“1 · 1”并非总页数**：[shell_screen.inc:301](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/examples/windows/shell_screen.inc:301) 输出的是 `part+1 · page+1`，即“章节 · 章内页”。
+
+2. **为什么重开后打不开，以及错误在哪里被隐藏**
+
+宿主逐章分页器在 [reader.c:1585](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/examples/reader.c:1585) 固定设置：
+
+```c
+exr_pager_set_cache(*out, 2, 8 * 1024 * 1024, error);
+```
+
+封面是 **1600×2400 PNG**，解码像素占 **15,360,000 字节**；完整封面页实际缓存计费 **15,372,040 字节**，超过 **8,388,608 字节**。因此 [pager.c:1675](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/src/pager.c:1675) 返回：
+
+```text
+EXR_LIMIT (6): Page exceeds the pager cache byte budget
+```
+
+只读检查现有数据库发现，《紅樓夢》已保存的位置正是：
+
+```text
+part=0
+path=OEBPS/wrap0000.html
+position=0
+prefix=""
+suffix=""
+```
+
+恢复调用链为：
+
+`bounded_restore → page_for_offset → get(0) → get(1)`
+
+因为空白页范围是 `0..0`，恢复逻辑继续探查下一页，在 [reader.c:1886](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/examples/reader.c:1886) 撞上封面的缓存错误并返回失败。
+
+错误有两处被隐藏：
+
+- **打开失败被成功提示遮盖**：[reader.c:2012](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/examples/reader.c:2012) 提前写入“已按章节与文本锚点恢复……”。失败处理在 [reader.c:5200](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/examples/reader.c:5200) 优先显示这个 `job->message`，跳过包含实际错误的 `describe_error`。
+- **预取失败直接丢弃**：[reader.c:4843](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/examples/reader.c:4843) 仅接受成功结果，然后无条件返回。
+
+失败候选会在 `reader.c:2604` 清理；没有有效 frame，shell 就不会进入阅读界面，所以表现为留在书库。
+
+**当前 DLL 与保留的 `after` DLL 都复现相同错误。证据支持“保存进度后重开触发已有缺陷”，不支持把重编本身认定为原因。**
+
+3. **拉丁书与中文书的实际差异**
+
+这里的差异是**首章结构和大封面图片**，不是 CJK 排版分支。
+
+`cjk_measure` 使用“逐章载入＋`exr_pager_next` 顺序遍历”，没有宿主这个 8 MiB get-mode 缓存门槛，所以能完整处理本书。
+
+本轮用当前 demo DLL 完整遍历得到：
+
+| 路径与参数 | 页数 | 字形数 |
+|---|---:|---:|
+| CLI 顺序分页，参考参数 `720×1040 / 36 / 28 / 1.5 / 10` | **1632** | 821108 |
+| 宿主逐章分页 API，相同参考参数，缓存改为 32 MiB | **1632** | 821108 |
+| 宿主逐章分页 API，shell 示例参数 `578×529 / 0 / 17 / 1.6 / 13.6`，32 MiB | **1202** | 821108 |
+
+原有 **1652 页**记录来自另一份 DLL。验收应固定 DLL 和布局参数；shell 字号、版心不同，不能直接要求也是 1652 页。
+
+4. **最小修复建议与回归**
+
+建议修改三处，均尚未实施：
+
+- **恢复打开和翻页**：`examples/reader.c:1585` 将缓存预算 **8 MiB → 32 MiB**。CLI 已验证 **16 MiB 即可容纳本书封面**，32 MiB 也通过。
+- **让失败可见**：`examples/reader.c:5200–5208` 的失败分支始终调用 `describe_error(status, error)`；恢复提示只能作为附加信息。
+- **消除封面前的空页**：`src/flow.c:564–571` 在当前页尚无正文或图片时，图片缩放应考虑当前剩余高度 **`exr_flow_bottom(f) - f->y`**；此处当前只使用整页高度。其余已有内容后的正常换页保持原行为。
+
+需要的回归：
+
+- 拉丁 Sample：固定配置，比较页数、文本范围和逐页渲染。**本轮仅调整缓存预算的 API 验证已通过：42 页，全部页面像素 SHA-256 完全一致。**
+- 紅樓夢：首次打开、封面翻页、跨章、关闭后恢复，以及从现有 `part=0/position=0` 记录恢复。
+- 中文完整遍历：固定参考参数，当前 DLL 应保持约 **1632 页**及 **821108 字形**；旧 DLL 的 **1652 页**单独作为版本基线。
+- 空页修复：封面第一页应出现图片；同时检查正文中间图片、横竖排、不同 DPI 和窗口尺寸。
+- 失败显示：保留 8 MiB 的故障注入配置时，应明确显示上述 `EXR_LIMIT`，不能显示“已恢复”。

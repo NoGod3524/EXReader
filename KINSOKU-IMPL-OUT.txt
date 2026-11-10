@@ -1,0 +1,26 @@
+已提交 `69d2ff79`，推送至 `codex/cjk-kinsoku-20261106`，创建草稿 **[PR #57](https://github.com/NoGod3524/EXReader/pull/57)**，base 为 `main`。
+
+改动位置：
+
+- [src/inline.c:519](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/src/inline.c:519)：共用过滤；536、1696 行分别用于 display/feed，清 LINE、置 GLUE。
+- [cjk_measure.c:12](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/tools/probes/cjk_measure.c:12)：补引号集合；32、97、121 行增加分类与汇总。
+- [test_line_boundary.c:220](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/tests/test_line_boundary.c:220)、[test_cjk_probe.c:1](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/tests/test_cjk_probe.c:1)：新增回归与探针自检。
+- [受保护树登记:24](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/evidence/ci-packaging-20261103/R-PROTECTED-TREES.md:24)；新增报告、汇总、逐页哈希、来源记录和测试日志。
+
+验收数字：
+
+| 书 | 旧口径行首异常 | punctuation_pairs | 页数 |
+|---|---:|---:|---:|
+| 紅樓夢 | 4→1 | 54→15,170 | 1652→1652 |
+| 醒世恆言 | 0→0 | 11,352→11,352 | 1170→1170 |
+| 唐詩 | 0→0 | 0→0 | 86→86 |
+
+紅樓夢补齐引号后，旧引擎已计 **15,166** 对；修复重排再净增 **4** 对。另外两本数值未变。
+
+分类后，紅樓夢 `soft_wrap=3→0`、`forced_break=1→1`，另两类均为 0；三本修后 `head_violations` 均为 **0**。剩余异常是 **p1033 的行首逗号**：保留源码 `<br/>` 时无法通过软断行解决，已单列。
+
+中文总页数实测均未变；紅樓夢行数 **37,154→37,155**。重排可能改变页数，但并非必然。探针还揭示紅樓夢原有 **2 处行尾左引号**，改前、改后相同。
+
+Pachinko：**1194→1194 页，逐页像素哈希差异 0/1194**。相关 **ctest 13/13 通过**，探针自检通过，未改既有断言。
+
+[完整证据报告](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/evidence/cjk-kinsoku-20261106/REPORT.md)。未开窗口、未跑 CI；提交带 `[skip ci]`。

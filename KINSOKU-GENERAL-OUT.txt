@@ -1,0 +1,19 @@
+已提交 `e3dc6099` 并 push 到同一分支，[PR #58](https://github.com/NoGod3524/EXReader/pull/58) 正文已追加本轮验收数字。
+
+仅改两个文件：
+
+- [inline.c:549](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/src/inline.c:549)：统一定义 16 字符禁则集合；573 行共用过滤，595、1757 行供 display/feed 调用。同时保护 `左引号 SP 正文`；弯引号采用中文字体判断，保持拉丁排版。未改 `exr_text_analyze()`。
+- [test_line_boundary.c:303](/C:/Users/Oscar/Documents/Codex/EXReader-evidence-20261105/tests/test_line_boundary.c:303)：新增三组回归测试。
+
+六项验收：
+
+1. **紅樓夢**：行首软换行异常 **1→0**，行尾左引号 **7→0**。
+2. **醒世恆言、唐詩**：禁则异常均为 **0**。
+3. 压缩对数：紅樓夢 **15,368/15,383**；醒世恆言 **11,472/11,472**，均达到要求。
+4. **Pachinko：1194 页，像素哈希差异 0/1194**。
+5. **ctest 169/169 通过**；新增两组中文测试分别在旧 DLL 上失败、新 DLL 上通过；line-boundary 共 **45,752 checks**。
+6. 中文页数：紅樓夢 **1632→1632**、醒世恆言 **1167→1167**、唐詩 **86→86**。
+
+仍有 **1 处结构性硬断冲突**：紅樓夢第 **1021 页**，part=20、source_start=32144。源码为 `《問難》<br/>，《秋水》`，保留 `<br/>` 就无法靠软断行移回逗号；单列为 `forced_break=1`。
+
+未开窗口、未手动触发 CI；提交信息无 CI 跳过标记。
