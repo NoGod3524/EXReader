@@ -85,5 +85,8 @@
   },
   "ctest_count": 258,
   "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
-  "ci_policy": "Automatic push/pull_request only. No workflow_dispatch/cancellation/.github edits."
+  "ci_policy": "Automatic push/pull_request only. No workflow_dispatch/cancellation/.github edits.",
+  "validated_code_commit": "cf8c20792e9ec25d313a944ed45fb00e1b9d5d06",
+  "pull_request": 115,
+  "pull_request_url": "https://github.com/NoGod3524/EXReader/pull/115"
 }
