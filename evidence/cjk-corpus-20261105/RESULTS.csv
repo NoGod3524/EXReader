@@ -1,0 +1,7 @@
+file,pages,columns,head_viol,tail_viol,punct_pairs,vertical,wrong_mode_pages
+hongloumeng-24264.epub,1652,37154,4,0,54,false,0
+xingshihengyan-24239.epub,1170,26510,0,0,11352,false,0
+tangshi300-52323.epub,86,1786,0,0,0,false,0
+hongloumeng-24264.epub,1652,1909,0,0,1353,true,1652
+xingshihengyan-24239.epub,1170,1250,0,0,11872,true,1170
+tangshi300-52323.epub,86,119,0,0,0,true,86
