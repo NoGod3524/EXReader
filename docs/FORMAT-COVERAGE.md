@@ -60,7 +60,7 @@ PDF/CBZ 最大边 720，另绘第一页的 2× 缩放。字体、DLL、输入文
 | 格式/形态 | 当前实测边界 |
 |---|---|
 | 流式 EPUB | 两书完整排版与图片可用，文字查找/命中可用；换宽度/字号重新分页。固定配置下可做像素回归。 |
-| 固定版式 EPUB | 两本 `rendition:layout=pre-paginated` 真书能经 publication/pager 读取，图片可见；固定页入口返回 FORMAT(5)。Haruko 从 14 页变成 15 页，未保持固定版式语义，只能按流式降级读取。 |
+| 固定版式 EPUB | 两本 `rendition:layout=pre-paginated` 真书能经 publication/pager 读取，图片可见；固定页入口返回 FORMAT(5)。Haruko 从 14 页变成 15 页，未保持固定版式语义，只能按流式降级读取。**2026-11-10 更新（D1）**：pager 已按原生视口一页排版并统一缩放，支持 item 级 rendition、page-spread 展开与固定页 `position:absolute`；8 本扩充语料六项 6/6，见 [FIXED-LAYOUT.md](FIXED-LAYOUT.md)。本表其余数字仍为 2026-11-07 当时的测量。 |
 | 含音频/视频 EPUB | Moby Dick 和 Creative Commons 样本的静态正文/图片可读。EPUB 交给 PCM 入口返回 FORMAT(5)；提取的 MP4/MP3 单独交给 PCM 入口也返回 FORMAT(5)。本构建未启用 MP3/AAC，不能把此结果推广为启用解码器后的结果；本轮未验证 SMIL 同步朗读或视频播放。 |
 | 文字 PDF | 固定页绘制、2× 缩放和文本查找/选择在 Malcolm X 279 页上可用。Binomial Distribution 及两份课程 syllabus 打开即 FORMAT(5)，不能概括为任意文字 PDF 均可读。 |
 | 扫描 PDF | Malcolm X 的 20 页图像版可完整绘制和缩放，文字字节/区域为 0，无法搜索选中。另一真实上游图像 PDF 能打开、列出 1 页，但绘制 UNSUPPORTED(11)；不是所有扫描 PDF 都可读。 |

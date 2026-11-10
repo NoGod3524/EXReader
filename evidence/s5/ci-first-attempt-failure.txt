@@ -1,0 +1,36 @@
+PR108 first Native C engine run42649829065 / Android job129272858349
+The target SDK compiled and installed; provenance version parsing failed before artifact upload.
+2026-11-09T15:59:23.4274984Z Traceback (most recent call last):
+2026-11-09T15:59:23.4275853Z   File "/home/runner/work/EXReader/EXReader/tools/crossbuild/manifest.py", line 151, in <module>
+2026-11-09T15:59:23.4276593Z     main()
+2026-11-09T15:59:23.4277176Z   File "/home/runner/work/EXReader/EXReader/tools/crossbuild/manifest.py", line 147, in main
+2026-11-09T15:59:23.4277874Z     capture(args)
+2026-11-09T15:59:23.4278496Z   File "/home/runner/work/EXReader/EXReader/tools/crossbuild/manifest.py", line 119, in capture
+2026-11-09T15:59:23.4281491Z     'dependencies': dependencies(settings, args.source),
+2026-11-09T15:59:23.4282397Z   File "/home/runner/work/EXReader/EXReader/tools/crossbuild/manifest.py", line 55, in dependencies
+2026-11-09T15:59:23.4283034Z     version = '.'.join(re.search(r'#define XML_' + part + r'_VERSION\s+(\d+)', content)[1]
+2026-11-09T15:59:23.4283617Z   File "/home/runner/work/EXReader/EXReader/tools/crossbuild/manifest.py", line 55, in <genexpr>
+2026-11-09T15:59:23.4284178Z     version = '.'.join(re.search(r'#define XML_' + part + r'_VERSION\s+(\d+)', content)[1]
+2026-11-09T15:59:23.4284602Z TypeError: 'NoneType' object is not subscriptable
+2026-11-09T15:59:23.4407724Z CMake Error at build/android/cmake_install.cmake:486 (execute_process):
+2026-11-09T15:59:23.4408359Z   execute_process failed command indexes:
+2026-11-09T15:59:23.4408657Z 
+2026-11-09T15:59:23.4408807Z     1: "Child return code: 1"
+2026-11-09T15:59:23.4409048Z 
+2026-11-09T15:59:23.4409054Z 
+2026-11-09T15:59:23.4409059Z 
+2026-11-09T15:59:23.4420518Z expected=command success; actual=exit 1 command=cmake --install build/android --prefix stage; candidate=/home/runner/work/_temp/80433225-bcf5-46b6-9f5b-1f18c631d4f5.sh:4
+2026-11-09T15:59:23.4439318Z ##[error]Process completed with exit code 1.
+2026-11-09T15:59:23.4598895Z Post job cleanup.
+2026-11-09T15:59:23.5504091Z [command]/usr/bin/git version
+2026-11-09T15:59:23.5550455Z git version 2.56.0
+2026-11-09T15:59:23.5595120Z Temporarily overriding HOME='/home/runner/work/_temp/b8c201a5-93f6-4c2f-8f4d-41c97283a04f' before making global git config changes
+2026-11-09T15:59:23.5596061Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-09T15:59:23.5602219Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/EXReader/EXReader
+2026-11-09T15:59:23.5650845Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-09T15:59:23.5692087Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-09T15:59:23.6019021Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-09T15:59:23.6050675Z http.https://github.com/.extraheader
+2026-11-09T15:59:23.6063740Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-09T15:59:23.6106171Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+

@@ -245,6 +245,9 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
   }
   if(align==4) align=base&1 ? 2 : 0;
   if(align==5) align=base&1 ? 0 : 2;
+  /* A justified paragraph's last/forced line uses start alignment. The
+     remaining space belongs on the left for RTL, including semantic titles. */
+  if((base&1) && f->paragraph->align==3 && (final || forced || semantic)) align=2;
   if(align==1 || align==2) cjk=0;
   if(semantic) cjk=0;
   if(cjk) {

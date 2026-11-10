@@ -1,5 +1,7 @@
 # EXReader — native C reading engine & SDK
 
+共享库发布包与三平台最小接入命令见 [SDK 快速开始](tools/release/README.md)。
+
 默认分支为 `main`；`codex/framework` 为 SDK 化之前的归档历史，不再接受新提交。台账与证据入口见 [docs/reader-total-progress/](docs/reader-total-progress/) 与 [evidence/INDEX.md](evidence/INDEX.md)。
 
 EXReader 是面向桌面和移动阅读应用的 **C11 原生阅读引擎与可嵌入 SDK**，当前为 **3.42.0 开发版**，ABI epoch 1、书库 schema 7。核心自有代码使用 MIT 协议，可构建静态组件或 DLL / SO / dylib，以 C 接口供 C/C++、Swift 和 JNI 宿主调用。

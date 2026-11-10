@@ -1,0 +1,10 @@
+{
+  "original_sha256": "b08b74c540efea958af64fb7e24838f7a3fee882f8158645a60b1e4f05e5f909",
+  "derivative_sha256": "91943533e6be9e356d81a195b4743f6f2cc6f9b167df07377d5e3c7fa7ea05d7",
+  "original_content_members_unchanged": true,
+  "changed_original_members": [
+    "OEBPS/content.opf"
+  ],
+  "added_member": "exr-rtl-probe.xhtml",
+  "fixture_sha256": "31a5db678b45fa52c8c64f0d10168d7e3d530550a49cd22b3792ed63671c3971"
+}

@@ -558,7 +558,8 @@ static int drive_execute(void) {
   if (!strcmp(action, "probe_key") || !strcmp(action, "probe_wheel")) {
     SetFocus(g.page);
     host_probe_log("input_gen",(double)g.frame.generation);
-    SendMessageW(g.page,!strcmp(action,"probe_key")?WM_KEYDOWN:WM_MOUSEWHEEL,!strcmp(action,"probe_key")?VK_NEXT:MAKEWPARAM(0,-WHEEL_DELTA),0);
+    UINT key=!strcmp(drive_args[1],"left") ? VK_LEFT : !strcmp(drive_args[1],"right") ? VK_RIGHT : VK_NEXT;
+    SendMessageW(g.page,!strcmp(action,"probe_key")?WM_KEYDOWN:WM_MOUSEWHEEL,!strcmp(action,"probe_key")?key:MAKEWPARAM(0,-WHEEL_DELTA),0);
     drive_expect_idle=1;return 1;
   }
   if (!strcmp(action, "quit")) {
