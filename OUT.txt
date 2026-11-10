@@ -1,0 +1,16 @@
+已完成并推送，Draft [PR #119](https://github.com/NoGod3524/EXReader/pull/119)，最新提交 `4861f740`。PR CI 已触发，正在运行。
+
+模型位于 [edit.h](/C:/Users/Oscar/Documents/Codex/EXReader-dxmodel-20261110/include/exr/edit.h) 和 [docx_edit.c](/C:/Users/Oscar/Documents/Codex/EXReader-dxmodel-20261110/src/docx_edit.c)：节、块、run 使用稳定 `uint64` ID 和显式属性结构体；表格、绘图 XML 与 OPC 部件原字节保留。
+
+- 五个命令全部可用。对应单测：`native-docx-edit-insert`、`split`、`para-props`、`run-props`、`delete`（后四项同前缀）。
+- 事务插入 **20 段**：一次 undo 全部消失，一次 redo 全部恢复。
+- 第 **10 条**故意失败：前 **9 条**全部回滚，逐块及全部 run、节、部件比对一致。
+- **120 次修改**后，恰好支持 **100 次 undo / redo**。
+- **ctest 270/270 全绿，新增 13 组**；62 个分配失败注入点通过。
+- **19 本、11,318 页**：页数与逐页哈希零变化。
+
+| 压力模型 | 插入数 | p50 | p95 | 模型内存增量 | 工作集增量 |
+|---|---:|---:|---:|---:|---:|
+| 100 个逻辑页、2,000 段 | 200 | 1.60 μs | 1.70 μs | 111,400 B | 12,288 B |
+
+`layers.json` 已登记；`docx.c`、`export_text.c`、`.github/` 未改。完整记录见 [W1-OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-dxmodel-20261110/W1-OUT.txt)。
