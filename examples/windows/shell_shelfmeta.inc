@@ -877,6 +877,7 @@ static void sm_create(HWND parent) {
   sm_view=CreateWindowExW(0,type.lpszClassName,L"系列、标签与阅读统计",WS_CHILD|WS_CLIPSIBLINGS|WS_TABSTOP,0,0,0,0,shelf_panel,NULL,instance,NULL);
   sm_foreground=GetForegroundWindow()==parent;sm_load();
   SetTimer(parent,0x5760,1000,NULL);
+  sy_boot();
 }
 static void sm_refresh(void) {
   if(!sm_view)return;

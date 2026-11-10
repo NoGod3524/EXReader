@@ -1,0 +1,2 @@
+PASS 19/19 source book hashes; 11318 prior pages, 0 changed hashes; SDK byte-identical
+PASS protected reading gate and version exception manifest SHA256 unchanged

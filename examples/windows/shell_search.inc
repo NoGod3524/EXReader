@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 /* One private search worker and immutable source snapshot, separate from pagers. */
-enum { IDC_SHELL_SEARCH=180,IDC_SEARCH_EDIT,IDC_SEARCH_PREV,IDC_SEARCH_NEXT,
+/* IDC_SHELL_SEARCH shared 180 with IDC_SHELL_BACK, so its click went back to the shelf. */
+enum { IDC_SHELL_SEARCH=196 };
+enum { IDC_SEARCH_EDIT=181,IDC_SEARCH_PREV,IDC_SEARCH_NEXT,
        IDC_SEARCH_CASE,IDC_SEARCH_WORD,IDC_SEARCH_CLOSE,IDC_SEARCH_COUNT };
 static HWND shell_search_button,shell_search_bar,shell_search_edit,shell_search_count,shell_search_label_control;
 static HWND shell_search_prev,shell_search_next,shell_search_case,shell_search_word,shell_search_close;
@@ -325,6 +327,7 @@ static int shell_search_key(const MSG *m) {
   if(m->wParam==VK_RETURN && (m->hwnd==shell_search_bar || IsChild(shell_search_bar,m->hwnd) || m->hwnd==g.page)) {
     if(shell_search_pending) shell_search_start();else shell_search_step((GetKeyState(VK_SHIFT)<0 || (host_offscreen && shell_search_test_shift)) ? -1:1);shell_search_test_shift=0;return 1;
   }
+  if(m->wParam==VK_TAB) return 0; /* the reading screen owns Tab order: shell_tab_next */
   if(m->hwnd==shell_search_bar || IsChild(shell_search_bar,m->hwnd)) return IsDialogMessageW(shell_search_bar,(MSG *)m)!=0;
   return 0;
 }

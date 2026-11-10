@@ -1,13 +1,34 @@
 /* SPDX-License-Identifier: MIT */
 /* Console acceptance for the OPDS engine parser + WinHTTP network layer against
-   a real catalog. Usage: check_shell_opds <root-feed-url> <out-dir> [slow-url]
+   a real catalog. Usage: check_shell_opds <root-feed-url> <out-dir>
+   Or: check_shell_opds --timeout-test <out-dir> (loopback only, no catalog).
    Writes <out-dir>/opds-net.json; exit 0 only when every check passed. */
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include "opds_net.h"
 #include <exr/opds.h>
 #include <direct.h>
 
 static int failures;
 static FILE *report;
+typedef struct { SOCKET listener; HANDLE stop; LONG accepted; } slow_server;
+static DWORD WINAPI slow_accept(void *arg) {
+  slow_server *s = arg;
+  /* Keep accepting WinHTTP retries, but never send a response. */
+  SOCKET clients[16];
+  int count = 0;
+  while (WaitForSingleObject(s->stop, 20) == WAIT_TIMEOUT) {
+    fd_set ready;
+    struct timeval timeout = {0, 20000};
+    FD_ZERO(&ready); FD_SET(s->listener, &ready);
+    if (select(0, &ready, NULL, NULL, &timeout) > 0 && count < 16) {
+      SOCKET c = accept(s->listener, NULL, NULL);
+      if (c != INVALID_SOCKET) { clients[count++] = c; InterlockedIncrement(&s->accepted); }
+    }
+  }
+  for (int i = 0; i < count; i++) closesocket(clients[i]);
+  return 0;
+}
 static void check(const char *name, int ok, const char *detail) {
   fprintf(report, "%s{\"check\":\"%s\",\"pass\":%s,\"detail\":\"%s\"}", "\n  ", name, ok ? "true" : "false", detail);
   fprintf(report, ",");
@@ -22,6 +43,38 @@ static void json_escape(const char *s, char *out, size_t size) {
     out[o++] = *s;
   }
   out[o] = 0;
+}
+static void timeout_check(void) {
+  WSADATA wsa;
+  slow_server s = {INVALID_SOCKET, NULL, 0};
+  HANDLE thread = NULL;
+  struct sockaddr_in address = {0};
+  int size = sizeof(address), ok = 0;
+  char url[128], detail[1024], safe[1100];
+  onet_options o = {0}; onet_result r = {0}; onet_buffer b = {0};
+  DWORD elapsed = 0;
+  if (WSAStartup(MAKEWORD(2, 2), &wsa)) { check("error_timeout", 0, "WSAStartup failed"); return; }
+  s.listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  address.sin_family = AF_INET; address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  if (s.listener == INVALID_SOCKET || bind(s.listener, (struct sockaddr *)&address, size) ||
+      listen(s.listener, 16) || getsockname(s.listener, (struct sockaddr *)&address, &size)) goto done;
+  s.stop = CreateEventW(NULL, TRUE, FALSE, NULL);
+  if (!s.stop || !(thread = CreateThread(NULL, 0, slow_accept, &s, 0, NULL))) goto done;
+  snprintf(url, sizeof(url), "http://127.0.0.1:%u/slow.xml", (unsigned)ntohs(address.sin_port));
+  o.resolve_ms = o.connect_ms = o.send_ms = o.receive_ms = 700;
+  DWORD started = GetTickCount();
+  int fetched = onet_fetch(url, &o, 0, &b, &r);
+  elapsed = GetTickCount() - started;
+  ok = !fetched && r.code == ONET_TIMEOUT && r.win_error == ERROR_WINHTTP_TIMEOUT &&
+       r.http_status == 0 && r.message[0] && s.accepted > 0 && elapsed >= 600 && elapsed < 6000;
+done:
+  if (thread) { SetEvent(s.stop); WaitForSingleObject(thread, INFINITE); CloseHandle(thread); }
+  if (s.stop) CloseHandle(s.stop);
+  if (s.listener != INVALID_SOCKET) closesocket(s.listener);
+  WSACleanup(); free(b.data);
+  snprintf(detail, sizeof(detail), "code=%s http=%d win_error=%lu accepted=%ld elapsed_ms=%lu message=%s",
+           onet_name(r.code), r.http_status, r.win_error, s.accepted, (unsigned long)elapsed, r.message);
+  json_escape(detail, safe, sizeof(safe)); check("error_timeout", ok, safe);
 }
 static int load(const char *url, int use_cache, exr_opds_feed *feed, onet_result *r, const onet_options *o) {
   onet_buffer b;
@@ -55,10 +108,13 @@ int main(int argc, char **argv) {
   report = fopen(path, "wb");
   if (!report) return 2;
   fprintf(report, "{\"root\":\"%s\",\"checks\":[", argv[1]);
+  timeout_check();
+  if (!strcmp(argv[1], "--timeout-test")) goto finish;
   /* 1. root feed + a book list with >= 20 entries */
   ok = load(argv[1], 1, &root, &r, &o);
   snprintf(detail_text, sizeof(detail_text), "title=%s entries=%zu search_description=%s", ok && root.title ? root.title : "", root.entry_count,
            ok && root.search_description_url ? root.search_description_url : "none");
+  if (!ok) snprintf(detail_text, sizeof(detail_text), "code=%s http=%d message=%s", onet_name(r.code), r.http_status, r.message);
   json_escape(detail_text, safe, sizeof(safe));
   check("root_feed", ok && root.entry_count > 0, safe);
   {
@@ -143,15 +199,6 @@ int main(int argc, char **argv) {
     snprintf(detail_text, sizeof(detail_text), "code=%s message=%s", onet_name(r.code), r.message);
     json_escape(detail_text, safe, sizeof(safe));
     check("error_plain_http_rejected", !ok && r.code == ONET_NOT_HTTPS, safe);
-    if (argc > 3) {
-      onet_options slow = {0};
-      DWORD t0 = GetTickCount();
-      slow.receive_ms = 1500;
-      ok = onet_fetch(argv[3], &slow, 0, &b, &r);
-      snprintf(detail_text, sizeof(detail_text), "code=%s elapsed_ms=%lu message=%s", onet_name(r.code), (unsigned long)(GetTickCount() - t0), r.message);
-      json_escape(detail_text, safe, sizeof(safe));
-      check("error_timeout", !ok && r.code == ONET_TIMEOUT && GetTickCount() - t0 < 6000, safe);
-    }
     {
       unsigned hits = onet_cache_hits;
       ok = onet_fetch(argv[1], &o, 1, &b, &r);
@@ -168,6 +215,7 @@ int main(int argc, char **argv) {
       check("cache_ttl_is_10_minutes", ONET_CACHE_MS == 600000, "ONET_CACHE_MS=600000");
     }
   }
+finish:
   fprintf(report, "\n  {\"check\":\"end\",\"pass\":true,\"detail\":\"failures=%d\"}\n]}\n", failures);
   fclose(report);
   exr_opds_feed_free(&root); exr_opds_feed_free(&page1); exr_opds_feed_free(&page2); exr_opds_feed_free(&detail); exr_opds_feed_free(&found);

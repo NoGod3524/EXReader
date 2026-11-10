@@ -1,0 +1,4 @@
+PASS negative control: name_help_shell_back
+PASS negative control: registration_reachable
+PASS negative control: native_property_registration
+PASS negative control: historical screenshot tampering

@@ -1,0 +1,11 @@
+{
+  "books": 19,
+  "pages": 11318,
+  "changed_page_hashes": 0,
+  "dll_sha256": "1da5a48571c6a2bd5b4a22a5aef06377de3cd7d5692c1bef97aa78dea5000071",
+  "method": "Prior page evidence reused for byte-identical SDK; original books rehashed, no rerender this round.",
+  "protected": {
+    "tests/check_reading_release.py": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b",
+    "tools/version_literal_exceptions.json": "6d2ab944c7c624b1f82ffa61b0c742fb1cb731b88bd700b245bac644aa247fc2"
+  }
+}
