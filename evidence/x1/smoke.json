@@ -1,0 +1,47 @@
+{
+  "passed": true,
+  "platform": "Windows",
+  "commands": [
+    "$env:PATH = \"$PWD\\lib;$env:PATH\"",
+    "gcc -std=c11 -Wall -Wextra -Iinclude examples/minimal/main.c -Llib -lexreader -o minimal.exe",
+    ".\\minimal.exe examples\\minimal\\sample.epub examples\\minimal\\font.ttf page-1.pgm"
+  ],
+  "archive_sha256": "7b8e508f58860dbc85e598c1f945b951e4696534d1bee46a065bbf0a9e565a09",
+  "archive_name": "exreader-3.42.0-win-x64.zip",
+  "command_results": [
+    {
+      "command": "$env:PATH = \"$PWD\\lib;$env:PATH\"",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "command": "gcc -std=c11 -Wall -Wextra -Iinclude examples/minimal/main.c -Llib -lexreader -o minimal.exe",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "command": ".\\minimal.exe examples\\minimal\\sample.epub examples\\minimal\\font.ttf page-1.pgm",
+      "exit_code": 0,
+      "output": "Title: Native styled sample\nPages: 2\nTOC entries: 1\nOutput: page-1.pgm (720 x 1040, PGM)\n"
+    }
+  ],
+  "pgm": {
+    "width": 720,
+    "height": 1040,
+    "bytes": 748816,
+    "nonwhite_pixels": 129549
+  },
+  "sample": {
+    "Title": "Native styled sample",
+    "Pages": 2,
+    "TOC entries": 1
+  },
+  "cli": {
+    "Version": "3.42.0",
+    "Format": "EPUB",
+    "Title": "Native styled sample",
+    "Pages": 2,
+    "TOC entries": 1
+  },
+  "version": "3.42.0"
+}

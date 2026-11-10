@@ -800,6 +800,24 @@ static int section_xml(exr_buffer *b,const source_xml *x,size_t n,const exr_edit
   return (n==NONE || exr_append(b,x->bytes+at,x->spans[n].close-at)) && end_tag(b,x,n,"sectPr");
 }
 
+/* Only lexical gaps may follow a section-ending paragraph. An opaque element
+   can contain visible content and must stay before that section's break. */
+static int trivia_block(const exr_edit_block *b) {
+  const char *s=b->opaque_xml; size_t i=0,n=b->opaque_size;
+  if (b->kind!=EXR_EDIT_OPAQUE_BLOCK) return 0;
+  while (i<n) {
+    const char *end; size_t length;
+    if (isspace((unsigned char)s[i])) { i++; continue; }
+    if (n-i>=4 && !memcmp(s+i,"<!--",4)) { i+=4; end="-->"; length=3; }
+    else if (n-i>=2 && !memcmp(s+i,"<?",2)) { i+=2; end="?>"; length=2; }
+    else return 0;
+    while (n-i>=length && memcmp(s+i,end,length)) i++;
+    if (n-i<length) return 0;
+    i+=length;
+  }
+  return 1;
+}
+
 exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,exr_error *e) {
   const exr_edit_part *parts,*p; const exr_edit_section *sections;
   size_t np,ns,nb,i,j,si=0,*sn=NULL; char main[2048]; source_xml x={0};
@@ -841,15 +859,17 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
   } else if (!put(&xml,"<?xml version=\"1.0\" encoding=\"UTF-8\"?><w:document xmlns:w=\"" W "\" xmlns:r=\"" R "\"><w:body>")) goto done;
   j=0;
   for (si=0;si<ns;si++) {
+    exr_edit_section original;
     int emitted=0,paragraph_break=si+1<ns ||
       (sn[si]!=NONE && x.tree->nodes[sn[si]].parent!=x.body);
+    section_props(&x,sn[si],&original); original.id=sections[si].id;
     section.size=0;
     if (!section_xml(&section,&x,sn[si],sections+si,!np)) goto done;
     while (j<nb) {
       const exr_edit_block *b=exr_edit_block_at(doc,j); size_t next=j+1;
       if (b->section_id!=sections[si].id) break;
       while (next<nb && exr_edit_block_at(doc,next)->section_id==b->section_id &&
-          exr_edit_block_at(doc,next)->kind==EXR_EDIT_OPAQUE_BLOCK) next++;
+          trivia_block(exr_edit_block_at(doc,next))) next++;
       if (b->kind==EXR_EDIT_PARAGRAPH) {
         int last=paragraph_break && (next==nb || exr_edit_block_at(doc,next)->section_id!=b->section_id);
         if (last) {
@@ -864,7 +884,8 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
     if (paragraph_break && !emitted) {
       if (!put(&xml,"<w:p xmlns:w=\"") || !put(&xml,word_ns(&x)) || !put(&xml,"\"><w:pPr>") ||
           !exr_append(&xml,section.data,section.size) || !put(&xml,"</w:pPr></w:p>")) goto done;
-    } else if (si+1==ns && !paragraph_break && (!p || sn[si]!=NONE) &&
+    } else if (si+1==ns && !paragraph_break &&
+        (!p || sn[si]!=NONE || memcmp(&original,sections+si,sizeof(original))) &&
         !exr_append(&xml,section.data,section.size)) goto done;
   }
   if (j!=nb) { status=EXR_ARGUMENT; goto done; }

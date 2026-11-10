@@ -388,6 +388,71 @@ def test(group, api):
                     api.doc_free(seeded)
             finally:
                 api.doc_free(original)
+        elif group == 'section-boundaries':
+            trivia = b'\n<!--after section--><?keep boundary?>\n'
+            parts = unzip(source)
+            parts['word/document.xml'] = parts['word/document.xml'].replace(
+                b'beta</w:t></w:r></w:p>', b'beta</w:t></w:r></w:p>' + trivia)
+            with_trivia = repack(parts)
+            model = api.read(with_trivia)
+            try:
+                saved = api.write(model)
+                assert audit(saved) == audit(with_trivia)
+                assert trivia in unzip(saved)['word/document.xml']
+            finally:
+                api.doc_free(model)
+            # Removing a section's final paragraph must leave a preceding opaque
+            # block in that section, even when it cannot itself host sectPr.
+            opaque = '<x:unknown><w:p><w:r><w:t>opaque</w:t></w:r></w:p></x:unknown>'
+            body = ('<w:p><w:r><w:t>first</w:t></w:r></w:p>' + opaque +
+                    '<w:p><w:pPr><w:sectPr><w:pgMar w:top="720"/></w:sectPr></w:pPr></w:p>'
+                    '<w:p><w:r><w:t>next section</w:t></w:r></w:p><w:sectPr/>')
+            model = api.read(package(body=body))
+            try:
+                assert api.delete_block(model, api.paragraphs(model)[1].id) == 0
+                saved = api.write(model)
+                xml = unzip(saved)['word/document.xml']
+                root = ET.fromstring(xml)
+                children = list(root.find('w:body', NS))
+                unknown = next(i for i, n in enumerate(children) if n.tag == '{urn:unknown}unknown')
+                boundary = next(i for i, n in enumerate(children) if n.find('w:pPr/w:sectPr', NS) is not None)
+                assert unknown < boundary, 'opaque block moved across the section boundary'
+                assert opaque.encode() in xml
+                reopened = api.read(saved)
+                try:
+                    blocks = [api.block_at(reopened, i).contents for i in range(api.block_count(reopened))]
+                    assert blocks[0].section == blocks[1].section
+                    assert blocks[-1].section != blocks[1].section
+                finally:
+                    api.doc_free(reopened)
+            finally:
+                api.doc_free(model)
+            # A source with an implicit final section stays implicit on no-op,
+            # but changes made through the section model must be serialized.
+            implicit = package(body='<w:p><w:r><w:t>implicit</w:t></w:r></w:p>')
+            original = api.read(implicit)
+            try:
+                assert b'sectPr' not in unzip(api.write(original))['word/document.xml']
+                ns, np = c.c_size_t(), c.c_size_t()
+                old = api.sections(original, c.byref(ns))
+                sections = (Section * ns.value)(*[old[i] for i in range(ns.value)])
+                sections[0].width, sections[0].left = 15840, 2160
+                count = api.block_count(original)
+                blocks = (Block * count)(*[api.block_at(original, i).contents for i in range(count)])
+                retained = api.parts(original, c.byref(np))
+                seeded = c.c_void_p()
+                assert api.doc_create(sections, ns, blocks, count, retained, np, None, c.byref(seeded)) == 0
+                try:
+                    reopened = api.read(api.write(seeded))
+                    try:
+                        actual = api.sections(reopened, c.byref(ns))
+                        assert actual[0].width == 15840 and actual[0].left == 2160
+                    finally:
+                        api.doc_free(reopened)
+                finally:
+                    api.doc_free(seeded)
+            finally:
+                api.doc_free(original)
         elif group == 'new':
             new = c.c_void_p()
             assert api.doc_create(None, 0, None, 0, None, 0, None, c.byref(new)) == 0
@@ -444,6 +509,6 @@ def test(group, api):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--library', required=True, type=Path)
-    parser.add_argument('group', choices=('roundtrip', 'parts', 'unknown', 'sections', 'properties', 'edits', 'split', 'namespaces', 'section-scope', 'section-edits', 'new', 'errors'))
+    parser.add_argument('group', choices=('roundtrip', 'parts', 'unknown', 'sections', 'properties', 'edits', 'split', 'namespaces', 'section-scope', 'section-edits', 'section-boundaries', 'new', 'errors'))
     args = parser.parse_args()
     test(args.group, Bridge(args.library.resolve()))
