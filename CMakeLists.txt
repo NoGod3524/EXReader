@@ -1260,3 +1260,11 @@ if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND AND NOT EXR_SANITIZE)
 endif()
 
 include(cmake/build_manifest.cmake)
+
+if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND AND NOT EXR_SANITIZE)
+  foreach(group boundaries ruby images)
+    add_test(NAME native-vertical-expand-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/vertical_expand.py --library $<TARGET_FILE:exreader>
+      --font ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/vertical-punctuation.ttf --group ${group})
+  endforeach()
+endif()

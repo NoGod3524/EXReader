@@ -10,7 +10,7 @@ from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 
 
-def font():
+def font(punctuation=False):
     digits = ["d%d" % i for i in range(10)]
     names = [".notdef", "space", "period", "cjk", "stop"] + digits
     b = FontBuilder(1000, isTTF=True)
@@ -31,8 +31,12 @@ def font():
     b.setupVerticalHeader(ascent=800, descent=-200)
     cmap = {32: "space", 46: "period", 0x7532: "cjk", 0x3002: "stop"}
     cmap.update({48 + i: digits[i] for i in range(10)})
+    if punctuation:
+        # Original tall rectangles deliberately make half-em vertical advances
+        # overlap. Compact stops retain a safe trailing half-em of blank space.
+        cmap.update({0xff01: 'd1', 0xff1f: 'd2', 0x2026: 'period'})
     b.setupCharacterMap(cmap)
-    family = "EXR Combine"
+    family = "EXR Vertical Punctuation" if punctuation else "EXR Combine"
     b.setupNameTable({"familyName": family, "styleName": "Regular", "uniqueFontIdentifier": family,
                       "fullName": family, "psName": "EXRCombine",
                       "copyright": "Copyright 2026 EXReader contributors; MIT"})
@@ -47,4 +51,5 @@ def font():
 if __name__ == "__main__":
     directory = Path(__file__).resolve().parents[1] / "tests/fixtures/fonts"
     font().save(directory / "combine.ttf")
+    font(punctuation=True).save(directory / "vertical-punctuation.ttf")
     print("Generated the original text-combine-upright test font.")

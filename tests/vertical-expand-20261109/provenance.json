@@ -1,0 +1,32 @@
+{
+  "baseline_revision": "3076d3dd",
+  "layout": {
+    "width": 504,
+    "height": 720,
+    "margin": 36,
+    "font_size": 28,
+    "line_height": 1.5,
+    "paragraph_spacing": 10
+  },
+  "font": "Reader.otf (same external font as 19-book canonical baseline)",
+  "optional_codecs": {
+    "webp": false,
+    "tiff": false,
+    "avif": false,
+    "icc": true,
+    "pdf_crypto": true,
+    "jpx": true
+  },
+  "source_sha256": {
+    "src\\inline.c": "522361969d2b05f88976227b2a5556205517587078064e89d454b458726176fe",
+    "tests\\vertical_expand.py": "73a23696d4022b6fbed4594e694238d6eac29f38acc6e59e5f2f0466c51ae744",
+    "tools\\generate_combine_test_font.py": "2684dca7b2a574f98ea7ee568b99d685029822c2c5eb02486d33ff7c3b9e2a80",
+    "examples\\reader.c": "43fad8f3604862fe78caa0fc9d07339396c66b558819e68e4fd7744c6bc99044",
+    "examples\\windows\\shell_gestures.inc": "fa772cf4a40b14ea5eb9c25a2198475e1f4ad8b543b7a58fe8fc09c9f38f8f34"
+  },
+  "binaries": {
+    "build\\a5\\libexreader.dll": "05a4a63d412e3007909f31b2c16f05fb278fba8e1805dc9aceaec5bd0c7bd0c9",
+    "build\\msvc-a5\\exreader.dll": "204889980a3f55fd1268ca4459fcacd3f678f7ff039f47935d8b16c4e552032c",
+    "build\\host\\a5-reader.exe": "bb262095373919c076f6b4adec2ceea83886178a73d7dadaf728efd0bc33a1a3"
+  }
+}
