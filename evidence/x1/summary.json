@@ -1,0 +1,70 @@
+{
+  "base": "aaf8aecc",
+  "model_dependency": "065ce2c9 (#119)",
+  "worktree_head": "1e6f1e294757829c2ee387324e4f32ccf04b530a",
+  "source_files_sha256": {
+    "CMakeLists.txt": "601c153ea00cec903f9c5ef5ed884d0b58b9f33a6126155fd3c0b90eb1d01fdc",
+    "include/exr/edit.h": "d4ab5a5f3a80927c7d76c2334cefba3bf9c9225f95c99e7a0ad1f7ddad0de7a5",
+    "include/exr/formats.h": "53480baa671862990d238f3acc135eceedf1468744224e373916c5d38db991e9",
+    "src/docx_edit.c": "c279253281c015ee0330bef2259ae8bfb70904494693efc0244782ac697c49cd",
+    "src/docx_edit_io.c": "0dd8d198e19994fba8827568999167e3f55dffb957dc90319c5967dd3923eb13",
+    "tools/layers.json": "c85070229e3c4d9687b2c987c8fb4eae00cce8e733ccbb6c29d49f6a9434b426",
+    "tools/docx/roundtrip.py": "b9a24334d376b2cd1fa00f2c743d7def2866d4a67f24712b78c3db9ce8e9cd01",
+    "tools/docx/verify_docx.py": "38761420779fa0af827031f430692ebffe5c8963fe64113e9a17ec25beaf7701",
+    "tools/docx/README.md": "3cc3f93b6134b93d83b507a14a3b06c732bd0befb56e58d628c80a9a08d62a66",
+    "tests/docx/corpus.json": "d44c6ac3a2ca362094802f576938bd63c0793296de40e42493420b0c225bb843",
+    "tests/docx/test_verify_docx.py": "7dd73a00f463bcd4d198794172df2bbb837dd4293c975ed5e659d63c8eabddc6",
+    "tests/test_docx_edit_io.py": "5a44044bf225300a1f3c40c8e370d6db80997b88ef85178454180213529716e0",
+    "tests/docx/check_edit_bridge.py": "e91369d00c389dc936ccbbbd8de8cff9260f3665d3de9cfbaebe0fde82280467",
+    "tools/release/build_packages.py": "a8d6a0961bb608142d67eac59014f479871e0db290c739a3efd81109dd7770c8",
+    "tools/release/smoke_release.py": "82f52a9a8bff6cbca07c07c6ab6c7232fc87ac6297f48ea41b586d9d1b75ca35",
+    "tools/release/test_check_release.py": "64f7273fc0c15ddde0a8ee744e1a533c0159a1633acd6ad7b4bea3111728f2c2"
+  },
+  "source_fingerprint": "9ff4ca18e7daa421f5c8dc727fdc6a1958c7319b77d08b6b1a8415a80e56de5e",
+  "library_sha256": "73a6bf72ffdf7a5efe3ed01f6e9e7d7be4ebeb0adf175dc4c6ae5c4d4348c4a8",
+  "roundtrip_passed": 18,
+  "roundtrip_total": 18,
+  "edit_documents_passed": 3,
+  "edit_batch": {
+    "inserted_paragraphs": 5,
+    "modified_paragraphs": 3,
+    "reopen": true,
+    "undo_redo": true,
+    "opaque_xml_bytes_unchanged": true
+  },
+  "ctest_passed": 289,
+  "ctest_total": 289,
+  "new_roundtrip_groups": 13,
+  "ctest_seconds": 92.76,
+  "baseline_tests_retained": 270,
+  "preexisting_extra_tests": 6,
+  "fuzz_enabled": true,
+  "realbooks": {
+    "books": 19,
+    "pages": 11318,
+    "glyphs": 8648571,
+    "changed_page_counts": 0,
+    "changed_page_hashes": 0,
+    "fingerprint": "8e51f8a0ad679f1fab702a96aed50dd02ad32d4d3624f0e30b1234ff20cd5434"
+  },
+  "layers": {
+    "objects": 121,
+    "inverse_symbols": 0,
+    "inverse_includes": 0,
+    "new_internal_headers": 0
+  },
+  "public_apis": [
+    "exr_edit_docx_read",
+    "exr_edit_docx_open",
+    "exr_edit_docx_write"
+  ],
+  "protected_paths_unchanged": [
+    "src/docx.c",
+    "src/export_text.c"
+  ],
+  "limits": [
+    "UTF-8/US-ASCII main XML and package relationships; other encodings return EXR_UNSUPPORTED",
+    "Tables and complex inline content are opaque and read-only; all original OPC parts are retained",
+    "Caller-seeded p/r templates require the retained original main part"
+  ]
+}
