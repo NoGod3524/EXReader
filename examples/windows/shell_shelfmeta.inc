@@ -447,7 +447,7 @@ static int sm_header(HDC dc,RECT client,HFONT title,HFONT ui) {
 static int sm_rank_cmp(const void *a,const void *b) {
   uint64_t x=sm_entries[*(const int *)a].read_ms,y=sm_entries[*(const int *)b].read_ms;return x<y ? 1:x>y ? -1:0;
 }
-static void sm_paint_stats(HDC dc,RECT client,HFONT ui,HFONT small,HFONT bold,HFONT big) {
+static void sm_paint_stats(HDC dc,RECT client,HFONT ui,HFONT small_font,HFONT bold,HFONT big) {
   int pad=shell_px(24,shell_dpi),y=shell_px(68,shell_dpi);
   uint64_t total=0;int books=0,read=0;
   for(size_t s=0;s<g.shelf_count;s++) if(g.shelf[s].id>0){int e=sm_book_entry(s);books++;if(e>=0 && sm_entries[e].read_ms){total+=sm_entries[e].read_ms;read++;}}
@@ -461,7 +461,7 @@ static void sm_paint_stats(HDC dc,RECT client,HFONT ui,HFONT small,HFONT bold,HF
     RECT r={pad+i*(w+shell_px(16,shell_dpi)),y,pad+i*(w+shell_px(16,shell_dpi))+w,y+shell_px(96,shell_dpi)};
     sm_round(dc,&r,shell_colors->layer_float,shell_colors->surface3,shell_px(14,shell_dpi));
     RECT t={r.left+shell_px(16,shell_dpi),r.top+shell_px(12,shell_dpi),r.right-shell_px(8,shell_dpi),r.top+shell_px(34,shell_dpi)};
-    SelectObject(dc,small);SetTextColor(dc,shell_colorref(shell_colors->text_secondary));DrawTextW(dc,names[i],-1,&t,DT_SINGLELINE);
+    SelectObject(dc,small_font);SetTextColor(dc,shell_colorref(shell_colors->text_secondary));DrawTextW(dc,names[i],-1,&t,DT_SINGLELINE);
     t.top=t.bottom+shell_px(6,shell_dpi);t.bottom=r.bottom-shell_px(10,shell_dpi);
     SelectObject(dc,big);SetTextColor(dc,shell_colorref(shell_colors->text));DrawTextW(dc,values[i],-1,&t,DT_SINGLELINE|DT_END_ELLIPSIS);
   }
@@ -470,7 +470,7 @@ static void sm_paint_stats(HDC dc,RECT client,HFONT ui,HFONT small,HFONT bold,HF
   RECT h={pad,y,client.right-pad,y+shell_px(28,shell_dpi)};DrawTextW(dc,L"单册排行（按阅读时长）",-1,&h,DT_SINGLELINE|DT_VCENTER);
   y+=shell_px(34,shell_dpi);
   int cols[7]={0,5,40,56,67,78,88};const wchar_t *heads[7]={L"#",L"书名",L"阅读时长",L"打开次数",L"已读页数",L"进度",L"最后阅读"};
-  int tw=client.right-2*pad;SelectObject(dc,small);
+  int tw=client.right-2*pad;SelectObject(dc,small_font);
   for(int c=0;c<7;c++){RECT r={pad+tw*cols[c]/100,y,pad+tw*(c<6 ? cols[c+1]:100)/100,y+shell_px(22,shell_dpi)};DrawTextW(dc,heads[c],-1,&r,DT_SINGLELINE);}
   y+=shell_px(26,shell_dpi);
   int rank[512],n=0;
@@ -498,12 +498,12 @@ static void sm_paint(HWND window,HDC target) {
   HDC dc=CreateCompatibleDC(target);HBITMAP bitmap=CreateCompatibleBitmap(target,client.right,client.bottom);
   HGDIOBJ old=SelectObject(dc,bitmap);
   sm_fill(dc,&client,shell_colors->layer_page);SetBkMode(dc,TRANSPARENT);sm_hit_count=0;
-  HFONT title=sm_font(20,650),ui=sm_font(14,400),small=sm_font(12,400),bold=sm_font(14,650),big=sm_font(22,650);
+  HFONT title=sm_font(20,650),ui=sm_font(14,400),small_font=sm_font(12,400),bold=sm_font(14,650),big=sm_font(22,650);
   sm_cover_font[0]=sm_font(15,650);sm_cover_font[1]=sm_font(16,650);
   RECT bar={0,0,client.right,shell_px(56,shell_dpi)};sm_fill(dc,&bar,shell_colors->layer_side);
   RECT line={0,bar.bottom-1,client.right,bar.bottom};sm_fill(dc,&line,shell_colors->surface3);
   sm_header(dc,client,title,ui);
-  if(sm_mode)sm_paint_stats(dc,client,ui,small,bold,big);else sm_paint_shelf(dc,client,ui,small,bold);
+  if(sm_mode)sm_paint_stats(dc,client,ui,small_font,bold,big);else sm_paint_shelf(dc,client,ui,small_font,bold);
   int page=max(1,client.bottom-shell_px(104,shell_dpi));
   int pos=max(0,min(sm_scroll,max(0,sm_content_h-page)));
   SCROLLINFO scroll={sizeof(scroll),SIF_RANGE|SIF_PAGE|SIF_POS,0,max(0,sm_content_h-1),(UINT)page,pos,0};
@@ -511,7 +511,7 @@ static void sm_paint(HWND window,HDC target) {
   if(sm_scroll!=pos){sm_scroll=pos;InvalidateRect(window,NULL,FALSE);}
   BitBlt(target,0,0,client.right,client.bottom,dc,0,0,SRCCOPY);
   SelectObject(dc,old);DeleteObject(bitmap);DeleteDC(dc);
-  DeleteObject(title);DeleteObject(ui);DeleteObject(small);DeleteObject(bold);DeleteObject(big);DeleteObject(sm_cover_font[0]);DeleteObject(sm_cover_font[1]);
+  DeleteObject(title);DeleteObject(ui);DeleteObject(small_font);DeleteObject(bold);DeleteObject(big);DeleteObject(sm_cover_font[0]);DeleteObject(sm_cover_font[1]);
 }
 
 /* ---- metadata editing ---------------------------------------------- */

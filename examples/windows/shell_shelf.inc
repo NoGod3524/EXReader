@@ -35,7 +35,7 @@ static void sm_draw_cover(HDC dc,RECT r,int s,int e) {
   RECT text={r.left+shell_px(10,shell_dpi),r.top+(r.bottom-r.top)/4,r.right-shell_px(10,shell_dpi),r.bottom-shell_px(10,shell_dpi)};
   HGDIOBJ old=SelectObject(dc,sm_cover_font[0]);sm_text(dc,sm_title((size_t)s),&text,DT_WORDBREAK|DT_EDITCONTROL|DT_END_ELLIPSIS);SelectObject(dc,old);
 }
-static void sm_paint_shelf(HDC dc,RECT client,HFONT ui,HFONT small,HFONT bold) {
+static void sm_paint_shelf(HDC dc,RECT client,HFONT ui,HFONT small_font,HFONT bold) {
   int pad=shell_px(24,shell_dpi),y=shell_px(60,shell_dpi);
   sm_collect_tags();
   /* tag filter bar */
@@ -77,7 +77,7 @@ static void sm_paint_shelf(HDC dc,RECT client,HFONT ui,HFONT small,HFONT bold) {
       if(series && e>=0 && sm_entries[e].has_index)snprintf(line,512,"%g · %s",sm_entries[e].series_index,sm_title((size_t)s));
       else snprintf(line,512,"%s",sm_title((size_t)s));
       sm_text(dc,line,&t,DT_SINGLELINE|DT_END_ELLIPSIS);
-      SelectObject(dc,small);SetTextColor(dc,shell_colorref(shell_colors->text_secondary));
+      SelectObject(dc,small_font);SetTextColor(dc,shell_colorref(shell_colors->text_secondary));
       OffsetRect(&t,0,shell_px(20,shell_dpi));sm_text(dc,sm_author((size_t)s),&t,DT_SINGLELINE|DT_END_ELLIPSIS);
       RECT hit={cx,y,cx+card,t.bottom};sm_add_hit(hit,SM_HIT_BOOK,s);
       if(++col==columns){col=0;y+=cover_h+shell_px(64,shell_dpi);}
@@ -92,7 +92,7 @@ static void sm_paint_shelf(HDC dc,RECT client,HFONT ui,HFONT small,HFONT bold) {
       if(series && e>=0 && sm_entries[e].has_index)snprintf(line,512,"%g · %s",sm_entries[e].series_index,sm_title((size_t)s));
       else snprintf(line,512,"%s",sm_title((size_t)s));
       SelectObject(dc,ui);SetTextColor(dc,shell_colorref(shell_colors->text));sm_text(dc,line,&t,DT_SINGLELINE|DT_END_ELLIPSIS);
-      SelectObject(dc,small);SetTextColor(dc,shell_colorref(shell_colors->text_secondary));
+      SelectObject(dc,small_font);SetTextColor(dc,shell_colorref(shell_colors->text_secondary));
       OffsetRect(&t,0,shell_px(22,shell_dpi));sm_text(dc,sm_author((size_t)s),&t,DT_SINGLELINE|DT_END_ELLIPSIS);
       wchar_t info[256];sm_entry *x=e>=0 ? &sm_entries[e]:NULL;
       int started=x && (x->read_ms || x->opens);
@@ -108,7 +108,7 @@ static void sm_paint_shelf(HDC dc,RECT client,HFONT ui,HFONT small,HFONT bold) {
       }
       wchar_t tags[512];sm_tags_line(e,tags,512);
       RECT q={c1+w*72/100,r.top+shell_px(8,shell_dpi),r.right-shell_px(12,shell_dpi),r.bottom-shell_px(8,shell_dpi)};
-      SelectObject(dc,small);SetTextColor(dc,shell_colorref(shell_colors->accent));DrawTextW(dc,tags[0] ? tags:L"未分类",-1,&q,DT_WORDBREAK|DT_END_ELLIPSIS|DT_NOPREFIX);
+      SelectObject(dc,small_font);SetTextColor(dc,shell_colorref(shell_colors->accent));DrawTextW(dc,tags[0] ? tags:L"未分类",-1,&q,DT_WORDBREAK|DT_END_ELLIPSIS|DT_NOPREFIX);
       sm_add_hit(r,SM_HIT_BOOK,s);y+=row;
     }
   }
