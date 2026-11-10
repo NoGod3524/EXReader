@@ -22,7 +22,16 @@ struct exr_edit_doc {
   size_t history_count,cursor,depth,bytes;
   exr_edit_id next_id;
 };
-typedef union { size_t size; max_align_t alignment; } edit_allocation;
+typedef union {
+  size_t size;
+#ifdef _MSC_VER
+  /* MSVC's C headers omit max_align_t; same shim as images.c and
+     base_internal.h: preserve the 16-byte malloc alignment. */
+  __declspec(align(16)) unsigned char alignment[16];
+#else
+  max_align_t alignment;
+#endif
+} edit_allocation;
 
 /* Account requested bytes, including retained versions, without platform heap APIs. */
 static void *allocate(exr_edit_doc *d,size_t size) {
