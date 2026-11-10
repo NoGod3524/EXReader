@@ -1,0 +1,10 @@
+已提交 `430a4e15` 并推送目标分支，草稿 PR：[#73](https://github.com/NoGod3524/EXReader/pull/73)。
+
+- **覆盖矩阵 29 行**，包含 PDF、CBZ、TXT、特殊 EPUB 和两本 LCP DRM 测试书。
+- **基线 29 样本**：13 个全页哈希样本、1,051 页；16 个观察样本。两轮对照 **0 差异**。
+- 关键边界：GBK 返回 `ENCODING(4)`；固定 EPUB 降级重排；DRM 正文加载返回 `FORMAT(5)`；部分 PDF 只能打开或显示首屏。
+- **19 本 EPUB**：历史 DLL 复跑 11,128 页、0 哈希变化；当前 DLL 本任务前后也为 0 变化。但当前源码相对历史基线已有 **5,446 页哈希漂移**，已明确记录。
+- **ctest 176/176 通过**。
+- 文档指出 README **第 150 行**表述不符，以及支持矩阵 **第 38/41 行**的边界遗漏。
+
+完整矩阵与证据见 [FORMAT-COVERAGE.md](C:/Users/Oscar/Documents/Codex/EXReader-formats-20261107/docs/FORMAT-COVERAGE.md)。样本未入库，改动均在允许路径内。
