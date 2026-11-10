@@ -1,8 +1,45 @@
-[2026-11-07 Step 1] Reviewed all 18 initial worktree changes. Chapter pagination, title/ornament no-justify, and CSS-overridable CJK 2em indent are implemented; targeted tests and semantic API/probe exist. Existing CMake test registration and protected-tree ledger retained. examples/ and .github/ unchanged. Task document absent from this checkout; locating original. Prior compile log incomplete; prior ctest.log absent.
-[2026-11-07 Step 2] Release build passed (build/compile-resume.log). Full local ctest passed 172/172, 0 failures, 75.08s (evidence/engine-chapter-layout-20261107/ctest.log). Task located at C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/projects/exreader-handoff/TASK-engine-chapter-layout.md; six acceptance items confirmed.
-[2026-11-07 Step 3] True-book 1552x928/18px probe: chapter 26 ends at book page 69, chapter 27 begins page 70, line 1; previous-page blank 91px. Title 22 adjacent gaps min/max=18px, font default=18px, max deviation=0px. Body first ink x=45px vs continuation x=9px, indent=36px. Root cause: multiple source newline/U+3000 paragraphs within one HTML p were collapsed into one paragraph. Added exact class-token, synthetic title/ornament advance and no-double-literal-indent checks; groups pass 50/308/41 assertions. Full final ctest and before/after Latin title location audit running.
-[2026-11-07 Step 4] Re-ran tools/regress/run_realbooks.py over all 19 books and every page: 19/19 success, 0 errors; 11083 -> 11298 pages (+215), glyphs unchanged at 8660230. Same font/layout/source hashes; comparison exit 1 means expected layout differences (comparable=true), not a failed render. Full hashes/counts: after-resume.json and after-resume.diff.json; 249.697764s. Bounded HLM probe also completes at 399 pages.
-[2026-11-07 Step 3 supplement] origin/main advanced to c9dfc6c1 (#69 fullwidth/NBSP projection). Fast-forwarded with autostash, retained both protected-tree ledger entries, resolved its single conflict. Found and fixed source_structure offset accounting to reuse exr_projection_space; restore raw fullwidth paragraph indentation geometrically after projection removes those spaces. Rebuilding and rerunning acceptance against merged main; collecting a separate #69 baseline to isolate this PR's page changes.
-[2026-11-07 Step 3 final probe] Merged-main build passes. Added CRLF/blank-line title-to-body separation regression; three groups now 54/308/41 checks (403 total). Final true-book probe confirms 69 -> 70 / first line, 20 title gaps exactly 18px (0px deviation), 45px vs 9px body x (36px indent), 91px preceding-page blank; 399 pages overall. Unicode source normalization remains unchanged and shares #69's whitespace predicate. Full merged-main ctest, final 19-book render, and updated Latin cause audit still running.
-[2026-11-07 Steps 2-4 final] Final merged-main ctest 172/172, 0 failures, 155.28s. Final regression 19/19 success, 11061 -> 11296 pages (+235 vs main), 8648640 glyphs unchanged per book, 6082 expected ordinal pixel changes; 236.513630s. Original handoff baseline 11083 -> 11296 (+213); #69 independently accounts for -22 pages/-11590 whitespace glyphs. Ordinary/bounded final probes byte-identical (399 pages). Final groups 54/308/41=403 checks. All six acceptance items, complete 19-book table and 9 Latin-book causes recorded in evidence/engine-chapter-layout-20261107/REPORT.md and ACCEPTANCE.json.
-[2026-11-07 Step 5 checkpoint] Committed implementation, all existing changes and evidence as 7f1f3a82 (feat(layout): paginate chapter starts and expose semantic blocks); pushed origin/codex/engine-chapter-layout-20261107. Draft PR title/body prepared in build/chapter-pr-body.md. PR creation is pending user clarification: native.yml:5 and bounded-library.yml:5 automatically run on every pull_request, including drafts, which conflicts with the no-CI requirement. No workflow dispatched or cancelled.
+三项已完成，代码已提交并推送：`7f1f3a82`；进度记录提交：`40f1fd86`，工作树干净。
+
+- 章首分页：[pager.c:936](/C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/src/pager.c:936)
+- 标题识别／禁两端对齐：[style.c:1096](/C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/src/style.c:1096)、[flow.c:228](/C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/src/flow.c:228)
+- 默认缩进及 CSS 覆盖：[flow_internal.h:128](/C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/src/flow_internal.h:128)
+
+六项验收：
+
+| 项目 | 最终数字 |
+|---|---|
+| 章首分页 | 第二十六回止于第 **69** 页；第二十七回第 **70 页第 1 行**开始；前页余白 **91px** |
+| 标题字距 | **20 组**均为 **18px**，默认 advance **18px**，误差 **0px** |
+| 段首缩进 | 首字 x=**45px**，续行 x=**9px**，差 **36px＝2em** |
+| 真书回归 | **19/19 成功**；相对 main **11,061→11,296 页**；各书字形数不变 |
+| ctest | **172/172 通过，0 失败，155.28 秒** |
+| 新增测试 | **3 组**，分别 **54／308／41** 个 checks，共 **403** |
+
+紅樓夢原先将多个逻辑段落放在同一个 `<p>` 中，折叠换行后丢失了段落边界；并非目标段被 CSS 明确设为零缩进。
+
+| 书籍 | 接手基线 | #69 后 main | 最终 |
+|---|---:|---:|---:|
+| A Raisin in the Sun | 354 | 354 | 356 |
+| Between the World and Me | 228 | 228 | 228 |
+| Black Boy | 1011 | 1011 | 1016 |
+| Born a Crime | 501 | 501 | 502 |
+| Crying in H Mart | 506 | 506 | 524 |
+| How Does It Feel to Be a Problem | 492 | 492 | 493 |
+| I Know Why the Caged Bird Sings | 625 | 625 | 625 |
+| Pachinko | 1214 | 1214 | 1248 |
+| The Absolutely True Diary… | 560 | 560 | 560 |
+| The Autobiography of Malcolm X | 279 | 279 | 279 |
+| The Distance Between Us | 702 | 702 | 702 |
+| The Fire Next Time | 187 | 187 | 189 |
+| The Fire This Time | 314 | 314 | 333 |
+| The House on Mango Street | 181 | 181 | 182 |
+| Zami | 624 | 624 | 624 |
+| 紅樓夢 | 1594 | 1586 | 1686 |
+| 醒世恆言 | 1166 | 1152 | 1202 |
+| 唐詩三百首 | 83 | 83 | 83 |
+| 草枕 | 462 | 462 | 464 |
+| **合计** | **11083** | **11061** | **11296** |
+
+章首分页与段落恢复导致页数变化是预期结果。9 本变化的拉丁书已逐本定位原因，见[完整报告](/C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/evidence/engine-chapter-layout-20261107/REPORT.md)。各步进展已追加到 [CHAP-OUT2.txt](/C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/CHAP-OUT2.txt)。
+
+**PR 编号：尚无。** `native.yml:5`、`bounded-library.yml:5` 会在创建 draft PR 时自动运行，与“不跑 CI”冲突。是否允许创建 PR 时自动触发检查？目前未手动运行 CI，也未取消任何 workflow run。

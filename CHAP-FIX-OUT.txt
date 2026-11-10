@@ -1,0 +1,27 @@
+已推送，**6 个实际失败作业全部转绿**。`reading-required-core` 仍等待 macOS/Apple 作业分配 runner：[当前 CI](https://github.com/NoGod3524/EXReader/actions/runs/42419190582)。
+
+首个错误原文：
+
+```text
+/usr/bin/ld: CMakeFiles/exreader-chapter-layout-probe.dir/tests/probe_chapter_layout.c.o: undefined reference to symbol 'fmaxf@@GLIBC_2.2.5'
+/usr/bin/ld: /lib/x86_64-linux-gnu/libm.so.6: error adding symbols: DSO missing from command line
+```
+
+source ON/OFF 的首错：
+
+```text
+ValueError: Unclassified local header: src/source_structure.h
+```
+
+根因是**构建集成缺陷**：探针缺少数学库链接、私有头文件未分类。没有页码断言失败；修复后两组 sanitizer 均 **169/169 通过，无 UB/越界诊断**。测试断言未修改。
+
+修改：
+
+- [tests/probe_chapter_layout.c:37](C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/tests/probe_chapter_layout.c:37)：37–41 行改用等价比较计算极值。
+- [src/pager.c:5](C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/src/pager.c:5)：5–61 行原样移入私有辅助代码，删除 `src/source_structure.h`。
+
+本地 **172/172 通过**，分层检查通过。未改 `examples/`、`.github/`，未取消 workflow。
+
+Push 后 head：`e2f550dcd67eb01c9130a69b2719aec711498ff2`
+
+逐步记录已追加至 [CHAP-FIX-OUT.txt](C:/Users/Oscar/Documents/Codex/EXReader-chapter-layout-20261107/CHAP-FIX-OUT.txt)。
