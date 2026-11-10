@@ -1,0 +1,417 @@
+{
+ "exe": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-c2-a11y-20261110\\build\\a11y-host\\EXReader.exe",
+ "self_test": {
+  "identical": 0,
+  "with_2px_border": 2528
+ },
+ "foreground_activations": 1,
+ "text_read": {
+  "pagedown_presses": 1,
+  "first50": "IMMORALITY ACT, 1927",
+  "length": 20,
+  "events": []
+ },
+ "reading_keys": [
+  {
+   "key": "PageDown",
+   "before": "IMMORALITY ACT, 1927",
+   "after": "To prohibit illicit carnal int",
+   "changed": true,
+   "events": []
+  },
+  {
+   "key": "PageUp",
+   "before": "To prohibit illicit carnal int",
+   "after": "IMMORALITY ACT, 1927",
+   "changed": true,
+   "events": []
+  },
+  {
+   "key": "End",
+   "before": "IMMORALITY ACT, 1927",
+   "after": "IMMORALITY ACT, 1927",
+   "changed": false,
+   "events": []
+  },
+  {
+   "key": "Home",
+   "before": "IMMORALITY ACT, 1927",
+   "after": "IMMORALITY ACT, 1927",
+   "changed": false,
+   "events": []
+  }
+ ],
+ "tab_with_search_open": [
+  "Edit#181 \"搜索关键词\"",
+  "Button#184 \"区分大小写\"",
+  "Button#185 \"全词匹配\"",
+  "Button#186 \"关闭搜索\"",
+  "EXReaderPage \"阅读区域\"",
+  "Button#160 \"目录\"",
+  "Button#161 \"设置\"",
+  "Button#180 \"返回书架\"",
+  "Button#180 \"全文搜索\"",
+  "Edit#181 \"搜索关键词\""
+ ],
+ "search_esc_focus": "EXReaderPage \"阅读区域\"",
+ "search_ctrl_f_focus": "Edit#181 \"搜索关键词\"",
+ "tab_order_forward": [
+  "EXReaderPage \"阅读区域\"",
+  "Button#160 \"目录\"",
+  "Button#161 \"设置\"",
+  "Button#180 \"返回书架\"",
+  "Button#180 \"全文搜索\"",
+  "EXReaderPage \"阅读区域\"",
+  "Button#160 \"目录\""
+ ],
+ "tab_order_backward": [
+  "Button#160 \"目录\"",
+  "EXReaderPage \"阅读区域\"",
+  "Button#180 \"全文搜索\"",
+  "Button#180 \"返回书架\"",
+  "Button#161 \"设置\"",
+  "Button#160 \"目录\"",
+  "EXReaderPage \"阅读区域\""
+ ],
+ "focus_sequence_for_shots": [
+  "Button#161 \"设置\"",
+  "Button#180 \"返回书架\"",
+  "Button#180 \"全文搜索\""
+ ],
+ "page_border": {
+  "dpi": 120,
+  "page_region": [
+   9,
+   108,
+   1271,
+   851
+  ],
+  "diff_page_focused_vs_toc_focused": 0,
+  "diff_page_focused_vs_settings_focused": 0,
+  "note": "client area below the top bar only; 0 means no focus border is painted on the page"
+ },
+ "focus_ring": {
+  "button": "目录",
+  "box": [
+   1163,
+   48,
+   1213,
+   98
+  ],
+  "ring_px_when_focused": 0,
+  "ring_px_when_not_focused": 2,
+  "expected_px": 2,
+  "accent": "#4553E0",
+  "stroke_token": "SHELL_FOCUS_STROKE=2px x dpi/96"
+ },
+ "tab_with_toc_open": [
+  "Button#160 \"目录\"",
+  "Button#161 \"设置\"",
+  "Button#180 \"返回书架\"",
+  "Button#180 \"全文搜索\"",
+  "EXReaderPage \"阅读区域\""
+ ],
+ "toc_flow": {
+  "open_events": [],
+  "focus_after_open": "Button#160 \"目录\"",
+  "text_before_jump": "IMMORALITY ACT, 1927",
+  "text_after_jump": "IMMORALITY ACT, 1927",
+  "changed": false,
+  "jump_events": [],
+  "focus_after_jump": "EXReaderPage \"阅读区域\""
+ },
+ "settings_events": [],
+ "tab_with_settings_open": [
+  "Button#161 \"设置\"",
+  "Button#180 \"返回书架\"",
+  "Button#180 \"全文搜索\"",
+  "EXReaderPage \"阅读区域\""
+ ],
+ "coverage": {
+  "closed": {
+   "total": 5,
+   "named": 5,
+   "unnamed": [],
+   "with_help": 5,
+   "controls": [
+    {
+     "name": "阅读区域",
+     "type": "正文",
+     "enabled": true,
+     "help": "选择文字后可复制引用或添加标注",
+     "id": "IDC_PAGE",
+     "cls": "EXReaderPage"
+    },
+    {
+     "name": "返回书架",
+     "type": "button",
+     "enabled": true,
+     "help": "回到书架，快捷键 Ctrl+W",
+     "id": "180",
+     "cls": "Button"
+    },
+    {
+     "name": "目录",
+     "type": "button",
+     "enabled": true,
+     "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+     "id": "160",
+     "cls": "Button"
+    },
+    {
+     "name": "设置",
+     "type": "button",
+     "enabled": true,
+     "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+     "id": "161",
+     "cls": "Button"
+    },
+    {
+     "name": "全文搜索",
+     "type": "button",
+     "enabled": true,
+     "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+     "id": "180",
+     "cls": "Button"
+    }
+   ]
+  },
+  "search-open": {
+   "total": 14,
+   "named": 14,
+   "unnamed": [],
+   "with_help": 12,
+   "controls": [
+    {
+     "name": "阅读区域",
+     "type": "正文",
+     "enabled": true,
+     "help": "选择文字后可复制引用或添加标注",
+     "id": "IDC_PAGE",
+     "cls": "EXReaderPage"
+    },
+    {
+     "name": "返回书架",
+     "type": "button",
+     "enabled": true,
+     "help": "回到书架，快捷键 Ctrl+W",
+     "id": "180",
+     "cls": "Button"
+    },
+    {
+     "name": "目录",
+     "type": "button",
+     "enabled": true,
+     "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+     "id": "160",
+     "cls": "Button"
+    },
+    {
+     "name": "设置",
+     "type": "button",
+     "enabled": true,
+     "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+     "id": "161",
+     "cls": "Button"
+    },
+    {
+     "name": "全文搜索",
+     "type": "button",
+     "enabled": true,
+     "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+     "id": "180",
+     "cls": "Button"
+    },
+    {
+     "name": "全文搜索栏",
+     "type": "pane",
+     "enabled": true,
+     "help": "输入关键词，回车查找下一处，Shift+回车查找上一处，Esc 关闭",
+     "id": "",
+     "cls": "EXReaderSearchBar"
+    },
+    {
+     "name": "搜索",
+     "type": "text",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": "Static"
+    },
+    {
+     "name": "搜索关键词",
+     "type": "edit",
+     "enabled": true,
+     "help": "输入要在全文中查找的文字",
+     "id": "181",
+     "cls": "Edit"
+    },
+    {
+     "name": "搜索结果计数",
+     "type": "text",
+     "enabled": true,
+     "help": "",
+     "id": "187",
+     "cls": "Static"
+    },
+    {
+     "name": "上一处",
+     "type": "button",
+     "enabled": false,
+     "help": "跳到上一个搜索结果",
+     "id": "182",
+     "cls": "Button"
+    },
+    {
+     "name": "下一处",
+     "type": "button",
+     "enabled": false,
+     "help": "跳到下一个搜索结果",
+     "id": "183",
+     "cls": "Button"
+    },
+    {
+     "name": "区分大小写",
+     "type": "check box",
+     "enabled": true,
+     "help": "选中后搜索区分英文大小写",
+     "id": "184",
+     "cls": "Button"
+    },
+    {
+     "name": "全词匹配",
+     "type": "check box",
+     "enabled": true,
+     "help": "选中后只匹配完整的词",
+     "id": "185",
+     "cls": "Button"
+    },
+    {
+     "name": "关闭搜索",
+     "type": "button",
+     "enabled": true,
+     "help": "关闭搜索栏并回到正文",
+     "id": "186",
+     "cls": "Button"
+    }
+   ]
+  },
+  "toc-open": {
+   "total": 5,
+   "named": 5,
+   "unnamed": [],
+   "with_help": 5,
+   "controls": [
+    {
+     "name": "阅读区域",
+     "type": "正文",
+     "enabled": true,
+     "help": "选择文字后可复制引用或添加标注",
+     "id": "IDC_PAGE",
+     "cls": "EXReaderPage"
+    },
+    {
+     "name": "返回书架",
+     "type": "button",
+     "enabled": true,
+     "help": "回到书架，快捷键 Ctrl+W",
+     "id": "180",
+     "cls": "Button"
+    },
+    {
+     "name": "目录",
+     "type": "button",
+     "enabled": true,
+     "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+     "id": "160",
+     "cls": "Button"
+    },
+    {
+     "name": "设置",
+     "type": "button",
+     "enabled": true,
+     "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+     "id": "161",
+     "cls": "Button"
+    },
+    {
+     "name": "全文搜索",
+     "type": "button",
+     "enabled": true,
+     "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+     "id": "180",
+     "cls": "Button"
+    }
+   ]
+  },
+  "settings-open": {
+   "total": 5,
+   "named": 5,
+   "unnamed": [],
+   "with_help": 5,
+   "controls": [
+    {
+     "name": "阅读区域",
+     "type": "正文",
+     "enabled": true,
+     "help": "选择文字后可复制引用或添加标注",
+     "id": "IDC_PAGE",
+     "cls": "EXReaderPage"
+    },
+    {
+     "name": "返回书架",
+     "type": "button",
+     "enabled": true,
+     "help": "回到书架，快捷键 Ctrl+W",
+     "id": "180",
+     "cls": "Button"
+    },
+    {
+     "name": "目录",
+     "type": "button",
+     "enabled": true,
+     "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+     "id": "160",
+     "cls": "Button"
+    },
+    {
+     "name": "设置",
+     "type": "button",
+     "enabled": true,
+     "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+     "id": "161",
+     "cls": "Button"
+    },
+    {
+     "name": "全文搜索",
+     "type": "button",
+     "enabled": true,
+     "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+     "id": "180",
+     "cls": "Button"
+    }
+   ]
+  }
+ },
+ "high_contrast": {
+  "saved": {
+   "flags": 126,
+   "scheme": ""
+  },
+  "sys_color_window": "0x202020",
+  "sys_color_window_normal": "0xffffff",
+  "sys_color_windowtext": "0xffffff",
+  "sys_color_hotlight": "0xfce975",
+  "shots": [
+   "08-high-contrast-text.png",
+   "09-high-contrast-toc-focus.png",
+   "10-high-contrast-toc-open.png",
+   "11-high-contrast-settings-open.png"
+  ]
+ },
+ "contrast_restored": {
+  "flags": 126,
+  "high_contrast_on": false,
+  "sys_color_window": "0xffffff"
+ }
+}

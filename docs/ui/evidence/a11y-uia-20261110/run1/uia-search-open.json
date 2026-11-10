@@ -1,0 +1,401 @@
+[
+ {
+  "name": "EXReader",
+  "type": "window",
+  "type_id": 50032,
+  "id": "",
+  "class": "EXReaderHost",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   192,
+   192,
+   1472,
+   1052
+  ]
+ },
+ {
+  "name": "阅读区域",
+  "type": "正文",
+  "type_id": 50030,
+  "id": "IDC_PAGE",
+  "class": "EXReaderPage",
+  "enabled": true,
+  "help": "选择文字后可复制引用或添加标注",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   201,
+   360,
+   1463,
+   1043
+  ]
+ },
+ {
+  "name": "返回书架",
+  "type": "button",
+  "type_id": 50000,
+  "id": "180",
+  "class": "Button",
+  "enabled": true,
+  "help": "回到书架，快捷键 Ctrl+W",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   216,
+   240,
+   326,
+   290
+  ]
+ },
+ {
+  "name": "目录",
+  "type": "button",
+  "type_id": 50000,
+  "id": "160",
+  "class": "Button",
+  "enabled": true,
+  "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1355,
+   240,
+   1405,
+   290
+  ]
+ },
+ {
+  "name": "设置",
+  "type": "button",
+  "type_id": 50000,
+  "id": "161",
+  "class": "Button",
+  "enabled": true,
+  "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1403,
+   240,
+   1453,
+   290
+  ]
+ },
+ {
+  "name": "全文搜索",
+  "type": "button",
+  "type_id": 50000,
+  "id": "180",
+  "class": "Button",
+  "enabled": true,
+  "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1308,
+   240,
+   1358,
+   290
+  ]
+ },
+ {
+  "name": "全文搜索栏",
+  "type": "pane",
+  "type_id": 50033,
+  "id": "",
+  "class": "EXReaderSearchBar",
+  "enabled": true,
+  "help": "输入关键词，回车查找下一处，Shift+回车查找上一处，Esc 关闭",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   201,
+   300,
+   1463,
+   360
+  ]
+ },
+ {
+  "name": "搜索",
+  "type": "text",
+  "type_id": 50020,
+  "id": "",
+  "class": "Static",
+  "enabled": true,
+  "help": "",
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   226,
+   310,
+   276,
+   350
+  ]
+ },
+ {
+  "name": "搜索关键词",
+  "type": "edit",
+  "type_id": 50004,
+  "id": "181",
+  "class": "Edit",
+  "enabled": true,
+  "help": "输入要在全文中查找的文字",
+  "focusable": true,
+  "focused": true,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   281,
+   310,
+   948,
+   350
+  ]
+ },
+ {
+  "name": "搜索结果计数",
+  "type": "text",
+  "type_id": 50020,
+  "id": "187",
+  "class": "Static",
+  "enabled": true,
+  "help": "",
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1118,
+   310,
+   1313,
+   350
+  ]
+ },
+ {
+  "name": "上一处",
+  "type": "button",
+  "type_id": 50000,
+  "id": "182",
+  "class": "Button",
+  "enabled": false,
+  "help": "跳到上一个搜索结果",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1318,
+   310,
+   1358,
+   350
+  ]
+ },
+ {
+  "name": "下一处",
+  "type": "button",
+  "type_id": 50000,
+  "id": "183",
+  "class": "Button",
+  "enabled": false,
+  "help": "跳到下一个搜索结果",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1363,
+   310,
+   1403,
+   350
+  ]
+ },
+ {
+  "name": "区分大小写",
+  "type": "check box",
+  "type_id": 50002,
+  "id": "184",
+  "class": "Button",
+  "enabled": true,
+  "help": "选中后搜索区分英文大小写",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   958,
+   310,
+   1038,
+   350
+  ]
+ },
+ {
+  "name": "全词匹配",
+  "type": "check box",
+  "type_id": 50002,
+  "id": "185",
+  "class": "Button",
+  "enabled": true,
+  "help": "选中后只匹配完整的词",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1038,
+   310,
+   1118,
+   350
+  ]
+ },
+ {
+  "name": "关闭搜索",
+  "type": "button",
+  "type_id": 50000,
+  "id": "186",
+  "class": "Button",
+  "enabled": true,
+  "help": "关闭搜索栏并回到正文",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1408,
+   310,
+   1448,
+   350
+  ]
+ },
+ {
+  "name": null,
+  "type": "title bar",
+  "type_id": 50037,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   221,
+   195,
+   1463,
+   230
+  ]
+ },
+ {
+  "name": "System",
+  "type": "menu bar",
+  "type_id": 50010,
+  "id": "MenuBar",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   201,
+   201,
+   229,
+   229
+  ]
+ },
+ {
+  "name": "System",
+  "type": "menu item",
+  "type_id": 50011,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   201,
+   201,
+   229,
+   229
+  ]
+ },
+ {
+  "name": "Minimize",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1285,
+   193,
+   1345,
+   230
+  ]
+ },
+ {
+  "name": "Maximize",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1345,
+   193,
+   1404,
+   230
+  ]
+ },
+ {
+  "name": "Close",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1404,
+   193,
+   1464,
+   230
+  ]
+ }
+]
