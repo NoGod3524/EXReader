@@ -120,3 +120,5 @@ PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions
 - 新增 WebDAV/OPDS 界面的原生焦点及读屏体验。
 
 本轮运行时 UIA 和视觉验收保持待确认。未运行任何 GUI 主程序、浏览器或 CUA；未模拟输入，未修改系统设置。
+
+验收代码提交 `1f07047e` 已推送，draft PR：[#130](https://github.com/NoGod3524/EXReader/pull/130)。PR 与 main 仅共享进度文件 OUT.txt 冲突；本分支该文件为空，已恢复 main 的记录以消除冲突。引擎源码及上述验证结果保持一致。
