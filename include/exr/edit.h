@@ -54,15 +54,19 @@ typedef struct {
   exr_edit_run_kind kind;
   const char *text; size_t text_size; /* UTF-8, byte length, owned copy is NUL terminated */
   exr_edit_run_props props;
-  const void *opaque_xml; size_t opaque_size; /* Uninterpreted drawing/unknown inline XML */
+  /* OPAQUE_RUN: complete unmodelled inline XML. TEXT: optional original run
+     template, backed by the retained DOCX main part when using the IO bridge. */
+  const void *opaque_xml; size_t opaque_size;
 } exr_edit_run;
-typedef enum { EXR_EDIT_PARAGRAPH,EXR_EDIT_TABLE,EXR_EDIT_PAGE_BREAK } exr_edit_block_kind;
+typedef enum { EXR_EDIT_PARAGRAPH,EXR_EDIT_TABLE,EXR_EDIT_PAGE_BREAK,
+  EXR_EDIT_OPAQUE_BLOCK } exr_edit_block_kind;
 typedef struct {
   exr_edit_id id,section_id;
   exr_edit_block_kind kind;
   exr_edit_para_props props;
   const exr_edit_run *runs; size_t run_count;
-  /* Table XML or unmodelled paragraph properties. Preserved verbatim, never edited here. */
+  /* Original paragraph/table/unknown XML. The DOCX bridge patches modelled
+     properties in paragraph templates and retains all other source bytes. */
   const void *opaque_xml; size_t opaque_size;
 } exr_edit_block;
 typedef struct {

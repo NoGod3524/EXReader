@@ -126,7 +126,10 @@ def main():
                          'LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH', 'DYLD_FALLBACK_LIBRARY_PATH'):
             env.pop(variable, None)
         if system == 'Windows':
-            env = msvc_environment(args.compiler, env)
+            if args.compiler and Path(args.compiler).stem.lower() not in ('cl', 'clang-cl'):
+                env['PATH'] = str(Path(args.compiler).resolve().parent) + os.pathsep + env.get('PATH', '')
+            else:
+                env = msvc_environment(args.compiler, env)
             shell = shutil.which('pwsh') or shutil.which('powershell')
             if shell is None:
                 raise RuntimeError('PowerShell is required for the Windows README')

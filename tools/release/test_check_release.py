@@ -11,6 +11,8 @@ import zipfile
 
 from check_release import API_HEADERS, ROOT, check_package, source_version
 from test_check_exports import macho
+from build_packages import package_readme
+from smoke_release import quickstart
 
 
 def pe(count):
@@ -124,4 +126,8 @@ def main():
 
 
 if __name__ == '__main__':
+    for name, compiler in [('exreader.lib', 'cl '), ('libexreader.dll.a', 'gcc ')]:
+        commands = quickstart(package_readme('win-x64', name), 'Windows')
+        assert commands[1].startswith(compiler), commands
+        assert ('exreader.lib' in commands[1]) == (compiler == 'cl ')
     main()

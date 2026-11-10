@@ -69,6 +69,7 @@
     "document.c": "doc",
     "docx.c": "formats",
     "docx_edit.c": "doc",
+    "docx_edit_io.c": "formats",
     "epub_write.c": "formats",
     "export_epub.c": "formats",
     "export_text.c": "formats",
