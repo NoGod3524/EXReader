@@ -268,6 +268,13 @@ static void XMLCALL tree_start(void *user, const char *name, const char **attrs)
       token(exr_node_attribute(node, "role"), "doc-footnote") ||
       token(exr_node_attribute(node, "role"), "doc-endnote"))
     node->kind = EXR_NODE_NOTE;
+  /* EPUB placeholders must stay in tree order for layout. Generic XML trees
+     retain their source nodes so streaming chapter indexes remain equivalent. */
+  if (p->doc->format == EXR_EPUB && exr_media_element(local_name(name)) &&
+      exr_model_node(p->doc, index, p->chapter, EXR_NODE_TEXT, NULL, "", 0) == SIZE_MAX) {
+    stop(p, EXR_LIMIT);
+    return;
+  }
   if (p->position) {
     int64_t offset = XML_GetCurrentByteIndex64(p->parser);
     exr_status status = offset < 0 ? EXR_FORMAT :

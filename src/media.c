@@ -302,7 +302,8 @@ exr_status exr_media_scan(exr_document *d, exr_error *e) {
     int is_object;
     if (n->kind == EXR_NODE_TEXT || !exr_media_element(tag)) continue;
     is_object = !strcmp(tag, "object");
-    ph = SIZE_MAX;
+    ph = n->first_child;
+    if (ph == SIZE_MAX || d->nodes[ph].kind != EXR_NODE_TEXT || (d->nodes[ph].text && d->nodes[ph].text[0])) ph = SIZE_MAX;
     memset(&item, 0, sizeof(item));
     pick(d, base, n, !is_object && strcmp(tag, "embed"), &c, &count);
     type = exr_node_attribute(n, "type");
@@ -340,11 +341,12 @@ exr_status exr_media_scan(exr_document *d, exr_error *e) {
     if (!item.src || !item.media_type || !item.label || (c.path[0] && !item.path)) { release_item(&item); return exr_fail(e, EXR_MEMORY, "Media table allocation failed"); }
     if (d->media_count >= MEDIA_MAX_ITEMS) { release_item(&item); continue; }
     if (!exr_grow((void **)&d->media, &d->media_capacity, d->media_count + 1, sizeof(*d->media))) { release_item(&item); return exr_fail(e, EXR_MEMORY, "Media table allocation failed"); }
-    if (!(item.flags & EXR_MEDIA_HIDDEN)) {
-      ph = exr_model_node(d, i, n->chapter, EXR_NODE_TEXT, NULL, label, strlen(label));
-      if (ph == SIZE_MAX) { release_item(&item); return exr_fail(e, EXR_LIMIT, "Media placeholder exceeds text limit"); }
-      item.placeholder = ph;
-    }
+    if (ph != SIZE_MAX && !(item.flags & EXR_MEDIA_HIDDEN)) {
+      char *text = exr_model_copy(d, label, strlen(label));
+      if (!text) { release_item(&item); return exr_fail(e, EXR_LIMIT, "Media placeholder exceeds text limit"); }
+      free((void *)d->nodes[ph].text);
+      d->nodes[ph].text = text;
+    } else item.placeholder = SIZE_MAX;
     d->media[d->media_count++] = item;
   }
   return EXR_OK;
