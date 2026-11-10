@@ -183,7 +183,7 @@ endif()
 if(EXR_FULL_TESTS)
   enable_testing()
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
-  foreach(group roundtrip parts unknown sections properties edits split namespaces new errors)
+  foreach(group roundtrip parts unknown sections properties edits split namespaces section-scope section-edits new errors)
     add_test(NAME native-docx-edit-io-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_io.py
       --library $<TARGET_FILE:exreader> ${group})

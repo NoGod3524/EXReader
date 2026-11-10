@@ -44,7 +44,10 @@ relationship parts. Tables, unknown blocks and complex inline XML are opaque.
 Plain direct text runs remain editable; fields, hyperlinks and mixed-content
 runs are preserved as whole opaque runs. Property edits retain unmodelled
 property children and unknown attributes. Splits/deletions place section breaks
-at the remaining section boundary. Source styles, headers and footers stay in
+at the remaining section boundary and carry the section's inherited namespace
+bindings. Section serialization applies page geometry, signed top/bottom margins,
+and all default/first/even header/footer references from the model; missing page
+properties are inserted in OOXML order. Source styles, headers and footers stay in
 their original parts. New documents receive Letter sections, one-inch margins
 and a header with dirty PAGE and DATE fields and 12pt Times New Roman defaults.
 
@@ -53,6 +56,9 @@ accepted). Other XML encodings return `EXR_UNSUPPORTED` with a null output.
 Packed input and the total extracted parts are limited to 128 MiB, with at most
 10,000 OPC entries and the existing XML DOM depth/node limits. `write` returns
 memory; callers save it only after success.
+The acceptance edit runner also hashes the exact table/drawing/note-reference
+XML slices and checks every retained non-main OPC part byte for byte, then verifies
+the five inserted texts and three paragraph property changes in the reopened model.
 Caller-seeded paragraph/text templates must match their retained original main
 part. Unresolvable templates return `EXR_UNSUPPORTED` instead of being omitted.
 The source and exported ZIP/XML are independently

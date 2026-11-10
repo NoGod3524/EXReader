@@ -201,6 +201,7 @@ static void section_props(const source_xml *x,size_t pr,exr_edit_section *s) {
     } else if (word(n,"headerReference") || word(n,"footerReference")) {
       const char *type=wa(n,"type"),*id=attribute(n,R,RS,"id");
       size_t slot=type && !strcmp(type,"first") ? 1 : type && !strcmp(type,"even") ? 2 : 0;
+      if (type && strcmp(type,"default") && strcmp(type,"first") && strcmp(type,"even")) continue;
       if (id && strlen(id)<128) strcpy(word(n,"headerReference") ? s->header_refs[slot] : s->footer_refs[slot],id);
     }
   }
@@ -430,7 +431,7 @@ static size_t tag_name_end(const source_xml *x,size_t n) {
   while (p<x->spans[n].open && !isspace((unsigned char)x->bytes[p]) && x->bytes[p]!='/' && x->bytes[p]!='>') p++;
   return p;
 }
-static int word_attribute(const source_xml *x,size_t n,const attr_span *a,const char *key) {
+static int namespaced_attribute(const source_xml *x,size_t n,const attr_span *a,const char *key,int relationship) {
   const char *s=x->bytes,*colon=memchr(s+a->name,':',a->length); size_t prefix,i;
   if (!colon || a->length-(size_t)(colon-(s+a->name))-1!=strlen(key) ||
       memcmp(colon+1,key,strlen(key))) return 0;
@@ -440,8 +441,10 @@ static int word_attribute(const source_xml *x,size_t n,const attr_span *a,const 
     while (next_attr(s,x->spans[i].open,&at,&v)) if (v.length==prefix+6 &&
         !memcmp(s+v.name,"xmlns:",6) && !memcmp(s+v.name+6,s+a->name,prefix)) {
       size_t len=v.end-v.value-1;
-      return (len==sizeof(W)-1 && !memcmp(s+v.value,W,len)) ||
-        (len==sizeof(WS)-1 && !memcmp(s+v.value,WS,len));
+      return relationship ? ((len==sizeof(R)-1 && !memcmp(s+v.value,R,len)) ||
+        (len==sizeof(RS)-1 && !memcmp(s+v.value,RS,len))) :
+        ((len==sizeof(W)-1 && !memcmp(s+v.value,W,len)) ||
+        (len==sizeof(WS)-1 && !memcmp(s+v.value,WS,len)));
     }
   }
   return 0;
@@ -449,6 +452,13 @@ static int word_attribute(const source_xml *x,size_t n,const attr_span *a,const 
 static const char *word_ns(const source_xml *x) {
   return x->tree && x->root!=NONE && word(x->tree->nodes+x->root,"document") &&
     !strncmp(x->tree->nodes[x->root].name,WS "|",sizeof(WS)) ? WS : W;
+}
+static void unused_prefix(const source_xml *x,const char *base,char prefix[64]) {
+  unsigned suffix=0; size_t i,len; int found;
+  do {
+    snprintf(prefix,64,"%s%u",base,suffix++); len=strlen(prefix); found=0;
+    for (i=0;i+len<=x->size;i++) if (!memcmp(x->bytes+i,prefix,len)) { found=1; break; }
+  } while (found);
 }
 static int start_tag(exr_buffer *b,const source_xml *x,size_t n,const char *tag) {
   return n!=NONE ? exr_append(b,x->bytes+x->spans[n].start,x->spans[n].open-x->spans[n].start-
@@ -464,9 +474,34 @@ static int end_tag(exr_buffer *b,const source_xml *x,size_t n,const char *tag) {
   }
   return put(b,"</w:") && put(b,tag) && put(b,">");
 }
+/* A section can move off its original paragraph after insert/split/delete.
+   Carry the visible namespace bindings with it, including those used only by
+   opaque descendants. Closer declarations shadow more distant ancestors. */
+static int section_start(exr_buffer *b,const source_xml *x,size_t n) {
+  size_t ancestor,i,at; attr_span a,v;
+  if (!start_tag(b,x,n,"sectPr")) return 0;
+  if (n==NONE || x->tree->nodes[n].parent==x->body) return 1;
+  b->size--;
+  for (ancestor=x->tree->nodes[n].parent;ancestor!=NONE;ancestor=x->tree->nodes[ancestor].parent) {
+    if (!x->tree->nodes[ancestor].name) continue;
+    at=tag_name_end(x,ancestor);
+    while (next_attr(x->bytes,x->spans[ancestor].open,&at,&a)) {
+      int shadowed=0;
+      if (!((a.length==5 && !memcmp(x->bytes+a.name,"xmlns",5)) ||
+          (a.length>6 && !memcmp(x->bytes+a.name,"xmlns:",6)))) continue;
+      for (i=n;i!=ancestor && !shadowed;i=x->tree->nodes[i].parent) if (x->tree->nodes[i].name) {
+        size_t inner=tag_name_end(x,i);
+        while (next_attr(x->bytes,x->spans[i].open,&inner,&v))
+          if (v.length==a.length && !memcmp(x->bytes+v.name,x->bytes+a.name,a.length)) { shadowed=1; break; }
+      }
+      if (!shadowed && !exr_append(b,x->bytes+a.start,a.end-a.start)) return 0;
+    }
+  }
+  return put(b,">");
+}
 static int attrs_element(exr_buffer *b,const source_xml *x,size_t n,const char *tag,
                          const attr_edit *edits,size_t count) {
-  size_t i,at,name_end=0; attr_span a; char prefix[64]="w"; int declare=0;
+  size_t i,at,name_end=0; attr_span a; char prefix[64]="w",rel_prefix[64]; int declare=0,relation=0;
   if (n!=NONE) {
     const char *colon; size_t length;
     name_end=tag_name_end(x,n); length=name_end-x->spans[n].start-1;
@@ -475,13 +510,8 @@ static int attrs_element(exr_buffer *b,const source_xml *x,size_t n,const char *
       length=(size_t)(colon-x->bytes-x->spans[n].start-1);
       memcpy(prefix,x->bytes+x->spans[n].start+1,length); prefix[length]=0;
     } else {
-      unsigned suffix=0; int found;
       /* A fresh prefix cannot shadow a binding used by opaque descendants. */
-      do {
-        size_t len;
-        snprintf(prefix,sizeof(prefix),"exrEditW%u",suffix++); len=strlen(prefix); found=0;
-        for (i=0;i+len<=x->size;i++) if (!memcmp(x->bytes+i,prefix,len)) { found=1; break; }
-      } while (found);
+      unused_prefix(x,"exrEditW",prefix);
       declare=1;
     }
     if (!exr_append(b,x->bytes+x->spans[n].start,name_end-x->spans[n].start)) return 0;
@@ -490,16 +520,26 @@ static int attrs_element(exr_buffer *b,const source_xml *x,size_t n,const char *
     if (!put(b,"<w:") || !put(b,tag)) return 0;
   }
   if (declare && (!put(b," xmlns:") || !put(b,prefix) || !put(b,"=\"") || !put(b,word_ns(x)) || !put(b,"\""))) return 0;
+  for (i=0;i<count;i++) if (!strncmp(edits[i].key,"r:",2) && edits[i].value) relation=1;
+  if (relation) {
+    unused_prefix(x,"exrEditR",rel_prefix);
+    if (!put(b," xmlns:") || !put(b,rel_prefix) || !put(b,"=\"") ||
+        !put(b,!strcmp(word_ns(x),WS) ? RS : R) || !put(b,"\"")) return 0;
+  }
   if (n!=NONE) {
     at=tag_name_end(x,n);
     while (next_attr(x->bytes,x->spans[n].open,&at,&a)) {
       int skip=0;
-      for (i=0;i<count && !skip;i++) if (word_attribute(x,n,&a,edits[i].key)) skip=1;
+      for (i=0;i<count && !skip;i++) {
+        int rel=!strncmp(edits[i].key,"r:",2);
+        if (namespaced_attribute(x,n,&a,edits[i].key+(rel ? 2 : 0),rel)) skip=1;
+      }
       if (!skip && !exr_append(b,x->bytes+a.start,a.end-a.start)) return 0;
     }
   }
   for (i=0;i<count;i++) if (edits[i].value &&
-      (!put(b," ") || !put(b,prefix) || !put(b,":") || !put(b,edits[i].key) || !put(b,"=\"") ||
+      (!put(b," ") || !put(b,!strncmp(edits[i].key,"r:",2) ? rel_prefix : prefix) || !put(b,":") ||
+       !put(b,edits[i].key+(!strncmp(edits[i].key,"r:",2) ? 2 : 0)) || !put(b,"=\"") ||
        !escaped(b,edits[i].value,strlen(edits[i].value)) || !put(b,"\""))) return 0;
   if (n==NONE || x->spans[n].open==x->spans[n].end) return put(b,"/>");
   return put(b,">") && exr_append(b,x->bytes+x->spans[n].open,x->spans[n].close-x->spans[n].open) &&
@@ -539,7 +579,8 @@ static const unsigned rb[]={EXR_EDIT_FONT,EXR_EDIT_BOLD,EXR_EDIT_ITALIC,EXR_EDIT
 static const char *const pt[]={"keepNext","keepLines","pageBreakBefore","numPr","spacing","ind","jc"};
 static const unsigned pb[]={EXR_EDIT_KEEP_NEXT,EXR_EDIT_KEEP_LINES,EXR_EDIT_PAGE_BEFORE,EXR_EDIT_NUMBERING,EXR_EDIT_SPACING,EXR_EDIT_INDENT,EXR_EDIT_ALIGN};
 static int property_rank(const char *name,int paragraph) {
-  const char *order=paragraph ?
+  const char *order=paragraph==2 ?
+    "|headerReference|footerReference|footnotePr|endnotePr|type|pgSz|pgMar|paperSrc|pgBorders|lnNumType|pgNumType|cols|formProt|vAlign|noEndnote|titlePg|textDirection|bidi|rtlGutter|docGrid|printerSettings|sectPrChange|" : paragraph ?
     "|pStyle|keepNext|keepLines|pageBreakBefore|framePr|widowControl|numPr|suppressLineNumbers|pBdr|shd|tabs|suppressAutoHyphens|kinsoku|wordWrap|overflowPunct|topLinePunct|autoSpaceDE|autoSpaceDN|bidi|adjustRightInd|snapToGrid|spacing|ind|contextualSpacing|mirrorIndents|suppressOverlap|jc|textDirection|textAlignment|textboxTightWrap|outlineLvl|divId|cnfStyle|rPr|sectPr|pPrChange|" :
     "|rStyle|rFonts|b|bCs|i|iCs|caps|smallCaps|strike|dstrike|outline|shadow|emboss|imprint|noProof|snapToGrid|vanish|webHidden|color|spacing|w|kern|position|sz|szCs|highlight|u|effect|bdr|shd|fitText|vertAlign|rtl|cs|em|lang|eastAsianLayout|specVanish|oMath|rPrChange|";
   char token[64]; const char *found;
@@ -676,11 +717,40 @@ static int write_paragraph(exr_buffer *b,const source_xml *x,const exr_edit_bloc
   for (i=0;i<p->run_count;i++) if (!write_run(b,x,p->runs+i,n)) return 0;
   return end_tag(b,x,n,"p");
 }
+static int reference_slot(const exr_node *n) {
+  const char *type=wa(n,"type"); int kind;
+  if (word(n,"headerReference")) kind=0;
+  else if (word(n,"footerReference")) kind=3;
+  else return -1;
+  if (!type || !strcmp(type,"default")) return kind;
+  if (!strcmp(type,"first")) return kind+1;
+  if (!strcmp(type,"even")) return kind+2;
+  return -1;
+}
+static int write_reference(exr_buffer *b,const source_xml *x,size_t n,size_t slot,const char *id) {
+  static const char *types[]={"default","first","even"};
+  attr_edit edits[]={{"type",types[slot%3]},{"r:id",id}};
+  return !*id || attrs_element(b,x,n,slot<3 ? "headerReference" : "footerReference",edits,2);
+}
+static int missing_references(exr_buffer *b,const source_xml *x,const exr_edit_section *s,unsigned seen,
+                              size_t kind,int header) {
+  size_t i;
+  for (i=0;i<3;i++) if (!(seen&(1u<<(kind*3+i)))) {
+    const char *id=kind ? s->footer_refs[i] : s->header_refs[i];
+    if (!*id && !kind && !i && header) id="exrHeader";
+    if (!write_reference(b,x,NONE,kind*3+i,id)) return 0;
+  }
+  return 1;
+}
 static int section_xml(exr_buffer *b,const source_xml *x,size_t n,const exr_edit_section *s,int header) {
   exr_edit_section old; char v[8][32]; attr_edit sz[3],mar[6]; size_t i,at=n==NONE ? 0 : x->spans[n].open;
-  int size_seen=0,margin_seen=0;
+  int size_seen=0,margin_seen=0; unsigned seen=0; size_t emitted=0;
   section_props(x,n,&old); old.id=s->id;
-  if (n!=NONE && !memcmp(&old,s,sizeof(old))) return raw(b,x,n);
+  if (n!=NONE && !memcmp(&old,s,sizeof(old))) {
+    if (x->tree->nodes[n].parent==x->body) return raw(b,x,n);
+    return section_start(b,x,n) && exr_append(b,x->bytes+x->spans[n].open,x->spans[n].close-x->spans[n].open) &&
+      end_tag(b,x,n,"sectPr");
+  }
   snprintf(v[0],32,"%d",s->page_width); snprintf(v[1],32,"%d",s->page_height);
   sz[0]=(attr_edit){"w",v[0]}; sz[1]=(attr_edit){"h",v[1]}; sz[2]=(attr_edit){"orient",s->landscape ? "landscape" : NULL};
   snprintf(v[2],32,"%d",s->margin_top); snprintf(v[3],32,"%d",s->margin_right);
@@ -688,21 +758,42 @@ static int section_xml(exr_buffer *b,const source_xml *x,size_t n,const exr_edit
   snprintf(v[6],32,"%d",s->header_distance); snprintf(v[7],32,"%d",s->footer_distance);
   mar[0]=(attr_edit){"top",v[2]}; mar[1]=(attr_edit){"right",v[3]}; mar[2]=(attr_edit){"bottom",v[4]};
   mar[3]=(attr_edit){"left",v[5]}; mar[4]=(attr_edit){"header",v[6]}; mar[5]=(attr_edit){"footer",v[7]};
-  if (!start_tag(b,x,n,"sectPr")) return 0;
-  if (n==NONE) {
-    static const char *types[]={"default","first","even"}; size_t j;
-    for (j=0;j<2;j++) for (i=0;i<3;i++) {
-      const char *ref=j ? s->footer_refs[i] : s->header_refs[i];
-      if (!*ref && !j && !i && header) ref="exrHeader";
-      if (*ref && (!put(b,j ? "<w:footerReference w:type=\"" : "<w:headerReference w:type=\"") ||
-          !put(b,types[i]) || !put(b,"\" r:id=\"") || !escaped(b,ref,strlen(ref)) || !put(b,"\"/>"))) return 0;
+  if (!section_start(b,x,n)) return 0;
+  if (n!=NONE) for (i=x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) {
+    int slot=reference_slot(x->tree->nodes+i);
+    if (slot>=0) seen|=1u<<(unsigned)slot;
+  }
+  if (n!=NONE) for (i=x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (x->tree->nodes[i].name) {
+    int slot=reference_slot(x->tree->nodes+i);
+    const char *local=strrchr(x->tree->nodes[i].name,'|');
+    int rank=local && word(x->tree->nodes+i,local+1) ? property_rank(local+1,2) : -1;
+    size_t kind=word(x->tree->nodes+i,"headerReference") ? 0 : word(x->tree->nodes+i,"footerReference") ? 1 : 2;
+    while (emitted<kind) {
+      if (!missing_references(b,x,s,seen,emitted,0)) return 0;
+      emitted++;
     }
-  } else for (i=x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (x->tree->nodes[i].name) {
     if (!exr_append(b,x->bytes+at,x->spans[i].start-at)) return 0;
-    if (word(x->tree->nodes+i,"pgSz")) { if (!attrs_element(b,x,i,"pgSz",sz,3)) return 0; size_seen=1; }
+    if (!size_seen && child(x,n,"pgSz")==NONE && rank>property_rank("pgSz",2)) {
+      if (!attrs_element(b,x,NONE,"pgSz",sz,3)) return 0;
+      size_seen=1;
+    }
+    if (!margin_seen && child(x,n,"pgMar")==NONE && rank>property_rank("pgMar",2)) {
+      if (!attrs_element(b,x,NONE,"pgMar",mar,6)) return 0;
+      margin_seen=1;
+    }
+    if (slot>=0) {
+      const char *id=slot<3 ? s->header_refs[slot] : s->footer_refs[slot-3];
+      const char *previous=slot<3 ? old.header_refs[slot] : old.footer_refs[slot-3];
+      if (!(strcmp(id,previous) ? write_reference(b,x,i,(size_t)slot,id) : raw(b,x,i))) return 0;
+    }
+    else if (word(x->tree->nodes+i,"pgSz")) { if (!attrs_element(b,x,i,"pgSz",sz,3)) return 0; size_seen=1; }
     else if (word(x->tree->nodes+i,"pgMar")) { if (!attrs_element(b,x,i,"pgMar",mar,6)) return 0; margin_seen=1; }
     else if (!raw(b,x,i)) return 0;
     at=x->spans[i].end;
+  }
+  while (emitted<2) {
+    if (!missing_references(b,x,s,seen,emitted,header)) return 0;
+    emitted++;
   }
   if (!size_seen && !attrs_element(b,x,NONE,"pgSz",sz,3)) return 0;
   if (!margin_seen && !attrs_element(b,x,NONE,"pgMar",mar,6)) return 0;
