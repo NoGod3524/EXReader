@@ -163,7 +163,27 @@ static int shell_system_dark(void) {
     L"AppsUseLightTheme",RRF_RT_REG_DWORD,NULL,&value,&bytes);
   return value==0;
 }
-static int shell_is_dark(void) { return shell_theme_mode==1 || (shell_theme_mode==2 && shell_system_dark()); }
+/* Windows high contrast wins over the light/dark choice: the palette is the
+   system colours, never the design tokens. 2 is the `dark` value that selects it. */
+static int shell_contrast;
+static unsigned shell_contrast_generation;
+static uint32_t shell_sys_rgb(int index) { DWORD c=GetSysColor(index); return ((c&255u)<<16)|(c&0xff00u)|((c>>16)&255u); }
+static void shell_contrast_refresh(void) {
+  HIGHCONTRASTW high; memset(&high,0,sizeof(high)); high.cbSize=sizeof(high);
+  shell_contrast=SystemParametersInfoW(SPI_GETHIGHCONTRAST,sizeof(high),&high,0) && (high.dwFlags&HCF_HIGHCONTRASTON);
+  if(!shell_contrast) return;
+  shell_theme_contrast=(shell_theme){
+    shell_sys_rgb(COLOR_WINDOW),shell_sys_rgb(COLOR_WINDOW),shell_sys_rgb(COLOR_WINDOW),
+    shell_sys_rgb(COLOR_BTNFACE),shell_sys_rgb(COLOR_BTNFACE),shell_sys_rgb(COLOR_WINDOW),
+    shell_sys_rgb(COLOR_WINDOWTEXT),shell_sys_rgb(COLOR_WINDOWTEXT),shell_sys_rgb(COLOR_GRAYTEXT),
+    shell_sys_rgb(COLOR_HOTLIGHT),shell_sys_rgb(COLOR_HIGHLIGHT),shell_sys_rgb(COLOR_HIGHLIGHTTEXT),
+    shell_sys_rgb(COLOR_WINDOWTEXT)};
+  shell_contrast_generation++;
+}
+static int shell_is_dark(void) {
+  if(shell_contrast) return 2;
+  return shell_theme_mode==1 || (shell_theme_mode==2 && shell_system_dark());
+}
 static void shell_step_font(int delta);
 static unsigned long shell_epoch = 1, shell_pager_builds, shell_failed_epoch;
 static shell_geometry shell_target;
@@ -494,6 +514,9 @@ typedef exr_status (*host_progress_fn)(void *context, unsigned percent);
 /* Native accessibility providers live in one owner file (windows_accessibility.inc).
    These entry points are used by code that is compiled before that file. */
 static void host_a11y_status_changed(void);
+/* Accessible name/help for a window-based control; a panel appearing or going away. */
+static void host_a11y_describe(HWND window, const wchar_t *name, const wchar_t *help);
+static void host_a11y_panel_toggled(HWND panel, int shown);
 static void host_a11y_prepare_note(void);
 static inline void host_a11y_owner_enabled(int enabled);
 
@@ -4143,7 +4166,7 @@ static void compose_page_view(HWND window) {
 #ifdef EXR_READER_WINDOWS_SHELL
     if(shell_active) SetTextColor(dc,shell_colorref(shell_colors->text_secondary));else
 #endif
-    SetTextColor(dc, RGB(90, 90, 90));
+    SetTextColor(dc, shell_contrast ? GetSysColor(COLOR_WINDOWTEXT) : RGB(90, 90, 90));
     DrawTextW(dc, hint, -1, &text, DT_CENTER | DT_VCENTER | DT_WORDBREAK);
   }
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -4292,6 +4315,7 @@ static void selection_report(void) {
 #include "windows/shell_gestures.inc"
 #include "windows/shell_tts.inc"
 #include "windows/shell_dictionary.inc"
+#include "windows/shell_sync.inc"
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -6261,6 +6285,7 @@ static int check_selection(int minimum, const char *needle) {
 #include "windows/shell_opds_drive.inc"
 #include "windows/shell_tts_drive.inc"
 #include "windows/shell_dictionary_drive.inc"
+#include "windows/shell_sync_drive.inc"
 #endif
 
 static int drive_execute(void) {
@@ -6289,6 +6314,9 @@ static int drive_execute(void) {
   }
   if (!strncmp(action,"dict_",5)) {
     drive_step_finish(dict_drive(action),"dictionary action dispatched");return 0;
+  }
+  if (!strncmp(action,"sync_",5)) {
+    drive_step_finish(sy_drive(action),"cloud sync action dispatched");return 0;
   }
 #include "windows/shell_annotations_navigation.inc"
 #include "windows/shell_shelf_drive.inc"
@@ -7308,6 +7336,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
   if(message==WM_APP+31) { product_shelf_edges();return 0; }
 #endif
 #ifdef EXR_READER_WINDOWS_SHELL
+  if(message==WM_SY_DONE) { sy_done(); return 0; }
   if(message==WM_ACTIVATE) sm_focus(LOWORD(wparam)!=WA_INACTIVE);
 #endif
   switch (message) {
@@ -7358,6 +7387,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       InvalidateRect(window, NULL, FALSE);
       return 0;
     }
+    case WM_SYSCOLORCHANGE:
     case WM_SETTINGCHANGE:
     case WM_THEMECHANGED:
       shell_apply_theme(); break;
@@ -7547,6 +7577,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #ifdef EXR_READER_WINDOWS_SHELL
       if (wparam == SHELF_TIMER) {shelf_pump();return 0;}
       if(wparam==0x5760) { sm_tick(); return 0; }
+      if(wparam==0x5C01 || wparam==0x5C02) { sy_timer(wparam); return 0; }
       if(wparam==0x5453) {tts_poll();return 0;}
       if (wparam == 0x5756) { shell_search_start(); return 0; }
       if (wparam == 0x5757) { shell_search_poll(); return 0; }

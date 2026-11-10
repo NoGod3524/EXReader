@@ -1,0 +1,237 @@
+{
+  "mode": "headless-static-only",
+  "checks": [
+    {
+      "check": "registration_reachable",
+      "passed": true,
+      "detail": "create_controls -> shell_create -> shell_a11y_names after panel creation"
+    },
+    {
+      "check": "name_help_shell_back",
+      "passed": true,
+      "detail": "返回书架"
+    },
+    {
+      "check": "name_help_shell_search_button",
+      "passed": true,
+      "detail": "全文搜索"
+    },
+    {
+      "check": "name_help_shell_toc",
+      "passed": true,
+      "detail": "目录"
+    },
+    {
+      "check": "name_help_shell_settings",
+      "passed": true,
+      "detail": "设置"
+    },
+    {
+      "check": "name_help_shell_toc_panel",
+      "passed": true,
+      "detail": "目录面板"
+    },
+    {
+      "check": "name_help_shell_toc_list",
+      "passed": true,
+      "detail": "目录列表"
+    },
+    {
+      "check": "name_help_shell_panel",
+      "passed": true,
+      "detail": "阅读设置"
+    },
+    {
+      "check": "name_help_shell_search_bar",
+      "passed": true,
+      "detail": "全文搜索栏"
+    },
+    {
+      "check": "name_help_shell_search_edit",
+      "passed": true,
+      "detail": "搜索关键词"
+    },
+    {
+      "check": "name_help_shell_search_prev",
+      "passed": true,
+      "detail": "上一处"
+    },
+    {
+      "check": "name_help_shell_search_next",
+      "passed": true,
+      "detail": "下一处"
+    },
+    {
+      "check": "name_help_shell_search_case",
+      "passed": true,
+      "detail": "区分大小写"
+    },
+    {
+      "check": "name_help_shell_search_word",
+      "passed": true,
+      "detail": "全词匹配"
+    },
+    {
+      "check": "name_help_shell_search_close",
+      "passed": true,
+      "detail": "关闭搜索"
+    },
+    {
+      "check": "name_help_shell_segments[0]",
+      "passed": true,
+      "detail": "浅色主题"
+    },
+    {
+      "check": "name_help_shell_segments[1]",
+      "passed": true,
+      "detail": "深色主题"
+    },
+    {
+      "check": "name_help_shell_segments[2]",
+      "passed": true,
+      "detail": "跟随系统主题"
+    },
+    {
+      "check": "name_help_style_preset",
+      "passed": true,
+      "detail": "排版预设"
+    },
+    {
+      "check": "name_help_shell_tap_buttons[0]",
+      "passed": true,
+      "detail": "点击分区 20 / 60 / 20"
+    },
+    {
+      "check": "name_help_shell_tap_buttons[1]",
+      "passed": true,
+      "detail": "点击分区 25 / 50 / 25"
+    },
+    {
+      "check": "style_fields",
+      "passed": true,
+      "detail": "8 fields, increment/decrement names and help"
+    },
+    {
+      "check": "native_help_style_save",
+      "passed": true,
+      "detail": "native caption retained, explicit help registered"
+    },
+    {
+      "check": "native_help_style_reset",
+      "passed": true,
+      "detail": "native caption retained, explicit help registered"
+    },
+    {
+      "check": "native_help_GetDlgItem(shell_panel, IDC_SHELL_DICTIONARY)",
+      "passed": true,
+      "detail": "native caption retained, explicit help registered"
+    },
+    {
+      "check": "native_help_GetDlgItem(shell_panel, IDC_SHELL_SYNC)",
+      "passed": true,
+      "detail": "native caption retained, explicit help registered"
+    },
+    {
+      "check": "native_property_registration",
+      "passed": true,
+      "detail": "IAccPropServices name/help path present"
+    },
+    {
+      "check": "page_name_help",
+      "passed": true,
+      "detail": "page provider returns nonempty Name and HelpText"
+    },
+    {
+      "check": "UIA_Text_TextChangedEventId",
+      "passed": true,
+      "detail": "static provider event path; runtime delivery pending"
+    },
+    {
+      "check": "UIA_Text_TextSelectionChangedEventId",
+      "passed": true,
+      "detail": "static provider event path; runtime delivery pending"
+    },
+    {
+      "check": "UiaRaiseStructureChangedEvent",
+      "passed": true,
+      "detail": "static provider event path; runtime delivery pending"
+    },
+    {
+      "check": "focus_stroke",
+      "passed": true,
+      "detail": "2px token used by draw path"
+    },
+    {
+      "check": "contrast_palette",
+      "passed": true,
+      "detail": "read system palette and apply it"
+    },
+    {
+      "check": "contrast_read_only",
+      "passed": true,
+      "detail": "host does not set high contrast"
+    },
+    {
+      "check": "tab_configuration",
+      "passed": true,
+      "detail": "declared order and visible/enabled filtering; actual focus pending"
+    },
+    {
+      "check": "historical_01-text-page.png",
+      "passed": true,
+      "detail": "existing screenshot 1280x860, SHA256 checked"
+    },
+    {
+      "check": "historical_02-page-focused.png",
+      "passed": true,
+      "detail": "existing screenshot 1280x860, SHA256 checked"
+    },
+    {
+      "check": "historical_03-toc-button-focused.png",
+      "passed": true,
+      "detail": "existing screenshot 1280x860, SHA256 checked"
+    },
+    {
+      "check": "historical_04-settings-button-focused.png",
+      "passed": true,
+      "detail": "existing screenshot 1280x860, SHA256 checked"
+    },
+    {
+      "check": "historical_05-toc-open.png",
+      "passed": true,
+      "detail": "existing screenshot 1280x860, SHA256 checked"
+    },
+    {
+      "check": "historical_06-settings-open.png",
+      "passed": true,
+      "detail": "existing screenshot 1280x860, SHA256 checked"
+    },
+    {
+      "check": "historical_08-high-contrast-text.png",
+      "passed": true,
+      "detail": "existing screenshot 1280x860, SHA256 checked"
+    },
+    {
+      "check": "historical_09-high-contrast-toc-focus.png",
+      "passed": true,
+      "detail": "existing screenshot 1280x860, SHA256 checked"
+    },
+    {
+      "check": "historical_10-high-contrast-toc-open.png",
+      "passed": true,
+      "detail": "existing screenshot 1280x860, SHA256 checked"
+    }
+  ],
+  "source_sha256": {
+    "examples/reader.c": "94f377ecc075a07afff01d697ae33322a184abfe9f3b13981eb0ae502c14ee99",
+    "examples/windows/shell_screen.inc": "c137ede72a9b083ad5a3f01d69fe0b1b2ade606ad152d341316e8201c874e0e8",
+    "apps/reader/desktop/windows_accessibility.inc": "97b484196d945c901745cdfae4e1f6f27901599dd8a8e95f105eada80d63faf2",
+    "examples/windows/shell_tokens.h": "d396aac5782854c6e81ea8c129e014de2bd59d0c48ececb857acc70e901bbaad",
+    "examples/windows/shell_d2d.cpp": "124c116d43cac761551a22271e75f8239d4a5c8ea3e7b08cc8ec96ff07ae8a20",
+    "examples/windows/shell_settings.inc": "c9b65906ae9aef1dda647c5bc7941aa5668c7bb85b540f21ac7c645e2df69d3d",
+    "docs/a11y/C2-EVIDENCE.json": "bf6b76a1308ec012e1357f7bf432d3ae546abd505fe3422b55bd24bcf937298d"
+  },
+  "runtime_uia": "pending manual check",
+  "screenshot_source_commit": "5cdc779ce7b90d47167893592fe1ac72d71b9261",
+  "passed": true
+}
