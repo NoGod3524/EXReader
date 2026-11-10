@@ -7,7 +7,9 @@
 #define WP "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
 #define WPS "http://purl.oclc.org/ooxml/drawingml/wordprocessingDrawing"
 #define A "http://schemas.openxmlformats.org/drawingml/2006/main"
+#define AS "http://purl.oclc.org/ooxml/drawingml/main"
 #define PIC "http://schemas.openxmlformats.org/drawingml/2006/picture"
+#define PICS "http://purl.oclc.org/ooxml/drawingml/picture"
 static int put(exr_buffer *b,const char *s) { return exr_append(b,s,strlen(s)); }
 static int local(const exr_node *n,const char *space,const char *name) {
   size_t length=strlen(space);
@@ -37,6 +39,14 @@ exr_status exr_edit_insert_image(exr_edit_doc *d,exr_edit_id after,const void *b
 
 /* Remove only drawing/pict elements, keeping text, rPr, bookmarks and other
    children even when Word stored them in the same opaque run. */
+static int contains_image(const source_xml *x,size_t n) {
+  size_t i;
+  for (i=n+1;i<x->tree->node_count && x->spans[i].start<x->spans[n].end;i++) {
+    const exr_node *v=x->tree->nodes+i;
+    if (local(v,A,"blip") || local(v,AS,"blip") || local(v,"urn:schemas-microsoft-com:vml","imagedata")) return 1;
+  }
+  return 0;
+}
 static int strip_image(exr_buffer *out,const source_xml *x,const exr_edit_run *r,int *found) {
   size_t i,n=NONE,at,end;
   *found=0;
@@ -46,7 +56,7 @@ static int strip_image(exr_buffer *out,const source_xml *x,const exr_edit_run *r
   if (n==NONE) return 1;
   at=x->spans[n].start; end=x->spans[n].end;
   for (i=n;i<x->tree->node_count && x->spans[i].start<end;i++) if (x->tree->nodes[i].name &&
-      x->spans[i].start>=at && (exr_edit_xml_word(x->tree->nodes+i,"drawing") || exr_edit_xml_word(x->tree->nodes+i,"pict"))) {
+      x->spans[i].start>=at && (exr_edit_xml_word(x->tree->nodes+i,"drawing") || exr_edit_xml_word(x->tree->nodes+i,"pict")) && contains_image(x,i)) {
     if (!exr_append(out,x->bytes+at,x->spans[i].start-at)) return 0;
     at=x->spans[i].end; *found=1;
   }
@@ -111,7 +121,8 @@ exr_status exr_edit_delete_image(exr_edit_doc *d,exr_edit_id id) {
           if (!ps || !rows || !cells) s=EXR_MEMORY;
           else {
             memcpy(rows,t.rows,t.row_count*sizeof(*rows)); memcpy(cells,t.rows[j].cells,t.rows[j].cell_count*sizeof(*cells));
-            memcpy(ps,cell->blocks,cell->block_count*sizeof(*ps)); ps[l]=v; cells[k].blocks=ps; cells[k].changed|=1;
+            memcpy(ps,cell->blocks,cell->block_count*sizeof(*ps)); ps[l]=v; cells[k].blocks=ps;
+            if (!(cells[k].changed&CELL_REPLACED)) cells[k].changed|=CELL_PATCHED;
             rows[j].cells=cells; t.rows=rows; block.table=&t; s=exr_edit_replace(d,b->id,&block);
           }
           free(ps); free(rows); free(cells); free_changed_runs(nr,runs); goto done;
@@ -172,12 +183,15 @@ done:
 }
 int exr_edit_image_write(exr_buffer *b,const source_xml *x,const edit_image_output *im) {
   const exr_edit_image *p=im->block->image; char values[512];
-  const char *r=!strcmp(exr_edit_xml_ns(x),WS) ? RS : R;
+  int strict=!strcmp(exr_edit_xml_ns(x),WS);
+  const char *r=strict ? RS : R,*wp=strict ? WPS : WP,*a=strict ? AS : A,*pic=strict ? PICS : PIC;
   if (!put(b,"<w:p xmlns:w=\"") || !put(b,exr_edit_xml_ns(x)) || !put(b,"\" xmlns:r=\"") || !put(b,r) ||
-      !put(b,"\" xmlns:wp=\"" WP "\" xmlns:a=\"" A "\" xmlns:pic=\"" PIC "\"><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:drawing><wp:inline><wp:extent ")) return 0;
+      !put(b,"\" xmlns:wp=\"") || !put(b,wp) || !put(b,"\" xmlns:a=\"") || !put(b,a) || !put(b,"\" xmlns:pic=\"") || !put(b,pic) ||
+      !put(b,"\"><w:pPr><w:spacing w:line=\"480\" w:lineRule=\"auto\"/></w:pPr><w:r><w:drawing><wp:inline><wp:extent ")) return 0;
   snprintf(values,sizeof(values),"cx=\"%lld\" cy=\"%lld\"/><wp:docPr id=\"%u\" name=\"Image %u\"/>",
     (long long)p->width_emu,(long long)p->height_emu,im->drawing_id,im->drawing_id);
-  if (!put(b,values) || !put(b,"<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri=\"" PIC "\"><pic:pic><pic:nvPicPr><pic:cNvPr id=\"0\" name=\"image\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"") || !put(b,im->rid) ||
+  if (!put(b,values) || !put(b,"<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri=\"") || !put(b,pic) ||
+      !put(b,"\"><pic:pic><pic:nvPicPr><pic:cNvPr id=\"0\" name=\"image\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"") || !put(b,im->rid) ||
       !put(b,"\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext ")) return 0;
   snprintf(values,sizeof(values),"cx=\"%lld\" cy=\"%lld\"/>",(long long)p->width_emu,(long long)p->height_emu);
   return put(b,values) && put(b,"</a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>");
@@ -259,9 +273,9 @@ exr_status exr_edit_images_package(mz_zip_archive *zip,const exr_edit_part *part
       const exr_node *n=rels.tree->nodes+i; const char *id=exr_node_attribute(n,"Id"),*type=exr_node_attribute(n,"Type");
       const char *target=exr_node_attribute(n,"Target"),*mode=exr_node_attribute(n,"TargetMode");
       if (local(n,REL,"Relationship") && id && target && type && (!strcmp(type,R "/image") || !strcmp(type,RS "/image")) &&
-          (!mode || strcmp(mode,"External")) && referenced(&old,id) && !referenced(&now,id)) {
+          referenced(&old,id) && !referenced(&now,id)) {
         removed[nr].id=id;
-        if (!exr_resolve_path(main,target,removed[nr].target)) { s=EXR_FORMAT; goto done; }
+        if ((!mode || strcmp(mode,"External")) && !exr_resolve_path(main,target,removed[nr].target)) { s=EXR_FORMAT; goto done; }
         nr++;
       }
     }

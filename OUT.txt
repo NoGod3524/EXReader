@@ -16,3 +16,11 @@
 `layers.json` 已登记；`docx.c`、`export_text.c`、`.github/` 未改。完整记录见 [W1-OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-dxmodel-20261110/W1-OUT.txt)。
 [X6 step 1] 接入已提交 X1 依赖 ee47eacc（含 W1 模型、IO bridge、#117 校验器）；当前无 exr_edit_table/image。确认 src/export_text.c 未改。开始基于既有事务/原字节模板扩展。
 [X6 step 2] 已扩展表/行/单元格模型（单元格复用段落块、ID/深拷贝/undo），新增 docx_edit_table.c 与 docx_edit_image.c；共享 XML 模板工具，两个内部头与新源均登记 layers.json。实现行增删、cell runs、宽度/边框、PNG/JPEG inline 与导出时引用清理；开始编译与验收。
+[X6 step 3] 接续 a0a0c766 的 X6 草稿，核实已有模型/命令/OPC 清理实现；修复表格模块 unused-function 导致的 -Werror 编译失败。下一步完成现有测试兼容与新增验收，不覆盖既有记录。
+[X6 step 4] 原有 23 组 docx-edit/IO/分配失败测试已全部通过（build/native/x6-existing-tests.log）。定位 #117 的 18 项为三份真实文档 × 六项结构指标；已找到 hash-pinned 本地原件，将同时给出未编辑/编辑后对比。新增 X6 专项测试开始覆盖六夹具、尺寸 XML、引用清理、复杂单元格、事务与边界。
+[X6 step 5] 新增 13 组 X6 验收首轮全部通过：六夹具加行/删行/改字与重开、宽度边框、新建表、合并/嵌套/底纹、事务、两种 PNG、删除/共享 media、复杂单元格图片删除、表删除及非法输入。进一步修复重复行定位和行间标记顺序，tblPr 新属性按 OOXML 顺序写入；非图片图表不作为图片删除。
+[X6 step 6] 14 组专项测试通过（含 JPEG、新文档 OPC、严格/不同前缀、非标准主文档路径、MIME 冲突）。真实语料首轮 minitab-ch10 因所有单元格含 shd 而没有允许覆盖的原单元格，验收脚本失败已记录；保持保护规则，改为编辑新增行的单元格后删除该行，并持久修改表宽。其它真实文档继续验证原单元格文字编辑。
+[X6 step 7] 真实语料全部通过 #117 同一六项指标：minitab-ch10（10 表/17 图）、soci-syllabus（2 表/5 节）、ohchr-40-69（2 表/5 脚注），未编辑基线 18/18、编辑后 18/18；均重开并 undo/redo 验证，全部 media 载荷和非主 XML 部件逐字节一致。证据 build/x6-real/real-corpus.json。全量 293 组 ctest 已启动。
+[X6 step 8] 首轮全量 ctest 293/293 全绿；层级审计 123 objects / 1428 symbol references，无新增逆向依赖或逆向 include。最终边界修复（空 cell 自动写段落、严格 OOXML 图片命名空间、外链图片关系删除）及嵌套模型分配失败注入已通过全部 37 组编辑测试。#117 的 OHCHR 同样没有可直接替换的非空普通 cell，采用新增行改字后删除 + 持久表宽编辑；SOCI 为原 cell 改字。
+[X6 step 9] 最终源码全量 ctest 293/293 PASS（81.61s），新增 X6 14 组；37 组编辑测试通过；79 个模型分配失败注入点全部原子回滚且零残留。六夹具均 3→4→3 行、2 个网格列，表数/图片/脚注/节不变；1×1 PNG 为 9525/9525 EMU = 0.75/0.75pt，800×600 PNG 为 7623175/5721350 EMU = 600.25/450.5pt。删除原图 media 1→0、image rel 1→0，共享引用保留。
+[X6 step 10] 已归档 docs/DOCX-X6.md（数字验收与原样合并 XML 片段）、docs/validation/docx-x6-20261110.json（源码/库 SHA256、六夹具、14 组用例、三份真实语料 18/18→18/18）、更新 tools/docx/README.md。原 export_text.c 与 X1 依赖 ee47eacc 完全一致；layers.json 包含全部新增内部头/源文件。完整 DOCX 产物及日志位于 build/x6-evidence、build/x6-real、build/native。

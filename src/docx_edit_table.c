@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "docx_edit_internal.h"
 
-static int put(exr_buffer *b,const char *s) { return exr_append(b,s,strlen(s)); }
 static const exr_edit_block *table_block(exr_edit_doc *d,exr_edit_id id,exr_status *s) {
   const exr_edit_block *b=NULL;
   *s=exr_edit_ready(d);
@@ -19,7 +18,7 @@ static int vertical(const exr_edit_row *r,int continuation) {
   for (i=0;i<r->cell_count;i++) if (r->cells[i].unsupported&EXR_EDIT_CELL_MERGED) {
     const exr_edit_cell *c=r->cells+i;
     /* These flags are set by the namespace-aware decoder below. */
-    if ((c->changed&(continuation ? 4u : 6u))) return 1;
+    if ((c->changed&(continuation ? CELL_VMERGE_CONTINUE : CELL_VMERGE_START|CELL_VMERGE_CONTINUE))) return 1;
   }
   return 0;
 }
@@ -39,7 +38,7 @@ exr_status exr_edit_table_insert_row(exr_edit_doc *d,exr_edit_id id,size_t after
     const exr_edit_cell *c=t.rows[after==SIZE_MAX ? 0 : after].cells+i;
     if (!c->unsupported && c->block_count && c->blocks[0].kind==EXR_EDIT_PARAGRAPH) { p.props=c->blocks[0].props; break; }
   }
-  for (i=0;i<t.column_count;i++) { cells[i].blocks=&p; cells[i].block_count=1; cells[i].changed=1; }
+  for (i=0;i<t.column_count;i++) { cells[i].blocks=&p; cells[i].block_count=1; cells[i].changed=CELL_REPLACED; }
   rows[at].cells=cells; rows[at].cell_count=t.column_count; t.rows=rows; t.row_count++;
   v=*b; v.table=&t; s=exr_edit_replace(d,id,&v);
   free(cells); free(rows); return s;
@@ -75,7 +74,7 @@ exr_status exr_edit_table_set_cell_text(exr_edit_doc *d,exr_edit_id id,size_t ro
   memcpy(rows,t.rows,t.row_count*sizeof(*rows)); memcpy(cells,t.rows[row].cells,t.rows[row].cell_count*sizeof(*cells));
   if (cells[col].block_count) p=cells[col].blocks[0];
   p.kind=EXR_EDIT_PARAGRAPH; p.runs=rs; p.run_count=count;
-  cells[col].blocks=&p; cells[col].block_count=1; cells[col].changed=1;
+  cells[col].blocks=&p; cells[col].block_count=1; cells[col].changed=CELL_REPLACED;
   rows[row].cells=cells; t.rows=rows; v=*b; v.table=&t;
   s=exr_edit_replace(d,id,&v); free(rows); free(cells); free(rs); return s;
 }
@@ -141,6 +140,7 @@ exr_status exr_edit_table_decode(const source_xml *x,size_t n,exr_edit_table **o
     exr_edit_row *row; exr_edit_cell *cells=NULL; size_t columns=0;
     if (!exr_grow((void **)&rows,&rc,t->row_count+1,sizeof(*rows))) goto done;
     t->rows=rows; row=rows+t->row_count++; memset(row,0,sizeof(*row)); cc=0;
+    row->source_index=i+1;
     template(x,i,&row->opaque_xml,&row->opaque_size);
     for (j=x->tree->nodes[i].first_child;j!=NONE;j=x->tree->nodes[j].next_sibling) if (exr_edit_xml_word(x->tree->nodes+j,"tc")) {
       exr_edit_cell *cell; exr_edit_block *blocks=NULL; size_t span=1;
@@ -155,7 +155,8 @@ exr_status exr_edit_table_decode(const source_xml *x,size_t n,exr_edit_table **o
       k=exr_edit_xml_child(x,pr,"vMerge");
       if (k!=NONE) {
         const char *val=exr_edit_xml_wa(x->tree->nodes+k,"val");
-        cell->unsupported|=EXR_EDIT_CELL_MERGED; cell->changed|=val && !strcmp(val,"restart") ? 2u : 4u;
+        cell->unsupported|=EXR_EDIT_CELL_MERGED;
+        cell->changed|=val && !strcmp(val,"restart") ? CELL_VMERGE_START : CELL_VMERGE_CONTINUE;
       }
       if (exr_edit_xml_child(x,pr,"hMerge")!=NONE) cell->unsupported|=EXR_EDIT_CELL_MERGED;
       if (exr_edit_xml_child(x,pr,"shd")!=NONE) cell->unsupported|=EXR_EDIT_CELL_SHADING;
@@ -186,10 +187,40 @@ done:
   exr_edit_table_decode_free(t); return status;
 }
 
+static int cell_block_write(exr_buffer *b,const source_xml *x,const exr_edit_block *p) {
+  return p->kind==EXR_EDIT_PARAGRAPH ? exr_edit_xml_paragraph(b,x,p,NONE,NULL) :
+    exr_append(b,p->opaque_xml,p->opaque_size);
+}
+static int cell_write(exr_buffer *b,const source_xml *x,const exr_edit_cell *c,size_t n) {
+  size_t pr=exr_edit_xml_child(x,n,"tcPr"),i,at=x->spans[n].open,j=0;
+  if (!exr_edit_xml_start(b,x,n,"tc")) return 0;
+  if (c->changed&CELL_PATCHED) {
+    /* Drawing deletion patches paragraphs in place, including inside protected
+       cells. Nested tables, shading, comments and whitespace retain their bytes. */
+    for (i=x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (x->tree->nodes[i].name) {
+      if (!exr_append(b,x->bytes+at,x->spans[i].start-at)) return 0;
+      if (i==pr) { if (!exr_edit_xml_raw(b,x,i)) return 0; }
+      else if (j>=c->block_count || !cell_block_write(b,x,c->blocks+j++)) return 0;
+      at=x->spans[i].end;
+    }
+    if (j!=c->block_count || !exr_append(b,x->bytes+at,x->spans[n].close-at)) return 0;
+  } else {
+    if (!exr_edit_xml_raw(b,x,pr)) return 0;
+    for (i=0;i<c->block_count;i++) if (!cell_block_write(b,x,c->blocks+i)) return 0;
+  }
+  return exr_edit_xml_end(b,x,n,"tc");
+}
+static size_t row_node(const source_xml *x,const exr_edit_row *r,size_t parent) {
+  size_t n=r->source_index-1;
+  if (x->tree && r->source_index && n<x->tree->node_count && x->tree->nodes[n].parent==parent &&
+      exr_edit_xml_word(x->tree->nodes+n,"tr") && x->spans[n].end-x->spans[n].start==r->opaque_size &&
+      !memcmp(x->bytes+x->spans[n].start,r->opaque_xml,r->opaque_size)) return n;
+  return exr_edit_xml_locate(x,r->opaque_xml,r->opaque_size,"tr",parent);
+}
 static int row_write(exr_buffer *b,const source_xml *x,const exr_edit_row *r,size_t parent) {
-  size_t i,j,n=exr_edit_xml_locate(x,r->opaque_xml,r->opaque_size,"tr",parent),at,ci=0;
+  size_t i,j,n=row_node(x,r,parent),at,ci=0;
   int changed=n==NONE;
-  for (i=0;i<r->cell_count;i++) if (r->cells[i].changed&1u) changed=1;
+  for (i=0;i<r->cell_count;i++) if (r->cells[i].changed&(CELL_REPLACED|CELL_PATCHED)) changed=1;
   if (!changed) return exr_edit_xml_raw(b,x,n);
   if (!exr_edit_xml_start(b,x,n,"tr")) return 0;
   at=n==NONE ? 0 : x->spans[n].open;
@@ -197,13 +228,8 @@ static int row_write(exr_buffer *b,const source_xml *x,const exr_edit_row *r,siz
     if (!exr_append(b,x->bytes+at,x->spans[i].start-at)) return 0;
     if (exr_edit_xml_word(x->tree->nodes+i,"tc")) {
       const exr_edit_cell *c=r->cells+ci++;
-      if (!(c->changed&1u)) { if (!exr_edit_xml_raw(b,x,i)) return 0; }
-      else {
-        size_t tcpr=exr_edit_xml_child(x,i,"tcPr");
-        if (!exr_edit_xml_start(b,x,i,"tc") || !exr_edit_xml_raw(b,x,tcpr)) return 0;
-        for (j=0;j<c->block_count;j++) if (!exr_edit_xml_paragraph(b,x,c->blocks+j,NONE,NULL)) return 0;
-        if (!exr_edit_xml_end(b,x,i,"tc")) return 0;
-      }
+      if (!(c->changed&(CELL_REPLACED|CELL_PATCHED))) { if (!exr_edit_xml_raw(b,x,i)) return 0; }
+      else if (!cell_write(b,x,c,i)) return 0;
     } else if (!exr_edit_xml_raw(b,x,i)) return 0;
     at=x->spans[i].end;
   }
@@ -211,6 +237,7 @@ static int row_write(exr_buffer *b,const source_xml *x,const exr_edit_row *r,siz
   if (n==NONE) for (i=0;i<r->cell_count;i++) {
     if (!exr_edit_xml_start(b,x,NONE,"tc")) return 0;
     for (j=0;j<r->cells[i].block_count;j++) if (!exr_edit_xml_paragraph(b,x,r->cells[i].blocks+j,NONE,NULL)) return 0;
+    if (!r->cells[i].block_count && !exr_edit_xml_paragraph(b,x,&(exr_edit_block){0},NONE,NULL)) return 0;
     if (!exr_edit_xml_end(b,x,NONE,"tc")) return 0;
   }
   return exr_edit_xml_end(b,x,n,"tr");
@@ -218,7 +245,7 @@ static int row_write(exr_buffer *b,const source_xml *x,const exr_edit_row *r,siz
 static int table_prop(exr_buffer *b,const source_xml *x,const exr_edit_table *t,size_t n,int borders) {
   char num[32]; size_t i; static const char *edges[]={"top","left","bottom","right","insideH","insideV"};
   if (!borders) {
-    attr_edit a[]={{"w",num},{"type","dxa"}}; snprintf(num,sizeof(num),"%d",t->width_twips);
+    attr_edit a[]={{"w",num},{"type",t->width_twips ? "dxa" : "auto"}}; snprintf(num,sizeof(num),"%d",t->width_twips);
     return exr_edit_xml_attrs(b,x,n,"tblW",a,2);
   }
   if (!exr_edit_xml_start(b,x,n,"tblBorders")) return 0;
@@ -228,30 +255,47 @@ static int table_prop(exr_buffer *b,const source_xml *x,const exr_edit_table *t,
   }
   return exr_edit_xml_end(b,x,n,"tblBorders");
 }
+static int table_rank(const exr_node *n) {
+  static const char *tags[]={"tblStyle","tblpPr","tblOverlap","bidiVisual","tblStyleRowBandSize",
+    "tblStyleColBandSize","tblW","jc","tblCellSpacing","tblInd","tblBorders","shd",
+    "tblLayout","tblCellMar","tblLook","tblCaption","tblDescription","tblPrChange"};
+  size_t i;
+  for (i=0;i<sizeof(tags)/sizeof(tags[0]);i++) if (exr_edit_xml_word(n,tags[i])) return (int)i;
+  return -1;
+}
 static int table_pr(exr_buffer *b,const source_xml *x,const exr_edit_table *t,size_t n) {
-  size_t i,at=n==NONE ? 0 : x->spans[n].open; unsigned seen=0;
+  size_t i,at=n==NONE ? 0 : x->spans[n].open; unsigned seen=0,wanted=n==NONE ? 3u : t->changed;
+  int missing_w=exr_edit_xml_child(x,n,"tblW")==NONE,missing_b=exr_edit_xml_child(x,n,"tblBorders")==NONE;
   if (n!=NONE && !t->changed) return exr_edit_xml_raw(b,x,n);
   if (!exr_edit_xml_start(b,x,n,"tblPr")) return 0;
   for (i=n==NONE ? NONE : x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (x->tree->nodes[i].name) {
     unsigned bit=exr_edit_xml_word(x->tree->nodes+i,"tblW") ? 1u : exr_edit_xml_word(x->tree->nodes+i,"tblBorders") ? 2u : 0u;
     if (!exr_append(b,x->bytes+at,x->spans[i].start-at)) return 0;
+    if ((wanted&1) && !(seen&1) && missing_w && table_rank(x->tree->nodes+i)>6) {
+      if (!table_prop(b,x,t,NONE,0)) return 0;
+      seen|=1;
+    }
+    if ((wanted&2) && !(seen&2) && missing_b && table_rank(x->tree->nodes+i)>10) {
+      if (!table_prop(b,x,t,NONE,1)) return 0;
+      seen|=2;
+    }
     if (bit && (t->changed&bit)) { if (!table_prop(b,x,t,i,bit==2)) return 0; }
     else if (!exr_edit_xml_raw(b,x,i)) return 0;
     seen|=bit; at=x->spans[i].end;
   }
-  if (!(seen&1) && !table_prop(b,x,t,NONE,0)) return 0;
-  if (!(seen&2) && (t->changed&2) && !table_prop(b,x,t,NONE,1)) return 0;
+  if (!(seen&1) && (wanted&1) && !table_prop(b,x,t,NONE,0)) return 0;
+  if (!(seen&2) && (wanted&2) && !table_prop(b,x,t,NONE,1)) return 0;
   return (n==NONE || exr_append(b,x->bytes+at,x->spans[n].close-at)) && exr_edit_xml_end(b,x,n,"tblPr");
 }
 int exr_edit_table_write(exr_buffer *b,const source_xml *x,const exr_edit_block *block) {
-  const exr_edit_table *t=block->table; size_t n,i,at,ri=0,pr,grid; int emitted=0;
+  const exr_edit_table *t=block->table; size_t n,i,at,ri=0,pr,grid;
   if (!t) return exr_append(b,block->opaque_xml,block->opaque_size);
   n=exr_edit_xml_locate(x,block->opaque_xml,block->opaque_size,"tbl",NONE);
   if (n!=NONE && !t->changed) {
     size_t count=0,j; int same=1;
     for (i=x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (exr_edit_xml_word(x->tree->nodes+i,"tr")) {
-      if (count>=t->row_count || exr_edit_xml_locate(x,t->rows[count].opaque_xml,t->rows[count].opaque_size,"tr",n)!=i) { same=0; break; }
-      for (j=0;j<t->rows[count].cell_count;j++) if (t->rows[count].cells[j].changed&1u) same=0;
+      if (count>=t->row_count || row_node(x,t->rows+count,n)!=i) { same=0; break; }
+      for (j=0;j<t->rows[count].cell_count;j++) if (t->rows[count].cells[j].changed&(CELL_REPLACED|CELL_PATCHED)) same=0;
       count++;
     }
     if (same && count==t->row_count) return exr_edit_xml_raw(b,x,n);
@@ -271,13 +315,18 @@ int exr_edit_table_write(exr_buffer *b,const source_xml *x,const exr_edit_block 
   for (i=n==NONE ? NONE : x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (x->tree->nodes[i].name) {
     if (!exr_append(b,x->bytes+at,x->spans[i].start-at)) return 0;
     if (exr_edit_xml_word(x->tree->nodes+i,"tr")) {
-      /* Emit the current model at the first original row; unknown siblings and
-         raw protected rows stay byte-identical, including their namespace scopes. */
-      if (!emitted) for (ri=0;ri<t->row_count;ri++) if (!row_write(b,x,t->rows+ri,n)) return 0;
-      emitted=1;
+      /* Retain siblings (bookmarks, permission ranges, extensions) at their
+         original row boundary. source_index distinguishes byte-identical rows. */
+      while (ri<t->row_count && row_node(x,t->rows+ri,n)==NONE)
+        if (!row_write(b,x,t->rows+ri++,n)) return 0;
+      if (ri<t->row_count && row_node(x,t->rows+ri,n)==i) {
+        if (!row_write(b,x,t->rows+ri++,n)) return 0;
+        while (ri<t->row_count && row_node(x,t->rows+ri,n)==NONE)
+          if (!row_write(b,x,t->rows+ri++,n)) return 0;
+      }
     } else if (i!=pr && i!=grid && !exr_edit_xml_raw(b,x,i)) return 0;
     at=x->spans[i].end;
   }
-  if (!emitted) for (ri=0;ri<t->row_count;ri++) if (!row_write(b,x,t->rows+ri,n)) return 0;
+  for (;ri<t->row_count;ri++) if (!row_write(b,x,t->rows+ri,n)) return 0;
   return (n==NONE || exr_append(b,x->bytes+at,x->spans[n].close-at)) && exr_edit_xml_end(b,x,n,"tbl");
 }
