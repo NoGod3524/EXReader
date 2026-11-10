@@ -175,6 +175,11 @@ enum {
   BORDER_LEFT_STYLE,
   BORDER_SPACING,
   COMBINE,
+  POSITION,
+  INSET_TOP,
+  INSET_RIGHT,
+  INSET_BOTTOM,
+  INSET_LEFT,
   PROPERTIES
 };
 typedef struct {
@@ -381,7 +386,7 @@ static int property(const char *s, size_t n) {
       "border-top-width", "border-right-width", "border-bottom-width", "border-left-width",
       "border-top-color", "border-right-color", "border-bottom-color", "border-left-color",
       "border-top-style", "border-right-style", "border-bottom-style", "border-left-style", "border-spacing",
-      "text-combine-upright"};
+      "text-combine-upright", "position", "top", "right", "bottom", "left"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -988,6 +993,16 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     else if(!strcmp(v,"manual")) s->hyphens=EXR_HYPHENS_MANUAL;
     else if(!strcmp(v,"auto")) s->hyphens=EXR_HYPHENS_AUTO;
     else return 0;
+  } else if (prop == POSITION) {
+    if(!strcmp(v,"static") || !strcmp(v,"relative") || !strcmp(v,"sticky")) s->position=0;
+    else if(!strcmp(v,"absolute") || !strcmp(v,"fixed")) s->position=1;
+    else return 0;
+  } else if (prop >= INSET_TOP && prop <= INSET_LEFT) {
+    int side=prop-INSET_TOP, negative=v[0]=='-';
+    if(!strcmp(v,"auto")) { s->inset_set&=~(1u<<side); return 1; }
+    if(!length(negative ? v+1 : v,s->font_size,root,0,&l) || l.value<0) return 0;
+    s->inset[side]=negative ? -l.value : l.value; s->inset_percent[side]=l.percent;
+    s->inset_set|=1u<<side;
   } else if (prop == FLOAT_SIDE || prop == CLEAR_SIDE) {
     int side;
     if(!strcmp(v,"none")) side=0;

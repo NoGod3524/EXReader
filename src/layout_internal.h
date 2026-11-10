@@ -41,6 +41,7 @@ struct exr_layout {
   unsigned has_baseline;
   int source_overlaps; /* Page source envelopes overlap; consult actual glyph ranges. */
   struct exr_toc_meta *toc; /* Synthetic TOC pages only; NULL for ordinary layouts. */
+  exr_fixed_viewport fixed; /* EPUB pre-paginated page mapping; zero for reflow pages. */
 };
 void exr_toc_meta_free(struct exr_toc_meta *meta);
 exr_status exr_layout_image_asset(const exr_document *doc, exr_layout *assets,
