@@ -1,10 +1,10 @@
 {
-  "library_sha256": "0d52e529f37a3dc7acf6877346d7c4f26b71dbf589ee538701663670ebdc537a",
+  "library_sha256": "bf8fd70e9f2604013d22e857b4b287a1ba8b12b5f892a02e98e9acf73b4d6d77",
   "documents": [
     {
       "id": "minitab-ch10",
       "source_sha256": "e73c211e12cbd07e467d6c2f5b731a71d9b831d871f055a46e3de087f5b55d4d",
-      "edited_sha256": "7eee14031f2c59c0e0533c1f05503adba57ea8f25ea503faf8496ced80558c0f",
+      "edited_sha256": "ec7ba7f94edb85e414db24b4874aa0e1015508c09270ce13c8fdde09d0aa3532",
       "status": "PASS",
       "selected_table": 0,
       "selected_cell": [
@@ -131,7 +131,7 @@
     {
       "id": "soci-syllabus",
       "source_sha256": "dbc1fe7c9f99521074ed300e224f3d4ec906aedfc60d917220d2ffcc882913d9",
-      "edited_sha256": "dfc272a91ea070b7e9b22aa99a3a2a92dc570ac8103e9e297047355275f9ef9a",
+      "edited_sha256": "51aa4f6bfad26f60bbdfc14b7841f88b96b65ad22e6cf1bbcaa646d66cdd3693",
       "status": "PASS",
       "selected_table": 0,
       "selected_cell": [
@@ -354,7 +354,7 @@
     {
       "id": "ohchr-40-69",
       "source_sha256": "ca0701fe199aae7f35de67bfff4c66c70d7db3c65029a74ac96b8587fd42e214",
-      "edited_sha256": "d5c1326540173b85d54c64c191e0a1c56aa31e117a82d2037f70bb53053a7310",
+      "edited_sha256": "8cb070d0d5b0315ab07f6272b1c72f6f2205fe6dbf8228ed818cc920c522d7db",
       "status": "PASS",
       "selected_table": 0,
       "selected_cell": [
