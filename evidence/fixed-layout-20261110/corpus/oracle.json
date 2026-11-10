@@ -1,0 +1,1203 @@
+[
+  {
+    "id": "fxl-picturebook",
+    "title": "The Tide Garden",
+    "pages": [
+      {
+        "viewport": [
+          1024,
+          768
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "bg0",
+          "left": 0,
+          "top": 0,
+          "width": 1024,
+          "height": 768,
+          "frame_px": 12,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "t0a",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 64,
+            "top": 48,
+            "width": 400
+          },
+          {
+            "id": "t0b",
+            "color": [
+              255,
+              248,
+              200
+            ],
+            "right": 64,
+            "bottom": 48,
+            "width": 360
+          }
+        ],
+        "images": [
+          {
+            "id": "st0",
+            "left_pct": 0.6,
+            "top_pct": 0.4,
+            "width": 160,
+            "height": 120
+          }
+        ],
+        "href": "p1.xhtml",
+        "spine_properties": ""
+      },
+      {
+        "viewport": [
+          1024,
+          768
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "bg1",
+          "left": 0,
+          "top": 0,
+          "width": 1024,
+          "height": 768,
+          "frame_px": 12,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "t1a",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 64,
+            "top": 48,
+            "width": 400
+          },
+          {
+            "id": "t1b",
+            "color": [
+              255,
+              248,
+              200
+            ],
+            "right": 64,
+            "bottom": 48,
+            "width": 360
+          }
+        ],
+        "images": [
+          {
+            "id": "st1",
+            "left_pct": 0.6,
+            "top_pct": 0.4,
+            "width": 160,
+            "height": 120
+          }
+        ],
+        "href": "p2.xhtml",
+        "spine_properties": ""
+      },
+      {
+        "viewport": [
+          1024,
+          768
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "bg2",
+          "left": 0,
+          "top": 0,
+          "width": 1024,
+          "height": 768,
+          "frame_px": 12,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "t2a",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 64,
+            "top": 48,
+            "width": 400
+          },
+          {
+            "id": "t2b",
+            "color": [
+              255,
+              248,
+              200
+            ],
+            "right": 64,
+            "bottom": 48,
+            "width": 360
+          }
+        ],
+        "images": [
+          {
+            "id": "st2",
+            "left_pct": 0.6,
+            "top_pct": 0.4,
+            "width": 160,
+            "height": 120
+          }
+        ],
+        "href": "p3.xhtml",
+        "spine_properties": ""
+      },
+      {
+        "viewport": [
+          1024,
+          768
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "bg3",
+          "left": 0,
+          "top": 0,
+          "width": 1024,
+          "height": 768,
+          "frame_px": 12,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "t3a",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 64,
+            "top": 48,
+            "width": 400
+          },
+          {
+            "id": "t3b",
+            "color": [
+              255,
+              248,
+              200
+            ],
+            "right": 64,
+            "bottom": 48,
+            "width": 360
+          }
+        ],
+        "images": [
+          {
+            "id": "st3",
+            "left_pct": 0.6,
+            "top_pct": 0.4,
+            "width": 160,
+            "height": 120
+          }
+        ],
+        "href": "p4.xhtml",
+        "spine_properties": ""
+      }
+    ],
+    "expected_spreads": [
+      {
+        "left": 0,
+        "right": null,
+        "single": true
+      },
+      {
+        "left": 1,
+        "right": null,
+        "single": true
+      },
+      {
+        "left": 2,
+        "right": null,
+        "single": true
+      },
+      {
+        "left": 3,
+        "right": null,
+        "single": true
+      }
+    ],
+    "package": {
+      "layout": "pre-paginated",
+      "spread": "none",
+      "viewport": null,
+      "progression": null
+    },
+    "toc": [],
+    "path": "..\\EXReader-D1-work\\corpus\\fxl-picturebook.epub"
+  },
+  {
+    "id": "fxl-magazine",
+    "title": "Harbour Quarterly",
+    "pages": [
+      {
+        "viewport": [
+          1200,
+          1600
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "boxes": [
+          {
+            "id": "h0",
+            "color": [
+              30,
+              50,
+              90
+            ],
+            "left": 60,
+            "top": 60,
+            "width": 1080
+          },
+          {
+            "id": "c00",
+            "color": [
+              230,
+              238,
+              246
+            ],
+            "left": 60,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "c01",
+            "color": [
+              240,
+              230,
+              220
+            ],
+            "left": 430,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "c02",
+            "color": [
+              232,
+              244,
+              232
+            ],
+            "left": 800,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "s0",
+            "color": [
+              250,
+              200,
+              60
+            ],
+            "right": 10,
+            "top": 300,
+            "width": 40
+          }
+        ],
+        "vertical": "s0",
+        "transform": "r0",
+        "href": "m1.xhtml",
+        "spine_properties": "page-spread-right"
+      },
+      {
+        "viewport": [
+          1200,
+          1600
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "boxes": [
+          {
+            "id": "h1",
+            "color": [
+              30,
+              50,
+              90
+            ],
+            "left": 60,
+            "top": 60,
+            "width": 1080
+          },
+          {
+            "id": "c10",
+            "color": [
+              240,
+              230,
+              220
+            ],
+            "left": 60,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "c11",
+            "color": [
+              232,
+              244,
+              232
+            ],
+            "left": 430,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "c12",
+            "color": [
+              246,
+              232,
+              240
+            ],
+            "left": 800,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "s1",
+            "color": [
+              250,
+              200,
+              60
+            ],
+            "right": 10,
+            "top": 300,
+            "width": 40
+          }
+        ],
+        "vertical": "s1",
+        "transform": "r1",
+        "href": "m2.xhtml",
+        "spine_properties": "page-spread-left"
+      },
+      {
+        "viewport": [
+          1200,
+          1600
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "boxes": [
+          {
+            "id": "h2",
+            "color": [
+              30,
+              50,
+              90
+            ],
+            "left": 60,
+            "top": 60,
+            "width": 1080
+          },
+          {
+            "id": "c20",
+            "color": [
+              232,
+              244,
+              232
+            ],
+            "left": 60,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "c21",
+            "color": [
+              246,
+              232,
+              240
+            ],
+            "left": 430,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "c22",
+            "color": [
+              230,
+              238,
+              246
+            ],
+            "left": 800,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "s2",
+            "color": [
+              250,
+              200,
+              60
+            ],
+            "right": 10,
+            "top": 300,
+            "width": 40
+          }
+        ],
+        "vertical": "s2",
+        "transform": "r2",
+        "href": "m3.xhtml",
+        "spine_properties": "page-spread-right"
+      },
+      {
+        "viewport": [
+          1200,
+          1600
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "boxes": [
+          {
+            "id": "h3",
+            "color": [
+              30,
+              50,
+              90
+            ],
+            "left": 60,
+            "top": 60,
+            "width": 1080
+          },
+          {
+            "id": "c30",
+            "color": [
+              246,
+              232,
+              240
+            ],
+            "left": 60,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "c31",
+            "color": [
+              230,
+              238,
+              246
+            ],
+            "left": 430,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "c32",
+            "color": [
+              240,
+              230,
+              220
+            ],
+            "left": 800,
+            "top": 300,
+            "width": 340
+          },
+          {
+            "id": "s3",
+            "color": [
+              250,
+              200,
+              60
+            ],
+            "right": 10,
+            "top": 300,
+            "width": 40
+          }
+        ],
+        "vertical": "s3",
+        "transform": "r3",
+        "href": "m4.xhtml",
+        "spine_properties": "page-spread-left"
+      }
+    ],
+    "expected_spreads": [
+      {
+        "left": null,
+        "right": 0
+      },
+      {
+        "left": 1,
+        "right": 2
+      },
+      {
+        "left": 3,
+        "right": null
+      }
+    ],
+    "package": {
+      "layout": "pre-paginated",
+      "spread": "landscape",
+      "viewport": null,
+      "progression": null
+    },
+    "toc": [],
+    "path": "..\\EXReader-D1-work\\corpus\\fxl-magazine.epub"
+  },
+  {
+    "id": "fxl-toc",
+    "title": "A Field Guide in Five Plates",
+    "pages": [
+      {
+        "viewport": [
+          800,
+          1100
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pl0",
+          "left": 0,
+          "top": 0,
+          "width": 800,
+          "height": 1100,
+          "frame_px": 13,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "cap0",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 40,
+            "top": 980,
+            "width": 720
+          }
+        ],
+        "href": "plate1.xhtml",
+        "spine_properties": ""
+      },
+      {
+        "viewport": [
+          800,
+          1100
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pl1",
+          "left": 0,
+          "top": 0,
+          "width": 800,
+          "height": 1100,
+          "frame_px": 13,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "cap1",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 40,
+            "top": 980,
+            "width": 720
+          }
+        ],
+        "href": "plate2.xhtml",
+        "spine_properties": ""
+      },
+      {
+        "viewport": [
+          800,
+          1100
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pl2",
+          "left": 0,
+          "top": 0,
+          "width": 800,
+          "height": 1100,
+          "frame_px": 13,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "cap2",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 40,
+            "top": 980,
+            "width": 720
+          }
+        ],
+        "href": "plate3.xhtml",
+        "spine_properties": ""
+      },
+      {
+        "viewport": [
+          800,
+          1100
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pl3",
+          "left": 0,
+          "top": 0,
+          "width": 800,
+          "height": 1100,
+          "frame_px": 13,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "cap3",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 40,
+            "top": 980,
+            "width": 720
+          }
+        ],
+        "href": "plate4.xhtml",
+        "spine_properties": ""
+      },
+      {
+        "viewport": [
+          800,
+          1100
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pl4",
+          "left": 0,
+          "top": 0,
+          "width": 800,
+          "height": 1100,
+          "frame_px": 13,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "cap4",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 40,
+            "top": 980,
+            "width": 720
+          }
+        ],
+        "href": "plate5.xhtml",
+        "spine_properties": ""
+      }
+    ],
+    "expected_spreads": [
+      {
+        "left": null,
+        "right": 0
+      },
+      {
+        "left": 1,
+        "right": 2
+      },
+      {
+        "left": 3,
+        "right": 4
+      }
+    ],
+    "expected_toc_parts": [
+      0,
+      2,
+      4
+    ],
+    "package": {
+      "layout": "pre-paginated",
+      "spread": null,
+      "viewport": null,
+      "progression": null
+    },
+    "toc": [
+      {
+        "label": "Plate one: Shore",
+        "href": "plate1.xhtml"
+      },
+      {
+        "label": "Plate three: Dunes",
+        "href": "plate3.xhtml"
+      },
+      {
+        "label": "Plate five: Night",
+        "href": "plate5.xhtml"
+      }
+    ],
+    "path": "..\\EXReader-D1-work\\corpus\\fxl-toc.epub"
+  },
+  {
+    "id": "fxl-spread-ltr",
+    "title": "Seven Panels",
+    "pages": [
+      {
+        "viewport": [
+          700,
+          1000
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pa0",
+          "left": 0,
+          "top": 0,
+          "width": 700,
+          "height": 1000,
+          "frame_px": 11,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "no0",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 20,
+            "top": 20,
+            "width": 120
+          }
+        ],
+        "href": "panel1.xhtml",
+        "spine_properties": "page-spread-right"
+      },
+      {
+        "viewport": [
+          700,
+          1000
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pa1",
+          "left": 0,
+          "top": 0,
+          "width": 700,
+          "height": 1000,
+          "frame_px": 11,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "no1",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 20,
+            "top": 20,
+            "width": 120
+          }
+        ],
+        "href": "panel2.xhtml",
+        "spine_properties": "page-spread-left"
+      },
+      {
+        "viewport": [
+          700,
+          1000
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pa2",
+          "left": 0,
+          "top": 0,
+          "width": 700,
+          "height": 1000,
+          "frame_px": 11,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "no2",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 20,
+            "top": 20,
+            "width": 120
+          }
+        ],
+        "href": "panel3.xhtml",
+        "spine_properties": "page-spread-right"
+      },
+      {
+        "viewport": [
+          700,
+          1000
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pa3",
+          "left": 0,
+          "top": 0,
+          "width": 700,
+          "height": 1000,
+          "frame_px": 11,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "no3",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 20,
+            "top": 20,
+            "width": 120
+          }
+        ],
+        "href": "panel4.xhtml",
+        "spine_properties": "rendition:page-spread-center"
+      },
+      {
+        "viewport": [
+          700,
+          1000
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pa4",
+          "left": 0,
+          "top": 0,
+          "width": 700,
+          "height": 1000,
+          "frame_px": 11,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "no4",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 20,
+            "top": 20,
+            "width": 120
+          }
+        ],
+        "href": "panel5.xhtml",
+        "spine_properties": "page-spread-left"
+      },
+      {
+        "viewport": [
+          700,
+          1000
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pa5",
+          "left": 0,
+          "top": 0,
+          "width": 700,
+          "height": 1000,
+          "frame_px": 11,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "no5",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 20,
+            "top": 20,
+            "width": 120
+          }
+        ],
+        "href": "panel6.xhtml",
+        "spine_properties": "page-spread-right"
+      },
+      {
+        "viewport": [
+          700,
+          1000
+        ],
+        "viewport_source": "content",
+        "fixed": true,
+        "full_image": {
+          "id": "pa6",
+          "left": 0,
+          "top": 0,
+          "width": 700,
+          "height": 1000,
+          "frame_px": 11,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "no6",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 20,
+            "top": 20,
+            "width": 120
+          }
+        ],
+        "href": "panel7.xhtml",
+        "spine_properties": ""
+      }
+    ],
+    "expected_spreads": [
+      {
+        "left": null,
+        "right": 0
+      },
+      {
+        "left": 1,
+        "right": 2
+      },
+      {
+        "left": 3,
+        "right": null,
+        "single": true
+      },
+      {
+        "left": 4,
+        "right": 5
+      },
+      {
+        "left": 6,
+        "right": null
+      }
+    ],
+    "package": {
+      "layout": "pre-paginated",
+      "spread": "both",
+      "viewport": null,
+      "progression": "ltr"
+    },
+    "toc": [],
+    "path": "..\\EXReader-D1-work\\corpus\\fxl-spread-ltr.epub"
+  },
+  {
+    "id": "fxl-mixed",
+    "title": "Notes with Plates",
+    "pages": [
+      {
+        "viewport": [
+          800,
+          1000
+        ],
+        "viewport_source": "package",
+        "fixed": true,
+        "full_image": {
+          "id": "cv",
+          "left": 0,
+          "top": 0,
+          "width": 800,
+          "height": 1000,
+          "frame_px": 13,
+          "frame": "#ff0000"
+        },
+        "href": "cover.xhtml",
+        "spine_properties": "rendition:layout-pre-paginated"
+      },
+      {
+        "fixed": false,
+        "href": "ch1.xhtml",
+        "spine_properties": "rendition:layout-reflowable"
+      },
+      {
+        "viewport": [
+          800,
+          1000
+        ],
+        "viewport_source": "package",
+        "fixed": true,
+        "full_image": {
+          "id": "pt",
+          "left": 0,
+          "top": 0,
+          "width": 800,
+          "height": 1000,
+          "frame_px": 13,
+          "frame": "#ff0000"
+        },
+        "boxes": [
+          {
+            "id": "pcap",
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "left": 50,
+            "bottom": 40,
+            "width": 400
+          }
+        ],
+        "href": "plate.xhtml",
+        "spine_properties": "rendition:layout-pre-paginated"
+      },
+      {
+        "fixed": false,
+        "href": "ch2.xhtml",
+        "spine_properties": ""
+      },
+      {
+        "viewport": [
+          800,
+          1000
+        ],
+        "viewport_source": "package",
+        "fixed": true,
+        "full_image": {
+          "id": "en",
+          "left": 0,
+          "top": 0,
+          "width": 800,
+          "height": 1000,
+          "frame_px": 13,
+          "frame": "#ff0000"
+        },
+        "href": "end.xhtml",
+        "spine_properties": "rendition:layout-pre-paginated page-spread-left"
+      }
+    ],
+    "expected_spreads": [
+      {
+        "left": null,
+        "right": 0
+      },
+      {
+        "left": 1,
+        "right": null,
+        "single": true
+      },
+      {
+        "left": null,
+        "right": 2
+      },
+      {
+        "left": 3,
+        "right": null,
+        "single": true
+      },
+      {
+        "left": 4,
+        "right": null
+      }
+    ],
+    "package": {
+      "layout": "reflowable",
+      "spread": null,
+      "viewport": [
+        800,
+        1000
+      ],
+      "progression": null
+    },
+    "toc": [],
+    "path": "..\\EXReader-D1-work\\corpus\\fxl-mixed.epub"
+  },
+  {
+    "id": "fxl-noviewport",
+    "title": "Undeclared Sizes",
+    "pages": [
+      {
+        "viewport": [
+          600,
+          900
+        ],
+        "viewport_source": "image",
+        "fixed": true,
+        "full_image": {
+          "id": "ia",
+          "left": 0,
+          "top": 0,
+          "width": 600,
+          "height": 900,
+          "frame_px": 10,
+          "frame": "#ff0000"
+        },
+        "href": "a.xhtml",
+        "spine_properties": ""
+      },
+      {
+        "viewport": null,
+        "viewport_source": "page",
+        "fixed": true,
+        "boxes": [
+          {
+            "id": "tb",
+            "color": [
+              220,
+              240,
+              255
+            ],
+            "left_pct": 0.1,
+            "top_pct": 0.1,
+            "width_pct": 0.5
+          }
+        ],
+        "href": "b.xhtml",
+        "spine_properties": ""
+      }
+    ],
+    "expected_spreads": [
+      {
+        "left": 0,
+        "right": null,
+        "single": true
+      },
+      {
+        "left": 1,
+        "right": null,
+        "single": true
+      }
+    ],
+    "package": {
+      "layout": "pre-paginated",
+      "spread": "none",
+      "viewport": null,
+      "progression": null
+    },
+    "toc": [],
+    "path": "..\\EXReader-D1-work\\corpus\\fxl-noviewport.epub"
+  }
+]
