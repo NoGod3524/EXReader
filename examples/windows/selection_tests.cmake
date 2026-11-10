@@ -13,7 +13,7 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
     target_compile_features(exreader-shell-selection-test PRIVATE cxx_std_17)
     target_include_directories(exreader-shell-selection-test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
     target_link_libraries(exreader-shell-selection-test PRIVATE exreader miniz expat d2d1 dwrite
-      gdi32 comdlg32 shell32 ole32 oleaut32 uuid uiautomationcore advapi32)
+      gdi32 comdlg32 shell32 ole32 oleaut32 uuid uiautomationcore advapi32 winhttp)
     if(MSVC)
       target_compile_options(exreader-shell-selection-test PRIVATE /UNDEBUG /utf-8)
     else()
