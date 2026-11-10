@@ -19,7 +19,7 @@
 #include "shell_tokens.h"
 
 enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, SHELL_HIDDEN_MAX = 128 };
-enum { IDC_SHELL_BACK=180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY };
+enum { IDC_SHELL_BACK=180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY, IDC_SHELL_SYNC };
 static HWND shell_back;
 static char *shell_synced_title;
 /* The 32px visual has 4px per side for the offset keyboard outline. */
@@ -40,6 +40,7 @@ static void shell_panel_layout(void);
 static void shell_apply_theme(void);
 static void shell_toggle_settings(void);
 static int shell_settings_command(int id);
+static void sy_open(void);
 static int shell_draw_settings(const DRAWITEMSTRUCT *item);
 static void shell_toc_create(HWND parent);
 static void shell_toc_layout(void);

@@ -4,6 +4,8 @@
 #include <shlobj.h>
 enum { DICT_ADD=810,DICT_REMOVE,DICT_AUTO,DICT_VOCAB,DICT_SAVE,DICT_CLOSE,DICT_EXPORT,
        DICT_FILTER,DICT_LIST,DICT_PATHS,DICT_QUERY,DICT_STATUS,DICT_GROUP=900 };
+enum { SY_ID_URL=840,SY_ID_USER,SY_ID_PASS,SY_ID_SAVE,SY_ID_NOW,SY_ID_CLEAR,SY_ID_CLOSE,SY_ID_AUTO,SY_ID_STATUS,SY_ID_L1,SY_ID_L2,SY_ID_L3 };
+static HWND sy_panel;static int sy_command(HWND window,int id,int notify);
 static exr_dictionary *dicts[64];
 static size_t dict_count,dict_dir_count,dict_result_count;
 static wchar_t *dict_dirs[64];
@@ -348,8 +350,8 @@ static void dict_groups_layout(void) {
 }
 static void dict_hide(void) {if(dict_popup)ShowWindow(dict_popup,SW_HIDE);}
 static void dict_close_all(void) {
-  HWND panels[]={dict_popup,dict_manager,vocab_panel};
-  for(size_t i=0;i<3;i++)if(panels[i])ShowWindow(panels[i],SW_HIDE);
+  HWND panels[]={dict_popup,dict_manager,vocab_panel,sy_panel};
+  for(size_t i=0;i<4;i++)if(panels[i])ShowWindow(panels[i],SW_HIDE);
 }
 static void dict_lookup(void) {
   dict_init();char *word=NULL;size_t size=shell_selection_bytes(&word);
@@ -490,6 +492,7 @@ static LRESULT CALLBACK dict_procedure(HWND window,UINT message,WPARAM wp,LPARAM
       }break;
     case WM_COMMAND: {
       int id=LOWORD(wp);
+      if(sy_command(window,id,HIWORD(wp)))return 0;
       if(id>=DICT_GROUP && id<DICT_GROUP+64){dict_collapsed[id-DICT_GROUP]=!dict_collapsed[id-DICT_GROUP];dict_groups_layout();return 0;}
       if(id==DICT_CLOSE){ShowWindow(window,SW_HIDE);SetFocus(g.page);return 0;}
       if(id==DICT_SAVE){vocab_add();return 0;}
@@ -525,7 +528,7 @@ static LRESULT CALLBACK dict_procedure(HWND window,UINT message,WPARAM wp,LPARAM
         InflateRect(&box,-shell_px(6,shell_dpi),-shell_px(3,shell_dpi));DrawTextW(item->hDC,text,-1,&box,DT_WORDBREAK|DT_NOPREFIX);
         SelectObject(item->hDC,old);if(item->itemState&ODS_FOCUS)DrawFocusRect(item->hDC,&item->rcItem);return TRUE;
       }
-      shell_d2d_control(host_shell,item->hDC,&item->rcItem,text,shell_is_dark(),item->CtlID==DICT_SAVE ? 1:2,
+      shell_d2d_control(host_shell,item->hDC,&item->rcItem,text,shell_is_dark(),item->CtlID==DICT_SAVE || item->CtlID==SY_ID_NOW ? 1:2,
         (item->itemState&ODS_SELECTED ? 2:0)|(item->itemState&ODS_FOCUS ? 4:0)|(item->itemState&ODS_DISABLED ? 8:0));return TRUE;
     }
     case WM_PAINT:case WM_PRINTCLIENT: {
@@ -539,8 +542,8 @@ static LRESULT CALLBACK dict_procedure(HWND window,UINT message,WPARAM wp,LPARAM
   return DefWindowProcW(window,message,wp,lp);
 }
 static int dict_translate(const MSG *message) {
-  HWND panels[]={dict_popup,dict_manager,vocab_panel};
-  for(size_t i=0;i<3;i++)if(panels[i] && IsWindowVisible(panels[i])) {
+  HWND panels[]={dict_popup,dict_manager,vocab_panel,sy_panel};
+  for(size_t i=0;i<4;i++)if(panels[i] && IsWindowVisible(panels[i])) {
     if(message->message==WM_KEYDOWN && message->wParam==VK_ESCAPE){ShowWindow(panels[i],SW_HIDE);SetFocus(g.page);return 1;}
     if((message->message==WM_LBUTTONDOWN || message->message==WM_POINTERDOWN) && message->hwnd==g.page) {
       dict_close_all();SetFocus(g.page);return 1;
