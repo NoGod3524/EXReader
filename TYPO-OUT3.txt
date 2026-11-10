@@ -1,0 +1,19 @@
+已手工编译、提交并推送：`39b9ef0b`。
+
+A–E：衬线字体链、标题居中且不 justify、章首分页、2em 缩进均已实现；实书重估后保留 18px / 1.75 行高，字重设为 400。
+
+| 验收 | 结果 |
+|---|---|
+| 1 正文衬线及前后对照 | 通过 |
+| 2 标题 advance | 通过，偏差 0em |
+| 3 章首分页 | 通过，7·19 → 7·20 |
+| 4 段首缩进 | 通过，18px 字实测 36px |
+| 5 Sample 全页比较 | 42→45 页；逐页哈希和三页视觉检查完成，严格页数目标未达标 |
+| 6 回归 | self-test：0 / 26；ctest：166/169，三个既有失败 |
+| 7 指定截图与目录 | 通过 |
+
+最终字体：`C:\Windows\Fonts\NotoSerifSC-VF.ttf`，weight 400。
+
+[完整验收报告](C:/Users/Oscar/Documents/Codex/EXReader-typo-rescue-20261107/docs/ui/evidence/2a-typography/README.md)。各步已追加到 [TYPO-OUT3.txt](C:/Users/Oscar/Documents/Codex/EXReader-typo-rescue-20261107/TYPO-OUT3.txt)。
+
+**PR 编号：暂无。** 创建 draft PR 会自动触发仓库 CI，与“不跑 CI”冲突；正文已备好，等待你对该冲突的选择。
