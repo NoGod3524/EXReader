@@ -12,3 +12,5 @@
 | SDK 包 | `07c0e315df9b4c47f532842af4b76b9fd0edfbc9102db6f2e54bbda665c65c19` | `07c0e315df9b4c47f532842af4b76b9fd0edfbc9102db6f2e54bbda665c65c19` |
 
 [完整验收记录与命令](/C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/evidence/artifact-signing-20261109/README.md)
+[2026-11-10 PR107 收尾 step 1] 首查 UNKNOWN/UNKNOWN、checks=[]；复查 OPEN，head=da91831345e24f5a738a28c51ec52a4d7dfc1ac4，mergeable=CONFLICTING，mergeStateStatus=DIRTY，core 未出现。工作树 clean，但处于 detached HEAD。目标 merge，接下来恢复 PR 分支并合并 origin/main。
+[step 2] 已 fetch origin main 和 PR 分支，开始本地 merge origin/main；冲突详情以 git 输出及后续记录为准。
