@@ -1,0 +1,19 @@
+已提交并推送 `401d37b5`，Draft PR：[**#88**](https://github.com/NoGod3524/EXReader/pull/88)，base 为 `main`。
+
+| 平台 | 产物状态 | 验收清单要点 |
+|---|---|---|
+| Windows | DLL + EXE 已产出 | 加载与五项探针已通过 |
+| Android | ARM64 SO/JNI/AAR 已产出；x86_64 待 CI，本机无 NDK | AAR 接入、adb 安装运行与取证 |
+| macOS | ARM64 dylib 已产出；x86_64 待 CI，本机无 Apple SDK | 架构确认、dyld 加载、五项探针 |
+| iOS | device/simulator dylib 已取得；目标 `.a` 待 CI 聚合 | 静态库生成、模拟器运行、真机签名 |
+| Linux | x86_64 SO 已取得 | ldd 加载检查、无桌面环境探针 |
+| WASM | 不支持：缺少 Emscripten 构建与浏览器适配 | 支持状态检查，五项明确 N/A |
+
+文件名、大小、完整 SHA-256、符号数和构建命令均在[产物矩阵](C:/Users/Oscar/Documents/Codex/EXReader-platforms-20261108/docs/platforms/README.md)。
+
+- Windows DLL：**389 个符号，严格校验通过**。
+- 其他已取得核心库均含全部 389 个入口；因额外导出，严格同集合校验未通过。
+- 六份清单各含 ≥5 项判定；`platform_status.py` 原样运行成功，输出 16 行。
+- Windows 探针 **5/5**；ctest **211/211**；19 本真书 **11,484 页零变化**。
+
+未改引擎、头文件、示例或 workflow；产物二进制未入库。
