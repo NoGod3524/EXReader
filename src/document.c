@@ -82,6 +82,13 @@ const exr_media_item *exr_document_media(const exr_document *d, size_t *n) {
 int exr_media_element(const char *s) {
   return !strcmp(s, "audio") || !strcmp(s, "video") || !strcmp(s, "object") || !strcmp(s, "embed");
 }
+size_t exr_media_placeholder_of(const exr_document *d, size_t element) {
+  size_t i;
+  for (i = 0; d && i < d->media_count; i++)
+    if (d->media[i].element == element)
+      return d->media[i].placeholder;
+  return SIZE_MAX;
+}
 int exr_media_placeholder(const exr_document *d, size_t node) {
   size_t i;
   for (i = 0; d && i < d->media_count; i++)
@@ -256,15 +263,6 @@ static void XMLCALL tree_start(void *user, const char *name, const char **attrs)
       return;
     }
   }
-  /* Reserve one empty TEXT child per XHTML media element so a loader can fill a
-     visible placeholder while keeping preorder node indices; empty text does
-     not change projection, layout or CFI text offsets. */
-  if (!strcmp(p->root_name, "html") && exr_media_element(local_name(name)) &&
-      exr_model_node(p->doc, index, p->chapter, EXR_NODE_TEXT, NULL, "", 0) == SIZE_MAX) {
-    stop(p, EXR_LIMIT);
-    return;
-  }
-  node = &p->doc->nodes[index];
   if (token(exr_node_attribute(node, "http://www.idpf.org/2007/ops|type"), "footnote") ||
       token(exr_node_attribute(node, "http://www.idpf.org/2007/ops|type"), "endnote") ||
       token(exr_node_attribute(node, "role"), "doc-footnote") ||
@@ -482,12 +480,19 @@ static int project_node(projection *p, size_t index, unsigned heading) {
   const char *tag = exr_html_tag(p->doc, node);
   size_t child, start = SIZE_MAX, end = 0;
   int boundary;
+  size_t placeholder;
   if (node->kind == EXR_NODE_TEXT)
     return project_text(p, node, heading);
   if (!strcmp(tag, "head") || !strcmp(tag, "script") || !strcmp(tag, "style") ||
-      !strcmp(tag, "object") || !strcmp(tag, "template") || exr_node_attribute(node, "hidden"))
+      !strcmp(tag, "template") || exr_node_attribute(node, "hidden"))
     return 1;
-  boundary = exr_projection_boundary(node->kind, tag);
+  placeholder = exr_media_placeholder_of(p->doc, index);
+  /* An <object> shows only its engine placeholder; other objects stay hidden. */
+  if (!strcmp(tag, "object") && placeholder == SIZE_MAX)
+    return 1;
+  /* The placeholder replaces the element's fallback content, which would
+     otherwise contradict a playable file's label. */
+  boundary = exr_projection_boundary(node->kind, tag) || placeholder != SIZE_MAX;
   if (boundary)
     end_block(p);
   if (node->kind == EXR_NODE_HEADING)
@@ -495,6 +500,8 @@ static int project_node(projection *p, size_t index, unsigned heading) {
         tag[0] == 'h' && tag[1] >= '1' && tag[1] <= '6' && !tag[2] ? (unsigned)(tag[1] - '0') : 1;
   for (child = node->first_child; child != SIZE_MAX; child = p->doc->nodes[child].next_sibling) {
     exr_node *v = &p->doc->nodes[child];
+    if (placeholder != SIZE_MAX && child != placeholder)
+      continue;
     if (!project_node(p, child, heading))
       return 0;
     if (v->start != SIZE_MAX && v->end > v->start) {

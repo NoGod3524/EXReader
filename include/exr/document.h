@@ -296,7 +296,7 @@ EXR_API const char *exr_node_attribute(const exr_node *node, const char *name);
    read bytes with exr_document_resource. */
 typedef enum { EXR_MEDIA_AUDIO = 1, EXR_MEDIA_VIDEO, EXR_MEDIA_EMBEDDED } exr_media_kind;
 typedef enum {
-  EXR_MEDIA_AVAILABLE = 0, /* local, present, audio/* or video/* */
+  EXR_MEDIA_AVAILABLE = 0, /* local, present, an audio or video type */
   EXR_MEDIA_MISSING,       /* local reference absent from the container */
   EXR_MEDIA_UNSUPPORTED,   /* plugin/legacy type (Flash, Java, ...) or non-media */
   EXR_MEDIA_REMOTE,        /* absolute URI outside the book; never fetched */
