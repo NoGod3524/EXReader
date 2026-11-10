@@ -1,44 +1,50 @@
-HYPH-OUT 2026-11-08
-[1] Recon: engine already has Liang hyphenation (src/hyphen.c, CSS hyphens parse, hyphens:auto layout, U+2010 generated glyphs, bidi-safe) but needs caller-supplied dictionaries and has no built-in rule set. Gap = built-in hyph-en-us + default switch + joiner/zh guards. Baseline build: ../hyph-build-base (Release).
-[2] Added data/hyph-en-us.pat.txt (Kuiken 2005, 4938 patterns, permissive notice in data/hyph-en-us.LICENSE.txt), tools/gen_hyphen_builtin.py -> src/hyphen_builtin_data.h.
-[3] Implemented: exr_hyphenator_create_builtin (hyph-en-us, keys en/en-us, mins default 3/3, auto_default flag); style value EXR_HYPHENS_INITIAL (undeclared) vs MANUAL (explicit) so default stays manual unless host opts in; auto-default requires BOTH text language and block-container language to have rules (zh paragraphs stay un-hyphenated); breaks adjacent to apostrophe/hyphen/en-dash/middot dropped.
-[4] Tests: tests/test_hyphen_builtin.c (+ tests/fixtures/fonts/latin-hyphen.ttf via tools/generate_hyphen_test_font.py) -> 3 ctest entries native-hyphen-builtin-{rules,switches,joiners}; 148 checks pass.
-[5] Real-book measurement (tools/hyphen_measure.c, Times New Roman, 720x1040, margin 36, justify forced): see results in hyph-run/results-28.json & results-20.json. Black Boy 28px: pages 886->876, lines with >0.5em/space looseness 220->16. 5617 events verified by independent Liang implementation: 5616 match, 1 is 'Castre-jón' (non-ASCII tail clipped by harness) -> correct under full word.
-[6] Final numbers (pages old->new auto-default; stretched=lines with >0.5em total added space; loose=>0.5em per space; hyphens=generated U+2010). Hash/pages with hyphens:none and with default-manual are identical to pre-feature build except Born a Crime, whose own CSS declares hyphens:auto. Logical-text hash identical in every variant of every book.
---- 28px font, 720x1040 page, margin 36, Times New Roman / NotoSerifSC (zh)
-en A Raisin in the Sun                      pages   356 ->   355  stretched   3242->  3082  loose  243->  73  hyphens 500  none==base:True  manual==base:True  text_same:True
-en Between The World and Me                 pages   160 ->   157  stretched   2789->  2608  loose   49->   1  hyphens 476  none==base:True  manual==base:True  text_same:True
-en Black Boy                                pages   886 ->   876  stretched  10661->  9813  loose  220->  16  hyphens 1828  none==base:True  manual==base:True  text_same:True
-en Born a Crime                             pages   359 ->   357  stretched   5771->  5445  loose   47->   5  hyphens 769  none==base:True  manual==base:False  text_same:True
-en Crying in H Mart                         pages   379 ->   379  stretched   6235->  6235  loose  213-> 213  hyphens 0  none==base:True  manual==base:True  text_same:True
-en How Does It Feel to Be a Problem Being Y pages   442 ->   435  stretched   6951->  6418  loose   83->   5  hyphens 1370  none==base:True  manual==base:True  text_same:True
-en I Know Why the Caged Bird Sings          pages   625 ->   619  stretched   7471->  7039  loose  348->  59  hyphens 1137  none==base:True  manual==base:True  text_same:True
-en Pachinko                                 pages  1103 ->  1103  stretched  11758-> 11758  loose  225-> 225  hyphens 0  none==base:True  manual==base:True  text_same:True
-en The Absolutely True Diary of a Part-Time pages   541 ->   541  stretched   2108->  2108  loose   11->  11  hyphens 0  none==base:True  manual==base:True  text_same:True
-en The Distance Between Us A Memoir         pages   616 ->   616  stretched   7062->  6801  loose   32->   3  hyphens 805  none==base:True  manual==base:True  text_same:True
-en The Fire Next Time                       pages   189 ->   186  stretched   2440->  2263  loose  184->  24  hyphens 486  none==base:True  manual==base:True  text_same:True
-en The Fire This Time A New Generation Spea pages   333 ->   332  stretched   4112->  3806  loose  132->  15  hyphens 756  none==base:True  manual==base:True  text_same:True
-en The House on Mango Street                pages   169 ->   168  stretched   1234->  1173  loose    4->   0  hyphens 142  none==base:True  manual==base:True  text_same:True
-zh hongloumeng-24264                        pages  1684 ->  1683  stretched   1006->   968  loose  719-> 667  hyphens 76  none==base:True  manual==base:True  text_same:True
-zh tangshi300-52323                         pages    84 ->    83  stretched    404->   366  loose  102->  50  hyphens 76  none==base:True  manual==base:True  text_same:True
-zh xingshihengyan-24239                     pages  1203 ->  1202  stretched    331->   293  loose   64->  12  hyphens 76  none==base:True  manual==base:True  text_same:True
---- 20px font, 720x1040 page, margin 36, Times New Roman / NotoSerifSC (zh)
-en A Raisin in the Sun                      pages   188 ->   188  stretched   2019->  1912  loose   21->   1  hyphens 315  none==base:True  manual==base:True  text_same:True
-en Between The World and Me                 pages    91 ->    91  stretched   2035->  1849  loose    6->   1  hyphens 333  none==base:True  manual==base:True  text_same:True
-en Black Boy                                pages   489 ->   485  stretched   6943->  6487  loose   17->   1  hyphens 1130  none==base:True  manual==base:True  text_same:True
-en Born a Crime                             pages   202 ->   202  stretched   4161->  3907  loose    6->   2  hyphens 570  none==base:True  manual==base:False  text_same:True
-en Crying in H Mart                         pages   217 ->   217  stretched   4414->  4414  loose   33->  33  hyphens 0  none==base:True  manual==base:True  text_same:True
-en How Does It Feel to Be a Problem Being Y pages   246 ->   244  stretched   4831->  4474  loose    3->   0  hyphens 989  none==base:True  manual==base:True  text_same:True
-en I Know Why the Caged Bird Sings          pages   322 ->   319  stretched   4913->  4623  loose   33->   1  hyphens 769  none==base:True  manual==base:True  text_same:True
-en Pachinko                                 pages   660 ->   660  stretched   8044->  8044  loose   23->  23  hyphens 0  none==base:True  manual==base:True  text_same:True
-en The Absolutely True Diary of a Part-Time pages   369 ->   369  stretched   1366->  1366  loose    0->   0  hyphens 0  none==base:True  manual==base:True  text_same:True
-en The Distance Between Us A Memoir         pages   366 ->   366  stretched   4958->  4720  loose    0->   0  hyphens 542  none==base:True  manual==base:True  text_same:True
-en The Fire Next Time                       pages    96 ->    95  stretched   1627->  1483  loose   12->   0  hyphens 310  none==base:True  manual==base:True  text_same:True
-en The Fire This Time A New Generation Spea pages   200 ->   198  stretched   2940->  2710  loose   13->   0  hyphens 566  none==base:True  manual==base:True  text_same:True
-en The House on Mango Street                pages   106 ->   106  stretched    838->   803  loose    0->   0  hyphens 93  none==base:True  manual==base:True  text_same:True
-zh hongloumeng-24264                        pages   906 ->   906  stretched    906->   883  loose  672-> 660  hyphens 44  none==base:True  manual==base:True  text_same:True
-zh tangshi300-52323                         pages    45 ->    45  stretched    304->   281  loose   88->  76  hyphens 44  none==base:True  manual==base:True  text_same:True
-zh xingshihengyan-24239                     pages   628 ->   628  stretched    228->   205  loose   12->   0  hyphens 44  none==base:True  manual==base:True  text_same:True
-[7] ctest: baseline 191 -> 194 (3 new: native-hyphen-builtin-rules/switches/joiners), all pass locally (ICC/PDF-crypto/WebP/AVIF/TIFF off for lack of local deps).
-[8] Event check: 5617 hyphen events across 13 English books verified against independent Liang implementation (hyph-en-us, mins 3/3): 5616 exact, 1 is Castre-jon (non-ASCII o clipped by harness; correct on full word). Random 50-sample: 50/50.
-[9] Mis-tagged books are untouched by design (no matching language => no hyphenation): Pachinko dc:language=pt, Crying in H Mart it-IT, Part-Time Indian xml:lang="". zh books change only in lang=en Project Gutenberg license part (76 hyphens at 28px) when auto-default is on.
+断词已经做完并推送，draft PR 是 #82，base `main`。本地 ctest 从 191 增到 194，全部通过。我没等 CI 结果。本地构建关掉了 ICC、PDF 加密、WebP/AVIF/TIFF（缺依赖），所以这 194 个不含这几块的测试。
+
+## 先说一个出入
+引擎里**已经有**完整的 Liang 断词：CSS `hyphens` 解析、按 `lang` 选规则、U+2010 生成字形、`&shy;`、双向文字安全。缺的是内嵌的英文规则集：原来必须由调用方传词典，而且 `hyphens` 不显式写 `auto` 就不断。所以这次是补缺口，不是重写。
+
+## 规格 1–7 的实现
+1. **算法和规则集**：内嵌 hyph-en-us，4938 条，Kuiken 2005，许可声明写进了 `THIRD_PARTY_NOTICES.md`。规则以纯数据放在 `data/hyph-en-us.pat.txt`，由 `tools/gen_hyphen_builtin.py` 生成 `src/hyphen_builtin_data.h`。新接口是 `exr_hyphenator_create_builtin(left, right, auto_default, …)`。
+2. **语言判定**：只认 `en` 和 `en-us`，其他语言（含 zh）一律不断。`en-GB` 会通过父标签匹配到 `en`，可能按美式拼写断，这点没处理。
+3. **最小约束**：默认两侧各 ≥3 个字符（按"≥2 且两侧 ≥3"取较严的），参数可配。
+4. **连字符**：只在行末生成 U+2010，该字形 `start==end`，逻辑文本不变。
+5. **中英混排**：只有文字本身和所在块的语言都有规则时，默认才断词，所以 zh 段落里的英文词默认不断。显式 `hyphens:auto` 才会让英文断词，但前提是该文字自己的语言是英文。
+6. **开关**：CSS 默认仍是 `manual`。新增"未声明"和"显式 manual"两个内部值，只有宿主传 `auto_default` 才让未声明的文字按 auto 处理，显式 `manual`/`none` 永远优先。
+7. **禁则**：撇号、连字符、en dash 两侧不产生断点。中点 `·` 例外，保留加泰罗尼亚语 `l·l` 的断点（原有测试要求）。
+
+## 七项验收
+测试用 Times New Roman，页面 720×1040，边距 36，强制两端对齐。
+
+1. **Black Boy**（28px）：每个空格平均多拉伸超过 0.5em 的行数 **220 → 16**；整行多拉伸超过 0.5em 的行数 10661 → 9813；页数 886 → 876。20px 下页数 489 → 485，每个空格拉伸超过 0.5em 的行数 17 → 1。
+2. **断词点正确性**：共 5617 个断词事件，用独立的 Python Liang 实现核对。5616 个完全吻合，另一个是 "Castre-jón"：我的脚本只取了 ASCII 字母，把后面的 ó 截掉了，对完整词是正确的。随机抽 50 个是 50/50。
+3. **逻辑文本**：校验方法是从页面字形里取出源文本字节（跳过生成字形），去掉空白后求 FNV-1a 哈希，再和改前对比。所有书、所有模式的哈希都与改前一致。
+4. **中文书**：3 本的页数和版面哈希在默认 manual 下不变。打开 `auto_default` 后，红楼梦、唐诗三百首、醒世恒言各出现 76 处断词，来自书里 `lang="en"` 的 Project Gutenberg 英文许可部分，正文不变。
+5. **改前/改后页数**见下表。
+6. **ctest**：191 → **194**，新增 3 个：`native-hyphen-builtin-rules`、`native-hyphen-builtin-switches`、`native-hyphen-builtin-joiners`。
+7. **`hyphens:none`**：16 本的页数和版面哈希与改前一致。`none` 用了 `!important` 才压过书自己的 CSS。
+
+## 英文书页数（28px，改前 → 改后）
+| 书 | 页数 | 断词数 |
+|---|---|---|
+| Raisin in the Sun | 356 → 355 | 500 |
+| Between the World and Me | 160 → 157 | 476 |
+| Black Boy | 886 → 876 | 1828 |
+| Born a Crime | 359 → 357 | 769 |
+| How Does It Feel… | 442 → 435 | 1370 |
+| Caged Bird | 625 → 619 | 1137 |
+| Distance Between Us | 616 → 616 | 805 |
+| Fire Next Time | 189 → 186 | 486 |
+| Fire This Time | 333 → 332 | 756 |
+| Mango Street | 169 → 168 | 142 |
+| **Pachinko** | 1103 → 1103 | 0 |
+| **Crying in H Mart** | 379 → 379 | 0 |
+| **Part-Time Indian** | 541 → 541 | 0 |
+
+## 需要你知道的几点
+- **Pachinko 不变是按规格行为，不是 bug。** 它的元数据写的是 `pt`，H Mart 写的是 `it-IT`，Part-Time Indian 的 `xml:lang=""` 为空，规格要求"无匹配语言不断词"，所以三本都不断。因此验收 1 我用的是 Black Boy。
+- **Born a Crime 的 manual 模式和改前哈希不同。** 它自己的 CSS 声明了 `hyphens:auto`，不是默认行为变了。
+- **书的数量对不上。** 目录里实际是 13 本英文加 3 本中文，共 16 本，不是 19/17。
+- **`HYPH-OUT.txt` 里**有完整数据，包括 20px 的结果。
+- **新增的测试字体**：`primary.ttf` 只覆盖 a/A/V，英文词会被丢掉，所以我新生成了 `tests/fixtures/fonts/latin-hyphen.ttf`，生成脚本是 `tools/generate_hyphen_test_font.py`。
+- **分支名**：按你的要求推到了 `codex/engine-hyphenation-20261107`，本地分支名是 `…20261108`。
+
