@@ -18,8 +18,15 @@
    settings opens the owner-drawn child panel. */
 #include "shell_tokens.h"
 
-enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, SHELL_HIDDEN_MAX = 128 };
-enum { IDC_SHELL_BACK=180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY };
+/* Every command ID routed through the main window or the settings panel, in
+   one table: both end in shell_settings_command or the main WM_COMMAND, so the
+   values must be unique here. (A second "180" once sent the search button to
+   the shelf.) Panels with their own procedure number their children apart:
+   search bar 200+, shelf 190+, style fields 1800+, dictionary 810+. */
+enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, IDC_SHELL_SEARCH,
+       IDC_SHELL_LIGHT = 164, IDC_SHELL_DARK, IDC_SHELL_SYSTEM,
+       IDC_SHELL_BACK = 180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY };
+enum { SHELL_HIDDEN_MAX = 128 };
 static HWND shell_back;
 /* The 32px visual has 4px per side for the offset keyboard outline. */
 enum { SHELL_BUTTON_BOX = SHELL_ICON_SIZE + 2 * SHELL_CONTROL_FRAME };
@@ -61,6 +68,58 @@ static WNDPROC shell_button_base;
 static HWND shell_render_focus; /* offscreen drive: inject only the drawing state */
 static HWND shell_hover;       /* the button under the mouse */
 static int shell_hover_pinned; /* --drive only: keep the hover state for a screenshot */
+
+/* Owner-draw state for shell_d2d_control. The ring follows the keyboard: it is
+   hidden while the window hides focus cues. */
+static unsigned shell_item_state(const DRAWITEMSTRUCT *item) {
+  unsigned state = 0;
+  if (shell_hover == item->hwndItem) state |= SHELL_STATE_HOVER;
+  if (item->itemState & ODS_SELECTED) state |= SHELL_STATE_PRESSED;
+  if ((item->itemState & ODS_FOCUS) && !(item->itemState & ODS_NOFOCUSRECT)) state |= SHELL_STATE_FOCUS;
+  if (host_offscreen && g.drive_mode && shell_render_focus == item->hwndItem &&
+      !(SendMessageW(item->hwndItem, WM_QUERYUISTATE, 0, 0) & UISF_HIDEFOCUS)) state |= SHELL_STATE_FOCUS;
+  if (item->itemState & ODS_DISABLED) state |= SHELL_STATE_DISABLED;
+  return state;
+}
+
+/* One text button on a surface of colour `under`. */
+static void shell_draw_control(const DRAWITEMSTRUCT *item, const wchar_t *text, int kind, uint32_t under) {
+  shell_d2d_look look = {kind, shell_item_state(item), under, 0, 1};
+  shell_d2d_control(host_shell, item->hDC, &item->rcItem, text, shell_is_dark(), &look);
+}
+
+/* The UI face as a GDI font, for native EDIT/STATIC children and GDI-drawn
+   lists. One font per size and weight, rebuilt when the DPI changes; callers
+   set it again from their layout, which runs on every DPI change. */
+static HFONT shell_gdi_font(int size, int weight) {
+  static struct { int size, weight; unsigned dpi; HFONT font; } cache[12];
+  int slot = -1;
+  for (int i = 0; i < 12; i++) {
+    if (cache[i].font && cache[i].size == size && cache[i].weight == weight) {
+      if (cache[i].dpi == shell_dpi) return cache[i].font;
+      slot = i; break;
+    }
+    if (!cache[i].font && slot < 0) slot = i;
+  }
+  if (slot < 0) slot = 0;
+  HFONT font = CreateFontW(-shell_px((float)size, shell_dpi), 0, 0, 0, weight, 0, 0, 0, DEFAULT_CHARSET, 0, 0,
+                           CLEARTYPE_QUALITY, 0, host_shell ? shell_d2d_family(host_shell, SHELL_TEXT_UI) : SHELL_UI_FONTS[2]);
+  if (!font) return (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+  if (cache[slot].font) DeleteObject(cache[slot].font);
+  cache[slot].size = size; cache[slot].weight = weight; cache[slot].dpi = shell_dpi; cache[slot].font = font;
+  return font;
+}
+
+/* Line height of a GDI font: a single-line EDIT this tall centres its text. */
+static int shell_gdi_line(HFONT font) {
+  TEXTMETRICW metrics = {0};
+  HDC dc = GetDC(NULL);
+  HGDIOBJ old = SelectObject(dc, font);
+  GetTextMetricsW(dc, &metrics);
+  SelectObject(dc, old);
+  ReleaseDC(NULL, dc);
+  return metrics.tmHeight > 0 ? metrics.tmHeight : shell_px(18, shell_dpi);
+}
 
 /* Keep the first requested page-head anchor through resize and font changes.
    Navigation outside that content range starts a new anchor. */
@@ -133,29 +192,50 @@ static void shell_update_dpi(HWND window) {
   if (host_shell) shell_d2d_set_dpi(host_shell, shell_dpi);
 }
 
+/* WM_MOUSEMOVE / WM_MOUSELEAVE of any shell button: one hovered button at a time. */
+static void shell_track_hover(HWND window, UINT message) {
+  if (message == WM_MOUSEMOVE && shell_hover != window) {
+    TRACKMOUSEEVENT track = {sizeof(track), TME_LEAVE, window, 0};
+    HWND previous = shell_hover;
+    shell_hover = window;
+    TrackMouseEvent(&track);
+    if (previous) InvalidateRect(previous, NULL, FALSE);
+    InvalidateRect(window, NULL, FALSE);
+  } else if (message == WM_MOUSELEAVE && shell_hover == window && !shell_hover_pinned) {
+    shell_hover = NULL;
+    InvalidateRect(window, NULL, FALSE);
+  }
+}
+
+/* The three right-hand bar buttons sit 6 apart, yet each needs 4 around it
+   for its focus ring, so neighbouring windows overlap by 2. Only the focused
+   button keeps that strip; the others give it up, or their background would
+   cut the ring. Released strips are painted by the bar itself. */
+static void shell_bar_regions(HWND focused) {
+  HWND buttons[3] = {shell_search_button, shell_toc, shell_settings};
+  int overlap = 2 * shell_px(SHELL_CONTROL_FRAME, shell_dpi) - shell_px(SHELL_ICON_GAP, shell_dpi);
+  RECT bar;
+  if (overlap <= 0 || !g.window) return;
+  for (int i = 0; i < 3; i++) if (buttons[i]) {
+    RECT box; int trim = buttons[i] == focused ? 0 : overlap;
+    GetClientRect(buttons[i], &box);
+    SetWindowRgn(buttons[i], CreateRectRgn(trim, 0, box.right - trim, box.bottom), TRUE);
+  }
+  GetClientRect(g.window, &bar);
+  bar.bottom = shell_px(SHELL_TOPBAR_H, shell_dpi);
+  InvalidateRect(g.window, &bar, FALSE);
+}
+
 static LRESULT CALLBACK shell_button_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
   switch (message) {
+    case WM_SETFOCUS: case WM_KILLFOCUS:
+      if (window == shell_toc || window == shell_settings || window == shell_search_button)
+        shell_bar_regions(message == WM_SETFOCUS ? window : NULL);
+      break;
     case WM_LBUTTONDOWN: if(window==shell_toc) shell_toc_keyboard=0;break;
     case WM_KEYDOWN: if(window==shell_toc) shell_toc_keyboard=1;break;
-    case WM_MOUSEMOVE:
-      if (shell_hover != window) {
-        TRACKMOUSEEVENT track;
-        HWND previous = shell_hover;
-        memset(&track, 0, sizeof(track));
-        track.cbSize = sizeof(track);
-        track.dwFlags = TME_LEAVE;
-        track.hwndTrack = window;
-        shell_hover = window;
-        TrackMouseEvent(&track);
-        if (previous) InvalidateRect(previous, NULL, FALSE);
-        InvalidateRect(window, NULL, FALSE);
-      }
-      break;
-    case WM_MOUSELEAVE:
-      if (shell_hover == window && !shell_hover_pinned) {
-        shell_hover = NULL;
-        InvalidateRect(window, NULL, FALSE);
-      }
+    case WM_MOUSEMOVE: case WM_MOUSELEAVE:
+      shell_track_hover(window, message);
       break;
     case WM_ERASEBKGND:
       return 1;
@@ -169,6 +249,61 @@ static HWND shell_make_button(HWND parent, int id, const wchar_t *name) {
                                 SHELL_BUTTON_BOX, parent, (HMENU)(INT_PTR)id, NULL, NULL);
   if (button) shell_button_base = (WNDPROC)SetWindowLongPtrW(button, GWLP_WNDPROC, (LONG_PTR)shell_button_procedure);
   return button;
+}
+
+/* Gives a BUTTON created elsewhere the shell's hover tracking. */
+static void shell_adopt_button(HWND button) {
+  if (button) shell_button_base = (WNDPROC)SetWindowLongPtrW(button, GWLP_WNDPROC, (LONG_PTR)shell_button_procedure);
+}
+
+/* A native check box, so its role and toggle state stay with its UIA proxy,
+   painted as a ghost toggle on the bar. The control also draws itself outside
+   WM_PAINT (clicks, keys, focus changes): redraw is held off around those
+   messages and done here afterwards. */
+static struct { HWND window; int held; } shell_toggles[4];
+static void shell_toggle_paint(HWND window, HDC dc) {
+  RECT box; wchar_t text[32]; unsigned state = 0;
+  GetClientRect(window, &box); GetWindowTextW(window, text, 32);
+  if (shell_hover == window) state |= SHELL_STATE_HOVER;
+  if (CallWindowProcW(shell_button_base, window, BM_GETSTATE, 0, 0) & BST_PUSHED) state |= SHELL_STATE_PRESSED;
+  if (GetFocus() == window && !(SendMessageW(window, WM_QUERYUISTATE, 0, 0) & UISF_HIDEFOCUS)) state |= SHELL_STATE_FOCUS;
+  if (!IsWindowEnabled(window)) state |= SHELL_STATE_DISABLED;
+  if (CallWindowProcW(shell_button_base, window, BM_GETCHECK, 0, 0) == BST_CHECKED) state |= SHELL_STATE_SELECTED;
+  shell_d2d_look look = {SHELL_CONTROL_GHOST, state, shell_colors->layer_side, 0, 1};
+  if (host_shell) shell_d2d_control(host_shell, dc, &box, text, shell_is_dark(), &look);
+}
+static LRESULT CALLBACK shell_toggle_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+  int slot = 0;
+  LRESULT result;
+  switch (message) {
+    case WM_ERASEBKGND: return 1;
+    case WM_PAINT: { PAINTSTRUCT paint; shell_toggle_paint(window, BeginPaint(window, &paint)); EndPaint(window, &paint); return 0; }
+    case WM_PRINTCLIENT: shell_toggle_paint(window, (HDC)wparam); return 0;
+    case WM_MOUSELEAVE: shell_track_hover(window, message); break;
+    case WM_MOUSEMOVE:
+      shell_track_hover(window, message);
+      if (GetCapture() != window) break;
+      /* fall through: a captured drag changes the pushed state */
+    case WM_LBUTTONDOWN: case WM_LBUTTONUP: case WM_LBUTTONDBLCLK: case WM_KEYDOWN: case WM_KEYUP:
+    case WM_SETFOCUS: case WM_KILLFOCUS: case WM_ENABLE: case WM_SETTEXT: case WM_UPDATEUISTATE:
+    case WM_CAPTURECHANGED: case BM_SETCHECK: case BM_SETSTATE: case BM_CLICK:
+      while (slot < 3 && shell_toggles[slot].window != window) slot++;
+      if (!shell_toggles[slot].held++) CallWindowProcW(shell_button_base, window, WM_SETREDRAW, FALSE, 0);
+      result = CallWindowProcW(shell_button_base, window, message, wparam, lparam);
+      if (!--shell_toggles[slot].held) {
+        CallWindowProcW(shell_button_base, window, WM_SETREDRAW, TRUE, 0);
+        RedrawWindow(window, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+      }
+      return result;
+  }
+  return CallWindowProcW(shell_button_base, window, message, wparam, lparam);
+}
+static void shell_adopt_toggle(HWND button) {
+  for (int i = 0; button && i < 4; i++) if (!shell_toggles[i].window) {
+    shell_toggles[i].window = button;
+    SetWindowLongPtrW(button, GWLP_WNDPROC, (LONG_PTR)shell_toggle_procedure);
+    return;
+  }
 }
 
 static void shell_create_panel(HWND parent);
@@ -198,7 +333,8 @@ static int shell_layout(void) {
   if(shelf_layout()) return 1;
   if (!shell_active) return 0;
   GetClientRect(g.window, &area);
-  MoveWindow(shell_back,shell_px(12,shell_dpi),shell_px(8,shell_dpi),shell_px(88,shell_dpi),shell_px(40,shell_dpi),TRUE);
+  MoveWindow(shell_back,shell_px(SHELL_BAR_RIGHT-SHELL_CONTROL_FRAME,shell_dpi),shell_px((SHELL_TOPBAR_H-SHELL_CONTROL_H)/2-SHELL_CONTROL_FRAME,shell_dpi),
+    shell_px(80+2*SHELL_CONTROL_FRAME,shell_dpi),shell_px(SHELL_CONTROL_H+2*SHELL_CONTROL_FRAME,shell_dpi),TRUE);
   HWND bar_buttons[4]={shell_back,shell_toc,shell_settings,shell_search_button};
   for(int i=0;i<4;i++) ShowWindow(bar_buttons[i],shell_bar_hidden ? SW_HIDE:SW_SHOWNA);
   shell_button_circle(shell_toc, area.right, &circle);
@@ -209,6 +345,7 @@ static int shell_layout(void) {
              shell_px(SHELL_BUTTON_BOX, shell_dpi), TRUE);
   shell_button_circle(shell_search_button, area.right, &circle);
   MoveWindow(shell_search_button,circle.left-shell_px(SHELL_CONTROL_FRAME,shell_dpi),circle.top-shell_px(SHELL_CONTROL_FRAME,shell_dpi),shell_px(SHELL_BUTTON_BOX,shell_dpi),shell_px(SHELL_BUTTON_BOX,shell_dpi),TRUE);
+  shell_bar_regions(GetFocus());
   int page_top=shell_px(SHELL_TOPBAR_H+(shell_search_open ? 48:0),shell_dpi);
   MoveWindow(g.page,0,page_top,area.right,area.bottom>page_top ? area.bottom-page_top:0,TRUE);
   shell_search_layout();
@@ -308,9 +445,9 @@ static void shell_sync(void) {
     shell_vertical = g.frame.writing_mode;
     shell_request_layout();
   }
-  int want = host_shell && g.window && (g.drive_mode ? shell_drive_on : 1) && !shell_legacy &&
+  int want = host_shell && g.window && (g.drive_mode ? shell_drive_on : 1) &&
              g.has_current && g.frame.valid && !shelf_requested;
-  if(want || shell_legacy || (g.drive_mode && !shell_drive_on)) shelf_show(0);
+  if(want || (g.drive_mode && !shell_drive_on)) shelf_show(0);
   if (want && !shell_active) shell_enter();
   else if (!want && shell_active) shell_leave();
   else if (shell_active) {
@@ -320,7 +457,7 @@ static void shell_sync(void) {
     InvalidateRect(g.window, &bar, FALSE); /* the title may have changed */
     if(shell_panel_open) InvalidateRect(shell_panel,NULL,FALSE);
   }
-  if(!want && host_shell && !shell_legacy && (!g.drive_mode || shell_drive_on)) shelf_show(1);
+  if(!want && host_shell && (!g.drive_mode || shell_drive_on)) shelf_show(1);
 }
 
 static void shell_paint(HWND window) {
@@ -354,10 +491,7 @@ static void shell_paint(HWND window) {
 static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   shell_d2d_button look;
   int disabled, pressed, hover, focus;
-  if(item->hwndItem==shell_back) {
-    shell_d2d_control(host_shell,item->hDC,&item->rcItem,L"← 书架",shell_is_dark(),2,
-      (item->itemState&ODS_SELECTED ? 2:0)|(item->itemState&ODS_FOCUS ? 4:0));return 1;
-  }
+  if(item->hwndItem==shell_back) { shell_draw_control(item,L"← 书架",SHELL_CONTROL_GHOST,shell_colors->layer_side);return 1; }
   if (shell_toc_draw(item)) return 1;
   if (shell_draw_settings(item)) return 1;
   if (!host_shell || (item->hwndItem != shell_toc && item->hwndItem != shell_settings && item->hwndItem != shell_search_button)) return 0;
@@ -385,12 +519,23 @@ static int shell_draw_item(const DRAWITEMSTRUCT *item) {
 }
 
 /* The page accepts reading keys, but only interactive controls get a ring. */
+static const wchar_t *shell_toc_current_label(wchar_t *out, size_t capacity);
 static int shell_page_footer(HDC dc, const RECT *area) {
   if (shell_active && g.frame.valid) {
-    wchar_t text[96]; RECT number = *area;
+    /* The current page is the strong run. A fixed-layout book knows its total;
+       a reflowed chapter does not, so it names the chapter it is in instead. */
+    wchar_t text[160], chapter[96]; RECT number = *area; unsigned start = 0, length;
+    unsigned long long page = (unsigned long long)(g.frame.page + 1);
     number.top = number.bottom - shell_px(SHELL_PAGE_NUMBER_H, shell_dpi);
-    swprintf(text, 96, L"%llu · %llu", (unsigned long long)(g.frame.part + 1), (unsigned long long)(g.frame.page + 1));
-    shell_d2d_dc_text(host_shell, dc, &number, text, shell_colors->text_secondary, shell_colors->text_disabled);
+    if (g.frame.fixed && g.frame.page_count) {
+      length = (unsigned)swprintf(text, 160, L"%llu", page);
+      swprintf(text + length, 160 - length, L" / %llu", (unsigned long long)g.frame.page_count);
+    } else {
+      if (shell_toc_current_label(chapter, 96)) start = (unsigned)swprintf(text, 160, L"%ls · ", chapter);
+      else start = (unsigned)swprintf(text, 160, L"%llu · ", (unsigned long long)(g.frame.part + 1));
+      length = (unsigned)swprintf(text + start, 160 - start, L"%llu", page);
+    }
+    shell_d2d_dc_text(host_shell, dc, &number, text, start, length, shell_colors->text_secondary, shell_colors->text_disabled);
   }
   return shell_active;
 }
@@ -425,7 +570,6 @@ static int shell_translate(const MSG *message) {
       (message->hwnd != g.window && !IsChild(g.window, message->hwnd)))
     return 0;
   if (message->wParam == VK_LEFT && shell_active) { shelf_return(); return 1; }
-  if (message->wParam == VK_RIGHT && shell_legacy) { shell_legacy = 0; shell_sync(); return 1; }
   return 0;
 }
 

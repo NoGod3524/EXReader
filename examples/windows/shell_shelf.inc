@@ -14,7 +14,8 @@ typedef struct {
 } shelf_book;
 static shelf_book shelf_recent[SHELF_LIMIT];
 static int shelf_count,shelf_loaded,shelf_writable=1;
-static HWND shelf_panel,shelf_list,shelf_add,shelf_organize,shelf_stats,shelf_children[128];
+static HWND shelf_panel,shelf_list,shelf_add,shelf_organize,shelf_stats,shelf_empty_add,shelf_children[128];
+static void shelf_arrange(void);
 static int shelf_child_count;
 static wchar_t shelf_json_path[HOST_PATH];
 static WNDPROC shelf_list_base;
@@ -110,6 +111,7 @@ static void shelf_refresh(void) {
   SendMessageW(shelf_list,LB_SETITEMHEIGHT,0,shell_px(148,shell_dpi));
   if(shelf_count)SendMessageW(shelf_list,LB_SETCURSEL,0,0);
   SendMessageW(shelf_list,WM_SETREDRAW,TRUE,0);InvalidateRect(shelf_list,NULL,TRUE);
+  shelf_arrange();
   InvalidateRect(shelf_panel,NULL,TRUE);
 }
 static void shelf_imported(int64_t id,const wchar_t *path) {
@@ -233,9 +235,8 @@ static void shelf_open_index(int index) {
   SendMessageW(g.books,LB_SETCURSEL,(WPARAM)row,0);open_selected_book();
 }
 static void shelf_text(HDC dc,const wchar_t *text,RECT r,int size,int weight,uint32_t color,UINT flags) {
-  HFONT f=CreateFontW(-shell_px((float)size,shell_dpi),0,0,0,weight,0,0,0,DEFAULT_CHARSET,0,0,CLEARTYPE_QUALITY,0,L"Microsoft YaHei UI");
-  HGDIOBJ old=SelectObject(dc,f);SetTextColor(dc,shell_colorref(color));SetBkMode(dc,TRANSPARENT);
-  DrawTextW(dc,text,-1,&r,flags|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS|DT_NOPREFIX);SelectObject(dc,old);DeleteObject(f);
+  HGDIOBJ old=SelectObject(dc,shell_gdi_font(size,weight));SetTextColor(dc,shell_colorref(color));SetBkMode(dc,TRANSPARENT);
+  DrawTextW(dc,text,-1,&r,flags|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS|DT_NOPREFIX);SelectObject(dc,old);
 }
 static int shelf_draw_book_cover(HDC dc,RECT r,int64_t id) {
   shelf_book *b=shelf_find(id);if(!b)return 0;
@@ -273,7 +274,96 @@ static void shelf_draw(const DRAWITEMSTRUCT *d) {
   brush=CreateSolidBrush(shell_colorref(shell_colors->surface3));FillRect(dc,&bar,brush);DeleteObject(brush);
   bar.right=bar.left+(int)((bar.right-bar.left)*b->progress);
   brush=CreateSolidBrush(shell_colorref(shell_colors->accent));FillRect(dc,&bar,brush);DeleteObject(brush);
-  if((d->itemState&ODS_FOCUS) && !(d->itemState&ODS_NOFOCUSRECT))DrawFocusRect(dc,&d->rcItem);
+  if((d->itemState&ODS_FOCUS) && !(d->itemState&ODS_NOFOCUSRECT)) {
+    /* Keyboard cue: an accent edge on the row, not the dotted system rectangle. */
+    RECT edge={d->rcItem.left,d->rcItem.top,d->rcItem.left+shell_px(3,shell_dpi),d->rcItem.bottom};
+    brush=CreateSolidBrush(shell_colorref(shell_colors->accent));FillRect(dc,&edge,brush);DeleteObject(brush);
+  }
+}
+/* The list scrolls by whole rows. Its bar is drawn here (UI-SPEC: 4 wide, 8
+   under the pointer): the native one ignores the theme and stays white. */
+enum { SHELF_ROW_H=148,SHELF_BAR_GAP=4,SHELF_BAR_W=8,SHELF_BAR_REST=4,SHELF_BAR_MIN=32 };
+static int shelf_bar_hot,shelf_bar_drag,shelf_bar_grab;
+static int shelf_rows_visible(void) {
+  RECT r;GetClientRect(shelf_list,&r);int row=shell_px(SHELF_ROW_H,shell_dpi);
+  return row>0 && r.bottom>=row ? r.bottom/row:1;
+}
+/* The strip right of the list, in panel coordinates. 0: every row fits. */
+static int shelf_bar_track(RECT *track) {
+  RECT list;GetWindowRect(shelf_list,&list);MapWindowPoints(NULL,shelf_panel,(POINT *)&list,2);
+  *track=(RECT){list.right+shell_px(SHELF_BAR_GAP,shell_dpi),list.top,list.right+shell_px(SHELF_BAR_GAP+SHELF_BAR_W,shell_dpi),list.bottom};
+  return shelf_count>shelf_rows_visible();
+}
+static RECT shelf_bar_thumb(const RECT *track) {
+  int visible=shelf_rows_visible(),range=shelf_count-visible,height=track->bottom-track->top;
+  int size=max(shell_px(SHELF_BAR_MIN,shell_dpi),(int)((int64_t)height*visible/max(1,shelf_count)));
+  int top=(int)SendMessageW(shelf_list,LB_GETTOPINDEX,0,0);
+  int y=track->top+(range>0 ? (int)((int64_t)(height-size)*min(top,range)/range):0);
+  int width=shell_px(shelf_bar_hot || shelf_bar_drag ? SHELF_BAR_W:SHELF_BAR_REST,shell_dpi);
+  return (RECT){track->right-width,y,track->right,y+size};
+}
+static void shelf_bar_changed(void) {
+  RECT track;
+  if(shelf_panel && shelf_list) {shelf_bar_track(&track);InvalidateRect(shelf_panel,&track,FALSE);}
+}
+static void shelf_scroll_to(int top) {
+  int range=shelf_count-shelf_rows_visible();
+  top=max(0,min(max(0,range),top));
+  SendMessageW(shelf_list,LB_SETTOPINDEX,(WPARAM)top,0);shelf_bar_changed();
+}
+static void shelf_bar_paint(HDC dc) {
+  RECT track;if(!shelf_count || !shelf_bar_track(&track))return;
+  RECT thumb=shelf_bar_thumb(&track);int round=thumb.right-thumb.left;
+  uint32_t color=shelf_bar_hot || shelf_bar_drag ? shell_colors->text_disabled:
+    shell_blend(shell_colors->layer_page,shell_colors->text_disabled,.55f);
+  HBRUSH brush=CreateSolidBrush(shell_colorref(color));
+  HGDIOBJ old_brush=SelectObject(dc,brush),old_pen=SelectObject(dc,GetStockObject(NULL_PEN));
+  RoundRect(dc,thumb.left,thumb.top,thumb.right+1,thumb.bottom+1,round,round);
+  SelectObject(dc,old_pen);SelectObject(dc,old_brush);DeleteObject(brush);
+}
+/* Pointer messages of the panel: 1 when the scroll bar took this one. */
+static int shelf_bar_mouse(HWND w,UINT m,LPARAM lp) {
+  RECT track;POINT p={(short)LOWORD(lp),(short)HIWORD(lp)};
+  if(m==WM_MOUSELEAVE) {if(shelf_bar_hot) {shelf_bar_hot=0;shelf_bar_changed();}return 0;}
+  if(m==WM_LBUTTONUP || m==WM_CAPTURECHANGED) {
+    if(!shelf_bar_drag)return 0;
+    shelf_bar_drag=0;if(m==WM_LBUTTONUP)ReleaseCapture();
+    shelf_bar_changed();return 1;
+  }
+  if(!shelf_count || !shelf_bar_track(&track))return 0;
+  RECT thumb=shelf_bar_thumb(&track);
+  int range=shelf_count-shelf_rows_visible(),travel=track.bottom-track.top-(thumb.bottom-thumb.top);
+  if(m==WM_MOUSEMOVE) {
+    if(shelf_bar_drag) {
+      if(travel>0)shelf_scroll_to((int)(((int64_t)(p.y-shelf_bar_grab-track.top)*range+travel/2)/travel));
+      return 1;
+    }
+    int hot=PtInRect(&track,p)!=0;
+    if(hot!=shelf_bar_hot) {
+      TRACKMOUSEEVENT leave={sizeof(leave),TME_LEAVE,w,0};
+      shelf_bar_hot=hot;if(hot)TrackMouseEvent(&leave);
+      shelf_bar_changed();
+    }
+    return 0;
+  }
+  if(m==WM_LBUTTONDOWN && PtInRect(&track,p)) {
+    int top=(int)SendMessageW(shelf_list,LB_GETTOPINDEX,0,0);
+    if(p.y<thumb.top)shelf_scroll_to(top-shelf_rows_visible());
+    else if(p.y>=thumb.bottom)shelf_scroll_to(top+shelf_rows_visible());
+    else {shelf_bar_drag=1;shelf_bar_grab=p.y-thumb.top;SetCapture(w);shelf_bar_changed();}
+    return 1;
+  }
+  return 0;
+}
+/* Keys, selection and the wheel can all move the top row: tell the bar. */
+static LRESULT shelf_list_forward(HWND w,UINT m,WPARAM wp,LPARAM lp) {
+  static int shown=-1;
+  LRESULT result=CallWindowProcW(shelf_list_base,w,m,wp,lp);
+  if(m!=WM_DESTROY && m!=WM_NCDESTROY) {
+    int top=(int)CallWindowProcW(shelf_list_base,w,LB_GETTOPINDEX,0,0);
+    if(top!=shown) {shown=top;shelf_bar_changed();}
+  }
+  return result;
 }
 static LRESULT CALLBACK shelf_list_proc(HWND w,UINT m,WPARAM wp,LPARAM lp) {
   if(m==WM_CONTEXTMENU) {
@@ -288,14 +378,52 @@ static LRESULT CALLBACK shelf_list_proc(HWND w,UINT m,WPARAM wp,LPARAM lp) {
     return 0;
   }
   if(m==WM_ERASEBKGND) {RECT r;GetClientRect(w,&r);HBRUSH b=CreateSolidBrush(shell_colorref(shell_colors->layer_page));FillRect((HDC)wp,&r,b);DeleteObject(b);return 1;}
-  if(m==WM_LBUTTONUP) {LRESULT result=CallWindowProcW(shelf_list_base,w,m,wp,lp);DWORD item=(DWORD)SendMessageW(w,LB_ITEMFROMPOINT,0,lp);if(!HIWORD(item))shelf_open_index(LOWORD(item));return result;}
+  if(m==WM_MOUSEWHEEL) {
+    static int carry;carry+=GET_WHEEL_DELTA_WPARAM(wp);
+    int rows=carry/WHEEL_DELTA;carry-=rows*WHEEL_DELTA;
+    if(rows)shelf_scroll_to((int)SendMessageW(w,LB_GETTOPINDEX,0,0)-rows);
+    return 0;
+  }
+  if(m==WM_LBUTTONUP) {LRESULT result=shelf_list_forward(w,m,wp,lp);DWORD item=(DWORD)SendMessageW(w,LB_ITEMFROMPOINT,0,lp);if(!HIWORD(item))shelf_open_index(LOWORD(item));return result;}
   if(m==WM_KEYDOWN && wp==VK_RETURN) {shelf_open_index((int)SendMessageW(w,LB_GETCURSEL,0,0));return 0;}
-  return CallWindowProcW(shelf_list_base,w,m,wp,lp);
+  return shelf_list_forward(w,m,wp,lp);
+}
+/* Empty shelf (WIREFRAMES section 1): icon 48, 16, title 28, 8, line 20, 24,
+   then the one action; the block is centred below the header. */
+enum { SHELF_HEADER_H=124,SHELF_EMPTY_ACTION_Y=48+16+28+8+20+24,SHELF_EMPTY_H=SHELF_EMPTY_ACTION_Y+SHELL_CONTROL_H };
+static int shelf_empty_top(const RECT *client) {
+  int top=shell_px(SHELF_HEADER_H,shell_dpi);
+  return top+max(0,(client->bottom-top-shell_px(SHELF_EMPTY_H,shell_dpi))/2);
+}
+static void shelf_empty_paint(HDC dc,const RECT *client) {
+  RECT line={0,shelf_empty_top(client),client->right,0};
+  const wchar_t *icons=host_shell ? shell_d2d_family(host_shell,SHELL_TEXT_ICON):L"";
+  line.bottom=line.top+shell_px(48,shell_dpi);
+  if(wcsstr(icons,L"Icons") || wcsstr(icons,L"MDL2")) {
+    HFONT font=CreateFontW(-shell_px(48,shell_dpi),0,0,0,FW_NORMAL,0,0,0,DEFAULT_CHARSET,0,0,CLEARTYPE_QUALITY,0,icons);
+    HGDIOBJ old=SelectObject(dc,font);SetTextColor(dc,shell_colorref(shell_colors->text_secondary));SetBkMode(dc,TRANSPARENT);
+    DrawTextW(dc,L"\xE8F1",1,&line,DT_CENTER|DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX);
+    SelectObject(dc,old);DeleteObject(font);
+  }
+  line.top=line.bottom+shell_px(16,shell_dpi);line.bottom=line.top+shell_px(28,shell_dpi);
+  shelf_text(dc,L"书架还是空的",line,20,400,shell_colors->text,DT_CENTER);
+  line.top=line.bottom+shell_px(8,shell_dpi);line.bottom=line.top+shell_px(20,shell_dpi);
+  shelf_text(dc,L"打开一本书开始阅读，支持 EPUB、PDF、MOBI、TXT 等格式",line,14,400,shell_colors->text_secondary,DT_CENTER);
+}
+/* An empty shelf shows one centred action; a filled one its header and list. */
+static void shelf_arrange(void) {
+  HWND header[3]={shelf_add,shelf_organize,shelf_stats};
+  if(!shelf_panel)return;
+  ShowWindow(shelf_list,shelf_count ? SW_SHOWNA:SW_HIDE);ShowWindow(shelf_empty_add,shelf_count ? SW_HIDE:SW_SHOWNA);
+  for(int i=0;i<3;i++)ShowWindow(header[i],shelf_count ? SW_SHOWNA:SW_HIDE);
 }
 static LRESULT CALLBACK shelf_proc(HWND w,UINT m,WPARAM wp,LPARAM lp) {
   switch(m) {
     case WM_ERASEBKGND:return 1;
     case WM_SIZE:shelf_layout();return 0;
+    case WM_MOUSEMOVE:case WM_MOUSELEAVE:case WM_LBUTTONDOWN:case WM_LBUTTONUP:case WM_CAPTURECHANGED:
+      if(shelf_bar_mouse(w,m,lp))return 0;
+      break;
     case WM_COMMAND:
       if(LOWORD(wp)==SHELF_IMPORT) {g.auto_open_imported=1;import_path(NULL,1);return 0;}
       if(LOWORD(wp)==SHELF_ORGANIZE || LOWORD(wp)==SHELF_STATS) {sm_show(LOWORD(wp)==SHELF_STATS);return 0;}
@@ -304,20 +432,22 @@ static LRESULT CALLBACK shelf_proc(HWND w,UINT m,WPARAM wp,LPARAM lp) {
       const DRAWITEMSTRUCT *d=(const DRAWITEMSTRUCT *)lp;
       if(d->hwndItem==shelf_list)shelf_draw(d);
       else {
+        /* Opening a book is the page's one primary action. */
         wchar_t label[32];GetWindowTextW(d->hwndItem,label,32);
-        shell_d2d_control(host_shell,d->hDC,&d->rcItem,label,shell_is_dark(),1,(d->itemState&ODS_SELECTED ? 2:0)|(d->itemState&ODS_FOCUS ? 4:0));
+        shell_draw_control(d,label,d->hwndItem==shelf_add || d->hwndItem==shelf_empty_add ? SHELL_CONTROL_PRIMARY:SHELL_CONTROL_STANDARD,
+          shell_colors->layer_page);
       }
       return TRUE;
     }
     case WM_CTLCOLORLISTBOX:SetBkColor((HDC)wp,shell_colorref(shell_colors->layer_page));return (LRESULT)GetStockObject(NULL_BRUSH);
     case WM_PAINT:case WM_PRINTCLIENT: {
-      PAINTSTRUCT p;HDC dc=m==WM_PAINT ? BeginPaint(w,&p):(HDC)wp;RECT r;GetClientRect(w,&r);
+      PAINTSTRUCT p;HDC dc=m==WM_PAINT ? BeginPaint(w,&p):(HDC)wp;RECT client,r;GetClientRect(w,&client);r=client;
       HBRUSH bg=CreateSolidBrush(shell_colorref(shell_colors->layer_page));FillRect(dc,&r,bg);DeleteObject(bg);
       r.left=shell_px(48,shell_dpi);r.top=shell_px(24,shell_dpi);r.bottom=shell_px(68,shell_dpi);
       shelf_text(dc,L"书架",r,28,600,shell_colors->text,DT_LEFT);
       r.top=shell_px(76,shell_dpi);r.bottom=shell_px(104,shell_dpi);wchar_t label[96];
       swprintf(label,96,L"最近阅读  ·  %d 本书",shelf_count);shelf_text(dc,label,r,13,400,shell_colors->text_secondary,DT_LEFT);
-      if(!shelf_count) {GetClientRect(w,&r);shelf_text(dc,L"打开一本书，开始阅读",r,18,400,shell_colors->text_secondary,DT_CENTER);}
+      if(shelf_count)shelf_bar_paint(dc);else shelf_empty_paint(dc,&client);
       if(m==WM_PAINT)EndPaint(w,&p);
       return 0;
     }
@@ -327,11 +457,19 @@ static LRESULT CALLBACK shelf_proc(HWND w,UINT m,WPARAM wp,LPARAM lp) {
 static int shelf_layout(void) {
   if(!shelf_visible || !shelf_panel)return 0;
   RECT r;GetClientRect(g.window,&r);SetWindowPos(shelf_panel,HWND_TOP,0,0,r.right,r.bottom,SWP_NOACTIVATE);
-  int pad=shell_px(24,shell_dpi),top=shell_px(124,shell_dpi);
+  int pad=shell_px(24,shell_dpi),top=shell_px(SHELF_HEADER_H,shell_dpi),frame=shell_px(SHELL_CONTROL_FRAME,shell_dpi);
   MoveWindow(shelf_list,pad,top,max(0,r.right-2*pad),max(0,r.bottom-top-pad),TRUE);
-  MoveWindow(shelf_add,r.right-shell_px(188,shell_dpi),shell_px(35,shell_dpi),shell_px(140,shell_dpi),shell_px(40,shell_dpi),TRUE);
-  MoveWindow(shelf_organize,r.right-shell_px(440,shell_dpi),shell_px(35,shell_dpi),shell_px(120,shell_dpi),shell_px(40,shell_dpi),TRUE);
-  MoveWindow(shelf_stats,r.right-shell_px(312,shell_dpi),shell_px(35,shell_dpi),shell_px(116,shell_dpi),shell_px(40,shell_dpi),TRUE);
+  /* Header buttons: 34-high visuals 8 apart, the last ending 48 from the edge. */
+  struct {HWND button;int right,width;} header[3]={{shelf_add,48,140},{shelf_stats,196,116},{shelf_organize,320,120}};
+  int y=shell_px(38,shell_dpi),height=shell_px(SHELL_CONTROL_H,shell_dpi);
+  for(int i=0;i<3;i++) {
+    int right=r.right-shell_px((float)header[i].right,shell_dpi),left=r.right-shell_px((float)(header[i].right+header[i].width),shell_dpi);
+    MoveWindow(header[i].button,left-frame,y-frame,right-left+2*frame,height+2*frame,TRUE);
+  }
+  int width=shell_px(144,shell_dpi);
+  MoveWindow(shelf_empty_add,(r.right-width)/2-frame,shelf_empty_top(&r)+shell_px(SHELF_EMPTY_ACTION_Y,shell_dpi)-frame,
+    width+2*frame,height+2*frame,TRUE);
+  shelf_arrange();
   sm_refresh();
   return 1;
 }
@@ -343,7 +481,7 @@ static void shelf_show(int show) {
     shelf_child_count=0;
     for(HWND child=GetWindow(g.window,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT))
       if(child!=shelf_panel && IsWindowVisible(child) && shelf_child_count<128) {shelf_children[shelf_child_count++]=child;ShowWindow(child,SW_HIDE);}
-    shelf_layout();shelf_refresh();ShowWindow(shelf_panel,SW_SHOWNA);SetFocus(shelf_list);
+    shelf_layout();shelf_refresh();ShowWindow(shelf_panel,SW_SHOWNA);SetFocus(shelf_count ? shelf_list:shelf_empty_add);
   } else {
     ShowWindow(shelf_panel,SW_HIDE);
     for(int i=0;i<shelf_child_count;i++)ShowWindow(shelf_children[i],SW_SHOWNA);
@@ -354,12 +492,15 @@ static void shelf_show(int show) {
 static void shelf_create(HWND parent) {
   WNDCLASSW c={0};c.lpfnWndProc=shelf_proc;c.hInstance=GetModuleHandleW(NULL);c.lpszClassName=L"EXReaderShelf";c.hCursor=LoadCursor(NULL,IDC_ARROW);RegisterClassW(&c);
   shelf_panel=CreateWindowExW(WS_EX_CONTROLPARENT,c.lpszClassName,L"书架",WS_CHILD|WS_CLIPCHILDREN,0,0,0,0,parent,NULL,c.hInstance,NULL);
-  shelf_list=CreateWindowExW(0,L"LISTBOX",L"最近阅读",WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|LBS_OWNERDRAWFIXED|LBS_HASSTRINGS|LBS_NOINTEGRALHEIGHT|LBS_NOTIFY,
+  shelf_list=CreateWindowExW(0,L"LISTBOX",L"最近阅读",WS_CHILD|WS_VISIBLE|WS_TABSTOP|LBS_OWNERDRAWFIXED|LBS_HASSTRINGS|LBS_NOINTEGRALHEIGHT|LBS_NOTIFY,
     0,0,0,0,shelf_panel,(HMENU)SHELF_LIST,NULL,NULL);
   shelf_list_base=(WNDPROC)SetWindowLongPtrW(shelf_list,GWLP_WNDPROC,(LONG_PTR)shelf_list_proc);
   shelf_add=CreateWindowExW(0,L"BUTTON",L"＋ 打开书籍",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_IMPORT,NULL,NULL);
   shelf_organize=CreateWindowExW(0,L"BUTTON",L"系列 / 标签",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_ORGANIZE,NULL,NULL);
   shelf_stats=CreateWindowExW(0,L"BUTTON",L"阅读统计",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_STATS,NULL,NULL);
+  shelf_empty_add=CreateWindowExW(0,L"BUTTON",L"＋ 打开书籍",WS_CHILD|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_IMPORT,NULL,NULL);
+  HWND buttons[4]={shelf_add,shelf_organize,shelf_stats,shelf_empty_add};
+  for(int i=0;i<4;i++)shell_adopt_button(buttons[i]);
 }
 static void shelf_load(void) {
   path_join(shelf_json_path,HOST_PATH,g.data_dir,L"recent-books.json");shelf_loaded=1;

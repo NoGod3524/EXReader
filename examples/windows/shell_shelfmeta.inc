@@ -732,8 +732,7 @@ static LRESULT CALLBACK sm_edit_procedure(HWND window,UINT message,WPARAM wp,LPA
       break;
     case WM_DRAWITEM: {
       const DRAWITEMSTRUCT *item=(const DRAWITEMSTRUCT *)lp;wchar_t text[64];GetWindowTextW(item->hwndItem,text,64);
-      shell_d2d_control(host_shell,item->hDC,&item->rcItem,text,shell_is_dark(),item->CtlID==SM_ID_SAVE ? 1:2,
-        (item->itemState&ODS_SELECTED ? 2:0)|(item->itemState&ODS_FOCUS ? 4:0));return TRUE;
+      shell_draw_control(item,text,item->CtlID==SM_ID_SAVE ? SHELL_CONTROL_PRIMARY:SHELL_CONTROL_STANDARD,shell_colors->layer_float);return TRUE;
     }
   }
   return DefWindowProcW(window,message,wp,lp);
