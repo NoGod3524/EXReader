@@ -1,0 +1,62 @@
+{
+  "run_id": 42653099549,
+  "artifacts": [
+    {
+      "id": 13691860407,
+      "name": "EXReader-C-Linux",
+      "size_in_bytes": 23961220,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13691860407",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13691860407/zip",
+      "expired": false,
+      "created_at": "2026-11-09T16:26:45Z",
+      "expires_at": "2027-02-07T16:16:34Z",
+      "updated_at": "2026-11-09T16:26:45Z",
+      "digest": "sha256:4edede208783db573b6629037d7fe15e62475e9228a64bacfd69ec1396c99fe5",
+      "workflow_run": {
+        "id": 42653099549,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/sdk-crossbuild-20261109",
+        "head_sha": "30595c2107ef934c962b64401e60865dfd266b24"
+      }
+    },
+    {
+      "id": 13691780835,
+      "name": "EXReader-C-Windows",
+      "size_in_bytes": 16984660,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13691780835",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13691780835/zip",
+      "expired": false,
+      "created_at": "2026-11-09T16:29:47Z",
+      "expires_at": "2027-02-07T16:16:34Z",
+      "updated_at": "2026-11-09T16:29:47Z",
+      "digest": "sha256:504f0cf4f055e72ac1cf2c621a9140e4f21b37cab3ab1ab9d6a7eb5b6c2ff212",
+      "workflow_run": {
+        "id": 42653099549,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/sdk-crossbuild-20261109",
+        "head_sha": "30595c2107ef934c962b64401e60865dfd266b24"
+      }
+    },
+    {
+      "id": 13690229979,
+      "name": "EXReader-C-Android-arm64",
+      "size_in_bytes": 37272519,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13690229979",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13690229979/zip",
+      "expired": false,
+      "created_at": "2026-11-09T16:20:37Z",
+      "expires_at": "2027-02-07T16:16:34Z",
+      "updated_at": "2026-11-09T16:20:37Z",
+      "digest": "sha256:0ad875ab7e5da1c6a33ffdd2c9fbd164e7b4d6dc23642f83b679ba98f90b151a",
+      "workflow_run": {
+        "id": 42653099549,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/sdk-crossbuild-20261109",
+        "head_sha": "30595c2107ef934c962b64401e60865dfd266b24"
+      }
+    }
+  ]
+}
