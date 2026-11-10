@@ -1,0 +1,4 @@
+Command: python tools/check_layers.py ../exr-opds-build
+Exit: 0
+121 objects, 1365 symbol references, 0 remaining inverse references, 0 new
+1068 source/header dependencies, 0 inverse includes
