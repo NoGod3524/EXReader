@@ -195,11 +195,7 @@ static void shelf_fixed_page(int64_t id,const exr_fixed_page *pages,size_t count
   for(size_t i=0;i<count;i++)if(pages[i].id && !strcmp(pages[i].id,b->fixed_id)) {*target=i;return;}
 }
 static int shelf_before_exit(void) {
-  if(annot_panel && IsWindowVisible(annot_panel)) {
-    SendMessageW(annot_panel,WM_COMMAND,1,0);
-    if(IsWindowVisible(annot_panel))return 0;
-  }
-  return 1;
+  return annot_before_leave();
 }
 static void shelf_return(void) {
   if(!shell_active || shelf_requested)return;
