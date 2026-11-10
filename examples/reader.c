@@ -116,7 +116,7 @@ enum {
 };
 
 enum {
-  HOST_CMD_IMPORT = 0x9000, HOST_CMD_OPEN, HOST_CMD_DELETE, HOST_CMD_PREV, HOST_CMD_NEXT, HOST_CMD_SELECT_ALL, HOST_CMD_COPY_QUOTE, HOST_CMD_ADD_NOTE, HOST_CMD_UPDATE_NOTE, HOST_CMD_DELETE_NOTE, HOST_CMD_JUMP_NOTE, HOST_CMD_FONT_DEC, HOST_CMD_FONT_INC, HOST_CMD_ZOOM_DEC, HOST_CMD_ZOOM_INC, HOST_CMD_CANCEL
+  HOST_CMD_IMPORT = 0x9000, HOST_CMD_OPEN
 };
 
 #define WM_HOST_COMPLETE (WM_APP + 1)
@@ -939,7 +939,6 @@ static void sm_shelf_visibility(int show);
 static void sm_edit_open(int shelf);
 static const char *sm_title(size_t shelf);
 static const char *sm_author(size_t shelf);
-static int sm_draw_override_cover(HDC dc,RECT r,int64_t id);
 #endif
 static void shelf_clear(void) {
 #ifdef EXR_READER_PRODUCT_CATALOG
@@ -1687,7 +1686,7 @@ static void job_submit(host_job *job) {
   job_start(job);
 }
 
-static void job_cancel_button(void) {
+static inline void job_cancel_button(void) {
   if (g.pending) {
     job_release(g.pending);
     g.pending = NULL;
@@ -3639,17 +3638,17 @@ static exr_status job_run(host_job *job) {
 
 static void host_command(int id);
 static void page_step(int direction);
-static void change_font(int delta);
-static void change_zoom(int delta);
+static inline void change_font(int delta);
+static inline void change_zoom(int delta);
 static void select_all_page(void);
 static void selection_bounds(size_t *start,size_t *end);
 static void copy_quote(void);
-static void add_note(void);
-static void update_note(void);
-static void delete_note(void);
-static void jump_selected_note(void);
+static inline void add_note(void);
+static inline void update_note(void);
+static inline void delete_note(void);
+static inline void jump_selected_note(void);
 static void open_selected_book(void);
-static void delete_selected_book(void);
+static inline void delete_selected_book(void);
 static void import_path(const wchar_t *path, int dialog_fallback);
 static int save_progress(void);
 static void update_page_label(void);
@@ -4167,7 +4166,7 @@ static void selection_report(void) {
 #include "windows/shell_selection.inc"
 #include "windows/shell_annotations.inc"
 #include "windows/shell_footnotes.inc"
-#include "windows/shell_shelf.inc"
+#include "windows/shell_recent.inc"
 #include "windows/shell_shelfmeta.inc"
 #include "windows/shell_gestures.inc"
 #include "windows/shell_tts.inc"
@@ -4569,7 +4568,7 @@ static void page_step(int direction) {
   job_submit(job);
 }
 
-static void change_font(int delta) {
+static inline void change_font(int delta) {
 #ifdef EXR_READER_WINDOWS_SHELL
   if (shell_active && !g.frame.fixed) {
     shell_step_font(delta); return;
@@ -4653,7 +4652,7 @@ static void change_font(int delta) {
   job_submit(job);
 }
 
-static void change_zoom(int delta) {
+static inline void change_zoom(int delta) {
   int next;
   host_job *job;
   if (!g.has_current || !g.frame.valid) { set_status(L"请先打开一本书。"); return; }
@@ -4833,7 +4832,7 @@ static void copy_quote(void) {
   }
 }
 
-static void add_note(void) {
+static inline void add_note(void) {
   char comment[65536];
   exr_error error = {0};
   host_job *job;
@@ -4855,7 +4854,7 @@ static void add_note(void) {
   job_submit(job);
 }
 
-static void update_note(void) {
+static inline void update_note(void) {
   int index = notes_selected();
   char comment[65536];
   host_job *job;
@@ -4874,7 +4873,7 @@ static void update_note(void) {
   job_submit(job);
 }
 
-static void delete_note(void) {
+static inline void delete_note(void) {
   int index = notes_selected();
   exr_error error = {0};
   exr_status status;
@@ -4902,7 +4901,7 @@ static void delete_note(void) {
   set_status(L"已删除标注。");
 }
 
-static void jump_selected_note(void) {
+static inline void jump_selected_note(void) {
   int index = notes_selected();
   host_job *job;
   if (index < 0) { set_status(L"请先在标注列表中选择一条标注。"); return; }
@@ -5042,7 +5041,7 @@ static void show_deleted_book(int64_t id) {
   host_update_controls();
   set_status(L"已删除书籍及其标注。");
 }
-static void delete_selected_book(void) {
+static inline void delete_selected_book(void) {
   if(g.job || g.pending || !g.books) return;
   LRESULT index=SendMessageW(g.books,LB_GETCURSEL,0,0);
   if(index==LB_ERR || (size_t)index>=g.shelf_count) {
@@ -5580,7 +5579,7 @@ static void handle_job_complete(host_job *job) {
 }
 
 static void host_command(int id) {
-  if (g.session.txt && id != HOST_CMD_OPEN && id != HOST_CMD_IMPORT && id != HOST_CMD_CANCEL && id != HOST_CMD_DELETE && id != HOST_CMD_PREV && id != HOST_CMD_NEXT && id != HOST_CMD_SELECT_ALL && id != HOST_CMD_COPY_QUOTE
+  if (g.session.txt && id != HOST_CMD_OPEN && id != HOST_CMD_IMPORT
 #ifdef EXR_READER_WINDOWS_ACCOUNT
       && id != IDC_ACCOUNT_BUTTON
 #endif
@@ -5598,9 +5597,6 @@ static void host_command(int id) {
 #endif
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
       && id != IDC_CLOUD_IMPORT && id != IDC_BULK_ORGANIZE
-#endif
-#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
-      && id != HOST_CMD_FONT_DEC && id != HOST_CMD_FONT_INC
 #endif
   ) {
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
@@ -5640,20 +5636,6 @@ static void host_command(int id) {
 #endif
     case HOST_CMD_IMPORT: import_path(NULL, 1); break;
     case HOST_CMD_OPEN: open_selected_book(); break;
-    case HOST_CMD_DELETE: delete_selected_book(); break;
-    case HOST_CMD_PREV: page_step(-1); break;
-    case HOST_CMD_NEXT: page_step(1); break;
-    case HOST_CMD_SELECT_ALL: select_all_page(); break;
-    case HOST_CMD_COPY_QUOTE: copy_quote(); break;
-    case HOST_CMD_ADD_NOTE: add_note(); break;
-    case HOST_CMD_UPDATE_NOTE: update_note(); break;
-    case HOST_CMD_DELETE_NOTE: delete_note(); break;
-    case HOST_CMD_JUMP_NOTE: jump_selected_note(); break;
-    case HOST_CMD_FONT_DEC: change_font(-HOST_FONT_STEP); break;
-    case HOST_CMD_FONT_INC: change_font(HOST_FONT_STEP); break;
-    case HOST_CMD_ZOOM_DEC: change_zoom(-HOST_ZOOM_STEP); break;
-    case HOST_CMD_ZOOM_INC: change_zoom(HOST_ZOOM_STEP); break;
-    case HOST_CMD_CANCEL: job_cancel_button(); break;
   }
 }
 
