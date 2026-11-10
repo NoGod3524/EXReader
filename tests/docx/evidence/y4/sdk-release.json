@@ -6,7 +6,7 @@
     "cl /nologo /W4 /Iinclude examples\\minimal\\main.c lib\\exreader.lib /Feminimal.exe",
     ".\\minimal.exe examples\\minimal\\sample.epub examples\\minimal\\font.ttf page-1.pgm"
   ],
-  "archive_sha256": "0399cfd1882de7254735a368a644c37ac8a0c275c278b2988b35e793d6a3ef2d",
+  "archive_sha256": "bf067fe9dcca92fec5406efc33d5927732446f3a5f054f4b495f2fc3bdb09bb2",
   "archive_name": "exreader-3.42.0-win-x64.zip",
   "command_results": [
     {

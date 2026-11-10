@@ -1,0 +1,45 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-y4-editor-20261110/build/native
+        Start 258: native-convert-corpus
+        Start 131: native-core
+        Start 135: native-flow
+        Start  59: native-hyphen-layout
+        Start  89: native-inks
+        Start 269: native-document-probe
+        Start 235: native-line-boundary
+        Start 278: native-fuzz-accounting
+  1/321 Test #135: native-flow ..............................   Passed    9.50 sec
+        Start 270: native-corpus-triage
+  2/321 Test #131: native-core ..............................   Passed   17.92 sec
+        Start 240: native-chapter-reader
+  3/321 Test #258: native-convert-corpus ....................   Passed   73.56 sec
+        Start 262: native-convert-benchmark
+  4/321 Test #270: native-corpus-triage .....................***Failed   81.26 sec
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-y4-editor-20261110\tests\check_corpus_triage.py", line 136, in <module>
+    check(binary, fixtures, Path(directory))
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-y4-editor-20261110\tests\check_corpus_triage.py", line 34, in check
+    run('tools/check_corpus.py', [binary, font, manifest, baseline], 'baseline', 1)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-y4-editor-20261110\tests\check_corpus_triage.py", line 29, in run
+    p = subprocess.run([sys.executable, str(ROOT/script), *map(str, args)],
+                       stdout=stdout, stderr=stderr, timeout=60)
+  File "C:\Python314\Lib\subprocess.py", line 557, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\subprocess.py", line 1240, in communicate
+    sts = self.wait(timeout=self._remaining_time(endtime))
+  File "C:\Python314\Lib\subprocess.py", line 1279, in wait
+    return self._wait(timeout=timeout)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\subprocess.py", line 1608, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['C:\\Python314\\python.exe', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-y4-editor-20261110\\tools\\check_corpus.py', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-y4-editor-20261110\\build\\native\\exreader-check-document.exe', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-y4-editor-20261110\\tests\\fixtures\\fonts\\primary.ttf', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exr-triage-qo_3liu5\\manifest.json', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exr-triage-qo_3liu5\\baseline']' timed out after 60 seconds
+
+        Start 268: native-benchmark
+  5/321 Test #240: native-chapter-reader ....................   Passed  167.45 sec
+        Start 151: native-publication-index-boundaries
+  6/321 Test #268: native-benchmark .........................   Passed  137.36 sec
+        Start 260: native-convert-cli
+  7/321 Test #151: native-publication-index-boundaries ......   Passed  108.22 sec
+        Start 250: native-reflow-long
