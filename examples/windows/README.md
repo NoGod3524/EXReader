@@ -67,3 +67,61 @@ point `font_file` at Reader.otf, and set `serif = Noto Serif SC` and
 Build with an SDK exposing `exr/font_manager.h` and its 12 symbols. Measured
 startup, real-book page hashes and DPI-aware UI captures are documented in
 [`font-manager-host evidence`](../../docs/ui/evidence/font-manager-host/README.md).
+
+## X3 host editing
+
+Build the shell against an SDK with #119 (`exr/edit.h`):
+
+```powershell
+cmake -S examples/windows -B examples/windows/.build-edit -G Ninja -DEXR_SDK=C:/path/to/stage -DEXR_READER_WINDOWS_SHELL=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build examples/windows/.build-edit --target EXReader --parallel 4
+```
+
+Open DOCX/TXT from **File → Open** (`Ctrl+O`). The document starts in reading
+mode. **Edit → Editing mode** (`Ctrl+E`) explicitly enables typing. Clicking or
+dragging in the body moves the caret or selects text; Shift+arrows extends the
+selection. Arrows, Home/End, Ctrl+Home/End, Backspace, Delete and Enter operate
+on the editable model. Ctrl+wheel zooms. The caret is a DPI-scaled vertical
+stroke, blinking every 500 ms only while the body has focus.
+
+Contiguous `WM_CHAR` input shares one SDK transaction until a 1000 ms pause,
+navigation, selection, focus loss or another command. Thus typing ten characters
+continuously takes one Ctrl+Z. Enter, deletion, cut, paste and each IME result
+are separate transactions. Ctrl+Y and Ctrl+Shift+Z redo. History retains 100
+transactions. Chinese preedit is underlined in the layout without changing the
+model; `GCS_RESULTSTR` commits the entire result once. The system receives both
+caret/candidate bounds and `IMR_QUERYCHARPOSITION` screen coordinates, following
+the [Microsoft IME contract](https://learn.microsoft.com/en-us/windows/win32/intl/imr-querycharposition).
+
+Ctrl+A/C/X/V uses `CF_UNICODETEXT`; CRLF/CR paste creates paragraphs, including
+empty ones. Tables and opaque objects display as object placeholders and cannot
+be deleted here. The surface presents editable text; it does not preview Word's
+full page formatting.
+Text replacement rebuilds the affected paragraphs with #119's insert/delete
+commands. Modelled paragraph/run properties and inline object bytes are copied;
+unmodelled paragraph XML templates are not retained by that replacement path.
+Preserving those templates needs an in-place text command in the engine API.
+
+Ctrl+S saves the current file; Ctrl+Shift+S opens Save As. A title-bar `*` marks
+changes. Closing, opening another document or returning to the shelf asks
+Save/Discard/Cancel when needed. Saving writes and flushes a temporary file in
+the destination directory before replacing the original; errors retain the dirty
+state. An SDK with X1 (`exr_edit_docx_read/write`) uses the model directly.
+Without X1, DOCX uses #118's text exporter and refuses saves that normalize the
+model's bytes; TXT remains available. `-DEXR_READER_WINDOWS_EDIT=OFF` builds the
+reading-only shell with an older SDK.
+
+With an X1 SDK, run the reproducible model/HWND/save checks and collect hashes:
+
+```powershell
+python examples/windows/check_shell_edit.py --build examples/windows/.build-edit --output examples/windows/acceptance-edit --clean-first
+```
+
+The host and both checks compile under `-Wall -Wextra -Werror` (MSVC `/W4 /WX`).
+The HWND check runs in its own hidden window and drives native dialog buttons
+inside that test process. It verifies edit-mode gating, ten-character burst undo,
+Unicode/paragraph navigation, clipboard, drag selection, DPI/zoom geometry,
+preedit isolation, DOCX save/reopen, 20 undo/redo steps, all three close decisions
+and preservation of a locked destination. It does not certify a physical IME.
+See [the acceptance record](acceptance-edit/README.md) for results and the remaining
+visible-window checks.

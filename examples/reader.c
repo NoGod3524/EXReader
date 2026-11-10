@@ -53,6 +53,8 @@ static int shell_edit_before_close(void);
 static int shell_edit_before_leave(void);
 static void shell_edit_destroy(void);
 static int shell_edit_relayout(void);
+static int shell_edit_loaded(void);
+static const wchar_t *shell_edit_name(void);
 #endif
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
@@ -7598,13 +7600,13 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if (wparam == 1 && g.drive_mode) drive_tick();
       return 0;
     case WM_CLOSE:
+      if (g.closing) return 0;
 #ifdef EXR_READER_WINDOWS_SHELL
 #ifdef EXR_READER_WINDOWS_EDIT
       if (!shell_edit_before_close()) return 0;
 #endif
       tts_stop();
 #endif
-      if (g.closing) return 0;
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       prefs_close();
 #endif

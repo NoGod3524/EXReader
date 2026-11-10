@@ -55,6 +55,22 @@ extern "C" float shell_edit_view_height(shell_edit_view *v) {
   DWRITE_TEXT_METRICS m{};
   return v && SUCCEEDED(v->layout->GetMetrics(&m)) ? m.height : 0;
 }
+extern "C" void shell_edit_view_underline(shell_edit_view *v,HDC dc,float left,float top,
+  unsigned start,unsigned length,int width,uint32_t color) {
+  if (!v || !length) return;
+  UINT32 count=0;
+  v->layout->HitTestTextRange(start,length,left,top,nullptr,0,&count);
+  std::vector<DWRITE_HIT_TEST_METRICS> hits(count);
+  if (FAILED(v->layout->HitTestTextRange(start,length,left,top,hits.data(),count,&count))) return;
+  HPEN pen=CreatePen(PS_SOLID,width,RGB((color>>16)&255,(color>>8)&255,color&255));
+  HGDIOBJ old=SelectObject(dc,pen);
+  for (const auto &hit:hits) {
+    int y=static_cast<int>(std::lround(hit.top+hit.height-width));
+    MoveToEx(dc,static_cast<int>(std::lround(hit.left)),y,nullptr);
+    LineTo(dc,static_cast<int>(std::lround(hit.left+hit.width)),y);
+  }
+  SelectObject(dc,old); DeleteObject(pen);
+}
 extern "C" HRESULT shell_edit_view_paint(shell_d2d *s, shell_edit_view *v, HDC dc,
   const RECT *area, float left, float top, unsigned start, unsigned end,
   uint32_t paper, uint32_t ink, uint32_t accent) {

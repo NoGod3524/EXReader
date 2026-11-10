@@ -55,6 +55,8 @@ static exr_status edit_refresh(edit_model *m) {
   free(m->text); free(m->spans); exr_free(m->boundaries);
   m->text=text; m->spans=spans; m->boundaries=boundaries; m->size=at; m->count=count;
   m->selection.anchor=min(m->selection.anchor,at); m->selection.focus=min(m->selection.focus,at);
+  while (m->selection.anchor<at && !(boundaries[m->selection.anchor]&EXR_BOUNDARY_GRAPHEME)) m->selection.anchor++;
+  while (m->selection.focus<at && !(boundaries[m->selection.focus]&EXR_BOUNDARY_GRAPHEME)) m->selection.focus++;
   return EXR_OK;
 }
 static int edit_dirty(const edit_model *m) { return !m->saved || strcmp(m->saved,m->text); }
@@ -181,7 +183,9 @@ static exr_status edit_replace(edit_model *m,size_t a,size_t b,const char *text,
   exr_edit_run_props inherit={0};
   if (prefix && runs[prefix-1].kind==EXR_EDIT_TEXT) inherit=runs[prefix-1].props;
   else if (left->run_count && left->runs[0].kind==EXR_EDIT_TEXT) inherit=left->runs[0].props;
-  exr_edit_id after=first ? m->spans[first-1].id:0;
+  /* Anchor to the paragraph being replaced so the SDK inherits its section.
+     Delete that original only after all replacement paragraphs are inserted. */
+  exr_edit_id after=m->spans[first].id;
   size_t at=0;
   do {
     size_t end=at,n=at ? 0:prefix;

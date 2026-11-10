@@ -25,6 +25,14 @@ int main(int argc,char **argv) {
   assert(!edit_dirty(&m)); assert(edit_history_move(&m,1)==EXR_OK); equal(&m,"xxxxxxxxxx");
   edit_model_free(&m);
 
+  assert(edit_seed(&m,"",0)==EXR_OK);
+  const char *chinese="\xe4\xbd\xa0\xe5\xa5\xbd\xe4\xb8\x96\xe7\x95\x8c";
+  assert(edit_replace(&m,0,0,chinese,strlen(chinese),0)==EXR_OK);
+  equal(&m,chinese); assert(m.cursor==1 && !m.tx);
+  assert(edit_history_move(&m,0)==EXR_OK); equal(&m,"");
+  assert(edit_history_move(&m,1)==EXR_OK); equal(&m,chinese);
+  edit_model_free(&m);
+
   const char *baseline="Alpha\n\xe4\xbd\xa0\xe5\xa5\xbd\nOmega";
   assert(edit_seed(&m,baseline,strlen(baseline))==EXR_OK);
   write_text(argv[1],"undo-before",&m);
@@ -64,6 +72,14 @@ int main(int argc,char **argv) {
   for (int i=0;i<100;i++) assert(edit_history_move(&m,1)==EXR_OK);
   edit_model_free(&m);
 
+  assert(edit_seed(&m,"\xcc\x81Z",3)==EXR_OK);
+  assert(edit_replace(&m,0,0,"e",1,0)==EXR_OK); equal(&m,"e\xcc\x81Z");
+  assert(m.selection.focus==3 && m.selection.anchor==3);
+  assert(edit_replace(&m,3,3,"!",1,0)==EXR_OK); equal(&m,"e\xcc\x81!Z");
+  assert(edit_history_move(&m,0)==EXR_OK); equal(&m,"e\xcc\x81Z");
+  assert(edit_history_move(&m,0)==EXR_OK); equal(&m,"\xcc\x81Z");
+  edit_model_free(&m);
+
   exr_edit_run runs[3]={{0}}; runs[0].text="ab"; runs[0].text_size=2;
   runs[0].props.present=EXR_EDIT_BOLD; runs[0].props.bold=1;
   runs[1].kind=EXR_EDIT_OPAQUE_RUN; runs[1].opaque_xml="<drawing/>"; runs[1].opaque_size=10;
@@ -77,6 +93,19 @@ int main(int argc,char **argv) {
   assert(edit_replace(&m,0,m.size,"",0,0)==EXR_UNSUPPORTED);
   assert(edit_history_move(&m,0)==EXR_OK); equal(&m,"ab\xef\xbf\xbc" "cd");
   edit_model_free(&m);
-  puts("PASS: burst undo; 20 undo/redo; paragraph replacement/split; graphemes; branch/depth; protected opaque runs");
+  assert(edit_seed(&m,"one\ntwo",7)==EXR_OK);
+  size_t section_count=0;
+  const exr_edit_section *original=exr_edit_sections(m.doc,&section_count); assert(section_count==1);
+  exr_edit_section sections[2]={original[0],original[0]}; sections[1].id=99;
+  exr_edit_block blocks[2]={*exr_edit_block_at(m.doc,0),*exr_edit_block_at(m.doc,1)};
+  blocks[1].section_id=99; exr_edit_doc *multi=NULL;
+  assert(exr_edit_doc_create(sections,2,blocks,2,NULL,0,NULL,&multi)==EXR_OK);
+  edit_model_free(&m); m.doc=multi; assert(edit_refresh(&m)==EXR_OK); assert(edit_mark_saved(&m));
+  assert(edit_replace(&m,5,5,"X",1,0)==EXR_OK); equal(&m,"one\ntXwo");
+  assert(exr_edit_block_at(m.doc,1)->section_id==99);
+  assert(edit_history_move(&m,0)==EXR_OK); equal(&m,"one\ntwo");
+  assert(edit_history_move(&m,1)==EXR_OK); assert(exr_edit_block_at(m.doc,1)->section_id==99);
+  edit_model_free(&m);
+  puts("PASS: burst undo; single CJK result; 20 undo/redo; paragraph replacement/split; graphemes/joined caret; branch/depth; protected opaque runs; section inheritance");
   return 0;
 }
