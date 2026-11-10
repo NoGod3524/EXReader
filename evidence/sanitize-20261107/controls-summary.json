@@ -1,0 +1,16 @@
+{
+  "group": "controls",
+  "timestamp_utc": "2026-11-08T19:22:02.282357+00:00",
+  "units": 2,
+  "pages": 0,
+  "rendered_pages": 0,
+  "nonzero_exits": 1,
+  "completed": 0,
+  "replays_completed": 0,
+  "timed_out": 0,
+  "asan": 1,
+  "ubsan": 1,
+  "engine_sha256": "0a00d3b450fd6948454cb0f1abf07fe7981810e7b91781ca80af910c7d93edc8",
+  "font_sha256": "d79c55e68b1131eea0cc1c47be4f572d964f28c682e143db2ad09c1e4cb07a3f",
+  "workers": 2
+}
