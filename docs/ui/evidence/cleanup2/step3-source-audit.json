@@ -1,0 +1,13 @@
+{
+  "renderers": [
+    {
+      "file": "examples/windows/shell_shelf.inc",
+      "line": 38,
+      "declaration": "static void sm_paint_shelf(HDC dc,RECT client,HFONT ui,HFONT small,HFONT bold) {"
+    }
+  ],
+  "renderer_file_lines": 119,
+  "backend_file": "examples/windows/shell_recent.inc",
+  "backend_lines": 281,
+  "legacy_list_or_bar_hits": ""
+}

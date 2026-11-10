@@ -9,9 +9,9 @@
   if(!strcmp(action,"shelf_open")) {
     int index=atoi(drive_args[1]);RECT r={0};
     if(index<0 || index>=shelf_count || !shelf_visible) {drive_step_finish(0,"shelf row unavailable");return 0;}
-    SendMessageW(shelf_list,LB_SETTOPINDEX,(WPARAM)index,0);SendMessageW(shelf_list,LB_GETITEMRECT,(WPARAM)index,(LPARAM)&r);
-    SendMessageW(shelf_list,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(r.left+12,(r.top+r.bottom)/2));
-    SendMessageW(shelf_list,WM_LBUTTONUP,0,MAKELPARAM(r.left+12,(r.top+r.bottom)/2));
+    (void)r;
+    int row=shelf_index(shelf_recent[index].id);
+    if(!sm_drive_click(SM_HIT_BOOK,row,0)){drive_step_finish(0,"book is outside the shelf viewport");return 0;}
     drive_step_finish(1,"shelf row clicked");return 0;
   }
   if(!strcmp(action,"shelf_dump")) {

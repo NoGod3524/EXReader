@@ -96,6 +96,11 @@ static int shell_gesture_message(HWND window,UINT message,WPARAM wp,LPARAM lp) {
   }
   return 0;
 }
+static void gesture_label(HDC dc,const wchar_t *label,RECT r) {
+  HGDIOBJ font=SelectObject(dc,shell_gdi_font(14,600));
+  SetTextColor(dc,shell_colorref(shell_colors->accent));SetBkMode(dc,TRANSPARENT);
+  DrawTextW(dc,label,-1,&r,DT_CENTER|DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX);SelectObject(dc,font);
+}
 static void gesture_overlay(HDC dc,const RECT *area) {
   if(!shell_zone_overlay || !shell_active)return;
   int left=(int)((int64_t)area->right*shell_tap_edge/100),right=area->right-left;
@@ -104,7 +109,7 @@ static void gesture_overlay(HDC dc,const RECT *area) {
   SelectObject(dc,old);DeleteObject(pen);
   wchar_t label[96];RECT r={0,area->bottom-shell_px(100,shell_dpi),left,area->bottom-shell_px(60,shell_dpi)};
   swprintf(label,96,L"%ls · %d%%",gesture_reverse() ? L"下一页":L"上一页",shell_tap_edge);
-  shelf_text(dc,label,r,14,600,shell_colors->accent,DT_CENTER);
-  r.left=left;r.right=right;swprintf(label,96,L"顶栏 显示 / 隐藏 · %d%%",100-2*shell_tap_edge);shelf_text(dc,label,r,14,600,shell_colors->accent,DT_CENTER);
-  r.left=right;r.right=area->right;swprintf(label,96,L"%ls · %d%%",gesture_reverse() ? L"上一页":L"下一页",shell_tap_edge);shelf_text(dc,label,r,14,600,shell_colors->accent,DT_CENTER);
+  gesture_label(dc,label,r);
+  r.left=left;r.right=right;swprintf(label,96,L"顶栏 显示 / 隐藏 · %d%%",100-2*shell_tap_edge);gesture_label(dc,label,r);
+  r.left=right;r.right=area->right;swprintf(label,96,L"%ls · %d%%",gesture_reverse() ? L"上一页":L"下一页",shell_tap_edge);gesture_label(dc,label,r);
 }

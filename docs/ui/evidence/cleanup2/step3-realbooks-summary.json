@@ -1,0 +1,129 @@
+{
+  "books": 19,
+  "total_pages": 11318,
+  "hash_changed_pages": 0,
+  "baseline_sdk_revision": "0a8076a7",
+  "dll_sha256": "517463cfe99ea8c0faf0129554fda08202920945551d530499a7e568ad7d84c8",
+  "after_dll_sha256": "517463cfe99ea8c0faf0129554fda08202920945551d530499a7e568ad7d84c8",
+  "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "fingerprint_before": "8e51f8a0ad679f1fab702a96aed50dd02ad32d4d3624f0e30b1234ff20cd5434",
+  "fingerprint_after": "8e51f8a0ad679f1fab702a96aed50dd02ad32d4d3624f0e30b1234ff20cd5434",
+  "raw_before_sha256": "29c3948e21efa2382d187e8ce7a6b044a67f5bff2fb9ae5f80f17e363ca64b88",
+  "raw_after_sha256": "51e51b11fe90babcc745cf3f135ab6037467c833dc14a66474cc44fe036c827f",
+  "rows": [
+    {
+      "id": "a-raisin-in-the-sun",
+      "before_pages": 356,
+      "after_pages": 356,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "between-the-world-and-me",
+      "before_pages": 228,
+      "after_pages": 228,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "black-boy",
+      "before_pages": 1016,
+      "after_pages": 1016,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "born-a-crime",
+      "before_pages": 502,
+      "after_pages": 502,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "crying-in-h-mart",
+      "before_pages": 524,
+      "after_pages": 524,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+      "before_pages": 493,
+      "after_pages": 493,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "i-know-why-the-caged-bird-sings",
+      "before_pages": 625,
+      "after_pages": 625,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "pachinko",
+      "before_pages": 1248,
+      "after_pages": 1248,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "the-absolutely-true-diary-of-a-part-time-indian",
+      "before_pages": 560,
+      "after_pages": 560,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "the-autobiography-of-malcolm-x.",
+      "before_pages": 279,
+      "after_pages": 279,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "the-distance-between-us-a-memoir",
+      "before_pages": 702,
+      "after_pages": 702,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "the-fire-next-time",
+      "before_pages": 189,
+      "after_pages": 189,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+      "before_pages": 333,
+      "after_pages": 333,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "before_pages": 182,
+      "after_pages": 182,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+      "before_pages": 646,
+      "after_pages": 646,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "hongloumeng-24264",
+      "before_pages": 1686,
+      "after_pages": 1686,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "xingshihengyan-24239",
+      "before_pages": 1202,
+      "after_pages": 1202,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "tangshi300-52323",
+      "before_pages": 83,
+      "after_pages": 83,
+      "changed_hash_pages": 0
+    },
+    {
+      "id": "kusamakura-japanese-vertical-writing",
+      "before_pages": 464,
+      "after_pages": 464,
+      "changed_hash_pages": 0
+    }
+  ]
+}
