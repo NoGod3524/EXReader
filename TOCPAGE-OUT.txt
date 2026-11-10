@@ -1,9 +1,56 @@
-Step 1: prerequisite confirmed: origin/main d1395059 contains #76 (4004501c) and exr_document_locate; branch codex/engine-toc-page-20261108 at same commit.
-Step 2: built baseline SDK (../tocpage-build, local deps in exr-deps, TLS verification untouched). ctest baseline = 196/196 in this configuration (task note said 191; config differs: audio/library/text-index/pdf-edit ON).
-Step 3: designed synthetic TOC pages: private document -> real layout stack (exr_layout_create_ex) -> compose leaders/labels/pages into positioned layout; added exr_page_kind/EXR_PAGE_TOC, exr_toc_pages_*, exr_publication_toc_insert_before (src/toc_page.c, include/exr/layout.h). Build + test pending.
-Step 4: src/toc_page.c compiles under -Werror; tests/test_toc_page.c (new ctest native-toc-page, 10421 checks) passes: pagination, roman labels, continued heading, 1em/level indent, single spacing, contiguous dot grid, labels right-aligned at W-margin, entry_at/hit_test->exr_publication_locate for all 70 entries, no-TOC book -> no layout, cover detection (insert_before=1), publication text search finds 0 hits for TOC-only word. New fixtures toc-pages.epub / toc-pages-none.epub via tests/make_toc_fixtures.py.
-Step 5: first real-book screenshot showed title/label baseline mismatch (extra margin in glyph shift) -> fixed + vertical-alignment assertion; titles now reserve a right margin for the label zone so they wrap before it; whole row is the hit target (line box = row width). Found: engine line box = max(leading, ascent+descent) so line-height:1 is clamped to 42px for Reader.otf == body 42px.
-Step 6: real-book audit (19 EPUB + 2 fixtures) and body hash comparison done on candidate DLL; cover rule extended to 表紙/表纸/封面 names after the 草枕 book showed insert_before=0; final verification re-running on the final DLL.
-Step 7: final verification on the final DLL (sha256 0928f274...): ctest 197/197 (196 baseline + native-toc-page, 22029 assertions). Body: 19 books 11296 -> 11296 pages, 0 changed page hashes, content fingerprint equal. TOC pages: honglou 108 entries -> 11 pages (16,10x9,2), indent 0px; xingshi 40 -> 2 pages (21,19); Pachinko 70 -> 4 pages (21,21,20,8), level-2 indent 28px; clicks 30/30 on the three named books (161/161 over all 17 EPUBs with a TOC), line delta 0; no-TOC fixture -> no layout, body 1 page identical hashes before/after; search for the TOC-only string finds 0 hits in publication text. Known engine rule: line box = max(leading, ascent+descent), so line-height:1 is clamped to 42px with Reader.otf (same as body). Evidence: evidence/toc-page-20261108/ (REPORT.md, toc-audit.json, body-hash-compare.json, CTEST.txt, screenshots). examples/ untouched; no workflow touched or cancelled; no CI trigger run.
-Step 8: committing, pushing codex/engine-toc-page-20261108 and opening a draft PR against main.
-Step 9: committed 14ca2044, pushed codex/engine-toc-page-20261108, draft PR #85 (https://github.com/NoGod3524/EXReader/pull/85) against main.
+卷首目录页已做完并推送，草稿 PR 是 **#85**（base `main`）：https://github.com/NoGod3524/EXReader/pull/85
+
+前置条件满足：`main` 已含 #76 和 `exr_document_locate`。
+
+## 规格 1–7 的实现
+
+| 规格 | 实现 |
+|---|---|
+| 1 位置 | 新增 `exr_publication_toc_insert_before()`，返回目录页应排在哪个阅读 part 之前。首个阅读 part 的 id 或路径含 cover/表紙/表纸/封面，或是无文字的纯图 part，目录页就排在它之后，否则排最前。引擎本身没有"封面"概念，封面识别是启发式，不解析 OPF guide。实际拼接由宿主按这个下标做。 |
+| 2 内容 | 用 `exr_publication_toc()` 的结果（nav / NCX / 正文恢复），标题和层级原样。 |
+| 3 版式 | 标题、页码、表头和点线先作为普通段落交给现有 `exr_layout_create_ex` 排版（同字体、同视口、同用户 CSS、同对齐规则）。样式是 `text-indent:0; line-height:1`，每级缩进 1em。点线、右对齐页码、分页和续页表头在 `src/toc_page.c` 里组装。标题会为页码区预留右边距，所以长标题在页码前换行。 |
+| 4 点线 | 用重复的 `·` 字形，不画直线。理由：宿主不需要任何新的绘制命令，点按"从页码往左的固定格线"排，各行点列对齐、间距恒等。字体里 `·` 宽于 0.6em 时（CJK 全角点）改用 `.`。 |
+| 5 超链接 | 命中后得到条目序号（走 `exr_layout_hit_test` 偏移，或 `exr_toc_pages_entry_at` 行几何），再取 `exr_publication_toc()[i].target`，交给 `exr_publication_locate`（内部调 `exr_document_locate`）。整行宽度都是点击目标。 |
+| 6 分页和无目录 | 条目不跨页，续页顶部重复"目录（续）"。无目录的书 `exr_toc_pages_create` 返回 `EXR_OK` 且输出 NULL，不生成空页。 |
+| 7 搜索和复制 | 目录页是独立的合成 layout，不在任何 part 的文本里，`exr_layout_page_kind()` 供宿主在混排页列表时跳过。引擎没有"复制全书"入口，已验证各 part 文本不含目录合成文字。 |
+
+**页码编号**：目录页用罗马数字 i、ii、iii，不占正文页号。理由：
+1. 目录条目的页码必须等于读者在正文看到的页号。若目录页占正文页号，目录自身页数会反过来改变所有条目的页码，形成循环依赖。
+2. 正文页序、书签、阅读进度和现有逐页哈希都不变。
+3. 与印刷惯例一致。
+
+## 八项验收（720×1040，Reader.otf）
+
+1. 紅樓夢 108 项，目录页 **11** 页，每页项数 16,10,10,10,10,10,10,10,10,10,2，最大缩进 **0 px**（单层）。
+2. 醒世恆言 40 项 → **2** 页（21+19）。Pachinko 70 项、两级 → **4** 页（21,21,20,8），二级缩进 **28 px**。
+3. 三本指定书各抽 10 项，点击 **30/30** 命中正确，落点与原 EPUB 里标题行 Δ行=0。全部 17 本带目录的 EPUB 共 161/161。
+4. 所有有页码的行，点线等间距连续，页码右端 = 页宽 − margin（容差 0.02px）。
+5. 构造的无目录书（`toc-pages-none.epub`）：不生成目录页；该书改前/改后都是 1 页，逐页哈希相同。
+6. 在全部阅读 part 里搜"目录（续）"（它只出现在紅樓夢目录页）命中 **0**，同一串在目录页字形里存在。C 测试里 "Zyxwv"（仅出现在 nav 标题）命中 0，对照词 "Body paragraph" 命中 >0。
+7. 正文 **11,296 → 11,296** 页，逐页哈希改变 **0**，内容指纹一致。
+8. ctest：本机配置基线是 196，不是你写的 191（本机开了 audio / library / text-index / pdf-edit，配置不同）。新增 `native-toc-page`（22,029 项断言），共 **197/197**。
+
+## 截图
+
+在 `evidence/toc-page-20261108/screenshots/`：
+- 紅樓夢第 1、2、11 页
+- Pachinko 第 1、2、4 页
+- 醒世恆言第 1、2 页
+
+我看过 Pachinko 第 1 页（层级缩进）和醒世恆言第 2 页（续页表头）：标题、点线、页码同基线，点线网格逐行对齐，页码右对齐。
+
+## 需要你知道的
+
+- **单倍行距在 Reader.otf 下没有比正文更紧。** 我设了 `line-height:1`，但引擎行盒是 `max(leading, 上升+下降)`，Reader.otf 的自然高度 42px，目录行距和正文（28×1.5=42）一样。换用 primary.ttf 实测是 15px 对 21px，确实更紧。这是引擎既有规则，改了会动正文哈希，所以没动。
+- **默认表头文案**：只在有 CJK 标题时用中文，否则是 "Contents"（Pachinko 是葡语书但显示 "Contents"）。宿主可经 `exr_toc_page_options` 传本地化文案。
+- **仅横排、从左到右。** 竖排书（如草枕）的目录页也是横排。
+- **页码标签由宿主传入。** 宿主知道全书分页，harness 用真实 pager 算出。
+- 过程中截图暴露了一个 bug：标题基线比点线和页码低了一个 margin。已修，并补了"同行基线一致"的断言。
+- 本地构建时依赖下载 TLS 校验失败，我没有关校验，改用了本机已有的依赖源码（`FETCHCONTENT_SOURCE_DIR_*`）。
+- 超出你列的目录：`CMakeLists.txt` 加一条测试，`tools/layers.json` 登记新源文件，两者都是编译所必需。另外新增 `evidence/toc-page-20261108/`（沿用 #76 的做法）。`examples/` 和 workflow 都没动，没有取消任何 workflow run，提交信息没有 CI 跳过标记。
+- 没往 `R-PROTECTED-TREES.md` 登记本次改动（那是 evidence 目录里的文档，不在你给的允许范围）。#76 登记了，需要的话可以补。
+
+## 提交
+
+`14ca2044` 和 `ab78a588`（记录 PR 号）。步骤记录在 `TOCPAGE-OUT.txt`。
+
