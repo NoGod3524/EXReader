@@ -1,0 +1,20 @@
+已提交 `955a7e3a`，推送指定分支，并创建 [Draft PR #53](https://github.com/NoGod3524/EXReader/pull/53)（base：main）。未运行 CI。
+
+改动仅在 `examples/`：`reader.c`、`shell_geometry.h`、`shell_tokens.h`、`shell_screen.inc`、`shell_d2d.{h,cpp}`、`shell_measure.inc`，以及三个验收脚本和证据文件。完整清单见[验收报告](examples/windows/acceptance-step3/README.md)。
+
+| 验收项 | 实测 |
+|---|---|
+| 1280×800、f=18、受控96 DPI | 20页；每行中位34字；左右334/334px；行高比1.599999 |
+| 2560×1440、同字号 | 20页；每行中位34字；左右974/974px；行高比1.599999 |
+| 125% / 150% 显示比例 | 均1.000；150%为受控DPI注入 |
+| D2D target | HWND/DC 均96dpi |
+| 竖排1280 / 2560 | 每列中位32/34字；上下边距104/120、104/724px |
+| 旧界面像素对照 | 三组各8张全部差异0；单像素负例报1、退出码1 |
+| phase-a/b/c | 仅既有A115、B5，共2个失败 |
+| 自检 | 退出码0，26项 |
+
+PMv2 请求返回1，实际窗口context校验通过，`GetDpiForWindow=120`。
+
+未达标或未覆盖：真实150%显示器跨屏尚未验证；原版《草枕》CSS别名实测仍为横排、竖排字形0，标准CSS竖排样本通过；MSVC和TXT产品宏组合未构建。
+
+**是否出现过前台窗口：否。** 截图均通过离屏窗口和 PrintWindow 完成。

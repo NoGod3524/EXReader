@@ -1,0 +1,5 @@
+已生成 [STEP3-PLAN.md](/C:/Users/Oscar/Documents/Codex/EXReader-ui-2a-20261105/STEP3-PLAN.md)，包含源码定位、函数改动清单、横竖排测量方法及客户区零回归方案。
+
+当前 main 未包含第 2 步，已从已有分支读取并注明版本与行号差异。
+
+仅新增该文件，未提交；未改代码、未打开窗口、未运行测试或 CI。
