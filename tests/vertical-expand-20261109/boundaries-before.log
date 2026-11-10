@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-A5-20261109\tests\vertical_expand.py", line 296, in <module>
+    if __name__=='__main__': main()
+                             ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-A5-20261109\tests\vertical_expand.py", line 280, in main
+    test_group(sdk,font,Path(d),args.group)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-A5-20261109\tests\vertical_expand.py", line 233, in test_group
+    assert abs(sum(g['advance'] for g in gs)-28*(1+(len(marks)-1)/2))<.05,gs
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: [{'start': 3, 'end': 6, 'codepoint': 12290, 'glyph': 4, 'x': 447.0, 'baseline': 64.0, 'advance': 14.0, 'size': 28.0, 'page': 0, 'node': 10, 'color': 255, 'flags': 128, 'clip_left': 36.0, 'clip_right': 684.0, 'line_height': 42.0, 'cluster_start': 3, 'cluster_end': 6, 'boundaries': 9, 'font_index': 0, 'offset_x': -14.0, 'offset_y': -12.0, 'bidi_level': 0}, {'start': 6, 'end': 9, 'codepoint': 12290, 'glyph': 4, 'x': 447.0, 'baseline': 78.0, 'advance': 14.0, 'size': 28.0, 'page': 0, 'node': 10, 'color': 255, 'flags': 128, 'clip_left': 36.0, 'clip_right': 684.0, 'line_height': 42.0, 'cluster_start': 6, 'cluster_end': 9, 'boundaries': 9, 'font_index': 0, 'offset_x': -14.0, 'offset_y': -12.0, 'bidi_level': 0}]

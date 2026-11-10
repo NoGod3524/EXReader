@@ -534,11 +534,23 @@ int exr_inline_punctuation(uint32_t cp) {
 /* Remaining punctuation space, after any adjacent compression, has the same
    half-em floor. Latin faces and proportional punctuation never participate. */
 static float punctuation_room(flow *f,const exr_glyph *g) {
+  float room;
   if((g->flags&(EXR_GLYPH_HIDDEN|EXR_GLYPH_RUBY_ITEM|EXR_GLYPH_COMBINED)) ||
      !exr_inline_punctuation(g->codepoint) || g->size<=0 ||
      g->advance>g->size+.01f || g->advance<.5f*g->size-.01f ||
      (g->codepoint<0x3000 && !exr_font_has_glyph(f->font,g->font_index,0x3002))) return 0;
-  return fmaxf(0,g->advance-.5f*g->size);
+  room=fmaxf(0,g->advance-.5f*g->size);
+  if((g->flags&EXR_GLYPH_VERTICAL) && !(g->flags&EXR_GLYPH_SIDEWAYS)) {
+    exr_face *face=&f->font->faces[g->font_index];
+    FT_Glyph_Metrics metrics;
+    /* Upright vertical marks such as fullwidth !/? can occupy most of the
+       inline em. Remove only trailing blank space, never their visible ink. */
+    if(face->bitmap_only || exr_font_size(face,g->size) ||
+       FT_Load_Glyph(face->face,g->glyph,FT_LOAD_VERTICAL_LAYOUT)) return 0;
+    metrics=face->face->glyph->metrics;
+    room=fminf(room,fmaxf(0,g->advance-(float)(metrics.vertBearingY+metrics.height)/64));
+  }
+  return room;
 }
 /* Charge each join to its left glyph once. Provisional runs stay untouched;
    only a freshly shaped final line receives the reduced advances. Requiring
@@ -578,6 +590,9 @@ static float punctuation_width(flow *f,exr_glyph *glyphs,size_t count,int commit
   tail=end;
   while(tail>first) {
     const exr_glyph *g=glyphs+tail-1;
+    /* Pooling a terminal run into one horizontal em can stack vertical ink.
+       Vertical text uses the per-glyph trailing-space budget above instead. */
+    if(g->flags&EXR_GLYPH_VERTICAL) break;
     if(!exr_inline_punctuation(g->codepoint) ||
        fabsf(g->advance-g->size)>.01f || !punctuation_room(f,g)) break;
     if(tail<end && (exr_inline_same(g,g+1) || g->bidi_level!=(g+1)->bidi_level || g->size!=tail_em)) break;
