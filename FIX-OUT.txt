@@ -1,0 +1,16 @@
+已完成三项离屏界面验收，并 commit → push → 创建 draft PR。
+
+- 首次打开：17/17，通过；阅读屏显示封面。
+  截图：C:/Users/Oscar/Documents/Codex/cjk-host-open-fix-20261106/ui-first/first-cover.png
+- 现有 part=0/position=0 恢复：16/16，通过；恢复到封面。
+  截图：C:/Users/Oscar/Documents/Codex/cjk-host-open-fix-20261106/ui-restore/restored-cover.png
+- 临时 8 MiB 故障：13/13，通过；显示 Page exceeds the pager cache byte budget，无恢复成功提示。
+  截图：C:/Users/Oscar/Documents/Codex/cjk-host-open-fix-20261106/ui-fault/fault.png
+
+三次验收窗口均为 (-32000,-32000)，只用 PrintWindow；165 次监测，前台观测 0。未调用 SetForegroundWindow/BringWindowToTop，未移动鼠标。
+
+Commit: 42fca211
+Branch: codex/cjk-host-open-fix-20261106
+Draft PR #60: https://github.com/NoGod3524/EXReader/pull/60
+Base: main
+提交信息无 CI 跳过标记；未取消任何 workflow run。

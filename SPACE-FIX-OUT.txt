@@ -1,0 +1,12 @@
+已提交 `2c3aed06`，推送至 `codex/cjk-space-collapse-20261106`，创建 [Draft PR #62](https://github.com/NoGod3524/EXReader/pull/62)（base：main）。
+
+1. 正文“汉字 空格 汉字”：**16,243→0**；含 CJK 标点／全角符号：**27,222→0**。
+2. 紅樓夢：**1,632→1,599 页，减少 33 页**，符合预期。
+3. Sample：**42→42 页，逐页像素哈希差异 0/42**。
+4. 指定混合文本 **3/3 通过**：`GPU 加速` 保留；`你 好`→`你好`；`第一章 总论`→`第一章总论`，因“章／总”均为 CJK。
+5. 新增 **2 组、11 个用例**；最终 **ctest 169/169 通过**。
+6. 同页截图 **2/2 通过**，前台观测 **0**；[改后截图](docs/ui/evidence/2a-step5-art/clear-text-after-1280.png)。
+
+核心改动：`src/document.c:375、387`；同步 `src/chapter_index.c:193` 和内部声明，已登记受保护树。未手动触发 CI、未取消 workflow run。
+
+[完整报告、改动行和统计命令](evidence/cjk-space-collapse-20261106/REPORT.md) · [42 页完整哈希](evidence/cjk-space-collapse-20261106/SAMPLE-PAGES.csv)
