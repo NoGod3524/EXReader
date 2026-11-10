@@ -727,9 +727,9 @@ static int drive_execute(void) {
     drive_step_finish(shell_measure(drive_args[1]), "physical layout captured"); return 0;
   }
   if (!strcmp(action, "shell")) {
-    shell_drive_on = !strcmp(drive_args[1], "on");
+    /* Historical shell|on setup remains accepted; only the new UI exists. */
     shell_sync();
-    drive_step_finish(1, shell_active ? "reading screen" : "legacy panel");
+    drive_step_finish(1, shell_active ? "reading screen" : "bookshelf");
     return 0;
   }
   if (!strcmp(action, "shell_key")) {
@@ -748,7 +748,7 @@ static int drive_execute(void) {
     }
     if (shell_active != want && GetTickCount() - drive_step_start < 5000) return 1;
     posted = 0;
-    drive_step_finish(shell_active == want, shell_active ? "reading screen" : "legacy panel");
+    drive_step_finish(shell_active == want, shell_active ? "reading screen" : "bookshelf");
     return 0;
   }
   if (!strcmp(action, "shell_hover")) {
@@ -841,22 +841,21 @@ static int drive_execute(void) {
     return 0;
   }
   if (!strcmp(action, "cancel")) {
-    SendMessageW(g.cancel_button, BM_CLICK, 0, 0);
+    job_cancel_button();
     drive_step_finish(1, g.job ? "cancel requested" : "no task to cancel");
     return 0;
   }
   if (!strcmp(action, "open")) {
     if (!shelf_click(drive_args[1])) { drive_step_finish(0, "book not found"); return 0; }
-    SendMessageW(g.open_button, BM_CLICK, 0, 0);
+    open_selected_book();
     drive_expect_idle = 1;
     return 1;
   }
   if (!strcmp(action, "import_async")) {
     wchar_t *wide = host_wide(drive_args[1], strlen(drive_args[1]));
     if (!wide) { drive_step_finish(0, "invalid path"); return 0; }
-    SetWindowTextW(g.import_edit, wide);
+    import_path(wide, 0);
     free(wide);
-    SendMessageW(g.import_button, BM_CLICK, 0, 0);
     drive_step_finish(g.job != NULL, "import dispatched asynchronously");
     return 0;
   }
@@ -870,9 +869,8 @@ static int drive_execute(void) {
   if (!strcmp(action, "import")) {
     wchar_t *wide = host_wide(drive_args[1], strlen(drive_args[1]));
     if (!wide) { drive_step_finish(0, "invalid path"); return 0; }
-    SetWindowTextW(g.import_edit, wide);
+    import_path(wide, 0);
     free(wide);
-    SendMessageW(g.import_button, BM_CLICK, 0, 0);
     launches = 1;
   } else if (!strcmp(action, "shelf")) {
     if (!shelf_click(drive_args[1])) { drive_step_finish(0, "book not found"); return 0; }
@@ -882,7 +880,7 @@ static int drive_execute(void) {
     wchar_t *needle;
     int gone;
     if (!shelf_click(drive_args[1])) { drive_step_finish(0, "book not found"); return 0; }
-    SendMessageW(g.delete_button, BM_CLICK, 0, 0);
+    delete_selected_book();
 #ifdef EXR_READER_PRODUCT_CATALOG
     if(g.job || g.pending) { drive_expect_idle=1;return 1; }
 #endif
@@ -892,29 +890,29 @@ static int drive_execute(void) {
     drive_step_finish(gone, gone ? "book removed" : "book still present");
     return 0;
   } else if (!strcmp(action, "next")) {
-    SendMessageW(g.next_button, BM_CLICK, 0, 0);
+    page_step(1);
     launches = 1;
   } else if (!strcmp(action, "prev")) {
-    SendMessageW(g.prev_button, BM_CLICK, 0, 0);
+    page_step(-1);
     launches = 1;
   } else if (!strcmp(action, "chapter_end")) {
     page_step(1000000); launches = 1;
   } else if (!strcmp(action, "chapter_home")) {
     page_step(-1000000); launches = 1;
   } else if (!strcmp(action, "font_inc")) {
-    SendMessageW(g.font_inc, BM_CLICK, 0, 0);
+    change_font(HOST_FONT_STEP);
     launches = 1;
   } else if (!strcmp(action, "font_dec")) {
-    SendMessageW(g.font_dec, BM_CLICK, 0, 0);
+    change_font(-HOST_FONT_STEP);
     launches = 1;
   } else if (!strcmp(action, "zoom_inc")) {
-    SendMessageW(g.zoom_inc, BM_CLICK, 0, 0);
+    change_zoom(HOST_ZOOM_STEP);
     launches = 1;
   } else if (!strcmp(action, "zoom_dec")) {
-    SendMessageW(g.zoom_dec, BM_CLICK, 0, 0);
+    change_zoom(-HOST_ZOOM_STEP);
     launches = 1;
   } else if (!strcmp(action, "select_all")) {
-    SendMessageW(g.select_button, BM_CLICK, 0, 0);
+    select_all_page();
     drive_step_finish(1, "select-all dispatched");
     return 0;
   } else if (!strcmp(action, "select_range")) {
@@ -948,15 +946,15 @@ static int drive_execute(void) {
     drive_step_finish(1, "comment set");
     return 0;
   } else if (!strcmp(action, "add_note")) {
-    SendMessageW(g.add_button, BM_CLICK, 0, 0);
+    add_note();
     drive_step_finish(g.status_text[0] != 0, "add dispatched");
     return 0;
   } else if (!strcmp(action, "update_note")) {
-    SendMessageW(g.update_button, BM_CLICK, 0, 0);
+    update_note();
     drive_step_finish(1, "update dispatched");
     return 0;
   } else if (!strcmp(action, "delete_note")) {
-    SendMessageW(g.remove_button, BM_CLICK, 0, 0);
+    delete_note();
     drive_step_finish(1, "delete dispatched");
     return 0;
   } else if (!strcmp(action, "note_select")) {
@@ -972,10 +970,10 @@ static int drive_execute(void) {
       if (!current_note_count() || (size_t)index >= current_note_count()) { drive_step_finish(0, "note index out of range"); return 0; }
       SendMessageW(g.notes, LB_SETCURSEL, (WPARAM)index, 0);
     }
-    SendMessageW(g.jump_button, BM_CLICK, 0, 0);
+    jump_selected_note();
     launches = 1;
   } else if (!strcmp(action, "copy")) {
-    SendMessageW(g.copy_button, BM_CLICK, 0, 0);
+    copy_quote();
     drive_step_finish(1, "copy dispatched");
     return 0;
   } else if (!strcmp(action, "check")) {
@@ -1007,12 +1005,10 @@ static int drive_execute(void) {
       detail_add(detail, sizeof(detail), "client_origin", number);
       snprintf(number, sizeof(number), "%ldx%ld", (long)client.right, (long)client.bottom);
       detail_add(detail, sizeof(detail), "client", number);
-    } else if (!strcmp(what, "legacy_ids")) {
-      char missing[160];
-      int reachable = shell_legacy_reachable(missing, sizeof(missing));
-      pass = reachable == 17;
-      snprintf(number, sizeof(number), "%d", reachable); detail_add(detail, sizeof(detail), "reachable", number);
-      detail_add(detail, sizeof(detail), "missing", missing);
+    } else if (!strcmp(what, "retired_controls")) {
+      pass=1;
+      for(int retired=101;retired<=117;retired++) if(GetDlgItem(g.window,retired))pass=0;
+      detail_add(detail,sizeof(detail),"retired_controls",pass ? "absent":"present");
     } else if (!strcmp(what, "shell_fonts")) {
       unsigned latin = 0, cjk = 0;
       char *title = host_utf8(shell_d2d_family(host_shell, SHELL_TEXT_TITLE));

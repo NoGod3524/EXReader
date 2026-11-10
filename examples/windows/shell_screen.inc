@@ -6,10 +6,9 @@
    Once a book is open the window shows the flat top bar (UI-SPEC, 2026-11-05):
    56 high, DeckMark surface with a line-token hairline on its last row, the title on the left
    (15, weight 650) and two 32x32 rounded icon buttons on the right (目录, 设置).
-   Below it the page fills the window with no 3D edge. Every legacy control is
-   hidden. The back button, Esc without selection, Ctrl+W and Alt+Left return
-   to the recent-books shelf. --drive keeps the legacy layout unless the
-   script says shell|on, so phase-a/b/c run exactly as before. Included after
+   Below it the page fills the window with no 3D edge.
+   The back button, Esc without selection, Ctrl+W and Alt+Left return
+   to the bookshelf. The acceptance build uses the same screen routing. Included after
    create_controls, so create_controls calls shell_create through a forward
    declaration.
 
@@ -26,7 +25,6 @@
 enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, IDC_SHELL_SEARCH,
        IDC_SHELL_LIGHT = 164, IDC_SHELL_DARK, IDC_SHELL_SYSTEM,
        IDC_SHELL_BACK = 180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY };
-enum { SHELL_HIDDEN_MAX = 128 };
 static HWND shell_back;
 /* The 32px visual has 4px per side for the offset keyboard outline. */
 enum { SHELL_BUTTON_BOX = SHELL_ICON_SIZE + 2 * SHELL_CONTROL_FRAME };
@@ -61,8 +59,6 @@ static int shell_toc_close_pending;
 static HWND shell_toc_test_focus;
 static int shell_toc_test_shift;
 static HWND shell_toc_panel,shell_toc_list;
-static HWND shell_hidden[SHELL_HIDDEN_MAX];
-static size_t shell_hidden_count;
 static const shell_theme *shell_colors = &shell_theme_light;
 static WNDPROC shell_button_base;
 static HWND shell_render_focus; /* offscreen drive: inject only the drawing state */
@@ -244,7 +240,7 @@ static LRESULT CALLBACK shell_button_procedure(HWND window, UINT message, WPARAM
 }
 
 static HWND shell_make_button(HWND parent, int id, const wchar_t *name) {
-  /* Created hidden, so the legacy panel never shows them. */
+  /* Shown only while reading. */
   HWND button = CreateWindowExW(0, L"BUTTON", name, WS_CHILD | WS_TABSTOP | BS_OWNERDRAW, 0, 0, SHELL_BUTTON_BOX,
                                 SHELL_BUTTON_BOX, parent, (HMENU)(INT_PTR)id, NULL, NULL);
   if (button) shell_button_base = (WNDPROC)SetWindowLongPtrW(button, GWLP_WNDPROC, (LONG_PTR)shell_button_procedure);
@@ -355,29 +351,11 @@ static int shell_layout(void) {
   return 1;
 }
 
-/* The legacy page has a sunken 3D edge; the reading screen has none. */
-static void shell_page_edge(int on) {
-  LONG_PTR style = GetWindowLongPtrW(g.page, GWL_EXSTYLE);
-  style = on ? (style | WS_EX_CLIENTEDGE) : (style & ~(LONG_PTR)WS_EX_CLIENTEDGE);
-  SetWindowLongPtrW(g.page, GWL_EXSTYLE, style);
-  SetWindowPos(g.page, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-}
-
 static void shell_enter(void) {
-  HWND child;
-  size_t i;
-  shell_hidden_count = 0;
-  for (child = GetWindow(g.window, GW_CHILD); child; child = GetWindow(child, GW_HWNDNEXT)) {
-    if (child == g.page || child == shell_back || child == shell_toc || child == shell_settings || child == shell_search_button || !IsWindowVisible(child)) continue;
-    if (shell_hidden_count == SHELL_HIDDEN_MAX) break;
-    shell_hidden[shell_hidden_count++] = child;
-  }
-  if (child) { shell_hidden_count = 0; return; } /* more controls than slots: stay on the legacy panel */
-  for (i = 0; i < shell_hidden_count; i++) ShowWindow(shell_hidden[i], SW_HIDE);
   SetWindowLongPtrW(g.window, GWL_STYLE, GetWindowLongPtrW(g.window, GWL_STYLE) | WS_CLIPCHILDREN);
-  shell_page_edge(0);
   SetWindowLongPtrW(g.page,GWL_STYLE,GetWindowLongPtrW(g.page,GWL_STYLE)|WS_CLIPSIBLINGS);
   shell_active = 1;
+  ShowWindow(g.page,SW_SHOWNA);
   shell_apply_theme();
   shell_layout();
   shell_request_layout();
@@ -390,7 +368,6 @@ static void shell_enter(void) {
 }
 
 static void shell_leave(void) {
-  size_t i;
   dict_close_all();
   tts_stop();
   tts_command(104); /* close speech controls on leaving the book */
@@ -399,6 +376,7 @@ static void shell_leave(void) {
   shell_panel_open=0; shell_animating=0; shell_animation_value=0;
   KillTimer(g.window,0x5753); ShowWindow(shell_panel,SW_HIDE);
   shell_active = 0;
+  ShowWindow(g.page,SW_HIDE);
   shell_apply_theme();
   shell_hover = NULL;
   shell_hover_pinned = 0;
@@ -407,22 +385,7 @@ static void shell_leave(void) {
   ShowWindow(shell_search_button, SW_HIDE);
   ShowWindow(shell_back, SW_HIDE);
   SetWindowLongPtrW(g.window, GWL_STYLE, GetWindowLongPtrW(g.window, GWL_STYLE) & ~(LONG_PTR)WS_CLIPCHILDREN);
-  shell_page_edge(1);
   SetWindowLongPtrW(g.page,GWL_STYLE,GetWindowLongPtrW(g.page,GWL_STYLE)&~(LONG_PTR)WS_CLIPSIBLINGS);
-  for (i = 0; i < shell_hidden_count; i++) ShowWindow(shell_hidden[i], SW_SHOW);
-  shell_hidden_count = 0;
-  {
-    RECT bounds; MINMAXINFO limits = {0};
-    /* The legacy toolbar needs its original minimum, even after a narrow shell. */
-    SendMessageW(g.window, WM_GETMINMAXINFO, 0, (LPARAM)&limits);
-    GetWindowRect(g.window, &bounds);
-    int width = bounds.right - bounds.left, height = bounds.bottom - bounds.top;
-    if (width < limits.ptMinTrackSize.x || height < limits.ptMinTrackSize.y)
-      SetWindowPos(g.window, NULL, 0, 0,
-        width < limits.ptMinTrackSize.x ? limits.ptMinTrackSize.x : width,
-        height < limits.ptMinTrackSize.y ? limits.ptMinTrackSize.y : height,
-        SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-  }
   sm_refresh();
   layout_controls();
   shell_request_layout();
@@ -445,9 +408,9 @@ static void shell_sync(void) {
     shell_vertical = g.frame.writing_mode;
     shell_request_layout();
   }
-  int want = host_shell && g.window && (g.drive_mode ? shell_drive_on : 1) &&
+  int want = host_shell && g.window &&
              g.has_current && g.frame.valid && !shelf_requested;
-  if(want || (g.drive_mode && !shell_drive_on)) shelf_show(0);
+  if(want) shelf_show(0);
   if (want && !shell_active) shell_enter();
   else if (!want && shell_active) shell_leave();
   else if (shell_active) {
@@ -457,7 +420,7 @@ static void shell_sync(void) {
     InvalidateRect(g.window, &bar, FALSE); /* the title may have changed */
     if(shell_panel_open) InvalidateRect(shell_panel,NULL,FALSE);
   }
-  if(!want && host_shell && (!g.drive_mode || shell_drive_on)) shelf_show(1);
+  if(!want && host_shell) shelf_show(1);
 }
 
 static void shell_paint(HWND window) {
@@ -573,32 +536,7 @@ static int shell_translate(const MSG *message) {
   return 0;
 }
 
-/* Every control in the 17-row map of HOST-AUDIT section A (IDs 101..117) is
-   visible, a tab stop and inside the client area. */
-#ifdef EXR_READER_TEST_DRIVERS
-static int shell_legacy_reachable(char *missing, size_t capacity) {
-  RECT client, box;
-  int id, count = 0;
-  size_t used = 0;
-  GetClientRect(g.window, &client);
-  if (capacity) missing[0] = 0;
-  for (id = IDC_IMPORT_EDIT; id <= IDC_CANCEL; id++) {
-    HWND control = GetDlgItem(g.window, id);
-    int ok = control && IsWindowVisible(control) && (GetWindowLongPtrW(control, GWL_STYLE) & WS_TABSTOP);
-    if (ok) {
-      GetWindowRect(control, &box);
-      MapWindowPoints(NULL, g.window, (POINT *)&box, 2);
-      ok = box.right > box.left && box.bottom > box.top && box.left >= 0 && box.top >= 0 &&
-           box.right <= client.right && box.bottom <= client.bottom;
-    }
-    if (ok) count++;
-    else if (used + 8 < capacity) used += (size_t)snprintf(missing + used, capacity - used, "%s%d", used ? "," : "", id);
-  }
-  return count;
-}
-#endif
-
-/* Visible direct children of the main window, for legacy driver telemetry. */
+/* Visible direct children for acceptance telemetry. */
 #ifdef EXR_READER_TEST_DRIVERS
 static int shell_visible_children(void) {
   int count = 0;
