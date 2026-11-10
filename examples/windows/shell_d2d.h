@@ -27,6 +27,7 @@ unsigned shell_edit_view_hit(shell_edit_view *, float, float);
 HRESULT shell_edit_view_caret(shell_edit_view *, unsigned, float box[4]);
 unsigned shell_edit_view_line_edge(shell_edit_view *, unsigned, int);
 float shell_edit_view_height(shell_edit_view *);
+void shell_edit_view_underline(shell_edit_view *, HDC, float, float, unsigned, unsigned, int, uint32_t);
 HRESULT shell_edit_view_paint(shell_d2d *, shell_edit_view *, HDC, const RECT *,
                               float, float, unsigned, unsigned, uint32_t, uint32_t, uint32_t);
 

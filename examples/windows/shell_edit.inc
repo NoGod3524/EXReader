@@ -11,7 +11,7 @@ static struct {
   edit_model model;
   shell_edit_view *view;
   wchar_t *display,*composition;
-  unsigned display_size,composition_size;
+  unsigned display_size,composition_size,composition_cursor;
   wchar_t path[HOST_PATH];
   int enabled,composing,drag,blink,caret_created;
   wchar_t surrogate;
@@ -23,6 +23,11 @@ static struct {
   HMENU menu;
 } editor;
 
+static int shell_edit_loaded(void) { return editor.model.doc!=NULL; }
+static const wchar_t *shell_edit_name(void) {
+  const wchar_t *name=wcsrchr(editor.path,L'\\'); name=name ? name+1:editor.path;
+  return *name ? name:L"未命名文档";
+}
 static unsigned edit_utf16_at(const edit_model *m,size_t offset) {
   if (!offset) return 0;
   int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,m->text,(int)min(offset,m->size),NULL,0);
@@ -42,23 +47,28 @@ static size_t edit_byte_at(const edit_model *m,unsigned offset) {
 }
 static void shell_edit_title(void) {
   if (!editor.model.doc) return;
-  const wchar_t *name=wcsrchr(editor.path,L'\\'); name=name ? name+1:editor.path;
   wchar_t title[HOST_PATH+80];
   swprintf(title,HOST_PATH+80,L"%ls%ls — EXReader [%ls]",edit_dirty(&editor.model) ? L"* ":L"",
-    *name ? name:L"未命名文档",editor.enabled ? L"编辑":L"阅读");
+    shell_edit_name(),editor.enabled ? L"编辑":L"阅读");
   SetWindowTextW(g.window,title);
   CheckMenuItem(editor.menu,EDIT_MODE,MF_BYCOMMAND|(editor.enabled ? MF_CHECKED:MF_UNCHECKED));
 }
 static void edit_error(exr_status status) {
   wchar_t message[160];
-  swprintf(message,160,L"编辑未完成（%d）。表格和不透明对象不能在此表面删除。",(int)status);
+  swprintf(message,160,status==EXR_UNSUPPORTED ? L"此处包含不能编辑的表格或对象。":L"编辑未完成（%d）。",(int)status);
   set_status(message); MessageBeep(MB_ICONWARNING);
 }
 static int edit_caret_box(float box[4]) {
   unsigned position=edit_utf16_at(&editor.model,editor.model.selection.focus);
   if (editor.composing) position=edit_utf16_at(&editor.model,
-    min(editor.model.selection.anchor,editor.model.selection.focus))+editor.composition_size;
+    min(editor.model.selection.anchor,editor.model.selection.focus))+editor.composition_cursor;
   return editor.view && SUCCEEDED(shell_edit_view_caret(editor.view,position,box));
+}
+static void edit_native_caret(void) {
+  if (editor.caret_created) DestroyCaret();
+  editor.caret_created=0;
+  if (editor.enabled && GetFocus()==g.page)
+    editor.caret_created=CreateCaret(g.page,NULL,max(1,shell_px(1,shell_dpi)),max(1,(int)ceilf(editor.font_size*1.75f)));
 }
 static void edit_ime_position(void) {
   float box[4];
@@ -95,6 +105,7 @@ static void edit_keep_visible(void) {
 }
 static int shell_edit_relayout(void) {
   if (!editor.model.doc || !host_shell || !g.page) return 0;
+  float previous_size=editor.font_size;
   RECT area; GetClientRect(g.page,&area);
   editor.dpi=shell_dpi; editor.zoom=g.zoom_percent ? g.zoom_percent:100;
   editor.left=(float)shell_px(40,shell_dpi); editor.top=(float)shell_px(28,shell_dpi);
@@ -119,6 +130,7 @@ static int shell_edit_relayout(void) {
   if (FAILED(hr)) { free(display); return 0; }
   shell_edit_view_free(editor.view); free(editor.display);
   editor.view=view; editor.display=display; editor.display_size=used;
+  if (previous_size!=editor.font_size) edit_native_caret();
   edit_keep_visible(); edit_blink_reset(); return 1;
 }
 static void edit_changed(exr_status status) {
@@ -138,7 +150,8 @@ static void edit_cancel_composition(void) {
     HIMC context=ImmGetContext(g.page);
     if (context) { ImmNotifyIME(context,NI_COMPOSITIONSTR,CPS_CANCEL,0); ImmReleaseContext(g.page,context); }
   }
-  editor.composing=0; free(editor.composition); editor.composition=NULL; editor.composition_size=0;
+  editor.composing=0; free(editor.composition); editor.composition=NULL;
+  editor.composition_size=editor.composition_cursor=0;
 }
 static int edit_read_file(const wchar_t *path,void **out,size_t *size) {
   *out=NULL; *size=0;
@@ -173,19 +186,26 @@ static exr_status edit_load(edit_model *model,const wchar_t *path) {
   if (!edit_read_file(path,&data,&size)) return EXR_IO;
   const wchar_t *extension=wcsrchr(path,L'.');
   if (extension && !_wcsicmp(extension,L".txt")) {
-    wchar_t *wide=NULL;
+    wchar_t *wide=NULL; size_t count=0;
     if (size>=2 && ((unsigned char *)data)[0]==0xff && ((unsigned char *)data)[1]==0xfe && !(size&1)) {
-      size_t n=(size-2)/2; wide=calloc(n+1,sizeof(*wide)); if (wide) memcpy(wide,(char *)data+2,n*2);
+      count=(size-2)/2; wide=calloc(count+1,sizeof(*wide)); if (wide) memcpy(wide,(char *)data+2,count*2);
     } else {
       size_t bom=size>=3 && !memcmp(data,"\xef\xbb\xbf",3) ? 3:0;
       wide=host_wide((char *)data+bom,size-bom);
+      if (wide && !memchr((char *)data+bom,0,size-bom)) count=wcslen(wide);
+      else { free(wide); wide=NULL; }
     }
-    char *text=wide ? edit_normalize_wide(wide,wcslen(wide)):NULL;
+    char *text=wide ? edit_normalize_wide(wide,count):NULL;
     if (text) status=edit_seed(model,text,strlen(text)); else status=EXR_ENCODING;
     free(text); free(wide);
   } else if (extension && !_wcsicmp(extension,L".docx")) {
 #ifdef EXR_READER_WINDOWS_EDIT_DOCX
-    status=exr_edit_docx_read(data,size,NULL,&model->doc,NULL);
+    exr_edit_options options={EDIT_HISTORY};
+    status=exr_edit_docx_read(data,size,&options,&model->doc,NULL);
+    if (status==EXR_OK && !exr_edit_block_count(model->doc)) {
+      exr_edit_id id=0;
+      status=exr_edit_insert_paragraph(model->doc,0,NULL,0,NULL,&id);
+    }
     if (status==EXR_OK) status=edit_refresh(model);
     if (status==EXR_OK && !edit_mark_saved(model)) status=EXR_MEMORY;
 #else
@@ -280,6 +300,7 @@ static void shell_edit_destroy(void) {
   edit_cancel_composition();
   if (editor.caret_created) DestroyCaret();
   editor.caret_created=0;
+  ImmAssociateContextEx(g.page,NULL,IACE_DEFAULT);
   shell_edit_view_free(editor.view); editor.view=NULL; free(editor.display); editor.display=NULL;
   edit_model_free(&editor.model); editor.enabled=0; editor.path[0]=0; editor.scroll=0; editor.surrogate=0;
   if (editor.menu) CheckMenuItem(editor.menu,EDIT_MODE,MF_BYCOMMAND|MF_UNCHECKED);
@@ -289,14 +310,17 @@ static int shell_edit_before_leave(void) {
   shell_edit_destroy(); SetWindowTextW(g.window,L"EXReader"); page_dirty(g.page,1); return 1;
 }
 static int shell_edit_open(const wchar_t *path) {
+  wchar_t source[HOST_PATH]; copy_wstring(source,HOST_PATH,path);
   edit_model model={0};
-  exr_status status=edit_load(&model,path);
+  exr_status status=edit_load(&model,source);
   if (status!=EXR_OK) { edit_model_free(&model); edit_error(status); return 0; }
   if (!shell_edit_before_close()) { edit_model_free(&model); return 0; }
-  shell_edit_destroy(); editor.model=model; copy_wstring(editor.path,HOST_PATH,path);
+  shell_edit_destroy(); editor.model=model; copy_wstring(editor.path,HOST_PATH,source);
   editor.book_id=g.session.book_id;
-  if (!shell_active) { shelf_requested=0; shelf_show(0); shell_enter(); }
   shell_toc_set(0,0); shell_search_set(0); tts_stop(); dict_close_all();
+  shell_bar_hidden=0; shelf_requested=0;
+  ImmAssociateContextEx(g.page,NULL,0);
+  shell_sync(); shell_layout();
   shell_edit_relayout(); shell_edit_title(); SetFocus(g.page); return 1;
 }
 static void shell_edit_toggle(void) {
@@ -311,9 +335,10 @@ static void shell_edit_toggle(void) {
   }
   if (!edit_complete_composition()) return;
   edit_finish(&editor.model); editor.enabled=!editor.enabled;
+  ImmAssociateContextEx(g.page,NULL,editor.enabled ? IACE_DEFAULT:0);
   editor.surrogate=0; shell_edit_title(); SetFocus(g.page);
   if (!editor.enabled) { KillTimer(g.page,EDIT_BLINK); if (editor.caret_created) DestroyCaret(); editor.caret_created=0; }
-  else if (!editor.caret_created) editor.caret_created=CreateCaret(g.page,NULL,max(1,shell_px(1,shell_dpi)),(int)ceilf(editor.font_size*1.75f));
+  else if (!editor.caret_created) edit_native_caret();
   edit_blink_reset();
 }
 static void edit_copy(int cut) {
@@ -384,15 +409,8 @@ static void shell_edit_paint(HWND window) {
     editor.composing ? 0:a,editor.composing ? 0:b,shell_colors->layer_page,shell_colors->text,highlight);
   if (editor.composing && editor.composition_size) {
     unsigned start=edit_utf16_at(&editor.model,min(editor.model.selection.anchor,editor.model.selection.focus));
-    HPEN pen=CreatePen(PS_SOLID,max(1,shell_px(1,shell_dpi)),shell_colorref(shell_colors->text)); HGDIOBJ previous=SelectObject(dc,pen);
-    for (unsigned i=start;i<start+editor.composition_size;i++) {
-      float first[4],last[4];
-      if (SUCCEEDED(shell_edit_view_caret(editor.view,i,first)) && SUCCEEDED(shell_edit_view_caret(editor.view,i+1,last))) {
-        int x=(int)lroundf(editor.left+first[0]),y=(int)lroundf(editor.top+first[1]+first[3]-editor.scroll-2);
-        MoveToEx(dc,x,y,NULL); LineTo(dc,(int)lroundf(editor.left+last[0]),y);
-      }
-    }
-    SelectObject(dc,previous); DeleteObject(pen);
+    shell_edit_view_underline(editor.view,dc,editor.left,editor.top-editor.scroll,start,
+      editor.composition_size,max(1,shell_px(1,shell_dpi)),shell_colors->text);
   }
   if (editor.enabled && GetFocus()==window && (editor.blink || editor.composing)) {
     float box[4];
@@ -407,7 +425,6 @@ static void shell_edit_paint(HWND window) {
 }
 static int shell_edit_command(int id) {
   if (id==EDIT_OPEN) {
-    if (!shell_edit_before_close()) return 1;
     wchar_t path[HOST_PATH]=L""; OPENFILENAMEW dialog={0}; dialog.lStructSize=sizeof(dialog); dialog.hwndOwner=g.window;
     dialog.lpstrFilter=L"可编辑文档\0*.docx;*.txt\0\0"; dialog.lpstrFile=path; dialog.nMaxFile=HOST_PATH;
     dialog.Flags=OFN_FILEMUSTEXIST|OFN_PATHMUSTEXIST|OFN_NOCHANGEDIR;
@@ -464,8 +481,9 @@ static int shell_edit_message(HWND window,UINT message,WPARAM wp,LPARAM lp,LRESU
     case WM_PAINT: shell_edit_paint(window); return 1;
     case WM_SIZE: shell_edit_relayout(); return 1;
     case WM_GETDLGCODE: *result=DLGC_WANTARROWS|DLGC_WANTCHARS|(editor.enabled ? DLGC_WANTTAB:0); return 1;
+    case WM_SETCURSOR: SetCursor(LoadCursorW(NULL,editor.enabled ? IDC_IBEAM:IDC_ARROW)); *result=TRUE; return 1;
     case WM_SETFOCUS:
-      if (editor.enabled) editor.caret_created=CreateCaret(window,NULL,max(1,shell_px(1,shell_dpi)),(int)ceilf(editor.font_size*1.75f));
+      edit_native_caret();
       edit_blink_reset(); return 1;
     case WM_KILLFOCUS:
       edit_complete_composition(); edit_finish(m); KillTimer(window,EDIT_BLINK); KillTimer(window,EDIT_BATCH);
@@ -503,20 +521,35 @@ static int shell_edit_message(HWND window,UINT message,WPARAM wp,LPARAM lp,LRESU
       return 1;
     case WM_IME_SETCONTEXT:
       *result=DefWindowProcW(window,message,wp,lp&~(LPARAM)ISC_SHOWUICOMPOSITIONWINDOW); return 1;
+    case WM_IME_REQUEST:
+      if (wp==IMR_QUERYCHARPOSITION && lp && editor.enabled) {
+        IMECHARPOSITION *position=(IMECHARPOSITION *)lp; float box[4];
+        if (position->dwSize<sizeof(*position) || position->dwCharPos>(editor.composing ? editor.composition_size:0)) return 1;
+        unsigned at=edit_utf16_at(m,editor.composing ? min(m->selection.anchor,m->selection.focus):m->selection.focus);
+        if (FAILED(shell_edit_view_caret(editor.view,at+position->dwCharPos,box))) return 1;
+        position->pt=(POINT){(LONG)lroundf(editor.left+box[0]),(LONG)lroundf(editor.top+box[1]-editor.scroll)};
+        ClientToScreen(window,&position->pt); position->cLineHeight=(UINT)ceilf(box[3]);
+        GetClientRect(window,&position->rcDocument);
+        MapWindowPoints(window,NULL,(POINT *)&position->rcDocument,2); *result=TRUE; return 1;
+      }
+      return 0;
+    case WM_IME_NOTIFY:
+      if (wp==IMN_OPENCANDIDATE || wp==IMN_CHANGECANDIDATE) edit_ime_position();
+      return 0;
     case WM_IME_STARTCOMPOSITION:
       if (!editor.enabled) return 1;
-      edit_finish(m); editor.surrogate=0; editor.composing=1; editor.composition_size=0;
+      edit_finish(m); editor.surrogate=0; editor.composing=1; editor.composition_size=editor.composition_cursor=0;
       free(editor.composition); editor.composition=NULL; shell_edit_relayout(); return 1;
     case WM_IME_COMPOSITION: {
       if (!editor.enabled) return 1;
       HIMC context=ImmGetContext(window); if (!context) return 1;
       if (lp&GCS_RESULTSTR) {
         LONG bytes=ImmGetCompositionStringW(context,GCS_RESULTSTR,NULL,0);
-        if (bytes>=0 && bytes<=EDIT_LIMIT && !(bytes&1)) {
+        if (bytes>0 && bytes<=EDIT_LIMIT && !(bytes&1)) {
           wchar_t *text=calloc((size_t)bytes/2+1,sizeof(*text));
           if (text && ImmGetCompositionStringW(context,GCS_RESULTSTR,text,(DWORD)bytes)==bytes) {
             char *utf8=edit_normalize_wide(text,(size_t)bytes/2);
-            if (utf8) { editor.composing=0; editor.composition_size=0;
+            if (utf8) { editor.composing=0; editor.composition_size=editor.composition_cursor=0;
               edit_changed(edit_replace(m,min(m->selection.anchor,m->selection.focus),max(m->selection.anchor,m->selection.focus),utf8,strlen(utf8),0)); free(utf8); }
           }
           free(text);
@@ -528,15 +561,22 @@ static int shell_edit_message(HWND window,UINT message,WPARAM wp,LPARAM lp,LRESU
           wchar_t *text=calloc((size_t)bytes/2+1,sizeof(*text));
           if (text && ImmGetCompositionStringW(context,GCS_COMPSTR,text,(DWORD)bytes)==bytes) {
             free(editor.composition); editor.composition=text; text=NULL;
-            editor.composition_size=(unsigned)bytes/2; editor.composing=1;
+            editor.composition_size=editor.composition_cursor=(unsigned)bytes/2; editor.composing=1;
           }
           free(text);
         }
       }
+      if (lp&GCS_CURSORPOS) {
+        LONG cursor=ImmGetCompositionStringW(context,GCS_CURSORPOS,NULL,0);
+        if (cursor>=0) editor.composition_cursor=min((unsigned)cursor,editor.composition_size);
+      }
+      if (!(lp&(GCS_COMPSTR|GCS_CURSORPOS|GCS_COMPATTR|GCS_COMPCLAUSE|GCS_RESULTSTR))) {
+        free(editor.composition); editor.composition=NULL; editor.composition_size=editor.composition_cursor=0;
+      }
       ImmReleaseContext(window,context); shell_edit_relayout(); return 1;
     }
     case WM_IME_ENDCOMPOSITION:
-      editor.composing=0; editor.composition_size=0; free(editor.composition); editor.composition=NULL;
+      editor.composing=0; editor.composition_size=editor.composition_cursor=0; free(editor.composition); editor.composition=NULL;
       shell_edit_relayout(); return 1;
     case WM_IME_CHAR: return 1; /* RESULTSTR was already committed once. */
     case WM_UNICHAR:
@@ -556,8 +596,13 @@ static int shell_edit_message(HWND window,UINT message,WPARAM wp,LPARAM lp,LRESU
       }
       editor.surrogate=0; char *utf8=edit_normalize_wide(text,count);
       if (utf8) {
-        exr_status status=edit_replace(m,min(m->selection.anchor,m->selection.focus),max(m->selection.anchor,m->selection.focus),utf8,strlen(utf8),1);
-        edit_changed(status); free(utf8); SetTimer(window,EDIT_BATCH,1000,NULL);
+        size_t unit=strlen(utf8),repeat=max(1,LOWORD(lp)),size=unit*repeat;
+        char *input=realloc(utf8,size+1);
+        if (!input) { free(utf8); edit_error(EXR_MEMORY); return 1; }
+        for (size_t at=unit;at<size;at+=unit) memcpy(input+at,input,unit);
+        input[size]=0;
+        exr_status status=edit_replace(m,min(m->selection.anchor,m->selection.focus),max(m->selection.anchor,m->selection.focus),input,size,1);
+        edit_changed(status); free(input); SetTimer(window,EDIT_BATCH,1000,NULL);
       }
       return 1;
     }

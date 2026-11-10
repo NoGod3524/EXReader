@@ -1,0 +1,10 @@
+编辑接入已落地，未修改 `src/`。自动化通过：
+
+- 连续 10 字符一次撤销；撤销/重做各 20 次，前后哈希一致。
+- DOCX 新进程重开内容一致。
+- 保存/放弃/取消、锁文件保存失败保护通过。
+- `-Wall -Wextra -Werror` 完整重编译，零警告。
+
+[验收记录、SHA-256 和复现命令](C:/Users/Oscar/Documents/Codex/EXReader-x3-shell-20261110/examples/windows/acceptance-edit/README.md)。
+
+**真实窗口验收尚未完成**：你按 Esc 停止了 Computer Use，微软拼音实测与 4 张截图待补。DOCX 未建模段落模板的保留限制，以及本机字体启动参数，已写入记录。

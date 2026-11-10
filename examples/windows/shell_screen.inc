@@ -71,6 +71,9 @@ static int64_t shell_anchor_book;
 static size_t shell_anchor_offset, shell_anchor_part;
 
 static void shell_request_layout(void) {
+#ifdef EXR_READER_WINDOWS_EDIT
+  if (shell_edit_loaded()) { shell_edit_relayout(); return; }
+#endif
   shell_geometry target = shell_snapshot();
   if (shell_dpi_changing || IsIconic(g.window) || !g.window) return;
   if (shell_wants_reading() && !target.enabled) return;
@@ -93,6 +96,9 @@ static void shell_request_layout(void) {
 }
 
 static void shell_pump_layout(void) {
+#ifdef EXR_READER_WINDOWS_EDIT
+  if (shell_edit_loaded()) return;
+#endif
   host_job *job;
   if (shell_failed_epoch == shell_epoch || shell_layout_waiting || g.job || g.pending || g.closing || !g.frame.valid || !g.session.active || IsIconic(g.window)) return;
   if (shell_geometry_equal(g.session.shell_geometry, shell_target)) return;
@@ -299,6 +305,16 @@ static void shell_leave(void) {
 }
 
 static void shell_sync(void) {
+#ifdef EXR_READER_WINDOWS_EDIT
+  int editing=shell_edit_loaded();
+  EnableWindow(shell_toc,!editing); EnableWindow(shell_search_button,!editing);
+  if (editing) {
+    shelf_show(0);
+    if (!shell_active) shell_enter();
+    InvalidateRect(g.window,NULL,FALSE);
+    return;
+  }
+#endif
   annot_sync();
   shell_search_reset_book();
   if(shell_toc_close_pending && !g.job && !g.pending) {
@@ -345,6 +361,10 @@ static void shell_paint(HWND window) {
   if (SUCCEEDED(shell_d2d_begin(host_shell, shell_bar_hidden ? shell_colors->layer_page:shell_colors->layer_side))) {
     if(!shell_bar_hidden) {
     shell_d2d_fill(host_shell, 0, (float)(shell_px(SHELL_TOPBAR_H, shell_dpi) - 1), (float)area.right, 1, shell_blend(shell_colors->layer_side,shell_colors->line_rgb,SHELL_LINE_ALPHA));
+#ifdef EXR_READER_WINDOWS_EDIT
+    if(shell_edit_loaded()) title=_wcsdup(shell_edit_name());
+    else
+#endif
     if(g.has_current) {
       int row=shelf_index(g.current.id);
       const char *name=row>=0 ? sm_title((size_t)row):g.current.title;
