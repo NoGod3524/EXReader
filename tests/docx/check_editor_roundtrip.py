@@ -16,18 +16,21 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--manifest', type=Path, required=True)
     parser.add_argument('--library', type=Path, required=True)
+    parser.add_argument('--baseline-library', type=Path, help='separate #124 control DLL')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     api, reader = Bridge(args.library.resolve()), Engine(args.library.resolve())
+    legacy = Engine((args.baseline_library or args.library).resolve())
     report = dict(library_sha256=hashlib.sha256(args.library.read_bytes()).hexdigest(), documents=[])
+    report['baseline_library_sha256'] = hashlib.sha256((args.baseline_library or args.library).read_bytes()).hexdigest()
     for entry in json.loads(args.manifest.read_text(encoding='utf-8-sig'))['documents']:
         source = (args.manifest.parent / entry['path']).resolve()
         data = source.read_bytes()
         assert hashlib.sha256(data).hexdigest() == entry['sha256']
         baseline = args.output / (entry['id'] + '-legacy.docx')
         output = args.output / (entry['id'] + '-editable.docx')
-        legacy_text = reader.roundtrip(source, baseline)
+        legacy_text = legacy.roundtrip(source, baseline)
         doc = api.read(data)
         try:
             output.write_bytes(api.write(doc))
