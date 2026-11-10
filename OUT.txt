@@ -1,0 +1,34 @@
+已完成并推送 `03b46b46`，Draft PR：[#110](https://github.com/NoGod3524/EXReader/pull/110)。PR CI 已自动触发，目前排队中。
+
+消费者目录：
+
+```text
+C:\Users\Oscar\AppData\Local\Temp\exreader-consumer-n4hry411
+```
+
+在该目录执行的构建命令：
+
+```powershell
+foreach ($m in 'static','shared','runtime') {
+  cmake -S project -B "build-$m" -G Ninja "-DSDK_ROOT=$PWD/sdk" "-DMODE=$m" -DCMAKE_BUILD_TYPE=Release
+  cmake --build "build-$m" --config Release --verbose
+}
+```
+
+三种接入均退出 `0`：
+
+```text
+PASS mode=static  title="Platform delivery smoke" pages=216 render=static.png
+PASS mode=shared  title="Platform delivery smoke" pages=216 render=shared.png
+PASS mode=runtime title="Platform delivery smoke" pages=216 render=runtime.png
+PASS runtime symbols=389
+```
+
+三个 PNG 完全一致。
+
+- **ABI：基线 389，导出 427，缺失 0，新增 38。** 新增均为有意增加的字典、CFI、7z 和布局 API。
+- **只有头文件：** 编译成功，链接退出 `1`：`cannot find -lexreader: No such file or directory`。
+- **版本不匹配：** 三种模式均退出 `4`：`SDK_VERSION_MISMATCH: header=3.43.0 library=3.42.0`。
+- **CTest：** `installed-consumer-contract` 通过。
+
+完整命令、输出和逐步记录见 [验收证据](/C:/Users/Oscar/Documents/Codex/EXReader-S3-20261109/evidence/sdk-consumer-20261109/README.md) 与 [S3-OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-S3-20261109/S3-OUT.txt)。
