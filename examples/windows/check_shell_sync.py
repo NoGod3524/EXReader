@@ -79,7 +79,12 @@ def profile_run(exe, font, out, name, annot_dir, script, captures=()):
     old = os.environ.get('EXREADER_ANNOTATIONS_DIR')
     os.environ['EXREADER_ANNOTATIONS_DIR'] = str(annot_dir)
     try:
-        return run(exe, font, phase, script, captures)
+        result = run(exe, font, phase, script, captures)
+        history = phase / f'run-{len(list(phase.glob("run-*"))):02d}'
+        history.mkdir()
+        for name in ('drive.log', 'run.drive', 'result.json'):
+            shutil.copy2(phase / name, history / name)
+        return result
     finally:
         if old is None:
             os.environ.pop('EXREADER_ANNOTATIONS_DIR', None)
@@ -100,7 +105,7 @@ def main():
     url = f'http://127.0.0.1:{port}/dav/'
     results = {}
     try:
-        pa, pb = out / 'A', out / 'B'
+        pa, pb = out / 'A' / 'profile', out / 'B' / 'profile'
         aa, ab = out / 'A-annotations', out / 'B-annotations'
         write_annotations(aa, sha, [(100, 'from device A', 1762600001000)])
         write_annotations(ab, sha, [(200, 'from device B', 1762600002000)])
@@ -110,7 +115,7 @@ def main():
         script = open_book + ['sync_open', 'wait_idle', f'sync_fill|{url}|{USER}|{PASSWORD}', 'sync_click|save', 'sync_pass_empty', 'sync_click|now',
                               'sync_wait|20000', 'sync_check|0|同步完成|0']
         caps = [(f'STEP\t{len(script)}\tsync_check\tPASS', 'sync-ok')]
-        script += ['probe_wait|3000', 'quit']
+        script += ['probe_wait|20000', 'quit']
         results['A-first'] = profile_run(exe, font, out, 'A', aa, script, caps)
         st = remote_state(mock, sha)
         assert st['revision'] == 1 and len(st['annotations']) == 1, st['revision']
@@ -126,7 +131,7 @@ def main():
         # 3. device A restarts (credentials come back from the DPAPI file, nothing is typed) and receives B's annotation
         script = open_book + ['sync_open', 'sync_click|now', 'sync_wait|20000', 'sync_check|0|同步完成|0']
         caps = [(f'STEP\t{len(script)}\tsync_check\tPASS', 'sync-restart')]
-        script += ['probe_wait|3000', 'quit']
+        script += ['probe_wait|20000', 'quit']
         results['A-restart'] = profile_run(exe, font, out, 'A', aa, script, caps)
         assert sorted(read_annotations(aa, sha)) == ['from device A', 'from device B']
 
@@ -136,7 +141,7 @@ def main():
                                     (300, 'offline edit 1', 1762600100000)])
         script = open_book + ['sync_open', 'sync_click|now', 'sync_wait|40000', 'sync_check|4|无法连接服务器|1']
         caps = [(f'STEP\t{len(script)}\tsync_check\tPASS', 'sync-offline')]
-        script += ['probe_wait|3000', 'quit']
+        script += ['probe_wait|20000', 'quit']
         results['A-offline'] = profile_run(exe, font, out, 'A', aa, script, caps)
         queue = json.loads((pa / 'sync.json').read_text('utf8'))['queue']
         assert [q['sha256'] for q in queue] == [sha]
@@ -148,17 +153,17 @@ def main():
         # the new process starts empty, so this is a first upload of the merged state
         script = open_book + ['sync_open', 'sync_click|now', 'sync_wait|20000', 'sync_check|0|同步完成|0']
         caps = [(f'STEP\t{len(script)}\tsync_check\tPASS', 'sync-reconnected')]
-        script += ['probe_wait|3000', 'quit']
+        script += ['probe_wait|20000', 'quit']
         results['A-reconnect'] = profile_run(exe, font, out, 'A', aa, script, caps)
         st = remote_state(mock, sha)
         assert len(st['annotations']) == 3
         assert json.loads((pa / 'sync.json').read_text('utf8'))['queue'] == []
 
         # 6. wrong password on a fresh profile: explicit 401 text, nothing saved as success
-        pc = out / 'C'
+        pc = out / 'C' / 'profile'
         script = open_book + ['sync_open', f'sync_fill|{url}|{USER}|wrong-password', 'sync_click|now', 'sync_wait|20000', 'sync_check|1|HTTP 401|-1']
         caps = [(f'STEP\t{len(script)}\tsync_check\tPASS', 'sync-401')]
-        script += ['probe_wait|3000', 'quit']
+        script += ['probe_wait|20000', 'quit']
         results['C-401'] = profile_run(exe, font, out, 'C', out / 'C-annotations', script, caps)
 
         # 7. credentials are not in plain text anywhere the app writes
@@ -176,7 +181,9 @@ def main():
             mock.kill()
         except Exception:
             pass
-    report = {'exe_sha256': hashlib.sha256(exe.read_bytes()).hexdigest(), 'book_sha256': sha, 'credential_scan': scan,
+    report = {'exe_sha256': hashlib.sha256(exe.read_bytes()).hexdigest(),
+              'dll_sha256': hashlib.sha256((exe.parent / 'libexreader.dll').read_bytes()).hexdigest(),
+              'book_sha256': sha, 'credential_scan': scan,
               'runs': {k: {'exit': v['exit'], 'elapsed_seconds': v['elapsed_seconds']} for k, v in results.items()}}
     (out / 'summary.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf8')
     print(json.dumps(report, ensure_ascii=False, indent=2))

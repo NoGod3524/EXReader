@@ -311,7 +311,7 @@ static void dict_card_paint(HWND window,HDC dc) {
     if(page_buffer_dc)BitBlt(underlay,0,0,box.right,box.bottom,page_buffer_dc,place.left,place.top,SRCCOPY);
     GdiFlush();SelectObject(underlay,old);
   }
-  shell_d2d_card(host_shell,dc,&box,shell_is_dark(),bits,window==dict_popup ? L"查词":window==dict_manager ? L"词典设置":L"生词本");
+  shell_d2d_card(host_shell,dc,&box,shell_is_dark(),bits,window==dict_popup ? L"查词":window==dict_manager ? L"词典设置":window==sy_panel ? L"云同步（WebDAV）":L"生词本");
   if(bitmap)DeleteObject(bitmap);
   if(underlay)DeleteDC(underlay);
 }
