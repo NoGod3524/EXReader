@@ -1,0 +1,90 @@
+{
+  "license": "MIT",
+  "origin": "Original synthetic content; no external inputs.",
+  "fixtures": [
+    {
+      "id": "plain",
+      "path": "plain.docx",
+      "bytes": 3491,
+      "sha256": "8eebb1a5a07a49bd8d74d4d77136edafd779be446dcb00cd322d6528a45303f9",
+      "paragraphs": 3,
+      "body_paragraphs": 3,
+      "tables": 0,
+      "images": 0,
+      "footnotes": 0,
+      "endnotes": 0,
+      "sections": 1,
+      "headers": 0
+    },
+    {
+      "id": "heading",
+      "path": "heading.docx",
+      "bytes": 3525,
+      "sha256": "6898821fad299762c4cc4bd3d77dcc0b525f30e841408cc0128798d3afc5664b",
+      "paragraphs": 3,
+      "body_paragraphs": 3,
+      "tables": 0,
+      "images": 0,
+      "footnotes": 0,
+      "endnotes": 0,
+      "sections": 1,
+      "headers": 0
+    },
+    {
+      "id": "table",
+      "path": "table.docx",
+      "bytes": 6092,
+      "sha256": "45b3f65b718dc37960353febb7733c57640fd97f6f1b4a80a170751479f764b1",
+      "paragraphs": 12,
+      "body_paragraphs": 3,
+      "tables": 1,
+      "images": 0,
+      "footnotes": 0,
+      "endnotes": 0,
+      "sections": 1,
+      "headers": 0
+    },
+    {
+      "id": "image",
+      "path": "image.docx",
+      "bytes": 4443,
+      "sha256": "7e99e0037ab6cd5d0ff99c99ff08d230d8fd7ade04092dbf3ffe49ce7d17c980",
+      "paragraphs": 3,
+      "body_paragraphs": 3,
+      "tables": 0,
+      "images": 1,
+      "footnotes": 0,
+      "endnotes": 0,
+      "sections": 1,
+      "headers": 0
+    },
+    {
+      "id": "notes",
+      "path": "notes.docx",
+      "bytes": 5190,
+      "sha256": "be0f897be0aac93d2c1289ddba5d04cfd89b6db38940a3fcbeedcd20f67ef448",
+      "paragraphs": 3,
+      "body_paragraphs": 3,
+      "tables": 0,
+      "images": 0,
+      "footnotes": 1,
+      "endnotes": 1,
+      "sections": 1,
+      "headers": 0
+    },
+    {
+      "id": "sections",
+      "path": "sections.docx",
+      "bytes": 4582,
+      "sha256": "d2d2fa36177b7b57aa5d75719894108a9f160213ac3425a8e179080f7bff2c55",
+      "paragraphs": 3,
+      "body_paragraphs": 3,
+      "tables": 0,
+      "images": 0,
+      "footnotes": 0,
+      "endnotes": 0,
+      "sections": 2,
+      "headers": 1
+    }
+  ]
+}

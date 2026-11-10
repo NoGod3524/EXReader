@@ -190,7 +190,7 @@ static void section_props(const source_xml *x,size_t pr,exr_edit_section *s) {
   }
 }
 
-/* Each exr_edit_xml_child remains an independent exr_edit_xml_raw run unless it is a plain text run.
+/* Each child remains an independent raw run unless it is a plain text run.
    Fields, hyperlinks, drawings, revisions and note references remain opaque;
    editing their neighbouring text can never flatten them into plain text. */
 exr_status exr_edit_xml_decode_runs(const source_xml *x,size_t p,exr_edit_run **out,size_t *count) {
@@ -320,7 +320,7 @@ exr_status exr_edit_main_part(const exr_edit_part *parts,size_t n,char name[2048
   const exr_edit_part *p=exr_edit_part_named(parts,n,"_rels/.rels"); source_xml x={0}; size_t i; exr_status status;
   if (!p) return EXR_FORMAT;
   status=exr_edit_xml_parse(&x,p->data,p->size,"Relationships",e); if (status) return status;
-  strcpy(name,"exr_edit_xml_word/document.xml");
+  strcpy(name,"word/document.xml");
   for (i=0;i<x.tree->node_count;i++) {
     const exr_node *v=x.tree->nodes+i; const char *type=exr_node_attribute(v,"Type");
     if (type && (!strcmp(type,R "/officeDocument") || !strcmp(type,RS "/officeDocument"))) {
@@ -817,7 +817,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
   parts=exr_edit_parts(doc,&np); sections=exr_edit_sections(doc,&ns); nb=exr_edit_block_count(doc);
   if (!ns) return exr_fail(e,EXR_ARGUMENT,"Editable document has no sections");
   for (i=0;i<np;i++) if (!part_path(parts[i].name)) return exr_fail(e,EXR_ARGUMENT,"Invalid DOCX part path");
-  strcpy(main,"exr_edit_xml_word/document.xml");
+  strcpy(main,"word/document.xml");
   if (np) { status=exr_edit_main_part(parts,np,main,e); if (status) goto done; }
   p=exr_edit_part_named(parts,np,main);
   if (p) {
@@ -900,13 +900,13 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
   }
   status=EXR_MEMORY;
   if (!np) {
-    const char *types="<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/><Override PartName=\"/exr_edit_xml_word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/><Override PartName=\"/exr_edit_xml_word/header1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml\"/><Override PartName=\"/exr_edit_xml_word/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml\"/></Types>";
-    const char *rels="<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"officeDocument\" Type=\"" R "/officeDocument\" Target=\"exr_edit_xml_word/document.xml\"/></Relationships>";
+    const char *types="<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/><Override PartName=\"/word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/><Override PartName=\"/word/header1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml\"/><Override PartName=\"/word/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml\"/></Types>";
+    const char *rels="<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"officeDocument\" Type=\"" R "/officeDocument\" Target=\"word/document.xml\"/></Relationships>";
     const char *dr="<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"exrHeader\" Type=\"" R "/header\" Target=\"header1.xml\"/><Relationship Id=\"exrStyles\" Type=\"" R "/styles\" Target=\"styles.xml\"/></Relationships>";
     const char *styles="<w:styles xmlns:w=\"" W "\"><w:docDefaults><w:rPrDefault>" DEFAULT_RPR "</w:rPrDefault></w:docDefaults><w:style w:type=\"paragraph\" w:default=\"1\" w:styleId=\"Normal\"><w:name w:val=\"Normal\"/>" DEFAULT_RPR "</w:style></w:styles>";
     const char *header="<w:hdr xmlns:w=\"" W "\"><w:p><w:pPr><w:spacing w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/><w:jc w:val=\"right\"/>" DEFAULT_RPR "</w:pPr><w:fldSimple w:instr=\" PAGE \" w:dirty=\"true\"><w:r>" DEFAULT_RPR "<w:t>1</w:t></w:r></w:fldSimple><w:fldSimple w:instr=\" DATE \\@ &quot;MMMM d, yyyy&quot; \" w:dirty=\"true\"><w:r>" DEFAULT_RPR "<w:t> </w:t></w:r></w:fldSimple></w:p></w:hdr>";
     exr_edit_part base[5]={{0}};
-    const char *names[]={"[Content_Types].xml","_rels/.rels","exr_edit_xml_word/_rels/document.xml.rels","exr_edit_xml_word/styles.xml","exr_edit_xml_word/header1.xml"};
+    const char *names[]={"[Content_Types].xml","_rels/.rels","word/_rels/document.xml.rels","word/styles.xml","word/header1.xml"};
     const char *values[]={types,rels,dr,styles,header};
     for (i=0;i<5;i++) { base[i].name=names[i]; base[i].data=values[i]; base[i].size=strlen(values[i]); }
     status=exr_edit_images_package(&zip,base,5,main,&xml,images,image_count,e); if (status) goto done;

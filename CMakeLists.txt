@@ -194,6 +194,9 @@ if(EXR_FULL_TESTS)
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_table_image.py
       --library $<TARGET_FILE:exreader> ${group})
   endforeach()
+  add_test(NAME native-docx-editor-e2e COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_editor_e2e.py
+    --library $<TARGET_FILE:exreader>)
   add_executable(exreader-docx-edit-test tests/test_docx_edit.c)
   target_link_libraries(exreader-docx-edit-test PRIVATE exreader)
   if(WIN32)
