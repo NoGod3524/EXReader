@@ -101,11 +101,11 @@ static int para_props_valid(const exr_edit_para_props *p) {
 }
 static int block_valid(const exr_edit_block *b) {
   size_t i;
-  if (b->kind<EXR_EDIT_PARAGRAPH || b->kind>EXR_EDIT_PAGE_BREAK ||
+  if (b->kind<EXR_EDIT_PARAGRAPH || b->kind>EXR_EDIT_OPAQUE_BLOCK ||
       !para_props_valid(&b->props) || (b->opaque_size && !b->opaque_xml) ||
       b->run_count>SIZE_MAX/sizeof(exr_edit_run) || (b->run_count && !b->runs) ||
       (b->kind!=EXR_EDIT_PARAGRAPH && b->run_count) ||
-      (b->kind==EXR_EDIT_TABLE && !b->opaque_size)) return 0;
+      ((b->kind==EXR_EDIT_TABLE || b->kind==EXR_EDIT_OPAQUE_BLOCK) && !b->opaque_size)) return 0;
   for (i=0;i<b->run_count;i++) {
     const exr_edit_run *r=b->runs+i;
     if (!run_props_valid(&r->props) || (r->opaque_size && !r->opaque_xml)) return 0;
@@ -312,8 +312,8 @@ exr_status exr_edit_doc_create(const exr_edit_section *sections,size_t ns,
   memcpy(d->sections,sections,ns*sizeof(*sections)); d->section_count=ns;
   for (i=0;i<ns;i++) {
     exr_edit_section *s=d->sections+i;
-    if (s->page_width<=0 || s->page_height<=0 || s->margin_top<0 || s->margin_right<0 ||
-        s->margin_bottom<0 || s->margin_left<0 || s->header_distance<0 ||
+    if (s->page_width<=0 || s->page_height<=0 || s->margin_right<0 ||
+        s->margin_left<0 || s->header_distance<0 ||
         s->footer_distance<0 || s->landscape>1) { status=EXR_ARGUMENT; goto fail; }
     for (j=0;j<3;j++) if (!string_field(s->header_refs[j],128) || !string_field(s->footer_refs[j],128)) {
       status=EXR_ARGUMENT; goto fail;
@@ -483,7 +483,8 @@ exr_status exr_edit_delete_block(exr_edit_doc *d,exr_edit_id id) {
   if (s) return s;
   index=find_index(d,id);
   if (index==SIZE_MAX) return command_failure(d,EXR_ARGUMENT);
-  if (d->blocks[index]->view.kind==EXR_EDIT_TABLE) return command_failure(d,EXR_UNSUPPORTED);
+  if (d->blocks[index]->view.kind==EXR_EDIT_TABLE ||
+      d->blocks[index]->view.kind==EXR_EDIT_OPAQUE_BLOCK) return command_failure(d,EXR_UNSUPPORTED);
   c.index=index; c.before=d->blocks[index]; c.after=NULL;
   return modify(d,&c,1);
 }

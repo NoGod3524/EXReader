@@ -54,7 +54,9 @@ typedef struct {
   exr_edit_run_kind kind;
   const char *text; size_t text_size; /* UTF-8, byte length, owned copy is NUL terminated */
   exr_edit_run_props props;
-  const void *opaque_xml; size_t opaque_size; /* Uninterpreted drawing/unknown inline XML */
+  /* OPAQUE_RUN: complete unmodelled inline XML. TEXT: optional original run
+     template, backed by the retained DOCX main part when using the IO bridge. */
+  const void *opaque_xml; size_t opaque_size;
 } exr_edit_run;
 typedef enum { EXR_EDIT_PARAGRAPH,EXR_EDIT_TABLE,EXR_EDIT_PAGE_BREAK,
   EXR_EDIT_OPAQUE_BLOCK } exr_edit_block_kind;
@@ -84,6 +86,16 @@ EXR_API exr_status exr_edit_doc_create(const exr_edit_section *sections,size_t s
   const exr_edit_block *blocks,size_t block_count,const exr_edit_part *parts,size_t part_count,
   const exr_edit_options *options,exr_edit_doc **out);
 EXR_API void exr_edit_doc_free(exr_edit_doc *doc);
+/* Lossless OPC-backed DOCX IO. Unknown XML and package parts are retained.
+   UTF-8/US-ASCII XML only. Outputs are cleared on failure; release successful
+   write output with exr_free(). Edits invalidate retained digital signatures. */
+EXR_API exr_status exr_edit_docx_read(const void *data,size_t size,
+  const exr_edit_options *options,exr_edit_doc **out,exr_error *error);
+EXR_API exr_status exr_edit_docx_open(const char *path,const exr_edit_options *options,
+  exr_edit_doc **out,exr_error *error);
+EXR_API exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,
+  size_t *size,exr_error *error);
+
 /* Borrowed read-only views. Block/run views expire when that block changes or
    leaves the model; IDs remain stable. Sections and parts live until doc_free.
    Objects are single-threaded; callers serialize access. */
