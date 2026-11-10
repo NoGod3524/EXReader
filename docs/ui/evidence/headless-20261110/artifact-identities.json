@@ -1,0 +1,38 @@
+{
+  "source_revision": "787e86e09cd3ca517922e6b14dfbee31ed1bcf98",
+  "artifacts": [
+    {
+      "path": "build/w/check_sync.exe",
+      "bytes": 1796720,
+      "sha256": "d4fe19ab3887c7589d348851e424ccbdd421c42e89f960c7c5b5a9fbdbe60fb3",
+      "pe_subsystem": 3
+    },
+    {
+      "path": "build/w/check_shell_opds.exe",
+      "bytes": 93418,
+      "sha256": "69da0b637b9ae921a431b1e4aca357d8c81070e6decedc1ff357335bf28eaff6",
+      "pe_subsystem": 3
+    },
+    {
+      "path": "build/host/EXReader.exe",
+      "bytes": 2672167,
+      "sha256": "0a5cbb78ba31f373002c481b54a84cd462b73853f239b1271cf30759a749e41a",
+      "pe_subsystem": 2
+    },
+    {
+      "path": "build/w/libexreader.dll",
+      "bytes": 6346126,
+      "sha256": "d510c3895159644f3f59716b7824cfa3143abc26102c81dcb683046ca0c35df6"
+    },
+    {
+      "path": "build/host/libexreader.dll",
+      "bytes": 6346126,
+      "sha256": "d510c3895159644f3f59716b7824cfa3143abc26102c81dcb683046ca0c35df6"
+    }
+  ],
+  "unchanged_protected_files": {
+    "tests/check_reading_release.py": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b",
+    "tools/version_literal_exceptions.json": "6d2ab944c7c624b1f82ffa61b0c742fb1cb731b88bd700b245bac644aa247fc2"
+  },
+  "gui_execution": "not performed"
+}

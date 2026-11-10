@@ -1,0 +1,10 @@
+[1/3] Building CXX object CMakeFiles/EXReader.dir/shell_d2d.cpp.obj
+[2/3] Building C object CMakeFiles/EXReader.dir/C_/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/examples/reader.c.obj
+FAILED: [code=1] CMakeFiles/EXReader.dir/C_/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/examples/reader.c.obj 
+C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\gcc.exe -DEXR_READER_WINDOWS_SHELL=1 -isystem C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/out/sdk/include -O2 -Wall -Wextra -Werror -std=gnu11 -MD -MT CMakeFiles/EXReader.dir/C_/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/examples/reader.c.obj -MF CMakeFiles\EXReader.dir\C_\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110\examples\reader.c.obj.d -o CMakeFiles/EXReader.dir/C_/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/examples/reader.c.obj -c C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/examples/reader.c
+In file included from C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/examples/reader.c:4318:
+C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/examples/windows/shell_sync.inc:923:12: error: 'sy_sync_now' defined but not used [-Werror=unused-function]
+  923 | static int sy_sync_now(sy_status *out) {
+      |            ^~~~~~~~~~~
+cc1.exe: all warnings being treated as errors
+ninja: build stopped: subcommand failed.

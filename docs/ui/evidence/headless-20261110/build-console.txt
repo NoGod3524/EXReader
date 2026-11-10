@@ -1,0 +1,65 @@
+ninja: warning: premature end of file; recovering
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- ===========================================================================
+-- 
+-- CMake version in use ......... 4.4.2
+-- 
+-- Configuration
+--   Generator .................. Ninja
+--   Build type ................. Release
+--   Prefix ..................... C:/Program Files (x86)/EXReader
+--   Shared libraries ........... OFF
+--   Character type ............. char (UTF-8)
+--   Library name postfix ....... 
+-- 
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... ON
+--   Install files .............. OFF
+-- 
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+-- 
+--   Entropy sources
+--     rand_s ................... ON
+-- 
+-- ===========================================================================
+CMake Warning (deprecated) at C:/Users/Oscar/exr-deps/miniz/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+-- Editing reflow disabled: supply EXR_EDIT_MODEL_SOURCE from X1
+-- Configuring done (4.7s)
+-- Generating done (1.4s)
+-- Build files have been written to: C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/build/w
+ninja: warning: premature end of file; recovering
+[0/4] Re-checking globbed directories...
+[1/17] Building C object CMakeFiles/exr_doc_objects.dir/src/opds.c.obj
+[2/17] Linking C static library libexr_doc.a
+[3/17] Building C object CMakeFiles/exreader-opds-test.dir/tests/test_opds.c.obj
+[4/17] Building C object CMakeFiles/check_sync.dir/examples/windows/check_sync.c.obj
+[5/17] Building CXX object CMakeFiles/check_sync.dir/examples/windows/shell_d2d.cpp.obj
+[6/17] Building CXX object CMakeFiles/check_sync.dir/examples/windows/shell_speech.cpp.obj
+[7/17] Building CXX object CMakeFiles/check_sync.dir/examples/windows/shell_epub.cpp.obj
+[8/17] Building C object CMakeFiles/check_shell_opds.dir/examples/windows/check_shell_opds.c.obj
+[9/17] Building C object CMakeFiles/exr_sqlite.dir/C_/Users/Oscar/exr-deps/sqlite/sqlite3.c.obj
+[10/17] Linking C static library libexr_sqlite.a
+[11/17] Linking C shared library libexreader.dll
+[12/17] Linking C executable exreader-opds-test.exe
+[13/17] Linking C executable check_shell_opds.exe
+[14/17] Linking CXX executable check_sync.exe

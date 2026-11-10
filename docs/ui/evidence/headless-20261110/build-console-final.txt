@@ -1,0 +1,16 @@
+ninja: warning: premature end of file; recovering
+[0/2] Re-checking globbed directories...
+[1/15] Building C object CMakeFiles/exr_doc_objects.dir/src/opds.c.obj
+[2/15] Linking C static library libexr_doc.a
+[3/15] Building C object CMakeFiles/exreader-opds-test.dir/tests/test_opds.c.obj
+[4/15] Building C object CMakeFiles/check_sync.dir/examples/windows/check_sync.c.obj
+[5/15] Building CXX object CMakeFiles/check_sync.dir/examples/windows/shell_d2d.cpp.obj
+[6/15] Building CXX object CMakeFiles/check_sync.dir/examples/windows/shell_speech.cpp.obj
+[7/15] Building CXX object CMakeFiles/check_sync.dir/examples/windows/shell_epub.cpp.obj
+[8/15] Building C object CMakeFiles/check_shell_opds.dir/examples/windows/check_shell_opds.c.obj
+[9/15] Building C object CMakeFiles/exr_sqlite.dir/C_/Users/Oscar/exr-deps/sqlite/sqlite3.c.obj
+[10/15] Linking C static library libexr_sqlite.a
+[11/15] Linking C shared library libexreader.dll
+[12/15] Linking C executable exreader-opds-test.exe
+[13/15] Linking C executable check_shell_opds.exe
+[14/15] Linking CXX executable check_sync.exe

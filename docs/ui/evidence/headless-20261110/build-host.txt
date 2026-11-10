@@ -1,0 +1,2 @@
+[1/2] Building C object CMakeFiles/EXReader.dir/C_/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/examples/reader.c.obj
+[2/2] Linking CXX executable EXReader.exe

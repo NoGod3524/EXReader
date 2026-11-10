@@ -1,0 +1,24 @@
+{
+  "command": [
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\build\\w\\check_sync.exe"
+  ],
+  "exit_code": 0,
+  "accepted": true,
+  "scenarios": {
+    "merge": true,
+    "first-upload": true,
+    "incremental": true,
+    "conflict": true,
+    "tombstone": true,
+    "lww": true,
+    "401": true,
+    "404": true,
+    "timeout": true,
+    "403": true,
+    "retry": true,
+    "corrupt-remote": true,
+    "offline-queue": true,
+    "reconnect": true,
+    "credentials": true
+  }
+}
