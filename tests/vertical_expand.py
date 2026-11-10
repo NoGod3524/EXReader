@@ -209,6 +209,13 @@ def render(sdk, font, path, cfg, output=None, measure_ink=False):
 
 def test_group(sdk, font, directory, group):
     if group == 'boundaries':
+        # Opening marks have leading blank space; treating it as trailing
+        # space changes existing vertical books even when no ink collides.
+        path=directory/'opening.epub'; epub(path,'<p>「甲</p>')
+        pages=render(sdk,font,path,config(sdk),measure_ink=True)
+        opening=pages[0]['glyphs'][0]
+        assert opening['codepoint']==0x300c and abs(opening['advance']-14)<.02,opening
+        assert opening['ink_bounds'][1]>=36-.02,opening
         for digits in ('2026','1234','0000'):
             for limit in (2,4):
                 path=directory/'boundary.epub'

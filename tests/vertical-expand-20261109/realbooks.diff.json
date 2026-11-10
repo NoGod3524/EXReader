@@ -119,10 +119,7 @@
       "glyph_count_changed": false,
       "added_pages": [],
       "removed_pages": [],
-      "hash_changed_pages": [
-        462,
-        463
-      ]
+      "hash_changed_pages": []
     },
     {
       "id": "pachinko",
@@ -255,7 +252,7 @@
       "hash_changed_pages": []
     }
   ],
-  "hash_changed_pages": 2,
+  "hash_changed_pages": 0,
   "failed_books": [],
-  "needs_review": true
+  "needs_review": false
 }
