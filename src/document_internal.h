@@ -51,6 +51,8 @@ struct exr_document {
   exr_archive_store *shared_archive;
   size_t ncx_resource;
   int has_ncx;
+  exr_media_item *media; /* EPUB part media table; strings owned here. */
+  size_t media_count;
 };
 static inline exr_node exr_doc_node(const exr_document *doc,size_t node) {
   return doc->view ? doc->view->node(doc->view->context,node) : doc->nodes[node];
@@ -107,6 +109,9 @@ exr_status exr_cfi_range_join(const char *start,const char *end,char **out,exr_e
 exr_status exr_document_package_tree(const exr_document *doc,const exr_control *control,exr_document **out,exr_error *error);
 int exr_add_block(exr_document *doc, const char *text, size_t size, unsigned heading);
 char *exr_model_copy(exr_document *doc, const char *text, size_t size);
+/* XHTML media elements whose first child is an engine placeholder TEXT node. */
+int exr_media_element(const char *local_name);
+int exr_media_placeholder(const exr_document *doc, size_t node);
 const char *exr_html_tag(const exr_document *doc, const exr_node *node);
 size_t exr_model_node(exr_document *doc, size_t parent, size_t chapter, exr_node_kind kind,
                       const char *name, const char *text, size_t length);
