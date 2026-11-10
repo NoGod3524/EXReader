@@ -74,6 +74,21 @@ const exr_node *exr_document_nodes(const exr_document *d, size_t *n) {
     *n = d ? d->node_count : 0;
   return d ? d->nodes : NULL;
 }
+const exr_media_item *exr_document_media(const exr_document *d, size_t *n) {
+  if (n)
+    *n = d ? d->media_count : 0;
+  return d && d->media_count ? d->media : NULL;
+}
+int exr_media_element(const char *s) {
+  return !strcmp(s, "audio") || !strcmp(s, "video") || !strcmp(s, "object") || !strcmp(s, "embed");
+}
+int exr_media_placeholder(const exr_document *d, size_t node) {
+  size_t i;
+  for (i = 0; d && i < d->media_count; i++)
+    if (d->media[i].placeholder == node)
+      return 1;
+  return 0;
+}
 const exr_chapter *exr_document_chapters(const exr_document *d, size_t *n) {
   if (n)
     *n = d ? d->chapter_count : 0;
@@ -118,6 +133,16 @@ void exr_model_free(exr_document *d) {
       free((void *)d->chapters[i].id);
       free((void *)d->chapters[i].path);
     }
+  for (i = 0; i < d->media_count; i++) {
+    free((void *)d->media[i].src);
+    free((void *)d->media[i].path);
+    free((void *)d->media[i].media_type);
+    free((void *)d->media[i].poster);
+    free((void *)d->media[i].label);
+  }
+  free(d->media);
+  d->media = NULL;
+  d->media_count = 0;
   free(d->nodes);
   free(d->last_children);
   free(d->chapters);
@@ -231,6 +256,15 @@ static void XMLCALL tree_start(void *user, const char *name, const char **attrs)
       return;
     }
   }
+  /* Reserve one empty TEXT child per XHTML media element so a loader can fill a
+     visible placeholder while keeping preorder node indices; empty text does
+     not change projection, layout or CFI text offsets. */
+  if (!strcmp(p->root_name, "html") && exr_media_element(local_name(name)) &&
+      exr_model_node(p->doc, index, p->chapter, EXR_NODE_TEXT, NULL, "", 0) == SIZE_MAX) {
+    stop(p, EXR_LIMIT);
+    return;
+  }
+  node = &p->doc->nodes[index];
   if (token(exr_node_attribute(node, "http://www.idpf.org/2007/ops|type"), "footnote") ||
       token(exr_node_attribute(node, "http://www.idpf.org/2007/ops|type"), "endnote") ||
       token(exr_node_attribute(node, "role"), "doc-footnote") ||
@@ -677,6 +711,7 @@ size_t exr_document_memory_size(const exr_document *d) {
   total = exr_memory_array(total, d->chapters, d->chapter_capacity, sizeof(*d->chapters));
   total = exr_memory_array(total, d->resources, d->resource_capacity, sizeof(*d->resources));
   total = exr_memory_array(total, d->resource_data, d->resource_count, sizeof(*d->resource_data));
+  total = exr_memory_array(total, d->media, d->media_count, sizeof(*d->media));
   total = exr_memory_add(total, d->model_bytes);
   /* Custom construction copies its title through exr_model_copy. Chapter strings
      either alias resource metadata or were copied through that same model path. */
