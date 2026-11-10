@@ -182,6 +182,12 @@ if(EXR_BUILD_TOOLS)
 endif()
 if(EXR_FULL_TESTS)
   enable_testing()
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  foreach(group roundtrip parts unknown sections properties edits split namespaces new errors)
+    add_test(NAME native-docx-edit-io-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_io.py
+      --library $<TARGET_FILE:exreader> ${group})
+  endforeach()
   add_executable(exreader-docx-edit-test tests/test_docx_edit.c)
   target_link_libraries(exreader-docx-edit-test PRIVATE exreader)
   if(WIN32)

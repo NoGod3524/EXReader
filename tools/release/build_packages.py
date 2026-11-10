@@ -33,6 +33,24 @@ def artifact(directories, names):
     raise FileNotFoundError(f'Build the required target first; missing {names}')
 
 
+def package_readme(target, import_name=None):
+    text = (ROOT / 'tools/release/README.md').read_text(encoding='utf-8')
+    if target == 'win-x64' and import_name and import_name.endswith('.dll.a'):
+        start, end = text.index('### Windows'), text.index('### Linux')
+        text = text[:start] + '''### Windows (MinGW x64)
+
+Install MinGW-w64 GCC and add its bin directory to PATH, then start PowerShell.
+
+```powershell
+$env:PATH = "$PWD\\lib;$env:PATH"
+gcc -std=c11 -Wall -Wextra -Iinclude examples/minimal/main.c -Llib -lexreader -o minimal.exe
+.\\minimal.exe examples\\minimal\\sample.epub examples\\minimal\\font.ttf page-1.pgm
+```
+
+''' + text[end:]
+    return text
+
+
 def copy_licenses(build, package, cache):
     switches = {key: switch(value) for key, value in cache.items()}
     for component in COMPONENTS:
@@ -90,7 +108,8 @@ def collect(build, package, target, config):
     copy(ROOT / 'tests/fixtures/fonts/README.md', package / 'examples/minimal/FONT-LICENSE.md')
     for name in ('LICENSE', 'THIRD_PARTY_NOTICES.md', 'VERSION'):
         copy(ROOT / name, package / name)
-    copy(ROOT / 'tools/release/README.md', package / 'README.md')
+    (package / 'README.md').write_text(package_readme(target, import_lib.name if target == 'win-x64' else None),
+                                     encoding='utf-8', newline='\n')
     copy_licenses(build, package, cache)
     lines = []
     for path in sorted(package.rglob('*')):

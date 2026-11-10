@@ -2,10 +2,25 @@
 #ifndef EXR_FORMATS_H
 #define EXR_FORMATS_H
 #include "document.h"
+#include "edit.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 typedef struct exr_sevenz exr_sevenz;
+
+/* Lossless OPC-backed editable DOCX bridge. Unknown blocks/runs and all OPC
+   parts are deep-owned by the model. Direct pPr/rPr values are exposed; absent
+   properties continue to inherit from the retained styles/numbering parts.
+   UTF-8 XML only; other encodings return EXR_UNSUPPORTED without producing a
+   partial model. read/open clear out on failure. write clears data/size on
+   failure; release successful output with exr_free(). No source file is changed.
+   Digital signatures are retained as parts but edits invalidate their digest. */
+EXR_API exr_status exr_edit_docx_read(const void *data,size_t size,
+  const exr_edit_options *options,exr_edit_doc **out,exr_error *error);
+EXR_API exr_status exr_edit_docx_open(const char *path,const exr_edit_options *options,
+  exr_edit_doc **out,exr_error *error);
+EXR_API exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,
+  size_t *size,exr_error *error);
 typedef struct {
   size_t struct_size;
   size_t max_unpack_size; /* Default 128 MiB: packed input AND each decoded stage. */
