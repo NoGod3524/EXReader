@@ -1,0 +1,9 @@
+open|X4 Acceptance
+shell|on
+shell_client|1100|700
+wait_idle
+annot_pick|0|marker
+annot_edit|this copy will be truncated|0|preview
+annot_autosave
+annot_dump|ready
+probe_wait|120000

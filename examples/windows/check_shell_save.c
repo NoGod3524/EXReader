@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 static const char *pause_stage;
-static int corrupt_readback,corrupt_temp;
+static int corrupt_readback,corrupt_temp,block_rollback;
 static wchar_t ready[4096];
 static void shell_save_checkpoint(const wchar_t *path,const char *stage) {
   int temp=wcslen(path)>=4 && !wcscmp(path+wcslen(path)-4,L".tmp");
@@ -15,6 +15,10 @@ static void shell_save_checkpoint(const wchar_t *path,const char *stage) {
     HANDLE file=CreateFileW(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,0,NULL);
     assert(file!=INVALID_HANDLE_VALUE);DWORD written=0;
     assert(WriteFile(file,"!",1,&written,NULL) && written==1);assert(FlushFileBuffers(file));CloseHandle(file);
+    if(block_rollback && !strcmp(stage,"readback")) {
+      wchar_t blocked[4096];assert(shell_save_suffix(blocked,4096,path,L".tmp"));
+      assert(CreateDirectoryW(blocked,NULL));
+    }
     corrupt_readback=corrupt_temp=0;
   }
   if(pause_stage && temp && !strcmp(stage,pause_stage)) {
@@ -68,14 +72,25 @@ int main(int argc,char **argv) {
   assert(shell_save_equal(path,old,sizeof(old)-1,valid,NULL));
   assert(GetFileAttributesExW(path,GetFileExInfoStandard,&after));
   assert(CompareFileTime(&before.ftLastWriteTime,&after.ftLastWriteTime)==0);
+  wchar_t backup[4096],temp_path[4096];
+  assert(shell_save_suffix(backup,4096,path,L".bak"));assert(shell_save_suffix(temp_path,4096,path,L".tmp"));
+  corrupt_readback=block_rollback=1;
+  assert(shell_save_replace(path,changed,sizeof(changed)-1,valid,NULL,NULL)==-1);
+  assert(shell_save_equal(backup,old,sizeof(old)-1,valid,NULL));
+  assert(RemoveDirectoryW(temp_path));block_rollback=0;
+  assert(MoveFileExW(backup,path,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH));
   DeleteFileW(path);corrupt_readback=1;
   assert(shell_save_replace(path,changed,sizeof(changed)-1,valid,NULL,NULL)==0);
   assert(GetFileAttributesW(path)==INVALID_FILE_ATTRIBUTES);
   assert(shell_save_replace(path,old,sizeof(old)-1,valid,NULL,NULL)==1);
   assert(shell_save_autosave(path,changed,sizeof(changed)-1,valid,NULL)==1);
-  assert(shell_save_replace(path,changed,sizeof(changed)-1,valid,NULL,NULL)==1);
+  /* Test ordering explicitly; filesystem and wall clocks need not tick together. */
+  WIN32_FILE_ATTRIBUTE_DATA copy;assert(GetFileAttributesExW(auto_path,GetFileExInfoStandard,&copy));
+  ULARGE_INTEGER next;next.LowPart=copy.ftLastWriteTime.dwLowDateTime;next.HighPart=copy.ftLastWriteTime.dwHighDateTime;next.QuadPart++;
+  FILETIME newer={next.LowPart,next.HighPart};
+  assert(shell_save_replace(path,changed,sizeof(changed)-1,valid,NULL,&newer)==1);
   assert(shell_save_recovery(path,&recovered,&size,valid,NULL)==0);
   assert(shell_save_discard(path));
-  puts("PASS CRC32; length; truncation; payload CRC; structure; discard; timestamp; temp validation; readback rollback; first-save rollback");
+  puts("PASS CRC32; length; truncation; payload CRC; structure; discard; timestamp; temp validation; readback rollback; failed rollback retains backup; first-save rollback");
   return 0;
 }

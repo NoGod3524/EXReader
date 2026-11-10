@@ -1,0 +1,32 @@
+Window: "EXReader - X4 Acceptance", App: EXReader.exe.
+	0 window (disabled) EXReader - X4 Acceptance Secondary Actions: Raise
+		1 dialog EXReader Secondary Actions: Raise
+			2 button Yes ID: 6
+			3 button No ID: 7
+			4 image ID: 20
+			5 text 有未保存的修改，是否恢复？ ID: 65535
+			6 title bar (settable, string) Value: EXReader
+				7 button (disabled) Close
+		8 正文 阅读区域 Description: 选择文字后可复制引用或添加标注 Value: X4 persistence acceptance document. Select this text to attach a note. A complete note must survive process termination. ID: IDC_PAGE
+		9 button ← 书架 ID: 180
+		10 button 目录 ID: 160
+		11 button 设置 ID: 161
+		12 button 全文搜索 ID: 180
+		13 title bar (settable, string) Value: EXReader - X4 Acceptance
+			14 menu bar System ID: MenuBar
+				15 menu item System
+			16 button Minimize
+			17 button Maximize
+			18 button Close
+		1 dialog EXReader Secondary Actions: Raise
+			2 button Yes ID: 6
+			3 button No ID: 7
+			4 image ID: 20
+			5 text 有未保存的修改，是否恢复？ ID: 65535
+			6 title bar (settable, string) Value: EXReader
+				7 button (disabled) Close
+
+Document text: ```
+X4 persistence acceptance document. Select this text to attach a note.
+A complete note must survive process termination.
+```

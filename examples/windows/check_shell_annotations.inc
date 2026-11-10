@@ -16,7 +16,7 @@ static void test_annotations(void) {
   annot_autosave();assert(annot_storage.dirty && annot_storage.autosaved==annot_storage.revision);
   assert(annot_save() && !annot_storage.dirty);
   cv_text saved={0};annot_serialize(&saved);assert(!saved.failed);
-  annot_clear();assert(annot_parse(saved.data,saved.size));annot_resolve();annot_writable=1;
+  annot_clear();assert(annot_parse(saved.data,saved.size));annot_resolve();annot_writable=1;annot_book=g.frame.book_id;
   for(int i=0;i<8;i++)assert(annotations[i].found && annotations[i].range.start.offset==(size_t)i*3 && annotations[i].color==i%3);
   annot_selected=7;select_all_part();assert(annot_selected==-1);
   assert(!strcmp(annotations[7].text,"笔记\n\"quote\"\\😀"));
@@ -36,13 +36,24 @@ static void test_annotations(void) {
   }
   annot_selected=7;assert(annot_commit("edited",2));assert(annotations[7].color==2 && !strcmp(annotations[7].text,"edited"));
   assert(annot_delete());assert(annot_count==7);
-  annot_selected=6;annot_open();SetWindowTextW(annot_edit,L"unsubmitted editor draft 中文 😀");
+  ShowWindow(g.window,SW_SHOWNOACTIVATE); /* EN_CHANGE follows the real visible editor path. */
+  annot_selected=6;annot_open();SendMessageW(annot_edit,EM_SETSEL,0,-1);
+  SendMessageW(annot_edit,EM_REPLACESEL,TRUE,(LPARAM)L"unsubmitted editor draft 中文 😀");
   assert(annot_storage.dirty && !strcmp(annotations[6].text,"unsubmitted editor draft 中文 😀"));
   annot_autosave();char *draft=NULL;size_t draft_size=0;
   assert(shell_save_recovery(annot_path,&draft,&draft_size,annot_validate,NULL)==1);
   assert(strstr(draft,"unsubmitted editor draft"));free(draft);annot_cancel_edit();
   assert(strcmp(annotations[6].text,"unsubmitted editor draft 中文 😀"));
   assert(annot_save() && !annot_storage.dirty);
+  annot_selected=6;annot_open();SendMessageW(annot_edit,EM_SETSEL,0,-1);
+  SendMessageW(annot_edit,EM_REPLACESEL,TRUE,(LPARAM)L"leave decision draft");
+  assert(annot_storage.dirty);annot_test_answer=IDYES;g.drive_mode=1;
+  assert(annot_before_leave() && !annot_storage.dirty && !IsWindowVisible(annot_panel));
+  host_job opening={0};opening.kind=JOB_OPEN;g.pending=&opening;
+  assert(!annot_commit("late edit",0));g.pending=NULL;
+  g.frame.fixed=1;g.frame.book_id++;annot_sync();
+  assert(!annot_writable && annot_count==0 && !annot_path[0]);
+  g.frame.fixed=0;g.frame.book_id--;annot_sync();assert(annot_writable && annot_count==7);
   shell_annotation *items=annotations;int count=annot_count;annotations=NULL;annot_count=0;
   assert(!annot_parse("{\"version\":2}",13));assert(!annot_parse("{broken",7));
   const char *nul="{\"version\":1,\"text\":\"\\u0000\"}";assert(!annot_parse(nul,strlen(nul)));
