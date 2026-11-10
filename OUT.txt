@@ -1,0 +1,17 @@
+已完成并复验，推送至 `codex/drm-lcp-20261109`，最新提交 `26fd7be9`。Draft PR **[#105](https://github.com/NoGod3524/EXReader/pull/105)**，目标 `main`；自动 CI 已触发，仍在运行或排队。
+
+- **LCP Basic Profile**：`open_ex` 接收口令，SHA-256 派生用户密钥、AES-256-CBC 按资源内存解密，不落盘。算法依据[公开规范](https://readium.org/lcp-specs/releases/lcp/latest.html)。
+- **公开样本**：EDRLab/Readium《The Waste Land》成功打开，**48 页**；10 个资源、1,612,682 字节与原书完全一致。
+- **19 本回归**：共 **11,116 页**，页数和逐页哈希全部不变。
+- **ctest：240/240 通过，新增 6 组**。
+
+| 场景 | 错误码 |
+|---|---|
+| 无口令 | `EXR_DRM_PASSPHRASE_REQUIRED`（14） |
+| 口令错 | `EXR_DRM_PASSPHRASE_INCORRECT`（15） |
+| 许可证过期 | `EXR_DRM_LICENSE_EXPIRED`（16，附过期日期） |
+| 算法不支持 | `EXR_DRM_UNSUPPORTED`（17） |
+
+商用 LCP profile、签名及证书校验尚未实现。**ADEPT 未支持**：缺少授权 EPUB、许可证及可用用户密钥，需完整测试组合和原书对照。借阅回收、设备激活未实现。
+
+[完整报告与样本来源](C:/Users/Oscar/Documents/Codex/EXReader-A2-20261109/evidence/drm-lcp-20261109/REPORT.md) · [持续进度日志](C:/Users/Oscar/Documents/Codex/EXReader-A2-20261109/DRM-OUT.txt)
