@@ -325,7 +325,7 @@ typedef struct {
   exr_direction page_progression;
   int in_title,in_language,have_language,failed,depth;
   /* Package-level EPUB 3 Fixed Layout metadata (rendition: vocabulary). */
-  int in_meta,meta_kind,layout,spread_none,progression;
+  int in_meta,meta_kind,layout,spread_none;
   float viewport_width,viewport_height;
 } package;
 /* Space-separated property token test (OPF properties attribute). */
@@ -392,10 +392,6 @@ static void XMLCALL package_start(void *user, const char *full, const char **att
       if (!p->spine[p->spine_count++].id)
         p->failed = 1;
     }
-  }
-  if (!strcmp(tag, "spine")) {
-    b = attribute(attrs, "page-progression-direction");
-    if (b) p->progression = !strcmp(b, "rtl") ? 2 : !strcmp(b, "ltr") ? 1 : 0;
   }
   if (!strcmp(tag, "spine") && !p->toc_id) {
     a = attribute(attrs, "toc");
@@ -829,7 +825,6 @@ static exr_status epub_metadata(exr_document *d, archive *z, int strict, const c
     if (result != EXR_OK)
       goto done;
   }
-  d->page_progression = p.progression;
   d->spread_none = p.spread_none;
   for (i = 0; i < p.spine_count && !p.layout; i++)
     if (p.spine[i].layout || p.spine[i].side) break;

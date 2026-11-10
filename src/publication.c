@@ -322,10 +322,6 @@ exr_status exr_publication_rendition(const exr_publication *p,size_t part,exr_pa
   }
   return exr_fail(e,EXR_OK,"");
 }
-int exr_publication_page_progression(const exr_publication *p) {
-  const exr_document *index=p && p->load==epub_load ? p->context : NULL;
-  return index ? index->page_progression : 0;
-}
 exr_status exr_publication_spreads(const exr_publication *p,exr_spread **out,size_t *count,exr_error *e) {
   exr_spread *list,open={SIZE_MAX,SIZE_MAX,0};
   size_t i,n=0; int rtl,previous=0,none;
@@ -334,7 +330,7 @@ exr_status exr_publication_spreads(const exr_publication *p,exr_spread **out,siz
   if(!p) return exr_fail(e,EXR_ARGUMENT,"Missing publication");
   list=calloc(p->count ? p->count : 1,sizeof(*list));
   if(!list) return exr_fail(e,EXR_MEMORY,"Spread allocation failed");
-  rtl=exr_publication_page_progression(p)==2;
+  rtl=exr_publication_page_progression(p)==EXR_DIRECTION_RTL;
   none=p->load==epub_load && ((const exr_document *)p->context)->spread_none;
 #define FLUSH() do { if(open.left!=SIZE_MAX || open.right!=SIZE_MAX) list[n++]=open; open.left=open.right=SIZE_MAX; open.flags=0; } while(0)
   for(i=0;i<p->count;i++) {

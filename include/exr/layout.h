@@ -176,8 +176,6 @@ typedef struct {
 } exr_part_rendition;
 EXR_API exr_status exr_publication_rendition(const exr_publication *publication, size_t part,
                                              exr_part_rendition *out, exr_error *error);
-/* Spine page-progression-direction: 0 unspecified (ltr), 1 ltr, 2 rtl. */
-EXR_API int exr_publication_page_progression(const exr_publication *publication);
 /* Two-page screens in reading order. left/right are physical slots holding
    part indices, SIZE_MAX when empty. Pre-paginated parts pair by declared
    page-spread sides; an unspecified side alternates from the previous page

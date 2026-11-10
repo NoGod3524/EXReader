@@ -54,7 +54,7 @@ struct exr_document {
   size_t chapter_count, chapter_capacity;
   exr_rendition *renditions; /* NULL unless the EPUB package declares rendition data. */
   size_t rendition_count;     /* Entries, indexed by chapter. */
-  int page_progression, spread_none; /* Spine page-progression-direction 0 default/1 ltr/2 rtl; rendition:spread none. */
+  int spread_none; /* rendition:spread none. */
   exr_resource *resources;
   size_t resource_count, resource_capacity;
   exr_resource_data *resource_data; /* Copied resources from public construction inputs. */
