@@ -22,7 +22,7 @@ b1 原分支缺少 b2/C2 文件，因此把已提交的 b2 实现（`83a554ae`�
 
 ③ 命令与实际输出
 
-以下命令均在仓库根目录运行。完整参数、退出码、耗时和日志关联见 [commands.json](commands.json)。
+以下命令均在仓库根目录运行。完整参数、退出码、耗时和日志关联见 [commands.json](commands.json)。日志统一为 LF 并去除行尾空白。
 
 ```text
 cmake --build build/w --target check_sync check_shell_opds exreader-opds-test -j 2
