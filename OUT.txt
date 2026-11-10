@@ -178,3 +178,5 @@ git diff --check
 - 延迟来自共享机器上的 SDK probe；尚无空闲机器复测和窗口消息队列/屏幕呈现实测。若要给出产品端交互 SLA，还需独立的 reader 窗口端到端测量。
 
 证据目录：evidence/d3-large-20261110/。推送和 draft PR 链接在 LARGE-OUT.txt 收尾记录及会话回执中提供。
+
+发布回执：证据与报告提交 417b2f4f 已推送到 origin/codex/large-book-2-20261110；已创建 draft PR #127：https://github.com/NoGod3524/EXReader/pull/127 。GitHub 当前返回 draft=true、merged=false、mergeable=false，目标 main 已到 fe3d46e1bf94af5381ce91997cb98ab46b9cec29；后续还需主控处理与当前 main 的集成。本轮验证针对前述合并树，不代表已验证与最新 main 的合并结果。
