@@ -1,0 +1,21 @@
+已提交 `d834a3bd`，推送至 `codex/cjk-u3000-20261107`，并创建草稿 [PR #69](https://github.com/NoGod3524/EXReader/pull/69)（base：`main`）。
+
+| 验收项 | 结果 |
+|---|---|
+| 1. 汉字＋任意空白＋汉字 | **370 → 0** |
+| 2. 汉字＋空白＋标点；标点＋空白＋汉字 | **0 → 0；1,719 → 0** |
+| 3. 紅樓夢页数 | **1,077 → 1,073，减少 4 页** |
+| 4. Sample 像素闸门 | **42 → 42 页，哈希差异 0/42** |
+| 5. 混合用例 | 全通过：`GPU 加速` 保留；U+3000／NBSP 的“你好”用例均删除空白；`第一回　甄士隱` → `第一回甄士隱`，因为两侧均为汉字 |
+| 6. ctest | **169/169 全通过** |
+| 7. 改后截图 | [正文截图](C:/Users/Oscar/Documents/Codex/EXReader-u3000-20261107/docs/ui/evidence/2a-step6/wsfix-hongloumeng-body.png)，由 DPI 感知的 `ops/capture_window.py` 抓取 |
+
+统计命令：
+
+```powershell
+python evidence/cjk-u3000-20261107/count_whitespace.py ../cjk-u3000-20261107/before/text ../cjk-u3000-20261107/after/text
+```
+
+完整复现命令、逐页哈希和受保护树登记见 [验收报告](C:/Users/Oscar/Documents/Codex/EXReader-u3000-20261107/evidence/cjk-u3000-20261107/REPORT.md)。
+
+未手动触发 CI，未取消任何 workflow run；提交信息无 CI 跳过标记。
