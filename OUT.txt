@@ -14,3 +14,5 @@
 | 100 个逻辑页、2,000 段 | 200 | 1.60 μs | 1.70 μs | 111,400 B | 12,288 B |
 
 `layers.json` 已登记；`docx.c`、`export_text.c`、`.github/` 未改。完整记录见 [W1-OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-dxmodel-20261110/W1-OUT.txt)。
+[X6 step 1] 接入已提交 X1 依赖 ee47eacc（含 W1 模型、IO bridge、#117 校验器）；当前无 exr_edit_table/image。确认 src/export_text.c 未改。开始基于既有事务/原字节模板扩展。
+[X6 step 2] 已扩展表/行/单元格模型（单元格复用段落块、ID/深拷贝/undo），新增 docx_edit_table.c 与 docx_edit_image.c；共享 XML 模板工具，两个内部头与新源均登记 layers.json。实现行增删、cell runs、宽度/边框、PNG/JPEG inline 与导出时引用清理；开始编译与验收。
