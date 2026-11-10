@@ -812,7 +812,7 @@ static void sm_context(int shelf,int command) {
 static void sm_recent(void) {
   sm_requested=-1;sm_edit_close();
   if(sm_view)ShowWindow(sm_view,SW_HIDE);
-  HWND controls[]={shelf_list,shelf_add,shelf_organize,shelf_stats};
+  HWND controls[]={shelf_list,shelf_add,shelf_organize,shelf_stats,shelf_sources};
   for(size_t i=0;i<sizeof(controls)/sizeof(*controls);i++)if(controls[i])ShowWindow(controls[i],SW_SHOWNA);
   sm_last_tick=sm_now();sm_refresh();
   if(shelf_visible)SetFocus(shelf_list);
@@ -888,7 +888,7 @@ static void sm_shelf_visibility(int show) {
   if(!show){sm_recent();return;}
   if(sm_view && sm_requested>=0) {
     sm_mode=sm_requested;sm_requested=-1;
-    HWND controls[]={shelf_list,shelf_add,shelf_organize,shelf_stats};
+    HWND controls[]={shelf_list,shelf_add,shelf_organize,shelf_stats,shelf_sources};
     for(size_t i=0;i<sizeof(controls)/sizeof(*controls);i++)ShowWindow(controls[i],SW_HIDE);
     ShowWindow(sm_view,SW_SHOW);sm_layout();SetFocus(sm_view);
   }

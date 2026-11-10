@@ -1,0 +1,43 @@
+{
+  "origin_commit": "5cdc779c",
+  "origin_directory": "docs/ui/evidence/a11y-uia-20261110/run1",
+  "historical_only": true,
+  "images": [
+    {
+      "path": "01-text-page.png",
+      "sha256": "901d873f84c981095fb2b67da4ac0c47d23cffc2b6ded661a03e282b4f36c4db"
+    },
+    {
+      "path": "03-toc-button-focused.png",
+      "sha256": "caa67c8b62818c1e2284b046510627dbc17dfc7e221ba8e6b7e2549f2aea620b"
+    },
+    {
+      "path": "04-settings-button-focused.png",
+      "sha256": "3e275110b43c79dd837e78754099adaa6a72c000512416bfef081f3e4d340deb"
+    },
+    {
+      "path": "05-toc-open.png",
+      "sha256": "28fb2711346c390bc99ef5fc443662f1c537782c00e0ea617c3413ca521afd09"
+    },
+    {
+      "path": "06-settings-open.png",
+      "sha256": "1444637a4dbc94a068a51e7afa011dd63289e0ebadc4b94b557f1fd8065a1f8c"
+    },
+    {
+      "path": "08-high-contrast-text.png",
+      "sha256": "6a1c1e01d74d944e6962b9ae1451e264dfdf537daea852e27a8a23242406aecc"
+    },
+    {
+      "path": "09-high-contrast-toc-focus.png",
+      "sha256": "051fd257c427b23b5dd1f89123fc6917060074eebe4c4ab479cb21e9f8340169"
+    },
+    {
+      "path": "10-high-contrast-toc-open.png",
+      "sha256": "051fd257c427b23b5dd1f89123fc6917060074eebe4c4ab479cb21e9f8340169"
+    },
+    {
+      "path": "11-high-contrast-settings-open.png",
+      "sha256": "af77f1c8bd13bdfa48c6aaba3b9e15fba230d062bf18b42a77c88d143f6a0698"
+    }
+  ]
+}

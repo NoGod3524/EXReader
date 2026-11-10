@@ -460,9 +460,14 @@ extern "C" HRESULT shell_d2d_page_image(shell_d2d *s,HDC dc,const RECT *area,con
   hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s);return hr;
 }
 
+/* dark: 0 light, 1 dark, 2 system high contrast (colours supplied by the host). */
+shell_theme shell_theme_contrast = shell_theme_dark; /* declared extern "C" in shell_tokens.h */
+static const shell_theme &theme_of(int dark) { return dark == 2 ? shell_theme_contrast : dark ? shell_theme_dark : shell_theme_light; }
+static float line_alpha(int dark, float normal) { return dark == 2 ? 1.f : normal; }
+
 extern "C" HRESULT shell_d2d_card(shell_d2d *s,HDC dc,const RECT *box,int dark,const uint32_t *background,const wchar_t *title) {
   HRESULT hr=bind_dc(s,dc,box); if(FAILED(hr)) return hr;
-  const auto &c=dark ? shell_theme_dark : shell_theme_light;
+  const auto &c=theme_of(dark);
   float k=s->dpi/96.f,pad=(float)SHELL_SHADOW_PAD*k,top=(float)SHELL_SHADOW_TOP*k,w=(float)(box->right-box->left),h=(float)(box->bottom-box->top);
   auto shadow=shadow_bitmap(s,(unsigned)w,(unsigned)(h+pad-top),1);
   ID2D1Bitmap *underlay=nullptr;
@@ -476,7 +481,7 @@ extern "C" HRESULT shell_d2d_card(shell_d2d *s,HDC dc,const RECT *box,int dark,c
   s->dc_brush->SetColor(D2D1::ColorF(c.layer_float));
   s->dc_target->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(pad,top,w-pad,h-pad),(float)SHELL_RADIUS*k,(float)SHELL_RADIUS*k),s->dc_brush);
   auto border=D2D1::RoundedRect(D2D1::RectF(pad+k/2,top+k/2,w-pad-k/2,h-pad-k/2),14*k,14*k);
-  s->dc_brush->SetColor(D2D1::ColorF(shell_blend(c.layer_float,c.line_rgb,SHELL_LINE_ALPHA)));
+  s->dc_brush->SetColor(D2D1::ColorF(shell_blend(c.layer_float,c.line_rgb,line_alpha(dark,SHELL_LINE_ALPHA))));
   s->dc_target->DrawRoundedRectangle(border,s->dc_brush,k);
   s->dc_brush->SetColor(D2D1::ColorF(c.text));
   s->format[SHELL_TEXT_TITLE]->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
@@ -490,7 +495,7 @@ extern "C" HRESULT shell_d2d_note(shell_d2d *s,HDC dc,const RECT *box,int dark,c
 
 extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,const wchar_t *font,const wchar_t *family,const wchar_t *path,const uint32_t *background) {
   HRESULT hr=bind_dc(s,dc,box); if(FAILED(hr)) return hr;
-  const auto &c=dark ? shell_theme_dark : shell_theme_light;
+  const auto &c=theme_of(dark);
   float k=s->dpi/96.f,pad=(float)SHELL_SHADOW_PAD*k,top=(float)SHELL_SHADOW_TOP*k,w=(float)(box->right-box->left),h=(float)(box->bottom-box->top);
   auto shadow=shadow_bitmap(s,(unsigned)w,(unsigned)(h+pad-top),1);
   ID2D1Bitmap *underlay=nullptr;
@@ -504,7 +509,7 @@ extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,
   s->dc_brush->SetColor(D2D1::ColorF(c.layer_float));
   s->dc_target->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(pad,top,w-pad,h-pad),(float)SHELL_RADIUS*k,(float)SHELL_RADIUS*k),s->dc_brush);
   auto border=D2D1::RoundedRect(D2D1::RectF(pad+k/2,top+k/2,w-pad-k/2,h-pad-k/2),14*k,14*k);
-  s->dc_brush->SetColor(D2D1::ColorF(shell_blend(c.layer_float,c.line_rgb,SHELL_LINE_ALPHA)));
+  s->dc_brush->SetColor(D2D1::ColorF(shell_blend(c.layer_float,c.line_rgb,line_alpha(dark,SHELL_LINE_ALPHA))));
   s->dc_target->DrawRoundedRectangle(border,s->dc_brush,k);
   (void)font;(void)family;(void)path;
   s->dc_brush->SetColor(D2D1::ColorF(c.text));
@@ -523,7 +528,7 @@ extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,
 
 extern "C" HRESULT shell_d2d_control(shell_d2d *s,HDC dc,const RECT *box,const wchar_t *text,int dark,int variant,unsigned state) {
   HRESULT hr=bind_dc(s,dc,box); if(FAILED(hr)) return hr;
-  const auto &c=dark ? shell_theme_dark : shell_theme_light;
+  const auto &c=theme_of(dark);
   const float k=s->dpi/96.f,pad=(float)(variant ? SHELL_SEGMENT_PAD : SHELL_CONTROL_FRAME)*k;
   const float px=variant ? 0 : pad,shadow_pad=(float)SHELL_SHADOW_PAD*k;
   float w=(float)(box->right-box->left),h=(float)(box->bottom-box->top);
@@ -541,7 +546,7 @@ extern "C" HRESULT shell_d2d_control(shell_d2d *s,HDC dc,const RECT *box,const w
   s->dc_brush->SetColor(D2D1::ColorF(shell_blend(base,fill,opacity)));
   s->dc_target->FillRoundedRectangle(rect,s->dc_brush);
   if(variant==0) {
-    s->dc_brush->SetColor(D2D1::ColorF(shell_blend(fill,c.line_rgb,SHELL_LINE_STRONG_ALPHA*opacity)));
+    s->dc_brush->SetColor(D2D1::ColorF(shell_blend(fill,c.line_rgb,line_alpha(dark,SHELL_LINE_STRONG_ALPHA)*opacity)));
     auto border=rect;border.rect.left+=k/2;border.rect.top+=k/2;border.rect.right-=k/2;border.rect.bottom-=k/2;
     s->dc_target->DrawRoundedRectangle(border,s->dc_brush,k);
   }
@@ -567,7 +572,7 @@ static COLORREF toc_rgb(uint32_t c) {return RGB((c>>16)&255,(c>>8)&255,c&255);}
 
 extern "C" HRESULT shell_d2d_toc_row(shell_d2d *s,HDC dc,const RECT *box,const wchar_t *text,
     int dark,unsigned state,int row,float size,unsigned weight,int align) {
-  const auto &c=dark ? shell_theme_dark:shell_theme_light;
+  const auto &c=theme_of(dark);
   float k=s->dpi/96.f;int w=box->right-box->left,h=box->bottom-box->top;
   bool selected=(state&8)!=0;
   if(row>=0) {
@@ -614,7 +619,7 @@ extern "C" HRESULT shell_d2d_toc_row(shell_d2d *s,HDC dc,const RECT *box,const w
       }
       it=s->toc_labels.emplace(key,std::move(label)).first;
     }
-    uint32_t fill=selected ? (dark ? ((state&2) ? 0x2d2f45:0x262835):((state&2) ? 0xeceefc:0xf4f5fd)):
+    uint32_t fill=selected ? (dark==2 ? c.surface3 : dark ? ((state&2) ? 0x2d2f45:0x262835):((state&2) ? 0xeceefc:0xf4f5fd)):
       (state&2) ? c.surface3:(state&1) ? c.surface2:c.layer_side;
     int radius=(int)std::round(9*k);HRGN rounded=CreateRoundRectRgn(0,0,w+1,h+1,2*radius,2*radius);
     HBRUSH brush=CreateSolidBrush(toc_rgb(fill));FillRgn(dc,rounded,brush);DeleteObject(brush);
@@ -650,7 +655,7 @@ extern "C" HRESULT shell_d2d_toc_row(shell_d2d *s,HDC dc,const RECT *box,const w
   hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s);return hr;
 }
 extern "C" HRESULT shell_d2d_toc_begin(shell_d2d *,HDC dc,const RECT *box,int dark) {
-  HBRUSH brush=CreateSolidBrush(toc_rgb(dark ? shell_theme_dark.layer_side:shell_theme_light.layer_side));
+  HBRUSH brush=CreateSolidBrush(toc_rgb(theme_of(dark).layer_side));
   FillRect(dc,box,brush);DeleteObject(brush);return S_OK;
 }
 extern "C" HRESULT shell_d2d_toc_end(shell_d2d *) {return S_OK;}

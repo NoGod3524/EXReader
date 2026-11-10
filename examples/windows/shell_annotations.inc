@@ -198,7 +198,7 @@ static void annot_sync(void) {
   if(!annot_writable)annot_error(L"标注JSON格式错误或版本不支持；原文件已保留，暂停写入。");
   annot_resolve();page_dirty(g.page,0);
 }
-static uint32_t annot_rgb(int color) {return shell_is_dark() ? SHELL_ANNOT_DARK_RGB[color]:SHELL_ANNOT_RGB[color];}
+static uint32_t annot_rgb(int color) {if(shell_contrast)return shell_colors->accent;return shell_is_dark() ? SHELL_ANNOT_DARK_RGB[color]:SHELL_ANNOT_RGB[color];}
 static HRGN annot_region(const shell_annotation *a) {
   if(!a->found || g.frame.part<a->range.start.part || g.frame.part>a->range.end.part)return CreateRectRgn(0,0,0,0);
   return select_region_for(g.frame.part==a->range.start.part ? a->range.start.offset:0,
