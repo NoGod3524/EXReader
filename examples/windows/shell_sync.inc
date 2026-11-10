@@ -920,7 +920,7 @@ static int sy_run_apply(sy_run *run,int *ui_changed) {
   return ok;
 }
 /* Synchronous convenience for tests and the command line. */
-static int sy_sync_now(sy_status *out) {
+static inline int sy_sync_now(sy_status *out) {
   sy_run run;sy_run_net(&run);int changed=0;sy_run_apply(&run,&changed);
   if(out) *out=run.status;
   int code=run.status.code;sy_run_free(&run);return code;
