@@ -1,0 +1,50 @@
+[
+  {
+    "dependency": "freetype",
+    "archive_sha256": "87c7f1f8699b91e89f773f7dcfa505b044e1dae67f62a55d4e29c3afdcac4fb8",
+    "checked_files": 775,
+    "mismatches": []
+  },
+  {
+    "dependency": "expat",
+    "archive_sha256": "6e8ce7b52ebbaa423c59becc7cf1e6875c42e49228c062ac8123c10e700cec27",
+    "checked_files": 231,
+    "mismatches": []
+  },
+  {
+    "dependency": "miniz",
+    "archive_sha256": "98468f8924934b723276680f85238b6c78bf1f8b49b4459cc9b7214a20e2e9fb",
+    "checked_files": 52,
+    "mismatches": []
+  },
+  {
+    "dependency": "stb",
+    "archive_sha256": "9a955b1b49a4410088a2e0ee2a9c057c3c907d0c1d75454144cb980aca0ba515",
+    "checked_files": 431,
+    "mismatches": []
+  },
+  {
+    "dependency": "lcms",
+    "archive_sha256": "267705e278e2f7c2fb886c259dadcbaeb2be52748bcbc71c79f08aacacb7a709",
+    "checked_files": 340,
+    "mismatches": []
+  },
+  {
+    "dependency": "mbedtls",
+    "archive_sha256": "807f0a1cc7c63b571180e9efeb6236b677e550869eb0442ace33aa9c69055fcc",
+    "checked_files": 948,
+    "mismatches": []
+  },
+  {
+    "dependency": "minimp3",
+    "archive_sha256": "5628166eb82a9bb581317918a334c317a2c0a30278bb14a20381307976768f34",
+    "checked_files": 210,
+    "mismatches": []
+  },
+  {
+    "dependency": "sqlite",
+    "archive_sha256": "68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d",
+    "checked_files": 4,
+    "mismatches": []
+  }
+]
