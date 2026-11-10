@@ -1,0 +1,24 @@
+EPUB CFI 兼容层已完成，Draft PR 是 **#90**（https://github.com/NoGod3524/EXReader/pull/90），从 `codex/engine-cfi-20261108` 合入 `main`，状态 MERGEABLE。
+
+**需要你知道的：** 这个 worktree 里同时有一个 Codex 进程在做同一任务（由 `ops/dispatch.ps1 -Engine codex` 启动）。我接手时代码已基本写完，我做的是：重新编译最新修改并跑测试、跑完整 ctest 218/218、记录 CFI-OUT 第 4 步。之后看到 Codex 已开始收集证据，为避免两边同时提交、开出两个 PR，我没有自己提交，等它完成：它提交了 `56d1123a` 和 `2c203b55`，推送并建了 #90。我核对过：远端 HEAD 与本地一致；提交信息里没有 CI 跳过标记，也没有取消任何 workflow run；`examples/` 和 `.github/` 零改动；在已提交的源码上重新编译，8 组 CFI 测试全过。它还留下一个未跟踪的 `CFI-OUT4.txt`（它的回报草稿），我没有动。以后同一 worktree 最好只派一个引擎。
+
+## A–D 实现要点
+- **A 解析与序列化**：新增 `src/cfi_syntax.c`，用状态机逐字符扫描，不用正则。支持折叠 CFI、range CFI、ID 断言、前后文本断言、side bias、`^` 转义、未知扩展参数、时间和空间偏移。非法输入返回 7 类错误码（语法、数字、转义、断言、range、编码、超长）和出错的字节位置。规范里没有 `[pre]`/`[post]`/`[start]`/`[end]` 这类关键字，它们按普通 ID 断言处理。
+- **B 结构映射**：新增 `src/cfi_offset.c`，在真实 XML DOM 上把我们的 `(part, 偏移)` 映射到"节点路径 + 字符偏移"，直接做到了精确 DOM 映射，不是线性折算。spine 路径沿用原 OPF 的 itemref。只读映射，不改排版。
+- **C 锚点互转**：新增 4 个接口：`exr_anchor_to_cfi`、`exr_anchor_from_cfi`、`exr_range_to_cfi`、`exr_range_from_cfi`。支持跨 part range（两端共享 package 层的公共路径）。反向 range、找不到或有歧义的锚点直接报错，不会悄悄退回到别的位置。
+- **D 自检**：63 个测试向量，含 13 个 W3C 规范示例。每个合法向量还会逐个截断前缀测试，确认截断输入不会出错乱。
+- `tools/layers.json` 已登记两个新 `.c` 文件；没有新增 `src/*.h`（`document_internal.h` 是修改已有文件）。
+
+## 七项验收
+| # | 项目 | 结果 |
+|---|---|---|
+| 1 | 解析 | 63/63 = 100%（25 合法 + 38 非法），非法输入全部返回预期错误码 |
+| 2 | 序列化 | 25/25，与原串逐字节相同，断言顺序也不变；没有 `epubcfi(...)` 外壳的输入序列化后会补上外壳 |
+| 3 | anchor ↔ CFI 往返 | 100/100 = **100% 无损**：两端 `(part, 偏移)` 和锚点所有字段都相等，另加 4 个边界用例 |
+| 4 | 跨 part range | 10/10 |
+| 5 | 紅樓夢 | 20/20，落点一致 |
+| 6 | 19 本真书 | 19/19，共 11,296 页，页数变化 0，页哈希变化 0；对比的就是最终 DLL（87b6b6f9） |
+| 7 | ctest | **218/218 全绿**（原有 212 + 新增 6 组：parse / invalid / mapping / roundtrip / cross / contracts） |
+
+紅樓夢那 20 个点是"位置"（起止相同的点 CFI），不是 range。这一项没有注册进 ctest，因为它要读本地书文件；需要用 `tests/collect_cfi_acceptance.py` 单独跑。证据都在 `tests/cfi-acceptance-20261108.json` 和同名目录，说明文档是 `tests/cfi-compat.md`。
+
