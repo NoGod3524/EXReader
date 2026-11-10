@@ -203,6 +203,9 @@ static int shelf_before_exit(void) {
 }
 static void shelf_return(void) {
   if(!shell_active || shelf_requested)return;
+#ifdef EXR_READER_WINDOWS_EDIT
+  if(!shell_edit_before_leave())return;
+#endif
   if(!shelf_before_exit())return;
   sm_tick();shelf_exit_pending=1;shelf_pump();
   if(shelf_exit_pending)SetTimer(g.window,SHELF_TIMER,30,NULL);

@@ -13,6 +13,7 @@
 #include <new>
 #include <map>
 #include <string>
+#include "shell_highlight.h"
 
 struct shadow_cache { unsigned width,height,dpi; int kind; ID2D1Bitmap *bitmap; };
 struct toc_row_cache {HBITMAP bitmap;unsigned used;};
@@ -39,6 +40,8 @@ struct shell_d2d {
   unsigned toc_tick;
 
 };
+
+#include "shell_edit_layout.inc"
 
 /* 96 dpi: one unit is one physical pixel, the host's own coordinate space. */
 static D2D1_RENDER_TARGET_PROPERTIES pixel_properties(D2D1_PIXEL_FORMAT format) {
