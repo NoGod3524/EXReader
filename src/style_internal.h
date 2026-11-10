@@ -40,6 +40,13 @@ typedef struct {
   int combine; /* text-combine-upright: 0 none, EXR_COMBINE_ALL, or 2-4 = digits N. */
   uint32_t color, background, border_color[4];
   exr_length width, height, max_width, max_height, margin[4], padding[4];
+  /* CSS position (0 static/relative, 1 absolute/fixed) and physical insets
+     top/right/bottom/left. inset_set bit n marks a declared, non-auto side.
+     Only fixed-layout EPUB pages consume these; reflow ignores them. */
+  int position;
+  unsigned inset_set;
+  float inset[4];
+  int inset_percent[4];
 } exr_style;
 /* A visible border occupies its width; CSS "hidden" reserves no space outside
    the collapsing model. */
