@@ -1,0 +1,33 @@
+已完成并推送 `codex/dx-write-20261110`，Draft PR：**[#118](https://github.com/NoGod3524/EXReader/pull/118)**。最新提交 `e48971e6`，工作区干净；PR CI 已触发，仍在运行。
+
+`python-docx` 独立校验 **15/15 通过**：
+
+| 字段 | 期望 | 实际 | 通过 |
+|---|---|---|---|
+| 字体／字号 | Times New Roman／12pt | 相同 | ✓ |
+| 行距 | 2.0 倍 | 2.0／DOUBLE | ✓ |
+| 首行缩进 | 0.5" | 0.5" | ✓ |
+| 段后 | 6pt | 6pt | ✓ |
+| 对齐 | 左对齐 | 左对齐 | ✓ |
+| 纸张 | Letter | 8.5×11" | ✓ |
+| 四边距 | 各 1" | 各 1" | ✓ |
+
+实际写出的节属性非空：
+
+```xml
+<w:sectPr>
+  <w:headerReference w:type="default" r:id="rId1"/>
+  <w:pgSz w:w="12240" w:h="15840"/>
+  <w:pgMar w:top="1440" w:right="1440"
+           w:bottom="1440" w:left="1440"
+           w:header="720" w:footer="720" w:gutter="0"/>
+</w:sectPr>
+```
+
+正文写入 `pPr/rPr`，行距为 `w:line="480" w:lineRule="auto"`。独立页眉包含 PAGE 域，首页包含 DATE 域，关系及 Content Types 均已登记；Word 更新日期后仍保持 TNR 12pt。
+
+Word 截图：[字体](C:/Users/Oscar/Documents/Codex/EXReader-dxwrite-20261110/evidence/w2-docx-write/02-font-dialog.jpg)、[行距／缩进／段距](C:/Users/Oscar/Documents/Codex/EXReader-dxwrite-20261110/evidence/w2-docx-write/03-paragraph-double-indent-spacing.jpg)、[边距](C:/Users/Oscar/Documents/Codex/EXReader-dxwrite-20261110/evidence/w2-docx-write/04-letter-margins-one-inch.jpg)、[Letter](C:/Users/Oscar/Documents/Codex/EXReader-dxwrite-20261110/evidence/w2-docx-write/05-letter-paper.jpg)、[日期与页码](C:/Users/Oscar/Documents/Codex/EXReader-dxwrite-20261110/evidence/w2-docx-write/06-final-first-page-fields.jpg)、[域代码](C:/Users/Oscar/Documents/Codex/EXReader-dxwrite-20261110/evidence/w2-docx-write/08-date-and-page-field-codes.jpg)、[引用末页](C:/Users/Oscar/Documents/Codex/EXReader-dxwrite-20261110/evidence/w2-docx-write/09-references-page-two.jpg)。
+
+本地 **ctest 251/251 全绿**。19 本真书共 **9,995 页**，页数、字形数及逐页 SHA-256 均零变化。
+
+[完整验收报告与 OOXML](C:/Users/Oscar/Documents/Codex/EXReader-dxwrite-20261110/evidence/w2-docx-write/REPORT.txt) · [逐步记录](C:/Users/Oscar/Documents/Codex/EXReader-dxwrite-20261110/W2-OUT.txt)
