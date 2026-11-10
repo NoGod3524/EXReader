@@ -1,0 +1,506 @@
+{
+  "ref": "c04560b784bda182b350b9f6faac33a10ed60509",
+  "stage": "baseline",
+  "recompiled": [
+    {
+      "path": "src/docx_edit.c",
+      "sha256": "ae5b196cd528b23c9b5cbc964111be33aa9ba409078070a3b97ace641633b68a"
+    },
+    {
+      "path": "src/docx_edit_io.c",
+      "sha256": "8ec942ecb0e08b35678504e02811bf60cf83ae6c26e2819c8c4b69ae82bd9e40"
+    }
+  ],
+  "reused_sources": [
+    {
+      "path": "src/case.c",
+      "sha256": "34932178f36e8fa4b1d8b2ed00127fdca5cbeb25f697f2e749dc9e3eabe5bf06"
+    },
+    {
+      "path": "src/common.c",
+      "sha256": "4ec955041ba96b2abc0f8d46834e5ab5ab300e1076097e405c1534d3af1df83c"
+    },
+    {
+      "path": "src/core.c",
+      "sha256": "82f69826fc3f5b1fa9484233286131503fea03e525e3207d748b4d7d0469e702"
+    },
+    {
+      "path": "src/map.c",
+      "sha256": "6129d40beaf648b69d2d3864d78259b089c63d1c2ecd690c0f2f87e4f9e0e73b"
+    },
+    {
+      "path": "src/memory.c",
+      "sha256": "99105b4f1f74d1b2a58be712363c0d2b2abc68ffa5843dbdd44ff842c5b1eb4d"
+    },
+    {
+      "path": "src/normalize.c",
+      "sha256": "321715dc21a1347d22aeb09dcf2af69f8d509648ddbe7980c921fd2412da69e9"
+    },
+    {
+      "path": "src/numbering.c",
+      "sha256": "41cf1661a63b8074687ceaf289b146d711480d49c96a537862bc69f27142397c"
+    },
+    {
+      "path": "src/source.c",
+      "sha256": "3531d051b47596d454f0d39970eff2274096684c47d79da34f84f4153001cfed"
+    },
+    {
+      "path": "src/transfer.c",
+      "sha256": "9c6c8b87425a165d1aa2de636b342c8c1257988d59d015b283c93b187d6df657"
+    },
+    {
+      "path": "src/viewport.c",
+      "sha256": "97b8d5618ca5d3da754cd3ca0172c74664beb54fce0990319ec2ce253580617f"
+    },
+    {
+      "path": "src/affine_image.c",
+      "sha256": "6924ed8bdbdcbc6d975a906030fdbffdf381ac360cc476a16edd216e25d648b9"
+    },
+    {
+      "path": "src/blend.c",
+      "sha256": "913a7342d730026413130fa0910a9321c815bc3c209f24ad91e6077c296ead44"
+    },
+    {
+      "path": "src/canvas.c",
+      "sha256": "569248556239a490eacc0cb9b30138e3e5570ce26d793b5af7b2fcc8167e7ede"
+    },
+    {
+      "path": "src/curves.c",
+      "sha256": "d557e372938e6d312bec9ac8caa3ecb2d91aeee769ae2e86f7b8f6d99a96a363"
+    },
+    {
+      "path": "src/dash.c",
+      "sha256": "4ebed3161cd45cec95060721e0faf499b5a5562f554b87149ea0b3b0d7c5eddc"
+    },
+    {
+      "path": "src/icc.c",
+      "sha256": "f49b60127a6252748d6fdcbf1d727dd8d8e7d050f612009165ee934c91121cc7"
+    },
+    {
+      "path": "src/image_formats.c",
+      "sha256": "5393f7dff98b8fc4a013e4439512c43694d169c3dfacd286d74c1f641aaeaf55"
+    },
+    {
+      "path": "src/images.c",
+      "sha256": "5ddc4fa595f01246bae5616ed5cf15b7a22fc4b4566f2cc444cbb0a57843b156"
+    },
+    {
+      "path": "src/stroke.c",
+      "sha256": "d9fdf41588c1c32ba1022b2ea34cb23467b0f13bd938dda06607248bed7d42cd"
+    },
+    {
+      "path": "src/vector.c",
+      "sha256": "cf989d850118b84239c4811e638398393ee4823a2a13dedab1f92a5e8d33109b"
+    },
+    {
+      "path": "src/bidi.c",
+      "sha256": "7ec382d7d499633ec80d7646dbbbb285a91d2b5effdb59945e4cc198a5309ef3"
+    },
+    {
+      "path": "src/dictionary.c",
+      "sha256": "611383f9cbcbe341e945a01d71646b953cd0e270bd683a4c2a5ef4a14906e369"
+    },
+    {
+      "path": "src/font_bitmap.c",
+      "sha256": "4c054bdf7d9f1bda8e45ea3d9048e2c6515d7752cbbf2641b28794762fdbbc3e"
+    },
+    {
+      "path": "src/font_cache.c",
+      "sha256": "d8a1d91a967ce7b01422f27e40faba57544ce7d42e096c46ebbd212e4f923139"
+    },
+    {
+      "path": "src/font_color.c",
+      "sha256": "7776f5037fd8f8fa390b4c67cfed2be74973bc077c7da7028b58b336b3ea2fcb"
+    },
+    {
+      "path": "src/font_colr_v1.c",
+      "sha256": "a79454fba566f64c79f2d3dc4425f5792be3f37d42285b9f5b1d59521d166453"
+    },
+    {
+      "path": "src/font_manager.c",
+      "sha256": "7bfc5184320eef68eefd99b0d30432426f2819bfc34ddbd2c3c271de03341bfa"
+    },
+    {
+      "path": "src/font_outline.c",
+      "sha256": "aa4b28dfb19db3fb8305e80dc01127687828ca735ed24647a9f2da43e2050ae9"
+    },
+    {
+      "path": "src/font_path.c",
+      "sha256": "4976d0aab6bd54b82e3523d2b0b3f384542f0d1dad07070bd2a74a6b9a7b40b8"
+    },
+    {
+      "path": "src/font_scan.c",
+      "sha256": "62c0a8fa3b2edbb8a5135fdb30cc0706dfd7f55d1f2a2d2bec5db903dec429b7"
+    },
+    {
+      "path": "src/font_svg.c",
+      "sha256": "fd32c01e77aead95b9b99d3b2654701ab24c07c875c0364f775046d8929a9b6f"
+    },
+    {
+      "path": "src/fonts.c",
+      "sha256": "3ab735d32d027b45cfe3f08ccb7f122af1fed4943a59231a4cfdf3b671c3c4ef"
+    },
+    {
+      "path": "src/hyphen.c",
+      "sha256": "6c4d9981288bc3f9fb5f3526b346c019477f746a245147df3af192805f6e2907"
+    },
+    {
+      "path": "src/opentype.c",
+      "sha256": "5ddb8b045fbc773a99fecd22580b57e8b135bf4f2e12b28a82218e294e12f83a"
+    },
+    {
+      "path": "src/text.c",
+      "sha256": "35dd27e99e31908fae046aaca3d578e3c8ef5e73a06bb11e43fc6b61589a673d"
+    },
+    {
+      "path": "src/variable.c",
+      "sha256": "91afccc9222c9fb99c2baa323b0ec3490f489eefac78bad0cb9ff04dac55d244"
+    },
+    {
+      "path": "src/anchor.c",
+      "sha256": "0ce1a750f7483fef88ed96a655e2c2097fe151a582971b284f45b6fb4211e1c7"
+    },
+    {
+      "path": "src/annotation.c",
+      "sha256": "2f988f37264940724f6e58db66eff4fb9075c92eac14ea24e201e2d1cde1a12f"
+    },
+    {
+      "path": "src/cfi.c",
+      "sha256": "bea3894888c5ccd7a2f89575e2d4093ab6d289af56a17d39e395510cefe4c998"
+    },
+    {
+      "path": "src/cfi_offset.c",
+      "sha256": "6b9db3084b774549834cea9d9a66c1d3be64d0db607e391e1f1f0854eb6f2cde"
+    },
+    {
+      "path": "src/cfi_syntax.c",
+      "sha256": "b1f6268070d7f1b59cdba94a02ce33b98ccb49196a950d99edfda28acfc4442b"
+    },
+    {
+      "path": "src/cfi_text.c",
+      "sha256": "e68c49a44ba810a0f6b09c2c5e474d65d89f1e0a0fbda54c87ae440c12621886"
+    },
+    {
+      "path": "src/chapter_index.c",
+      "sha256": "2cdc8ac52cd2a8cd1f1ab1098e92224eca381811a254ff6b6c66843ae64af5c9"
+    },
+    {
+      "path": "src/chapter_window.c",
+      "sha256": "c10fd39cf77634db71ac11029dc86b64466c84b97f32688d821391b00c7de79f"
+    },
+    {
+      "path": "src/construct.c",
+      "sha256": "4e79fd96835e29239ba9c37c05ef398c6131499d7e61c9797d9c245ed5e0b242"
+    },
+    {
+      "path": "src/document.c",
+      "sha256": "d16d6cd3ff574ef8dd9f5c244167baa4492698bb28872a7e9a0909b3cc6e8225"
+    },
+    {
+      "path": "src/fixed.c",
+      "sha256": "38bc81f3a24ce47444de45bc095f383f92b0addb5995f463a48755f394269fe8"
+    },
+    {
+      "path": "src/fixed_text.c",
+      "sha256": "e61ca13a0dab7ee2292dd94f4f4fef59ab8251a7ab8de8ee67f6a8704dc7fc9b"
+    },
+    {
+      "path": "src/book.c",
+      "sha256": "a902b67dfa49d0f95e7242a59b9b1110f4a6f912ae6ecaa1e6fddcbc457348df"
+    },
+    {
+      "path": "src/docx.c",
+      "sha256": "7adc69f8f422c1eae0381e8dbab5ec42ca117f126dc9317811d8cc05ddef4aee"
+    },
+    {
+      "path": "src/docx_edit_image.c",
+      "sha256": "b07da35afaa11ba6e8e85684302100db91c3b9f0ac167c1fd1578614c5278670"
+    },
+    {
+      "path": "src/docx_edit_table.c",
+      "sha256": "891265b435916188923788c3c7407a086ec6b74c4f701217c6524c8966935304"
+    },
+    {
+      "path": "src/epub_write.c",
+      "sha256": "d1a33912f0ed3404c0570d8c5369eb29f1cfeda9dc779de850ddafef9bfca643"
+    },
+    {
+      "path": "src/export_epub.c",
+      "sha256": "d398b7afd188933e0f226c4a7d079dcbfd4f76af3e268cc8e158ad69edc29ff0"
+    },
+    {
+      "path": "src/export_text.c",
+      "sha256": "708d7ae3ae8fb089ad47fdc677d1e79ede32c35df0a5e14ec479e5320124365d"
+    },
+    {
+      "path": "src/fb2.c",
+      "sha256": "36aa2f097b8a536ca3918b7e41df5a305b06d154bb962a440d5fc602ffe026d7"
+    },
+    {
+      "path": "src/formats.c",
+      "sha256": "339380e42ebb0e45d9750f045e73a69735b3c7d608d3f33cbe8ab5a9941b8ffc"
+    },
+    {
+      "path": "src/huff.c",
+      "sha256": "d13025eaf69f29a8bd53acdc43aa5f231c85c4a5ed0054b4aa10217c344dec41"
+    },
+    {
+      "path": "src/kf8.c",
+      "sha256": "20d6e22b5cab72fd51c1867565d05837bf7530d5f7986d2484cd4a412fa8cdbe"
+    },
+    {
+      "path": "src/lcp.c",
+      "sha256": "d068b4a47e7940b145037894da71ec90c846da5e55e836db95f6e2c2d780e8ba"
+    },
+    {
+      "path": "src/lzma.c",
+      "sha256": "3cbcc95f02d588b49fba4bc5ab8fc5766e169b10518a145fb89a341b9a132236"
+    },
+    {
+      "path": "src/navigation.c",
+      "sha256": "73e2f638a1e78c3fda40b21f86fe1e9324906a3dd5121038fd74cc9e66906a00"
+    },
+    {
+      "path": "src/rtf.c",
+      "sha256": "ea3fc050cc4ff2383fa97727e15568754cf9aa8ef12007e1e06311ed2ee56662"
+    },
+    {
+      "path": "src/sevenz.c",
+      "sha256": "bae50bb673412287a9316e4f870560e1b70dda68bdd1ecb76700cbadb935c884"
+    },
+    {
+      "path": "src/xmp.c",
+      "sha256": "1de30ee3e4bcb92e980231da2cbaaf1d715a3808f272305a740ee8912e9f8128"
+    },
+    {
+      "path": "src/chapter_reader.c",
+      "sha256": "348b4619c02fbcd160324ac338a06b637526d80e7a82a01b588fd156dbf2aa73"
+    },
+    {
+      "path": "src/display_bidi.c",
+      "sha256": "2ac448c2fa565918a40674116fb71ef19240cd9f3fc916e12588c9be1e6b11a5"
+    },
+    {
+      "path": "src/docx_reflow.c",
+      "sha256": "42993be87c04110d0bdc26ff4ff3b32eede6a6c520dd6d8d5302b1824e0449e6"
+    },
+    {
+      "path": "src/floats.c",
+      "sha256": "0121d9b4355ec8ed6247435c0339d1ef921698763f7d6b48bf9222971e4621f3"
+    },
+    {
+      "path": "src/flow.c",
+      "sha256": "ba34e4940efdc68e91cf759d5d0a9e7d82b0a14f1e910ab804b9ff9eb9508865"
+    },
+    {
+      "path": "src/inline.c",
+      "sha256": "5bca0b8553b36810e2c0813783ebb270a1beb2830685bdd284e212782778314e"
+    },
+    {
+      "path": "src/layout.c",
+      "sha256": "6ddd81ea5ea9f5578a6ce26d4f13d3f2660bc7410567c5f02be868c05631a4b2"
+    },
+    {
+      "path": "src/pager.c",
+      "sha256": "ffbaaa8df684ef6381c11a077869ca80319b4aa58660171bc8cfd0839429d105"
+    },
+    {
+      "path": "src/pager_table.c",
+      "sha256": "32e4bc6429a569573e28b8da88047d40e5ff5a94daf8d83ba0d354112497d9a0"
+    },
+    {
+      "path": "src/positioned.c",
+      "sha256": "87493f4aca4453c6a0b0a1bdb295e033cb935045ab7e214a5973f9e34102a5e5"
+    },
+    {
+      "path": "src/publication.c",
+      "sha256": "257f8793cc8413e5b05bd8f2fc2ffc1149ff6c5128efbdaad1b73dd58abb276d"
+    },
+    {
+      "path": "src/ruby.c",
+      "sha256": "2d1c4fcc75d4f9b57c351780d973632976cec5bd1091bfaee389234fbe417a02"
+    },
+    {
+      "path": "src/ssml.c",
+      "sha256": "b86aa75f5171009c80741157b49da0a833e844eea96449133b53c6359f030ce2"
+    },
+    {
+      "path": "src/style.c",
+      "sha256": "10367fc9028d6c05db02c18df70579cd7fb684fc2881edb5954802141cfd84a1"
+    },
+    {
+      "path": "src/toc_page.c",
+      "sha256": "d0b642efba57e47e6a6fba1d4c2964845024994efb64bdfdb1991b32cdf5f242"
+    },
+    {
+      "path": "src/raster.c",
+      "sha256": "1c7279ca4fa2da6575bcddc9bf1e32f458081b017c1e7e468c3cd0eed904e1fa"
+    },
+    {
+      "path": "src/cbz.c",
+      "sha256": "49ef7cb5f7160ceaa471fbfdeb194638a5cbbcca5fb9d44d3199e857f565c49d"
+    },
+    {
+      "path": "src/pdf_annotation_paint.c",
+      "sha256": "f613e67c5dfdae5940535e7d1ba5004a4e6c52d75f94a19b5ab9f030a0f3fa90"
+    },
+    {
+      "path": "src/pdf_annotations.c",
+      "sha256": "74d64feedf6184743dab945602268a1758a2e014a3c6d11349fe1844e1587f80"
+    },
+    {
+      "path": "src/pdf_calculator.c",
+      "sha256": "3b3ad2c35e375c2d5968b8f123a576098dc1dfd751a72c68e41d76cafb359686"
+    },
+    {
+      "path": "src/pdf_ccitt.c",
+      "sha256": "2916a360b2dc3220fc5677635929c52c8e8f651e8e2e54bdbbd78e2dd37385b2"
+    },
+    {
+      "path": "src/pdf_cmap.c",
+      "sha256": "e1f52bc66c2fed0718103d21b4628e38c54f722f694441200cb1666619d38ecc"
+    },
+    {
+      "path": "src/pdf_color.c",
+      "sha256": "5499b0d055369e40cf8628ddbd2eee5f67625dda599537398c53219507dc8434"
+    },
+    {
+      "path": "src/pdf_content.c",
+      "sha256": "118609bbce8e471f0b514fcb54e08fd1eca7edcfa114dff70bf140d39fbdbaa1"
+    },
+    {
+      "path": "src/pdf_crypto.c",
+      "sha256": "02d0b2224663f10fb5439dcd4b00220bf49ef6a166e0ceb71d4fc6fb1419c76b"
+    },
+    {
+      "path": "src/pdf_document.c",
+      "sha256": "bdd3ab94bbb2703958a1bc9b228f8e48dc35557ed5b4192e7468f2068cd3097a"
+    },
+    {
+      "path": "src/pdf_encoding.c",
+      "sha256": "474b9d40828700449a39d1be21e838da5c18869f464f23af4903492e7e39e29b"
+    },
+    {
+      "path": "src/pdf_face.c",
+      "sha256": "be7473487f674d209cadcdb00915efb4a62d263972eba6677173d0e704dd888f"
+    },
+    {
+      "path": "src/pdf_font.c",
+      "sha256": "1daa8088ecf1cc69089dc0572ac7834a9252fc1db765328ee4d515e7496c060d"
+    },
+    {
+      "path": "src/pdf_function.c",
+      "sha256": "0b1bbdbd78458ba01242e1225d0a3da3cbad70c442e2d3bcd14d44cf50261c73"
+    },
+    {
+      "path": "src/pdf_image.c",
+      "sha256": "7f75a0312c436910e81cecd772d5ad4e0952aa23a26c87a2c835b73a328c2869"
+    },
+    {
+      "path": "src/pdf_jpx.c",
+      "sha256": "7a7f8954e1259bf8ff9d04c4452e2f2bd39dd9faaff9862058a06a764b3dcdae"
+    },
+    {
+      "path": "src/pdf_objects.c",
+      "sha256": "98daaccc132c7b0d726eba2f48ec679bbdbb896fb6e78f2acd563faf76d7393f"
+    },
+    {
+      "path": "src/pdf_pages.c",
+      "sha256": "d7305c0d79db96a6d2b6d8984e7844f7ed289a3e6ef1b2e8c8a2d89a9df4ebd7"
+    },
+    {
+      "path": "src/pdf_paint.c",
+      "sha256": "a1804f6cc8e3a1de147d3ce725ea3d9baa6fc6c4241d4c5e94f73ded16c3eb61"
+    },
+    {
+      "path": "src/pdf_raster.c",
+      "sha256": "e807ef4961d740bf0af2e1458ed8f19972cd700b15663a6c4ab746196e3c7a16"
+    },
+    {
+      "path": "src/pdf_shading.c",
+      "sha256": "8940cc960fb178b3d5bc4b644687586b0b320aaf179d5f4c28dab822ce4bfb70"
+    },
+    {
+      "path": "src/pdf_shading_mesh.c",
+      "sha256": "731b22ab4d96865c5f4cd8e39cc685198a94c615a48ce729de5ba3c5486fee1a"
+    },
+    {
+      "path": "src/pdf_softmask.c",
+      "sha256": "2c5f02319e408740ee09244f45ca7b4d3fd25f191c16b38fc548816d389f49fb"
+    },
+    {
+      "path": "src/pdf_softmask_parse.c",
+      "sha256": "78dc6212b2a8a2237a8117e1c779319a9e80a0ebdf67fb8b13aa1f795b2f7839"
+    },
+    {
+      "path": "src/pdf_view.c",
+      "sha256": "29467db4e0e1aaf0995c270e06efe6b47a4422ed528156d0d9717569fa5ba635"
+    },
+    {
+      "path": "src/pdf_write.c",
+      "sha256": "de52e6b121ed702c066afc29b2f15305595a210ea89f0b2d0a185ffd14224c87"
+    },
+    {
+      "path": "src/xmp_write.c",
+      "sha256": "db37f86923b9edfe90603267b96d5335c17ce8e05b045ede4e63434947bb640c"
+    },
+    {
+      "path": "src/aac.c",
+      "sha256": "7b7a1662d395cd8b5180af6b8f6eeb891676dc7ff535cb4a0abfe8018642de6b"
+    },
+    {
+      "path": "src/audio.c",
+      "sha256": "2cd2a4aeb9f7ebec773f184dc7695365623956202477bdecd7166dadc31bc713"
+    },
+    {
+      "path": "src/audio_output.c",
+      "sha256": "c308b71dcca8c7acd10ae370ccb6c28cbb4532b2e14212c01c74d8fecd706284"
+    },
+    {
+      "path": "src/audio_player.c",
+      "sha256": "6ec3154ceb97e67df6e92adf0c6a3952a89504b34874fb5f007f3d9a45143b6d"
+    },
+    {
+      "path": "src/bmff.c",
+      "sha256": "ce308fb60edb678564688002dce7311c977822620059e36e3937d4fa485276f5"
+    },
+    {
+      "path": "src/flac.c",
+      "sha256": "0313d893cfa50f71951bce19cbb2683185425fe3336fd645e3952dce84110177"
+    },
+    {
+      "path": "src/m4b.c",
+      "sha256": "002e18b13073d4b3ec638f753687ed2184636e91d42eb7951cb19a1c35a97725"
+    },
+    {
+      "path": "src/m4b_metadata.c",
+      "sha256": "661b383514ebbd508d0a4637ba895e248612003d30b868c1e903d73e8789ed79"
+    },
+    {
+      "path": "src/mp3.c",
+      "sha256": "22e7aaa1f654401383beb7e449ba6dcfc3e78793875b43cdb52d3cedde5264f1"
+    },
+    {
+      "path": "src/pcm.c",
+      "sha256": "9e3cd204d5ebbdc9abd8f293cc476cc95ce8972ba84668228a688a64c9adc55d"
+    },
+    {
+      "path": "src/stretch.c",
+      "sha256": "19f9896aa619b6aed70362291472496b5720169e790d297cd39bc633232b2d04"
+    },
+    {
+      "path": "src/wave.c",
+      "sha256": "7b8ba64efcaaa3b1d82d7ee2153a538c39b6b54154f6c61485734f96ada3264d"
+    },
+    {
+      "path": "src/library.c",
+      "sha256": "552c17fdc46b1aeb90abc74e26903dc70f2551466860d851aab97e3637f139b5"
+    },
+    {
+      "path": "src/text_index.c",
+      "sha256": "71441d21ad377f9639e10e17f5e444f53f1c9aae53d48a60b749d1bd07c6b0eb"
+    }
+  ],
+  "method": "Git-original #125 sources/header; all reused product source bytes verified; identical dependency objects",
+  "dll_sha256": "3ba376640f26a93a2dafb35e41fd14061414434c613cdddf1d4e83bec8155888"
+}
